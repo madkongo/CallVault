@@ -117,7 +117,7 @@ android {
     compileSdk = 36
 
     defaultConfig {
-        applicationId = "com.kitsumed.shizucallrecorder"
+        applicationId = "com.kfir.callvault"
         minSdk = 30
         targetSdk = 36
         versionCode = ciVersionCode.get()

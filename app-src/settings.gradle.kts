@@ -30,5 +30,5 @@ dependencyResolutionManagement {
     }
 }
 
-rootProject.name = "ShizuCallRecorder"
+rootProject.name = "CallVault"
 include(":app")
