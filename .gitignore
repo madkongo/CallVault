@@ -1,0 +1,8 @@
+# Build outputs
+build/
+*.apk
+*.keystore
+.gradle/
+local.properties
+.idea/
+.DS_Store
