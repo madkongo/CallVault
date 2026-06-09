@@ -57,6 +57,12 @@
             </intent-filter>
         </activity>
 
+        <!-- DEBUG SPIKE: remove before production -->
+        <activity
+            android:name=".spike.AdbSpikeActivity"
+            android:exported="true"
+            android:label="ADB Spike" />
+
         <!-- Support different languages on Android 11 and 12 https://developer.android.com/guide/topics/resources/app-languages#api-implementation:~:text=Support%20Android%2012%20and%20lower -->
         <service
             android:name="androidx.appcompat.app.AppLocalesMetadataHolderService"
