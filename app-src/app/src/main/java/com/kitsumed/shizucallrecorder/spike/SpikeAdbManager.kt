@@ -155,9 +155,16 @@ class SpikeAdbManager private constructor(context: Context) : AbsAdbConnectionMa
          * @return a [Pair] of (privateKey, certificate).
          */
         private fun generateAndPersistIdentity(context: Context): Pair<PrivateKey, Certificate> {
+            // 0. Delete any partial/stale identity files BEFORE writing new ones so that an
+            //    interrupted write never leaves a new private key paired with an old certificate
+            //    (or vice-versa).  If both files are absent the next run regenerates both together.
+            File(context.filesDir, PRIVATE_KEY_FILE).delete()
+            File(context.filesDir, CERTIFICATE_FILE).delete()
+
             // 1. Generate RSA-2048 keypair.
+            val secureRandom = SecureRandom()
             val keyPairGen = KeyPairGenerator.getInstance("RSA")
-            keyPairGen.initialize(2048, SecureRandom.getInstance("SHA1PRNG"))
+            keyPairGen.initialize(2048, secureRandom)
             val keyPair = keyPairGen.generateKeyPair()
             val privateKey = keyPair.private
             val publicKey = keyPair.public
@@ -170,7 +177,7 @@ class SpikeAdbManager private constructor(context: Context) : AbsAdbConnectionMa
             val dn = X509Name(CERT_SUBJECT)
             @Suppress("DEPRECATION")
             val certGen = X509V3CertificateGenerator().apply {
-                setSerialNumber(BigInteger.valueOf(SecureRandom().nextLong() and Long.MAX_VALUE))
+                setSerialNumber(BigInteger.valueOf(secureRandom.nextLong() and Long.MAX_VALUE))
                 setIssuerDN(dn)
                 setSubjectDN(dn)
                 setNotBefore(now)
