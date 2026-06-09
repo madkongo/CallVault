@@ -256,4 +256,7 @@ dependencies {
 
     // Spike (Plan 1): in-app ADB over wireless debugging. Candidate transport to replace Shizuku.
     implementation("com.github.MuntashirAkon:libadb-android:3.1.1")
+    // bcprov is already a runtime transitive dep of libadb-android; we need it at compile time too
+    // so SpikeAdbManager can use X509V3CertificateGenerator for self-signed cert generation.
+    compileOnly("org.bouncycastle:bcprov-jdk15to18:1.81")
 }
