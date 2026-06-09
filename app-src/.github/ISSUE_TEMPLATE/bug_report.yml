@@ -1,0 +1,91 @@
+name: Bug Report
+description: Report a bug or unexpected behavior
+title: "[Bug]: "
+labels: ["Type: Bug","Waiting For Contributors Review"]
+assignees: []
+
+body:
+  - type: checkboxes
+    id: prechecks
+    attributes:
+      label: Checklist
+      description: Please confirm the following before continuing
+      options:
+        - label: I have searched existing [issues](https://github.com/kitsumed/ShizuCallRecorder/issues) and [discussions](https://github.com/kitsumed/ShizuCallRecorder/discussions/categories/community-support) and this is not a duplicate
+          required: true
+        - label: I am using the latest version of the project
+          required: true
+        - label: I am reporting an issue with ShizuCallRecorder itself, NOT an issue about Shizuku or another app
+          required: true
+        - label: I have read the application [docs](https://github.com/kitsumed/ShizuCallRecorder/blob/main/docs/SUPPORT.md).
+          required: true
+
+  - type: input
+    id: appVersion
+    attributes:
+      label: ShizuCallRecorder Version
+      description: The version of your app. Please ensure you tried the latest version.
+      placeholder: e.g. v1.0.2
+    validations:
+      required: true
+
+  - type: input
+    id: shizukuVersion
+    attributes:
+      label: Shizuku Version
+      description: The version of your app and the url of the public repository. Please ensure you tried the latest version.
+      placeholder: e.g. v13.6.0.r1318 | https://github.com/thedjchi/Shizuku/
+    validations:
+      required: true
+
+  - type: input
+    id: androidVersion
+    attributes:
+      label: Android Version
+      description: The version of Android your phone is running.
+      placeholder: e.g. Android 16
+    validations:
+      required: true
+
+  - type: input
+    id: phoneModel
+    attributes:
+      label: The model of your device
+      description: The name and model of your device, with its version if possible.
+      placeholder: e.g. Samsung Galaxy S24 | One UI 8 | 
+    validations:
+      required: true
+      
+  - type: textarea
+    id: summary
+    attributes:
+      label: Explain the bug
+      description: Describe the issue
+      placeholder: A clear and concise description of the bug. What actually happened? What Should have happened instead?
+    validations:
+      required: true
+
+  - type: textarea
+    id: steps
+    attributes:
+      label: Steps to Reproduce
+      description: How can we reproduce the issue?
+      placeholder: |
+        1. Go to '...'
+        2. Click on '...'
+        3. See error
+    validations:
+      required: true
+
+  - type: textarea
+    id: logs
+    attributes:
+      label: Logs / Screenshots
+      description: Add logs, error messages, screenshots, and video, if available
+      placeholder: |
+        If you have a file, please upload it in one of the prior steps instead of pasting its raw content here.
+
+        To export logs, you can go under the Debug section and enable Log recording. Note that this feature only record a limited amount of logs. If you can, include logs from your device using logcat or any Shizuku-powered app that use logcat, so that any missing logs may be visible. Ensure you redact sensitive informations.
+      render: shell
+    validations:
+      required: false

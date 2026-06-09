@@ -1,0 +1,73 @@
+title: "[Support]: "
+labels: []
+body:
+  - type: markdown
+    attributes:
+      value: |
+        **Use community support when you need help installing, using, or configuring ShizuCallRecorder. If you have a bug, use [Issues](https://github.com/kitsumed/ShizuCallRecorder/issues).**
+        You should also check existing Issues, as the problem you are experiencing may have already been fixed or might be a known issue that cannot or will not be addressed.
+        **When someone gives you an answer** that **resolves your issue**, **PLEASE MARK THEIR ANSWER AS THE SOLUTION** to close your support request and **give them credit**!
+        
+  - type: checkboxes
+    attributes:
+      label: Checklist
+      options:
+        - label: I tried using the latest ShizuCallRecorder version.
+          required: true
+        - label: I tried using the latest version of recommended Shizuku fork (thedjchi)
+          required: true
+        - label: This is not a support request related to a problem with Shizuku
+          required: true
+
+  - type: input
+    id: appVersion
+    attributes:
+      label: ShizuCallRecorder Version
+      description: The version of your app. Please ensure you tried the latest version.
+      placeholder: e.g. v1.0.2
+    validations:
+      required: true
+
+  - type: input
+    id: shizukuVersion
+    attributes:
+      label: Shizuku Version
+      description: The version of your app and the url of the public repository. Please ensure you tried the latest version.
+      placeholder: e.g. v13.6.0.r1318 | https://github.com/thedjchi/Shizuku/
+    validations:
+      required: true
+
+  - type: input
+    id: androidVersion
+    attributes:
+      label: Android Version
+      description: The version of Android your phone is running.
+      placeholder: e.g. Android 16
+    validations:
+      required: true
+
+  - type: input
+    id: phoneModel
+    attributes:
+      label: The model of your device
+      description: The name and model of your device, with its version if possible.
+      placeholder: e.g. Samsung Galaxy S24 | One UI 8 | 
+    validations:
+      required: true
+      
+  - type: textarea
+    id: problemContent
+    attributes:
+      label: Explain your problem
+      description: "Explain your problem in detail, provide steps to reproduce it, and include any other useful information so that the community can help you."
+      placeholder: |
+        I was trying to ... but ... happened ... and I can't figure out how to make it do ...
+        ...
+        It happen everytime I do:
+        1.
+        2.
+        3.
+        ...
+      render: bash
+    validations:
+      required: true
