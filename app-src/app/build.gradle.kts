@@ -253,4 +253,7 @@ dependencies {
     // Shizuku
     implementation(libs.shizukuApi)
     implementation(libs.shizukuProvider)
+
+    // Spike (Plan 1): in-app ADB over wireless debugging. Candidate transport to replace Shizuku.
+    implementation("com.github.MuntashirAkon:libadb-android:3.1.1")
 }
