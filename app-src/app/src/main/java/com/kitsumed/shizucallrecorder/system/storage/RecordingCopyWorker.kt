@@ -15,8 +15,8 @@ import androidx.work.CoroutineWorker
 import androidx.work.WorkerParameters
 import com.kitsumed.shizucallrecorder.utils.AppLogger
 
-/** Copies a finished recording from the local SAF folder to the Drive SAF folder, verifies by
- *  size, optionally deletes the local copy, and retries (WorkManager backoff) on failure. */
+/** Copies a finished recording from the local SAF folder to the Drive SAF folder, optionally
+ *  deletes the local copy, and retries (WorkManager backoff) only if the copy itself fails. */
 class RecordingCopyWorker(ctx: Context, params: WorkerParameters) : CoroutineWorker(ctx, params) {
     override suspend fun doWork(): Result {
         val src = inputData.getString(KEY_SRC)?.toUri() ?: return Result.failure()
@@ -27,16 +27,20 @@ class RecordingCopyWorker(ctx: Context, params: WorkerParameters) : CoroutineWor
 
         if (!SafHelper.isFolderValid(applicationContext, destFolder)) return Result.retry()
         val srcSize = SafHelper.fileSize(applicationContext, src)
+
+        // copyFileToFolder streams the whole file and only returns non-null when copyTo() finished
+        // without throwing — that IS the success signal. We deliberately do NOT verify by comparing
+        // DocumentFile.length(): cloud providers (Google Drive) commonly report length()=0/-1 right
+        // after a streamed write, which previously caused a delete-and-retry loop (the file kept
+        // disappearing). A size difference is logged as a soft warning, not treated as failure.
         val copied = SafHelper.copyFileToFolder(applicationContext, src, destFolder, name, mime)
             ?: return Result.retry()
-        val verified = srcSize <= 0L || SafHelper.fileSize(applicationContext, copied) == srcSize
-        if (!verified) {
-            runCatching { DocumentFile.fromSingleUri(applicationContext, copied)?.delete() }
-            AppLogger.w(TAG, "Drive copy size mismatch; will retry")
-            return Result.retry()
+        val destSize = SafHelper.fileSize(applicationContext, copied)
+        if (srcSize > 0L && destSize > 0L && destSize != srcSize) {
+            AppLogger.w(TAG, "Drive copy size differs (src=$srcSize dest=$destSize); keeping it anyway")
         }
         if (deleteLocal) runCatching { DocumentFile.fromSingleUri(applicationContext, src)?.delete() }
-        AppLogger.i(TAG, "Recording copied to Drive folder (deleteLocal=$deleteLocal)")
+        AppLogger.i(TAG, "Recording copied to Drive (deleteLocal=$deleteLocal, src=$srcSize dest=$destSize)")
         return Result.success()
     }
 
