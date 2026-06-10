@@ -110,6 +110,13 @@
     <string name="settings_section_audio">Audio configuration</string>
     <string name="settings_section_debug">Debug Options</string>
     <string name="settings_section_security">Security</string>
+    <string name="settings_section_recorder_server">Recorder service</string>
+
+    <!-- Settings Screen: Recorder Service Section -->
+    <string name="settings_persistent_server">Persistent recorder server</string>
+    <string name="settings_persistent_server_description">Record calls via a background privileged service so Wireless debugging can stay off between calls. Experimental.</string>
+    <string name="settings_wd_disable_when_idle">Turn off Wireless debugging when idle</string>
+    <string name="settings_wd_disable_when_idle_description">Disable Wireless debugging once the recorder service is connected; re-enabled briefly only when needed.</string>
 
     <!-- Settings Screen: Storage Section -->
     <string name="settings_storage_section">Storage</string>
