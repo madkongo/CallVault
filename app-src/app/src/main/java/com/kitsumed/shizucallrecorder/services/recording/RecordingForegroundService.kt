@@ -193,7 +193,10 @@ class RecordingForegroundService : Service() {
                 // If enabled in the user preferences, we try to start the Shizuku as we are now starting the recording.
                 tryStartShizukuServer()
 
-                serviceScope.launch {
+                // IO dispatcher: AdbShell.ensureConnected + ScrcpyLauncher do real network I/O over the
+                // ADB TLS socket (and block on a socket-readiness retry loop). Running on the main thread
+                // throws NetworkOnMainThreadException and would ANR.
+                serviceScope.launch(Dispatchers.IO) {
                     try {
                         if (!AdbShell.ensureConnected(this@RecordingForegroundService)) {
                             throw IllegalStateException("ADB shell not connected. Pair once in setup and keep Wireless debugging ON.")
