@@ -18,7 +18,6 @@ import android.os.IBinder
 import android.content.pm.ServiceInfo
 import android.provider.CallLog
 import androidx.documentfile.provider.DocumentFile
-import com.kitsumed.shizucallrecorder.integrations.shizuku.ShizukuConnectionManager
 import com.kitsumed.shizucallrecorder.data.AppPreferences
 import com.kitsumed.shizucallrecorder.integrations.adb.AdbShell
 import com.kitsumed.shizucallrecorder.R
@@ -81,8 +80,6 @@ class RecordingForegroundService : Service() {
     }
 
     // ── Dependencies ──────────────────────────────────────────────────────────
-    private lateinit var shizukuManager: ShizukuConnectionManager
-
     private lateinit var appPreferences: AppPreferences
 
     private lateinit var phoneNumberManager: PhoneNumberManager
@@ -123,15 +120,6 @@ class RecordingForegroundService : Service() {
 
         appPreferences = AppPreferences(this)
         phoneNumberManager = PhoneNumberManager.getInstance(this)
-
-        shizukuManager = ShizukuConnectionManager(this) {
-            AppLogger.w(TAG, "Received callback from ShizukuConnectionManager: Shizuku disconnected unexpectedly. Stopping recording service...")
-            // Handle cleanup if the service dies
-            if (hasSession) {
-                notificationHelper.showErrorNotification(getString(R.string.recording_error_shizuku_disconnected_unexpectedly))
-                stopRecordingSessionAndService()
-            }
-        }
 
         AppLogger.d(TAG, "RecordingForegroundService initialized")
     }
@@ -192,9 +180,6 @@ class RecordingForegroundService : Service() {
 
                 currentState = RecordingServiceState.Starting(currentMeta)
 
-                // If enabled in the user preferences, we try to start the Shizuku as we are now starting the recording.
-                tryStartShizukuServer()
-
                 // IO dispatcher: AdbShell.ensureConnected + ScrcpyLauncher do real network I/O over the
                 // ADB TLS socket (and block on a socket-readiness retry loop). Running on the main thread
                 // throws NetworkOnMainThreadException and would ANR.
@@ -223,13 +208,13 @@ class RecordingForegroundService : Service() {
 
             ACTION_STANDBY -> {
                 currentState = RecordingServiceState.Standby(currentMeta)
-                serviceScope.launch {
-                    // If enabled in the user preferences, we try to start the Shizuku server as early as possible (in the standby state, RINGING/OUTGOING),
-                    // increasing the chance it's ready by the time we need it. But this means Shizuku will be running without the user starting the recording yet.
-                    if (!appPreferences.isShizukuStartOnRecordEnabled()) {
-                        tryStartShizukuServer()
-                    }
-                    AppLogger.i(TAG, "Entered standby for ${currentMeta?.direction} call")
+                serviceScope.launch(Dispatchers.IO) {
+                    // Pre-warm the ADB connection as early as possible (RINGING/OUTGOING standby), so
+                    // it is already live by the time the call connects — this also re-enables Wireless
+                    // debugging if the OEM disabled it on reboot. For incoming calls the ring gives us
+                    // several seconds head start, avoiding clipping the start of the recording.
+                    AppLogger.i(TAG, "Entered standby for ${currentMeta?.direction} call; pre-warming ADB connection")
+                    AdbShell.ensureConnected(this@RecordingForegroundService)
                 }
             }
 
@@ -256,34 +241,12 @@ class RecordingForegroundService : Service() {
         return START_NOT_STICKY
     }
 
-    /**
-     * Tries to start the Shizuku server if "Auto-manage Shizuku" is enabled in the user preferences.
-     * If the auth key is missing, shows an error notification and stops the service since we won't be able to record without Shizuku.
-     * **This does not check the user preference for if shizuku should only start when recording or directly at standby**.
-     */
-    private fun tryStartShizukuServer() {
-        if (appPreferences.isShizukuAutoManageEnabled()) {
-            val authKey = appPreferences.getShizukuAuthKey()
-            if (authKey.isNotBlank()) {
-                ShizukuConnectionManager.startServer(this, authKey)
-            } else {
-                notificationHelper.showErrorNotification(getString(R.string.recording_shizuku_auth_key_missing))
-                notificationHelper.showToast(getString(R.string.recording_shizuku_auth_key_missing))
-                stopRecordingSessionAndService()
-            }
-        }
-    }
-
     override fun onDestroy() {
         // Always clean up, even if the OS kills the service mid-recording.
         // This is the guaranteed last callback before the service process is cleaned up.
         AppLogger.v(TAG, "RecordingForegroundService is destroying... Ensuring cleanup...")
         serviceScope.cancel()
         stopRecordingSessionAndService()
-        shizukuManager.unbind()
-        if (appPreferences.isShizukuAutoManageEnabled() && !appPreferences.isShizukuKeepAliveEnabled()) {
-            ShizukuConnectionManager.stopServer(this, appPreferences.getShizukuAuthKey())
-        }
         super.onDestroy()
     }
 
