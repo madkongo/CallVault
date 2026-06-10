@@ -127,6 +127,8 @@
                 <action android:name="com.kitsumed.shizucallrecorder.persist.LAUNCH_AUDIO" />
                 <!-- 0c: app-side binder command-channel test (ping + pfd write). -->
                 <action android:name="com.kitsumed.shizucallrecorder.persist.BINDER_PING" />
+                <!-- Task 4: launch the PRODUCTION recorder server via RecorderServerLauncher. -->
+                <action android:name="com.kitsumed.shizucallrecorder.persist.LAUNCH_RECORDER_SERVER" />
             </intent-filter>
         </receiver>
 

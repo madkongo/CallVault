@@ -16,6 +16,8 @@ import androidx.annotation.Keep
 import com.kitsumed.shizucallrecorder.integrations.scrcpy.ScrcpyAudioCodec
 import com.kitsumed.shizucallrecorder.integrations.scrcpy.ScrcpyAudioSource
 import com.kitsumed.shizucallrecorder.utils.AppLogger
+import java.util.concurrent.CountDownLatch
+import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicBoolean
 import kotlin.system.exitProcess
 
@@ -46,6 +48,9 @@ import kotlin.system.exitProcess
 object RecorderServer {
 
     private const val TAG = "SCR:RecorderServer"
+
+    /** Upper bound the synchronous stopRecording() waits for session teardown (muxer trailer). */
+    private const val STOP_AWAIT_MS = 6000L
 
     /** Guards single-session recording (binder threads + worker may race). */
     private val recordingActive = AtomicBoolean(false)
@@ -166,10 +171,21 @@ object RecorderServer {
                 return
             }
             AppLogger.i(TAG, "stopRecording requested")
+            // BLOCK this (synchronous) binder call until teardown finishes, so when the app's
+            // release() returns the .ogg trailer is written and the file is complete. Otherwise the
+            // app could move/read a truncated recording (the daemon's MediaMuxer.close happens in
+            // session.stop). session.stop has its own internal grace/joins (~up to 4s).
+            val done = CountDownLatch(1)
             workerHandler.post {
                 runCatching { session?.stop() }
                     .onFailure { AppLogger.w(TAG, "stopRecording teardown error: ${it.message}") }
                 session = null
+                done.countDown()
+            }
+            runCatching {
+                if (!done.await(STOP_AWAIT_MS, TimeUnit.MILLISECONDS)) {
+                    AppLogger.w(TAG, "stopRecording teardown did not finish within ${STOP_AWAIT_MS}ms")
+                }
             }
         }
 

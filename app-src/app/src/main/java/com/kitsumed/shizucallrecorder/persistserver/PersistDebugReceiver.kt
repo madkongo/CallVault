@@ -12,6 +12,8 @@ import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
 import android.os.ParcelFileDescriptor
+import com.kitsumed.shizucallrecorder.server.RecorderConnection
+import com.kitsumed.shizucallrecorder.server.RecorderServerLauncher
 import com.kitsumed.shizucallrecorder.utils.AppLogger
 import java.io.File
 import java.io.FileWriter
@@ -48,6 +50,20 @@ class PersistDebugReceiver : BroadcastReceiver() {
                     runCatching { PersistDaemonLauncher.launchAudioCapture(appContext) }
                         .onFailure { AppLogger.e(TAG, "Audio launch thread failed: ${it.message}", it) }
                     AppLogger.i(TAG, "PersistDebugReceiver audio launch thread finished")
+                }.apply { isDaemon = true }.start()
+            }
+
+            ACTION_LAUNCH_RECORDER_SERVER -> {
+                AppLogger.i(RECORDER_TAG, "PersistDebugReceiver triggered LAUNCH_RECORDER_SERVER; running off main thread")
+                Thread {
+                    runCatching {
+                        val ok = RecorderServerLauncher.ensureServerRunning(appContext)
+                        AppLogger.i(
+                            RECORDER_TAG,
+                            "ensureServerRunning returned=$ok ; RecorderConnection.isConnected=${RecorderConnection.isConnected}"
+                        )
+                    }.onFailure { AppLogger.e(RECORDER_TAG, "Recorder server launch thread failed: ${it.message}", it) }
+                    AppLogger.i(RECORDER_TAG, "PersistDebugReceiver recorder-server launch thread finished")
                 }.apply { isDaemon = true }.start()
             }
 
@@ -126,6 +142,9 @@ class PersistDebugReceiver : BroadcastReceiver() {
         /** 0c log tag (matches the daemon + provider) for the binder command-channel test. */
         private const val BINDER_TAG = "SCR:Binder"
 
+        /** Task 4 log tag (matches RecorderServerLauncher) for the production recorder-server launch. */
+        private const val RECORDER_TAG = "SCR:RecorderLauncher"
+
         /** Durable 0c evidence file shared with [BinderDebugDaemon]; driver reads it after WD-on. */
         private const val STATUS_PATH = "/data/local/tmp/cv_binder_status.txt"
 
@@ -139,5 +158,8 @@ class PersistDebugReceiver : BroadcastReceiver() {
 
         /** 0c: drives the app-side binder command-channel test (ping + pfd write). */
         const val ACTION_BINDER_PING = "com.kitsumed.shizucallrecorder.persist.BINDER_PING"
+
+        /** Task 4: launches the PRODUCTION recorder server (RecorderServerLauncher.ensureServerRunning). */
+        const val ACTION_LAUNCH_RECORDER_SERVER = "com.kitsumed.shizucallrecorder.persist.LAUNCH_RECORDER_SERVER"
     }
 }

@@ -65,6 +65,11 @@ class AppPreferences(context: Context) {
         // not shown again on every launch (a live connection only exists per-process).
         const val ADB_PAIRED = false
 
+        // --- Persistent recorder server (CallVault Plan 5) ---
+        // OFF by default: when false the existing local recording path runs unchanged. When true the
+        // recording layer drives the detached privileged daemon (RecorderServer) over binder instead.
+        const val PERSISTENT_SERVER_ENABLED = false
+
         // --- Audio/Scrcpy Quality ---
         val AUDIO_SOURCE = ScrcpyAudioSource.VOICE_CALL.cliKey
         val AUDIO_CODEC = ScrcpyAudioCodec.OPUS.cliKey
@@ -98,6 +103,9 @@ class AppPreferences(context: Context) {
 
         // --- ADB ---
         ADB_PAIRED("adb_paired"),
+
+        // --- Persistent recorder server (CallVault Plan 5) ---
+        PERSISTENT_SERVER_ENABLED("persistent_server_enabled"),
         
         // --- Automation ---
         AUTO_RECORD_INCOMING("auto_record_incoming"),
@@ -214,6 +222,18 @@ class AppPreferences(context: Context) {
 
     /** Marks the one-time ADB pairing as completed (set after the first successful connection). */
     fun setAdbPaired(paired: Boolean) = setBoolean(Key.ADB_PAIRED, paired)
+
+    // -------- Persistent Recorder Server (CallVault Plan 5) --------
+
+    /**
+     * Whether the persistent privileged recorder daemon path is enabled. OFF by default: when false the
+     * existing local recording pipeline runs unchanged; when true the recording layer drives the
+     * detached daemon ([com.kitsumed.shizucallrecorder.server.RecorderServer]) over binder.
+     */
+    fun isPersistentServerEnabled() = getBoolean(Key.PERSISTENT_SERVER_ENABLED, DefaultsValue.PERSISTENT_SERVER_ENABLED)
+
+    /** Sets whether the persistent privileged recorder daemon path is enabled. */
+    fun setPersistentServerEnabled(enabled: Boolean) = setBoolean(Key.PERSISTENT_SERVER_ENABLED, enabled)
 
     // -------- Storage & General --------
 

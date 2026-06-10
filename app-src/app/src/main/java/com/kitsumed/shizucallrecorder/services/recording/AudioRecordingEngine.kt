@@ -21,6 +21,8 @@ import com.kitsumed.shizucallrecorder.integrations.scrcpy.ScrcpyAudioMuxer
 import com.kitsumed.shizucallrecorder.integrations.scrcpy.ScrcpyAudioSource
 import com.kitsumed.shizucallrecorder.integrations.scrcpy.ScrcpyClient
 import com.kitsumed.shizucallrecorder.integrations.scrcpy.ScrcpyLauncher
+import com.kitsumed.shizucallrecorder.server.RecorderConnection
+import com.kitsumed.shizucallrecorder.server.RecorderServerLauncher
 import com.kitsumed.shizucallrecorder.system.storage.SafHelper
 import com.kitsumed.shizucallrecorder.integrations.scrcpy.ServerExtractor
 import com.kitsumed.shizucallrecorder.utils.AppLogger
@@ -104,9 +106,31 @@ class AudioRecordingEngine {
      */
     var audioPipeReadJob: Job? = null
 
-    /** Whether the recording is currently paused by the user. */
+    /**
+     * Whether this session is recording via the persistent privileged daemon (CallVault Plan 5) instead
+     * of the local scrcpy pipeline. Decided ONCE in [startPipeline] from
+     * [AppPreferences.isPersistentServerEnabled] (OFF by default). When false the engine behaves exactly
+     * as before; when true the daemon owns scrcpy + muxing and the local muxer/launcher/scope are never
+     * created, so [release] must skip their teardown.
+     */
+    private var daemonMode: Boolean = false
+
+    /**
+     * Whether the recording is currently paused by the user.
+     *
+     * In [daemonMode] this is a no-op for the pipeline: the daemon writes straight into the output fd,
+     * so app-side pause cannot drop packets (acceptable v1 gap — see [setter]). In local mode the audio
+     * reader honours this flag to skip writing to the muxer while paused.
+     */
     @Volatile
     var isPaused: Boolean = false
+        set(value) {
+            if (daemonMode && value) {
+                // Log once on the transition into a (no-op) paused state in daemon mode.
+                AppLogger.w(TAG, "pause not supported in persistent-server mode")
+            }
+            field = value
+        }
 
     /**
      * Orchestrates the initialization and connection of the entire recording pipeline.
@@ -142,6 +166,17 @@ class AudioRecordingEngine {
 
         currentRecordingUri = safResult.uri
         outputPfd = safResult.descriptor
+
+        // GATED branch (CallVault Plan 5): when the persistent-server flag is ON, hand the SAF output fd
+        // to the privileged daemon and let IT own scrcpy + muxing. The pfd creation above is identical
+        // for both paths; only the consumer differs. When the flag is OFF, the local path below runs
+        // completely unchanged.
+        if (preferences.isPersistentServerEnabled()) {
+            daemonMode = true
+            startDaemonPipeline(context, audioSourceEnum, codecEnum, bitRate)
+            currentCodecEnum = codecEnum
+            return
+        }
 
         scrcpyAudioMuxer = ScrcpyAudioMuxer(outputPfd!!.fileDescriptor, safResult.displayName)
 
@@ -202,9 +237,51 @@ class AudioRecordingEngine {
     }
 
     /**
+     * Persistent-server pipeline (CallVault Plan 5): ensure the privileged daemon is running, then hand
+     * it the already-opened SAF output fd and the resolved source/codec/bitRate. The daemon owns scrcpy
+     * + muxing into [outputPfd]; the engine creates NO local muxer/launcher/client/scope in this mode.
+     *
+     * @throws PipelineInitializationException if the daemon cannot be reached or rejects the start.
+     */
+    private fun startDaemonPipeline(
+        context: Service,
+        audioSourceEnum: ScrcpyAudioSource,
+        codecEnum: ScrcpyAudioCodec,
+        bitRate: Int
+    ) {
+        AppLogger.i(TAG, "Persistent-server mode: ensuring recorder daemon is running")
+        val connected = RecorderServerLauncher.ensureServerRunning(context)
+        val service = RecorderConnection.service
+        if (!connected || service == null) {
+            throw PipelineInitializationException(
+                userFriendlyMessage = context.getString(R.string.recording_error_start_failed),
+                technicalLogMessage = "Persistent recorder server unavailable (connected=$connected, service=${service != null})"
+            )
+        }
+
+        try {
+            service.startRecording(audioSourceEnum.cliKey, codecEnum.cliKey, bitRate, outputPfd)
+        } catch (e: Exception) {
+            throw PipelineInitializationException(
+                userFriendlyMessage = context.getString(R.string.recording_error_start_failed),
+                technicalLogMessage = "Daemon startRecording failed",
+                cause = e,
+            )
+        }
+        AppLogger.i(TAG, "Persistent-server mode: daemon startRecording dispatched, daemon now owns scrcpy + muxing")
+    }
+
+    /**
      * Safely releases all held resources in the correct order.
      * Everything is wrapped in runCatching to ignore any exceptions and continue the cleanup.
      *
+     * In [daemonMode] (CallVault Plan 5) the daemon owns scrcpy + muxing, so release only asks the daemon
+     * to stop and closes the local fd handle; the local muxer/launcher/client/scope were never created so
+     * their teardown is skipped. The metadata/call-log finalize done by [RecordingForegroundService] after
+     * release() is unaffected (it reads [initializationMetadata]/[currentRecordingUri]/[currentCodecEnum],
+     * none of which release() clears).
+     *
+     * Local mode (flag off) is unchanged:
      * 1. Stops the ScrcpyLauncher (closes ADB shell and audio streams), which gives scrcpy-server
      *    a grace period to write its final audio bytes before closing the pipe from the sender side.
      * 2. Waits for the local reading coroutine to reach EOF and finish parsing the late bytes.
@@ -213,6 +290,16 @@ class AudioRecordingEngine {
      */
     fun release() {
         AppLogger.i(TAG, "Releasing session resources and recording pipeline...")
+
+        if (daemonMode) {
+            // Ask the daemon to stop + finalise the container, then close our local fd handle. The local
+            // muxer/launcher/client/scope do not exist in this mode, so there is nothing else to tear down.
+            runCatching { RecorderConnection.service?.stopRecording() }
+                .onFailure { AppLogger.w(TAG, "Daemon stopRecording failed during release: ${it.message}") }
+            runCatching { outputPfd?.close() }
+            return
+        }
+
         runCatching { scrcpyLauncher?.stop() }
         scrcpyLauncher = null
 
