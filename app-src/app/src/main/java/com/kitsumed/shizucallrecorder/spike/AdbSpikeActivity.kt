@@ -35,9 +35,15 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import io.github.muntashirakon.adb.android.AdbMdns
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import java.net.InetAddress
+import java.util.concurrent.CountDownLatch
+import java.util.concurrent.TimeUnit
+import java.util.concurrent.atomic.AtomicInteger
+import java.util.concurrent.atomic.AtomicReference
 
 /**
  * AdbSpikeActivity — throwaway debug Activity that exercises [SpikeAdbManager].
@@ -45,14 +51,20 @@ import kotlinx.coroutines.withContext
  * Launch via adb:
  *   adb shell am start -n com.kfir.callvault/.spike.AdbSpikeActivity
  *
- * All ADB calls run on [Dispatchers.IO]; results are appended to an in-memory log
- * displayed as a scrolling Text on screen. The UI never crashes on failure — every
- * call is wrapped in [runCatching].
+ * UX goal (like Shizuku): the user only types the 6-digit pairing code. The pairing
+ * port AND the connect port are discovered automatically over mDNS — the user never
+ * reads or types a port. The phone's "Pair device with pairing code" dialog must be
+ * open while pairing (that is what advertises the _adb-tls-pairing._tcp service).
+ *
+ * All ADB calls run on [Dispatchers.IO]; results are appended to an on-screen log.
+ * Every call is wrapped in [runCatching] so the UI never crashes on failure.
  *
  * API signatures used (verified via `javap` on libadb-android 3.1.1):
- *   pair      : AbsAdbConnectionManager.pair(String, int, String): boolean
- *   connect   : AbsAdbConnectionManager.connect(String, int): boolean
- *   openStream: AbsAdbConnectionManager.openStream(String): AdbStream  throws IOException, InterruptedException
+ *   mDNS      : AdbMdns(Context, String serviceType, OnAdbDaemonDiscoveredListener{ onPortChanged(InetAddress, int) }); start()/stop()
+ *               SERVICE_TYPE_TLS_PAIRING = "adb-tls-pairing", SERVICE_TYPE_TLS_CONNECT = "adb-tls-connect"
+ *   pair      : AbsAdbConnectionManager.pair(String host, int port, String code): boolean
+ *   connect   : AbsAdbConnectionManager.autoConnect(Context, long timeoutMs): boolean  (mDNS connect discovery)
+ *   openStream: AbsAdbConnectionManager.openStream(String): AdbStream
  *   read      : AdbStream.openInputStream(): AdbInputStream  (extends java.io.InputStream)
  *
  * Will be removed at the end of the spike — do NOT ship to production.
@@ -73,22 +85,57 @@ class AdbSpikeActivity : ComponentActivity() {
 
 // ---- ADB operations (called on IO dispatcher by the screen) ----
 
+private const val MDNS_DISCOVERY_TIMEOUT_SECONDS = 25L
+
 /**
- * Calls [SpikeAdbManager.pair] with the given host/port/code.
- * Verified signature: `pair(String host, int port, String pairingCode): boolean`
+ * Discovers an mDNS-advertised ADB service of [serviceType] and returns its (host, port),
+ * or null if nothing was found within [MDNS_DISCOVERY_TIMEOUT_SECONDS].
+ *
+ * Bridges [AdbMdns]'s async `onPortChanged` callback to a blocking call via a latch,
+ * mirroring how the library's own `autoConnect` waits for discovery.
  */
-private fun doPair(context: Context, host: String, pairingPort: Int, pairingCode: String): String {
-    val ok = SpikeAdbManager.getInstance(context).pair(host, pairingPort, pairingCode)
-    return "pair($host, $pairingPort, ***) → $ok"
+private fun discoverService(context: Context, serviceType: String): Pair<String, Int>? {
+    val addrRef = AtomicReference<InetAddress?>(null)
+    val portRef = AtomicInteger(-1)
+    val latch = CountDownLatch(1)
+    val mdns = AdbMdns(context, serviceType) { address, port ->
+        if (address != null && port > 0) {
+            addrRef.set(address)
+            portRef.set(port)
+            latch.countDown()
+        }
+    }
+    mdns.start()
+    try {
+        val found = latch.await(MDNS_DISCOVERY_TIMEOUT_SECONDS, TimeUnit.SECONDS)
+        if (!found) return null
+        val host = addrRef.get()?.hostAddress ?: return null
+        return host to portRef.get()
+    } finally {
+        mdns.stop()
+    }
 }
 
 /**
- * Calls [SpikeAdbManager.connect].
- * Verified signature: `connect(String host, int port): boolean`
+ * Pairs using ONLY the 6-digit code: the pairing host/port are auto-discovered over mDNS
+ * (service `adb-tls-pairing`), which Android advertises while the "Pair device with
+ * pairing code" dialog is open.
  */
-private fun doConnect(context: Context, host: String, connectPort: Int): String {
-    val ok = SpikeAdbManager.getInstance(context).connect(host, connectPort)
-    return "connect($host, $connectPort) → $ok"
+private fun doPairAutoDiscover(context: Context, pairingCode: String): String {
+    val (host, port) = discoverService(context, AdbMdns.SERVICE_TYPE_TLS_PAIRING)
+        ?: return "pair: no pairing service found via mDNS — is the phone's " +
+            "'Pair device with pairing code' dialog open?"
+    val ok = SpikeAdbManager.getInstance(context).pair(host, port, pairingCode)
+    return "pair(mDNS $host:$port, ***) → $ok"
+}
+
+/**
+ * Connects using mDNS connect discovery — no port needed.
+ * Verified signature: `autoConnect(Context, long): boolean`.
+ */
+private fun doConnectAuto(context: Context): String {
+    val ok = SpikeAdbManager.getInstance(context).autoConnect(context, 25_000L)
+    return "autoConnect(mDNS) → $ok"
 }
 
 /**
@@ -115,10 +162,7 @@ private fun doShellCommand(context: Context, command: String): String {
  */
 @Composable
 private fun AdbSpikeScreen(context: Context) {
-    var host by remember { mutableStateOf("127.0.0.1") }
-    var pairingPort by remember { mutableStateOf("") }
     var pairingCode by remember { mutableStateOf("") }
-    var connectPort by remember { mutableStateOf("5555") }
     var log by remember { mutableStateOf("Ready.\n") }
 
     val scrollState = rememberScrollState()
@@ -146,20 +190,10 @@ private fun AdbSpikeScreen(context: Context) {
     ) {
         Text(text = "ADB Spike", style = MaterialTheme.typography.headlineSmall)
 
-        OutlinedTextField(
-            value = host,
-            onValueChange = { host = it },
-            label = { Text("Host") },
-            modifier = Modifier.fillMaxWidth(),
-            singleLine = true,
-        )
-
-        OutlinedTextField(
-            value = pairingPort,
-            onValueChange = { pairingPort = it },
-            label = { Text("Pairing port") },
-            modifier = Modifier.fillMaxWidth(),
-            singleLine = true,
+        Text(
+            text = "Open the phone's 'Pair device with pairing code' dialog, type the " +
+                "6-digit code below, then tap Pair. The port is found automatically.",
+            fontSize = 12.sp,
         )
 
         OutlinedTextField(
@@ -170,33 +204,21 @@ private fun AdbSpikeScreen(context: Context) {
             singleLine = true,
         )
 
-        OutlinedTextField(
-            value = connectPort,
-            onValueChange = { connectPort = it },
-            label = { Text("Connect port") },
-            modifier = Modifier.fillMaxWidth(),
-            singleLine = true,
-        )
-
         Row(
             modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.spacedBy(8.dp),
         ) {
             Button(
                 onClick = {
-                    val port = pairingPort.toIntOrNull()
-                        ?: return@Button appendLog("ERROR: pairing port must be an integer")
-                    launchIo("Pair $host:$port") { doPair(context, host, port, pairingCode) }
+                    val code = pairingCode.trim()
+                    if (code.isEmpty()) return@Button appendLog("ERROR: enter the pairing code first")
+                    launchIo("Pair (auto-discover port)") { doPairAutoDiscover(context, code) }
                 },
                 modifier = Modifier.weight(1f),
             ) { Text("Pair") }
 
             Button(
-                onClick = {
-                    val port = connectPort.toIntOrNull()
-                        ?: return@Button appendLog("ERROR: connect port must be an integer")
-                    launchIo("Connect $host:$port") { doConnect(context, host, port) }
-                },
+                onClick = { launchIo("Connect (auto)") { doConnectAuto(context) } },
                 modifier = Modifier.weight(1f),
             ) { Text("Connect") }
         }
