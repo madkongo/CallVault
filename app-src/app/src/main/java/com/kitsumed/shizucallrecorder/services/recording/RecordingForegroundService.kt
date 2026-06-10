@@ -18,8 +18,8 @@ import android.content.pm.ServiceInfo
 import android.provider.CallLog
 import androidx.documentfile.provider.DocumentFile
 import com.kitsumed.shizucallrecorder.integrations.shizuku.ShizukuConnectionManager
-import com.kitsumed.shizucallrecorder.IShellService
 import com.kitsumed.shizucallrecorder.data.AppPreferences
+import com.kitsumed.shizucallrecorder.integrations.adb.AdbShell
 import com.kitsumed.shizucallrecorder.R
 import com.kitsumed.shizucallrecorder.data.recordings.RecordingDirection
 import com.kitsumed.shizucallrecorder.data.recordings.RecordingMetadata
@@ -86,9 +86,6 @@ class RecordingForegroundService : Service() {
     private lateinit var phoneNumberManager: PhoneNumberManager
 
     private lateinit var notificationHelper: RecordingNotificationHelper
-
-    /** IPC stub to the privileged ShellService running in the shell process. */
-    private var shellService: IShellService? = null
 
     /** Scope for service lifecycle operations (binding, etc.) */
     private val serviceScope = CoroutineScope(SupervisorJob() + Dispatchers.Main)
@@ -198,21 +195,16 @@ class RecordingForegroundService : Service() {
 
                 serviceScope.launch {
                     try {
-                        // Wait for Shizuku server to be available
-                        ShizukuConnectionManager.waitForServer()
-                        val service = shizukuManager.getShellService()
-                        shellService = service // update local ref
-                        startNewRecordingSession(service, currentMeta)
-                    } catch (e: SecurityException) { // Shizuku permission not granted
-                        AppLogger.e(TAG, "Shizuku permission was denied / not granted", e)
-                        notificationHelper.showErrorNotification(getString(R.string.recording_shizuku_permission_denied))
-                        stopRecordingSessionAndService()
-                    } catch (e: Exception) { // Shizuku not running or other binding connection errors
+                        if (!AdbShell.ensureConnected(this@RecordingForegroundService)) {
+                            throw IllegalStateException("ADB shell not connected. Pair once in setup and keep Wireless debugging ON.")
+                        }
+                        startNewRecordingSession(currentMeta)
+                    } catch (e: Exception) {
                         // Don't catch coroutine cancellations, they are used for cleanup. This creates a false error notification when everything's fine.
                         if (e is CancellationException) throw e
 
-                        AppLogger.e(TAG, "Failed to perform ShellService binding with Shizuku. Ensure it is running, else look at error related to failed binding.", e)
-                        notificationHelper.showErrorNotification(getString(R.string.recording_shizuku_not_started) + "\nLocalized: " + e.localizedMessage)
+                        AppLogger.e(TAG, "Failed to start recording via ADB transport.", e)
+                        notificationHelper.showErrorNotification(getString(R.string.recording_error_start_failed) + "\nADB connection failed: " + e.localizedMessage)
                         stopRecordingSessionAndService()
                     } finally {
                         if (currentState is RecordingServiceState.Starting) {
@@ -296,7 +288,7 @@ class RecordingForegroundService : Service() {
      * Creates a new [AudioRecordingEngine], starts the I/O pipeline, updates the visible notification,
      * and handles fatal [PipelineInitializationException].
      */
-    private fun startNewRecordingSession(service: IShellService, metadata: RecordingMetadata) {
+    private fun startNewRecordingSession(metadata: RecordingMetadata) {
         if (hasSession) {
             AppLogger.w(TAG, "startNewRecordingSession() called while already active – ignoring")
             return
@@ -307,7 +299,7 @@ class RecordingForegroundService : Service() {
 
         try {
             // 2. Try to start the pipeline
-            activeSession.startPipeline(this, service, metadata)
+            activeSession.startPipeline(this, metadata)
             // 3. Success
             currentState = RecordingServiceState.Active(activeSession, false, metadata)
             AppLogger.i(TAG, "Recording pipeline started successfully")
@@ -315,7 +307,7 @@ class RecordingForegroundService : Service() {
             AppLogger.e(TAG, e.message ?: "", e.cause ?: e)
             notificationHelper.showErrorNotification(e.userFriendlyMessage)
             // Ensure partial resources are cleaned up
-            activeSession.cancel(this, shellService)
+            activeSession.cancel(this)
             currentState = RecordingServiceState.Standby(metadata)
             stopRecordingSessionAndService()
         }
@@ -342,8 +334,8 @@ class RecordingForegroundService : Service() {
         val originalMetadata = activeSession.initializationMetadata
         val uriToRename = activeSession.currentRecordingUri
 
-        // Release all resources held by the recording session, and stop the remote shell service, finalizing the recording file.
-        activeSession.release(shellService)
+        // Release all resources held by the recording session, stopping the ADB transport and finalizing the recording file.
+        activeSession.release()
 
         // If the initialization metadata do not contain a phone number, we attempt to query the call log as a fallback.
         // TODO: Remove this fallback logic once we have a more reliable way to get phone number (using Shizuku and hidden api)

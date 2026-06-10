@@ -13,7 +13,6 @@ import android.content.Context
 import android.net.Uri
 import android.os.ParcelFileDescriptor
 import androidx.documentfile.provider.DocumentFile
-import com.kitsumed.shizucallrecorder.IShellService
 import com.kitsumed.shizucallrecorder.R
 import com.kitsumed.shizucallrecorder.data.AppPreferences
 import com.kitsumed.shizucallrecorder.data.recordings.RecordingMetadata
@@ -21,7 +20,7 @@ import com.kitsumed.shizucallrecorder.integrations.scrcpy.ScrcpyAudioCodec
 import com.kitsumed.shizucallrecorder.integrations.scrcpy.ScrcpyAudioMuxer
 import com.kitsumed.shizucallrecorder.integrations.scrcpy.ScrcpyAudioSource
 import com.kitsumed.shizucallrecorder.integrations.scrcpy.ScrcpyClient
-import com.kitsumed.shizucallrecorder.integrations.scrcpy.ScrcpyConfig
+import com.kitsumed.shizucallrecorder.integrations.scrcpy.ScrcpyLauncher
 import com.kitsumed.shizucallrecorder.system.storage.SafHelper
 import com.kitsumed.shizucallrecorder.integrations.scrcpy.ServerExtractor
 import com.kitsumed.shizucallrecorder.utils.AppLogger
@@ -36,7 +35,7 @@ import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withTimeoutOrNull
 
 /**
- * Manages the audio recording pipeline, including the connection to the shell service, reading from the audio pipe,
+ * Manages the audio recording pipeline, including the connection to the ADB transport, reading from the audio pipe,
  * parsing scrcpy-server custom stream format, and writing to the output container via [ScrcpyAudioMuxer].
  *
  * Call [startPipeline] to initialize and start the recording, and [release] to clean up resources when done.
@@ -68,12 +67,10 @@ class AudioRecordingEngine {
         }
 
     /**
-     * Read end of the kernel pipe owned by the shell process.
-     * The shell process writes scrcpy-server audio bytes into the write end; this service
-     * reads from the read end. Android's [ParcelFileDescriptor] wraps a native file descriptor
-     * so it can be transferred across processes via Binder.
+     * Active [ScrcpyLauncher] instance that owns the ADB shell stream and audio socket.
+     * Created in [startPipeline] and stopped in [release].
      */
-    var audioReadPipePfd: ParcelFileDescriptor? = null
+    private var scrcpyLauncher: ScrcpyLauncher? = null
 
     /**
      * Write-access file descriptor for the output file.
@@ -96,7 +93,7 @@ class AudioRecordingEngine {
     var currentCodecEnum: ScrcpyAudioCodec = ScrcpyAudioCodec.OPUS
 
     /**
-     * Coroutine scope for reading from the audio pipe data returned by the shell service.
+     * Coroutine scope for reading from the audio pipe data returned by the ADB transport.
      * Initialised in [startPipeline] and cancelled in [release].
      */
     var audioPipeReadScope: CoroutineScope? = null
@@ -115,7 +112,7 @@ class AudioRecordingEngine {
      * Orchestrates the initialization and connection of the entire recording pipeline.
      * @throws PipelineInitializationException if any step of the initialization fails, with details for user-friendly and technical error reporting.
      */
-    fun startPipeline(context: Service, service: IShellService, metadata: RecordingMetadata) {
+    fun startPipeline(context: Service, metadata: RecordingMetadata) {
         initializationMetadata = metadata
         val preferences = AppPreferences(context)
         val folderUri = preferences.getRecordingFolderUri()
@@ -146,43 +143,24 @@ class AudioRecordingEngine {
         currentRecordingUri = safResult.uri
         outputPfd = safResult.descriptor
 
-        val serverPath = ScrcpyConfig.getServerPath(context)
-        if (!ServerExtractor.ensureServerFile(context, serverPath)) {
-            throw PipelineInitializationException(
-                userFriendlyMessage = context.getString(R.string.recording_error_server_missing),
-                technicalLogMessage = "scrcpy-server missing or SHA256 check was invalid at $serverPath"
-            )
-        }
-
         scrcpyAudioMuxer = ScrcpyAudioMuxer(outputPfd!!.fileDescriptor, safResult.displayName)
 
-        try {
-            audioReadPipePfd = service.startRecording(
-                audioSourceEnum.cliKey,
-                codecEnum.cliKey,
-                bitRate,
-                serverPath,
-                preferences.isDebugEnabled(),
-                AppLogger.callback
-            )
+        val launcher = try {
+            ScrcpyLauncher.start(context, audioSourceEnum, codecEnum, bitRate)
         } catch (e: Exception) {
             throw PipelineInitializationException(
                 userFriendlyMessage = e.localizedMessage ?: context.getString(R.string.recording_error_start_failed),
-                technicalLogMessage = "Remote exception calling startRecording",
-                cause = e
+                technicalLogMessage = "ScrcpyLauncher.start failed",
+                cause = e,
             )
         }
-
-        val inputPfd = audioReadPipePfd ?: throw PipelineInitializationException(
-            userFriendlyMessage = context.getString(R.string.recording_error_start_failed),
-            technicalLogMessage = "Shell service returned null pipe – cannot start recording"
-        )
+        scrcpyLauncher = launcher
 
         currentCodecEnum = codecEnum
         scrcpyAudioMuxer?.initialize(currentCodecEnum)
 
         scrcpyClient = ScrcpyClient(
-            input = ParcelFileDescriptor.AutoCloseInputStream(inputPfd),
+            input = launcher.audioInput,
             expectedCodec = codecEnum,
             listener = object : ScrcpyClient.AudioPacketListener {
                 /**
@@ -227,16 +205,16 @@ class AudioRecordingEngine {
      * Safely releases all held resources in the correct order.
      * Everything is wrapped in runCatching to ignore any exceptions and continue the cleanup.
      *
-     * 1. Stops the remote shell service process natively, which gives scrcpy-server a grace period
-     *    to write its final audio bytes before closing the pipe from the sender side.
+     * 1. Stops the ScrcpyLauncher (closes ADB shell and audio streams), which gives scrcpy-server
+     *    a grace period to write its final audio bytes before closing the pipe from the sender side.
      * 2. Waits for the local reading coroutine to reach EOF and finish parsing the late bytes.
      * 3. Cancels the active reading coroutine and scrcpy client as a fallback.
-     * 4. Closes the inbound pipe.
-     * 5. Closes the muxer and output file descriptor to finalize the container header.
+     * 4. Closes the muxer and output file descriptor to finalize the container header.
      */
-    fun release(shellService: IShellService?) {
+    fun release() {
         AppLogger.i(TAG, "Releasing session resources and recording pipeline...")
-        runCatching { shellService?.stopRecording() }
+        runCatching { scrcpyLauncher?.stop() }
+        scrcpyLauncher = null
 
         runCatching {
             runBlocking {
@@ -248,7 +226,6 @@ class AudioRecordingEngine {
 
         runCatching { scrcpyClient?.stop() }
         runCatching { audioPipeReadScope?.cancel() }
-        runCatching { audioReadPipePfd?.close() }
         runCatching { scrcpyAudioMuxer?.close() }
         runCatching { outputPfd?.close() }
     }
@@ -257,8 +234,8 @@ class AudioRecordingEngine {
      * Trigger the normal [release] flow, then followed by an attempt to delete the incomplete recording file if it was created
      * during the pipeline initialization.
      */
-    fun cancel(context: Context, shellService: IShellService?) {
-        release(shellService)
+    fun cancel(context: Context) {
+        release()
         try {
             currentRecordingUri?.let { uri ->
                 DocumentFile.fromSingleUri(context, uri)?.delete()
