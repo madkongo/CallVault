@@ -35,23 +35,25 @@ object RecorderServerLauncher {
     private const val DAEMON_FQCN = "com.kitsumed.shizucallrecorder.server.RecorderServer"
 
     /**
-     * PRIMARY detached launch format — identical detach technique to the proven spike: setsid into a
-     * fresh session/process-group, stdio -> /dev/null so a closing adb pipe cannot SIGHUP/EOF us, and
-     * backgrounded. `%1$s` is the app APK path, used twice: as the CLASSPATH for app_process AND as the
-     * daemon's first positional arg (`apkPath`, used by [RecorderServer] to self-extract scrcpy).
-     */
-    private const val PRIMARY_CMD_FORMAT =
-        "setsid sh -c 'CLASSPATH=%1\$s exec app_process / $DAEMON_FQCN %1\$s' >/dev/null 2>&1 </dev/null & sleep $LAUNCH_KEEPALIVE_SEC"
-
-    /**
      * Seconds the launching shell stays alive (a trailing `sleep`) AFTER backgrounding the daemon.
      * CRITICAL for the embedded-ADB transport: unlike laptop `adb shell`, libadb closes the shell
      * stream almost immediately (~30ms), and adbd then kills the just-spawned child before `app_process`
      * has loaded the APK + reparented to init — so the daemon never comes up. Keeping the parent shell
      * alive past app_process startup lets the daemon fully detach before the stream closes. (Proven gap:
      * the identical command works from laptop adb, which holds the stream open longer.)
+     * NOTE: must be declared BEFORE [PRIMARY_CMD_FORMAT] — Kotlin const interpolation needs it initialised.
      */
-    private const val LAUNCH_KEEPALIVE_SEC = 2
+    private const val LAUNCH_KEEPALIVE_SEC = 3
+
+    /**
+     * PRIMARY detached launch format — identical detach technique to the proven spike: setsid into a
+     * fresh session/process-group, stdio -> /dev/null so a closing adb pipe cannot SIGHUP/EOF us, and
+     * backgrounded, then a trailing `sleep` keeps the launching shell alive while the daemon starts.
+     * `%1$s` is the app APK path, used twice: as the CLASSPATH for app_process AND as the daemon's first
+     * positional arg (`apkPath`, used by [RecorderServer] to self-extract scrcpy).
+     */
+    private const val PRIMARY_CMD_FORMAT =
+        "setsid sh -c 'CLASSPATH=%1\$s exec app_process / $DAEMON_FQCN %1\$s' >/dev/null 2>&1 </dev/null & sleep $LAUNCH_KEEPALIVE_SEC"
 
     /**
      * How long to block-drain the launching shell. Must exceed [LAUNCH_KEEPALIVE_SEC] so we hold the
