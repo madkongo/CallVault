@@ -200,7 +200,6 @@ fun SettingsContent(
             item { StorageSection(preferences, updateTrigger, actions, onSelectDriveFolder) }
             item { AudioSection(preferences, updateTrigger, actions) }
             item { VisualSection(preferences, updateTrigger, actions) }
-            item { RecorderServerSection(preferences, updateTrigger, actions) }
             item { DebugSection(preferences, updateTrigger, actions, onExportLogs) }
         }
     }
@@ -392,39 +391,6 @@ private fun VisualSection(preferences: AppPreferences, updateTrigger: Int, actio
     }
 }
 
-
-/** Shows the persistent recorder server toggle and its dependent Wireless-debugging idle policy.
- *
- * The Wireless-debugging idle policy only applies in daemon mode, so its row is disabled
- * (greyed out, non-interactable) while the persistent-server toggle is off.
- *
- * @param preferences   The [AppPreferences] instance to read data from.
- * @param updateTrigger Trigger value to force recomposition when settings change.
- * @param actions       Implementation of [SettingsActions] to handle user interaction.
- */
-@Composable
-private fun RecorderServerSection(preferences: AppPreferences, updateTrigger: Int, actions: SettingsActions) {
-    val isPersistentServerEnabled = remember(updateTrigger) { preferences.isPersistentServerEnabled() }
-    val isWdDisableWhenIdle = remember(updateTrigger) { preferences.isWdDisableWhenIdle() }
-
-    SettingsSection(title = stringResource(R.string.settings_section_recorder_server)) {
-        ToggleListItem(
-            label           = stringResource(R.string.settings_persistent_server),
-            checked         = isPersistentServerEnabled,
-            onCheckedChange = { actions.setPersistentServerEnabled(it) },
-            description     = stringResource(R.string.settings_persistent_server_description)
-        )
-        ToggleListItem(
-            label           = stringResource(R.string.settings_wd_disable_when_idle),
-            checked         = isWdDisableWhenIdle,
-            onCheckedChange = { actions.setWdDisableWhenIdle(it) },
-            description     = stringResource(R.string.settings_wd_disable_when_idle_description),
-            // Only meaningful in daemon mode; greyed out and non-interactable when the
-            // persistent recorder server is off.
-            enabled         = isPersistentServerEnabled
-        )
-    }
-}
 
 /** Shows the recording folder, auto-record toggles, and contact-filter options.
  *
@@ -976,8 +942,6 @@ private fun SettingsScreenPreview() {
             override fun setThemeMode(mode: AppPreferences.ThemeMode) {}
             override fun setDynamicColorEnabled(enabled: Boolean) {}
             override fun setShowToastsEnabled(enabled: Boolean) {}
-            override fun setPersistentServerEnabled(enabled: Boolean) {}
-            override fun setWdDisableWhenIdle(enabled: Boolean) {}
             override fun setAppLanguage(languageCode: String) {}
             override fun setLoggingEnabled(enabled: Boolean) {}
             override fun setDebugEnabled(enabled: Boolean) {}

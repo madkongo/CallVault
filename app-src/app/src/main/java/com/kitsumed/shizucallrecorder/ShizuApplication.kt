@@ -10,23 +10,29 @@ package com.kitsumed.shizucallrecorder
 
 import android.app.Application
 import com.kitsumed.shizucallrecorder.data.AppPreferences
-import com.kitsumed.shizucallrecorder.integrations.adb.AdbShell
+import com.kitsumed.shizucallrecorder.server.RecorderServerLauncher
 import com.kitsumed.shizucallrecorder.utils.AppLogger
 
 /**
  * ShizuApplication is run when the app process is created. Can be seen as the very first entry point of the app.
  */
 class ShizuApplication : Application() {
+    private companion object {
+        const val TAG = "SCR:ShizuApplication"
+    }
+
     override fun onCreate() {
         super.onCreate()
         AppLogger.init(applicationContext)
 
-        // If ADB was already paired, warm up the connection in the background so the app is ready
-        // to record without re-running setup each launch. Best-effort; the recording path also
-        // calls AdbShell.ensureConnected on demand. Network I/O → off the main thread.
+        // If ADB was already paired, proactively bring up the persistent recorder daemon in the
+        // background: this (transiently) enables Wireless debugging if needed, launches the daemon,
+        // waits for its binder, then turns WD back OFF — so the app is recording-ready over binder and
+        // WD is off when idle, with no user action. Best-effort; the call path also ensures it on demand.
         if (AppPreferences(applicationContext).isAdbPaired()) {
             Thread {
-                runCatching { AdbShell.ensureConnected(applicationContext) }
+                runCatching { RecorderServerLauncher.ensureServerRunning(applicationContext) }
+                    .onFailure { AppLogger.w(TAG, "Startup recorder-daemon warmup failed: ${it.message}") }
             }.apply { isDaemon = true }.start()
         }
     }

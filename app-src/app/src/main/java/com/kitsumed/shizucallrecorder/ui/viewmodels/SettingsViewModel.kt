@@ -61,8 +61,6 @@ interface SettingsActions {
     fun setThemeMode(mode: AppPreferences.ThemeMode)
     fun setDynamicColorEnabled(enabled: Boolean)
     fun setShowToastsEnabled(enabled: Boolean)
-    fun setPersistentServerEnabled(enabled: Boolean)
-    fun setWdDisableWhenIdle(enabled: Boolean)
     fun setAppLanguage(languageCode: String)
     fun setLoggingEnabled(enabled: Boolean)
     fun setDebugEnabled(enabled: Boolean)
@@ -312,29 +310,6 @@ class SettingsViewModel(application: Application) : AndroidViewModel(application
      */
     override fun setShowToastsEnabled(enabled: Boolean) {
         preferences.setShowToastsEnabled(enabled)
-        refresh()
-    }
-
-    /** Enables or disables the persistent privileged recorder server (daemon mode).
-     *
-     * When enabled, calls record via the persistent daemon instead of the per-call ADB path.
-     *
-     * @param enabled `true` to record via the persistent daemon.
-     */
-    override fun setPersistentServerEnabled(enabled: Boolean) {
-        preferences.setPersistentServerEnabled(enabled)
-        refresh()
-    }
-
-    /** Sets the Wireless debugging idle policy.
-     *
-     * When enabled, Wireless debugging is turned off once the daemon is connected (re-enabled
-     * only transiently to relaunch). Only meaningful when persistent-server mode is on.
-     *
-     * @param enabled `true` to disable Wireless debugging while the daemon is idle.
-     */
-    override fun setWdDisableWhenIdle(enabled: Boolean) {
-        preferences.setWdDisableWhenIdle(enabled)
         refresh()
     }
 

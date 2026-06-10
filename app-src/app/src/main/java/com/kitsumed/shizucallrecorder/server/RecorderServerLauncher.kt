@@ -9,7 +9,6 @@
 package com.kitsumed.shizucallrecorder.server
 
 import android.content.Context
-import com.kitsumed.shizucallrecorder.data.AppPreferences
 import com.kitsumed.shizucallrecorder.integrations.adb.AdbShell
 import com.kitsumed.shizucallrecorder.utils.AppLogger
 
@@ -131,17 +130,16 @@ object RecorderServerLauncher {
     }
 
     /**
-     * Applies the WD policy now that the daemon binder is connected: if the user chose
-     * "turn Wireless debugging off when idle", drop WD (the daemon needs no ADB at record time — it is
-     * commanded over binder). Re-enabled transiently by [ensureServerRunning] when a relaunch is needed.
-     * No-op when the policy is off or WD is already off.
+     * Now that the daemon's binder is connected, turn Wireless debugging OFF — the daemon is commanded
+     * over binder and needs no ADB until it must be relaunched (then [ensureServerRunning] re-enables WD
+     * transiently). This is unconditional: "WD only when needed" is CallVault's core behaviour, not a
+     * user toggle. No-op if WD is already off or WRITE_SECURE_SETTINGS is missing.
      */
     private fun applyWdPolicy(context: Context) {
-        if (!AppPreferences(context).isWdDisableWhenIdle()) return
         if (AdbShell.disableWirelessDebugging(context)) {
-            AppLogger.i(TAG, "WD policy: disabled Wireless debugging (daemon connected; commands flow over binder)")
+            AppLogger.i(TAG, "Wireless debugging disabled (daemon connected; commands flow over binder)")
         } else {
-            AppLogger.w(TAG, "WD policy: could not disable Wireless debugging (missing WRITE_SECURE_SETTINGS?)")
+            AppLogger.w(TAG, "Could not disable Wireless debugging (missing WRITE_SECURE_SETTINGS?)")
         }
     }
 

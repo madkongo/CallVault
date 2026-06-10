@@ -16,6 +16,7 @@ import androidx.documentfile.provider.DocumentFile
 import com.kitsumed.shizucallrecorder.R
 import com.kitsumed.shizucallrecorder.data.AppPreferences
 import com.kitsumed.shizucallrecorder.data.recordings.RecordingMetadata
+import com.kitsumed.shizucallrecorder.integrations.adb.AdbShell
 import com.kitsumed.shizucallrecorder.integrations.scrcpy.ScrcpyAudioCodec
 import com.kitsumed.shizucallrecorder.integrations.scrcpy.ScrcpyAudioMuxer
 import com.kitsumed.shizucallrecorder.integrations.scrcpy.ScrcpyAudioSource
@@ -177,15 +178,21 @@ class AudioRecordingEngine {
         currentRecordingUri = safResult.uri
         outputPfd = safResult.descriptor
 
-        // GATED branch (CallVault Plan 5): when the persistent-server flag is ON, hand the SAF output fd
-        // to the privileged daemon and let IT own scrcpy + muxing. The pfd creation above is identical
-        // for both paths; only the consumer differs. When the flag is OFF, the local path below runs
-        // completely unchanged.
-        if (preferences.isPersistentServerEnabled()) {
+        // CallVault ALWAYS records via the persistent privileged daemon — it is the app's core
+        // mechanism, not an option. Hand the SAF output fd to the daemon and let IT own scrcpy + muxing
+        // over binder (no ADB at record time). Only if the daemon truly can't be brought up do we fall
+        // through to the local ADB path below, so a call is never lost.
+        if (startDaemonPipeline(context, audioSourceEnum, codecEnum, bitRate)) {
             daemonMode = true
-            startDaemonPipeline(context, audioSourceEnum, codecEnum, bitRate)
             currentCodecEnum = codecEnum
             return
+        }
+        AppLogger.w(TAG, "Persistent daemon unavailable; falling back to local ADB recording path")
+        if (!AdbShell.ensureConnected(context)) {
+            throw PipelineInitializationException(
+                userFriendlyMessage = context.getString(R.string.recording_error_start_failed),
+                technicalLogMessage = "Neither the recorder daemon nor a direct ADB connection is available"
+            )
         }
 
         scrcpyAudioMuxer = ScrcpyAudioMuxer(outputPfd!!.fileDescriptor, safResult.displayName)
@@ -247,39 +254,36 @@ class AudioRecordingEngine {
     }
 
     /**
-     * Persistent-server pipeline (CallVault Plan 5): ensure the privileged daemon is running, then hand
-     * it the already-opened SAF output fd and the resolved source/codec/bitRate. The daemon owns scrcpy
-     * + muxing into [outputPfd]; the engine creates NO local muxer/launcher/client/scope in this mode.
+     * Persistent-server pipeline: ensure the privileged daemon is running (which also turns Wireless
+     * debugging back OFF once connected), then hand it the already-opened SAF output fd + resolved
+     * source/codec/bitRate. The daemon owns scrcpy + muxing into [outputPfd]; the engine creates NO
+     * local muxer/launcher/client/scope in this mode.
      *
-     * @throws PipelineInitializationException if the daemon cannot be reached or rejects the start.
+     * @return true if the daemon accepted the recording; false if the daemon is UNAVAILABLE (caller
+     *         falls back to the local ADB path) — this never throws, so the fallback can run.
      */
     private fun startDaemonPipeline(
         context: Service,
         audioSourceEnum: ScrcpyAudioSource,
         codecEnum: ScrcpyAudioCodec,
         bitRate: Int
-    ) {
-        AppLogger.i(TAG, "Persistent-server mode: ensuring recorder daemon is running")
+    ): Boolean {
+        AppLogger.i(TAG, "Ensuring recorder daemon is running")
         val connected = RecorderServerLauncher.ensureServerRunning(context)
         val service = RecorderConnection.service
         if (!connected || service == null) {
-            throw PipelineInitializationException(
-                userFriendlyMessage = context.getString(R.string.recording_error_start_failed),
-                technicalLogMessage = "Persistent recorder server unavailable (connected=$connected, service=${service != null})"
-            )
+            AppLogger.w(TAG, "Recorder daemon unavailable (connected=$connected, service=${service != null})")
+            return false
         }
-
-        try {
+        return try {
             service.startRecording(audioSourceEnum.cliKey, codecEnum.cliKey, bitRate, outputPfd)
+            daemonRecording = true
+            AppLogger.i(TAG, "Daemon startRecording dispatched; daemon now owns scrcpy + muxing")
+            true
         } catch (e: Exception) {
-            throw PipelineInitializationException(
-                userFriendlyMessage = context.getString(R.string.recording_error_start_failed),
-                technicalLogMessage = "Daemon startRecording failed",
-                cause = e,
-            )
+            AppLogger.w(TAG, "Daemon startRecording failed; will fall back to local path: ${e.message}", e)
+            false
         }
-        daemonRecording = true
-        AppLogger.i(TAG, "Persistent-server mode: daemon startRecording dispatched, daemon now owns scrcpy + muxing")
     }
 
     /**
