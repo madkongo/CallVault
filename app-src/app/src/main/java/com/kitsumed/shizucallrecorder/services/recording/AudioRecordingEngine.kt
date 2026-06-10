@@ -108,11 +108,11 @@ class AudioRecordingEngine {
     var audioPipeReadJob: Job? = null
 
     /**
-     * Whether this session is recording via the persistent privileged daemon (CallVault Plan 5) instead
-     * of the local scrcpy pipeline. Decided ONCE in [startPipeline] from
-     * [AppPreferences.isPersistentServerEnabled] (OFF by default). When false the engine behaves exactly
-     * as before; when true the daemon owns scrcpy + muxing and the local muxer/launcher/scope are never
-     * created, so [release] must skip their teardown.
+     * Whether this session is recording via the persistent privileged daemon (the default + only
+     * intended path) vs the local scrcpy fallback. Set true in [startPipeline] when the daemon accepts
+     * the recording; false only when the daemon was unavailable and we fell back to the local pipeline.
+     * When true the daemon owns scrcpy + muxing and the local muxer/launcher/scope are never created,
+     * so [release] must skip their teardown.
      */
     private var daemonMode: Boolean = false
 

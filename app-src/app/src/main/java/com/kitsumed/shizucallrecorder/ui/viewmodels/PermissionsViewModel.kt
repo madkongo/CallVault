@@ -59,8 +59,11 @@ class PermissionsViewModel(application: Application) : AndroidViewModel(applicat
         onPermissionGranted: () -> Unit
     ) {
         when {
-            !status.adbConnected             -> setupAdb(onPermissionGranted)
+            // Notifications FIRST: ADB pairing is driven entirely through a notification (the inline
+            // "enter pairing code" reply action), so without POST_NOTIFICATIONS the pairing step is
+            // invisible and "Setup ADB" appears to do nothing. Gate ADB behind notifications.
             !status.notificationsGranted     -> requestRuntimePermission(Manifest.permission.POST_NOTIFICATIONS)
+            !status.adbConnected             -> setupAdb(onPermissionGranted)
             !status.contactsGranted          -> requestRuntimePermission(Manifest.permission.READ_CONTACTS)
             !status.phoneStateGranted        -> requestRuntimePermission(Manifest.permission.READ_PHONE_STATE)
             !status.callLogGranted           -> requestRuntimePermission(Manifest.permission.READ_CALL_LOG)
@@ -72,8 +75,9 @@ class PermissionsViewModel(application: Application) : AndroidViewModel(applicat
                     }
                 )
             }
-            !status.storageSelected          -> launchFolderPicker()
-            else                             -> { /* All steps completed, all permission granted.*/ }
+            // Recording-folder selection has moved OUT of onboarding into the in-app settings wizard;
+            // it is no longer a prerequisite to finish setup.
+            else                             -> { /* All permissions granted; setup complete. */ }
         }
         // Always trigger a refresh of the UI to detect and show new permission changes.
         onPermissionGranted()

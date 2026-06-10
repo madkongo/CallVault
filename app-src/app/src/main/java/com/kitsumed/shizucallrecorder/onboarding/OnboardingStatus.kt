@@ -49,13 +49,15 @@ object OnboardingStatus {
          * Returns true only when every prerequisite is satisfied, including the disclaimer.
          */
         fun isComplete(): Boolean {
+            // NOTE: storageSelected is intentionally NOT required here — recording-folder selection
+            // moved out of onboarding into the in-app settings wizard. It remains in [Status] so the
+            // wizard/UI can still surface it.
             return disclaimerAccepted &&
                 notificationsGranted &&
                 contactsGranted &&
                 phoneStateGranted &&
                 callLogGranted &&
                 batteryExempted &&
-                storageSelected &&
                 adbConnected
         }
     }
