@@ -48,8 +48,26 @@ class ScrcpyLauncher private constructor(
 
     companion object {
         private const val TAG = "SCR:ScrcpyLauncher"
-        private const val SOCKET_RETRY_COUNT = 100
+        // ~6 s: if the server hasn't served its socket by then it never will (e.g. no live call
+        // audio, or a stale server is holding the audio source). Bounded so we fail fast and clean.
+        private const val SOCKET_RETRY_COUNT = 60
         private const val SOCKET_RETRY_DELAY_MS = 100L
+        private const val SERVER_MAIN_CLASS_NEEDLE = "com.genymobile.scrcpy.Server"
+
+        /**
+         * Kills any running scrcpy-server processes via the ADB shell. A leftover server (from an
+         * interrupted/failed launch) keeps holding the call-audio source, which makes the NEXT
+         * recording's server hang on audio init — so we always clear them before launching and on
+         * failure. Best-effort; drains the shell so the command completes.
+         */
+        fun killStaleServers(context: Context) {
+            runCatching {
+                AdbShell.openShell(context, "pkill -f $SERVER_MAIN_CLASS_NEEDLE").use { s ->
+                    s.openInputStream().use { it.readBytes() }
+                }
+                AppLogger.d(TAG, "Killed any stale scrcpy-server processes")
+            }.onFailure { AppLogger.w(TAG, "killStaleServers failed: ${it.message}") }
+        }
 
         /**
          * Launches scrcpy-server over the embedded ADB connection and returns a [ScrcpyLauncher]
@@ -74,6 +92,10 @@ class ScrcpyLauncher private constructor(
                 throw IOException("scrcpy-server missing/invalid at $serverPath")
             }
 
+            // Clear any leftover server first — a stale one holds the audio source and makes this
+            // launch hang on audio init (the root cause of intermittent "no capture" recordings).
+            killStaleServers(context)
+
             val scid = ScrcpyConfig.getRandomSocketName()
             val args = ScrcpyConfig.buildServerArgs(scid, source, codec, bitRate).joinToString(" ")
             val shell = AdbShell.openShell(
@@ -90,17 +112,26 @@ class ScrcpyLauncher private constructor(
             }.apply { isDaemon = true }.start()
 
             // Readiness via retry-open: openLocalAbstract fails until the server creates the socket.
+            // Interruptible so a call that ends mid-launch (coroutine cancel) stops promptly.
             val sockName = "${ScrcpyConfig.SERVER_SOCKET_NAME_PREFIX}$scid"
             var audio: AdbStream? = null
-            repeat(SOCKET_RETRY_COUNT) {
+            var tries = 0
+            while (audio == null && tries < SOCKET_RETRY_COUNT && !Thread.currentThread().isInterrupted) {
+                runCatching { audio = AdbShell.openLocalAbstract(context, sockName) }
                 if (audio == null) {
-                    runCatching { audio = AdbShell.openLocalAbstract(context, sockName) }
-                    if (audio == null) Thread.sleep(SOCKET_RETRY_DELAY_MS)
+                    tries++
+                    try {
+                        Thread.sleep(SOCKET_RETRY_DELAY_MS)
+                    } catch (e: InterruptedException) {
+                        Thread.currentThread().interrupt()
+                    }
                 }
             }
 
             val a = audio ?: run {
+                // Server never served the socket — kill it so it doesn't linger and block the next call.
                 runCatching { shell.close() }
+                killStaleServers(context)
                 throw IOException("scrcpy audio socket never became ready: $sockName")
             }
 
