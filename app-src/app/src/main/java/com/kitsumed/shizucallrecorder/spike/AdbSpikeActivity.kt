@@ -10,9 +10,11 @@ package com.kitsumed.shizucallrecorder.spike
 
 import android.Manifest
 import android.content.Context
+import android.content.Intent
 import android.content.pm.PackageManager
 import android.os.Build
 import android.os.Bundle
+import android.provider.Settings
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.compose.foundation.layout.Arrangement
@@ -99,6 +101,18 @@ private fun AdbSpikeScreen(context: Context) {
                 "Use 'Run all' to repeat the checks (e.g. after a reboot).",
             fontSize = 12.sp,
         )
+
+        Button(
+            onClick = {
+                runCatching {
+                    context.startActivity(
+                        Intent(Settings.ACTION_APPLICATION_DEVELOPMENT_SETTINGS)
+                            .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK),
+                    )
+                }.onFailure { SpikeLog.append("open dev options ERROR: ${it.message}") }
+            },
+            modifier = Modifier.fillMaxWidth(),
+        ) { Text("Open Developer options") }
 
         Button(
             onClick = { AdbPairingService.start(context); SpikeLog.append("→ Start pairing service") },
