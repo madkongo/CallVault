@@ -28,6 +28,19 @@
 - Spike classes to build on (branch `feat/callvault-adb-spike`, package `…spike`): `SpikeAdbManager`, `AdbMdns`, `AdbPairingService`, `SpikeActions`, `SpikeLog`. The `CONNECT_SETTLE_MS` (2.5 s) settle-after-connect lesson applies.
 - Audio format: 48 kHz stereo; Opus/AAC; FourCC header first (see `ScrcpyClient` doc).
 
+## Proven references (don't design from scratch — mirror these)
+
+Per project rule, the scrcpy-over-ADB transport is modeled on existing implementations, not invented:
+
+- **Tango ADB** (`tangoadb.dev/scrcpy/start-server`, `/connect-server`) — runs scrcpy entirely over the **raw ADB protocol** (no `adb` binary, no PC), the exact analogue of our libadb approach. Confirmed mechanics we mirror:
+  - Connect by opening a stream to `localabstract:scrcpy_<scid8hex>` — the protocol-level equivalent of `adb forward … localabstract:`. (= our `openStream("localabstract:…")`.)
+  - **Socket readiness = retry the open** with ~100 ms backoff up to ~100 tries (raw-protocol: the open *fails* until the server has created the socket; retry-until-success — do NOT use a fixed sleep).
+  - The ADB connection is **multiplexed**; you MUST continuously drain the shell (stdout) stream or it back-pressures and blocks every stream on the connection (incl. audio).
+  - Socket order is video, audio, control; we disable video+control so audio is the only socket.
+  - Forward-tunnel dummy byte: Tango enables it and `readExactly(1)` to skip it as a readiness signal. We instead keep `send_dummy_byte=false` (our `ScrcpyClient` expects the FourCC as the first bytes) and rely on the retry-open for readiness. If testing shows the open succeeds before the socket is truly serving (FourCC never arrives), switch to Tango's dummy-byte mode.
+- **Genymobile/scrcpy** `doc/develop.md` — tunnel modes + `tunnel_forward=true` (device listens, client connects to `localabstract:scrcpy_<scid>`).
+- **kitsumed/ShizuCallRecorder** (our upstream) — already the source of `ScrcpyConfig`/`ScrcpyClient`/`ScrcpyAudioMuxer`; the scrcpy *args + audio parsing* are unchanged, only the transport (Shizuku UserService → ADB socket) is swapped.
+
 ## File Structure
 
 **New (production `integrations/adb/` package):**
@@ -76,10 +89,15 @@ suspend fun recordScrcpyTest(context: Context): String = withContext(Dispatchers
     val shell = mgr.openStream(
         "shell:CLASSPATH=$serverPath app_process / ${ScrcpyConfig.SERVER_MAIN_CLASS} $args"
     )
-    // Drain server logs on a side thread so we can see failures.
-    Thread { runCatching { shell.openInputStream().bufferedReader().forEachLine { SpikeLog.append("[srv] $it") } } }.start()
-    delay(1500) // let the server create localabstract:scrcpy_<scid>
-    val audio = mgr.openStream("localabstract:${ScrcpyConfig.SERVER_SOCKET_NAME_PREFIX}$scid")
+    // REQUIRED: drain server stdout continuously or it blocks the multiplexed ADB connection (Tango).
+    Thread { runCatching { shell.openInputStream().bufferedReader().forEachLine { SpikeLog.append("[srv] $it") } } }.apply { isDaemon = true }.start()
+    // Readiness = retry the open until the server has created the socket (Tango: ~100ms backoff).
+    val sockName = "localabstract:${ScrcpyConfig.SERVER_SOCKET_NAME_PREFIX}$scid"
+    val audio = run {
+        var s: io.github.muntashirakon.adb.AdbStream? = null
+        repeat(100) { if (s == null) runCatching { s = mgr.openStream(sockName) }.also { if (s == null) Thread.sleep(100) } }
+        s ?: return@withContext "audio socket never became ready ($sockName)"
+    }
     val ins = audio.openInputStream()
     val header = ByteArray(4); var n = 0
     while (n < 4) { val r = ins.read(header, n, 4 - n); if (r < 0) break; n += r }
@@ -201,7 +219,8 @@ class ScrcpyLauncher private constructor(
     fun stop() { runCatching { audioStream.close() }; runCatching { shellStream.close() } }
 
     companion object {
-        private const val SOCKET_SETTLE_MS = 1500L
+        private const val SOCKET_RETRY_COUNT = 100
+        private const val SOCKET_RETRY_DELAY_MS = 100L
         // Throws on failure; caller wraps in PipelineInitializationException.
         fun start(context: Context, source: ScrcpyAudioSource, codec: ScrcpyAudioCodec, bitRate: Int): ScrcpyLauncher {
             val serverPath = ScrcpyConfig.getServerPath(context)
@@ -209,13 +228,21 @@ class ScrcpyLauncher private constructor(
             val scid = ScrcpyConfig.getRandomSocketName()
             val args = ScrcpyConfig.buildServerArgs(scid, source, codec, bitRate).joinToString(" ")
             val shell = AdbShell.openShell(context, "CLASSPATH=$serverPath app_process / ${ScrcpyConfig.SERVER_MAIN_CLASS} $args")
-            // Drain server logs so failures are visible and the stream doesn't back-pressure.
+            // REQUIRED (Tango): continuously drain stdout or it back-pressures the multiplexed ADB connection.
             Thread {
                 runCatching { shell.openInputStream().bufferedReader().forEachLine { AppLogger.i("ScrcpyLauncher", "[srv] $it") } }
             }.apply { isDaemon = true }.start()
-            Thread.sleep(SOCKET_SETTLE_MS)
-            val audio = AdbShell.openLocalAbstract(context, "${ScrcpyConfig.SERVER_SOCKET_NAME_PREFIX}$scid")
-            return ScrcpyLauncher(shell, audio, audio.openInputStream())
+            // Readiness via retry-open (Tango): the localabstract open fails until the server creates the socket.
+            val sockName = "${ScrcpyConfig.SERVER_SOCKET_NAME_PREFIX}$scid"
+            var audio: io.github.muntashirakon.adb.AdbStream? = null
+            repeat(SOCKET_RETRY_COUNT) {
+                if (audio == null) {
+                    runCatching { audio = AdbShell.openLocalAbstract(context, sockName) }
+                    if (audio == null) Thread.sleep(SOCKET_RETRY_DELAY_MS)
+                }
+            }
+            val a = audio ?: run { runCatching { shell.close() }; throw java.io.IOException("scrcpy audio socket never ready: $sockName") }
+            return ScrcpyLauncher(shell, a, a.openInputStream())
         }
     }
 }
@@ -303,8 +330,9 @@ So a real call can be recorded, the user must pair once from the app (not the sp
 
 ## Risks
 
-- **scrcpy audio over `localabstract` (Task 1)** — the main unknown; gated first. If `openStream("localabstract:…")` doesn't route, fallback is an `adb forward`-style tcp tunnel (more work) — but the ADB protocol supports `localabstract:` connects, so this is expected to work.
-- **Server socket readiness timing** — fixed `SOCKET_SETTLE_MS` may be flaky; if so, retry the `localabstract` open a few times instead of a fixed sleep.
+- **scrcpy audio over `localabstract` (Task 1)** — the main unknown; gated first. Validated by Tango ADB doing exactly this over the raw ADB protocol, so it's expected to work; `openStream("localabstract:…")` is the protocol equivalent of `adb forward … localabstract:`.
+- **Server socket readiness** — handled the proven way (Tango): retry the `localabstract` open with 100 ms backoff until success, not a fixed sleep.
+- **Multiplexed-connection back-pressure** — the shell stdout stream MUST be drained continuously (Tango), else audio stalls. `ScrcpyLauncher` drains it on a daemon thread.
 - **OEM audio source** — which `audio_source` captures both call sides on OOS16 is empirical (Task 7).
 - **Stream longevity** — a multi-minute call must not stall; the spike only read briefly. Validate in Task 7.
 - **Shell stream lifetime** — closing the shell `AdbStream` must terminate scrcpy-server (no orphan). Verify in Task 7 / via `adb shell ps | grep app_process`.
