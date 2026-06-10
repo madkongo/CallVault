@@ -115,35 +115,6 @@
             </intent-filter>
         </receiver>
 
-        <!-- THROWAWAY de-risk spike (CallVault Plan 5, Task 0a): exported debug receiver that lets
-             the device-driver trigger the detached persist-daemon launch from laptop adb without UI.
-             Exported is fine for a throwaway spike. Remove with the persistserver/ package. -->
-        <receiver
-            android:name=".persistserver.PersistDebugReceiver"
-            android:enabled="true"
-            android:exported="true">
-            <intent-filter>
-                <action android:name="com.kitsumed.shizucallrecorder.persist.LAUNCH" />
-                <action android:name="com.kitsumed.shizucallrecorder.persist.LAUNCH_AUDIO" />
-                <!-- 0c: app-side binder command-channel test (ping + pfd write). -->
-                <action android:name="com.kitsumed.shizucallrecorder.persist.BINDER_PING" />
-                <!-- Task 4: launch the PRODUCTION recorder server via RecorderServerLauncher. -->
-                <action android:name="com.kitsumed.shizucallrecorder.persist.LAUNCH_RECORDER_SERVER" />
-                <!-- Task 4: toggle the isPersistentServerEnabled gate from adb (no UI yet). -->
-                <action android:name="com.kitsumed.shizucallrecorder.persist.SET_PERSISTENT" />
-            </intent-filter>
-        </receiver>
-
-        <!-- THROWAWAY de-risk spike (CallVault Plan 5, Task 0c): exported provider that RECEIVES the
-             detached shell-uid daemon's IBinder (risk #3), mirroring Shizuku's ShizukuProvider.
-             Exported is required so the non-app daemon process can call("sendBinder", ...). Remove with
-             the persistserver/ package. -->
-        <provider
-            android:name=".persistserver.RecorderBinderDebugProvider"
-            android:authorities="com.kfir.callvault.persistdebug"
-            android:enabled="true"
-            android:exported="true" />
-
         <!-- CallVault Plan 5 (PRODUCTION): exported provider that RECEIVES the privileged recorder
              daemon's IBinder. exported=true is REQUIRED so the non-app shell-uid daemon
              (RecorderServer) can call("sendBinder", ...) — this mirrors Shizuku's ShizukuProvider,

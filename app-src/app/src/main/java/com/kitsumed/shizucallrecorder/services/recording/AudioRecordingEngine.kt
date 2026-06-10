@@ -116,6 +116,16 @@ class AudioRecordingEngine {
     private var daemonMode: Boolean = false
 
     /**
+     * Whether a daemon-mode recording is currently live. In [daemonMode] there is no local
+     * [audioPipeReadJob] to reflect liveness, so callers (e.g. RecordingForegroundService's
+     * `isCurrentlyRecording`) must consult this instead. Set true once the daemon's `startRecording`
+     * is dispatched, cleared in [release].
+     */
+    @Volatile
+    var daemonRecording: Boolean = false
+        private set
+
+    /**
      * Whether the recording is currently paused by the user.
      *
      * In [daemonMode] this is a no-op for the pipeline: the daemon writes straight into the output fd,
@@ -268,6 +278,7 @@ class AudioRecordingEngine {
                 cause = e,
             )
         }
+        daemonRecording = true
         AppLogger.i(TAG, "Persistent-server mode: daemon startRecording dispatched, daemon now owns scrcpy + muxing")
     }
 
@@ -297,6 +308,7 @@ class AudioRecordingEngine {
             runCatching { RecorderConnection.service?.stopRecording() }
                 .onFailure { AppLogger.w(TAG, "Daemon stopRecording failed during release: ${it.message}") }
             runCatching { outputPfd?.close() }
+            daemonRecording = false
             return
         }
 

@@ -50,6 +50,7 @@ internal object ScrcpyJarExtractor {
      * @return the absolute path of the extracted scrcpy binary ([JAR_PATH]).
      * @throws java.io.IOException if the asset entry is missing or extraction produced an empty file.
      */
+    @Synchronized
     fun ensureScrcpyJar(apkPath: String): String {
         val target = File(JAR_PATH)
         if (target.exists() && target.length() > 0L) {

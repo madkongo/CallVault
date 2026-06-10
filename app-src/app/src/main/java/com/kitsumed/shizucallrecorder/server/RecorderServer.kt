@@ -149,16 +149,22 @@ object RecorderServer {
 
             // Heavy work (scrcpy launch, socket retry) OFF the binder thread.
             workerHandler.post {
+                var built: RecorderSession? = null
                 runCatching {
                     val freshJar = ScrcpyJarExtractor.ensureScrcpyJar(apkPath) // re-extract if reaper ate it
-                    val newSession = RecorderSession(sourceEnum, codecEnum, bitRate, outFd, freshJar)
-                    newSession.start()
-                    session = newSession
+                    val s = RecorderSession(sourceEnum, codecEnum, bitRate, outFd, freshJar)
+                    built = s
+                    s.start()
+                    session = s
                 }.onFailure {
                     AppLogger.e(TAG, "startRecording failed: ${it.message}", it)
-                    runCatching { session?.stop() }
+                    // If the session was constructed, stop() destroys the (possibly-launched) scrcpy child,
+                    // closes the socket/muxer AND closes outFd — without this a failed start would LEAK the
+                    // shell-uid scrcpy child, which holds the audio source and breaks the NEXT recording.
+                    // If construction never happened, close the fd directly.
+                    val s = built
+                    if (s != null) runCatching { s.stop() } else runCatching { outFd.close() }
                     session = null
-                    runCatching { outFd.close() }
                     recordingActive.set(false)
                 }
             }
@@ -184,7 +190,11 @@ object RecorderServer {
             }
             runCatching {
                 if (!done.await(STOP_AWAIT_MS, TimeUnit.MILLISECONDS)) {
-                    AppLogger.w(TAG, "stopRecording teardown did not finish within ${STOP_AWAIT_MS}ms")
+                    // Teardown is stuck (e.g. a scrcpy child wedged mid-flush blocking a join). Interrupt
+                    // the worker so the blocking join/waitFor throws and the runnable can finish — otherwise
+                    // the single worker thread stays blocked and every future recording would hang.
+                    AppLogger.w(TAG, "stopRecording teardown exceeded ${STOP_AWAIT_MS}ms; interrupting worker")
+                    runCatching { worker.interrupt() }
                 }
             }
         }
