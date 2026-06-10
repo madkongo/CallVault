@@ -9,6 +9,8 @@
 package com.kitsumed.shizucallrecorder
 
 import android.app.Application
+import com.kitsumed.shizucallrecorder.data.AppPreferences
+import com.kitsumed.shizucallrecorder.integrations.adb.AdbShell
 import com.kitsumed.shizucallrecorder.utils.AppLogger
 
 /**
@@ -18,5 +20,14 @@ class ShizuApplication : Application() {
     override fun onCreate() {
         super.onCreate()
         AppLogger.init(applicationContext)
+
+        // If ADB was already paired, warm up the connection in the background so the app is ready
+        // to record without re-running setup each launch. Best-effort; the recording path also
+        // calls AdbShell.ensureConnected on demand. Network I/O → off the main thread.
+        if (AppPreferences(applicationContext).isAdbPaired()) {
+            Thread {
+                runCatching { AdbShell.ensureConnected(applicationContext) }
+            }.apply { isDaemon = true }.start()
+        }
     }
 }

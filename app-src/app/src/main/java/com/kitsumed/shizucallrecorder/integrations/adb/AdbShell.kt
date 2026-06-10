@@ -9,6 +9,7 @@
 package com.kitsumed.shizucallrecorder.integrations.adb
 
 import android.content.Context
+import com.kitsumed.shizucallrecorder.data.AppPreferences
 import io.github.muntashirakon.adb.AdbStream
 
 /** Thin facade over the embedded ADB connection for the recording pipeline. */
@@ -18,16 +19,23 @@ object AdbShell {
 
     /**
      * Ensures the ADB connection is up (mDNS-discover the connect port, connect, settle).
-     * Call off main thread.
+     * Call off main thread. On success, persists the "ADB paired" flag so the onboarding gate
+     * is not shown again on subsequent launches (a live connection only exists per-process).
      *
      * @return true if already connected or newly connected successfully; false on failure.
      */
     fun ensureConnected(context: Context): Boolean {
         val mgr = AdbConnectionManager.getInstance(context)
-        if (mgr.isConnected) return true
+        if (mgr.isConnected) {
+            AppPreferences(context).setAdbPaired(true)
+            return true
+        }
         val port = AdbMdns.discoverPort(context, AdbMdns.TLS_CONNECT, MDNS_TIMEOUT_MS) ?: return false
         val ok = mgr.connect("127.0.0.1", port)
-        if (ok) Thread.sleep(CONNECT_SETTLE_MS)
+        if (ok) {
+            Thread.sleep(CONNECT_SETTLE_MS)
+            AppPreferences(context).setAdbPaired(true)
+        }
         return ok
     }
 

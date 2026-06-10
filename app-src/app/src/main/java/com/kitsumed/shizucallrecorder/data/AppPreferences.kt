@@ -60,6 +60,11 @@ class AppPreferences(context: Context) {
         val STORAGE_TARGET = StorageTarget.LOCAL.key
         val DRIVE_FOLDER_URI: String? = null
 
+        // --- ADB (embedded wireless-debugging transport) ---
+        // Whether the user has completed the one-time ADB pairing. Persisted so onboarding is
+        // not shown again on every launch (a live connection only exists per-process).
+        const val ADB_PAIRED = false
+
         // --- Audio/Scrcpy Quality ---
         val AUDIO_SOURCE = ScrcpyAudioSource.VOICE_CALL.cliKey
         val AUDIO_CODEC = ScrcpyAudioCodec.OPUS.cliKey
@@ -95,6 +100,9 @@ class AppPreferences(context: Context) {
         // --- Storage Routing ---
         STORAGE_TARGET("storage_target"),
         DRIVE_FOLDER_URI("drive_folder_uri"),
+
+        // --- ADB ---
+        ADB_PAIRED("adb_paired"),
         
         // --- Automation ---
         AUTO_RECORD_INCOMING("auto_record_incoming"),
@@ -209,6 +217,12 @@ class AppPreferences(context: Context) {
     
     /** Sets whether the user has accepted the disclaimer. */
     fun setDisclaimerAccepted(accepted: Boolean) = setBoolean(Key.DISCLAIMER_ACCEPTED, accepted)
+
+    /** Whether the one-time ADB wireless-debugging pairing has been completed. */
+    fun isAdbPaired() = getBoolean(Key.ADB_PAIRED, DefaultsValue.ADB_PAIRED)
+
+    /** Marks the one-time ADB pairing as completed (set after the first successful connection). */
+    fun setAdbPaired(paired: Boolean) = setBoolean(Key.ADB_PAIRED, paired)
 
     // -------- Storage & General --------
 

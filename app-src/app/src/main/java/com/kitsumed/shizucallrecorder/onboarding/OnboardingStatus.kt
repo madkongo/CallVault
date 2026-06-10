@@ -77,9 +77,12 @@ object OnboardingStatus {
             callLogGranted           = PermissionChecks.hasCallLogPermission(context),
             batteryExempted          = PermissionChecks.hasBatteryExemption(context),
             storageSelected          = SafHelper.isFolderValid(context, storageUri),
-            // Embedded-ADB replaces Shizuku: ready when our ADB connection is live. It becomes true
-            // after the user pairs once (notification) and we connect (AdbShell.ensureConnected).
-            adbConnected             = AdbConnectionManager.getInstance(context).isConnected
+            // Embedded-ADB replaces Shizuku. Onboarding is satisfied once the user has paired (a
+            // persisted flag) — not only while a live connection exists, since a connection is
+            // per-process and would otherwise force re-onboarding on every launch. The live
+            // connection is (re)established lazily by the recording path and on app start.
+            adbConnected             = preferences.isAdbPaired() ||
+                AdbConnectionManager.getInstance(context).isConnected
         )
     }
 }
