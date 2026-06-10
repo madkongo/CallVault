@@ -254,6 +254,9 @@ dependencies {
     implementation(libs.shizukuApi)
     implementation(libs.shizukuProvider)
 
+    // WorkManager: reliable background task execution for post-call Drive copy.
+    implementation("androidx.work:work-runtime-ktx:2.10.0")
+
     // Spike (Plan 1): in-app ADB over wireless debugging. Candidate transport to replace Shizuku.
     implementation("com.github.MuntashirAkon:libadb-android:3.1.1")
     // bcprov is already a runtime transitive dep of libadb-android; we need it at compile time too

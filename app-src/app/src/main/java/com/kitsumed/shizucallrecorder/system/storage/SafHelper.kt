@@ -88,4 +88,42 @@ object SafHelper {
         val directory = DocumentFile.fromTreeUri(context, folderUri)
         return directory?.name
     }
+
+    /**
+     * Copies [srcUri]'s content into [destFolderUri] as [displayName] using a WRITE-ONLY output
+     * stream (works on cloud providers like Google Drive, unlike "rw"). Returns the new file Uri or null.
+     *
+     * @param context       App context used for content resolver operations.
+     * @param srcUri        The content URI of the source file to copy.
+     * @param destFolderUri The tree URI of the destination folder.
+     * @param displayName   The desired file name for the copy (including extension).
+     * @param mimeType      The MIME type of the file (e.g. "audio/ogg").
+     * @return The content URI of the newly created copy, or null on failure.
+     */
+    fun copyFileToFolder(context: Context, srcUri: Uri, destFolderUri: Uri, displayName: String, mimeType: String): Uri? {
+        val dir = DocumentFile.fromTreeUri(context, destFolderUri) ?: return null
+        if (!dir.canWrite()) return null
+        val dest = dir.createFile(mimeType, displayName) ?: return null
+        return try {
+            context.contentResolver.openInputStream(srcUri)?.use { input ->
+                context.contentResolver.openOutputStream(dest.uri, "w")?.use { output ->
+                    input.copyTo(output)
+                } ?: return null
+            } ?: return null
+            dest.uri
+        } catch (e: Exception) {
+            runCatching { dest.delete() }
+            null
+        }
+    }
+
+    /**
+     * Returns the byte length of the document at [uri], or -1 if unknown.
+     *
+     * @param context App context used to resolve the [DocumentFile].
+     * @param uri     The content URI of the document to measure.
+     * @return The file size in bytes, or -1 if unavailable.
+     */
+    fun fileSize(context: Context, uri: Uri): Long =
+        runCatching { DocumentFile.fromSingleUri(context, uri)?.length() ?: -1L }.getOrDefault(-1L)
 }

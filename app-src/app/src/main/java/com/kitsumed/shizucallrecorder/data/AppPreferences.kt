@@ -14,6 +14,7 @@ import androidx.core.content.edit
 import androidx.core.net.toUri
 import com.kitsumed.shizucallrecorder.integrations.scrcpy.ScrcpyAudioCodec
 import com.kitsumed.shizucallrecorder.integrations.scrcpy.ScrcpyAudioSource
+import com.kitsumed.shizucallrecorder.data.StorageTarget
 
 /**
  * AppPreferences wraps [android.content.SharedPreferences] to provide typed access to all
@@ -55,6 +56,10 @@ class AppPreferences(context: Context) {
         const val DEBUG_ENABLED = false
         const val DEBUG_CALLER_NUMBER = ""
         
+        // --- Storage Routing ---
+        val STORAGE_TARGET = StorageTarget.LOCAL.key
+        val DRIVE_FOLDER_URI: String? = null
+
         // --- Audio/Scrcpy Quality ---
         val AUDIO_SOURCE = ScrcpyAudioSource.VOICE_CALL.cliKey
         val AUDIO_CODEC = ScrcpyAudioCodec.OPUS.cliKey
@@ -86,6 +91,10 @@ class AppPreferences(context: Context) {
         // --- Storage & General ---
         RECORDING_FOLDER_URI("recording_folder_uri"),
         VIBRATION_ENABLED("vibration_enabled"),
+
+        // --- Storage Routing ---
+        STORAGE_TARGET("storage_target"),
+        DRIVE_FOLDER_URI("drive_folder_uri"),
         
         // --- Automation ---
         AUTO_RECORD_INCOMING("auto_record_incoming"),
@@ -205,9 +214,21 @@ class AppPreferences(context: Context) {
 
     /** Gets the user-selected folder URI for storing recordings. */
     fun getRecordingFolderUri(): Uri? = getString(Key.RECORDING_FOLDER_URI, DefaultsValue.RECORDING_FOLDER_URI)?.toUri()
-    
+
     /** Sets the user-selected folder URI for storing recordings. */
     fun setRecordingFolderUri(uri: Uri?) = setString(Key.RECORDING_FOLDER_URI, uri?.toString())
+
+    /** Gets the storage routing target (Local / Drive / Both). */
+    fun getStorageTarget(): StorageTarget = StorageTarget.fromKey(getString(Key.STORAGE_TARGET, DefaultsValue.STORAGE_TARGET) ?: DefaultsValue.STORAGE_TARGET)
+
+    /** Sets the storage routing target. */
+    fun setStorageTarget(target: StorageTarget) = setString(Key.STORAGE_TARGET, target.key)
+
+    /** Gets the user-selected Google Drive SAF folder URI for routing copies. */
+    fun getDriveFolderUri(): Uri? = getString(Key.DRIVE_FOLDER_URI, DefaultsValue.DRIVE_FOLDER_URI)?.toUri()
+
+    /** Sets the user-selected Google Drive SAF folder URI for routing copies. */
+    fun setDriveFolderUri(uri: Uri?) = setString(Key.DRIVE_FOLDER_URI, uri?.toString())
 
     /** Checks if vibration is enabled for notifications/actions. */
     fun isVibrationEnabled() = getBoolean(Key.VIBRATION_ENABLED, DefaultsValue.VIBRATION_ENABLED)
