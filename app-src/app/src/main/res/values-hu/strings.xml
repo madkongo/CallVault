@@ -11,12 +11,12 @@
     <string name="general_incoming">bejövő</string>
     <string name="general_outgoing">kimenő</string>
     <string name="general_system_limitation">Rendszerkorlát</string>
-    <string name="disclaimer_title">Üdvözöljük a ShizuCallRecorder alkalmazásban</string>
+    <string name="disclaimer_title">Üdvözöljük a CallVault alkalmazásban</string>
     <string name="disclaimer_wiki_link_KEYWORD">Wiki</string>
     <string name="general_close">Közeli</string>
     <string name="general_resume">Folytatás</string>
     <string name="general_reset">Visszaállít</string>
-    <string name="general_system_limitation_message">ShizuCallRecorder nem tud működni ezen a készüléken mivel a shell alkalmazás nem rendelkezik a megfelelő jogosultságokkal.\n\n%1$s\n\nA helyzettel nem lehet mit csinálni, az alkalmazás nem tud működni és most bezáródik.</string>
+    <string name="general_system_limitation_message">CallVault nem tud működni ezen a készüléken mivel a shell alkalmazás nem rendelkezik a megfelelő jogosultságokkal.\n\n%1$s\n\nA helyzettel nem lehet mit csinálni, az alkalmazás nem tud működni és most bezáródik.</string>
     <string name="disclaimer_introduction">Mielőtt továbbhaladsz, kérjük olvasd el a telepítési útmutatót a Wikin majd olvasd el az alábbi jogi nyilatkozatot.</string>
     <string name="disclaimer_checkbox_label">Elolvastam a jogi nyilatkozatot és tisztában vagyok a szoftverrel kapcsolatos jogi követelményekkel, felelősségi körökkel valamint műszaki korlátozásokkal.</string>
     <string name="disclaimer_wait">Várj %1$d másodpercet</string>
@@ -37,20 +37,12 @@
     <string name="permission_battery_label">Akkumulátor optimalizáció</string>
     <string name="permission_battery_description">Aktív állapotban tartja az alkalmazást és lehetővé teszi az esetleges háttérindítási korlátozások megkerülését.</string>
     <string name="permission_storage_description">Felvételek mentésének helye.</string>
-    <string name="permission_shizuku_description">A felvétel elindításához szükséges (ShellService) a scrcpy használatával.</string>
-    <string name="permission_shizuku_not_running">Nem fut</string>
-    <string name="permission_shizuku_open">Shizuku megnyitása</string>
     <string name="settings_section_about">Névjegy</string>
     <string name="settings_section_recording">Felvétel</string>
     <string name="settings_section_visual">Megjelenítési beállítások</string>
     <string name="settings_section_audio">Hangbeállítások</string>
     <string name="settings_section_debug">Debug beállítások</string>
     <string name="settings_section_security">Biztonság</string>
-    <string name="settings_shizuku_auto_manage">Shizuku beállítások</string>
-    <string name="settings_shizuku_auto_manage_desc">Automatikus Shizuku indítás és leállítás</string>
-    <string name="settings_shizuku_auth_key">Shizuku Intents kulcs</string>
-    <string name="settings_shizuku_start_on_record">Indítás csak ha felvétel készül</string>
-    <string name="settings_shizuku_start_on_record_desc">A Shizuku csak akkor indul el ha kézzel indított felvétel indul vagy egy automatikus felvételi szabály teljesül</string>
     <string name="settings_tap_to_select_folder">Mappa kiálasztása...</string>
     <string name="settings_recording_folder_label">Felvételek mappája</string>
     <string name="settings_file_name_template">Fájlnév minta</string>
@@ -119,7 +111,7 @@
     <string name="recording_notification_current_country_tip">🏠Országos</string>
     <string name="recording_notification_title">Felvétel folyamatban</string>
     <string name="recording_notification_press_to_start">Nyomd meg a startot a felvétel indításához</string>
-    <string name="recording_notification_waiting_shizuku">Várakozás a Shizuku indulására...</string>
+    <string name="recording_notification_waiting">Felvétel előkészítése…</string>
     <string name="recording_notification_press_to_pause">Nyomd meg a gombot a felvétel szüneteltetéséhez</string>
     <string name="recording_notification_press_to_resume">Nyomd meg a gombot a felvétel folytatásához</string>
     <string name="recording_toast_standby">Várakoztatás a %1$s hívás miatt.</string>
@@ -133,9 +125,5 @@
     <string name="recording_error_file_creation">A felvétel létrehozása sikertelen. Kérjük ellenőrizd a tárhely jogosultságot és/vagy válassz ki egy másik mappát az alkalmazás beállításaiban.</string>
     <string name="recording_error_start_failed">A felvétel indítása sikertelen. Hiba történt a ShellService binder meghívásakor.</string>
     <string name="recording_unexpected_error">A felvétel közben váratlan hiba történt. Kérjük jelezd a hibát a reprodukáláshoz szükséges lépésekkel és az alkalmazás naplófájljainak megadásával.</string>
-    <string name="recording_error_shizuku_disconnected_unexpectedly">A Shizuku kapcsolat váratlanul megszakadt ami miatt a felvétel leállt. (A Shizuku szerver folyamat leállt.)</string>
-    <string name="recording_shizuku_not_started">A Shizuku szerver folyamat leállt. Kérjük indítsd el a Shizuku alkalmazást és gondoskodjon arról hogy a Shizuku szerver fusson amikor az alkalmazásal hangot szeretne rögzíteni.</string>
-    <string name="recording_shizuku_permission_denied">Kérjük engedélyezd az alkalmazás számára a Shizuku használatát. Az engedély el lett elutasítotva.</string>
-    <string name="recording_shizuku_auth_key_missing">Hiányzik a Shizuku Intents kulcs. Kérjük,add meg az alkalmazás beállításaiban (megj.: a kulcsot a Shizuku alkalmazában találod).</string>
     <string name="settings_file_name_template_placeholders">Kitöltők:</string>
 </resources>

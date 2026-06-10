@@ -1,5 +1,5 @@
 /*
- * ShizuCallRecorder: FOSS Call recording powered through ADB/Shizuku!
+ * CallVault: FOSS call recording, self-contained over embedded ADB
  *  Copyright (C) 2026-present kitsumed (Med)
  *  This software is licensed under the GNU General Public License v3 or later, with additional terms as permitted under Section 7.
  *  The full license text is available in the LICENSE file at the root of this project.
@@ -44,7 +44,7 @@ import com.kitsumed.shizucallrecorder.integrations.scrcpy.ScrcpyAudioCodec
 import com.kitsumed.shizucallrecorder.data.AppPreferences
 import com.kitsumed.shizucallrecorder.data.recordings.RecordingDirection
 import com.kitsumed.shizucallrecorder.data.recordings.RecordingMetadata
-import com.kitsumed.shizucallrecorder.ui.theme.ShizucallrecorderTheme
+import com.kitsumed.shizucallrecorder.ui.theme.CallVaultTheme
 import com.kitsumed.shizucallrecorder.utils.RecordingFileNameFormatter
 
 /**
@@ -155,7 +155,7 @@ fun FileNameFormatDialog(
 @Preview(showBackground = true)
 @Composable
 private fun SettingsScreenPreview() {
-    ShizucallrecorderTheme(darkTheme = false) {
+    CallVaultTheme(darkTheme = false) {
         Surface(modifier = Modifier.fillMaxSize()) {
             FileNameFormatDialog(
                 initialFormat = AppPreferences.DefaultsValue.FILE_NAME_TEMPLATE,

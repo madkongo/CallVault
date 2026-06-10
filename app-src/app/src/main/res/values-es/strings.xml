@@ -12,8 +12,8 @@
     <string name="general_resume">Reanudar</string>
     <string name="general_outgoing">saliente</string>
     <string name="general_system_limitation">Limitación del sistema</string>
-    <string name="general_system_limitation_message">ShizuCallRecorder no funcionará en este dispositivo ya que tu aplicación de shell no tiene los permisos necesarios:\n\n%1$s\n\nNo puedes hacer nada al respecto; la aplicación no puede funcionar y se cerrará ahora.</string>
-    <string name="disclaimer_title">Bienvenido a ShizuCallRecorder</string>
+    <string name="general_system_limitation_message">CallVault no funcionará en este dispositivo ya que tu aplicación de shell no tiene los permisos necesarios:\n\n%1$s\n\nNo puedes hacer nada al respecto; la aplicación no puede funcionar y se cerrará ahora.</string>
+    <string name="disclaimer_title">Bienvenido a CallVault</string>
     <string name="disclaimer_wiki_link_KEYWORD">Wiki</string>
     <string name="disclaimer_introduction">Por favor, abre y lee las instrucciones de configuración en nuestra Wiki antes de continuar. Luego, lee el descargo de responsabilidad que aparece a continuación.</string>
     <string name="disclaimer_checkbox_label">He leído el descargo de responsabilidad y comprendo los requisitos legales, las responsabilidades y las limitaciones técnicas de este software.</string>
@@ -36,20 +36,12 @@
     <string name="permission_battery_label">Optimización de la batería</string>
     <string name="permission_battery_description">Mantiene la aplicación activa cuando es necesario y permite evitar posibles limitaciones de inicio en segundo plano.</string>
     <string name="permission_storage_description">Selecciona dónde se guardarán las grabaciones.</string>
-    <string name="permission_shizuku_description">Necesario para iniciar la grabación de audio (ShellService) con scrcpy.</string>
-    <string name="permission_shizuku_not_running">No se está ejecutando</string>
-    <string name="permission_shizuku_open">Abrir Shizuku</string>
     <string name="settings_section_about">Acerca de</string>
     <string name="settings_section_recording">Grabando</string>
     <string name="settings_section_visual">Ajustes visuales</string>
     <string name="settings_section_audio">Configuración de audio</string>
     <string name="settings_section_debug">Opciones de depuración</string>
     <string name="settings_section_security">Seguridad</string>
-    <string name="settings_shizuku_auto_manage">Administrar Shizuku</string>
-    <string name="settings_shizuku_auto_manage_desc">Iniciar y detener Shizuku automáticamente</string>
-    <string name="settings_shizuku_auth_key">Clave de autenticación de Intents de Shizuku</string>
-    <string name="settings_shizuku_start_on_record">Iniciar solo cuando se esté grabando</string>
-    <string name="settings_shizuku_start_on_record_desc">Shizuku solo se iniciará cuando pulses grabar o cuando se active una regla de grabación automática</string>
     <string name="settings_tap_to_select_folder">Toca para seleccionar la carpeta...</string>
     <string name="settings_recording_folder_label">Carpeta de grabaciones</string>
     <string name="settings_auto_record_incoming">Grabar automáticamente las llamadas entrantes</string>
@@ -111,7 +103,7 @@
     <string name="recording_notification_current_country_tip">🏠País de origen</string>
     <string name="recording_notification_title">Grabación en curso</string>
     <string name="recording_notification_press_to_start">Pulsa para iniciar la grabación</string>
-    <string name="recording_notification_waiting_shizuku">Esperando a que se inicie el servidor Shizuku...</string>
+    <string name="recording_notification_waiting">Preparando la grabación…</string>
     <string name="recording_notification_press_to_pause">Pulsa para pausar la grabación</string>
     <string name="recording_notification_press_to_resume">Pulsa para reanudar la grabación</string>
     <string name="recording_toast_standby">Entrando en modo de espera para la llamada de %1$s.</string>
@@ -124,10 +116,6 @@
     <string name="recording_error_server_missing">Falta el binario de scrcpy‑server o la verificación de seguridad SHA256 ha fallado. Esto no debería ocurrir; por favor, informa de este problema.</string>
     <string name="recording_error_file_creation">No se pudo crear el archivo de grabación. Comprueba los permisos de almacenamiento y/o selecciona una nueva carpeta de grabación en los ajustes de la aplicación.</string>
     <string name="recording_error_start_failed">No se pudo iniciar la grabación. Ocurrió un error al llamar al método Binder de ShellService.</string>
-    <string name="recording_error_shizuku_disconnected_unexpectedly">Shizuku se desconectó inesperadamente, lo que provocó que el proceso de grabación se detuviera. (El proceso Shizuku-Server se cerró)</string>
-    <string name="recording_shizuku_not_started">Inicia Shizuku y asegúrate de que pueda ejecutarse siempre que la aplicación necesite grabar audio.</string>
-    <string name="recording_shizuku_permission_denied">Por favor, permite que la aplicación use Shizuku. El permiso fue denegado.</string>
-    <string name="recording_shizuku_auth_key_missing">Falta la clave de autenticación de Shizuku Intents. Introdúcela en los ajustes de la aplicación.</string>
     <string name="general_reset">Restablecer</string>
     <string name="settings_file_name_template">Plantilla de nombre de archivo</string>
     <string name="settings_file_name_template_placeholders">Marcadores de posición:</string>
@@ -138,6 +126,4 @@
     <string name="placeholder_contact_name_desc">El nombre del contacto, si está disponible</string>
     <string name="placeholder_cross_country_desc">Indica si la llamada es nacional de larga distancia (verdadero/falso)</string>
     <string name="recording_unexpected_error">Se produjo un error inesperado durante la grabación. Por favor, informa de esto incluyendo los pasos para reproducirlo y los registros de la aplicación.</string>
-    <string name="settings_shizuku_keep_alive">Mantén a Shizuku con vida</string>
-    <string name="settings_shizuku_keep_alive_desc">No envíes la intención de detener</string>
 </resources>

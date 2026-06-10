@@ -1,5 +1,5 @@
 /*
- * ShizuCallRecorder: FOSS Call recording powered through ADB/Shizuku!
+ * CallVault: FOSS call recording, self-contained over embedded ADB
  *  Copyright (C) 2026-present kitsumed (Med)
  *  This software is licensed under the GNU General Public License v3 or later, with additional terms as permitted under Section 7.
  *  The full license text is available in the LICENSE file at the root of this project.
@@ -14,11 +14,11 @@ import com.kitsumed.shizucallrecorder.server.RecorderServerLauncher
 import com.kitsumed.shizucallrecorder.utils.AppLogger
 
 /**
- * ShizuApplication is run when the app process is created. Can be seen as the very first entry point of the app.
+ * CallVaultApplication is run when the app process is created. Can be seen as the very first entry point of the app.
  */
-class ShizuApplication : Application() {
+class CallVaultApplication : Application() {
     private companion object {
-        const val TAG = "SCR:ShizuApplication"
+        const val TAG = "SCR:CallVaultApplication"
     }
 
     override fun onCreate() {

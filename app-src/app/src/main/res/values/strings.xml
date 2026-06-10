@@ -1,5 +1,5 @@
 <!--
-  ~ ShizuCallRecorder: FOSS Call recording powered through ADB/Shizuku!
+  ~ CallVault: FOSS call recording, self-contained over embedded ADB
   ~  Copyright (C) 2026-present kitsumed (Med)
   ~  This software is licensed under the GNU General Public License v3 or later, with additional terms as permitted under Section 7.
   ~  The full license text is available in the LICENSE file at the root of this project.
@@ -25,14 +25,14 @@
     <string name="general_outgoing">outgoing</string>
     <string name="general_reset">Reset</string>
     <string name="general_system_limitation">System Limitation</string>
-    <string name="general_system_limitation_message">ShizuCallRecorder will not work on this device as your shell application does not have the required permissions:\n\n%1$s\n\nThere is nothing you can do about this, the app cannot function and will now close.</string>
+    <string name="general_system_limitation_message">CallVault will not work on this device as your shell application does not have the required permissions:\n\n%1$s\n\nThere is nothing you can do about this, the app cannot function and will now close.</string>
 
     <!-- ========================================== -->
     <!-- UI SECTIONS                                -->
     <!-- ========================================== -->
 
     <!-- Disclaimer Screen -->
-    <string name="disclaimer_title">Welcome to ShizuCallRecorder</string>
+    <string name="disclaimer_title">Welcome to CallVault</string>
     <string name="disclaimer_wiki_link_KEYWORD">Wiki</string>
     <string name="disclaimer_introduction">Please open and read the setup instructions on our Wiki before proceeding. Then, read the disclaimer below.</string>
     <string name="disclaimer_body" translatable="false">
@@ -94,10 +94,6 @@
     <!-- Same label as settings_recording_folder_label -->
     <string name="permission_storage_description">Select where recordings will be saved.</string>
 
-    <string name="permission_shizuku_label" translatable="false">Shizuku</string>
-    <string name="permission_shizuku_description">Required to start the audio recording (ShellService) with scrcpy.</string>
-    <string name="permission_shizuku_not_running">Not running</string>
-    <string name="permission_shizuku_open">Open Shizuku</string>
     <string name="permission_adb_label" translatable="false">Wireless debugging (ADB)</string>
     <string name="permission_adb_description">Required to capture call audio. Pair once via the notification, then it connects automatically.</string>
     <string name="permission_adb_not_connected">Not connected — tap to set up</string>
@@ -129,13 +125,6 @@
     <string name="general_not_set">Not set</string>
 
     <!-- Settings Screen: Security Section -->
-    <string name="settings_shizuku_auto_manage">Manage Shizuku</string>
-    <string name="settings_shizuku_auto_manage_desc">Automatically start and stop Shizuku</string>
-    <string name="settings_shizuku_auth_key">Shizuku Intents Auth Key</string>
-    <string name="settings_shizuku_start_on_record">Start only when recording</string>
-    <string name="settings_shizuku_start_on_record_desc">Shizuku will only start when you press record or an auto-recording rule matches</string>
-    <string name="settings_shizuku_keep_alive">Keep Shizuku alive</string>
-    <string name="settings_shizuku_keep_alive_desc">Do not send the stop intent</string>
 
     <!-- Settings Screen: Recording Section -->
     <string name="settings_tap_to_select_folder">Tap to select folder...</string>
@@ -261,7 +250,7 @@
     <string name="recording_notification_current_country_tip">🏠Home-Country</string>
     <string name="recording_notification_title">Recording in progress</string>
     <string name="recording_notification_press_to_start">Press to start recording</string>
-    <string name="recording_notification_waiting_shizuku">Preparing to record…</string>
+    <string name="recording_notification_waiting">Preparing to record…</string>
     <string name="recording_notification_press_to_pause">Press to pause recording</string>
     <string name="recording_notification_press_to_resume">Press to resume recording</string>
     <string name="recording_toast_standby">Entering standby for %1$s call.</string>
@@ -276,9 +265,4 @@
     <string name="recording_error_file_creation">Failed to create recording file. Please check the storage permissions and/or select a new recording folder in the app settings.</string>
     <string name="recording_error_start_failed">Failed to start the recording. An error occurred when calling the ShellService binder method.</string>
     <string name="recording_unexpected_error">An unexpected error occurred during recording. Please report this with the steps to reproduce and the apps logs.</string>
-    <!-- Recording Service: Errors Shizuku -->
-    <string name="recording_error_shizuku_disconnected_unexpectedly">Shizuku disconnected unexpectedly, causing the recording process to stop. (Shizuku-Server process died)</string>
-    <string name="recording_shizuku_not_started">Shizuku-Server process is stopped. Please start Shizuku and ensure it is always able to run when the app wants to record audio.</string>
-    <string name="recording_shizuku_permission_denied">Please allow the application to use Shizuku. Permission was denied.</string>
-    <string name="recording_shizuku_auth_key_missing">Shizuku Intents authentication key is missing. Please enter it in the app settings.</string>
 </resources>

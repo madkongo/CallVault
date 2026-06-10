@@ -1,5 +1,5 @@
 /*
- * ShizuCallRecorder: FOSS Call recording powered through ADB/Shizuku!
+ * CallVault: FOSS call recording, self-contained over embedded ADB
  *  Copyright (C) 2026-present kitsumed (Med)
  *  This software is licensed under the GNU General Public License v3 or later, with additional terms as permitted under Section 7.
  *  The full license text is available in the LICENSE file at the root of this project.
@@ -33,7 +33,7 @@ import com.kitsumed.shizucallrecorder.R
 import com.kitsumed.shizucallrecorder.data.AppPreferences
 import com.kitsumed.shizucallrecorder.onboarding.OnboardingStatus
 import com.kitsumed.shizucallrecorder.system.openAppSettings
-import com.kitsumed.shizucallrecorder.ui.theme.ShizucallrecorderTheme
+import com.kitsumed.shizucallrecorder.ui.theme.CallVaultTheme
 import com.kitsumed.shizucallrecorder.ui.viewmodels.PermissionsViewModel
 
 /**
@@ -253,7 +253,7 @@ private fun PermissionCard(
 @Preview(showBackground = true)
 @Composable
 private fun PermissionsScreenPreview() {
-    ShizucallrecorderTheme(darkTheme = false) {
+    CallVaultTheme(darkTheme = false) {
         PermissionsContent(
             status = OnboardingStatus.Status(
                 disclaimerAccepted       = true,

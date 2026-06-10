@@ -1,5 +1,5 @@
 /*
- * ShizuCallRecorder: FOSS Call recording powered through ADB/Shizuku!
+ * CallVault: FOSS call recording, self-contained over embedded ADB
  *  Copyright (C) 2026-present kitsumed (Med)
  *  This software is licensed under the GNU General Public License v3 or later, with additional terms as permitted under Section 7.
  *  The full license text is available in the LICENSE file at the root of this project.
@@ -37,7 +37,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
 import androidx.core.net.toUri
-import com.kitsumed.shizucallrecorder.ui.theme.ShizucallrecorderTheme
+import com.kitsumed.shizucallrecorder.ui.theme.CallVaultTheme
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import com.kitsumed.shizucallrecorder.R
@@ -349,7 +349,7 @@ fun PreviewContactSelectionDialog() {
     )
     val selectedContacts = setOf("+1 555-0202")
 
-    ShizucallrecorderTheme(darkTheme = false) {
+    CallVaultTheme(darkTheme = false) {
         ContactSelectionContent(
             title = stringResource(R.string.settings_select_contacts, selectedContacts.count()),
             contacts = dummyContacts,

@@ -13,8 +13,8 @@
     <string name="general_incoming">Entrant</string>
     <string name="general_outgoing">Sortant</string>
     <string name="general_system_limitation">Limitation Système</string>
-    <string name="general_system_limitation_message">ShizuCallRecorder ne fonctionnera pas sur cet appareil car votre application shell ne dispose pas des autorisations requises :\n\n%1$s\n\nVous ne pouvez rien y faire, l’application ne peut pas fonctionner et va se fermer.</string>
-    <string name="disclaimer_title">Bienvenue sur ShizuCallRecorder</string>
+    <string name="general_system_limitation_message">CallVault ne fonctionnera pas sur cet appareil car votre application shell ne dispose pas des autorisations requises :\n\n%1$s\n\nVous ne pouvez rien y faire, l’application ne peut pas fonctionner et va se fermer.</string>
+    <string name="disclaimer_title">Bienvenue sur CallVault</string>
     <string name="disclaimer_wiki_link_KEYWORD">Wiki</string>
     <string name="disclaimer_introduction">Veuillez consulter les instructions d\'installation sur notre Wiki avant de continuer. Ensuite, lisez l\'avertissement ci-dessous.</string>
     <string name="disclaimer_checkbox_label">J\'ai lu l\'avertissement et je comprends les exigences légales, les responsabilités et les limitations techniques de ce logiciel.</string>
@@ -36,20 +36,12 @@
     <string name="permission_battery_label">Optimisation de la batterie</string>
     <string name="permission_battery_description">Permet de maintenir l\'application active lorsque cela est nécessaire et de contourner les éventuelles limitations de démarrage en arrière-plan.</string>
     <string name="permission_storage_description">Sélectionnez l\'emplacement où les enregistrements seront sauvegardés.</string>
-    <string name="permission_shizuku_description">Nécessaire pour démarrer l\'enregistrement audio (ShellService) avec scrcpy.</string>
-    <string name="permission_shizuku_not_running">Pas démarrez</string>
-    <string name="permission_shizuku_open">Ouvrir Shizuku</string>
     <string name="settings_section_about">À propos</string>
     <string name="settings_section_recording">Enregistrement</string>
     <string name="settings_section_visual">Paramètres visuels</string>
     <string name="settings_section_audio">Configuration audio</string>
     <string name="settings_section_debug">Options de débogage</string>
     <string name="settings_section_security">Sécurité</string>
-    <string name="settings_shizuku_auto_manage">Gérer Shizuku</string>
-    <string name="settings_shizuku_auto_manage_desc">Démarrage et arrêt automatiques de Shizuku</string>
-    <string name="settings_shizuku_auth_key">Clé d\'authentification pour les Intents Shizuku (Auth key)</string>
-    <string name="settings_shizuku_start_on_record">Démarrer uniquement lors de l\'enregistrement</string>
-    <string name="settings_shizuku_start_on_record_desc">Shizuku ne démarrera que lorsque vous appuierez sur enregistrer ou qu\'une règle d\'enregistrement automatique sera valide</string>
     <string name="settings_tap_to_select_folder">Appuyez pour sélectionner un dossier...</string>
     <string name="settings_recording_folder_label">Dossier d\'enregistrement</string>
     <string name="settings_auto_record_incoming">Enregistrement automatique des appels entrants</string>
@@ -107,7 +99,7 @@
     <string name="recording_notification_current_country_tip">🏠Pays d\'origine</string>
     <string name="recording_notification_title">Enregistrement en cours</string>
     <string name="recording_notification_press_to_start">Appuyez pour démarrer l\'enregistrement</string>
-    <string name="recording_notification_waiting_shizuku">En attente du démarrage du serveur Shizuku...</string>
+    <string name="recording_notification_waiting">Préparation de l’enregistrement…</string>
     <string name="recording_notification_press_to_pause">Appuyez pour suspendre l\'enregistrement</string>
     <string name="recording_notification_press_to_resume">Appuyez pour reprendre l\'enregistrement</string>
     <string name="recording_toast_standby">En attente pour l\'appel %1$s.</string>
@@ -120,10 +112,6 @@
     <string name="recording_error_server_missing">Le fichier du serveur Scrcpy est manquant ou la vérification de sécurité SHA256 a échoué. Ceci ne devrait pas se produire, veuillez le signaler.</string>
     <string name="recording_error_file_creation">Impossible de créer le fichier d\'enregistrement. Veuillez vérifier les autorisations de stockage et/ou sélectionner un nouveau dossier d\'enregistrement dans les paramètres de l\'application.</string>
     <string name="recording_error_start_failed">L\'enregistrement n\'a pas pu démarrer. Une erreur s\'est produite lors de l\'appel de ShellService binder method.</string>
-    <string name="recording_error_shizuku_disconnected_unexpectedly">Shizuku s\'est déconnecté de manière inattendue, interrompant l\'enregistrement. (Le processus Shizuku-Server s\'est arrêté.)</string>
-    <string name="recording_shizuku_not_started">Le processus Shizuku-Server est arrêté. Veuillez démarrer Shizuku et vous assurer qu\'il est toujours en cours d\'exécution lorsque l\'application souhaite enregistrer de l\'audio.</string>
-    <string name="recording_shizuku_permission_denied">Veuillez autoriser l\'application à utiliser Shizuku. L\'autorisation a été refusée.</string>
-    <string name="recording_shizuku_auth_key_missing">La clé d\'authentification Shizuku Intents est manquante. Veuillez la saisir dans les paramètres de l\'application.</string>
     <string name="settings_language_system">Langue du système</string>
     <string name="settings_language">Langue</string>
     <string name="contact_select_all">Tout sélectionner</string>
@@ -138,6 +126,4 @@
     <string name="placeholder_contact_name_desc">Le nom du contact, si trouvez</string>
     <string name="placeholder_cross_country_desc">Indique si l\'appel est international (true/false)</string>
     <string name="recording_unexpected_error">Une erreur inattendue s\'est produite lors de l\'enregistrement. Veuillez la signaler en précisant les étapes pour la reproduire et en joignant les journaux de l\'application.</string>
-    <string name="settings_shizuku_keep_alive">Ne pas arrêter Shizuku</string>
-    <string name="settings_shizuku_keep_alive_desc">N\'envoie pas l\'intent d\'arrêt</string>
 </resources>

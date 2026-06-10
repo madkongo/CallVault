@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!--
-  ~ ShizuCallRecorder: FOSS Call recording powered through ADB/Shizuku!
+  ~ CallVault: FOSS call recording, self-contained over embedded ADB
   ~  Copyright (C) 2026-present kitsumed (Med)
   ~  This software is licensed under the GNU General Public License v3 or later, with additional terms as permitted under Section 7.
   ~  The full license text is available in the LICENSE file at the root of this project.
@@ -39,7 +39,7 @@
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE_DATA_SYNC" />
 
     <application
-        android:name=".ShizuApplication"
+        android:name=".CallVaultApplication"
         android:allowBackup="true"
         android:dataExtractionRules="@xml/data_extraction_rules"
         android:fullBackupContent="@xml/backup_rules"
@@ -47,12 +47,12 @@
         android:label="@string/app_name"
         android:roundIcon="@mipmap/ic_launcher_round"
         android:supportsRtl="true"
-        android:theme="@style/Theme.Shizucallrecorder">
+        android:theme="@style/Theme.CallVault">
         <!-- MainActivity must be run when Android want to show the application UI (with the app launcher) -->
         <activity
             android:name=".MainActivity"
             android:exported="true"
-            android:theme="@style/Theme.Shizucallrecorder">
+            android:theme="@style/Theme.CallVault">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
                 <action android:name="android.intent.action.APPLICATION_PREFERENCES" /> <!-- Show "Additional settings in the app" button in Settings App Info -->

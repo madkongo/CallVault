@@ -1,5 +1,5 @@
 /*
- * ShizuCallRecorder: FOSS Call recording powered through ADB/Shizuku!
+ * CallVault: FOSS call recording, self-contained over embedded ADB
  *  Copyright (C) 2026-present kitsumed (Med)
  *  This software is licensed under the GNU General Public License v3 or later, with additional terms as permitted under Section 7.
  *  The full license text is available in the LICENSE file at the root of this project.
@@ -86,7 +86,7 @@ class RecordingNotificationHelper(private val context: Context) {
         when (state) {
             is RecordingServiceState.Starting -> {
                 titleRes = R.string.recording_standby_notification_title
-                contentRes = R.string.recording_notification_waiting_shizuku
+                contentRes = R.string.recording_notification_waiting
                 actionIcon = null
                 actionText = null
                 actionIntentAction = null

@@ -1,5 +1,5 @@
 /*
- * ShizuCallRecorder: FOSS Call recording powered through ADB/Shizuku!
+ * CallVault: FOSS call recording, self-contained over embedded ADB
  *  Copyright (C) 2026-present kitsumed (Med)
  *  This software is licensed under the GNU General Public License v3 or later, with additional terms as permitted under Section 7.
  *  The full license text is available in the LICENSE file at the root of this project.
@@ -30,7 +30,7 @@ object AdbShell {
      * If Wireless debugging is off (e.g. after an OEM reboot) and the app holds
      * WRITE_SECURE_SETTINGS, it re-enables Wireless debugging before starting mDNS discovery.
      *
-     * **@Synchronized**: when a call wakes the app, the launch auto-connect (ShizuApplication) and
+     * **@Synchronized**: when a call wakes the app, the launch auto-connect (CallVaultApplication) and
      * the recording path both call this at once. Without serialization they raced — one connected
      * while the other checked `isConnected` a moment too early, tried its own connect, lost, and
      * reported "not connected". Serializing makes the second caller wait, then see the live
