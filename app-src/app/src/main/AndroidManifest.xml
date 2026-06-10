@@ -73,6 +73,16 @@
                 android:value="ADB wireless-debugging pairing (spike)." />
         </service>
 
+        <!-- Production foreground service that drives ADB wireless pairing via a notification -->
+        <service
+            android:name=".integrations.adb.AdbPairingService"
+            android:exported="false"
+            android:foregroundServiceType="specialUse">
+            <property
+                android:name="android.app.PROPERTY_SPECIAL_USE_FGS_SUBTYPE"
+                android:value="ADB wireless-debugging pairing." />
+        </service>
+
         <!-- Support different languages on Android 11 and 12 https://developer.android.com/guide/topics/resources/app-languages#api-implementation:~:text=Support%20Android%2012%20and%20lower -->
         <service
             android:name="androidx.appcompat.app.AppLocalesMetadataHolderService"
