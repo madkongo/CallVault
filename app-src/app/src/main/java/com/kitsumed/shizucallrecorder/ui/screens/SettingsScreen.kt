@@ -35,6 +35,7 @@ import com.kitsumed.shizucallrecorder.R
 import com.kitsumed.shizucallrecorder.system.PersistentFolderPickerContract
 import com.kitsumed.shizucallrecorder.system.copyToClipboard
 import com.kitsumed.shizucallrecorder.data.AppPreferences
+import com.kitsumed.shizucallrecorder.data.StorageTarget
 import com.kitsumed.shizucallrecorder.integrations.scrcpy.ScrcpyAudioCodec
 import com.kitsumed.shizucallrecorder.integrations.scrcpy.ScrcpyAudioSource
 import com.kitsumed.shizucallrecorder.integrations.scrcpy.ScrcpyConfig
@@ -101,6 +102,15 @@ fun SettingsScreen(
         viewModel.refresh()
     }
 
+    // Drive folder picker — same contract; persists READ + WRITE access across reboots.
+    val driveFolderPickerLauncher = rememberLauncherForActivityResult(PersistentFolderPickerContract()) { uri ->
+        if (uri != null) {
+            context.takePersistableFolderPermission(uri)
+            viewModel.setDriveFolderUri(uri)
+        }
+        viewModel.refresh()
+    }
+
     // Export logs picker — creates a new text file and gives us access to write to it, then passes the URI to the viewmodel for writing.
     val exportLogLauncher = rememberLauncherForActivityResult(ActivityResultContracts.CreateDocument("text/plain")) { uri: Uri? ->
         if (uri != null) {
@@ -114,6 +124,7 @@ fun SettingsScreen(
         actions = viewModel,
         contactPickerState = contactPickerState,
         onSelectFolder = { folderPickerLauncher.launch(null) },
+        onSelectDriveFolder = { driveFolderPickerLauncher.launch(null) },
         onOpenContactsIncoming = { contactPickerViewModel.openContactPicker(ContactPickerType.INCOMING) },
         onOpenContactsOutgoing = { contactPickerViewModel.openContactPicker(ContactPickerType.OUTGOING) },
         onConfirmContacts = { numbers ->
@@ -135,6 +146,7 @@ fun SettingsScreen(
  * @param actions                Implementation of [SettingsActions] to handle user interaction.
  * @param contactPickerState     Current state of the contact picker dialog.
  * @param onSelectFolder         Called when the user taps the recording-folder row.
+ * @param onSelectDriveFolder    Called when the user taps the Drive-folder row; opens the SAF picker.
  * @param onOpenContactsIncoming Called to open picker for incoming contacts.
  * @param onOpenContactsOutgoing Called to open picker for outgoing contacts.
  * @param onConfirmContacts      Called when contacts are confirmed from the dialog.
@@ -149,6 +161,7 @@ fun SettingsContent(
     actions: SettingsActions,
     contactPickerState: ContactPickerState?,
     onSelectFolder: () -> Unit,
+    onSelectDriveFolder: () -> Unit,
     onOpenContactsIncoming: () -> Unit,
     onOpenContactsOutgoing: () -> Unit,
     onConfirmContacts: (Set<String>) -> Unit,
@@ -187,6 +200,7 @@ fun SettingsContent(
                     onOpenContactsOutgoing = onOpenContactsOutgoing
                 )
             }
+            item { StorageSection(preferences, updateTrigger, actions, onSelectDriveFolder) }
             item { AudioSection(preferences, updateTrigger, actions) }
             item { SecuritySection(preferences, updateTrigger, actions) }
             item { VisualSection(preferences, updateTrigger, actions) }
@@ -581,6 +595,63 @@ private fun RecordingSection(
     }
 }
 
+/** Shows the storage target dropdown and Drive folder picker.
+ *
+ * @param preferences        The [AppPreferences] instance to read data from.
+ * @param updateTrigger      Trigger value to force recomposition when settings change.
+ * @param actions            Implementation of [SettingsActions] to handle user interaction.
+ * @param onSelectDriveFolder Called when the user taps the Drive-folder row; opens the SAF picker.
+ */
+@Composable
+private fun StorageSection(
+    preferences: AppPreferences,
+    updateTrigger: Int,
+    actions: SettingsActions,
+    onSelectDriveFolder: () -> Unit
+) {
+    val context = LocalContext.current
+    val storageTarget = remember(updateTrigger) { preferences.getStorageTarget() }
+    val driveFolderLabel = remember(updateTrigger) {
+        SafHelper.getFolderDisplayNameOrNull(context, preferences.getDriveFolderUri())
+    }
+
+    val storageTargetOptions = StorageTarget.entries.map { target ->
+        val labelRes = when (target) {
+            StorageTarget.LOCAL -> R.string.storage_target_local
+            StorageTarget.DRIVE -> R.string.storage_target_drive
+            StorageTarget.BOTH  -> R.string.storage_target_both
+        }
+        OptionItem(target.key, stringResource(labelRes))
+    }
+
+    SettingsSection(title = stringResource(R.string.settings_storage_section)) {
+        M3DropdownField(
+            label    = stringResource(R.string.settings_storage_target_label),
+            selected = storageTargetOptions.find { it.key == storageTarget.key } ?: storageTargetOptions.first(),
+            options  = storageTargetOptions,
+            onOptionSelected = { actions.setStorageTarget(StorageTarget.fromKey(it.key)) }
+        )
+
+        ListItem(
+            modifier = Modifier.clickable { onSelectDriveFolder() },
+            headlineContent = { Text(stringResource(R.string.settings_drive_folder_label)) },
+            supportingContent = {
+                Text(
+                    text = driveFolderLabel ?: stringResource(R.string.general_not_set),
+                    color = MaterialTheme.colorScheme.primary
+                )
+            },
+            colors = ListItemDefaults.colors(containerColor = Color.Transparent)
+        )
+        Text(
+            text     = stringResource(R.string.settings_drive_folder_desc),
+            style    = MaterialTheme.typography.labelSmall,
+            color    = MaterialTheme.colorScheme.onSurfaceVariant,
+            modifier = Modifier.padding(horizontal = 16.dp, vertical = 2.dp)
+        )
+    }
+}
+
 /** Shows the audio source, codec, and bit-rate dropdowns.
  *
  * The audio-source list is generated from [ScrcpyAudioSource.entries], filtered by
@@ -948,6 +1019,8 @@ private fun SettingsScreenPreview() {
             override fun setShizukuKeepAliveEnabled(enabled: Boolean) {}
             override fun setShizukuAuthKey(key: String) {}
             override fun setFileNameTemplate(template: String) {}
+            override fun setStorageTarget(target: StorageTarget) {}
+            override fun setDriveFolderUri(uri: android.net.Uri?) {}
         }
 
         // File name template selection dialog
@@ -959,6 +1032,7 @@ private fun SettingsScreenPreview() {
             actions = dummyActions,
             contactPickerState = null,
             onSelectFolder = {},
+            onSelectDriveFolder = {},
             onOpenContactsIncoming = {},
             onOpenContactsOutgoing = {},
             onConfirmContacts = {},

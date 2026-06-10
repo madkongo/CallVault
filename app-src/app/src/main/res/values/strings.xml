@@ -111,6 +111,16 @@
     <string name="settings_section_debug">Debug Options</string>
     <string name="settings_section_security">Security</string>
 
+    <!-- Settings Screen: Storage Section -->
+    <string name="settings_storage_section">Storage</string>
+    <string name="settings_storage_target_label">Where to save recordings</string>
+    <string name="storage_target_local">On this device only</string>
+    <string name="storage_target_drive">Google Drive only</string>
+    <string name="storage_target_both">Device + Google Drive</string>
+    <string name="settings_drive_folder_label">Google Drive folder</string>
+    <string name="settings_drive_folder_desc">Pick a folder (in the Google Drive app) to copy recordings to.</string>
+    <string name="general_not_set">Not set</string>
+
     <!-- Settings Screen: Security Section -->
     <string name="settings_shizuku_auto_manage">Manage Shizuku</string>
     <string name="settings_shizuku_auto_manage_desc">Automatically start and stop Shizuku</string>

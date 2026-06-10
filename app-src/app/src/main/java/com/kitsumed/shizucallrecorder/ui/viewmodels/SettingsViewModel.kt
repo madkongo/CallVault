@@ -16,6 +16,7 @@ import androidx.lifecycle.viewModelScope
 import com.kitsumed.shizucallrecorder.BuildConfig
 import com.kitsumed.shizucallrecorder.services.call.CallSessionManager
 import com.kitsumed.shizucallrecorder.data.AppPreferences
+import com.kitsumed.shizucallrecorder.data.StorageTarget
 import com.kitsumed.shizucallrecorder.integrations.scrcpy.ScrcpyAudioCodec
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -72,6 +73,8 @@ interface SettingsActions {
     fun setShizukuKeepAliveEnabled(enabled: Boolean)
     fun setShizukuAuthKey(key: String)
     fun setFileNameTemplate(template: String)
+    fun setStorageTarget(target: StorageTarget)
+    fun setDriveFolderUri(uri: android.net.Uri?)
 }
 
 /**
@@ -262,6 +265,26 @@ class SettingsViewModel(application: Application) : AndroidViewModel(application
      */
     override fun setFileNameTemplate(template: String) {
         preferences.setFileNameTemplate(template)
+        refresh()
+    }
+
+    // -------- Storage settings
+
+    /** Saves the storage target (local, Drive, or both).
+     *
+     * @param target The [StorageTarget] enum value.
+     */
+    override fun setStorageTarget(target: StorageTarget) {
+        preferences.setStorageTarget(target)
+        refresh()
+    }
+
+    /** Saves the Google Drive folder URI chosen via SAF.
+     *
+     * @param uri The URI returned by the SAF tree picker, or null to clear.
+     */
+    override fun setDriveFolderUri(uri: android.net.Uri?) {
+        preferences.setDriveFolderUri(uri)
         refresh()
     }
 
