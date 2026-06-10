@@ -98,6 +98,10 @@
     <string name="permission_shizuku_description">Required to start the audio recording (ShellService) with scrcpy.</string>
     <string name="permission_shizuku_not_running">Not running</string>
     <string name="permission_shizuku_open">Open Shizuku</string>
+    <string name="permission_adb_label" translatable="false">Wireless debugging (ADB)</string>
+    <string name="permission_adb_description">Required to capture call audio. Pair once via the notification, then it connects automatically.</string>
+    <string name="permission_adb_not_connected">Not connected — tap to set up</string>
+    <string name="permission_adb_setup">Set up ADB</string>
 
     <!-- Settings Screen: Section Titles -->
     <string name="settings_section_about">About</string>

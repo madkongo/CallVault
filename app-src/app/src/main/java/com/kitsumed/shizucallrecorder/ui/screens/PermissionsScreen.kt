@@ -87,36 +87,8 @@ fun PermissionsScreen(
         onPermissionGranted()
     }
 
-    // Run safety check once Shizuku permission is granted
-    if (status.shizukuPermissionGranted && ShizukuConnectionManager.hasPermission(activityContext)) {
-        // We still need to check if the Shell app has all required permissions.
-        if (ShizukuConnectionManager.isAvailable()) {
-            // If Shizuku server is running, just ensure we have all required permissions on the Shell app level. If not, then the app won't work.
-            val requiredPermissions = listOf(
-                Manifest.permission.CAPTURE_AUDIO_OUTPUT
-            )
-
-            val missingPermissions = requiredPermissions.filter {
-                !ShizukuConnectionManager.checkServerPermission(it)
-            }
-
-            if (missingPermissions.isNotEmpty()) {
-                val cleanPermissionsString = missingPermissions
-                    .joinToString("\n") { it.substringAfterLast(".") }
-
-                val dialogMessage = stringResource(R.string.general_system_limitation_message, cleanPermissionsString)
-
-                AlertDialog.Builder(activityContext)
-                    .setTitle(R.string.general_system_limitation)
-                    .setMessage(dialogMessage)
-                    .setIcon(android.R.drawable.ic_dialog_alert)
-                    .setCancelable(false)
-                    .setPositiveButton("Exit") { _, _ ->
-                        exitProcess(0)
-                    }.show()
-            }
-        }
-    }
+    // No Shizuku shell-permission check needed: CallVault's embedded ADB shell runs as uid 2000
+    // (shell), which already holds the audio-capture privileges scrcpy-server needs.
 
     PermissionsContent(
         status = status,
@@ -185,14 +157,11 @@ fun PermissionsContent(
                 verticalArrangement = Arrangement.spacedBy(12.dp)
             ) {
                 PermissionCard(
-                    label = stringResource(R.string.permission_shizuku_label),
-                    description = stringResource(R.string.permission_shizuku_description),
-                    granted = status.shizukuRunning && status.shizukuPermissionGranted,
-                    statusOverride = when {
-                        !status.shizukuRunning -> stringResource(R.string.permission_shizuku_not_running)
-                        !status.shizukuPermissionGranted -> stringResource(R.string.permissions_status_required)
-                        else -> null
-                    }
+                    label = stringResource(R.string.permission_adb_label),
+                    description = stringResource(R.string.permission_adb_description),
+                    granted = status.adbConnected,
+                    statusOverride = if (!status.adbConnected)
+                        stringResource(R.string.permission_adb_not_connected) else null
                 )
 
                 val permissions = listOf(
@@ -226,7 +195,7 @@ fun PermissionsContent(
                 Text(
                     text = when {
                         status.isComplete()       -> stringResource(R.string.general_continue)
-                        !status.shizukuRunning    -> stringResource(R.string.permission_shizuku_open)
+                        !status.adbConnected      -> stringResource(R.string.permission_adb_setup)
                         else                      -> stringResource(R.string.permissions_grant_access)
                     }
                 )
@@ -298,8 +267,7 @@ private fun PermissionsScreenPreview() {
                 callLogGranted           = false,
                 batteryExempted          = false,
                 storageSelected          = false,
-                shizukuRunning           = false,
-                shizukuPermissionGranted = false
+                adbConnected             = false
             ),
             onGrantAccessButtonClick = {}
         )

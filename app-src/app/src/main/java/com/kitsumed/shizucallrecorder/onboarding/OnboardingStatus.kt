@@ -10,7 +10,7 @@ package com.kitsumed.shizucallrecorder.onboarding
 
 import android.content.Context
 import com.kitsumed.shizucallrecorder.data.AppPreferences
-import com.kitsumed.shizucallrecorder.integrations.shizuku.ShizukuConnectionManager
+import com.kitsumed.shizucallrecorder.integrations.adb.AdbConnectionManager
 import com.kitsumed.shizucallrecorder.system.permissions.PermissionChecks
 import com.kitsumed.shizucallrecorder.system.storage.SafHelper
 import com.kitsumed.shizucallrecorder.ui.viewmodels.AppNavigationViewModel
@@ -32,8 +32,8 @@ object OnboardingStatus {
      * @param callLogGranted            True if the app has permission to access the call log.
      * @param batteryExempted           True if the app is on the battery-optimisation whitelist.
      * @param storageSelected           True if a valid SAF recording folder has been chosen.
-     * @param shizukuRunning            True if the Shizuku service is currently active.
-     * @param shizukuPermissionGranted  True if the user has granted Shizuku permission to this app.
+     * @param adbConnected              True if CallVault's embedded ADB connection is established
+     *                                  (paired once + connected). Replaces the old Shizuku gate.
      */
     data class Status(
         val disclaimerAccepted: Boolean,
@@ -43,8 +43,7 @@ object OnboardingStatus {
         val callLogGranted: Boolean,
         val batteryExempted: Boolean,
         val storageSelected: Boolean,
-        val shizukuRunning: Boolean,
-        val shizukuPermissionGranted: Boolean
+        val adbConnected: Boolean
     ) {
         /**
          * Returns true only when every prerequisite is satisfied, including the disclaimer.
@@ -57,8 +56,7 @@ object OnboardingStatus {
                 callLogGranted &&
                 batteryExempted &&
                 storageSelected &&
-                shizukuRunning &&
-                shizukuPermissionGranted
+                adbConnected
         }
     }
 
@@ -79,11 +77,9 @@ object OnboardingStatus {
             callLogGranted           = PermissionChecks.hasCallLogPermission(context),
             batteryExempted          = PermissionChecks.hasBatteryExemption(context),
             storageSelected          = SafHelper.isFolderValid(context, storageUri),
-            // Special check here, if the auto-manage option was enabled, users already passed this check, and we can assume app will be able to start/stop Shizuku as needed.
-            shizukuRunning           = ShizukuConnectionManager.isAvailable() || preferences.isShizukuAutoManageEnabled(),
-            // We provide the context to use the Android Permission system as a fallback. Since if isShizukuAutoManageEnabled is enabled, we can assume the
-            // shizuku server may not be running at the moment.
-            shizukuPermissionGranted = ShizukuConnectionManager.hasPermission(context)
+            // Embedded-ADB replaces Shizuku: ready when our ADB connection is live. It becomes true
+            // after the user pairs once (notification) and we connect (AdbShell.ensureConnected).
+            adbConnected             = AdbConnectionManager.getInstance(context).isConnected
         )
     }
 }

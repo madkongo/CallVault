@@ -14,12 +14,16 @@ import android.content.Intent
 import android.provider.Settings
 import androidx.core.net.toUri
 import androidx.lifecycle.AndroidViewModel
+import androidx.lifecycle.viewModelScope
 
-import com.kitsumed.shizucallrecorder.integrations.shizuku.ShizukuConnectionManager
+import com.kitsumed.shizucallrecorder.integrations.adb.AdbPairingService
+import com.kitsumed.shizucallrecorder.integrations.adb.AdbShell
 import com.kitsumed.shizucallrecorder.onboarding.OnboardingStatus
 import com.kitsumed.shizucallrecorder.system.openAppSettings
-import com.kitsumed.shizucallrecorder.system.openShizukuManager
 import com.kitsumed.shizucallrecorder.ui.screens.PermissionsScreen
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 
 /**
  * The "Brain" of the permissions setup flow.
@@ -55,8 +59,7 @@ class PermissionsViewModel(application: Application) : AndroidViewModel(applicat
         onPermissionGranted: () -> Unit
     ) {
         when {
-            !status.shizukuRunning           -> appContext.openShizukuManager()
-            !status.shizukuPermissionGranted -> ShizukuConnectionManager.requestPermission()
+            !status.adbConnected             -> setupAdb(onPermissionGranted)
             !status.notificationsGranted     -> requestRuntimePermission(Manifest.permission.POST_NOTIFICATIONS)
             !status.contactsGranted          -> requestRuntimePermission(Manifest.permission.READ_CONTACTS)
             !status.phoneStateGranted        -> requestRuntimePermission(Manifest.permission.READ_PHONE_STATE)
@@ -74,5 +77,23 @@ class PermissionsViewModel(application: Application) : AndroidViewModel(applicat
         }
         // Always trigger a refresh of the UI to detect and show new permission changes.
         onPermissionGranted()
+    }
+
+    /**
+     * Sets up the embedded-ADB connection (replaces the old "open Shizuku" step).
+     *
+     * Tries to connect with the persisted, already-authorised key. If the device has never been
+     * paired (connect fails), starts [AdbPairingService] so the user can pair once via the
+     * notification (enter the 6-digit code). Refreshes the UI when done so the card turns green.
+     */
+    private fun setupAdb(onDone: () -> Unit) {
+        viewModelScope.launch {
+            val connected = withContext(Dispatchers.IO) { AdbShell.ensureConnected(appContext) }
+            if (!connected) {
+                // Not paired yet (or connect failed) — guide the user through one-time pairing.
+                AdbPairingService.start(appContext)
+            }
+            onDone()
+        }
     }
 }
