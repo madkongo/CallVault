@@ -52,7 +52,14 @@ object AdbShell {
             Thread.sleep(WD_START_WAIT_MS)
         }
         val port = AdbMdns.discoverPort(context, AdbMdns.TLS_CONNECT, MDNS_TIMEOUT_MS) ?: return false
-        val ok = mgr.connect("127.0.0.1", port)
+        // connect() THROWS on an unpaired/unauthorised identity (AdbPairingRequiredException) or a flaky
+        // TLS handshake (SSLProtocolException: CERTIFICATE_UNKNOWN). ensureConnected MUST return a boolean —
+        // callers branch on it (onboarding's setupAdb starts pairing when false; the recording/boot paths
+        // treat false as "not available"). Propagating crashed the app at the onboarding "Setup ADB" step.
+        val ok = runCatching { mgr.connect("127.0.0.1", port) }.getOrElse { e ->
+            AppLogger.w(TAG, "ADB connect failed (pairing required or transport error): ${e.message}")
+            false
+        }
         if (ok) {
             Thread.sleep(CONNECT_SETTLE_MS)
             AppPreferences(context).setAdbPaired(true)
