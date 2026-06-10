@@ -62,6 +62,24 @@ object AdbShell {
     }
 
     /**
+     * Forces a fresh ADB connection: drops the current one (so a half-dead/stale connection that
+     * still reports `isConnected` is discarded) then re-runs [ensureConnected] to rediscover the
+     * mDNS port and reconnect. Used by the recorder-server launcher to recover from intermittent
+     * "Stream closed" failures on the flaky wireless link.
+     *
+     * Call off the main thread. @Synchronized for the same reason as [ensureConnected] (serialise
+     * concurrent connect attempts). Re-entrant with [ensureConnected] (same thread).
+     *
+     * @return true if a live connection is up after the reconnect attempt.
+     */
+    @Synchronized
+    fun forceReconnect(context: Context): Boolean {
+        runCatching { AdbConnectionManager.getInstance(context).disconnect() }
+            .onFailure { AppLogger.d(TAG, "forceReconnect disconnect ignored: ${it.message}") }
+        return ensureConnected(context)
+    }
+
+    /**
      * Opens an ADB shell stream for [command]. The full `shell:` prefix is added automatically.
      *
      * @param context App context.
@@ -104,6 +122,22 @@ object AdbShell {
         return runCatching {
             android.provider.Settings.Global.putInt(context.contentResolver, "adb_wifi_enabled", 1)
         }.onFailure { AppLogger.e(TAG, "Failed to enable Wireless debugging", it) }.isSuccess
+    }
+
+    /**
+     * Turns Wireless debugging OFF by writing adb_wifi_enabled=0. Requires WRITE_SECURE_SETTINGS.
+     * Used by the persistent-server WD policy to keep WD off between uses once the daemon's binder is
+     * connected (the daemon needs no ADB at record time). Returns true if WD is off after the call.
+     *
+     * NOTE: this drops the app's embedded ADB connection — only safe once the recorder daemon binder
+     * is already connected (recording then flows over binder, not ADB).
+     */
+    fun disableWirelessDebugging(context: Context): Boolean {
+        if (!isWirelessDebuggingEnabled(context)) return true
+        if (!hasWriteSecureSettings(context)) return false
+        return runCatching {
+            android.provider.Settings.Global.putInt(context.contentResolver, "adb_wifi_enabled", 0)
+        }.onFailure { AppLogger.e(TAG, "Failed to disable Wireless debugging", it) }.isSuccess
     }
 
     /**

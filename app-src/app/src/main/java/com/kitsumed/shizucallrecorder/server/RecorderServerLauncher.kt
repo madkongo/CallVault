@@ -9,6 +9,7 @@
 package com.kitsumed.shizucallrecorder.server
 
 import android.content.Context
+import com.kitsumed.shizucallrecorder.data.AppPreferences
 import com.kitsumed.shizucallrecorder.integrations.adb.AdbShell
 import com.kitsumed.shizucallrecorder.utils.AppLogger
 
@@ -43,69 +44,116 @@ object RecorderServerLauncher {
         "setsid sh -c 'CLASSPATH=%1\$s exec app_process / $DAEMON_FQCN %1\$s' >/dev/null 2>&1 </dev/null &"
 
     /** How long to drain stdout so the shell command is actually delivered before we close. */
-    private const val DRAIN_BUDGET_MS = 1500L
+    private const val DRAIN_BUDGET_MS = 1200L
 
     /** Poll interval while waiting for the daemon to deliver its binder to [RecorderConnection]. */
     private const val POLL_INTERVAL_MS = 150L
 
     /**
+     * How many launch attempts to make. The wireless embedded-ADB link is flaky ("Stream closed"),
+     * and a single openShell can silently fail to deliver the command, so we retry with a fresh
+     * connection between attempts.
+     */
+    private const val MAX_LAUNCH_ATTEMPTS = 3
+
+    /**
      * Ensures the privileged recorder daemon is running and its binder is available in
      * [RecorderConnection]. Call OFF the main thread (does ADB network I/O and polls/sleeps).
      *
-     * Fast path: if [RecorderConnection.isConnected] is already true, returns true immediately. Otherwise
-     * it ensures the embedded ADB connection, detached-launches [RecorderServer] with the app APK as both
-     * CLASSPATH and `apkPath` arg, drains the launching shell briefly, then polls
-     * [RecorderConnection.isConnected] every [POLL_INTERVAL_MS] until [timeoutMs] elapses.
+     * Fast path: if [RecorderConnection.isConnected] is already true, returns true immediately.
+     * Otherwise it makes up to [MAX_LAUNCH_ATTEMPTS] launch attempts: ensure the embedded ADB
+     * connection, detached-launch [RecorderServer], then poll [RecorderConnection.isConnected] for a
+     * slice of [timeoutMs]. The detached `&` launch makes the launching shell exit immediately, so a
+     * "Stream closed" while draining is EXPECTED and is NOT treated as failure — the real success
+     * signal is the binder arriving. If an attempt does not connect, the connection may be stale, so
+     * we [AdbShell.forceReconnect] before retrying.
      *
      * @param context   App context; its `applicationInfo.sourceDir` (the installed APK) is the CLASSPATH.
-     * @param timeoutMs Max time to wait for the daemon's binder to be delivered after launch.
+     * @param timeoutMs Total budget to wait for the daemon's binder across all attempts.
      * @return true if the daemon's binder is available in [RecorderConnection] (already or after launch).
      */
-    fun ensureServerRunning(context: Context, timeoutMs: Long = 8000): Boolean {
+    fun ensureServerRunning(context: Context, timeoutMs: Long = 12_000): Boolean {
         if (RecorderConnection.isConnected) {
             AppLogger.d(TAG, "Recorder daemon already connected; reusing existing binder")
+            applyWdPolicy(context)
             return true
         }
 
-        if (!AdbShell.ensureConnected(context)) {
-            AppLogger.e(TAG, "ADB not connected; cannot launch recorder daemon")
-            return false
+        val apk = context.applicationInfo.sourceDir
+        val perAttemptMs = (timeoutMs / MAX_LAUNCH_ATTEMPTS).coerceAtLeast(2000L)
+
+        repeat(MAX_LAUNCH_ATTEMPTS) { attempt ->
+            val n = attempt + 1
+            // (Re)establish ADB. On a retry, force a fresh connection — a stale half-dead connection
+            // still reports isConnected but its openStream throws "Stream closed". This also re-enables
+            // Wireless debugging if the WD policy had turned it off (needed to relaunch the daemon).
+            val connected = if (attempt == 0) AdbShell.ensureConnected(context)
+            else AdbShell.forceReconnect(context)
+            if (!connected) {
+                AppLogger.w(TAG, "Attempt $n/$MAX_LAUNCH_ATTEMPTS: ADB not connected; retrying")
+                return@repeat
+            }
+
+            launchOnce(context, apk, n)
+
+            if (pollConnected(perAttemptMs)) {
+                AppLogger.i(TAG, "Recorder daemon connected on attempt $n; binder available")
+                applyWdPolicy(context)
+                return true
+            }
+            AppLogger.w(TAG, "Attempt $n/$MAX_LAUNCH_ATTEMPTS: binder not delivered within ${perAttemptMs}ms")
         }
 
-        val apk = context.applicationInfo.sourceDir
-        val command = String.format(PRIMARY_CMD_FORMAT, apk)
-        AppLogger.i(TAG, "Launching recorder daemon. apk=$apk")
-        AppLogger.i(TAG, "Recorder launch command: $command")
+        val ok = RecorderConnection.isConnected
+        AppLogger.w(TAG, "ensureServerRunning gave up after $MAX_LAUNCH_ATTEMPTS attempts; connected=$ok")
+        return ok
+    }
 
+    /**
+     * Applies the WD policy now that the daemon binder is connected: if the user chose
+     * "turn Wireless debugging off when idle", drop WD (the daemon needs no ADB at record time — it is
+     * commanded over binder). Re-enabled transiently by [ensureServerRunning] when a relaunch is needed.
+     * No-op when the policy is off or WD is already off.
+     */
+    private fun applyWdPolicy(context: Context) {
+        if (!AppPreferences(context).isWdDisableWhenIdle()) return
+        if (AdbShell.disableWirelessDebugging(context)) {
+            AppLogger.i(TAG, "WD policy: disabled Wireless debugging (daemon connected; commands flow over binder)")
+        } else {
+            AppLogger.w(TAG, "WD policy: could not disable Wireless debugging (missing WRITE_SECURE_SETTINGS?)")
+        }
+    }
+
+    /**
+     * Fires the detached launch command once over the embedded ADB shell and drains briefly so it is
+     * delivered. A "Stream closed" here is expected (the `&`-backgrounded launcher shell exits at
+     * once and the daemon's own stdio is /dev/null), so failures are logged at debug, not error.
+     */
+    private fun launchOnce(context: Context, apk: String, attempt: Int) {
+        val command = String.format(PRIMARY_CMD_FORMAT, apk)
+        AppLogger.i(TAG, "Attempt $attempt: launching recorder daemon. apk=$apk")
         runCatching {
             AdbShell.openShell(context, command).use { shell ->
-                // Drain briefly so the command is delivered, mirroring PersistDaemonLauncher. The
-                // detached daemon's own stdio is /dev/null, so this only captures the launching shell's exit.
                 val deadline = System.currentTimeMillis() + DRAIN_BUDGET_MS
                 shell.openInputStream().use { input ->
                     val buf = ByteArray(256)
                     while (System.currentTimeMillis() < deadline) {
-                        val n = input.read(buf)
-                        if (n < 0) break
-                        if (n > 0) AppLogger.d(TAG, "[launch] ${String(buf, 0, n)}")
+                        val read = input.read(buf)
+                        if (read < 0) break
+                        if (read > 0) AppLogger.d(TAG, "[launch] ${String(buf, 0, read)}")
                     }
                 }
             }
-            AppLogger.i(TAG, "Recorder daemon launch command delivered; shell closed")
-        }.onFailure { AppLogger.e(TAG, "Recorder daemon launch failed: ${it.message}", it) }
+        }.onFailure { AppLogger.d(TAG, "Attempt $attempt drain ended (expected for detached &): ${it.message}") }
+    }
 
-        // Poll the connection holder until the daemon delivers its binder to RecorderBinderProvider.
-        val deadline = System.currentTimeMillis() + timeoutMs
+    /** Polls [RecorderConnection.isConnected] up to [waitMs]. Returns true as soon as connected. */
+    private fun pollConnected(waitMs: Long): Boolean {
+        val deadline = System.currentTimeMillis() + waitMs
         while (System.currentTimeMillis() < deadline) {
-            if (RecorderConnection.isConnected) {
-                AppLogger.i(TAG, "Recorder daemon connected; binder available in RecorderConnection")
-                return true
-            }
+            if (RecorderConnection.isConnected) return true
             runCatching { Thread.sleep(POLL_INTERVAL_MS) }
         }
-
-        val connected = RecorderConnection.isConnected
-        AppLogger.w(TAG, "ensureServerRunning finished connected=$connected (timeout=${timeoutMs}ms)")
-        return connected
+        return RecorderConnection.isConnected
     }
 }

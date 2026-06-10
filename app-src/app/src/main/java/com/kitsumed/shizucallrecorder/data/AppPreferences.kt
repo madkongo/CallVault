@@ -70,6 +70,11 @@ class AppPreferences(context: Context) {
         // recording layer drives the detached privileged daemon (RecorderServer) over binder instead.
         const val PERSISTENT_SERVER_ENABLED = false
 
+        // WD policy for persistent-server mode. false (default) = keep Wireless debugging ON (safer,
+        // matches the legacy behaviour). true = turn WD OFF once the daemon's binder is connected and
+        // re-enable it only transiently to (re)launch the daemon — the persistent-server payoff.
+        const val WD_DISABLE_WHEN_IDLE = false
+
         // --- Audio/Scrcpy Quality ---
         val AUDIO_SOURCE = ScrcpyAudioSource.VOICE_CALL.cliKey
         val AUDIO_CODEC = ScrcpyAudioCodec.OPUS.cliKey
@@ -106,6 +111,7 @@ class AppPreferences(context: Context) {
 
         // --- Persistent recorder server (CallVault Plan 5) ---
         PERSISTENT_SERVER_ENABLED("persistent_server_enabled"),
+        WD_DISABLE_WHEN_IDLE("wd_disable_when_idle"),
         
         // --- Automation ---
         AUTO_RECORD_INCOMING("auto_record_incoming"),
@@ -234,6 +240,16 @@ class AppPreferences(context: Context) {
 
     /** Sets whether the persistent privileged recorder daemon path is enabled. */
     fun setPersistentServerEnabled(enabled: Boolean) = setBoolean(Key.PERSISTENT_SERVER_ENABLED, enabled)
+
+    /**
+     * Whether Wireless debugging should be turned OFF once the daemon's binder is connected (and only
+     * re-enabled transiently to relaunch the daemon). Only meaningful when [isPersistentServerEnabled].
+     * Default false = keep WD on.
+     */
+    fun isWdDisableWhenIdle() = getBoolean(Key.WD_DISABLE_WHEN_IDLE, DefaultsValue.WD_DISABLE_WHEN_IDLE)
+
+    /** Sets the "turn Wireless debugging off when the daemon is connected" policy. */
+    fun setWdDisableWhenIdle(enabled: Boolean) = setBoolean(Key.WD_DISABLE_WHEN_IDLE, enabled)
 
     // -------- Storage & General --------
 

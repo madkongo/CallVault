@@ -20,7 +20,9 @@ import android.os.IBinder
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import com.kitsumed.shizucallrecorder.data.AppPreferences
 import com.kitsumed.shizucallrecorder.integrations.adb.AdbShell
+import com.kitsumed.shizucallrecorder.server.RecorderServerLauncher
 import com.kitsumed.shizucallrecorder.utils.AppLogger
 
 /**
@@ -62,6 +64,16 @@ class AdbConnectionService : Service() {
         CoroutineScope(Dispatchers.IO).launch {
             val ok = runCatching { AdbShell.ensureConnected(applicationContext) }.getOrDefault(false)
             AppLogger.i(TAG, "Boot reconnect result: $ok")
+
+            // Persistent-server mode: launch the privileged recorder daemon now so calls record
+            // hands-free after a reboot. ensureServerRunning also applies the WD policy (turns Wireless
+            // debugging back off once the daemon's binder is connected, if the user enabled that).
+            if (ok && AppPreferences(applicationContext).isPersistentServerEnabled()) {
+                val started = runCatching { RecorderServerLauncher.ensureServerRunning(applicationContext) }
+                    .getOrDefault(false)
+                AppLogger.i(TAG, "Boot persistent-server launch: connected=$started")
+            }
+
             stopForeground(STOP_FOREGROUND_REMOVE)
             stopSelf()
         }
