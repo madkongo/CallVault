@@ -41,10 +41,23 @@ object RecorderServerLauncher {
      * daemon's first positional arg (`apkPath`, used by [RecorderServer] to self-extract scrcpy).
      */
     private const val PRIMARY_CMD_FORMAT =
-        "setsid sh -c 'CLASSPATH=%1\$s exec app_process / $DAEMON_FQCN %1\$s' >/dev/null 2>&1 </dev/null &"
+        "setsid sh -c 'CLASSPATH=%1\$s exec app_process / $DAEMON_FQCN %1\$s' >/dev/null 2>&1 </dev/null & sleep $LAUNCH_KEEPALIVE_SEC"
 
-    /** How long to drain stdout so the shell command is actually delivered before we close. */
-    private const val DRAIN_BUDGET_MS = 1200L
+    /**
+     * Seconds the launching shell stays alive (a trailing `sleep`) AFTER backgrounding the daemon.
+     * CRITICAL for the embedded-ADB transport: unlike laptop `adb shell`, libadb closes the shell
+     * stream almost immediately (~30ms), and adbd then kills the just-spawned child before `app_process`
+     * has loaded the APK + reparented to init — so the daemon never comes up. Keeping the parent shell
+     * alive past app_process startup lets the daemon fully detach before the stream closes. (Proven gap:
+     * the identical command works from laptop adb, which holds the stream open longer.)
+     */
+    private const val LAUNCH_KEEPALIVE_SEC = 2
+
+    /**
+     * How long to block-drain the launching shell. Must exceed [LAUNCH_KEEPALIVE_SEC] so we hold the
+     * stream open for the whole keep-alive window (the read returns EOF when the shell's sleep ends).
+     */
+    private const val DRAIN_BUDGET_MS = 4000L
 
     /** Poll interval while waiting for the daemon to deliver its binder to [RecorderConnection]. */
     private const val POLL_INTERVAL_MS = 150L
@@ -71,7 +84,13 @@ object RecorderServerLauncher {
      * @param context   App context; its `applicationInfo.sourceDir` (the installed APK) is the CLASSPATH.
      * @param timeoutMs Total budget to wait for the daemon's binder across all attempts.
      * @return true if the daemon's binder is available in [RecorderConnection] (already or after launch).
+     *
+     * **@Synchronized**: serialise launch attempts. STANDBY and START_RECORDING (and boot) can call this
+     * near-simultaneously; without serialisation the concurrent runs call disconnect()/reconnect on each
+     * other mid-connect and spawn duplicate daemons — observed to thrash the embedded ADB connection into
+     * a "Stream closed" state. One launch at a time; the second caller sees the connected binder and returns.
      */
+    @Synchronized
     fun ensureServerRunning(context: Context, timeoutMs: Long = 12_000): Boolean {
         if (RecorderConnection.isConnected) {
             AppLogger.d(TAG, "Recorder daemon already connected; reusing existing binder")

@@ -126,6 +126,17 @@
             android:enabled="true"
             android:exported="true" />
 
+        <!-- DEBUG-ONLY throwaway: exercise RecorderServerLauncher.ensureServerRunning in isolation
+             (validate the flaky-wireless in-app launch without a real call). Remove before release. -->
+        <receiver
+            android:name=".debug.LaunchTestReceiver"
+            android:enabled="true"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="com.kitsumed.shizucallrecorder.debug.LAUNCH_SERVER" />
+            </intent-filter>
+        </receiver>
+
         <!-- Foreground service used by BootReceiver to reconnect ADB off the main thread -->
         <service
             android:name=".services.boot.AdbConnectionService"
