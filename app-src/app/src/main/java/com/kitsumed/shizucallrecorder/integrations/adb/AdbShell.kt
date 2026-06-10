@@ -30,8 +30,15 @@ object AdbShell {
      * If Wireless debugging is off (e.g. after an OEM reboot) and the app holds
      * WRITE_SECURE_SETTINGS, it re-enables Wireless debugging before starting mDNS discovery.
      *
+     * **@Synchronized**: when a call wakes the app, the launch auto-connect (ShizuApplication) and
+     * the recording path both call this at once. Without serialization they raced — one connected
+     * while the other checked `isConnected` a moment too early, tried its own connect, lost, and
+     * reported "not connected". Serializing makes the second caller wait, then see the live
+     * connection and return true.
+     *
      * @return true if already connected or newly connected successfully; false on failure.
      */
+    @Synchronized
     fun ensureConnected(context: Context): Boolean {
         val mgr = AdbConnectionManager.getInstance(context)
         if (mgr.isConnected) {
