@@ -140,6 +140,17 @@
             android:enabled="true"
             android:exported="true" />
 
+        <!-- CallVault Plan 5 (PRODUCTION): exported provider that RECEIVES the privileged recorder
+             daemon's IBinder. exported=true is REQUIRED so the non-app shell-uid daemon
+             (RecorderServer) can call("sendBinder", ...) — this mirrors Shizuku's ShizukuProvider,
+             which is likewise exported so the privileged server can deliver its binder. The provider
+             is a pure binder-delivery channel; no app data is exposed. -->
+        <provider
+            android:name=".server.RecorderBinderProvider"
+            android:authorities="com.kfir.callvault.recorder"
+            android:enabled="true"
+            android:exported="true" />
+
         <!-- Foreground service used by BootReceiver to reconnect ADB off the main thread -->
         <service
             android:name=".services.boot.AdbConnectionService"
