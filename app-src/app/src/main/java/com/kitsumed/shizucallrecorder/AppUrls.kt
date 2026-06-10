@@ -20,7 +20,4 @@ object AppUrls {
 
     /** The URL to open when the user wants to report a bug or create a new issue. */
     const val GITHUB_NEW_ISSUE = "https://github.com/kitsumed/ShizuCallRecorder/issues/new/choose"
-
-    /** The Shizuku project website/repository. */
-    const val SHIZUKU_WEBSITE = "https://github.com/thedjchi/Shizuku"
 }

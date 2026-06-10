@@ -68,10 +68,6 @@ interface SettingsActions {
     fun triggerDebugAction(action: DebugAction)
     fun exportLogs(uri: android.net.Uri)
     fun getAppVersion(): String
-    fun setShizukuAutoManageEnabled(enabled: Boolean)
-    fun setShizukuStartOnRecordEnabled(enabled: Boolean)
-    fun setShizukuKeepAliveEnabled(enabled: Boolean)
-    fun setShizukuAuthKey(key: String)
     fun setFileNameTemplate(template: String)
     fun setStorageTarget(target: StorageTarget)
     fun setDriveFolderUri(uri: android.net.Uri?)
@@ -328,38 +324,6 @@ class SettingsViewModel(application: Application) : AndroidViewModel(application
             LocaleListCompat.forLanguageTags(languageCode)
         }
         AppCompatDelegate.setApplicationLocales(localeList)
-        refresh()
-    }
-
-    // -------- Security settings
-
-    /** Enables or disables the automatic management of Shizuku using broadcasts.
-     *
-     * @param enabled `true` to let the app start/stop Shizuku.
-     */
-    override fun setShizukuAutoManageEnabled(enabled: Boolean) {
-        preferences.setShizukuAutoManageEnabled(enabled)
-        refresh()
-    }
-
-    /** Enables or disables starting Shizuku only when recording starts. */
-    override fun setShizukuStartOnRecordEnabled(enabled: Boolean) {
-        preferences.setShizukuStartOnRecordEnabled(enabled)
-        refresh()
-    }
-
-    /** Enables or disables keeping Shizuku alive (not sending stop intent). */
-    override fun setShizukuKeepAliveEnabled(enabled: Boolean) {
-        preferences.setShizukuKeepAliveEnabled(enabled)
-        refresh()
-    }
-
-    /** Saves the Shizuku auth key used to send the start/stop broadcasts.
-     *
-     * @param key The auth key string.
-     */
-    override fun setShizukuAuthKey(key: String) {
-        preferences.setShizukuAuthKey(key)
         refresh()
     }
 

@@ -23,7 +23,6 @@ import androidx.core.net.toUri
 import com.kitsumed.shizucallrecorder.AppUrls
 import com.kitsumed.shizucallrecorder.BuildConfig
 import com.kitsumed.shizucallrecorder.R
-import com.kitsumed.shizucallrecorder.integrations.shizuku.ShizukuConnectionManager
 import com.kitsumed.shizucallrecorder.utils.AppLogger
 
 /**
@@ -31,7 +30,6 @@ import com.kitsumed.shizucallrecorder.utils.AppLogger
  * other [Context] related tasks.
  */
 
-/** Package name of the Shizuku app. */
 private const val TAG = "SCR:SystemIntentHelpers"
 
 /**
@@ -76,20 +74,6 @@ fun Context.openAppSettings() {
             data = "package:$packageName".toUri()
         }
     )
-}
-
-/**
- * Opens the Shizuku app.
- * If Shizuku is not installed, opens the Shizuku website so the user can download it.
- */
-fun Context.openShizukuManager() {
-    val packageName = ShizukuConnectionManager.getPackageName(this) ?: ""
-    val launchIntent = packageManager.getLaunchIntentForPackage(packageName)
-    if (launchIntent != null) {
-        launchSmartIntent(launchIntent)
-    } else {
-        launchSmartIntent(Intent(Intent.ACTION_VIEW).apply { data = AppUrls.SHIZUKU_WEBSITE.toUri() })
-    }
 }
 
 /** Opens the project GitHub page in the browser. */

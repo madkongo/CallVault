@@ -11,7 +11,6 @@
     xmlns:tools="http://schemas.android.com/tools">
 
     <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
-    <uses-permission android:name="moe.shizuku.manager.permission.API_V23" />
     <!-- Granted via our own ADB shell (pm grant). Lets the app re-enable Wireless debugging
          (adb_wifi_enabled) on boot so recording survives reboots hands-free. -->
     <uses-permission android:name="android.permission.WRITE_SECURE_SETTINGS"
@@ -62,23 +61,7 @@
             </intent-filter>
         </activity>
 
-        <!-- DEBUG SPIKE: remove before production -->
-        <activity
-            android:name=".spike.AdbSpikeActivity"
-            android:exported="true"
-            android:label="ADB Spike" />
-
-        <!-- DEBUG SPIKE: foreground service that drives ADB wireless pairing via a notification -->
-        <service
-            android:name=".spike.AdbPairingService"
-            android:exported="false"
-            android:foregroundServiceType="specialUse">
-            <property
-                android:name="android.app.PROPERTY_SPECIAL_USE_FGS_SUBTYPE"
-                android:value="ADB wireless-debugging pairing (spike)." />
-        </service>
-
-        <!-- Production foreground service that drives ADB wireless pairing via a notification -->
+        <!-- Foreground service that drives ADB wireless pairing via a notification -->
         <service
             android:name=".integrations.adb.AdbPairingService"
             android:exported="false"
@@ -109,7 +92,7 @@
             -->
             <property
                 android:name="android.app.PROPERTY_SPECIAL_USE_FGS_SUBTYPE"
-                android:value="Call recording: captures and write audio stream during phone calls via Shizuku." />
+                android:value="Call recording: captures audio during phone calls." />
         </service>
 
         <receiver
@@ -142,13 +125,6 @@
                 android:value="Re-establish ADB wireless-debugging connection after boot." />
         </service>
 
-        <provider
-            android:name="rikka.shizuku.ShizukuProvider"
-            android:authorities="${applicationId}.shizuku"
-            android:enabled="true"
-            android:exported="true"
-            android:multiprocess="false"
-            android:permission="android.permission.INTERACT_ACROSS_USERS_FULL" />
     </application>
 
 </manifest>

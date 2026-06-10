@@ -10,7 +10,6 @@ package com.kitsumed.shizucallrecorder.utils
 
 import android.content.Context
 import android.util.Log
-import com.kitsumed.shizucallrecorder.ILogCallback
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
@@ -31,21 +30,13 @@ import com.kitsumed.shizucallrecorder.integrations.scrcpy.ScrcpyConfig
 import java.io.OutputStreamWriter
 import java.io.PrintWriter
 import com.kitsumed.shizucallrecorder.data.AppPreferences
-import rikka.shizuku.Shizuku
 
 /**
  * A unified, thread-safe, and asynchronous logging utility with built-in log rotation and redaction capabilities.
- * Also serves as an IPC bridge for receiving logs from the ShellService process via AIDL callbacks.
  */
 object AppLogger {
 
     private const val TAG = "AppLogger"
-
-    /**
-     * Reference to a remote callback. When set, this process acts as a producer
-     * and forwards all logs to the remote process instead of writing locally.
-     */
-    private var remoteCallback: ILogCallback? = null
 
     /** Maximum number of lines the log file can hold before being trimmed. */
     private const val MAX_LOG_LINES = 1000
@@ -74,57 +65,19 @@ object AppLogger {
     /** Pointer to the internal application diagnostic log file. */
     private var logFile: File? = null
 
-    /** Indicates whether log redaction is explicitly enabled for the remote process context. */
-    private var remoteRedactionEnabled: Boolean = true
-
     /**
-     * Helper to determine if we are currently running in a secondary/remote process context
-     * (like a Shizuku service or an isolated process) instead of the main application process.
-     */
-    private val isRemoteProcess: Boolean
-        get() {
-            // The main process name accurately matches the APPLICATION_ID.
-            // Any other process (Shizuku, :remote service, etc.) will have a different or suffixed name.
-            return android.app.Application.getProcessName() != BuildConfig.APPLICATION_ID
-        }
-
-    /**
-     * Helper to gracefully determine if log redaction is active without relying solely on AppPreferences,
-     * which are unavailable in remote IPC contexts.
+     * Helper to gracefully determine if log redaction is active.
      */
     private val isRedactionEnabled: Boolean
-        get() = if (isRemoteProcess) remoteRedactionEnabled else prefs?.isDebugEnabled() != true
-
-    /**
-     * An AIDL stub implementation acting as an IPC hook.
-     * Used to receive native logs emitted from fully separated process context, like our ShellService.
-     */
-    val callback: ILogCallback.Stub by lazy {
-        if (isRemoteProcess) {
-            throw IllegalStateException("AppLogger.callback IPC stub must only be accessed and hosted from the main application process.")
-        }
-        object : ILogCallback.Stub() {
-            override fun onLogEvent(level: String, tag: String, message: String, throwableStackTrace: String?) {
-                val fullMessage = if (throwableStackTrace != null) "$message\n$throwableStackTrace" else message
-                val redacted = if (isRedactionEnabled) redact(fullMessage) else fullMessage
-
-                // Pipe IPC logs using the level provided by the remote process
-                logInternal(level, tag, redacted, null)
-            }
-        }
-    }
+        get() = prefs?.isDebugEnabled() != true
 
     /**
      * Initializes the logging mechanism for the main application process.
      * Sets up the primary log file, attaches an uncaught exception handler, and launches the persistent IO loop.
      *
      * @param context The application context.
-     * @throws IllegalStateException if called from a remote process context. Use [initAsRemote] instead for remote contexts.
      */
     fun init(context: Context) {
-        if (isRemoteProcess) {
-            throw IllegalStateException("init() should not be called from a remote process context. Use initAsRemote() instead.")
-        }
         prefs = AppPreferences(context)
         logFile = File(context.cacheDir, "app_debug.log")
 
@@ -173,26 +126,6 @@ object AppLogger {
     }
 
     /**
-     * Initializes the logging mechanism for a remote process (e.g., ShellService).
-     * All logs will be forwarded via IPC to the main application.
-     * This allows us to capture logs from a separate Shizuku process context and send them back to this application process context.
-     *
-     * **NOTE**: Remote logging cannot pass the raw Throwable object in case of exceptions, so it is converted as a string and appended to the message.
-     *
-     * @param callback The AIDL interface hooked to the main process.
-     * @param isRedactionEnabled Whether log redaction is active (passed from the main app to control log redaction).
-     * @throws IllegalStateException if called from the main application process context. Use [init] instead for the main app process.
-     */
-    fun initAsRemote(callback: ILogCallback, isRedactionEnabled: Boolean = true) {
-        if (!isRemoteProcess) {
-            throw IllegalStateException("initAsRemote() should only be called from a remote process context. Use init() for the main app process.")
-        }
-        this.remoteCallback = callback
-        this.remoteRedactionEnabled = isRedactionEnabled
-        Log.i(TAG, "Initialized in remote process context. All logs will be forwarded via IPC to the main application process.")
-    }
-
-    /**
      * Safely deletes the existing internal log file and resets the writing stream
      * and line tracking metrics. Execution is managed sequentially via a Mutex lock.
      */
@@ -221,7 +154,6 @@ object AppLogger {
                 writer.println("=== ShizuCallRecorder AppLogger Export ===")
                 writer.println("Generated: ${SimpleDateFormat("yyyy-MM-dd HH:mm:ss z", Locale.US).format(Date())}")
                 writer.println("App Version: ${BuildConfig.VERSION_NAME} (${BuildConfig.VERSION_CODE})")
-                writer.println("Shizuku Supported Server API: ${Shizuku.getLatestServiceVersion()}")
                 writer.println("Scrcpy Server: ${ScrcpyConfig.SCRCPY_VERSION}")
                 writer.println("Manufacturer: ${Build.MANUFACTURER}")
                 writer.println("Model: ${Build.MODEL}")
@@ -293,21 +225,6 @@ object AppLogger {
      * **WARNING**: YOU MUST ENSURE THE MESSAGE IS [redact] BEFORE CALLING THIS METHOD TO TRY TO AVOID LEAKING SENSITIVE DATA INTO THE LOG FILE.
      */
     private fun logInternal(level: String, tag: String, message: String, t: Throwable?) {
-        // Handle remote process execution securely
-        if (isRemoteProcess) {
-            if (remoteCallback == null) {
-                Log.w(TAG, "IPC Drop: Log event triggered in remote process, but initAsRemote() was never called.")
-                return
-            }
-            try {
-                remoteCallback?.onLogEvent(level, tag, message, t?.let { Log.getStackTraceString(it) })
-            } catch (e: Exception) {
-                Log.v(TAG, "Failed to send log event via IPC callback, likely due to remote process death. Message was: $message", e)
-            }
-            // In remote mode, we rely entirely on the main process to handle log persistence. We do not write anything locally.
-            return
-        }
-
         if (prefs?.isLoggingEnabled() != true) return
 
         val time = SimpleDateFormat("yyyy-MM-dd HH:mm:ss.SSS", Locale.US).format(Date())

@@ -11,10 +11,6 @@ androidxAppcompat = "1.7.1"
 kotlin = "2.3.21"
 composeBom = "2026.05.01"
 
-# Shizuku
-shizuku-api = "13.1.5"
-shizuku-provider = "13.1.5"
-
 # Utility
 aboutlibraries = "14.2.1"
 libphonenumber = "9.0.31"
@@ -40,10 +36,6 @@ androidx-compose-material-icons-extended = { module = "androidx.compose.material
 androidx-compose-ui-tooling = { group = "androidx.compose.ui", name = "ui-tooling" }
 androidx-compose-ui-tooling-preview = { group = "androidx.compose.ui", name = "ui-tooling-preview" }
 androidx-compose-ui-test-manifest = { group = "androidx.compose.ui", name = "ui-test-manifest" }
-
-# Shizuku
-shizukuApi = { module = "dev.rikka.shizuku:api", version.ref = "shizuku-api" }
-shizukuProvider = { module = "dev.rikka.shizuku:provider", version.ref = "shizuku-provider" }
 
 # AboutLibraries
 aboutlibraries-core = { module = "com.mikepenz:aboutlibraries-core", version.ref = "aboutlibraries" }

@@ -78,11 +78,6 @@ class AppPreferences(context: Context) {
         val THEME_MODE = ThemeMode.SYSTEM
         const val DYNAMIC_COLOR = true
         const val SHOW_TOASTS = true
-        // --- Security ---
-        const val SHIZUKU_AUTO_MANAGE = false
-        const val SHIZUKU_START_ON_RECORD = false
-        const val SHIZUKU_KEEP_ALIVE = false
-        const val SHIZUKU_AUTH_KEY = ""
     }
 
     /**
@@ -133,11 +128,7 @@ class AppPreferences(context: Context) {
         // --- UI & Appearance ---
         THEME_MODE("theme_mode"),
         DYNAMIC_COLOR("dynamic_color"),
-        SHOW_TOASTS("show_toasts"),
-        SHIZUKU_AUTO_MANAGE("shizuku_auto_manage"),
-        SHIZUKU_START_ON_RECORD("shizuku_start_on_record"),
-        SHIZUKU_KEEP_ALIVE("shizuku_keep_alive"),
-        SHIZUKU_AUTH_KEY("shizuku_auth_key");
+        SHOW_TOASTS("show_toasts");
     }
 
     // -------- Nested enums
@@ -376,29 +367,4 @@ class AppPreferences(context: Context) {
     /** Sets whether toast notifications are enabled. */
     fun setShowToastsEnabled(enabled: Boolean) = setBoolean(Key.SHOW_TOASTS, enabled)
 
-    // -------- Security --------
-
-    /** Checks if the app should manage starting/stopping Shizuku. */
-    fun isShizukuAutoManageEnabled() = getBoolean(Key.SHIZUKU_AUTO_MANAGE, DefaultsValue.SHIZUKU_AUTO_MANAGE)
-
-    /** Sets whether the app should manage starting/stopping Shizuku. */
-    fun setShizukuAutoManageEnabled(enabled: Boolean) = setBoolean(Key.SHIZUKU_AUTO_MANAGE, enabled)
-
-    /** Checks if Shizuku should only start when recording starts. */
-    fun isShizukuStartOnRecordEnabled() = getBoolean(Key.SHIZUKU_START_ON_RECORD, DefaultsValue.SHIZUKU_START_ON_RECORD)
-
-    /** Sets whether Shizuku should only start when recording starts. */
-    fun setShizukuStartOnRecordEnabled(enabled: Boolean) = setBoolean(Key.SHIZUKU_START_ON_RECORD, enabled)
-
-    /** Checks if Shizuku should be kept alive when no longer needed. */
-    fun isShizukuKeepAliveEnabled() = getBoolean(Key.SHIZUKU_KEEP_ALIVE, DefaultsValue.SHIZUKU_KEEP_ALIVE)
-
-    /** Sets whether Shizuku should be kept alive when no longer needed. */
-    fun setShizukuKeepAliveEnabled(enabled: Boolean) = setBoolean(Key.SHIZUKU_KEEP_ALIVE, enabled)
-
-    /** Gets the Shizuku auth key. */
-    fun getShizukuAuthKey() = getString(Key.SHIZUKU_AUTH_KEY, DefaultsValue.SHIZUKU_AUTH_KEY) ?: DefaultsValue.SHIZUKU_AUTH_KEY
-
-    /** Sets the Shizuku auth key. */
-    fun setShizukuAuthKey(key: String) = setString(Key.SHIZUKU_AUTH_KEY, key)
 }

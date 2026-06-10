@@ -161,7 +161,7 @@ android {
     }
     buildFeatures {
         compose = true
-        aidl = true
+        aidl = false
         buildConfig = true
     }
     packaging {
@@ -249,10 +249,6 @@ dependencies {
 
     // Libphonenumber
     implementation(libs.libphonenumber)
-
-    // Shizuku
-    implementation(libs.shizukuApi)
-    implementation(libs.shizukuProvider)
 
     // WorkManager: reliable background task execution for post-call Drive copy.
     implementation("androidx.work:work-runtime-ktx:2.10.0")

@@ -8,8 +8,6 @@
 
 package com.kitsumed.shizucallrecorder.ui.screens
 
-import android.Manifest
-import android.app.AlertDialog
 import android.content.Intent
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
@@ -33,12 +31,10 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.kitsumed.shizucallrecorder.R
 import com.kitsumed.shizucallrecorder.data.AppPreferences
-import com.kitsumed.shizucallrecorder.integrations.shizuku.ShizukuConnectionManager
 import com.kitsumed.shizucallrecorder.onboarding.OnboardingStatus
 import com.kitsumed.shizucallrecorder.system.openAppSettings
 import com.kitsumed.shizucallrecorder.ui.theme.ShizucallrecorderTheme
 import com.kitsumed.shizucallrecorder.ui.viewmodels.PermissionsViewModel
-import kotlin.system.exitProcess
 
 /**
  * Stateful wrapper that connects [PermissionsViewModel] to [PermissionsContent].

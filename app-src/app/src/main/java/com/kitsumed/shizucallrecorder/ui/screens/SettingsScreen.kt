@@ -63,12 +63,9 @@ import android.net.Uri
 import androidx.appcompat.app.AppCompatDelegate
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
-import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.platform.LocalInspectionMode
 import androidx.compose.ui.platform.LocalResources
 import androidx.compose.ui.text.input.KeyboardType
-import androidx.compose.ui.text.input.PasswordVisualTransformation
-import androidx.compose.ui.text.input.VisualTransformation
 import com.kitsumed.shizucallrecorder.system.openGithubReportIssue
 import org.xmlpull.v1.XmlPullParser
 import java.util.Locale
@@ -202,7 +199,6 @@ fun SettingsContent(
             }
             item { StorageSection(preferences, updateTrigger, actions, onSelectDriveFolder) }
             item { AudioSection(preferences, updateTrigger, actions) }
-            item { SecuritySection(preferences, updateTrigger, actions) }
             item { VisualSection(preferences, updateTrigger, actions) }
             item { DebugSection(preferences, updateTrigger, actions, onExportLogs) }
         }
@@ -395,67 +391,6 @@ private fun VisualSection(preferences: AppPreferences, updateTrigger: Int, actio
     }
 }
 
-/** Shows the security settings.
- *
- * @param preferences   The [AppPreferences] instance to read data from.
- * @param updateTrigger Trigger value to force recomposition when settings change.
- * @param actions       Implementation of [SettingsActions] to handle user interaction.
- */
-@Composable
-private fun SecuritySection(preferences: AppPreferences, updateTrigger: Int, actions: SettingsActions) {
-    val autoManageShizuku = remember(updateTrigger) { preferences.isShizukuAutoManageEnabled() }
-    val shizukuStartOnRecord = remember(updateTrigger) { preferences.isShizukuStartOnRecordEnabled() }
-    val shizukuKeepAlive = remember(updateTrigger) { preferences.isShizukuKeepAliveEnabled() }
-    val shizukuAuthKey = remember(updateTrigger) { preferences.getShizukuAuthKey() }
-
-    SettingsSection(title = stringResource(R.string.settings_section_security)) {
-        ToggleListItem(
-            label           = stringResource(R.string.settings_shizuku_auto_manage),
-            checked         = autoManageShizuku,
-            onCheckedChange = { actions.setShizukuAutoManageEnabled(it) },
-            description     = stringResource(R.string.settings_shizuku_auto_manage_desc)
-        )
-
-        AnimatedVisibility(visible = autoManageShizuku,enter = fadeIn() + expandVertically(),exit = fadeOut() + shrinkVertically()) {
-            Column {
-                var textState by remember(shizukuAuthKey) { mutableStateOf(shizukuAuthKey) }
-                val keyboardController = LocalSoftwareKeyboardController.current
-                var isFocused by remember { mutableStateOf(false) }
-
-                OutlinedTextField(
-                    value    = textState,
-                    onValueChange = { textState = it },
-                    label    = { Text(stringResource(R.string.settings_shizuku_auth_key)) },
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(start = 16.dp, end = 16.dp, bottom = 12.dp)
-                        .onFocusChanged { isFocused = it.isFocused },
-                    singleLine = true,
-                    visualTransformation = if (isFocused) VisualTransformation.None else PasswordVisualTransformation(),
-                    keyboardOptions = KeyboardOptions(imeAction = ImeAction.Done, keyboardType = KeyboardType.Password, showKeyboardOnFocus = true),
-                    keyboardActions = KeyboardActions(onDone = {
-                        actions.setShizukuAuthKey(textState)
-                        keyboardController?.hide()
-                    })
-                )
-
-                ToggleListItem(
-                    label           = stringResource(R.string.settings_shizuku_start_on_record),
-                    checked         = shizukuStartOnRecord,
-                    onCheckedChange = { actions.setShizukuStartOnRecordEnabled(it) },
-                    description     = stringResource(R.string.settings_shizuku_start_on_record_desc)
-                )
-
-                ToggleListItem(
-                    label           = stringResource(R.string.settings_shizuku_keep_alive),
-                    checked         = shizukuKeepAlive,
-                    onCheckedChange = { actions.setShizukuKeepAliveEnabled(it) },
-                    description     = stringResource(R.string.settings_shizuku_keep_alive_desc)
-                )
-            }
-        }
-    }
-}
 
 /** Shows the recording folder, auto-record toggles, and contact-filter options.
  *
@@ -1014,10 +949,6 @@ private fun SettingsScreenPreview() {
             override fun triggerDebugAction(action: DebugAction) {}
             override fun exportLogs(uri: Uri) {}
             override fun getAppVersion(): String = "Version 1.0.0 (Mock)"
-            override fun setShizukuAutoManageEnabled(enabled: Boolean) {}
-            override fun setShizukuStartOnRecordEnabled(enabled: Boolean) {}
-            override fun setShizukuKeepAliveEnabled(enabled: Boolean) {}
-            override fun setShizukuAuthKey(key: String) {}
             override fun setFileNameTemplate(template: String) {}
             override fun setStorageTarget(target: StorageTarget) {}
             override fun setDriveFolderUri(uri: android.net.Uri?) {}
