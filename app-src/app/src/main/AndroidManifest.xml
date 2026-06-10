@@ -11,6 +11,10 @@
     xmlns:tools="http://schemas.android.com/tools">
 
     <uses-permission android:name="moe.shizuku.manager.permission.API_V23" />
+    <!-- Granted via our own ADB shell (pm grant). Lets the app re-enable Wireless debugging
+         (adb_wifi_enabled) on boot so recording survives reboots hands-free. -->
+    <uses-permission android:name="android.permission.WRITE_SECURE_SETTINGS"
+        tools:ignore="ProtectedPermissions" />
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
     <uses-permission android:name="android.permission.READ_PHONE_STATE" />
     <uses-permission android:name="android.permission.READ_CONTACTS" />
