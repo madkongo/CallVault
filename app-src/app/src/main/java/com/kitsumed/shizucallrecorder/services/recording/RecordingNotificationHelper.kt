@@ -78,8 +78,10 @@ class RecordingNotificationHelper(private val context: Context) {
         val actionIcon: Int?
         val actionText: String?
         val actionIntentAction: String?
-        // We want to show the cross-country tip if we are unsure about the metadata, as it is better to be safe than sorry.
-        val subRes: Int = if (state.metadata == null || state.metadata?.isCrossCountry == true) R.string.recording_notification_cross_country_tip else R.string.recording_notification_current_country_tip
+        // Show the cross-country tip only when the call is actually detected as cross-country.
+        // (Previously it also showed when metadata was merely unknown/not-yet-enriched, which made
+        // local calls briefly appear "cross-country" early in the call.)
+        val subRes: Int = if (state.metadata?.isCrossCountry == true) R.string.recording_notification_cross_country_tip else R.string.recording_notification_current_country_tip
 
         when (state) {
             is RecordingServiceState.Starting -> {
