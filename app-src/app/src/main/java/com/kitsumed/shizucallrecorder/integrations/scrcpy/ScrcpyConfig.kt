@@ -103,7 +103,7 @@ object ScrcpyConfig {
      * Resulting command (shell-side) looks like:
      *   app_process / com.genymobile.scrcpy.Server 3.3.4 \
      *       log_level=info video=false audio=true control=false \
-     *       tunnel_forward=false send_dummy_byte=false scid=<socketName> \
+     *       tunnel_forward=true send_dummy_byte=false scid=<socketName> \
      *       audio_source=<audioSource.cliKey> audio_codec=<audioCodec.cliKey> \
      *       send_device_meta=false send_frame_meta=true send_codec_meta=true \
      *       [audio_bit_rate=<audioBitRate>] [audio_dup=true]
@@ -126,12 +126,12 @@ object ScrcpyConfig {
             "video=false",
             "audio=true",
             "control=false",
-            // tunnel_forward=false: scrcpy-server dials OUR LocalServerSocket (not the reverse).
-            // With this mode the server writes no dummy byte before the codec data - the very
-            // first bytes on the socket are the 4-byte FourCC (written by Streamer.writeAudioHeader).
-            // See DesktopConnection.java in scrcpy-server: the dummy byte is only emitted on the
-            // tunnel_forward=true (LocalServerSocket.accept) path.
-            "tunnel_forward=false",
+            // tunnel_forward=true: scrcpy-server creates localabstract:scrcpy_<scid> and waits for
+            // the client to connect. The client (us) opens this socket over the ADB protocol via
+            // openStream("localabstract:scrcpy_<scid>"). The first bytes on the socket are the
+            // 4-byte codec FourCC; no dummy byte is emitted because send_dummy_byte=false below.
+            // This is the ADB transport model (proven in SpikeActions.recordScrcpyTest).
+            "tunnel_forward=true",
             // explicitly suppress the 1-byte result code. We specify it as a double safety
             "send_dummy_byte=false",
             "scid=$socketName",
