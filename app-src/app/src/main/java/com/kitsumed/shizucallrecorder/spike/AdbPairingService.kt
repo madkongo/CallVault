@@ -93,17 +93,21 @@ class AdbPairingService : Service() {
 
     private fun onInput(code: String, port: Int): Notification {
         CoroutineScope(Dispatchers.IO).launch {
-            val result = runCatching {
+            val paired = runCatching {
                 SpikeAdbManager.getInstance(applicationContext).pair("127.0.0.1", port, code)
             }
             stopSearch()
-            val notif = result.fold(
-                onSuccess = { ok ->
-                    if (ok) resultNotification("Paired ✓", "ADB pairing succeeded. You can now Connect.")
-                    else resultNotification("Pairing failed", "pair() returned false (wrong code?)")
-                },
-                onFailure = { resultNotification("Pairing failed", it.message ?: it.toString()) },
-            )
+            val notif = if (paired.getOrNull() == true) {
+                SpikeLog.append("Paired ✓")
+                // Automatically continue: connect → id → forward test.
+                val summary = runCatching { SpikeActions.runAutoChain(applicationContext) }
+                    .getOrElse { "auto-chain error: ${it.message}" }
+                resultNotification("Paired ✓ — checks done", summary)
+            } else {
+                val msg = paired.exceptionOrNull()?.message ?: "pair() returned false (wrong code?)"
+                SpikeLog.append("Pairing failed: $msg")
+                resultNotification("Pairing failed", msg)
+            }
             getSystemService(NotificationManager::class.java).notify(NOTIFICATION_ID, notif)
             stopForeground(STOP_FOREGROUND_DETACH)
             stopSelf()
@@ -148,7 +152,11 @@ class AdbPairingService : Service() {
         builder().setContentTitle("Pairing…").build()
 
     private fun resultNotification(title: String, text: String): Notification =
-        builder().setContentTitle(title).setContentText(text).build()
+        builder()
+            .setContentTitle(title)
+            .setContentText(text)
+            .setStyle(Notification.BigTextStyle().bigText(text))
+            .build()
 
     private fun stopAction(): Notification.Action {
         val pi = PendingIntent.getService(

@@ -28,19 +28,15 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.core.content.ContextCompat
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
 
 /**
  * AdbSpikeActivity — throwaway debug Activity for the embedded-ADB spike.
@@ -48,17 +44,11 @@ import kotlinx.coroutines.withContext
  * Launch via adb:
  *   adb shell am start -n com.kfir.callvault/.spike.AdbSpikeActivity
  *
- * UX (mirrors Shizuku): pairing is driven by [AdbPairingService], a foreground
- * service that runs mDNS discovery and posts a notification with an inline reply
- * field — the user types only the 6-digit code, in the notification. The pairing
- * port and the connect port are both discovered over mDNS ([AdbMdns]); the user
- * never reads or types a port.
- *
- * Buttons:
- *   Start pairing → starts [AdbPairingService]
- *   Connect       → discover _adb-tls-connect._tcp, then SpikeAdbManager.connect()
- *   Run id        → openStream("shell:id")  (expect uid=2000(shell))
- *   Forward test  → openStream("shell:cat /proc/uptime")
+ * Flow (mirrors Shizuku): tap Start pairing → a foreground service ([AdbPairingService])
+ * runs mDNS discovery and posts a notification with an inline reply field. You type
+ * only the 6-digit code. On a successful pair the service AUTOMATICALLY runs
+ * connect → `id` → forward test ([SpikeActions.runAutoChain]); results appear here and
+ * in the result notification. "Run all" repeats that chain on demand (e.g. after a reboot).
  *
  * Will be removed at the end of the spike — do NOT ship to production.
  */
@@ -86,54 +76,11 @@ class AdbSpikeActivity : ComponentActivity() {
     }
 }
 
-// ---- ADB operations (called on IO dispatcher by the screen) ----
-
-private const val MDNS_TIMEOUT_MS = 25_000L
-
-/**
- * Discovers the _adb-tls-connect._tcp port over mDNS, then connects with the
- * persisted key. Verified signature: `connect(String host, int port): boolean`.
- */
-private fun doConnect(context: Context): String {
-    val port = AdbMdns.discoverPort(context, AdbMdns.TLS_CONNECT, MDNS_TIMEOUT_MS)
-        ?: return "connect: no _adb-tls-connect._tcp found — is Wireless debugging ON and paired?"
-    val ok = SpikeAdbManager.getInstance(context).connect("127.0.0.1", port)
-    return "connect(127.0.0.1:$port) → $ok"
-}
-
-/**
- * Opens a one-shot ADB shell stream, reads its entire output to a String, and closes it.
- *   AbsAdbConnectionManager.openStream(String): AdbStream ; AdbStream.openInputStream(): AdbInputStream
- */
-private fun doShellCommand(context: Context, command: String): String {
-    val stream = SpikeAdbManager.getInstance(context).openStream(command)
-    return stream.use { s ->
-        s.openInputStream().use { it.readBytes().toString(Charsets.UTF_8) }
-    }
-}
-
-// ---- Compose UI ----
-
 @Composable
 private fun AdbSpikeScreen(context: Context) {
-    var log by remember { mutableStateOf("Ready.\n") }
-
+    val log by SpikeLog.text.collectAsState()
     val scrollState = rememberScrollState()
     val scope = rememberCoroutineScope()
-
-    fun appendLog(line: String) {
-        log += "$line\n"
-    }
-
-    fun launchIo(label: String, action: () -> String) {
-        scope.launch {
-            appendLog("→ $label …")
-            val result = withContext(Dispatchers.IO) {
-                runCatching { action() }.fold(onSuccess = { it }, onFailure = { "ERROR: ${it.message}" })
-            }
-            appendLog(result)
-        }
-    }
 
     Column(
         modifier = Modifier
@@ -147,13 +94,14 @@ private fun AdbSpikeScreen(context: Context) {
             text = "1. Tap Start pairing.\n" +
                 "2. Open Settings → Developer options → Wireless debugging → " +
                 "Pair device with pairing code.\n" +
-                "3. Enter the 6-digit code in the notification that pops up.\n" +
-                "4. Then tap Connect, then Run id (expect uid=2000).",
+                "3. Enter the 6-digit code in the notification.\n" +
+                "→ connect + id + forward run automatically after pairing.\n" +
+                "Use 'Run all' to repeat the checks (e.g. after a reboot).",
             fontSize = 12.sp,
         )
 
         Button(
-            onClick = { AdbPairingService.start(context); appendLog("→ Start pairing service") },
+            onClick = { AdbPairingService.start(context); SpikeLog.append("→ Start pairing service") },
             modifier = Modifier.fillMaxWidth(),
         ) { Text("Start pairing") }
 
@@ -162,27 +110,12 @@ private fun AdbSpikeScreen(context: Context) {
             horizontalArrangement = Arrangement.spacedBy(8.dp),
         ) {
             Button(
-                onClick = { launchIo("Connect (mDNS)") { doConnect(context) } },
+                onClick = { scope.launch { SpikeActions.runAutoChain(context) } },
                 modifier = Modifier.weight(1f),
-            ) { Text("Connect") }
+            ) { Text("Run all") }
 
             Button(
-                onClick = { launchIo("Run id") { doShellCommand(context, "shell:id") } },
-                modifier = Modifier.weight(1f),
-            ) { Text("Run id") }
-        }
-
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.spacedBy(8.dp),
-        ) {
-            Button(
-                onClick = { launchIo("Forward test") { doShellCommand(context, "shell:cat /proc/uptime") } },
-                modifier = Modifier.weight(1f),
-            ) { Text("Forward test") }
-
-            Button(
-                onClick = { log = "Log cleared.\n" },
+                onClick = { SpikeLog.clear() },
                 modifier = Modifier.weight(1f),
             ) { Text("Clear log") }
         }
