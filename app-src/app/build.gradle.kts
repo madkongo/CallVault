@@ -259,4 +259,9 @@ dependencies {
     // bcprov is already a runtime transitive dep of libadb-android; we need it at compile time too
     // so SpikeAdbManager can use X509V3CertificateGenerator for self-signed cert generation.
     compileOnly("org.bouncycastle:bcprov-jdk15to18:1.81")
+    // Required by libadb-android for ADB TLS pairing: its SslUtils prefers the bundled
+    // Conscrypt (org.conscrypt.OpenSSLProvider) for TLSv1.3 + exportKeyingMaterial. Without it,
+    // pairing falls back to the platform Conscrypt and fails on Android 14+/OEM builds with
+    // NoSuchMethodException: com.android.org.conscrypt.Conscrypt.exportKeyingMaterial.
+    implementation("org.conscrypt:conscrypt-android:2.5.2")
 }
