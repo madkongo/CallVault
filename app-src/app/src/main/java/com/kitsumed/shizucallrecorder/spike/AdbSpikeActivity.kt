@@ -8,7 +8,10 @@
 
 package com.kitsumed.shizucallrecorder.spike
 
+import android.Manifest
 import android.content.Context
+import android.content.pm.PackageManager
+import android.os.Build
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
@@ -22,7 +25,6 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Button
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -35,37 +37,28 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import io.github.muntashirakon.adb.android.AdbMdns
+import androidx.core.content.ContextCompat
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
-import java.net.InetAddress
-import java.util.concurrent.CountDownLatch
-import java.util.concurrent.TimeUnit
-import java.util.concurrent.atomic.AtomicInteger
-import java.util.concurrent.atomic.AtomicReference
 
 /**
- * AdbSpikeActivity — throwaway debug Activity that exercises [SpikeAdbManager].
+ * AdbSpikeActivity — throwaway debug Activity for the embedded-ADB spike.
  *
  * Launch via adb:
  *   adb shell am start -n com.kfir.callvault/.spike.AdbSpikeActivity
  *
- * UX goal (like Shizuku): the user only types the 6-digit pairing code. The pairing
- * port AND the connect port are discovered automatically over mDNS — the user never
- * reads or types a port. The phone's "Pair device with pairing code" dialog must be
- * open while pairing (that is what advertises the _adb-tls-pairing._tcp service).
+ * UX (mirrors Shizuku): pairing is driven by [AdbPairingService], a foreground
+ * service that runs mDNS discovery and posts a notification with an inline reply
+ * field — the user types only the 6-digit code, in the notification. The pairing
+ * port and the connect port are both discovered over mDNS ([AdbMdns]); the user
+ * never reads or types a port.
  *
- * All ADB calls run on [Dispatchers.IO]; results are appended to an on-screen log.
- * Every call is wrapped in [runCatching] so the UI never crashes on failure.
- *
- * API signatures used (verified via `javap` on libadb-android 3.1.1):
- *   mDNS      : AdbMdns(Context, String serviceType, OnAdbDaemonDiscoveredListener{ onPortChanged(InetAddress, int) }); start()/stop()
- *               SERVICE_TYPE_TLS_PAIRING = "adb-tls-pairing", SERVICE_TYPE_TLS_CONNECT = "adb-tls-connect"
- *   pair      : AbsAdbConnectionManager.pair(String host, int port, String code): boolean
- *   connect   : AbsAdbConnectionManager.autoConnect(Context, long timeoutMs): boolean  (mDNS connect discovery)
- *   openStream: AbsAdbConnectionManager.openStream(String): AdbStream
- *   read      : AdbStream.openInputStream(): AdbInputStream  (extends java.io.InputStream)
+ * Buttons:
+ *   Start pairing → starts [AdbPairingService]
+ *   Connect       → discover _adb-tls-connect._tcp, then SpikeAdbManager.connect()
+ *   Run id        → openStream("shell:id")  (expect uid=2000(shell))
+ *   Forward test  → openStream("shell:cat /proc/uptime")
  *
  * Will be removed at the end of the spike — do NOT ship to production.
  */
@@ -73,6 +66,7 @@ class AdbSpikeActivity : ComponentActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        maybeRequestNotificationPermission()
         setContent {
             MaterialTheme {
                 Surface(modifier = Modifier.fillMaxSize()) {
@@ -81,69 +75,35 @@ class AdbSpikeActivity : ComponentActivity() {
             }
         }
     }
+
+    private fun maybeRequestNotificationPermission() {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU &&
+            ContextCompat.checkSelfPermission(this, Manifest.permission.POST_NOTIFICATIONS) !=
+            PackageManager.PERMISSION_GRANTED
+        ) {
+            requestPermissions(arrayOf(Manifest.permission.POST_NOTIFICATIONS), 0)
+        }
+    }
 }
 
 // ---- ADB operations (called on IO dispatcher by the screen) ----
 
-private const val MDNS_DISCOVERY_TIMEOUT_SECONDS = 25L
+private const val MDNS_TIMEOUT_MS = 25_000L
 
 /**
- * Discovers an mDNS-advertised ADB service of [serviceType] and returns its (host, port),
- * or null if nothing was found within [MDNS_DISCOVERY_TIMEOUT_SECONDS].
- *
- * Bridges [AdbMdns]'s async `onPortChanged` callback to a blocking call via a latch,
- * mirroring how the library's own `autoConnect` waits for discovery.
+ * Discovers the _adb-tls-connect._tcp port over mDNS, then connects with the
+ * persisted key. Verified signature: `connect(String host, int port): boolean`.
  */
-private fun discoverService(context: Context, serviceType: String): Pair<String, Int>? {
-    val addrRef = AtomicReference<InetAddress?>(null)
-    val portRef = AtomicInteger(-1)
-    val latch = CountDownLatch(1)
-    val mdns = AdbMdns(context, serviceType) { address, port ->
-        if (address != null && port > 0) {
-            addrRef.set(address)
-            portRef.set(port)
-            latch.countDown()
-        }
-    }
-    mdns.start()
-    try {
-        val found = latch.await(MDNS_DISCOVERY_TIMEOUT_SECONDS, TimeUnit.SECONDS)
-        if (!found) return null
-        val host = addrRef.get()?.hostAddress ?: return null
-        return host to portRef.get()
-    } finally {
-        mdns.stop()
-    }
-}
-
-/**
- * Pairs using ONLY the 6-digit code: the pairing host/port are auto-discovered over mDNS
- * (service `adb-tls-pairing`), which Android advertises while the "Pair device with
- * pairing code" dialog is open.
- */
-private fun doPairAutoDiscover(context: Context, pairingCode: String): String {
-    val (host, port) = discoverService(context, AdbMdns.SERVICE_TYPE_TLS_PAIRING)
-        ?: return "pair: no pairing service found via mDNS — is the phone's " +
-            "'Pair device with pairing code' dialog open?"
-    val ok = SpikeAdbManager.getInstance(context).pair(host, port, pairingCode)
-    return "pair(mDNS $host:$port, ***) → $ok"
-}
-
-/**
- * Connects using mDNS connect discovery — no port needed.
- * Verified signature: `autoConnect(Context, long): boolean`.
- */
-private fun doConnectAuto(context: Context): String {
-    val ok = SpikeAdbManager.getInstance(context).autoConnect(context, 25_000L)
-    return "autoConnect(mDNS) → $ok"
+private fun doConnect(context: Context): String {
+    val port = AdbMdns.discoverPort(context, AdbMdns.TLS_CONNECT, MDNS_TIMEOUT_MS)
+        ?: return "connect: no _adb-tls-connect._tcp found — is Wireless debugging ON and paired?"
+    val ok = SpikeAdbManager.getInstance(context).connect("127.0.0.1", port)
+    return "connect(127.0.0.1:$port) → $ok"
 }
 
 /**
  * Opens a one-shot ADB shell stream, reads its entire output to a String, and closes it.
- *
- * Verified API:
- *   AbsAdbConnectionManager.openStream(String destination): AdbStream
- *   AdbStream.openInputStream(): AdbInputStream  (extends java.io.InputStream)
+ *   AbsAdbConnectionManager.openStream(String): AdbStream ; AdbStream.openInputStream(): AdbInputStream
  */
 private fun doShellCommand(context: Context, command: String): String {
     val stream = SpikeAdbManager.getInstance(context).openStream(command)
@@ -154,15 +114,8 @@ private fun doShellCommand(context: Context, command: String): String {
 
 // ---- Compose UI ----
 
-/**
- * Stateful Compose screen for the ADB spike.
- *
- * All ADB actions are launched via [rememberCoroutineScope] on [Dispatchers.IO].
- * Each result (or exception message) is appended to a scrolling monospace log.
- */
 @Composable
 private fun AdbSpikeScreen(context: Context) {
-    var pairingCode by remember { mutableStateOf("") }
     var log by remember { mutableStateOf("Ready.\n") }
 
     val scrollState = rememberScrollState()
@@ -191,57 +144,48 @@ private fun AdbSpikeScreen(context: Context) {
         Text(text = "ADB Spike", style = MaterialTheme.typography.headlineSmall)
 
         Text(
-            text = "Open the phone's 'Pair device with pairing code' dialog, type the " +
-                "6-digit code below, then tap Pair. The port is found automatically.",
+            text = "1. Tap Start pairing.\n" +
+                "2. Open Settings → Developer options → Wireless debugging → " +
+                "Pair device with pairing code.\n" +
+                "3. Enter the 6-digit code in the notification that pops up.\n" +
+                "4. Then tap Connect, then Run id (expect uid=2000).",
             fontSize = 12.sp,
         )
 
-        OutlinedTextField(
-            value = pairingCode,
-            onValueChange = { pairingCode = it },
-            label = { Text("Pairing code") },
+        Button(
+            onClick = { AdbPairingService.start(context); appendLog("→ Start pairing service") },
             modifier = Modifier.fillMaxWidth(),
-            singleLine = true,
-        )
+        ) { Text("Start pairing") }
 
         Row(
             modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.spacedBy(8.dp),
         ) {
             Button(
-                onClick = {
-                    val code = pairingCode.trim()
-                    if (code.isEmpty()) return@Button appendLog("ERROR: enter the pairing code first")
-                    launchIo("Pair (auto-discover port)") { doPairAutoDiscover(context, code) }
-                },
-                modifier = Modifier.weight(1f),
-            ) { Text("Pair") }
-
-            Button(
-                onClick = { launchIo("Connect (auto)") { doConnectAuto(context) } },
+                onClick = { launchIo("Connect (mDNS)") { doConnect(context) } },
                 modifier = Modifier.weight(1f),
             ) { Text("Connect") }
-        }
 
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.spacedBy(8.dp),
-        ) {
             Button(
                 onClick = { launchIo("Run id") { doShellCommand(context, "shell:id") } },
                 modifier = Modifier.weight(1f),
             ) { Text("Run id") }
+        }
 
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.spacedBy(8.dp),
+        ) {
             Button(
                 onClick = { launchIo("Forward test") { doShellCommand(context, "shell:cat /proc/uptime") } },
                 modifier = Modifier.weight(1f),
             ) { Text("Forward test") }
-        }
 
-        Button(
-            onClick = { log = "Log cleared.\n" },
-            modifier = Modifier.fillMaxWidth(),
-        ) { Text("Clear log") }
+            Button(
+                onClick = { log = "Log cleared.\n" },
+                modifier = Modifier.weight(1f),
+            ) { Text("Clear log") }
+        }
 
         Text(
             text = log,
