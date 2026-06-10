@@ -12,6 +12,7 @@ import android.app.Notification
 import android.app.Service
 import android.content.Context
 import android.content.Intent
+import android.net.Uri
 import android.os.Build
 import android.os.IBinder
 import android.content.pm.ServiceInfo
@@ -23,6 +24,7 @@ import com.kitsumed.shizucallrecorder.integrations.adb.AdbShell
 import com.kitsumed.shizucallrecorder.R
 import com.kitsumed.shizucallrecorder.data.recordings.RecordingDirection
 import com.kitsumed.shizucallrecorder.data.recordings.RecordingMetadata
+import com.kitsumed.shizucallrecorder.system.storage.StorageRouter
 import com.kitsumed.shizucallrecorder.utils.AppLogger
 import com.kitsumed.shizucallrecorder.utils.PhoneNumberManager
 import com.kitsumed.shizucallrecorder.utils.RecordingFileNameFormatter
@@ -336,6 +338,8 @@ class RecordingForegroundService : Service() {
         // Capture metadata before releasing resources, in case we need to query call logs for the final file name if phone number is empty.
         val originalMetadata = activeSession.initializationMetadata
         val uriToRename = activeSession.currentRecordingUri
+        // Capture mimeType before release (currentCodecEnum is not cleared by release()).
+        val mimeType = activeSession.currentCodecEnum.mimeType
 
         // Release all resources held by the recording session, stopping the ADB transport and finalizing the recording file.
         activeSession.release()
@@ -361,20 +365,36 @@ class RecordingForegroundService : Service() {
                     sanitizedRaw
                 }
 
+                // finalUri tracks the URI after any rename attempt, for routing exactly once.
+                val finalUri: Uri
                 if (finalNumber.isNotBlank()) {
                     val updatedMeta = originalMetadata.copy(rawPhoneNumber = finalNumber)
                     val newName = RecordingFileNameFormatter.formatFileName(applicationContext, updatedMeta, activeSession.currentCodecEnum)
+                    val doc = DocumentFile.fromSingleUri(applicationContext, uriToRename)
+                    var renamed = false
                     try {
-                        DocumentFile.fromSingleUri(applicationContext, uriToRename)
-                            ?.renameTo(newName)
-                        AppLogger.d(TAG, "Successfully renamed wrongly detected anonymous recording to: $newName")
+                        renamed = doc?.renameTo(newName) ?: false
+                        if (renamed) {
+                            AppLogger.d(TAG, "Successfully renamed wrongly detected anonymous recording to: $newName")
+                        }
                     } catch (e: Exception) {
                         AppLogger.e(TAG, "Failed to rename file using CallLog fallback", e)
                     }
+                    // After a successful renameTo the DocumentFile's uri reflects the new name;
+                    // on failure fall back to the original URI.
+                    finalUri = if (renamed && doc != null) doc.uri else uriToRename
                 } else {
                     AppLogger.d(TAG, "Call log confirmed the call is anonymous, or no actual number was found. Keeping file name as is.")
+                    finalUri = uriToRename
                 }
+
+                // Route exactly once, after any rename has been applied.
+                routeFinalRecording(finalUri, mimeType)
             }
+        } else if (uriToRename != null) {
+            // Phone number was already known at recording start — no rename needed.
+            // Route the file with its current name immediately (once).
+            routeFinalRecording(uriToRename, mimeType)
         }
         currentState = RecordingServiceState.Standby(null)
         AppLogger.i(TAG, "The recording session has been stopped and resources have been released. Stopping foreground service. Goodbye >3")
@@ -416,6 +436,18 @@ class RecordingForegroundService : Service() {
             if (i < 4) delay(400)
         }
         return null
+    }
+
+    /**
+     * Routes the final (post-rename) recording file to the configured storage destination via [StorageRouter].
+     * Resolves the display name from the DocumentFile; if the DocumentFile cannot be resolved the call is a no-op.
+     *
+     * @param uri      The URI of the finalized recording file.
+     * @param mimeType The MIME type of the recording (e.g. "audio/opus" or "audio/mp4a-latm").
+     */
+    private fun routeFinalRecording(uri: Uri, mimeType: String) {
+        val name = DocumentFile.fromSingleUri(applicationContext, uri)?.name ?: return
+        StorageRouter.route(applicationContext, uri, name, mimeType)
     }
 
     /**
