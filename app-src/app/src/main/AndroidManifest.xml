@@ -10,6 +10,7 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools">
 
+    <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
     <uses-permission android:name="moe.shizuku.manager.permission.API_V23" />
     <!-- Granted via our own ADB shell (pm grant). Lets the app re-enable Wireless debugging
          (adb_wifi_enabled) on boot so recording survives reboots hands-free. -->
@@ -119,6 +120,27 @@
                 <action android:name="android.intent.action.PHONE_STATE" />
             </intent-filter>
         </receiver>
+
+        <!-- Boot receiver: re-enables Wireless debugging and reconnects ADB after reboot -->
+        <receiver
+            android:name=".services.boot.BootReceiver"
+            android:enabled="true"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.intent.action.BOOT_COMPLETED" />
+                <action android:name="android.intent.action.QUICKBOOT_POWERON" />
+            </intent-filter>
+        </receiver>
+
+        <!-- Foreground service used by BootReceiver to reconnect ADB off the main thread -->
+        <service
+            android:name=".services.boot.AdbConnectionService"
+            android:exported="false"
+            android:foregroundServiceType="specialUse">
+            <property
+                android:name="android.app.PROPERTY_SPECIAL_USE_FGS_SUBTYPE"
+                android:value="Re-establish ADB wireless-debugging connection after boot." />
+        </service>
 
         <provider
             android:name="rikka.shizuku.ShizukuProvider"
