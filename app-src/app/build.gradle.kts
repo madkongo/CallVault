@@ -161,7 +161,10 @@ android {
     }
     buildFeatures {
         compose = true
-        aidl = false
+        // Re-enabled for CallVault Plan 5 Task 0c: the binder command-channel spike needs the
+        // generated AIDL stubs (IPersistDebugService, BinderContainer) shared between the app and the
+        // app_process daemon. THROWAWAY — flip back to false when persistserver/ + aidl/ are removed.
+        aidl = true
         buildConfig = true
     }
     packaging {
