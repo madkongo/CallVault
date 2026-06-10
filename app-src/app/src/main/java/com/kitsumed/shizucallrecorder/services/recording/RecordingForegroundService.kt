@@ -20,6 +20,7 @@ import android.provider.CallLog
 import androidx.documentfile.provider.DocumentFile
 import com.kitsumed.shizucallrecorder.data.AppPreferences
 import com.kitsumed.shizucallrecorder.integrations.adb.AdbShell
+import com.kitsumed.shizucallrecorder.server.RecorderServerLauncher
 import com.kitsumed.shizucallrecorder.R
 import com.kitsumed.shizucallrecorder.data.recordings.RecordingDirection
 import com.kitsumed.shizucallrecorder.data.recordings.RecordingMetadata
@@ -185,7 +186,12 @@ class RecordingForegroundService : Service() {
                 // throws NetworkOnMainThreadException and would ANR.
                 serviceScope.launch(Dispatchers.IO) {
                     try {
-                        if (!AdbShell.ensureConnected(this@RecordingForegroundService)) {
+                        // In persistent-server (daemon) mode the daemon is commanded over binder and
+                        // needs NO ADB at record time, so we must NOT call ensureConnected here (it would
+                        // re-enable Wireless debugging). The daemon path's ensureServerRunning handles
+                        // (re)launch when needed. Only the legacy local path requires a live ADB shell.
+                        val daemonMode = AppPreferences(this@RecordingForegroundService).isPersistentServerEnabled()
+                        if (!daemonMode && !AdbShell.ensureConnected(this@RecordingForegroundService)) {
                             throw IllegalStateException("ADB shell not connected. Pair once in setup and keep Wireless debugging ON.")
                         }
                         startNewRecordingSession(currentMeta)
@@ -209,12 +215,21 @@ class RecordingForegroundService : Service() {
             ACTION_STANDBY -> {
                 currentState = RecordingServiceState.Standby(currentMeta)
                 serviceScope.launch(Dispatchers.IO) {
-                    // Pre-warm the ADB connection as early as possible (RINGING/OUTGOING standby), so
-                    // it is already live by the time the call connects — this also re-enables Wireless
-                    // debugging if the OEM disabled it on reboot. For incoming calls the ring gives us
-                    // several seconds head start, avoiding clipping the start of the recording.
-                    AppLogger.i(TAG, "Entered standby for ${currentMeta?.direction} call; pre-warming ADB connection")
-                    AdbShell.ensureConnected(this@RecordingForegroundService)
+                    if (AppPreferences(this@RecordingForegroundService).isPersistentServerEnabled()) {
+                        // Daemon mode: warm the persistent recorder server instead of the ADB connection.
+                        // ensureServerRunning is a no-op when the binder is already connected (no WD touch);
+                        // it only (transiently) needs ADB if the daemon has to be relaunched. This keeps
+                        // Wireless debugging OFF between uses — the whole point of the persistent server.
+                        AppLogger.i(TAG, "Entered standby (daemon mode); ensuring recorder server is running")
+                        RecorderServerLauncher.ensureServerRunning(this@RecordingForegroundService)
+                    } else {
+                        // Pre-warm the ADB connection as early as possible (RINGING/OUTGOING standby), so
+                        // it is already live by the time the call connects — this also re-enables Wireless
+                        // debugging if the OEM disabled it on reboot. For incoming calls the ring gives us
+                        // several seconds head start, avoiding clipping the start of the recording.
+                        AppLogger.i(TAG, "Entered standby for ${currentMeta?.direction} call; pre-warming ADB connection")
+                        AdbShell.ensureConnected(this@RecordingForegroundService)
+                    }
                 }
             }
 

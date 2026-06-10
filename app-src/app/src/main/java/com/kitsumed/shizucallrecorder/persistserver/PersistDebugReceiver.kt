@@ -75,6 +75,13 @@ class PersistDebugReceiver : BroadcastReceiver() {
                     AppLogger.i(BINDER_TAG, "PersistDebugReceiver binder ping thread finished")
                 }.apply { isDaemon = true }.start()
             }
+
+            ACTION_SET_PERSISTENT -> {
+                // Debug-only: flip the isPersistentServerEnabled gate from adb without the (Task 5) UI.
+                val enabled = intent.getBooleanExtra("enabled", true)
+                com.kitsumed.shizucallrecorder.data.AppPreferences(appContext).setPersistentServerEnabled(enabled)
+                AppLogger.i(RECORDER_TAG, "SET_PERSISTENT -> isPersistentServerEnabled=$enabled")
+            }
         }
     }
 
@@ -161,5 +168,8 @@ class PersistDebugReceiver : BroadcastReceiver() {
 
         /** Task 4: launches the PRODUCTION recorder server (RecorderServerLauncher.ensureServerRunning). */
         const val ACTION_LAUNCH_RECORDER_SERVER = "com.kitsumed.shizucallrecorder.persist.LAUNCH_RECORDER_SERVER"
+
+        /** Debug-only: set the isPersistentServerEnabled gate (boolean extra "enabled", default true). */
+        const val ACTION_SET_PERSISTENT = "com.kitsumed.shizucallrecorder.persist.SET_PERSISTENT"
     }
 }

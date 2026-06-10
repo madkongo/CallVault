@@ -129,6 +129,8 @@
                 <action android:name="com.kitsumed.shizucallrecorder.persist.BINDER_PING" />
                 <!-- Task 4: launch the PRODUCTION recorder server via RecorderServerLauncher. -->
                 <action android:name="com.kitsumed.shizucallrecorder.persist.LAUNCH_RECORDER_SERVER" />
+                <!-- Task 4: toggle the isPersistentServerEnabled gate from adb (no UI yet). -->
+                <action android:name="com.kitsumed.shizucallrecorder.persist.SET_PERSISTENT" />
             </intent-filter>
         </receiver>
 
