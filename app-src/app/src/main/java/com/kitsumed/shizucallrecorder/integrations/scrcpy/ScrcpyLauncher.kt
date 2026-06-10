@@ -31,12 +31,19 @@ class ScrcpyLauncher private constructor(
     val audioInput: InputStream,
 ) {
     /**
-     * Closes the audio and shell streams, releasing the ADB connections.
-     * Safe to call multiple times — errors are silently swallowed.
+     * Closes the audio and shell streams, which sends ADB CLSE packets that signal scrcpy-server
+     * to exit (otherwise it lingers as an orphan `app_process`).
+     *
+     * Runs on a background thread: closing performs network I/O over the ADB TLS socket, which
+     * throws [android.os.NetworkOnMainThreadException] on the main thread (stop() is often called
+     * from the main thread, e.g. RecordingForegroundService.onDestroy / ACTION_STOP_RECORDING).
+     * Fire-and-forget — we don't need to block the caller on cleanup. Safe to call multiple times.
      */
     fun stop() {
-        runCatching { audioStream.close() }
-        runCatching { shellStream.close() }
+        Thread {
+            runCatching { audioStream.close() }
+            runCatching { shellStream.close() }
+        }.apply { isDaemon = true }.start()
     }
 
     companion object {
