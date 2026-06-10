@@ -8,13 +8,12 @@
 
 package com.kitsumed.shizucallrecorder.integrations.scrcpy
 
-import android.os.ParcelFileDescriptor
 import com.kitsumed.shizucallrecorder.utils.AppLogger
 import java.io.BufferedInputStream
 import java.io.Closeable
 import java.io.DataInputStream
 import java.io.EOFException
-import java.io.FileInputStream
+import java.io.InputStream
 
 /**
  * Reads the binary audio stream that scrcpy-server sends over the pipe.
@@ -53,8 +52,8 @@ import java.io.FileInputStream
  *   https://github.com/Genymobile/scrcpy/blob/master/server/src/main/java/com/genymobile/scrcpy/audio/AudioCodec.java
  */
 class ScrcpyClient(
-    /** The read-end of the kernel pipe carrying the scrcpy audio stream. */
-    private val inputPfd: ParcelFileDescriptor,
+    /** The input stream carrying the scrcpy audio stream (pipe, socket, or any other transport). */
+    private val input: InputStream,
     /**
      * The codec enum we expect to receive, resolved from the user's codec preference.
      * The stream header FourCC is verified against this value; a mismatch is logged as a warning.
@@ -178,7 +177,7 @@ class ScrcpyClient(
         // BufferedInputStream reduces the number of native read() syscalls by batching
         // small reads into a larger kernel buffer.
         val inputStream = DataInputStream(
-            BufferedInputStream(FileInputStream(inputPfd.fileDescriptor))
+            BufferedInputStream(input)
         )
         try {
             // Read the 4-byte FourCC header sent by scrcpy-server (no dummy byte with tunnel_forward=false).
@@ -247,7 +246,7 @@ class ScrcpyClient(
             AppLogger.w(TAG, "Stream ended with error: ${e.message}")
             listener.onStreamEnd(e.message)
         } finally {
-            runCatching { inputStream.close() } // do NOT close inputPfd here; that is done in close()
+            runCatching { inputStream.close() } // closing inputStream also closes the underlying input
         }
     }
 
@@ -257,12 +256,12 @@ class ScrcpyClient(
     }
 
     /**
-     * Stops the loop and closes [inputPfd]. Closing the PFD causes any blocking read inside
+     * Stops the loop and closes [input]. Closing the stream causes any blocking read inside
      * [start] to throw, allowing the loop to exit even if [stop] hasn't been observed yet.
      */
     override fun close() {
         stop()
-        runCatching { inputPfd.close() }
+        runCatching { input.close() }
     }
 
     // Private helpers

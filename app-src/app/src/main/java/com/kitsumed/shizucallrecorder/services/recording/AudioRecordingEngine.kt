@@ -182,7 +182,7 @@ class AudioRecordingEngine {
         scrcpyAudioMuxer?.initialize(currentCodecEnum)
 
         scrcpyClient = ScrcpyClient(
-            inputPfd = inputPfd,
+            input = ParcelFileDescriptor.AutoCloseInputStream(inputPfd),
             expectedCodec = codecEnum,
             listener = object : ScrcpyClient.AudioPacketListener {
                 /**
