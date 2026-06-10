@@ -12,6 +12,11 @@
 package com.kitsumed.shizucallrecorder.spike
 
 import android.content.Context
+import com.kitsumed.shizucallrecorder.integrations.scrcpy.ScrcpyAudioCodec
+import com.kitsumed.shizucallrecorder.integrations.scrcpy.ScrcpyAudioSource
+import com.kitsumed.shizucallrecorder.integrations.scrcpy.ScrcpyConfig
+import com.kitsumed.shizucallrecorder.integrations.scrcpy.ServerExtractor
+import io.github.muntashirakon.adb.AdbStream
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.withContext
@@ -57,6 +62,55 @@ object SpikeActions {
             SpikeLog.append(msg)
             msg
         }
+    }
+
+    /**
+     * Plan 2 GATE smoke test: launch scrcpy-server over ADB with tunnel_forward=true, connect its
+     * localabstract audio socket (retry-open, Tango-style), and report the codec FourCC + bytes read
+     * in ~5s. MIC source — works without an active call (shell uid 2000 can capture). Proves the
+     * scrcpy-audio-over-ADB transport before any production refactor.
+     */
+    suspend fun recordScrcpyTest(context: Context): String = withContext(Dispatchers.IO) {
+        if (!connect(context)) return@withContext "scrcpy: connect failed".also { SpikeLog.append(it) }
+        delay(CONNECT_SETTLE_MS)
+        val serverPath = ScrcpyConfig.getServerPath(context)
+        if (!ServerExtractor.ensureServerFile(context, serverPath)) {
+            return@withContext "scrcpy: server extract failed ($serverPath)".also { SpikeLog.append(it) }
+        }
+        val scid = ScrcpyConfig.getRandomSocketName()
+        // Reuse the proven args; flip to tunnel_forward=true for the ADB localabstract model.
+        val args = ScrcpyConfig.buildServerArgs(scid, ScrcpyAudioSource.MIC, ScrcpyAudioCodec.fromKey("opus"), 16000)
+            .joinToString(" ").replace("tunnel_forward=false", "tunnel_forward=true")
+        val mgr = SpikeAdbManager.getInstance(context)
+        SpikeLog.append("→ scrcpy: launching server (scid=$scid) …")
+        val shell = mgr.openStream("shell:CLASSPATH=$serverPath app_process / ${ScrcpyConfig.SERVER_MAIN_CLASS} $args")
+        // REQUIRED (Tango): drain stdout or it back-pressures the multiplexed ADB connection.
+        Thread { runCatching { shell.openInputStream().bufferedReader().forEachLine { SpikeLog.append("[srv] $it") } } }
+            .apply { isDaemon = true }.start()
+        // Readiness = retry-open the localabstract socket until the server creates it.
+        val sockName = "localabstract:${ScrcpyConfig.SERVER_SOCKET_NAME_PREFIX}$scid"
+        var audio: AdbStream? = null
+        repeat(100) {
+            if (audio == null) {
+                runCatching { audio = mgr.openStream(sockName) }
+                if (audio == null) Thread.sleep(100)
+            }
+        }
+        val a = audio ?: run {
+            runCatching { shell.close() }
+            return@withContext "scrcpy: audio socket never ready ($sockName)".also { SpikeLog.append(it) }
+        }
+        val ins = a.openInputStream()
+        val header = ByteArray(4)
+        var n = 0
+        while (n < 4) { val r = ins.read(header, n, 4 - n); if (r < 0) break; n += r }
+        val fourcc = header.copyOf(n).joinToString("") { "%02x".format(it) }
+        var total = 0L
+        val buf = ByteArray(16 * 1024)
+        val end = System.currentTimeMillis() + 5000
+        while (System.currentTimeMillis() < end) { val r = ins.read(buf); if (r < 0) break; total += r }
+        runCatching { a.close() }; runCatching { shell.close() }
+        "scrcpy: header=0x$fourcc bytes=$total".also { SpikeLog.append(it) }
     }
 
     /**

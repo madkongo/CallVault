@@ -134,6 +134,11 @@ private fun AdbSpikeScreen(context: Context) {
             ) { Text("Clear log") }
         }
 
+        Button(
+            onClick = { scope.launch { SpikeActions.recordScrcpyTest(context) } },
+            modifier = Modifier.fillMaxWidth(),
+        ) { Text("scrcpy audio test") }
+
         Text(
             text = log,
             modifier = Modifier
