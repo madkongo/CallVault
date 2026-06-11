@@ -129,7 +129,7 @@ object RecordingsRepository {
             // device copy's uri/size are also captured in localUri/localSizeBytes so a BOTH item
             // can later play each physical copy individually.
             if (deviceFolder != null) {
-                for (item in enumerateFolder(context, deviceFolder)) {
+                for (item in enumerateFolder(context, deviceFolder, isCloud = false)) {
                     byName.putIfAbsent(
                         item.displayName,
                         item.copy(
@@ -141,7 +141,7 @@ object RecordingsRepository {
                 }
             }
             if (driveFolder != null) {
-                for (item in enumerateFolder(context, driveFolder)) {
+                for (item in enumerateFolder(context, driveFolder, isCloud = true)) {
                     val existing = byName[item.displayName]
                     if (existing == null) {
                         // Only on Drive → DRIVE, with Drive uri for playback.
@@ -261,14 +261,24 @@ object RecordingsRepository {
         }
     }.getOrNull()
 
-    /** Enumerates one SAF folder, filtering to audio files. Never throws. */
-    private fun enumerateFolder(context: Context, folderUri: Uri): List<RecordingItem> {
+    /**
+     * Enumerates one SAF folder, filtering to audio files. Never throws.
+     *
+     * IMPORTANT: cloud providers (notably Google Drive) cache both their folder listing AND each
+     * file's metadata, so [DocumentFile.listFiles]/[DocumentFile.exists]/[DocumentFile.length] can all
+     * report a file that was deleted in the cloud as a present, non-empty blob — a "phantom" recording
+     * the user can see but can't play. Metadata checks alone do NOT catch this. We defend against it in
+     * [isUsable]: for a cloud folder ([isCloud]) we force the provider to actually resolve the bytes
+     * (open the document); a phantom throws and is dropped. For the local device folder, the cheap
+     * metadata check is sufficient and we skip the open to avoid pointless I/O.
+     */
+    private fun enumerateFolder(context: Context, folderUri: Uri, isCloud: Boolean): List<RecordingItem> {
         val result = mutableListOf<RecordingItem>()
         runCatching {
             val tree = DocumentFile.fromTreeUri(context, folderUri)
             val files = tree?.listFiles() ?: emptyArray()
             for (doc in files) {
-                if (doc.isFile && isAudio(doc)) {
+                if (doc.isFile && isAudio(doc) && isUsable(context, doc, isCloud)) {
                     result.add(toItem(doc))
                 }
             }
@@ -276,6 +286,28 @@ object RecordingsRepository {
             AppLogger.w(TAG, "Failed to enumerate folder $folderUri: ${e.message}")
         }
         return result
+    }
+
+    /**
+     * True if [doc] is a real, playable recording. Always requires existing/readable/non-empty
+     * metadata. For a cloud folder ([isCloud]) this ALSO opens the document to force the provider to
+     * resolve the underlying bytes — the only reliable way to detect a Google-Drive phantom, whose
+     * cached metadata still reports a present 293 KB blob long after the file was deleted in the cloud.
+     * A phantom throws [java.io.FileNotFoundException] on open and is dropped. Best-effort: any thrown
+     * check treats the entry as not-usable.
+     */
+    private fun isUsable(context: Context, doc: DocumentFile, isCloud: Boolean): Boolean = runCatching {
+        if (!doc.exists() || !doc.canRead() || doc.length() <= 0L) return false
+        if (isCloud) {
+            // Open + read one byte so a lazy provider actually resolves the document. A deleted-but-
+            // cached Drive file throws here; a real file yields its first byte cheaply.
+            val opened = context.contentResolver.openInputStream(doc.uri)?.use { it.read() >= 0 } ?: false
+            if (!opened) return false
+        }
+        true
+    }.getOrElse { e ->
+        AppLogger.d(TAG, "Dropping unreadable/phantom recording ${doc.name}: ${e.message}")
+        false
     }
 
     /** True if the document looks like a CallVault audio file (by extension or an audio mime type). */
