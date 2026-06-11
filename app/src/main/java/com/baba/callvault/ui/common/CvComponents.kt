@@ -22,6 +22,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.CircleShape
@@ -71,7 +72,8 @@ fun CvScaffold(
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(start = if (onBack != null) 4.dp else 20.dp, end = 8.dp, top = 14.dp, bottom = 10.dp),
+                    .statusBarsPadding()
+                    .padding(start = if (onBack != null) 4.dp else 20.dp, end = 8.dp, top = 16.dp, bottom = 10.dp),
                 verticalAlignment = Alignment.CenterVertically,
             ) {
                 if (onBack != null) {

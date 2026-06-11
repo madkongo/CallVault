@@ -8,7 +8,7 @@
 <resources>
     <!-- Hero status card -->
     <string name="home_hero_status_label">Status</string>
-    <string name="home_hero_pill_ready">Protected</string>
+    <string name="home_hero_pill_ready">Active</string>
     <string name="home_hero_pill_not_paired">Action needed</string>
     <string name="home_hero_pill_no_folder">Action needed</string>
 

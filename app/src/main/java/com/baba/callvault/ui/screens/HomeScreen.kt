@@ -332,21 +332,24 @@ private fun RecordingFilterBar(
     )
     val directionValueLabel = directionOptions.first { it.value == directionFilter }.label
 
-    // Contact facet: "All contacts" + one entry per distinct contact key (already A→Z sorted).
+    // Contact facet: dropdown keeps the full "All contacts" wording; the chip itself shows the
+    // compact "All" so Contact + Date fit together on one line.
     val allContactsLabel = stringResource(R.string.home_filter_contact_all)
+    val allContactsShort = stringResource(R.string.home_filter_contact_all_short)
     val contactOptions = buildList<FilterOption<String?>> {
         add(FilterOption(null, allContactsLabel))
         availableContacts.forEach { add(FilterOption(it, it)) }
     }
-    val contactValueLabel = contactFilter ?: allContactsLabel
+    val contactValueLabel = contactFilter ?: allContactsShort
 
-    // Date facet: "All dates" + one entry per distinct day key (already newest-first).
+    // Date facet: dropdown keeps "All dates"; the chip itself shows the compact "All".
     val allDatesLabel = stringResource(R.string.home_filter_date_all)
+    val allDatesShort = stringResource(R.string.home_filter_date_all_short)
     val dateOptions = buildList<FilterOption<String?>> {
         add(FilterOption(null, allDatesLabel))
         availableDates.forEach { add(FilterOption(it, it)) }
     }
-    val dateValueLabel = dateFilter ?: allDatesLabel
+    val dateValueLabel = dateFilter ?: allDatesShort
 
     FlowRow(
         modifier = Modifier.fillMaxWidth(),
@@ -495,14 +498,18 @@ private fun SourceBadge(source: RecordingSource) {
                 modifier = Modifier.size(12.dp)
             )
         }
-        Spacer(Modifier.width(5.dp))
-        Text(
-            text = label,
-            style = MaterialTheme.typography.labelSmall,
-            color = color,
-            maxLines = 1,
-            overflow = TextOverflow.Ellipsis
-        )
+        // BOTH: show only the two glyphs (no text — it truncated to "Dev…").
+        // Single-source rows keep their text label alongside the icon.
+        if (source != RecordingSource.BOTH) {
+            Spacer(Modifier.width(5.dp))
+            Text(
+                text = label,
+                style = MaterialTheme.typography.labelSmall,
+                color = color,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis
+            )
+        }
     }
 }
 
@@ -727,6 +734,7 @@ private fun RecordingRow(
             Spacer(Modifier.height(12.dp))
             item.localUri?.let { uri ->
                 CopySubEntry(
+                    source = RecordingSource.LOCAL,
                     label = stringResource(R.string.home_copy_device),
                     sizeBytes = item.localSizeBytes,
                     uri = uri,
@@ -743,6 +751,7 @@ private fun RecordingRow(
             if (item.localUri != null && item.driveUri != null) Spacer(Modifier.height(8.dp))
             item.driveUri?.let { uri ->
                 CopySubEntry(
+                    source = RecordingSource.DRIVE,
                     label = stringResource(R.string.home_copy_drive),
                     sizeBytes = item.driveSizeBytes,
                     uri = uri,
@@ -767,6 +776,7 @@ private fun RecordingRow(
  */
 @Composable
 private fun CopySubEntry(
+    source: RecordingSource,
     label: String,
     sizeBytes: Long?,
     uri: Uri,
@@ -817,6 +827,18 @@ private fun CopySubEntry(
                 }
             }
             Spacer(Modifier.width(12.dp))
+            // Source glyph to the left of the Device/Drive tag.
+            Icon(
+                imageVector = if (source == RecordingSource.DRIVE) {
+                    Icons.Filled.Cloud
+                } else {
+                    Icons.Filled.Smartphone
+                },
+                contentDescription = null,
+                tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                modifier = Modifier.size(16.dp)
+            )
+            Spacer(Modifier.width(6.dp))
             Text(
                 text = label,
                 style = MaterialTheme.typography.bodyMedium,
