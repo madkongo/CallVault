@@ -22,6 +22,7 @@ import com.baba.callvault.data.AppPreferences
 import com.baba.callvault.integrations.adb.AdbShell
 import com.baba.callvault.server.RecorderServerLauncher
 import com.baba.callvault.R
+import com.baba.callvault.data.recordings.RecordingCatalog
 import com.baba.callvault.data.recordings.RecordingDirection
 import com.baba.callvault.data.recordings.RecordingMetadata
 import com.baba.callvault.system.storage.StorageRouter
@@ -414,7 +415,18 @@ class RecordingForegroundService : Service() {
      * @param mimeType The MIME type of the recording (e.g. "audio/opus" or "audio/mp4a-latm").
      */
     private fun routeFinalRecording(uri: Uri, mimeType: String) {
-        val name = DocumentFile.fromSingleUri(applicationContext, uri)?.name ?: return
+        val doc = DocumentFile.fromSingleUri(applicationContext, uri) ?: return
+        val name = doc.name ?: return
+        val sizeBytes = doc.length()
+        val lastModified = doc.lastModified()
+        // Record this finished recording in CallVault's own catalog (the Home list's source of truth).
+        // The file is on the device now, so this is the local copy; the copy/sweep workers later stamp
+        // the Drive copy onto this same row by name. Done on a detached IO scope because the service may
+        // be torn down right after (the process is given a few seconds to live — same rationale as the
+        // CallLog fallback above). Written for every storage target, regardless of where the file lands.
+        CoroutineScope(Dispatchers.IO).launch {
+            RecordingCatalog.recordLocal(applicationContext, name, uri, sizeBytes, lastModified)
+        }
         StorageRouter.route(applicationContext, uri, name, mimeType)
     }
 

@@ -14,6 +14,7 @@ import androidx.work.CoroutineWorker
 import androidx.work.WorkerParameters
 import com.baba.callvault.data.AppPreferences
 import com.baba.callvault.data.StorageTarget
+import com.baba.callvault.data.recordings.RecordingCatalog
 import com.baba.callvault.utils.AppLogger
 
 /**
@@ -80,6 +81,10 @@ class SyncSweepWorker(ctx: Context, params: WorkerParameters) : CoroutineWorker(
             copied++
             existingDriveNames.add(name.lowercase())
             if (deleteLocal) runCatching { file.delete() }
+            // Stamp the Drive copy onto the catalog (clearing the local copy for DRIVE-only mode) so the
+            // Home list reflects the swept file without re-scanning the Drive folder.
+            val destSize = SafHelper.fileSize(applicationContext, result)
+            RecordingCatalog.markDrive(applicationContext, name, result, destSize.takeIf { it > 0L }, deleteLocal)
         }
 
         AppLogger.i(TAG, "Sweep complete (target=$target copied=$copied failures=$failures deleteLocal=$deleteLocal).")
