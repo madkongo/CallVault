@@ -13,6 +13,7 @@ import android.net.Uri
 import android.provider.ContactsContract
 import androidx.documentfile.provider.DocumentFile
 import com.baba.callvault.data.AppPreferences
+import com.baba.callvault.data.StorageTarget
 import com.baba.callvault.system.permissions.PermissionChecks
 import com.baba.callvault.utils.AppLogger
 import kotlinx.coroutines.Dispatchers
@@ -117,19 +118,24 @@ object RecordingsRepository {
     suspend fun listRecordings(context: Context): List<RecordingItem> = withContext(Dispatchers.IO) {
         runCatching {
             val prefs = AppPreferences(context)
+            val target = prefs.getStorageTarget()
             val deviceFolder = prefs.getRecordingFolderUri()
             val driveFolder = prefs.getDriveFolderUri()
 
-            // Enumerate each folder independently so we can record WHERE each name was found.
-            // Device items are preferred for playback (their single-document URI is kept), but the
-            // resulting source reflects every folder the name appeared in (LOCAL / DRIVE / BOTH).
+            // Merge the configured folders, recording WHERE each display name was found. The device
+            // folder is CallVault's source of truth for LOCAL and BOTH (it always keeps the local
+            // copy), so in BOTH mode a Drive copy only ANNOTATES a recording that also exists locally
+            // (mark BOTH + keep the Drive uri/size for the expandable per-copy UI). A Drive-ONLY name
+            // in BOTH mode is a deleted/orphaned file — notably a stale Google Drive listing-cache
+            // "phantom" the cloud still reports after deletion — and is intentionally NOT surfaced.
+            // In DRIVE mode the local copy is removed after sync, so Drive IS the source of truth and
+            // is enumerated directly. This avoids ever opening a Drive document to probe it, which is
+            // what made the Google Drive app raise its own "synchronization issue" toast.
             val byName = LinkedHashMap<String, RecordingItem>()
 
-            // Device folder first so its uri wins for playback when a name exists in both. The
-            // device copy's uri/size are also captured in localUri/localSizeBytes so a BOTH item
-            // can later play each physical copy individually.
-            if (deviceFolder != null) {
-                for (item in enumerateFolder(context, deviceFolder, isCloud = false)) {
+            // 1. Device folder — canonical for LOCAL and BOTH; its uri wins for playback.
+            if (target != StorageTarget.DRIVE && deviceFolder != null) {
+                for (item in enumerateFolder(context, deviceFolder)) {
                     byName.putIfAbsent(
                         item.displayName,
                         item.copy(
@@ -140,25 +146,31 @@ object RecordingsRepository {
                     )
                 }
             }
-            if (driveFolder != null) {
-                for (item in enumerateFolder(context, driveFolder, isCloud = true)) {
-                    val existing = byName[item.displayName]
-                    if (existing == null) {
-                        // Only on Drive → DRIVE, with Drive uri for playback.
-                        byName[item.displayName] = item.copy(
+
+            // 2a. DRIVE mode — Drive is the only source; surface its entries directly.
+            if (target == StorageTarget.DRIVE && driveFolder != null) {
+                for (item in enumerateFolder(context, driveFolder)) {
+                    byName.putIfAbsent(
+                        item.displayName,
+                        item.copy(
                             source = RecordingSource.DRIVE,
                             driveUri = item.uri,
                             driveSizeBytes = item.sizeBytes
                         )
-                    } else {
-                        // Already seen in the device folder → present in BOTH; keep device uri as
-                        // the primary, but record the Drive copy's uri/size too.
-                        byName[item.displayName] = existing.copy(
-                            source = RecordingSource.BOTH,
-                            driveUri = item.uri,
-                            driveSizeBytes = item.sizeBytes
-                        )
-                    }
+                    )
+                }
+            }
+
+            // 2b. BOTH mode — Drive only annotates names already found locally. Drive-only names are
+            //     skipped (phantom/orphan), so a stale cloud-cache entry never shows.
+            if (target == StorageTarget.BOTH && driveFolder != null) {
+                for (item in enumerateFolder(context, driveFolder)) {
+                    val existing = byName[item.displayName] ?: continue
+                    byName[item.displayName] = existing.copy(
+                        source = RecordingSource.BOTH,
+                        driveUri = item.uri,
+                        driveSizeBytes = item.sizeBytes
+                    )
                 }
             }
 
@@ -264,21 +276,19 @@ object RecordingsRepository {
     /**
      * Enumerates one SAF folder, filtering to audio files. Never throws.
      *
-     * IMPORTANT: cloud providers (notably Google Drive) cache both their folder listing AND each
-     * file's metadata, so [DocumentFile.listFiles]/[DocumentFile.exists]/[DocumentFile.length] can all
-     * report a file that was deleted in the cloud as a present, non-empty blob — a "phantom" recording
-     * the user can see but can't play. Metadata checks alone do NOT catch this. We defend against it in
-     * [isUsable]: for a cloud folder ([isCloud]) we force the provider to actually resolve the bytes
-     * (open the document); a phantom throws and is dropped. For the local device folder, the cheap
-     * metadata check is sufficient and we skip the open to avoid pointless I/O.
+     * Phantom defense lives in [listRecordings], not here: in BOTH mode a Drive-only name (the shape a
+     * stale Google Drive listing-cache "phantom" takes) is never surfaced because the device folder is
+     * authoritative. We deliberately do NOT open Drive documents to probe them — that makes the Google
+     * Drive app raise its own "synchronization issue" toast. The cheap metadata check below still drops
+     * obviously-dead/zero-byte entries.
      */
-    private fun enumerateFolder(context: Context, folderUri: Uri, isCloud: Boolean): List<RecordingItem> {
+    private fun enumerateFolder(context: Context, folderUri: Uri): List<RecordingItem> {
         val result = mutableListOf<RecordingItem>()
         runCatching {
             val tree = DocumentFile.fromTreeUri(context, folderUri)
             val files = tree?.listFiles() ?: emptyArray()
             for (doc in files) {
-                if (doc.isFile && isAudio(doc) && isUsable(context, doc, isCloud)) {
+                if (doc.isFile && isAudio(doc) && isUsable(doc)) {
                     result.add(toItem(doc))
                 }
             }
@@ -289,26 +299,13 @@ object RecordingsRepository {
     }
 
     /**
-     * True if [doc] is a real, playable recording. Always requires existing/readable/non-empty
-     * metadata. For a cloud folder ([isCloud]) this ALSO opens the document to force the provider to
-     * resolve the underlying bytes — the only reliable way to detect a Google-Drive phantom, whose
-     * cached metadata still reports a present 293 KB blob long after the file was deleted in the cloud.
-     * A phantom throws [java.io.FileNotFoundException] on open and is dropped. Best-effort: any thrown
-     * check treats the entry as not-usable.
+     * True if [doc] still exists and is non-empty per its metadata — drops obviously-dead and
+     * zero-byte entries. Best-effort: treats a thrown query as not-usable. (Stale cloud-cache phantoms,
+     * whose metadata can still look valid, are handled structurally in [listRecordings].)
      */
-    private fun isUsable(context: Context, doc: DocumentFile, isCloud: Boolean): Boolean = runCatching {
-        if (!doc.exists() || !doc.canRead() || doc.length() <= 0L) return false
-        if (isCloud) {
-            // Open + read one byte so a lazy provider actually resolves the document. A deleted-but-
-            // cached Drive file throws here; a real file yields its first byte cheaply.
-            val opened = context.contentResolver.openInputStream(doc.uri)?.use { it.read() >= 0 } ?: false
-            if (!opened) return false
-        }
-        true
-    }.getOrElse { e ->
-        AppLogger.d(TAG, "Dropping unreadable/phantom recording ${doc.name}: ${e.message}")
-        false
-    }
+    private fun isUsable(doc: DocumentFile): Boolean = runCatching {
+        doc.exists() && doc.canRead() && doc.length() > 0L
+    }.getOrDefault(false)
 
     /** True if the document looks like a CallVault audio file (by extension or an audio mime type). */
     private fun isAudio(doc: DocumentFile): Boolean {
