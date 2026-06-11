@@ -1,0 +1,38 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="320" viewBox="0 0 1200 320" role="img" aria-label="CallVault — non-root call recorder for Android">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#0E1726"/>
+      <stop offset="1" stop-color="#16223A"/>
+    </linearGradient>
+    <radialGradient id="glow" cx="0.18" cy="0.4" r="0.5">
+      <stop offset="0" stop-color="#2DD4BF" stop-opacity="0.22"/>
+      <stop offset="1" stop-color="#0E1726" stop-opacity="0"/>
+    </radialGradient>
+  </defs>
+  <rect width="1200" height="320" rx="0" fill="url(#bg)"/>
+  <rect width="1200" height="320" fill="url(#glow)"/>
+
+  <!-- icon: teal phone + coral record dot, in a rounded navy tile -->
+  <g transform="translate(96,86)">
+    <rect width="148" height="148" rx="34" fill="#111B2E" stroke="#2E405E" stroke-width="1.5"/>
+    <g transform="translate(40,44) scale(2.6)">
+      <path fill="#2DD4BF" d="M6.62,10.79c1.44,2.83 3.76,5.14 6.59,6.59l2.2,-2.2c0.27,-0.27 0.67,-0.36 1.02,-0.24 1.12,0.37 2.33,0.57 3.57,0.57 0.55,0 1,0.45 1,1V20c0,0.55 -0.45,1 -1,1 -9.39,0 -17,-7.61 -17,-17 0,-0.55 0.45,-1 1,-1h3.5c0.55,0 1,0.45 1,1 0,1.25 0.2,2.45 0.57,3.57 0.11,0.35 0.03,0.74 -0.25,1.02l-2.2,2.2z"/>
+    </g>
+    <circle cx="112" cy="40" r="13" fill="#0E1726"/>
+    <circle cx="112" cy="40" r="9" fill="#FB7185"/>
+  </g>
+
+  <!-- wordmark + tagline -->
+  <text x="300" y="150" font-family="-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif" font-size="76" font-weight="800" fill="#E6EDF5" letter-spacing="-1.5">CallVault</text>
+  <text x="304" y="200" font-family="-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif" font-size="27" font-weight="500" fill="#9FB0C4">Non-root call recorder for Android — records both sides of a call.</text>
+  <g font-family="-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif" font-size="18" font-weight="600">
+    <rect x="304" y="226" width="132" height="34" rx="17" fill="#2DD4BF" fill-opacity="0.14"/>
+    <text x="324" y="249" fill="#2DD4BF">No root</text>
+    <rect x="448" y="226" width="148" height="34" rx="17" fill="#2DD4BF" fill-opacity="0.14"/>
+    <text x="468" y="249" fill="#2DD4BF">No Shizuku</text>
+    <rect x="608" y="226" width="92" height="34" rx="17" fill="#2DD4BF" fill-opacity="0.14"/>
+    <text x="628" y="249" fill="#2DD4BF">No PC</text>
+    <rect x="712" y="226" width="84" height="34" rx="17" fill="#FB7185" fill-opacity="0.14"/>
+    <text x="732" y="249" fill="#FB7185">FOSS</text>
+  </g>
+</svg>

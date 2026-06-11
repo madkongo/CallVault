@@ -1,90 +1,107 @@
-# CallVault
+<div align="center">
 
-**A non-root, FOSS call recorder for Android that records both sides of a phone call — no root, no Shizuku, no PC.**
+<img src="docs/screenshots/banner.svg" alt="CallVault" width="100%"/>
 
-> CallVault is a fork of [ShizuCallRecorder](https://github.com/kitsumed/ShizuCallRecorder) (Copyright © kitsumed (Med)), re-architected to run **self-contained over embedded ADB** instead of Shizuku. It is a modified, independent version — not endorsed by or affiliated with the original author. See [NOTICE.md](./NOTICE.md).
+[![Release](https://img.shields.io/github/v/release/madkongo/CallVault?style=for-the-badge&label=Latest&labelColor=16223A&color=2DD4BF)](https://github.com/madkongo/CallVault/releases/latest)
+[![Downloads](https://img.shields.io/github/downloads/madkongo/CallVault/total?style=for-the-badge&label=Downloads&labelColor=16223A&color=2DD4BF)](https://github.com/madkongo/CallVault/releases)
+[![License](https://img.shields.io/badge/License-GPL%20v3%20%2B%20%C2%A77-FB7185?style=for-the-badge&labelColor=16223A)](LICENSE)
+[![Android](https://img.shields.io/badge/Android-11%2B-2DD4BF?style=for-the-badge&labelColor=16223A&logo=android&logoColor=white)](#requirements)
 
-CallVault drives a privileged shell session entirely **on-device** using an embedded ADB client ([libadb-android](https://github.com/MuntashirAkon/libadb-android)) over Android's own **Wireless Debugging**, with [scrcpy-server](https://github.com/genymobile/scrcpy) as the audio-capture engine. You pair **once**; after that it's hands-free.
+</div>
 
----
+> **CallVault is a fork of [ShizuCallRecorder](https://github.com/kitsumed/ShizuCallRecorder)** (Copyright © kitsumed (Med)), re-architected to run **self-contained over embedded ADB** instead of Shizuku. It is a modified, independent version — not endorsed by or affiliated with the original author. See [NOTICE.md](./NOTICE.md).
 
-## How it works
+## What is CallVault?
 
-After a one-time pairing, CallVault runs a **persistent privileged daemon** (a detached `app_process` under the shell user, in the spirit of Shizuku) that survives Wireless Debugging being turned off. Recording commands flow to it over **binder IPC** — no ADB connection is needed at record time.
+**CallVault** is a **non-root, FOSS call recorder for Android** that records **both sides** of a phone call. It drives a privileged shell session entirely **on-device** — no root, no [Shizuku](https://github.com/RikkaApps/Shizuku), no companion PC — using an embedded ADB client ([libadb-android](https://github.com/MuntashirAkon/libadb-android)) over Android's own **Wireless Debugging**, with [scrcpy-server](https://github.com/genymobile/scrcpy) as the audio-capture engine.
 
-- **Wireless Debugging is fully automatic and transient** — CallVault turns it on only long enough to (re)launch the daemon, then turns it back off. You never toggle it manually.
-- Call audio is captured via scrcpy and saved (as **Opus** or **AAC**) to a folder you choose — on the device and/or a **cloud folder** (e.g. a Google Drive folder picked through the system file picker).
+You pair **once**; after that it's hands-free.
+
+<div align="center">
+
+| Home | Setup Wizard | Settings |
+|:---:|:---:|:---:|
+| <img src="docs/screenshots/home.png" width="240"/> | <img src="docs/screenshots/wizard.png" width="240"/> | <img src="docs/screenshots/settings.png" width="240"/> |
+
+</div>
 
 ## Features
 
-- 🎙️ Records **both sides** of incoming & outgoing calls (incl. Bluetooth / headset).
-- 🤖 **Automatic** recording with per-call rules (ignore anonymous / specific contacts).
-- ☁️ Save to **device, a cloud folder, or both**, with optional **scheduled sync** (immediate / daily / weekly).
-- ▶️ In-app **recordings list** with playback, **contact-name** resolution, and **delete**.
-- 🔒 **No root, no Shizuku, no companion PC** — everything runs on-device.
+| | Feature |
+|:---:|---|
+| 🎙️ | Records **both sides** of incoming & outgoing calls (incl. Bluetooth / headset) |
+| 🤖 | **Automatic** recording with per-call rules — ignore anonymous, cross-country, or specific contacts |
+| ☁️ | Save to **device, a cloud folder, or both**, with optional **scheduled sync** (immediate / daily / weekly) |
+| ▶️ | In-app **recordings list** with playback, **contact-name** resolution, source badges, and filters |
+| 🗂️ | Filter recordings by **source, direction, contact, or date**; play & delete each copy individually |
+| 🎚️ | **Opus** or **AAC** at your chosen bitrate; [BCR](https://github.com/chenxiaolong/BCR)-compatible file names |
+| 🔒 | **No root, no Shizuku, no PC** — everything runs on-device, Wireless Debugging is automatic & transient |
+| 🎨 | Clean, modern UI — no telemetry, no ads, no nonsense |
+
+## How it works
+
+After a one-time pairing, CallVault runs a **persistent privileged daemon** — a detached `app_process` under the shell user, in the spirit of Shizuku — that **survives Wireless Debugging being turned off**. Recording commands then flow to it over **binder IPC**, so no ADB connection is needed at record time.
+
+- **Wireless Debugging is fully automatic and transient.** CallVault turns it on only long enough to (re)launch the daemon, then turns it back off. You never toggle it manually after the first pair.
+- Call audio is captured via scrcpy and muxed into a file you own (via the Storage Access Framework) — on the device and/or a cloud folder you pick through the system file picker.
 
 ## Requirements
 
 - **Android 11 or newer** (best on Android 12+; on Android 11 the screen must be unlocked during a call).
 - **Wireless Debugging** available in Developer Options.
-- That's it — no PC, no root, no Shizuku app.
+- No root, no PC, no Shizuku.
 
 > [!IMPORTANT]
-> CallVault relies on hidden internal Android APIs and scrcpy-server, so it can break on new Android releases or specific OEM builds. Behavior is **non-deterministic** across devices — read the Disclaimer below.
-
----
+> CallVault relies on hidden internal Android APIs and `scrcpy-server`, so it can break on new Android releases or specific OEM builds. Behavior is **non-deterministic** across devices — read the [Disclaimer](#disclaimer).
 
 ## Install
 
-1. Download the latest **`CallVault.apk`** from the [**Releases**](https://github.com/madkongo/CallVault/releases) page.
+1. Download the latest **`CallVault.apk`** from the [**Releases**](https://github.com/madkongo/CallVault/releases/latest) page (or use [Obtainium](https://github.com/ImranR98/Obtainium) for auto-updates from this repo).
 2. Open it and allow installing from unknown sources if prompted.
 
-> CallVault is sideloaded only — it **cannot** be on the Google Play Store (Play prohibits both call recording and the embedded-ADB privilege mechanism it depends on).
+> CallVault is sideloaded only — it **cannot** be on the Google Play Store (Play prohibits both call recording and the embedded-ADB privilege mechanism it depends on). F-Droid is the intended catalog.
 
 ## How to use
 
 **One-time setup (in-app):**
 
-1. **Enable Wireless Debugging** on your phone: *Settings → System → Developer options → Wireless debugging → On.*
-   (If Developer options aren't visible: *Settings → About phone → tap "Build number" 7 times.*)
+1. **Enable Wireless Debugging:** *Settings → System → Developer options → Wireless debugging → On.*
+   (If Developer options aren't visible: *Settings → About phone → tap "Build number" 7 times.*) — CallVault detects this and offers a shortcut.
 2. **Open CallVault** and accept the disclaimer.
-3. On the **Permissions** screen, grant **Notifications**, then tap **Authorize** (Wireless debugging / ADB).
-4. A **pairing notification** appears. On your phone open *Wireless debugging → **Pair device with pairing code***, then type that **6-digit code** into the notification's reply field and send it. (CallVault finds the port automatically.)
-5. After a few seconds you'll get a **"Paired ✓ — tap to continue"** notification → **tap it** to return to CallVault.
-6. Grant the remaining permissions (**Contacts, Phone State, Call Log, Battery optimization**).
-7. Complete the **Setup Wizard**: where to save recordings (device / cloud folder / both), sync schedule, auto-record incoming/outgoing, audio quality, and file-name format.
+3. On the **Permissions** screen, grant **Notifications**, then tap **Pair**. CallVault opens the Wireless-debugging screen and waits — when you flip the toggle on, pairing starts automatically.
+4. Tap **"Pair device with pairing code"**, and type the 6-digit code into CallVault's notification. After a few seconds you'll get **"Paired ✓"** — tap it to return.
+5. Grant the remaining permissions, then complete the **Setup Wizard**: where to save recordings, sync schedule, auto-record, audio quality, and file-name format.
 
-**Day-to-day:**
-
-- The **Home** screen shows app status and your recordings — tap one to **play** it, or delete it. **Settings** is reachable from the button on Home.
-- Calls are recorded **automatically** per your auto-record rules. Saved files use a [BCR](https://github.com/chenxiaolong/BCR)-compatible name format.
+**Day-to-day:** the **Home** screen shows app status and your recordings — tap one to play, expand a *Device + Drive* recording to play/delete each copy, and filter by source/direction/contact/date. Settings is one tap away.
 
 > [!TIP]
-> On OEMs that aggressively kill background apps (OnePlus/OxygenOS, Xiaomi, etc.), allow CallVault in **Auto-launch / Startup Manager** and exclude it from **battery optimization** so it can record reliably and start after a reboot. See [dontkillmyapp.com](https://dontkillmyapp.com/).
+> On OEMs that aggressively kill background apps (OnePlus/OxygenOS, Xiaomi, etc.), allow CallVault in **Auto-launch / Startup Manager** and exclude it from **battery optimization** so it records reliably and starts after a reboot. See [dontkillmyapp.com](https://dontkillmyapp.com/).
 
 ## Building from source
 
-The Android project is under [`app-src/`](./app-src). See [BUILDING.md](./BUILDING.md). In short:
+This is a standard single-module Android project at the repo root. See [BUILDING.md](./BUILDING.md):
 
 ```bash
-cd app-src
-./gradlew :app:assembleDebug   # outputs app/build/outputs/apk/debug/app-debug.apk
+./gradlew :app:assembleDebug   # → app/build/outputs/apk/debug/app-debug.apk
 ```
 
-Requires a JDK 17 and the Android SDK. CallVault is **reflection-heavy** (hidden APIs, the daemon is launched by class name) — a minified release build will break it unless minification is disabled.
+Requires JDK 17 and the Android SDK. CallVault is **reflection-heavy** (hidden APIs, the daemon is launched by class name) — a minified release build will break it unless minification is disabled.
 
-## Attribution
+## Credits & attribution
 
-CallVault is a modified fork of **ShizuCallRecorder**, available at <https://github.com/kitsumed/ShizuCallRecorder>. The original project, its name, trademarks, and logos are the property of **kitsumed (Med)** and are used here only for this required attribution.
+CallVault is a modified fork of **[ShizuCallRecorder](https://github.com/kitsumed/ShizuCallRecorder)** by **kitsumed (Med)**; the original project's name, trademarks, and logos are the property of their owner and are used here only for this required attribution. The ADB pairing/mDNS code is adapted from [RikkaApps/Shizuku](https://github.com/RikkaApps/Shizuku) (Apache-2.0).
 
-Built on: [ShizuCallRecorder](https://github.com/kitsumed/ShizuCallRecorder) (upstream), [scrcpy](https://github.com/genymobile/scrcpy), [libadb-android](https://github.com/MuntashirAkon/libadb-android).
+Built on the work of:
+- [ShizuCallRecorder](https://github.com/kitsumed/ShizuCallRecorder) — the upstream project this is forked from
+- [scrcpy](https://github.com/genymobile/scrcpy) — the audio-capture server
+- [libadb-android](https://github.com/MuntashirAkon/libadb-android) — the embedded ADB client
 
 ## License
 
-Licensed under the [GNU General Public License v3.0](./LICENSE). ⚠️ **Additional Terms** under GPLv3 Section 7 apply (at the end of the license file), including trademark protection and the mandatory fork-attribution requirements that this project complies with.
+Licensed under the [GNU General Public License v3.0](LICENSE). ⚠️ **Additional Terms** under GPLv3 Section 7 apply (at the end of the license file), including trademark protection and the mandatory fork-attribution requirements that this project complies with.
+
+> CallVault is **not affiliated with, endorsed by, or supported by** kitsumed/ShizuCallRecorder, Shizuku, scrcpy, or Google/Android. "Android" is a trademark of Google LLC.
 
 ## Disclaimer
 
-**Recording phone calls may be subject to complex and varying laws in different countries and jurisdictions.** You may need consent from all parties before recording. The developers and contributors are **not responsible** for any misuse or legal consequences. Learn more: [Telephone call recording laws](https://en.wikipedia.org/wiki/Telephone_call_recording_laws). **This is not legal advice** — consult a legal professional for your situation.
-
-It is **your responsibility** to verify that CallVault's behavior on your device complies with your local laws, and to stop immediately any activity that would constitute a legal infraction.
+**Recording phone calls may be subject to complex and varying laws in different countries and jurisdictions.** You may need consent from all parties before recording. The developers and contributors are **not responsible** for any misuse or legal consequences. Learn more: [Telephone call recording laws](https://en.wikipedia.org/wiki/Telephone_call_recording_laws). **This is not legal advice** — consult a legal professional for your situation. It is **your responsibility** to verify that CallVault's behavior on your device complies with your local laws, and to stop immediately any activity that would constitute a legal infraction.
