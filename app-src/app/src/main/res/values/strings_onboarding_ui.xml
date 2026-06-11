@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  ~ CallVault: FOSS call recording, self-contained over embedded ADB
+  ~  Copyright (C) 2026-present The CallVault Authors
+  ~  This software is licensed under the GNU General Public License v3 or later, with additional terms as permitted under Section 7.
+  ~  The full license text is available in the LICENSE file at the root of this project.
+  ~  This software is distributed WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+  -->
+<resources>
+
+    <!-- Onboarding: redesign-only UI strings for the "Signal" Disclaimer + Permissions screens. -->
+
+    <!-- Disclaimer screen. -->
+    <string name="disclaimer_ui_hero_subtitle">FOSS call recording, on your terms. Please review the disclaimer before you continue.</string>
+    <string name="disclaimer_ui_body_header">Disclaimer</string>
+    <string name="disclaimer_ui_scroll_hint">Scroll to the end to enable the checkbox.</string>
+
+    <!-- Permissions screen. -->
+    <string name="permissions_ui_eyebrow">Setup</string>
+    <string name="permissions_ui_hero_title">Let’s get set up</string>
+    <string name="permissions_ui_hero_subtitle">A few permissions so CallVault can capture and label your calls. Approve each item below.</string>
+    <string name="permissions_ui_section_label">Permissions</string>
+    <string name="permission_adb_hint">Tap Authorize, then enter the pairing code from the notification.</string>
+    <string name="permission_adb_desc_short">Required to capture call audio.</string>
+    <string name="permissions_status_adb_not_connected">Not connected</string>
+    <string name="permissions_status_adb_connected">Connected</string>
+
+    <!-- ADB card: Developer Options status + deep-link shortcuts. -->
+    <string name="permission_devmode_on">Developer Options: on</string>
+    <string name="permission_devmode_off">Developer Options is off</string>
+    <string name="permission_devmode_open_wd">Open Wireless debugging</string>
+    <string name="permission_devmode_enable_hint">Enable it: Settings → About phone → tap Build number 7 times.</string>
+    <string name="permission_devmode_open_device_info">Open device info</string>
+
+    <!-- ADB card: Wireless debugging state (shown when Developer Options is on). -->
+    <string name="permission_wd_on">Wireless debugging: on</string>
+    <string name="permission_wd_off">Wireless debugging is off</string>
+    <string name="permission_wd_enable_hint">Turn it on: Developer Options → Wireless debugging.</string>
+    <string name="permission_adb_hint_wd_on">Tap Authorize, then enter the pairing code from the Wireless debugging screen.</string>
+
+    <!-- ADB step: bottom CTA labels that adapt to Wireless-debugging / Developer-Options state. -->
+    <string name="permission_adb_open_device_info">Open device info</string>
+    <string name="permission_adb_open_wd">Open Wireless debugging</string>
+
+    <string name="permission_adb_pair">Pair</string>
+</resources>

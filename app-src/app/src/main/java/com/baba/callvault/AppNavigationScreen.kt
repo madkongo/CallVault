@@ -160,7 +160,8 @@ fun AppNavigationScreen() {
                 // Settings is reached only via manual nav; provide a back affordance that returns to Home.
                 BackHandler { appNavViewModel.navigateBack() }
                 SettingsScreen(
-                    viewModel = settingsViewModel
+                    viewModel = settingsViewModel,
+                    onBack = { appNavViewModel.navigateBack() }
                 )
             }
         }

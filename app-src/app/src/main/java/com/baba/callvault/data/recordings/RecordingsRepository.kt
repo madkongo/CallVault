@@ -17,6 +17,9 @@ import com.baba.callvault.system.permissions.PermissionChecks
 import com.baba.callvault.utils.AppLogger
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
+import java.text.SimpleDateFormat
+import java.util.Date
+import java.util.Locale
 
 /**
  * RecordingsRepository enumerates finished recordings for the in-app Home list.
@@ -35,6 +38,16 @@ object RecordingsRepository {
     private val AUDIO_EXTENSIONS = listOf(".ogg", ".m4a")
 
     /**
+     * Where a recording physically lives, derived from which configured folder(s) a given display
+     * name was found in.
+     *
+     *  - [LOCAL]: present only in the device folder ([AppPreferences.getRecordingFolderUri]).
+     *  - [DRIVE]: present only in the Drive folder ([AppPreferences.getDriveFolderUri]).
+     *  - [BOTH]:  present in both folders (e.g. BOTH storage mode, or after a Drive sync).
+     */
+    enum class RecordingSource { LOCAL, DRIVE, BOTH }
+
+    /**
      * A single recording surfaced to the UI. Parsing of [direction]/[displayDate]/[number] is
      * best-effort from the display name; any unparsed field is null and the UI falls back to the
      * raw [displayName].
@@ -46,8 +59,15 @@ object RecordingsRepository {
      * @param direction    Parsed call direction, or null if it could not be derived.
      * @param displayDate  A human-friendly date string parsed from the name, or null.
      * @param number       The phone number parsed from the name, or null.
+     * @param source       Which folder(s) this recording was found in (LOCAL / DRIVE / BOTH).
      * @param contactName  The contact display name resolved from [number] via PhoneLookup, or null
      *                     when READ_CONTACTS is not granted, no number was parsed, or no match.
+     * @param localUri     The device-folder copy's content URI, or null if this name is Drive-only.
+     * @param driveUri     The Drive-folder copy's content URI, or null if this name is device-only.
+     *                     For a BOTH item both [localUri] and [driveUri] are set, so each physical
+     *                     copy can be played individually.
+     * @param localSizeBytes Size of the device copy in bytes, or null when there is no device copy.
+     * @param driveSizeBytes Size of the Drive copy in bytes, or null when there is no Drive copy.
      */
     data class RecordingItem(
         val uri: Uri,
@@ -57,8 +77,34 @@ object RecordingsRepository {
         val direction: RecordingDirection?,
         val displayDate: String?,
         val number: String?,
-        val contactName: String? = null
+        val source: RecordingSource = RecordingSource.LOCAL,
+        val contactName: String? = null,
+        val localUri: Uri? = null,
+        val driveUri: Uri? = null,
+        val localSizeBytes: Long? = null,
+        val driveSizeBytes: Long? = null
     )
+
+    /** Friendly day format used for the Date facet keys (e.g. "Jun 11, 2026"). */
+    private val DAY_KEY_FORMAT = SimpleDateFormat("MMM d, yyyy", Locale.US)
+
+    /**
+     * Derives a stable day key for a recording, used by the Home "Date" filter facet. Prefers the
+     * date encoded in [RecordingItem.displayDate] (whose shape is "yyyy-MM-dd HH:mm"); when that is
+     * absent or unparsable, falls back to formatting [RecordingItem.lastModified]. The same key is
+     * used both to build the option list and to match the active filter, so they always agree.
+     */
+    fun dayKey(item: RecordingItem): String {
+        // displayDate is "yyyy-MM-dd HH:mm" — turn the date part into the friendly day label.
+        val raw = item.displayDate?.substringBefore(' ')?.takeIf { it.length == 10 }
+        if (raw != null) {
+            runCatching {
+                val parsed = SimpleDateFormat("yyyy-MM-dd", Locale.US).parse(raw)
+                if (parsed != null) return DAY_KEY_FORMAT.format(parsed)
+            }
+        }
+        return DAY_KEY_FORMAT.format(Date(item.lastModified))
+    }
 
     /**
      * Lists all recordings across the device and Drive folders, merged and deduped by display name,
@@ -71,13 +117,48 @@ object RecordingsRepository {
     suspend fun listRecordings(context: Context): List<RecordingItem> = withContext(Dispatchers.IO) {
         runCatching {
             val prefs = AppPreferences(context)
-            val folders = listOfNotNull(prefs.getRecordingFolderUri(), prefs.getDriveFolderUri())
+            val deviceFolder = prefs.getRecordingFolderUri()
+            val driveFolder = prefs.getDriveFolderUri()
 
-            // Dedupe by display name; first writer wins (device folder is listed first).
+            // Enumerate each folder independently so we can record WHERE each name was found.
+            // Device items are preferred for playback (their single-document URI is kept), but the
+            // resulting source reflects every folder the name appeared in (LOCAL / DRIVE / BOTH).
             val byName = LinkedHashMap<String, RecordingItem>()
-            for (folderUri in folders) {
-                for (item in enumerateFolder(context, folderUri)) {
-                    byName.putIfAbsent(item.displayName, item)
+
+            // Device folder first so its uri wins for playback when a name exists in both. The
+            // device copy's uri/size are also captured in localUri/localSizeBytes so a BOTH item
+            // can later play each physical copy individually.
+            if (deviceFolder != null) {
+                for (item in enumerateFolder(context, deviceFolder)) {
+                    byName.putIfAbsent(
+                        item.displayName,
+                        item.copy(
+                            source = RecordingSource.LOCAL,
+                            localUri = item.uri,
+                            localSizeBytes = item.sizeBytes
+                        )
+                    )
+                }
+            }
+            if (driveFolder != null) {
+                for (item in enumerateFolder(context, driveFolder)) {
+                    val existing = byName[item.displayName]
+                    if (existing == null) {
+                        // Only on Drive → DRIVE, with Drive uri for playback.
+                        byName[item.displayName] = item.copy(
+                            source = RecordingSource.DRIVE,
+                            driveUri = item.uri,
+                            driveSizeBytes = item.sizeBytes
+                        )
+                    } else {
+                        // Already seen in the device folder → present in BOTH; keep device uri as
+                        // the primary, but record the Drive copy's uri/size too.
+                        byName[item.displayName] = existing.copy(
+                            source = RecordingSource.BOTH,
+                            driveUri = item.uri,
+                            driveSizeBytes = item.sizeBytes
+                        )
+                    }
                 }
             }
 
@@ -141,6 +222,23 @@ object RecordingsRepository {
         }
 
         deletedAny
+    }
+
+    /**
+     * Deletes ONLY the single file at [uri] (one physical copy), via
+     * [DocumentFile.fromSingleUri]. Unlike [deleteRecording], this does NOT touch same-named copies
+     * in the other folder — it is used to delete just the Device or just the Drive copy of a BOTH
+     * recording. Best-effort and never throws.
+     *
+     * @return true if the file was deleted, false otherwise (missing, no permission, or error).
+     */
+    suspend fun deleteFile(context: Context, uri: Uri): Boolean = withContext(Dispatchers.IO) {
+        runCatching {
+            DocumentFile.fromSingleUri(context, uri)?.delete() == true
+        }.getOrElse { e ->
+            AppLogger.w(TAG, "Failed to delete file $uri: ${e.message}")
+            false
+        }
     }
 
     /**

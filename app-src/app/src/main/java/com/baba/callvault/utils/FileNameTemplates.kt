@@ -42,12 +42,14 @@ fun presetForTemplateOrFirst(template: String): FileNameTemplatePreset =
 
 /**
  * Renders a small, realistic, deterministic example for a template using fixed sample values
- * (e.g. "20260611_in_+15551234"). Intentionally a lightweight local substitution so the preview is
- * stable and free of the live timestamp/contacts lookup the real formatter performs.
+ * (e.g. "{date}_{direction}_{contact_name}" -> "20260611_143052_in_John Doe"). Intentionally a
+ * lightweight local substitution so the preview is stable and free of the live timestamp/contacts
+ * lookup the real formatter performs — and free of the raw "yyyyMMdd_HHmmss.SSSZ" date pattern.
+ * No raw "{token}" should ever leak into the result.
  */
 fun fileNameTemplateExample(template: String): String = template
-    .replace(RecordingFileNameFormatter.FileNamePlaceholder.DATE.tag, "20260611")
+    .replace(RecordingFileNameFormatter.FileNamePlaceholder.DATE.tag, "20260611_143052")
     .replace(RecordingFileNameFormatter.FileNamePlaceholder.DIRECTION.tag, "in")
     .replace(RecordingFileNameFormatter.FileNamePlaceholder.PHONE_NUMBER.tag, "+15551234")
-    .replace(RecordingFileNameFormatter.FileNamePlaceholder.CONTACT_NAME.tag, "Jane_Doe")
+    .replace(RecordingFileNameFormatter.FileNamePlaceholder.CONTACT_NAME.tag, "John Doe")
     .replace(RecordingFileNameFormatter.FileNamePlaceholder.CROSS_COUNTRY.tag, "false")

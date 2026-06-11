@@ -12,23 +12,40 @@ import android.annotation.SuppressLint
 import android.os.Build
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.expandVertically
 import androidx.compose.animation.shrinkVertically
+import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ArrowForwardIos
+import androidx.compose.material.icons.automirrored.filled.CallMade
+import androidx.compose.material.icons.automirrored.filled.CallReceived
+import androidx.compose.material.icons.filled.BugReport
+import androidx.compose.material.icons.filled.Cloud
+import androidx.compose.material.icons.filled.ColorLens
+import androidx.compose.material.icons.filled.ContentCopy
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.baba.callvault.R
@@ -44,16 +61,21 @@ import com.baba.callvault.system.storage.SafHelper
 import com.baba.callvault.system.takePersistableFolderPermission
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.baba.callvault.ui.common.ContactSelectionDialog
+import com.baba.callvault.ui.common.CvCard
+import com.baba.callvault.ui.common.CvScaffold
+import com.baba.callvault.ui.common.CvSecondaryButton
+import com.baba.callvault.ui.common.CvSectionHeader
 import com.baba.callvault.ui.common.FileNameFormatDialog
 import com.baba.callvault.ui.common.M3DropdownField
 import com.baba.callvault.ui.common.OptionItem
-import com.baba.callvault.ui.common.ToggleListItem
 import com.baba.callvault.ui.viewmodels.ContactPickerType
 import com.baba.callvault.ui.viewmodels.ContactPickerViewModel
 import com.baba.callvault.ui.viewmodels.DebugAction
 import com.baba.callvault.ui.viewmodels.SettingsActions
 import com.baba.callvault.ui.viewmodels.SettingsViewModel
 import com.baba.callvault.ui.viewmodels.ContactPickerState
+import com.baba.callvault.utils.fileNameTemplateExample
+import com.baba.callvault.utils.presetForTemplateOrFirst
 import com.mikepenz.aboutlibraries.ui.compose.m3.LibrariesContainer
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
@@ -63,6 +85,14 @@ import android.net.Uri
 import androidx.appcompat.app.AppCompatDelegate
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
+import androidx.compose.material.icons.filled.DriveFileRenameOutline
+import androidx.compose.material.icons.filled.ExpandMore
+import androidx.compose.material.icons.filled.Folder
+import androidx.compose.material.icons.filled.Gavel
+import androidx.compose.material.icons.filled.GraphicEq
+import androidx.compose.material.icons.filled.NotificationsActive
+import androidx.compose.material.icons.filled.Save
+import androidx.compose.material.icons.filled.Vibration
 import androidx.compose.ui.platform.LocalInspectionMode
 import androidx.compose.ui.platform.LocalResources
 import androidx.compose.ui.text.input.KeyboardType
@@ -73,15 +103,18 @@ import java.util.Locale
  * Stateful wrapper for the Settings screen that connects [SettingsViewModel] to [SettingsContent].
  *
  * @param viewModel Handles saving whenever the user changes a setting.
- * @param modifier  Optional modifier for the root [Surface].
+ * @param onBack    Called when the user taps the top-bar back affordance; the router maps this to
+ *                  [com.baba.callvault.ui.viewmodels.AppNavViewModel.navigateBack].
+ * @param modifier  Optional modifier for the root scaffold.
  */
 @Composable
 fun SettingsScreen(
     viewModel: SettingsViewModel,
+    onBack: () -> Unit = {},
     modifier: Modifier = Modifier
 ) {
     val context = LocalContext.current
-    
+
     // Trigger recomposition when settings change by viewmodel.refresh()
     val updateTrigger by viewModel.updateTrigger.collectAsState()
 
@@ -119,6 +152,7 @@ fun SettingsScreen(
         updateTrigger = updateTrigger,
         actions = viewModel,
         contactPickerState = contactPickerState,
+        onBack = onBack,
         onSelectFolder = { folderPickerLauncher.launch(null) },
         onSelectDriveFolder = { driveFolderPickerLauncher.launch(null) },
         onOpenContactsIncoming = { contactPickerViewModel.openContactPicker(ContactPickerType.INCOMING) },
@@ -135,12 +169,17 @@ fun SettingsScreen(
 }
 
 /**
- * Stateless visual layer for the Settings screen.
+ * Stateless visual layer for the Settings screen, redesigned on the "Signal" design system.
+ *
+ * Each section is a [CvSectionHeader] followed by a [CvCard] grouping its rows. Every existing
+ * setting, action, dialog, and the hidden developer-unlock gesture is preserved; only the layout
+ * is restyled.
  *
  * @param preferences            The [AppPreferences] instance to read data from.
  * @param updateTrigger          Trigger value to force/detect recomposition when settings change.
  * @param actions                Implementation of [SettingsActions] to handle user interaction.
  * @param contactPickerState     Current state of the contact picker dialog.
+ * @param onBack                 Called when the user taps the top-bar back affordance.
  * @param onSelectFolder         Called when the user taps the recording-folder row.
  * @param onSelectDriveFolder    Called when the user taps the Drive-folder row; opens the SAF picker.
  * @param onOpenContactsIncoming Called to open picker for incoming contacts.
@@ -156,6 +195,7 @@ fun SettingsContent(
     updateTrigger: Int,
     actions: SettingsActions,
     contactPickerState: ContactPickerState?,
+    onBack: () -> Unit,
     onSelectFolder: () -> Unit,
     onSelectDriveFolder: () -> Unit,
     onOpenContactsIncoming: () -> Unit,
@@ -169,24 +209,24 @@ fun SettingsContent(
     // Read in the composable scope (not the LazyListScope) so the Debug item recomposes on unlock.
     val isDeveloperModeUnlocked = remember(updateTrigger) { preferences.isDeveloperModeUnlocked() }
 
-    Surface(
-        modifier = modifier
-            .fillMaxSize()
-            .navigationBarsPadding(),
-        color = MaterialTheme.colorScheme.background
-    ) {
+    CvScaffold(
+        modifier = modifier.fillMaxSize(),
+        title = stringResource(R.string.general_settings),
+        subtitle = stringResource(R.string.settings_ui_subtitle),
+        onBack = onBack
+    ) { innerPadding ->
         LazyColumn(
-            modifier = Modifier.fillMaxSize(),
-            contentPadding = PaddingValues(horizontal = 20.dp, vertical = 24.dp),
-            verticalArrangement = Arrangement.spacedBy(24.dp)
+            modifier = Modifier
+                .fillMaxSize()
+                .navigationBarsPadding(),
+            contentPadding = PaddingValues(
+                start = 20.dp,
+                end = 20.dp,
+                top = innerPadding.calculateTopPadding() + 8.dp,
+                bottom = innerPadding.calculateBottomPadding() + 28.dp
+            ),
+            verticalArrangement = Arrangement.spacedBy(20.dp)
         ) {
-            item {
-                Text(
-                    text = stringResource(R.string.general_settings),
-                    style = MaterialTheme.typography.headlineMedium,
-                    fontWeight = FontWeight.Bold
-                )
-            }
             item {
                 RecordingAndStorageSection(
                     preferences = preferences,
@@ -272,60 +312,255 @@ private const val DEVELOPER_UNLOCK_TAPS = 7
 
 // ── Settings sections ──────────────────────────────────────────────────────────────────────
 
-/** Shows the app version, server version, clipboard buttons, and a GitHub link.
+/** Shows the storage target, device + Drive folders, filename template, auto-record toggles, and
+ * contact-filter options — the merged Recording &amp; storage section.
  *
- * Tapping the version row [DEVELOPER_UNLOCK_TAPS] times in a row unlocks the hidden Debug section.
- *
- * @param versionString         The formatted app-version string to display.
- * @param onShowLicenses        Called when the user taps "View Licenses".
- * @param onUnlockDeveloperMode Called once the hidden 7-tap gesture completes.
+ * @param preferences              The [AppPreferences] instance to read data from.
+ * @param updateTrigger          Trigger value to force recomposition when settings change.
+ * @param actions                Implementation of [SettingsActions] to handle user interaction.
+ * @param onSelectFolder         Called when the user taps the recording-folder row; opens the SAF picker
+ *                               whose launcher lives in AppNavigation.
+ * @param onSelectDriveFolder    Called when the user taps the Drive-folder row; opens the SAF picker.
+ * @param onOpenContactsIncoming Called when the user wants to pick incoming contacts to ignore;
+ *                               opens the [ContactSelectionDialog] via [ContactPickerViewModel].
+ * @param onOpenContactsOutgoing Called when the user wants to pick outgoing contacts to ignore;
+ *                               opens the [ContactSelectionDialog] via [ContactPickerViewModel].
  */
 @Composable
-private fun AboutSection(
-    versionString: String,
-    onShowLicenses: () -> Unit,
-    onUnlockDeveloperMode: () -> Unit
+private fun RecordingAndStorageSection(
+    preferences: AppPreferences,
+    updateTrigger: Int,
+    actions: SettingsActions,
+    onSelectFolder: () -> Unit,
+    onSelectDriveFolder: () -> Unit,
+    onOpenContactsIncoming: () -> Unit,
+    onOpenContactsOutgoing: () -> Unit
 ) {
     val context = LocalContext.current
-    val serverVersion = ScrcpyConfig.SCRCPY_VERSION
-    var versionTapCount by remember { mutableIntStateOf(0) }
 
-    SettingsSection(title = stringResource(R.string.settings_section_about)) {
-        ListItem(
-            modifier = Modifier.clickable {
-                versionTapCount += 1
-                if (versionTapCount >= DEVELOPER_UNLOCK_TAPS) {
-                    versionTapCount = 0
-                    onUnlockDeveloperMode()
-                }
-            },
-            headlineContent = { Text(versionString) },
-            supportingContent = {
-                Text(stringResource(R.string.settings_scrcpy_server, serverVersion))
-            },
-            colors = ListItemDefaults.colors(containerColor = Color.Transparent)
+    // Evaluate these here so they are fetched on every recomposition.
+    val recordingFolderLabel = remember(updateTrigger) { SafHelper.getFolderDisplayNameOrNull(context, preferences.getRecordingFolderUri()) }
+    val fileNameFormat = remember(updateTrigger) { preferences.getFileNameTemplate() }
+    val storageTarget = remember(updateTrigger) { preferences.getStorageTarget() }
+    val driveFolderLabel = remember(updateTrigger) { SafHelper.getFolderDisplayNameOrNull(context, preferences.getDriveFolderUri()) }
+    val autoRecordIncoming = remember(updateTrigger) { preferences.isAutoRecordIncomingEnabled() }
+    val autoRecordOutgoing = remember(updateTrigger) { preferences.isAutoRecordOutgoingEnabled() }
+    val ignoreAnonymousIncoming = remember(updateTrigger) { preferences.isIgnoreAnonymousIncomingEnabled() }
+    val ignoreCrossCountryIncoming = remember(updateTrigger) { preferences.isIgnoreCrossCountryIncomingEnabled() }
+    val ignoreContactsModeIncoming = remember(updateTrigger) { preferences.getIgnoreContactsModeIncoming() }
+    val ignoreContactsModeOutgoing = remember(updateTrigger) { preferences.getIgnoreContactsModeOutgoing() }
+    val ignoreCrossCountryOutgoing = remember(updateTrigger) { preferences.isIgnoreCrossCountryOutgoingEnabled() }
+    val ignoredContactsIncomingCount = remember(updateTrigger) { preferences.getIgnoredContactsIncoming().size }
+    val ignoredContactsOutgoingCount = remember(updateTrigger) { preferences.getIgnoredContactsOutgoing().size }
+
+    var showFileNameFormatDialog by remember { mutableStateOf(false) }
+
+    val storageTargetOptions = StorageTarget.entries.map { target ->
+        val labelRes = when (target) {
+            StorageTarget.LOCAL -> R.string.storage_target_local
+            StorageTarget.DRIVE -> R.string.storage_target_drive
+            StorageTarget.BOTH  -> R.string.storage_target_both
+        }
+        OptionItem(target.key, stringResource(labelRes))
+    }
+
+    SettingsSection(title = stringResource(R.string.settings_section_recording_storage)) {
+        DropdownRow {
+            M3DropdownField(
+                label    = stringResource(R.string.settings_storage_target_label),
+                selected = storageTargetOptions.find { it.key == storageTarget.key } ?: storageTargetOptions.first(),
+                options  = storageTargetOptions,
+                onOptionSelected = { actions.setStorageTarget(StorageTarget.fromKey(it.key)) }
+            )
+        }
+
+        SettingsDivider()
+
+        NavigationRow(
+            icon = Icons.Filled.Folder,
+            label = stringResource(R.string.settings_recording_folder_label),
+            value = recordingFolderLabel ?: stringResource(R.string.settings_tap_to_select_folder),
+            onClick = onSelectFolder
         )
-        // Required fork attribution under the upstream license (GPLv3 §7).
-        ListItem(
-            headlineContent = { Text(stringResource(R.string.settings_fork_attribution)) },
-            supportingContent = {
-                Text(stringResource(R.string.settings_fork_attribution_supporting))
-            },
-            modifier = Modifier.clickable { context.openOriginalProjectRepo() },
-            colors = ListItemDefaults.colors(containerColor = Color.Transparent)
+
+        NavigationRow(
+            icon = Icons.Filled.Cloud,
+            label = stringResource(R.string.settings_drive_folder_label),
+            value = driveFolderLabel ?: stringResource(R.string.general_not_set),
+            supporting = stringResource(R.string.settings_drive_folder_desc),
+            onClick = onSelectDriveFolder
         )
-        Row(
-            modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp),
-            horizontalArrangement = Arrangement.spacedBy(8.dp)
+
+        NavigationRow(
+            icon = Icons.Filled.DriveFileRenameOutline,
+            label = stringResource(R.string.settings_file_name_template),
+            value = stringResource(presetForTemplateOrFirst(fileNameFormat).labelRes),
+            supporting = stringResource(
+                R.string.settings_file_name_template_example,
+                fileNameTemplateExample(fileNameFormat)
+            ),
+            onClick = { showFileNameFormatDialog = true }
+        )
+
+        SettingsDivider()
+
+        SettingsToggleRow(
+            icon = Icons.AutoMirrored.Filled.CallReceived,
+            label = stringResource(R.string.settings_auto_record_incoming),
+            checked = autoRecordIncoming,
+            onCheckedChange = { actions.setAutoRecordIncoming(it) }
+        )
+        AnimatedVisibility(
+            visible = autoRecordIncoming,
+            enter   = fadeIn() +  expandVertically(),
+            exit    = fadeOut() + shrinkVertically()
         ) {
-            OutlinedButton(
-                onClick = { context.copyToClipboard("Scrcpy-Server Version", ScrcpyConfig.SCRCPY_VERSION) },
-                modifier = Modifier.weight(1f)
-            ) { Text(stringResource(R.string.settings_copy_version)) }
-            OutlinedButton(
-                onClick = onShowLicenses,
-                modifier = Modifier.weight(1f)
-            ) { Text(stringResource(R.string.settings_view_licenses)) }
+            NestedGroup {
+                SettingsToggleRow(
+                    label           = stringResource(R.string.settings_ignore_anonymous_incoming),
+                    checked         = ignoreAnonymousIncoming,
+                    onCheckedChange = { actions.setIgnoreAnonymousIncoming(it) }
+                )
+                SettingsToggleRow(
+                    label           = stringResource(R.string.settings_ignore_cross_country_incoming),
+                    checked         = ignoreCrossCountryIncoming,
+                    onCheckedChange = { actions.setIgnoreCrossCountryIncoming(it) },
+                    enabled         = ignoreAnonymousIncoming
+                )
+                IgnoreContactsOptions(
+                    label           = stringResource(R.string.settings_ignore_contacts_incoming),
+                    selectedEnum     = ignoreContactsModeIncoming,
+                    selectedCount    = ignoredContactsIncomingCount,
+                    onSelected      = { actions.setIgnoreContactsModeIncoming(it) },
+                    onSelectContacts = onOpenContactsIncoming
+                )
+            }
+        }
+
+        SettingsDivider()
+
+        SettingsToggleRow(
+            icon = Icons.AutoMirrored.Filled.CallMade,
+            label = stringResource(R.string.settings_auto_record_outgoing),
+            checked = autoRecordOutgoing,
+            onCheckedChange = { actions.setAutoRecordOutgoing(it) }
+        )
+        AnimatedVisibility(
+            visible = autoRecordOutgoing,
+            enter   = fadeIn() +  expandVertically(),
+            exit    = fadeOut() + shrinkVertically()
+        ) {
+            NestedGroup {
+                SettingsToggleRow(
+                    label           = stringResource(R.string.settings_ignore_cross_country_outgoing),
+                    checked         = ignoreCrossCountryOutgoing,
+                    onCheckedChange = { actions.setIgnoreCrossCountryOutgoing(it) }
+                )
+                IgnoreContactsOptions(
+                    label           = stringResource(R.string.settings_ignore_contacts_outgoing),
+                    selectedEnum     = ignoreContactsModeOutgoing,
+                    selectedCount    = ignoredContactsOutgoingCount,
+                    onSelected      = { actions.setIgnoreContactsModeOutgoing(it) },
+                    onSelectContacts = onOpenContactsOutgoing
+                )
+            }
+        }
+    }
+
+    if (showFileNameFormatDialog) {
+        FileNameFormatDialog(
+            initialFormat = fileNameFormat,
+            onConfirm = { format ->
+                actions.setFileNameTemplate(format)
+                showFileNameFormatDialog = false
+            },
+            onDismiss = { showFileNameFormatDialog = false }
+        )
+    }
+}
+
+/** Shows the audio source, codec, and bit-rate dropdowns.
+ *
+ * The audio-source list is generated from [ScrcpyAudioSource.entries], filtered by
+ * [ScrcpyAudioSource.isDebugOnly] based on [AppPreferences.isDebugEnabled]. Items whose
+ * [ScrcpyAudioSource.minApi]/[ScrcpyAudioSource.maxApi] range does not include the current
+ * device's API level are shown grayed out and cannot be selected.
+ *
+ * @param preferences   The [AppPreferences] instance to read data from.
+ * @param updateTrigger Trigger value to force recomposition when settings change.
+ * @param actions       Implementation of [SettingsActions] to handle user interaction.
+ */
+@Composable
+private fun AudioSection(preferences: AppPreferences, updateTrigger: Int, actions: SettingsActions) {
+
+    val isDebugEnabled = remember(updateTrigger) { preferences.isDebugEnabled() }
+    val audioSource = remember(updateTrigger) { preferences.getAudioSource() }
+    val audioCodec = remember(updateTrigger) { preferences.getAudioCodec() }
+    val savedBitRate = remember(updateTrigger) { preferences.getAudioBitRate() }
+
+    SettingsSection(title = stringResource(R.string.settings_section_audio)) {
+        val currentSdk = Build.VERSION.SDK_INT
+
+        // Build the source list from the enum, hiding debug-only entries when debug is off.
+        // Items that require an API level not available on this device are shown as disabled.
+        val audioSourceOptions = ScrcpyAudioSource.entries
+            .filter { !it.isDebugOnly || isDebugEnabled }
+            .map { source ->
+                OptionItem(
+                    key         = source.cliKey,
+                    label       = stringResource(source.titleResId),
+                    description = stringResource(source.descriptionResId),
+                    // Enabled only when the current SDK is within the source's API range.
+                    enabled     = currentSdk >= source.minApi &&
+                                  (source.maxApi == null || currentSdk <= source.maxApi)
+                )
+            }
+
+        val selectedAudio = audioSourceOptions.find { it.key == audioSource }
+            ?: audioSourceOptions.first()
+
+        DropdownRow {
+            M3DropdownField(
+                label    = stringResource(R.string.settings_audio_source),
+                selected = selectedAudio,
+                options  = audioSourceOptions,
+                onOptionSelected = { actions.setAudioSource(it.key) }
+            )
+            // Show the description of the currently selected audio source below the dropdown.
+            selectedAudio.description?.let { desc ->
+                HintText(desc)
+            }
+        }
+
+        val codecOptions = ScrcpyAudioCodec.entries
+            .map { OptionItem(it.cliKey, stringResource(it.titleResId)) }
+
+        DropdownRow {
+            M3DropdownField(
+                label    = stringResource(R.string.settings_audio_codec),
+                selected = codecOptions.find { it.key == audioCodec }
+                    ?: codecOptions.first(),
+                options  = codecOptions,
+                onOptionSelected = { actions.setAudioCodec(it.key) },
+            )
+            // Show the AAC recommendation if the user has issues.
+            // LocalInspectionMode.current is true in Android Preview, it prevents a preview compilation error.
+            if (!LocalInspectionMode.current && audioCodec != ScrcpyAudioCodec.AAC.cliKey) {
+                HintText(stringResource(R.string.settings_audio_bitrate_recommendation))
+            }
+        }
+
+        val bitrateOptions = listOf(8000, 16000, 32000, 64000, 128000)
+            .map { OptionItem(it.toString(), stringResource(R.string.audio_bitrate_kbps, it / 1000)) }
+
+        DropdownRow {
+            M3DropdownField(
+                label    = stringResource(R.string.settings_audio_bitrate),
+                selected = bitrateOptions.find { it.key == savedBitRate.toString() }
+                    ?: bitrateOptions.first(), // fallback gracefully if bitrate was removed from expected options
+                options  = bitrateOptions,
+                onOptionSelected = { actions.setAudioBitRate(it.key.toInt()) }
+            )
         }
     }
 }
@@ -383,12 +618,14 @@ private fun VisualSection(preferences: AppPreferences, updateTrigger: Int, actio
     }
 
     SettingsSection(title = stringResource(R.string.settings_section_visual)) {
-        M3DropdownField(
-            label = stringResource(R.string.settings_language),
-            selected = languageOptions.find { it.key == currentLanguage } ?: languageOptions.first(),
-            options = languageOptions,
-            onOptionSelected = { actions.setAppLanguage(it.key) }
-        )
+        DropdownRow {
+            M3DropdownField(
+                label = stringResource(R.string.settings_language),
+                selected = languageOptions.find { it.key == currentLanguage } ?: languageOptions.first(),
+                options = languageOptions,
+                onOptionSelected = { actions.setAppLanguage(it.key) }
+            )
+        }
 
         val themeOptions = AppPreferences.ThemeMode.entries.map { mode ->
             val labelRes = when (mode) {
@@ -399,297 +636,37 @@ private fun VisualSection(preferences: AppPreferences, updateTrigger: Int, actio
             OptionItem(mode.key, stringResource(labelRes))
         }
         val defaultThemeMode = AppPreferences.DefaultsValue.THEME_MODE.key
-        
-        M3DropdownField(
-            label    = stringResource(R.string.settings_theme_mode),
-            selected = themeOptions.find { it.key == currentThemeMode.key } 
-                ?: themeOptions.find { it.key == defaultThemeMode } 
-                ?: themeOptions.first(),
-            options  = themeOptions,
-            onOptionSelected = { actions.setThemeMode(AppPreferences.ThemeMode.fromKey(it.key)) }
-        )
-        ToggleListItem(
+
+        DropdownRow {
+            M3DropdownField(
+                label    = stringResource(R.string.settings_theme_mode),
+                selected = themeOptions.find { it.key == currentThemeMode.key }
+                    ?: themeOptions.find { it.key == defaultThemeMode }
+                    ?: themeOptions.first(),
+                options  = themeOptions,
+                onOptionSelected = { actions.setThemeMode(AppPreferences.ThemeMode.fromKey(it.key)) }
+            )
+        }
+
+        SettingsDivider()
+
+        SettingsToggleRow(
+            icon            = Icons.Filled.ColorLens,
             label           = stringResource(R.string.settings_dynamic_color),
             checked         = isDynamicColorEnabled,
             onCheckedChange = { actions.setDynamicColorEnabled(it) }
         )
-        ToggleListItem(
+        SettingsToggleRow(
+            icon            = Icons.Filled.NotificationsActive,
             label           = stringResource(R.string.settings_show_toasts),
             checked         = isShowToastsEnabled,
             onCheckedChange = { actions.setShowToastsEnabled(it) }
         )
-        ToggleListItem(
+        SettingsToggleRow(
+            icon            = Icons.Filled.Vibration,
             label           = stringResource(R.string.settings_vibration_enabled),
             checked         = isVibrationEnabled,
             onCheckedChange = { actions.setVibrationEnabled(it) }
-        )
-    }
-}
-
-
-/** Shows the storage target, device + Drive folders, filename template, auto-record toggles, and
- * contact-filter options — the merged Recording &amp; storage section.
- *
- * @param preferences              The [AppPreferences] instance to read data from.
- * @param updateTrigger          Trigger value to force recomposition when settings change.
- * @param actions                Implementation of [SettingsActions] to handle user interaction.
- * @param onSelectFolder         Called when the user taps the recording-folder row; opens the SAF picker
- *                               whose launcher lives in AppNavigation.
- * @param onSelectDriveFolder    Called when the user taps the Drive-folder row; opens the SAF picker.
- * @param onOpenContactsIncoming Called when the user wants to pick incoming contacts to ignore;
- *                               opens the [ContactSelectionDialog] via [ContactPickerViewModel].
- * @param onOpenContactsOutgoing Called when the user wants to pick outgoing contacts to ignore;
- *                               opens the [ContactSelectionDialog] via [ContactPickerViewModel].
- */
-@Composable
-private fun RecordingAndStorageSection(
-    preferences: AppPreferences,
-    updateTrigger: Int,
-    actions: SettingsActions,
-    onSelectFolder: () -> Unit,
-    onSelectDriveFolder: () -> Unit,
-    onOpenContactsIncoming: () -> Unit,
-    onOpenContactsOutgoing: () -> Unit
-) {
-    val context = LocalContext.current
-
-    // Evaluate these here so they are fetched on every recomposition.
-    val recordingFolderLabel = remember(updateTrigger) { SafHelper.getFolderDisplayNameOrNull(context, preferences.getRecordingFolderUri()) }
-    val fileNameFormat = remember(updateTrigger) { preferences.getFileNameTemplate() }
-    val storageTarget = remember(updateTrigger) { preferences.getStorageTarget() }
-    val driveFolderLabel = remember(updateTrigger) { SafHelper.getFolderDisplayNameOrNull(context, preferences.getDriveFolderUri()) }
-    val autoRecordIncoming = remember(updateTrigger) { preferences.isAutoRecordIncomingEnabled() }
-    val autoRecordOutgoing = remember(updateTrigger) { preferences.isAutoRecordOutgoingEnabled() }
-    val ignoreAnonymousIncoming = remember(updateTrigger) { preferences.isIgnoreAnonymousIncomingEnabled() }
-    val ignoreCrossCountryIncoming = remember(updateTrigger) { preferences.isIgnoreCrossCountryIncomingEnabled() }
-    val ignoreContactsModeIncoming = remember(updateTrigger) { preferences.getIgnoreContactsModeIncoming() }
-    val ignoreContactsModeOutgoing = remember(updateTrigger) { preferences.getIgnoreContactsModeOutgoing() }
-    val ignoreCrossCountryOutgoing = remember(updateTrigger) { preferences.isIgnoreCrossCountryOutgoingEnabled() }
-    val ignoredContactsIncomingCount = remember(updateTrigger) { preferences.getIgnoredContactsIncoming().size }
-    val ignoredContactsOutgoingCount = remember(updateTrigger) { preferences.getIgnoredContactsOutgoing().size }
-
-    var showFileNameFormatDialog by remember { mutableStateOf(false) }
-
-    val storageTargetOptions = StorageTarget.entries.map { target ->
-        val labelRes = when (target) {
-            StorageTarget.LOCAL -> R.string.storage_target_local
-            StorageTarget.DRIVE -> R.string.storage_target_drive
-            StorageTarget.BOTH  -> R.string.storage_target_both
-        }
-        OptionItem(target.key, stringResource(labelRes))
-    }
-
-    SettingsSection(title = stringResource(R.string.settings_section_recording_storage)) {
-        M3DropdownField(
-            label    = stringResource(R.string.settings_storage_target_label),
-            selected = storageTargetOptions.find { it.key == storageTarget.key } ?: storageTargetOptions.first(),
-            options  = storageTargetOptions,
-            onOptionSelected = { actions.setStorageTarget(StorageTarget.fromKey(it.key)) }
-        )
-
-        ListItem(
-            modifier = Modifier.clickable { onSelectFolder() },
-            headlineContent = { Text(stringResource(R.string.settings_recording_folder_label)) },
-            supportingContent = {
-                Text(
-                    text = recordingFolderLabel ?: stringResource(R.string.settings_tap_to_select_folder),
-                    color = MaterialTheme.colorScheme.primary
-                )
-            },
-            colors = ListItemDefaults.colors(containerColor = Color.Transparent)
-        )
-
-        ListItem(
-            modifier = Modifier.clickable { onSelectDriveFolder() },
-            headlineContent = { Text(stringResource(R.string.settings_drive_folder_label)) },
-            supportingContent = {
-                Text(
-                    text = driveFolderLabel ?: stringResource(R.string.general_not_set),
-                    color = MaterialTheme.colorScheme.primary
-                )
-            },
-            colors = ListItemDefaults.colors(containerColor = Color.Transparent)
-        )
-        Text(
-            text     = stringResource(R.string.settings_drive_folder_desc),
-            style    = MaterialTheme.typography.labelSmall,
-            color    = MaterialTheme.colorScheme.onSurfaceVariant,
-            modifier = Modifier.padding(horizontal = 16.dp, vertical = 2.dp)
-        )
-
-        ListItem(
-            modifier = Modifier.clickable { showFileNameFormatDialog = true },
-            headlineContent = { Text(stringResource(R.string.settings_file_name_template)) },
-            supportingContent = {
-                Text(
-                    text = fileNameFormat,
-                    color = MaterialTheme.colorScheme.primary
-                )
-            },
-            colors = ListItemDefaults.colors(containerColor = Color.Transparent)
-        )
-
-        HorizontalDivider(modifier = Modifier.padding(horizontal = 16.dp), thickness = 0.5.dp)
-
-        ToggleListItem(
-            label           = stringResource(R.string.settings_auto_record_incoming),
-            checked         = autoRecordIncoming,
-            onCheckedChange = { actions.setAutoRecordIncoming(it) }
-        )
-        AnimatedVisibility(
-            visible = autoRecordIncoming,
-            enter   = fadeIn() +  expandVertically(),
-            exit    = fadeOut() + shrinkVertically()
-        ) {
-            Column {
-                ToggleListItem(
-                    label           = stringResource(R.string.settings_ignore_anonymous_incoming),
-                    checked         = ignoreAnonymousIncoming,
-                    onCheckedChange = { actions.setIgnoreAnonymousIncoming(it) }
-                )
-                ToggleListItem(
-                    label           = stringResource(R.string.settings_ignore_cross_country_incoming),
-                    checked         = ignoreCrossCountryIncoming,
-                    onCheckedChange = { actions.setIgnoreCrossCountryIncoming(it) },
-                    enabled         = ignoreAnonymousIncoming
-                )
-                IgnoreContactsOptions(
-                    label           = stringResource(R.string.settings_ignore_contacts_incoming),
-                    selectedEnum     = ignoreContactsModeIncoming,
-                    selectedCount    = ignoredContactsIncomingCount,
-                    onSelected      = { actions.setIgnoreContactsModeIncoming(it) },
-                    onSelectContacts = onOpenContactsIncoming
-                )
-            }
-        }
-
-        HorizontalDivider(modifier = Modifier.padding(horizontal = 16.dp), thickness = 0.5.dp)
-
-        ToggleListItem(
-            label           = stringResource(R.string.settings_auto_record_outgoing),
-            checked         = autoRecordOutgoing,
-            onCheckedChange = { actions.setAutoRecordOutgoing(it) }
-        )
-        AnimatedVisibility(
-            visible = autoRecordOutgoing,
-            enter   = fadeIn() +  expandVertically(),
-            exit    = fadeOut() + shrinkVertically()
-        ) {
-            Column {
-                ToggleListItem(
-                    label           = stringResource(R.string.settings_ignore_cross_country_outgoing),
-                    checked         = ignoreCrossCountryOutgoing,
-                    onCheckedChange = { actions.setIgnoreCrossCountryOutgoing(it) }
-                )
-                IgnoreContactsOptions(
-                    label           = stringResource(R.string.settings_ignore_contacts_outgoing),
-                    selectedEnum     = ignoreContactsModeOutgoing,
-                    selectedCount    = ignoredContactsOutgoingCount,
-                    onSelected      = { actions.setIgnoreContactsModeOutgoing(it) },
-                    onSelectContacts = onOpenContactsOutgoing
-                )
-            }
-        }
-    }
-
-    if (showFileNameFormatDialog) {
-        FileNameFormatDialog(
-            initialFormat = fileNameFormat,
-            onConfirm = { format ->
-                actions.setFileNameTemplate(format)
-                showFileNameFormatDialog = false
-            },
-            onDismiss = { showFileNameFormatDialog = false }
-        )
-    }
-}
-
-/** Shows the audio source, codec, and bit-rate dropdowns.
- *
- * The audio-source list is generated from [ScrcpyAudioSource.entries], filtered by
- * [ScrcpyAudioSource.isDebugOnly] based on [AppPreferences.isDebugEnabled]. Items whose
- * [ScrcpyAudioSource.minApi]/[ScrcpyAudioSource.maxApi] range does not include the current
- * device's API level are shown grayed out and cannot be selected.
- *
- * @param preferences   The [AppPreferences] instance to read data from.
- * @param updateTrigger Trigger value to force recomposition when settings change.
- * @param actions       Implementation of [SettingsActions] to handle user interaction.
- */
-@Composable
-private fun AudioSection(preferences: AppPreferences, updateTrigger: Int, actions: SettingsActions) {
-
-    val isDebugEnabled = remember(updateTrigger) { preferences.isDebugEnabled() }
-    val audioSource = remember(updateTrigger) { preferences.getAudioSource() }
-    val audioCodec = remember(updateTrigger) { preferences.getAudioCodec() }
-    val savedBitRate = remember(updateTrigger) { preferences.getAudioBitRate() }
-        
-    SettingsSection(title = stringResource(R.string.settings_section_audio)) {
-        val currentSdk = Build.VERSION.SDK_INT
-
-        // Build the source list from the enum, hiding debug-only entries when debug is off.
-        // Items that require an API level not available on this device are shown as disabled.
-        val audioSourceOptions = ScrcpyAudioSource.entries
-            .filter { !it.isDebugOnly || isDebugEnabled }
-            .map { source ->
-                OptionItem(
-                    key         = source.cliKey,
-                    label       = stringResource(source.titleResId),
-                    description = stringResource(source.descriptionResId),
-                    // Enabled only when the current SDK is within the source's API range.
-                    enabled     = currentSdk >= source.minApi &&
-                                  (source.maxApi == null || currentSdk <= source.maxApi)
-                )
-            }
-
-        val selectedAudio = audioSourceOptions.find { it.key == audioSource }
-            ?: audioSourceOptions.first()
-
-        M3DropdownField(
-            label    = stringResource(R.string.settings_audio_source),
-            selected = selectedAudio,
-            options  = audioSourceOptions,
-            onOptionSelected = { actions.setAudioSource(it.key) }
-        )
-        // Show the description of the currently selected audio source below the dropdown.
-        selectedAudio.description?.let { desc ->
-            Text(
-                text     = desc,
-                style    = MaterialTheme.typography.labelSmall,
-                color    = MaterialTheme.colorScheme.onSurfaceVariant,
-                modifier = Modifier.padding(horizontal = 16.dp, vertical = 2.dp)
-            )
-        }
-
-        val codecOptions = ScrcpyAudioCodec.entries
-            .map { OptionItem(it.cliKey, stringResource(it.titleResId)) }
-        
-        M3DropdownField(
-            label    = stringResource(R.string.settings_audio_codec),
-            selected = codecOptions.find { it.key == audioCodec } 
-                ?: codecOptions.first(),
-            options  = codecOptions,
-            onOptionSelected = { actions.setAudioCodec(it.key) },
-        )
-        // Show the AAC recommendation if the user has issues.
-        // LocalInspectionMode.current is true in Android Preview, it prevents a preview compilation error.
-        if (!LocalInspectionMode.current && audioCodec != ScrcpyAudioCodec.AAC.cliKey) {
-            Text(
-                text     = stringResource(R.string.settings_audio_bitrate_recommendation),
-                style    = MaterialTheme.typography.labelSmall,
-                color    = MaterialTheme.colorScheme.onSurfaceVariant,
-                modifier = Modifier.padding(horizontal = 16.dp, vertical = 2.dp)
-            )
-        }
-
-        val bitrateOptions = listOf(8000, 16000, 32000, 64000, 128000)
-            .map { OptionItem(it.toString(), stringResource(R.string.audio_bitrate_kbps, it / 1000)) }
-
-        M3DropdownField(
-            label    = stringResource(R.string.settings_audio_bitrate),
-            selected = bitrateOptions.find { it.key == savedBitRate.toString() } 
-                ?: bitrateOptions.first(), // fallback gracefully if bitrate was removed from expected options
-            options  = bitrateOptions,
-            onOptionSelected = { actions.setAudioBitRate(it.key.toInt()) }
         )
     }
 }
@@ -706,10 +683,10 @@ private fun DebugSection(preferences: AppPreferences, updateTrigger: Int, action
     val isDebugEnabled = remember(updateTrigger) { preferences.isDebugEnabled() }
     val debugCallerNumber = remember(updateTrigger) { preferences.getDebugCallerNumber() }
     val isLoggingEnabled = remember(updateTrigger) { preferences.isLoggingEnabled() }
-    val context = LocalContext.current
 
     SettingsSection(title = stringResource(R.string.settings_section_debug)) {
-        ToggleListItem(
+        SettingsToggleRow(
+            icon            = Icons.Filled.BugReport,
             label           = stringResource(R.string.settings_debug_logging_enabled),
             checked         = isLoggingEnabled,
             onCheckedChange = { actions.setLoggingEnabled(it) },
@@ -764,9 +741,10 @@ private fun DebugSection(preferences: AppPreferences, updateTrigger: Int, action
             }
         }
 
-        HorizontalDivider(modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp), thickness = 0.5.dp)
+        SettingsDivider()
 
-        ToggleListItem(
+        SettingsToggleRow(
+            icon            = Icons.Filled.GraphicEq,
             label           = stringResource(R.string.settings_debug_mode),
             checked         = isDebugEnabled,
             onCheckedChange = { actions.setDebugEnabled(it) },
@@ -806,35 +784,279 @@ private fun DebugSection(preferences: AppPreferences, updateTrigger: Int, action
     }
 }
 
+/** Shows the app version, server version, clipboard buttons, and a GitHub link.
+ *
+ * Tapping the version row [DEVELOPER_UNLOCK_TAPS] times in a row unlocks the hidden Debug section.
+ *
+ * @param versionString         The formatted app-version string to display.
+ * @param onShowLicenses        Called when the user taps "View Licenses".
+ * @param onUnlockDeveloperMode Called once the hidden 7-tap gesture completes.
+ */
+@Composable
+private fun AboutSection(
+    versionString: String,
+    onShowLicenses: () -> Unit,
+    onUnlockDeveloperMode: () -> Unit
+) {
+    val context = LocalContext.current
+    val serverVersion = ScrcpyConfig.SCRCPY_VERSION
+    var versionTapCount by remember { mutableIntStateOf(0) }
+
+    SettingsSection(title = stringResource(R.string.settings_section_about)) {
+        // Hidden 7-tap developer unlock lives on the app-version row.
+        NavigationRow(
+            icon = Icons.Filled.Save,
+            label = stringResource(R.string.settings_ui_about_app),
+            value = versionString,
+            supporting = stringResource(R.string.settings_scrcpy_server, serverVersion),
+            showChevron = false,
+            onClick = {
+                versionTapCount += 1
+                if (versionTapCount >= DEVELOPER_UNLOCK_TAPS) {
+                    versionTapCount = 0
+                    onUnlockDeveloperMode()
+                }
+            }
+        )
+
+        SettingsDivider()
+
+        // Required fork attribution under the upstream license (GPLv3 §7). Opens the upstream repo.
+        NavigationRow(
+            icon = Icons.Filled.Gavel,
+            label = stringResource(R.string.settings_fork_attribution),
+            value = stringResource(R.string.settings_fork_attribution_supporting),
+            supporting = stringResource(R.string.settings_ui_open_repo_hint),
+            onClick = { context.openOriginalProjectRepo() }
+        )
+
+        Row(
+            modifier = Modifier.padding(start = 16.dp, end = 16.dp, top = 12.dp),
+            horizontalArrangement = Arrangement.spacedBy(12.dp)
+        ) {
+            CvSecondaryButton(
+                text = stringResource(R.string.settings_copy_version),
+                onClick = { context.copyToClipboard("Scrcpy-Server Version", ScrcpyConfig.SCRCPY_VERSION) },
+                leadingIcon = Icons.Filled.ContentCopy,
+                modifier = Modifier.weight(1f)
+            )
+            CvSecondaryButton(
+                text = stringResource(R.string.settings_view_licenses),
+                onClick = onShowLicenses,
+                leadingIcon = Icons.Filled.Gavel,
+                modifier = Modifier.weight(1f)
+            )
+        }
+    }
+}
+
 // ── Internal helper composables ────────────────────────────────────────────────────────────
 
-
-/** A titled card that groups related settings together.
+/** A branded, collapsible section: a tappable [CvSectionHeader] (with a rotating chevron) above a
+ * [CvCard] grouping its rows. Tapping the header toggles the body open/closed; the body animates in
+ * and out. Each section is expanded by default so nothing is hidden on first render. The expanded
+ * state survives configuration changes via [rememberSaveable].
  *
- * @param title   Section heading shown in the app's primary colour above the card.
- * @param content The slot for child Composables rendered inside the [ElevatedCard].
+ * @param title   Section heading shown above the card; the whole header row toggles the section.
+ * @param content The slot for child rows rendered inside the [CvCard] when expanded.
  */
 @Composable
 private fun SettingsSection(title: String, content: @Composable ColumnScope.() -> Unit) {
-    Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-        Text(
-            text       = title,
-            style      = MaterialTheme.typography.titleSmall,
-            color      = MaterialTheme.colorScheme.primary,
-            fontWeight = FontWeight.Bold,
-            modifier   = Modifier.padding(start = 4.dp)
-        )
-        ElevatedCard(
-            modifier  = Modifier.fillMaxWidth(),
-            colors    = CardDefaults.elevatedCardColors(
-                containerColor = MaterialTheme.colorScheme.surfaceContainerLow
-            ),
-            elevation = CardDefaults.elevatedCardElevation(defaultElevation = 1.dp)
+    var expanded by rememberSaveable { mutableStateOf(true) }
+    val chevronRotation by animateFloatAsState(
+        targetValue = if (expanded) 180f else 0f,
+        label = "settingsSectionChevron"
+    )
+
+    Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .clip(RoundedCornerShape(12.dp))
+                .clickable { expanded = !expanded },
+            verticalAlignment = Alignment.CenterVertically
         ) {
-            Column(modifier = Modifier.padding(vertical = 4.dp)) {
+            CvSectionHeader(text = title, modifier = Modifier.weight(1f))
+            Icon(
+                imageVector = Icons.Filled.ExpandMore,
+                contentDescription = null,
+                tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                modifier = Modifier
+                    .padding(end = 4.dp)
+                    .size(22.dp)
+                    .rotate(chevronRotation)
+            )
+        }
+        AnimatedVisibility(
+            visible = expanded,
+            enter = fadeIn() + expandVertically(),
+            exit = fadeOut() + shrinkVertically()
+        ) {
+            CvCard(contentPadding = PaddingValues(vertical = 8.dp)) {
                 content()
             }
         }
+    }
+}
+
+/** A thin inset divider used to separate row clusters inside a [CvCard]. */
+@Composable
+private fun SettingsDivider() {
+    HorizontalDivider(
+        modifier = Modifier.padding(horizontal = 16.dp, vertical = 6.dp),
+        thickness = 1.dp,
+        color = MaterialTheme.colorScheme.outlineVariant
+    )
+}
+
+/** Wraps a [M3DropdownField] (and optional hint) so it slots cleanly inside a [CvCard]. */
+@Composable
+private fun DropdownRow(content: @Composable ColumnScope.() -> Unit) {
+    Column(content = content)
+}
+
+/** Indents and tints a nested option cluster revealed under an auto-record toggle. */
+@Composable
+private fun NestedGroup(content: @Composable ColumnScope.() -> Unit) {
+    Column(
+        modifier = Modifier
+            .padding(horizontal = 12.dp, vertical = 2.dp)
+            .clip(RoundedCornerShape(16.dp))
+            .background(MaterialTheme.colorScheme.surfaceContainerHigh.copy(alpha = 0.5f))
+            .padding(vertical = 4.dp),
+        content = content
+    )
+}
+
+/** A small muted helper line shown beneath a dropdown/field. */
+@Composable
+private fun HintText(text: String) {
+    Text(
+        text     = text,
+        style    = MaterialTheme.typography.labelSmall,
+        color    = MaterialTheme.colorScheme.onSurfaceVariant,
+        modifier = Modifier.padding(horizontal = 16.dp, vertical = 2.dp)
+    )
+}
+
+/** Circular tinted leading-icon badge used by settings rows. */
+@Composable
+private fun RowIcon(icon: ImageVector) {
+    Box(
+        modifier = Modifier
+            .size(36.dp)
+            .clip(CircleShape)
+            .background(MaterialTheme.colorScheme.primary.copy(alpha = 0.14f)),
+        contentAlignment = Alignment.Center
+    ) {
+        Icon(
+            imageVector = icon,
+            contentDescription = null,
+            tint = MaterialTheme.colorScheme.primary,
+            modifier = Modifier.size(20.dp)
+        )
+    }
+}
+
+/**
+ * A tappable navigation/dialog row: leading icon, label + value (+ optional supporting hint), and a
+ * trailing chevron. Used for folder pickers, the filename template, and the About rows.
+ */
+@Composable
+private fun NavigationRow(
+    icon: ImageVector,
+    label: String,
+    value: String,
+    onClick: () -> Unit,
+    supporting: String? = null,
+    showChevron: Boolean = true
+) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clickable { onClick() }
+            .padding(horizontal = 16.dp, vertical = 12.dp),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        RowIcon(icon)
+        Spacer(Modifier.width(14.dp))
+        Column(Modifier.weight(1f)) {
+            Text(
+                text = label,
+                style = MaterialTheme.typography.titleMedium,
+                color = MaterialTheme.colorScheme.onSurface
+            )
+            Spacer(Modifier.height(2.dp))
+            Text(
+                text = value,
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.primary,
+                maxLines = 2,
+                overflow = TextOverflow.Ellipsis
+            )
+            if (supporting != null) {
+                Text(
+                    text = supporting,
+                    style = MaterialTheme.typography.labelSmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+            }
+        }
+        if (showChevron) {
+            Spacer(Modifier.width(8.dp))
+            Icon(
+                imageVector = Icons.AutoMirrored.Filled.ArrowForwardIos,
+                contentDescription = null,
+                tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                modifier = Modifier.size(14.dp)
+            )
+        }
+    }
+}
+
+/**
+ * A switch row styled for the Signal cards: optional leading icon, label + supporting text, and a
+ * teal [Switch]. Tapping anywhere on the row toggles it. Mirrors the behavior of the shared
+ * ToggleListItem while matching the redesigned row anatomy.
+ */
+@Composable
+private fun SettingsToggleRow(
+    label: String,
+    checked: Boolean,
+    onCheckedChange: (Boolean) -> Unit,
+    icon: ImageVector? = null,
+    description: String? = null,
+    enabled: Boolean = true
+) {
+    val contentAlpha = if (enabled) 1f else 0.38f
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clickable(enabled = enabled) { onCheckedChange(!checked) }
+            .padding(horizontal = 16.dp, vertical = 10.dp),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        if (icon != null) {
+            RowIcon(icon)
+            Spacer(Modifier.width(14.dp))
+        }
+        Column(Modifier.weight(1f)) {
+            Text(
+                text = label,
+                style = MaterialTheme.typography.titleMedium,
+                color = MaterialTheme.colorScheme.onSurface.copy(alpha = contentAlpha)
+            )
+            if (description != null) {
+                Spacer(Modifier.height(2.dp))
+                Text(
+                    text = description,
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = contentAlpha)
+                )
+            }
+        }
+        Spacer(Modifier.width(12.dp))
+        Switch(checked = checked, onCheckedChange = onCheckedChange, enabled = enabled)
     }
 }
 
@@ -965,14 +1187,12 @@ private fun SettingsScreenPreview() {
             override fun setDriveFolderUri(uri: android.net.Uri?) {}
         }
 
-        // File name template selection dialog
-        //FileNameFormatDialog(AppPreferences.DefaultsValue.FILE_NAME_TEMPLATE, {},{})
-
         SettingsContent(
             preferences = dummyPreferences,
             updateTrigger = 0,
             actions = dummyActions,
             contactPickerState = null,
+            onBack = {},
             onSelectFolder = {},
             onSelectDriveFolder = {},
             onOpenContactsIncoming = {},

@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  ~ CallVault: FOSS call recording, self-contained over embedded ADB
+  ~  Copyright (C) 2026-present The CallVault Authors
+  ~  This software is licensed under the GNU General Public License v3 or later, with additional terms as permitted under Section 7.
+  ~  The full license text is available in the LICENSE file at the root of this project.
+  ~  This software is distributed WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+  -->
+<resources>
+
+    <!-- Setup Wizard: redesign-only UI strings (the "Signal" guided onboarding shell). -->
+    <string name="wizard_ui_eyebrow">Setup</string>
+
+    <!-- Storage target option cards (title + one-line description). -->
+    <string name="wizard_ui_storage_local_desc">Recordings stay on this phone. Nothing leaves the device.</string>
+    <string name="wizard_ui_storage_drive_desc">Recordings upload to your Google Drive folder, then clear off this phone.</string>
+    <string name="wizard_ui_storage_both_desc">Keep a copy on this phone and back it up to Google Drive.</string>
+
+    <!-- Folder picker rows. -->
+    <string name="wizard_ui_folder_choose">Choose folder</string>
+
+    <!-- Schedule mode option cards (title + one-line description). -->
+    <string name="wizard_ui_schedule_immediate_desc">Upload each call the moment it finishes.</string>
+    <string name="wizard_ui_schedule_daily_desc">Batch the day\'s calls and upload once each day.</string>
+    <string name="wizard_ui_schedule_weekly_desc">Batch the week\'s calls and upload once each week.</string>
+
+    <!-- Auto-record toggle row descriptions. -->
+    <string name="wizard_ui_auto_incoming_desc">Start recording automatically when a call comes in.</string>
+    <string name="wizard_ui_auto_outgoing_desc">Start recording automatically when you place a call.</string>
+
+</resources>

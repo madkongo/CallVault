@@ -8,8 +8,11 @@
 
 package com.baba.callvault.ui.screens
 
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
@@ -17,14 +20,17 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.selection.toggleable
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.text.selection.SelectionContainer
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material3.Button
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.GraphicEq
 import androidx.compose.material3.Checkbox
-import androidx.compose.material3.ElevatedCard
-import androidx.compose.material3.HorizontalDivider
+import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
@@ -37,6 +43,7 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.platform.LocalUriHandler
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
@@ -52,12 +59,21 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.baba.callvault.BuildConfig
 import com.baba.callvault.R
+import com.baba.callvault.ui.common.CvCard
+import com.baba.callvault.ui.common.CvHero
+import com.baba.callvault.ui.common.CvPrimaryButton
+import com.baba.callvault.ui.common.CvSectionHeader
 import com.baba.callvault.ui.theme.CallVaultTheme
 import kotlinx.coroutines.delay
 
 
 /**
- * One-time disclaimer screen shown on first launch.
+ * One-time disclaimer screen shown on first launch, redesigned on the "Signal" design system.
+ *
+ * A branded hero (teal app glyph + welcome) sits above the scrollable legal body in a styled
+ * [CvCard], a clean acknowledgement checkbox, and a teal [CvPrimaryButton] for Continue. All gating
+ * logic is preserved verbatim: the scroll-to-read gate, the countdown, the checkbox, and the
+ * three-way `canContinue` condition.
  *
  * @param onContinue Called when the user presses the enabled "Continue" button. The caller
  *                   ([AppNavigation]) then persists the acceptance flag and triggers a refresh
@@ -90,9 +106,12 @@ fun DisclaimerScreen(onContinue: () -> Unit, modifier: Modifier = Modifier) {
         }
     }
 
+    // Continue button — enabled only when all three gates are satisfied.
+    val canContinue = hasAccepted && hasScrolledToBottom && timeLeft == 0
+
     // Surface ensures the Material 3 background colour fills the screen correctly.
     Surface(
-        modifier = Modifier
+        modifier = modifier
             .navigationBarsPadding()
             .fillMaxSize(),
         color = MaterialTheme.colorScheme.background,
@@ -100,57 +119,69 @@ fun DisclaimerScreen(onContinue: () -> Unit, modifier: Modifier = Modifier) {
         Column(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(24.dp),
-            verticalArrangement = Arrangement.spacedBy(14.dp)
+                .padding(horizontal = 24.dp)
+                .padding(top = 28.dp, bottom = 20.dp),
+            verticalArrangement = Arrangement.spacedBy(18.dp)
         ) {
-            // Title
-            Text(
-                text = stringResource(R.string.disclaimer_title),
-                style = MaterialTheme.typography.headlineMedium,
-                color = MaterialTheme.colorScheme.onBackground
-            )
+            // Branded hero: teal app glyph + welcome title + one-line subtitle.
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Box(
+                    modifier = Modifier
+                        .size(52.dp)
+                        .clip(CircleShape)
+                        .background(MaterialTheme.colorScheme.primary.copy(alpha = 0.16f)),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Icon(
+                        imageVector = Icons.Filled.GraphicEq,
+                        contentDescription = null,
+                        tint = MaterialTheme.colorScheme.primary,
+                        modifier = Modifier.size(28.dp)
+                    )
+                }
+                Spacer(Modifier.width(16.dp))
+                CvHero(
+                    title = stringResource(R.string.disclaimer_title),
+                    subtitle = stringResource(R.string.disclaimer_ui_hero_subtitle),
+                    modifier = Modifier.weight(1f)
+                )
+            }
 
-            // Introduction paragraph (plain text — no external links)
-            Text(
-                text = stringResource(R.string.disclaimer_introduction),
-                style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.onBackground
-            )
-
-            Spacer(modifier = Modifier.height(1.dp))
-
-            // Elevated card gives visual depth to the scrollable disclaimer body.
-            ElevatedCard(
-                modifier = Modifier
-                    .weight(1f)
-                    .fillMaxWidth(),
+            // The legal disclaimer body in a styled, scrollable card (muted, with subtle inner scroll).
+            CvCard(
+                modifier = Modifier.weight(1f),
+                contentPadding = PaddingValues(0.dp)
             ) {
+                CvSectionHeader(
+                    text = stringResource(R.string.disclaimer_ui_body_header),
+                    modifier = Modifier.padding(start = 18.dp, top = 16.dp)
+                )
                 SelectionContainer {
                     Text(
                         text = stringResource(R.string.disclaimer_body),
                         modifier = Modifier
                             .verticalScroll(scrollState)
-                            .padding(16.dp),
-                        style = MaterialTheme.typography.bodyLarge.copy(
+                            .padding(horizontal = 18.dp, vertical = 12.dp),
+                        style = MaterialTheme.typography.bodySmall.copy(
                             lineBreak = LineBreak.Paragraph
-                        )
+                        ),
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
                 }
             }
-
-            HorizontalDivider(modifier = Modifier.padding(vertical = 8.dp))
 
             // Acknowledgement checkbox — only becomes interactive after the user scrolls down.
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
+                    .clip(MaterialTheme.shapes.medium)
                     .toggleable(
                         value = hasAccepted,
                         onValueChange = { if (hasScrolledToBottom) hasAccepted = it },
                         role = Role.Checkbox,
                         enabled = hasScrolledToBottom
                     )
-                    .padding(vertical = 8.dp),
+                    .padding(vertical = 4.dp),
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.spacedBy(12.dp)
             ) {
@@ -160,33 +191,25 @@ fun DisclaimerScreen(onContinue: () -> Unit, modifier: Modifier = Modifier) {
                     enabled = hasScrolledToBottom
                 )
                 Text(
-                    text = stringResource(R.string.disclaimer_checkbox_label),
+                    text = if (hasScrolledToBottom) stringResource(R.string.disclaimer_checkbox_label)
+                    else stringResource(R.string.disclaimer_ui_scroll_hint),
                     style = MaterialTheme.typography.bodyMedium,
                     // Dim the label to signal it's not yet interactive.
                     color = if (hasScrolledToBottom) MaterialTheme.colorScheme.onBackground
-                    else MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.6f)
+                    else MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f)
                 )
             }
 
-            // Continue button — enabled only when all three gates are satisfied.
-            val canContinue = hasAccepted && hasScrolledToBottom && timeLeft == 0
-
-            Button(
+            // Continue button — shows the remaining countdown, then a read prompt, then "Continue".
+            CvPrimaryButton(
+                text = when {
+                    timeLeft > 0 -> stringResource(R.string.disclaimer_wait, timeLeft)
+                    !hasScrolledToBottom -> stringResource(R.string.disclaimer_must_read)
+                    else -> stringResource(R.string.general_continue)
+                },
                 onClick = onContinue,
-                modifier = Modifier.fillMaxWidth(),
-                enabled = canContinue,
-            ) {
-                // Show the remaining countdown seconds while the timer is still running.
-                if (timeLeft > 0) {
-                    Text(text = stringResource(R.string.disclaimer_wait, timeLeft))
-                }
-                else if (!hasScrolledToBottom) {
-                    Text(text = stringResource(R.string.disclaimer_must_read))
-                }
-                else {
-                    Text(text = stringResource(R.string.general_continue))
-                }
-            }
+                enabled = canContinue
+            )
         }
     }
 }

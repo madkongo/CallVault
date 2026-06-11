@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  CallVault: FOSS call recording, self-contained over embedded ADB
+  Copyright (C) 2026-present The CallVault Authors
+  Strings added for the Signal redesign of the Home screen. Kept in a separate
+  resources file to avoid conflicts with parallel work on strings.xml.
+-->
+<resources>
+    <!-- Hero status card -->
+    <string name="home_hero_status_label">Status</string>
+    <string name="home_hero_pill_ready">Protected</string>
+    <string name="home_hero_pill_not_paired">Action needed</string>
+    <string name="home_hero_pill_no_folder">Action needed</string>
+
+    <!-- Recordings section -->
+    <string name="home_recordings_count">%1$d saved</string>
+    <string name="home_recordings_empty_title">No recordings yet</string>
+    <string name="home_recordings_empty_hint">When CallVault records a call, it shows up here. Make or take a call to get started.</string>
+
+    <!-- Row content descriptions -->
+    <string name="home_play_recording">Play recording</string>
+</resources>

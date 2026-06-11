@@ -53,7 +53,18 @@ fun FileNameFormatDialog(
         mutableStateOf(presetForTemplateOrFirst(initialFormat).template)
     }
 
-    val options = FILE_NAME_TEMPLATE_PRESETS.map { OptionItem(it.template, stringResource(it.labelRes)) }
+    // Each option shows the friendly preset label as primary text and a resolved example as the
+    // secondary/preview line — never the raw "{token}" template.
+    val options = FILE_NAME_TEMPLATE_PRESETS.map {
+        OptionItem(
+            key = it.template,
+            label = stringResource(it.labelRes),
+            description = stringResource(
+                R.string.settings_file_name_template_example,
+                fileNameTemplateExample(it.template)
+            )
+        )
+    }
 
     AlertDialog(
         title = { Text(stringResource(R.string.settings_file_name_template)) },

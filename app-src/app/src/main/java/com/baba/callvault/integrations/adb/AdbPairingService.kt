@@ -25,8 +25,12 @@ import android.app.Service
 import android.content.Context
 import android.content.Intent
 import android.content.pm.ServiceInfo
+import android.database.ContentObserver
 import android.os.Build
+import android.os.Handler
 import android.os.IBinder
+import android.os.Looper
+import android.provider.Settings
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -39,6 +43,20 @@ class AdbPairingService : Service() {
 
     private var adbMdns: AdbMdns? = null
     private var started = false
+
+    // Guards against running the pairing handshake more than once (e.g. a re-delivered ACTION_REPLY
+    // or a double notification reply) — which would post a second, confusing "Paired ✓" notification.
+    @Volatile
+    private var pairingHandled = false
+
+    // ---- "Wait for Wireless debugging" pre-state ----
+    // When ACTION_START arrives while Wireless debugging (WD) is OFF, we don't start mDNS discovery
+    // yet. Instead we post a "waiting" foreground notification and watch the adb_wifi_enabled global
+    // setting; the moment the user toggles WD on we transition into the normal discovery flow. This
+    // lets the user tap "Open Wireless debugging" once and never return to CallVault to authorize.
+    private val mainHandler = Handler(Looper.getMainLooper())
+    private var wdObserver: ContentObserver? = null
+    private val wdTimeoutRunnable = Runnable { onWaitTimedOut() }
 
     override fun onCreate() {
         super.onCreate()
@@ -64,6 +82,7 @@ class AdbPairingService : Service() {
                 if (port != -1) onInput(code, port) else onStart()
             }
             ACTION_STOP -> {
+                stopWaitingForWd(); stopSearch()
                 stopForeground(STOP_FOREGROUND_REMOVE); stopSelf(); null
             }
             else -> return START_NOT_STICKY
@@ -76,28 +95,100 @@ class AdbPairingService : Service() {
                 getSystemService(NotificationManager::class.java).notify(NOTIFICATION_ID, notification)
             }
         }
-        return START_REDELIVER_INTENT
+        // NOT_STICKY: pairing is a one-shot, user-driven flow. We must never let the system
+        // re-deliver ACTION_REPLY (which would re-run the handshake and post a duplicate "Paired ✓").
+        return START_NOT_STICKY
     }
 
+    /**
+     * ACTION_START entry. If Wireless debugging is already ON we start mDNS discovery immediately
+     * (the original behaviour). If it is OFF we enter the WAITING pre-state instead — see
+     * [beginWaitingForWd] — and only start discovery once the user toggles WD on.
+     */
     private fun onStart(): Notification {
-        if (!started) {
-            started = true
-            adbMdns = AdbMdns(this, AdbMdns.TLS_PAIRING) { port ->
-                AppLogger.i(TAG, "pairing service port: $port")
-                if (port > 0) {
-                    getSystemService(NotificationManager::class.java)
-                        .notify(NOTIFICATION_ID, foundNotification(port))
-                }
-            }.also { it.start() }
+        if (started) return searchingNotification()
+        return if (AdbShell.isWirelessDebuggingEnabled(applicationContext)) {
+            beginDiscovery()
+            searchingNotification()
+        } else {
+            beginWaitingForWd()
+            waitingForWdNotification()
         }
-        return searchingNotification()
+    }
+
+    /** Begins mDNS discovery for the pairing service. Idempotent via [started]. */
+    private fun beginDiscovery() {
+        if (started) return
+        started = true
+        adbMdns = AdbMdns(this, AdbMdns.TLS_PAIRING) { port ->
+            AppLogger.i(TAG, "pairing service port: $port")
+            if (port > 0) {
+                getSystemService(NotificationManager::class.java)
+                    .notify(NOTIFICATION_ID, foundNotification(port))
+            }
+        }.also { it.start() }
+    }
+
+    /**
+     * Registers a [ContentObserver] on the adb_wifi_enabled global setting and a safety timeout.
+     * When WD flips on we cancel the timeout, unregister the observer, start discovery, and swap the
+     * foreground notification to the "searching" one — all without the user returning to CallVault.
+     * Idempotent: a second ACTION_START while already waiting is a no-op.
+     */
+    private fun beginWaitingForWd() {
+        if (wdObserver != null) return
+        AppLogger.i(TAG, "WD off — arming pairing; waiting for Wireless debugging to be turned on")
+        val observer = object : ContentObserver(mainHandler) {
+            override fun onChange(selfChange: Boolean) {
+                if (AdbShell.isWirelessDebuggingEnabled(applicationContext)) {
+                    AppLogger.i(TAG, "Wireless debugging turned on — starting pairing discovery")
+                    stopWaitingForWd()
+                    beginDiscovery()
+                    runCatching {
+                        getSystemService(NotificationManager::class.java)
+                            .notify(NOTIFICATION_ID, searchingNotification())
+                    }.onFailure { AppLogger.e(TAG, "notify(searching) after WD-on failed", it) }
+                }
+            }
+        }
+        wdObserver = observer
+        runCatching {
+            val uri = Settings.Global.getUriFor("adb_wifi_enabled")
+            contentResolver.registerContentObserver(uri, false, observer)
+        }.onFailure {
+            AppLogger.e(TAG, "registerContentObserver(adb_wifi_enabled) failed", it)
+            wdObserver = null
+        }
+        mainHandler.postDelayed(wdTimeoutRunnable, WD_WAIT_TIMEOUT_MS)
+    }
+
+    /** Tears down the WD-waiting observer + timeout. Safe to call when not waiting. */
+    private fun stopWaitingForWd() {
+        mainHandler.removeCallbacks(wdTimeoutRunnable)
+        wdObserver?.let { obs ->
+            runCatching { contentResolver.unregisterContentObserver(obs) }
+                .onFailure { AppLogger.d(TAG, "unregisterContentObserver ignored: ${it.message}") }
+        }
+        wdObserver = null
+    }
+
+    /** Safety net: WD never turned on within the timeout — tear down and stop the service. */
+    private fun onWaitTimedOut() {
+        AppLogger.i(TAG, "Wireless debugging not enabled within timeout — stopping pairing service")
+        stopWaitingForWd()
+        stopForeground(STOP_FOREGROUND_REMOVE)
+        stopSelf()
     }
 
     private fun onInput(code: String, port: Int): Notification {
+        // Ignore a second/redelivered reply so we never pair twice or post a duplicate result.
+        if (pairingHandled) return workingNotification()
+        pairingHandled = true
         CoroutineScope(Dispatchers.IO).launch {
             val paired = runCatching {
                 AdbConnectionManager.getInstance(applicationContext).pair("127.0.0.1", port, code)
             }
+            stopWaitingForWd()
             stopSearch()
             val nm = getSystemService(NotificationManager::class.java)
             if (paired.getOrNull() == true) {
@@ -114,8 +205,8 @@ class AdbPairingService : Service() {
                 // (A background Service can't reliably foreground an Activity on Android 12+ — the
                 // contentIntent on this notification gives a reliable one-tap return instead.)
                 nm.notify(NOTIFICATION_ID, resultNotification(
-                    "Paired ✓ — tap to continue setup",
-                    "ADB wireless pairing completed. Finishing recorder setup in the background.",
+                    "Paired ✓",
+                    "Wireless debugging paired. Tap to finish setting up CallVault.",
                     tapToOpen = true,
                 ))
                 runCatching { RecorderServerLauncher.ensureServerRunning(applicationContext) }
@@ -149,6 +240,7 @@ class AdbPairingService : Service() {
 
     override fun onDestroy() {
         super.onDestroy()
+        stopWaitingForWd()
         stopSearch()
     }
 
@@ -163,6 +255,14 @@ class AdbPairingService : Service() {
         builder()
             .setContentTitle("Searching for pairing service…")
             .setContentText("Open the phone's 'Pair device with pairing code' dialog.")
+            .addAction(stopAction())
+            .build()
+
+    private fun waitingForWdNotification(): Notification =
+        builder()
+            .setContentTitle("Waiting for Wireless debugging…")
+            .setContentText("Turn on Wireless debugging to start pairing.")
+            .setOngoing(true)
             .addAction(stopAction())
             .build()
 
@@ -226,6 +326,9 @@ class AdbPairingService : Service() {
         private const val ACTION_START = "start"
         private const val ACTION_REPLY = "reply"
         private const val ACTION_STOP = "stop"
+
+        /** Safety cap on the "waiting for Wireless debugging" pre-state (5 minutes). */
+        private const val WD_WAIT_TIMEOUT_MS = 5 * 60 * 1000L
 
         fun start(context: Context) {
             val intent = Intent(context, AdbPairingService::class.java).setAction(ACTION_START)

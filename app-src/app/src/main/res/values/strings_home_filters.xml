@@ -1,0 +1,52 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  ~ CallVault: FOSS call recording, self-contained over embedded ADB
+  ~  Copyright (C) 2026-present The CallVault Authors
+  ~  This software is licensed under the GNU General Public License v3 or later, with additional terms as permitted under Section 7.
+  ~  The full license text is available in the LICENSE file at the root of this project.
+  ~  This software is distributed WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+  -->
+<resources>
+
+    <!-- Source facet (chip label + options). %1$s = current value shown on the chip. -->
+    <string name="home_filter_source_label">Source</string>
+    <string name="home_filter_source_chip">Source: %1$s</string>
+    <string name="home_filter_source_all">All</string>
+    <string name="home_filter_source_local">Local only</string>
+    <string name="home_filter_source_drive">Drive only</string>
+
+    <!-- Direction facet (chip label + options). %1$s = current value shown on the chip. -->
+    <string name="home_filter_direction_label">Direction</string>
+    <string name="home_filter_direction_chip">Direction: %1$s</string>
+    <string name="home_filter_direction_all">All</string>
+    <string name="home_filter_direction_incoming">Incoming</string>
+    <string name="home_filter_direction_outgoing">Outgoing</string>
+
+    <!-- Contact facet (chip label + "all" option). %1$s = current value shown on the chip. -->
+    <string name="home_filter_contact_label">Contact</string>
+    <string name="home_filter_contact_chip">Contact: %1$s</string>
+    <string name="home_filter_contact_all">All contacts</string>
+
+    <!-- Date facet (chip label + "all" option). %1$s = current value shown on the chip. -->
+    <string name="home_filter_date_label">Date</string>
+    <string name="home_filter_date_chip">Date: %1$s</string>
+    <string name="home_filter_date_all">All dates</string>
+
+    <!-- Per-row storage-source badge labels -->
+    <string name="home_source_badge_local">Device</string>
+    <string name="home_source_badge_drive">Drive</string>
+    <string name="home_source_badge_both">Device + Drive</string>
+
+    <!-- Device + Drive row: expandable per-copy section -->
+    <string name="home_copies_expand">Show copies</string>
+    <string name="home_copies_collapse">Hide copies</string>
+    <string name="home_copy_device">Device</string>
+    <string name="home_copy_drive">Drive</string>
+
+    <!-- Per-copy delete (Device + Drive row). %1$s = recording name. -->
+    <string name="home_delete_confirm_device_message">Delete the Device copy of %1$s? The Drive copy is kept.</string>
+    <string name="home_delete_confirm_drive_message">Delete the Drive copy of %1$s? The Device copy is kept.</string>
+    <string name="home_delete_copy_device_content_desc">Delete Device copy</string>
+    <string name="home_delete_copy_drive_content_desc">Delete Drive copy</string>
+
+</resources>

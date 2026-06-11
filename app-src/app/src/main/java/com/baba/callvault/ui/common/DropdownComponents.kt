@@ -11,6 +11,7 @@ package com.baba.callvault.ui.common
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.foundation.layout.*
 import androidx.compose.ui.tooling.preview.Preview
@@ -60,7 +61,9 @@ fun M3DropdownField(
             value         = selected.label,
             onValueChange = {},
             readOnly      = true,
-            label         = { Text(label) },
+            singleLine    = true,
+            maxLines      = 1,
+            label         = { Text(label, maxLines = 1, overflow = TextOverflow.Ellipsis) },
             trailingIcon  = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = expanded) },
             colors        = ExposedDropdownMenuDefaults.outlinedTextFieldColors(),
             modifier      = Modifier.menuAnchor(type = ExposedDropdownMenuAnchorType.PrimaryNotEditable, enabled = true).fillMaxWidth()
@@ -71,7 +74,20 @@ fun M3DropdownField(
         ) {
             options.forEach { option ->
                 DropdownMenuItem(
-                    text    = { Text(option.label) },
+                    text    = {
+                        Column {
+                            Text(option.label)
+                            // Optional secondary preview line (e.g. a resolved file-name example)
+                            // shown beneath the primary label when a description is provided.
+                            option.description?.let { desc ->
+                                Text(
+                                    text  = desc,
+                                    style = MaterialTheme.typography.bodySmall,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                                )
+                            }
+                        }
+                    },
                     onClick = {
                         if (option.enabled) {
                             onOptionSelected(option)

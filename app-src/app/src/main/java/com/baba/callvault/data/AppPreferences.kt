@@ -95,11 +95,11 @@ class AppPreferences(context: Context) {
         val AUDIO_BITRATE = ScrcpyAudioCodec.OPUS.defaultBitRate
 
         // --- File Naming ---
-        const val FILE_NAME_TEMPLATE = "{date}_{direction}_{phone_number}"
+        const val FILE_NAME_TEMPLATE = "{date}_{direction}_{contact_name}"
 
         // --- UI & Appearance ---
         val THEME_MODE = ThemeMode.SYSTEM
-        const val DYNAMIC_COLOR = true
+        const val DYNAMIC_COLOR = false // Signal brand colors are the identity; Material You is opt-in
         const val SHOW_TOASTS = true
     }
 

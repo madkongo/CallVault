@@ -9,8 +9,13 @@
 package com.baba.callvault.ui.screens
 
 import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.compose.animation.animateColorAsState
+import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
@@ -18,16 +23,21 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.statusBarsPadding
-import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.verticalScroll
-import androidx.compose.material3.Button
-import androidx.compose.material3.ElevatedCard
-import androidx.compose.material3.HorizontalDivider
-import androidx.compose.material3.LinearProgressIndicator
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ArrowForward
+import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
+import androidx.compose.material.icons.filled.Check
+import androidx.compose.material.icons.filled.CloudUpload
+import androidx.compose.material.icons.filled.Done
+import androidx.compose.material.icons.filled.Folder
+import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedButton
-import androidx.compose.material3.Surface
+import androidx.compose.material3.Switch
+import androidx.compose.material3.SwitchDefaults
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
@@ -38,9 +48,13 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.baba.callvault.R
@@ -50,9 +64,13 @@ import com.baba.callvault.integrations.scrcpy.ScrcpyAudioCodec
 import com.baba.callvault.system.PersistentFolderPickerContract
 import com.baba.callvault.system.storage.SafHelper
 import com.baba.callvault.system.takePersistableFolderPermission
+import com.baba.callvault.ui.common.CvCard
+import com.baba.callvault.ui.common.CvHero
+import com.baba.callvault.ui.common.CvPrimaryButton
+import com.baba.callvault.ui.common.CvScaffold
+import com.baba.callvault.ui.common.CvSecondaryButton
 import com.baba.callvault.ui.common.M3DropdownField
 import com.baba.callvault.ui.common.OptionItem
-import com.baba.callvault.ui.common.ToggleListItem
 import com.baba.callvault.ui.viewmodels.WizardViewModel
 import com.baba.callvault.utils.FILE_NAME_TEMPLATE_PRESETS
 import com.baba.callvault.utils.fileNameTemplateExample
@@ -68,13 +86,18 @@ private val WIZARD_MINUTE_OPTIONS = listOf(0, 15, 30, 45)
 private val WIZARD_DAY_OF_WEEK_OPTIONS = (1..7).toList()
 
 /**
- * The one-time post-onboarding setup wizard.
+ * The one-time post-onboarding setup wizard, redesigned on the "Signal" design system.
  *
- * Connects the [WizardViewModel] to a stepper UI and the SAF folder pickers, then calls [onFinished]
- * after the wizard persists everything (so the router can refresh and advance to Home).
+ * A guided, premium stepper: a teal segmented progress bar + "Step N of M" header sit above a
+ * [CvHero] step title, branded [CvCard] option rows form each step body, and a persistent bottom
+ * bar carries Back / Next (Finish on the last step). The [WizardViewModel] persists every choice
+ * live; [onFinished] fires after the final step so the router refreshes and advances to Home.
+ *
+ * Behavior, persistence, the dynamic step list (the schedule step appears only for Drive/Both),
+ * the clamp logic, and the Next-gating on required folders are all preserved from the original.
  *
  * @param onFinished Called after the final "Finish" step completes; the router triggers a nav refresh.
- * @param modifier   Optional layout modifier for the root [Surface].
+ * @param modifier   Optional layout modifier for the root [CvScaffold].
  */
 @Composable
 fun WizardScreen(
@@ -148,39 +171,46 @@ fun WizardScreen(
 
     val isLastStep = safeIndex == steps.lastIndex
 
-    Surface(
-        modifier = modifier
-            .fillMaxSize()
-            .statusBarsPadding()
-            .navigationBarsPadding(),
-        color = MaterialTheme.colorScheme.background
-    ) {
-        Column(modifier = Modifier.fillMaxSize().padding(20.dp)) {
-            Text(
-                text = stringResource(R.string.wizard_title),
-                style = MaterialTheme.typography.headlineMedium,
-                fontWeight = FontWeight.Bold
+    CvScaffold(
+        modifier = modifier.fillMaxSize(),
+        title = stringResource(R.string.app_name),
+        bottomBar = {
+            WizardBottomBar(
+                isFirstStep = safeIndex == 0,
+                isLastStep = isLastStep,
+                canAdvance = canAdvance,
+                onBack = { if (safeIndex > 0) stepIndex = safeIndex - 1 },
+                onNext = {
+                    if (isLastStep) {
+                        viewModel.finish()
+                        onFinished()
+                    } else {
+                        stepIndex = safeIndex + 1
+                    }
+                }
             )
-            Spacer(modifier = Modifier.height(4.dp))
-            Text(
-                text = stringResource(R.string.wizard_step_of, safeIndex + 1, steps.size),
-                style = MaterialTheme.typography.labelLarge,
-                color = MaterialTheme.colorScheme.onSurfaceVariant
-            )
-            Spacer(modifier = Modifier.height(8.dp))
-            LinearProgressIndicator(
-                progress = { (safeIndex + 1f) / steps.size },
-                modifier = Modifier.fillMaxWidth()
-            )
-            Spacer(modifier = Modifier.height(16.dp))
+        }
+    ) { innerPadding ->
+        LazyColumn(
+            modifier = Modifier.fillMaxSize(),
+            contentPadding = PaddingValues(
+                start = 20.dp,
+                end = 20.dp,
+                top = innerPadding.calculateTopPadding() + 4.dp,
+                bottom = innerPadding.calculateBottomPadding() + 24.dp
+            ),
+            verticalArrangement = Arrangement.spacedBy(16.dp)
+        ) {
+            item {
+                WizardHeader(
+                    stepNumber = safeIndex + 1,
+                    stepCount = steps.size,
+                    title = stringResource(stepTitleRes(currentStep)),
+                    subtitle = stringResource(stepSubtitleRes(currentStep))
+                )
+            }
 
-            // Scrollable step body.
-            Column(
-                modifier = Modifier
-                    .weight(1f)
-                    .fillMaxWidth()
-                    .verticalScroll(rememberScrollState())
-            ) {
+            item {
                 when (currentStep) {
                     WizardStep.STORAGE -> StorageStep(
                         storageTarget = storageTarget,
@@ -219,40 +249,6 @@ fun WizardScreen(
                     )
                 }
             }
-
-            HorizontalDivider()
-            Spacer(modifier = Modifier.height(12.dp))
-
-            // Stepper controls.
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(12.dp)
-            ) {
-                OutlinedButton(
-                    onClick = { if (safeIndex > 0) stepIndex = safeIndex - 1 },
-                    enabled = safeIndex > 0,
-                    modifier = Modifier.weight(1f)
-                ) { Text(stringResource(R.string.wizard_back)) }
-
-                Button(
-                    onClick = {
-                        if (isLastStep) {
-                            viewModel.finish()
-                            onFinished()
-                        } else {
-                            stepIndex = safeIndex + 1
-                        }
-                    },
-                    enabled = canAdvance,
-                    modifier = Modifier.weight(1f)
-                ) {
-                    Text(
-                        stringResource(
-                            if (isLastStep) R.string.wizard_finish else R.string.wizard_next
-                        )
-                    )
-                }
-            }
         }
     }
 }
@@ -260,53 +256,293 @@ fun WizardScreen(
 /** The logical steps of the wizard (the schedule step is conditionally included). */
 private enum class WizardStep { STORAGE, SCHEDULE, AUTO_RECORD, AUDIO, FILE_NAME }
 
-// ── Steps ───────────────────────────────────────────────────────────────────────────────────
+// ── Shell: header + progress + bottom bar ─────────────────────────────────────────────────────
 
+/**
+ * The guided header: a small "Setup" eyebrow + "Step N of M", a teal segmented progress bar, then
+ * the current step's title + subtitle via [CvHero]. This anchors the wizard as a confident, modern
+ * onboarding flow rather than a stock Material stepper.
+ */
 @Composable
-private fun WizardStepCard(title: String, content: @Composable () -> Unit) {
-    Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-        Text(
-            text = title,
-            style = MaterialTheme.typography.titleMedium,
-            fontWeight = FontWeight.Bold,
-            color = MaterialTheme.colorScheme.primary
-        )
-        ElevatedCard(modifier = Modifier.fillMaxWidth()) {
-            Column(modifier = Modifier.padding(vertical = 8.dp)) { content() }
+private fun WizardHeader(stepNumber: Int, stepCount: Int, title: String, subtitle: String) {
+    Column {
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Text(
+                text = stringResource(R.string.wizard_ui_eyebrow).uppercase(),
+                style = MaterialTheme.typography.labelSmall,
+                color = MaterialTheme.colorScheme.primary
+            )
+            Spacer(Modifier.weight(1f))
+            Text(
+                text = stringResource(R.string.wizard_step_of, stepNumber, stepCount),
+                style = MaterialTheme.typography.labelMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
+        }
+        Spacer(Modifier.height(10.dp))
+        SegmentedProgress(current = stepNumber, total = stepCount)
+        Spacer(Modifier.height(20.dp))
+        CvHero(title = title, subtitle = subtitle)
+    }
+}
+
+/** A row of rounded teal segments showing progress; completed/current segments are filled teal. */
+@Composable
+private fun SegmentedProgress(current: Int, total: Int) {
+    Row(
+        modifier = Modifier.fillMaxWidth(),
+        horizontalArrangement = Arrangement.spacedBy(6.dp)
+    ) {
+        val track = MaterialTheme.colorScheme.surfaceContainerHighest
+        val fill = MaterialTheme.colorScheme.primary
+        for (i in 1..total) {
+            val color by animateColorAsState(
+                targetValue = if (i <= current) fill else track,
+                label = "wizardSegment$i"
+            )
+            Box(
+                modifier = Modifier
+                    .weight(1f)
+                    .height(5.dp)
+                    .clip(CircleShape)
+                    .background(color)
+            )
         }
     }
 }
 
+/** Persistent bottom bar: tonal Back (hidden on step 1) + filled teal Next / Finish. */
 @Composable
-private fun StepBody(text: String) {
-    Text(
-        text = text,
-        style = MaterialTheme.typography.bodyMedium,
-        color = MaterialTheme.colorScheme.onSurfaceVariant,
-        modifier = Modifier.padding(horizontal = 16.dp, vertical = 4.dp)
-    )
-}
-
-@Composable
-private fun FolderPickerRow(label: String, chosenName: String?, onClick: () -> Unit) {
-    Column(
+private fun WizardBottomBar(
+    isFirstStep: Boolean,
+    isLastStep: Boolean,
+    canAdvance: Boolean,
+    onBack: () -> Unit,
+    onNext: () -> Unit
+) {
+    Row(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(horizontal = 16.dp, vertical = 8.dp)
+            .navigationBarsPadding()
+            .padding(horizontal = 20.dp, vertical = 16.dp),
+        horizontalArrangement = Arrangement.spacedBy(12.dp),
+        verticalAlignment = Alignment.CenterVertically
     ) {
-        Text(text = label, style = MaterialTheme.typography.labelLarge)
-        Spacer(modifier = Modifier.height(4.dp))
-        Text(
-            text = chosenName ?: stringResource(R.string.settings_tap_to_select_folder),
-            style = MaterialTheme.typography.bodyMedium,
-            color = if (chosenName != null) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.error
+        if (!isFirstStep) {
+            CvSecondaryButton(
+                text = stringResource(R.string.wizard_back),
+                onClick = onBack,
+                modifier = Modifier.weight(1f)
+            )
+        }
+        CvPrimaryButton(
+            text = stringResource(if (isLastStep) R.string.wizard_finish else R.string.wizard_next),
+            onClick = onNext,
+            enabled = canAdvance,
+            leadingIcon = if (isLastStep) Icons.Filled.Done else Icons.AutoMirrored.Filled.ArrowForward,
+            modifier = Modifier.weight(1f)
         )
-        Spacer(modifier = Modifier.height(8.dp))
-        OutlinedButton(onClick = onClick) {
-            Text(stringResource(R.string.wizard_choose_folder))
+    }
+}
+
+// ── Reusable branded option / folder / toggle rows ────────────────────────────────────────────
+
+/**
+ * A branded radio-style option card: title + one-line description, a teal check that appears when
+ * selected, and a teal border + faint teal tint in the selected state. Replaces stock RadioButtons.
+ */
+@Composable
+private fun OptionCard(
+    title: String,
+    description: String,
+    selected: Boolean,
+    onClick: () -> Unit
+) {
+    val primary = MaterialTheme.colorScheme.primary
+    val container =
+        if (selected) primary.copy(alpha = 0.10f) else MaterialTheme.colorScheme.surface
+    val borderColor by animateColorAsState(
+        targetValue = if (selected) primary else MaterialTheme.colorScheme.outlineVariant,
+        label = "optionBorder"
+    )
+
+    CvCard(
+        onClick = onClick,
+        color = container,
+        border = false,
+        contentPadding = PaddingValues(16.dp),
+        modifier = Modifier.border(
+            width = if (selected) 1.5.dp else 1.dp,
+            color = borderColor,
+            shape = MaterialTheme.shapes.large
+        )
+    ) {
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            Column(Modifier.weight(1f)) {
+                Text(
+                    text = title,
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.SemiBold,
+                    color = MaterialTheme.colorScheme.onSurface
+                )
+                Spacer(Modifier.height(3.dp))
+                Text(
+                    text = description,
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+            }
+            Spacer(Modifier.width(12.dp))
+            SelectionDot(selected = selected)
         }
     }
 }
+
+/** A circular selection indicator: a hollow ring when unselected, a filled teal check when selected. */
+@Composable
+private fun SelectionDot(selected: Boolean) {
+    val primary = MaterialTheme.colorScheme.primary
+    if (selected) {
+        Box(
+            modifier = Modifier
+                .size(24.dp)
+                .clip(CircleShape)
+                .background(primary),
+            contentAlignment = Alignment.Center
+        ) {
+            Icon(
+                imageVector = Icons.Filled.Check,
+                contentDescription = null,
+                tint = MaterialTheme.colorScheme.onPrimary,
+                modifier = Modifier.size(16.dp)
+            )
+        }
+    } else {
+        Box(
+            modifier = Modifier
+                .size(24.dp)
+                .clip(CircleShape)
+                .border(2.dp, MaterialTheme.colorScheme.outlineVariant, CircleShape)
+        )
+    }
+}
+
+/**
+ * A tappable folder picker row: a leading icon, the label + chosen folder name (or a "Required"
+ * pill prompting selection), and a trailing chevron. Required-but-unset rows read with a coral tint.
+ */
+@Composable
+private fun FolderPickerCard(
+    icon: ImageVector,
+    label: String,
+    chosenName: String?,
+    onClick: () -> Unit
+) {
+    val hasFolder = chosenName != null
+    CvCard(onClick = onClick, contentPadding = PaddingValues(16.dp)) {
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            Box(
+                modifier = Modifier
+                    .size(40.dp)
+                    .clip(CircleShape)
+                    .background(MaterialTheme.colorScheme.surfaceContainerHigh),
+                contentAlignment = Alignment.Center
+            ) {
+                Icon(
+                    imageVector = icon,
+                    contentDescription = null,
+                    tint = MaterialTheme.colorScheme.primary,
+                    modifier = Modifier.size(20.dp)
+                )
+            }
+            Spacer(Modifier.width(14.dp))
+            Column(Modifier.weight(1f)) {
+                Text(
+                    text = label,
+                    style = MaterialTheme.typography.labelMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+                Spacer(Modifier.height(2.dp))
+                Text(
+                    text = chosenName ?: stringResource(R.string.wizard_ui_folder_choose),
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.SemiBold,
+                    color = if (hasFolder) MaterialTheme.colorScheme.onSurface
+                    else MaterialTheme.colorScheme.secondary,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis
+                )
+            }
+            Spacer(Modifier.width(8.dp))
+            Icon(
+                imageVector = Icons.AutoMirrored.Filled.KeyboardArrowRight,
+                contentDescription = null,
+                tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                modifier = Modifier.size(22.dp)
+            )
+        }
+    }
+}
+
+/** A clear toggle row: title + one-line description on the left, a teal [Switch] on the right. */
+@Composable
+private fun ToggleCard(
+    title: String,
+    description: String,
+    checked: Boolean,
+    onCheckedChange: (Boolean) -> Unit
+) {
+    CvCard(onClick = { onCheckedChange(!checked) }, contentPadding = PaddingValues(16.dp)) {
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            Column(Modifier.weight(1f)) {
+                Text(
+                    text = title,
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.SemiBold,
+                    color = MaterialTheme.colorScheme.onSurface
+                )
+                Spacer(Modifier.height(3.dp))
+                Text(
+                    text = description,
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+            }
+            Spacer(Modifier.width(12.dp))
+            Switch(
+                checked = checked,
+                onCheckedChange = onCheckedChange,
+                colors = SwitchDefaults.colors(
+                    checkedThumbColor = MaterialTheme.colorScheme.onPrimary,
+                    checkedTrackColor = MaterialTheme.colorScheme.primary,
+                    uncheckedTrackColor = MaterialTheme.colorScheme.surfaceContainerHighest,
+                    uncheckedBorderColor = MaterialTheme.colorScheme.outlineVariant
+                )
+            )
+        }
+    }
+}
+
+/** A muted helper/note line set inside a faint surface card — for contextual guidance. */
+@Composable
+private fun NoteCard(text: String) {
+    CvCard(
+        color = MaterialTheme.colorScheme.surfaceContainerHigh,
+        border = false,
+        contentPadding = PaddingValues(14.dp)
+    ) {
+        Text(
+            text = text,
+            style = MaterialTheme.typography.bodySmall,
+            color = MaterialTheme.colorScheme.onSurfaceVariant
+        )
+    }
+}
+
+// ── Steps ─────────────────────────────────────────────────────────────────────────────────────
 
 @Composable
 private fun StorageStep(
@@ -318,39 +554,32 @@ private fun StorageStep(
     onPickRecordingFolder: () -> Unit,
     onPickDriveFolder: () -> Unit
 ) {
-    WizardStepCard(title = stringResource(R.string.wizard_storage_title)) {
-        StepBody(stringResource(R.string.wizard_storage_subtitle))
-
-        val options = StorageTarget.entries.map { target ->
-            val labelRes = when (target) {
-                StorageTarget.LOCAL -> R.string.storage_target_local
-                StorageTarget.DRIVE -> R.string.storage_target_drive
-                StorageTarget.BOTH -> R.string.storage_target_both
-            }
-            OptionItem(target.key, stringResource(labelRes))
+    Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
+        StorageTarget.entries.forEach { target ->
+            OptionCard(
+                title = stringResource(storageTargetTitleRes(target)),
+                description = stringResource(storageTargetDescRes(target)),
+                selected = storageTarget == target,
+                onClick = { onSelectStorageTarget(target) }
+            )
         }
-        M3DropdownField(
-            label = stringResource(R.string.settings_storage_target_label),
-            selected = options.find { it.key == storageTarget.key } ?: options.first(),
-            options = options,
-            onOptionSelected = { onSelectStorageTarget(StorageTarget.fromKey(it.key)) }
-        )
 
         if (usesDrive) {
-            StepBody(stringResource(R.string.wizard_storage_drive_note))
+            NoteCard(stringResource(R.string.wizard_storage_drive_note))
         }
 
-        HorizontalDivider(modifier = Modifier.padding(horizontal = 16.dp), thickness = 0.5.dp)
+        Spacer(Modifier.height(2.dp))
 
-        FolderPickerRow(
+        FolderPickerCard(
+            icon = Icons.Filled.Folder,
             label = stringResource(R.string.settings_recording_folder_label),
             chosenName = recordingFolderLabel,
             onClick = onPickRecordingFolder
         )
 
         if (usesDrive) {
-            HorizontalDivider(modifier = Modifier.padding(horizontal = 16.dp), thickness = 0.5.dp)
-            FolderPickerRow(
+            FolderPickerCard(
+                icon = Icons.Filled.CloudUpload,
                 label = stringResource(R.string.settings_drive_folder_label),
                 chosenName = driveFolderLabel,
                 onClick = onPickDriveFolder
@@ -370,55 +599,48 @@ private fun ScheduleStep(
     onSelectMinute: (Int) -> Unit,
     onSelectDayOfWeek: (Int) -> Unit
 ) {
-    WizardStepCard(title = stringResource(R.string.wizard_schedule_title)) {
-        StepBody(stringResource(R.string.wizard_schedule_subtitle))
-
-        val modeOptions = SyncScheduleMode.entries.map { mode ->
-            val labelRes = when (mode) {
-                SyncScheduleMode.IMMEDIATE -> R.string.wizard_schedule_immediate
-                SyncScheduleMode.DAILY -> R.string.wizard_schedule_daily
-                SyncScheduleMode.WEEKLY -> R.string.wizard_schedule_weekly
-            }
-            OptionItem(mode.key, stringResource(labelRes))
+    Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
+        SyncScheduleMode.entries.forEach { mode ->
+            OptionCard(
+                title = stringResource(scheduleModeTitleRes(mode)),
+                description = stringResource(scheduleModeDescRes(mode)),
+                selected = scheduleMode == mode,
+                onClick = { onSelectMode(mode) }
+            )
         }
-        M3DropdownField(
-            label = stringResource(R.string.wizard_schedule_mode_label),
-            selected = modeOptions.find { it.key == scheduleMode.key } ?: modeOptions.first(),
-            options = modeOptions,
-            onOptionSelected = { onSelectMode(SyncScheduleMode.fromKey(it.key)) }
-        )
 
         if (scheduleMode == SyncScheduleMode.IMMEDIATE) {
-            StepBody(stringResource(R.string.wizard_schedule_immediate_note))
-        }
-
-        if (scheduleMode == SyncScheduleMode.WEEKLY) {
-            val dayOptions = WIZARD_DAY_OF_WEEK_OPTIONS.map { day ->
-                OptionItem(day.toString(), stringResource(dayOfWeekLabelRes(day)))
-            }
-            M3DropdownField(
-                label = stringResource(R.string.wizard_schedule_day_label),
-                selected = dayOptions.find { it.key == dayOfWeek.toString() } ?: dayOptions.first(),
-                options = dayOptions,
-                onOptionSelected = { onSelectDayOfWeek(it.key.toInt()) }
-            )
+            NoteCard(stringResource(R.string.wizard_schedule_immediate_note))
         }
 
         if (scheduleMode == SyncScheduleMode.DAILY || scheduleMode == SyncScheduleMode.WEEKLY) {
-            val hourOptions = (0..23).map { OptionItem(it.toString(), it.toString().padStart(2, '0')) }
-            M3DropdownField(
-                label = stringResource(R.string.wizard_schedule_hour_label),
-                selected = hourOptions.find { it.key == hour.toString() } ?: hourOptions.first(),
-                options = hourOptions,
-                onOptionSelected = { onSelectHour(it.key.toInt()) }
-            )
-            val minuteOptions = WIZARD_MINUTE_OPTIONS.map { OptionItem(it.toString(), it.toString().padStart(2, '0')) }
-            M3DropdownField(
-                label = stringResource(R.string.wizard_schedule_minute_label),
-                selected = minuteOptions.find { it.key == minute.toString() } ?: minuteOptions.first(),
-                options = minuteOptions,
-                onOptionSelected = { onSelectMinute(it.key.toInt()) }
-            )
+            CvCard(contentPadding = PaddingValues(vertical = 8.dp)) {
+                if (scheduleMode == SyncScheduleMode.WEEKLY) {
+                    val dayOptions = WIZARD_DAY_OF_WEEK_OPTIONS.map { day ->
+                        OptionItem(day.toString(), stringResource(dayOfWeekLabelRes(day)))
+                    }
+                    M3DropdownField(
+                        label = stringResource(R.string.wizard_schedule_day_label),
+                        selected = dayOptions.find { it.key == dayOfWeek.toString() } ?: dayOptions.first(),
+                        options = dayOptions,
+                        onOptionSelected = { onSelectDayOfWeek(it.key.toInt()) }
+                    )
+                }
+                val hourOptions = (0..23).map { OptionItem(it.toString(), it.toString().padStart(2, '0')) }
+                M3DropdownField(
+                    label = stringResource(R.string.wizard_schedule_hour_label),
+                    selected = hourOptions.find { it.key == hour.toString() } ?: hourOptions.first(),
+                    options = hourOptions,
+                    onOptionSelected = { onSelectHour(it.key.toInt()) }
+                )
+                val minuteOptions = WIZARD_MINUTE_OPTIONS.map { OptionItem(it.toString(), it.toString().padStart(2, '0')) }
+                M3DropdownField(
+                    label = stringResource(R.string.wizard_schedule_minute_label),
+                    selected = minuteOptions.find { it.key == minute.toString() } ?: minuteOptions.first(),
+                    options = minuteOptions,
+                    onOptionSelected = { onSelectMinute(it.key.toInt()) }
+                )
+            }
         }
     }
 }
@@ -430,15 +652,16 @@ private fun AutoRecordStep(
     onIncomingChange: (Boolean) -> Unit,
     onOutgoingChange: (Boolean) -> Unit
 ) {
-    WizardStepCard(title = stringResource(R.string.wizard_auto_record_title)) {
-        StepBody(stringResource(R.string.wizard_auto_record_subtitle))
-        ToggleListItem(
-            label = stringResource(R.string.settings_auto_record_incoming),
+    Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
+        ToggleCard(
+            title = stringResource(R.string.settings_auto_record_incoming),
+            description = stringResource(R.string.wizard_ui_auto_incoming_desc),
             checked = incoming,
             onCheckedChange = onIncomingChange
         )
-        ToggleListItem(
-            label = stringResource(R.string.settings_auto_record_outgoing),
+        ToggleCard(
+            title = stringResource(R.string.settings_auto_record_outgoing),
+            description = stringResource(R.string.wizard_ui_auto_outgoing_desc),
             checked = outgoing,
             onCheckedChange = onOutgoingChange
         )
@@ -452,9 +675,7 @@ private fun AudioStep(
     onSelectCodec: (String) -> Unit,
     onSelectBitRate: (Int) -> Unit
 ) {
-    WizardStepCard(title = stringResource(R.string.wizard_audio_title)) {
-        StepBody(stringResource(R.string.wizard_audio_subtitle))
-
+    CvCard(contentPadding = PaddingValues(vertical = 8.dp)) {
         val codecOptions = ScrcpyAudioCodec.entries.map { OptionItem(it.cliKey, stringResource(it.titleResId)) }
         M3DropdownField(
             label = stringResource(R.string.settings_audio_codec),
@@ -480,25 +701,78 @@ private fun FileNameStep(
     template: String,
     onSelectTemplate: (String) -> Unit
 ) {
-    WizardStepCard(title = stringResource(R.string.wizard_filename_title)) {
-        StepBody(stringResource(R.string.wizard_filename_subtitle))
-
-        val options = FILE_NAME_TEMPLATE_PRESETS.map { OptionItem(it.template, stringResource(it.labelRes)) }
-        val selectedTemplate = presetForTemplateOrFirst(template).template
-        M3DropdownField(
-            label = stringResource(R.string.settings_file_name_template_preset),
-            selected = options.find { it.key == selectedTemplate } ?: options.first(),
-            options = options,
-            onOptionSelected = { onSelectTemplate(it.key) }
+    // Friendly preset label as primary text + a resolved example as the per-item preview line —
+    // never the raw "{token}" template.
+    val options = FILE_NAME_TEMPLATE_PRESETS.map {
+        OptionItem(
+            key = it.template,
+            label = stringResource(it.labelRes),
+            description = stringResource(
+                R.string.settings_file_name_template_example,
+                fileNameTemplateExample(it.template)
+            )
         )
+    }
+    val selectedTemplate = presetForTemplateOrFirst(template).template
 
-        StepBody(
+    Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
+        CvCard(contentPadding = PaddingValues(vertical = 8.dp)) {
+            M3DropdownField(
+                label = stringResource(R.string.settings_file_name_template_preset),
+                selected = options.find { it.key == selectedTemplate } ?: options.first(),
+                options = options,
+                onOptionSelected = { onSelectTemplate(it.key) }
+            )
+        }
+        NoteCard(
             stringResource(
                 R.string.settings_file_name_template_example,
                 fileNameTemplateExample(selectedTemplate)
             )
         )
     }
+}
+
+// ── String-resource mappers ───────────────────────────────────────────────────────────────────
+
+private fun stepTitleRes(step: WizardStep): Int = when (step) {
+    WizardStep.STORAGE -> R.string.wizard_storage_title
+    WizardStep.SCHEDULE -> R.string.wizard_schedule_title
+    WizardStep.AUTO_RECORD -> R.string.wizard_auto_record_title
+    WizardStep.AUDIO -> R.string.wizard_audio_title
+    WizardStep.FILE_NAME -> R.string.wizard_filename_title
+}
+
+private fun stepSubtitleRes(step: WizardStep): Int = when (step) {
+    WizardStep.STORAGE -> R.string.wizard_storage_subtitle
+    WizardStep.SCHEDULE -> R.string.wizard_schedule_subtitle
+    WizardStep.AUTO_RECORD -> R.string.wizard_auto_record_subtitle
+    WizardStep.AUDIO -> R.string.wizard_audio_subtitle
+    WizardStep.FILE_NAME -> R.string.wizard_filename_subtitle
+}
+
+private fun storageTargetTitleRes(target: StorageTarget): Int = when (target) {
+    StorageTarget.LOCAL -> R.string.storage_target_local
+    StorageTarget.DRIVE -> R.string.storage_target_drive
+    StorageTarget.BOTH -> R.string.storage_target_both
+}
+
+private fun storageTargetDescRes(target: StorageTarget): Int = when (target) {
+    StorageTarget.LOCAL -> R.string.wizard_ui_storage_local_desc
+    StorageTarget.DRIVE -> R.string.wizard_ui_storage_drive_desc
+    StorageTarget.BOTH -> R.string.wizard_ui_storage_both_desc
+}
+
+private fun scheduleModeTitleRes(mode: SyncScheduleMode): Int = when (mode) {
+    SyncScheduleMode.IMMEDIATE -> R.string.wizard_schedule_immediate
+    SyncScheduleMode.DAILY -> R.string.wizard_schedule_daily
+    SyncScheduleMode.WEEKLY -> R.string.wizard_schedule_weekly
+}
+
+private fun scheduleModeDescRes(mode: SyncScheduleMode): Int = when (mode) {
+    SyncScheduleMode.IMMEDIATE -> R.string.wizard_ui_schedule_immediate_desc
+    SyncScheduleMode.DAILY -> R.string.wizard_ui_schedule_daily_desc
+    SyncScheduleMode.WEEKLY -> R.string.wizard_ui_schedule_weekly_desc
 }
 
 /** Maps a java.util.Calendar day-of-week constant (SUNDAY=1..SATURDAY=7) to a label string resource. */

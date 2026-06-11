@@ -14,6 +14,7 @@ import android.content.ClipboardManager
 import android.content.Context
 import android.content.Intent
 import android.net.Uri
+import android.os.Bundle
 import android.os.Handler
 import android.os.Looper
 import android.provider.Settings
@@ -79,6 +80,57 @@ fun Context.openAppSettings() {
             data = "package:$packageName".toUri()
         }
     )
+}
+
+/**
+ * Opens the system Developer Options screen, where "Wireless debugging" and
+ * "Pair device with pairing code" live. Falls back to the top-level Settings screen if the
+ * developer-settings activity isn't found on this device/ROM.
+ */
+fun Context.openDeveloperSettings() {
+    val opened = runCatching {
+        launchSmartIntent(Intent(Settings.ACTION_APPLICATION_DEVELOPMENT_SETTINGS))
+    }.isSuccess
+    if (!opened) {
+        runCatching { launchSmartIntent(Intent(Settings.ACTION_SETTINGS)) }
+    }
+}
+
+/**
+ * Opens the device-info ("About phone") screen, where the user taps Build number 7 times to
+ * unlock Developer Options. Falls back to the top-level Settings screen if unavailable.
+ */
+fun Context.openDeviceInfoSettings() {
+    val opened = runCatching {
+        launchSmartIntent(Intent(Settings.ACTION_DEVICE_INFO_SETTINGS))
+    }.isSuccess
+    if (!opened) {
+        runCatching { launchSmartIntent(Intent(Settings.ACTION_SETTINGS)) }
+    }
+}
+
+/**
+ * Opens the system Wireless-debugging screen as directly as the device allows, with layered
+ * fallbacks (devices differ — e.g. OxygenOS has no direct activity):
+ *   1) the direct AOSP/Pixel "Wireless debugging" activity,
+ *   2) Developer Options scrolled to + highlighting the Wireless-debugging toggle,
+ *   3) plain Developer Options, then 4) all Settings.
+ * Each candidate is tried until one launches.
+ */
+fun Context.openWirelessDebugging() {
+    val highlightKey = "toggle_adb_wireless"
+    val candidates = listOf(
+        Intent().setClassName("com.android.settings", "com.android.settings.Settings\$AdbWirelessSettingsActivity"),
+        Intent(Settings.ACTION_APPLICATION_DEVELOPMENT_SETTINGS).apply {
+            putExtra(":settings:fragment_args_key", highlightKey)
+            putExtra(":settings:show_fragment_args", Bundle().apply { putString(":settings:fragment_args_key", highlightKey) })
+        },
+        Intent(Settings.ACTION_APPLICATION_DEVELOPMENT_SETTINGS),
+        Intent(Settings.ACTION_SETTINGS),
+    )
+    for (intent in candidates) {
+        if (runCatching { launchSmartIntent(intent) }.isSuccess) return
+    }
 }
 
 /** Opens the upstream project repository (required fork attribution, GPLv3 §7). */
