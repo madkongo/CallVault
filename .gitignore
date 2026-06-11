@@ -6,9 +6,6 @@ build/
 local.properties
 .idea/
 .DS_Store
-app-src/.gradle/
-app-src/**/build/
-app-src/local.properties
 
 # graphify knowledge-graph output (build artifact, not published)
 graphify-out/
