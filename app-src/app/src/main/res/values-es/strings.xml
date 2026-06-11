@@ -14,8 +14,6 @@
     <string name="general_system_limitation">Limitación del sistema</string>
     <string name="general_system_limitation_message">CallVault no funcionará en este dispositivo ya que tu aplicación de shell no tiene los permisos necesarios:\n\n%1$s\n\nNo puedes hacer nada al respecto; la aplicación no puede funcionar y se cerrará ahora.</string>
     <string name="disclaimer_title">Bienvenido a CallVault</string>
-    <string name="disclaimer_wiki_link_KEYWORD">Wiki</string>
-    <string name="disclaimer_introduction">Por favor, abre y lee las instrucciones de configuración en nuestra Wiki antes de continuar. Luego, lee el descargo de responsabilidad que aparece a continuación.</string>
     <string name="disclaimer_checkbox_label">He leído el descargo de responsabilidad y comprendo los requisitos legales, las responsabilidades y las limitaciones técnicas de este software.</string>
     <string name="disclaimer_wait">Espera %1$ds</string>
     <string name="disclaimer_must_read">Debes leer el descargo de responsabilidad.</string>
@@ -88,13 +86,11 @@
     <string name="settings_debug_logging_step_warning">Revisa el archivo generado para comprobar que no contiene información sensible antes de compartirlo. Desactiva el registro de eventos cuando termines.</string>
     <string name="settings_debug_logging_step_warning_no_redaction">⚠️ El modo de depuración está ACTIVADO. La redacción de registros está desactivada.</string>
     <string name="settings_debug_logging_generate_report">Generar informe</string>
-    <string name="settings_debug_logging_report_on_github">Reportar en GitHub</string>
     <string name="settings_debug_mode">Activar el modo de depuración</string>
     <string name="settings_debug_mode_description">Mostrar las opciones de desarrollador, desactivar la redacción de registros.</string>
     <string name="settings_debug_caller_number">Depurar número de teléfono</string>
     <string name="settings_copy_version">Copiar versión</string>
     <string name="settings_view_licenses">Ver licencias</string>
-    <string name="settings_open_github">Abrir el repositorio de GitHub</string>
     <string name="contact_search_hint">Buscar por nombre o número…</string>
     <string name="contact_select_all">Seleccionar todo</string>
     <string name="contact_unselect_all">Deseleccionar todo</string>

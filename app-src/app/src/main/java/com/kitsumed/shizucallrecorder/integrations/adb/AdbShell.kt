@@ -1,6 +1,6 @@
 /*
  * CallVault: FOSS call recording, self-contained over embedded ADB
- *  Copyright (C) 2026-present kitsumed (Med)
+ *  Copyright (C) 2026-present The CallVault Authors
  *  This software is licensed under the GNU General Public License v3 or later, with additional terms as permitted under Section 7.
  *  The full license text is available in the LICENSE file at the root of this project.
  *  This software is distributed WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
@@ -15,7 +15,7 @@ import io.github.muntashirakon.adb.AdbStream
 
 /** Thin facade over the embedded ADB connection for the recording pipeline. */
 object AdbShell {
-    private const val TAG = "SCR:AdbShell"
+    private const val TAG = "CV:AdbShell"
     private const val CONNECT_SETTLE_MS = 2500L
     /** Reduced from 25 s so the recording path fails fast instead of hanging while falsely appearing to record. */
     private const val MDNS_TIMEOUT_MS = 12_000L

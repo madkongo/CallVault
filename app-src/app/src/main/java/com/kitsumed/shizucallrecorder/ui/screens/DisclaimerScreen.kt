@@ -1,6 +1,6 @@
 /*
  * CallVault: FOSS call recording, self-contained over embedded ADB
- *  Copyright (C) 2026-present kitsumed (Med)
+ *  Copyright (C) 2026-present The CallVault Authors
  *  This software is licensed under the GNU General Public License v3 or later, with additional terms as permitted under Section 7.
  *  The full license text is available in the LICENSE file at the root of this project.
  *  This software is distributed WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
@@ -53,7 +53,6 @@ import androidx.compose.ui.unit.dp
 import com.kitsumed.shizucallrecorder.BuildConfig
 import com.kitsumed.shizucallrecorder.R
 import com.kitsumed.shizucallrecorder.ui.theme.CallVaultTheme
-import com.kitsumed.shizucallrecorder.AppUrls
 import kotlinx.coroutines.delay
 
 
@@ -111,12 +110,12 @@ fun DisclaimerScreen(onContinue: () -> Unit, modifier: Modifier = Modifier) {
                 color = MaterialTheme.colorScheme.onBackground
             )
 
-            // Introduction paragraph with a hyperlinked "Wiki" keyword
-            val links = mapOf(
-                stringResource(R.string.disclaimer_wiki_link_KEYWORD) to AppUrls.GITHUB_WIKI
+            // Introduction paragraph (plain text — no external links)
+            Text(
+                text = stringResource(R.string.disclaimer_introduction),
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onBackground
             )
-
-            HyperlinkText(stringResource(R.string.disclaimer_introduction), links)
 
             Spacer(modifier = Modifier.height(1.dp))
 

@@ -15,8 +15,6 @@
     <string name="general_system_limitation">Limitation Système</string>
     <string name="general_system_limitation_message">CallVault ne fonctionnera pas sur cet appareil car votre application shell ne dispose pas des autorisations requises :\n\n%1$s\n\nVous ne pouvez rien y faire, l’application ne peut pas fonctionner et va se fermer.</string>
     <string name="disclaimer_title">Bienvenue sur CallVault</string>
-    <string name="disclaimer_wiki_link_KEYWORD">Wiki</string>
-    <string name="disclaimer_introduction">Veuillez consulter les instructions d\'installation sur notre Wiki avant de continuer. Ensuite, lisez l\'avertissement ci-dessous.</string>
     <string name="disclaimer_checkbox_label">J\'ai lu l\'avertissement et je comprends les exigences légales, les responsabilités et les limitations techniques de ce logiciel.</string>
     <string name="disclaimer_wait">Attendez %1$ds</string>
     <string name="disclaimer_must_read">Vous devez lire l\'avertissement.</string>
@@ -86,13 +84,11 @@
     <string name="settings_debug_logging_step_warning">Vérifier que le fichier généré ne contient pas d\'informations sensibles avant de le partager. Désactivez l\'enregistrement des journaux une fois l\'opération terminée.</string>
     <string name="settings_debug_logging_step_warning_no_redaction">⚠️ Le mode débogage est ACTIVÉ. La rédaction des journaux est désactivée.</string>
     <string name="settings_debug_logging_generate_report">Générer un rapport</string>
-    <string name="settings_debug_logging_report_on_github">Signaler sur GitHub</string>
     <string name="settings_debug_mode">Activer le mode débogage</string>
     <string name="settings_debug_mode_description">Afficher les options développeurs, désactiver la rédaction des journaux.</string>
     <string name="settings_debug_caller_number">Numéro de téléphone de débogage</string>
     <string name="settings_copy_version">Copier la version</string>
     <string name="settings_view_licenses">Afficher les licences</string>
-    <string name="settings_open_github">Ouvrir la page GitHub</string>
     <string name="contact_search_hint">Recherche par nom ou numéro...</string>
     <string name="recording_standby_notification_title">Appel en cours</string>
     <string name="recording_notification_cross_country_tip">🌐International</string>

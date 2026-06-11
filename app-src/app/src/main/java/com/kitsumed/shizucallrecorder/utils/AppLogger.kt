@@ -1,6 +1,6 @@
 /*
  * CallVault: FOSS call recording, self-contained over embedded ADB
- *  Copyright (C) 2026-present kitsumed (Med)
+ *  Copyright (C) 2026-present The CallVault Authors
  *  This software is licensed under the GNU General Public License v3 or later, with additional terms as permitted under Section 7.
  *  The full license text is available in the LICENSE file at the root of this project.
  *  This software is distributed WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
@@ -151,7 +151,7 @@ object AppLogger {
         val file = logFile ?: return
         context.contentResolver.openOutputStream(destinationUri, "w")?.use { outputStream ->
             PrintWriter(OutputStreamWriter(outputStream, Charsets.UTF_8)).use { writer ->
-                writer.println("=== ShizuCallRecorder AppLogger Export ===")
+                writer.println("=== CallVault AppLogger Export ===")
                 writer.println("Generated: ${SimpleDateFormat("yyyy-MM-dd HH:mm:ss z", Locale.US).format(Date())}")
                 writer.println("App Version: ${BuildConfig.VERSION_NAME} (${BuildConfig.VERSION_CODE})")
                 writer.println("Scrcpy Server: ${ScrcpyConfig.SCRCPY_VERSION}")

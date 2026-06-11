@@ -15,8 +15,6 @@
     <string name="general_system_limitation">Systemeinschränkung</string>
     <string name="general_system_limitation_message">CallVault wird nicht an diesem Gerät funktionieren, da Ihre Shell-Anwendung nicht die erforderlichen Berechtigungen hat:\n\n%1$s\n\nDieses Problem kann von Ihnen nicht behoben werden. Die App kann auf Ihrem Gerät nicht funktionieren und wird jetzt geschlossen.</string>
     <string name="disclaimer_title">Willkommen bei CallVault</string>
-    <string name="disclaimer_wiki_link_KEYWORD">Wiki</string>
-    <string name="disclaimer_introduction">Bitte öffnen Sie die Einrichtungsanweisungen auf unserer Wiki, bevor Sie fortfahren. Dann lesen Sie den Haftungsausschluss unten.</string>
     <string name="disclaimer_checkbox_label">Ich habe den Haftungsausschluss gelesen und verstehe die rechtlichen Anforderungen, Verantwortungen und technischen Einschränkungen dieser Anwendung.</string>
     <string name="disclaimer_wait">Warten Sie %1$ds</string>
     <string name="disclaimer_must_read">Sie müssen den Haftungsausschluss lesen.</string>
@@ -69,11 +67,9 @@
     <string name="settings_debug_logging_step_warning">Bitte überprüfen Sie die generierte Datei vor dem Teilen auf sensible Informationen. Deaktivieren Sie die Log-Aufzeichnung, sobald Sie fertig sind.</string>
     <string name="settings_debug_logging_step_warning_no_redaction">⚠️ Debug-Modus ist aktiv. Log-Redaktion ist deaktiviert.</string>
     <string name="settings_debug_logging_generate_report">Bericht generieren</string>
-    <string name="settings_debug_logging_report_on_github">Auf GitHub melden</string>
     <string name="settings_debug_mode">Debug-Modus aktivieren</string>
     <string name="settings_copy_version">Version kopieren</string>
     <string name="settings_view_licenses">Lizenzen ansehen</string>
-    <string name="settings_open_github">GitHub-Repository öffnen</string>
     <string name="contact_search_hint">Nach Name oder Nummer suchen...</string>
     <string name="recording_standby_notification_title">Anruf läuft</string>
     <string name="recording_notification_cross_country_tip">🌐International</string>

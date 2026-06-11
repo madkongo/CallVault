@@ -1,6 +1,6 @@
 /*
  * CallVault: FOSS call recording, self-contained over embedded ADB
- *  Copyright (C) 2026-present kitsumed (Med)
+ *  Copyright (C) 2026-present The CallVault Authors
  *  This software is licensed under the GNU General Public License v3 or later, with additional terms as permitted under Section 7.
  *  The full license text is available in the LICENSE file at the root of this project.
  *  This software is distributed WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
@@ -24,7 +24,7 @@ import com.kitsumed.shizucallrecorder.utils.AppLogger
 class CallSessionTemporaryCache(private val context: Context) {
 
     companion object {
-        private const val TAG = "SCR:CallSessionTemporaryCache"
+        private const val TAG = "CV:CallSessionTemporaryCache"
         private const val PREFS_CACHE = "CallSessionManagerTemporaryCache"
         private const val KEY_CACHE_DIRECTION = "cache_direction"
         private const val KEY_CACHE_TIMESTAMP = "cache_timestamp"

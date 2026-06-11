@@ -1,21 +1,18 @@
-Welcome to the main page of the documentation. (SUPPORT.md)
+# CallVault — Documentation & Support
 
-This guide contains installation, configuration, and support informations.
+This is the main documentation page. It covers installation, configuration, and support.
 
-Please note that ShizuCallRecorder is a free, FOSS, project. It may work, but it may also not (you should look at existing issues and make a detailed issue if none exists!)
+> CallVault is a free, FOSS project and a fork of [ShizuCallRecorder](https://github.com/kitsumed/ShizuCallRecorder). It may work on your device, or it may not — Android call recording depends heavily on OEM and OS specifics.
 
-## Installation / Configuration
-If you are new to ShizuCallRecorder, please check the [configuration documentation](./configuration.md).
+## Installation & Configuration
 
->[!TIP]
-> This application only saves recording files. If you would like a visual interface to browse the files and see your contact names, you can use an application like [bcr-gui](https://github.com/nicorac/bcr-gui) (unrelated to this project). I made ShizuCallRecorder in a way that it replicates the [BCR](https://github.com/chenxiaolong/BCR) file name format. **I will not add a visual interface, I want to keep the app relatively simple**.
+CallVault is sideloaded (GitHub Releases / Obtainium; F-Droid intended) — it is **not** on the Google Play Store. All setup happens **in-app** during onboarding; there is nothing to configure from a PC. See the [configuration guide](./configuration.md) for how it works and what to expect.
 
-## Issues, bugs and support
+> [!TIP]
+> CallVault only saves recording files. If you want a visual interface to browse files and see contact names, you can use an app like [bcr-gui](https://github.com/nicorac/bcr-gui) (unrelated to this project) — CallVault replicates the [BCR](https://github.com/chenxiaolong/BCR) file-name format.
 
-If you have issues with ShizuCallRecorder getting killed in background or not starting when you receive a call, please check [dontkillmyapp](https://dontkillmyapp.com/) for specific instructions for you phone OEM.
-Also ensure that the application is excluded from battery saving.
+## Issues, bugs, and support
 
-If you need help installing, testing, using, or configuring Shizuku and/or ShizuCallRecorder. Please use the correct community support forum. [Shizuku](https://github.com/thedjchi/Shizuku/discussions/categories/q-a) or [ShizuCallRecorder](https://github.com/kitsumed/ShizuCallRecorder/discussions).
+If CallVault is getting killed in the background or not starting when a call comes in, check [dontkillmyapp](https://dontkillmyapp.com/) for OEM-specific instructions, and make sure the app is excluded from battery optimization. On some OEMs (e.g. OnePlus/OxygenOS) you must also allow the app in **Auto-launch / Startup Manager** so it can start after boot.
 
-If you have a issue **(a bug)** where ShizuCallRecorder does not behave the right way, crash, or has any other unexpected error, please create a new [issue](https://github.com/kitsumed/ShizuCallRecorder/issues).
-
+For a reproducible bug — a crash, wrong behavior, or unexpected error — please open an issue with detailed steps, logs (Settings → generate report), and your device/Android version.

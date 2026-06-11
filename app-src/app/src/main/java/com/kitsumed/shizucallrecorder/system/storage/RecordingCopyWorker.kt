@@ -1,6 +1,6 @@
 /*
  * CallVault: FOSS call recording, self-contained over embedded ADB
- *  Copyright (C) 2026-present kitsumed (Med)
+ *  Copyright (C) 2026-present The CallVault Authors
  *  This software is licensed under the GNU General Public License v3 or later, with additional terms as permitted under Section 7.
  *  The full license text is available in the LICENSE file at the root of this project.
  *  This software is distributed WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
@@ -45,7 +45,7 @@ class RecordingCopyWorker(ctx: Context, params: WorkerParameters) : CoroutineWor
     }
 
     companion object {
-        private const val TAG = "SCR:RecordingCopyWorker"
+        private const val TAG = "CV:RecordingCopyWorker"
         const val KEY_SRC = "srcUri"
         const val KEY_DEST_FOLDER = "destFolderUri"
         const val KEY_NAME = "displayName"

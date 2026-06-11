@@ -1,6 +1,6 @@
 <!--
   ~ CallVault: FOSS call recording, self-contained over embedded ADB
-  ~  Copyright (C) 2026-present kitsumed (Med)
+  ~  Copyright (C) 2026-present The CallVault Authors
   ~  This software is licensed under the GNU General Public License v3 or later, with additional terms as permitted under Section 7.
   ~  The full license text is available in the LICENSE file at the root of this project.
   ~  This software is distributed WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
@@ -33,18 +33,17 @@
 
     <!-- Disclaimer Screen -->
     <string name="disclaimer_title">Welcome to CallVault</string>
-    <string name="disclaimer_wiki_link_KEYWORD">Wiki</string>
-    <string name="disclaimer_introduction">Please open and read the setup instructions on our Wiki before proceeding. Then, read the disclaimer below.</string>
+    <string name="disclaimer_introduction">Please read the disclaimer below carefully before continuing.</string>
     <string name="disclaimer_body" translatable="false">
         By using this application, you confirm that you have read this disclaimer and acknowledge that this software is licensed under the GNU General Public License v3.0 with additional clauses under Section 7.\n\n
 
-        Copyright © 2026 Kitsumed (Med)\n\n
+        Copyright © 2026 The CallVault Authors\n\n
 
         This program is free software: you can redistribute it and/or modify it under the terms of the GNU General Public License as published by the Free Software Foundation, either version 3 of the License, or (at your option) any later version.\n\n
 
         This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.\n\n
 
-        You should have received a copy of the GNU General Public License along with this program. If not, see https://github.com/kitsumed/ShizuCallRecorder/blob/main/LICENSE/.\n\n
+        You should have received a copy of the GNU General Public License along with this program. If not, see the LICENSE file included with this application.\n\n
 
         ----------------------Disclaimer---------------------------\n\n
 
@@ -221,7 +220,6 @@
     <string name="settings_debug_logging_step_warning">Please review the generated file for sensitive info before sharing. Disable log recording once done.</string>
     <string name="settings_debug_logging_step_warning_no_redaction">⚠️ Debug Mode is ON. Log redaction is disabled.</string>
     <string name="settings_debug_logging_generate_report">Generate Report</string>
-    <string name="settings_debug_logging_report_on_github">Report on GitHub</string>
     <string name="settings_debug_mode">Enable debug mode</string>
     <string name="settings_debug_mode_description">Show developers options, disable log redaction.</string>
     <string name="settings_debug_caller_number">Debug phone number</string>
@@ -233,7 +231,8 @@
     <string name="settings_copy_version">Copy Version</string>
     <string name="settings_view_licenses">View Licenses</string>
     <string name="settings_scrcpy_server" translatable="false">Scrcpy-Server: %1$s</string>
-    <string name="settings_open_github">Open GitHub Repository</string>
+    <string name="settings_fork_attribution" translatable="false">CallVault is a fork of ShizuCallRecorder</string>
+    <string name="settings_fork_attribution_supporting" translatable="false">github.com/kitsumed/ShizuCallRecorder</string>
 
     <!-- ContactSelection Dialog -->
     <string name="contact_search_hint">Search by name or number...</string>

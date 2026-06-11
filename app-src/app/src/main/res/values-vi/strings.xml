@@ -16,8 +16,6 @@
     <string name="general_system_limitation">Giới hạn hệ thống</string>
     <string name="general_system_limitation_message">CallVault sẽ không hoạt động trên thiết bị này vì ứng dụng shell của bạn không có các quyền cần thiết:\n\n%1$s\n\nBạn không thể làm gì được nữa, ứng dụng không thể hoạt động và sẽ tự động đóng.</string>
     <string name="disclaimer_title">Chào mừng bạn đến với CallVault</string>
-    <string name="disclaimer_wiki_link_KEYWORD">Wiki</string>
-    <string name="disclaimer_introduction">Vui lòng mở và đọc hướng dẫn cài đặt trên Wiki của chúng tôi trước khi tiếp tục. Sau đó, hãy đọc phần tuyên bố miễn trừ trách nhiệm bên dưới.</string>
     <string name="disclaimer_checkbox_label">Tôi đã đọc điều khoản miễn trừ trách nhiệm và hiểu rõ các yêu cầu pháp lý, trách nhiệm và giới hạn kỹ thuật của phần mềm này.</string>
     <string name="disclaimer_wait">Chờ %1$ds</string>
     <string name="disclaimer_must_read">Bạn phải đọc điều khoản miễn trừ trách nhiệm.</string>
@@ -97,13 +95,11 @@
     <string name="settings_debug_logging_step_warning">Vui lòng xem lại tệp được tạo để kiểm tra thông tin nhạy cảm trước khi chia sẻ. Sau khi hoàn tất, hãy tắt chức năng ghi nhật ký.</string>
     <string name="settings_debug_logging_step_warning_no_redaction">⚠️ Chế độ gỡ lỗi đang BẬT. Chức năng ẩn nhật ký đã bị vô hiệu hóa.</string>
     <string name="settings_debug_logging_generate_report">Tạo báo cáo</string>
-    <string name="settings_debug_logging_report_on_github">Báo cáo trên GitHub</string>
     <string name="settings_debug_mode">Bật chế độ gỡ lỗi</string>
     <string name="settings_debug_mode_description">Hiển thị tùy chọn dành cho nhà phát triển, tắt tính năng ẩn nhật ký.</string>
     <string name="settings_debug_caller_number">Gỡ lỗi số điện thoại</string>
     <string name="settings_copy_version">Sao chép phiên bản</string>
     <string name="settings_view_licenses">Xem giấy phép</string>
-    <string name="settings_open_github">Mở kho lưu trữ GitHub</string>
     <string name="contact_search_hint">Tìm kiếm theo tên hoặc số...</string>
     <string name="contact_select_all">Chọn tất cả</string>
     <string name="contact_unselect_all">Bỏ chọn tất cả</string>

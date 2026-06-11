@@ -1,6 +1,6 @@
 /*
  * CallVault: FOSS call recording, self-contained over embedded ADB
- *  Copyright (C) 2026-present kitsumed (Med)
+ *  Copyright (C) 2026-present The CallVault Authors
  *  This software is licensed under the GNU General Public License v3 or later, with additional terms as permitted under Section 7.
  *  The full license text is available in the LICENSE file at the root of this project.
  *  This software is distributed WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
@@ -47,7 +47,7 @@ internal class RecorderSession(
 ) {
 
     private companion object {
-        private const val TAG = "SCR:RecorderServer"
+        private const val TAG = "CV:RecorderServer"
 
         /** scrcpy-server main-class needle, used to pkill stale servers locally (NOT over ADB). */
         private const val SERVER_MAIN_CLASS_NEEDLE = "com.genymobile.scrcpy.Server"
@@ -126,7 +126,7 @@ internal class RecorderSession(
 
         // 5. Parse → mux. ScrcpyClient.start() blocks until EOF/stop; the listener initialises the muxer
         // on metadata and writes each parsed packet (the EXACT pattern from AudioRecordingEngine /
-        // AudioCaptureDaemon). ScrcpyClient keeps its "SCR:ScrcpyClient: Packet:" logging internally.
+        // AudioCaptureDaemon). ScrcpyClient keeps its "CV:ScrcpyClient: Packet:" logging internally.
         val client = ScrcpyClient(
             input = conn.inputStream,
             expectedCodec = codec,

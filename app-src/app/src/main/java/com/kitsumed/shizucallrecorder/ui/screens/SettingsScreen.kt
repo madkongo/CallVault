@@ -1,6 +1,6 @@
 /*
  * CallVault: FOSS call recording, self-contained over embedded ADB
- *  Copyright (C) 2026-present kitsumed (Med)
+ *  Copyright (C) 2026-present The CallVault Authors
  *  This software is licensed under the GNU General Public License v3 or later, with additional terms as permitted under Section 7.
  *  The full license text is available in the LICENSE file at the root of this project.
  *  This software is distributed WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
@@ -34,13 +34,13 @@ import androidx.compose.ui.unit.dp
 import com.kitsumed.shizucallrecorder.R
 import com.kitsumed.shizucallrecorder.system.PersistentFolderPickerContract
 import com.kitsumed.shizucallrecorder.system.copyToClipboard
+import com.kitsumed.shizucallrecorder.system.openOriginalProjectRepo
 import com.kitsumed.shizucallrecorder.data.AppPreferences
 import com.kitsumed.shizucallrecorder.data.StorageTarget
 import com.kitsumed.shizucallrecorder.integrations.scrcpy.ScrcpyAudioCodec
 import com.kitsumed.shizucallrecorder.integrations.scrcpy.ScrcpyAudioSource
 import com.kitsumed.shizucallrecorder.integrations.scrcpy.ScrcpyConfig
 import com.kitsumed.shizucallrecorder.system.storage.SafHelper
-import com.kitsumed.shizucallrecorder.system.openGithub
 import com.kitsumed.shizucallrecorder.system.takePersistableFolderPermission
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.kitsumed.shizucallrecorder.ui.common.ContactSelectionDialog
@@ -66,7 +66,6 @@ import androidx.compose.animation.fadeOut
 import androidx.compose.ui.platform.LocalInspectionMode
 import androidx.compose.ui.platform.LocalResources
 import androidx.compose.ui.text.input.KeyboardType
-import com.kitsumed.shizucallrecorder.system.openGithubReportIssue
 import org.xmlpull.v1.XmlPullParser
 import java.util.Locale
 
@@ -130,7 +129,7 @@ fun SettingsScreen(
             viewModel.refresh()
         },
         onDismissContacts = { contactPickerViewModel.dismissContactPicker() },
-        onExportLogs = { exportLogLauncher.launch("shizucallrecorder_bug_report.log") },
+        onExportLogs = { exportLogLauncher.launch("callvault_bug_report.log") },
         modifier = modifier
     )
 }
@@ -273,6 +272,15 @@ private fun AboutSection(versionString: String, onShowLicenses: () -> Unit) {
             },
             colors = ListItemDefaults.colors(containerColor = Color.Transparent)
         )
+        // Required fork attribution under the upstream license (GPLv3 §7).
+        ListItem(
+            headlineContent = { Text(stringResource(R.string.settings_fork_attribution)) },
+            supportingContent = {
+                Text(stringResource(R.string.settings_fork_attribution_supporting))
+            },
+            modifier = Modifier.clickable { context.openOriginalProjectRepo() },
+            colors = ListItemDefaults.colors(containerColor = Color.Transparent)
+        )
         Row(
             modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp),
             horizontalArrangement = Arrangement.spacedBy(8.dp)
@@ -286,12 +294,6 @@ private fun AboutSection(versionString: String, onShowLicenses: () -> Unit) {
                 modifier = Modifier.weight(1f)
             ) { Text(stringResource(R.string.settings_view_licenses)) }
         }
-        Button(
-            onClick = { context.openGithub() },
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(horizontal = 16.dp, vertical = 4.dp)
-        ) { Text(stringResource(R.string.settings_open_github)) }
     }
 }
 
@@ -742,13 +744,6 @@ private fun DebugSection(preferences: AppPreferences, updateTrigger: Int, action
                         modifier = Modifier.weight(1f)
                     ) {
                         Text(stringResource(R.string.settings_debug_logging_generate_report))
-                    }
-
-                    OutlinedButton(
-                        onClick = { context.openGithubReportIssue()},
-                        modifier = Modifier.weight(1f)
-                    ) {
-                        Text(stringResource(R.string.settings_debug_logging_report_on_github))
                     }
                 }
             }

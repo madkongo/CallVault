@@ -1,6 +1,6 @@
 /*
  * CallVault: FOSS call recording, self-contained over embedded ADB
- *  Copyright (C) 2026-present kitsumed (Med)
+ *  Copyright (C) 2026-present The CallVault Authors
  *  This software is licensed under the GNU General Public License v3 or later, with additional terms as permitted under Section 7.
  *  The full license text is available in the LICENSE file at the root of this project.
  *  This software is distributed WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
@@ -20,7 +20,6 @@ import android.provider.Settings
 import android.widget.Toast
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.core.net.toUri
-import com.kitsumed.shizucallrecorder.AppUrls
 import com.kitsumed.shizucallrecorder.BuildConfig
 import com.kitsumed.shizucallrecorder.R
 import com.kitsumed.shizucallrecorder.utils.AppLogger
@@ -30,7 +29,13 @@ import com.kitsumed.shizucallrecorder.utils.AppLogger
  * other [Context] related tasks.
  */
 
-private const val TAG = "SCR:SystemIntentHelpers"
+private const val TAG = "CV:SystemIntentHelpers"
+
+/**
+ * The upstream project this app is forked from. Surfaced in the About screen as a
+ * required fork attribution under the upstream license's GPLv3 Section 7 terms.
+ */
+const val ORIGINAL_PROJECT_URL = "https://github.com/kitsumed/ShizuCallRecorder"
 
 /**
  * A folder-picker that asks for long-term read and write access to the chosen folder.
@@ -76,14 +81,9 @@ fun Context.openAppSettings() {
     )
 }
 
-/** Opens the project GitHub page in the browser. */
-fun Context.openGithub() {
-    launchSmartIntent(Intent(Intent.ACTION_VIEW).apply { data = AppUrls.GITHUB_REPOSITORY.toUri() })
-}
-
-/** Opens the Github report issue page in the browser. */
-fun Context.openGithubReportIssue() {
-    launchSmartIntent(Intent(Intent.ACTION_VIEW).apply { data = AppUrls.GITHUB_NEW_ISSUE.toUri() })
+/** Opens the upstream project repository (required fork attribution, GPLv3 §7). */
+fun Context.openOriginalProjectRepo() {
+    launchSmartIntent(Intent(Intent.ACTION_VIEW).apply { data = ORIGINAL_PROJECT_URL.toUri() })
 }
 
 /**

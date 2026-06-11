@@ -9,8 +9,6 @@
     <string name="general_pause">暂停</string>
     <string name="general_system_limitation">系统限制</string>
     <string name="disclaimer_title">欢迎使用 CallVault</string>
-    <string name="disclaimer_wiki_link_KEYWORD">查看项目Wiki</string>
-    <string name="disclaimer_introduction">请先打开并阅读我们在 Wiki 上的设置说明。然后，请阅读下面的免责声明。</string>
     <string name="disclaimer_checkbox_label">我已阅读免责声明，并理解本软件的法律要求、责任和技术限制。</string>
     <string name="disclaimer_wait">等待%1$d秒</string>
     <string name="disclaimer_must_read">您必须阅读免责声明。</string>
@@ -70,7 +68,6 @@
     <string name="settings_debug_logging_title">请参照以下步骤反馈Bug：</string>
     <string name="settings_debug_logging_enabled_description">若要反馈Bug，请先开启此开关，然后在重启App之后再重复您刚才的操作。</string>
     <string name="settings_debug_logging_enabled">记录运行日志</string>
-    <string name="settings_debug_logging_report_on_github">反馈到GitHub</string>
     <string name="general_record">录音</string>
     <string name="general_system_limitation_message">很抱歉，CallVault无法在您的设备上运行，因为您设备的shell权限不足。\n\n%1$s\n\n对于您厂商添加的限制，我们无能为力。CallVault现在将退出。</string>
     <string name="settings_section_recording">自动录音触发条件</string>
@@ -96,7 +93,6 @@
     <string name="settings_debug_caller_number">请输入用于调试的电话号码</string>
     <string name="settings_copy_version">复制S-S版本号</string>
     <string name="settings_view_licenses">阅读许可协议</string>
-    <string name="settings_open_github">打开GitHub仓库</string>
     <string name="contact_search_hint">输入姓名或电话号码来搜索…</string>
     <string name="contact_select_all">全选</string>
     <string name="contact_unselect_all">全不选</string>

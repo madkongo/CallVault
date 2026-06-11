@@ -19,7 +19,7 @@ Reports affecting unsupported versions will be closed without action.
 
 ## Reporting a Vulnerability
 
-If you discover a security vulnerability in ShizuCallRecorder, please report it **privately** and practice responsible disclosure. [See how](https://docs.github.com/en/code-security/how-tos/report-and-fix-vulnerabilities/report-a-vulnerability/privately-reporting-a-security-vulnerability).
+If you discover a security vulnerability in CallVault, please report it **privately** and practice responsible disclosure. [See how](https://docs.github.com/en/code-security/how-tos/report-and-fix-vulnerabilities/report-a-vulnerability/privately-reporting-a-security-vulnerability).
 
 When reporting a vulnerability, you may include any of the following:
 - Detailed step-by-step reproduction instructions (including granular or 1-by-2 steps)
@@ -58,6 +58,6 @@ This delay allows users adequate time to update and helps reduce the risk of act
 ## What Not to Report
 
 - Issues affecting only unsupported versions
-- Vulnerabilities that require modifying ShizuCallRecorder itself to be exploitable
+- Vulnerabilities that require modifying CallVault itself to be exploitable
 - Reports without any reasonable security impact
-- Reports not related to ShizuCallRecorder (For examples, issues related to Shizuku should be reported to Shizuku)
+- Reports not related to CallVault (for example, issues in an upstream dependency such as scrcpy or libadb-android should be reported to that project)

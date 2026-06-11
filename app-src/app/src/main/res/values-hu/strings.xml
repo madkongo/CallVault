@@ -12,12 +12,10 @@
     <string name="general_outgoing">kimenő</string>
     <string name="general_system_limitation">Rendszerkorlát</string>
     <string name="disclaimer_title">Üdvözöljük a CallVault alkalmazásban</string>
-    <string name="disclaimer_wiki_link_KEYWORD">Wiki</string>
     <string name="general_close">Közeli</string>
     <string name="general_resume">Folytatás</string>
     <string name="general_reset">Visszaállít</string>
     <string name="general_system_limitation_message">CallVault nem tud működni ezen a készüléken mivel a shell alkalmazás nem rendelkezik a megfelelő jogosultságokkal.\n\n%1$s\n\nA helyzettel nem lehet mit csinálni, az alkalmazás nem tud működni és most bezáródik.</string>
-    <string name="disclaimer_introduction">Mielőtt továbbhaladsz, kérjük olvasd el a telepítési útmutatót a Wikin majd olvasd el az alábbi jogi nyilatkozatot.</string>
     <string name="disclaimer_checkbox_label">Elolvastam a jogi nyilatkozatot és tisztában vagyok a szoftverrel kapcsolatos jogi követelményekkel, felelősségi körökkel valamint műszaki korlátozásokkal.</string>
     <string name="disclaimer_wait">Várj %1$d másodpercet</string>
     <string name="disclaimer_must_read">Kérjük mindenképp olvasd el a jogi nyilatkozatot.</string>
@@ -96,13 +94,11 @@
     <string name="settings_debug_logging_step_warning">Kérjük, a megosztás előtt ellenőrizd a létrehozott fájlt, hogy nem tartalmaz-e bizalmas információkat. Ha elkészült, tiltsd le a naplózást.</string>
     <string name="settings_debug_logging_step_warning_no_redaction">⚠️ Hibakeresési mód bekapcsolva. A naplószűrés nincs bekapcsolva.</string>
     <string name="settings_debug_logging_generate_report">Jelentés generálása</string>
-    <string name="settings_debug_logging_report_on_github">Jelentés GitHub-on</string>
     <string name="settings_debug_mode">Hibakeresés mód bekapcsolása</string>
     <string name="settings_debug_mode_description">Fejlesztői beállítások megjelenítése, a naplószűrés kikapcsolása.</string>
     <string name="settings_debug_caller_number">Telefonszám</string>
     <string name="settings_copy_version">Verziószám másolása</string>
     <string name="settings_view_licenses">Licenszek megtekintése</string>
-    <string name="settings_open_github">A GitHub repo megnyitása</string>
     <string name="contact_search_hint">Keresés név vagy szám alapján...</string>
     <string name="contact_select_all">Összes kijelölése</string>
     <string name="contact_unselect_all">Összes kijelölés megszűntetése</string>

@@ -15,8 +15,6 @@
     <string name="general_system_limitation">Ograniczenia systemu</string>
     <string name="general_system_limitation_message">CallVault nie będzie działać na tym urządzeniu, ponieważ Twoja aplikacja powłoki nie posiada wymaganych uprawnień:\n\n%1$s\n\nNie można nic z tym zrobić – aplikacja nie może działać i zostanie teraz zamknięta.</string>
     <string name="disclaimer_title">Witaj w CallVault</string>
-    <string name="disclaimer_wiki_link_KEYWORD">Wiki</string>
-    <string name="disclaimer_introduction">Zanim zaczniesz, otwórz i zapoznaj się z instrukcją konfiguracji na naszej stronie Wiki. Następnie przeczytaj poniższe zastrzeżenie.</string>
     <string name="disclaimer_checkbox_label">Zapoznałem się z oświadczeniem o wyłączeniu odpowiedzialności i rozumiem wymogi prawne, obowiązki oraz ograniczenia techniczne związane z tym oprogramowaniem.</string>
     <string name="disclaimer_wait">Czekaj %1$ds</string>
     <string name="disclaimer_must_read">Należy zapoznać się z treścią zastrzeżenia.</string>
@@ -88,13 +86,11 @@
     <string name="settings_debug_logging_step_warning">Przed udostępnieniem pliku sprawdź, czy nie zawiera on danych wrażliwych. Po zakończeniu wyłącz rejestrowanie logów.</string>
     <string name="settings_debug_logging_step_warning_no_redaction">⚠️ Tryb debugowania jest włączony. Redagowanie logów jest wyłączone.</string>
     <string name="settings_debug_logging_generate_report">Generuj Raport</string>
-    <string name="settings_debug_logging_report_on_github">Zgłoś na GitHubie</string>
     <string name="settings_debug_mode">Włącz tryb debugowania</string>
     <string name="settings_debug_mode_description">Pokaż opcje programisty, wyłącz redagowanie logów.</string>
     <string name="settings_debug_caller_number">Debuguj numer telefonu</string>
     <string name="settings_copy_version">Kopiuj Wersję</string>
     <string name="settings_view_licenses">Wyświetl licencje</string>
-    <string name="settings_open_github">Otwórz repozytorium GitHub</string>
     <string name="contact_search_hint">Wyszukaj według nazwy lub numeru...</string>
     <string name="contact_select_all">Zaznacz wszystko</string>
     <string name="contact_unselect_all">Odznacz wszystko</string>

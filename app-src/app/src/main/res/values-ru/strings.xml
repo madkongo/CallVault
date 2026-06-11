@@ -12,8 +12,6 @@
     <string name="general_incoming">входящий</string>
     <string name="general_outgoing">исходящий</string>
     <string name="general_system_limitation">Системное ограничение</string>
-    <string name="disclaimer_wiki_link_KEYWORD">Вики</string>
-    <string name="disclaimer_introduction">Пожалуйста откройте и прочитайте инструкцию по установке на нашей Вики, прежде чем продолжить. Затем прочитайте дисклеймер приведённый ниже.</string>
     <string name="disclaimer_checkbox_label">Я ознакомился с дисклеймером и понимаю юридические требования, ответственность и технические ограничения данного программного обеспечения.</string>
     <string name="disclaimer_wait">Подождите %1$d сек</string>
     <string name="disclaimer_must_read">Вы должны прочитать дисклеймер.</string>
@@ -84,13 +82,11 @@
     <string name="settings_debug_logging_step_warning">Пожалуйста, проверьте созданный файл на наличие личных данных перед отправкой. По окончании не забудьте отключить запись логов.</string>
     <string name="settings_debug_logging_step_warning_no_redaction">⚠️ Включен режим отладки. Скрытие личных данных в логах отключено.</string>
     <string name="settings_debug_logging_generate_report">Создать отчёт</string>
-    <string name="settings_debug_logging_report_on_github">Сообщить на GitHub</string>
     <string name="settings_debug_mode">Включить режим отладки</string>
     <string name="settings_debug_mode_description">Показывать меню разработчика и не скрывать личные данные в логах.</string>
     <string name="settings_debug_caller_number">Отладка телефонного номера</string>
     <string name="settings_copy_version">Копировать версию</string>
     <string name="settings_view_licenses">Посмотреть лицензии</string>
-    <string name="settings_open_github">Открыть GitHub репозиторий</string>
     <string name="contact_search_hint">Искать по имени или номеру...</string>
     <string name="recording_standby_notification_title">Звонок в процессе</string>
     <string name="recording_notification_cross_country_tip">🌐 Международный</string>
