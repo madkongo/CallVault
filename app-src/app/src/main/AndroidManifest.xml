@@ -122,7 +122,7 @@
              is a pure binder-delivery channel; no app data is exposed. -->
         <provider
             android:name=".server.RecorderBinderProvider"
-            android:authorities="com.kfir.callvault.recorder"
+            android:authorities="com.baba.callvault.recorder"
             android:enabled="true"
             android:exported="true" />
 
@@ -133,7 +133,7 @@
             android:enabled="true"
             android:exported="true">
             <intent-filter>
-                <action android:name="com.kitsumed.shizucallrecorder.debug.LAUNCH_SERVER" />
+                <action android:name="com.baba.callvault.debug.LAUNCH_SERVER" />
             </intent-filter>
         </receiver>
 

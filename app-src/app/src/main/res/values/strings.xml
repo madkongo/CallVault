@@ -96,11 +96,13 @@
     <string name="permission_adb_label" translatable="false">Wireless debugging (ADB)</string>
     <string name="permission_adb_description">Required to capture call audio. Pair once via the notification, then it connects automatically.</string>
     <string name="permission_adb_not_connected">Not connected — tap to set up</string>
-    <string name="permission_adb_setup">Set up ADB</string>
+    <string name="permission_adb_setup">Authorize</string>
 
     <!-- Settings Screen: Section Titles -->
     <string name="settings_section_about">About</string>
     <string name="settings_section_recording">Recording</string>
+    <string name="settings_section_recording_storage">Recording &amp; storage</string>
+    <string name="settings_developer_mode_unlocked">Developer options unlocked</string>
     <string name="settings_section_visual">Visual settings</string>
     <string name="settings_section_audio">Audio configuration</string>
     <string name="settings_section_debug">Debug Options</string>
@@ -130,8 +132,15 @@
     <string name="settings_recording_folder_label">Recording Folder</string>
 
     <string name="settings_file_name_template">File Name Template</string>
+    <string name="settings_file_name_template_preset">Preset</string>
+    <string name="settings_file_name_preset_date_direction_number">Date · Direction · Number</string>
+    <string name="settings_file_name_preset_date_number">Date · Number</string>
+    <string name="settings_file_name_preset_date_contact">Date · Contact</string>
+    <string name="settings_file_name_preset_date_direction_contact">Date · Direction · Contact</string>
+    <string name="settings_file_name_preset_custom">Custom</string>
     <string name="settings_file_name_template_placeholders">Placeholders:</string>
     <string name="settings_file_name_template_placeholders_preview">Preview: %1$s</string>
+    <string name="settings_file_name_template_example">Example: %1$s</string>
     <string name="placeholder_date_desc">The current date and time</string>
     <string name="placeholder_direction_desc">The call direction (in/out)</string>
     <string name="placeholder_phone_number_desc">The phone number</string>
@@ -264,4 +273,70 @@
     <string name="recording_error_file_creation">Failed to create recording file. Please check the storage permissions and/or select a new recording folder in the app settings.</string>
     <string name="recording_error_start_failed">Failed to start the recording. An error occurred when calling the ShellService binder method.</string>
     <string name="recording_unexpected_error">An unexpected error occurred during recording. Please report this with the steps to reproduce and the apps logs.</string>
+
+    <!-- Setup Wizard -->
+    <string name="wizard_title">Set up CallVault</string>
+    <string name="wizard_step_of">Step %1$d of %2$d</string>
+    <string name="wizard_back">Back</string>
+    <string name="wizard_next">Next</string>
+    <string name="wizard_finish">Finish</string>
+    <string name="wizard_choose_folder">Choose folder</string>
+    <!-- Wizard: Storage step -->
+    <string name="wizard_storage_title">Where to save recordings</string>
+    <string name="wizard_storage_subtitle">Choose where your recordings are stored. You can change this later in Settings.</string>
+    <string name="wizard_storage_drive_note">With Google Drive, the copy on this device is temporary and is deleted after it has been uploaded.</string>
+    <!-- Wizard: Schedule step -->
+    <string name="wizard_schedule_title">When to upload to Drive</string>
+    <string name="wizard_schedule_subtitle">Choose how often recordings are uploaded to your Google Drive folder.</string>
+    <string name="wizard_schedule_mode_label">Upload schedule</string>
+    <string name="wizard_schedule_immediate">Immediately</string>
+    <string name="wizard_schedule_daily">Daily</string>
+    <string name="wizard_schedule_weekly">Weekly</string>
+    <string name="wizard_schedule_immediate_note">Every call is uploaded automatically as soon as it finishes.</string>
+    <string name="wizard_schedule_day_label">Day of week</string>
+    <string name="wizard_schedule_hour_label">Hour</string>
+    <string name="wizard_schedule_minute_label">Minute</string>
+    <string name="wizard_day_sunday">Sunday</string>
+    <string name="wizard_day_monday">Monday</string>
+    <string name="wizard_day_tuesday">Tuesday</string>
+    <string name="wizard_day_wednesday">Wednesday</string>
+    <string name="wizard_day_thursday">Thursday</string>
+    <string name="wizard_day_friday">Friday</string>
+    <string name="wizard_day_saturday">Saturday</string>
+    <!-- Wizard: Auto-record step -->
+    <string name="wizard_auto_record_title">Automatic recording</string>
+    <string name="wizard_auto_record_subtitle">Choose which calls are recorded automatically. You can fine-tune this later in Settings.</string>
+    <!-- Wizard: Audio step -->
+    <string name="wizard_audio_title">Audio quality</string>
+    <string name="wizard_audio_subtitle">Pick the recording format and bit rate. Opus at 16 kbps is recommended for clear voice at small file sizes.</string>
+    <string name="wizard_filename_title">File name format</string>
+    <string name="wizard_filename_subtitle">Choose how saved recordings are named.</string>
+
+    <!-- Home -->
+    <string name="home_all_set_message">You\'re all set. CallVault is ready to record your calls.</string>
+    <string name="home_open_settings">Settings</string>
+
+    <!-- Home: status card -->
+    <string name="home_status_no_folder_title">No recording folder set</string>
+    <string name="home_status_no_folder_suggestion">Open Settings to choose where recordings are saved.</string>
+    <string name="home_status_not_paired_title">Setup not complete</string>
+    <string name="home_status_not_paired_suggestion">Finish Wireless Debugging pairing in setup.</string>
+    <string name="home_status_ready_title">Ready to record</string>
+    <string name="home_status_ready_suggestion">CallVault records calls automatically per your settings.</string>
+
+    <!-- Home: recordings list -->
+    <string name="home_recordings_title">Recordings</string>
+    <string name="home_recordings_empty">No recordings yet.</string>
+
+    <!-- Home: inline player -->
+    <string name="home_player_play">Play</string>
+    <string name="home_player_pause">Pause</string>
+    <string name="home_player_stop">Stop</string>
+    <string name="home_player_loading">Loading…</string>
+    <string name="home_player_error">Couldn\'t play this file.</string>
+
+    <!-- Home: delete recording -->
+    <string name="home_delete">Delete</string>
+    <string name="home_delete_confirm_title">Delete recording?</string>
+    <string name="home_delete_confirm_message">This permanently deletes %1$s.</string>
 </resources>

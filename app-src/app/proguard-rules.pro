@@ -34,6 +34,6 @@
 }
 
 # Also strip your our custom AppLogger verbose calls
--assumenosideeffects class com.kitsumed.shizucallrecorder.utils.AppLogger {
+-assumenosideeffects class com.baba.callvault.utils.AppLogger {
   v(...);
 }

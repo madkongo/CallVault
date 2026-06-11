@@ -113,11 +113,11 @@ val ciVersionName = providers.gradleProperty("versionName").orElse("1.0.0")
 val ciBuildNumber = providers.gradleProperty("ciBuildNumber").orElse("Local")
 
 android {
-    namespace = "com.kitsumed.shizucallrecorder"
+    namespace = "com.baba.callvault"
     compileSdk = 36
 
     defaultConfig {
-        applicationId = "com.kfir.callvault"
+        applicationId = "com.baba.callvault"
         minSdk = 30
         targetSdk = 36
         versionCode = ciVersionCode.get()
@@ -256,7 +256,7 @@ dependencies {
     // WorkManager: reliable background task execution for post-call Drive copy.
     implementation("androidx.work:work-runtime-ktx:2.10.0")
 
-    // Spike (Plan 1): in-app ADB over wireless debugging. Candidate transport to replace Shizuku.
+    // Spike (Plan 1): in-app ADB over wireless debugging. Candidate transport to replace an external privileged-helper dependency.
     implementation("com.github.MuntashirAkon:libadb-android:3.1.1")
     // bcprov is already a runtime transitive dep of libadb-android; we need it at compile time too
     // so SpikeAdbManager can use X509V3CertificateGenerator for self-signed cert generation.
