@@ -26,11 +26,15 @@
     <string name="home_filter_contact_label">Contact</string>
     <string name="home_filter_contact_chip">Contact: %1$s</string>
     <string name="home_filter_contact_all">All contacts</string>
+    <!-- Compact value shown on the Contact chip itself, so it fits one line. -->
+    <string name="home_filter_contact_all_short">All</string>
 
     <!-- Date facet (chip label + "all" option). %1$s = current value shown on the chip. -->
     <string name="home_filter_date_label">Date</string>
     <string name="home_filter_date_chip">Date: %1$s</string>
     <string name="home_filter_date_all">All dates</string>
+    <!-- Compact value shown on the Date chip itself, so it fits one line. -->
+    <string name="home_filter_date_all_short">All</string>
 
     <!-- Per-row storage-source badge labels -->
     <string name="home_source_badge_local">Device</string>
