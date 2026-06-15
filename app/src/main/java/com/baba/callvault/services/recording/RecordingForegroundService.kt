@@ -105,6 +105,17 @@ class RecordingForegroundService : Service() {
             }
         }
 
+    /**
+     * Set true the moment a STOP is requested (call ended / explicit stop / service destroy). The
+     * recording start path runs on a background coroutine and can block for tens of seconds while the
+     * daemon cold-starts; a STOP that arrives during that window would otherwise be a no-op (no Active
+     * engine yet), and the late start would turn the mic on AFTER the call with nothing to stop it. The
+     * start path checks this flag (passed into [AudioRecordingEngine.startPipeline]) to abort, and a
+     * belt-and-suspenders check tears down if the start completed just after the stop.
+     */
+    @Volatile
+    private var stopRequested: Boolean = false
+
     /** True while a recording session object is present (initializing, active, or pending teardown). */
     private val hasSession: Boolean
         get() = currentState is RecordingServiceState.Active
@@ -184,6 +195,7 @@ class RecordingForegroundService : Service() {
                     return START_NOT_STICKY // We won't reach this anyway.
                 }
 
+                stopRequested = false
                 currentState = RecordingServiceState.Starting(currentMeta)
 
                 // IO dispatcher: AdbShell.ensureConnected + ScrcpyLauncher do real network I/O over the
@@ -238,7 +250,12 @@ class RecordingForegroundService : Service() {
                 }
             }
 
-            ACTION_STOP_RECORDING -> stopRecordingSessionAndService()
+            ACTION_STOP_RECORDING -> {
+                // Mark stop FIRST so an in-flight start (blocked in the daemon cold-start) aborts instead
+                // of turning the mic on after the call has ended.
+                stopRequested = true
+                stopRecordingSessionAndService()
+            }
             ACTION_NOTIFICATION_DISMISSED -> {
                 AppLogger.d(TAG, "Ongoing foreground service notification dismissed by user (Android 14+), reposting.")
                 updateNotification()
@@ -251,6 +268,7 @@ class RecordingForegroundService : Service() {
         // Always clean up, even if the OS kills the service mid-recording.
         // This is the guaranteed last callback before the service process is cleaned up.
         AppLogger.v(TAG, "RecordingForegroundService is destroying... Ensuring cleanup...")
+        stopRequested = true
         serviceScope.cancel()
         stopRecordingSessionAndService()
         super.onDestroy()
@@ -272,11 +290,20 @@ class RecordingForegroundService : Service() {
         val activeSession = AudioRecordingEngine()
 
         try {
-            // 2. Try to start the pipeline
-            activeSession.startPipeline(this, metadata)
+            // 2. Try to start the pipeline. Pass our stop flag so the (slow, daemon-cold-start) start
+            //    aborts before touching the daemon if the call already ended — preventing a mic that
+            //    turns on after the call with nothing to stop it.
+            activeSession.startPipeline(this, metadata) { stopRequested }
             // 3. Success
             currentState = RecordingServiceState.Active(activeSession, false, metadata)
             AppLogger.i(TAG, "Recording pipeline started successfully")
+            // Belt-and-suspenders: if a STOP landed in the tiny window after the daemon accepted the
+            // recording but before we reached here, tear it down immediately so capture (and the mic)
+            // does not linger past the call.
+            if (stopRequested) {
+                AppLogger.w(TAG, "Stop requested during startup; tearing down the just-started session")
+                stopRecordingSessionAndService()
+            }
         } catch (e: PipelineInitializationException) {
             AppLogger.e(TAG, e.message ?: "", e.cause ?: e)
             notificationHelper.showErrorNotification(e.userFriendlyMessage)

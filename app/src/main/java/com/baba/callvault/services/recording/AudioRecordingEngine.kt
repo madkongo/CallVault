@@ -28,6 +28,7 @@ import com.baba.callvault.system.storage.SafHelper
 import com.baba.callvault.integrations.scrcpy.ServerExtractor
 import com.baba.callvault.utils.AppLogger
 import com.baba.callvault.utils.RecordingFileNameFormatter
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
@@ -147,8 +148,14 @@ class AudioRecordingEngine {
      * Orchestrates the initialization and connection of the entire recording pipeline.
      * @throws PipelineInitializationException if any step of the initialization fails, with details for user-friendly and technical error reporting.
      */
-    fun startPipeline(context: Service, metadata: RecordingMetadata) {
+    fun startPipeline(context: Service, metadata: RecordingMetadata, isCancelled: () -> Boolean = { false }) {
         initializationMetadata = metadata
+        // The daemon bring-up below can block for tens of seconds while it cold-starts (re-enable WD →
+        // mDNS reconnect → relaunch). On this OEM the call frequently ENDS during that window. If we
+        // proceed, the daemon's startRecording would fire AFTER the call — turning the mic on with
+        // nothing left to stop it (stuck-mic bug). [isCancelled] lets the caller (the service, via its
+        // stopRequested flag) signal "the call already ended" so we abort before touching the daemon.
+        if (isCancelled()) throw CancellationException("Recording aborted before start (call already ended)")
         val preferences = AppPreferences(context)
         val folderUri = preferences.getRecordingFolderUri()
 
@@ -182,7 +189,7 @@ class AudioRecordingEngine {
         // mechanism, not an option. Hand the SAF output fd to the daemon and let IT own scrcpy + muxing
         // over binder (no ADB at record time). Only if the daemon truly can't be brought up do we fall
         // through to the local ADB path below, so a call is never lost.
-        if (startDaemonPipeline(context, audioSourceEnum, codecEnum, bitRate)) {
+        if (startDaemonPipeline(context, audioSourceEnum, codecEnum, bitRate, isCancelled)) {
             daemonMode = true
             currentCodecEnum = codecEnum
             return
@@ -266,10 +273,20 @@ class AudioRecordingEngine {
         context: Service,
         audioSourceEnum: ScrcpyAudioSource,
         codecEnum: ScrcpyAudioCodec,
-        bitRate: Int
+        bitRate: Int,
+        isCancelled: () -> Boolean
     ): Boolean {
         AppLogger.i(TAG, "Ensuring recorder daemon is running")
         val connected = RecorderServerLauncher.ensureServerRunning(context)
+        // ensureServerRunning can block for tens of seconds cold-starting the daemon; the call may have
+        // ENDED in the meantime. Abort BEFORE startRecording so we never start capture after the call
+        // (the stuck-mic bug). Throw (not return false) so the caller does NOT fall back to the local
+        // ADB path — there is nothing to record. Close the SAF fd we opened so it isn't leaked.
+        if (isCancelled()) {
+            AppLogger.w(TAG, "Call ended before the daemon was ready; aborting start so the mic stays off")
+            runCatching { outputPfd?.close() }
+            throw CancellationException("Recording aborted before start (call ended during daemon cold-start)")
+        }
         val service = RecorderConnection.service
         if (!connected || service == null) {
             AppLogger.w(TAG, "Recorder daemon unavailable (connected=$connected, service=${service != null})")
