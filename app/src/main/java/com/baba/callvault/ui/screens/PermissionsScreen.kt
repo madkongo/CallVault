@@ -129,16 +129,20 @@ fun PermissionsScreen(
     // Battery-optimization exemption opens a system screen; using StartActivityForResult brings the
     // user back to CallVault when they're done so the UI refreshes (vs. a fire-and-forget startActivity).
     val batteryExemptionLauncher = rememberLauncherForActivityResult(ActivityResultContracts.StartActivityForResult()) {
-        onPermissionGranted()
         // The Doze modal grants the standard battery-optimization exemption (what `batteryExempted`
         // detects). On OEMs like OxygenOS that is NOT enough — the per-app battery mode stays
         // "Intelligent/Smart", which still throttles the background daemon — and no public API can set
         // it to "Allow background activity / Unrestricted". So guide the user to App Info (where OnePlus
         // exposes that mode) with a one-time hint. Best-effort; harmless if the OEM lacks the setting.
+        //
+        // Open App Info FIRST, THEN refresh the onboarding state: this way the step advancing happens
+        // hidden BEHIND the App Info page, so the user lands on App Info (not on a wizard step that
+        // visibly jumped ahead before the settings page appeared).
         runCatching {
             Toast.makeText(activityContext, R.string.permission_battery_oem_hint, Toast.LENGTH_LONG).show()
             activityContext.openAppSettings()
         }
+        onPermissionGranted()
     }
 
     // No external shell-permission check needed: CallVault's embedded ADB shell runs as uid 2000
