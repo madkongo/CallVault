@@ -17,6 +17,7 @@ import android.net.Uri
 import android.os.Bundle
 import android.os.Handler
 import android.os.Looper
+import android.provider.DocumentsContract
 import android.provider.Settings
 import android.widget.Toast
 import androidx.activity.result.contract.ActivityResultContracts
@@ -47,7 +48,18 @@ const val ORIGINAL_PROJECT_URL = "https://github.com/kitsumed/ShizuCallRecorder"
  */
 class PersistentFolderPickerContract : ActivityResultContracts.OpenDocumentTree() {
     override fun createIntent(context: Context, input: Uri?): Intent {
-        return super.createIntent(context, input).apply {
+        // The [input] (when non-null) is the slot's currently-saved tree URI, used as the picker's
+        // EXTRA_INITIAL_URI so it opens at that folder. AOSP's documented-correct form for the initial
+        // location is a DOCUMENT uri (or a tree uri WITH a document id), NOT a bare persisted tree uri
+        // (content://…/tree/<id>) — AndroidX passes our input straight into EXTRA_INITIAL_URI unchanged,
+        // so we convert tree -> document here. NOTE: EXTRA_INITIAL_URI is a best-effort HINT; OEM pickers
+        // (e.g. OxygenOS) are permitted to ignore it and reopen at the last-browsed location.
+        val initialUri = input?.let { tree ->
+            runCatching {
+                DocumentsContract.buildDocumentUriUsingTree(tree, DocumentsContract.getTreeDocumentId(tree))
+            }.getOrNull()
+        }
+        return super.createIntent(context, initialUri).apply {
             addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
             addFlags(Intent.FLAG_GRANT_WRITE_URI_PERMISSION)
             // Makes the access survive app restarts and reboots.

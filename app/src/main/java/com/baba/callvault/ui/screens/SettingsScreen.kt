@@ -212,6 +212,12 @@ fun SettingsContent(
     // Read in the composable scope (not the LazyListScope) so the Debug item recomposes on unlock.
     val isDeveloperModeUnlocked = remember(updateTrigger) { preferences.isDeveloperModeUnlocked() }
 
+    // Accordion: at most one section open at a time; Recording & storage is open on entry. State is
+    // hoisted here (above the LazyColumn) so it is shared across all sections. Tapping the open section
+    // closes it (null = none open); tapping any other section opens it and closes the previous one.
+    var openSection by rememberSaveable { mutableStateOf<String?>(SECTION_RECORDING_STORAGE) }
+    val onToggleSection: (String) -> Unit = { id -> openSection = if (openSection == id) null else id }
+
     CvScaffold(
         modifier = modifier.fillMaxSize(),
         title = stringResource(R.string.general_settings),
@@ -235,24 +241,46 @@ fun SettingsContent(
                     preferences = preferences,
                     updateTrigger = updateTrigger,
                     actions = actions,
+                    expanded = openSection == SECTION_RECORDING_STORAGE,
+                    onToggle = { onToggleSection(SECTION_RECORDING_STORAGE) },
                     onSelectFolder = onSelectFolder,
                     onSelectDriveFolder = onSelectDriveFolder,
                     onOpenContactsIncoming = onOpenContactsIncoming,
                     onOpenContactsOutgoing = onOpenContactsOutgoing
                 )
             }
-            item { AudioSection(preferences, updateTrigger, actions) }
-            item { VisualSection(preferences, updateTrigger, actions) }
+            item {
+                AudioSection(
+                    preferences, updateTrigger, actions,
+                    expanded = openSection == SECTION_AUDIO,
+                    onToggle = { onToggleSection(SECTION_AUDIO) }
+                )
+            }
+            item {
+                VisualSection(
+                    preferences, updateTrigger, actions,
+                    expanded = openSection == SECTION_VISUAL,
+                    onToggle = { onToggleSection(SECTION_VISUAL) }
+                )
+            }
             // Debug section is hidden until developer options are unlocked (7-tap on the version row).
             if (isDeveloperModeUnlocked) {
-                item { DebugSection(preferences, updateTrigger, actions, onExportLogs) }
+                item {
+                    DebugSection(
+                        preferences, updateTrigger, actions, onExportLogs,
+                        expanded = openSection == SECTION_DEBUG,
+                        onToggle = { onToggleSection(SECTION_DEBUG) }
+                    )
+                }
             }
             // About moved to the bottom; the fork attribution stays visible (GPLv3 §7 requirement).
             item {
                 AboutSection(
                     versionString = actions.getAppVersion(),
                     onShowLicenses = { showLicensesDialog = true },
-                    onUnlockDeveloperMode = { actions.unlockDeveloperMode() }
+                    onUnlockDeveloperMode = { actions.unlockDeveloperMode() },
+                    expanded = openSection == SECTION_ABOUT,
+                    onToggle = { onToggleSection(SECTION_ABOUT) }
                 )
             }
         }
@@ -313,6 +341,14 @@ fun SettingsContent(
 /** Number of consecutive taps on the version row required to unlock developer options. */
 private const val DEVELOPER_UNLOCK_TAPS = 7
 
+// Settings accordion: stable keys identifying each section. At most one section is open at a time;
+// [SECTION_RECORDING_STORAGE] is the one open when Settings is first entered.
+private const val SECTION_RECORDING_STORAGE = "recording_storage"
+private const val SECTION_AUDIO = "audio"
+private const val SECTION_VISUAL = "visual"
+private const val SECTION_DEBUG = "debug"
+private const val SECTION_ABOUT = "about"
+
 // ── Settings sections ──────────────────────────────────────────────────────────────────────
 
 /** Shows the storage target, device + Drive folders, filename template, auto-record toggles, and
@@ -334,6 +370,8 @@ private fun RecordingAndStorageSection(
     preferences: AppPreferences,
     updateTrigger: Int,
     actions: SettingsActions,
+    expanded: Boolean,
+    onToggle: () -> Unit,
     onSelectFolder: () -> Unit,
     onSelectDriveFolder: () -> Unit,
     onOpenContactsIncoming: () -> Unit,
@@ -367,7 +405,7 @@ private fun RecordingAndStorageSection(
         OptionItem(target.key, stringResource(labelRes))
     }
 
-    SettingsSection(title = stringResource(R.string.settings_section_recording_storage)) {
+    SettingsSection(title = stringResource(R.string.settings_section_recording_storage), expanded = expanded, onToggle = onToggle) {
         DropdownRow {
             M3DropdownField(
                 label    = stringResource(R.string.settings_storage_target_label),
@@ -494,14 +532,14 @@ private fun RecordingAndStorageSection(
  * @param actions       Implementation of [SettingsActions] to handle user interaction.
  */
 @Composable
-private fun AudioSection(preferences: AppPreferences, updateTrigger: Int, actions: SettingsActions) {
+private fun AudioSection(preferences: AppPreferences, updateTrigger: Int, actions: SettingsActions, expanded: Boolean, onToggle: () -> Unit) {
 
     val isDebugEnabled = remember(updateTrigger) { preferences.isDebugEnabled() }
     val audioSource = remember(updateTrigger) { preferences.getAudioSource() }
     val audioCodec = remember(updateTrigger) { preferences.getAudioCodec() }
     val savedBitRate = remember(updateTrigger) { preferences.getAudioBitRate() }
 
-    SettingsSection(title = stringResource(R.string.settings_section_audio)) {
+    SettingsSection(title = stringResource(R.string.settings_section_audio), expanded = expanded, onToggle = onToggle) {
         val currentSdk = Build.VERSION.SDK_INT
 
         // Build the source list from the enum, hiding debug-only entries when debug is off.
@@ -575,7 +613,7 @@ private fun AudioSection(preferences: AppPreferences, updateTrigger: Int, action
  * @param actions       Implementation of [SettingsActions] to handle user interaction.
  */
 @Composable
-private fun VisualSection(preferences: AppPreferences, updateTrigger: Int, actions: SettingsActions) {
+private fun VisualSection(preferences: AppPreferences, updateTrigger: Int, actions: SettingsActions, expanded: Boolean, onToggle: () -> Unit) {
     val currentThemeMode = remember(updateTrigger) { preferences.getThemeMode() }
     val isDynamicColorEnabled = remember(updateTrigger) { preferences.isDynamicColorEnabled() }
     val isShowToastsEnabled = remember(updateTrigger) { preferences.isShowToastsEnabled() }
@@ -620,7 +658,7 @@ private fun VisualSection(preferences: AppPreferences, updateTrigger: Int, actio
         options.distinctBy { it.key }
     }
 
-    SettingsSection(title = stringResource(R.string.settings_section_visual)) {
+    SettingsSection(title = stringResource(R.string.settings_section_visual), expanded = expanded, onToggle = onToggle) {
         DropdownRow {
             M3DropdownField(
                 label = stringResource(R.string.settings_language),
@@ -682,12 +720,12 @@ private fun VisualSection(preferences: AppPreferences, updateTrigger: Int, actio
  * @param onExportLogs  Called to export logs via SAF when logging is enabled.
  */
 @Composable
-private fun DebugSection(preferences: AppPreferences, updateTrigger: Int, actions: SettingsActions, onExportLogs: () -> Unit) {
+private fun DebugSection(preferences: AppPreferences, updateTrigger: Int, actions: SettingsActions, onExportLogs: () -> Unit, expanded: Boolean, onToggle: () -> Unit) {
     val isDebugEnabled = remember(updateTrigger) { preferences.isDebugEnabled() }
     val debugCallerNumber = remember(updateTrigger) { preferences.getDebugCallerNumber() }
     val isLoggingEnabled = remember(updateTrigger) { preferences.isLoggingEnabled() }
 
-    SettingsSection(title = stringResource(R.string.settings_section_debug)) {
+    SettingsSection(title = stringResource(R.string.settings_section_debug), expanded = expanded, onToggle = onToggle) {
         SettingsToggleRow(
             icon            = Icons.Filled.BugReport,
             label           = stringResource(R.string.settings_debug_logging_enabled),
@@ -799,13 +837,15 @@ private fun DebugSection(preferences: AppPreferences, updateTrigger: Int, action
 private fun AboutSection(
     versionString: String,
     onShowLicenses: () -> Unit,
-    onUnlockDeveloperMode: () -> Unit
+    onUnlockDeveloperMode: () -> Unit,
+    expanded: Boolean,
+    onToggle: () -> Unit
 ) {
     val context = LocalContext.current
     val serverVersion = ScrcpyConfig.SCRCPY_VERSION
     var versionTapCount by remember { mutableIntStateOf(0) }
 
-    SettingsSection(title = stringResource(R.string.settings_section_about)) {
+    SettingsSection(title = stringResource(R.string.settings_section_about), expanded = expanded, onToggle = onToggle) {
         // Hidden 7-tap developer unlock lives on the app-version row.
         NavigationRow(
             icon = Icons.Filled.Save,
@@ -856,16 +896,22 @@ private fun AboutSection(
 // ── Internal helper composables ────────────────────────────────────────────────────────────
 
 /** A branded, collapsible section: a tappable [CvSectionHeader] (with a rotating chevron) above a
- * [CvCard] grouping its rows. Tapping the header toggles the body open/closed; the body animates in
- * and out. Each section is expanded by default so nothing is hidden on first render. The expanded
- * state survives configuration changes via [rememberSaveable].
+ * [CvCard] grouping its rows. Tapping the header invokes [onToggle]; the body animates in and out.
+ * The expand/collapse state is HOISTED to the parent so the Settings screen can run an accordion
+ * (at most one section open at a time); this composable is stateless about expansion.
  *
- * @param title   Section heading shown above the card; the whole header row toggles the section.
- * @param content The slot for child rows rendered inside the [CvCard] when expanded.
+ * @param title    Section heading shown above the card; the whole header row toggles the section.
+ * @param expanded Whether this section's body is currently shown.
+ * @param onToggle Invoked when the header is tapped (the parent decides the new open-section).
+ * @param content  The slot for child rows rendered inside the [CvCard] when expanded.
  */
 @Composable
-private fun SettingsSection(title: String, content: @Composable ColumnScope.() -> Unit) {
-    var expanded by rememberSaveable { mutableStateOf(true) }
+private fun SettingsSection(
+    title: String,
+    expanded: Boolean,
+    onToggle: () -> Unit,
+    content: @Composable ColumnScope.() -> Unit
+) {
     val chevronRotation by animateFloatAsState(
         targetValue = if (expanded) 180f else 0f,
         label = "settingsSectionChevron"
@@ -876,7 +922,7 @@ private fun SettingsSection(title: String, content: @Composable ColumnScope.() -
             modifier = Modifier
                 .fillMaxWidth()
                 .clip(RoundedCornerShape(12.dp))
-                .clickable { expanded = !expanded },
+                .clickable { onToggle() },
             verticalAlignment = Alignment.CenterVertically
         ) {
             CvSectionHeader(text = title, modifier = Modifier.weight(1f))
