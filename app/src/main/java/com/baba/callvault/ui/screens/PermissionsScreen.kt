@@ -10,6 +10,7 @@ package com.baba.callvault.ui.screens
 
 import android.content.Intent
 import android.provider.Settings
+import android.widget.Toast
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.core.net.toUri
@@ -129,6 +130,15 @@ fun PermissionsScreen(
     // user back to CallVault when they're done so the UI refreshes (vs. a fire-and-forget startActivity).
     val batteryExemptionLauncher = rememberLauncherForActivityResult(ActivityResultContracts.StartActivityForResult()) {
         onPermissionGranted()
+        // The Doze modal grants the standard battery-optimization exemption (what `batteryExempted`
+        // detects). On OEMs like OxygenOS that is NOT enough — the per-app battery mode stays
+        // "Intelligent/Smart", which still throttles the background daemon — and no public API can set
+        // it to "Allow background activity / Unrestricted". So guide the user to App Info (where OnePlus
+        // exposes that mode) with a one-time hint. Best-effort; harmless if the OEM lacks the setting.
+        runCatching {
+            Toast.makeText(activityContext, R.string.permission_battery_oem_hint, Toast.LENGTH_LONG).show()
+            activityContext.openAppSettings()
+        }
     }
 
     // No external shell-permission check needed: CallVault's embedded ADB shell runs as uid 2000

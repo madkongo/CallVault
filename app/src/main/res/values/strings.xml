@@ -88,7 +88,8 @@
     <string name="permission_call_log_description">Required so we receive the unredacted phone number on phone state events.</string>
 
     <string name="permission_battery_label">Battery Optimization</string>
-    <string name="permission_battery_description">Keeps the app alive when it needs and allow to bypass possible background startup limitations.</string>
+    <string name="permission_battery_description">Keeps the app alive when it needs and allow to bypass possible background startup limitations. On some phones (e.g. OnePlus/OxygenOS) also set this app\'s battery mode to \"Allow background activity\".</string>
+    <string name="permission_battery_oem_hint">Exemption set. On OnePlus/OxygenOS, also tap Battery → set \"Allow background activity\" (Unrestricted) for reliable recording.</string>
 
     <!-- Same label as settings_recording_folder_label -->
     <string name="permission_storage_description">Select where recordings will be saved.</string>
