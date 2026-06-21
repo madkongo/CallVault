@@ -40,7 +40,7 @@
 
     <application
         android:name=".CallVaultApplication"
-        android:allowBackup="true"
+        android:allowBackup="false"
         android:dataExtractionRules="@xml/data_extraction_rules"
         android:fullBackupContent="@xml/backup_rules"
         android:icon="@mipmap/ic_launcher"
@@ -104,6 +104,17 @@
             </intent-filter>
         </receiver>
 
+        <!-- Re-anchors the daily retention sweep to local time on a time-zone/clock change (travel). -->
+        <receiver
+            android:name=".services.boot.RetentionTimezoneReceiver"
+            android:enabled="true"
+            android:exported="false">
+            <intent-filter>
+                <action android:name="android.intent.action.TIMEZONE_CHANGED" />
+                <action android:name="android.intent.action.TIME_SET" />
+            </intent-filter>
+        </receiver>
+
         <!-- Boot receiver: re-enables Wireless debugging and reconnects ADB after reboot -->
         <receiver
             android:name=".services.boot.BootReceiver"
@@ -126,16 +137,6 @@
             android:enabled="true"
             android:exported="true" />
 
-        <!-- DEBUG-ONLY throwaway: exercise RecorderServerLauncher.ensureServerRunning in isolation
-             (validate the flaky-wireless in-app launch without a real call). Remove before release. -->
-        <receiver
-            android:name=".debug.LaunchTestReceiver"
-            android:enabled="true"
-            android:exported="true">
-            <intent-filter>
-                <action android:name="com.baba.callvault.debug.LAUNCH_SERVER" />
-            </intent-filter>
-        </receiver>
 
         <!-- Foreground service used by BootReceiver to reconnect ADB off the main thread -->
         <service

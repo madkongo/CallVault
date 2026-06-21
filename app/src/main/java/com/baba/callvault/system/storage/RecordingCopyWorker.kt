@@ -13,6 +13,7 @@ import androidx.core.net.toUri
 import androidx.documentfile.provider.DocumentFile
 import androidx.work.CoroutineWorker
 import androidx.work.WorkerParameters
+import com.baba.callvault.data.recordings.RecordingCatalog
 import com.baba.callvault.utils.AppLogger
 
 /** Copies a finished recording from the local SAF folder to the Drive SAF folder, optionally
@@ -40,6 +41,9 @@ class RecordingCopyWorker(ctx: Context, params: WorkerParameters) : CoroutineWor
             AppLogger.w(TAG, "Drive copy size differs (src=$srcSize dest=$destSize); keeping it anyway")
         }
         if (deleteLocal) runCatching { DocumentFile.fromSingleUri(applicationContext, src)?.delete() }
+        // Stamp the Drive copy onto the catalog row (clearing the local copy when DRIVE-only deletes it),
+        // so the Home list reflects where the file now lives without re-scanning the Drive folder.
+        RecordingCatalog.markDrive(applicationContext, name, copied, destSize.takeIf { it > 0L }, deleteLocal)
         AppLogger.i(TAG, "Recording copied to Drive (deleteLocal=$deleteLocal, src=$srcSize dest=$destSize)")
         return Result.success()
     }

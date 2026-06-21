@@ -14,6 +14,7 @@ plugins {
     alias(libs.plugins.kotlin.compose)
     alias(libs.plugins.kotlin.parcelize)
     alias(libs.plugins.aboutlibraries)
+    alias(libs.plugins.ksp)
 }
 
 val scrcpyVersion = "4.0"
@@ -255,6 +256,12 @@ dependencies {
 
     // WorkManager: reliable background task execution for post-call Drive copy.
     implementation("androidx.work:work-runtime-ktx:2.10.0")
+
+    // Room: the on-device recordings catalog — CallVault's own source of truth for the Home list,
+    // so it never depends on a cloud provider's (Google Drive's) eventually-consistent folder listing.
+    implementation(libs.androidx.room.runtime)
+    implementation(libs.androidx.room.ktx)
+    ksp(libs.androidx.room.compiler)
 
     // Spike (Plan 1): in-app ADB over wireless debugging. Candidate transport to replace an external privileged-helper dependency.
     implementation("com.github.MuntashirAkon:libadb-android:3.1.1")

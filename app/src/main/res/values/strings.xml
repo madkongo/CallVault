@@ -88,7 +88,8 @@
     <string name="permission_call_log_description">Required so we receive the unredacted phone number on phone state events.</string>
 
     <string name="permission_battery_label">Battery Optimization</string>
-    <string name="permission_battery_description">Keeps the app alive when it needs and allow to bypass possible background startup limitations.</string>
+    <string name="permission_battery_description">Keeps the app alive when it needs and allow to bypass possible background startup limitations. On some phones (e.g. OnePlus/OxygenOS) also set this app\'s battery mode to \"Allow background activity\".</string>
+    <string name="permission_battery_oem_hint">Battery exemption set. Now on this App info page, tap \"Battery\", then choose \"Allow background activity\" (Unrestricted) — required so recording survives in the background on OnePlus/OxygenOS.</string>
 
     <!-- Same label as settings_recording_folder_label -->
     <string name="permission_storage_description">Select where recordings will be saved.</string>
@@ -101,6 +102,24 @@
     <!-- Settings Screen: Section Titles -->
     <string name="settings_section_about">About</string>
     <string name="settings_section_recording">Recording</string>
+    <string name="settings_section_storage">Storage</string>
+    <string name="settings_section_retention">Retention</string>
+
+    <!-- Retention (auto-delete old recordings) -->
+    <string name="retention_keep_forever">Keep forever</string>
+    <string name="retention_daily">Daily (1 day)</string>
+    <string name="retention_weekly">Weekly (7 days)</string>
+    <string name="retention_biweekly">Bi-weekly (14 days)</string>
+    <string name="retention_monthly">Monthly (30 days)</string>
+    <string name="retention_linked_label">Same period for device &amp; Drive</string>
+    <string name="retention_period_label">Auto-delete recordings</string>
+    <string name="retention_local_label">Device recordings</string>
+    <string name="retention_drive_label">Drive recordings</string>
+    <string name="retention_description">Recordings older than the selected period are permanently deleted. Checked once a day at the time below.</string>
+    <string name="retention_time_label">Run at (your local time)</string>
+    <string name="retention_confirm_title">Enable auto-delete?</string>
+    <string name="retention_confirm_message">Recordings older than the selected period will be permanently deleted from your device and/or Google Drive. This can\'t be undone.</string>
+    <string name="retention_confirm_enable">Enable</string>
     <string name="settings_section_recording_storage">Recording &amp; storage</string>
     <string name="settings_developer_mode_unlocked">Developer options unlocked</string>
     <string name="settings_section_visual">Visual settings</string>

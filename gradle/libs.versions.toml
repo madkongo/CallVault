@@ -11,6 +11,10 @@ androidxAppcompat = "1.7.1"
 kotlin = "2.3.21"
 composeBom = "2026.05.01"
 
+# Persistence
+room = "2.8.4"
+ksp = "2.3.9"
+
 # Utility
 aboutlibraries = "14.2.1"
 libphonenumber = "9.0.31"
@@ -44,8 +48,14 @@ aboutlibraries-compose-m3 = { module = "com.mikepenz:aboutlibraries-compose-m3",
 # Libphonenumber
 libphonenumber = { module = "com.googlecode.libphonenumber:libphonenumber", version.ref = "libphonenumber" }
 
+# Room (recordings catalog)
+androidx-room-runtime = { module = "androidx.room:room-runtime", version.ref = "room" }
+androidx-room-ktx = { module = "androidx.room:room-ktx", version.ref = "room" }
+androidx-room-compiler = { module = "androidx.room:room-compiler", version.ref = "room" }
+
 [plugins]
 android-application = { id = "com.android.application", version.ref = "agp" }
 kotlin-compose = { id = "org.jetbrains.kotlin.plugin.compose", version.ref = "kotlin" }
 kotlin-parcelize = { id = "org.jetbrains.kotlin.plugin.parcelize", version.ref = "kotlin" }
 aboutlibraries = { id = "com.mikepenz.aboutlibraries.plugin.android", version.ref = "aboutlibraries" }
+ksp = { id = "com.google.devtools.ksp", version.ref = "ksp" }

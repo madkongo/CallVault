@@ -58,9 +58,11 @@ internal class RecorderSession(
         /** Brief wait for the read thread to drain late bytes during stop (mirrors engine release()). */
         private const val READ_DRAIN_WAIT_MS = 2000L
 
-        /** scrcpy creates its abstract socket on startup; retry-connect until ready (mirrors launcher). */
-        private const val SOCKET_RETRY_COUNT = 60
-        private const val SOCKET_RETRY_DELAY_MS = 100L
+        /** scrcpy creates its abstract socket on startup; retry-connect until ready (mirrors launcher).
+         *  Fine 25 ms granularity so we attach the instant scrcpy serves the socket — shaving up to
+         *  ~75 ms of dead wait off every recording's first audio (count kept high for the same ~6 s cap). */
+        private const val SOCKET_RETRY_COUNT = 240
+        private const val SOCKET_RETRY_DELAY_MS = 25L
     }
 
     @Volatile private var scrcpyProcess: java.lang.Process? = null

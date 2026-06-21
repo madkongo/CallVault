@@ -12,3 +12,4 @@ graphify-out/
 
 # internal build/planning notes (not published)
 docs/superpowers/
+.gstack/
