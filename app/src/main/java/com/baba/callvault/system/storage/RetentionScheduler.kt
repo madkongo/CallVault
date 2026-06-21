@@ -32,8 +32,6 @@ object RetentionScheduler {
 
     private const val TAG = "CV:RetentionScheduler"
     private const val PERIOD_HOURS = 24L
-    private const val SWEEP_HOUR = 3   // run at ~03:00 local, off-peak
-    private const val SWEEP_MINUTE = 30
 
     /** Reconciles the periodic sweep with the current retention prefs. */
     fun apply(context: Context) {
@@ -47,14 +45,18 @@ object RetentionScheduler {
             return
         }
 
+        // Anchored to the device's LOCAL time zone (Calendar default TZ), so the chosen HH:mm fires at
+        // local time wherever the user is. Re-anchored on app start and on TIMEZONE_CHANGED.
+        val hour = prefs.getRetentionTimeHour()
+        val minute = prefs.getRetentionTimeMinute()
         val request = PeriodicWorkRequestBuilder<RetentionSweepWorker>(PERIOD_HOURS, TimeUnit.HOURS)
-            .setInitialDelay(nextDailyDelayMillis(SWEEP_HOUR, SWEEP_MINUTE), TimeUnit.MILLISECONDS)
+            .setInitialDelay(nextDailyDelayMillis(hour, minute), TimeUnit.MILLISECONDS)
             .build()
 
         workManager.enqueueUniquePeriodicWork(WORK_NAME, ExistingPeriodicWorkPolicy.UPDATE, request)
         AppLogger.i(
             TAG,
-            "Retention sweep scheduled (localDays=${prefs.getRetentionLocalDays()} driveDays=${prefs.getRetentionDriveDays()})."
+            "Retention sweep scheduled at $hour:$minute local (localDays=${prefs.getRetentionLocalDays()} driveDays=${prefs.getRetentionDriveDays()})."
         )
     }
 

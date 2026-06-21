@@ -81,6 +81,11 @@ class AppPreferences(context: Context) {
         const val RETENTION_LINKED = true
         const val RETENTION_LOCAL_DAYS = 0
         const val RETENTION_DRIVE_DAYS = 0
+        // Daily sweep time, in the device's LOCAL time zone (so e.g. "00:00" means local midnight
+        // wherever the user is). The schedule is re-anchored to local time on app start and on a
+        // time-zone change.
+        const val RETENTION_TIME_HOUR = 3      // 0-23
+        const val RETENTION_TIME_MINUTE = 30   // 0-59
 
         // --- ADB (embedded wireless-debugging transport) ---
         // Whether the user has completed the one-time ADB pairing. Persisted so onboarding is
@@ -139,6 +144,8 @@ class AppPreferences(context: Context) {
         RETENTION_LINKED("retention_linked"),
         RETENTION_LOCAL_DAYS("retention_local_days"),
         RETENTION_DRIVE_DAYS("retention_drive_days"),
+        RETENTION_TIME_HOUR("retention_time_hour"),
+        RETENTION_TIME_MINUTE("retention_time_minute"),
 
         // --- ADB ---
         ADB_PAIRED("adb_paired"),
@@ -357,6 +364,18 @@ class AppPreferences(context: Context) {
 
     /** Sets the Drive retention in days (0 = keep forever). */
     fun setRetentionDriveDays(days: Int) = setInt(Key.RETENTION_DRIVE_DAYS, days)
+
+    /** Hour (0-23, local time) the daily retention sweep runs. */
+    fun getRetentionTimeHour() = getInt(Key.RETENTION_TIME_HOUR, DefaultsValue.RETENTION_TIME_HOUR)
+
+    /** Sets the retention sweep hour (0-23, local time). */
+    fun setRetentionTimeHour(hour: Int) = setInt(Key.RETENTION_TIME_HOUR, hour)
+
+    /** Minute (0-59) the daily retention sweep runs. */
+    fun getRetentionTimeMinute() = getInt(Key.RETENTION_TIME_MINUTE, DefaultsValue.RETENTION_TIME_MINUTE)
+
+    /** Sets the retention sweep minute (0-59). */
+    fun setRetentionTimeMinute(minute: Int) = setInt(Key.RETENTION_TIME_MINUTE, minute)
 
     /** Checks if vibration is enabled for notifications/actions. */
     fun isVibrationEnabled() = getBoolean(Key.VIBRATION_ENABLED, DefaultsValue.VIBRATION_ENABLED)

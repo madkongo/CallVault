@@ -646,6 +646,38 @@ private fun RetentionSection(
             }
         }
 
+        // Sweep time — only relevant once retention is enabled. Two dropdowns (Hour/Minute) in the
+        // device's LOCAL time zone, mirroring the sync-schedule picker.
+        if (localDays > 0 || driveDays > 0) {
+            SettingsDivider()
+            val hour = remember(updateTrigger) { preferences.getRetentionTimeHour() }
+            val minute = remember(updateTrigger) { preferences.getRetentionTimeMinute() }
+            val hourOptions = (0..23).map { OptionItem(it.toString(), it.toString().padStart(2, '0')) }
+            val minuteOptions = listOf(0, 15, 30, 45).map { OptionItem(it.toString(), it.toString().padStart(2, '0')) }
+            Text(
+                text = stringResource(R.string.retention_time_label),
+                style = MaterialTheme.typography.labelMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                modifier = Modifier.padding(start = 16.dp, top = 8.dp)
+            )
+            DropdownRow {
+                M3DropdownField(
+                    label = stringResource(R.string.wizard_schedule_hour_label),
+                    selected = hourOptions.find { it.key == hour.toString() } ?: hourOptions.first(),
+                    options = hourOptions,
+                    onOptionSelected = { actions.setRetentionTimeHour(it.key.toIntOrNull() ?: 0) }
+                )
+            }
+            DropdownRow {
+                M3DropdownField(
+                    label = stringResource(R.string.wizard_schedule_minute_label),
+                    selected = minuteOptions.find { it.key == minute.toString() } ?: minuteOptions.first(),
+                    options = minuteOptions,
+                    onOptionSelected = { actions.setRetentionTimeMinute(it.key.toIntOrNull() ?: 0) }
+                )
+            }
+        }
+
         Text(
             text = stringResource(R.string.retention_description),
             style = MaterialTheme.typography.bodySmall,
@@ -1390,6 +1422,8 @@ private fun SettingsScreenPreview() {
             override fun setRetentionLinked(linked: Boolean) {}
             override fun setRetentionLocalDays(days: Int) {}
             override fun setRetentionDriveDays(days: Int) {}
+            override fun setRetentionTimeHour(hour: Int) {}
+            override fun setRetentionTimeMinute(minute: Int) {}
         }
 
         SettingsContent(

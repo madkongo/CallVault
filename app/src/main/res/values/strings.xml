@@ -115,7 +115,8 @@
     <string name="retention_period_label">Auto-delete recordings</string>
     <string name="retention_local_label">Device recordings</string>
     <string name="retention_drive_label">Drive recordings</string>
-    <string name="retention_description">Recordings older than the selected period are permanently deleted. Checked once a day.</string>
+    <string name="retention_description">Recordings older than the selected period are permanently deleted. Checked once a day at the time below.</string>
+    <string name="retention_time_label">Run at (your local time)</string>
     <string name="retention_confirm_title">Enable auto-delete?</string>
     <string name="retention_confirm_message">Recordings older than the selected period will be permanently deleted from your device and/or Google Drive. This can\'t be undone.</string>
     <string name="retention_confirm_enable">Enable</string>

@@ -78,6 +78,8 @@ interface SettingsActions {
     fun setRetentionLinked(linked: Boolean)
     fun setRetentionLocalDays(days: Int)
     fun setRetentionDriveDays(days: Int)
+    fun setRetentionTimeHour(hour: Int)
+    fun setRetentionTimeMinute(minute: Int)
 }
 
 /**
@@ -309,6 +311,20 @@ class SettingsViewModel(application: Application) : AndroidViewModel(application
     /** Saves the Drive retention (days; 0 = keep forever) and reconciles the periodic sweep. */
     override fun setRetentionDriveDays(days: Int) {
         preferences.setRetentionDriveDays(days)
+        RetentionScheduler.apply(appContext)
+        refresh()
+    }
+
+    /** Saves the retention sweep hour (0-23, local) and re-anchors the periodic sweep. */
+    override fun setRetentionTimeHour(hour: Int) {
+        preferences.setRetentionTimeHour(hour)
+        RetentionScheduler.apply(appContext)
+        refresh()
+    }
+
+    /** Saves the retention sweep minute (0-59) and re-anchors the periodic sweep. */
+    override fun setRetentionTimeMinute(minute: Int) {
+        preferences.setRetentionTimeMinute(minute)
         RetentionScheduler.apply(appContext)
         refresh()
     }

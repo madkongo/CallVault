@@ -104,6 +104,17 @@
             </intent-filter>
         </receiver>
 
+        <!-- Re-anchors the daily retention sweep to local time on a time-zone/clock change (travel). -->
+        <receiver
+            android:name=".services.boot.RetentionTimezoneReceiver"
+            android:enabled="true"
+            android:exported="false">
+            <intent-filter>
+                <action android:name="android.intent.action.TIMEZONE_CHANGED" />
+                <action android:name="android.intent.action.TIME_SET" />
+            </intent-filter>
+        </receiver>
+
         <!-- Boot receiver: re-enables Wireless debugging and reconnects ADB after reboot -->
         <receiver
             android:name=".services.boot.BootReceiver"
