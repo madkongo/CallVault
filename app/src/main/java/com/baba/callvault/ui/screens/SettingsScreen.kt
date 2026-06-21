@@ -215,7 +215,7 @@ fun SettingsContent(
     // Accordion: at most one section open at a time; Recording & storage is open on entry. State is
     // hoisted here (above the LazyColumn) so it is shared across all sections. Tapping the open section
     // closes it (null = none open); tapping any other section opens it and closes the previous one.
-    var openSection by rememberSaveable { mutableStateOf<String?>(SECTION_RECORDING_STORAGE) }
+    var openSection by rememberSaveable { mutableStateOf<String?>(SECTION_RECORDING) }
     val onToggleSection: (String) -> Unit = { id -> openSection = if (openSection == id) null else id }
 
     CvScaffold(
@@ -237,16 +237,25 @@ fun SettingsContent(
             verticalArrangement = Arrangement.spacedBy(20.dp)
         ) {
             item {
-                RecordingAndStorageSection(
+                RecordingSection(
                     preferences = preferences,
                     updateTrigger = updateTrigger,
                     actions = actions,
-                    expanded = openSection == SECTION_RECORDING_STORAGE,
-                    onToggle = { onToggleSection(SECTION_RECORDING_STORAGE) },
-                    onSelectFolder = onSelectFolder,
-                    onSelectDriveFolder = onSelectDriveFolder,
+                    expanded = openSection == SECTION_RECORDING,
+                    onToggle = { onToggleSection(SECTION_RECORDING) },
                     onOpenContactsIncoming = onOpenContactsIncoming,
                     onOpenContactsOutgoing = onOpenContactsOutgoing
+                )
+            }
+            item {
+                StorageSection(
+                    preferences = preferences,
+                    updateTrigger = updateTrigger,
+                    actions = actions,
+                    expanded = openSection == SECTION_STORAGE,
+                    onToggle = { onToggleSection(SECTION_STORAGE) },
+                    onSelectFolder = onSelectFolder,
+                    onSelectDriveFolder = onSelectDriveFolder
                 )
             }
             item {
@@ -342,8 +351,9 @@ fun SettingsContent(
 private const val DEVELOPER_UNLOCK_TAPS = 7
 
 // Settings accordion: stable keys identifying each section. At most one section is open at a time;
-// [SECTION_RECORDING_STORAGE] is the one open when Settings is first entered.
-private const val SECTION_RECORDING_STORAGE = "recording_storage"
+// [SECTION_RECORDING] is the one open when Settings is first entered.
+private const val SECTION_RECORDING = "recording"
+private const val SECTION_STORAGE = "storage"
 private const val SECTION_AUDIO = "audio"
 private const val SECTION_VISUAL = "visual"
 private const val SECTION_DEBUG = "debug"
@@ -351,39 +361,29 @@ private const val SECTION_ABOUT = "about"
 
 // ── Settings sections ──────────────────────────────────────────────────────────────────────
 
-/** Shows the storage target, device + Drive folders, filename template, auto-record toggles, and
- * contact-filter options — the merged Recording &amp; storage section.
+/** Recording behaviour: filename template, plus auto-record incoming/outgoing with their
+ * per-direction ignore filters. (Where files are saved lives in [StorageSection].)
  *
- * @param preferences              The [AppPreferences] instance to read data from.
+ * @param preferences            The [AppPreferences] instance to read data from.
  * @param updateTrigger          Trigger value to force recomposition when settings change.
  * @param actions                Implementation of [SettingsActions] to handle user interaction.
- * @param onSelectFolder         Called when the user taps the recording-folder row; opens the SAF picker
- *                               whose launcher lives in AppNavigation.
- * @param onSelectDriveFolder    Called when the user taps the Drive-folder row; opens the SAF picker.
- * @param onOpenContactsIncoming Called when the user wants to pick incoming contacts to ignore;
- *                               opens the [ContactSelectionDialog] via [ContactPickerViewModel].
- * @param onOpenContactsOutgoing Called when the user wants to pick outgoing contacts to ignore;
- *                               opens the [ContactSelectionDialog] via [ContactPickerViewModel].
+ * @param expanded               Whether this accordion section is open.
+ * @param onToggle               Invoked when the section header is tapped.
+ * @param onOpenContactsIncoming Called when the user wants to pick incoming contacts to ignore.
+ * @param onOpenContactsOutgoing Called when the user wants to pick outgoing contacts to ignore.
  */
 @Composable
-private fun RecordingAndStorageSection(
+private fun RecordingSection(
     preferences: AppPreferences,
     updateTrigger: Int,
     actions: SettingsActions,
     expanded: Boolean,
     onToggle: () -> Unit,
-    onSelectFolder: () -> Unit,
-    onSelectDriveFolder: () -> Unit,
     onOpenContactsIncoming: () -> Unit,
     onOpenContactsOutgoing: () -> Unit
 ) {
-    val context = LocalContext.current
-
     // Evaluate these here so they are fetched on every recomposition.
-    val recordingFolderLabel = remember(updateTrigger) { SafHelper.getFolderDisplayNameOrNull(context, preferences.getRecordingFolderUri()) }
     val fileNameFormat = remember(updateTrigger) { preferences.getFileNameTemplate() }
-    val storageTarget = remember(updateTrigger) { preferences.getStorageTarget() }
-    val driveFolderLabel = remember(updateTrigger) { SafHelper.getFolderDisplayNameOrNull(context, preferences.getDriveFolderUri()) }
     val autoRecordIncoming = remember(updateTrigger) { preferences.isAutoRecordIncomingEnabled() }
     val autoRecordOutgoing = remember(updateTrigger) { preferences.isAutoRecordOutgoingEnabled() }
     val ignoreAnonymousIncoming = remember(updateTrigger) { preferences.isIgnoreAnonymousIncomingEnabled() }
@@ -396,42 +396,7 @@ private fun RecordingAndStorageSection(
 
     var showFileNameFormatDialog by remember { mutableStateOf(false) }
 
-    val storageTargetOptions = StorageTarget.entries.map { target ->
-        val labelRes = when (target) {
-            StorageTarget.LOCAL -> R.string.storage_target_local
-            StorageTarget.DRIVE -> R.string.storage_target_drive
-            StorageTarget.BOTH  -> R.string.storage_target_both
-        }
-        OptionItem(target.key, stringResource(labelRes))
-    }
-
-    SettingsSection(title = stringResource(R.string.settings_section_recording_storage), expanded = expanded, onToggle = onToggle) {
-        DropdownRow {
-            M3DropdownField(
-                label    = stringResource(R.string.settings_storage_target_label),
-                selected = storageTargetOptions.find { it.key == storageTarget.key } ?: storageTargetOptions.first(),
-                options  = storageTargetOptions,
-                onOptionSelected = { actions.setStorageTarget(StorageTarget.fromKey(it.key)) }
-            )
-        }
-
-        SettingsDivider()
-
-        NavigationRow(
-            icon = Icons.Filled.Folder,
-            label = stringResource(R.string.settings_recording_folder_label),
-            value = recordingFolderLabel ?: stringResource(R.string.settings_tap_to_select_folder),
-            onClick = onSelectFolder
-        )
-
-        NavigationRow(
-            icon = Icons.Filled.Cloud,
-            label = stringResource(R.string.settings_drive_folder_label),
-            value = driveFolderLabel ?: stringResource(R.string.general_not_set),
-            supporting = stringResource(R.string.settings_drive_folder_desc),
-            onClick = onSelectDriveFolder
-        )
-
+    SettingsSection(title = stringResource(R.string.settings_section_recording), expanded = expanded, onToggle = onToggle) {
         NavigationRow(
             icon = Icons.Filled.DriveFileRenameOutline,
             label = stringResource(R.string.settings_file_name_template),
@@ -516,6 +481,71 @@ private fun RecordingAndStorageSection(
                 showFileNameFormatDialog = false
             },
             onDismiss = { showFileNameFormatDialog = false }
+        )
+    }
+}
+
+/** Storage destinations: where recordings are saved — the storage target (device / Drive / both),
+ * the on-device folder, and the Drive folder. (Recording behaviour lives in [RecordingSection].)
+ *
+ * @param preferences         The [AppPreferences] instance to read data from.
+ * @param updateTrigger       Trigger value to force recomposition when settings change.
+ * @param actions             Implementation of [SettingsActions] to handle user interaction.
+ * @param expanded            Whether this accordion section is open.
+ * @param onToggle            Invoked when the section header is tapped.
+ * @param onSelectFolder      Called when the user taps the recording-folder row; opens the SAF picker.
+ * @param onSelectDriveFolder Called when the user taps the Drive-folder row; opens the SAF picker.
+ */
+@Composable
+private fun StorageSection(
+    preferences: AppPreferences,
+    updateTrigger: Int,
+    actions: SettingsActions,
+    expanded: Boolean,
+    onToggle: () -> Unit,
+    onSelectFolder: () -> Unit,
+    onSelectDriveFolder: () -> Unit
+) {
+    val context = LocalContext.current
+
+    val recordingFolderLabel = remember(updateTrigger) { SafHelper.getFolderDisplayNameOrNull(context, preferences.getRecordingFolderUri()) }
+    val storageTarget = remember(updateTrigger) { preferences.getStorageTarget() }
+    val driveFolderLabel = remember(updateTrigger) { SafHelper.getFolderDisplayNameOrNull(context, preferences.getDriveFolderUri()) }
+
+    val storageTargetOptions = StorageTarget.entries.map { target ->
+        val labelRes = when (target) {
+            StorageTarget.LOCAL -> R.string.storage_target_local
+            StorageTarget.DRIVE -> R.string.storage_target_drive
+            StorageTarget.BOTH  -> R.string.storage_target_both
+        }
+        OptionItem(target.key, stringResource(labelRes))
+    }
+
+    SettingsSection(title = stringResource(R.string.settings_section_storage), expanded = expanded, onToggle = onToggle) {
+        DropdownRow {
+            M3DropdownField(
+                label    = stringResource(R.string.settings_storage_target_label),
+                selected = storageTargetOptions.find { it.key == storageTarget.key } ?: storageTargetOptions.first(),
+                options  = storageTargetOptions,
+                onOptionSelected = { actions.setStorageTarget(StorageTarget.fromKey(it.key)) }
+            )
+        }
+
+        SettingsDivider()
+
+        NavigationRow(
+            icon = Icons.Filled.Folder,
+            label = stringResource(R.string.settings_recording_folder_label),
+            value = recordingFolderLabel ?: stringResource(R.string.settings_tap_to_select_folder),
+            onClick = onSelectFolder
+        )
+
+        NavigationRow(
+            icon = Icons.Filled.Cloud,
+            label = stringResource(R.string.settings_drive_folder_label),
+            value = driveFolderLabel ?: stringResource(R.string.general_not_set),
+            supporting = stringResource(R.string.settings_drive_folder_desc),
+            onClick = onSelectDriveFolder
         )
     }
 }
