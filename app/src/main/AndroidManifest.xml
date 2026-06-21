@@ -137,6 +137,17 @@
             </intent-filter>
         </receiver>
 
+        <!-- DEBUG-ONLY throwaway: run the retention sweep on demand (instead of the daily schedule)
+             to validate auto-delete. Remove before release. -->
+        <receiver
+            android:name=".debug.RetentionTestReceiver"
+            android:enabled="true"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="com.baba.callvault.debug.RUN_RETENTION" />
+            </intent-filter>
+        </receiver>
+
         <!-- Foreground service used by BootReceiver to reconnect ADB off the main thread -->
         <service
             android:name=".services.boot.AdbConnectionService"
