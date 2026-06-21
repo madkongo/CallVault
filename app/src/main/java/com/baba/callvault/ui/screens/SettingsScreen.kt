@@ -53,6 +53,7 @@ import com.baba.callvault.system.PersistentFolderPickerContract
 import com.baba.callvault.system.copyToClipboard
 import com.baba.callvault.system.openOriginalProjectRepo
 import com.baba.callvault.data.AppPreferences
+import com.baba.callvault.data.RetentionPeriod
 import com.baba.callvault.data.StorageTarget
 import com.baba.callvault.integrations.scrcpy.ScrcpyAudioCodec
 import com.baba.callvault.integrations.scrcpy.ScrcpyAudioSource
@@ -153,8 +154,11 @@ fun SettingsScreen(
         actions = viewModel,
         contactPickerState = contactPickerState,
         onBack = onBack,
-        onSelectFolder = { folderPickerLauncher.launch(null) },
-        onSelectDriveFolder = { driveFolderPickerLauncher.launch(null) },
+        // Seed each picker with its OWN current folder so it opens there, instead of letting
+        // Android's DocumentsUI reopen at the last-browsed location (which, after setting Drive,
+        // made re-picking the local folder open at the Drive path).
+        onSelectFolder = { folderPickerLauncher.launch(viewModel.preferences.getRecordingFolderUri()) },
+        onSelectDriveFolder = { driveFolderPickerLauncher.launch(viewModel.preferences.getDriveFolderUri()) },
         onOpenContactsIncoming = { contactPickerViewModel.openContactPicker(ContactPickerType.INCOMING) },
         onOpenContactsOutgoing = { contactPickerViewModel.openContactPicker(ContactPickerType.OUTGOING) },
         onConfirmContacts = { numbers ->
@@ -209,6 +213,12 @@ fun SettingsContent(
     // Read in the composable scope (not the LazyListScope) so the Debug item recomposes on unlock.
     val isDeveloperModeUnlocked = remember(updateTrigger) { preferences.isDeveloperModeUnlocked() }
 
+    // Accordion: at most one section open at a time; Recording & storage is open on entry. State is
+    // hoisted here (above the LazyColumn) so it is shared across all sections. Tapping the open section
+    // closes it (null = none open); tapping any other section opens it and closes the previous one.
+    var openSection by rememberSaveable { mutableStateOf<String?>(SECTION_RECORDING) }
+    val onToggleSection: (String) -> Unit = { id -> openSection = if (openSection == id) null else id }
+
     CvScaffold(
         modifier = modifier.fillMaxSize(),
         title = stringResource(R.string.general_settings),
@@ -228,28 +238,68 @@ fun SettingsContent(
             verticalArrangement = Arrangement.spacedBy(20.dp)
         ) {
             item {
-                RecordingAndStorageSection(
+                RecordingSection(
                     preferences = preferences,
                     updateTrigger = updateTrigger,
                     actions = actions,
-                    onSelectFolder = onSelectFolder,
-                    onSelectDriveFolder = onSelectDriveFolder,
+                    expanded = openSection == SECTION_RECORDING,
+                    onToggle = { onToggleSection(SECTION_RECORDING) },
                     onOpenContactsIncoming = onOpenContactsIncoming,
                     onOpenContactsOutgoing = onOpenContactsOutgoing
                 )
             }
-            item { AudioSection(preferences, updateTrigger, actions) }
-            item { VisualSection(preferences, updateTrigger, actions) }
+            item {
+                StorageSection(
+                    preferences = preferences,
+                    updateTrigger = updateTrigger,
+                    actions = actions,
+                    expanded = openSection == SECTION_STORAGE,
+                    onToggle = { onToggleSection(SECTION_STORAGE) },
+                    onSelectFolder = onSelectFolder,
+                    onSelectDriveFolder = onSelectDriveFolder
+                )
+            }
+            item {
+                RetentionSection(
+                    preferences = preferences,
+                    updateTrigger = updateTrigger,
+                    actions = actions,
+                    expanded = openSection == SECTION_RETENTION,
+                    onToggle = { onToggleSection(SECTION_RETENTION) }
+                )
+            }
+            item {
+                AudioSection(
+                    preferences, updateTrigger, actions,
+                    expanded = openSection == SECTION_AUDIO,
+                    onToggle = { onToggleSection(SECTION_AUDIO) }
+                )
+            }
+            item {
+                VisualSection(
+                    preferences, updateTrigger, actions,
+                    expanded = openSection == SECTION_VISUAL,
+                    onToggle = { onToggleSection(SECTION_VISUAL) }
+                )
+            }
             // Debug section is hidden until developer options are unlocked (7-tap on the version row).
             if (isDeveloperModeUnlocked) {
-                item { DebugSection(preferences, updateTrigger, actions, onExportLogs) }
+                item {
+                    DebugSection(
+                        preferences, updateTrigger, actions, onExportLogs,
+                        expanded = openSection == SECTION_DEBUG,
+                        onToggle = { onToggleSection(SECTION_DEBUG) }
+                    )
+                }
             }
             // About moved to the bottom; the fork attribution stays visible (GPLv3 §7 requirement).
             item {
                 AboutSection(
                     versionString = actions.getAppVersion(),
                     onShowLicenses = { showLicensesDialog = true },
-                    onUnlockDeveloperMode = { actions.unlockDeveloperMode() }
+                    onUnlockDeveloperMode = { actions.unlockDeveloperMode() },
+                    expanded = openSection == SECTION_ABOUT,
+                    onToggle = { onToggleSection(SECTION_ABOUT) }
                 )
             }
         }
@@ -310,39 +360,41 @@ fun SettingsContent(
 /** Number of consecutive taps on the version row required to unlock developer options. */
 private const val DEVELOPER_UNLOCK_TAPS = 7
 
+// Settings accordion: stable keys identifying each section. At most one section is open at a time;
+// [SECTION_RECORDING] is the one open when Settings is first entered.
+private const val SECTION_RECORDING = "recording"
+private const val SECTION_STORAGE = "storage"
+private const val SECTION_RETENTION = "retention"
+private const val SECTION_AUDIO = "audio"
+private const val SECTION_VISUAL = "visual"
+private const val SECTION_DEBUG = "debug"
+private const val SECTION_ABOUT = "about"
+
 // ── Settings sections ──────────────────────────────────────────────────────────────────────
 
-/** Shows the storage target, device + Drive folders, filename template, auto-record toggles, and
- * contact-filter options — the merged Recording &amp; storage section.
+/** Recording behaviour: filename template, plus auto-record incoming/outgoing with their
+ * per-direction ignore filters. (Where files are saved lives in [StorageSection].)
  *
- * @param preferences              The [AppPreferences] instance to read data from.
+ * @param preferences            The [AppPreferences] instance to read data from.
  * @param updateTrigger          Trigger value to force recomposition when settings change.
  * @param actions                Implementation of [SettingsActions] to handle user interaction.
- * @param onSelectFolder         Called when the user taps the recording-folder row; opens the SAF picker
- *                               whose launcher lives in AppNavigation.
- * @param onSelectDriveFolder    Called when the user taps the Drive-folder row; opens the SAF picker.
- * @param onOpenContactsIncoming Called when the user wants to pick incoming contacts to ignore;
- *                               opens the [ContactSelectionDialog] via [ContactPickerViewModel].
- * @param onOpenContactsOutgoing Called when the user wants to pick outgoing contacts to ignore;
- *                               opens the [ContactSelectionDialog] via [ContactPickerViewModel].
+ * @param expanded               Whether this accordion section is open.
+ * @param onToggle               Invoked when the section header is tapped.
+ * @param onOpenContactsIncoming Called when the user wants to pick incoming contacts to ignore.
+ * @param onOpenContactsOutgoing Called when the user wants to pick outgoing contacts to ignore.
  */
 @Composable
-private fun RecordingAndStorageSection(
+private fun RecordingSection(
     preferences: AppPreferences,
     updateTrigger: Int,
     actions: SettingsActions,
-    onSelectFolder: () -> Unit,
-    onSelectDriveFolder: () -> Unit,
+    expanded: Boolean,
+    onToggle: () -> Unit,
     onOpenContactsIncoming: () -> Unit,
     onOpenContactsOutgoing: () -> Unit
 ) {
-    val context = LocalContext.current
-
     // Evaluate these here so they are fetched on every recomposition.
-    val recordingFolderLabel = remember(updateTrigger) { SafHelper.getFolderDisplayNameOrNull(context, preferences.getRecordingFolderUri()) }
     val fileNameFormat = remember(updateTrigger) { preferences.getFileNameTemplate() }
-    val storageTarget = remember(updateTrigger) { preferences.getStorageTarget() }
-    val driveFolderLabel = remember(updateTrigger) { SafHelper.getFolderDisplayNameOrNull(context, preferences.getDriveFolderUri()) }
     val autoRecordIncoming = remember(updateTrigger) { preferences.isAutoRecordIncomingEnabled() }
     val autoRecordOutgoing = remember(updateTrigger) { preferences.isAutoRecordOutgoingEnabled() }
     val ignoreAnonymousIncoming = remember(updateTrigger) { preferences.isIgnoreAnonymousIncomingEnabled() }
@@ -355,42 +407,7 @@ private fun RecordingAndStorageSection(
 
     var showFileNameFormatDialog by remember { mutableStateOf(false) }
 
-    val storageTargetOptions = StorageTarget.entries.map { target ->
-        val labelRes = when (target) {
-            StorageTarget.LOCAL -> R.string.storage_target_local
-            StorageTarget.DRIVE -> R.string.storage_target_drive
-            StorageTarget.BOTH  -> R.string.storage_target_both
-        }
-        OptionItem(target.key, stringResource(labelRes))
-    }
-
-    SettingsSection(title = stringResource(R.string.settings_section_recording_storage)) {
-        DropdownRow {
-            M3DropdownField(
-                label    = stringResource(R.string.settings_storage_target_label),
-                selected = storageTargetOptions.find { it.key == storageTarget.key } ?: storageTargetOptions.first(),
-                options  = storageTargetOptions,
-                onOptionSelected = { actions.setStorageTarget(StorageTarget.fromKey(it.key)) }
-            )
-        }
-
-        SettingsDivider()
-
-        NavigationRow(
-            icon = Icons.Filled.Folder,
-            label = stringResource(R.string.settings_recording_folder_label),
-            value = recordingFolderLabel ?: stringResource(R.string.settings_tap_to_select_folder),
-            onClick = onSelectFolder
-        )
-
-        NavigationRow(
-            icon = Icons.Filled.Cloud,
-            label = stringResource(R.string.settings_drive_folder_label),
-            value = driveFolderLabel ?: stringResource(R.string.general_not_set),
-            supporting = stringResource(R.string.settings_drive_folder_desc),
-            onClick = onSelectDriveFolder
-        )
-
+    SettingsSection(title = stringResource(R.string.settings_section_recording), expanded = expanded, onToggle = onToggle) {
         NavigationRow(
             icon = Icons.Filled.DriveFileRenameOutline,
             label = stringResource(R.string.settings_file_name_template),
@@ -479,6 +496,215 @@ private fun RecordingAndStorageSection(
     }
 }
 
+/** Storage destinations: where recordings are saved — the storage target (device / Drive / both),
+ * the on-device folder, and the Drive folder. (Recording behaviour lives in [RecordingSection].)
+ *
+ * @param preferences         The [AppPreferences] instance to read data from.
+ * @param updateTrigger       Trigger value to force recomposition when settings change.
+ * @param actions             Implementation of [SettingsActions] to handle user interaction.
+ * @param expanded            Whether this accordion section is open.
+ * @param onToggle            Invoked when the section header is tapped.
+ * @param onSelectFolder      Called when the user taps the recording-folder row; opens the SAF picker.
+ * @param onSelectDriveFolder Called when the user taps the Drive-folder row; opens the SAF picker.
+ */
+@Composable
+private fun StorageSection(
+    preferences: AppPreferences,
+    updateTrigger: Int,
+    actions: SettingsActions,
+    expanded: Boolean,
+    onToggle: () -> Unit,
+    onSelectFolder: () -> Unit,
+    onSelectDriveFolder: () -> Unit
+) {
+    val context = LocalContext.current
+
+    val recordingFolderLabel = remember(updateTrigger) { SafHelper.getFolderDisplayNameOrNull(context, preferences.getRecordingFolderUri()) }
+    val storageTarget = remember(updateTrigger) { preferences.getStorageTarget() }
+    val driveFolderLabel = remember(updateTrigger) { SafHelper.getFolderDisplayNameOrNull(context, preferences.getDriveFolderUri()) }
+
+    val storageTargetOptions = StorageTarget.entries.map { target ->
+        val labelRes = when (target) {
+            StorageTarget.LOCAL -> R.string.storage_target_local
+            StorageTarget.DRIVE -> R.string.storage_target_drive
+            StorageTarget.BOTH  -> R.string.storage_target_both
+        }
+        OptionItem(target.key, stringResource(labelRes))
+    }
+
+    SettingsSection(title = stringResource(R.string.settings_section_storage), expanded = expanded, onToggle = onToggle) {
+        DropdownRow {
+            M3DropdownField(
+                label    = stringResource(R.string.settings_storage_target_label),
+                selected = storageTargetOptions.find { it.key == storageTarget.key } ?: storageTargetOptions.first(),
+                options  = storageTargetOptions,
+                onOptionSelected = { actions.setStorageTarget(StorageTarget.fromKey(it.key)) }
+            )
+        }
+
+        SettingsDivider()
+
+        NavigationRow(
+            icon = Icons.Filled.Folder,
+            label = stringResource(R.string.settings_recording_folder_label),
+            value = recordingFolderLabel ?: stringResource(R.string.settings_tap_to_select_folder),
+            onClick = onSelectFolder
+        )
+
+        NavigationRow(
+            icon = Icons.Filled.Cloud,
+            label = stringResource(R.string.settings_drive_folder_label),
+            value = driveFolderLabel ?: stringResource(R.string.general_not_set),
+            supporting = stringResource(R.string.settings_drive_folder_desc),
+            onClick = onSelectDriveFolder
+        )
+    }
+}
+
+/** Retention: auto-delete recordings older than a chosen period. One shared period for device & Drive,
+ * or a separate period for each. Destructive, so it defaults to "Keep forever" and a confirmation is
+ * shown the first time a non-forever period is chosen.
+ *
+ * @param preferences   The [AppPreferences] instance to read data from.
+ * @param updateTrigger Trigger value to force recomposition when settings change.
+ * @param actions       Implementation of [SettingsActions] to handle user interaction.
+ * @param expanded      Whether this accordion section is open.
+ * @param onToggle      Invoked when the section header is tapped.
+ */
+@Composable
+private fun RetentionSection(
+    preferences: AppPreferences,
+    updateTrigger: Int,
+    actions: SettingsActions,
+    expanded: Boolean,
+    onToggle: () -> Unit
+) {
+    val linked = remember(updateTrigger) { preferences.isRetentionLinked() }
+    val localDays = remember(updateTrigger) { preferences.getRetentionLocalDays() }
+    val driveDays = remember(updateTrigger) { preferences.getRetentionDriveDays() }
+
+    val options = RetentionPeriod.entries.map { OptionItem(it.days.toString(), stringResource(it.labelRes)) }
+    fun optionFor(days: Int) =
+        options.find { it.key == RetentionPeriod.fromDays(days).days.toString() } ?: options.first()
+
+    // Enabling retention from OFF is destructive, so stash the apply-action and confirm first.
+    var pendingConfirm by remember { mutableStateOf<(() -> Unit)?>(null) }
+    fun applyOrConfirm(wasOff: Boolean, newDays: Int, apply: () -> Unit) {
+        if (wasOff && newDays > 0) pendingConfirm = apply else apply()
+    }
+
+    SettingsSection(title = stringResource(R.string.settings_section_retention), expanded = expanded, onToggle = onToggle) {
+        SettingsToggleRow(
+            label = stringResource(R.string.retention_linked_label),
+            checked = linked,
+            onCheckedChange = { nowLinked ->
+                actions.setRetentionLinked(nowLinked)
+                // When linking, unify the Drive period to the device one so they match.
+                if (nowLinked) actions.setRetentionDriveDays(localDays)
+            }
+        )
+
+        SettingsDivider()
+
+        if (linked) {
+            DropdownRow {
+                M3DropdownField(
+                    label = stringResource(R.string.retention_period_label),
+                    selected = optionFor(localDays),
+                    options = options,
+                    onOptionSelected = { opt ->
+                        val days = opt.key.toIntOrNull() ?: 0
+                        applyOrConfirm(wasOff = localDays == 0 && driveDays == 0, newDays = days) {
+                            actions.setRetentionLocalDays(days)
+                            actions.setRetentionDriveDays(days)
+                        }
+                    }
+                )
+            }
+        } else {
+            DropdownRow {
+                M3DropdownField(
+                    label = stringResource(R.string.retention_local_label),
+                    selected = optionFor(localDays),
+                    options = options,
+                    onOptionSelected = { opt ->
+                        val days = opt.key.toIntOrNull() ?: 0
+                        applyOrConfirm(wasOff = localDays == 0, newDays = days) { actions.setRetentionLocalDays(days) }
+                    }
+                )
+            }
+            DropdownRow {
+                M3DropdownField(
+                    label = stringResource(R.string.retention_drive_label),
+                    selected = optionFor(driveDays),
+                    options = options,
+                    onOptionSelected = { opt ->
+                        val days = opt.key.toIntOrNull() ?: 0
+                        applyOrConfirm(wasOff = driveDays == 0, newDays = days) { actions.setRetentionDriveDays(days) }
+                    }
+                )
+            }
+        }
+
+        // Sweep time — only relevant once retention is enabled. Two dropdowns (Hour/Minute) in the
+        // device's LOCAL time zone, mirroring the sync-schedule picker.
+        if (localDays > 0 || driveDays > 0) {
+            SettingsDivider()
+            val hour = remember(updateTrigger) { preferences.getRetentionTimeHour() }
+            val minute = remember(updateTrigger) { preferences.getRetentionTimeMinute() }
+            val hourOptions = (0..23).map { OptionItem(it.toString(), it.toString().padStart(2, '0')) }
+            val minuteOptions = listOf(0, 15, 30, 45).map { OptionItem(it.toString(), it.toString().padStart(2, '0')) }
+            Text(
+                text = stringResource(R.string.retention_time_label),
+                style = MaterialTheme.typography.labelMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                modifier = Modifier.padding(start = 16.dp, top = 8.dp)
+            )
+            DropdownRow {
+                M3DropdownField(
+                    label = stringResource(R.string.wizard_schedule_hour_label),
+                    selected = hourOptions.find { it.key == hour.toString() } ?: hourOptions.first(),
+                    options = hourOptions,
+                    onOptionSelected = { actions.setRetentionTimeHour(it.key.toIntOrNull() ?: 0) }
+                )
+            }
+            DropdownRow {
+                M3DropdownField(
+                    label = stringResource(R.string.wizard_schedule_minute_label),
+                    selected = minuteOptions.find { it.key == minute.toString() } ?: minuteOptions.first(),
+                    options = minuteOptions,
+                    onOptionSelected = { actions.setRetentionTimeMinute(it.key.toIntOrNull() ?: 0) }
+                )
+            }
+        }
+
+        Text(
+            text = stringResource(R.string.retention_description),
+            style = MaterialTheme.typography.bodySmall,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+            modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp)
+        )
+    }
+
+    pendingConfirm?.let { confirm ->
+        AlertDialog(
+            onDismissRequest = { pendingConfirm = null },
+            title = { Text(stringResource(R.string.retention_confirm_title)) },
+            text = { Text(stringResource(R.string.retention_confirm_message)) },
+            confirmButton = {
+                TextButton(onClick = { confirm(); pendingConfirm = null }) {
+                    Text(stringResource(R.string.retention_confirm_enable))
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { pendingConfirm = null }) {
+                    Text(stringResource(R.string.general_cancel))
+                }
+            }
+        )
+    }
+}
+
 /** Shows the audio source, codec, and bit-rate dropdowns.
  *
  * The audio-source list is generated from [ScrcpyAudioSource.entries], filtered by
@@ -491,14 +717,14 @@ private fun RecordingAndStorageSection(
  * @param actions       Implementation of [SettingsActions] to handle user interaction.
  */
 @Composable
-private fun AudioSection(preferences: AppPreferences, updateTrigger: Int, actions: SettingsActions) {
+private fun AudioSection(preferences: AppPreferences, updateTrigger: Int, actions: SettingsActions, expanded: Boolean, onToggle: () -> Unit) {
 
     val isDebugEnabled = remember(updateTrigger) { preferences.isDebugEnabled() }
     val audioSource = remember(updateTrigger) { preferences.getAudioSource() }
     val audioCodec = remember(updateTrigger) { preferences.getAudioCodec() }
     val savedBitRate = remember(updateTrigger) { preferences.getAudioBitRate() }
 
-    SettingsSection(title = stringResource(R.string.settings_section_audio)) {
+    SettingsSection(title = stringResource(R.string.settings_section_audio), expanded = expanded, onToggle = onToggle) {
         val currentSdk = Build.VERSION.SDK_INT
 
         // Build the source list from the enum, hiding debug-only entries when debug is off.
@@ -572,7 +798,7 @@ private fun AudioSection(preferences: AppPreferences, updateTrigger: Int, action
  * @param actions       Implementation of [SettingsActions] to handle user interaction.
  */
 @Composable
-private fun VisualSection(preferences: AppPreferences, updateTrigger: Int, actions: SettingsActions) {
+private fun VisualSection(preferences: AppPreferences, updateTrigger: Int, actions: SettingsActions, expanded: Boolean, onToggle: () -> Unit) {
     val currentThemeMode = remember(updateTrigger) { preferences.getThemeMode() }
     val isDynamicColorEnabled = remember(updateTrigger) { preferences.isDynamicColorEnabled() }
     val isShowToastsEnabled = remember(updateTrigger) { preferences.isShowToastsEnabled() }
@@ -617,7 +843,7 @@ private fun VisualSection(preferences: AppPreferences, updateTrigger: Int, actio
         options.distinctBy { it.key }
     }
 
-    SettingsSection(title = stringResource(R.string.settings_section_visual)) {
+    SettingsSection(title = stringResource(R.string.settings_section_visual), expanded = expanded, onToggle = onToggle) {
         DropdownRow {
             M3DropdownField(
                 label = stringResource(R.string.settings_language),
@@ -679,12 +905,12 @@ private fun VisualSection(preferences: AppPreferences, updateTrigger: Int, actio
  * @param onExportLogs  Called to export logs via SAF when logging is enabled.
  */
 @Composable
-private fun DebugSection(preferences: AppPreferences, updateTrigger: Int, actions: SettingsActions, onExportLogs: () -> Unit) {
+private fun DebugSection(preferences: AppPreferences, updateTrigger: Int, actions: SettingsActions, onExportLogs: () -> Unit, expanded: Boolean, onToggle: () -> Unit) {
     val isDebugEnabled = remember(updateTrigger) { preferences.isDebugEnabled() }
     val debugCallerNumber = remember(updateTrigger) { preferences.getDebugCallerNumber() }
     val isLoggingEnabled = remember(updateTrigger) { preferences.isLoggingEnabled() }
 
-    SettingsSection(title = stringResource(R.string.settings_section_debug)) {
+    SettingsSection(title = stringResource(R.string.settings_section_debug), expanded = expanded, onToggle = onToggle) {
         SettingsToggleRow(
             icon            = Icons.Filled.BugReport,
             label           = stringResource(R.string.settings_debug_logging_enabled),
@@ -796,13 +1022,15 @@ private fun DebugSection(preferences: AppPreferences, updateTrigger: Int, action
 private fun AboutSection(
     versionString: String,
     onShowLicenses: () -> Unit,
-    onUnlockDeveloperMode: () -> Unit
+    onUnlockDeveloperMode: () -> Unit,
+    expanded: Boolean,
+    onToggle: () -> Unit
 ) {
     val context = LocalContext.current
     val serverVersion = ScrcpyConfig.SCRCPY_VERSION
     var versionTapCount by remember { mutableIntStateOf(0) }
 
-    SettingsSection(title = stringResource(R.string.settings_section_about)) {
+    SettingsSection(title = stringResource(R.string.settings_section_about), expanded = expanded, onToggle = onToggle) {
         // Hidden 7-tap developer unlock lives on the app-version row.
         NavigationRow(
             icon = Icons.Filled.Save,
@@ -853,16 +1081,22 @@ private fun AboutSection(
 // ── Internal helper composables ────────────────────────────────────────────────────────────
 
 /** A branded, collapsible section: a tappable [CvSectionHeader] (with a rotating chevron) above a
- * [CvCard] grouping its rows. Tapping the header toggles the body open/closed; the body animates in
- * and out. Each section is expanded by default so nothing is hidden on first render. The expanded
- * state survives configuration changes via [rememberSaveable].
+ * [CvCard] grouping its rows. Tapping the header invokes [onToggle]; the body animates in and out.
+ * The expand/collapse state is HOISTED to the parent so the Settings screen can run an accordion
+ * (at most one section open at a time); this composable is stateless about expansion.
  *
- * @param title   Section heading shown above the card; the whole header row toggles the section.
- * @param content The slot for child rows rendered inside the [CvCard] when expanded.
+ * @param title    Section heading shown above the card; the whole header row toggles the section.
+ * @param expanded Whether this section's body is currently shown.
+ * @param onToggle Invoked when the header is tapped (the parent decides the new open-section).
+ * @param content  The slot for child rows rendered inside the [CvCard] when expanded.
  */
 @Composable
-private fun SettingsSection(title: String, content: @Composable ColumnScope.() -> Unit) {
-    var expanded by rememberSaveable { mutableStateOf(true) }
+private fun SettingsSection(
+    title: String,
+    expanded: Boolean,
+    onToggle: () -> Unit,
+    content: @Composable ColumnScope.() -> Unit
+) {
     val chevronRotation by animateFloatAsState(
         targetValue = if (expanded) 180f else 0f,
         label = "settingsSectionChevron"
@@ -873,7 +1107,7 @@ private fun SettingsSection(title: String, content: @Composable ColumnScope.() -
             modifier = Modifier
                 .fillMaxWidth()
                 .clip(RoundedCornerShape(12.dp))
-                .clickable { expanded = !expanded },
+                .clickable { onToggle() },
             verticalAlignment = Alignment.CenterVertically
         ) {
             CvSectionHeader(text = title, modifier = Modifier.weight(1f))
@@ -1185,6 +1419,11 @@ private fun SettingsScreenPreview() {
             override fun setFileNameTemplate(template: String) {}
             override fun setStorageTarget(target: StorageTarget) {}
             override fun setDriveFolderUri(uri: android.net.Uri?) {}
+            override fun setRetentionLinked(linked: Boolean) {}
+            override fun setRetentionLocalDays(days: Int) {}
+            override fun setRetentionDriveDays(days: Int) {}
+            override fun setRetentionTimeHour(hour: Int) {}
+            override fun setRetentionTimeMinute(minute: Int) {}
         }
 
         SettingsContent(

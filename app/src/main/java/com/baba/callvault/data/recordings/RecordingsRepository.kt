@@ -11,8 +11,11 @@ package com.baba.callvault.data.recordings
 import android.content.Context
 import android.net.Uri
 import android.provider.ContactsContract
+import androidx.core.net.toUri
 import androidx.documentfile.provider.DocumentFile
 import com.baba.callvault.data.AppPreferences
+import com.baba.callvault.data.StorageTarget
+import com.baba.callvault.data.recordings.db.RecordingEntry
 import com.baba.callvault.system.permissions.PermissionChecks
 import com.baba.callvault.utils.AppLogger
 import kotlinx.coroutines.Dispatchers
@@ -107,72 +110,30 @@ object RecordingsRepository {
     }
 
     /**
-     * Lists all recordings across the device and Drive folders, merged and deduped by display name,
-     * sorted newest-first. Runs on [Dispatchers.IO]. Returns an empty list if no folder is configured
-     * or on any error.
+     * Lists all recordings, newest-first, from CallVault's own catalog ([RecordingCatalog]) — NOT a
+     * live folder listing. The catalog is the source of truth (written at record-finish and updated by
+     * the copy/sweep workers), so the Home list is instant, offline, and immune to a cloud provider's
+     * eventually-consistent folder cache: no Google Drive "phantom" recordings and no Drive sync-error
+     * toast, because we never enumerate or open the Drive folder here. On first run the catalog is
+     * seeded once from a folder scan ([scanFolders]) so recordings made before it existed still appear.
+     * Runs on [Dispatchers.IO]; returns an empty list on any error.
      *
-     * @param context App context used to resolve SAF document trees and read preferences.
-     * @return The merged, sorted list of recordings (possibly empty); never throws.
+     * @param context App context used to access the catalog and resolve contact names.
+     * @return The sorted list of recordings (possibly empty); never throws.
      */
     suspend fun listRecordings(context: Context): List<RecordingItem> = withContext(Dispatchers.IO) {
         runCatching {
-            val prefs = AppPreferences(context)
-            val deviceFolder = prefs.getRecordingFolderUri()
-            val driveFolder = prefs.getDriveFolderUri()
+            // One-time seed for pre-catalog recordings; no-op once any row exists.
+            RecordingCatalog.importIfEmpty(context) { scanFolders(context) }
 
-            // Enumerate each folder independently so we can record WHERE each name was found.
-            // Device items are preferred for playback (their single-document URI is kept), but the
-            // resulting source reflects every folder the name appeared in (LOCAL / DRIVE / BOTH).
-            val byName = LinkedHashMap<String, RecordingItem>()
-
-            // Device folder first so its uri wins for playback when a name exists in both. The
-            // device copy's uri/size are also captured in localUri/localSizeBytes so a BOTH item
-            // can later play each physical copy individually.
-            if (deviceFolder != null) {
-                for (item in enumerateFolder(context, deviceFolder)) {
-                    byName.putIfAbsent(
-                        item.displayName,
-                        item.copy(
-                            source = RecordingSource.LOCAL,
-                            localUri = item.uri,
-                            localSizeBytes = item.sizeBytes
-                        )
-                    )
-                }
-            }
-            if (driveFolder != null) {
-                for (item in enumerateFolder(context, driveFolder)) {
-                    val existing = byName[item.displayName]
-                    if (existing == null) {
-                        // Only on Drive → DRIVE, with Drive uri for playback.
-                        byName[item.displayName] = item.copy(
-                            source = RecordingSource.DRIVE,
-                            driveUri = item.uri,
-                            driveSizeBytes = item.sizeBytes
-                        )
-                    } else {
-                        // Already seen in the device folder → present in BOTH; keep device uri as
-                        // the primary, but record the Drive copy's uri/size too.
-                        byName[item.displayName] = existing.copy(
-                            source = RecordingSource.BOTH,
-                            driveUri = item.uri,
-                            driveSizeBytes = item.sizeBytes
-                        )
-                    }
-                }
-            }
-
-            val merged = byName.values.sortedWith(
-                compareByDescending<RecordingItem> { it.lastModified }
-                    .thenByDescending { it.displayName }
-            ).toList()
+            val items = RecordingCatalog.all(context).mapNotNull { toItem(it) }
 
             // Resolve contact names from the parsed numbers (only when READ_CONTACTS is granted),
             // caching by number within this call to avoid duplicate PhoneLookup queries.
-            if (!PermissionChecks.hasContactsPermission(context)) merged
+            if (!PermissionChecks.hasContactsPermission(context)) items
             else {
                 val nameCache = HashMap<String, String?>()
-                merged.map { item ->
+                items.map { item ->
                     val number = item.number
                     if (number.isNullOrBlank()) item
                     else {
@@ -185,6 +146,90 @@ object RecordingsRepository {
             AppLogger.w(TAG, "Failed to list recordings: ${e.message}")
             emptyList()
         }
+    }
+
+    /**
+     * Maps a catalog [RecordingEntry] to the UI [RecordingItem], deriving direction/date/number from
+     * the display name (the filename template encodes them). [RecordingSource] follows which copies are
+     * present; the primary playback uri prefers the local copy. Returns null for an empty row (no copy).
+     */
+    private fun toItem(entry: RecordingEntry): RecordingItem? {
+        val localUri = entry.localUri?.toUri()
+        val driveUri = entry.driveUri?.toUri()
+        val primary = localUri ?: driveUri ?: return null
+        val source = when {
+            localUri != null && driveUri != null -> RecordingSource.BOTH
+            driveUri != null -> RecordingSource.DRIVE
+            else -> RecordingSource.LOCAL
+        }
+        val parsed = parseName(entry.displayName)
+        return RecordingItem(
+            uri = primary,
+            displayName = entry.displayName,
+            sizeBytes = entry.localSizeBytes ?: entry.driveSizeBytes ?: 0L,
+            lastModified = entry.lastModified,
+            direction = parsed.direction,
+            displayDate = parsed.displayDate,
+            number = parsed.number,
+            source = source,
+            localUri = localUri,
+            driveUri = driveUri,
+            localSizeBytes = entry.localSizeBytes,
+            driveSizeBytes = entry.driveSizeBytes
+        )
+    }
+
+    /**
+     * Enumerates the configured SAF folders into catalog rows for the one-time [RecordingCatalog]
+     * seed. The device folder is CallVault's source of truth for LOCAL and BOTH (it always keeps the
+     * local copy), so in BOTH mode a Drive copy only ANNOTATES a name that also exists locally; a
+     * Drive-ONLY name in BOTH mode is a deleted/orphaned file (e.g. a stale Google Drive listing-cache
+     * "phantom") and is intentionally NOT seeded. In DRIVE mode the local copy is removed after sync,
+     * so Drive is the source of truth and is enumerated directly. No Drive document is ever opened.
+     */
+    private fun scanFolders(context: Context): List<RecordingEntry> {
+        val prefs = AppPreferences(context)
+        val target = prefs.getStorageTarget()
+        val deviceFolder = prefs.getRecordingFolderUri()
+        val driveFolder = prefs.getDriveFolderUri()
+        val byName = LinkedHashMap<String, RecordingEntry>()
+
+        if (target != StorageTarget.DRIVE && deviceFolder != null) {
+            for (item in enumerateFolder(context, deviceFolder)) {
+                byName.putIfAbsent(
+                    item.displayName,
+                    RecordingEntry(
+                        displayName = item.displayName,
+                        localUri = item.uri.toString(),
+                        localSizeBytes = item.sizeBytes.takeIf { it > 0L },
+                        lastModified = item.lastModified
+                    )
+                )
+            }
+        }
+        if (target == StorageTarget.DRIVE && driveFolder != null) {
+            for (item in enumerateFolder(context, driveFolder)) {
+                byName.putIfAbsent(
+                    item.displayName,
+                    RecordingEntry(
+                        displayName = item.displayName,
+                        driveUri = item.uri.toString(),
+                        driveSizeBytes = item.sizeBytes.takeIf { it > 0L },
+                        lastModified = item.lastModified
+                    )
+                )
+            }
+        }
+        if (target == StorageTarget.BOTH && driveFolder != null) {
+            for (item in enumerateFolder(context, driveFolder)) {
+                val existing = byName[item.displayName] ?: continue
+                byName[item.displayName] = existing.copy(
+                    driveUri = item.uri.toString(),
+                    driveSizeBytes = item.sizeBytes.takeIf { it > 0L }
+                )
+            }
+        }
+        return byName.values.toList()
     }
 
     /**
@@ -221,6 +266,8 @@ object RecordingsRepository {
             }
         }
 
+        // Drop the recording from the catalog (all copies are gone) so Home reflects the deletion.
+        RecordingCatalog.removeName(context, item.displayName)
         deletedAny
     }
 
@@ -233,12 +280,15 @@ object RecordingsRepository {
      * @return true if the file was deleted, false otherwise (missing, no permission, or error).
      */
     suspend fun deleteFile(context: Context, uri: Uri): Boolean = withContext(Dispatchers.IO) {
-        runCatching {
+        val deleted = runCatching {
             DocumentFile.fromSingleUri(context, uri)?.delete() == true
         }.getOrElse { e ->
             AppLogger.w(TAG, "Failed to delete file $uri: ${e.message}")
             false
         }
+        // Clear just this copy from the catalog (dropping the row if it was the last copy).
+        RecordingCatalog.removeCopyByUri(context, uri)
+        deleted
     }
 
     /**
@@ -261,14 +311,22 @@ object RecordingsRepository {
         }
     }.getOrNull()
 
-    /** Enumerates one SAF folder, filtering to audio files. Never throws. */
+    /**
+     * Enumerates one SAF folder, filtering to audio files. Never throws.
+     *
+     * Phantom defense lives in [listRecordings], not here: in BOTH mode a Drive-only name (the shape a
+     * stale Google Drive listing-cache "phantom" takes) is never surfaced because the device folder is
+     * authoritative. We deliberately do NOT open Drive documents to probe them — that makes the Google
+     * Drive app raise its own "synchronization issue" toast. The cheap metadata check below still drops
+     * obviously-dead/zero-byte entries.
+     */
     private fun enumerateFolder(context: Context, folderUri: Uri): List<RecordingItem> {
         val result = mutableListOf<RecordingItem>()
         runCatching {
             val tree = DocumentFile.fromTreeUri(context, folderUri)
             val files = tree?.listFiles() ?: emptyArray()
             for (doc in files) {
-                if (doc.isFile && isAudio(doc)) {
+                if (doc.isFile && isAudio(doc) && isUsable(doc)) {
                     result.add(toItem(doc))
                 }
             }
@@ -277,6 +335,15 @@ object RecordingsRepository {
         }
         return result
     }
+
+    /**
+     * True if [doc] still exists and is non-empty per its metadata — drops obviously-dead and
+     * zero-byte entries. Best-effort: treats a thrown query as not-usable. (Stale cloud-cache phantoms,
+     * whose metadata can still look valid, are handled structurally in [listRecordings].)
+     */
+    private fun isUsable(doc: DocumentFile): Boolean = runCatching {
+        doc.exists() && doc.canRead() && doc.length() > 0L
+    }.getOrDefault(false)
 
     /** True if the document looks like a CallVault audio file (by extension or an audio mime type). */
     private fun isAudio(doc: DocumentFile): Boolean {
