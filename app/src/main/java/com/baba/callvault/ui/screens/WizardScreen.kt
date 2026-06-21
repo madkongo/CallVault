@@ -218,8 +218,11 @@ fun WizardScreen(
                         driveFolderLabel = driveFolderLabel,
                         usesDrive = usesDrive,
                         onSelectStorageTarget = viewModel::setStorageTarget,
-                        onPickRecordingFolder = { recordingFolderPicker.launch(null) },
-                        onPickDriveFolder = { driveFolderPicker.launch(null) }
+                        // Seed each picker with its OWN current folder so it opens there, instead of
+                        // letting Android's DocumentsUI reopen at the last-browsed location (which, after
+                        // setting Drive, made re-picking the local folder open at the Drive path).
+                        onPickRecordingFolder = { recordingFolderPicker.launch(viewModel.preferences.getRecordingFolderUri()) },
+                        onPickDriveFolder = { driveFolderPicker.launch(viewModel.preferences.getDriveFolderUri()) }
                     )
                     WizardStep.SCHEDULE -> ScheduleStep(
                         scheduleMode = scheduleMode,

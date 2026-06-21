@@ -153,8 +153,11 @@ fun SettingsScreen(
         actions = viewModel,
         contactPickerState = contactPickerState,
         onBack = onBack,
-        onSelectFolder = { folderPickerLauncher.launch(null) },
-        onSelectDriveFolder = { driveFolderPickerLauncher.launch(null) },
+        // Seed each picker with its OWN current folder so it opens there, instead of letting
+        // Android's DocumentsUI reopen at the last-browsed location (which, after setting Drive,
+        // made re-picking the local folder open at the Drive path).
+        onSelectFolder = { folderPickerLauncher.launch(viewModel.preferences.getRecordingFolderUri()) },
+        onSelectDriveFolder = { driveFolderPickerLauncher.launch(viewModel.preferences.getDriveFolderUri()) },
         onOpenContactsIncoming = { contactPickerViewModel.openContactPicker(ContactPickerType.INCOMING) },
         onOpenContactsOutgoing = { contactPickerViewModel.openContactPicker(ContactPickerType.OUTGOING) },
         onConfirmContacts = { numbers ->
