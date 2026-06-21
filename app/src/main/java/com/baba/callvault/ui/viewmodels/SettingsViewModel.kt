@@ -20,6 +20,7 @@ import com.baba.callvault.services.call.CallSessionManager
 import com.baba.callvault.data.AppPreferences
 import com.baba.callvault.data.StorageTarget
 import com.baba.callvault.integrations.scrcpy.ScrcpyAudioCodec
+import com.baba.callvault.system.storage.RetentionScheduler
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -74,6 +75,9 @@ interface SettingsActions {
     fun setFileNameTemplate(template: String)
     fun setStorageTarget(target: StorageTarget)
     fun setDriveFolderUri(uri: android.net.Uri?)
+    fun setRetentionLinked(linked: Boolean)
+    fun setRetentionLocalDays(days: Int)
+    fun setRetentionDriveDays(days: Int)
 }
 
 /**
@@ -284,6 +288,28 @@ class SettingsViewModel(application: Application) : AndroidViewModel(application
      */
     override fun setDriveFolderUri(uri: android.net.Uri?) {
         preferences.setDriveFolderUri(uri)
+        refresh()
+    }
+
+    // -------- Retention settings
+
+    /** Saves whether device & Drive share one retention period. */
+    override fun setRetentionLinked(linked: Boolean) {
+        preferences.setRetentionLinked(linked)
+        refresh()
+    }
+
+    /** Saves the on-device retention (days; 0 = keep forever) and reconciles the periodic sweep. */
+    override fun setRetentionLocalDays(days: Int) {
+        preferences.setRetentionLocalDays(days)
+        RetentionScheduler.apply(appContext)
+        refresh()
+    }
+
+    /** Saves the Drive retention (days; 0 = keep forever) and reconciles the periodic sweep. */
+    override fun setRetentionDriveDays(days: Int) {
+        preferences.setRetentionDriveDays(days)
+        RetentionScheduler.apply(appContext)
         refresh()
     }
 

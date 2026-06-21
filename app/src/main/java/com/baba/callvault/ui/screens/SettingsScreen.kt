@@ -53,6 +53,7 @@ import com.baba.callvault.system.PersistentFolderPickerContract
 import com.baba.callvault.system.copyToClipboard
 import com.baba.callvault.system.openOriginalProjectRepo
 import com.baba.callvault.data.AppPreferences
+import com.baba.callvault.data.RetentionPeriod
 import com.baba.callvault.data.StorageTarget
 import com.baba.callvault.integrations.scrcpy.ScrcpyAudioCodec
 import com.baba.callvault.integrations.scrcpy.ScrcpyAudioSource
@@ -259,6 +260,15 @@ fun SettingsContent(
                 )
             }
             item {
+                RetentionSection(
+                    preferences = preferences,
+                    updateTrigger = updateTrigger,
+                    actions = actions,
+                    expanded = openSection == SECTION_RETENTION,
+                    onToggle = { onToggleSection(SECTION_RETENTION) }
+                )
+            }
+            item {
                 AudioSection(
                     preferences, updateTrigger, actions,
                     expanded = openSection == SECTION_AUDIO,
@@ -354,6 +364,7 @@ private const val DEVELOPER_UNLOCK_TAPS = 7
 // [SECTION_RECORDING] is the one open when Settings is first entered.
 private const val SECTION_RECORDING = "recording"
 private const val SECTION_STORAGE = "storage"
+private const val SECTION_RETENTION = "retention"
 private const val SECTION_AUDIO = "audio"
 private const val SECTION_VISUAL = "visual"
 private const val SECTION_DEBUG = "debug"
@@ -546,6 +557,118 @@ private fun StorageSection(
             value = driveFolderLabel ?: stringResource(R.string.general_not_set),
             supporting = stringResource(R.string.settings_drive_folder_desc),
             onClick = onSelectDriveFolder
+        )
+    }
+}
+
+/** Retention: auto-delete recordings older than a chosen period. One shared period for device & Drive,
+ * or a separate period for each. Destructive, so it defaults to "Keep forever" and a confirmation is
+ * shown the first time a non-forever period is chosen.
+ *
+ * @param preferences   The [AppPreferences] instance to read data from.
+ * @param updateTrigger Trigger value to force recomposition when settings change.
+ * @param actions       Implementation of [SettingsActions] to handle user interaction.
+ * @param expanded      Whether this accordion section is open.
+ * @param onToggle      Invoked when the section header is tapped.
+ */
+@Composable
+private fun RetentionSection(
+    preferences: AppPreferences,
+    updateTrigger: Int,
+    actions: SettingsActions,
+    expanded: Boolean,
+    onToggle: () -> Unit
+) {
+    val linked = remember(updateTrigger) { preferences.isRetentionLinked() }
+    val localDays = remember(updateTrigger) { preferences.getRetentionLocalDays() }
+    val driveDays = remember(updateTrigger) { preferences.getRetentionDriveDays() }
+
+    val options = RetentionPeriod.entries.map { OptionItem(it.days.toString(), stringResource(it.labelRes)) }
+    fun optionFor(days: Int) =
+        options.find { it.key == RetentionPeriod.fromDays(days).days.toString() } ?: options.first()
+
+    // Enabling retention from OFF is destructive, so stash the apply-action and confirm first.
+    var pendingConfirm by remember { mutableStateOf<(() -> Unit)?>(null) }
+    fun applyOrConfirm(wasOff: Boolean, newDays: Int, apply: () -> Unit) {
+        if (wasOff && newDays > 0) pendingConfirm = apply else apply()
+    }
+
+    SettingsSection(title = stringResource(R.string.settings_section_retention), expanded = expanded, onToggle = onToggle) {
+        SettingsToggleRow(
+            label = stringResource(R.string.retention_linked_label),
+            checked = linked,
+            onCheckedChange = { nowLinked ->
+                actions.setRetentionLinked(nowLinked)
+                // When linking, unify the Drive period to the device one so they match.
+                if (nowLinked) actions.setRetentionDriveDays(localDays)
+            }
+        )
+
+        SettingsDivider()
+
+        if (linked) {
+            DropdownRow {
+                M3DropdownField(
+                    label = stringResource(R.string.retention_period_label),
+                    selected = optionFor(localDays),
+                    options = options,
+                    onOptionSelected = { opt ->
+                        val days = opt.key.toIntOrNull() ?: 0
+                        applyOrConfirm(wasOff = localDays == 0 && driveDays == 0, newDays = days) {
+                            actions.setRetentionLocalDays(days)
+                            actions.setRetentionDriveDays(days)
+                        }
+                    }
+                )
+            }
+        } else {
+            DropdownRow {
+                M3DropdownField(
+                    label = stringResource(R.string.retention_local_label),
+                    selected = optionFor(localDays),
+                    options = options,
+                    onOptionSelected = { opt ->
+                        val days = opt.key.toIntOrNull() ?: 0
+                        applyOrConfirm(wasOff = localDays == 0, newDays = days) { actions.setRetentionLocalDays(days) }
+                    }
+                )
+            }
+            DropdownRow {
+                M3DropdownField(
+                    label = stringResource(R.string.retention_drive_label),
+                    selected = optionFor(driveDays),
+                    options = options,
+                    onOptionSelected = { opt ->
+                        val days = opt.key.toIntOrNull() ?: 0
+                        applyOrConfirm(wasOff = driveDays == 0, newDays = days) { actions.setRetentionDriveDays(days) }
+                    }
+                )
+            }
+        }
+
+        Text(
+            text = stringResource(R.string.retention_description),
+            style = MaterialTheme.typography.bodySmall,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+            modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp)
+        )
+    }
+
+    pendingConfirm?.let { confirm ->
+        AlertDialog(
+            onDismissRequest = { pendingConfirm = null },
+            title = { Text(stringResource(R.string.retention_confirm_title)) },
+            text = { Text(stringResource(R.string.retention_confirm_message)) },
+            confirmButton = {
+                TextButton(onClick = { confirm(); pendingConfirm = null }) {
+                    Text(stringResource(R.string.retention_confirm_enable))
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { pendingConfirm = null }) {
+                    Text(stringResource(R.string.general_cancel))
+                }
+            }
         )
     }
 }
@@ -1264,6 +1387,9 @@ private fun SettingsScreenPreview() {
             override fun setFileNameTemplate(template: String) {}
             override fun setStorageTarget(target: StorageTarget) {}
             override fun setDriveFolderUri(uri: android.net.Uri?) {}
+            override fun setRetentionLinked(linked: Boolean) {}
+            override fun setRetentionLocalDays(days: Int) {}
+            override fun setRetentionDriveDays(days: Int) {}
         }
 
         SettingsContent(

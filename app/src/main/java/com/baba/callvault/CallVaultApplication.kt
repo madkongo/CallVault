@@ -11,6 +11,7 @@ package com.baba.callvault
 import android.app.Application
 import com.baba.callvault.data.AppPreferences
 import com.baba.callvault.server.RecorderServerLauncher
+import com.baba.callvault.system.storage.RetentionScheduler
 import com.baba.callvault.utils.AppLogger
 
 /**
@@ -24,6 +25,11 @@ class CallVaultApplication : Application() {
     override fun onCreate() {
         super.onCreate()
         AppLogger.init(applicationContext)
+
+        // Reconcile the daily retention sweep with the saved prefs (schedules it when retention is on,
+        // cancels it when off). Idempotent; ensures the sweep persists across reinstalls/reboots.
+        runCatching { RetentionScheduler.apply(applicationContext) }
+            .onFailure { AppLogger.w(TAG, "Retention scheduler apply failed: ${it.message}") }
 
         // If ADB was already paired, proactively bring up the persistent recorder daemon in the
         // background: this (transiently) enables Wireless debugging if needed, launches the daemon,

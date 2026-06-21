@@ -73,6 +73,15 @@ class AppPreferences(context: Context) {
         const val SYNC_TIME_MINUTE = 0        // 0-59
         const val SYNC_DAY_OF_WEEK = 2        // java.util.Calendar: SUNDAY=1..SATURDAY=7 (2 = Monday)
 
+        // --- Retention (auto-delete old recordings) ---
+        // Delete recordings older than N days. 0 = keep forever (OFF). Applied per copy: device copies
+        // use RETENTION_LOCAL_DAYS, Drive copies use RETENTION_DRIVE_DAYS. When RETENTION_LINKED is true
+        // the UI shows one selector that writes both to the same value. Defaults to OFF so nothing is
+        // ever deleted until the user explicitly opts in.
+        const val RETENTION_LINKED = true
+        const val RETENTION_LOCAL_DAYS = 0
+        const val RETENTION_DRIVE_DAYS = 0
+
         // --- ADB (embedded wireless-debugging transport) ---
         // Whether the user has completed the one-time ADB pairing. Persisted so onboarding is
         // not shown again on every launch (a live connection only exists per-process).
@@ -125,6 +134,11 @@ class AppPreferences(context: Context) {
         SYNC_TIME_HOUR("sync_time_hour"),
         SYNC_TIME_MINUTE("sync_time_minute"),
         SYNC_DAY_OF_WEEK("sync_day_of_week"),
+
+        // --- Retention ---
+        RETENTION_LINKED("retention_linked"),
+        RETENTION_LOCAL_DAYS("retention_local_days"),
+        RETENTION_DRIVE_DAYS("retention_drive_days"),
 
         // --- ADB ---
         ADB_PAIRED("adb_paired"),
@@ -323,6 +337,26 @@ class AppPreferences(context: Context) {
 
     /** Sets the scheduled sweep day-of-week (java.util.Calendar: SUNDAY=1..SATURDAY=7). */
     fun setSyncDayOfWeek(day: Int) = setInt(Key.SYNC_DAY_OF_WEEK, day)
+
+    // --- Retention (auto-delete old recordings; 0 = keep forever) ---
+
+    /** Whether device & Drive share one retention period (true) or each has its own (false). */
+    fun isRetentionLinked() = getBoolean(Key.RETENTION_LINKED, DefaultsValue.RETENTION_LINKED)
+
+    /** Sets whether device & Drive share one retention period. */
+    fun setRetentionLinked(linked: Boolean) = setBoolean(Key.RETENTION_LINKED, linked)
+
+    /** Retention in days for on-device recordings (0 = keep forever). */
+    fun getRetentionLocalDays() = getInt(Key.RETENTION_LOCAL_DAYS, DefaultsValue.RETENTION_LOCAL_DAYS)
+
+    /** Sets the on-device retention in days (0 = keep forever). */
+    fun setRetentionLocalDays(days: Int) = setInt(Key.RETENTION_LOCAL_DAYS, days)
+
+    /** Retention in days for Drive recordings (0 = keep forever). */
+    fun getRetentionDriveDays() = getInt(Key.RETENTION_DRIVE_DAYS, DefaultsValue.RETENTION_DRIVE_DAYS)
+
+    /** Sets the Drive retention in days (0 = keep forever). */
+    fun setRetentionDriveDays(days: Int) = setInt(Key.RETENTION_DRIVE_DAYS, days)
 
     /** Checks if vibration is enabled for notifications/actions. */
     fun isVibrationEnabled() = getBoolean(Key.VIBRATION_ENABLED, DefaultsValue.VIBRATION_ENABLED)
