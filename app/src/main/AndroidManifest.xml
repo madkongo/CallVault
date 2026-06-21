@@ -137,27 +137,6 @@
             android:enabled="true"
             android:exported="true" />
 
-        <!-- DEBUG-ONLY throwaway: exercise RecorderServerLauncher.ensureServerRunning in isolation
-             (validate the flaky-wireless in-app launch without a real call). Remove before release. -->
-        <receiver
-            android:name=".debug.LaunchTestReceiver"
-            android:enabled="true"
-            android:exported="true">
-            <intent-filter>
-                <action android:name="com.baba.callvault.debug.LAUNCH_SERVER" />
-            </intent-filter>
-        </receiver>
-
-        <!-- DEBUG-ONLY throwaway: run the retention sweep on demand (instead of the daily schedule)
-             to validate auto-delete. Remove before release. -->
-        <receiver
-            android:name=".debug.RetentionTestReceiver"
-            android:enabled="true"
-            android:exported="true">
-            <intent-filter>
-                <action android:name="com.baba.callvault.debug.RUN_RETENTION" />
-            </intent-filter>
-        </receiver>
 
         <!-- Foreground service used by BootReceiver to reconnect ADB off the main thread -->
         <service

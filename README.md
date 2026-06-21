@@ -32,6 +32,7 @@ You pair **once**; after that it's hands-free.
 | 🎙️ | Records **both sides** of incoming & outgoing calls (incl. Bluetooth / headset) |
 | 🤖 | **Automatic** recording with per-call rules — ignore anonymous, cross-country, or specific contacts |
 | ☁️ | Save to **device, a cloud folder, or both**, with optional **scheduled sync** (immediate / daily / weekly) |
+| 🧹 | **Retention / auto-delete** — remove recordings after a chosen age, separately for device & cloud, swept daily at a time you pick (your local time zone) |
 | ▶️ | In-app **recordings list** with playback, **contact-name** resolution, source badges, and filters |
 | 🗂️ | Filter recordings by **source, direction, contact, or date**; play & delete each copy individually |
 | 🎚️ | **Opus** or **AAC** at your chosen bitrate; [BCR](https://github.com/chenxiaolong/BCR)-compatible file names |
