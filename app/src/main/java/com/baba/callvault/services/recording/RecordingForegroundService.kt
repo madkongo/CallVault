@@ -17,6 +17,7 @@ import android.os.Build
 import android.os.IBinder
 import android.content.pm.ServiceInfo
 import android.provider.CallLog
+import android.provider.DocumentsContract
 import androidx.documentfile.provider.DocumentFile
 import com.baba.callvault.data.AppPreferences
 import com.baba.callvault.integrations.adb.AdbShell
@@ -366,19 +367,20 @@ class RecordingForegroundService : Service() {
                 if (finalNumber.isNotBlank()) {
                     val updatedMeta = originalMetadata.copy(rawPhoneNumber = finalNumber)
                     val newName = RecordingFileNameFormatter.formatFileName(applicationContext, updatedMeta, activeSession.currentCodecEnum)
-                    val doc = DocumentFile.fromSingleUri(applicationContext, uriToRename)
-                    var renamed = false
+                    // Use DocumentsContract.renameDocument (NOT DocumentFile.renameTo): the latter is a
+                    // SingleDocumentFile here and throws UnsupportedOperationException, while
+                    // renameDocument is supported by ExternalStorageProvider and returns the new URI.
+                    var renamedUri: Uri? = null
                     try {
-                        renamed = doc?.renameTo(newName) ?: false
-                        if (renamed) {
+                        renamedUri = DocumentsContract.renameDocument(applicationContext.contentResolver, uriToRename, newName)
+                        if (renamedUri != null) {
                             AppLogger.d(TAG, "Successfully renamed wrongly detected anonymous recording to: $newName")
                         }
                     } catch (e: Exception) {
                         AppLogger.e(TAG, "Failed to rename file using CallLog fallback", e)
                     }
-                    // After a successful renameTo the DocumentFile's uri reflects the new name;
-                    // on failure fall back to the original URI.
-                    finalUri = if (renamed && doc != null) doc.uri else uriToRename
+                    // renameDocument may return a new document URI; fall back to the original on failure.
+                    finalUri = renamedUri ?: uriToRename
                 } else {
                     AppLogger.d(TAG, "Call log confirmed the call is anonymous, or no actual number was found. Keeping file name as is.")
                     finalUri = uriToRename

@@ -109,8 +109,12 @@ val extractLibphonenumberMetadata = tasks.register<ExtractMetadataTask>("extract
     into(outputDir)
 }
 
-val ciVersionCode = providers.gradleProperty("versionCode").map { it.toIntOrNull() }.orElse(1)
-val ciVersionName = providers.gradleProperty("versionName").orElse("1.0.0")
+// In-repo source of truth for the app version. CI overrides these via -PversionName / -PversionCode
+// (versionCode = the CI run number), but local builds and the in-app "About" version use these
+// defaults — so BUMP versionName here every release to match the CHANGELOG and the version dispatched
+// to the build workflow.
+val ciVersionCode = providers.gradleProperty("versionCode").map { it.toIntOrNull() }.orElse(10200)
+val ciVersionName = providers.gradleProperty("versionName").orElse("1.2.0")
 val ciBuildNumber = providers.gradleProperty("ciBuildNumber").orElse("Local")
 
 android {

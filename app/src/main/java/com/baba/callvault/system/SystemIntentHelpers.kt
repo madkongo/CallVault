@@ -21,10 +21,12 @@ import android.provider.DocumentsContract
 import android.provider.Settings
 import android.widget.Toast
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.core.content.FileProvider
 import androidx.core.net.toUri
 import com.baba.callvault.BuildConfig
 import com.baba.callvault.R
 import com.baba.callvault.utils.AppLogger
+import java.io.File
 
 /**
  * SystemIntentHelpers.kt contains shortcuts for opening system screens and doing
@@ -148,6 +150,28 @@ fun Context.openWirelessDebugging() {
 /** Opens the upstream project repository (required fork attribution, GPLv3 §7). */
 fun Context.openOriginalProjectRepo() {
     launchSmartIntent(Intent(Intent.ACTION_VIEW).apply { data = ORIGINAL_PROJECT_URL.toUri() })
+}
+
+/**
+ * Shares [file] (the diagnostic log report) through the system share-sheet (ACTION_SEND), so the
+ * user can attach it to an email, chat, or GitHub issue in one tap.
+ *
+ * The file is exposed via [FileProvider] (authority `${applicationId}.fileprovider`) and the receiving
+ * app is granted temporary read access for the lifetime of the share.
+ *
+ * @param file The report file produced by `AppLogger.buildShareableReport`.
+ */
+fun Context.shareLogFile(file: File) {
+    val uri = FileProvider.getUriForFile(this, "$packageName.fileprovider", file)
+    val sendIntent = Intent(Intent.ACTION_SEND).apply {
+        type = "text/plain"
+        putExtra(Intent.EXTRA_STREAM, uri)
+        putExtra(Intent.EXTRA_SUBJECT, "CallVault debug logs")
+        // Grant the chosen app temporary read access to the report URI.
+        addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+        clipData = android.content.ClipData.newRawUri("CallVault debug logs", uri)
+    }
+    launchSmartIntent(Intent.createChooser(sendIntent, getString(R.string.settings_bugreport_share_chooser)))
 }
 
 /**

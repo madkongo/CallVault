@@ -12,6 +12,7 @@
     <!-- ========================================== -->
     <string name="app_name" translatable="false">CallVault</string>
     <string name="general_close">Close</string>
+    <string name="general_recommended">Recommended</string>
     <string name="general_continue">Continue</string>
     <string name="general_ok">OK</string>
     <string name="general_cancel">Cancel</string>
@@ -121,10 +122,9 @@
     <string name="retention_confirm_message">Recordings older than the selected period will be permanently deleted from your device and/or Google Drive. This can\'t be undone.</string>
     <string name="retention_confirm_enable">Enable</string>
     <string name="settings_section_recording_storage">Recording &amp; storage</string>
-    <string name="settings_developer_mode_unlocked">Developer options unlocked</string>
     <string name="settings_section_visual">Visual settings</string>
     <string name="settings_section_audio">Audio configuration</string>
-    <string name="settings_section_debug">Debug Options</string>
+    <string name="settings_section_debug">Debug</string>
     <string name="settings_section_security">Security</string>
     <string name="settings_section_recorder_server">Recorder service</string>
 
@@ -235,25 +235,19 @@
     <string name="audio_source_voice_performance" translatable="false">Voice performance</string>
     <string name="audio_source_voice_performance_description">High-speed microphone mode designed for live music and real-time audio apps.</string>
 
-    <!-- Settings Screen: Debug Section -->
+    <!-- Settings Screen: Debug section (always visible) -->
     <string name="settings_debug_logging_enabled">Enable log recording</string>
-    <string name="settings_debug_logging_enabled_description">To report a bug, enable this, restart the app, and reproduce the issue.</string>
-    <string name="settings_debug_logging_title">Bug Reporting Steps</string>
-    <string name="settings_debug_logging_steps">
-        1. Check if your issue has already been reported on GitHub, if not, continue.\n
-        2. Reproduce the bug while keeping log recording enabled.\n
-        3. Press Generate Report below to save the logs to your phone.\n
-        4. Press Report on GitHub to open a new issue, fill up the fields, and attach the log file.
-    </string>
-    <string name="settings_debug_logging_step_warning">Please review the generated file for sensitive info before sharing. Disable log recording once done.</string>
-    <string name="settings_debug_logging_step_warning_no_redaction">⚠️ Debug Mode is ON. Log redaction is disabled.</string>
-    <string name="settings_debug_logging_generate_report">Generate Report</string>
-    <string name="settings_debug_mode">Enable debug mode</string>
-    <string name="settings_debug_mode_description">Show developers options, disable log redaction.</string>
-    <string name="settings_debug_caller_number">Debug phone number</string>
-    <string name="settings_debug_action_ringing" translatable="false">Ringing</string>
-    <string name="settings_debug_action_offhook" translatable="false">Off Hook</string>
-    <string name="settings_debug_action_idle" translatable="false">Idle / End</string>
+    <string name="settings_debug_logging_enabled_description">To report a bug, enable this, reproduce the issue, then turn it off and share the logs.</string>
+    <string name="settings_bugreport_active_warning">Debug logging is ON. Remember to turn it off when you\'re done to save space.</string>
+    <string name="settings_bugreport_share_hint">Logs from your last debug session are ready to share.</string>
+    <string name="settings_bugreport_share">Share debug logs</string>
+    <string name="settings_bugreport_share_empty">No logs yet. Enable debug logging, reproduce the issue, then tap share.</string>
+    <string name="settings_bugreport_share_chooser">Share debug logs</string>
+
+    <!-- Persistent reminder that debug logging is enabled -->
+    <string name="debug_notification_channel_name">Debug logging</string>
+    <string name="debug_notification_title">Debug logging is on</string>
+    <string name="debug_notification_text">Tap to open CallVault and turn it off when you\'re done.</string>
 
     <!-- Settings Screen: About/Server Section -->
     <string name="settings_copy_version">Copy Version</string>
