@@ -11,6 +11,7 @@ package com.baba.callvault
 import android.app.Application
 import com.baba.callvault.data.AppPreferences
 import com.baba.callvault.server.RecorderServerLauncher
+import com.baba.callvault.services.debug.DebugNotificationHelper
 import com.baba.callvault.system.storage.RetentionScheduler
 import com.baba.callvault.utils.AppLogger
 
@@ -25,6 +26,11 @@ class CallVaultApplication : Application() {
     override fun onCreate() {
         super.onCreate()
         AppLogger.init(applicationContext)
+
+        // Re-assert the "debug logging is on" reminder if the user left logging enabled across an
+        // app restart, so the nudge to turn it back off survives process death.
+        runCatching { DebugNotificationHelper.sync(applicationContext) }
+            .onFailure { AppLogger.w(TAG, "Debug notification sync failed: ${it.message}") }
 
         // Reconcile the daily retention sweep with the saved prefs (schedules it when retention is on,
         // cancels it when off). Idempotent; ensures the sweep persists across reinstalls/reboots.

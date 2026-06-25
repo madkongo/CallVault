@@ -19,8 +19,12 @@ object AdbShell {
     private const val CONNECT_SETTLE_MS = 2500L
     /** Reduced from 25 s so the recording path fails fast instead of hanging while falsely appearing to record. */
     private const val MDNS_TIMEOUT_MS = 12_000L
-    /** How long to wait for adbd to start advertising after we toggle Wireless debugging on. */
-    private const val WD_START_WAIT_MS = 4_000L
+    /**
+     * Small settle after toggling Wireless debugging on, before we begin mDNS discovery. Kept short
+     * (was 4 s) because [AdbMdns.discoverPort] is event-driven and already blocks until adbd actually
+     * advertises — so a long fixed pre-sleep was mostly dead time on the post-boot cold-start path.
+     */
+    private const val WD_START_WAIT_MS = 750L
 
     /**
      * Ensures the ADB connection is up (mDNS-discover the connect port, connect, settle).

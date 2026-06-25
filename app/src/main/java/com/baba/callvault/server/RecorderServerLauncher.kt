@@ -9,6 +9,7 @@
 package com.baba.callvault.server
 
 import android.content.Context
+import android.os.SystemClock
 import com.baba.callvault.integrations.adb.AdbShell
 import com.baba.callvault.utils.AppLogger
 
@@ -76,6 +77,14 @@ object RecorderServerLauncher {
 
     /** Drain cap for [killStaleDaemons]; the command isn't backgrounded, so it usually EOFs sooner. */
     private const val KILL_DRAIN_MS = 1500L
+
+    /**
+     * Below this device uptime, a reboot has just cleared every process, so no stale/orphaned daemon
+     * can exist — [killStaleDaemons] would only burn a shell round-trip on the latency-critical
+     * post-boot cold start. Stale daemons only accumulate from reinstall-over WITHOUT a reboot, which
+     * happens at much higher uptimes.
+     */
+    private const val RECENT_BOOT_GRACE_MS = 90_000L
 
     /** Poll interval while waiting for the daemon to deliver its binder to [RecorderConnection]. */
     private const val POLL_INTERVAL_MS = 150L
@@ -167,29 +176,63 @@ object RecorderServerLauncher {
     }
 
     /**
-     * Fires the detached launch command once over the embedded ADB shell and drains briefly so it is
-     * delivered. A "Stream closed" here is expected (the `&`-backgrounded launcher shell exits at
+     * Fires the detached launch command once over the embedded ADB shell and returns as soon as the
+     * daemon's binder has arrived — WITHOUT waiting out the whole keep-alive window.
+     *
+     * The launching shell must stay open for [LAUNCH_KEEPALIVE_SEC] so the daemon fully detaches
+     * before the stream closes; we satisfy that by draining the shell on a background thread (which
+     * also delivers the command). But once the binder is in [RecorderConnection] the daemon has
+     * ALREADY detached, so there is no reason to keep blocking the caller. Previously this method
+     * block-read the shell for the full ~3-4s keep-alive on every launch, which meant a binder that
+     * arrived early (the common case) was not noticed until the drain ended — adding ~3s of dead
+     * latency that could push readiness PAST the end of a short call (the "call ended before the
+     * daemon was ready" abort).
+     *
+     * A "Stream closed" on the drain thread is expected (the `&`-backgrounded launcher shell exits at
      * once and the daemon's own stdio is /dev/null), so failures are logged at debug, not error.
      */
     private fun launchOnce(context: Context, apk: String, attempt: Int) {
         // Clear any stale/orphaned daemon (e.g. old code surviving a reinstall) before launching fresh,
-        // so at most one daemon — matching the installed code — is ever running.
-        killStaleDaemons(context)
+        // so at most one daemon — matching the installed code — is ever running. Skipped shortly after
+        // boot: a reboot already cleared every process, so the scan can only cost time on the
+        // latency-critical first post-boot launch.
+        if (SystemClock.elapsedRealtime() > RECENT_BOOT_GRACE_MS) {
+            killStaleDaemons(context)
+        } else {
+            AppLogger.d(TAG, "Recent boot (uptime < ${RECENT_BOOT_GRACE_MS}ms); skipping killStaleDaemons — reboot already cleared any stale daemon")
+        }
         val command = String.format(PRIMARY_CMD_FORMAT, apk)
         AppLogger.i(TAG, "Attempt $attempt: launching recorder daemon. apk=$apk")
-        runCatching {
-            AdbShell.openShell(context, command).use { shell ->
-                val deadline = System.currentTimeMillis() + DRAIN_BUDGET_MS
-                shell.openInputStream().use { input ->
-                    val buf = ByteArray(256)
-                    while (System.currentTimeMillis() < deadline) {
-                        val read = input.read(buf)
-                        if (read < 0) break
-                        if (read > 0) AppLogger.d(TAG, "[launch] ${String(buf, 0, read)}")
+
+        // Background thread: send the command and hold the shell's stream open for the keep-alive
+        // window so the daemon detaches. Owns the shell's whole lifetime; outlives this method if the
+        // binder arrives first (harmless — it just finishes draining and closes).
+        Thread {
+            runCatching {
+                AdbShell.openShell(context, command).use { shell ->
+                    val deadline = System.currentTimeMillis() + DRAIN_BUDGET_MS
+                    shell.openInputStream().use { input ->
+                        val buf = ByteArray(256)
+                        while (System.currentTimeMillis() < deadline) {
+                            val read = input.read(buf)
+                            if (read < 0) break
+                            if (read > 0) AppLogger.d(TAG, "[launch] ${String(buf, 0, read)}")
+                        }
                     }
                 }
+            }.onFailure { AppLogger.d(TAG, "Attempt $attempt drain ended (expected for detached &): ${it.message}") }
+        }.apply { isDaemon = true; name = "recorder-launch-drain-$attempt" }.start()
+
+        // Return the moment the binder lands; otherwise wait out the keep-alive window (the launch
+        // failed to come up and the caller's retry will reconnect + relaunch).
+        val deadline = System.currentTimeMillis() + DRAIN_BUDGET_MS
+        while (System.currentTimeMillis() < deadline) {
+            if (RecorderConnection.isConnected) {
+                AppLogger.d(TAG, "Attempt $attempt: binder arrived during launch; not waiting out keep-alive")
+                return
             }
-        }.onFailure { AppLogger.d(TAG, "Attempt $attempt drain ended (expected for detached &): ${it.message}") }
+            runCatching { Thread.sleep(POLL_INTERVAL_MS) }
+        }
     }
 
     /**

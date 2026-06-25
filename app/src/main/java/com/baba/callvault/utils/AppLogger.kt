@@ -23,7 +23,6 @@ import java.io.FileWriter
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
-import android.net.Uri
 import android.os.Build
 import com.baba.callvault.BuildConfig
 import com.baba.callvault.integrations.scrcpy.ScrcpyConfig
@@ -66,10 +65,13 @@ object AppLogger {
     private var logFile: File? = null
 
     /**
-     * Helper to gracefully determine if log redaction is active.
+     * Redaction is always on. The shareable diagnostic log must never contain raw phone numbers.
+     *
+     * (Previously this was gated by a developer-only "Debug mode" toggle that disabled redaction;
+     * that toggle has been removed, so redaction is now unconditional and cannot be turned off.)
      */
     private val isRedactionEnabled: Boolean
-        get() = prefs?.isDebugEnabled() != true
+        get() = true
 
     /**
      * Initializes the logging mechanism for the main application process.
@@ -141,39 +143,72 @@ object AppLogger {
     }
 
     /**
-     * Gathers system/app metadata and concatenates it with the existing debug log history,
-     * streaming the complete report to a destination URI via the Storage Access Framework.
+     * Whether a valid (existing, non-empty) log file is currently on disk and therefore worth
+     * sharing. Used by the Settings Debug section to decide whether to offer the Share action.
+     */
+    fun hasLogs(): Boolean {
+        val file = logFile
+        return file != null && file.exists() && file.length() > 0L
+    }
+
+    /**
+     * Builds a self-contained diagnostic report (metadata header + the redacted log history) into a
+     * file inside the app's cache directory, ready to be attached to a share-sheet via FileProvider.
+     *
+     * The report lives under `cacheDir/logs/` (the only folder exposed by the FileProvider) and is
+     * overwritten on each call. Phone numbers remain redacted.
+     *
+     * Suspends and copies the log body under [fileMutex] so it never captures a half-flushed or
+     * mid-rotation file (the logger's IO coroutine writes under the same lock).
      *
      * @param context Application context.
-     * @param destinationUri Target SAF URI to which the file will be generated.
+     * @return The report [File], or `null` if no log file exists yet (nothing to share).
      */
-    fun exportReport(context: Context, destinationUri: Uri) {
-        val file = logFile ?: return
-        context.contentResolver.openOutputStream(destinationUri, "w")?.use { outputStream ->
-            PrintWriter(OutputStreamWriter(outputStream, Charsets.UTF_8)).use { writer ->
-                writer.println("=== CallVault AppLogger Export ===")
-                writer.println("Generated: ${SimpleDateFormat("yyyy-MM-dd HH:mm:ss z", Locale.US).format(Date())}")
-                writer.println("App Version: ${BuildConfig.VERSION_NAME} (${BuildConfig.VERSION_CODE})")
-                writer.println("Scrcpy Server: ${ScrcpyConfig.SCRCPY_VERSION}")
-                writer.println("Manufacturer: ${Build.MANUFACTURER}")
-                writer.println("Model: ${Build.MODEL}")
-                writer.println("Device: ${Build.DEVICE}")
-                writer.println("Product: ${Build.PRODUCT}")
-                writer.println("Android Version: ${Build.VERSION.RELEASE} (API ${Build.VERSION.SDK_INT})")
-                writer.println("Device Country Iso Estimation: ${PhoneNumberManager.getInstance(context).getDeviceCountryIso()}")
-                writer.println("===========================================")
-                writer.println()
-                writer.flush()
+    suspend fun buildShareableReport(context: Context): File? {
+        val source = logFile
+        if (source == null || !source.exists() || source.length() == 0L) return null
 
-                if (file.exists()) {
-                    file.inputStream().use { inputStream ->
-                        inputStream.copyTo(outputStream)
-                    }
-                } else {
-                    writer.println("[No logs found in internal storage]")
+        val shareDir = File(context.cacheDir, "logs").apply { mkdirs() }
+        val report = File(shareDir, "callvault_debug_report.txt")
+        return try {
+            // Write the header and the log body into ONE output stream. The PrintWriter is flushed
+            // (not closed) before copying the body so its text lands ahead of the log bytes; the
+            // `use` block closes the underlying stream once both have been written.
+            report.outputStream().use { out ->
+                val writer = PrintWriter(OutputStreamWriter(out, Charsets.UTF_8))
+                writeReportHeader(writer, context)
+                writer.flush()
+                // Snapshot the live log under the writer's lock so the copy is consistent.
+                fileMutex.withLock {
+                    if (source.exists()) source.inputStream().use { input -> input.copyTo(out) }
+                }
+                out.flush()
+                if (writer.checkError()) {
+                    e(TAG, "PrintWriter reported an error while building the shareable report")
+                    return null
                 }
             }
+            report
+        } catch (e: Exception) {
+            e(TAG, "Failed to build shareable report", e)
+            null
         }
+    }
+
+    /** Writes the common report metadata header (app/device/runtime info) to [writer]. */
+    private fun writeReportHeader(writer: PrintWriter, context: Context) {
+        writer.println("=== CallVault AppLogger Export ===")
+        writer.println("Generated: ${SimpleDateFormat("yyyy-MM-dd HH:mm:ss z", Locale.US).format(Date())}")
+        writer.println("App Version: ${BuildConfig.VERSION_NAME} (${BuildConfig.VERSION_CODE})")
+        writer.println("Scrcpy Server: ${ScrcpyConfig.SCRCPY_VERSION}")
+        writer.println("Manufacturer: ${Build.MANUFACTURER}")
+        writer.println("Model: ${Build.MODEL}")
+        writer.println("Device: ${Build.DEVICE}")
+        writer.println("Product: ${Build.PRODUCT}")
+        writer.println("Android Version: ${Build.VERSION.RELEASE} (API ${Build.VERSION.SDK_INT})")
+        writer.println("Device Country Iso Estimation: ${PhoneNumberManager.getInstance(context).getDeviceCountryIso()}")
+        writer.println("===========================================")
+        writer.println()
     }
 
     /** Logs a Verbose level message and optionally its throwable trace. */
