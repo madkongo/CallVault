@@ -62,12 +62,6 @@
     <string name="settings_audio_source">Audioquelle</string>
     <string name="settings_debug_logging_enabled">Logging aktivieren</string>
     <string name="settings_debug_logging_enabled_description">Um einen Fehler zu melden, aktivieren Sie diese Einstellung, starten Sie die App neu und reproduzieren die das Problem.</string>
-    <string name="settings_debug_logging_title">Schritte zur Fehlermeldung</string>
-    <string name="settings_debug_logging_steps">1. Überprüfen Sie, ob Ihr Problem bereits auf GitHub gemeldet wurde; falls nicht, fahren Sie fort.\n 2. Reproduzieren Sie den Fehler, während die Log-Aufzeichnung aktiviert ist.­­\n 3. Tippen Sie unten auf „Bericht erstellen“, um die Logs auf Ihrem Smartphone zu speichern.\n 4. Tippen Sie auf „Auf GitHub melden“, um ein neues Issue zu eröffnen, füllen Sie die Felder aus und fügen Sie die Log-Datei bei.</string>
-    <string name="settings_debug_logging_step_warning">Bitte überprüfen Sie die generierte Datei vor dem Teilen auf sensible Informationen. Deaktivieren Sie die Log-Aufzeichnung, sobald Sie fertig sind.</string>
-    <string name="settings_debug_logging_step_warning_no_redaction">⚠️ Debug-Modus ist aktiv. Log-Redaktion ist deaktiviert.</string>
-    <string name="settings_debug_logging_generate_report">Bericht generieren</string>
-    <string name="settings_debug_mode">Debug-Modus aktivieren</string>
     <string name="settings_copy_version">Version kopieren</string>
     <string name="settings_view_licenses">Lizenzen ansehen</string>
     <string name="contact_search_hint">Nach Name oder Nummer suchen...</string>
@@ -106,6 +100,4 @@
     <string name="audio_source_voice_call_uplink_description">Zeichnet nur Ihre Seite eines Telefonats auf (Uplink).</string>
     <string name="audio_source_voice_call_downlink_description">Zeichnet nur die Seite der anderen Person bei einem Telefonat auf (Downlink).</string>
     <string name="audio_source_voice_performance_description">Hochgeschwindigkeits-Mikrofonmodus, konzipiert für Live-Musik und Echtzeit-Audioanwendungen.</string>
-    <string name="settings_debug_mode_description">Entwickleroptionen anzeigen, Log-Redaktion deaktivieren.</string>
-    <string name="settings_debug_caller_number">Telefonnummer debuggen</string>
 </resources>

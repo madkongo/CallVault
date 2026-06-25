@@ -81,14 +81,6 @@
     <string name="audio_source_voice_performance_description">Tryb mikrofonu o dużej czułości przeznaczony do nagrywania muzyki na żywo i aplikacji audio działających w czasie rzeczywistym.</string>
     <string name="settings_debug_logging_enabled">Włącz rejestrowanie logów</string>
     <string name="settings_debug_logging_enabled_description">Aby zgłosić błąd, włącz tę opcję, uruchom ponownie aplikację i spróbuj odtworzyć problem.</string>
-    <string name="settings_debug_logging_title">Jak zgłaszać błędy</string>
-    <string name="settings_debug_logging_steps">1. Sprawdź, czy problem nie został już zgłoszony na GitHubie; jeśli nie, kontynuuj.\n 2. Odtwórz błąd, pozostawiając włączoną funkcję rejestrowania logów.\n 3. Naciśnij przycisk „Generuj raport” poniżej, aby zapisać logi w telefonie.\n 4. Naciśnij przycisk „Zgłoś na GitHubie”, aby otworzyć nowe zgłoszenie, wypełnij pola i załącz plik logu.</string>
-    <string name="settings_debug_logging_step_warning">Przed udostępnieniem pliku sprawdź, czy nie zawiera on danych wrażliwych. Po zakończeniu wyłącz rejestrowanie logów.</string>
-    <string name="settings_debug_logging_step_warning_no_redaction">⚠️ Tryb debugowania jest włączony. Redagowanie logów jest wyłączone.</string>
-    <string name="settings_debug_logging_generate_report">Generuj Raport</string>
-    <string name="settings_debug_mode">Włącz tryb debugowania</string>
-    <string name="settings_debug_mode_description">Pokaż opcje programisty, wyłącz redagowanie logów.</string>
-    <string name="settings_debug_caller_number">Debuguj numer telefonu</string>
     <string name="settings_copy_version">Kopiuj Wersję</string>
     <string name="settings_view_licenses">Wyświetl licencje</string>
     <string name="contact_search_hint">Wyszukaj według nazwy lub numeru...</string>

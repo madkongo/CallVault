@@ -37,3 +37,9 @@
 -assumenosideeffects class com.baba.callvault.utils.AppLogger {
   v(...);
 }
+
+# Conscrypt (pulled in transitively by the embedded-ADB TLS layer) references optional legacy platform
+# SSL classes that are not on the compile classpath and are never present at runtime on supported
+# Android versions. Without these rules R8 fails the release build on the dangling references.
+-dontwarn com.android.org.conscrypt.**
+-dontwarn org.apache.harmony.xnet.provider.jsse.**
