@@ -81,14 +81,6 @@
     <string name="audio_source_voice_performance_description">Modo de micrófono de alta velocidad diseñado para música en vivo y aplicaciones de audio en tiempo real.</string>
     <string name="settings_debug_logging_enabled">Activar el registro de eventos</string>
     <string name="settings_debug_logging_enabled_description">Para informar de un error, activa esta opción, reinicia la aplicación y reproduce el problema.</string>
-    <string name="settings_debug_logging_title">Pasos para reportar errores</string>
-    <string name="settings_debug_logging_steps">1. Comprueba si tu problema ya se ha reportado en GitHub; si no, continúa.\n2. Reproduce el error manteniendo el registro de eventos activado.\n3. Pulsa Generar informe a continuación para guardar los registros en tu teléfono.\n4. Pulsa Reportar en GitHub para abrir un nuevo problema, completa los campos y adjunta el archivo de registro.</string>
-    <string name="settings_debug_logging_step_warning">Revisa el archivo generado para comprobar que no contiene información sensible antes de compartirlo. Desactiva el registro de eventos cuando termines.</string>
-    <string name="settings_debug_logging_step_warning_no_redaction">⚠️ El modo de depuración está ACTIVADO. La redacción de registros está desactivada.</string>
-    <string name="settings_debug_logging_generate_report">Generar informe</string>
-    <string name="settings_debug_mode">Activar el modo de depuración</string>
-    <string name="settings_debug_mode_description">Mostrar las opciones de desarrollador, desactivar la redacción de registros.</string>
-    <string name="settings_debug_caller_number">Depurar número de teléfono</string>
     <string name="settings_copy_version">Copiar versión</string>
     <string name="settings_view_licenses">Ver licencias</string>
     <string name="contact_search_hint">Buscar por nombre o número…</string>

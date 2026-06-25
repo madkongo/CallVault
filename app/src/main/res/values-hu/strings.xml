@@ -89,14 +89,6 @@
     <string name="audio_source_voice_performance_description">Nagy sebességű mikrofon üzemmód - leginkább élő zenei előadásokhoz és valós idejű hangalkalmazásokhoz.</string>
     <string name="settings_debug_logging_enabled">Naplózás bekapcsolása</string>
     <string name="settings_debug_logging_enabled_description">Hibajelentéshez engedélyezd ezt a beállítást, indítsd újra az alkalmazást majd próbáld reprodukálni a problémát.</string>
-    <string name="settings_debug_logging_title">A hibajelentés lépései</string>
-    <string name="settings_debug_logging_steps">1. Ellenőrizd, hogy a problémádat jelentették-e már a GitHubon; ha nem, folytasd.\n2. Reprodukáld a hibát úgy, hogy a naplózás engedélyezve legyen.\n3. Használd az alul található „Jelentés létrehozása” gombot a naplófájlok telefonra mentéséhez.\n4. Használd a „Jelentés a GitHubon” gombot egy új hibajelentés nyitásához, töltsd ki a mezőket és csatold a naplófájlt.</string>
-    <string name="settings_debug_logging_step_warning">Kérjük, a megosztás előtt ellenőrizd a létrehozott fájlt, hogy nem tartalmaz-e bizalmas információkat. Ha elkészült, tiltsd le a naplózást.</string>
-    <string name="settings_debug_logging_step_warning_no_redaction">⚠️ Hibakeresési mód bekapcsolva. A naplószűrés nincs bekapcsolva.</string>
-    <string name="settings_debug_logging_generate_report">Jelentés generálása</string>
-    <string name="settings_debug_mode">Hibakeresés mód bekapcsolása</string>
-    <string name="settings_debug_mode_description">Fejlesztői beállítások megjelenítése, a naplószűrés kikapcsolása.</string>
-    <string name="settings_debug_caller_number">Telefonszám</string>
     <string name="settings_copy_version">Verziószám másolása</string>
     <string name="settings_view_licenses">Licenszek megtekintése</string>
     <string name="contact_search_hint">Keresés név vagy szám alapján...</string>
