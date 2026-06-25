@@ -3,7 +3,7 @@
 All notable changes to CallVault are documented here. The format is based on
 [Keep a Changelog](https://keepachangelog.com/), and this project uses semantic-ish versioning.
 
-## [1.2.0] — unreleased
+## [1.2.0] — 2026-06-25
 
 A reliability release focused on **recording the first call after a reboot**, plus a rebuilt,
 user-facing debug/bug-report flow and an audio default better suited to voice.
