@@ -21,8 +21,6 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.foundation.text.KeyboardActions
-import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowForwardIos
 import androidx.compose.material.icons.automirrored.filled.CallMade
@@ -41,20 +39,24 @@ import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import android.widget.Toast
 import com.baba.callvault.R
 import com.baba.callvault.system.PersistentFolderPickerContract
 import com.baba.callvault.system.copyToClipboard
 import com.baba.callvault.system.openOriginalProjectRepo
+import com.baba.callvault.system.shareLogFile
+import com.baba.callvault.utils.AppLogger
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import com.baba.callvault.data.AppPreferences
 import com.baba.callvault.data.RetentionPeriod
 import com.baba.callvault.data.StorageTarget
+import com.baba.callvault.integrations.scrcpy.RECOMMENDED_AUDIO_BIT_RATE
 import com.baba.callvault.integrations.scrcpy.ScrcpyAudioCodec
 import com.baba.callvault.integrations.scrcpy.ScrcpyAudioSource
 import com.baba.callvault.integrations.scrcpy.ScrcpyConfig
@@ -71,7 +73,6 @@ import com.baba.callvault.ui.common.M3DropdownField
 import com.baba.callvault.ui.common.OptionItem
 import com.baba.callvault.ui.viewmodels.ContactPickerType
 import com.baba.callvault.ui.viewmodels.ContactPickerViewModel
-import com.baba.callvault.ui.viewmodels.DebugAction
 import com.baba.callvault.ui.viewmodels.SettingsActions
 import com.baba.callvault.ui.viewmodels.SettingsViewModel
 import com.baba.callvault.ui.viewmodels.ContactPickerState
@@ -81,7 +82,6 @@ import com.mikepenz.aboutlibraries.ui.compose.m3.LibrariesContainer
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
 import com.mikepenz.aboutlibraries.ui.compose.android.produceLibraries
-import androidx.activity.result.contract.ActivityResultContracts
 import android.net.Uri
 import androidx.appcompat.app.AppCompatDelegate
 import androidx.compose.animation.fadeIn
@@ -90,13 +90,11 @@ import androidx.compose.material.icons.filled.DriveFileRenameOutline
 import androidx.compose.material.icons.filled.ExpandMore
 import androidx.compose.material.icons.filled.Folder
 import androidx.compose.material.icons.filled.Gavel
-import androidx.compose.material.icons.filled.GraphicEq
 import androidx.compose.material.icons.filled.NotificationsActive
 import androidx.compose.material.icons.filled.Save
 import androidx.compose.material.icons.filled.Vibration
 import androidx.compose.ui.platform.LocalInspectionMode
 import androidx.compose.ui.platform.LocalResources
-import androidx.compose.ui.text.input.KeyboardType
 import org.xmlpull.v1.XmlPullParser
 import java.util.Locale
 
@@ -115,6 +113,7 @@ fun SettingsScreen(
     modifier: Modifier = Modifier
 ) {
     val context = LocalContext.current
+    val scope = rememberCoroutineScope()
 
     // Trigger recomposition when settings change by viewmodel.refresh()
     val updateTrigger by viewModel.updateTrigger.collectAsState()
@@ -141,13 +140,6 @@ fun SettingsScreen(
         viewModel.refresh()
     }
 
-    // Export logs picker — creates a new text file and gives us access to write to it, then passes the URI to the viewmodel for writing.
-    val exportLogLauncher = rememberLauncherForActivityResult(ActivityResultContracts.CreateDocument("text/plain")) { uri: Uri? ->
-        if (uri != null) {
-            viewModel.exportLogs(uri)
-        }
-    }
-
     SettingsContent(
         preferences = viewModel.preferences,
         updateTrigger = updateTrigger,
@@ -167,7 +159,18 @@ fun SettingsScreen(
             viewModel.refresh()
         },
         onDismissContacts = { contactPickerViewModel.dismissContactPicker() },
-        onExportLogs = { exportLogLauncher.launch("callvault_bug_report.log") },
+        // Build the report off the main thread, then hand it to the system share-sheet. The Share
+        // entry point is only shown when a valid log file exists, so the null branch is a safety net.
+        onShareLogs = {
+            scope.launch {
+                val report = withContext(Dispatchers.IO) { AppLogger.buildShareableReport(context) }
+                if (report != null) {
+                    context.shareLogFile(report)
+                } else {
+                    Toast.makeText(context, R.string.settings_bugreport_share_empty, Toast.LENGTH_LONG).show()
+                }
+            }
+        },
         modifier = modifier
     )
 }
@@ -190,7 +193,7 @@ fun SettingsScreen(
  * @param onOpenContactsOutgoing Called to open picker for outgoing contacts.
  * @param onConfirmContacts      Called when contacts are confirmed from the dialog.
  * @param onDismissContacts      Called when we want to close the dialog without confirmation/saving.
- * @param onExportLogs           Called to export diagnostic logs using SAF.
+ * @param onShareLogs            Called to share diagnostic logs via the system share-sheet (Debug section).
  * @param modifier               Optional size/position modifier.
  */
 @Composable
@@ -206,12 +209,10 @@ fun SettingsContent(
     onOpenContactsOutgoing: () -> Unit,
     onConfirmContacts: (Set<String>) -> Unit,
     onDismissContacts: () -> Unit,
-    onExportLogs: () -> Unit,
+    onShareLogs: () -> Unit,
     modifier: Modifier = Modifier
 ) {
     var showLicensesDialog by remember { mutableStateOf(false) }
-    // Read in the composable scope (not the LazyListScope) so the Debug item recomposes on unlock.
-    val isDeveloperModeUnlocked = remember(updateTrigger) { preferences.isDeveloperModeUnlocked() }
 
     // Accordion: at most one section open at a time; Recording & storage is open on entry. State is
     // hoisted here (above the LazyColumn) so it is shared across all sections. Tapping the open section
@@ -282,22 +283,19 @@ fun SettingsContent(
                     onToggle = { onToggleSection(SECTION_VISUAL) }
                 )
             }
-            // Debug section is hidden until developer options are unlocked (7-tap on the version row).
-            if (isDeveloperModeUnlocked) {
-                item {
-                    DebugSection(
-                        preferences, updateTrigger, actions, onExportLogs,
-                        expanded = openSection == SECTION_DEBUG,
-                        onToggle = { onToggleSection(SECTION_DEBUG) }
-                    )
-                }
+            // Debug section: always visible so anyone can enable logging and share logs to report an issue.
+            item {
+                BugReportSection(
+                    preferences, updateTrigger, actions, onShareLogs,
+                    expanded = openSection == SECTION_BUG_REPORT,
+                    onToggle = { onToggleSection(SECTION_BUG_REPORT) }
+                )
             }
             // About moved to the bottom; the fork attribution stays visible (GPLv3 §7 requirement).
             item {
                 AboutSection(
                     versionString = actions.getAppVersion(),
                     onShowLicenses = { showLicensesDialog = true },
-                    onUnlockDeveloperMode = { actions.unlockDeveloperMode() },
                     expanded = openSection == SECTION_ABOUT,
                     onToggle = { onToggleSection(SECTION_ABOUT) }
                 )
@@ -357,9 +355,6 @@ fun SettingsContent(
     }
 }
 
-/** Number of consecutive taps on the version row required to unlock developer options. */
-private const val DEVELOPER_UNLOCK_TAPS = 7
-
 // Settings accordion: stable keys identifying each section. At most one section is open at a time;
 // [SECTION_RECORDING] is the one open when Settings is first entered.
 private const val SECTION_RECORDING = "recording"
@@ -367,7 +362,7 @@ private const val SECTION_STORAGE = "storage"
 private const val SECTION_RETENTION = "retention"
 private const val SECTION_AUDIO = "audio"
 private const val SECTION_VISUAL = "visual"
-private const val SECTION_DEBUG = "debug"
+private const val SECTION_BUG_REPORT = "bug_report"
 private const val SECTION_ABOUT = "about"
 
 // ── Settings sections ──────────────────────────────────────────────────────────────────────
@@ -707,8 +702,8 @@ private fun RetentionSection(
 
 /** Shows the audio source, codec, and bit-rate dropdowns.
  *
- * The audio-source list is generated from [ScrcpyAudioSource.entries], filtered by
- * [ScrcpyAudioSource.isDebugOnly] based on [AppPreferences.isDebugEnabled]. Items whose
+ * The audio-source list is generated from [ScrcpyAudioSource.entries] with debug-only entries
+ * ([ScrcpyAudioSource.isDebugOnly]) always hidden. Items whose
  * [ScrcpyAudioSource.minApi]/[ScrcpyAudioSource.maxApi] range does not include the current
  * device's API level are shown grayed out and cannot be selected.
  *
@@ -719,7 +714,6 @@ private fun RetentionSection(
 @Composable
 private fun AudioSection(preferences: AppPreferences, updateTrigger: Int, actions: SettingsActions, expanded: Boolean, onToggle: () -> Unit) {
 
-    val isDebugEnabled = remember(updateTrigger) { preferences.isDebugEnabled() }
     val audioSource = remember(updateTrigger) { preferences.getAudioSource() }
     val audioCodec = remember(updateTrigger) { preferences.getAudioCodec() }
     val savedBitRate = remember(updateTrigger) { preferences.getAudioBitRate() }
@@ -727,10 +721,10 @@ private fun AudioSection(preferences: AppPreferences, updateTrigger: Int, action
     SettingsSection(title = stringResource(R.string.settings_section_audio), expanded = expanded, onToggle = onToggle) {
         val currentSdk = Build.VERSION.SDK_INT
 
-        // Build the source list from the enum, hiding debug-only entries when debug is off.
+        // Build the source list from the enum, always hiding debug-only entries.
         // Items that require an API level not available on this device are shown as disabled.
         val audioSourceOptions = ScrcpyAudioSource.entries
-            .filter { !it.isDebugOnly || isDebugEnabled }
+            .filter { !it.isDebugOnly }
             .map { source ->
                 OptionItem(
                     key         = source.cliKey,
@@ -776,8 +770,14 @@ private fun AudioSection(preferences: AppPreferences, updateTrigger: Int, action
             }
         }
 
-        val bitrateOptions = listOf(8000, 16000, 32000, 64000, 128000)
-            .map { OptionItem(it.toString(), stringResource(R.string.audio_bitrate_kbps, it / 1000)) }
+        val recommendedLabel = stringResource(R.string.general_recommended)
+        val bitrateOptions = listOf(8000, 16000, 24000, 32000, 64000, 128000)
+            .map { bps ->
+                val kbpsLabel = stringResource(R.string.audio_bitrate_kbps, bps / 1000)
+                // 24 kbps is the recommended sweet spot for voice — flag it right in the dropdown.
+                val label = if (bps == RECOMMENDED_AUDIO_BIT_RATE) "$kbpsLabel ($recommendedLabel)" else kbpsLabel
+                OptionItem(bps.toString(), label)
+            }
 
         DropdownRow {
             M3DropdownField(
@@ -897,18 +897,36 @@ private fun VisualSection(preferences: AppPreferences, updateTrigger: Int, actio
     }
 }
 
-/** Shows the debug toggle, and when enabled, a caller-number field and test-call buttons.
+/**
+ * Debug section (always visible). The flow is: turn logging on, reproduce the issue, turn logging
+ * off, then share the captured log.
+ *
+ * - While logging is **on**, we show a red reminder to turn it back off; sharing is intentionally
+ *   hidden so the user isn't sharing a log that is still being written to.
+ * - While logging is **off**, the Share button appears only if a valid (non-empty) log file from a
+ *   previous session still exists — there is nothing to share otherwise.
+ *
+ * Logs stay redacted (phone numbers masked). Each time logging is turned on the previous capture is
+ * cleared (see [SettingsViewModel.setLoggingEnabled]) so every report is a fresh, focused log.
  *
  * @param preferences   The [AppPreferences] instance to read data from.
  * @param updateTrigger Trigger value to force recomposition when settings change.
  * @param actions       Implementation of [SettingsActions] to handle user interaction.
- * @param onExportLogs  Called to export logs via SAF when logging is enabled.
+ * @param onShareLogs   Called to share the diagnostic log report via the system share-sheet.
  */
 @Composable
-private fun DebugSection(preferences: AppPreferences, updateTrigger: Int, actions: SettingsActions, onExportLogs: () -> Unit, expanded: Boolean, onToggle: () -> Unit) {
-    val isDebugEnabled = remember(updateTrigger) { preferences.isDebugEnabled() }
-    val debugCallerNumber = remember(updateTrigger) { preferences.getDebugCallerNumber() }
+private fun BugReportSection(
+    preferences: AppPreferences,
+    updateTrigger: Int,
+    actions: SettingsActions,
+    onShareLogs: () -> Unit,
+    expanded: Boolean,
+    onToggle: () -> Unit
+) {
     val isLoggingEnabled = remember(updateTrigger) { preferences.isLoggingEnabled() }
+    // Re-checked on every settings change (e.g. right after the toggle flips off) so the Share
+    // button appears as soon as a capture is frozen on disk.
+    val hasLogs = remember(updateTrigger) { AppLogger.hasLogs() }
 
     SettingsSection(title = stringResource(R.string.settings_section_debug), expanded = expanded, onToggle = onToggle) {
         SettingsToggleRow(
@@ -916,95 +934,36 @@ private fun DebugSection(preferences: AppPreferences, updateTrigger: Int, action
             label           = stringResource(R.string.settings_debug_logging_enabled),
             checked         = isLoggingEnabled,
             onCheckedChange = { actions.setLoggingEnabled(it) },
-            description     = if (!isLoggingEnabled) stringResource(R.string.settings_debug_logging_enabled_description) else null
+            description     = stringResource(R.string.settings_debug_logging_enabled_description)
         )
 
         if (isLoggingEnabled) {
             Column(modifier = Modifier.padding(horizontal = 16.dp)) {
                 Text(
-                    text = stringResource(R.string.settings_debug_logging_title),
-                    style = MaterialTheme.typography.titleSmall,
-                    color = MaterialTheme.colorScheme.primary,
-                    modifier = Modifier.padding(bottom = 8.dp)
+                    text = stringResource(R.string.settings_bugreport_active_warning),
+                    style = MaterialTheme.typography.labelLarge,
+                    color = MaterialTheme.colorScheme.error
                 )
+                Spacer(modifier = Modifier.height(4.dp))
+            }
+        } else if (hasLogs) {
+            Column(modifier = Modifier.padding(horizontal = 16.dp)) {
                 Text(
-                    text = stringResource(R.string.settings_debug_logging_steps),
+                    text = stringResource(R.string.settings_bugreport_share_hint),
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurface
                 )
 
                 Spacer(modifier = Modifier.height(12.dp))
 
-                Text(
-                    text = stringResource(R.string.settings_debug_logging_step_warning),
-                    style = MaterialTheme.typography.labelMedium,
-                    color = MaterialTheme.colorScheme.error
-                )
-
-                if (isDebugEnabled) {
-                    Spacer(modifier = Modifier.height(5.dp))
-                    Text(
-                        text = stringResource(R.string.settings_debug_logging_step_warning_no_redaction),
-                        style = MaterialTheme.typography.labelMedium,
-                        fontWeight = FontWeight.Bold,
-                        color = MaterialTheme.colorScheme.error
-                    )
-                }
-
-                Spacer(modifier = Modifier.height(12.dp))
-
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                Button(
+                    onClick = onShareLogs,
+                    modifier = Modifier.fillMaxWidth()
                 ) {
-                    Button(
-                        onClick = onExportLogs,
-                        modifier = Modifier.weight(1f)
-                    ) {
-                        Text(stringResource(R.string.settings_debug_logging_generate_report))
-                    }
+                    Text(stringResource(R.string.settings_bugreport_share))
                 }
-            }
-        }
 
-        SettingsDivider()
-
-        SettingsToggleRow(
-            icon            = Icons.Filled.GraphicEq,
-            label           = stringResource(R.string.settings_debug_mode),
-            checked         = isDebugEnabled,
-            onCheckedChange = { actions.setDebugEnabled(it) },
-            description = stringResource(R.string.settings_debug_mode_description)
-        )
-        if (isDebugEnabled) {
-            Column(
-                modifier = Modifier.padding(16.dp),
-                verticalArrangement = Arrangement.spacedBy(12.dp)
-            ) {
-                var textState by remember(debugCallerNumber) { mutableStateOf(debugCallerNumber) }
-                val allowedChars = "^[0-9+-]*$".toRegex()
-                val keyboardController = LocalSoftwareKeyboardController.current
-
-                OutlinedTextField(
-                    value    = textState,
-                    onValueChange = { newValue ->
-                        if (newValue.matches(allowedChars)) {
-                            textState = newValue
-                            // We aggressively update the setting on every change so that
-                            // the test buttons always use the latest number.
-                            actions.setDebugCallerNumber(newValue)
-                        }
-                    },
-                    label    = { Text(stringResource(R.string.settings_debug_caller_number)) },
-                    modifier = Modifier.fillMaxWidth(),
-                    singleLine = true,
-                    keyboardOptions = KeyboardOptions(imeAction = ImeAction.Done, keyboardType = KeyboardType.Phone, showKeyboardOnFocus = true),
-                    keyboardActions = KeyboardActions(onDone = {
-                        actions.setDebugCallerNumber(textState)
-                        keyboardController?.hide()
-                    })
-                )
-                DebugActionGrid(actions)
+                Spacer(modifier = Modifier.height(4.dp))
             }
         }
     }
@@ -1012,39 +971,26 @@ private fun DebugSection(preferences: AppPreferences, updateTrigger: Int, action
 
 /** Shows the app version, server version, clipboard buttons, and a GitHub link.
  *
- * Tapping the version row [DEVELOPER_UNLOCK_TAPS] times in a row unlocks the hidden Debug section.
- *
  * @param versionString         The formatted app-version string to display.
  * @param onShowLicenses        Called when the user taps "View Licenses".
- * @param onUnlockDeveloperMode Called once the hidden 7-tap gesture completes.
  */
 @Composable
 private fun AboutSection(
     versionString: String,
     onShowLicenses: () -> Unit,
-    onUnlockDeveloperMode: () -> Unit,
     expanded: Boolean,
     onToggle: () -> Unit
 ) {
     val context = LocalContext.current
     val serverVersion = ScrcpyConfig.SCRCPY_VERSION
-    var versionTapCount by remember { mutableIntStateOf(0) }
 
     SettingsSection(title = stringResource(R.string.settings_section_about), expanded = expanded, onToggle = onToggle) {
-        // Hidden 7-tap developer unlock lives on the app-version row.
         NavigationRow(
             icon = Icons.Filled.Save,
             label = stringResource(R.string.settings_ui_about_app),
             value = versionString,
             supporting = stringResource(R.string.settings_scrcpy_server, serverVersion),
-            showChevron = false,
-            onClick = {
-                versionTapCount += 1
-                if (versionTapCount >= DEVELOPER_UNLOCK_TAPS) {
-                    versionTapCount = 0
-                    onUnlockDeveloperMode()
-                }
-            }
+            showChevron = false
         )
 
         SettingsDivider()
@@ -1201,14 +1147,14 @@ private fun NavigationRow(
     icon: ImageVector,
     label: String,
     value: String,
-    onClick: () -> Unit,
+    onClick: (() -> Unit)? = null,
     supporting: String? = null,
     showChevron: Boolean = true
 ) {
     Row(
         modifier = Modifier
             .fillMaxWidth()
-            .clickable { onClick() }
+            .then(if (onClick != null) Modifier.clickable { onClick() } else Modifier)
             .padding(horizontal = 16.dp, vertical = 12.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {
@@ -1357,33 +1303,6 @@ private fun IgnoreContactsOptions(
     }
 }
 
-/** A row of buttons for simulating different call events during testing.
- *
- * @param actions Called via proxy for each button press.
- */
-@Composable
-private fun DebugActionGrid(actions: SettingsActions) {
-    val items = listOf(
-        DebugAction.RINGING  to stringResource(R.string.settings_debug_action_ringing),
-        DebugAction.OFFHOOK  to stringResource(R.string.settings_debug_action_offhook),
-        DebugAction.IDLE     to stringResource(R.string.settings_debug_action_idle)
-    )
-    Row(
-        horizontalArrangement = Arrangement.spacedBy(8.dp),
-        modifier = Modifier.fillMaxWidth()
-    ) {
-        items.forEach { (action, label) ->
-            FilledTonalButton(
-                onClick = { actions.triggerDebugAction(action) },
-                modifier = Modifier.weight(1f),
-                contentPadding = PaddingValues(horizontal = 4.dp)
-            ) {
-                Text(label, style = MaterialTheme.typography.labelSmall)
-            }
-        }
-    }
-}
-
 /**
  * Safe Compose Preview for Settings.
  */
@@ -1410,11 +1329,6 @@ private fun SettingsScreenPreview() {
             override fun setShowToastsEnabled(enabled: Boolean) {}
             override fun setAppLanguage(languageCode: String) {}
             override fun setLoggingEnabled(enabled: Boolean) {}
-            override fun setDebugEnabled(enabled: Boolean) {}
-            override fun setDebugCallerNumber(number: String) {}
-            override fun unlockDeveloperMode() {}
-            override fun triggerDebugAction(action: DebugAction) {}
-            override fun exportLogs(uri: Uri) {}
             override fun getAppVersion(): String = "Version 1.0.0 (Mock)"
             override fun setFileNameTemplate(template: String) {}
             override fun setStorageTarget(target: StorageTarget) {}
@@ -1438,7 +1352,7 @@ private fun SettingsScreenPreview() {
             onOpenContactsOutgoing = {},
             onConfirmContacts = {},
             onDismissContacts = {},
-            onExportLogs = {}
+            onShareLogs = {}
         )
     }
 }
