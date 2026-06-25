@@ -77,14 +77,6 @@
     <string name="audio_source_voice_performance_description">Высокоскоростной режим микрофона для живой музыки и приложений для работы со звуком в реальном времени.</string>
     <string name="settings_debug_logging_enabled">Включить логи записи</string>
     <string name="settings_debug_logging_enabled_description">Чтобы сообщить об ошибке, включите это, перезапустите приложение, и повторите проблему.</string>
-    <string name="settings_debug_logging_title">Шаги сообщения об ошибке</string>
-    <string name="settings_debug_logging_steps">1. Проверьте, не сообщали ли об этой проблеме на GitHub ранее. Если нет, переходите к следующему шагу.\n 2. Воспроизведите ошибку, не выключая запись логов.\n 3. Нажмите «Создать отчет» ниже, чтобы сохранить логи на телефон.\n 4. Нажмите «Сообщить на GitHub», чтобы открыть новую тему, заполните поля и прикрепите файл логов.</string>
-    <string name="settings_debug_logging_step_warning">Пожалуйста, проверьте созданный файл на наличие личных данных перед отправкой. По окончании не забудьте отключить запись логов.</string>
-    <string name="settings_debug_logging_step_warning_no_redaction">⚠️ Включен режим отладки. Скрытие личных данных в логах отключено.</string>
-    <string name="settings_debug_logging_generate_report">Создать отчёт</string>
-    <string name="settings_debug_mode">Включить режим отладки</string>
-    <string name="settings_debug_mode_description">Показывать меню разработчика и не скрывать личные данные в логах.</string>
-    <string name="settings_debug_caller_number">Отладка телефонного номера</string>
     <string name="settings_copy_version">Копировать версию</string>
     <string name="settings_view_licenses">Посмотреть лицензии</string>
     <string name="contact_search_hint">Искать по имени или номеру...</string>
