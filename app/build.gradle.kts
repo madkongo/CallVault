@@ -148,8 +148,13 @@ android {
     }
     buildTypes {
         release {
-            isMinifyEnabled = true
-            isShrinkResources = true
+            // R8/minification is DISABLED: the privileged recorder daemon is launched out-of-process
+            // by `app_process` via a string classpath reference (com.baba.callvault.server.RecorderServer),
+            // so R8 can't see it as reachable and strips its internals — breaking recording. This matches
+            // the (un-minified) v1.1.x releases. Re-enabling minify would require comprehensive -keep rules
+            // for the whole daemon class graph plus on-device verification.
+            isMinifyEnabled = false
+            isShrinkResources = false
             proguardFiles(
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro"

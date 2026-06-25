@@ -19,8 +19,9 @@ user-facing debug/bug-report flow and an audio default better suited to voice.
 ### Changed
 - **Removed the hidden "Developer Options"** (the 7-tap unlock, test-call simulator, and the
   redaction-off "Debug mode"). Log **redaction is now always on** and cannot be turned off.
-- After a reboot the app briefly shows **"Call recorder starting up…"**, flipping to **"Ready to record
-  calls"** once recording is actually possible — so you know when a call will be captured.
+- After a reboot **or an app update** the app briefly shows **"Call recorder starting up…"**, flipping
+  to **"Ready to record calls"** once recording is actually possible — so you know when a call will be
+  captured. Only appears while the recorder daemon is cold (nothing shown when it's already warm).
 
 ### Fixed
 - **First call after a reboot now records.** A new bounded post-boot **live call-state listener**
