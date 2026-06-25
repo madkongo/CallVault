@@ -10,8 +10,10 @@ package com.baba.callvault
 
 import android.app.Application
 import com.baba.callvault.data.AppPreferences
+import com.baba.callvault.server.RecorderConnection
 import com.baba.callvault.server.RecorderServerLauncher
 import com.baba.callvault.services.debug.DebugNotificationHelper
+import com.baba.callvault.services.recording.RecorderReadinessNotifier
 import com.baba.callvault.system.storage.RetentionScheduler
 import com.baba.callvault.utils.AppLogger
 
@@ -43,8 +45,20 @@ class CallVaultApplication : Application() {
         // WD is off when idle, with no user action. Best-effort; the call path also ensures it on demand.
         if (AppPreferences(applicationContext).isAdbPaired()) {
             Thread {
-                runCatching { RecorderServerLauncher.ensureServerRunning(applicationContext) }
+                // If the daemon is cold at app start (fresh install/update, post-reboot, or after the OS
+                // killed us), surface a "starting up… → ready to record" notification so the user knows
+                // when a call will actually be captured — the same signal the post-reboot path gives.
+                val coldAtStart = !RecorderConnection.isConnected
+                if (coldAtStart) RecorderReadinessNotifier.showStarting(applicationContext)
+
+                val connected = runCatching { RecorderServerLauncher.ensureServerRunning(applicationContext) }
                     .onFailure { AppLogger.w(TAG, "Startup recorder-daemon warmup failed: ${it.message}") }
+                    .getOrDefault(false)
+
+                if (coldAtStart) {
+                    if (connected) RecorderReadinessNotifier.showReadyThenDismiss(applicationContext)
+                    else RecorderReadinessNotifier.dismiss(applicationContext)
+                }
             }.apply { isDaemon = true }.start()
         }
     }
