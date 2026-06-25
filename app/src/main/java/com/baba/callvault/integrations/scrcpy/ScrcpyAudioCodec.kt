@@ -14,6 +14,14 @@ import com.baba.callvault.R
 import com.baba.callvault.services.recording.RecordingForegroundService
 
 /**
+ * Recommended bit rate (bps) for voice/call recording: 24 kbps is plenty for intelligible speech,
+ * and going higher only inflates file size. Used as the Opus default and flagged "Recommended" in the
+ * bit-rate picker. Top-level (not in the companion) so it can be referenced from an enum entry
+ * initializer below.
+ */
+const val RECOMMENDED_AUDIO_BIT_RATE = 24000
+
+/**
  * The audio codecs supported by scrcpy-server, each carrying all container metadata needed
  * by [ScrcpyAudioMuxer] and [RecordingForegroundService].
  *
@@ -40,7 +48,8 @@ enum class ScrcpyAudioCodec(
 
     /**
      * Opus codec — preferred for call recording because it delivers intelligible voice quality
-     * at very low bit rates (16 kbps).
+     * at very low bit rates. We default to [RECOMMENDED_AUDIO_BIT_RATE] (24 kbps): for voice/call audio
+     * higher bit rates add size without audible benefit, and lower ones aren't worth it.
      * Recordings are stored in an OGG container ([MediaMuxer.OutputFormat.MUXER_OUTPUT_OGG],
      * available since Android 10 / API 29).
      *
@@ -49,7 +58,7 @@ enum class ScrcpyAudioCodec(
     OPUS(
         cliKey             = "opus",
         codecFourCC        = 0x6F707573,
-        defaultBitRate     = 16000,
+        defaultBitRate     = RECOMMENDED_AUDIO_BIT_RATE,
         outputFormat       = MediaMuxer.OutputFormat.MUXER_OUTPUT_OGG,
         mimeType           = MediaFormat.MIMETYPE_AUDIO_OPUS,
         containerExtension = ".ogg",

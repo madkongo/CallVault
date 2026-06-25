@@ -12,6 +12,7 @@ import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
 import com.baba.callvault.data.AppPreferences
+import com.baba.callvault.services.call.CallMonitorService
 import com.baba.callvault.utils.AppLogger
 
 /**
@@ -23,8 +24,11 @@ class BootReceiver : BroadcastReceiver() {
         val action = intent?.action ?: return
         if (action != Intent.ACTION_BOOT_COMPLETED && action != "android.intent.action.QUICKBOOT_POWERON") return
         if (!AppPreferences(context).isAdbPaired()) return
-        AppLogger.i(TAG, "Boot completed; starting ADB connection service")
+        AppLogger.i(TAG, "Boot completed; starting ADB connection service + post-boot call monitor")
         AdbConnectionService.start(context)
+        // Hold a live telephony listener for a bounded window so the first call(s) after a reboot are
+        // detected in real time, instead of via the post-boot-delayed PHONE_STATE broadcast.
+        CallMonitorService.start(context)
     }
 
     companion object {

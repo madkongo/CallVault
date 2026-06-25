@@ -138,6 +138,19 @@
             android:exported="true" />
 
 
+        <!-- FileProvider used to share the diagnostic log report via the system share-sheet
+             (ACTION_SEND). Not exported; access is granted per-share via temporary read URI
+             permissions. Only the cache/logs sub-folder is exposed (see res/xml/file_paths.xml). -->
+        <provider
+            android:name="androidx.core.content.FileProvider"
+            android:authorities="${applicationId}.fileprovider"
+            android:exported="false"
+            android:grantUriPermissions="true">
+            <meta-data
+                android:name="android.support.FILE_PROVIDER_PATHS"
+                android:resource="@xml/file_paths" />
+        </provider>
+
         <!-- Foreground service used by BootReceiver to reconnect ADB off the main thread -->
         <service
             android:name=".services.boot.AdbConnectionService"
@@ -146,6 +159,18 @@
             <property
                 android:name="android.app.PROPERTY_SPECIAL_USE_FGS_SUBTYPE"
                 android:value="Re-establish ADB wireless-debugging connection after boot." />
+        </service>
+
+        <!-- Post-boot foreground service that holds a LIVE telephony call-state listener for a bounded
+             window, so the first call(s) after a reboot are detected in real time instead of via the
+             post-boot-delayed PHONE_STATE broadcast. Stops itself after the window. -->
+        <service
+            android:name=".services.call.CallMonitorService"
+            android:exported="false"
+            android:foregroundServiceType="specialUse">
+            <property
+                android:name="android.app.PROPERTY_SPECIAL_USE_FGS_SUBTYPE"
+                android:value="Call recording: listen for call state after reboot to record reliably." />
         </service>
 
     </application>

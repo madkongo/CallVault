@@ -59,6 +59,15 @@ class PhoneStateReceiver : BroadcastReceiver() {
 
         AppLogger.v(TAG, "Raw broadcast received: state=$state number=$number")
 
+        // During the post-boot window, CallMonitorService holds a LIVE telephony listener and is the
+        // authoritative call-state source. The PHONE_STATE broadcast can be delivered seconds late on a
+        // freshly-booted system (after the call has already ended), which would otherwise spawn a stale
+        // session for a call that's over. So while the live listener is active, defer to it.
+        if (CallMonitorService.isListening) {
+            AppLogger.v(TAG, "CallMonitorService active; deferring to the live listener (broadcast ignored)")
+            return
+        }
+
         // Forward the phone state and number to the session manager.
         // We now forward everything (including null) to let the CallSessionManager handle the Verification Window.
         CallSessionManager.getInstance(context).handlePhoneState(state, number)

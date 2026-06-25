@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  ~ CallVault: FOSS call recording, self-contained over embedded ADB
+  ~  Copyright (C) 2026-present The CallVault Authors
+  ~  Licensed under the GNU General Public License v3 or later (see LICENSE).
+  -->
+<paths>
+    <!-- Exposes the diagnostic report written by AppLogger.buildShareableReport() so it can be
+         attached to a share-sheet (ACTION_SEND) via FileProvider. Limited to the dedicated
+         cache/logs sub-folder so nothing else in the cache directory is shareable. -->
+    <cache-path name="debug_logs" path="logs/" />
+</paths>

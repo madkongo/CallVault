@@ -3,6 +3,40 @@
 All notable changes to CallVault are documented here. The format is based on
 [Keep a Changelog](https://keepachangelog.com/), and this project uses semantic-ish versioning.
 
+## [1.2.0] — unreleased
+
+A reliability release focused on **recording the first call after a reboot**, plus a rebuilt,
+user-facing debug/bug-report flow and an audio default better suited to voice.
+
+### Added
+- **Debug section (always visible).** Settings now has a simple **Debug** section: turn on diagnostic
+  logging, see an **"ON" reminder** (in-app warning + a persistent notification) so you don't leave it
+  running, and **Share debug logs** in one tap via the system share-sheet to send a bug report. Logs
+  are phone-number **redacted**.
+- **24 kbps audio bit rate**, flagged **Recommended** and now the **default** for Opus — plenty for
+  intelligible voice; higher rates only inflate file size.
+
+### Changed
+- **Removed the hidden "Developer Options"** (the 7-tap unlock, test-call simulator, and the
+  redaction-off "Debug mode"). Log **redaction is now always on** and cannot be turned off.
+- After a reboot the app briefly shows **"Call recorder starting up…"**, flipping to **"Ready to record
+  calls"** once recording is actually possible — so you know when a call will be captured.
+
+### Fixed
+- **First call after a reboot now records.** A new bounded post-boot **live call-state listener**
+  detects calls in real time instead of relying on the system `PHONE_STATE` broadcast, which on a
+  freshly-booted device could arrive **~9 seconds late** — after the call had already ended.
+- **Faster recorder warm-up after boot** (~5 s vs ~15 s): trimmed a redundant Wireless-Debugging wait
+  and skip the stale-daemon scan in the first 90 s after boot (a reboot already cleared any daemon).
+- **Daemon cold-start no longer over-waits.** The launcher returns the instant the daemon's binder
+  arrives instead of blocking out the full keep-alive window, recovering calls that were previously
+  aborted 1–3 s too late.
+- **Redaction can no longer be left disabled.** A leftover developer "Debug mode" flag could keep real
+  phone numbers in shared logs; redaction is now unconditional.
+- **Number-less recordings rename correctly.** The end-of-call CallLog rename now uses
+  `DocumentsContract.renameDocument` (the previous call threw on single-document SAF URIs), so files
+  get the contact/number in their name.
+
 ## [1.1.1] — unreleased
 
 A stability + features release built on top of v1.1.0. It keeps v1.1.0's proven on-demand

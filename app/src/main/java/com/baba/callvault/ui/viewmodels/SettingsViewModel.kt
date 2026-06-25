@@ -9,14 +9,11 @@
 package com.baba.callvault.ui.viewmodels
 
 import android.app.Application
-import android.widget.Toast
 import androidx.appcompat.app.AppCompatDelegate
 import androidx.core.os.LocaleListCompat
 import androidx.lifecycle.AndroidViewModel
-import androidx.lifecycle.viewModelScope
 import com.baba.callvault.BuildConfig
-import com.baba.callvault.R
-import com.baba.callvault.services.call.CallSessionManager
+import com.baba.callvault.services.debug.DebugNotificationHelper
 import com.baba.callvault.data.AppPreferences
 import com.baba.callvault.data.StorageTarget
 import com.baba.callvault.integrations.scrcpy.ScrcpyAudioCodec
@@ -25,25 +22,9 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
-import kotlinx.coroutines.launch
 import com.baba.callvault.utils.AppLogger
 
 // -------- Screen state & action types owned by this ViewModel
-
-/**
- * The four phone-call lifecycle events that can be simulated from the debug panel.
- *
- * Used by [SettingsViewModel.triggerDebugAction] to fire a broadcast that exercises the
- * recording pipeline without needing a real phone call.
- */
-enum class DebugAction {
-    /** Simulate an incoming call starting to ring. */
-    RINGING,
-    /** Simulate the call being answered (off-hook) or an outgoing call being placed. */
-    OFFHOOK,
-    /** Simulate the call being idle (no active call). */
-    IDLE
-}
 
 /**
  * Interface defining all user actions that can be triggered from the Settings screen.
@@ -66,11 +47,6 @@ interface SettingsActions {
     fun setShowToastsEnabled(enabled: Boolean)
     fun setAppLanguage(languageCode: String)
     fun setLoggingEnabled(enabled: Boolean)
-    fun setDebugEnabled(enabled: Boolean)
-    fun setDebugCallerNumber(number: String)
-    fun unlockDeveloperMode()
-    fun triggerDebugAction(action: DebugAction)
-    fun exportLogs(uri: android.net.Uri)
     fun getAppVersion(): String
     fun setFileNameTemplate(template: String)
     fun setStorageTarget(target: StorageTarget)
@@ -374,71 +350,20 @@ class SettingsViewModel(application: Application) : AndroidViewModel(application
 
     // -------- Debug settings
 
-    /** Enables or disables application background logging.
+    /** Turns diagnostic logging on or off.
      *
-     * @param enabled `true` to log application flow.
+     * Turning it **on** clears any previous capture so each bug report is a fresh, focused log.
+     * Turning it **off** keeps the captured log on disk so the user can still share it afterwards.
+     * Either way the persistent "debug logging is on" reminder is posted/cleared to match.
+     *
+     * @param enabled `true` to start capturing application logs.
      */
     override fun setLoggingEnabled(enabled: Boolean) {
-        preferences.setLoggingEnabled(enabled)
-        if (!enabled) {
+        if (enabled) {
             AppLogger.clearLogs()
         }
+        preferences.setLoggingEnabled(enabled)
+        DebugNotificationHelper.sync(appContext)
         refresh()
-    }
-
-    /** Enables or disables the debug panel and other internal debug checks like log redactions.
-     *
-     * @param enabled `true` to show the debug panel.
-     */
-    override fun setDebugEnabled(enabled: Boolean) {
-        preferences.setDebugEnabled(enabled)
-        refresh()
-    }
-
-    /**
-     * Saves the phone number used when simulating a call in debug mode.
-     * Does not call [refresh] because the text field already shows the correct value.
-     *
-     * @param number The phone number to simulate (digits, `+`, and `-` only).
-     */
-    override fun setDebugCallerNumber(number: String) {
-        preferences.setDebugCallerNumber(number)
-    }
-
-    /**
-     * Unlocks the hidden developer options (the Debug section). Triggered by the 7-tap gesture on
-     * the app-version row. Idempotent: if already unlocked, only re-shows the confirmation toast.
-     */
-    override fun unlockDeveloperMode() {
-        preferences.setDeveloperModeUnlocked(true)
-        Toast.makeText(appContext, R.string.settings_developer_mode_unlocked, Toast.LENGTH_SHORT).show()
-        refresh()
-    }
-
-    /**
-     * Fires a simulated call broadcast so you can test the recording flow without making
-     * a real phone call.
-     *
-     * @param action The type of simulated call event to fire (see [DebugAction]).
-     */
-    override fun triggerDebugAction(action: DebugAction) {
-        viewModelScope.launch {
-            val actionType = when (action) {
-                DebugAction.IDLE     -> CallSessionManager.ACTION_DEBUG_IDLE
-                DebugAction.RINGING  -> CallSessionManager.ACTION_DEBUG_RINGING
-                DebugAction.OFFHOOK  -> CallSessionManager.ACTION_DEBUG_OFFHOOK
-            }
-            CallSessionManager.getInstance(appContext).handleDebugAction(actionType)
-        }
-    }
-
-    /**
-     * Exports the application logs to a user-selected SAF file destination.
-     * Starts an async coroutine to avoid blocking the main UI thread during physical disk writes.
-     */
-    override fun exportLogs(uri: android.net.Uri) {
-        viewModelScope.launch(kotlinx.coroutines.Dispatchers.IO) {
-            AppLogger.exportReport(appContext, uri)
-        }
     }
 }
