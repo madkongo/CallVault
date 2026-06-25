@@ -90,14 +90,6 @@
     <string name="audio_source_voice_performance_description">Chế độ micro tốc độ cao được thiết kế cho nhạc sống và các ứng dụng âm thanh thời gian thực.</string>
     <string name="settings_debug_logging_enabled">Bật ghi nhật ký</string>
     <string name="settings_debug_logging_enabled_description">Để báo cáo lỗi, hãy bật chức năng này, khởi động lại ứng dụng và tái hiện lỗi.</string>
-    <string name="settings_debug_logging_title">Các bước báo cáo lỗi</string>
-    <string name="settings_debug_logging_steps">1. Kiểm tra xem sự cố của bạn đã được báo cáo trên GitHub chưa, nếu chưa, hãy tiếp tục.\n2. Tái hiện lỗi trong khi vẫn bật ghi nhật ký.\n3. Nhấn Tạo báo cáo bên dưới để lưu nhật ký vào điện thoại của bạn.\n4. Nhấn Báo cáo trên GitHub để mở một sự cố mới, điền đầy đủ thông tin và đính kèm tệp nhật ký.</string>
-    <string name="settings_debug_logging_step_warning">Vui lòng xem lại tệp được tạo để kiểm tra thông tin nhạy cảm trước khi chia sẻ. Sau khi hoàn tất, hãy tắt chức năng ghi nhật ký.</string>
-    <string name="settings_debug_logging_step_warning_no_redaction">⚠️ Chế độ gỡ lỗi đang BẬT. Chức năng ẩn nhật ký đã bị vô hiệu hóa.</string>
-    <string name="settings_debug_logging_generate_report">Tạo báo cáo</string>
-    <string name="settings_debug_mode">Bật chế độ gỡ lỗi</string>
-    <string name="settings_debug_mode_description">Hiển thị tùy chọn dành cho nhà phát triển, tắt tính năng ẩn nhật ký.</string>
-    <string name="settings_debug_caller_number">Gỡ lỗi số điện thoại</string>
     <string name="settings_copy_version">Sao chép phiên bản</string>
     <string name="settings_view_licenses">Xem giấy phép</string>
     <string name="contact_search_hint">Tìm kiếm theo tên hoặc số...</string>
