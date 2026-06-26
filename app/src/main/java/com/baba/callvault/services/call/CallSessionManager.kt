@@ -283,6 +283,27 @@ class CallSessionManager private constructor(context: Context) {
         session.wasRecordingServiceStartIntentSend = true
     }
 
+    /**
+     * Entry point for the [com.baba.callvault.calls.CallEventRouter] sink.
+     * Maps a normalized [com.baba.callvault.calls.CallEvent] onto the existing [handlePhoneState]
+     * pipeline without touching any recording-decision logic.
+     *
+     * Phase → TelephonyManager EXTRA_STATE mapping:
+     *  RINGING  → EXTRA_STATE_RINGING  (incoming ring)
+     *  DIALING  → EXTRA_STATE_OFFHOOK  (outgoing dial, treated as OFFHOOK by the pipeline)
+     *  ACTIVE   → EXTRA_STATE_OFFHOOK  (call answered / active)
+     *  ENDED    → EXTRA_STATE_IDLE     (call finished)
+     */
+    fun onCallEvent(event: com.baba.callvault.calls.CallEvent) {
+        val stateString = when (event.phase) {
+            com.baba.callvault.calls.CallEvent.Phase.RINGING -> TelephonyManager.EXTRA_STATE_RINGING
+            com.baba.callvault.calls.CallEvent.Phase.DIALING -> TelephonyManager.EXTRA_STATE_OFFHOOK
+            com.baba.callvault.calls.CallEvent.Phase.ACTIVE  -> TelephonyManager.EXTRA_STATE_OFFHOOK
+            com.baba.callvault.calls.CallEvent.Phase.ENDED   -> TelephonyManager.EXTRA_STATE_IDLE
+        }
+        handlePhoneState(stateString, event.number)
+    }
+
     @Synchronized
     fun handleDebugAction(action: String) {
         if (!preferences.isDebugEnabled()) {

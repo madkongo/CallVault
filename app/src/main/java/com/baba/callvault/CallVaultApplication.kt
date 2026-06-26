@@ -9,6 +9,7 @@
 package com.baba.callvault
 
 import android.app.Application
+import com.baba.callvault.calls.CallDetection
 import com.baba.callvault.data.AppPreferences
 import com.baba.callvault.server.RecorderConnection
 import com.baba.callvault.server.RecorderServerLauncher
@@ -28,6 +29,11 @@ class CallVaultApplication : Application() {
     override fun onCreate() {
         super.onCreate()
         AppLogger.init(applicationContext)
+
+        // Initialise the process-wide call-event routing singleton and set detection mode from
+        // the saved preference (BROADCAST = recording-only mode; TELECOM = dialer mode).
+        CallDetection.init(applicationContext)
+        CallDetection.setMode(AppPreferences(applicationContext).isDialerModeEnabled())
 
         // Re-assert the "debug logging is on" reminder if the user left logging enabled across an
         // app restart, so the nudge to turn it back off survives process death.

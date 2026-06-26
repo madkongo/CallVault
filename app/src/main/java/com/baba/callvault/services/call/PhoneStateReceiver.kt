@@ -12,6 +12,11 @@ import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
 import android.telephony.TelephonyManager
+import com.baba.callvault.calls.CallDetection
+import com.baba.callvault.calls.CallDirection
+import com.baba.callvault.calls.CallEvent
+import com.baba.callvault.data.AppPreferences
+import com.baba.callvault.dialer.BroadcastCallEventSource
 import com.baba.callvault.utils.AppLogger
 
 /**
@@ -59,6 +64,13 @@ class PhoneStateReceiver : BroadcastReceiver() {
 
         AppLogger.v(TAG, "Raw broadcast received: state=$state number=$number")
 
+        // In dialer mode the InCallService (Telecom) is the authoritative call-state source.
+        // Let it own detection entirely; ignore this broadcast.
+        if (AppPreferences(context).isDialerModeEnabled()) {
+            AppLogger.v(TAG, "Dialer mode active; broadcast detection deferred to Telecom (broadcast ignored)")
+            return
+        }
+
         // During the post-boot window, CallMonitorService holds a LIVE telephony listener and is the
         // authoritative call-state source. The PHONE_STATE broadcast can be delivered seconds late on a
         // freshly-booted system (after the call has already ended), which would otherwise spawn a stale
@@ -68,8 +80,23 @@ class PhoneStateReceiver : BroadcastReceiver() {
             return
         }
 
-        // Forward the phone state and number to the session manager.
-        // We now forward everything (including null) to let the CallSessionManager handle the Verification Window.
-        CallSessionManager.getInstance(context).handlePhoneState(state, number)
+        // Map the raw telephony state string to a normalized CallEvent and route it through the
+        // CallEventRouter. The router forwards only events from the currently active source
+        // (BROADCAST in recording-only mode), ensuring mutual exclusion with the Telecom path.
+        val phase = when (state) {
+            TelephonyManager.EXTRA_STATE_RINGING -> CallEvent.Phase.RINGING
+            TelephonyManager.EXTRA_STATE_OFFHOOK -> CallEvent.Phase.ACTIVE
+            TelephonyManager.EXTRA_STATE_IDLE    -> CallEvent.Phase.ENDED
+            else -> return  // unknown state; handlePhoneState would also ignore it
+        }
+        // Direction is only unambiguous at RINGING (always incoming). OFFHOOK/IDLE direction is
+        // derived inside CallSessionManager from the session state sequence, so UNKNOWN is safe here.
+        val direction = if (state == TelephonyManager.EXTRA_STATE_RINGING) {
+            CallDirection.INCOMING
+        } else {
+            CallDirection.UNKNOWN
+        }
+        val event = CallEvent(phase, number, direction, isEmergency = false)
+        BroadcastCallEventSource(CallDetection.router).emit(event)
     }
 }
