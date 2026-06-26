@@ -16,7 +16,6 @@ import com.baba.callvault.calls.CallDetection
 import com.baba.callvault.calls.CallDirection
 import com.baba.callvault.calls.CallEvent
 import com.baba.callvault.data.AppPreferences
-import com.baba.callvault.dialer.BroadcastCallEventSource
 import com.baba.callvault.utils.AppLogger
 
 /**
@@ -97,6 +96,6 @@ class PhoneStateReceiver : BroadcastReceiver() {
             CallDirection.UNKNOWN
         }
         val event = CallEvent(phase, number, direction, isEmergency = false)
-        BroadcastCallEventSource(CallDetection.router).emit(event)
+        CallDetection.emitBroadcast(event)
     }
 }

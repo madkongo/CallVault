@@ -32,8 +32,10 @@ class CallVaultApplication : Application() {
 
         // Initialise the process-wide call-event routing singleton and set detection mode from
         // the saved preference (BROADCAST = recording-only mode; TELECOM = dialer mode).
-        CallDetection.init(applicationContext)
-        CallDetection.setMode(AppPreferences(applicationContext).isDialerModeEnabled())
+        runCatching {
+            CallDetection.init(applicationContext)
+            CallDetection.setMode(AppPreferences(applicationContext).isDialerModeEnabled())
+        }.onFailure { AppLogger.e(TAG, "CallDetection init failed", it) }
 
         // Re-assert the "debug logging is on" reminder if the user left logging enabled across an
         // app restart, so the nudge to turn it back off survives process death.

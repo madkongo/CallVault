@@ -9,7 +9,7 @@ class CallDetectionSinkTest {
         val router = CallEventRouter(sink = { seen.add(it) })
         router.setActiveMode(DetectionMode.BROADCAST)
         val src = com.baba.callvault.dialer.BroadcastCallEventSource(router)
-        src.emit(CallEvent(CallEvent.Phase.ACTIVE, "1", CallDirection.OUTGOING, false))
+        src.emit(CallEvent(CallEvent.Phase.ACTIVE, "1", CallDirection.UNKNOWN, false))
         assertEquals(1, seen.size)
     }
 }

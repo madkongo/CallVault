@@ -16,6 +16,8 @@ object CallDetection {
     lateinit var router: CallEventRouter
         private set
 
+    val isInitialized: Boolean get() = ::router.isInitialized
+
     fun init(context: Context) {
         if (::router.isInitialized) return
         val mgr = CallSessionManager.getInstance(context)
@@ -24,5 +26,10 @@ object CallDetection {
 
     fun setMode(dialer: Boolean) {
         router.setActiveMode(if (dialer) DetectionMode.TELECOM else DetectionMode.BROADCAST)
+    }
+
+    /** Emits a broadcast-path event into the router without allocating a source wrapper. No-op if not yet initialized. */
+    fun emitBroadcast(event: CallEvent) {
+        if (::router.isInitialized) router.submit(DetectionMode.BROADCAST, event)
     }
 }
