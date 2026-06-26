@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Auto-completed translations. Do not hand-edit placeholders (%1$s etc.). -->
+<resources xmlns:tools="http://schemas.android.com/tools">
+    <string name="disclaimer_ui_body_header">Disclaimer</string>
+    <string name="disclaimer_ui_hero_subtitle">Registrazione delle chiamate FOSS, alle Sue condizioni. Legga il disclaimer prima di continuare.</string>
+    <string name="disclaimer_ui_scroll_hint">Scorra fino alla fine per attivare la casella.</string>
+    <string name="permission_adb_desc_short">Necessario per registrare l\'audio delle chiamate.</string>
+    <string name="permission_adb_hint">Tocchi Autorizza, poi inserisca il codice di abbinamento dalla notifica.</string>
+    <string name="permission_adb_hint_wd_on">Tocchi Autorizza, poi inserisca il codice di abbinamento dalla schermata Debug wireless.</string>
+    <string name="permission_adb_open_device_info">Apri informazioni dispositivo</string>
+    <string name="permission_adb_open_wd">Apri Debug wireless</string>
+    <string name="permission_adb_pair">Abbina</string>
+    <string name="permission_devmode_enable_hint">Per attivarle: Impostazioni → Info sul telefono → tocchi 7 volte Numero build.</string>
+    <string name="permission_devmode_off">Le Opzioni sviluppatore sono disattivate</string>
+    <string name="permission_devmode_on">Opzioni sviluppatore: attive</string>
+    <string name="permission_devmode_open_device_info">Apri informazioni dispositivo</string>
+    <string name="permission_devmode_open_wd">Apri Debug wireless</string>
+    <string name="permission_wd_enable_hint">Per attivarlo: Opzioni sviluppatore → Debug wireless.</string>
+    <string name="permission_wd_off">Il Debug wireless è disattivato</string>
+    <string name="permission_wd_on">Debug wireless: attivo</string>
+    <string name="permissions_status_adb_connected">Connesso</string>
+    <string name="permissions_status_adb_not_connected">Non connesso</string>
+    <string name="permissions_ui_eyebrow">Configurazione</string>
+    <string name="permissions_ui_hero_subtitle">Alcune autorizzazioni servono a CallVault per registrare ed etichettare le Sue chiamate. Approvi ogni elemento qui sotto.</string>
+    <string name="permissions_ui_hero_title">Iniziamo la configurazione</string>
+    <string name="permissions_ui_section_label">Autorizzazioni</string>
+</resources>

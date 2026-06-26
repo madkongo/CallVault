@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Auto-completed translations. Do not hand-edit placeholders (%1$s etc.). -->
+<resources xmlns:tools="http://schemas.android.com/tools">
+    <string name="home_hero_pill_no_folder">需要操作</string>
+    <string name="home_hero_pill_not_paired">需要操作</string>
+    <string name="home_hero_pill_ready">运行中</string>
+    <string name="home_hero_status_label">状态</string>
+    <string name="home_play_recording">播放录音</string>
+    <string name="home_recordings_count">已保存 %1$d 个</string>
+    <string name="home_recordings_empty_hint">当 CallVault 录制通话后，会显示在这里。拨打或接听一通电话即可开始。</string>
+    <string name="home_recordings_empty_title">暂无录音</string>
+</resources>

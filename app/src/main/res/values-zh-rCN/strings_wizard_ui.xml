@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Auto-completed translations. Do not hand-edit placeholders (%1$s etc.). -->
+<resources xmlns:tools="http://schemas.android.com/tools">
+    <string name="wizard_ui_auto_incoming_desc">来电时自动开始录音。</string>
+    <string name="wizard_ui_auto_outgoing_desc">拨打电话时自动开始录音。</string>
+    <string name="wizard_ui_eyebrow">设置</string>
+    <string name="wizard_ui_folder_choose">选择文件夹</string>
+    <string name="wizard_ui_schedule_daily_desc">汇总当天的通话，每天上传一次。</string>
+    <string name="wizard_ui_schedule_immediate_desc">每通通话结束的瞬间即上传。</string>
+    <string name="wizard_ui_schedule_weekly_desc">汇总本周的通话，每周上传一次。</string>
+    <string name="wizard_ui_storage_both_desc">在本手机保留一份副本，并备份到 Google Drive。</string>
+    <string name="wizard_ui_storage_drive_desc">录音上传到你的 Google Drive 文件夹，然后从本手机清除。</string>
+    <string name="wizard_ui_storage_local_desc">录音保留在本手机上，不会离开设备。</string>
+</resources>

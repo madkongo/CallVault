@@ -113,8 +113,8 @@ val extractLibphonenumberMetadata = tasks.register<ExtractMetadataTask>("extract
 // (versionCode = the CI run number), but local builds and the in-app "About" version use these
 // defaults — so BUMP versionName here every release to match the CHANGELOG and the version dispatched
 // to the build workflow.
-val ciVersionCode = providers.gradleProperty("versionCode").map { it.toIntOrNull() }.orElse(10200)
-val ciVersionName = providers.gradleProperty("versionName").orElse("1.2.0")
+val ciVersionCode = providers.gradleProperty("versionCode").map { it.toIntOrNull() }.orElse(10201)
+val ciVersionName = providers.gradleProperty("versionName").orElse("1.2.1")
 val ciBuildNumber = providers.gradleProperty("ciBuildNumber").orElse("Local")
 
 android {
@@ -183,6 +183,13 @@ android {
     }
     androidResources {
         generateLocaleConfig = true
+    }
+    lint {
+        // Fail the build if any shipped locale is missing a translatable string, or has a
+        // stale key that no longer exists in the default resources. This prevents the
+        // "first page stays English" class of regressions where new strings ship untranslated.
+        warningsAsErrors = false
+        error += setOf("MissingTranslation", "ExtraTranslation")
     }
 }
 

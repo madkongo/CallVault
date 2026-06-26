@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Auto-completed translations. Do not hand-edit placeholders (%1$s etc.). -->
+<resources xmlns:tools="http://schemas.android.com/tools">
+    <string name="home_hero_pill_no_folder">Требуется действие</string>
+    <string name="home_hero_pill_not_paired">Требуется действие</string>
+    <string name="home_hero_pill_ready">Активно</string>
+    <string name="home_hero_status_label">Статус</string>
+    <string name="home_play_recording">Воспроизвести запись</string>
+    <string name="home_recordings_count">%1$d сохранено</string>
+    <string name="home_recordings_empty_hint">Когда CallVault запишет звонок, он появится здесь. Совершите или примите звонок, чтобы начать.</string>
+    <string name="home_recordings_empty_title">Записей пока нет</string>
+</resources>

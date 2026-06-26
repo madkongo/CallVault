@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Auto-completed translations. Do not hand-edit placeholders (%1$s etc.). -->
+<resources xmlns:tools="http://schemas.android.com/tools">
+    <string name="home_hero_pill_no_folder">Cần thao tác</string>
+    <string name="home_hero_pill_not_paired">Cần thao tác</string>
+    <string name="home_hero_pill_ready">Đang hoạt động</string>
+    <string name="home_hero_status_label">Trạng thái</string>
+    <string name="home_play_recording">Phát bản ghi âm</string>
+    <string name="home_recordings_count">Đã lưu %1$d</string>
+    <string name="home_recordings_empty_hint">Khi CallVault ghi âm một cuộc gọi, nó sẽ hiển thị ở đây. Hãy thực hiện hoặc nhận một cuộc gọi để bắt đầu.</string>
+    <string name="home_recordings_empty_title">Chưa có bản ghi âm nào</string>
+</resources>

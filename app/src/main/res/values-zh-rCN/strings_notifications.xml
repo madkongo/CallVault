@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Auto-completed notification translations. -->
+<resources>
+    <string name="notif_readiness_channel">通话录音就绪状态</string>
+    <string name="notif_readiness_ready_title">已就绪，可录制通话</string>
+    <string name="notif_readiness_starting_title">通话录音正在启动…</string>
+    <string name="notif_readiness_ready_text">录音器已连接。</string>
+    <string name="notif_readiness_starting_text">正在连接录音器——完成前通话不会被录制。</string>
+    <string name="notif_pairing_channel">ADB 配对</string>
+    <string name="notif_pairing_searching_title">正在查找配对服务…</string>
+    <string name="notif_pairing_searching_text">请打开手机的“使用配对码配对设备”对话框。</string>
+    <string name="notif_pairing_waiting_wd_title">正在等待无线调试…</string>
+    <string name="notif_pairing_waiting_wd_text">请开启无线调试以开始配对。</string>
+    <string name="notif_pairing_found_title">已找到配对服务</string>
+    <string name="notif_pairing_found_text">请输入 6 位配对码。</string>
+    <string name="notif_pairing_working_title">正在配对…</string>
+    <string name="notif_pairing_working_text">正在设置 CallVault，需要几秒钟。</string>
+    <string name="notif_pairing_success_title">配对成功 ✓</string>
+    <string name="notif_pairing_success_text">无线调试已配对。点按以完成 CallVault 的设置。</string>
+    <string name="notif_pairing_failed_title">配对失败</string>
+    <string name="notif_pairing_action_stop">停止</string>
+    <string name="notif_pairing_action_enter_code">输入配对码</string>
+    <string name="notif_pairing_remote_input_label">配对码</string>
+</resources>

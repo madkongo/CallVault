@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Auto-completed translations. Do not hand-edit placeholders (%1$s etc.). -->
+<resources xmlns:tools="http://schemas.android.com/tools">
+    <string name="home_hero_pill_no_folder">Beavatkozás szükséges</string>
+    <string name="home_hero_pill_not_paired">Beavatkozás szükséges</string>
+    <string name="home_hero_pill_ready">Aktív</string>
+    <string name="home_hero_status_label">Állapot</string>
+    <string name="home_play_recording">Felvétel lejátszása</string>
+    <string name="home_recordings_count">%1$d mentve</string>
+    <string name="home_recordings_empty_hint">Amikor a CallVault rögzít egy hívást, az itt jelenik meg. Kezdje el egy hívás indításával vagy fogadásával.</string>
+    <string name="home_recordings_empty_title">Még nincsenek felvételek</string>
+</resources>

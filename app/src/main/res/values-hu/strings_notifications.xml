@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Auto-completed notification translations. -->
+<resources>
+    <string name="notif_readiness_channel">Hívásrögzítő készenléte</string>
+    <string name="notif_readiness_ready_title">Készen áll a hívások rögzítésére</string>
+    <string name="notif_readiness_starting_title">A hívásrögzítő indítása…</string>
+    <string name="notif_readiness_ready_text">A rögzítő csatlakozva van.</string>
+    <string name="notif_readiness_starting_text">A rögzítő csatlakoztatása folyamatban — a hívások rögzítése csak ennek befejezése után indul el.</string>
+    <string name="notif_pairing_channel">ADB párosítás</string>
+    <string name="notif_pairing_searching_title">Párosítási szolgáltatás keresése…</string>
+    <string name="notif_pairing_searching_text">Nyissa meg a telefon „Eszköz párosítása párosítási kóddal” párbeszédpanelét.</string>
+    <string name="notif_pairing_waiting_wd_title">Várakozás a Vezeték nélküli hibakeresésre…</string>
+    <string name="notif_pairing_waiting_wd_text">Kapcsolja be a Vezeték nélküli hibakeresést a párosítás megkezdéséhez.</string>
+    <string name="notif_pairing_found_title">Párosítási szolgáltatás megtalálva</string>
+    <string name="notif_pairing_found_text">Adja meg a 6 számjegyű párosítási kódot.</string>
+    <string name="notif_pairing_working_title">Párosítás…</string>
+    <string name="notif_pairing_working_text">A CallVault beállítása folyamatban. Ez néhány másodpercet vesz igénybe.</string>
+    <string name="notif_pairing_success_title">Párosítva ✓</string>
+    <string name="notif_pairing_success_text">A Vezeték nélküli hibakeresés párosítva. Koppintson a CallVault beállításának befejezéséhez.</string>
+    <string name="notif_pairing_failed_title">A párosítás sikertelen</string>
+    <string name="notif_pairing_action_stop">Leállítás</string>
+    <string name="notif_pairing_action_enter_code">Párosítási kód megadása</string>
+    <string name="notif_pairing_remote_input_label">Párosítási kód</string>
+</resources>

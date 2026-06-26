@@ -35,6 +35,7 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import com.baba.callvault.MainActivity
+import com.baba.callvault.R
 import com.baba.callvault.data.AppPreferences
 import com.baba.callvault.server.RecorderServerLauncher
 import com.baba.callvault.utils.AppLogger
@@ -63,7 +64,7 @@ class AdbPairingService : Service() {
         getSystemService(NotificationManager::class.java).createNotificationChannel(
             NotificationChannel(
                 CHANNEL_ID,
-                "ADB pairing",
+                getString(R.string.notif_pairing_channel),
                 NotificationManager.IMPORTANCE_HIGH,
             ).apply {
                 setSound(null, null)
@@ -205,8 +206,8 @@ class AdbPairingService : Service() {
                 // (A background Service can't reliably foreground an Activity on Android 12+ — the
                 // contentIntent on this notification gives a reliable one-tap return instead.)
                 nm.notify(NOTIFICATION_ID, resultNotification(
-                    "Paired ✓",
-                    "Wireless debugging paired. Tap to finish setting up CallVault.",
+                    getString(R.string.notif_pairing_success_title),
+                    getString(R.string.notif_pairing_success_text),
                     tapToOpen = true,
                 ))
                 runCatching { RecorderServerLauncher.ensureServerRunning(applicationContext) }
@@ -214,7 +215,7 @@ class AdbPairingService : Service() {
             } else {
                 val msg = paired.exceptionOrNull()?.message ?: "pair() returned false (wrong code?)"
                 AppLogger.e(TAG, "ADB pairing failed on port $port: $msg")
-                nm.notify(NOTIFICATION_ID, resultNotification("Pairing failed", msg))
+                nm.notify(NOTIFICATION_ID, resultNotification(getString(R.string.notif_pairing_failed_title), msg))
             }
             stopForeground(STOP_FOREGROUND_DETACH)
             stopSelf()
@@ -253,30 +254,30 @@ class AdbPairingService : Service() {
 
     private fun searchingNotification(): Notification =
         builder()
-            .setContentTitle("Searching for pairing service…")
-            .setContentText("Open the phone's 'Pair device with pairing code' dialog.")
+            .setContentTitle(getString(R.string.notif_pairing_searching_title))
+            .setContentText(getString(R.string.notif_pairing_searching_text))
             .addAction(stopAction())
             .build()
 
     private fun waitingForWdNotification(): Notification =
         builder()
-            .setContentTitle("Waiting for Wireless debugging…")
-            .setContentText("Turn on Wireless debugging to start pairing.")
+            .setContentTitle(getString(R.string.notif_pairing_waiting_wd_title))
+            .setContentText(getString(R.string.notif_pairing_waiting_wd_text))
             .setOngoing(true)
             .addAction(stopAction())
             .build()
 
     private fun foundNotification(port: Int): Notification =
         builder()
-            .setContentTitle("Pairing service found")
-            .setContentText("Enter the 6-digit pairing code.")
+            .setContentTitle(getString(R.string.notif_pairing_found_title))
+            .setContentText(getString(R.string.notif_pairing_found_text))
             .addAction(replyAction(port))
             .build()
 
     private fun workingNotification(): Notification =
         builder()
-            .setContentTitle("Pairing…")
-            .setContentText("Setting up CallVault. This takes a few seconds.")
+            .setContentTitle(getString(R.string.notif_pairing_working_title))
+            .setContentText(getString(R.string.notif_pairing_working_text))
             .setOngoing(true)
             .setProgress(0, 0, true) // indeterminate — reassures the user something is happening
             .build()
@@ -299,17 +300,17 @@ class AdbPairingService : Service() {
             this, REQ_STOP, Intent(this, AdbPairingService::class.java).setAction(ACTION_STOP),
             PendingIntent.FLAG_IMMUTABLE,
         )
-        return Notification.Action.Builder(null, "Stop", pi).build()
+        return Notification.Action.Builder(null, getString(R.string.notif_pairing_action_stop), pi).build()
     }
 
     private fun replyAction(port: Int): Notification.Action {
-        val remoteInput = RemoteInput.Builder(REMOTE_INPUT_KEY).setLabel("Pairing code").build()
+        val remoteInput = RemoteInput.Builder(REMOTE_INPUT_KEY).setLabel(getString(R.string.notif_pairing_remote_input_label)).build()
         val pi = PendingIntent.getForegroundService(
             this, REQ_REPLY,
             Intent(this, AdbPairingService::class.java).setAction(ACTION_REPLY).putExtra(EXTRA_PORT, port),
             PendingIntent.FLAG_MUTABLE or PendingIntent.FLAG_UPDATE_CURRENT,
         )
-        return Notification.Action.Builder(null, "Enter pairing code", pi)
+        return Notification.Action.Builder(null, getString(R.string.notif_pairing_action_enter_code), pi)
             .addRemoteInput(remoteInput)
             .build()
     }

@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Auto-completed translations. Do not hand-edit placeholders (%1$s etc.). -->
+<resources xmlns:tools="http://schemas.android.com/tools">
+    <string name="settings_ui_about_app">CallVault</string>
+    <string name="settings_ui_open_repo_hint">Nhấn để mở dự án gốc</string>
+    <string name="settings_ui_recording_server_label">Bộ máy ghi âm</string>
+    <string name="settings_ui_subtitle">Tinh chỉnh ghi âm, âm thanh và giao diện</string>
+</resources>

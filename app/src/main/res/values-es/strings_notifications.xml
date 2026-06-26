@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Auto-completed notification translations. -->
+<resources>
+    <string name="notif_readiness_channel">Preparación de la grabadora de llamadas</string>
+    <string name="notif_readiness_ready_title">Listo para grabar llamadas</string>
+    <string name="notif_readiness_starting_title">Iniciando la grabadora de llamadas…</string>
+    <string name="notif_readiness_ready_text">La grabadora está conectada.</string>
+    <string name="notif_readiness_starting_text">Conectando la grabadora; las llamadas no se grabarán hasta que esto finalice.</string>
+    <string name="notif_pairing_channel">Vinculación de ADB</string>
+    <string name="notif_pairing_searching_title">Buscando el servicio de vinculación…</string>
+    <string name="notif_pairing_searching_text">Abra el cuadro de diálogo «Vincular dispositivo mediante código de vinculación» del teléfono.</string>
+    <string name="notif_pairing_waiting_wd_title">Esperando la depuración inalámbrica…</string>
+    <string name="notif_pairing_waiting_wd_text">Active la depuración inalámbrica para iniciar la vinculación.</string>
+    <string name="notif_pairing_found_title">Servicio de vinculación encontrado</string>
+    <string name="notif_pairing_found_text">Introduzca el código de vinculación de 6 dígitos.</string>
+    <string name="notif_pairing_working_title">Vinculando…</string>
+    <string name="notif_pairing_working_text">Configurando CallVault. Esto tarda unos segundos.</string>
+    <string name="notif_pairing_success_title">Vinculado ✓</string>
+    <string name="notif_pairing_success_text">Depuración inalámbrica vinculada. Toque para terminar de configurar CallVault.</string>
+    <string name="notif_pairing_failed_title">Error de vinculación</string>
+    <string name="notif_pairing_action_stop">Detener</string>
+    <string name="notif_pairing_action_enter_code">Introducir código de vinculación</string>
+    <string name="notif_pairing_remote_input_label">Código de vinculación</string>
+</resources>
