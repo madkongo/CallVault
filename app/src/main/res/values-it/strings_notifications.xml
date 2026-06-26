@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Auto-completed notification translations. -->
+<resources>
+    <string name="notif_readiness_channel">Stato del registratore di chiamate</string>
+    <string name="notif_readiness_ready_title">Pronto a registrare le chiamate</string>
+    <string name="notif_readiness_starting_title">Avvio del registratore di chiamate…</string>
+    <string name="notif_readiness_ready_text">Il registratore è connesso.</string>
+    <string name="notif_readiness_starting_text">Connessione del registratore in corso: le chiamate non verranno registrate finché non termina.</string>
+    <string name="notif_pairing_channel">Associazione ADB</string>
+    <string name="notif_pairing_searching_title">Ricerca del servizio di associazione…</string>
+    <string name="notif_pairing_searching_text">Apra la finestra \"Associa dispositivo tramite codice di associazione\" del telefono.</string>
+    <string name="notif_pairing_waiting_wd_title">In attesa del Debug wireless…</string>
+    <string name="notif_pairing_waiting_wd_text">Attivi il Debug wireless per avviare l\'associazione.</string>
+    <string name="notif_pairing_found_title">Servizio di associazione trovato</string>
+    <string name="notif_pairing_found_text">Inserisca il codice di associazione a 6 cifre.</string>
+    <string name="notif_pairing_working_title">Associazione in corso…</string>
+    <string name="notif_pairing_working_text">Configurazione di CallVault in corso. Richiede qualche secondo.</string>
+    <string name="notif_pairing_success_title">Associato ✓</string>
+    <string name="notif_pairing_success_text">Debug wireless associato. Tocchi per completare la configurazione di CallVault.</string>
+    <string name="notif_pairing_failed_title">Associazione non riuscita</string>
+    <string name="notif_pairing_action_stop">Interrompi</string>
+    <string name="notif_pairing_action_enter_code">Inserisci codice di associazione</string>
+    <string name="notif_pairing_remote_input_label">Codice di associazione</string>
+</resources>

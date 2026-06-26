@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Auto-completed translations. Do not hand-edit placeholders (%1$s etc.). -->
+<resources xmlns:tools="http://schemas.android.com/tools">
+    <string name="disclaimer_ui_body_header">Tuyên bố miễn trừ trách nhiệm</string>
+    <string name="disclaimer_ui_hero_subtitle">Ghi âm cuộc gọi FOSS, theo cách của bạn. Vui lòng đọc tuyên bố miễn trừ trách nhiệm trước khi tiếp tục.</string>
+    <string name="disclaimer_ui_scroll_hint">Cuộn xuống cuối để bật ô chọn.</string>
+    <string name="permission_adb_desc_short">Bắt buộc để ghi âm cuộc gọi.</string>
+    <string name="permission_adb_hint">Nhấn Cấp quyền, sau đó nhập mã ghép nối từ thông báo.</string>
+    <string name="permission_adb_hint_wd_on">Nhấn Cấp quyền, sau đó nhập mã ghép nối từ màn hình Gỡ lỗi không dây.</string>
+    <string name="permission_adb_open_device_info">Mở thông tin thiết bị</string>
+    <string name="permission_adb_open_wd">Mở Gỡ lỗi không dây</string>
+    <string name="permission_adb_pair">Ghép nối</string>
+    <string name="permission_devmode_enable_hint">Bật nó: Cài đặt → Giới thiệu về điện thoại → nhấn Số bản dựng 7 lần.</string>
+    <string name="permission_devmode_off">Tùy chọn nhà phát triển đang tắt</string>
+    <string name="permission_devmode_on">Tùy chọn nhà phát triển: bật</string>
+    <string name="permission_devmode_open_device_info">Mở thông tin thiết bị</string>
+    <string name="permission_devmode_open_wd">Mở Gỡ lỗi không dây</string>
+    <string name="permission_wd_enable_hint">Bật nó lên: Tùy chọn nhà phát triển → Gỡ lỗi không dây.</string>
+    <string name="permission_wd_off">Gỡ lỗi không dây đang tắt</string>
+    <string name="permission_wd_on">Gỡ lỗi không dây: bật</string>
+    <string name="permissions_status_adb_connected">Đã kết nối</string>
+    <string name="permissions_status_adb_not_connected">Chưa kết nối</string>
+    <string name="permissions_ui_eyebrow">Thiết lập</string>
+    <string name="permissions_ui_hero_subtitle">Một vài quyền để CallVault có thể ghi âm và gắn nhãn cuộc gọi của bạn. Hãy chấp thuận từng mục bên dưới.</string>
+    <string name="permissions_ui_hero_title">Cùng thiết lập nào</string>
+    <string name="permissions_ui_section_label">Quyền</string>
+</resources>

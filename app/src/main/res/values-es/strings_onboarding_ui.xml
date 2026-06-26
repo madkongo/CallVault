@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Auto-completed translations. Do not hand-edit placeholders (%1$s etc.). -->
+<resources xmlns:tools="http://schemas.android.com/tools">
+    <string name="disclaimer_ui_body_header">Aviso legal</string>
+    <string name="disclaimer_ui_hero_subtitle">Grabación de llamadas FOSS, en sus términos. Por favor, lea el aviso legal antes de continuar.</string>
+    <string name="disclaimer_ui_scroll_hint">Desplácese hasta el final para activar la casilla.</string>
+    <string name="permission_adb_desc_short">Necesario para capturar el audio de las llamadas.</string>
+    <string name="permission_adb_hint">Toque Autorizar y luego introduzca el código de emparejamiento de la notificación.</string>
+    <string name="permission_adb_hint_wd_on">Toque Autorizar y luego introduzca el código de emparejamiento de la pantalla de Depuración inalámbrica.</string>
+    <string name="permission_adb_open_device_info">Abrir información del dispositivo</string>
+    <string name="permission_adb_open_wd">Abrir Depuración inalámbrica</string>
+    <string name="permission_adb_pair">Emparejar</string>
+    <string name="permission_devmode_enable_hint">Actívelas: Ajustes → Acerca del teléfono → toque Número de compilación 7 veces.</string>
+    <string name="permission_devmode_off">Las Opciones de desarrollador están desactivadas</string>
+    <string name="permission_devmode_on">Opciones de desarrollador: activadas</string>
+    <string name="permission_devmode_open_device_info">Abrir información del dispositivo</string>
+    <string name="permission_devmode_open_wd">Abrir Depuración inalámbrica</string>
+    <string name="permission_wd_enable_hint">Actívela: Opciones de desarrollador → Depuración inalámbrica.</string>
+    <string name="permission_wd_off">La Depuración inalámbrica está desactivada</string>
+    <string name="permission_wd_on">Depuración inalámbrica: activada</string>
+    <string name="permissions_status_adb_connected">Conectado</string>
+    <string name="permissions_status_adb_not_connected">Sin conexión</string>
+    <string name="permissions_ui_eyebrow">Configuración</string>
+    <string name="permissions_ui_hero_subtitle">Algunos permisos para que CallVault pueda capturar y etiquetar sus llamadas. Apruebe cada elemento a continuación.</string>
+    <string name="permissions_ui_hero_title">Vamos a configurarlo</string>
+    <string name="permissions_ui_section_label">Permisos</string>
+</resources>

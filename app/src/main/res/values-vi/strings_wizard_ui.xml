@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Auto-completed translations. Do not hand-edit placeholders (%1$s etc.). -->
+<resources xmlns:tools="http://schemas.android.com/tools">
+    <string name="wizard_ui_auto_incoming_desc">Tự động bắt đầu ghi âm khi có cuộc gọi đến.</string>
+    <string name="wizard_ui_auto_outgoing_desc">Tự động bắt đầu ghi âm khi bạn thực hiện cuộc gọi.</string>
+    <string name="wizard_ui_eyebrow">Thiết lập</string>
+    <string name="wizard_ui_folder_choose">Chọn thư mục</string>
+    <string name="wizard_ui_schedule_daily_desc">Gom các cuộc gọi trong ngày và tải lên một lần mỗi ngày.</string>
+    <string name="wizard_ui_schedule_immediate_desc">Tải lên mỗi cuộc gọi ngay khi kết thúc.</string>
+    <string name="wizard_ui_schedule_weekly_desc">Gom các cuộc gọi trong tuần và tải lên một lần mỗi tuần.</string>
+    <string name="wizard_ui_storage_both_desc">Giữ một bản sao trên điện thoại này và sao lưu lên Google Drive.</string>
+    <string name="wizard_ui_storage_drive_desc">Bản ghi âm được tải lên thư mục Google Drive của bạn, rồi xóa khỏi điện thoại này.</string>
+    <string name="wizard_ui_storage_local_desc">Bản ghi âm được giữ trên điện thoại này. Không có gì rời khỏi thiết bị.</string>
+</resources>

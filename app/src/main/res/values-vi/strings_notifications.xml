@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Auto-completed notification translations. -->
+<resources>
+    <string name="notif_readiness_channel">Trạng thái sẵn sàng ghi âm cuộc gọi</string>
+    <string name="notif_readiness_ready_title">Sẵn sàng ghi âm cuộc gọi</string>
+    <string name="notif_readiness_starting_title">Trình ghi âm cuộc gọi đang khởi động…</string>
+    <string name="notif_readiness_ready_text">Trình ghi âm đã được kết nối.</string>
+    <string name="notif_readiness_starting_text">Đang kết nối trình ghi âm — cuộc gọi sẽ không được ghi cho đến khi hoàn tất.</string>
+    <string name="notif_pairing_channel">Ghép nối ADB</string>
+    <string name="notif_pairing_searching_title">Đang tìm dịch vụ ghép nối…</string>
+    <string name="notif_pairing_searching_text">Mở hộp thoại \'Ghép nối thiết bị bằng mã ghép nối\' trên điện thoại.</string>
+    <string name="notif_pairing_waiting_wd_title">Đang chờ Gỡ lỗi không dây…</string>
+    <string name="notif_pairing_waiting_wd_text">Bật Gỡ lỗi không dây để bắt đầu ghép nối.</string>
+    <string name="notif_pairing_found_title">Đã tìm thấy dịch vụ ghép nối</string>
+    <string name="notif_pairing_found_text">Nhập mã ghép nối gồm 6 chữ số.</string>
+    <string name="notif_pairing_working_title">Đang ghép nối…</string>
+    <string name="notif_pairing_working_text">Đang thiết lập CallVault. Quá trình này mất vài giây.</string>
+    <string name="notif_pairing_success_title">Đã ghép nối ✓</string>
+    <string name="notif_pairing_success_text">Đã ghép nối Gỡ lỗi không dây. Nhấn để hoàn tất thiết lập CallVault.</string>
+    <string name="notif_pairing_failed_title">Ghép nối thất bại</string>
+    <string name="notif_pairing_action_stop">Dừng</string>
+    <string name="notif_pairing_action_enter_code">Nhập mã ghép nối</string>
+    <string name="notif_pairing_remote_input_label">Mã ghép nối</string>
+</resources>

@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Auto-completed translations. Do not hand-edit placeholders (%1$s etc.). -->
+<resources xmlns:tools="http://schemas.android.com/tools">
+    <string name="disclaimer_ui_body_header">Отказ от ответственности</string>
+    <string name="disclaimer_ui_hero_subtitle">Запись звонков на ваших условиях, FOSS. Пожалуйста, ознакомьтесь с отказом от ответственности, прежде чем продолжить.</string>
+    <string name="disclaimer_ui_scroll_hint">Прокрутите до конца, чтобы активировать флажок.</string>
+    <string name="permission_adb_desc_short">Требуется для записи звука звонков.</string>
+    <string name="permission_adb_hint">Нажмите «Авторизовать», затем введите код сопряжения из уведомления.</string>
+    <string name="permission_adb_hint_wd_on">Нажмите «Авторизовать», затем введите код сопряжения с экрана отладки по Wi-Fi.</string>
+    <string name="permission_adb_open_device_info">Открыть сведения об устройстве</string>
+    <string name="permission_adb_open_wd">Открыть отладку по Wi-Fi</string>
+    <string name="permission_adb_pair">Сопрячь</string>
+    <string name="permission_devmode_enable_hint">Включите их: Настройки → О телефоне → нажмите «Номер сборки» 7 раз.</string>
+    <string name="permission_devmode_off">Параметры разработчика отключены</string>
+    <string name="permission_devmode_on">Параметры разработчика: включены</string>
+    <string name="permission_devmode_open_device_info">Открыть сведения об устройстве</string>
+    <string name="permission_devmode_open_wd">Открыть отладку по Wi-Fi</string>
+    <string name="permission_wd_enable_hint">Включите её: Параметры разработчика → Отладка по Wi-Fi.</string>
+    <string name="permission_wd_off">Отладка по Wi-Fi отключена</string>
+    <string name="permission_wd_on">Отладка по Wi-Fi: включена</string>
+    <string name="permissions_status_adb_connected">Подключено</string>
+    <string name="permissions_status_adb_not_connected">Не подключено</string>
+    <string name="permissions_ui_eyebrow">Настройка</string>
+    <string name="permissions_ui_hero_subtitle">Несколько разрешений, чтобы CallVault мог записывать и помечать ваши звонки. Подтвердите каждый пункт ниже.</string>
+    <string name="permissions_ui_hero_title">Давайте всё настроим</string>
+    <string name="permissions_ui_section_label">Разрешения</string>
+</resources>

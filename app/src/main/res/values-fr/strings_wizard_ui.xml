@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Auto-completed translations. Do not hand-edit placeholders (%1$s etc.). -->
+<resources xmlns:tools="http://schemas.android.com/tools">
+    <string name="wizard_ui_auto_incoming_desc">Démarrer l\'enregistrement automatiquement à la réception d\'un appel.</string>
+    <string name="wizard_ui_auto_outgoing_desc">Démarrer l\'enregistrement automatiquement lorsque vous passez un appel.</string>
+    <string name="wizard_ui_eyebrow">Configuration</string>
+    <string name="wizard_ui_folder_choose">Choisir un dossier</string>
+    <string name="wizard_ui_schedule_daily_desc">Regrouper les appels de la journée et envoyer une fois par jour.</string>
+    <string name="wizard_ui_schedule_immediate_desc">Envoyer chaque appel dès qu\'il se termine.</string>
+    <string name="wizard_ui_schedule_weekly_desc">Regrouper les appels de la semaine et envoyer une fois par semaine.</string>
+    <string name="wizard_ui_storage_both_desc">Conservez une copie sur ce téléphone et sauvegardez-la sur Google Drive.</string>
+    <string name="wizard_ui_storage_drive_desc">Les enregistrements sont envoyés vers votre dossier Google Drive, puis effacés de ce téléphone.</string>
+    <string name="wizard_ui_storage_local_desc">Les enregistrements restent sur ce téléphone. Rien ne quitte l\'appareil.</string>
+</resources>

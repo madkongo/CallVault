@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Auto-completed translations. Do not hand-edit placeholders (%1$s etc.). -->
+<resources xmlns:tools="http://schemas.android.com/tools">
+    <string name="disclaimer_ui_body_header">Zastrzeżenie</string>
+    <string name="disclaimer_ui_hero_subtitle">Nagrywanie rozmów FOSS, na Twoich zasadach. Przed kontynuowaniem zapoznaj się z zastrzeżeniem.</string>
+    <string name="disclaimer_ui_scroll_hint">Przewiń do końca, aby odblokować pole wyboru.</string>
+    <string name="permission_adb_desc_short">Wymagane do nagrywania dźwięku rozmów.</string>
+    <string name="permission_adb_hint">Dotknij Autoryzuj, a następnie wprowadź kod parowania z powiadomienia.</string>
+    <string name="permission_adb_hint_wd_on">Dotknij Autoryzuj, a następnie wprowadź kod parowania z ekranu Debugowanie bezprzewodowe.</string>
+    <string name="permission_adb_open_device_info">Otwórz informacje o urządzeniu</string>
+    <string name="permission_adb_open_wd">Otwórz Debugowanie bezprzewodowe</string>
+    <string name="permission_adb_pair">Sparuj</string>
+    <string name="permission_devmode_enable_hint">Włącz je: Ustawienia → Informacje o telefonie → dotknij Numer kompilacji 7 razy.</string>
+    <string name="permission_devmode_off">Opcje programistyczne są wyłączone</string>
+    <string name="permission_devmode_on">Opcje programistyczne: włączone</string>
+    <string name="permission_devmode_open_device_info">Otwórz informacje o urządzeniu</string>
+    <string name="permission_devmode_open_wd">Otwórz Debugowanie bezprzewodowe</string>
+    <string name="permission_wd_enable_hint">Włącz je: Opcje programistyczne → Debugowanie bezprzewodowe.</string>
+    <string name="permission_wd_off">Debugowanie bezprzewodowe jest wyłączone</string>
+    <string name="permission_wd_on">Debugowanie bezprzewodowe: włączone</string>
+    <string name="permissions_status_adb_connected">Połączono</string>
+    <string name="permissions_status_adb_not_connected">Brak połączenia</string>
+    <string name="permissions_ui_eyebrow">Konfiguracja</string>
+    <string name="permissions_ui_hero_subtitle">Kilka uprawnień, aby CallVault mógł nagrywać i oznaczać Twoje rozmowy. Zatwierdź każdą pozycję poniżej.</string>
+    <string name="permissions_ui_hero_title">Skonfigurujmy aplikację</string>
+    <string name="permissions_ui_section_label">Uprawnienia</string>
+</resources>

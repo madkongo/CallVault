@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Auto-completed translations. Do not hand-edit placeholders (%1$s etc.). -->
+<resources xmlns:tools="http://schemas.android.com/tools">
+    <string name="disclaimer_ui_body_header">Haftungsausschluss</string>
+    <string name="disclaimer_ui_hero_subtitle">FOSS-Anrufaufzeichnung, ganz nach Ihren Bedingungen. Bitte lesen Sie den Haftungsausschluss, bevor Sie fortfahren.</string>
+    <string name="disclaimer_ui_scroll_hint">Scrollen Sie ans Ende, um das Kontrollkästchen zu aktivieren.</string>
+    <string name="permission_adb_desc_short">Erforderlich, um Anruf-Audio aufzuzeichnen.</string>
+    <string name="permission_adb_hint">Tippen Sie auf Autorisieren und geben Sie dann den Kopplungscode aus der Benachrichtigung ein.</string>
+    <string name="permission_adb_hint_wd_on">Tippen Sie auf Autorisieren und geben Sie dann den Kopplungscode aus dem Bildschirm „Drahtloses Debugging“ ein.</string>
+    <string name="permission_adb_open_device_info">Geräteinfo öffnen</string>
+    <string name="permission_adb_open_wd">Drahtloses Debugging öffnen</string>
+    <string name="permission_adb_pair">Koppeln</string>
+    <string name="permission_devmode_enable_hint">Aktivieren: Einstellungen → Über das Telefon → 7-mal auf die Build-Nummer tippen.</string>
+    <string name="permission_devmode_off">Entwickleroptionen sind aus</string>
+    <string name="permission_devmode_on">Entwickleroptionen: ein</string>
+    <string name="permission_devmode_open_device_info">Geräteinfo öffnen</string>
+    <string name="permission_devmode_open_wd">Drahtloses Debugging öffnen</string>
+    <string name="permission_wd_enable_hint">Einschalten: Entwickleroptionen → Drahtloses Debugging.</string>
+    <string name="permission_wd_off">Drahtloses Debugging ist aus</string>
+    <string name="permission_wd_on">Drahtloses Debugging: ein</string>
+    <string name="permissions_status_adb_connected">Verbunden</string>
+    <string name="permissions_status_adb_not_connected">Nicht verbunden</string>
+    <string name="permissions_ui_eyebrow">Einrichtung</string>
+    <string name="permissions_ui_hero_subtitle">Ein paar Berechtigungen, damit CallVault Ihre Anrufe aufzeichnen und beschriften kann. Bestätigen Sie jeden Punkt unten.</string>
+    <string name="permissions_ui_hero_title">Los geht\'s mit der Einrichtung</string>
+    <string name="permissions_ui_section_label">Berechtigungen</string>
+</resources>

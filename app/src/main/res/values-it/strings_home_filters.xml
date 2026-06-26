@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Auto-completed translations. Do not hand-edit placeholders (%1$s etc.). -->
+<resources xmlns:tools="http://schemas.android.com/tools">
+    <string name="home_copies_collapse">Nascondi copie</string>
+    <string name="home_copies_expand">Mostra copie</string>
+    <string name="home_copy_device">Dispositivo</string>
+    <string name="home_copy_drive">Drive</string>
+    <string name="home_delete_confirm_device_message">Eliminare la copia su Dispositivo di %1$s? La copia su Drive viene conservata.</string>
+    <string name="home_delete_confirm_drive_message">Eliminare la copia su Drive di %1$s? La copia su Dispositivo viene conservata.</string>
+    <string name="home_delete_copy_device_content_desc">Elimina copia su Dispositivo</string>
+    <string name="home_delete_copy_drive_content_desc">Elimina copia su Drive</string>
+    <string name="home_filter_contact_all">Tutti i contatti</string>
+    <string name="home_filter_contact_all_short">Tutti</string>
+    <string name="home_filter_contact_chip">Contatto: %1$s</string>
+    <string name="home_filter_contact_label">Contatto</string>
+    <string name="home_filter_date_all">Tutte le date</string>
+    <string name="home_filter_date_all_short">Tutte</string>
+    <string name="home_filter_date_chip">Data: %1$s</string>
+    <string name="home_filter_date_label">Data</string>
+    <string name="home_filter_direction_all">Tutte</string>
+    <string name="home_filter_direction_chip">Direzione: %1$s</string>
+    <string name="home_filter_direction_incoming">In entrata</string>
+    <string name="home_filter_direction_label">Direzione</string>
+    <string name="home_filter_direction_outgoing">In uscita</string>
+    <string name="home_filter_source_all">Tutte</string>
+    <string name="home_filter_source_chip">Origine: %1$s</string>
+    <string name="home_filter_source_drive">Solo Drive</string>
+    <string name="home_filter_source_label">Origine</string>
+    <string name="home_filter_source_local">Solo locali</string>
+    <string name="home_source_badge_both">Dispositivo + Drive</string>
+    <string name="home_source_badge_drive">Drive</string>
+    <string name="home_source_badge_local">Dispositivo</string>
+</resources>
