@@ -92,6 +92,11 @@ class AppPreferences(context: Context) {
         // not shown again on every launch (a live connection only exists per-process).
         const val ADB_PAIRED = false
 
+        // --- Dialer Mode ---
+        // OFF by default: when false the existing call-detection source (TelecomManager/PhoneStateListener)
+        // is used unchanged. When true the dialer-mode detection source is active instead.
+        const val DIALER_MODE_ENABLED = false
+
         // --- Persistent recorder server (CallVault Plan 5) ---
         // OFF by default: when false the existing local recording path runs unchanged. When true the
         // recording layer drives the detached privileged daemon (RecorderServer) over binder instead.
@@ -149,6 +154,9 @@ class AppPreferences(context: Context) {
 
         // --- ADB ---
         ADB_PAIRED("adb_paired"),
+
+        // --- Dialer Mode ---
+        DIALER_MODE_ENABLED("dialer_mode_enabled"),
 
         // --- Persistent recorder server (CallVault Plan 5) ---
         PERSISTENT_SERVER_ENABLED("persistent_server_enabled"),
@@ -298,6 +306,18 @@ class AppPreferences(context: Context) {
 
     /** Sets the "turn Wireless debugging off when the daemon is connected" policy. */
     fun setWdDisableWhenIdle(enabled: Boolean) = setBoolean(Key.WD_DISABLE_WHEN_IDLE, enabled)
+
+    // -------- Dialer Mode --------
+
+    /**
+     * Whether the dialer-mode call-detection source is enabled. OFF by default: when false the
+     * existing detection source (TelecomManager/PhoneStateListener) is used unchanged; when true
+     * the dialer-mode source is active instead.
+     */
+    fun isDialerModeEnabled() = getBoolean(Key.DIALER_MODE_ENABLED, DefaultsValue.DIALER_MODE_ENABLED)
+
+    /** Sets whether the dialer-mode call-detection source is enabled. */
+    fun setDialerModeEnabled(enabled: Boolean) = setBoolean(Key.DIALER_MODE_ENABLED, enabled)
 
     // -------- Storage & General --------
 
