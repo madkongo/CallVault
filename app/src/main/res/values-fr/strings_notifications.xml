@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Auto-completed notification translations. -->
+<resources>
+    <string name="notif_readiness_channel">État de l\'enregistreur d\'appels</string>
+    <string name="notif_readiness_ready_title">Prêt à enregistrer les appels</string>
+    <string name="notif_readiness_starting_title">Démarrage de l\'enregistreur d\'appels…</string>
+    <string name="notif_readiness_ready_text">L\'enregistreur est connecté.</string>
+    <string name="notif_readiness_starting_text">Connexion de l\'enregistreur — les appels ne seront pas enregistrés tant que ce n\'est pas terminé.</string>
+    <string name="notif_pairing_channel">Association ADB</string>
+    <string name="notif_pairing_searching_title">Recherche du service d\'association…</string>
+    <string name="notif_pairing_searching_text">Ouvrez la boîte de dialogue « Associer l\'appareil à l\'aide d\'un code d\'association » du téléphone.</string>
+    <string name="notif_pairing_waiting_wd_title">En attente du débogage sans fil…</string>
+    <string name="notif_pairing_waiting_wd_text">Activez le débogage sans fil pour démarrer l\'association.</string>
+    <string name="notif_pairing_found_title">Service d\'association trouvé</string>
+    <string name="notif_pairing_found_text">Saisissez le code d\'association à 6 chiffres.</string>
+    <string name="notif_pairing_working_title">Association en cours…</string>
+    <string name="notif_pairing_working_text">Configuration de CallVault. Cela prend quelques secondes.</string>
+    <string name="notif_pairing_success_title">Associé ✓</string>
+    <string name="notif_pairing_success_text">Débogage sans fil associé. Appuyez pour terminer la configuration de CallVault.</string>
+    <string name="notif_pairing_failed_title">Échec de l\'association</string>
+    <string name="notif_pairing_action_stop">Arrêter</string>
+    <string name="notif_pairing_action_enter_code">Saisir le code d\'association</string>
+    <string name="notif_pairing_remote_input_label">Code d\'association</string>
+</resources>

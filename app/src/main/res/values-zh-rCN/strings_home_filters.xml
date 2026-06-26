@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Auto-completed translations. Do not hand-edit placeholders (%1$s etc.). -->
+<resources xmlns:tools="http://schemas.android.com/tools">
+    <string name="home_copies_collapse">隐藏副本</string>
+    <string name="home_copies_expand">显示副本</string>
+    <string name="home_copy_device">设备</string>
+    <string name="home_copy_drive">Drive</string>
+    <string name="home_delete_confirm_device_message">删除 %1$s 的设备副本？Drive 副本将保留。</string>
+    <string name="home_delete_confirm_drive_message">删除 %1$s 的 Drive 副本？设备副本将保留。</string>
+    <string name="home_delete_copy_device_content_desc">删除设备副本</string>
+    <string name="home_delete_copy_drive_content_desc">删除 Drive 副本</string>
+    <string name="home_filter_contact_all">所有联系人</string>
+    <string name="home_filter_contact_all_short">全部</string>
+    <string name="home_filter_contact_chip">联系人：%1$s</string>
+    <string name="home_filter_contact_label">联系人</string>
+    <string name="home_filter_date_all">所有日期</string>
+    <string name="home_filter_date_all_short">全部</string>
+    <string name="home_filter_date_chip">日期：%1$s</string>
+    <string name="home_filter_date_label">日期</string>
+    <string name="home_filter_direction_all">全部</string>
+    <string name="home_filter_direction_chip">方向：%1$s</string>
+    <string name="home_filter_direction_incoming">来电</string>
+    <string name="home_filter_direction_label">方向</string>
+    <string name="home_filter_direction_outgoing">去电</string>
+    <string name="home_filter_source_all">全部</string>
+    <string name="home_filter_source_chip">来源：%1$s</string>
+    <string name="home_filter_source_drive">仅 Drive</string>
+    <string name="home_filter_source_label">来源</string>
+    <string name="home_filter_source_local">仅本地</string>
+    <string name="home_source_badge_both">设备 + Drive</string>
+    <string name="home_source_badge_drive">Drive</string>
+    <string name="home_source_badge_local">设备</string>
+</resources>

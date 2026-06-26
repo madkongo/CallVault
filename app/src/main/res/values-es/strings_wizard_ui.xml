@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Auto-completed translations. Do not hand-edit placeholders (%1$s etc.). -->
+<resources xmlns:tools="http://schemas.android.com/tools">
+    <string name="wizard_ui_auto_incoming_desc">Comience a grabar automáticamente cuando entra una llamada.</string>
+    <string name="wizard_ui_auto_outgoing_desc">Comience a grabar automáticamente cuando usted realiza una llamada.</string>
+    <string name="wizard_ui_eyebrow">Configuración</string>
+    <string name="wizard_ui_folder_choose">Elegir carpeta</string>
+    <string name="wizard_ui_schedule_daily_desc">Agrupe las llamadas del día y súbalas una vez al día.</string>
+    <string name="wizard_ui_schedule_immediate_desc">Suba cada llamada en el momento en que termina.</string>
+    <string name="wizard_ui_schedule_weekly_desc">Agrupe las llamadas de la semana y súbalas una vez por semana.</string>
+    <string name="wizard_ui_storage_both_desc">Conserve una copia en este teléfono y haga una copia de seguridad en Google Drive.</string>
+    <string name="wizard_ui_storage_drive_desc">Las grabaciones se suben a su carpeta de Google Drive y luego se borran de este teléfono.</string>
+    <string name="wizard_ui_storage_local_desc">Las grabaciones permanecen en este teléfono. Nada sale del dispositivo.</string>
+</resources>

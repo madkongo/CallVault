@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Auto-completed translations. Do not hand-edit placeholders (%1$s etc.). -->
+<resources xmlns:tools="http://schemas.android.com/tools">
+    <string name="home_copies_collapse">Másolatok elrejtése</string>
+    <string name="home_copies_expand">Másolatok megjelenítése</string>
+    <string name="home_copy_device">Eszköz</string>
+    <string name="home_copy_drive">Drive</string>
+    <string name="home_delete_confirm_device_message">Törli %1$s eszközön tárolt másolatát? A Drive-on lévő másolat megmarad.</string>
+    <string name="home_delete_confirm_drive_message">Törli %1$s Drive-on tárolt másolatát? Az eszközön lévő másolat megmarad.</string>
+    <string name="home_delete_copy_device_content_desc">Eszközön lévő másolat törlése</string>
+    <string name="home_delete_copy_drive_content_desc">Drive-on lévő másolat törlése</string>
+    <string name="home_filter_contact_all">Összes névjegy</string>
+    <string name="home_filter_contact_all_short">Mind</string>
+    <string name="home_filter_contact_chip">Névjegy: %1$s</string>
+    <string name="home_filter_contact_label">Névjegy</string>
+    <string name="home_filter_date_all">Összes dátum</string>
+    <string name="home_filter_date_all_short">Mind</string>
+    <string name="home_filter_date_chip">Dátum: %1$s</string>
+    <string name="home_filter_date_label">Dátum</string>
+    <string name="home_filter_direction_all">Mind</string>
+    <string name="home_filter_direction_chip">Irány: %1$s</string>
+    <string name="home_filter_direction_incoming">Bejövő</string>
+    <string name="home_filter_direction_label">Irány</string>
+    <string name="home_filter_direction_outgoing">Kimenő</string>
+    <string name="home_filter_source_all">Mind</string>
+    <string name="home_filter_source_chip">Forrás: %1$s</string>
+    <string name="home_filter_source_drive">Csak Drive</string>
+    <string name="home_filter_source_label">Forrás</string>
+    <string name="home_filter_source_local">Csak helyi</string>
+    <string name="home_source_badge_both">Eszköz + Drive</string>
+    <string name="home_source_badge_drive">Drive</string>
+    <string name="home_source_badge_local">Eszköz</string>
+</resources>

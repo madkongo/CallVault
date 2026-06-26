@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Auto-completed translations. Do not hand-edit placeholders (%1$s etc.). -->
+<resources xmlns:tools="http://schemas.android.com/tools">
+    <string name="disclaimer_ui_body_header">Jogi nyilatkozat</string>
+    <string name="disclaimer_ui_hero_subtitle">FOSS hívásrögzítés, az Ön feltételei szerint. Folytatás előtt olvassa el a jogi nyilatkozatot.</string>
+    <string name="disclaimer_ui_scroll_hint">A jelölőnégyzet engedélyezéséhez görgessen a végére.</string>
+    <string name="permission_adb_desc_short">A hívás hangjának rögzítéséhez szükséges.</string>
+    <string name="permission_adb_hint">Koppintson az Engedélyezés gombra, majd adja meg az értesítésben szereplő párosítási kódot.</string>
+    <string name="permission_adb_hint_wd_on">Koppintson az Engedélyezés gombra, majd adja meg a Vezeték nélküli hibakeresés képernyőjén látható párosítási kódot.</string>
+    <string name="permission_adb_open_device_info">Eszközadatok megnyitása</string>
+    <string name="permission_adb_open_wd">Vezeték nélküli hibakeresés megnyitása</string>
+    <string name="permission_adb_pair">Párosítás</string>
+    <string name="permission_devmode_enable_hint">Engedélyezés: Beállítások → A telefonról → koppintson 7-szer a Build-számra.</string>
+    <string name="permission_devmode_off">A fejlesztői beállítások ki vannak kapcsolva</string>
+    <string name="permission_devmode_on">Fejlesztői beállítások: be</string>
+    <string name="permission_devmode_open_device_info">Eszközadatok megnyitása</string>
+    <string name="permission_devmode_open_wd">Vezeték nélküli hibakeresés megnyitása</string>
+    <string name="permission_wd_enable_hint">Bekapcsolás: Fejlesztői beállítások → Vezeték nélküli hibakeresés.</string>
+    <string name="permission_wd_off">A vezeték nélküli hibakeresés ki van kapcsolva</string>
+    <string name="permission_wd_on">Vezeték nélküli hibakeresés: be</string>
+    <string name="permissions_status_adb_connected">Csatlakoztatva</string>
+    <string name="permissions_status_adb_not_connected">Nincs csatlakoztatva</string>
+    <string name="permissions_ui_eyebrow">Beállítás</string>
+    <string name="permissions_ui_hero_subtitle">Néhány engedély, hogy a CallVault rögzíthesse és felcímkézhesse a hívásait. Hagyja jóvá az alábbi elemeket.</string>
+    <string name="permissions_ui_hero_title">Kezdjük a beállítást</string>
+    <string name="permissions_ui_section_label">Engedélyek</string>
+</resources>

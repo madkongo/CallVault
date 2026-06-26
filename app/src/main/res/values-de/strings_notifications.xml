@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Auto-completed notification translations. -->
+<resources>
+    <string name="notif_readiness_channel">Bereitschaft des Anrufrekorders</string>
+    <string name="notif_readiness_ready_title">Bereit zum Aufnehmen von Anrufen</string>
+    <string name="notif_readiness_starting_title">Anrufrekorder wird gestartet…</string>
+    <string name="notif_readiness_ready_text">Der Rekorder ist verbunden.</string>
+    <string name="notif_readiness_starting_text">Rekorder wird verbunden – Anrufe werden erst aufgenommen, wenn dies abgeschlossen ist.</string>
+    <string name="notif_pairing_channel">ADB-Kopplung</string>
+    <string name="notif_pairing_searching_title">Kopplungsdienst wird gesucht…</string>
+    <string name="notif_pairing_searching_text">Öffnen Sie auf dem Telefon den Dialog „Gerät über Kopplungscode koppeln“.</string>
+    <string name="notif_pairing_waiting_wd_title">Warten auf Drahtloses Debugging…</string>
+    <string name="notif_pairing_waiting_wd_text">Aktivieren Sie Drahtloses Debugging, um die Kopplung zu starten.</string>
+    <string name="notif_pairing_found_title">Kopplungsdienst gefunden</string>
+    <string name="notif_pairing_found_text">Geben Sie den 6-stelligen Kopplungscode ein.</string>
+    <string name="notif_pairing_working_title">Kopplung läuft…</string>
+    <string name="notif_pairing_working_text">CallVault wird eingerichtet. Dies dauert einige Sekunden.</string>
+    <string name="notif_pairing_success_title">Gekoppelt ✓</string>
+    <string name="notif_pairing_success_text">Drahtloses Debugging gekoppelt. Tippen Sie, um die Einrichtung von CallVault abzuschließen.</string>
+    <string name="notif_pairing_failed_title">Kopplung fehlgeschlagen</string>
+    <string name="notif_pairing_action_stop">Stopp</string>
+    <string name="notif_pairing_action_enter_code">Kopplungscode eingeben</string>
+    <string name="notif_pairing_remote_input_label">Kopplungscode</string>
+</resources>

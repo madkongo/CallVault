@@ -8,6 +8,7 @@
 
 package com.baba.callvault.services.debug
 
+import android.annotation.SuppressLint
 import android.app.NotificationChannel
 import android.app.NotificationManager
 import android.app.PendingIntent
@@ -18,6 +19,7 @@ import androidx.core.app.NotificationManagerCompat
 import com.baba.callvault.MainActivity
 import com.baba.callvault.R
 import com.baba.callvault.data.AppPreferences
+import com.baba.callvault.system.permissions.PermissionChecks
 
 /**
  * Posts (and clears) the persistent reminder that debug logging is currently enabled.
@@ -38,6 +40,9 @@ object DebugNotificationHelper {
     }
 
     /** Shows the ongoing "debug logging is on" reminder. No-op if POST_NOTIFICATIONS is denied. */
+    // Permission is verified at runtime via PermissionChecks.hasNotificationPermission() before
+    // notify() is called; lint can't trace into the helper, so the check is suppressed here.
+    @SuppressLint("MissingPermission")
     fun show(context: Context) {
         createChannel(context)
 
@@ -64,8 +69,10 @@ object DebugNotificationHelper {
             .setPriority(NotificationCompat.PRIORITY_LOW)
             .build()
 
-        // notify() silently no-ops when POST_NOTIFICATIONS is not granted (Android 13+); the in-app
-        // warning banner still informs the user, so we don't force a permission prompt here.
+        // Skip when POST_NOTIFICATIONS is not granted (Android 13+); the in-app warning banner still
+        // informs the user, so we don't force a permission prompt here. Guarding explicitly (rather than
+        // relying on notify()'s silent no-op) satisfies the MissingPermission lint check.
+        if (!PermissionChecks.hasNotificationPermission(context)) return
         NotificationManagerCompat.from(context).notify(NOTIFICATION_ID, notification)
     }
 
