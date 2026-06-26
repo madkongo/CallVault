@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Auto-completed translations. Do not hand-edit placeholders (%1$s etc.). -->
+<resources xmlns:tools="http://schemas.android.com/tools">
+    <string name="home_copies_collapse">Masquer les copies</string>
+    <string name="home_copies_expand">Afficher les copies</string>
+    <string name="home_copy_device">Appareil</string>
+    <string name="home_copy_drive">Drive</string>
+    <string name="home_delete_confirm_device_message">Supprimer la copie de %1$s sur l\'appareil ? La copie sur Drive est conservée.</string>
+    <string name="home_delete_confirm_drive_message">Supprimer la copie de %1$s sur Drive ? La copie sur l\'appareil est conservée.</string>
+    <string name="home_delete_copy_device_content_desc">Supprimer la copie sur l\'appareil</string>
+    <string name="home_delete_copy_drive_content_desc">Supprimer la copie sur Drive</string>
+    <string name="home_filter_contact_all">Tous les contacts</string>
+    <string name="home_filter_contact_all_short">Tous</string>
+    <string name="home_filter_contact_chip">Contact : %1$s</string>
+    <string name="home_filter_contact_label">Contact</string>
+    <string name="home_filter_date_all">Toutes les dates</string>
+    <string name="home_filter_date_all_short">Toutes</string>
+    <string name="home_filter_date_chip">Date : %1$s</string>
+    <string name="home_filter_date_label">Date</string>
+    <string name="home_filter_direction_all">Tous</string>
+    <string name="home_filter_direction_chip">Sens : %1$s</string>
+    <string name="home_filter_direction_incoming">Entrants</string>
+    <string name="home_filter_direction_label">Sens</string>
+    <string name="home_filter_direction_outgoing">Sortants</string>
+    <string name="home_filter_source_all">Toutes</string>
+    <string name="home_filter_source_chip">Source : %1$s</string>
+    <string name="home_filter_source_drive">Drive uniquement</string>
+    <string name="home_filter_source_label">Source</string>
+    <string name="home_filter_source_local">Locales uniquement</string>
+    <string name="home_source_badge_both">Appareil + Drive</string>
+    <string name="home_source_badge_drive">Drive</string>
+    <string name="home_source_badge_local">Appareil</string>
+</resources>

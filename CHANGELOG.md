@@ -3,6 +3,30 @@
 All notable changes to CallVault are documented here. The format is based on
 [Keep a Changelog](https://keepachangelog.com/), and this project uses semantic-ish versioning.
 
+## [1.2.1] — unreleased
+
+A localization release: every shipped language is now fully translated, fixing screens that
+appeared in English even when the rest of the app was localized.
+
+### Fixed
+- **Onboarding and main screens now follow the selected language.** The disclaimer/first page, the
+  permissions and setup wizard, and the home screen (recordings list + status) previously fell back to
+  English for many strings — most visibly the **first page stayed English** even with a French
+  device/app language. All shipped locales (fr, de, es, it, hu, pl, ru, vi, zh-rCN) are now at **100%
+  coverage** (289 UI strings each).
+- **Recorder & pairing notifications are now translated.** The cold-start "Call recorder starting up…
+  / Ready to record calls" status and the wireless-debugging pairing notifications were hardcoded in
+  English; they are now string resources and localized in every language (using each locale's official
+  Android wording for "Wireless debugging").
+
+### Changed
+- **Translation coverage is now enforced at build time.** Lint treats `MissingTranslation` and
+  `ExtraTranslation` as errors, so a new untranslated string can no longer ship silently.
+
+### Internal
+- Hardened two notification posts (`DebugNotificationHelper`, `RecorderReadinessNotifier`) with an
+  explicit `POST_NOTIFICATIONS` check, resolving the corresponding `MissingPermission` lint errors.
+
 ## [1.2.0] — 2026-06-25
 
 A reliability release focused on **recording the first call after a reboot**, plus a rebuilt,

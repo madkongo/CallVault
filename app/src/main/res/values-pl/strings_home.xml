@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Auto-completed translations. Do not hand-edit placeholders (%1$s etc.). -->
+<resources xmlns:tools="http://schemas.android.com/tools">
+    <string name="home_hero_pill_no_folder">Wymagane działanie</string>
+    <string name="home_hero_pill_not_paired">Wymagane działanie</string>
+    <string name="home_hero_pill_ready">Aktywny</string>
+    <string name="home_hero_status_label">Stan</string>
+    <string name="home_play_recording">Odtwórz nagranie</string>
+    <string name="home_recordings_count">%1$d zapisanych</string>
+    <string name="home_recordings_empty_hint">Gdy CallVault nagra rozmowę, pojawi się ona tutaj. Wykonaj lub odbierz połączenie, aby rozpocząć.</string>
+    <string name="home_recordings_empty_title">Brak nagrań</string>
+</resources>

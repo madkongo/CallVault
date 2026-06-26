@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Recorder readiness notification (cold-start status) -->
+    <string name="notif_readiness_channel">Call recorder readiness</string>
+    <string name="notif_readiness_ready_title">Ready to record calls</string>
+    <string name="notif_readiness_starting_title">Call recorder starting up…</string>
+    <string name="notif_readiness_ready_text">The recorder is connected.</string>
+    <string name="notif_readiness_starting_text">Connecting the recorder — calls won\'t record until this finishes.</string>
+
+    <!-- ADB wireless-debugging pairing notifications -->
+    <string name="notif_pairing_channel">ADB pairing</string>
+    <string name="notif_pairing_searching_title">Searching for pairing service…</string>
+    <string name="notif_pairing_searching_text">Open the phone\'s \'Pair device with pairing code\' dialog.</string>
+    <string name="notif_pairing_waiting_wd_title">Waiting for Wireless debugging…</string>
+    <string name="notif_pairing_waiting_wd_text">Turn on Wireless debugging to start pairing.</string>
+    <string name="notif_pairing_found_title">Pairing service found</string>
+    <string name="notif_pairing_found_text">Enter the 6-digit pairing code.</string>
+    <string name="notif_pairing_working_title">Pairing…</string>
+    <string name="notif_pairing_working_text">Setting up CallVault. This takes a few seconds.</string>
+    <string name="notif_pairing_success_title">Paired ✓</string>
+    <string name="notif_pairing_success_text">Wireless debugging paired. Tap to finish setting up CallVault.</string>
+    <string name="notif_pairing_failed_title">Pairing failed</string>
+    <string name="notif_pairing_action_stop">Stop</string>
+    <string name="notif_pairing_action_enter_code">Enter pairing code</string>
+    <string name="notif_pairing_remote_input_label">Pairing code</string>
+</resources>

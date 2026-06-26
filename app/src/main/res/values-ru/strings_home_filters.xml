@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Auto-completed translations. Do not hand-edit placeholders (%1$s etc.). -->
+<resources xmlns:tools="http://schemas.android.com/tools">
+    <string name="home_copies_collapse">Скрыть копии</string>
+    <string name="home_copies_expand">Показать копии</string>
+    <string name="home_copy_device">Устройство</string>
+    <string name="home_copy_drive">Drive</string>
+    <string name="home_delete_confirm_device_message">Удалить копию «%1$s» на устройстве? Копия в Drive будет сохранена.</string>
+    <string name="home_delete_confirm_drive_message">Удалить копию «%1$s» в Drive? Копия на устройстве будет сохранена.</string>
+    <string name="home_delete_copy_device_content_desc">Удалить копию на устройстве</string>
+    <string name="home_delete_copy_drive_content_desc">Удалить копию в Drive</string>
+    <string name="home_filter_contact_all">Все контакты</string>
+    <string name="home_filter_contact_all_short">Все</string>
+    <string name="home_filter_contact_chip">Контакт: %1$s</string>
+    <string name="home_filter_contact_label">Контакт</string>
+    <string name="home_filter_date_all">Все даты</string>
+    <string name="home_filter_date_all_short">Все</string>
+    <string name="home_filter_date_chip">Дата: %1$s</string>
+    <string name="home_filter_date_label">Дата</string>
+    <string name="home_filter_direction_all">Все</string>
+    <string name="home_filter_direction_chip">Направление: %1$s</string>
+    <string name="home_filter_direction_incoming">Входящие</string>
+    <string name="home_filter_direction_label">Направление</string>
+    <string name="home_filter_direction_outgoing">Исходящие</string>
+    <string name="home_filter_source_all">Все</string>
+    <string name="home_filter_source_chip">Источник: %1$s</string>
+    <string name="home_filter_source_drive">Только в Drive</string>
+    <string name="home_filter_source_label">Источник</string>
+    <string name="home_filter_source_local">Только на устройстве</string>
+    <string name="home_source_badge_both">Устройство + Drive</string>
+    <string name="home_source_badge_drive">Drive</string>
+    <string name="home_source_badge_local">Устройство</string>
+</resources>

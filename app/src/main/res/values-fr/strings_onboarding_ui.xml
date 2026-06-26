@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Auto-completed translations. Do not hand-edit placeholders (%1$s etc.). -->
+<resources xmlns:tools="http://schemas.android.com/tools">
+    <string name="disclaimer_ui_body_header">Avertissement</string>
+    <string name="disclaimer_ui_hero_subtitle">L\'enregistrement d\'appels FOSS, selon vos règles. Veuillez lire l\'avertissement avant de continuer.</string>
+    <string name="disclaimer_ui_scroll_hint">Faites défiler jusqu\'en bas pour activer la case à cocher.</string>
+    <string name="permission_adb_desc_short">Nécessaire pour capturer l\'audio des appels.</string>
+    <string name="permission_adb_hint">Touchez Autoriser, puis saisissez le code d\'association indiqué dans la notification.</string>
+    <string name="permission_adb_hint_wd_on">Touchez Autoriser, puis saisissez le code d\'association affiché sur l\'écran Débogage sans fil.</string>
+    <string name="permission_adb_open_device_info">Ouvrir les infos de l\'appareil</string>
+    <string name="permission_adb_open_wd">Ouvrir le débogage sans fil</string>
+    <string name="permission_adb_pair">Associer</string>
+    <string name="permission_devmode_enable_hint">Activez-les : Paramètres → À propos du téléphone → touchez Numéro de build 7 fois.</string>
+    <string name="permission_devmode_off">Les options pour les développeurs sont désactivées</string>
+    <string name="permission_devmode_on">Options pour les développeurs : activées</string>
+    <string name="permission_devmode_open_device_info">Ouvrir les infos de l\'appareil</string>
+    <string name="permission_devmode_open_wd">Ouvrir le débogage sans fil</string>
+    <string name="permission_wd_enable_hint">Activez-le : Options pour les développeurs → Débogage sans fil.</string>
+    <string name="permission_wd_off">Le débogage sans fil est désactivé</string>
+    <string name="permission_wd_on">Débogage sans fil : activé</string>
+    <string name="permissions_status_adb_connected">Connecté</string>
+    <string name="permissions_status_adb_not_connected">Non connecté</string>
+    <string name="permissions_ui_eyebrow">Configuration</string>
+    <string name="permissions_ui_hero_subtitle">Quelques autorisations pour que CallVault puisse capturer et étiqueter vos appels. Approuvez chaque élément ci-dessous.</string>
+    <string name="permissions_ui_hero_title">C\'est parti pour la configuration</string>
+    <string name="permissions_ui_section_label">Autorisations</string>
+</resources>

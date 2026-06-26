@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Auto-completed translations. Do not hand-edit placeholders (%1$s etc.). -->
+<resources xmlns:tools="http://schemas.android.com/tools">
+    <string name="home_copies_collapse">Ẩn các bản sao</string>
+    <string name="home_copies_expand">Hiện các bản sao</string>
+    <string name="home_copy_device">Thiết bị</string>
+    <string name="home_copy_drive">Drive</string>
+    <string name="home_delete_confirm_device_message">Xóa bản sao trên Thiết bị của %1$s? Bản sao trên Drive vẫn được giữ lại.</string>
+    <string name="home_delete_confirm_drive_message">Xóa bản sao trên Drive của %1$s? Bản sao trên Thiết bị vẫn được giữ lại.</string>
+    <string name="home_delete_copy_device_content_desc">Xóa bản sao trên Thiết bị</string>
+    <string name="home_delete_copy_drive_content_desc">Xóa bản sao trên Drive</string>
+    <string name="home_filter_contact_all">Tất cả liên hệ</string>
+    <string name="home_filter_contact_all_short">Tất cả</string>
+    <string name="home_filter_contact_chip">Liên hệ: %1$s</string>
+    <string name="home_filter_contact_label">Liên hệ</string>
+    <string name="home_filter_date_all">Tất cả các ngày</string>
+    <string name="home_filter_date_all_short">Tất cả</string>
+    <string name="home_filter_date_chip">Ngày: %1$s</string>
+    <string name="home_filter_date_label">Ngày</string>
+    <string name="home_filter_direction_all">Tất cả</string>
+    <string name="home_filter_direction_chip">Hướng: %1$s</string>
+    <string name="home_filter_direction_incoming">Cuộc gọi đến</string>
+    <string name="home_filter_direction_label">Hướng</string>
+    <string name="home_filter_direction_outgoing">Cuộc gọi đi</string>
+    <string name="home_filter_source_all">Tất cả</string>
+    <string name="home_filter_source_chip">Nguồn: %1$s</string>
+    <string name="home_filter_source_drive">Chỉ trên Drive</string>
+    <string name="home_filter_source_label">Nguồn</string>
+    <string name="home_filter_source_local">Chỉ trên thiết bị</string>
+    <string name="home_source_badge_both">Thiết bị + Drive</string>
+    <string name="home_source_badge_drive">Drive</string>
+    <string name="home_source_badge_local">Thiết bị</string>
+</resources>

@@ -8,6 +8,7 @@
 
 package com.baba.callvault.services.recording
 
+import android.annotation.SuppressLint
 import android.app.NotificationChannel
 import android.app.NotificationManager
 import android.content.Context
@@ -15,7 +16,9 @@ import android.os.Handler
 import android.os.Looper
 import androidx.core.app.NotificationCompat
 import androidx.core.app.NotificationManagerCompat
+import com.baba.callvault.R
 import com.baba.callvault.services.call.CallMonitorService
+import com.baba.callvault.system.permissions.PermissionChecks
 import com.baba.callvault.utils.AppLogger
 
 /**
@@ -65,21 +68,33 @@ object RecorderReadinessNotifier {
         runCatching { NotificationManagerCompat.from(context).cancel(NOTIFICATION_ID) }
     }
 
+    // Permission is verified at runtime via PermissionChecks.hasNotificationPermission() before
+    // notify() is called; lint can't trace into the helper, so the check is suppressed here.
+    @SuppressLint("MissingPermission")
     private fun post(context: Context, ready: Boolean) {
         createChannel(context)
         val notification = NotificationCompat.Builder(context, CHANNEL_ID)
             .setSmallIcon(android.R.drawable.stat_notify_sync)
-            .setContentTitle(if (ready) "Ready to record calls" else "Call recorder starting up…")
+            .setContentTitle(
+                context.getString(
+                    if (ready) R.string.notif_readiness_ready_title
+                    else R.string.notif_readiness_starting_title,
+                ),
+            )
             .setContentText(
-                if (ready) "The recorder is connected."
-                else "Connecting the recorder — calls won't record until this finishes.",
+                context.getString(
+                    if (ready) R.string.notif_readiness_ready_text
+                    else R.string.notif_readiness_starting_text,
+                ),
             )
             .setOngoing(!ready)
             .setOnlyAlertOnce(true)
             .setPriority(NotificationCompat.PRIORITY_LOW)
             .setVisibility(NotificationCompat.VISIBILITY_SECRET)
             .build()
-        // notify() silently no-ops without POST_NOTIFICATIONS (Android 13+); acceptable here.
+        // Skip when POST_NOTIFICATIONS is not granted (Android 13+); checking explicitly (rather than
+        // relying on notify()'s silent no-op) satisfies the MissingPermission lint check.
+        if (!PermissionChecks.hasNotificationPermission(context)) return
         runCatching { NotificationManagerCompat.from(context).notify(NOTIFICATION_ID, notification) }
             .onFailure { AppLogger.w(TAG, "Failed to post readiness notification: ${it.message}") }
     }
@@ -87,7 +102,7 @@ object RecorderReadinessNotifier {
     private fun createChannel(context: Context) {
         val channel = NotificationChannel(
             CHANNEL_ID,
-            "Call recorder readiness",
+            context.getString(R.string.notif_readiness_channel),
             NotificationManager.IMPORTANCE_LOW,
         ).apply {
             setShowBadge(false)
