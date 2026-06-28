@@ -11,4 +11,7 @@
     <string name="dialer_record">Rögzítés</string>
     <string name="dialer_stop_recording">Rögzítés leállítása</string>
     <string name="dialer_unknown_caller">Ismeretlen</string>
+    <string name="dialer_status_dialing">Hívás folyamatban…</string>
+    <string name="dialer_status_active">Aktív</string>
+    <string name="dialer_status_ended">Hívás befejezve</string>
 </resources>

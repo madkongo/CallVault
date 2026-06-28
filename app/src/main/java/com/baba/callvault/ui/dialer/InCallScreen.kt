@@ -104,9 +104,9 @@ fun InCallScreen(
             Text(
                 text = when (call.phase) {
                     CallEvent.Phase.RINGING -> stringResource(R.string.dialer_incoming_title)
-                    CallEvent.Phase.DIALING -> "Calling…"
-                    CallEvent.Phase.ACTIVE  -> "Active"
-                    CallEvent.Phase.ENDED   -> "Call ended"
+                    CallEvent.Phase.DIALING -> stringResource(R.string.dialer_status_dialing)
+                    CallEvent.Phase.ACTIVE  -> stringResource(R.string.dialer_status_active)
+                    CallEvent.Phase.ENDED   -> stringResource(R.string.dialer_status_ended)
                 },
                 color = Color.White.copy(alpha = 0.7f),
                 style = MaterialTheme.typography.bodyLarge,

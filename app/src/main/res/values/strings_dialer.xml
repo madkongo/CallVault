@@ -11,4 +11,7 @@
     <string name="dialer_record">Record</string>
     <string name="dialer_stop_recording">Stop recording</string>
     <string name="dialer_unknown_caller">Unknown</string>
+    <string name="dialer_status_dialing">Calling…</string>
+    <string name="dialer_status_active">Active</string>
+    <string name="dialer_status_ended">Call ended</string>
 </resources>

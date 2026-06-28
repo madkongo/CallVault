@@ -11,4 +11,7 @@
     <string name="dialer_record">Registra</string>
     <string name="dialer_stop_recording">Interrompi registrazione</string>
     <string name="dialer_unknown_caller">Sconosciuto</string>
+    <string name="dialer_status_dialing">Chiamata in corso…</string>
+    <string name="dialer_status_active">Attivo</string>
+    <string name="dialer_status_ended">Chiamata terminata</string>
 </resources>

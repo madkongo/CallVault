@@ -11,4 +11,7 @@
     <string name="dialer_record">Ghi âm</string>
     <string name="dialer_stop_recording">Dừng ghi âm</string>
     <string name="dialer_unknown_caller">Không xác định</string>
+    <string name="dialer_status_dialing">Đang gọi…</string>
+    <string name="dialer_status_active">Đang hoạt động</string>
+    <string name="dialer_status_ended">Cuộc gọi đã kết thúc</string>
 </resources>

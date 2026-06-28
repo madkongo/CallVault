@@ -46,11 +46,13 @@ class CallVaultInCallService : InCallService() {
     }
 
     override fun onCallRemoved(call: Call) {
-        CallActions.clear()
+        if (call === CallActions.activeCall) {
+            CallActions.clear()
+            CallStateRepository.update(null)
+        }
         callbacks.remove(call)?.let { call.unregisterCallback(it) }
         if (!CallDetection.isInitialized) return
         TelecomCallEventSource.submit(CallDetection.router, call) // ENDED
-        CallStateRepository.update(null)
     }
 
     private fun publish(call: Call) {

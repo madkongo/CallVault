@@ -11,4 +11,7 @@
     <string name="dialer_record">Nagraj</string>
     <string name="dialer_stop_recording">Zatrzymaj nagrywanie</string>
     <string name="dialer_unknown_caller">Nieznany</string>
+    <string name="dialer_status_dialing">Połączenie trwa…</string>
+    <string name="dialer_status_active">Aktywne</string>
+    <string name="dialer_status_ended">Połączenie zakończone</string>
 </resources>

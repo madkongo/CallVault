@@ -11,4 +11,7 @@
     <string name="dialer_record">Запись</string>
     <string name="dialer_stop_recording">Остановить запись</string>
     <string name="dialer_unknown_caller">Неизвестный</string>
+    <string name="dialer_status_dialing">Звонок…</string>
+    <string name="dialer_status_active">Активный</string>
+    <string name="dialer_status_ended">Звонок завершён</string>
 </resources>
