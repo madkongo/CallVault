@@ -17,6 +17,7 @@ class DialerModeStateTest {
         assertTrue(DialerModeState.effective(prefOn = true, roleHeld = true))
         assertFalse(DialerModeState.effective(prefOn = true, roleHeld = false))
         assertFalse(DialerModeState.effective(prefOn = false, roleHeld = true))
+        assertFalse(DialerModeState.effective(prefOn = false, roleHeld = false))
     }
     @Test fun banner_shown_when_pref_on_but_role_lost() {
         assertTrue(DialerModeState.shouldShowRoleLostBanner(prefOn = true, roleHeld = false))

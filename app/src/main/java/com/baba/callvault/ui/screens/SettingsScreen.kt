@@ -964,7 +964,7 @@ private fun DialerModeSection(
 
     // Shown below the switch after the user disables dialer mode so they know how to
     // release the role in system settings (we cannot drop it programmatically).
-    var showReleaseGuidance by remember(prefOn) { mutableStateOf(false) }
+    var showReleaseGuidance by remember { mutableStateOf(false) }
 
     SettingsSection(
         title = stringResource(R.string.settings_dialer_mode_label),
@@ -1018,8 +1018,10 @@ private fun DialerModeSection(
                             // Preference NOT persisted here; persisted in the launcher callback
                             // only when the system confirms the role was granted.
                             onRequestDialerRole(intent)
+                        } else {
+                            // Role unavailable on this device; refresh so the switch reverts deterministically.
+                            actions.refresh()
                         }
-                        // If intent is null the role is unavailable on this device; do nothing.
                     }
                 } else {
                     actions.setDialerModeEnabled(false)
@@ -1494,6 +1496,7 @@ private fun SettingsScreenPreview() {
             override fun setRetentionTimeHour(hour: Int) {}
             override fun setRetentionTimeMinute(minute: Int) {}
             override fun setDialerModeEnabled(enabled: Boolean) {}
+            override fun refresh() {}
         }
 
         SettingsContent(

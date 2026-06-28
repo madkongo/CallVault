@@ -60,6 +60,7 @@ interface SettingsActions {
     fun setRetentionTimeHour(hour: Int)
     fun setRetentionTimeMinute(minute: Int)
     fun setDialerModeEnabled(enabled: Boolean)
+    fun refresh()
 }
 
 /**
@@ -134,7 +135,7 @@ class SettingsViewModel(application: Application) : AndroidViewModel(application
      * val autoRecord = remember(updateTrigger) { preferences.isAutoRecordIncomingEnabled() }
      * ```
      */
-    fun refresh() {
+    override fun refresh() {
         _updateTrigger.update { it + 1 }
     }
 
