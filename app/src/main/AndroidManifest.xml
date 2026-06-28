@@ -71,6 +71,28 @@
                 <category android:name="android.intent.category.NOTIFICATION_PREFERENCES" /> <!-- Show "Additional settings in the app" button in Settings App Info -> notifications -->
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
+            <!--
+                Default-dialer qualification: Android only offers ROLE_DIALER to an app that declares
+                an activity handling ACTION_DIAL (with and without a tel: number) and VIEW tel:. Without
+                these, the system role-request dialog opens but the role can never be granted. These
+                make CallVault a valid default-phone-app candidate; MainActivity routes a dial intent to
+                the in-app dialpad.
+            -->
+            <intent-filter>
+                <action android:name="android.intent.action.DIAL" />
+                <category android:name="android.intent.category.DEFAULT" />
+            </intent-filter>
+            <intent-filter>
+                <action android:name="android.intent.action.DIAL" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <data android:scheme="tel" />
+            </intent-filter>
+            <intent-filter>
+                <action android:name="android.intent.action.VIEW" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.BROWSABLE" />
+                <data android:scheme="tel" />
+            </intent-filter>
         </activity>
 
         <!-- Foreground service that drives ADB wireless pairing via a notification -->
