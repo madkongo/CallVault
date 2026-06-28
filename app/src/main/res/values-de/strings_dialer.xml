@@ -20,4 +20,5 @@
     <string name="settings_dialer_mode_description">Ersetzt die System-Telefon-App. Ermöglicht Anrufaufzeichnung ohne Root.</string>
     <string name="settings_dialer_mode_role_lost_banner">Standard-Wähler-Rolle verloren. Tippen zum Wiederherstellen und Aufzeichnung fortsetzen.</string>
     <string name="settings_dialer_mode_release_hint">Um nicht mehr als Standard-Telefon-App zu fungieren, öffnen Sie die Standard-Apps-Einstellungen.</string>
+    <string name="dialer_launcher_label">CallVault Dialer</string>
 </resources>

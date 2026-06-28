@@ -20,4 +20,5 @@
     <string name="settings_dialer_mode_description">Zastępuje systemową aplikację telefonu. Umożliwia nagrywanie rozmów bez roota.</string>
     <string name="settings_dialer_mode_role_lost_banner">Utracono rolę domyślnego dialera. Dotknij, aby przywrócić i wznowić nagrywanie.</string>
     <string name="settings_dialer_mode_release_hint">Aby przestać być domyślną aplikacją telefoniczną, otwórz ustawienia domyślnych aplikacji.</string>
+    <string name="dialer_launcher_label">CallVault Dialer</string>
 </resources>

@@ -95,6 +95,21 @@
             </intent-filter>
         </activity>
 
+        <!-- Toggle-able launcher icon for the in-app dialpad; enabled only while dialer mode is on. -->
+        <activity-alias
+            android:name=".dialer.DialerLauncherAlias"
+            android:targetActivity=".MainActivity"
+            android:enabled="false"
+            android:exported="true"
+            android:label="@string/dialer_launcher_label"
+            android:icon="@mipmap/ic_launcher">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+            <meta-data android:name="cv.open_dialer" android:value="true" />
+        </activity-alias>
+
         <!-- Foreground service that drives ADB wireless pairing via a notification -->
         <service
             android:name=".integrations.adb.AdbPairingService"

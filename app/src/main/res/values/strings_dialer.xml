@@ -20,4 +20,5 @@
     <string name="settings_dialer_mode_description">Replace the system phone app. Enables call recording without root.</string>
     <string name="settings_dialer_mode_role_lost_banner">Dialer role was lost. Tap to restore and resume recording.</string>
     <string name="settings_dialer_mode_release_hint">To stop acting as the default phone app, open Default apps settings.</string>
+    <string name="dialer_launcher_label">CallVault Dialer</string>
 </resources>

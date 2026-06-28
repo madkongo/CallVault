@@ -25,8 +25,9 @@ class MainActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
+        val openDialer = intent?.component?.shortClassName?.endsWith("DialerLauncherAlias") == true
         setContent {
-            AppNavigationScreen()
+            AppNavigationScreen(openDialer = openDialer)
         }
     }
 }

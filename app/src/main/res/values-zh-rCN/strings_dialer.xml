@@ -20,4 +20,5 @@
     <string name="settings_dialer_mode_description">替换系统电话应用。无需 root 即可录制通话。</string>
     <string name="settings_dialer_mode_role_lost_banner">默认拨号器角色已丢失。点击以恢复并继续录音。</string>
     <string name="settings_dialer_mode_release_hint">若要停止作为默认电话应用，请打开默认应用设置。</string>
+    <string name="dialer_launcher_label">CallVault Dialer</string>
 </resources>

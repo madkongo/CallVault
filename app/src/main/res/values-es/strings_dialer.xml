@@ -20,4 +20,5 @@
     <string name="settings_dialer_mode_description">Reemplaza la app de teléfono del sistema. Permite grabar llamadas sin root.</string>
     <string name="settings_dialer_mode_role_lost_banner">Se perdió el rol de marcador. Toca para restaurar y reanudar la grabación.</string>
     <string name="settings_dialer_mode_release_hint">Para dejar de ser la app de teléfono predeterminada, abre la configuración de apps predeterminadas.</string>
+    <string name="dialer_launcher_label">CallVault Dialer</string>
 </resources>
