@@ -979,10 +979,7 @@ private fun DialerModeSection(
                     .padding(horizontal = 16.dp, vertical = 6.dp)
                     .clip(RoundedCornerShape(8.dp))
                     .background(MaterialTheme.colorScheme.errorContainer)
-                    .clickable {
-                        val intent = dialerRoleController?.requestRoleIntent()
-                        if (intent != null) onRequestDialerRole(intent)
-                    }
+                    .clickable { actions.reassertDialerDefault() }
                     .padding(12.dp),
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.spacedBy(8.dp)
@@ -1496,6 +1493,7 @@ private fun SettingsScreenPreview() {
             override fun setRetentionTimeHour(hour: Int) {}
             override fun setRetentionTimeMinute(minute: Int) {}
             override fun setDialerModeEnabled(enabled: Boolean) {}
+            override fun reassertDialerDefault() {}
             override fun refresh() {}
         }
 

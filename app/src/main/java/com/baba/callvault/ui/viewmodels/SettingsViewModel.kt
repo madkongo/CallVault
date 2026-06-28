@@ -65,6 +65,7 @@ interface SettingsActions {
     fun setRetentionTimeHour(hour: Int)
     fun setRetentionTimeMinute(minute: Int)
     fun setDialerModeEnabled(enabled: Boolean)
+    fun reassertDialerDefault()
     fun refresh()
 }
 
@@ -395,6 +396,29 @@ class SettingsViewModel(application: Application) : AndroidViewModel(application
                 )
             }
             refresh() // re-read state so the toggle/banner reflect reality
+        }
+    }
+
+    /**
+     * Re-asserts the default dialer role if dialer mode is enabled but the role was lost.
+     * No-op when dialer mode is disabled. Runs off the main thread; calls [refresh] when done.
+     */
+    fun reassertDialerDefaultIfNeeded() {
+        if (!preferences.isDialerModeEnabled()) return
+        viewModelScope.launch(Dispatchers.IO) {
+            if (!dialerRoleController.isDefaultDialer()) dialerEnforcer.enforce()
+            refresh()
+        }
+    }
+
+    /**
+     * Unconditionally re-asserts the default dialer role (used when the user taps the role-lost
+     * banner). Runs off the main thread; calls [refresh] when done.
+     */
+    override fun reassertDialerDefault() {
+        viewModelScope.launch(Dispatchers.IO) {
+            dialerEnforcer.enforce()
+            refresh()
         }
     }
 

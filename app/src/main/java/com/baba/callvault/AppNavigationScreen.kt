@@ -126,6 +126,7 @@ fun AppNavigationScreen(openDialer: Boolean = false, onDialerHandled: () -> Unit
             if (event == Lifecycle.Event.ON_RESUME) {
                 appNavViewModel.refresh()
                 settingsViewModel.refresh()
+                settingsViewModel.reassertDialerDefaultIfNeeded()
             }
         }
         lifecycleOwner.lifecycle.addObserver(observer)

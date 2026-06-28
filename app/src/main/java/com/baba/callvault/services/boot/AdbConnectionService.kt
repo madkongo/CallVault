@@ -68,6 +68,15 @@ class AdbConnectionService : Service() {
                 .getOrDefault(false)
             AppLogger.i(TAG, "Boot: recorder daemon connected=$started")
 
+            // Re-assert default dialer after boot if the role was lost while the device was off.
+            val prefs = com.baba.callvault.data.AppPreferences(this@AdbConnectionService)
+            if (prefs.isDialerModeEnabled()) {
+                val rc = com.baba.callvault.dialer.DialerRoleController(this@AdbConnectionService)
+                if (!rc.isDefaultDialer()) {
+                    com.baba.callvault.dialer.DialerDefaultEnforcer(this@AdbConnectionService, prefs, rc).enforce()
+                }
+            }
+
             stopForeground(STOP_FOREGROUND_REMOVE)
             stopSelf()
         }
