@@ -30,6 +30,12 @@ class CallVaultInCallService : InCallService() {
 
     private val callbacks = mutableMapOf<Call, Call.Callback>()
 
+    override fun onDestroy() {
+        super.onDestroy()
+        // Prevent leaking the service reference held in CallActions after the service is unbound.
+        CallActions.clear()
+    }
+
     override fun onCallAdded(call: Call) {
         val cb = object : Call.Callback() {
             override fun onStateChanged(c: Call, state: Int) = publish(c)

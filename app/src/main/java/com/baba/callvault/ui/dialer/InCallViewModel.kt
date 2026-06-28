@@ -70,11 +70,13 @@ class InCallViewModel(application: Application) : AndroidViewModel(application) 
     fun toggleRecord() {
         val call = current.value ?: return
         val ctx = getApplication<Application>().applicationContext
+        // Known Phase-1 limitation: an auto-started recording will show "Record" until the first tap.
         if (call.isRecording) {
             ctx.startService(
                 Intent(ctx, RecordingForegroundService::class.java)
                     .setAction(RecordingForegroundService.ACTION_STOP_RECORDING),
             )
+            CallStateRepository.setRecording(false)
         } else {
             val direction = when (call.direction) {
                 CallDirection.INCOMING -> RecordingDirection.INCOMING
@@ -86,6 +88,7 @@ class InCallViewModel(application: Application) : AndroidViewModel(application) 
                     .setAction(RecordingForegroundService.ACTION_MANUAL_START)
                     .putExtra(RecordingMetadata.EXTRA_METADATA, metadata),
             )
+            CallStateRepository.setRecording(true)
         }
     }
 }

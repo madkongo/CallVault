@@ -23,6 +23,7 @@ import android.telephony.PhoneStateListener
 import android.telephony.TelephonyCallback
 import android.telephony.TelephonyManager
 import androidx.annotation.RequiresApi
+import com.baba.callvault.data.AppPreferences
 import com.baba.callvault.server.RecorderConnection
 import com.baba.callvault.utils.AppLogger
 
@@ -194,6 +195,12 @@ class CallMonitorService : Service() {
 
     /** Maps a [TelephonyManager] call-state int to the broadcast's EXTRA_STATE string and feeds the session manager. */
     private fun forwardState(state: Int) {
+        // In dialer mode the InCallService (Telecom) is the authoritative call-state source.
+        // Mirrors the identical guard in PhoneStateReceiver to prevent double-feeding.
+        if (AppPreferences(this).isDialerModeEnabled()) {
+            AppLogger.v(TAG, "Dialer mode active; live listener deferring to Telecom (state forwarding skipped)")
+            return
+        }
         val stateString = when (state) {
             TelephonyManager.CALL_STATE_RINGING  -> TelephonyManager.EXTRA_STATE_RINGING
             TelephonyManager.CALL_STATE_OFFHOOK  -> TelephonyManager.EXTRA_STATE_OFFHOOK

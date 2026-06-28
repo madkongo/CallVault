@@ -216,7 +216,9 @@
             android:name=".ui.dialer.InCallActivity"
             android:exported="false"
             android:showOnLockScreen="true"
-            android:turnScreenOn="true" />
+            android:turnScreenOn="true"
+            android:launchMode="singleTask"
+            android:excludeFromRecents="true" />
 
     </application>
 
