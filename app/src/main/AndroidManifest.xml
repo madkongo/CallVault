@@ -31,6 +31,18 @@
     -->
     <uses-permission android:name="android.permission.READ_CALL_LOG" tools:ignore="SmsAndCallLogPolicy" />
 
+    <!-- Default-dialer role: place calls and observe Telecom call state via InCallService. -->
+    <uses-permission android:name="android.permission.MANAGE_OWN_CALLS" />
+    <uses-permission android:name="android.permission.CALL_PHONE" />
+    <!-- Required for the full-screen in-call UI notification (lock-screen call HUD). -->
+    <uses-permission android:name="android.permission.USE_FULL_SCREEN_INTENT" />
+    <!--
+        CALL_PHONE implies android.hardware.telephony, which is unavailable on Chrome OS / large-screen
+        devices. Mark it optional so the app remains installable on those form factors (we degrade
+        gracefully without the dialer role).
+    -->
+    <uses-feature android:name="android.hardware.telephony" android:required="false" />
+
     <!-- Recording Foreground Job -->
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE" tools:ignore="ForegroundServicesPolicy" />
     <!-- Android 14+ Onwards (API 34) -->
@@ -172,6 +184,39 @@
                 android:name="android.app.PROPERTY_SPECIAL_USE_FGS_SUBTYPE"
                 android:value="Call recording: listen for call state after reboot to record reliably." />
         </service>
+
+        <!--
+            InCallService: receives Telecom Call objects when CallVault holds the default-dialer
+            role. Maps call states to CallEvents (via TELECOM detection mode) and updates
+            CallStateRepository for the in-call UI. Emergency calls are never blocked — the service
+            is a pure observer.
+            android:permission guards binding so only the Telecom subsystem can bind.
+        -->
+        <service
+            android:name=".dialer.CallVaultInCallService"
+            android:exported="true"
+            android:permission="android.permission.BIND_INCALL_SERVICE"
+            android:foregroundServiceType="specialUse">
+            <property
+                android:name="android.app.PROPERTY_SPECIAL_USE_FGS_SUBTYPE"
+                android:value="In-call UI and call-event observation for the default dialer role." />
+            <meta-data android:name="android.telecom.IN_CALL_SERVICE_UI" android:value="true" />
+            <meta-data android:name="android.telecom.IN_CALL_SERVICE_RINGING" android:value="true" />
+            <intent-filter>
+                <action android:name="android.telecom.InCallService" />
+            </intent-filter>
+        </service>
+
+        <!--
+            In-call UI activity — stub (Task 8 provides the full Compose implementation).
+            Launched by CallVaultInCallService when a call arrives; shown over the lock screen
+            via FLAG_SHOW_WHEN_LOCKED / FLAG_TURN_SCREEN_ON set programmatically in Task 8.
+        -->
+        <activity
+            android:name=".ui.dialer.InCallActivity"
+            android:exported="false"
+            android:showOnLockScreen="true"
+            android:turnScreenOn="true" />
 
     </application>
 
