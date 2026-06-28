@@ -16,6 +16,7 @@ import com.baba.callvault.calls.CallDetection
 import com.baba.callvault.calls.CallDirection
 import com.baba.callvault.calls.CallEvent
 import com.baba.callvault.data.AppPreferences
+import com.baba.callvault.dialer.DialerRoleController
 import com.baba.callvault.utils.AppLogger
 
 /**
@@ -63,10 +64,17 @@ class PhoneStateReceiver : BroadcastReceiver() {
 
         AppLogger.v(TAG, "Raw broadcast received: state=$state number=$number")
 
-        // In dialer mode the InCallService (Telecom) is the authoritative call-state source.
-        // Let it own detection entirely; ignore this broadcast.
-        if (AppPreferences(context).isDialerModeEnabled()) {
-            AppLogger.v(TAG, "Dialer mode active; broadcast detection deferred to Telecom (broadcast ignored)")
+        // Dialer mode is *effective* only when the preference is on AND CallVault actually holds the
+        // default-dialer role (so its InCallService is bound and receiving calls). Resync the router's
+        // active source to reality on every call: this self-heals a lost/never-granted role back to
+        // broadcast detection (and hands ownership to Telecom only while the role is truly held).
+        // Without this, pref-on + role-not-held would leave the router stuck on TELECOM and silently
+        // drop the broadcast while Telecom never fires → total detection blackout (no recording).
+        val effectiveDialerMode =
+            AppPreferences(context).isDialerModeEnabled() && DialerRoleController(context).isDefaultDialer()
+        if (CallDetection.isInitialized) CallDetection.setMode(effectiveDialerMode)
+        if (effectiveDialerMode) {
+            AppLogger.v(TAG, "Dialer mode effective (role held); broadcast detection deferred to Telecom")
             return
         }
 

@@ -24,6 +24,7 @@ import android.telephony.TelephonyCallback
 import android.telephony.TelephonyManager
 import androidx.annotation.RequiresApi
 import com.baba.callvault.data.AppPreferences
+import com.baba.callvault.dialer.DialerRoleController
 import com.baba.callvault.server.RecorderConnection
 import com.baba.callvault.utils.AppLogger
 
@@ -195,10 +196,11 @@ class CallMonitorService : Service() {
 
     /** Maps a [TelephonyManager] call-state int to the broadcast's EXTRA_STATE string and feeds the session manager. */
     private fun forwardState(state: Int) {
-        // In dialer mode the InCallService (Telecom) is the authoritative call-state source.
-        // Mirrors the identical guard in PhoneStateReceiver to prevent double-feeding.
-        if (AppPreferences(this).isDialerModeEnabled()) {
-            AppLogger.v(TAG, "Dialer mode active; live listener deferring to Telecom (state forwarding skipped)")
+        // Defer to Telecom ONLY when dialer mode is *effective* (pref on AND the default-dialer role is
+        // actually held). Mirrors PhoneStateReceiver: if the role isn't held, the live-listener path must
+        // stay active so recording keeps working instead of going dark.
+        if (AppPreferences(this).isDialerModeEnabled() && DialerRoleController(this).isDefaultDialer()) {
+            AppLogger.v(TAG, "Dialer mode effective (role held); live listener deferring to Telecom")
             return
         }
         val stateString = when (state) {
