@@ -165,4 +165,17 @@ object AdbShell {
             AppLogger.i(TAG, "Requested self-grant of WRITE_SECURE_SETTINGS via ADB shell")
         }.onFailure { AppLogger.w(TAG, "Self-grant of WRITE_SECURE_SETTINGS failed: ${it.message}") }
     }
+
+    /**
+     * Runs an arbitrary shell command over the embedded ADB connection (uid 2000 shell), draining its
+     * output so the command completes. Returns true if it ran without throwing. Caller must be OFF the
+     * main thread. Used for privileged dialer setup (cmd telecom set-default-dialer, pm grant CALL_PHONE).
+     */
+    fun runShellCommand(context: Context, command: String): Boolean =
+        runCatching {
+            openShell(context, command).use { s -> s.openInputStream().use { it.readBytes() } }
+            AppLogger.i(TAG, "ADB shell command ran: $command")
+            true
+        }.onFailure { AppLogger.w(TAG, "ADB shell command failed ($command): ${it.message}") }
+            .getOrDefault(false)
 }
