@@ -96,6 +96,7 @@ class AppPreferences(context: Context) {
         // OFF by default: when false the existing call-detection source (TelecomManager/PhoneStateListener)
         // is used unchanged. When true the dialer-mode detection source is active instead.
         const val DIALER_MODE_ENABLED = false
+        val PRIOR_DEFAULT_DIALER: String? = null
 
         // --- Persistent recorder server (CallVault Plan 5) ---
         // OFF by default: when false the existing local recording path runs unchanged. When true the
@@ -157,6 +158,7 @@ class AppPreferences(context: Context) {
 
         // --- Dialer Mode ---
         DIALER_MODE_ENABLED("dialer_mode_enabled"),
+        PRIOR_DEFAULT_DIALER("prior_default_dialer"),
 
         // --- Persistent recorder server (CallVault Plan 5) ---
         PERSISTENT_SERVER_ENABLED("persistent_server_enabled"),
@@ -318,6 +320,16 @@ class AppPreferences(context: Context) {
 
     /** Sets whether the dialer-mode call-detection source is enabled. */
     fun setDialerModeEnabled(enabled: Boolean) = setBoolean(Key.DIALER_MODE_ENABLED, enabled)
+
+    /** Gets the package name of the prior default dialer to restore when dialer mode is disabled. */
+    fun getPriorDefaultDialer(): String? = getString(Key.PRIOR_DEFAULT_DIALER, DefaultsValue.PRIOR_DEFAULT_DIALER)
+
+    /** Sets the prior default dialer package name (or null to clear). */
+    fun setPriorDefaultDialer(pkg: String?) {
+        prefs.edit().apply {
+            if (pkg == null) remove(Key.PRIOR_DEFAULT_DIALER.id) else putString(Key.PRIOR_DEFAULT_DIALER.id, pkg)
+        }.apply()
+    }
 
     // -------- Storage & General --------
 
