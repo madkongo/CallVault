@@ -13,9 +13,14 @@ import androidx.appcompat.app.AppCompatDelegate
 import androidx.core.os.LocaleListCompat
 import androidx.lifecycle.AndroidViewModel
 import com.baba.callvault.BuildConfig
+import androidx.lifecycle.viewModelScope
 import com.baba.callvault.calls.CallDetection
+import com.baba.callvault.dialer.DialerDefaultEnforcer
+import com.baba.callvault.dialer.DialerLauncherIcon
 import com.baba.callvault.dialer.DialerModeState
 import com.baba.callvault.dialer.DialerRoleController
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
 import com.baba.callvault.services.debug.DebugNotificationHelper
 import com.baba.callvault.data.AppPreferences
 import com.baba.callvault.data.StorageTarget
@@ -83,6 +88,12 @@ class SettingsViewModel(application: Application) : AndroidViewModel(application
 
     /** Manages the default-dialer (ROLE_DIALER) role request and release. */
     val dialerRoleController = DialerRoleController(appContext)
+
+    /** Lazily-created enforcer; constructed on first use so tests that never call
+     *  [setDialerModeEnabled] pay no construction cost. */
+    private val dialerEnforcer by lazy {
+        DialerDefaultEnforcer(appContext, preferences, dialerRoleController)
+    }
 
     // -------- Internal mutable state
     // Private so only this ViewModel can mutate it.
@@ -372,15 +383,19 @@ class SettingsViewModel(application: Application) : AndroidViewModel(application
      */
     override fun setDialerModeEnabled(enabled: Boolean) {
         preferences.setDialerModeEnabled(enabled)
-        if (CallDetection.isInitialized) {
-            CallDetection.setMode(
-                DialerModeState.effective(
-                    prefOn = enabled,
-                    roleHeld = dialerRoleController.isDefaultDialer()
+        DialerLauncherIcon.setEnabled(appContext, enabled)
+        viewModelScope.launch(Dispatchers.IO) {
+            if (enabled) dialerEnforcer.enforce() else dialerEnforcer.relinquish()
+            if (CallDetection.isInitialized) {
+                CallDetection.setMode(
+                    DialerModeState.effective(
+                        prefOn = enabled,
+                        roleHeld = dialerRoleController.isDefaultDialer(),
+                    )
                 )
-            )
+            }
+            refresh() // re-read state so the toggle/banner reflect reality
         }
-        refresh()
     }
 
     /** Turns diagnostic logging on or off.
