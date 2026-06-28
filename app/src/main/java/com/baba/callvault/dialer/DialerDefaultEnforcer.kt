@@ -29,6 +29,10 @@ class DialerDefaultEnforcer(
     /** Make CallVault the Telecom default dialer + grant CALL_PHONE. Returns true if it actually became default. */
     fun enforce(): Boolean {
         if (roleController.isDefaultDialer()) return true
+        if (!AdbShell.ensureConnected(context)) {
+            AppLogger.w(TAG, "enforce() skipped: ADB connection unavailable")
+            return false
+        }
         // Remember who held it so we can restore on relinquish (only if it wasn't already us).
         @Suppress("DEPRECATION")
         val current = telecom?.defaultDialerPackage
@@ -47,6 +51,10 @@ class DialerDefaultEnforcer(
         val prior = prefs.getPriorDefaultDialer()
             ?: @Suppress("DEPRECATION") telecom?.systemDialerPackage
         if (prior != null && prior != pkg) {
+            if (!AdbShell.ensureConnected(context)) {
+                AppLogger.w(TAG, "relinquish() skipped restore: ADB connection unavailable")
+                return
+            }
             AdbShell.runShellCommand(context, DialerCommands.restore(prior))
         }
         prefs.setPriorDefaultDialer(null)
