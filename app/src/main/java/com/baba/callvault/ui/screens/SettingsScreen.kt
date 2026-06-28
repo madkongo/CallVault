@@ -9,10 +9,8 @@
 package com.baba.callvault.ui.screens
 
 import android.annotation.SuppressLint
-import android.app.Activity
 import android.os.Build
 import androidx.activity.compose.rememberLauncherForActivityResult
-import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.expandVertically
@@ -146,24 +144,12 @@ fun SettingsScreen(
         viewModel.refresh()
     }
 
-    // Dialer-role launcher: fires the system "set as default phone app" dialog. On success we
-    // verify that the role is actually held (the system may still deny despite RESULT_OK on some
-    // OEMs) before persisting the preference. On denial we just refresh so the switch snaps back.
-    val dialerRoleLauncher = rememberLauncherForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
-        if (result.resultCode == Activity.RESULT_OK && viewModel.dialerRoleController.isDefaultDialer()) {
-            viewModel.setDialerModeEnabled(true)
-        }
-        // Always refresh — if denied, the preference was not persisted so the switch reverts.
-        viewModel.refresh()
-    }
-
     SettingsContent(
         preferences = viewModel.preferences,
         updateTrigger = updateTrigger,
         actions = viewModel,
         contactPickerState = contactPickerState,
         dialerRoleController = viewModel.dialerRoleController,
-        onRequestDialerRole = { intent -> dialerRoleLauncher.launch(intent) },
         onBack = onBack,
         // Seed each picker with its OWN current folder so it opens there, instead of letting
         // Android's DocumentsUI reopen at the last-browsed location (which, after setting Drive,
@@ -230,7 +216,6 @@ fun SettingsContent(
     onDismissContacts: () -> Unit,
     onShareLogs: () -> Unit,
     dialerRoleController: DialerRoleController? = null,
-    onRequestDialerRole: (android.content.Intent) -> Unit = {},
     modifier: Modifier = Modifier
 ) {
     var showLicensesDialog by remember { mutableStateOf(false) }
@@ -310,7 +295,6 @@ fun SettingsContent(
                     updateTrigger = updateTrigger,
                     actions = actions,
                     dialerRoleController = dialerRoleController,
-                    onRequestDialerRole = onRequestDialerRole,
                     expanded = openSection == SECTION_DIALER,
                     onToggle = { onToggleSection(SECTION_DIALER) }
                 )
@@ -932,9 +916,11 @@ private fun VisualSection(preferences: AppPreferences, updateTrigger: Int, actio
 
 /**
  * Dialer mode: lets the user make CallVault the default phone app (ROLE_DIALER) so Telecom-path
- * call events can be captured without root. The switch defaults to OFF; on enable, the system
- * role-request dialog is fired via [onRequestDialerRole]. On success the preference is persisted
- * by the caller ([SettingsScreen]) once [DialerRoleController.isDefaultDialer] confirms the role.
+ * call events can be captured without root. The switch defaults to OFF; enabling always routes
+ * through [SettingsActions.setDialerModeEnabled], which calls the enforcer to force Telecom's
+ * default-dialer assignment via ADB. The RoleManager prompt is retired — on OEMs like OxygenOS
+ * it grants the role without moving Telecom's default-dialer cache, so [DialerRoleController.isDefaultDialer]
+ * would stay false and the pref would never turn on.
  * On disable, the preference is cleared and a hint to open Default Apps settings is shown.
  * A role-loss banner is shown whenever the preference is ON but the role was revoked externally.
  *
@@ -942,8 +928,6 @@ private fun VisualSection(preferences: AppPreferences, updateTrigger: Int, actio
  * @param updateTrigger        Trigger value to force recomposition when settings change.
  * @param actions              Implementation of [SettingsActions] to handle user interaction.
  * @param dialerRoleController Optional controller; null in Compose Previews and non-dialer builds.
- * @param onRequestDialerRole  Called with the role-request [android.content.Intent] when the user
- *                             enables the switch; the stateful [SettingsScreen] fires the launcher.
  * @param expanded             Whether this accordion section is currently open.
  * @param onToggle             Invoked when the section header is tapped.
  */
@@ -953,7 +937,6 @@ private fun DialerModeSection(
     updateTrigger: Int,
     actions: SettingsActions,
     dialerRoleController: DialerRoleController?,
-    onRequestDialerRole: (android.content.Intent) -> Unit,
     expanded: Boolean,
     onToggle: () -> Unit
 ) {
@@ -971,7 +954,7 @@ private fun DialerModeSection(
         expanded = expanded,
         onToggle = onToggle
     ) {
-        // Role-loss banner — tapping it fires a fresh role-request dialog.
+        // Role-loss banner — tapping it re-asserts the default dialer via the enforcer.
         if (showRoleLostBanner) {
             Row(
                 modifier = Modifier
@@ -1006,20 +989,10 @@ private fun DialerModeSection(
             onCheckedChange = { enabled ->
                 if (enabled) {
                     showReleaseGuidance = false
-                    if (isRoleHeld) {
-                        // Already the default dialer — just persist and propagate the mode.
-                        actions.setDialerModeEnabled(true)
-                    } else {
-                        val intent = dialerRoleController?.requestRoleIntent()
-                        if (intent != null) {
-                            // Preference NOT persisted here; persisted in the launcher callback
-                            // only when the system confirms the role was granted.
-                            onRequestDialerRole(intent)
-                        } else {
-                            // Role unavailable on this device; refresh so the switch reverts deterministically.
-                            actions.refresh()
-                        }
-                    }
+                    // Enabling routes through the enforcer: setDialerModeEnabled(true) runs enforce(),
+                    // which forces the Telecom default dialer via ADB. The RoleManager prompt is retired —
+                    // on OEMs like OxygenOS it grants the role without moving Telecom's default-dialer cache.
+                    actions.setDialerModeEnabled(true)
                 } else {
                     actions.setDialerModeEnabled(false)
                     showReleaseGuidance = true
