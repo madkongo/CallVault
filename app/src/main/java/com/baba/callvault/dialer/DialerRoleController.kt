@@ -31,10 +31,18 @@ class DialerRoleController(private val context: Context) {
         return tm.defaultDialerPackage == context.packageName
     }
 
-    /** Intent to ask the user to make CallVault the default phone app, or null if already held/unavailable. */
+    /**
+     * Intent to ask the user to make CallVault the default phone app, or null if the role is
+     * unavailable or CallVault is *already* the real default dialer.
+     *
+     * "Already holding it" is judged by [isDefaultDialer] (Telecom), NOT by [RoleManager.isRoleHeld]:
+     * on OxygenOS isRoleHeld can be stuck `true` while Telecom binds another dialer, which previously
+     * made this return null forever — so the role-lost banner and the enable toggle did nothing.
+     */
     fun requestRoleIntent(): Intent? {
         val rm = roleManager ?: return null
-        if (!rm.isRoleAvailable(RoleManager.ROLE_DIALER) || rm.isRoleHeld(RoleManager.ROLE_DIALER)) return null
+        if (!rm.isRoleAvailable(RoleManager.ROLE_DIALER)) return null
+        if (isDefaultDialer()) return null
         return rm.createRequestRoleIntent(RoleManager.ROLE_DIALER)
     }
 
