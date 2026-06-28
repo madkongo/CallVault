@@ -10,6 +10,7 @@ package com.baba.callvault.dialer
 
 import android.Manifest
 import android.content.Context
+import android.content.Intent
 import android.content.pm.PackageManager
 import android.net.Uri
 import android.telecom.TelecomManager
@@ -19,13 +20,21 @@ class CallPlacer(private val context: Context) {
 
     fun place(number: String) {
         if (!isDialable(number)) return
-        val tm = context.getSystemService(Context.TELECOM_SERVICE) as TelecomManager
         val uri = Uri.fromParts("tel", normalize(number), null)
         if (ContextCompat.checkSelfPermission(context, Manifest.permission.CALL_PHONE)
             == PackageManager.PERMISSION_GRANTED
         ) {
-            tm.placeCall(uri, null) // emergency numbers handled by the platform
+            val tm = context.getSystemService(Context.TELECOM_SERVICE) as TelecomManager
+            runCatching { tm.placeCall(uri, null) }.onFailure { fallbackToDial(uri) }
+        } else {
+            fallbackToDial(uri)
         }
+    }
+
+    private fun fallbackToDial(uri: Uri) {
+        context.startActivity(
+            Intent(Intent.ACTION_DIAL, uri).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+        )
     }
 
     companion object {
