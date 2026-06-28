@@ -47,6 +47,7 @@ import androidx.compose.material.icons.filled.ArrowDropDown
 import androidx.compose.material.icons.filled.ExpandLess
 import androidx.compose.material.icons.filled.ExpandMore
 import androidx.compose.material.icons.filled.Smartphone
+import androidx.compose.material.icons.filled.Dialpad
 import androidx.compose.material.icons.filled.Tune
 import androidx.compose.material.icons.filled.WarningAmber
 import androidx.compose.material3.AlertDialog
@@ -72,6 +73,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.compositeOver
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
@@ -82,6 +84,7 @@ import androidx.compose.runtime.DisposableEffect
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
 import com.baba.callvault.R
+import com.baba.callvault.data.AppPreferences
 import com.baba.callvault.data.recordings.RecordingDirection
 import com.baba.callvault.data.recordings.RecordingsRepository.RecordingItem
 import com.baba.callvault.data.recordings.RecordingsRepository.RecordingSource
@@ -116,6 +119,7 @@ import java.util.Locale
 @Composable
 fun HomeScreen(
     onOpenSettings: () -> Unit,
+    onOpenDialpad: () -> Unit = {},
     modifier: Modifier = Modifier,
     viewModel: HomeViewModel = viewModel()
 ) {
@@ -140,10 +144,22 @@ fun HomeScreen(
         }
     }
 
+    val context = LocalContext.current
+    val isDialerMode = remember { AppPreferences(context).isDialerModeEnabled() }
+
     CvScaffold(
         modifier = modifier.fillMaxSize(),
         title = stringResource(R.string.app_name),
         actions = {
+            if (isDialerMode) {
+                IconButton(onClick = onOpenDialpad) {
+                    Icon(
+                        imageVector = Icons.Filled.Dialpad,
+                        contentDescription = stringResource(R.string.dialer_keypad),
+                        tint = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                }
+            }
             IconButton(onClick = onOpenSettings) {
                 Icon(
                     imageVector = Icons.Filled.Tune,

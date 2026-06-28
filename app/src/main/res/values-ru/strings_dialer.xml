@@ -14,4 +14,6 @@
     <string name="dialer_status_dialing">Звонок…</string>
     <string name="dialer_status_active">Активный</string>
     <string name="dialer_status_ended">Звонок завершён</string>
+    <string name="dialer_place_call">Позвонить</string>
+    <string name="dialer_backspace">Удалить</string>
 </resources>

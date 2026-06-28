@@ -14,4 +14,6 @@
     <string name="dialer_status_dialing">Chiamata in corso…</string>
     <string name="dialer_status_active">Attivo</string>
     <string name="dialer_status_ended">Chiamata terminata</string>
+    <string name="dialer_place_call">Chiama</string>
+    <string name="dialer_backspace">Cancella</string>
 </resources>

@@ -30,5 +30,8 @@ enum class AppScreen {
     Home,
 
     /** Settings. Reachable only via manual navigation from [Home]. */
-    Settings
+    Settings,
+
+    /** Outgoing-call dialpad. Reachable only from [Home] when dialer mode is enabled. */
+    Dialer
 }

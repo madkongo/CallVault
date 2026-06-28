@@ -14,4 +14,6 @@
     <string name="dialer_status_dialing">正在拨打…</string>
     <string name="dialer_status_active">通话中</string>
     <string name="dialer_status_ended">通话已结束</string>
+    <string name="dialer_place_call">拨号</string>
+    <string name="dialer_backspace">删除</string>
 </resources>

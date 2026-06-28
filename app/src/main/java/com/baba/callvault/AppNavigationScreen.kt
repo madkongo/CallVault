@@ -23,6 +23,7 @@ import androidx.compose.ui.platform.LocalContext
 import com.baba.callvault.data.AppPreferences
 import com.baba.callvault.onboarding.OnboardingStatus
 import com.baba.callvault.ui.navigation.AppScreen
+import com.baba.callvault.ui.dialer.DialpadScreen
 import com.baba.callvault.ui.screens.DisclaimerScreen
 import com.baba.callvault.ui.screens.HomeScreen
 import com.baba.callvault.ui.screens.PermissionsScreen
@@ -153,7 +154,8 @@ fun AppNavigationScreen() {
             )
 
             AppScreen.Home -> HomeScreen(
-                onOpenSettings = { appNavViewModel.navigateTo(AppScreen.Settings) }
+                onOpenSettings = { appNavViewModel.navigateTo(AppScreen.Settings) },
+                onOpenDialpad = { appNavViewModel.navigateTo(AppScreen.Dialer) }
             )
 
             AppScreen.Settings -> {
@@ -163,6 +165,11 @@ fun AppNavigationScreen() {
                     viewModel = settingsViewModel,
                     onBack = { appNavViewModel.navigateBack() }
                 )
+            }
+
+            AppScreen.Dialer -> {
+                BackHandler { appNavViewModel.navigateBack() }
+                DialpadScreen(onBack = { appNavViewModel.navigateBack() })
             }
         }
     }
