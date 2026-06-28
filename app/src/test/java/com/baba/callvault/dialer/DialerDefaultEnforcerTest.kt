@@ -16,4 +16,9 @@ class DialerDefaultEnforcerTest {
         assertEquals("cmd telecom set-default-dialer com.google.android.dialer",
             DialerCommands.restore("com.google.android.dialer"))
     }
+    @Test fun set_default_and_grant_is_one_command() {
+        assertEquals(
+            "cmd telecom set-default-dialer com.baba.callvault ; pm grant com.baba.callvault android.permission.CALL_PHONE",
+            DialerCommands.setDefaultAndGrant("com.baba.callvault"))
+    }
 }

@@ -11,6 +11,8 @@ object DialerCommands {
     fun setDefault(pkg: String) = "cmd telecom set-default-dialer $pkg"
     fun grantCallPhone(pkg: String) = "pm grant $pkg android.permission.CALL_PHONE"
     fun restore(priorPkg: String) = "cmd telecom set-default-dialer $priorPkg"
+    /** Combines set-default + grant into ONE shell invocation (avoids a second ADB stream on flaky links). */
+    fun setDefaultAndGrant(pkg: String) = "cmd telecom set-default-dialer $pkg ; pm grant $pkg android.permission.CALL_PHONE"
 }
 
 /**
@@ -39,8 +41,7 @@ class DialerDefaultEnforcer(
         if (current != null && current != pkg && prefs.getPriorDefaultDialer() == null) {
             prefs.setPriorDefaultDialer(current)
         }
-        AdbShell.runShellCommand(context, DialerCommands.setDefault(pkg))
-        AdbShell.runShellCommand(context, DialerCommands.grantCallPhone(pkg))
+        AdbShell.runShellCommand(context, DialerCommands.setDefaultAndGrant(pkg))
         val ok = roleController.isDefaultDialer()
         AppLogger.i(TAG, "enforce() default-dialer now=${if (ok) pkg else current} ok=$ok")
         return ok
