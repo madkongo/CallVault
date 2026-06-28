@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="dialer_incoming_title">来电</string>
+    <string name="dialer_answer">接听</string>
+    <string name="dialer_reject">拒接</string>
+    <string name="dialer_end_call">挂断</string>
+    <string name="dialer_mute">静音</string>
+    <string name="dialer_speaker">扬声器</string>
+    <string name="dialer_hold">保留</string>
+    <string name="dialer_keypad">键盘</string>
+    <string name="dialer_record">录音</string>
+    <string name="dialer_stop_recording">停止录音</string>
+    <string name="dialer_unknown_caller">未知</string>
+</resources>

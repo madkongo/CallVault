@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="dialer_incoming_title">Połączenie przychodzące</string>
+    <string name="dialer_answer">Odbierz</string>
+    <string name="dialer_reject">Odrzuć</string>
+    <string name="dialer_end_call">Zakończ połączenie</string>
+    <string name="dialer_mute">Wycisz</string>
+    <string name="dialer_speaker">Głośnik</string>
+    <string name="dialer_hold">Wstrzymaj</string>
+    <string name="dialer_keypad">Klawiatura</string>
+    <string name="dialer_record">Nagraj</string>
+    <string name="dialer_stop_recording">Zatrzymaj nagrywanie</string>
+    <string name="dialer_unknown_caller">Nieznany</string>
+</resources>

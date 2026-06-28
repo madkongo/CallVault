@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="dialer_incoming_title">Cuộc gọi đến</string>
+    <string name="dialer_answer">Trả lời</string>
+    <string name="dialer_reject">Từ chối</string>
+    <string name="dialer_end_call">Kết thúc cuộc gọi</string>
+    <string name="dialer_mute">Tắt tiếng</string>
+    <string name="dialer_speaker">Loa ngoài</string>
+    <string name="dialer_hold">Giữ máy</string>
+    <string name="dialer_keypad">Bàn phím</string>
+    <string name="dialer_record">Ghi âm</string>
+    <string name="dialer_stop_recording">Dừng ghi âm</string>
+    <string name="dialer_unknown_caller">Không xác định</string>
+</resources>

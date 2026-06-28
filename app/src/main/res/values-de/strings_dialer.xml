@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="dialer_incoming_title">Eingehender Anruf</string>
+    <string name="dialer_answer">Annehmen</string>
+    <string name="dialer_reject">Ablehnen</string>
+    <string name="dialer_end_call">Auflegen</string>
+    <string name="dialer_mute">Stummschalten</string>
+    <string name="dialer_speaker">Lautsprecher</string>
+    <string name="dialer_hold">Halten</string>
+    <string name="dialer_keypad">Tastenfeld</string>
+    <string name="dialer_record">Aufnehmen</string>
+    <string name="dialer_stop_recording">Aufnahme stoppen</string>
+    <string name="dialer_unknown_caller">Unbekannt</string>
+</resources>

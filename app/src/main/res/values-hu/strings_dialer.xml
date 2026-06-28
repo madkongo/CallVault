@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="dialer_incoming_title">Bejövő hívás</string>
+    <string name="dialer_answer">Fogadás</string>
+    <string name="dialer_reject">Elutasítás</string>
+    <string name="dialer_end_call">Hívás befejezése</string>
+    <string name="dialer_mute">Némítás</string>
+    <string name="dialer_speaker">Hangszóró</string>
+    <string name="dialer_hold">Tartás</string>
+    <string name="dialer_keypad">Billentyűzet</string>
+    <string name="dialer_record">Rögzítés</string>
+    <string name="dialer_stop_recording">Rögzítés leállítása</string>
+    <string name="dialer_unknown_caller">Ismeretlen</string>
+</resources>

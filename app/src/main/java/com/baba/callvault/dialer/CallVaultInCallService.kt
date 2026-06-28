@@ -14,6 +14,7 @@ import android.telecom.InCallService
 import com.baba.callvault.calls.CallDetection
 import com.baba.callvault.calls.CallStateRepository
 import com.baba.callvault.calls.UiCall
+import com.baba.callvault.dialer.CallActions
 import com.baba.callvault.ui.dialer.InCallActivity
 
 /**
@@ -35,6 +36,8 @@ class CallVaultInCallService : InCallService() {
         }
         callbacks[call] = cb
         call.registerCallback(cb)
+        CallActions.activeCall = call
+        CallActions.serviceRef = this
         publish(call)
         startActivity(
             Intent(this, InCallActivity::class.java)
@@ -43,6 +46,7 @@ class CallVaultInCallService : InCallService() {
     }
 
     override fun onCallRemoved(call: Call) {
+        CallActions.clear()
         callbacks.remove(call)?.let { call.unregisterCallback(it) }
         if (!CallDetection.isInitialized) return
         TelecomCallEventSource.submit(CallDetection.router, call) // ENDED

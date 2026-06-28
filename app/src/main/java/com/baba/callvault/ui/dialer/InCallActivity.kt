@@ -8,10 +8,56 @@
 
 package com.baba.callvault.ui.dialer
 
+import android.os.Bundle
 import androidx.activity.ComponentActivity
+import androidx.activity.compose.setContent
+import androidx.activity.viewModels
+import androidx.compose.runtime.getValue
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.baba.callvault.calls.CallEvent
+import com.baba.callvault.ui.theme.CallVaultTheme
 
 /**
- * In-call UI activity — stub only.
- * Full implementation is provided by Task 8 (in-call screen + Compose UI).
+ * Full-screen in-call Activity.
+ *
+ * Shown over the lock screen ([setShowWhenLocked]) and wakes the display ([setTurnScreenOn])
+ * so an incoming call is immediately visible. The Activity auto-finishes when the call ends
+ * ([CallEvent.Phase.ENDED]) or when [com.baba.callvault.calls.CallStateRepository.current] drops
+ * to null (call removed by the system).
+ *
+ * All call actions are delegated to [InCallViewModel], which routes them through
+ * [com.baba.callvault.dialer.CallActions].
  */
-class InCallActivity : ComponentActivity()
+class InCallActivity : ComponentActivity() {
+
+    private val vm: InCallViewModel by viewModels()
+
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
+        setShowWhenLocked(true)
+        setTurnScreenOn(true)
+
+        setContent {
+            CallVaultTheme {
+                val call by vm.current.collectAsStateWithLifecycle()
+
+                if (call == null || call?.phase == CallEvent.Phase.ENDED) {
+                    finish()
+                    return@CallVaultTheme
+                }
+
+                InCallScreen(
+                    call = call,
+                    onAnswer = { vm.answer() },
+                    onReject = { vm.reject() },
+                    onEnd = { vm.end() },
+                    onHold = { vm.hold() },
+                    onMute = { muted -> vm.setMuted(muted) },
+                    onSpeaker = { on -> vm.setSpeaker(on) },
+                    onToggleRecord = { vm.toggleRecord() },
+                    onDtmf = { digit -> vm.sendDtmf(digit) },
+                )
+            }
+        }
+    }
+}

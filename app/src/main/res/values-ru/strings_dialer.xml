@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="dialer_incoming_title">Входящий звонок</string>
+    <string name="dialer_answer">Принять</string>
+    <string name="dialer_reject">Отклонить</string>
+    <string name="dialer_end_call">Завершить звонок</string>
+    <string name="dialer_mute">Без звука</string>
+    <string name="dialer_speaker">Громкоговоритель</string>
+    <string name="dialer_hold">Удержание</string>
+    <string name="dialer_keypad">Клавиатура</string>
+    <string name="dialer_record">Запись</string>
+    <string name="dialer_stop_recording">Остановить запись</string>
+    <string name="dialer_unknown_caller">Неизвестный</string>
+</resources>
