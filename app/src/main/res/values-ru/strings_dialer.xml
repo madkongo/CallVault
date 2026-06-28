@@ -16,4 +16,8 @@
     <string name="dialer_status_ended">Звонок завершён</string>
     <string name="dialer_place_call">Позвонить</string>
     <string name="dialer_backspace">Удалить</string>
+    <string name="settings_dialer_mode_label">Режим телефонного приложения</string>
+    <string name="settings_dialer_mode_description">Заменяет системное приложение телефона. Позволяет записывать звонки без root-прав.</string>
+    <string name="settings_dialer_mode_role_lost_banner">Роль стандартного приложения телефона утеряна. Нажмите для восстановления и возобновления записи.</string>
+    <string name="settings_dialer_mode_release_hint">Чтобы перестать быть стандартным приложением телефона, откройте настройки приложений по умолчанию.</string>
 </resources>

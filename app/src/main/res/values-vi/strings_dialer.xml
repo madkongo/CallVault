@@ -16,4 +16,8 @@
     <string name="dialer_status_ended">Cuộc gọi đã kết thúc</string>
     <string name="dialer_place_call">Gọi</string>
     <string name="dialer_backspace">Xóa</string>
+    <string name="settings_dialer_mode_label">Chế độ ứng dụng gọi mặc định</string>
+    <string name="settings_dialer_mode_description">Thay thế ứng dụng điện thoại hệ thống. Cho phép ghi âm cuộc gọi mà không cần root.</string>
+    <string name="settings_dialer_mode_role_lost_banner">Đã mất vai trò ứng dụng gọi mặc định. Nhấn để khôi phục và tiếp tục ghi âm.</string>
+    <string name="settings_dialer_mode_release_hint">Để ngừng là ứng dụng điện thoại mặc định, hãy mở cài đặt ứng dụng mặc định.</string>
 </resources>

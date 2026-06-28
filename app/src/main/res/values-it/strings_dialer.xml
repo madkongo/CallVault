@@ -16,4 +16,8 @@
     <string name="dialer_status_ended">Chiamata terminata</string>
     <string name="dialer_place_call">Chiama</string>
     <string name="dialer_backspace">Cancella</string>
+    <string name="settings_dialer_mode_label">Modalità telefono predefinita</string>
+    <string name="settings_dialer_mode_description">Sostituisce l\'app telefono di sistema. Consente la registrazione delle chiamate senza root.</string>
+    <string name="settings_dialer_mode_role_lost_banner">Il ruolo di telefono predefinito è stato perso. Tocca per ripristinare e riprendere la registrazione.</string>
+    <string name="settings_dialer_mode_release_hint">Per smettere di essere l\'app telefono predefinita, apri le impostazioni delle app predefinite.</string>
 </resources>

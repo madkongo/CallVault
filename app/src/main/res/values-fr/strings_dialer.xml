@@ -16,4 +16,8 @@
     <string name="dialer_status_ended">Appel terminé</string>
     <string name="dialer_place_call">Appeler</string>
     <string name="dialer_backspace">Effacer</string>
+    <string name="settings_dialer_mode_label">Mode téléphone par défaut</string>
+    <string name="settings_dialer_mode_description">Remplace l\'application téléphone du système. Permet l\'enregistrement des appels sans root.</string>
+    <string name="settings_dialer_mode_role_lost_banner">Le rôle de téléphone par défaut a été perdu. Appuyez pour restaurer et reprendre l\'enregistrement.</string>
+    <string name="settings_dialer_mode_release_hint">Pour ne plus être l\'application téléphone par défaut, ouvrez les paramètres des applications par défaut.</string>
 </resources>

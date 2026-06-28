@@ -16,4 +16,8 @@
     <string name="dialer_status_ended">Hívás befejezve</string>
     <string name="dialer_place_call">Hívás</string>
     <string name="dialer_backspace">Töröl</string>
+    <string name="settings_dialer_mode_label">Alapértelmezett tárcsázó mód</string>
+    <string name="settings_dialer_mode_description">Felváltja a rendszer telefonalkalmazását. Lehetővé teszi a hívások rögzítését root nélkül.</string>
+    <string name="settings_dialer_mode_role_lost_banner">Az alapértelmezett tárcsázó szerepkör elveszett. Koppintson a visszaállításhoz és a rögzítés folytatásához.</string>
+    <string name="settings_dialer_mode_release_hint">Ha nem szeretne alapértelmezett telefonalkalmazás lenni, nyissa meg az alapértelmezett alkalmazások beállításait.</string>
 </resources>

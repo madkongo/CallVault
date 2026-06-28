@@ -9,8 +9,10 @@
 package com.baba.callvault.ui.screens
 
 import android.annotation.SuppressLint
+import android.app.Activity
 import android.os.Build
 import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.expandVertically
@@ -45,6 +47,8 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import android.widget.Toast
 import com.baba.callvault.R
+import com.baba.callvault.dialer.DialerModeState
+import com.baba.callvault.dialer.DialerRoleController
 import com.baba.callvault.system.PersistentFolderPickerContract
 import com.baba.callvault.system.copyToClipboard
 import com.baba.callvault.system.openOriginalProjectRepo
@@ -91,8 +95,10 @@ import androidx.compose.material.icons.filled.ExpandMore
 import androidx.compose.material.icons.filled.Folder
 import androidx.compose.material.icons.filled.Gavel
 import androidx.compose.material.icons.filled.NotificationsActive
+import androidx.compose.material.icons.filled.Phone
 import androidx.compose.material.icons.filled.Save
 import androidx.compose.material.icons.filled.Vibration
+import androidx.compose.material.icons.filled.Warning
 import androidx.compose.ui.platform.LocalInspectionMode
 import androidx.compose.ui.platform.LocalResources
 import org.xmlpull.v1.XmlPullParser
@@ -140,11 +146,24 @@ fun SettingsScreen(
         viewModel.refresh()
     }
 
+    // Dialer-role launcher: fires the system "set as default phone app" dialog. On success we
+    // verify that the role is actually held (the system may still deny despite RESULT_OK on some
+    // OEMs) before persisting the preference. On denial we just refresh so the switch snaps back.
+    val dialerRoleLauncher = rememberLauncherForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
+        if (result.resultCode == Activity.RESULT_OK && viewModel.dialerRoleController.isDefaultDialer()) {
+            viewModel.setDialerModeEnabled(true)
+        }
+        // Always refresh — if denied, the preference was not persisted so the switch reverts.
+        viewModel.refresh()
+    }
+
     SettingsContent(
         preferences = viewModel.preferences,
         updateTrigger = updateTrigger,
         actions = viewModel,
         contactPickerState = contactPickerState,
+        dialerRoleController = viewModel.dialerRoleController,
+        onRequestDialerRole = { intent -> dialerRoleLauncher.launch(intent) },
         onBack = onBack,
         // Seed each picker with its OWN current folder so it opens there, instead of letting
         // Android's DocumentsUI reopen at the last-browsed location (which, after setting Drive,
@@ -210,6 +229,8 @@ fun SettingsContent(
     onConfirmContacts: (Set<String>) -> Unit,
     onDismissContacts: () -> Unit,
     onShareLogs: () -> Unit,
+    dialerRoleController: DialerRoleController? = null,
+    onRequestDialerRole: (android.content.Intent) -> Unit = {},
     modifier: Modifier = Modifier
 ) {
     var showLicensesDialog by remember { mutableStateOf(false) }
@@ -281,6 +302,17 @@ fun SettingsContent(
                     preferences, updateTrigger, actions,
                     expanded = openSection == SECTION_VISUAL,
                     onToggle = { onToggleSection(SECTION_VISUAL) }
+                )
+            }
+            item {
+                DialerModeSection(
+                    preferences = preferences,
+                    updateTrigger = updateTrigger,
+                    actions = actions,
+                    dialerRoleController = dialerRoleController,
+                    onRequestDialerRole = onRequestDialerRole,
+                    expanded = openSection == SECTION_DIALER,
+                    onToggle = { onToggleSection(SECTION_DIALER) }
                 )
             }
             // Debug section: always visible so anyone can enable logging and share logs to report an issue.
@@ -362,6 +394,7 @@ private const val SECTION_STORAGE = "storage"
 private const val SECTION_RETENTION = "retention"
 private const val SECTION_AUDIO = "audio"
 private const val SECTION_VISUAL = "visual"
+private const val SECTION_DIALER = "dialer"
 private const val SECTION_BUG_REPORT = "bug_report"
 private const val SECTION_ABOUT = "about"
 
@@ -898,6 +931,128 @@ private fun VisualSection(preferences: AppPreferences, updateTrigger: Int, actio
 }
 
 /**
+ * Dialer mode: lets the user make CallVault the default phone app (ROLE_DIALER) so Telecom-path
+ * call events can be captured without root. The switch defaults to OFF; on enable, the system
+ * role-request dialog is fired via [onRequestDialerRole]. On success the preference is persisted
+ * by the caller ([SettingsScreen]) once [DialerRoleController.isDefaultDialer] confirms the role.
+ * On disable, the preference is cleared and a hint to open Default Apps settings is shown.
+ * A role-loss banner is shown whenever the preference is ON but the role was revoked externally.
+ *
+ * @param preferences          The [AppPreferences] instance to read data from.
+ * @param updateTrigger        Trigger value to force recomposition when settings change.
+ * @param actions              Implementation of [SettingsActions] to handle user interaction.
+ * @param dialerRoleController Optional controller; null in Compose Previews and non-dialer builds.
+ * @param onRequestDialerRole  Called with the role-request [android.content.Intent] when the user
+ *                             enables the switch; the stateful [SettingsScreen] fires the launcher.
+ * @param expanded             Whether this accordion section is currently open.
+ * @param onToggle             Invoked when the section header is tapped.
+ */
+@Composable
+private fun DialerModeSection(
+    preferences: AppPreferences,
+    updateTrigger: Int,
+    actions: SettingsActions,
+    dialerRoleController: DialerRoleController?,
+    onRequestDialerRole: (android.content.Intent) -> Unit,
+    expanded: Boolean,
+    onToggle: () -> Unit
+) {
+    val context = LocalContext.current
+    val prefOn = remember(updateTrigger) { preferences.isDialerModeEnabled() }
+    val isRoleHeld = remember(updateTrigger) { dialerRoleController?.isDefaultDialer() ?: false }
+    val showRoleLostBanner = DialerModeState.shouldShowRoleLostBanner(prefOn = prefOn, roleHeld = isRoleHeld)
+
+    // Shown below the switch after the user disables dialer mode so they know how to
+    // release the role in system settings (we cannot drop it programmatically).
+    var showReleaseGuidance by remember(prefOn) { mutableStateOf(false) }
+
+    SettingsSection(
+        title = stringResource(R.string.settings_dialer_mode_label),
+        expanded = expanded,
+        onToggle = onToggle
+    ) {
+        // Role-loss banner — tapping it fires a fresh role-request dialog.
+        if (showRoleLostBanner) {
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 16.dp, vertical = 6.dp)
+                    .clip(RoundedCornerShape(8.dp))
+                    .background(MaterialTheme.colorScheme.errorContainer)
+                    .clickable {
+                        val intent = dialerRoleController?.requestRoleIntent()
+                        if (intent != null) onRequestDialerRole(intent)
+                    }
+                    .padding(12.dp),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                Icon(
+                    imageVector = Icons.Filled.Warning,
+                    contentDescription = null,
+                    tint = MaterialTheme.colorScheme.onErrorContainer,
+                    modifier = Modifier.size(18.dp)
+                )
+                Text(
+                    text = stringResource(R.string.settings_dialer_mode_role_lost_banner),
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onErrorContainer
+                )
+            }
+        }
+
+        SettingsToggleRow(
+            icon = Icons.Filled.Phone,
+            label = stringResource(R.string.settings_dialer_mode_label),
+            description = stringResource(R.string.settings_dialer_mode_description),
+            checked = prefOn,
+            onCheckedChange = { enabled ->
+                if (enabled) {
+                    showReleaseGuidance = false
+                    if (isRoleHeld) {
+                        // Already the default dialer — just persist and propagate the mode.
+                        actions.setDialerModeEnabled(true)
+                    } else {
+                        val intent = dialerRoleController?.requestRoleIntent()
+                        if (intent != null) {
+                            // Preference NOT persisted here; persisted in the launcher callback
+                            // only when the system confirms the role was granted.
+                            onRequestDialerRole(intent)
+                        }
+                        // If intent is null the role is unavailable on this device; do nothing.
+                    }
+                } else {
+                    actions.setDialerModeEnabled(false)
+                    showReleaseGuidance = true
+                }
+            }
+        )
+
+        // Release guidance: shown after the user disables dialer mode.
+        if (showReleaseGuidance) {
+            Column(modifier = Modifier.padding(horizontal = 16.dp, vertical = 6.dp)) {
+                Text(
+                    text = stringResource(R.string.settings_dialer_mode_release_hint),
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+                Spacer(modifier = Modifier.height(8.dp))
+                OutlinedButton(
+                    onClick = {
+                        val intent = dialerRoleController?.releaseRoleHint()
+                        if (intent != null) context.startActivity(intent)
+                        showReleaseGuidance = false
+                    },
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    Text(stringResource(R.string.general_settings))
+                }
+            }
+        }
+    }
+}
+
+/**
  * Debug section (always visible). The flow is: turn logging on, reproduce the issue, turn logging
  * off, then share the captured log.
  *
@@ -1338,6 +1493,7 @@ private fun SettingsScreenPreview() {
             override fun setRetentionDriveDays(days: Int) {}
             override fun setRetentionTimeHour(hour: Int) {}
             override fun setRetentionTimeMinute(minute: Int) {}
+            override fun setDialerModeEnabled(enabled: Boolean) {}
         }
 
         SettingsContent(

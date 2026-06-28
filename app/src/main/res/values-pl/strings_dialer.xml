@@ -16,4 +16,8 @@
     <string name="dialer_status_ended">Połączenie zakończone</string>
     <string name="dialer_place_call">Zadzwoń</string>
     <string name="dialer_backspace">Usuń</string>
+    <string name="settings_dialer_mode_label">Tryb domyślnego dialera</string>
+    <string name="settings_dialer_mode_description">Zastępuje systemową aplikację telefonu. Umożliwia nagrywanie rozmów bez roota.</string>
+    <string name="settings_dialer_mode_role_lost_banner">Utracono rolę domyślnego dialera. Dotknij, aby przywrócić i wznowić nagrywanie.</string>
+    <string name="settings_dialer_mode_release_hint">Aby przestać być domyślną aplikacją telefoniczną, otwórz ustawienia domyślnych aplikacji.</string>
 </resources>

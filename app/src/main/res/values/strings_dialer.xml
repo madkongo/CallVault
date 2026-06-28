@@ -16,4 +16,8 @@
     <string name="dialer_status_ended">Call ended</string>
     <string name="dialer_place_call">Call</string>
     <string name="dialer_backspace">Backspace</string>
+    <string name="settings_dialer_mode_label">Dialer mode</string>
+    <string name="settings_dialer_mode_description">Replace the system phone app. Enables call recording without root.</string>
+    <string name="settings_dialer_mode_role_lost_banner">Dialer role was lost. Tap to restore and resume recording.</string>
+    <string name="settings_dialer_mode_release_hint">To stop acting as the default phone app, open Default apps settings.</string>
 </resources>

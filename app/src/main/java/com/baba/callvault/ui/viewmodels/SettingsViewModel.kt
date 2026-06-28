@@ -13,6 +13,9 @@ import androidx.appcompat.app.AppCompatDelegate
 import androidx.core.os.LocaleListCompat
 import androidx.lifecycle.AndroidViewModel
 import com.baba.callvault.BuildConfig
+import com.baba.callvault.calls.CallDetection
+import com.baba.callvault.dialer.DialerModeState
+import com.baba.callvault.dialer.DialerRoleController
 import com.baba.callvault.services.debug.DebugNotificationHelper
 import com.baba.callvault.data.AppPreferences
 import com.baba.callvault.data.StorageTarget
@@ -56,6 +59,7 @@ interface SettingsActions {
     fun setRetentionDriveDays(days: Int)
     fun setRetentionTimeHour(hour: Int)
     fun setRetentionTimeMinute(minute: Int)
+    fun setDialerModeEnabled(enabled: Boolean)
 }
 
 /**
@@ -75,6 +79,9 @@ class SettingsViewModel(application: Application) : AndroidViewModel(application
      * Read and Manager AppPreference settings
      */
     val preferences = AppPreferences(appContext)
+
+    /** Manages the default-dialer (ROLE_DIALER) role request and release. */
+    val dialerRoleController = DialerRoleController(appContext)
 
     // -------- Internal mutable state
     // Private so only this ViewModel can mutate it.
@@ -349,6 +356,31 @@ class SettingsViewModel(application: Application) : AndroidViewModel(application
     }
 
     // -------- Debug settings
+
+    // -------- Dialer mode settings
+
+    /**
+     * Persists the dialer-mode preference and propagates the effective mode to [CallDetection].
+     *
+     * The *effective* mode requires both the preference and the role being held
+     * (see [DialerModeState.effective]). [CallDetection.setMode] is only called when the
+     * detection engine has been initialised; if the daemon hasn't started yet, the correct mode
+     * will be applied at daemon start time.
+     *
+     * @param enabled `true` to opt in to dialer mode; `false` to revert to broadcast capture.
+     */
+    override fun setDialerModeEnabled(enabled: Boolean) {
+        preferences.setDialerModeEnabled(enabled)
+        if (CallDetection.isInitialized) {
+            CallDetection.setMode(
+                DialerModeState.effective(
+                    prefOn = enabled,
+                    roleHeld = dialerRoleController.isDefaultDialer()
+                )
+            )
+        }
+        refresh()
+    }
 
     /** Turns diagnostic logging on or off.
      *
