@@ -52,7 +52,7 @@ import com.baba.callvault.ui.viewmodels.SettingsViewModel
  *   granting a permission in the system Settings app).
  */
 @Composable
-fun AppNavigationScreen(openDialer: Boolean = false) {
+fun AppNavigationScreen(openDialer: Boolean = false, onDialerHandled: () -> Unit = {}) {
 
     val activityContext = LocalContext.current
 
@@ -98,10 +98,14 @@ fun AppNavigationScreen(openDialer: Boolean = false) {
         }
     }
 
-    // When the activity was launched via the DialerLauncherAlias, route directly to the dialpad.
-    // The key is a stable Boolean so this fires exactly once on first composition.
+    // When the activity was launched (or brought to front) via the DialerLauncherAlias, route
+    // directly to the dialpad. After acting, onDialerHandled() resets the flag so a subsequent
+    // alias tap can re-fire this effect via singleTop / onNewIntent.
     LaunchedEffect(openDialer) {
-        if (openDialer) appNavViewModel.navigateTo(AppScreen.Dialer)
+        if (openDialer) {
+            appNavViewModel.navigateTo(AppScreen.Dialer)
+            onDialerHandled()
+        }
     }
 
     // resolveScreen reads the flow-backed onboardingStatus - no direct preference reads here,
