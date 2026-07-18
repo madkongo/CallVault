@@ -18,6 +18,7 @@ import com.baba.callvault.data.StorageTarget
 import com.baba.callvault.data.recordings.db.RecordingEntry
 import com.baba.callvault.system.permissions.PermissionChecks
 import com.baba.callvault.utils.AppLogger
+import com.baba.callvault.utils.VoicemailLabel
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import java.text.SimpleDateFormat
@@ -128,18 +129,22 @@ object RecordingsRepository {
 
             val items = RecordingCatalog.all(context).mapNotNull { toItem(it) }
 
-            // Resolve contact names from the parsed numbers (only when READ_CONTACTS is granted),
-            // caching by number within this call to avoid duplicate PhoneLookup queries.
-            if (!PermissionChecks.hasContactsPermission(context)) items
-            else {
-                val nameCache = HashMap<String, String?>()
-                items.map { item ->
-                    val number = item.number
-                    if (number.isNullOrBlank()) item
-                    else {
-                        val name = nameCache.getOrPut(number) { lookupContactName(context, number) }
-                        if (name == null) item else item.copy(contactName = name)
+            // Resolve contact names from the parsed numbers (PhoneLookup only when READ_CONTACTS is
+            // granted), caching by number within this call to avoid duplicate queries. Voicemail is
+            // not a real contact, so it gets its label as a fallback after the lookup misses.
+            // "No name" is cached as "" — getOrPut re-runs the lambda for stored nulls.
+            val hasContactsPermission = PermissionChecks.hasContactsPermission(context)
+            val nameCache = HashMap<String, String>()
+            items.map { item ->
+                val number = item.number
+                if (number.isNullOrBlank()) item
+                else {
+                    val name = nameCache.getOrPut(number) {
+                        (if (hasContactsPermission) lookupContactName(context, number) else null)
+                            ?: VoicemailLabel.labelOrNull(context, number)
+                            ?: ""
                     }
+                    if (name.isEmpty()) item else item.copy(contactName = name)
                 }
             }
         }.getOrElse { e ->

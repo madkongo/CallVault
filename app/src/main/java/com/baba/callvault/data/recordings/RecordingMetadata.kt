@@ -78,6 +78,18 @@ data class RecordingMetadata(
                 )
             }
 
+            if (!phoneNumberManager.isValidNumber(parsedNumber)) {
+                // Short codes (e.g. the FR "123" voicemail number) parse but are not valid subscriber
+                // numbers; E.164-ifying them ("+33123") breaks contact lookup and display, so keep raw.
+                // Cross-country is still computed: an invalid number can carry a foreign country code,
+                // and hardcoding false here would bypass the ignore-cross-country recording rules.
+                AppLogger.i(TAG, "Number '$raw' is not a valid subscriber number (likely a short code); keeping raw form.")
+                return@withContext base.copy(
+                    isEnriched = true,
+                    isCrossCountry = phoneNumberManager.isNumberFromDifferentCountry(parsedNumber)
+                )
+            }
+
             val standardized = phoneNumberManager.formatToE164(parsedNumber)
             val crossCountry = phoneNumberManager.isNumberFromDifferentCountry(parsedNumber)
             AppLogger.i(TAG, "Enriched metadata for number: raw='$raw', standardized='$standardized', crossCountry=$crossCountry")

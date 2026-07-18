@@ -25,6 +25,7 @@
     <string name="disclaimer_wait">Attendez %1$ds</string>
     <string name="general_cancel">Annuler</string>
     <string name="general_close">Fermer</string>
+    <string name="voicemail_contact_label">Messagerie vocale</string>
     <string name="general_continue">Continuer</string>
     <string name="general_copied_to_clipboard">Copié dans le presse-papiers</string>
     <string name="general_incoming">Entrant</string>
@@ -56,6 +57,8 @@
     <string name="home_status_no_folder_title">Aucun dossier d\'enregistrement défini</string>
     <string name="home_status_not_paired_suggestion">Terminez l\'association du débogage sans fil lors de la configuration.</string>
     <string name="home_status_not_paired_title">Configuration incomplète</string>
+    <string name="home_status_dev_options_off_title">Options pour les développeurs désactivées</string>
+    <string name="home_status_dev_options_off_suggestion">CallVault enregistre via le débogage sans fil, qui nécessite les options pour les développeurs. L\'enregistrement ne peut pas fonctionner tant que vous ne réactivez pas les options pour les développeurs (et le débogage sans fil) dans les paramètres du système.</string>
     <string name="home_status_ready_suggestion">CallVault enregistre les appels automatiquement selon vos paramètres.</string>
     <string name="home_status_ready_title">Prêt à enregistrer</string>
     <string name="permission_adb_description">Nécessaire pour capturer l\'audio des appels. Associez une fois via la notification, puis la connexion se fait automatiquement.</string>
@@ -87,6 +90,8 @@
     <string name="recording_error_folder_missing">Le dossier de sortie sélectionné est manquant, invalide ou nous n\'avons pas l\'autorisation d\'y écrire. Veuillez en sélectionner un dans les paramètres de l\'application.</string>
     <string name="recording_error_server_missing">Le fichier du serveur Scrcpy est manquant ou la vérification de sécurité SHA256 a échoué. Ceci ne devrait pas se produire, veuillez le signaler.</string>
     <string name="recording_error_start_failed">L\'enregistrement n\'a pas pu démarrer. Une erreur s\'est produite lors de l\'appel de ShellService binder method.</string>
+    <string name="recording_error_empty_file">L\'enregistrement est vide — aucun audio n\'a été capturé car le démon d\'enregistrement n\'était pas actif. Vérifiez que les options pour les développeurs et le débogage sans fil sont activés.</string>
+    <string name="recording_error_daemon_died">Le démon d\'enregistrement s\'est arrêté — cet appel n\'est PAS enregistré. Vérifiez que les options pour les développeurs et le débogage sans fil sont activés.</string>
     <string name="recording_error_title">Erreur d\'enregistrement</string>
     <string name="recording_notification_cross_country_tip">🌐International</string>
     <string name="recording_notification_current_country_tip">🏠Pays d\'origine</string>
