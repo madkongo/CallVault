@@ -184,6 +184,12 @@ android {
     androidResources {
         generateLocaleConfig = true
     }
+    testOptions {
+        unitTests {
+            isIncludeAndroidResources = true
+            isReturnDefaultValues = true
+        }
+    }
     lint {
         // Fail the build if any shipped locale is missing a translatable string, or has a
         // stale key that no longer exists in the default resources. This prevents the
@@ -289,4 +295,10 @@ dependencies {
     // pairing falls back to the platform Conscrypt and fails on Android 14+/OEM builds with
     // NoSuchMethodException: com.android.org.conscrypt.Conscrypt.exportKeyingMaterial.
     implementation("org.conscrypt:conscrypt-android:2.5.2")
+
+    // Test harness
+    testImplementation("junit:junit:4.13.2")
+    testImplementation("io.mockk:mockk:1.13.13")
+    testImplementation("org.robolectric:robolectric:4.14")
+    testImplementation("androidx.test:core:1.6.1")
 }

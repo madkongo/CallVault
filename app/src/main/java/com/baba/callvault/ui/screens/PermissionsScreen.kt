@@ -65,6 +65,7 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import com.baba.callvault.R
 import com.baba.callvault.data.AppPreferences
 import com.baba.callvault.integrations.adb.AdbShell
+import com.baba.callvault.integrations.adb.DeveloperOptions
 import com.baba.callvault.onboarding.OnboardingStatus
 import com.baba.callvault.system.openAppSettings
 import com.baba.callvault.system.openDeveloperSettings
@@ -356,18 +357,9 @@ fun PermissionsContent(
     }
 }
 
-/**
- * Reads whether Developer Options is currently enabled on this device.
- * Wrapped in [runCatching] (defaults to false) because the global setting may be absent on some ROMs.
- */
+/** Reads whether Developer Options is currently enabled. Delegates to the shared [DeveloperOptions]. */
 private fun isDeveloperOptionsEnabled(context: android.content.Context): Boolean =
-    runCatching {
-        Settings.Global.getInt(
-            context.contentResolver,
-            Settings.Global.DEVELOPMENT_SETTINGS_ENABLED,
-            0
-        ) == 1
-    }.getOrDefault(false)
+    DeveloperOptions.isEnabled(context)
 
 /**
  * The dedicated, full-width ADB hero card.
