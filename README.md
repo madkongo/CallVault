@@ -50,6 +50,10 @@ After a one-time pairing, CallVault runs a **persistent privileged daemon** — 
 
 - **Android 11 or newer** (best on Android 12+; on Android 11 the screen must be unlocked during a call).
 - **Wireless Debugging** available in Developer Options.
+- **Developer options must stay enabled.** If you turn Developer options off later (or an OS update
+  resets it), the recorder can't run and calls come out empty — the Home screen will show a red
+  **"Developer options is off"** status until you re-enable it (Wireless debugging itself stays
+  automatic; you never toggle that manually).
 - No root, no PC, no Shizuku.
 
 > [!IMPORTANT]
