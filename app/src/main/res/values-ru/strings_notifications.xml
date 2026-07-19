@@ -21,4 +21,8 @@
     <string name="notif_pairing_action_stop">Остановить</string>
     <string name="notif_pairing_action_enter_code">Ввести код подключения</string>
     <string name="notif_pairing_remote_input_label">Код подключения</string>
+    <string name="notif_call_monitor_channel">Отслеживание вызовов</string>
+    <string name="notif_readiness_reboot_ready_text">Ожидание вызовов после перезагрузки.</string>
+    <string name="notif_startup_channel">Запуск</string>
+    <string name="notif_startup_preparing">Подготовка записи звонков…</string>
 </resources>

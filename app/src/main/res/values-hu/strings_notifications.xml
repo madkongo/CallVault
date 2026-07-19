@@ -21,4 +21,8 @@
     <string name="notif_pairing_action_stop">Leállítás</string>
     <string name="notif_pairing_action_enter_code">Párosítási kód megadása</string>
     <string name="notif_pairing_remote_input_label">Párosítási kód</string>
+    <string name="notif_call_monitor_channel">Hívásfigyelés</string>
+    <string name="notif_readiness_reboot_ready_text">Hívások figyelése újraindítás után.</string>
+    <string name="notif_startup_channel">Indítás</string>
+    <string name="notif_startup_preparing">Hívásrögzítő előkészítése…</string>
 </resources>

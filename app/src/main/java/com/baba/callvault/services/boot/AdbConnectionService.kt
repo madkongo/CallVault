@@ -20,6 +20,7 @@ import android.os.IBinder
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import com.baba.callvault.R
 import com.baba.callvault.server.RecorderServerLauncher
 import com.baba.callvault.utils.AppLogger
 
@@ -37,7 +38,7 @@ class AdbConnectionService : Service() {
         getSystemService(NotificationManager::class.java).createNotificationChannel(
             NotificationChannel(
                 CHANNEL_ID,
-                "Startup",
+                getString(R.string.notif_startup_channel),
                 NotificationManager.IMPORTANCE_MIN,
             ).apply {
                 setSound(null, null)
@@ -50,13 +51,13 @@ class AdbConnectionService : Service() {
         runCatching {
             startForeground(
                 NOTIF_ID,
-                buildNotification("Preparing call recorder…"),
+                buildNotification(getString(R.string.notif_startup_preparing)),
                 ServiceInfo.FOREGROUND_SERVICE_TYPE_SPECIAL_USE,
             )
         }.onFailure {
             AppLogger.e(TAG, "startForeground failed", it)
             getSystemService(NotificationManager::class.java)
-                .notify(NOTIF_ID, buildNotification("Preparing call recorder…"))
+                .notify(NOTIF_ID, buildNotification(getString(R.string.notif_startup_preparing)))
         }
 
         CoroutineScope(Dispatchers.IO).launch {

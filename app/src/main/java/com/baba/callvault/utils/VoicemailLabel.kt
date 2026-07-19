@@ -8,6 +8,7 @@
 
 package com.baba.callvault.utils
 
+import android.annotation.SuppressLint
 import android.content.Context
 import android.telephony.PhoneNumberUtils
 import android.telephony.TelephonyManager
@@ -39,6 +40,9 @@ object VoicemailLabel {
      * Both telephony calls require READ_PHONE_STATE, so without that permission this is always
      * false. Never throws; returns false on a blank number or any failure.
      */
+    // Permission is verified via PermissionChecks.hasPhoneStatePermission() below (and the calls are
+    // wrapped in runCatching); lint can't trace into the helper, so the check is suppressed here.
+    @SuppressLint("MissingPermission")
     fun isVoicemailNumber(context: Context, number: String?): Boolean {
         if (number.isNullOrBlank()) return false
         if (!PermissionChecks.hasPhoneStatePermission(context)) return false

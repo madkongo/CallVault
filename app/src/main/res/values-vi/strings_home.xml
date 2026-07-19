@@ -9,4 +9,5 @@
     <string name="home_recordings_count">Đã lưu %1$d</string>
     <string name="home_recordings_empty_hint">Khi CallVault ghi âm một cuộc gọi, nó sẽ hiển thị ở đây. Hãy thực hiện hoặc nhận một cuộc gọi để bắt đầu.</string>
     <string name="home_recordings_empty_title">Chưa có bản ghi âm nào</string>
+    <string name="home_hero_pill_dev_options_off">Không thể ghi âm</string>
 </resources>
