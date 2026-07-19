@@ -21,4 +21,8 @@
     <string name="notif_pairing_action_stop">Dừng</string>
     <string name="notif_pairing_action_enter_code">Nhập mã ghép nối</string>
     <string name="notif_pairing_remote_input_label">Mã ghép nối</string>
+    <string name="notif_call_monitor_channel">Theo dõi cuộc gọi</string>
+    <string name="notif_readiness_reboot_ready_text">Đang chờ cuộc gọi sau khi khởi động lại.</string>
+    <string name="notif_startup_channel">Khởi động</string>
+    <string name="notif_startup_preparing">Đang chuẩn bị trình ghi âm cuộc gọi…</string>
 </resources>

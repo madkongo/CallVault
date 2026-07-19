@@ -21,4 +21,8 @@
     <string name="notif_pairing_action_stop">Detener</string>
     <string name="notif_pairing_action_enter_code">Introducir código de vinculación</string>
     <string name="notif_pairing_remote_input_label">Código de vinculación</string>
+    <string name="notif_call_monitor_channel">Supervisión de llamadas</string>
+    <string name="notif_readiness_reboot_ready_text">Escuchando llamadas tras el reinicio.</string>
+    <string name="notif_startup_channel">Inicio</string>
+    <string name="notif_startup_preparing">Preparando la grabadora de llamadas…</string>
 </resources>

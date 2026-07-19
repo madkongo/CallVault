@@ -9,4 +9,5 @@
     <string name="home_recordings_count">%1$d zapisanych</string>
     <string name="home_recordings_empty_hint">Gdy CallVault nagra rozmowę, pojawi się ona tutaj. Wykonaj lub odbierz połączenie, aby rozpocząć.</string>
     <string name="home_recordings_empty_title">Brak nagrań</string>
+    <string name="home_hero_pill_dev_options_off">Nagrywanie niemożliwe</string>
 </resources>

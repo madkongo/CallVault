@@ -216,4 +216,9 @@
     <string name="wizard_storage_subtitle">选择录音的存储位置。你之后可以在设置中更改。</string>
     <string name="wizard_storage_title">录音保存位置</string>
     <string name="wizard_title">设置 CallVault</string>
+    <string name="voicemail_contact_label">语音信箱</string>
+    <string name="home_status_dev_options_off_title">开发者选项已关闭</string>
+    <string name="home_status_dev_options_off_suggestion">CallVault 通过无线调试进行录音，需要开发者选项。在系统设置中重新启用开发者选项（和无线调试）之前，无法录音。</string>
+    <string name="recording_error_empty_file">录音为空 — 由于录音守护进程未运行，未捕获任何音频。请检查开发者选项和无线调试是否已启用。</string>
+    <string name="recording_error_daemon_died">录音守护进程已停止 — 此通话未被录音。请检查开发者选项和无线调试是否已启用。</string>
 </resources>
