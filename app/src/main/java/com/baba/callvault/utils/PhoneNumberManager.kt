@@ -129,6 +129,17 @@ class PhoneNumberManager private constructor(context: Context) {
     }
 
     /**
+     * Checks whether the parsed number is a valid, fully-dialable subscriber number for its region.
+     * Short codes and carrier service numbers (e.g. the FR "123" voicemail code) are NOT valid here,
+     * even though they parse successfully.
+     * @param phoneNumber The structured phone number object to validate.
+     * @return True only for numbers that match a real numbering plan.
+     */
+    suspend fun isValidNumber(phoneNumber: Phonenumber.PhoneNumber): Boolean = withContext(Dispatchers.Default) {
+        return@withContext phoneUtil.isValidNumber(phoneNumber)
+    }
+
+    /**
      * Extracts the region code (ISO country code) from a phone number.
      * @param phoneNumber The phone number to check.
      * @return The region code (e.g., "FR", "US").

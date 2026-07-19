@@ -9,4 +9,5 @@
     <string name="home_recordings_count">%1$d mentve</string>
     <string name="home_recordings_empty_hint">Amikor a CallVault rögzít egy hívást, az itt jelenik meg. Kezdje el egy hívás indításával vagy fogadásával.</string>
     <string name="home_recordings_empty_title">Még nincsenek felvételek</string>
+    <string name="home_hero_pill_dev_options_off">A rögzítés nem működik</string>
 </resources>

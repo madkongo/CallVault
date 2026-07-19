@@ -12,6 +12,7 @@
     <!-- ========================================== -->
     <string name="app_name" translatable="false">CallVault</string>
     <string name="general_close">Close</string>
+    <string name="voicemail_contact_label">Voicemail</string>
     <string name="general_recommended">Recommended</string>
     <string name="general_continue">Continue</string>
     <string name="general_ok">OK</string>
@@ -285,6 +286,8 @@
     <string name="recording_error_server_missing">Scrcpy-server binary is missing or the security SHA256 check failed. This should not happen, please report this.</string>
     <string name="recording_error_file_creation">Failed to create recording file. Please check the storage permissions and/or select a new recording folder in the app settings.</string>
     <string name="recording_error_start_failed">Failed to start the recording. An error occurred when calling the ShellService binder method.</string>
+    <string name="recording_error_empty_file">The recording is empty — no audio was captured because the recorder daemon was not running. Check that Developer options and Wireless debugging are enabled.</string>
+    <string name="recording_error_daemon_died">The recorder daemon stopped — this call is NOT being recorded. Check that Developer options and Wireless debugging are enabled.</string>
     <string name="recording_unexpected_error">An unexpected error occurred during recording. Please report this with the steps to reproduce and the apps logs.</string>
 
     <!-- Setup Wizard -->
@@ -334,6 +337,8 @@
     <string name="home_status_no_folder_suggestion">Open Settings to choose where recordings are saved.</string>
     <string name="home_status_not_paired_title">Setup not complete</string>
     <string name="home_status_not_paired_suggestion">Finish Wireless Debugging pairing in setup.</string>
+    <string name="home_status_dev_options_off_title">Developer options is off</string>
+    <string name="home_status_dev_options_off_suggestion">CallVault records through Wireless debugging, which needs Developer options. Recording cannot work until you re-enable Developer options (and Wireless debugging) in system settings.</string>
     <string name="home_status_ready_title">Ready to record</string>
     <string name="home_status_ready_suggestion">CallVault records calls automatically per your settings.</string>
 

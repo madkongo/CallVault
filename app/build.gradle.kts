@@ -113,8 +113,8 @@ val extractLibphonenumberMetadata = tasks.register<ExtractMetadataTask>("extract
 // (versionCode = the CI run number), but local builds and the in-app "About" version use these
 // defaults — so BUMP versionName here every release to match the CHANGELOG and the version dispatched
 // to the build workflow.
-val ciVersionCode = providers.gradleProperty("versionCode").map { it.toIntOrNull() }.orElse(10201)
-val ciVersionName = providers.gradleProperty("versionName").orElse("1.2.1")
+val ciVersionCode = providers.gradleProperty("versionCode").map { it.toIntOrNull() }.orElse(10204)
+val ciVersionName = providers.gradleProperty("versionName").orElse("1.2.2")
 val ciBuildNumber = providers.gradleProperty("ciBuildNumber").orElse("Local")
 
 android {
@@ -183,6 +183,12 @@ android {
     }
     androidResources {
         generateLocaleConfig = true
+    }
+    testOptions {
+        unitTests {
+            isIncludeAndroidResources = true
+            isReturnDefaultValues = true
+        }
     }
     lint {
         // Fail the build if any shipped locale is missing a translatable string, or has a
@@ -289,4 +295,10 @@ dependencies {
     // pairing falls back to the platform Conscrypt and fails on Android 14+/OEM builds with
     // NoSuchMethodException: com.android.org.conscrypt.Conscrypt.exportKeyingMaterial.
     implementation("org.conscrypt:conscrypt-android:2.5.2")
+
+    // Test harness
+    testImplementation("junit:junit:4.13.2")
+    testImplementation("io.mockk:mockk:1.13.13")
+    testImplementation("org.robolectric:robolectric:4.14")
+    testImplementation("androidx.test:core:1.6.1")
 }

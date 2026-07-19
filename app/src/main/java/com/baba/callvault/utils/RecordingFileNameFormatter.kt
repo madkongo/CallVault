@@ -72,7 +72,10 @@ object RecordingFileNameFormatter {
         var contactStr = ""
 
         if (template.contains(FileNamePlaceholder.CONTACT_NAME.tag) && phoneStr.isNotEmpty()) {
-            contactStr = getContactName(context, phoneStr) ?: ""
+            // Voicemail is not a real contact — PhoneLookup misses it, so fall back to its label.
+            contactStr = getContactName(context, phoneStr)
+                ?: VoicemailLabel.labelOrNull(context, phoneStr)
+                ?: ""
         }
 
         val crossCountryStr = metadata.isCrossCountry.toString()

@@ -239,11 +239,13 @@ private fun HeroStatusCard(status: HomeViewModel.HomeStatus) {
         HomeViewModel.HomeStatus.READY -> CvTone.Success
         HomeViewModel.HomeStatus.NOT_PAIRED -> CvTone.Warning
         HomeViewModel.HomeStatus.NO_FOLDER -> CvTone.Error
+        HomeViewModel.HomeStatus.DEV_OPTIONS_OFF -> CvTone.Error
     }
     val pillText = when (status) {
         HomeViewModel.HomeStatus.READY -> stringResource(R.string.home_hero_pill_ready)
         HomeViewModel.HomeStatus.NOT_PAIRED -> stringResource(R.string.home_hero_pill_not_paired)
         HomeViewModel.HomeStatus.NO_FOLDER -> stringResource(R.string.home_hero_pill_no_folder)
+        HomeViewModel.HomeStatus.DEV_OPTIONS_OFF -> stringResource(R.string.home_hero_pill_dev_options_off)
     }
 
     // Subtle accent-tinted surface so the banner reads as a confident state, not a stock card.

@@ -216,4 +216,9 @@
     <string name="wizard_storage_subtitle">Válassza ki, hová mentse a felvételeit. Ezt később a Beállításokban módosíthatja.</string>
     <string name="wizard_storage_title">Hová mentse a felvételeket</string>
     <string name="wizard_title">CallVault beállítása</string>
+    <string name="voicemail_contact_label">Hangposta</string>
+    <string name="home_status_dev_options_off_title">A fejlesztői beállítások ki vannak kapcsolva</string>
+    <string name="home_status_dev_options_off_suggestion">A CallVault a vezeték nélküli hibakeresésen keresztül rögzít, amelyhez a fejlesztői beállítások szükségesek. A rögzítés nem működik, amíg újra nem engedélyezi a fejlesztői beállításokat (és a vezeték nélküli hibakeresést) a rendszerbeállításokban.</string>
+    <string name="recording_error_empty_file">A felvétel üres — nem történt hangrögzítés, mert a rögzítő démon nem futott. Ellenőrizze, hogy a fejlesztői beállítások és a vezeték nélküli hibakeresés engedélyezve vannak-e.</string>
+    <string name="recording_error_daemon_died">A rögzítő démon leállt — ez a hívás NINCS rögzítve. Ellenőrizze, hogy a fejlesztői beállítások és a vezeték nélküli hibakeresés engedélyezve vannak-e.</string>
 </resources>
