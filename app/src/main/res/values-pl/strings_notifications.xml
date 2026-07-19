@@ -21,4 +21,8 @@
     <string name="notif_pairing_action_stop">Zatrzymaj</string>
     <string name="notif_pairing_action_enter_code">Wprowadź kod parowania</string>
     <string name="notif_pairing_remote_input_label">Kod parowania</string>
+    <string name="notif_call_monitor_channel">Monitorowanie połączeń</string>
+    <string name="notif_readiness_reboot_ready_text">Nasłuchiwanie połączeń po ponownym uruchomieniu.</string>
+    <string name="notif_startup_channel">Uruchamianie</string>
+    <string name="notif_startup_preparing">Przygotowywanie rejestratora połączeń…</string>
 </resources>

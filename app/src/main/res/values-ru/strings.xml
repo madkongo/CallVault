@@ -216,4 +216,9 @@
     <string name="wizard_storage_subtitle">Выберите, где будут храниться ваши записи. Это можно изменить позже в настройках.</string>
     <string name="wizard_storage_title">Куда сохранять записи</string>
     <string name="wizard_title">Настройка CallVault</string>
+    <string name="voicemail_contact_label">Голосовая почта</string>
+    <string name="home_status_dev_options_off_title">Параметры разработчика отключены</string>
+    <string name="home_status_dev_options_off_suggestion">CallVault записывает через беспроводную отладку, для которой нужны параметры разработчика. Запись не будет работать, пока вы не включите параметры разработчика (и беспроводную отладку) в настройках системы.</string>
+    <string name="recording_error_empty_file">Запись пуста — звук не был захвачен, так как демон записи не был запущен. Убедитесь, что параметры разработчика и беспроводная отладка включены.</string>
+    <string name="recording_error_daemon_died">Демон записи остановился — этот вызов НЕ записывается. Убедитесь, что параметры разработчика и беспроводная отладка включены.</string>
 </resources>

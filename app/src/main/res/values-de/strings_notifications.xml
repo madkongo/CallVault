@@ -21,4 +21,8 @@
     <string name="notif_pairing_action_stop">Stopp</string>
     <string name="notif_pairing_action_enter_code">Kopplungscode eingeben</string>
     <string name="notif_pairing_remote_input_label">Kopplungscode</string>
+    <string name="notif_call_monitor_channel">Anrufüberwachung</string>
+    <string name="notif_readiness_reboot_ready_text">Wartet nach dem Neustart auf Anrufe.</string>
+    <string name="notif_startup_channel">Start</string>
+    <string name="notif_startup_preparing">Anrufaufzeichnung wird vorbereitet…</string>
 </resources>

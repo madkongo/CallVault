@@ -216,4 +216,9 @@
     <string name="wizard_storage_subtitle">Chọn nơi lưu các bản ghi âm. Bạn có thể thay đổi sau trong Cài đặt.</string>
     <string name="wizard_storage_title">Nơi lưu bản ghi âm</string>
     <string name="wizard_title">Thiết lập CallVault</string>
+    <string name="voicemail_contact_label">Thư thoại</string>
+    <string name="home_status_dev_options_off_title">Tùy chọn nhà phát triển đang tắt</string>
+    <string name="home_status_dev_options_off_suggestion">CallVault ghi âm qua gỡ lỗi không dây, tính năng này cần Tùy chọn nhà phát triển. Không thể ghi âm cho đến khi bạn bật lại Tùy chọn nhà phát triển (và Gỡ lỗi không dây) trong cài đặt hệ thống.</string>
+    <string name="recording_error_empty_file">Bản ghi trống — không có âm thanh nào được thu vì trình nền ghi âm không chạy. Hãy kiểm tra xem Tùy chọn nhà phát triển và Gỡ lỗi không dây đã được bật chưa.</string>
+    <string name="recording_error_daemon_died">Trình nền ghi âm đã dừng — cuộc gọi này KHÔNG được ghi âm. Hãy kiểm tra xem Tùy chọn nhà phát triển và Gỡ lỗi không dây đã được bật chưa.</string>
 </resources>

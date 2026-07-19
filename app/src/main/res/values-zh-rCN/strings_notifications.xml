@@ -21,4 +21,8 @@
     <string name="notif_pairing_action_stop">停止</string>
     <string name="notif_pairing_action_enter_code">输入配对码</string>
     <string name="notif_pairing_remote_input_label">配对码</string>
+    <string name="notif_call_monitor_channel">通话监听</string>
+    <string name="notif_readiness_reboot_ready_text">重启后正在监听来电。</string>
+    <string name="notif_startup_channel">启动</string>
+    <string name="notif_startup_preparing">正在准备通话录音…</string>
 </resources>

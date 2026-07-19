@@ -19,6 +19,7 @@ import com.baba.callvault.data.recordings.RecordingDirection
 import com.baba.callvault.data.recordings.RecordingsRepository
 import com.baba.callvault.data.recordings.RecordingsRepository.RecordingItem
 import com.baba.callvault.data.recordings.RecordingsRepository.RecordingSource
+import com.baba.callvault.integrations.adb.DeveloperOptions
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -62,6 +63,7 @@ class HomeViewModel(application: Application) : AndroidViewModel(application) {
     ) {
         NO_FOLDER(R.string.home_status_no_folder_title, R.string.home_status_no_folder_suggestion),
         NOT_PAIRED(R.string.home_status_not_paired_title, R.string.home_status_not_paired_suggestion),
+        DEV_OPTIONS_OFF(R.string.home_status_dev_options_off_title, R.string.home_status_dev_options_off_suggestion),
         READY(R.string.home_status_ready_title, R.string.home_status_ready_suggestion, isReady = true)
     }
 
@@ -216,9 +218,12 @@ class HomeViewModel(application: Application) : AndroidViewModel(application) {
 
     /**
      * Derives the current [HomeStatus]. First match wins:
-     *  1. NO_FOLDER   — no device recording folder configured.
-     *  2. NOT_PAIRED  — Wireless Debugging pairing was never completed in setup.
-     *  3. READY       — everything looks good.
+     *  1. NO_FOLDER        — no device recording folder configured.
+     *  2. NOT_PAIRED       — Wireless Debugging pairing was never completed in setup.
+     *  3. DEV_OPTIONS_OFF  — the Developer options master toggle is disabled, so Wireless debugging
+     *                        (and with it the recorder daemon) cannot function; recordings come out
+     *                        empty while everything else still "looks" configured.
+     *  4. READY            — everything looks good.
      *
      * By design, Wireless Debugging (ADB) is INTENTIONALLY transient: it is turned off between
      * calls and recording flows over the privileged daemon's binder, not over ADB. So a live
@@ -226,11 +231,15 @@ class HomeViewModel(application: Application) : AndroidViewModel(application) {
      * checked here. Likewise the daemon launches on demand, so an idle binder is fine and never
      * turns the card red.
      *
-     * All checks are synchronous reads of [AppPreferences]; none launch the daemon or do I/O.
+     * All checks are synchronous, cheap reads (AppPreferences + one Settings.Global int); none
+     * launch the daemon or do I/O.
      */
     private fun computeStatus(): HomeStatus {
         if (preferences.getRecordingFolderUri() == null) return HomeStatus.NO_FOLDER
         if (!preferences.isAdbPaired()) return HomeStatus.NOT_PAIRED
+        // isExplicitlyDisabled (not !isEnabled): an absent/unreadable global must not paint a
+        // permanent red banner on ROMs that don't expose the setting.
+        if (DeveloperOptions.isExplicitlyDisabled(appContext)) return HomeStatus.DEV_OPTIONS_OFF
         return HomeStatus.READY
     }
 

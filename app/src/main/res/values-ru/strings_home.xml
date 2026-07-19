@@ -9,4 +9,5 @@
     <string name="home_recordings_count">%1$d сохранено</string>
     <string name="home_recordings_empty_hint">Когда CallVault запишет звонок, он появится здесь. Совершите или примите звонок, чтобы начать.</string>
     <string name="home_recordings_empty_title">Записей пока нет</string>
+    <string name="home_hero_pill_dev_options_off">Запись невозможна</string>
 </resources>

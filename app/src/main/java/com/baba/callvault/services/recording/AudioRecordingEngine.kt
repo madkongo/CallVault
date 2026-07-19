@@ -11,6 +11,8 @@ package com.baba.callvault.services.recording
 import android.app.Service
 import android.content.Context
 import android.net.Uri
+import android.os.Handler
+import android.os.Looper
 import android.os.ParcelFileDescriptor
 import androidx.documentfile.provider.DocumentFile
 import com.baba.callvault.R
@@ -48,6 +50,9 @@ class AudioRecordingEngine {
 
     companion object {
         private const val TAG = "CV:AudioRecordingEngine"
+
+        /** How often the daemon-mode liveness watch re-checks that the daemon's binder is alive. */
+        private const val DAEMON_LIVENESS_POLL_MS = 2000L
     }
 
     /**
@@ -126,6 +131,33 @@ class AudioRecordingEngine {
     @Volatile
     var daemonRecording: Boolean = false
         private set
+
+    /**
+     * Fired at most once per session when the liveness watch finds the daemon's binder dead while a
+     * daemon-mode recording is supposed to be live (observed when Developer options is off: the
+     * daemon dies within ~200ms of Wireless debugging being turned off, so `startRecording` is
+     * dispatched into a corpse and the output file stays empty). Set by the owning service BEFORE
+     * [startPipeline] to surface an honest "this call is NOT being recorded" failure.
+     */
+    var onDaemonLostDuringRecording: (() -> Unit)? = null
+
+    private val livenessHandler = Handler(Looper.getMainLooper())
+    private val livenessWatch = object : Runnable {
+        override fun run() {
+            if (!daemonRecording) return
+            // pingBinder() probes the daemon process directly, so a dead daemon is detected even if
+            // the provider's linkToDeath failed and RecorderConnection.isConnected never cleared.
+            val alive = runCatching {
+                RecorderConnection.service?.asBinder()?.pingBinder() == true
+            }.getOrDefault(false)
+            if (!alive) {
+                AppLogger.e(TAG, "Recorder daemon binder died while a recording is live — no audio is being captured")
+                onDaemonLostDuringRecording?.invoke()
+                return // One-shot: the daemon-mode pipeline cannot recover mid-call.
+            }
+            livenessHandler.postDelayed(this, DAEMON_LIVENESS_POLL_MS)
+        }
+    }
 
     /**
      * Whether the recording is currently paused by the user.
@@ -296,6 +328,9 @@ class AudioRecordingEngine {
             service.startRecording(audioSourceEnum.cliKey, codecEnum.cliKey, bitRate, outputPfd)
             daemonRecording = true
             AppLogger.i(TAG, "Daemon startRecording dispatched; daemon now owns scrcpy + muxing")
+            // A successful dispatch only proves the binder was alive at that instant — watch it so a
+            // daemon that dies moments later surfaces as a failure instead of a silent empty file.
+            livenessHandler.postDelayed(livenessWatch, DAEMON_LIVENESS_POLL_MS)
             true
         } catch (e: Exception) {
             AppLogger.w(TAG, "Daemon startRecording failed; will fall back to local path: ${e.message}", e)
@@ -322,6 +357,7 @@ class AudioRecordingEngine {
      */
     fun release() {
         AppLogger.i(TAG, "Releasing session resources and recording pipeline...")
+        livenessHandler.removeCallbacks(livenessWatch)
 
         if (daemonMode) {
             // Ask the daemon to stop + finalise the container, then close our local fd handle. The local

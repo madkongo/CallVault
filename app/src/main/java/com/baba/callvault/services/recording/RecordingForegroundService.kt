@@ -117,6 +117,14 @@ class RecordingForegroundService : Service() {
     @Volatile
     private var stopRequested: Boolean = false
 
+    /**
+     * True once the mid-call daemon-death warning has been shown for the current session. The
+     * end-of-call empty-file check consults this so the same failure doesn't raise a second error
+     * notification that overwrites the first (both share the error notification ID).
+     */
+    @Volatile
+    private var daemonLossNotified: Boolean = false
+
     /** True while a recording session object is present (initializing, active, or pending teardown). */
     private val hasSession: Boolean
         get() = currentState is RecordingServiceState.Active
@@ -289,6 +297,13 @@ class RecordingForegroundService : Service() {
 
         // 1. Create a new session (declared here to allow cleanup if startPipeline fails)
         val activeSession = AudioRecordingEngine()
+        daemonLossNotified = false
+        // Surface a mid-call daemon death immediately — the pipeline "started successfully" only
+        // proves the dispatch worked, and a daemon that dies right after leaves an empty file.
+        activeSession.onDaemonLostDuringRecording = {
+            daemonLossNotified = true
+            notificationHelper.showErrorNotification(getString(R.string.recording_error_daemon_died))
+        }
 
         try {
             // 2. Try to start the pipeline. Pass our stop flag so the (slow, daemon-cold-start) start
@@ -448,6 +463,21 @@ class RecordingForegroundService : Service() {
         val name = doc.name ?: return
         val sizeBytes = doc.length()
         val lastModified = doc.lastModified()
+        // An empty file means capture never actually ran (typically: the daemon died right after
+        // startRecording was dispatched — seen when Developer options is off and Wireless debugging
+        // teardown kills the daemon). Surface an honest failure instead of cataloging an unplayable
+        // entry and copying zero bytes to Drive.
+        if (sizeBytes <= 0L) {
+            AppLogger.e(TAG, "Recording '$name' is empty (0 bytes) — capture never ran. Deleting it and notifying instead of cataloging.")
+            // The mid-call daemon-death warning is the more actionable message and shares the same
+            // notification ID — don't overwrite it (and double-vibrate) with the empty-file variant.
+            if (!daemonLossNotified) {
+                notificationHelper.showErrorNotification(getString(R.string.recording_error_empty_file))
+            }
+            runCatching { doc.delete() }
+                .onFailure { AppLogger.w(TAG, "Failed to delete empty recording '$name': ${it.message}") }
+            return
+        }
         // Record this finished recording in CallVault's own catalog (the Home list's source of truth).
         // The file is on the device now, so this is the local copy; the copy/sweep workers later stamp
         // the Drive copy onto this same row by name. Done on a detached IO scope because the service may

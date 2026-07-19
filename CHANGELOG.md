@@ -3,7 +3,38 @@
 All notable changes to CallVault are documented here. The format is based on
 [Keep a Changelog](https://keepachangelog.com/), and this project uses semantic-ish versioning.
 
-## [1.2.1] — unreleased
+## [1.2.2] — 2026-07-19
+
+A field-report fix release: voicemail calls get their proper name, and the app now tells the truth
+when recording can't work instead of pretending everything is fine.
+
+### Fixed
+- **Voicemail calls are now labeled correctly.** Carrier voicemail short codes (e.g. `123` in
+  France) were being "standardized" into an invalid international number (`+33123`), which broke
+  contact-name resolution — and voicemail isn't a real contact anyway, so lookups always came up
+  empty. Short codes now keep their raw form, and calls to the carrier voicemail number are labeled
+  with a localized **"Voicemail"** name in file names and the recordings list.
+- **No more false "Ready to record" while Developer options is off.** If Developer options is
+  disabled (e.g. after an OS update or manual toggle), the recorder daemon cannot survive and every
+  "recording" comes out empty — but the Home screen still showed green. It now shows a clear red
+  **"Developer options is off"** status explaining what to re-enable.
+- **Empty recordings are no longer saved as if they succeeded.** A 0-byte file (daemon died before
+  capture started) used to be cataloged, copied to Drive, and shown as an unplayable entry
+  ("Can't read this file"). It is now deleted and reported with an error notification instead.
+- **You are warned during the call if recording silently stops.** The app now watches the recorder
+  daemon while a recording is live and immediately notifies **"this call is NOT being recorded"**
+  if the daemon dies mid-call, instead of discovering the loss after hanging up.
+- **Post-reboot and startup notifications are now translated.** The "Ready to record calls /
+  Listening for calls after restart" notification (and the boot-time "Preparing call recorder…")
+  were hardcoded in English; they now follow the app language like everything else.
+
+### Internal
+- Cross-country detection is preserved for invalid/foreign numbers (the ignore-cross-country
+  auto-record rules keep working for them).
+- The unit-test harness (JUnit/Robolectric) now lives on `main`, with tests covering the number
+  enrichment, voicemail matching, file-name fallback, and Developer-options detection.
+
+## [1.2.1] — 2026-06-26
 
 A localization release: every shipped language is now fully translated, fixing screens that
 appeared in English even when the rest of the app was localized.

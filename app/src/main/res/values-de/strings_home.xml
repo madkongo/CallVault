@@ -9,4 +9,5 @@
     <string name="home_recordings_count">%1$d gespeichert</string>
     <string name="home_recordings_empty_hint">Wenn CallVault einen Anruf aufzeichnet, erscheint er hier. Tätigen oder nehmen Sie einen Anruf an, um zu beginnen.</string>
     <string name="home_recordings_empty_title">Noch keine Aufnahmen</string>
+    <string name="home_hero_pill_dev_options_off">Aufnahme nicht möglich</string>
 </resources>

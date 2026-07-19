@@ -23,6 +23,7 @@ import android.telephony.PhoneStateListener
 import android.telephony.TelephonyCallback
 import android.telephony.TelephonyManager
 import androidx.annotation.RequiresApi
+import com.baba.callvault.R
 import com.baba.callvault.server.RecorderConnection
 import com.baba.callvault.utils.AppLogger
 
@@ -92,7 +93,7 @@ class CallMonitorService : Service() {
     override fun onCreate() {
         super.onCreate()
         getSystemService(NotificationManager::class.java).createNotificationChannel(
-            NotificationChannel(CHANNEL_ID, "Call monitor", NotificationManager.IMPORTANCE_MIN).apply {
+            NotificationChannel(CHANNEL_ID, getString(R.string.notif_call_monitor_channel), NotificationManager.IMPORTANCE_MIN).apply {
                 setSound(null, null)
                 setShowBadge(false)
             },
@@ -219,10 +220,17 @@ class CallMonitorService : Service() {
     private fun buildNotification(ready: Boolean): Notification =
         Notification.Builder(this, CHANNEL_ID)
             .setSmallIcon(android.R.drawable.stat_notify_sync)
-            .setContentTitle(if (ready) "Ready to record calls" else "Call recorder starting up…")
+            .setContentTitle(
+                getString(
+                    if (ready) R.string.notif_readiness_ready_title
+                    else R.string.notif_readiness_starting_title,
+                ),
+            )
             .setContentText(
-                if (ready) "Listening for calls after restart."
-                else "Connecting the recorder — calls won't record until this finishes.",
+                getString(
+                    if (ready) R.string.notif_readiness_reboot_ready_text
+                    else R.string.notif_readiness_starting_text,
+                ),
             )
             .setOnlyAlertOnce(true)
             .build()
