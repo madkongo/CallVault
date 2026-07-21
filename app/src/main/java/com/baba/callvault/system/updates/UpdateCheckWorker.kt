@@ -29,6 +29,7 @@ class UpdateCheckWorker(context: Context, params: WorkerParameters) : CoroutineW
         val preferences = AppPreferences(applicationContext)
         if (!preferences.isUpdateCheckEnabled()) return@withContext Result.success()
 
+        preferences.setLastUpdateCheckMillis(System.currentTimeMillis())
         val release = UpdateManager.checkForUpdate(applicationContext) ?: return@withContext Result.success()
 
         if (preferences.isAutoUpdateEnabled() && !UpdateManager.isNetworkMetered(applicationContext)) {

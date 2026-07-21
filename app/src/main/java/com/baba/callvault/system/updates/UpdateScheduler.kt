@@ -29,7 +29,11 @@ object UpdateScheduler {
 
     private const val TAG = "CV:UpdateScheduler"
     private const val WORK_NAME = "cv_update_check"
+    private const val CHECK_NOW_WORK_NAME = "cv_update_check_now"
     private const val PERIOD_HOURS = 24L
+
+    /** Minimum gap between check-on-open triggers, so relaunches can't hammer the GitHub API. */
+    private const val CHECK_ON_OPEN_THROTTLE_MS = 6 * 60 * 60 * 1000L
 
     /** Unique name of the user-initiated install work; the Home banner observes its state. */
     const val INSTALL_WORK_NAME = "cv_update_install"
@@ -47,6 +51,27 @@ object UpdateScheduler {
             )
             .build()
         workManager.enqueueUniquePeriodicWork(WORK_NAME, ExistingPeriodicWorkPolicy.KEEP, request)
+    }
+
+    /**
+     * Runs an immediate one-time check when the app is opened, so a new release surfaces promptly
+     * instead of waiting up to [PERIOD_HOURS] for the daily worker. Throttled by
+     * [CHECK_ON_OPEN_THROTTLE_MS] (via the last-check timestamp) so frequent relaunches don't spam
+     * the GitHub API. No-op when checks are disabled.
+     */
+    fun checkNowIfDue(context: Context) {
+        val preferences = AppPreferences(context)
+        if (!preferences.isUpdateCheckEnabled()) return
+        val elapsed = System.currentTimeMillis() - preferences.getLastUpdateCheckMillis()
+        if (elapsed < CHECK_ON_OPEN_THROTTLE_MS) return
+
+        val request = OneTimeWorkRequestBuilder<UpdateCheckWorker>()
+            .setConstraints(
+                Constraints.Builder().setRequiredNetworkType(NetworkType.CONNECTED).build()
+            )
+            .build()
+        WorkManager.getInstance(context)
+            .enqueueUniqueWork(CHECK_NOW_WORK_NAME, ExistingWorkPolicy.KEEP, request)
     }
 
     /**

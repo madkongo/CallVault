@@ -40,9 +40,12 @@ class CallVaultApplication : Application() {
         runCatching { RetentionScheduler.apply(applicationContext) }
             .onFailure { AppLogger.w(TAG, "Retention scheduler apply failed: ${it.message}") }
 
-        // Reconcile the daily update check with the saved prefs (same idempotent pattern).
-        runCatching { UpdateScheduler.apply(applicationContext) }
-            .onFailure { AppLogger.w(TAG, "Update scheduler apply failed: ${it.message}") }
+        // Reconcile the daily update check with the saved prefs (same idempotent pattern), then run
+        // an immediate throttled check so a new release surfaces on app open, not just once a day.
+        runCatching {
+            UpdateScheduler.apply(applicationContext)
+            UpdateScheduler.checkNowIfDue(applicationContext)
+        }.onFailure { AppLogger.w(TAG, "Update scheduler apply failed: ${it.message}") }
 
         // If ADB was already paired, proactively bring up the persistent recorder daemon in the
         // background: this (transiently) enables Wireless debugging if needed, launches the daemon,
