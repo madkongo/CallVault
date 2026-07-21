@@ -3,6 +3,30 @@
 All notable changes to CallVault are documented here. The format is based on
 [Keep a Changelog](https://keepachangelog.com/), and this project uses semantic-ish versioning.
 
+## [1.3.0] — 2026-07-21
+
+The headline feature: **in-app updates**. CallVault can now tell you when a new version is out and
+install it for you, without hunting for the APK on GitHub.
+
+### Added
+- **In-app updater (manual).** CallVault checks GitHub daily (and when you open the app) for a new
+  release. When one is available you get a notification and an **Update** banner on the Home screen;
+  tap it and CallVault downloads, verifies, and installs the update itself, then reopens on the new
+  version and confirms with an "updated" banner + notification. No more manually downloading APKs.
+  - The download is **resumable** — a slow or flaky connection resumes where it left off instead of
+    restarting the ~80 MB file.
+  - Every update is **signature-pinned**: the downloaded APK is checked against CallVault's release
+    certificate (and must be a genuinely newer build) before anything is installed.
+  - The install also re-grants the permission an app update otherwise drops, so recording keeps
+    working seamlessly across updates.
+  - A **"Check for updates"** toggle (Settings → Updates, on by default) turns the checks off if you
+    prefer to update manually.
+
+### Notes
+- Installing is always an explicit choice — CallVault never installs an update on its own.
+- Distribution is still sideload/F-Droid/Obtainium; the in-app updater is an added convenience for
+  GitHub releases, not a replacement.
+
 ## [1.2.3] — 2026-07-19
 
 ### Fixed
