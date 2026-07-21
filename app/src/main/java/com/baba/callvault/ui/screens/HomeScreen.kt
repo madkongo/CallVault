@@ -177,7 +177,9 @@ fun HomeScreen(
                 }
             }
 
-            uiState.availableUpdateTag?.let { tag ->
+            // The "update available" banner is for MANUAL mode only — with auto-update on, the update
+            // installs silently in the background, so no banner/tap is needed.
+            uiState.availableUpdateTag?.takeUnless { uiState.isAutoUpdateEnabled }?.let { tag ->
                 item {
                     UpdateBannerCard(
                         tag = tag,
