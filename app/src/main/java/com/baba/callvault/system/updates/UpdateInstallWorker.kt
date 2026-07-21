@@ -12,6 +12,8 @@ import android.content.Context
 import androidx.work.CoroutineWorker
 import androidx.work.WorkerParameters
 import androidx.work.workDataOf
+import com.baba.callvault.data.AppPreferences
+import com.baba.callvault.utils.AppLogger
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 
@@ -27,6 +29,16 @@ import kotlinx.coroutines.withContext
 class UpdateInstallWorker(context: Context, params: WorkerParameters) : CoroutineWorker(context, params) {
 
     override suspend fun doWork(): Result = withContext(Dispatchers.IO) {
+        val preferences = AppPreferences(applicationContext)
+        // Explicit-consent gate: only run when the user actually tapped Update (armed just before
+        // enqueue). Consume the flag immediately so a WorkManager re-run of THIS work after an
+        // interruption (process killed mid-install) becomes a no-op instead of silently reinstalling.
+        if (!preferences.isUpdateInstallArmed()) {
+            AppLogger.i(TAG, "Install work ran without a fresh tap (stale re-run); skipping")
+            return@withContext Result.success()
+        }
+        preferences.setUpdateInstallArmed(false)
+
         val release = UpdateManager.checkForUpdate(applicationContext, reconcile = false)
             ?: return@withContext Result.success()
         UpdateManager.downloadAndInstall(applicationContext, release, allowInteractiveFallback = true) { percent ->
@@ -37,6 +49,8 @@ class UpdateInstallWorker(context: Context, params: WorkerParameters) : Coroutin
     }
 
     companion object {
+        private const val TAG = "CV:UpdateInstallWorker"
+
         /** WorkManager progress key: download percentage (0-100). */
         const val KEY_PROGRESS = "progress_percent"
     }

@@ -167,6 +167,7 @@ class AppPreferences(context: Context) {
         PENDING_UPDATE_TAG("pending_update_tag"),
         LAST_NOTIFIED_UPDATE_TAG("last_notified_update_tag"),
         LAST_UPDATE_CHECK_MILLIS("last_update_check_millis"),
+        UPDATE_INSTALL_ARMED("update_install_armed"),
 
         // --- Persistent recorder server (CallVault Plan 5) ---
         PERSISTENT_SERVER_ENABLED("persistent_server_enabled"),
@@ -338,6 +339,15 @@ class AppPreferences(context: Context) {
     /** Epoch millis of the last completed update check; throttles the check-on-open trigger. */
     fun getLastUpdateCheckMillis() = getLong(Key.LAST_UPDATE_CHECK_MILLIS)
     fun setLastUpdateCheckMillis(millis: Long) = setLong(Key.LAST_UPDATE_CHECK_MILLIS, millis)
+
+    /**
+     * One-shot consent flag: set true the instant the user taps "Update", consumed (cleared) by the
+     * install worker when it starts. It gates the install so that a WorkManager re-run of an
+     * interrupted install (process death mid-install) does NOT silently reinstall without the user
+     * tapping again — the worker no-ops when this is false and the banner reappears for a fresh tap.
+     */
+    fun isUpdateInstallArmed() = getBoolean(Key.UPDATE_INSTALL_ARMED)
+    fun setUpdateInstallArmed(armed: Boolean) = setBoolean(Key.UPDATE_INSTALL_ARMED, armed)
 
     fun isPersistentServerEnabled() = getBoolean(Key.PERSISTENT_SERVER_ENABLED, DefaultsValue.PERSISTENT_SERVER_ENABLED)
 
