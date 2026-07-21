@@ -101,6 +101,20 @@ object AdbShell {
         AdbConnectionManager.getInstance(context).openStream("shell:$command")
 
     /**
+     * Opens an ADB `exec:` stream for [command] — a RAW, PTY-less bidirectional stream. Use this
+     * (not [openShell]) whenever binary data is streamed to a command's stdin: `shell:` allocates a
+     * pseudo-terminal that performs newline translation and can truncate on certain bytes, corrupting
+     * or prematurely closing a binary stream (e.g. an APK piped to `pm install -S`). `exec:` is the
+     * same channel desktop `adb install` uses for exactly this reason.
+     *
+     * @param context App context.
+     * @param command Command string (without the "exec:" prefix).
+     * @return An [AdbStream] connected to the command with a raw binary I/O channel.
+     */
+    fun openExec(context: Context, command: String): AdbStream =
+        AdbConnectionManager.getInstance(context).openStream("exec:$command")
+
+    /**
      * Opens an ADB localabstract socket by [name]. The full `localabstract:` prefix is added automatically.
      *
      * @param context App context.
