@@ -68,8 +68,10 @@ object UpdateInstaller {
             "pm install -r -S $size && " +
                 "pm grant ${context.packageName} android.permission.WRITE_SECURE_SETTINGS"
 
+        // exec: (raw, no PTY) — REQUIRED for streaming the binary APK to stdin; shell: would corrupt
+        // or prematurely close the stream (the "Stream closed mid-send" failure this fixes).
         val wroteAllBytes = runCatching {
-            AdbShell.openShell(context, command).use { shell ->
+            AdbShell.openExec(context, command).use { shell ->
                 shell.openOutputStream().use { output ->
                     apkFile.inputStream().use { it.copyTo(output) }
                     output.flush()
