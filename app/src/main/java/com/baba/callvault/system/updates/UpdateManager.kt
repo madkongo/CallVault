@@ -9,7 +9,6 @@
 package com.baba.callvault.system.updates
 
 import android.content.Context
-import android.net.ConnectivityManager
 import com.baba.callvault.BuildConfig
 import com.baba.callvault.R
 import com.baba.callvault.data.AppPreferences
@@ -92,7 +91,6 @@ object UpdateManager {
         context: Context,
         release: GitHubReleases.ReleaseInfo,
         allowInteractiveFallback: Boolean,
-        relaunchUi: Boolean,
         onProgress: (Int) -> Unit = {}
     ): Boolean {
         val preferences = AppPreferences(context)
@@ -124,7 +122,7 @@ object UpdateManager {
 
         UpdateNotifications.showInstalling(context)
         preferences.setPendingUpdateTag(release.tag)
-        return when (UpdateInstaller.installSilentlyViaShell(context, apk, relaunchUi)) {
+        return when (UpdateInstaller.installSilentlyViaShell(context, apk)) {
             UpdateInstaller.ShellResult.DISPATCHED -> true
             UpdateInstaller.ShellResult.FAILED -> {
                 preferences.setPendingUpdateTag(null)
@@ -153,11 +151,6 @@ object UpdateManager {
         UpdateNotifications.showUpdateAvailable(context, tag)
         preferences.setLastNotifiedUpdateTag(tag)
     }
-
-    /** True when the active network is metered (auto mode won't download the APK on it). */
-    fun isNetworkMetered(context: Context): Boolean = runCatching {
-        context.getSystemService(ConnectivityManager::class.java).isActiveNetworkMetered
-    }.getOrDefault(true)
 
     /**
      * An install was dispatched earlier but the app is still on the same version — the install

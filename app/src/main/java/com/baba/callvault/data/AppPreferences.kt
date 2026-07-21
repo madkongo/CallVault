@@ -96,11 +96,9 @@ class AppPreferences(context: Context) {
         const val ADB_PAIRED = false
 
         // --- In-app updates ---
-        // Check for new GitHub releases (a tiny daily JSON query). ON by default; the APK download
-        // itself only ever happens silently on unmetered networks or on an explicit user tap.
+        // Check for new GitHub releases (a tiny daily JSON query). ON by default; a found update
+        // surfaces as a Home banner + notification and installs only on an explicit user tap.
         const val UPDATE_CHECK_ENABLED = true
-        // Install updates silently through the privileged shell. OFF by default — opt-in.
-        const val AUTO_UPDATE_ENABLED = false
 
         // --- Persistent recorder server (CallVault Plan 5) ---
         // OFF by default: when false the existing local recording path runs unchanged. When true the
@@ -162,7 +160,6 @@ class AppPreferences(context: Context) {
 
         // --- In-app updates ---
         UPDATE_CHECK_ENABLED("update_check_enabled"),
-        AUTO_UPDATE_ENABLED("auto_update_enabled"),
         AVAILABLE_UPDATE_TAG("available_update_tag"),
         PENDING_UPDATE_TAG("pending_update_tag"),
         LAST_NOTIFIED_UPDATE_TAG("last_notified_update_tag"),
@@ -323,9 +320,6 @@ class AppPreferences(context: Context) {
      */
     fun isUpdateCheckEnabled() = getBoolean(Key.UPDATE_CHECK_ENABLED, DefaultsValue.UPDATE_CHECK_ENABLED)
     fun setUpdateCheckEnabled(enabled: Boolean) = setBoolean(Key.UPDATE_CHECK_ENABLED, enabled)
-
-    fun isAutoUpdateEnabled() = getBoolean(Key.AUTO_UPDATE_ENABLED, DefaultsValue.AUTO_UPDATE_ENABLED)
-    fun setAutoUpdateEnabled(enabled: Boolean) = setBoolean(Key.AUTO_UPDATE_ENABLED, enabled)
 
     /** Release tag of a known-newer version (drives the Home banner + notification); null = none. */
     fun getAvailableUpdateTag() = getString(Key.AVAILABLE_UPDATE_TAG)

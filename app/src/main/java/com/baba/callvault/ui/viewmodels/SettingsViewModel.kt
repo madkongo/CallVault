@@ -58,7 +58,6 @@ interface SettingsActions {
     fun setRetentionTimeHour(hour: Int)
     fun setRetentionTimeMinute(minute: Int)
     fun setUpdateCheckEnabled(enabled: Boolean)
-    fun setAutoUpdateEnabled(enabled: Boolean)
 }
 
 /**
@@ -315,12 +314,6 @@ class SettingsViewModel(application: Application) : AndroidViewModel(application
         preferences.setUpdateCheckEnabled(enabled)
         if (!enabled) preferences.setAvailableUpdateTag(null)
         UpdateScheduler.apply(appContext)
-        refresh()
-    }
-
-    /** Turn silent automatic installation of updates on or off. */
-    override fun setAutoUpdateEnabled(enabled: Boolean) {
-        preferences.setAutoUpdateEnabled(enabled)
         refresh()
     }
 

@@ -224,6 +224,4 @@
     <string name="settings_section_updates">Frissítések</string>
     <string name="settings_update_check_label">Frissítések keresése</string>
     <string name="settings_update_check_description">Naponta egyszer új verziót keres a GitHubon.</string>
-    <string name="settings_auto_update_label">Automatikus frissítés</string>
-    <string name="settings_auto_update_description">Wi-Fi-n letölti és csendben telepíti az új verziókat. Kikapcsolva értesítést kap helyette.</string>
 </resources>

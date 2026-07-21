@@ -224,6 +224,4 @@
     <string name="settings_section_updates">更新</string>
     <string name="settings_update_check_label">检查更新</string>
     <string name="settings_update_check_description">每天在 GitHub 上检查一次新版本。</string>
-    <string name="settings_auto_update_label">自动更新</string>
-    <string name="settings_auto_update_description">通过 Wi-Fi 下载并静默安装新版本。关闭时将改为发送通知。</string>
 </resources>

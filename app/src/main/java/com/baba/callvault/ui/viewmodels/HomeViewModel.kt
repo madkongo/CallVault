@@ -118,9 +118,7 @@ class HomeViewModel(application: Application) : AndroidViewModel(application) {
         /** Download percentage (0-100) while installing, or -1 before the download reports. */
         val updateProgressPercent: Int = -1,
         /** Version name to show a dismissable "updated successfully" banner for, or null. */
-        val updatedToVersion: String? = null,
-        /** When auto-update is on, the "update available" banner is suppressed (it installs silently). */
-        val isAutoUpdateEnabled: Boolean = false
+        val updatedToVersion: String? = null
     ) {
         /**
          * The distinct contact keys present in [recordings], sorted A→Z case-insensitively. Each
@@ -233,8 +231,7 @@ class HomeViewModel(application: Application) : AndroidViewModel(application) {
                 status = computeStatus(),
                 isLoading = true,
                 availableUpdateTag = preferences.getAvailableUpdateTag(),
-                updatedToVersion = preferences.getUpdateSuccessBannerVersion(),
-                isAutoUpdateEnabled = preferences.isAutoUpdateEnabled()
+                updatedToVersion = preferences.getUpdateSuccessBannerVersion()
             )
         }
         viewModelScope.launch {
