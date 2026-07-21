@@ -65,7 +65,7 @@ object UpdateManager {
         val preferences = AppPreferences(context)
         if (reconcile) reconcilePendingState(context, preferences)
 
-        val release = GitHubReleases.fetchLatestRelease() ?: return null
+        val release = GitHubReleases.fetchLatestRelease(preferences.getUpdateSourceOverrideUrl()) ?: return null
         if (!UpdateVersion.isNewer(release.tag, BuildConfig.VERSION_NAME)) {
             // Up to date (or ahead, e.g. a local test build): clear any stale banner state.
             preferences.setAvailableUpdateTag(null)
@@ -92,6 +92,7 @@ object UpdateManager {
         context: Context,
         release: GitHubReleases.ReleaseInfo,
         allowInteractiveFallback: Boolean,
+        relaunchUi: Boolean,
         onProgress: (Int) -> Unit = {}
     ): Boolean {
         val preferences = AppPreferences(context)
@@ -123,7 +124,7 @@ object UpdateManager {
 
         UpdateNotifications.showInstalling(context)
         preferences.setPendingUpdateTag(release.tag)
-        return when (UpdateInstaller.installSilentlyViaShell(context, apk)) {
+        return when (UpdateInstaller.installSilentlyViaShell(context, apk, relaunchUi)) {
             UpdateInstaller.ShellResult.DISPATCHED -> true
             UpdateInstaller.ShellResult.FAILED -> {
                 preferences.setPendingUpdateTag(null)

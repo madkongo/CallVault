@@ -41,7 +41,10 @@ class UpdateInstallWorker(context: Context, params: WorkerParameters) : Coroutin
 
         val release = UpdateManager.checkForUpdate(applicationContext, reconcile = false)
             ?: return@withContext Result.success()
-        UpdateManager.downloadAndInstall(applicationContext, release, allowInteractiveFallback = true) { percent ->
+        // Manual (user-tapped) install: reopen the UI on the new version when it lands.
+        UpdateManager.downloadAndInstall(
+            applicationContext, release, allowInteractiveFallback = true, relaunchUi = true
+        ) { percent ->
             // Publish to WorkManager so the Home banner can show the download percentage.
             setProgressAsync(workDataOf(KEY_PROGRESS to percent))
         }
