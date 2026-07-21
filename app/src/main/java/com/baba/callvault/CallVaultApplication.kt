@@ -15,6 +15,7 @@ import com.baba.callvault.server.RecorderServerLauncher
 import com.baba.callvault.services.debug.DebugNotificationHelper
 import com.baba.callvault.services.recording.RecorderReadinessNotifier
 import com.baba.callvault.system.storage.RetentionScheduler
+import com.baba.callvault.system.updates.UpdateScheduler
 import com.baba.callvault.utils.AppLogger
 
 /**
@@ -38,6 +39,10 @@ class CallVaultApplication : Application() {
         // cancels it when off). Idempotent; ensures the sweep persists across reinstalls/reboots.
         runCatching { RetentionScheduler.apply(applicationContext) }
             .onFailure { AppLogger.w(TAG, "Retention scheduler apply failed: ${it.message}") }
+
+        // Reconcile the daily update check with the saved prefs (same idempotent pattern).
+        runCatching { UpdateScheduler.apply(applicationContext) }
+            .onFailure { AppLogger.w(TAG, "Update scheduler apply failed: ${it.message}") }
 
         // If ADB was already paired, proactively bring up the persistent recorder daemon in the
         // background: this (transiently) enables Wireless debugging if needed, launches the daemon,

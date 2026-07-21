@@ -25,4 +25,13 @@
     <string name="notif_readiness_reboot_ready_text">Wartet nach dem Neustart auf Anrufe.</string>
     <string name="notif_startup_channel">Start</string>
     <string name="notif_startup_preparing">Anrufaufzeichnung wird vorbereitet…</string>
+    <string name="update_notif_channel">App-Updates</string>
+    <string name="update_notif_available_title">CallVault %1$s ist verfügbar</string>
+    <string name="update_notif_available_text">Öffnen Sie die App und tippen Sie auf Aktualisieren, um es zu installieren.</string>
+    <string name="update_notif_success_title">Update installiert</string>
+    <string name="update_notif_success_text">CallVault ist jetzt Version %1$s.</string>
+    <string name="update_notif_failure_title">Update fehlgeschlagen</string>
+    <string name="update_notif_failure_download_text">Das Update konnte nicht heruntergeladen werden. Tippen Sie, um es von GitHub zu holen.</string>
+    <string name="update_notif_failure_verify_text">Das heruntergeladene Update hat die Sicherheitsprüfung nicht bestanden und wurde verworfen. Tippen Sie, um es von GitHub zu holen.</string>
+    <string name="update_notif_failure_install_text">Das Update konnte nicht installiert werden. Tippen Sie, um es von GitHub zu holen.</string>
 </resources>

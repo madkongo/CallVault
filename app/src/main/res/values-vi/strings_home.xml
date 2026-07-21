@@ -10,4 +10,7 @@
     <string name="home_recordings_empty_hint">Khi CallVault ghi âm một cuộc gọi, nó sẽ hiển thị ở đây. Hãy thực hiện hoặc nhận một cuộc gọi để bắt đầu.</string>
     <string name="home_recordings_empty_title">Chưa có bản ghi âm nào</string>
     <string name="home_hero_pill_dev_options_off">Không thể ghi âm</string>
+    <string name="home_update_banner_title">Có bản cập nhật: %1$s</string>
+    <string name="home_update_banner_text">Phiên bản mới đã sẵn sàng tải xuống từ GitHub.</string>
+    <string name="home_update_banner_button">Cập nhật</string>
 </resources>

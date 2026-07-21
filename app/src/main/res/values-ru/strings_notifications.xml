@@ -25,4 +25,13 @@
     <string name="notif_readiness_reboot_ready_text">Ожидание вызовов после перезагрузки.</string>
     <string name="notif_startup_channel">Запуск</string>
     <string name="notif_startup_preparing">Подготовка записи звонков…</string>
+    <string name="update_notif_channel">Обновления приложения</string>
+    <string name="update_notif_available_title">Доступна версия CallVault %1$s</string>
+    <string name="update_notif_available_text">Откройте приложение и нажмите «Обновить», чтобы установить.</string>
+    <string name="update_notif_success_title">Обновление установлено</string>
+    <string name="update_notif_success_text">CallVault обновлён до версии %1$s.</string>
+    <string name="update_notif_failure_title">Не удалось обновить</string>
+    <string name="update_notif_failure_download_text">Не удалось загрузить обновление. Нажмите, чтобы скачать его с GitHub.</string>
+    <string name="update_notif_failure_verify_text">Загруженное обновление не прошло проверку безопасности и было удалено. Нажмите, чтобы скачать его с GitHub.</string>
+    <string name="update_notif_failure_install_text">Не удалось установить обновление. Нажмите, чтобы скачать его с GitHub.</string>
 </resources>

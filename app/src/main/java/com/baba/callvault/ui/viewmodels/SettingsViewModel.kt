@@ -18,6 +18,7 @@ import com.baba.callvault.data.AppPreferences
 import com.baba.callvault.data.StorageTarget
 import com.baba.callvault.integrations.scrcpy.ScrcpyAudioCodec
 import com.baba.callvault.system.storage.RetentionScheduler
+import com.baba.callvault.system.updates.UpdateScheduler
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -56,6 +57,8 @@ interface SettingsActions {
     fun setRetentionDriveDays(days: Int)
     fun setRetentionTimeHour(hour: Int)
     fun setRetentionTimeMinute(minute: Int)
+    fun setUpdateCheckEnabled(enabled: Boolean)
+    fun setAutoUpdateEnabled(enabled: Boolean)
 }
 
 /**
@@ -302,6 +305,22 @@ class SettingsViewModel(application: Application) : AndroidViewModel(application
     override fun setRetentionTimeMinute(minute: Int) {
         preferences.setRetentionTimeMinute(minute)
         RetentionScheduler.apply(appContext)
+        refresh()
+    }
+
+    // -------- In-app updates
+
+    /** Turn the daily update check on or off (also schedules/cancels the periodic worker). */
+    override fun setUpdateCheckEnabled(enabled: Boolean) {
+        preferences.setUpdateCheckEnabled(enabled)
+        if (!enabled) preferences.setAvailableUpdateTag(null)
+        UpdateScheduler.apply(appContext)
+        refresh()
+    }
+
+    /** Turn silent automatic installation of updates on or off. */
+    override fun setAutoUpdateEnabled(enabled: Boolean) {
+        preferences.setAutoUpdateEnabled(enabled)
         refresh()
     }
 

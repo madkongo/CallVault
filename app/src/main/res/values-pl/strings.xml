@@ -221,4 +221,9 @@
     <string name="home_status_dev_options_off_suggestion">CallVault nagrywa przez debugowanie bezprzewodowe, które wymaga opcji programistycznych. Nagrywanie nie będzie działać, dopóki nie włączysz ponownie opcji programistycznych (i debugowania bezprzewodowego) w ustawieniach systemu.</string>
     <string name="recording_error_empty_file">Nagranie jest puste — nie przechwycono dźwięku, ponieważ demon nagrywania nie był uruchomiony. Sprawdź, czy opcje programistyczne i debugowanie bezprzewodowe są włączone.</string>
     <string name="recording_error_daemon_died">Demon nagrywania zatrzymał się — to połączenie NIE jest nagrywane. Sprawdź, czy opcje programistyczne i debugowanie bezprzewodowe są włączone.</string>
+    <string name="settings_section_updates">Aktualizacje</string>
+    <string name="settings_update_check_label">Sprawdzaj aktualizacje</string>
+    <string name="settings_update_check_description">Raz dziennie sprawdza, czy na GitHubie jest nowa wersja.</string>
+    <string name="settings_auto_update_label">Aktualizuj automatycznie</string>
+    <string name="settings_auto_update_description">Pobiera przez Wi-Fi i instaluje nowe wersje po cichu. Gdy wyłączone, zamiast tego otrzymasz powiadomienie.</string>
 </resources>

@@ -27,4 +27,13 @@
     <string name="notif_readiness_reboot_ready_text">Listening for calls after restart.</string>
     <string name="notif_startup_channel">Startup</string>
     <string name="notif_startup_preparing">Preparing call recorder…</string>
+    <string name="update_notif_channel">App updates</string>
+    <string name="update_notif_available_title">CallVault %1$s is available</string>
+    <string name="update_notif_available_text">Open the app and tap Update to install it.</string>
+    <string name="update_notif_success_title">Update installed</string>
+    <string name="update_notif_success_text">CallVault is now version %1$s.</string>
+    <string name="update_notif_failure_title">Update failed</string>
+    <string name="update_notif_failure_download_text">The update could not be downloaded. Tap to get it from GitHub.</string>
+    <string name="update_notif_failure_verify_text">The downloaded update failed the security check and was discarded. Tap to get it from GitHub.</string>
+    <string name="update_notif_failure_install_text">The update could not be installed. Tap to get it from GitHub.</string>
 </resources>

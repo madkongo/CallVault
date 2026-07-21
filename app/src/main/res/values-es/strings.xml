@@ -221,4 +221,9 @@
     <string name="home_status_dev_options_off_suggestion">CallVault graba a través de la depuración inalámbrica, que necesita las opciones de desarrollador. La grabación no funcionará hasta que reactives las opciones de desarrollador (y la depuración inalámbrica) en los ajustes del sistema.</string>
     <string name="recording_error_empty_file">La grabación está vacía: no se capturó audio porque el daemon de grabación no estaba en ejecución. Comprueba que las opciones de desarrollador y la depuración inalámbrica estén activadas.</string>
     <string name="recording_error_daemon_died">El daemon de grabación se detuvo: esta llamada NO se está grabando. Comprueba que las opciones de desarrollador y la depuración inalámbrica estén activadas.</string>
+    <string name="settings_section_updates">Actualizaciones</string>
+    <string name="settings_update_check_label">Buscar actualizaciones</string>
+    <string name="settings_update_check_description">Una vez al día, busca una nueva versión en GitHub.</string>
+    <string name="settings_auto_update_label">Actualizar automáticamente</string>
+    <string name="settings_auto_update_description">Descarga por Wi-Fi e instala nuevas versiones en silencio. Si está desactivado, recibirás una notificación en su lugar.</string>
 </resources>
