@@ -53,6 +53,16 @@ class GitHubReleasesTest {
     }
 
     @Test
+    fun prerelease_is_accepted_when_allowed_but_draft_never_is() {
+        val prerelease = goodJson.replace("\"prerelease\": false", "\"prerelease\": true")
+        val draft = goodJson.replace("\"draft\": false", "\"draft\": true")
+
+        assertEquals("v1.2.4", GitHubReleases.parseLatestRelease(prerelease, allowPrerelease = true)?.tag)
+        // A draft has no published assets — never installable, even in the test-override path.
+        assertNull(GitHubReleases.parseLatestRelease(draft, allowPrerelease = true))
+    }
+
+    @Test
     fun missing_apk_asset_returns_null() {
         val noApk = goodJson.replace("CallVault.apk", "CallVault-other.zip")
 

@@ -45,10 +45,12 @@ object GitHubReleases {
 
     /**
      * Fetches and parses the latest release. Blocking network I/O — call from a worker thread.
+     * @param overrideUrl TEST-ONLY: fetch this release API URL instead of `/latest`, and accept a
+     *                    prerelease/draft target. Null in normal use.
      * @return The release info, or null on any failure (network, parse, no APK asset).
      */
-    fun fetchLatestRelease(): ReleaseInfo? = runCatching {
-        val connection = (URL(LATEST_RELEASE_URL).openConnection() as HttpURLConnection).apply {
+    fun fetchLatestRelease(overrideUrl: String? = null): ReleaseInfo? = runCatching {
+        val connection = (URL(overrideUrl ?: LATEST_RELEASE_URL).openConnection() as HttpURLConnection).apply {
             connectTimeout = CONNECT_TIMEOUT_MS
             readTimeout = READ_TIMEOUT_MS
             setRequestProperty("Accept", "application/vnd.github+json")
@@ -65,15 +67,17 @@ object GitHubReleases {
     }.getOrElse { e ->
         AppLogger.w(TAG, "Latest-release query failed: ${e.message}")
         null
-    }?.let { parseLatestRelease(it) }
+    }?.let { parseLatestRelease(it, allowPrerelease = overrideUrl != null) }
 
     /**
-     * Parses a GitHub "latest release" JSON payload. Drafts and prereleases return null (the
-     * /latest endpoint should never serve them, but a manual check costs nothing).
+     * Parses a GitHub release JSON payload. Drafts and prereleases return null unless
+     * [allowPrerelease] (the test-override path) — the `/latest` endpoint should never serve them,
+     * but a manual check costs nothing.
      */
-    fun parseLatestRelease(json: String): ReleaseInfo? = runCatching {
+    fun parseLatestRelease(json: String, allowPrerelease: Boolean = false): ReleaseInfo? = runCatching {
         val root = JSONObject(json)
-        if (root.optBoolean("draft") || root.optBoolean("prerelease")) return null
+        if (root.optBoolean("draft")) return null
+        if (!allowPrerelease && root.optBoolean("prerelease")) return null
         val tag = root.optString("tag_name").ifBlank { return null }
         val assets = root.optJSONArray("assets") ?: return null
         for (i in 0 until assets.length()) {

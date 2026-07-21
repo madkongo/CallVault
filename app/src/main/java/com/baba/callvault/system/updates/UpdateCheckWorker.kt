@@ -33,8 +33,11 @@ class UpdateCheckWorker(context: Context, params: WorkerParameters) : CoroutineW
         val release = UpdateManager.checkForUpdate(applicationContext) ?: return@withContext Result.success()
 
         if (preferences.isAutoUpdateEnabled() && !UpdateManager.isNetworkMetered(applicationContext)) {
-            // Unattended: no interactive fallback — degrade to a notification if the shell is down.
-            UpdateManager.downloadAndInstall(applicationContext, release, allowInteractiveFallback = false)
+            // Unattended auto-update: no interactive fallback, and DON'T steal the foreground —
+            // relaunchUi=false only warms the recorder service; a notification reports the result.
+            UpdateManager.downloadAndInstall(
+                applicationContext, release, allowInteractiveFallback = false, relaunchUi = false
+            )
         } else {
             UpdateManager.notifyAvailableOnce(applicationContext, preferences, release.tag)
         }

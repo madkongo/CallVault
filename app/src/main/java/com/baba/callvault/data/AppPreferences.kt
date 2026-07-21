@@ -170,6 +170,7 @@ class AppPreferences(context: Context) {
         UPDATE_INSTALL_ARMED("update_install_armed"),
         LAST_SEEN_VERSION_CODE("last_seen_version_code"),
         UPDATE_SUCCESS_BANNER_VERSION("update_success_banner_version"),
+        UPDATE_SOURCE_OVERRIDE_URL("update_source_override_url"),
 
         // --- Persistent recorder server (CallVault Plan 5) ---
         PERSISTENT_SERVER_ENABLED("persistent_server_enabled"),
@@ -358,6 +359,14 @@ class AppPreferences(context: Context) {
     /** Version name to show a dismissable "updated successfully" banner for, or null when none. */
     fun getUpdateSuccessBannerVersion() = getString(Key.UPDATE_SUCCESS_BANNER_VERSION)
     fun setUpdateSuccessBannerVersion(version: String?) = setString(Key.UPDATE_SUCCESS_BANNER_VERSION, version)
+
+    /**
+     * TEST-ONLY: a GitHub release API URL to fetch the update from instead of `/latest`. Not exposed
+     * in the UI — set via adb to verify the update flow against a pre-release before publishing. When
+     * set, prerelease/draft releases are accepted (so a `-rc` tag can be the target). Null in normal use.
+     */
+    fun getUpdateSourceOverrideUrl() = getString(Key.UPDATE_SOURCE_OVERRIDE_URL)
+    fun setUpdateSourceOverrideUrl(url: String?) = setString(Key.UPDATE_SOURCE_OVERRIDE_URL, url)
 
     fun isPersistentServerEnabled() = getBoolean(Key.PERSISTENT_SERVER_ENABLED, DefaultsValue.PERSISTENT_SERVER_ENABLED)
 

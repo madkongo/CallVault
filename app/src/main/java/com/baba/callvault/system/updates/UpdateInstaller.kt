@@ -56,7 +56,7 @@ object UpdateInstaller {
      * verified file is installed directly with no intermediate copy. A trailing `&& pm grant …` is run
      * by the (shell-uid, separate) shell process, which survives this app being replaced.
      */
-    fun installSilentlyViaShell(context: Context, apkFile: File): ShellResult {
+    fun installSilentlyViaShell(context: Context, apkFile: File, relaunchUi: Boolean): ShellResult {
         val size = apkFile.length()
         if (size <= 0L) return ShellResult.FAILED
         if (!AdbShell.ensureConnected(context)) {
@@ -65,14 +65,21 @@ object UpdateInstaller {
         }
         // `-r` reinstall, `-S <size>` stream-from-stdin. On install success the SHELL process (which
         // survives this app being replaced, since it runs under the adb/shell uid) re-grants
-        // WRITE_SECURE_SETTINGS and RELAUNCHES the app — `am start` from the shell bypasses the
-        // background-activity-launch limits an app itself is subject to, so CallVault reopens on the
-        // new version (where it shows the "updated" banner) instead of just vanishing.
+        // WRITE_SECURE_SETTINGS and then, depending on [relaunchUi]:
+        //  - manual update → `am start` the launcher activity: CallVault reopens on the new version
+        //    (showing the "updated" banner), which also warms the recorder daemon via app startup;
+        //  - auto update → `am start-foreground-service` the daemon warm-up service: recording is made
+        //    ready again WITHOUT stealing the foreground (the user didn't ask to see the app).
+        // `am` from the shell bypasses the background-launch limits an app itself is subject to.
         val pkg = context.packageName
+        val ensureRunning = if (relaunchUi) {
+            "am start -n $pkg/$pkg.MainActivity"
+        } else {
+            "am start-foreground-service -n $pkg/$pkg.services.boot.AdbConnectionService"
+        }
         val command =
             "pm install -r -S $size && " +
-                "{ pm grant $pkg android.permission.WRITE_SECURE_SETTINGS; " +
-                "am start -n $pkg/$pkg.MainActivity; }"
+                "{ pm grant $pkg android.permission.WRITE_SECURE_SETTINGS; $ensureRunning; }"
 
         // exec: (raw, no PTY) — REQUIRED for streaming the binary APK to stdin; shell: would corrupt
         // or prematurely close the stream (the "Stream closed mid-send" failure this fixes).
