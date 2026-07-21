@@ -15,4 +15,5 @@
     <string name="home_update_banner_button">Cập nhật</string>
     <string name="home_update_banner_downloading">Đang tải… %1$d%%</string>
     <string name="home_update_banner_installing">Đang cài đặt…</string>
+    <string name="home_updated_banner_text">CallVault đã cập nhật lên %1$s</string>
 </resources>

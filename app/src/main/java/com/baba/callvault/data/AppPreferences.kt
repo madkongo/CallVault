@@ -168,6 +168,8 @@ class AppPreferences(context: Context) {
         LAST_NOTIFIED_UPDATE_TAG("last_notified_update_tag"),
         LAST_UPDATE_CHECK_MILLIS("last_update_check_millis"),
         UPDATE_INSTALL_ARMED("update_install_armed"),
+        LAST_SEEN_VERSION_CODE("last_seen_version_code"),
+        UPDATE_SUCCESS_BANNER_VERSION("update_success_banner_version"),
 
         // --- Persistent recorder server (CallVault Plan 5) ---
         PERSISTENT_SERVER_ENABLED("persistent_server_enabled"),
@@ -348,6 +350,14 @@ class AppPreferences(context: Context) {
      */
     fun isUpdateInstallArmed() = getBoolean(Key.UPDATE_INSTALL_ARMED)
     fun setUpdateInstallArmed(armed: Boolean) = setBoolean(Key.UPDATE_INSTALL_ARMED, armed)
+
+    /** The versionCode seen on the previous launch, used to detect that an update just landed. */
+    fun getLastSeenVersionCode() = getInt(Key.LAST_SEEN_VERSION_CODE)
+    fun setLastSeenVersionCode(code: Int) = setInt(Key.LAST_SEEN_VERSION_CODE, code)
+
+    /** Version name to show a dismissable "updated successfully" banner for, or null when none. */
+    fun getUpdateSuccessBannerVersion() = getString(Key.UPDATE_SUCCESS_BANNER_VERSION)
+    fun setUpdateSuccessBannerVersion(version: String?) = setString(Key.UPDATE_SUCCESS_BANNER_VERSION, version)
 
     fun isPersistentServerEnabled() = getBoolean(Key.PERSISTENT_SERVER_ENABLED, DefaultsValue.PERSISTENT_SERVER_ENABLED)
 

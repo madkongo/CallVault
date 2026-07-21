@@ -63,10 +63,16 @@ object UpdateInstaller {
             AppLogger.w(TAG, "Silent install unavailable: embedded ADB shell did not connect")
             return ShellResult.UNAVAILABLE
         }
-        // `-r` reinstall, `-S <size>` stream-from-stdin; the re-grant runs only on install success.
+        // `-r` reinstall, `-S <size>` stream-from-stdin. On install success the SHELL process (which
+        // survives this app being replaced, since it runs under the adb/shell uid) re-grants
+        // WRITE_SECURE_SETTINGS and RELAUNCHES the app — `am start` from the shell bypasses the
+        // background-activity-launch limits an app itself is subject to, so CallVault reopens on the
+        // new version (where it shows the "updated" banner) instead of just vanishing.
+        val pkg = context.packageName
         val command =
             "pm install -r -S $size && " +
-                "pm grant ${context.packageName} android.permission.WRITE_SECURE_SETTINGS"
+                "{ pm grant $pkg android.permission.WRITE_SECURE_SETTINGS; " +
+                "am start -n $pkg/$pkg.MainActivity; }"
 
         // exec: (raw, no PTY) — REQUIRED for streaming the binary APK to stdin; shell: would corrupt
         // or prematurely close the stream (the "Stream closed mid-send" failure this fixes).
