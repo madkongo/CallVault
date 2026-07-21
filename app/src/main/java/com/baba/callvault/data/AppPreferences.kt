@@ -25,6 +25,9 @@ class AppPreferences(context: Context) {
 
     companion object {
         private const val PREFS_NAME = "callvault_prefs"
+
+        /** Public key id for the available-update tag, for change-listener comparisons. */
+        const val AVAILABLE_UPDATE_TAG_KEY = "available_update_tag"
     }
 
     /**
@@ -253,6 +256,18 @@ class AppPreferences(context: Context) {
     // -------- SharedPreferences instance
 
     private val prefs = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
+
+    /**
+     * Registers a change listener so callers can react the instant a preference is written from
+     * another component (e.g. a background worker setting [AVAILABLE_UPDATE_TAG_KEY]). Callers MUST
+     * [unregisterChangeListener] to avoid leaks. The listener receives the changed key id; compare
+     * against the public key constants (e.g. [AVAILABLE_UPDATE_TAG_KEY]).
+     */
+    fun registerChangeListener(listener: android.content.SharedPreferences.OnSharedPreferenceChangeListener) =
+        prefs.registerOnSharedPreferenceChangeListener(listener)
+
+    fun unregisterChangeListener(listener: android.content.SharedPreferences.OnSharedPreferenceChangeListener) =
+        prefs.unregisterOnSharedPreferenceChangeListener(listener)
 
     // -------- Helpers to simplify reading/writing
 
