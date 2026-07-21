@@ -178,9 +178,22 @@ class HomeViewModel(application: Application) : AndroidViewModel(application) {
     /** Convenience pass-through of the inline player's state for the UI. */
     val playback: StateFlow<RecordingPlaybackController.PlaybackState> = playbackController.state
 
+    /**
+     * Reacts to the available-update tag being written by a background worker, so the update banner
+     * appears/disappears the instant an update is found or cleared — not only on the next screen
+     * resume. Registered for the ViewModel's lifetime; removed in [onCleared].
+     */
+    private val prefsListener =
+        android.content.SharedPreferences.OnSharedPreferenceChangeListener { _, key ->
+            if (key == AppPreferences.AVAILABLE_UPDATE_TAG_KEY) {
+                _uiState.update { it.copy(availableUpdateTag = preferences.getAvailableUpdateTag()) }
+            }
+        }
+
     init {
         refresh()
         observeInstallWork()
+        preferences.registerChangeListener(prefsListener)
     }
 
     /**
@@ -346,6 +359,7 @@ class HomeViewModel(application: Application) : AndroidViewModel(application) {
     fun isActive(uri: Uri): Boolean = playback.value.activeUri == uri
 
     override fun onCleared() {
+        preferences.unregisterChangeListener(prefsListener)
         playbackController.release()
         super.onCleared()
     }
