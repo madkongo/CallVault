@@ -221,4 +221,9 @@
     <string name="home_status_dev_options_off_suggestion">CallVault ghi âm qua gỡ lỗi không dây, tính năng này cần Tùy chọn nhà phát triển. Không thể ghi âm cho đến khi bạn bật lại Tùy chọn nhà phát triển (và Gỡ lỗi không dây) trong cài đặt hệ thống.</string>
     <string name="recording_error_empty_file">Bản ghi trống — không có âm thanh nào được thu vì trình nền ghi âm không chạy. Hãy kiểm tra xem Tùy chọn nhà phát triển và Gỡ lỗi không dây đã được bật chưa.</string>
     <string name="recording_error_daemon_died">Trình nền ghi âm đã dừng — cuộc gọi này KHÔNG được ghi âm. Hãy kiểm tra xem Tùy chọn nhà phát triển và Gỡ lỗi không dây đã được bật chưa.</string>
+    <string name="settings_section_updates">Cập nhật</string>
+    <string name="settings_update_check_label">Kiểm tra bản cập nhật</string>
+    <string name="settings_update_check_description">Mỗi ngày một lần, tìm phiên bản mới trên GitHub.</string>
+    <string name="settings_auto_update_label">Tự động cập nhật</string>
+    <string name="settings_auto_update_description">Tải qua Wi-Fi và cài đặt phiên bản mới trong im lặng. Khi tắt, bạn sẽ nhận được thông báo thay thế.</string>
 </resources>

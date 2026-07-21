@@ -20,6 +20,7 @@ import com.baba.callvault.data.recordings.RecordingsRepository
 import com.baba.callvault.data.recordings.RecordingsRepository.RecordingItem
 import com.baba.callvault.data.recordings.RecordingsRepository.RecordingSource
 import com.baba.callvault.integrations.adb.DeveloperOptions
+import com.baba.callvault.system.updates.UpdateManager
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -107,7 +108,11 @@ class HomeViewModel(application: Application) : AndroidViewModel(application) {
         val sourceFilter: SourceFilter = SourceFilter.ALL,
         val directionFilter: DirectionFilter = DirectionFilter.ALL,
         val contactFilter: String? = null,
-        val dateFilter: String? = null
+        val dateFilter: String? = null,
+        /** Release tag of a known-newer version (drives the update banner), or null. */
+        val availableUpdateTag: String? = null,
+        /** True while the banner's Update action is downloading/dispatching the install. */
+        val isUpdateInstalling: Boolean = false
     ) {
         /**
          * The distinct contact keys present in [recordings], sorted A→Z case-insensitively. Each
@@ -178,7 +183,13 @@ class HomeViewModel(application: Application) : AndroidViewModel(application) {
      * thread. Safe to call on first composition and on every ON_RESUME.
      */
     fun refresh() {
-        _uiState.update { it.copy(status = computeStatus(), isLoading = true) }
+        _uiState.update {
+            it.copy(
+                status = computeStatus(),
+                isLoading = true,
+                availableUpdateTag = preferences.getAvailableUpdateTag()
+            )
+        }
         viewModelScope.launch {
             val recordings = withContext(Dispatchers.IO) { RecordingsRepository.listRecordings(appContext) }
             _uiState.update { state ->
@@ -191,6 +202,30 @@ class HomeViewModel(application: Application) : AndroidViewModel(application) {
                     isLoading = false,
                     contactFilter = state.contactFilter?.takeIf { it in contacts },
                     dateFilter = state.dateFilter?.takeIf { it in days }
+                )
+            }
+        }
+    }
+
+    /**
+     * Downloads and installs the update the banner advertises (re-querying the release for its
+     * download URL). Runs off the main thread; the install outcome itself is reported via the
+     * updater's notifications, so this only manages the banner's transient "installing" state.
+     */
+    fun installAvailableUpdate() {
+        if (_uiState.value.isUpdateInstalling) return
+        _uiState.update { it.copy(isUpdateInstalling = true) }
+        viewModelScope.launch {
+            withContext(Dispatchers.IO) {
+                val release = UpdateManager.checkForUpdate(appContext)
+                if (release != null) {
+                    UpdateManager.downloadAndInstall(appContext, release, silent = false)
+                }
+            }
+            _uiState.update {
+                it.copy(
+                    isUpdateInstalling = false,
+                    availableUpdateTag = preferences.getAvailableUpdateTag()
                 )
             }
         }

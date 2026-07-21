@@ -47,6 +47,7 @@ import androidx.compose.material.icons.filled.ArrowDropDown
 import androidx.compose.material.icons.filled.ExpandLess
 import androidx.compose.material.icons.filled.ExpandMore
 import androidx.compose.material.icons.filled.Smartphone
+import androidx.compose.material.icons.filled.SystemUpdate
 import androidx.compose.material.icons.filled.Tune
 import androidx.compose.material.icons.filled.WarningAmber
 import androidx.compose.material3.AlertDialog
@@ -165,6 +166,16 @@ fun HomeScreen(
         ) {
             item { HeroStatusCard(status = uiState.status) }
 
+            uiState.availableUpdateTag?.let { tag ->
+                item {
+                    UpdateBannerCard(
+                        tag = tag,
+                        isInstalling = uiState.isUpdateInstalling,
+                        onUpdate = { viewModel.installAvailableUpdate() }
+                    )
+                }
+            }
+
             val recordings = uiState.filteredRecordings
 
             item {
@@ -219,6 +230,50 @@ fun HomeScreen(
                         onDeleteAll = { viewModel.deleteRecording(item) },
                         onDeleteUri = { uri -> viewModel.deleteUri(uri) }
                     )
+                }
+            }
+        }
+    }
+}
+
+/**
+ * Slim banner shown under the hero card when a newer release is known. Tapping Update downloads,
+ * verifies, and installs it (system confirm dialog may appear); while working the action shows a
+ * small progress spinner. Auto-update users normally never see this — it appears only when the
+ * silent path couldn't run (e.g. metered network or the shell being unavailable).
+ */
+@Composable
+private fun UpdateBannerCard(tag: String, isInstalling: Boolean, onUpdate: () -> Unit) {
+    val accent = MaterialTheme.colorScheme.primary
+    val tinted = accent.copy(alpha = 0.08f).compositeOver(MaterialTheme.colorScheme.surface)
+    CvCard(color = tinted, contentPadding = PaddingValues(horizontal = 16.dp, vertical = 10.dp)) {
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            Icon(
+                imageVector = Icons.Filled.SystemUpdate,
+                contentDescription = null,
+                tint = accent,
+                modifier = Modifier.size(22.dp)
+            )
+            Spacer(Modifier.width(12.dp))
+            Column(Modifier.weight(1f)) {
+                Text(
+                    text = stringResource(R.string.home_update_banner_title, tag.removePrefix("v")),
+                    style = MaterialTheme.typography.titleSmall,
+                    fontWeight = FontWeight.SemiBold,
+                    color = MaterialTheme.colorScheme.onSurface
+                )
+                Text(
+                    text = stringResource(R.string.home_update_banner_text),
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+            }
+            Spacer(Modifier.width(8.dp))
+            if (isInstalling) {
+                CircularProgressIndicator(modifier = Modifier.size(20.dp), strokeWidth = 2.dp)
+            } else {
+                TextButton(onClick = onUpdate) {
+                    Text(stringResource(R.string.home_update_banner_button))
                 }
             }
         }

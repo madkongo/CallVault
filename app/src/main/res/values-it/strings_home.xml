@@ -10,4 +10,7 @@
     <string name="home_recordings_empty_hint">Quando CallVault registra una chiamata, comparirà qui. Effettui o riceva una chiamata per iniziare.</string>
     <string name="home_recordings_empty_title">Ancora nessuna registrazione</string>
     <string name="home_hero_pill_dev_options_off">Registrazione non disponibile</string>
+    <string name="home_update_banner_title">Aggiornamento disponibile: %1$s</string>
+    <string name="home_update_banner_text">Una nuova versione è pronta per il download da GitHub.</string>
+    <string name="home_update_banner_button">Aggiorna</string>
 </resources>

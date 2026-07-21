@@ -221,4 +221,9 @@
     <string name="wizard_storage_subtitle">Choisissez l\'emplacement de stockage de vos enregistrements. Vous pourrez le modifier plus tard dans les Paramètres.</string>
     <string name="wizard_storage_title">Où enregistrer les enregistrements</string>
     <string name="wizard_title">Configurer CallVault</string>
+    <string name="settings_section_updates">Mises à jour</string>
+    <string name="settings_update_check_label">Rechercher des mises à jour</string>
+    <string name="settings_update_check_description">Une fois par jour, recherche une nouvelle version sur GitHub.</string>
+    <string name="settings_auto_update_label">Mettre à jour automatiquement</string>
+    <string name="settings_auto_update_description">Télécharge en Wi-Fi et installe les nouvelles versions silencieusement. Si désactivé, vous recevez une notification à la place.</string>
 </resources>

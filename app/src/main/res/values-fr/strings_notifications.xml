@@ -25,4 +25,13 @@
     <string name="notif_readiness_reboot_ready_text">En écoute des appels après le redémarrage.</string>
     <string name="notif_startup_channel">Démarrage</string>
     <string name="notif_startup_preparing">Préparation de l\'enregistreur d\'appels…</string>
+    <string name="update_notif_channel">Mises à jour de l\'application</string>
+    <string name="update_notif_available_title">CallVault %1$s est disponible</string>
+    <string name="update_notif_available_text">Ouvrez l\'application et appuyez sur Mettre à jour pour l\'installer.</string>
+    <string name="update_notif_success_title">Mise à jour installée</string>
+    <string name="update_notif_success_text">CallVault est maintenant en version %1$s.</string>
+    <string name="update_notif_failure_title">Échec de la mise à jour</string>
+    <string name="update_notif_failure_download_text">La mise à jour n\'a pas pu être téléchargée. Appuyez pour l\'obtenir depuis GitHub.</string>
+    <string name="update_notif_failure_verify_text">La mise à jour téléchargée a échoué au contrôle de sécurité et a été supprimée. Appuyez pour l\'obtenir depuis GitHub.</string>
+    <string name="update_notif_failure_install_text">La mise à jour n\'a pas pu être installée. Appuyez pour l\'obtenir depuis GitHub.</string>
 </resources>
