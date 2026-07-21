@@ -165,8 +165,9 @@ object UpdateManager {
             UpdateNotifications.showUpdateFailure(
                 context, context.getString(R.string.update_notif_failure_install_text)
             )
-        } else {
-            preferences.setPendingUpdateTag(null)
         }
+        // Install SUCCEEDED (running version >= pendingTag): do NOT clear the tag here. The
+        // MY_PACKAGE_REPLACED receiver owns the success path (notification + cleanup); clearing it
+        // here would race that broadcast and could swallow the "update installed" notification.
     }
 }
