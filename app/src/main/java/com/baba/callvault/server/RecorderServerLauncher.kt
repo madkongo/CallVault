@@ -117,8 +117,12 @@ object RecorderServerLauncher {
      * other mid-connect and spawn duplicate daemons — observed to thrash the embedded ADB connection into
      * a "Stream closed" state. One launch at a time; the second caller sees the connected binder and returns.
      */
-    @Synchronized
-    fun ensureServerRunning(context: Context, timeoutMs: Long = 12_000): Boolean {
+    fun ensureServerRunning(context: Context, timeoutMs: Long = 12_000): Boolean =
+        // Serialize with the update installer (and other daemon launches) on the shared ADB lock, so
+        // a launch's reconnect/WD-toggle never tears down an in-flight update install stream.
+        synchronized(AdbShell.heavyOperationLock) { ensureServerRunningLocked(context, timeoutMs) }
+
+    private fun ensureServerRunningLocked(context: Context, timeoutMs: Long): Boolean {
         if (RecorderConnection.isConnected) {
             AppLogger.d(TAG, "Recorder daemon already connected; reusing existing binder")
             applyWdPolicy(context)

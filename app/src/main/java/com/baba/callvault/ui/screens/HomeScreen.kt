@@ -298,13 +298,13 @@ private fun UpdateBannerCard(
 ) {
     val accent = MaterialTheme.colorScheme.primary
     val tinted = accent.copy(alpha = 0.08f).compositeOver(MaterialTheme.colorScheme.surface)
-    // While installing: a subtitle tracks the phase (downloading N% → installing), and the trailing
-    // action becomes a spinner. Downloading shows a determinate bar; the post-download install phase
-    // (percent < 0) shows an indeterminate bar because pm install has no measurable progress.
+    // While installing: a subtitle tracks the phase. Downloading (percent -1..99, -1 = not yet
+    // reported) shows the download label; only once the download completes (percent >= 100) does it
+    // switch to "Installing…". A determinate bar during download, indeterminate before/after.
     val subtitle = when {
         !isInstalling -> stringResource(R.string.home_update_banner_text)
-        progressPercent in 0..99 -> stringResource(R.string.home_update_banner_downloading, progressPercent)
-        else -> stringResource(R.string.home_update_banner_installing)
+        progressPercent >= 100 -> stringResource(R.string.home_update_banner_installing)
+        else -> stringResource(R.string.home_update_banner_downloading, progressPercent.coerceAtLeast(0))
     }
     CvCard(color = tinted, contentPadding = PaddingValues(horizontal = 16.dp, vertical = 10.dp)) {
         Row(verticalAlignment = Alignment.CenterVertically) {
