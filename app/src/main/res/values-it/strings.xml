@@ -221,4 +221,7 @@
     <string name="home_status_dev_options_off_suggestion">CallVault registra tramite il debug wireless, che richiede le opzioni sviluppatore. La registrazione non può funzionare finché non riattivi le opzioni sviluppatore (e il debug wireless) nelle impostazioni di sistema.</string>
     <string name="recording_error_empty_file">La registrazione è vuota — nessun audio è stato acquisito perché il daemon di registrazione non era in esecuzione. Verifica che le opzioni sviluppatore e il debug wireless siano attivi.</string>
     <string name="recording_error_daemon_died">Il daemon di registrazione si è arrestato — questa chiamata NON viene registrata. Verifica che le opzioni sviluppatore e il debug wireless siano attivi.</string>
+    <string name="settings_section_updates">Aggiornamenti</string>
+    <string name="settings_update_check_label">Cerca aggiornamenti</string>
+    <string name="settings_update_check_description">Una volta al giorno, cerca una nuova versione su GitHub.</string>
 </resources>

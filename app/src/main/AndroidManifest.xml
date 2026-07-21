@@ -16,6 +16,10 @@
     <uses-permission android:name="android.permission.WRITE_SECURE_SETTINGS"
         tools:ignore="ProtectedPermissions" />
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
+    <!-- In-app updater: query GitHub Releases + download the update APK. -->
+    <uses-permission android:name="android.permission.INTERNET" />
+    <!-- In-app updater: commit a PackageInstaller session for the tap-to-update flow. -->
+    <uses-permission android:name="android.permission.REQUEST_INSTALL_PACKAGES" />
     <uses-permission android:name="android.permission.READ_PHONE_STATE" />
     <uses-permission android:name="android.permission.READ_CONTACTS" />
     <uses-permission android:name="android.permission.REQUEST_IGNORE_BATTERY_OPTIMIZATIONS" />
@@ -112,6 +116,26 @@
             <intent-filter>
                 <action android:name="android.intent.action.TIMEZONE_CHANGED" />
                 <action android:name="android.intent.action.TIME_SET" />
+            </intent-filter>
+        </receiver>
+
+        <!-- In-app updater: PackageInstaller session status (confirm dialog + failures). -->
+        <receiver
+            android:name=".system.updates.UpdateInstallReceiver"
+            android:enabled="true"
+            android:exported="false">
+            <intent-filter>
+                <action android:name="com.baba.callvault.UPDATE_INSTALL_STATUS" />
+            </intent-filter>
+        </receiver>
+
+        <!-- In-app updater: reports "updated successfully" after this app was replaced. -->
+        <receiver
+            android:name=".system.updates.UpdatePackageReplacedReceiver"
+            android:enabled="true"
+            android:exported="false">
+            <intent-filter>
+                <action android:name="android.intent.action.MY_PACKAGE_REPLACED" />
             </intent-filter>
         </receiver>
 

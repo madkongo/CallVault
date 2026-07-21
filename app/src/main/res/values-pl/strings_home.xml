@@ -10,4 +10,10 @@
     <string name="home_recordings_empty_hint">Gdy CallVault nagra rozmowę, pojawi się ona tutaj. Wykonaj lub odbierz połączenie, aby rozpocząć.</string>
     <string name="home_recordings_empty_title">Brak nagrań</string>
     <string name="home_hero_pill_dev_options_off">Nagrywanie niemożliwe</string>
+    <string name="home_update_banner_title">Dostępna aktualizacja: %1$s</string>
+    <string name="home_update_banner_text">Nowa wersja jest gotowa do pobrania z GitHuba.</string>
+    <string name="home_update_banner_button">Aktualizuj</string>
+    <string name="home_update_banner_downloading">Pobieranie… %1$d%%</string>
+    <string name="home_update_banner_installing">Instalowanie…</string>
+    <string name="home_updated_banner_text">CallVault zaktualizowano do %1$s</string>
 </resources>

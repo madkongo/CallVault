@@ -25,4 +25,15 @@
     <string name="notif_readiness_reboot_ready_text">Hívások figyelése újraindítás után.</string>
     <string name="notif_startup_channel">Indítás</string>
     <string name="notif_startup_preparing">Hívásrögzítő előkészítése…</string>
+    <string name="update_notif_channel">Alkalmazásfrissítések</string>
+    <string name="update_notif_available_title">Elérhető a CallVault %1$s</string>
+    <string name="update_notif_available_text">Nyissa meg az alkalmazást, és koppintson a Frissítés gombra a telepítéshez.</string>
+    <string name="update_notif_success_title">Frissítés telepítve</string>
+    <string name="update_notif_success_text">A CallVault mostantól %1$s verziójú.</string>
+    <string name="update_notif_failure_title">A frissítés nem sikerült</string>
+    <string name="update_notif_failure_download_text">A frissítést nem sikerült letölteni. Koppintson a GitHubról való letöltéshez.</string>
+    <string name="update_notif_failure_verify_text">A letöltött frissítés nem ment át a biztonsági ellenőrzésen, ezért törölve lett. Koppintson a GitHubról való letöltéshez.</string>
+    <string name="update_notif_failure_install_text">A frissítést nem sikerült telepíteni. Koppintson a GitHubról való letöltéshez.</string>
+    <string name="update_notif_downloading_title">Frissítés letöltése…</string>
+    <string name="update_notif_installing_title">Frissítés telepítése…</string>
 </resources>

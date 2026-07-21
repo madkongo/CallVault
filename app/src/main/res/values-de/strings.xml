@@ -221,4 +221,7 @@
     <string name="home_status_dev_options_off_suggestion">CallVault nimmt über das drahtlose Debugging auf, das die Entwickleroptionen benötigt. Die Aufnahme funktioniert erst wieder, wenn Sie die Entwickleroptionen (und das drahtlose Debugging) in den Systemeinstellungen aktivieren.</string>
     <string name="recording_error_empty_file">Die Aufnahme ist leer — es wurde kein Audio aufgezeichnet, da der Aufnahme-Daemon nicht lief. Prüfen Sie, ob die Entwickleroptionen und das drahtlose Debugging aktiviert sind.</string>
     <string name="recording_error_daemon_died">Der Aufnahme-Daemon wurde beendet — dieser Anruf wird NICHT aufgezeichnet. Prüfen Sie, ob die Entwickleroptionen und das drahtlose Debugging aktiviert sind.</string>
+    <string name="settings_section_updates">Updates</string>
+    <string name="settings_update_check_label">Nach Updates suchen</string>
+    <string name="settings_update_check_description">Einmal täglich auf GitHub nach einer neuen Version suchen.</string>
 </resources>

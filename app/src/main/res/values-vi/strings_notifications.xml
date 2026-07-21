@@ -25,4 +25,15 @@
     <string name="notif_readiness_reboot_ready_text">Đang chờ cuộc gọi sau khi khởi động lại.</string>
     <string name="notif_startup_channel">Khởi động</string>
     <string name="notif_startup_preparing">Đang chuẩn bị trình ghi âm cuộc gọi…</string>
+    <string name="update_notif_channel">Cập nhật ứng dụng</string>
+    <string name="update_notif_available_title">Đã có CallVault %1$s</string>
+    <string name="update_notif_available_text">Mở ứng dụng và nhấn Cập nhật để cài đặt.</string>
+    <string name="update_notif_success_title">Đã cài đặt bản cập nhật</string>
+    <string name="update_notif_success_text">CallVault hiện là phiên bản %1$s.</string>
+    <string name="update_notif_failure_title">Cập nhật thất bại</string>
+    <string name="update_notif_failure_download_text">Không thể tải bản cập nhật. Nhấn để tải từ GitHub.</string>
+    <string name="update_notif_failure_verify_text">Bản cập nhật đã tải không vượt qua kiểm tra bảo mật và đã bị loại bỏ. Nhấn để tải từ GitHub.</string>
+    <string name="update_notif_failure_install_text">Không thể cài đặt bản cập nhật. Nhấn để tải từ GitHub.</string>
+    <string name="update_notif_downloading_title">Đang tải bản cập nhật…</string>
+    <string name="update_notif_installing_title">Đang cài đặt bản cập nhật…</string>
 </resources>

@@ -20,6 +20,9 @@ import com.baba.callvault.data.recordings.RecordingsRepository
 import com.baba.callvault.data.recordings.RecordingsRepository.RecordingItem
 import com.baba.callvault.data.recordings.RecordingsRepository.RecordingSource
 import com.baba.callvault.integrations.adb.DeveloperOptions
+import com.baba.callvault.system.updates.UpdateInstallWorker
+import com.baba.callvault.system.updates.UpdateScheduler
+import androidx.work.WorkManager
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -107,7 +110,15 @@ class HomeViewModel(application: Application) : AndroidViewModel(application) {
         val sourceFilter: SourceFilter = SourceFilter.ALL,
         val directionFilter: DirectionFilter = DirectionFilter.ALL,
         val contactFilter: String? = null,
-        val dateFilter: String? = null
+        val dateFilter: String? = null,
+        /** Release tag of a known-newer version (drives the update banner), or null. */
+        val availableUpdateTag: String? = null,
+        /** True while the banner's Update action is downloading/dispatching the install. */
+        val isUpdateInstalling: Boolean = false,
+        /** Download percentage (0-100) while installing, or -1 before the download reports. */
+        val updateProgressPercent: Int = -1,
+        /** Version name to show a dismissable "updated successfully" banner for, or null. */
+        val updatedToVersion: String? = null
     ) {
         /**
          * The distinct contact keys present in [recordings], sorted A→Z case-insensitively. Each
@@ -169,8 +180,45 @@ class HomeViewModel(application: Application) : AndroidViewModel(application) {
     /** Convenience pass-through of the inline player's state for the UI. */
     val playback: StateFlow<RecordingPlaybackController.PlaybackState> = playbackController.state
 
+    /**
+     * Reacts to the available-update tag being written by a background worker, so the update banner
+     * appears/disappears the instant an update is found or cleared — not only on the next screen
+     * resume. Registered for the ViewModel's lifetime; removed in [onCleared].
+     */
+    private val prefsListener =
+        android.content.SharedPreferences.OnSharedPreferenceChangeListener { _, key ->
+            if (key == AppPreferences.AVAILABLE_UPDATE_TAG_KEY) {
+                _uiState.update { it.copy(availableUpdateTag = preferences.getAvailableUpdateTag()) }
+            }
+        }
+
     init {
+        detectJustUpdated()
         refresh()
+        observeInstallWork()
+        preferences.registerChangeListener(prefsListener)
+    }
+
+    /**
+     * Detects that an update just landed by comparing the running [BuildConfig.VERSION_CODE] against
+     * the versionCode seen on the previous launch. On a version bump (not a fresh install), records
+     * the new version name so the Home screen shows a dismissable "updated successfully" banner. This
+     * catches ALL updates — via CallVault's own updater or a manual sideload — not just ones that
+     * fire [android.content.Intent.ACTION_MY_PACKAGE_REPLACED].
+     */
+    private fun detectJustUpdated() {
+        val current = com.baba.callvault.BuildConfig.VERSION_CODE
+        val lastSeen = preferences.getLastSeenVersionCode()
+        if (lastSeen != 0 && current > lastSeen) {
+            preferences.setUpdateSuccessBannerVersion(com.baba.callvault.BuildConfig.VERSION_NAME)
+        }
+        if (lastSeen != current) preferences.setLastSeenVersionCode(current)
+    }
+
+    /** Dismisses the "updated successfully" banner (clears its persisted state). */
+    fun dismissUpdatedBanner() {
+        preferences.setUpdateSuccessBannerVersion(null)
+        _uiState.update { it.copy(updatedToVersion = null) }
     }
 
     /**
@@ -178,7 +226,14 @@ class HomeViewModel(application: Application) : AndroidViewModel(application) {
      * thread. Safe to call on first composition and on every ON_RESUME.
      */
     fun refresh() {
-        _uiState.update { it.copy(status = computeStatus(), isLoading = true) }
+        _uiState.update {
+            it.copy(
+                status = computeStatus(),
+                isLoading = true,
+                availableUpdateTag = preferences.getAvailableUpdateTag(),
+                updatedToVersion = preferences.getUpdateSuccessBannerVersion()
+            )
+        }
         viewModelScope.launch {
             val recordings = withContext(Dispatchers.IO) { RecordingsRepository.listRecordings(appContext) }
             _uiState.update { state ->
@@ -193,6 +248,39 @@ class HomeViewModel(application: Application) : AndroidViewModel(application) {
                     dateFilter = state.dateFilter?.takeIf { it in days }
                 )
             }
+        }
+    }
+
+    /**
+     * Kicks off the update the banner advertises via a WorkManager job, so the download + install
+     * survive the user leaving this screen (the outcome is reported through notifications). The
+     * banner spinner is driven by [observeInstallWork] watching that job's state — never by this
+     * call directly — so it can't get stuck if the ViewModel is torn down mid-install.
+     */
+    fun installAvailableUpdate() {
+        if (_uiState.value.isUpdateInstalling) return
+        // Arm the one-shot consent flag so the worker runs for THIS tap only; an interrupted re-run
+        // won't silently reinstall (it no-ops and the banner reappears for a fresh tap).
+        preferences.setUpdateInstallArmed(true)
+        UpdateScheduler.enqueueInstallNow(appContext)
+    }
+
+    /** Mirrors the install job's RUNNING/ENQUEUED state into [HomeUiState.isUpdateInstalling]. */
+    private fun observeInstallWork() {
+        viewModelScope.launch {
+            WorkManager.getInstance(appContext)
+                .getWorkInfosForUniqueWorkFlow(UpdateScheduler.INSTALL_WORK_NAME)
+                .collect { infos ->
+                    val running = infos.firstOrNull { info -> !info.state.isFinished }
+                    val percent = running?.progress?.getInt(UpdateInstallWorker.KEY_PROGRESS, -1) ?: -1
+                    _uiState.update {
+                        it.copy(
+                            isUpdateInstalling = running != null,
+                            updateProgressPercent = percent,
+                            availableUpdateTag = preferences.getAvailableUpdateTag()
+                        )
+                    }
+                }
         }
     }
 
@@ -300,6 +388,7 @@ class HomeViewModel(application: Application) : AndroidViewModel(application) {
     fun isActive(uri: Uri): Boolean = playback.value.activeUri == uri
 
     override fun onCleared() {
+        preferences.unregisterChangeListener(prefsListener)
         playbackController.release()
         super.onCleared()
     }

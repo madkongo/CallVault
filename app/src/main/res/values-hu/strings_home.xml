@@ -10,4 +10,10 @@
     <string name="home_recordings_empty_hint">Amikor a CallVault rögzít egy hívást, az itt jelenik meg. Kezdje el egy hívás indításával vagy fogadásával.</string>
     <string name="home_recordings_empty_title">Még nincsenek felvételek</string>
     <string name="home_hero_pill_dev_options_off">A rögzítés nem működik</string>
+    <string name="home_update_banner_title">Frissítés érhető el: %1$s</string>
+    <string name="home_update_banner_text">Új verzió tölthető le a GitHubról.</string>
+    <string name="home_update_banner_button">Frissítés</string>
+    <string name="home_update_banner_downloading">Letöltés… %1$d%%</string>
+    <string name="home_update_banner_installing">Telepítés…</string>
+    <string name="home_updated_banner_text">A CallVault frissült erre: %1$s</string>
 </resources>
