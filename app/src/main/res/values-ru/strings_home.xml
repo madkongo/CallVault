@@ -10,4 +10,10 @@
     <string name="home_recordings_empty_hint">Когда CallVault запишет звонок, он появится здесь. Совершите или примите звонок, чтобы начать.</string>
     <string name="home_recordings_empty_title">Записей пока нет</string>
     <string name="home_hero_pill_dev_options_off">Запись невозможна</string>
+    <string name="home_update_banner_title">Доступно обновление: %1$s</string>
+    <string name="home_update_banner_text">Новая версия готова к загрузке с GitHub.</string>
+    <string name="home_update_banner_button">Обновить</string>
+    <string name="home_update_banner_downloading">Загрузка… %1$d%%</string>
+    <string name="home_update_banner_installing">Установка…</string>
+    <string name="home_updated_banner_text">CallVault обновлён до %1$s</string>
 </resources>

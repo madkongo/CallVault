@@ -16,6 +16,15 @@ import io.github.muntashirakon.adb.AdbStream
 /** Thin facade over the embedded ADB connection for the recording pipeline. */
 object AdbShell {
     private const val TAG = "CV:AdbShell"
+
+    /**
+     * Serializes ADB operations that hold the connection for a while or tear it down/rebuild it —
+     * the recorder-daemon launch (which toggles Wireless debugging and reconnects) and the update
+     * installer (which streams the whole APK over one exec: stream). Run concurrently they corrupt
+     * each other: the daemon launcher's reconnect closes the installer's in-flight stream ("Stream
+     * closed mid-send"). Both take this lock so one waits for the other instead of colliding.
+     */
+    val heavyOperationLock = Any()
     private const val CONNECT_SETTLE_MS = 2500L
     /** Reduced from 25 s so the recording path fails fast instead of hanging while falsely appearing to record. */
     private const val MDNS_TIMEOUT_MS = 12_000L
@@ -99,6 +108,20 @@ object AdbShell {
      */
     fun openShell(context: Context, command: String): AdbStream =
         AdbConnectionManager.getInstance(context).openStream("shell:$command")
+
+    /**
+     * Opens an ADB `exec:` stream for [command] — a RAW, PTY-less bidirectional stream. Use this
+     * (not [openShell]) whenever binary data is streamed to a command's stdin: `shell:` allocates a
+     * pseudo-terminal that performs newline translation and can truncate on certain bytes, corrupting
+     * or prematurely closing a binary stream (e.g. an APK piped to `pm install -S`). `exec:` is the
+     * same channel desktop `adb install` uses for exactly this reason.
+     *
+     * @param context App context.
+     * @param command Command string (without the "exec:" prefix).
+     * @return An [AdbStream] connected to the command with a raw binary I/O channel.
+     */
+    fun openExec(context: Context, command: String): AdbStream =
+        AdbConnectionManager.getInstance(context).openStream("exec:$command")
 
     /**
      * Opens an ADB localabstract socket by [name]. The full `localabstract:` prefix is added automatically.

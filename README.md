@@ -37,6 +37,7 @@ You pair **once**; after that it's hands-free.
 | 🗂️ | Filter recordings by **source, direction, contact, or date**; play & delete each copy individually |
 | 🎚️ | **Opus** or **AAC** at your chosen bitrate; [BCR](https://github.com/chenxiaolong/BCR)-compatible file names |
 | 🔒 | **No root, no Shizuku, no PC** — everything runs on-device, Wireless Debugging is automatic & transient |
+| ⬆️ | **In-app updates** — CallVault notices new GitHub releases and installs them on a tap (signature-pinned, resumable download); never auto-installs |
 | 🎨 | Clean, modern UI — no telemetry, no ads, no nonsense |
 
 ## How it works
@@ -63,6 +64,8 @@ After a one-time pairing, CallVault runs a **persistent privileged daemon** — 
 
 1. Download the latest **`CallVault.apk`** from the [**Releases**](https://github.com/madkongo/CallVault/releases/latest) page (or use [Obtainium](https://github.com/ImranR98/Obtainium) for auto-updates from this repo).
 2. Open it and allow installing from unknown sources if prompted.
+
+> After the first install, CallVault can update **itself** — it checks GitHub for new releases and offers a one-tap install on the Home screen (toggle off under Settings → Updates). Installing is always your choice; it never updates on its own.
 
 > CallVault is sideloaded only — it **cannot** be on the Google Play Store (Play prohibits both call recording and the embedded-ADB privilege mechanism it depends on). F-Droid is the intended catalog.
 

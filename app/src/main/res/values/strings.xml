@@ -357,4 +357,7 @@
     <string name="home_delete">Delete</string>
     <string name="home_delete_confirm_title">Delete recording?</string>
     <string name="home_delete_confirm_message">This permanently deletes %1$s.</string>
+    <string name="settings_section_updates">Updates</string>
+    <string name="settings_update_check_label">Check for updates</string>
+    <string name="settings_update_check_description">Once a day, look for a new version on GitHub.</string>
 </resources>

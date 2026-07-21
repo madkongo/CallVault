@@ -25,4 +25,15 @@
     <string name="notif_readiness_reboot_ready_text">Nasłuchiwanie połączeń po ponownym uruchomieniu.</string>
     <string name="notif_startup_channel">Uruchamianie</string>
     <string name="notif_startup_preparing">Przygotowywanie rejestratora połączeń…</string>
+    <string name="update_notif_channel">Aktualizacje aplikacji</string>
+    <string name="update_notif_available_title">Dostępny jest CallVault %1$s</string>
+    <string name="update_notif_available_text">Otwórz aplikację i dotknij Aktualizuj, aby ją zainstalować.</string>
+    <string name="update_notif_success_title">Aktualizacja zainstalowana</string>
+    <string name="update_notif_success_text">CallVault ma teraz wersję %1$s.</string>
+    <string name="update_notif_failure_title">Aktualizacja nie powiodła się</string>
+    <string name="update_notif_failure_download_text">Nie udało się pobrać aktualizacji. Dotknij, aby pobrać ją z GitHuba.</string>
+    <string name="update_notif_failure_verify_text">Pobrana aktualizacja nie przeszła kontroli bezpieczeństwa i została odrzucona. Dotknij, aby pobrać ją z GitHuba.</string>
+    <string name="update_notif_failure_install_text">Nie udało się zainstalować aktualizacji. Dotknij, aby pobrać ją z GitHuba.</string>
+    <string name="update_notif_downloading_title">Pobieranie aktualizacji…</string>
+    <string name="update_notif_installing_title">Instalowanie aktualizacji…</string>
 </resources>

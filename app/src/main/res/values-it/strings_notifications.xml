@@ -25,4 +25,15 @@
     <string name="notif_readiness_reboot_ready_text">In ascolto delle chiamate dopo il riavvio.</string>
     <string name="notif_startup_channel">Avvio</string>
     <string name="notif_startup_preparing">Preparazione del registratore di chiamate…</string>
+    <string name="update_notif_channel">Aggiornamenti dell\'app</string>
+    <string name="update_notif_available_title">CallVault %1$s è disponibile</string>
+    <string name="update_notif_available_text">Apri l\'app e tocca Aggiorna per installarlo.</string>
+    <string name="update_notif_success_title">Aggiornamento installato</string>
+    <string name="update_notif_success_text">CallVault è ora alla versione %1$s.</string>
+    <string name="update_notif_failure_title">Aggiornamento non riuscito</string>
+    <string name="update_notif_failure_download_text">Impossibile scaricare l\'aggiornamento. Tocca per scaricarlo da GitHub.</string>
+    <string name="update_notif_failure_verify_text">L\'aggiornamento scaricato non ha superato il controllo di sicurezza ed è stato eliminato. Tocca per scaricarlo da GitHub.</string>
+    <string name="update_notif_failure_install_text">Impossibile installare l\'aggiornamento. Tocca per scaricarlo da GitHub.</string>
+    <string name="update_notif_downloading_title">Download dell\'aggiornamento…</string>
+    <string name="update_notif_installing_title">Installazione dell\'aggiornamento…</string>
 </resources>

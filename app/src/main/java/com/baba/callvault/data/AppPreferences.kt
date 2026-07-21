@@ -25,6 +25,9 @@ class AppPreferences(context: Context) {
 
     companion object {
         private const val PREFS_NAME = "callvault_prefs"
+
+        /** Public key id for the available-update tag, for change-listener comparisons. */
+        const val AVAILABLE_UPDATE_TAG_KEY = "available_update_tag"
     }
 
     /**
@@ -92,6 +95,11 @@ class AppPreferences(context: Context) {
         // not shown again on every launch (a live connection only exists per-process).
         const val ADB_PAIRED = false
 
+        // --- In-app updates ---
+        // Check for new GitHub releases (a tiny daily JSON query). ON by default; a found update
+        // surfaces as a Home banner + notification and installs only on an explicit user tap.
+        const val UPDATE_CHECK_ENABLED = true
+
         // --- Persistent recorder server (CallVault Plan 5) ---
         // OFF by default: when false the existing local recording path runs unchanged. When true the
         // recording layer drives the detached privileged daemon (RecorderServer) over binder instead.
@@ -149,6 +157,17 @@ class AppPreferences(context: Context) {
 
         // --- ADB ---
         ADB_PAIRED("adb_paired"),
+
+        // --- In-app updates ---
+        UPDATE_CHECK_ENABLED("update_check_enabled"),
+        AVAILABLE_UPDATE_TAG("available_update_tag"),
+        PENDING_UPDATE_TAG("pending_update_tag"),
+        LAST_NOTIFIED_UPDATE_TAG("last_notified_update_tag"),
+        LAST_UPDATE_CHECK_MILLIS("last_update_check_millis"),
+        UPDATE_INSTALL_ARMED("update_install_armed"),
+        LAST_SEEN_VERSION_CODE("last_seen_version_code"),
+        UPDATE_SUCCESS_BANNER_VERSION("update_success_banner_version"),
+        UPDATE_SOURCE_OVERRIDE_URL("update_source_override_url"),
 
         // --- Persistent recorder server (CallVault Plan 5) ---
         PERSISTENT_SERVER_ENABLED("persistent_server_enabled"),
@@ -239,6 +258,18 @@ class AppPreferences(context: Context) {
 
     private val prefs = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
 
+    /**
+     * Registers a change listener so callers can react the instant a preference is written from
+     * another component (e.g. a background worker setting [AVAILABLE_UPDATE_TAG_KEY]). Callers MUST
+     * [unregisterChangeListener] to avoid leaks. The listener receives the changed key id; compare
+     * against the public key constants (e.g. [AVAILABLE_UPDATE_TAG_KEY]).
+     */
+    fun registerChangeListener(listener: android.content.SharedPreferences.OnSharedPreferenceChangeListener) =
+        prefs.registerOnSharedPreferenceChangeListener(listener)
+
+    fun unregisterChangeListener(listener: android.content.SharedPreferences.OnSharedPreferenceChangeListener) =
+        prefs.unregisterOnSharedPreferenceChangeListener(listener)
+
     // -------- Helpers to simplify reading/writing
 
     private fun getBoolean(key: Key, default: Boolean = false) = prefs.getBoolean(key.id, default)
@@ -249,6 +280,9 @@ class AppPreferences(context: Context) {
 
     private fun getInt(key: Key, default: Int = 0) = prefs.getInt(key.id, default)
     private fun setInt(key: Key, value: Int) = prefs.edit { putInt(key.id, value) }
+
+    private fun getLong(key: Key, default: Long = 0L) = prefs.getLong(key.id, default)
+    private fun setLong(key: Key, value: Long) = prefs.edit { putLong(key.id, value) }
 
     private fun getStringSet(key: Key, default: Set<String> = emptySet()) = prefs.getStringSet(key.id, default)?.toSet().orEmpty()
     private fun setStringSet(key: Key, value: Set<String>) = prefs.edit { putStringSet(key.id, value) }
@@ -284,6 +318,50 @@ class AppPreferences(context: Context) {
      * existing local recording pipeline runs unchanged; when true the recording layer drives the
      * detached daemon ([com.baba.callvault.server.RecorderServer]) over binder.
      */
+    fun isUpdateCheckEnabled() = getBoolean(Key.UPDATE_CHECK_ENABLED, DefaultsValue.UPDATE_CHECK_ENABLED)
+    fun setUpdateCheckEnabled(enabled: Boolean) = setBoolean(Key.UPDATE_CHECK_ENABLED, enabled)
+
+    /** Release tag of a known-newer version (drives the Home banner + notification); null = none. */
+    fun getAvailableUpdateTag() = getString(Key.AVAILABLE_UPDATE_TAG)
+    fun setAvailableUpdateTag(tag: String?) = setString(Key.AVAILABLE_UPDATE_TAG, tag)
+
+    /** Tag of an update whose install was fired but not yet confirmed; used to report success/failure. */
+    fun getPendingUpdateTag() = getString(Key.PENDING_UPDATE_TAG)
+    fun setPendingUpdateTag(tag: String?) = setString(Key.PENDING_UPDATE_TAG, tag)
+
+    /** Last tag the "update available" notification was posted for, so one tag notifies only once. */
+    fun getLastNotifiedUpdateTag() = getString(Key.LAST_NOTIFIED_UPDATE_TAG)
+    fun setLastNotifiedUpdateTag(tag: String?) = setString(Key.LAST_NOTIFIED_UPDATE_TAG, tag)
+
+    /** Epoch millis of the last completed update check; throttles the check-on-open trigger. */
+    fun getLastUpdateCheckMillis() = getLong(Key.LAST_UPDATE_CHECK_MILLIS)
+    fun setLastUpdateCheckMillis(millis: Long) = setLong(Key.LAST_UPDATE_CHECK_MILLIS, millis)
+
+    /**
+     * One-shot consent flag: set true the instant the user taps "Update", consumed (cleared) by the
+     * install worker when it starts. It gates the install so that a WorkManager re-run of an
+     * interrupted install (process death mid-install) does NOT silently reinstall without the user
+     * tapping again — the worker no-ops when this is false and the banner reappears for a fresh tap.
+     */
+    fun isUpdateInstallArmed() = getBoolean(Key.UPDATE_INSTALL_ARMED)
+    fun setUpdateInstallArmed(armed: Boolean) = setBoolean(Key.UPDATE_INSTALL_ARMED, armed)
+
+    /** The versionCode seen on the previous launch, used to detect that an update just landed. */
+    fun getLastSeenVersionCode() = getInt(Key.LAST_SEEN_VERSION_CODE)
+    fun setLastSeenVersionCode(code: Int) = setInt(Key.LAST_SEEN_VERSION_CODE, code)
+
+    /** Version name to show a dismissable "updated successfully" banner for, or null when none. */
+    fun getUpdateSuccessBannerVersion() = getString(Key.UPDATE_SUCCESS_BANNER_VERSION)
+    fun setUpdateSuccessBannerVersion(version: String?) = setString(Key.UPDATE_SUCCESS_BANNER_VERSION, version)
+
+    /**
+     * TEST-ONLY: a GitHub release API URL to fetch the update from instead of `/latest`. Not exposed
+     * in the UI — set via adb to verify the update flow against a pre-release before publishing. When
+     * set, prerelease/draft releases are accepted (so a `-rc` tag can be the target). Null in normal use.
+     */
+    fun getUpdateSourceOverrideUrl() = getString(Key.UPDATE_SOURCE_OVERRIDE_URL)
+    fun setUpdateSourceOverrideUrl(url: String?) = setString(Key.UPDATE_SOURCE_OVERRIDE_URL, url)
+
     fun isPersistentServerEnabled() = getBoolean(Key.PERSISTENT_SERVER_ENABLED, DefaultsValue.PERSISTENT_SERVER_ENABLED)
 
     /** Sets whether the persistent privileged recorder daemon path is enabled. */

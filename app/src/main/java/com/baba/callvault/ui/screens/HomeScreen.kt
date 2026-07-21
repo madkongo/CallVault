@@ -38,6 +38,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.CallMade
 import androidx.compose.material.icons.automirrored.filled.CallReceived
 import androidx.compose.material.icons.filled.CheckCircle
+import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Cloud
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.GraphicEq
@@ -47,10 +48,12 @@ import androidx.compose.material.icons.filled.ArrowDropDown
 import androidx.compose.material.icons.filled.ExpandLess
 import androidx.compose.material.icons.filled.ExpandMore
 import androidx.compose.material.icons.filled.Smartphone
+import androidx.compose.material.icons.filled.SystemUpdate
 import androidx.compose.material.icons.filled.Tune
 import androidx.compose.material.icons.filled.WarningAmber
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -165,6 +168,26 @@ fun HomeScreen(
         ) {
             item { HeroStatusCard(status = uiState.status) }
 
+            uiState.updatedToVersion?.let { version ->
+                item {
+                    UpdatedBannerCard(
+                        version = version,
+                        onDismiss = { viewModel.dismissUpdatedBanner() }
+                    )
+                }
+            }
+
+            uiState.availableUpdateTag?.let { tag ->
+                item {
+                    UpdateBannerCard(
+                        tag = tag,
+                        isInstalling = uiState.isUpdateInstalling,
+                        progressPercent = uiState.updateProgressPercent,
+                        onUpdate = { viewModel.installAvailableUpdate() }
+                    )
+                }
+            }
+
             val recordings = uiState.filteredRecordings
 
             item {
@@ -219,6 +242,109 @@ fun HomeScreen(
                         onDeleteAll = { viewModel.deleteRecording(item) },
                         onDeleteUri = { uri -> viewModel.deleteUri(uri) }
                     )
+                }
+            }
+        }
+    }
+}
+
+/**
+ * Dismissable confirmation shown once after an update lands ("CallVault updated to X.Y.Z"). Uses a
+ * success (primary) tint with a check, and a close button that clears it for good.
+ */
+@Composable
+private fun UpdatedBannerCard(version: String, onDismiss: () -> Unit) {
+    val accent = MaterialTheme.colorScheme.primary
+    val tinted = accent.copy(alpha = 0.10f).compositeOver(MaterialTheme.colorScheme.surface)
+    CvCard(color = tinted, contentPadding = PaddingValues(horizontal = 16.dp, vertical = 10.dp)) {
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            Icon(
+                imageVector = Icons.Filled.CheckCircle,
+                contentDescription = null,
+                tint = accent,
+                modifier = Modifier.size(22.dp)
+            )
+            Spacer(Modifier.width(12.dp))
+            Text(
+                text = stringResource(R.string.home_updated_banner_text, version),
+                style = MaterialTheme.typography.bodyMedium,
+                fontWeight = FontWeight.Medium,
+                color = MaterialTheme.colorScheme.onSurface,
+                modifier = Modifier.weight(1f)
+            )
+            IconButton(onClick = onDismiss) {
+                Icon(
+                    imageVector = Icons.Filled.Close,
+                    contentDescription = stringResource(R.string.general_close),
+                    tint = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+            }
+        }
+    }
+}
+
+/**
+ * Slim banner shown under the hero card when a newer release is known. Tapping Update downloads,
+ * verifies, and installs it (system confirm dialog may appear); while working the action shows a
+ * small progress spinner. Auto-update users normally never see this — it appears only when the
+ * silent path couldn't run (e.g. metered network or the shell being unavailable).
+ */
+@Composable
+private fun UpdateBannerCard(
+    tag: String,
+    isInstalling: Boolean,
+    progressPercent: Int,
+    onUpdate: () -> Unit
+) {
+    val accent = MaterialTheme.colorScheme.primary
+    val tinted = accent.copy(alpha = 0.08f).compositeOver(MaterialTheme.colorScheme.surface)
+    // While installing: a subtitle tracks the phase. Downloading (percent -1..99, -1 = not yet
+    // reported) shows the download label; only once the download completes (percent >= 100) does it
+    // switch to "Installing…". A determinate bar during download, indeterminate before/after.
+    val subtitle = when {
+        !isInstalling -> stringResource(R.string.home_update_banner_text)
+        progressPercent >= 100 -> stringResource(R.string.home_update_banner_installing)
+        else -> stringResource(R.string.home_update_banner_downloading, progressPercent.coerceAtLeast(0))
+    }
+    CvCard(color = tinted, contentPadding = PaddingValues(horizontal = 16.dp, vertical = 10.dp)) {
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            Icon(
+                imageVector = Icons.Filled.SystemUpdate,
+                contentDescription = null,
+                tint = accent,
+                modifier = Modifier.size(22.dp)
+            )
+            Spacer(Modifier.width(12.dp))
+            Column(Modifier.weight(1f)) {
+                Text(
+                    text = stringResource(R.string.home_update_banner_title, tag.removePrefix("v")),
+                    style = MaterialTheme.typography.titleSmall,
+                    fontWeight = FontWeight.SemiBold,
+                    color = MaterialTheme.colorScheme.onSurface
+                )
+                Text(
+                    text = subtitle,
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+                if (isInstalling) {
+                    Spacer(Modifier.height(6.dp))
+                    if (progressPercent in 0..99) {
+                        LinearProgressIndicator(
+                            progress = { progressPercent / 100f },
+                            modifier = Modifier.fillMaxWidth()
+                        )
+                    } else {
+                        LinearProgressIndicator(modifier = Modifier.fillMaxWidth())
+                    }
+                }
+            }
+            Spacer(Modifier.width(8.dp))
+            if (isInstalling) {
+                CircularProgressIndicator(modifier = Modifier.size(20.dp), strokeWidth = 2.dp)
+            } else {
+                TextButton(onClick = onUpdate) {
+                    Text(stringResource(R.string.home_update_banner_button))
                 }
             }
         }

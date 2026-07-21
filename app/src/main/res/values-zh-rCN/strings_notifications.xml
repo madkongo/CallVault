@@ -25,4 +25,15 @@
     <string name="notif_readiness_reboot_ready_text">重启后正在监听来电。</string>
     <string name="notif_startup_channel">启动</string>
     <string name="notif_startup_preparing">正在准备通话录音…</string>
+    <string name="update_notif_channel">应用更新</string>
+    <string name="update_notif_available_title">CallVault %1$s 已发布</string>
+    <string name="update_notif_available_text">打开应用并点按“更新”进行安装。</string>
+    <string name="update_notif_success_title">更新已安装</string>
+    <string name="update_notif_success_text">CallVault 已更新到 %1$s 版。</string>
+    <string name="update_notif_failure_title">更新失败</string>
+    <string name="update_notif_failure_download_text">无法下载更新。点按可从 GitHub 获取。</string>
+    <string name="update_notif_failure_verify_text">下载的更新未通过安全检查，已被丢弃。点按可从 GitHub 获取。</string>
+    <string name="update_notif_failure_install_text">无法安装更新。点按可从 GitHub 获取。</string>
+    <string name="update_notif_downloading_title">正在下载更新…</string>
+    <string name="update_notif_installing_title">正在安装更新…</string>
 </resources>

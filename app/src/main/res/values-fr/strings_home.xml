@@ -10,4 +10,10 @@
     <string name="home_recordings_count">%1$d enregistré(s)</string>
     <string name="home_recordings_empty_hint">Lorsque CallVault enregistre un appel, il apparaît ici. Passez ou recevez un appel pour commencer.</string>
     <string name="home_recordings_empty_title">Aucun enregistrement pour l\'instant</string>
+    <string name="home_update_banner_title">Mise à jour disponible : %1$s</string>
+    <string name="home_update_banner_text">Une nouvelle version est prête à être téléchargée depuis GitHub.</string>
+    <string name="home_update_banner_button">Mettre à jour</string>
+    <string name="home_update_banner_downloading">Téléchargement… %1$d%%</string>
+    <string name="home_update_banner_installing">Installation…</string>
+    <string name="home_updated_banner_text">CallVault a été mis à jour vers %1$s</string>
 </resources>

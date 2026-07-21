@@ -26,6 +26,7 @@ import androidx.compose.material.icons.automirrored.filled.ArrowForwardIos
 import androidx.compose.material.icons.automirrored.filled.CallMade
 import androidx.compose.material.icons.automirrored.filled.CallReceived
 import androidx.compose.material.icons.filled.BugReport
+import androidx.compose.material.icons.filled.SystemUpdate
 import androidx.compose.material.icons.filled.Cloud
 import androidx.compose.material.icons.filled.ColorLens
 import androidx.compose.material.icons.filled.ContentCopy
@@ -291,6 +292,13 @@ fun SettingsContent(
                     onToggle = { onToggleSection(SECTION_BUG_REPORT) }
                 )
             }
+            item {
+                UpdatesSection(
+                    preferences, updateTrigger, actions,
+                    expanded = openSection == SECTION_UPDATES,
+                    onToggle = { onToggleSection(SECTION_UPDATES) }
+                )
+            }
             // About moved to the bottom; the fork attribution stays visible (GPLv3 §7 requirement).
             item {
                 AboutSection(
@@ -363,6 +371,7 @@ private const val SECTION_RETENTION = "retention"
 private const val SECTION_AUDIO = "audio"
 private const val SECTION_VISUAL = "visual"
 private const val SECTION_BUG_REPORT = "bug_report"
+private const val SECTION_UPDATES = "updates"
 private const val SECTION_ABOUT = "about"
 
 // ── Settings sections ──────────────────────────────────────────────────────────────────────
@@ -1036,6 +1045,35 @@ private fun AboutSection(
  * @param onToggle Invoked when the header is tapped (the parent decides the new open-section).
  * @param content  The slot for child rows rendered inside the [CvCard] when expanded.
  */
+/**
+ * In-app updates: a daily release check (on by default). A new release surfaces as a notification +
+ * Home banner, and installs only on an explicit tap.
+ */
+@Composable
+private fun UpdatesSection(
+    preferences: AppPreferences,
+    updateTrigger: Int,
+    actions: SettingsActions,
+    expanded: Boolean,
+    onToggle: () -> Unit
+) {
+    val isCheckEnabled = remember(updateTrigger) { preferences.isUpdateCheckEnabled() }
+
+    SettingsSection(
+        title = stringResource(R.string.settings_section_updates),
+        expanded = expanded,
+        onToggle = onToggle
+    ) {
+        SettingsToggleRow(
+            icon = Icons.Filled.SystemUpdate,
+            label = stringResource(R.string.settings_update_check_label),
+            checked = isCheckEnabled,
+            onCheckedChange = { actions.setUpdateCheckEnabled(it) },
+            description = stringResource(R.string.settings_update_check_description)
+        )
+    }
+}
+
 @Composable
 private fun SettingsSection(
     title: String,
@@ -1338,6 +1376,7 @@ private fun SettingsScreenPreview() {
             override fun setRetentionDriveDays(days: Int) {}
             override fun setRetentionTimeHour(hour: Int) {}
             override fun setRetentionTimeMinute(minute: Int) {}
+            override fun setUpdateCheckEnabled(enabled: Boolean) {}
         }
 
         SettingsContent(
