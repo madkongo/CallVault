@@ -59,6 +59,15 @@ object UpdateInstaller {
     fun installSilentlyViaShell(context: Context, apkFile: File, relaunchUi: Boolean): ShellResult {
         val size = apkFile.length()
         if (size <= 0L) return ShellResult.FAILED
+        // Hold the shared ADB lock for the whole connect+stream so a concurrent daemon launch can't
+        // reconnect the transport out from under the in-flight install stream (the "Stream closed
+        // mid-send" collision). A daemon launch requested meanwhile simply waits for this to finish.
+        return synchronized(AdbShell.heavyOperationLock) {
+            installLocked(context, apkFile, size, relaunchUi)
+        }
+    }
+
+    private fun installLocked(context: Context, apkFile: File, size: Long, relaunchUi: Boolean): ShellResult {
         if (!AdbShell.ensureConnected(context)) {
             AppLogger.w(TAG, "Silent install unavailable: embedded ADB shell did not connect")
             return ShellResult.UNAVAILABLE
