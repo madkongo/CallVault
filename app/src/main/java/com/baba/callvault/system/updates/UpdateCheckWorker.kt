@@ -12,14 +12,17 @@ import android.content.Context
 import androidx.work.CoroutineWorker
 import androidx.work.WorkerParameters
 import com.baba.callvault.data.AppPreferences
+import com.baba.callvault.system.AppForeground
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 
 /**
- * Daily update check (scheduled by [UpdateScheduler], network-constrained):
- *  - auto-update ON + unmetered network → download, verify, and install silently;
- *  - auto-update ON + metered network   → don't burn data: notify "update available" instead;
- *  - auto-update OFF                    → notify once per tag; the Home banner offers the install.
+ * Update check (scheduled daily by [UpdateScheduler], on app open, and on backgrounding):
+ *  - auto-update ON + unmetered + app BACKGROUNDED → download, verify, and install silently;
+ *  - auto-update ON but app in the FOREGROUND       → defer (installing kills the app the user is in);
+ *    the check still records the pending update, and [AppForeground]'s onBackground hook re-runs this
+ *    worker the moment the user leaves the app;
+ *  - auto-update OFF                                → notify once per tag; the Home banner offers install.
  */
 class UpdateCheckWorker(context: Context, params: WorkerParameters) : CoroutineWorker(context, params) {
 
@@ -32,14 +35,21 @@ class UpdateCheckWorker(context: Context, params: WorkerParameters) : CoroutineW
         preferences.setLastUpdateCheckMillis(System.currentTimeMillis())
         val release = UpdateManager.checkForUpdate(applicationContext) ?: return@withContext Result.success()
 
-        if (preferences.isAutoUpdateEnabled() && !UpdateManager.isNetworkMetered(applicationContext)) {
-            // Unattended auto-update: no interactive fallback, and DON'T steal the foreground —
-            // relaunchUi=false only warms the recorder service; a notification reports the result.
-            UpdateManager.downloadAndInstall(
-                applicationContext, release, allowInteractiveFallback = false, relaunchUi = false
-            )
-        } else {
-            UpdateManager.notifyAvailableOnce(applicationContext, preferences, release.tag)
+        val autoUnmetered = preferences.isAutoUpdateEnabled() &&
+            !UpdateManager.isNetworkMetered(applicationContext)
+        when {
+            autoUnmetered && !AppForeground.isForeground -> {
+                // Backgrounded auto-update: install silently (relaunchUi=false → no foreground steal);
+                // result reported by notification, no interactive fallback (no user present).
+                UpdateManager.downloadAndInstall(
+                    applicationContext, release, allowInteractiveFallback = false, relaunchUi = false
+                )
+            }
+            autoUnmetered -> {
+                // Auto-update wanted but the user is IN the app — defer so we don't kill it mid-use.
+                // availableUpdateTag is already recorded; onBackground re-runs this worker on exit.
+            }
+            else -> UpdateManager.notifyAvailableOnce(applicationContext, preferences, release.tag)
         }
         Result.success()
     }
