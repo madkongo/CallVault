@@ -75,7 +75,14 @@ object GitHubReleases {
             val asset = assets.getJSONObject(i)
             if (asset.optString("name") == APK_ASSET_NAME) {
                 val url = asset.optString("browser_download_url").ifBlank { return null }
-                return ReleaseInfo(tag = tag, apkUrl = url, apkSizeBytes = asset.optLong("size"))
+                // Refuse a cleartext download URL — the pinned-cert check is the integrity gate, but
+                // the transport must still be TLS so the bytes can't be tampered in flight.
+                if (!url.startsWith("https://")) return null
+                // A missing/zero advertised size means we can't sanity-check the download; treat as
+                // untrustworthy metadata rather than skipping the check.
+                val size = asset.optLong("size")
+                if (size <= 0L) return null
+                return ReleaseInfo(tag = tag, apkUrl = url, apkSizeBytes = size)
             }
         }
         null

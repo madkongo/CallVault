@@ -12,6 +12,8 @@ import android.content.Context
 import androidx.work.CoroutineWorker
 import androidx.work.WorkerParameters
 import com.baba.callvault.data.AppPreferences
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 
 /**
  * Daily update check (scheduled by [UpdateScheduler], network-constrained):
@@ -21,17 +23,20 @@ import com.baba.callvault.data.AppPreferences
  */
 class UpdateCheckWorker(context: Context, params: WorkerParameters) : CoroutineWorker(context, params) {
 
-    override suspend fun doWork(): Result {
+    // CoroutineWorker.doWork runs on Dispatchers.Default; the update work does blocking network +
+    // ADB I/O, so move it to Dispatchers.IO to keep it off the CPU-bound thread pool.
+    override suspend fun doWork(): Result = withContext(Dispatchers.IO) {
         val preferences = AppPreferences(applicationContext)
-        if (!preferences.isUpdateCheckEnabled()) return Result.success()
+        if (!preferences.isUpdateCheckEnabled()) return@withContext Result.success()
 
-        val release = UpdateManager.checkForUpdate(applicationContext) ?: return Result.success()
+        val release = UpdateManager.checkForUpdate(applicationContext) ?: return@withContext Result.success()
 
         if (preferences.isAutoUpdateEnabled() && !UpdateManager.isNetworkMetered(applicationContext)) {
-            UpdateManager.downloadAndInstall(applicationContext, release, silent = true)
+            // Unattended: no interactive fallback — degrade to a notification if the shell is down.
+            UpdateManager.downloadAndInstall(applicationContext, release, allowInteractiveFallback = false)
         } else {
             UpdateManager.notifyAvailableOnce(applicationContext, preferences, release.tag)
         }
-        return Result.success()
+        Result.success()
     }
 }

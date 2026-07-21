@@ -11,7 +11,9 @@ package com.baba.callvault.system.updates
 import android.content.Context
 import androidx.work.Constraints
 import androidx.work.ExistingPeriodicWorkPolicy
+import androidx.work.ExistingWorkPolicy
 import androidx.work.NetworkType
+import androidx.work.OneTimeWorkRequestBuilder
 import androidx.work.PeriodicWorkRequestBuilder
 import androidx.work.WorkManager
 import com.baba.callvault.data.AppPreferences
@@ -29,6 +31,9 @@ object UpdateScheduler {
     private const val WORK_NAME = "cv_update_check"
     private const val PERIOD_HOURS = 24L
 
+    /** Unique name of the user-initiated install work; the Home banner observes its state. */
+    const val INSTALL_WORK_NAME = "cv_update_install"
+
     fun apply(context: Context) {
         val workManager = WorkManager.getInstance(context)
         if (!AppPreferences(context).isUpdateCheckEnabled()) {
@@ -42,5 +47,19 @@ object UpdateScheduler {
             )
             .build()
         workManager.enqueueUniquePeriodicWork(WORK_NAME, ExistingPeriodicWorkPolicy.KEEP, request)
+    }
+
+    /**
+     * Enqueues the one-time user-initiated install (Home banner "Update"). Unique + KEEP so repeated
+     * taps don't stack; requires a network connection. Runs in WorkManager so it outlives the UI.
+     */
+    fun enqueueInstallNow(context: Context) {
+        val request = OneTimeWorkRequestBuilder<UpdateInstallWorker>()
+            .setConstraints(
+                Constraints.Builder().setRequiredNetworkType(NetworkType.CONNECTED).build()
+            )
+            .build()
+        WorkManager.getInstance(context)
+            .enqueueUniqueWork(INSTALL_WORK_NAME, ExistingWorkPolicy.KEEP, request)
     }
 }

@@ -20,7 +20,8 @@ import com.baba.callvault.data.recordings.RecordingsRepository
 import com.baba.callvault.data.recordings.RecordingsRepository.RecordingItem
 import com.baba.callvault.data.recordings.RecordingsRepository.RecordingSource
 import com.baba.callvault.integrations.adb.DeveloperOptions
-import com.baba.callvault.system.updates.UpdateManager
+import com.baba.callvault.system.updates.UpdateScheduler
+import androidx.work.WorkManager
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -176,6 +177,7 @@ class HomeViewModel(application: Application) : AndroidViewModel(application) {
 
     init {
         refresh()
+        observeInstallWork()
     }
 
     /**
@@ -208,26 +210,30 @@ class HomeViewModel(application: Application) : AndroidViewModel(application) {
     }
 
     /**
-     * Downloads and installs the update the banner advertises (re-querying the release for its
-     * download URL). Runs off the main thread; the install outcome itself is reported via the
-     * updater's notifications, so this only manages the banner's transient "installing" state.
+     * Kicks off the update the banner advertises via a WorkManager job, so the download + install
+     * survive the user leaving this screen (the outcome is reported through notifications). The
+     * banner spinner is driven by [observeInstallWork] watching that job's state — never by this
+     * call directly — so it can't get stuck if the ViewModel is torn down mid-install.
      */
     fun installAvailableUpdate() {
         if (_uiState.value.isUpdateInstalling) return
-        _uiState.update { it.copy(isUpdateInstalling = true) }
+        UpdateScheduler.enqueueInstallNow(appContext)
+    }
+
+    /** Mirrors the install job's RUNNING/ENQUEUED state into [HomeUiState.isUpdateInstalling]. */
+    private fun observeInstallWork() {
         viewModelScope.launch {
-            withContext(Dispatchers.IO) {
-                val release = UpdateManager.checkForUpdate(appContext)
-                if (release != null) {
-                    UpdateManager.downloadAndInstall(appContext, release, silent = false)
+            WorkManager.getInstance(appContext)
+                .getWorkInfosForUniqueWorkFlow(UpdateScheduler.INSTALL_WORK_NAME)
+                .collect { infos ->
+                    val active = infos.any { info -> !info.state.isFinished }
+                    _uiState.update {
+                        it.copy(
+                            isUpdateInstalling = active,
+                            availableUpdateTag = preferences.getAvailableUpdateTag()
+                        )
+                    }
                 }
-            }
-            _uiState.update {
-                it.copy(
-                    isUpdateInstalling = false,
-                    availableUpdateTag = preferences.getAvailableUpdateTag()
-                )
-            }
         }
     }
 

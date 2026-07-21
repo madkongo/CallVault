@@ -64,12 +64,19 @@ object ApkVerifier {
             return false
         }
 
-        val signers = info.signingInfo?.apkContentsSigners
-        if (signers.isNullOrEmpty()) {
+        val signingInfo = info.signingInfo
+        val signers = signingInfo?.apkContentsSigners
+        if (signingInfo == null || signers.isNullOrEmpty()) {
             AppLogger.w(TAG, "Update APK has no readable signature")
             return false
         }
-        val matches = signers.any { sha256Hex(it.toByteArray()) == PINNED_CERT_SHA256 }
+        // Require EXACTLY the pinned cert as the sole signer. A genuine CallVault release is
+        // single-signed with the pinned key; anything multiply-signed is not ours.
+        if (signingInfo.hasMultipleSigners() || signers.size != 1) {
+            AppLogger.e(TAG, "Update APK has an unexpected signer set — refusing to install")
+            return false
+        }
+        val matches = sha256Hex(signers[0].toByteArray()) == PINNED_CERT_SHA256
         if (!matches) {
             AppLogger.e(TAG, "Update APK signing certificate does NOT match the pinned release cert — refusing to install")
         }
