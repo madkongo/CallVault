@@ -3,6 +3,16 @@
 All notable changes to CallVault are documented here. The format is based on
 [Keep a Changelog](https://keepachangelog.com/), and this project uses semantic-ish versioning.
 
+## [1.2.3] — 2026-07-19
+
+### Fixed
+- **Filenames no longer lose the caller for unsaved numbers.** With a file-name template using
+  `{contact_name}`, calls from numbers not saved in your contacts produced a name with an empty
+  contact segment — no way to tell who the recording was from. The placeholder now falls back to
+  the **phone number itself** when there is no saved contact (and it's not voicemail). If your
+  template already includes `{phone_number}`, the fallback stays empty so the number isn't
+  written twice.
+
 ## [1.2.2] — 2026-07-19
 
 A field-report fix release: voicemail calls get their proper name, and the app now tells the truth
