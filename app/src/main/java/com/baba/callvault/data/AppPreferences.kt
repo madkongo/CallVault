@@ -163,6 +163,7 @@ class AppPreferences(context: Context) {
         AVAILABLE_UPDATE_TAG("available_update_tag"),
         PENDING_UPDATE_TAG("pending_update_tag"),
         LAST_NOTIFIED_UPDATE_TAG("last_notified_update_tag"),
+        LAST_UPDATE_CHECK_MILLIS("last_update_check_millis"),
 
         // --- Persistent recorder server (CallVault Plan 5) ---
         PERSISTENT_SERVER_ENABLED("persistent_server_enabled"),
@@ -264,6 +265,9 @@ class AppPreferences(context: Context) {
     private fun getInt(key: Key, default: Int = 0) = prefs.getInt(key.id, default)
     private fun setInt(key: Key, value: Int) = prefs.edit { putInt(key.id, value) }
 
+    private fun getLong(key: Key, default: Long = 0L) = prefs.getLong(key.id, default)
+    private fun setLong(key: Key, value: Long) = prefs.edit { putLong(key.id, value) }
+
     private fun getStringSet(key: Key, default: Set<String> = emptySet()) = prefs.getStringSet(key.id, default)?.toSet().orEmpty()
     private fun setStringSet(key: Key, value: Set<String>) = prefs.edit { putStringSet(key.id, value) }
 
@@ -315,6 +319,10 @@ class AppPreferences(context: Context) {
     /** Last tag the "update available" notification was posted for, so one tag notifies only once. */
     fun getLastNotifiedUpdateTag() = getString(Key.LAST_NOTIFIED_UPDATE_TAG)
     fun setLastNotifiedUpdateTag(tag: String?) = setString(Key.LAST_NOTIFIED_UPDATE_TAG, tag)
+
+    /** Epoch millis of the last completed update check; throttles the check-on-open trigger. */
+    fun getLastUpdateCheckMillis() = getLong(Key.LAST_UPDATE_CHECK_MILLIS)
+    fun setLastUpdateCheckMillis(millis: Long) = setLong(Key.LAST_UPDATE_CHECK_MILLIS, millis)
 
     fun isPersistentServerEnabled() = getBoolean(Key.PERSISTENT_SERVER_ENABLED, DefaultsValue.PERSISTENT_SERVER_ENABLED)
 
