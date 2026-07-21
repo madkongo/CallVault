@@ -87,20 +87,4 @@ object UpdateScheduler {
         WorkManager.getInstance(context)
             .enqueueUniqueWork(INSTALL_WORK_NAME, ExistingWorkPolicy.KEEP, request)
     }
-
-    /**
-     * Enqueues an immediate auto-update check+install, used when the app goes to the background with a
-     * pending update — so an auto-update installs the moment the user leaves the app, never while they
-     * are looking at it. Reuses [UpdateCheckWorker], which installs only when auto-update is on, the
-     * network is unmetered, and the app is backgrounded.
-     */
-    fun enqueueAutoInstall(context: Context) {
-        val request = OneTimeWorkRequestBuilder<UpdateCheckWorker>()
-            .setConstraints(
-                Constraints.Builder().setRequiredNetworkType(NetworkType.CONNECTED).build()
-            )
-            .build()
-        WorkManager.getInstance(context)
-            .enqueueUniqueWork(CHECK_NOW_WORK_NAME, ExistingWorkPolicy.KEEP, request)
-    }
 }

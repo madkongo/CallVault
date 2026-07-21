@@ -360,6 +360,4 @@
     <string name="settings_section_updates">Updates</string>
     <string name="settings_update_check_label">Check for updates</string>
     <string name="settings_update_check_description">Once a day, look for a new version on GitHub.</string>
-    <string name="settings_auto_update_label">Update automatically</string>
-    <string name="settings_auto_update_description">Download on Wi-Fi and install new versions silently. When off, you get a notification instead.</string>
 </resources>

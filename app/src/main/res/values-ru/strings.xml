@@ -224,6 +224,4 @@
     <string name="settings_section_updates">Обновления</string>
     <string name="settings_update_check_label">Проверять обновления</string>
     <string name="settings_update_check_description">Раз в день проверяет наличие новой версии на GitHub.</string>
-    <string name="settings_auto_update_label">Обновлять автоматически</string>
-    <string name="settings_auto_update_description">Загружает по Wi-Fi и устанавливает новые версии в фоновом режиме. Если выключено, вместо этого придёт уведомление.</string>
 </resources>

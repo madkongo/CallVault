@@ -56,40 +56,30 @@ object UpdateInstaller {
      * verified file is installed directly with no intermediate copy. A trailing `&& pm grant …` is run
      * by the (shell-uid, separate) shell process, which survives this app being replaced.
      */
-    fun installSilentlyViaShell(context: Context, apkFile: File, relaunchUi: Boolean): ShellResult {
+    fun installSilentlyViaShell(context: Context, apkFile: File): ShellResult {
         val size = apkFile.length()
         if (size <= 0L) return ShellResult.FAILED
         // Hold the shared ADB lock for the whole connect+stream so a concurrent daemon launch can't
         // reconnect the transport out from under the in-flight install stream (the "Stream closed
         // mid-send" collision). A daemon launch requested meanwhile simply waits for this to finish.
         return synchronized(AdbShell.heavyOperationLock) {
-            installLocked(context, apkFile, size, relaunchUi)
+            installLocked(context, apkFile, size)
         }
     }
 
-    private fun installLocked(context: Context, apkFile: File, size: Long, relaunchUi: Boolean): ShellResult {
+    private fun installLocked(context: Context, apkFile: File, size: Long): ShellResult {
         if (!AdbShell.ensureConnected(context)) {
             AppLogger.w(TAG, "Silent install unavailable: embedded ADB shell did not connect")
             return ShellResult.UNAVAILABLE
         }
         // `-r` reinstall, `-S <size>` stream-from-stdin. On install success the SHELL process (which
         // survives this app being replaced, since it runs under the adb/shell uid) re-grants
-        // WRITE_SECURE_SETTINGS, and for a MANUAL update also `am start`s the launcher activity so
-        // CallVault reopens on the new version (showing the "updated" banner). `am start` from the
-        // shell bypasses the background-launch limits an app itself is subject to.
-        //
-        // The AUTO path deliberately does NOT relaunch the UI: the system delivers
-        // ACTION_MY_PACKAGE_REPLACED to the app's manifest receiver right after the reinstall, which
-        // starts the app process (running Application.onCreate → warms the recorder daemon) and posts
-        // the "updated" notification — all without stealing the foreground. (We can't `am start` the
-        // internal warm-up service from the shell anyway: it isn't exported.)
+        // WRITE_SECURE_SETTINGS and `am start`s the launcher activity so CallVault reopens on the new
+        // version (showing the "updated" banner). `am start` from the shell bypasses the
+        // background-launch limits an app itself is subject to.
         val pkg = context.packageName
         val grant = "pm grant $pkg android.permission.WRITE_SECURE_SETTINGS"
-        val command = if (relaunchUi) {
-            "pm install -r -S $size && { $grant; am start -n $pkg/$pkg.MainActivity; }"
-        } else {
-            "pm install -r -S $size && $grant"
-        }
+        val command = "pm install -r -S $size && { $grant; am start -n $pkg/$pkg.MainActivity; }"
 
         // exec: (raw, no PTY) — REQUIRED for streaming the binary APK to stdin; shell: would corrupt
         // or prematurely close the stream (the "Stream closed mid-send" failure this fixes).

@@ -25,7 +25,6 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowForwardIos
 import androidx.compose.material.icons.automirrored.filled.CallMade
 import androidx.compose.material.icons.automirrored.filled.CallReceived
-import androidx.compose.material.icons.filled.Autorenew
 import androidx.compose.material.icons.filled.BugReport
 import androidx.compose.material.icons.filled.SystemUpdate
 import androidx.compose.material.icons.filled.Cloud
@@ -1047,8 +1046,8 @@ private fun AboutSection(
  * @param content  The slot for child rows rendered inside the [CvCard] when expanded.
  */
 /**
- * In-app updates: a daily release check (on by default) and opt-in silent auto-install.
- * With auto-update off, a new release surfaces as a notification + Home banner instead.
+ * In-app updates: a daily release check (on by default). A new release surfaces as a notification +
+ * Home banner, and installs only on an explicit tap.
  */
 @Composable
 private fun UpdatesSection(
@@ -1059,7 +1058,6 @@ private fun UpdatesSection(
     onToggle: () -> Unit
 ) {
     val isCheckEnabled = remember(updateTrigger) { preferences.isUpdateCheckEnabled() }
-    val isAutoUpdateEnabled = remember(updateTrigger) { preferences.isAutoUpdateEnabled() }
 
     SettingsSection(
         title = stringResource(R.string.settings_section_updates),
@@ -1072,14 +1070,6 @@ private fun UpdatesSection(
             checked = isCheckEnabled,
             onCheckedChange = { actions.setUpdateCheckEnabled(it) },
             description = stringResource(R.string.settings_update_check_description)
-        )
-        SettingsToggleRow(
-            icon = Icons.Filled.Autorenew,
-            label = stringResource(R.string.settings_auto_update_label),
-            checked = isAutoUpdateEnabled,
-            onCheckedChange = { actions.setAutoUpdateEnabled(it) },
-            description = stringResource(R.string.settings_auto_update_description),
-            enabled = isCheckEnabled
         )
     }
 }
@@ -1387,7 +1377,6 @@ private fun SettingsScreenPreview() {
             override fun setRetentionTimeHour(hour: Int) {}
             override fun setRetentionTimeMinute(minute: Int) {}
             override fun setUpdateCheckEnabled(enabled: Boolean) {}
-            override fun setAutoUpdateEnabled(enabled: Boolean) {}
         }
 
         SettingsContent(

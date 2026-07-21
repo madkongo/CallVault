@@ -224,6 +224,4 @@
     <string name="settings_section_updates">Aggiornamenti</string>
     <string name="settings_update_check_label">Cerca aggiornamenti</string>
     <string name="settings_update_check_description">Una volta al giorno, cerca una nuova versione su GitHub.</string>
-    <string name="settings_auto_update_label">Aggiorna automaticamente</string>
-    <string name="settings_auto_update_description">Scarica tramite Wi-Fi e installa le nuove versioni in modo silenzioso. Se disattivato, ricevi invece una notifica.</string>
 </resources>

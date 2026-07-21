@@ -224,6 +224,4 @@
     <string name="settings_section_updates">Cập nhật</string>
     <string name="settings_update_check_label">Kiểm tra bản cập nhật</string>
     <string name="settings_update_check_description">Mỗi ngày một lần, tìm phiên bản mới trên GitHub.</string>
-    <string name="settings_auto_update_label">Tự động cập nhật</string>
-    <string name="settings_auto_update_description">Tải qua Wi-Fi và cài đặt phiên bản mới trong im lặng. Khi tắt, bạn sẽ nhận được thông báo thay thế.</string>
 </resources>

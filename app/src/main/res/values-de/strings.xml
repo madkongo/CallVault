@@ -224,6 +224,4 @@
     <string name="settings_section_updates">Updates</string>
     <string name="settings_update_check_label">Nach Updates suchen</string>
     <string name="settings_update_check_description">Einmal täglich auf GitHub nach einer neuen Version suchen.</string>
-    <string name="settings_auto_update_label">Automatisch aktualisieren</string>
-    <string name="settings_auto_update_description">Lädt neue Versionen über WLAN und installiert sie im Hintergrund. Wenn deaktiviert, erhalten Sie stattdessen eine Benachrichtigung.</string>
 </resources>
