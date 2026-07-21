@@ -64,4 +64,16 @@ class GitHubReleasesTest {
         assertNull(GitHubReleases.parseLatestRelease("not json at all"))
         assertNull(GitHubReleases.parseLatestRelease("{}"))
     }
+
+    @Test
+    fun cleartext_http_download_url_is_rejected() {
+        val http = goodJson.replace("https://github.com", "http://github.com")
+        assertNull(GitHubReleases.parseLatestRelease(http))
+    }
+
+    @Test
+    fun missing_or_zero_asset_size_is_rejected() {
+        val zero = goodJson.replace("\"size\": 83061613", "\"size\": 0")
+        assertNull(GitHubReleases.parseLatestRelease(zero))
+    }
 }

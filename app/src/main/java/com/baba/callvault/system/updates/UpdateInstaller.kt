@@ -9,87 +9,118 @@
 package com.baba.callvault.system.updates
 
 import android.app.PendingIntent
-import android.content.ContentValues
 import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageInstaller
 import android.os.Build
-import android.os.Environment
-import android.provider.MediaStore
 import com.baba.callvault.integrations.adb.AdbShell
 import com.baba.callvault.utils.AppLogger
 import java.io.File
 
 /**
  * The two install paths of the in-app updater. Callers MUST run [ApkVerifier.isValidUpdate] on the
- * APK first — especially before [installSilentlyViaShell], which will happily `pm install` anything.
+ * APK first — especially before [installSilentlyViaShell], which will happily install anything.
  *
- * - [installSilentlyViaShell]: zero-tap. Stages the APK in the public Download folder (the shell
- *   uid cannot read app-private storage), then fires a DETACHED `pm install` over the embedded ADB
- *   shell — the same setsid technique as the daemon launch, so the install survives this very app
- *   being killed mid-replacement. Chains a WRITE_SECURE_SETTINGS re-grant after the install, healing
- *   the known grant-drop-on-update wart.
- * - [installViaPackageInstaller]: standard session install. Shows the system confirm dialog when
- *   required (always on the first in-app update; afterwards CallVault is the installer of record
- *   and Android 12+ applies it silently).
+ * - [installSilentlyViaShell]: zero-tap. STREAMS the verified APK bytes straight into `pm install -S`
+ *   over the embedded ADB shell — the exact bytes that were verified are the bytes installed, with no
+ *   world-readable intermediate file (closing the stage-then-install TOCTOU). Chains a
+ *   WRITE_SECURE_SETTINGS re-grant that the surviving shell process runs after the app is replaced,
+ *   healing the known grant-drop-on-update wart. Reads pm's own result so a rejected install is
+ *   reported promptly instead of masquerading as success.
+ * - [installViaPackageInstaller]: standard session install (fallback when the shell can't come up).
+ *   Shows the system confirm dialog when required.
  */
 object UpdateInstaller {
 
     private const val TAG = "CV:UpdateInstaller"
 
-    /** Public staging name; the detached shell removes it after installing. */
-    private const val STAGED_APK_NAME = "callvault-update.apk"
-    private const val STAGED_APK_PATH = "/sdcard/Download/$STAGED_APK_NAME"
-
     /** Broadcast action [UpdateInstallReceiver] listens on for PackageInstaller session status. */
     const val ACTION_INSTALL_STATUS = "com.baba.callvault.UPDATE_INSTALL_STATUS"
 
+    /** How long to wait for pm's "Success"/"Failure" line after streaming all bytes. */
+    private const val RESULT_READ_BUDGET_MS = 20_000L
+
+    /** Outcome of a shell install attempt. */
+    enum class ShellResult {
+        /** Install command accepted the bytes; final confirmation arrives via MY_PACKAGE_REPLACED. */
+        DISPATCHED,
+        /** pm rejected the install (bad signature, downgrade, storage, …) — reported promptly. */
+        FAILED,
+        /** The embedded ADB shell could not be brought up (e.g. Developer options off). */
+        UNAVAILABLE
+    }
+
     /**
-     * Fires a silent, detached shell install of [apkFile]. Blocking (ADB I/O) — call from a worker
-     * thread. Returns true when the install command was DELIVERED — the final outcome is reported
-     * asynchronously: success via MY_PACKAGE_REPLACED ([UpdatePackageReplacedReceiver]), failure by
-     * the pending-tag reconciliation on the next app start / worker run.
+     * Streams [apkFile] into `pm install -S` over the embedded ADB shell. Blocking (ADB I/O) — call
+     * from a worker thread. `pm install -r -S <size>` reads exactly the APK's bytes from stdin, so the
+     * verified file is installed directly with no intermediate copy. A trailing `&& pm grant …` is run
+     * by the (shell-uid, separate) shell process, which survives this app being replaced.
      */
-    fun installSilentlyViaShell(context: Context, apkFile: File): Boolean {
-        if (!stageApkInDownloads(context, apkFile)) return false
+    fun installSilentlyViaShell(context: Context, apkFile: File): ShellResult {
+        val size = apkFile.length()
+        if (size <= 0L) return ShellResult.FAILED
         if (!AdbShell.ensureConnected(context)) {
             AppLogger.w(TAG, "Silent install unavailable: embedded ADB shell did not connect")
-            cleanupStagedApk(context)
-            return false
+            return ShellResult.UNAVAILABLE
         }
-        // Detached: setsid + stdio to /dev/null + '&' so the install survives adbd/app teardown;
-        // trailing sleep keeps the launching shell alive long enough for the child to detach
-        // (mirrors RecorderServerLauncher's proven launch technique). The re-grant heals the
-        // WRITE_SECURE_SETTINGS drop that install-over causes on some OEMs.
+        // `-r` reinstall, `-S <size>` stream-from-stdin; the re-grant runs only on install success.
         val command =
-            "setsid sh -c 'pm install -r $STAGED_APK_PATH && " +
-                "pm grant ${context.packageName} android.permission.WRITE_SECURE_SETTINGS; " +
-                "rm -f $STAGED_APK_PATH' >/dev/null 2>&1 </dev/null & sleep 3"
-        return runCatching {
+            "pm install -r -S $size && " +
+                "pm grant ${context.packageName} android.permission.WRITE_SECURE_SETTINGS"
+
+        val wroteAllBytes = runCatching {
             AdbShell.openShell(context, command).use { shell ->
-                val deadline = System.currentTimeMillis() + SHELL_DRAIN_BUDGET_MS
-                shell.openInputStream().use { input ->
-                    val buffer = ByteArray(256)
-                    while (System.currentTimeMillis() < deadline) {
-                        if (input.read(buffer) < 0) break
-                    }
+                shell.openOutputStream().use { output ->
+                    apkFile.inputStream().use { it.copyTo(output) }
+                    output.flush()
+                }
+                // All bytes are sent; from here the install is committed. Read pm's verdict — but a
+                // read exception / EOF now means the app is being replaced (success), NOT a failure.
+                return readShellVerdict(shell)
+            }
+        }
+        // Only reached if openShell / openOutputStream / the byte copy threw — a genuine pre-commit
+        // failure (the return inside the block exits the function on the success path).
+        AppLogger.w(TAG, "Silent install failed before bytes were fully sent: ${wroteAllBytes.exceptionOrNull()?.message}")
+        return ShellResult.FAILED
+    }
+
+    /** After all bytes are streamed, classify pm's output. EOF/exception ⇒ replaced (DISPATCHED). */
+    private fun readShellVerdict(shell: io.github.muntashirakon.adb.AdbStream): ShellResult {
+        val output = StringBuilder()
+        runCatching {
+            shell.openInputStream().use { input ->
+                val deadline = System.currentTimeMillis() + RESULT_READ_BUDGET_MS
+                val buffer = ByteArray(256)
+                while (System.currentTimeMillis() < deadline) {
+                    val read = input.read(buffer)
+                    if (read < 0) break
+                    if (read > 0) output.append(String(buffer, 0, read))
+                    if (output.contains("Success") || output.contains("Failure")) break
                 }
             }
-            AppLogger.i(TAG, "Silent update install dispatched (detached shell)")
-            true
-        }.getOrElse { e ->
-            // "Stream closed" while draining is expected for a detached '&' launch — the command
-            // was already delivered when the stream opened; treat only pre-open failures as fatal.
-            AppLogger.d(TAG, "Silent install drain ended: ${e.message}")
-            true
+        }
+        val text = output.toString()
+        return when {
+            text.contains("Failure") -> {
+                AppLogger.e(TAG, "pm install rejected the update: ${text.trim()}")
+                ShellResult.FAILED
+            }
+            // "Success" seen, or the stream ended without a verdict because the app is being
+            // replaced — either way the install is under way; MY_PACKAGE_REPLACED confirms it.
+            else -> {
+                AppLogger.i(TAG, "Silent update install dispatched (streamed pm install)")
+                ShellResult.DISPATCHED
+            }
         }
     }
 
     /**
-     * Standard PackageInstaller session commit of [apkFile]. Status (including a possible system
-     * confirmation dialog) is delivered to [UpdateInstallReceiver] via [ACTION_INSTALL_STATUS].
-     * USER_ACTION_NOT_REQUIRED is requested so the install is silent whenever Android allows it
-     * (i.e. once CallVault is its own installer of record); otherwise the system prompts.
+     * Standard PackageInstaller session commit of the VERIFIED [apkFile] (streamed straight into the
+     * session — same bytes that were verified). Status is delivered to [UpdateInstallReceiver] via
+     * [ACTION_INSTALL_STATUS]; USER_ACTION_NOT_REQUIRED is requested so the install is silent when
+     * Android allows it, otherwise the system prompts.
+     * @return true when the session was committed (outcome arrives via the receiver).
      */
     fun installViaPackageInstaller(context: Context, apkFile: File): Boolean = runCatching {
         val installer = context.packageManager.packageInstaller
@@ -101,7 +132,7 @@ object UpdateInstaller {
         }
         val sessionId = installer.createSession(params)
         installer.openSession(sessionId).use { session ->
-            session.openWrite(STAGED_APK_NAME, 0, apkFile.length()).use { out ->
+            session.openWrite("callvault-update", 0, apkFile.length()).use { out ->
                 apkFile.inputStream().use { it.copyTo(out) }
                 session.fsync(out)
             }
@@ -118,41 +149,4 @@ object UpdateInstaller {
         AppLogger.e(TAG, "PackageInstaller session failed: ${e.message}", e)
         false
     }
-
-    /**
-     * Copies [apkFile] into the public Download folder so the shell uid can read it. Direct file
-     * I/O into the public directory is allowed here because the file is app-created (scoped
-     * storage permits an app to create files in Download via MediaStore); we insert through
-     * MediaStore so the entry is tracked and cleanable.
-     */
-    private fun stageApkInDownloads(context: Context, apkFile: File): Boolean = runCatching {
-        cleanupStagedApk(context)
-        val values = ContentValues().apply {
-            put(MediaStore.Downloads.DISPLAY_NAME, STAGED_APK_NAME)
-            put(MediaStore.Downloads.MIME_TYPE, "application/vnd.android.package-archive")
-            put(MediaStore.Downloads.RELATIVE_PATH, Environment.DIRECTORY_DOWNLOADS)
-        }
-        val uri = context.contentResolver.insert(MediaStore.Downloads.EXTERNAL_CONTENT_URI, values)
-            ?: return false
-        context.contentResolver.openOutputStream(uri)?.use { out ->
-            apkFile.inputStream().use { it.copyTo(out) }
-        } ?: return false
-        true
-    }.getOrElse { e ->
-        AppLogger.w(TAG, "Failed to stage update APK in Downloads: ${e.message}")
-        false
-    }
-
-    /** Removes any previously staged copy (ours, by display name) from the Download collection. */
-    fun cleanupStagedApk(context: Context) {
-        runCatching {
-            context.contentResolver.delete(
-                MediaStore.Downloads.EXTERNAL_CONTENT_URI,
-                "${MediaStore.Downloads.DISPLAY_NAME} = ?",
-                arrayOf(STAGED_APK_NAME)
-            )
-        }
-    }
-
-    private const val SHELL_DRAIN_BUDGET_MS = 4000L
 }

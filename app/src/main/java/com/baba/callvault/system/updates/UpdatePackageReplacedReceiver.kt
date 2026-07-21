@@ -35,7 +35,6 @@ class UpdatePackageReplacedReceiver : BroadcastReceiver() {
         preferences.setAvailableUpdateTag(null)
         preferences.setLastNotifiedUpdateTag(null)
         UpdateNotifications.cancelAvailable(context)
-        UpdateInstaller.cleanupStagedApk(context)
         UpdateManager.cleanupDownloadCache(context)
     }
 

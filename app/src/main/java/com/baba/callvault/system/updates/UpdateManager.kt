@@ -42,11 +42,14 @@ object UpdateManager {
 
     /**
      * Queries the latest release and updates local state. Blocking network I/O — worker thread only.
+     * @param reconcile when true, first reports any earlier install that never landed as a failure.
+     *                  The user-initiated (banner) path passes false: it is about to retry, so a
+     *                  stale failure from the previous attempt must not pop up mid-retry.
      * @return the newer release when one exists, else null.
      */
-    fun checkForUpdate(context: Context): GitHubReleases.ReleaseInfo? {
+    fun checkForUpdate(context: Context, reconcile: Boolean = true): GitHubReleases.ReleaseInfo? {
         val preferences = AppPreferences(context)
-        reconcilePendingState(context, preferences)
+        if (reconcile) reconcilePendingState(context, preferences)
 
         val release = GitHubReleases.fetchLatestRelease() ?: return null
         if (!UpdateVersion.isNewer(release.tag, BuildConfig.VERSION_NAME)) {
@@ -62,16 +65,25 @@ object UpdateManager {
 
     /**
      * Downloads, verifies, and installs [release]. Blocking — worker thread only.
-     * @param silent true = auto-update path (shell install, no user action); false = the user asked
-     *               for this install (PackageInstaller; the system may show its confirm dialog).
-     * @return true when an install was dispatched (outcome arrives via notifications).
+     *
+     * Both paths install through the privileged shell first (silent, no dialog — CallVault's
+     * advantage). [allowInteractiveFallback] governs what happens when the shell can't come up:
+     * the user-initiated (banner) path falls back to a PackageInstaller session (which may show the
+     * system confirm dialog); the unattended auto path instead degrades to the "update available"
+     * notification, since there is no user present to answer a dialog.
+     *
+     * @return true when an install was dispatched (final outcome arrives via notifications).
      */
-    fun downloadAndInstall(context: Context, release: GitHubReleases.ReleaseInfo, silent: Boolean): Boolean {
+    fun downloadAndInstall(
+        context: Context,
+        release: GitHubReleases.ReleaseInfo,
+        allowInteractiveFallback: Boolean
+    ): Boolean {
         val preferences = AppPreferences(context)
         val apk = downloadFile(context)
 
         if (!GitHubReleases.downloadApk(release, apk)) {
-            if (!silent) {
+            if (allowInteractiveFallback) {
                 UpdateNotifications.showUpdateFailure(
                     context, context.getString(R.string.update_notif_failure_download_text)
                 )
@@ -87,23 +99,27 @@ object UpdateManager {
         }
 
         preferences.setPendingUpdateTag(release.tag)
-        val dispatched = if (silent) {
-            UpdateInstaller.installSilentlyViaShell(context, apk)
-        } else {
-            UpdateInstaller.installViaPackageInstaller(context, apk)
-        }
-        if (!dispatched) {
-            preferences.setPendingUpdateTag(null)
-            if (silent) {
-                // Shell unavailable (e.g. Developer options off): degrade to the manual flow.
-                notifyAvailableOnce(context, preferences, release.tag)
-            } else {
+        return when (UpdateInstaller.installSilentlyViaShell(context, apk)) {
+            UpdateInstaller.ShellResult.DISPATCHED -> true
+            UpdateInstaller.ShellResult.FAILED -> {
+                preferences.setPendingUpdateTag(null)
                 UpdateNotifications.showUpdateFailure(
                     context, context.getString(R.string.update_notif_failure_install_text)
                 )
+                false
+            }
+            UpdateInstaller.ShellResult.UNAVAILABLE -> {
+                if (allowInteractiveFallback && UpdateInstaller.installViaPackageInstaller(context, apk)) {
+                    true
+                } else {
+                    preferences.setPendingUpdateTag(null)
+                    // No shell and no interactive path: leave the "update available" notification so
+                    // the user can still install manually.
+                    notifyAvailableOnce(context, preferences, release.tag)
+                    false
+                }
             }
         }
-        return dispatched
     }
 
     /** Posts the "update available" notification at most once per tag. */
