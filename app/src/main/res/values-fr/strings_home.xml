@@ -15,4 +15,5 @@
     <string name="home_update_banner_button">Mettre à jour</string>
     <string name="home_update_banner_downloading">Téléchargement… %1$d%%</string>
     <string name="home_update_banner_installing">Installation…</string>
+    <string name="home_updated_banner_text">CallVault a été mis à jour vers %1$s</string>
 </resources>

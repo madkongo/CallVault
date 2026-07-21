@@ -116,7 +116,9 @@ class HomeViewModel(application: Application) : AndroidViewModel(application) {
         /** True while the banner's Update action is downloading/dispatching the install. */
         val isUpdateInstalling: Boolean = false,
         /** Download percentage (0-100) while installing, or -1 before the download reports. */
-        val updateProgressPercent: Int = -1
+        val updateProgressPercent: Int = -1,
+        /** Version name to show a dismissable "updated successfully" banner for, or null. */
+        val updatedToVersion: String? = null
     ) {
         /**
          * The distinct contact keys present in [recordings], sorted A→Z case-insensitively. Each
@@ -191,9 +193,32 @@ class HomeViewModel(application: Application) : AndroidViewModel(application) {
         }
 
     init {
+        detectJustUpdated()
         refresh()
         observeInstallWork()
         preferences.registerChangeListener(prefsListener)
+    }
+
+    /**
+     * Detects that an update just landed by comparing the running [BuildConfig.VERSION_CODE] against
+     * the versionCode seen on the previous launch. On a version bump (not a fresh install), records
+     * the new version name so the Home screen shows a dismissable "updated successfully" banner. This
+     * catches ALL updates — via CallVault's own updater or a manual sideload — not just ones that
+     * fire [android.content.Intent.ACTION_MY_PACKAGE_REPLACED].
+     */
+    private fun detectJustUpdated() {
+        val current = com.baba.callvault.BuildConfig.VERSION_CODE
+        val lastSeen = preferences.getLastSeenVersionCode()
+        if (lastSeen != 0 && current > lastSeen) {
+            preferences.setUpdateSuccessBannerVersion(com.baba.callvault.BuildConfig.VERSION_NAME)
+        }
+        if (lastSeen != current) preferences.setLastSeenVersionCode(current)
+    }
+
+    /** Dismisses the "updated successfully" banner (clears its persisted state). */
+    fun dismissUpdatedBanner() {
+        preferences.setUpdateSuccessBannerVersion(null)
+        _uiState.update { it.copy(updatedToVersion = null) }
     }
 
     /**
@@ -205,7 +230,8 @@ class HomeViewModel(application: Application) : AndroidViewModel(application) {
             it.copy(
                 status = computeStatus(),
                 isLoading = true,
-                availableUpdateTag = preferences.getAvailableUpdateTag()
+                availableUpdateTag = preferences.getAvailableUpdateTag(),
+                updatedToVersion = preferences.getUpdateSuccessBannerVersion()
             )
         }
         viewModelScope.launch {

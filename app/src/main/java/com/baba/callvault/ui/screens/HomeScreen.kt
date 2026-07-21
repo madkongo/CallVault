@@ -38,6 +38,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.CallMade
 import androidx.compose.material.icons.automirrored.filled.CallReceived
 import androidx.compose.material.icons.filled.CheckCircle
+import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Cloud
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.GraphicEq
@@ -167,6 +168,15 @@ fun HomeScreen(
         ) {
             item { HeroStatusCard(status = uiState.status) }
 
+            uiState.updatedToVersion?.let { version ->
+                item {
+                    UpdatedBannerCard(
+                        version = version,
+                        onDismiss = { viewModel.dismissUpdatedBanner() }
+                    )
+                }
+            }
+
             uiState.availableUpdateTag?.let { tag ->
                 item {
                     UpdateBannerCard(
@@ -233,6 +243,41 @@ fun HomeScreen(
                         onDeleteUri = { uri -> viewModel.deleteUri(uri) }
                     )
                 }
+            }
+        }
+    }
+}
+
+/**
+ * Dismissable confirmation shown once after an update lands ("CallVault updated to X.Y.Z"). Uses a
+ * success (primary) tint with a check, and a close button that clears it for good.
+ */
+@Composable
+private fun UpdatedBannerCard(version: String, onDismiss: () -> Unit) {
+    val accent = MaterialTheme.colorScheme.primary
+    val tinted = accent.copy(alpha = 0.10f).compositeOver(MaterialTheme.colorScheme.surface)
+    CvCard(color = tinted, contentPadding = PaddingValues(horizontal = 16.dp, vertical = 10.dp)) {
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            Icon(
+                imageVector = Icons.Filled.CheckCircle,
+                contentDescription = null,
+                tint = accent,
+                modifier = Modifier.size(22.dp)
+            )
+            Spacer(Modifier.width(12.dp))
+            Text(
+                text = stringResource(R.string.home_updated_banner_text, version),
+                style = MaterialTheme.typography.bodyMedium,
+                fontWeight = FontWeight.Medium,
+                color = MaterialTheme.colorScheme.onSurface,
+                modifier = Modifier.weight(1f)
+            )
+            IconButton(onClick = onDismiss) {
+                Icon(
+                    imageVector = Icons.Filled.Close,
+                    contentDescription = stringResource(R.string.general_close),
+                    tint = MaterialTheme.colorScheme.onSurfaceVariant
+                )
             }
         }
     }
