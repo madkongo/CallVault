@@ -73,8 +73,12 @@ object RecordingFileNameFormatter {
 
         if (template.contains(FileNamePlaceholder.CONTACT_NAME.tag) && phoneStr.isNotEmpty()) {
             // Voicemail is not a real contact — PhoneLookup misses it, so fall back to its label.
+            // For numbers with no saved contact at all, fall back to the number itself so the
+            // filename still identifies the call — unless the template already carries the number
+            // via {phone_number}, in which case duplicating it would just add noise.
             contactStr = getContactName(context, phoneStr)
                 ?: VoicemailLabel.labelOrNull(context, phoneStr)
+                ?: phoneStr.takeUnless { template.contains(FileNamePlaceholder.PHONE_NUMBER.tag) }
                 ?: ""
         }
 
