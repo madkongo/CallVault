@@ -233,6 +233,9 @@ class HomeViewModel(application: Application) : AndroidViewModel(application) {
      */
     fun installAvailableUpdate() {
         if (_uiState.value.isUpdateInstalling) return
+        // Arm the one-shot consent flag so the worker runs for THIS tap only; an interrupted re-run
+        // won't silently reinstall (it no-ops and the banner reappears for a fresh tap).
+        preferences.setUpdateInstallArmed(true)
         UpdateScheduler.enqueueInstallNow(appContext)
     }
 
