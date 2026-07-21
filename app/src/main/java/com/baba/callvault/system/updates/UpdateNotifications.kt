@@ -30,6 +30,7 @@ object UpdateNotifications {
     // 47xx block, following CallMonitorService (4714) and RecorderReadinessNotifier (4715).
     private const val AVAILABLE_NOTIFICATION_ID = 4716
     private const val RESULT_NOTIFICATION_ID = 4717
+    private const val PROGRESS_NOTIFICATION_ID = 4718
 
     /** "vX.Y.Z is available" — tapping opens the app, where the Home banner offers Update. */
     fun showUpdateAvailable(context: Context, tag: String) {
@@ -46,9 +47,54 @@ object UpdateNotifications {
         )
     }
 
+    /**
+     * Ongoing "Downloading update… N%" notification — the only feedback the user has once the app's
+     * own UI is torn down by the install, so it's posted for BOTH the auto and manual paths.
+     */
+    fun showDownloadProgress(context: Context, percent: Int) {
+        if (!PermissionChecks.hasNotificationPermission(context)) return
+        createChannel(context)
+        val notification = NotificationCompat.Builder(context, CHANNEL_ID)
+            .setSmallIcon(R.drawable.ic_mic)
+            .setContentTitle(context.getString(R.string.update_notif_downloading_title))
+            .setContentText("$percent%")
+            .setProgress(100, percent.coerceIn(0, 100), false)
+            .setOngoing(true)
+            .setOnlyAlertOnce(true)
+            .build()
+        runCatching {
+            context.getSystemService(NotificationManager::class.java)
+                .notify(PROGRESS_NOTIFICATION_ID, notification)
+        }
+    }
+
+    /** Ongoing indeterminate "Installing update…" notification (download done, pm install running). */
+    fun showInstalling(context: Context) {
+        if (!PermissionChecks.hasNotificationPermission(context)) return
+        createChannel(context)
+        val notification = NotificationCompat.Builder(context, CHANNEL_ID)
+            .setSmallIcon(R.drawable.ic_mic)
+            .setContentTitle(context.getString(R.string.update_notif_installing_title))
+            .setProgress(0, 0, true)
+            .setOngoing(true)
+            .setOnlyAlertOnce(true)
+            .build()
+        runCatching {
+            context.getSystemService(NotificationManager::class.java)
+                .notify(PROGRESS_NOTIFICATION_ID, notification)
+        }
+    }
+
+    fun cancelProgress(context: Context) {
+        runCatching {
+            context.getSystemService(NotificationManager::class.java).cancel(PROGRESS_NOTIFICATION_ID)
+        }
+    }
+
     /** Install confirmed (fires from MY_PACKAGE_REPLACED after a successful update). */
     fun showUpdateSuccess(context: Context, versionName: String) {
         cancelAvailable(context)
+        cancelProgress(context)
         post(
             context, RESULT_NOTIFICATION_ID,
             title = context.getString(R.string.update_notif_success_title),
@@ -58,6 +104,7 @@ object UpdateNotifications {
 
     /** Install failed — offers the GitHub releases page as a manual way out. */
     fun showUpdateFailure(context: Context, reason: String) {
+        cancelProgress(context)
         val openReleases = PendingIntent.getActivity(
             context, 1,
             Intent(Intent.ACTION_VIEW, Uri.parse(GitHubReleases.RELEASES_PAGE_URL))

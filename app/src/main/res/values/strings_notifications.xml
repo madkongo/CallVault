@@ -36,4 +36,6 @@
     <string name="update_notif_failure_download_text">The update could not be downloaded. Tap to get it from GitHub.</string>
     <string name="update_notif_failure_verify_text">The downloaded update failed the security check and was discarded. Tap to get it from GitHub.</string>
     <string name="update_notif_failure_install_text">The update could not be installed. Tap to get it from GitHub.</string>
+    <string name="update_notif_downloading_title">Downloading update…</string>
+    <string name="update_notif_installing_title">Installing update…</string>
 </resources>

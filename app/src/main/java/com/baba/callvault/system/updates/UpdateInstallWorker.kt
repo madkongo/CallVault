@@ -11,6 +11,7 @@ package com.baba.callvault.system.updates
 import android.content.Context
 import androidx.work.CoroutineWorker
 import androidx.work.WorkerParameters
+import androidx.work.workDataOf
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 
@@ -28,7 +29,15 @@ class UpdateInstallWorker(context: Context, params: WorkerParameters) : Coroutin
     override suspend fun doWork(): Result = withContext(Dispatchers.IO) {
         val release = UpdateManager.checkForUpdate(applicationContext, reconcile = false)
             ?: return@withContext Result.success()
-        UpdateManager.downloadAndInstall(applicationContext, release, allowInteractiveFallback = true)
+        UpdateManager.downloadAndInstall(applicationContext, release, allowInteractiveFallback = true) { percent ->
+            // Publish to WorkManager so the Home banner can show the download percentage.
+            setProgressAsync(workDataOf(KEY_PROGRESS to percent))
+        }
         Result.success()
+    }
+
+    companion object {
+        /** WorkManager progress key: download percentage (0-100). */
+        const val KEY_PROGRESS = "progress_percent"
     }
 }

@@ -77,12 +77,19 @@ object UpdateManager {
     fun downloadAndInstall(
         context: Context,
         release: GitHubReleases.ReleaseInfo,
-        allowInteractiveFallback: Boolean
+        allowInteractiveFallback: Boolean,
+        onProgress: (Int) -> Unit = {}
     ): Boolean {
         val preferences = AppPreferences(context)
         val apk = downloadFile(context)
 
-        if (!GitHubReleases.downloadApk(release, apk)) {
+        // Ongoing progress notification (feedback survives the app's UI being torn down by install).
+        val downloaded = GitHubReleases.downloadApk(release, apk) { percent ->
+            UpdateNotifications.showDownloadProgress(context, percent)
+            onProgress(percent)
+        }
+        if (!downloaded) {
+            UpdateNotifications.cancelProgress(context)
             if (allowInteractiveFallback) {
                 UpdateNotifications.showUpdateFailure(
                     context, context.getString(R.string.update_notif_failure_download_text)
@@ -98,6 +105,7 @@ object UpdateManager {
             return false
         }
 
+        UpdateNotifications.showInstalling(context)
         preferences.setPendingUpdateTag(release.tag)
         return when (UpdateInstaller.installSilentlyViaShell(context, apk)) {
             UpdateInstaller.ShellResult.DISPATCHED -> true
