@@ -50,13 +50,37 @@ class RecordingFileNameFormatterVoicemailTest {
     }
 
     @Test
-    fun contact_name_placeholder_stays_empty_for_regular_unsaved_number() {
+    fun contact_name_placeholder_falls_back_to_number_for_unsaved_number() {
+        // No saved contact and not voicemail: the filename must still identify the call.
         val metadata = RecordingMetadata(rawPhoneNumber = "0612345678", direction = RecordingDirection.OUTGOING)
 
         val fileName = RecordingFileNameFormatter.formatFileName(
             context, metadata, ScrcpyAudioCodec.OPUS, customFormat = "{contact_name}"
         )
 
-        assertEquals(".ogg", fileName)
+        assertEquals("0612345678.ogg", fileName)
+    }
+
+    @Test
+    fun number_fallback_is_skipped_when_template_already_has_the_number() {
+        // {phone_number} already carries the number — an unsaved contact must not duplicate it.
+        val metadata = RecordingMetadata(rawPhoneNumber = "0612345678", direction = RecordingDirection.OUTGOING)
+
+        val fileName = RecordingFileNameFormatter.formatFileName(
+            context, metadata, ScrcpyAudioCodec.OPUS, customFormat = "{phone_number}_{contact_name}"
+        )
+
+        assertEquals("0612345678_.ogg", fileName)
+    }
+
+    @Test
+    fun voicemail_label_still_wins_over_number_fallback() {
+        val metadata = RecordingMetadata(rawPhoneNumber = "123", direction = RecordingDirection.OUTGOING)
+
+        val fileName = RecordingFileNameFormatter.formatFileName(
+            context, metadata, ScrcpyAudioCodec.OPUS, customFormat = "{contact_name}"
+        )
+
+        assertEquals("Voicemail.ogg", fileName)
     }
 }
