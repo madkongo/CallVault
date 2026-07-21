@@ -34,4 +34,6 @@
     <string name="update_notif_failure_download_text">Не удалось загрузить обновление. Нажмите, чтобы скачать его с GitHub.</string>
     <string name="update_notif_failure_verify_text">Загруженное обновление не прошло проверку безопасности и было удалено. Нажмите, чтобы скачать его с GitHub.</string>
     <string name="update_notif_failure_install_text">Не удалось установить обновление. Нажмите, чтобы скачать его с GitHub.</string>
+    <string name="update_notif_downloading_title">Загрузка обновления…</string>
+    <string name="update_notif_installing_title">Установка обновления…</string>
 </resources>

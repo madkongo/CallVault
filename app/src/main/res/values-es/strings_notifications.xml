@@ -34,4 +34,6 @@
     <string name="update_notif_failure_download_text">No se pudo descargar la actualización. Toca para obtenerla desde GitHub.</string>
     <string name="update_notif_failure_verify_text">La actualización descargada no superó la comprobación de seguridad y se descartó. Toca para obtenerla desde GitHub.</string>
     <string name="update_notif_failure_install_text">No se pudo instalar la actualización. Toca para obtenerla desde GitHub.</string>
+    <string name="update_notif_downloading_title">Descargando actualización…</string>
+    <string name="update_notif_installing_title">Instalando actualización…</string>
 </resources>

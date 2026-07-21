@@ -23,4 +23,6 @@
     <string name="home_update_banner_title">Update available: %1$s</string>
     <string name="home_update_banner_text">A new version is ready to download from GitHub.</string>
     <string name="home_update_banner_button">Update</string>
+    <string name="home_update_banner_downloading">Downloading… %1$d%%</string>
+    <string name="home_update_banner_installing">Installing…</string>
 </resources>

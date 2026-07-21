@@ -13,4 +13,6 @@
     <string name="home_update_banner_title">Frissítés érhető el: %1$s</string>
     <string name="home_update_banner_text">Új verzió tölthető le a GitHubról.</string>
     <string name="home_update_banner_button">Frissítés</string>
+    <string name="home_update_banner_downloading">Letöltés… %1$d%%</string>
+    <string name="home_update_banner_installing">Telepítés…</string>
 </resources>

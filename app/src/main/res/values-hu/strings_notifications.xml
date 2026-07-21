@@ -34,4 +34,6 @@
     <string name="update_notif_failure_download_text">A frissítést nem sikerült letölteni. Koppintson a GitHubról való letöltéshez.</string>
     <string name="update_notif_failure_verify_text">A letöltött frissítés nem ment át a biztonsági ellenőrzésen, ezért törölve lett. Koppintson a GitHubról való letöltéshez.</string>
     <string name="update_notif_failure_install_text">A frissítést nem sikerült telepíteni. Koppintson a GitHubról való letöltéshez.</string>
+    <string name="update_notif_downloading_title">Frissítés letöltése…</string>
+    <string name="update_notif_installing_title">Frissítés telepítése…</string>
 </resources>

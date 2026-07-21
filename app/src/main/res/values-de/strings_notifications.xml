@@ -34,4 +34,6 @@
     <string name="update_notif_failure_download_text">Das Update konnte nicht heruntergeladen werden. Tippen Sie, um es von GitHub zu holen.</string>
     <string name="update_notif_failure_verify_text">Das heruntergeladene Update hat die Sicherheitsprüfung nicht bestanden und wurde verworfen. Tippen Sie, um es von GitHub zu holen.</string>
     <string name="update_notif_failure_install_text">Das Update konnte nicht installiert werden. Tippen Sie, um es von GitHub zu holen.</string>
+    <string name="update_notif_downloading_title">Update wird heruntergeladen…</string>
+    <string name="update_notif_installing_title">Update wird installiert…</string>
 </resources>

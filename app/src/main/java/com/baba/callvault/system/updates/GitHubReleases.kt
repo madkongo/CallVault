@@ -94,9 +94,12 @@ object GitHubReleases {
     /**
      * Downloads [release]'s APK to [destination] (replacing any previous file). Blocking; call
      * from a worker thread. The advertised size is verified when the release reports one.
+     * @param onProgress invoked with the download percentage (0-100) as bytes arrive; percentages
+     *                   are reported against [ReleaseInfo.apkSizeBytes], throttled to whole-percent
+     *                   changes so callers can drive a notification/UI cheaply.
      * @return true when the file was fully written (and size-checked).
      */
-    fun downloadApk(release: ReleaseInfo, destination: File): Boolean = runCatching {
+    fun downloadApk(release: ReleaseInfo, destination: File, onProgress: (Int) -> Unit = {}): Boolean = runCatching {
         destination.parentFile?.mkdirs()
         if (destination.exists()) destination.delete()
         val connection = (URL(release.apkUrl).openConnection() as HttpURLConnection).apply {
@@ -109,8 +112,27 @@ object GitHubReleases {
                 AppLogger.w(TAG, "APK download failed: HTTP ${connection.responseCode}")
                 return false
             }
+            val total = release.apkSizeBytes
+            var written = 0L
+            var lastPercent = -1
+            onProgress(0)
             connection.inputStream.use { input ->
-                destination.outputStream().use { output -> input.copyTo(output) }
+                destination.outputStream().use { output ->
+                    val buffer = ByteArray(64 * 1024)
+                    while (true) {
+                        val read = input.read(buffer)
+                        if (read < 0) break
+                        output.write(buffer, 0, read)
+                        written += read
+                        if (total > 0L) {
+                            val percent = ((written * 100) / total).toInt().coerceIn(0, 100)
+                            if (percent != lastPercent) {
+                                lastPercent = percent
+                                onProgress(percent)
+                            }
+                        }
+                    }
+                }
             }
         } finally {
             connection.disconnect()

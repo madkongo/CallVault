@@ -34,4 +34,6 @@
     <string name="update_notif_failure_download_text">Nie udało się pobrać aktualizacji. Dotknij, aby pobrać ją z GitHuba.</string>
     <string name="update_notif_failure_verify_text">Pobrana aktualizacja nie przeszła kontroli bezpieczeństwa i została odrzucona. Dotknij, aby pobrać ją z GitHuba.</string>
     <string name="update_notif_failure_install_text">Nie udało się zainstalować aktualizacji. Dotknij, aby pobrać ją z GitHuba.</string>
+    <string name="update_notif_downloading_title">Pobieranie aktualizacji…</string>
+    <string name="update_notif_installing_title">Instalowanie aktualizacji…</string>
 </resources>

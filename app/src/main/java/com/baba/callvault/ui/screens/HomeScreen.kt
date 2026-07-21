@@ -52,6 +52,7 @@ import androidx.compose.material.icons.filled.Tune
 import androidx.compose.material.icons.filled.WarningAmber
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -171,6 +172,7 @@ fun HomeScreen(
                     UpdateBannerCard(
                         tag = tag,
                         isInstalling = uiState.isUpdateInstalling,
+                        progressPercent = uiState.updateProgressPercent,
                         onUpdate = { viewModel.installAvailableUpdate() }
                     )
                 }
@@ -243,9 +245,22 @@ fun HomeScreen(
  * silent path couldn't run (e.g. metered network or the shell being unavailable).
  */
 @Composable
-private fun UpdateBannerCard(tag: String, isInstalling: Boolean, onUpdate: () -> Unit) {
+private fun UpdateBannerCard(
+    tag: String,
+    isInstalling: Boolean,
+    progressPercent: Int,
+    onUpdate: () -> Unit
+) {
     val accent = MaterialTheme.colorScheme.primary
     val tinted = accent.copy(alpha = 0.08f).compositeOver(MaterialTheme.colorScheme.surface)
+    // While installing: a subtitle tracks the phase (downloading N% → installing), and the trailing
+    // action becomes a spinner. Downloading shows a determinate bar; the post-download install phase
+    // (percent < 0) shows an indeterminate bar because pm install has no measurable progress.
+    val subtitle = when {
+        !isInstalling -> stringResource(R.string.home_update_banner_text)
+        progressPercent in 0..99 -> stringResource(R.string.home_update_banner_downloading, progressPercent)
+        else -> stringResource(R.string.home_update_banner_installing)
+    }
     CvCard(color = tinted, contentPadding = PaddingValues(horizontal = 16.dp, vertical = 10.dp)) {
         Row(verticalAlignment = Alignment.CenterVertically) {
             Icon(
@@ -263,10 +278,21 @@ private fun UpdateBannerCard(tag: String, isInstalling: Boolean, onUpdate: () ->
                     color = MaterialTheme.colorScheme.onSurface
                 )
                 Text(
-                    text = stringResource(R.string.home_update_banner_text),
+                    text = subtitle,
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
+                if (isInstalling) {
+                    Spacer(Modifier.height(6.dp))
+                    if (progressPercent in 0..99) {
+                        LinearProgressIndicator(
+                            progress = { progressPercent / 100f },
+                            modifier = Modifier.fillMaxWidth()
+                        )
+                    } else {
+                        LinearProgressIndicator(modifier = Modifier.fillMaxWidth())
+                    }
+                }
             }
             Spacer(Modifier.width(8.dp))
             if (isInstalling) {

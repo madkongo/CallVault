@@ -34,4 +34,6 @@
     <string name="update_notif_failure_download_text">La mise à jour n\'a pas pu être téléchargée. Appuyez pour l\'obtenir depuis GitHub.</string>
     <string name="update_notif_failure_verify_text">La mise à jour téléchargée a échoué au contrôle de sécurité et a été supprimée. Appuyez pour l\'obtenir depuis GitHub.</string>
     <string name="update_notif_failure_install_text">La mise à jour n\'a pas pu être installée. Appuyez pour l\'obtenir depuis GitHub.</string>
+    <string name="update_notif_downloading_title">Téléchargement de la mise à jour…</string>
+    <string name="update_notif_installing_title">Installation de la mise à jour…</string>
 </resources>

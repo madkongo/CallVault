@@ -34,4 +34,6 @@
     <string name="update_notif_failure_download_text">Không thể tải bản cập nhật. Nhấn để tải từ GitHub.</string>
     <string name="update_notif_failure_verify_text">Bản cập nhật đã tải không vượt qua kiểm tra bảo mật và đã bị loại bỏ. Nhấn để tải từ GitHub.</string>
     <string name="update_notif_failure_install_text">Không thể cài đặt bản cập nhật. Nhấn để tải từ GitHub.</string>
+    <string name="update_notif_downloading_title">Đang tải bản cập nhật…</string>
+    <string name="update_notif_installing_title">Đang cài đặt bản cập nhật…</string>
 </resources>

@@ -34,4 +34,6 @@
     <string name="update_notif_failure_download_text">Impossibile scaricare l\'aggiornamento. Tocca per scaricarlo da GitHub.</string>
     <string name="update_notif_failure_verify_text">L\'aggiornamento scaricato non ha superato il controllo di sicurezza ed è stato eliminato. Tocca per scaricarlo da GitHub.</string>
     <string name="update_notif_failure_install_text">Impossibile installare l\'aggiornamento. Tocca per scaricarlo da GitHub.</string>
+    <string name="update_notif_downloading_title">Download dell\'aggiornamento…</string>
+    <string name="update_notif_installing_title">Installazione dell\'aggiornamento…</string>
 </resources>

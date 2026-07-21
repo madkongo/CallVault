@@ -13,4 +13,6 @@
     <string name="home_update_banner_title">Có bản cập nhật: %1$s</string>
     <string name="home_update_banner_text">Phiên bản mới đã sẵn sàng tải xuống từ GitHub.</string>
     <string name="home_update_banner_button">Cập nhật</string>
+    <string name="home_update_banner_downloading">Đang tải… %1$d%%</string>
+    <string name="home_update_banner_installing">Đang cài đặt…</string>
 </resources>

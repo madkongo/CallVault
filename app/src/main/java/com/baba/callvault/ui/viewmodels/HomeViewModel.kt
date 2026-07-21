@@ -20,6 +20,7 @@ import com.baba.callvault.data.recordings.RecordingsRepository
 import com.baba.callvault.data.recordings.RecordingsRepository.RecordingItem
 import com.baba.callvault.data.recordings.RecordingsRepository.RecordingSource
 import com.baba.callvault.integrations.adb.DeveloperOptions
+import com.baba.callvault.system.updates.UpdateInstallWorker
 import com.baba.callvault.system.updates.UpdateScheduler
 import androidx.work.WorkManager
 import kotlinx.coroutines.Dispatchers
@@ -113,7 +114,9 @@ class HomeViewModel(application: Application) : AndroidViewModel(application) {
         /** Release tag of a known-newer version (drives the update banner), or null. */
         val availableUpdateTag: String? = null,
         /** True while the banner's Update action is downloading/dispatching the install. */
-        val isUpdateInstalling: Boolean = false
+        val isUpdateInstalling: Boolean = false,
+        /** Download percentage (0-100) while installing, or -1 before the download reports. */
+        val updateProgressPercent: Int = -1
     ) {
         /**
          * The distinct contact keys present in [recordings], sorted A→Z case-insensitively. Each
@@ -226,10 +229,12 @@ class HomeViewModel(application: Application) : AndroidViewModel(application) {
             WorkManager.getInstance(appContext)
                 .getWorkInfosForUniqueWorkFlow(UpdateScheduler.INSTALL_WORK_NAME)
                 .collect { infos ->
-                    val active = infos.any { info -> !info.state.isFinished }
+                    val running = infos.firstOrNull { info -> !info.state.isFinished }
+                    val percent = running?.progress?.getInt(UpdateInstallWorker.KEY_PROGRESS, -1) ?: -1
                     _uiState.update {
                         it.copy(
-                            isUpdateInstalling = active,
+                            isUpdateInstalling = running != null,
+                            updateProgressPercent = percent,
                             availableUpdateTag = preferences.getAvailableUpdateTag()
                         )
                     }
