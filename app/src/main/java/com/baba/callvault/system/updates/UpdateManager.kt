@@ -30,11 +30,25 @@ object UpdateManager {
 
     private const val TAG = "CV:UpdateManager"
     private const val DOWNLOAD_DIR = "updates"
-    private const val DOWNLOAD_NAME = "CallVault-update.apk"
 
-    /** Where the downloaded (not yet verified) APK lands, inside app-private cache. */
-    fun downloadFile(context: Context): File =
-        File(File(context.cacheDir, DOWNLOAD_DIR), DOWNLOAD_NAME)
+    /**
+     * Per-release download file inside app-private cache. The tag is in the name so a resumable
+     * partial is always matched to its own release — a partial can never be resumed against a
+     * different version's bytes. [pruneStalePartials] removes other releases' leftovers.
+     */
+    private fun downloadFile(context: Context, tag: String): File {
+        val safeTag = tag.replace(Regex("[^A-Za-z0-9._-]"), "_")
+        return File(File(context.cacheDir, DOWNLOAD_DIR), "CallVault-$safeTag.apk")
+    }
+
+    /** Deletes any partial/complete downloads in the cache other than [keep]. */
+    private fun pruneStalePartials(context: Context, keep: File) {
+        runCatching {
+            File(context.cacheDir, DOWNLOAD_DIR).listFiles()?.forEach { file ->
+                if (file != keep) file.delete()
+            }
+        }
+    }
 
     fun cleanupDownloadCache(context: Context) {
         runCatching { File(context.cacheDir, DOWNLOAD_DIR).deleteRecursively() }
@@ -81,7 +95,9 @@ object UpdateManager {
         onProgress: (Int) -> Unit = {}
     ): Boolean {
         val preferences = AppPreferences(context)
-        val apk = downloadFile(context)
+        val apk = downloadFile(context, release.tag)
+        // A resumable partial persists across attempts, but only for THIS release — clear others.
+        pruneStalePartials(context, keep = apk)
 
         // Ongoing progress notification (feedback survives the app's UI being torn down by install).
         val downloaded = GitHubReleases.downloadApk(release, apk) { percent ->

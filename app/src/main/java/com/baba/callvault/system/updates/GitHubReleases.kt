@@ -31,6 +31,11 @@ object GitHubReleases {
     private const val CONNECT_TIMEOUT_MS = 15_000
     private const val READ_TIMEOUT_MS = 30_000
 
+    /** Download attempts before giving up. Each attempt RESUMES from the bytes already on disk. */
+    private const val MAX_DOWNLOAD_ATTEMPTS = 6
+    /** Backoff before a resume attempt, so a flapping connection isn't hammered. */
+    private const val RETRY_DELAY_MS = 2_000L
+
     /**
      * @param tag          The release tag, e.g. "v1.2.4".
      * @param apkUrl       Direct download URL of the [APK_ASSET_NAME] asset.
@@ -92,32 +97,78 @@ object GitHubReleases {
     }
 
     /**
-     * Downloads [release]'s APK to [destination] (replacing any previous file). Blocking; call
-     * from a worker thread. The advertised size is verified when the release reports one.
-     * @param onProgress invoked with the download percentage (0-100) as bytes arrive; percentages
-     *                   are reported against [ReleaseInfo.apkSizeBytes], throttled to whole-percent
-     *                   changes so callers can drive a notification/UI cheaply.
+     * Downloads [release]'s APK to [destination]. Blocking; call from a worker thread.
+     *
+     * RESUMABLE + retried: a large APK over a flaky mobile network commonly stalls or drops. Instead
+     * of restarting the whole ~80 MB transfer, each of up to [MAX_DOWNLOAD_ATTEMPTS] attempts RESUMES
+     * from the bytes already on disk via an HTTP `Range` request, so partial progress is never lost
+     * (across a stall, a dropped connection, or even a worker rerun — the partial file persists).
+     * A pre-existing file larger than the target, or a server that ignores `Range` (200 instead of
+     * 206), triggers a clean restart. Verified against the advertised size on completion.
+     *
+     * @param onProgress invoked with the download percentage (0-100), throttled to whole-percent
+     *                   changes; resumes report against bytes-already-on-disk so the bar never resets.
      * @return true when the file was fully written (and size-checked).
      */
-    fun downloadApk(release: ReleaseInfo, destination: File, onProgress: (Int) -> Unit = {}): Boolean = runCatching {
+    fun downloadApk(release: ReleaseInfo, destination: File, onProgress: (Int) -> Unit = {}): Boolean {
+        val total = release.apkSizeBytes
         destination.parentFile?.mkdirs()
-        if (destination.exists()) destination.delete()
+        // A stale partial larger than the target can't be resumed correctly — start clean.
+        if (destination.exists() && destination.length() > total) {
+            runCatching { destination.delete() }
+        }
+
+        repeat(MAX_DOWNLOAD_ATTEMPTS) { attempt ->
+            val alreadyHave = if (destination.exists()) destination.length() else 0L
+            if (alreadyHave == total) {
+                onProgress(100)
+                return true
+            }
+            val ok = runCatching { downloadAttempt(release, destination, alreadyHave, total, onProgress) }
+                .getOrElse { e ->
+                    AppLogger.w(TAG, "Download attempt ${attempt + 1}/$MAX_DOWNLOAD_ATTEMPTS failed: ${e.message}")
+                    false
+                }
+            if (ok && destination.length() == total) return true
+            // Keep the partial file for the next attempt to resume from; back off briefly first.
+            if (attempt < MAX_DOWNLOAD_ATTEMPTS - 1) runCatching { Thread.sleep(RETRY_DELAY_MS) }
+        }
+
+        AppLogger.w(TAG, "APK download gave up after $MAX_DOWNLOAD_ATTEMPTS attempts (have ${destination.length()}/$total)")
+        return false
+    }
+
+    /**
+     * One download attempt, resuming from [alreadyHave] bytes. Returns true only if the transfer
+     * reached [total]; throws on network errors (the caller retries). Appends on a 206 resume;
+     * restarts (truncates) if the server returns 200 (ignored the Range) or [alreadyHave] is 0.
+     */
+    private fun downloadAttempt(
+        release: ReleaseInfo,
+        destination: File,
+        alreadyHave: Long,
+        total: Long,
+        onProgress: (Int) -> Unit
+    ): Boolean {
         val connection = (URL(release.apkUrl).openConnection() as HttpURLConnection).apply {
             connectTimeout = CONNECT_TIMEOUT_MS
             readTimeout = READ_TIMEOUT_MS
             instanceFollowRedirects = true
+            if (alreadyHave > 0L) setRequestProperty("Range", "bytes=$alreadyHave-")
         }
         try {
-            if (connection.responseCode != HttpURLConnection.HTTP_OK) {
-                AppLogger.w(TAG, "APK download failed: HTTP ${connection.responseCode}")
+            val code = connection.responseCode
+            // 206 = server honoured the Range (append); 200 = full body (must restart from 0).
+            val resuming = code == HttpURLConnection.HTTP_PARTIAL
+            if (code != HttpURLConnection.HTTP_OK && code != HttpURLConnection.HTTP_PARTIAL) {
+                AppLogger.w(TAG, "APK download HTTP $code")
                 return false
             }
-            val total = release.apkSizeBytes
-            var written = 0L
+            var written = if (resuming) alreadyHave else 0L
             var lastPercent = -1
-            onProgress(0)
+            if (total > 0L) onProgress(((written * 100) / total).toInt().coerceIn(0, 100))
             connection.inputStream.use { input ->
-                destination.outputStream().use { output ->
+                java.io.FileOutputStream(destination, resuming).use { output ->
                     val buffer = ByteArray(64 * 1024)
                     while (true) {
                         val read = input.read(buffer)
@@ -132,20 +183,12 @@ object GitHubReleases {
                             }
                         }
                     }
+                    output.flush()
                 }
             }
         } finally {
             connection.disconnect()
         }
-        val sizeOk = release.apkSizeBytes <= 0L || destination.length() == release.apkSizeBytes
-        if (!sizeOk) {
-            AppLogger.w(TAG, "APK download size mismatch: got ${destination.length()}, expected ${release.apkSizeBytes}")
-            destination.delete()
-        }
-        sizeOk
-    }.getOrElse { e ->
-        AppLogger.w(TAG, "APK download failed: ${e.message}")
-        runCatching { destination.delete() }
-        false
+        return destination.length() == total
     }
 }
