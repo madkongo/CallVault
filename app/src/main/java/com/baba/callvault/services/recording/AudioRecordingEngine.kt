@@ -39,6 +39,7 @@ import kotlinx.coroutines.cancel
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withTimeoutOrNull
+import java.io.File
 
 /**
  * Manages the audio recording pipeline, including the connection to the ADB transport, reading from the audio pipe,
@@ -89,10 +90,23 @@ class AudioRecordingEngine {
     var outputPfd: ParcelFileDescriptor? = null
 
     /**
-     * URI of the current recording file.
+     * URI of the current recording file (the FINAL destination in the user's SAF folder).
      * Used to delete the file if recording fails to start mid-initialization.
      */
     var currentRecordingUri: Uri? = null
+
+    /**
+     * Application context captured in [startPipeline], used by [release] to finalise a staged recording
+     * (copy the internal temp into the SAF file) without changing the [release]/[cancel] signatures.
+     */
+    private var appContext: Context? = null
+
+    /**
+     * Non-null only when the chosen SAF provider refused `"rw"` and we recorded into this app-private
+     * temp file instead (see [SafHelper.createAudioFile]). [release] copies it into [currentRecordingUri]
+     * write-only once the container is finalised, then deletes it. Null on the normal direct-to-SAF path.
+     */
+    private var stagingFile: File? = null
 
     /**
      * Active codec enum resolved from the user's preference and confirmed by the stream header.
@@ -214,8 +228,10 @@ class AudioRecordingEngine {
 
         AppLogger.d(TAG, "Created SAF recording file: ${safResult.uri}")
 
+        appContext = context.applicationContext
         currentRecordingUri = safResult.uri
         outputPfd = safResult.descriptor
+        stagingFile = safResult.stagingFile
 
         // CallVault ALWAYS records via the persistent privileged daemon — it is the app's core
         // mechanism, not an option. Hand the SAF output fd to the daemon and let IT own scrcpy + muxing
@@ -317,6 +333,8 @@ class AudioRecordingEngine {
         if (isCancelled()) {
             AppLogger.w(TAG, "Call ended before the daemon was ready; aborting start so the mic stays off")
             runCatching { outputPfd?.close() }
+            stagingFile?.let { runCatching { it.delete() } }
+            stagingFile = null
             throw CancellationException("Recording aborted before start (call ended during daemon cold-start)")
         }
         val service = RecorderConnection.service
@@ -366,6 +384,7 @@ class AudioRecordingEngine {
                 .onFailure { AppLogger.w(TAG, "Daemon stopRecording failed during release: ${it.message}") }
             runCatching { outputPfd?.close() }
             daemonRecording = false
+            finalizeStagingIfNeeded()
             return
         }
 
@@ -384,6 +403,37 @@ class AudioRecordingEngine {
         runCatching { audioPipeReadScope?.cancel() }
         runCatching { scrcpyAudioMuxer?.close() }
         runCatching { outputPfd?.close() }
+        finalizeStagingIfNeeded()
+    }
+
+    /**
+     * When the recording was staged to an internal temp file (the SAF provider refused `"rw"`), copy the
+     * now-finalised container into the SAF destination write-only, then delete the temp. No-op on the
+     * normal direct-to-SAF path. MUST run only AFTER [outputPfd] is closed (so the container is complete).
+     *
+     * On copy failure the temp is intentionally KEPT (so nothing is lost) and the SAF file is left empty
+     * — the caller's existing 0-byte handling then reports an honest failure instead of cataloguing junk.
+     */
+    private fun finalizeStagingIfNeeded() {
+        val temp = stagingFile ?: return
+        stagingFile = null
+        val ctx = appContext
+        val dest = currentRecordingUri
+        if (ctx == null || dest == null) {
+            AppLogger.e(TAG, "Cannot finalise staged recording (context/uri missing); temp left at ${temp.path}")
+            return
+        }
+        if (!temp.exists() || temp.length() == 0L) {
+            AppLogger.w(TAG, "Staged recording is empty — skipping copy (capture never produced audio)")
+            runCatching { temp.delete() }
+            return
+        }
+        if (SafHelper.writeStagedFileToUri(ctx, temp, dest)) {
+            AppLogger.i(TAG, "Finalised staged recording → $dest (${temp.length()} bytes)")
+            runCatching { temp.delete() }
+        } else {
+            AppLogger.e(TAG, "Failed to copy staged recording into $dest; keeping temp at ${temp.path}")
+        }
     }
 
     /**

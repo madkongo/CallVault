@@ -221,8 +221,12 @@ class RecordingForegroundService : Service() {
                         // Don't catch coroutine cancellations, they are used for cleanup. This creates a false error notification when everything's fine.
                         if (e is CancellationException) throw e
 
-                        AppLogger.e(TAG, "Failed to start recording via ADB transport.", e)
-                        notificationHelper.showErrorNotification(getString(R.string.recording_error_start_failed) + "\nADB connection failed: " + e.localizedMessage)
+                        AppLogger.e(TAG, "Failed to start recording session.", e)
+                        // Don't assert a cause here — this generic catch sees ALL start failures (daemon,
+                        // ADB, storage, …). Prefixing "ADB connection failed" mislabels e.g. a SAF storage
+                        // error as an ADB problem (real field report: "Unsupported mode: rw"). Just surface
+                        // the technical detail; specific causes are reported via PipelineInitializationException.
+                        notificationHelper.showErrorNotification(getString(R.string.recording_error_start_failed) + "\n" + e.localizedMessage)
                         stopRecordingSessionAndService()
                     } finally {
                         if (currentState is RecordingServiceState.Starting) {
