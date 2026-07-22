@@ -13,3 +13,6 @@ graphify-out/
 # internal build/planning notes (not published)
 docs/superpowers/
 .gstack/
+
+# App signing keystore — the release identity; keep local, back up separately, NEVER commit.
+/signing/

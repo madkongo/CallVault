@@ -57,7 +57,6 @@ import androidx.compose.ui.text.style.LineBreak
 import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import com.baba.callvault.BuildConfig
 import com.baba.callvault.R
 import com.baba.callvault.ui.common.CvCard
 import com.baba.callvault.ui.common.CvHero
@@ -86,7 +85,7 @@ fun DisclaimerScreen(onContinue: () -> Unit, modifier: Modifier = Modifier) {
     // changes (like when recompose is triggered by a screen rotation)
     var hasAccepted by rememberSaveable { mutableStateOf(false) }
     var hasScrolledToBottom by rememberSaveable { mutableStateOf(false) }
-    var timeLeft by rememberSaveable { mutableIntStateOf(if (BuildConfig.DEBUG) 4 else 30) }
+    var timeLeft by rememberSaveable { mutableIntStateOf(5) }
 
     val scrollState = rememberScrollState()
 
