@@ -156,6 +156,8 @@
     <string name="settings_persistent_server">常驻录音服务器</string>
     <string name="settings_persistent_server_description">通过后台特权服务录制通话，使无线调试在两次通话之间可以保持关闭。实验性功能。</string>
     <string name="settings_recording_folder_label">选取保存目录</string>
+    <string name="folder_cloud_rejected">云端文件夹（如 Google Drive）无法用于录音。请选择设备本地存储——如需云端副本，请使用 Google Drive 备份选项。</string>
+    <string name="folder_cloud_warning">⚠ 此录音文件夹位于云端，用于录音并不可靠。请选择设备本地的文件夹。</string>
     <string name="settings_section_about">关于</string>
     <string name="settings_section_audio">音源选项</string>
     <string name="settings_section_debug">调试选项</string>

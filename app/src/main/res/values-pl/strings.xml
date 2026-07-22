@@ -156,6 +156,8 @@
     <string name="settings_persistent_server">Trwały serwer nagrywania</string>
     <string name="settings_persistent_server_description">Nagrywaj rozmowy przez uprzywilejowaną usługę działającą w tle, dzięki czemu Debugowanie bezprzewodowe może pozostać wyłączone między rozmowami. Eksperymentalne.</string>
     <string name="settings_recording_folder_label">Folder nagrań</string>
+    <string name="folder_cloud_rejected">Folderów w chmurze (takich jak Google Drive) nie można używać do nagrywania. Wybierz pamięć na urządzeniu — do kopii w chmurze użyj opcji kopii zapasowej Google Drive.</string>
+    <string name="folder_cloud_warning">⚠ Ten folder nagrań znajduje się w chmurze, co jest zawodne przy nagrywaniu. Wybierz folder na urządzeniu.</string>
     <string name="settings_section_about">O nas</string>
     <string name="settings_section_audio">Ustawienia dźwięku</string>
     <string name="settings_section_debug">Opcje debugowania</string>

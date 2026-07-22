@@ -156,6 +156,8 @@
     <string name="settings_persistent_server">Máy chủ ghi âm thường trực</string>
     <string name="settings_persistent_server_description">Ghi âm cuộc gọi thông qua một dịch vụ đặc quyền chạy nền để Gỡ lỗi không dây có thể tắt giữa các cuộc gọi. Thử nghiệm.</string>
     <string name="settings_recording_folder_label">Thư mục ghi âm</string>
+    <string name="folder_cloud_rejected">Không thể dùng thư mục trên đám mây (như Google Drive) để ghi âm. Hãy chọn bộ nhớ trên thiết bị — dùng tùy chọn sao lưu Google Drive để tạo bản sao trên đám mây.</string>
+    <string name="folder_cloud_warning">⚠ Thư mục ghi âm này nằm trên đám mây, vốn không đáng tin cậy cho việc ghi âm. Hãy chọn một thư mục trên thiết bị.</string>
     <string name="settings_section_about">Về</string>
     <string name="settings_section_audio">Cấu hình âm thanh</string>
     <string name="settings_section_debug">Tùy chọn gỡ lỗi</string>
