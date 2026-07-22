@@ -51,6 +51,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
+import android.widget.Toast
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
@@ -111,8 +112,12 @@ fun WizardScreen(
     // Device/recording folder picker — persists access across reboots.
     val recordingFolderPicker = rememberLauncherForActivityResult(PersistentFolderPickerContract()) { uri ->
         if (uri != null) {
-            context.takePersistableFolderPermission(uri)
-            viewModel.setRecordingFolderUri(uri)
+            if (SafHelper.isCloudFolder(uri)) {
+                Toast.makeText(context, context.getString(R.string.folder_cloud_rejected), Toast.LENGTH_LONG).show()
+            } else {
+                context.takePersistableFolderPermission(uri)
+                viewModel.setRecordingFolderUri(uri)
+            }
         }
     }
 

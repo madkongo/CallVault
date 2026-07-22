@@ -150,6 +150,8 @@
     <!-- Settings Screen: Recording Section -->
     <string name="settings_tap_to_select_folder">Tap to select folder...</string>
     <string name="settings_recording_folder_label">Recording Folder</string>
+    <string name="folder_cloud_rejected">Cloud folders (like Google Drive) can\'t be used for recording. Pick on-device storage — use the Google Drive backup option for cloud copies.</string>
+    <string name="folder_cloud_warning">⚠ This recording folder is in the cloud, which is unreliable for capture. Choose an on-device folder.</string>
 
     <string name="settings_file_name_template">File Name Template</string>
     <string name="settings_file_name_template_preset">Preset</string>

@@ -124,6 +124,26 @@ object SafHelper {
      * @param folderUri The tree URI to validate, or null.
      * @return true if the folder exists and is writable; false if null or inaccessible.
      */
+    /**
+     * SAF document-provider authorities that are cloud/synced and therefore unreliable as the LIVE
+     * recording-capture folder: they reject `"rw"` and report file length asynchronously (0 right after
+     * a write), which breaks in-progress capture and the empty-recording guard. They are perfectly fine
+     * as the Drive *backup* target (that copy happens after the recording is finalised).
+     */
+    private val CLOUD_PROVIDER_AUTHORITIES = setOf(
+        "com.google.android.apps.docs.storage",                          // Google Drive
+        "com.google.android.apps.docs.storage.legacy",                   // Google Drive (legacy)
+        "com.microsoft.skydrive.content.StorageAccessProvider",          // OneDrive
+        "com.dropbox.product.android.dbapp.document_provider.documents", // Dropbox
+    )
+
+    /**
+     * Returns true if [uri] is served by a known cloud/sync document provider (Google Drive, OneDrive,
+     * Dropbox). Used to reject such folders as the capture destination and to warn about an existing one.
+     */
+    fun isCloudFolder(uri: Uri?): Boolean =
+        uri?.authority?.let { it in CLOUD_PROVIDER_AUTHORITIES } == true
+
     @OptIn(ExperimentalContracts::class)
     fun isFolderValid(context: Context, folderUri: Uri?): Boolean {
         // Tells the compiler: if we returns true, folderUri is not null. Prevent false compiler error and warnings.

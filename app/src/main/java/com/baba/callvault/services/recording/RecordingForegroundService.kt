@@ -406,12 +406,12 @@ class RecordingForegroundService : Service() {
                 }
 
                 // Route exactly once, after any rename has been applied.
-                routeFinalRecording(finalUri, mimeType)
+                routeFinalRecording(finalUri, mimeType, activeSession.lastCapturedByteCount)
             }
         } else if (uriToRename != null) {
             // Phone number was already known at recording start — no rename needed.
             // Route the file with its current name immediately (once).
-            routeFinalRecording(uriToRename, mimeType)
+            routeFinalRecording(uriToRename, mimeType, activeSession.lastCapturedByteCount)
         }
         currentState = RecordingServiceState.Standby(null)
         AppLogger.i(TAG, "The recording session has been stopped and resources have been released. Stopping foreground service. Goodbye >3")
@@ -462,10 +462,13 @@ class RecordingForegroundService : Service() {
      * @param uri      The URI of the finalized recording file.
      * @param mimeType The MIME type of the recording (e.g. "audio/opus" or "audio/mp4a-latm").
      */
-    private fun routeFinalRecording(uri: Uri, mimeType: String) {
+    private fun routeFinalRecording(uri: Uri, mimeType: String, knownByteCount: Long? = null) {
         val doc = DocumentFile.fromSingleUri(applicationContext, uri) ?: return
         val name = doc.name ?: return
-        val sizeBytes = doc.length()
+        // Prefer the exact captured count when we have it (staged recordings): a cloud destination like
+        // Google Drive reports length 0 right after the write (async upload), which would otherwise make
+        // a genuine recording look empty. Fall back to the document length for direct-to-SAF (local) files.
+        val sizeBytes = knownByteCount ?: doc.length()
         val lastModified = doc.lastModified()
         // An empty file means capture never actually ran (typically: the daemon died right after
         // startRecording was dispatched — seen when Developer options is off and Wireless debugging

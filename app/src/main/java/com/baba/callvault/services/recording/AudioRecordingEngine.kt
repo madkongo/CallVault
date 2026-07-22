@@ -109,6 +109,18 @@ class AudioRecordingEngine {
     private var stagingFile: File? = null
 
     /**
+     * The exact number of audio bytes captured this session, when known reliably — set only after a
+     * STAGED recording is successfully copied to its destination (we measured the internal temp before
+     * copying). Null on the direct-to-SAF path (there the destination file's own length is authoritative).
+     *
+     * The empty-recording guard MUST prefer this over re-reading the destination's length: cloud SAF
+     * providers (Google Drive, …) report length 0 immediately after a write (async upload), which would
+     * otherwise make a real recording look empty and get deleted.
+     */
+    var lastCapturedByteCount: Long? = null
+        private set
+
+    /**
      * Active codec enum resolved from the user's preference and confirmed by the stream header.
      * Updated once [ScrcpyClient.AudioPacketListener.onMetadataReceived] fires.
      * Defaults to [ScrcpyAudioCodec.OPUS] as a safe initial value before the stream header is read.
@@ -428,8 +440,12 @@ class AudioRecordingEngine {
             runCatching { temp.delete() }
             return
         }
+        val bytes = temp.length()
         if (SafHelper.writeStagedFileToUri(ctx, temp, dest)) {
-            AppLogger.i(TAG, "Finalised staged recording → $dest (${temp.length()} bytes)")
+            // Trust this measured count downstream — the destination (e.g. Google Drive) may report
+            // length 0 right after the write, which would trip the empty-recording guard.
+            lastCapturedByteCount = bytes
+            AppLogger.i(TAG, "Finalised staged recording → $dest ($bytes bytes)")
             runCatching { temp.delete() }
         } else {
             AppLogger.e(TAG, "Failed to copy staged recording into $dest; keeping temp at ${temp.path}")
