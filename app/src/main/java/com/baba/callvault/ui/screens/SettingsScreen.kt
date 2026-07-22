@@ -126,8 +126,14 @@ fun SettingsScreen(
     // Folder picker — PersistentFolderPickerContract keeps access alive after a reboot.
     val folderPickerLauncher = rememberLauncherForActivityResult(PersistentFolderPickerContract()) { uri ->
         if (uri != null) {
-            context.takePersistableFolderPermission(uri)
-            viewModel.preferences.setRecordingFolderUri(uri)
+            if (SafHelper.isCloudFolder(uri)) {
+                // Cloud folders (Google Drive, …) reject "rw" and report length asynchronously, which
+                // breaks live capture. Refuse it here; the Drive backup option handles cloud copies.
+                Toast.makeText(context, context.getString(R.string.folder_cloud_rejected), Toast.LENGTH_LONG).show()
+            } else {
+                context.takePersistableFolderPermission(uri)
+                viewModel.preferences.setRecordingFolderUri(uri)
+            }
         }
         viewModel.refresh()
     }
@@ -524,6 +530,7 @@ private fun StorageSection(
     val context = LocalContext.current
 
     val recordingFolderLabel = remember(updateTrigger) { SafHelper.getFolderDisplayNameOrNull(context, preferences.getRecordingFolderUri()) }
+    val recordingFolderIsCloud = remember(updateTrigger) { SafHelper.isCloudFolder(preferences.getRecordingFolderUri()) }
     val storageTarget = remember(updateTrigger) { preferences.getStorageTarget() }
     val driveFolderLabel = remember(updateTrigger) { SafHelper.getFolderDisplayNameOrNull(context, preferences.getDriveFolderUri()) }
 
@@ -552,6 +559,9 @@ private fun StorageSection(
             icon = Icons.Filled.Folder,
             label = stringResource(R.string.settings_recording_folder_label),
             value = recordingFolderLabel ?: stringResource(R.string.settings_tap_to_select_folder),
+            // Surface a cloud folder (e.g. Google Drive) that was set before we started rejecting them —
+            // otherwise it's indistinguishable from a local folder by name alone.
+            supporting = if (recordingFolderIsCloud) stringResource(R.string.folder_cloud_warning) else null,
             onClick = onSelectFolder
         )
 

@@ -63,6 +63,7 @@ import androidx.lifecycle.LifecycleEventObserver
 import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.baba.callvault.R
+import com.baba.callvault.system.storage.SafHelper
 import com.baba.callvault.data.AppPreferences
 import com.baba.callvault.integrations.adb.AdbShell
 import com.baba.callvault.integrations.adb.DeveloperOptions
@@ -116,6 +117,12 @@ fun PermissionsScreen(
         onPermissionGranted()
     }
     val folderPickerLauncher = rememberLauncherForActivityResult(ActivityResultContracts.OpenDocumentTree()) { uri ->
+        if (uri != null && SafHelper.isCloudFolder(uri)) {
+            // Reject a cloud folder (Google Drive, …) as the capture destination — it breaks live
+            // recording. Don't advance onboarding, so the user picks on-device storage instead.
+            Toast.makeText(activityContext, activityContext.getString(R.string.folder_cloud_rejected), Toast.LENGTH_LONG).show()
+            return@rememberLauncherForActivityResult
+        }
         if (uri != null) {
             // takePersistableUriPermission locks in long-term read/write access so the
             // folder URI remains valid after a device reboot.

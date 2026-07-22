@@ -161,6 +161,8 @@
     <string name="settings_persistent_server">Serveur d\'enregistrement persistant</string>
     <string name="settings_persistent_server_description">Enregistrer les appels via un service privilégié en arrière-plan afin que le débogage sans fil puisse rester désactivé entre les appels. Expérimental.</string>
     <string name="settings_recording_folder_label">Dossier d\'enregistrement</string>
+    <string name="folder_cloud_rejected">Les dossiers cloud (comme Google Drive) ne peuvent pas être utilisés pour l\'enregistrement. Choisissez un stockage sur l\'appareil — utilisez l\'option de sauvegarde Google Drive pour les copies dans le cloud.</string>
+    <string name="folder_cloud_warning">⚠ Ce dossier d\'enregistrement se trouve dans le cloud, ce qui n\'est pas fiable pour la capture. Choisissez un dossier sur l\'appareil.</string>
     <string name="settings_section_about">À propos</string>
     <string name="settings_section_audio">Configuration audio</string>
     <string name="settings_section_debug">Options de débogage</string>

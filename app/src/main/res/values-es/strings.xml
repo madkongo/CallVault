@@ -156,6 +156,8 @@
     <string name="settings_persistent_server">Servidor de grabación persistente</string>
     <string name="settings_persistent_server_description">Graba las llamadas mediante un servicio privilegiado en segundo plano para que la Depuración inalámbrica pueda permanecer desactivada entre llamadas. Experimental.</string>
     <string name="settings_recording_folder_label">Carpeta de grabaciones</string>
+    <string name="folder_cloud_rejected">Las carpetas en la nube (como Google Drive) no se pueden usar para grabar. Elige un almacenamiento en el dispositivo; usa la opción de copia de seguridad de Google Drive para las copias en la nube.</string>
+    <string name="folder_cloud_warning">⚠ Esta carpeta de grabación está en la nube, lo que no es fiable para la captura. Elige una carpeta en el dispositivo.</string>
     <string name="settings_section_about">Acerca de</string>
     <string name="settings_section_audio">Configuración de audio</string>
     <string name="settings_section_debug">Opciones de depuración</string>
