@@ -94,6 +94,9 @@ import androidx.compose.material.icons.filled.Gavel
 import androidx.compose.material.icons.filled.NotificationsActive
 import androidx.compose.material.icons.filled.Save
 import androidx.compose.material.icons.filled.Vibration
+import androidx.compose.material.icons.filled.WifiOff
+import com.baba.callvault.integrations.adb.AdbShell
+import com.baba.callvault.server.RecorderServerLauncher
 import androidx.compose.ui.platform.LocalInspectionMode
 import androidx.compose.ui.platform.LocalResources
 import org.xmlpull.v1.XmlPullParser
@@ -985,6 +988,85 @@ private fun BugReportSection(
                 Spacer(modifier = Modifier.height(4.dp))
             }
         }
+
+        OfflineRecordingToggle()
+    }
+}
+
+/**
+ * Opt-in "Offline recording (no Wi-Fi)" toggle. Turning it ON pops a security-warning modal
+ * (Cancel / Continue anyway) because it arms a local `adb tcpip` debugging port; only on "Continue"
+ * do we persist the opt-in, arm the loopback listener, and re-warm the daemon. Turning it OFF clears
+ * the opt-in and best-effort closes the port (reverts adbd to USB mode).
+ */
+@Composable
+private fun OfflineRecordingToggle() {
+    val context = LocalContext.current
+    val scope = rememberCoroutineScope()
+    val prefs = remember { AppPreferences(context) }
+    var enabled by remember { mutableStateOf(prefs.isOfflineRecordingEnabled()) }
+    var showWarning by remember { mutableStateOf(false) }
+    var busy by remember { mutableStateOf(false) }
+
+    SettingsToggleRow(
+        icon = Icons.Filled.WifiOff,
+        label = stringResource(R.string.settings_offline_recording_label),
+        description = stringResource(R.string.settings_offline_recording_desc),
+        checked = enabled,
+        enabled = !busy,
+        onCheckedChange = { turnOn ->
+            if (turnOn) {
+                // Don't enable yet — confirm the security tradeoff first.
+                showWarning = true
+            } else {
+                enabled = false
+                prefs.setOfflineRecordingEnabled(false)
+                busy = true
+                scope.launch {
+                    withContext(Dispatchers.IO) { runCatching { AdbShell.disarmLoopback(context) } }
+                    busy = false
+                    Toast.makeText(context, "Offline recording disabled", Toast.LENGTH_SHORT).show()
+                }
+            }
+        },
+    )
+
+    if (showWarning) {
+        AlertDialog(
+            onDismissRequest = { showWarning = false },
+            title = { Text(stringResource(R.string.offline_recording_warning_title)) },
+            text = { Text(stringResource(R.string.offline_recording_warning_message)) },
+            confirmButton = {
+                TextButton(onClick = {
+                    showWarning = false
+                    enabled = true
+                    prefs.setOfflineRecordingEnabled(true)
+                    busy = true
+                    scope.launch {
+                        val armed = withContext(Dispatchers.IO) {
+                            val ok = AdbShell.armLoopbackIfNeeded(context)
+                            // Arming restarts adbd and kills the daemon — re-warm so the first off-WiFi call records.
+                            if (ok) runCatching { RecorderServerLauncher.ensureServerRunning(context) }
+                            ok
+                        }
+                        busy = false
+                        if (armed) {
+                            Toast.makeText(context, "Offline recording enabled", Toast.LENGTH_SHORT).show()
+                        } else {
+                            // Couldn't arm (needs Wi-Fi + Wireless debugging once) — revert the opt-in.
+                            enabled = false
+                            prefs.setOfflineRecordingEnabled(false)
+                            Toast.makeText(context, "Couldn't enable — connect on Wi-Fi once, then retry", Toast.LENGTH_LONG).show()
+                        }
+                    }
+                }) { Text(stringResource(R.string.offline_recording_warning_continue)) }
+            },
+            dismissButton = {
+                TextButton(onClick = { showWarning = false /* leave the toggle OFF */ }) {
+                    Text(stringResource(R.string.general_cancel))
+                }
+            },
+        )
     }
 }
 

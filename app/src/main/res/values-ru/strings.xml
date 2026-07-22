@@ -158,6 +158,11 @@
     <string name="settings_recording_folder_label">Папка для записей</string>
     <string name="folder_cloud_rejected">Облачные папки (например, Google Drive) нельзя использовать для записи. Выберите хранилище на устройстве — для копий в облаке используйте функцию резервного копирования в Google Drive.</string>
     <string name="folder_cloud_warning">⚠ Эта папка для записей находится в облаке, что ненадёжно для записи. Выберите папку на устройстве.</string>
+    <string name="settings_offline_recording_label">Запись без сети (без Wi-Fi)</string>
+    <string name="settings_offline_recording_desc">Записывать звонки даже при отсутствии сети Wi-Fi.</string>
+    <string name="offline_recording_warning_title">Включить запись без Wi-Fi?</string>
+    <string name="offline_recording_warning_message">При этом на телефоне открывается локальный порт отладки, чтобы звонки можно было записывать без Wi-Fi. Он защищён ключом вашего устройства, но представляет собой небольшой компромисс в плане безопасности. Включайте эту функцию только в том случае, если вам нужно записывать звонки без Wi-Fi.</string>
+    <string name="offline_recording_warning_continue">Всё равно продолжить</string>
     <string name="settings_section_about">О приложении</string>
     <string name="settings_section_audio">Настройки аудио</string>
     <string name="settings_section_debug">Настройки отладки</string>

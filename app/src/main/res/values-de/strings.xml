@@ -158,6 +158,11 @@
     <string name="settings_recording_folder_label">Aufnahmeordner</string>
     <string name="folder_cloud_rejected">Cloud-Ordner (wie Google Drive) können nicht für Aufnahmen verwendet werden. Wählen Sie einen Speicherort auf dem Gerät – nutzen Sie die Google Drive-Backup-Option für Cloud-Kopien.</string>
     <string name="folder_cloud_warning">⚠ Dieser Aufnahmeordner liegt in der Cloud, was für die Aufnahme unzuverlässig ist. Wählen Sie einen Ordner auf dem Gerät.</string>
+    <string name="settings_offline_recording_label">Offline-Aufnahme (ohne Wi-Fi)</string>
+    <string name="settings_offline_recording_desc">Anrufe auch dann aufnehmen, wenn kein Wi-Fi-Netzwerk verfügbar ist.</string>
+    <string name="offline_recording_warning_title">Offline-Aufnahme aktivieren?</string>
+    <string name="offline_recording_warning_message">Dadurch wird ein lokaler Debugging-Port auf Ihrem Telefon geöffnet, damit Anrufe ohne Wi-Fi aufgenommen werden können. Er ist durch den Schlüssel Ihres Geräts geschützt, stellt aber einen kleinen Sicherheitskompromiss dar. Aktivieren Sie ihn nur, wenn Sie Anrufe ohne Wi-Fi aufnehmen müssen.</string>
+    <string name="offline_recording_warning_continue">Trotzdem fortfahren</string>
     <string name="settings_section_about">Über</string>
     <string name="settings_section_audio">Tonkonfiguration</string>
     <string name="settings_section_debug">Debug-Optionen</string>

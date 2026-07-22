@@ -158,6 +158,11 @@
     <string name="settings_recording_folder_label">Felvételek mappája</string>
     <string name="folder_cloud_rejected">A felhőmappák (például a Google Drive) nem használhatók rögzítésre. Válasszon eszközön lévő tárhelyet – a felhőben tárolt másolatokhoz használja a Google Drive biztonsági mentés lehetőséget.</string>
     <string name="folder_cloud_warning">⚠ Ez a rögzítési mappa a felhőben van, ami megbízhatatlan a rögzítéshez. Válasszon egy eszközön lévő mappát.</string>
+    <string name="settings_offline_recording_label">Offline rögzítés (Wi-Fi nélkül)</string>
+    <string name="settings_offline_recording_desc">Hívások rögzítése akkor is, ha nincs Wi-Fi hálózat.</string>
+    <string name="offline_recording_warning_title">Engedélyezi az offline rögzítést?</string>
+    <string name="offline_recording_warning_message">Ez megnyit egy helyi hibakeresési portot a telefonján, hogy a hívások Wi-Fi nélkül is rögzíthetők legyenek. Az eszköz kulcsa védi, de kis biztonsági kompromisszumot jelent. Csak akkor engedélyezze, ha Wi-Fi nélkül kell hívásokat rögzítenie.</string>
+    <string name="offline_recording_warning_continue">Folytatás mindenképp</string>
     <string name="settings_section_about">Névjegy</string>
     <string name="settings_section_audio">Hangbeállítások</string>
     <string name="settings_section_debug">Debug beállítások</string>

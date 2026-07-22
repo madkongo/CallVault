@@ -158,6 +158,11 @@
     <string name="settings_recording_folder_label">Thư mục ghi âm</string>
     <string name="folder_cloud_rejected">Không thể dùng thư mục trên đám mây (như Google Drive) để ghi âm. Hãy chọn bộ nhớ trên thiết bị — dùng tùy chọn sao lưu Google Drive để tạo bản sao trên đám mây.</string>
     <string name="folder_cloud_warning">⚠ Thư mục ghi âm này nằm trên đám mây, vốn không đáng tin cậy cho việc ghi âm. Hãy chọn một thư mục trên thiết bị.</string>
+    <string name="settings_offline_recording_label">Ghi âm ngoại tuyến (không có Wi-Fi)</string>
+    <string name="settings_offline_recording_desc">Ghi âm cuộc gọi ngay cả khi không có mạng Wi-Fi.</string>
+    <string name="offline_recording_warning_title">Bật ghi âm ngoại tuyến?</string>
+    <string name="offline_recording_warning_message">Thao tác này mở một cổng gỡ lỗi cục bộ trên điện thoại của bạn để có thể ghi âm cuộc gọi mà không cần Wi-Fi. Cổng này được bảo vệ bằng khóa của thiết bị, nhưng đây là một sự đánh đổi nhỏ về bảo mật. Chỉ bật khi bạn cần ghi âm cuộc gọi mà không có Wi-Fi.</string>
+    <string name="offline_recording_warning_continue">Vẫn tiếp tục</string>
     <string name="settings_section_about">Về</string>
     <string name="settings_section_audio">Cấu hình âm thanh</string>
     <string name="settings_section_debug">Tùy chọn gỡ lỗi</string>
