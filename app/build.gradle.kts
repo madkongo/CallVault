@@ -134,6 +134,12 @@ android {
         buildConfigField("String", "SCRCPY_SERVER_SHA256", "\"$scrcpyServerSha256\"")
         buildConfigField("String", "SCRCPY_SERVER_ASSET_NAME", "\"$scrcpyServerAssetName\"")
     }
+    // Local release keystore (gitignored). This is the SAME key the published debug builds used
+    // (cert c875ffd0…), preserved here so `assembleRelease` produces a NON-debuggable APK that
+    // existing installs can still update over in place. Guard/back this file up — losing it means
+    // no more in-place updates for existing users, ever.
+    val localReleaseKeystore = rootProject.file("signing/callvault-signing.keystore")
+
     signingConfigs {
         // Signing config for CI environments.
         create("ci-release") {
@@ -143,6 +149,16 @@ android {
                 keyAlias = System.getenv("KEY_ALIAS") ?: throw GradleException("Key alias not provided for release signing. env variable: KEY_ALIAS")
                 keyPassword = System.getenv("KEY_PASSWORD") ?:throw GradleException("Key password not provided for release signing. env variable: KEY_PASSWORD")
 
+            }
+        }
+        // Local release signing (maintainer machine). Same key/creds as the app's historical debug
+        // keystore (default alias/password), so the cert matches every prior release.
+        create("local-release") {
+            if (localReleaseKeystore.exists()) {
+                storeFile = localReleaseKeystore
+                storePassword = "android"
+                keyAlias = "androiddebugkey"
+                keyPassword = "android"
             }
         }
     }
@@ -159,9 +175,17 @@ android {
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro"
             )
-            if (isEnvironmentGithubCI) {
-                println("Configuring release build for CI environment. Official release signing keys will be used.")
-                signingConfig = signingConfigs.getByName("ci-release")
+            // release build type defaults to debuggable=false — the whole point of shipping this
+            // instead of assembleDebug. Sign with the CI key on CI, else the local release keystore.
+            when {
+                isEnvironmentGithubCI -> {
+                    println("Configuring release build for CI environment. Official release signing keys will be used.")
+                    signingConfig = signingConfigs.getByName("ci-release")
+                }
+                localReleaseKeystore.exists() -> {
+                    signingConfig = signingConfigs.getByName("local-release")
+                }
+                else -> println("No release keystore found (signing/callvault-signing.keystore); release APK will be unsigned.")
             }
         }
     }
