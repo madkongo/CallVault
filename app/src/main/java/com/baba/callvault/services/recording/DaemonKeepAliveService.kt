@@ -53,19 +53,37 @@ class DaemonKeepAliveService : Service() {
 
     @Volatile private var rewarming = false
     private var lastRewarmAtMs = 0L
+    /** Consecutive "daemon down" readings — we only relaunch after a couple, to not churn on a blip. */
+    private var downStreak = 0
 
     private val watchdog = object : Runnable {
         override fun run() {
-            val ready = RecorderConnection.isConnected
-            if (ready != lastReady) {
-                lastReady = ready
-                updateNotification(ready)
-                AppLogger.d(TAG, "keep-alive: daemon ready=$ready")
+            val alive = isDaemonAlive()
+            if (alive != (lastReady == true)) {
+                lastReady = alive
+                updateNotification(alive)
+                AppLogger.d(TAG, "keep-alive: daemon alive=$alive")
             }
-            if (!ready) maybeRewarm()
+            if (alive) {
+                downStreak = 0
+            } else {
+                downStreak++
+                // Debounce: act only after DOWN_STREAK_THRESHOLD consecutive down reads, so a transient
+                // binder blip doesn't trigger a relaunch (which would kill+respawn a daemon that was fine).
+                if (downStreak >= DOWN_STREAK_THRESHOLD) maybeRewarm()
+            }
             watchdogHandler.postDelayed(this, WATCHDOG_INTERVAL_MS)
         }
     }
+
+    /**
+     * True only if the daemon process actually answers a binder ping — more reliable than
+     * [RecorderConnection.isConnected] (`service != null`), which can stay stale-true if linkToDeath
+     * missed, or read false on a transient. Matches the recording liveness watch's probe.
+     */
+    private fun isDaemonAlive(): Boolean = runCatching {
+        RecorderConnection.service?.asBinder()?.pingBinder() == true
+    }.getOrDefault(false)
 
     override fun onCreate() {
         super.onCreate()
@@ -159,6 +177,9 @@ class DaemonKeepAliveService : Service() {
 
         /** Minimum gap between daemon relaunch attempts, so a persistently-down daemon isn't hammered. */
         private const val REWARM_THROTTLE_MS = 90_000L
+
+        /** Consecutive down reads before relaunching — debounces a transient binder blip into no action. */
+        private const val DOWN_STREAK_THRESHOLD = 2
 
         /** Start (or no-op if already running) the persistent keep-alive anchor. Safe to call repeatedly. */
         fun start(context: Context) {

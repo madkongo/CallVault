@@ -34,6 +34,12 @@ object AdbShell {
      * advertises — so a long fixed pre-sleep was mostly dead time on the post-boot cold-start path.
      */
     private const val WD_START_WAIT_MS = 750L
+    /** Time to let adbd restart into tcp mode after opening the `tcpip:` service, before reconnecting. */
+    private const val TCPIP_RESTART_WAIT_MS = 1500L
+    /** Settle after dropping the (now-dead) pre-restart connection, before the loopback reconnect. */
+    private const val POST_DISCONNECT_WAIT_MS = 500L
+    /** Hard cap on the tcpip: arm open (adbd restarts mid-open, so the call can stall — don't wait forever). */
+    private const val ARM_FIRE_CAP_MS = 3000L
 
     /**
      * Ensures the ADB connection is up (mDNS-discover the connect port, connect, settle).
@@ -55,6 +61,17 @@ object AdbShell {
     fun ensureConnected(context: Context): Boolean {
         val mgr = AdbConnectionManager.getInstance(context)
         if (mgr.isConnected) {
+            AppPreferences(context).setAdbPaired(true)
+            grantSecureSettingsIfNeeded(context)
+            return true
+        }
+        // Loopback-first — ONLY when the user has opted in to offline recording. The persistent
+        // classic-tcpip port (see [armLoopbackIfNeeded]) works OFF-WiFi (loopback is always up, no mDNS,
+        // no WiFi), so a call on the road records without any network. Fails fast (connection refused)
+        // when not armed, falling through to Wireless Debugging. Gated behind the opt-in because arming
+        // opens a local debugging port (RSA-gated but a real surface) — see AppPreferences.isOfflineRecordingEnabled.
+        if (AppPreferences(context).isOfflineRecordingEnabled() && connectLoopback(context)) {
+            Thread.sleep(CONNECT_SETTLE_MS)
             AppPreferences(context).setAdbPaired(true)
             grantSecureSettingsIfNeeded(context)
             return true
@@ -132,6 +149,110 @@ object AdbShell {
      */
     fun openLocalAbstract(context: Context, name: String): AdbStream =
         AdbConnectionManager.getInstance(context).openStream("localabstract:$name")
+
+    // ---- Off-WiFi recording: persistent classic-tcpip loopback listener (opt-in) ----
+
+    /**
+     * Attempts the persistent classic-tcpip loopback connection (`127.0.0.1:<port>`).
+     *
+     * Unlike Wireless Debugging this needs NO WiFi (loopback is always up) — but only works once the
+     * port has been armed since the last reboot (see [armLoopbackIfNeeded]). Returns false FAST
+     * (connection refused) when unarmed, so callers fall back to Wireless Debugging. libadb-android
+     * reacts to the daemon's AUTH-vs-STLS message dynamically, so the same identity authenticates over
+     * this plain RSA-AUTH port. Holds no lock itself — callers order locks (heavy → monitor).
+     */
+    private fun connectLoopback(context: Context): Boolean {
+        val port = AppPreferences(context).getLoopbackAdbPort()
+        val mgr = AdbConnectionManager.getInstance(context)
+        return runCatching { mgr.connect("127.0.0.1", port) }
+            .onFailure { AppLogger.d(TAG, "Loopback :$port unavailable (unarmed/refused): ${it.message}") }
+            .getOrDefault(false)
+            .also { if (it) AppLogger.i(TAG, "Connected over loopback tcpip :$port (works off-WiFi)") }
+    }
+
+    /**
+     * Arms the persistent classic-tcpip loopback listener so future connects work OFF-WiFi.
+     *
+     * Opens the `tcpip:<port>` adb service → adbd restarts listening on `0.0.0.0:<port>` (reachable on
+     * loopback, which is always up). Because the restart DROPS the live connection, this is disruptive
+     * and must run only at a SAFE idle moment — NEVER while recording. It needs a base connection to arm
+     * through, which comes via Wireless Debugging, so WiFi + WD must be available ONCE; after arming,
+     * calls record off-WiFi until the next reboot (tcpip mode clears on reboot → re-arm on next
+     * connectivity). No-op (returns true) if the loopback port is already armed and reachable.
+     *
+     * Lock order: takes [heavyOperationLock] FIRST, then [ensureConnected] acquires the AdbShell
+     * monitor — matching the recorder launcher's heavy→monitor order so the two never deadlock.
+     *
+     * @return true if the loopback listener is armed and reachable after the call.
+     */
+    fun armLoopbackIfNeeded(context: Context): Boolean = synchronized(heavyOperationLock) {
+        if (connectLoopback(context)) {
+            AppLogger.i(TAG, "Loopback already armed & reachable — nothing to do")
+            return@synchronized true
+        }
+        // Need a base connection to arm through (Wireless Debugging → needs WiFi once).
+        if (!ensureConnected(context)) {
+            AppLogger.i(TAG, "Cannot arm loopback — no base connection (needs WiFi + Wireless debugging once)")
+            return@synchronized false
+        }
+        // ensureConnected may itself have landed us on loopback already (nothing left to arm).
+        if (connectLoopback(context)) return@synchronized true
+
+        val port = AppPreferences(context).getLoopbackAdbPort()
+        val mgr = AdbConnectionManager.getInstance(context)
+        AppLogger.i(TAG, "Arming loopback tcpip on :$port (adbd will restart)…")
+        // Fire the tcpip: arm WITHOUT blocking. adbd restarts on receiving the OPEN and kills this very
+        // connection, so reading the stream's response can stall forever (the read never gets an EOF when
+        // the socket dies mid-flight). Opening the stream is what arms adbd; do it on a daemon thread with
+        // a hard cap so a stalled open/close can never hang the caller.
+        armFireThread(mgr, port)
+
+        Thread.sleep(TCPIP_RESTART_WAIT_MS)
+        runCatching { mgr.disconnect() }.onFailure { AppLogger.d(TAG, "post-arm disconnect ignored: ${it.message}") }
+        Thread.sleep(POST_DISCONNECT_WAIT_MS)
+
+        val armed = connectLoopback(context)
+        AppLogger.i(TAG, "Loopback arm result on :$port = $armed")
+        armed
+    }
+
+    /**
+     * Opens `tcpip:<port>` to arm adbd, on a bounded daemon thread. The open triggers adbd's restart;
+     * we neither read the response (the connection dies mid-read) nor wait beyond [ARM_FIRE_CAP_MS]
+     * (a stalled open must not hang arming). Any leftover thread is a daemon and self-reaps.
+     */
+    private fun armFireThread(mgr: AdbConnectionManager, port: Int) {
+        val t = Thread {
+            runCatching { mgr.openStream("tcpip:$port").close() }
+                .onFailure { AppLogger.d(TAG, "arm open/close ended: ${it.message} (adbd restarting — expected)") }
+        }.apply { isDaemon = true; name = "cv-arm-tcpip" }
+        t.start()
+        t.join(ARM_FIRE_CAP_MS)
+        if (t.isAlive) AppLogger.d(TAG, "arm open did not return within ${ARM_FIRE_CAP_MS}ms; proceeding (request already sent)")
+    }
+
+    /**
+     * Closes the classic-tcpip listener (reverting adbd to USB mode via the `usb:` service — the device
+     * side of `adb usb`), so the open port doesn't linger until reboot after the user turns OFF offline
+     * recording. Best-effort + bounded (adbd restarts on the request, so it can stall); if it can't run
+     * now, the port simply closes on the next reboot. Call OFF the main thread.
+     */
+    fun disarmLoopback(context: Context) = synchronized(heavyOperationLock) {
+        val mgr = AdbConnectionManager.getInstance(context)
+        if (!mgr.isConnected && !ensureConnected(context)) {
+            AppLogger.i(TAG, "disarmLoopback: no connection to send usb: (port closes on next reboot)")
+            return@synchronized
+        }
+        AppLogger.i(TAG, "Disarming loopback tcpip (reverting adbd to usb mode)…")
+        val t = Thread {
+            runCatching { mgr.openStream("usb:").close() }
+                .onFailure { AppLogger.d(TAG, "usb: revert ended: ${it.message} (adbd restarting — expected)") }
+        }.apply { isDaemon = true; name = "cv-disarm-tcpip" }
+        t.start()
+        t.join(ARM_FIRE_CAP_MS)
+        Thread.sleep(TCPIP_RESTART_WAIT_MS)
+        runCatching { mgr.disconnect() }.onFailure { AppLogger.d(TAG, "post-disarm disconnect ignored: ${it.message}") }
+    }
 
     // ---- Wireless-debugging helpers ----
 

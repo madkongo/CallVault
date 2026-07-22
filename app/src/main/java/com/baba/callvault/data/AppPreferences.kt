@@ -28,6 +28,14 @@ class AppPreferences(context: Context) {
 
         /** Public key id for the available-update tag, for change-listener comparisons. */
         const val AVAILABLE_UPDATE_TAG_KEY = "available_update_tag"
+
+        /**
+         * Range for the randomly-chosen loopback ADB port ([getLoopbackAdbPort]). Deliberately an
+         * uncommon high range: above the ephemeral/registered clutter, and NOT the well-known adb
+         * 5555, the adb-server 5037, or the emulator 5554–5585 band.
+         */
+        private const val LOOPBACK_PORT_MIN = 47000
+        private const val LOOPBACK_PORT_MAX = 59999
     }
 
     /**
@@ -157,6 +165,8 @@ class AppPreferences(context: Context) {
 
         // --- ADB ---
         ADB_PAIRED("adb_paired"),
+        LOOPBACK_ADB_PORT("loopback_adb_port"),
+        OFFLINE_RECORDING_ENABLED("offline_recording_enabled"),
 
         // --- In-app updates ---
         UPDATE_CHECK_ENABLED("update_check_enabled"),
@@ -310,6 +320,34 @@ class AppPreferences(context: Context) {
 
     /** Marks the one-time ADB pairing as completed (set after the first successful connection). */
     fun setAdbPaired(paired: Boolean) = setBoolean(Key.ADB_PAIRED, paired)
+
+    /**
+     * Returns this install's fixed loopback ADB port for the classic `adb tcpip` listener
+     * (`127.0.0.1:<port>`), which — unlike Wireless Debugging — survives WiFi-off because loopback
+     * is always up. Generated ONCE at random in an uncommon range (deliberately NOT the well-known
+     * 5555) on first read and persisted, so it is stable across app updates (SharedPreferences
+     * survives in-place same-cert updates) and across reboots (we re-arm adbd with the same number).
+     * It resets only on uninstall/clear-data, which also wipes the ADB pairing and forces re-onboard.
+     */
+    fun getLoopbackAdbPort(): Int {
+        val existing = getInt(Key.LOOPBACK_ADB_PORT, 0)
+        if (existing in LOOPBACK_PORT_MIN..LOOPBACK_PORT_MAX) return existing
+        val port = LOOPBACK_PORT_MIN + java.security.SecureRandom().nextInt(LOOPBACK_PORT_MAX - LOOPBACK_PORT_MIN + 1)
+        setInt(Key.LOOPBACK_ADB_PORT, port)
+        return port
+    }
+
+    /**
+     * Whether the user has OPTED IN to "offline recording (no Wi-Fi)" — the loopback `adb tcpip` mode.
+     * OFF by default: it opens a local debugging port bound to all interfaces (RSA-key-gated but a real
+     * surface), so it's only enabled after an explicit security-warning confirmation. When on,
+     * [com.baba.callvault.integrations.adb.AdbShell.ensureConnected] prefers the loopback port so calls
+     * record with no Wi-Fi.
+     */
+    fun isOfflineRecordingEnabled() = getBoolean(Key.OFFLINE_RECORDING_ENABLED, false)
+
+    /** Sets the offline-recording (loopback) opt-in flag. */
+    fun setOfflineRecordingEnabled(enabled: Boolean) = setBoolean(Key.OFFLINE_RECORDING_ENABLED, enabled)
 
     // -------- Persistent Recorder Server (CallVault Plan 5) --------
 
