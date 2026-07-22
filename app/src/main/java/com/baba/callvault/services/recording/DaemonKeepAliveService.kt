@@ -104,12 +104,30 @@ class DaemonKeepAliveService : Service() {
             stopSelf()
             return START_NOT_STICKY
         }
+        // Recover the INSTANT the daemon dies (binder linkToDeath) — don't wait for the next poll.
+        // On a real incoming call this is what races (and hopefully beats) the call after a long idle.
+        RecorderConnection.onDeath = { onDaemonDiedImmediate() }
         // Kick the watchdog now (first tick warms the daemon immediately if it's cold).
         lastReady = null
         watchdogHandler.removeCallbacks(watchdog)
         watchdogHandler.post(watchdog)
         // START_STICKY: if the OS kills us under pressure, restart so the daemon anchor comes back.
         return START_STICKY
+    }
+
+    /**
+     * Called from [RecorderConnection.onDeath] the moment the daemon binder dies — an authoritative
+     * "process gone" signal (linkToDeath only fires on real death). Relaunch immediately, skipping the
+     * poll interval AND the debounce. Posted to the handler so we're off the binder thread.
+     */
+    private fun onDaemonDiedImmediate() {
+        watchdogHandler.post {
+            AppLogger.i(TAG, "keep-alive: binder-death signal — relaunching immediately")
+            lastReady = false
+            updateNotification(false)
+            downStreak = DOWN_STREAK_THRESHOLD // death confirmed — no debounce needed
+            maybeRewarm()
+        }
     }
 
     /**
@@ -162,6 +180,7 @@ class DaemonKeepAliveService : Service() {
 
     override fun onDestroy() {
         watchdogHandler.removeCallbacks(watchdog)
+        RecorderConnection.onDeath = null
         super.onDestroy()
     }
 
