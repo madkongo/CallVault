@@ -197,6 +197,18 @@
                 android:value="Call recording: listen for call state after reboot to record reliably." />
         </service>
 
+        <!-- Persistent keep-alive: anchors our process + watchdog-relaunches the privileged recorder
+             daemon so calls are captured instantly (over binder, no Wi-Fi needed) instead of paying a
+             cold-start. Our equivalent of Shizuku's always-on manager presence. -->
+        <service
+            android:name=".services.recording.DaemonKeepAliveService"
+            android:exported="false"
+            android:foregroundServiceType="specialUse">
+            <property
+                android:name="android.app.PROPERTY_SPECIAL_USE_FGS_SUBTYPE"
+                android:value="Call recording: keep the privileged recorder daemon warm so calls are captured instantly." />
+        </service>
+
     </application>
 
 </manifest>

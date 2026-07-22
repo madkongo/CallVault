@@ -12,6 +12,8 @@ import android.os.Bundle
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.appcompat.app.AppCompatActivity
+import com.baba.callvault.data.AppPreferences
+import com.baba.callvault.services.recording.DaemonKeepAliveService
 
 /**
  * MainActivity is the single Android Activity entry point for CallVault.
@@ -27,6 +29,16 @@ class MainActivity : AppCompatActivity() {
         enableEdgeToEdge()
         setContent {
             AppNavigationScreen()
+        }
+    }
+
+    override fun onResume() {
+        super.onResume()
+        // Anchor the recorder daemon whenever the app is opened. Modern Android requires a foreground
+        // context to (re)start a foreground service, so we do it here rather than from Application.onCreate.
+        // Idempotent — no-op if the keep-alive service is already running.
+        if (AppPreferences(applicationContext).isAdbPaired()) {
+            DaemonKeepAliveService.start(applicationContext)
         }
     }
 }
