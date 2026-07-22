@@ -3,6 +3,25 @@
 All notable changes to CallVault are documented here. The format is based on
 [Keep a Changelog](https://keepachangelog.com/), and this project uses semantic-ish versioning.
 
+## [1.3.1] — 2026-07-22
+
+A reliability release for recordings saved to cloud folders (e.g. Google Drive), based on field reports.
+
+### Fixed
+- **Recordings to a Google Drive folder no longer fail or vanish.** Some storage providers (Google
+  Drive, and other cloud/synced folders) reject the read-write mode the recorder needs, and report a
+  file's size as 0 immediately after writing (their upload is asynchronous). This caused recordings to
+  either fail to start (`Unsupported mode: rw`) or be **falsely detected as empty and deleted**.
+  CallVault now records into on-device storage first and copies the finished file into such folders,
+  and it trusts the actual captured size instead of the provider's delayed report.
+- **Honest error messages.** A storage failure is no longer mislabeled as "ADB connection failed".
+
+### Added
+- **Cloud folders are blocked as the recording folder.** Picking Google Drive / OneDrive / Dropbox as
+  the *device* recording folder is now refused with guidance to choose on-device storage — use the
+  **Google Drive backup** option for cloud copies instead. Any existing cloud recording folder now
+  shows a warning in Settings so it's no longer mistaken for local storage.
+
 ## [1.3.0] — 2026-07-21
 
 The headline feature: **in-app updates**. CallVault can now tell you when a new version is out and
