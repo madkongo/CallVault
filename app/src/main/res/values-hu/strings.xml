@@ -156,6 +156,8 @@
     <string name="settings_persistent_server">Állandó rögzítőszerver</string>
     <string name="settings_persistent_server_description">Hívások rögzítése egy háttérben futó, kiemelt jogosultságú szolgáltatáson keresztül, így a vezeték nélküli hibakeresés a hívások között kikapcsolva maradhat. Kísérleti.</string>
     <string name="settings_recording_folder_label">Felvételek mappája</string>
+    <string name="folder_cloud_rejected">A felhőmappák (például a Google Drive) nem használhatók rögzítésre. Válasszon eszközön lévő tárhelyet – a felhőben tárolt másolatokhoz használja a Google Drive biztonsági mentés lehetőséget.</string>
+    <string name="folder_cloud_warning">⚠ Ez a rögzítési mappa a felhőben van, ami megbízhatatlan a rögzítéshez. Válasszon egy eszközön lévő mappát.</string>
     <string name="settings_section_about">Névjegy</string>
     <string name="settings_section_audio">Hangbeállítások</string>
     <string name="settings_section_debug">Debug beállítások</string>

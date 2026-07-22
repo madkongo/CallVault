@@ -156,6 +156,8 @@
     <string name="settings_persistent_server">Server di registrazione persistente</string>
     <string name="settings_persistent_server_description">Registra le chiamate tramite un servizio privilegiato in background, così il Debug wireless può restare disattivato tra una chiamata e l\'altra. Sperimentale.</string>
     <string name="settings_recording_folder_label">Cartella di registrazione</string>
+    <string name="folder_cloud_rejected">Le cartelle nel cloud (come Google Drive) non possono essere usate per la registrazione. Scelga un\'archiviazione sul dispositivo; usi l\'opzione di backup su Google Drive per le copie nel cloud.</string>
+    <string name="folder_cloud_warning">⚠ Questa cartella di registrazione si trova nel cloud, il che non è affidabile per l\'acquisizione. Scelga una cartella sul dispositivo.</string>
     <string name="settings_section_about">Info</string>
     <string name="settings_section_audio">Configurazione audio</string>
     <string name="settings_section_debug">Opzioni di debug</string>

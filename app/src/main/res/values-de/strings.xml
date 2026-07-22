@@ -156,6 +156,8 @@
     <string name="settings_persistent_server">Persistenter Aufnahmeserver</string>
     <string name="settings_persistent_server_description">Anrufe über einen privilegierten Hintergrunddienst aufzeichnen, damit das drahtlose Debugging zwischen Anrufen ausgeschaltet bleiben kann. Experimentell.</string>
     <string name="settings_recording_folder_label">Aufnahmeordner</string>
+    <string name="folder_cloud_rejected">Cloud-Ordner (wie Google Drive) können nicht für Aufnahmen verwendet werden. Wählen Sie einen Speicherort auf dem Gerät – nutzen Sie die Google Drive-Backup-Option für Cloud-Kopien.</string>
+    <string name="folder_cloud_warning">⚠ Dieser Aufnahmeordner liegt in der Cloud, was für die Aufnahme unzuverlässig ist. Wählen Sie einen Ordner auf dem Gerät.</string>
     <string name="settings_section_about">Über</string>
     <string name="settings_section_audio">Tonkonfiguration</string>
     <string name="settings_section_debug">Debug-Optionen</string>

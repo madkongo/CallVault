@@ -156,6 +156,8 @@
     <string name="settings_persistent_server">Постоянный сервер записи</string>
     <string name="settings_persistent_server_description">Записывать звонки через привилегированную фоновую службу, чтобы отладку по Wi-Fi можно было держать выключенной между звонками. Экспериментально.</string>
     <string name="settings_recording_folder_label">Папка для записей</string>
+    <string name="folder_cloud_rejected">Облачные папки (например, Google Drive) нельзя использовать для записи. Выберите хранилище на устройстве — для копий в облаке используйте функцию резервного копирования в Google Drive.</string>
+    <string name="folder_cloud_warning">⚠ Эта папка для записей находится в облаке, что ненадёжно для записи. Выберите папку на устройстве.</string>
     <string name="settings_section_about">О приложении</string>
     <string name="settings_section_audio">Настройки аудио</string>
     <string name="settings_section_debug">Настройки отладки</string>
