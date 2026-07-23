@@ -40,6 +40,16 @@ object AdbShell {
     private const val POST_DISCONNECT_WAIT_MS = 500L
     /** Hard cap on the tcpip: arm open (adbd restarts mid-open, so the call can stall — don't wait forever). */
     private const val ARM_FIRE_CAP_MS = 3000L
+    /** Max time to wait for an armed-but-restarting loopback listener to reappear before re-arming via WD. */
+    private const val LOOPBACK_SELFHEAL_MS = 12_000L
+    /** Poll interval while waiting for the loopback listener to self-heal after an adbd restart. */
+    private const val LOOPBACK_RETRY_INTERVAL_MS = 1500L
+    /** Sentinel echoed by [waitForShellReady] to confirm adbd actually answers a shell command. */
+    private const val SHELL_PROBE_TOKEN = "cv_shell_ok"
+    /** Poll interval between shell-readiness probes while adbd is coming back after a restart. */
+    private const val SHELL_PROBE_INTERVAL_MS = 400L
+    /** Hard cap per shell probe so a half-open (mid-restart) adbd connection can never hang the caller. */
+    private const val SHELL_PROBE_CAP_MS = 1500L
 
     /**
      * Ensures the ADB connection is up (mDNS-discover the connect port, connect, settle).
@@ -65,17 +75,69 @@ object AdbShell {
             grantSecureSettingsIfNeeded(context)
             return true
         }
-        // Loopback-first — ONLY when the user has opted in to offline recording. The persistent
-        // classic-tcpip port (see [armLoopbackIfNeeded]) works OFF-WiFi (loopback is always up, no mDNS,
-        // no WiFi), so a call on the road records without any network. Fails fast (connection refused)
-        // when not armed, falling through to Wireless Debugging. Gated behind the opt-in because arming
-        // opens a local debugging port (RSA-gated but a real surface) — see AppPreferences.isOfflineRecordingEnabled.
-        if (AppPreferences(context).isOfflineRecordingEnabled() && connectLoopback(context)) {
-            Thread.sleep(CONNECT_SETTLE_MS)
-            AppPreferences(context).setAdbPaired(true)
-            grantSecureSettingsIfNeeded(context)
-            return true
+        // OFFLINE MODE = LOOPBACK ONLY. We deliberately do NOT enable Wireless Debugging on this hot path:
+        // writing adb_wifi_enabled restarts adbd, and when classic-tcpip (loopback) is the daemon's only
+        // lifeline that restart KILLS the daemon. On-device heartbeat proof: the WD-enable churn was the
+        // PRIMARY cause of every daemon death — with WD kept off and loopback armed the daemon persists
+        // across screen-off + deep doze (~30 min, Athena-limited). If loopback is DOWN (e.g. tcpip cleared
+        // on reboot) we do NOT fall back to persistent WD here; the launcher re-arms loopback via
+        // [armLoopbackIfNeeded] (a deliberate, transient one-time WD bootstrap), which is not this churn.
+        if (AppPreferences(context).isOfflineRecordingEnabled()) {
+            var ok = connectLoopback(context)
+            // Loopback can be MOMENTARILY unavailable while adbd restarts (a USB plug/unplug transition,
+            // or a WD toggle) — but the tcpip listener SELF-HEALS because `service.adb.tcp.port` persists
+            // across adbd restarts, so it reappears within a few seconds. If the port is still armed, WAIT
+            // for it rather than re-arm via WD (which is what caused the transient WD "blips" on unplug).
+            // Only when the port is genuinely gone (e.g. tcpip cleared on reboot) do we let the caller
+            // re-arm — distinguished by isLoopbackArmed() so a post-reboot connect isn't delayed here.
+            if (!ok && isLoopbackArmed(context)) {
+                var waited = 0L
+                while (!ok && waited < LOOPBACK_SELFHEAL_MS) {
+                    Thread.sleep(LOOPBACK_RETRY_INTERVAL_MS)
+                    waited += LOOPBACK_RETRY_INTERVAL_MS
+                    ok = connectLoopback(context)
+                }
+                if (ok) AppLogger.i(TAG, "Loopback self-healed after ${waited}ms (adbd restart) — no WD needed")
+            }
+            if (ok) {
+                Thread.sleep(CONNECT_SETTLE_MS)
+                AppPreferences(context).setAdbPaired(true)
+                grantSecureSettingsIfNeeded(context)
+            }
+            return ok
         }
+        return connectViaWirelessDebugging(context)
+    }
+
+    /**
+     * True if adbd's classic-tcpip listener is armed on OUR loopback port — i.e. `service.adb.tcp.port`
+     * equals [AppPreferences.getLoopbackAdbPort]. The property PERSISTS across adbd restarts (only a
+     * reboot clears it), so "armed but connect refused" means adbd is mid-restart and the port will come
+     * back — worth waiting for instead of re-arming via Wireless Debugging.
+     */
+    private fun isLoopbackArmed(context: Context): Boolean =
+        getSystemProperty("service.adb.tcp.port") == AppPreferences(context).getLoopbackAdbPort().toString()
+
+    /** Reads a system property via the hidden `SystemProperties.get` (reflection; public SDK-safe). */
+    private fun getSystemProperty(key: String): String = runCatching {
+        Class.forName("android.os.SystemProperties")
+            .getMethod("get", String::class.java)
+            .invoke(null, key) as? String ?: ""
+    }.getOrDefault("")
+
+    /**
+     * Wireless-Debugging bootstrap: enable WD if the OEM turned it off, mDNS-discover the connect port,
+     * connect, settle. This is the ONLY path that writes `adb_wifi_enabled=1`. Used by the non-offline
+     * recording path and by [armLoopbackIfNeeded] for the one-time base connection it needs to arm the
+     * loopback listener (arming inherently needs a transport once).
+     *
+     * @Synchronized (instance monitor) — where both are held it is always acquired AFTER
+     * [heavyOperationLock], matching every other lock site (heavy → instance), so no inversion.
+     */
+    @Synchronized
+    private fun connectViaWirelessDebugging(context: Context): Boolean {
+        val mgr = AdbConnectionManager.getInstance(context)
+        if (mgr.isConnected) return true
         // Re-enable Wireless debugging if the OEM turned it off on reboot (needs WRITE_SECURE_SETTINGS).
         if (!isWirelessDebuggingEnabled(context) && enableWirelessDebugging(context)) {
             AppLogger.i(TAG, "Re-enabled Wireless debugging; waiting for adbd to advertise…")
@@ -83,9 +145,8 @@ object AdbShell {
         }
         val port = AdbMdns.discoverPort(context, AdbMdns.TLS_CONNECT, MDNS_TIMEOUT_MS) ?: return false
         // connect() THROWS on an unpaired/unauthorised identity (AdbPairingRequiredException) or a flaky
-        // TLS handshake (SSLProtocolException: CERTIFICATE_UNKNOWN). ensureConnected MUST return a boolean —
-        // callers branch on it (onboarding's setupAdb starts pairing when false; the recording/boot paths
-        // treat false as "not available"). Propagating crashed the app at the onboarding "Setup ADB" step.
+        // TLS handshake (SSLProtocolException: CERTIFICATE_UNKNOWN). Callers branch on the boolean —
+        // propagating crashed the app at onboarding's "Setup ADB" step — so swallow to false.
         val ok = runCatching { mgr.connect("127.0.0.1", port) }.getOrElse { e ->
             AppLogger.w(TAG, "ADB connect failed (pairing required or transport error): ${e.message}")
             false
@@ -125,6 +186,58 @@ object AdbShell {
      */
     fun openShell(context: Context, command: String): AdbStream =
         AdbConnectionManager.getInstance(context).openStream("shell:$command")
+
+    /**
+     * Polls a trivial shell round-trip until adbd actually answers, or [timeoutMs] elapses.
+     *
+     * On OnePlus, adbd RESTARTS on screen on/off transitions (even cable-out, WD off) — a TCP connect to
+     * the loopback port can succeed while adbd is still mid-init, so firing the daemon-launch command then
+     * lands on a dead shell and we wait out a full launch timeout for a binder that never comes. Verifying
+     * a cheap `echo` round-trips first means we launch ONLY into a live shell — the daemon then boots
+     * instantly. Cheap and bounded: each probe is one short shell exec; the daemon relaunch calls this
+     * right before [RecorderServerLauncher.launchOnce].
+     *
+     * @return true once a shell command round-trips; false if none did within [timeoutMs].
+     */
+    fun waitForShellReady(context: Context, timeoutMs: Long): Boolean {
+        val deadline = System.currentTimeMillis() + timeoutMs
+        var probes = 0
+        while (System.currentTimeMillis() < deadline) {
+            probes++
+            if (probeShellOnce(context)) {
+                if (probes > 1) AppLogger.i(TAG, "Loopback shell became ready after $probes probes")
+                return true
+            }
+            Thread.sleep(SHELL_PROBE_INTERVAL_MS)
+        }
+        AppLogger.w(TAG, "Loopback shell not ready within ${timeoutMs}ms ($probes probes) — adbd still restarting?")
+        return false
+    }
+
+    /**
+     * One shell round-trip, HARD-CAPPED at [SHELL_PROBE_CAP_MS]. Runs the exec on a throwaway daemon
+     * thread and joins with a timeout: if adbd is mid-restart the connection can half-open so the read
+     * never sees EOF — we then close the stream (unblocking the read) and report "not ready" instead of
+     * hanging the caller. This is the fix for the stall the un-bounded version caused on unplug.
+     */
+    private fun probeShellOnce(context: Context): Boolean {
+        val streamRef = java.util.concurrent.atomic.AtomicReference<AdbStream?>()
+        val ok = java.util.concurrent.atomic.AtomicBoolean(false)
+        val t = Thread {
+            runCatching {
+                val s = openShell(context, "echo $SHELL_PROBE_TOKEN")
+                streamRef.set(s)
+                s.use { if (it.openInputStream().bufferedReader().use { r -> r.readText() }.contains(SHELL_PROBE_TOKEN)) ok.set(true) }
+            }
+        }.apply { isDaemon = true; name = "cv-shell-probe" }
+        t.start()
+        t.join(SHELL_PROBE_CAP_MS)
+        if (t.isAlive) {
+            runCatching { streamRef.get()?.close() } // unblock the hung read so the abandoned thread dies
+            return false
+        }
+        return ok.get()
+    }
 
     /**
      * Opens an ADB `exec:` stream for [command] — a RAW, PTY-less bidirectional stream. Use this
@@ -190,8 +303,10 @@ object AdbShell {
             AppLogger.i(TAG, "Loopback already armed & reachable — nothing to do")
             return@synchronized true
         }
-        // Need a base connection to arm through (Wireless Debugging → needs WiFi once).
-        if (!ensureConnected(context)) {
+        // Need a base connection to arm through — bootstrap via Wireless Debugging directly (NOT
+        // ensureConnected, which in offline mode is loopback-only and would just fail here). This is the
+        // one deliberate, transient WD use in offline mode; applyWdPolicy turns WD back off once armed.
+        if (!connectViaWirelessDebugging(context)) {
             AppLogger.i(TAG, "Cannot arm loopback — no base connection (needs WiFi + Wireless debugging once)")
             return@synchronized false
         }

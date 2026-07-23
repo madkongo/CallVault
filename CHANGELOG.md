@@ -3,6 +3,32 @@
 All notable changes to CallVault are documented here. The format is based on
 [Keep a Changelog](https://keepachangelog.com/), and this project uses semantic-ish versioning.
 
+## [1.4.0] — 2026-07-23
+
+The headline: **record calls even without Wi-Fi**, plus a much faster, more reliable recorder.
+
+### Added
+- **Offline recording (opt-in) — record with no Wi-Fi.** A new option (Settings → Debug → "Offline
+  recording") lets CallVault capture calls even when you're not on a Wi-Fi network — for the important
+  call you get on the road. It's **off by default** and shows a short security note when you turn it on,
+  because it opens a local debugging port on your own device. You can also enable it straight from the
+  "What's new" note after updating.
+- **The recorder stays warm and comes back fast.** CallVault now keeps its privileged recorder ready and
+  relaunches it within a few seconds when the system reclaims it — so a call after your phone has been
+  idle is captured almost immediately instead of after a long "starting up" wait.
+
+### Changed
+- **New audio-capture engine.** Calls are recorded through a direct on-device audio path instead of the
+  previous screen-mirroring helper. Capture begins from the first moment (no clipped beginnings), the
+  daemon boots faster, and the app has fewer moving parts. (Falls back to the old path automatically if a
+  device can't use the new one.)
+- **One clear "ready to record" notification** instead of the occasional duplicates.
+
+### Fixed
+- **No more Wireless-Debugging notification flapping** on and off while idle.
+- **Recovery after the system reclaims the recorder is now seconds, not up to a minute** — the old
+  behaviour left "starting up" showing long after recording was actually ready.
+
 ## [1.3.1] — 2026-07-22
 
 A reliability release for recordings saved to cloud folders (e.g. Google Drive), based on field reports.

@@ -95,8 +95,8 @@ import androidx.compose.material.icons.filled.NotificationsActive
 import androidx.compose.material.icons.filled.Save
 import androidx.compose.material.icons.filled.Vibration
 import androidx.compose.material.icons.filled.WifiOff
-import com.baba.callvault.integrations.adb.AdbShell
-import com.baba.callvault.server.RecorderServerLauncher
+import com.baba.callvault.ui.common.OfflineDialogMode
+import com.baba.callvault.ui.common.OfflineRecordingDialog
 import androidx.compose.ui.platform.LocalInspectionMode
 import androidx.compose.ui.platform.LocalResources
 import org.xmlpull.v1.XmlPullParser
@@ -1002,70 +1002,27 @@ private fun BugReportSection(
 @Composable
 private fun OfflineRecordingToggle() {
     val context = LocalContext.current
-    val scope = rememberCoroutineScope()
     val prefs = remember { AppPreferences(context) }
     var enabled by remember { mutableStateOf(prefs.isOfflineRecordingEnabled()) }
-    var showWarning by remember { mutableStateOf(false) }
-    var busy by remember { mutableStateOf(false) }
+    // Non-null while the enable/disable dialog is walking the user through the ADB work with live feedback.
+    var dialogMode by remember { mutableStateOf<OfflineDialogMode?>(null) }
 
     SettingsToggleRow(
         icon = Icons.Filled.WifiOff,
         label = stringResource(R.string.settings_offline_recording_label),
         description = stringResource(R.string.settings_offline_recording_desc),
         checked = enabled,
-        enabled = !busy,
+        enabled = dialogMode == null,
         onCheckedChange = { turnOn ->
-            if (turnOn) {
-                // Don't enable yet — confirm the security tradeoff first.
-                showWarning = true
-            } else {
-                enabled = false
-                prefs.setOfflineRecordingEnabled(false)
-                busy = true
-                scope.launch {
-                    withContext(Dispatchers.IO) { runCatching { AdbShell.disarmLoopback(context) } }
-                    busy = false
-                    Toast.makeText(context, "Offline recording disabled", Toast.LENGTH_SHORT).show()
-                }
-            }
+            dialogMode = if (turnOn) OfflineDialogMode.ENABLE else OfflineDialogMode.DISABLE
         },
     )
 
-    if (showWarning) {
-        AlertDialog(
-            onDismissRequest = { showWarning = false },
-            title = { Text(stringResource(R.string.offline_recording_warning_title)) },
-            text = { Text(stringResource(R.string.offline_recording_warning_message)) },
-            confirmButton = {
-                TextButton(onClick = {
-                    showWarning = false
-                    enabled = true
-                    prefs.setOfflineRecordingEnabled(true)
-                    busy = true
-                    scope.launch {
-                        val armed = withContext(Dispatchers.IO) {
-                            val ok = AdbShell.armLoopbackIfNeeded(context)
-                            // Arming restarts adbd and kills the daemon — re-warm so the first off-WiFi call records.
-                            if (ok) runCatching { RecorderServerLauncher.ensureServerRunning(context) }
-                            ok
-                        }
-                        busy = false
-                        if (armed) {
-                            Toast.makeText(context, "Offline recording enabled", Toast.LENGTH_SHORT).show()
-                        } else {
-                            // Couldn't arm (needs Wi-Fi + Wireless debugging once) — revert the opt-in.
-                            enabled = false
-                            prefs.setOfflineRecordingEnabled(false)
-                            Toast.makeText(context, "Couldn't enable — connect on Wi-Fi once, then retry", Toast.LENGTH_LONG).show()
-                        }
-                    }
-                }) { Text(stringResource(R.string.offline_recording_warning_continue)) }
-            },
-            dismissButton = {
-                TextButton(onClick = { showWarning = false /* leave the toggle OFF */ }) {
-                    Text(stringResource(R.string.general_cancel))
-                }
-            },
+    dialogMode?.let { mode ->
+        OfflineRecordingDialog(
+            mode = mode,
+            onResult = { nowEnabled -> enabled = nowEnabled },
+            onClose = { dialogMode = null },
         )
     }
 }

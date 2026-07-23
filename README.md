@@ -13,7 +13,7 @@
 
 ## What is CallVault?
 
-**CallVault** is a **non-root, FOSS call recorder for Android** that records **both sides** of a phone call. It drives a privileged shell session entirely **on-device** — no root, no [Shizuku](https://github.com/RikkaApps/Shizuku), no companion PC — using an embedded ADB client ([libadb-android](https://github.com/MuntashirAkon/libadb-android)) over Android's own **Wireless Debugging**, with [scrcpy-server](https://github.com/genymobile/scrcpy) as the audio-capture engine.
+**CallVault** is a **non-root, FOSS call recorder for Android** that records **both sides** of a phone call. It drives a privileged shell session entirely **on-device** — no root, no [Shizuku](https://github.com/RikkaApps/Shizuku), no companion PC — using an embedded ADB client ([libadb-android](https://github.com/MuntashirAkon/libadb-android)) over Android's own **Wireless Debugging**. Audio is captured through a direct on-device path, with [scrcpy-server](https://github.com/genymobile/scrcpy) as an automatic fallback.
 
 You pair **once**; after that it's hands-free.
 
@@ -30,6 +30,7 @@ You pair **once**; after that it's hands-free.
 | | Feature |
 |:---:|---|
 | 🎙️ | Records **both sides** of incoming & outgoing calls (incl. Bluetooth / headset) |
+| 📶 | **Offline recording (opt-in)** — record calls even with **no Wi-Fi network**, for calls on the road (off by default; opens a local, RSA-gated debugging port when enabled) |
 | 🤖 | **Automatic** recording with per-call rules — ignore anonymous, cross-country, or specific contacts |
 | ☁️ | Save to **device, a cloud folder, or both**, with optional **scheduled sync** (immediate / daily / weekly) |
 | 🧹 | **Retention / auto-delete** — remove recordings after a chosen age, separately for device & cloud, swept daily at a time you pick (your local time zone) |

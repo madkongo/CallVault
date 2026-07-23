@@ -16,4 +16,12 @@
     <string name="home_update_banner_downloading">Загрузка… %1$d%%</string>
     <string name="home_update_banner_installing">Установка…</string>
     <string name="home_updated_banner_text">CallVault обновлён до %1$s</string>
+    <string name="home_whatsnew_title">Что нового</string>
+    <string name="home_whatsnew_body">• Запись звонков даже без Wi-Fi (включите ниже)\n• Запись готова быстрее после простоя телефона\n• Новый, более лёгкий аудиодвижок — больше никаких обрезанных начал звонков</string>
+    <string name="home_whatsnew_offline_cta">Включить запись без Wi-Fi</string>
+    <string name="home_whatsnew_offline_enabled">Офлайн-запись включена.</string>
+    <string name="home_whatsnew_offline_failed">Не удалось включить — подключитесь один раз к Wi-Fi, затем попробуйте в Настройках.</string>
+    <string name="home_whatsnew_offline_enabling">Включение записи без Wi-Fi…</string>
+    <string name="offline_recording_on">Запись без Wi-Fi включена.</string>
+    <string name="offline_recording_disabling">Выключение записи без Wi-Fi…</string>
 </resources>

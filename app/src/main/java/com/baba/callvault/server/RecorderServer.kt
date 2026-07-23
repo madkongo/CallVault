@@ -56,10 +56,7 @@ object RecorderServer {
     private val recordingActive = AtomicBoolean(false)
 
     /** The active session, owned by the worker thread; null between recordings. */
-    @Volatile private var session: RecorderSession? = null
-
-    /** scrcpy binary path established by [ensureScrcpyJar] in [main]; reused per session. */
-    @Volatile private var scrcpyJarPath: String = ScrcpyJarExtractor.JAR_PATH
+    @Volatile private var session: RecordingSession? = null
 
     /** The daemon's own APK path (launch arg), used to (re)extract scrcpy if it goes missing. */
     @Volatile private var apkPath: String = ""
@@ -99,8 +96,9 @@ object RecorderServer {
             // A main looper is required (binder dispatch + system-context ContentResolver fallback).
             Looper.prepareMainLooper()
 
-            // Self-extract scrcpy from our OWN apk to a reaper-safe, ADB-free, namespace-safe path.
-            scrcpyJarPath = ScrcpyJarExtractor.ensureScrcpyJar(apkPath)
+            // NOTE: scrcpy is NOT extracted here anymore — the direct AudioRecord path needs no jar, and
+            // the scrcpy fallback re-extracts on demand ([startWithFallback]). Keeps daemon boot fast so a
+            // relaunch after an Athena reap is ready sooner (the cold-start that a call races).
 
             val stub = createStub()
             val delivered = BinderDelivery.deliverBinderToApp(stub.asBinder(), authority)
@@ -115,8 +113,39 @@ object RecorderServer {
     }
 
     /**
+     * Starts capture, preferring the FAST direct AudioRecord pipeline and falling back to scrcpy.
+     *
+     * The direct path ([DirectAudioRecorderSession]) spawns no child process and needs no scrcpy jar, so
+     * it begins capturing near-instantly — used whenever it can handle the source+codec on this device
+     * ([DirectAudioRecorderSession.supports]). If it throws during setup it releases its own resources
+     * WITHOUT closing [outFd], so the live fd can still be handed to scrcpy. Throws if BOTH paths fail.
+     */
+    private fun startWithFallback(
+        source: ScrcpyAudioSource,
+        codec: ScrcpyAudioCodec,
+        bitRate: Int,
+        outFd: ParcelFileDescriptor,
+    ): RecordingSession {
+        if (DirectAudioRecorderSession.supports(source, codec)) {
+            val direct = DirectAudioRecorderSession(source, codec, bitRate, outFd)
+            if (runCatching { direct.start() }
+                    .onFailure { AppLogger.w(TAG, "Direct capture unavailable, falling back to scrcpy: ${it.message}") }
+                    .isSuccess
+            ) {
+                AppLogger.i(TAG, "Recording via DIRECT AudioRecord — source=${source.cliKey} codec=${codec.cliKey}")
+                return direct
+            }
+        }
+        val freshJar = ScrcpyJarExtractor.ensureScrcpyJar(apkPath) // scrcpy needs its extracted jar
+        val scrcpy = RecorderSession(source, codec, bitRate, outFd, freshJar)
+        scrcpy.start()
+        AppLogger.i(TAG, "Recording via scrcpy — source=${source.cliKey} codec=${codec.cliKey}")
+        return scrcpy
+    }
+
+    /**
      * The daemon-side [IRecorderService] implementation. Binder transactions are short and never block
-     * on scrcpy: [startRecording]/[stopRecording] post the heavy work to [workerHandler].
+     * on capture setup: [startRecording]/[stopRecording] post the heavy work to [workerHandler].
      */
     private fun createStub(): IRecorderService.Stub = object : IRecorderService.Stub() {
 
@@ -147,23 +176,17 @@ object RecorderServer {
 
             AppLogger.i(TAG, "startRecording source=$source codec=$codec bitRate=$bitRate")
 
-            // Heavy work (scrcpy launch, socket retry) OFF the binder thread.
+            // Heavy work (AudioRecord/encoder init or scrcpy launch) OFF the binder thread.
             workerHandler.post {
-                var built: RecorderSession? = null
-                runCatching {
-                    val freshJar = ScrcpyJarExtractor.ensureScrcpyJar(apkPath) // re-extract if reaper ate it
-                    val s = RecorderSession(sourceEnum, codecEnum, bitRate, outFd, freshJar)
-                    built = s
-                    s.start()
-                    session = s
-                }.onFailure {
-                    AppLogger.e(TAG, "startRecording failed: ${it.message}", it)
-                    // If the session was constructed, stop() destroys the (possibly-launched) scrcpy child,
-                    // closes the socket/muxer AND closes outFd — without this a failed start would LEAK the
-                    // shell-uid scrcpy child, which holds the audio source and breaks the NEXT recording.
-                    // If construction never happened, close the fd directly.
-                    val s = built
-                    if (s != null) runCatching { s.stop() } else runCatching { outFd.close() }
+                val active = runCatching { startWithFallback(sourceEnum, codecEnum, bitRate, outFd) }
+                    .onFailure { AppLogger.e(TAG, "startRecording failed (all paths): ${it.message}", it) }
+                    .getOrNull()
+                if (active != null) {
+                    session = active
+                } else {
+                    // Both paths failed and neither owns the fd now — close it so it isn't leaked, and
+                    // release the recording latch so a later attempt can run.
+                    runCatching { outFd.close() }
                     session = null
                     recordingActive.set(false)
                 }

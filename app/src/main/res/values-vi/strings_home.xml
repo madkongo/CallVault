@@ -16,4 +16,12 @@
     <string name="home_update_banner_downloading">Đang tải… %1$d%%</string>
     <string name="home_update_banner_installing">Đang cài đặt…</string>
     <string name="home_updated_banner_text">CallVault đã cập nhật lên %1$s</string>
+    <string name="home_whatsnew_title">Có gì mới</string>
+    <string name="home_whatsnew_body">• Ghi âm cuộc gọi ngay cả khi không có Wi-Fi (bật bên dưới)\n• Bản ghi âm sẵn sàng nhanh hơn sau khi điện thoại ở trạng thái nhàn rỗi\n• Công cụ âm thanh mới, nhẹ hơn — không còn cắt mất phần đầu cuộc gọi</string>
+    <string name="home_whatsnew_offline_cta">Bật ghi âm khi không có Wi-Fi</string>
+    <string name="home_whatsnew_offline_enabled">Đã bật ghi âm ngoại tuyến.</string>
+    <string name="home_whatsnew_offline_failed">Không thể bật — hãy kết nối Wi-Fi một lần, sau đó thử lại từ Cài đặt.</string>
+    <string name="home_whatsnew_offline_enabling">Đang bật ghi âm không cần Wi-Fi…</string>
+    <string name="offline_recording_on">Ghi âm không cần Wi-Fi đang bật.</string>
+    <string name="offline_recording_disabling">Đang tắt ghi âm không cần Wi-Fi…</string>
 </resources>
