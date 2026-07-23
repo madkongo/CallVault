@@ -16,4 +16,12 @@
     <string name="home_update_banner_downloading">正在下载… %1$d%%</string>
     <string name="home_update_banner_installing">正在安装…</string>
     <string name="home_updated_banner_text">CallVault 已更新到 %1$s</string>
+    <string name="home_whatsnew_title">新功能</string>
+    <string name="home_whatsnew_body">• 即使没有 Wi-Fi 也能录制通话（在下方开启）\n• 手机闲置后，录音准备就绪更快\n• 全新、更轻量的音频引擎 — 通话开头不再被截断</string>
+    <string name="home_whatsnew_offline_cta">开启无 Wi-Fi 录音</string>
+    <string name="home_whatsnew_offline_enabled">已启用离线录音。</string>
+    <string name="home_whatsnew_offline_failed">无法启用 — 请先连接一次 Wi-Fi，然后在设置中重试。</string>
+    <string name="home_whatsnew_offline_enabling">正在启用无 Wi-Fi 录音…</string>
+    <string name="offline_recording_on">无 Wi-Fi 录音已开启。</string>
+    <string name="offline_recording_disabling">正在关闭无 Wi-Fi 录音…</string>
 </resources>

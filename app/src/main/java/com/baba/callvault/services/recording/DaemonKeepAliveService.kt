@@ -24,6 +24,7 @@ import android.os.SystemClock
 import androidx.core.app.NotificationCompat
 import androidx.core.content.ContextCompat
 import com.baba.callvault.R
+import com.baba.callvault.data.AppPreferences
 import com.baba.callvault.server.RecorderConnection
 import com.baba.callvault.server.RecorderServerLauncher
 import com.baba.callvault.utils.AppLogger
@@ -32,19 +33,17 @@ import com.baba.callvault.utils.AppLogger
  * Persistent foreground service that keeps CallVault's privileged recorder daemon WARM — our
  * equivalent of what Shizuku's manager app does for its server: a durable foreground presence that
  * anchors the app process and actively re-warms the daemon the moment it dies, so a call is captured
- * instantly (over binder, no Wi-Fi needed) instead of paying a ~10–24s cold-start that outlasts short
- * calls.
+ * instantly (over binder) instead of paying a cold-start that outlasts a short call.
  *
- * **Why a foreground service.** OnePlus/ColorOS reaps our detached shell-uid daemon after a few minutes
- * of idle. Holding a foreground service (a) keeps our own process important, giving the daemon a best-
- * effort priority anchor, and (b) lets a watchdog notice the daemon died and relaunch it BEFORE the
- * next call, not during it. Recording itself flows over the daemon's binder, so once warm, calls record
- * with Wi-Fi off — this service is the thing that keeps it warm.
+ * **Why a foreground service.** OnePlus/ColorOS reaps our detached shell-uid daemon on idle and on
+ * screen transitions (it restarts adbd, which the daemon dies with). Holding a foreground service (a)
+ * keeps our own process important, and (b) lets us notice the daemon died and relaunch it — ideally
+ * BEFORE the next call. Recording itself flows over the daemon's binder, so once warm, calls record
+ * even with Wi-Fi off (over the opt-in loopback transport).
  *
- * **Battery-safe.** The watchdog is a cheap 60s binder-liveness check. A relaunch is only attempted
- * when the daemon is down AND Wi-Fi is available (Wireless debugging needs Wi-Fi to relaunch) and is
- * throttled — so off-Wi-Fi idle costs nothing (the daemon simply can't be relaunched there; that gap is
- * what the opt-in loopback mode covers).
+ * **Fast recovery.** A confirmed binder-death ([onDaemonDiedImmediate]) relaunches immediately, and the
+ * notification flips to "ready" the instant the relaunch succeeds. A cheap 60s binder-liveness watchdog
+ * is the backup for a death we somehow missed.
  */
 class DaemonKeepAliveService : Service() {
 
@@ -126,28 +125,39 @@ class DaemonKeepAliveService : Service() {
             lastReady = false
             updateNotification(false)
             downStreak = DOWN_STREAK_THRESHOLD // death confirmed — no debounce needed
-            maybeRewarm()
+            // Confirmed death (linkToDeath) is authoritative — relaunch NOW, bypassing the throttle.
+            // The throttle exists to avoid HAMMERING a failed relaunch, NOT to delay a genuine recovery:
+            // on OnePlus the daemon dies on every screen transition, so a death shortly after a prior
+            // relaunch was being throttled — the cause of a long "starting up" window a call would race.
+            maybeRewarm(force = true)
         }
     }
 
     /**
-     * Relaunch the daemon if it's down — but only when it can actually succeed (Wi-Fi up, since
-     * Wireless debugging needs it) and not more than once per [REWARM_THROTTLE_MS]. When the daemon is
-     * already connected the [watchdog] never calls this, so an active recording (daemon connected) is
-     * implicitly skipped and never churned.
+     * Relaunch the daemon if it's down. [force] (a confirmed binder-death) bypasses the throttle so a
+     * genuine recovery isn't delayed; the un-forced watchdog path still throttles to avoid hammering a
+     * relaunch that keeps failing. Loopback records off-Wi-Fi, so only the non-offline (Wireless
+     * Debugging) relaunch path requires Wi-Fi. When the daemon is already connected the [watchdog] never
+     * calls this, so an active recording is implicitly skipped and never churned.
      */
-    private fun maybeRewarm() {
+    private fun maybeRewarm(force: Boolean = false) {
         if (rewarming) return
         val now = SystemClock.elapsedRealtime()
-        if (now - lastRewarmAtMs < REWARM_THROTTLE_MS) return
-        if (!isWifiConnected()) return // off-Wi-Fi we can't relaunch (WD needs Wi-Fi) — save battery
+        if (!force && now - lastRewarmAtMs < REWARM_THROTTLE_MS) return
+        val offline = runCatching { AppPreferences(this).isOfflineRecordingEnabled() }.getOrDefault(false)
+        if (!offline && !isWifiConnected()) return // the WD relaunch path needs Wi-Fi; loopback doesn't
         lastRewarmAtMs = now
         rewarming = true
         Thread {
-            AppLogger.i(TAG, "keep-alive: daemon down — relaunching over Wi-Fi")
-            runCatching { RecorderServerLauncher.ensureServerRunning(applicationContext) }
+            AppLogger.i(TAG, "keep-alive: daemon down — relaunching (force=$force offline=$offline)")
+            val ok = runCatching { RecorderServerLauncher.ensureServerRunning(applicationContext) }
                 .onFailure { AppLogger.w(TAG, "keep-alive relaunch failed: ${it.message}") }
+                .getOrDefault(false)
             rewarming = false
+            // Flip the notification to "ready" the INSTANT the relaunch succeeds — don't wait for the next
+            // 60s watchdog tick. Without this the daemon reconnects in seconds but the user would still see
+            // "starting up" for up to a minute (a perceived-but-false slow recovery).
+            if (ok) watchdogHandler.post { lastReady = true; updateNotification(true) }
         }.apply { isDaemon = true; name = "cv-keepalive-rewarm" }.start()
     }
 
@@ -194,8 +204,13 @@ class DaemonKeepAliveService : Service() {
         /** How often the watchdog checks the daemon is alive. Cheap (a binder ping). */
         private const val WATCHDOG_INTERVAL_MS = 60_000L
 
-        /** Minimum gap between daemon relaunch attempts, so a persistently-down daemon isn't hammered. */
-        private const val REWARM_THROTTLE_MS = 90_000L
+        /**
+         * Minimum gap between UN-FORCED (watchdog) relaunch attempts, so a persistently-failing relaunch
+         * isn't hammered. A confirmed binder-death relaunches immediately via `maybeRewarm(force = true)`
+         * and ignores this. Kept modest (was 90s — which delayed real recoveries when the daemon died
+         * shortly after a prior relaunch, as it does on every OnePlus screen transition).
+         */
+        private const val REWARM_THROTTLE_MS = 20_000L
 
         /** Consecutive down reads before relaunching — debounces a transient binder blip into no action. */
         private const val DOWN_STREAK_THRESHOLD = 2

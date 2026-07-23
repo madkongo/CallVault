@@ -44,7 +44,7 @@ internal class RecorderSession(
     /** The daemon's received fd copy. Muxer writes through it; closed by [stop] after muxer.close(). */
     private val outFd: ParcelFileDescriptor,
     private val scrcpyJarPath: String
-) {
+) : RecordingSession {
 
     private companion object {
         private const val TAG = "CV:RecorderServer"
@@ -78,7 +78,7 @@ internal class RecorderSession(
      *
      * @throws IOException if the scrcpy jar is missing or the abstract socket never becomes ready.
      */
-    fun start() {
+    override fun start() {
         // Guard: a missing/empty jar would make app_process fail with ClassNotFound — surface it clearly.
         if (!File(scrcpyJarPath).exists()) {
             throw IOException("scrcpy jar missing at $scrcpyJarPath")
@@ -167,7 +167,7 @@ internal class RecorderSession(
      * socket → close the daemon's received outFd copy → pkill stale. Best-effort throughout. Idempotent
      * (the caller's AtomicBoolean ensures one invocation; each step is independently guarded anyway).
      */
-    fun stop() {
+    override fun stop() {
         AppLogger.i(TAG, "Stopping recording session")
 
         // Stop the parser loop first so it releases the socket read.

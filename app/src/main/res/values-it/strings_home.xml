@@ -16,4 +16,12 @@
     <string name="home_update_banner_downloading">Download… %1$d%%</string>
     <string name="home_update_banner_installing">Installazione…</string>
     <string name="home_updated_banner_text">CallVault è stato aggiornato alla %1$s</string>
+    <string name="home_whatsnew_title">Novità</string>
+    <string name="home_whatsnew_body">• Registra le chiamate anche senza Wi-Fi (attivalo qui sotto)\n• La registrazione è pronta più velocemente dopo che il telefono è rimasto inattivo\n• Un nuovo motore audio più leggero — niente più inizi di chiamata tagliati</string>
+    <string name="home_whatsnew_offline_cta">Attiva la registrazione senza Wi-Fi</string>
+    <string name="home_whatsnew_offline_enabled">Registrazione offline attivata.</string>
+    <string name="home_whatsnew_offline_failed">Attivazione non riuscita — collegati una volta al Wi-Fi, poi riprova dalle Impostazioni.</string>
+    <string name="home_whatsnew_offline_enabling">Attivazione della registrazione senza Wi-Fi…</string>
+    <string name="offline_recording_on">La registrazione senza Wi-Fi è attiva.</string>
+    <string name="offline_recording_disabling">Disattivazione della registrazione senza Wi-Fi…</string>
 </resources>

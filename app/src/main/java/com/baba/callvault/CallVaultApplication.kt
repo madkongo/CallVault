@@ -10,10 +10,8 @@ package com.baba.callvault
 
 import android.app.Application
 import com.baba.callvault.data.AppPreferences
-import com.baba.callvault.server.RecorderConnection
 import com.baba.callvault.server.RecorderServerLauncher
 import com.baba.callvault.services.debug.DebugNotificationHelper
-import com.baba.callvault.services.recording.RecorderReadinessNotifier
 import com.baba.callvault.system.storage.RetentionScheduler
 import com.baba.callvault.system.updates.UpdateScheduler
 import com.baba.callvault.utils.AppLogger
@@ -24,11 +22,27 @@ import com.baba.callvault.utils.AppLogger
 class CallVaultApplication : Application() {
     private companion object {
         const val TAG = "CV:CallVaultApplication"
+
+        /** Old CallMonitorService notification id (pre-consolidation) — now shares 4720; cancel the stale one. */
+        const val LEGACY_READINESS_NOTIF_ID = 4714
+
+        /** Old RecorderReadinessNotifier notification id (pre-consolidation, transient launch notice). */
+        const val LEGACY_LAUNCH_NOTIF_ID = 4715
     }
 
     override fun onCreate() {
         super.onCreate()
         AppLogger.init(applicationContext)
+
+        // Migration: pre-consolidation builds showed readiness from THREE sources (the transient launch
+        // notifier id 4715 + the post-boot CallMonitorService id 4714), duplicating the single permanent
+        // keep-alive notification (id 4720). Cancel those stale ids once on startup so an updated install
+        // immediately drops to ONE readiness notification instead of waiting for a reboot to clear them.
+        runCatching {
+            getSystemService(android.app.NotificationManager::class.java)?.apply {
+                cancel(LEGACY_READINESS_NOTIF_ID); cancel(LEGACY_LAUNCH_NOTIF_ID)
+            }
+        }
 
         // Re-assert the "debug logging is on" reminder if the user left logging enabled across an
         // app restart, so the nudge to turn it back off survives process death.
@@ -53,20 +67,12 @@ class CallVaultApplication : Application() {
         // WD is off when idle, with no user action. Best-effort; the call path also ensures it on demand.
         if (AppPreferences(applicationContext).isAdbPaired()) {
             Thread {
-                // If the daemon is cold at app start (fresh install/update, post-reboot, or after the OS
-                // killed us), surface a "starting up… → ready to record" notification so the user knows
-                // when a call will actually be captured — the same signal the post-reboot path gives.
-                val coldAtStart = !RecorderConnection.isConnected
-                if (coldAtStart) RecorderReadinessNotifier.showStarting(applicationContext)
-
-                val connected = runCatching { RecorderServerLauncher.ensureServerRunning(applicationContext) }
+                // Warm the persistent daemon in the background so the app is recording-ready over binder.
+                // Readiness ("starting up… → ready to record") is surfaced by the SINGLE persistent
+                // DaemonKeepAliveService notification — no separate notifier here, which previously
+                // produced a DUPLICATE readiness notification alongside the keep-alive one.
+                runCatching { RecorderServerLauncher.ensureServerRunning(applicationContext) }
                     .onFailure { AppLogger.w(TAG, "Startup recorder-daemon warmup failed: ${it.message}") }
-                    .getOrDefault(false)
-
-                if (coldAtStart) {
-                    if (connected) RecorderReadinessNotifier.showReadyThenDismiss(applicationContext)
-                    else RecorderReadinessNotifier.dismiss(applicationContext)
-                }
             }.apply { isDaemon = true }.start()
         }
     }

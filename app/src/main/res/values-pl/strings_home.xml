@@ -16,4 +16,12 @@
     <string name="home_update_banner_downloading">Pobieranie… %1$d%%</string>
     <string name="home_update_banner_installing">Instalowanie…</string>
     <string name="home_updated_banner_text">CallVault zaktualizowano do %1$s</string>
+    <string name="home_whatsnew_title">Nowości</string>
+    <string name="home_whatsnew_body">• Nagrywaj rozmowy nawet bez Wi-Fi (włącz to poniżej)\n• Nagrywanie jest gotowe szybciej, gdy telefon był bezczynny\n• Nowy, lżejszy silnik audio — koniec z ucinanymi początkami rozmów</string>
+    <string name="home_whatsnew_offline_cta">Włącz nagrywanie bez Wi-Fi</string>
+    <string name="home_whatsnew_offline_enabled">Nagrywanie offline włączone.</string>
+    <string name="home_whatsnew_offline_failed">Nie udało się włączyć — połącz się raz z Wi-Fi, a następnie spróbuj w Ustawieniach.</string>
+    <string name="home_whatsnew_offline_enabling">Włączanie nagrywania bez Wi-Fi…</string>
+    <string name="offline_recording_on">Nagrywanie bez Wi-Fi jest włączone.</string>
+    <string name="offline_recording_disabling">Wyłączanie nagrywania bez Wi-Fi…</string>
 </resources>
