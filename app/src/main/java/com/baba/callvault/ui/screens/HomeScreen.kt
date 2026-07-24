@@ -12,6 +12,8 @@ import android.net.Uri
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
+import androidx.compose.ui.platform.LocalContext
+import com.baba.callvault.system.openWirelessDebugging
 import androidx.compose.foundation.gestures.detectHorizontalDragGestures
 import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.ui.input.pointer.pointerInput
@@ -124,6 +126,7 @@ fun HomeScreen(
     modifier: Modifier = Modifier,
     viewModel: HomeViewModel = viewModel()
 ) {
+    val context = LocalContext.current
     val uiState by viewModel.uiState.collectAsState()
     val playback by viewModel.playback.collectAsState()
     // Show the "What's new" note once after an update lands (driven by the same signal as the banner).
@@ -181,7 +184,16 @@ fun HomeScreen(
             ),
             verticalArrangement = Arrangement.spacedBy(10.dp)
         ) {
-            item { HeroStatusCard(status = uiState.status) }
+            item {
+                HeroStatusCard(
+                    status = uiState.status,
+                    onAction = if (uiState.status == HomeViewModel.HomeStatus.UPDATE_REGRANT_NEEDED) {
+                        { context.openWirelessDebugging() }
+                    } else {
+                        null
+                    },
+                )
+            }
 
             uiState.updatedToVersion?.let { version ->
                 item {
@@ -406,7 +418,10 @@ private fun UpdateBannerCard(
  * unmistakable.
  */
 @Composable
-private fun HeroStatusCard(status: HomeViewModel.HomeStatus) {
+private fun HeroStatusCard(
+    status: HomeViewModel.HomeStatus,
+    onAction: (() -> Unit)? = null,
+) {
     val brand = LocalCvBrand.current
     val accent: Color = if (status.isReady) MaterialTheme.colorScheme.primary else brand.warning
     val icon: ImageVector = if (status.isReady) Icons.Filled.CheckCircle else Icons.Filled.WarningAmber
@@ -415,18 +430,20 @@ private fun HeroStatusCard(status: HomeViewModel.HomeStatus) {
         HomeViewModel.HomeStatus.NOT_PAIRED -> CvTone.Warning
         HomeViewModel.HomeStatus.NO_FOLDER -> CvTone.Error
         HomeViewModel.HomeStatus.DEV_OPTIONS_OFF -> CvTone.Error
+        HomeViewModel.HomeStatus.UPDATE_REGRANT_NEEDED -> CvTone.Warning
     }
     val pillText = when (status) {
         HomeViewModel.HomeStatus.READY -> stringResource(R.string.home_hero_pill_ready)
         HomeViewModel.HomeStatus.NOT_PAIRED -> stringResource(R.string.home_hero_pill_not_paired)
         HomeViewModel.HomeStatus.NO_FOLDER -> stringResource(R.string.home_hero_pill_no_folder)
         HomeViewModel.HomeStatus.DEV_OPTIONS_OFF -> stringResource(R.string.home_hero_pill_dev_options_off)
+        HomeViewModel.HomeStatus.UPDATE_REGRANT_NEEDED -> stringResource(R.string.home_hero_pill_update_regrant)
     }
 
     // Subtle accent-tinted surface so the banner reads as a confident state, not a stock card.
     val tinted = accent.copy(alpha = 0.10f).compositeOver(MaterialTheme.colorScheme.surface)
 
-    CvCard(color = tinted, contentPadding = PaddingValues(20.dp)) {
+    CvCard(color = tinted, onClick = onAction, contentPadding = PaddingValues(20.dp)) {
         Row(verticalAlignment = Alignment.CenterVertically) {
             Box(
                 modifier = Modifier

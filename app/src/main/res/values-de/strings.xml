@@ -57,6 +57,8 @@
     <string name="home_status_not_paired_suggestion">Schließen Sie die Kopplung für drahtloses Debugging in der Einrichtung ab.</string>
     <string name="home_status_not_paired_title">Einrichtung nicht abgeschlossen</string>
     <string name="home_status_ready_suggestion">CallVault zeichnet Anrufe automatisch gemäß Ihren Einstellungen auf.</string>
+    <string name="home_status_update_regrant_title">Aufnahme nach Update pausiert</string>
+    <string name="home_status_update_regrant_suggestion">Das Update hat eine von CallVault benötigte Berechtigung entfernt. Tippe hier und aktiviere das WLAN-Debugging einmal – die Aufnahme stellt sich von selbst wieder her. Keine Neuinstallation nötig.</string>
     <string name="home_status_ready_title">Bereit zur Aufnahme</string>
     <string name="permission_adb_description">Erforderlich, um Anruf-Audio aufzuzeichnen. Einmal über die Benachrichtigung koppeln, danach verbindet es sich automatisch.</string>
     <string name="permission_adb_not_connected">Nicht verbunden — zum Einrichten tippen</string>
