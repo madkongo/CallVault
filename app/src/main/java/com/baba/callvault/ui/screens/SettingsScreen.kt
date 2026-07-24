@@ -1053,6 +1053,7 @@ private fun UsbDefaultConfigRow() {
             label = stringResource(R.string.settings_usb_default_label),
             selected = selected,
             options = options,
+            enabled = !applying,
             onOptionSelected = { opt ->
                 val target = runCatching { UsbDefaultMode.valueOf(opt.key) }.getOrNull() ?: return@M3DropdownField
                 if (target == mode || applying) return@M3DropdownField
@@ -1064,8 +1065,24 @@ private fun UsbDefaultConfigRow() {
                 }
             },
         )
-        HintText(stringResource(R.string.settings_usb_default_hint))
-        if (applying) HintText(stringResource(R.string.settings_usb_default_applying))
+        // While the change is being applied + verified, grey the field (above) and show a live spinner,
+        // so the (few-second) delay before the value updates can't be mistaken for "nothing happened".
+        if (applying) {
+            Row(
+                modifier = Modifier.padding(start = 16.dp, top = 2.dp),
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                CircularProgressIndicator(modifier = Modifier.size(16.dp), strokeWidth = 2.dp)
+                Spacer(Modifier.width(8.dp))
+                Text(
+                    text = stringResource(R.string.settings_usb_default_applying),
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+            }
+        } else {
+            HintText(stringResource(R.string.settings_usb_default_hint))
+        }
     }
 }
 
