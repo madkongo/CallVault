@@ -28,6 +28,13 @@ val libphonenumberMetadataDir = layout.buildDirectory.dir("generated/libphonenum
 // Detect if we're running in a CI environment (e.g., GitHub Actions).
 val isEnvironmentGithubCI = providers.environmentVariable("GITHUB_ACTIONS").isPresent
 
+// True only when a release-producing task is in the requested task graph (assembleRelease,
+// bundleRelease, packageRelease, lintVitalRelease, …). The release keystore is required ONLY for
+// real release builds — so debug-only CI jobs (notably CodeQL's `compileDebugSources`) don't trip
+// the keystore check at configuration time, while `assembleRelease` still fails loudly on a missing
+// secret. `taskNames` reflects what was requested on the command line (":app:assembleRelease", etc.).
+val isReleaseBuildRequested = gradle.startParameter.taskNames.any { it.contains("release", ignoreCase = true) }
+
 abstract class DownloadAssetTask : DefaultTask() {
     @get:Input
     abstract val url: Property<String>
@@ -141,9 +148,11 @@ android {
     val localReleaseKeystore = rootProject.file("signing/callvault-signing.keystore")
 
     signingConfigs {
-        // Signing config for CI environments.
+        // Signing config for CI environments. Only demand the keystore env when a release build is
+        // actually requested — otherwise a debug-only CI job (e.g. CodeQL's `compileDebugSources`)
+        // would fail here at configuration time even though it never signs a release APK.
         create("ci-release") {
-            if (isEnvironmentGithubCI) {
+            if (isEnvironmentGithubCI && isReleaseBuildRequested) {
                 storeFile = file(System.getenv("KEYSTORE_FILE") ?: throw GradleException("Keystore file not provided for release signing. env variable: KEYSTORE_FILE"))
                 storePassword = System.getenv("KEYSTORE_PASSWORD") ?: throw GradleException("Keystore password not provided for release signing. env variable: KEYSTORE_PASSWORD")
                 keyAlias = System.getenv("KEY_ALIAS") ?: throw GradleException("Key alias not provided for release signing. env variable: KEY_ALIAS")
