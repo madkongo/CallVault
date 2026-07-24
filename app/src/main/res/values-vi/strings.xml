@@ -206,6 +206,14 @@
     <string name="storage_target_drive">Chỉ trên Google Drive</string>
     <string name="storage_target_local">Chỉ trên thiết bị này</string>
     <string name="wizard_audio_subtitle">Chọn định dạng ghi âm và bit rate. Opus ở 16 kbps được khuyến nghị để có giọng nói rõ ràng với kích thước tệp nhỏ.</string>
+    <string name="wizard_reliability_title">Ghi âm đáng tin cậy</string>
+    <string name="wizard_reliability_subtitle">Hai tùy chọn giúp việc ghi âm hoạt động trong điều kiện khó khăn. Bạn có thể bỏ qua và thay đổi sau trong Cài đặt.</string>
+    <string name="wizard_reliability_usb_title">Tiếp tục ghi âm khi khóa màn hình</string>
+    <string name="wizard_reliability_usb_desc">Trên một số điện thoại, khóa màn hình khi đang gọi có thể dừng ghi âm. Đặt USB thành "Chỉ sạc" sẽ ngăn điều đó. (Khi cắm vào máy tính, điện thoại sẽ mặc định chỉ sạc — chọn Truyền tệp thủ công khi cần.)</string>
+    <string name="wizard_reliability_usb_button">Đặt USB thành Chỉ sạc</string>
+    <string name="wizard_reliability_usb_done">USB đã đặt thành Chỉ sạc</string>
+    <string name="wizard_reliability_offline_button">Bật</string>
+    <string name="wizard_reliability_offline_done">Ghi âm ngoại tuyến đang bật</string>
     <string name="wizard_audio_title">Chất lượng âm thanh</string>
     <string name="wizard_auto_record_subtitle">Chọn cuộc gọi nào được ghi âm tự động. Bạn có thể tinh chỉnh sau trong Cài đặt.</string>
     <string name="wizard_auto_record_title">Tự động ghi âm</string>

@@ -206,6 +206,14 @@
     <string name="storage_target_drive">Solo su Google Drive</string>
     <string name="storage_target_local">Solo su questo dispositivo</string>
     <string name="wizard_audio_subtitle">Scelga il formato di registrazione e il bit rate. Opus a 16 kbps è consigliato per una voce nitida con file di piccole dimensioni.</string>
+    <string name="wizard_reliability_title">Registrazione affidabile</string>
+    <string name="wizard_reliability_subtitle">Due impostazioni facoltative che mantengono attiva la registrazione in condizioni difficili. Puoi saltarle e modificarle in seguito nelle Impostazioni.</string>
+    <string name="wizard_reliability_usb_title">Continua a registrare quando blocchi lo schermo</string>
+    <string name="wizard_reliability_usb_desc">Su alcuni telefoni, bloccare lo schermo durante una chiamata può interrompere la registrazione. Impostare USB su "Solo ricarica" lo evita. (Il telefono, collegato a un PC, resta in ricarica: scegli Trasferimento file manualmente quando serve.)</string>
+    <string name="wizard_reliability_usb_button">Imposta USB su Solo ricarica</string>
+    <string name="wizard_reliability_usb_done">USB è impostato su Solo ricarica</string>
+    <string name="wizard_reliability_offline_button">Attiva</string>
+    <string name="wizard_reliability_offline_done">La registrazione offline è attiva</string>
     <string name="wizard_audio_title">Qualità audio</string>
     <string name="wizard_auto_record_subtitle">Scelga quali chiamate registrare automaticamente. Potrà perfezionarlo in seguito nelle Impostazioni.</string>
     <string name="wizard_auto_record_title">Registrazione automatica</string>

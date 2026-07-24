@@ -206,6 +206,14 @@
     <string name="storage_target_drive">仅 Google Drive</string>
     <string name="storage_target_local">仅保存在本设备</string>
     <string name="wizard_audio_subtitle">选择录音格式和比特率。推荐使用 16 kbps 的 Opus，可在小文件下获得清晰的语音。</string>
+    <string name="wizard_reliability_title">可靠录音</string>
+    <string name="wizard_reliability_subtitle">两项可选设置，让录音在复杂情况下也能正常工作。你可以跳过，稍后在“设置”中更改。</string>
+    <string name="wizard_reliability_usb_title">锁屏时继续录音</string>
+    <string name="wizard_reliability_usb_desc">在某些手机上，通话中锁屏可能会中断录音。将 USB 设为“仅充电”即可避免。（连接电脑时手机将默认为充电——需要时请手动选择文件传输。）</string>
+    <string name="wizard_reliability_usb_button">将 USB 设为仅充电</string>
+    <string name="wizard_reliability_usb_done">USB 已设为仅充电</string>
+    <string name="wizard_reliability_offline_button">启用</string>
+    <string name="wizard_reliability_offline_done">离线录音已开启</string>
     <string name="wizard_audio_title">音频质量</string>
     <string name="wizard_auto_record_subtitle">选择哪些通话会被自动录制。你之后可以在设置中进一步调整。</string>
     <string name="wizard_auto_record_title">自动录音</string>

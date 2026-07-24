@@ -206,6 +206,14 @@
     <string name="storage_target_drive">Nur Google Drive</string>
     <string name="storage_target_local">Nur auf diesem Gerät</string>
     <string name="wizard_audio_subtitle">Wählen Sie das Aufnahmeformat und die Bitrate. Opus mit 16 kbps wird für klare Sprache bei geringer Dateigröße empfohlen.</string>
+    <string name="wizard_reliability_title">Zuverlässige Aufnahme</string>
+    <string name="wizard_reliability_subtitle">Zwei optionale Einstellungen, die die Aufnahme unter schwierigen Bedingungen am Laufen halten. Du kannst sie überspringen und später in den Einstellungen ändern.</string>
+    <string name="wizard_reliability_usb_title">Aufnahme beim Sperren des Bildschirms fortsetzen</string>
+    <string name="wizard_reliability_usb_desc">Bei manchen Handys kann das Sperren des Bildschirms während eines Anrufs die Aufnahme stoppen. „Nur Laden“ für USB verhindert das. (Dein Handy lädt dann standardmäßig am PC – wähle bei Bedarf manuell Dateiübertragung.)</string>
+    <string name="wizard_reliability_usb_button">USB auf „Nur Laden“ setzen</string>
+    <string name="wizard_reliability_usb_done">USB ist auf „Nur Laden“ eingestellt</string>
+    <string name="wizard_reliability_offline_button">Aktivieren</string>
+    <string name="wizard_reliability_offline_done">Offline-Aufnahme ist aktiviert</string>
     <string name="wizard_audio_title">Audioqualität</string>
     <string name="wizard_auto_record_subtitle">Wählen Sie, welche Anrufe automatisch aufgezeichnet werden. Sie können dies später in den Einstellungen feinabstimmen.</string>
     <string name="wizard_auto_record_title">Automatische Aufnahme</string>

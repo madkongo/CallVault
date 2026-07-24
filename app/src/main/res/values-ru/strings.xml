@@ -206,6 +206,14 @@
     <string name="storage_target_drive">Только в Google Drive</string>
     <string name="storage_target_local">Только на этом устройстве</string>
     <string name="wizard_audio_subtitle">Выберите формат записи и битрейт. Рекомендуется Opus с 16 кбит/с для чёткого голоса при небольшом размере файлов.</string>
+    <string name="wizard_reliability_title">Надёжная запись</string>
+    <string name="wizard_reliability_subtitle">Две необязательные настройки, которые сохраняют запись в сложных условиях. Их можно пропустить и изменить позже в настройках.</string>
+    <string name="wizard_reliability_usb_title">Продолжайте запись при блокировке экрана</string>
+    <string name="wizard_reliability_usb_desc">На некоторых телефонах блокировка экрана во время звонка может остановить запись. Режим USB «Только зарядка» это предотвращает. (При подключении к ПК телефон будет только заряжаться — при необходимости выберите «Передача файлов» вручную.)</string>
+    <string name="wizard_reliability_usb_button">Установить USB «Только зарядка»</string>
+    <string name="wizard_reliability_usb_done">USB установлен на «Только зарядка»</string>
+    <string name="wizard_reliability_offline_button">Включить</string>
+    <string name="wizard_reliability_offline_done">Автономная запись включена</string>
     <string name="wizard_audio_title">Качество звука</string>
     <string name="wizard_auto_record_subtitle">Выберите, какие звонки записываются автоматически. Это можно точнее настроить позже в настройках.</string>
     <string name="wizard_auto_record_title">Автоматическая запись</string>

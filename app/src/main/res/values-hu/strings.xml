@@ -206,6 +206,14 @@
     <string name="storage_target_drive">Csak Google Drive</string>
     <string name="storage_target_local">Csak erre az eszközre</string>
     <string name="wizard_audio_subtitle">Válassza ki a rögzítési formátumot és a bitrátát. A tiszta hang és a kis fájlméret érdekében az Opus 16 kbps ajánlott.</string>
+    <string name="wizard_reliability_title">Megbízható rögzítés</string>
+    <string name="wizard_reliability_subtitle">Két opcionális beállítás, amely nehéz körülmények között is működteti a rögzítést. Kihagyhatod, és később a Beállításokban módosíthatod.</string>
+    <string name="wizard_reliability_usb_title">A rögzítés folytatása a képernyő zárolásakor</string>
+    <string name="wizard_reliability_usb_desc">Egyes telefonokon a képernyő zárolása hívás közben leállíthatja a rögzítést. A „Csak töltés“ USB-beállítás megakadályozza ezt. (A telefon PC-hez csatlakoztatva ekkor töltésre vált – szükség esetén válaszd kézzel a Fájlátvitelt.)</string>
+    <string name="wizard_reliability_usb_button">USB beállítása Csak töltésre</string>
+    <string name="wizard_reliability_usb_done">Az USB „Csak töltés“ értékre van állítva</string>
+    <string name="wizard_reliability_offline_button">Bekapcsolás</string>
+    <string name="wizard_reliability_offline_done">Az offline rögzítés be van kapcsolva</string>
     <string name="wizard_audio_title">Hangminőség</string>
     <string name="wizard_auto_record_subtitle">Válassza ki, mely hívások rögzüljenek automatikusan. Ezt később a Beállításokban finomhangolhatja.</string>
     <string name="wizard_auto_record_title">Automatikus rögzítés</string>

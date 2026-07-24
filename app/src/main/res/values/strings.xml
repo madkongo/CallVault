@@ -344,6 +344,14 @@
     <string name="wizard_auto_record_title">Automatic recording</string>
     <string name="wizard_auto_record_subtitle">Choose which calls are recorded automatically. You can fine-tune this later in Settings.</string>
     <!-- Wizard: Audio step -->
+    <string name="wizard_reliability_title">Reliable recording</string>
+    <string name="wizard_reliability_subtitle">Two optional settings that keep recording working in tricky conditions. You can skip these and change them later in Settings.</string>
+    <string name="wizard_reliability_usb_title">Keep recording when the screen locks</string>
+    <string name="wizard_reliability_usb_desc">On some phones, locking the screen during a call can stop the recording. Setting USB to \"Charging only\" prevents that. (Your phone then defaults to charging when plugged into a PC — pick File transfer manually when you need it.)</string>
+    <string name="wizard_reliability_usb_button">Set USB to Charging only</string>
+    <string name="wizard_reliability_usb_done">USB is set to Charging only</string>
+    <string name="wizard_reliability_offline_button">Enable</string>
+    <string name="wizard_reliability_offline_done">Offline recording is on</string>
     <string name="wizard_audio_title">Audio quality</string>
     <string name="wizard_audio_subtitle">Pick the recording format and bit rate. Opus at 16 kbps is recommended for clear voice at small file sizes.</string>
     <string name="wizard_filename_title">File name format</string>

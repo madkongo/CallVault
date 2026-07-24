@@ -211,6 +211,14 @@
     <string name="storage_target_drive">Google Drive uniquement</string>
     <string name="storage_target_local">Sur cet appareil uniquement</string>
     <string name="wizard_audio_subtitle">Choisissez le format d\'enregistrement et le débit. Opus à 16 kbps est recommandé pour une voix claire dans des fichiers de petite taille.</string>
+    <string name="wizard_reliability_title">Enregistrement fiable</string>
+    <string name="wizard_reliability_subtitle">Deux réglages facultatifs qui maintiennent l\'enregistrement dans des conditions difficiles. Tu peux les ignorer et les modifier plus tard dans les Paramètres.</string>
+    <string name="wizard_reliability_usb_title">Continuer d\'enregistrer quand l\'écran se verrouille</string>
+    <string name="wizard_reliability_usb_desc">Sur certains téléphones, verrouiller l\'écran pendant un appel peut arrêter l\'enregistrement. Régler l\'USB sur « Charge uniquement » l\'empêche. (Ton téléphone se met alors en charge par défaut sur un PC — choisis Transfert de fichiers manuellement au besoin.)</string>
+    <string name="wizard_reliability_usb_button">Régler l\'USB sur Charge uniquement</string>
+    <string name="wizard_reliability_usb_done">L\'USB est réglé sur Charge uniquement</string>
+    <string name="wizard_reliability_offline_button">Activer</string>
+    <string name="wizard_reliability_offline_done">L\'enregistrement hors ligne est activé</string>
     <string name="wizard_audio_title">Qualité audio</string>
     <string name="wizard_auto_record_subtitle">Choisissez quels appels sont enregistrés automatiquement. Vous pourrez affiner ce réglage plus tard dans les Paramètres.</string>
     <string name="wizard_auto_record_title">Enregistrement automatique</string>

@@ -206,6 +206,14 @@
     <string name="storage_target_drive">Tylko Google Drive</string>
     <string name="storage_target_local">Tylko na tym urządzeniu</string>
     <string name="wizard_audio_subtitle">Wybierz format nagrywania i przepływność. Opus przy 16 kb/s jest zalecany dla wyraźnego głosu przy małym rozmiarze plików.</string>
+    <string name="wizard_reliability_title">Niezawodne nagrywanie</string>
+    <string name="wizard_reliability_subtitle">Dwa opcjonalne ustawienia, które utrzymują nagrywanie w trudnych warunkach. Możesz je pominąć i zmienić później w Ustawieniach.</string>
+    <string name="wizard_reliability_usb_title">Nagrywaj dalej po zablokowaniu ekranu</string>
+    <string name="wizard_reliability_usb_desc">W niektórych telefonach zablokowanie ekranu podczas rozmowy może zatrzymać nagrywanie. Ustawienie USB na „Tylko ładowanie“ temu zapobiega. (Telefon po podłączeniu do komputera domyślnie się ładuje — w razie potrzeby wybierz ręcznie Przesyłanie plików.)</string>
+    <string name="wizard_reliability_usb_button">Ustaw USB na Tylko ładowanie</string>
+    <string name="wizard_reliability_usb_done">USB jest ustawione na Tylko ładowanie</string>
+    <string name="wizard_reliability_offline_button">Włącz</string>
+    <string name="wizard_reliability_offline_done">Nagrywanie offline jest włączone</string>
     <string name="wizard_audio_title">Jakość dźwięku</string>
     <string name="wizard_auto_record_subtitle">Wybierz, które rozmowy są nagrywane automatycznie. Możesz to później dostosować w Ustawieniach.</string>
     <string name="wizard_auto_record_title">Automatyczne nagrywanie</string>
