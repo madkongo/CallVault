@@ -298,6 +298,12 @@ fun SettingsContent(
                     onToggle = { onToggleSection(SECTION_VISUAL) }
                 )
             }
+            item {
+                ReliabilitySection(
+                    expanded = openSection == SECTION_RELIABILITY,
+                    onToggle = { onToggleSection(SECTION_RELIABILITY) }
+                )
+            }
             // Debug section: always visible so anyone can enable logging and share logs to report an issue.
             item {
                 BugReportSection(
@@ -384,6 +390,7 @@ private const val SECTION_STORAGE = "storage"
 private const val SECTION_RETENTION = "retention"
 private const val SECTION_AUDIO = "audio"
 private const val SECTION_VISUAL = "visual"
+private const val SECTION_RELIABILITY = "reliability"
 private const val SECTION_BUG_REPORT = "bug_report"
 private const val SECTION_UPDATES = "updates"
 private const val SECTION_ABOUT = "about"
@@ -994,10 +1001,19 @@ private fun BugReportSection(
             }
         }
 
+    }
+}
+
+/**
+ * "Reliability" — controls that keep recording working in tricky conditions: recording without Wi-Fi
+ * (loopback opt-in) and the Default USB Configuration that stops a screen-lock from killing the recorder
+ * mid-call. Grouped together so users have one place to make recording robust.
+ */
+@Composable
+private fun ReliabilitySection(expanded: Boolean, onToggle: () -> Unit) {
+    SettingsSection(title = stringResource(R.string.settings_section_reliability), expanded = expanded, onToggle = onToggle) {
         OfflineRecordingToggle()
-
         SettingsDivider()
-
         UsbDefaultConfigRow()
     }
 }

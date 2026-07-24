@@ -178,6 +178,7 @@
     <string name="offline_recording_warning_continue">Continua comunque</string>
     <string name="settings_section_about">Info</string>
     <string name="settings_section_audio">Configurazione audio</string>
+    <string name="settings_section_reliability">Affidabilità</string>
     <string name="settings_section_debug">Opzioni di debug</string>
     <string name="settings_section_recorder_server">Servizio di registrazione</string>
     <string name="settings_section_recording">Registrazione</string>

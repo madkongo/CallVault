@@ -178,6 +178,7 @@
     <string name="offline_recording_warning_continue">Всё равно продолжить</string>
     <string name="settings_section_about">О приложении</string>
     <string name="settings_section_audio">Настройки аудио</string>
+    <string name="settings_section_reliability">Надёжность</string>
     <string name="settings_section_debug">Настройки отладки</string>
     <string name="settings_section_recorder_server">Служба записи</string>
     <string name="settings_section_recording">Запись</string>

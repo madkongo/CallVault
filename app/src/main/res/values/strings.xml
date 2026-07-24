@@ -125,6 +125,7 @@
     <string name="settings_section_recording_storage">Recording &amp; storage</string>
     <string name="settings_section_visual">Visual settings</string>
     <string name="settings_section_audio">Audio configuration</string>
+    <string name="settings_section_reliability">Reliability</string>
     <string name="settings_section_debug">Debug</string>
     <string name="settings_section_security">Security</string>
     <string name="settings_section_recorder_server">Recorder service</string>

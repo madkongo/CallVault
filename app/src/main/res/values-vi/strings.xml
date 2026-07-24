@@ -178,6 +178,7 @@
     <string name="offline_recording_warning_continue">Vẫn tiếp tục</string>
     <string name="settings_section_about">Về</string>
     <string name="settings_section_audio">Cấu hình âm thanh</string>
+    <string name="settings_section_reliability">Độ tin cậy</string>
     <string name="settings_section_debug">Tùy chọn gỡ lỗi</string>
     <string name="settings_section_recorder_server">Dịch vụ ghi âm</string>
     <string name="settings_section_recording">Ghi âm</string>
