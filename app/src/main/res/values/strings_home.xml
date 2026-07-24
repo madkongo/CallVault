@@ -12,6 +12,7 @@
     <string name="home_hero_pill_not_paired">Action needed</string>
     <string name="home_hero_pill_no_folder">Action needed</string>
     <string name="home_hero_pill_dev_options_off">Recording broken</string>
+    <string name="home_hero_pill_update_regrant">Action needed</string>
 
     <!-- Recordings section -->
     <string name="home_recordings_count">%1$d saved</string>
@@ -26,4 +27,12 @@
     <string name="home_update_banner_downloading">Downloading… %1$d%%</string>
     <string name="home_update_banner_installing">Installing…</string>
     <string name="home_updated_banner_text">CallVault updated to %1$s</string>
+    <string name="home_whatsnew_title">What\'s new</string>
+    <string name="home_whatsnew_body">• Record calls even without Wi-Fi (turn it on below)\n• Recording is ready faster after your phone has been idle\n• A new, lighter audio engine — no more clipped call beginnings</string>
+    <string name="home_whatsnew_offline_cta">Turn on off-Wi-Fi recording</string>
+    <string name="home_whatsnew_offline_enabled">Offline recording enabled.</string>
+    <string name="home_whatsnew_offline_failed">Couldn\'t enable — connect to Wi-Fi once, then try from Settings.</string>
+    <string name="home_whatsnew_offline_enabling">Enabling off-Wi-Fi recording…</string>
+    <string name="offline_recording_on">Off-Wi-Fi recording is on.</string>
+    <string name="offline_recording_disabling">Turning off off-Wi-Fi recording…</string>
 </resources>

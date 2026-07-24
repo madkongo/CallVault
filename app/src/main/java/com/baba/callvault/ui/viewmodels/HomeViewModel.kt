@@ -16,9 +16,13 @@ import androidx.lifecycle.viewModelScope
 import com.baba.callvault.R
 import com.baba.callvault.data.AppPreferences
 import com.baba.callvault.data.recordings.RecordingDirection
+import androidx.documentfile.provider.DocumentFile
+import com.baba.callvault.data.recordings.RecordingCatalog
+import com.baba.callvault.utils.AppLogger
 import com.baba.callvault.data.recordings.RecordingsRepository
 import com.baba.callvault.data.recordings.RecordingsRepository.RecordingItem
 import com.baba.callvault.data.recordings.RecordingsRepository.RecordingSource
+import com.baba.callvault.integrations.adb.AdbShell
 import com.baba.callvault.integrations.adb.DeveloperOptions
 import com.baba.callvault.system.updates.UpdateInstallWorker
 import com.baba.callvault.system.updates.UpdateScheduler
@@ -67,6 +71,7 @@ class HomeViewModel(application: Application) : AndroidViewModel(application) {
         NO_FOLDER(R.string.home_status_no_folder_title, R.string.home_status_no_folder_suggestion),
         NOT_PAIRED(R.string.home_status_not_paired_title, R.string.home_status_not_paired_suggestion),
         DEV_OPTIONS_OFF(R.string.home_status_dev_options_off_title, R.string.home_status_dev_options_off_suggestion),
+        UPDATE_REGRANT_NEEDED(R.string.home_status_update_regrant_title, R.string.home_status_update_regrant_suggestion),
         READY(R.string.home_status_ready_title, R.string.home_status_ready_suggestion, isReady = true)
     }
 
@@ -118,7 +123,9 @@ class HomeViewModel(application: Application) : AndroidViewModel(application) {
         /** Download percentage (0-100) while installing, or -1 before the download reports. */
         val updateProgressPercent: Int = -1,
         /** Version name to show a dismissable "updated successfully" banner for, or null. */
-        val updatedToVersion: String? = null
+        val updatedToVersion: String? = null,
+        /** Uris of recordings currently being deleted — drives an inline spinner on their row. */
+        val deletingUris: Set<Uri> = emptySet()
     ) {
         /**
          * The distinct contact keys present in [recordings], sorted A→Z case-insensitively. Each
@@ -196,7 +203,47 @@ class HomeViewModel(application: Application) : AndroidViewModel(application) {
         detectJustUpdated()
         refresh()
         observeInstallWork()
+        observePlaybackErrors()
         preferences.registerChangeListener(prefsListener)
+    }
+
+    /** The last uri whose playback ERROR we handled, so we prune it at most once per failure. */
+    private var lastHandledErrorUri: Uri? = null
+
+    /**
+     * When a recording fails to play, verify the file still exists; if it was deleted OUTSIDE the app
+     * (e.g. removed directly in Google Drive, or a device file cleaned up externally), prune the now-stale
+     * catalog entry and refresh so the dead row disappears instead of lingering with a "couldn't play"
+     * error. Only prunes on a CONFIRMED-missing file — a transient/network error (exists() throws) leaves
+     * the entry untouched, so a valid recording is never removed by a hiccup.
+     */
+    private fun observePlaybackErrors() {
+        viewModelScope.launch {
+            playbackController.state.collect { state ->
+                val uri = state.activeUri
+                if (state.phase == RecordingPlaybackController.Phase.ERROR && uri != null) {
+                    if (uri != lastHandledErrorUri) {
+                        lastHandledErrorUri = uri
+                        pruneIfMissing(uri)
+                    }
+                } else {
+                    lastHandledErrorUri = null // a fresh play — re-arm handling for a later failure
+                }
+            }
+        }
+    }
+
+    private fun pruneIfMissing(uri: Uri) {
+        viewModelScope.launch {
+            val missing = withContext(Dispatchers.IO) {
+                runCatching { DocumentFile.fromSingleUri(appContext, uri)?.exists() == false }.getOrDefault(false)
+            }
+            if (missing) {
+                AppLogger.i("CV:HomeViewModel", "Recording gone (deleted outside the app); pruning stale entry: $uri")
+                withContext(Dispatchers.IO) { RecordingCatalog.removeCopyByUri(appContext, uri) }
+                refresh()
+            }
+        }
     }
 
     /**
@@ -328,6 +375,12 @@ class HomeViewModel(application: Application) : AndroidViewModel(application) {
         // isExplicitlyDisabled (not !isEnabled): an absent/unreadable global must not paint a
         // permanent red banner on ROMs that don't expose the setting.
         if (DeveloperOptions.isExplicitlyDisabled(appContext)) return HomeStatus.DEV_OPTIONS_OFF
+        // Paired + dev options on, but WRITE_SECURE_SETTINGS is gone → an install-over (Obtainium /
+        // manual sideload) dropped the grant and no transport survived to self-heal it. The app can't
+        // re-enable Wireless debugging, so the daemon can't be relaunched: recording is dead until the
+        // user toggles Wireless debugging on once (which lets ensureConnected re-grant it). Once granted
+        // the permission persists, so "paired but missing" reliably means "an update cleared it".
+        if (!AdbShell.hasWriteSecureSettings(appContext)) return HomeStatus.UPDATE_REGRANT_NEEDED
         return HomeStatus.READY
     }
 
@@ -343,9 +396,11 @@ class HomeViewModel(application: Application) : AndroidViewModel(application) {
         if (active == item.uri || active == item.localUri || active == item.driveUri) {
             playbackController.stop()
         }
+        _uiState.update { it.copy(deletingUris = it.deletingUris + item.uri) }
         viewModelScope.launch {
             withContext(Dispatchers.IO) { RecordingsRepository.deleteRecording(appContext, item) }
             refresh()
+            _uiState.update { it.copy(deletingUris = it.deletingUris - item.uri) }
         }
     }
 
@@ -356,9 +411,11 @@ class HomeViewModel(application: Application) : AndroidViewModel(application) {
      */
     fun deleteUri(uri: Uri) {
         if (playback.value.activeUri == uri) playbackController.stop()
+        _uiState.update { it.copy(deletingUris = it.deletingUris + uri) }
         viewModelScope.launch {
             withContext(Dispatchers.IO) { RecordingsRepository.deleteFile(appContext, uri) }
             refresh()
+            _uiState.update { it.copy(deletingUris = it.deletingUris - uri) }
         }
     }
 

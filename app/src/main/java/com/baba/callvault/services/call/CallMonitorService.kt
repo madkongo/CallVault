@@ -93,7 +93,7 @@ class CallMonitorService : Service() {
     override fun onCreate() {
         super.onCreate()
         getSystemService(NotificationManager::class.java).createNotificationChannel(
-            NotificationChannel(CHANNEL_ID, getString(R.string.notif_call_monitor_channel), NotificationManager.IMPORTANCE_MIN).apply {
+            NotificationChannel(CHANNEL_ID, getString(R.string.notif_readiness_channel), NotificationManager.IMPORTANCE_MIN).apply {
                 setSound(null, null)
                 setShowBadge(false)
             },
@@ -136,6 +136,10 @@ class CallMonitorService : Service() {
     override fun onBind(intent: Intent?): IBinder? = null
 
     override fun onDestroy() {
+        // Detach (do NOT remove) the SHARED readiness notification so DaemonKeepAliveService's permanent
+        // one survives this transient post-boot service ending — they share NOTIF_ID + channel so the user
+        // only ever sees ONE readiness notification.
+        runCatching { stopForeground(STOP_FOREGROUND_DETACH) }
         stopHandler.removeCallbacks(windowElapsed)
         readinessHandler.removeCallbacks(readinessPoll)
         unregisterListener()
@@ -228,7 +232,7 @@ class CallMonitorService : Service() {
             )
             .setContentText(
                 getString(
-                    if (ready) R.string.notif_readiness_reboot_ready_text
+                    if (ready) R.string.notif_readiness_ready_text
                     else R.string.notif_readiness_starting_text,
                 ),
             )
@@ -237,8 +241,11 @@ class CallMonitorService : Service() {
 
     companion object {
         private const val TAG = "CV:CallMonitorService"
-        private const val CHANNEL_ID = "call_monitor"
-        private const val NOTIF_ID = 4714
+        // Shares the SINGLE readiness notification with DaemonKeepAliveService (same channel + id) so this
+        // transient post-boot monitor never adds a duplicate "starting up / ready" notification. Detached
+        // (not removed) in onDestroy so the permanent keep-alive notification outlives this service.
+        private const val CHANNEL_ID = "recorder_keepalive"
+        private const val NOTIF_ID = 4720
 
         /** How long after boot the live listener stays registered before the broadcast path takes over. */
         private const val WINDOW_MS = 10 * 60 * 1000L

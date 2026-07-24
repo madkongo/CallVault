@@ -54,6 +54,10 @@ class AdbConnectionManager private constructor(context: Context) : AbsAdbConnect
     init {
         // Tell the library which Android API level we're running on; it selects TLS vs plain TCP.
         setApi(Build.VERSION.SDK_INT)
+        // Bound EVERY connect() — the library defaults to an effectively infinite timeout, so a stalled
+        // handshake (e.g. reconnecting to the loopback tcpip port right after adbd restarts) would hang
+        // the caller forever. This covers connectLoopback at call time too.
+        setTimeout(CONNECT_TIMEOUT_SECONDS, java.util.concurrent.TimeUnit.SECONDS)
 
         val appContext = context.applicationContext
         val loadedKey = loadPrivateKey(appContext)
@@ -93,6 +97,10 @@ class AdbConnectionManager private constructor(context: Context) : AbsAdbConnect
 
         /** Name shown in the ADB "Allow USB debugging?" / wireless pairing dialog. */
         private const val DEVICE_NAME = "CallVault"
+
+        /** Upper bound for a single connect() handshake (WD TLS or plain loopback). Generous for TLS,
+         *  but finite so a stalled handshake fails instead of hanging the recording/arming path. */
+        private const val CONNECT_TIMEOUT_SECONDS = 20L
 
         private const val PRIVATE_KEY_FILE = "adbkey"
         private const val CERTIFICATE_FILE = "adbkey.pem"

@@ -10,10 +10,19 @@
     <string name="home_recordings_empty_hint">Cuando CallVault grabe una llamada, aparecerá aquí. Haga o reciba una llamada para empezar.</string>
     <string name="home_recordings_empty_title">Aún no hay grabaciones</string>
     <string name="home_hero_pill_dev_options_off">Grabación no disponible</string>
+    <string name="home_hero_pill_update_regrant">Acción necesaria</string>
     <string name="home_update_banner_title">Actualización disponible: %1$s</string>
     <string name="home_update_banner_text">Hay una nueva versión lista para descargar desde GitHub.</string>
     <string name="home_update_banner_button">Actualizar</string>
     <string name="home_update_banner_downloading">Descargando… %1$d%%</string>
     <string name="home_update_banner_installing">Instalando…</string>
     <string name="home_updated_banner_text">CallVault se actualizó a %1$s</string>
+    <string name="home_whatsnew_title">Novedades</string>
+    <string name="home_whatsnew_body">• Graba llamadas incluso sin Wi-Fi (actívalo abajo)\n• La grabación está lista más rápido después de que el teléfono haya estado inactivo\n• Un nuevo motor de audio más ligero — se acabaron los inicios de llamada cortados</string>
+    <string name="home_whatsnew_offline_cta">Activar grabación sin Wi-Fi</string>
+    <string name="home_whatsnew_offline_enabled">Grabación sin conexión activada.</string>
+    <string name="home_whatsnew_offline_failed">No se pudo activar — conéctate una vez a Wi-Fi y luego inténtalo desde Ajustes.</string>
+    <string name="home_whatsnew_offline_enabling">Activando la grabación sin Wi-Fi…</string>
+    <string name="offline_recording_on">La grabación sin Wi-Fi está activada.</string>
+    <string name="offline_recording_disabling">Desactivando la grabación sin Wi-Fi…</string>
 </resources>

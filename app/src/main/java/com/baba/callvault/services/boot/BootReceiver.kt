@@ -13,6 +13,7 @@ import android.content.Context
 import android.content.Intent
 import com.baba.callvault.data.AppPreferences
 import com.baba.callvault.services.call.CallMonitorService
+import com.baba.callvault.services.recording.DaemonKeepAliveService
 import com.baba.callvault.utils.AppLogger
 
 /**
@@ -29,6 +30,9 @@ class BootReceiver : BroadcastReceiver() {
         // Hold a live telephony listener for a bounded window so the first call(s) after a reboot are
         // detected in real time, instead of via the post-boot-delayed PHONE_STATE broadcast.
         CallMonitorService.start(context)
+        // Persistent anchor: keep the recorder daemon warm from boot onward so calls record instantly
+        // (and off-Wi-Fi over binder) without a per-call cold-start. Boot grants the FGS-start exemption.
+        DaemonKeepAliveService.start(context)
     }
 
     companion object {

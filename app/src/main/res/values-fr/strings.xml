@@ -60,6 +60,8 @@
     <string name="home_status_dev_options_off_title">Options pour les développeurs désactivées</string>
     <string name="home_status_dev_options_off_suggestion">CallVault enregistre via le débogage sans fil, qui nécessite les options pour les développeurs. L\'enregistrement ne peut pas fonctionner tant que vous ne réactivez pas les options pour les développeurs (et le débogage sans fil) dans les paramètres du système.</string>
     <string name="home_status_ready_suggestion">CallVault enregistre les appels automatiquement selon vos paramètres.</string>
+    <string name="home_status_update_regrant_title">Enregistrement suspendu après la mise à jour</string>
+    <string name="home_status_update_regrant_suggestion">La mise à jour a supprimé une autorisation dont CallVault a besoin. Appuie ici, puis active le débogage sans fil une fois — l\'enregistrement se rétablit tout seul. Aucune réinstallation nécessaire.</string>
     <string name="home_status_ready_title">Prêt à enregistrer</string>
     <string name="permission_adb_description">Nécessaire pour capturer l\'audio des appels. Associez une fois via la notification, puis la connexion se fait automatiquement.</string>
     <string name="permission_adb_not_connected">Non connecté — touchez pour configurer</string>
@@ -163,6 +165,11 @@
     <string name="settings_recording_folder_label">Dossier d\'enregistrement</string>
     <string name="folder_cloud_rejected">Les dossiers cloud (comme Google Drive) ne peuvent pas être utilisés pour l\'enregistrement. Choisissez un stockage sur l\'appareil — utilisez l\'option de sauvegarde Google Drive pour les copies dans le cloud.</string>
     <string name="folder_cloud_warning">⚠ Ce dossier d\'enregistrement se trouve dans le cloud, ce qui n\'est pas fiable pour la capture. Choisissez un dossier sur l\'appareil.</string>
+    <string name="settings_offline_recording_label">Enregistrement hors ligne (sans Wi-Fi)</string>
+    <string name="settings_offline_recording_desc">Enregistrer les appels même en l\'absence de réseau Wi-Fi.</string>
+    <string name="offline_recording_warning_title">Activer l\'enregistrement hors ligne ?</string>
+    <string name="offline_recording_warning_message">Cela ouvre un port de débogage local sur votre téléphone afin que les appels puissent être enregistrés sans Wi-Fi. Il est protégé par la clé de votre appareil, mais cela représente un léger compromis de sécurité. Ne l\'activez que si vous avez besoin d\'enregistrer des appels sans Wi-Fi.</string>
+    <string name="offline_recording_warning_continue">Continuer quand même</string>
     <string name="settings_section_about">À propos</string>
     <string name="settings_section_audio">Configuration audio</string>
     <string name="settings_section_debug">Options de débogage</string>

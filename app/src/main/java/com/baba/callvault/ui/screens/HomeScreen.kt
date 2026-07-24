@@ -12,6 +12,8 @@ import android.net.Uri
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
+import androidx.compose.ui.platform.LocalContext
+import com.baba.callvault.system.openWirelessDebugging
 import androidx.compose.foundation.gestures.detectHorizontalDragGestures
 import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.ui.input.pointer.pointerInput
@@ -69,6 +71,8 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import com.baba.callvault.ui.common.OfflineDialogMode
+import com.baba.callvault.ui.common.OfflineRecordingDialog
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -122,8 +126,14 @@ fun HomeScreen(
     modifier: Modifier = Modifier,
     viewModel: HomeViewModel = viewModel()
 ) {
+    val context = LocalContext.current
     val uiState by viewModel.uiState.collectAsState()
     val playback by viewModel.playback.collectAsState()
+    // Show the "What's new" note once after an update lands (driven by the same signal as the banner).
+    var showWhatsNew by remember { mutableStateOf(false) }
+    LaunchedEffect(uiState.updatedToVersion) {
+        if (uiState.updatedToVersion != null) showWhatsNew = true
+    }
 
     // Refresh status + recordings whenever the user returns to the screen (e.g. after a new call).
     val lifecycleOwner = LocalLifecycleOwner.current
@@ -156,6 +166,14 @@ fun HomeScreen(
             }
         }
     ) { innerPadding ->
+        if (showWhatsNew) {
+            WhatsNewDialog(
+                onDismiss = {
+                    showWhatsNew = false
+                    viewModel.dismissUpdatedBanner()
+                },
+            )
+        }
         LazyColumn(
             modifier = Modifier.fillMaxSize(),
             contentPadding = PaddingValues(
@@ -166,7 +184,16 @@ fun HomeScreen(
             ),
             verticalArrangement = Arrangement.spacedBy(10.dp)
         ) {
-            item { HeroStatusCard(status = uiState.status) }
+            item {
+                HeroStatusCard(
+                    status = uiState.status,
+                    onAction = if (uiState.status == HomeViewModel.HomeStatus.UPDATE_REGRANT_NEEDED) {
+                        { context.openWirelessDebugging() }
+                    } else {
+                        null
+                    },
+                )
+            }
 
             uiState.updatedToVersion?.let { version ->
                 item {
@@ -235,6 +262,7 @@ fun HomeScreen(
                     RecordingRow(
                         item = item,
                         playback = playback,
+                        deleting = item.uri in uiState.deletingUris,
                         onPlayUri = { uri -> viewModel.play(uri) },
                         onPause = { viewModel.pausePlayback() },
                         onResume = { viewModel.resumePlayback() },
@@ -245,6 +273,39 @@ fun HomeScreen(
                 }
             }
         }
+    }
+}
+
+/**
+ * Post-update "What's new" note — plain-language highlights of the release, with a one-tap opt-in to
+ * enable off-Wi-Fi (loopback) recording behind the same security warning as the Settings toggle.
+ * [onDismiss] closes the note AND clears the updated-banner so it doesn't reappear.
+ */
+@Composable
+private fun WhatsNewDialog(onDismiss: () -> Unit) {
+    var showOfflineDialog by remember { mutableStateOf(false) }
+
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = { Text(stringResource(R.string.home_whatsnew_title)) },
+        text = { Text(stringResource(R.string.home_whatsnew_body)) },
+        confirmButton = {
+            TextButton(onClick = onDismiss) { Text(stringResource(R.string.general_ok)) }
+        },
+        dismissButton = {
+            TextButton(onClick = { showOfflineDialog = true }) {
+                Text(stringResource(R.string.home_whatsnew_offline_cta))
+            }
+        },
+    )
+    if (showOfflineDialog) {
+        // Shared enable flow: security warning → live spinner → "it's on" (auto-closes). The What's New
+        // note stays open behind it, so the user lands back on it and taps OK to dismiss.
+        OfflineRecordingDialog(
+            mode = OfflineDialogMode.ENABLE,
+            onResult = { },
+            onClose = { showOfflineDialog = false },
+        )
     }
 }
 
@@ -357,7 +418,10 @@ private fun UpdateBannerCard(
  * unmistakable.
  */
 @Composable
-private fun HeroStatusCard(status: HomeViewModel.HomeStatus) {
+private fun HeroStatusCard(
+    status: HomeViewModel.HomeStatus,
+    onAction: (() -> Unit)? = null,
+) {
     val brand = LocalCvBrand.current
     val accent: Color = if (status.isReady) MaterialTheme.colorScheme.primary else brand.warning
     val icon: ImageVector = if (status.isReady) Icons.Filled.CheckCircle else Icons.Filled.WarningAmber
@@ -366,18 +430,20 @@ private fun HeroStatusCard(status: HomeViewModel.HomeStatus) {
         HomeViewModel.HomeStatus.NOT_PAIRED -> CvTone.Warning
         HomeViewModel.HomeStatus.NO_FOLDER -> CvTone.Error
         HomeViewModel.HomeStatus.DEV_OPTIONS_OFF -> CvTone.Error
+        HomeViewModel.HomeStatus.UPDATE_REGRANT_NEEDED -> CvTone.Warning
     }
     val pillText = when (status) {
         HomeViewModel.HomeStatus.READY -> stringResource(R.string.home_hero_pill_ready)
         HomeViewModel.HomeStatus.NOT_PAIRED -> stringResource(R.string.home_hero_pill_not_paired)
         HomeViewModel.HomeStatus.NO_FOLDER -> stringResource(R.string.home_hero_pill_no_folder)
         HomeViewModel.HomeStatus.DEV_OPTIONS_OFF -> stringResource(R.string.home_hero_pill_dev_options_off)
+        HomeViewModel.HomeStatus.UPDATE_REGRANT_NEEDED -> stringResource(R.string.home_hero_pill_update_regrant)
     }
 
     // Subtle accent-tinted surface so the banner reads as a confident state, not a stock card.
     val tinted = accent.copy(alpha = 0.10f).compositeOver(MaterialTheme.colorScheme.surface)
 
-    CvCard(color = tinted, contentPadding = PaddingValues(20.dp)) {
+    CvCard(color = tinted, onClick = onAction, contentPadding = PaddingValues(20.dp)) {
         Row(verticalAlignment = Alignment.CenterVertically) {
             Box(
                 modifier = Modifier
@@ -715,6 +781,7 @@ private sealed interface DeleteTarget {
 private fun RecordingRow(
     item: RecordingItem,
     playback: RecordingPlaybackController.PlaybackState,
+    deleting: Boolean,
     onPlayUri: (Uri) -> Unit,
     onPause: () -> Unit,
     onResume: () -> Unit,
@@ -831,17 +898,25 @@ private fun RecordingRow(
                 }
             }
             // Main-row delete: BOTH rows delete every copy; single-source rows delete their one file.
-            IconButton(
-                onClick = {
-                    deleteTarget = if (isBoth) DeleteTarget.All else DeleteTarget.Single(item.uri)
+            // While the delete (and any cloud-copy removal) is in flight, show a live spinner in the
+            // delete button's place — the row then vanishes on the list refresh. No modal.
+            if (deleting) {
+                Box(modifier = Modifier.size(48.dp), contentAlignment = Alignment.Center) {
+                    CircularProgressIndicator(modifier = Modifier.size(20.dp), strokeWidth = 2.dp)
                 }
-            ) {
-                Icon(
-                    imageVector = Icons.Filled.Delete,
-                    contentDescription = stringResource(R.string.home_delete),
-                    tint = MaterialTheme.colorScheme.onSurfaceVariant,
-                    modifier = Modifier.size(20.dp)
-                )
+            } else {
+                IconButton(
+                    onClick = {
+                        deleteTarget = if (isBoth) DeleteTarget.All else DeleteTarget.Single(item.uri)
+                    }
+                ) {
+                    Icon(
+                        imageVector = Icons.Filled.Delete,
+                        contentDescription = stringResource(R.string.home_delete),
+                        tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                        modifier = Modifier.size(20.dp)
+                    )
+                }
             }
         }
 

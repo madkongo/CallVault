@@ -94,6 +94,9 @@ import androidx.compose.material.icons.filled.Gavel
 import androidx.compose.material.icons.filled.NotificationsActive
 import androidx.compose.material.icons.filled.Save
 import androidx.compose.material.icons.filled.Vibration
+import androidx.compose.material.icons.filled.WifiOff
+import com.baba.callvault.ui.common.OfflineDialogMode
+import com.baba.callvault.ui.common.OfflineRecordingDialog
 import androidx.compose.ui.platform.LocalInspectionMode
 import androidx.compose.ui.platform.LocalResources
 import org.xmlpull.v1.XmlPullParser
@@ -985,6 +988,42 @@ private fun BugReportSection(
                 Spacer(modifier = Modifier.height(4.dp))
             }
         }
+
+        OfflineRecordingToggle()
+    }
+}
+
+/**
+ * Opt-in "Offline recording (no Wi-Fi)" toggle. Turning it ON pops a security-warning modal
+ * (Cancel / Continue anyway) because it arms a local `adb tcpip` debugging port; only on "Continue"
+ * do we persist the opt-in, arm the loopback listener, and re-warm the daemon. Turning it OFF clears
+ * the opt-in and best-effort closes the port (reverts adbd to USB mode).
+ */
+@Composable
+private fun OfflineRecordingToggle() {
+    val context = LocalContext.current
+    val prefs = remember { AppPreferences(context) }
+    var enabled by remember { mutableStateOf(prefs.isOfflineRecordingEnabled()) }
+    // Non-null while the enable/disable dialog is walking the user through the ADB work with live feedback.
+    var dialogMode by remember { mutableStateOf<OfflineDialogMode?>(null) }
+
+    SettingsToggleRow(
+        icon = Icons.Filled.WifiOff,
+        label = stringResource(R.string.settings_offline_recording_label),
+        description = stringResource(R.string.settings_offline_recording_desc),
+        checked = enabled,
+        enabled = dialogMode == null,
+        onCheckedChange = { turnOn ->
+            dialogMode = if (turnOn) OfflineDialogMode.ENABLE else OfflineDialogMode.DISABLE
+        },
+    )
+
+    dialogMode?.let { mode ->
+        OfflineRecordingDialog(
+            mode = mode,
+            onResult = { nowEnabled -> enabled = nowEnabled },
+            onClose = { dialogMode = null },
+        )
     }
 }
 
