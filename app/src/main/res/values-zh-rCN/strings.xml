@@ -60,8 +60,8 @@
     <string name="home_status_not_paired_suggestion">请在设置中完成无线调试配对。</string>
     <string name="home_status_not_paired_title">设置未完成</string>
     <string name="home_status_ready_suggestion">CallVault 会根据你的设置自动录制通话。</string>
-    <string name="home_status_update_regrant_title">更新后录音已暂停</string>
-    <string name="home_status_update_regrant_suggestion">此次更新清除了 CallVault 所需的一项权限。点按这里，然后开启一次无线调试——录音会自动恢复。无需重新安装。</string>
+    <string name="home_status_update_regrant_title">重新连接以继续录音</string>
+    <string name="home_status_update_regrant_suggestion">一次更新清除了 CallVault 重新启动录音所需的一项权限。目前可能仍可使用——点按这里，然后开启一次无线调试即可恢复。无需重新安装。</string>
     <string name="home_status_ready_title">准备就绪</string>
     <string name="permission_adb_description">录制通话音频所必需。通过通知配对一次后，即可自动连接。</string>
     <string name="permission_adb_not_connected">未连接——点按进行设置</string>

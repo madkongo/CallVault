@@ -60,8 +60,8 @@
     <string name="home_status_not_paired_suggestion">Hoàn tất việc ghép nối Gỡ lỗi không dây trong phần thiết lập.</string>
     <string name="home_status_not_paired_title">Thiết lập chưa hoàn tất</string>
     <string name="home_status_ready_suggestion">CallVault tự động ghi âm cuộc gọi theo cài đặt của bạn.</string>
-    <string name="home_status_update_regrant_title">Ghi âm tạm dừng sau khi cập nhật</string>
-    <string name="home_status_update_regrant_suggestion">Bản cập nhật đã xóa một quyền mà CallVault cần. Nhấn vào đây, rồi bật gỡ lỗi không dây một lần — bản ghi sẽ tự khôi phục. Không cần cài đặt lại.</string>
+    <string name="home_status_update_regrant_title">Kết nối lại để tiếp tục ghi âm</string>
+    <string name="home_status_update_regrant_suggestion">Một bản cập nhật đã xóa quyền mà CallVault cần để khởi động lại việc ghi âm. Hiện tại có thể vẫn hoạt động — nhấn vào đây, rồi bật gỡ lỗi không dây một lần để khôi phục. Không cần cài đặt lại.</string>
     <string name="home_status_ready_title">Sẵn sàng ghi âm</string>
     <string name="permission_adb_description">Bắt buộc để ghi âm cuộc gọi. Ghép nối một lần qua thông báo, sau đó nó sẽ tự động kết nối.</string>
     <string name="permission_adb_not_connected">Chưa kết nối — nhấn để thiết lập</string>

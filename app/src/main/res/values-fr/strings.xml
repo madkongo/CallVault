@@ -63,8 +63,8 @@
     <string name="home_status_dev_options_off_title">Options pour les développeurs désactivées</string>
     <string name="home_status_dev_options_off_suggestion">CallVault enregistre via le débogage sans fil, qui nécessite les options pour les développeurs. L\'enregistrement ne peut pas fonctionner tant que vous ne réactivez pas les options pour les développeurs (et le débogage sans fil) dans les paramètres du système.</string>
     <string name="home_status_ready_suggestion">CallVault enregistre les appels automatiquement selon vos paramètres.</string>
-    <string name="home_status_update_regrant_title">Enregistrement suspendu après la mise à jour</string>
-    <string name="home_status_update_regrant_suggestion">La mise à jour a supprimé une autorisation dont CallVault a besoin. Appuie ici, puis active le débogage sans fil une fois — l\'enregistrement se rétablit tout seul. Aucune réinstallation nécessaire.</string>
+    <string name="home_status_update_regrant_title">Reconnecte-toi pour continuer à enregistrer</string>
+    <string name="home_status_update_regrant_suggestion">Une mise à jour a supprimé une autorisation dont CallVault a besoin pour relancer l\'enregistrement. Ça marche peut-être encore — appuie ici, puis active le débogage sans fil une fois pour la rétablir. Aucune réinstallation nécessaire.</string>
     <string name="home_status_ready_title">Prêt à enregistrer</string>
     <string name="permission_adb_description">Nécessaire pour capturer l\'audio des appels. Associez une fois via la notification, puis la connexion se fait automatiquement.</string>
     <string name="permission_adb_not_connected">Non connecté — touchez pour configurer</string>

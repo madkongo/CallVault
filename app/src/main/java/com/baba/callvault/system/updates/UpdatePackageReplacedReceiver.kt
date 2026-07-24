@@ -54,24 +54,26 @@ class UpdatePackageReplacedReceiver : BroadcastReceiver() {
     }
 
     /**
-     * Best-effort, off the broadcast thread: reconnect over any surviving transport so
-     * [AdbShell.ensureConnected] re-grants WRITE_SECURE_SETTINGS (`pm grant`) and the daemon relaunches.
-     * Skipped when the grant already survived (in-app updater re-grants inline). Harmless no-op when no
-     * transport survives — the Home `UPDATE_REGRANT_NEEDED` banner then guides the one-time WD toggle.
+     * Best-effort, off the broadcast thread: re-grant WRITE_SECURE_SETTINGS that the install-over
+     * dropped, over any transport that's ALREADY up (WD still on / loopback armed) — no adbd churn.
+     *
+     * [AdbShell.tryHealWriteSecureSettings] is used INSTEAD of relying on the daemon launcher, because
+     * when the daemon survived the update [RecorderServerLauncher.ensureServerRunning] early-returns on
+     * the already-connected binder and never reaches the self-grant — which is exactly the common case
+     * (recording keeps working, but the grant stays lost). After healing we still ensure the daemon is
+     * up (a no-op when it's already connected). Skipped when the grant survived (in-app updater re-grants
+     * inline). Harmless no-op when no transport is up — Home's banner then guides the one-time WD toggle.
      */
     private fun recoverAfterReplace(context: Context) {
         if (AdbShell.hasWriteSecureSettings(context)) {
             AppLogger.d(TAG, "WRITE_SECURE_SETTINGS survived the update; no post-replace recovery needed")
             return
         }
-        AppLogger.i(TAG, "WRITE_SECURE_SETTINGS lost on update; attempting reconnect self-heal + daemon relaunch")
+        AppLogger.i(TAG, "WRITE_SECURE_SETTINGS lost on update; attempting non-churning self-heal")
         Thread {
+            val healed = runCatching { AdbShell.tryHealWriteSecureSettings(context) }.getOrDefault(false)
             runCatching { RecorderServerLauncher.ensureServerRunning(context) }
-                .onSuccess { ok ->
-                    val healed = AdbShell.hasWriteSecureSettings(context)
-                    AppLogger.i(TAG, "Post-replace recovery: daemon=$ok, WRITE_SECURE_SETTINGS regranted=$healed")
-                }
-                .onFailure { AppLogger.w(TAG, "Post-replace recovery failed (no surviving transport?): ${it.message}") }
+            AppLogger.i(TAG, "Post-replace recovery: WRITE_SECURE_SETTINGS regranted=$healed")
         }.apply { isDaemon = true; name = "cv-post-update-recover" }.start()
     }
 
