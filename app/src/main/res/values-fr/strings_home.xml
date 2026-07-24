@@ -3,6 +3,7 @@
 <resources xmlns:tools="http://schemas.android.com/tools">
     <string name="home_hero_pill_no_folder">Action requise</string>
     <string name="home_hero_pill_dev_options_off">Enregistrement impossible</string>
+    <string name="home_hero_pill_update_regrant">Action requise</string>
     <string name="home_hero_pill_not_paired">Action requise</string>
     <string name="home_hero_pill_ready">Actif</string>
     <string name="home_hero_status_label">État</string>
@@ -16,4 +17,12 @@
     <string name="home_update_banner_downloading">Téléchargement… %1$d%%</string>
     <string name="home_update_banner_installing">Installation…</string>
     <string name="home_updated_banner_text">CallVault a été mis à jour vers %1$s</string>
+    <string name="home_whatsnew_title">Nouveautés</string>
+    <string name="home_whatsnew_body">• Enregistrez les appels même sans Wi-Fi (activez-le ci-dessous)\n• L\'enregistrement est prêt plus vite après une période d\'inactivité du téléphone\n• Un nouveau moteur audio plus léger — fini les débuts d\'appel coupés</string>
+    <string name="home_whatsnew_offline_cta">Activer l\'enregistrement sans Wi-Fi</string>
+    <string name="home_whatsnew_offline_enabled">Enregistrement hors ligne activé.</string>
+    <string name="home_whatsnew_offline_failed">Activation impossible — connectez-vous une fois au Wi-Fi, puis réessayez depuis les Paramètres.</string>
+    <string name="home_whatsnew_offline_enabling">Activation de l\'enregistrement sans Wi-Fi…</string>
+    <string name="offline_recording_on">L\'enregistrement sans Wi-Fi est activé.</string>
+    <string name="offline_recording_disabling">Désactivation de l\'enregistrement sans Wi-Fi…</string>
 </resources>

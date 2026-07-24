@@ -53,8 +53,18 @@ object RecorderConnection {
         AppLogger.i(TAG, "RecorderConnection received daemon binder")
     }
 
+    /**
+     * Optional hook fired (in addition to clearing [service]) the instant the daemon binder dies, so a
+     * watcher (the keep-alive service) can relaunch the daemon RIGHT AWAY instead of waiting for its next
+     * poll. Since linkToDeath only fires on genuine process death, this is an authoritative "daemon gone"
+     * signal — the fastest possible recovery trigger.
+     */
+    @Volatile
+    var onDeath: (() -> Unit)? = null
+
     /** Cleared when the daemon dies (via [deathRecipient]) so callers observe a stale channel. */
     fun onBinderDied() {
         this.service = null
+        runCatching { onDeath?.invoke() }.onFailure { AppLogger.w(TAG, "onDeath hook failed: ${it.message}") }
     }
 }

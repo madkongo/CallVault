@@ -153,6 +153,13 @@
     <string name="folder_cloud_rejected">Cloud folders (like Google Drive) can\'t be used for recording. Pick on-device storage — use the Google Drive backup option for cloud copies.</string>
     <string name="folder_cloud_warning">⚠ This recording folder is in the cloud, which is unreliable for capture. Choose an on-device folder.</string>
 
+    <!-- Offline recording (loopback) opt-in + security warning -->
+    <string name="settings_offline_recording_label">Offline recording (no Wi-Fi)</string>
+    <string name="settings_offline_recording_desc">Record calls even when there is no Wi-Fi network.</string>
+    <string name="offline_recording_warning_title">Enable offline recording?</string>
+    <string name="offline_recording_warning_message">This opens a local debugging port on your phone so calls can record with no Wi-Fi. It is protected by your device\'s key, but it is a small security tradeoff. Only enable it if you need to record calls without Wi-Fi.</string>
+    <string name="offline_recording_warning_continue">Continue anyway</string>
+
     <string name="settings_file_name_template">File Name Template</string>
     <string name="settings_file_name_template_preset">Preset</string>
     <string name="settings_file_name_preset_date_direction_number">Date · Direction · Number</string>
@@ -341,6 +348,8 @@
     <string name="home_status_not_paired_suggestion">Finish Wireless Debugging pairing in setup.</string>
     <string name="home_status_dev_options_off_title">Developer options is off</string>
     <string name="home_status_dev_options_off_suggestion">CallVault records through Wireless debugging, which needs Developer options. Recording cannot work until you re-enable Developer options (and Wireless debugging) in system settings.</string>
+    <string name="home_status_update_regrant_title">Recording paused after update</string>
+    <string name="home_status_update_regrant_suggestion">The update cleared a permission CallVault needs. Tap here, then turn Wireless debugging on once — recording restores itself. No reinstall needed.</string>
     <string name="home_status_ready_title">Ready to record</string>
     <string name="home_status_ready_suggestion">CallVault records calls automatically per your settings.</string>
 

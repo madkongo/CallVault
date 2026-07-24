@@ -57,6 +57,8 @@
     <string name="home_status_not_paired_suggestion">请在设置中完成无线调试配对。</string>
     <string name="home_status_not_paired_title">设置未完成</string>
     <string name="home_status_ready_suggestion">CallVault 会根据你的设置自动录制通话。</string>
+    <string name="home_status_update_regrant_title">更新后录音已暂停</string>
+    <string name="home_status_update_regrant_suggestion">此次更新清除了 CallVault 所需的一项权限。点按这里，然后开启一次无线调试——录音会自动恢复。无需重新安装。</string>
     <string name="home_status_ready_title">准备就绪</string>
     <string name="permission_adb_description">录制通话音频所必需。通过通知配对一次后，即可自动连接。</string>
     <string name="permission_adb_not_connected">未连接——点按进行设置</string>
@@ -158,6 +160,11 @@
     <string name="settings_recording_folder_label">选取保存目录</string>
     <string name="folder_cloud_rejected">云端文件夹（如 Google Drive）无法用于录音。请选择设备本地存储——如需云端副本，请使用 Google Drive 备份选项。</string>
     <string name="folder_cloud_warning">⚠ 此录音文件夹位于云端，用于录音并不可靠。请选择设备本地的文件夹。</string>
+    <string name="settings_offline_recording_label">离线录音（无 Wi-Fi）</string>
+    <string name="settings_offline_recording_desc">即使没有 Wi-Fi 网络也能录制通话。</string>
+    <string name="offline_recording_warning_title">启用离线录音？</string>
+    <string name="offline_recording_warning_message">此操作会在您的手机上开启一个本地调试端口，以便在没有 Wi-Fi 的情况下录制通话。它受设备密钥保护，但会带来轻微的安全权衡。仅在您需要在没有 Wi-Fi 的情况下录制通话时才启用。</string>
+    <string name="offline_recording_warning_continue">仍然继续</string>
     <string name="settings_section_about">关于</string>
     <string name="settings_section_audio">音源选项</string>
     <string name="settings_section_debug">调试选项</string>

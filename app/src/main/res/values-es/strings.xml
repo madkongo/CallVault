@@ -57,6 +57,8 @@
     <string name="home_status_not_paired_suggestion">Complete el emparejamiento de la Depuración inalámbrica en la configuración.</string>
     <string name="home_status_not_paired_title">Configuración incompleta</string>
     <string name="home_status_ready_suggestion">CallVault graba las llamadas automáticamente según sus ajustes.</string>
+    <string name="home_status_update_regrant_title">Grabación en pausa tras la actualización</string>
+    <string name="home_status_update_regrant_suggestion">La actualización eliminó un permiso que CallVault necesita. Toca aquí y activa la depuración inalámbrica una vez: la grabación se restaura sola. No hace falta reinstalar.</string>
     <string name="home_status_ready_title">Listo para grabar</string>
     <string name="permission_adb_description">Necesario para capturar el audio de las llamadas. Empareje una vez mediante la notificación y luego se conecta automáticamente.</string>
     <string name="permission_adb_not_connected">Sin conexión — toque para configurar</string>
@@ -158,6 +160,11 @@
     <string name="settings_recording_folder_label">Carpeta de grabaciones</string>
     <string name="folder_cloud_rejected">Las carpetas en la nube (como Google Drive) no se pueden usar para grabar. Elige un almacenamiento en el dispositivo; usa la opción de copia de seguridad de Google Drive para las copias en la nube.</string>
     <string name="folder_cloud_warning">⚠ Esta carpeta de grabación está en la nube, lo que no es fiable para la captura. Elige una carpeta en el dispositivo.</string>
+    <string name="settings_offline_recording_label">Grabación sin conexión (sin Wi-Fi)</string>
+    <string name="settings_offline_recording_desc">Graba llamadas incluso cuando no hay red Wi-Fi.</string>
+    <string name="offline_recording_warning_title">¿Activar la grabación sin conexión?</string>
+    <string name="offline_recording_warning_message">Esto abre un puerto de depuración local en tu teléfono para que las llamadas puedan grabarse sin Wi-Fi. Está protegido por la clave de tu dispositivo, pero supone una pequeña concesión de seguridad. Actívalo solo si necesitas grabar llamadas sin Wi-Fi.</string>
+    <string name="offline_recording_warning_continue">Continuar de todos modos</string>
     <string name="settings_section_about">Acerca de</string>
     <string name="settings_section_audio">Configuración de audio</string>
     <string name="settings_section_debug">Opciones de depuración</string>

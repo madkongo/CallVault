@@ -10,10 +10,19 @@
     <string name="home_recordings_empty_hint">Wenn CallVault einen Anruf aufzeichnet, erscheint er hier. Tätigen oder nehmen Sie einen Anruf an, um zu beginnen.</string>
     <string name="home_recordings_empty_title">Noch keine Aufnahmen</string>
     <string name="home_hero_pill_dev_options_off">Aufnahme nicht möglich</string>
+    <string name="home_hero_pill_update_regrant">Aktion erforderlich</string>
     <string name="home_update_banner_title">Update verfügbar: %1$s</string>
     <string name="home_update_banner_text">Eine neue Version steht auf GitHub zum Download bereit.</string>
     <string name="home_update_banner_button">Aktualisieren</string>
     <string name="home_update_banner_downloading">Wird heruntergeladen… %1$d%%</string>
     <string name="home_update_banner_installing">Wird installiert…</string>
     <string name="home_updated_banner_text">CallVault wurde auf %1$s aktualisiert</string>
+    <string name="home_whatsnew_title">Neu</string>
+    <string name="home_whatsnew_body">• Anrufe auch ohne Wi-Fi aufzeichnen (unten aktivieren)\n• Die Aufnahme ist schneller bereit, nachdem Ihr Telefon im Leerlauf war\n• Eine neue, leichtere Audio-Engine — keine abgeschnittenen Anrufanfänge mehr</string>
+    <string name="home_whatsnew_offline_cta">Aufnahme ohne Wi-Fi aktivieren</string>
+    <string name="home_whatsnew_offline_enabled">Offline-Aufnahme aktiviert.</string>
+    <string name="home_whatsnew_offline_failed">Aktivierung fehlgeschlagen — verbinden Sie sich einmal mit Wi-Fi und versuchen Sie es dann in den Einstellungen.</string>
+    <string name="home_whatsnew_offline_enabling">Aufnahme ohne Wi-Fi wird aktiviert…</string>
+    <string name="offline_recording_on">Aufnahme ohne Wi-Fi ist aktiv.</string>
+    <string name="offline_recording_disabling">Aufnahme ohne Wi-Fi wird deaktiviert…</string>
 </resources>

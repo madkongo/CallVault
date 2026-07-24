@@ -10,6 +10,7 @@ package com.baba.callvault.server
 
 import android.content.Context
 import android.os.SystemClock
+import com.baba.callvault.data.AppPreferences
 import com.baba.callvault.integrations.adb.AdbShell
 import com.baba.callvault.utils.AppLogger
 
@@ -64,16 +65,19 @@ object RecorderServerLauncher {
     /**
      * Kills any already-running [RecorderServer] daemon before launching a fresh one. The daemon is a
      * detached shell-uid `app_process` reparented to init, so it SURVIVES app uninstall/update — without
-     * this, stale OLD-code daemons accumulate across reinstalls/updates and orphan until reboot. Scans
-     * `/proc/<pid>/cmdline` for the daemon FQCN and `kill`s the matches.
+     * this, stale OLD-code daemons accumulate across reinstalls/updates and orphan until reboot.
      *
-     * Self-exclusion: the FQCN is written `Recorder[S]erver` so this kill shell's OWN cmdline (which
-     * contains the literal `Recorder[S]erver`) does NOT match the regex, while a real daemon's cmdline
-     * (`…RecorderServer …`) does. Run only on the launch path (binder not connected), so killing an
-     * existing daemon is safe — a fresh one is about to replace it.
+     * Uses `pgrep -f` (a single fast kernel scan) — the previous `for d in /proc/[0-9]*; do grep …`
+     * loop forked a `grep` per process and measured **~25 s** on this device, dwarfing the whole rest of
+     * a relaunch (the dominant chunk of the post-death "starting up" window a call races). pgrep is ~70 ms.
+     *
+     * Self-exclusion: the FQCN is written `Recorder[S]erver` so this command's OWN cmdline (which contains
+     * the literal `Recorder[S]erver`) does NOT match the regex, while a real daemon's cmdline
+     * (`…RecorderServer …`) does. Run only on the launch path (binder not connected), and only AFTER
+     * [AdbShell.waitForShellReady] confirms the shell answers, so pgrep can't hang mid-restart.
      */
     private const val KILL_STALE_CMD =
-        "for d in /proc/[0-9]*; do grep -qa 'com.baba.callvault.server.Recorder[S]erver' \"\$d/cmdline\" 2>/dev/null && kill \"\${d#/proc/}\" 2>/dev/null; done"
+        "p=\$(pgrep -f 'com.baba.callvault.server.Recorder[S]erver' 2>/dev/null); [ -n \"\$p\" ] && kill \$p 2>/dev/null; true"
 
     /** Drain cap for [killStaleDaemons]; the command isn't backgrounded, so it usually EOFs sooner. */
     private const val KILL_DRAIN_MS = 1500L
@@ -96,6 +100,9 @@ object RecorderServerLauncher {
      */
     private const val MAX_LAUNCH_ATTEMPTS = 3
 
+    /** Per-attempt budget to wait for the loopback shell to actually answer (adbd finishing a restart). */
+    private const val SHELL_READY_TIMEOUT_MS = 6_000L
+
     /**
      * Ensures the privileged recorder daemon is running and its binder is available in
      * [RecorderConnection]. Call OFF the main thread (does ADB network I/O and polls/sleeps).
@@ -117,7 +124,10 @@ object RecorderServerLauncher {
      * other mid-connect and spawn duplicate daemons — observed to thrash the embedded ADB connection into
      * a "Stream closed" state. One launch at a time; the second caller sees the connected binder and returns.
      */
-    fun ensureServerRunning(context: Context, timeoutMs: Long = 12_000): Boolean =
+    // 24s total / 3 attempts = 8s per attempt. The old 12s (=4s/attempt) was shorter than the daemon's
+    // cold-start, so attempt 1 ALWAYS timed out and we burned ~8s before even retrying — the biggest
+    // avoidable chunk of the post-reap "starting up" window a call races. 8s comfortably covers a cold boot.
+    fun ensureServerRunning(context: Context, timeoutMs: Long = 24_000): Boolean =
         // Serialize with the update installer (and other daemon launches) on the shared ADB lock, so
         // a launch's reconnect/WD-toggle never tears down an in-flight update install stream.
         synchronized(AdbShell.heavyOperationLock) { ensureServerRunningLocked(context, timeoutMs) }
@@ -143,10 +153,27 @@ object RecorderServerLauncher {
             // (Re)establish ADB. On a retry, force a fresh connection — a stale half-dead connection
             // still reports isConnected but its openStream throws "Stream closed". This also re-enables
             // Wireless debugging if the WD policy had turned it off (needed to relaunch the daemon).
-            val connected = if (attempt == 0) AdbShell.ensureConnected(context)
+            var connected = if (attempt == 0) AdbShell.ensureConnected(context)
             else AdbShell.forceReconnect(context)
+            // Offline mode: if we couldn't connect, the loopback listener is DOWN (e.g. tcpip cleared on
+            // reboot). Re-ARM it (a deliberate, transient WD bootstrap) rather than run on persistent
+            // Wireless Debugging — WD's adbd churn is what kills the daemon. Held under heavyOperationLock
+            // (this method), so armLoopbackIfNeeded's lock is re-entrant. No-op/fast when already armed.
+            if (!connected && AppPreferences(context).isOfflineRecordingEnabled()) {
+                AppLogger.i(TAG, "Attempt $n: offline mode but no connection — re-arming loopback")
+                if (AdbShell.armLoopbackIfNeeded(context)) connected = AdbShell.ensureConnected(context)
+            }
             if (!connected) {
                 AppLogger.w(TAG, "Attempt $n/$MAX_LAUNCH_ATTEMPTS: ADB not connected; retrying")
+                return@repeat
+            }
+
+            // A TCP connect to loopback can succeed while adbd is still mid-restart (OnePlus restarts adbd
+            // on screen transitions), so the launch command would land on a dead shell and we'd wait out
+            // the whole poll for a binder that never arrives. Confirm the shell actually round-trips FIRST
+            // — the daemon boots instantly once the command lands, so this turns a ~40s stall into seconds.
+            if (!AdbShell.waitForShellReady(context, SHELL_READY_TIMEOUT_MS)) {
+                AppLogger.w(TAG, "Attempt $n/$MAX_LAUNCH_ATTEMPTS: loopback shell not ready (adbd restarting); retrying")
                 return@repeat
             }
 

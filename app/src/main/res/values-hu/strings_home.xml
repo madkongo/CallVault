@@ -10,10 +10,19 @@
     <string name="home_recordings_empty_hint">Amikor a CallVault rögzít egy hívást, az itt jelenik meg. Kezdje el egy hívás indításával vagy fogadásával.</string>
     <string name="home_recordings_empty_title">Még nincsenek felvételek</string>
     <string name="home_hero_pill_dev_options_off">A rögzítés nem működik</string>
+    <string name="home_hero_pill_update_regrant">Beavatkozás szükséges</string>
     <string name="home_update_banner_title">Frissítés érhető el: %1$s</string>
     <string name="home_update_banner_text">Új verzió tölthető le a GitHubról.</string>
     <string name="home_update_banner_button">Frissítés</string>
     <string name="home_update_banner_downloading">Letöltés… %1$d%%</string>
     <string name="home_update_banner_installing">Telepítés…</string>
     <string name="home_updated_banner_text">A CallVault frissült erre: %1$s</string>
+    <string name="home_whatsnew_title">Újdonságok</string>
+    <string name="home_whatsnew_body">• Hívások rögzítése Wi-Fi nélkül is (kapcsolja be lent)\n• A felvétel gyorsabban áll készen, miután a telefon tétlen volt\n• Új, könnyebb hangmotor — nincs több levágott híváskezdet</string>
+    <string name="home_whatsnew_offline_cta">Wi-Fi nélküli rögzítés bekapcsolása</string>
+    <string name="home_whatsnew_offline_enabled">Offline rögzítés bekapcsolva.</string>
+    <string name="home_whatsnew_offline_failed">Nem sikerült bekapcsolni — csatlakozzon egyszer Wi-Fi-hez, majd próbálja meg a Beállításokban.</string>
+    <string name="home_whatsnew_offline_enabling">Wi-Fi nélküli rögzítés bekapcsolása…</string>
+    <string name="offline_recording_on">A Wi-Fi nélküli rögzítés be van kapcsolva.</string>
+    <string name="offline_recording_disabling">Wi-Fi nélküli rögzítés kikapcsolása…</string>
 </resources>
