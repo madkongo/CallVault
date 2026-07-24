@@ -14,6 +14,9 @@
     <string name="home_hero_pill_dev_options_off">Recording broken</string>
     <string name="home_hero_pill_update_regrant">Action needed</string>
     <string name="home_support_pill">Support</string>
+    <string name="home_usb_advisory_title">Recording may stop on screen lock</string>
+    <string name="home_usb_advisory_text">USB is set to a data mode. Tap to set it to Charging only.</string>
+    <string name="home_usb_advisory_fix">Fix</string>
 
     <!-- Recordings section -->
     <string name="home_recordings_count">%1$d saved</string>

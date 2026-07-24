@@ -40,6 +40,8 @@ data class OptionItem(
  * @param options          All available options shown in the dropdown menu.
  * @param onOptionSelected Called with the chosen [OptionItem] when the user picks a new option.
  * @param modifier         Optional layout modifier forwarded to the root [ExposedDropdownMenuBox].
+ * @param enabled          When `false`, the field is greyed out and can't be opened (e.g. while a
+ *                         selection is being applied). Defaults to `true`.
  */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -48,25 +50,29 @@ fun M3DropdownField(
     selected: OptionItem,
     options: List<OptionItem>,
     onOptionSelected: (OptionItem) -> Unit,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    enabled: Boolean = true,
 ) {
     var expanded by remember { mutableStateOf(false) }
+    // Never leave the menu open once the field is disabled mid-interaction.
+    if (!enabled && expanded) expanded = false
 
     ExposedDropdownMenuBox(
         expanded         = expanded,
-        onExpandedChange = { expanded = !expanded },
+        onExpandedChange = { if (enabled) expanded = !expanded },
         modifier         = modifier.padding(horizontal = 16.dp, vertical = 8.dp)
     ) {
         OutlinedTextField(
             value         = selected.label,
             onValueChange = {},
             readOnly      = true,
+            enabled       = enabled,
             singleLine    = true,
             maxLines      = 1,
             label         = { Text(label, maxLines = 1, overflow = TextOverflow.Ellipsis) },
             trailingIcon  = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = expanded) },
             colors        = ExposedDropdownMenuDefaults.outlinedTextFieldColors(),
-            modifier      = Modifier.menuAnchor(type = ExposedDropdownMenuAnchorType.PrimaryNotEditable, enabled = true).fillMaxWidth()
+            modifier      = Modifier.menuAnchor(type = ExposedDropdownMenuAnchorType.PrimaryNotEditable, enabled = enabled).fillMaxWidth()
         )
         ExposedDropdownMenu(
             expanded         = expanded,

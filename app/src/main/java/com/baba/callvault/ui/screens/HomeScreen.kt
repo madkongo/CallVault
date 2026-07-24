@@ -196,6 +196,15 @@ fun HomeScreen(
                 )
             }
 
+            if (uiState.usbScreenLockRisk) {
+                item {
+                    UsbReliabilityAdvisoryCard(
+                        fixing = uiState.usbFixInProgress,
+                        onFix = { viewModel.setUsbChargingOnly() },
+                    )
+                }
+            }
+
             uiState.updatedToVersion?.let { version ->
                 item {
                     UpdatedBannerCard(
@@ -339,6 +348,58 @@ private fun UpdatedBannerCard(version: String, onDismiss: () -> Unit) {
                     imageVector = Icons.Filled.Close,
                     contentDescription = stringResource(R.string.general_close),
                     tint = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+            }
+        }
+    }
+}
+
+/**
+ * Gentle advisory shown under the hero card when the Default USB Configuration is a DATA mode — locking
+ * the screen mid-call can then stop recording. NOT a red "broken" state (recording works otherwise), so
+ * it uses a soft warning tint. Tapping it applies the one-tap fix (set USB to "Charging only"); a spinner
+ * replaces the action while that runs.
+ */
+@Composable
+private fun UsbReliabilityAdvisoryCard(fixing: Boolean, onFix: () -> Unit) {
+    val accent = LocalCvBrand.current.warning
+    val tinted = accent.copy(alpha = 0.10f).compositeOver(MaterialTheme.colorScheme.surface)
+    CvCard(
+        color = tinted,
+        onClick = if (fixing) null else onFix,
+        contentPadding = PaddingValues(16.dp),
+    ) {
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            Icon(
+                imageVector = Icons.Filled.WarningAmber,
+                contentDescription = null,
+                tint = accent,
+                modifier = Modifier.size(24.dp)
+            )
+            Spacer(Modifier.width(14.dp))
+            Column(Modifier.weight(1f)) {
+                Text(
+                    text = stringResource(R.string.home_usb_advisory_title),
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.Bold,
+                    color = MaterialTheme.colorScheme.onSurface,
+                )
+                Spacer(Modifier.height(2.dp))
+                Text(
+                    text = stringResource(R.string.home_usb_advisory_text),
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+            }
+            Spacer(Modifier.width(10.dp))
+            if (fixing) {
+                CircularProgressIndicator(modifier = Modifier.size(20.dp), strokeWidth = 2.dp)
+            } else {
+                Text(
+                    text = stringResource(R.string.home_usb_advisory_fix),
+                    style = MaterialTheme.typography.labelLarge,
+                    fontWeight = FontWeight.Bold,
+                    color = accent,
                 )
             }
         }

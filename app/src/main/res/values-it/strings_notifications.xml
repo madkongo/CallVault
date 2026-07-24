@@ -6,6 +6,7 @@
     <string name="notif_readiness_starting_title">Avvio del registratore di chiamate…</string>
     <string name="notif_readiness_ready_text">Il registratore è connesso.</string>
     <string name="notif_readiness_starting_text">Connessione del registratore in corso: le chiamate non verranno registrate finché non termina.</string>
+    <string name="notif_usb_lock_warning">Bloccare lo schermo durante una chiamata può interrompere la registrazione. Imposta USB su "Solo ricarica" in Impostazioni → Affidabilità.</string>
     <string name="notif_pairing_channel">Associazione ADB</string>
     <string name="notif_pairing_searching_title">Ricerca del servizio di associazione…</string>
     <string name="notif_pairing_searching_text">Apra la finestra \"Associa dispositivo tramite codice di associazione\" del telefono.</string>

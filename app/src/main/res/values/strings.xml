@@ -125,6 +125,7 @@
     <string name="settings_section_recording_storage">Recording &amp; storage</string>
     <string name="settings_section_visual">Visual settings</string>
     <string name="settings_section_audio">Audio configuration</string>
+    <string name="settings_section_reliability">Reliability</string>
     <string name="settings_section_debug">Debug</string>
     <string name="settings_section_security">Security</string>
     <string name="settings_section_recorder_server">Recorder service</string>
@@ -156,6 +157,14 @@
     <!-- Offline recording (loopback) opt-in + security warning -->
     <string name="settings_offline_recording_label">Offline recording (no Wi-Fi)</string>
     <string name="settings_offline_recording_desc">Record calls even when there is no Wi-Fi network.</string>
+    <string name="settings_usb_default_label">USB when screen unlocks</string>
+    <string name="settings_usb_default_hint">"Charging only" keeps recording alive if you lock the screen during a call. Other modes let USB transfer data but can interrupt a recording when you lock the phone.</string>
+    <string name="settings_usb_default_applying">Applying…</string>
+    <string name="usb_mode_charging">Charging only (no data)</string>
+    <string name="usb_mode_file_transfer">File transfer</string>
+    <string name="usb_mode_ptp">PTP</string>
+    <string name="usb_mode_tethering">USB tethering</string>
+    <string name="usb_mode_midi">MIDI</string>
     <string name="offline_recording_warning_title">Enable offline recording?</string>
     <string name="offline_recording_warning_message">This opens a local debugging port on your phone so calls can record with no Wi-Fi. It is protected by your device\'s key, but it is a small security tradeoff. Only enable it if you need to record calls without Wi-Fi.</string>
     <string name="offline_recording_warning_continue">Continue anyway</string>
@@ -335,6 +344,14 @@
     <string name="wizard_auto_record_title">Automatic recording</string>
     <string name="wizard_auto_record_subtitle">Choose which calls are recorded automatically. You can fine-tune this later in Settings.</string>
     <!-- Wizard: Audio step -->
+    <string name="wizard_reliability_title">Reliable recording</string>
+    <string name="wizard_reliability_subtitle">Two optional settings that keep recording working in tricky conditions. You can skip these and change them later in Settings.</string>
+    <string name="wizard_reliability_usb_title">Keep recording when the screen locks</string>
+    <string name="wizard_reliability_usb_desc">On some phones, locking the screen during a call can stop the recording. Setting USB to \"Charging only\" prevents that. (Your phone then defaults to charging when plugged into a PC — pick File transfer manually when you need it.)</string>
+    <string name="wizard_reliability_usb_button">Set USB to Charging only</string>
+    <string name="wizard_reliability_usb_done">USB is set to Charging only</string>
+    <string name="wizard_reliability_offline_button">Enable</string>
+    <string name="wizard_reliability_offline_done">Offline recording is on</string>
     <string name="wizard_audio_title">Audio quality</string>
     <string name="wizard_audio_subtitle">Pick the recording format and bit rate. Opus at 16 kbps is recommended for clear voice at small file sizes.</string>
     <string name="wizard_filename_title">File name format</string>

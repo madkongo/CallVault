@@ -26,4 +26,7 @@
     <string name="offline_recording_on">A Wi-Fi nélküli rögzítés be van kapcsolva.</string>
     <string name="offline_recording_disabling">Wi-Fi nélküli rögzítés kikapcsolása…</string>
     <string name="home_support_pill">Támogatás</string>
+    <string name="home_usb_advisory_title">A rögzítés leállhat a képernyő zárolásakor</string>
+    <string name="home_usb_advisory_text">Az USB adatmódban van. Koppints a Csak töltés beállításához.</string>
+    <string name="home_usb_advisory_fix">Javítás</string>
 </resources>

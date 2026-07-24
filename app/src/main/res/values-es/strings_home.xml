@@ -26,4 +26,7 @@
     <string name="offline_recording_on">La grabación sin Wi-Fi está activada.</string>
     <string name="offline_recording_disabling">Desactivando la grabación sin Wi-Fi…</string>
     <string name="home_support_pill">Apoyar</string>
+    <string name="home_usb_advisory_title">La grabación puede detenerse al bloquear</string>
+    <string name="home_usb_advisory_text">USB está en un modo de datos. Toca para ponerlo en Solo carga.</string>
+    <string name="home_usb_advisory_fix">Corregir</string>
 </resources>

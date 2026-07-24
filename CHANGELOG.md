@@ -3,6 +3,23 @@
 All notable changes to CallVault are documented here. The format is based on
 [Keep a Changelog](https://keepachangelog.com/), and this project uses semantic-ish versioning.
 
+## [1.4.5] — 2026-07-24
+
+The headline: **recording no longer stops if you lock the screen during a call** — on phones where it did.
+
+### Added
+- **Keep recording when the screen locks.** On many phones (OnePlus, Xiaomi, Samsung…), locking the
+  screen during a call restarts the USB connection, which was killing the recorder mid-call. CallVault
+  can now set your phone's **Default USB Configuration to "Charging only"** from inside the app, which
+  prevents it — no digging through system menus.
+  - A new **Settings → Reliability** section lets you pick the USB mode (Charging only is recommended)
+    and holds the off-Wi-Fi recording option too.
+  - A **setup step** offers the one-tap fix during onboarding.
+  - If USB is on a data mode, the **Home screen** and the **recorder notification** show a gentle
+    "locking the screen may stop recording — tap to fix" prompt.
+  - Note: with "Charging only", plugging into a PC defaults to charging — pick "File transfer" manually
+    when you actually want to move files.
+
 ## [1.4.4] — 2026-07-24
 
 ### Fixed

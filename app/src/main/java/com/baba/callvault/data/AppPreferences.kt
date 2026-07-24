@@ -178,6 +178,7 @@ class AppPreferences(context: Context) {
         LAST_SEEN_VERSION_CODE("last_seen_version_code"),
         UPDATE_SUCCESS_BANNER_VERSION("update_success_banner_version"),
         WHATS_NEW_OFFWIFI_SEEN("whats_new_offwifi_seen"),
+        USB_DEFAULT_MODE("usb_default_mode"),
         UPDATE_SOURCE_OVERRIDE_URL("update_source_override_url"),
 
         // --- Persistent recorder server (CallVault Plan 5) ---
@@ -400,6 +401,10 @@ class AppPreferences(context: Context) {
      */
     fun hasSeenOffWifiWhatsNew() = getBoolean(Key.WHATS_NEW_OFFWIFI_SEEN, false)
     fun setSeenOffWifiWhatsNew(seen: Boolean) = setBoolean(Key.WHATS_NEW_OFFWIFI_SEEN, seen)
+
+    /** Cached name of the last-read [com.baba.callvault.integrations.adb.UsbDefaultMode], or null. */
+    fun getUsbDefaultMode() = getString(Key.USB_DEFAULT_MODE)
+    fun setUsbDefaultMode(mode: String?) = setString(Key.USB_DEFAULT_MODE, mode)
 
     /**
      * TEST-ONLY: a GitHub release API URL to fetch the update from instead of `/latest`. Not exposed

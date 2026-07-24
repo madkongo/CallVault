@@ -6,6 +6,7 @@
     <string name="notif_readiness_starting_title">Démarrage de l\'enregistreur d\'appels…</string>
     <string name="notif_readiness_ready_text">L\'enregistreur est connecté.</string>
     <string name="notif_readiness_starting_text">Connexion de l\'enregistreur — les appels ne seront pas enregistrés tant que ce n\'est pas terminé.</string>
+    <string name="notif_usb_lock_warning">Verrouiller l\'écran pendant un appel peut arrêter l\'enregistrement. Règle l\'USB sur « Charge uniquement » dans Paramètres → Fiabilité.</string>
     <string name="notif_pairing_channel">Association ADB</string>
     <string name="notif_pairing_searching_title">Recherche du service d\'association…</string>
     <string name="notif_pairing_searching_text">Ouvrez la boîte de dialogue « Associer l\'appareil à l\'aide d\'un code d\'association » du téléphone.</string>

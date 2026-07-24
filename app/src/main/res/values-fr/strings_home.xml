@@ -26,4 +26,7 @@
     <string name="offline_recording_on">L\'enregistrement sans Wi-Fi est activé.</string>
     <string name="offline_recording_disabling">Désactivation de l\'enregistrement sans Wi-Fi…</string>
     <string name="home_support_pill">Soutenir</string>
+    <string name="home_usb_advisory_title">L\'enregistrement peut s\'arrêter au verrouillage</string>
+    <string name="home_usb_advisory_text">L\'USB est en mode données. Appuie pour choisir Charge uniquement.</string>
+    <string name="home_usb_advisory_fix">Corriger</string>
 </resources>

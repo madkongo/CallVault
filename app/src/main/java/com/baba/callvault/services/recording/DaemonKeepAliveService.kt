@@ -25,6 +25,7 @@ import androidx.core.app.NotificationCompat
 import androidx.core.content.ContextCompat
 import com.baba.callvault.R
 import com.baba.callvault.data.AppPreferences
+import com.baba.callvault.integrations.adb.UsbDefaultConfig
 import com.baba.callvault.server.RecorderConnection
 import com.baba.callvault.server.RecorderServerLauncher
 import com.baba.callvault.utils.AppLogger
@@ -173,20 +174,28 @@ class DaemonKeepAliveService : Service() {
         }
     }
 
-    private fun buildNotification(ready: Boolean): Notification =
-        NotificationCompat.Builder(this, CHANNEL_ID)
+    private fun buildNotification(ready: Boolean): Notification {
+        val baseText = getString(if (ready) R.string.notif_readiness_ready_text else R.string.notif_readiness_starting_text)
+        val builder = NotificationCompat.Builder(this, CHANNEL_ID)
             .setSmallIcon(android.R.drawable.stat_notify_sync)
             .setContentTitle(
                 getString(if (ready) R.string.notif_readiness_ready_title else R.string.notif_readiness_starting_title),
             )
-            .setContentText(
-                getString(if (ready) R.string.notif_readiness_ready_text else R.string.notif_readiness_starting_text),
-            )
+            .setContentText(baseText)
             .setOngoing(true)
             .setOnlyAlertOnce(true)
             .setPriority(NotificationCompat.PRIORITY_MIN)
             .setVisibility(NotificationCompat.VISIBILITY_SECRET)
-            .build()
+
+        // When recording is ready BUT the USB default is a data mode, locking the screen mid-call can kill
+        // the recorder — surface that right on the readiness notification so the user can act.
+        if (ready && UsbDefaultConfig.isScreenLockRisk(this)) {
+            val warning = getString(R.string.notif_usb_lock_warning)
+            builder.setContentText(warning)
+                .setStyle(NotificationCompat.BigTextStyle().bigText("$baseText\n$warning"))
+        }
+        return builder.build()
+    }
 
     override fun onDestroy() {
         watchdogHandler.removeCallbacks(watchdog)

@@ -6,6 +6,7 @@
     <string name="notif_readiness_starting_title">Iniciando la grabadora de llamadas…</string>
     <string name="notif_readiness_ready_text">La grabadora está conectada.</string>
     <string name="notif_readiness_starting_text">Conectando la grabadora; las llamadas no se grabarán hasta que esto finalice.</string>
+    <string name="notif_usb_lock_warning">Bloquear la pantalla durante una llamada puede detener la grabación. Configura USB como "Solo carga" en Ajustes → Fiabilidad.</string>
     <string name="notif_pairing_channel">Vinculación de ADB</string>
     <string name="notif_pairing_searching_title">Buscando el servicio de vinculación…</string>
     <string name="notif_pairing_searching_text">Abra el cuadro de diálogo «Vincular dispositivo mediante código de vinculación» del teléfono.</string>

@@ -24,6 +24,8 @@ import com.baba.callvault.data.recordings.RecordingsRepository.RecordingItem
 import com.baba.callvault.data.recordings.RecordingsRepository.RecordingSource
 import com.baba.callvault.integrations.adb.AdbShell
 import com.baba.callvault.integrations.adb.DeveloperOptions
+import com.baba.callvault.integrations.adb.UsbDefaultConfig
+import com.baba.callvault.integrations.adb.UsbDefaultMode
 import com.baba.callvault.server.RecorderConnection
 import com.baba.callvault.system.updates.UpdateInstallWorker
 import com.baba.callvault.system.updates.UpdateScheduler
@@ -127,6 +129,10 @@ class HomeViewModel(application: Application) : AndroidViewModel(application) {
         val updatedToVersion: String? = null,
         /** Whether to show the one-time "What's new: off-Wi-Fi" intro modal (updated AND not seen yet). */
         val showWhatsNew: Boolean = false,
+        /** True when the USB default is a data mode → locking the screen mid-call can stop recording. */
+        val usbScreenLockRisk: Boolean = false,
+        /** True while the one-tap "set USB to Charging only" fix is running. */
+        val usbFixInProgress: Boolean = false,
         /** Uris of recordings currently being deleted — drives an inline spinner on their row. */
         val deletingUris: Set<Uri> = emptySet()
     ) {
@@ -265,6 +271,22 @@ class HomeViewModel(application: Application) : AndroidViewModel(application) {
         if (lastSeen != current) preferences.setLastSeenVersionCode(current)
     }
 
+    /**
+     * One-tap fix for the reliability advisory: sets the Default USB Configuration to "Charging only"
+     * over the embedded shell, so locking the screen mid-call no longer kills the recorder. Re-derives
+     * the risk flag afterwards so the advisory clears on success.
+     */
+    fun setUsbChargingOnly() {
+        if (_uiState.value.usbFixInProgress) return
+        _uiState.update { it.copy(usbFixInProgress = true) }
+        viewModelScope.launch {
+            withContext(Dispatchers.IO) { UsbDefaultConfig.setViaShell(appContext, UsbDefaultMode.CHARGING) }
+            _uiState.update {
+                it.copy(usbFixInProgress = false, usbScreenLockRisk = UsbDefaultConfig.isScreenLockRisk(appContext))
+            }
+        }
+    }
+
     /** Dismisses the "updated successfully" banner (clears its persisted state). */
     fun dismissUpdatedBanner() {
         preferences.setUpdateSuccessBannerVersion(null)
@@ -295,7 +317,9 @@ class HomeViewModel(application: Application) : AndroidViewModel(application) {
                 updatedToVersion = updatedTo,
                 // The off-Wi-Fi "What's new" is a ONE-TIME feature intro: show it only after an update
                 // AND only until it's been seen once, so it never recurs on every later release.
-                showWhatsNew = updatedTo != null && !preferences.hasSeenOffWifiWhatsNew()
+                showWhatsNew = updatedTo != null && !preferences.hasSeenOffWifiWhatsNew(),
+                // Advisory when the USB default is a data mode (cheap cached read; never blocks/forces ADB).
+                usbScreenLockRisk = UsbDefaultConfig.isScreenLockRisk(appContext)
             )
         }
         // An install-over can drop WRITE_SECURE_SETTINGS while the daemon stays warm (recording still

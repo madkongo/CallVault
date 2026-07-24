@@ -26,4 +26,7 @@
     <string name="offline_recording_on">Nagrywanie bez Wi-Fi jest włączone.</string>
     <string name="offline_recording_disabling">Wyłączanie nagrywania bez Wi-Fi…</string>
     <string name="home_support_pill">Wesprzyj</string>
+    <string name="home_usb_advisory_title">Nagrywanie może się zatrzymać po zablokowaniu</string>
+    <string name="home_usb_advisory_text">USB jest w trybie danych. Dotknij, aby ustawić Tylko ładowanie.</string>
+    <string name="home_usb_advisory_fix">Napraw</string>
 </resources>
