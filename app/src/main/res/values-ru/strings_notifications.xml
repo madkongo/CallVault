@@ -6,6 +6,7 @@
     <string name="notif_readiness_starting_title">Запуск записи звонков…</string>
     <string name="notif_readiness_ready_text">Запись подключена.</string>
     <string name="notif_readiness_starting_text">Подключение записи — до завершения звонки не записываются.</string>
+    <string name="notif_usb_lock_warning">Блокировка экрана во время звонка может остановить запись. Выберите для USB режим «Только зарядка» в Настройки → Надёжность.</string>
     <string name="notif_pairing_channel">Подключение по ADB</string>
     <string name="notif_pairing_searching_title">Поиск сервиса подключения…</string>
     <string name="notif_pairing_searching_text">Откройте на телефоне диалог «Подключить устройство с помощью кода подключения».</string>

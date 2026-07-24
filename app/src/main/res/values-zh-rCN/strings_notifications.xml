@@ -6,6 +6,7 @@
     <string name="notif_readiness_starting_title">通话录音正在启动…</string>
     <string name="notif_readiness_ready_text">录音器已连接。</string>
     <string name="notif_readiness_starting_text">正在连接录音器——完成前通话不会被录制。</string>
+    <string name="notif_usb_lock_warning">通话中锁屏可能会中断录音。请在“设置 → 可靠性”中将 USB 设为“仅充电”。</string>
     <string name="notif_pairing_channel">ADB 配对</string>
     <string name="notif_pairing_searching_title">正在查找配对服务…</string>
     <string name="notif_pairing_searching_text">请打开手机的“使用配对码配对设备”对话框。</string>

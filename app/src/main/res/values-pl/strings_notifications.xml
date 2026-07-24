@@ -6,6 +6,7 @@
     <string name="notif_readiness_starting_title">Uruchamianie rejestratora połączeń…</string>
     <string name="notif_readiness_ready_text">Rejestrator jest połączony.</string>
     <string name="notif_readiness_starting_text">Łączenie rejestratora — połączenia nie będą nagrywane, dopóki proces się nie zakończy.</string>
+    <string name="notif_usb_lock_warning">Zablokowanie ekranu podczas rozmowy może zatrzymać nagrywanie. Ustaw USB na „Tylko ładowanie“ w Ustawienia → Niezawodność.</string>
     <string name="notif_pairing_channel">Parowanie ADB</string>
     <string name="notif_pairing_searching_title">Wyszukiwanie usługi parowania…</string>
     <string name="notif_pairing_searching_text">Otwórz na telefonie okno „Sparuj urządzenie za pomocą kodu parowania”.</string>

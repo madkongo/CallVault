@@ -26,4 +26,7 @@
     <string name="offline_recording_on">无 Wi-Fi 录音已开启。</string>
     <string name="offline_recording_disabling">正在关闭无 Wi-Fi 录音…</string>
     <string name="home_support_pill">支持</string>
+    <string name="home_usb_advisory_title">锁屏时录音可能中断</string>
+    <string name="home_usb_advisory_text">USB 处于数据模式。点按设为仅充电。</string>
+    <string name="home_usb_advisory_fix">修复</string>
 </resources>

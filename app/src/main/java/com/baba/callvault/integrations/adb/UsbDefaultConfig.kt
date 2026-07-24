@@ -64,8 +64,17 @@ object UsbDefaultConfig {
      * there is no live shell to read through (caller should fall back to [cached]); does NOT force a
      * connection, so it never causes WD/adbd churn. Caches the value on success. Call OFF the main thread.
      */
-    fun readViaShell(context: Context): UsbDefaultMode? {
-        val out = runShell(context, READ_CMD) ?: return null
+    fun readViaShell(context: Context): UsbDefaultMode? = parseAndCache(context, runShell(context, READ_CMD, ensure = true))
+
+    /**
+     * Like [readViaShell] but reads ONLY if an ADB connection is already up — never forces one, so it
+     * causes no WD/adbd churn. Use for opportunistic cache refreshes on paths that already hold a
+     * connection (e.g. right after a daemon launch). Returns null when nothing was read. OFF main thread.
+     */
+    fun readIfConnected(context: Context): UsbDefaultMode? = parseAndCache(context, runShell(context, READ_CMD, ensure = false))
+
+    private fun parseAndCache(context: Context, out: String?): UsbDefaultMode? {
+        if (out == null) return null
         // Filter for the relevant line in Kotlin rather than a `| grep` (pipes are fragile over `shell:`).
         val line = out.lineSequence().firstOrNull { it.contains("screen_unlocked_functions") } ?: return null
         val mode = parse(line)
@@ -80,6 +89,16 @@ object UsbDefaultConfig {
             .getOrDefault(UsbDefaultMode.UNKNOWN)
 
     /**
+     * True when the cached Default USB Configuration is a DATA mode (File transfer, etc.) — i.e. locking
+     * the screen mid-call may restart adbd and kill the recorder. CHARGING and UNKNOWN return false, so we
+     * never warn without a confirmed data value.
+     */
+    fun isScreenLockRisk(context: Context): Boolean = when (cached(context)) {
+        UsbDefaultMode.CHARGING, UsbDefaultMode.UNKNOWN -> false
+        else -> true
+    }
+
+    /**
      * Sets the Default USB Configuration over the ADB shell (ensures a connection first). Returns true if
      * the command was delivered.
      *
@@ -91,7 +110,7 @@ object UsbDefaultConfig {
         if (mode == UsbDefaultMode.UNKNOWN) return false
         // `svc` applies the change ON-DEVICE even when its (empty) response stream closes early, so we
         // can't trust the stream result. Fire it, cache optimistically, then CONFIRM by reading back.
-        runShell(context, "svc usb setScreenUnlockedFunctions ${mode.svcArg}".trimEnd())
+        runShell(context, "svc usb setScreenUnlockedFunctions ${mode.svcArg}".trimEnd(), ensure = true)
         AppPreferences(context).setUsbDefaultMode(mode.name)
         val readback = runCatching { readViaShell(context) }.getOrNull()
         // A null read-back means the link dropped (expected when switching to CHARGING kills USB-adb) —
@@ -118,9 +137,14 @@ object UsbDefaultConfig {
      * flaky ("Stream closed"), so retry once with a fresh connection — mirroring the daemon launcher.
      * Returns null if both attempts fail. Call OFF the main thread.
      */
-    private fun runShell(context: Context, cmd: String): String? {
-        repeat(2) { attempt ->
-            val connected = if (attempt == 0) AdbShell.ensureConnected(context) else AdbShell.forceReconnect(context)
+    private fun runShell(context: Context, cmd: String, ensure: Boolean): String? {
+        val attempts = if (ensure) 2 else 1
+        repeat(attempts) { attempt ->
+            val connected = when {
+                !ensure -> AdbConnectionManager.getInstance(context).isConnected // opportunistic: never force
+                attempt == 0 -> AdbShell.ensureConnected(context)
+                else -> AdbShell.forceReconnect(context)
+            }
             if (!connected) return@repeat
             val out = runCatching {
                 AdbShell.openShell(context, cmd).use { s -> s.openInputStream().use { String(it.readBytes()) } }
@@ -128,7 +152,7 @@ object UsbDefaultConfig {
                 .getOrNull()
             if (out != null) return out
         }
-        AppLogger.w(TAG, "USB shell cmd failed after retry ('$cmd')")
+        if (ensure) AppLogger.w(TAG, "USB shell cmd failed after retry ('$cmd')")
         return null
     }
 

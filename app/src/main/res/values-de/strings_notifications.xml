@@ -6,6 +6,7 @@
     <string name="notif_readiness_starting_title">Anrufrekorder wird gestartet…</string>
     <string name="notif_readiness_ready_text">Der Rekorder ist verbunden.</string>
     <string name="notif_readiness_starting_text">Rekorder wird verbunden – Anrufe werden erst aufgenommen, wenn dies abgeschlossen ist.</string>
+    <string name="notif_usb_lock_warning">Das Sperren des Bildschirms während eines Anrufs kann die Aufnahme stoppen. Stelle USB unter Einstellungen → Zuverlässigkeit auf „Nur Laden“.</string>
     <string name="notif_pairing_channel">ADB-Kopplung</string>
     <string name="notif_pairing_searching_title">Kopplungsdienst wird gesucht…</string>
     <string name="notif_pairing_searching_text">Öffnen Sie auf dem Telefon den Dialog „Gerät über Kopplungscode koppeln“.</string>

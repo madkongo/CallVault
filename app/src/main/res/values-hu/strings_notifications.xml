@@ -6,6 +6,7 @@
     <string name="notif_readiness_starting_title">A hívásrögzítő indítása…</string>
     <string name="notif_readiness_ready_text">A rögzítő csatlakozva van.</string>
     <string name="notif_readiness_starting_text">A rögzítő csatlakoztatása folyamatban — a hívások rögzítése csak ennek befejezése után indul el.</string>
+    <string name="notif_usb_lock_warning">A képernyő zárolása hívás közben leállíthatja a rögzítést. Állítsd az USB-t „Csak töltés“ értékre a Beállítások → Megbízhatóság alatt.</string>
     <string name="notif_pairing_channel">ADB párosítás</string>
     <string name="notif_pairing_searching_title">Párosítási szolgáltatás keresése…</string>
     <string name="notif_pairing_searching_text">Nyissa meg a telefon „Eszköz párosítása párosítási kóddal” párbeszédpanelét.</string>

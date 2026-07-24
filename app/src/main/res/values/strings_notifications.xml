@@ -6,6 +6,7 @@
     <string name="notif_readiness_starting_title">Call recorder starting up…</string>
     <string name="notif_readiness_ready_text">The recorder is connected.</string>
     <string name="notif_readiness_starting_text">Connecting the recorder — calls won\'t record until this finishes.</string>
+    <string name="notif_usb_lock_warning">Locking the screen during a call may stop the recording. Set USB to \"Charging only\" in Settings → Reliability.</string>
 
     <!-- ADB wireless-debugging pairing notifications -->
     <string name="notif_pairing_channel">ADB pairing</string>

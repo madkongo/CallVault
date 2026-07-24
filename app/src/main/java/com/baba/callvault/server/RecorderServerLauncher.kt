@@ -12,6 +12,7 @@ import android.content.Context
 import android.os.SystemClock
 import com.baba.callvault.data.AppPreferences
 import com.baba.callvault.integrations.adb.AdbShell
+import com.baba.callvault.integrations.adb.UsbDefaultConfig
 import com.baba.callvault.utils.AppLogger
 
 /**
@@ -199,6 +200,10 @@ object RecorderServerLauncher {
      * user toggle. No-op if WD is already off or WRITE_SECURE_SETTINGS is missing.
      */
     private fun applyWdPolicy(context: Context) {
+        // We still hold the ADB shell here (before WD is turned off) — opportunistically refresh the
+        // USB-default cache that drives the "locking the screen may stop recording" warning. Never forces
+        // a connection (no-op when the shell isn't up), so it adds no churn and only a fast dumpsys read.
+        runCatching { UsbDefaultConfig.readIfConnected(context) }
         if (AdbShell.disableWirelessDebugging(context)) {
             AppLogger.i(TAG, "Wireless debugging disabled (daemon connected; commands flow over binder)")
         } else {

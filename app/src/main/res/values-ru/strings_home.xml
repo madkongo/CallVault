@@ -26,4 +26,7 @@
     <string name="offline_recording_on">Запись без Wi-Fi включена.</string>
     <string name="offline_recording_disabling">Выключение записи без Wi-Fi…</string>
     <string name="home_support_pill">Поддержать</string>
+    <string name="home_usb_advisory_title">Запись может остановиться при блокировке</string>
+    <string name="home_usb_advisory_text">USB в режиме передачи данных. Нажмите, чтобы выбрать «Только зарядка».</string>
+    <string name="home_usb_advisory_fix">Исправить</string>
 </resources>
