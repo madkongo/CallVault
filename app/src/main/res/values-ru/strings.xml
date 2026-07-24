@@ -60,8 +60,8 @@
     <string name="home_status_not_paired_suggestion">Завершите сопряжение для отладки по Wi-Fi в настройке.</string>
     <string name="home_status_not_paired_title">Настройка не завершена</string>
     <string name="home_status_ready_suggestion">CallVault записывает звонки автоматически согласно вашим настройкам.</string>
-    <string name="home_status_update_regrant_title">Запись приостановлена после обновления</string>
-    <string name="home_status_update_regrant_suggestion">Обновление сбросило разрешение, необходимое CallVault. Нажмите здесь и один раз включите беспроводную отладку — запись восстановится сама. Переустановка не нужна.</string>
+    <string name="home_status_update_regrant_title">Переподключитесь для записи</string>
+    <string name="home_status_update_regrant_suggestion">Обновление сбросило разрешение, необходимое CallVault для перезапуска записи. Пока может работать — нажмите здесь и один раз включите беспроводную отладку, чтобы восстановить его. Переустановка не нужна.</string>
     <string name="home_status_ready_title">Готово к записи</string>
     <string name="permission_adb_description">Требуется для записи звука звонков. Выполните сопряжение один раз через уведомление, далее подключение будет происходить автоматически.</string>
     <string name="permission_adb_not_connected">Не подключено — нажмите, чтобы настроить</string>

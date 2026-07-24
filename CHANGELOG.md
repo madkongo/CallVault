@@ -3,6 +3,15 @@
 All notable changes to CallVault are documented here. The format is based on
 [Keep a Changelog](https://keepachangelog.com/), and this project uses semantic-ish versioning.
 
+## [1.4.3] — 2026-07-24
+
+### Fixed
+- **No more false "recording paused" warning after an update.** When an update dropped a permission
+  but recording kept working (the recorder was still running), CallVault showed an alarming
+  "paused after update" banner anyway. It now **silently restores the permission** over the
+  connection that's already open — no action, no reinstall — and only shows a (reworded, honest)
+  prompt when it genuinely can't, telling you it may still be working and how to keep it that way.
+
 ## [1.4.2] — 2026-07-24
 
 ### Added

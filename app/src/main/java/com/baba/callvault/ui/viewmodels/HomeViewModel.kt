@@ -285,9 +285,10 @@ class HomeViewModel(application: Application) : AndroidViewModel(application) {
      */
     fun refresh() {
         val updatedTo = preferences.getUpdateSuccessBannerVersion()
+        val status = computeStatus()
         _uiState.update {
             it.copy(
-                status = computeStatus(),
+                status = status,
                 isLoading = true,
                 availableUpdateTag = preferences.getAvailableUpdateTag(),
                 updatedToVersion = updatedTo,
@@ -295,6 +296,15 @@ class HomeViewModel(application: Application) : AndroidViewModel(application) {
                 // AND only until it's been seen once, so it never recurs on every later release.
                 showWhatsNew = updatedTo != null && !preferences.hasSeenOffWifiWhatsNew()
             )
+        }
+        // An install-over can drop WRITE_SECURE_SETTINGS while the daemon stays warm (recording still
+        // works). Rather than nag with the banner, silently self-heal over any transport that's already
+        // up (WD still on / loopback armed) — no user action, no adbd churn. If it heals, drop the banner.
+        if (status == HomeStatus.UPDATE_REGRANT_NEEDED) {
+            viewModelScope.launch {
+                val healed = withContext(Dispatchers.IO) { AdbShell.tryHealWriteSecureSettings(appContext) }
+                if (healed) _uiState.update { it.copy(status = computeStatus()) }
+            }
         }
         viewModelScope.launch {
             val recordings = withContext(Dispatchers.IO) { RecordingsRepository.listRecordings(appContext) }

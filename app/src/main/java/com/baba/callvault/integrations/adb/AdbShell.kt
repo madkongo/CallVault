@@ -424,4 +424,31 @@ object AdbShell {
             AppLogger.i(TAG, "Requested self-grant of WRITE_SECURE_SETTINGS via ADB shell")
         }.onFailure { AppLogger.w(TAG, "Self-grant of WRITE_SECURE_SETTINGS failed: ${it.message}") }
     }
+
+    /**
+     * Silently re-grants WRITE_SECURE_SETTINGS after an install-over dropped it — but ONLY over a
+     * transport that is ALREADY up, so it never restarts adbd (which would kill a warm daemon). This is
+     * the common post-update state: the daemon survived the update (recording still flows over its
+     * binder) and Wireless debugging is still ON (it couldn't be turned off without the very grant we
+     * lost), so [ensureConnected] connects with NO `adb_wifi` write and self-grants via
+     * [grantSecureSettingsIfNeeded]. If nothing safe is up (WD off + loopback not armed), we do NOTHING
+     * here — enabling WD would churn adbd — and the Home banner asks the user to toggle WD once.
+     *
+     * Call OFF the main thread. Returns true if the grant is present afterwards.
+     */
+    fun tryHealWriteSecureSettings(context: Context): Boolean {
+        if (hasWriteSecureSettings(context)) return true
+        val offline = AppPreferences(context).isOfflineRecordingEnabled()
+        // Heal only over an already-live transport — never toggle WD here (adbd restart risks the daemon).
+        val transportUp = isWirelessDebuggingEnabled(context) || (offline && isLoopbackArmed(context))
+        if (!transportUp) {
+            AppLogger.i(TAG, "WRITE_SECURE_SETTINGS missing but no non-churning transport up; leaving for user WD toggle")
+            return false
+        }
+        AppLogger.i(TAG, "WRITE_SECURE_SETTINGS missing; healing over live transport (WD/loopback already up)")
+        ensureConnected(context)   // connects without a WD write and self-grants via grantSecureSettingsIfNeeded
+        val healed = hasWriteSecureSettings(context)
+        if (healed) AppLogger.i(TAG, "WRITE_SECURE_SETTINGS re-granted via live transport (no adbd churn)")
+        return healed
+    }
 }

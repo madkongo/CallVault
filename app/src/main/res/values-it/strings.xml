@@ -60,8 +60,8 @@
     <string name="home_status_not_paired_suggestion">Completi l\'abbinamento del Debug wireless nella configurazione.</string>
     <string name="home_status_not_paired_title">Configurazione non completata</string>
     <string name="home_status_ready_suggestion">CallVault registra le chiamate automaticamente in base alle Sue impostazioni.</string>
-    <string name="home_status_update_regrant_title">Registrazione in pausa dopo l\'aggiornamento</string>
-    <string name="home_status_update_regrant_suggestion">L\'aggiornamento ha rimosso un\'autorizzazione necessaria a CallVault. Tocca qui, poi attiva una volta il debug wireless: la registrazione si ripristina da sola. Nessuna reinstallazione necessaria.</string>
+    <string name="home_status_update_regrant_title">Riconnetti per continuare a registrare</string>
+    <string name="home_status_update_regrant_suggestion">Un aggiornamento ha rimosso un\'autorizzazione necessaria a CallVault per riavviare la registrazione. Per ora potrebbe funzionare ancora: tocca qui e attiva una volta il debug wireless per ripristinarla. Nessuna reinstallazione necessaria.</string>
     <string name="home_status_ready_title">Pronto a registrare</string>
     <string name="permission_adb_description">Necessario per registrare l\'audio delle chiamate. Abbini una sola volta tramite la notifica, poi si connetterà automaticamente.</string>
     <string name="permission_adb_not_connected">Non connesso — tocchi per configurare</string>
