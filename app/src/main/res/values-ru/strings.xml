@@ -12,6 +12,9 @@
     <string name="audio_source_voice_call_uplink_description">Запись только вашего голоса во время телефонного разговора (исходящий канал).</string>
     <string name="audio_source_voice_comm_description">Источник звука микрофона оптимизирован для голосового общения. Встроена функция эхоподавления.</string>
     <string name="audio_source_voice_performance_description">Высокоскоростной режим микрофона для живой музыки и приложений для работы со звуком в реальном времени.</string>
+    <string name="settings_support_label">Поддержать разработку</string>
+    <string name="settings_support_value">Купить мне кофе на Ko-fi</string>
+    <string name="settings_support_supporting">Откроет Ko-fi в браузере</string>
     <string name="contact_search_hint">Искать по имени или номеру...</string>
     <string name="contact_select_all">Выбрать все</string>
     <string name="contact_unselect_all">Отменить выбор всех</string>

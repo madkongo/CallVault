@@ -12,6 +12,9 @@
     <string name="audio_source_voice_call_uplink_description">Enregistre uniquement votre partie de l\'appel téléphonique (uplink).</string>
     <string name="audio_source_voice_comm_description">Source Microphone optimisée pour les communications vocales. Annulation d\'écho intégrée.</string>
     <string name="audio_source_voice_performance_description">Mode microphone haute vitesse conçu pour la musique en direct et les applications audio en temps réel.</string>
+    <string name="settings_support_label">Soutenir le développement</string>
+    <string name="settings_support_value">Offrez-moi un café sur Ko-fi</string>
+    <string name="settings_support_supporting">Ouvre Ko-fi dans votre navigateur</string>
     <string name="contact_search_hint">Recherche par nom ou numéro...</string>
     <string name="contact_select_all">Tout sélectionner</string>
     <string name="contact_unselect_all">Tout désélectionner</string>

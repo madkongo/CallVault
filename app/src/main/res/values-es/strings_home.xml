@@ -25,4 +25,5 @@
     <string name="home_whatsnew_offline_enabling">Activando la grabación sin Wi-Fi…</string>
     <string name="offline_recording_on">La grabación sin Wi-Fi está activada.</string>
     <string name="offline_recording_disabling">Desactivando la grabación sin Wi-Fi…</string>
+    <string name="home_support_pill">Apoyar</string>
 </resources>

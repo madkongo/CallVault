@@ -13,7 +13,10 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.material.icons.filled.Favorite
+import androidx.compose.material3.Surface
 import com.baba.callvault.system.openWirelessDebugging
+import com.baba.callvault.system.openKofi
 import androidx.compose.foundation.gestures.detectHorizontalDragGestures
 import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.ui.input.pointer.pointerInput
@@ -129,11 +132,6 @@ fun HomeScreen(
     val context = LocalContext.current
     val uiState by viewModel.uiState.collectAsState()
     val playback by viewModel.playback.collectAsState()
-    // Show the "What's new" note once after an update lands (driven by the same signal as the banner).
-    var showWhatsNew by remember { mutableStateOf(false) }
-    LaunchedEffect(uiState.updatedToVersion) {
-        if (uiState.updatedToVersion != null) showWhatsNew = true
-    }
 
     // Refresh status + recordings whenever the user returns to the screen (e.g. after a new call).
     val lifecycleOwner = LocalLifecycleOwner.current
@@ -156,6 +154,7 @@ fun HomeScreen(
     CvScaffold(
         modifier = modifier.fillMaxSize(),
         title = stringResource(R.string.app_name),
+        titleTrailing = { SupportPill(onClick = { context.openKofi() }) },
         actions = {
             IconButton(onClick = onOpenSettings) {
                 Icon(
@@ -166,10 +165,12 @@ fun HomeScreen(
             }
         }
     ) { innerPadding ->
-        if (showWhatsNew) {
+        if (uiState.showWhatsNew) {
             WhatsNewDialog(
                 onDismiss = {
-                    showWhatsNew = false
+                    // Persist "seen" so the one-time off-Wi-Fi intro never reappears on later updates,
+                    // and clear the small "updated" banner too.
+                    viewModel.markWhatsNewSeen()
                     viewModel.dismissUpdatedBanner()
                 },
             )
@@ -408,6 +409,40 @@ private fun UpdateBannerCard(
                     Text(stringResource(R.string.home_update_banner_button))
                 }
             }
+        }
+    }
+}
+
+/**
+ * A compact, tappable "♥ Support" pill shown next to the app title. Opens the maintainer's Ko-fi
+ * page in the browser — an optional, low-key donation entry point that keeps the status card and the
+ * recordings list uncluttered. The matching, more explicit ask lives in Settings → About.
+ */
+@Composable
+private fun SupportPill(onClick: () -> Unit) {
+    val accent = MaterialTheme.colorScheme.primary
+    Surface(
+        onClick = onClick,
+        shape = CircleShape,
+        color = accent.copy(alpha = 0.12f),
+    ) {
+        Row(
+            modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            Icon(
+                imageVector = Icons.Filled.Favorite,
+                contentDescription = null,
+                tint = accent,
+                modifier = Modifier.size(15.dp),
+            )
+            Spacer(Modifier.width(6.dp))
+            Text(
+                text = stringResource(R.string.home_support_pill),
+                style = MaterialTheme.typography.labelMedium,
+                fontWeight = FontWeight.Medium,
+                color = accent,
+            )
         }
     }
 }

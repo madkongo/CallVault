@@ -42,6 +42,12 @@ private const val TAG = "CV:SystemIntentHelpers"
 const val ORIGINAL_PROJECT_URL = "https://github.com/kitsumed/ShizuCallRecorder"
 
 /**
+ * The maintainer's Ko-fi page. Surfaced as an optional "support development" link on Home and in
+ * About. Donations happen entirely on Ko-fi's site (opened in the browser) — no in-app payment SDK.
+ */
+const val KOFI_SUPPORT_URL = "https://ko-fi.com/madkongo"
+
+/**
  * A folder-picker that asks for long-term read and write access to the chosen folder.
  *
  * Android normally only grants temporary access to a folder. This contract also requests
@@ -150,6 +156,11 @@ fun Context.openWirelessDebugging() {
 /** Opens the upstream project repository (required fork attribution, GPLv3 §7). */
 fun Context.openOriginalProjectRepo() {
     launchSmartIntent(Intent(Intent.ACTION_VIEW).apply { data = ORIGINAL_PROJECT_URL.toUri() })
+}
+
+/** Opens the maintainer's Ko-fi page in the browser so the user can support development. */
+fun Context.openKofi() {
+    launchSmartIntent(Intent(Intent.ACTION_VIEW).apply { data = KOFI_SUPPORT_URL.toUri() })
 }
 
 /**

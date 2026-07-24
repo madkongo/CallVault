@@ -25,4 +25,5 @@
     <string name="home_whatsnew_offline_enabling">Wi-Fi nélküli rögzítés bekapcsolása…</string>
     <string name="offline_recording_on">A Wi-Fi nélküli rögzítés be van kapcsolva.</string>
     <string name="offline_recording_disabling">Wi-Fi nélküli rögzítés kikapcsolása…</string>
+    <string name="home_support_pill">Támogatás</string>
 </resources>

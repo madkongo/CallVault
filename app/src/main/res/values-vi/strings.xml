@@ -12,6 +12,9 @@
     <string name="audio_source_voice_call_uplink_description">Chỉ ghi âm phần cuộc gọi từ phía bạn (đường truyền lên).</string>
     <string name="audio_source_voice_comm_description">Nguồn âm thanh micro được tinh chỉnh cho giao tiếp bằng giọng nói. Tích hợp chức năng khử tiếng vọng.</string>
     <string name="audio_source_voice_performance_description">Chế độ micro tốc độ cao được thiết kế cho nhạc sống và các ứng dụng âm thanh thời gian thực.</string>
+    <string name="settings_support_label">Ủng hộ phát triển</string>
+    <string name="settings_support_value">Mời tôi một ly cà phê trên Ko-fi</string>
+    <string name="settings_support_supporting">Mở Ko-fi trong trình duyệt</string>
     <string name="contact_search_hint">Tìm kiếm theo tên hoặc số...</string>
     <string name="contact_select_all">Chọn tất cả</string>
     <string name="contact_unselect_all">Bỏ chọn tất cả</string>

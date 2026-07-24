@@ -124,6 +124,8 @@ class HomeViewModel(application: Application) : AndroidViewModel(application) {
         val updateProgressPercent: Int = -1,
         /** Version name to show a dismissable "updated successfully" banner for, or null. */
         val updatedToVersion: String? = null,
+        /** Whether to show the one-time "What's new: off-Wi-Fi" intro modal (updated AND not seen yet). */
+        val showWhatsNew: Boolean = false,
         /** Uris of recordings currently being deleted — drives an inline spinner on their row. */
         val deletingUris: Set<Uri> = emptySet()
     ) {
@@ -269,16 +271,29 @@ class HomeViewModel(application: Application) : AndroidViewModel(application) {
     }
 
     /**
+     * Marks the one-time "What's new: off-Wi-Fi" intro modal as seen so it never reappears on later
+     * updates. Persists the flag; the small "updated successfully" banner is dismissed separately.
+     */
+    fun markWhatsNewSeen() {
+        preferences.setSeenOffWifiWhatsNew(true)
+        _uiState.update { it.copy(showWhatsNew = false) }
+    }
+
+    /**
      * Recomputes the [HomeStatus] (synchronous, cheap) and reloads the recordings list off the main
      * thread. Safe to call on first composition and on every ON_RESUME.
      */
     fun refresh() {
+        val updatedTo = preferences.getUpdateSuccessBannerVersion()
         _uiState.update {
             it.copy(
                 status = computeStatus(),
                 isLoading = true,
                 availableUpdateTag = preferences.getAvailableUpdateTag(),
-                updatedToVersion = preferences.getUpdateSuccessBannerVersion()
+                updatedToVersion = updatedTo,
+                // The off-Wi-Fi "What's new" is a ONE-TIME feature intro: show it only after an update
+                // AND only until it's been seen once, so it never recurs on every later release.
+                showWhatsNew = updatedTo != null && !preferences.hasSeenOffWifiWhatsNew()
             )
         }
         viewModelScope.launch {

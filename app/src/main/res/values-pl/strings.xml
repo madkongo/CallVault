@@ -12,6 +12,9 @@
     <string name="audio_source_voice_call_uplink_description">Nagrywa tylko Twoją część rozmowy telefonicznej (sygnał wychodzący).</string>
     <string name="audio_source_voice_comm_description">Źródło dźwięku z mikrofonu dostosowane do komunikacji głosowej. Wbudowana funkcja eliminacji echa.</string>
     <string name="audio_source_voice_performance_description">Tryb mikrofonu o dużej czułości przeznaczony do nagrywania muzyki na żywo i aplikacji audio działających w czasie rzeczywistym.</string>
+    <string name="settings_support_label">Wesprzyj rozwój</string>
+    <string name="settings_support_value">Postaw mi kawę na Ko-fi</string>
+    <string name="settings_support_supporting">Otwiera Ko-fi w przeglądarce</string>
     <string name="contact_search_hint">Wyszukaj według nazwy lub numeru...</string>
     <string name="contact_select_all">Zaznacz wszystko</string>
     <string name="contact_unselect_all">Odznacz wszystko</string>

@@ -25,4 +25,5 @@
     <string name="home_whatsnew_offline_enabling">Đang bật ghi âm không cần Wi-Fi…</string>
     <string name="offline_recording_on">Ghi âm không cần Wi-Fi đang bật.</string>
     <string name="offline_recording_disabling">Đang tắt ghi âm không cần Wi-Fi…</string>
+    <string name="home_support_pill">Ủng hộ</string>
 </resources>

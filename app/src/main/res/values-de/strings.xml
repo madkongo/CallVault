@@ -12,6 +12,9 @@
     <string name="audio_source_voice_call_uplink_description">Zeichnet nur Ihre Seite eines Telefonats auf (Uplink).</string>
     <string name="audio_source_voice_comm_description">Optimiert für klare Sprachaufnahmen mit integrierter Echounterdrückung.</string>
     <string name="audio_source_voice_performance_description">Hochgeschwindigkeits-Mikrofonmodus, konzipiert für Live-Musik und Echtzeit-Audioanwendungen.</string>
+    <string name="settings_support_label">Entwicklung unterstützen</string>
+    <string name="settings_support_value">Spendier mir einen Kaffee auf Ko-fi</string>
+    <string name="settings_support_supporting">Öffnet Ko-fi im Browser</string>
     <string name="contact_search_hint">Nach Name oder Nummer suchen...</string>
     <string name="contact_select_all">Alle auswählen</string>
     <string name="contact_unselect_all">Auswahl aufheben</string>

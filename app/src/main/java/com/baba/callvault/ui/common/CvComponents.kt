@@ -61,6 +61,7 @@ fun CvScaffold(
     modifier: Modifier = Modifier,
     subtitle: String? = null,
     onBack: (() -> Unit)? = null,
+    titleTrailing: (@Composable () -> Unit)? = null,
     actions: @Composable RowScope.() -> Unit = {},
     bottomBar: @Composable () -> Unit = {},
     content: @Composable (PaddingValues) -> Unit,
@@ -82,11 +83,19 @@ fun CvScaffold(
                     }
                     Spacer(Modifier.width(2.dp))
                 }
-                Column(Modifier.weight(1f)) {
+                // When a [titleTrailing] element is present it sits right next to the title (a weighted
+                // spacer then pushes [actions] to the far edge); otherwise the title column itself takes
+                // the remaining width, preserving the original layout for every existing caller.
+                Column(if (titleTrailing == null) Modifier.weight(1f) else Modifier) {
                     Text(title, style = MaterialTheme.typography.titleLarge, color = MaterialTheme.colorScheme.onBackground)
                     if (subtitle != null) {
                         Text(subtitle, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
                     }
+                }
+                if (titleTrailing != null) {
+                    Spacer(Modifier.width(10.dp))
+                    titleTrailing()
+                    Spacer(Modifier.weight(1f))
                 }
                 actions()
             }
