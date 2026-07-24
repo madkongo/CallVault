@@ -170,6 +170,14 @@
     <string name="folder_cloud_warning">⚠ Ce dossier d\'enregistrement se trouve dans le cloud, ce qui n\'est pas fiable pour la capture. Choisissez un dossier sur l\'appareil.</string>
     <string name="settings_offline_recording_label">Enregistrement hors ligne (sans Wi-Fi)</string>
     <string name="settings_offline_recording_desc">Enregistrer les appels même en l\'absence de réseau Wi-Fi.</string>
+    <string name="settings_usb_default_label">USB au déverrouillage</string>
+    <string name="settings_usb_default_hint">« Charge uniquement » maintient l\'enregistrement actif si tu verrouilles l\'écran pendant un appel. Les autres modes permettent le transfert de données en USB mais peuvent interrompre un enregistrement au verrouillage.</string>
+    <string name="settings_usb_default_applying">Application…</string>
+    <string name="usb_mode_charging">Charge uniquement (sans données)</string>
+    <string name="usb_mode_file_transfer">Transfert de fichiers</string>
+    <string name="usb_mode_ptp">PTP</string>
+    <string name="usb_mode_tethering">Partage de connexion USB</string>
+    <string name="usb_mode_midi">MIDI</string>
     <string name="offline_recording_warning_title">Activer l\'enregistrement hors ligne ?</string>
     <string name="offline_recording_warning_message">Cela ouvre un port de débogage local sur votre téléphone afin que les appels puissent être enregistrés sans Wi-Fi. Il est protégé par la clé de votre appareil, mais cela représente un léger compromis de sécurité. Ne l\'activez que si vous avez besoin d\'enregistrer des appels sans Wi-Fi.</string>
     <string name="offline_recording_warning_continue">Continuer quand même</string>

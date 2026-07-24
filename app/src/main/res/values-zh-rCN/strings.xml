@@ -165,6 +165,14 @@
     <string name="folder_cloud_warning">⚠ 此录音文件夹位于云端，用于录音并不可靠。请选择设备本地的文件夹。</string>
     <string name="settings_offline_recording_label">离线录音（无 Wi-Fi）</string>
     <string name="settings_offline_recording_desc">即使没有 Wi-Fi 网络也能录制通话。</string>
+    <string name="settings_usb_default_label">解锁时的 USB 模式</string>
+    <string name="settings_usb_default_hint">“仅充电”可在通话中锁屏时保持录音不中断。其他模式允许 USB 传输数据，但在锁定手机时可能中断录音。</string>
+    <string name="settings_usb_default_applying">正在应用…</string>
+    <string name="usb_mode_charging">仅充电（无数据）</string>
+    <string name="usb_mode_file_transfer">文件传输</string>
+    <string name="usb_mode_ptp">PTP</string>
+    <string name="usb_mode_tethering">USB 网络共享</string>
+    <string name="usb_mode_midi">MIDI</string>
     <string name="offline_recording_warning_title">启用离线录音？</string>
     <string name="offline_recording_warning_message">此操作会在您的手机上开启一个本地调试端口，以便在没有 Wi-Fi 的情况下录制通话。它受设备密钥保护，但会带来轻微的安全权衡。仅在您需要在没有 Wi-Fi 的情况下录制通话时才启用。</string>
     <string name="offline_recording_warning_continue">仍然继续</string>

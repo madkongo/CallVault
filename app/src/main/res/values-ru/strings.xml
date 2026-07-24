@@ -165,6 +165,14 @@
     <string name="folder_cloud_warning">⚠ Эта папка для записей находится в облаке, что ненадёжно для записи. Выберите папку на устройстве.</string>
     <string name="settings_offline_recording_label">Запись без сети (без Wi-Fi)</string>
     <string name="settings_offline_recording_desc">Записывать звонки даже при отсутствии сети Wi-Fi.</string>
+    <string name="settings_usb_default_label">USB при разблокировке</string>
+    <string name="settings_usb_default_hint">«Только зарядка» сохраняет запись, если вы блокируете экран во время звонка. Другие режимы позволяют передавать данные по USB, но могут прервать запись при блокировке телефона.</string>
+    <string name="settings_usb_default_applying">Применение…</string>
+    <string name="usb_mode_charging">Только зарядка (без данных)</string>
+    <string name="usb_mode_file_transfer">Передача файлов</string>
+    <string name="usb_mode_ptp">PTP</string>
+    <string name="usb_mode_tethering">USB-модем</string>
+    <string name="usb_mode_midi">MIDI</string>
     <string name="offline_recording_warning_title">Включить запись без Wi-Fi?</string>
     <string name="offline_recording_warning_message">При этом на телефоне открывается локальный порт отладки, чтобы звонки можно было записывать без Wi-Fi. Он защищён ключом вашего устройства, но представляет собой небольшой компромисс в плане безопасности. Включайте эту функцию только в том случае, если вам нужно записывать звонки без Wi-Fi.</string>
     <string name="offline_recording_warning_continue">Всё равно продолжить</string>

@@ -55,7 +55,10 @@ import com.baba.callvault.utils.AppLogger
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import androidx.annotation.StringRes
 import com.baba.callvault.data.AppPreferences
+import com.baba.callvault.integrations.adb.UsbDefaultConfig
+import com.baba.callvault.integrations.adb.UsbDefaultMode
 import com.baba.callvault.data.RetentionPeriod
 import com.baba.callvault.data.StorageTarget
 import com.baba.callvault.integrations.scrcpy.RECOMMENDED_AUDIO_BIT_RATE
@@ -992,7 +995,73 @@ private fun BugReportSection(
         }
 
         OfflineRecordingToggle()
+
+        SettingsDivider()
+
+        UsbDefaultConfigRow()
     }
+}
+
+/**
+ * Lets the user pick the device's **Default USB Configuration** (what USB does when the screen unlocks)
+ * from inside the app, applied over the embedded ADB shell. **"Charging only" is recommended**: on many
+ * OEMs a data default (File transfer, etc.) makes the USB gadget renegotiate on every screen on/off,
+ * restarting adbd and killing the recorder daemon — which stops a recording if you lock the phone
+ * mid-call. The other modes are offered for people who rely on them (e.g. USB tethering); picking one
+ * just trades that reliability. Reads the live value on open (falls back to the cached value), and shows
+ * a spinner-style "applying" hint while the shell command runs.
+ */
+@Composable
+private fun UsbDefaultConfigRow() {
+    val context = LocalContext.current
+    val scope = rememberCoroutineScope()
+    var mode by remember { mutableStateOf(UsbDefaultConfig.cached(context)) }
+    var applying by remember { mutableStateOf(false) }
+
+    // Refresh the live value once when shown (readViaShell connects+retries internally); falls back to
+    // the shown cached value on failure.
+    LaunchedEffect(Unit) {
+        withContext(Dispatchers.IO) { UsbDefaultConfig.readViaShell(context) }?.let { mode = it }
+    }
+
+    val recommendedLabel = stringResource(R.string.general_recommended)
+    val options = UsbDefaultConfig.SELECTABLE.map { m ->
+        val base = stringResource(usbModeLabelRes(m))
+        OptionItem(m.name, if (m == UsbDefaultConfig.RECOMMENDED) "$base ($recommendedLabel)" else base)
+    }
+    // When the current value is UNKNOWN (never read), don't force a wrong selection — show recommended.
+    val selected = options.find { it.key == mode.name } ?: options.first()
+
+    DropdownRow {
+        M3DropdownField(
+            label = stringResource(R.string.settings_usb_default_label),
+            selected = selected,
+            options = options,
+            onOptionSelected = { opt ->
+                val target = runCatching { UsbDefaultMode.valueOf(opt.key) }.getOrNull() ?: return@M3DropdownField
+                if (target == mode || applying) return@M3DropdownField
+                applying = true
+                scope.launch {
+                    val ok = withContext(Dispatchers.IO) { UsbDefaultConfig.setViaShell(context, target) }
+                    if (ok) mode = target
+                    applying = false
+                }
+            },
+        )
+        HintText(stringResource(R.string.settings_usb_default_hint))
+        if (applying) HintText(stringResource(R.string.settings_usb_default_applying))
+    }
+}
+
+/** Maps a [UsbDefaultMode] to its user-facing label string resource. */
+@StringRes
+private fun usbModeLabelRes(mode: UsbDefaultMode): Int = when (mode) {
+    UsbDefaultMode.CHARGING -> R.string.usb_mode_charging
+    UsbDefaultMode.FILE_TRANSFER -> R.string.usb_mode_file_transfer
+    UsbDefaultMode.PTP -> R.string.usb_mode_ptp
+    UsbDefaultMode.TETHERING -> R.string.usb_mode_tethering
+    UsbDefaultMode.MIDI -> R.string.usb_mode_midi
+    UsbDefaultMode.UNKNOWN -> R.string.usb_mode_charging
 }
 
 /**
