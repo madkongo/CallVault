@@ -12,6 +12,7 @@
     <string name="home_hero_pill_not_paired">Action needed</string>
     <string name="home_hero_pill_no_folder">Action needed</string>
     <string name="home_hero_pill_dev_options_off">Recording broken</string>
+    <string name="home_hero_pill_update_regrant">Action needed</string>
 
     <!-- Recordings section -->
     <string name="home_recordings_count">%1$d saved</string>

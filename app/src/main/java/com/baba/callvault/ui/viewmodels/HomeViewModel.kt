@@ -22,6 +22,7 @@ import com.baba.callvault.utils.AppLogger
 import com.baba.callvault.data.recordings.RecordingsRepository
 import com.baba.callvault.data.recordings.RecordingsRepository.RecordingItem
 import com.baba.callvault.data.recordings.RecordingsRepository.RecordingSource
+import com.baba.callvault.integrations.adb.AdbShell
 import com.baba.callvault.integrations.adb.DeveloperOptions
 import com.baba.callvault.system.updates.UpdateInstallWorker
 import com.baba.callvault.system.updates.UpdateScheduler
@@ -70,6 +71,7 @@ class HomeViewModel(application: Application) : AndroidViewModel(application) {
         NO_FOLDER(R.string.home_status_no_folder_title, R.string.home_status_no_folder_suggestion),
         NOT_PAIRED(R.string.home_status_not_paired_title, R.string.home_status_not_paired_suggestion),
         DEV_OPTIONS_OFF(R.string.home_status_dev_options_off_title, R.string.home_status_dev_options_off_suggestion),
+        UPDATE_REGRANT_NEEDED(R.string.home_status_update_regrant_title, R.string.home_status_update_regrant_suggestion),
         READY(R.string.home_status_ready_title, R.string.home_status_ready_suggestion, isReady = true)
     }
 
@@ -373,6 +375,12 @@ class HomeViewModel(application: Application) : AndroidViewModel(application) {
         // isExplicitlyDisabled (not !isEnabled): an absent/unreadable global must not paint a
         // permanent red banner on ROMs that don't expose the setting.
         if (DeveloperOptions.isExplicitlyDisabled(appContext)) return HomeStatus.DEV_OPTIONS_OFF
+        // Paired + dev options on, but WRITE_SECURE_SETTINGS is gone → an install-over (Obtainium /
+        // manual sideload) dropped the grant and no transport survived to self-heal it. The app can't
+        // re-enable Wireless debugging, so the daemon can't be relaunched: recording is dead until the
+        // user toggles Wireless debugging on once (which lets ensureConnected re-grant it). Once granted
+        // the permission persists, so "paired but missing" reliably means "an update cleared it".
+        if (!AdbShell.hasWriteSecureSettings(appContext)) return HomeStatus.UPDATE_REGRANT_NEEDED
         return HomeStatus.READY
     }
 

@@ -10,6 +10,7 @@
     <string name="home_recordings_empty_hint">Wenn CallVault einen Anruf aufzeichnet, erscheint er hier. Tätigen oder nehmen Sie einen Anruf an, um zu beginnen.</string>
     <string name="home_recordings_empty_title">Noch keine Aufnahmen</string>
     <string name="home_hero_pill_dev_options_off">Aufnahme nicht möglich</string>
+    <string name="home_hero_pill_update_regrant">Aktion erforderlich</string>
     <string name="home_update_banner_title">Update verfügbar: %1$s</string>
     <string name="home_update_banner_text">Eine neue Version steht auf GitHub zum Download bereit.</string>
     <string name="home_update_banner_button">Aktualisieren</string>

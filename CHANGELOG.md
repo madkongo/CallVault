@@ -3,6 +3,19 @@
 All notable changes to CallVault are documented here. The format is based on
 [Keep a Changelog](https://keepachangelog.com/), and this project uses semantic-ish versioning.
 
+## [1.4.1] — 2026-07-24
+
+A focused fix for a problem some people hit after updating to 1.4.0.
+
+### Fixed
+- **Recording no longer breaks after updating without a reinstall.** When CallVault was updated in place
+  (e.g. via Obtainium or a sideloaded APK), Android could quietly drop a permission the app needs to run
+  the recorder — leaving recording dead until a full clean reinstall. CallVault now heals this itself:
+  right after an update it reconnects over any still-open channel and restores the permission
+  automatically. If it can't (nothing to reconnect through), the Home screen shows a clear
+  **"Recording paused after update"** banner — tap it and turn Wireless debugging on once, and recording
+  restores itself. **No reinstall needed.**
+
 ## [1.4.0] — 2026-07-23
 
 The headline: **record calls even without Wi-Fi**, plus a much faster, more reliable recorder.

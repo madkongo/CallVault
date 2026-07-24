@@ -348,6 +348,8 @@
     <string name="home_status_not_paired_suggestion">Finish Wireless Debugging pairing in setup.</string>
     <string name="home_status_dev_options_off_title">Developer options is off</string>
     <string name="home_status_dev_options_off_suggestion">CallVault records through Wireless debugging, which needs Developer options. Recording cannot work until you re-enable Developer options (and Wireless debugging) in system settings.</string>
+    <string name="home_status_update_regrant_title">Recording paused after update</string>
+    <string name="home_status_update_regrant_suggestion">The update cleared a permission CallVault needs. Tap here, then turn Wireless debugging on once — recording restores itself. No reinstall needed.</string>
     <string name="home_status_ready_title">Ready to record</string>
     <string name="home_status_ready_suggestion">CallVault records calls automatically per your settings.</string>
 

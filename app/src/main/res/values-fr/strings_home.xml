@@ -3,6 +3,7 @@
 <resources xmlns:tools="http://schemas.android.com/tools">
     <string name="home_hero_pill_no_folder">Action requise</string>
     <string name="home_hero_pill_dev_options_off">Enregistrement impossible</string>
+    <string name="home_hero_pill_update_regrant">Action requise</string>
     <string name="home_hero_pill_not_paired">Action requise</string>
     <string name="home_hero_pill_ready">Actif</string>
     <string name="home_hero_status_label">État</string>
