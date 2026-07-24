@@ -12,6 +12,9 @@
     <string name="audio_source_voice_call_uplink_description">Registra solo il Suo lato di una telefonata (uplink).</string>
     <string name="audio_source_voice_comm_description">Sorgente audio del microfono ottimizzata per le comunicazioni vocali. Cancellazione dell\'eco integrata.</string>
     <string name="audio_source_voice_performance_description">Modalità microfono ad alta velocità progettata per la musica dal vivo e le app audio in tempo reale.</string>
+    <string name="settings_support_label">Sostieni lo sviluppo</string>
+    <string name="settings_support_value">Offrimi un caffè su Ko-fi</string>
+    <string name="settings_support_supporting">Apre Ko-fi nel browser</string>
     <string name="contact_search_hint">Cerca per nome o numero...</string>
     <string name="contact_select_all">Seleziona tutti</string>
     <string name="contact_unselect_all">Deseleziona tutti</string>

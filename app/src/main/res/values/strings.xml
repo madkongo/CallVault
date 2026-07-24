@@ -265,6 +265,9 @@
     <string name="settings_scrcpy_server" translatable="false">Scrcpy-Server: %1$s</string>
     <string name="settings_fork_attribution" translatable="false">CallVault is a fork of ShizuCallRecorder</string>
     <string name="settings_fork_attribution_supporting" translatable="false">github.com/kitsumed/ShizuCallRecorder</string>
+    <string name="settings_support_label">Support development</string>
+    <string name="settings_support_value">Buy me a coffee on Ko-fi</string>
+    <string name="settings_support_supporting">Opens Ko-fi in your browser</string>
 
     <!-- ContactSelection Dialog -->
     <string name="contact_search_hint">Search by name or number...</string>

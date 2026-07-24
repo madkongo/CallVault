@@ -3,6 +3,18 @@
 All notable changes to CallVault are documented here. The format is based on
 [Keep a Changelog](https://keepachangelog.com/), and this project uses semantic-ish versioning.
 
+## [1.4.2] — 2026-07-24
+
+### Added
+- **Support development.** An optional "♥ Support" button next to the app title on Home, and a
+  matching row in Settings → About, open the maintainer's Ko-fi page in your browser. Entirely
+  optional — CallVault stays fully free and open source.
+
+### Fixed
+- **The "What's new: off-Wi-Fi recording" note no longer pops up after every update.** It's a
+  one-time introduction now — shown once, then never again (a small "updated to …" banner still
+  confirms an update landed).
+
 ## [1.4.1] — 2026-07-24
 
 A focused fix for a problem some people hit after updating to 1.4.0.

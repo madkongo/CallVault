@@ -49,6 +49,7 @@ import com.baba.callvault.R
 import com.baba.callvault.system.PersistentFolderPickerContract
 import com.baba.callvault.system.copyToClipboard
 import com.baba.callvault.system.openOriginalProjectRepo
+import com.baba.callvault.system.openKofi
 import com.baba.callvault.system.shareLogFile
 import com.baba.callvault.utils.AppLogger
 import kotlinx.coroutines.Dispatchers
@@ -90,6 +91,7 @@ import androidx.compose.animation.fadeOut
 import androidx.compose.material.icons.filled.DriveFileRenameOutline
 import androidx.compose.material.icons.filled.ExpandMore
 import androidx.compose.material.icons.filled.Folder
+import androidx.compose.material.icons.filled.Favorite
 import androidx.compose.material.icons.filled.Gavel
 import androidx.compose.material.icons.filled.NotificationsActive
 import androidx.compose.material.icons.filled.Save
@@ -1060,6 +1062,17 @@ private fun AboutSection(
             value = stringResource(R.string.settings_fork_attribution_supporting),
             supporting = stringResource(R.string.settings_ui_open_repo_hint),
             onClick = { context.openOriginalProjectRepo() }
+        )
+
+        SettingsDivider()
+
+        // Optional "support development" link. Opens the maintainer's Ko-fi page in the browser.
+        NavigationRow(
+            icon = Icons.Filled.Favorite,
+            label = stringResource(R.string.settings_support_label),
+            value = stringResource(R.string.settings_support_value),
+            supporting = stringResource(R.string.settings_support_supporting),
+            onClick = { context.openKofi() }
         )
 
         Row(

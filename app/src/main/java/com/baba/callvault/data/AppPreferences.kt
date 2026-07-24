@@ -177,6 +177,7 @@ class AppPreferences(context: Context) {
         UPDATE_INSTALL_ARMED("update_install_armed"),
         LAST_SEEN_VERSION_CODE("last_seen_version_code"),
         UPDATE_SUCCESS_BANNER_VERSION("update_success_banner_version"),
+        WHATS_NEW_OFFWIFI_SEEN("whats_new_offwifi_seen"),
         UPDATE_SOURCE_OVERRIDE_URL("update_source_override_url"),
 
         // --- Persistent recorder server (CallVault Plan 5) ---
@@ -391,6 +392,14 @@ class AppPreferences(context: Context) {
     /** Version name to show a dismissable "updated successfully" banner for, or null when none. */
     fun getUpdateSuccessBannerVersion() = getString(Key.UPDATE_SUCCESS_BANNER_VERSION)
     fun setUpdateSuccessBannerVersion(version: String?) = setString(Key.UPDATE_SUCCESS_BANNER_VERSION, version)
+
+    /**
+     * Whether the one-time "What's new: off-Wi-Fi recording" intro modal has already been shown. Set
+     * true the first time it is dismissed so it never reappears on later updates — the note is a
+     * one-time feature introduction, not a per-release changelog.
+     */
+    fun hasSeenOffWifiWhatsNew() = getBoolean(Key.WHATS_NEW_OFFWIFI_SEEN, false)
+    fun setSeenOffWifiWhatsNew(seen: Boolean) = setBoolean(Key.WHATS_NEW_OFFWIFI_SEEN, seen)
 
     /**
      * TEST-ONLY: a GitHub release API URL to fetch the update from instead of `/latest`. Not exposed

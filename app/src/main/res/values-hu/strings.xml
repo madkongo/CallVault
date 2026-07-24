@@ -12,6 +12,9 @@
     <string name="audio_source_voice_call_uplink_description">Csak a saját hangod rögzíti a telefonbeszélgetésből (kimenő irány).</string>
     <string name="audio_source_voice_comm_description">Mikrofon hangforrás beszédhangra hangolva - beépített visszhangszűréssel.</string>
     <string name="audio_source_voice_performance_description">Nagy sebességű mikrofon üzemmód - leginkább élő zenei előadásokhoz és valós idejű hangalkalmazásokhoz.</string>
+    <string name="settings_support_label">Fejlesztés támogatása</string>
+    <string name="settings_support_value">Hívj meg egy kávéra a Ko-fin</string>
+    <string name="settings_support_supporting">Megnyitja a Ko-fit a böngészőben</string>
     <string name="contact_search_hint">Keresés név vagy szám alapján...</string>
     <string name="contact_select_all">Összes kijelölése</string>
     <string name="contact_unselect_all">Összes kijelölés megszűntetése</string>

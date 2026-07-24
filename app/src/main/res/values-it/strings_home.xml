@@ -25,4 +25,5 @@
     <string name="home_whatsnew_offline_enabling">Attivazione della registrazione senza Wi-Fi…</string>
     <string name="offline_recording_on">La registrazione senza Wi-Fi è attiva.</string>
     <string name="offline_recording_disabling">Disattivazione della registrazione senza Wi-Fi…</string>
+    <string name="home_support_pill">Sostieni</string>
 </resources>

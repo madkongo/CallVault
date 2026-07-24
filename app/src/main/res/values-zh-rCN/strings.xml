@@ -12,6 +12,9 @@
     <string name="audio_source_voice_call_uplink_description">仅录制您的声音（仅上行）。</string>
     <string name="audio_source_voice_comm_description">麦克风音频源（本意是面向语音通话的系统接口），内置降噪功能。</string>
     <string name="audio_source_voice_performance_description">高速麦克风模式（此选项专为Live音乐和实时音频而设）。</string>
+    <string name="settings_support_label">支持开发</string>
+    <string name="settings_support_value">在 Ko-fi 上请我喝杯咖啡</string>
+    <string name="settings_support_supporting">在浏览器中打开 Ko-fi</string>
     <string name="contact_search_hint">输入姓名或电话号码来搜索…</string>
     <string name="contact_select_all">全选</string>
     <string name="contact_unselect_all">全不选</string>
