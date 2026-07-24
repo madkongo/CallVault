@@ -3,6 +3,19 @@
 All notable changes to CallVault are documented here. The format is based on
 [Keep a Changelog](https://keepachangelog.com/), and this project uses semantic-ish versioning.
 
+## [1.4.4] — 2026-07-24
+
+### Fixed
+- **Call audio quality restored at the same bitrate — the far party is clear again.** Recording captured
+  the call in stereo (your side on one channel, the other person's on the other) and encoded it as
+  stereo, which split the bitrate and starved each side — so the **other party** sounded noticeably
+  worse at the default 24 kbps. Calls are mono content, so CallVault now downmixes to a single channel
+  and gives the whole bitrate to the voice. Same setting, much better quality.
+- **No false "recording paused" warning while recording actually works.** The post-update permission
+  banner now only appears when a call genuinely couldn't be recorded (the recorder isn't running), not
+  while it's warm and recording normally — and CallVault keeps quietly restoring the permission in the
+  background.
+
 ## [1.4.3] — 2026-07-24
 
 ### Fixed

@@ -67,12 +67,17 @@ internal class DirectAudioRecorderSession(
             ?: throw UnsupportedOperationException("source ${source.cliKey} is not a mic-type source")
         val mime = encoderMimeFor(codec)
 
-        // Try stereo first (matches scrcpy's 48 kHz stereo output); fall back to mono if the source
-        // won't initialise in stereo (some OEM VOICE_CALL routes are mono-only).
-        val (record, channelCount) = openAudioRecord(androidSource)
+        // Capture stereo when the route allows it — that reliably gets BOTH directions (uplink on one
+        // channel, the remote party's downlink on the other); mono routes fall back to 1 channel.
+        val (record, captureChannels) = openAudioRecord(androidSource)
         audioRecord = record
 
-        val format = MediaFormat.createAudioFormat(mime, SAMPLE_RATE, channelCount).apply {
+        // ...but always ENCODE MONO. A phone call is mono content, and encoding the captured stereo as
+        // stereo Opus splits the bitrate across the two channels — at the default 24 kbps that leaves
+        // ~12 kbps per side and audibly degrades the FAR party (their downlink channel gets starved).
+        // Downmixing to one channel gives the whole bitrate to the (mono) call, restoring quality at the
+        // same setting. See [captureLoop]'s downmix.
+        val format = MediaFormat.createAudioFormat(mime, SAMPLE_RATE, ENCODE_CHANNELS).apply {
             setInteger(MediaFormat.KEY_BIT_RATE, bitRate)
             if (mime == MediaFormat.MIMETYPE_AUDIO_AAC) {
                 setInteger(MediaFormat.KEY_AAC_PROFILE, MediaCodecInfo.CodecProfileLevel.AACObjectLC)
@@ -94,9 +99,9 @@ internal class DirectAudioRecorderSession(
         if (record.recordingState != AudioRecord.RECORDSTATE_RECORDING) {
             throw IllegalStateException("AudioRecord failed to enter RECORDING state")
         }
-        AppLogger.i(TAG, "Direct capture started: source=${source.cliKey} codec=${codec.cliKey} ch=$channelCount rate=$SAMPLE_RATE")
+        AppLogger.i(TAG, "Direct capture started: source=${source.cliKey} codec=${codec.cliKey} captureCh=$captureChannels encodeCh=$ENCODE_CHANNELS rate=$SAMPLE_RATE")
 
-        readThread = Thread { runCatching { captureLoop(record, enc, mux) }
+        readThread = Thread { runCatching { captureLoop(record, enc, mux, captureChannels) }
             .onFailure { AppLogger.w(TAG, "Direct capture loop ended: ${it.message}") } }
             .apply { isDaemon = true; name = "direct-capture" }
             .also { it.start() }
@@ -107,24 +112,29 @@ internal class DirectAudioRecorderSession(
      * signals EOS. Standard synchronous MediaCodec drive: queue input with a monotonic sample-count PTS,
      * drain output, add the track on INFO_OUTPUT_FORMAT_CHANGED (its format carries the Opus/AAC CSD).
      */
-    private fun captureLoop(record: AudioRecord, enc: MediaCodec, mux: MediaMuxer) {
+    private fun captureLoop(record: AudioRecord, enc: MediaCodec, mux: MediaMuxer, captureChannels: Int) {
         val pcm = ByteArray(READ_CHUNK_BYTES)
+        val mono = ByteArray(READ_CHUNK_BYTES / 2)   // downmix target (half the samples of stereo input)
+        val downmix = captureChannels == 2
         val info = MediaCodec.BufferInfo()
         var muxerStarted = false
         var totalFrames = 0L
-        val bytesPerFrame = 2 * record.channelCount // PCM-16
+        val bytesPerFrame = 2 * ENCODE_CHANNELS // PCM-16, mono → 2 bytes/frame (matches what we feed the encoder)
 
         while (!stopRequested.get()) {
             val read = record.read(pcm, 0, pcm.size)
             if (read <= 0) continue
 
+            // Feed MONO to the encoder: downmix a stereo capture (average L+R), or pass a mono capture through.
+            val (buf, len) = if (downmix) mono to downmixStereoToMono(pcm, read, mono) else pcm to read
+
             val inIdx = enc.dequeueInputBuffer(DEQUEUE_TIMEOUT_US)
             if (inIdx >= 0) {
                 val inBuf = enc.getInputBuffer(inIdx)!!
-                inBuf.clear(); inBuf.put(pcm, 0, read)
+                inBuf.clear(); inBuf.put(buf, 0, len)
                 val ptsUs = totalFrames * 1_000_000L / SAMPLE_RATE
-                enc.queueInputBuffer(inIdx, 0, read, ptsUs, 0)
-                totalFrames += read / bytesPerFrame
+                enc.queueInputBuffer(inIdx, 0, len, ptsUs, 0)
+                totalFrames += len / bytesPerFrame
             }
             muxerStarted = drainEncoder(enc, mux, info, muxerStarted)
         }
@@ -192,6 +202,25 @@ internal class DirectAudioRecorderSession(
         audioRecord = null; encoder = null; muxer = null
     }
 
+    /**
+     * Downmixes interleaved stereo PCM-16 (little-endian) into mono by averaging each L/R pair. Returns
+     * the number of mono bytes written to [dst] (= [srcLen] / 2). Averaging (not summing) avoids clipping.
+     */
+    private fun downmixStereoToMono(src: ByteArray, srcLen: Int, dst: ByteArray): Int {
+        var di = 0
+        var si = 0
+        while (si + 3 < srcLen) {
+            val l = (src[si].toInt() and 0xFF or (src[si + 1].toInt() shl 8)).toShort().toInt()
+            val r = (src[si + 2].toInt() and 0xFF or (src[si + 3].toInt() shl 8)).toShort().toInt()
+            val m = (l + r) / 2
+            dst[di] = (m and 0xFF).toByte()
+            dst[di + 1] = ((m shr 8) and 0xFF).toByte()
+            di += 2
+            si += 4
+        }
+        return di
+    }
+
     private fun openAudioRecord(androidSource: Int): Pair<AudioRecord, Int> {
         for (channelMask in intArrayOf(AudioFormat.CHANNEL_IN_STEREO, AudioFormat.CHANNEL_IN_MONO)) {
             val channels = if (channelMask == AudioFormat.CHANNEL_IN_STEREO) 2 else 1
@@ -212,6 +241,9 @@ internal class DirectAudioRecorderSession(
 
         /** Match scrcpy's output so the muxed file is equivalent (48 kHz). */
         private const val SAMPLE_RATE = 48_000
+
+        /** Always encode mono — a call is mono content, so this gives the full bitrate to the voice. */
+        private const val ENCODE_CHANNELS = 1
         private const val READ_CHUNK_BYTES = 4096
         private const val MAX_INPUT_SIZE = 16_384
         private const val BUFFER_FACTOR = 4
