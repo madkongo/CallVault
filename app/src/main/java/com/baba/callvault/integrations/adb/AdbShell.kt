@@ -448,7 +448,11 @@ object AdbShell {
         AppLogger.i(TAG, "WRITE_SECURE_SETTINGS missing; healing over live transport (WD/loopback already up)")
         ensureConnected(context)   // connects without a WD write and self-grants via grantSecureSettingsIfNeeded
         val healed = hasWriteSecureSettings(context)
-        if (healed) AppLogger.i(TAG, "WRITE_SECURE_SETTINGS re-granted via live transport (no adbd churn)")
+        if (healed) {
+            AppLogger.i(TAG, "WRITE_SECURE_SETTINGS re-granted via live transport (no adbd churn)")
+        } else {
+            AppLogger.w(TAG, "WRITE_SECURE_SETTINGS heal did NOT land (ADB connect/grant failed); recording still works while the daemon is warm")
+        }
         return healed
     }
 }

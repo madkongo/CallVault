@@ -24,6 +24,7 @@ import com.baba.callvault.data.recordings.RecordingsRepository.RecordingItem
 import com.baba.callvault.data.recordings.RecordingsRepository.RecordingSource
 import com.baba.callvault.integrations.adb.AdbShell
 import com.baba.callvault.integrations.adb.DeveloperOptions
+import com.baba.callvault.server.RecorderConnection
 import com.baba.callvault.system.updates.UpdateInstallWorker
 import com.baba.callvault.system.updates.UpdateScheduler
 import androidx.work.WorkManager
@@ -298,9 +299,10 @@ class HomeViewModel(application: Application) : AndroidViewModel(application) {
             )
         }
         // An install-over can drop WRITE_SECURE_SETTINGS while the daemon stays warm (recording still
-        // works). Rather than nag with the banner, silently self-heal over any transport that's already
-        // up (WD still on / loopback armed) — no user action, no adbd churn. If it heals, drop the banner.
-        if (status == HomeStatus.UPDATE_REGRANT_NEEDED) {
+        // works). Whenever the grant is missing, silently try to restore it over any transport that's
+        // already up (WD still on / loopback armed) — no user action, no adbd churn — so a later daemon
+        // death stays recoverable. Recompute the status afterwards so any banner reflects the heal.
+        if (!AdbShell.hasWriteSecureSettings(appContext)) {
             viewModelScope.launch {
                 val healed = withContext(Dispatchers.IO) { AdbShell.tryHealWriteSecureSettings(appContext) }
                 if (healed) _uiState.update { it.copy(status = computeStatus()) }
@@ -400,12 +402,16 @@ class HomeViewModel(application: Application) : AndroidViewModel(application) {
         // isExplicitlyDisabled (not !isEnabled): an absent/unreadable global must not paint a
         // permanent red banner on ROMs that don't expose the setting.
         if (DeveloperOptions.isExplicitlyDisabled(appContext)) return HomeStatus.DEV_OPTIONS_OFF
-        // Paired + dev options on, but WRITE_SECURE_SETTINGS is gone → an install-over (Obtainium /
-        // manual sideload) dropped the grant and no transport survived to self-heal it. The app can't
-        // re-enable Wireless debugging, so the daemon can't be relaunched: recording is dead until the
-        // user toggles Wireless debugging on once (which lets ensureConnected re-grant it). Once granted
-        // the permission persists, so "paired but missing" reliably means "an update cleared it".
-        if (!AdbShell.hasWriteSecureSettings(appContext)) return HomeStatus.UPDATE_REGRANT_NEEDED
+        // WRITE_SECURE_SETTINGS gone → an install-over (Obtainium / manual sideload) dropped the grant.
+        // But this ONLY matters if recording can't happen: the grant is needed to RELAUNCH a dead daemon,
+        // NOT to record over an already-warm one. So while the daemon binder is connected (recording works
+        // right now), we do NOT alarm — showing "recording paused" then was a false warning a user hit.
+        // We only surface UPDATE_REGRANT_NEEDED when the grant is missing AND the daemon is disconnected,
+        // i.e. the next call genuinely couldn't be recorded (can't relaunch without the grant). refresh()
+        // still tries a silent, non-churning self-heal whenever the grant is missing.
+        if (!AdbShell.hasWriteSecureSettings(appContext) && !RecorderConnection.isConnected) {
+            return HomeStatus.UPDATE_REGRANT_NEEDED
+        }
         return HomeStatus.READY
     }
 
