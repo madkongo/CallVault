@@ -44,4 +44,5 @@
     <string name="notif_readiness_no_debugging_text">USB debugging and Wireless debugging are both off. Turn one back on in Developer options.</string>
     <string name="notif_readiness_needs_wifi_text">USB debugging is off and there\'s no Wi-Fi. Connect to Wi-Fi, or turn USB debugging on.</string>
     <string name="notif_readiness_stuck_text">The recorder keeps failing to start. Open CallVault to see why.</string>
+    <string name="notif_readiness_needs_wifi_restart_text">The recorder stopped and needs Wi-Fi to start again. Turning on Offline recording while on Wi-Fi avoids this.</string>
 </resources>

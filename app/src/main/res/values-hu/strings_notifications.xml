@@ -42,4 +42,5 @@
     <string name="notif_readiness_no_debugging_text">Az USB-hibakeresés és a vezeték nélküli hibakeresés is ki van kapcsolva. Kapcsold vissza az egyiket a Fejlesztői beállításokban.</string>
     <string name="notif_readiness_needs_wifi_text">Az USB-hibakeresés ki van kapcsolva, és nincs Wi-Fi. Csatlakozz Wi-Fi-hez, vagy kapcsold be az USB-hibakeresést.</string>
     <string name="notif_readiness_stuck_text">A rögzítő nem tud elindulni. Nyisd meg a CallVaultot az okért.</string>
+    <string name="notif_readiness_needs_wifi_restart_text">A rögzítő leállt, és Wi-Fi kell az újraindításához. Ennek elkerüléséhez kapcsold be az offline rögzítést, amíg Wi-Fi-n vagy.</string>
 </resources>

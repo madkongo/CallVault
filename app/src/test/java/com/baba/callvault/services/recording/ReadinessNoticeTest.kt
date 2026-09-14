@@ -16,7 +16,8 @@ import org.junit.Test
  * Which readiness notice the permanent notification shows.
  *
  * #23, #24 and #39 all sat on "Call recorder starting up…" while recovery could not succeed. "Starting"
- * is a claim that it will finish; it may only be shown while that is still possible.
+ * is a claim that it will finish; it may only be shown while a restart is still possible.
+ * See docs/dev-notes/2026-09-14-debugging-switches-model.md for the measured rules.
  */
 class ReadinessNoticeTest {
 
@@ -26,7 +27,9 @@ class ReadinessNoticeTest {
         usbOn: Boolean = true,
         wdOn: Boolean = false,
         wifi: WifiState = WifiState.CONNECTED,
-    ) = ReadinessNotice.of(ready, stuck, usbOn, wdOn, wifi)
+        loopbackArmed: Boolean = false,
+        hasGrant: Boolean = true,
+    ) = ReadinessNotice.of(ready, stuck, usbOn, wdOn, wifi, loopbackArmed, hasGrant)
 
     @Test
     fun `ready wins over everything`() {
@@ -39,14 +42,32 @@ class ReadinessNoticeTest {
     }
 
     @Test
-    fun `both switches off is known at once, without waiting for the streak`() {
-        assertEquals(ReadinessNotice.NO_DEBUGGING, of(usbOn = false, wdOn = false))
+    fun `usb off and no wifi cannot recover, whatever the wireless switch reads`() {
+        // Android clears Wireless debugging off Wi-Fi, so "turn one back on" would be wrong advice here.
+        assertEquals(ReadinessNotice.NEEDS_WIFI, of(usbOn = false, wdOn = true, wifi = WifiState.NOT_CONNECTED))
+        assertEquals(ReadinessNotice.NEEDS_WIFI, of(usbOn = false, wdOn = false, wifi = WifiState.NOT_CONNECTED))
     }
 
     @Test
-    fun `usb off and no wifi cannot recover, so it is said at once`() {
-        // AOSP clears Wireless debugging off Wi-Fi, so it is irrelevant whether the flag reads on.
-        assertEquals(ReadinessNotice.NEEDS_WIFI, of(usbOn = false, wdOn = true, wifi = WifiState.NOT_CONNECTED))
+    fun `usb on without an armed loopback still needs wifi to restart`() {
+        // Measured as T3: the recorder stayed down off Wi-Fi and the old notice said "starting up".
+        assertEquals(ReadinessNotice.NEEDS_WIFI_TO_RESTART, of(usbOn = true, wifi = WifiState.NOT_CONNECTED))
+    }
+
+    @Test
+    fun `usb on with an armed loopback restarts off wifi`() {
+        // Measured as T5b: relaunched over the loopback in under a second.
+        assertEquals(ReadinessNotice.STARTING, of(usbOn = true, wifi = WifiState.NOT_CONNECTED, loopbackArmed = true))
+    }
+
+    @Test
+    fun `both off on wifi is recoverable by the app itself`() {
+        assertEquals(ReadinessNotice.STARTING, of(usbOn = false, wdOn = false))
+    }
+
+    @Test
+    fun `both off without the grant needs the user`() {
+        assertEquals(ReadinessNotice.NO_DEBUGGING, of(usbOn = false, wdOn = false, hasGrant = false))
     }
 
     @Test
@@ -57,7 +78,6 @@ class ReadinessNoticeTest {
     @Test
     fun `a tripped recovery streak stops claiming it is starting`() {
         assertEquals(ReadinessNotice.STUCK, of(stuck = true))
-        assertEquals(ReadinessNotice.STUCK, of(stuck = true, usbOn = false, wdOn = true, wifi = WifiState.UNKNOWN))
     }
 
     @Test

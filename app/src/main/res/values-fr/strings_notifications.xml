@@ -42,4 +42,5 @@
     <string name="notif_readiness_no_debugging_text">Le débogage USB et le débogage sans fil sont tous deux désactivés. Réactivez-en un dans les Options pour les développeurs.</string>
     <string name="notif_readiness_needs_wifi_text">Le débogage USB est désactivé et il n\'y a pas de Wi-Fi. Connectez-vous au Wi-Fi ou activez le débogage USB.</string>
     <string name="notif_readiness_stuck_text">L\'enregistreur n\'arrive pas à démarrer. Ouvrez CallVault pour en voir la raison.</string>
+    <string name="notif_readiness_needs_wifi_restart_text">L\'enregistreur s\'est arrêté et a besoin du Wi-Fi pour redémarrer. Activez l\'enregistrement hors ligne lorsque vous êtes en Wi-Fi pour l\'éviter.</string>
 </resources>

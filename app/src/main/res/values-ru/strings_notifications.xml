@@ -42,4 +42,5 @@
     <string name="notif_readiness_no_debugging_text">Отладка по USB и отладка по Wi-Fi выключены. Включите одну из них в параметрах разработчика.</string>
     <string name="notif_readiness_needs_wifi_text">Отладка по USB выключена, а Wi-Fi нет. Подключитесь к Wi-Fi или включите отладку по USB.</string>
     <string name="notif_readiness_stuck_text">Рекордер не может запуститься. Откройте CallVault, чтобы узнать причину.</string>
+    <string name="notif_readiness_needs_wifi_restart_text">Рекордер остановился, и для перезапуска нужен Wi-Fi. Чтобы этого избежать, включите офлайн-запись, пока вы подключены к Wi-Fi.</string>
 </resources>

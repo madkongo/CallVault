@@ -30,11 +30,14 @@ enum class ReadinessNotice {
     /** A relaunch that can still succeed. */
     STARTING,
 
-    /** USB and Wireless debugging are both off, so adbd is not running and nothing can connect. */
+    /** Both switches off and CallVault lacks the grant to switch Wireless debugging back on. */
     NO_DEBUGGING,
 
-    /** USB debugging is off and there is no Wi-Fi, so Wireless debugging cannot run. */
+    /** USB debugging is off and there is no Wi-Fi, so Wireless debugging cannot run — adbd is down. */
     NEEDS_WIFI,
+
+    /** USB debugging keeps adbd up, but nothing to dial without Wi-Fi: no armed off-Wi-Fi listener. */
+    NEEDS_WIFI_TO_RESTART,
 
     /** Recovery keeps failing for a reason these switches do not explain. */
     STUCK;
@@ -46,13 +49,16 @@ enum class ReadinessNotice {
             usbDebuggingOn: Boolean,
             wirelessDebuggingOn: Boolean,
             wifi: WifiState,
+            loopbackArmed: Boolean,
+            hasGrant: Boolean,
         ): ReadinessNotice = when {
             ready -> READY
-            // The two named causes are evidence about the present, so they are shown at once rather
-            // than after the failure streak — and they outrank the generic notice because they say what
-            // to do. USB debugging on means adbd is alive, so neither applies.
-            !usbDebuggingOn && !wirelessDebuggingOn -> NO_DEBUGGING
-            !usbDebuggingOn && wifi == WifiState.NOT_CONNECTED -> NEEDS_WIFI
+            // The named causes are evidence about the present, so they are shown at once rather than after
+            // the failure streak, and they outrank the generic notice because they say what to do.
+            // Only a positive "no Wi-Fi" counts; an unreadable state is not evidence.
+            wifi == WifiState.NOT_CONNECTED && !usbDebuggingOn -> NEEDS_WIFI
+            wifi == WifiState.NOT_CONNECTED && !loopbackArmed -> NEEDS_WIFI_TO_RESTART
+            !usbDebuggingOn && !wirelessDebuggingOn && !hasGrant -> NO_DEBUGGING
             recoveryStuck -> STUCK
             else -> STARTING
         }
@@ -80,6 +86,8 @@ object ReadinessNoticeText {
             usbDebuggingOn = AdbShell.isUsbDebuggingEnabled(context),
             wirelessDebuggingOn = AdbShell.isWirelessDebuggingEnabled(context),
             wifi = WifiState.of(context),
+            loopbackArmed = AdbShell.isLoopbackArmed(context),
+            hasGrant = AdbShell.hasWriteSecureSettings(context),
         )
     }
 
@@ -89,6 +97,7 @@ object ReadinessNoticeText {
         ReadinessNotice.STARTING -> R.string.notif_readiness_starting_title
         ReadinessNotice.NO_DEBUGGING,
         ReadinessNotice.NEEDS_WIFI,
+        ReadinessNotice.NEEDS_WIFI_TO_RESTART,
         ReadinessNotice.STUCK -> R.string.notif_readiness_down_title
     }
 
@@ -98,6 +107,7 @@ object ReadinessNoticeText {
         ReadinessNotice.STARTING -> R.string.notif_readiness_starting_text
         ReadinessNotice.NO_DEBUGGING -> R.string.notif_readiness_no_debugging_text
         ReadinessNotice.NEEDS_WIFI -> R.string.notif_readiness_needs_wifi_text
+        ReadinessNotice.NEEDS_WIFI_TO_RESTART -> R.string.notif_readiness_needs_wifi_restart_text
         ReadinessNotice.STUCK -> R.string.notif_readiness_stuck_text
     }
 }
