@@ -50,6 +50,8 @@ object ShizukuLifecycleWatcher {
         runCatching { AppPreferences(context).getPrivilegedMode().needsShizuku }.getOrDefault(false)
 
     private fun onDead(context: Context) {
+        // In every mode: a stale binding would block the next bind whichever mode the user is in by then.
+        ShizukuBackend.onShizukuDied()
         if (!inShizukuMode(context)) return
         AppLogger.w(TAG, "Shizuku stopped; calls will not be recorded until it is started again")
         SilentFailureNotifier.warnRecorderUnavailable(context)

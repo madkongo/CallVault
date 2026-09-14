@@ -184,6 +184,18 @@ object ShizukuBackend {
     }
 
     /**
+     * Forgets the binding when Shizuku's server dies. A user service does not survive its Shizuku server, but
+     * [connection] did — so when Shizuku came back, [startLocked] answered "Already bound" to a server that no
+     * longer had the service and never bound again. Measured on the OP9 on 2026-09-14: Shizuku restarted, the
+     * warning cleared, and the recorder never returned until the app process died.
+     */
+    fun onShizukuDied(): Unit = synchronized(bindLock) {
+        if (connection != null) AppLogger.i(TAG, "Shizuku died; dropping the stale recorder binding")
+        connection = null
+        RecorderConnection.onBinderDied()
+    }
+
+    /**
      * Stops the Shizuku-hosted recorder.
      *
      * [remove] `true` tells Shizuku to forget the daemon service entirely rather than leave it running
