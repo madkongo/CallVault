@@ -2380,6 +2380,19 @@ private fun UsbDebuggingToggle() {
     val context = LocalContext.current
     var enabled by remember { mutableStateOf(AdbShell.isUsbDebuggingEnabled(context)) }
     var failed by remember { mutableStateOf(false) }
+    // Follow the real setting, not just our own taps: it is changed from Developer options, by Android
+    // itself, and by recovery — and a switch showing "on" while USB debugging is off offers the wrong move.
+    DisposableEffect(context) {
+        val observer = object : android.database.ContentObserver(android.os.Handler(android.os.Looper.getMainLooper())) {
+            override fun onChange(selfChange: Boolean) {
+                enabled = AdbShell.isUsbDebuggingEnabled(context)
+            }
+        }
+        runCatching {
+            context.contentResolver.registerContentObserver(Settings.Global.getUriFor("adb_enabled"), false, observer)
+        }
+        onDispose { runCatching { context.contentResolver.unregisterContentObserver(observer) } }
+    }
     // The cost of switching it off, while the user decides; null when no question is open.
     var pendingOff by remember { mutableStateOf<UsbDebuggingOff?>(null) }
     val writeUsbDebugging: (Boolean) -> Unit = { turnOn ->
@@ -2417,7 +2430,8 @@ private fun UsbDebuggingToggle() {
     pendingOff?.let { cost ->
         AlertDialog(
             onDismissRequest = { pendingOff = null },
-            icon = { Icon(imageVector = Icons.Filled.Usb, contentDescription = null) },
+            // Tinted explicitly: the dialog's default icon colour resolves to coral in this app's scheme.
+            icon = { Icon(imageVector = Icons.Filled.Usb, contentDescription = null, tint = MaterialTheme.colorScheme.primary) },
             title = { Text(stringResource(R.string.usb_debugging_off_warn_title)) },
             text = {
                 Text(
