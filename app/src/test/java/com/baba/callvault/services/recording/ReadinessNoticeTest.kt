@@ -29,7 +29,10 @@ class ReadinessNoticeTest {
         wifi: WifiState = WifiState.CONNECTED,
         loopbackArmed: Boolean = false,
         hasGrant: Boolean = true,
-    ) = ReadinessNotice.of(ready, stuck, usbOn, wdOn, wifi, loopbackArmed, hasGrant)
+        wdOffByUser: Boolean = false,
+        enforced: Boolean = false,
+        offlineOn: Boolean = false,
+    ) = ReadinessNotice.of(ready, stuck, usbOn, wdOn, wifi, loopbackArmed, hasGrant, wdOffByUser, enforced, offlineOn)
 
     @Test
     fun `ready wins over everything`() {
@@ -83,5 +86,30 @@ class ReadinessNoticeTest {
     @Test
     fun `a named cause outranks the generic stuck notice`() {
         assertEquals(ReadinessNotice.NEEDS_WIFI, of(stuck = true, usbOn = false, wdOn = true, wifi = WifiState.NOT_CONNECTED))
+    }
+
+    @Test
+    fun `a wireless switch the user turned off is named, not retried`() {
+        assertEquals(ReadinessNotice.WD_OFF_BY_USER, of(usbOn = false, wdOn = false, wdOffByUser = true))
+    }
+
+    @Test
+    fun `with the opt-in setting on, it is simply starting again`() {
+        assertEquals(ReadinessNotice.STARTING, of(usbOn = false, wdOn = false, wdOffByUser = true, enforced = true))
+    }
+
+    @Test
+    fun `usb on with an armed loopback does not need the wireless switch at all`() {
+        assertEquals(ReadinessNotice.STARTING, of(usbOn = true, wdOn = false, wdOffByUser = true, loopbackArmed = true))
+    }
+
+    @Test
+    fun `off-wifi recording without usb debugging is ready, but paused`() {
+        assertEquals(ReadinessNotice.READY_OFFLINE_PAUSED, of(ready = true, usbOn = false, offlineOn = true))
+    }
+
+    @Test
+    fun `off-wifi recording with usb debugging is plainly ready`() {
+        assertEquals(ReadinessNotice.READY, of(ready = true, usbOn = true, offlineOn = true))
     }
 }

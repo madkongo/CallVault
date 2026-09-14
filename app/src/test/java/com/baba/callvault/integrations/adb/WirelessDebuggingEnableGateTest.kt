@@ -60,4 +60,28 @@ class WirelessDebuggingEnableGateTest {
             WirelessDebuggingEnableGate.decide(alreadyOn = false, hasGrant = true, wifi = WifiState.UNKNOWN),
         )
     }
+
+    @Test
+    fun `a switch the user turned off stays off by default`() {
+        assertEquals(
+            WirelessDebuggingEnable.RESPECT_USER,
+            WirelessDebuggingEnableGate.decide(alreadyOn = false, hasGrant = true, wifi = WifiState.CONNECTED, userTurnedOff = true),
+        )
+    }
+
+    @Test
+    fun `the opt-in setting lets CallVault turn it back on`() {
+        assertEquals(
+            WirelessDebuggingEnable.WRITE,
+            WirelessDebuggingEnableGate.decide(alreadyOn = false, hasGrant = true, wifi = WifiState.CONNECTED, userTurnedOff = true, enforced = true),
+        )
+    }
+
+    @Test
+    fun `a button the user pressed is the user asking`() {
+        assertEquals(
+            WirelessDebuggingEnable.WRITE,
+            WirelessDebuggingEnableGate.decide(alreadyOn = false, hasGrant = true, wifi = WifiState.CONNECTED, userTurnedOff = true, userRequested = true),
+        )
+    }
 }

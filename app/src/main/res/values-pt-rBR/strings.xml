@@ -631,4 +631,6 @@
     <string name="usb_debugging_off_warn_offline">A gravação sem Wi-Fi precisa da depuração USB. Com ela desativada, chamadas feitas fora do Wi-Fi não serão gravadas.</string>
     <string name="usb_debugging_off_confirm">Desativar mesmo assim</string>
     <string name="usb_debugging_off_keep">Manter ativada</string>
+    <string name="settings_wd_enforce_label">Manter a depuração por Wi-Fi ativada para gravar</string>
+    <string name="settings_wd_enforce_description">Se você desativar a depuração por Wi-Fi quando o CallVault não tiver outro acesso, ele a ativa de novo para as chamadas continuarem sendo gravadas. Com esta opção desativada, seu interruptor fica desligado e a notificação avisa que a gravação está pausada.</string>
 </resources>

@@ -628,4 +628,6 @@
     <string name="usb_debugging_off_warn_offline">La registrazione senza Wi-Fi richiede il debug USB. Se lo disattivi, le chiamate fatte lontano dal Wi-Fi non verranno registrate.</string>
     <string name="usb_debugging_off_confirm">Disattiva comunque</string>
     <string name="usb_debugging_off_keep">Lascialo attivo</string>
+    <string name="settings_wd_enforce_label">Mantieni attivo il debug wireless per la registrazione</string>
+    <string name="settings_wd_enforce_description">Se disattivi il debug wireless quando CallVault non ha altri accessi, lo riattiva perché le chiamate continuino a essere registrate. Se questa opzione è disattivata, il tuo interruttore resta spento e la notifica indica che la registrazione è in pausa.</string>
 </resources>

@@ -38,8 +38,17 @@ object OfflineRecording {
      * It used to print "connect to Wi-Fi once, then try from Settings" for every one of them.
      */
     fun enable(context: Context): LoopbackArm {
+        // It cannot work without USB debugging: the listener lives inside adbd, and Android stops adbd off
+        // Wi-Fi when USB debugging is off. Arming anyway would also restart adbd for nothing, which kills a
+        // running Shizuku server (S1a, OP9, 2026-09-14).
+        if (!AdbShell.isUsbDebuggingEnabled(context)) {
+            AppLogger.i(TAG, "Not arming off-Wi-Fi recording: USB debugging is off")
+            return LoopbackArm.NEEDS_USB_DEBUGGING
+        }
         AppPreferences(context).setOfflineRecordingEnabled(true)
-        val result = AdbShell.armLoopbackIfNeededWithReason(context)
+        // The user pressed the button, so Wireless debugging may be switched on for it even if they had
+        // turned it off.
+        val result = AdbShell.asUserRequest { AdbShell.armLoopbackIfNeededWithReason(context) }
         if (result == LoopbackArm.ARMED) {
             runCatching { RecorderBackend.ensureRunning(context) }
                 .onFailure { AppLogger.w(TAG, "re-warm after enable failed: ${it.message}") }

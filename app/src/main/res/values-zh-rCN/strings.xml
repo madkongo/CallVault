@@ -627,4 +627,6 @@
     <string name="usb_debugging_off_warn_offline">无 Wi-Fi 录音需要开启 USB 调试。关闭后，在没有 Wi-Fi 时拨打或接听的电话将不会被录音。</string>
     <string name="usb_debugging_off_confirm">仍然关闭</string>
     <string name="usb_debugging_off_keep">保持开启</string>
+    <string name="settings_wd_enforce_label">录音时保持无线调试开启</string>
+    <string name="settings_wd_enforce_description">如果在 CallVault 没有其他连接方式时关闭无线调试，它会重新开启，以便继续录音。关闭此项后，你的开关会保持关闭，通知会提示录音已暂停。</string>
 </resources>

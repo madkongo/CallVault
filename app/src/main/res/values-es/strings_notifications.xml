@@ -43,4 +43,7 @@
     <string name="notif_readiness_needs_wifi_text">La depuración USB está desactivada y no hay Wi-Fi. Conéctate a una red Wi-Fi o activa la depuración USB.</string>
     <string name="notif_readiness_stuck_text">La grabadora no consigue iniciarse. Abre CallVault para ver el motivo.</string>
     <string name="notif_readiness_needs_wifi_restart_text">La grabadora se detuvo y necesita Wi-Fi para volver a iniciarse. Activa la grabación sin conexión mientras estás en Wi-Fi para evitarlo.</string>
+    <string name="notif_readiness_wd_off_by_user_text">Desactivaste la depuración inalámbrica y CallVault no tiene otra forma de reiniciar la grabadora. Vuelve a activarla o activa la depuración USB.</string>
+    <string name="notif_readiness_offline_paused_text">La grabación sin Wi-Fi está en pausa: necesita la depuración USB. Las llamadas con Wi-Fi se siguen grabando.</string>
+    <string name="notif_action_turn_wd_on">Activar la depuración inalámbrica</string>
 </resources>

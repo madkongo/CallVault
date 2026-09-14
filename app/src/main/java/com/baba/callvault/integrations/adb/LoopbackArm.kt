@@ -23,6 +23,9 @@ enum class LoopbackArm {
     /** Wireless debugging is off and CallVault could not switch it on — the user has to. */
     NEEDS_WIRELESS_DEBUGGING,
 
+    /** USB debugging is off, so off-Wi-Fi recording could never work; nothing was armed. */
+    NEEDS_USB_DEBUGGING,
+
     /** Not on Wi-Fi, so Wireless debugging cannot run to arm through. */
     NO_WIFI,
 

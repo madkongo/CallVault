@@ -170,4 +170,5 @@
     <string name="unmerge_progress_working">Separating the calls</string>
     <string name="offline_failed_no_wifi">Couldn\'t enable — you\'re not on Wi-Fi. Connect to any Wi-Fi network once, then try again.</string>
     <string name="offline_failed_wd_refused">Couldn\'t enable — Android didn\'t allow Wireless debugging on this network. Turn it on once in Developer options, accept the prompt, then try again.</string>
+    <string name="offline_failed_needs_usb">Turn on USB debugging first — off-Wi-Fi recording can\'t work without it. Settings ▸ Experimental ▸ USB debugging.</string>
 </resources>

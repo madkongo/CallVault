@@ -27,6 +27,7 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Wifi
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.automirrored.filled.ArrowForwardIos
 import androidx.compose.material.icons.automirrored.filled.CallMade
@@ -2103,6 +2104,8 @@ private fun ExperimentalSubSection() {
         SettingsDivider()
         UsbDebuggingToggle()
         SettingsDivider()
+        WirelessDebuggingEnforceToggle()
+        SettingsDivider()
         UsbDefaultConfigRow()
 
         SettingsSubHeader(stringResource(R.string.settings_subsection_voip), nested = true)
@@ -2375,6 +2378,34 @@ internal fun HandoffPersistToggle() {
  * Turning it back off is allowed and honest about the consequence — Wireless debugging comes back on,
  * because otherwise the helper would have no way in at all.
  */
+/**
+ * Whether CallVault may switch Wireless debugging back on after the user turned it off themselves.
+ *
+ * Off by default (decided 2026-09-14). Measured on the OP9 before this existed: CallVault switched it back on
+ * 50 ms after the user's tap, so the switch could not be turned off at all while USB debugging was off. With
+ * this off, a switch the user turned off stays off and the notification says recording is paused, with a
+ * button to turn it back on. Shared with onboarding, so both places say the same thing.
+ */
+@Composable
+internal fun WirelessDebuggingEnforceToggle() {
+    val context = LocalContext.current
+    val prefs = remember { AppPreferences(context) }
+    var enforced by remember { mutableStateOf(prefs.isWirelessDebuggingEnforced()) }
+    // Shizuku mode does not touch the switches at all, so the choice means nothing there.
+    val usesEmbeddedAdb = remember { !prefs.getPrivilegedMode().needsShizuku }
+    SettingsToggleRow(
+        icon = Icons.Filled.Wifi,
+        label = stringResource(R.string.settings_wd_enforce_label),
+        description = stringResource(R.string.settings_wd_enforce_description),
+        checked = enforced,
+        enabled = usesEmbeddedAdb,
+        onCheckedChange = { on ->
+            prefs.setWirelessDebuggingEnforced(on)
+            enforced = on
+        },
+    )
+}
+
 @Composable
 private fun UsbDebuggingToggle() {
     val context = LocalContext.current

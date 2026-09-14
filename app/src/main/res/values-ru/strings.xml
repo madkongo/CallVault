@@ -630,4 +630,6 @@
     <string name="usb_debugging_off_warn_offline">Для записи без Wi-Fi нужна отладка по USB. Если её выключить, звонки вне Wi-Fi записываться не будут.</string>
     <string name="usb_debugging_off_confirm">Всё равно выключить</string>
     <string name="usb_debugging_off_keep">Оставить включённой</string>
+    <string name="settings_wd_enforce_label">Держать отладку по Wi-Fi включённой для записи</string>
+    <string name="settings_wd_enforce_description">Если выключить отладку по Wi-Fi, когда у CallVault нет другого доступа, он включит её снова, чтобы звонки продолжали записываться. Если эта настройка выключена, ваш переключатель остаётся выключенным, а уведомление сообщает, что запись приостановлена.</string>
 </resources>

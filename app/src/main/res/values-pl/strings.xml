@@ -630,4 +630,6 @@
     <string name="usb_debugging_off_warn_offline">Nagrywanie bez Wi-Fi wymaga debugowania USB. Gdy jest wyłączone, połączenia wykonane poza Wi-Fi nie będą nagrywane.</string>
     <string name="usb_debugging_off_confirm">Wyłącz mimo to</string>
     <string name="usb_debugging_off_keep">Pozostaw włączone</string>
+    <string name="settings_wd_enforce_label">Utrzymuj debugowanie bezprzewodowe włączone do nagrywania</string>
+    <string name="settings_wd_enforce_description">Jeśli wyłączysz debugowanie bezprzewodowe, gdy CallVault nie ma innego dostępu, włączy je ponownie, aby połączenia dalej były nagrywane. Gdy ta opcja jest wyłączona, Twój przełącznik pozostaje wyłączony, a powiadomienie informuje, że nagrywanie jest wstrzymane.</string>
 </resources>

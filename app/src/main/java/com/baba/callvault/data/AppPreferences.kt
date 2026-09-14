@@ -331,6 +331,8 @@ class AppPreferences(context: Context) {
         // --- Developer & Debug ---
         LOGGING_ENABLED("logging_enabled"),
         WD_ENABLED_BY_US("wd_enabled_by_us"),
+        WD_TURNED_OFF_BY_USER("wd_turned_off_by_user"),
+        WD_ENFORCED("wd_enforced"),
         LOG_PSEUDONYM_SALT("log_pseudonym_salt"),
         LOGCAT_RING_PREVIOUS_KIB("logcat_ring_previous_kib"),
         DEBUG_ENABLED("debug_enabled"),
@@ -1183,6 +1185,23 @@ class AppPreferences(context: Context) {
 
     /** Records who turned Wireless debugging on. See [wasWirelessDebuggingEnabledByUs]. */
     fun setWirelessDebuggingEnabledByUs(byUs: Boolean) = setBoolean(Key.WD_ENABLED_BY_US, byUs)
+
+    /**
+     * Whether the user switched Wireless debugging off themselves — not Android (Wi-Fi dropped, or a refused
+     * write) and not us. See [com.baba.callvault.integrations.adb.WirelessDebuggingOffCause]. While true, and
+     * unless [isWirelessDebuggingEnforced], CallVault does not switch it back on by itself.
+     */
+    fun wasWirelessDebuggingTurnedOffByUser() = getBoolean(Key.WD_TURNED_OFF_BY_USER, false)
+
+    fun setWirelessDebuggingTurnedOffByUser(byUser: Boolean) = setBoolean(Key.WD_TURNED_OFF_BY_USER, byUser)
+
+    /**
+     * The opt-in "keep Wireless debugging on for recording" setting. Off by default (decided 2026-09-14): a
+     * switch the user turned off stays off, and the notification says recording is paused.
+     */
+    fun isWirelessDebuggingEnforced() = getBoolean(Key.WD_ENFORCED, false)
+
+    fun setWirelessDebuggingEnforced(enforced: Boolean) = setBoolean(Key.WD_ENFORCED, enforced)
 
     /** Sets whether logging features are enabled. */
     fun setLoggingEnabled(enabled: Boolean) = setBoolean(Key.LOGGING_ENABLED, enabled)

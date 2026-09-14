@@ -43,4 +43,7 @@
     <string name="notif_readiness_needs_wifi_text">Debugowanie USB jest wyłączone i nie ma Wi-Fi. Połącz się z Wi-Fi lub włącz debugowanie USB.</string>
     <string name="notif_readiness_stuck_text">Rejestrator nie może się uruchomić. Otwórz CallVault, aby zobaczyć przyczynę.</string>
     <string name="notif_readiness_needs_wifi_restart_text">Rejestrator zatrzymał się i potrzebuje Wi-Fi, aby uruchomić się ponownie. Włącz nagrywanie offline, gdy jesteś w sieci Wi-Fi, aby tego uniknąć.</string>
+    <string name="notif_readiness_wd_off_by_user_text">Wyłączyłeś debugowanie bezprzewodowe, a CallVault nie ma innego sposobu na ponowne uruchomienie rejestratora. Włącz je z powrotem albo włącz debugowanie USB.</string>
+    <string name="notif_readiness_offline_paused_text">Nagrywanie bez Wi-Fi jest wstrzymane: wymaga debugowania USB. Połączenia przez Wi-Fi są nadal nagrywane.</string>
+    <string name="notif_action_turn_wd_on">Włącz debugowanie bezprzewodowe</string>
 </resources>

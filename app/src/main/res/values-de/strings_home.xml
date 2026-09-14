@@ -153,4 +153,5 @@
     <string name="whatsnew_221_title">Schneller zu öffnen, und leiser bei Problemen, die es nicht gibt</string>
     <string name="offline_failed_no_wifi">Aktivierung fehlgeschlagen – du bist nicht mit einem WLAN verbunden. Verbinde dich einmal mit einem beliebigen WLAN und versuche es erneut.</string>
     <string name="offline_failed_wd_refused">Aktivierung fehlgeschlagen – Android hat WLAN-Debugging in diesem Netzwerk nicht erlaubt. Schalte es einmal in den Entwickleroptionen ein, bestätige die Abfrage und versuche es erneut.</string>
+    <string name="offline_failed_needs_usb">Schalte zuerst USB-Debugging ein – ohne es funktioniert die Aufnahme ohne WLAN nicht. Einstellungen ▸ Experimentell ▸ USB-Debugging.</string>
 </resources>

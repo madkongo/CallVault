@@ -138,6 +138,12 @@
         </receiver>
 
         <!-- Re-anchors the daily retention sweep to local time on a time-zone/clock change (travel). -->
+        <!-- The paused-recording notification's "Turn Wireless debugging on" button. Internal only. -->
+        <receiver
+            android:name=".services.recording.WirelessDebuggingActionReceiver"
+            android:enabled="true"
+            android:exported="false" />
+
         <receiver
             android:name=".services.boot.RetentionTimezoneReceiver"
             android:enabled="true"

@@ -172,14 +172,24 @@ object AdbShell {
      *
      * @return what was decided, for the caller's log.
      */
-    fun reviveAdbdIfStopped(context: Context, reason: String): AdbdRevival {
-        fun decideNow() = AdbdRevivalPolicy.decide(
-            adbd = adbdState(),
-            usbDebuggingOn = isUsbDebuggingEnabled(context),
-            wirelessDebuggingOn = isWirelessDebuggingEnabled(context),
-            wifi = WifiState.of(context),
-            hasGrant = hasWriteSecureSettings(context),
-        )
+    fun reviveAdbdIfStopped(
+        context: Context,
+        reason: String,
+        /** False where CallVault must not switch Wireless debugging on from off — Shizuku mode. */
+        mayEnable: Boolean = true,
+    ): AdbdRevival {
+        fun decideNow(): AdbdRevival {
+            val prefs = AppPreferences(context)
+            val userOff = prefs.wasWirelessDebuggingTurnedOffByUser() && !prefs.isWirelessDebuggingEnforced()
+            return AdbdRevivalPolicy.decide(
+                adbd = adbdState(),
+                usbDebuggingOn = isUsbDebuggingEnabled(context),
+                wirelessDebuggingOn = isWirelessDebuggingEnabled(context),
+                wifi = WifiState.of(context),
+                hasGrant = hasWriteSecureSettings(context),
+                mayEnable = mayEnable && !userOff,
+            )
+        }
         var decision = decideNow()
         if (decision == AdbdRevival.ENABLE_WIRELESS_DEBUGGING || decision == AdbdRevival.CYCLE_WIRELESS_DEBUGGING) {
             // Let a USB change that may still be running finish first, then look again. Starting adbd inside
@@ -600,11 +610,15 @@ object AdbShell {
      * Returns true if the write succeeded (or it was already on).
      */
     fun enableWirelessDebugging(context: Context): Boolean {
+        val prefs = AppPreferences(context)
         when (
             WirelessDebuggingEnableGate.decide(
                 alreadyOn = isWirelessDebuggingEnabled(context),
                 hasGrant = hasWriteSecureSettings(context),
                 wifi = WifiState.of(context),
+                userTurnedOff = prefs.wasWirelessDebuggingTurnedOffByUser(),
+                enforced = prefs.isWirelessDebuggingEnforced(),
+                userRequested = userRequest.get() == true,
             )
         ) {
             // Already on means it is the user's, not ours — recorded so nothing later mistakes it for a
@@ -613,6 +627,12 @@ object AdbShell {
             WirelessDebuggingEnable.NO_GRANT -> return false
             // The framework would put it straight back to 0, and on OxygenOS/One UI the attempt also
             // turned the user's USB debugging on and restarted adbd (#24, #39). See the gate.
+            // The user switched it off and has not opted into CallVault overriding that. The notification
+            // says recording is paused and offers to turn it back on.
+            WirelessDebuggingEnable.RESPECT_USER -> {
+                AppLogger.i(TAG, "Not switching Wireless debugging on: the user turned it off (override setting is off)")
+                return false
+            }
             WirelessDebuggingEnable.NO_WIFI -> {
                 AppLogger.i(TAG, "Not switching Wireless debugging on: no Wi-Fi, so Android would refuse it")
                 return false
@@ -623,7 +643,10 @@ object AdbShell {
         val enabled = runCatching {
             android.provider.Settings.Global.putInt(context.contentResolver, "adb_wifi_enabled", 1)
         }.onFailure { AppLogger.e(TAG, "Failed to enable Wireless debugging", it) }.isSuccess
-        if (enabled) AppPreferences(context).setWirelessDebuggingEnabledByUs(true)
+        if (enabled) {
+            prefs.setWirelessDebuggingEnabledByUs(true)
+            prefs.setWirelessDebuggingTurnedOffByUser(false)
+        }
         return enabled
     }
 
@@ -633,6 +656,25 @@ object AdbShell {
     // react to every change — it would fight its own bootstrap, switching off the very thing it just
     // switched on. Recording each write lets a change be attributed: if it matches what we just wrote,
     // it is ours; anything else came from the user (or another app), and only then is it acted on.
+
+    /**
+     * Set while code runs on behalf of a button the user pressed — pairing, enabling off-Wi-Fi recording, the
+     * notification's "turn it back on" — so a Wireless-debugging switch the user turned off may be switched on
+     * for it. Thread-scoped because those paths reach [enableWirelessDebugging] through several layers on one
+     * worker thread; everything else (the keep-alive, recovery) runs without it and respects the user.
+     */
+    private val userRequest = ThreadLocal<Boolean>()
+
+    /** Runs [block] as an explicit user request. See [userRequest]. Blocking, like everything it wraps. */
+    fun <T> asUserRequest(block: () -> T): T {
+        val previous = userRequest.get()
+        userRequest.set(true)
+        try {
+            return block()
+        } finally {
+            userRequest.set(previous)
+        }
+    }
 
     @Volatile private var ownWdWriteValue = -1
     @Volatile private var ownWdWriteAtMs = 0L

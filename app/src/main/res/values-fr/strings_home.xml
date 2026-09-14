@@ -154,4 +154,5 @@
     <string name="whatsnew_221_title">Plus rapide à ouvrir, et plus discrète sur les problèmes qui n’existent pas</string>
     <string name="offline_failed_no_wifi">Activation impossible — vous n\'êtes pas connecté au Wi-Fi. Connectez-vous une fois à n\'importe quel réseau Wi-Fi, puis réessayez.</string>
     <string name="offline_failed_wd_refused">Activation impossible — Android n\'a pas autorisé le débogage sans fil sur ce réseau. Activez-le une fois dans les Options pour les développeurs, acceptez la demande, puis réessayez.</string>
+    <string name="offline_failed_needs_usb">Activez d\'abord le débogage USB — l\'enregistrement hors Wi-Fi ne peut pas fonctionner sans lui. Paramètres ▸ Expérimental ▸ Débogage USB.</string>
 </resources>

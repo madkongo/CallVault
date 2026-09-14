@@ -62,6 +62,12 @@ object AdbdRevivalPolicy {
         wirelessDebuggingOn: Boolean,
         wifi: WifiState,
         hasGrant: Boolean,
+        /**
+         * Whether switching Wireless debugging ON from off is allowed here. False in Shizuku mode (CallVault
+         * does not own the switches there) and when the user turned the switch off themselves. A cycle is
+         * still allowed: it ends with the switch exactly as it was.
+         */
+        mayEnable: Boolean = true,
     ): AdbdRevival = when {
         adbd != AdbdState.STOPPED -> AdbdRevival.NOTHING
         // With USB debugging on, init starts adbd itself; a stopped reading is a moment in a restart.
@@ -69,6 +75,7 @@ object AdbdRevivalPolicy {
         wifi == WifiState.NOT_CONNECTED -> AdbdRevival.NEEDS_WIFI
         !hasGrant -> AdbdRevival.NO_GRANT
         wirelessDebuggingOn -> AdbdRevival.CYCLE_WIRELESS_DEBUGGING
+        !mayEnable -> AdbdRevival.NOTHING
         else -> AdbdRevival.ENABLE_WIRELESS_DEBUGGING
     }
 }

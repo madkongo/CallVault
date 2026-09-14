@@ -153,4 +153,5 @@
     <string name="whatsnew_221_title">Mais rápido para abrir, e mais quieto sobre problemas que não existem</string>
     <string name="offline_failed_no_wifi">Não foi possível ativar — você não está conectado ao Wi-Fi. Conecte-se uma vez a qualquer rede Wi-Fi e tente de novo.</string>
     <string name="offline_failed_wd_refused">Não foi possível ativar — o Android não permitiu a depuração por Wi-Fi nesta rede. Ative-a uma vez nas Opções do desenvolvedor, aceite o aviso e tente de novo.</string>
+    <string name="offline_failed_needs_usb">Ative primeiro a depuração USB — a gravação sem Wi-Fi não funciona sem ela. Configurações ▸ Experimental ▸ Depuração USB.</string>
 </resources>

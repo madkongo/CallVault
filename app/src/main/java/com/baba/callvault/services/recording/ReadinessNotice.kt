@@ -27,6 +27,13 @@ import com.baba.callvault.integrations.adb.WifiState
 enum class ReadinessNotice {
     READY,
 
+    /**
+     * Ready, but off-Wi-Fi recording is switched on while USB debugging is off — so it cannot work (its
+     * listener lives inside adbd, which Android stops off Wi-Fi without USB debugging). Calls on Wi-Fi still
+     * record; it resumes by itself when USB debugging comes back.
+     */
+    READY_OFFLINE_PAUSED,
+
     /** A relaunch that can still succeed. */
     STARTING,
 
@@ -38,6 +45,9 @@ enum class ReadinessNotice {
 
     /** USB debugging keeps adbd up, but nothing to dial without Wi-Fi: no armed off-Wi-Fi listener. */
     NEEDS_WIFI_TO_RESTART,
+
+    /** The user switched Wireless debugging off and it is needed; CallVault respects that by default. */
+    WD_OFF_BY_USER,
 
     /** Recovery keeps failing for a reason these switches do not explain. */
     STUCK;
@@ -51,7 +61,11 @@ enum class ReadinessNotice {
             wifi: WifiState,
             loopbackArmed: Boolean,
             hasGrant: Boolean,
+            wirelessDebuggingOffByUser: Boolean,
+            enforced: Boolean,
+            offlineRecordingOn: Boolean,
         ): ReadinessNotice = when {
+            ready && offlineRecordingOn && !usbDebuggingOn -> READY_OFFLINE_PAUSED
             ready -> READY
             // The named causes are evidence about the present, so they are shown at once rather than after
             // the failure streak, and they outrank the generic notice because they say what to do.
@@ -59,6 +73,9 @@ enum class ReadinessNotice {
             wifi == WifiState.NOT_CONNECTED && !usbDebuggingOn -> NEEDS_WIFI
             wifi == WifiState.NOT_CONNECTED && !loopbackArmed -> NEEDS_WIFI_TO_RESTART
             !usbDebuggingOn && !wirelessDebuggingOn && !hasGrant -> NO_DEBUGGING
+            // Needed only when nothing else can be dialled: USB debugging with an armed listener restarts
+            // the recorder without it.
+            !wirelessDebuggingOn && wirelessDebuggingOffByUser && !enforced && !(usbDebuggingOn && loopbackArmed) -> WD_OFF_BY_USER
             recoveryStuck -> STUCK
             else -> STARTING
         }
@@ -71,7 +88,8 @@ object ReadinessNoticeText {
     fun current(context: Context, ready: Boolean): ReadinessNotice {
         // In Shizuku mode the debugging switches say nothing reliable — Sui needs neither — so only the
         // mode-independent notices apply there.
-        val standalone = runCatching { !AppPreferences(context).getPrivilegedMode().needsShizuku }.getOrDefault(true)
+        val prefs = AppPreferences(context)
+        val standalone = runCatching { !prefs.getPrivilegedMode().needsShizuku }.getOrDefault(true)
         val stuck = DaemonKeepAliveService.isRecoveryStuck
         if (!standalone) {
             return when {
@@ -88,22 +106,28 @@ object ReadinessNoticeText {
             wifi = WifiState.of(context),
             loopbackArmed = AdbShell.isLoopbackArmed(context),
             hasGrant = AdbShell.hasWriteSecureSettings(context),
+            wirelessDebuggingOffByUser = prefs.wasWirelessDebuggingTurnedOffByUser(),
+            enforced = prefs.isWirelessDebuggingEnforced(),
+            offlineRecordingOn = prefs.isOfflineRecordingEnabled(),
         )
     }
 
     @StringRes
     fun title(notice: ReadinessNotice): Int = when (notice) {
-        ReadinessNotice.READY -> R.string.notif_readiness_ready_title
+        ReadinessNotice.READY, ReadinessNotice.READY_OFFLINE_PAUSED -> R.string.notif_readiness_ready_title
         ReadinessNotice.STARTING -> R.string.notif_readiness_starting_title
         ReadinessNotice.NO_DEBUGGING,
         ReadinessNotice.NEEDS_WIFI,
         ReadinessNotice.NEEDS_WIFI_TO_RESTART,
+        ReadinessNotice.WD_OFF_BY_USER,
         ReadinessNotice.STUCK -> R.string.notif_readiness_down_title
     }
 
     @StringRes
     fun text(notice: ReadinessNotice): Int = when (notice) {
         ReadinessNotice.READY -> R.string.notif_readiness_ready_text
+        ReadinessNotice.READY_OFFLINE_PAUSED -> R.string.notif_readiness_offline_paused_text
+        ReadinessNotice.WD_OFF_BY_USER -> R.string.notif_readiness_wd_off_by_user_text
         ReadinessNotice.STARTING -> R.string.notif_readiness_starting_text
         ReadinessNotice.NO_DEBUGGING -> R.string.notif_readiness_no_debugging_text
         ReadinessNotice.NEEDS_WIFI -> R.string.notif_readiness_needs_wifi_text

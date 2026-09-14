@@ -43,4 +43,7 @@
     <string name="notif_readiness_needs_wifi_text">Gỡ lỗi USB đang tắt và không có Wi-Fi. Hãy kết nối Wi-Fi hoặc bật gỡ lỗi USB.</string>
     <string name="notif_readiness_stuck_text">Trình ghi âm liên tục không khởi động được. Mở CallVault để xem lý do.</string>
     <string name="notif_readiness_needs_wifi_restart_text">Trình ghi âm đã dừng và cần Wi-Fi để khởi động lại. Hãy bật ghi âm ngoại tuyến khi đang dùng Wi-Fi để tránh tình trạng này.</string>
+    <string name="notif_readiness_wd_off_by_user_text">Bạn đã tắt gỡ lỗi không dây và CallVault không còn cách nào khác để khởi động lại trình ghi âm. Hãy bật lại hoặc bật gỡ lỗi USB.</string>
+    <string name="notif_readiness_offline_paused_text">Ghi âm không cần Wi-Fi đang tạm dừng: cần bật gỡ lỗi USB. Cuộc gọi khi có Wi-Fi vẫn được ghi.</string>
+    <string name="notif_action_turn_wd_on">Bật gỡ lỗi không dây</string>
 </resources>

@@ -29,6 +29,8 @@ import com.baba.callvault.R
 import com.baba.callvault.data.AppPreferences
 import com.baba.callvault.data.health.SetupHealthStore
 import com.baba.callvault.integrations.adb.AdbShell
+import com.baba.callvault.integrations.adb.WifiState
+import com.baba.callvault.integrations.adb.WirelessDebuggingOffCause
 import com.baba.callvault.integrations.adb.DeveloperOptions
 import com.baba.callvault.integrations.adb.UsbDefaultConfig
 import com.baba.callvault.integrations.adb.UsbNotice
@@ -161,11 +163,8 @@ class DaemonKeepAliveService : Service() {
             Thread {
                 runCatching {
                     if (!usbOn) {
-                        // Not at once. Writing Wireless debugging on within milliseconds of the USB change
-                        // loses a race measured on the emulator: init starts a fresh adbd, then the
-                        // still-running USB transition stops it, leaving Wireless debugging reading on with
-                        // nothing listening — #39's state exactly.
-                        Thread.sleep(USB_CHANGE_SETTLE_MS)
+                        // The revival waits for the USB change to settle itself before touching Wireless
+                        // debugging — a second wait here made recovery take 10.5 s on the OP9 instead of ~7.
                         AdbShell.reviveAdbdIfStopped(applicationContext, "USB debugging switched off")
                     }
                     // Re-runs the transport policy: with the daemon already connected this is just the
@@ -210,10 +209,42 @@ class DaemonKeepAliveService : Service() {
     private val wirelessDebuggingObserver = object : ContentObserver(watchdogHandler) {
         override fun onChange(selfChange: Boolean) {
             val on = AdbShell.isWirelessDebuggingEnabled(applicationContext)
+            val prefs = AppPreferences(applicationContext)
+            if (on) {
+                // On again, by anyone: nothing left to respect.
+                prefs.setWirelessDebuggingTurnedOffByUser(false)
+                updateNotification(isDaemonAlive())
+                if (AdbShell.didWeJustSetWirelessDebugging(enabled = true)) return
+                prefs.setWirelessDebuggingEnabledByUs(false)
+                AppLogger.i(TAG, "Wireless debugging switched on by hand; it is the user\'s to manage")
+                return
+            }
+            // Off. Only the user's own change may hold CallVault back — Android also writes it off, when it
+            // refuses our write on an untrusted network and when Wi-Fi drops.
+            when (
+                WirelessDebuggingOffCause.of(
+                    weJustTurnedItOff = AdbShell.didWeJustSetWirelessDebugging(enabled = false),
+                    weJustTurnedItOn = AdbShell.didWeJustSetWirelessDebugging(enabled = true),
+                    wifi = WifiState.of(applicationContext),
+                )
+            ) {
+                WirelessDebuggingOffCause.OURS -> Unit
+                WirelessDebuggingOffCause.ANDROID_REFUSED ->
+                    AppLogger.i(TAG, "Android switched Wireless debugging off right after we turned it on (network not trusted)")
+                WirelessDebuggingOffCause.ANDROID_NO_WIFI ->
+                    AppLogger.i(TAG, "Wireless debugging went off with Wi-Fi; Android's doing, not the user's")
+                WirelessDebuggingOffCause.USER -> {
+                    prefs.setWirelessDebuggingEnabledByUs(false)
+                    prefs.setWirelessDebuggingTurnedOffByUser(true)
+                    AppLogger.i(
+                        TAG,
+                        "Wireless debugging switched off by hand; " +
+                            if (prefs.isWirelessDebuggingEnforced()) "the override setting is on, so CallVault may switch it back on"
+                            else "CallVault will leave it off",
+                    )
+                }
+            }
             updateNotification(isDaemonAlive())
-            if (AdbShell.didWeJustSetWirelessDebugging(enabled = on)) return
-            AppPreferences(applicationContext).setWirelessDebuggingEnabledByUs(false)
-            AppLogger.i(TAG, "Wireless debugging switched ${if (on) "on" else "off"} by hand; it is the user\'s to manage")
         }
     }
 
@@ -386,6 +417,10 @@ class DaemonKeepAliveService : Service() {
             ) {
                 RecoveryStep.RESTORE_WIRELESS_DEBUGGING -> {
                     AppLogger.w(TAG, "keep-alive: no TCP endpoint to dial — switching Wireless debugging back on")
+                    // Let the switch observer attribute the change first. Measured on the OP9 without this:
+                    // the user tapped Wireless debugging off and this switched it back on 50 ms later, before
+                    // anything had recorded that it was the user's tap. The gate reads that record.
+                    Thread.sleep(RESTORE_SETTLE_MS)
                     runCatching { AdbShell.enableWirelessDebugging(applicationContext) }
                         .onFailure { AppLogger.w(TAG, "keep-alive: could not re-enable Wireless debugging: ${it.message}") }
                 }
@@ -502,8 +537,15 @@ class DaemonKeepAliveService : Service() {
         // Except when recording is down for a named reason: then that reason is the only thing worth the
         // collapsed line. Measured on the emulator — "USB debugging is off and there's no Wi-Fi" was hidden
         // behind the screen-lock tip, which is about a recording that cannot happen anyway.
-        val recordingDown = notice != ReadinessNotice.READY && notice != ReadinessNotice.STARTING
-        if (usbNotice != UsbNotice.NONE && !recordingDown) {
+        val noticeOwnsLine = notice != ReadinessNotice.READY && notice != ReadinessNotice.STARTING
+        if (notice == ReadinessNotice.WD_OFF_BY_USER) {
+            builder.addAction(
+                0,
+                getString(R.string.notif_action_turn_wd_on),
+                WirelessDebuggingActionReceiver.pendingIntent(this),
+            )
+        }
+        if (usbNotice != UsbNotice.NONE && !noticeOwnsLine) {
             val warning = getString(
                 when (usbNotice) {
                     UsbNotice.DATA_MODE_RISK -> R.string.notif_usb_lock_warning
@@ -518,7 +560,7 @@ class DaemonKeepAliveService : Service() {
         // Wireless debugging has to stay on when it is adbd's ONLY transport, because switching it off
         // would stop adbd and take the daemon with it. Say so rather than leaving the user to notice that
         // a debugging switch they did not turn on is staying on — and name the two settings that free it.
-        if (ready && WirelessDebuggingPolicy.mustKeepWirelessDebugging(AdbShell.wirelessDebuggingPlan(this))) {
+        if (notice == ReadinessNotice.READY && WirelessDebuggingPolicy.mustKeepWirelessDebugging(AdbShell.wirelessDebuggingPlan(this))) {
             val notice = getString(R.string.notif_wd_required)
             builder.setContentText(notice)
                 .setStyle(NotificationCompat.BigTextStyle().bigText("$baseText\n$notice"))
@@ -601,12 +643,8 @@ class DaemonKeepAliveService : Service() {
         /** How often the watchdog checks the daemon is alive. Cheap (a binder ping). */
         private const val WATCHDOG_INTERVAL_MS = 60_000L
 
-        /**
-         * How long to let a USB debugging change finish before touching Wireless debugging. The race it
-         * avoids was 24 ms wide on the emulator; this is generous on purpose, since a slow phone costs only
-         * seconds of an already-unrecordable window.
-         */
-        private const val USB_CHANGE_SETTLE_MS = 3_000L
+        /** How long a restore waits for the switch observer to say who turned Wireless debugging off. */
+        private const val RESTORE_SETTLE_MS = 1_000L
 
         /**
          * Minimum gap between UN-FORCED (watchdog) relaunch attempts, so a persistently-failing relaunch

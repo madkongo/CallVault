@@ -26,7 +26,8 @@ class AdbdRevivalPolicyTest {
         wdOn: Boolean = false,
         wifi: WifiState = WifiState.CONNECTED,
         hasGrant: Boolean = true,
-    ) = AdbdRevivalPolicy.decide(adbd, usbOn, wdOn, wifi, hasGrant)
+        mayEnable: Boolean = true,
+    ) = AdbdRevivalPolicy.decide(adbd, usbOn, wdOn, wifi, hasGrant, mayEnable)
 
     @Test
     fun `a running adbd is left alone`() {
@@ -67,5 +68,16 @@ class AdbdRevivalPolicyTest {
     @Test
     fun `without the grant the switches cannot be written`() {
         assertEquals(AdbdRevival.NO_GRANT, decide(wdOn = true, hasGrant = false))
+    }
+
+    @Test
+    fun `when switching it on is not allowed, both-off is left alone`() {
+        // Shizuku mode, or a switch the user turned off: only a cycle that ends where it started is ok.
+        assertEquals(AdbdRevival.NOTHING, decide(mayEnable = false))
+    }
+
+    @Test
+    fun `a cycle is still allowed, because it ends with the switch as it was`() {
+        assertEquals(AdbdRevival.CYCLE_WIRELESS_DEBUGGING, decide(wdOn = true, mayEnable = false))
     }
 }

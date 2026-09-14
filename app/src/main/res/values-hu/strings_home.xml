@@ -153,4 +153,5 @@
     <string name="whatsnew_221_title">Gyorsabban nyílik, és kevesebbet panaszkodik nem létező hibákra</string>
     <string name="offline_failed_no_wifi">Nem sikerült bekapcsolni – nem csatlakozol Wi-Fi-hez. Csatlakozz egyszer bármilyen Wi-Fi-hálózathoz, majd próbáld újra.</string>
     <string name="offline_failed_wd_refused">Nem sikerült bekapcsolni – az Android nem engedélyezte a vezeték nélküli hibakeresést ezen a hálózaton. Kapcsold be egyszer a Fejlesztői beállításokban, fogadd el a kérést, majd próbáld újra.</string>
+    <string name="offline_failed_needs_usb">Először kapcsold be az USB-hibakeresést — nélküle a Wi-Fi nélküli rögzítés nem működik. Beállítások ▸ Kísérleti ▸ USB-hibakeresés.</string>
 </resources>

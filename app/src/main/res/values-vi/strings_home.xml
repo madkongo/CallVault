@@ -153,4 +153,5 @@
     <string name="whatsnew_221_title">Mở nhanh hơn, và ít báo động về những vấn đề không tồn tại</string>
     <string name="offline_failed_no_wifi">Không bật được — bạn chưa kết nối Wi-Fi. Hãy kết nối một lần với bất kỳ mạng Wi-Fi nào rồi thử lại.</string>
     <string name="offline_failed_wd_refused">Không bật được — Android không cho phép gỡ lỗi không dây trên mạng này. Hãy bật nó một lần trong Tùy chọn cho nhà phát triển, chấp nhận lời nhắc rồi thử lại.</string>
+    <string name="offline_failed_needs_usb">Hãy bật gỡ lỗi USB trước — ghi âm không cần Wi-Fi không thể hoạt động nếu thiếu nó. Cài đặt ▸ Thử nghiệm ▸ Gỡ lỗi USB.</string>
 </resources>

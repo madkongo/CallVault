@@ -17,6 +17,13 @@ enum class WirelessDebuggingEnable {
     NO_GRANT,
 
     /**
+     * The user switched it off themselves, and has not asked CallVault to override that. Default since
+     * 2026-09-14: on the OP9, CallVault used to switch it back on 50 ms after the user's tap, so the switch
+     * could not be turned off at all. Overriding is an opt-in setting.
+     */
+    RESPECT_USER,
+
+    /**
      * Not on Wi-Fi. The framework would write the setting straight back to 0, so the attempt achieves
      * nothing — and on OxygenOS 16 (#24) and One UI 7 (#39) it also switched USB debugging on and
      * restarted adbd, taking any Shizuku server with it.
@@ -36,9 +43,22 @@ enum class WirelessDebuggingEnable {
  */
 object WirelessDebuggingEnableGate {
 
-    fun decide(alreadyOn: Boolean, hasGrant: Boolean, wifi: WifiState): WirelessDebuggingEnable = when {
+    /**
+     * @param userTurnedOff the switch was last turned off by the user, not by Android or by us.
+     * @param enforced the opt-in "keep Wireless debugging on for recording" setting.
+     * @param userRequested the write comes from a button the user pressed that needs it.
+     */
+    fun decide(
+        alreadyOn: Boolean,
+        hasGrant: Boolean,
+        wifi: WifiState,
+        userTurnedOff: Boolean = false,
+        enforced: Boolean = false,
+        userRequested: Boolean = false,
+    ): WirelessDebuggingEnable = when {
         alreadyOn -> WirelessDebuggingEnable.ALREADY_ON
         !hasGrant -> WirelessDebuggingEnable.NO_GRANT
+        userTurnedOff && !enforced && !userRequested -> WirelessDebuggingEnable.RESPECT_USER
         // Only a positive "not connected" blocks. Unknown carries on, because blocking a write that
         // would have worked is exactly the kind of dead end this exists to remove.
         wifi == WifiState.NOT_CONNECTED -> WirelessDebuggingEnable.NO_WIFI

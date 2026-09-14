@@ -398,6 +398,14 @@ fun PermissionsContent(
                         pillTone = if (usbOn) null else CvTone.Neutral,
                     )
                 }
+                // The same choice as in Settings: may CallVault switch Wireless debugging back on after the
+                // user turned it off? Asked here too, because it decides how the app treats a switch the
+                // user is about to be told to flip.
+                item {
+                    CvCard(contentPadding = PaddingValues(horizontal = 8.dp, vertical = 4.dp)) {
+                        WirelessDebuggingEnforceToggle()
+                    }
+                }
             }
 
             // Persistent bottom CTA.

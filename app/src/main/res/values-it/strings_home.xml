@@ -153,4 +153,5 @@
     <string name="whatsnew_221_title">Più rapida ad aprirsi, e più discreta su problemi che non esistono</string>
     <string name="offline_failed_no_wifi">Impossibile attivare: non sei connesso al Wi-Fi. Connettiti una volta a una qualsiasi rete Wi-Fi, poi riprova.</string>
     <string name="offline_failed_wd_refused">Impossibile attivare: Android non ha consentito il debug wireless su questa rete. Attivalo una volta nelle Opzioni sviluppatore, accetta la richiesta, poi riprova.</string>
+    <string name="offline_failed_needs_usb">Attiva prima il debug USB: senza di esso la registrazione senza Wi-Fi non funziona. Impostazioni ▸ Sperimentale ▸ Debug USB.</string>
 </resources>
