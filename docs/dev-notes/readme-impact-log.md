@@ -1,5 +1,12 @@
 # README impact log
 
+## 2026-09-14 (later) — switching Wireless debugging off yourself; Shizuku mode
+
+🧪 VERIFYING. Added to "The two debugging switches": CallVault leaves a Wireless-debugging switch you turned off
+alone unless *Keep Wireless debugging on for recording* is on; and a Shizuku-mode paragraph (what stops Shizuku,
+that CallVault warns and reconnects, that Shizuku started after USB debugging is off keeps running). Measured as
+E3/E4 (emulator) and S4/S5/R11 (OP9). Only true once `fix/adb-transport-dead-ends` ships.
+
 ## 2026-09-14 — the two debugging switches (#23, #24, #39)
 
 🧪 VERIFYING. New section "The two debugging switches" under Install, and the away-from-Wi-Fi note now says it

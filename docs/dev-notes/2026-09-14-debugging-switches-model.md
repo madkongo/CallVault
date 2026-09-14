@@ -113,6 +113,29 @@ Decided by the maintainer 2026-09-14: CallVault turning a Wireless-debugging swi
 turned it off must be an **opt-in setting**; and the two Shizuku gaps (no notification, no way to restart
 Shizuku after R2) are to be fixed.
 
+
+## Round 2 — the new behaviour, measured (2026-09-14 afternoon)
+
+Emulator (E) and OP9 (S). All 🧪 until the maintainer confirms on the OP12.
+
+| # | Setup | Action | Result | Status |
+|---|---|---|---|---|
+| E1 | Settings | open Experimental | "Keep Wireless debugging on for recording" shows under USB debugging, off by default | ✅ |
+| E2 | built-in, off-Wi-Fi recording on, USB on | USB debugging off | recorder back in 7 s; notice "Ready to record calls — Off-Wi-Fi recording is paused: it needs USB debugging. Calls on Wi-Fi still record." | ✅ |
+| E3 | USB off, WD on (CallVault's) | WD off (as the user) | logged "switched off by hand; CallVault will leave it off"; the old 50 ms override refused; WD stayed off 75 s+; notice "Calls aren't being recorded — You turned Wireless debugging off…" with a **Turn Wireless debugging on** button; tapping it → recorder back in 4 s | ✅ (button verified twice) |
+| E4 | same, override setting **on** | WD off (as the user) | "the override setting is on" → WD back on 2 s later, recorder back in 6 s | ✅ |
+| S4 | OP9, **Shizuku mode**, Shizuku running, USB on, WD on | USB debugging off (by hand) | warning "CallVault cannot record right now" posted; adbd running again with USB off within ~9 s (WD cycle); Shizuku stayed dead as expected | ✅ |
+| S4b | same | Shizuku restarted (adb over Wi-Fi) | warning cleared, but **the recorder never came back** — "Already bound" to the dead Shizuku. Pre-existing bug; fixed | ❌ → fixed |
+| S5 | fix installed, Shizuku mode, USB **off**, WD on | kill Shizuku, then restart it | warning within 1 s; on restart "Shizuku is running" and the recorder service bound again 0.3 s later; warning cleared; app never opened | ✅ |
+| R11 | Shizuku started **after** USB debugging went off | left running | Shizuku and CallVault's recorder ran normally with USB debugging off | ✅ now measured with Shizuku |
+
+About the maintainer's "Wireless debugging notification keeps coming back" during S4: adbd's pid stayed the
+same for the whole window, so it was not a restart loop. The likeliest cause is the test watcher reconnecting
+over Wi-Fi every 2 s, which makes Android re-post "Wireless debugging connected". 📐 not confirmed.
+
+Also fixed after S4: leaving Shizuku mode did not clear Shizuku's "cannot record" warning, so it stayed up over
+a working standalone recorder (seen once; the fix is not yet re-tested on a device).
+
 ## Limits of these tests
 
 - The emulator has `ro.adb.secure=0`, so pairing is never exercised there; Android's Wi-Fi trust prompt still is.

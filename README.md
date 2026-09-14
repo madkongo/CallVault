@@ -167,6 +167,10 @@ Both live in *Developer options*, and they do different jobs. You don't need bot
 > [!WARNING]
 > **Turning USB debugging off stops the recorder**, even with Wireless debugging on — Android restarts its debugging service when the USB setting changes. On Wi-Fi, CallVault starts it again within a few seconds. Away from Wi-Fi it can't, and the notification says so.
 
+**If you switch Wireless debugging off yourself**, CallVault leaves it off. The notification says recording is paused and has a button to turn it back on. If you'd rather CallVault switch it back on for you, turn on *Keep Wireless debugging on for recording* in *Settings ▸ Experimental* (you're also asked during setup).
+
+**In Shizuku mode**, Shizuku runs inside the same debugging service, so anything that restarts it stops Shizuku: turning USB debugging off, or arming recording away from Wi-Fi in built-in mode. Start Shizuku again from its app — CallVault tells you when that's needed and reconnects on its own once Shizuku is back. Shizuku started *after* USB debugging is already off keeps running.
+
 ### On OPPO, OnePlus and Realme phones
 
 ColorOS, OxygenOS and Realme UI refuse ADB permission grants out of the box. CallVault pairs, and then the privilege it needs is quietly denied — so recordings never start. **This affects Shizuku mode too**; Shizuku reports it as *"the permission of adb is limited"*.
