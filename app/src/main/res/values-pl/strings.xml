@@ -625,4 +625,9 @@
     <string name="settings_bugreport_saved">Raport zapisany</string>
     <string name="settings_bugreport_save_failed">Nie udało się zapisać raportu</string>
     <string name="settings_debug_log_wrap">Zawijaj wiersze</string>
+    <string name="usb_debugging_off_warn_title">Wyłączyć debugowanie USB?</string>
+    <string name="usb_debugging_off_warn_no_way_in">Nie masz połączenia z Wi-Fi, więc CallVault nie będzie mieć dostępu do rejestratora. Połączenia nie będą nagrywane, dopóki nie połączysz się z Wi-Fi lub nie włączysz tego ponownie.</string>
+    <string name="usb_debugging_off_warn_offline">Nagrywanie bez Wi-Fi wymaga debugowania USB. Gdy jest wyłączone, połączenia wykonane poza Wi-Fi nie będą nagrywane.</string>
+    <string name="usb_debugging_off_confirm">Wyłącz mimo to</string>
+    <string name="usb_debugging_off_keep">Pozostaw włączone</string>
 </resources>

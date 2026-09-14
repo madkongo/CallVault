@@ -625,4 +625,9 @@
     <string name="settings_bugreport_saved">Отчёт сохранён</string>
     <string name="settings_bugreport_save_failed">Не удалось сохранить отчёт</string>
     <string name="settings_debug_log_wrap">Перенос строк</string>
+    <string name="usb_debugging_off_warn_title">Выключить отладку по USB?</string>
+    <string name="usb_debugging_off_warn_no_way_in">Нет подключения к Wi-Fi, поэтому CallVault не сможет связаться с рекордером. Звонки не будут записываться, пока вы не подключитесь к Wi-Fi или снова не включите эту настройку.</string>
+    <string name="usb_debugging_off_warn_offline">Для записи без Wi-Fi нужна отладка по USB. Если её выключить, звонки вне Wi-Fi записываться не будут.</string>
+    <string name="usb_debugging_off_confirm">Всё равно выключить</string>
+    <string name="usb_debugging_off_keep">Оставить включённой</string>
 </resources>

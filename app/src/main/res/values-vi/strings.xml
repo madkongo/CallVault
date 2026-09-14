@@ -622,4 +622,9 @@
     <string name="settings_bugreport_saved">Đã lưu báo cáo</string>
     <string name="settings_bugreport_save_failed">Không thể lưu báo cáo</string>
     <string name="settings_debug_log_wrap">Xuống dòng</string>
+    <string name="usb_debugging_off_warn_title">Tắt gỡ lỗi USB?</string>
+    <string name="usb_debugging_off_warn_no_way_in">Bạn chưa kết nối Wi-Fi nên CallVault sẽ không thể kết nối tới trình ghi âm. Cuộc gọi sẽ không được ghi cho đến khi bạn kết nối Wi-Fi hoặc bật lại tùy chọn này.</string>
+    <string name="usb_debugging_off_warn_offline">Ghi âm không cần Wi-Fi yêu cầu bật gỡ lỗi USB. Nếu tắt, các cuộc gọi khi không có Wi-Fi sẽ không được ghi.</string>
+    <string name="usb_debugging_off_confirm">Vẫn tắt</string>
+    <string name="usb_debugging_off_keep">Giữ bật</string>
 </resources>

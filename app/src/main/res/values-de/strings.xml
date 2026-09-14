@@ -623,4 +623,9 @@
     <string name="settings_bugreport_saved">Bericht gespeichert</string>
     <string name="settings_bugreport_save_failed">Bericht konnte nicht gespeichert werden</string>
     <string name="settings_debug_log_wrap">Zeilen umbrechen</string>
+    <string name="usb_debugging_off_warn_title">USB-Debugging ausschalten?</string>
+    <string name="usb_debugging_off_warn_no_way_in">Du bist nicht mit einem WLAN verbunden, daher kann CallVault den Rekorder nicht erreichen. Anrufe werden erst wieder aufgenommen, wenn du dich mit einem WLAN verbindest oder dies wieder einschaltest.</string>
+    <string name="usb_debugging_off_warn_offline">Die Aufnahme ohne WLAN benötigt USB-Debugging. Ist es aus, werden Anrufe außerhalb eines WLANs nicht aufgenommen.</string>
+    <string name="usb_debugging_off_confirm">Trotzdem ausschalten</string>
+    <string name="usb_debugging_off_keep">Eingeschaltet lassen</string>
 </resources>

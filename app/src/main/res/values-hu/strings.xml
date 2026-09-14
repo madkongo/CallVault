@@ -623,4 +623,9 @@
     <string name="settings_bugreport_saved">Jelentés mentve</string>
     <string name="settings_bugreport_save_failed">A jelentést nem sikerült menteni</string>
     <string name="settings_debug_log_wrap">Sortörés</string>
+    <string name="usb_debugging_off_warn_title">Kikapcsolod az USB-hibakeresést?</string>
+    <string name="usb_debugging_off_warn_no_way_in">Nem csatlakozol Wi-Fi-hez, így a CallVault nem fogja elérni a rögzítőt. A hívások rögzítése addig nem működik, amíg nem csatlakozol Wi-Fi-hez, vagy vissza nem kapcsolod ezt.</string>
+    <string name="usb_debugging_off_warn_offline">A Wi-Fi nélküli rögzítéshez USB-hibakeresés kell. Ha kikapcsolod, a Wi-Fi-n kívül folytatott hívások nem lesznek rögzítve.</string>
+    <string name="usb_debugging_off_confirm">Kikapcsolás mégis</string>
+    <string name="usb_debugging_off_keep">Maradjon bekapcsolva</string>
 </resources>

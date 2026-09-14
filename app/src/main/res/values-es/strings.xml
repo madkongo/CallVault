@@ -623,4 +623,9 @@
     <string name="settings_bugreport_saved">Informe guardado</string>
     <string name="settings_bugreport_save_failed">No se pudo guardar el informe</string>
     <string name="settings_debug_log_wrap">Ajustar líneas</string>
+    <string name="usb_debugging_off_warn_title">¿Desactivar la depuración USB?</string>
+    <string name="usb_debugging_off_warn_no_way_in">No estás conectado a Wi-Fi, así que CallVault no podrá acceder a la grabadora. Las llamadas no se grabarán hasta que te conectes a Wi-Fi o vuelvas a activar esta opción.</string>
+    <string name="usb_debugging_off_warn_offline">La grabación sin Wi-Fi necesita la depuración USB. Si la desactivas, no se grabarán las llamadas hechas fuera de una red Wi-Fi.</string>
+    <string name="usb_debugging_off_confirm">Desactivar de todos modos</string>
+    <string name="usb_debugging_off_keep">Mantenerla activada</string>
 </resources>

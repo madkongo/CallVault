@@ -94,9 +94,12 @@ import com.baba.callvault.data.AppPreferences
 import com.baba.callvault.system.AppLock
 import com.baba.callvault.data.ModeCapability
 import com.baba.callvault.integrations.adb.AdbShell
+import com.baba.callvault.integrations.adb.UsbDebuggingOff
+import com.baba.callvault.integrations.adb.UsbDebuggingOffGuard
 import com.baba.callvault.integrations.adb.UsbDefaultConfig
 import com.baba.callvault.integrations.adb.UsbDefaultMode
 import com.baba.callvault.integrations.adb.UsbSetResult
+import com.baba.callvault.integrations.adb.WifiState
 import com.baba.callvault.data.RetentionPeriod
 import com.baba.callvault.integrations.scrcpy.AUDIO_BIT_RATE_OPTIONS
 import com.baba.callvault.data.SyncScheduleMode
@@ -2377,6 +2380,15 @@ private fun UsbDebuggingToggle() {
     val context = LocalContext.current
     var enabled by remember { mutableStateOf(AdbShell.isUsbDebuggingEnabled(context)) }
     var failed by remember { mutableStateOf(false) }
+    // The cost of switching it off, while the user decides; null when no question is open.
+    var pendingOff by remember { mutableStateOf<UsbDebuggingOff?>(null) }
+    val writeUsbDebugging: (Boolean) -> Unit = { turnOn ->
+        val ok = runCatching {
+            Settings.Global.putInt(context.contentResolver, "adb_enabled", if (turnOn) 1 else 0)
+        }.isSuccess
+        failed = !ok
+        if (ok) enabled = turnOn
+    }
     // Shizuku's server is a shell-uid process hosted by adbd, so turning USB debugging off takes it
     // down with adbd — the same mechanism measured for the Default USB Configuration on 2026-09-05
     // (issue #28g). This row also recommends turning it ON, which is advice for the embedded-ADB
@@ -2391,13 +2403,45 @@ private fun UsbDebuggingToggle() {
         checked = enabled,
         enabled = usesEmbeddedAdb,
         onCheckedChange = { turnOn ->
-            val ok = runCatching {
-                Settings.Global.putInt(context.contentResolver, "adb_enabled", if (turnOn) 1 else 0)
-            }.isSuccess
-            failed = !ok
-            if (ok) enabled = turnOn
+            // Say what turning it off costs BEFORE the switch moves. AOSP stops adbd when both debugging
+            // flags are off and clears Wireless debugging itself off Wi-Fi, so this toggle could leave the
+            // recorder with no way back in — #39 sat on "starting up" after doing exactly this.
+            val cost = UsbDebuggingOffGuard.decide(
+                turnOn = turnOn,
+                offlineRecordingOn = AppPreferences(context).isOfflineRecordingEnabled(),
+                wifi = WifiState.of(context),
+            )
+            if (cost == UsbDebuggingOff.PROCEED) writeUsbDebugging(turnOn) else pendingOff = cost
         },
     )
+    pendingOff?.let { cost ->
+        AlertDialog(
+            onDismissRequest = { pendingOff = null },
+            icon = { Icon(imageVector = Icons.Filled.Usb, contentDescription = null) },
+            title = { Text(stringResource(R.string.usb_debugging_off_warn_title)) },
+            text = {
+                Text(
+                    stringResource(
+                        if (cost == UsbDebuggingOff.WARN_NO_WAY_IN) R.string.usb_debugging_off_warn_no_way_in
+                        else R.string.usb_debugging_off_warn_offline,
+                    ),
+                )
+            },
+            confirmButton = {
+                TextButton(onClick = { pendingOff = null }) {
+                    Text(stringResource(R.string.usb_debugging_off_keep))
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = {
+                    pendingOff = null
+                    writeUsbDebugging(false)
+                }) {
+                    Text(stringResource(R.string.usb_debugging_off_confirm))
+                }
+            },
+        )
+    }
     when {
         !usesEmbeddedAdb -> SettingsHint(stringResource(R.string.settings_usb_debugging_shizuku_hint))
         failed -> SettingsHint(stringResource(R.string.settings_usb_debugging_failed))

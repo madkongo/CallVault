@@ -623,4 +623,9 @@
     <string name="settings_bugreport_saved">Rapport enregistré</string>
     <string name="settings_bugreport_save_failed">Impossible d\'enregistrer le rapport</string>
     <string name="settings_debug_log_wrap">Retour à la ligne</string>
+    <string name="usb_debugging_off_warn_title">Désactiver le débogage USB ?</string>
+    <string name="usb_debugging_off_warn_no_way_in">Vous n\'êtes pas connecté au Wi-Fi : CallVault n\'aura aucun moyen d\'atteindre l\'enregistreur. Les appels ne seront pas enregistrés tant que vous ne serez pas connecté au Wi-Fi ou que vous n\'aurez pas réactivé cette option.</string>
+    <string name="usb_debugging_off_warn_offline">L\'enregistrement sans Wi-Fi nécessite le débogage USB. S\'il est désactivé, les appels passés hors Wi-Fi ne seront pas enregistrés.</string>
+    <string name="usb_debugging_off_confirm">Désactiver quand même</string>
+    <string name="usb_debugging_off_keep">Le laisser activé</string>
 </resources>

@@ -623,4 +623,9 @@
     <string name="settings_bugreport_saved">Report salvato</string>
     <string name="settings_bugreport_save_failed">Impossibile salvare il report</string>
     <string name="settings_debug_log_wrap">A capo automatico</string>
+    <string name="usb_debugging_off_warn_title">Disattivare il debug USB?</string>
+    <string name="usb_debugging_off_warn_no_way_in">Non sei connesso al Wi-Fi, quindi CallVault non potrà raggiungere il registratore. Le chiamate non verranno registrate finché non ti connetti al Wi-Fi o riattivi questa opzione.</string>
+    <string name="usb_debugging_off_warn_offline">La registrazione senza Wi-Fi richiede il debug USB. Se lo disattivi, le chiamate fatte lontano dal Wi-Fi non verranno registrate.</string>
+    <string name="usb_debugging_off_confirm">Disattiva comunque</string>
+    <string name="usb_debugging_off_keep">Lascialo attivo</string>
 </resources>
