@@ -48,6 +48,9 @@ class CallVaultApplication : Application() {
         super.onCreate()
         AppLogger.init(applicationContext)
 
+        // Shizuku mode has no keep-alive, so nothing else would notice Shizuku dying while the app runs.
+        com.baba.callvault.server.ShizukuLifecycleWatcher.install(applicationContext)
+
         // Reclaim model files no version of the app will ever use again.
         //
         // Model entries name the exact file they fetch, and `ModelRepository.delete` only removes a
