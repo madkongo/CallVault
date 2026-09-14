@@ -4,7 +4,7 @@
     <string name="disclaimer_ui_body_header">Haftungsausschluss</string>
     <string name="disclaimer_ui_hero_subtitle">FOSS-Anrufaufzeichnung, ganz nach Ihren Bedingungen. Bitte lesen Sie den Haftungsausschluss, bevor Sie fortfahren.</string>
     <string name="disclaimer_ui_scroll_hint">Scrollen Sie ans Ende, um das Kontrollkästchen zu aktivieren.</string>
-    <string name="permission_adb_desc_short">Erforderlich, um Anruf-Audio aufzuzeichnen.</string>
+    <string name="permission_adb_desc_short">Für die Einrichtung des Rekorders nötig. Braucht WLAN.</string>
     <string name="permission_adb_hint">Tippen Sie auf Autorisieren und geben Sie dann den Kopplungscode aus der Benachrichtigung ein.</string>
     <string name="permission_adb_hint_wd_on">Tippen Sie auf Autorisieren und geben Sie dann den Kopplungscode aus dem Bildschirm „Drahtloses Debugging“ ein.</string>
     <string name="permission_adb_open_device_info">Geräteinfo öffnen</string>

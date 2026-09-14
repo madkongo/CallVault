@@ -102,11 +102,11 @@
     <string name="notif_info_channel">Avisos do CallVault</string>
     <string name="notif_voip_recording_text">O CallVault está gravando uma chamada de app.</string>
     <string name="notif_voip_recording_title">Gravando chamada VoIP</string>
-    <string name="notif_wd_required">A Depuração sem fio precisa ficar ativada para o CallVault continuar pronto neste celular. Ative “Gravar sem Wi-Fi” em Configurações ▸ Experimental (ou ative a Depuração USB) e o CallVault vai desligá-la de novo.</string>
+    <string name="notif_wd_required">A depuração por Wi-Fi precisa ficar ativada porque a depuração USB está desativada. Ative a depuração USB em Configurações ▸ Experimental e o CallVault desativará a depuração por Wi-Fi de novo.</string>
     <string name="offline_recording_warning_continue">Continuar mesmo assim</string>
     <string name="offline_recording_warning_message">Isto abre uma porta local de depuração no seu celular para que as chamadas sejam gravadas sem Wi-Fi. Ela é protegida pela chave do seu dispositivo, mas é uma pequena concessão de segurança. Ative apenas se você precisar gravar chamadas sem Wi-Fi.</string>
     <string name="offline_recording_warning_title">Ativar a gravação offline?</string>
-    <string name="permission_adb_description">Necessária para capturar o áudio das chamadas. Pareie uma vez pela notificação e depois a conexão é automática.</string>
+    <string name="permission_adb_description">Necessário para configurar e iniciar o gravador, e só funciona no Wi-Fi. Pareie uma vez pela notificação e depois ele conecta automaticamente.</string>
     <string name="permission_adb_not_connected">Não conectado — toque para configurar</string>
     <string name="permission_adb_setup">Autorizar</string>
     <string name="permission_battery_description">Mantém o app ativo quando ele precisa e permite contornar possíveis limitações de inicialização em segundo plano. Em alguns celulares (por exemplo, OnePlus/OxygenOS), defina também o modo de bateria deste app como \"Permitir atividade em segundo plano\".</string>
@@ -121,7 +121,7 @@
     <string name="permission_phone_state_description">Necessária para detectar quando uma chamada começa ou termina.</string>
     <string name="permission_phone_state_label">Estado do telefone</string>
     <string name="permission_storage_description">Escolha onde as gravações serão salvas.</string>
-    <string name="permission_usb_debugging_description">Recomendada. Permite que o CallVault desligue a Depuração sem fio depois da configuração. Não é preciso cabo.</string>
+    <string name="permission_usb_debugging_description">Recomendado. Mantém a gravação funcionando fora do Wi-Fi e permite que o CallVault desative a depuração por Wi-Fi após a configuração. Não precisa de cabo.</string>
     <string name="permission_usb_debugging_label">Depuração USB</string>
     <string name="permissions_grant_access">Conceder acesso</string>
     <string name="permissions_intro">Precisamos de algumas permissões para começar a gravar. Toque em \"Conceder acesso\" e aprove cada item.</string>
@@ -226,7 +226,7 @@
     <string name="settings_ignore_cross_country_outgoing">Ignorar chamadas internacionais efetuadas</string>
     <string name="settings_language">Idioma</string>
     <string name="settings_language_system">Padrão do sistema</string>
-    <string name="settings_offline_recording_desc">Gravar chamadas mesmo quando não houver rede Wi-Fi.</string>
+    <string name="settings_offline_recording_desc">Grave chamadas mesmo sem rede Wi-Fi. Precisa da depuração USB ativada.</string>
     <string name="settings_offline_recording_label">Gravação offline (sem Wi-Fi)</string>
     <string name="settings_persistent_server">Servidor de gravação persistente</string>
     <string name="settings_persistent_server_description">Gravar chamadas por um serviço privilegiado em segundo plano, para que a Depuração sem fio possa ficar desligada entre as chamadas. Experimental.</string>
@@ -308,12 +308,12 @@
     <string name="settings_theme_mode_system">Padrão do sistema</string>
     <string name="settings_update_check_description">Uma vez por dia, procurar uma nova versão no GitHub.</string>
     <string name="settings_update_check_label">Buscar atualizações</string>
-    <string name="settings_usb_debugging_description">Recomendada. Permite que o CallVault desligue a Depuração sem fio. Não é preciso cabo e, ao contrário da Depuração sem fio, ela não abre nenhuma porta de rede.</string>
+    <string name="settings_usb_debugging_description">Recomendado. Mantém a gravação funcionando quando você sai do Wi-Fi e permite que o CallVault desative a depuração por Wi-Fi. Não precisa de cabo.</string>
     <string name="settings_usb_debugging_failed">Não foi possível alterar — o CallVault precisa da permissão obtida durante a configuração.</string>
     <string name="settings_usb_debugging_label">Depuração USB</string>
-    <string name="settings_usb_debugging_on_hint">O CallVault pode manter a Depuração sem fio desligada. Não desative esta opção — isso deixaria o app sem nenhuma forma de acesso, e a Depuração sem fio voltaria a ser ativada.</string>
+    <string name="settings_usb_debugging_on_hint">O CallVault pode manter a depuração por Wi-Fi desativada. Se você desativar isto, a gravação para por alguns segundos enquanto o CallVault a reinicia pelo Wi-Fi — e fora do Wi-Fi ela não pode reiniciar.</string>
     <string name="settings_usb_debugging_shizuku_hint">Deixe a depuração USB ligada enquanto usar o Shizuku. O serviço do Shizuku é iniciado pelo serviço de depuração do Android e para junto com ele — o CallVault não precisa desta chave no modo Shizuku.</string>
-    <string name="settings_usb_debugging_recommended">Sem esta opção, a Depuração sem fio precisa ficar ativada. Ativando-a, o CallVault pode desligá-la.</string>
+    <string name="settings_usb_debugging_recommended">Sem isto, a gravação só funciona no Wi-Fi, e a depuração por Wi-Fi precisa ficar ativada.</string>
     <string name="settings_usb_default_applying">Aplicando…</string>
     <string name="settings_usb_default_shizuku_hint">Não altere isto enquanto usar o Shizuku. Alterar reinicia o serviço de depuração do Android, e o Shizuku para junto — você teria que iniciar o Shizuku de novo antes que a próxima chamada pudesse ser gravada.</string>
     <string name="settings_usb_default_busy">Não alterado: há uma gravação em andamento. Alterar isto reinicia o serviço de depuração do Android, o que encerraria a gravação.</string>

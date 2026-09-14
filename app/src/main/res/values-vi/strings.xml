@@ -99,11 +99,11 @@
     <string name="notif_info_channel">Thông báo của CallVault</string>
     <string name="notif_voip_recording_text">CallVault đang ghi âm một cuộc gọi trong ứng dụng.</string>
     <string name="notif_voip_recording_title">Đang ghi âm cuộc gọi VoIP</string>
-    <string name="notif_wd_required">Gỡ lỗi không dây phải luôn bật thì CallVault mới sẵn sàng trên điện thoại này. Hãy bật “Ghi âm không cần Wi-Fi” trong Cài đặt ▸ Thử nghiệm (hoặc bật Gỡ lỗi USB), rồi CallVault sẽ tắt nó trở lại.</string>
+    <string name="notif_wd_required">Gỡ lỗi không dây phải luôn bật vì gỡ lỗi USB đang tắt. Bật gỡ lỗi USB trong Cài đặt ▸ Thử nghiệm và CallVault sẽ tắt lại gỡ lỗi không dây.</string>
     <string name="offline_recording_warning_continue">Vẫn tiếp tục</string>
     <string name="offline_recording_warning_message">Thao tác này mở một cổng gỡ lỗi cục bộ trên điện thoại của bạn để có thể ghi âm cuộc gọi mà không cần Wi-Fi. Cổng này được bảo vệ bằng khóa của thiết bị, nhưng đây là một sự đánh đổi nhỏ về bảo mật. Chỉ bật khi bạn cần ghi âm cuộc gọi mà không có Wi-Fi.</string>
     <string name="offline_recording_warning_title">Bật ghi âm ngoại tuyến?</string>
-    <string name="permission_adb_description">Bắt buộc để ghi âm cuộc gọi. Ghép nối một lần qua thông báo, sau đó nó sẽ tự động kết nối.</string>
+    <string name="permission_adb_description">Cần để thiết lập và khởi động trình ghi âm, và chỉ hoạt động khi có Wi-Fi. Ghép nối một lần qua thông báo, sau đó sẽ tự kết nối.</string>
     <string name="permission_adb_not_connected">Chưa kết nối — nhấn để thiết lập</string>
     <string name="permission_adb_setup">Cấp quyền</string>
     <string name="permission_battery_description">Giúp ứng dụng hoạt động khi cần thiết và cho phép vượt qua các hạn chế có thể xảy ra khi khởi chạy ngầm.</string>
@@ -118,7 +118,7 @@
     <string name="permission_phone_state_description">Cần thiết để phát hiện khi nào cuộc gọi bắt đầu hoặc kết thúc.</string>
     <string name="permission_phone_state_label">Trạng thái điện thoại</string>
     <string name="permission_storage_description">Chọn nơi bạn muốn lưu bản ghi âm.</string>
-    <string name="permission_usb_debugging_description">Nên bật. Cho phép CallVault tắt Gỡ lỗi không dây sau khi thiết lập. Không cần cáp.</string>
+    <string name="permission_usb_debugging_description">Khuyên dùng. Giúp ghi âm vẫn hoạt động khi không có Wi-Fi và cho phép CallVault tắt gỡ lỗi không dây sau khi thiết lập. Không cần cáp.</string>
     <string name="permission_usb_debugging_label">Gỡ lỗi USB</string>
     <string name="permissions_grant_access">Cấp quyền truy cập</string>
     <string name="permissions_intro">Chúng tôi cần một vài quyền để bắt đầu ghi lại mã. Hãy nhấn Cấp quyền truy cập và phê duyệt từng mục.</string>
@@ -223,7 +223,7 @@
     <string name="settings_ignore_cross_country_outgoing">Bỏ qua các cuộc gọi đi xuyên quốc gia</string>
     <string name="settings_language">Ngôn ngữ</string>
     <string name="settings_language_system">Mặc định hệ thống</string>
-    <string name="settings_offline_recording_desc">Ghi âm cuộc gọi ngay cả khi không có mạng Wi-Fi.</string>
+    <string name="settings_offline_recording_desc">Ghi âm cuộc gọi ngay cả khi không có mạng Wi-Fi. Cần bật gỡ lỗi USB.</string>
     <string name="settings_offline_recording_label">Ghi âm ngoại tuyến (không có Wi-Fi)</string>
     <string name="settings_persistent_server">Máy chủ ghi âm thường trực</string>
     <string name="settings_persistent_server_description">Ghi âm cuộc gọi thông qua một dịch vụ đặc quyền chạy nền để Gỡ lỗi không dây có thể tắt giữa các cuộc gọi. Thử nghiệm.</string>
@@ -305,12 +305,12 @@
     <string name="settings_theme_mode_system">Mặc định hệ thống</string>
     <string name="settings_update_check_description">Mỗi ngày một lần, tìm phiên bản mới trên GitHub.</string>
     <string name="settings_update_check_label">Kiểm tra bản cập nhật</string>
-    <string name="settings_usb_debugging_description">Nên bật. Cho phép CallVault tắt Gỡ lỗi không dây. Không cần cáp, và khác với Gỡ lỗi không dây, nó không mở cổng mạng nào.</string>
+    <string name="settings_usb_debugging_description">Khuyên dùng. Giúp ghi âm vẫn hoạt động khi bạn rời Wi-Fi và cho phép CallVault tắt gỡ lỗi không dây. Không cần cáp.</string>
     <string name="settings_usb_debugging_failed">Không thể thay đổi — CallVault cần quyền mà nó nhận được trong quá trình thiết lập.</string>
     <string name="settings_usb_debugging_label">Gỡ lỗi USB</string>
-    <string name="settings_usb_debugging_on_hint">CallVault có thể giữ Gỡ lỗi không dây ở trạng thái tắt. Đừng tắt lại tùy chọn này — khi đó sẽ không còn đường truy cập nào, nên Gỡ lỗi không dây sẽ bật trở lại.</string>
+    <string name="settings_usb_debugging_on_hint">CallVault có thể giữ gỡ lỗi không dây ở trạng thái tắt. Nếu bạn tắt mục này, việc ghi âm sẽ dừng vài giây trong lúc CallVault khởi động lại qua Wi-Fi — và khi không có Wi-Fi thì không thể khởi động lại.</string>
     <string name="settings_usb_debugging_shizuku_hint">Hãy để bật gỡ lỗi USB khi bạn dùng Shizuku. Dịch vụ của Shizuku được khởi động qua dịch vụ gỡ lỗi của Android và dừng cùng với nó — CallVault không cần công tắc này ở chế độ Shizuku.</string>
-    <string name="settings_usb_debugging_recommended">Nếu không có tùy chọn này, Gỡ lỗi không dây phải luôn bật. Bật tùy chọn này thì CallVault có thể tắt nó.</string>
+    <string name="settings_usb_debugging_recommended">Nếu không bật mục này, ghi âm chỉ hoạt động khi có Wi-Fi và gỡ lỗi không dây phải luôn bật.</string>
     <string name="settings_usb_default_applying">Đang áp dụng…</string>
     <string name="settings_usb_default_shizuku_hint">Đừng thay đổi mục này khi bạn đang dùng Shizuku. Thay đổi sẽ khởi động lại dịch vụ gỡ lỗi của Android, và Shizuku dừng theo — bạn sẽ phải khởi động lại Shizuku trước khi cuộc gọi tiếp theo có thể được ghi âm.</string>
     <string name="settings_usb_default_busy">Chưa thay đổi: đang có một bản ghi. Thay đổi mục này sẽ khởi động lại dịch vụ gỡ lỗi của Android, và bản ghi sẽ kết thúc.</string>

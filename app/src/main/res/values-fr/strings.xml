@@ -99,11 +99,11 @@
     <string name="notif_info_channel">Avis de CallVault</string>
     <string name="notif_voip_recording_text">CallVault enregistre un appel dans une appli.</string>
     <string name="notif_voip_recording_title">Enregistrement d\'un appel VoIP</string>
-    <string name="notif_wd_required">Le débogage sans fil doit rester activé pour que CallVault reste prêt sur ce téléphone. Activez « Enregistrer sans Wi-Fi » dans Paramètres ▸ Expérimental (ou activez le débogage USB) et CallVault le désactivera à nouveau.</string>
+    <string name="notif_wd_required">Le débogage sans fil doit rester activé car le débogage USB est désactivé. Activez le débogage USB dans Paramètres ▸ Expérimental et CallVault désactivera à nouveau le débogage sans fil.</string>
     <string name="offline_recording_warning_continue">Continuer quand même</string>
     <string name="offline_recording_warning_message">Cela ouvre un port de débogage local sur votre téléphone afin que les appels puissent être enregistrés sans Wi-Fi. Il est protégé par la clé de votre appareil, mais cela représente un léger compromis de sécurité. Ne l\'activez que si vous avez besoin d\'enregistrer des appels sans Wi-Fi.</string>
     <string name="offline_recording_warning_title">Activer l\'enregistrement hors ligne ?</string>
-    <string name="permission_adb_description">Nécessaire pour capturer l\'audio des appels. Associez une fois via la notification, puis la connexion se fait automatiquement.</string>
+    <string name="permission_adb_description">Nécessaire pour configurer et démarrer l\'enregistreur, et ne fonctionne qu\'en Wi-Fi. Associez une fois via la notification, puis la connexion est automatique.</string>
     <string name="permission_adb_not_connected">Non connecté — touchez pour configurer</string>
     <string name="permission_adb_setup">Autoriser</string>
     <string name="permission_battery_description">Permet de maintenir l\'application active lorsque cela est nécessaire et de contourner les éventuelles limitations de démarrage en arrière-plan.</string>
@@ -118,7 +118,7 @@
     <string name="permission_phone_state_description">Nécessaire pour détecter le début et la fin d\'un appel.</string>
     <string name="permission_phone_state_label">État du téléphone</string>
     <string name="permission_storage_description">Sélectionnez l\'emplacement où les enregistrements seront sauvegardés.</string>
-    <string name="permission_usb_debugging_description">Recommandé. Permet à CallVault de désactiver le débogage sans fil après la configuration. Aucun câble nécessaire.</string>
+    <string name="permission_usb_debugging_description">Recommandé. L\'enregistrement continue de fonctionner hors Wi-Fi, et CallVault peut désactiver le débogage sans fil après la configuration. Aucun câble nécessaire.</string>
     <string name="permission_usb_debugging_label">Débogage USB</string>
     <string name="permissions_grant_access">Accorder l\'accès</string>
     <string name="permissions_intro">Nous avons besoin de quelques autorisations pour commencer l\'enregistrement. Appuyez sur « Autoriser l\'accès » et approuvez chaque élément.</string>
@@ -223,7 +223,7 @@
     <string name="settings_ignore_cross_country_outgoing">Ignorer les appels sortants intercontinentaux</string>
     <string name="settings_language">Langue</string>
     <string name="settings_language_system">Langue du système</string>
-    <string name="settings_offline_recording_desc">Enregistrer les appels même en l\'absence de réseau Wi-Fi.</string>
+    <string name="settings_offline_recording_desc">Enregistrer les appels même sans réseau Wi-Fi. Nécessite le débogage USB activé.</string>
     <string name="settings_offline_recording_label">Enregistrement hors ligne (sans Wi-Fi)</string>
     <string name="settings_persistent_server">Serveur d\'enregistrement persistant</string>
     <string name="settings_persistent_server_description">Enregistrer les appels via un service privilégié en arrière-plan afin que le débogage sans fil puisse rester désactivé entre les appels. Expérimental.</string>
@@ -305,12 +305,12 @@
     <string name="settings_theme_mode_system">Valeur par défaut du système</string>
     <string name="settings_update_check_description">Une fois par jour, recherche une nouvelle version sur GitHub.</string>
     <string name="settings_update_check_label">Rechercher des mises à jour</string>
-    <string name="settings_usb_debugging_description">Recommandé. Permet à CallVault de désactiver le débogage sans fil. Aucun câble nécessaire et, contrairement au débogage sans fil, il n\'ouvre aucun port réseau.</string>
+    <string name="settings_usb_debugging_description">Recommandé. L\'enregistrement continue quand vous quittez le Wi-Fi, et CallVault peut désactiver le débogage sans fil. Aucun câble nécessaire.</string>
     <string name="settings_usb_debugging_failed">Modification impossible — CallVault a besoin de l\'autorisation qu\'il obtient pendant la configuration.</string>
     <string name="settings_usb_debugging_label">Débogage USB</string>
-    <string name="settings_usb_debugging_on_hint">CallVault peut laisser le débogage sans fil désactivé. Ne le redésactivez pas — il ne resterait alors aucun moyen d\'accès, et le débogage sans fil serait réactivé.</string>
+    <string name="settings_usb_debugging_on_hint">CallVault peut laisser le débogage sans fil désactivé. Si vous désactivez ceci, l\'enregistrement s\'arrête quelques secondes le temps que CallVault le redémarre via le Wi-Fi — et hors Wi-Fi, il ne peut pas redémarrer.</string>
     <string name="settings_usb_debugging_shizuku_hint">Laissez le débogage USB activé tant que vous utilisez Shizuku. Le service de Shizuku est lancé via le service de débogage d\'Android et s\'arrête avec lui — CallVault n\'a pas besoin de ce réglage en mode Shizuku.</string>
-    <string name="settings_usb_debugging_recommended">Sans cela, le débogage sans fil doit rester activé. En l\'activant, CallVault pourra le désactiver.</string>
+    <string name="settings_usb_debugging_recommended">Sans cette option, l\'enregistrement ne fonctionne qu\'en Wi-Fi, et le débogage sans fil doit rester activé.</string>
     <string name="settings_usb_default_applying">Application…</string>
     <string name="settings_usb_default_shizuku_hint">Ne modifiez pas ce réglage tant que vous utilisez Shizuku. Le modifier redémarre le service de débogage d\'Android, et Shizuku s\'arrête avec lui — il faudrait relancer Shizuku avant que le prochain appel puisse être enregistré.</string>
     <string name="settings_usb_default_busy">Non modifié : un enregistrement est en cours. Modifier ce réglage redémarre le service de débogage d\'Android, ce qui mettrait fin à l\'enregistrement.</string>

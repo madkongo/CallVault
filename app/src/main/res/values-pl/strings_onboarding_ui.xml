@@ -4,7 +4,7 @@
     <string name="disclaimer_ui_body_header">Zastrzeżenie</string>
     <string name="disclaimer_ui_hero_subtitle">Nagrywanie rozmów FOSS, na Twoich zasadach. Przed kontynuowaniem zapoznaj się z zastrzeżeniem.</string>
     <string name="disclaimer_ui_scroll_hint">Przewiń do końca, aby odblokować pole wyboru.</string>
-    <string name="permission_adb_desc_short">Wymagane do nagrywania dźwięku rozmów.</string>
+    <string name="permission_adb_desc_short">Wymagane do skonfigurowania rejestratora. Wymaga Wi-Fi.</string>
     <string name="permission_adb_hint">Dotknij Autoryzuj, a następnie wprowadź kod parowania z powiadomienia.</string>
     <string name="permission_adb_hint_wd_on">Dotknij Autoryzuj, a następnie wprowadź kod parowania z ekranu Debugowanie bezprzewodowe.</string>
     <string name="permission_adb_open_device_info">Otwórz informacje o urządzeniu</string>

@@ -99,11 +99,11 @@
     <string name="notif_info_channel">Powiadomienia CallVault</string>
     <string name="notif_voip_recording_text">CallVault nagrywa rozmowę w aplikacji.</string>
     <string name="notif_voip_recording_title">Nagrywanie połączenia VoIP</string>
-    <string name="notif_wd_required">Debugowanie bezprzewodowe musi pozostać włączone, aby CallVault był gotowy na tym telefonie. Włącz „Nagrywanie bez Wi-Fi” w Ustawienia ▸ Eksperymentalne (albo włącz debugowanie USB), a CallVault znowu je wyłączy.</string>
+    <string name="notif_wd_required">Debugowanie bezprzewodowe musi pozostać włączone, bo debugowanie USB jest wyłączone. Włącz debugowanie USB w Ustawieniach ▸ Eksperymentalne, a CallVault ponownie wyłączy debugowanie bezprzewodowe.</string>
     <string name="offline_recording_warning_continue">Kontynuuj mimo to</string>
     <string name="offline_recording_warning_message">Spowoduje to otwarcie lokalnego portu debugowania w telefonie, aby połączenia mogły być nagrywane bez Wi-Fi. Jest on chroniony kluczem urządzenia, ale stanowi niewielki kompromis w zakresie bezpieczeństwa. Włącz tę opcję tylko wtedy, gdy musisz nagrywać połączenia bez Wi-Fi.</string>
     <string name="offline_recording_warning_title">Włączyć nagrywanie offline?</string>
-    <string name="permission_adb_description">Wymagane do nagrywania dźwięku rozmów. Sparuj raz przez powiadomienie, a następnie połączenie nastąpi automatycznie.</string>
+    <string name="permission_adb_description">Wymagane do skonfigurowania i uruchomienia rejestratora; działa tylko przez Wi-Fi. Sparuj raz przez powiadomienie, potem łączy się automatycznie.</string>
     <string name="permission_adb_not_connected">Brak połączenia — dotknij, aby skonfigurować</string>
     <string name="permission_adb_setup">Autoryzuj</string>
     <string name="permission_battery_description">Utrzymuje aplikację w stanie aktywności, gdy jest to konieczne, i pozwala ominąć ewentualne ograniczenia dotyczące uruchamiania w tle.</string>
@@ -118,7 +118,7 @@
     <string name="permission_phone_state_description">Wymagane do wykrywania momentu rozpoczęcia lub zakończenia połączenia.</string>
     <string name="permission_phone_state_label">Stan telefonu</string>
     <string name="permission_storage_description">Wybierz miejsce, w którym będą zapisywane nagrania.</string>
-    <string name="permission_usb_debugging_description">Zalecane. Pozwala CallVault wyłączyć debugowanie bezprzewodowe po konfiguracji. Kabel nie jest potrzebny.</string>
+    <string name="permission_usb_debugging_description">Zalecane. Utrzymuje nagrywanie poza Wi-Fi i pozwala CallVault wyłączyć debugowanie bezprzewodowe po konfiguracji. Kabel nie jest potrzebny.</string>
     <string name="permission_usb_debugging_label">Debugowanie USB</string>
     <string name="permissions_grant_access">Przyznaj Dostęp</string>
     <string name="permissions_intro">Aby rozpocząć nagrywanie, potrzebujemy kilku uprawnień. Naciśnij „Zezwól na dostęp” i zatwierdź każdą pozycję.</string>
@@ -223,7 +223,7 @@
     <string name="settings_ignore_cross_country_outgoing">Ignoruj połączenia wychodzące w innych krajach</string>
     <string name="settings_language">Język</string>
     <string name="settings_language_system">Domyślne systemu</string>
-    <string name="settings_offline_recording_desc">Nagrywaj połączenia nawet wtedy, gdy nie ma sieci Wi-Fi.</string>
+    <string name="settings_offline_recording_desc">Nagrywaj połączenia nawet bez sieci Wi-Fi. Wymaga włączonego debugowania USB.</string>
     <string name="settings_offline_recording_label">Nagrywanie offline (bez Wi-Fi)</string>
     <string name="settings_persistent_server">Trwały serwer nagrywania</string>
     <string name="settings_persistent_server_description">Nagrywaj rozmowy przez uprzywilejowaną usługę działającą w tle, dzięki czemu Debugowanie bezprzewodowe może pozostać wyłączone między rozmowami. Eksperymentalne.</string>
@@ -305,12 +305,12 @@
     <string name="settings_theme_mode_system">Domyślne systemu</string>
     <string name="settings_update_check_description">Raz dziennie sprawdza, czy na GitHubie jest nowa wersja.</string>
     <string name="settings_update_check_label">Sprawdzaj aktualizacje</string>
-    <string name="settings_usb_debugging_description">Zalecane. Pozwala CallVault wyłączyć debugowanie bezprzewodowe. Kabel nie jest potrzebny, a w przeciwieństwie do debugowania bezprzewodowego nie otwiera żadnego portu sieciowego.</string>
+    <string name="settings_usb_debugging_description">Zalecane. Utrzymuje nagrywanie po opuszczeniu Wi-Fi i pozwala CallVault wyłączyć debugowanie bezprzewodowe. Kabel nie jest potrzebny.</string>
     <string name="settings_usb_debugging_failed">Nie udało się zmienić — CallVault potrzebuje uprawnienia, które otrzymuje podczas konfiguracji.</string>
     <string name="settings_usb_debugging_label">Debugowanie USB</string>
-    <string name="settings_usb_debugging_on_hint">CallVault może utrzymywać debugowanie bezprzewodowe wyłączone. Nie wyłączaj tej opcji z powrotem — nie zostałaby żadna droga dostępu, więc debugowanie bezprzewodowe zostałoby ponownie włączone.</string>
+    <string name="settings_usb_debugging_on_hint">CallVault może trzymać debugowanie bezprzewodowe wyłączone. Jeśli to wyłączysz, nagrywanie zatrzyma się na kilka sekund, aż CallVault uruchomi je ponownie przez Wi-Fi — bez Wi-Fi nie da się go uruchomić.</string>
     <string name="settings_usb_debugging_shizuku_hint">Zostaw debugowanie USB włączone, gdy korzystasz z Shizuku. Usługa Shizuku jest uruchamiana przez usługę debugowania Androida i zatrzymuje się razem z nią — CallVault nie potrzebuje tego przełącznika w trybie Shizuku.</string>
-    <string name="settings_usb_debugging_recommended">Bez tego debugowanie bezprzewodowe musi pozostać włączone. Włączenie tej opcji pozwoli CallVault je wyłączyć.</string>
+    <string name="settings_usb_debugging_recommended">Bez tego nagrywanie działa tylko przez Wi-Fi, a debugowanie bezprzewodowe musi pozostać włączone.</string>
     <string name="settings_usb_default_applying">Stosowanie…</string>
     <string name="settings_usb_default_shizuku_hint">Nie zmieniaj tego, gdy korzystasz z Shizuku. Zmiana restartuje usługę debugowania Androida, a Shizuku zatrzymuje się razem z nią — trzeba by uruchomić Shizuku ponownie, zanim kolejna rozmowa mogłaby zostać nagrana.</string>
     <string name="settings_usb_default_busy">Nie zmieniono: trwa nagrywanie. Zmiana tego ustawienia restartuje usługę debugowania Androida, co zakończyłoby nagranie.</string>

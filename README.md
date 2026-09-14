@@ -119,7 +119,7 @@ Switch whenever you like; any setting a mode couldn't honour comes back when you
 | Full bug-report export | ✅ | ❌ |
 
 > [!NOTE]
-> Recording away from Wi-Fi is armed over your network, and a reboot clears it. It comes back as soon as the phone joins *any* Wi-Fi network for a few seconds — it needs no internet, and a café or a hotspot will do. CallVault says when that is needed, so a missed call is not how you find out.
+> Recording away from Wi-Fi needs **USB debugging** switched on — see [the two debugging switches](#the-two-debugging-switches). It is armed over your network, and a reboot clears it. It comes back as soon as the phone joins *any* Wi-Fi network for a few seconds — it needs no internet, and a café or a hotspot will do. CallVault says when that is needed, so a missed call is not how you find out.
 
 ## Install
 
@@ -149,6 +149,23 @@ If a recording stops when you lock the screen, set **Default USB configuration**
 
 > [!WARNING]
 > Keep the pairing: uninstalling CallVault wipes it and there is no way to restore it — you pair again from scratch.
+
+### The two debugging switches
+
+Both live in *Developer options*, and they do different jobs. You don't need both on all the time.
+
+- **Wireless debugging is how CallVault gets in.** It uses it to pair, and to start its recorder again after a reboot or an update. It only works on Wi-Fi — Android refuses it otherwise, asks you once to trust each new network, and turns it off when Wi-Fi drops.
+- **USB debugging keeps the recorder alive away from Wi-Fi.** No cable is involved. With it on, CallVault can switch Wireless debugging off after using it, and recording away from Wi-Fi becomes possible.
+
+| Your setup | On Wi-Fi | Away from Wi-Fi |
+|---|---|---|
+| **USB debugging on + Recording away from Wi-Fi on** (recommended) | ✅ | ✅ |
+| USB debugging on | ✅ | ✅ until the recorder has to restart, then it waits for Wi-Fi |
+| USB debugging off, Wireless debugging on | ✅ | ❌ |
+| Both off | ❌ | ❌ |
+
+> [!WARNING]
+> **Turning USB debugging off stops the recorder**, even with Wireless debugging on — Android restarts its debugging service when the USB setting changes. On Wi-Fi, CallVault starts it again within a few seconds. Away from Wi-Fi it can't, and the notification says so.
 
 ### On OPPO, OnePlus and Realme phones
 

@@ -99,11 +99,11 @@
     <string name="notif_info_channel">CallVault értesítések</string>
     <string name="notif_voip_recording_text">A CallVault éppen egy alkalmazáshívást rögzít.</string>
     <string name="notif_voip_recording_title">VoIP-hívás rögzítése</string>
-    <string name="notif_wd_required">A vezeték nélküli hibakeresésnek bekapcsolva kell maradnia, hogy a CallVault készen álljon ezen a telefonon. Kapcsolja be a „Rögzítés Wi-Fi nélkül” lehetőséget a Beállítások ▸ Kísérleti menüben (vagy engedélyezze az USB hibakeresést), és a CallVault ismét kikapcsolja.</string>
+    <string name="notif_wd_required">A vezeték nélküli hibakeresésnek bekapcsolva kell maradnia, mert az USB-hibakeresés ki van kapcsolva. Kapcsold be az USB-hibakeresést a Beállítások ▸ Kísérleti menüben, és a CallVault újra kikapcsolja a vezeték nélküli hibakeresést.</string>
     <string name="offline_recording_warning_continue">Folytatás mindenképp</string>
     <string name="offline_recording_warning_message">Ez megnyit egy helyi hibakeresési portot a telefonján, hogy a hívások Wi-Fi nélkül is rögzíthetők legyenek. Az eszköz kulcsa védi, de kis biztonsági kompromisszumot jelent. Csak akkor engedélyezze, ha Wi-Fi nélkül kell hívásokat rögzítenie.</string>
     <string name="offline_recording_warning_title">Engedélyezi az offline rögzítést?</string>
-    <string name="permission_adb_description">A hívás hangjának rögzítéséhez szükséges. Párosítsa egyszer az értesítésen keresztül, ezután automatikusan csatlakozik.</string>
+    <string name="permission_adb_description">A rögzítő beállításához és indításához szükséges, és csak Wi-Fi-n működik. Egyszer párosítsd az értesítésből, utána automatikusan csatlakozik.</string>
     <string name="permission_adb_not_connected">Nincs csatlakoztatva — koppintson a beállításhoz</string>
     <string name="permission_adb_setup">Engedélyezés</string>
     <string name="permission_battery_description">Aktív állapotban tartja az alkalmazást és lehetővé teszi az esetleges háttérindítási korlátozások megkerülését.</string>
@@ -118,7 +118,7 @@
     <string name="permission_phone_state_description">A hívások kezdetének és végének észleléséhez szükséges.</string>
     <string name="permission_phone_state_label">Telefon státusz</string>
     <string name="permission_storage_description">Felvételek mentésének helye.</string>
-    <string name="permission_usb_debugging_description">Ajánlott. Lehetővé teszi, hogy a CallVault a beállítás után kikapcsolja a vezeték nélküli hibakeresést. Nem kell kábel.</string>
+    <string name="permission_usb_debugging_description">Ajánlott. A rögzítés Wi-Fi nélkül is működik tőle, és a CallVault a beállítás után kikapcsolhatja a vezeték nélküli hibakeresést. Nem kell kábel.</string>
     <string name="permission_usb_debugging_label">USB hibakeresés</string>
     <string name="permissions_grant_access">Hozzáférés engedélyezése</string>
     <string name="permissions_intro">Az felvételkészítés megkezdéséhez néhány engedélyre még szükségünk van. Nyomd meg a „Hozzáférés engedélyezése” gombot és hagyd jóvá az egyes elemeket.</string>
@@ -223,7 +223,7 @@
     <string name="settings_ignore_cross_country_outgoing">Külföldi kimenő hívások figyelmen kívül hagyása</string>
     <string name="settings_language">Nyelv</string>
     <string name="settings_language_system">Rendszer alapértelmezett beállítás</string>
-    <string name="settings_offline_recording_desc">Hívások rögzítése akkor is, ha nincs Wi-Fi hálózat.</string>
+    <string name="settings_offline_recording_desc">Hívások rögzítése Wi-Fi-hálózat nélkül is. Bekapcsolt USB-hibakeresés kell hozzá.</string>
     <string name="settings_offline_recording_label">Offline rögzítés (Wi-Fi nélkül)</string>
     <string name="settings_persistent_server">Állandó rögzítőszerver</string>
     <string name="settings_persistent_server_description">Hívások rögzítése egy háttérben futó, kiemelt jogosultságú szolgáltatáson keresztül, így a vezeték nélküli hibakeresés a hívások között kikapcsolva maradhat. Kísérleti.</string>
@@ -305,12 +305,12 @@
     <string name="settings_theme_mode_system">Rendszer alapértelmezett</string>
     <string name="settings_update_check_description">Naponta egyszer új verziót keres a GitHubon.</string>
     <string name="settings_update_check_label">Frissítések keresése</string>
-    <string name="settings_usb_debugging_description">Ajánlott. Lehetővé teszi, hogy a CallVault kikapcsolja a vezeték nélküli hibakeresést. Nem kell kábel, és a vezeték nélküli hibakereséssel ellentétben nem nyit hálózati portot.</string>
+    <string name="settings_usb_debugging_description">Ajánlott. A rögzítés akkor is működik, ha elhagyod a Wi-Fi-t, és a CallVault kikapcsolhatja a vezeték nélküli hibakeresést. Nem kell kábel.</string>
     <string name="settings_usb_debugging_failed">Nem sikerült módosítani — a CallVaultnak szüksége van a beállítás során kapott engedélyre.</string>
     <string name="settings_usb_debugging_label">USB hibakeresés</string>
-    <string name="settings_usb_debugging_on_hint">A CallVault kikapcsolva tudja tartani a vezeték nélküli hibakeresést. Ne kapcsolja vissza ezt — akkor nem maradna hozzáférés, így a vezeték nélküli hibakeresés újra bekapcsol.</string>
+    <string name="settings_usb_debugging_on_hint">A CallVault kikapcsolva tarthatja a vezeték nélküli hibakeresést. Ha ezt kikapcsolod, a rögzítés néhány másodpercre leáll, amíg a CallVault Wi-Fi-n újraindítja — Wi-Fi nélkül nem tudja újraindítani.</string>
     <string name="settings_usb_debugging_shizuku_hint">Hagyja bekapcsolva az USB-hibakeresést, amíg Shizukut használ. A Shizuku szolgáltatása az Android hibakeresési szolgáltatásán keresztül indul, és azzal együtt le is áll — a CallVaultnak Shizuku módban nincs szüksége erre a kapcsolóra.</string>
-    <string name="settings_usb_debugging_recommended">Enélkül a vezeték nélküli hibakeresésnek bekapcsolva kell maradnia. Ha ezt bekapcsolja, a CallVault ki tudja kapcsolni.</string>
+    <string name="settings_usb_debugging_recommended">Enélkül a rögzítés csak Wi-Fi-n működik, és a vezeték nélküli hibakeresésnek bekapcsolva kell maradnia.</string>
     <string name="settings_usb_default_applying">Alkalmazás…</string>
     <string name="settings_usb_default_shizuku_hint">Ne módosítsa ezt, amíg Shizukut használ. A módosítás újraindítja az Android hibakeresési szolgáltatását, és a Shizuku is leáll vele — újra el kellene indítania a Shizukut, mielőtt a következő hívás rögzíthető lenne.</string>
     <string name="settings_usb_default_busy">Nem módosult: felvétel van folyamatban. A módosítás újraindítja az Android hibakeresési szolgáltatását, ami leállítaná a felvételt.</string>

@@ -6,7 +6,7 @@
     <string name="disclaimer_ui_body_header">Aviso legal</string>
     <string name="disclaimer_ui_hero_subtitle">Gravação de chamadas livre e de código aberto, nos seus termos. Leia o aviso legal antes de continuar.</string>
     <string name="disclaimer_ui_scroll_hint">Role até o fim para liberar a caixa de seleção.</string>
-    <string name="permission_adb_desc_short">Necessário para capturar o áudio das chamadas.</string>
+    <string name="permission_adb_desc_short">Necessário para configurar o gravador. Precisa de Wi-Fi.</string>
     <string name="permission_adb_hint">Toque em Autorizar e digite o código de pareamento que aparece na notificação.</string>
     <string name="permission_adb_hint_wd_on">Toque em Autorizar e digite o código de pareamento que aparece na tela Depuração sem fio.</string>
     <string name="permission_adb_open_device_info">Abrir informações do dispositivo</string>

@@ -99,11 +99,11 @@
     <string name="notif_info_channel">CallVault-Hinweise</string>
     <string name="notif_voip_recording_text">CallVault nimmt gerade einen App-Anruf auf.</string>
     <string name="notif_voip_recording_title">Aufnahme eines App-Anrufs</string>
-    <string name="notif_wd_required">Das drahtlose Debugging muss aktiviert bleiben, damit CallVault auf diesem Telefon bereit bleibt. Aktivieren Sie „Ohne Wi-Fi aufnehmen“ unter Einstellungen ▸ Experimentell (oder aktivieren Sie das USB-Debugging), dann schaltet CallVault es wieder ab.</string>
+    <string name="notif_wd_required">WLAN-Debugging muss eingeschaltet bleiben, weil USB-Debugging aus ist. Schalte USB-Debugging unter Einstellungen ▸ Experimentell ein, dann schaltet CallVault WLAN-Debugging wieder aus.</string>
     <string name="offline_recording_warning_continue">Trotzdem fortfahren</string>
     <string name="offline_recording_warning_message">Dadurch wird ein lokaler Debugging-Port auf Ihrem Telefon geöffnet, damit Anrufe ohne Wi-Fi aufgenommen werden können. Er ist durch den Schlüssel Ihres Geräts geschützt, stellt aber einen kleinen Sicherheitskompromiss dar. Aktivieren Sie ihn nur, wenn Sie Anrufe ohne Wi-Fi aufnehmen müssen.</string>
     <string name="offline_recording_warning_title">Offline-Aufnahme aktivieren?</string>
-    <string name="permission_adb_description">Erforderlich, um Anruf-Audio aufzuzeichnen. Einmal über die Benachrichtigung koppeln, danach verbindet es sich automatisch.</string>
+    <string name="permission_adb_description">Nötig, um den Rekorder einzurichten und zu starten, und funktioniert nur im WLAN. Einmal über die Benachrichtigung koppeln, danach verbindet es sich automatisch.</string>
     <string name="permission_adb_not_connected">Nicht verbunden — zum Einrichten tippen</string>
     <string name="permission_adb_setup">Autorisieren</string>
     <string name="permission_battery_description">Hält die App aktiv, wenn dies erforderlich ist, und ermöglicht es, mögliche Beschränkungen für den Hintergrundstart zu umgehen.</string>
@@ -118,7 +118,7 @@
     <string name="permission_phone_state_description">Erforderlich, um zu erkennen, wann ein Anruf startet und endet.</string>
     <string name="permission_phone_state_label">Telefonstatus</string>
     <string name="permission_storage_description">Wählen Sie aus, wo die Aufnahmen gespeichert werden sollen.</string>
-    <string name="permission_usb_debugging_description">Empfohlen. Ermöglicht es CallVault, das drahtlose Debugging nach der Einrichtung abzuschalten. Kein Kabel nötig.</string>
+    <string name="permission_usb_debugging_description">Empfohlen. Hält die Aufnahme auch ohne WLAN am Laufen und lässt CallVault WLAN-Debugging nach der Einrichtung ausschalten. Kein Kabel nötig.</string>
     <string name="permission_usb_debugging_label">USB-Debugging</string>
     <string name="permissions_grant_access">Zugriff gewähren</string>
     <string name="permissions_intro">Wir benötigen einige Berechtigungen, um Aufnahmen zu starten. Tippen Sie auf Zugriff gewähren und stimmen Sie jeweils zu.</string>
@@ -223,7 +223,7 @@
     <string name="settings_ignore_cross_country_outgoing">Ausgehende Inlandsanrufe ignorieren</string>
     <string name="settings_language">Sprache</string>
     <string name="settings_language_system">Systemstandard</string>
-    <string name="settings_offline_recording_desc">Anrufe auch dann aufnehmen, wenn kein Wi-Fi-Netzwerk verfügbar ist.</string>
+    <string name="settings_offline_recording_desc">Anrufe auch ohne WLAN-Netz aufnehmen. Benötigt eingeschaltetes USB-Debugging.</string>
     <string name="settings_offline_recording_label">Offline-Aufnahme (ohne Wi-Fi)</string>
     <string name="settings_persistent_server">Persistenter Aufnahmeserver</string>
     <string name="settings_persistent_server_description">Anrufe über einen privilegierten Hintergrunddienst aufzeichnen, damit das drahtlose Debugging zwischen Anrufen ausgeschaltet bleiben kann. Experimentell.</string>
@@ -305,12 +305,12 @@
     <string name="settings_theme_mode_system">Systemstandard</string>
     <string name="settings_update_check_description">Einmal täglich auf GitHub nach einer neuen Version suchen.</string>
     <string name="settings_update_check_label">Nach Updates suchen</string>
-    <string name="settings_usb_debugging_description">Empfohlen. Ermöglicht es CallVault, das drahtlose Debugging abzuschalten. Kein Kabel nötig, und anders als das drahtlose Debugging öffnet es keinen Netzwerkport.</string>
+    <string name="settings_usb_debugging_description">Empfohlen. Hält die Aufnahme am Laufen, wenn du das WLAN verlässt, und lässt CallVault WLAN-Debugging ausschalten. Kein Kabel nötig.</string>
     <string name="settings_usb_debugging_failed">Änderung nicht möglich — CallVault benötigt die Berechtigung, die es während der Einrichtung erhält.</string>
     <string name="settings_usb_debugging_label">USB-Debugging</string>
-    <string name="settings_usb_debugging_on_hint">CallVault kann das drahtlose Debugging abgeschaltet lassen. Schalten Sie dies nicht wieder aus — dann gäbe es keinen Zugang mehr, und das drahtlose Debugging wird wieder aktiviert.</string>
+    <string name="settings_usb_debugging_on_hint">CallVault kann WLAN-Debugging ausgeschaltet lassen. Schaltest du dies aus, stoppt die Aufnahme für einige Sekunden, bis CallVault sie über WLAN neu startet – ohne WLAN ist kein Neustart möglich.</string>
     <string name="settings_usb_debugging_shizuku_hint">Lassen Sie das USB-Debugging aktiviert, solange Sie Shizuku verwenden. Shizukus Dienst wird über Androids Debugging-Dienst gestartet und endet mit ihm — CallVault benötigt diesen Schalter im Shizuku-Modus nicht.</string>
-    <string name="settings_usb_debugging_recommended">Ohne dies muss das drahtlose Debugging aktiviert bleiben. Wenn Sie dies aktivieren, kann CallVault es abschalten.</string>
+    <string name="settings_usb_debugging_recommended">Ohne diese Option funktioniert die Aufnahme nur im WLAN, und WLAN-Debugging muss eingeschaltet bleiben.</string>
     <string name="settings_usb_default_applying">Wird angewendet…</string>
     <string name="settings_usb_default_shizuku_hint">Ändern Sie dies nicht, solange Sie Shizuku verwenden. Eine Änderung startet Androids Debugging-Dienst neu, und Shizuku wird dabei beendet — Sie müssten Shizuku erneut starten, bevor der nächste Anruf aufgezeichnet werden kann.</string>
     <string name="settings_usb_default_busy">Nicht geändert: Eine Aufnahme läuft. Diese Änderung startet Androids Debugging-Dienst neu und würde die Aufnahme beenden.</string>

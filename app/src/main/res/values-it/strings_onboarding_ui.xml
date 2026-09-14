@@ -4,7 +4,7 @@
     <string name="disclaimer_ui_body_header">Disclaimer</string>
     <string name="disclaimer_ui_hero_subtitle">Registrazione delle chiamate FOSS, alle Sue condizioni. Legga il disclaimer prima di continuare.</string>
     <string name="disclaimer_ui_scroll_hint">Scorra fino alla fine per attivare la casella.</string>
-    <string name="permission_adb_desc_short">Necessario per registrare l\'audio delle chiamate.</string>
+    <string name="permission_adb_desc_short">Necessario per configurare il registratore. Richiede il Wi-Fi.</string>
     <string name="permission_adb_hint">Tocchi Autorizza, poi inserisca il codice di abbinamento dalla notifica.</string>
     <string name="permission_adb_hint_wd_on">Tocchi Autorizza, poi inserisca il codice di abbinamento dalla schermata Debug wireless.</string>
     <string name="permission_adb_open_device_info">Apri informazioni dispositivo</string>

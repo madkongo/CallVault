@@ -4,7 +4,7 @@
     <string name="disclaimer_ui_body_header">Jogi nyilatkozat</string>
     <string name="disclaimer_ui_hero_subtitle">FOSS hívásrögzítés, az Ön feltételei szerint. Folytatás előtt olvassa el a jogi nyilatkozatot.</string>
     <string name="disclaimer_ui_scroll_hint">A jelölőnégyzet engedélyezéséhez görgessen a végére.</string>
-    <string name="permission_adb_desc_short">A hívás hangjának rögzítéséhez szükséges.</string>
+    <string name="permission_adb_desc_short">A rögzítő beállításához szükséges. Wi-Fi kell hozzá.</string>
     <string name="permission_adb_hint">Koppintson az Engedélyezés gombra, majd adja meg az értesítésben szereplő párosítási kódot.</string>
     <string name="permission_adb_hint_wd_on">Koppintson az Engedélyezés gombra, majd adja meg a Vezeték nélküli hibakeresés képernyőjén látható párosítási kódot.</string>
     <string name="permission_adb_open_device_info">Eszközadatok megnyitása</string>

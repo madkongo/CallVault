@@ -4,7 +4,7 @@
     <string name="disclaimer_ui_body_header">Aviso legal</string>
     <string name="disclaimer_ui_hero_subtitle">Grabación de llamadas FOSS, en sus términos. Por favor, lea el aviso legal antes de continuar.</string>
     <string name="disclaimer_ui_scroll_hint">Desplácese hasta el final para activar la casilla.</string>
-    <string name="permission_adb_desc_short">Necesario para capturar el audio de las llamadas.</string>
+    <string name="permission_adb_desc_short">Necesario para configurar la grabadora. Requiere Wi-Fi.</string>
     <string name="permission_adb_hint">Toque Autorizar y luego introduzca el código de emparejamiento de la notificación.</string>
     <string name="permission_adb_hint_wd_on">Toque Autorizar y luego introduzca el código de emparejamiento de la pantalla de Depuración inalámbrica.</string>
     <string name="permission_adb_open_device_info">Abrir información del dispositivo</string>

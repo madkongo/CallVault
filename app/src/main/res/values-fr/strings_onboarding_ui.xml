@@ -4,7 +4,7 @@
     <string name="disclaimer_ui_body_header">Avertissement</string>
     <string name="disclaimer_ui_hero_subtitle">L\'enregistrement d\'appels FOSS, selon vos règles. Veuillez lire l\'avertissement avant de continuer.</string>
     <string name="disclaimer_ui_scroll_hint">Faites défiler jusqu\'en bas pour activer la case à cocher.</string>
-    <string name="permission_adb_desc_short">Nécessaire pour capturer l\'audio des appels.</string>
+    <string name="permission_adb_desc_short">Nécessaire pour configurer l\'enregistreur. Nécessite le Wi-Fi.</string>
     <string name="permission_adb_hint">Touchez Autoriser, puis saisissez le code d\'association indiqué dans la notification.</string>
     <string name="permission_adb_hint_wd_on">Touchez Autoriser, puis saisissez le code d\'association affiché sur l\'écran Débogage sans fil.</string>
     <string name="permission_adb_open_device_info">Ouvrir les infos de l\'appareil</string>

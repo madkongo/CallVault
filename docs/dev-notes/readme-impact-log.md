@@ -1,5 +1,14 @@
 # README impact log
 
+## 2026-09-14 — the two debugging switches (#23, #24, #39)
+
+🧪 VERIFYING. New section "The two debugging switches" under Install, and the away-from-Wi-Fi note now says it
+needs USB debugging. Every claim comes from measurements in
+`docs/dev-notes/2026-09-14-debugging-switches-model.md` (emulator + OP9): turning USB debugging off stops
+adbd even with Wireless debugging on; Wireless debugging needs Wi-Fi; recording away from Wi-Fi needs USB
+debugging; with the `fix/adb-transport-dead-ends` build CallVault restarts adbd on Wi-Fi within seconds.
+The "within a few seconds" claim is only true once that branch ships — it is false for 2.3.0.
+
 ## ✅ THE README IS PUBLISHED — 2026-08-30
 
 `README.md` on `main` is the rewrite (`3a2cb00`), 3,439 words → 1,832. The artifact

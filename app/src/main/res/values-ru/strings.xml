@@ -99,11 +99,11 @@
     <string name="notif_info_channel">Уведомления CallVault</string>
     <string name="notif_voip_recording_text">CallVault записывает звонок в приложении.</string>
     <string name="notif_voip_recording_title">Запись звонка VoIP</string>
-    <string name="notif_wd_required">Беспроводная отладка должна оставаться включённой, чтобы CallVault был готов к работе на этом телефоне. Включите «Запись без Wi-Fi» в Настройки ▸ Экспериментальное (или включите отладку по USB), и CallVault снова её отключит.</string>
+    <string name="notif_wd_required">Отладка по Wi-Fi должна оставаться включённой, потому что отладка по USB выключена. Включите отладку по USB в Настройки ▸ Экспериментальные, и CallVault снова выключит отладку по Wi-Fi.</string>
     <string name="offline_recording_warning_continue">Всё равно продолжить</string>
     <string name="offline_recording_warning_message">При этом на телефоне открывается локальный порт отладки, чтобы звонки можно было записывать без Wi-Fi. Он защищён ключом вашего устройства, но представляет собой небольшой компромисс в плане безопасности. Включайте эту функцию только в том случае, если вам нужно записывать звонки без Wi-Fi.</string>
     <string name="offline_recording_warning_title">Включить запись без Wi-Fi?</string>
-    <string name="permission_adb_description">Требуется для записи звука звонков. Выполните сопряжение один раз через уведомление, далее подключение будет происходить автоматически.</string>
+    <string name="permission_adb_description">Нужна для настройки и запуска рекордера и работает только через Wi-Fi. Выполните сопряжение один раз через уведомление — дальше подключение будет автоматическим.</string>
     <string name="permission_adb_not_connected">Не подключено — нажмите, чтобы настроить</string>
     <string name="permission_adb_setup">Авторизовать</string>
     <string name="permission_battery_description">Сохраняет активность приложения, когда это необходимо, и даёт возможность преодолеть возможные ограничения запуска в фоновом режиме.</string>
@@ -118,7 +118,7 @@
     <string name="permission_phone_state_description">Требуется для обнаружения начала и окончания звонка.</string>
     <string name="permission_phone_state_label">Состояние телефона</string>
     <string name="permission_storage_description">Выбор куда записи будут сохраняться.</string>
-    <string name="permission_usb_debugging_description">Рекомендуется. Позволяет CallVault отключить беспроводную отладку после настройки. Кабель не нужен.</string>
+    <string name="permission_usb_debugging_description">Рекомендуется. Запись продолжает работать без Wi-Fi, а CallVault может выключить отладку по Wi-Fi после настройки. Кабель не нужен.</string>
     <string name="permission_usb_debugging_label">Отладка по USB</string>
     <string name="permissions_grant_access">Предоставить доступ</string>
     <string name="permissions_intro">Нужно получить несколько разрешений, чтобы начать запись. Нажмите \"Предоставить доступ\" для каждого разрешения.</string>
@@ -223,7 +223,7 @@
     <string name="settings_ignore_cross_country_outgoing">Игнорировать международные исходящие вызовы</string>
     <string name="settings_language">Язык</string>
     <string name="settings_language_system">Системный</string>
-    <string name="settings_offline_recording_desc">Записывать звонки даже при отсутствии сети Wi-Fi.</string>
+    <string name="settings_offline_recording_desc">Записывать звонки даже без сети Wi-Fi. Требуется включённая отладка по USB.</string>
     <string name="settings_offline_recording_label">Запись без сети (без Wi-Fi)</string>
     <string name="settings_persistent_server">Постоянный сервер записи</string>
     <string name="settings_persistent_server_description">Записывать звонки через привилегированную фоновую службу, чтобы отладку по Wi-Fi можно было держать выключенной между звонками. Экспериментально.</string>
@@ -305,12 +305,12 @@
     <string name="settings_theme_mode_system">Системная</string>
     <string name="settings_update_check_description">Раз в день проверяет наличие новой версии на GitHub.</string>
     <string name="settings_update_check_label">Проверять обновления</string>
-    <string name="settings_usb_debugging_description">Рекомендуется. Позволяет CallVault отключить беспроводную отладку. Кабель не нужен, и, в отличие от беспроводной отладки, она не открывает сетевой порт.</string>
+    <string name="settings_usb_debugging_description">Рекомендуется. Запись продолжает работать, когда вы уходите из сети Wi-Fi, а CallVault может выключить отладку по Wi-Fi. Кабель не нужен.</string>
     <string name="settings_usb_debugging_failed">Не удалось изменить — CallVault нужно разрешение, которое он получает во время настройки.</string>
     <string name="settings_usb_debugging_label">Отладка по USB</string>
-    <string name="settings_usb_debugging_on_hint">CallVault может держать беспроводную отладку отключённой. Не выключайте этот параметр — тогда не останется способа подключиться, и беспроводная отладка снова включится.</string>
+    <string name="settings_usb_debugging_on_hint">CallVault может держать отладку по Wi-Fi выключенной. Если выключить эту настройку, запись остановится на несколько секунд, пока CallVault перезапускает её через Wi-Fi, — а без Wi-Fi перезапуск невозможен.</string>
     <string name="settings_usb_debugging_shizuku_hint">Оставьте отладку по USB включённой, пока пользуетесь Shizuku. Служба Shizuku запускается через службу отладки Android и останавливается вместе с ней — в режиме Shizuku CallVault этот переключатель не нужен.</string>
-    <string name="settings_usb_debugging_recommended">Без этого беспроводная отладка должна оставаться включённой. Если включить этот параметр, CallVault сможет её отключить.</string>
+    <string name="settings_usb_debugging_recommended">Без этого запись работает только через Wi-Fi, а отладка по Wi-Fi должна оставаться включённой.</string>
     <string name="settings_usb_default_applying">Применение…</string>
     <string name="settings_usb_default_shizuku_hint">Не меняйте этот параметр, пока пользуетесь Shizuku. Изменение перезапускает службу отладки Android, и Shizuku останавливается вместе с ней — придётся снова запустить Shizuku, прежде чем следующий звонок можно будет записать.</string>
     <string name="settings_usb_default_busy">Не изменено: идёт запись. Изменение перезапускает службу отладки Android, что прервёт запись.</string>

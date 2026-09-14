@@ -4,7 +4,7 @@
     <string name="disclaimer_ui_body_header">Отказ от ответственности</string>
     <string name="disclaimer_ui_hero_subtitle">Запись звонков на ваших условиях, FOSS. Пожалуйста, ознакомьтесь с отказом от ответственности, прежде чем продолжить.</string>
     <string name="disclaimer_ui_scroll_hint">Прокрутите до конца, чтобы активировать флажок.</string>
-    <string name="permission_adb_desc_short">Требуется для записи звука звонков.</string>
+    <string name="permission_adb_desc_short">Нужна для настройки рекордера. Требуется Wi-Fi.</string>
     <string name="permission_adb_hint">Нажмите «Авторизовать», затем введите код сопряжения из уведомления.</string>
     <string name="permission_adb_hint_wd_on">Нажмите «Авторизовать», затем введите код сопряжения с экрана отладки по Wi-Fi.</string>
     <string name="permission_adb_open_device_info">Открыть сведения об устройстве</string>

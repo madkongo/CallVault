@@ -4,7 +4,7 @@
     <string name="disclaimer_ui_body_header">免责声明</string>
     <string name="disclaimer_ui_hero_subtitle">FOSS 通话录音，由你做主。请在继续前阅读免责声明。</string>
     <string name="disclaimer_ui_scroll_hint">滚动到底部以启用复选框。</string>
-    <string name="permission_adb_desc_short">录制通话音频所必需。</string>
+    <string name="permission_adb_desc_short">设置录音器时需要。需要 Wi-Fi。</string>
     <string name="permission_adb_hint">点按“授权”，然后输入通知中的配对码。</string>
     <string name="permission_adb_hint_wd_on">点按“授权”，然后输入无线调试界面上的配对码。</string>
     <string name="permission_adb_open_device_info">打开设备信息</string>
