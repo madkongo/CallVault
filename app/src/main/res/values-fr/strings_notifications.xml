@@ -25,8 +25,8 @@
     <string name="notif_readiness_starting_title">Démarrage de l\'enregistreur d\'appels…</string>
     <string name="notif_startup_channel">Démarrage</string>
     <string name="notif_startup_preparing">Préparation de l\'enregistreur d\'appels…</string>
-    <string name="notif_usb_check_unavailable">Si cela ne se termine pas, réglez l\'USB sur \"Charge uniquement\" dans Paramètres → Fiabilité : sur certains téléphones, un mode USB de données empêche l\'enregistreur de se connecter.</string>
-    <string name="notif_usb_lock_warning">Verrouiller l\'écran pendant un appel peut arrêter l\'enregistrement. Règle l\'USB sur « Charge uniquement » dans Paramètres → Fiabilité.</string>
+    <string name="notif_usb_check_unavailable">Si cela ne se termine pas, réglez « USB au déverrouillage » sur Recharge uniquement dans Paramètres ▸ Expérimental — sur certains téléphones, un mode USB de données empêche l\'enregistreur de se connecter.</string>
+    <string name="notif_usb_lock_warning">Verrouiller l\'écran pendant un appel peut arrêter l\'enregistrement. Dans Paramètres ▸ Expérimental, réglez « USB au déverrouillage » sur Recharge uniquement.</string>
     <string name="update_notif_available_text">Ouvrez l\'application et appuyez sur Mettre à jour pour l\'installer.</string>
     <string name="update_notif_available_title">CallVault %1$s est disponible</string>
     <string name="update_notif_channel">Mises à jour de l\'application</string>

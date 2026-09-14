@@ -25,8 +25,8 @@
     <string name="notif_readiness_starting_title">Anrufrekorder wird gestartet…</string>
     <string name="notif_startup_channel">Start</string>
     <string name="notif_startup_preparing">Anrufaufzeichnung wird vorbereitet…</string>
-    <string name="notif_usb_check_unavailable">Falls das nicht abgeschlossen wird, stellen Sie USB in Einstellungen → Zuverlässigkeit auf \"Nur Laden\" — auf manchen Telefonen verhindert ein USB-Datenmodus die Verbindung des Rekorders.</string>
-    <string name="notif_usb_lock_warning">Das Sperren des Bildschirms während eines Anrufs kann die Aufnahme stoppen. Stelle USB unter Einstellungen → Zuverlässigkeit auf „Nur Laden“.</string>
+    <string name="notif_usb_check_unavailable">Falls dies nicht abgeschlossen wird, stelle „USB beim Entsperren“ unter Einstellungen ▸ Experimentell auf Nur Laden – auf manchen Handys verhindert ein USB-Datenmodus, dass sich der Rekorder verbindet.</string>
+    <string name="notif_usb_lock_warning">Das Sperren des Bildschirms während eines Anrufs kann die Aufnahme beenden. Stelle unter Einstellungen ▸ Experimentell „USB beim Entsperren“ auf Nur Laden.</string>
     <string name="update_notif_available_text">Öffnen Sie die App und tippen Sie auf Aktualisieren, um es zu installieren.</string>
     <string name="update_notif_available_title">CallVault %1$s ist verfügbar</string>
     <string name="update_notif_channel">App-Updates</string>

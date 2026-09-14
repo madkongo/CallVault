@@ -25,8 +25,8 @@
     <string name="notif_readiness_starting_title">Avvio del registratore di chiamate…</string>
     <string name="notif_startup_channel">Avvio</string>
     <string name="notif_startup_preparing">Preparazione del registratore di chiamate…</string>
-    <string name="notif_usb_check_unavailable">Se non si completa, imposta l\'USB su \"Solo ricarica\" in Impostazioni → Affidabilità: su alcuni telefoni una modalità USB dati impedisce al registratore di connettersi.</string>
-    <string name="notif_usb_lock_warning">Bloccare lo schermo durante una chiamata può interrompere la registrazione. Imposta USB su "Solo ricarica" in Impostazioni → Affidabilità.</string>
+    <string name="notif_usb_check_unavailable">Se non termina, imposta «USB allo sblocco» su Solo ricarica in Impostazioni ▸ Sperimentale: su alcuni telefoni una modalità USB dati impedisce al registratore di connettersi.</string>
+    <string name="notif_usb_lock_warning">Bloccare lo schermo durante una chiamata può interrompere la registrazione. In Impostazioni ▸ Sperimentale, imposta «USB allo sblocco» su Solo ricarica.</string>
     <string name="update_notif_available_text">Apri l\'app e tocca Aggiorna per installarlo.</string>
     <string name="update_notif_available_title">CallVault %1$s è disponibile</string>
     <string name="update_notif_channel">Aggiornamenti dell\'app</string>

@@ -25,8 +25,8 @@
     <string name="notif_readiness_starting_title">A hívásrögzítő indítása…</string>
     <string name="notif_startup_channel">Indítás</string>
     <string name="notif_startup_preparing">Hívásrögzítő előkészítése…</string>
-    <string name="notif_usb_check_unavailable">Ha ez nem fejeződik be, állítsa az USB-t \"Csak töltés\" módra a Beállítások → Megbízhatóság alatt — egyes telefonokon az adatátviteli USB-mód megakadályozza a rögzítő csatlakozását.</string>
-    <string name="notif_usb_lock_warning">A képernyő zárolása hívás közben leállíthatja a rögzítést. Állítsd az USB-t „Csak töltés“ értékre a Beállítások → Megbízhatóság alatt.</string>
+    <string name="notif_usb_check_unavailable">Ha ez nem fejeződik be, állítsd az „USB a képernyő feloldásakor” opciót Csak töltésre a Beállítások ▸ Kísérleti menüben — egyes telefonokon az adatátviteli USB-mód megakadályozza a rögzítő csatlakozását.</string>
+    <string name="notif_usb_lock_warning">Ha hívás közben lezárod a képernyőt, a rögzítés leállhat. A Beállítások ▸ Kísérleti menüben állítsd az „USB a képernyő feloldásakor” opciót Csak töltésre.</string>
     <string name="update_notif_available_text">Nyissa meg az alkalmazást, és koppintson a Frissítés gombra a telepítéshez.</string>
     <string name="update_notif_available_title">Elérhető a CallVault %1$s</string>
     <string name="update_notif_channel">Alkalmazásfrissítések</string>

@@ -25,8 +25,8 @@
     <string name="notif_readiness_starting_title">Запуск записи звонков…</string>
     <string name="notif_startup_channel">Запуск</string>
     <string name="notif_startup_preparing">Подготовка записи звонков…</string>
-    <string name="notif_usb_check_unavailable">Если это не завершится, установите USB в режим «Только зарядка» в Настройки → Надёжность — на некоторых телефонах режим передачи данных по USB мешает записывающему модулю подключиться.</string>
-    <string name="notif_usb_lock_warning">Блокировка экрана во время звонка может остановить запись. Выберите для USB режим «Только зарядка» в Настройки → Надёжность.</string>
+    <string name="notif_usb_check_unavailable">Если это не завершится, установите «USB при разблокировке» в режим «Только зарядка» в Настройки ▸ Экспериментальные — на некоторых телефонах режим передачи данных по USB мешает рекордеру подключиться.</string>
+    <string name="notif_usb_lock_warning">Блокировка экрана во время звонка может остановить запись. В Настройки ▸ Экспериментальные установите «USB при разблокировке» в режим «Только зарядка».</string>
     <string name="update_notif_available_text">Откройте приложение и нажмите «Обновить», чтобы установить.</string>
     <string name="update_notif_available_title">Доступна версия CallVault %1$s</string>
     <string name="update_notif_channel">Обновления приложения</string>

@@ -25,8 +25,8 @@
     <string name="notif_readiness_starting_title">Uruchamianie rejestratora połączeń…</string>
     <string name="notif_startup_channel">Uruchamianie</string>
     <string name="notif_startup_preparing">Przygotowywanie rejestratora połączeń…</string>
-    <string name="notif_usb_check_unavailable">Jeśli to się nie zakończy, ustaw USB na \"Tylko ładowanie\" w Ustawienia → Niezawodność — w niektórych telefonach tryb USB z transmisją danych uniemożliwia połączenie rejestratora.</string>
-    <string name="notif_usb_lock_warning">Zablokowanie ekranu podczas rozmowy może zatrzymać nagrywanie. Ustaw USB na „Tylko ładowanie“ w Ustawienia → Niezawodność.</string>
+    <string name="notif_usb_check_unavailable">Jeśli to się nie zakończy, ustaw „USB po odblokowaniu” na Tylko ładowanie w Ustawieniach ▸ Eksperymentalne — na niektórych telefonach tryb danych USB uniemożliwia połączenie rejestratora.</string>
+    <string name="notif_usb_lock_warning">Zablokowanie ekranu podczas połączenia może przerwać nagrywanie. W Ustawieniach ▸ Eksperymentalne ustaw „USB po odblokowaniu” na Tylko ładowanie.</string>
     <string name="update_notif_available_text">Otwórz aplikację i dotknij Aktualizuj, aby ją zainstalować.</string>
     <string name="update_notif_available_title">Dostępny jest CallVault %1$s</string>
     <string name="update_notif_channel">Aktualizacje aplikacji</string>
