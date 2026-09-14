@@ -38,4 +38,8 @@
     <string name="update_notif_installing_title">Installazione dell\'aggiornamento…</string>
     <string name="update_notif_success_text">CallVault è ora alla versione %1$s.</string>
     <string name="update_notif_success_title">Aggiornamento installato</string>
+    <string name="notif_readiness_down_title">Le chiamate non vengono registrate</string>
+    <string name="notif_readiness_no_debugging_text">Il debug USB e il debug wireless sono entrambi disattivati. Riattivane uno nelle Opzioni sviluppatore.</string>
+    <string name="notif_readiness_needs_wifi_text">Il debug USB è disattivato e non c\'è Wi-Fi. Connettiti a una rete Wi-Fi o attiva il debug USB.</string>
+    <string name="notif_readiness_stuck_text">Il registratore non riesce ad avviarsi. Apri CallVault per vedere il motivo.</string>
 </resources>

@@ -38,4 +38,8 @@
     <string name="update_notif_installing_title">正在安装更新…</string>
     <string name="update_notif_success_text">CallVault 已更新到 %1$s 版。</string>
     <string name="update_notif_success_title">更新已安装</string>
+    <string name="notif_readiness_down_title">通话未在录音</string>
+    <string name="notif_readiness_no_debugging_text">USB 调试和无线调试都已关闭。请在开发者选项中重新开启其中一项。</string>
+    <string name="notif_readiness_needs_wifi_text">USB 调试已关闭，且没有连接 Wi-Fi。请连接 Wi-Fi 或开启 USB 调试。</string>
+    <string name="notif_readiness_stuck_text">录音器一直无法启动。打开 CallVault 查看原因。</string>
 </resources>

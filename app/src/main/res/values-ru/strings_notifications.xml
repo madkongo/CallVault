@@ -38,4 +38,8 @@
     <string name="update_notif_installing_title">Установка обновления…</string>
     <string name="update_notif_success_text">CallVault обновлён до версии %1$s.</string>
     <string name="update_notif_success_title">Обновление установлено</string>
+    <string name="notif_readiness_down_title">Звонки не записываются</string>
+    <string name="notif_readiness_no_debugging_text">Отладка по USB и отладка по Wi-Fi выключены. Включите одну из них в параметрах разработчика.</string>
+    <string name="notif_readiness_needs_wifi_text">Отладка по USB выключена, а Wi-Fi нет. Подключитесь к Wi-Fi или включите отладку по USB.</string>
+    <string name="notif_readiness_stuck_text">Рекордер не может запуститься. Откройте CallVault, чтобы узнать причину.</string>
 </resources>

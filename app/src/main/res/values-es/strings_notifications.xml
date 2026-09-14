@@ -38,4 +38,8 @@
     <string name="update_notif_installing_title">Instalando actualización…</string>
     <string name="update_notif_success_text">CallVault ahora es la versión %1$s.</string>
     <string name="update_notif_success_title">Actualización instalada</string>
+    <string name="notif_readiness_down_title">No se están grabando las llamadas</string>
+    <string name="notif_readiness_no_debugging_text">La depuración USB y la depuración inalámbrica están desactivadas. Vuelve a activar una en Opciones de desarrollador.</string>
+    <string name="notif_readiness_needs_wifi_text">La depuración USB está desactivada y no hay Wi-Fi. Conéctate a una red Wi-Fi o activa la depuración USB.</string>
+    <string name="notif_readiness_stuck_text">La grabadora no consigue iniciarse. Abre CallVault para ver el motivo.</string>
 </resources>

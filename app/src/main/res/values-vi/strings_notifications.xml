@@ -38,4 +38,8 @@
     <string name="update_notif_installing_title">Đang cài đặt bản cập nhật…</string>
     <string name="update_notif_success_text">CallVault hiện là phiên bản %1$s.</string>
     <string name="update_notif_success_title">Đã cài đặt bản cập nhật</string>
+    <string name="notif_readiness_down_title">Cuộc gọi không được ghi âm</string>
+    <string name="notif_readiness_no_debugging_text">Cả gỡ lỗi USB và gỡ lỗi không dây đều đang tắt. Hãy bật lại một trong hai trong Tùy chọn cho nhà phát triển.</string>
+    <string name="notif_readiness_needs_wifi_text">Gỡ lỗi USB đang tắt và không có Wi-Fi. Hãy kết nối Wi-Fi hoặc bật gỡ lỗi USB.</string>
+    <string name="notif_readiness_stuck_text">Trình ghi âm liên tục không khởi động được. Mở CallVault để xem lý do.</string>
 </resources>

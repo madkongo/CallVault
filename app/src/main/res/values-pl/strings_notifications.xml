@@ -38,4 +38,8 @@
     <string name="update_notif_installing_title">Instalowanie aktualizacji…</string>
     <string name="update_notif_success_text">CallVault ma teraz wersję %1$s.</string>
     <string name="update_notif_success_title">Aktualizacja zainstalowana</string>
+    <string name="notif_readiness_down_title">Połączenia nie są nagrywane</string>
+    <string name="notif_readiness_no_debugging_text">Debugowanie USB i debugowanie bezprzewodowe są wyłączone. Włącz jedno z nich w Opcjach programisty.</string>
+    <string name="notif_readiness_needs_wifi_text">Debugowanie USB jest wyłączone i nie ma Wi-Fi. Połącz się z Wi-Fi lub włącz debugowanie USB.</string>
+    <string name="notif_readiness_stuck_text">Rejestrator nie może się uruchomić. Otwórz CallVault, aby zobaczyć przyczynę.</string>
 </resources>

@@ -25,6 +25,7 @@ import android.telephony.TelephonyCallback
 import android.telephony.TelephonyManager
 import androidx.annotation.RequiresApi
 import com.baba.callvault.R
+import com.baba.callvault.services.recording.ReadinessNoticeText
 import com.baba.callvault.server.RecorderConnection
 import com.baba.callvault.utils.AppLogger
 
@@ -229,23 +230,15 @@ class CallMonitorService : Service() {
         override fun onCallStateChanged(state: Int, phoneNumber: String?) = forwardState(state)
     }
 
-    private fun buildNotification(ready: Boolean): Notification =
-        Notification.Builder(this, CHANNEL_ID)
+    private fun buildNotification(ready: Boolean): Notification {
+        val notice = ReadinessNoticeText.current(this, ready)
+        return Notification.Builder(this, CHANNEL_ID)
             .setSmallIcon(android.R.drawable.stat_notify_sync)
-            .setContentTitle(
-                getString(
-                    if (ready) R.string.notif_readiness_ready_title
-                    else R.string.notif_readiness_starting_title,
-                ),
-            )
-            .setContentText(
-                getString(
-                    if (ready) R.string.notif_readiness_ready_text
-                    else R.string.notif_readiness_starting_text,
-                ),
-            )
+            .setContentTitle(getString(ReadinessNoticeText.title(notice)))
+            .setContentText(getString(ReadinessNoticeText.text(notice)))
             .setOnlyAlertOnce(true)
             .build()
+    }
 
     companion object {
         private const val TAG = "CV:CallMonitorService"

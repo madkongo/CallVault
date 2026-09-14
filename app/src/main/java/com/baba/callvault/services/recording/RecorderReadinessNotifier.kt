@@ -73,20 +73,11 @@ object RecorderReadinessNotifier {
     @SuppressLint("MissingPermission")
     private fun post(context: Context, ready: Boolean) {
         createChannel(context)
+        val notice = ReadinessNoticeText.current(context, ready)
         val notification = NotificationCompat.Builder(context, CHANNEL_ID)
             .setSmallIcon(android.R.drawable.stat_notify_sync)
-            .setContentTitle(
-                context.getString(
-                    if (ready) R.string.notif_readiness_ready_title
-                    else R.string.notif_readiness_starting_title,
-                ),
-            )
-            .setContentText(
-                context.getString(
-                    if (ready) R.string.notif_readiness_ready_text
-                    else R.string.notif_readiness_starting_text,
-                ),
-            )
+            .setContentTitle(context.getString(ReadinessNoticeText.title(notice)))
+            .setContentText(context.getString(ReadinessNoticeText.text(notice)))
             .setOngoing(!ready)
             .setOnlyAlertOnce(true)
             .setPriority(NotificationCompat.PRIORITY_LOW)

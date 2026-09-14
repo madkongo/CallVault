@@ -38,4 +38,8 @@
     <string name="update_notif_installing_title">Installation de la mise à jour…</string>
     <string name="update_notif_success_text">CallVault est maintenant en version %1$s.</string>
     <string name="update_notif_success_title">Mise à jour installée</string>
+    <string name="notif_readiness_down_title">Les appels ne sont pas enregistrés</string>
+    <string name="notif_readiness_no_debugging_text">Le débogage USB et le débogage sans fil sont tous deux désactivés. Réactivez-en un dans les Options pour les développeurs.</string>
+    <string name="notif_readiness_needs_wifi_text">Le débogage USB est désactivé et il n\'y a pas de Wi-Fi. Connectez-vous au Wi-Fi ou activez le débogage USB.</string>
+    <string name="notif_readiness_stuck_text">L\'enregistreur n\'arrive pas à démarrer. Ouvrez CallVault pour en voir la raison.</string>
 </resources>

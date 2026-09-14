@@ -38,4 +38,8 @@
     <string name="update_notif_installing_title">Frissítés telepítése…</string>
     <string name="update_notif_success_text">A CallVault mostantól %1$s verziójú.</string>
     <string name="update_notif_success_title">Frissítés telepítve</string>
+    <string name="notif_readiness_down_title">A hívások rögzítése nem működik</string>
+    <string name="notif_readiness_no_debugging_text">Az USB-hibakeresés és a vezeték nélküli hibakeresés is ki van kapcsolva. Kapcsold vissza az egyiket a Fejlesztői beállításokban.</string>
+    <string name="notif_readiness_needs_wifi_text">Az USB-hibakeresés ki van kapcsolva, és nincs Wi-Fi. Csatlakozz Wi-Fi-hez, vagy kapcsold be az USB-hibakeresést.</string>
+    <string name="notif_readiness_stuck_text">A rögzítő nem tud elindulni. Nyisd meg a CallVaultot az okért.</string>
 </resources>

@@ -38,4 +38,8 @@
     <string name="update_notif_installing_title">Update wird installiert…</string>
     <string name="update_notif_success_text">CallVault ist jetzt Version %1$s.</string>
     <string name="update_notif_success_title">Update installiert</string>
+    <string name="notif_readiness_down_title">Anrufe werden nicht aufgenommen</string>
+    <string name="notif_readiness_no_debugging_text">USB-Debugging und WLAN-Debugging sind beide aus. Schalte eines davon in den Entwickleroptionen wieder ein.</string>
+    <string name="notif_readiness_needs_wifi_text">USB-Debugging ist aus und es gibt kein WLAN. Verbinde dich mit einem WLAN oder schalte USB-Debugging ein.</string>
+    <string name="notif_readiness_stuck_text">Der Rekorder startet wiederholt nicht. Öffne CallVault, um den Grund zu sehen.</string>
 </resources>

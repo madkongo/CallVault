@@ -92,6 +92,11 @@ class DaemonKeepAliveService : Service() {
                 // attempt gets one un-retried shot while a call is starting, and on the device in issue
                 // #22 that shot always failed, leaving the advice permanently unsayable.
                 if (alive) readUsbDefaultIfStillUnknown()
+            } else if (!alive) {
+                // Down and still down: what the notice should say can change without the daemon
+                // changing — the failure streak trips, Wi-Fi drops or returns — so re-read it each tick
+                // rather than leave "starting up" on screen for a recovery that cannot happen (#39).
+                updateNotification(false)
             }
             if (alive) {
                 downStreak = 0
@@ -130,6 +135,8 @@ class DaemonKeepAliveService : Service() {
         override fun onChange(selfChange: Boolean) {
             val usbOn = AdbShell.isUsbDebuggingEnabled(applicationContext)
             val wdOn = AdbShell.isWirelessDebuggingEnabled(applicationContext)
+            // The notice names these switches, so it has to follow them immediately.
+            updateNotification(isDaemonAlive())
 
             // Both directions matter, and both are immediate. Waiting for the next daemon launch to
             // re-evaluate means the user flips a switch and nothing visibly happens, which reads as
@@ -196,6 +203,7 @@ class DaemonKeepAliveService : Service() {
     private val wirelessDebuggingObserver = object : ContentObserver(watchdogHandler) {
         override fun onChange(selfChange: Boolean) {
             val on = AdbShell.isWirelessDebuggingEnabled(applicationContext)
+            updateNotification(isDaemonAlive())
             if (AdbShell.didWeJustSetWirelessDebugging(enabled = on)) return
             AppPreferences(applicationContext).setWirelessDebuggingEnabledByUs(false)
             AppLogger.i(TAG, "Wireless debugging switched ${if (on) "on" else "off"} by hand; it is the user\'s to manage")
@@ -455,18 +463,17 @@ class DaemonKeepAliveService : Service() {
 
     private fun buildNotification(ready: Boolean): Notification {
         val voipRecording = runCatching { voipDetector.isRecording }.getOrDefault(false)
+        val notice = ReadinessNoticeText.current(this, ready)
         val baseText = when {
             voipRecording -> getString(R.string.notif_voip_recording_text)
-            ready -> getString(R.string.notif_readiness_ready_text)
-            else -> getString(R.string.notif_readiness_starting_text)
+            else -> getString(ReadinessNoticeText.text(notice))
         }
         val builder = NotificationCompat.Builder(this, CHANNEL_ID)
             .setSmallIcon(android.R.drawable.stat_notify_sync)
             .setContentTitle(
                 when {
                     voipRecording -> getString(R.string.notif_voip_recording_title)
-                    ready -> getString(R.string.notif_readiness_ready_title)
-                    else -> getString(R.string.notif_readiness_starting_title)
+                    else -> getString(ReadinessNoticeText.title(notice))
                 },
             )
             .setContentText(baseText)

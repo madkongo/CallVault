@@ -40,4 +40,8 @@
     <string name="update_notif_failure_install_text">The update could not be installed. Tap to get it from GitHub.</string>
     <string name="update_notif_downloading_title">Downloading update…</string>
     <string name="update_notif_installing_title">Installing update…</string>
+    <string name="notif_readiness_down_title">Calls aren\'t being recorded</string>
+    <string name="notif_readiness_no_debugging_text">USB debugging and Wireless debugging are both off. Turn one back on in Developer options.</string>
+    <string name="notif_readiness_needs_wifi_text">USB debugging is off and there\'s no Wi-Fi. Connect to Wi-Fi, or turn USB debugging on.</string>
+    <string name="notif_readiness_stuck_text">The recorder keeps failing to start. Open CallVault to see why.</string>
 </resources>
