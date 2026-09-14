@@ -80,6 +80,39 @@ reading **on** and nothing listening — exactly what R2 + R9 produce, and what 
 Fixed since first written: the in-app USB-debugging switch now follows the real setting (✅ emulator, it read
 off while USB debugging was off); the warning dialog's icon is tinted explicitly (not re-shot).
 
+
+## OP9 run — manual toggles and Shizuku (2026-09-14, fix build on the OP9)
+
+All switch changes in this section were made **by hand in Developer options** by the maintainer, except where
+noted. Watched over Wi-Fi TLS adb.
+
+| # | Setup | Action | Result | Status |
+|---|---|---|---|---|
+| S1a | Built-in mode, Shizuku server running (started over adb) | arm off-Wi-Fi recording from CallVault | **Shizuku's server killed** — arming opens `tcpip:`, which restarts adbd. #39's second complaint | ✅ reproduced |
+| S1b | Built-in mode, Shizuku running, USB on, WD on | USB debugging off (no confirmation dialog on OxygenOS) | adbd, recorder and Shizuku died; CallVault cycled WD and the recorder was back in **10.5 s**; USB stayed off; **Shizuku stayed dead** | ✅ |
+| S1c | Built-in mode, USB off, WD on, USB mode MTP | screen locked for 60 s (adb) | adbd kept running, recorder alive, USB mode stayed `mtp` — no kill on this phone | ✅ one data point |
+| S2 | Built-in mode, USB off, WD on | Wireless debugging off | **CallVault switched it back on 50 ms later**, both taps — the user cannot turn it off. Older keep-alive step `RESTORE_WIRELESS_DEBUGGING`, also in 2.3.0 | ✅ measured |
+| S3 | **Shizuku mode**, Shizuku running, USB on, WD on | USB debugging off | adbd, Shizuku and CallVault's recorder died; no switch touched (correct); home screen said "Shizuku is not ready"; **no notification at all** | ✅ measured |
+
+What these add to the rules:
+
+- **R10** Shizuku's server lives inside adbd, so everything that stops adbd stops Shizuku: USB debugging off
+  (R2), both switches off, arming off-Wi-Fi recording (`tcpip:`), a Default USB configuration change. Nothing
+  restarts Shizuku; its user must start it again. ✅ S1a, S1b, S3.
+- **R11** Once adbd has been started *after* USB debugging went off, it runs stably with USB off and Wireless
+  debugging on (recorder ran 20 min in S1b). So Shizuku started over Wireless debugging with USB debugging
+  already off should survive too. 📐 not measured with Shizuku itself.
+- **R12** After R2, Wireless debugging still reads on with adbd stopped, so Shizuku's "Start via Wireless
+  debugging" should fail until WD is switched off and on. 📐 Shizuku is not paired on the OP9; not tried.
+- CallVault in Shizuku mode has **no runtime signal** that Shizuku died: no `addBinderDeadListener`, and the
+  "cannot record" notification only posts from the boot path.
+- Resilient recording has **no USB-debugging dependency** in code (`HandoffPolicy`: pref, audio source, not
+  Shizuku mode). It is what keeps a call recording when adbd dies mid-call. Not exercised on a call this run.
+
+Decided by the maintainer 2026-09-14: CallVault turning a Wireless-debugging switch back on after the user
+turned it off must be an **opt-in setting**; and the two Shizuku gaps (no notification, no way to restart
+Shizuku after R2) are to be fixed.
+
 ## Limits of these tests
 
 - The emulator has `ro.adb.secure=0`, so pairing is never exercised there; Android's Wi-Fi trust prompt still is.
