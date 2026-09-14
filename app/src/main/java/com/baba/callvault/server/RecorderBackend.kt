@@ -133,6 +133,12 @@ object RecorderBackend {
                 .getOrDefault(false)
         }
         AppLogger.i(TAG, "Switch to $to complete: connected=$connected voipArmed=$voipArmed")
+        // A recorder is up in the new mode, so a "cannot record" warning from the old one is now false — and
+        // nothing else would clear it. Seen on the OP9: Shizuku died in Shizuku mode (warning correct), the
+        // switch to standalone succeeded, and the Shizuku warning stayed up over a working recorder.
+        if (connected) {
+            runCatching { com.baba.callvault.system.health.SilentFailureNotifier.clearRecorderUnavailable(context) }
+        }
 
         return ModeSwitchResult.of(to, connected, voipArmed, shizukuStatus(context))
     }
