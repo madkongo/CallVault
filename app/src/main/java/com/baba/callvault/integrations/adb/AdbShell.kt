@@ -34,6 +34,12 @@ object AdbShell {
      * advertises — so a long fixed pre-sleep was mostly dead time on the post-boot cold-start path.
      */
     private const val WD_START_WAIT_MS = 750L
+
+    /** How long Wireless debugging stays off in a restart cycle, so AdbService sees a real change. */
+    private const val WD_CYCLE_OFF_MS = 1_500L
+
+    /** How long to wait for adbd to report running after a revival. */
+    private const val ADBD_REVIVE_WAIT_MS = 5_000L
     /** Time to let adbd restart into tcp mode after opening the `tcpip:` service, before reconnecting. */
     private const val TCPIP_RESTART_WAIT_MS = 1500L
     /** Settle after dropping the (now-dead) pre-restart connection, before the loopback reconnect. */
@@ -144,6 +150,62 @@ object AdbShell {
 
     internal fun isLoopbackArmed(context: Context): Boolean =
         getSystemProperty("service.adb.tcp.port") == AppPreferences(context).getLoopbackAdbPort().toString()
+
+    /**
+     * Whether adbd is actually running, from Android's own `init.svc.adbd`.
+     *
+     * The switch settings are not evidence of this: turning USB debugging off stops adbd while Wireless
+     * debugging still reads on (#39). Any app may read this property (`allow domain
+     * init_service_status_prop`), unlike `service.adb.tls.port`.
+     */
+    fun adbdState(): AdbdState = AdbdState.of(getSystemProperty("init.svc.adbd"))
+
+    /**
+     * Brings adbd back when a debugging switch says it should be up and it is not. Blocking; call off the
+     * main thread.
+     *
+     * Switching a user's Wireless debugging off and on again ends with it on, as they left it, and its
+     * ownership is put back exactly — so #30's rule (never take away a switch the user set) still holds.
+     *
+     * @return what was decided, for the caller's log.
+     */
+    fun reviveAdbdIfStopped(context: Context, reason: String): AdbdRevival {
+        val decision = AdbdRevivalPolicy.decide(
+            adbd = adbdState(),
+            usbDebuggingOn = isUsbDebuggingEnabled(context),
+            wirelessDebuggingOn = isWirelessDebuggingEnabled(context),
+            wifi = WifiState.of(context),
+            hasGrant = hasWriteSecureSettings(context),
+        )
+        when (decision) {
+            AdbdRevival.NOTHING -> return decision
+            AdbdRevival.NEEDS_WIFI, AdbdRevival.NO_GRANT -> {
+                AppLogger.i(TAG, "adbd is stopped after $reason and cannot be revived now ($decision)")
+                return decision
+            }
+            AdbdRevival.ENABLE_WIRELESS_DEBUGGING -> {
+                AppLogger.i(TAG, "adbd is stopped after $reason; switching Wireless debugging on")
+                enableWirelessDebugging(context)
+            }
+            AdbdRevival.CYCLE_WIRELESS_DEBUGGING -> {
+                AppLogger.i(TAG, "adbd is stopped after $reason although Wireless debugging reads on; switching it off and on")
+                val ours = AppPreferences(context).wasWirelessDebuggingEnabledByUs()
+                markOwnWirelessDebuggingWrite(0)
+                runCatching { android.provider.Settings.Global.putInt(context.contentResolver, "adb_wifi_enabled", 0) }
+                    .onFailure { AppLogger.w(TAG, "Could not switch Wireless debugging off to restart adbd: ${it.message}") }
+                Thread.sleep(WD_CYCLE_OFF_MS)
+                enableWirelessDebugging(context)
+                // enableWirelessDebugging records the switch as ours; it was not necessarily.
+                AppPreferences(context).setWirelessDebuggingEnabledByUs(ours)
+            }
+        }
+        val deadline = android.os.SystemClock.elapsedRealtime() + ADBD_REVIVE_WAIT_MS
+        while (adbdState() != AdbdState.RUNNING && android.os.SystemClock.elapsedRealtime() < deadline) {
+            Thread.sleep(250)
+        }
+        AppLogger.i(TAG, "adbd after revival ($decision): ${adbdState()}")
+        return decision
+    }
 
     /** Reads a system property via the hidden `SystemProperties.get` (reflection; public SDK-safe). */
     private fun getSystemProperty(key: String): String = runCatching {

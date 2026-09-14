@@ -142,25 +142,32 @@ class DaemonKeepAliveService : Service() {
             // re-evaluate means the user flips a switch and nothing visibly happens, which reads as
             // broken even when it eventually corrects itself.
             val reason = when {
-                // Last way in just disappeared — adbd is going down and the daemon with it. This is a
-                // user-caused unrecordable window opening RIGHT NOW, not the daemon dying on its own —
-                // restart the observation window immediately rather than waiting for the user to next
-                // open the app, so a call missed in this window is never later judged as a failure.
-                !usbOn && !wdOn -> {
-                    restartObservationWindow("USB debugging switched off with Wireless debugging already off")
-                    "USB debugging switched off and Wireless debugging is off — adbd has no transport; restoring"
+                // USB debugging just went off. Stock Android stops adbd on that change whatever Wireless
+                // debugging reads (init.usb.configfs.rc: sys.usb.config=none → stop adbd), and the daemon
+                // dies with it. This is a user-caused unrecordable window opening RIGHT NOW, so the
+                // observation window restarts immediately.
+                !usbOn -> {
+                    restartObservationWindow("USB debugging switched off")
+                    "USB debugging switched off — adbd stops with it; restarting it once the USB change settles"
                 }
                 // USB debugging now holds adbd up, so Wireless debugging is no longer needed. Dropping
                 // it here is safe: with USB debugging enabled, toggling Wireless debugging does not
                 // restart adbd (measured — its pid is unchanged), so the daemon is never at risk.
-                usbOn && wdOn -> "USB debugging switched on — Wireless debugging is no longer needed"
+                wdOn -> "USB debugging switched on — Wireless debugging is no longer needed"
                 else -> return
             }
 
             AppLogger.i(TAG, reason)
             Thread {
                 runCatching {
-                    if (!usbOn && !wdOn) AdbShell.enableWirelessDebugging(applicationContext)
+                    if (!usbOn) {
+                        // Not at once. Writing Wireless debugging on within milliseconds of the USB change
+                        // loses a race measured on the emulator: init starts a fresh adbd, then the
+                        // still-running USB transition stops it, leaving Wireless debugging reading on with
+                        // nothing listening — #39's state exactly.
+                        Thread.sleep(USB_CHANGE_SETTLE_MS)
+                        AdbShell.reviveAdbdIfStopped(applicationContext, "USB debugging switched off")
+                    }
                     // Re-runs the transport policy: with the daemon already connected this is just the
                     // decision, no relaunch — and it is what switches Wireless debugging off.
                     RecorderBackend.ensureRunning(applicationContext)
@@ -365,6 +372,11 @@ class DaemonKeepAliveService : Service() {
             // silent multi-hour outage on 2026-08-18 — see that class. In short: USB debugging being
             // enabled is NOT a transport this app can dial, and an attempt that keeps timing out must
             // be escalated rather than repeated.
+            // A switch that reads on is not proof adbd is up: turning USB debugging off stops it while Wireless
+            // debugging still reads on, and every attempt below would then dial nothing. Catches the case
+            // the switch observer missed — the service was not running when it happened, or it rebooted.
+            runCatching { AdbShell.reviveAdbdIfStopped(applicationContext, "keep-alive relaunch") }
+                .onFailure { AppLogger.w(TAG, "keep-alive: could not check adbd: ${it.message}") }
             when (
                 recoveryPolicy.nextStep(
                     wirelessDebuggingEnabled = AdbShell.isWirelessDebuggingEnabled(applicationContext),
@@ -584,6 +596,13 @@ class DaemonKeepAliveService : Service() {
 
         /** How often the watchdog checks the daemon is alive. Cheap (a binder ping). */
         private const val WATCHDOG_INTERVAL_MS = 60_000L
+
+        /**
+         * How long to let a USB debugging change finish before touching Wireless debugging. The race it
+         * avoids was 24 ms wide on the emulator; this is generous on purpose, since a slow phone costs only
+         * seconds of an already-unrecordable window.
+         */
+        private const val USB_CHANGE_SETTLE_MS = 3_000L
 
         /**
          * Minimum gap between UN-FORCED (watchdog) relaunch attempts, so a persistently-failing relaunch
