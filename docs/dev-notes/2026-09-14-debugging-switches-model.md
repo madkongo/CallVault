@@ -142,3 +142,17 @@ a working standalone recorder (seen once; the fix is not yet re-tested on a devi
 - Only one OEM phone (OP9, Android 14). #24's "USB debugging turned itself on" came from an OP12 on
   Android 16 and was **not** reproduced on the OP9. Samsung is untested.
 - No real call was recorded in any of these tests; "recorder alive" is the process and its binder.
+
+## Open follow-ups (as of 2026-09-14 12:40)
+
+- 🧪 Build `op12-probe-plus-fix` (branch `build/op12-probe-plus-transport-fix` = fix branch + stereo probe) installed on
+  the OP12 at 12:37; waiting on the maintainer's regression check. The OP9 runs the fix build without the probe.
+- After an install, the readiness notice says "starting up" for up to ~50 s while the recorder is already connected
+  (OP12: binder 12:37:42, notice corrected 12:38:34). Also in 2.3.0. Not fixed.
+- Not fixed: Wireless debugging left on for good after the user accepts Android's trust prompt at first setup; the
+  launcher retries three times in 2 s after a refusal (re-raising the prompt); onboarding step 4 recommends 16 kbps
+  where the default is 24.
+- Not re-tested on a device: clearing the Shizuku warning on a mode switch (`81ec6e7`).
+- Nothing pushed; `fix/adb-transport-dead-ends` is unmerged. Samsung and a real call during a switch change are untested.
+- Separate thread still open: the per-channel transcription design (16 kHz two-channel sidecar vs stereo main file) —
+  `docs/dev-notes/2026-09-12-stereo-separation-probe.md`.
