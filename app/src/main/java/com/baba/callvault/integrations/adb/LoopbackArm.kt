@@ -23,6 +23,12 @@ enum class LoopbackArm {
     /** Wireless debugging is off and CallVault could not switch it on — the user has to. */
     NEEDS_WIRELESS_DEBUGGING,
 
+    /** Not on Wi-Fi, so Wireless debugging cannot run to arm through. */
+    NO_WIFI,
+
+    /** Android switched Wireless debugging back off after CallVault turned it on — an untrusted network. */
+    WIRELESS_DEBUGGING_REFUSED,
+
     /** Wireless debugging is on, but no adb service could be reached to arm through. */
     NO_ADB_SERVICE,
 

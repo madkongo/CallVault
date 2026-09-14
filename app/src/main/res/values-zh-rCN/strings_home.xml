@@ -151,4 +151,6 @@
     <string name="whatsnew_220_where">设置 ▸ 存储 ▸ 保留，即可找到清理选项</string>
     <string name="whatsnew_221_body">CallVault 重新变得打开迅速，并且无论保存多少通话都保持迅速。2.2.0 每次绘制列表时都会重新读取每条录音的时长，因此当通话积累到几十条时，列表会慢到让几分钟前录下的通话看起来像是根本没有被录下。\n\n关于录音不再传到 Google 云端硬盘的警告，不会再在事实并非如此时出现。曾有两位用户被告知备份失败，而他们的每一条录音其实都完好送达。\n\n导出的转写稿内的标题、已选应用的数量以及返回按钮，现在都会跟随你所选择的语言，而不再停留在英文。调试报告还能指出是哪个应用正占用着麦克风——用于一个目前很难当场抓到的问题。</string>
     <string name="whatsnew_221_title">打开更快，也不再为并不存在的问题报警</string>
+    <string name="offline_failed_no_wifi">无法开启——未连接 Wi-Fi。请先连接任意 Wi-Fi 网络一次，然后重试。</string>
+    <string name="offline_failed_wd_refused">无法开启——Android 不允许在此网络上使用无线调试。请在开发者选项中手动开启一次并接受提示，然后重试。</string>
 </resources>

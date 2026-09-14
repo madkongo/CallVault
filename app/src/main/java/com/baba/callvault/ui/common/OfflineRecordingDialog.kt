@@ -154,5 +154,7 @@ private fun LoopbackArm.messageRes(): Int = when (this) {
     LoopbackArm.ARMED -> R.string.offline_recording_on
     LoopbackArm.NEEDS_WIRELESS_DEBUGGING -> R.string.offline_failed_needs_wd
     LoopbackArm.NO_ADB_SERVICE -> R.string.offline_failed_no_service
+    LoopbackArm.NO_WIFI -> R.string.offline_failed_no_wifi
+    LoopbackArm.WIRELESS_DEBUGGING_REFUSED -> R.string.offline_failed_wd_refused
     LoopbackArm.PORT_DID_NOT_COME_UP -> R.string.offline_failed_port
 }

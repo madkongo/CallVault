@@ -165,7 +165,16 @@ object AdbShell {
         connectViaWirelessDebuggingWithReason(context) == BaseConnect.CONNECTED
 
     /** Why the Wireless-debugging bootstrap did or did not produce a connection. */
-    internal enum class BaseConnect { CONNECTED, NEEDS_WIRELESS_DEBUGGING, NO_ADB_SERVICE, CONNECT_REFUSED }
+    internal enum class BaseConnect {
+        CONNECTED,
+        NEEDS_WIRELESS_DEBUGGING,
+        /** Wireless debugging is off and there is no Wi-Fi to turn it on over. */
+        NO_WIFI,
+        /** We switched it on and Android switched it straight back off — typically an untrusted network. */
+        WIRELESS_DEBUGGING_REFUSED,
+        NO_ADB_SERVICE,
+        CONNECT_REFUSED,
+    }
 
     @Synchronized
     private fun connectViaWirelessDebuggingWithReason(context: Context): BaseConnect {
@@ -174,11 +183,21 @@ object AdbShell {
         // Re-enable Wireless debugging if the OEM turned it off on reboot (needs WRITE_SECURE_SETTINGS).
         if (!isWirelessDebuggingEnabled(context)) {
             if (!enableWirelessDebugging(context)) {
+                if (WifiState.of(context) == WifiState.NOT_CONNECTED) return BaseConnect.NO_WIFI
                 AppLogger.w(TAG, "Wireless debugging is off and could not be switched on")
                 return BaseConnect.NEEDS_WIRELESS_DEBUGGING
             }
             AppLogger.i(TAG, "Re-enabled Wireless debugging; waiting for adbd to advertise…")
             Thread.sleep(WD_START_WAIT_MS)
+            // Read our own write back. AOSP's AdbDebuggingManager puts adb_wifi_enabled back to 0 when it
+            // will not run Wireless debugging — no Wi-Fi, or a network the user has not trusted, where it
+            // shows its own "Allow on this network?" prompt instead. Waiting 12 s for an mDNS service that
+            // cannot exist is how #39 spent three minutes before giving up. We cannot read
+            // service.adb.tls.port instead: SELinux gives it only to adbd and system_server.
+            if (!isWirelessDebuggingEnabled(context)) {
+                AppLogger.w(TAG, "Android switched Wireless debugging back off after we turned it on (untrusted network or no Wi-Fi)")
+                return BaseConnect.WIRELESS_DEBUGGING_REFUSED
+            }
         }
         val port = AdbMdns.discoverPort(context, AdbMdns.TLS_CONNECT, MDNS_TIMEOUT_MS)
             ?: return BaseConnect.NO_ADB_SERVICE
@@ -425,6 +444,8 @@ object AdbShell {
             AppLogger.i(TAG, "Cannot arm loopback — no base connection ($base)")
             return@synchronized when (base) {
                 BaseConnect.NEEDS_WIRELESS_DEBUGGING -> LoopbackArm.NEEDS_WIRELESS_DEBUGGING
+                BaseConnect.NO_WIFI -> LoopbackArm.NO_WIFI
+                BaseConnect.WIRELESS_DEBUGGING_REFUSED -> LoopbackArm.WIRELESS_DEBUGGING_REFUSED
                 else -> LoopbackArm.NO_ADB_SERVICE
             }
         }
@@ -505,10 +526,25 @@ object AdbShell {
      * Returns true if the write succeeded (or it was already on).
      */
     fun enableWirelessDebugging(context: Context): Boolean {
-        // Already on means it is the user's, not ours — recorded so nothing later mistakes it for a
-        // switch we are entitled to undo (#30).
-        if (isWirelessDebuggingEnabled(context)) return true
-        if (!hasWriteSecureSettings(context)) return false
+        when (
+            WirelessDebuggingEnableGate.decide(
+                alreadyOn = isWirelessDebuggingEnabled(context),
+                hasGrant = hasWriteSecureSettings(context),
+                wifi = WifiState.of(context),
+            )
+        ) {
+            // Already on means it is the user's, not ours — recorded so nothing later mistakes it for a
+            // switch we are entitled to undo (#30).
+            WirelessDebuggingEnable.ALREADY_ON -> return true
+            WirelessDebuggingEnable.NO_GRANT -> return false
+            // The framework would put it straight back to 0, and on OxygenOS/One UI the attempt also
+            // turned the user's USB debugging on and restarted adbd (#24, #39). See the gate.
+            WirelessDebuggingEnable.NO_WIFI -> {
+                AppLogger.i(TAG, "Not switching Wireless debugging on: no Wi-Fi, so Android would refuse it")
+                return false
+            }
+            WirelessDebuggingEnable.WRITE -> Unit
+        }
         markOwnWirelessDebuggingWrite(1)
         val enabled = runCatching {
             android.provider.Settings.Global.putInt(context.contentResolver, "adb_wifi_enabled", 1)

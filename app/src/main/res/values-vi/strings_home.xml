@@ -151,4 +151,6 @@
     <string name="whatsnew_220_where">Cài đặt ▸ Lưu trữ ▸ Thời gian giữ để xem các tùy chọn dọn dẹp</string>
     <string name="whatsnew_221_body">CallVault mở nhanh trở lại, và vẫn nhanh dù bạn lưu bao nhiêu cuộc gọi. Phiên bản 2.2.0 đọc lại độ dài của từng bản ghi mỗi lần vẽ danh sách, nên khi có vài chục cuộc gọi thì danh sách chậm tới mức một cuộc gọi được ghi vài phút trước trông như thể chưa từng được ghi.\n\nCảnh báo rằng các bản ghi đã ngừng đến Google Drive không còn xuất hiện khi điều đó không đúng. Hai người đã được báo là sao lưu thất bại trong khi mọi bản ghi vẫn đến hoàn toàn bình thường.\n\nCác tiêu đề bên trong bản chép lời đã xuất, số ứng dụng được chọn và nút quay lại giờ đây theo ngôn ngữ bạn đã chọn thay vì giữ nguyên tiếng Anh. Báo cáo gỡ lỗi cũng có thể cho biết ứng dụng nào đang giữ micrô, cho một vấn đề đang tỏ ra khó bắt tận tay.</string>
     <string name="whatsnew_221_title">Mở nhanh hơn, và ít báo động về những vấn đề không tồn tại</string>
+    <string name="offline_failed_no_wifi">Không bật được — bạn chưa kết nối Wi-Fi. Hãy kết nối một lần với bất kỳ mạng Wi-Fi nào rồi thử lại.</string>
+    <string name="offline_failed_wd_refused">Không bật được — Android không cho phép gỡ lỗi không dây trên mạng này. Hãy bật nó một lần trong Tùy chọn cho nhà phát triển, chấp nhận lời nhắc rồi thử lại.</string>
 </resources>
