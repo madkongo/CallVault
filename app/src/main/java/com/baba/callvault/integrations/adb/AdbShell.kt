@@ -38,6 +38,9 @@ object AdbShell {
     /** How long Wireless debugging stays off in a restart cycle, so AdbService sees a real change. */
     private const val WD_CYCLE_OFF_MS = 1_500L
 
+    /** How long a debugging-switch change gets to finish before adbd is started again. */
+    private const val REVIVE_SETTLE_MS = 2_000L
+
     /** How long to wait for adbd to report running after a revival. */
     private const val ADBD_REVIVE_WAIT_MS = 5_000L
     /** Time to let adbd restart into tcp mode after opening the `tcpip:` service, before reconnecting. */
@@ -170,13 +173,22 @@ object AdbShell {
      * @return what was decided, for the caller's log.
      */
     fun reviveAdbdIfStopped(context: Context, reason: String): AdbdRevival {
-        val decision = AdbdRevivalPolicy.decide(
+        fun decideNow() = AdbdRevivalPolicy.decide(
             adbd = adbdState(),
             usbDebuggingOn = isUsbDebuggingEnabled(context),
             wirelessDebuggingOn = isWirelessDebuggingEnabled(context),
             wifi = WifiState.of(context),
             hasGrant = hasWriteSecureSettings(context),
         )
+        var decision = decideNow()
+        if (decision == AdbdRevival.ENABLE_WIRELESS_DEBUGGING || decision == AdbdRevival.CYCLE_WIRELESS_DEBUGGING) {
+            // Let a USB change that may still be running finish first, then look again. Starting adbd inside
+            // it loses a race measured on the emulator (24 ms wide): init stops the adbd we just started.
+            // Every caller can reach here within milliseconds of the change — the keep-alive's binder-death
+            // relaunch does — so the wait lives here rather than in any one caller.
+            Thread.sleep(REVIVE_SETTLE_MS)
+            decision = decideNow()
+        }
         when (decision) {
             AdbdRevival.NOTHING -> return decision
             AdbdRevival.NEEDS_WIFI, AdbdRevival.NO_GRANT -> {

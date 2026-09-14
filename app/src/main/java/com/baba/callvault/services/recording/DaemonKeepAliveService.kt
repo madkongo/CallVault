@@ -499,7 +499,11 @@ class DaemonKeepAliveService : Service() {
         // useless exactly when it mattered: the data mode kills the daemon, the dead daemon reads as
         // not-ready, and not-ready hid the warning. See [UsbDefaultConfig.noticeFor].
         val usbNotice = UsbDefaultConfig.noticeFor(UsbDefaultConfig.cached(this), ready)
-        if (usbNotice != UsbNotice.NONE) {
+        // Except when recording is down for a named reason: then that reason is the only thing worth the
+        // collapsed line. Measured on the emulator — "USB debugging is off and there's no Wi-Fi" was hidden
+        // behind the screen-lock tip, which is about a recording that cannot happen anyway.
+        val recordingDown = notice != ReadinessNotice.READY && notice != ReadinessNotice.STARTING
+        if (usbNotice != UsbNotice.NONE && !recordingDown) {
             val warning = getString(
                 when (usbNotice) {
                     UsbNotice.DATA_MODE_RISK -> R.string.notif_usb_lock_warning
