@@ -32,7 +32,12 @@ class WirelessDebuggingActionReceiver : BroadcastReceiver() {
             try {
                 val on = AdbShell.asUserRequest { AdbShell.enableWirelessDebugging(app) }
                 AppLogger.i(TAG, "User asked to turn Wireless debugging back on: ${if (on) "on" else "refused (see the log above)"}")
-                if (on) runCatching { RecorderBackend.ensureRunning(app) }
+                if (on) {
+                    runCatching { RecorderBackend.ensureRunning(app) }
+                    // Refresh the notification now; left to the next keep-alive tick it went on saying
+                    // "keeps failing to start" for ~15 s while the recorder was already back.
+                    runCatching { DaemonKeepAliveService.start(app) }
+                }
             } finally {
                 pending.finish()
             }

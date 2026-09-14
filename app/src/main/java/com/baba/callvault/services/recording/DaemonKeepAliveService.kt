@@ -213,7 +213,10 @@ class DaemonKeepAliveService : Service() {
             if (on) {
                 // On again, by anyone: nothing left to respect.
                 prefs.setWirelessDebuggingTurnedOffByUser(false)
-                updateNotification(isDaemonAlive())
+                val alive = isDaemonAlive()
+                updateNotification(alive)
+                // If recording was paused waiting for this switch, resume now rather than at the next tick.
+                if (!alive) maybeRewarm(force = true)
                 if (AdbShell.didWeJustSetWirelessDebugging(enabled = true)) return
                 prefs.setWirelessDebuggingEnabledByUs(false)
                 AppLogger.i(TAG, "Wireless debugging switched on by hand; it is the user\'s to manage")
@@ -389,6 +392,15 @@ class DaemonKeepAliveService : Service() {
     private fun maybeRewarm(force: Boolean = false) {
         val offline = runCatching { AppPreferences(this).isOfflineRecordingEnabled() }.getOrDefault(false)
         if (!offline && !isWifiConnected()) return // the WD relaunch path needs Wi-Fi; loopback doesn't
+        // Nothing to try while recovery is known to be impossible — the user turned the only way in off, or
+        // USB debugging is off with no Wi-Fi. Seen on the emulator: the launcher retried every 12 s, logging a
+        // refusal each time, for as long as the switch stayed off. The switch observer comes back here the
+        // moment either switch changes, and the watchdog still ticks for Wi-Fi returning.
+        val known = ReadinessNoticeText.current(this, ready = false)
+        if (known == ReadinessNotice.WD_OFF_BY_USER || known == ReadinessNotice.NEEDS_WIFI) {
+            updateNotification(false)
+            return
+        }
         // Checked AFTER the Wi-Fi guard so a relaunch we never attempt does not consume the throttle.
         if (!rewarmGate.tryEnter(SystemClock.elapsedRealtime(), force)) return
         Thread {
@@ -538,6 +550,8 @@ class DaemonKeepAliveService : Service() {
         // collapsed line. Measured on the emulator — "USB debugging is off and there's no Wi-Fi" was hidden
         // behind the screen-lock tip, which is about a recording that cannot happen anyway.
         val noticeOwnsLine = notice != ReadinessNotice.READY && notice != ReadinessNotice.STARTING
+        // The reason is the whole message; don't let the collapsed line cut it off (it read "Turn it ba…").
+        if (noticeOwnsLine) builder.setStyle(NotificationCompat.BigTextStyle().bigText(baseText))
         if (notice == ReadinessNotice.WD_OFF_BY_USER) {
             builder.addAction(
                 0,

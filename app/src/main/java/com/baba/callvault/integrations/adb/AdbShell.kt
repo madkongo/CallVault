@@ -190,6 +190,10 @@ object AdbShell {
                 mayEnable = mayEnable && !userOff,
             )
         }
+        // One revival at a time. The switch observer and the keep-alive both reach here within milliseconds of
+        // USB debugging going off; seen on the emulator, both switched Wireless debugging on at once. The second
+        // now waits, looks again, and finds adbd running.
+        synchronized(reviveLock) {
         var decision = decideNow()
         if (decision == AdbdRevival.ENABLE_WIRELESS_DEBUGGING || decision == AdbdRevival.CYCLE_WIRELESS_DEBUGGING) {
             // Let a USB change that may still be running finish first, then look again. Starting adbd inside
@@ -227,7 +231,11 @@ object AdbShell {
         }
         AppLogger.i(TAG, "adbd after revival ($decision): ${adbdState()}")
         return decision
+        }
     }
+
+    /** Serialises [reviveAdbdIfStopped]. Its own lock, so a revival never blocks unrelated ADB work. */
+    private val reviveLock = Any()
 
     /** Reads a system property via the hidden `SystemProperties.get` (reflection; public SDK-safe). */
     private fun getSystemProperty(key: String): String = runCatching {
