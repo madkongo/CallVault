@@ -47,7 +47,7 @@ reading **on** and nothing listening — exactly what R2 + R9 produce, and what 
 | **USB on + off-Wi-Fi recording** | ✅ | ✅ | ✅ (app flips Wireless debugging on/off) | ✅ over the loopback, <1 s | T2 ✅, T5b ✅ |
 | USB on, no off-Wi-Fi recording | ✅ | ✅ while the recorder stays alive | ✅ 4 s | ❌ until Wi-Fi returns, then ✅ by itself (36 s) | T2 ✅, T3 ❌, T4 ✅ |
 | USB off, Wireless debugging on | ✅ | ❌ Android turns Wireless debugging off → `adbd` stops | ✅ | ❌ | OP9 ✅ on Wi-Fi |
-| Both off | ❌ | ❌ | app can switch Wireless debugging on (trusted Wi-Fi) | ❌ | T6a ❌ in 2.3.0 (R9) |
+| Both off | ❌ | ❌ | app switches Wireless debugging on after a 2 s settle | ❌ | 2.3.0 T6a ❌ · fix T6a ✅ |
 | Off-Wi-Fi recording with USB off | — | ❌ always (R7) | — | — | by rule |
 
 **Transitions:**
@@ -56,17 +56,18 @@ reading **on** and nothing listening — exactly what R2 + R9 produce, and what 
 |---|---|---|
 | turns Wireless debugging off, USB on | nothing; `adbd` pid unchanged, recorder alive | T1 ✅ |
 | turns USB debugging off (any state) | `adbd` stops, recorder dies (R2) | T7 ✅, T9 ✅ |
-| turns USB debugging off, Wi-Fi available | 2.3.0 does **not** recover (it only reacts when both are off, and then loses R9) | T6a ❌, T7 ❌ |
+| turns USB debugging off, Wi-Fi available | 2.3.0 does **not** recover (it only reacts when both are off, and then loses R9). **Fix build: back in 4.6 s (WD on) / 5 s (both off), USB debugging stays off** | 2.3.0: T6a ❌, T7 ❌, OP9 ❌ · fix: T7 ✅, T6a ✅ |
 | cycles Wireless debugging by hand afterwards | recovers | OP9 ✅ |
 | loses Wi-Fi, USB on, off-Wi-Fi recording armed | recorder keeps running and restarts over the loopback | T5b ✅ |
 
-## What the app must do (fix list, in progress on `fix/adb-transport-dead-ends`)
+## What the app does now (`fix/adb-transport-dead-ends`, 🧪 not on any user's phone yet)
 
 1. After USB debugging turns off, wait for the USB change to settle, then check `init.svc.adbd`. If it is not
    running and Wi-Fi is up: switch Wireless debugging on (if off) or off-and-on (if on). R2, R3, R9.
 2. Never write Wireless debugging on without Wi-Fi (built, R4). Read the write back (built, R5).
-3. The notification may only say "starting up" while a restart is possible: no Wi-Fi and no armed loopback
-   means it is not (T3 gap in the first build).
+3. The notification may only say "starting up" while a restart is possible. ✅ emulator: with USB off and no
+   Wi-Fi it read "Calls aren't being recorded — USB debugging is off and there's no Wi-Fi. Connect to Wi-Fi, or
+   turn USB debugging on." (The collapsed line was first hidden by the screen-lock tip; fixed, not re-shot.)
 4. Warn before USB debugging is turned off from our own settings (built; dialog verified on the emulator).
 
 ## Things found on the way, not yet fixed
@@ -74,9 +75,10 @@ reading **on** and nothing listening — exactly what R2 + R9 produce, and what 
 - After the user accepts Android's "trust this network" prompt, CallVault treats Wireless debugging as the
   user's and never switches it back off, even with USB debugging on. First setup can leave it on for good.
 - The launcher retries three times in two seconds after a refusal, re-raising the trust prompt each time.
-- The in-app USB-debugging switch does not follow the real setting when it changes elsewhere.
 - Onboarding step 4 says "Opus at 16 kbps is recommended"; the recommended setting is 24 kbps.
-- The new dialog's USB icon renders coral (the M3-default colour trap).
+
+Fixed since first written: the in-app USB-debugging switch now follows the real setting (✅ emulator, it read
+off while USB debugging was off); the warning dialog's icon is tinted explicitly (not re-shot).
 
 ## Limits of these tests
 
