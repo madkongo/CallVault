@@ -1,7 +1,7 @@
 # 2026-09-15 — OP12 stuck on "starting up" for ~6 h: a thread parked inside libadb holds its lock
 
-Status: 🧪 VERIFYING — diagnosis from live device state; no fix built yet. Settled when a fix is on the
-OP12 and the maintainer sees a call after an off-Wi-Fi trip record.
+Status: 🧪 VERIFYING — diagnosis from live device state; fix built and tested off-device (see "Fix" at the
+end). Settled when the fix is on the OP12 and the maintainer sees a call after an off-Wi-Fi trip record.
 
 ## What the maintainer saw
 
@@ -49,7 +49,7 @@ happening, so this build is the prime suspect. The follow-up sweep is
 `2026-09-15-wedge-regression-and-app-flow-map.md`. Wi-Fi loss itself did not start it — the wedge
 began about an hour after Wi-Fi was lost.
 
-## Fix direction (not started)
+## Fix direction (as first proposed; what was built is under "Fix" below — the singleton swap was not needed)
 
 1. Interrupt, don't just abandon: every bounded ADB worker (`probeShellOnce`, `connectBounded`,
    `launchDaemonBounded`, `refreshUsbDefaultBounded`, `armFireThread`) interrupts its thread on timeout.
