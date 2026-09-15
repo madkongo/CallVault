@@ -215,9 +215,12 @@ class DaemonKeepAliveService : Service() {
                 prefs.setWirelessDebuggingTurnedOffByUser(false)
                 val alive = isDaemonAlive()
                 updateNotification(alive)
-                // If recording was paused waiting for this switch, resume now rather than at the next tick.
-                if (!alive) maybeRewarm(force = true)
+                // CallVault writes the switch on only from inside a launch or a revival that goes on to launch, so
+                // a forced relaunch here would start a second one alongside it — and a relaunch that overruns drops
+                // the ADB connection the first is using.
                 if (AdbShell.didWeJustSetWirelessDebugging(enabled = true)) return
+                // The user's switch. If recording was paused waiting for it, resume now rather than at the next tick.
+                if (!alive) maybeRewarm(force = true)
                 prefs.setWirelessDebuggingEnabledByUs(false)
                 AppLogger.i(TAG, "Wireless debugging switched on by hand; it is the user\'s to manage")
                 return
@@ -245,10 +248,29 @@ class DaemonKeepAliveService : Service() {
                             if (prefs.isWirelessDebuggingEnforced()) "the override setting is on, so CallVault may switch it back on"
                             else "CallVault will leave it off",
                     )
+                    // Android can write the switch off a moment before Wi-Fi is reported gone, which reads exactly
+                    // like a tap. Respect it at once, then look again once the network has settled.
+                    watchdogHandler.removeCallbacks(recheckWirelessDebuggingOffCause)
+                    watchdogHandler.postDelayed(recheckWirelessDebuggingOffCause, WD_OFF_RECHECK_MS)
                 }
             }
             updateNotification(isDaemonAlive())
         }
+    }
+
+    /**
+     * Takes back a "switched off by hand" that was really Wi-Fi going away.
+     *
+     * Left standing, it held recovery back for good: the keep-alive stands down while the user's switch is
+     * respected, and nothing but the user switching it on again cleared it.
+     */
+    private val recheckWirelessDebuggingOffCause = Runnable {
+        val prefs = AppPreferences(applicationContext)
+        if (!prefs.wasWirelessDebuggingTurnedOffByUser()) return@Runnable
+        if (WifiState.of(applicationContext) != WifiState.NOT_CONNECTED) return@Runnable
+        AppLogger.i(TAG, "Wi-Fi went away with Wireless debugging; that was Android switching it off, not the user")
+        prefs.setWirelessDebuggingTurnedOffByUser(false)
+        updateNotification(isDaemonAlive())
     }
 
     /**
@@ -451,15 +473,19 @@ class DaemonKeepAliveService : Service() {
 
                 RecoveryStep.CONNECT -> Unit
             }
-            val ok = try {
+            val outcome = try {
                 launchDaemonBounded()
             } finally {
                 // ALWAYS release, even if the bounded launch threw. The gate expiring is the safety net;
                 // this is the normal path, and leaving it to the net would cost a whole stuck window.
                 rewarmGate.leave()
             }
-            // Feed the outcome back so a run of failures escalates instead of repeating unchanged.
+            val ok = outcome == LaunchOutcome.CONNECTED
+            // Feed the outcome back so a run of failures escalates instead of repeating unchanged. This comes
+            // BEFORE the rescue below on purpose: on 2026-09-14 the rescue itself blocked, this line was never
+            // reached, and six hours of relaunches never once escalated or told the user.
             if (ok) recoveryPolicy.onAttemptSucceeded() else recoveryPolicy.onAttemptFailed()
+            if (outcome == LaunchOutcome.TIMED_OUT) AdbShell.dropConnection(applicationContext)
             // Flip the notification to "ready" the INSTANT the relaunch succeeds — don't wait for the next
             // 60s watchdog tick. Without this the daemon reconnects in seconds but the user would still see
             // "starting up" for up to a minute (a perceived-but-false slow recovery).
@@ -476,11 +502,12 @@ class DaemonKeepAliveService : Service() {
      * device ~21 hours of silently missed recordings — one hung call latched the old `rewarming` flag
      * and the watchdog never relaunched again.
      *
-     * On timeout the worker is abandoned (it is a daemon thread) and the ADB connection is dropped, which
-     * unblocks its read so it can die and release the lock. Without that drop the abandoned thread keeps
+     * On timeout the worker is abandoned (it is a daemon thread), its stack goes to the log, and the caller
+     * — after recording the failure — drops the ADB connection, which unblocks its read so it can die and
+     * release the lock. Without that drop the abandoned thread keeps
      * `heavyOperationLock` and every later attempt piles up behind it — bounded, but never succeeding.
      */
-    private fun launchDaemonBounded(): Boolean {
+    private fun launchDaemonBounded(): LaunchOutcome {
         val ok = java.util.concurrent.atomic.AtomicBoolean(false)
         val worker = Thread {
             ok.set(
@@ -495,13 +522,16 @@ class DaemonKeepAliveService : Service() {
             AppLogger.w(
                 TAG,
                 "keep-alive: relaunch still blocked after ${LAUNCH_BUDGET_MS}ms — abandoning it and " +
-                    "dropping the ADB connection so it can unwind and free the lock",
+                    "dropping the ADB connection so it can unwind and free the lock. It is parked at:\n" +
+                    worker.stackTrace.take(STACK_FRAMES_LOGGED).joinToString("\n") { "    at $it" },
             )
-            AdbShell.dropConnection(applicationContext)
-            return false
+            return LaunchOutcome.TIMED_OUT
         }
-        return ok.get()
+        return if (ok.get()) LaunchOutcome.CONNECTED else LaunchOutcome.FAILED
     }
+
+    /** How a bounded relaunch ended. A timeout also needs its ADB connection dropped. */
+    private enum class LaunchOutcome { CONNECTED, FAILED, TIMED_OUT }
 
     private fun isWifiConnected(): Boolean = runCatching {
         val cm = getSystemService(ConnectivityManager::class.java) ?: return false
@@ -653,6 +683,12 @@ class DaemonKeepAliveService : Service() {
 
         /** Low-importance channel for one-off explanations, kept apart from the permanent status note. */
         private const val NOTIF_ID = SharedStatusNotice.ID
+
+        /** How long after a "switched off by hand" Wi-Fi is looked at again, in case its loss was the real cause. */
+        private const val WD_OFF_RECHECK_MS = 3_000L
+
+        /** Frames of a stuck relaunch's stack written to the log — enough to name the lock it waits on. */
+        private const val STACK_FRAMES_LOGGED = 14
 
         /** How often the watchdog checks the daemon is alive. Cheap (a binder ping). */
         private const val WATCHDOG_INTERVAL_MS = 60_000L

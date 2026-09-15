@@ -248,6 +248,9 @@ object RecorderServerLauncher {
         worker.start()
         runCatching { worker.join(USB_REFRESH_TIMEOUT_MS) }
         if (worker.isAlive) {
+            // Interrupt rather than only abandon: its read waits interruptibly, and an abandoned one never ended —
+            // two were still parked on the OP12 hours later.
+            worker.interrupt()
             AppLogger.w(TAG, "USB-default refresh still blocked after ${USB_REFRESH_TIMEOUT_MS}ms; continuing (stale value)")
         }
     }

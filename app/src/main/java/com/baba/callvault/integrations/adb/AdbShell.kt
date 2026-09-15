@@ -57,6 +57,8 @@ object AdbShell {
     private const val SHELL_PROBE_TOKEN = "cv_shell_ok"
     /** Poll interval between shell-readiness probes while adbd is coming back after a restart. */
     private const val SHELL_PROBE_INTERVAL_MS = 400L
+    /** How long a rescue waits to drop the ADB connection before leaving it to finish on its own. */
+    private const val DROP_BUDGET_MS = 3_000L
     /** Hard cap per shell probe so a half-open (mid-restart) adbd connection can never hang the caller. */
     private const val SHELL_PROBE_CAP_MS = 1500L
 
@@ -347,8 +349,19 @@ object AdbShell {
      * [ensureConnected], and reconnecting here would re-enter the code we are escaping.
      */
     fun dropConnection(context: Context) {
-        runCatching { AdbConnectionManager.getInstance(context).disconnect() }
-            .onFailure { AppLogger.d(TAG, "dropConnection ignored: ${it.message}") }
+        // Bounded as well: `disconnect()` takes libadb's connection lock, and a caller parked inside the library
+        // can hold that lock. On 2026-09-14 this call blocked 134 times in a row, so the keep-alive never learnt
+        // its relaunches were failing. Stream opens are now bounded in [AdbConnectionManager], so the lock comes
+        // back within seconds; this bound is for whatever else might still hold it.
+        val worker = Thread {
+            runCatching { AdbConnectionManager.getInstance(context).disconnect() }
+                .onFailure { AppLogger.d(TAG, "dropConnection ignored: ${it.message}") }
+        }.apply { isDaemon = true; name = "cv-adb-drop" }
+        worker.start()
+        runCatching { worker.join(DROP_BUDGET_MS) }
+        if (worker.isAlive) {
+            AppLogger.w(TAG, "Dropping the ADB connection is still blocked after ${DROP_BUDGET_MS}ms; leaving it to finish on its own")
+        }
     }
 
     /**
@@ -408,6 +421,8 @@ object AdbShell {
         t.join(SHELL_PROBE_CAP_MS)
         if (t.isAlive) {
             runCatching { streamRef.get()?.close() } // unblock the hung read so the abandoned thread dies
+            // No stream yet if it is still inside the open: interrupting is what gets it out of libadb's wait.
+            t.interrupt()
             return false
         }
         return ok.get()
@@ -484,6 +499,7 @@ object AdbShell {
         runCatching { worker.join(CONNECT_BUDGET_MS) }
         if (worker.isAlive) {
             AppLogger.w(TAG, "$what did not complete the ADB handshake within ${CONNECT_BUDGET_MS}ms (adbd restarting?) — abandoning this attempt")
+            worker.interrupt() // the handshake waits interruptibly; out of it, the thread frees libadb's lock
             runCatching { AdbConnectionManager.getInstance(context).disconnect() }
             return false
         }
