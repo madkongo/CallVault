@@ -12,12 +12,15 @@ import android.content.Context
 import android.os.Build
 import android.util.Base64
 import android.util.Log
+import com.baba.callvault.utils.AppLogger
 import io.github.muntashirakon.adb.AbsAdbConnectionManager
+import io.github.muntashirakon.adb.AdbStream
 import org.bouncycastle.asn1.x509.X509Name
 import org.bouncycastle.x509.X509V3CertificateGenerator
 import java.io.File
 import java.io.FileInputStream
 import java.io.FileOutputStream
+import java.io.IOException
 import java.math.BigInteger
 import java.security.KeyFactory
 import java.security.KeyPairGenerator
@@ -27,6 +30,9 @@ import java.security.cert.Certificate
 import java.security.cert.CertificateFactory
 import java.security.spec.PKCS8EncodedKeySpec
 import java.util.Date
+import java.util.concurrent.Executors
+import java.util.concurrent.TimeUnit
+import java.util.concurrent.atomic.AtomicInteger
 
 /**
  * AdbConnectionManager provides a persisted cryptographic identity (RSA-2048 key + self-signed X.509
@@ -50,6 +56,10 @@ class AdbConnectionManager private constructor(context: Context) : AbsAdbConnect
 
     private val privateKey: PrivateKey
     private val certificate: Certificate
+
+    /** How long a stream open may wait for adbd's answer. Settable for tests. */
+    @Volatile
+    internal var openBudgetMs: Long = DEFAULT_OPEN_BUDGET_MS
 
     init {
         // Tell the library which Android API level we're running on; it selects TLS vs plain TCP.
@@ -90,6 +100,60 @@ class AdbConnectionManager private constructor(context: Context) : AbsAdbConnect
     /** Human-readable device name shown in the ADB authorisation dialog on the target device. */
     override fun getDeviceName(): String = DEVICE_NAME
 
+    // ---- Bounded stream opens ----
+
+    override fun openStream(destination: String): AdbStream =
+        openBounded(destination) { super.openStream(destination) }
+
+    override fun openStream(service: Int, vararg args: String): AdbStream =
+        openBounded("service $service") { super.openStream(service, *args) }
+
+    /**
+     * Runs a library stream open under [openBudgetMs], interrupting the caller if adbd never answers.
+     *
+     * **Why.** libadb's `AdbConnection.open()` sends OPEN and then waits for the OKAY with no timeout and no
+     * condition, while `AbsAdbConnectionManager` holds its connection lock. A lost wakeup, or a reader thread
+     * that died just before the stream was registered, parks that caller forever — and `isConnected`,
+     * `connect` and `disconnect` all need the same lock. On 2026-09-14 one shell probe parked like that took
+     * the OP12's recorder down for six hours: every relaunch, and the keep-alive's own rescue, queued behind
+     * it. Closing the stream from outside cannot help, because the caller has no stream until `open` returns.
+     *
+     * Interrupting works where closing cannot: `Object.wait()` throws, the library unwinds out of its lock,
+     * and every queued caller proceeds. The connection that swallowed an OPEN is not trusted again — it is
+     * dropped on a separate thread once the lock is free, so the next caller builds a fresh one.
+     */
+    private fun openBounded(what: String, open: () -> AdbStream): AdbStream {
+        val caller = Thread.currentThread()
+        val state = AtomicInteger(OPEN_RUNNING)
+        val budget = openBudgetMs
+        val watchdog = openWatchdog.schedule({
+            if (state.compareAndSet(OPEN_RUNNING, OPEN_TIMED_OUT)) {
+                AppLogger.w(TAG, "adbd did not answer an open of '$what' within ${budget}ms — interrupting ${caller.name} to release the connection lock")
+                caller.interrupt()
+            }
+        }, budget, TimeUnit.MILLISECONDS)
+        try {
+            return open()
+        } catch (e: InterruptedException) {
+            if (state.get() != OPEN_TIMED_OUT) throw e
+            dropUnansweredConnection()
+            throw IOException("adbd did not answer an open of '$what' within ${budget}ms", e)
+        } finally {
+            watchdog.cancel(false)
+            // Lost the race: the watchdog interrupted just as the open returned. Do not leak that interrupt
+            // into the caller's next sleep or wait.
+            if (!state.compareAndSet(OPEN_RUNNING, OPEN_DONE)) Thread.interrupted()
+        }
+    }
+
+    /** Drops the connection that swallowed an OPEN, off the caller's thread (closing joins the reader). */
+    private fun dropUnansweredConnection() {
+        Thread {
+            runCatching { disconnect() }
+                .onFailure { AppLogger.d(TAG, "Dropping the unanswered connection failed: ${it.message}") }
+        }.apply { isDaemon = true; name = "cv-adb-drop-unanswered" }.start()
+    }
+
     // ---- Singleton ----
 
     companion object {
@@ -101,6 +165,22 @@ class AdbConnectionManager private constructor(context: Context) : AbsAdbConnect
         /** Upper bound for a single connect() handshake (WD TLS or plain loopback). Generous for TLS,
          *  but finite so a stalled handshake fails instead of hanging the recording/arming path. */
         private const val CONNECT_TIMEOUT_SECONDS = 20L
+
+        /**
+         * Longest a stream open waits for adbd's OKAY. A healthy local open answers in milliseconds; the slow
+         * ones are `tcpip:`/`usb:`, where adbd restarts instead of answering, and their callers already give
+         * up after 3 s.
+         */
+        internal const val DEFAULT_OPEN_BUDGET_MS = 5_000L
+
+        private const val OPEN_RUNNING = 0
+        private const val OPEN_DONE = 1
+        private const val OPEN_TIMED_OUT = 2
+
+        /** One daemon thread times every open; its tasks only flip a flag and interrupt. */
+        private val openWatchdog = Executors.newSingleThreadScheduledExecutor { r ->
+            Thread(r, "cv-adb-open-watchdog").apply { isDaemon = true }
+        }
 
         private const val PRIVATE_KEY_FILE = "adbkey"
         private const val CERTIFICATE_FILE = "adbkey.pem"
