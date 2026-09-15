@@ -249,7 +249,10 @@ class DaemonKeepAliveService : Service() {
                             else "CallVault will leave it off",
                     )
                     // Android can write the switch off a moment before Wi-Fi is reported gone, which reads exactly
-                    // like a tap. Respect it at once, then look again once the network has settled.
+                    // like a tap. Measured on the OP9 (2026-09-15): Wi-Fi off, Android's "Disabling adbwifi" 0.18 s
+                    // later, and this branch still saw Wi-Fi connected. Respect it at once, then look again once the
+                    // network has settled. The cost: a user who switches it off and loses Wi-Fi within the recheck
+                    // window is taken for Android — far rarer than every Wi-Fi drop being taken for the user.
                     watchdogHandler.removeCallbacks(recheckWirelessDebuggingOffCause)
                     watchdogHandler.postDelayed(recheckWirelessDebuggingOffCause, WD_OFF_RECHECK_MS)
                 }
