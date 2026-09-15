@@ -101,3 +101,9 @@ maintainer's daily use, including an off-Wi-Fi trip.
 **Maintainer report 2026-09-15 ~10:35** (🧪, not yet a verdict): with this build, Wi-Fi off → calls →
 Wi-Fi on → calls all recorded. A quick toggle cannot exercise the lost-wakeup race; the day-long use
 including time off Wi-Fi is still outstanding.
+
+**OP12 install 2026-09-15 16:31 — stereo probe removed** (🧪): at the maintainer's request (stereo is on hold,
+see `2026-09-15-mono-vs-stereo-setting-investigation.md`), `fix/adb-open-lock-wedge` HEAD (fix branch only,
+mono recordings as released) installed over the probe build. Installed APK sha256 prefix b605d481e2e7bc41
+matches the build. Recorder connected over loopback in 4 s; notice reached "Ready to record calls" at
+16:32:51, ~60 s after install (the known post-update notice lag). Awaiting the maintainer's check.
