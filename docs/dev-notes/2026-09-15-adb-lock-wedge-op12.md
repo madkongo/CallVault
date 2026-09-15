@@ -92,3 +92,8 @@ Not done (fix plan steps 4–6 of the sweep): bounded call-start lock, fewer str
 "can't record" by down-duration. Open finding: on the OP9 an install-over with no ADB transport (WD
 respected off, no loopback) could not kill the previous install's recorder, which kept running old code
 until WD came back.
+
+**OP12 install 2026-09-15 10:21** (🧪): `build/op12-probe-plus-wedge-fix` installed over the old build after a
+WhatsApp call ended (MODE_NORMAL, mCallState=0). Recorder reconnected over loopback :51392 in 3.4 s; grant
+kept; switches unchanged (USB on, WD off, loopback armed); notice "Ready to record calls". Awaiting the
+maintainer's daily use, including an off-Wi-Fi trip.
