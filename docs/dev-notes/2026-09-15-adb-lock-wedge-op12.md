@@ -97,3 +97,7 @@ until WD came back.
 WhatsApp call ended (MODE_NORMAL, mCallState=0). Recorder reconnected over loopback :51392 in 3.4 s; grant
 kept; switches unchanged (USB on, WD off, loopback armed); notice "Ready to record calls". Awaiting the
 maintainer's daily use, including an off-Wi-Fi trip.
+
+**Maintainer report 2026-09-15 ~10:35** (🧪, not yet a verdict): with this build, Wi-Fi off → calls →
+Wi-Fi on → calls all recorded. A quick toggle cannot exercise the lost-wakeup race; the day-long use
+including time off Wi-Fi is still outstanding.
