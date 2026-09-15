@@ -120,18 +120,24 @@ class AdbConnectionManager private constructor(context: Context) : AbsAdbConnect
      *
      * Interrupting works where closing cannot: `Object.wait()` throws, the library unwinds out of its lock,
      * and every queued caller proceeds. The connection that swallowed an OPEN is not trusted again — it is
-     * dropped on a separate thread once the lock is free, so the next caller builds a fresh one.
+     * dropped before the failure is reported, so the next caller builds a fresh one.
      */
     private fun openBounded(what: String, open: () -> AdbStream): AdbStream {
         val caller = Thread.currentThread()
         val state = AtomicInteger(OPEN_RUNNING)
         val budget = openBudgetMs
-        val watchdog = openWatchdog.schedule({
-            if (state.compareAndSet(OPEN_RUNNING, OPEN_TIMED_OUT)) {
+        // Counts only time the caller spends NOT queued for the connection lock. A thread blocked on a monitor
+        // entry cannot be interrupted out of it, and an interrupt landed then is spent on its own open the moment
+        // it gets in — so an opener queued behind a stuck one would fail without ever having waited on adbd.
+        val tickMs = (budget / WATCHDOG_TICKS_PER_BUDGET).coerceAtLeast(1)
+        var waitedMs = 0L
+        val watchdog = openWatchdog.scheduleWithFixedDelay({
+            if (caller.state != Thread.State.BLOCKED) waitedMs += tickMs
+            if (waitedMs >= budget && state.compareAndSet(OPEN_RUNNING, OPEN_TIMED_OUT)) {
                 AppLogger.w(TAG, "adbd did not answer an open of '$what' within ${budget}ms — interrupting ${caller.name} to release the connection lock")
                 caller.interrupt()
             }
-        }, budget, TimeUnit.MILLISECONDS)
+        }, tickMs, tickMs, TimeUnit.MILLISECONDS)
         try {
             return open()
         } catch (e: InterruptedException) {
@@ -146,12 +152,19 @@ class AdbConnectionManager private constructor(context: Context) : AbsAdbConnect
         }
     }
 
-    /** Drops the connection that swallowed an OPEN, off the caller's thread (closing joins the reader). */
+    /**
+     * Drops the connection that swallowed an OPEN before the caller hears about it, so a caller that retries
+     * through `isConnected` sees a dead connection rather than the zombie. Closing joins the library's reader
+     * thread with no timeout, so it runs on its own thread under [DROP_UNANSWERED_BUDGET_MS]. The half-registered
+     * stream stays in the old connection's table; it goes when that connection object does.
+     */
     private fun dropUnansweredConnection() {
-        Thread {
+        val dropper = Thread {
             runCatching { disconnect() }
                 .onFailure { AppLogger.d(TAG, "Dropping the unanswered connection failed: ${it.message}") }
-        }.apply { isDaemon = true; name = "cv-adb-drop-unanswered" }.start()
+        }.apply { isDaemon = true; name = "cv-adb-drop-unanswered" }
+        dropper.start()
+        runCatching { dropper.join(DROP_UNANSWERED_BUDGET_MS) }
     }
 
     // ---- Singleton ----
@@ -173,11 +186,17 @@ class AdbConnectionManager private constructor(context: Context) : AbsAdbConnect
          */
         internal const val DEFAULT_OPEN_BUDGET_MS = 5_000L
 
+        /** How long a timed-out open waits for its connection to be dropped before reporting the failure. */
+        private const val DROP_UNANSWERED_BUDGET_MS = 2_000L
+
+        /** Watchdog resolution: it checks the caller this many times per budget. */
+        private const val WATCHDOG_TICKS_PER_BUDGET = 20L
+
         private const val OPEN_RUNNING = 0
         private const val OPEN_DONE = 1
         private const val OPEN_TIMED_OUT = 2
 
-        /** One daemon thread times every open; its tasks only flip a flag and interrupt. */
+        /** One daemon thread times every open; its tasks only count, flip a flag and interrupt. */
         private val openWatchdog = Executors.newSingleThreadScheduledExecutor { r ->
             Thread(r, "cv-adb-open-watchdog").apply { isDaemon = true }
         }
