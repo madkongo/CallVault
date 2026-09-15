@@ -190,7 +190,10 @@ object ShizukuBackend {
      * warning cleared, and the recorder never returned until the app process died.
      */
     fun onShizukuDied(): Unit = synchronized(bindLock) {
-        if (connection != null) AppLogger.i(TAG, "Shizuku died; dropping the stale recorder binding")
+        // Only a binding of ours is stale. With none, the recorder CallVault is talking to — in built-in mode, the
+        // ADB daemon — has nothing to do with Shizuku and must not be dropped because Shizuku's server went away.
+        if (connection == null) return@synchronized
+        AppLogger.i(TAG, "Shizuku died; dropping the stale recorder binding")
         connection = null
         RecorderConnection.onBinderDied()
     }
