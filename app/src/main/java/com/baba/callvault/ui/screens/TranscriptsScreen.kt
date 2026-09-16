@@ -47,9 +47,11 @@ import androidx.compose.ui.unit.dp
 import com.baba.callvault.R
 import com.baba.callvault.data.recordings.ImportedRecording
 import com.baba.callvault.data.recordings.RecordingsRepository.RecordingItem
+import com.baba.callvault.data.transcripts.LibraryRowActions
 import com.baba.callvault.data.transcripts.TranscriptStatus
 import com.baba.callvault.data.transcripts.TranscriptsPage
 import com.baba.callvault.data.transcripts.db.TranscriptEntry
+import com.baba.callvault.data.transcripts.export.TranscriptFormat
 import com.baba.callvault.ui.common.CvCard
 import com.baba.callvault.ui.common.CvScaffold
 import com.baba.callvault.ui.common.CvSectionHeader
@@ -103,6 +105,11 @@ import com.baba.callvault.ui.common.TranscriptAudio
  * @param onRetry    Try a failed one again.
  * @param onOpenAudio Opens a recording's own screen — used by the waiting group, where the audio is
  *                   still there and playing, sharing or deleting it are the other things to do.
+ * @param onShare    Sends one finished transcript's words to the share sheet.
+ * @param onSave     Writes one finished transcript out as a file in the chosen format.
+ * @param onDelete   Asks to delete one transcript's **text**. Never the recording — see
+ *                   [com.baba.callvault.data.transcripts.LibraryRowActions] for why a page about
+ *                   words does not offer to destroy audio.
  * @param onImport   Raises the file picker; the flag is true for "Transcribe only".
  * @param importing  True while a chosen file is being copied and checked. The card says so and
  *                   stops accepting taps: the copy is not instant for a long recording, and a second
@@ -121,6 +128,9 @@ fun TranscriptsScreen(
     onOpen: (String) -> Unit,
     onRetry: (String) -> Unit,
     onOpenAudio: (String) -> Unit,
+    onShare: (String) -> Unit,
+    onSave: (String, TranscriptFormat) -> Unit,
+    onDelete: (String) -> Unit,
     onImport: (transcribeOnly: Boolean) -> Unit,
     importing: Boolean,
     modifier: Modifier = Modifier,
@@ -212,6 +222,9 @@ fun TranscriptsScreen(
                     // nothing would read as the app having missed it.
                     onOpen = null,
                     onRetry = onRetry,
+                    onShare = onShare,
+                    onSave = onSave,
+                    onDelete = onDelete,
                     percentFor = transcribing::percentFor,
                 )
             }
@@ -234,6 +247,9 @@ fun TranscriptsScreen(
                     // user opened this heading to do.
                     onOpen = onRetry,
                     onRetry = onRetry,
+                    onShare = onShare,
+                    onSave = onSave,
+                    onDelete = onDelete,
                     percentFor = { 0 },
                 )
             }
@@ -251,6 +267,9 @@ fun TranscriptsScreen(
                 byName = byName,
                 onOpen = onOpen,
                 onRetry = onRetry,
+                onShare = onShare,
+                onSave = onSave,
+                onDelete = onDelete,
                 percentFor = { 0 },
             )
         }
@@ -311,6 +330,9 @@ private fun LazyListScope.transcriptRows(
     byName: Map<String, RecordingItem>,
     onOpen: ((String) -> Unit)?,
     onRetry: (String) -> Unit,
+    onShare: (String) -> Unit,
+    onSave: (String, TranscriptFormat) -> Unit,
+    onDelete: (String) -> Unit,
     percentFor: (String) -> Int,
 ) {
     items(entries, key = { it.displayName }) { entry ->
@@ -332,9 +354,20 @@ private fun LazyListScope.transcriptRows(
                 isImported = ImportedRecording.isImported(entry.displayName),
             ),
             onOpen = onOpen?.let { open -> { open(entry.displayName) } },
-            // Only where the row has a state worth drawing. A finished transcript needs no icon: the
-            // card is the affordance, and an "open" button on a card that opens says it twice.
-            trailing = if (status == TranscriptStatus.DONE) null else {
+            // A finished transcript needs no "open" icon — the card is the affordance, and a button
+            // on a card that opens says it twice — so its slot carries the overflow menu instead.
+            // Every other state keeps the one action it has: transcribe, in progress, or retry.
+            trailing = if (status == TranscriptStatus.DONE) {
+                {
+                    LibraryRowMenu(
+                        menu = LibraryRowActions.forTranscript(entry.state, hasAudio = item != null),
+                        formats = LibraryRowActions.formatsFor(LibraryRowActions.Page.Transcripts),
+                        onShare = { onShare(entry.displayName) },
+                        onSave = { format -> onSave(entry.displayName, format) },
+                        onDelete = { onDelete(entry.displayName) },
+                    )
+                }
+            } else {
                 {
                     TranscriptActionButton(
                         status = status,

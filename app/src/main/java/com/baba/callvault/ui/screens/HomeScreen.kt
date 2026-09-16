@@ -126,6 +126,8 @@ import com.baba.callvault.data.SpeakerNames
 import com.baba.callvault.data.transcripts.SpeakerTurnsRepository
 import com.baba.callvault.data.transcripts.LibraryCounts
 import com.baba.callvault.data.transcripts.SummariesPage
+import com.baba.callvault.data.transcripts.LibraryRowActions
+import com.baba.callvault.data.transcripts.db.TranscriptState
 import com.baba.callvault.data.transcripts.TranscriptRepository
 import com.baba.callvault.data.transcripts.TranscriptsPage
 import com.baba.callvault.data.waveform.RecordingExtrasRepository
@@ -293,6 +295,18 @@ fun HomeScreen(
         uiState.recordings + uiState.transcribeOnly
     }
 
+    /**
+     * What a library row is called, the same way every list and dialog names the same call.
+     *
+     * `forName` rather than the raw name when there is no catalog row, because a transcript can
+     * outlive its recording — every finished "Transcribe only" import does — and the raw name is
+     * three lines of stamp and marker where the row that opened it said "PTT-20260916-WA0007".
+     */
+    val libraryTitleOf: (String) -> String = { displayName ->
+        RecordingLabel.of(libraryRecordings.firstOrNull { it.displayName == displayName })
+            ?: RecordingLabel.forName(displayName)
+    }
+
     val playback by viewModel.playback.collectAsState()
 
     // Two separate flags, not one: the chooser is opened by the user tapping Support, the appeal
@@ -404,6 +418,17 @@ fun HomeScreen(
     val transcriptScope = rememberCoroutineScope()
     val mergeScope = rememberCoroutineScope()
     val listScope = rememberCoroutineScope()
+
+    /** The summary whose delete is awaiting confirmation, raised from a Summaries row's menu. */
+    var deleteSummaryFor by rememberSaveable { mutableStateOf<String?>(null) }
+
+    // Resolved in composition because that is the only place they can be: a row's Share and Save
+    // run from a click, outside composition, where stringResource cannot be called. Without them a
+    // shared transcript would name its two sides in English on a phone set to anything else, and a
+    // Markdown export would write its headings in English under a screen showing them translated —
+    // the defect the reading view's own export already records.
+    val librarySpeakerLabels = rememberLibrarySpeakerLabels()
+    val libraryExportLabels = rememberExportLabels()
     LaunchedEffect(uiState.recordings.size) { mergedCounts = viewModel.mergedCounts() }
 
     /**
@@ -887,6 +912,34 @@ fun HomeScreen(
             // playing, sharing and deleting it live. Setting playbackFor directly rather than
             // changing section — the recording is deliberately not in Recordings to go back to.
             onOpenAudio = { displayName -> playbackFor = displayName },
+            onShare = { displayName ->
+                transcriptScope.launch {
+                    shareLibraryRow(
+                        context = context,
+                        page = LibraryRowActions.Page.Transcripts,
+                        displayName = displayName,
+                        title = libraryTitleOf(displayName),
+                        speakers = librarySpeakerLabels,
+                        exportLabels = libraryExportLabels,
+                    )
+                }
+            },
+            onSave = { displayName, format ->
+                transcriptScope.launch {
+                    saveLibraryRow(
+                        context = context,
+                        displayName = displayName,
+                        title = libraryTitleOf(displayName),
+                        format = format,
+                        speakers = librarySpeakerLabels,
+                        exportLabels = libraryExportLabels,
+                    )
+                }
+            },
+            // The TEXT, never the recording — and the same state, dialog and delete the reading
+            // view's own "Delete text" raises, so there is one transcript delete in the app rather
+            // than a second one that could come to disagree about what it takes.
+            onDelete = { displayName -> deleteTranscriptFor = displayName },
             // The same two answers the share card offers, in the same words. One door asking a
             // question the other does not would make the answer look like a property of how the
             // file arrived, when it is a property of what the user wants from it.
@@ -937,6 +990,34 @@ fun HomeScreen(
                 readingFor = displayName
                 readingFromSummary = true
             },
+            onShare = { displayName ->
+                transcriptScope.launch {
+                    shareLibraryRow(
+                        context = context,
+                        page = LibraryRowActions.Page.Summaries,
+                        displayName = displayName,
+                        title = libraryTitleOf(displayName),
+                        speakers = librarySpeakerLabels,
+                        exportLabels = libraryExportLabels,
+                    )
+                }
+            },
+            onSave = { displayName, format ->
+                transcriptScope.launch {
+                    saveLibraryRow(
+                        context = context,
+                        displayName = displayName,
+                        title = libraryTitleOf(displayName),
+                        format = format,
+                        speakers = librarySpeakerLabels,
+                        exportLabels = libraryExportLabels,
+                    )
+                }
+            },
+            // The summary alone. Never TranscriptCascade, which would take the transcript, the note
+            // and the tags with it — the text the summary was written FROM, thrown away because
+            // somebody disliked the write-up of it.
+            onDelete = { displayName -> deleteSummaryFor = displayName },
             // No confirmation, like the card's own Stop: stopping is the safe direction, and the
             // abort has to come first because cancelling the worker does not interrupt a generate.
             onStop = { SummaryScheduler.stopNow(context) },
@@ -1617,7 +1698,19 @@ fun HomeScreen(
         DeleteRecordingDialog(
             name = label,
             title = stringResource(R.string.transcript_delete_confirm_title),
-            message = stringResource(R.string.transcript_delete_confirm_message, label),
+            // Two sentences, because the two cases are not the same act. With the recording still
+            // there this destroys a copy of what was said and the audio can be read again; with it
+            // gone — every finished "Transcribe only" import, and any transcript that outlived its
+            // recording — the words ARE the item, and the reassuring half of the usual sentence
+            // would be a lie told to somebody about to lose the only record of a conversation.
+            message = when (
+                LibraryRowActions.forTranscript(TranscriptState.DONE, hasAudio = row != null).delete
+            ) {
+                LibraryRowActions.DeleteMeaning.TranscriptAndNothingLeft ->
+                    stringResource(R.string.transcript_delete_confirm_message_text_only, label)
+
+                else -> stringResource(R.string.transcript_delete_confirm_message, label)
+            },
             onConfirm = {
                 transcriptScope.launch { TranscriptRepository.delete(context, displayName) }
                 // Deleted, so there is nothing to go back to — and nothing left on the page that was
@@ -1636,6 +1729,24 @@ fun HomeScreen(
                 transcriptFor = reopenTranscriptAfterDelete
                 reopenTranscriptAfterDelete = null
             }
+        )
+    }
+
+    deleteSummaryFor?.let { displayName ->
+        val label = libraryTitleOf(displayName)
+        DeleteRecordingDialog(
+            name = label,
+            title = stringResource(R.string.library_summary_delete_confirm_title),
+            // Says what survives, which here is everything else: the transcript the summary was
+            // written from and the recording both stay, and a new summary is one tap away inside
+            // the row's own reading view. Nothing about this delete is irreversible, and a
+            // confirmation that implied otherwise would teach the user to distrust the ones that are.
+            message = stringResource(R.string.library_summary_delete_confirm_message, label),
+            onConfirm = {
+                transcriptScope.launch { TranscriptRepository.deleteSummary(context, displayName) }
+                deleteSummaryFor = null
+            },
+            onDismiss = { deleteSummaryFor = null },
         )
     }
 }

@@ -647,8 +647,8 @@
     <string name="library_row_save">Mentés fájlba</string>
     <string name="library_nothing_to_share">Már nincs ott semmi megosztható.</string>
     <string name="transcript_delete_confirm_message_text_only">Ezek a szavak mögött nincs felvétel: %1$s átiratának törlésével az egész elvész, és nem hozható vissza.</string>
-    <string name="summary_delete_confirm_title">Törlöd ezt az összefoglalót?</string>
-    <string name="summary_delete_confirm_message">%1$s összefoglalója törlődik. Az átirat és a felvétel megmarad, és újra megíratható.</string>
+    <string name="library_summary_delete_confirm_title">Törlöd ezt az összefoglalót?</string>
+    <string name="library_summary_delete_confirm_message">%1$s összefoglalója törlődik. Az átirat és a felvétel megmarad, és újra megíratható.</string>
     <string name="library_bulk_delete_transcripts_message">A szöveg törlődik. A felvételek megmaradnak, és később újra átírhatók.</string>
     <string name="library_bulk_delete_summaries_message">Az összefoglalók törlődnek. Az átiratok és a felvételek megmaradnak.</string>
     <plurals name="library_bulk_delete_transcripts_title">

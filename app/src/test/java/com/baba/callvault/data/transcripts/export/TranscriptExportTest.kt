@@ -363,4 +363,52 @@ class TranscriptExportTest {
         }
         assertTrue(TranscriptExport.render(TranscriptFormat.VTT, empty, english).startsWith("WEBVTT"))
     }
+
+    @Test
+    fun `a summary shared as a message carries no heading marks`() {
+        // The share path. A summary sent into a chat used to be impossible; now it is the same
+        // renderer the Markdown export uses, with the marks left out — because hash marks in a chat
+        // message are visible punctuation that says nothing about the call.
+        val plain = TranscriptExport.renderSummary(
+            summary = CallSummary(
+                intent = "Chasing an invoice",
+                summary = "She agreed to send it Tuesday.",
+                keyPoints = listOf("Three weeks late"),
+                decisions = emptyList(),
+                actionItems = emptyList(),
+                keyFacts = emptyList()
+            ),
+            labels = english,
+            titleMark = "",
+            sectionMark = "",
+        )
+
+        assertFalse(plain, plain.contains("#"))
+        assertTrue(plain, plain.startsWith("Summary"))
+        assertTrue(plain, plain.contains("Chasing an invoice"))
+        assertTrue(plain, plain.contains("Key points"))
+        assertTrue(plain, plain.contains("- Three weeks late"))
+    }
+
+    @Test
+    fun `an empty section of a summary is left out rather than headed`() {
+        // Same rule as the Markdown export it was extracted from, and worth pinning on the share
+        // path too: a heading with nothing under it reads as content that went missing.
+        val plain = TranscriptExport.renderSummary(
+            summary = CallSummary(
+                intent = "A short call",
+                summary = "Nothing was decided.",
+                keyPoints = emptyList(),
+                decisions = emptyList(),
+                actionItems = emptyList(),
+                keyFacts = emptyList()
+            ),
+            labels = english,
+            titleMark = "",
+            sectionMark = "",
+        )
+
+        assertFalse(plain, plain.contains("Key points"))
+        assertFalse(plain, plain.contains("Decisions"))
+    }
 }

@@ -34,7 +34,9 @@ import androidx.compose.ui.unit.dp
 import com.baba.callvault.R
 import com.baba.callvault.data.recordings.ImportedRecording
 import com.baba.callvault.data.recordings.RecordingsRepository.RecordingItem
+import com.baba.callvault.data.transcripts.LibraryRowActions
 import com.baba.callvault.data.transcripts.SummariesPage
+import com.baba.callvault.data.transcripts.export.TranscriptFormat
 import com.baba.callvault.ui.common.CvScaffold
 import com.baba.callvault.ui.common.CvSectionHeader
 import com.baba.callvault.ui.common.RecordingLabel
@@ -78,6 +80,11 @@ import com.baba.callvault.ui.common.WorkProgressRing
  *                   whenever a summary is opened over it, taking any place in the list with it.
  * @param onOpen     Opens the reading view — see the call site for why that rather than the
  *                   recording's own screen.
+ * @param onShare    Sends one stored summary to the share sheet.
+ * @param onSave     Writes one stored summary out as a file in the chosen format.
+ * @param onDelete   Asks to delete one **summary**. The transcript it was written from and the
+ *                   recording both stay; see
+ *                   [com.baba.callvault.data.transcripts.LibraryRowActions].
  * @param onStop     Stops whatever the summariser is doing. One stop for the whole queue, because
  *                   that is all there is: the engine serialises on a mutex and runs one at a time.
  */
@@ -89,6 +96,9 @@ fun SummariesScreen(
     onBack: () -> Unit,
     onOpenSettings: () -> Unit,
     onOpen: (String) -> Unit,
+    onShare: (String) -> Unit,
+    onSave: (String, TranscriptFormat) -> Unit,
+    onDelete: (String) -> Unit,
     onStop: () -> Unit,
     modifier: Modifier = Modifier,
     titleTrailing: (@Composable () -> Unit)? = null,
@@ -159,7 +169,9 @@ fun SummariesScreen(
                         modifier = Modifier.padding(start = 4.dp, bottom = 2.dp),
                     )
                 }
-                summaryRows(groups.failed, byName, onOpen)
+                // No menu: a failed run left no summary row, so there is nothing to share, save or
+                // delete. What it left is a work info, and Stop above is what clears that.
+                summaryRows(groups.failed, byName, onOpen, menu = LibraryRowActions.NONE, onShare, onSave, onDelete)
             }
 
             item {
@@ -170,7 +182,15 @@ fun SummariesScreen(
                     modifier = Modifier.padding(start = 4.dp, top = 4.dp, bottom = 2.dp),
                 )
             }
-            summaryRows(groups.ready, byName, onOpen)
+            summaryRows(
+                groups.ready,
+                byName,
+                onOpen,
+                menu = LibraryRowActions.forStoredSummary(),
+                onShare,
+                onSave,
+                onDelete,
+            )
         }
     }
 }
@@ -186,12 +206,27 @@ private fun LazyListScope.summaryRows(
     displayNames: List<String>,
     byName: Map<String, RecordingItem>,
     onOpen: (String) -> Unit,
+    menu: LibraryRowActions.Menu,
+    onShare: (String) -> Unit,
+    onSave: (String, TranscriptFormat) -> Unit,
+    onDelete: (String) -> Unit,
 ) {
     items(displayNames, key = { it }) { displayName ->
         SummaryRow(
             displayName = displayName,
             item = byName[displayName],
             onOpen = { onOpen(displayName) },
+            trailing = if (menu.isEmpty) null else {
+                {
+                    LibraryRowMenu(
+                        menu = menu,
+                        formats = LibraryRowActions.formatsFor(LibraryRowActions.Page.Summaries),
+                        onShare = { onShare(displayName) },
+                        onSave = { format -> onSave(displayName, format) },
+                        onDelete = { onDelete(displayName) },
+                    )
+                }
+            },
         )
     }
 }

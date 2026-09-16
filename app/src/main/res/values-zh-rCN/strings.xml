@@ -646,8 +646,8 @@
     <string name="library_row_save">保存为文件</string>
     <string name="library_nothing_to_share">那里已经没有可分享的内容了。</string>
     <string name="transcript_delete_confirm_message_text_only">这些文字背后已经没有录音：删除 %1$s 的转写就是把整条都删掉，而且无法恢复。</string>
-    <string name="summary_delete_confirm_title">删除这条摘要？</string>
-    <string name="summary_delete_confirm_message">%1$s 的摘要将被删除。转写和录音都会保留，你可以让它重新写一份。</string>
+    <string name="library_summary_delete_confirm_title">删除这条摘要？</string>
+    <string name="library_summary_delete_confirm_message">%1$s 的摘要将被删除。转写和录音都会保留，你可以让它重新写一份。</string>
     <string name="library_bulk_delete_transcripts_message">文字将被删除。录音会保留，之后仍可以重新转写。</string>
     <string name="library_bulk_delete_summaries_message">摘要将被删除。转写和录音都会保留。</string>
     <plurals name="library_bulk_delete_transcripts_title">

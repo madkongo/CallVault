@@ -141,15 +141,7 @@ object TranscriptExport {
 
         doc.summary?.let { summary ->
             appendLine()
-            appendLine("## ${labels.summary}")
-            appendLine()
-            appendLine(summary.intent)
-            appendLine()
-            appendLine(summary.summary)
-            appendSection(labels.keyPoints, summary.keyPoints)
-            appendSection(labels.decisions, summary.decisions)
-            appendSection(labels.actionItems, summary.actionItems)
-            appendSection(labels.keyFacts, summary.keyFacts)
+            append(renderSummary(summary, labels, titleMark = "## ", sectionMark = "### "))
         }
 
         doc.note?.takeIf { it.isNotBlank() }?.let { note ->
@@ -172,11 +164,43 @@ object TranscriptExport {
         }
     }.trimEnd() + "\n"
 
-    private fun StringBuilder.appendSection(heading: String, items: List<String>) {
+    /**
+     * The summary on its own, under headings in the reader's language.
+     *
+     * Extracted from the Markdown export rather than written twice, because a summary is now shared
+     * from a row as well as carried inside an exported document, and two renderings of one structure
+     * would be two places for a heading to go missing.
+     *
+     * **The two heading marks are parameters because the destination decides them.** A `.md` file
+     * wants `##` and `###`; a summary sent into a chat as plain text wants neither, and would
+     * otherwise arrive with hash marks in front of every heading — visible punctuation that says
+     * nothing about the call. Only the marks differ, so the sections, the order and the dropping of
+     * empty ones cannot come apart between the two.
+     *
+     * Bullets stay `- ` in both: a leading dash reads as a list wherever it lands, unlike a `#`.
+     */
+    fun renderSummary(
+        summary: CallSummary,
+        labels: ExportLabels,
+        titleMark: String,
+        sectionMark: String,
+    ): String = buildString {
+        appendLine("$titleMark${labels.summary}")
+        appendLine()
+        appendLine(summary.intent)
+        appendLine()
+        appendLine(summary.summary)
+        appendSection(sectionMark, labels.keyPoints, summary.keyPoints)
+        appendSection(sectionMark, labels.decisions, summary.decisions)
+        appendSection(sectionMark, labels.actionItems, summary.actionItems)
+        appendSection(sectionMark, labels.keyFacts, summary.keyFacts)
+    }.trimEnd() + "\n"
+
+    private fun StringBuilder.appendSection(mark: String, heading: String, items: List<String>) {
         val entries = items.filter { it.isNotBlank() }
         if (entries.isEmpty()) return
         appendLine()
-        appendLine("### $heading")
+        appendLine("$mark$heading")
         appendLine()
         entries.forEach { appendLine("- ${it.trim()}") }
     }

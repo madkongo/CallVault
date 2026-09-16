@@ -646,8 +646,8 @@
     <string name="library_row_save">Lưu thành tệp</string>
     <string name="library_nothing_to_share">Ở đó không còn gì để chia sẻ nữa.</string>
     <string name="transcript_delete_confirm_message_text_only">Không còn bản ghi nào phía sau những chữ này: xoá bản chép lời của %1$s là xoá toàn bộ, và không lấy lại được.</string>
-    <string name="summary_delete_confirm_title">Xoá bản tóm tắt này?</string>
-    <string name="summary_delete_confirm_message">Bản tóm tắt của %1$s sẽ bị xoá. Bản chép lời và bản ghi vẫn được giữ, và bạn có thể cho viết lại.</string>
+    <string name="library_summary_delete_confirm_title">Xoá bản tóm tắt này?</string>
+    <string name="library_summary_delete_confirm_message">Bản tóm tắt của %1$s sẽ bị xoá. Bản chép lời và bản ghi vẫn được giữ, và bạn có thể cho viết lại.</string>
     <string name="library_bulk_delete_transcripts_message">Phần chữ sẽ bị xoá. Các bản ghi vẫn được giữ và bạn có thể chép lời lại sau.</string>
     <string name="library_bulk_delete_summaries_message">Các bản tóm tắt sẽ bị xoá. Các bản chép lời và bản ghi vẫn được giữ.</string>
     <plurals name="library_bulk_delete_transcripts_title">

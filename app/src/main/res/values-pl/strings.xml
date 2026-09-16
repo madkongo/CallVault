@@ -649,8 +649,8 @@
     <string name="library_row_save">Zapisz jako plik</string>
     <string name="library_nothing_to_share">Nie ma już tam nic do udostępnienia.</string>
     <string name="transcript_delete_confirm_message_text_only">Za tymi słowami nie ma nagrania: usunięcie transkrypcji %1$s usuwa całość i nie da się jej przywrócić.</string>
-    <string name="summary_delete_confirm_title">Usunąć to podsumowanie?</string>
-    <string name="summary_delete_confirm_message">Podsumowanie %1$s zostanie usunięte. Transkrypcja i nagranie pozostaną, a podsumowanie można napisać ponownie.</string>
+    <string name="library_summary_delete_confirm_title">Usunąć to podsumowanie?</string>
+    <string name="library_summary_delete_confirm_message">Podsumowanie %1$s zostanie usunięte. Transkrypcja i nagranie pozostaną, a podsumowanie można napisać ponownie.</string>
     <string name="library_bulk_delete_transcripts_message">Tekst zostanie usunięty. Nagrania pozostaną i można je później transkrybować ponownie.</string>
     <string name="library_bulk_delete_summaries_message">Podsumowania zostaną usunięte. Transkrypcje i nagrania pozostaną.</string>
     <plurals name="library_bulk_delete_transcripts_title">

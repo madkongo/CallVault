@@ -650,8 +650,8 @@
     <string name="library_row_save">Salvar como arquivo</string>
     <string name="library_nothing_to_share">Já não há nada ali para compartilhar.</string>
     <string name="transcript_delete_confirm_message_text_only">Não há gravação por trás dessas palavras: apagar a transcrição de %1$s apaga tudo, e não dá para trazer de volta.</string>
-    <string name="summary_delete_confirm_title">Excluir este resumo?</string>
-    <string name="summary_delete_confirm_message">O resumo de %1$s será excluído. A transcrição e a gravação são mantidas, e você pode pedir outro resumo.</string>
+    <string name="library_summary_delete_confirm_title">Excluir este resumo?</string>
+    <string name="library_summary_delete_confirm_message">O resumo de %1$s será excluído. A transcrição e a gravação são mantidas, e você pode pedir outro resumo.</string>
     <string name="library_bulk_delete_transcripts_message">O texto será excluído. As gravações são mantidas e você pode transcrevê-las de novo depois.</string>
     <string name="library_bulk_delete_summaries_message">Os resumos serão excluídos. As transcrições e as gravações são mantidas.</string>
     <plurals name="library_bulk_delete_transcripts_title">

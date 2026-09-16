@@ -647,8 +647,8 @@
     <string name="library_row_save">Enregistrer dans un fichier</string>
     <string name="library_nothing_to_share">Il n\'y a plus rien à partager ici.</string>
     <string name="transcript_delete_confirm_message_text_only">Il n\'y a plus d\'enregistrement derrière ces mots : supprimer la transcription de %1$s supprime tout, et rien ne pourra être récupéré.</string>
-    <string name="summary_delete_confirm_title">Supprimer ce résumé ?</string>
-    <string name="summary_delete_confirm_message">Le résumé de %1$s sera supprimé. La transcription et l\'enregistrement sont conservés, et tu peux en faire écrire un autre.</string>
+    <string name="library_summary_delete_confirm_title">Supprimer ce résumé ?</string>
+    <string name="library_summary_delete_confirm_message">Le résumé de %1$s sera supprimé. La transcription et l\'enregistrement sont conservés, et tu peux en faire écrire un autre.</string>
     <string name="library_bulk_delete_transcripts_message">Le texte sera supprimé. Les enregistrements sont conservés et pourront être transcrits à nouveau plus tard.</string>
     <string name="library_bulk_delete_summaries_message">Les résumés seront supprimés. Les transcriptions et les enregistrements sont conservés.</string>
     <plurals name="library_bulk_delete_transcripts_title">

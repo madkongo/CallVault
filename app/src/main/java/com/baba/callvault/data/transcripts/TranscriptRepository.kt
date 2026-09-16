@@ -146,6 +146,23 @@ object TranscriptRepository {
     }
 
     /**
+     * Removes a summary, leaving the transcript it was written from and the recording.
+     *
+     * The narrowest of the three deletes, and deliberately not [TranscriptCascade]: that one clears
+     * the transcript, the note, the tags and the stars as well, which is right when the recording
+     * itself goes and catastrophic when the user only meant to throw away a summary they disagreed
+     * with. The summary can be written again from the reading view afterwards.
+     *
+     * Guarded on the database existing, like every other read in this area: there is no summary to
+     * remove on a phone that has never transcribed, and materialising `transcripts.db` to find that
+     * out is the mistake [LibraryCounts] exists to prevent.
+     */
+    suspend fun deleteSummary(context: Context, displayName: String) {
+        if (!TranscriptDatabase.exists(context)) return
+        TranscriptDatabase.get(context).summaryDao().deleteFor(displayName)
+    }
+
+    /**
      * Full-text search across every transcript, **summary and note**.
      *
      * [query] is whatever the user typed, and is quoted before it reaches SQLite: `MATCH` takes an

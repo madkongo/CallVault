@@ -647,8 +647,8 @@
     <string name="library_row_save">Als Datei speichern</string>
     <string name="library_nothing_to_share">Dort ist nichts mehr zum Teilen.</string>
     <string name="transcript_delete_confirm_message_text_only">Hinter diesen Worten steht keine Aufnahme: Wird das Transkript von %1$s gelöscht, ist alles weg und lässt sich nicht zurückholen.</string>
-    <string name="summary_delete_confirm_title">Diese Zusammenfassung löschen?</string>
-    <string name="summary_delete_confirm_message">Die Zusammenfassung von %1$s wird gelöscht. Das Transkript und die Aufnahme bleiben erhalten, und du kannst sie neu schreiben lassen.</string>
+    <string name="library_summary_delete_confirm_title">Diese Zusammenfassung löschen?</string>
+    <string name="library_summary_delete_confirm_message">Die Zusammenfassung von %1$s wird gelöscht. Das Transkript und die Aufnahme bleiben erhalten, und du kannst sie neu schreiben lassen.</string>
     <string name="library_bulk_delete_transcripts_message">Die Texte werden gelöscht. Die Aufnahmen bleiben erhalten und können später erneut transkribiert werden.</string>
     <string name="library_bulk_delete_summaries_message">Die Zusammenfassungen werden gelöscht. Die Transkripte und die Aufnahmen bleiben erhalten.</string>
     <plurals name="library_bulk_delete_transcripts_title">

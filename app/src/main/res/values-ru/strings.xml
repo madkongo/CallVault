@@ -649,8 +649,8 @@
     <string name="library_row_save">Сохранить в файл</string>
     <string name="library_nothing_to_share">Здесь больше нечем поделиться.</string>
     <string name="transcript_delete_confirm_message_text_only">За этими словами нет записи: удаление расшифровки «%1$s» удалит всё целиком, и вернуть это будет нельзя.</string>
-    <string name="summary_delete_confirm_title">Удалить эту сводку?</string>
-    <string name="summary_delete_confirm_message">Сводка «%1$s» будет удалена. Расшифровка и запись сохранятся, и сводку можно написать заново.</string>
+    <string name="library_summary_delete_confirm_title">Удалить эту сводку?</string>
+    <string name="library_summary_delete_confirm_message">Сводка «%1$s» будет удалена. Расшифровка и запись сохранятся, и сводку можно написать заново.</string>
     <string name="library_bulk_delete_transcripts_message">Текст будет удалён. Записи сохранятся, и их можно будет расшифровать снова.</string>
     <string name="library_bulk_delete_summaries_message">Сводки будут удалены. Расшифровки и записи сохранятся.</string>
     <plurals name="library_bulk_delete_transcripts_title">
