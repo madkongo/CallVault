@@ -440,3 +440,9 @@ idle. Grant survived, recorder reconnected over loopback in 3 s. Everything on i
 maintainer's own use settles it — in particular the three things the emulator cannot show: a real
 transcription of an imported voice note, a real summary run (ring percentage, Stop mid-generate, the row
 moving into the list), and playback stopping when a reading page is left.
+
+**OP12 install 2026-09-16 15:57** (🧪): branch with the share target installed while idle; grant survived,
+recorder back in ~2 s. `cmd package query-activities -a android.intent.action.SEND -t audio/ogg` lists
+`com.baba.callvault.ShareImportActivity`, so the target is registered on the device. Whether WhatsApp's own
+voice-note share reaches it is the open measurement — it depends on the MIME type WhatsApp attaches, which
+could not be read on the emulator.
