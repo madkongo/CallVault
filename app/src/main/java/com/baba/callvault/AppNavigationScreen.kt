@@ -35,6 +35,7 @@ import com.baba.callvault.ui.screens.SettingsScreen
 import com.baba.callvault.ui.screens.WizardScreen
 import com.baba.callvault.ui.theme.CallVaultTheme
 import com.baba.callvault.ui.viewmodels.AppNavigationViewModel
+import com.baba.callvault.ui.viewmodels.HomeViewModel
 import com.baba.callvault.ui.viewmodels.SettingsViewModel
 
 /**
@@ -163,6 +164,31 @@ fun AppNavigationScreen() {
             AppScreen.Home -> {
                 val scope = rememberCoroutineScope()
                 val drawerState = rememberDrawerState(DrawerValue.Closed)
+
+                // Held here rather than defaulted inside HomeScreen so the resume observer below and
+                // the list are demonstrably the same instance. `viewModel()` resolves against the
+                // Activity's store, so this is the instance HomeScreen would have built anyway.
+                val homeViewModel: HomeViewModel = viewModel()
+
+                // Returning to the app re-runs HomeViewModel.refresh(), and this is the level it has
+                // to happen at. refresh() is not a list reload: it recomputes the status card, runs
+                // the setup-health sweep and silently re-grants WRITE_SECURE_SETTINGS when an
+                // install-over has dropped it — a grant whose absence has already cost a real
+                // 13-minute call. Owned by the recordings screen, all of that ran only while the
+                // recordings list was what you resumed onto; owned here, it runs whatever section is
+                // showing. HomeScreen no longer registers one, so there is still exactly one.
+                //
+                // Deliberately inside the Home branch and not beside the router's own observer
+                // above: during onboarding there is no recorder, no folder and nothing to heal, and
+                // building HomeViewModel there would start a full recordings pass behind the wizard.
+                DisposableEffect(lifecycleOwner) {
+                    val observer = LifecycleEventObserver { _, event ->
+                        if (event == Lifecycle.Event.ON_RESUME) homeViewModel.refresh()
+                    }
+                    lifecycleOwner.lifecycle.addObserver(observer)
+                    onDispose { lifecycleOwner.lifecycle.removeObserver(observer) }
+                }
+
                 SettingsSidebar(
                     drawerState = drawerState,
                     onClose = { scope.launch { drawerState.close() } },
@@ -174,7 +200,8 @@ fun AppNavigationScreen() {
                     },
                 ) {
                     HomeScreen(
-                        onOpenSettings = { scope.launch { drawerState.open() } }
+                        onOpenSettings = { scope.launch { drawerState.open() } },
+                        viewModel = homeViewModel
                     )
                 }
             }

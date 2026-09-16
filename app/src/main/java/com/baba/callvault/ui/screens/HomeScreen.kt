@@ -160,11 +160,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
-import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.lifecycle.viewmodel.compose.viewModel
-import androidx.compose.runtime.DisposableEffect
-import androidx.lifecycle.Lifecycle
-import androidx.lifecycle.LifecycleEventObserver
 import com.baba.callvault.ui.common.CallOriginBadge
 import androidx.compose.foundation.Image
 import androidx.compose.material.icons.filled.Groups
@@ -397,15 +393,11 @@ fun HomeScreen(
     // only way out would be the close button.
     BackHandler(enabled = selectionMode) { clearSelection() }
 
-    // Refresh status + recordings whenever the user returns to the screen (e.g. after a new call).
-    val lifecycleOwner = LocalLifecycleOwner.current
-    DisposableEffect(lifecycleOwner) {
-        val observer = LifecycleEventObserver { _, event ->
-            if (event == Lifecycle.Event.ON_RESUME) viewModel.refresh()
-        }
-        lifecycleOwner.lifecycle.addObserver(observer)
-        onDispose { lifecycleOwner.lifecycle.removeObserver(observer) }
-    }
+    // The ON_RESUME refresh lives in AppNavigationScreen, not here. refresh() is not only a list
+    // reload: it recomputes the status card, sweeps setup health and silently re-grants
+    // WRITE_SECURE_SETTINGS. Hooking that to this screen made the heal conditional on the recordings
+    // list being what the user happens to be looking at, which stops being true the moment there is
+    // more than one section. Exactly one observer exists, and it is in the shell.
 
     // While a track is playing, tick the player position so the slider tracks playback.
     LaunchedEffect(playback.phase) {
