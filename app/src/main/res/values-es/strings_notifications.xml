@@ -46,4 +46,15 @@
     <string name="notif_readiness_wd_off_by_user_text">Desactivaste la depuración inalámbrica y CallVault no tiene otra forma de reiniciar la grabadora. Vuelve a activarla o activa la depuración USB.</string>
     <string name="notif_readiness_offline_paused_text">La grabación sin Wi-Fi está en pausa: necesita la depuración USB. Las llamadas con Wi-Fi se siguen grabando.</string>
     <string name="notif_action_turn_wd_on">Activar la depuración inalámbrica</string>
+
+    <!-- Transcription finished / didn't finish -->
+    <string name="transcript_notice_channel">Transcripciones</string>
+    <string name="transcript_notice_ready_title">Transcripción lista</string>
+    <string name="transcript_notice_ready_deleted_text">%1$s: se eliminó el audio, como pediste.</string>
+    <string name="transcript_notice_ready_many_title">Transcripciones listas: %1$d</string>
+    <string name="transcript_notice_ready_many_text">Toca para leerlas.</string>
+    <string name="transcript_notice_failed_title">La transcripción no terminó</string>
+    <string name="transcript_notice_failed_text">%1$s. Toca para intentarlo de nuevo.</string>
+    <string name="transcript_notice_failed_many_title">Transcripciones sin terminar: %1$d</string>
+    <string name="transcript_notice_failed_many_text">Toca para verlas.</string>
 </resources>

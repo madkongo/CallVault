@@ -65,6 +65,17 @@ class HomeSectionTest {
         assertEquals(HomeSection.Hub, forNotification(AppScreen.Home, NotificationDestination.Update))
         assertEquals(HomeSection.Hub, forNotification(AppScreen.Home, NotificationDestination.Pairing))
         assertEquals(HomeSection.Hub, forNotification(AppScreen.Home, NotificationDestination.Debug))
+        // And the two transcript notices land on Transcripts, which is the only page carrying
+        // either of the things they are about: the finished transcripts, and the "didn't finish"
+        // group whose whole card retries.
+        assertEquals(
+            HomeSection.Transcripts,
+            forNotification(AppScreen.Home, NotificationDestination.Transcript)
+        )
+        assertEquals(
+            HomeSection.Transcripts,
+            forNotification(AppScreen.Home, NotificationDestination.TranscriptFailed)
+        )
     }
 
     @Test

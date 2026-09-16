@@ -46,4 +46,15 @@
     <string name="notif_readiness_wd_off_by_user_text">Kikapcsoltad a vezeték nélküli hibakeresést, és a CallVault máshogy nem tudja újraindítani a rögzítőt. Kapcsold vissza, vagy kapcsold be az USB-hibakeresést.</string>
     <string name="notif_readiness_offline_paused_text">A Wi-Fi nélküli rögzítés szünetel: USB-hibakeresés kell hozzá. A Wi-Fi-n folytatott hívások rögzítése folytatódik.</string>
     <string name="notif_action_turn_wd_on">Vezeték nélküli hibakeresés bekapcsolása</string>
+
+    <!-- Transcription finished / didn't finish -->
+    <string name="transcript_notice_channel">Átiratok</string>
+    <string name="transcript_notice_ready_title">Az átirat elkészült</string>
+    <string name="transcript_notice_ready_deleted_text">%1$s – a hangfelvételt töröltük, ahogy kérted.</string>
+    <string name="transcript_notice_ready_many_title">Elkészült átiratok: %1$d</string>
+    <string name="transcript_notice_ready_many_text">Koppints az elolvasásukhoz.</string>
+    <string name="transcript_notice_failed_title">Az átírás nem fejeződött be</string>
+    <string name="transcript_notice_failed_text">%1$s. Koppints az újrapróbálkozáshoz.</string>
+    <string name="transcript_notice_failed_many_title">Be nem fejeződött átírások: %1$d</string>
+    <string name="transcript_notice_failed_many_text">Koppints a megtekintésükhöz.</string>
 </resources>

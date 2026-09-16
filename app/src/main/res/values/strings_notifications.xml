@@ -48,4 +48,15 @@
     <string name="notif_readiness_wd_off_by_user_text">You turned Wireless debugging off, and nothing else lets CallVault restart the recorder. Turn it back on, or turn on USB debugging.</string>
     <string name="notif_readiness_offline_paused_text">Off-Wi-Fi recording is paused: it needs USB debugging. Calls on Wi-Fi still record.</string>
     <string name="notif_action_turn_wd_on">Turn Wireless debugging on</string>
+
+    <!-- Transcription finished / didn't finish -->
+    <string name="transcript_notice_channel">Transcripts</string>
+    <string name="transcript_notice_ready_title">Transcript ready</string>
+    <string name="transcript_notice_ready_deleted_text">%1$s — the audio was deleted, as you asked.</string>
+    <string name="transcript_notice_ready_many_title">Transcripts ready: %1$d</string>
+    <string name="transcript_notice_ready_many_text">Tap to read them.</string>
+    <string name="transcript_notice_failed_title">Transcription didn\'t finish</string>
+    <string name="transcript_notice_failed_text">%1$s. Tap to try again.</string>
+    <string name="transcript_notice_failed_many_title">Transcriptions that didn\'t finish: %1$d</string>
+    <string name="transcript_notice_failed_many_text">Tap to see them.</string>
 </resources>

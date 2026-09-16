@@ -13,6 +13,7 @@ import android.net.Uri
 import android.os.SystemClock
 import androidx.core.net.toUri
 import com.baba.callvault.data.AppPreferences
+import com.baba.callvault.data.recordings.ImportedRecording
 import com.baba.callvault.data.recordings.RecordingCatalog
 import com.baba.callvault.data.recordings.RecordingsRepository
 import com.baba.callvault.data.recordings.TranscribeOnlyAudio
@@ -55,6 +56,14 @@ class TranscriptionRunner(
     private val wasAborted: () -> Boolean = { TranscriptionEngine.wasAborted() },
     /** One recording's length. Injected for tests, which have no real audio to measure. */
     private val audioDurationMs: (Uri) -> Long = { uri -> AudioDecoder.durationMs(context, uri) },
+    /**
+     * Told how each recording ended, so something can say so out loud. Injected for tests, which have
+     * no NotificationManager and must not need one to assert what a run stored.
+     *
+     * Only the three endings a user is owed a word about reach it — see [TranscriptNotice.Outcome].
+     */
+    private val onFinished: suspend (String, TranscriptNotice.Outcome) -> Unit =
+        { displayName, outcome -> TranscriptNotifier.announce(context, displayName, outcome) },
     // Last, so `TranscriptionRunner(context) { ... }` still reads as "a runner with this transcriber".
     private val transcriber: Transcriber = Transcriber(TranscriptionEngine::transcribe)
 ) {
@@ -200,19 +209,62 @@ class TranscriptionRunner(
                 withContext(NonCancellable) {
                     TranscribeOnlyAudio.deleteAfterTranscript(context, displayName)
                 }
+                // Whether the audio is gone is asked of the CATALOG, not of that call's return value.
+                // It answers "a file was found and removed", which is false on a phone where the file
+                // had already been deleted by hand — and the user's library has still lost the
+                // recording, because `forgetName` ran either way. Observing the outcome also cannot
+                // drift from TranscribeOnlyAudio's own verdict, where re-deriving "it was an import
+                // and it produced words" here would be a second copy of a rule that decides whether
+                // somebody's only copy of a file is destroyed.
+                val audioGone = ImportedRecording.isTranscribeOnly(displayName) &&
+                    withContext(NonCancellable) { localUriFor(displayName) } == null
                 // What it really cost on this phone, so the next estimate is measured rather than
                 // inherited from whatever hardware the published figure came from.
                 recordSpeed(modelId, audioMs, SystemClock.elapsedRealtime() - startedAt)
                 // Count, never content: a transcript is the substance of a private call.
                 AppLogger.i(TAG, "Transcribed $displayName (${segments.size} segment(s))")
+                // After the words, the DONE row and the audio decision are all settled, so the
+                // notification can never be the first thing to claim a transcript exists. Inside
+                // NonCancellable and guarded: a shade that cannot be written to is not a reason to
+                // unwind a finished transcription.
+                withContext(NonCancellable) {
+                    announce(
+                        displayName,
+                        if (audioGone) TranscriptNotice.Outcome.StoredAndAudioDeleted
+                        else TranscriptNotice.Outcome.Stored,
+                    )
+                }
                 true
             },
             onFailure = { failure ->
                 AppLogger.w(TAG, "Failed to transcribe $displayName: ${failure.message}")
                 mark(displayName, TranscriptState.FAILED, modelId, language, failure.message)
+                // A failure was as silent as a success until now: the row gained a red icon on a
+                // page the user had been given no reason to open. Only a real failure reaches here
+                // — a stop, an abort and a refusal for length have all returned above.
+                announce(displayName, TranscriptNotice.Outcome.Failed)
                 false
             }
         )
+    }
+
+    /**
+     * Tells [onFinished] how one recording ended, never letting that reporting break the run.
+     *
+     * Wrapped because the report is the least important thing that happens here: the transcript is
+     * already stored, and a NotificationManager that throws — a phone with notifications disabled at
+     * the OS level, a binder call that fails while the system is busy — must not turn a finished
+     * transcription into a failed batch entry.
+     */
+    private suspend fun announce(displayName: String, outcome: TranscriptNotice.Outcome) {
+        runCatching { onFinished(displayName, outcome) }
+            .onFailure {
+                // Cancellation is not a reporting failure and must never be swallowed here: this is
+                // a suspend call, so a stop arriving mid-report surfaces as a CancellationException,
+                // and catching it would leave the coroutine running after it had been cancelled.
+                if (it is CancellationException) throw it
+                AppLogger.w(TAG, "Could not report $displayName as $outcome: ${it.message}")
+            }
     }
 
     /** Folds one run's observed cost into this phone's stored figures for [modelId]. */

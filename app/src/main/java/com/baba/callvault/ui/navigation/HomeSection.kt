@@ -60,10 +60,14 @@ enum class HomeSection(val key: String) {
         /**
          * Which section a notification tap should land on, or null to leave the app where it is.
          *
-         * All four destinations answer [Hub], and that is not a placeholder: the status card, the
-         * update offer and the banners all live on the hub, so the hub is where each of these taps
-         * can actually be acted on. A "recording is broken" tap that landed on a transcript list
-         * would show no sign of the problem and nothing would say so.
+         * The first four answer [Hub], and that is not a placeholder: the status card, the update
+         * offer and the banners all live on the hub, so the hub is where each of these taps can
+         * actually be acted on. A "recording is broken" tap that landed on a transcript list would
+         * show no sign of the problem and nothing would say so.
+         *
+         * The two transcript destinations answer [Transcripts] for exactly the same reason, read the
+         * other way round: everything either of them is about — the finished transcripts, the
+         * "didn't finish" group and its retry — is on that page and on no other.
          *
          * [resolvedScreen] is honoured for the same reason [opening] honours it — a notification
          * cannot jump ahead of the disclaimer or the wizard, and there are no sections to speak of
@@ -84,6 +88,8 @@ enum class HomeSection(val key: String) {
                 NotificationDestination.Update,
                 NotificationDestination.Pairing,
                 NotificationDestination.Debug -> Hub
+                NotificationDestination.Transcript,
+                NotificationDestination.TranscriptFailed -> Transcripts
             }
         }
     }

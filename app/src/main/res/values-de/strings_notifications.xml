@@ -46,4 +46,15 @@
     <string name="notif_readiness_wd_off_by_user_text">Du hast WLAN-Debugging ausgeschaltet, und CallVault kann den Rekorder sonst nicht neu starten. Schalte es wieder ein oder schalte USB-Debugging ein.</string>
     <string name="notif_readiness_offline_paused_text">Die Aufnahme ohne WLAN ist pausiert: Sie benötigt USB-Debugging. Anrufe im WLAN werden weiter aufgenommen.</string>
     <string name="notif_action_turn_wd_on">WLAN-Debugging einschalten</string>
+
+    <!-- Transcription finished / didn't finish -->
+    <string name="transcript_notice_channel">Transkripte</string>
+    <string name="transcript_notice_ready_title">Transkript fertig</string>
+    <string name="transcript_notice_ready_deleted_text">%1$s – die Audiodatei wurde gelöscht, wie gewünscht.</string>
+    <string name="transcript_notice_ready_many_title">Fertige Transkripte: %1$d</string>
+    <string name="transcript_notice_ready_many_text">Zum Lesen tippen.</string>
+    <string name="transcript_notice_failed_title">Transkription nicht fertig geworden</string>
+    <string name="transcript_notice_failed_text">%1$s. Zum erneuten Versuch tippen.</string>
+    <string name="transcript_notice_failed_many_title">Nicht fertig gewordene Transkriptionen: %1$d</string>
+    <string name="transcript_notice_failed_many_text">Zum Ansehen tippen.</string>
 </resources>

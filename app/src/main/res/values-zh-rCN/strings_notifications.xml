@@ -46,4 +46,15 @@
     <string name="notif_readiness_wd_off_by_user_text">你关闭了无线调试，CallVault 没有其他方式重新启动录音器。请重新开启它，或开启 USB 调试。</string>
     <string name="notif_readiness_offline_paused_text">无 Wi-Fi 录音已暂停：它需要 USB 调试。连接 Wi-Fi 时的通话仍会录音。</string>
     <string name="notif_action_turn_wd_on">开启无线调试</string>
+
+    <!-- Transcription finished / didn't finish -->
+    <string name="transcript_notice_channel">转写文本</string>
+    <string name="transcript_notice_ready_title">转写已完成</string>
+    <string name="transcript_notice_ready_deleted_text">%1$s — 音频已按你的选择删除。</string>
+    <string name="transcript_notice_ready_many_title">已完成的转写：%1$d</string>
+    <string name="transcript_notice_ready_many_text">点按即可阅读。</string>
+    <string name="transcript_notice_failed_title">转写未完成</string>
+    <string name="transcript_notice_failed_text">%1$s。点按可重试。</string>
+    <string name="transcript_notice_failed_many_title">未完成的转写：%1$d</string>
+    <string name="transcript_notice_failed_many_text">点按即可查看。</string>
 </resources>

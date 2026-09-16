@@ -50,7 +50,27 @@ enum class NotificationDestination(val key: String, val requestCode: Int) {
     Pairing("pairing", 5003),
 
     /** The standing "debug logging is on" reminder. */
-    Debug("debug", 5004);
+    Debug("debug", 5004),
+
+    /**
+     * A transcript has been stored and is ready to read.
+     *
+     * Which one rides on [OpenTranscriptRequest], not here: this enum is a closed set of places and
+     * the name of one row is not. When it carries a name the reading view opens; when it does not —
+     * a batch, where naming the last of ten would be a lie about the other nine — the Transcripts
+     * page does.
+     */
+    Transcript("transcript", 5005),
+
+    /**
+     * A transcription did not finish.
+     *
+     * A destination of its own rather than a flag on [Transcript], because the two are separate
+     * notifications and a shared destination would mean a shared [requestCode] — which is one
+     * PendingIntent, so whichever posted last would decide where both of them led. See the note on
+     * [requestCode].
+     */
+    TranscriptFailed("transcript_failed", 5006);
 
     companion object {
 

@@ -46,4 +46,15 @@
     <string name="notif_readiness_wd_off_by_user_text">Wyłączyłeś debugowanie bezprzewodowe, a CallVault nie ma innego sposobu na ponowne uruchomienie rejestratora. Włącz je z powrotem albo włącz debugowanie USB.</string>
     <string name="notif_readiness_offline_paused_text">Nagrywanie bez Wi-Fi jest wstrzymane: wymaga debugowania USB. Połączenia przez Wi-Fi są nadal nagrywane.</string>
     <string name="notif_action_turn_wd_on">Włącz debugowanie bezprzewodowe</string>
+
+    <!-- Transcription finished / didn't finish -->
+    <string name="transcript_notice_channel">Transkrypcje</string>
+    <string name="transcript_notice_ready_title">Transkrypcja gotowa</string>
+    <string name="transcript_notice_ready_deleted_text">%1$s — nagranie zostało usunięte, zgodnie z Twoim wyborem.</string>
+    <string name="transcript_notice_ready_many_title">Gotowe transkrypcje: %1$d</string>
+    <string name="transcript_notice_ready_many_text">Dotknij, aby je przeczytać.</string>
+    <string name="transcript_notice_failed_title">Transkrypcja nie została ukończona</string>
+    <string name="transcript_notice_failed_text">%1$s. Dotknij, aby spróbować ponownie.</string>
+    <string name="transcript_notice_failed_many_title">Nieukończone transkrypcje: %1$d</string>
+    <string name="transcript_notice_failed_many_text">Dotknij, aby je zobaczyć.</string>
 </resources>

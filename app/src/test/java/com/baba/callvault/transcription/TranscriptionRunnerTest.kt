@@ -461,9 +461,105 @@ class TranscriptionRunnerTest {
         )
     }
 
-    private fun transcribeOnlyName() = ImportedRecording.nameFor(
+    // ---- what the shade is told, which is the only sign a background run ever gives
+
+    @Test
+    fun reports_a_stored_transcript_once_it_is_really_stored() = runBlocking {
+        // Reported after the words and the DONE row, never before: a notification that arrived first
+        // would promise a transcript the user could tap through to and not find.
+        catalogued("said.ogg")
+        val reported = mutableListOf<Pair<String, TranscriptNotice.Outcome>>()
+        val runner = TranscriptionRunner(
+            context,
+            onFinished = { name, outcome -> reported += name to outcome },
+            transcriber = { _, _, _, _, _ -> listOf(TranscriptSegment(0, 1000, "שלום")) },
+        )
+
+        runner.runBatch(MODEL_ID, MODEL_PATH, LANGUAGE, listOf("said.ogg"))
+
+        assertEquals(listOf("said.ogg" to TranscriptNotice.Outcome.Stored), reported)
+        assertEquals(TranscriptState.DONE, transcript("said.ogg")!!.transcript.state)
+    }
+
+    @Test
+    fun reports_a_failure_too() = runBlocking {
+        // A failure was exactly as silent as a success: a red icon on a page nobody had been given a
+        // reason to open.
+        catalogued("broken.ogg")
+        val reported = mutableListOf<Pair<String, TranscriptNotice.Outcome>>()
+        val runner = TranscriptionRunner(
+            context,
+            onFinished = { name, outcome -> reported += name to outcome },
+            transcriber = { _, _, _, _, _ -> error("cannot decode") },
+        )
+
+        runner.runBatch(MODEL_ID, MODEL_PATH, LANGUAGE, listOf("broken.ogg"))
+
+        assertEquals(listOf("broken.ogg" to TranscriptNotice.Outcome.Failed), reported)
+    }
+
+    @Test
+    fun says_when_the_audio_went_with_the_transcript() = runBlocking {
+        // The "Transcribe only" import: its file is deleted as the words land, so this notification
+        // is not a convenience but the app's only account of what became of it.
+        val name = transcribeOnlyName("shared note")
+        catalogued(name)
+        val reported = mutableListOf<Pair<String, TranscriptNotice.Outcome>>()
+        val runner = TranscriptionRunner(
+            context,
+            onFinished = { n, outcome -> reported += n to outcome },
+            transcriber = { _, _, _, _, _ -> listOf(TranscriptSegment(0, 1000, "שלום")) },
+        )
+
+        runner.runBatch(MODEL_ID, MODEL_PATH, LANGUAGE, listOf(name))
+
+        assertEquals(listOf(name to TranscriptNotice.Outcome.StoredAndAudioDeleted), reported)
+    }
+
+    @Test
+    fun says_nothing_about_a_recording_it_refused_for_length() = runBlocking {
+        // Nothing happened to it: no transcript, no failure, and a dialog has already told whoever
+        // asked. A notification here would report an event the user has no way to act on.
+        catalogued("marathon2.ogg")
+        val reported = mutableListOf<String>()
+        val runner = TranscriptionRunner(
+            context,
+            audioDurationMs = { OVER_THE_LIMIT_MS },
+            onFinished = { name, _ -> reported += name },
+            transcriber = { _, _, _, _, _ -> emptyList() },
+        )
+
+        runner.runBatch(MODEL_ID, MODEL_PATH, LANGUAGE, listOf("marathon2.ogg"))
+
+        assertEquals(emptyList<String>(), reported)
+    }
+
+    @Test
+    fun a_shade_that_cannot_be_written_to_does_not_lose_a_transcript() = runBlocking {
+        // The reporting is the least important thing that happens on the success path: the words are
+        // already stored, and a NotificationManager that throws must not turn a finished
+        // transcription into a failed one.
+        catalogued("noisy.ogg")
+        val runner = TranscriptionRunner(
+            context,
+            onFinished = { _, _ -> error("no notification manager") },
+            transcriber = { _, _, _, _, _ -> listOf(TranscriptSegment(0, 1000, "שלום")) },
+        )
+
+        val transcribed = runner.runBatch(MODEL_ID, MODEL_PATH, LANGUAGE, listOf("noisy.ogg"))
+
+        assertEquals(1, transcribed)
+        assertEquals(TranscriptState.DONE, transcript("noisy.ogg")!!.transcript.state)
+    }
+
+    /**
+     * [label] is a parameter because Robolectric keeps one transcripts database for the whole class:
+     * two tests sharing a name would find the first one's DONE row, and the second would skip the
+     * run it was written to exercise — silently, since skipping is what a resumed batch is meant to do.
+     */
+    private fun transcribeOnlyName(label: String = "voice note") = ImportedRecording.nameFor(
         importedAtMillis = IMPORTED_AT,
-        label = "voice note",
+        label = label,
         extension = ".ogg",
         kind = ImportedRecording.Kind.TRANSCRIBE_ONLY,
     )

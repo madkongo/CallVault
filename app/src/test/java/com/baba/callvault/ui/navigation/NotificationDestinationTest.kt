@@ -10,6 +10,7 @@ package com.baba.callvault.ui.navigation
 
 import com.baba.callvault.ui.navigation.NotificationDestination.Companion.fromIntentExtra
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertNotEquals
 import org.junit.Test
 
 /**
@@ -27,6 +28,22 @@ class NotificationDestinationTest {
         assertEquals(NotificationDestination.Update, fromIntentExtra("update", false))
         assertEquals(NotificationDestination.Pairing, fromIntentExtra("pairing", false))
         assertEquals(NotificationDestination.Debug, fromIntentExtra("debug", false))
+        assertEquals(NotificationDestination.Transcript, fromIntentExtra("transcript", false))
+        assertEquals(
+            NotificationDestination.TranscriptFailed,
+            fromIntentExtra("transcript_failed", false)
+        )
+    }
+
+    @Test
+    fun `a finished transcript and a failed one are told apart`() {
+        // They are two notifications and a user may have both waiting. Sharing a destination would
+        // mean sharing a request code, which is one PendingIntent — so whichever posted last would
+        // decide where both of them led, and the failure is the half that needs acting on.
+        assertNotEquals(
+            fromIntentExtra("transcript", false),
+            fromIntentExtra("transcript_failed", false)
+        )
     }
 
     @Test

@@ -250,6 +250,9 @@ import java.util.Locale
  * @param openRecording  A recording to land on, sent in from outside the app (the share target's
  *                       Open button). Null means nothing was asked for.
  * @param onOpenRecordingHandled Acknowledges [openRecording], so one request navigates once.
+ * @param openTranscript A transcript to open the reading view on, sent in from outside the app (the
+ *                       "transcript ready" notification). Null means nothing was asked for.
+ * @param onOpenTranscriptHandled Acknowledges [openTranscript], so one request navigates once.
  * @param modifier       Optional layout modifier.
  * @param viewModel      The Home "Brain"; defaults to a [viewModel]-scoped [HomeViewModel]. One
  *                       instance for the whole shell, so there is exactly one playback controller
@@ -263,6 +266,8 @@ fun HomeScreen(
     onOpenSettings: () -> Unit,
     openRecording: String? = null,
     onOpenRecordingHandled: () -> Unit = {},
+    openTranscript: String? = null,
+    onOpenTranscriptHandled: () -> Unit = {},
     modifier: Modifier = Modifier,
     viewModel: HomeViewModel = viewModel()
 ) {
@@ -475,6 +480,23 @@ fun HomeScreen(
         onSelectSection(HomeSection.Recordings)
         openWhenListed = requested
         onOpenRecordingHandled()
+    }
+
+    // A transcript named from outside the app — the "transcript ready" notification. Straight to the
+    // reading view rather than through a list: the page reads from the transcripts database and needs
+    // no catalog row, so unlike a recording there is nothing to wait for — and for the case this
+    // exists for, a finished "Transcribe only" import, there will never BE a catalog row to wait for.
+    //
+    // playbackFor is cleared because the reading view is only drawn when no recording is open (see
+    // readingPresentation): without this, a tap arriving while the user had left a recording open
+    // would draw the transcript as a sheet over that other recording's screen.
+    LaunchedEffect(openTranscript) {
+        val requested = openTranscript ?: return@LaunchedEffect
+        onSelectSection(HomeSection.Transcripts)
+        playbackFor = null
+        readingFromSummary = false
+        readingFor = requested
+        onOpenTranscriptHandled()
     }
 
     LaunchedEffect(openWhenListed, libraryRecordings) {

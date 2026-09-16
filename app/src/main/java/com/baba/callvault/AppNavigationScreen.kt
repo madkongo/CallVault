@@ -68,7 +68,9 @@ fun AppNavigationScreen(
     notificationDestination: NotificationDestination = NotificationDestination.None,
     onNotificationDestinationHandled: () -> Unit = {},
     openRecording: String? = null,
-    onOpenRecordingHandled: () -> Unit = {}
+    onOpenRecordingHandled: () -> Unit = {},
+    openTranscript: String? = null,
+    onOpenTranscriptHandled: () -> Unit = {}
 ) {
 
     val activityContext = LocalContext.current
@@ -191,6 +193,15 @@ fun AppNavigationScreen(
         onOpenRecordingHandled()
     }
 
+    // The same guard for a transcript asked for by name, and for the same reason: a request held
+    // unacknowledged would fire whenever onboarding finally resolved to Home, which could be days
+    // and several screens later. Home acknowledges it itself once it has somewhere to put it.
+    LaunchedEffect(openTranscript, screenState) {
+        if (openTranscript == null || screenState == AppScreen.Home) return@LaunchedEffect
+        AppLogger.d("CV:Nav", "Asked to open a transcript during $screenState; dropping the request")
+        onOpenTranscriptHandled()
+    }
+
     // Derive the active theme from AppPreferences so a theme change triggers a refresh (recompose)
     // and is applied immediately.
     val darkTheme = when ( preferences.getThemeMode()) {
@@ -280,6 +291,8 @@ fun AppNavigationScreen(
                         onOpenSettings = { scope.launch { drawerState.open() } },
                         openRecording = openRecording,
                         onOpenRecordingHandled = onOpenRecordingHandled,
+                        openTranscript = openTranscript,
+                        onOpenTranscriptHandled = onOpenTranscriptHandled,
                         viewModel = homeViewModel
                     )
                 }

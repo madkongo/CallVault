@@ -46,4 +46,15 @@
     <string name="notif_readiness_wd_off_by_user_text">Você desativou a depuração por Wi-Fi, e o CallVault não tem outro jeito de reiniciar o gravador. Ative-a de novo ou ative a depuração USB.</string>
     <string name="notif_readiness_offline_paused_text">A gravação sem Wi-Fi está pausada: ela precisa da depuração USB. Chamadas no Wi-Fi continuam sendo gravadas.</string>
     <string name="notif_action_turn_wd_on">Ativar a depuração por Wi-Fi</string>
+
+    <!-- Transcription finished / didn't finish -->
+    <string name="transcript_notice_channel">Transcrições</string>
+    <string name="transcript_notice_ready_title">Transcrição pronta</string>
+    <string name="transcript_notice_ready_deleted_text">%1$s — o áudio foi excluído, como você pediu.</string>
+    <string name="transcript_notice_ready_many_title">Transcrições prontas: %1$d</string>
+    <string name="transcript_notice_ready_many_text">Toque para lê-las.</string>
+    <string name="transcript_notice_failed_title">A transcrição não foi concluída</string>
+    <string name="transcript_notice_failed_text">%1$s. Toque para tentar de novo.</string>
+    <string name="transcript_notice_failed_many_title">Transcrições não concluídas: %1$d</string>
+    <string name="transcript_notice_failed_many_text">Toque para vê-las.</string>
 </resources>

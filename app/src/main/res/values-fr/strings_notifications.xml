@@ -46,4 +46,15 @@
     <string name="notif_readiness_wd_off_by_user_text">Vous avez désactivé le débogage sans fil, et CallVault n\'a aucun autre moyen de redémarrer l\'enregistreur. Réactivez-le, ou activez le débogage USB.</string>
     <string name="notif_readiness_offline_paused_text">L\'enregistrement hors Wi-Fi est en pause : il nécessite le débogage USB. Les appels en Wi-Fi sont toujours enregistrés.</string>
     <string name="notif_action_turn_wd_on">Activer le débogage sans fil</string>
+
+    <!-- Transcription finished / didn't finish -->
+    <string name="transcript_notice_channel">Transcriptions</string>
+    <string name="transcript_notice_ready_title">Transcription prête</string>
+    <string name="transcript_notice_ready_deleted_text">%1$s — l\'audio a été supprimé, comme demandé.</string>
+    <string name="transcript_notice_ready_many_title">Transcriptions prêtes : %1$d</string>
+    <string name="transcript_notice_ready_many_text">Appuyez pour les lire.</string>
+    <string name="transcript_notice_failed_title">La transcription n\'a pas abouti</string>
+    <string name="transcript_notice_failed_text">%1$s. Appuyez pour réessayer.</string>
+    <string name="transcript_notice_failed_many_title">Transcriptions non abouties : %1$d</string>
+    <string name="transcript_notice_failed_many_text">Appuyez pour les voir.</string>
 </resources>

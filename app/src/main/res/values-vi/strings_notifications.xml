@@ -46,4 +46,15 @@
     <string name="notif_readiness_wd_off_by_user_text">Bạn đã tắt gỡ lỗi không dây và CallVault không còn cách nào khác để khởi động lại trình ghi âm. Hãy bật lại hoặc bật gỡ lỗi USB.</string>
     <string name="notif_readiness_offline_paused_text">Ghi âm không cần Wi-Fi đang tạm dừng: cần bật gỡ lỗi USB. Cuộc gọi khi có Wi-Fi vẫn được ghi.</string>
     <string name="notif_action_turn_wd_on">Bật gỡ lỗi không dây</string>
+
+    <!-- Transcription finished / didn't finish -->
+    <string name="transcript_notice_channel">Bản chép lời</string>
+    <string name="transcript_notice_ready_title">Đã chép lời xong</string>
+    <string name="transcript_notice_ready_deleted_text">%1$s — tệp âm thanh đã bị xoá, đúng như bạn chọn.</string>
+    <string name="transcript_notice_ready_many_title">Bản chép lời đã xong: %1$d</string>
+    <string name="transcript_notice_ready_many_text">Chạm để đọc.</string>
+    <string name="transcript_notice_failed_title">Việc chép lời chưa hoàn tất</string>
+    <string name="transcript_notice_failed_text">%1$s. Chạm để thử lại.</string>
+    <string name="transcript_notice_failed_many_title">Lượt chép lời chưa hoàn tất: %1$d</string>
+    <string name="transcript_notice_failed_many_text">Chạm để xem.</string>
 </resources>

@@ -46,4 +46,15 @@
     <string name="notif_readiness_wd_off_by_user_text">Hai disattivato il debug wireless e CallVault non ha altri modi per riavviare il registratore. Riattivalo, oppure attiva il debug USB.</string>
     <string name="notif_readiness_offline_paused_text">La registrazione senza Wi-Fi è in pausa: richiede il debug USB. Le chiamate in Wi-Fi vengono ancora registrate.</string>
     <string name="notif_action_turn_wd_on">Attiva il debug wireless</string>
+
+    <!-- Transcription finished / didn't finish -->
+    <string name="transcript_notice_channel">Trascrizioni</string>
+    <string name="transcript_notice_ready_title">Trascrizione pronta</string>
+    <string name="transcript_notice_ready_deleted_text">%1$s — l\'audio è stato eliminato, come richiesto.</string>
+    <string name="transcript_notice_ready_many_title">Trascrizioni pronte: %1$d</string>
+    <string name="transcript_notice_ready_many_text">Tocca per leggerle.</string>
+    <string name="transcript_notice_failed_title">La trascrizione non è stata completata</string>
+    <string name="transcript_notice_failed_text">%1$s. Tocca per riprovare.</string>
+    <string name="transcript_notice_failed_many_title">Trascrizioni non completate: %1$d</string>
+    <string name="transcript_notice_failed_many_text">Tocca per vederle.</string>
 </resources>

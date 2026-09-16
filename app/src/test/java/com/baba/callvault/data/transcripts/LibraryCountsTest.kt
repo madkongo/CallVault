@@ -17,6 +17,7 @@ import com.baba.callvault.data.transcripts.db.TranscriptState
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.runBlocking
 import org.junit.Assert.assertEquals
+import org.junit.Before
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
@@ -37,6 +38,19 @@ import org.robolectric.annotation.Config
 class LibraryCountsTest {
 
     private val context: Context = ApplicationProvider.getApplicationContext()
+
+    /**
+     * Robolectric hands classes with the same `@Config` one classloader, and `TranscriptDatabase`
+     * holds its instance in a static — so rows written by a test in *another* class are still there
+     * when this one asks for a count. Left alone, this class passes or fails according to the order
+     * Gradle happens to scan test classes in, which is not a property of the code under test.
+     */
+    @Before
+    fun emptyTheDatabase() = runBlocking {
+        val db = TranscriptDatabase.get(context)
+        db.transcriptDao().allTranscripts().forEach { db.transcriptDao().deleteFor(it.displayName) }
+        db.summaryDao().observeAllDisplayNames().first().forEach { db.summaryDao().deleteFor(it) }
+    }
 
     private fun transcript(name: String, state: TranscriptState, at: Long) = TranscriptEntry(
         displayName = name,
