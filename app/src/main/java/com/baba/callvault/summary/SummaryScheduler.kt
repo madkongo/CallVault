@@ -29,6 +29,9 @@ object SummaryScheduler {
 
     private const val TAG = "CV:SummaryScheduler"
 
+    /** What marks a job as ours. See [tagFor] and [displayNameOfTag]. */
+    private const val TAG_PREFIX = "cv_summary:"
+
     /** Unique work for the summary queue. One name, so two taps queue rather than collide. */
     const val WORK_NAME = "cv_summary_now"
 
@@ -84,7 +87,21 @@ object SummaryScheduler {
      * happened. It also made the failed state unreachable: the worker reported the failure and
      * nothing could see it.
      */
-    fun tagFor(displayName: String): String = "cv_summary:$displayName"
+    fun tagFor(displayName: String): String = TAG_PREFIX + displayName
+
+    /**
+     * The recording [tag] belongs to, or null when it is not one of ours.
+     *
+     * The inverse of [tagFor], and the only way a **list** can find out what the queue is doing:
+     * every job carries WorkManager's own tags too (the worker's class name, and the unique-work
+     * name), so a caller reading tags has to be able to say which ones mean nothing to it.
+     *
+     * Split from the queue itself because the Summaries page reads one flow of work infos for the
+     * whole list rather than one observer per row, and this is the step that turns them back into
+     * recordings.
+     */
+    fun displayNameOfTag(tag: String): String? =
+        tag.removePrefix(TAG_PREFIX).takeIf { it.length != tag.length && it.isNotEmpty() }
 
     /** The recording a *running* summary is for, or null. Only meaningful mid-run. */
     fun displayNameOf(progress: Data): String? = progress.getString(SummaryWorker.KEY_DISPLAY_NAME)
