@@ -414,6 +414,8 @@
     <string name="transcript_no_model_title">Még nincs beszédmodell</string>
     <string name="transcript_no_speech">Ebben a felvételben nem ismerhető fel beszéd.</string>
     <string name="transcript_retranscribe">Átírás újra</string>
+    <string name="transcript_note_add">Jegyzet hozzáadása</string>
+    <string name="transcript_note_hint">Miről szólt, vagy mi a teendő vele…</string>
     <string name="transcript_search_empty">Egyetlen hívás sem tartalmazza ezeket a szavakat. Csak teljes szavakra keres, próbáljon másik szóalakot.</string>
     <string name="transcript_search_hint">Keresés az elhangzottak között</string>
     <string name="transcript_search_idle">Írjon be egy szót az összes átirat átkereséséhez.</string>

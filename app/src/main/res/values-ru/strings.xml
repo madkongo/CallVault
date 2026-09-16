@@ -414,6 +414,8 @@
     <string name="transcript_no_model_title">Речевая модель ещё не загружена</string>
     <string name="transcript_no_speech">В этой записи речь не распознана.</string>
     <string name="transcript_retranscribe">Расшифровать заново</string>
+    <string name="transcript_note_add">Добавить заметку</string>
+    <string name="transcript_note_hint">О чём это было или что с этим делать…</string>
     <string name="transcript_search_empty">Ни в одном звонке нет этих слов. Совпадают только целые слова — попробуйте другую форму слова.</string>
     <string name="transcript_search_hint">Поиск по сказанному</string>
     <string name="transcript_search_idle">Введите слово, чтобы искать по всем вашим расшифровкам.</string>

@@ -1388,6 +1388,14 @@ fun HomeScreen(
             summaryFirst = readingPresentation && readingFromSummary,
             modifier = modifier,
             note = sheetNote,
+            // The same table, the same key and the same export the playback screen writes to — a
+            // second door onto one note, not a second note. It is the ONLY door for a transcript
+            // whose recording is gone, which has no playback screen to reach.
+            onNoteChange = { text ->
+                transcriptScope.launch {
+                    RecordingExtrasRepository.saveNote(context, displayName, text)
+                }
+            },
             tags = sheetTags,
             positionMs = if (isThisTrack) playback.positionMs.toLong() else -1L,
             durationMs = if (isThisTrack) playback.durationMs.toLong() else 0L,

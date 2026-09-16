@@ -21,17 +21,22 @@ import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.lazy.rememberLazyListState
+import androidx.compose.material.icons.automirrored.filled.Notes
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Icon
 import androidx.compose.material3.ModalBottomSheet
+import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.rememberModalBottomSheetState
@@ -44,6 +49,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.material.icons.Icons
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalLayoutDirection
@@ -165,6 +171,14 @@ fun TranscriptView(
      * and never a subtitle file.
      */
     note: String = "",
+    /**
+     * Saves the note as it is typed, or null where the host has nowhere to keep one.
+     *
+     * The reading view is the only way to a note for a transcript whose recording is gone — notes
+     * live on the playback screen, and such a transcript has none. Same table, same key (the display
+     * name) and the same export: this is a second door onto one note, never a second note.
+     */
+    onNoteChange: ((String) -> Unit)? = null,
     tags: List<String> = emptyList(),
     onRetranscribe: () -> Unit,
     onDelete: () -> Unit,
@@ -207,6 +221,7 @@ fun TranscriptView(
             onShare = onShare,
             onExport = onExport,
             note = note,
+            onNoteChange = onNoteChange,
             tags = tags,
             onRetranscribe = onRetranscribe,
             onDelete = onDelete,
@@ -287,6 +302,7 @@ private fun ColumnScope.TranscriptBody(
     onShare: (String) -> Unit,
     onExport: (TranscriptFormat, ExportDocument) -> Unit,
     note: String,
+    onNoteChange: ((String) -> Unit)?,
     tags: List<String>,
     onRetranscribe: () -> Unit,
     onDelete: () -> Unit,
@@ -475,6 +491,28 @@ private fun ColumnScope.TranscriptBody(
                 }
             }
         }
+        // Beside Share rather than above the words: the page is for reading, and a text field
+        // between the summary and the transcript would push the thing being read down the screen
+        // every time it grew. Its label says whether there is already a note, which is the only
+        // sign there is — for a transcript with no recording there is no playback screen to show one.
+        if (onNoteChange != null) {
+            var noteOpen by remember { mutableStateOf(false) }
+            TextButton(onClick = { noteOpen = true }) {
+                Text(
+                    stringResource(
+                        if (note.isBlank()) R.string.transcript_note_add
+                        else R.string.playback_note_title
+                    )
+                )
+            }
+            if (noteOpen) {
+                TranscriptNoteDialog(
+                    note = note,
+                    onNoteChange = onNoteChange,
+                    onDismiss = { noteOpen = false },
+                )
+            }
+        }
         TextButton(onClick = onRetranscribe) {
             Text(stringResource(R.string.transcript_retranscribe))
         }
@@ -511,6 +549,54 @@ private fun ColumnScope.TranscriptBody(
             Text(stringResource(R.string.transcript_delete))
         }
     }
+}
+
+/**
+ * The note, in a dialog rather than on the page.
+ *
+ * **Saved as it is typed**, exactly as the playback screen's note card is, and for the reason written
+ * there: a note behind a Save button is a note somebody loses. So the only button closes it, and
+ * there is nothing to lose by backing out — which also means the dialog can be dismissed by the
+ * scrim or by back without a confirmation nobody would read.
+ *
+ * The draft is held locally as well as written through. Binding the field straight to the stored
+ * value would round-trip every keystroke through Room and the flow, which moves the cursor.
+ */
+@Composable
+private fun TranscriptNoteDialog(
+    note: String,
+    onNoteChange: (String) -> Unit,
+    onDismiss: () -> Unit,
+) {
+    var draft by remember { mutableStateOf(note) }
+
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        icon = { Icon(imageVector = Icons.AutoMirrored.Filled.Notes, contentDescription = null) },
+        // Stated: AlertDialog defaults an icon to `secondary`, which this scheme resolves to
+        // CoralDeep — the colour the app uses for trouble.
+        iconContentColor = MaterialTheme.colorScheme.primary,
+        title = { Text(stringResource(R.string.playback_note_title)) },
+        text = {
+            OutlinedTextField(
+                value = draft,
+                onValueChange = {
+                    draft = it
+                    onNoteChange(it)
+                },
+                placeholder = { Text(stringResource(R.string.transcript_note_hint)) },
+                modifier = Modifier.fillMaxWidth().heightIn(min = 120.dp),
+                // Content direction: a note is written in the language the call was in, not the
+                // app's.
+                textStyle = MaterialTheme.typography.bodyMedium.copy(
+                    textDirection = TextDirection.Content
+                ),
+            )
+        },
+        confirmButton = {
+            TextButton(onClick = onDismiss) { Text(stringResource(R.string.general_close)) }
+        },
+    )
 }
 
 /**

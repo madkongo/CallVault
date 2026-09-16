@@ -414,6 +414,8 @@
     <string name="transcript_no_model_title">Noch kein Sprachmodell</string>
     <string name="transcript_no_speech">In dieser Aufnahme wurde keine Sprache erkannt.</string>
     <string name="transcript_retranscribe">Erneut transkribieren</string>
+    <string name="transcript_note_add">Notiz hinzufügen</string>
+    <string name="transcript_note_hint">Worum es ging, oder was noch zu tun ist…</string>
     <string name="transcript_search_empty">Kein Anruf enthält diese Wörter. Es werden nur ganze Wörter gefunden — versuchen Sie eine andere Wortform.</string>
     <string name="transcript_search_hint">Nach Gesagtem suchen</string>
     <string name="transcript_search_idle">Geben Sie ein Wort ein, um alle Ihre Transkripte zu durchsuchen.</string>

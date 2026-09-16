@@ -414,6 +414,8 @@
     <string name="transcript_no_model_title">Aún no hay modelo de voz</string>
     <string name="transcript_no_speech">No se reconoció ninguna voz en esta grabación.</string>
     <string name="transcript_retranscribe">Transcribir de nuevo</string>
+    <string name="transcript_note_add">Añadir una nota</string>
+    <string name="transcript_note_hint">De qué trataba, o qué hay que hacer…</string>
     <string name="transcript_search_empty">Ninguna llamada contiene esas palabras. Solo coinciden palabras completas, prueba con otra forma de la palabra.</string>
     <string name="transcript_search_hint">Buscar lo que se dijo</string>
     <string name="transcript_search_idle">Escribe una palabra para buscar en todas tus transcripciones.</string>

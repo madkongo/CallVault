@@ -414,6 +414,8 @@
     <string name="transcript_no_model_title">Chưa có mô hình giọng nói</string>
     <string name="transcript_no_speech">Không nhận ra giọng nói nào trong bản ghi âm này.</string>
     <string name="transcript_retranscribe">Chuyển lại</string>
+    <string name="transcript_note_add">Thêm ghi chú</string>
+    <string name="transcript_note_hint">Nội dung là gì, hoặc cần làm gì tiếp…</string>
     <string name="transcript_search_empty">Không cuộc gọi nào chứa những từ đó. Chỉ khớp từ nguyên vẹn, hãy thử dạng khác của từ.</string>
     <string name="transcript_search_hint">Tìm trong nội dung đã nói</string>
     <string name="transcript_search_idle">Nhập một từ để tìm trong mọi bản chép lời của bạn.</string>

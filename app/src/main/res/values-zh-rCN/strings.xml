@@ -414,6 +414,8 @@
     <string name="transcript_no_model_title">尚无语音模型</string>
     <string name="transcript_no_speech">这段录音中未识别到语音。</string>
     <string name="transcript_retranscribe">重新转写</string>
+    <string name="transcript_note_add">添加备注</string>
+    <string name="transcript_note_hint">内容是什么，或接下来要做什么…</string>
     <string name="transcript_search_empty">没有通话包含这些词。只匹配完整词语，请换一种词形试试。</string>
     <string name="transcript_search_hint">搜索通话内容</string>
     <string name="transcript_search_idle">输入词语即可搜索你的全部文字记录。</string>

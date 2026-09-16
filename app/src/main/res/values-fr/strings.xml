@@ -414,6 +414,8 @@
     <string name="transcript_no_model_title">Pas encore de modèle vocal</string>
     <string name="transcript_no_speech">Aucune parole n\'a été reconnue dans cet enregistrement.</string>
     <string name="transcript_retranscribe">Transcrire à nouveau</string>
+    <string name="transcript_note_add">Ajouter une note</string>
+    <string name="transcript_note_hint">De quoi il s\'agissait, ou ce qu\'il reste à faire…</string>
     <string name="transcript_search_empty">Aucun appel ne contient ces mots. Seuls les mots entiers correspondent, essayez une autre forme du mot.</string>
     <string name="transcript_search_hint">Rechercher ce qui a été dit</string>
     <string name="transcript_search_idle">Saisissez un mot pour chercher dans toutes vos transcriptions.</string>

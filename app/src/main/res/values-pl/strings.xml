@@ -414,6 +414,8 @@
     <string name="transcript_no_model_title">Brak modelu mowy</string>
     <string name="transcript_no_speech">W tym nagraniu nie rozpoznano mowy.</string>
     <string name="transcript_retranscribe">Transkrybuj ponownie</string>
+    <string name="transcript_note_add">Dodaj notatkę</string>
+    <string name="transcript_note_hint">O czym to było albo co trzeba zrobić…</string>
     <string name="transcript_search_empty">Żadna rozmowa nie zawiera tych słów. Dopasowywane są tylko całe słowa — spróbuj innej formy.</string>
     <string name="transcript_search_hint">Szukaj w wypowiedziach</string>
     <string name="transcript_search_idle">Wpisz słowo, aby przeszukać wszystkie swoje transkrypcje.</string>
