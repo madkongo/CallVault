@@ -28,17 +28,57 @@ import java.util.Locale
  * a call with a contact called "Important", to a VoIP app named "Import", and to any stranger file
  * with the word in it; and an exemption handed out by accident is a recording that quietly stops
  * being backed up and never expires.
+ *
+ * ## Two kinds of import, and why the difference is a token of its own
+ *
+ * The user is asked what a file is *for*: keep it, or only read it. A [Kind.TRANSCRIBE_ONLY] file is
+ * transcribed and then its audio is deleted, so it must never join the recordings list on the way
+ * through — and that has to survive the catalog's destructive re-seed, which knows nothing but the
+ * folder's file names. So the answer lives in the name, exactly as the import marker itself does.
+ *
+ * **It is a token AFTER the marker, not a variant of it**, and the reason is downgrades. Had this
+ * been written `_import-transcribeonly`, a build from before this feature would read the marker slot,
+ * fail to match `import`, and conclude the file was not an import at all — handing it straight to the
+ * Drive upload and the retention sweep, which is somebody's private voice note uploaded and then
+ * deleted. Written as a second token, every older build still sees `import` in the slot it looks at,
+ * still exempts the file from every sweep, and merely shows an odd word in the label.
  */
 object ImportedRecording {
 
+    /** What the user said the file was for when they brought it in. */
+    enum class Kind {
+        /** Keep it: it joins the recordings list, like every other recording. */
+        KEEP,
+
+        /**
+         * Only read it: transcribe it, then delete the audio.
+         *
+         * Never in the recordings list while it exists — see
+         * [com.baba.callvault.data.recordings.TranscribeOnlyAudio] for when the audio may go.
+         */
+        TRANSCRIBE_ONLY,
+    }
+
     /** The marker that says the user brought this file in rather than CallVault recording it. */
     const val TOKEN = "import"
+
+    /**
+     * The token that says the audio is wanted only until its transcript exists.
+     *
+     * One word with no separator on purpose: the label sanitiser strips underscores, so a two-word
+     * token would be indistinguishable from a label, and a hyphen would read as a variant of the
+     * marker rather than a token beside it.
+     */
+    const val TRANSCRIBE_ONLY_TOKEN = "transcribeonly"
 
     /**
      * Where the marker sits among the underscore-separated tokens: the timestamp itself contains an
      * underscore (`20260916_101010.123+0300`), so it occupies slots 0 and 1 and the marker is slot 2.
      */
     private const val MARKER_SLOT = 2
+
+    /** Where [TRANSCRIBE_ONLY_TOKEN] sits when it is there at all: straight after the marker. */
+    private const val KIND_SLOT = MARKER_SLOT + 1
 
     /** Same stamp the carrier and VoIP recorders write, so one sort orders the whole folder. */
     private const val STAMP_PATTERN = "yyyyMMdd_HHmmss.SSSZ"
@@ -69,15 +109,21 @@ object ImportedRecording {
      * source — its file name, usually — and is best-effort: an unusable one simply drops out rather
      * than being guessed at, exactly as an absent VoIP caller does.
      */
-    fun nameFor(importedAtMillis: Long, label: String?, extension: String): String {
+    fun nameFor(
+        importedAtMillis: Long,
+        label: String?,
+        extension: String,
+        kind: Kind = Kind.KEEP,
+    ): String {
         val stamp = SimpleDateFormat(STAMP_PATTERN, Locale.CANADA).format(Date(importedAtMillis))
+        val kindToken = if (kind == Kind.TRANSCRIBE_ONLY) "_$TRANSCRIBE_ONLY_TOKEN" else ""
         val suffix = labelFor(label)?.let { "_$it" } ?: ""
         val ext = when {
             extension.isBlank() -> ""
             extension.startsWith('.') -> extension
             else -> ".$extension"
         }
-        return "${stamp}_$TOKEN$suffix$ext"
+        return "${stamp}_$TOKEN$kindToken$suffix$ext"
     }
 
     /**
@@ -100,6 +146,11 @@ object ImportedRecording {
             .take(MAX_LABEL_LENGTH)
             .trim()
             .ifBlank { null }
+            // A file the user really did call "transcribeonly" would otherwise land in the slot the
+            // kind is read from, and a KEPT import would be read back as one whose audio may be
+            // deleted the moment its transcript is stored. Dropped rather than mangled: the label is
+            // a hint for the user's eye and losing it costs nothing, where misreading it costs audio.
+            ?.takeUnless { it.equals(TRANSCRIBE_ONLY_TOKEN, ignoreCase = true) }
     }
 
     /**
@@ -136,8 +187,35 @@ object ImportedRecording {
      */
     fun labelOf(displayName: String): String? {
         if (!isImported(displayName)) return null
-        return tokensOf(displayName).drop(MARKER_SLOT + 1).joinToString("_").ifBlank { null }
+        // Past the kind token where there is one, so a transcribe-only import is labelled with what
+        // the user's file was called and not with our own bookkeeping word.
+        val from = if (kindOf(displayName) == Kind.TRANSCRIBE_ONLY) KIND_SLOT + 1 else MARKER_SLOT + 1
+        return tokensOf(displayName).drop(from).joinToString("_").ifBlank { null }
     }
+
+    /**
+     * What the user said [displayName] was for, or null when it is not an import at all.
+     *
+     * Read from the name on every occasion rather than remembered anywhere, for the same reason
+     * [isImported] is: the catalog is a destructible cache and a re-seed knows nothing but the file
+     * names in the folder. A kind stored in the database alone would be gone after a re-seed, and a
+     * transcribe-only file would quietly rejoin the recordings list.
+     */
+    fun kindOf(displayName: String): Kind? {
+        if (!isImported(displayName)) return null
+        val parts = tokensOf(displayName)
+        val isTranscribeOnly = parts.size > KIND_SLOT && parts[KIND_SLOT] == TRANSCRIBE_ONLY_TOKEN
+        return if (isTranscribeOnly) Kind.TRANSCRIBE_ONLY else Kind.KEEP
+    }
+
+    /**
+     * Whether [displayName] is an import whose audio is wanted only until its transcript exists.
+     *
+     * Asked by everything that decides where such a file may appear and when its audio may go, so
+     * both a wrong "yes" (audio deleted that the user meant to keep) and a wrong "no" (a file the
+     * user never wanted in their call list, sitting in it for ever) are answered in one place.
+     */
+    fun isTranscribeOnly(displayName: String): Boolean = kindOf(displayName) == Kind.TRANSCRIBE_ONLY
 
     /**
      * [displayName] split on underscores, with its extension removed.

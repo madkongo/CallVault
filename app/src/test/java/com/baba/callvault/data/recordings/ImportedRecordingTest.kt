@@ -129,6 +129,78 @@ class ImportedRecordingTest {
         assertFalse(ImportedRecording.isImported("important.mp3"))
     }
 
+    // ---- the two kinds
+
+    @Test
+    fun `a transcribe-only name says so, and is still an import`() {
+        val name = ImportedRecording.nameFor(
+            importedAt,
+            label = null,
+            extension = ".ogg",
+            kind = ImportedRecording.Kind.TRANSCRIBE_ONLY,
+        )
+        // Still an import first and foremost: every sweep gate keys on this, so a transcribe-only
+        // file that stopped reading as an import would be uploaded to Drive and aged out.
+        assertTrue(name, ImportedRecording.isImported(name))
+        assertTrue(name, ImportedRecording.isTranscribeOnly(name))
+        assertEquals(ImportedRecording.Kind.TRANSCRIBE_ONLY, ImportedRecording.kindOf(name))
+        assertTrue(name, name.endsWith("_import_transcribeonly.ogg"))
+    }
+
+    @Test
+    fun `a kept import is not transcribe-only`() {
+        val name = ImportedRecording.nameFor(importedAt, label = "Standup", extension = ".m4a")
+        assertEquals(ImportedRecording.Kind.KEEP, ImportedRecording.kindOf(name))
+        assertFalse(name, ImportedRecording.isTranscribeOnly(name))
+    }
+
+    @Test
+    fun `a transcribe-only name keeps its label, and the label is not the kind token`() {
+        val name = ImportedRecording.nameFor(
+            importedAt,
+            label = "voice note.opus",
+            extension = ".opus",
+            kind = ImportedRecording.Kind.TRANSCRIBE_ONLY,
+        )
+        assertTrue(name, name.endsWith("_import_transcribeonly_voice note.opus"))
+        assertEquals("voice note", ImportedRecording.labelOf(name))
+        assertTrue(name, ImportedRecording.isTranscribeOnly(name))
+    }
+
+    @Test
+    fun `a file actually called transcribeonly cannot turn a kept import into a deletable one`() {
+        // The one way a user could otherwise reach the kind slot. Losing the label costs nothing;
+        // misreading it would delete audio they asked to keep.
+        assertNull(ImportedRecording.labelFor("transcribeonly.m4a"))
+        assertNull(ImportedRecording.labelFor("TranscribeOnly"))
+        val name = ImportedRecording.nameFor(importedAt, label = "transcribeonly.m4a", extension = ".m4a")
+        assertFalse(name, ImportedRecording.isTranscribeOnly(name))
+        assertEquals(ImportedRecording.Kind.KEEP, ImportedRecording.kindOf(name))
+    }
+
+    @Test
+    fun `the kind token sits after the marker, so an older build still sees an import`() {
+        // The downgrade guarantee, pinned: a build that has never heard of the kind reads the marker
+        // slot alone. Written as "_import-transcribeonly" it would have read "not an import", and
+        // handed somebody's voice note to the Drive upload and the retention sweep.
+        val name = ImportedRecording.nameFor(
+            importedAt,
+            label = null,
+            extension = ".ogg",
+            kind = ImportedRecording.Kind.TRANSCRIBE_ONLY,
+        )
+        val markerSlot = name.substringBeforeLast('.').split('_')[2]
+        assertEquals(ImportedRecording.TOKEN, markerSlot)
+    }
+
+    @Test
+    fun `a call or stranger file is never transcribe-only`() {
+        assertFalse(ImportedRecording.isTranscribeOnly("20260916_101010.123+0300_in_5551234.ogg"))
+        assertFalse(ImportedRecording.isTranscribeOnly("20260916_101010.123+0300_voip-WhatsApp.ogg"))
+        assertFalse(ImportedRecording.isTranscribeOnly("transcribeonly.mp3"))
+        assertNull(ImportedRecording.kindOf("20260916_101010.123+0300_in_5551234.ogg"))
+    }
+
     @Test
     fun `a name stored without an extension is still read correctly`() {
         // The stamp carries dots of its own, so "chop at the last dot" would eat half the name.

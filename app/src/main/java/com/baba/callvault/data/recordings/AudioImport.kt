@@ -63,8 +63,13 @@ object AudioImport {
          *
          * @param displayName the name it was stored under, which is what every other part of the app
          *   keys on — the transcript, the summary, the tags and the delete cascade alike.
+         * @param durationMs how long the audio is, or 0 when the container would not say. Handed back
+         *   rather than left to be read again: it was measured here anyway, and the caller needs it to
+         *   quote an estimate and to refuse a file over the transcription length limit. Reading it a
+         *   second time would be a second SAF open and a second MediaExtractor for an answer already
+         *   in hand.
          */
-        data class Imported(val displayName: String) : Outcome
+        data class Imported(val displayName: String, val durationMs: Long) : Outcome
 
         /** Nothing was kept, and [reason] is what to tell the user. */
         data class Refused(val reason: Reason) : Outcome
@@ -137,12 +142,15 @@ object AudioImport {
      * a crash on the screen the user was standing on.
      *
      * @param source the URI handed back by the SAF picker.
+     * @param kind what the user said the file was for. It is written into the name rather than kept
+     *   anywhere else, so a catalog re-seed cannot lose it — see [ImportedRecording].
      * @param importedAtMillis when the import happened; the catalog is stamped with this and nothing
      *   else. Injectable so the naming and the retention stamp can be pinned in a test.
      */
     suspend fun import(
         context: Context,
         source: Uri,
+        kind: ImportedRecording.Kind = ImportedRecording.Kind.KEEP,
         importedAtMillis: Long = System.currentTimeMillis(),
     ): Outcome = withContext(Dispatchers.IO) {
         val meta = readMetadata(context, source)
@@ -164,6 +172,7 @@ object AudioImport {
             importedAtMillis = importedAtMillis,
             label = meta.displayName,
             extension = storedAs.extension,
+            kind = kind,
         )
         val copied = SafHelper.copyFileToFolder(
             context = context,
@@ -204,13 +213,12 @@ object AudioImport {
         )
         // Read once and remembered, exactly as a recording's is, so the list never has to open the
         // file for it — the cost that made the library slower the more of it there was.
-        val durationSeconds = AudioDecoder.durationMs(context, copyUri)
-            .takeIf { it > 0L }
-            ?.let { (it + 500) / 1000 }
+        val durationMs = runCatching { AudioDecoder.durationMs(context, copyUri) }.getOrDefault(0L)
+        val durationSeconds = durationMs.takeIf { it > 0L }?.let { (it + 500) / 1000 }
         if (durationSeconds != null) RecordingCatalog.setDuration(context, displayName, durationSeconds)
 
         AppLogger.i(TAG, "Imported '$displayName' ($sizeBytes bytes, ${durationSeconds ?: "unknown"}s)")
-        Outcome.Imported(displayName)
+        Outcome.Imported(displayName, durationMs)
     }
 
     /**
