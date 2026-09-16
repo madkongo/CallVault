@@ -122,6 +122,7 @@ import com.baba.callvault.system.takePersistableFolderPermission
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.baba.callvault.ui.common.ContactSelectionDialog
 import com.baba.callvault.ui.common.CvCard
+import com.baba.callvault.ui.common.OemGateNotice
 import com.baba.callvault.ui.common.CvDestructiveButton
 import com.baba.callvault.ui.common.CvPrimaryButton
 import com.baba.callvault.ui.common.CvScaffold
@@ -443,6 +444,9 @@ fun SettingsContent(
                 // also the first thing worth checking when something is not working, which is exactly
                 // when nobody wants to go hunting for it.
                 PrivilegedModeSubSection()
+                // The wizard cannot be re-run, so a phone whose OEM blocks the grant needs to be able to
+                // find this out here too. Self-hiding when it does not apply.
+                OemGateNotice(modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp))
             }
             item {
                 RecordingSection(

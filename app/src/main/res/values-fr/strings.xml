@@ -630,4 +630,10 @@
     <string name="usb_debugging_off_keep">Le laisser activé</string>
     <string name="settings_wd_enforce_label">Garder le débogage sans fil activé pour l\'enregistrement</string>
     <string name="settings_wd_enforce_description">Si vous désactivez le débogage sans fil alors que CallVault n\'a pas d\'autre accès, il le réactive pour que les appels continuent d\'être enregistrés. Si cette option est désactivée, votre interrupteur reste éteint et la notification indique que l\'enregistrement est en pause.</string>
+    <string name="oem_gate_title">Votre téléphone bloque cette étape</string>
+    <string name="oem_gate_body_oppo">Les téléphones OnePlus, OPPO et realme refusent cette autorisation aux applications tant que \"Désactiver l\'optimisation système\" n\'est pas activé dans les options pour développeurs — vers le bas, dans Applications. Les anciennes versions l\'appellent \"Désactiver la surveillance des autorisations\". Activez-le puis réessayez. Si vous ne le trouvez pas, passez le téléphone en anglais, activez-le, puis revenez.</string>
+    <string name="oem_gate_body_xiaomi">Les téléphones Xiaomi, Redmi et POCO refusent cette autorisation aux applications tant que \"Débogage USB (paramètres de sécurité)\" n\'est pas activé dans les options pour développeurs. C\'est distinct du débogage USB et nécessite un compte Mi connecté. Activez-le puis réessayez.</string>
+    <string name="oem_gate_body_other">Ce téléphone refuse à CallVault l\'autorisation nécessaire. Dans les options pour développeurs, cherchez un réglage sur la surveillance des autorisations ou l\'optimisation système, activez-le puis réessayez.</string>
+    <string name="oem_gate_open_dev_options">Ouvrir les options pour développeurs</string>
+    <string name="oem_gate_continue_hint">Vous pouvez continuer, mais les appels ne seront pas enregistrés tant que ce n\'est pas fait.</string>
 </resources>

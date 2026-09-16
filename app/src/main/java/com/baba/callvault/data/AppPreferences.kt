@@ -244,6 +244,10 @@ class AppPreferences(context: Context) {
         DISCLAIMER_ACCEPTED("disclaimer_accepted"),
         WIZARD_COMPLETED("wizard_completed"),
 
+        // What the last real `pm grant` from the shell showed, for phones whose OEM refuses it. Remembered
+        // because most OEMs state it nowhere readable — see [ShellGrantGate].
+        SHELL_GRANT_STATE("shell_grant_state"),
+
         // --- Storage & General ---
         RECORDING_FOLDER_URI("recording_folder_uri"),
         VIBRATION_ENABLED("vibration_enabled"),
@@ -445,6 +449,12 @@ class AppPreferences(context: Context) {
     
     /** Sets whether the user has accepted the disclaimer. */
     fun setDisclaimerAccepted(accepted: Boolean) = setBoolean(Key.DISCLAIMER_ACCEPTED, accepted)
+
+    /** What the last self-grant attempt over the ADB shell showed ([ShellGrantGate.ShellGrantState] name), or null. */
+    fun getShellGrantState(): String? = getString(Key.SHELL_GRANT_STATE)
+
+    /** Records what a self-grant attempt showed, so a screen can explain a refusal that happened minutes ago. */
+    fun setShellGrantState(state: String) = setString(Key.SHELL_GRANT_STATE, state)
 
     /** Whether the one-time post-onboarding setup wizard has been completed. */
     fun isWizardCompleted() = getBoolean(Key.WIZARD_COMPLETED, DefaultsValue.WIZARD_COMPLETED)

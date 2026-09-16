@@ -632,4 +632,10 @@
     <string name="usb_debugging_off_keep">Pozostaw włączone</string>
     <string name="settings_wd_enforce_label">Utrzymuj debugowanie bezprzewodowe włączone do nagrywania</string>
     <string name="settings_wd_enforce_description">Jeśli wyłączysz debugowanie bezprzewodowe, gdy CallVault nie ma innego dostępu, włączy je ponownie, aby połączenia dalej były nagrywane. Gdy ta opcja jest wyłączona, Twój przełącznik pozostaje wyłączony, a powiadomienie informuje, że nagrywanie jest wstrzymane.</string>
+    <string name="oem_gate_title">Telefon blokuje ten krok</string>
+    <string name="oem_gate_body_oppo">Telefony OnePlus, OPPO i realme nie przyznają aplikacjom tego uprawnienia, dopóki nie włączysz opcji \"Wyłącz optymalizację systemu\" w opcjach programisty — na dole, w sekcji Aplikacje. Starsze wersje nazywają to \"Wyłącz monitorowanie uprawnień\". Włącz ją i spróbuj ponownie. Jeśli jej nie widzisz, przełącz telefon na angielski, włącz ją i wróć do swojego języka.</string>
+    <string name="oem_gate_body_xiaomi">Telefony Xiaomi, Redmi i POCO nie przyznają aplikacjom tego uprawnienia, dopóki nie włączysz opcji \"Debugowanie USB (ustawienia zabezpieczeń)\" w opcjach programisty. To coś innego niż debugowanie USB i wymaga zalogowania na konto Mi. Włącz ją i spróbuj ponownie.</string>
+    <string name="oem_gate_body_other">Ten telefon odmawia CallVault potrzebnego uprawnienia. W opcjach programisty poszukaj przełącznika dotyczącego monitorowania uprawnień lub optymalizacji systemu, włącz go i spróbuj ponownie.</string>
+    <string name="oem_gate_open_dev_options">Otwórz opcje programisty</string>
+    <string name="oem_gate_continue_hint">Możesz na razie kontynuować, ale połączenia nie będą nagrywane, dopóki tego nie zrobisz.</string>
 </resources>

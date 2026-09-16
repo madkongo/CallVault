@@ -630,4 +630,10 @@
     <string name="usb_debugging_off_keep">Maradjon bekapcsolva</string>
     <string name="settings_wd_enforce_label">Vezeték nélküli hibakeresés bekapcsolva tartása a rögzítéshez</string>
     <string name="settings_wd_enforce_description">Ha kikapcsolod a vezeték nélküli hibakeresést, miközben a CallVault máshogy nem fér hozzá, visszakapcsolja, hogy a hívások rögzítése folytatódjon. Ha ez ki van kapcsolva, a kapcsolód kikapcsolva marad, és az értesítés jelzi, hogy a rögzítés szünetel.</string>
+    <string name="oem_gate_title">A telefonod blokkolja ezt a lépést</string>
+    <string name="oem_gate_body_oppo">A OnePlus, OPPO és realme telefonok nem adják meg ezt az engedélyt az alkalmazásoknak, amíg be nem kapcsolod a \"Rendszeroptimalizálás letiltása\" kapcsolót a fejlesztői beállításokban — alul, az Alkalmazások résznél. A régebbi verziók \"Engedélyfigyelés letiltása\" néven hívják. Kapcsold be, majd próbáld újra. Ha nem találod, állítsd a telefont angolra, kapcsold be, majd állítsd vissza.</string>
+    <string name="oem_gate_body_xiaomi">A Xiaomi, Redmi és POCO telefonok nem adják meg ezt az engedélyt, amíg be nem kapcsolod az \"USB-hibakeresés (biztonsági beállítások)\" kapcsolót a fejlesztői beállításokban. Ez nem ugyanaz, mint az USB-hibakeresés, és Mi-fiókos bejelentkezést igényel. Kapcsold be, majd próbáld újra.</string>
+    <string name="oem_gate_body_other">Ez a telefon megtagadja a CallVault számára szükséges engedélyt. A fejlesztői beállításokban keress engedélyfigyeléssel vagy rendszeroptimalizálással kapcsolatos kapcsolót, kapcsold be, majd próbáld újra.</string>
+    <string name="oem_gate_open_dev_options">Fejlesztői beállítások megnyitása</string>
+    <string name="oem_gate_continue_hint">Most folytathatod, de a hívások addig nem lesznek rögzítve, amíg ezt el nem végzed.</string>
 </resources>

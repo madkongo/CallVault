@@ -633,4 +633,10 @@
     <string name="usb_debugging_off_keep">Manter ativada</string>
     <string name="settings_wd_enforce_label">Manter a depuração por Wi-Fi ativada para gravar</string>
     <string name="settings_wd_enforce_description">Se você desativar a depuração por Wi-Fi quando o CallVault não tiver outro acesso, ele a ativa de novo para as chamadas continuarem sendo gravadas. Com esta opção desativada, seu interruptor fica desligado e a notificação avisa que a gravação está pausada.</string>
+    <string name="oem_gate_title">Seu telefone está bloqueando esta etapa</string>
+    <string name="oem_gate_body_oppo">Telefones OnePlus, OPPO e realme não concedem esta permissão aos aplicativos até você ativar \"Desativar otimização do sistema\" nas opções do desenvolvedor — perto do fim, em Apps. Versões mais antigas chamam de \"Desativar monitoramento de permissões\". Ative e tente de novo. Se não encontrar, mude o telefone para inglês, ative e volte ao seu idioma.</string>
+    <string name="oem_gate_body_xiaomi">Telefones Xiaomi, Redmi e POCO não concedem esta permissão aos aplicativos até você ativar \"Depuração USB (configurações de segurança)\" nas opções do desenvolvedor. É diferente da depuração USB e exige login em uma conta Mi. Ative e tente de novo.</string>
+    <string name="oem_gate_body_other">Este telefone nega ao CallVault a permissão necessária. Nas opções do desenvolvedor, procure uma chave sobre monitoramento de permissões ou otimização do sistema, ative e tente de novo.</string>
+    <string name="oem_gate_open_dev_options">Abrir opções do desenvolvedor</string>
+    <string name="oem_gate_continue_hint">Você pode continuar por enquanto, mas as chamadas não serão gravadas até isso ser feito.</string>
 </resources>

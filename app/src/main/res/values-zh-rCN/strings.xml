@@ -629,4 +629,10 @@
     <string name="usb_debugging_off_keep">保持开启</string>
     <string name="settings_wd_enforce_label">录音时保持无线调试开启</string>
     <string name="settings_wd_enforce_description">如果在 CallVault 没有其他连接方式时关闭无线调试，它会重新开启，以便继续录音。关闭此项后，你的开关会保持关闭，通知会提示录音已暂停。</string>
+    <string name="oem_gate_title">手机正在阻止这一步</string>
+    <string name="oem_gate_body_oppo">OnePlus、OPPO 和 realme 手机在开启开发者选项中的\"禁用系统优化\"之前，不会把该权限授予应用——该开关靠近底部的\"应用\"分组。旧版本叫\"禁用权限监控\"。开启后再试一次。如果找不到，可把系统语言切换成英文，开启后再切回来。</string>
+    <string name="oem_gate_body_xiaomi">小米、红米和 POCO 手机在开启开发者选项中的\"USB 调试（安全设置）\"之前，不会把该权限授予应用。它与普通的 USB 调试不同，并且需要登录小米账号。开启后再试一次。</string>
+    <string name="oem_gate_body_other">这台手机拒绝授予 CallVault 所需的权限。请在开发者选项中查找与权限监控或系统优化相关的开关，开启后再试一次。</string>
+    <string name="oem_gate_open_dev_options">打开开发者选项</string>
+    <string name="oem_gate_continue_hint">你可以先继续，但在完成之前通话不会被录制。</string>
 </resources>

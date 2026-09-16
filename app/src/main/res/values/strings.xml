@@ -835,4 +835,10 @@
     <string name="usb_debugging_off_keep">Keep it on</string>
     <string name="settings_wd_enforce_label">Keep Wireless debugging on for recording</string>
     <string name="settings_wd_enforce_description">If you switch Wireless debugging off while nothing else lets CallVault in, it turns it back on so calls keep recording. When this is off, your switch stays off and the notification says recording is paused.</string>
+    <string name="oem_gate_title">Your phone is blocking this step</string>
+    <string name="oem_gate_body_oppo">OnePlus, OPPO and realme phones refuse to give apps this permission until you turn on \"Disable system optimization\" in Developer options — near the bottom, under Apps. Older versions call it \"Disable permission monitoring\". Turn it on and try again. If you cannot find it, switch the phone to English, turn it on, then switch back.</string>
+    <string name="oem_gate_body_xiaomi">Xiaomi, Redmi and POCO phones refuse to give apps this permission until you turn on \"USB debugging (Security settings)\" in Developer options. It is separate from USB debugging, and needs you to be signed in to a Mi account. Turn it on and try again.</string>
+    <string name="oem_gate_body_other">This phone refuses to give CallVault the permission it needs. In Developer options, look for a switch about permission monitoring or system optimisation, turn it on, and try again.</string>
+    <string name="oem_gate_open_dev_options">Open Developer options</string>
+    <string name="oem_gate_continue_hint">You can carry on for now, but calls will not be recorded until this is done.</string>
 </resources>

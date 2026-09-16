@@ -630,4 +630,10 @@
     <string name="usb_debugging_off_keep">Lascialo attivo</string>
     <string name="settings_wd_enforce_label">Mantieni attivo il debug wireless per la registrazione</string>
     <string name="settings_wd_enforce_description">Se disattivi il debug wireless quando CallVault non ha altri accessi, lo riattiva perché le chiamate continuino a essere registrate. Se questa opzione è disattivata, il tuo interruttore resta spento e la notifica indica che la registrazione è in pausa.</string>
+    <string name="oem_gate_title">Il telefono sta bloccando questo passaggio</string>
+    <string name="oem_gate_body_oppo">I telefoni OnePlus, OPPO e realme non concedono questa autorizzazione alle app finché non attivi \"Disattiva ottimizzazione del sistema\" nelle Opzioni sviluppatore, in fondo, sotto App. Le versioni più vecchie la chiamano \"Disattiva monitoraggio autorizzazioni\". Attivala e riprova. Se non la trovi, imposta il telefono in inglese, attivala e poi torna indietro.</string>
+    <string name="oem_gate_body_xiaomi">I telefoni Xiaomi, Redmi e POCO non concedono questa autorizzazione alle app finché non attivi \"Debug USB (impostazioni di sicurezza)\" nelle Opzioni sviluppatore. È diversa dal debug USB e richiede l\'accesso a un account Mi. Attivala e riprova.</string>
+    <string name="oem_gate_body_other">Questo telefono nega a CallVault l\'autorizzazione necessaria. Nelle Opzioni sviluppatore cerca un\'impostazione su monitoraggio autorizzazioni od ottimizzazione del sistema, attivala e riprova.</string>
+    <string name="oem_gate_open_dev_options">Apri Opzioni sviluppatore</string>
+    <string name="oem_gate_continue_hint">Puoi proseguire, ma le chiamate non verranno registrate finché non lo fai.</string>
 </resources>

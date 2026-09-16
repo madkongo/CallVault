@@ -629,4 +629,10 @@
     <string name="usb_debugging_off_keep">Giữ bật</string>
     <string name="settings_wd_enforce_label">Giữ gỡ lỗi không dây luôn bật để ghi âm</string>
     <string name="settings_wd_enforce_description">Nếu bạn tắt gỡ lỗi không dây trong khi CallVault không còn cách nào khác để truy cập, ứng dụng sẽ bật lại để cuộc gọi tiếp tục được ghi. Khi tắt tùy chọn này, công tắc của bạn giữ nguyên trạng thái tắt và thông báo cho biết việc ghi âm đang tạm dừng.</string>
+    <string name="oem_gate_title">Điện thoại đang chặn bước này</string>
+    <string name="oem_gate_body_oppo">Điện thoại OnePlus, OPPO và realme không cấp quyền này cho ứng dụng cho đến khi bạn bật \"Tắt tối ưu hóa hệ thống\" trong Tùy chọn nhà phát triển — ở gần cuối, trong mục Ứng dụng. Phiên bản cũ gọi là \"Tắt giám sát quyền\". Hãy bật rồi thử lại. Nếu không thấy, hãy chuyển máy sang tiếng Anh, bật lên, rồi chuyển lại.</string>
+    <string name="oem_gate_body_xiaomi">Điện thoại Xiaomi, Redmi và POCO không cấp quyền này cho ứng dụng cho đến khi bạn bật \"Gỡ lỗi USB (cài đặt bảo mật)\" trong Tùy chọn nhà phát triển. Đây là mục riêng, khác với gỡ lỗi USB, và cần đăng nhập tài khoản Mi. Hãy bật rồi thử lại.</string>
+    <string name="oem_gate_body_other">Điện thoại này từ chối cấp quyền mà CallVault cần. Trong Tùy chọn nhà phát triển, hãy tìm mục về giám sát quyền hoặc tối ưu hóa hệ thống, bật lên rồi thử lại.</string>
+    <string name="oem_gate_open_dev_options">Mở Tùy chọn nhà phát triển</string>
+    <string name="oem_gate_continue_hint">Bạn có thể tiếp tục, nhưng cuộc gọi sẽ không được ghi cho đến khi làm xong việc này.</string>
 </resources>

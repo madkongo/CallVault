@@ -630,4 +630,10 @@
     <string name="usb_debugging_off_keep">Eingeschaltet lassen</string>
     <string name="settings_wd_enforce_label">WLAN-Debugging für die Aufnahme eingeschaltet lassen</string>
     <string name="settings_wd_enforce_description">Schaltest du WLAN-Debugging aus, während CallVault keinen anderen Zugang hat, schaltet CallVault es wieder ein, damit Anrufe weiter aufgenommen werden. Ist diese Option aus, bleibt dein Schalter aus und die Benachrichtigung meldet, dass die Aufnahme pausiert ist.</string>
+    <string name="oem_gate_title">Dein Telefon blockiert diesen Schritt</string>
+    <string name="oem_gate_body_oppo">OnePlus-, OPPO- und realme-Telefone verweigern Apps diese Berechtigung, solange \"Systemoptimierung deaktivieren\" in den Entwickleroptionen nicht aktiviert ist — weiter unten, unter Apps. Ältere Versionen nennen es \"Berechtigungsüberwachung deaktivieren\". Aktiviere es und versuche es erneut. Wenn du es nicht findest, stelle das Telefon auf Englisch, aktiviere es und stelle danach zurück.</string>
+    <string name="oem_gate_body_xiaomi">Xiaomi-, Redmi- und POCO-Telefone verweigern Apps diese Berechtigung, solange \"USB-Debugging (Sicherheitseinstellungen)\" in den Entwickleroptionen nicht aktiviert ist. Das ist nicht dasselbe wie USB-Debugging und erfordert eine Anmeldung mit einem Mi-Konto. Aktiviere es und versuche es erneut.</string>
+    <string name="oem_gate_body_other">Dieses Telefon verweigert CallVault die benötigte Berechtigung. Suche in den Entwickleroptionen nach einem Schalter zu Berechtigungsüberwachung oder Systemoptimierung, aktiviere ihn und versuche es erneut.</string>
+    <string name="oem_gate_open_dev_options">Entwickleroptionen öffnen</string>
+    <string name="oem_gate_continue_hint">Du kannst vorerst fortfahren, aber Anrufe werden erst aufgezeichnet, wenn das erledigt ist.</string>
 </resources>

@@ -505,6 +505,10 @@ object AppLogger {
             writer.println("USB debugging: ${runCatching { AdbShell.isUsbDebuggingEnabled(context) }.getOrDefault("?")}")
             writer.println("WRITE_SECURE_SETTINGS: ${runCatching { AdbShell.hasWriteSecureSettings(context) }.getOrDefault("?")}")
             writer.println("WD plan: ${runCatching { AdbShell.wirelessDebuggingPlan(context).name }.getOrDefault("?")}")
+            // Whether this phone's OEM lets the shell grant at all. Unlike codec or bit rate, it CHANGES
+            // WHAT IS POSSIBLE: on a blocked phone setup cannot complete, and nothing else in a report says
+            // so. See docs/dev-notes/2026-09-16-oem-adb-restrictions-and-onboarding-check.md.
+            writer.println("Shell grants (OEM gate): ${runCatching { AdbShell.shellGrantState(context).name }.getOrDefault("?")} (${runCatching { AdbShell.oemGate(context).name }.getOrDefault("?")})")
         }
         writer.println("===========================================")
         writer.println()

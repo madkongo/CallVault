@@ -630,4 +630,10 @@
     <string name="usb_debugging_off_keep">Mantenerla activada</string>
     <string name="settings_wd_enforce_label">Mantener la depuración inalámbrica activa para grabar</string>
     <string name="settings_wd_enforce_description">Si desactivas la depuración inalámbrica cuando CallVault no tiene otra forma de acceder, la vuelve a activar para seguir grabando llamadas. Si esta opción está desactivada, tu interruptor se queda apagado y la notificación indica que la grabación está en pausa.</string>
+    <string name="oem_gate_title">Tu teléfono está bloqueando este paso</string>
+    <string name="oem_gate_body_oppo">Los teléfonos OnePlus, OPPO y realme no conceden este permiso a las aplicaciones hasta que actives \"Desactivar optimización del sistema\" en Opciones de desarrollador, cerca del final, en Aplicaciones. Las versiones antiguas lo llaman \"Desactivar supervisión de permisos\". Actívalo y vuelve a intentarlo. Si no lo encuentras, cambia el teléfono a inglés, actívalo y vuelve a tu idioma.</string>
+    <string name="oem_gate_body_xiaomi">Los teléfonos Xiaomi, Redmi y POCO no conceden este permiso a las aplicaciones hasta que actives \"Depuración USB (ajustes de seguridad)\" en Opciones de desarrollador. Es distinto de la depuración USB y requiere iniciar sesión con una cuenta Mi. Actívalo y vuelve a intentarlo.</string>
+    <string name="oem_gate_body_other">Este teléfono no concede a CallVault el permiso que necesita. En Opciones de desarrollador, busca un ajuste sobre supervisión de permisos u optimización del sistema, actívalo y vuelve a intentarlo.</string>
+    <string name="oem_gate_open_dev_options">Abrir Opciones de desarrollador</string>
+    <string name="oem_gate_continue_hint">Puedes continuar por ahora, pero las llamadas no se grabarán hasta que lo hagas.</string>
 </resources>

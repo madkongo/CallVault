@@ -800,14 +800,50 @@ object AdbShell {
      */
     private fun grantSecureSettingsIfNeeded(context: Context) {
         if (hasWriteSecureSettings(context)) return
-        runCatching {
+        // READ the command's output, don't just drain it: several OEMs refuse a grant from the shell, and the
+        // refusal arrives as a SecurityException on this stream. Without it, a user whose phone blocks the
+        // grant saw "setup done" and a recorder that never worked, with nothing anywhere naming the cause.
+        val output = runCatching {
             val pkg = context.packageName
             openShell(context, "pm grant $pkg android.permission.WRITE_SECURE_SETTINGS").use { s ->
-                s.openInputStream().use { it.readBytes() }   // drain to let the command complete
+                s.openInputStream().bufferedReader().use { it.readText() }
             }
-            AppLogger.i(TAG, "Requested self-grant of WRITE_SECURE_SETTINGS via ADB shell")
         }.onFailure { AppLogger.w(TAG, "Self-grant of WRITE_SECURE_SETTINGS failed: ${it.message}") }
+            .getOrDefault("")
+        // The read-back is the only proof: a grant can print nothing and still not land (reported on HyperOS).
+        val held = hasWriteSecureSettings(context)
+        val state = ShellGrantGate.fromGrantAttempt(output, held)
+        runCatching { AppPreferences(context).setShellGrantState(state.name) }
+        when (state) {
+            ShellGrantGate.ShellGrantState.ALLOWED ->
+                AppLogger.i(TAG, "Self-granted WRITE_SECURE_SETTINGS via ADB shell")
+            ShellGrantGate.ShellGrantState.BLOCKED ->
+                AppLogger.w(TAG, "This phone refuses grants from the shell (${oemGate(context)}) — the user must switch its Developer-options restriction off: ${output.trim().take(200)}")
+            ShellGrantGate.ShellGrantState.UNKNOWN ->
+                AppLogger.w(TAG, "Self-grant of WRITE_SECURE_SETTINGS did not land and said nothing: ${output.trim().take(200)}")
+        }
     }
+
+    /**
+     * What we know about this phone letting the shell grant CallVault its privilege — see [ShellGrantGate].
+     *
+     * The OEM property wins when it exists (it is the phone stating it outright, and it is live); otherwise
+     * we report what the last real grant attempt showed.
+     */
+    fun shellGrantState(context: Context): ShellGrantGate.ShellGrantState {
+        val fromProperty = ShellGrantGate.fromOemProperty(getSystemProperty(ShellGrantGate.OPPO_PROPERTY))
+        if (fromProperty != ShellGrantGate.ShellGrantState.UNKNOWN) return fromProperty
+        val remembered = runCatching { AppPreferences(context).getShellGrantState() }.getOrNull()
+        return runCatching { ShellGrantGate.ShellGrantState.valueOf(remembered.orEmpty()) }
+            .getOrDefault(ShellGrantGate.ShellGrantState.UNKNOWN)
+    }
+
+    /** Which OEM's Developer-options switch to name when [shellGrantState] says the shell is blocked. */
+    fun oemGate(context: Context): ShellGrantGate.OemGate = ShellGrantGate.oemGate(
+        manufacturer = android.os.Build.MANUFACTURER.orEmpty(),
+        oemProperty = getSystemProperty(ShellGrantGate.OPPO_PROPERTY),
+        miuiProperty = getSystemProperty(ShellGrantGate.XIAOMI_PROPERTY),
+    )
 
     /**
      * Silently re-grants WRITE_SECURE_SETTINGS after an install-over dropped it — but ONLY over a

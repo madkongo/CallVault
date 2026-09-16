@@ -81,6 +81,7 @@ import com.baba.callvault.system.openDeveloperSettings
 import com.baba.callvault.system.openDeviceInfoSettings
 import com.baba.callvault.system.openWirelessDebugging
 import com.baba.callvault.ui.common.CvCard
+import com.baba.callvault.ui.common.OemGateNotice
 import com.baba.callvault.ui.common.CvHero
 import com.baba.callvault.ui.common.CvPrimaryButton
 import com.baba.callvault.ui.common.CvSectionHeader
@@ -598,6 +599,12 @@ private fun AdbPermissionCard(
                 )
             }
         }
+
+        // Some OEMs refuse to let the shell hand us the privilege at all, whatever the switches above say.
+        // Nothing else on this screen can explain that, and the user cannot get past it without a switch
+        // only they can reach — see [OemGateNotice]. Self-hiding when it does not apply.
+        Spacer(Modifier.height(12.dp))
+        OemGateNotice()
     }
 }
 
