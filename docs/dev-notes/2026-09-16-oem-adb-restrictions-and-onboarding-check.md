@@ -168,8 +168,15 @@ Also Samsung-specific: the One UI equivalent of the "No data transfer" trick is 
   options. So the claim is at most build- or language-specific, not general. Onboarding copy should still
   mention the English trick as a fallback ("if you cannot find it, switch the phone to English"), but must
   not state it as a requirement.
-- Does the gate also block `pm install` from shell? (Our in-app updater.) Testable on the OP9.
-- Does an existing grant survive a **reboot** with monitoring active? (Our "set up once" story depends on it.)
+- ~~Does the gate also block `pm install` from shell?~~ **ANSWERED 2026-09-16 (OP9, gate closed): no.**
+  `pm install -r` from the shell returned `Success`. Our in-app updater is unaffected on OPPO. The
+  install-over also kept the grant (`grant survived=true`) and the recorder relaunched normally, so even
+  updating while blocked is safe.
+- ~~Does an existing grant survive a **reboot** with monitoring active?~~ **ANSWERED 2026-09-16: yes.** OP9
+  rebooted with `persist.sys.permission.enable=true`; `WRITE_SECURE_SETTINGS: granted=true` afterwards. The
+  "set up once and it keeps working" story holds even across reboots in the blocked state.
+- Detector dry-run in the blocked state: the re-grant probe raised the SecurityException as expected
+  (§4b), so the probe is confirmed in both directions on the same device.
 - Does `SystemProperties.get` return the value from a **release** (non-debuggable) build, not just `run-as`?
 - Dry-run the OEM-agnostic permission check on the OP9 in both toggle states, and on the emulator as a control.
 - Whether vivo also reverts `pm grant`, and whether its i管家 blocks a permission at use time.
