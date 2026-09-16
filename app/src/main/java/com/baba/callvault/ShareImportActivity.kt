@@ -182,6 +182,20 @@ class ShareImportActivity : AppCompatActivity() {
             isUnlocked = false
             promptDismissed = false
         }
+
+        // A share card that is off screen has nothing left to say, and leaving it alive costs the
+        // NEXT share. Measured: `am start` of a second SEND while the first card was still up came
+        // back START_DELIVERED_TO_TOP and the new Intent was dropped on the floor, because
+        // FLAG_ACTIVITY_NEW_TASK reuses a task whose root Intent `filterEquals` the incoming one
+        // and Intent.filterEquals compares action, type and component but NOT extras — so two
+        // shares of two entirely different files are, to the system, the same Intent. A share
+        // silently doing nothing is the worst outcome this screen has.
+        //
+        // Never while a copy is running: finishing takes the ViewModel with it, which would cancel
+        // the job between the copy and the catalogue and leave a file in the user's folder that
+        // the app has no record of. A share behind the app lock has copied nothing, so it is not
+        // busy and does not hold the card open — see ShareImportViewModel.isBusy.
+        if (!isChangingConfigurations && !isFinishing && !viewModel.isBusy) finish()
     }
 
     /**

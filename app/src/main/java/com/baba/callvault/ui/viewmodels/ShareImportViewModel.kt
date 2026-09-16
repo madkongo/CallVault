@@ -70,6 +70,15 @@ class ShareImportViewModel(application: Application) : AndroidViewModel(applicat
     private var hasBegun = false
 
     /**
+     * Whether a copy is actually in flight, as opposed to not started yet.
+     *
+     * [State.Working] alone cannot answer this: it is also the state of a share sitting behind the
+     * app lock, which has read nothing and copied nothing. The Activity asks before it decides
+     * whether it is safe to finish itself, and the difference is a file half-imported.
+     */
+    val isBusy: Boolean get() = hasBegun && _state.value is State.Working
+
+    /**
      * Takes the share apart, decides what it is, and imports it if it is anything.
      *
      * @param action the incoming Intent's action, passed in rather than read here so the decision
