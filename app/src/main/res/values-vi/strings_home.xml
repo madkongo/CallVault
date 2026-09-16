@@ -200,4 +200,19 @@
     <string name="share_import_nothing">Không có gì đi kèm lần chia sẻ đó. Hãy thử chia sẻ chính tệp âm thanh, thay vì tin nhắn chứa nó.</string>
     <string name="share_import_not_set_up_title">Hãy hoàn tất cài đặt CallVault trước</string>
     <string name="share_import_not_set_up_body">CallVault chưa hoàn tất phần cài đặt một lần, nên chưa có chỗ để giữ tệp này. Hãy mở ứng dụng, hoàn tất cài đặt, rồi chia sẻ lại.</string>
+    <string name="share_import_choice_title">CallVault nên làm gì với tệp này?</string>
+    <string name="share_import_choice_unnamed">Tệp âm thanh được chia sẻ</string>
+    <string name="import_choice_keep">Nhập và chép lời</string>
+    <string name="import_choice_keep_hint">Giữ tệp âm thanh trong các bản ghi của bạn và chép lời.</string>
+    <string name="import_choice_transcribe_only">Chỉ chép lời</string>
+    <string name="import_choice_transcribe_only_hint">Chép lời rồi xoá tệp âm thanh. Tệp không bao giờ xuất hiện trong các bản ghi của bạn — chỉ còn lời, ở mục Bản chép lời.</string>
+    <string name="share_import_queued_keep_title">Đã thêm và đưa vào hàng đợi</string>
+    <string name="share_import_queued_keep_body">Tệp đã nằm trong các bản ghi của bạn. Bản chép lời sẽ xuất hiện ở mục Bản chép lời khi xong.</string>
+    <string name="share_import_queued_only_title">Đã đưa vào hàng đợi chép lời</string>
+    <string name="share_import_queued_only_body">Bạn sẽ thấy lời ở mục Bản chép lời. Tệp âm thanh bị xoá ngay khi bản chép lời được lưu.</string>
+    <string name="share_import_kept_title">Đã lưu nhưng chưa chép lời</string>
+    <string name="share_import_kept_body">Tệp nằm trong các bản ghi của bạn. Bạn có thể bắt đầu chép lời từ đó bất cứ lúc nào.</string>
+    <string name="share_import_kept_only_body">Tệp đang chờ ở mục Bản chép lời. Bắt đầu ở đó bất cứ lúc nào, hoặc xoá ngay tại đó.</string>
+    <string name="share_import_too_long">Tệp này dài %1$d phút, còn CallVault chỉ chép lời được tối đa %2$d phút mỗi lần. Tệp đã được lưu nên bạn vẫn nghe được.</string>
+    <string name="share_import_no_model">Chưa có mô hình chép lời nào được cài, nên CallVault không đọc được tệp này. Tệp âm thanh đã được lưu — hãy cài một mô hình trong Cài đặt rồi bắt đầu từ mục Bản chép lời.</string>
 </resources>

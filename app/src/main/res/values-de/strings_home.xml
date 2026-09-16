@@ -200,4 +200,19 @@
     <string name="share_import_nothing">Mit dieser Freigabe kam nichts an. Teile die Audiodatei selbst statt der Nachricht, in der sie steckt.</string>
     <string name="share_import_not_set_up_title">Richte CallVault zuerst fertig ein</string>
     <string name="share_import_not_set_up_body">CallVault hat seine einmalige Einrichtung noch nicht abgeschlossen, es gibt also noch keinen Platz für diese Datei. Öffne die App, schließe die Einrichtung ab und teile die Datei dann erneut.</string>
+    <string name="share_import_choice_title">Was soll CallVault damit machen?</string>
+    <string name="share_import_choice_unnamed">Die geteilte Audiodatei</string>
+    <string name="import_choice_keep">Importieren &amp; transkribieren</string>
+    <string name="import_choice_keep_hint">Behält die Audiodatei in deinen Aufnahmen und transkribiert sie.</string>
+    <string name="import_choice_transcribe_only">Nur transkribieren</string>
+    <string name="import_choice_transcribe_only_hint">Transkribiert sie und löscht die Audiodatei danach. Sie erscheint nie in deinen Aufnahmen — nur der Text, unter Transkripte.</string>
+    <string name="share_import_queued_keep_title">Hinzugefügt und eingereiht</string>
+    <string name="share_import_queued_keep_body">Sie ist in deinen Aufnahmen. Das Transkript erscheint unter Transkripte, sobald es fertig ist.</string>
+    <string name="share_import_queued_only_title">Für die Transkription eingereiht</string>
+    <string name="share_import_queued_only_body">Den Text findest du unter Transkripte. Die Audiodatei wird gelöscht, sobald das Transkript gespeichert ist.</string>
+    <string name="share_import_kept_title">Gespeichert, aber nicht transkribiert</string>
+    <string name="share_import_kept_body">Sie ist in deinen Aufnahmen. Du kannst das Transkript jederzeit von dort aus starten.</string>
+    <string name="share_import_kept_only_body">Sie wartet unter Transkripte. Starte sie dort, wann du willst, oder lösche sie an derselben Stelle.</string>
+    <string name="share_import_too_long">Diese Audiodatei ist %1$d Minuten lang, und CallVault kann höchstens %2$d Minuten am Stück transkribieren. Die Datei wurde gespeichert, du kannst sie also weiterhin anhören.</string>
+    <string name="share_import_no_model">Es ist noch kein Transkriptionsmodell installiert, daher kann CallVault das nicht lesen. Die Audiodatei wurde gespeichert — installiere in den Einstellungen ein Modell und starte sie dann unter Transkripte.</string>
 </resources>

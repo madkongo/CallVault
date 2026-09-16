@@ -200,4 +200,19 @@
     <string name="share_import_nothing">Con quella condivisione non è arrivato nulla. Prova a condividere il file audio vero e proprio, non il messaggio che lo contiene.</string>
     <string name="share_import_not_set_up_title">Completa prima la configurazione di CallVault</string>
     <string name="share_import_not_set_up_body">CallVault non ha ancora completato la configurazione iniziale, quindi non c\'è ancora un posto dove tenere questo file. Aprilo, completa la configurazione e poi ricondividilo.</string>
+    <string name="share_import_choice_title">Cosa deve farne CallVault?</string>
+    <string name="share_import_choice_unnamed">L\'audio condiviso</string>
+    <string name="import_choice_keep">Importa e trascrivi</string>
+    <string name="import_choice_keep_hint">Tiene l\'audio fra le tue registrazioni e lo trascrive.</string>
+    <string name="import_choice_transcribe_only">Solo trascrizione</string>
+    <string name="import_choice_transcribe_only_hint">Lo trascrive, poi elimina l\'audio. Non compare mai fra le tue registrazioni: resta solo il testo, in Trascrizioni.</string>
+    <string name="share_import_queued_keep_title">Aggiunto e in coda</string>
+    <string name="share_import_queued_keep_body">È fra le tue registrazioni. La trascrizione comparirà in Trascrizioni quando sarà pronta.</string>
+    <string name="share_import_queued_only_title">In coda per la trascrizione</string>
+    <string name="share_import_queued_only_body">Troverai il testo in Trascrizioni. L\'audio viene eliminato appena la trascrizione è salvata.</string>
+    <string name="share_import_kept_title">Salvato, ma non trascritto</string>
+    <string name="share_import_kept_body">È fra le tue registrazioni. Puoi avviare la trascrizione da lì quando vuoi.</string>
+    <string name="share_import_kept_only_body">È in attesa in Trascrizioni. Avvialo da lì quando vuoi, oppure eliminalo dallo stesso posto.</string>
+    <string name="share_import_too_long">Quell\'audio dura %1$d minuti e CallVault può trascrivere al massimo %2$d minuti per volta. Il file è stato salvato, quindi puoi comunque ascoltarlo.</string>
+    <string name="share_import_no_model">Non è ancora installato alcun modello di trascrizione, perciò CallVault non può leggerlo. L\'audio è stato salvato: installa un modello nelle Impostazioni, poi avvialo da Trascrizioni.</string>
 </resources>

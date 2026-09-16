@@ -200,4 +200,19 @@
     <string name="share_import_nothing">С этим файлом ничего не пришло. Попробуйте поделиться самим аудиофайлом, а не сообщением, в котором он лежит.</string>
     <string name="share_import_not_set_up_title">Сначала завершите настройку CallVault</string>
     <string name="share_import_not_set_up_body">CallVault ещё не завершил первоначальную настройку, поэтому этот файл пока негде хранить. Откройте приложение, завершите настройку и поделитесь файлом ещё раз.</string>
+    <string name="share_import_choice_title">Что CallVault должен с этим сделать?</string>
+    <string name="share_import_choice_unnamed">Присланный аудиофайл</string>
+    <string name="import_choice_keep">Импортировать и расшифровать</string>
+    <string name="import_choice_keep_hint">Сохраняет аудио среди ваших записей и расшифровывает его.</string>
+    <string name="import_choice_transcribe_only">Только расшифровать</string>
+    <string name="import_choice_transcribe_only_hint">Расшифрует, а затем удалит аудио. Оно никогда не появится среди ваших записей — останется только текст, в разделе «Расшифровки».</string>
+    <string name="share_import_queued_keep_title">Добавлено и поставлено в очередь</string>
+    <string name="share_import_queued_keep_body">Файл среди ваших записей. Расшифровка появится в разделе «Расшифровки», когда будет готова.</string>
+    <string name="share_import_queued_only_title">В очереди на расшифровку</string>
+    <string name="share_import_queued_only_body">Текст вы найдёте в разделе «Расшифровки». Аудио удаляется сразу после того, как расшифровка сохранена.</string>
+    <string name="share_import_kept_title">Сохранено, но не расшифровано</string>
+    <string name="share_import_kept_body">Файл среди ваших записей. Расшифровку можно запустить оттуда в любой момент.</string>
+    <string name="share_import_kept_only_body">Файл ждёт в разделе «Расшифровки». Запустите его там когда угодно или удалите там же.</string>
+    <string name="share_import_too_long">Это аудио длится %1$d мин, а CallVault может расшифровать не больше %2$d мин за раз. Файл сохранён, так что вы всё ещё можете его прослушать.</string>
+    <string name="share_import_no_model">Модель расшифровки ещё не установлена, поэтому CallVault не может это прочитать. Аудио сохранено — установите модель в настройках и запустите расшифровку из раздела «Расшифровки».</string>
 </resources>

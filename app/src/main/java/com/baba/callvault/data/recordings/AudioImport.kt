@@ -241,6 +241,22 @@ object AudioImport {
         return Outcome.Refused(reason)
     }
 
+    /** What a source file says about itself, for a card that has to describe it before copying it. */
+    data class Description(val displayName: String?, val sizeBytes: Long)
+
+    /**
+     * What [source] says about itself, without opening it.
+     *
+     * One provider query and no bytes, so the share card can name the file it is asking about before
+     * anything has been copied. It deliberately cannot report a *duration*: that needs the audio, and
+     * reading the audio needs a seekable stream, which a share URI frequently is not — the whole
+     * reason [import] copies before it probes.
+     */
+    suspend fun describe(context: Context, source: Uri): Description = withContext(Dispatchers.IO) {
+        val meta = readMetadata(context, source)
+        Description(meta.displayName, meta.sizeBytes)
+    }
+
     /** What the source says about itself: its name, its type and its size, each possibly unknown. */
     private data class Metadata(val displayName: String?, val mimeType: String?, val sizeBytes: Long)
 

@@ -218,4 +218,19 @@
     <string name="share_import_nothing">Nothing came through with that share. Try sharing the audio file itself rather than the message around it.</string>
     <string name="share_import_not_set_up_title">Finish setting CallVault up first</string>
     <string name="share_import_not_set_up_body">CallVault hasn\'t finished its one-time setup, so there\'s nowhere to keep this file yet. Open it, finish setting up, then share this again.</string>
+    <string name="share_import_choice_title">What should CallVault do with this?</string>
+    <string name="share_import_choice_unnamed">The shared audio</string>
+    <string name="import_choice_keep">Import &amp; transcribe</string>
+    <string name="import_choice_keep_hint">Keeps the audio in your recordings and transcribes it.</string>
+    <string name="import_choice_transcribe_only">Transcribe only</string>
+    <string name="import_choice_transcribe_only_hint">Transcribes it, then deletes the audio. It never appears in your recordings — only the words, under Transcripts.</string>
+    <string name="share_import_queued_keep_title">Added, and queued</string>
+    <string name="share_import_queued_keep_body">It\'s in your recordings. The transcript appears under Transcripts when it\'s done.</string>
+    <string name="share_import_queued_only_title">Queued for transcription</string>
+    <string name="share_import_queued_only_body">You\'ll find the words under Transcripts. The audio is deleted as soon as the transcript is stored.</string>
+    <string name="share_import_kept_title">Saved, but not transcribed</string>
+    <string name="share_import_kept_body">It\'s in your recordings. You can start the transcript from there whenever you like.</string>
+    <string name="share_import_kept_only_body">It\'s waiting under Transcripts. Start it there whenever you like, or delete it from the same place.</string>
+    <string name="share_import_too_long">That audio is %1$d minutes long, and CallVault can only transcribe up to %2$d minutes at once. The file was saved, so you can still listen to it.</string>
+    <string name="share_import_no_model">There\'s no transcription model installed yet, so CallVault can\'t read this. The audio was saved — install a model in Settings, then start it from Transcripts.</string>
 </resources>

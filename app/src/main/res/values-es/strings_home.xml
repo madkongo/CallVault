@@ -200,4 +200,19 @@
     <string name="share_import_nothing">Con eso no llegó ningún archivo. Prueba a compartir el archivo de audio en sí, y no el mensaje que lo contiene.</string>
     <string name="share_import_not_set_up_title">Termina antes de configurar CallVault</string>
     <string name="share_import_not_set_up_body">CallVault aún no ha terminado su configuración inicial, así que todavía no hay dónde guardar este archivo. Ábrelo, termina la configuración y vuelve a compartirlo.</string>
+    <string name="share_import_choice_title">¿Qué debe hacer CallVault con esto?</string>
+    <string name="share_import_choice_unnamed">El audio compartido</string>
+    <string name="import_choice_keep">Importar y transcribir</string>
+    <string name="import_choice_keep_hint">Guarda el audio en tus grabaciones y lo transcribe.</string>
+    <string name="import_choice_transcribe_only">Solo transcribir</string>
+    <string name="import_choice_transcribe_only_hint">Lo transcribe y luego borra el audio. Nunca aparece en tus grabaciones: solo el texto, en Transcripciones.</string>
+    <string name="share_import_queued_keep_title">Añadido y en cola</string>
+    <string name="share_import_queued_keep_body">Está en tus grabaciones. La transcripción aparecerá en Transcripciones cuando termine.</string>
+    <string name="share_import_queued_only_title">En cola para transcribir</string>
+    <string name="share_import_queued_only_body">Encontrarás el texto en Transcripciones. El audio se borra en cuanto se guarda la transcripción.</string>
+    <string name="share_import_kept_title">Guardado, pero sin transcribir</string>
+    <string name="share_import_kept_body">Está en tus grabaciones. Puedes iniciar la transcripción desde ahí cuando quieras.</string>
+    <string name="share_import_kept_only_body">Está esperando en Transcripciones. Inícialo ahí cuando quieras, o bórralo desde el mismo sitio.</string>
+    <string name="share_import_too_long">Ese audio dura %1$d minutos y CallVault solo puede transcribir hasta %2$d minutos de una vez. El archivo se guardó, así que todavía puedes escucharlo.</string>
+    <string name="share_import_no_model">Aún no hay ningún modelo de transcripción instalado, así que CallVault no puede leer esto. El audio se guardó: instala un modelo en Ajustes y luego inícialo desde Transcripciones.</string>
 </resources>

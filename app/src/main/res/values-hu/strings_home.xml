@@ -200,4 +200,19 @@
     <string name="share_import_nothing">Ezzel a megosztással nem érkezett semmi. Próbáld magát a hangfájlt megosztani, ne az üzenetet, amiben van.</string>
     <string name="share_import_not_set_up_title">Előbb fejezd be a CallVault beállítását</string>
     <string name="share_import_not_set_up_body">A CallVault még nem fejezte be az egyszeri beállítást, így egyelőre nincs hová tenni ezt a fájlt. Nyisd meg, fejezd be a beállítást, majd oszd meg újra.</string>
+    <string name="share_import_choice_title">Mit kezdjen ezzel a CallVault?</string>
+    <string name="share_import_choice_unnamed">A megosztott hangfájl</string>
+    <string name="import_choice_keep">Importálás és átírás</string>
+    <string name="import_choice_keep_hint">Megtartja a hangfájlt a felvételeid között, és átírja.</string>
+    <string name="import_choice_transcribe_only">Csak átírás</string>
+    <string name="import_choice_transcribe_only_hint">Átírja, majd törli a hangfájlt. Sosem jelenik meg a felvételeid között — csak a szöveg, az Átiratok alatt.</string>
+    <string name="share_import_queued_keep_title">Hozzáadva, és sorba állítva</string>
+    <string name="share_import_queued_keep_body">Ott van a felvételeid között. Az átirat az Átiratok alatt jelenik meg, ha elkészült.</string>
+    <string name="share_import_queued_only_title">Átírásra sorba állítva</string>
+    <string name="share_import_queued_only_body">A szöveget az Átiratok alatt találod. A hangfájl törlődik, amint az átirat elkészült.</string>
+    <string name="share_import_kept_title">Elmentve, de nincs átírva</string>
+    <string name="share_import_kept_body">Ott van a felvételeid között. Az átírást bármikor elindíthatod onnan.</string>
+    <string name="share_import_kept_only_body">Az Átiratok alatt vár. Onnan indíthatod bármikor, vagy ugyanott törölheted.</string>
+    <string name="share_import_too_long">Ez a hangfájl %1$d perc hosszú, a CallVault pedig egyszerre legfeljebb %2$d percet tud átírni. A fájl elmentve, tehát továbbra is meghallgathatod.</string>
+    <string name="share_import_no_model">Még nincs telepítve átíró modell, így a CallVault nem tudja elolvasni. A hangfájl elmentve — telepíts egy modellt a Beállításokban, majd indítsd el az Átiratok alól.</string>
 </resources>

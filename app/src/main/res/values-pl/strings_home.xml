@@ -200,4 +200,19 @@
     <string name="share_import_nothing">Wraz z tym udostępnieniem nic nie dotarło. Spróbuj udostępnić sam plik dźwiękowy, a nie wiadomość, w której się znajduje.</string>
     <string name="share_import_not_set_up_title">Najpierw dokończ konfigurację CallVault</string>
     <string name="share_import_not_set_up_body">CallVault nie ukończył jeszcze jednorazowej konfiguracji, więc nie ma jeszcze gdzie trzymać tego pliku. Otwórz aplikację, dokończ konfigurację i udostępnij plik ponownie.</string>
+    <string name="share_import_choice_title">Co CallVault ma z tym zrobić?</string>
+    <string name="share_import_choice_unnamed">Udostępniony plik audio</string>
+    <string name="import_choice_keep">Zaimportuj i transkrybuj</string>
+    <string name="import_choice_keep_hint">Zachowuje dźwięk wśród Twoich nagrań i go transkrybuje.</string>
+    <string name="import_choice_transcribe_only">Tylko transkrypcja</string>
+    <string name="import_choice_transcribe_only_hint">Transkrybuje, a potem usuwa dźwięk. Nigdy nie pojawi się wśród Twoich nagrań — zostanie tylko tekst, w Transkrypcjach.</string>
+    <string name="share_import_queued_keep_title">Dodano i dodano do kolejki</string>
+    <string name="share_import_queued_keep_body">Jest wśród Twoich nagrań. Transkrypcja pojawi się w Transkrypcjach, gdy będzie gotowa.</string>
+    <string name="share_import_queued_only_title">W kolejce do transkrypcji</string>
+    <string name="share_import_queued_only_body">Tekst znajdziesz w Transkrypcjach. Dźwięk zostanie usunięty, gdy tylko transkrypcja zostanie zapisana.</string>
+    <string name="share_import_kept_title">Zapisano, ale nie transkrybowano</string>
+    <string name="share_import_kept_body">Jest wśród Twoich nagrań. Transkrypcję możesz stamtąd uruchomić, kiedy zechcesz.</string>
+    <string name="share_import_kept_only_body">Czeka w Transkrypcjach. Uruchom ją tam, kiedy zechcesz, albo usuń plik w tym samym miejscu.</string>
+    <string name="share_import_too_long">Ten plik trwa %1$d min, a CallVault potrafi transkrybować najwyżej %2$d min naraz. Plik został zapisany, więc nadal możesz go odsłuchać.</string>
+    <string name="share_import_no_model">Nie zainstalowano jeszcze żadnego modelu transkrypcji, więc CallVault nie może tego odczytać. Dźwięk został zapisany — zainstaluj model w Ustawieniach, a potem uruchom go w Transkrypcjach.</string>
 </resources>

@@ -26,6 +26,7 @@ import androidx.compose.runtime.setValue
 import androidx.core.content.ContextCompat
 import com.baba.callvault.data.AppPreferences
 import com.baba.callvault.system.AppLock
+import com.baba.callvault.ui.navigation.HomeSection
 import com.baba.callvault.ui.navigation.OpenRecordingRequest
 import com.baba.callvault.ui.screens.AppLockScreen
 import com.baba.callvault.ui.screens.AppLockUi
@@ -109,11 +110,29 @@ class ShareImportActivity : AppCompatActivity() {
                     val state by viewModel.state.collectAsState()
                     ShareImportScreen(
                         state = state,
+                        onChoose = viewModel::choose,
+                        onLanguage = viewModel::languageChosen,
+                        onConfirm = viewModel::confirmed,
+                        onDecline = viewModel::transcriptionDeclined,
                         // The imported file's own screen, which is where its length, its player and
                         // Transcribe already are — the same place the picker lands. Without the
                         // name, Open landed on whichever section the user was last in, which on a
                         // real run was a page of summaries with no sign of what had just arrived.
                         onOpenRecording = { name -> openApp(name); finish() },
+                        // A transcribe-only file has no row in Recordings to land on — that is the
+                        // whole point of it — so Open goes to Transcripts, where its words will
+                        // appear and where it is already listed while it waits.
+                        //
+                        // Done by writing the last section rather than by inventing a second Intent
+                        // extra: the app's documented behaviour is that it reopens the section you
+                        // were last in, and Open IS the user going to Transcripts. A new route would
+                        // be a second way to ask for the same thing, and a second one to get wrong.
+                        onOpenTranscripts = {
+                            AppPreferences(this@ShareImportActivity)
+                                .setLastHomeSection(HomeSection.Transcripts)
+                            openApp(recording = null)
+                            finish()
+                        },
                         onOpenApp = { openApp(recording = null); finish() },
                         onClose = { finish() },
                     )

@@ -200,4 +200,19 @@
     <string name="share_import_nothing">这次分享没有带来任何文件。请尝试直接分享音频文件本身，而不是包含它的消息。</string>
     <string name="share_import_not_set_up_title">请先完成 CallVault 的设置</string>
     <string name="share_import_not_set_up_body">CallVault 尚未完成一次性设置，因此暂时没有地方存放这个文件。请打开应用完成设置，然后再分享一次。</string>
+    <string name="share_import_choice_title">CallVault 该怎么处理它？</string>
+    <string name="share_import_choice_unnamed">分享过来的音频</string>
+    <string name="import_choice_keep">导入并转写</string>
+    <string name="import_choice_keep_hint">把音频保留在你的录音里，并进行转写。</string>
+    <string name="import_choice_transcribe_only">仅转写</string>
+    <string name="import_choice_transcribe_only_hint">转写完成后删除音频。它不会出现在你的录音里，只在“转写”中留下文字。</string>
+    <string name="share_import_queued_keep_title">已添加并排入队列</string>
+    <string name="share_import_queued_keep_body">它已在你的录音里。转写完成后会出现在“转写”中。</string>
+    <string name="share_import_queued_only_title">已排入转写队列</string>
+    <string name="share_import_queued_only_body">文字会出现在“转写”中。转写一存好，音频就会被删除。</string>
+    <string name="share_import_kept_title">已保存，但未转写</string>
+    <string name="share_import_kept_body">它已在你的录音里。你随时可以从那里开始转写。</string>
+    <string name="share_import_kept_only_body">它正在“转写”中等待。你可以随时从那里开始转写，也可以在同一处删除它。</string>
+    <string name="share_import_too_long">这段音频有 %1$d 分钟，而 CallVault 一次最多只能转写 %2$d 分钟。文件已保存，你仍然可以收听。</string>
+    <string name="share_import_no_model">还没有安装转写模型，CallVault 读不了这个文件。音频已保存——请先在设置中安装模型，再从“转写”中开始。</string>
 </resources>
