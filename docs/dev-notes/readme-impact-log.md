@@ -281,3 +281,12 @@ as "does not support Shizuku" — the opposite of the truth since Shizuku mode s
 
 **Still claimed, unchanged:** every ✅/❌ in the comparison table. The only new row — "Nothing to pair, and no
 wireless debugging of CallVault's own" — restates the paragraph that was already there.
+
+## 2026-09-16 — Telegram group link added to the README
+
+- **What changed:** a new "Get in touch" section links the maintainer's Telegram group
+  (https://t.me/+bAnxwAywhdk4MzM8) as the quickest way to ask a question or hear about a build, while
+  pointing anything needing a log at GitHub issues.
+- **Claim status:** no product claim changed; this is a contact route only.
+- **Also worth updating when convenient:** the F-Droid/fastlane description and the GitHub repo
+  description/About links still mention no chat channel.
