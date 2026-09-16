@@ -132,9 +132,13 @@ fun SummarySheetStrip(
     onCreate: () -> Unit,
     onStop: () -> Unit,
     onSeek: (Long) -> Unit,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    initiallyExpanded: Boolean = false,
 ) {
-    var expanded by rememberSaveable { mutableStateOf(false) }
+    // Collapsed by default, because the transcript is what the page is for. Opened from the Summaries
+    // list it is the other way round: the summary IS the thing tapped, and a one-line strip above
+    // someone else's words is not what that tap asked for.
+    var expanded by rememberSaveable(initiallyExpanded) { mutableStateOf(initiallyExpanded) }
 
     Column(modifier = modifier.fillMaxWidth().padding(horizontal = 24.dp)) {
         when (state) {

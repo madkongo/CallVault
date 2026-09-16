@@ -120,6 +120,8 @@ fun TranscriptView(
     isTranscriptSettled: Boolean,
     title: String,
     presentation: TranscriptPresentation = TranscriptPresentation.Sheet,
+    /** True when the reader arrived from a summary, so the summary opens rather than the words. */
+    summaryFirst: Boolean = false,
     modifier: Modifier = Modifier,
     /**
      * Where playback has reached, so the line being spoken can be lit and the transport bar knows
@@ -203,6 +205,7 @@ fun TranscriptView(
             summaryState = summaryState,
             onSummarise = onSummarise,
             onStopSummary = onStopSummary,
+            summaryFirst = summaryFirst,
         )
     }
 
@@ -281,6 +284,7 @@ private fun ColumnScope.TranscriptBody(
     summaryState: SummaryCardState,
     onSummarise: () -> Unit,
     onStopSummary: () -> Unit,
+    summaryFirst: Boolean,
 ) {
     // Directly under the title, above the words. Someone who opened the transcript to find out
     // what a call was about is answered here without reading it — and a summary that already
@@ -290,7 +294,8 @@ private fun ColumnScope.TranscriptBody(
         state = summaryState,
         onCreate = onSummarise,
         onStop = onStopSummary,
-        onSeek = onSeekTo
+        onSeek = onSeekTo,
+        initiallyExpanded = summaryFirst,
     )
 
     val segments = transcript?.segments.orEmpty()

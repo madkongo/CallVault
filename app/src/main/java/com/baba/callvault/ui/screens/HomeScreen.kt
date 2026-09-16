@@ -311,6 +311,11 @@ fun HomeScreen(
      */
     var readingFor by rememberSaveable { mutableStateOf<String?>(null) }
 
+    // Which list the reader came from. The page is the same either way, but the emphasis is not: a
+    // summary tapped on the Summaries page must not open as a one-line strip above someone else's
+    // words, which is what it did the first time this page was built.
+    var readingFromSummary by rememberSaveable { mutableStateOf(false) }
+
     /** Which recording's transcript is awaiting a delete confirmation, or null. */
     var deleteTranscriptFor by rememberSaveable { mutableStateOf<String?>(null) }
 
@@ -767,7 +772,10 @@ fun HomeScreen(
             // A page of its own, not the sheet. Here the transcript is the destination rather than a
             // look at something you are already standing on, and a sheet over a list of transcripts
             // would be a transcript over a list of transcripts.
-            onOpen = { displayName -> readingFor = displayName },
+            onOpen = { displayName ->
+                readingFor = displayName
+                readingFromSummary = false
+            },
             // The same gate every other entry point uses: without it a retry on a phone whose model
             // has been deleted would fail exactly the silent way the first attempt did.
             onRetry = { displayName -> startTranscription(displayName) },
@@ -811,7 +819,10 @@ fun HomeScreen(
             // swallowed in silence — on a page that exists to keep orphans listed.
             //
             // Leaving it stops the audio, which the page frame already does for Transcripts (#27).
-            onOpen = { displayName -> readingFor = displayName },
+            onOpen = { displayName ->
+                readingFor = displayName
+                readingFromSummary = true
+            },
             // No confirmation, like the card's own Stop: stopping is the safe direction, and the
             // abort has to come first because cancelling the worker does not interrupt a generate.
             onStop = { SummaryScheduler.stopNow(context) },
@@ -1049,7 +1060,10 @@ fun HomeScreen(
                 // is tinted behind the dismissed sheet, so something on screen owns the sound —
                 // whereas a list of transcripts shows nothing about playback, and starting a private
                 // call out loud over it would leave nothing anywhere to stop it (#27).
-                if (section == HomeSection.Transcripts) readingFor = row.displayName
+                if (section == HomeSection.Transcripts) {
+                    readingFor = row.displayName
+                    readingFromSummary = false
+                }
                 viewModel.playFrom(row.uri, row.startMs.toInt())
             }
         )
@@ -1253,6 +1267,7 @@ fun HomeScreen(
             title = title,
             presentation = if (readingPresentation) TranscriptPresentation.Screen
                            else TranscriptPresentation.Sheet,
+            summaryFirst = readingPresentation && readingFromSummary,
             modifier = modifier,
             note = sheetNote,
             tags = sheetTags,
