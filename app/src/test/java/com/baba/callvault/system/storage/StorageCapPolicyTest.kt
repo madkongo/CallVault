@@ -116,6 +116,45 @@ class StorageCapPolicyTest {
         assertEquals(emptyList<String>(), StorageCapPolicy.selectForEviction(unknown, capBytes = 300L))
     }
 
+    @Test
+    fun `never evicts an imported file`() {
+        // For a call the cap deletes the device copy and the Drive copy survives, so nothing is
+        // destroyed. An import has no Drive copy by design, so evicting it is not freeing space —
+        // it is destroying the only copy of something the user handed us, and its transcript with
+        // it. The star does not cover this: it protects what somebody remembered to protect.
+        val withImport = listOf(
+            Candidate("20260916_101010.123+0300_import_note.ogg", 100L, 1L, isFavourite = false, isImported = true),
+            Candidate("mid.m4a", 100L, lastModified = 2L, isFavourite = false),
+            Candidate("new.m4a", 100L, lastModified = 3L, isFavourite = false)
+        )
+
+        // It is the oldest, so without the exemption it would be the first thing taken.
+        assertEquals(listOf("mid.m4a"), StorageCapPolicy.selectForEviction(withImport, capBytes = 200L))
+    }
+
+    @Test
+    fun `goes over the cap rather than deleting an imported file`() {
+        val onlyImports = listOf(
+            Candidate("20260916_101010.123+0300_import_a.ogg", 100L, 1L, isFavourite = false, isImported = true),
+            Candidate("20260916_101011.123+0300_import_b.ogg", 100L, 2L, isFavourite = false, isImported = true)
+        )
+
+        assertEquals(emptyList<String>(), StorageCapPolicy.selectForEviction(onlyImports, capBytes = 50L))
+    }
+
+    @Test
+    fun `counts imported files toward the total`() {
+        // They occupy the phone. Pretending they do not would let a library of imports sit far over
+        // the cap while the sweep deleted calls that were not the problem — and would also stop the
+        // sweep running at all once the total looked small enough.
+        val withImport = listOf(
+            Candidate("20260916_101010.123+0300_import_note.ogg", 250L, 1L, isFavourite = false, isImported = true),
+            Candidate("new.m4a", 100L, lastModified = 3L, isFavourite = false)
+        )
+
+        assertEquals(listOf("new.m4a"), StorageCapPolicy.selectForEviction(withImport, capBytes = 300L))
+    }
+
     private fun library(favourites: Set<String> = emptySet()) = listOf(
         Candidate("old.m4a", 100L, lastModified = 1L, isFavourite = "old.m4a" in favourites),
         Candidate("mid.m4a", 100L, lastModified = 2L, isFavourite = "mid.m4a" in favourites),

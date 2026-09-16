@@ -792,7 +792,7 @@
     <string name="storage_cap_label">Limit space used</string>
     <string name="storage_cap_off">No limit</string>
     <string name="storage_cap_gigabytes">%1$d GB on this phone</string>
-    <string name="storage_cap_caption">Once your recordings pass this, the daily clean-up deletes the oldest from this phone until they fit. Starred recordings are never deleted, even if that means going over. A recording kept in Drive as well only loses its copy here.</string>
+    <string name="storage_cap_caption">Once your recordings pass this, the daily clean-up deletes the oldest from this phone until they fit. Starred recordings are never deleted, even if that means going over. A recording kept in Drive as well only loses its copy here. Audio you imported is never deleted by the limit either: it has no copy in Drive, so this phone holds the only one.</string>
     <string name="storage_cap_confirm_message">Recordings will be deleted from this phone whenever they exceed the limit, oldest first. Starred recordings are never taken. This cannot be undone.</string>
     <string name="notif_health_channel">Problems that need you</string>
     <string name="notif_health_recorder_title">CallVault cannot record right now</string>

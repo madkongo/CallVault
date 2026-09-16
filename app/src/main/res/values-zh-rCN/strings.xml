@@ -586,7 +586,7 @@
     <string name="storage_cap_label">限制占用空间</string>
     <string name="storage_cap_off">不限制</string>
     <string name="storage_cap_gigabytes">本机 %1$d GB</string>
-    <string name="storage_cap_caption">当录音超出此容量时，每日清理会从本机删除最旧的录音，直到不再超出。加星标的录音永不删除，即使因此仍然超出。同时存在于云端硬盘的录音只会失去本机副本。</string>
+    <string name="storage_cap_caption">当录音超出此容量时，每日清理会从本机删除最旧的录音，直到不再超出。加星标的录音永不删除，即使因此仍然超出。同时存在于云端硬盘的录音只会失去本机副本。你导入的音频也永不会因容量限制被删除：它在云端硬盘没有副本，本机保存的是唯一一份。</string>
     <string name="storage_cap_confirm_message">每当录音超出上限，就会从本机删除，最旧的优先。加星标的录音不会被删除。此操作无法撤销。</string>
     <string name="notif_health_channel">需要你处理的问题</string>
     <string name="notif_health_recorder_title">CallVault 目前无法录音</string>

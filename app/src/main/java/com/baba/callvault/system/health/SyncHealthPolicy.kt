@@ -9,6 +9,7 @@
 package com.baba.callvault.system.health
 
 import com.baba.callvault.data.SyncScheduleMode
+import com.baba.callvault.data.recordings.ImportedRecording
 
 /**
  * Whether recordings have stopped reaching Drive.
@@ -41,6 +42,25 @@ object SyncHealthPolicy {
         SyncScheduleMode.DAILY -> 3
         SyncScheduleMode.WEEKLY -> 10
     }
+
+    /**
+     * Whether a catalogued recording is one this check may hold against Drive at all.
+     *
+     * Two things disqualify a row, and the second is the interesting one:
+     *
+     *  - **It has to be missing from Drive.** A row with a Drive copy is proof, not a symptom.
+     *  - **It has to be something Drive was ever going to receive.** An imported file is refused by
+     *    `CloudCopyPolicy` on purpose — it is the user's own audio and the app does not put it in
+     *    their cloud — so it has a device copy and no Drive copy for ever. Counting it would make
+     *    this notification tell the user their backup had failed, permanently, because of a
+     *    behaviour they asked for. That is the same false positive two users hit on 2.2.0, where a
+     *    claim about the present was made from evidence about the past.
+     *
+     * Kept here rather than inline at the call site so it can be proved without a device, alongside
+     * the counting rule it feeds.
+     */
+    fun countsAsUnsynced(displayName: String, hasLocalCopy: Boolean, hasDriveCopy: Boolean): Boolean =
+        hasLocalCopy && !hasDriveCopy && !ImportedRecording.isImported(displayName)
 
     /**
      * How many of [unsyncedLastModified] are evidence that copying has actually stopped.

@@ -15,6 +15,7 @@ import androidx.work.CoroutineWorker
 import androidx.work.WorkerParameters
 import com.baba.callvault.data.AppPreferences
 import com.baba.callvault.data.recordings.DriveCatalogRepair
+import com.baba.callvault.data.recordings.ImportedRecording
 import com.baba.callvault.data.recordings.RecordingCatalog
 import com.baba.callvault.data.recordings.RecordingsRepository
 import com.baba.callvault.data.recordings.RecordingsRepository.RecordingItem
@@ -140,7 +141,11 @@ class RetentionSweepWorker(ctx: Context, params: WorkerParameters) : CoroutineWo
                 displayName = entry.displayName,
                 sizeBytes = size,
                 lastModified = entry.lastModified,
-                isFavourite = entry.displayName in favourites
+                isFavourite = entry.displayName in favourites,
+                // For a call the cap deletes the device copy and the Drive copy survives. An import
+                // has no Drive copy by design, so the same delete would destroy the only copy of
+                // something the user handed us, plus its transcript.
+                isImported = ImportedRecording.isImported(entry.displayName)
             )
         }
 
@@ -155,12 +160,12 @@ class RetentionSweepWorker(ctx: Context, params: WorkerParameters) : CoroutineWo
 
         // Said plainly, because it is the one case where the setting visibly does not do what it
         // says: the library stays over the cap and that is the intended answer, not a failure.
-        val protectedBytes = candidates.filter { it.isFavourite }.sumOf { it.sizeBytes }
+        val protectedBytes = candidates.filter { it.isFavourite || it.isImported }.sumOf { it.sizeBytes }
         if (protectedBytes > capBytes) {
             AppLogger.i(
                 TAG,
-                "Starred recordings alone ($protectedBytes bytes) exceed the ${capBytes}-byte cap; " +
-                    "staying over it rather than deleting them."
+                "Starred and imported recordings alone ($protectedBytes bytes) exceed the " +
+                    "${capBytes}-byte cap; staying over it rather than deleting them."
             )
         }
         AppLogger.i(TAG, "Storage cap: deleted $deleted of ${doomed.size} selected device copies.")

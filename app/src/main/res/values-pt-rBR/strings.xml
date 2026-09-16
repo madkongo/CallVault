@@ -589,7 +589,7 @@
     <string name="storage_cap_label">Limitar espaço usado</string>
     <string name="storage_cap_off">Sem limite</string>
     <string name="storage_cap_gigabytes">%1$d GB neste telefone</string>
-    <string name="storage_cap_caption">Quando suas gravações passarem disso, a limpeza diária exclui as mais antigas deste telefone até caberem. Gravações marcadas nunca são excluídas, mesmo que isso mantenha o limite estourado. Uma gravação que também está no Drive perde só a cópia daqui.</string>
+    <string name="storage_cap_caption">Quando suas gravações passarem disso, a limpeza diária exclui as mais antigas deste telefone até caberem. Gravações marcadas nunca são excluídas, mesmo que isso mantenha o limite estourado. Uma gravação que também está no Drive perde só a cópia daqui. O áudio que você importou também nunca é excluído pelo limite: ele não tem cópia no Drive, então este telefone guarda a única.</string>
     <string name="storage_cap_confirm_message">Gravações serão excluídas deste telefone sempre que passarem do limite, das mais antigas primeiro. As marcadas nunca são levadas. Isso não pode ser desfeito.</string>
     <string name="notif_health_channel">Problemas que precisam de você</string>
     <string name="notif_health_recorder_title">O CallVault não consegue gravar agora</string>

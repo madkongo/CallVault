@@ -34,12 +34,15 @@ object StorageCapPolicy {
      *                     and should not be passed in at all.
      * @param lastModified Used only for ordering — oldest goes first.
      * @param isFavourite  Starred by the user, and therefore never deleted by this policy.
+     * @param isImported   A file the user brought in rather than a call; never deleted by this
+     *                     policy. See [selectForEviction] rule 3 for why.
      */
     data class Candidate(
         val displayName: String,
         val sizeBytes: Long,
         val lastModified: Long,
-        val isFavourite: Boolean
+        val isFavourite: Boolean,
+        val isImported: Boolean = false
     )
 
     /**
@@ -52,11 +55,19 @@ object StorageCapPolicy {
      *    star is the user saying "keep this"; a cap is the user saying "keep less". When the two
      *    disagree the explicit instruction about a specific recording wins over the general one, and
      *    the sweep goes over its cap rather than destroying something the user protected.
-     * 3. **Favourites still count toward the total.** They occupy the phone, and pretending they do
-     *    not would let a library of starred calls sit far over the cap while the sweep deleted
-     *    ordinary recordings that were not the problem.
-     * 4. **Oldest first, and it stops the moment it is under.** Not one recording more.
-     * 5. **A recording of unknown or zero size is skipped.** Deleting it cannot be shown to free
+     * 3. **An imported file is never selected either.** For a call, evicting the device copy is a
+     *    reasonable thing to do: the Drive copy survives, the row keeps its transcript, and nothing
+     *    is destroyed — which is what makes the cap a safe setting to offer at all. An import has no
+     *    Drive copy and never will (`CloudCopyPolicy` refuses it by design), so evicting one is not
+     *    freeing space, it is destroying the only copy of something the user handed us, and taking
+     *    its transcript with it. The star cannot be relied on to cover this: it protects what
+     *    somebody remembered to protect, and nobody stars a file on the assumption that the app
+     *    would otherwise delete the original.
+     * 4. **Protected recordings still count toward the total.** They occupy the phone, and
+     *    pretending they do not would let a library of starred or imported files sit far over the
+     *    cap while the sweep deleted ordinary recordings that were not the problem.
+     * 5. **Oldest first, and it stops the moment it is under.** Not one recording more.
+     * 6. **A recording of unknown or zero size is skipped.** Deleting it cannot be shown to free
      *    anything, so the sweep would take it *and* carry on to the next one — destroying more than
      *    the cap ever asked for. In practice the sweep does not pass these in at all; the rule is
      *    here so the policy cannot be talked into an unaccountable delete.
@@ -71,7 +82,7 @@ object StorageCapPolicy {
         // Oldest first; ties broken by name so the same library always yields the same decision —
         // a sweep that deleted a different recording on each run would be untestable and unexplainable.
         val order = candidates
-            .filterNot { it.isFavourite }
+            .filterNot { it.isFavourite || it.isImported }
             .filter { it.sizeBytes > 0L }
             .sortedWith(compareBy({ it.lastModified }, { it.displayName }))
 

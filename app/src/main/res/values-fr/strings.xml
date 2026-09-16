@@ -586,7 +586,7 @@
     <string name="storage_cap_label">Limiter l\'espace utilisé</string>
     <string name="storage_cap_off">Aucune limite</string>
     <string name="storage_cap_gigabytes">%1$d Go sur ce téléphone</string>
-    <string name="storage_cap_caption">Dès que vos enregistrements dépassent cette taille, le nettoyage quotidien supprime les plus anciens de ce téléphone jusqu\'à repasser dessous. Les favoris ne sont jamais supprimés, quitte à rester au-dessus de la limite. Un enregistrement également présent sur Drive ne perd que sa copie locale.</string>
+    <string name="storage_cap_caption">Dès que vos enregistrements dépassent cette taille, le nettoyage quotidien supprime les plus anciens de ce téléphone jusqu\'à repasser dessous. Les favoris ne sont jamais supprimés, quitte à rester au-dessus de la limite. Un enregistrement également présent sur Drive ne perd que sa copie locale. Les fichiers audio que vous avez importés ne sont jamais supprimés non plus : ils n\'ont pas de copie sur Drive, ce téléphone détient donc la seule.</string>
     <string name="storage_cap_confirm_message">Des enregistrements seront supprimés de ce téléphone dès que la limite est dépassée, les plus anciens d\'abord. Les favoris ne sont jamais pris. Action irréversible.</string>
     <string name="notif_health_channel">Problèmes qui vous concernent</string>
     <string name="notif_health_recorder_title">CallVault ne peut pas enregistrer</string>

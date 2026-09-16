@@ -586,7 +586,7 @@
     <string name="storage_cap_label">Giới hạn dung lượng</string>
     <string name="storage_cap_off">Không giới hạn</string>
     <string name="storage_cap_gigabytes">%1$d GB trên điện thoại này</string>
-    <string name="storage_cap_caption">Khi bản ghi vượt mức này, dọn dẹp hằng ngày sẽ xóa những bản cũ nhất khỏi điện thoại cho đến khi vừa đủ. Bản ghi gắn sao không bao giờ bị xóa, kể cả khi vì thế mà vẫn vượt mức. Bản ghi có cả trên Drive chỉ mất bản sao ở đây.</string>
+    <string name="storage_cap_caption">Khi bản ghi vượt mức này, dọn dẹp hằng ngày sẽ xóa những bản cũ nhất khỏi điện thoại cho đến khi vừa đủ. Bản ghi gắn sao không bao giờ bị xóa, kể cả khi vì thế mà vẫn vượt mức. Bản ghi có cả trên Drive chỉ mất bản sao ở đây. Tệp âm thanh bạn đã nhập cũng không bao giờ bị mức giới hạn xóa: nó không có bản sao trên Drive, nên điện thoại này giữ bản duy nhất.</string>
     <string name="storage_cap_confirm_message">Bản ghi sẽ bị xóa khỏi điện thoại này mỗi khi vượt giới hạn, cũ nhất trước. Bản ghi gắn sao không bao giờ bị lấy. Không thể hoàn tác.</string>
     <string name="notif_health_channel">Sự cố cần bạn xử lý</string>
     <string name="notif_health_recorder_title">CallVault hiện không thể ghi âm</string>

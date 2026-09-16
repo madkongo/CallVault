@@ -586,7 +586,7 @@
     <string name="storage_cap_label">Tárhely korlátozása</string>
     <string name="storage_cap_off">Nincs korlát</string>
     <string name="storage_cap_gigabytes">%1$d GB ezen a telefonon</string>
-    <string name="storage_cap_caption">Amint a felvételek túllépik ezt, a napi takarítás a legrégebbieket törli erről a telefonról, amíg vissza nem fér. A csillagozott felvételek soha nem törlődnek, még akkor sem, ha így a korlát felett marad. A Drive-ban is meglévő felvétel csak az itteni példányát veszíti el.</string>
+    <string name="storage_cap_caption">Amint a felvételek túllépik ezt, a napi takarítás a legrégebbieket törli erről a telefonról, amíg vissza nem fér. A csillagozott felvételek soha nem törlődnek, még akkor sem, ha így a korlát felett marad. A Drive-ban is meglévő felvétel csak az itteni példányát veszíti el. Az általad importált hangfájlokat sem törli a korlát: nincs másolatuk a Drive-ban, így ez a telefon őrzi az egyetlent.</string>
     <string name="storage_cap_confirm_message">A felvételek törlődnek erről a telefonról, valahányszor túllépik a korlátot, a legrégebbiekkel kezdve. A csillagozottakat soha nem érinti. Ez nem vonható vissza.</string>
     <string name="notif_health_channel">Beavatkozást igénylő problémák</string>
     <string name="notif_health_recorder_title">A CallVault most nem tud felvenni</string>

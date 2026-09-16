@@ -10,6 +10,7 @@ package com.baba.callvault.system.health
 
 import com.baba.callvault.data.SyncScheduleMode
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
 import org.junit.Test
 
@@ -114,4 +115,63 @@ class SyncHealthPolicyTest {
         )
     }
 
+    @Test
+    fun `a call with no Drive copy is evidence worth counting`() {
+        assertTrue(
+            SyncHealthPolicy.countsAsUnsynced(
+                "20260916_101010.123+0300_in_0501234567.ogg",
+                hasLocalCopy = true,
+                hasDriveCopy = false,
+            )
+        )
+    }
+
+    @Test
+    fun `an imported file is never evidence that copying has stopped`() {
+        // It has no Drive copy BY DESIGN and never will, so it is permanently the shape this check
+        // reads as a stall. Counting it would tell the user their backup had failed because of a
+        // behaviour they asked for — the 2.2.0 false positive, made permanent.
+        assertFalse(
+            SyncHealthPolicy.countsAsUnsynced(
+                "20260916_101010.123+0300_import_voice-note.ogg",
+                hasLocalCopy = true,
+                hasDriveCopy = false,
+            )
+        )
+    }
+
+    @Test
+    fun `a call with a contact called Important still counts`() {
+        // The exemption is read from the marker slot, not from the word appearing in the name. If it
+        // were looser, this call would silently stop being watched over.
+        assertTrue(
+            SyncHealthPolicy.countsAsUnsynced(
+                "20260916_101010.123+0300_in_Important.ogg",
+                hasLocalCopy = true,
+                hasDriveCopy = false,
+            )
+        )
+    }
+
+    @Test
+    fun `a recording that reached Drive is proof rather than a symptom`() {
+        assertFalse(
+            SyncHealthPolicy.countsAsUnsynced(
+                "20260916_101010.123+0300_in_0501234567.ogg",
+                hasLocalCopy = true,
+                hasDriveCopy = true,
+            )
+        )
+    }
+
+    @Test
+    fun `a Drive-only recording has no device copy to be waiting`() {
+        assertFalse(
+            SyncHealthPolicy.countsAsUnsynced(
+                "20260916_101010.123+0300_in_0501234567.ogg",
+                hasLocalCopy = false,
+                hasDriveCopy = false,
+            )
+        )
+    }
 }

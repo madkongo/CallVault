@@ -586,7 +586,7 @@
     <string name="storage_cap_label">Speicherplatz begrenzen</string>
     <string name="storage_cap_off">Kein Limit</string>
     <string name="storage_cap_gigabytes">%1$d GB auf diesem Telefon</string>
-    <string name="storage_cap_caption">Sobald Ihre Aufnahmen das überschreiten, löscht die tägliche Bereinigung die ältesten von diesem Telefon, bis es wieder passt. Markierte Aufnahmen werden nie gelöscht, auch wenn das Limit dadurch überschritten bleibt. Eine auch in Drive gespeicherte Aufnahme verliert nur ihre Kopie hier.</string>
+    <string name="storage_cap_caption">Sobald Ihre Aufnahmen das überschreiten, löscht die tägliche Bereinigung die ältesten von diesem Telefon, bis es wieder passt. Markierte Aufnahmen werden nie gelöscht, auch wenn das Limit dadurch überschritten bleibt. Eine auch in Drive gespeicherte Aufnahme verliert nur ihre Kopie hier. Von Ihnen importierte Audiodateien löscht das Limit ebenfalls nie: Es gibt keine Kopie in Drive, dieses Telefon hält also die einzige.</string>
     <string name="storage_cap_confirm_message">Aufnahmen werden von diesem Telefon gelöscht, sobald sie das Limit überschreiten — die ältesten zuerst. Markierte Aufnahmen sind ausgenommen. Das lässt sich nicht rückgängig machen.</string>
     <string name="notif_health_channel">Probleme, die Sie betreffen</string>
     <string name="notif_health_recorder_title">CallVault kann derzeit nicht aufnehmen</string>

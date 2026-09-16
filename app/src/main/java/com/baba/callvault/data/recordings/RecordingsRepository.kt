@@ -40,8 +40,17 @@ object RecordingsRepository {
 
     private const val TAG = "CV:RecordingsRepo"
 
-    /** Audio container extensions CallVault writes (Opus -> .ogg, AAC -> .m4a). */
-    private val AUDIO_EXTENSIONS = listOf(".ogg", ".m4a")
+    /**
+     * Audio container extensions the folder scan recognises by name.
+     *
+     * The first two are what CallVault writes (Opus → .ogg, AAC → .m4a); the rest are everything
+     * [ImportableAudio] will store an import as. Derived from that list rather than repeated here,
+     * so a format added to the importer cannot end up importable but invisible: the scan otherwise
+     * falls back to the provider's MIME type, and a provider that reports `application/octet-stream`
+     * for a perfectly good `.mp3` — several file managers do — would drop it from a re-seed.
+     */
+    private val AUDIO_EXTENSIONS: Set<String> =
+        (setOf("ogg", "m4a") + ImportableAudio.ACCEPTED_EXTENSIONS).mapTo(mutableSetOf()) { ".$it" }
 
     /**
      * Where a recording physically lives, derived from which configured folder(s) a given display
@@ -279,8 +288,11 @@ object RecordingsRepository {
         val driveFolder = prefs.getDriveFolderUri()
         val byName = LinkedHashMap<String, RecordingEntry>()
 
-        if (target != StorageTarget.DRIVE && deviceFolder != null) {
+        // The device folder is walked for EVERY storage target now; what is taken from it is what
+        // depends on the target. See [seedsFromDevice].
+        if (deviceFolder != null) {
             for (item in enumerateFolder(context, deviceFolder)) {
+                if (!seedsFromDevice(target, item.displayName)) continue
                 byName.putIfAbsent(
                     item.displayName,
                     RecordingEntry(
@@ -316,6 +328,22 @@ object RecordingsRepository {
         }
         return byName.values.toList()
     }
+
+    /**
+     * Whether a file found in the DEVICE folder belongs in a catalog re-seed.
+     *
+     * For LOCAL and BOTH the device folder is the source of truth and everything in it counts. For
+     * DRIVE the local copy is deleted after each sync, so a leftover call there is a copy the sync
+     * deliberately removed and must not be raised from the dead.
+     *
+     * **An import is the exception, and it is why this function exists.** An import is never sent to
+     * Drive (`CloudCopyPolicy` refuses it by design), so in DRIVE mode it lives on the device and
+     * nowhere else. Enumerating the Drive folder alone — which is what happened until now — would
+     * drop every import out of the list on a re-seed while the files themselves sat safely in the
+     * folder, leaving the user to take our word that their audio still existed.
+     */
+    internal fun seedsFromDevice(target: StorageTarget, displayName: String): Boolean =
+        target != StorageTarget.DRIVE || ImportedRecording.isImported(displayName)
 
     /**
      * Deletes the recording represented by [item] everywhere the app surfaces it: the [item]'s own
@@ -441,9 +469,20 @@ object RecordingsRepository {
 
     /** True if the document looks like a CallVault audio file (by extension or an audio mime type). */
     private fun isAudio(doc: DocumentFile): Boolean {
-        val name = doc.name?.lowercase().orEmpty()
-        if (AUDIO_EXTENSIONS.any { name.endsWith(it) }) return true
+        if (isAudioName(doc.name)) return true
         return doc.type?.startsWith("audio/") == true
+    }
+
+    /**
+     * Whether [displayName] alone is enough to call a file audio.
+     *
+     * Split out from [isAudio] so the extension half can be proved without a [DocumentFile]. It is
+     * the half that matters: the MIME fallback below it depends on a provider reporting a useful
+     * type, and several file managers report `application/octet-stream` for a perfectly good `.mp3`.
+     */
+    internal fun isAudioName(displayName: String?): Boolean {
+        val name = displayName?.lowercase().orEmpty()
+        return AUDIO_EXTENSIONS.any { name.endsWith(it) }
     }
 
     private fun toItem(doc: DocumentFile): RecordingItem {

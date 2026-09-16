@@ -586,7 +586,7 @@
     <string name="storage_cap_label">Limitar el espacio usado</string>
     <string name="storage_cap_off">Sin límite</string>
     <string name="storage_cap_gigabytes">%1$d GB en este teléfono</string>
-    <string name="storage_cap_caption">Cuando tus grabaciones superen esto, la limpieza diaria elimina las más antiguas de este teléfono hasta que quepan. Las destacadas nunca se eliminan, aunque eso implique excederse. Una grabación que también esté en Drive solo pierde su copia local.</string>
+    <string name="storage_cap_caption">Cuando tus grabaciones superen esto, la limpieza diaria elimina las más antiguas de este teléfono hasta que quepan. Las destacadas nunca se eliminan, aunque eso implique excederse. Una grabación que también esté en Drive solo pierde su copia local. El audio que hayas importado tampoco se elimina nunca por el límite: no tiene copia en Drive, así que este teléfono guarda la única.</string>
     <string name="storage_cap_confirm_message">Se eliminarán grabaciones de este teléfono siempre que superen el límite, empezando por las más antiguas. Las destacadas nunca se tocan. No se puede deshacer.</string>
     <string name="notif_health_channel">Problemas que requieren tu atención</string>
     <string name="notif_health_recorder_title">CallVault no puede grabar ahora</string>

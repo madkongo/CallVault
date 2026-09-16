@@ -586,7 +586,7 @@
     <string name="storage_cap_label">Ogranicz zajmowane miejsce</string>
     <string name="storage_cap_off">Bez limitu</string>
     <string name="storage_cap_gigabytes">%1$d GB w tym telefonie</string>
-    <string name="storage_cap_caption">Gdy nagrania przekroczą ten rozmiar, codzienne porządkowanie usuwa najstarsze z tego telefonu, aż się zmieszczą. Nagrania oznaczone gwiazdką nie są usuwane nigdy, nawet jeśli limit pozostanie przekroczony. Nagranie obecne także na Dysku traci tylko kopię lokalną.</string>
+    <string name="storage_cap_caption">Gdy nagrania przekroczą ten rozmiar, codzienne porządkowanie usuwa najstarsze z tego telefonu, aż się zmieszczą. Nagrania oznaczone gwiazdką nie są usuwane nigdy, nawet jeśli limit pozostanie przekroczony. Nagranie obecne także na Dysku traci tylko kopię lokalną. Zaimportowanego dźwięku limit też nigdy nie usuwa: nie ma kopii na Dysku, więc ten telefon przechowuje jedyną.</string>
     <string name="storage_cap_confirm_message">Nagrania będą usuwane z tego telefonu za każdym razem, gdy przekroczą limit — od najstarszych. Oznaczonych gwiazdką to nie dotyczy. Tego nie można cofnąć.</string>
     <string name="notif_health_channel">Problemy wymagające uwagi</string>
     <string name="notif_health_recorder_title">CallVault nie może teraz nagrywać</string>

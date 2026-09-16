@@ -107,7 +107,16 @@ object SilentFailureNotifier {
 
             val catalogued = RecordingCatalog.all(context)
             val unsynced = catalogued
-                .filter { it.localUri != null && it.driveUri == null }
+                // Asked of the policy, which is where the rule can be proved without a device. An
+                // import is excluded there, and that exclusion is what stops this notification
+                // crying wolf — see SyncHealthPolicy.countsAsUnsynced.
+                .filter {
+                    SyncHealthPolicy.countsAsUnsynced(
+                        displayName = it.displayName,
+                        hasLocalCopy = it.localUri != null,
+                        hasDriveCopy = it.driveUri != null,
+                    )
+                }
                 .map { it.lastModified }
             // The most recent recording known to be in Drive. This is what turns "some old file has
             // no Drive copy" into "copying has stopped" — or, far more often, rules it out.
