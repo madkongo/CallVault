@@ -420,6 +420,85 @@ while the app lock was up) reads as `NOT_AUDIO`, so the user is told CallVault c
 `am start` and an ungranted URI. A sixth refusal reason would fix it; it is `AudioImport`'s
 ordering, shared with the picker, so it is not a share-target change.
 
+**Phase 7 (transcribe only) — 🧪 VERIFYING (built 2026-09-16, unit- and instrumented-tested, driven
+on the emulator through a real share sheet; nothing seen on a phone).** The maintainer confirms it
+or it is not done.
+
+**What the maintainer said, and what was built.** Sharing a voice note dropped it straight into
+Recordings, and "a user might want to import it simply for transcribing — doesn't mean it should be
+in the recording page". So the card asks first, in his words: **Transcribe only** and **Import &
+transcribe**; and a transcribe-only file loses its audio once the transcript is stored — his choice
+too.
+
+Landed: `ImportedRecording.Kind` and the name that carries it; `TranscribeOnlyAudio` (when the audio
+may go, and the act of removing it); `RecordingCatalog.forgetName`; `ImportFollowUp` (the order of
+the two refusals); the share card's question, language and estimate; `HomeUiState.transcribeOnly`
+and `libraryRecordings`; `TranscriptsPage.Groups.waiting` and its rows; two buttons on the
+Transcripts import card; and fifteen strings in eleven locales.
+
+Decisions worth not re-litigating:
+
+- **The kind is a token AFTER the import marker** (`{stamp}_import_transcribeonly[_label]{ext}`),
+  never a variant of it (`_import-transcribeonly`). A build from before this feature reads the
+  marker slot alone: with a variant it would fail to match `import`, conclude the file was not an
+  import at all, and hand somebody's private voice note to the Drive upload and the retention sweep.
+  As a second token every older build still sees `import` where it looks. A label sanitised down to
+  exactly "transcribeonly" is dropped, because it is the one way a user's own file name could reach
+  the kind slot and turn an import they asked to keep into one whose audio may be deleted.
+- **The delete happens in `TranscriptionRunner.runOne`'s success branch**, after `replaceSegments`
+  and after the DONE mark, under `NonCancellable`. Every other way out of that function — a stop, an
+  abort, a failure, a refusal for length — has already returned, so none of them can take the audio.
+  What may be deleted is a pure function that says no by default, re-reads the database rather than
+  trusting the write that has just happened, and counts the stored segments as well as the state: a
+  DONE row with no words is a transcript of nothing.
+- **Never `RecordingCatalog.removeName`.** It runs `TranscriptCascade`, which deletes the transcript,
+  the summary, the note and the tags — the exact text the deletion was made in exchange for. The row
+  is dropped by `forgetName`, which drops the row and nothing else.
+- **The split is in the ViewModel, once.** `uiState.recordings` is the recordings list and no longer
+  holds a transcribe-only import, so the facets, the selection, the merge candidates and the hub's
+  count are all correct without any of them being told. What has to work on a file by name regardless
+  — the length check and estimate, the player, a dialog's title, the Transcripts join — asks
+  `libraryRecordings` instead.
+- **A transcribe-only file with no transcript row is listed under *Waiting to be transcribed*.** It
+  is kept out of Recordings on purpose, so while a transcript row exists it is visible on the
+  Transcripts page and nowhere else — and the row can go away underneath it (a Stop deletes it, so
+  does a refusal for length, and a process death between the copy and the enqueue means one was never
+  written). Without that group the file would be on disk and in no list anywhere: audio the user
+  could not find, play, retry or delete. Its rows offer Transcribe, and the card opens the
+  recording's own screen, where playing, sharing and deleting already are.
+- **Both doors ask the same question in the same words.** The in-app button asks before the picker
+  rather than after, because there is nothing to describe until a file is chosen; the answer is held
+  in `rememberSaveable`, since the picker is another app's Activity and a lost answer would default
+  to Keep.
+- **Both answers now end in a transcription**, and an import still asks the language and still shows
+  the estimate whatever the two "don't ask" settings say. Backing out of either keeps the file.
+
+Verified on the emulator (AOSP 16, `com.baba.callvault`), through a real share sheet from Files: the
+entry reads "CallVault / Import audio"; the card names the file and its size and offers the two
+answers; with no recordings folder the NO_FOLDER refusal is unchanged; Transcribe only stores
+`{stamp}_import_transcribeonly_{label}{ext}`, asks the language, shows the first-run estimate, says
+"Queued for transcription — the audio is deleted as soon as the transcript is stored", and Open lands
+on Transcripts; the file is absent from Recordings and from the hub's count (12 files in the folder,
+11 saved) while present on disk; a failed run leaves it under *Didn't finish* with its audio; with the
+transcript row removed by hand — what a Stop leaves — it moves to *Waiting to be transcribed*, still
+out of Recordings, and its card opens a screen that plays, stars and deletes it; with a DONE
+transcript and the audio removed, Transcripts lists it as readable and the reading view opens it. The
+in-app card was driven both ways: Import & transcribe landed a plain `_import_` name and opened the
+recording's own screen under the language dialog, Transcribe only landed a `_import_transcribeonly_`
+name and did **not** open it, and cancelling the language question left it in the waiting group.
+
+The delete itself was run on the device by `TranscribeOnlyAudioDeviceTest` against the real SAF
+folder: audio gone, catalog row gone, transcript, segments and note all still there; and the three
+keep cases (failed, stopped, kept import) leave the file where it was.
+
+Not exercised: a **real** transcription, because the model on the emulator is a stand-in — so the
+DONE-then-delete sequence was run by the instrumented test and by hand, never by whisper finishing;
+and a real WhatsApp share.
+
+⚠️ `connectedDebugAndroidTest` without `-PisolateTestApp` **uninstalls** the app afterwards, which
+cost this session the emulator's folder grant, catalog and onboarding. The one test that needs the
+app's own process says so in its KDoc; nothing of the sort goes near a phone.
+
 ## Testing approach
 
 House style is to test the decision, not the rendering, and there is no Compose test stack today. So: pure
