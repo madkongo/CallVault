@@ -173,6 +173,9 @@
     <string name="transcripts_working_header">In trascrizione</string>
     <string name="transcripts_failed_header">Non è andata a buon fine</string>
     <string name="transcripts_failed_hint">Toccane una per riprovare.</string>
+    <string name="summaries_working_header">In riepilogo</string>
+    <string name="summaries_failed_header">Non è andata a buon fine</string>
+    <string name="summaries_failed_hint">Aprine uno per richiederlo di nuovo.</string>
     <!-- Transcripts: bringing in audio CallVault did not record -->
     <string name="transcripts_import_title">Importa audio</string>
     <string name="transcripts_import_working">Importazione…</string>

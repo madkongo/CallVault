@@ -173,6 +173,9 @@
     <string name="transcripts_working_header">Расшифровывается</string>
     <string name="transcripts_failed_header">Не завершилось</string>
     <string name="transcripts_failed_hint">Нажмите, чтобы попробовать снова.</string>
+    <string name="summaries_working_header">Составляется сводка</string>
+    <string name="summaries_failed_header">Не завершилось</string>
+    <string name="summaries_failed_hint">Откройте, чтобы запросить снова.</string>
     <!-- Transcripts: bringing in audio CallVault did not record -->
     <string name="transcripts_import_title">Импортировать аудио</string>
     <string name="transcripts_import_working">Импортируется…</string>

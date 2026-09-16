@@ -173,6 +173,9 @@
     <string name="transcripts_working_header">Átírás folyamatban</string>
     <string name="transcripts_failed_header">Nem fejeződött be</string>
     <string name="transcripts_failed_hint">Koppints rá az újrapróbálkozáshoz.</string>
+    <string name="summaries_working_header">Összefoglalás folyamatban</string>
+    <string name="summaries_failed_header">Nem fejeződött be</string>
+    <string name="summaries_failed_hint">Nyiss meg egyet, és kérd újra.</string>
     <!-- Transcripts: bringing in audio CallVault did not record -->
     <string name="transcripts_import_title">Hang importálása</string>
     <string name="transcripts_import_working">Importálás…</string>

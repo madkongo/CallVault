@@ -173,6 +173,9 @@
     <string name="transcripts_working_header">Đang chép lời</string>
     <string name="transcripts_failed_header">Chưa hoàn tất</string>
     <string name="transcripts_failed_hint">Chạm vào một mục để thử lại.</string>
+    <string name="summaries_working_header">Đang tóm tắt</string>
+    <string name="summaries_failed_header">Chưa hoàn tất</string>
+    <string name="summaries_failed_hint">Mở một mục để yêu cầu lại.</string>
     <!-- Transcripts: bringing in audio CallVault did not record -->
     <string name="transcripts_import_title">Nhập tệp âm thanh</string>
     <string name="transcripts_import_working">Đang nhập…</string>

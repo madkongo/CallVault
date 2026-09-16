@@ -173,6 +173,9 @@
     <string name="transcripts_working_header">正在转写</string>
     <string name="transcripts_failed_header">未能完成</string>
     <string name="transcripts_failed_hint">点按其中一项即可重试。</string>
+    <string name="summaries_working_header">正在生成摘要</string>
+    <string name="summaries_failed_header">未能完成</string>
+    <string name="summaries_failed_hint">打开其中一项即可重新请求。</string>
     <!-- Transcripts: bringing in audio CallVault did not record -->
     <string name="transcripts_import_title">导入音频</string>
     <string name="transcripts_import_working">正在导入…</string>

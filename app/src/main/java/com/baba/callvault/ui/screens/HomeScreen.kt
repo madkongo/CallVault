@@ -125,6 +125,7 @@ import com.baba.callvault.data.ChannelMap
 import com.baba.callvault.data.SpeakerNames
 import com.baba.callvault.data.transcripts.SpeakerTurnsRepository
 import com.baba.callvault.data.transcripts.LibraryCounts
+import com.baba.callvault.data.transcripts.SummariesPage
 import com.baba.callvault.data.transcripts.TranscriptRepository
 import com.baba.callvault.data.transcripts.TranscriptsPage
 import com.baba.callvault.data.waveform.RecordingExtrasRepository
@@ -140,6 +141,7 @@ import com.baba.callvault.ui.common.ImportedBadge
 import com.baba.callvault.ui.common.RecordingLabel
 import com.baba.callvault.ui.common.TranscribeConfirmDialog
 import com.baba.callvault.ui.common.TranscribeLanguageDialog
+import androidx.work.WorkManager
 import com.baba.callvault.summary.SummaryScheduler
 import com.baba.callvault.ui.common.rememberSummaryState
 import com.baba.callvault.ui.common.TranscribingPill
@@ -775,22 +777,44 @@ fun HomeScreen(
     }
 
     HomeSection.Summaries -> {
+        // Two sources, one observer each, both above the list. Re-read on arrival for the reason
+        // the hub's counts are: the guard inside LibraryCounts answers "is there a transcripts
+        // database?" when it is called, and a flow remembered before the user's first summary would
+        // answer empty for ever.
         val names by remember(section) { LibraryCounts.summarisedNames(context) }
             .collectAsState(initial = emptyList())
-        LibrarySectionScreen(
+        // The queue, for the whole page at once. rememberSummaryState is per-recording: asked on a
+        // row it would put one WorkManager observer and two database observers behind every visible
+        // line of the list.
+        val workManager = remember(context) { WorkManager.getInstance(context) }
+        val workInfos by remember(workManager) {
+            workManager.getWorkInfosForUniqueWorkFlow(SummaryScheduler.WORK_NAME)
+        }.collectAsState(initial = emptyList())
+        val groups = remember(names, workInfos) {
+            SummariesPage.group(names, SummariesPage.jobsOf(workInfos))
+        }
+
+        SummariesScreen(
             modifier = modifier,
-            title = stringResource(R.string.home_summaries_title),
-            countLabel = stringResource(R.string.home_summaries_count, names.size),
-            names = names,
+            groups = groups,
             recordings = uiState.recordings,
-            emptyTitle = stringResource(R.string.home_summaries_empty_title),
-            emptyHint = stringResource(R.string.home_summaries_empty_hint),
             listState = summariesListState,
             onBack = { onSelectSection(HomeSection.Hub) },
             onOpenSettings = onOpenSettings,
-            // The summary is on the recording's own screen, so that is what a row opens. Opening it
-            // does NOT start playing it, for the same reason a tap on a recordings row does not.
-            onOpen = { displayName -> playbackFor = displayName },
+            titleTrailing = titleTrailing,
+            // The reading view, not the recording's own screen, for three reasons that all point
+            // the same way. It already carries the summary at the top, above the words it was
+            // written from — which is what anyone checks when a summary looks wrong. It is the same
+            // destination a Transcripts row opens, so one rule covers every library row. And it is
+            // the only one of the two that can open a row whose recording is gone: the playback
+            // screen finds no catalog row and closes itself again, so a tap on an orphan would be
+            // swallowed in silence — on a page that exists to keep orphans listed.
+            //
+            // Leaving it stops the audio, which the page frame already does for Transcripts (#27).
+            onOpen = { displayName -> readingFor = displayName },
+            // No confirmation, like the card's own Stop: stopping is the safe direction, and the
+            // abort has to come first because cancelling the worker does not interrupt a generate.
+            onStop = { SummaryScheduler.stopNow(context) },
         )
     }
 
