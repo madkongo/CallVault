@@ -93,4 +93,19 @@ class RetentionPolicyTest {
         // exempt this call from retention for ever.
         assertTrue(RetentionPolicy.isEligible("20260804_101010.123+0300_in_Important.ogg", now))
     }
+
+    @Test
+    fun `a catalogued import is exempt from age retention too`() {
+        // The catalogued pass needs no filename test — CallVault put the row there — so it asks this
+        // question instead. Stamping an import with the import time only postpones the problem: once
+        // the retention period elapses the pass would delete it like a call, except that a call keeps
+        // its Drive copy and an import has none.
+        assertFalse(RetentionPolicy.agesOut("20260804_101010.123+0300_import_Standup.m4a"))
+    }
+
+    @Test
+    fun `a catalogued call still ages out`() {
+        assertTrue(RetentionPolicy.agesOut("20260804_101010.123+0300_in_0501234567.ogg"))
+        assertTrue(RetentionPolicy.agesOut("20260804_101010.123+0300_voip-WhatsApp_Dana.ogg"))
+    }
 }

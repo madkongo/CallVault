@@ -54,5 +54,21 @@ object RetentionPolicy {
      * was never a call, and the user still has nowhere else to have put it.
      */
     fun isEligible(displayName: String, startedAtMillis: Long?): Boolean =
-        startedAtMillis != null && !ImportedRecording.isImported(displayName)
+        startedAtMillis != null && agesOut(displayName)
+
+    /**
+     * Whether age retention applies to [displayName] at all, wherever the file was found.
+     *
+     * Asked by the **catalogued** half of the sweep, which [isEligible] does not cover: a row in the
+     * catalog needs no filename test, because CallVault put it there. It still needs this one.
+     *
+     * Stamping an import with the import time — which is what catalogues it — was enough to stop a
+     * two-year-old voice note being deleted the night it arrived. It is not enough after that: once
+     * the retention period elapses, the catalogued pass would delete it like anything else, and for
+     * an import that is not the routine loss of a device copy. There is no Drive copy to survive it,
+     * because CallVault refuses to make one, so the delete destroys the only copy of something the
+     * user handed us, plus its transcript. Retention is a promise about how long a *call* is kept;
+     * an import was never a call.
+     */
+    fun agesOut(displayName: String): Boolean = !ImportedRecording.isImported(displayName)
 }
