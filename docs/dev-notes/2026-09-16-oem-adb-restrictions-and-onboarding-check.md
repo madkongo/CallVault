@@ -148,6 +148,19 @@ Also Samsung-specific: the One UI equivalent of the "No data transfer" trick is 
    exit code on vivo** — read it back. `PrivilegedGrants.grantAppOp` already reads back, which is why it
    would report honestly there.
 
+## 4b. The probe to use (tested 2026-09-16)
+
+- `cmd package check-permission` **does not exist** on any of our three targets (OP9, OP12, emulator) — so a
+  "does the shell hold the permission?" query is not available from the shell.
+- `dumpsys package com.android.shell` is **not a detector**: it still prints `GRANT_RUNTIME_PERMISSIONS:
+  granted=true` while the gate is blocking, because ColorOS intercepts the check, not the grant record.
+- **What works, and is OEM-agnostic:** re-grant a permission the app already holds and look at the outcome —
+  `pm grant <our pkg> android.permission.WRITE_SECURE_SETTINGS`. Blocked → `SecurityException`; allowed →
+  silent success, and nothing changes because the permission was already held. Verified silent-success on the
+  OP9, OP12 and emulator with the gate open, and the SecurityException on the OP9 with it closed.
+  At first-time setup the real grant *is* the probe — do it, then read it back with
+  `dumpsys package <pkg> | grep WRITE_SECURE_SETTINGS` (the Xiaomi lesson: success can be a lie).
+
 ## 5. Open questions / experiments worth doing
 
 - **"Hidden unless the system language is English"** — two user reports, never reproduced by us. Settling it
