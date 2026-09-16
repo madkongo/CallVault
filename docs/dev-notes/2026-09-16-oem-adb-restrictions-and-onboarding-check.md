@@ -1,6 +1,7 @@
 # The OEM "shell can't grant" gate — what it is, who has it, and what an onboarding check should do
 
-Status: 📐 INVESTIGATION + 🧪 MEASURED — no code written. Device measurements are ours (OP9 daabf34f,
+Status: 📐 INVESTIGATION + 🧪 MEASURED. **Built 2026-09-16** (commit 17d9890, branch
+`fix/adb-open-lock-wedge`) — see §7 at the end; 🧪 until the maintainer sees it on a device. Device measurements are ours (OP9 daabf34f,
 OxygenOS V14.0.0, and OP12 6011b07e, OxygenOS V16.1.0). Everything else is sourced research; each claim
 says how strong it is.
 
@@ -201,3 +202,27 @@ Also Samsung-specific: the One UI equivalent of the "No data transfer" trick is 
   **away from Huawei/Honor**, where that setting switches USB debugging off.
 - We have **no detection code today**: nothing in `app/src/main` mentions the property or those permissions;
   the knowledge lives only in `README.md` and `docs/dev-notes/2026-08-24-shizuku-support-plan.md`.
+
+
+## 7. What was built (🧪 VERIFYING, 2026-09-16, commit 17d9890)
+
+- `integrations/adb/ShellGrantGate.kt` — pure decisions: read the OPPO property (`true` = blocked,
+  `false` = allowed, absent = unknown); read a real grant attempt (held afterwards = allowed; the OEM's
+  SecurityException = blocked; **silent failure = unknown**, never blamed on a switch); pick whose wording
+  to show; and `shouldAdvise`, which stays quiet when the permission is already held. 13 tests.
+- `AdbShell.grantSecureSettingsIfNeeded` now **reads** the command's output instead of draining it, reads
+  the permission back, records the outcome in preferences and logs which of the three happened.
+  `AdbShell.shellGrantState()` / `oemGate()` expose it (property first, remembered attempt second).
+- `ui/common/OemGateNotice.kt` — a self-hiding warning with the OEM's own switch name, a button to
+  Developer options, and a line saying setup can continue. Shown inside the ADB card in onboarding
+  (`PermissionsScreen`) and under Privileged mode in Settings (the wizard cannot be re-run).
+- Debug report header gains `Shell grants (OEM gate): <state> (<oem>)`.
+- Strings in 11 locales. Full suite 1352/0.
+
+Verified on the emulator by faking the blocked state (remembered state = BLOCKED, permission absent): the
+notice appears in onboarding with the general wording and the button, and disappears when the state is
+flipped back to ALLOWED. The OPPO and Xiaomi wordings have **not** been seen on a real blocked phone.
+
+Not done: the Home screen says nothing about this (a blocked phone that is already granted keeps working,
+and an ungranted one already shows its own "cannot record" state); vivo and Meizu get the general wording
+because their exact switch names are unverified.
