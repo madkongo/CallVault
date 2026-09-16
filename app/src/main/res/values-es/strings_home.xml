@@ -165,7 +165,7 @@
     <string name="home_transcripts_count">%1$d transcritas</string>
     <string name="home_summaries_count">%1$d resumidas</string>
     <string name="home_transcripts_empty_title">Aún no hay transcripciones</string>
-    <string name="home_transcripts_empty_hint">Pide una transcripción desde el menú de una grabación; aparecerá aquí en cuanto esté escrita.</string>
+    <string name="home_transcripts_empty_hint">Pide una transcripción desde el menú de una grabación o importa arriba un archivo de audio: cualquiera de los dos aparecerá aquí en cuanto esté escrito.</string>
     <string name="home_summaries_empty_title">Aún no hay resúmenes</string>
     <string name="home_summaries_empty_hint">Abre una llamada que tenga transcripción y pide un resumen; aparecerá aquí en cuanto esté escrito.</string>
 
@@ -173,4 +173,15 @@
     <string name="transcripts_working_header">Transcribiéndose</string>
     <string name="transcripts_failed_header">No se completó</string>
     <string name="transcripts_failed_hint">Toca una para volver a intentarlo.</string>
+    <!-- Transcripts: bringing in audio CallVault did not record -->
+    <string name="transcripts_import_title">Importar audio</string>
+    <string name="transcripts_import_working">Importando…</string>
+    <string name="transcripts_import_body">Transcribe una nota de voz o cualquier otro archivo de audio que ya tengas en el teléfono.</string>
+    <string name="import_failed_title">No se pudo importar el archivo</string>
+    <string name="import_failed_not_audio">CallVault no puede leer ese tipo de archivo. Prueba con una grabación .opus, .ogg, .m4a, .mp3 o .wav.</string>
+    <string name="import_failed_empty">Ese archivo está vacío, así que no habría nada que transcribir.</string>
+    <string name="import_failed_no_folder">No hay ninguna carpeta de grabaciones donde guardarlo. Elige una en Ajustes y vuelve a intentarlo.</string>
+    <string name="import_failed_copy">No se pudo escribir el archivo en tu carpeta de grabaciones. Comprueba que haya espacio en el teléfono y que la carpeta siga disponible.</string>
+    <string name="import_failed_undecodable">Este teléfono no puede leer el audio de ese archivo, así que nunca podría transcribirse. Puede estar dañado o en un formato que Android no descodifica.</string>
+    <string name="home_row_imported">Importado</string>
 </resources>

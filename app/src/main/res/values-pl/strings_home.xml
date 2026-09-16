@@ -165,7 +165,7 @@
     <string name="home_transcripts_count">%1$d przepisanych</string>
     <string name="home_summaries_count">%1$d podsumowanych</string>
     <string name="home_transcripts_empty_title">Brak transkrypcji</string>
-    <string name="home_transcripts_empty_hint">Poproś o transkrypcję z menu nagrania — pojawi się tutaj, gdy będzie gotowa.</string>
+    <string name="home_transcripts_empty_hint">Poproś o transkrypcję z menu nagrania albo zaimportuj powyżej plik dźwiękowy — jedno i drugie pojawi się tutaj, gdy będzie gotowe.</string>
     <string name="home_summaries_empty_title">Brak podsumowań</string>
     <string name="home_summaries_empty_hint">Otwórz rozmowę, która ma transkrypcję, i poproś o podsumowanie; pojawi się tutaj, gdy będzie gotowe.</string>
 
@@ -173,4 +173,15 @@
     <string name="transcripts_working_header">Trwa transkrypcja</string>
     <string name="transcripts_failed_header">Nie ukończono</string>
     <string name="transcripts_failed_hint">Dotknij, aby spróbować ponownie.</string>
+    <!-- Transcripts: bringing in audio CallVault did not record -->
+    <string name="transcripts_import_title">Importuj dźwięk</string>
+    <string name="transcripts_import_working">Importowanie…</string>
+    <string name="transcripts_import_body">Przepisz wiadomość głosową lub dowolny inny plik dźwiękowy, który masz już w telefonie.</string>
+    <string name="import_failed_title">Nie udało się zaimportować pliku</string>
+    <string name="import_failed_not_audio">CallVault nie potrafi odczytać tego rodzaju pliku. Spróbuj nagrania .opus, .ogg, .m4a, .mp3 lub .wav.</string>
+    <string name="import_failed_empty">Ten plik jest pusty, więc nie byłoby czego przepisywać.</string>
+    <string name="import_failed_no_folder">Nie ma folderu nagrań, w którym można go umieścić. Wybierz go w ustawieniach i spróbuj ponownie.</string>
+    <string name="import_failed_copy">Nie udało się zapisać pliku w folderze nagrań. Sprawdź, czy w telefonie jest miejsce i czy folder jest nadal dostępny.</string>
+    <string name="import_failed_undecodable">Ten telefon nie potrafi odczytać dźwięku w tym pliku, więc nigdy nie dałoby się go przepisać. Może być uszkodzony albo w formacie, którego Android nie dekoduje.</string>
+    <string name="home_row_imported">Zaimportowane</string>
 </resources>

@@ -165,7 +165,7 @@
     <string name="home_transcripts_count">%1$d transkribiert</string>
     <string name="home_summaries_count">%1$d zusammengefasst</string>
     <string name="home_transcripts_empty_title">Noch nichts transkribiert</string>
-    <string name="home_transcripts_empty_hint">Fordere im Menü einer Aufnahme ein Transkript an – sobald es geschrieben ist, erscheint es hier.</string>
+    <string name="home_transcripts_empty_hint">Fordere im Menü einer Aufnahme ein Transkript an oder importiere oben eine Audiodatei – beides erscheint hier, sobald es geschrieben ist.</string>
     <string name="home_summaries_empty_title">Noch nichts zusammengefasst</string>
     <string name="home_summaries_empty_hint">Öffne einen Anruf mit Transkript und fordere eine Zusammenfassung an; sobald sie geschrieben ist, erscheint sie hier.</string>
 
@@ -173,4 +173,15 @@
     <string name="transcripts_working_header">Wird transkribiert</string>
     <string name="transcripts_failed_header">Nicht fertig geworden</string>
     <string name="transcripts_failed_hint">Tippe eines an, um es erneut zu versuchen.</string>
+    <!-- Transcripts: bringing in audio CallVault did not record -->
+    <string name="transcripts_import_title">Audio importieren</string>
+    <string name="transcripts_import_working">Wird importiert…</string>
+    <string name="transcripts_import_body">Transkribiere eine Sprachnachricht oder eine beliebige andere Audiodatei auf deinem Telefon.</string>
+    <string name="import_failed_title">Datei konnte nicht importiert werden</string>
+    <string name="import_failed_not_audio">CallVault kann diese Art von Datei nicht lesen. Versuche es mit einer .opus-, .ogg-, .m4a-, .mp3- oder .wav-Aufnahme.</string>
+    <string name="import_failed_empty">Die Datei ist leer – es gäbe nichts zu transkribieren.</string>
+    <string name="import_failed_no_folder">Es gibt keinen Aufnahmeordner, in dem sie liegen könnte. Wähle in den Einstellungen einen aus und versuche es erneut.</string>
+    <string name="import_failed_copy">Die Datei konnte nicht in deinen Aufnahmeordner geschrieben werden. Prüfe, ob auf dem Telefon Platz ist und der Ordner noch verfügbar ist.</string>
+    <string name="import_failed_undecodable">Dieses Telefon kann das Audio in dieser Datei nicht lesen, sie könnte also nie transkribiert werden. Vielleicht ist sie beschädigt oder in einem Format, das Android nicht dekodiert.</string>
+    <string name="home_row_imported">Importiert</string>
 </resources>

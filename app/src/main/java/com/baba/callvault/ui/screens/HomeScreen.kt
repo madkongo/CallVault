@@ -15,6 +15,8 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.activity.compose.BackHandler
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.ui.platform.LocalUriHandler
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.material.icons.filled.Favorite
@@ -23,6 +25,7 @@ import androidx.compose.material.icons.filled.StarBorder
 import androidx.compose.material3.Surface
 import com.baba.callvault.system.openWirelessDebugging
 import com.baba.callvault.data.merge.MergeCandidates
+import com.baba.callvault.data.recordings.AudioImport
 import com.baba.callvault.data.recordings.DeleteScope
 import com.baba.callvault.data.recordings.RecordingSelection
 import com.baba.callvault.system.openKofi
@@ -361,6 +364,51 @@ fun HomeScreen(
     val listScope = rememberCoroutineScope()
     LaunchedEffect(uiState.recordings.size) { mergedCounts = viewModel.mergedCounts() }
 
+    /**
+     * The SAF picker for an audio file to import.
+     *
+     * `OpenDocument`, filtered by [IMPORT_MIME_FILTER], and **no permission is declared or asked
+     * for**. SAF
+     * hands back a URI for the one file the user chose and nothing else; `READ_MEDIA_AUDIO` would
+     * let a call recorder read every audio file on the phone, which is indefensible on its own terms
+     * and would be flagged on F-Droid besides.
+     *
+     * The work runs in the ViewModel, not here — see [HomeViewModel.importAudio] for why a rotation
+     * must not be able to cancel it.
+     */
+    val importPicker = rememberLauncherForActivityResult(
+        ActivityResultContracts.OpenDocument()
+    ) { uri -> uri?.let { viewModel.importAudio(it) } }
+
+    /**
+     * A just-imported recording waiting for the list to catch up, so it can be opened on arrival.
+     *
+     * The catalog write and the list reload are two steps, and setting [playbackFor] straight away
+     * would find no row and reset itself — the screen already guards against opening a recording
+     * that is not there. So the name is held until the refreshed list contains it.
+     *
+     * A plain `remember`: this is a hand-off between two moments of the same interaction, and a
+     * pending open restored after the process was killed would open a recording the user chose
+     * before lunch.
+     */
+    var openWhenListed by remember { mutableStateOf<String?>(null) }
+    LaunchedEffect(uiState.importedName) {
+        uiState.importedName?.let {
+            openWhenListed = it
+            viewModel.importShown()
+        }
+    }
+    LaunchedEffect(openWhenListed, uiState.recordings) {
+        val pending = openWhenListed ?: return@LaunchedEffect
+        if (uiState.recordings.any { it.displayName == pending }) {
+            // Its own screen, which is where the file's length, its player and Transcribe all are.
+            // A toast saying "imported" would be the app telling the user something happened
+            // somewhere else; this shows them the thing itself.
+            playbackFor = pending
+            openWhenListed = null
+        }
+    }
+
     /** Raised when transcription is asked for but the model it needs is not installed. */
     var showModelMissing by rememberSaveable { mutableStateOf(false) }
     // Non-null while refusing to transcribe a recording that is too long; holds its length in minutes
@@ -668,6 +716,8 @@ fun HomeScreen(
             // The same gate every other entry point uses: without it a retry on a phone whose model
             // has been deleted would fail exactly the silent way the first attempt did.
             onRetry = { displayName -> startTranscription(displayName) },
+            onImport = { importPicker.launch(arrayOf(IMPORT_MIME_FILTER)) },
+            importing = uiState.isImporting,
         )
     }
 
@@ -1296,6 +1346,22 @@ fun HomeScreen(
         )
     }
 
+    // A dialog rather than a toast, because every one of these is something the user has to do
+    // differently next time — pick another file, choose a folder — and a toast that appears while
+    // they are still looking at the picker's closing animation is a message nobody reads.
+    uiState.importRefusal?.let { reason ->
+        AlertDialog(
+            onDismissRequest = { viewModel.importRefusalSeen() },
+            title = { Text(stringResource(R.string.import_failed_title)) },
+            text = { Text(stringResource(importRefusalMessage(reason))) },
+            confirmButton = {
+                TextButton(onClick = { viewModel.importRefusalSeen() }) {
+                    Text(stringResource(R.string.general_ok))
+                }
+            }
+        )
+    }
+
     if (showModelMissing) {
         AlertDialog(
             onDismissRequest = { showModelMissing = false },
@@ -1344,6 +1410,26 @@ fun HomeScreen(
             }
         )
     }
+}
+
+/**
+ * What the SAF picker is asked to offer.
+ *
+ * The audio wildcard rather than the exact list [ImportableAudio] accepts, because a provider is
+ * free to report a type of its own for a file it knows perfectly well — a WhatsApp voice note comes
+ * back as `application/octet-stream` from more than one file manager, and naming exact types would
+ * hide it from the picker entirely. The narrower check happens after the file is chosen, where a
+ * refusal can say why.
+ */
+private const val IMPORT_MIME_FILTER = "audio/*"
+
+/** The sentence for a refused import. One per reason; "that didn't work" is what makes people retry. */
+private fun importRefusalMessage(reason: AudioImport.Reason): Int = when (reason) {
+    AudioImport.Reason.NOT_AUDIO -> R.string.import_failed_not_audio
+    AudioImport.Reason.EMPTY -> R.string.import_failed_empty
+    AudioImport.Reason.NO_FOLDER -> R.string.import_failed_no_folder
+    AudioImport.Reason.COPY_FAILED -> R.string.import_failed_copy
+    AudioImport.Reason.UNDECODABLE -> R.string.import_failed_undecodable
 }
 
 /**

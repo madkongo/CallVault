@@ -165,7 +165,7 @@
     <string name="home_transcripts_count">已转写 %1$d 个</string>
     <string name="home_summaries_count">已摘要 %1$d 个</string>
     <string name="home_transcripts_empty_title">还没有转写</string>
-    <string name="home_transcripts_empty_hint">在某个录音的菜单中请求转写，写好后就会出现在这里。</string>
+    <string name="home_transcripts_empty_hint">在某个录音的菜单中请求转写，或在上方导入一个音频文件——两者写好后都会出现在这里。</string>
     <string name="home_summaries_empty_title">还没有摘要</string>
     <string name="home_summaries_empty_hint">打开一通已有转写的通话并请求摘要，写好后就会出现在这里。</string>
 
@@ -173,4 +173,15 @@
     <string name="transcripts_working_header">正在转写</string>
     <string name="transcripts_failed_header">未能完成</string>
     <string name="transcripts_failed_hint">点按其中一项即可重试。</string>
+    <!-- Transcripts: bringing in audio CallVault did not record -->
+    <string name="transcripts_import_title">导入音频</string>
+    <string name="transcripts_import_working">正在导入…</string>
+    <string name="transcripts_import_body">转写一条语音留言，或手机上任何其他音频文件。</string>
+    <string name="import_failed_title">无法导入该文件</string>
+    <string name="import_failed_not_audio">CallVault 读不了这种文件。请试试 .opus、.ogg、.m4a、.mp3 或 .wav 录音。</string>
+    <string name="import_failed_empty">该文件是空的，没有内容可转写。</string>
+    <string name="import_failed_no_folder">还没有存放录音的文件夹。请先在设置中选一个，然后重试。</string>
+    <string name="import_failed_copy">无法把文件写入你的录音文件夹。请检查手机是否还有空间，以及该文件夹是否仍然可用。</string>
+    <string name="import_failed_undecodable">这部手机读不出该文件里的音频，因此永远无法转写。文件可能已损坏，或采用了 Android 不解码的格式。</string>
+    <string name="home_row_imported">已导入</string>
 </resources>

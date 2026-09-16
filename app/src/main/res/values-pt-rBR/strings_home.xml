@@ -165,7 +165,7 @@
     <string name="home_transcripts_count">%1$d transcritas</string>
     <string name="home_summaries_count">%1$d resumidas</string>
     <string name="home_transcripts_empty_title">Nada transcrito ainda</string>
-    <string name="home_transcripts_empty_hint">Peça uma transcrição no menu de uma gravação; ela aparece aqui assim que ficar pronta.</string>
+    <string name="home_transcripts_empty_hint">Peça uma transcrição no menu de uma gravação ou importe um arquivo de áudio acima; qualquer um dos dois aparece aqui assim que ficar pronto.</string>
     <string name="home_summaries_empty_title">Nada resumido ainda</string>
     <string name="home_summaries_empty_hint">Abra uma chamada que tenha transcrição e peça um resumo; ele aparece aqui assim que ficar pronto.</string>
 
@@ -173,4 +173,15 @@
     <string name="transcripts_working_header">Sendo transcrito</string>
     <string name="transcripts_failed_header">Não foi concluída</string>
     <string name="transcripts_failed_hint">Toque em uma para tentar de novo.</string>
+    <!-- Transcripts: bringing in audio CallVault did not record -->
+    <string name="transcripts_import_title">Importar áudio</string>
+    <string name="transcripts_import_working">Importando…</string>
+    <string name="transcripts_import_body">Transcreva um áudio de voz ou qualquer outro arquivo de som que já esteja no celular.</string>
+    <string name="import_failed_title">Não foi possível importar o arquivo</string>
+    <string name="import_failed_not_audio">O CallVault não consegue ler esse tipo de arquivo. Tente uma gravação .opus, .ogg, .m4a, .mp3 ou .wav.</string>
+    <string name="import_failed_empty">Esse arquivo está vazio, então não haveria nada para transcrever.</string>
+    <string name="import_failed_no_folder">Não há uma pasta de gravações para guardá-lo. Escolha uma nas configurações e tente de novo.</string>
+    <string name="import_failed_copy">Não foi possível gravar o arquivo na sua pasta de gravações. Verifique se há espaço no celular e se a pasta continua disponível.</string>
+    <string name="import_failed_undecodable">Este celular não consegue ler o áudio desse arquivo, então ele nunca poderia ser transcrito. Pode estar danificado ou em um formato que o Android não decodifica.</string>
+    <string name="home_row_imported">Importado</string>
 </resources>

@@ -29,6 +29,7 @@ import com.baba.callvault.services.recording.DaemonKeepAliveService
 import com.baba.callvault.services.recording.RecordingPolicy
 import com.baba.callvault.data.health.Prerequisite
 import com.baba.callvault.data.health.SetupPrerequisites
+import com.baba.callvault.data.recordings.AudioImport
 import com.baba.callvault.data.recordings.RecordingDirection
 import androidx.documentfile.provider.DocumentFile
 import com.baba.callvault.data.recordings.RecordingCatalog
@@ -205,7 +206,19 @@ class HomeViewModel(application: Application) : AndroidViewModel(application) {
         /** Uris of recordings currently being deleted — drives an inline spinner on their row. */
         val deletingUris: Set<Uri> = emptySet(),
         /** What real calls have proved about this setup — drives the status card's second line. */
-        val setupHealth: SetupHealth = SetupHealth.Unverified
+        val setupHealth: SetupHealth = SetupHealth.Unverified,
+        /** True while a chosen file is being copied into the recordings folder and checked. */
+        val isImporting: Boolean = false,
+        /**
+         * The name an import landed under, waiting to be shown to the user, or null.
+         *
+         * State rather than a callback because the work runs in this ViewModel's scope and must
+         * survive the rotation that would cancel a screen-scoped job half way through a copy. The
+         * screen clears it with [importShown] once it has acted on it.
+         */
+        val importedName: String? = null,
+        /** Why the last import was refused, or null. Cleared by [importRefusalSeen]. */
+        val importRefusal: AudioImport.Reason? = null,
     ) {
         /**
          * The distinct contact keys present in [recordings], sorted A→Z case-insensitively. Each
@@ -497,6 +510,44 @@ class HomeViewModel(application: Application) : AndroidViewModel(application) {
                 .debounce(CATALOG_SETTLE_MS)
                 .collect { reloadListQuietly() }
         }
+    }
+
+    /**
+     * Brings the audio file at [source] into the library. See [AudioImport] for what that involves.
+     *
+     * Runs in the ViewModel's scope, deliberately, not the screen's. Copying a long recording and
+     * checking that it decodes takes a moment, and a rotation half way through a job scoped to the
+     * composition would cancel it between the copy and the catalogue — leaving a file sitting in the
+     * user's recordings folder that the app has no record of and no sweep will ever reconcile.
+     *
+     * The list is refreshed immediately on success rather than left to the catalog observer's
+     * debounce: the user is standing in front of the screen that has to show what they just
+     * imported, and a second of nothing reads as the import having failed.
+     */
+    fun importAudio(source: Uri) {
+        if (_uiState.value.isImporting) return
+        _uiState.update { it.copy(isImporting = true, importRefusal = null) }
+        viewModelScope.launch {
+            val outcome = AudioImport.import(appContext, source)
+            when (outcome) {
+                is AudioImport.Outcome.Imported -> {
+                    refresh()
+                    _uiState.update { it.copy(isImporting = false, importedName = outcome.displayName) }
+                }
+                is AudioImport.Outcome.Refused ->
+                    _uiState.update { it.copy(isImporting = false, importRefusal = outcome.reason) }
+            }
+        }
+    }
+
+    /** The screen has opened the imported recording; stop offering it again. */
+    fun importShown() {
+        _uiState.update { it.copy(importedName = null) }
+    }
+
+    /** The user has read why the import was refused. */
+    fun importRefusalSeen() {
+        _uiState.update { it.copy(importRefusal = null) }
     }
 
     private fun reloadListQuietly() {

@@ -9,19 +9,26 @@
 package com.baba.callvault.ui.screens
 
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyListScope
 import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.AudioFile
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.filled.Tune
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -31,6 +38,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.baba.callvault.R
 import com.baba.callvault.data.recordings.RecordingsRepository.RecordingItem
@@ -38,6 +46,7 @@ import com.baba.callvault.data.transcripts.TranscriptStatus
 import com.baba.callvault.data.transcripts.TranscriptsPage
 import com.baba.callvault.data.transcripts.db.TranscriptEntry
 import com.baba.callvault.ui.common.BidiText
+import com.baba.callvault.ui.common.CvCard
 import com.baba.callvault.ui.common.CvScaffold
 import com.baba.callvault.ui.common.CvSectionHeader
 import com.baba.callvault.ui.common.RecordingLabel
@@ -68,6 +77,13 @@ import com.baba.callvault.ui.common.TranscriptActionButton
  * exact shape of the list-load regression that made freshly recorded calls look missing. The row says
  * who the call was with and when, which is what recognises it.
  *
+ * ## Why import lives here
+ *
+ * An imported file is not a call and has no business on a list of calls; the only reason to bring
+ * one in is to read it. So the way in sits on the page that shows what has been read — above the
+ * groups, and above the empty state too, because someone who has never transcribed anything is
+ * precisely the person for whom importing is the answer.
+ *
  * @param groups     Already grouped; see [TranscriptsPage] for what is kept and why.
  * @param recordings The catalog, resolved to rows **once for the whole list** rather than per row.
  *                   A transcript with no row in it is drawn from its own file name; see
@@ -80,6 +96,10 @@ import com.baba.callvault.ui.common.TranscriptActionButton
  * @param onOpenQueue Opens the queue sheet, which owns the Stop.
  * @param onOpen     Read a finished transcript.
  * @param onRetry    Try a failed one again.
+ * @param onImport   Raises the file picker.
+ * @param importing  True while a chosen file is being copied and checked. The card says so and
+ *                   stops accepting taps: the copy is not instant for a long recording, and a second
+ *                   picker opened over the first would import the same file twice.
  */
 @Composable
 fun TranscriptsScreen(
@@ -93,6 +113,8 @@ fun TranscriptsScreen(
     onOpenQueue: () -> Unit,
     onOpen: (String) -> Unit,
     onRetry: (String) -> Unit,
+    onImport: () -> Unit,
+    importing: Boolean,
     modifier: Modifier = Modifier,
     titleTrailing: (@Composable () -> Unit)? = null,
 ) {
@@ -137,6 +159,11 @@ fun TranscriptsScreen(
             ),
             verticalArrangement = Arrangement.spacedBy(10.dp)
         ) {
+            // Before the empty-state branch below, which returns early. An empty Transcripts page is
+            // exactly where importing needs to be offered — it is one of the two answers to "there
+            // is nothing here yet", and the other one is on a different screen.
+            item { ImportAudioCard(importing = importing, onImport = onImport) }
+
             if (groups.isEmpty) {
                 item {
                     LibrarySectionEmpty(
@@ -250,6 +277,67 @@ private fun LazyListScope.transcriptRows(
         )
     }
 }
+
+/**
+ * The way in for a file CallVault did not record.
+ *
+ * A card rather than an icon in the bar: this is the one action on the page that creates something,
+ * it needs a sentence to explain what it is for, and a glyph in a row of glyphs would be read as
+ * another way to filter the list. It sits at the top on purpose — under the search and settings
+ * actions, above everything the page is otherwise listing.
+ *
+ * While a copy is running the card says so and stops taking taps. The copy and the decode check are
+ * not instant for a long recording, and a second picker raised over the first would import the same
+ * file twice, under two names, with two rows and two transcripts.
+ */
+@Composable
+private fun ImportAudioCard(importing: Boolean, onImport: () -> Unit) {
+    CvCard(
+        onClick = if (importing) null else onImport,
+        contentPadding = PaddingValues(horizontal = 16.dp, vertical = 14.dp),
+    ) {
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            Box(modifier = Modifier.size(IMPORT_GLYPH_SLOT), contentAlignment = Alignment.Center) {
+                if (importing) {
+                    CircularProgressIndicator(
+                        modifier = Modifier.size(20.dp),
+                        strokeWidth = 2.dp,
+                        // Stated, not defaulted: several of M3's own roles resolve to CoralDeep in
+                        // this scheme, and a red spinner in a teal app reads as a failure.
+                        color = MaterialTheme.colorScheme.primary,
+                    )
+                } else {
+                    Icon(
+                        imageVector = Icons.Filled.AudioFile,
+                        contentDescription = null,
+                        tint = MaterialTheme.colorScheme.primary,
+                        modifier = Modifier.size(24.dp),
+                    )
+                }
+            }
+            Spacer(Modifier.width(14.dp))
+            Column(modifier = Modifier.weight(1f)) {
+                Text(
+                    text = stringResource(
+                        if (importing) R.string.transcripts_import_working else R.string.transcripts_import_title
+                    ),
+                    style = MaterialTheme.typography.titleSmall,
+                    fontWeight = FontWeight.SemiBold,
+                    color = MaterialTheme.colorScheme.onSurface,
+                )
+                Spacer(Modifier.height(2.dp))
+                Text(
+                    text = stringResource(R.string.transcripts_import_body),
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+            }
+        }
+    }
+}
+
+/** Matches the trailing slot on a transcript row, so the card's text starts on the same column. */
+private val IMPORT_GLYPH_SLOT = 40.dp
 
 /**
  * The heading over what is being transcribed, with the way to stop it.

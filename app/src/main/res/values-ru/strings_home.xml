@@ -165,7 +165,7 @@
     <string name="home_transcripts_count">Расшифровок: %1$d</string>
     <string name="home_summaries_count">Сводок: %1$d</string>
     <string name="home_transcripts_empty_title">Расшифровок пока нет</string>
-    <string name="home_transcripts_empty_hint">Запросите расшифровку в меню записи — она появится здесь, когда будет готова.</string>
+    <string name="home_transcripts_empty_hint">Запросите расшифровку в меню записи или импортируйте звуковой файл выше — и то и другое появится здесь, когда будет готово.</string>
     <string name="home_summaries_empty_title">Сводок пока нет</string>
     <string name="home_summaries_empty_hint">Откройте звонок с расшифровкой и запросите сводку; она появится здесь, когда будет готова.</string>
 
@@ -173,4 +173,15 @@
     <string name="transcripts_working_header">Расшифровывается</string>
     <string name="transcripts_failed_header">Не завершилось</string>
     <string name="transcripts_failed_hint">Нажмите, чтобы попробовать снова.</string>
+    <!-- Transcripts: bringing in audio CallVault did not record -->
+    <string name="transcripts_import_title">Импортировать аудио</string>
+    <string name="transcripts_import_working">Импортируется…</string>
+    <string name="transcripts_import_body">Расшифруйте голосовое сообщение или любой другой звуковой файл, который уже есть на телефоне.</string>
+    <string name="import_failed_title">Не удалось импортировать файл</string>
+    <string name="import_failed_not_audio">CallVault не умеет читать такие файлы. Попробуйте запись .opus, .ogg, .m4a, .mp3 или .wav.</string>
+    <string name="import_failed_empty">Файл пуст — расшифровывать нечего.</string>
+    <string name="import_failed_no_folder">Нет папки записей, куда его положить. Выберите её в настройках и попробуйте снова.</string>
+    <string name="import_failed_copy">Не удалось записать файл в вашу папку записей. Проверьте, есть ли на телефоне место и доступна ли ещё эта папка.</string>
+    <string name="import_failed_undecodable">Этот телефон не может прочитать звук внутри файла, поэтому расшифровать его никогда не получится. Возможно, файл повреждён или в формате, который Android не декодирует.</string>
+    <string name="home_row_imported">Импортировано</string>
 </resources>

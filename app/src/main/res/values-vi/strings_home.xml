@@ -165,7 +165,7 @@
     <string name="home_transcripts_count">Đã chép lời %1$d</string>
     <string name="home_summaries_count">Đã tóm tắt %1$d</string>
     <string name="home_transcripts_empty_title">Chưa có bản chép lời nào</string>
-    <string name="home_transcripts_empty_hint">Hãy yêu cầu chép lời từ menu của một bản ghi âm; nó sẽ xuất hiện ở đây khi viết xong.</string>
+    <string name="home_transcripts_empty_hint">Hãy yêu cầu chép lời từ menu của một bản ghi âm, hoặc nhập một tệp âm thanh ở trên; cả hai đều sẽ xuất hiện ở đây khi viết xong.</string>
     <string name="home_summaries_empty_title">Chưa có bản tóm tắt nào</string>
     <string name="home_summaries_empty_hint">Hãy mở một cuộc gọi đã có bản chép lời và yêu cầu tóm tắt; nó sẽ xuất hiện ở đây khi viết xong.</string>
 
@@ -173,4 +173,15 @@
     <string name="transcripts_working_header">Đang chép lời</string>
     <string name="transcripts_failed_header">Chưa hoàn tất</string>
     <string name="transcripts_failed_hint">Chạm vào một mục để thử lại.</string>
+    <!-- Transcripts: bringing in audio CallVault did not record -->
+    <string name="transcripts_import_title">Nhập tệp âm thanh</string>
+    <string name="transcripts_import_working">Đang nhập…</string>
+    <string name="transcripts_import_body">Chép lời một tin nhắn thoại hoặc bất kỳ tệp âm thanh nào đã có trên điện thoại.</string>
+    <string name="import_failed_title">Không nhập được tệp đó</string>
+    <string name="import_failed_not_audio">CallVault không đọc được loại tệp này. Hãy thử bản ghi .opus, .ogg, .m4a, .mp3 hoặc .wav.</string>
+    <string name="import_failed_empty">Tệp đó rỗng, nên sẽ không có gì để chép lời.</string>
+    <string name="import_failed_no_folder">Chưa có thư mục bản ghi để cất tệp. Hãy chọn một thư mục trong phần cài đặt rồi thử lại.</string>
+    <string name="import_failed_copy">Không ghi được tệp vào thư mục bản ghi của bạn. Hãy kiểm tra điện thoại còn chỗ trống và thư mục vẫn dùng được.</string>
+    <string name="import_failed_undecodable">Điện thoại này không đọc được âm thanh bên trong tệp đó, nên sẽ không bao giờ chép lời được. Tệp có thể đã hỏng, hoặc ở định dạng Android không giải mã.</string>
+    <string name="home_row_imported">Đã nhập</string>
 </resources>

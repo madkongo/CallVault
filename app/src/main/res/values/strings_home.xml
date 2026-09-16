@@ -182,7 +182,7 @@
     <string name="home_transcripts_count">%1$d transcribed</string>
     <string name="home_summaries_count">%1$d summarised</string>
     <string name="home_transcripts_empty_title">Nothing transcribed yet</string>
-    <string name="home_transcripts_empty_hint">Ask for a transcript from a recording\'s menu, and it appears here once it is written.</string>
+    <string name="home_transcripts_empty_hint">Ask for a transcript from a recording\'s menu, or import an audio file above. Either one appears here once it is written.</string>
     <string name="home_summaries_empty_title">Nothing summarised yet</string>
     <string name="home_summaries_empty_hint">Open a call that has a transcript and ask for a summary; it appears here once it is written.</string>
 
@@ -190,4 +190,15 @@
     <string name="transcripts_working_header">Being transcribed</string>
     <string name="transcripts_failed_header">Didn\'t finish</string>
     <string name="transcripts_failed_hint">Tap one to try it again.</string>
+    <!-- Transcripts: bringing in audio CallVault did not record -->
+    <string name="transcripts_import_title">Import audio</string>
+    <string name="transcripts_import_working">Importing…</string>
+    <string name="transcripts_import_body">Transcribe a voice note or any other audio file already on your phone.</string>
+    <string name="import_failed_title">Couldn\'t import that file</string>
+    <string name="import_failed_not_audio">CallVault can\'t read that kind of file. Try an .opus, .ogg, .m4a, .mp3 or .wav recording.</string>
+    <string name="import_failed_empty">That file is empty, so there would be nothing to transcribe.</string>
+    <string name="import_failed_no_folder">There\'s no recordings folder to keep it in. Choose one in Settings, then try again.</string>
+    <string name="import_failed_copy">The file couldn\'t be written into your recordings folder. Check the phone has space and that the folder is still available.</string>
+    <string name="import_failed_undecodable">This phone can\'t read the audio inside that file, so it could never be transcribed. It may be damaged, or in a format Android doesn\'t decode.</string>
+    <string name="home_row_imported">Imported</string>
 </resources>
