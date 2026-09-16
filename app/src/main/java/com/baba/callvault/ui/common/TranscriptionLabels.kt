@@ -82,6 +82,23 @@ object TranscriptionLabels {
         return auto + languages.sortedWith { a, b -> collator.compare(a.second, b.second) }
     }
 
+    /**
+     * Which option the per-recording language dialog opens on, given the pinned Settings [setting].
+     *
+     * The pinned language, so the common case — this call is in the usual language — is one
+     * confirming tap. It falls back to auto-detect when the pin names a language this build does not
+     * offer, which is not hypothetical: a setting written by a later version outlives an install, and
+     * the alternative is a dropdown showing one language while the confirm button sends another.
+     *
+     * [offered] is passed in rather than read from [LANGUAGE_OPTIONS] so the fallback is tested
+     * against a list, not against whatever the catalogue happens to hold today.
+     */
+    fun preselectedLanguageKey(setting: String?, offered: List<String?> = LANGUAGE_OPTIONS): String {
+        val key = TranscriptionLanguageChoice.encode(setting)
+        val keys = offered.map { TranscriptionLanguageChoice.encode(it) }
+        return if (key in keys) key else AUTO_DETECT_KEY
+    }
+
     @StringRes
     fun titleOf(mode: TranscriptionMode): Int = when (mode) {
         TranscriptionMode.MANUAL -> R.string.transcription_mode_manual

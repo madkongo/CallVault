@@ -439,7 +439,6 @@
     <string name="transcription_confirm_subtitle">显示需要多久，并允许取消。</string>
     <string name="transcribe_language_title">使用哪种语言？</string>
     <string name="transcribe_language_message">将 %1$s 转写为：</string>
-    <string name="transcribe_language_current">%1$s（常用）</string>
     <string name="transcribe_language_confirm">转写</string>
     <string name="transcription_ask_language_title">每次都询问语言</string>
     <string name="transcription_ask_language_subtitle">为每条录音单独选择语言，而不是始终使用上面的设置。仅对该条录音生效。</string>

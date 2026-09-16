@@ -53,6 +53,26 @@ class TranscriptionLanguageOrderTest {
     }
 
     @Test
+    fun the_dialog_opens_on_the_pinned_language() {
+        // The whole reason the per-recording question is one confirming tap rather than a hunt: the
+        // common case is that this call is in the usual language.
+        assertEquals("he", TranscriptionLabels.preselectedLanguageKey("he", listOf("he", "en", null)))
+    }
+
+    @Test
+    fun a_pin_of_auto_detect_opens_on_auto_detect() {
+        assertEquals(auto, TranscriptionLabels.preselectedLanguageKey(null, listOf("he", "en", null)))
+    }
+
+    @Test
+    fun a_pinned_language_this_build_does_not_offer_falls_back_to_auto_detect() {
+        // A setting outlives an install, so a pin written by a later version can name a language this
+        // one does not list. Collapsed into a dropdown that matters more than it did as a row: the
+        // field would show one language while Confirm sent another, with nothing on screen to say so.
+        assertEquals(auto, TranscriptionLabels.preselectedLanguageKey("xx", listOf("he", "en", null)))
+    }
+
+    @Test
     fun nothing_is_lost_or_duplicated() {
         val input = listOf(auto to "Detect automatically", "he" to "Hebrew", "en" to "English")
 

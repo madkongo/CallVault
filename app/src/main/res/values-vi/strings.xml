@@ -439,7 +439,6 @@
     <string name="transcription_confirm_subtitle">Cho biết sẽ mất bao lâu và cho phép huỷ.</string>
     <string name="transcribe_language_title">Ngôn ngữ nào?</string>
     <string name="transcribe_language_message">Chép lời %1$s bằng:</string>
-    <string name="transcribe_language_current">%1$s (thường dùng)</string>
     <string name="transcribe_language_confirm">Chép lời</string>
     <string name="transcription_ask_language_title">Hỏi ngôn ngữ mỗi lần</string>
     <string name="transcription_ask_language_subtitle">Chọn ngôn ngữ cho từng bản ghi thay vì luôn dùng ngôn ngữ ở trên. Chỉ áp dụng cho bản ghi đó.</string>

@@ -439,7 +439,6 @@
     <string name="transcription_confirm_subtitle">Показывает, сколько это займёт, и позволяет отменить.</string>
     <string name="transcribe_language_title">Какой язык?</string>
     <string name="transcribe_language_message">Расшифровать %1$s на языке:</string>
-    <string name="transcribe_language_current">%1$s (обычный)</string>
     <string name="transcribe_language_confirm">Расшифровать</string>
     <string name="transcription_ask_language_title">Спрашивать язык каждый раз</string>
     <string name="transcription_ask_language_subtitle">Выбирайте язык для каждой записи вместо того, чтобы всегда использовать указанный выше. Действует только для этой записи.</string>

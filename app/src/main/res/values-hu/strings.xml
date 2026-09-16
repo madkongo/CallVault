@@ -439,7 +439,6 @@
     <string name="transcription_confirm_subtitle">Megmutatja, mennyi ideig tart, és megszakíthatja.</string>
     <string name="transcribe_language_title">Melyik nyelv?</string>
     <string name="transcribe_language_message">%1$s átírása ezen a nyelven:</string>
-    <string name="transcribe_language_current">%1$s (a szokásos)</string>
     <string name="transcribe_language_confirm">Átírás</string>
     <string name="transcription_ask_language_title">Kérdezzen rá a nyelvre minden alkalommal</string>
     <string name="transcription_ask_language_subtitle">Válasszon nyelvet felvételenként a fenti helyett. Csak az adott felvételre vonatkozik.</string>

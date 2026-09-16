@@ -442,7 +442,6 @@
     <string name="transcription_confirm_subtitle">Mostra quanto tempo vai levar e permite cancelar.</string>
     <string name="transcribe_language_title">Qual idioma?</string>
     <string name="transcribe_language_message">Transcrever %1$s em:</string>
-    <string name="transcribe_language_current">%1$s (o de sempre)</string>
     <string name="transcribe_language_confirm">Transcrever</string>
     <string name="transcription_ask_language_title">Perguntar o idioma a cada vez</string>
     <string name="transcription_ask_language_subtitle">Escolha o idioma por gravação em vez de usar sempre o de cima. Vale só para essa gravação.</string>

@@ -719,7 +719,6 @@
     <string name="transcribe_confirm_dont_ask">Don\'t ask again</string>
     <string name="transcribe_language_title">Which language?</string>
     <string name="transcribe_language_message">Transcribe %1$s in:</string>
-    <string name="transcribe_language_current">%1$s (your usual)</string>
     <string name="transcribe_language_confirm">Transcribe</string>
     <string name="transcription_ask_language_title">Ask which language each time</string>
     <string name="transcription_ask_language_subtitle">Choose the language per recording instead of always using the one above. It applies to that recording only.</string>

@@ -439,7 +439,6 @@
     <string name="transcription_confirm_subtitle">Indique la durée et vous laisse annuler.</string>
     <string name="transcribe_language_title">Quelle langue ?</string>
     <string name="transcribe_language_message">Transcrire %1$s en :</string>
-    <string name="transcribe_language_current">%1$s (votre habitude)</string>
     <string name="transcribe_language_confirm">Transcrire</string>
     <string name="transcription_ask_language_title">Demander la langue à chaque fois</string>
     <string name="transcription_ask_language_subtitle">Choisissez la langue pour chaque enregistrement au lieu d\'utiliser toujours celle ci-dessus. Ne s\'applique qu\'à cet enregistrement.</string>
