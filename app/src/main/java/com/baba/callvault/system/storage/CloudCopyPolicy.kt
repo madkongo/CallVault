@@ -8,6 +8,8 @@
 
 package com.baba.callvault.system.storage
 
+import com.baba.callvault.data.recordings.ImportedRecording
+
 /** What an already-present destination file (same display name) means for a pending copy. */
 enum class ExistingCopyVerdict {
     /** The recording is already in the cloud folder — do not upload it again. */
@@ -75,4 +77,18 @@ object CloudCopyPolicy {
 
     /** True for a staging name, so leftovers from a killed attempt can be recognised and swept. */
     fun isStagingName(name: String): Boolean = name.contains(STAGING_MARKER)
+
+    /**
+     * Whether a file sitting in the recordings folder may be copied to the cloud folder at all.
+     *
+     * A file the user imported may not. It is their own audio, handed to CallVault to transcribe and
+     * nothing else, so uploading it puts it in their Drive on a decision they never made — and under
+     * [com.baba.callvault.data.StorageTarget.DRIVE] the upload is what deletes the local original, so
+     * the file they imported would leave the phone.
+     *
+     * Asked by both routes to Drive — the per-recording enqueue and the scheduled sweep — because a
+     * recording reaches Drive through whichever of the two the user has on, and a gate on one of them
+     * is no gate at all.
+     */
+    fun mayGoToCloud(displayName: String): Boolean = !ImportedRecording.isImported(displayName)
 }

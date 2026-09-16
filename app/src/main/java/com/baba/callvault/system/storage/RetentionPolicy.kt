@@ -8,6 +8,8 @@
 
 package com.baba.callvault.system.storage
 
+import com.baba.callvault.data.recordings.ImportedRecording
+
 /**
  * The two questions the retention sweep asks before deleting anything, kept pure so they can be tested
  * without a device, a folder, or a clock.
@@ -40,10 +42,17 @@ object RetentionPolicy {
      * Whether a file found in a storage folder — as opposed to in our catalog — may be deleted by age.
      *
      * A storage folder is whichever folder the user picked, up to and including one they keep other audio
-     * in. The gate is the filename template: [startedAtMillis] is parsed from the timestamp CallVault
+     * in. The first gate is the filename template: [startedAtMillis] is parsed from the timestamp CallVault
      * writes at the front of every recording's name, so anything without one was not written by us and is
      * left alone however old it is. Deleting a stranger's file would be a far worse bug than the one that
      * made this sweep read the folders in the first place.
+     *
+     * The second gate is imports, and it exists because the first one stops covering them. A file the user
+     * imported is written by us and carries our timestamp, so the template alone would start letting the
+     * sweep delete it — a voice note someone brought in to transcribe, destroyed overnight by a retention
+     * period they set for their calls. Retention is a promise about how long a *call* is kept; an import
+     * was never a call, and the user still has nowhere else to have put it.
      */
-    fun isEligible(startedAtMillis: Long?): Boolean = startedAtMillis != null
+    fun isEligible(displayName: String, startedAtMillis: Long?): Boolean =
+        startedAtMillis != null && !ImportedRecording.isImported(displayName)
 }

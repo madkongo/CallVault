@@ -68,12 +68,29 @@ class RetentionPolicyTest {
 
     @Test
     fun `a name carrying CallVault's timestamp is ours to sweep`() {
-        assertTrue(RetentionPolicy.isEligible(startedAtMillis = now))
+        assertTrue(RetentionPolicy.isEligible("20260804_101010.123+0300_in_5551234.ogg", now))
+        assertTrue(RetentionPolicy.isEligible("20260804_101010.123+0300_voip-WhatsApp_Dana.ogg", now))
     }
 
     @Test
     fun `a name the template could not parse is left alone`() {
         // e.g. music the user keeps in the same folder: old, audio, and none of our business.
-        assertFalse(RetentionPolicy.isEligible(startedAtMillis = null))
+        assertFalse(RetentionPolicy.isEligible("my favourite album.mp3", startedAtMillis = null))
+    }
+
+    @Test
+    fun `an imported file is never deleted by age, timestamp or not`() {
+        // It carries our timestamp — we wrote the name — so the template gate alone would hand it to
+        // the sweep. A voice note someone imported to transcribe is not a call, and the retention
+        // period they chose for their calls was never an instruction to destroy it.
+        assertFalse(RetentionPolicy.isEligible("20260804_101010.123+0300_import.m4a", now))
+        assertFalse(RetentionPolicy.isEligible("20260804_101010.123+0300_import_Standup.m4a", now))
+    }
+
+    @Test
+    fun `a call with a contact called Important is still swept`() {
+        // The import exemption reads the marker slot, not the whole name; a looser test would quietly
+        // exempt this call from retention for ever.
+        assertTrue(RetentionPolicy.isEligible("20260804_101010.123+0300_in_Important.ogg", now))
     }
 }

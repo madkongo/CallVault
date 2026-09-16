@@ -74,10 +74,17 @@ object UntrackedRecordings {
      * so the filename template is the gate: [RecordingItem.startedAtMillis] is parsed out of the
      * timestamp CallVault puts at the front of every name, and anything that does not carry one is left
      * alone. Catalogued recordings are exempt from this check — those we already know are ours.
+     *
+     * A file the user imported passes that test — we wrote its name — and [RetentionPolicy.isEligible]
+     * turns it down for the other reason: it is the user's own audio, not a call, and no retention period
+     * they set for their calls was ever an instruction to destroy it.
      */
     private fun untrackedIn(context: Context, folder: android.net.Uri?, known: Set<String>): List<RecordingItem> {
         if (folder == null) return emptyList()
         return RecordingsRepository.enumerateFolder(context, folder)
-            .filter { it.displayName !in known && RetentionPolicy.isEligible(it.startedAtMillis) }
+            .filter {
+                it.displayName !in known &&
+                    RetentionPolicy.isEligible(it.displayName, it.startedAtMillis)
+            }
     }
 }

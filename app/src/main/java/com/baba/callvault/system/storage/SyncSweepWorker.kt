@@ -77,6 +77,9 @@ class SyncSweepWorker(ctx: Context, params: WorkerParameters) : CoroutineWorker(
             if (!file.isFile) continue
             // A staging document from an interrupted copy is not a recording.
             if (CloudCopyPolicy.isStagingName(name)) continue
+            // Nor is a file the user imported: their own audio, which in DRIVE-only mode this sweep
+            // would upload and then delete from the phone. See [CloudCopyPolicy.mayGoToCloud].
+            if (!CloudCopyPolicy.mayGoToCloud(name)) continue
 
             val sourceSize = runCatching { file.length() }.getOrDefault(-1L)
             if (sourceSize <= 0L) {

@@ -33,6 +33,7 @@ import com.baba.callvault.data.recordings.RecordingDirection
 import androidx.documentfile.provider.DocumentFile
 import com.baba.callvault.data.recordings.RecordingCatalog
 import com.baba.callvault.utils.AppLogger
+import com.baba.callvault.data.merge.MergeCandidates
 import com.baba.callvault.data.merge.MergeService
 import com.baba.callvault.data.recordings.db.RecordingDatabase
 import com.baba.callvault.data.recordings.RecordingsRepository
@@ -806,18 +807,11 @@ class HomeViewModel(application: Application) : AndroidViewModel(application) {
     /**
      * The other calls with this one's number that could continue it, newest first.
      *
-     * Filtered to what is actually on the phone: joining copies frame by frame needs the audio here,
-     * not in Drive. Unbounded by date on purpose — a cut-off can only ever hide the row someone came
-     * looking for.
+     * The rule itself lives in [MergeCandidates], where it can be proved at a desk: a merge deletes
+     * the parts it consumed, so a row offered here by mistake is audio the user does not get back.
      */
-    fun mergeCandidates(primary: RecordingItem): List<RecordingItem> {
-        val key = primary.contactName ?: primary.number ?: return emptyList()
-        return _uiState.value.recordings.filter { other ->
-            other.displayName != primary.displayName &&
-                other.localUri != null &&
-                (other.contactName ?: other.number) == key
-        }
-    }
+    fun mergeCandidates(primary: RecordingItem): List<RecordingItem> =
+        MergeCandidates.of(primary, _uiState.value.recordings)
 
     /**
      * How many calls each merged recording holds, as one query.

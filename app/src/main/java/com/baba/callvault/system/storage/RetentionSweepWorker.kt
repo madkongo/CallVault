@@ -65,6 +65,12 @@ class RetentionSweepWorker(ctx: Context, params: WorkerParameters) : CoroutineWo
 
         var deletedLocal = 0
         var deletedDrive = 0
+        // Age here is the catalog's `lastModified`, and nothing about an entry says how it got there.
+        // So whatever catalogues an import MUST stamp it with the time it was imported, never with the
+        // date the audio was originally recorded: a two-year-old voice note brought in to transcribe
+        // would arrive already expired and be deleted by this pass the same night. Retention is not
+        // changed for imports here — the file the user still has is the one that has to be kept, and
+        // the untracked pass below is where an import that never reached the catalog is spared.
         for (entry in RecordingCatalog.all(applicationContext)) {
             val ts = entry.lastModified
             val localUri = entry.localUri

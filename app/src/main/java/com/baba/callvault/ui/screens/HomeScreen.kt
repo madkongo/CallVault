@@ -22,6 +22,7 @@ import androidx.compose.material.icons.filled.Star
 import androidx.compose.material.icons.filled.StarBorder
 import androidx.compose.material3.Surface
 import com.baba.callvault.system.openWirelessDebugging
+import com.baba.callvault.data.merge.MergeCandidates
 import com.baba.callvault.data.recordings.DeleteScope
 import com.baba.callvault.data.recordings.RecordingSelection
 import com.baba.callvault.system.openKofi
@@ -1973,7 +1974,8 @@ private fun RecordingRowMenu(
     shareUri: Uri,
     shareName: String,
     onDelete: () -> Unit,
-    onMerge: () -> Unit = {},
+    /** Null on a row nothing can be merged into it — an import, which was never a call. */
+    onMerge: (() -> Unit)? = null,
     onUnMerge: (() -> Unit)? = null,
 ) {
     val context = LocalContext.current
@@ -1997,14 +1999,16 @@ private fun RecordingRowMenu(
                     context.shareRecording(shareUri, shareName)
                 }
             )
-            DropdownMenuItem(
-                text = { Text(stringResource(R.string.merge_menu_action)) },
-                leadingIcon = { Icon(Icons.Filled.CallMerge, contentDescription = null) },
-                onClick = {
-                    open = false
-                    onMerge()
-                }
-            )
+            if (onMerge != null) {
+                DropdownMenuItem(
+                    text = { Text(stringResource(R.string.merge_menu_action)) },
+                    leadingIcon = { Icon(Icons.Filled.CallMerge, contentDescription = null) },
+                    onClick = {
+                        open = false
+                        onMerge()
+                    }
+                )
+            }
             if (onUnMerge != null) {
                 DropdownMenuItem(
                     text = { Text(stringResource(R.string.merge_menu_take_apart)) },
@@ -2382,7 +2386,9 @@ private fun RecordingRow(
                     onDelete = {
                         deleteTarget = DeleteTarget.Ask
                     },
-                    onMerge = onMerge,
+                    // Merging joins a dropped call to the redial and deletes the parts. An import is
+                    // neither half of that, so it is not offered the action at all.
+                    onMerge = onMerge.takeIf { MergeCandidates.canMerge(item) },
                     onUnMerge = onUnMerge
                 )
             }

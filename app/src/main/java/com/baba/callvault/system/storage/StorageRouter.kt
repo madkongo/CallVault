@@ -30,6 +30,13 @@ object StorageRouter {
     private const val TAG = "CV:StorageRouter"
 
     fun route(context: Context, localUri: Uri, displayName: String, mimeType: String) {
+        // An imported file is the user's own audio, not a call we recorded, and under DRIVE the copy
+        // is followed by a delete of the local original — so routing one would take their file off
+        // the phone. Same gate as the scheduled sweep; see [CloudCopyPolicy.mayGoToCloud].
+        if (!CloudCopyPolicy.mayGoToCloud(displayName)) {
+            AppLogger.i(TAG, "'$displayName' was imported; leaving it on the device.")
+            return
+        }
         val prefs = AppPreferences(context)
         val target = prefs.getStorageTarget()
         if (target == StorageTarget.LOCAL) return

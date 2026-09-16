@@ -79,4 +79,27 @@ class CloudCopyPolicyTest {
         assertTrue(CloudCopyPolicy.isStagingName(CloudCopyPolicy.stagingNameFor("call.ogg")))
         assertFalse(CloudCopyPolicy.isStagingName("call.ogg"))
     }
+
+    // ---- what may leave the phone at all
+
+    @Test
+    fun `a recording goes to the cloud folder`() {
+        assertTrue(CloudCopyPolicy.mayGoToCloud("20260728_085310.464+0300_in_5551234.ogg"))
+        assertTrue(CloudCopyPolicy.mayGoToCloud("20260728_085310.464+0300_voip-WhatsApp_AthenX.ogg"))
+    }
+
+    @Test
+    fun `an imported file never does`() {
+        // Under DRIVE-only the upload is what deletes the local original, so uploading the user's own
+        // imported audio would take it off their phone as well as putting it in a cloud they never
+        // chose for it.
+        assertFalse(CloudCopyPolicy.mayGoToCloud("20260728_085310.464+0300_import.m4a"))
+        assertFalse(CloudCopyPolicy.mayGoToCloud("20260728_085310.464+0300_import_Standup.m4a"))
+    }
+
+    @Test
+    fun `a call with a contact called Important is still backed up`() {
+        // A looser test for the word would stop backing this call up, silently and for ever.
+        assertTrue(CloudCopyPolicy.mayGoToCloud("20260728_085310.464+0300_in_Important.ogg"))
+    }
 }
