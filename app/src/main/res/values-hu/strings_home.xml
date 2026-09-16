@@ -154,4 +154,18 @@
     <string name="offline_failed_no_wifi">Nem sikerült bekapcsolni – nem csatlakozol Wi-Fi-hez. Csatlakozz egyszer bármilyen Wi-Fi-hálózathoz, majd próbáld újra.</string>
     <string name="offline_failed_wd_refused">Nem sikerült bekapcsolni – az Android nem engedélyezte a vezeték nélküli hibakeresést ezen a hálózaton. Kapcsold be egyszer a Fejlesztői beállításokban, fogadd el a kérést, majd próbáld újra.</string>
     <string name="offline_failed_needs_usb">Először kapcsold be az USB-hibakeresést — nélküle a Wi-Fi nélküli rögzítés nem működik. Beállítások ▸ Kísérleti ▸ USB-hibakeresés.</string>
+
+    <!-- Home: the hub of cards, and the two sections its cards open -->
+    <string name="home_hub_library_title">Könyvtár</string>
+    <string name="home_hub_recordings_body">Minden hívás, amelyet a CallVault rögzített.</string>
+    <string name="home_hub_transcripts_body">Hívások szöveggé alakítva, hogy olvasható és kereshető legyen.</string>
+    <string name="home_hub_summaries_body">A rövid változat: miről szólt a hívás, és mi lett eldöntve.</string>
+    <string name="home_transcripts_title">Átiratok</string>
+    <string name="home_summaries_title">Összefoglalók</string>
+    <string name="home_transcripts_count">%1$d átírva</string>
+    <string name="home_summaries_count">%1$d összefoglalva</string>
+    <string name="home_transcripts_empty_title">Még nincs átirat</string>
+    <string name="home_transcripts_empty_hint">Kérj átiratot egy felvétel menüjéből – amint elkészül, itt jelenik meg.</string>
+    <string name="home_summaries_empty_title">Még nincs összefoglaló</string>
+    <string name="home_summaries_empty_hint">Nyiss meg egy hívást, amelynek van átirata, és kérj összefoglalót; amint elkészül, itt jelenik meg.</string>
 </resources>

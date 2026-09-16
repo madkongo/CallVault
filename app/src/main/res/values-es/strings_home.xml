@@ -154,4 +154,18 @@
     <string name="offline_failed_no_wifi">No se pudo activar: no estás conectado a Wi-Fi. Conéctate una vez a cualquier red Wi-Fi y vuelve a intentarlo.</string>
     <string name="offline_failed_wd_refused">No se pudo activar: Android no permitió la depuración inalámbrica en esta red. Actívala una vez en Opciones de desarrollador, acepta el aviso y vuelve a intentarlo.</string>
     <string name="offline_failed_needs_usb">Activa primero la depuración USB: la grabación sin Wi-Fi no funciona sin ella. Ajustes ▸ Experimental ▸ Depuración USB.</string>
+
+    <!-- Home: the hub of cards, and the two sections its cards open -->
+    <string name="home_hub_library_title">Biblioteca</string>
+    <string name="home_hub_recordings_body">Todas las llamadas que CallVault ha grabado.</string>
+    <string name="home_hub_transcripts_body">Llamadas convertidas en texto que puedes leer y buscar.</string>
+    <string name="home_hub_summaries_body">La versión corta: de qué trató la llamada y qué se decidió.</string>
+    <string name="home_transcripts_title">Transcripciones</string>
+    <string name="home_summaries_title">Resúmenes</string>
+    <string name="home_transcripts_count">%1$d transcritas</string>
+    <string name="home_summaries_count">%1$d resumidas</string>
+    <string name="home_transcripts_empty_title">Aún no hay transcripciones</string>
+    <string name="home_transcripts_empty_hint">Pide una transcripción desde el menú de una grabación; aparecerá aquí en cuanto esté escrita.</string>
+    <string name="home_summaries_empty_title">Aún no hay resúmenes</string>
+    <string name="home_summaries_empty_hint">Abre una llamada que tenga transcripción y pide un resumen; aparecerá aquí en cuanto esté escrito.</string>
 </resources>

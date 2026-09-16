@@ -171,4 +171,18 @@
     <string name="offline_failed_no_wifi">Couldn\'t enable — you\'re not on Wi-Fi. Connect to any Wi-Fi network once, then try again.</string>
     <string name="offline_failed_wd_refused">Couldn\'t enable — Android didn\'t allow Wireless debugging on this network. Turn it on once in Developer options, accept the prompt, then try again.</string>
     <string name="offline_failed_needs_usb">Turn on USB debugging first — off-Wi-Fi recording can\'t work without it. Settings ▸ Experimental ▸ USB debugging.</string>
+
+    <!-- Home: the hub of cards, and the two sections its cards open -->
+    <string name="home_hub_library_title">Library</string>
+    <string name="home_hub_recordings_body">Every call CallVault has recorded.</string>
+    <string name="home_hub_transcripts_body">Calls written out as text you can read and search.</string>
+    <string name="home_hub_summaries_body">The short version: what a call was about and what was decided.</string>
+    <string name="home_transcripts_title">Transcripts</string>
+    <string name="home_summaries_title">Summaries</string>
+    <string name="home_transcripts_count">%1$d transcribed</string>
+    <string name="home_summaries_count">%1$d summarised</string>
+    <string name="home_transcripts_empty_title">Nothing transcribed yet</string>
+    <string name="home_transcripts_empty_hint">Ask for a transcript from a recording\'s menu, and it appears here once it is written.</string>
+    <string name="home_summaries_empty_title">Nothing summarised yet</string>
+    <string name="home_summaries_empty_hint">Open a call that has a transcript and ask for a summary; it appears here once it is written.</string>
 </resources>

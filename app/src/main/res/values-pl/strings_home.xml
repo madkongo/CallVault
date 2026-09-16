@@ -154,4 +154,18 @@
     <string name="offline_failed_no_wifi">Nie udało się włączyć — nie masz połączenia z Wi-Fi. Połącz się raz z dowolną siecią Wi-Fi i spróbuj ponownie.</string>
     <string name="offline_failed_wd_refused">Nie udało się włączyć — Android nie zezwolił na debugowanie bezprzewodowe w tej sieci. Włącz je raz w Opcjach programisty, zaakceptuj monit i spróbuj ponownie.</string>
     <string name="offline_failed_needs_usb">Najpierw włącz debugowanie USB — bez niego nagrywanie bez Wi-Fi nie działa. Ustawienia ▸ Eksperymentalne ▸ Debugowanie USB.</string>
+
+    <!-- Home: the hub of cards, and the two sections its cards open -->
+    <string name="home_hub_library_title">Biblioteka</string>
+    <string name="home_hub_recordings_body">Każde połączenie nagrane przez CallVault.</string>
+    <string name="home_hub_transcripts_body">Połączenia zapisane jako tekst, który możesz czytać i przeszukiwać.</string>
+    <string name="home_hub_summaries_body">Krótka wersja: czego dotyczyła rozmowa i co ustalono.</string>
+    <string name="home_transcripts_title">Transkrypcje</string>
+    <string name="home_summaries_title">Podsumowania</string>
+    <string name="home_transcripts_count">%1$d przepisanych</string>
+    <string name="home_summaries_count">%1$d podsumowanych</string>
+    <string name="home_transcripts_empty_title">Brak transkrypcji</string>
+    <string name="home_transcripts_empty_hint">Poproś o transkrypcję z menu nagrania — pojawi się tutaj, gdy będzie gotowa.</string>
+    <string name="home_summaries_empty_title">Brak podsumowań</string>
+    <string name="home_summaries_empty_hint">Otwórz rozmowę, która ma transkrypcję, i poproś o podsumowanie; pojawi się tutaj, gdy będzie gotowe.</string>
 </resources>

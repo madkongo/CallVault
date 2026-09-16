@@ -154,4 +154,18 @@
     <string name="offline_failed_no_wifi">Impossibile attivare: non sei connesso al Wi-Fi. Connettiti una volta a una qualsiasi rete Wi-Fi, poi riprova.</string>
     <string name="offline_failed_wd_refused">Impossibile attivare: Android non ha consentito il debug wireless su questa rete. Attivalo una volta nelle Opzioni sviluppatore, accetta la richiesta, poi riprova.</string>
     <string name="offline_failed_needs_usb">Attiva prima il debug USB: senza di esso la registrazione senza Wi-Fi non funziona. Impostazioni ▸ Sperimentale ▸ Debug USB.</string>
+
+    <!-- Home: the hub of cards, and the two sections its cards open -->
+    <string name="home_hub_library_title">Libreria</string>
+    <string name="home_hub_recordings_body">Ogni chiamata registrata da CallVault.</string>
+    <string name="home_hub_transcripts_body">Chiamate trascritte in testo che puoi leggere e cercare.</string>
+    <string name="home_hub_summaries_body">La versione breve: di cosa parlava la chiamata e cosa è stato deciso.</string>
+    <string name="home_transcripts_title">Trascrizioni</string>
+    <string name="home_summaries_title">Riepiloghi</string>
+    <string name="home_transcripts_count">%1$d trascritte</string>
+    <string name="home_summaries_count">%1$d riepilogate</string>
+    <string name="home_transcripts_empty_title">Nessuna trascrizione</string>
+    <string name="home_transcripts_empty_hint">Chiedi una trascrizione dal menu di una registrazione: comparirà qui appena è pronta.</string>
+    <string name="home_summaries_empty_title">Nessun riepilogo</string>
+    <string name="home_summaries_empty_hint">Apri una chiamata che ha una trascrizione e chiedi un riepilogo: comparirà qui appena è pronto.</string>
 </resources>

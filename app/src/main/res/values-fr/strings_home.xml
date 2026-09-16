@@ -155,4 +155,18 @@
     <string name="offline_failed_no_wifi">Activation impossible — vous n\'êtes pas connecté au Wi-Fi. Connectez-vous une fois à n\'importe quel réseau Wi-Fi, puis réessayez.</string>
     <string name="offline_failed_wd_refused">Activation impossible — Android n\'a pas autorisé le débogage sans fil sur ce réseau. Activez-le une fois dans les Options pour les développeurs, acceptez la demande, puis réessayez.</string>
     <string name="offline_failed_needs_usb">Activez d\'abord le débogage USB — l\'enregistrement hors Wi-Fi ne peut pas fonctionner sans lui. Paramètres ▸ Expérimental ▸ Débogage USB.</string>
+
+    <!-- Home: the hub of cards, and the two sections its cards open -->
+    <string name="home_hub_library_title">Bibliothèque</string>
+    <string name="home_hub_recordings_body">Tous les appels enregistrés par CallVault.</string>
+    <string name="home_hub_transcripts_body">Des appels transcrits en texte que vous pouvez lire et rechercher.</string>
+    <string name="home_hub_summaries_body">La version courte : le sujet de l\'appel et ce qui a été décidé.</string>
+    <string name="home_transcripts_title">Transcriptions</string>
+    <string name="home_summaries_title">Résumés</string>
+    <string name="home_transcripts_count">%1$d transcrits</string>
+    <string name="home_summaries_count">%1$d résumés</string>
+    <string name="home_transcripts_empty_title">Aucune transcription pour l\'instant</string>
+    <string name="home_transcripts_empty_hint">Demandez une transcription depuis le menu d\'un enregistrement ; elle apparaîtra ici une fois écrite.</string>
+    <string name="home_summaries_empty_title">Aucun résumé pour l\'instant</string>
+    <string name="home_summaries_empty_hint">Ouvrez un appel qui a une transcription et demandez un résumé ; il apparaîtra ici une fois écrit.</string>
 </resources>

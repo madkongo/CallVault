@@ -154,4 +154,18 @@
     <string name="offline_failed_no_wifi">Aktivierung fehlgeschlagen – du bist nicht mit einem WLAN verbunden. Verbinde dich einmal mit einem beliebigen WLAN und versuche es erneut.</string>
     <string name="offline_failed_wd_refused">Aktivierung fehlgeschlagen – Android hat WLAN-Debugging in diesem Netzwerk nicht erlaubt. Schalte es einmal in den Entwickleroptionen ein, bestätige die Abfrage und versuche es erneut.</string>
     <string name="offline_failed_needs_usb">Schalte zuerst USB-Debugging ein – ohne es funktioniert die Aufnahme ohne WLAN nicht. Einstellungen ▸ Experimentell ▸ USB-Debugging.</string>
+
+    <!-- Home: the hub of cards, and the two sections its cards open -->
+    <string name="home_hub_library_title">Bibliothek</string>
+    <string name="home_hub_recordings_body">Jeder Anruf, den CallVault aufgezeichnet hat.</string>
+    <string name="home_hub_transcripts_body">Anrufe als Text, den du lesen und durchsuchen kannst.</string>
+    <string name="home_hub_summaries_body">Die Kurzfassung: worum es im Anruf ging und was beschlossen wurde.</string>
+    <string name="home_transcripts_title">Transkripte</string>
+    <string name="home_summaries_title">Zusammenfassungen</string>
+    <string name="home_transcripts_count">%1$d transkribiert</string>
+    <string name="home_summaries_count">%1$d zusammengefasst</string>
+    <string name="home_transcripts_empty_title">Noch nichts transkribiert</string>
+    <string name="home_transcripts_empty_hint">Fordere im Menü einer Aufnahme ein Transkript an – sobald es geschrieben ist, erscheint es hier.</string>
+    <string name="home_summaries_empty_title">Noch nichts zusammengefasst</string>
+    <string name="home_summaries_empty_hint">Öffne einen Anruf mit Transkript und fordere eine Zusammenfassung an; sobald sie geschrieben ist, erscheint sie hier.</string>
 </resources>

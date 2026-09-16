@@ -154,4 +154,18 @@
     <string name="offline_failed_no_wifi">无法开启——未连接 Wi-Fi。请先连接任意 Wi-Fi 网络一次，然后重试。</string>
     <string name="offline_failed_wd_refused">无法开启——Android 不允许在此网络上使用无线调试。请在开发者选项中手动开启一次并接受提示，然后重试。</string>
     <string name="offline_failed_needs_usb">请先开启 USB 调试——没有它，无 Wi-Fi 录音无法工作。设置 ▸ 实验性功能 ▸ USB 调试。</string>
+
+    <!-- Home: the hub of cards, and the two sections its cards open -->
+    <string name="home_hub_library_title">资料库</string>
+    <string name="home_hub_recordings_body">CallVault 录下的每一通通话。</string>
+    <string name="home_hub_transcripts_body">转写成文字的通话，可以阅读和搜索。</string>
+    <string name="home_hub_summaries_body">简短版本：这通电话在谈什么，又决定了什么。</string>
+    <string name="home_transcripts_title">转写</string>
+    <string name="home_summaries_title">摘要</string>
+    <string name="home_transcripts_count">已转写 %1$d 个</string>
+    <string name="home_summaries_count">已摘要 %1$d 个</string>
+    <string name="home_transcripts_empty_title">还没有转写</string>
+    <string name="home_transcripts_empty_hint">在某个录音的菜单中请求转写，写好后就会出现在这里。</string>
+    <string name="home_summaries_empty_title">还没有摘要</string>
+    <string name="home_summaries_empty_hint">打开一通已有转写的通话并请求摘要，写好后就会出现在这里。</string>
 </resources>

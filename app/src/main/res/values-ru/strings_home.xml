@@ -154,4 +154,18 @@
     <string name="offline_failed_no_wifi">Не удалось включить — нет подключения к Wi-Fi. Подключитесь один раз к любой сети Wi-Fi и повторите попытку.</string>
     <string name="offline_failed_wd_refused">Не удалось включить — Android не разрешил отладку по Wi-Fi в этой сети. Включите её один раз в параметрах разработчика, подтвердите запрос и повторите попытку.</string>
     <string name="offline_failed_needs_usb">Сначала включите отладку по USB — без неё запись без Wi-Fi не работает. Настройки ▸ Экспериментальные ▸ Отладка по USB.</string>
+
+    <!-- Home: the hub of cards, and the two sections its cards open -->
+    <string name="home_hub_library_title">Библиотека</string>
+    <string name="home_hub_recordings_body">Все звонки, записанные CallVault.</string>
+    <string name="home_hub_transcripts_body">Звонки, переведённые в текст, который можно читать и искать.</string>
+    <string name="home_hub_summaries_body">Коротко: о чём был звонок и что решили.</string>
+    <string name="home_transcripts_title">Расшифровки</string>
+    <string name="home_summaries_title">Сводки</string>
+    <string name="home_transcripts_count">Расшифровок: %1$d</string>
+    <string name="home_summaries_count">Сводок: %1$d</string>
+    <string name="home_transcripts_empty_title">Расшифровок пока нет</string>
+    <string name="home_transcripts_empty_hint">Запросите расшифровку в меню записи — она появится здесь, когда будет готова.</string>
+    <string name="home_summaries_empty_title">Сводок пока нет</string>
+    <string name="home_summaries_empty_hint">Откройте звонок с расшифровкой и запросите сводку; она появится здесь, когда будет готова.</string>
 </resources>

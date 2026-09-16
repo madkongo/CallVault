@@ -154,4 +154,18 @@
     <string name="offline_failed_no_wifi">Không bật được — bạn chưa kết nối Wi-Fi. Hãy kết nối một lần với bất kỳ mạng Wi-Fi nào rồi thử lại.</string>
     <string name="offline_failed_wd_refused">Không bật được — Android không cho phép gỡ lỗi không dây trên mạng này. Hãy bật nó một lần trong Tùy chọn cho nhà phát triển, chấp nhận lời nhắc rồi thử lại.</string>
     <string name="offline_failed_needs_usb">Hãy bật gỡ lỗi USB trước — ghi âm không cần Wi-Fi không thể hoạt động nếu thiếu nó. Cài đặt ▸ Thử nghiệm ▸ Gỡ lỗi USB.</string>
+
+    <!-- Home: the hub of cards, and the two sections its cards open -->
+    <string name="home_hub_library_title">Thư viện</string>
+    <string name="home_hub_recordings_body">Mọi cuộc gọi mà CallVault đã ghi âm.</string>
+    <string name="home_hub_transcripts_body">Cuộc gọi được chuyển thành văn bản để bạn đọc và tìm kiếm.</string>
+    <string name="home_hub_summaries_body">Bản ngắn gọn: cuộc gọi nói về điều gì và đã quyết định điều gì.</string>
+    <string name="home_transcripts_title">Bản chép lời</string>
+    <string name="home_summaries_title">Bản tóm tắt</string>
+    <string name="home_transcripts_count">Đã chép lời %1$d</string>
+    <string name="home_summaries_count">Đã tóm tắt %1$d</string>
+    <string name="home_transcripts_empty_title">Chưa có bản chép lời nào</string>
+    <string name="home_transcripts_empty_hint">Hãy yêu cầu chép lời từ menu của một bản ghi âm; nó sẽ xuất hiện ở đây khi viết xong.</string>
+    <string name="home_summaries_empty_title">Chưa có bản tóm tắt nào</string>
+    <string name="home_summaries_empty_hint">Hãy mở một cuộc gọi đã có bản chép lời và yêu cầu tóm tắt; nó sẽ xuất hiện ở đây khi viết xong.</string>
 </resources>
