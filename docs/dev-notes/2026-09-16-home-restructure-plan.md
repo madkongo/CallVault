@@ -605,3 +605,8 @@ reports (including the deleted-audio one), and the whole of `TranscriptNotifier.
 failure path, which is the same code. **On the phone, look first at**: whether a finished
 transcription posts at all; what a "Transcribe only" import's notification says; and whether tapping
 it opens the right transcript.
+
+**OP12 install 2026-09-16 18:18** (🧪): the five feedback changes (finish notification, language dropdown,
+no player without audio, Text-only badge, notes in the reading view) installed while idle; grant survived,
+recorder back up, "Ready to record calls" reached. The success notification has still never been posted by a
+real transcription — the emulator refuses every speech model, so only the failure path has run for real.
