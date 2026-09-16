@@ -136,7 +136,6 @@ import com.baba.callvault.transcription.model.TranscriptionModel
 import com.baba.callvault.transcription.AudioDecoder
 import com.baba.callvault.transcription.TranscriptionEstimate
 import com.baba.callvault.transcription.TranscriptionLengthLimit
-import com.baba.callvault.ui.common.BidiText
 import com.baba.callvault.ui.common.ImportedBadge
 import com.baba.callvault.ui.common.RecordingLabel
 import com.baba.callvault.ui.common.TranscribeConfirmDialog
@@ -1301,7 +1300,11 @@ fun HomeScreen(
         val isThisTrack = row != null && playback.activeUri == row.uri
 
         val sheetSummary by rememberSummaryState(displayName)
-        val title = RecordingLabel.of(row) ?: BidiText.isolate(displayName)
+        // forName, not the raw name: this page is the ordinary destination for a transcript whose
+        // recording is gone — every finished transcribe-only import is one — and without it the
+        // heading read "20260916_163951.431+0300_import_transcribeonly_PTT-20260916-WA0007.opus"
+        // across three lines, where the row that opened it said "PTT-20260916-WA0007".
+        val title = RecordingLabel.of(row) ?: RecordingLabel.forName(displayName)
 
         // Re-read whenever a transcript is opened rather than held for the life of the screen: the
         // mapping is learned in the background from calls that happen while the app is running, and
@@ -1461,7 +1464,7 @@ fun HomeScreen(
         } else {
             DeleteCopiesDialog(
                 item = row,
-                name = RecordingLabel.of(row) ?: BidiText.isolate(displayName),
+                name = RecordingLabel.of(row) ?: RecordingLabel.forName(displayName),
                 onConfirm = { scope ->
                     confirmDeleteFor = null
                     // Leave the screen only once it is settled: the recording is about to stop
@@ -1575,7 +1578,7 @@ fun HomeScreen(
 
     deleteTranscriptFor?.let { displayName ->
         val row = libraryRecordings.firstOrNull { it.displayName == displayName }
-        val label = RecordingLabel.of(row) ?: BidiText.isolate(displayName)
+        val label = RecordingLabel.of(row) ?: RecordingLabel.forName(displayName)
         DeleteRecordingDialog(
             name = label,
             title = stringResource(R.string.transcript_delete_confirm_title),
