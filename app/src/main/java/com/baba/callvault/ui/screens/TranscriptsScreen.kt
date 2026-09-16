@@ -28,10 +28,13 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.AudioFile
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.filled.Tune
+import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
@@ -39,6 +42,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import com.baba.callvault.R
 import com.baba.callvault.data.recordings.ImportedRecording
@@ -98,7 +102,7 @@ import com.baba.callvault.ui.common.TranscriptActionButton
  * @param onRetry    Try a failed one again.
  * @param onOpenAudio Opens a recording's own screen — used by the waiting group, where the audio is
  *                   still there and playing, sharing or deleting it are the other things to do.
- * @param onImport   Raises the file picker.
+ * @param onImport   Raises the file picker; the flag is true for "Transcribe only".
  * @param importing  True while a chosen file is being copied and checked. The card says so and
  *                   stops accepting taps: the copy is not instant for a long recording, and a second
  *                   picker opened over the first would import the same file twice.
@@ -116,7 +120,7 @@ fun TranscriptsScreen(
     onOpen: (String) -> Unit,
     onRetry: (String) -> Unit,
     onOpenAudio: (String) -> Unit,
-    onImport: () -> Unit,
+    onImport: (transcribeOnly: Boolean) -> Unit,
     importing: Boolean,
     modifier: Modifier = Modifier,
     titleTrailing: (@Composable () -> Unit)? = null,
@@ -346,16 +350,20 @@ private fun LazyListScope.transcriptRows(
  * another way to filter the list. It sits at the top on purpose — under the search and settings
  * actions, above everything the page is otherwise listing.
  *
+ * **Two buttons, the same two the share card offers, in the same words.** Asking on one door and not
+ * the other would make "keep it or not" look like a property of how the file arrived rather than of
+ * what the user wants from it — and the in-app door is the one someone reaches for when the file is
+ * already on their phone, which is at least as likely to be "just read this" as a share is. The
+ * difference from the share card is that the answer is given BEFORE the picker rather than after,
+ * because there is nothing to describe until a file is chosen.
+ *
  * While a copy is running the card says so and stops taking taps. The copy and the decode check are
  * not instant for a long recording, and a second picker raised over the first would import the same
  * file twice, under two names, with two rows and two transcripts.
  */
 @Composable
-private fun ImportAudioCard(importing: Boolean, onImport: () -> Unit) {
-    CvCard(
-        onClick = if (importing) null else onImport,
-        contentPadding = PaddingValues(horizontal = 16.dp, vertical = 14.dp),
-    ) {
+private fun ImportAudioCard(importing: Boolean, onImport: (transcribeOnly: Boolean) -> Unit) {
+    CvCard(contentPadding = PaddingValues(horizontal = 16.dp, vertical = 14.dp)) {
         Row(verticalAlignment = Alignment.CenterVertically) {
             Box(modifier = Modifier.size(IMPORT_GLYPH_SLOT), contentAlignment = Alignment.Center) {
                 if (importing) {
@@ -392,6 +400,53 @@ private fun ImportAudioCard(importing: Boolean, onImport: () -> Unit) {
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
             }
+        }
+        if (!importing) {
+            Spacer(Modifier.height(12.dp))
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(10.dp),
+            ) {
+                Button(
+                    onClick = { onImport(false) },
+                    modifier = Modifier.weight(1f),
+                    contentPadding = PaddingValues(horizontal = 8.dp, vertical = 10.dp),
+                ) {
+                    Text(
+                        text = stringResource(R.string.import_choice_keep),
+                        maxLines = 2,
+                        textAlign = TextAlign.Center,
+                        style = MaterialTheme.typography.labelLarge,
+                    )
+                }
+                OutlinedButton(
+                    onClick = { onImport(true) },
+                    modifier = Modifier.weight(1f),
+                    contentPadding = PaddingValues(horizontal = 8.dp, vertical = 10.dp),
+                    // Stated, not defaulted: an OutlinedButton takes its content colour from the
+                    // primary role, and several of M3's own roles resolve to CoralDeep here — which
+                    // would put the quieter of the two answers in the app's error colour.
+                    colors = ButtonDefaults.outlinedButtonColors(
+                        contentColor = MaterialTheme.colorScheme.primary,
+                    ),
+                ) {
+                    Text(
+                        text = stringResource(R.string.import_choice_transcribe_only),
+                        maxLines = 2,
+                        textAlign = TextAlign.Center,
+                        style = MaterialTheme.typography.labelLarge,
+                    )
+                }
+            }
+            Spacer(Modifier.height(4.dp))
+            Text(
+                // One line under both, saying what the quieter answer does — the asymmetry is the
+                // thing worth spelling out, and two hints under two buttons on a card this size
+                // would be more words than the page they sit above.
+                text = stringResource(R.string.import_choice_transcribe_only_hint),
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
         }
     }
 }

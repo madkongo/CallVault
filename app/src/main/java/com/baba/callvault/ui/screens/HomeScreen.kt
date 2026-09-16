@@ -414,9 +414,26 @@ fun HomeScreen(
      * The work runs in the ViewModel, not here — see [HomeViewModel.importAudio] for why a rotation
      * must not be able to cancel it.
      */
+    /**
+     * Which of the two answers the user tapped, held across the picker.
+     *
+     * The picker is another app's Activity, so this process can be killed while it is up — hence
+     * `rememberSaveable`. A lost answer would be worse than a lost tap: the default is Keep, so a
+     * file chosen under "Transcribe only" would silently land in Recordings and never be deleted.
+     */
+    var pendingImportTranscribeOnly by rememberSaveable { mutableStateOf(false) }
+
     val importPicker = rememberLauncherForActivityResult(
         ActivityResultContracts.OpenDocument()
-    ) { uri -> uri?.let { viewModel.importAudio(it) } }
+    ) { uri ->
+        uri?.let {
+            viewModel.importAudio(
+                it,
+                if (pendingImportTranscribeOnly) ImportedRecording.Kind.TRANSCRIBE_ONLY
+                else ImportedRecording.Kind.KEEP,
+            )
+        }
+    }
 
     /**
      * A just-imported recording waiting for the list to catch up, so it can be opened on arrival.
@@ -430,9 +447,22 @@ fun HomeScreen(
      * before lunch.
      */
     var openWhenListed by remember { mutableStateOf<String?>(null) }
+    /**
+     * A just-imported file waiting for the list to catch up, so its transcription can be started.
+     *
+     * Both answers on the import card end in a transcription, and starting one needs the file's
+     * LENGTH — for the limit check and for the estimate — which is read from the catalogued row.
+     * Firing before the reload would find no row, skip the length check and quote no estimate.
+     */
+    var transcribeWhenListed by remember { mutableStateOf<String?>(null) }
+
     LaunchedEffect(uiState.importedName) {
-        uiState.importedName?.let {
-            openWhenListed = it
+        uiState.importedName?.let { name ->
+            // Only a kept import has a row in Recordings to open. A transcribe-only one is
+            // deliberately not there, and opening its playback screen over the language dialog
+            // would be the app showing someone the audio they just said they did not want.
+            if (!ImportedRecording.isTranscribeOnly(name)) openWhenListed = name
+            transcribeWhenListed = name
             viewModel.importShown()
         }
     }
@@ -556,6 +586,17 @@ fun HomeScreen(
             askLanguageFor = displayName
         } else {
             continueTranscription(displayName, null)
+        }
+    }
+
+    // Both answers on the import card transcribe, so an import starts one as soon as the list knows
+    // about it. startTranscription is the same gate every other entry point uses — length, then
+    // model, then the two asks an import always makes — so nothing here is a second implementation.
+    LaunchedEffect(transcribeWhenListed, libraryRecordings) {
+        val pending = transcribeWhenListed ?: return@LaunchedEffect
+        if (libraryRecordings.any { it.displayName == pending }) {
+            transcribeWhenListed = null
+            startTranscription(pending)
         }
     }
 
@@ -825,7 +866,13 @@ fun HomeScreen(
             // playing, sharing and deleting it live. Setting playbackFor directly rather than
             // changing section — the recording is deliberately not in Recordings to go back to.
             onOpenAudio = { displayName -> playbackFor = displayName },
-            onImport = { importPicker.launch(arrayOf(IMPORT_MIME_FILTER)) },
+            // The same two answers the share card offers, in the same words. One door asking a
+            // question the other does not would make the answer look like a property of how the
+            // file arrived, when it is a property of what the user wants from it.
+            onImport = { transcribeOnly ->
+                pendingImportTranscribeOnly = transcribeOnly
+                importPicker.launch(arrayOf(IMPORT_MIME_FILTER))
+            },
             importing = uiState.isImporting,
         )
     }

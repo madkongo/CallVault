@@ -527,7 +527,8 @@ class HomeViewModel(application: Application) : AndroidViewModel(application) {
     }
 
     /**
-     * Brings the audio file at [source] into the library. See [AudioImport] for what that involves.
+     * Brings the audio file at [source] into the library as [kind]. See [AudioImport] for what that
+     * involves, and [ImportedRecording] for what the kind decides.
      *
      * Runs in the ViewModel's scope, deliberately, not the screen's. Copying a long recording and
      * checking that it decodes takes a moment, and a rotation half way through a job scoped to the
@@ -538,11 +539,11 @@ class HomeViewModel(application: Application) : AndroidViewModel(application) {
      * debounce: the user is standing in front of the screen that has to show what they just
      * imported, and a second of nothing reads as the import having failed.
      */
-    fun importAudio(source: Uri) {
+    fun importAudio(source: Uri, kind: ImportedRecording.Kind) {
         if (_uiState.value.isImporting) return
         _uiState.update { it.copy(isImporting = true, importRefusal = null) }
         viewModelScope.launch {
-            val outcome = AudioImport.import(appContext, source)
+            val outcome = AudioImport.import(appContext, source, kind)
             when (outcome) {
                 is AudioImport.Outcome.Imported -> {
                     refresh()
