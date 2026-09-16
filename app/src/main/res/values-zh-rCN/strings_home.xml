@@ -158,8 +158,8 @@
     <!-- Home: the hub of cards, and the two sections its cards open -->
     <string name="home_hub_library_title">资料库</string>
     <string name="home_hub_recordings_body">CallVault 录下的每一通通话。</string>
-    <string name="home_hub_transcripts_body">转写成文字的通话，可以阅读和搜索。</string>
-    <string name="home_hub_summaries_body">简短版本：这通电话在谈什么，又决定了什么。</string>
+    <string name="home_hub_transcripts_body">阅读通话内容，或导入音频。</string>
+    <string name="home_hub_summaries_body">由手机本地 AI 生成的摘要。</string>
     <string name="home_transcripts_title">转写</string>
     <string name="home_summaries_title">摘要</string>
     <string name="home_transcripts_count">已转写 %1$d 个</string>

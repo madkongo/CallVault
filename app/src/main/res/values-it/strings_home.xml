@@ -158,8 +158,8 @@
     <!-- Home: the hub of cards, and the two sections its cards open -->
     <string name="home_hub_library_title">Libreria</string>
     <string name="home_hub_recordings_body">Ogni chiamata registrata da CallVault.</string>
-    <string name="home_hub_transcripts_body">Chiamate trascritte in testo che puoi leggere e cercare.</string>
-    <string name="home_hub_summaries_body">La versione breve: di cosa parlava la chiamata e cosa è stato deciso.</string>
+    <string name="home_hub_transcripts_body">Leggi le tue chiamate o importa un audio.</string>
+    <string name="home_hub_summaries_body">Riassunti con IA, creati sul telefono.</string>
     <string name="home_transcripts_title">Trascrizioni</string>
     <string name="home_summaries_title">Riepiloghi</string>
     <string name="home_transcripts_count">%1$d trascritte</string>

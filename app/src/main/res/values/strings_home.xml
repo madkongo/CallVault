@@ -175,8 +175,8 @@
     <!-- Home: the hub of cards, and the two sections its cards open -->
     <string name="home_hub_library_title">Library</string>
     <string name="home_hub_recordings_body">Every call CallVault has recorded.</string>
-    <string name="home_hub_transcripts_body">Calls written out as text you can read and search.</string>
-    <string name="home_hub_summaries_body">The short version: what a call was about and what was decided.</string>
+    <string name="home_hub_transcripts_body">Read your calls, or import audio.</string>
+    <string name="home_hub_summaries_body">AI summaries, written on your phone.</string>
     <string name="home_transcripts_title">Transcripts</string>
     <string name="home_summaries_title">Summaries</string>
     <string name="home_transcripts_count">%1$d transcribed</string>

@@ -158,8 +158,8 @@
     <!-- Home: the hub of cards, and the two sections its cards open -->
     <string name="home_hub_library_title">Könyvtár</string>
     <string name="home_hub_recordings_body">Minden hívás, amelyet a CallVault rögzített.</string>
-    <string name="home_hub_transcripts_body">Hívások szöveggé alakítva, hogy olvasható és kereshető legyen.</string>
-    <string name="home_hub_summaries_body">A rövid változat: miről szólt a hívás, és mi lett eldöntve.</string>
+    <string name="home_hub_transcripts_body">Olvasd a hívásaidat, vagy importálj hangot.</string>
+    <string name="home_hub_summaries_body">MI-összefoglalók, a telefonodon készülnek.</string>
     <string name="home_transcripts_title">Átiratok</string>
     <string name="home_summaries_title">Összefoglalók</string>
     <string name="home_transcripts_count">%1$d átírva</string>

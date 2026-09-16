@@ -158,8 +158,8 @@
     <!-- Home: the hub of cards, and the two sections its cards open -->
     <string name="home_hub_library_title">Библиотека</string>
     <string name="home_hub_recordings_body">Все звонки, записанные CallVault.</string>
-    <string name="home_hub_transcripts_body">Звонки, переведённые в текст, который можно читать и искать.</string>
-    <string name="home_hub_summaries_body">Коротко: о чём был звонок и что решили.</string>
+    <string name="home_hub_transcripts_body">Читайте свои звонки или импортируйте аудио.</string>
+    <string name="home_hub_summaries_body">Сводки ИИ, прямо на телефоне.</string>
     <string name="home_transcripts_title">Расшифровки</string>
     <string name="home_summaries_title">Сводки</string>
     <string name="home_transcripts_count">Расшифровок: %1$d</string>
