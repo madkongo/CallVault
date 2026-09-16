@@ -187,4 +187,15 @@
     <string name="import_failed_copy">Не удалось записать файл в вашу папку записей. Проверьте, есть ли на телефоне место и доступна ли ещё эта папка.</string>
     <string name="import_failed_undecodable">Этот телефон не может прочитать звук внутри файла, поэтому расшифровать его никогда не получится. Возможно, файл повреждён или в формате, который Android не декодирует.</string>
     <string name="home_row_imported">Импортировано</string>
+    <!-- Меню «Поделиться»: аудио, отправленное в CallVault из другого приложения -->
+    <string name="share_import_label">Импорт аудио</string>
+    <string name="share_import_working_body">Копируем файл и проверяем, сможет ли этот телефон его прочитать.</string>
+    <string name="share_import_done_title">Добавлено в ваши записи</string>
+    <string name="share_import_done_body">Файл уже в CallVault. Откройте его, чтобы послушать или запросить расшифровку.</string>
+    <string name="share_import_open">Открыть</string>
+    <string name="share_import_open_app">Открыть CallVault</string>
+    <string name="share_import_close">Закрыть</string>
+    <string name="share_import_nothing">С этим файлом ничего не пришло. Попробуйте поделиться самим аудиофайлом, а не сообщением, в котором он лежит.</string>
+    <string name="share_import_not_set_up_title">Сначала завершите настройку CallVault</string>
+    <string name="share_import_not_set_up_body">CallVault ещё не завершил первоначальную настройку, поэтому этот файл пока негде хранить. Откройте приложение, завершите настройку и поделитесь файлом ещё раз.</string>
 </resources>

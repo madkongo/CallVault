@@ -187,4 +187,15 @@
     <string name="import_failed_copy">Không ghi được tệp vào thư mục bản ghi của bạn. Hãy kiểm tra điện thoại còn chỗ trống và thư mục vẫn dùng được.</string>
     <string name="import_failed_undecodable">Điện thoại này không đọc được âm thanh bên trong tệp đó, nên sẽ không bao giờ chép lời được. Tệp có thể đã hỏng, hoặc ở định dạng Android không giải mã.</string>
     <string name="home_row_imported">Đã nhập</string>
+    <!-- Menu chia sẻ: âm thanh gửi tới CallVault từ ứng dụng khác -->
+    <string name="share_import_label">Nhập âm thanh</string>
+    <string name="share_import_working_body">Đang chép tệp vào và kiểm tra xem điện thoại có đọc được không.</string>
+    <string name="share_import_done_title">Đã thêm vào bản ghi của bạn</string>
+    <string name="share_import_done_body">Tệp đã nằm trong CallVault. Hãy mở để nghe, hoặc để yêu cầu chép lời.</string>
+    <string name="share_import_open">Mở</string>
+    <string name="share_import_open_app">Mở CallVault</string>
+    <string name="share_import_close">Đóng</string>
+    <string name="share_import_nothing">Không có gì đi kèm lần chia sẻ đó. Hãy thử chia sẻ chính tệp âm thanh, thay vì tin nhắn chứa nó.</string>
+    <string name="share_import_not_set_up_title">Hãy hoàn tất cài đặt CallVault trước</string>
+    <string name="share_import_not_set_up_body">CallVault chưa hoàn tất phần cài đặt một lần, nên chưa có chỗ để giữ tệp này. Hãy mở ứng dụng, hoàn tất cài đặt, rồi chia sẻ lại.</string>
 </resources>

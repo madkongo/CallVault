@@ -187,4 +187,15 @@
     <string name="import_failed_copy">A fájlt nem sikerült a felvételmappádba írni. Ellenőrizd, hogy van-e hely a telefonon, és hogy a mappa továbbra is elérhető-e.</string>
     <string name="import_failed_undecodable">Ez a telefon nem tudja olvasni a fájlban lévő hangot, így soha nem lehetne átírni. Lehet, hogy sérült, vagy olyan formátumú, amit az Android nem dekódol.</string>
     <string name="home_row_imported">Importált</string>
+    <!-- Megosztás menü: másik alkalmazásból a CallVaultnak küldött hang -->
+    <string name="share_import_label">Hang importálása</string>
+    <string name="share_import_working_body">Másolás, és annak ellenőrzése, hogy a telefon el tudja-e olvasni.</string>
+    <string name="share_import_done_title">Hozzáadva a felvételeidhez</string>
+    <string name="share_import_done_body">Már a CallVaultban van. Nyisd meg, hogy meghallgasd, vagy hogy átiratot kérj hozzá.</string>
+    <string name="share_import_open">Megnyitás</string>
+    <string name="share_import_open_app">CallVault megnyitása</string>
+    <string name="share_import_close">Bezárás</string>
+    <string name="share_import_nothing">Ezzel a megosztással nem érkezett semmi. Próbáld magát a hangfájlt megosztani, ne az üzenetet, amiben van.</string>
+    <string name="share_import_not_set_up_title">Előbb fejezd be a CallVault beállítását</string>
+    <string name="share_import_not_set_up_body">A CallVault még nem fejezte be az egyszeri beállítást, így egyelőre nincs hová tenni ezt a fájlt. Nyisd meg, fejezd be a beállítást, majd oszd meg újra.</string>
 </resources>

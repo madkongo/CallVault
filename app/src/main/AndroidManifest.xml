@@ -94,6 +94,81 @@
             </intent-filter>
         </activity>
 
+        <!--
+            Share target: one audio file sent to CallVault from another app.
+
+            A separate Activity, not MainActivity, and the reasons are in ShareImportActivity's own
+            KDoc — the short version is that MainActivity reads no EXTRA_STREAM, routes an
+            unfinished setup into the wizard, and is launchMode="standard", so a share would be
+            discarded, buried in onboarding, or open a second copy of the whole app over the first.
+
+            ## Which types appear in the share sheet, and how the list was arrived at
+
+            There is no single answer to "what type is a voice note": the type on the Intent is
+            whatever the SENDING app decided to put there, and the framework never re-derives it.
+            What the senders do was read out of their own source where it is open:
+
+            - Telegram sets its voice recorder's document type to audio/ogg, and shares a document
+              under its own mime_type (MediaController, ChatActivity).
+            - Signal records AAC and shares audio/aac, through Intent.normalizeMimeType, so it can
+              never hand over a parameterised type (AudioRecorder, MediaOverviewContextMenu).
+            - Files, Downloads and any SAF provider use the platform map, where .opus has resolved
+              to audio/ogg since API 29 (debian.mime.types: "audio/ogg  oga ogg opus spx"). Two of
+              its answers are surprising and both still land inside audio/*: .m4a is audio/mpeg and
+              .wav is audio/x-wav.
+            - WhatsApp is closed and could not be proved. Its voice notes are Ogg/Opus and it knows
+              they are, so audio/ogg is the expectation; application/ogg is the other spelling it
+              has been reported under.
+
+            audio/* covers every one of those, and covers them even when the sender spells out its
+            codec. IntentFilter compares a wildcard filter against only the part of the type before
+            the slash (IntentFilter.findMimeType), so "audio/ogg; codecs=opus" matches audio/* —
+            where it would NOT match a concrete audio/ogg filter, which is compared with exact
+            string equality. That is the reason not to list concrete audio types here at all.
+
+            application/ogg is listed beside it because a wildcard on one top-level type never
+            reaches another: audio/* does not match application/ogg, nor would it match anything
+            else under application/. It is narrow — nothing but an Ogg container carries it.
+
+            application/octet-stream is deliberately NOT here, though a voice note is sometimes
+            labelled with it. It is the type for bytes Android could not identify, so accepting it
+            would put a call recorder in the share sheet of every .bin, .dat, backup and unknown
+            download on the phone, where the entry would be wrong far more often than right. If a
+            real WhatsApp share turns out not to offer CallVault at all, that is the measurement
+            that changes this decision and the change is this one line. Meanwhile such a file is
+            still reachable through Transcripts → Import audio, whose picker filters on the
+            wildcard for exactly this reason.
+
+            ## The label
+
+            The share sheet draws the APP's label on one line and this Activity's underneath it, in
+            a column about a dozen characters wide — "Import to CallVault" came out as
+            "Import to C…" on the emulator. So the label carries only the verb and leaves the
+            identity to the line above it, which already says CallVault and draws the icon.
+
+            ## Task and recents
+
+            taskAffinity="" keeps the card in a task of its own rather than on top of CallVault's,
+            so dismissing it returns to the app that sent the file instead of revealing the
+            recordings list. excludeFromRecents goes with it: a share is finished when it is
+            finished, and leaving it in the recents list would also leave a thumbnail of somebody's
+            file name there.
+        -->
+        <activity
+            android:name=".ShareImportActivity"
+            android:exported="true"
+            android:label="@string/share_import_label"
+            android:taskAffinity=""
+            android:excludeFromRecents="true"
+            android:theme="@style/Theme.CallVault.Share">
+            <intent-filter>
+                <action android:name="android.intent.action.SEND" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <data android:mimeType="audio/*" />
+                <data android:mimeType="application/ogg" />
+            </intent-filter>
+        </activity>
+
         <!-- Foreground service that drives ADB wireless pairing via a notification -->
         <service
             android:name=".integrations.adb.AdbPairingService"

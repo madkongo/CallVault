@@ -205,4 +205,15 @@
     <string name="import_failed_copy">The file couldn\'t be written into your recordings folder. Check the phone has space and that the folder is still available.</string>
     <string name="import_failed_undecodable">This phone can\'t read the audio inside that file, so it could never be transcribed. It may be damaged, or in a format Android doesn\'t decode.</string>
     <string name="home_row_imported">Imported</string>
+    <!-- Share sheet: audio sent to CallVault from another app -->
+    <string name="share_import_label">Import audio</string>
+    <string name="share_import_working_body">Copying it in and checking this phone can read it.</string>
+    <string name="share_import_done_title">Added to your recordings</string>
+    <string name="share_import_done_body">It\'s in CallVault now. Open it to listen, or to ask for a transcript.</string>
+    <string name="share_import_open">Open</string>
+    <string name="share_import_open_app">Open CallVault</string>
+    <string name="share_import_close">Close</string>
+    <string name="share_import_nothing">Nothing came through with that share. Try sharing the audio file itself rather than the message around it.</string>
+    <string name="share_import_not_set_up_title">Finish setting CallVault up first</string>
+    <string name="share_import_not_set_up_body">CallVault hasn\'t finished its one-time setup, so there\'s nowhere to keep this file yet. Open it, finish setting up, then share this again.</string>
 </resources>

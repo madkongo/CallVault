@@ -11,4 +11,16 @@
     <!--<style name="Theme.CallVault" parent="android:Theme.Material.Light.NoActionBar" />  OLD, FOR ComponentActivity -->
     <!-- Use AppCompat for better compatibility with older Android versions and to support features like Selecting the language. -->
     <style name="Theme.CallVault" parent="Theme.AppCompat.NoActionBar" />
+
+    <!-- The share target's window. Translucent, so the card ShareImportScreen draws sits over the
+         app that sent the file: a share is a detour, not CallVault being opened, and the
+         conversation the voice note came from is the most useful thing to still have behind it.
+         The window background must be transparent as well as the window translucent — without it
+         the theme's own opaque background is painted first and the scrim has nothing behind it. -->
+    <style name="Theme.CallVault.Share" parent="Theme.CallVault">
+        <item name="android:windowIsTranslucent">true</item>
+        <item name="android:windowBackground">@android:color/transparent</item>
+        <item name="android:windowContentOverlay">@null</item>
+        <item name="android:backgroundDimEnabled">false</item>
+    </style>
 </resources>

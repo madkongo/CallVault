@@ -1520,14 +1520,9 @@ fun HomeScreen(
  */
 private const val IMPORT_MIME_FILTER = "audio/*"
 
-/** The sentence for a refused import. One per reason; "that didn't work" is what makes people retry. */
-private fun importRefusalMessage(reason: AudioImport.Reason): Int = when (reason) {
-    AudioImport.Reason.NOT_AUDIO -> R.string.import_failed_not_audio
-    AudioImport.Reason.EMPTY -> R.string.import_failed_empty
-    AudioImport.Reason.NO_FOLDER -> R.string.import_failed_no_folder
-    AudioImport.Reason.COPY_FAILED -> R.string.import_failed_copy
-    AudioImport.Reason.UNDECODABLE -> R.string.import_failed_undecodable
-}
+// The sentence for a refused import — one per reason; "that didn't work" is what makes people retry
+// — now lives in ShareImportScreen.kt, because the share sheet refuses the same files for the same
+// reasons and a second set of wordings would be a second set to keep translated.
 
 /**
  * Post-update "What's new" note: the last few releases, newest first, each labelled with its version.
