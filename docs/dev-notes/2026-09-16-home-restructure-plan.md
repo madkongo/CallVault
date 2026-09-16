@@ -144,6 +144,48 @@ List of everything transcribed (batch status query + in-memory join to the recor
 existing transcript action button, queue sheet and search. The reading view is the existing transcript sheet
 moved onto its own screen — same parameters, plus its ~120 lines of data plumbing.
 
+**Phase 3 — 🧪 VERIFYING (built 2026-09-16, unit-tested, driven on the emulator; nothing seen on a
+phone).** The maintainer confirms it or it is not done.
+
+Landed: `TranscriptsScreen` — the finished transcripts, with *being transcribed* and *didn't finish*
+above them, search raising the existing sheet, and the queue's existing Stop; and the reading view,
+which is the same transcript body in a page frame instead of a sheet frame (`TranscriptView`, a
+`presentation` parameter, one `TranscriptBody` call site). `LibrarySectionScreen` now serves Summaries
+alone.
+
+Decisions worth not re-litigating:
+
+- **Search is the existing sheet raised from the page**, not an inline field. A hit is a moment inside
+  a call rather than a transcript, so inline results would replace the list with rows that mean
+  something else — and a second implementation would be a second FTS query to keep correct over an
+  index whose quoting rules have already produced one crash. Raised from *this* page a hit opens the
+  reading view and plays from there; from the recordings list it still only plays, unchanged.
+- **Back from the reading view returns to whatever it was opened over**, which is Transcripts, because
+  opening it never changes the section. It also **stops the audio**, where dismissing the sheet does
+  not: the recordings list keeps the playing row tinted behind the sheet, a list of transcripts shows
+  nothing about playback at all (#27).
+- **No snippet of the words on a row.** The transcripts table holds no text, so a first line means a
+  group-by across every segment of every call, paid on every visit and growing with the library — the
+  shape of the list-load regression.
+- **A transcript whose recording is gone is listed, not dropped.** Dropping it made the hub say "4
+  transcribed" over a page of three, with nothing to explain the missing one: the card counts rows in
+  the transcripts database and cannot see the catalog.
+
+Verified on the emulator (AOSP 16, `com.baba.callvault.instrtest`, seeded transcripts): all three
+groups render; the page count and the hub card agree at 4 and again at 3 after a delete; a row opens
+the reading view; tapping a line plays from that timestamp; rotation keeps the page, the track and the
+playing position; back returns to Transcripts and leaves nothing playing; the sheet still opens from
+the recordings list and from a recording's screen; deleting from the reading view updates list and
+count with no manual refresh; the empty state shows when there is nothing transcribed.
+
+Not exercised on the emulator: a *real* running transcription, because no model is installed there —
+the queue's Stop only appears while a worker is actually running, so it was reasoned about and not
+seen. The running rows were seeded, so the ring and the heading are confirmed but the percentage
+inside the ring is not.
+
+Left for later, deliberately: Summaries still drops a summary whose recording is gone, so its card and
+its list can disagree the way Transcripts no longer does. Phase 5 should fix it the same way.
+
 **Phase 4 — import (smallest useful version).**
 A SAF audio picker on the Transcripts page → copy into the recordings folder under the import name →
 catalogue it → read its duration. No new permission (SAF only, never `READ_MEDIA_AUDIO`), no manifest change,

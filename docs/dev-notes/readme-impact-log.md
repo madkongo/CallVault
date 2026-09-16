@@ -1,5 +1,27 @@
 # README impact log
 
+## 2026-09-16 (later) — Transcripts is a page, and a transcript opens on one
+
+🧪 VERIFYING (built and driven on the emulator; nothing seen on a real phone). The Transcripts card
+now opens a real page: everything transcribed, newest first, with headings above it for what is being
+transcribed and what failed, the transcript search raised from it, and the queue's Stop. Tapping a
+transcript opens it as a **page with a back arrow**, not as a bottom sheet.
+
+**What this makes wrong in the README, when this ships:**
+
+- **Any screenshot of the transcript bottom sheet presented as "how you read a transcript".** It is
+  still the sheet from the recordings list and from a recording's own screen, but the route the
+  README would most naturally show — going to your transcripts and opening one — is now a page.
+- Anything saying transcript search is reached only from the recordings list. It is on the Transcripts
+  page too, and from there a hit opens the transcript rather than only playing from the match.
+- The Phase 2 entry's "Transcripts is a minimal list" caveat no longer applies to Transcripts. It
+  still applies to Summaries.
+
+**Newly claimable, once the maintainer confirms it:** a failed transcription is now visible and
+retryable in one place instead of only as a red icon somewhere in the recordings list.
+
+**Not claimed yet, deliberately:** audio import. That is Phase 4 and nothing imports anything.
+
 ## 2026-09-16 — Home is a hub of cards, not the recordings list
 
 🧪 VERIFYING (built and driven on the emulator; nothing seen on a real phone). The app no longer
