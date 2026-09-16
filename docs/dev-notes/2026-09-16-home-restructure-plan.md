@@ -269,6 +269,72 @@ finished transcript and therefore a model.
 **Phase 5 — Summaries page**, on a batch summary query (the per-recording state holder would spawn one
 observer per row).
 
+**Phase 5 — 🧪 VERIFYING (built 2026-09-16, unit-tested, driven on the emulator; nothing seen on a
+phone).** The maintainer confirms it or it is not done.
+
+Landed: `SummariesPage` (the grouping, pure); `SummariesScreen` — the finished summaries, with
+*being summarised* and *didn't finish* above them; `WorkProgressRing`, the transcript button's ring
+pulled out so both lists draw one; and a fix for a reading page that said "Loading the transcript…"
+for ever. `LibrarySectionScreen` had no callers left and is gone; the shared row and empty state it
+held stay, in `LibraryRows.kt`.
+
+**The asymmetry that shapes the whole page: a summary has no database row until it succeeds.** A
+transcript is QUEUED, RUNNING or FAILED in the database from the moment it is asked for, so
+Transcripts reads one table. A summary in flight exists only in WorkManager — so the page reads the
+queue's unique-work flow as well, **one observer for the whole list**. `rememberSummaryState` is
+per-recording and would have put one WorkManager observer and two database observers behind every
+visible row.
+
+Decisions worth not re-litigating:
+
+- **A summary whose recording is gone is listed, not dropped** — the defect Phase 3 left here.
+  The hub card is a `COUNT(*)` over the summaries table and cannot see the catalog, so a row
+  filtered out is a number the user can catch the app lying about by counting. Drawn from the file's
+  own name with no date. `SummariesPage.Groups.ready` *is* the query's result, unfiltered, which is
+  how the card and the page agree by construction rather than by two queries that happen to match.
+- **A rewrite appears twice**, under *being summarised* and in the list. The old summary is still
+  there and still readable while the new one is written; taking it out of the list for those ninety
+  seconds would put the page one below the card just tapped. A failed *rewrite*, by the same logic,
+  is not listed under "didn't finish" — the earlier summary survived it.
+- **A row opens the reading view, not the recording's own screen.** It already carries the summary
+  above the words it was written from, which is what anyone checks when a summary looks wrong; it is
+  what a Transcripts row opens, so one rule covers every library row; and it is the only one of the
+  two that can open a row whose recording is gone — the playback screen finds no catalog row and
+  closes itself again, so a tap on an orphan would be swallowed in silence, on the page that exists
+  to keep orphans listed. Leaving it stops the audio, as the page frame already does (#27).
+- **Stop is on the page; "write it again" is not.** Stopping needs no reading, is always the safe
+  direction, and a run somebody wants stopped is exactly the one they may not be able to find.
+  Deciding a summary needs *redoing* means having read it and found it wanting — and this list shows
+  none of the words, so a redo one mis-tap from a row would spend ninety seconds of full CPU
+  replacing something the user never saw was wrong. It stays under the summary it would replace,
+  which the page reaches in one tap.
+- **The page offers no search.** The existing sheet searches transcripts, summaries and notes
+  together and opens a *recording*; wiring it here would mean deciding what a summary hit opens from
+  this page, which is the reading view it already opens from Transcripts. Worth doing, not worth
+  doing blind — left out rather than half-wired.
+
+**One fix outside the page, forced by it.** Room's flow does not emit until it has queried, so a null
+transcript meant both "not read yet" and "there is none", and the reader was always told the
+friendlier of the two. Harmless while every way into the reading view was gated on a finished
+transcript — but deleting the text leaves the summary behind, and the summary's row then opens a page
+that would have read "Loading the transcript…" for ever. The read is wrapped
+(`TranscriptRepository.TranscriptRead`) so the two answers are different values.
+
+Verified on the emulator (AOSP 16, `com.baba.callvault`, seeded summaries incl. one orphan, one
+import, and seeded queue rows): all three groups render with the right rows; the page's count and the
+hub card agree at 4 with an orphan present, and again at 3 after deleting a recording — list and card
+both, with no manual refresh; a row opens the reading view with the summary above the transcript, and
+"Write it again" is one tap inside it; the orphan's row opens rather than being swallowed, and now
+says there is no transcript instead of loading one; an imported row carries its badge; Stop clears
+the *being summarised* group live on the visible page; the empty state shows when nothing is
+summarised; rotation keeps the section and the page, and reopening the app lands back on Summaries.
+
+Not exercised: a **real** summary run, because the 3.46 GB model is not on the emulator — the queue
+rows were seeded, so the headings, the Stop and the grouping are confirmed but the percentage inside
+a running row's ring is not (it is the same `WorkProgressRing` the Transcripts page already draws).
+`LibraryCounts`' "do not create the database" guard is unchanged and still covered by
+`LibraryCountsUntouchedDatabaseTest`; it was not re-checked on a device this round.
+
 **Phase 6 — decisions to make later, not now:** whether transcription settings move out of Settings onto the
 Transcripts page (and what that means for the wizard, which cannot be re-run); a share-sheet target
 (`ACTION_SEND` audio/\*) via a separate lightweight activity so a share never lands in onboarding; batch

@@ -1,6 +1,31 @@
 # README impact log
 
-## 2026-09-16 (latest) — CallVault can transcribe audio it did not record
+## 2026-09-16 (latest) — Summaries is a page too
+
+🧪 VERIFYING (built and driven on the emulator; nothing seen on a real phone). The Summaries card now
+opens a real page: every call a model has written up, newest first, with headings above it for what
+is being summarised — with a Stop — and what failed. Tapping one opens the **reading view**, the same
+page a transcript opens on, with the summary above the words it was written from.
+
+**What this makes wrong in the README, when this ships:**
+
+- **The Phase 2 entry's "Summaries is a minimal list" caveat no longer applies.** Nothing in this
+  restructure is a placeholder any more.
+- **Anything saying a summary is only reachable from the recording it belongs to.** It now has a list
+  of its own, and that list is also where a summary being written, or one that failed, is visible at
+  all — neither was anywhere in the app before.
+
+**Newly claimable, once the maintainer confirms it:** a summary that failed is visible and can be
+asked for again in one place; and a summary being written can be stopped without hunting for the
+call it belongs to.
+
+**Not claimed, deliberately:** "write it again" is not on the list — it is inside the summary, one
+tap in. Don't describe the page as a place to manage summaries; it is a place to find and read them.
+
+**Not yet claimable:** no real summary has been run — the 3.46 GB model is not on the emulator, so
+the queue rows were seeded.
+
+## 2026-09-16 (earlier) — CallVault can transcribe audio it did not record
 
 🧪 VERIFYING (built and driven on the emulator; nothing seen on a real phone). The Transcripts page
 has an **Import audio** card. It takes a file through the system file picker — a WhatsApp voice note,
