@@ -56,6 +56,26 @@ interface TranscriptDao {
     suspend fun displayNamesWithState(state: TranscriptState): List<String>
 
     /**
+     * How many transcripts are in [state], as a live count.
+     *
+     * COUNT in SQL rather than the size of a list of rows: the hub draws this as a badge beside a
+     * card, and reading every transcript row to count them would make opening the app cost more the
+     * more the user has transcribed — the same shape as the list-load regression that made a fresh
+     * recording look missing.
+     */
+    @Query("SELECT COUNT(*) FROM transcripts WHERE state = :state")
+    fun countWithState(state: TranscriptState): Flow<Int>
+
+    /**
+     * The recordings in [state], newest first.
+     *
+     * Ordered by when the transcript was written rather than when the call happened: this table
+     * knows nothing about call times, and the join that does is in the other database.
+     */
+    @Query("SELECT displayName FROM transcripts WHERE state = :state ORDER BY updatedAt DESC")
+    fun observeDisplayNamesWithState(state: TranscriptState): Flow<List<String>>
+
+    /**
      * Every transcript row, without its segments.
      *
      * Used to work out what still needs transcribing. That decision spans two databases, so it cannot

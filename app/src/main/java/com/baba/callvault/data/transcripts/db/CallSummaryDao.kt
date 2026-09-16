@@ -77,4 +77,18 @@ interface CallSummaryDao {
 
     @Query("SELECT displayName FROM call_summaries WHERE displayName IN (:displayNames)")
     suspend fun summarised(displayNames: List<String>): List<String>
+
+    /**
+     * How many summaries exist, as a live count.
+     *
+     * COUNT in SQL, not the size of a row list: every summary row carries its whole JSON document,
+     * and the hub wants one number beside a card. Reading the documents to count them would make the
+     * hub cost more the more the user has summarised.
+     */
+    @Query("SELECT COUNT(*) FROM call_summaries")
+    fun countAll(): Flow<Int>
+
+    /** Every summarised recording, newest first. */
+    @Query("SELECT displayName FROM call_summaries ORDER BY createdAt DESC")
+    fun observeAllDisplayNames(): Flow<List<String>>
 }
