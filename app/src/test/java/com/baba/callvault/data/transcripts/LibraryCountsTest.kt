@@ -61,11 +61,17 @@ class LibraryCountsTest {
         dao.upsertTranscript(transcript("failed.ogg", TranscriptState.FAILED, at = 300L))
 
         assertEquals(2, LibraryCounts.transcribed(context).first())
-        // Newest transcript first, so the section opens on what was just written.
+
+        // The page is handed every state, newest change first — it has to be able to say that a
+        // transcription is waiting or has failed, which the count deliberately never mentions.
+        val page = LibraryCounts.transcripts(context).first()
+        assertEquals(5, page.size)
         assertEquals(
             listOf("done-a.ogg", "done-b.ogg"),
-            LibraryCounts.transcribedNames(context).first()
+            page.filter { it.state == TranscriptState.DONE }.map { it.displayName }
         )
+        // Ordering is by updatedAt DESC, so the three 300L rows lead and the older pair follows.
+        assertEquals(listOf("done-a.ogg", "done-b.ogg"), page.takeLast(2).map { it.displayName })
     }
 
     @Test

@@ -168,4 +168,9 @@
     <string name="home_transcripts_empty_hint">Chiedi una trascrizione dal menu di una registrazione: comparirà qui appena è pronta.</string>
     <string name="home_summaries_empty_title">Nessun riepilogo</string>
     <string name="home_summaries_empty_hint">Apri una chiamata che ha una trascrizione e chiedi un riepilogo: comparirà qui appena è pronto.</string>
+
+    <!-- Transcripts: the two headings above the finished transcripts -->
+    <string name="transcripts_working_header">In trascrizione</string>
+    <string name="transcripts_failed_header">Non è andata a buon fine</string>
+    <string name="transcripts_failed_hint">Toccane una per riprovare.</string>
 </resources>

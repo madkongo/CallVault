@@ -168,4 +168,9 @@
     <string name="home_transcripts_empty_hint">Pide una transcripción desde el menú de una grabación; aparecerá aquí en cuanto esté escrita.</string>
     <string name="home_summaries_empty_title">Aún no hay resúmenes</string>
     <string name="home_summaries_empty_hint">Abre una llamada que tenga transcripción y pide un resumen; aparecerá aquí en cuanto esté escrito.</string>
+
+    <!-- Transcripts: the two headings above the finished transcripts -->
+    <string name="transcripts_working_header">Transcribiéndose</string>
+    <string name="transcripts_failed_header">No se completó</string>
+    <string name="transcripts_failed_hint">Toca una para volver a intentarlo.</string>
 </resources>

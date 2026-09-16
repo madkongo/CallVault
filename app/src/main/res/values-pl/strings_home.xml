@@ -168,4 +168,9 @@
     <string name="home_transcripts_empty_hint">Poproś o transkrypcję z menu nagrania — pojawi się tutaj, gdy będzie gotowa.</string>
     <string name="home_summaries_empty_title">Brak podsumowań</string>
     <string name="home_summaries_empty_hint">Otwórz rozmowę, która ma transkrypcję, i poproś o podsumowanie; pojawi się tutaj, gdy będzie gotowe.</string>
+
+    <!-- Transcripts: the two headings above the finished transcripts -->
+    <string name="transcripts_working_header">Trwa transkrypcja</string>
+    <string name="transcripts_failed_header">Nie ukończono</string>
+    <string name="transcripts_failed_hint">Dotknij, aby spróbować ponownie.</string>
 </resources>

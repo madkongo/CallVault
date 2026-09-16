@@ -168,4 +168,9 @@
     <string name="home_transcripts_empty_hint">Kérj átiratot egy felvétel menüjéből – amint elkészül, itt jelenik meg.</string>
     <string name="home_summaries_empty_title">Még nincs összefoglaló</string>
     <string name="home_summaries_empty_hint">Nyiss meg egy hívást, amelynek van átirata, és kérj összefoglalót; amint elkészül, itt jelenik meg.</string>
+
+    <!-- Transcripts: the two headings above the finished transcripts -->
+    <string name="transcripts_working_header">Átírás folyamatban</string>
+    <string name="transcripts_failed_header">Nem fejeződött be</string>
+    <string name="transcripts_failed_hint">Koppints rá az újrapróbálkozáshoz.</string>
 </resources>

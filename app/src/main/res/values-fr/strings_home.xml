@@ -169,4 +169,9 @@
     <string name="home_transcripts_empty_hint">Demandez une transcription depuis le menu d\'un enregistrement ; elle apparaîtra ici une fois écrite.</string>
     <string name="home_summaries_empty_title">Aucun résumé pour l\'instant</string>
     <string name="home_summaries_empty_hint">Ouvrez un appel qui a une transcription et demandez un résumé ; il apparaîtra ici une fois écrit.</string>
+
+    <!-- Transcripts: the two headings above the finished transcripts -->
+    <string name="transcripts_working_header">Transcription en cours</string>
+    <string name="transcripts_failed_header">N\'a pas abouti</string>
+    <string name="transcripts_failed_hint">Touchez-en un pour réessayer.</string>
 </resources>

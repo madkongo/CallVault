@@ -10,6 +10,7 @@ package com.baba.callvault.data.transcripts
 
 import android.content.Context
 import com.baba.callvault.data.transcripts.db.TranscriptDatabase
+import com.baba.callvault.data.transcripts.db.TranscriptEntry
 import com.baba.callvault.data.transcripts.db.TranscriptState
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flowOf
@@ -42,11 +43,17 @@ object LibraryCounts {
         return TranscriptDatabase.get(context).summaryDao().countAll()
     }
 
-    /** The recordings with a finished transcript, newest transcript first. */
-    fun transcribedNames(context: Context): Flow<List<String>> {
+    /**
+     * Every transcript there is — finished, waiting, running or failed — newest change first.
+     *
+     * One query for the whole Transcripts page, which groups and joins what comes back. Rows in the
+     * other states are included on purpose: a transcription that is queued or that failed is the
+     * thing the page most needs to be able to say, and it is nowhere else in the app except as a
+     * small icon on a recordings row nobody scrolls to.
+     */
+    fun transcripts(context: Context): Flow<List<TranscriptEntry>> {
         if (!TranscriptDatabase.exists(context)) return flowOf(emptyList())
-        return TranscriptDatabase.get(context).transcriptDao()
-            .observeDisplayNamesWithState(TranscriptState.DONE)
+        return TranscriptDatabase.get(context).transcriptDao().observeAllOrdered()
     }
 
     /** The recordings with a summary, newest summary first. */

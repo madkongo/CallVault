@@ -67,13 +67,23 @@ interface TranscriptDao {
     fun countWithState(state: TranscriptState): Flow<Int>
 
     /**
-     * The recordings in [state], newest first.
+     * Every transcript row, without its segments, newest change first.
      *
-     * Ordered by when the transcript was written rather than when the call happened: this table
+     * **One query for the whole Transcripts page**, joined against the recordings catalog in memory
+     * by whoever draws it. A row that asked this table about itself would put one database read
+     * behind every visible row, which is the exact shape of the list-load regression that made a
+     * freshly recorded call look missing as a library grew.
+     *
+     * Every state, not only DONE: a transcript that is waiting, running or failed is something the
+     * page has to be able to say out loud, and it is one query cheaper to filter in Kotlin than to
+     * ask twice. The row carries no segment text, so this stays one small row per recording however
+     * long the calls were.
+     *
+     * Ordered by when the transcript last changed rather than when the call happened: this table
      * knows nothing about call times, and the join that does is in the other database.
      */
-    @Query("SELECT displayName FROM transcripts WHERE state = :state ORDER BY updatedAt DESC")
-    fun observeDisplayNamesWithState(state: TranscriptState): Flow<List<String>>
+    @Query("SELECT * FROM transcripts ORDER BY updatedAt DESC")
+    fun observeAllOrdered(): Flow<List<TranscriptEntry>>
 
     /**
      * Every transcript row, without its segments.

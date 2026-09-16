@@ -185,4 +185,9 @@
     <string name="home_transcripts_empty_hint">Ask for a transcript from a recording\'s menu, and it appears here once it is written.</string>
     <string name="home_summaries_empty_title">Nothing summarised yet</string>
     <string name="home_summaries_empty_hint">Open a call that has a transcript and ask for a summary; it appears here once it is written.</string>
+
+    <!-- Transcripts: the two headings above the finished transcripts -->
+    <string name="transcripts_working_header">Being transcribed</string>
+    <string name="transcripts_failed_header">Didn\'t finish</string>
+    <string name="transcripts_failed_hint">Tap one to try it again.</string>
 </resources>

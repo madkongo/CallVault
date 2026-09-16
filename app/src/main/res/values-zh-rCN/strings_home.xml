@@ -168,4 +168,9 @@
     <string name="home_transcripts_empty_hint">在某个录音的菜单中请求转写，写好后就会出现在这里。</string>
     <string name="home_summaries_empty_title">还没有摘要</string>
     <string name="home_summaries_empty_hint">打开一通已有转写的通话并请求摘要，写好后就会出现在这里。</string>
+
+    <!-- Transcripts: the two headings above the finished transcripts -->
+    <string name="transcripts_working_header">正在转写</string>
+    <string name="transcripts_failed_header">未能完成</string>
+    <string name="transcripts_failed_hint">点按其中一项即可重试。</string>
 </resources>

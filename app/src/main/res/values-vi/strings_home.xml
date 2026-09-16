@@ -168,4 +168,9 @@
     <string name="home_transcripts_empty_hint">Hãy yêu cầu chép lời từ menu của một bản ghi âm; nó sẽ xuất hiện ở đây khi viết xong.</string>
     <string name="home_summaries_empty_title">Chưa có bản tóm tắt nào</string>
     <string name="home_summaries_empty_hint">Hãy mở một cuộc gọi đã có bản chép lời và yêu cầu tóm tắt; nó sẽ xuất hiện ở đây khi viết xong.</string>
+
+    <!-- Transcripts: the two headings above the finished transcripts -->
+    <string name="transcripts_working_header">Đang chép lời</string>
+    <string name="transcripts_failed_header">Chưa hoàn tất</string>
+    <string name="transcripts_failed_hint">Chạm vào một mục để thử lại.</string>
 </resources>

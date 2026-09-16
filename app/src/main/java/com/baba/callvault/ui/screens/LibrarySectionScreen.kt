@@ -9,11 +9,16 @@
 package com.baba.callvault.ui.screens
 
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.lazy.items
@@ -24,6 +29,7 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
@@ -37,13 +43,12 @@ import com.baba.callvault.ui.common.CvScaffold
 import com.baba.callvault.ui.common.RecordingLabel
 
 /**
- * The Transcripts and Summaries sections, as the hub's cards open them today.
+ * The Summaries section, as the hub's card opens it today.
  *
- * One composable for both because they differ only in their words and in what a tap opens: a list of
- * the recordings that have the thing the section is named after, newest first. That is deliberately
- * the smallest version that is not a dead end — a card that opened a "coming soon" page would be
- * worse than no card. Phase 3 gives Transcripts its own screen, with the reading view, the queue and
- * the search that belong to it; Phase 5 does the same for Summaries.
+ * Deliberately the smallest version that is not a dead end — a card that opened a "coming soon" page
+ * would be worse than no card. Transcripts has outgrown this and has [TranscriptsScreen] of its own;
+ * Summaries gets the same treatment in Phase 5, and until then this is still a real list of real
+ * recordings that opens the right thing.
  *
  * [names] comes from the transcripts database and [recordings] from the catalog, so a name with no
  * row is normal rather than exceptional — a recording can be deleted while its transcript is still
@@ -117,36 +122,70 @@ fun LibrarySectionScreen(
     }
 }
 
-/** One recording, named the way the recordings list names it so the same call reads the same here. */
+/**
+ * One recording, named the way the recordings list names it so the same call reads the same here.
+ *
+ * Shared with the Transcripts page rather than copied there, so a call carries one label everywhere
+ * and the bidi isolation below cannot be remembered in one list and forgotten in the next.
+ *
+ * @param onOpen  What a tap does, or null for a row that is only telling the user something — a
+ *                transcription still running has nothing to open, and a card that visibly accepts a
+ *                tap and then does nothing reads as the app having missed it.
+ * @param trailing Drawn at the end of the row: the transcript action button, where the row has a
+ *                state worth showing. Nothing by default.
+ */
 @Composable
-private fun LibrarySectionRow(item: RecordingItem, onOpen: () -> Unit) {
+internal fun LibrarySectionRow(
+    item: RecordingItem,
+    onOpen: (() -> Unit)? = null,
+    trailing: (@Composable () -> Unit)? = null,
+) {
     CvCard(onClick = onOpen, contentPadding = PaddingValues(horizontal = 16.dp, vertical = 14.dp)) {
-        Text(
-            // BidiText.isolate, not the raw name: a Hebrew or Arabic contact next to a
-            // Latin-digit timestamp reorders the whole line without it.
-            text = RecordingLabel.of(item) ?: BidiText.isolate(item.displayName),
-            style = MaterialTheme.typography.titleSmall,
-            fontWeight = FontWeight.SemiBold,
-            color = MaterialTheme.colorScheme.onSurface,
-            maxLines = 1,
-            overflow = TextOverflow.Ellipsis,
-        )
-        item.displayDate?.let { date ->
-            Spacer(Modifier.height(2.dp))
-            Text(
-                text = date,
-                style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                maxLines = 1,
-                overflow = TextOverflow.Ellipsis,
-            )
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            Column(modifier = Modifier.weight(1f)) {
+                Text(
+                    // BidiText.isolate, not the raw name: a Hebrew or Arabic contact next to a
+                    // Latin-digit timestamp reorders the whole line without it.
+                    text = RecordingLabel.of(item) ?: BidiText.isolate(item.displayName),
+                    style = MaterialTheme.typography.titleSmall,
+                    fontWeight = FontWeight.SemiBold,
+                    color = MaterialTheme.colorScheme.onSurface,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis,
+                )
+                item.displayDate?.let { date ->
+                    Spacer(Modifier.height(2.dp))
+                    Text(
+                        text = date,
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis,
+                    )
+                }
+            }
+            if (trailing != null) {
+                Spacer(Modifier.width(12.dp))
+                Box(modifier = Modifier.size(TRAILING_SLOT), contentAlignment = Alignment.Center) {
+                    trailing()
+                }
+            }
         }
     }
 }
 
+/**
+ * The trailing slot's size, fixed rather than wrapped.
+ *
+ * TranscriptActionButton is an icon button at one size and a progress ring at another, and a slot
+ * that measured its content would move the row's text sideways every time a transcription started or
+ * finished — in a list where the rows above it are doing the same.
+ */
+private val TRAILING_SLOT = 40.dp
+
 /** Says what would put something here, rather than only that there is nothing. */
 @Composable
-private fun LibrarySectionEmpty(title: String, hint: String) {
+internal fun LibrarySectionEmpty(title: String, hint: String) {
     CvCard(contentPadding = PaddingValues(20.dp)) {
         Text(
             text = title,

@@ -57,7 +57,7 @@ class LibraryCountsUntouchedDatabaseTest {
 
         assertEquals(0, LibraryCounts.transcribed(context).first())
         assertEquals(0, LibraryCounts.summarised(context).first())
-        assertEquals(emptyList<String>(), LibraryCounts.transcribedNames(context).first())
+        assertEquals(emptyList<Any>(), LibraryCounts.transcripts(context).first())
         assertEquals(emptyList<String>(), LibraryCounts.summarisedNames(context).first())
 
         assertFalse("asking for the counts must not materialise one", TranscriptDatabase.exists(context))

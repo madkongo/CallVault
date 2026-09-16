@@ -168,4 +168,9 @@
     <string name="home_transcripts_empty_hint">Fordere im Menü einer Aufnahme ein Transkript an – sobald es geschrieben ist, erscheint es hier.</string>
     <string name="home_summaries_empty_title">Noch nichts zusammengefasst</string>
     <string name="home_summaries_empty_hint">Öffne einen Anruf mit Transkript und fordere eine Zusammenfassung an; sobald sie geschrieben ist, erscheint sie hier.</string>
+
+    <!-- Transcripts: the two headings above the finished transcripts -->
+    <string name="transcripts_working_header">Wird transkribiert</string>
+    <string name="transcripts_failed_header">Nicht fertig geworden</string>
+    <string name="transcripts_failed_hint">Tippe eines an, um es erneut zu versuchen.</string>
 </resources>

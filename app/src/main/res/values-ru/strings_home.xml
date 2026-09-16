@@ -168,4 +168,9 @@
     <string name="home_transcripts_empty_hint">Запросите расшифровку в меню записи — она появится здесь, когда будет готова.</string>
     <string name="home_summaries_empty_title">Сводок пока нет</string>
     <string name="home_summaries_empty_hint">Откройте звонок с расшифровкой и запросите сводку; она появится здесь, когда будет готова.</string>
+
+    <!-- Transcripts: the two headings above the finished transcripts -->
+    <string name="transcripts_working_header">Расшифровывается</string>
+    <string name="transcripts_failed_header">Не завершилось</string>
+    <string name="transcripts_failed_hint">Нажмите, чтобы попробовать снова.</string>
 </resources>

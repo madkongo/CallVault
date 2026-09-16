@@ -119,6 +119,7 @@ import com.baba.callvault.data.SpeakerNames
 import com.baba.callvault.data.transcripts.SpeakerTurnsRepository
 import com.baba.callvault.data.transcripts.LibraryCounts
 import com.baba.callvault.data.transcripts.TranscriptRepository
+import com.baba.callvault.data.transcripts.TranscriptsPage
 import com.baba.callvault.data.waveform.RecordingExtrasRepository
 import com.baba.callvault.data.transcripts.TranscriptStatus
 import com.baba.callvault.ui.common.TranscriptActionButton
@@ -616,22 +617,37 @@ fun HomeScreen(
     }
 
     HomeSection.Transcripts -> {
-        val names by remember(section) { LibraryCounts.transcribedNames(context) }
+        // One query for the page, re-read on arrival for the same reason the hub's counts are: the
+        // guard inside LibraryCounts answers "is there a transcripts database?" when it is called,
+        // and a flow remembered before the user's first transcription would answer empty for ever.
+        val entries by remember(section) { LibraryCounts.transcripts(context) }
             .collectAsState(initial = emptyList())
-        LibrarySectionScreen(
+        // The names the catalog actually holds, built once and handed to the grouping rather than
+        // walked per transcript. Keyed on the list so it is rebuilt when recordings change, not on
+        // every recomposition of a screen that scrolls.
+        val catalogued = remember(uiState.recordings) {
+            uiState.recordings.mapTo(HashSet()) { it.displayName }
+        }
+        val groups = remember(entries, catalogued) { TranscriptsPage.group(entries, catalogued) }
+
+        TranscriptsScreen(
             modifier = modifier,
-            title = stringResource(R.string.home_transcripts_title),
-            countLabel = stringResource(R.string.home_transcripts_count, names.size),
-            names = names,
+            groups = groups,
             recordings = uiState.recordings,
-            emptyTitle = stringResource(R.string.home_transcripts_empty_title),
-            emptyHint = stringResource(R.string.home_transcripts_empty_hint),
+            transcribing = transcribingShown,
             listState = transcriptsListState,
             onBack = { onSelectSection(HomeSection.Hub) },
             onOpenSettings = onOpenSettings,
-            // The transcript sheet this shell already owns. The reading view is Phase 3; until then
-            // the section opens the same thing the recordings list opens, rather than nothing.
+            titleTrailing = titleTrailing,
+            onSearch = { showTranscriptSearch = true },
+            onOpenQueue = { showTranscribingSheet = true },
+            // The transcript sheet this shell already owns. The reading view is the next commit;
+            // until then the page opens the same thing the recordings list opens, rather than
+            // nothing.
             onOpen = { displayName -> transcriptFor = displayName },
+            // The same gate every other entry point uses: without it a retry on a phone whose model
+            // has been deleted would fail exactly the silent way the first attempt did.
+            onRetry = { displayName -> startTranscription(displayName) },
         )
     }
 
