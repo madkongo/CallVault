@@ -19,6 +19,7 @@ import com.baba.callvault.data.SyncScheduleMode
 import com.baba.callvault.transcription.TranscriptionEstimate
 import com.baba.callvault.transcription.TranscriptionLanguageChoice
 import com.baba.callvault.transcription.model.TranscriptionModel
+import com.baba.callvault.ui.navigation.HomeSection
 
 /**
  * AppPreferences wraps [android.content.SharedPreferences] to provide typed access to all
@@ -354,7 +355,11 @@ class AppPreferences(context: Context) {
         // --- UI & Appearance ---
         THEME_MODE("theme_mode"),
         DYNAMIC_COLOR("dynamic_color"),
-        SHOW_TOASTS("show_toasts");
+        SHOW_TOASTS("show_toasts"),
+
+        // The section of Home the user was last in. Absent until they have been somewhere, which is
+        // a state with its own meaning — see HomeSection.opening — so there is no DefaultsValue entry.
+        LAST_HOME_SECTION("last_home_section");
     }
 
     // -------- Nested enums
@@ -1316,6 +1321,20 @@ class AppPreferences(context: Context) {
     
     /** Sets whether dynamic color is enabled. */
     fun setDynamicColorEnabled(enabled: Boolean) = setBoolean(Key.DYNAMIC_COLOR, enabled)
+
+    /**
+     * The raw key of the section of Home the user was last in, or null if they have never been
+     * anywhere.
+     *
+     * Returns the string rather than a [HomeSection] on purpose. This value is written by whatever
+     * build the user was last on, so it can name a section that no longer exists — deciding what to
+     * do about that is [HomeSection.opening]'s job, and it cannot decide anything about a value
+     * already silently turned into a default on the way out of here.
+     */
+    fun getLastHomeSectionKey(): String? = getString(Key.LAST_HOME_SECTION)
+
+    /** Remembers the section of Home the user is in, so the next visit can reopen it. */
+    fun setLastHomeSection(section: HomeSection) = setString(Key.LAST_HOME_SECTION, section.key)
 
     /** Checks if toast notifications are enabled. */
     fun isShowToastsEnabled() = getBoolean(Key.SHOW_TOASTS, DefaultsValue.SHOW_TOASTS)

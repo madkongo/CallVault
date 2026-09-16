@@ -1,0 +1,64 @@
+/*
+ * CallVault: FOSS call recording, self-contained over embedded ADB
+ *  Copyright (C) 2026-present The CallVault Authors
+ *  This software is licensed under the GNU General Public License v3 or later, with additional terms as permitted under Section 7.
+ *  The full license text is available in the LICENSE file at the root of this project.
+ *  This software is distributed WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+ */
+
+package com.baba.callvault.ui.navigation
+
+import com.baba.callvault.ui.navigation.HomeSection.Companion.opening
+import org.junit.Assert.assertEquals
+import org.junit.Assert.assertNull
+import org.junit.Test
+
+/**
+ * Which section the app opens on.
+ *
+ * "Reopen where you were" reads as a convenience and behaves like a router: the stored key comes
+ * from a previous build, the previous visit may have ended mid-onboarding, and the failure mode is
+ * a blank screen with no way to say what went wrong. So the decision is pinned here, before anything
+ * navigates on it.
+ */
+class HomeSectionTest {
+
+    @Test
+    fun `a first run opens the hub`() {
+        // Nothing stored, because nobody has been anywhere yet. The cards are what explains the app;
+        // dropping a new user straight into a list would not.
+        assertEquals(HomeSection.Hub, opening(AppScreen.Home, storedKey = null))
+    }
+
+    @Test
+    fun `a stored section is reopened`() {
+        assertEquals(HomeSection.Recordings, opening(AppScreen.Home, storedKey = "recordings"))
+        assertEquals(HomeSection.Transcripts, opening(AppScreen.Home, storedKey = "transcripts"))
+        assertEquals(HomeSection.Summaries, opening(AppScreen.Home, storedKey = "summaries"))
+        assertEquals(HomeSection.Hub, opening(AppScreen.Home, storedKey = "hub"))
+    }
+
+    @Test
+    fun `a section that no longer exists opens the hub`() {
+        // Written by a build that had a section this one does not, or renamed since. Landing on the
+        // hub is the one answer that is always a real screen.
+        assertEquals(HomeSection.Hub, opening(AppScreen.Home, storedKey = "speakers"))
+        assertEquals(HomeSection.Hub, opening(AppScreen.Home, storedKey = ""))
+    }
+
+    @Test
+    fun `onboarding beats whatever was stored`() {
+        // Someone who has not accepted the disclaimer or finished the wizard has nothing to be
+        // returned to, and resuming ahead of setup would open an app that cannot record.
+        assertNull(opening(AppScreen.Disclaimer, storedKey = "recordings"))
+        assertNull(opening(AppScreen.Permissions, storedKey = "recordings"))
+        assertNull(opening(AppScreen.Wizard, storedKey = "recordings"))
+    }
+
+    @Test
+    fun `no two sections share a key`() {
+        // The keys outlive the build that wrote them; a duplicate would make one unreachable.
+        val keys = HomeSection.entries.map { it.key }
+        assertEquals(keys.size, keys.toSet().size)
+    }
+}
