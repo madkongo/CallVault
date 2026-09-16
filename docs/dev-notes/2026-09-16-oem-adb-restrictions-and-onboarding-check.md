@@ -163,14 +163,18 @@ Also Samsung-specific: the One UI equivalent of the "No data transfer" trick is 
 
 ## 5. Open questions / experiments worth doing
 
-- **"Hidden unless the system language is English"** — two user reports, never reproduced by us. Settling it
-  needs the OP12 switched to Hebrew and back (maintainer's hands, one minute).
+- ~~"Hidden unless the system language is English"~~ — **REFUTED for this version, 2026-09-16**: the
+  maintainer switched the OP12 (OxygenOS V16.1.0) to Hebrew and the setting was still visible in Developer
+  options. So the claim is at most build- or language-specific, not general. Onboarding copy should still
+  mention the English trick as a fallback ("if you cannot find it, switch the phone to English"), but must
+  not state it as a requirement.
 - Does the gate also block `pm install` from shell? (Our in-app updater.) Testable on the OP9.
 - Does an existing grant survive a **reboot** with monitoring active? (Our "set up once" story depends on it.)
 - Does `SystemProperties.get` return the value from a **release** (non-debuggable) build, not just `run-as`?
 - Dry-run the OEM-agnostic permission check on the OP9 in both toggle states, and on the emulator as a control.
 - Whether vivo also reverts `pm grant`, and whether its i管家 blocks a permission at use time.
-- Samsung `rampart_blocked_adb_cmd` under the plain Auto Blocker switch (see 3c) — ask the Samsung tester.
+- Samsung `rampart_blocked_adb_cmd` under the plain Auto Blocker switch (see 3c) — ⏸️ PARKED 2026-09-16: no
+  Samsung device or tester available. Ask when one is.
 
 ## 5b. Do not propose (checked, no evidence)
 
