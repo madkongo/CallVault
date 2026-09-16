@@ -248,6 +248,9 @@ import java.util.Locale
  *                       "reopen where you were" have one place to be decided.
  * @param onSelectSection Navigates to another section; the router persists it.
  * @param onOpenSettings Opens the Settings panel, which slides over whatever section is showing.
+ * @param openRecording  A recording to land on, sent in from outside the app (the share target's
+ *                       Open button). Null means nothing was asked for.
+ * @param onOpenRecordingHandled Acknowledges [openRecording], so one request navigates once.
  * @param modifier       Optional layout modifier.
  * @param viewModel      The Home "Brain"; defaults to a [viewModel]-scoped [HomeViewModel]. One
  *                       instance for the whole shell, so there is exactly one playback controller
@@ -259,6 +262,8 @@ fun HomeScreen(
     section: HomeSection,
     onSelectSection: (HomeSection) -> Unit,
     onOpenSettings: () -> Unit,
+    openRecording: String? = null,
+    onOpenRecordingHandled: () -> Unit = {},
     modifier: Modifier = Modifier,
     viewModel: HomeViewModel = viewModel()
 ) {
@@ -415,6 +420,18 @@ fun HomeScreen(
             viewModel.importShown()
         }
     }
+    // A recording named from outside the app — the share target's Open button — joins the same
+    // queue, rather than setting playbackFor directly. A cold start arrives here before the first
+    // list pass has finished, so the row is not there yet and opening it would find nothing and
+    // reset itself. The section moves too: landing on the recording while the app still says it is
+    // showing Summaries would leave back returning to a page that never mentioned this file.
+    LaunchedEffect(openRecording) {
+        val requested = openRecording ?: return@LaunchedEffect
+        onSelectSection(HomeSection.Recordings)
+        openWhenListed = requested
+        onOpenRecordingHandled()
+    }
+
     LaunchedEffect(openWhenListed, uiState.recordings) {
         val pending = openWhenListed ?: return@LaunchedEffect
         if (uiState.recordings.any { it.displayName == pending }) {

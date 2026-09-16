@@ -57,14 +57,14 @@ import com.baba.callvault.ui.viewmodels.ShareImportViewModel
  * that did not offers a sentence saying why. Nothing here vanishes silently — a share that produced
  * a toast behind a closing share sheet is a share that, as far as anyone can tell, did nothing.
  *
- * @param onOpenRecording open what was just imported, in the app.
+ * @param onOpenRecording open what was just imported, by the name it was stored under.
  * @param onOpenApp       open CallVault itself; the way out of "setup is not finished".
  * @param onClose         dismiss, having done nothing further.
  */
 @Composable
 fun ShareImportScreen(
     state: ShareImportViewModel.State,
-    onOpenRecording: () -> Unit,
+    onOpenRecording: (String) -> Unit,
     onOpenApp: () -> Unit,
     onClose: () -> Unit,
 ) {
@@ -101,7 +101,7 @@ fun ShareImportScreen(
                     title = stringResource(R.string.share_import_done_title),
                     body = stringResource(R.string.share_import_done_body),
                     primaryLabel = stringResource(R.string.share_import_open),
-                    onPrimary = onOpenRecording,
+                    onPrimary = { onOpenRecording(state.displayName) },
                     onClose = onClose,
                 )
 

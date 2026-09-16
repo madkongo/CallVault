@@ -66,7 +66,9 @@ import com.baba.callvault.ui.viewmodels.SettingsViewModel
 @Composable
 fun AppNavigationScreen(
     notificationDestination: NotificationDestination = NotificationDestination.None,
-    onNotificationDestinationHandled: () -> Unit = {}
+    onNotificationDestinationHandled: () -> Unit = {},
+    openRecording: String? = null,
+    onOpenRecordingHandled: () -> Unit = {}
 ) {
 
     val activityContext = LocalContext.current
@@ -179,6 +181,16 @@ fun AppNavigationScreen(
         onNotificationDestinationHandled()
     }
 
+    // A request to land on one recording cannot outlive the visit it arrived in, for the same
+    // reason a notification's cannot: held unacknowledged, it would fire whenever onboarding
+    // finally resolved to Home, which could be days and several screens later. Home acknowledges it
+    // itself once it has somewhere to put it; here we only drop the ones Home will never see.
+    LaunchedEffect(openRecording, screenState) {
+        if (openRecording == null || screenState == AppScreen.Home) return@LaunchedEffect
+        AppLogger.d("CV:Nav", "Asked to open a recording during $screenState; dropping the request")
+        onOpenRecordingHandled()
+    }
+
     // Derive the active theme from AppPreferences so a theme change triggers a refresh (recompose)
     // and is applied immediately.
     val darkTheme = when ( preferences.getThemeMode()) {
@@ -266,6 +278,8 @@ fun AppNavigationScreen(
                         section = section,
                         onSelectSection = goToSection,
                         onOpenSettings = { scope.launch { drawerState.open() } },
+                        openRecording = openRecording,
+                        onOpenRecordingHandled = onOpenRecordingHandled,
                         viewModel = homeViewModel
                     )
                 }

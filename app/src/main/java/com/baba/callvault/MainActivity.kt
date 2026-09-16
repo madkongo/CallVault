@@ -23,6 +23,7 @@ import com.baba.callvault.data.AppPreferences
 import com.baba.callvault.services.recording.DaemonKeepAliveService
 import com.baba.callvault.system.AppLock
 import com.baba.callvault.ui.navigation.NotificationDestination
+import com.baba.callvault.ui.navigation.OpenRecordingRequest
 import com.baba.callvault.ui.screens.AppLockScreen
 import com.baba.callvault.ui.screens.AppLockUi
 import com.baba.callvault.ui.screens.appLockUi
@@ -73,6 +74,15 @@ class MainActivity : AppCompatActivity() {
      */
     private var notificationDestination by mutableStateOf(NotificationDestination.None)
 
+    /**
+     * A recording this visit was asked to open, or null. Sent by the share target's Open button.
+     *
+     * Held beside [notificationDestination] and for the same reasons: it can arrive warm as well as
+     * cold, and the app lock can stand between the request and the screen that acts on it. A request
+     * that arrived at a locked app has to wait for the unlock rather than be lost to it.
+     */
+    private var openRecording by mutableStateOf<String?>(null)
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         // Cold start. Both of the PendingIntents that use FLAG_ACTIVITY_CLEAR_TOP arrive this way
@@ -80,6 +90,7 @@ class MainActivity : AppCompatActivity() {
         // launch mode is `standard`: CLEAR_TOP with no SINGLE_TOP destroys the existing instance and
         // builds a new one with the new Intent. Both paths are handled; neither can be assumed.
         notificationDestination = destinationOf(intent)
+        openRecording = recordingOf(intent)
         // Carry an unlock across an Activity recreation — see [onSaveInstanceState] for why this is
         // only ever set for a configuration change. Read before setContent so the first composition
         // draws the app rather than the lock screen and then swaps.
@@ -91,7 +102,9 @@ class MainActivity : AppCompatActivity() {
                     notificationDestination = notificationDestination,
                     onNotificationDestinationHandled = {
                         notificationDestination = NotificationDestination.None
-                    }
+                    },
+                    openRecording = openRecording,
+                    onOpenRecordingHandled = { openRecording = null }
                 )
                 // Background only. The prompt is coming or already up, so there is nothing to act on
                 // — drawing the door here is what flashed an "Unlock" card on every open.
@@ -116,6 +129,7 @@ class MainActivity : AppCompatActivity() {
         super.onNewIntent(intent)
         setIntent(intent)
         notificationDestination = destinationOf(intent)
+        openRecording = recordingOf(intent)
     }
 
     /**
@@ -128,6 +142,19 @@ class MainActivity : AppCompatActivity() {
     private fun destinationOf(intent: Intent?): NotificationDestination =
         NotificationDestination.fromIntentExtra(
             key = intent?.getStringExtra(NotificationDestination.EXTRA),
+            relaunchedFromHistory =
+                (intent?.flags ?: 0) and Intent.FLAG_ACTIVITY_LAUNCHED_FROM_HISTORY != 0
+        )
+
+    /**
+     * Reads a "land on this recording" request off an incoming Intent.
+     *
+     * The history flag matters here exactly as it does above: without it, one shared voice note
+     * would re-open itself on every later return from the recents list.
+     */
+    private fun recordingOf(intent: Intent?): String? =
+        OpenRecordingRequest.fromIntentExtra(
+            name = intent?.getStringExtra(OpenRecordingRequest.EXTRA),
             relaunchedFromHistory =
                 (intent?.flags ?: 0) and Intent.FLAG_ACTIVITY_LAUNCHED_FROM_HISTORY != 0
         )

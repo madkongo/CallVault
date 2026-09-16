@@ -26,6 +26,7 @@ import androidx.compose.runtime.setValue
 import androidx.core.content.ContextCompat
 import com.baba.callvault.data.AppPreferences
 import com.baba.callvault.system.AppLock
+import com.baba.callvault.ui.navigation.OpenRecordingRequest
 import com.baba.callvault.ui.screens.AppLockScreen
 import com.baba.callvault.ui.screens.AppLockUi
 import com.baba.callvault.ui.screens.ShareImportScreen
@@ -108,8 +109,12 @@ class ShareImportActivity : AppCompatActivity() {
                     val state by viewModel.state.collectAsState()
                     ShareImportScreen(
                         state = state,
-                        onOpenRecording = { openApp(); finish() },
-                        onOpenApp = { openApp(); finish() },
+                        // The imported file's own screen, which is where its length, its player and
+                        // Transcribe already are — the same place the picker lands. Without the
+                        // name, Open landed on whichever section the user was last in, which on a
+                        // real run was a page of summaries with no sign of what had just arrived.
+                        onOpenRecording = { name -> openApp(name); finish() },
+                        onOpenApp = { openApp(recording = null); finish() },
                         onClose = { finish() },
                     )
                 }
@@ -141,11 +146,19 @@ class ShareImportActivity : AppCompatActivity() {
         null
     }
 
-    /** Opens CallVault proper, as a fresh task, so backing out of it does not return to this card. */
-    private fun openApp() {
+    /**
+     * Opens CallVault proper, as a fresh task, so backing out of it does not return to this card.
+     *
+     * [recording] names a row to land on, or is null to open the app wherever it was last. CLEAR_TOP
+     * without SINGLE_TOP is deliberate and matches how the notifications reach MainActivity: its
+     * launch mode is `standard`, so this rebuilds the Activity with the new Intent rather than
+     * handing it to an instance that has already read one.
+     */
+    private fun openApp(recording: String?) {
         startActivity(
             Intent(this, MainActivity::class.java)
                 .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP)
+                .apply { recording?.let { putExtra(OpenRecordingRequest.EXTRA, it) } }
         )
     }
 
