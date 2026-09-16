@@ -362,3 +362,24 @@ wireless debugging of CallVault's own" — restates the paragraph that was alrea
 - **Still claimed, unchanged:** no new permission is requested. The share target reads the one URI it
   is handed and takes no persistable grant, exactly as the SAF picker does — `READ_MEDIA_AUDIO` is
   still not declared and still must not be.
+
+## 2026-09-16 — Five pieces of maintainer feedback after using the branch
+
+- **What changed:**
+  1. A transcription that finishes — or fails — now says so in the shade, on a channel of its own,
+     and the tap opens that transcript's reading view (or the Transcripts page when it stands for
+     more than one). A "Transcribe only" import's notification also says the audio was deleted.
+  2. The per-recording language question is a dropdown rather than fourteen radio rows.
+  3. A transcript whose audio is gone no longer draws a player, and its lines no longer react to a tap.
+  4. Transcripts and Summaries rows say "Text only" when the recording behind them is gone.
+  5. A note can be written from the reading view, so a transcript with no recording can have one.
+- **Why it matters to the README:** anywhere it describes transcription as something that happens in
+  the background, it can now add that **the phone tells you when it is done**; and the "Transcribe
+  only" import story gains its missing half — the notification is how the words come back, since the
+  file itself does not. Nothing the README already claims becomes false.
+- **Claim status:** 🧪 all five are unconfirmed on a phone. Verified on the emulator only, and the
+  **success** notification was never seen posted there: the emulator's model is a stand-in whisper
+  refuses to load, so only the failure path could be run end to end. Do not write a README line about
+  "CallVault tells you when a transcript is ready" until the maintainer has seen one on the OP12.
+- **Still claimed, unchanged:** no new permission. `POST_NOTIFICATIONS` was already declared and is
+  still checked before every post, and a phone that has refused it simply gets no notice.

@@ -525,3 +525,83 @@ recorder back in ~2 s. `cmd package query-activities -a android.intent.action.SE
 `com.baba.callvault.ShareImportActivity`, so the target is registered on the device. Whether WhatsApp's own
 voice-note share reaches it is the open measurement — it depends on the MIME type WhatsApp attaches, which
 could not be read on the emulator.
+
+## After the phases — five pieces of feedback from using the build
+
+**🧪 VERIFYING (built 2026-09-16, unit-tested, driven on the emulator; nothing seen on a phone).**
+The maintainer confirms each of these or none of them is done.
+
+Five things the maintainer asked for after living with Phases 0–7, each landed as its own revertable
+commit.
+
+**1. The phone says when a transcription ends.** It ended in silence before — which for a call is
+merely unhelpful, but for a shared voice note is the feature failing (the user has left CallVault),
+and for a **"Transcribe only"** import is the app quietly destroying a file with no account of it.
+A failure was equally silent: a red icon on a page nobody had been given a reason to open.
+
+Decisions worth not re-litigating:
+
+- **One notification per outcome, merged, never one per recording.** The nightly sweep can finish
+  fifty; fifty lines would be worse than the silence. The first finish names the recording and opens
+  its reading view, every one after turns it into a count and opens the page. "Only notify for work
+  the user started by hand" was considered and rejected: the case this exists for — a share — is the
+  one where the user is furthest from the app, and the runner would have to be told who asked.
+- **The merge state lives on the notification** (`getActiveNotifications` + extras), not in a
+  preference, so a swipe is the reset. That is the right reset: someone who cleared the last batch
+  has seen it, and the next transcript is fresh news.
+- **Two ids (4721 ready, 4722 didn't finish)**, so a success cannot quietly erase a failure — the half
+  that needs acting on. Both above `SharedStatusNotice.ID` (4720), which stays the recorder's alone,
+  and clear of the 4716/4717 collision the health and update notifications already have.
+- **Its own channel at IMPORTANCE_LOW.** Silenceable without silencing anything about recording, and
+  quiet by construction — the after-every-call mode would otherwise chime after every call.
+- **Two new `NotificationDestination` entries, not one**, because a shared destination is a shared
+  request code, which is one PendingIntent. `OpenTranscriptRequest` carries *which* transcript,
+  separate from `OpenRecordingRequest` because the two open different screens.
+- **"The audio is gone" is asked of the catalog**, not of `deleteAfterTranscript`'s return value:
+  that answers "a file was found and removed", which is false on a phone where the file had already
+  been deleted by hand — and the user's library has still lost the recording.
+
+**2. The language question is a dropdown.** Fourteen radio rows in a scrolling dialog, asked before
+every import, to which the answer is nearly always the one already selected. The "(your usual)"
+suffix went with the rows: it said which one to look for in a list of fourteen, and says nothing in a
+field showing one value. Preselection now falls back to auto-detect for a pin this build does not
+offer — invisible as a row, but as a collapsed field it would show one language and send another.
+
+**3. No player where there is no audio.** Answered from the catalog row the reading view already
+looks up, not a new flag. A line with no audio gets **no click handler** rather than one that does
+nothing, because `combinedClickable` still ripples; long-press-to-copy survives through a
+long-press-only gesture detector. A summary's `[m:ss]` chip follows the same rule — it is a third way
+to the same player — but is still drawn, because when a point was made is worth reading.
+
+**4. One badge per row.** `no audio → "Text only"`, `audio + import → "Imported"`, `audio + call →
+nothing`. "Text only" wins where both could apply: it changes what the row can *do*, where an origin
+is only history, and an import is still visibly an import from the name the row is titled with. Both
+badges state their colours; the new one is surface variant, quieter than the accent pill, because an
+absence should not be announced like a feature.
+
+**5. Notes reach a transcript with no recording.** Same table, same key, same export — a second door,
+never a second note. A dialog off the actions row rather than a card on the page, because a growing
+text field between the summary and the words pushes the thing being read down the screen. Saved as it
+is typed, like the playback screen's card; the label says whether a note already exists, which for an
+orphan is the only sign there is.
+
+Verified on the emulator (AOSP 16, `com.baba.callvault`): the language dropdown, preselected from the
+setting, with auto-detect first and the pick surviving to the estimate dialog; a text-only transcript
+drawing no transport where a catalogued one draws it; "Text only" / "Imported" / nothing on the right
+rows of both Transcripts and Summaries; a note written from the reading view of a transcript with no
+recording, stored under its display name and carried into the Markdown export. For the notification:
+a real failed run posted it, a second failure merged it into "Transcriptions that didn't finish: 2"
+without a second line, a tap landed on Transcripts with both rows under *Didn't finish*
+(`CV:Nav … transcript_failed`), a later failure after that tap started the count again at one, and
+the recorder's own "Ready to record calls" was never displaced. The **ready** destination was driven
+by `am start` with the two extras and landed on the named transcript's reading view
+(`CV:Nav … transcript`), with back returning to Transcripts.
+
+**Not exercised: the success notification actually being posted.** The emulator's model is a
+stand-in, and a real `ggml-tiny` padded to the expected size is still refused by
+`whisper_init_from_file`, so no run has ever reached the success branch there. What is covered:
+`TranscriptNoticeTest` for the merge, `TranscriptionRunnerTest` for which outcome each branch
+reports (including the deleted-audio one), and the whole of `TranscriptNotifier.post`/`read` by the
+failure path, which is the same code. **On the phone, look first at**: whether a finished
+transcription posts at all; what a "Transcribe only" import's notification says; and whether tapping
+it opens the right transcript.
