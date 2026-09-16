@@ -185,7 +185,6 @@ import com.baba.callvault.data.recordings.RecordingsRepository.RecordingItem
 import com.baba.callvault.data.recordings.RecordingsRepository.RecordingSource
 import com.baba.callvault.ui.common.CvCard
 import com.baba.callvault.ui.common.CvScaffold
-import com.baba.callvault.ui.common.CvSectionHeader
 import com.baba.callvault.ui.common.CvStatusPill
 import com.baba.callvault.ui.common.CvTone
 import com.baba.callvault.ui.common.rememberExportLabels
@@ -658,9 +657,12 @@ fun HomeScreen(
 
     HomeSection.Recordings -> CvScaffold(
         modifier = modifier.fillMaxSize(),
+        // Named for the section, not the app. The app's name belongs on the hub, which is what a
+        // back arrow here now leads to — a section titled "CallVault" with an arrow back to
+        // CallVault says nothing about where either of them goes.
         title =
             if (selectionMode) pluralStringResource(R.plurals.home_selected_count, selection.size, selection.size)
-            else stringResource(R.string.app_name),
+            else stringResource(R.string.home_recordings_title),
         // Leaving selection mode comes first: while rows are selected the arrow has to undo that,
         // not the navigation, or the only way out of selection would be the close button.
         onBack = if (selectionMode) clearSelection else ({ onSelectSection(HomeSection.Hub) }),
@@ -722,23 +724,17 @@ fun HomeScreen(
 
             val recordings = uiState.filteredRecordings
 
-            item {
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(top = 12.dp),
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    CvSectionHeader(text = stringResource(R.string.home_recordings_title))
-                    Spacer(Modifier.weight(1f))
-                    if (recordings.isNotEmpty()) {
-                        Text(
-                            text = stringResource(R.string.home_recordings_count, recordings.size),
-                            style = MaterialTheme.typography.labelMedium,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant,
-                            modifier = Modifier.padding(end = 4.dp)
-                        )
-                    }
+            // The count alone. The section header that used to sit beside it said "RECORDINGS"
+            // under a bar that now says the same thing, because this is a section with its own
+            // title rather than one block on a single Home screen.
+            if (recordings.isNotEmpty()) {
+                item {
+                    Text(
+                        text = stringResource(R.string.home_recordings_count, recordings.size),
+                        style = MaterialTheme.typography.labelMedium,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        modifier = Modifier.padding(start = 4.dp, top = 4.dp, bottom = 2.dp)
+                    )
                 }
             }
 
