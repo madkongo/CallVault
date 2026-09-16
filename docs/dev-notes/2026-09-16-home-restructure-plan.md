@@ -610,3 +610,90 @@ it opens the right transcript.
 no player without audio, Text-only badge, notes in the reading view) installed while idle; grant survived,
 recorder back up, "Ready to record calls" reached. The success notification has still never been posted by a
 real transcription — the emulator refuses every speech model, so only the failure path has run for real.
+
+## Three more pieces of feedback — the library rows
+
+**🧪 VERIFYING (built 2026-09-16, unit-tested, driven on the emulator; nothing seen on a phone).**
+The maintainer confirms each of these or none of them is done.
+
+Three things the maintainer asked for after living with the five above, each landed as its own
+revertable commit.
+
+**1. A transcript with no audio no longer offers "Transcribe again."** The player was hidden for it;
+the re-run button was left standing next to it. There is nothing to transcribe from — pressing it
+discards the stored text and queues a run that refuses itself, which is the one outcome nobody would
+press it for. Hidden by the same `hasAudio` rule the transport follows
+(`TranscriptAudio.retranscribeOffered`), so the two cannot come apart again.
+
+The rest of that row was audited and stays, deliberately: Share and its five export formats, the
+note, the speaker-name swap and Delete all read and write the stored words and never touch the file.
+So does the summary strip above them — `SummaryQueue.blockerFor` asks only for a finished transcript
+— so summarising a text-only transcript still works and is still offered.
+
+**2. Transcripts and Summaries rows have an overflow menu**: Share, Save as a file, Delete. The
+recordings list's own shape, in the same trailing slot, rather than a second pattern for one gesture.
+
+Decisions worth not re-litigating:
+
+- **Delete on Transcripts deletes the TEXT, never the recording.** That is what the page lists, and
+  the recording stays reachable from Recordings where deleting one already has its own confirmation
+  naming the copies. A list of words that quietly destroys audio is the mistake nobody forgives, so
+  it is not offered at all rather than offered carefully. The exception is the row where the two are
+  the same thing — a transcript whose recording is gone, which every finished "Transcribe only"
+  import is — and there the confirmation says so outright rather than repeating the reassuring
+  sentence about a recording that is not there. `LibraryRowActions.DeleteMeaning` carries that
+  difference and is tested.
+- **Delete on Summaries deletes the SUMMARY**, through `TranscriptRepository.deleteSummary` and never
+  `TranscriptCascade`, which would take the transcript, the note, the tags and the stars with it —
+  the text the summary was written from, thrown away because somebody disliked the write-up.
+- **Save offers five formats for a transcript and two for a summary.** TXT, SRT and VTT would write a
+  file with no summary in it at all, from a menu item called Save on a page about summaries.
+- **A menu is drawn only where there is something in it**: a finished transcript and a stored
+  summary. Queued, running, failed and waiting rows have no words, and a failed summary left no row
+  at all; three dots opening onto nothing are worse than no dots.
+- **The summary renderer was extracted from the Markdown export rather than written twice**
+  (`TranscriptExport.renderSummary`), with its two heading marks as parameters: a `.md` file wants
+  `##` and `###`, a message sent into a chat wants neither.
+
+**3. Long-press to multi-select on both pages**, with the recordings list's grammar exactly: long-press
+enters, a tap toggles, the bar becomes a count and two bulk actions, back leaves selection before it
+leaves the page.
+
+- **The selection carries the section it was picked on** (`LibrarySelection`), rather than being
+  cleared by an effect. Transcripts and Summaries are two lists of display names with a large
+  overlap, so a bare set carried between them arrives looking like a valid selection of *different*
+  things — and the next tap after a selection is a delete. An effect keyed on the section also fires
+  on first composition, which throws the selection away on every process recreation (#27).
+- **Only rows with text can be picked.** Everything else goes inert while selecting rather than
+  keeping its ordinary tap: a tap that started a transcription out of the middle of a sweep down the
+  list is the app doing something nobody asked for.
+- **A mixed bulk delete is decided by its worst member.** One selected transcript whose recording is
+  already gone makes "the recordings are kept" false for something in the batch, so the dialog adds
+  a line in the error colour saying how many.
+- **Bulk share joins the texts into one message**, each under the name of the call it came from.
+  Over 60,000 characters it goes as a file instead: Intent extras travel through the binder, and a
+  large selection would raise `TransactionTooLargeException` out of `startActivity` — an unhandled
+  crash at the moment the user taps Share. `BulkTextShare` holds both rules.
+- **No bulk Save**, and the reason is mechanical rather than taste: `TranscriptExportFile` keeps
+  exactly one file in the export cache and empties it on every write, so that a share still being
+  read when the chooser closes cannot be deleted out from under it. Several files at once would need
+  that rule relaxed on the one path where a race destroys somebody's export.
+
+Verified on the emulator (AOSP 16, `com.baba.callvault`, seeded transcripts and summaries incl. an
+orphan and imports): the reading view of a text-only transcript draws Share / Note / Delete text and
+no "Transcribe again", where one with audio still draws it beside the transport; the row menu opens
+on both pages and offers five formats on Transcripts and two on Summaries; Save on an orphan wrote a
+Markdown file carrying the summary, the note and the words; Share sent the transcript as text, and a
+summary as text with no hash marks; deleting a summary took the summary and left the transcript, with
+the page and the hub card going 3 → 2 and Recordings unchanged; deleting a transcript with audio took
+the text, with Transcripts going 3 → 2 and Recordings still 11; long-press entered selection on both
+pages with the import card hidden and the failed rows inert; a mixed selection of two showed "1 of
+these has no recording behind it"; Cancel kept the selection; bulk share produced one message with
+both transcripts under their own names; back left selection rather than the page; and a selection
+survived a rotation.
+
+Not exercised: a selection crossing between the two pages, which the UI gives no route to — back
+clears it — so `LibrarySelectionTest` is what holds that guard; a bulk share large enough to go as a
+file (asserted by `BulkTextShareTest`); and anything needing a real model, as before.
+
+Tests: 1568 unit tests, 0 failures (1537 before this batch).
