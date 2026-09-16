@@ -31,6 +31,24 @@ object TranscriptAudio {
      */
     fun playbackOffered(hasAudio: Boolean): Boolean = hasAudio
 
+    /**
+     * Whether the reading view offers "Transcribe again".
+     *
+     * **There is nothing to transcribe from.** Re-running the model means decoding the recording,
+     * and for a transcript whose audio is gone the button can only throw the stored text away and
+     * queue a run that refuses itself — which is the one outcome nobody would press it for. It sat
+     * there after the transport was taken away, which is the same defect one control later: a live
+     * button in a row of live buttons, with nothing on screen to say it cannot work.
+     *
+     * The rest of the actions row is text and stays: Share and its five export formats, the note,
+     * the speaker-name swap and Delete all read and write the stored words, never the file. So does
+     * the summary strip above them — [com.baba.callvault.summary.SummaryQueue.blockerFor] asks only
+     * for a finished transcript — which is why summarising a text-only transcript is still offered.
+     *
+     * @param hasAudio true when the recordings catalog still holds a row for this transcript.
+     */
+    fun retranscribeOffered(hasAudio: Boolean): Boolean = hasAudio
+
     /** What a library row puts beside its title. */
     enum class RowBadge {
 

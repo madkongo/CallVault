@@ -345,7 +345,10 @@ private fun ColumnScope.TranscriptBody(
         // other way in is gated on a finished transcript, so a null here could only mean the query
         // had not come back — but deleting the text leaves the summary behind, and the summary's
         // own row then opens a page that would have said "Loading the transcript…" for ever.
-        // "Transcribe again", below, is the way out of the second one.
+        // "Transcribe again", below, is the way out of the second one — where the recording is still
+        // there. Where it is not, there is no way out and none is offered: nothing to read and
+        // nothing to read it from is the honest state of a transcript deleted from a text-only
+        // import, and a button that cannot work would only say otherwise.
         transcript == null -> Text(
             text = stringResource(
                 if (isTranscriptSettled) R.string.transcript_none else R.string.transcript_loading
@@ -513,8 +516,14 @@ private fun ColumnScope.TranscriptBody(
                 )
             }
         }
-        TextButton(onClick = onRetranscribe) {
-            Text(stringResource(R.string.transcript_retranscribe))
+        // Only where there is something to transcribe. A transcript can outlive its recording — every
+        // finished "Transcribe only" import does, by design — and offering to run the model again on
+        // a file that is gone would destroy the stored text in exchange for a run that refuses
+        // itself. See TranscriptAudio.retranscribeOffered for why the rest of this row stays.
+        if (TranscriptAudio.retranscribeOffered(hasAudio)) {
+            TextButton(onClick = onRetranscribe) {
+                Text(stringResource(R.string.transcript_retranscribe))
+            }
         }
         // The way back, once the question above has been answered and stops being asked.
         //

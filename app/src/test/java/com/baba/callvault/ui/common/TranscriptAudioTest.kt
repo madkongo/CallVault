@@ -36,6 +36,18 @@ class TranscriptAudioTest {
     }
 
     @Test
+    fun a_transcript_that_still_has_its_recording_may_be_transcribed_again() {
+        assertTrue(TranscriptAudio.retranscribeOffered(hasAudio = true))
+    }
+
+    @Test
+    fun a_transcript_whose_audio_is_gone_is_not_offered_a_re_run() {
+        // The control that outlived the player. Pressing it would throw the stored text away in
+        // exchange for a run with nothing to decode — the one outcome nobody would press it for.
+        assertFalse(TranscriptAudio.retranscribeOffered(hasAudio = false))
+    }
+
+    @Test
     fun a_transcript_with_no_audio_says_so() {
         assertEquals(
             TranscriptAudio.RowBadge.TextOnly,
