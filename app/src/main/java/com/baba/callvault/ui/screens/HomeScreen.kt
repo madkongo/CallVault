@@ -1393,6 +1393,11 @@ fun HomeScreen(
             durationMs = if (isThisTrack) playback.durationMs.toLong() else 0L,
             isPlaying = isThisTrack && playback.phase == RecordingPlaybackController.Phase.PLAYING,
             isLoading = isThisTrack && playback.phase == RecordingPlaybackController.Phase.LOADING,
+            // The catalog row IS the answer, and it is already looked up above for the Uri. A
+            // transcript outliving its recording is ordinary — every finished "Transcribe only"
+            // import is one — and until this the page drew it the full transport anyway: play, skip,
+            // a position that never moved, and lines that invited a tap and answered nothing.
+            hasAudio = row != null,
             onDismiss = closeTranscript,
             // playFrom, not seekTo: seekTo only works on a track already prepared, so tapping a
             // line in a recording that is not playing used to do nothing at all.

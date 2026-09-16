@@ -11,6 +11,7 @@ package com.baba.callvault.ui.common
 import androidx.compose.foundation.background
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.combinedClickable
+import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -44,6 +45,7 @@ import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextDirection
@@ -131,6 +133,14 @@ fun TranscriptView(
     durationMs: Long = 0L,
     isPlaying: Boolean = false,
     isLoading: Boolean = false,
+    /**
+     * Whether this transcript's recording is still on the phone.
+     *
+     * False hides the transport and stops a line reacting to a tap — see [TranscriptAudio]. The
+     * callbacks below are still passed, and still do nothing when asked, because the caller has no
+     * separate set for the case; this is what makes sure they are never *offered*.
+     */
+    hasAudio: Boolean = true,
     onDismiss: () -> Unit,
     onSeekTo: (Long) -> Unit,
     onPlay: () -> Unit,
@@ -186,6 +196,7 @@ fun TranscriptView(
             durationMs = durationMs,
             isPlaying = isPlaying,
             isLoading = isLoading,
+            hasAudio = hasAudio,
             onSeekTo = onSeekTo,
             onPlay = onPlay,
             onPause = onPause,
@@ -265,6 +276,7 @@ private fun ColumnScope.TranscriptBody(
     durationMs: Long,
     isPlaying: Boolean,
     isLoading: Boolean,
+    hasAudio: Boolean,
     onSeekTo: (Long) -> Unit,
     onPlay: () -> Unit,
     onPause: () -> Unit,
@@ -290,11 +302,16 @@ private fun ColumnScope.TranscriptBody(
     // what a call was about is answered here without reading it — and a summary that already
     // exists is simply shown, because writing another costs ninety seconds of CPU for a page
     // that is already on the phone.
+    // One answer for the whole page, asked once: the transport, a tapped line and a summary's
+    // citation are three ways to reach the same player, and a page that hid one of them and kept the
+    // other two would be worse than one that kept all three.
+    val playable = TranscriptAudio.playbackOffered(hasAudio)
+
     SummarySheetStrip(
         state = summaryState,
         onCreate = onSummarise,
         onStop = onStopSummary,
-        onSeek = onSeekTo,
+        onSeek = if (playable) onSeekTo else null,
         initiallyExpanded = summaryFirst,
     )
 
@@ -365,7 +382,9 @@ private fun ColumnScope.TranscriptBody(
                         segment = segment,
                         speaker = speakerNames.of(segment.speaker),
                         isActive = index == active,
-                        onClick = { onSeekTo(segment.startMs) },
+                        // Null, not a lambda that does nothing: a no-op click still ripples, which
+                        // is the app appearing to fail rather than declining to offer.
+                        onClick = if (playable) ({ onSeekTo(segment.startMs) }) else null,
                         // The speaker's name goes with it. A quoted line without who said it is
                         // the thing a transcript exists to stop being ambiguous about.
                         onLongClick = {
@@ -381,20 +400,24 @@ private fun ColumnScope.TranscriptBody(
     // Pinned below the transcript rather than scrolling with it: the point of these controls is
     // to pause or step back while reading, which is when they would have scrolled away.
     //
-    // Present in every state, including "still loading" and "no speech was recognised" — the
-    // recording exists and is playable whether or not there are words to show for it.
-    TranscriptPlayerBar(
-        positionMs = positionMs,
-        durationMs = durationMs,
-        isPlaying = isPlaying,
-        isLoading = isLoading,
-        onPlay = onPlay,
-        onPause = onPause,
-        onResume = onResume,
-        onSeek = onSeek,
-        onSkip = onSkip,
-        modifier = Modifier.padding(top = 4.dp)
-    )
+    // Present in every state that HAS audio, including "still loading" and "no speech was
+    // recognised" — the recording exists and is playable whether or not there are words to show for
+    // it. Absent when it does not: a transcript can outlive its recording, and a transport whose
+    // position never moves is four controls that quietly do nothing.
+    if (playable) {
+        TranscriptPlayerBar(
+            positionMs = positionMs,
+            durationMs = durationMs,
+            isPlaying = isPlaying,
+            isLoading = isLoading,
+            onPlay = onPlay,
+            onPause = onPause,
+            onResume = onResume,
+            onSeek = onSeek,
+            onSkip = onSkip,
+            modifier = Modifier.padding(top = 4.dp)
+        )
+    }
 
     // FlowRow, not Row: four actions do not fit on one line on a narrow screen in every locale,
     // and wrapping is better than squeezing labels until they ellipsize.
@@ -565,7 +588,14 @@ private fun TranscriptLine(
     segment: TranscriptSegmentEntry,
     speaker: String?,
     isActive: Boolean,
-    onClick: () -> Unit,
+    /**
+     * Plays from this line, or null when there is no audio to play.
+     *
+     * Null rather than an empty lambda, and the difference is the whole point: `combinedClickable`
+     * would still draw a ripple, so a transcript whose recording is gone would answer every tap with
+     * the animation of something happening and then nothing happening.
+     */
+    onClick: (() -> Unit)?,
     /**
      * Copies just this sentence.
      *
@@ -588,7 +618,17 @@ private fun TranscriptLine(
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .combinedClickable(onClick = onClick, onLongClick = onLongClick)
+                // Long-press to copy survives either way: quoting a line needs no audio, and it is
+                // the one thing a reader of an orphaned transcript is most likely to want.
+                .then(
+                    if (onClick != null) {
+                        Modifier.combinedClickable(onClick = onClick, onLongClick = onLongClick)
+                    } else {
+                        Modifier.pointerInput(onLongClick) {
+                            detectTapGestures(onLongPress = { onLongClick() })
+                        }
+                    }
+                )
                 // A tint rather than bolder text: re-weighting the line would reflow it, so every
                 // line would twitch sideways as the highlight passed through.
                 .background(

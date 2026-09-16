@@ -131,7 +131,12 @@ fun SummarySheetStrip(
     state: SummaryCardState,
     onCreate: () -> Unit,
     onStop: () -> Unit,
-    onSeek: (Long) -> Unit,
+    /**
+     * Plays from a cited timestamp, or **null when there is no audio to play** — a transcript can
+     * outlive its recording, and a citation chip that answered a tap with nothing would be the same
+     * dead control the transport below it no longer draws.
+     */
+    onSeek: ((Long) -> Unit)?,
     modifier: Modifier = Modifier,
     initiallyExpanded: Boolean = false,
 ) {
@@ -216,7 +221,7 @@ private fun Header() {
 }
 
 @Composable
-private fun ReadySummary(summary: CallSummary, onRedo: () -> Unit, onSeek: (Long) -> Unit) {
+private fun ReadySummary(summary: CallSummary, onRedo: () -> Unit, onSeek: ((Long) -> Unit)?) {
     // The call's own language, which is rarely the app's. Content direction rather than a fixed one
     // so a Hebrew summary lays out right-to-left inside an English UI.
     if (summary.intent.isNotEmpty()) {
@@ -262,7 +267,7 @@ private fun ReadySummary(summary: CallSummary, onRedo: () -> Unit, onSeek: (Long
 
 /** A titled list, or nothing at all when the list is empty. */
 @Composable
-private fun Section(titleRes: Int, items: List<String>, onSeek: (Long) -> Unit) {
+private fun Section(titleRes: Int, items: List<String>, onSeek: ((Long) -> Unit)?) {
     if (items.isEmpty()) return
 
     Spacer(Modifier.height(12.dp))
@@ -280,7 +285,7 @@ private fun Section(titleRes: Int, items: List<String>, onSeek: (Long) -> Unit) 
 
 /** One bullet. A `[m:ss]` prefix becomes a chip that seeks. */
 @Composable
-private fun SummaryItem(item: String, onSeek: (Long) -> Unit) {
+private fun SummaryItem(item: String, onSeek: ((Long) -> Unit)?) {
     val stamp = TranscriptTimestamp.parseLeading(item)
 
     Row(modifier = Modifier.fillMaxWidth(), verticalAlignment = Alignment.Top) {
@@ -288,7 +293,10 @@ private fun SummaryItem(item: String, onSeek: (Long) -> Unit) {
             Surface(
                 color = MaterialTheme.colorScheme.primary.copy(alpha = STAMP_ALPHA),
                 shape = RoundedCornerShape(6.dp),
-                modifier = Modifier.clickable { onSeek(stamp.millis) }
+                // Still drawn without audio — it says when in the call the point was made, which is
+                // worth reading on its own — but not clickable, so it cannot ripple and do nothing.
+                modifier = if (onSeek == null) Modifier
+                           else Modifier.clickable { onSeek(stamp.millis) }
             ) {
                 Text(
                     text = TranscriptTimestamp.format(stamp.millis),
