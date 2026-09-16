@@ -192,6 +192,80 @@ catalogue it → read its duration. No new permission (SAF only, never `READ_MED
 no database migration. Always ask language and always confirm the estimate for an import. Hide Merge for
 imports; add an "imported" badge; make an undated row fall back to its file date.
 
+**Phase 4 — 🧪 VERIFYING (built 2026-09-16, unit-tested, driven on the emulator; nothing seen on a
+phone).** The maintainer confirms it or it is not done.
+
+**The format probe was run first, and the plan's expectation was wrong.** One second of a 440 Hz tone
+in each container, through the app's own `AudioDecoder`, on the emulator (AOSP 16, arm64):
+
+| fixture | container / codec | decodes | note |
+|---|---|---|---|
+| `.opus` | Ogg / Opus 48 kHz | ✅ | 16216 samples for 1.000 s |
+| `.ogg` | Ogg / Opus 48 kHz | ✅ | 16216 samples |
+| `.m4a` | MP4 / AAC 44.1 kHz | ✅ | 16346 samples |
+| `.mp3` | MP3 44.1 kHz | ✅ | 16000 samples; duration read as 1044 ms |
+| `.wav` (PCM s16le) | WAVE | ✅ | **the one the plan expected to fail** |
+| `.wav` (PCM f32le) | WAVE | ✅ | the codec converts to 16-bit for us |
+
+WAV decodes: `c2.android.raw.decoder` is present, and PCM/WAVE decoding is a CDD requirement for
+handhelds anyway. The float variant decodes too, because MediaCodec's default output encoding is
+16-bit and the raw decoder converts rather than handing back floats — so `AudioDecoder`'s
+PCM-encoding check never fires on it. Both are asserted by `AudioImportFormatProbe`, so a platform
+change to either is one failing test rather than a field report.
+
+**So the gate is in two halves, and that is the design decision worth keeping.** `ImportableAudio`
+answers what a name and a MIME type can answer — is this a shape we know how to store. The runtime
+decode probe in `AudioImport` answers the rest, because a name is only a claim: a file called `.mp3`
+that holds anything else passes every check that can be made without opening it. The probe reads two
+seconds of the **copy**, so importing an hour-long recording costs the same as importing a voice note.
+
+Landed: `ImportableAudio` (what we accept and what we store it as); `AudioImport` (metadata → copy →
+decode probe → catalogue, in that order, with `planFor` holding the refusals as a pure function); the
+SAF picker on the Transcripts page, above the groups and above the empty state, whose hint is reworded
+now that importing is a second answer; an import branch in `RecordingsRepository.parseName`; the
+"imported" badge in `LibraryNameRow` and on the recordings row; a date fallback for an undated row;
+always-ask-language and always-confirm for an import; and the four sweep guards.
+
+Decisions worth not re-litigating:
+
+- **No permission, ever.** `ActivityResultContracts.OpenDocument` filtered to the audio wildcard.
+  `READ_MEDIA_AUDIO` would let a call recorder read every audio file on the phone. The filter is the
+  wildcard rather than our exact list because a provider is free to report `application/octet-stream`
+  for a perfectly good voice note, and naming exact types would hide it from the picker entirely.
+- **Copy before decode, always.** A share-sheet or chat-app URI is frequently a non-seekable pipe and
+  `MediaExtractor` needs to seek, so probing the source works on files picked from local storage and
+  fails on exactly the ones this feature exists for.
+- **The import runs in the ViewModel's scope, not the screen's.** A rotation half way through would
+  otherwise cancel it between the copy and the catalogue, leaving a file in the user's folder that the
+  app has no record of.
+- **Retention now exempts an import in the catalogued pass too.** Phase 1 stamped it with the import
+  time, which stops it arriving already expired; it does not stop the sweep taking it once the period
+  elapses. For a call that delete is the routine loss of a device copy and the Drive copy survives —
+  an import has none, so the same delete destroys the only copy plus its transcript. Same argument as
+  the storage cap, and the untracked pass had already said it in words.
+- **The storage cap exempts imports and says so in its description**, in all eleven locales. They
+  still count toward the total, like favourites, so a library of imports cannot sit over the cap while
+  calls are deleted instead.
+
+Verified on the emulator (AOSP 16, `com.baba.callvault`, a real `.opus` named the way WhatsApp names
+one, and an `.m4a`): the picker offers both with no permission prompt; the import lands in the
+recordings folder under `{stamp}_import_{label}{ext}`; the app opens the imported recording's own
+screen, which plays it and shows its length; both appear in the recordings list with the "imported"
+badge, a date, a duration and a device-only source badge; the Transcripts row shows the badge too;
+the row menu offers Share and Delete and **not** Merge, where a call beside it still offers Merge;
+deleting an import removes the file; a file called `.mp3` that is not audio was copied, probed,
+**deleted again** and refused with a sentence.
+
+Transcription UX confirmed with the "ask before running" setting deliberately turned **off**: the
+import still asked the language and still showed the estimate, while a call in the same list went
+straight to the queue with no dialogs. The queue itself was confirmed end to end — the scheduler
+logged the request, the worker picked it up with the right model — with a **stand-in model file**, so
+what could not be run is the transcription itself and therefore the resulting text.
+
+Not exercised: a real Drive account (the exclusion is asserted by `CloudCopyPolicyTest` and both
+routes to Drive ask it), a retention sweep on a real clock, and the summary/export paths, which need a
+finished transcript and therefore a model.
+
 **Phase 5 — Summaries page**, on a batch summary query (the per-recording state holder would spawn one
 observer per row).
 

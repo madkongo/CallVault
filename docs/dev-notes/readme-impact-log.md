@@ -1,5 +1,33 @@
 # README impact log
 
+## 2026-09-16 (latest) — CallVault can transcribe audio it did not record
+
+🧪 VERIFYING (built and driven on the emulator; nothing seen on a real phone). The Transcripts page
+has an **Import audio** card. It takes a file through the system file picker — a WhatsApp voice note,
+a meeting, anything already on the phone — copies it into the recordings folder and catalogues it, so
+it can be played, transcribed, summarised, tagged, searched and exported like a call.
+
+**What this makes wrong in the README, when this ships:**
+
+- **"Records both sides of a call" is no longer the whole of what the app does with audio.** The
+  tagline is still true; the feature list is now incomplete without a line about importing.
+- **Anything that says CallVault only ever handles what it recorded itself** needs softening. It still
+  only *records* calls.
+- **The permissions section, if it lists what the app can read.** Import adds **no permission**: the
+  picker is SAF and hands back exactly the one file the user chose. `READ_MEDIA_AUDIO` is deliberately
+  not requested and should not appear anywhere, including the F-Droid description.
+- **The privacy story gains a sentence worth making explicitly**: an imported file is **never** copied
+  to Drive, never deleted by the retention period, and never evicted by the storage cap — so the phone
+  holds the only copy, which is both the guarantee and the caveat. The storage-cap setting's own
+  description already says so in all eleven locales.
+
+**Formats to claim, measured rather than assumed** (see the plan's Phase 4 note for the table):
+`.opus`, `.ogg`, `.m4a`, `.mp3` and `.wav` all decode. Anything the phone cannot read is refused at
+import with a reason, so the README should not promise a format list longer than that.
+
+**Not yet claimable:** nothing here has been seen on a real phone, and no real transcription has been
+run on an import — the emulator has no model.
+
 ## 2026-09-16 (later) — Transcripts is a page, and a transcript opens on one
 
 🧪 VERIFYING (built and driven on the emulator; nothing seen on a real phone). The Transcripts card
