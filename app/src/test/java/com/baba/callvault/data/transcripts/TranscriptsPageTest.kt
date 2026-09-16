@@ -17,16 +17,14 @@ import org.junit.Test
 /**
  * How the Transcripts page divides what it is handed.
  *
- * Plain JUnit, no Robolectric: this is arithmetic over two lists, and the interesting failures —
- * a row under the wrong heading, an orphan drawn as an unlabelled row, a page count that disagrees
- * with the hub card the user just tapped — all render without complaint.
+ * Plain JUnit, no Robolectric: this is a partition of one list, and the interesting failures — a
+ * row under the wrong heading, or a page count that disagrees with the hub card the user has just
+ * tapped — all render without complaint.
  */
 class TranscriptsPageTest {
 
     private fun entry(name: String, state: TranscriptState) =
         TranscriptEntry(displayName = name, state = state, updatedAt = 0L)
-
-    private val catalogue = setOf("a.ogg", "b.ogg", "c.ogg", "d.ogg", "e.ogg")
 
     @Test
     fun each_state_lands_under_the_heading_that_describes_it() {
@@ -37,7 +35,6 @@ class TranscriptsPageTest {
                 entry("c.ogg", TranscriptState.RUNNING),
                 entry("d.ogg", TranscriptState.FAILED),
             ),
-            catalogued = catalogue,
         )
 
         assertEquals(listOf("b.ogg", "c.ogg"), groups.working.map { it.displayName })
@@ -54,7 +51,6 @@ class TranscriptsPageTest {
                 entry("c.ogg", TranscriptState.QUEUED),
                 entry("d.ogg", TranscriptState.FAILED),
             ),
-            catalogued = catalogue,
         )
 
         // The hub card counts DONE rows; this is the number the page prints beside the same list.
@@ -62,18 +58,22 @@ class TranscriptsPageTest {
     }
 
     @Test
-    fun a_transcript_whose_recording_is_gone_is_dropped_from_every_group() {
+    fun a_transcript_whose_recording_is_gone_is_still_listed() {
+        // Dropping these looked tidier and immediately produced the defect this page exists to
+        // avoid: the hub card counts DONE rows in the transcripts database and cannot see the
+        // recordings catalog, so anything filtered out here is a number the user can catch the app
+        // lying about simply by counting the rows under it.
         val groups = TranscriptsPage.group(
             entries = listOf(
                 entry("deleted-months-ago.ogg", TranscriptState.DONE),
-                entry("also-gone.ogg", TranscriptState.FAILED),
                 entry("a.ogg", TranscriptState.DONE),
             ),
-            catalogued = catalogue,
         )
 
-        assertEquals(listOf("a.ogg"), groups.ready.map { it.displayName })
-        assertTrue(groups.failed.isEmpty())
+        assertEquals(
+            listOf("deleted-months-ago.ogg", "a.ogg"),
+            groups.ready.map { it.displayName }
+        )
     }
 
     @Test
@@ -84,7 +84,6 @@ class TranscriptsPageTest {
                 entry("a.ogg", TranscriptState.DONE),
                 entry("b.ogg", TranscriptState.DONE),
             ),
-            catalogued = catalogue,
         )
 
         assertEquals(listOf("c.ogg", "a.ogg", "b.ogg"), groups.ready.map { it.displayName })
@@ -92,25 +91,14 @@ class TranscriptsPageTest {
 
     @Test
     fun nothing_at_all_is_the_empty_page_and_a_queued_run_alone_is_not() {
-        assertTrue(TranscriptsPage.group(emptyList(), catalogue).isEmpty)
+        assertTrue(TranscriptsPage.group(emptyList()).isEmpty)
 
         val queuedOnly = TranscriptsPage.group(
             entries = listOf(entry("a.ogg", TranscriptState.QUEUED)),
-            catalogued = catalogue,
         )
         // Nothing is readable yet, but the page has something to say — showing "nothing transcribed,
         // here is how to get one" over a transcription already in flight would be a lie.
         assertTrue(queuedOnly.ready.isEmpty())
         assertTrue(!queuedOnly.isEmpty)
-    }
-
-    @Test
-    fun an_empty_catalogue_drops_everything_rather_than_listing_rows_that_open_onto_nothing() {
-        val groups = TranscriptsPage.group(
-            entries = listOf(entry("a.ogg", TranscriptState.DONE)),
-            catalogued = emptySet(),
-        )
-
-        assertTrue(groups.isEmpty)
     }
 }

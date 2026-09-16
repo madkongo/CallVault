@@ -139,24 +139,45 @@ internal fun LibrarySectionRow(
     item: RecordingItem,
     onOpen: (() -> Unit)? = null,
     trailing: (@Composable () -> Unit)? = null,
+) = LibraryNameRow(
+    // BidiText.isolate, not the raw name: a Hebrew or Arabic contact next to a Latin-digit
+    // timestamp reorders the whole line without it.
+    title = RecordingLabel.of(item) ?: BidiText.isolate(item.displayName),
+    subtitle = item.displayDate,
+    onOpen = onOpen,
+    trailing = trailing,
+)
+
+/**
+ * The same row, for something the recordings catalog cannot name.
+ *
+ * A transcript can outlive its recording — the two are separate databases and the delete cascade is
+ * called by hand — and such a row is still worth drawing, because the text is still readable. It is
+ * drawn with the file's own name and no date rather than with an invented one: what is missing is
+ * the audio, and a row that quietly borrowed a date from somewhere would hide that.
+ */
+@Composable
+internal fun LibraryNameRow(
+    title: String,
+    subtitle: String?,
+    onOpen: (() -> Unit)? = null,
+    trailing: (@Composable () -> Unit)? = null,
 ) {
     CvCard(onClick = onOpen, contentPadding = PaddingValues(horizontal = 16.dp, vertical = 14.dp)) {
         Row(verticalAlignment = Alignment.CenterVertically) {
             Column(modifier = Modifier.weight(1f)) {
                 Text(
-                    // BidiText.isolate, not the raw name: a Hebrew or Arabic contact next to a
-                    // Latin-digit timestamp reorders the whole line without it.
-                    text = RecordingLabel.of(item) ?: BidiText.isolate(item.displayName),
+                    text = title,
                     style = MaterialTheme.typography.titleSmall,
                     fontWeight = FontWeight.SemiBold,
                     color = MaterialTheme.colorScheme.onSurface,
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis,
                 )
-                item.displayDate?.let { date ->
+                subtitle?.let { line ->
                     Spacer(Modifier.height(2.dp))
                     Text(
-                        text = date,
+                        text = line,
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                         maxLines = 1,

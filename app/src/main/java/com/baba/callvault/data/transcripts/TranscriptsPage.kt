@@ -29,7 +29,8 @@ object TranscriptsPage {
      *                 scheduler deliberately never retries a FAILED row, so a transcription that
      *                 died is invisible for ever unless something says so.
      * @param ready    Finished, and therefore readable. **This group alone is what the hub counts**,
-     *                 so the card and the page agree by construction rather than by coincidence.
+     *                 and it holds every DONE row without exception, so the card's number and the
+     *                 page's list are the same set rather than two that happen to agree.
      */
     data class Groups(
         val working: List<TranscriptEntry>,
@@ -41,26 +42,29 @@ object TranscriptsPage {
     }
 
     /**
-     * Groups [entries] for the page, dropping any whose recording is gone.
+     * Groups [entries] for the page.
      *
-     * [catalogued] is every display name the recordings list currently holds. A transcript with no
-     * recording behind it is normal rather than exceptional — the two are separate databases with no
-     * foreign key between them, so a recording can be deleted while its transcript is still being
-     * cleaned up, and a Drive-only library does not enumerate the device folder at all. Such a row is
-     * dropped rather than drawn: it would be an unlabelled row that opens onto a transcript with no
-     * audio to play, and it would make the page's count disagree with the hub's.
+     * **Every entry is kept, including one whose recording is gone.** That was not the first answer:
+     * dropping them looked tidier, and on the emulator it immediately produced the defect this page
+     * exists to avoid — the hub card said "4 transcribed", the page listed three, and nothing
+     * anywhere explained the missing one. The card counts DONE rows in the transcripts database and
+     * cannot see the recordings catalog, so anything this filters out is a number the user can catch
+     * the app lying about by counting.
+     *
+     * An orphan is rare rather than impossible: the two are separate databases with no foreign key
+     * between them, so the delete cascade has to be called by hand and a recording can be gone while
+     * its transcript is still being cleaned up. Keeping it is also the honest reading of what it is —
+     * the text really is still there and still readable. Only the audio has gone, and the page draws
+     * such a row with what it does know rather than pretending to a date and a contact it does not.
      *
      * Input order is preserved inside each group, so the caller's ORDER BY is the page's order and
      * this function has no opinion about what "newest" means.
      */
-    fun group(entries: List<TranscriptEntry>, catalogued: Set<String>): Groups {
-        val known = entries.filter { it.displayName in catalogued }
-        return Groups(
-            working = known.filter {
-                it.state == TranscriptState.QUEUED || it.state == TranscriptState.RUNNING
-            },
-            failed = known.filter { it.state == TranscriptState.FAILED },
-            ready = known.filter { it.state == TranscriptState.DONE },
-        )
-    }
+    fun group(entries: List<TranscriptEntry>): Groups = Groups(
+        working = entries.filter {
+            it.state == TranscriptState.QUEUED || it.state == TranscriptState.RUNNING
+        },
+        failed = entries.filter { it.state == TranscriptState.FAILED },
+        ready = entries.filter { it.state == TranscriptState.DONE },
+    )
 }

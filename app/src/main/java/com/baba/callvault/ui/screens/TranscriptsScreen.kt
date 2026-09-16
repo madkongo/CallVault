@@ -37,8 +37,10 @@ import com.baba.callvault.data.recordings.RecordingsRepository.RecordingItem
 import com.baba.callvault.data.transcripts.TranscriptStatus
 import com.baba.callvault.data.transcripts.TranscriptsPage
 import com.baba.callvault.data.transcripts.db.TranscriptEntry
-import com.baba.callvault.ui.common.CvSectionHeader
+import com.baba.callvault.ui.common.BidiText
 import com.baba.callvault.ui.common.CvScaffold
+import com.baba.callvault.ui.common.CvSectionHeader
+import com.baba.callvault.ui.common.RecordingLabel
 import com.baba.callvault.ui.common.TranscribingPillState
 import com.baba.callvault.ui.common.TranscriptActionButton
 
@@ -66,8 +68,10 @@ import com.baba.callvault.ui.common.TranscriptActionButton
  * exact shape of the list-load regression that made freshly recorded calls look missing. The row says
  * who the call was with and when, which is what recognises it.
  *
- * @param groups     Already decided and already joined against the catalog; see [TranscriptsPage].
+ * @param groups     Already grouped; see [TranscriptsPage] for what is kept and why.
  * @param recordings The catalog, resolved to rows **once for the whole list** rather than per row.
+ *                   A transcript with no row in it is drawn from its own file name; see
+ *                   [transcriptRows].
  * @param transcribing What the queue is doing, the same state the title pill reads. It supplies the
  *                   percentage inside a running row's ring, and its being anything other than
  *                   Hidden is what makes Stop worth offering.
@@ -220,14 +224,15 @@ private fun LazyListScope.transcriptRows(
     percentFor: (String) -> Int,
 ) {
     items(entries, key = { it.displayName }) { entry ->
-        // Non-null by construction — TranscriptsPage.group drops anything the catalog does not have —
-        // but asserted here rather than assumed, because the alternative to a skipped row is a crash
-        // on a screen the user opened to read something.
-        val item = byName[entry.displayName] ?: return@items
+        // Null when the transcript has outlived its recording, which is rare but real: the two are
+        // separate databases and the delete cascade is called by hand. The row is still drawn — see
+        // TranscriptsPage.group for why dropping it made the hub's count a lie — with the file's own
+        // name and no date, so what is missing shows rather than being papered over.
+        val item = byName[entry.displayName]
         val status = TranscriptStatus.of(entry.state)
-
-        LibrarySectionRow(
-            item = item,
+        LibraryNameRow(
+            title = item?.let { RecordingLabel.of(it) } ?: BidiText.isolate(entry.displayName),
+            subtitle = item?.displayDate,
             onOpen = onOpen?.let { open -> { open(entry.displayName) } },
             // Only where the row has a state worth drawing. A finished transcript needs no icon: the
             // card is the affordance, and an "open" button on a card that opens says it twice.

@@ -146,6 +146,7 @@ import com.baba.callvault.ui.common.MergeProgressState
 import com.baba.callvault.ui.common.DeleteCopiesDialog
 import com.baba.callvault.ui.common.DeleteRecordingDialog
 import com.baba.callvault.ui.common.SeekBar
+import com.baba.callvault.ui.common.TranscriptPresentation
 import com.baba.callvault.ui.common.TranscriptView
 import com.baba.callvault.system.copyToClipboard
 import com.baba.callvault.system.sharePlainText
@@ -203,7 +204,7 @@ import java.util.Locale
 
 /**
  * Home, once onboarding and the setup wizard are complete: **the shell that holds every section**,
- * and the one recording that may be open over them.
+ * and the two things that may be open in place of one — a recording, or a transcript being read.
  *
  * ## Why one composable and not four
  *
@@ -214,6 +215,11 @@ import java.util.Locale
  * loss that issue #27 reported for a rotation, and then three times over, once per section.
  * `rememberSaveable` does not help there: it restores across an Activity recreation, not across a
  * subtree leaving composition for good.
+ *
+ * The same holds for the transcript being read: it replaces the section rather than sitting over it,
+ * so which transcript that is, and the one playback controller behind it, are held here too. There
+ * is exactly one [HomeViewModel] for the whole shell precisely so that a section, a recording and a
+ * transcript can never each own a player.
  *
  * So the state placement is deliberate, and each field below says which it is:
  *  - **shell** — outlives every section switch (the open recording, the dialogs, the selection),
@@ -269,8 +275,26 @@ fun HomeScreen(
         TranscriptRepository.statusesFor(context, listedNames)
     }.collectAsState(initial = emptyMap())
 
-    /** Which recording's transcript is open, or null. */
+    /** Which recording's transcript is open **as a sheet**, over the list or the playback screen. */
     var transcriptFor by rememberSaveable { mutableStateOf<String?>(null) }
+
+    /**
+     * Which recording's transcript is open **as a page**, or null.
+     *
+     * A second field rather than a flag beside [transcriptFor], because the two differ in more than
+     * how they are drawn: a sheet sits over a list that still shows the playing row, and a page
+     * replaces the section entirely, so leaving one keeps the audio and leaving the other must stop
+     * it. Keeping them apart means neither host can be reached with the other's rules.
+     *
+     * SHELL state, and saveable for the reason [playbackFor] is: rotation recreates the Activity, and
+     * a plain `remember` would drop the reader back on the list having lost their place — and, worse,
+     * would leave the recording playing with nothing on screen owning it, which is issue #27 exactly.
+     *
+     * Deliberately NOT part of the persisted "reopen where you were" section. A section is a place;
+     * this is a place *plus a recording*, and reopening the app onto a transcript whose recording a
+     * retention sweep deleted overnight would be a blank page with nothing to go back to.
+     */
+    var readingFor by rememberSaveable { mutableStateOf<String?>(null) }
 
     /** Which recording's transcript is awaiting a delete confirmation, or null. */
     var deleteTranscriptFor by rememberSaveable { mutableStateOf<String?>(null) }
@@ -549,11 +573,13 @@ fun HomeScreen(
         }
     }
 
-    // One section at a time, and none of them while a recording is open over the lot.
+    // One section at a time, and none of them while a recording is open over the lot — or while a
+    // transcript is being read on a page of its own, which likewise replaces the section rather than
+    // sitting over it. Both are drawn below, as the only other full-screen things this shell emits.
     //
     // The switch is here, below every piece of state above it, and that placement is the point: see
     // the function's KDoc. Nothing in a section branch may remember anything it would mind losing.
-    if (playbackFor == null) when (section) {
+    if (playbackFor == null && readingFor == null) when (section) {
 
     HomeSection.Hub -> {
         // Re-read on arrival rather than once for the life of the shell. The guard inside
@@ -622,13 +648,7 @@ fun HomeScreen(
         // and a flow remembered before the user's first transcription would answer empty for ever.
         val entries by remember(section) { LibraryCounts.transcripts(context) }
             .collectAsState(initial = emptyList())
-        // The names the catalog actually holds, built once and handed to the grouping rather than
-        // walked per transcript. Keyed on the list so it is rebuilt when recordings change, not on
-        // every recomposition of a screen that scrolls.
-        val catalogued = remember(uiState.recordings) {
-            uiState.recordings.mapTo(HashSet()) { it.displayName }
-        }
-        val groups = remember(entries, catalogued) { TranscriptsPage.group(entries, catalogued) }
+        val groups = remember(entries) { TranscriptsPage.group(entries) }
 
         TranscriptsScreen(
             modifier = modifier,
@@ -641,10 +661,10 @@ fun HomeScreen(
             titleTrailing = titleTrailing,
             onSearch = { showTranscriptSearch = true },
             onOpenQueue = { showTranscribingSheet = true },
-            // The transcript sheet this shell already owns. The reading view is the next commit;
-            // until then the page opens the same thing the recordings list opens, rather than
-            // nothing.
-            onOpen = { displayName -> transcriptFor = displayName },
+            // A page of its own, not the sheet. Here the transcript is the destination rather than a
+            // look at something you are already standing on, and a sheet over a list of transcripts
+            // would be a transcript over a list of transcripts.
+            onOpen = { displayName -> readingFor = displayName },
             // The same gate every other entry point uses: without it a retry on a phone whose model
             // has been deleted would fail exactly the silent way the first attempt did.
             onRetry = { displayName -> startTranscription(displayName) },
@@ -897,6 +917,12 @@ fun HomeScreen(
             onDismiss = { showTranscriptSearch = false },
             onOpen = { row ->
                 showTranscriptSearch = false
+                // Raised from the Transcripts page, a hit opens the transcript it was found in and
+                // plays from there. On the recordings list it only plays, unchanged: there the row
+                // is tinted behind the dismissed sheet, so something on screen owns the sound —
+                // whereas a list of transcripts shows nothing about playback, and starting a private
+                // call out loud over it would leave nothing anywhere to stop it (#27).
+                if (section == HomeSection.Transcripts) readingFor = row.displayName
                 viewModel.playFrom(row.uri, row.startMs.toInt())
             }
         )
@@ -1014,10 +1040,18 @@ fun HomeScreen(
         )
     }
 
-    // The transcript sheet, raised from the recordings list, the playback screen and — until Phase 3
-    // gives it a reading view of its own — the Transcripts section. Outside every scaffold, for the
-    // reason given above.
-    transcriptFor?.let { displayName ->
+    // The transcript, in whichever frame it was opened in. ONE block of plumbing for both: the data
+    // a transcript needs — the text, the summary, the note, the tags, the speaker mapping, the
+    // export labels — is the same wherever it is drawn, and a second copy of it for the reading view
+    // would be the place the two silently stopped agreeing.
+    //
+    // A sheet when the recordings list or a recording's own screen raised it; a page when the
+    // Transcripts section did. Never both, so the frame is derived rather than stored twice.
+    //
+    // Outside every scaffold, for the reason given above.
+    val readingPresentation = readingFor != null && playbackFor == null
+    val openTranscriptFor = if (readingPresentation) readingFor else transcriptFor
+    openTranscriptFor?.let { displayName ->
         val transcript by remember(displayName) {
             TranscriptRepository.transcript(context, displayName)
         }.collectAsState(initial = null)
@@ -1057,16 +1091,44 @@ fun HomeScreen(
         // English while the screen behind it shows them translated.
         val exportLabels = rememberExportLabels()
 
+        /**
+         * Leaving the transcript.
+         *
+         * The page stops the audio; the sheet does not, and that difference is the whole reason the
+         * two frames are told apart. Dismissing the sheet puts the user back on the recordings list,
+         * where the playing row is tinted and its own screen is one tap away — something on screen
+         * still owns the sound. Leaving the page puts them on a list of transcripts that says nothing
+         * about playback at all, so a recording left running there would be playing a private
+         * conversation out loud with nothing anywhere to stop it. That is issue #27's complaint, and
+         * it is the same rule the playback screen's own back arrow follows.
+         */
+        val closeTranscript = {
+            if (readingPresentation) {
+                viewModel.stopPlayback()
+                readingFor = null
+            } else {
+                transcriptFor = null
+            }
+        }
+
+        // Back leaves the page, exactly as the arrow does. Registered here rather than in the router,
+        // so it outranks the router's "back returns to the hub": Compose hands back to the most
+        // recently composed enabled handler, and this is composed below that one.
+        BackHandler(enabled = readingPresentation) { closeTranscript() }
+
         TranscriptView(
             transcript = transcript,
             title = title,
+            presentation = if (readingPresentation) TranscriptPresentation.Screen
+                           else TranscriptPresentation.Sheet,
+            modifier = modifier,
             note = sheetNote,
             tags = sheetTags,
             positionMs = if (isThisTrack) playback.positionMs.toLong() else -1L,
             durationMs = if (isThisTrack) playback.durationMs.toLong() else 0L,
             isPlaying = isThisTrack && playback.phase == RecordingPlaybackController.Phase.PLAYING,
             isLoading = isThisTrack && playback.phase == RecordingPlaybackController.Phase.LOADING,
-            onDismiss = { transcriptFor = null },
+            onDismiss = closeTranscript,
             // playFrom, not seekTo: seekTo only works on a track already prepared, so tapping a
             // line in a recording that is not playing used to do nothing at all.
             onSeekTo = { startMs ->
@@ -1098,17 +1160,27 @@ fun HomeScreen(
                     context.shareTranscriptFile(file, format.mimeType)
                 }
             },
+            // Leaving without stopping the audio even on the page: a re-transcription throws the
+            // stored text away, so there is nothing left to read, but the recording is still the
+            // recording and is now back in a list that shows it playing.
             onRetranscribe = {
                 startTranscription(displayName)
                 transcriptFor = null
+                readingFor = null
             },
-            // Close the sheet first: an AlertDialog raised over a ModalBottomSheet leaves the
-            // user looking at the very text they asked to destroy. Cancelling puts it back — losing
-            // the transcript you were reading because you thought better of deleting it is a
-            // punishment for changing your mind (mirror176, #27).
             onDelete = {
-                transcriptFor = null
-                reopenTranscriptAfterDelete = displayName
+                // The SHEET is closed first: an AlertDialog raised over a ModalBottomSheet leaves
+                // the user looking at the very text they asked to destroy. Cancelling puts it back —
+                // losing the transcript you were reading because you thought better of deleting it
+                // is a punishment for changing your mind (mirror176, #27).
+                //
+                // The PAGE stays put, because a dialog over a screen is ordinary and does not cover
+                // what it is asking about. Nothing to restore on cancel, and nothing flashes away
+                // and back for someone who only wanted to think about it.
+                if (!readingPresentation) {
+                    transcriptFor = null
+                    reopenTranscriptAfterDelete = displayName
+                }
                 deleteTranscriptFor = displayName
             },
             // The contact's name is the one already in the header, so a labelled line reads as
@@ -1254,8 +1326,15 @@ fun HomeScreen(
             message = stringResource(R.string.transcript_delete_confirm_message, label),
             onConfirm = {
                 transcriptScope.launch { TranscriptRepository.delete(context, displayName) }
-                // Deleted, so there is nothing to go back to.
+                // Deleted, so there is nothing to go back to — and nothing left on the page that was
+                // showing it, which is still composed underneath this dialog. Leaving it there would
+                // hold a reader on a page whose text is being removed from under them, and leave the
+                // audio playing on a screen that no longer has a reason to exist.
                 reopenTranscriptAfterDelete = null
+                if (readingFor == displayName) {
+                    viewModel.stopPlayback()
+                    readingFor = null
+                }
                 deleteTranscriptFor = null
             },
             onDismiss = {
