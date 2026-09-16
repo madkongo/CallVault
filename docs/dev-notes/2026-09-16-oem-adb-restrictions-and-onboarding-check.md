@@ -226,3 +226,8 @@ flipped back to ALLOWED. The OPPO and Xiaomi wordings have **not** been seen on 
 Not done: the Home screen says nothing about this (a blocked phone that is already granted keeps working,
 and an ungranted one already shows its own "cannot record" state); vivo and Meizu get the general wording
 because their exact switch names are unverified.
+
+**OP12 install 2026-09-16 10:03** (🧪): release build of `fix/adb-open-lock-wedge` (freeze fix + OEM check,
+no stereo probe) installed while idle. Grant survived, recorder connected over loopback in 3 s, notice reached
+"Ready to record calls" at 10:04:51. The phone reads permissive (`persist.sys.permission.enable=false`), so the
+OEM warning correctly shows nothing there.
