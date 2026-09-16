@@ -158,7 +158,7 @@
     <!-- Home: the hub of cards, and the two sections its cards open -->
     <string name="home_hub_library_title">Bibliothek</string>
     <string name="home_hub_recordings_body">Jeder Anruf, den CallVault aufgezeichnet hat.</string>
-    <string name="home_hub_transcripts_body">Anrufe lesen oder Audio importieren.</string>
+    <string name="home_hub_transcripts_body">Deine Anrufe als Worte – und jedes Audio, das du mitbringst.</string>
     <string name="home_hub_summaries_body">KI-Zusammenfassungen, auf deinem Telefon erstellt.</string>
     <string name="home_transcripts_title">Transkripte</string>
     <string name="home_summaries_title">Zusammenfassungen</string>

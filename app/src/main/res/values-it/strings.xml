@@ -644,4 +644,23 @@
     <string name="home_community_pill">Telegram</string>
     <string name="home_community_tucked_hint">Spostato in alto accanto a Sostieni. Tienilo premuto lì per riportare la scheda.</string>
     <string name="home_community_restored_hint">Di nuovo nella schermata iniziale.</string>
+    <string name="library_row_save">Salva come file</string>
+    <string name="library_nothing_to_share">Non c\'è più niente da condividere qui.</string>
+    <string name="transcript_delete_confirm_message_text_only">Dietro queste parole non c\'è nessuna registrazione: eliminare la trascrizione di %1$s elimina tutto, e non si può recuperare.</string>
+    <string name="summary_delete_confirm_title">Eliminare questo riassunto?</string>
+    <string name="summary_delete_confirm_message">Il riassunto di %1$s sarà eliminato. La trascrizione e la registrazione restano, e puoi farne scrivere un altro.</string>
+    <string name="library_bulk_delete_transcripts_message">Il testo sarà eliminato. Le registrazioni restano e potrai trascriverle di nuovo più tardi.</string>
+    <string name="library_bulk_delete_summaries_message">I riassunti saranno eliminati. Le trascrizioni e le registrazioni restano.</string>
+    <plurals name="library_bulk_delete_transcripts_title">
+        <item quantity="one">Eliminare %1$d trascrizione?</item>
+        <item quantity="other">Eliminare %1$d trascrizioni?</item>
+    </plurals>
+    <plurals name="library_bulk_delete_summaries_title">
+        <item quantity="one">Eliminare %1$d riassunto?</item>
+        <item quantity="other">Eliminare %1$d riassunti?</item>
+    </plurals>
+    <plurals name="library_bulk_delete_text_only_warning">
+        <item quantity="one">%1$d di queste non ha più una registrazione: il suo testo è tutto ciò che resta. Quella parte non si può annullare.</item>
+        <item quantity="other">%1$d di queste non hanno più una registrazione: il loro testo è tutto ciò che resta. Quella parte non si può annullare.</item>
+    </plurals>
 </resources>

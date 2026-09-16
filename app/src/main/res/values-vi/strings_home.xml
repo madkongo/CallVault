@@ -158,7 +158,7 @@
     <!-- Home: the hub of cards, and the two sections its cards open -->
     <string name="home_hub_library_title">Thư viện</string>
     <string name="home_hub_recordings_body">Mọi cuộc gọi mà CallVault đã ghi âm.</string>
-    <string name="home_hub_transcripts_body">Đọc cuộc gọi của bạn, hoặc nhập âm thanh.</string>
+    <string name="home_hub_transcripts_body">Cuộc gọi của bạn thành chữ — và bất kỳ âm thanh nào bạn mang tới.</string>
     <string name="home_hub_summaries_body">Tóm tắt bằng AI, ngay trên máy.</string>
     <string name="home_transcripts_title">Bản chép lời</string>
     <string name="home_summaries_title">Bản tóm tắt</string>

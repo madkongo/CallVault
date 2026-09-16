@@ -644,4 +644,23 @@
     <string name="home_community_pill">Telegram</string>
     <string name="home_community_tucked_hint">Nach oben neben „Unterstützen“ verschoben. Dort lange drücken, um die Karte zurückzuholen.</string>
     <string name="home_community_restored_hint">Wieder auf dem Startbildschirm.</string>
+    <string name="library_row_save">Als Datei speichern</string>
+    <string name="library_nothing_to_share">Dort ist nichts mehr zum Teilen.</string>
+    <string name="transcript_delete_confirm_message_text_only">Hinter diesen Worten steht keine Aufnahme: Wird das Transkript von %1$s gelöscht, ist alles weg und lässt sich nicht zurückholen.</string>
+    <string name="summary_delete_confirm_title">Diese Zusammenfassung löschen?</string>
+    <string name="summary_delete_confirm_message">Die Zusammenfassung von %1$s wird gelöscht. Das Transkript und die Aufnahme bleiben erhalten, und du kannst sie neu schreiben lassen.</string>
+    <string name="library_bulk_delete_transcripts_message">Die Texte werden gelöscht. Die Aufnahmen bleiben erhalten und können später erneut transkribiert werden.</string>
+    <string name="library_bulk_delete_summaries_message">Die Zusammenfassungen werden gelöscht. Die Transkripte und die Aufnahmen bleiben erhalten.</string>
+    <plurals name="library_bulk_delete_transcripts_title">
+        <item quantity="one">%1$d Transkript löschen?</item>
+        <item quantity="other">%1$d Transkripte löschen?</item>
+    </plurals>
+    <plurals name="library_bulk_delete_summaries_title">
+        <item quantity="one">%1$d Zusammenfassung löschen?</item>
+        <item quantity="other">%1$d Zusammenfassungen löschen?</item>
+    </plurals>
+    <plurals name="library_bulk_delete_text_only_warning">
+        <item quantity="one">Bei %1$d davon gibt es keine Aufnahme mehr — dort ist der Text alles, was bleibt. Das lässt sich nicht rückgängig machen.</item>
+        <item quantity="other">Bei %1$d davon gibt es keine Aufnahme mehr — dort ist der Text alles, was bleibt. Das lässt sich nicht rückgängig machen.</item>
+    </plurals>
 </resources>

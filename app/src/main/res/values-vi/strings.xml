@@ -643,4 +643,23 @@
     <string name="home_community_pill">Telegram</string>
     <string name="home_community_tucked_hint">Đã chuyển lên cạnh Ủng hộ. Nhấn giữ ở đó để đưa thẻ trở lại.</string>
     <string name="home_community_restored_hint">Đã trở lại màn hình chính.</string>
+    <string name="library_row_save">Lưu thành tệp</string>
+    <string name="library_nothing_to_share">Ở đó không còn gì để chia sẻ nữa.</string>
+    <string name="transcript_delete_confirm_message_text_only">Không còn bản ghi nào phía sau những chữ này: xoá bản chép lời của %1$s là xoá toàn bộ, và không lấy lại được.</string>
+    <string name="summary_delete_confirm_title">Xoá bản tóm tắt này?</string>
+    <string name="summary_delete_confirm_message">Bản tóm tắt của %1$s sẽ bị xoá. Bản chép lời và bản ghi vẫn được giữ, và bạn có thể cho viết lại.</string>
+    <string name="library_bulk_delete_transcripts_message">Phần chữ sẽ bị xoá. Các bản ghi vẫn được giữ và bạn có thể chép lời lại sau.</string>
+    <string name="library_bulk_delete_summaries_message">Các bản tóm tắt sẽ bị xoá. Các bản chép lời và bản ghi vẫn được giữ.</string>
+    <plurals name="library_bulk_delete_transcripts_title">
+        <item quantity="one">Xoá %1$d bản chép lời?</item>
+        <item quantity="other">Xoá %1$d bản chép lời?</item>
+    </plurals>
+    <plurals name="library_bulk_delete_summaries_title">
+        <item quantity="one">Xoá %1$d bản tóm tắt?</item>
+        <item quantity="other">Xoá %1$d bản tóm tắt?</item>
+    </plurals>
+    <plurals name="library_bulk_delete_text_only_warning">
+        <item quantity="one">%1$d trong số này không còn bản ghi phía sau, nên phần chữ là tất cả những gì còn lại. Phần đó không hoàn tác được.</item>
+        <item quantity="other">%1$d trong số này không còn bản ghi phía sau, nên phần chữ là tất cả những gì còn lại. Phần đó không hoàn tác được.</item>
+    </plurals>
 </resources>

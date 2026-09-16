@@ -849,4 +849,23 @@
     <string name="home_community_pill">Telegram</string>
     <string name="home_community_tucked_hint">Moved up beside Support. Long-press it there to bring the card back.</string>
     <string name="home_community_restored_hint">Back on the home screen.</string>
+    <string name="library_row_save">Save as a file</string>
+    <string name="library_nothing_to_share">There is nothing there to share any more.</string>
+    <string name="transcript_delete_confirm_message_text_only">There is no recording behind these words: deleting the transcript of %1$s deletes the whole thing, and it cannot be brought back.</string>
+    <string name="summary_delete_confirm_title">Delete this summary?</string>
+    <string name="summary_delete_confirm_message">The summary of %1$s will be deleted. The transcript and the recording are kept, and you can have it written again.</string>
+    <string name="library_bulk_delete_transcripts_message">The words will be deleted. The recordings are kept, and you can transcribe them again later.</string>
+    <string name="library_bulk_delete_summaries_message">The summaries will be deleted. The transcripts and the recordings are kept.</string>
+    <plurals name="library_bulk_delete_transcripts_title">
+        <item quantity="one">Delete %1$d transcript?</item>
+        <item quantity="other">Delete %1$d transcripts?</item>
+    </plurals>
+    <plurals name="library_bulk_delete_summaries_title">
+        <item quantity="one">Delete %1$d summary?</item>
+        <item quantity="other">Delete %1$d summaries?</item>
+    </plurals>
+    <plurals name="library_bulk_delete_text_only_warning">
+        <item quantity="one">%1$d of these has no recording behind it, so its words are all that is left. That part cannot be undone.</item>
+        <item quantity="other">%1$d of these have no recording behind them, so their words are all that is left. That part cannot be undone.</item>
+    </plurals>
 </resources>
