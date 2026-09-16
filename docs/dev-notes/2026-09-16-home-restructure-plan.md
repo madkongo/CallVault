@@ -69,6 +69,32 @@ Tests: pure resolver for "which section to open" (stored section × onboarding �
 Teach the Drive sweep, the storage router, retention's untracked pass and merge-candidates about the import
 token, before any import can exist. Unit tests on each predicate.
 
+**Phase 1 — 🧪 VERIFYING (built 2026-09-16, unit-tested, nothing run on a device).**
+Landed: the import name (`ImportedRecording`, marker read by slot position so a contact called
+"Important" or an app named "Import" cannot claim the exemption); `CloudCopyPolicy.mayGoToCloud`
+asked by both routes to Drive; `RetentionPolicy.isEligible` now takes the name and refuses imports;
+`MergeCandidates` out of the view model, with the Merge menu entry hidden for an import. No visible
+change — nothing imports anything yet.
+
+Left alone deliberately, and what Phase 4 has to deal with before an import can exist:
+
+- **The Drive health check will cry wolf.** `SilentFailureNotifier.checkSyncHealth` counts every
+  catalogued row with a device copy and no Drive copy. An import never has one, by design, so it is
+  permanently "unsynced" and will eventually tell the user copying to Drive has stopped — the same
+  false positive two users hit on 2.2.0. It needs the same exclusion.
+- **The storage cap would destroy an import outright.** The cap evicts device copies oldest-first,
+  and for a call that is fine — the Drive copy survives and the row keeps its transcript. An import
+  has no Drive copy, so eviction is permanent deletion of the only copy plus its transcript cascade.
+  Not changed here: a cap is the user's explicit instruction and the star already exempts what they
+  want kept. Decide in Phase 4 whether that is enough.
+- **The catalog re-seed drops imports in DRIVE-only mode.** `RecordingsRepository.scanFolders`
+  enumerates the Drive folder alone when the target is DRIVE, so a re-seed would lose every import
+  from the list while the file sits on the device.
+- **`enumerateFolder` knows two extensions** (`.ogg`, `.m4a`) and otherwise leans on the provider's
+  MIME type. `.mp3`, `.opus` and `.wav` imports depend on that MIME being reported.
+- **`deleteRecording` deletes any same-named file in both folders**, so an import's name must stay
+  unique — the stamp carries milliseconds, which two imports in the same second cannot collide on.
+
 **Phase 2 — hub + sections.**
 Grow the screen enum into hub/recordings/transcripts/summaries/reading; persist the last section; hoist list
 and playback state above the section switch; keep the Settings drawer over every section; keep dialogs
