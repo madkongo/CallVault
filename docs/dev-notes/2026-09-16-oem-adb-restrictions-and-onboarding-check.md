@@ -91,6 +91,41 @@ Only three families gate shell privilege this way: **OPPO/OnePlus/Realme**, **Xi
 | Motorola, Nothing, Sony, ASUS, Pixel/AOSP | no | — | — | Property absent on our emulator (measured). |
 | LineageOS / custom ROMs | opposite | *Rooted debugging* | — | An escalation, not a restriction. |
 
+## 3b. The ColorOS mechanism, now source-proven
+
+A ColorOS Android 10 framework decompile (`dstmath/OppoFramework`,
+`com/android/server/am/OppoShellPermissionUtils.java`) contains the guard verbatim: a list of permissions
+that are revoked when `uid == 2000` and `SystemProperties.getBoolean("persist.sys.permission.enable", true)`.
+That confirms both the mechanism and the polarity (default `true` = revoking), and matches our measurements.
+
+The full list is **eleven** permissions — the four we measured plus `WRITE_SETTINGS`, `SEND_SMS`,
+`ADJUST_RUNTIME_PERMISSIONS_POLICY`, `UPDATE_APP_OPS_STATS`, `KILL_BACKGROUND_PROCESSES`,
+`CLEAR_APP_USER_DATA` and `oppo.permission.OPPO_COMPONENT_SAFE`. So `am force-stop` and `pm clear` are
+blocked too. **We use neither** — `RecorderServerLauncher.kt:81` kills stale daemons with `pgrep` + `kill`
+inside our own shell uid, which the gate cannot touch. Worth knowing so a future change does not reach for
+`am force-stop` and get mysteriously refused.
+
+Two caveats: the list is **replaceable at runtime**, so OPPO can widen it in an update (another reason to
+probe capabilities instead of hard-coding which operations should fail), and alpha/"forum" ROM builds skip
+the guard entirely.
+
+## 3c. Samsung: no permission gate, but a possible transport kill switch
+
+Samsung's One UI `AdbService` watches `Settings.Secure` `rampart_blocked_adb_cmd`; when it reads 1 it forces
+**both** `adb_enabled` and `adb_wifi_enabled` to 0 and logs
+`AdbService: onChange : ADB is blocked by Auto Blocker`. It is an observer, so **any write we make to
+`adb_wifi_enabled` is reverted immediately** — which on a Samsung would look exactly like the
+Wireless-debugging flapping in #23/#24/#39, and would make our re-arm recovery loop forever. Auto Blocker
+(Settings ▸ Security and privacy) is on by default from One UI 6.1.1.
+
+⚠️ Unestablished: whether the ordinary consumer Auto Blocker switch ever sets that key (it may be
+Knox-Guard-only). One `settings get secure rampart_blocked_adb_cmd`, with Auto Blocker on and off, from our
+Samsung field tester (#25–#28) settles it. **Highest-value experiment here**, because it could already be
+causing reports we have misattributed to our own transport code.
+
+Also Samsung-specific: the One UI equivalent of the "No data transfer" trick is Default USB Configuration ▸
+**"Debugging only"**, and that option only appears after toggling USB debugging off and on again.
+
 ## 4. What this means for the check (design, not built)
 
 1. **Don't build an OPPO-only check.** The OPPO property doesn't exist elsewhere, and Xiaomi's equivalent
@@ -122,6 +157,17 @@ Only three families gate shell privilege this way: **OPPO/OnePlus/Realme**, **Xi
 - Does `SystemProperties.get` return the value from a **release** (non-debuggable) build, not just `run-as`?
 - Dry-run the OEM-agnostic permission check on the OP9 in both toggle states, and on the emulator as a control.
 - Whether vivo also reverts `pm grant`, and whether its i管家 blocks a permission at use time.
+- Samsung `rampart_blocked_adb_cmd` under the plain Auto Blocker switch (see 3c) — ask the Samsung tester.
+
+## 5b. Do not propose (checked, no evidence)
+
+- `settings put secure adb_install_grant_all_permission 1` and
+  `settings put global direct_control_permission_monitoring 0` — XDA folklore; a GitHub-wide search for the
+  second returned one hit, an AI transcript. No corroboration in real code.
+- AOSP hibernation / auto-revoke exemptions (`setAutoRevokeWhitelisted`): only the installing app may call
+  it, and hibernation never touches `WRITE_SECURE_SETTINGS`. Not our failure mode.
+- GrapheneOS's "broken ROM" label in Shizuku's bug template is an unexplained assertion; its shell manifest
+  is identical to AOSP. LineageOS, CalyxOS and /e/OS have the full AOSP shell permission set.
 
 ## 6. Corrections to our own notes
 
