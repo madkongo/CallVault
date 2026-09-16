@@ -354,3 +354,9 @@ and a `.wav` through the app's own decoder. WAV is the one that may fail.
 ## Not in this plan
 
 Stereo (on hold), the Samsung Auto Blocker probe (parked), and anything that changes how calls are recorded.
+
+**OP12 install 2026-09-16 14:55** (🧪): the whole branch (Phases 0–5 + the Telegram card) installed while
+idle. Grant survived, recorder reconnected over loopback in 3 s. Everything on it stays 🧪 until the
+maintainer's own use settles it — in particular the three things the emulator cannot show: a real
+transcription of an imported voice note, a real summary run (ring percentage, Stop mid-generate, the row
+moving into the list), and playback stopping when a reading page is left.
