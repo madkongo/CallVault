@@ -340,6 +340,86 @@ Transcripts page (and what that means for the wizard, which cannot be re-run); a
 (`ACTION_SEND` audio/\*) via a separate lightweight activity so a share never lands in onboarding; batch
 import; a non-call summary prompt, since every prompt currently says "phone call".
 
+**Phase 6 (share target) — 🧪 VERIFYING (built 2026-09-16, unit-tested, driven on the emulator
+through a real share sheet; nothing seen on a phone).** The maintainer confirms it or it is not done.
+
+**Why this, and why now.** Phase 4's picker cannot reach the file the feature exists for. A WhatsApp
+voice note lives in WhatsApp's app-private storage, where no document provider enumerates it and no
+SAF picker can offer it — the maintainer went looking for one and found nothing. Sharing is the only
+route to that file.
+
+Landed: `SharedAudio` (what an incoming Intent means, pure); `ShareImportActivity` +
+`ShareImportViewModel` + `ShareImportScreen`; the manifest filter; `OpenRecordingRequest` and the
+plumbing that lets an Intent land on one recording; and `importRefusalMessage` moved out of
+`HomeScreen` so both doors refuse in the same words.
+
+**What the senders actually send, since the plan guessed and guessing was the risk.** Read out of
+their own source where it is open: Telegram's voice recorder sets `audio/ogg`; Signal records AAC and
+shares `audio/aac` through `Intent.normalizeMimeType`; the platform map has resolved `.opus` to
+`audio/ogg` since API 29 (`debian.mime.types`), and two of its answers surprise — `.m4a` is
+`audio/mpeg` and `.wav` is `audio/x-wav`. **Measured here**: a `.opus` shared from Files arrives as
+`audio/ogg`, and an `.m4a` arrives as `audio/mpeg` — the platform-map trap, live. It imported
+correctly anyway, because `ImportableAudio.storedAs` believes the extension before the type.
+
+Decisions worth not re-litigating:
+
+- **`audio/*` plus `application/ogg`, and not `application/octet-stream`.** A wildcard filter is
+  compared against only the part of the type before the slash (`IntentFilter.findMimeType`), so
+  `audio/*` matches `audio/ogg; codecs=opus` where a concrete `audio/ogg` filter — compared with
+  exact string equality — would not. That is the reason to list no concrete audio types at all.
+  `application/ogg` is separate because a wildcard on one top-level type never reaches another.
+  `octet-stream` is left out: it is the type for bytes Android could not identify, so taking it would
+  put a call recorder in the share sheet of every `.bin`, backup and unknown download. **If a real
+  WhatsApp share does not offer CallVault, that is the measurement that overturns this, and the
+  change is one `<data>` line.**
+- **`ACTION_SEND_MULTIPLE` is declined, not half-handled.** Importing several files is a loop but
+  reporting on them is not: one copy can fail while another succeeds, and a refusal is a sentence
+  about *one* file. Confirmed from outside — selecting two files offers no CallVault at all.
+- **The activity label is "Import audio", not "Import to CallVault".** The share sheet draws the app
+  label above the activity label in a column about a dozen characters wide; the longer one came out
+  as "Import to C…". The line above already says CallVault and draws the icon.
+- **A share arriving before setup is finished is told so**, with an Open CallVault button, and
+  nothing is copied. Readiness is the router's own two gates (`isComplete()` and `wizardCompleted`),
+  asked of the same `OnboardingStatus`, so the two cannot disagree — if they could, a share would be
+  accepted and then land the user in the wizard when they tapped Open.
+- **The lock stands in front of it, and nothing is read until it is satisfied.** The gate is
+  `MainActivity`'s, reproduced rather than referenced, `FLAG_SECURE` included. The cost is two
+  prompts when Open is tapped — one for the card, one for the app — which is two windows and
+  therefore two doors, and is the right answer for audio out of someone's private messages.
+- **Open lands on the imported recording's own screen**, not on the app. Without it, Open opened
+  whatever section the user was last in, which on the first run was a page of summaries with no
+  mention of the file that had just arrived.
+- **Transcription is unchanged and needed no work.** The share produces the same
+  `{stamp}_import_{label}{ext}` name, and every rule keys on `ImportedRecording.isImported`.
+
+**One defect found by measurement, and fixed.** Two consecutive shares: the second came back
+`START_DELIVERED_TO_TOP` and its Intent was dropped, because `FLAG_ACTIVITY_NEW_TASK` reuses a task
+whose root Intent `filterEquals` the incoming one and `Intent.filterEquals` ignores extras — so two
+shares of two different files are, to the system, the same Intent. The card now finishes when it
+leaves the screen, except while a copy is running.
+
+Verified on the emulator (AOSP 16, `com.baba.callvault`), through a real share sheet from Files
+except where noted: the entry reads "CallVault / Import audio"; an `.opus` and an `.m4a` both import,
+carry the Imported badge, play, and show their length; Open lands on the recording's own screen and
+back returns to Recordings rather than the section the app was last in; a `.mp3` holding no audio is
+copied, probed, deleted and refused with its sentence, leaving the folder byte-identical; with the
+app lock on, the prompt stands in front of the card and the import runs only after the unlock (30 s
+later, in the log); with **both** transcription asks turned off, an import still asked the language
+and still showed the estimate while a call beside it went straight to the worker; with the wizard
+flag cleared, the share says so and Open CallVault lands on the wizard with nothing copied. By
+`am start`: a text-only `SEND`, a `SEND_MULTIPLE` and an unreadable URI each refuse with a sentence
+rather than crashing.
+
+Not exercised: **a real WhatsApp share**, which is the whole point and which the emulator has no
+WhatsApp to do; a real transcription of a shared file (the model on the emulator is a stand-in); and
+Telegram/Signal, whose types are source-proven but not measured here.
+
+Known rough edge, not fixed: a share whose URI has become unreadable (the sender revoked the grant
+while the app lock was up) reads as `NOT_AUDIO`, so the user is told CallVault cannot read that
+*kind* of file when the truth is that it could not read the file at all. Reproducible with
+`am start` and an ungranted URI. A sixth refusal reason would fix it; it is `AudioImport`'s
+ordering, shared with the picker, so it is not a share-target change.
+
 ## Testing approach
 
 House style is to test the decision, not the rendering, and there is no Compose test stack today. So: pure

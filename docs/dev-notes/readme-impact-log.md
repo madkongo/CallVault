@@ -343,3 +343,22 @@ wireless debugging of CallVault's own" — restates the paragraph that was alrea
 - **Claim status:** no product claim changed; this is a contact route only.
 - **Also worth updating when convenient:** the F-Droid/fastlane description and the GitHub repo
   description/About links still mention no chat channel.
+
+## 2026-09-16 — CallVault became an audio share target (Phase 6)
+
+- **What changed:** CallVault now appears in Android's share sheet for audio (`ACTION_SEND`,
+  `audio/*` and `application/ogg`) and imports the shared file into the recordings folder, where it
+  can be played and transcribed like anything else. One file at a time; `ACTION_SEND_MULTIPLE` is
+  deliberately not accepted.
+- **Why it matters to the README:** the import story so far has been "pick a file". That is only half
+  true — a WhatsApp or Telegram voice note lives in the sending app's private storage, which no
+  picker can enumerate, so **sharing is the only way to reach the files people most want
+  transcribed.** Anywhere the README describes importing, "share it to CallVault" is now the first
+  answer and the picker the second.
+- **Claim status:** 🧪 the feature is unconfirmed on a phone, and the one case that matters most —
+  a real WhatsApp voice note — has **not** been measured. Verified only against a real share sheet
+  from Files on the emulator. Do not write a README claim about WhatsApp until the maintainer has
+  shared one from the OP12.
+- **Still claimed, unchanged:** no new permission is requested. The share target reads the one URI it
+  is handed and takes no persistable grant, exactly as the SAF picker does — `READ_MEDIA_AUDIO` is
+  still not declared and still must not be.
