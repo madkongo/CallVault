@@ -12,6 +12,7 @@ import android.content.Context
 import androidx.core.net.toUri
 import androidx.test.core.app.ApplicationProvider
 import com.baba.callvault.data.ChannelMap
+import com.baba.callvault.data.recordings.ImportedRecording
 import com.baba.callvault.data.recordings.RecordingCatalog
 import com.baba.callvault.data.transcripts.db.SpeakerTurnsEntry
 import com.baba.callvault.data.transcripts.db.TranscriptDatabase
@@ -368,6 +369,105 @@ class TranscriptionRunnerTest {
         assertEquals(TranscriptState.DONE, transcript("ordinary.ogg")!!.transcript.state)
     }
 
+    // ---- the file the user asked us to read and not to keep
+
+    @Test
+    fun a_transcribed_transcribe_only_import_loses_its_catalog_row_but_keeps_its_words() = runBlocking {
+        // The whole point of the feature: the transcript is what was wanted, so it must outlive the
+        // audio. Calling the ordinary delete here would run the transcript cascade and wipe the text
+        // that had just been produced — which is the defect this path exists to avoid.
+        val name = transcribeOnlyName()
+        catalogued(name)
+        val runner = runnerReturning(listOf(TranscriptSegment(0, 1000, "שלום")))
+
+        runner.runBatch(MODEL_ID, MODEL_PATH, LANGUAGE, listOf(name))
+
+        val stored = transcript(name)
+        assertEquals(TranscriptState.DONE, stored!!.transcript.state)
+        assertEquals(listOf("שלום"), stored.segments.map { it.text })
+        assertNull(
+            "the catalog row must go, or it dangles with no copy behind it",
+            RecordingCatalog.all(context).firstOrNull { it.displayName == name },
+        )
+    }
+
+    @Test
+    fun a_failed_transcribe_only_run_keeps_its_audio_and_its_row() = runBlocking {
+        // Losing the audio AND the words is the one outcome that must be impossible. A failure is
+        // retryable, and a retry needs the file.
+        val name = transcribeOnlyName()
+        catalogued(name)
+        val runner = TranscriptionRunner(context) { _, _, _, _, _ -> error("cannot decode") }
+
+        runner.runBatch(MODEL_ID, MODEL_PATH, LANGUAGE, listOf(name))
+
+        assertEquals(TranscriptState.FAILED, transcript(name)!!.transcript.state)
+        assertNotNull(
+            "a failed run must leave the audio catalogued",
+            RecordingCatalog.all(context).firstOrNull { it.displayName == name },
+        )
+    }
+
+    @Test
+    fun a_stopped_transcribe_only_run_keeps_its_audio() = runBlocking {
+        // A stop removes the transcript row, so nothing at all would account for the file if the
+        // audio went too. It stays, and RecordingsRepository puts it back where it can be seen.
+        val name = transcribeOnlyName()
+        catalogued(name)
+        val runner = TranscriptionRunner(
+            context,
+            transcriber = { _, _, _, _, _ -> listOf(TranscriptSegment(0, 1000, "only the first bit")) },
+            wasAborted = { true },
+        )
+
+        runner.runBatch(MODEL_ID, MODEL_PATH, LANGUAGE, listOf(name))
+
+        assertNull("a partial result must not be stored", transcript(name))
+        assertNotNull(
+            "a stopped run must leave the audio catalogued",
+            RecordingCatalog.all(context).firstOrNull { it.displayName == name },
+        )
+    }
+
+    @Test
+    fun a_transcribe_only_import_refused_for_length_keeps_its_audio() = runBlocking {
+        val name = transcribeOnlyName()
+        catalogued(name)
+        val runner = TranscriptionRunner(
+            context,
+            audioDurationMs = { OVER_THE_LIMIT_MS },
+            transcriber = { _, _, _, _, _ -> emptyList() },
+        )
+
+        runner.runBatch(MODEL_ID, MODEL_PATH, LANGUAGE, listOf(name))
+
+        assertNotNull(
+            "a refusal must leave the audio catalogued",
+            RecordingCatalog.all(context).firstOrNull { it.displayName == name },
+        )
+    }
+
+    @Test
+    fun a_kept_import_is_never_deleted_by_a_finished_transcription() = runBlocking {
+        val name = ImportedRecording.nameFor(IMPORTED_AT, label = "voice note", extension = ".ogg")
+        catalogued(name)
+        val runner = runnerReturning(listOf(TranscriptSegment(0, 1000, "שלום")))
+
+        runner.runBatch(MODEL_ID, MODEL_PATH, LANGUAGE, listOf(name))
+
+        assertNotNull(
+            "an import the user asked to keep must survive being transcribed",
+            RecordingCatalog.all(context).firstOrNull { it.displayName == name },
+        )
+    }
+
+    private fun transcribeOnlyName() = ImportedRecording.nameFor(
+        importedAtMillis = IMPORTED_AT,
+        label = "voice note",
+        extension = ".ogg",
+        kind = ImportedRecording.Kind.TRANSCRIBE_ONLY,
+    )
+
     private suspend fun storeTurns(name: String, encoded: String) {
         TranscriptDatabase.get(context).speakerTurnsDao().upsert(
             SpeakerTurnsEntry(
@@ -394,6 +494,9 @@ class TranscriptionRunnerTest {
         const val MODEL_ID = "small-q5_1"
         const val MODEL_PATH = "/models/small.bin"
         const val LANGUAGE = "he"
+
+        /** 2026-09-16; only the shape of the stamp an import name carries matters. */
+        const val IMPORTED_AT = 1_789_567_810_000L
 
         /**
          * Comfortably past [TranscriptionLengthLimit.MAX_MINUTES], **derived from it**.

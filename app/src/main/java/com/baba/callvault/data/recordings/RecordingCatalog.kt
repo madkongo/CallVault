@@ -121,6 +121,24 @@ object RecordingCatalog {
     }
 
     /**
+     * Drops the catalog row for [displayName] and **nothing else** — no transcript, no summary, no
+     * note, no tag.
+     *
+     * The one caller is [TranscribeOnlyAudio], where the whole point is that the text survives the
+     * audio: the user asked for a file to be transcribed and not kept, so the words are the thing
+     * that must still be there afterwards. [removeName] would delete them, which is precisely the
+     * cascade it exists to run.
+     *
+     * **Never use this for a user's delete.** A recording removed this way leaves a searchable
+     * transcript of a private call behind it, which is more exposing than the audio it replaced —
+     * the defect [TranscriptCascade] was written to prevent.
+     */
+    suspend fun forgetName(context: Context, displayName: String) {
+        runCatching { dao(context).deleteByName(displayName) }
+            .onFailure { AppLogger.w(TAG, "forgetName('$displayName') failed: ${it.message}") }
+    }
+
+    /**
      * Clears the single copy whose content URI is [uri] (device or Drive) from its row, then drops the
      * row if no copy remains. Mirrors a per-copy delete of a BOTH recording.
      */

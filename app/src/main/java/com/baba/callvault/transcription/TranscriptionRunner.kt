@@ -15,6 +15,7 @@ import androidx.core.net.toUri
 import com.baba.callvault.data.AppPreferences
 import com.baba.callvault.data.recordings.RecordingCatalog
 import com.baba.callvault.data.recordings.RecordingsRepository
+import com.baba.callvault.data.recordings.TranscribeOnlyAudio
 import com.baba.callvault.data.transcripts.SpeakerTurnsRepository
 import com.baba.callvault.data.transcripts.db.TranscriptDatabase
 import com.baba.callvault.data.transcripts.db.TranscriptEntry
@@ -186,6 +187,19 @@ class TranscriptionRunner(
             onSuccess = { segments ->
                 dao.replaceSegments(displayName, segments.labelled(displayName))
                 mark(displayName, TranscriptState.DONE, modelId, language)
+                // A file the user imported to read rather than to keep loses its audio HERE, and
+                // nowhere else — after the words and the DONE row are both written, on the success
+                // path alone. Every other way out of this function (a stop, an abort, a failure, a
+                // refusal for length) has already returned, so none of them can destroy the only
+                // copy of a recording in exchange for nothing.
+                //
+                // NonCancellable for the same reason the abort cleanup above is: by the time this
+                // runs the worker may already be stopping, and a half-done delete would leave a file
+                // with no catalog row — invisible to the app and to every sweep that walks the
+                // catalog rather than the folder.
+                withContext(NonCancellable) {
+                    TranscribeOnlyAudio.deleteAfterTranscript(context, displayName)
+                }
                 // What it really cost on this phone, so the next estimate is measured rather than
                 // inherited from whatever hardware the published figure came from.
                 recordSpeed(modelId, audioMs, SystemClock.elapsedRealtime() - startedAt)
