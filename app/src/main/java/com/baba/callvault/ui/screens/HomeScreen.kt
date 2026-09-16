@@ -145,7 +145,7 @@ import com.baba.callvault.ui.common.MergeProgressState
 import com.baba.callvault.ui.common.DeleteCopiesDialog
 import com.baba.callvault.ui.common.DeleteRecordingDialog
 import com.baba.callvault.ui.common.SeekBar
-import com.baba.callvault.ui.common.TranscriptSheet
+import com.baba.callvault.ui.common.TranscriptView
 import com.baba.callvault.system.copyToClipboard
 import com.baba.callvault.system.sharePlainText
 import androidx.compose.ui.Alignment
@@ -1041,7 +1041,7 @@ fun HomeScreen(
         // English while the screen behind it shows them translated.
         val exportLabels = rememberExportLabels()
 
-        TranscriptSheet(
+        TranscriptView(
             transcript = transcript,
             title = title,
             note = sheetNote,
