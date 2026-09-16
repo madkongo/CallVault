@@ -81,6 +81,7 @@ import androidx.compose.material.icons.filled.SystemUpdate
 import androidx.compose.material.icons.filled.Tune
 import androidx.compose.material.icons.filled.WarningAmber
 import androidx.compose.foundation.lazy.rememberLazyListState
+import androidx.compose.foundation.lazy.grid.rememberLazyGridState
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.material.icons.filled.KeyboardArrowUp
@@ -116,6 +117,7 @@ import com.baba.callvault.ui.common.OfflineRecordingDialog
 import com.baba.callvault.data.ChannelMap
 import com.baba.callvault.data.SpeakerNames
 import com.baba.callvault.data.transcripts.SpeakerTurnsRepository
+import com.baba.callvault.data.transcripts.LibraryCounts
 import com.baba.callvault.data.transcripts.TranscriptRepository
 import com.baba.callvault.data.waveform.RecordingExtrasRepository
 import com.baba.callvault.data.transcripts.TranscriptStatus
@@ -187,6 +189,7 @@ import com.baba.callvault.ui.common.CvSectionHeader
 import com.baba.callvault.ui.common.CvStatusPill
 import com.baba.callvault.ui.common.CvTone
 import com.baba.callvault.ui.common.rememberExportLabels
+import com.baba.callvault.ui.navigation.HomeSection
 import com.baba.callvault.ui.theme.LocalCvBrand
 import com.baba.callvault.ui.viewmodels.HomeViewModel
 import com.baba.callvault.ui.viewmodels.HomeViewModel.DirectionFilter
@@ -199,22 +202,45 @@ import java.util.Date
 import java.util.Locale
 
 /**
- * The main Home screen shown once onboarding and the setup wizard are complete.
+ * Home, once onboarding and the setup wizard are complete: **the shell that holds every section**,
+ * and the one recording that may be open over them.
  *
- * Redesigned on the "Signal" design system. Renders:
- *  - a prominent HERO STATUS CARD reflecting the app's best-effort health (ADB / daemon / folder), and
- *  - the in-app RECORDINGS list with an inline [android.media.MediaPlayer]-backed player for the active row.
+ * ## Why one composable and not four
  *
- * The Settings affordance is preserved as a top-app-bar action.
+ * [section] chooses what is drawn, but everything that would be lost by drawing something else is
+ * held here, above the choice. That is the whole reason this is a shell rather than four screens the
+ * router swaps between: a section switch that composed and decomposed screens would take the open
+ * recording, the scroll position, the selection and every other saved field with it — exactly the
+ * loss that issue #27 reported for a rotation, and then three times over, once per section.
+ * `rememberSaveable` does not help there: it restores across an Activity recreation, not across a
+ * subtree leaving composition for good.
  *
- * @param onOpenSettings Called when the user taps the Settings action; the router maps this to
- *                       manual navigation to [com.baba.callvault.ui.navigation.AppScreen.Settings].
+ * So the state placement is deliberate, and each field below says which it is:
+ *  - **shell** — outlives every section switch (the open recording, the dialogs, the selection),
+ *  - **section** — belongs to one section but is hoisted here for the same reason (each list's
+ *    scroll position),
+ *  - **row** — lives in the row that owns it, and is nowhere near this file.
+ *
+ * The dialogs and sheets are kept OUT of every section's scaffold, at the bottom of this function.
+ * A scaffold is not composed while a recording is open, so a confirmation raised from the playback
+ * screen was queued invisibly and only appeared once the user went back to the list — which is how
+ * it was found. The same now holds per section: a dialog raised anywhere is drawn whatever section
+ * is showing.
+ *
+ * @param section        Which section to draw. Owned by the router, so that back and the stored
+ *                       "reopen where you were" have one place to be decided.
+ * @param onSelectSection Navigates to another section; the router persists it.
+ * @param onOpenSettings Opens the Settings panel, which slides over whatever section is showing.
  * @param modifier       Optional layout modifier.
- * @param viewModel      The Home "Brain"; defaults to a [viewModel]-scoped [HomeViewModel].
+ * @param viewModel      The Home "Brain"; defaults to a [viewModel]-scoped [HomeViewModel]. One
+ *                       instance for the whole shell, so there is exactly one playback controller
+ *                       and two sections can never each own a player.
  */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun HomeScreen(
+    section: HomeSection,
+    onSelectSection: (HomeSection) -> Unit,
     onOpenSettings: () -> Unit,
     modifier: Modifier = Modifier,
     viewModel: HomeViewModel = viewModel()
@@ -269,10 +295,15 @@ fun HomeScreen(
      * back, and the audio it belongs to is on it again.
      */
     var playbackFor by rememberSaveable { mutableStateOf<String?>(null) }
-    // Hoisted deliberately. The whole list leaves composition while a recording is open
-    // (`if (playbackFor == null)` below), taking any state remembered inside it — so someone who
-    // scrolled to the hundredth call and opened it came back to the top of the list.
+    // SECTION state, hoisted deliberately — one per list, all of them above the section switch.
+    // Each list leaves composition twice over: while a recording is open (`playbackFor == null`
+    // below) and whenever another section is showing. Remembered inside, someone who scrolled to the
+    // hundredth call and opened it came back to the top of the list; hoisted, their place survives
+    // both, and a rotation besides (rememberLazyListState is itself saveable).
     val listState = rememberLazyListState()
+    val hubGridState = rememberLazyGridState()
+    val transcriptsListState = rememberLazyListState()
+    val summariesListState = rememberLazyListState()
     // DELIBERATELY NOT saveable, unlike the rest of this block. A merge runs in `mergeScope`, a
     // rememberCoroutineScope, so rotation already cancels it half-done — that is a real bug, and a
     // bigger one than #27, but its fix is to hoist the merge into the ViewModel, not to restore its
@@ -507,22 +538,135 @@ fun HomeScreen(
         }
     }
 
-    // Only the list, and only when a recording is not open over it.
-    if (playbackFor == null) CvScaffold(
+    // The pill beside the title, on whichever section is showing. One slot, two claimants:
+    // transcription wins while it is working, because it is transient and explains something
+    // happening right now, whereas the support pill is always there and loses nothing by waiting.
+    val titleTrailing: @Composable () -> Unit = {
+        if (transcribingShown.occupiesTitleSlot) {
+            TranscribingPill(state = transcribingShown, onClick = { showTranscribingSheet = true })
+        } else {
+            SupportPill(onClick = { showSupport = true })
+        }
+    }
+
+    // One section at a time, and none of them while a recording is open over the lot.
+    //
+    // The switch is here, below every piece of state above it, and that placement is the point: see
+    // the function's KDoc. Nothing in a section branch may remember anything it would mind losing.
+    if (playbackFor == null) when (section) {
+
+    HomeSection.Hub -> {
+        // Re-read on arrival rather than once for the life of the shell. The guard inside
+        // LibraryCounts answers "is there a transcripts database?" at the moment it is called, and a
+        // flow remembered before the user's first transcription would keep answering zero until the
+        // app was restarted. Keyed on the section, so every visit to the hub asks again — and the
+        // hub is the only thing that asks at all.
+        val transcriptsCount by remember(section) { LibraryCounts.transcribed(context) }
+            .collectAsState(initial = 0)
+        val summariesCount by remember(section) { LibraryCounts.summarised(context) }
+            .collectAsState(initial = 0)
+
+        HubScreen(
+            modifier = modifier,
+            recordingsCount = uiState.recordings.size,
+            transcriptsCount = transcriptsCount,
+            summariesCount = summariesCount,
+            listState = hubGridState,
+            onOpenSection = onSelectSection,
+            onOpenSettings = onOpenSettings,
+            titleTrailing = titleTrailing,
+            // The state of the app, all on the page a notification about it now lands on. Kept off
+            // the recordings list rather than drawn in both places: a banner in two places is two
+            // places to dismiss it, and the point of the hub is that the list is only the list.
+            statusCards = {
+                Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                    HeroStatusCard(
+                        status = uiState.status,
+                        health = uiState.setupHealth,
+                        mode = uiState.privilegedMode,
+                        onAction = if (uiState.status == HomeViewModel.HomeStatus.UPDATE_REGRANT_NEEDED) {
+                            { context.openWirelessDebugging() }
+                        } else {
+                            null
+                        },
+                    )
+                    if (uiState.usbScreenLockRisk) {
+                        UsbReliabilityAdvisoryCard(
+                            fixing = uiState.usbFixInProgress,
+                            blockedByRecording = uiState.usbFixBlockedByRecording,
+                            onFix = { viewModel.setUsbChargingOnly() },
+                        )
+                    }
+                    uiState.updatedToVersion?.let { version ->
+                        UpdatedBannerCard(
+                            version = version,
+                            onDismiss = { viewModel.dismissUpdatedBanner() }
+                        )
+                    }
+                    uiState.availableUpdateTag?.let { tag ->
+                        UpdateBannerCard(
+                            tag = tag,
+                            isInstalling = uiState.isUpdateInstalling,
+                            progressPercent = uiState.updateProgressPercent,
+                            onUpdate = { viewModel.installAvailableUpdate() }
+                        )
+                    }
+                }
+            },
+        )
+    }
+
+    HomeSection.Transcripts -> {
+        val names by remember(section) { LibraryCounts.transcribedNames(context) }
+            .collectAsState(initial = emptyList())
+        LibrarySectionScreen(
+            modifier = modifier,
+            title = stringResource(R.string.home_transcripts_title),
+            countLabel = stringResource(R.string.home_transcripts_count, names.size),
+            names = names,
+            recordings = uiState.recordings,
+            emptyTitle = stringResource(R.string.home_transcripts_empty_title),
+            emptyHint = stringResource(R.string.home_transcripts_empty_hint),
+            listState = transcriptsListState,
+            onBack = { onSelectSection(HomeSection.Hub) },
+            onOpenSettings = onOpenSettings,
+            // The transcript sheet this shell already owns. The reading view is Phase 3; until then
+            // the section opens the same thing the recordings list opens, rather than nothing.
+            onOpen = { displayName -> transcriptFor = displayName },
+        )
+    }
+
+    HomeSection.Summaries -> {
+        val names by remember(section) { LibraryCounts.summarisedNames(context) }
+            .collectAsState(initial = emptyList())
+        LibrarySectionScreen(
+            modifier = modifier,
+            title = stringResource(R.string.home_summaries_title),
+            countLabel = stringResource(R.string.home_summaries_count, names.size),
+            names = names,
+            recordings = uiState.recordings,
+            emptyTitle = stringResource(R.string.home_summaries_empty_title),
+            emptyHint = stringResource(R.string.home_summaries_empty_hint),
+            listState = summariesListState,
+            onBack = { onSelectSection(HomeSection.Hub) },
+            onOpenSettings = onOpenSettings,
+            // The summary is on the recording's own screen, so that is what a row opens. Opening it
+            // does NOT start playing it, for the same reason a tap on a recordings row does not.
+            onOpen = { displayName -> playbackFor = displayName },
+        )
+    }
+
+    HomeSection.Recordings -> CvScaffold(
         modifier = modifier.fillMaxSize(),
         title =
             if (selectionMode) pluralStringResource(R.plurals.home_selected_count, selection.size, selection.size)
             else stringResource(R.string.app_name),
-        onBack = if (selectionMode) clearSelection else null,
-        // One slot, two claimants. Transcription wins while it is working: it is transient and
-        // explains something happening right now, whereas the support pill is always there and loses
-        // nothing by waiting a few minutes.
-        titleTrailing = when {
-            selectionMode -> null
-            transcribingShown.occupiesTitleSlot ->
-                ({ TranscribingPill(state = transcribingShown, onClick = { showTranscribingSheet = true }) })
-            else -> ({ SupportPill(onClick = { showSupport = true }) })
-        },
+        // Leaving selection mode comes first: while rows are selected the arrow has to undo that,
+        // not the navigation, or the only way out of selection would be the close button.
+        onBack = if (selectionMode) clearSelection else ({ onSelectSection(HomeSection.Hub) }),
+        // Nothing beside the title while selecting: the title is a count of what is selected, and a
+        // pill next to it would read as part of it.
+        titleTrailing = if (selectionMode) null else titleTrailing,
         actions = {
             if (selectionMode) {
                 IconButton(onClick = {
@@ -560,58 +704,6 @@ fun HomeScreen(
             }
         }
     ) { innerPadding ->
-        if (showTranscribingSheet) {
-            TranscribingSheet(
-                state = transcribing,
-                recordings = uiState.recordings,
-                onDismiss = { showTranscribingSheet = false },
-                onStopped = { showTranscribingSheet = false }
-            )
-        }
-
-        if (showTranscriptSearch) {
-            TranscriptSearchSheet(
-                // The whole library, not uiState.filteredRecordings: someone searching is looking for
-                // a call they could not find by scrolling, and an active filter would hide it.
-                recordings = uiState.recordings,
-                onDismiss = { showTranscriptSearch = false },
-                onOpen = { row ->
-                    showTranscriptSearch = false
-                    viewModel.playFrom(row.uri, row.startMs.toInt())
-                }
-            )
-        }
-
-        if (showBulkDelete) {
-            BulkDeleteDialog(
-                items = selectedItems,
-                needsScopeChoice = RecordingSelection.needsScopeChoice(selectedItems),
-                onConfirm = { scope ->
-                    showBulkDelete = false
-                    viewModel.deleteUris(RecordingSelection.urisToDelete(selectedItems, scope))
-                    clearSelection()
-                },
-                onDismiss = { showBulkDelete = false },
-            )
-        }
-        if (showSupport) {
-            SupportDialog(onDismiss = { showSupport = false })
-        }
-        // The appeal follows the release note rather than replacing it: the note is the reason the
-        // user has the app open, and asking mid-note would bury what changed.
-        if (showSupportAppeal) {
-            SupportDialog(onDismiss = { showSupportAppeal = false })
-        }
-        if (uiState.showWhatsNew) {
-            // Persist the version so the note never reappears for this build, and clear the small
-            // "updated" banner too.
-            val dismiss = {
-                viewModel.markWhatsNewSeen()
-                viewModel.dismissUpdatedBanner()
-                showSupportAppeal = true
-            }
-            WhatsNewDialog(onDismiss = dismiss, onOpenSettings = { dismiss(); onOpenSettings() })
-        }
         Box(modifier = Modifier.fillMaxSize()) {
         LazyColumn(
             state = listState,
@@ -624,48 +716,9 @@ fun HomeScreen(
             ),
             verticalArrangement = Arrangement.spacedBy(10.dp)
         ) {
-            item {
-                HeroStatusCard(
-                    status = uiState.status,
-                    health = uiState.setupHealth,
-                    mode = uiState.privilegedMode,
-                    onAction = if (uiState.status == HomeViewModel.HomeStatus.UPDATE_REGRANT_NEEDED) {
-                        { context.openWirelessDebugging() }
-                    } else {
-                        null
-                    },
-                )
-            }
-
-            if (uiState.usbScreenLockRisk) {
-                item {
-                    UsbReliabilityAdvisoryCard(
-                        fixing = uiState.usbFixInProgress,
-                        blockedByRecording = uiState.usbFixBlockedByRecording,
-                        onFix = { viewModel.setUsbChargingOnly() },
-                    )
-                }
-            }
-
-            uiState.updatedToVersion?.let { version ->
-                item {
-                    UpdatedBannerCard(
-                        version = version,
-                        onDismiss = { viewModel.dismissUpdatedBanner() }
-                    )
-                }
-            }
-
-            uiState.availableUpdateTag?.let { tag ->
-                item {
-                    UpdateBannerCard(
-                        tag = tag,
-                        isInstalling = uiState.isUpdateInstalling,
-                        progressPercent = uiState.updateProgressPercent,
-                        onUpdate = { viewModel.installAvailableUpdate() }
-                    )
-                }
-            }
+            // The status card and the update banners are on the hub, not here. They are about the
+            // app rather than about this list, the notifications that raise them now route to the
+            // hub, and drawing them in both places would make each of them two things to dismiss.
 
             val recordings = uiState.filteredRecordings
 
@@ -806,6 +859,68 @@ fun HomeScreen(
         }
     }
 
+    } // end of the section switch
+
+    // Sheets and dialogs any section can raise, and the playback screen with them.
+    //
+    // Kept OUT of every scaffold. A scaffold is not composed while a recording is open, so a
+    // confirmation raised from the playback screen was queued and only appeared once the user went
+    // back to the list — which is exactly how it was found. Sections make the same mistake available
+    // three more ways: a sheet left inside the recordings scaffold would vanish the moment the user
+    // reached the hub, and reappear on the way back.
+    if (showTranscribingSheet) {
+        TranscribingSheet(
+            state = transcribing,
+            recordings = uiState.recordings,
+            onDismiss = { showTranscribingSheet = false },
+            onStopped = { showTranscribingSheet = false }
+        )
+    }
+
+    if (showTranscriptSearch) {
+        TranscriptSearchSheet(
+            // The whole library, not uiState.filteredRecordings: someone searching is looking for
+            // a call they could not find by scrolling, and an active filter would hide it.
+            recordings = uiState.recordings,
+            onDismiss = { showTranscriptSearch = false },
+            onOpen = { row ->
+                showTranscriptSearch = false
+                viewModel.playFrom(row.uri, row.startMs.toInt())
+            }
+        )
+    }
+
+    if (showBulkDelete) {
+        BulkDeleteDialog(
+            items = selectedItems,
+            needsScopeChoice = RecordingSelection.needsScopeChoice(selectedItems),
+            onConfirm = { scope ->
+                showBulkDelete = false
+                viewModel.deleteUris(RecordingSelection.urisToDelete(selectedItems, scope))
+                clearSelection()
+            },
+            onDismiss = { showBulkDelete = false },
+        )
+    }
+    if (showSupport) {
+        SupportDialog(onDismiss = { showSupport = false })
+    }
+    // The appeal follows the release note rather than replacing it: the note is the reason the
+    // user has the app open, and asking mid-note would bury what changed.
+    if (showSupportAppeal) {
+        SupportDialog(onDismiss = { showSupportAppeal = false })
+    }
+    if (uiState.showWhatsNew) {
+        // Persist the version so the note never reappears for this build, and clear the small
+        // "updated" banner too.
+        val dismiss = {
+            viewModel.markWhatsNewSeen()
+            viewModel.dismissUpdatedBanner()
+            showSupportAppeal = true
+        }
+        WhatsNewDialog(onDismiss = dismiss, onOpenSettings = { dismiss(); onOpenSettings() })
+    }
+
     mergeFor?.let { primary ->
         MergeCallsDialog(
             primary = primary,
@@ -887,11 +1002,9 @@ fun HomeScreen(
         )
     }
 
-    // Dialogs and sheets that either screen can raise.
-    //
-    // Kept OUT of the scaffold: it is not composed while a recording is open, so a confirmation
-    // raised from the playback screen was queued and only appeared once the user went back to
-    // the list — which is exactly how it was found.
+    // The transcript sheet, raised from the recordings list, the playback screen and — until Phase 3
+    // gives it a reading view of its own — the Transcripts section. Outside every scaffold, for the
+    // reason given above.
     transcriptFor?.let { displayName ->
         val transcript by remember(displayName) {
             TranscriptRepository.transcript(context, displayName)

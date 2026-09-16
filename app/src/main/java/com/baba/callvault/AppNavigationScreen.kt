@@ -20,6 +20,10 @@ import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.setValue
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
 import androidx.lifecycle.compose.LocalLifecycleOwner
@@ -28,6 +32,7 @@ import androidx.compose.ui.platform.LocalContext
 import com.baba.callvault.data.AppPreferences
 import com.baba.callvault.onboarding.OnboardingStatus
 import com.baba.callvault.ui.navigation.AppScreen
+import com.baba.callvault.ui.navigation.HomeSection
 import com.baba.callvault.ui.navigation.NotificationDestination
 import com.baba.callvault.utils.AppLogger
 import com.baba.callvault.ui.screens.DisclaimerScreen
@@ -132,6 +137,27 @@ fun AppNavigationScreen(
         onDispose { lifecycleOwner.lifecycle.removeObserver(observer) }
     }
 
+    // ---- Which section of Home is showing.
+    //
+    // Read once per visit rather than on every recomposition: this is a SharedPreferences read, and
+    // the answer cannot change underneath us — only [goToSection] writes it, and it updates the state
+    // below in the same breath.
+    val storedSectionKey = remember { preferences.getLastHomeSectionKey() }
+
+    // Null until the user (or a notification) has actually navigated. Until then the section is
+    // derived from what was stored, every composition, which is what makes "reopen where you were"
+    // land without a frame of the hub first: an effect that resolved it after the first composition
+    // would show the hub and then swap.
+    var chosenSection by rememberSaveable { mutableStateOf<HomeSection?>(null) }
+    val section = chosenSection ?: HomeSection.opening(resolvedScreen, storedSectionKey) ?: HomeSection.Hub
+
+    // Every navigation between sections goes through here, so persisting it cannot be forgotten in
+    // one of the places that navigates.
+    val goToSection: (HomeSection) -> Unit = { next ->
+        chosenSection = next
+        preferences.setLastHomeSection(next)
+    }
+
     // A notification tap says what it was about. Every destination resolves to Home today, and Home
     // is where a tap already landed, so honouring one is currently the same as doing nothing — but
     // the delivery is real, and the sections that will make it matter can be added without also
@@ -212,6 +238,17 @@ fun AppNavigationScreen(
                     onDispose { lifecycleOwner.lifecycle.removeObserver(observer) }
                 }
 
+                // Back from a section returns to the hub. From the hub, nothing is registered at all
+                // and the gesture leaves the app — swallowing it there would make CallVault the one
+                // app on the phone you cannot back out of.
+                //
+                // Registered here, above the panel and above Home, so it is the LAST resort:
+                // Compose hands back to the most recently composed enabled handler, and the drawer's
+                // (open), selection mode's and the open recording's are all composed below this one.
+                // Deliberately inside the Home branch — during onboarding there are no sections, and
+                // a handler registered out there would swallow back on the wizard.
+                BackHandler(enabled = section != HomeSection.Hub) { goToSection(HomeSection.Hub) }
+
                 SettingsSidebar(
                     drawerState = drawerState,
                     onClose = { scope.launch { drawerState.close() } },
@@ -223,6 +260,8 @@ fun AppNavigationScreen(
                     },
                 ) {
                     HomeScreen(
+                        section = section,
+                        onSelectSection = goToSection,
                         onOpenSettings = { scope.launch { drawerState.open() } },
                         viewModel = homeViewModel
                     )
