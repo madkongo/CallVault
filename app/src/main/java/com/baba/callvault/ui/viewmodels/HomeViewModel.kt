@@ -30,6 +30,7 @@ import com.baba.callvault.services.recording.RecordingPolicy
 import com.baba.callvault.data.health.Prerequisite
 import com.baba.callvault.data.health.SetupPrerequisites
 import com.baba.callvault.data.recordings.AudioImport
+import com.baba.callvault.data.recordings.ImportedRecording
 import com.baba.callvault.data.recordings.RecordingDirection
 import androidx.documentfile.provider.DocumentFile
 import com.baba.callvault.data.recordings.RecordingCatalog
@@ -156,6 +157,19 @@ class HomeViewModel(application: Application) : AndroidViewModel(application) {
     data class HomeUiState(
         val status: HomeStatus = HomeStatus.READY,
         val recordings: List<RecordingItem> = emptyList(),
+        /**
+         * The transcribe-only imports on the device, newest-first, kept OUT of [recordings].
+         *
+         * A file shared with "Transcribe only" is not a recording and the user said so: it is audio
+         * borrowed until its words exist. Splitting it off here, once, is what keeps it out of the
+         * list, the facets, the selection, the merge candidates and the hub's count without any of
+         * them having to remember — each of those reads [recordings] and [recordings] no longer has
+         * it. What still needs it — the Transcripts page's join, the transcription dialogs' length
+         * and estimate, the player — asks for both lists explicitly.
+         *
+         * Almost always empty: one exists only between a share and the end of its transcription.
+         */
+        val transcribeOnly: List<RecordingItem> = emptyList(),
         val isLoading: Boolean = false,
         val hasLoaded: Boolean = false,
         val sourceFilter: SourceFilter = SourceFilter.ALL,
@@ -602,7 +616,13 @@ class HomeViewModel(application: Application) : AndroidViewModel(application) {
         listJob = viewModelScope.launch {
             val health = withContext(Dispatchers.IO) { sweepSetupHealth(status.isReady) }
             _uiState.update { it.copy(setupHealth = health) }
-            val recordings = withContext(Dispatchers.IO) { RecordingsRepository.listRecordings(appContext) }
+            val listed = withContext(Dispatchers.IO) { RecordingsRepository.listRecordings(appContext) }
+            // Split once, here, from the name alone. The name is the only place the kind lives, so a
+            // catalog re-seed cannot lose it and no row anywhere has to carry a flag that could be
+            // stale. See HomeUiState.transcribeOnly for why the split belongs here and not at each
+            // of the dozen places that read the list.
+            val (recordings, transcribeOnly) =
+                listed.partition { !ImportedRecording.isTranscribeOnly(it.displayName) }
             _uiState.update { state ->
                 // Drop a contact/date selection that no longer exists in the reloaded set so the
                 // user can never get stuck on an empty, un-clearable filter.
@@ -610,6 +630,7 @@ class HomeViewModel(application: Application) : AndroidViewModel(application) {
                 val days = recordings.map { RecordingsRepository.dayKey(it) }.toSet()
                 state.copy(
                     recordings = recordings,
+                    transcribeOnly = transcribeOnly,
                     isLoading = false,
                     hasLoaded = true,
                     contactFilter = state.contactFilter?.takeIf { it in contacts },

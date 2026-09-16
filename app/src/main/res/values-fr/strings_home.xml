@@ -174,6 +174,8 @@
     <string name="transcripts_working_header">Transcription en cours</string>
     <string name="transcripts_failed_header">N\'a pas abouti</string>
     <string name="transcripts_failed_hint">Touchez-en un pour réessayer.</string>
+    <string name="transcripts_waiting_header">En attente de transcription</string>
+    <string name="transcripts_waiting_hint">Vous avez partagé ces fichiers pour les lire, pas pour les garder. Touchez-en un pour commencer, ou ouvrez-le pour l\'écouter ou le supprimer.</string>
     <string name="summaries_working_header">Résumé en cours</string>
     <string name="summaries_failed_header">N\'a pas abouti</string>
     <string name="summaries_failed_hint">Ouvrez-en un pour le redemander.</string>

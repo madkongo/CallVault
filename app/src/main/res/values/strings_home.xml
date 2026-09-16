@@ -190,6 +190,8 @@
     <string name="transcripts_working_header">Being transcribed</string>
     <string name="transcripts_failed_header">Didn\'t finish</string>
     <string name="transcripts_failed_hint">Tap one to try it again.</string>
+    <string name="transcripts_waiting_header">Waiting to be transcribed</string>
+    <string name="transcripts_waiting_hint">You shared these to be read, not to keep. Tap one to start, or open it to listen to it or delete it.</string>
     <!-- Summaries: the two headings above the finished summaries -->
     <string name="summaries_working_header">Being summarised</string>
     <string name="summaries_failed_header">Didn\'t finish</string>

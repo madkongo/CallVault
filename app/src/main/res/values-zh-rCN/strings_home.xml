@@ -173,6 +173,8 @@
     <string name="transcripts_working_header">正在转写</string>
     <string name="transcripts_failed_header">未能完成</string>
     <string name="transcripts_failed_hint">点按其中一项即可重试。</string>
+    <string name="transcripts_waiting_header">等待转写</string>
+    <string name="transcripts_waiting_hint">这些音频是你分享来阅读的，不是用来保存的。点按开始转写，或打开它试听或删除。</string>
     <string name="summaries_working_header">正在生成摘要</string>
     <string name="summaries_failed_header">未能完成</string>
     <string name="summaries_failed_hint">打开其中一项即可重新请求。</string>

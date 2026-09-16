@@ -173,6 +173,8 @@
     <string name="transcripts_working_header">Transcribiéndose</string>
     <string name="transcripts_failed_header">No se completó</string>
     <string name="transcripts_failed_hint">Toca una para volver a intentarlo.</string>
+    <string name="transcripts_waiting_header">Pendiente de transcribir</string>
+    <string name="transcripts_waiting_hint">Compartiste estos archivos para leerlos, no para guardarlos. Toca uno para empezar, o ábrelo para escucharlo o borrarlo.</string>
     <string name="summaries_working_header">Resumiéndose</string>
     <string name="summaries_failed_header">No se completó</string>
     <string name="summaries_failed_hint">Abre uno para volver a pedirlo.</string>

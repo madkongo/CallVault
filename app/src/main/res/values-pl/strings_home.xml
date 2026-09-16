@@ -173,6 +173,8 @@
     <string name="transcripts_working_header">Trwa transkrypcja</string>
     <string name="transcripts_failed_header">Nie ukończono</string>
     <string name="transcripts_failed_hint">Dotknij, aby spróbować ponownie.</string>
+    <string name="transcripts_waiting_header">Czeka na transkrypcję</string>
+    <string name="transcripts_waiting_hint">Udostępniono te pliki do odczytania, a nie do zachowania. Dotknij jednego, aby zacząć, albo otwórz go, aby odsłuchać lub usunąć.</string>
     <string name="summaries_working_header">Trwa podsumowywanie</string>
     <string name="summaries_failed_header">Nie ukończono</string>
     <string name="summaries_failed_hint">Otwórz, aby poprosić ponownie.</string>

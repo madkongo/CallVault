@@ -173,6 +173,8 @@
     <string name="transcripts_working_header">Wird transkribiert</string>
     <string name="transcripts_failed_header">Nicht fertig geworden</string>
     <string name="transcripts_failed_hint">Tippe eines an, um es erneut zu versuchen.</string>
+    <string name="transcripts_waiting_header">Wartet auf Transkription</string>
+    <string name="transcripts_waiting_hint">Diese hast du zum Lesen geteilt, nicht zum Behalten. Tippe eine an, um zu starten, oder öffne sie, um sie anzuhören oder zu löschen.</string>
     <string name="summaries_working_header">Wird zusammengefasst</string>
     <string name="summaries_failed_header">Nicht fertig geworden</string>
     <string name="summaries_failed_hint">Öffne eines, um es erneut anzufordern.</string>

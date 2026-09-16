@@ -173,6 +173,8 @@
     <string name="transcripts_working_header">In trascrizione</string>
     <string name="transcripts_failed_header">Non è andata a buon fine</string>
     <string name="transcripts_failed_hint">Toccane una per riprovare.</string>
+    <string name="transcripts_waiting_header">In attesa di trascrizione</string>
+    <string name="transcripts_waiting_hint">Hai condiviso questi file per leggerli, non per conservarli. Tocca un file per iniziare, oppure aprilo per ascoltarlo o eliminarlo.</string>
     <string name="summaries_working_header">In riepilogo</string>
     <string name="summaries_failed_header">Non è andata a buon fine</string>
     <string name="summaries_failed_hint">Aprine uno per richiederlo di nuovo.</string>

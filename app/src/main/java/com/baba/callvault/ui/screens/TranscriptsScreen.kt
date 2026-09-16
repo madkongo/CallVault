@@ -46,7 +46,6 @@ import com.baba.callvault.data.recordings.RecordingsRepository.RecordingItem
 import com.baba.callvault.data.transcripts.TranscriptStatus
 import com.baba.callvault.data.transcripts.TranscriptsPage
 import com.baba.callvault.data.transcripts.db.TranscriptEntry
-import com.baba.callvault.ui.common.BidiText
 import com.baba.callvault.ui.common.CvCard
 import com.baba.callvault.ui.common.CvScaffold
 import com.baba.callvault.ui.common.CvSectionHeader
@@ -97,6 +96,8 @@ import com.baba.callvault.ui.common.TranscriptActionButton
  * @param onOpenQueue Opens the queue sheet, which owns the Stop.
  * @param onOpen     Read a finished transcript.
  * @param onRetry    Try a failed one again.
+ * @param onOpenAudio Opens a recording's own screen — used by the waiting group, where the audio is
+ *                   still there and playing, sharing or deleting it are the other things to do.
  * @param onImport   Raises the file picker.
  * @param importing  True while a chosen file is being copied and checked. The card says so and
  *                   stops accepting taps: the copy is not instant for a long recording, and a second
@@ -114,6 +115,7 @@ fun TranscriptsScreen(
     onOpenQueue: () -> Unit,
     onOpen: (String) -> Unit,
     onRetry: (String) -> Unit,
+    onOpenAudio: (String) -> Unit,
     onImport: () -> Unit,
     importing: Boolean,
     modifier: Modifier = Modifier,
@@ -173,6 +175,22 @@ fun TranscriptsScreen(
                     )
                 }
                 return@LazyColumn
+            }
+
+            // Above everything, including what is running: this is audio sitting on the phone that
+            // the user asked to have read and that nothing is currently reading. It is the one group
+            // on this page that needs an action rather than attention.
+            if (groups.waiting.isNotEmpty()) {
+                item { CvSectionHeader(text = stringResource(R.string.transcripts_waiting_header)) }
+                item {
+                    Text(
+                        text = stringResource(R.string.transcripts_waiting_hint),
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        modifier = Modifier.padding(start = 4.dp, bottom = 2.dp),
+                    )
+                }
+                waitingRows(names = groups.waiting, byName = byName, onTranscribe = onRetry, onOpen = onOpenAudio)
             }
 
             if (groups.working.isNotEmpty()) {
@@ -235,6 +253,43 @@ fun TranscriptsScreen(
 }
 
 /**
+ * The rows for audio that is waiting to be read, with the way to start it.
+ *
+ * Separate from [transcriptRows] because these have no transcript entry to draw a status from — that
+ * is the whole reason they are here. The trailing button is therefore always
+ * [TranscriptStatus.NONE]'s: offer to transcribe.
+ *
+ * Tapping the card opens the recording's own screen instead, which is where playing it, sharing it
+ * and deleting it already are. A file the user can see but only transcribe is a file they cannot get
+ * rid of, and this group exists precisely for the cases where they may want to.
+ */
+private fun LazyListScope.waitingRows(
+    names: List<String>,
+    byName: Map<String, RecordingItem>,
+    onTranscribe: (String) -> Unit,
+    onOpen: (String) -> Unit,
+) {
+    items(names, key = { it }) { displayName ->
+        val item = byName[displayName]
+        LibraryNameRow(
+            title = item?.let { RecordingLabel.of(it) } ?: RecordingLabel.forName(displayName),
+            subtitle = item?.displayDate,
+            imported = true,
+            onOpen = { onOpen(displayName) },
+            trailing = {
+                TranscriptActionButton(
+                    status = TranscriptStatus.NONE,
+                    percent = 0,
+                    onTranscribe = { onTranscribe(displayName) },
+                    onOpen = { onOpen(displayName) },
+                    onRetry = { onTranscribe(displayName) },
+                )
+            },
+        )
+    }
+}
+
+/**
  * One group of rows.
  *
  * A `LazyListScope` extension rather than a composable, so the rows stay individual list items: a
@@ -259,7 +314,7 @@ private fun LazyListScope.transcriptRows(
         val item = byName[entry.displayName]
         val status = TranscriptStatus.of(entry.state)
         LibraryNameRow(
-            title = item?.let { RecordingLabel.of(it) } ?: BidiText.isolate(entry.displayName),
+            title = item?.let { RecordingLabel.of(it) } ?: RecordingLabel.forName(entry.displayName),
             subtitle = item?.displayDate,
             // Read from the NAME, not from the row: a transcript can outlive its recording, and an
             // import that has been deleted is still an import — saying nothing would make it read as

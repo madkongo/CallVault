@@ -173,6 +173,8 @@
     <string name="transcripts_working_header">Átírás folyamatban</string>
     <string name="transcripts_failed_header">Nem fejeződött be</string>
     <string name="transcripts_failed_hint">Koppints rá az újrapróbálkozáshoz.</string>
+    <string name="transcripts_waiting_header">Átírásra vár</string>
+    <string name="transcripts_waiting_hint">Ezeket olvasásra osztottad meg, nem megőrzésre. Koppints rá az indításhoz, vagy nyisd meg, ha meghallgatnád vagy törölnéd.</string>
     <string name="summaries_working_header">Összefoglalás folyamatban</string>
     <string name="summaries_failed_header">Nem fejeződött be</string>
     <string name="summaries_failed_hint">Nyiss meg egyet, és kérd újra.</string>

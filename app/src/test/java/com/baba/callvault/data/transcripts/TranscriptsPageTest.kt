@@ -101,4 +101,45 @@ class TranscriptsPageTest {
         assertTrue(queuedOnly.ready.isEmpty())
         assertTrue(!queuedOnly.isEmpty)
     }
+
+    // ---- the safety net under a transcribe-only import
+
+    @Test
+    fun a_transcribe_only_import_with_no_transcript_row_is_listed_as_waiting() {
+        // The file exists on the phone and is deliberately kept out of Recordings. If it were not
+        // listed here it would be in no list at all: audio the user could not find, play, retry or
+        // delete. That is one step from having lost it.
+        val groups = TranscriptsPage.group(
+            entries = emptyList(),
+            transcribeOnly = listOf("stopped.opus", "never-enqueued.opus"),
+        )
+
+        assertEquals(listOf("stopped.opus", "never-enqueued.opus"), groups.waiting)
+        assertTrue(!groups.isEmpty)
+    }
+
+    @Test
+    fun a_transcribe_only_import_that_is_already_accounted_for_is_not_listed_twice() {
+        // Whatever its state, a transcript row already draws the file under one of the three
+        // headings; adding it to waiting as well would make the page say two things about it.
+        val groups = TranscriptsPage.group(
+            entries = listOf(
+                entry("queued.opus", TranscriptState.QUEUED),
+                entry("running.opus", TranscriptState.RUNNING),
+                entry("failed.opus", TranscriptState.FAILED),
+                entry("done.opus", TranscriptState.DONE),
+            ),
+            transcribeOnly = listOf("queued.opus", "running.opus", "failed.opus", "done.opus", "loose.opus"),
+        )
+
+        assertEquals(listOf("loose.opus"), groups.waiting)
+    }
+
+    @Test
+    fun a_library_with_no_transcribe_only_imports_is_unchanged() {
+        val groups = TranscriptsPage.group(entries = listOf(entry("a.ogg", TranscriptState.DONE)))
+
+        assertTrue(groups.waiting.isEmpty())
+    }
+
 }

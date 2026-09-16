@@ -173,6 +173,8 @@
     <string name="transcripts_working_header">Sendo transcrito</string>
     <string name="transcripts_failed_header">Não foi concluída</string>
     <string name="transcripts_failed_hint">Toque em uma para tentar de novo.</string>
+    <string name="transcripts_waiting_header">Aguardando transcrição</string>
+    <string name="transcripts_waiting_hint">Você compartilhou estes arquivos para lê-los, não para guardá-los. Toque em um para começar, ou abra para ouvir ou excluir.</string>
     <string name="summaries_working_header">Sendo resumido</string>
     <string name="summaries_failed_header">Não foi concluída</string>
     <string name="summaries_failed_hint">Abra um para pedir de novo.</string>

@@ -36,9 +36,23 @@ object TranscriptsPage {
         val working: List<TranscriptEntry>,
         val failed: List<TranscriptEntry>,
         val ready: List<TranscriptEntry>,
+        /**
+         * Files imported to be transcribed that nothing is currently accounting for — by display
+         * name, because there is no transcript row to carry.
+         *
+         * **This group is a safety net, not a feature.** A transcribe-only import is deliberately
+         * kept out of the recordings list, so while it has a transcript row it is visible here and
+         * nowhere else. The row can go away underneath it: a Stop deletes it, so does a refusal for
+         * length, and a process death between the copy and the enqueue means one was never written.
+         * Without this group the file would then exist on disk and in no list anywhere — audio the
+         * user can neither find, nor play, nor retry, nor delete. Which is one step from having lost
+         * it, and losing it is the outcome the whole feature is arranged to prevent.
+         */
+        val waiting: List<String> = emptyList(),
     ) {
         /** Nothing at all to show — the page's empty state, not merely "nothing readable". */
-        val isEmpty: Boolean get() = working.isEmpty() && failed.isEmpty() && ready.isEmpty()
+        val isEmpty: Boolean
+            get() = working.isEmpty() && failed.isEmpty() && ready.isEmpty() && waiting.isEmpty()
     }
 
     /**
@@ -59,12 +73,25 @@ object TranscriptsPage {
      *
      * Input order is preserved inside each group, so the caller's ORDER BY is the page's order and
      * this function has no opinion about what "newest" means.
+     *
+     * @param transcribeOnly every transcribe-only import still on the device, by display name. The
+     *   ones with a transcript row are already in the three groups above and are filtered out here;
+     *   what is left is [Groups.waiting], which exists so that such a file is never in no list at
+     *   all. Empty for a library that has never had one, which is every library until someone shares
+     *   a voice note.
      */
-    fun group(entries: List<TranscriptEntry>): Groups = Groups(
-        working = entries.filter {
-            it.state == TranscriptState.QUEUED || it.state == TranscriptState.RUNNING
-        },
-        failed = entries.filter { it.state == TranscriptState.FAILED },
-        ready = entries.filter { it.state == TranscriptState.DONE },
-    )
+    fun group(
+        entries: List<TranscriptEntry>,
+        transcribeOnly: List<String> = emptyList(),
+    ): Groups {
+        val accounted = entries.mapTo(HashSet()) { it.displayName }
+        return Groups(
+            working = entries.filter {
+                it.state == TranscriptState.QUEUED || it.state == TranscriptState.RUNNING
+            },
+            failed = entries.filter { it.state == TranscriptState.FAILED },
+            ready = entries.filter { it.state == TranscriptState.DONE },
+            waiting = transcribeOnly.filterNot { it in accounted },
+        )
+    }
 }

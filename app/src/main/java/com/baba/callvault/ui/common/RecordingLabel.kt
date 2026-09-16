@@ -8,6 +8,7 @@
 
 package com.baba.callvault.ui.common
 
+import com.baba.callvault.data.recordings.ImportedRecording
 import com.baba.callvault.data.recordings.RecordingsRepository.RecordingItem
 
 /**
@@ -31,10 +32,22 @@ object RecordingLabel {
     /**
      * The best available name for [displayName], looked up in [recordings].
      *
-     * Falls back to [displayName] itself when the recording is not there: the transcribing sheet
-     * learns the name from WorkManager progress, which can outlive the recording, and a raw file name
-     * is still better than a blank sheet.
+     * Falls back to [forName] when the recording is not there: the transcribing sheet learns the name
+     * from WorkManager progress, which can outlive the recording, and a raw file name is still better
+     * than a blank sheet.
      */
     fun forDisplayName(recordings: List<RecordingItem>, displayName: String): String =
-        of(recordings.firstOrNull { it.displayName == displayName }) ?: BidiText.isolate(displayName)
+        of(recordings.firstOrNull { it.displayName == displayName }) ?: forName(displayName)
+
+    /**
+     * The best name derivable from the file name alone, for a row whose recording is gone or was
+     * never in the list — an orphaned transcript, an orphaned summary, a transcribe-only import.
+     *
+     * An import carries the source file's own name as its label, so that is what is shown: otherwise
+     * the row reads `20260916_101010.123+0300_import_voice note.opus`, which is our bookkeeping
+     * rather than anything the user recognises. Everything else falls back to the raw name, which is
+     * all there is.
+     */
+    fun forName(displayName: String): String =
+        BidiText.isolate(ImportedRecording.labelOf(displayName) ?: displayName)
 }

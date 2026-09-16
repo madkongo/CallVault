@@ -35,7 +35,6 @@ import com.baba.callvault.R
 import com.baba.callvault.data.recordings.ImportedRecording
 import com.baba.callvault.data.recordings.RecordingsRepository.RecordingItem
 import com.baba.callvault.data.transcripts.SummariesPage
-import com.baba.callvault.ui.common.BidiText
 import com.baba.callvault.ui.common.CvScaffold
 import com.baba.callvault.ui.common.CvSectionHeader
 import com.baba.callvault.ui.common.RecordingLabel
@@ -213,7 +212,7 @@ private fun SummaryRow(
     onOpen: (() -> Unit)?,
     trailing: (@Composable () -> Unit)? = null,
 ) = LibraryNameRow(
-    title = item?.let { RecordingLabel.of(it) } ?: BidiText.isolate(displayName),
+    title = item?.let { RecordingLabel.of(it) } ?: RecordingLabel.forName(displayName),
     subtitle = item?.displayDate,
     // Read from the NAME, not from the row: a summary can outlive its recording, and an import that
     // has been deleted is still an import — saying nothing would make it read as a call whose

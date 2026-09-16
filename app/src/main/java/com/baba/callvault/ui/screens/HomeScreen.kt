@@ -273,6 +273,22 @@ fun HomeScreen(
     val preferences = remember(context) { AppPreferences(context) }
     var communityTucked by rememberSaveable { mutableStateOf(preferences.isCommunityTucked()) }
     val uiState by viewModel.uiState.collectAsState()
+
+    /**
+     * Every file the app can resolve a name to, including the transcribe-only imports the recordings
+     * list deliberately never shows.
+     *
+     * `uiState.recordings` is the RECORDINGS LIST and nothing else; a transcribe-only import is kept
+     * out of it on purpose (see [HomeViewModel.HomeUiState.transcribeOnly]). Everything that has to
+     * work on a file by name regardless of which list it belongs to — the length and estimate before
+     * a run, the player, the Transcripts page's join, a dialog's title — asks this instead. Looking
+     * such a file up in `recordings` would silently find nothing, which is a transcription started
+     * with no length check and a dialog headed with a raw file name.
+     */
+    val libraryRecordings = remember(uiState.recordings, uiState.transcribeOnly) {
+        uiState.recordings + uiState.transcribeOnly
+    }
+
     val playback by viewModel.playback.collectAsState()
 
     // Two separate flags, not one: the chooser is opened by the user tapping Support, the appeal
@@ -432,9 +448,11 @@ fun HomeScreen(
         onOpenRecordingHandled()
     }
 
-    LaunchedEffect(openWhenListed, uiState.recordings) {
+    LaunchedEffect(openWhenListed, libraryRecordings) {
         val pending = openWhenListed ?: return@LaunchedEffect
-        if (uiState.recordings.any { it.displayName == pending }) {
+        // The combined list: a transcribe-only import is never in uiState.recordings, so waiting
+        // for it there would wait for ever and its screen would never open.
+        if (libraryRecordings.any { it.displayName == pending }) {
             // Its own screen, which is where the file's length, its player and Transcribe all are.
             // A toast saying "imported" would be the app telling the user something happened
             // somewhere else; this shows them the thing itself.
@@ -485,7 +503,7 @@ fun HomeScreen(
             // dialog can open with the answer already in it rather than spinning first.
             transcriptScope.launch {
                 val audioMs = withContext(Dispatchers.IO) {
-                    val uri = uiState.recordings.firstOrNull { it.displayName == displayName }?.uri
+                    val uri = libraryRecordings.firstOrNull { it.displayName == displayName }?.uri
                     uri?.let { AudioDecoder.durationMs(context, it) } ?: 0L
                 }
                 // The container's own length, which is the honest one and is read here anyway. The
@@ -523,7 +541,7 @@ fun HomeScreen(
         // memory first, so a long call ends in a crash or a job that dies silently after a long wait —
         // saying no immediately, with a reason, is strictly better than trying and failing. A stopgap
         // until decoding is chunked; see TranscriptionLengthLimit.
-        val recordingSeconds = uiState.recordings
+        val recordingSeconds = libraryRecordings
             .firstOrNull { it.displayName == displayName }?.durationSeconds
         if (TranscriptionLengthLimit.isTooLong(recordingSeconds)) {
             tooLongMinutes = ((recordingSeconds ?: 0L) / 60L).toInt()
@@ -566,7 +584,9 @@ fun HomeScreen(
     }
 
     playbackFor?.let { displayName ->
-        val openItem = uiState.recordings.firstOrNull { it.displayName == displayName }
+        // The combined list, so a transcribe-only import can still be played, shared and deleted
+        // from its own screen while it exists. It is kept out of the LIST, not out of the app.
+        val openItem = libraryRecordings.firstOrNull { it.displayName == displayName }
         if (openItem == null) {
             // The recording went away underneath us — a retention sweep, or a delete from elsewhere.
             playbackFor = null
@@ -773,12 +793,17 @@ fun HomeScreen(
         // and a flow remembered before the user's first transcription would answer empty for ever.
         val entries by remember(section) { LibraryCounts.transcripts(context) }
             .collectAsState(initial = emptyList())
-        val groups = remember(entries) { TranscriptsPage.group(entries) }
+        // The transcribe-only imports go in as well, so one that nothing else is accounting for —
+        // a stopped run, a refusal, a process death before the queue heard about it — is listed
+        // here rather than existing on disk and in no list at all. See TranscriptsPage.Groups.waiting.
+        val groups = remember(entries, uiState.transcribeOnly) {
+            TranscriptsPage.group(entries, uiState.transcribeOnly.map { it.displayName })
+        }
 
         TranscriptsScreen(
             modifier = modifier,
             groups = groups,
-            recordings = uiState.recordings,
+            recordings = libraryRecordings,
             transcribing = transcribingShown,
             listState = transcriptsListState,
             onBack = { onSelectSection(HomeSection.Hub) },
@@ -796,6 +821,10 @@ fun HomeScreen(
             // The same gate every other entry point uses: without it a retry on a phone whose model
             // has been deleted would fail exactly the silent way the first attempt did.
             onRetry = { displayName -> startTranscription(displayName) },
+            // The waiting group's card: its audio is still on the phone, and its own screen is where
+            // playing, sharing and deleting it live. Setting playbackFor directly rather than
+            // changing section — the recording is deliberately not in Recordings to go back to.
+            onOpenAudio = { displayName -> playbackFor = displayName },
             onImport = { importPicker.launch(arrayOf(IMPORT_MIME_FILTER)) },
             importing = uiState.isImporting,
         )
@@ -822,7 +851,7 @@ fun HomeScreen(
         SummariesScreen(
             modifier = modifier,
             groups = groups,
-            recordings = uiState.recordings,
+            recordings = libraryRecordings,
             listState = summariesListState,
             onBack = { onSelectSection(HomeSection.Hub) },
             onOpenSettings = onOpenSettings,
@@ -1058,7 +1087,7 @@ fun HomeScreen(
     if (showTranscribingSheet) {
         TranscribingSheet(
             state = transcribing,
-            recordings = uiState.recordings,
+            recordings = libraryRecordings,
             onDismiss = { showTranscribingSheet = false },
             onStopped = { showTranscribingSheet = false }
         )
@@ -1068,7 +1097,7 @@ fun HomeScreen(
         TranscriptSearchSheet(
             // The whole library, not uiState.filteredRecordings: someone searching is looking for
             // a call they could not find by scrolling, and an active filter would hide it.
-            recordings = uiState.recordings,
+            recordings = libraryRecordings,
             onDismiss = { showTranscriptSearch = false },
             onOpen = { row ->
                 showTranscriptSearch = false
@@ -1218,7 +1247,7 @@ fun HomeScreen(
         }.collectAsState(initial = TranscriptRepository.TranscriptRead.Unread)
         val transcript = (read as? TranscriptRepository.TranscriptRead.Read)?.transcript
 
-        val row = uiState.recordings.firstOrNull { it.displayName == displayName }
+        val row = libraryRecordings.firstOrNull { it.displayName == displayName }
 
         // Explicitly row != null: activeUri is null when nothing is loaded, so comparing it against
         // a null row?.uri would call an idle player "this recording".
@@ -1415,7 +1444,7 @@ fun HomeScreen(
             !prefs.hasMeasuredRun(model.id)
         }
         TranscribeConfirmDialog(
-            title = RecordingLabel.forDisplayName(uiState.recordings, displayName),
+            title = RecordingLabel.forDisplayName(libraryRecordings, displayName),
             estimate = estimateMs?.let { formatEstimate(it) },
             isFirstRun = isFirstRun,
             onDismiss = { confirmTranscribe = null },
@@ -1429,7 +1458,7 @@ fun HomeScreen(
 
     askLanguageFor?.let { displayName ->
         TranscribeLanguageDialog(
-            title = RecordingLabel.forDisplayName(uiState.recordings, displayName),
+            title = RecordingLabel.forDisplayName(libraryRecordings, displayName),
             setting = AppPreferences(context).getTranscriptionLanguage(),
             onDismiss = { askLanguageFor = null },
             onConfirm = { language ->
@@ -1498,7 +1527,7 @@ fun HomeScreen(
     }
 
     deleteTranscriptFor?.let { displayName ->
-        val row = uiState.recordings.firstOrNull { it.displayName == displayName }
+        val row = libraryRecordings.firstOrNull { it.displayName == displayName }
         val label = RecordingLabel.of(row) ?: BidiText.isolate(displayName)
         DeleteRecordingDialog(
             name = label,

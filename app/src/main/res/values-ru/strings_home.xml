@@ -173,6 +173,8 @@
     <string name="transcripts_working_header">Расшифровывается</string>
     <string name="transcripts_failed_header">Не завершилось</string>
     <string name="transcripts_failed_hint">Нажмите, чтобы попробовать снова.</string>
+    <string name="transcripts_waiting_header">Ожидает расшифровки</string>
+    <string name="transcripts_waiting_hint">Вы поделились этими файлами, чтобы прочитать их, а не сохранить. Нажмите на файл, чтобы начать, или откройте его, чтобы прослушать или удалить.</string>
     <string name="summaries_working_header">Составляется сводка</string>
     <string name="summaries_failed_header">Не завершилось</string>
     <string name="summaries_failed_hint">Откройте, чтобы запросить снова.</string>
