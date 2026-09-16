@@ -383,3 +383,25 @@ wireless debugging of CallVault's own" — restates the paragraph that was alrea
   "CallVault tells you when a transcript is ready" until the maintainer has seen one on the OP12.
 - **Still claimed, unchanged:** no new permission. `POST_NOTIFICATIONS` was already declared and is
   still checked before every post, and a phone that has refused it simply gets no notice.
+
+## 2026-09-16 — Three more pieces of feedback: the library rows
+
+- **What changed:**
+  1. A transcript whose audio is gone no longer offers "Transcribe again" — there is nothing left to
+     transcribe from, and pressing it would have thrown the stored words away.
+  2. Transcripts and Summaries rows carry an overflow menu: Share, Save as a file, Delete. Share
+     sends the words (or the summary) as text; Save writes the same document the reading view
+     exports, five formats for a transcript and two for a summary. **Delete takes the text on
+     Transcripts and the summary on Summaries — never the recording.**
+  3. Both pages take long-press multi-select, with bulk share and bulk delete, the same grammar the
+     recordings list has always had.
+- **Why it matters to the README:** anywhere it says a transcript can be shared or exported, that is
+  now true **from the list** and not only from inside a transcript; and the Summaries page gains its
+  first actions at all. If the README describes multi-select as a recordings-list feature, it is now
+  a library feature. Nothing it already claims becomes false.
+- **Claim status:** 🧪 all three unconfirmed on a phone. Verified on the emulator: the menus, both
+  deletes with the counts following, a mixed-selection warning, bulk share, and a selection surviving
+  a rotation. **Do not** write a README line about bulk *export*: there deliberately is none, because
+  the export cache holds one file at a time.
+- **Still claimed, unchanged:** no new permission, and no new way for the app to reach audio — every
+  path added here reads and writes text the app already stores.
