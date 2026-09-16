@@ -79,9 +79,27 @@ object TranscriptRepository {
         }
     }
 
-    /** The full transcript for one recording, or null when there is none. */
-    fun transcript(context: Context, displayName: String): Flow<TranscriptWithSegments?> =
-        dao(context).observe(displayName)
+    /**
+     * What the database has said about one recording's transcript so far.
+     *
+     * **Two answers, not one.** Room's flow does not emit until it has queried, so a plain null meant
+     * both "not read yet" and "there is none" — and the reader could only be told the first, which
+     * is why a page with no transcript said "Loading the transcript…" for ever. That was unreachable
+     * while every way in was gated on a finished transcript; the Summaries page is not, because
+     * deleting the text leaves the summary, and then the summary is the only way back to the call.
+     */
+    sealed interface TranscriptRead {
+
+        /** The query has not come back yet. Nothing can be said about the transcript. */
+        data object Unread : TranscriptRead
+
+        /** The database has answered. A null [transcript] now means there is none. */
+        data class Read(val transcript: TranscriptWithSegments?) : TranscriptRead
+    }
+
+    /** The full transcript for one recording. See [TranscriptRead] for why it is wrapped. */
+    fun transcript(context: Context, displayName: String): Flow<TranscriptRead> =
+        dao(context).observe(displayName).map { TranscriptRead.Read(it) }
 
     /**
      * Transcribes [displayName] now, at the user's request — no charging or schedule constraints.

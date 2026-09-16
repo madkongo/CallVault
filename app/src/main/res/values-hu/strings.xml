@@ -406,6 +406,7 @@
     <string name="transcript_delete_confirm_message">A(z) %1$s átirata törlődik. Maga a felvétel megmarad, és később újra átírható.</string>
     <string name="transcript_delete_confirm_title">Törli ezt az átiratot?</string>
     <string name="transcript_loading">Átirat betöltése…</string>
+    <string name="transcript_none">Ehhez a híváshoz nincs átirat. Sosem készült, vagy törölték a szöveget.</string>
     <string name="transcript_no_model_message">Az átírás ezen a telefonon készül, ezért előbb le kell tölteni egy beszédmodellt. A Beállításokban választhat és tölthet le egyet.</string>
     <string name="transcript_no_model_open_settings">Beállítások megnyitása</string>
     <string name="transcript_too_long_title">Túl hosszú az átirathoz</string>

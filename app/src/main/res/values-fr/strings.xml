@@ -406,6 +406,7 @@
     <string name="transcript_delete_confirm_message">La transcription de %1$s sera supprimée. L\'enregistrement est conservé et vous pourrez le transcrire à nouveau plus tard.</string>
     <string name="transcript_delete_confirm_title">Supprimer cette transcription ?</string>
     <string name="transcript_loading">Chargement de la transcription…</string>
+    <string name="transcript_none">Il n\'y a pas de transcription pour cet appel. Il n\'a jamais été transcrit, ou le texte a été supprimé.</string>
     <string name="transcript_no_model_message">La transcription se fait sur ce téléphone : un modèle vocal doit donc être téléchargé au préalable. Vous pouvez en choisir et en télécharger un dans les paramètres.</string>
     <string name="transcript_no_model_open_settings">Ouvrir les paramètres</string>
     <string name="transcript_too_long_title">Trop long pour être transcrit</string>

@@ -1179,9 +1179,13 @@ fun HomeScreen(
     val readingPresentation = readingFor != null && playbackFor == null
     val openTranscriptFor = if (readingPresentation) readingFor else transcriptFor
     openTranscriptFor?.let { displayName ->
-        val transcript by remember(displayName) {
+        // Unread until the query answers, so the page can tell "still loading" from "there is none"
+        // — the second is reachable now that a summary's row opens this, and deleting the text
+        // leaves the summary behind.
+        val read by remember(displayName) {
             TranscriptRepository.transcript(context, displayName)
-        }.collectAsState(initial = null)
+        }.collectAsState(initial = TranscriptRepository.TranscriptRead.Unread)
+        val transcript = (read as? TranscriptRepository.TranscriptRead.Read)?.transcript
 
         val row = uiState.recordings.firstOrNull { it.displayName == displayName }
 
@@ -1245,6 +1249,7 @@ fun HomeScreen(
 
         TranscriptView(
             transcript = transcript,
+            isTranscriptSettled = read is TranscriptRepository.TranscriptRead.Read,
             title = title,
             presentation = if (readingPresentation) TranscriptPresentation.Screen
                            else TranscriptPresentation.Sheet,

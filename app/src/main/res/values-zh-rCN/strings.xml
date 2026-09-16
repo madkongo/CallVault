@@ -406,6 +406,7 @@
     <string name="transcript_delete_confirm_message">%1$s 的文字记录将被删除。录音本身会保留，稍后可以重新转写。</string>
     <string name="transcript_delete_confirm_title">删除这份文字记录？</string>
     <string name="transcript_loading">正在加载转写…</string>
+    <string name="transcript_none">这通电话没有转写文本。它从未转写过，或者文本已被删除。</string>
     <string name="transcript_no_model_message">转写在本机进行，因此需要先下载语音模型。你可以在设置中选择并下载。</string>
     <string name="transcript_no_model_open_settings">打开设置</string>
     <string name="transcript_too_long_title">太长，无法转录</string>

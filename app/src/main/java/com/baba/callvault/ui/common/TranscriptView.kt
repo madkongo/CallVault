@@ -112,6 +112,12 @@ enum class TranscriptPresentation {
 @Composable
 fun TranscriptView(
     transcript: TranscriptWithSegments?,
+    /**
+     * True once the database has answered, so a null [transcript] means there is none rather than
+     * that it has not been read yet. The two used to be one answer and the reader was always told
+     * the friendlier of them — see [com.baba.callvault.data.transcripts.TranscriptRepository.TranscriptRead].
+     */
+    isTranscriptSettled: Boolean,
     title: String,
     presentation: TranscriptPresentation = TranscriptPresentation.Sheet,
     modifier: Modifier = Modifier,
@@ -172,6 +178,7 @@ fun TranscriptView(
     val body: @Composable ColumnScope.() -> Unit = {
         TranscriptBody(
             transcript = transcript,
+            isTranscriptSettled = isTranscriptSettled,
             title = title,
             positionMs = positionMs,
             durationMs = durationMs,
@@ -249,6 +256,7 @@ fun TranscriptView(
 @Composable
 private fun ColumnScope.TranscriptBody(
     transcript: TranscriptWithSegments?,
+    isTranscriptSettled: Boolean,
     title: String,
     positionMs: Long,
     durationMs: Long,
@@ -295,8 +303,15 @@ private fun ColumnScope.TranscriptBody(
     }
 
     when {
+        // Two different nothings, and until the Summaries page they were reported as one. Every
+        // other way in is gated on a finished transcript, so a null here could only mean the query
+        // had not come back — but deleting the text leaves the summary behind, and the summary's
+        // own row then opens a page that would have said "Loading the transcript…" for ever.
+        // "Transcribe again", below, is the way out of the second one.
         transcript == null -> Text(
-            text = stringResource(R.string.transcript_loading),
+            text = stringResource(
+                if (isTranscriptSettled) R.string.transcript_none else R.string.transcript_loading
+            ),
             style = MaterialTheme.typography.bodyMedium,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
             modifier = Modifier.padding(horizontal = 24.dp, vertical = 24.dp)

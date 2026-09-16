@@ -406,6 +406,7 @@
     <string name="transcript_delete_confirm_message">Расшифровка %1$s будет удалена. Сама запись сохранится, и позже её можно расшифровать снова.</string>
     <string name="transcript_delete_confirm_title">Удалить эту расшифровку?</string>
     <string name="transcript_loading">Загрузка расшифровки…</string>
+    <string name="transcript_none">Для этого звонка нет расшифровки. Её не делали или текст удалили.</string>
     <string name="transcript_no_model_message">Расшифровка выполняется на этом телефоне, поэтому сначала нужно загрузить речевую модель. Выбрать и загрузить её можно в настройках.</string>
     <string name="transcript_no_model_open_settings">Открыть настройки</string>
     <string name="transcript_too_long_title">Слишком длинная для расшифровки</string>

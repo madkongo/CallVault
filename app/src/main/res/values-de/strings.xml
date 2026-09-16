@@ -406,6 +406,7 @@
     <string name="transcript_delete_confirm_message">Das Transkript von %1$s wird gelöscht. Die Aufnahme selbst bleibt erhalten, und Sie können sie später erneut transkribieren.</string>
     <string name="transcript_delete_confirm_title">Dieses Transkript löschen?</string>
     <string name="transcript_loading">Transkript wird geladen…</string>
+    <string name="transcript_none">Für diesen Anruf gibt es kein Transkript. Es wurde nie transkribiert, oder der Text wurde gelöscht.</string>
     <string name="transcript_no_model_message">Die Transkription läuft auf diesem Telefon, daher muss zuerst ein Sprachmodell heruntergeladen werden. In den Einstellungen können Sie eines auswählen und laden.</string>
     <string name="transcript_no_model_open_settings">Einstellungen öffnen</string>
     <string name="transcript_too_long_title">Zu lang zum Transkribieren</string>

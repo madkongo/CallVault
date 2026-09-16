@@ -409,6 +409,7 @@
     <string name="transcript_delete_confirm_message">A transcrição de %1$s será excluída. A gravação em si é mantida, e você pode transcrevê-la novamente depois.</string>
     <string name="transcript_delete_confirm_title">Excluir esta transcrição?</string>
     <string name="transcript_loading">Carregando a transcrição…</string>
+    <string name="transcript_none">Não há transcrição desta chamada. Ela nunca foi transcrita, ou o texto foi excluído.</string>
     <string name="transcript_no_model_message">A transcrição acontece neste telefone, então é preciso baixar um modelo de voz primeiro. Você pode escolher e baixar um nas Configurações.</string>
     <string name="transcript_no_model_open_settings">Abrir configurações</string>
     <string name="transcript_too_long_title">Longa demais para transcrever</string>

@@ -729,6 +729,7 @@
     <string name="transcript_action_open">Read the transcript</string>
     <string name="transcript_action_retry">Transcription failed — try again</string>
     <string name="transcript_loading">Loading the transcript…</string>
+    <string name="transcript_none">There\'s no transcript for this call. It was never transcribed, or the text was deleted.</string>
     <string name="transcript_no_speech">No speech was recognised in this recording.</string>
     <string name="transcript_speakers_which_is_you">Which one is you?</string>
     <string name="transcript_speakers_guessed">Names worked out automatically</string>
