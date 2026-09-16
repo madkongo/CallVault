@@ -189,6 +189,7 @@
     <string name="import_failed_copy">Nie udało się zapisać pliku w folderze nagrań. Sprawdź, czy w telefonie jest miejsce i czy folder jest nadal dostępny.</string>
     <string name="import_failed_undecodable">Ten telefon nie potrafi odczytać dźwięku w tym pliku, więc nigdy nie dałoby się go przepisać. Może być uszkodzony albo w formacie, którego Android nie dekoduje.</string>
     <string name="home_row_imported">Zaimportowane</string>
+    <string name="home_row_text_only">Tylko tekst</string>
     <!-- Menu udostępniania: dźwięk wysłany do CallVault z innej aplikacji -->
     <string name="share_import_label">Importuj dźwięk</string>
     <string name="share_import_working_body">Kopiujemy plik i sprawdzamy, czy ten telefon potrafi go odczytać.</string>

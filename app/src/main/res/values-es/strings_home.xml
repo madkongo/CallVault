@@ -189,6 +189,7 @@
     <string name="import_failed_copy">No se pudo escribir el archivo en tu carpeta de grabaciones. Comprueba que haya espacio en el teléfono y que la carpeta siga disponible.</string>
     <string name="import_failed_undecodable">Este teléfono no puede leer el audio de ese archivo, así que nunca podría transcribirse. Puede estar dañado o en un formato que Android no descodifica.</string>
     <string name="home_row_imported">Importado</string>
+    <string name="home_row_text_only">Solo texto</string>
     <!-- Menú de compartir: audio enviado a CallVault desde otra app -->
     <string name="share_import_label">Importar audio</string>
     <string name="share_import_working_body">Copiándolo y comprobando que este teléfono puede leerlo.</string>

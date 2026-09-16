@@ -189,6 +189,7 @@
     <string name="import_failed_copy">无法把文件写入你的录音文件夹。请检查手机是否还有空间，以及该文件夹是否仍然可用。</string>
     <string name="import_failed_undecodable">这部手机读不出该文件里的音频，因此永远无法转写。文件可能已损坏，或采用了 Android 不解码的格式。</string>
     <string name="home_row_imported">已导入</string>
+    <string name="home_row_text_only">仅文字</string>
     <!-- 分享菜单：从其他应用发送给 CallVault 的音频 -->
     <string name="share_import_label">导入音频</string>
     <string name="share_import_working_body">正在复制文件，并检查这部手机能否读取它。</string>

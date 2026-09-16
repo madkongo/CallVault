@@ -38,6 +38,7 @@ import com.baba.callvault.data.transcripts.SummariesPage
 import com.baba.callvault.ui.common.CvScaffold
 import com.baba.callvault.ui.common.CvSectionHeader
 import com.baba.callvault.ui.common.RecordingLabel
+import com.baba.callvault.ui.common.TranscriptAudio
 import com.baba.callvault.ui.common.WorkProgressRing
 
 /**
@@ -214,10 +215,14 @@ private fun SummaryRow(
 ) = LibraryNameRow(
     title = item?.let { RecordingLabel.of(it) } ?: RecordingLabel.forName(displayName),
     subtitle = item?.displayDate,
-    // Read from the NAME, not from the row: a summary can outlive its recording, and an import that
-    // has been deleted is still an import — saying nothing would make it read as a call whose
-    // details all failed to parse.
-    imported = ImportedRecording.isImported(displayName),
+    // A missing row is the audio being gone, which is what the badge says first: it changes what the
+    // row can do. Where the audio IS there, "imported" is read from the NAME rather than from the
+    // row, because saying nothing would make an import read as a call whose details all failed to
+    // parse. One badge, never two — see TranscriptAudio.badgeFor.
+    badge = TranscriptAudio.badgeFor(
+        hasAudio = item != null,
+        isImported = ImportedRecording.isImported(displayName),
+    ),
     onOpen = onOpen,
     trailing = trailing,
 )

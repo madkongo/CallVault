@@ -56,6 +56,7 @@ import com.baba.callvault.ui.common.CvSectionHeader
 import com.baba.callvault.ui.common.RecordingLabel
 import com.baba.callvault.ui.common.TranscribingPillState
 import com.baba.callvault.ui.common.TranscriptActionButton
+import com.baba.callvault.ui.common.TranscriptAudio
 
 /**
  * The Transcripts page: everything transcribed, and everything on its way to being.
@@ -278,7 +279,9 @@ private fun LazyListScope.waitingRows(
         LibraryNameRow(
             title = item?.let { RecordingLabel.of(it) } ?: RecordingLabel.forName(displayName),
             subtitle = item?.displayDate,
-            imported = true,
+            // Always Imported, never Text only: this group IS the files still waiting on the phone,
+            // so their audio is by definition there — that is what there is to transcribe.
+            badge = TranscriptAudio.RowBadge.Imported,
             onOpen = { onOpen(displayName) },
             trailing = {
                 TranscriptActionButton(
@@ -320,10 +323,14 @@ private fun LazyListScope.transcriptRows(
         LibraryNameRow(
             title = item?.let { RecordingLabel.of(it) } ?: RecordingLabel.forName(entry.displayName),
             subtitle = item?.displayDate,
-            // Read from the NAME, not from the row: a transcript can outlive its recording, and an
-            // import that has been deleted is still an import — saying nothing would make it read as
-            // a call whose details all failed to parse.
-            imported = ImportedRecording.isImported(entry.displayName),
+            // A missing row is the audio being gone, which is what the badge says first: it changes
+            // what the row can do. Where the audio IS there, "imported" is read from the NAME rather
+            // than from the row, because saying nothing would make an import read as a call whose
+            // details all failed to parse.
+            badge = TranscriptAudio.badgeFor(
+                hasAudio = item != null,
+                isImported = ImportedRecording.isImported(entry.displayName),
+            ),
             onOpen = onOpen?.let { open -> { open(entry.displayName) } },
             // Only where the row has a state worth drawing. A finished transcript needs no icon: the
             // card is the affordance, and an "open" button on a card that opens says it twice.

@@ -26,6 +26,8 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import com.baba.callvault.ui.common.CvCard
 import com.baba.callvault.ui.common.ImportedBadge
+import com.baba.callvault.ui.common.TextOnlyBadge
+import com.baba.callvault.ui.common.TranscriptAudio
 
 /**
  * The row every library list is built from.
@@ -38,18 +40,21 @@ import com.baba.callvault.ui.common.ImportedBadge
  * outlive its recording — the two are separate databases and the delete cascade is called by hand —
  * and such a row is still worth drawing, because the text is still readable. The caller passes what
  * it knows: the file's own name and no date rather than an invented one. What is missing is the
- * audio, and a row that quietly borrowed a date from somewhere would hide that.
+ * audio, which the badge now says outright rather than leaving to be inferred from a missing date.
  */
 @Composable
 internal fun LibraryNameRow(
     title: String,
     subtitle: String?,
     /**
-     * Draws the "imported" badge beside the title. Here rather than at each call site so that
-     * Transcripts and Summaries cannot disagree about whether a row says where it came from — and
-     * so that the next list built on this row gets it without anyone remembering.
+     * The one badge beside the title. Here rather than at each call site so that Transcripts and
+     * Summaries cannot disagree about what a row says, and so that the next list built on this row
+     * gets it without anyone remembering.
+     *
+     * One, never two: the trailing slot is a fixed width and the title already ellipsises, so a
+     * second pill would be paid for out of the name. [TranscriptAudio.badgeFor] decides which.
      */
-    imported: Boolean = false,
+    badge: TranscriptAudio.RowBadge = TranscriptAudio.RowBadge.None,
     onOpen: (() -> Unit)? = null,
     trailing: (@Composable () -> Unit)? = null,
 ) {
@@ -69,9 +74,16 @@ internal fun LibraryNameRow(
                         // truncated, and half a word saying where a row came from says nothing.
                         modifier = Modifier.weight(1f, fill = false),
                     )
-                    if (imported) {
-                        Spacer(Modifier.width(8.dp))
-                        ImportedBadge()
+                    when (badge) {
+                        TranscriptAudio.RowBadge.None -> Unit
+                        TranscriptAudio.RowBadge.Imported -> {
+                            Spacer(Modifier.width(8.dp))
+                            ImportedBadge()
+                        }
+                        TranscriptAudio.RowBadge.TextOnly -> {
+                            Spacer(Modifier.width(8.dp))
+                            TextOnlyBadge()
+                        }
                     }
                 }
                 subtitle?.let { line ->

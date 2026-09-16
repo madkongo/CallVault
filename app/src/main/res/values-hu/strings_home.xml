@@ -189,6 +189,7 @@
     <string name="import_failed_copy">A fájlt nem sikerült a felvételmappádba írni. Ellenőrizd, hogy van-e hely a telefonon, és hogy a mappa továbbra is elérhető-e.</string>
     <string name="import_failed_undecodable">Ez a telefon nem tudja olvasni a fájlban lévő hangot, így soha nem lehetne átírni. Lehet, hogy sérült, vagy olyan formátumú, amit az Android nem dekódol.</string>
     <string name="home_row_imported">Importált</string>
+    <string name="home_row_text_only">Csak szöveg</string>
     <!-- Megosztás menü: másik alkalmazásból a CallVaultnak küldött hang -->
     <string name="share_import_label">Hang importálása</string>
     <string name="share_import_working_body">Másolás, és annak ellenőrzése, hogy a telefon el tudja-e olvasni.</string>

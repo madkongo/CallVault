@@ -189,6 +189,7 @@
     <string name="import_failed_copy">Không ghi được tệp vào thư mục bản ghi của bạn. Hãy kiểm tra điện thoại còn chỗ trống và thư mục vẫn dùng được.</string>
     <string name="import_failed_undecodable">Điện thoại này không đọc được âm thanh bên trong tệp đó, nên sẽ không bao giờ chép lời được. Tệp có thể đã hỏng, hoặc ở định dạng Android không giải mã.</string>
     <string name="home_row_imported">Đã nhập</string>
+    <string name="home_row_text_only">Chỉ văn bản</string>
     <!-- Menu chia sẻ: âm thanh gửi tới CallVault từ ứng dụng khác -->
     <string name="share_import_label">Nhập âm thanh</string>
     <string name="share_import_working_body">Đang chép tệp vào và kiểm tra xem điện thoại có đọc được không.</string>
