@@ -158,10 +158,10 @@ fun AppNavigationScreen(
         preferences.setLastHomeSection(next)
     }
 
-    // A notification tap says what it was about. Every destination resolves to Home today, and Home
-    // is where a tap already landed, so honouring one is currently the same as doing nothing — but
-    // the delivery is real, and the sections that will make it matter can be added without also
-    // having to re-plumb four notifications in the same change.
+    // A notification tap says what it was about, and now it decides where it lands: all four go to
+    // the hub, because the status card, the update offer and the banners are all there. Without
+    // this, "recording is broken" could open onto a transcript list with no sign of the problem —
+    // silently, since nothing crashes.
     //
     // Acknowledged whatever the router decided, including when it decided onboarding: a notification
     // cannot jump ahead of the disclaimer or the wizard, and a request that outlives the visit it
@@ -169,9 +169,12 @@ fun AppNavigationScreen(
     // tap?" is a question a debug report otherwise cannot answer.
     LaunchedEffect(notificationDestination, screenState) {
         if (notificationDestination == NotificationDestination.None) return@LaunchedEffect
+        val target = HomeSection.forNotification(resolvedScreen, notificationDestination)
+        if (target != null) goToSection(target)
         AppLogger.d(
             "CV:Nav",
-            "Opened from the ${notificationDestination.key} notification; showing $screenState"
+            "Opened from the ${notificationDestination.key} notification; showing $screenState" +
+                (target?.let { ", section ${it.key}" } ?: "")
         )
         onNotificationDestinationHandled()
     }

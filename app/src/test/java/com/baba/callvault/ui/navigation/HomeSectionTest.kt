@@ -8,6 +8,7 @@
 
 package com.baba.callvault.ui.navigation
 
+import com.baba.callvault.ui.navigation.HomeSection.Companion.forNotification
 import com.baba.callvault.ui.navigation.HomeSection.Companion.opening
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNull
@@ -53,6 +54,32 @@ class HomeSectionTest {
         assertNull(opening(AppScreen.Disclaimer, storedKey = "recordings"))
         assertNull(opening(AppScreen.Permissions, storedKey = "recordings"))
         assertNull(opening(AppScreen.Wizard, storedKey = "recordings"))
+    }
+
+    @Test
+    fun `every notification lands where it can be acted on`() {
+        // The status card, the update offer and the banners are all on the hub, so every one of
+        // these taps has to arrive there. Landing on a transcript list would show no sign of the
+        // problem the notification was about, and nothing would say so.
+        assertEquals(HomeSection.Hub, forNotification(AppScreen.Home, NotificationDestination.Status))
+        assertEquals(HomeSection.Hub, forNotification(AppScreen.Home, NotificationDestination.Update))
+        assertEquals(HomeSection.Hub, forNotification(AppScreen.Home, NotificationDestination.Pairing))
+        assertEquals(HomeSection.Hub, forNotification(AppScreen.Home, NotificationDestination.Debug))
+    }
+
+    @Test
+    fun `nothing asked for moves nobody`() {
+        // A launcher open, a build older than the extra, or a destination already acted on. By then
+        // the user may have navigated somewhere themselves, and taking them off it would be the same
+        // out-of-nowhere jump the history-flag check exists to prevent.
+        assertNull(forNotification(AppScreen.Home, NotificationDestination.None))
+    }
+
+    @Test
+    fun `a notification cannot jump ahead of onboarding`() {
+        assertNull(forNotification(AppScreen.Wizard, NotificationDestination.Status))
+        assertNull(forNotification(AppScreen.Disclaimer, NotificationDestination.Pairing))
+        assertNull(forNotification(AppScreen.Permissions, NotificationDestination.Update))
     }
 
     @Test

@@ -56,5 +56,35 @@ enum class HomeSection(val key: String) {
             if (resolvedScreen != AppScreen.Home) return null
             return entries.firstOrNull { it.key == storedKey } ?: Hub
         }
+
+        /**
+         * Which section a notification tap should land on, or null to leave the app where it is.
+         *
+         * All four destinations answer [Hub], and that is not a placeholder: the status card, the
+         * update offer and the banners all live on the hub, so the hub is where each of these taps
+         * can actually be acted on. A "recording is broken" tap that landed on a transcript list
+         * would show no sign of the problem and nothing would say so.
+         *
+         * [resolvedScreen] is honoured for the same reason [opening] honours it — a notification
+         * cannot jump ahead of the disclaimer or the wizard, and there are no sections to speak of
+         * until setup is finished.
+         *
+         * [NotificationDestination.None] means nothing was asked for — a launcher open, or a
+         * destination already acted on — and so must not move the user, who by then may have
+         * navigated somewhere themselves.
+         */
+        fun forNotification(
+            resolvedScreen: AppScreen,
+            destination: NotificationDestination
+        ): HomeSection? {
+            if (resolvedScreen != AppScreen.Home) return null
+            return when (destination) {
+                NotificationDestination.None -> null
+                NotificationDestination.Status,
+                NotificationDestination.Update,
+                NotificationDestination.Pairing,
+                NotificationDestination.Debug -> Hub
+            }
+        }
     }
 }
