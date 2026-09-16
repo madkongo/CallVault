@@ -841,4 +841,10 @@
     <string name="oem_gate_body_other">This phone refuses to give CallVault the permission it needs. In Developer options, look for a switch about permission monitoring or system optimisation, turn it on, and try again.</string>
     <string name="oem_gate_open_dev_options">Open Developer options</string>
     <string name="oem_gate_continue_hint">You can carry on for now, but calls will not be recorded until this is done.</string>
+    <string name="home_hub_community_eyebrow">JOIN</string>
+    <string name="home_hub_community_title">Telegram group</string>
+    <string name="home_hub_community_body">Ask a question, say what is not working, hear about new builds.</string>
+    <string name="home_community_pill">Telegram</string>
+    <string name="home_community_tucked_hint">Moved up beside Support. Long-press it there to bring the card back.</string>
+    <string name="home_community_restored_hint">Back on the home screen.</string>
 </resources>

@@ -249,6 +249,10 @@ class AppPreferences(context: Context) {
         // because most OEMs state it nowhere readable — see [ShellGrantGate].
         SHELL_GRANT_STATE("shell_grant_state"),
 
+        // Whether the user has long-pressed the Telegram card away into the top bar. Their choice, so
+        // it persists; a card they have already acted on should not keep asking.
+        COMMUNITY_TUCKED("community_tucked"),
+
         // --- Storage & General ---
         RECORDING_FOLDER_URI("recording_folder_uri"),
         VIBRATION_ENABLED("vibration_enabled"),
@@ -454,6 +458,10 @@ class AppPreferences(context: Context) {
     
     /** Sets whether the user has accepted the disclaimer. */
     fun setDisclaimerAccepted(accepted: Boolean) = setBoolean(Key.DISCLAIMER_ACCEPTED, accepted)
+
+    /** Whether the Telegram invite has been tucked into the top bar (long-press) instead of the hub grid. */
+    fun isCommunityTucked() = getBoolean(Key.COMMUNITY_TUCKED, false)
+    fun setCommunityTucked(tucked: Boolean) = setBoolean(Key.COMMUNITY_TUCKED, tucked)
 
     /** What the last self-grant attempt over the ADB shell showed ([ShellGrantGate.ShellGrantState] name), or null. */
     fun getShellGrantState(): String? = getString(Key.SHELL_GRANT_STATE)

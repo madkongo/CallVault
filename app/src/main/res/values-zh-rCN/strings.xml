@@ -635,4 +635,10 @@
     <string name="oem_gate_body_other">这台手机拒绝授予 CallVault 所需的权限。请在开发者选项中查找与权限监控或系统优化相关的开关，开启后再试一次。</string>
     <string name="oem_gate_open_dev_options">打开开发者选项</string>
     <string name="oem_gate_continue_hint">你可以先继续，但在完成之前通话不会被录制。</string>
+    <string name="home_hub_community_eyebrow">加入</string>
+    <string name="home_hub_community_title">Telegram 群组</string>
+    <string name="home_hub_community_body">提问、反馈问题、了解新版本。</string>
+    <string name="home_community_pill">Telegram</string>
+    <string name="home_community_tucked_hint">已移到顶部“支持”旁边。在那里长按可以把卡片放回来。</string>
+    <string name="home_community_restored_hint">已回到主页。</string>
 </resources>

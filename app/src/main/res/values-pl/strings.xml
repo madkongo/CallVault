@@ -638,4 +638,10 @@
     <string name="oem_gate_body_other">Ten telefon odmawia CallVault potrzebnego uprawnienia. W opcjach programisty poszukaj przełącznika dotyczącego monitorowania uprawnień lub optymalizacji systemu, włącz go i spróbuj ponownie.</string>
     <string name="oem_gate_open_dev_options">Otwórz opcje programisty</string>
     <string name="oem_gate_continue_hint">Możesz na razie kontynuować, ale połączenia nie będą nagrywane, dopóki tego nie zrobisz.</string>
+    <string name="home_hub_community_eyebrow">DOŁĄCZ</string>
+    <string name="home_hub_community_title">Grupa na Telegramie</string>
+    <string name="home_hub_community_body">Zadaj pytanie, napisz co nie działa, poznaj nowe wersje.</string>
+    <string name="home_community_pill">Telegram</string>
+    <string name="home_community_tucked_hint">Przeniesione na górę obok Wesprzyj. Przytrzymaj tam, aby przywrócić kartę.</string>
+    <string name="home_community_restored_hint">Z powrotem na ekranie głównym.</string>
 </resources>

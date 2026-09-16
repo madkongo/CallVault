@@ -11,6 +11,8 @@ package com.baba.callvault.ui.screens
 import android.net.Uri
 import android.text.format.DateUtils
 import android.widget.Toast
+import androidx.compose.foundation.ExperimentalFoundationApi
+import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -29,6 +31,7 @@ import com.baba.callvault.data.recordings.AudioImport
 import com.baba.callvault.data.recordings.DeleteScope
 import com.baba.callvault.data.recordings.RecordingSelection
 import com.baba.callvault.system.openKofi
+import com.baba.callvault.system.openTelegramGroup
 import com.baba.callvault.ui.common.DeleteScopeStateSaver
 import com.baba.callvault.ui.common.M3DropdownField
 import com.baba.callvault.ui.common.OptionItem
@@ -63,6 +66,7 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.Send
 import androidx.compose.material.icons.automirrored.filled.CallMade
 import androidx.compose.material.icons.automirrored.filled.CallReceived
 import androidx.compose.material.icons.filled.CheckCircle
@@ -257,6 +261,10 @@ fun HomeScreen(
     viewModel: HomeViewModel = viewModel()
 ) {
     val context = LocalContext.current
+    // Where the Telegram invite currently lives. Read once and held, so the long-press moves it under
+    // the user's finger instead of on the next recomposition that happens to come along.
+    val preferences = remember(context) { AppPreferences(context) }
+    var communityTucked by rememberSaveable { mutableStateOf(preferences.isCommunityTucked()) }
     val uiState by viewModel.uiState.collectAsState()
     val playback by viewModel.playback.collectAsState()
 
@@ -639,7 +647,23 @@ fun HomeScreen(
         if (transcribingShown.occupiesTitleSlot) {
             TranscribingPill(state = transcribingShown, onClick = { showTranscribingSheet = true })
         } else {
-            SupportPill(onClick = { showSupport = true })
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                SupportPill(onClick = { showSupport = true })
+                // Where the Telegram card goes when the user long-presses it away — moved, not dismissed,
+                // because someone who tucks it away has usually joined and may still want the way back.
+                // Long-pressing here undoes it, which is the only way back: nothing else mentions it.
+                if (communityTucked) {
+                    Spacer(Modifier.width(8.dp))
+                    CommunityPill(
+                        onClick = { context.openTelegramGroup() },
+                        onLongClick = {
+                            preferences.setCommunityTucked(false)
+                            communityTucked = false
+                            Toast.makeText(context, R.string.home_community_restored_hint, Toast.LENGTH_SHORT).show()
+                        },
+                    )
+                }
+            }
         }
     }
 
@@ -670,6 +694,13 @@ fun HomeScreen(
             listState = hubGridState,
             onOpenSection = onSelectSection,
             onOpenSettings = onOpenSettings,
+            onOpenCommunity = { context.openTelegramGroup() },
+            onTuckCommunity = {
+                preferences.setCommunityTucked(true)
+                communityTucked = true
+                Toast.makeText(context, R.string.home_community_tucked_hint, Toast.LENGTH_LONG).show()
+            },
+            communityTucked = communityTucked,
             titleTrailing = titleTrailing,
             // The state of the app, all on the page a notification about it now lands on. Kept off
             // the recordings list rather than drawn in both places: a banner in two places is two
@@ -1733,6 +1764,40 @@ private fun UpdateBannerCard(
  * page in the browser — an optional, low-key donation entry point that keeps the status card and the
  * recordings list uncluttered. The matching, more explicit ask lives in Settings → About.
  */
+/**
+ * The tucked-away Telegram invite. Deliberately quieter than [SupportPill]: it is a way back to something
+ * the user has already seen, not a second thing asking for their attention.
+ */
+@OptIn(ExperimentalFoundationApi::class)
+@Composable
+private fun CommunityPill(onClick: () -> Unit, onLongClick: () -> Unit) {
+    val accent = LocalCvBrand.current.accent
+    Surface(
+        shape = CircleShape,
+        color = accent.copy(alpha = 0.12f),
+        modifier = Modifier.clip(CircleShape).combinedClickable(onClick = onClick, onLongClick = onLongClick),
+    ) {
+        Row(
+            modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            Icon(
+                imageVector = Icons.AutoMirrored.Filled.Send,
+                contentDescription = null,
+                tint = accent,
+                modifier = Modifier.size(15.dp),
+            )
+            Spacer(Modifier.width(6.dp))
+            Text(
+                text = stringResource(R.string.home_community_pill),
+                style = MaterialTheme.typography.labelMedium,
+                fontWeight = FontWeight.Medium,
+                color = accent,
+            )
+        }
+    }
+}
+
 @Composable
 private fun SupportPill(onClick: () -> Unit) {
     val accent = MaterialTheme.colorScheme.primary

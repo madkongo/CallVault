@@ -636,4 +636,10 @@
     <string name="oem_gate_body_other">Questo telefono nega a CallVault l\'autorizzazione necessaria. Nelle Opzioni sviluppatore cerca un\'impostazione su monitoraggio autorizzazioni od ottimizzazione del sistema, attivala e riprova.</string>
     <string name="oem_gate_open_dev_options">Apri Opzioni sviluppatore</string>
     <string name="oem_gate_continue_hint">Puoi proseguire, ma le chiamate non verranno registrate finché non lo fai.</string>
+    <string name="home_hub_community_eyebrow">ENTRA</string>
+    <string name="home_hub_community_title">Gruppo Telegram</string>
+    <string name="home_hub_community_body">Fai una domanda, segnala cosa non va, scopri le nuove build.</string>
+    <string name="home_community_pill">Telegram</string>
+    <string name="home_community_tucked_hint">Spostato in alto accanto a Sostieni. Tienilo premuto lì per riportare la scheda.</string>
+    <string name="home_community_restored_hint">Di nuovo nella schermata iniziale.</string>
 </resources>

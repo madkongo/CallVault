@@ -635,4 +635,10 @@
     <string name="oem_gate_body_other">Điện thoại này từ chối cấp quyền mà CallVault cần. Trong Tùy chọn nhà phát triển, hãy tìm mục về giám sát quyền hoặc tối ưu hóa hệ thống, bật lên rồi thử lại.</string>
     <string name="oem_gate_open_dev_options">Mở Tùy chọn nhà phát triển</string>
     <string name="oem_gate_continue_hint">Bạn có thể tiếp tục, nhưng cuộc gọi sẽ không được ghi cho đến khi làm xong việc này.</string>
+    <string name="home_hub_community_eyebrow">THAM GIA</string>
+    <string name="home_hub_community_title">Nhóm Telegram</string>
+    <string name="home_hub_community_body">Đặt câu hỏi, báo lỗi, biết tin về bản dựng mới.</string>
+    <string name="home_community_pill">Telegram</string>
+    <string name="home_community_tucked_hint">Đã chuyển lên cạnh Ủng hộ. Nhấn giữ ở đó để đưa thẻ trở lại.</string>
+    <string name="home_community_restored_hint">Đã trở lại màn hình chính.</string>
 </resources>

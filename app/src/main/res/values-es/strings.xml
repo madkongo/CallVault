@@ -636,4 +636,10 @@
     <string name="oem_gate_body_other">Este teléfono no concede a CallVault el permiso que necesita. En Opciones de desarrollador, busca un ajuste sobre supervisión de permisos u optimización del sistema, actívalo y vuelve a intentarlo.</string>
     <string name="oem_gate_open_dev_options">Abrir Opciones de desarrollador</string>
     <string name="oem_gate_continue_hint">Puedes continuar por ahora, pero las llamadas no se grabarán hasta que lo hagas.</string>
+    <string name="home_hub_community_eyebrow">ÚNETE</string>
+    <string name="home_hub_community_title">Grupo de Telegram</string>
+    <string name="home_hub_community_body">Pregunta, cuenta qué no funciona, entérate de nuevas versiones.</string>
+    <string name="home_community_pill">Telegram</string>
+    <string name="home_community_tucked_hint">Movido arriba, junto a Apoyar. Mantén pulsado allí para recuperar la tarjeta.</string>
+    <string name="home_community_restored_hint">De vuelta en la pantalla de inicio.</string>
 </resources>

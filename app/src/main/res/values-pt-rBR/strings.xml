@@ -639,4 +639,10 @@
     <string name="oem_gate_body_other">Este telefone nega ao CallVault a permissão necessária. Nas opções do desenvolvedor, procure uma chave sobre monitoramento de permissões ou otimização do sistema, ative e tente de novo.</string>
     <string name="oem_gate_open_dev_options">Abrir opções do desenvolvedor</string>
     <string name="oem_gate_continue_hint">Você pode continuar por enquanto, mas as chamadas não serão gravadas até isso ser feito.</string>
+    <string name="home_hub_community_eyebrow">ENTRAR</string>
+    <string name="home_hub_community_title">Grupo no Telegram</string>
+    <string name="home_hub_community_body">Tire dúvidas, conte o que não funciona, saiba das novas versões.</string>
+    <string name="home_community_pill">Telegram</string>
+    <string name="home_community_tucked_hint">Movido para cima, ao lado de Apoiar. Toque e segure ali para trazer o cartão de volta.</string>
+    <string name="home_community_restored_hint">De volta à tela inicial.</string>
 </resources>

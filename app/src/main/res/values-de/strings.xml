@@ -636,4 +636,10 @@
     <string name="oem_gate_body_other">Dieses Telefon verweigert CallVault die benötigte Berechtigung. Suche in den Entwickleroptionen nach einem Schalter zu Berechtigungsüberwachung oder Systemoptimierung, aktiviere ihn und versuche es erneut.</string>
     <string name="oem_gate_open_dev_options">Entwickleroptionen öffnen</string>
     <string name="oem_gate_continue_hint">Du kannst vorerst fortfahren, aber Anrufe werden erst aufgezeichnet, wenn das erledigt ist.</string>
+    <string name="home_hub_community_eyebrow">BEITRETEN</string>
+    <string name="home_hub_community_title">Telegram-Gruppe</string>
+    <string name="home_hub_community_body">Fragen stellen, Probleme melden, von neuen Builds erfahren.</string>
+    <string name="home_community_pill">Telegram</string>
+    <string name="home_community_tucked_hint">Nach oben neben „Unterstützen“ verschoben. Dort lange drücken, um die Karte zurückzuholen.</string>
+    <string name="home_community_restored_hint">Wieder auf dem Startbildschirm.</string>
 </resources>

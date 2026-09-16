@@ -23,6 +23,7 @@ import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.Article
+import androidx.compose.material.icons.automirrored.filled.Send
 import androidx.compose.material.icons.filled.AutoAwesome
 import androidx.compose.material.icons.filled.GraphicEq
 import androidx.compose.material.icons.filled.Tune
@@ -70,6 +71,9 @@ fun HubScreen(
     listState: LazyGridState,
     onOpenSection: (HomeSection) -> Unit,
     onOpenSettings: () -> Unit,
+    onOpenCommunity: () -> Unit,
+    onTuckCommunity: () -> Unit,
+    communityTucked: Boolean,
     modifier: Modifier = Modifier,
     titleTrailing: (@Composable () -> Unit)? = null,
     statusCards: @Composable () -> Unit,
@@ -139,6 +143,22 @@ fun HubScreen(
                     onClick = { onOpenSection(HomeSection.Summaries) },
                 )
             }
+            // Last, and only while the user has not tucked it away: an invitation is worth one cell of a
+            // screen they open every day, and worth none at all once they have taken it up. Long-press
+            // moves it to the pill beside Support rather than hiding it, so it is still one tap away.
+            if (!communityTucked) {
+                item {
+                    HubCard(
+                        icon = Icons.AutoMirrored.Filled.Send,
+                        accent = brand.accent,
+                        count = stringResource(R.string.home_hub_community_eyebrow),
+                        title = stringResource(R.string.home_hub_community_title),
+                        body = stringResource(R.string.home_hub_community_body),
+                        onClick = onOpenCommunity,
+                        onLongClick = onTuckCommunity,
+                    )
+                }
+            }
         }
     }
 }
@@ -162,11 +182,12 @@ private fun HubCard(
     title: String,
     body: String,
     onClick: () -> Unit,
+    onLongClick: (() -> Unit)? = null,
 ) {
     // Stated, not a tonal-container default: secondaryContainer is CoralDeep in this scheme.
     val tinted = accent.copy(alpha = 0.10f).compositeOver(MaterialTheme.colorScheme.surface)
 
-    CvCard(color = tinted, onClick = onClick, contentPadding = PaddingValues(16.dp)) {
+    CvCard(color = tinted, onClick = onClick, onLongClick = onLongClick, contentPadding = PaddingValues(16.dp)) {
         Box(
             modifier = Modifier
                 .size(40.dp)

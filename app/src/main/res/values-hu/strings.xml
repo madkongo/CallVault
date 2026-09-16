@@ -636,4 +636,10 @@
     <string name="oem_gate_body_other">Ez a telefon megtagadja a CallVault számára szükséges engedélyt. A fejlesztői beállításokban keress engedélyfigyeléssel vagy rendszeroptimalizálással kapcsolatos kapcsolót, kapcsold be, majd próbáld újra.</string>
     <string name="oem_gate_open_dev_options">Fejlesztői beállítások megnyitása</string>
     <string name="oem_gate_continue_hint">Most folytathatod, de a hívások addig nem lesznek rögzítve, amíg ezt el nem végzed.</string>
+    <string name="home_hub_community_eyebrow">CSATLAKOZÁS</string>
+    <string name="home_hub_community_title">Telegram-csoport</string>
+    <string name="home_hub_community_body">Kérdezz, jelezd, mi nem működik, értesülj az új buildekről.</string>
+    <string name="home_community_pill">Telegram</string>
+    <string name="home_community_tucked_hint">Felkerült a Támogatás mellé. Ott hosszan nyomva hozhatod vissza a kártyát.</string>
+    <string name="home_community_restored_hint">Újra a kezdőképernyőn.</string>
 </resources>

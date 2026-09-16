@@ -638,4 +638,10 @@
     <string name="oem_gate_body_other">Этот телефон отказывает CallVault в нужном разрешении. В параметрах разработчика найдите переключатель про мониторинг разрешений или оптимизацию системы, включите его и повторите.</string>
     <string name="oem_gate_open_dev_options">Открыть параметры разработчика</string>
     <string name="oem_gate_continue_hint">Можно продолжить, но звонки не будут записываться, пока это не сделано.</string>
+    <string name="home_hub_community_eyebrow">ВСТУПИТЬ</string>
+    <string name="home_hub_community_title">Группа в Telegram</string>
+    <string name="home_hub_community_body">Задать вопрос, рассказать о проблеме, узнать о новых сборках.</string>
+    <string name="home_community_pill">Telegram</string>
+    <string name="home_community_tucked_hint">Перенесено наверх, рядом с «Поддержать». Долгое нажатие там вернёт карточку.</string>
+    <string name="home_community_restored_hint">Снова на главном экране.</string>
 </resources>

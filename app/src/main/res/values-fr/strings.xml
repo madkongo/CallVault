@@ -636,4 +636,10 @@
     <string name="oem_gate_body_other">Ce téléphone refuse à CallVault l\'autorisation nécessaire. Dans les options pour développeurs, cherchez un réglage sur la surveillance des autorisations ou l\'optimisation système, activez-le puis réessayez.</string>
     <string name="oem_gate_open_dev_options">Ouvrir les options pour développeurs</string>
     <string name="oem_gate_continue_hint">Vous pouvez continuer, mais les appels ne seront pas enregistrés tant que ce n\'est pas fait.</string>
+    <string name="home_hub_community_eyebrow">REJOINDRE</string>
+    <string name="home_hub_community_title">Groupe Telegram</string>
+    <string name="home_hub_community_body">Poser une question, signaler un souci, suivre les nouvelles versions.</string>
+    <string name="home_community_pill">Telegram</string>
+    <string name="home_community_tucked_hint">Déplacé en haut, à côté de Soutenir. Appui long à cet endroit pour ramener la carte.</string>
+    <string name="home_community_restored_hint">De retour sur l\'écran d\'accueil.</string>
 </resources>
