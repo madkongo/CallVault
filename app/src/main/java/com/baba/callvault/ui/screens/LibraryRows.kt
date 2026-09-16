@@ -16,6 +16,10 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.CheckCircle
+import androidx.compose.material.icons.filled.RadioButtonUnchecked
+import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -57,8 +61,41 @@ internal fun LibraryNameRow(
     badge: TranscriptAudio.RowBadge = TranscriptAudio.RowBadge.None,
     onOpen: (() -> Unit)? = null,
     trailing: (@Composable () -> Unit)? = null,
+    /**
+     * True while the page is in multi-select, whether or not THIS row can be picked.
+     *
+     * A row that cannot be picked goes inert for the duration rather than keeping its ordinary tap.
+     * The alternative was measured against the gesture the page is in: while building a selection,
+     * a tap that started a transcription — or opened a screen — would be the app doing something
+     * nobody asked for, out of the middle of a sweep down a list.
+     */
+    selectionMode: Boolean = false,
+    selected: Boolean = false,
+    /** Null on a row that cannot be selected, which is also what makes long-press do nothing there. */
+    onToggleSelected: (() -> Unit)? = null,
 ) {
-    CvCard(onClick = onOpen, contentPadding = PaddingValues(horizontal = 16.dp, vertical = 14.dp)) {
+    val selectable = onToggleSelected != null
+
+    CvCard(
+        onClick = when {
+            selectionMode && selectable -> onToggleSelected
+            selectionMode -> null
+            else -> onOpen
+        },
+        // Long-press is what ENTERS selection, so it is live whether or not selection is already on
+        // — the same grammar the recordings list uses, and the one the platform trains people in.
+        onLongClick = onToggleSelected,
+        color = if (selected) {
+            // primaryContainer, NOT secondaryContainer: the secondary role in this theme is
+            // CoralDeep, so a selected row came out maroon on the recordings list and read as an
+            // error or a pending deletion. The note is repeated here because the trap is the theme's,
+            // not that screen's.
+            MaterialTheme.colorScheme.primaryContainer
+        } else {
+            MaterialTheme.colorScheme.surface
+        },
+        contentPadding = PaddingValues(horizontal = 16.dp, vertical = 14.dp),
+    ) {
         Row(verticalAlignment = Alignment.CenterVertically) {
             Column(modifier = Modifier.weight(1f)) {
                 Row(verticalAlignment = Alignment.CenterVertically) {
@@ -97,10 +134,17 @@ internal fun LibraryNameRow(
                     )
                 }
             }
-            if (trailing != null) {
+            // The tick takes the slot while selecting, so a row shows what a tap would do to it
+            // rather than an action it is no longer offering.
+            val slot: (@Composable () -> Unit)? = when {
+                selectionMode && selectable -> ({ SelectionTick(selected = selected) })
+                selectionMode -> null
+                else -> trailing
+            }
+            if (slot != null) {
                 Spacer(Modifier.width(12.dp))
                 Box(modifier = Modifier.size(TRAILING_SLOT), contentAlignment = Alignment.Center) {
-                    trailing()
+                    slot()
                 }
             }
         }
@@ -115,6 +159,19 @@ internal fun LibraryNameRow(
  * finished — in a list where the rows above it are doing the same.
  */
 private val TRAILING_SLOT = 40.dp
+
+/** Whether this row is in the selection, drawn where its action would otherwise be. */
+@Composable
+private fun SelectionTick(selected: Boolean) {
+    Icon(
+        imageVector = if (selected) Icons.Filled.CheckCircle else Icons.Filled.RadioButtonUnchecked,
+        contentDescription = null,
+        // Stated: the teal the recordings list ticks with, not a role that resolves to CoralDeep.
+        tint = if (selected) MaterialTheme.colorScheme.primary
+               else MaterialTheme.colorScheme.onSurfaceVariant,
+        modifier = Modifier.size(22.dp),
+    )
+}
 
 /** Says what would put something here, rather than only that there is nothing. */
 @Composable

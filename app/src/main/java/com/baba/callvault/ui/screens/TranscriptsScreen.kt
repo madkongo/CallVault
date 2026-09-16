@@ -40,6 +40,7 @@ import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
@@ -110,6 +111,11 @@ import com.baba.callvault.ui.common.TranscriptAudio
  * @param onDelete   Asks to delete one transcript's **text**. Never the recording — see
  *                   [com.baba.callvault.data.transcripts.LibraryRowActions] for why a page about
  *                   words does not offer to destroy audio.
+ * @param selection  Multi-select for this page — see [LibrarySelectionUi]. While it is active the
+ *                   bar becomes a count and two bulk actions, the import card is hidden (importing
+ *                   is not something anyone does in the middle of picking rows), and only finished
+ *                   transcripts can be picked: those are the rows a bulk share or delete means
+ *                   anything for.
  * @param onImport   Raises the file picker; the flag is true for "Transcribe only".
  * @param importing  True while a chosen file is being copied and checked. The card says so and
  *                   stops accepting taps: the copy is not instant for a long recording, and a second
@@ -131,6 +137,7 @@ fun TranscriptsScreen(
     onShare: (String) -> Unit,
     onSave: (String, TranscriptFormat) -> Unit,
     onDelete: (String) -> Unit,
+    selection: LibrarySelectionUi,
     onImport: (transcribeOnly: Boolean) -> Unit,
     importing: Boolean,
     modifier: Modifier = Modifier,
@@ -142,10 +149,25 @@ fun TranscriptsScreen(
 
     CvScaffold(
         modifier = modifier.fillMaxSize(),
-        title = stringResource(R.string.home_transcripts_title),
-        onBack = onBack,
-        titleTrailing = titleTrailing,
+        title =
+            if (selection.active) {
+                pluralStringResource(
+                    R.plurals.home_selected_count, selection.selected.size, selection.selected.size
+                )
+            } else {
+                stringResource(R.string.home_transcripts_title)
+            },
+        // Leaving selection comes first, exactly as on the recordings list: while rows are picked
+        // the arrow has to undo that rather than the navigation, or there is no way out but acting.
+        onBack = if (selection.active) selection.onClear else onBack,
+        // Nothing beside the title while selecting: the title IS a count, and a pill next to it
+        // would read as part of it.
+        titleTrailing = if (selection.active) null else titleTrailing,
         actions = {
+            if (selection.active) {
+                LibrarySelectionActions(selection)
+                return@CvScaffold
+            }
             // The same sheet the recordings list raises, not a field on this page. A hit is a moment
             // inside a call rather than a transcript, so inline results would replace this list with
             // rows that mean something else — and a second search would be a second FTS query to
@@ -180,7 +202,12 @@ fun TranscriptsScreen(
             // Before the empty-state branch below, which returns early. An empty Transcripts page is
             // exactly where importing needs to be offered — it is one of the two answers to "there
             // is nothing here yet", and the other one is on a different screen.
-            item { ImportAudioCard(importing = importing, onImport = onImport) }
+            // Not while selecting: bringing a new file in is not something anybody does in the
+            // middle of picking rows, and the card carries two live buttons where every other tap on
+            // the page has become a toggle.
+            if (!selection.active) {
+                item { ImportAudioCard(importing = importing, onImport = onImport) }
+            }
 
             if (groups.isEmpty) {
                 item {
@@ -205,7 +232,13 @@ fun TranscriptsScreen(
                         modifier = Modifier.padding(start = 4.dp, bottom = 2.dp),
                     )
                 }
-                waitingRows(names = groups.waiting, byName = byName, onTranscribe = onRetry, onOpen = onOpenAudio)
+                waitingRows(
+                    names = groups.waiting,
+                    byName = byName,
+                    onTranscribe = onRetry,
+                    onOpen = onOpenAudio,
+                    selectionMode = selection.active,
+                )
             }
 
             if (groups.working.isNotEmpty()) {
@@ -225,6 +258,7 @@ fun TranscriptsScreen(
                     onShare = onShare,
                     onSave = onSave,
                     onDelete = onDelete,
+                    selection = selection,
                     percentFor = transcribing::percentFor,
                 )
             }
@@ -250,6 +284,7 @@ fun TranscriptsScreen(
                     onShare = onShare,
                     onSave = onSave,
                     onDelete = onDelete,
+                    selection = selection,
                     percentFor = { 0 },
                 )
             }
@@ -270,6 +305,7 @@ fun TranscriptsScreen(
                 onShare = onShare,
                 onSave = onSave,
                 onDelete = onDelete,
+                selection = selection,
                 percentFor = { 0 },
             )
         }
@@ -292,6 +328,12 @@ private fun LazyListScope.waitingRows(
     byName: Map<String, RecordingItem>,
     onTranscribe: (String) -> Unit,
     onOpen: (String) -> Unit,
+    /**
+     * True while the page is selecting. These rows are never selectable — there is no text to share
+     * or delete yet — so they simply go inert, rather than opening a screen out of the middle of a
+     * sweep down the list.
+     */
+    selectionMode: Boolean,
 ) {
     items(names, key = { it }) { displayName ->
         val item = byName[displayName]
@@ -302,6 +344,7 @@ private fun LazyListScope.waitingRows(
             // so their audio is by definition there — that is what there is to transcribe.
             badge = TranscriptAudio.RowBadge.Imported,
             onOpen = { onOpen(displayName) },
+            selectionMode = selectionMode,
             trailing = {
                 TranscriptActionButton(
                     status = TranscriptStatus.NONE,
@@ -333,6 +376,7 @@ private fun LazyListScope.transcriptRows(
     onShare: (String) -> Unit,
     onSave: (String, TranscriptFormat) -> Unit,
     onDelete: (String) -> Unit,
+    selection: LibrarySelectionUi,
     percentFor: (String) -> Int,
 ) {
     items(entries, key = { it.displayName }) { entry ->
@@ -342,6 +386,7 @@ private fun LazyListScope.transcriptRows(
         // name and no date, so what is missing shows rather than being papered over.
         val item = byName[entry.displayName]
         val status = TranscriptStatus.of(entry.state)
+        val isDone = status == TranscriptStatus.DONE
         LibraryNameRow(
             title = item?.let { RecordingLabel.of(it) } ?: RecordingLabel.forName(entry.displayName),
             subtitle = item?.displayDate,
@@ -354,10 +399,15 @@ private fun LazyListScope.transcriptRows(
                 isImported = ImportedRecording.isImported(entry.displayName),
             ),
             onOpen = onOpen?.let { open -> { open(entry.displayName) } },
+            selectionMode = selection.active,
+            selected = entry.displayName in selection.selected,
+            // Only a finished transcript can be picked. A bulk share or delete over a queued, failed
+            // or waiting row would mean nothing — there are no words there to send or destroy.
+            onToggleSelected = if (isDone) ({ selection.onToggle(entry.displayName) }) else null,
             // A finished transcript needs no "open" icon — the card is the affordance, and a button
             // on a card that opens says it twice — so its slot carries the overflow menu instead.
             // Every other state keeps the one action it has: transcribe, in progress, or retry.
-            trailing = if (status == TranscriptStatus.DONE) {
+            trailing = if (isDone) {
                 {
                     LibraryRowMenu(
                         menu = LibraryRowActions.forTranscript(entry.state, hasAudio = item != null),

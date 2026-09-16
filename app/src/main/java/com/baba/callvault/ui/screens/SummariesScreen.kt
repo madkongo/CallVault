@@ -29,6 +29,7 @@ import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import com.baba.callvault.R
@@ -85,6 +86,8 @@ import com.baba.callvault.ui.common.WorkProgressRing
  * @param onDelete   Asks to delete one **summary**. The transcript it was written from and the
  *                   recording both stay; see
  *                   [com.baba.callvault.data.transcripts.LibraryRowActions].
+ * @param selection  Multi-select for this page — see [LibrarySelectionUi]. Only a stored summary
+ *                   can be picked: a run still in flight has no row to share or delete.
  * @param onStop     Stops whatever the summariser is doing. One stop for the whole queue, because
  *                   that is all there is: the engine serialises on a mutex and runs one at a time.
  */
@@ -99,6 +102,7 @@ fun SummariesScreen(
     onShare: (String) -> Unit,
     onSave: (String, TranscriptFormat) -> Unit,
     onDelete: (String) -> Unit,
+    selection: LibrarySelectionUi,
     onStop: () -> Unit,
     modifier: Modifier = Modifier,
     titleTrailing: (@Composable () -> Unit)? = null,
@@ -109,10 +113,22 @@ fun SummariesScreen(
 
     CvScaffold(
         modifier = modifier.fillMaxSize(),
-        title = stringResource(R.string.home_summaries_title),
-        onBack = onBack,
-        titleTrailing = titleTrailing,
+        title =
+            if (selection.active) {
+                pluralStringResource(
+                    R.plurals.home_selected_count, selection.selected.size, selection.selected.size
+                )
+            } else {
+                stringResource(R.string.home_summaries_title)
+            },
+        // Leaving selection comes first, exactly as on the recordings list and on Transcripts.
+        onBack = if (selection.active) selection.onClear else onBack,
+        titleTrailing = if (selection.active) null else titleTrailing,
         actions = {
+            if (selection.active) {
+                LibrarySelectionActions(selection)
+                return@CvScaffold
+            }
             IconButton(onClick = onOpenSettings) {
                 Icon(
                     imageVector = Icons.Filled.Tune,
@@ -149,6 +165,9 @@ fun SummariesScreen(
                     SummaryRow(
                         displayName = working.displayName,
                         item = byName[working.displayName],
+                        // Never selectable: there is no summary row yet to share or delete, which is
+                        // the asymmetry this whole page is built around.
+                        selectionMode = selection.active,
                         // Nothing to open while the FIRST summary is being written — and a row that
                         // visibly accepts a tap and does nothing reads as the app having missed it.
                         // A rewrite is a different matter: its earlier summary is still readable,
@@ -171,7 +190,19 @@ fun SummariesScreen(
                 }
                 // No menu: a failed run left no summary row, so there is nothing to share, save or
                 // delete. What it left is a work info, and Stop above is what clears that.
-                summaryRows(groups.failed, byName, onOpen, menu = LibraryRowActions.NONE, onShare, onSave, onDelete)
+                summaryRows(
+                    groups.failed,
+                    byName,
+                    onOpen,
+                    menu = LibraryRowActions.NONE,
+                    onShare,
+                    onSave,
+                    onDelete,
+                    // Not selectable either, for the same reason it has no menu: a failed run left
+                    // no row behind, so a bulk delete would have nothing of its to take.
+                    selection = null,
+                    selectionMode = selection.active,
+                )
             }
 
             item {
@@ -190,6 +221,8 @@ fun SummariesScreen(
                 onShare,
                 onSave,
                 onDelete,
+                selection = selection,
+                selectionMode = selection.active,
             )
         }
     }
@@ -210,12 +243,18 @@ private fun LazyListScope.summaryRows(
     onShare: (String) -> Unit,
     onSave: (String, TranscriptFormat) -> Unit,
     onDelete: (String) -> Unit,
+    /** Null where the group's rows cannot be picked, which is also where they have no menu. */
+    selection: LibrarySelectionUi?,
+    selectionMode: Boolean,
 ) {
     items(displayNames, key = { it }) { displayName ->
         SummaryRow(
             displayName = displayName,
             item = byName[displayName],
             onOpen = { onOpen(displayName) },
+            selectionMode = selectionMode,
+            selected = selection?.selected?.contains(displayName) == true,
+            onToggleSelected = selection?.let { picker -> { picker.onToggle(displayName) } },
             trailing = if (menu.isEmpty) null else {
                 {
                     LibraryRowMenu(
@@ -247,6 +286,9 @@ private fun SummaryRow(
     item: RecordingItem?,
     onOpen: (() -> Unit)?,
     trailing: (@Composable () -> Unit)? = null,
+    selectionMode: Boolean = false,
+    selected: Boolean = false,
+    onToggleSelected: (() -> Unit)? = null,
 ) = LibraryNameRow(
     title = item?.let { RecordingLabel.of(it) } ?: RecordingLabel.forName(displayName),
     subtitle = item?.displayDate,
@@ -260,6 +302,9 @@ private fun SummaryRow(
     ),
     onOpen = onOpen,
     trailing = trailing,
+    selectionMode = selectionMode,
+    selected = selected,
+    onToggleSelected = onToggleSelected,
 )
 
 /**

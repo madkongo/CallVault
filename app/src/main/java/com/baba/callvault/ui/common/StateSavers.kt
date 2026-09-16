@@ -12,6 +12,8 @@ import android.net.Uri
 import androidx.compose.runtime.saveable.Saver
 import androidx.compose.runtime.saveable.listSaver
 import com.baba.callvault.data.recordings.DeleteScope
+import com.baba.callvault.ui.navigation.HomeSection
+import com.baba.callvault.ui.navigation.LibrarySelection
 
 /**
  * Encoding Home's screen state so a rotation does not throw it away.
@@ -47,6 +49,38 @@ internal fun decodeUriSet(stored: List<String>): Set<Uri> = stored.map(Uri::pars
 val UriSetStateSaver: Saver<Set<Uri>, Any> = listSaver(
     save = { encodeUriSet(it) },
     restore = { decodeUriSet(it) },
+)
+
+// ---- library page selection ----
+
+/**
+ * The section key first, then the names.
+ *
+ * The section has to survive with them: restoring a set of names with no page attached would be a
+ * selection that could be acted on from either library page — see [LibrarySelection] for why the two
+ * overlap and what that would cost.
+ */
+internal fun encodeLibrarySelection(selection: LibrarySelection): List<String> =
+    listOf(selection.section?.key ?: ABSENT) + selection.names
+
+/**
+ * Falls back to [LibrarySelection.EMPTY] rather than throwing, on the same grounds as the delete
+ * scope's decoder: a stored section key can outlive the constant that wrote it. An unreadable
+ * selection means no selection, which is the safe direction — the alternative is restoring rows
+ * picked under a name we can no longer place, with a delete button above them.
+ */
+internal fun decodeLibrarySelection(stored: List<String>): LibrarySelection {
+    val section = stored.firstOrNull()
+        ?.takeIf { it != ABSENT }
+        ?.let { key -> HomeSection.entries.firstOrNull { it.key == key } }
+        ?: return LibrarySelection.EMPTY
+    val names = stored.drop(1).toSet()
+    return if (names.isEmpty()) LibrarySelection.EMPTY else LibrarySelection(section, names)
+}
+
+val LibrarySelectionStateSaver: Saver<LibrarySelection, Any> = listSaver(
+    save = { encodeLibrarySelection(it) },
+    restore = { decodeLibrarySelection(it) },
 )
 
 // ---- pending transcribe confirmation ----

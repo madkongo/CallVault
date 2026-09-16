@@ -202,7 +202,9 @@ import com.baba.callvault.ui.common.CvScaffold
 import com.baba.callvault.ui.common.CvStatusPill
 import com.baba.callvault.ui.common.CvTone
 import com.baba.callvault.ui.common.rememberExportLabels
+import com.baba.callvault.ui.common.LibrarySelectionStateSaver
 import com.baba.callvault.ui.navigation.HomeSection
+import com.baba.callvault.ui.navigation.LibrarySelection
 import com.baba.callvault.ui.theme.LocalCvBrand
 import com.baba.callvault.ui.viewmodels.HomeViewModel
 import com.baba.callvault.ui.viewmodels.HomeViewModel.DirectionFilter
@@ -306,6 +308,14 @@ fun HomeScreen(
         RecordingLabel.of(libraryRecordings.firstOrNull { it.displayName == displayName })
             ?: RecordingLabel.forName(displayName)
     }
+
+    // Resolved in composition because that is the only place they can be: a row's Share and Save
+    // run from a click, outside composition, where stringResource cannot be called. Without them a
+    // shared transcript would name its two sides in English on a phone set to anything else, and a
+    // Markdown export would write its headings in English under a screen showing them translated —
+    // the defect the reading view's own export already records.
+    val librarySpeakerLabels = rememberLibrarySpeakerLabels()
+    val libraryExportLabels = rememberExportLabels()
 
     val playback by viewModel.playback.collectAsState()
 
@@ -422,13 +432,66 @@ fun HomeScreen(
     /** The summary whose delete is awaiting confirmation, raised from a Summaries row's menu. */
     var deleteSummaryFor by rememberSaveable { mutableStateOf<String?>(null) }
 
-    // Resolved in composition because that is the only place they can be: a row's Share and Save
-    // run from a click, outside composition, where stringResource cannot be called. Without them a
-    // shared transcript would name its two sides in English on a phone set to anything else, and a
-    // Markdown export would write its headings in English under a screen showing them translated —
-    // the defect the reading view's own export already records.
-    val librarySpeakerLabels = rememberLibrarySpeakerLabels()
-    val libraryExportLabels = rememberExportLabels()
+    /**
+     * The rows picked on Transcripts or Summaries, and which of the two they were picked on.
+     *
+     * In the shell, above the section switch, with every other piece of restorable screen state and
+     * for the same reason: a section change composes and decomposes only the section's own
+     * rendering, so anything held inside one is thrown away by a visit to another. The section
+     * travels WITH the names rather than being cleared by an effect — see [LibrarySelection] for why
+     * a bare set of names cannot safely cross between two lists that overlap.
+     */
+    var librarySelection by rememberSaveable(stateSaver = LibrarySelectionStateSaver) {
+        mutableStateOf(LibrarySelection.EMPTY)
+    }
+    /** True while a bulk delete over [librarySelection] is awaiting its confirmation. */
+    var showLibraryBulkDelete by rememberSaveable { mutableStateOf(false) }
+
+    // Back leaves selection rather than the page — the same rule the recordings list follows, and
+    // without it the only way out of a selection would be to act on it. Registered beside that one,
+    // so the reading view's own handler (composed later) still outranks both.
+    BackHandler(enabled = librarySelection.names.isNotEmpty()) {
+        librarySelection = LibrarySelection.EMPTY
+    }
+
+    /**
+     * Multi-select for one library page, wired to the shell's single piece of state.
+     *
+     * Built per section rather than once, so the toggle, the share and the delete all name the page
+     * they were drawn on and a callback cannot be handed to the wrong list.
+     */
+    val librarySelectionFor: @Composable (HomeSection, LibraryRowActions.Page) -> LibrarySelectionUi =
+        { section, page ->
+            val sectionTitle = stringResource(
+                if (page == LibraryRowActions.Page.Transcripts) R.string.home_transcripts_title
+                else R.string.home_summaries_title
+            )
+            LibrarySelectionUi(
+                selected = librarySelection.on(section),
+                onToggle = { name -> librarySelection = librarySelection.toggled(section, name) },
+                onClear = { librarySelection = LibrarySelection.EMPTY },
+                onShare = {
+                    val picked = librarySelection.on(section).toList()
+                    // Cleared before the chooser, not after it: the share sheet is another app's
+                    // window and may be dismissed, backgrounded or never answered, and coming back
+                    // to a page still holding a selection with a delete button over it is the worse
+                    // of the two ways to be wrong.
+                    librarySelection = LibrarySelection.EMPTY
+                    transcriptScope.launch {
+                        shareLibraryRows(
+                            context = context,
+                            page = page,
+                            rows = picked.map { it to libraryTitleOf(it) },
+                            subject = sectionTitle,
+                            speakers = librarySpeakerLabels,
+                            exportLabels = libraryExportLabels,
+                        )
+                    }
+                },
+                onDelete = { showLibraryBulkDelete = true },
+            )
+        }
+
     LaunchedEffect(uiState.recordings.size) { mergedCounts = viewModel.mergedCounts() }
 
     /**
@@ -940,6 +1003,7 @@ fun HomeScreen(
             // view's own "Delete text" raises, so there is one transcript delete in the app rather
             // than a second one that could come to disagree about what it takes.
             onDelete = { displayName -> deleteTranscriptFor = displayName },
+            selection = librarySelectionFor(HomeSection.Transcripts, LibraryRowActions.Page.Transcripts),
             // The same two answers the share card offers, in the same words. One door asking a
             // question the other does not would make the answer look like a property of how the
             // file arrived, when it is a property of what the user wants from it.
@@ -1018,6 +1082,7 @@ fun HomeScreen(
             // and the tags with it — the text the summary was written FROM, thrown away because
             // somebody disliked the write-up of it.
             onDelete = { displayName -> deleteSummaryFor = displayName },
+            selection = librarySelectionFor(HomeSection.Summaries, LibraryRowActions.Page.Summaries),
             // No confirmation, like the card's own Stop: stopping is the safe direction, and the
             // abort has to come first because cancelling the worker does not interrupt a generate.
             onStop = { SummaryScheduler.stopNow(context) },
@@ -1747,6 +1812,50 @@ fun HomeScreen(
                 deleteSummaryFor = null
             },
             onDismiss = { deleteSummaryFor = null },
+        )
+    }
+
+    if (showLibraryBulkDelete && librarySelection.names.isNotEmpty()) {
+        val picked = librarySelection.names.toList()
+        val page = if (librarySelection.section == HomeSection.Summaries) {
+            LibraryRowActions.Page.Summaries
+        } else {
+            LibraryRowActions.Page.Transcripts
+        }
+        LibraryBulkDeleteDialog(
+            page = page,
+            count = picked.size,
+            // Counted here, against the catalog the page itself was drawn from, so the warning is
+            // about the rows actually picked rather than about the page in general. Zero for
+            // Summaries by construction: deleting a summary never touches audio, so whether the
+            // audio is there is not part of what is being agreed to.
+            textOnlyCount = if (page == LibraryRowActions.Page.Summaries) 0 else picked.count { name ->
+                libraryRecordings.none { it.displayName == name }
+            },
+            onConfirm = {
+                transcriptScope.launch {
+                    // One at a time, in the order they were listed. Each delete is its own
+                    // transaction, so a failure part-way through leaves the ones already removed
+                    // removed rather than rolling back a batch the user has watched disappear.
+                    picked.forEach { name ->
+                        when (page) {
+                            LibraryRowActions.Page.Summaries ->
+                                TranscriptRepository.deleteSummary(context, name)
+
+                            // The TEXT. Never RecordingCatalog.removeName, which runs the cascade
+                            // and would take the recording's note, tags and stars with it — from a
+                            // page about words.
+                            LibraryRowActions.Page.Transcripts ->
+                                TranscriptRepository.delete(context, name)
+                        }
+                    }
+                }
+                showLibraryBulkDelete = false
+                librarySelection = LibrarySelection.EMPTY
+            },
+            // Cancel keeps the selection: somebody who thought better of a delete has not thought
+            // better of the forty rows they spent a minute picking.
+            onDismiss = { showLibraryBulkDelete = false },
         )
     }
 }

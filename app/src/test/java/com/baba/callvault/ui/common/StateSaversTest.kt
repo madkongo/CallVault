@@ -9,6 +9,8 @@
 package com.baba.callvault.ui.common
 
 import android.net.Uri
+import com.baba.callvault.ui.navigation.HomeSection
+import com.baba.callvault.ui.navigation.LibrarySelection
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
@@ -115,5 +117,35 @@ class StateSaversTest {
     fun `encoded forms are plain strings so the framework can bundle them`() {
         assertTrue(encodeUriSet(setOf(Uri.parse("content://x"))).all { it is String })
         assertTrue(encodeTranscribeRequest(Triple("a", 1L, "b")).all { it is String })
+        assertTrue(encodeLibrarySelection(LibrarySelection.EMPTY).all { it is String })
+    }
+
+    @Test
+    fun `a library selection round-trips with the page it was picked on`() {
+        // The page has to survive with the names: a restored set with no page attached could be
+        // acted on from either library list, and the next tap after a selection is a delete.
+        val selection = LibrarySelection(
+            section = HomeSection.Summaries,
+            names = setOf("a.ogg", "b with spaces + plus | pipe.m4a"),
+        )
+        assertEquals(selection, decodeLibrarySelection(encodeLibrarySelection(selection)))
+    }
+
+    @Test
+    fun `an empty library selection round-trips to nothing selected`() {
+        assertEquals(
+            LibrarySelection.EMPTY,
+            decodeLibrarySelection(encodeLibrarySelection(LibrarySelection.EMPTY))
+        )
+    }
+
+    @Test
+    fun `a stored section key that no longer exists means nothing is selected`() {
+        // A downgrade or a renamed section. Restoring rows picked under a page we can no longer
+        // place, with a delete button over them, is the outcome this refuses.
+        assertEquals(
+            LibrarySelection.EMPTY,
+            decodeLibrarySelection(listOf("no-such-section", "a.ogg"))
+        )
     }
 }
