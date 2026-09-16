@@ -28,6 +28,8 @@ import androidx.compose.ui.platform.LocalContext
 import com.baba.callvault.data.AppPreferences
 import com.baba.callvault.onboarding.OnboardingStatus
 import com.baba.callvault.ui.navigation.AppScreen
+import com.baba.callvault.ui.navigation.NotificationDestination
+import com.baba.callvault.utils.AppLogger
 import com.baba.callvault.ui.screens.DisclaimerScreen
 import com.baba.callvault.ui.screens.HomeScreen
 import com.baba.callvault.ui.screens.PermissionsScreen
@@ -57,7 +59,10 @@ import com.baba.callvault.ui.viewmodels.SettingsViewModel
  *   granting a permission in the system Settings app).
  */
 @Composable
-fun AppNavigationScreen() {
+fun AppNavigationScreen(
+    notificationDestination: NotificationDestination = NotificationDestination.None,
+    onNotificationDestinationHandled: () -> Unit = {}
+) {
 
     val activityContext = LocalContext.current
 
@@ -125,6 +130,24 @@ fun AppNavigationScreen() {
         }
         lifecycleOwner.lifecycle.addObserver(observer)
         onDispose { lifecycleOwner.lifecycle.removeObserver(observer) }
+    }
+
+    // A notification tap says what it was about. Every destination resolves to Home today, and Home
+    // is where a tap already landed, so honouring one is currently the same as doing nothing — but
+    // the delivery is real, and the sections that will make it matter can be added without also
+    // having to re-plumb four notifications in the same change.
+    //
+    // Acknowledged whatever the router decided, including when it decided onboarding: a notification
+    // cannot jump ahead of the disclaimer or the wizard, and a request that outlives the visit it
+    // arrived in would re-navigate later, out of nowhere. Logged because "which notification did you
+    // tap?" is a question a debug report otherwise cannot answer.
+    LaunchedEffect(notificationDestination, screenState) {
+        if (notificationDestination == NotificationDestination.None) return@LaunchedEffect
+        AppLogger.d(
+            "CV:Nav",
+            "Opened from the ${notificationDestination.key} notification; showing $screenState"
+        )
+        onNotificationDestinationHandled()
     }
 
     // Derive the active theme from AppPreferences so a theme change triggers a refresh (recompose)

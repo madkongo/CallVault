@@ -16,6 +16,7 @@ import android.content.Intent
 import android.net.Uri
 import androidx.core.app.NotificationCompat
 import com.baba.callvault.MainActivity
+import com.baba.callvault.ui.navigation.NotificationDestination
 import com.baba.callvault.R
 import com.baba.callvault.system.permissions.PermissionChecks
 
@@ -35,8 +36,14 @@ object UpdateNotifications {
     /** "vX.Y.Z is available" — tapping opens the app, where the Home banner offers Update. */
     fun showUpdateAvailable(context: Context, tag: String) {
         val openApp = PendingIntent.getActivity(
-            context, 0,
-            Intent(context, MainActivity::class.java).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK),
+            // Request code 0 was shared with the debug-logging reminder, and the two Intents are
+            // identical as far as PendingIntent identity is concerned — so they were one object, and
+            // whichever posted last would have decided where both of them led once they started
+            // carrying a destination. See NotificationDestination.requestCode.
+            context, NotificationDestination.Update.requestCode,
+            Intent(context, MainActivity::class.java)
+                .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+                .putExtra(NotificationDestination.EXTRA, NotificationDestination.Update.key),
             PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT
         )
         post(

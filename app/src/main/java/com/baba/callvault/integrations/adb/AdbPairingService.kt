@@ -35,6 +35,7 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import com.baba.callvault.MainActivity
+import com.baba.callvault.ui.navigation.NotificationDestination
 import com.baba.callvault.R
 import com.baba.callvault.data.AppPreferences
 import com.baba.callvault.server.RecorderBackend
@@ -227,8 +228,13 @@ class AdbPairingService : Service() {
     private fun openAppIntent(): PendingIntent {
         val i = Intent(this, MainActivity::class.java)
             .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP)
+            .putExtra(NotificationDestination.EXTRA, NotificationDestination.Pairing.key)
+        // REQ_OPEN is retired in favour of the destination's own request code: every Intent into
+        // MainActivity looks the same to PendingIntent, so the codes have to be allocated in one
+        // place or two notifications silently share one. See NotificationDestination.requestCode.
         return PendingIntent.getActivity(
-            this, REQ_OPEN, i, PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT,
+            this, NotificationDestination.Pairing.requestCode, i,
+            PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT,
         )
     }
 
@@ -321,7 +327,6 @@ class AdbPairingService : Service() {
         private const val NOTIFICATION_ID = 4712
         private const val REQ_STOP = 2
         private const val REQ_REPLY = 1
-        private const val REQ_OPEN = 3
         private const val REMOTE_INPUT_KEY = "pairing_code"
         private const val EXTRA_PORT = "port"
         private const val ACTION_START = "start"

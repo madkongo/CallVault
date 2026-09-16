@@ -17,6 +17,7 @@ import android.content.Intent
 import androidx.core.app.NotificationCompat
 import androidx.core.app.NotificationManagerCompat
 import com.baba.callvault.MainActivity
+import com.baba.callvault.ui.navigation.NotificationDestination
 import com.baba.callvault.R
 import com.baba.callvault.data.AppPreferences
 import com.baba.callvault.data.StorageTarget
@@ -142,7 +143,10 @@ object SilentFailureNotifier {
         createChannel(context)
         val open = PendingIntent.getActivity(
             context,
-            id,
+            // The destination's own request code, not the notification id. Both warnings here open
+            // the same place, and the id would collide with another notification's PendingIntent —
+            // see NotificationDestination.requestCode for why that matters.
+            NotificationDestination.Status.requestCode,
             // Component AND package, though the component alone already makes this explicit: the
             // pair is what a static analyser can see without following the constructor, and this
             // PendingIntent leaves the app inside a notification, where an implicit one would be a
@@ -150,6 +154,9 @@ object SilentFailureNotifier {
             Intent(context, MainActivity::class.java).apply {
                 setPackage(context.packageName)
                 flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP
+                // Says what the tap was about. Both of these warnings are only actionable from the
+                // status card, which is the one thing Home has always been.
+                putExtra(NotificationDestination.EXTRA, NotificationDestination.Status.key)
             },
             PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
         )

@@ -8,6 +8,7 @@
 
 package com.baba.callvault
 
+import android.content.Intent
 import android.os.Bundle
 import android.view.WindowManager
 import androidx.activity.compose.setContent
@@ -21,6 +22,7 @@ import androidx.core.content.ContextCompat
 import com.baba.callvault.data.AppPreferences
 import com.baba.callvault.services.recording.DaemonKeepAliveService
 import com.baba.callvault.system.AppLock
+import com.baba.callvault.ui.navigation.NotificationDestination
 import com.baba.callvault.ui.screens.AppLockScreen
 import com.baba.callvault.ui.screens.AppLockUi
 import com.baba.callvault.ui.screens.appLockUi
@@ -57,8 +59,27 @@ class MainActivity : AppCompatActivity() {
      */
     private var promptDismissed by mutableStateOf(false)
 
+    /**
+     * What the notification that opened this visit was about, or [NotificationDestination.None].
+     *
+     * Observable, because the arrival can happen while the window is already up: a tap on a
+     * notification while the app is in the background delivers through [onNewIntent], and a state
+     * read from the composition is what turns that into a redraw. Cleared once the tree has acted on
+     * it, so one tap navigates once.
+     *
+     * Held here rather than read from the Intent inside Compose because [AppLock] can stand between
+     * the two: a destination that arrives at a locked app has to wait for the unlock rather than be
+     * lost to it.
+     */
+    private var notificationDestination by mutableStateOf(NotificationDestination.None)
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        // Cold start. Both of the PendingIntents that use FLAG_ACTIVITY_CLEAR_TOP arrive this way
+        // rather than through onNewIntent whenever the Activity is not already on top, because the
+        // launch mode is `standard`: CLEAR_TOP with no SINGLE_TOP destroys the existing instance and
+        // builds a new one with the new Intent. Both paths are handled; neither can be assumed.
+        notificationDestination = destinationOf(intent)
         // Carry an unlock across an Activity recreation — see [onSaveInstanceState] for why this is
         // only ever set for a configuration change. Read before setContent so the first composition
         // draws the app rather than the lock screen and then swaps.
@@ -66,7 +87,12 @@ class MainActivity : AppCompatActivity() {
         enableEdgeToEdge()
         setContent {
             when (appLockUi(AppLock.isEnabled(this), isUnlocked, promptDismissed)) {
-                AppLockUi.APP -> AppNavigationScreen()
+                AppLockUi.APP -> AppNavigationScreen(
+                    notificationDestination = notificationDestination,
+                    onNotificationDestinationHandled = {
+                        notificationDestination = NotificationDestination.None
+                    }
+                )
                 // Background only. The prompt is coming or already up, so there is nothing to act on
                 // — drawing the door here is what flashed an "Unlock" card on every open.
                 AppLockUi.WAITING -> AppLockScreen(onUnlock = ::promptForUnlock, showDoor = false)
@@ -76,6 +102,35 @@ class MainActivity : AppCompatActivity() {
             }
         }
     }
+
+    /**
+     * Warm delivery: the Activity was already alive and the system handed it a new Intent instead of
+     * building one. The debug reminder takes this path (it asks for SINGLE_TOP), and so does any tap
+     * that finds the app already on top.
+     *
+     * [setIntent] is not optional here. Everything that later asks the Activity what it was started
+     * with — including a recreation for a rotation — reads `getIntent()`, and without this it would
+     * keep answering with the launch Intent from minutes ago.
+     */
+    override fun onNewIntent(intent: Intent) {
+        super.onNewIntent(intent)
+        setIntent(intent)
+        notificationDestination = destinationOf(intent)
+    }
+
+    /**
+     * Reads the requested destination off an incoming Intent.
+     *
+     * The history flag is passed through rather than checked in Compose: reopening from the recents
+     * list re-delivers the Intent the task was started with, extras included, so a single tap on
+     * "recording is broken" would otherwise re-navigate on every later return to the app.
+     */
+    private fun destinationOf(intent: Intent?): NotificationDestination =
+        NotificationDestination.fromIntentExtra(
+            key = intent?.getStringExtra(NotificationDestination.EXTRA),
+            relaunchedFromHistory =
+                (intent?.flags ?: 0) and Intent.FLAG_ACTIVITY_LAUNCHED_FROM_HISTORY != 0
+        )
 
     override fun onStart() {
         super.onStart()

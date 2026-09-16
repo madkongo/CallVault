@@ -17,6 +17,7 @@ import android.content.Intent
 import androidx.core.app.NotificationCompat
 import androidx.core.app.NotificationManagerCompat
 import com.baba.callvault.MainActivity
+import com.baba.callvault.ui.navigation.NotificationDestination
 import com.baba.callvault.R
 import com.baba.callvault.data.AppPreferences
 import com.baba.callvault.system.permissions.PermissionChecks
@@ -48,9 +49,13 @@ object DebugNotificationHelper {
 
         val contentIntent = PendingIntent.getActivity(
             context,
-            0,
+            // Was 0, which the update notification also used — identical Intents as far as
+            // PendingIntent identity goes, so they were the same object and would have ended up
+            // sharing one destination. See NotificationDestination.requestCode.
+            NotificationDestination.Debug.requestCode,
             Intent(context, MainActivity::class.java).apply {
                 flags = Intent.FLAG_ACTIVITY_SINGLE_TOP or Intent.FLAG_ACTIVITY_CLEAR_TOP
+                putExtra(NotificationDestination.EXTRA, NotificationDestination.Debug.key)
             },
             PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
         )
