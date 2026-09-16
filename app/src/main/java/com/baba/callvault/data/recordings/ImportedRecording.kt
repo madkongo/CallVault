@@ -110,17 +110,48 @@ object ImportedRecording {
      * anything looser is unsafe.
      */
     fun isImported(displayName: String): Boolean {
-        // The extension is only the tail after the LAST dot when that dot comes after the last
-        // underscore. The timestamp carries dots of its own ("101010.123+0300"), so chopping at the
-        // last dot unconditionally would eat half the name of anything stored without an extension.
+        val parts = tokensOf(displayName)
+        if (parts.size <= MARKER_SLOT) return false
+        if (!STAMP_HEAD.matches(parts[0])) return false
+        return parts[MARKER_SLOT] == TOKEN
+    }
+
+    /**
+     * The timestamp token of an import, in the raw `yyyyMMdd_HHmmss.SSSZ` form, or null.
+     *
+     * Given out rather than re-derived by the name parser, because the two must agree about where
+     * the stamp ends: the parser finds a call's date by looking for the `in`/`out` anchor, and an
+     * import has no anchor to find.
+     */
+    fun stampTokenOf(displayName: String): String? {
+        if (!isImported(displayName)) return null
+        return tokensOf(displayName).take(MARKER_SLOT).joinToString("_")
+    }
+
+    /**
+     * The label an import was given, or null when it has none.
+     *
+     * This is the nearest thing an import has to a contact name — what the source file was called —
+     * and it is what the UI shows where a call shows who it was with.
+     */
+    fun labelOf(displayName: String): String? {
+        if (!isImported(displayName)) return null
+        return tokensOf(displayName).drop(MARKER_SLOT + 1).joinToString("_").ifBlank { null }
+    }
+
+    /**
+     * [displayName] split on underscores, with its extension removed.
+     *
+     * The extension is only the tail after the LAST dot when that dot comes after the last
+     * underscore. The timestamp carries dots of its own (`101010.123+0300`), so chopping at the last
+     * dot unconditionally would eat half the name of anything stored without an extension.
+     */
+    private fun tokensOf(displayName: String): List<String> {
         val base = if (displayName.lastIndexOf('.') > displayName.lastIndexOf('_')) {
             displayName.substringBeforeLast('.')
         } else {
             displayName
         }
-        val parts = base.split('_')
-        if (parts.size <= MARKER_SLOT) return false
-        if (!STAMP_HEAD.matches(parts[0])) return false
-        return parts[MARKER_SLOT] == TOKEN
+        return base.split('_')
     }
 }

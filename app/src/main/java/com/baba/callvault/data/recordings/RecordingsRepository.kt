@@ -95,6 +95,14 @@ object RecordingsRepository {
         val contactName: String? = null,
         /** Non-null only for VoIP recordings: the app the call was made in, for a badge/icon. */
         val voipApp: String? = null,
+        /**
+         * True for a file the user imported rather than a call CallVault recorded.
+         *
+         * Carried on the item rather than re-derived from the name wherever it is needed, so the
+         * marker is read by [ImportedRecording.isImported] — the one place that knows the rule — and
+         * every row, badge and sweep is answering the same question the same way.
+         */
+        val isImported: Boolean = false,
         val localUri: Uri? = null,
         val driveUri: Uri? = null,
         val localSizeBytes: Long? = null,
@@ -246,6 +254,7 @@ object RecordingsRepository {
             number = parsed.number,
             contactName = parsed.contactName,
             voipApp = parsed.voipApp,
+            isImported = parsed.isImported,
             source = source,
             durationSeconds = entry.durationSeconds,
             localUri = localUri,
@@ -450,7 +459,8 @@ object RecordingsRepository {
             startedAtMillis = parsed.startedAtMillis,
             number = parsed.number,
             contactName = parsed.contactName,
-            voipApp = parsed.voipApp
+            voipApp = parsed.voipApp,
+            isImported = parsed.isImported
         )
     }
 
@@ -470,7 +480,9 @@ object RecordingsRepository {
         /** Set only for VoIP recordings, which carry a name rather than a number. */
         val contactName: String? = null,
         /** The app the VoIP call was made in (e.g. "WhatsApp"), when it could be determined. */
-        val voipApp: String? = null
+        val voipApp: String? = null,
+        /** True for an imported file; see [ImportedRecording]. */
+        val isImported: Boolean = false
     )
 
     /**
@@ -483,6 +495,28 @@ object RecordingsRepository {
     internal fun parseName(displayName: String): ParsedName {
         val base = displayName.substringBeforeLast('.')
         val parts = base.split('_')
+
+        // An imported file uses "{date}_import[_{label}]". It is NOT a call: there is no number, no
+        // direction and nobody on the other end, and none of those is invented here. What it has is a
+        // date — the date it was imported — and the label it was given, which goes where a contact
+        // name goes because it is the nearest thing to one and is what recognises the row.
+        //
+        // Asked of ImportedRecording rather than matched here, because the marker is read by SLOT and
+        // not by search: a contact called "Important" or a VoIP app named "Import" must never claim
+        // the branch, and that rule has to live in exactly one place. It also computes the stamp,
+        // which this parser cannot: a call's date ends at the in/out anchor, and an import has none.
+        if (ImportedRecording.isImported(displayName)) {
+            val rawDate = ImportedRecording.stampTokenOf(displayName).orEmpty()
+            return ParsedName(
+                direction = null,
+                displayDate = formatDate(rawDate),
+                startedAtMillis = parseStartedAt(rawDate),
+                number = null,
+                contactName = ImportedRecording.labelOf(displayName),
+                voipApp = null,
+                isImported = true,
+            )
+        }
 
         // VoIP recordings use "{date}_voip[_{caller}]": there is no call-log entry behind them, so
         // there is no number and no reliable direction — but there IS often a name from the call

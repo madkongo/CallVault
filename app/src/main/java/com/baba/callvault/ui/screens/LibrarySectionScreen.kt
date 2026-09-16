@@ -40,6 +40,7 @@ import com.baba.callvault.data.recordings.RecordingsRepository.RecordingItem
 import com.baba.callvault.ui.common.BidiText
 import com.baba.callvault.ui.common.CvCard
 import com.baba.callvault.ui.common.CvScaffold
+import com.baba.callvault.ui.common.ImportedBadge
 import com.baba.callvault.ui.common.RecordingLabel
 
 /**
@@ -144,6 +145,7 @@ internal fun LibrarySectionRow(
     // timestamp reorders the whole line without it.
     title = RecordingLabel.of(item) ?: BidiText.isolate(item.displayName),
     subtitle = item.displayDate,
+    imported = item.isImported,
     onOpen = onOpen,
     trailing = trailing,
 )
@@ -160,20 +162,36 @@ internal fun LibrarySectionRow(
 internal fun LibraryNameRow(
     title: String,
     subtitle: String?,
+    /**
+     * Draws the "imported" badge beside the title. Here rather than at each call site so that
+     * Transcripts and Summaries cannot disagree about whether a row says where it came from — and
+     * so that the next list built on this row gets it without anyone remembering.
+     */
+    imported: Boolean = false,
     onOpen: (() -> Unit)? = null,
     trailing: (@Composable () -> Unit)? = null,
 ) {
     CvCard(onClick = onOpen, contentPadding = PaddingValues(horizontal = 16.dp, vertical = 14.dp)) {
         Row(verticalAlignment = Alignment.CenterVertically) {
             Column(modifier = Modifier.weight(1f)) {
-                Text(
-                    text = title,
-                    style = MaterialTheme.typography.titleSmall,
-                    fontWeight = FontWeight.SemiBold,
-                    color = MaterialTheme.colorScheme.onSurface,
-                    maxLines = 1,
-                    overflow = TextOverflow.Ellipsis,
-                )
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Text(
+                        text = title,
+                        style = MaterialTheme.typography.titleSmall,
+                        fontWeight = FontWeight.SemiBold,
+                        color = MaterialTheme.colorScheme.onSurface,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis,
+                        // weight(1f, fill = false) so the badge keeps its width and the TITLE is
+                        // what ellipsises. The other way round the badge would be the thing that
+                        // truncated, and half a word saying where a row came from says nothing.
+                        modifier = Modifier.weight(1f, fill = false),
+                    )
+                    if (imported) {
+                        Spacer(Modifier.width(8.dp))
+                        ImportedBadge()
+                    }
+                }
                 subtitle?.let { line ->
                     Spacer(Modifier.height(2.dp))
                     Text(

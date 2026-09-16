@@ -132,6 +132,7 @@ import com.baba.callvault.transcription.AudioDecoder
 import com.baba.callvault.transcription.TranscriptionEstimate
 import com.baba.callvault.transcription.TranscriptionLengthLimit
 import com.baba.callvault.ui.common.BidiText
+import com.baba.callvault.ui.common.ImportedBadge
 import com.baba.callvault.ui.common.RecordingLabel
 import com.baba.callvault.ui.common.TranscribeConfirmDialog
 import com.baba.callvault.ui.common.TranscribeLanguageDialog
@@ -185,6 +186,7 @@ import com.baba.callvault.data.health.FailureReason
 import com.baba.callvault.data.health.Prerequisite
 import com.baba.callvault.data.health.SetupHealth
 import com.baba.callvault.data.health.isProblem
+import com.baba.callvault.data.recordings.ImportedRecording
 import com.baba.callvault.data.recordings.RecordingDirection
 import com.baba.callvault.data.recordings.RecordingsRepository.RecordingItem
 import com.baba.callvault.data.recordings.RecordingsRepository.RecordingSource
@@ -439,21 +441,36 @@ fun HomeScreen(
     val continueTranscription: (String, String?) -> Unit = { displayName, language ->
         val prefs = AppPreferences(context)
         val model = TranscriptionModel.fromId(prefs.getTranscriptionModelId()) ?: TranscriptionModel.DEFAULT
-        if (!prefs.getTranscriptionConfirmBeforeRun()) {
+        // An import ALWAYS confirms, whatever the setting says. The setting was turned off by
+        // someone who had seen the estimate for their own calls, which are minutes long and in the
+        // language they speak; an imported file is neither, and may be an hour of a lecture. See
+        // startTranscription for the same argument about the language.
+        val isImport = ImportedRecording.isImported(displayName)
+        if (!isImport && !prefs.getTranscriptionConfirmBeforeRun()) {
             enqueueTranscription(displayName, language)
         } else {
             // Estimating is arithmetic on a duration read from the container — microseconds — so the
             // dialog can open with the answer already in it rather than spinning first.
             transcriptScope.launch {
-                val estimate = withContext(Dispatchers.IO) {
+                val audioMs = withContext(Dispatchers.IO) {
                     val uri = uiState.recordings.firstOrNull { it.displayName == displayName }?.uri
-                    val audioMs = uri?.let { AudioDecoder.durationMs(context, it) } ?: 0L
-                    if (audioMs <= 0L) null else TranscriptionEstimate.estimateMs(
+                    uri?.let { AudioDecoder.durationMs(context, it) } ?: 0L
+                }
+                // The container's own length, which is the honest one and is read here anyway. The
+                // check in startTranscription can only use the length the list happens to know, and
+                // for a file with no duration in the call log and none cached that is nothing at all
+                // — so a recording over the limit slipped through to the runner, which refuses it
+                // with nobody to tell. Asking the file itself, on the path that was opening it
+                // regardless, costs nothing and turns a silent nothing-happens into a sentence.
+                if (TranscriptionLengthLimit.isTooLong(audioMs)) {
+                    tooLongMinutes = (audioMs / 60_000L).toInt()
+                } else {
+                    val estimate = if (audioMs <= 0L) null else TranscriptionEstimate.estimateMs(
                         audioMs = audioMs,
                         cost = prefs.getRunCost(model),
                     )
+                    confirmTranscribe = Triple(displayName, estimate, language)
                 }
-                confirmTranscribe = Triple(displayName, estimate, language)
             }
         }
     }
@@ -480,7 +497,12 @@ fun HomeScreen(
             tooLongMinutes = ((recordingSeconds ?: 0L) / 60L).toInt()
         } else if (!ModelRepository.isInstalled(context, model)) {
             showModelMissing = true
-        } else if (prefs.getTranscriptionAskLanguage()) {
+        } else if (ImportedRecording.isImported(displayName) || prefs.getTranscriptionAskLanguage()) {
+            // An import ALWAYS asks, whatever the setting says. The setting means "my calls are in
+            // the language I set", and it is true — a phone's calls are mostly in one language. An
+            // imported file is the one thing in the library that is nobody's call: a voice note from
+            // abroad, a lecture, an interview. Transcribing an hour of Hebrew as English produces
+            // fluent nonsense and no error, and the whole run has to be done again.
             askLanguageFor = displayName
         } else {
             continueTranscription(displayName, null)
@@ -2622,14 +2644,26 @@ private fun RecordingRow(
             Column(Modifier.weight(1f)) {
                 // The whole line, to itself. The badge now sits under the play disc, in the gutter the
                 // details line already indents past — space that was simply empty.
-                Text(
-                    text = primaryLabel,
-                    style = MaterialTheme.typography.titleMedium,
-                    fontWeight = FontWeight.Bold,
-                    color = MaterialTheme.colorScheme.onSurface,
-                    maxLines = 1,
-                    overflow = TextOverflow.Ellipsis
-                )
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Text(
+                        text = primaryLabel,
+                        style = MaterialTheme.typography.titleMedium,
+                        fontWeight = FontWeight.Bold,
+                        color = MaterialTheme.colorScheme.onSurface,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis,
+                        // fill = false so the title is what ellipsises and the badge keeps its
+                        // width. An import arrives in a list of calls with no number, no direction
+                        // and no contact, so without this word it reads as a call whose details all
+                        // failed to parse — and it also behaves differently: no Drive copy, no
+                        // retention, no eviction, so this phone holds the only copy there is.
+                        modifier = Modifier.weight(1f, fill = false)
+                    )
+                    if (item.isImported) {
+                        Spacer(Modifier.width(8.dp))
+                        ImportedBadge()
+                    }
+                }
 
             }
             Spacer(Modifier.width(4.dp))
@@ -3064,10 +3098,20 @@ private fun buildSubtitle(item: RecordingItem, mergedPartCount: Int = 0): String
  *
  * Relative days are compared on the calendar day, not on elapsed hours: a call at 23:50 is still
  * "Yesterday" at 00:10, which "less than 24 hours ago" would get wrong.
+ *
+ * **A row whose name carries no date still gets one.** Where nothing could be parsed this falls back
+ * to the file's own last-modified time, which is what [RecordingsRepository.dayKey] has always done
+ * for the Date *filter* — so until now a recording could be filed under "Jun 11, 2026" by the filter
+ * while its own row showed no date at all. One of the two had to be wrong and it was this one.
  */
 @Composable
 private fun formatWhen(item: RecordingItem): String? {
-    val millis = item.startedAtMillis ?: return item.displayDate
+    val millis = item.startedAtMillis
+        // Only where the name said nothing. A name that parsed far enough to show something keeps
+        // showing it: displayDate is the recording's own claim about itself, and the file's
+        // timestamp is only evidence about the file.
+        ?: item.lastModified.takeIf { item.displayDate == null && it > 0L }
+        ?: return item.displayDate
     val time = SimpleDateFormat("HH:mm", Locale.getDefault()).format(Date(millis))
     val day = Calendar.getInstance().apply { timeInMillis = millis }
     val today = Calendar.getInstance()
