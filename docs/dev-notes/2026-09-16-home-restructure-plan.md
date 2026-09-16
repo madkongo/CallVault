@@ -101,6 +101,44 @@ and playback state above the section switch; keep the Settings drawer over every
 outside each section's scaffold. Hub = status card + three count cards (counts must not create the
 transcripts database on a phone that has never transcribed). Explicit colours — M3 defaults render coral here.
 
+**Phase 2 — 🧪 VERIFYING (built 2026-09-16, unit-tested, driven on the emulator; nothing seen on a
+phone).** The maintainer confirms it or it is not done.
+
+Landed: `HomeScreen` is now a shell over four sections rather than one screen, with the section chosen
+by the router (`AppNavigationScreen`) and persisted on every navigation; `HubScreen` (the app's first
+`LazyVerticalGrid`, 2 columns); `LibrarySectionScreen` serving both Transcripts and Summaries as
+minimal but real lists; `LibraryCounts` behind `TranscriptDatabase.exists()`; the four notifications
+now route to the hub. The status card, the USB advisory and both update banners moved off the
+recordings list onto the hub.
+
+The three regression risks, and what was done about each:
+
+1. **State across a section switch.** Every saved field stays in the shell, above the switch, so a
+   section change composes and decomposes only the section's own rendering. Each list has its own
+   hoisted state (`listState`, `hubGridState`, `transcriptsListState`, `summariesListState`), because
+   each leaves composition twice over — when a recording is open, and when another section is showing.
+   The merge state is still deliberately non-saveable, untouched.
+2. **Dialogs outside the scaffold.** The sheets that were inside the recordings scaffold
+   (transcribing, transcript search, bulk delete, Support, What's New) moved out to the shell, beside
+   the ones that were already there. A dialog raised anywhere is now drawn whatever section is showing.
+3. **The counts and the database.** `LibraryCounts` asks `TranscriptDatabase.exists()` first and
+   answers zero without opening anything. Two unit tests, one of them in its own class because
+   Robolectric shares a sandbox between classes with the same config. Confirmed on the emulator:
+   landing on the hub and visiting all three sections left `recordings.db` on disk and no
+   `transcripts.db`.
+
+Verified on the emulator (AOSP 16, `com.baba.callvault.instrtest`): the hub renders with live counts;
+each card opens its section; back returns to the hub and from the hub leaves the app; reopening lands
+on the last section; the Settings drawer opens from every section; the recordings list keeps its scroll
+position across a section switch; an open recording survives a rotation and returns to its own section.
+Notification routing checked cold (`am start` with the extra) and warm (`-f 0x14000000`).
+
+Left for Phase 3, deliberately: the Transcripts section is a list of names with the existing transcript
+sheet behind it, not the page the plan describes. `TranscriptDatabase.exists()` is **not** a reliable
+proxy for "has ever transcribed" on a device with recordings — `RecordingExtrasRepository.precomputeWaveform`
+creates the database, unguarded, to cache a waveform. The guard still does its job (the hub creates
+nothing), but nothing else should read `exists()` as "has transcripts".
+
 **Phase 3 — Transcripts page + reading view.**
 List of everything transcribed (batch status query + in-memory join to the recordings list), reusing the
 existing transcript action button, queue sheet and search. The reading view is the existing transcript sheet

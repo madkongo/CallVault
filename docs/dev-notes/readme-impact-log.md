@@ -1,5 +1,25 @@
 # README impact log
 
+## 2026-09-16 — Home is a hub of cards, not the recordings list
+
+🧪 VERIFYING (built and driven on the emulator; nothing seen on a real phone). The app no longer
+opens on the recordings list. It opens on a hub — the status card plus three cards, Recordings /
+Transcripts / Summaries, each with a count — and reopens whichever section you were last in. Back from
+a section returns to the hub; back from the hub leaves the app.
+
+**What this makes wrong in the README, when this ships:**
+
+- **Every Home screenshot.** The shot of the status card above a list of calls is no longer what the
+  app opens on, and the list no longer carries the status card at all.
+- Any sentence describing Home as "the recordings list" or "the status card above your recordings".
+- The update banner and the "CallVault updated to X" banner have moved to the hub with the status
+  card. Anything saying the update offer appears above the recordings list is now wrong.
+
+**Not claimed yet, deliberately:** Transcripts and Summaries are real destinations but minimal lists;
+the Transcripts page the plan describes — reading view, import, transcription tools — is Phase 3 and 4.
+Nothing about them should go in the README until then.
+
+
 ## 2026-09-14 (later) — switching Wireless debugging off yourself; Shizuku mode
 
 🧪 VERIFYING. Added to "The two debugging switches": CallVault leaves a Wireless-debugging switch you turned off
