@@ -249,3 +249,79 @@ exclusive:
 - **A host `adb` connected over the same Wireless-debugging TLS port starves the app's embedded client** —
   `waitForShellReady` failed 14 probes in a row for six minutes, and the daemon came back within seconds
   of the host disconnecting. Not an app bug; a trap for anyone measuring this over Wi-Fi adb.
+
+
+## CallVault starts Shizuku again — OP9 + emulator, 2026-09-18 (afternoon)
+
+🧪 VERIFYING. Decided by the maintainer the same day: when CallVault restarts `adbd` and that stops a
+Shizuku server that was running, CallVault **starts it again automatically** and a notification says so.
+Not a prompt, not a setting. This extends the `AdbdChurnNotice.around(…)` seam rather than adding a
+second one.
+
+### How the starter is found — never by package name
+
+The package comes from `ShizukuBackend.managerPackage`, which resolves it from the API permission a
+manager *declares* (stealth mode renames the package; Sui installs no app at all). From there:
+
+1. `ApplicationInfo.nativeLibraryDir` → `<dir>/libshizuku.so`. This already names the one ABI Android
+   installed, which settles the several-ABIs case without guessing.
+2. Failing that, `ApplicationInfo.sourceDir` or `pm path <pkg>` over our own shell → `<install
+   dir>/lib/<abi>/libshizuku.so` for each ABI in `Build.SUPPORTED_ABIS`.
+3. Nothing usable → **no candidates**, which fails into "could not start it". `ShizukuStarterPaths`
+   also refuses any path that is not absolute or that contains a quote or newline: the command is built
+   as `'<path>'` on a privileged shell, and a quote would close the quoting.
+
+Each candidate is simply run; there is deliberately **no "does this file exist" probe**. See the two
+defects below for why.
+
+### The rules the heal obeys
+
+| Rule | Where | Why |
+|---|---|---|
+| Heal only a server that answered **before** the restart | `AdbdChurnNotice` samples it; `ShizukuHealPolicy.decide` | starting one nobody had running is CallVault launching another app's privileged service uninvited |
+| Never start a second one | `ALREADY_BACK` when it answers again | two privileged hosts is the class of bug that cost most of 2026-08-24 |
+| Never during a recording | `TELL_ONLY_RECORDING` | ADB work during a capture kills the daemon holding it |
+| Never in front of the ADB work | the heal thread takes `AdbShell.heavyOperationLock` first | it can only run *after*, and never delays the operation the user asked for |
+| Never claim success without a ping | `waitForPing`, then `pidof shizuku_server` as a weaker second opinion | `drive-health-false-positive` |
+
+### Measured
+
+| # | Device | Action | Result | Status |
+|---|---|---|---|---|
+| H1 | OP9 | arm off-Wi-Fi recording, Shizuku running | churn seen, starter run, **Shizuku answered again 630 ms after the starter**; adbd 21619 → new, shizuku 23611 → 28097. Total downtime ≈ **2.7 s** | ✅ |
+| H2 | emulator | same | **answered again 300 ms after the starter**, downtime ≈ **2.3 s** | ✅ |
+| H3 | emulator | `AdbdChurnNotice.around { }` with the server still answering | `ALREADY_BACK`, "nothing to tell the user", `pidof shizuku_server` **10143 before and after** — no second server | ✅ |
+| H4 | emulator | same with no server running | **zero** `CV:AdbdChurn`/`CV:ShizukuHeal` lines, no server started, no notification | ✅ |
+| H5 | emulator | heal with the transport genuinely gone | "No ADB connection to start Shizuku through" → notification id 4718 *"Shizuku was stopped / … It tried to start Shizuku again and could not — open Shizuku and start it yourself."* | ✅ |
+| H6 | emulator | successful heal | notification id 4718 *"Shizuku was started again / … so it started Shizuku again for you. There is nothing to do."* | ✅ |
+| H7 | OP9 + emulator | close the listener (`usb:`) | the decision to start is reached on both (`After closing the off-Wi-Fi listener: START`), **completion never observed** — see below | ❌ not measured |
+
+H7's gap is a test-harness limit, not a known defect. On the emulator `usb:` removes the *only*
+transport, so the heal correctly cannot reach a shell and the instrumentation dies with it. On the OP9
+the run that reached the decision was killed when AGP uninstalled the app after a failed connected-test
+run. **This is the one thing to watch on a real phone.**
+
+The automatic re-arm after a reboot (A4 above, the case that matters most) runs the *same* code as H1
+with the same `underDialog = false`; it was not exercised as an actual reboot.
+
+### Two defects the devices found, both now fixed
+
+- **The starter's output was being read as the verdict.** It forks the server and exits, and on the
+  emulator that closed the stream mid-read ("Stream closed.") while the server came up perfectly — so
+  the first build posted *"could not start it"* over a Shizuku that was already running. What the
+  starter prints is now a log line; only the ping decides.
+- **A shell round trip that fails is not an answer of "no".** The first build probed `[ -x <path> ]`
+  before running the starter; right after `usb:` that probe failed on a connection that still called
+  itself connected, and a starter plainly present was reported missing. The probe is gone, and the
+  read-back commands (`pm path`, `pidof`) retry once through a forced reconnect. The starter command
+  itself deliberately does **not** retry: the request reaches `adbd` before the stream dies, so it has
+  already run — retrying it spent 12 s on a reconnect that could not succeed while the server it had
+  just started was answering all along.
+
+### What it cost
+
+The OP9 run also proved a harness hazard worth recording: `./gradlew connectedDebugAndroidTest` against
+a test that restarts `adbd` **kills the instrumentation** (the `am instrument` client is a child of
+`adbd`), and AGP then **uninstalls the app**, which takes its ADB pairing with it. Drive these tests
+with `am instrument` against manually installed APKs instead. The OP9 was left needing to be paired
+again.

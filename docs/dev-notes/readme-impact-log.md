@@ -428,3 +428,21 @@ wireless debugging of CallVault's own" — restates the paragraph that was alrea
   that is where #39 was reported.
 - **Still claimed, unchanged:** no new permission, and nothing here ever cancels a restart — recording
   still wins over another app's Shizuku.
+
+## 2026-09-18 — CallVault starts Shizuku again after stopping it (#39, follow-up)
+
+- **What changed:** when one of those three operations stops a running Shizuku server, CallVault now
+  **starts it again by itself** and the notification says which happened — started again, or could not
+  be started and needs starting by hand. It only ever restarts a server that was answering immediately
+  before, never one that came back on its own, and never while a recording is live.
+- **Why it matters to the README:** the shape of the true claim about built-in mode and Shizuku moves
+  again. Yesterday it was "arming off-Wi-Fi recording kills a running Shizuku and nothing brings it
+  back"; today the second half is no longer true on a phone where the heal can reach a shell. Any
+  future "works alongside Shizuku" line should say *restarted automatically*, not *survives* — the
+  server does stop, for a couple of seconds.
+- **Claim status:** 🧪 measured on the OP9 and the emulator on 2026-09-18 — arm path end to end on both
+  (Shizuku answering again 0.3–0.6 s after the starter ran, ~2.3–2.7 s of downtime), the leave-it-alone
+  guard and the silent no-Shizuku case on the emulator, and both notification texts read out of
+  `dumpsys notification`. **The close-the-listener path reached the start decision on both devices but
+  its completion was never observed** (see the dev note). Unconfirmed by the maintainer on any phone.
+- **Still claimed, unchanged:** no new permission; nothing cancels a restart; recording still wins.
