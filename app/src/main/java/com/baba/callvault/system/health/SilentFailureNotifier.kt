@@ -104,6 +104,36 @@ object SilentFailureNotifier {
     )
 
     /**
+     * Says that Shizuku was stopped by the restart and **has been started again**.
+     *
+     * Good news rather than a warning, but it shares [ID_SHIZUKU_STOPPED] on purpose: the three Shizuku
+     * outcomes are one story and only ever one of them is true at a time, so posting them under one id
+     * means the later answer replaces the earlier one instead of stacking two contradictory lines in the
+     * shade. Nothing here may take the recorder's own id — see
+     * [com.baba.callvault.integrations.adb.ShizukuHealPolicy].
+     */
+    fun noteShizukuRestarted(context: Context) = post(
+        context,
+        id = ID_SHIZUKU_STOPPED,
+        title = context.getString(R.string.notif_health_shizuku_restarted_title),
+        text = context.getString(R.string.notif_health_shizuku_restarted_text),
+    )
+
+    /**
+     * Says that CallVault stopped Shizuku, tried to start it again, and could not.
+     *
+     * The honest half of the heal. Posting "Shizuku is back" on the strength of having run its starter
+     * would be the Drive-health false positive again — a claim about the present with no evidence about
+     * the present — so an unverified start says so and names the one thing the user can do.
+     */
+    fun warnShizukuRestartFailed(context: Context) = post(
+        context,
+        id = ID_SHIZUKU_STOPPED,
+        title = context.getString(R.string.notif_health_shizuku_restart_failed_title),
+        text = context.getString(R.string.notif_health_shizuku_restart_failed_text),
+    )
+
+    /**
      * Checks whether recordings are reaching Drive, and posts or clears accordingly.
      *
      * Reads the catalog rather than asking the provider: a row with a device copy and no Drive copy

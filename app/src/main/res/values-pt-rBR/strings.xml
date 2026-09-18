@@ -105,7 +105,7 @@
     <string name="notif_wd_required">A depuração por Wi-Fi precisa ficar ativada porque a depuração USB está desativada. Ative a depuração USB em Configurações ▸ Experimental e o CallVault desativará a depuração por Wi-Fi de novo.</string>
     <string name="offline_recording_warning_continue">Continuar mesmo assim</string>
     <string name="offline_recording_warning_message">Isto abre uma porta local de depuração no seu celular para que as chamadas sejam gravadas sem Wi-Fi. Ela é protegida pela chave do seu dispositivo, mas é uma pequena concessão de segurança. Ative apenas se você precisar gravar chamadas sem Wi-Fi.</string>
-    <string name="offline_recording_warning_shizuku">O Shizuku está em execução. Ativar isto reinicia o serviço de depuração do Android, o que interrompe o Shizuku — você terá de iniciá-lo de novo.</string>
+    <string name="offline_recording_warning_shizuku">O Shizuku está em execução. Ativar isto reinicia o serviço de depuração do Android, o que interrompe o Shizuku — o CallVault vai iniciá-lo de novo logo em seguida e avisar se não conseguir.</string>
     <string name="offline_recording_warning_title">Ativar a gravação offline?</string>
     <string name="permission_adb_description">Necessário para configurar e iniciar o gravador, e só funciona no Wi-Fi. Pareie uma vez pela notificação e depois ele conecta automaticamente.</string>
     <string name="permission_adb_not_connected">Não conectado — toque para configurar</string>
@@ -598,6 +598,10 @@
     <string name="notif_health_recorder_title">O CallVault não consegue gravar agora</string>
     <string name="notif_health_shizuku_stopped_title">O Shizuku foi interrompido</string>
     <string name="notif_health_shizuku_stopped_text">O CallVault precisou reiniciar o serviço de depuração do Android, e isso interrompe o Shizuku. Abra o Shizuku e inicie-o novamente se você o usa com outros aplicativos.</string>
+    <string name="notif_health_shizuku_restarted_title">O Shizuku foi iniciado de novo</string>
+    <string name="notif_health_shizuku_restarted_text">O CallVault precisou reiniciar o serviço de depuração do Android, o que interrompe o Shizuku, então ele iniciou o Shizuku de novo para você. Não é preciso fazer nada.</string>
+    <string name="notif_health_shizuku_restart_failed_title">O Shizuku foi interrompido</string>
+    <string name="notif_health_shizuku_restart_failed_text">O CallVault precisou reiniciar o serviço de depuração do Android, e isso interrompe o Shizuku. Ele tentou iniciar o Shizuku de novo e não conseguiu — abra o Shizuku e inicie-o você mesmo.</string>
     <string name="notif_health_recorder_text">As chamadas não serão gravadas até este telefone entrar uma vez em uma rede Wi-Fi. Qualquer rede serve e não precisa de internet — alguns segundos bastam, e depois continua funcionando mesmo fora do Wi-Fi.</string>
     <string name="notif_health_sync_title">As gravações não estão chegando ao Drive</string>
     <string name="notif_health_sync_text">A cópia para o Google Drive parou há algum tempo. Nada foi perdido — as gravações ainda estão neste telefone — mas não têm backup. Abra o CallVault e confira as configurações de armazenamento.</string>

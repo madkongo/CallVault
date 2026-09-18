@@ -246,7 +246,7 @@
     <string name="usb_mode_midi">MIDI</string>
     <string name="offline_recording_warning_title">Enable offline recording?</string>
     <string name="offline_recording_warning_message">This opens a local debugging port on your phone so calls can record with no Wi-Fi. It is protected by your device\'s key, but it is a small security tradeoff. Only enable it if you need to record calls without Wi-Fi.</string>
-    <string name="offline_recording_warning_shizuku">Shizuku is running. Turning this on restarts Android\'s debugging service, which stops Shizuku — you will have to start it again.</string>
+    <string name="offline_recording_warning_shizuku">Shizuku is running. Turning this on restarts Android\'s debugging service, which stops Shizuku — CallVault will start it again straight afterwards, and tell you if it cannot.</string>
     <string name="offline_recording_warning_continue">Continue anyway</string>
 
     <string name="settings_file_name_template">File Name Template</string>
@@ -801,6 +801,10 @@
     <string name="notif_health_recorder_title">CallVault cannot record right now</string>
     <string name="notif_health_shizuku_stopped_title">Shizuku was stopped</string>
     <string name="notif_health_shizuku_stopped_text">CallVault had to restart Android\'s debugging service, and that stops Shizuku. Open Shizuku and start it again if you use it with other apps.</string>
+    <string name="notif_health_shizuku_restarted_title">Shizuku was started again</string>
+    <string name="notif_health_shizuku_restarted_text">CallVault had to restart Android\'s debugging service, which stops Shizuku, so it started Shizuku again for you. There is nothing to do.</string>
+    <string name="notif_health_shizuku_restart_failed_title">Shizuku was stopped</string>
+    <string name="notif_health_shizuku_restart_failed_text">CallVault had to restart Android\'s debugging service, and that stops Shizuku. It tried to start Shizuku again and could not — open Shizuku and start it yourself.</string>
     <string name="notif_health_recorder_text">Calls will not be recorded until this phone joins a Wi-Fi network once. Any network will do and it does not need internet — a few seconds is enough, then it keeps working even off Wi-Fi.</string>
     <string name="notif_health_sync_title">Recordings are not reaching Drive</string>
     <string name="notif_health_sync_text">Copying to Google Drive stopped some time ago. Nothing is lost — the recordings are still on this phone — but they are not backed up. Open CallVault to check your storage settings.</string>

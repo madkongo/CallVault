@@ -102,7 +102,7 @@
     <string name="notif_wd_required">由于 USB 调试已关闭，无线调试必须保持开启。在 设置 ▸ 实验性功能 中开启 USB 调试后，CallVault 会再次关闭无线调试。</string>
     <string name="offline_recording_warning_continue">仍然继续</string>
     <string name="offline_recording_warning_message">此操作会在您的手机上开启一个本地调试端口，以便在没有 Wi-Fi 的情况下录制通话。它受设备密钥保护，但会带来轻微的安全权衡。仅在您需要在没有 Wi-Fi 的情况下录制通话时才启用。</string>
-    <string name="offline_recording_warning_shizuku">Shizuku 正在运行。开启此项会重启 Android 的调试服务，从而停止 Shizuku——你需要重新启动它。</string>
+    <string name="offline_recording_warning_shizuku">Shizuku 正在运行。开启此项会重启 Android 的调试服务，从而停止 Shizuku——CallVault 会随后立即重新启动它，若无法启动会通知你。</string>
     <string name="offline_recording_warning_title">启用离线录音？</string>
     <string name="permission_adb_description">设置和启动录音器时需要，且仅在连接 Wi-Fi 时可用。通过通知配对一次，之后会自动连接。</string>
     <string name="permission_adb_not_connected">未连接——点按进行设置</string>
@@ -595,6 +595,10 @@
     <string name="notif_health_recorder_title">CallVault 目前无法录音</string>
     <string name="notif_health_shizuku_stopped_title">Shizuku 已停止</string>
     <string name="notif_health_shizuku_stopped_text">CallVault 需要重启 Android 的调试服务，这会停止 Shizuku。如果你还用它来支持其他应用，请打开 Shizuku 重新启动。</string>
+    <string name="notif_health_shizuku_restarted_title">Shizuku 已重新启动</string>
+    <string name="notif_health_shizuku_restarted_text">CallVault 需要重启 Android 的调试服务，这会停止 Shizuku，因此已替你重新启动了 Shizuku。无需操作。</string>
+    <string name="notif_health_shizuku_restart_failed_title">Shizuku 已停止</string>
+    <string name="notif_health_shizuku_restart_failed_text">CallVault 需要重启 Android 的调试服务，这会停止 Shizuku。尝试重新启动 Shizuku 未成功——请打开 Shizuku 自行启动。</string>
     <string name="notif_health_recorder_text">在本机连接一次 Wi-Fi 网络之前，通话不会被录制。任何网络都可以，也不需要联网——几秒钟即可，之后即使离开 Wi-Fi 也能继续工作。</string>
     <string name="notif_health_sync_title">录音没有传到云端硬盘</string>
     <string name="notif_health_sync_text">复制到 Google 云端硬盘在一段时间前就停止了。没有丢失任何内容——录音仍在本机——但没有备份。请打开 CallVault 检查存储设置。</string>
