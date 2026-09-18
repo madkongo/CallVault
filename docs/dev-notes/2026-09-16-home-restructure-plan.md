@@ -697,3 +697,34 @@ clears it — so `LibrarySelectionTest` is what holds that guard; a bulk share l
 file (asserted by `BulkTextShareTest`); and anything needing a real model, as before.
 
 Tests: 1568 unit tests, 0 failures (1537 before this batch).
+
+---
+
+## Where things stand — 2026-09-18 (written before a context compaction)
+
+Branch `feat/home-hub-and-import`, ~100 commits, **nothing pushed**, tests 1591/0. Rollback point:
+tag `pre-ui-restructure-2026-09-16`, and `CallVault-rollback-2026-09-16.apk` on the maintainer's Desktop.
+
+**On the OP12 right now** (installed 2026-09-17 09:31): hub + Transcripts + Summaries pages, import (picker
+and share target), transcribe-only, the five feedback changes, row menus and multi-select. **NOT on it:** the
+Shizuku churn warning and the auto-heal (committed after that install).
+
+**Open, needing the maintainer:**
+1. **The OP9 has lost its ADB pairing** — an instrumented test restarting adbd killed the runner and AGP
+   uninstalled the app. Needs the screen unlocked once and CallVault's pairing run. (Lesson recorded in
+   memory `instrumented-tests-on-the-daily-driver`.)
+2. Decide whether to install the Shizuku heal on the OP12.
+3. Answer pending: should a transcript whose recording the user deleted stay readable, or go with it?
+4. Still unproven on a phone: the "Transcript ready" notification after a real transcription; a real summary
+   run (ring percentage, Stop mid-generate); the heal's **disarm** direction; the reboot race against
+   Shizuku's own start-on-boot; Samsung/One UI, where #39 came from.
+
+**Known, not fixed:**
+- After USB debugging goes off, recovery took **48 s and 93 s** on the OP9, not the ~7 s
+  `2026-09-14-debugging-switches-model.md` claims: the first decision runs before the system has settled,
+  so only the keep-alive's next tick recovers. Fix is to settle before that first decision.
+- Issue #39 reply not drafted. Worth asking the reporter whether Shizuku's start-on-boot is on — Shizuku's
+  own starter writes `adb_enabled=1`, which explains "USB debugging turns itself back on".
+- Deferred by choice: batch import, a non-call summary prompt (every prompt says "phone call"), whether
+  transcription settings move out of Settings onto the Transcripts page.
+- Stereo is on hold — see `2026-09-15-mono-vs-stereo-setting-investigation.md`.
