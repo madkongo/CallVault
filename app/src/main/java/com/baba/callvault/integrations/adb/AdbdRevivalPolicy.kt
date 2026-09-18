@@ -68,8 +68,22 @@ object AdbdRevivalPolicy {
          * still allowed: it ends with the switch exactly as it was.
          */
         mayEnable: Boolean = true,
+        /**
+         * Whether a Shizuku server answers right now. A Shizuku server is a shell-uid process hosted by
+         * `adbd` and dies with it, so one that answers is proof `adbd` is up — whatever `init.svc.adbd`
+         * said a moment ago.
+         */
+        shizukuServerRunning: Boolean = false,
     ): AdbdRevival = when {
         adbd != AdbdState.STOPPED -> AdbdRevival.NOTHING
+        // Two readings that contradict each other, and this one is the reliable half: a binder that
+        // answers cannot belong to a process whose cgroup has been killed, while `init.svc.adbd` is a
+        // property that lags a restart. Cycling on the stale reading would restart a perfectly live adbd
+        // and kill the Shizuku server with it — #39's "when it starts it disables automatically within a
+        // second and wireless debugging seems to restart". Nothing is lost by waiting: the caller looks
+        // again on its next tick, and with adbd actually up the connection is what needs retrying, not
+        // the switches.
+        shizukuServerRunning -> AdbdRevival.NOTHING
         // With USB debugging on, init starts adbd itself; a stopped reading is a moment in a restart.
         usbDebuggingOn -> AdbdRevival.NOTHING
         wifi == WifiState.NOT_CONNECTED -> AdbdRevival.NEEDS_WIFI

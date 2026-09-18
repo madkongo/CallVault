@@ -10,6 +10,7 @@ package com.baba.callvault.integrations.adb
 
 import android.content.Context
 import com.baba.callvault.data.AppPreferences
+import com.baba.callvault.server.ShizukuBackend
 import com.baba.callvault.utils.AppLogger
 import io.github.muntashirakon.adb.AdbStream
 
@@ -190,6 +191,9 @@ object AdbShell {
                 wifi = WifiState.of(context),
                 hasGrant = hasWriteSecureSettings(context),
                 mayEnable = mayEnable && !userOff,
+                // Asked every time, not cached: the point of the check is to catch a `init.svc.adbd`
+                // reading that has gone stale in the seconds since, which a cached answer would share.
+                shizukuServerRunning = runCatching { ShizukuBackend.isRunning() }.getOrDefault(false),
             )
         }
         // One revival at a time. The switch observer and the keep-alive both reach here within milliseconds of
@@ -206,7 +210,15 @@ object AdbShell {
             decision = decideNow()
         }
         when (decision) {
-            AdbdRevival.NOTHING -> return decision
+            AdbdRevival.NOTHING -> {
+                // Worth saying only when it looked like it needed reviving. A stopped reading with a
+                // Shizuku server still answering is the contradiction the policy declines to act on, and
+                // silence there would read in a report as the revival never having been asked.
+                if (adbdState() == AdbdState.STOPPED) {
+                    AppLogger.i(TAG, "adbd reads stopped after $reason but a Shizuku server still answers — leaving the switches alone")
+                }
+                return decision
+            }
             AdbdRevival.NEEDS_WIFI, AdbdRevival.NO_GRANT -> {
                 AppLogger.i(TAG, "adbd is stopped after $reason and cannot be revived now ($decision)")
                 return decision
@@ -563,15 +575,21 @@ object AdbShell {
         val port = AppPreferences(context).getLoopbackAdbPort()
         val mgr = AdbConnectionManager.getInstance(context)
         AppLogger.i(TAG, "Arming loopback tcpip on :$port (adbd will restart)…")
-        // Fire the tcpip: arm WITHOUT blocking. adbd restarts on receiving the OPEN and kills this very
-        // connection, so reading the stream's response can stall forever (the read never gets an EOF when
-        // the socket dies mid-flight). Opening the stream is what arms adbd; do it on a daemon thread with
-        // a hard cap so a stalled open/close can never hang the caller.
-        armFireThread(mgr, port)
+        // The restart below kills any Shizuku server on the phone (measured on the OP9: adbd 7921 → 15968,
+        // Shizuku gone and never restarted). It still goes ahead — a missed call cannot be recovered and a
+        // Shizuku server can be started again — but the user is told which of their apps it cost. The
+        // dialog that turns off-Wi-Fi recording on warns first, and marks itself with [asUserRequest].
+        AdbdChurnNotice.around(context, "arming off-Wi-Fi recording", underDialog = userRequest.get() == true) {
+            // Fire the tcpip: arm WITHOUT blocking. adbd restarts on receiving the OPEN and kills this very
+            // connection, so reading the stream's response can stall forever (the read never gets an EOF when
+            // the socket dies mid-flight). Opening the stream is what arms adbd; do it on a daemon thread with
+            // a hard cap so a stalled open/close can never hang the caller.
+            armFireThread(mgr, port)
 
-        Thread.sleep(TCPIP_RESTART_WAIT_MS)
-        runCatching { mgr.disconnect() }.onFailure { AppLogger.d(TAG, "post-arm disconnect ignored: ${it.message}") }
-        Thread.sleep(POST_DISCONNECT_WAIT_MS)
+            Thread.sleep(TCPIP_RESTART_WAIT_MS)
+            runCatching { mgr.disconnect() }.onFailure { AppLogger.d(TAG, "post-arm disconnect ignored: ${it.message}") }
+            Thread.sleep(POST_DISCONNECT_WAIT_MS)
+        }
 
         val armed = connectLoopback(context)
         AppLogger.i(TAG, "Loopback arm result on :$port = $armed")
@@ -606,14 +624,18 @@ object AdbShell {
             return@synchronized
         }
         AppLogger.i(TAG, "Disarming loopback tcpip (reverting adbd to usb mode)…")
-        val t = Thread {
-            runCatching { mgr.openStream("usb:").close() }
-                .onFailure { AppLogger.d(TAG, "usb: revert ended: ${it.message} (adbd restarting — expected)") }
-        }.apply { isDaemon = true; name = "cv-disarm-tcpip" }
-        t.start()
-        t.join(ARM_FIRE_CAP_MS)
-        Thread.sleep(TCPIP_RESTART_WAIT_MS)
-        runCatching { mgr.disconnect() }.onFailure { AppLogger.d(TAG, "post-disarm disconnect ignored: ${it.message}") }
+        // Closing the listener restarts adbd exactly as opening it did, so it stops a running Shizuku the
+        // same way. Turning off-Wi-Fi recording OFF has no warning dialog, so this one is always told after.
+        AdbdChurnNotice.around(context, "closing the off-Wi-Fi listener") {
+            val t = Thread {
+                runCatching { mgr.openStream("usb:").close() }
+                    .onFailure { AppLogger.d(TAG, "usb: revert ended: ${it.message} (adbd restarting — expected)") }
+            }.apply { isDaemon = true; name = "cv-disarm-tcpip" }
+            t.start()
+            t.join(ARM_FIRE_CAP_MS)
+            Thread.sleep(TCPIP_RESTART_WAIT_MS)
+            runCatching { mgr.disconnect() }.onFailure { AppLogger.d(TAG, "post-disarm disconnect ignored: ${it.message}") }
+        }
     }
 
     // ---- Wireless-debugging helpers ----

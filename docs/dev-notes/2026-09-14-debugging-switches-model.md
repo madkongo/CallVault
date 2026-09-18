@@ -156,3 +156,96 @@ a working standalone recorder (seen once; the fix is not yet re-tested on a devi
 - Nothing pushed; `fix/adb-transport-dead-ends` is unmerged. Samsung and a real call during a switch change are untested.
 - Separate thread still open: the per-channel transcription design (16 kHz two-channel sidecar vs stereo main file) —
   `docs/dev-notes/2026-09-12-stereo-separation-probe.md`.
+
+
+## Does built-in mode break Shizuku for OTHER apps? — OP9, 2026-09-18
+
+🧪 VERIFYING — measured on the OP9 (LE2121, Android 14, OxygenOS) with CallVault in **built-in
+(standalone) mode** on `feat/home-hub-and-import`. Shizuku 13.6.0 (`moe.shizuku.privileged.api`) started
+over adb with its own starter:
+
+```
+adb shell /data/app/~~<hash>/moe.shizuku.privileged.api-<hash>/lib/arm64/libshizuku.so
+```
+
+(that binary *is* the starter; there is no `start.sh` on sdcard in v13). Every row watches `pidof adbd`,
+`pidof shizuku_server` and CallVault's `app_process` daemon together, so "survived" means the pid never
+changed. The maintainer has confirmed none of it on the OP12.
+
+| # | Configuration | Action | adbd | Shizuku | Verdict |
+|---|---|---|---|---|---|
+| A1 | USB on, WD on, loopback off | kill the daemon → keep-alive relaunch (0.9 s) | pid unchanged | **alive** | ✅ survives |
+| A2 | USB on, WD on | write `adb_wifi_enabled` 1→0→1 (what CallVault's WD policy does) | pid unchanged | **alive** | ✅ survives |
+| A3 | USB on, WD on | **arm off-Wi-Fi recording** (`tcpip:`) | 7921 → 15968 | **killed, never returns** | ❌ |
+| A4 | USB on, WD on, off-Wi-Fi opt-in ON, listener unarmed | app start → launcher **re-arms by itself** | 19509 → 20486 | **killed** | ❌ (no user action at all) |
+| B1 | USB **off**, WD on (reporter's setup), adbd already revived | kill the daemon → keep-alive relaunch | pid unchanged | **alive** | ✅ survives |
+| B2 | USB off, WD on | off-Wi-Fi recording | refused before any ADB work (`NEEDS_USB_DEBUGGING`) | untouched | ✅ by rule |
+| U1 | — | the **user** turns USB debugging off | stops (R2) | killed | user's own action |
+| U2 | — | the **user** turns USB debugging on | 16554 → 19509 | killed | user's own action |
+
+**So the answer is: built-in mode does not make Shizuku unusable.** Its routine work — relaunching the
+daemon, and writing the Wireless-debugging switch — leaves `adbd`'s pid alone and a Shizuku server runs
+straight through it (A1, A2, B1). Two things kill it:
+
+1. **Arming (or closing) the off-Wi-Fi listener.** `tcpip:`/`usb:` restart `adbd` by design. A3 is
+   deliberate and one-time; **A4 is the one that deserved a fix** — with the opt-in already on, the
+   launcher re-arms by itself whenever the listener is missing (every reboot clears it), so a user who
+   turned off-Wi-Fi recording on months ago loses Shizuku silently and repeatedly.
+2. **A Default USB configuration change** (`svc usb setScreenUnlockedFunctions`) — already known, already
+   guarded against running mid-call.
+
+**`reviveAdbdIfStopped` cannot kill a live Shizuku**, because it only acts when `adbd` reads *stopped* —
+by which time a server hosted by it is already dead. The one hazard there is a **stale reading**: a
+Shizuku server that answers is proof `adbd` is up, and cycling Wireless debugging on the older reading
+restarts a live `adbd` and kills the server that had just been started. That is the reporter's "when it
+starts it disables automatically within a second and wireless debugging seems to restart". Now guarded.
+
+### "…which then also turns USB debugging back on"
+
+**Nothing in CallVault can do this.** `adb_enabled` is written in exactly one place in the whole app —
+`SettingsScreen`'s own USB-debugging switch, which the user taps. Every automatic path writes only
+`adb_wifi_enabled`. Two other explanations remain, both outside our code, and they are not mutually
+exclusive:
+
+- **Shizuku's own starter.** Its `AdbStartWorker` writes `ADB_ENABLED=1` and
+  `adb_allowed_connection_time=0`, arms `tcpip:`, then writes `adb_wifi_enabled=0` — i.e. it turns USB
+  debugging on and Wireless debugging off, on every start and on boot. That is the reported sequence
+  almost word for word, from the app the reporter was starting at the time.
+- **The OEM.** `WirelessDebuggingEnableGate` already records that on OxygenOS/One UI an attempt to write
+  `adb_wifi_enabled` with no Wi-Fi *also* turned USB debugging on (#24). Not re-measured here: forcing it
+  needs both switches off, which on a phone reached only over adb is a lock-out.
+
+### What changed in the app
+
+- `ShizukuChurnPolicy` (pure) — decides whether an `adbd` restart owes the user a warning first, a
+  notification after, or nothing. It can never cancel the restart: **recording wins**, because a missed
+  call is unrecoverable and a Shizuku server is two taps.
+- `AdbdChurnNotice.around(…)` wraps the three restarting operations, samples Shizuku *before* (afterwards
+  the evidence is gone) and posts `notif_health_shizuku_stopped_*` when it stopped a running server.
+  Verified on the OP9: log line `CV:AdbdChurn: arming off-Wi-Fi recording restarted adbd, which stopped
+  the Shizuku server that was running`, and notification id 4718 present in `dumpsys notification`.
+- `AdbdRevivalPolicy.decide` takes `shizukuServerRunning`; a server that answers means `adbd` is up, so
+  the switches are left alone.
+- The off-Wi-Fi warning dialog gains a Shizuku paragraph, shown only when one is running.
+
+### Checked and deliberately left alone
+
+- **"Never write `adb_wifi_enabled` when the recorder is already reachable."** It already holds
+  everywhere: `connectViaWirelessDebugging` returns early on `isConnected`; `RESTORE_WIRELESS_DEBUGGING`
+  and `REBUILD_CONNECTION` only run with the daemon down; `reviveAdbdIfStopped` only with `adbd` stopped;
+  `releaseWirelessDebugging` is gated on ownership and on the last-transport rule. No change needed.
+- The `tcpip:` arm is **not** skipped when Shizuku is running. Skipping it would leave off-Wi-Fi calls
+  unrecorded to protect another app.
+- `reviveAdbdIfStopped`'s WD cycle is not suppressed for Shizuku beyond the stale-reading guard: when
+  `adbd` really is stopped, Shizuku is already gone and recording needs the cycle.
+
+### Two things found on the way, not fixed here
+
+- **The USB-debugging observer's immediate revival is a no-op.** At the instant `adb_enabled` flips,
+  `init.svc.adbd` still reads `running`, so `AdbdRevivalPolicy` answers `NOTHING` and returns without the
+  2 s settle (only `ENABLE`/`CYCLE` wait). Recovery then falls to the keep-alive's next tick: **48 s and
+  93 s** in two runs here, not the ~7 s this note claims further up. The 2 s settle needs to happen
+  *before* the first decision on that path, not after it.
+- **A host `adb` connected over the same Wireless-debugging TLS port starves the app's embedded client** —
+  `waitForShellReady` failed 14 probes in a row for six minutes, and the daemon came back within seconds
+  of the host disconnecting. Not an app bug; a trap for anyone measuring this over Wi-Fi adb.

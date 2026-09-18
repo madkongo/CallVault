@@ -102,6 +102,7 @@
     <string name="notif_wd_required">WLAN-Debugging muss eingeschaltet bleiben, weil USB-Debugging aus ist. Schalte USB-Debugging unter Einstellungen ▸ Experimentell ein, dann schaltet CallVault WLAN-Debugging wieder aus.</string>
     <string name="offline_recording_warning_continue">Trotzdem fortfahren</string>
     <string name="offline_recording_warning_message">Dadurch wird ein lokaler Debugging-Port auf Ihrem Telefon geöffnet, damit Anrufe ohne Wi-Fi aufgenommen werden können. Er ist durch den Schlüssel Ihres Geräts geschützt, stellt aber einen kleinen Sicherheitskompromiss dar. Aktivieren Sie ihn nur, wenn Sie Anrufe ohne Wi-Fi aufnehmen müssen.</string>
+    <string name="offline_recording_warning_shizuku">Shizuku läuft gerade. Wenn du dies aktivierst, wird der Debugging-Dienst von Android neu gestartet und Shizuku dadurch beendet – du musst es danach erneut starten.</string>
     <string name="offline_recording_warning_title">Offline-Aufnahme aktivieren?</string>
     <string name="permission_adb_description">Nötig, um den Rekorder einzurichten und zu starten, und funktioniert nur im WLAN. Einmal über die Benachrichtigung koppeln, danach verbindet es sich automatisch.</string>
     <string name="permission_adb_not_connected">Nicht verbunden — zum Einrichten tippen</string>
@@ -592,6 +593,8 @@
     <string name="storage_cap_confirm_message">Aufnahmen werden von diesem Telefon gelöscht, sobald sie das Limit überschreiten — die ältesten zuerst. Markierte Aufnahmen sind ausgenommen. Das lässt sich nicht rückgängig machen.</string>
     <string name="notif_health_channel">Probleme, die Sie betreffen</string>
     <string name="notif_health_recorder_title">CallVault kann derzeit nicht aufnehmen</string>
+    <string name="notif_health_shizuku_stopped_title">Shizuku wurde beendet</string>
+    <string name="notif_health_shizuku_stopped_text">CallVault musste den Debugging-Dienst von Android neu starten, und dadurch wird Shizuku beendet. Öffne Shizuku und starte es erneut, falls du es für andere Apps nutzt.</string>
     <string name="notif_health_recorder_text">Anrufe werden erst aufgezeichnet, wenn sich dieses Telefon einmal mit einem WLAN verbindet. Jedes Netz genügt, Internet ist nicht nötig — ein paar Sekunden reichen, danach funktioniert es auch ohne WLAN weiter.</string>
     <string name="notif_health_sync_title">Aufnahmen erreichen Drive nicht</string>
     <string name="notif_health_sync_text">Das Kopieren zu Google Drive ist vor einiger Zeit stehengeblieben. Es ist nichts verloren — die Aufnahmen sind noch auf diesem Telefon — aber sie sind nicht gesichert. Öffnen Sie CallVault und prüfen Sie die Speichereinstellungen.</string>

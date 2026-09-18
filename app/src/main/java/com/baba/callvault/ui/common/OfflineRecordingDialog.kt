@@ -32,6 +32,7 @@ import androidx.compose.ui.unit.dp
 import com.baba.callvault.R
 import com.baba.callvault.integrations.adb.LoopbackArm
 import com.baba.callvault.integrations.adb.OfflineRecording
+import com.baba.callvault.server.ShizukuBackend
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
@@ -71,6 +72,9 @@ fun OfflineRecordingDialog(
     }
     // Which failure to explain, when there is one.
     var failure by remember { mutableStateOf(LoopbackArm.NO_ADB_SERVICE) }
+    // Read once, when the dialog opens: it decides a sentence in the warning, and a Shizuku that starts or
+    // stops while the user reads it would make the text change under them for no benefit.
+    val shizukuRunning = remember { runCatching { ShizukuBackend.isRunning() }.getOrDefault(false) }
 
     // DISABLE has no warning gate — start the work immediately and close when it's done.
     LaunchedEffect(Unit) {
@@ -104,7 +108,14 @@ fun OfflineRecordingDialog(
         title = titleContent,
         text = {
             when (phase) {
-                OfflinePhase.WARNING -> Text(stringResource(R.string.offline_recording_warning_message))
+                // Two paragraphs when Shizuku is running, one when it is not. Arming restarts adbd, which
+                // stops a Shizuku server that is nothing to do with CallVault — and this dialog is the one
+                // moment the user can still say no, so the cost belongs here rather than in a notification
+                // after the fact. See ShizukuChurnPolicy.
+                OfflinePhase.WARNING -> Text(
+                    stringResource(R.string.offline_recording_warning_message) +
+                        if (shizukuRunning) "\n\n" + stringResource(R.string.offline_recording_warning_shizuku) else ""
+                )
                 OfflinePhase.WORKING -> WorkingRow(
                     if (mode == OfflineDialogMode.ENABLE) R.string.home_whatsnew_offline_enabling
                     else R.string.offline_recording_disabling,

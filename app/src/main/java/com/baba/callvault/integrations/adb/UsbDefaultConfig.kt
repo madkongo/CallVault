@@ -293,7 +293,13 @@ object UsbDefaultConfig {
         }
         // `svc` applies the change ON-DEVICE even when its (empty) response stream closes early, so the
         // stream result cannot be trusted either way. Fire it and record the intent.
-        runShell(context, "svc usb setScreenUnlockedFunctions ${mode.svcArg}".trimEnd(), ensure = true)
+        //
+        // Renegotiating the USB gadget restarts adbd (the reason for the recording guard above), and that
+        // also kills any Shizuku server — which is not ours and which nothing restarts. The picker gives
+        // no warning of its own, so the user is told afterwards which app it stopped.
+        AdbdChurnNotice.around(context, "changing the Default USB Configuration") {
+            runShell(context, "svc usb setScreenUnlockedFunctions ${mode.svcArg}".trimEnd(), ensure = true)
+        }
         AppPreferences(context).setUsbDefaultMode(mode.name)
         AppLogger.i(TAG, "Set Default USB Configuration to $mode")
         return UsbSetResult.APPLIED

@@ -102,6 +102,7 @@
     <string name="notif_wd_required">Gỡ lỗi không dây phải luôn bật vì gỡ lỗi USB đang tắt. Bật gỡ lỗi USB trong Cài đặt ▸ Thử nghiệm và CallVault sẽ tắt lại gỡ lỗi không dây.</string>
     <string name="offline_recording_warning_continue">Vẫn tiếp tục</string>
     <string name="offline_recording_warning_message">Thao tác này mở một cổng gỡ lỗi cục bộ trên điện thoại của bạn để có thể ghi âm cuộc gọi mà không cần Wi-Fi. Cổng này được bảo vệ bằng khóa của thiết bị, nhưng đây là một sự đánh đổi nhỏ về bảo mật. Chỉ bật khi bạn cần ghi âm cuộc gọi mà không có Wi-Fi.</string>
+    <string name="offline_recording_warning_shizuku">Shizuku đang chạy. Bật tuỳ chọn này sẽ khởi động lại dịch vụ gỡ lỗi của Android, khiến Shizuku dừng — bạn sẽ phải khởi động lại nó.</string>
     <string name="offline_recording_warning_title">Bật ghi âm ngoại tuyến?</string>
     <string name="permission_adb_description">Cần để thiết lập và khởi động trình ghi âm, và chỉ hoạt động khi có Wi-Fi. Ghép nối một lần qua thông báo, sau đó sẽ tự kết nối.</string>
     <string name="permission_adb_not_connected">Chưa kết nối — nhấn để thiết lập</string>
@@ -592,6 +593,8 @@
     <string name="storage_cap_confirm_message">Bản ghi sẽ bị xóa khỏi điện thoại này mỗi khi vượt giới hạn, cũ nhất trước. Bản ghi gắn sao không bao giờ bị lấy. Không thể hoàn tác.</string>
     <string name="notif_health_channel">Sự cố cần bạn xử lý</string>
     <string name="notif_health_recorder_title">CallVault hiện không thể ghi âm</string>
+    <string name="notif_health_shizuku_stopped_title">Shizuku đã bị dừng</string>
+    <string name="notif_health_shizuku_stopped_text">CallVault phải khởi động lại dịch vụ gỡ lỗi của Android, và điều đó làm dừng Shizuku. Hãy mở Shizuku và khởi động lại nếu bạn dùng nó cho các ứng dụng khác.</string>
     <string name="notif_health_recorder_text">Cuộc gọi sẽ không được ghi cho đến khi điện thoại này kết nối một lần vào mạng Wi-Fi. Mạng nào cũng được và không cần internet — vài giây là đủ, sau đó vẫn hoạt động kể cả khi không có Wi-Fi.</string>
     <string name="notif_health_sync_title">Bản ghi không lên được Drive</string>
     <string name="notif_health_sync_text">Việc sao chép lên Google Drive đã dừng từ một thời gian trước. Không mất gì cả — bản ghi vẫn còn trên điện thoại này — nhưng chúng chưa được sao lưu. Mở CallVault để kiểm tra cài đặt lưu trữ.</string>

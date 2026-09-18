@@ -102,6 +102,7 @@
     <string name="notif_wd_required">A vezeték nélküli hibakeresésnek bekapcsolva kell maradnia, mert az USB-hibakeresés ki van kapcsolva. Kapcsold be az USB-hibakeresést a Beállítások ▸ Kísérleti menüben, és a CallVault újra kikapcsolja a vezeték nélküli hibakeresést.</string>
     <string name="offline_recording_warning_continue">Folytatás mindenképp</string>
     <string name="offline_recording_warning_message">Ez megnyit egy helyi hibakeresési portot a telefonján, hogy a hívások Wi-Fi nélkül is rögzíthetők legyenek. Az eszköz kulcsa védi, de kis biztonsági kompromisszumot jelent. Csak akkor engedélyezze, ha Wi-Fi nélkül kell hívásokat rögzítenie.</string>
+    <string name="offline_recording_warning_shizuku">A Shizuku éppen fut. Ennek bekapcsolása újraindítja az Android hibakeresési szolgáltatását, ami leállítja a Shizukut – újra el kell majd indítanod.</string>
     <string name="offline_recording_warning_title">Engedélyezi az offline rögzítést?</string>
     <string name="permission_adb_description">A rögzítő beállításához és indításához szükséges, és csak Wi-Fi-n működik. Egyszer párosítsd az értesítésből, utána automatikusan csatlakozik.</string>
     <string name="permission_adb_not_connected">Nincs csatlakoztatva — koppintson a beállításhoz</string>
@@ -592,6 +593,8 @@
     <string name="storage_cap_confirm_message">A felvételek törlődnek erről a telefonról, valahányszor túllépik a korlátot, a legrégebbiekkel kezdve. A csillagozottakat soha nem érinti. Ez nem vonható vissza.</string>
     <string name="notif_health_channel">Beavatkozást igénylő problémák</string>
     <string name="notif_health_recorder_title">A CallVault most nem tud felvenni</string>
+    <string name="notif_health_shizuku_stopped_title">A Shizuku leállt</string>
+    <string name="notif_health_shizuku_stopped_text">A CallVaultnak újra kellett indítania az Android hibakeresési szolgáltatását, ami leállítja a Shizukut. Nyisd meg a Shizukut és indítsd el újra, ha más alkalmazásokhoz is használod.</string>
     <string name="notif_health_recorder_text">Addig nem lesz hívásrögzítés, amíg a telefon egyszer nem csatlakozik egy Wi-Fi hálózathoz. Bármelyik hálózat megfelel, és internet sem kell — néhány másodperc elég, utána Wi-Fi nélkül is működik tovább.</string>
     <string name="notif_health_sync_title">A felvételek nem jutnak el a Drive-ba</string>
     <string name="notif_health_sync_text">A Google Drive-ba másolás egy ideje leállt. Semmi nem veszett el — a felvételek még a telefonon vannak —, de nincs róluk biztonsági másolat. Nyissa meg a CallVaultot, és ellenőrizze a tárolási beállításokat.</string>

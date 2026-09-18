@@ -54,6 +54,7 @@ object SilentFailureNotifier {
     /** Distinct IDs: the two conditions are independent and either may be true alone. */
     private const val ID_RECORDER_UNAVAILABLE = 4716
     private const val ID_SYNC_STALLED = 4717
+    private const val ID_SHIZUKU_STOPPED = 4718
 
     /**
      * The recorder could not be started. Posted from the boot path, where a failure is invisible.
@@ -85,6 +86,22 @@ object SilentFailureNotifier {
 
     /** The recorder came up. Clears any standing warning. */
     fun clearRecorderUnavailable(context: Context) = clear(context, ID_RECORDER_UNAVAILABLE)
+
+    /**
+     * Says that CallVault restarted Android's debugging service and stopped the user's Shizuku with it.
+     *
+     * Shizuku belongs to its own users — app managers, ad-blockers, file managers — and #39's reporter
+     * could only describe this as Shizuku "disabling automatically within a second". The restart itself
+     * is unavoidable (see [com.baba.callvault.integrations.adb.ShizukuChurnPolicy]); being silent about
+     * it is not. Posted with its own id so it never replaces the "cannot record" warning, which is about
+     * CallVault and is the more urgent of the two.
+     */
+    fun warnShizukuStopped(context: Context) = post(
+        context,
+        id = ID_SHIZUKU_STOPPED,
+        title = context.getString(R.string.notif_health_shizuku_stopped_title),
+        text = context.getString(R.string.notif_health_shizuku_stopped_text),
+    )
 
     /**
      * Checks whether recordings are reaching Drive, and posts or clears accordingly.

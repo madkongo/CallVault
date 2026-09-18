@@ -405,3 +405,26 @@ wireless debugging of CallVault's own" — restates the paragraph that was alrea
   the export cache holds one file at a time.
 - **Still claimed, unchanged:** no new permission, and no new way for the app to reach audio — every
   path added here reads and writes text the app already stores.
+
+## 2026-09-18 — What built-in mode does to somebody else's Shizuku (#39)
+
+- **What changed:**
+  1. When CallVault restarts Android's debugging service and that stops a running Shizuku server, it
+     now says so — a notification naming Shizuku and telling the user to start it again. Three
+     operations do this: arming off-Wi-Fi recording, closing that listener again, and changing the
+     Default USB configuration.
+  2. The off-Wi-Fi recording warning dialog gains a second paragraph **only when Shizuku is actually
+     running**, so the cost is stated while the user can still say no.
+  3. CallVault no longer cycles Wireless debugging when `init.svc.adbd` reads stopped but a Shizuku
+     server still answers — the reading is the stale half, and acting on it killed a Shizuku that had
+     just been started.
+- **Why it matters to the README:** line 172 describes the Shizuku/adbd collision **in Shizuku mode**
+  only. It is equally true in built-in mode, and now measurable: routine built-in-mode work (daemon
+  relaunch, Wireless-debugging writes with USB debugging on) leaves a Shizuku server alone, while
+  arming off-Wi-Fi recording certainly kills it. If the README ever gains a "works alongside Shizuku"
+  line, that is the shape of the true claim.
+- **Claim status:** 🧪 measured on the OP9 on 2026-09-18 (adbd pids, Shizuku's pid, the notification in
+  `dumpsys notification`), unconfirmed by the maintainer on the OP12. **Samsung/One UI is untested** and
+  that is where #39 was reported.
+- **Still claimed, unchanged:** no new permission, and nothing here ever cancels a restart — recording
+  still wins over another app's Shizuku.

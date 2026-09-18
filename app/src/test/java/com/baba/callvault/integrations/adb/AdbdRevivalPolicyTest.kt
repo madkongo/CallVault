@@ -27,7 +27,8 @@ class AdbdRevivalPolicyTest {
         wifi: WifiState = WifiState.CONNECTED,
         hasGrant: Boolean = true,
         mayEnable: Boolean = true,
-    ) = AdbdRevivalPolicy.decide(adbd, usbOn, wdOn, wifi, hasGrant, mayEnable)
+        shizukuServerRunning: Boolean = false,
+    ) = AdbdRevivalPolicy.decide(adbd, usbOn, wdOn, wifi, hasGrant, mayEnable, shizukuServerRunning)
 
     @Test
     fun `a running adbd is left alone`() {
@@ -79,5 +80,31 @@ class AdbdRevivalPolicyTest {
     @Test
     fun `a cycle is still allowed, because it ends with the switch as it was`() {
         assertEquals(AdbdRevival.CYCLE_WIRELESS_DEBUGGING, decide(wdOn = true, mayEnable = false))
+    }
+
+    // --- A live Shizuku server contradicts a stopped reading, and it is the reliable half (#39) ---
+
+    @Test
+    fun `leaves the switches alone while a Shizuku server still answers`() {
+        // The hazard: cycling here restarts a live adbd and kills the Shizuku server it is hosting —
+        // the reporter's "it disables automatically within a second".
+        assertEquals(AdbdRevival.NOTHING, decide(wdOn = true, shizukuServerRunning = true))
+    }
+
+    @Test
+    fun `a live Shizuku server also blocks switching Wireless debugging on from off`() {
+        assertEquals(AdbdRevival.NOTHING, decide(wdOn = false, shizukuServerRunning = true))
+    }
+
+    @Test
+    fun `without a Shizuku server the stopped reading is acted on as before`() {
+        assertEquals(AdbdRevival.CYCLE_WIRELESS_DEBUGGING, decide(wdOn = true, shizukuServerRunning = false))
+        assertEquals(AdbdRevival.ENABLE_WIRELESS_DEBUGGING, decide(wdOn = false, shizukuServerRunning = false))
+    }
+
+    @Test
+    fun `USB debugging still wins over the Shizuku check`() {
+        // Nothing to do either way; the order of the two NOTHING branches must not change the answer.
+        assertEquals(AdbdRevival.NOTHING, decide(usbOn = true, shizukuServerRunning = true))
     }
 }
