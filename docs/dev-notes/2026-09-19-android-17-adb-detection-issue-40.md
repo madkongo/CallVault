@@ -566,3 +566,68 @@ adb shell settings get global adb_enabled                # uid 2000 -- expect th
 That answers: whether the flag is flippable on shipping builds, whether it went live in 17.0 or QPR1, and
 — the one that decides our design — **whether our daemon keeps the capability**. We have no Android 17
 device; the Android 17 emulator image is the cheapest route and is worth trying before writing the fix.
+
+## ⚠️ CORRECTION — Shizuku is not broken, and its users are not stranded
+
+The maintainer pushed back that this note's Shizuku account contradicted issue #40's reporter, who linked
+two things precisely *because* he knew the answer. He was right and I was wrong. Re-checked by fetching
+the actual files.
+
+### Upstream Shizuku is NOT affected
+
+`RikkaApps/Shizuku` — **30,320 stars**, the dominant install base, the Play Store build — **only ever
+writes** the setting:
+
+```kotlin
+// manager/.../home/AdbDialogFragment.kt:66-67
+Settings.Global.putInt(cr, "adb_wifi_enabled", 1)
+Settings.Global.putInt(cr, Settings.Global.ADB_ENABLED, 1)
+// manager/.../receiver/BootCompleteReceiver.kt:64
+Settings.Global.putInt(cr, Settings.Global.ADB_ENABLED, 1)
+```
+
+Those are its only two references, both `putInt`. **There is no read gate upstream, so Android 17 does
+not break it** — which is the real explanation for the "Play Store Shizuku works" reports in issue #301.
+
+Its dormancy since June 2025 is **irrelevant to this bug** and, if anything, protective: the read-gate is
+a later fork addition. An earlier version of this note used that dormancy to imply Shizuku users had no
+fix coming. That inference was unfounded.
+
+### The affected one is the fork the reporter linked — and it already has a patch
+
+`thedjchi/Shizuku` — **5,820 stars**, the popular maintained fork — is where the blocking gate lives:
+
+```kotlin
+// manager/.../adb/AdbStarter.kt:82-83
+val adbEnabled = Settings.Global.getInt(cr, Settings.Global.ADB_ENABLED, 0)
+if (adbEnabled == 0) throw IllegalStateException("ADB is not enabled")
+// manager/.../utils/SettingsHelper.kt:14
+```
+
+Its maintainer paused in July (`15ade0e40`, *"Update README to indicate maintenance pause"*), so #301 is
+still open at 12 comments — **but a fixed build exists and is installable**:
+
+- **`RazGame/Shizuku` `v13.7.0.r1366-razgame-beta`**, published **2026-09-15**, with an APK asset. This is
+  the second link in issue #40, and the reporter's words were *"how the problem is solved from RazGame in
+  his beta patch, **very easily actually**"*.
+- **`thejaustin/ShizukuPlus`** — 1,043 stars, pushed **2026-09-19**, actively maintained — shipped the
+  same fix in `1d1afb262`.
+
+Note too that thedjchi's fork was already doing Android 17 work before the redaction shipped: `eea81ed7a`
+(PR #226, *"android17-support"*, July 2026) *"Request ACCESS_LOCAL_NETWORK before pairing (fix Android 17
+endless picker)"*.
+
+### What this changes for us
+
+- **Do not tell #40's reporter that Shizuku is broken.** He knows the landscape better than the note did,
+  and he handed us both the diagnosis and the fix. The reply should thank him for the links and answer
+  about *CallVault*.
+- **Do not put "Shizuku may not start on Android 17" in our onboarding or help text.** It is false for
+  upstream, which is what most users run, and misleading for fork users, who have two patched builds.
+- The earlier line in this note — *"a Shizuku user on Android 17 may be unable to start Shizuku at all …
+  upstream has no fix"* — is **withdrawn**. What is true and much narrower: *users of the `thedjchi` fork
+  specifically, on a build whose flag is on, hit a read-gate their fork has not merged a fix for, though
+  RazGame and ShizukuPlus both ship one.*
+- The structural lesson stands and is now better evidenced: **writes are fine; only read-gates break.**
+  Upstream Shizuku is immune because it never reads. `kitsumed/ShizuCallRecorder` is immune for the same
+  reason. CallVault is affected because it reads — in ten places.
