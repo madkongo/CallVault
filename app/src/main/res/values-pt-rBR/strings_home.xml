@@ -114,6 +114,19 @@
     <string name="merge_note_will_keep">As outras chamadas também são mantidas no telefone.</string>
     <string name="home_scroll_to_top">Topo</string>
     <string name="home_whatsnew_full_notes">Notas de versão completas</string>
+    <string name="whatsnew_240_title">Gravações, transcrições e resumos têm cada um o seu lugar</string>
+    <string-array name="whatsnew_240_items">
+        <item>Novo — Uma tela inicial com Gravações, Transcrições e Resumos, que abre onde você parou</item>
+        <item>Novo — Importe um arquivo de áudio, ou compartilhe um com o CallVault de outro aplicativo</item>
+        <item>Novo — Importe só pelo texto: o áudio é apagado assim que a transcrição fica pronta</item>
+        <item>Novo — Leia uma transcrição em uma página só dela e adicione uma nota</item>
+        <item>Novo — Escolha várias transcrições ou resumos de uma vez para apagar, compartilhar ou salvar</item>
+        <item>Novo — Um aviso quando uma transcrição termina</item>
+        <item>Corrigido — Reiniciar o telefone não o deixa mais sem gravar</item>
+        <item>Corrigido — O Shizuku é iniciado de novo quando o CallVault precisa pará-lo</item>
+        <item>Corrigido — A configuração funciona no Android 17</item>
+    </string-array>
+    <string name="whatsnew_240_where">Início ▸ Transcrições ▸ Importar áudio</string>
     <string name="whatsnew_230_title">Chamadas que eram uma conversa podem ser uma gravação</string>
     <string-array name="whatsnew_230_items">
         <item>Novo — Junte em uma gravação as chamadas de uma mesma conversa</item>

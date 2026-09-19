@@ -114,6 +114,19 @@
     <string name="merge_note_will_keep">Các cuộc gọi kia cũng được giữ lại trên máy.</string>
     <string name="home_scroll_to_top">Lên đầu</string>
     <string name="home_whatsnew_full_notes">Ghi chú phát hành đầy đủ</string>
+    <string name="whatsnew_240_title">Bản ghi, bản chép lời và bản tóm tắt đều có chỗ riêng</string>
+    <string-array name="whatsnew_240_items">
+        <item>Mới — Màn hình chính với Bản ghi, Bản chép lời và Bản tóm tắt, mở lại đúng chỗ bạn dừng</item>
+        <item>Mới — Nhập một tệp âm thanh, hoặc chia sẻ tệp vào CallVault từ ứng dụng khác</item>
+        <item>Mới — Nhập chỉ để lấy chữ: âm thanh bị xoá khi bản chép lời đã xong</item>
+        <item>Mới — Đọc bản chép lời trên trang riêng của nó và thêm ghi chú</item>
+        <item>Mới — Chọn nhiều bản chép lời hoặc bản tóm tắt cùng lúc để xoá, chia sẻ hoặc lưu</item>
+        <item>Mới — Thông báo khi một bản chép lời hoàn tất</item>
+        <item>Đã sửa — Khởi động lại máy không còn khiến máy ngừng ghi âm</item>
+        <item>Đã sửa — Shizuku được khởi động lại khi CallVault buộc phải dừng nó</item>
+        <item>Đã sửa — Thiết lập hoạt động trên Android 17</item>
+    </string-array>
+    <string name="whatsnew_240_where">Trang chính ▸ Bản chép lời ▸ Nhập âm thanh</string>
     <string name="whatsnew_230_title">Những cuộc gọi vốn là một cuộc trò chuyện có thể thành một bản ghi</string>
     <string-array name="whatsnew_230_items">
         <item>Mới — Ghép các cuộc gọi của cùng một cuộc trò chuyện thành một bản ghi</item>

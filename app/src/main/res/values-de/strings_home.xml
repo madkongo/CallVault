@@ -114,6 +114,19 @@
     <string name="merge_note_will_keep">Die anderen Anrufe bleiben ebenfalls auf dem Telefon.</string>
     <string name="home_scroll_to_top">Nach oben</string>
     <string name="home_whatsnew_full_notes">Vollständige Versionshinweise</string>
+    <string name="whatsnew_240_title">Aufnahmen, Transkripte und Zusammenfassungen haben jetzt ihren eigenen Ort</string>
+    <string-array name="whatsnew_240_items">
+        <item>Neu — Ein Startbildschirm mit Aufnahmen, Transkripten und Zusammenfassungen, der dort öffnet, wo du warst</item>
+        <item>Neu — Eine Audiodatei importieren oder aus einer anderen App an CallVault teilen</item>
+        <item>Neu — Nur für den Text importieren: Die Audiodatei wird gelöscht, sobald das Transkript fertig ist</item>
+        <item>Neu — Ein Transkript auf einer eigenen Seite lesen und mit einer Notiz versehen</item>
+        <item>Neu — Mehrere Transkripte oder Zusammenfassungen auf einmal löschen, teilen oder speichern</item>
+        <item>Neu — Eine Benachrichtigung, wenn eine Transkription fertig ist</item>
+        <item>Behoben — Ein Neustart lässt das Telefon nicht mehr ohne Aufnahme zurück</item>
+        <item>Behoben — Shizuku wird wieder gestartet, wenn CallVault es beenden muss</item>
+        <item>Behoben — Die Einrichtung funktioniert unter Android 17</item>
+    </string-array>
+    <string name="whatsnew_240_where">Start ▸ Transkripte ▸ Audio importieren</string>
     <string name="whatsnew_230_title">Anrufe, die ein Gespräch waren, können eine Aufnahme sein</string>
     <string-array name="whatsnew_230_items">
         <item>Neu — Anrufe eines Gesprächs zu einer Aufnahme zusammenführen</item>

@@ -114,6 +114,19 @@
     <string name="merge_note_will_keep">Le altre chiamate restano anche sul telefono.</string>
     <string name="home_scroll_to_top">Su</string>
     <string name="home_whatsnew_full_notes">Note di rilascio complete</string>
+    <string name="whatsnew_240_title">Registrazioni, trascrizioni e riepiloghi hanno ciascuno il proprio posto</string>
+    <string-array name="whatsnew_240_items">
+        <item>Nuovo — Una schermata iniziale con Registrazioni, Trascrizioni e Riepiloghi, che riapre dove eri rimasto</item>
+        <item>Nuovo — Importa un file audio, o condividilo con CallVault da un\'altra app</item>
+        <item>Nuovo — Importa solo per il testo: l\'audio viene eliminato quando la trascrizione è pronta</item>
+        <item>Nuovo — Leggi una trascrizione su una pagina tutta sua e aggiungici una nota</item>
+        <item>Nuovo — Scegli più trascrizioni o riepiloghi insieme per eliminarli, condividerli o salvarli</item>
+        <item>Nuovo — Una notifica quando una trascrizione è finita</item>
+        <item>Corretto — Riavviare il telefono non lo lascia più senza registrare</item>
+        <item>Corretto — Shizuku viene riavviato quando CallVault deve fermarlo</item>
+        <item>Corretto — La configurazione funziona su Android 17</item>
+    </string-array>
+    <string name="whatsnew_240_where">Home ▸ Trascrizioni ▸ Importa audio</string>
     <string name="whatsnew_230_title">Chiamate che erano una sola conversazione possono essere una sola registrazione</string>
     <string-array name="whatsnew_230_items">
         <item>Nuovo — Unisci in una registrazione le chiamate di una stessa conversazione</item>

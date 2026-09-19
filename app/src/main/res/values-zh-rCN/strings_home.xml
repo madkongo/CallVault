@@ -114,6 +114,19 @@
     <string name="merge_note_will_keep">其余通话也会保留在手机上。</string>
     <string name="home_scroll_to_top">回到顶部</string>
     <string name="home_whatsnew_full_notes">完整发行说明</string>
+    <string name="whatsnew_240_title">录音、转写和摘要各有自己的位置</string>
+    <string-array name="whatsnew_240_items">
+        <item>新增 — 主屏幕分为录音、转写和摘要，并从你上次离开的地方打开</item>
+        <item>新增 — 导入音频文件，或从其他应用分享给 CallVault</item>
+        <item>新增 — 只为文字导入：转写完成后音频会被删除</item>
+        <item>新增 — 在独立页面上阅读转写，并为它添加备注</item>
+        <item>新增 — 一次选中多条转写或摘要，进行删除、分享或保存</item>
+        <item>新增 — 转写完成时通知你</item>
+        <item>已修复 — 重启手机后不再停止录音</item>
+        <item>已修复 — CallVault 必须停止 Shizuku 时会重新启动它</item>
+        <item>已修复 — 在 Android 17 上可以完成设置</item>
+    </string-array>
+    <string name="whatsnew_240_where">主页 ▸ 转写 ▸ 导入音频</string>
     <string name="whatsnew_230_title">本就是一次对话的通话，可以合成一条录音</string>
     <string-array name="whatsnew_230_items">
         <item>新增 — 将同一次谈话的多通来电合并为一条录音</item>

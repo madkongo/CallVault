@@ -115,6 +115,19 @@
     <string name="merge_note_will_keep">Les autres appels sont également conservés sur le téléphone.</string>
     <string name="home_scroll_to_top">Haut</string>
     <string name="home_whatsnew_full_notes">Notes de version complètes</string>
+    <string name="whatsnew_240_title">Enregistrements, transcriptions et résumés ont chacun leur place</string>
+    <string-array name="whatsnew_240_items">
+        <item>Nouveau — Un écran d\'accueil avec Enregistrements, Transcriptions et Résumés, qui rouvre là où vous étiez</item>
+        <item>Nouveau — Importez un fichier audio, ou partagez-en un vers CallVault depuis une autre application</item>
+        <item>Nouveau — Importez seulement pour le texte : l\'audio est supprimé une fois la transcription prête</item>
+        <item>Nouveau — Lisez une transcription sur sa propre page et ajoutez-y une note</item>
+        <item>Nouveau — Sélectionnez plusieurs transcriptions ou résumés à la fois pour les supprimer, partager ou enregistrer</item>
+        <item>Nouveau — Une notification quand une transcription est terminée</item>
+        <item>Corrigé — Redémarrer le téléphone ne le laisse plus sans enregistrement</item>
+        <item>Corrigé — Shizuku est relancé quand CallVault doit l\'arrêter</item>
+        <item>Corrigé — La configuration fonctionne sous Android 17</item>
+    </string-array>
+    <string name="whatsnew_240_where">Accueil ▸ Transcriptions ▸ Importer un audio</string>
     <string name="whatsnew_230_title">Des appels qui étaient une seule conversation peuvent être un seul enregistrement</string>
     <string-array name="whatsnew_230_items">
         <item>Nouveau — Fusionner en un enregistrement les appels d\'une même conversation</item>

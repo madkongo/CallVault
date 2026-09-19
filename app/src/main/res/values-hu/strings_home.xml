@@ -114,6 +114,19 @@
     <string name="merge_note_will_keep">A többi hívás is a telefonon marad.</string>
     <string name="home_scroll_to_top">Az elejére</string>
     <string name="home_whatsnew_full_notes">Teljes kiadási jegyzék</string>
+    <string name="whatsnew_240_title">A felvételeknek, leiratoknak és összefoglalóknak saját helyük lett</string>
+    <string-array name="whatsnew_240_items">
+        <item>Új — Kezdőképernyő Felvételek, Leiratok és Összefoglalók résszel, ott nyílik, ahol abbahagytad</item>
+        <item>Új — Importálj egy hangfájlt, vagy oszd meg a CallVaulttal egy másik alkalmazásból</item>
+        <item>Új — Importálás csak a szövegért: a hang törlődik, amint a leirat elkészült</item>
+        <item>Új — Olvasd a leiratot saját oldalán, és írj hozzá jegyzetet</item>
+        <item>Új — Válassz ki több leiratot vagy összefoglalót egyszerre törléshez, megosztáshoz vagy mentéshez</item>
+        <item>Új — Értesítés, amikor egy átirat elkészült</item>
+        <item>Javítva — Az újraindítás után a telefon már nem marad felvétel nélkül</item>
+        <item>Javítva — A Shizuku újraindul, ha a CallVaultnak le kell állítania</item>
+        <item>Javítva — A beállítás működik Android 17 alatt</item>
+    </string-array>
+    <string name="whatsnew_240_where">Kezdőlap ▸ Leiratok ▸ Hang importálása</string>
     <string name="whatsnew_230_title">Ami egy beszélgetés volt, egyetlen felvétel is lehet</string>
     <string-array name="whatsnew_230_items">
         <item>Új — Egy beszélgetés hívásai egyetlen felvétellé fűzhetők</item>
