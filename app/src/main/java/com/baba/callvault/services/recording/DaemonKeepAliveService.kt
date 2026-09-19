@@ -38,6 +38,7 @@ import com.baba.callvault.integrations.adb.WirelessDebuggingPolicy
 import com.baba.callvault.server.RecorderConnection
 import com.baba.callvault.server.RecorderBackend
 import com.baba.callvault.server.RecorderServerLauncher
+import com.baba.callvault.system.health.SilentFailureNotifier
 import com.baba.callvault.utils.AppLogger
 
 /**
@@ -545,6 +546,12 @@ class DaemonKeepAliveService : Service() {
     /** Tells the user CallVault undid their Wireless-debugging change, and why. Dismissible, silent. */
 
     private fun updateNotification(ready: Boolean) {
+        // The boot path posts "CallVault cannot record right now" and, until 2026-09-19, was also the only
+        // thing that ever took it down again — on its own success branch. So a boot that failed left the
+        // warning standing for the rest of the uptime, including after the recorder came back, telling a
+        // user their phone was broken while it was recording. Cleared here because this is the one place
+        // that knows the recorder is up, whoever brought it up.
+        if (ready) runCatching { SilentFailureNotifier.clearRecorderUnavailable(applicationContext) }
         // A recorded call owns the notification — posting now would replace Pause, Mark and Stop, the only
         // controls during a call, with "Ready to record calls". The release puts this back afterwards.
         if (SharedStatusNotice.isHeldByRecording) return

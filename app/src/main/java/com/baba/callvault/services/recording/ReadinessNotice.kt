@@ -13,6 +13,7 @@ import androidx.annotation.StringRes
 import com.baba.callvault.R
 import com.baba.callvault.data.AppPreferences
 import com.baba.callvault.integrations.adb.AdbShell
+import com.baba.callvault.integrations.adb.LoopbackBorrowPolicy
 import com.baba.callvault.integrations.adb.WifiState
 
 /**
@@ -74,8 +75,12 @@ enum class ReadinessNotice {
             wifi == WifiState.NOT_CONNECTED && !loopbackArmed -> NEEDS_WIFI_TO_RESTART
             !usbDebuggingOn && !wirelessDebuggingOn && !hasGrant -> NO_DEBUGGING
             // Needed only when nothing else can be dialled: USB debugging with an armed listener restarts
-            // the recorder without it.
-            !wirelessDebuggingOn && wirelessDebuggingOffByUser && !enforced && !(usbDebuggingOn && loopbackArmed) -> WD_OFF_BY_USER
+            // the recorder without it, and an unarmed listener CallVault may borrow the switch to re-arm
+            // is not a dead end either — saying it is, is what deadlocked a phone after a reboot on
+            // 2026-09-19 (the keep-alive stands down on this notice). See [LoopbackBorrowPolicy].
+            !wirelessDebuggingOn && wirelessDebuggingOffByUser && !enforced &&
+                !(usbDebuggingOn && loopbackArmed) &&
+                !LoopbackBorrowPolicy.mayBorrow(offlineRecordingOn, usbDebuggingOn, loopbackArmed) -> WD_OFF_BY_USER
             recoveryStuck -> STUCK
             else -> STARTING
         }

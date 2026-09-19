@@ -183,7 +183,12 @@ object AdbShell {
     ): AdbdRevival {
         fun decideNow(): AdbdRevival {
             val prefs = AppPreferences(context)
-            val userOff = prefs.wasWirelessDebuggingTurnedOffByUser() && !prefs.isWirelessDebuggingEnforced()
+            // A switch we may borrow is not a switch that blocks revival: after a reboot the listener is
+            // always gone, and refusing here was the second of the three gates that deadlocked a phone on
+            // 2026-09-19. See [LoopbackBorrowPolicy].
+            val userOff = prefs.wasWirelessDebuggingTurnedOffByUser() &&
+                !prefs.isWirelessDebuggingEnforced() &&
+                !mayBorrowWirelessDebugging(context)
             return AdbdRevivalPolicy.decide(
                 adbd = adbdState(),
                 usbDebuggingOn = isUsbDebuggingEnabled(context),
@@ -657,6 +662,10 @@ object AdbShell {
      */
     fun enableWirelessDebugging(context: Context): Boolean {
         val prefs = AppPreferences(context)
+        // A borrow is a loan, not a transfer: the switch goes back in `releaseWirelessDebugging` and the
+        // user's preference below is deliberately left standing, so the next boot borrows again rather
+        // than deciding the switch is now ours. See [LoopbackBorrowPolicy].
+        val borrowing = mayBorrowWirelessDebugging(context)
         when (
             WirelessDebuggingEnableGate.decide(
                 alreadyOn = isWirelessDebuggingEnabled(context),
@@ -665,6 +674,7 @@ object AdbShell {
                 userTurnedOff = prefs.wasWirelessDebuggingTurnedOffByUser(),
                 enforced = prefs.isWirelessDebuggingEnforced(),
                 userRequested = userRequest.get() == true,
+                borrowingForLoopback = borrowing,
             )
         ) {
             // Already on means it is the user's, not ours — recorded so nothing later mistakes it for a
@@ -685,16 +695,34 @@ object AdbShell {
             }
             WirelessDebuggingEnable.WRITE -> Unit
         }
+        if (borrowing) {
+            AppLogger.i(TAG, "Borrowing Wireless debugging to re-arm the off-Wi-Fi listener; it goes back off straight after")
+        }
         markOwnWirelessDebuggingWrite(1)
         val enabled = runCatching {
             android.provider.Settings.Global.putInt(context.contentResolver, "adb_wifi_enabled", 1)
         }.onFailure { AppLogger.e(TAG, "Failed to enable Wireless debugging", it) }.isSuccess
         if (enabled) {
             prefs.setWirelessDebuggingEnabledByUs(true)
-            prefs.setWirelessDebuggingTurnedOffByUser(false)
+            // Only a write that is ours to keep clears the user's choice. Clearing it on a borrow would
+            // quietly convert "the user turned this off" into "CallVault owns this switch" after one
+            // reboot, which is the opposite of what borrowing is for.
+            if (!borrowing) prefs.setWirelessDebuggingTurnedOffByUser(false)
         }
         return enabled
     }
+
+    /**
+     * Whether this moment is one CallVault may borrow the user's Wireless debugging switch for.
+     *
+     * Kept next to its two callers rather than inside [LoopbackBorrowPolicy] so the policy itself stays
+     * free of `Context` and every branch of it is unit-tested.
+     */
+    private fun mayBorrowWirelessDebugging(context: Context): Boolean = LoopbackBorrowPolicy.mayBorrow(
+        offlineRecordingOn = runCatching { AppPreferences(context).isOfflineRecordingEnabled() }.getOrDefault(false),
+        usbDebuggingOn = isUsbDebuggingEnabled(context),
+        loopbackArmed = isLoopbackArmed(context),
+    )
 
     // -------- Telling our own writes apart from the user's
     //

@@ -99,6 +99,27 @@ class ReadinessNoticeTest {
     }
 
     @Test
+    fun `after a reboot the switch is borrowable, so recovery is not declared impossible`() {
+        // The 2026-09-19 deadlock. A reboot clears the off-Wi-Fi listener, the "user turned it off" flag
+        // survives it, and this notice is what told the keep-alive to stop trying. With off-Wi-Fi
+        // recording on and USB debugging on, one transient write gets the listener back -- so the honest
+        // notice is "starting", not "you turned it off and nothing else can help".
+        assertEquals(
+            ReadinessNotice.STARTING,
+            of(usbOn = true, wdOn = false, loopbackArmed = false, wdOffByUser = true, offlineOn = true),
+        )
+    }
+
+    @Test
+    fun `a user who has not enabled off-Wi-Fi recording is still simply obeyed`() {
+        // Nothing to re-arm, so there is nothing to borrow the switch for and the notice stands.
+        assertEquals(
+            ReadinessNotice.WD_OFF_BY_USER,
+            of(usbOn = true, wdOn = false, loopbackArmed = false, wdOffByUser = true, offlineOn = false),
+        )
+    }
+
+    @Test
     fun `usb on with an armed loopback does not need the wireless switch at all`() {
         assertEquals(ReadinessNotice.STARTING, of(usbOn = true, wdOn = false, wdOffByUser = true, loopbackArmed = true))
     }

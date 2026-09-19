@@ -84,4 +84,64 @@ class WirelessDebuggingEnableGateTest {
             WirelessDebuggingEnableGate.decide(alreadyOn = false, hasGrant = true, wifi = WifiState.CONNECTED, userTurnedOff = true, userRequested = true),
         )
     }
+
+    // ---- Borrowing the switch back to re-arm the off-Wi-Fi listener (the 2026-09-19 reboot deadlock) ----
+
+    @Test
+    fun `a switch the user turned off may still be borrowed when nothing else can re-arm the listener`() {
+        // The reboot case: the listener is gone, off-Wi-Fi recording is on, and this one write is the
+        // only way to get it back. The switch is handed straight back afterwards, so the user's setting
+        // survives the borrow. Without this the phone never records again -- measured on the OP12.
+        assertEquals(
+            WirelessDebuggingEnable.WRITE,
+            WirelessDebuggingEnableGate.decide(
+                alreadyOn = false,
+                hasGrant = true,
+                wifi = WifiState.CONNECTED,
+                userTurnedOff = true,
+                borrowingForLoopback = true,
+            ),
+        )
+    }
+
+    @Test
+    fun `borrowing never overrides the reasons the write could not work anyway`() {
+        // Borrowing answers "may we?", not "would it help?". Off Wi-Fi the framework writes it straight
+        // back to 0, and with no grant the write throws -- neither becomes possible because we need it.
+        assertEquals(
+            WirelessDebuggingEnable.NO_WIFI,
+            WirelessDebuggingEnableGate.decide(
+                alreadyOn = false,
+                hasGrant = true,
+                wifi = WifiState.NOT_CONNECTED,
+                userTurnedOff = true,
+                borrowingForLoopback = true,
+            ),
+        )
+        assertEquals(
+            WirelessDebuggingEnable.NO_GRANT,
+            WirelessDebuggingEnableGate.decide(
+                alreadyOn = false,
+                hasGrant = false,
+                wifi = WifiState.CONNECTED,
+                userTurnedOff = true,
+                borrowingForLoopback = true,
+            ),
+        )
+    }
+
+    @Test
+    fun `not borrowing leaves the user's switch respected exactly as before`() {
+        // The default is unchanged, so every caller that does not opt in keeps 2026-09-14's behaviour.
+        assertEquals(
+            WirelessDebuggingEnable.RESPECT_USER,
+            WirelessDebuggingEnableGate.decide(
+                alreadyOn = false,
+                hasGrant = true,
+                wifi = WifiState.CONNECTED,
+                userTurnedOff = true,
+                borrowingForLoopback = false,
+            ),
+        )
+    }
 }

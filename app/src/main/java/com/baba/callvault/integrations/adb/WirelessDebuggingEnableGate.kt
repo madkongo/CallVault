@@ -47,6 +47,9 @@ object WirelessDebuggingEnableGate {
      * @param userTurnedOff the switch was last turned off by the user, not by Android or by us.
      * @param enforced the opt-in "keep Wireless debugging on for recording" setting.
      * @param userRequested the write comes from a button the user pressed that needs it.
+     * @param borrowingForLoopback this write is the only way to re-arm the off-Wi-Fi listener, and the
+     *   switch is handed straight back afterwards. See [LoopbackBorrowPolicy] for why that is not the
+     *   same as overriding the user, and for the reboot deadlock it exists to break.
      */
     fun decide(
         alreadyOn: Boolean,
@@ -55,10 +58,12 @@ object WirelessDebuggingEnableGate {
         userTurnedOff: Boolean = false,
         enforced: Boolean = false,
         userRequested: Boolean = false,
+        borrowingForLoopback: Boolean = false,
     ): WirelessDebuggingEnable = when {
         alreadyOn -> WirelessDebuggingEnable.ALREADY_ON
         !hasGrant -> WirelessDebuggingEnable.NO_GRANT
-        userTurnedOff && !enforced && !userRequested -> WirelessDebuggingEnable.RESPECT_USER
+        userTurnedOff && !enforced && !userRequested && !borrowingForLoopback ->
+            WirelessDebuggingEnable.RESPECT_USER
         // Only a positive "not connected" blocks. Unknown carries on, because blocking a write that
         // would have worked is exactly the kind of dead end this exists to remove.
         wifi == WifiState.NOT_CONNECTED -> WirelessDebuggingEnable.NO_WIFI
