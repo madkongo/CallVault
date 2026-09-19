@@ -713,8 +713,10 @@ survived, the loopback listener stayed armed on 51392, the daemon reconnected in
 read "Ready to record calls — The recorder is connected." The OP12 has no Shizuku installed, so the heal is
 dormant there by design.
 
-**✅ VERIFIED 2026-09-19 by the maintainer:** cell and VoIP calls record normally; a real transcription,
-a real summary run, and share-in + transcribe-only all work. **❌ Rebooting does not** — see
+**✅ VERIFIED 2026-09-19 by the maintainer, twice:** cell and VoIP calls record normally; a real
+transcription, a real summary run, and share-in + transcribe-only all work. Re-confirmed on the **2.4.0
+release build (20400)**: *"cell + voip - works / rebooted phone - came up just fine and again cell+voip
+are done"* — so the reboot recovery holds on the shipped artifact, not just on the build it was fixed in. **❌ Rebooting does not** — see
 `2026-09-19-reboot-deadlock-wd-off-by-user.md`: the phone came back not recording and could not recover
 on its own, not even with the app open.
 
