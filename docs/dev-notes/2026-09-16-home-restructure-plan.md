@@ -713,6 +713,9 @@ survived, the loopback listener stayed armed on 51392, the daemon reconnected in
 read "Ready to record calls — The recorder is connected." The OP12 has no Shizuku installed, so the heal is
 dormant there by design.
 
+**✅ VERIFIED 2026-09-19 by the maintainer:** cell and VoIP calls both record normally on this build. That
+covers capture only — nothing else in the list below has been used on a phone yet.
+
 **Open, needing the maintainer:**
 1. ~~The OP9 has lost its ADB pairing~~ — **done 2026-09-19**: re-paired by the maintainer, and the whole
    device suite re-run against it. See `2026-09-14-debugging-switches-model.md`, the 2026-09-19 section.
