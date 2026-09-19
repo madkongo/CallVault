@@ -302,3 +302,46 @@ well inside the budget.**
   discovery drops the one endpoint it should be using. Worth revisiting alongside the note in
   `2026-09-19-android-17-adb-detection-issue-40.md` that the loopback bind probe is unverified on
   Android 17.
+
+## Third boot (17:28): better, and it corrected my premise
+
+Two Wireless-debugging cycles instead of five or six, and 41 s instead of 73 s (17:28:12 → 17:28:53).
+Real progress, but it should have been one cycle — and the new `listener took …ms` line said why
+immediately:
+
+```
+17:28:17.236 I Arming loopback tcpip on :51392 (adbd will restart)…
+17:28:19.244 I Loopback arm result on :51392 = false (listener took 4ms)
+...
+17:28:35.824 I Loopback arm result on :51392 = false (listener took 9ms)
+...
+17:28:53.272 I Loopback arm result on :51392 = true  (listener took 38ms)
+```
+
+**4 ms and 9 ms.** The wait never engaged: `LoopbackArmWait` gave up at once because
+`service.adb.tcp.port` was still unset, which the first version treated as proof the arm had never
+landed.
+
+⚠️ **That premise was wrong**, and the KDoc asserting it was wrong too. `adbd` writes the property when it
+*restarts and binds*, not when it accepts `tcpip:` — and on a booting phone that takes longer than the
+2 s of fixed sleeps. One of the abandoned arms had plainly landed, because a later round found the
+listener up without arming again. `getSystemProperty` is in-process reflection on
+`android.os.SystemProperties`, so the reading was honest; only the meaning I gave it was not.
+
+### Corrected (`LOOPBACK_ARM_GRACE_MS`)
+
+The property is a **positive** signal only. Inside a 5 s grace an unset value means "`adbd` has not
+restarted yet" and the wait continues; after the grace it means the request never landed, and the caller
+is released rather than spending the whole budget; once it reads armed, the full 12 s is available.
+
+APK `ebaadb297f74c51b` on the OP12; daemon back in under 8 s, "Ready to record calls".
+**🧪 Settled when a reboot shows one Wireless-debugging cycle and a `listener took` figure in the
+seconds, not milliseconds.**
+
+### A lesson worth keeping
+
+Both wrong turns in this note were the same mistake: **treating the absence of a signal as evidence**.
+First `WD_TURNED_OFF_BY_USER` surviving a reboot was read as a statement about now; then an unset
+`service.adb.tcp.port` was read as proof of failure. Neither absence meant what it was taken to mean.
+The project already has the idiom for this — `WifiState.UNKNOWN`, `AdbdState.UNKNOWN` — and both bugs
+are what it looks like when a third state is collapsed into "no".
