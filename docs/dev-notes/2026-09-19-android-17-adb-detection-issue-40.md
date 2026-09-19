@@ -673,7 +673,15 @@ working, and it records.** So where does "CallVault always complains developer o
 when `SetupPrerequisites` returns at the `mode.needsShizuku` branch before the dev-options check and
 `computeStatus` goes through it?
 
-The journal answers it. He switched modes while investigating:
+The journal answers it, and so do his own words. He wrote *"the attached is the log file, where Shizuku
+is disabled"* — and the header says `SHIZUKU`/`READY`, which looks like a contradiction until the
+timestamps are lined up. They describe moments **46 seconds apart**: he turned CallVault's Shizuku mode
+off to reproduce the failure, then turned it back on before exporting. The header is the export moment;
+the journal is the reproduction. That makes the report a deliberate repro rather than an incidental one.
+
+*(The competing reading — that he disabled the Shizuku app itself — is not supported: `Shizuku started
+the recorder service` at 00:05:11 and `Status: READY` at export both say the service was alive. Worth one
+line of confirmation from him if it ever matters.)*
 
 ```
 00:04:45.963  Leaving Shizuku mode; releasing the user service
