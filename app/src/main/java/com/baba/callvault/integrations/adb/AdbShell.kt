@@ -53,6 +53,13 @@ object AdbShell {
     private const val ARM_FIRE_CAP_MS = 3000L
     /** Max time to wait for an armed-but-restarting loopback listener to reappear before re-arming via WD. */
     private const val LOOPBACK_SELFHEAL_MS = 12_000L
+    /**
+     * How long after a `tcpip:` arm an unset `service.adb.tcp.port` still means "adbd is restarting"
+     * rather than "the arm never landed". Measured on the OP12's 17:28 boot: two seconds in, the property
+     * was still unset on an arm that had in fact landed. Generous because the cost of being wrong in this
+     * direction is a wasted round, another adbd restart, and another borrowed Wireless-debugging cycle.
+     */
+    private const val LOOPBACK_ARM_GRACE_MS = 5_000L
     /** Poll interval while waiting for the loopback listener to self-heal after an adbd restart. */
     private const val LOOPBACK_RETRY_INTERVAL_MS = 1500L
     /** Sentinel echoed by [waitForShellReady] to confirm adbd actually answers a shell command. */
@@ -605,6 +612,7 @@ object AdbShell {
         val startedAt = SystemClock.elapsedRealtime()
         val armed = LoopbackArmWait.awaitListener(
             budgetMs = LOOPBACK_SELFHEAL_MS,
+            graceMs = LOOPBACK_ARM_GRACE_MS,
             intervalMs = LOOPBACK_RETRY_INTERVAL_MS,
             now = { SystemClock.elapsedRealtime() },
             sleep = { Thread.sleep(it) },
