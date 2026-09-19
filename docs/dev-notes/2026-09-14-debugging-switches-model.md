@@ -294,12 +294,24 @@ defects below for why.
 | H4 | emulator | same with no server running | **zero** `CV:AdbdChurn`/`CV:ShizukuHeal` lines, no server started, no notification | ✅ |
 | H5 | emulator | heal with the transport genuinely gone | "No ADB connection to start Shizuku through" → notification id 4718 *"Shizuku was stopped / … It tried to start Shizuku again and could not — open Shizuku and start it yourself."* | ✅ |
 | H6 | emulator | successful heal | notification id 4718 *"Shizuku was started again / … so it started Shizuku again for you. There is nothing to do."* | ✅ |
-| H7 | OP9 + emulator | close the listener (`usb:`) | the decision to start is reached on both (`After closing the off-Wi-Fi listener: START`), **completion never observed** — see below | ❌ not measured |
+| H7 | OP9 + emulator | close the listener (`usb:`) | the decision to start is reached on both (`After closing the off-Wi-Fi listener: START`), **completion never observed** — settled 2026-09-19, see below | ❌ NOT WORKING 2026-09-19 |
 
-H7's gap is a test-harness limit, not a known defect. On the emulator `usb:` removes the *only*
-transport, so the heal correctly cannot reach a shell and the instrumentation dies with it. On the OP9
-the run that reached the decision was killed when AGP uninstalled the app after a failed connected-test
-run. **This is the one thing to watch on a real phone.**
+H7 was measured on the re-paired OP9 on 2026-09-19 and **it does not heal**. It is not a harness limit
+after all: closing the listener is by design the release of the *last* ADB user, so by the time the heal
+runs there is no endpoint left to run the starter through.
+
+```
+10:31:00.162 W CV:AdbdChurn:  closing the off-Wi-Fi listener restarted adbd, which stopped the Shizuku server that was running
+10:31:00.173 I CV:ShizukuHeal: After closing the off-Wi-Fi listener: START
+10:31:00.183 W CV:ShizukuHeal: No ADB connection to start Shizuku through
+10:32:00.325 I CV:ShizukuHealTest: after closing the off-Wi-Fi listener, Shizuku answering = false (waited 60157ms)
+```
+
+`ShizukuRestarter.startAndVerify` (`:118`) fails its `AdbShell.ensureConnected` guard 10 ms in. It then
+does the honest thing — notification id 4718 was posted, with the "open Shizuku and start it yourself"
+text — so the user is told rather than left guessing. **Not fixed.** The real fix is either to start
+Shizuku *before* the disarm restarts adbd, or to accept the notification as the answer for this one
+direction; that is a decision, not an oversight to patch quietly.
 
 The automatic re-arm after a reboot (A4 above, the case that matters most) runs the *same* code as H1
 with the same `underDialog = false`; it was not exercised as an actual reboot.
@@ -325,3 +337,34 @@ a test that restarts `adbd` **kills the instrumentation** (the `am instrument` c
 `adbd`), and AGP then **uninstalls the app**, which takes its ADB pairing with it. Drive these tests
 with `am instrument` against manually installed APKs instead. The OP9 was left needing to be paired
 again.
+
+### 2026-09-19 — re-run on the re-paired OP9
+
+The phone was paired again by the maintainer, so the whole heal file was driven through `am instrument`
+against manually installed APKs (never Gradle — see "What it cost" above). Branch build installed over
+release 2.3.0; `WRITE_SECURE_SETTINGS` re-granted; `persist.sys.permission.enable=false`, so ColorOS
+allowed the grant.
+
+| # | Test | Result |
+|---|---|---|
+| H8 | a server that survived is not started twice | ✅ `pidof shizuku_server` **24594 before and after** |
+| H9 | a server stopped from outside is started again | ✅ dead → answering again as pid 25764 |
+| H10 | a phone with no Shizuku gets none started | ✅ nothing started |
+| H11 | **arm** off-Wi-Fi recording, Shizuku running | ✅ *"Shizuku answered again 648 ms after the starter ran"*, ~3.0 s end to end. Reproduced twice. |
+| H12 | **close** the off-Wi-Fi listener | ❌ see H7 above — no endpoint left, heal declines, notification posted |
+
+Two things the earlier session could not have seen:
+
+- **A Shizuku server CallVault started dies when CallVault's process dies.** Force-stopping the app —
+  which is what `am instrument` does on every run — takes the server with it, because the starter ran
+  over CallVault's own ADB shell stream and `adbd` reaps that stream's process group when the connection
+  drops. A server started from a *host* `adb shell` survives its shell exiting. Not a bug we have a
+  report for, but it means the heal's result is only as durable as the app process, and it silently
+  ruins any test that force-stops the app between arranging and asserting.
+- **`am instrument` must be run under `setsid`** for the two tests that restart adbd, or the restart
+  kills the instrumentation and the app with it and the test never reaches its assertion. The first two
+  attempts at H12 both died that way and looked like a 150 s hang.
+
+Also green on the OP9 that day: `ShizukuDetectionDeviceTest` (2), `TranscriptMigrationInstrumentedTest`
+(11), `TranscribeOnlyAudioDeviceTest` (4), `MergeRoundTripTest` (6), `CallEvidenceDeviceTest` (1). Unit
+suite 1591/0.
