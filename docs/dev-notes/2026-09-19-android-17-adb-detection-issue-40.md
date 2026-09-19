@@ -468,3 +468,101 @@ Shizuku unchanged since June 2025. `gh search issues` for `"third-party apps" ad
 returns **2 results total**. LADB, aShellYou, Canta, KeyMapper, AxManager, Tasker plugins and the
 root-detection vendors have not noticed in either direction. **Nobody is past "treat 0 as unknown".
 Whatever we build, we build first.**
+
+## Third pass — official docs, CTS and the flag. Two findings that decide the design.
+
+### ✅ It is NOT CTS-enforced and NOT CDD-required — so OEMs can differ
+
+- CTS `tests/tests/provider` at `android-17.0.0_r1`: **zero** `redact`, **zero** `Readable`. The one
+  `ADB_ENABLED` reference (`SettingsTest#testSecureTable`) only asserts the cursor is non-null; it never
+  reads the value, so it passes either way. Same null result across CTS `settings`, `security`, `appop`,
+  `deviceconfig`, `os`, and the platform's own `SettingsProvider` unit tests.
+- The Android 17 CDD (644 kB of text) never mentions it. §6.1 requires adb support and a user-accessible
+  way to turn it on — nothing about hiding the state from apps.
+
+✅ And the flag cannot easily *be* CTS-tested. Verified by fetching `core/java/android/provider/flags.aconfig`
+at `android-17.0.0_r1`: the declaration carries **no `is_exported` and no `is_fixed_read_only`**, while
+**13 of the 15 flags in that same file do declare `is_exported`**. A non-exported flag is not visible to a
+CTS test built against the SDK.
+
+**Consequence for us: do not assume uniformity.** Samsung, Xiaomi and OnePlus may each ship this
+differently, and #39/#23-style per-OEM divergence is likely. Detection must be behavioural, not
+"is this Android 17".
+
+### ✅ Stock AOSP 17 appears to have it OFF
+
+Default aconfig state is DISABLED unless a release config enables it, and **none of AOSP's 18 Android 17
+release configs** (`platform/build/release`, `android17-release`) contain a `flag_value` for it. Google's
+Pixel/GMS release config is internal and unpublished, so the shipping state cannot be proved from AOSP —
+but it is consistent with the ROM evidence above, where Evolution-X and CharaROM each had to add an
+`ENABLED` / `READ_ONLY` textproto by hand. **This is a per-build decision, not an Android-version fact.**
+One more reason the tri-state must corroborate rather than gate on `SDK_INT`.
+
+### 🔑 The decisive finding: our own daemon can still read the truth
+
+Both enforcement points exempt `UserHandle.getAppId(callingUid) < Process.FIRST_APPLICATION_UID` (10000).
+**An adb shell is uid 2000, and CallVault runs its own shell-uid daemon.** So on Android 17:
+
+- from the app process → `"0"`, always;
+- from our daemon / our ADB shell → **the true value**.
+
+If that holds on hardware, the redaction is a **display and onboarding problem for us, not a capability
+loss**. Everything after pairing — the readiness notices, the keep-alive's decisions, the debug-report
+header, `SetupPrerequisites` — can be told the truth by the daemon we already run.
+
+It does **not** help the case in issue #40, which is first-run: there is no daemon yet, and that is
+exactly when onboarding blocks. So the fix still needs both halves — a truthful reading where a daemon
+exists, and a never-blocking onboarding where one does not.
+
+Note the asymmetry that makes this work: the second enforcement point is **in-process**
+(`Settings.NameValueCache`), so no amount of reflection or direct provider work *inside the app* recovers
+the value. It has to come from a lower-uid process. (The `GET_global` hole in the previous section is the
+one exception, and it is unverified.)
+
+### Documentation: one sentence, and it is mis-dated
+
+`developer.android.com/reference/android/provider/Settings.Global` says, for both constants:
+
+> "This will always return 0 for all third-party apps."
+
+Two traps in that sentence: **it carries no version qualifier**, so a developer reading it today would
+conclude it was always true; and the "Added in API level 17" above it refers to the *constant*, which is a
+coincidence — Android 17 is API 37. The word "redacted" never appears on the page. Confirmed new in 17 by
+diffing the javadoc against `android-16.0.0_r1`.
+
+Everything else is silent: **zero hits** across `behavior-changes-all`, `behavior-changes-17`, `features`,
+`summary`, `migration`, `release-notes`, `qpr1`, `qpr1/release-notes`, `qpr2`, `qpr2/release-notes`. The
+API diff 36→37 cannot show it — JDiff does not track annotation or javadoc changes. AOSP Gerrit returns
+`[]` for both `bug:440232200` and the flag name, so it landed by internal merge with no public CL.
+
+Worth knowing: Google never documented the `@Readable` mechanism itself in Android 12 either. This family
+of change lives only in javadoc, by habit.
+
+### There is no sanctioned alternative API
+
+Play Integrity is the only sanctioned device-trust API and **has no developer-options or adb signal** —
+its verdicts cover licensing, app recognition, device integrity, recent activity and access risk. It is
+also an attestation oracle for a *server*, needs a Play Console app and a Cloud project, and our users
+sideload, so the licensing and recognition verdicts would come back negative anyway. Useless to us three
+times over.
+
+### targetSdk independence, re-confirmed, and the confusion named
+
+Neither redaction site reads `ApplicationInfo`. The reason people conflate this with a targetSdk gate is
+that `@Readable` carries **both** `maxTargetSdk` and `redactedValue`, collected in the same loop into two
+different maps — `keysWithMaxTargetSdk` feeds `enforceSettingReadable` (the Android 12 SecurityException
+path, which *is* targetSdk-gated), `keysWithRedactedValue` feeds the redaction (which is not).
+
+### The one device test that settles everything left open
+
+On any Android 17 phone, three commands:
+
+```
+adb shell aflags list | grep redacted                    # state + READ_ONLY/READ_WRITE
+adb shell settings get global adb_enabled                # uid 2000 -- expect the TRUE value
+# and from inside an app process                         -- expect "0"
+```
+
+That answers: whether the flag is flippable on shipping builds, whether it went live in 17.0 or QPR1, and
+— the one that decides our design — **whether our daemon keeps the capability**. We have no Android 17
+device; the Android 17 emulator image is the cheapest route and is worth trying before writing the fix.
