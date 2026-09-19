@@ -368,3 +368,36 @@ Two things the earlier session could not have seen:
 Also green on the OP9 that day: `ShizukuDetectionDeviceTest` (2), `TranscriptMigrationInstrumentedTest`
 (11), `TranscribeOnlyAudioDeviceTest` (4), `MergeRoundTripTest` (6), `CallEvidenceDeviceTest` (1). Unit
 suite 1591/0.
+
+### #39's unanswered question, and the answer 2.4.0 gives (2026-09-19)
+
+johnwick113's last comment (2026-09-18) was never replied to:
+
+> "Shizuku mode Does Not record App Calls. Is it Possible to run CallVault Mode simultaneously with
+> Shizuku running / without opting shizuku mode?? If possible that would be the real upgrade"
+
+He is right on both counts, and the answer is now **yes**.
+
+**Why he wants it.** Shizuku mode cannot record VoIP at all — a Shizuku-hosted process cannot get an
+`AudioRecord` into RECORDING state, so that mode uses scrcpy and loses VoIP, resilient recording,
+off-Wi-Fi recording and speaker attribution. `siongui`'s Android 17 report states it in the header:
+*"Not available in this mode: resilient recording, VoIP, offline recording, speaker attribution."* So a
+VoIP user has to be in built-in mode — and until now that cost them Shizuku for every other app.
+
+**What changed.** R10 said *"Nothing restarts Shizuku; its user must start it again."* That is no longer
+true. `AdbdChurnNotice.around` wraps the churn sites and `ShizukuRestarter` puts the server back:
+
+| Event that stops Shizuku | 2.4.0 |
+|---|---|
+| Arming off-Wi-Fi recording (`tcpip:`) | ✅ restarted, **648 ms**, measured on the OP9 twice |
+| Default USB configuration change | ✅ same path |
+| USB debugging turned off / both switches off | ⚠️ adbd is gone, so there is nothing to start it through |
+| **Closing the off-Wi-Fi listener (`usb:`)** | ❌ **not healed** — see H12. That call releases CallVault's own last ADB user, so no shell remains. It posts the "open Shizuku and start it yourself" notification. |
+
+**The advice that matters most for him, and it is already measured:** *keep USB debugging ON.* With it
+on, CallVault's routine Wireless-debugging toggling does not restart `adbd` at all — T1, pid unchanged —
+so day-to-day use never disturbs Shizuku. His original report was from a phone with USB debugging
+**off** (the issue title), which is the one configuration where every WD toggle churns `adbd`.
+
+So the honest answer is: yes, run built-in mode and keep Shizuku installed; 2.4.0 restarts it when
+CallVault has to stop it, and with USB debugging on there is very little left to stop it.
