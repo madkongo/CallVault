@@ -239,3 +239,66 @@ switch back before the next begins.
 
 **To settle it:** turn the debug log on **before** rebooting, reboot, then *Save log*. Nothing else
 captures it.
+
+## The flicker explained — and it was not the borrow (2026-09-19, second reboot)
+
+The maintainer deleted the log (which reopens the setup journal), rebooted, and reported it "didn't go
+smoothly at all": Wireless debugging cycling **five or six times**, an error notification that eventually
+cleared. The journal caught the whole thing, and my hypothesis about staggered boot starters was **wrong**.
+
+### What actually happens
+
+`armLoopbackIfNeeded` fires `tcpip:<port>`, sleeps a fixed 2 s (`TCPIP_RESTART_WAIT_MS` +
+`POST_DISCONNECT_WAIT_MS`), and makes **one** connect attempt. On a booting phone `adbd` has not finished
+restarting, so that attempt is refused:
+
+```
+17:04:39.651 I Arming loopback tcpip on :51392 (adbd will restart)…
+17:04:41.666 D loopback tcpip :51392 unavailable (unarmed/refused): null
+17:04:41.672 I Loopback arm result on :51392 = false
+```
+
+One refused socket writes off the whole round. What it costs is out of all proportion:
+
+```
+17:04:41.677 I Attempt 2: offline mode but no connection — re-arming loopback
+17:04:41.708 W Dropped adb-6011b07e at 192.168.1.213:35675 — NOTHING_LISTENING_ON_LOOPBACK
+17:04:53.682 W No _adb-tls-connect._tcp service accepted within 12000ms
+17:04:53.685 I Cannot arm loopback — no base connection (NO_ADB_SERVICE)
+```
+
+The next round has no connection, so it goes back to mDNS — but `adbd` is in tcpip mode now, its TLS
+advert is stale, and discovery burns its **full 12 s timeout**. Three of those make one
+`ensureServerRunning`, the boot path runs it more than once, and **every round borrows Wireless debugging
+again**. Hence the visible flicker.
+
+Full sequence: arm failed at **17:04:41**, **17:04:58** and **17:05:15**, succeeded at **17:05:44**.
+**73 seconds** for something that takes 2 s on a settled phone (measured: 17:05:42.940 → 17:05:44.984,
+2.04 s; the OP9 is the same). Every one of those restarts `adbd`, and every `adbd` restart takes a running
+Shizuku server with it.
+
+So the borrow was never the problem — it was doing its job each time, and the churn was the arm failing
+and being retried from scratch.
+
+### Fix — 🧪 VERIFYING (`f72198f9`, `LoopbackArmWait`)
+
+Poll for the listener instead of taking one look, keyed on `service.adb.tcp.port`: the property is set as
+part of handling `tcpip:` and survives the restart it triggers, so it answers *"did the arm take?"* long
+before a socket will answer *"is it listening yet?"*. Retry while the property says armed (budget 12 s,
+1.5 s apart); give up at once when it does not, so a request that never landed costs one attempt rather
+than the whole budget. The arm now logs how long the listener took, so the next report says whether the
+budget is right instead of leaving it to be inferred.
+
+Installed on the OP12 at 17:1x as APK `35eba9f44458ba92`; daemon back in under 8 s, notice "Ready to
+record calls". **Settled when a reboot shows one Wireless-debugging cycle and a `listener took …ms` line
+well inside the budget.**
+
+### Two things this leaves open
+
+- **The 12 s mDNS timeout is paid whenever the loopback is unreachable but armed.** The fix should stop
+  the app reaching that path on boot, but the path itself is still expensive and still wrong: with the
+  port armed, mDNS is the wrong thing to be waiting for.
+- **`NOTHING_LISTENING_ON_LOOPBACK` rejects this device's own advert** while `adbd` is mid-restart, so
+  discovery drops the one endpoint it should be using. Worth revisiting alongside the note in
+  `2026-09-19-android-17-adb-detection-issue-40.md` that the loopback bind probe is unverified on
+  Android 17.
