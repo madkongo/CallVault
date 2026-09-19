@@ -446,3 +446,11 @@ wireless debugging of CallVault's own" — restates the paragraph that was alrea
   `dumpsys notification`. **The close-the-listener path reached the start decision on both devices but
   its completion was never observed** (see the dev note). Unconfirmed by the maintainer on any phone.
 - **Still claimed, unchanged:** no new permission; nothing cancels a restart; recording still wins.
+
+## 2026-09-19 — the Telegram invite changed
+
+The group link was replaced with `https://t.me/+GmXjAcXxXh42Y2I8` at the maintainer's request. Changed in
+**two** places, because the invite is not only a README claim: `README.md:190` and
+`SystemIntentHelpers.TELEGRAM_GROUP_URL`, which is what the hub's Telegram card and its top-bar shortcut
+open. The old link (`+bAnxwAywhdk4MzM8`) is still what is live on GitHub `main` — the README there was
+pushed as `4fdaf2db` and **this change is not pushed yet**.

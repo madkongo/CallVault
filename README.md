@@ -187,7 +187,7 @@ Flip it *before* pairing. If you already paired, restart CallVault afterwards: a
 
 ## Get in touch
 
-**[Join the CallVault group on Telegram](https://t.me/+bAnxwAywhdk4MzM8)** — the quickest way to ask a
+**[Join the CallVault group on Telegram](https://t.me/+GmXjAcXxXh42Y2I8)** — the quickest way to ask a
 question, report something odd, or hear about a new build. Bug reports are still welcome as
 [GitHub issues](https://github.com/madkongo/CallVault/issues), which is the better place for anything that
 needs a log attached.

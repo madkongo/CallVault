@@ -51,7 +51,7 @@ const val KOFI_SUPPORT_URL = "https://ko-fi.com/madkongo"
  * The project's Telegram group. Offered in the app because most questions are never asked at all when
  * the only way to ask is to open a GitHub issue.
  */
-const val TELEGRAM_GROUP_URL = "https://t.me/+bAnxwAywhdk4MzM8"
+const val TELEGRAM_GROUP_URL = "https://t.me/+GmXjAcXxXh42Y2I8"
 
 /**
  * The maintainer's PayPal page, offered next to [KOFI_SUPPORT_URL] because the two are not
