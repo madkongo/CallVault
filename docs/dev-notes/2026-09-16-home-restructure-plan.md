@@ -713,8 +713,10 @@ survived, the loopback listener stayed armed on 51392, the daemon reconnected in
 read "Ready to record calls — The recorder is connected." The OP12 has no Shizuku installed, so the heal is
 dormant there by design.
 
-**✅ VERIFIED 2026-09-19 by the maintainer:** cell and VoIP calls both record normally on this build. That
-covers capture only — nothing else in the list below has been used on a phone yet.
+**✅ VERIFIED 2026-09-19 by the maintainer:** cell and VoIP calls record normally; a real transcription,
+a real summary run, and share-in + transcribe-only all work. **❌ Rebooting does not** — see
+`2026-09-19-reboot-deadlock-wd-off-by-user.md`: the phone came back not recording and could not recover
+on its own, not even with the app open.
 
 **Open, needing the maintainer:**
 1. ~~The OP9 has lost its ADB pairing~~ — **done 2026-09-19**: re-paired by the maintainer, and the whole
@@ -730,6 +732,11 @@ covers capture only — nothing else in the list below has been used on a phone 
 - After USB debugging goes off, recovery took **48 s and 93 s** on the OP9, not the ~7 s
   `2026-09-14-debugging-switches-model.md` claims: the first decision runs before the system has settled,
   so only the keep-alive's next tick recovers. Fix is to settle before that first decision.
+- 🚨 **A reboot can leave the phone not recording, permanently** (❌ 2026-09-19, OP12). The persisted
+  "user turned Wireless debugging off" flag plus a reboot-cleared loopback makes `maybeRewarm` refuse to
+  act, and the only condition that would let it act is the one it is refusing to create. Opening the app
+  does not help. Almost certainly in 2.3.0 as shipped.
+  `2026-09-19-reboot-deadlock-wd-off-by-user.md`. **Fix this before anything else.**
 - **The Shizuku heal does not work in the disarm direction** (❌ 2026-09-19). Closing the off-Wi-Fi listener
   releases the last ADB user, so the heal has no shell left to start Shizuku through and gives up 10 ms in.
   It does post the "open Shizuku and start it yourself" notification. Arming heals in ~648 ms. Full trace in
