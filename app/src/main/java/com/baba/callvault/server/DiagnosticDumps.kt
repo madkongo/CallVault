@@ -40,6 +40,7 @@ object DiagnosticDumps {
     private const val LOGCAT = "/system/bin/logcat"
     private const val DUMPSYS = "/system/bin/dumpsys"
     private const val PS = "/system/bin/ps"
+    private const val SETTINGS = "/system/bin/settings"
 
     /** A logcat buffer size and nothing else — digits with an optional unit. */
     private val SIZE = Regex("^[0-9]{1,7}[KMG]?$")
@@ -66,6 +67,18 @@ object DiagnosticDumps {
             "$DUMPSYS appops | grep -E '^[[:space:]]*(Uid [0-9]+:|Package |[A-Z_]+ \\(|Running start at:)'",
         )
         "processes" -> arrayOf(PS, "-A", "-o", "USER,PID,ARGS")
+        // The two settings Android 17 redacts, read from HERE rather than from the app.
+        //
+        // Both of the platform's redaction sites exempt uid < FIRST_APPLICATION_UID, and the daemon is
+        // uid 2000 (confirmed on a Pixel 8 running Android 17: `recorder host identity: uid=2000 …
+        // context=u:r:shell:s0`). So this process should see the true value where the app process is
+        // told "0" whatever the truth. Nothing in the app can recover it — the second redaction site
+        // runs INSIDE the calling app's own process — so a lower uid is the only way.
+        //
+        // Read-only, fixed key, no argument: the name selects the setting, the caller never supplies it.
+        // See docs/dev-notes/2026-09-19-android-17-adb-detection-issue-40.md.
+        "setting_adb_enabled" -> arrayOf(SETTINGS, "get", "global", "adb_enabled")
+        "setting_dev_options" -> arrayOf(SETTINGS, "get", "global", "development_settings_enabled")
         else -> null
     }
 

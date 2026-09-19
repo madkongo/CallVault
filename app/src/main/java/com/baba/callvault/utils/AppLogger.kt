@@ -249,6 +249,23 @@ object AppLogger {
         return file != null && file.exists() && file.length() > 0L
     }
 
+    /**
+     * One of the two redacted settings, read by the recorder daemon rather than by this process.
+     *
+     * The daemon is uid 2000 and both of Android 17's redaction sites exempt uid < 10000, so this is the
+     * only way an app can see the true value of `adb_enabled` / `development_settings_enabled` on a
+     * redacting build — the second site runs inside the calling app's own process, so no amount of
+     * reflection or provider work here can recover it.
+     *
+     * 🧪 UNVERIFIED on an Android 17 device. It is in the report precisely so the next report from one
+     * settles it. Never throws and never blocks the report.
+     */
+    private fun settingAsShell(key: String): String = runCatching {
+        val service = com.baba.callvault.server.RecorderConnection.service
+            ?: return "(app cannot ask — no daemon connected)"
+        service.diagnosticDump(key, null)?.trim()?.ifBlank { "(empty)" } ?: "(refused)"
+    }.getOrElse { "(failed: ${it.message})" }
+
     /** Whether the always-on setup journal has anything in it. */
     fun hasSetupJournal(): Boolean = setupJournalSizeBytes() > 0L
 
@@ -508,6 +525,11 @@ object AppLogger {
             // `adbd` is what the state is actually corroborated against, so it is printed too.
             writer.println("USB debugging: ${runCatching { AdbShell.usbDebuggingState(context).name }.getOrDefault("?")}")
             writer.println("init.svc.adbd: ${runCatching { AdbShell.adbdState().name }.getOrDefault("?")}")
+            // What the DAEMON sees. It is uid 2000, which the platform's redaction exempts, so on a phone
+            // that lies to the app process these two lines carry the truth and the ones above do not.
+            // "(app cannot ask)" means no daemon was connected, not that the read failed.
+            writer.println("adb_enabled as shell: ${settingAsShell("setting_adb_enabled")}")
+            writer.println("development_settings_enabled as shell: ${settingAsShell("setting_dev_options")}")
             writer.println("WRITE_SECURE_SETTINGS: ${runCatching { AdbShell.hasWriteSecureSettings(context) }.getOrDefault("?")}")
             writer.println("WD plan: ${runCatching { AdbShell.wirelessDebuggingPlan(context).name }.getOrDefault("?")}")
             // Whether this phone's OEM lets the shell grant at all. Unlike codec or bit rate, it CHANGES

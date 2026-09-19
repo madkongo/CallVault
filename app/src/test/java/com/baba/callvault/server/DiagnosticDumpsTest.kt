@@ -28,7 +28,10 @@ class DiagnosticDumpsTest {
 
     @Test
     fun `each known dump maps to a command`() {
-        listOf("logcat_size", "logcat_grow", "logcat_dump", "dumpsys_audio", "appops_mic", "appops_all", "processes")
+        listOf(
+            "logcat_size", "logcat_grow", "logcat_dump", "dumpsys_audio", "appops_mic", "appops_all", "processes",
+            "setting_adb_enabled", "setting_dev_options",
+        )
             .forEach { key ->
                 assertTrue("$key must be runnable", DiagnosticDumps.commandFor(key, null) != null)
             }
@@ -91,6 +94,21 @@ class DiagnosticDumpsTest {
             .forEach { key ->
                 val command = DiagnosticDumps.commandFor(key, null)!!
                 assertTrue("$key must exec an absolute path, got ${command.first()}", command.first().startsWith("/"))
+            }
+    }
+
+    @Test
+    fun `the settings reads are read-only, fixed, and take no caller input`() {
+        // These exist because Android 17 lies to the app process about these two settings and the daemon
+        // is uid 2000, which the platform exempts. The value of the seam is entirely in it being a
+        // *fixed* read: the key names the setting, so nothing crossing the binder can choose one.
+        listOf("setting_adb_enabled" to "adb_enabled", "setting_dev_options" to "development_settings_enabled")
+            .forEach { (key, name) ->
+                val command = DiagnosticDumps.commandFor(key, null)!!
+                assertTrue("$key must read, never write", command.contains("get") && !command.contains("put"))
+                assertTrue("$key must name its own setting", command.contains(name))
+                // An argument must not be able to redirect it -- only logcat_restore takes one at all.
+                assertTrue("$key must ignore any argument", DiagnosticDumps.commandFor(key, "put global x 1")!!.contentEquals(command))
             }
     }
 }
