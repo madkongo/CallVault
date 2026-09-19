@@ -705,24 +705,36 @@ Tests: 1568 unit tests, 0 failures (1537 before this batch).
 Branch `feat/home-hub-and-import`, ~100 commits, **nothing pushed**, tests 1591/0. Rollback point:
 tag `pre-ui-restructure-2026-09-16`, and `CallVault-rollback-2026-09-16.apk` on the maintainer's Desktop.
 
-**On the OP12 right now** (installed 2026-09-17 09:31): hub + Transcripts + Summaries pages, import (picker
-and share target), transcribe-only, the five feedback changes, row menus and multi-select. **NOT on it:** the
-Shizuku churn warning and the auto-heal (committed after that install).
+**On the OP12 right now** (installed 2026-09-17 09:31, replaced **2026-09-19 15:49**): hub + Transcripts +
+Summaries pages, import (picker and share target), transcribe-only, the five feedback changes, row menus and
+multi-select — **and now the Shizuku churn warning and the auto-heal too**. Release build, APK sha256 prefix
+`da6e8f6ff3c7eaf2`, installed over 2.3.0 while the phone was idle (MODE_NORMAL, mCallState=0). The grant
+survived, the loopback listener stayed armed on 51392, the daemon reconnected in under 8 s and the notice
+read "Ready to record calls — The recorder is connected." The OP12 has no Shizuku installed, so the heal is
+dormant there by design.
 
 **Open, needing the maintainer:**
-1. **The OP9 has lost its ADB pairing** — an instrumented test restarting adbd killed the runner and AGP
-   uninstalled the app. Needs the screen unlocked once and CallVault's pairing run. (Lesson recorded in
-   memory `instrumented-tests-on-the-daily-driver`.)
-2. Decide whether to install the Shizuku heal on the OP12.
+1. ~~The OP9 has lost its ADB pairing~~ — **done 2026-09-19**: re-paired by the maintainer, and the whole
+   device suite re-run against it. See `2026-09-14-debugging-switches-model.md`, the 2026-09-19 section.
+2. ~~Decide whether to install the Shizuku heal on the OP12~~ — **installed 2026-09-19 15:49.**
 3. Answer pending: should a transcript whose recording the user deleted stay readable, or go with it?
 4. Still unproven on a phone: the "Transcript ready" notification after a real transcription; a real summary
-   run (ring percentage, Stop mid-generate); the heal's **disarm** direction; the reboot race against
-   Shizuku's own start-on-boot; Samsung/One UI, where #39 came from.
+   run (ring percentage, Stop mid-generate); the reboot race against Shizuku's own start-on-boot;
+   Samsung/One UI, where #39 came from. (The heal's **disarm** direction is no longer unproven — it was
+   measured on 2026-09-19 and it does **not** heal; see below.)
 
 **Known, not fixed:**
 - After USB debugging goes off, recovery took **48 s and 93 s** on the OP9, not the ~7 s
   `2026-09-14-debugging-switches-model.md` claims: the first decision runs before the system has settled,
   so only the keep-alive's next tick recovers. Fix is to settle before that first decision.
+- **The Shizuku heal does not work in the disarm direction** (❌ 2026-09-19). Closing the off-Wi-Fi listener
+  releases the last ADB user, so the heal has no shell left to start Shizuku through and gives up 10 ms in.
+  It does post the "open Shizuku and start it yourself" notification. Arming heals in ~648 ms. Full trace in
+  `2026-09-14-debugging-switches-model.md`.
+- **Android 17 breaks built-in mode outright** (issue #40, 2026-09-18). `adb_enabled` and
+  `development_settings_enabled` read as "0" for every app, so onboarding can never reach pairing. Eight
+  damaged sites mapped, nothing fixed yet: `2026-09-19-android-17-adb-detection-issue-40.md`.
+  **This is the biggest open item on the project.**
 - Issue #39 reply not drafted. Worth asking the reporter whether Shizuku's start-on-boot is on — Shizuku's
   own starter writes `adb_enabled=1`, which explains "USB debugging turns itself back on".
 - Deferred by choice: batch import, a non-call summary prompt (every prompt says "phone call"), whether
