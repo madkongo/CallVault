@@ -345,3 +345,44 @@ First `WD_TURNED_OFF_BY_USER` surviving a reboot was read as a statement about n
 `service.adb.tcp.port` was read as proof of failure. Neither absence meant what it was taken to mean.
 The project already has the idiom for this — `WifiState.UNKNOWN`, `AdbdState.UNKNOWN` — and both bugs
 are what it looks like when a third state is collapsed into "no".
+
+## Fourth boot (17:35): one cycle, 11.4 s — 🧪 awaiting the maintainer's word
+
+APK `ebaadb297f74c51b`. The whole boot, with nothing left out:
+
+```
+17:35:19.020 I BootReceiver:     Boot completed; starting ADB connection service + post-boot call monitor
+17:35:19.064 I AdbShell:         Borrowing Wireless debugging to re-arm the off-Wi-Fi listener; it goes back off straight after
+17:35:20.988 I AdbMdns:          Accepted adb-6011b07e-cDHaSu at 192.168.1.178:41605
+17:35:23.566 I AdbShell:         Arming loopback tcpip on :51392 (adbd will restart)…
+17:35:25.579 I AdbShell:         Loopback arm result on :51392 = true (listener took 8ms)
+17:35:29.805 I RecorderLauncher: Attempt 1: launching recorder daemon
+17:35:30.406 I RecorderLauncher: Recorder daemon connected on attempt 1; binder available
+17:35:30.525 I AdbShell:         Wireless debugging disabled after the daemon launch (DROP_USB_KEEPS_ADBD)
+17:35:32.324 I AdbConnectionService: Boot: recorder daemon connected=true
+```
+
+**One borrow. One arm, successful first time. One daemon launch, successful first time. No mDNS timeout,
+no failed round. Boot-complete to recording-ready in 11.4 s**, and the switch handed back 120 ms after
+the daemon connected.
+
+Against the three boots before it: 17:04 — 5–6 cycles, 73 s, three failed arms. 17:28 — 2 cycles, 41 s,
+two failed arms. 17:35 — 1 cycle, 11.4 s, none.
+
+### The honest caveat
+
+`listener took 8ms` means the **first** connect attempt succeeded, so the grace path added in
+`LOOPBACK_ARM_GRACE_MS` never had to engage. This boot proves the path works when `adbd` is quick; it does
+**not** prove the grace, which only matters when `adbd` is slow — which is precisely what 17:04 and 17:28
+were. The same 2 s of fixed sleeps that failed twice at 17:28 succeeded here, so the difference is boot
+load, and the grace remains insurance whose value has not yet been observed firing.
+
+Worth watching for in a future report: a `listener took` figure in the **seconds**. That is the grace
+doing its job, and it should still end in `= true`.
+
+### Two small things this boot also showed
+
+- `Recent boot (uptime < 90000ms); skipping killStaleDaemons — reboot already cleared any stale daemon`
+  — working as intended.
+- `Clearing 1 other recorder process(es): [18735] (I am 18739)` — a daemon left by the install before the
+  reboot, cleared correctly by the one-recorder-host rule.
