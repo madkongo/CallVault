@@ -394,14 +394,19 @@ fun PermissionsContent(
                 // network port. Shown as "Recommended" rather than "Required" so nobody is misled
                 // into thinking recording depends on it.
                 item {
-                    val usbOn = AdbShell.isUsbDebuggingEnabled(LocalContext.current)
+                    // Tri-state, and this card is OUTSIDE the Shizuku mode gate, so it is one of only two
+                    // places the redaction reaches a Shizuku user. A phone that will not say is shown as
+                    // granted rather than as a standing "Recommended" nag: on a redacting build the nag
+                    // would be permanent and unfixable, and this step is advice, not a requirement.
+                    val usb = AdbShell.usbDebuggingState(LocalContext.current)
+                    val nag = usb.isOff
                     PermissionCard(
                         icon = Icons.Default.Usb,
                         label = stringResource(R.string.permission_usb_debugging_label),
                         description = stringResource(R.string.permission_usb_debugging_description),
-                        granted = usbOn,
-                        pillText = if (usbOn) null else stringResource(R.string.general_recommended),
-                        pillTone = if (usbOn) null else CvTone.Neutral,
+                        granted = !nag,
+                        pillText = if (nag) stringResource(R.string.general_recommended) else null,
+                        pillTone = if (nag) CvTone.Neutral else null,
                     )
                 }
                 // The same choice as in Settings: may CallVault switch Wireless debugging back on after the

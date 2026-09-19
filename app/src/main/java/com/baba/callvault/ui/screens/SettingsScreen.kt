@@ -100,6 +100,7 @@ import com.baba.callvault.integrations.adb.UsbDebuggingOffGuard
 import com.baba.callvault.integrations.adb.UsbDefaultConfig
 import com.baba.callvault.integrations.adb.UsbDefaultMode
 import com.baba.callvault.integrations.adb.UsbSetResult
+import com.baba.callvault.integrations.adb.UsbDebuggingState
 import com.baba.callvault.integrations.adb.WifiState
 import com.baba.callvault.data.RetentionPeriod
 import com.baba.callvault.integrations.scrcpy.AUDIO_BIT_RATE_OPTIONS
@@ -2413,14 +2414,24 @@ internal fun WirelessDebuggingEnforceToggle() {
 @Composable
 private fun UsbDebuggingToggle() {
     val context = LocalContext.current
-    var enabled by remember { mutableStateOf(AdbShell.isUsbDebuggingEnabled(context)) }
+    var enabled by remember { mutableStateOf(AdbShell.usbDebuggingState(context).isOn) }
     var failed by remember { mutableStateOf(false) }
     // Follow the real setting, not just our own taps: it is changed from Developer options, by Android
     // itself, and by recovery — and a switch showing "on" while USB debugging is off offers the wrong move.
+    //
+    // But only a PROVEN reading may move it. On a build that redacts `adb_enabled` (Android 17) the
+    // read-back after our own successful write returns 0, so this observer used to flip the switch
+    // straight back off in front of the user — the write had worked, and the app said it had not. An
+    // unprovable reading now leaves the switch where it is, which for a tap the user just made is the
+    // value they chose, and for a passive refresh is the last thing we actually knew.
     DisposableEffect(context) {
         val observer = object : android.database.ContentObserver(android.os.Handler(android.os.Looper.getMainLooper())) {
             override fun onChange(selfChange: Boolean) {
-                enabled = AdbShell.isUsbDebuggingEnabled(context)
+                when (AdbShell.usbDebuggingState(context)) {
+                    UsbDebuggingState.ON -> enabled = true
+                    UsbDebuggingState.OFF -> enabled = false
+                    UsbDebuggingState.UNKNOWN -> Unit
+                }
             }
         }
         runCatching {
