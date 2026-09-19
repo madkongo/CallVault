@@ -346,7 +346,7 @@ First `WD_TURNED_OFF_BY_USER` surviving a reboot was read as a statement about n
 The project already has the idiom for this — `WifiState.UNKNOWN`, `AdbdState.UNKNOWN` — and both bugs
 are what it looks like when a third state is collapsed into "no".
 
-## Fourth boot (17:35): one cycle, 11.4 s — 🧪 awaiting the maintainer's word
+## Fourth boot (17:35): one cycle, 11.4 s — ✅ VERIFIED 2026-09-19 by the maintainer ("this looks good")
 
 APK `ebaadb297f74c51b`. The whole boot, with nothing left out:
 
