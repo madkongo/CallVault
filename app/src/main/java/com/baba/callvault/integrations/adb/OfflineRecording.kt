@@ -41,7 +41,10 @@ object OfflineRecording {
         // It cannot work without USB debugging: the listener lives inside adbd, and Android stops adbd off
         // Wi-Fi when USB debugging is off. Arming anyway would also restart adbd for nothing, which kills a
         // running Shizuku server (S1a, OP9, 2026-09-14).
-        if (!AdbShell.isUsbDebuggingEnabled(context)) {
+        // Only a PROVEN off refuses. On a build that redacts the setting (Android 17) an unreadable
+        // state used to read as off here, and off-Wi-Fi recording could never be switched on at all --
+        // the user pressed the button and was told to enable something that was already enabled.
+        if (AdbShell.usbDebuggingState(context).isOff) {
             AppLogger.i(TAG, "Not arming off-Wi-Fi recording: USB debugging is off")
             return LoopbackArm.NEEDS_USB_DEBUGGING
         }

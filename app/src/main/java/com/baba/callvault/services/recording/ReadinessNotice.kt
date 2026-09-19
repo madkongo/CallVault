@@ -14,6 +14,7 @@ import com.baba.callvault.R
 import com.baba.callvault.data.AppPreferences
 import com.baba.callvault.integrations.adb.AdbShell
 import com.baba.callvault.integrations.adb.LoopbackBorrowPolicy
+import com.baba.callvault.integrations.adb.UsbDebuggingState
 import com.baba.callvault.integrations.adb.WifiState
 
 /**
@@ -57,7 +58,7 @@ enum class ReadinessNotice {
         fun of(
             ready: Boolean,
             recoveryStuck: Boolean,
-            usbDebuggingOn: Boolean,
+            usbDebugging: UsbDebuggingState,
             wirelessDebuggingOn: Boolean,
             wifi: WifiState,
             loopbackArmed: Boolean,
@@ -66,21 +67,24 @@ enum class ReadinessNotice {
             enforced: Boolean,
             offlineRecordingOn: Boolean,
         ): ReadinessNotice = when {
-            ready && offlineRecordingOn && !usbDebuggingOn -> READY_OFFLINE_PAUSED
+            // Only a PROVEN "off" pauses off-Wi-Fi recording in the text. On a build that redacts the
+            // setting (Android 17), an unreadable state used to read as off and told every off-Wi-Fi
+            // user their recording was paused when it was not.
+            ready && offlineRecordingOn && usbDebugging.isOff -> READY_OFFLINE_PAUSED
             ready -> READY
             // The named causes are evidence about the present, so they are shown at once rather than after
             // the failure streak, and they outrank the generic notice because they say what to do.
             // Only a positive "no Wi-Fi" counts; an unreadable state is not evidence.
-            wifi == WifiState.NOT_CONNECTED && !usbDebuggingOn -> NEEDS_WIFI
+            wifi == WifiState.NOT_CONNECTED && usbDebugging.isOff -> NEEDS_WIFI
             wifi == WifiState.NOT_CONNECTED && !loopbackArmed -> NEEDS_WIFI_TO_RESTART
-            !usbDebuggingOn && !wirelessDebuggingOn && !hasGrant -> NO_DEBUGGING
+            usbDebugging.isOff && !wirelessDebuggingOn && !hasGrant -> NO_DEBUGGING
             // Needed only when nothing else can be dialled: USB debugging with an armed listener restarts
             // the recorder without it, and an unarmed listener CallVault may borrow the switch to re-arm
             // is not a dead end either — saying it is, is what deadlocked a phone after a reboot on
             // 2026-09-19 (the keep-alive stands down on this notice). See [LoopbackBorrowPolicy].
             !wirelessDebuggingOn && wirelessDebuggingOffByUser && !enforced &&
-                !(usbDebuggingOn && loopbackArmed) &&
-                !LoopbackBorrowPolicy.mayBorrow(offlineRecordingOn, usbDebuggingOn, loopbackArmed) -> WD_OFF_BY_USER
+                !(usbDebugging.isOn && loopbackArmed) &&
+                !LoopbackBorrowPolicy.mayBorrow(offlineRecordingOn, usbDebugging.isOn, loopbackArmed) -> WD_OFF_BY_USER
             recoveryStuck -> STUCK
             else -> STARTING
         }
@@ -106,7 +110,7 @@ object ReadinessNoticeText {
         return ReadinessNotice.of(
             ready = ready,
             recoveryStuck = stuck,
-            usbDebuggingOn = AdbShell.isUsbDebuggingEnabled(context),
+            usbDebugging = AdbShell.usbDebuggingState(context),
             wirelessDebuggingOn = AdbShell.isWirelessDebuggingEnabled(context),
             wifi = WifiState.of(context),
             loopbackArmed = AdbShell.isLoopbackArmed(context),

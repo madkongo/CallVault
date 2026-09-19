@@ -136,7 +136,10 @@ class DaemonKeepAliveService : Service() {
      */
     private val usbDebuggingObserver = object : ContentObserver(watchdogHandler) {
         override fun onChange(selfChange: Boolean) {
-            val usbOn = AdbShell.isUsbDebuggingEnabled(applicationContext)
+            // Tri-state on purpose: a build that redacts the setting reports every change as "off", and
+            // treating that as the user's doing wipes the observation window and manufactures an
+            // unrecordable window that never existed. Only a proven off counts as off.
+            val usb = AdbShell.usbDebuggingState(applicationContext)
             val wdOn = AdbShell.isWirelessDebuggingEnabled(applicationContext)
             // The notice names these switches, so it has to follow them immediately.
             updateNotification(isDaemonAlive())
@@ -149,7 +152,7 @@ class DaemonKeepAliveService : Service() {
                 // debugging reads (init.usb.configfs.rc: sys.usb.config=none → stop adbd), and the daemon
                 // dies with it. This is a user-caused unrecordable window opening RIGHT NOW, so the
                 // observation window restarts immediately.
-                !usbOn -> {
+                usb.isOff -> {
                     restartObservationWindow("USB debugging switched off")
                     "USB debugging switched off — adbd stops with it; restarting it once the USB change settles"
                 }
@@ -163,7 +166,7 @@ class DaemonKeepAliveService : Service() {
             AppLogger.i(TAG, reason)
             Thread {
                 runCatching {
-                    if (!usbOn) {
+                    if (usb.isOff) {
                         // The revival waits for the USB change to settle itself before touching Wireless
                         // debugging — a second wait here made recovery take 10.5 s on the OP9 instead of ~7.
                         AdbShell.reviveAdbdIfStopped(applicationContext, "USB debugging switched off")

@@ -502,7 +502,12 @@ object AppLogger {
         } else {
             writer.println("--- Standalone transport ---")
             writer.println("Wireless debugging: ${runCatching { AdbShell.isWirelessDebuggingEnabled(context) }.getOrDefault("?")}")
-            writer.println("USB debugging: ${runCatching { AdbShell.isUsbDebuggingEnabled(context) }.getOrDefault("?")}")
+            // ON/OFF/UNKNOWN, not a boolean, and the evidence beside it. A build that redacts
+            // ADB_ENABLED (Android 17) reports "false" to every app whatever the truth, so a bare boolean
+            // here is triage poison -- every report from such a phone would say USB debugging was off.
+            // `adbd` is what the state is actually corroborated against, so it is printed too.
+            writer.println("USB debugging: ${runCatching { AdbShell.usbDebuggingState(context).name }.getOrDefault("?")}")
+            writer.println("init.svc.adbd: ${runCatching { AdbShell.adbdState().name }.getOrDefault("?")}")
             writer.println("WRITE_SECURE_SETTINGS: ${runCatching { AdbShell.hasWriteSecureSettings(context) }.getOrDefault("?")}")
             writer.println("WD plan: ${runCatching { AdbShell.wirelessDebuggingPlan(context).name }.getOrDefault("?")}")
             // Whether this phone's OEM lets the shell grant at all. Unlike codec or bit rate, it CHANGES

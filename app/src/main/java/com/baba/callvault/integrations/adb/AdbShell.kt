@@ -158,9 +158,25 @@ object AdbShell {
      * Whether USB debugging is enabled. It keeps `adbd` running whether or not a cable is attached, so
      * it counts as a transport for the purposes of [wirelessDebuggingPlan].
      */
-    fun isUsbDebuggingEnabled(context: Context): Boolean = runCatching {
-        android.provider.Settings.Global.getInt(context.contentResolver, "adb_enabled", 0) == 1
-    }.getOrDefault(false)
+    fun isUsbDebuggingEnabled(context: Context): Boolean = usbDebuggingState(context).isOn
+
+    /**
+     * USB debugging as three states, because Android 17 made the setting lie.
+     *
+     * `Settings.Global.ADB_ENABLED` reads `0` for every app on a redacting build whatever the truth, so
+     * the raw read is corroborated against `init.svc.adbd` — see [UsbDebuggingPolicy] for the two measured
+     * rules that make that sound, and for why the Android version cannot be used to decide it.
+     *
+     * Prefer this over [isUsbDebuggingEnabled] anywhere the answer is shown to the user or used to
+     * explain a failure: `isOn` is "proven on", and only `isOff` may be called off.
+     */
+    fun usbDebuggingState(context: Context): UsbDebuggingState = UsbDebuggingPolicy.of(
+        settingSaysOn = runCatching {
+            android.provider.Settings.Global.getInt(context.contentResolver, "adb_enabled", 0) == 1
+        }.getOrDefault(false),
+        adbd = adbdState(),
+        wirelessDebuggingOn = isWirelessDebuggingEnabled(context),
+    )
 
     internal fun isLoopbackArmed(context: Context): Boolean =
         getSystemProperty("service.adb.tcp.port") == AppPreferences(context).getLoopbackAdbPort().toString()

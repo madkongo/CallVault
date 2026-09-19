@@ -8,6 +8,7 @@
 
 package com.baba.callvault.services.recording
 
+import com.baba.callvault.integrations.adb.UsbDebuggingState
 import com.baba.callvault.integrations.adb.WifiState
 import org.junit.Assert.assertEquals
 import org.junit.Test
@@ -32,7 +33,25 @@ class ReadinessNoticeTest {
         wdOffByUser: Boolean = false,
         enforced: Boolean = false,
         offlineOn: Boolean = false,
-    ) = ReadinessNotice.of(ready, stuck, usbOn, wdOn, wifi, loopbackArmed, hasGrant, wdOffByUser, enforced, offlineOn)
+    ) = ReadinessNotice.of(
+        ready, stuck,
+        // The tests were written when this was a boolean. `true` is a proven ON and `false` a proven OFF,
+        // which is exactly what those cases meant; the unreadable third state gets its own tests below.
+        if (usbOn) UsbDebuggingState.ON else UsbDebuggingState.OFF,
+        wdOn, wifi, loopbackArmed, hasGrant, wdOffByUser, enforced, offlineOn,
+    )
+
+    private fun ofUnknownUsb(
+        ready: Boolean = false,
+        wdOn: Boolean = false,
+        wifi: WifiState = WifiState.CONNECTED,
+        loopbackArmed: Boolean = false,
+        hasGrant: Boolean = true,
+        wdOffByUser: Boolean = false,
+        offlineOn: Boolean = false,
+    ) = ReadinessNotice.of(
+        ready, false, UsbDebuggingState.UNKNOWN, wdOn, wifi, loopbackArmed, hasGrant, wdOffByUser, false, offlineOn,
+    )
 
     @Test
     fun `ready wins over everything`() {
@@ -132,5 +151,28 @@ class ReadinessNoticeTest {
     @Test
     fun `off-wifi recording with usb debugging is plainly ready`() {
         assertEquals(ReadinessNotice.READY, of(ready = true, usbOn = true, offlineOn = true))
+    }
+
+    // ---- Android 17: the setting reads off but nothing proves it. Nothing may be asserted. ----
+
+    @Test
+    fun `an unreadable USB switch off Wi-Fi does not claim the user has no way back`() {
+        // This is the one that cost calls: NEEDS_WIFI makes the keep-alive stand down, so an off-Wi-Fi
+        // phone with USB debugging actually ON would silently stop relaunching the recorder.
+        assertEquals(
+            ReadinessNotice.NEEDS_WIFI_TO_RESTART,
+            ofUnknownUsb(wifi = WifiState.NOT_CONNECTED, loopbackArmed = false),
+        )
+    }
+
+    @Test
+    fun `an unreadable USB switch never reads as no debugging at all`() {
+        // NO_DEBUGGING tells the user nothing is on. With the setting redacted that would be a guess.
+        assertEquals(ReadinessNotice.STARTING, ofUnknownUsb(wdOn = false, hasGrant = false))
+    }
+
+    @Test
+    fun `an unreadable USB switch does not tell an off-Wi-Fi user their recording is paused`() {
+        assertEquals(ReadinessNotice.READY, ofUnknownUsb(ready = true, offlineOn = true))
     }
 }
