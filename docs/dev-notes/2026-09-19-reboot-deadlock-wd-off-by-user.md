@@ -189,7 +189,53 @@ Hypotheses, none tested:
    before. If arming fails on a round, that round borrows again.
 3. Something else entirely.
 
-**How to settle it cheaply:** the **setup journal is always on** — it is what recorded the six refused
-attempts in the pre-fix report without anyone switching logging on. Tapping *Save log* after a reboot
-should show every `Borrowing Wireless debugging…` line with timestamps, and what happened between them.
-That is the next step, and it needs no preparation before the reboot.
+### ⚠️ The setup journal does NOT cover this, and saying it did was wrong
+
+I told the maintainer the always-on setup journal would capture the reboot, so *Save log* would settle it
+with no preparation. **That is false.** The journal is a **first-run** journal: it seals itself the moment
+a recorder first connects, and never reopens.
+
+His 16:58 report proves it. The journal inside it runs 16:11 → 16:21 and ends:
+
+```
+2026-09-19 16:21:16.608 [I] CV:RecorderConn: RecorderConnection received daemon binder
+=== a recorder connected; setup finished [journal-end] ===
+```
+
+16:21 is when the *pre-fix* phone was rescued by hand. The install at 16:49 and the reboot at ~16:50 are
+not in it at all, and the report contains **zero** `Borrowing Wireless debugging` lines — not because the
+borrow did not happen, but because nothing was recording by then.
+
+The reason the journal *did* hold the pre-fix boot is the opposite of "always on": setup had never
+succeeded on that build, so the journal was still open. **It is exactly the wrong tool for a regression
+after the app has worked once.** For that, the opt-in debug log has to be on *before* the reboot.
+
+### What the OP9 says: one borrow, not three
+
+Reproduced on the OP9 without a reboot — same state, different route. The fixed build, the flag set by
+turning Wireless debugging off by hand, then `adb usb` to clear the listener exactly as a reboot does.
+
+```
+16:59:00.418 W CV:DaemonKeepAlive: keep-alive: no TCP endpoint to dial — switching Wireless debugging back on
+16:59:01.427 I CV:AdbShell:        Borrowing Wireless debugging to re-arm the off-Wi-Fi listener; it goes back off straight after
+16:59:05.247 I CV:AdbShell:        Arming loopback tcpip on :47886 (adbd will restart)…
+16:59:07.295 I CV:AdbShell:        Loopback arm result on :47886 = true
+16:59:07.710 I CV:RecorderLauncher: Recorder daemon connected on attempt 1; binder available
+16:59:07.816 I CV:AdbShell:        Wireless debugging disabled after the daemon launch (DROP_USB_KEEPS_ADBD)
+```
+
+**One borrow, 7.4 s end to end**, switch handed back. So the policy itself is right and the triple is
+something about **boot specifically**, not about borrowing.
+
+### The refined hypothesis (still untested)
+
+Boot starts three things at once — `AdbConnectionService`, `CallMonitorService` and
+`DaemonKeepAliveService` were all seen starting inside the same 20 ms in the pre-fix log — and the
+pre-fix log also shows `ensureServerRunning` running its 3-attempt loop **twice**. If several of those
+starters reach `enableWirelessDebugging` at moments when the listener is not yet armed, each one borrows.
+`WirelessDebuggingLease` should collapse *overlapping* users into one on/off, so the suspicion is
+starters that are staggered rather than concurrent — each one borrowing, finishing, and handing the
+switch back before the next begins.
+
+**To settle it:** turn the debug log on **before** rebooting, reboot, then *Save log*. Nothing else
+captures it.
