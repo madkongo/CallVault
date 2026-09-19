@@ -30,7 +30,39 @@ Watched for **5 minutes: nothing changed.** Then **opened the app and watched an
 MainActivity focused and the screen awake: still nothing.** This is not slow recovery. It is a stall with
 no way out from inside the app.
 
-## The mechanism
+## The mechanism — corrected 2026-09-19 by the app's own log
+
+⚠️ **An earlier version of this note named `maybeRewarm`'s notice check as the mechanism. That was
+incomplete and put the emphasis in the wrong place.** The maintainer's debug report
+(`attachments/2026-09-19-op12-reboot-deadlock.txt`) shows the boot path **does** try, six times, and is
+refused much deeper down — in `WirelessDebuggingEnableGate`. Three separate gates read the same flag.
+
+### Gate 1 — `WirelessDebuggingEnableGate`, the one that fires first
+
+Straight from the log, at boot:
+
+```
+16:12:32.658 [I] CV:RecorderLauncher: Attempt 1: offline mode but no connection — re-arming loopback
+16:12:32.672 [I] CV:AdbShell: Not switching Wireless debugging on: the user turned it off (override setting is off)
+16:12:32.677 [W] CV:AdbShell: Wireless debugging is off and could not be switched on
+16:12:32.677 [I] CV:AdbShell: Cannot arm loopback — no base connection (NEEDS_WIRELESS_DEBUGGING)
+```
+
+`AdbShell.enableWirelessDebugging` (`:658-672`) asks the gate with `userTurnedOff = true`,
+`enforced = false`, `userRequested = false` and gets `RESPECT_USER`. It returns false, so the loopback
+cannot be armed, so there is no connection, so the daemon cannot launch.
+
+**The three "attempts" are worthless here.** `RecorderLauncher` ran its 3-attempt loop twice — six full
+`ensureServerRunning` cycles — and the whole thing was over in **107 ms** (16:12:32.658 → 16:12:32.765).
+The refusal is a `SharedPreferences` read: no I/O, no timeout, nothing that could come good on a retry. A
+retry loop is the wrong shape for a decision that cannot change.
+
+### Gate 2 — `reviveAdbdIfStopped`
+
+`AdbShell.kt:186`: `mayEnable = mayEnable && !userOff`, with `userOff` the same flag. So the revival path
+cannot enable it either.
+
+### Gate 3 — `maybeRewarm`, which is why nothing happened for the next five minutes
 
 `ReadinessNotice.of` (`services/recording/ReadinessNotice.kt:78`):
 
@@ -59,9 +91,12 @@ So:
 5. The only thing that re-arms the loopback is a relaunch — which is what `maybeRewarm` was about to do.
 
 **The condition that would clear the block is the thing the block prevents.** It is a true deadlock, not a
-slow path. Nothing in the app can break it: not the watchdog, not opening the app, not the boot service
-(which runs `RecorderBackend.ensureRunning` exactly once, `AdbConnectionService.kt:64-79`, and on failure
-only posts the warning).
+slow path. Nothing in the app can break it: not the boot service (it tried six times in 107 ms and every
+one was refused by gate 1), not the watchdog, not opening the app.
+
+The gate does have an escape — `userRequested`, set when the user asks explicitly. That is why the
+notification's "Turn Wireless debugging on" action button works, and it is the only route out from inside
+the app.
 
 The only exits are the user turning Wireless debugging on by hand, or the "Turn Wireless debugging on"
 action button on the notification.
@@ -75,6 +110,15 @@ holding it.
 Wireless debugging was then set back to 0 to restore the maintainer's normal configuration; the loopback
 stayed armed and the recorder stayed up, so the phone is healthy **until the next reboot**, when the same
 thing will happen again.
+
+## Other things the report settles
+
+- The OP12 is **Android 16 (API 36)**, ROM `CPH2581_16.0.10.501(EX01)`. Nothing to do with Android 17.
+- Config at the time: STANDALONE, offline recording **on**, resilient recording on, VoIP on, no Shizuku,
+  `WRITE_SECURE_SETTINGS` true, OEM shell gate ALLOWED.
+- `WD plan: DROP_USB_KEEPS_ADBD` — the app knew USB debugging alone was keeping adbd up, and still could
+  not use it.
+- "Recorder host lines: none" — the daemon never started, so there is nothing from its side. Expected.
 
 ## Why the flag was set at all
 
@@ -96,6 +140,9 @@ the uptime. A user who fixes the problem keeps being told it is broken.
 
 ## Fix directions (none written)
 
+0. **Gate 1 is the one to fix first** — a refusal to *transiently* switch Wireless debugging on is not the
+   same as respecting a user's setting, when USB debugging is on, Wi-Fi is up, and the switch will be put
+   back within seconds. That is the documented "best setup" flow, and the flag turns it off permanently.
 1. **The escape clause is wrong.** `usbDebuggingOn && loopbackArmed` should be `usbDebuggingOn` alone for
    the purpose of *deciding whether recovery is hopeless*. With USB debugging on and Wi-Fi up, turning
    Wireless debugging on for a few seconds is exactly what CallVault is for, and is the documented "best

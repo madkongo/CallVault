@@ -1,0 +1,189 @@
+=== CallVault AppLogger Export ===
+Generated: 2026-09-19 16:13:17 GMT+03:00
+App Version: 2.3.0 (20350)
+Scrcpy Server: 4.0
+Manufacturer: OnePlus
+Model: CPH2581
+Device: OP595DL1
+Product: CPH2581
+Android Version: 16 (API 36)
+ROM Build: CPH2581_16.0.10.501(EX01)
+ROM Incremental: U.R4T3.1ee2725_642f40_642bb6
+ROM Fingerprint: OnePlus/CPH2581/OP595DL1:16/BP2A.250605.015/U.R4T3.1ee2725_642f40_642bb6:user/release-keys
+Device Country Iso Estimation: il
+--- Configuration ---
+Privileged mode: STANDALONE
+Shizuku manager: none found
+Record phone calls: on
+Auto-record incoming: on
+Auto-record outgoing: on
+Resilient recording (handoff): on
+VoIP recording: on
+VoIP auto-start: on
+Offline recording (loopback): on
+Audio source: voice-call
+Ignore anonymous incoming: off
+Ignore cross-country in/out: off/off
+Storage target: BOTH
+--- Recorder ---
+Binder connected: false
+Host uid: ?
+--- Standalone transport ---
+Wireless debugging: false
+USB debugging: true
+WRITE_SECURE_SETTINGS: true
+WD plan: DROP_USB_KEEPS_ADBD
+Shell grants (OEM gate): ALLOWED (OPPO)
+===========================================
+
+Recorder host lines: none (see the note at the end of this file)
+===========================================
+
+--- Setup journal (always on; the first run, kept as it happened) ---
+=== CallVault setup journal — restarted after the log was deleted ===
+2026-09-19 16:11:23.021 [D] CV:AdbShell: loopback tcpip :51392 unavailable (unarmed/refused): null
+2026-09-19 16:11:23.025 [D] CV:AdbShell: loopback tcpip :51392 unavailable (unarmed/refused): null
+2026-09-19 16:11:23.026 [D] CV:AdbShell: ADB user done: the log collector (last=true)
+2026-09-19 16:11:23.027 [D] CV:AdbShell: Nothing to release after the log collector; Wireless debugging is already off
+2026-09-19 16:11:23.030 [D] CV:AdbShell: loopback tcpip :51392 unavailable (unarmed/refused): null
+2026-09-19 16:11:23.032 [D] CV:AdbShell: loopback tcpip :51392 unavailable (unarmed/refused): null
+2026-09-19 16:11:23.033 [D] CV:AdbShell: ADB user done: the log collector (last=true)
+2026-09-19 16:11:23.035 [D] CV:AdbShell: Nothing to release after the log collector; Wireless debugging is already off
+2026-09-19 16:12:32.638 [W] CV:ShizukuBackend: unbindUserService failed: binder haven't been received
+2026-09-19 16:12:32.640 [I] CV:BootReceiver: Boot completed; starting ADB connection service + post-boot call monitor
+2026-09-19 16:12:32.657 [D] CV:AdbShell: loopback tcpip :51392 unavailable (unarmed/refused): null
+2026-09-19 16:12:32.658 [I] CV:RecorderLauncher: Attempt 1: offline mode but no connection — re-arming loopback
+2026-09-19 16:12:32.665 [D] CV:AdbShell: loopback tcpip :51392 unavailable (unarmed/refused): null
+2026-09-19 16:12:32.672 [I] CV:AdbShell: Not switching Wireless debugging on: the user turned it off (override setting is off)
+2026-09-19 16:12:32.677 [W] CV:AdbShell: Wireless debugging is off and could not be switched on
+2026-09-19 16:12:32.677 [I] CV:AdbShell: Cannot arm loopback — no base connection (NEEDS_WIRELESS_DEBUGGING)
+2026-09-19 16:12:32.677 [D] CV:AdbShell: ADB user done: arming the loopback listener (last=false)
+2026-09-19 16:12:32.678 [W] CV:RecorderLauncher: Attempt 1/3: ADB not connected; retrying
+2026-09-19 16:12:32.679 [D] CV:AdbShell: loopback tcpip :51392 unavailable (unarmed/refused): null
+2026-09-19 16:12:32.680 [I] CV:RecorderLauncher: Attempt 2: offline mode but no connection — re-arming loopback
+2026-09-19 16:12:32.684 [D] CV:AdbShell: loopback tcpip :51392 unavailable (unarmed/refused): null
+2026-09-19 16:12:32.686 [I] CV:AdbShell: Not switching Wireless debugging on: the user turned it off (override setting is off)
+2026-09-19 16:12:32.686 [W] CV:AdbShell: Wireless debugging is off and could not be switched on
+2026-09-19 16:12:32.687 [I] CV:AdbShell: Cannot arm loopback — no base connection (NEEDS_WIRELESS_DEBUGGING)
+2026-09-19 16:12:32.687 [D] CV:AdbShell: ADB user done: arming the loopback listener (last=false)
+2026-09-19 16:12:32.687 [W] CV:RecorderLauncher: Attempt 2/3: ADB not connected; retrying
+2026-09-19 16:12:32.698 [D] CV:AdbShell: loopback tcpip :51392 unavailable (unarmed/refused): null
+2026-09-19 16:12:32.699 [I] CV:RecorderLauncher: Attempt 3: offline mode but no connection — re-arming loopback
+2026-09-19 16:12:32.702 [D] CV:AdbShell: loopback tcpip :51392 unavailable (unarmed/refused): null
+2026-09-19 16:12:32.707 [I] CV:AdbShell: Not switching Wireless debugging on: the user turned it off (override setting is off)
+2026-09-19 16:12:32.708 [W] CV:AdbShell: Wireless debugging is off and could not be switched on
+2026-09-19 16:12:32.713 [I] CV:AdbShell: Cannot arm loopback — no base connection (NEEDS_WIRELESS_DEBUGGING)
+2026-09-19 16:12:32.713 [D] CV:AdbShell: ADB user done: arming the loopback listener (last=false)
+2026-09-19 16:12:32.714 [W] CV:RecorderLauncher: Attempt 3/3: ADB not connected; retrying
+2026-09-19 16:12:32.714 [W] CV:RecorderLauncher: ensureServerRunning gave up after 3 attempts; connected=false
+2026-09-19 16:12:32.714 [D] CV:AdbShell: ADB user done: the daemon launch (last=true)
+2026-09-19 16:12:32.714 [D] CV:AdbShell: Nothing to release after the daemon launch; Wireless debugging is already off
+2026-09-19 16:12:32.717 [D] CV:AdbShell: loopback tcpip :51392 unavailable (unarmed/refused): null
+2026-09-19 16:12:32.720 [I] CV:RecorderLauncher: Attempt 1: offline mode but no connection — re-arming loopback
+2026-09-19 16:12:32.724 [D] CV:AdbShell: loopback tcpip :51392 unavailable (unarmed/refused): null
+2026-09-19 16:12:32.727 [I] CV:AdbShell: Not switching Wireless debugging on: the user turned it off (override setting is off)
+2026-09-19 16:12:32.728 [W] CV:AdbShell: Wireless debugging is off and could not be switched on
+2026-09-19 16:12:32.728 [I] CV:AdbShell: Cannot arm loopback — no base connection (NEEDS_WIRELESS_DEBUGGING)
+2026-09-19 16:12:32.728 [D] CV:AdbShell: ADB user done: arming the loopback listener (last=false)
+2026-09-19 16:12:32.728 [W] CV:RecorderLauncher: Attempt 1/3: ADB not connected; retrying
+2026-09-19 16:12:32.730 [D] CV:AdbShell: loopback tcpip :51392 unavailable (unarmed/refused): null
+2026-09-19 16:12:32.730 [I] CV:RecorderLauncher: Attempt 2: offline mode but no connection — re-arming loopback
+2026-09-19 16:12:32.731 [D] CV:AdbShell: loopback tcpip :51392 unavailable (unarmed/refused): null
+2026-09-19 16:12:32.735 [I] CV:AdbShell: Not switching Wireless debugging on: the user turned it off (override setting is off)
+2026-09-19 16:12:32.735 [W] CV:AdbShell: Wireless debugging is off and could not be switched on
+2026-09-19 16:12:32.736 [I] CV:AdbShell: Cannot arm loopback — no base connection (NEEDS_WIRELESS_DEBUGGING)
+2026-09-19 16:12:32.736 [D] CV:AdbShell: ADB user done: arming the loopback listener (last=false)
+2026-09-19 16:12:32.736 [W] CV:RecorderLauncher: Attempt 2/3: ADB not connected; retrying
+2026-09-19 16:12:32.737 [D] CV:AdbShell: loopback tcpip :51392 unavailable (unarmed/refused): null
+2026-09-19 16:12:32.738 [I] CV:RecorderLauncher: Attempt 3: offline mode but no connection — re-arming loopback
+2026-09-19 16:12:32.739 [D] CV:AdbShell: loopback tcpip :51392 unavailable (unarmed/refused): null
+2026-09-19 16:12:32.759 [I] CV:AdbShell: Not switching Wireless debugging on: the user turned it off (override setting is off)
+2026-09-19 16:12:32.763 [W] CV:AdbShell: Wireless debugging is off and could not be switched on
+2026-09-19 16:12:32.763 [I] CV:AdbShell: Cannot arm loopback — no base connection (NEEDS_WIRELESS_DEBUGGING)
+2026-09-19 16:12:32.763 [D] CV:AdbShell: ADB user done: arming the loopback listener (last=false)
+2026-09-19 16:12:32.764 [W] CV:RecorderLauncher: Attempt 3/3: ADB not connected; retrying
+2026-09-19 16:12:32.764 [W] CV:RecorderLauncher: ensureServerRunning gave up after 3 attempts; connected=false
+2026-09-19 16:12:32.764 [D] CV:AdbShell: ADB user done: the daemon launch (last=true)
+2026-09-19 16:12:32.765 [D] CV:AdbShell: Nothing to release after the daemon launch; Wireless debugging is already off
+2026-09-19 16:12:32.765 [I] CV:AdbConnectionService: Boot: recorder daemon connected=false
+===========================================
+
+2026-09-19 16:11:23.021 [D] CV:AdbShell: loopback tcpip :51392 unavailable (unarmed/refused): null
+2026-09-19 16:11:23.025 [D] CV:AdbShell: loopback tcpip :51392 unavailable (unarmed/refused): null
+2026-09-19 16:11:23.026 [W] CV:SystemLog: Shell command produced nothing after retry ('logcat -g')
+2026-09-19 16:11:23.026 [D] CV:AdbShell: ADB user done: the log collector (last=true)
+2026-09-19 16:11:23.027 [D] CV:AdbShell: Nothing to release after the log collector; Wireless debugging is already off
+2026-09-19 16:11:23.027 [W] CV:SystemLog: Could not read the logcat ring size; growing without a restore point
+2026-09-19 16:11:23.030 [D] CV:AdbShell: loopback tcpip :51392 unavailable (unarmed/refused): null
+2026-09-19 16:11:23.032 [D] CV:AdbShell: loopback tcpip :51392 unavailable (unarmed/refused): null
+2026-09-19 16:11:23.033 [D] CV:AdbShell: ADB user done: the log collector (last=true)
+2026-09-19 16:11:23.035 [D] CV:AdbShell: Nothing to release after the log collector; Wireless debugging is already off
+2026-09-19 16:12:32.637 [I] CV:RetentionScheduler: Retention sweep scheduled at 14:30 local (localDays=7 driveDays=7).
+2026-09-19 16:12:32.637 [I] CV:SyncScheduler: Periodic sweep cancelled (target=BOTH mode=IMMEDIATE).
+2026-09-19 16:12:32.638 [W] CV:ShizukuBackend: unbindUserService failed: binder haven't been received
+2026-09-19 16:12:32.640 [I] CV:BootReceiver: Boot completed; starting ADB connection service + post-boot call monitor
+2026-09-19 16:12:32.657 [D] CV:AdbShell: loopback tcpip :51392 unavailable (unarmed/refused): null
+2026-09-19 16:12:32.658 [I] CV:RecorderLauncher: Attempt 1: offline mode but no connection — re-arming loopback
+2026-09-19 16:12:32.665 [D] CV:AdbShell: loopback tcpip :51392 unavailable (unarmed/refused): null
+2026-09-19 16:12:32.668 [I] CV:CallMonitorService: Live call-state listener registered for the post-boot window
+2026-09-19 16:12:32.672 [I] CV:AdbShell: Not switching Wireless debugging on: the user turned it off (override setting is off)
+2026-09-19 16:12:32.675 [I] CV:VoipDetect: VoIP call detection active
+2026-09-19 16:12:32.677 [W] CV:AdbShell: Wireless debugging is off and could not be switched on
+2026-09-19 16:12:32.677 [I] CV:AdbShell: Cannot arm loopback — no base connection (NEEDS_WIRELESS_DEBUGGING)
+2026-09-19 16:12:32.677 [D] CV:AdbShell: ADB user done: arming the loopback listener (last=false)
+2026-09-19 16:12:32.678 [W] CV:RecorderLauncher: Attempt 1/3: ADB not connected; retrying
+2026-09-19 16:12:32.679 [D] CV:AdbShell: loopback tcpip :51392 unavailable (unarmed/refused): null
+2026-09-19 16:12:32.680 [I] CV:RecorderLauncher: Attempt 2: offline mode but no connection — re-arming loopback
+2026-09-19 16:12:32.684 [D] CV:AdbShell: loopback tcpip :51392 unavailable (unarmed/refused): null
+2026-09-19 16:12:32.685 [I] CV:CallMonitorService: Recording readiness changed: ready=false
+2026-09-19 16:12:32.685 [I] CV:CallMonitorService: Live telephony callback: state=IDLE -> forwarding to CallSessionManager
+2026-09-19 16:12:32.686 [D] CV:CallSessionManager: CallSessionManager initialised
+2026-09-19 16:12:32.686 [I] CV:AdbShell: Not switching Wireless debugging on: the user turned it off (override setting is off)
+2026-09-19 16:12:32.686 [I] CV:CallSessionManager: Received new phone state: IDLE (TelephonyManagerINT:0) | Number: null
+2026-09-19 16:12:32.686 [W] CV:AdbShell: Wireless debugging is off and could not be switched on
+2026-09-19 16:12:32.687 [I] CV:AdbShell: Cannot arm loopback — no base connection (NEEDS_WIRELESS_DEBUGGING)
+2026-09-19 16:12:32.687 [D] CV:AdbShell: ADB user done: arming the loopback listener (last=false)
+2026-09-19 16:12:32.687 [W] CV:RecorderLauncher: Attempt 2/3: ADB not connected; retrying
+2026-09-19 16:12:32.698 [D] CV:AdbShell: loopback tcpip :51392 unavailable (unarmed/refused): null
+2026-09-19 16:12:32.699 [I] CV:RecorderLauncher: Attempt 3: offline mode but no connection — re-arming loopback
+2026-09-19 16:12:32.702 [D] CV:AdbShell: loopback tcpip :51392 unavailable (unarmed/refused): null
+2026-09-19 16:12:32.707 [I] CV:AdbShell: Not switching Wireless debugging on: the user turned it off (override setting is off)
+2026-09-19 16:12:32.708 [W] CV:AdbShell: Wireless debugging is off and could not be switched on
+2026-09-19 16:12:32.713 [I] CV:AdbShell: Cannot arm loopback — no base connection (NEEDS_WIRELESS_DEBUGGING)
+2026-09-19 16:12:32.713 [D] CV:AdbShell: ADB user done: arming the loopback listener (last=false)
+2026-09-19 16:12:32.714 [W] CV:RecorderLauncher: Attempt 3/3: ADB not connected; retrying
+2026-09-19 16:12:32.714 [W] CV:RecorderLauncher: ensureServerRunning gave up after 3 attempts; connected=false
+2026-09-19 16:12:32.714 [D] CV:AdbShell: ADB user done: the daemon launch (last=true)
+2026-09-19 16:12:32.714 [D] CV:AdbShell: Nothing to release after the daemon launch; Wireless debugging is already off
+2026-09-19 16:12:32.717 [D] CV:AdbShell: loopback tcpip :51392 unavailable (unarmed/refused): null
+2026-09-19 16:12:32.720 [I] CV:RecorderLauncher: Attempt 1: offline mode but no connection — re-arming loopback
+2026-09-19 16:12:32.724 [D] CV:AdbShell: loopback tcpip :51392 unavailable (unarmed/refused): null
+2026-09-19 16:12:32.727 [I] CV:AdbShell: Not switching Wireless debugging on: the user turned it off (override setting is off)
+2026-09-19 16:12:32.728 [W] CV:AdbShell: Wireless debugging is off and could not be switched on
+2026-09-19 16:12:32.728 [I] CV:AdbShell: Cannot arm loopback — no base connection (NEEDS_WIRELESS_DEBUGGING)
+2026-09-19 16:12:32.728 [D] CV:AdbShell: ADB user done: arming the loopback listener (last=false)
+2026-09-19 16:12:32.728 [W] CV:RecorderLauncher: Attempt 1/3: ADB not connected; retrying
+2026-09-19 16:12:32.730 [D] CV:AdbShell: loopback tcpip :51392 unavailable (unarmed/refused): null
+2026-09-19 16:12:32.730 [I] CV:RecorderLauncher: Attempt 2: offline mode but no connection — re-arming loopback
+2026-09-19 16:12:32.731 [D] CV:AdbShell: loopback tcpip :51392 unavailable (unarmed/refused): null
+2026-09-19 16:12:32.735 [I] CV:AdbShell: Not switching Wireless debugging on: the user turned it off (override setting is off)
+2026-09-19 16:12:32.735 [W] CV:AdbShell: Wireless debugging is off and could not be switched on
+2026-09-19 16:12:32.736 [I] CV:AdbShell: Cannot arm loopback — no base connection (NEEDS_WIRELESS_DEBUGGING)
+2026-09-19 16:12:32.736 [D] CV:AdbShell: ADB user done: arming the loopback listener (last=false)
+2026-09-19 16:12:32.736 [W] CV:RecorderLauncher: Attempt 2/3: ADB not connected; retrying
+2026-09-19 16:12:32.737 [D] CV:AdbShell: loopback tcpip :51392 unavailable (unarmed/refused): null
+2026-09-19 16:12:32.738 [I] CV:RecorderLauncher: Attempt 3: offline mode but no connection — re-arming loopback
+2026-09-19 16:12:32.739 [D] CV:AdbShell: loopback tcpip :51392 unavailable (unarmed/refused): null
+2026-09-19 16:12:32.759 [I] CV:AdbShell: Not switching Wireless debugging on: the user turned it off (override setting is off)
+2026-09-19 16:12:32.763 [W] CV:AdbShell: Wireless debugging is off and could not be switched on
+2026-09-19 16:12:32.763 [I] CV:AdbShell: Cannot arm loopback — no base connection (NEEDS_WIRELESS_DEBUGGING)
+2026-09-19 16:12:32.763 [D] CV:AdbShell: ADB user done: arming the loopback listener (last=false)
+2026-09-19 16:12:32.764 [W] CV:RecorderLauncher: Attempt 3/3: ADB not connected; retrying
+2026-09-19 16:12:32.764 [W] CV:RecorderLauncher: ensureServerRunning gave up after 3 attempts; connected=false
+2026-09-19 16:12:32.764 [D] CV:AdbShell: ADB user done: the daemon launch (last=true)
+2026-09-19 16:12:32.765 [D] CV:AdbShell: Nothing to release after the daemon launch; Wireless debugging is already off
+2026-09-19 16:12:32.765 [I] CV:AdbConnectionService: Boot: recorder daemon connected=false
+2026-09-19 16:13:04.018 [I] CV:RecordingsRepo: Listed 124 recordings in 429ms (0 duration probe(s))
+2026-09-19 16:13:04.239 [I] CV:RecordingsRepo: Listed 124 recordings in 171ms (0 duration probe(s))
+
+NOTE: no lines from the recorder host. Either it was not running, or it predates this app version, or diagnostics were switched on after it started.
