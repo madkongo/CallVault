@@ -270,3 +270,59 @@ Neither bites us today; both will.
 - Whether `AdbMdns`'s loopback bind probe works on 17.
 - Why two people in #301 report the Play Store Shizuku working. Upstream has no fix, so that data point
   is unexplained — do not build on it.
+
+## Requirements the maintainer set for the fix (2026-09-19)
+
+### 1. It must not cause regressions
+
+The Android 17 fix changes how "USB debugging is off" and "Developer options are off" are decided, and
+those two answers feed **ten** call sites (see C9b). The risk is not the Android 17 path — it is Android
+≤16, where the readings are truthful today and everything already works. A tri-state that is wrong in the
+"unreadable" direction on an older phone would silently stop recovery, exactly as this change does on 17.
+
+Concretely, the things that must still behave on Android ≤16 after the change:
+
+- **USB debugging genuinely off** must still produce `NO_DEBUGGING` / `NEEDS_WIFI` and still tell the user
+  what to switch on. The Shizuku forks' blanket "treat 0 as unknown on SDK ≥ 37" loses this; we must not,
+  which is why it is gated on `SDK_INT >= 37` and never applied below.
+- **`WirelessDebuggingPolicy.plan`** must still return `DROP_USB_KEEPS_ADBD` when USB debugging is really
+  on, so Wireless debugging is still released. Getting this wrong leaves a debugging port open forever.
+- **`AdbdRevivalPolicy`'s `usbDebuggingOn -> NOTHING` early-out** must still fire, or a stale
+  `init.svc.adbd` reading sends us into a `CYCLE_WIRELESS_DEBUGGING` that restarts adbd — and kills
+  Shizuku — for nothing.
+- **`SetupPrerequisites`** must still report `DEVELOPER_OPTIONS` on a phone where they really are off, or
+  a genuinely broken setup reads as healthy.
+- The whole **2026-09-19 reboot chain** (`LoopbackBorrowPolicy`, `LoopbackArmWait`) must be untouched in
+  behaviour; it is verified on a device and must stay that way.
+
+The guard is the existing house rule: decisions are pure functions with their own tests, so each of the
+above gets a test at `SDK_INT = 36` **and** `= 37` with the same inputs, and the ≤36 row must be
+unchanged from today. `1606` tests pass now; that number is the floor.
+
+### 2. It must cover built-in **and** Shizuku mode
+
+Checked against the code rather than assumed. **Shizuku mode is already spared the worst of it**, and by
+deliberate design rather than luck:
+
+| Site | Shizuku mode | Why |
+|---|---|---|
+| Onboarding ADB card | **not shown** | `PermissionsScreen.kt:342` skips it for `PrivilegedMode.SHIZUKU` |
+| The About-phone dead-end CTA (issue #40 itself) | **not reached** | `isAdbStep` needs `!status.adbConnected`, and `AppPreferences.isPrivilegedTransportSetUp()` returns **true** for Shizuku (`:968-973`), so `adbConnected` is true |
+| `SetupPrerequisites` → `DEVELOPER_OPTIONS` | **not reached** | the `mode.needsShizuku` branch returns first (`:96-102`) |
+| Readiness notices (`NEEDS_WIFI`, `WD_OFF_BY_USER`, …) | **not reached** | `ReadinessNoticeText.current` returns early for Shizuku (`ReadinessNotice.kt:90-98`) |
+| Settings ▸ USB debugging toggle | **not shown** | guarded by `usesEmbeddedAdb = !needsShizuku` (`SettingsScreen.kt:2399`) |
+| Stuck-mic auto-heal | **ruled out** | `MicOpHealPolicy` takes `standalone` and declines otherwise (`MicOpAutoHeal.kt:80`) |
+
+**But two sites hit both modes and must be fixed for both:**
+
+1. **`PermissionsScreen.kt:391-400`** — the "USB debugging (Recommended)" card is **outside** the mode
+   gate, so on Android 17 it reads permanently not-granted in Shizuku mode too. Cosmetic, but it is a
+   false statement about the user's phone on the first screen they see.
+2. **`AppLogger.kt:505`** — the debug-report header prints `USB debugging: false` in both modes. Every
+   Android 17 report we ever receive will carry it, and we triage from that header.
+
+And one thing that is **not ours to fix but must be said to users**: a Shizuku user on Android 17 may be
+unable to start Shizuku at all, because *Shizuku's own* manager is broken by the same change and upstream
+has no fix (`RikkaApps/Shizuku` has had no commits since June 2025). Our Shizuku-mode onboarding should
+not imply that starting Shizuku will work, and pointing at a patched fork is a decision for the
+maintainer, not something to bury in a help string.
