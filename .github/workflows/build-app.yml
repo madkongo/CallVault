@@ -61,9 +61,13 @@ jobs:
       BUILD_TYPE: ${{ steps.set-output.outputs.BUILD_TYPE }}
     
     steps:
+      # whisper.cpp and llama.cpp are submodules and the native CMake build reads them
+      # directly, so a checkout without them cannot build the app at all.
       - name: Checkout Repository
         uses: actions/checkout@v6
-      
+        with:
+          submodules: recursive
+
       # Set up Java 17 (required for Android Gradle Plugin 8.x)
       - name: Setup Java 17
         uses: actions/setup-java@v5
