@@ -96,10 +96,7 @@ one was refused by gate 1), not the watchdog, not opening the app.
 
 The gate does have an escape — `userRequested`, set when the user asks explicitly. That is why the
 notification's "Turn Wireless debugging on" action button works, and it is the only route out from inside
-the app.
-
-The only exits are the user turning Wireless debugging on by hand, or the "Turn Wireless debugging on"
-action button on the notification.
+the app. The other way out is the user turning Wireless debugging on themselves in Developer options.
 
 ### Proof
 
