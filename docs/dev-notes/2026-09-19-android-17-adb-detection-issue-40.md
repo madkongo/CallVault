@@ -326,3 +326,145 @@ unable to start Shizuku at all, because *Shizuku's own* manager is broken by the
 has no fix (`RikkaApps/Shizuku` has had no commits since June 2025). Our Shizuku-mode onboarding should
 not imply that starting Shizuku will work, and pointing at a patched fork is a decision for the
 maintainer, not something to bury in a help string.
+
+## Second research pass, 2026-09-19 — two corrections and one unexplored escape
+
+Everything below marked ✅ I re-verified myself from primary sources, not from the research summary.
+
+### ⚠️ CORRECTION: `SDK_INT >= 37` is NOT a safe gate
+
+This note said *"Absent from Android 16 … So `SDK_INT >= 37` is the correct threshold; Android 16 is
+safe."* **True of AOSP, false of the field.** Two Android 16 custom ROMs have backported the redaction:
+
+✅ Verified by fetching both trees:
+
+| ROM | Branch | `Build.java` | `Settings.java` |
+|---|---|---|---|
+| `ProjectCiRCLE-ROM/frameworks_base` | `16.2` | `BAKLAVA = 36`, no 37 | `@Readable(redactedValue = "0")` on `ADB_ENABLED` |
+| `CharaROMAndroid/android_frameworks_base` | `hershey` | `BAKLAVA = 36` | same |
+
+Both also ship the aconfig flag as `state: ENABLED, permission: READ_ONLY` in their vendor release config
+(`ProjectCiRCLE-ROM/vendor_circle` `c2d9507dd`, 2026-08-05, *"Required for our backport of redactedValue"*).
+`READ_ONLY` means it is baked in at build time — **not togglable with `device_config`**, so there is no
+user-side workaround to suggest either.
+
+**So the tri-state must treat an uncorroborated `0` as UNKNOWN regardless of SDK level**, corroborated by
+`init.svc.adbd`. Doing it that way makes the version check unnecessary and covers these ROMs for free.
+This also satisfies the maintainer's no-regressions requirement better than a version gate would: the
+corroborator is what decides, so an Android ≤16 phone with debugging genuinely off still reads as off.
+
+### ✅ RESOLVED: why the Play Store Shizuku works
+
+This note listed that as *"unexplained — do not build on it"*. It is explained: **upstream Shizuku never
+reads the setting.** `RikkaApps/Shizuku`'s `AdbDialogFragment` only ever *writes* `adb_wifi_enabled` and
+`ADB_ENABLED`, and its `EnvironmentUtils` has no `isAdbEnabled` at all. The blocking read-gate is a
+**fork addition** (`thedjchi/Shizuku`'s `AdbStarter.kt:82-83`). Same lesson as ours: writes are fine,
+**only the read-gate breaks**. Our own upstream, `kitsumed/ShizuCallRecorder`, never reads either setting
+— structurally immune, and no fix there to borrow.
+
+### 🔓 NEW, unexplored by anyone: a provider path that is not redacted
+
+✅ Verified by reading `packages/SettingsProvider/.../SettingsProvider.java` at `android-17.0.0_r1`
+myself. The redaction sits **only** on the generation-tracking branch:
+
+```java
+// :2877-2889
+private Bundle packageValueForCallResult(int type, @NonNull String name, int userId,
+        int deviceId, @Nullable Setting setting, boolean trackingGeneration) {
+    if (!trackingGeneration) {
+        if (setting == null || setting.isNull()) return NULL_SETTING_BUNDLE;
+        return Bundle.forPair(Settings.NameValueTable.VALUE, setting.getValue());   // RAW
+    }
+    ...
+    String value = getEffectiveValue(setting, redactedSettingsMap);                 // redacted
+```
+
+and the flag is set by the *caller*:
+
+```java
+// :3025-3027
+private boolean isTrackingGeneration(Bundle args) {
+    return args != null && args.containsKey(Settings.CALL_METHOD_TRACK_GENERATION_KEY);
+}
+```
+
+`CALL_METHOD_GET_GLOBAL` dispatches straight into it (`:474-480`), and `getGlobalSetting` (`:1576-1591`)
+does nothing but `enforceSettingReadable` — which `adb_enabled` passes, being `@Readable` with no
+`maxTargetSdk`. The in-process check at `Settings.java:3846` never runs because `Settings.Global.getString`
+is never called. So:
+
+```kotlin
+val b = contentResolver.call("settings", "GET_global", "adb_enabled", null)
+val real = b?.getString("value")   // the true value, in principle
+```
+
+**Caveats, and they matter.** Nobody has published this. **It has not been run on an Android 17 device —
+we do not have one.** It is plainly an oversight in Google's patch, so a later QPR may close it. Use it
+as a **corroborator only, never the sole signal**, and make its absence non-fatal. `query()` is *not*
+leaky — both query paths go through `getEffectiveValue`.
+
+### ✅ No allowlist, no exemption, no opt-out — plainly
+
+The only escape at either enforcement point is uid. `MANAGE_DEBUGGING` is `signature|privileged`,
+`@SystemApi @hide`, gates an `AdbManager` that has no "is USB debugging on" getter anyway. No role, no
+permission, no `targetSdk` opt-out. **Even a platform-signed privileged app with uid ≥ 10000 gets `"0"`.**
+
+### Provenance, now evidence rather than inference
+
+Gerrit topic `dev-options-redacted-value`, merge `792c34a97`, **Pradyuman Dixit, 2026-03-25**; substantive
+CL `5d466bf8025e`, **2026-03-02**:
+
+> "We update ADB_ENABLED and DEVELOPEMENT_SETTINGS_ENABLED to have a redactedValue of 0, since **this
+> information is not important for the third-party apps**." — Bug: 440232200, Flag: EXEMPT BUGFIX,
+> Test: `atest android.appseurity.cts.ReadableSettingsFieldsTest`
+
+Written March 2026, in the tree three months before 17.0 shipped, classified `PURPOSE_BUGFIX`. So it was
+never secret — `DroidWin` reported it on 3 Aug 2026. "Undocumented" and "unannounced" remain correct;
+"unknown until it shipped" was not, and this note should not imply it.
+
+### ⚠️ Do not read AOSP `main` as a revert
+
+`refs/heads/main` = `refs/heads/master` = `1cdfff555f`, HEAD dated **2025-03-27** — frozen a year *before*
+the change. Its zero `redactedValue` hits are staleness, not relaxation. There is **no published QPR1 or
+QPR2 source** (no `android17-qpr1-release` branch exists), so the build users are reporting cannot be
+diffed. `android17-security-release` is byte-identical to `android-17.0.0_r1` for `Settings.java`,
+`flags.aconfig` and `SettingsProvider.java`. Still exactly two redacted settings; no extension, no revert.
+
+Gitiles `+log` now returns **HTTP 401** ("Please sign in"), so history must be reconstructed from ROM
+mirrors; `?format=TEXT` on a blob still works anonymously.
+
+### Three more things for the fix
+
+1. **`persist.adb.tcp.port`** — `Stellar` and `AxManager` both fall back to it after `service.adb.tcp.port`.
+   We read only the `service.` form (`AdbShell.kt`, `LoopbackArmWait.kt`, `LoopbackBorrowPolicy.kt`,
+   `WirelessDebuggingPolicy.kt`). Cheap gap on OEMs that set the persist form.
+2. **`ACCESS_LOCAL_NETWORK` hits every connect, not only pairing.** `thedjchi/Shizuku` **#302**
+   (2026-09-16, open): the already-paired start path calls `adbMdns.start()` with no permission check and
+   the OS picker reappears *on every start*. Our `AdbMdns` has the same shape.
+3. **`AppManager`'s default is the opposite of ours, and better**: `init.svc.adbd` defaults to
+   `"running"` — *"Default is set to 'running' to avoid other issues"*. Ours default to `false`
+   everywhere, which is why an unreadable state reads as broken.
+
+### ✅ Android 17's adbd now toggles Wireless debugging by itself
+
+From Google's own ADB Wi-Fi 2.0 post (9 Sep 2026), fetched and quoted verbatim:
+
+> "the daemon automatically turns off ADB Wi-Fi when it detects an untrusted network and re-enables itself
+> once running on a user-allowed network"
+
+**This lands directly on `WirelessDebuggingOffCause`.** It has exactly two excuses for an off-write we did
+not make — `ANDROID_REFUSED` (we had just written it on) and `ANDROID_NO_WIFI` (Wi-Fi gone). Neither
+covers *"untrusted network, Wi-Fi still connected"*, so on Android 17 that write is classified **USER**
+and sets `WD_TURNED_OFF_BY_USER` — the flag behind the reboot deadlock of
+`2026-09-19-reboot-deadlock-wd-off-by-user.md`. `LoopbackBorrowPolicy` means it can no longer deadlock,
+but it would re-arm that flag repeatedly, and every borrow restarts `adbd` and kills any Shizuku server.
+The post also replaces the mDNS stack outright, which our discovery sits on.
+
+### The ecosystem has produced nothing new
+
+Re-checked on 2026-09-19: `thedjchi/Shizuku` unchanged since its July maintenance-pause commit, #301 still
+open at 12 comments with no diagnosis past the javadoc, `RazGame` and `ShizukuPlus` unchanged, upstream
+Shizuku unchanged since June 2025. `gh search issues` for `"third-party apps" adb_enabled created:>2026-08-01`
+returns **2 results total**. LADB, aShellYou, Canta, KeyMapper, AxManager, Tasker plugins and the
+root-detection vendors have not noticed in either direction. **Nobody is past "treat 0 as unknown".
+Whatever we build, we build first.**
