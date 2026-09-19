@@ -9,6 +9,7 @@
 package com.baba.callvault.integrations.adb
 
 import android.content.Context
+import android.os.SystemClock
 import com.baba.callvault.data.AppPreferences
 import com.baba.callvault.server.ShizukuBackend
 import com.baba.callvault.utils.AppLogger
@@ -596,8 +597,22 @@ object AdbShell {
             Thread.sleep(POST_DISCONNECT_WAIT_MS)
         }
 
-        val armed = connectLoopback(context)
-        AppLogger.i(TAG, "Loopback arm result on :$port = $armed")
+        // Wait for the listener rather than taking one look at it. adbd needs longer to come back on a
+        // phone that is still booting than on an idle one, and a single refused attempt used to write the
+        // whole round off -- which sent the next round through a 12 s mDNS timeout and borrowed Wireless
+        // debugging all over again. Measured on the OP12: three wasted rounds, 73 s, five or six visible
+        // Wireless-debugging cycles. See [LoopbackArmWait].
+        val startedAt = SystemClock.elapsedRealtime()
+        val armed = LoopbackArmWait.awaitListener(
+            budgetMs = LOOPBACK_SELFHEAL_MS,
+            intervalMs = LOOPBACK_RETRY_INTERVAL_MS,
+            now = { SystemClock.elapsedRealtime() },
+            sleep = { Thread.sleep(it) },
+            isArmed = { isLoopbackArmed(context) },
+            connect = { connectLoopback(context) },
+        )
+        val waitedMs = SystemClock.elapsedRealtime() - startedAt
+        AppLogger.i(TAG, "Loopback arm result on :$port = $armed (listener took ${waitedMs}ms)")
         if (armed) LoopbackArm.ARMED else LoopbackArm.PORT_DID_NOT_COME_UP
     }
 
