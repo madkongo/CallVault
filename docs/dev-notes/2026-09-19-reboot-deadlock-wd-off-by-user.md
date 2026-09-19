@@ -1,8 +1,15 @@
 # 2026-09-19 — after a reboot the phone can stop recording for good: the "user turned Wireless debugging off" flag deadlocks recovery
 
-Status: **❌ NOT WORKING 2026-09-19** — reproduced on the OP12 (the maintainer's daily driver), diagnosed
-from live device state, and cleared by hand. **Not fixed.** Present in the branch build installed
-2026-09-19 15:49, and the logic is old enough that it is almost certainly in **2.3.0 as shipped**.
+Status: **✅ VERIFIED FIXED 2026-09-19** by the maintainer, on the OP12 that showed the fault. The bug
+itself was reproduced there, diagnosed from live device state and from the app's own setup journal; the
+fix (`1f9702cb`, `LoopbackBorrowPolicy`) was installed as APK `49e33c50eb6b6ded` at 16:49 and the phone
+was rebooted. His report: *"it shows a good state but i did see WD turning on and off for like 3 times
+until it reached 'Ready to record'."*
+
+So the deadlock is gone — the phone recovers on its own, which it could not do before. **One thing is not
+explained: three borrow cycles, where one should do.** See "Open: the flicker count" at the end.
+
+The bug is almost certainly in **2.3.0 as shipped**, and the fix is not released.
 
 ## What the maintainer saw
 
@@ -158,3 +165,31 @@ The reproduction is one reboot, so it is cheap. It needs `WD_TURNED_OFF_BY_USER`
 normal state for anyone running the recommended setup (USB debugging on, Wireless debugging off). Watch
 `service.adb.tcp.port`, `adb_wifi_enabled` and `ps -A | grep app_process`, and read notification 4720's
 text — it names the notice branch directly.
+
+
+## Open: the flicker count (🧪, 2026-09-19)
+
+The fix borrows Wireless debugging, arms the listener and hands the switch back. That is **one** on/off
+cycle. The maintainer watched **three** before the notification settled on "Ready to record calls".
+
+Three is not harmless. Each write restarts `adbd`, every restart takes any Shizuku server with it (R10),
+and the window it happens in — the first minute after a boot — is exactly when an early call is most
+likely to be missed. It also leaves the debugging port open three times instead of once.
+
+**Not diagnosed.** Logcat had already rotated past the boot when the phone was checked (Bluetooth
+chatter floods the default buffer within ~3 minutes), and app debug logging was off.
+
+Hypotheses, none tested:
+
+1. `releaseWirelessDebugging` restarts `adbd`, and the recorder daemon is a child of an `adbd` shell —
+   so handing the switch back may kill the daemon that was just launched, and the watchdog relaunches.
+   If the listener were momentarily unreachable during that restart, `mayBorrow` could read
+   `loopbackArmed` false again and borrow a second time.
+2. `RecorderLauncher` runs three attempts per `ensureServerRunning`, and the boot path called it twice
+   before. If arming fails on a round, that round borrows again.
+3. Something else entirely.
+
+**How to settle it cheaply:** the **setup journal is always on** — it is what recorded the six refused
+attempts in the pre-fix report without anyone switching logging on. Tapping *Save log* after a reboot
+should show every `Borrowing Wireless debugging…` line with timestamps, and what happened between them.
+That is the next step, and it needs no preparation before the reboot.
