@@ -47,6 +47,14 @@ object ReleaseHighlights {
 
     private val ALL = listOf(
         ReleaseHighlight(
+            version = "2.4.0",
+            title = R.string.whatsnew_240_title,
+            items = R.array.whatsnew_240_items,
+            // Import is the one thing here someone would go looking for and not find: it lives on the
+            // Transcripts page rather than in Settings, and nothing else points at it.
+            whereToFind = R.string.whatsnew_240_where,
+        ),
+        ReleaseHighlight(
             version = "2.3.0",
             title = R.string.whatsnew_230_title,
             items = R.array.whatsnew_230_items,

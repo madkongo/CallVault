@@ -3,6 +3,53 @@
 All notable changes to CallVault are documented here. The format is based on
 [Keep a Changelog](https://keepachangelog.com/), and this project uses semantic-ish versioning.
 
+## [2.4.0] — unreleased
+
+### Added
+
+- **A home screen, with Recordings, Transcripts and Summaries as their own places.** Transcripts and
+  summaries used to be things that happened to a recording; now each has a page you can open, and the
+  app reopens wherever you were last.
+
+- **Audio can be brought in from outside.** Pick a file from the Transcripts page, or share one to
+  CallVault from any other app — a WhatsApp voice note, for instance, which no file picker can see.
+  CallVault asks what you want it for:
+
+  - **Import and transcribe** keeps the audio and adds it alongside your calls.
+  - **Transcribe only** gives you the words and deletes the audio once the transcript is safely saved.
+
+- **A transcript has a page of its own to be read on**, with a note you can write against it, and a
+  badge on the row when the words are all that is left.
+
+- **Row menus and multi-select.** Every transcript and summary has a ⋮ menu — delete, share, save — and
+  a long press picks several at once.
+
+- **A notification when a transcription finishes**, and one when it does not.
+
+- **A way to join the Telegram group from the home screen**, for anyone who would rather ask than open
+  an issue.
+
+### Fixed
+
+- **Restarting the phone could leave it not recording, silently and for good.** Recovery decided it
+  could not act, and the one thing that would have let it act was the thing it was refusing to do.
+  Reported by nobody — it was found on the maintainer's own phone, and it had been there for releases.
+
+- **Setup could not be completed on Android 17.** Android 17 stopped telling apps whether Developer
+  options and USB debugging are on, so CallVault believed they were off and sent people to a settings
+  screen they had already visited, with no way forward. It now works this out for itself instead of
+  asking Android. Existing users on Android 17 were also told, wrongly, that their setup was broken
+  and that calls had not been recorded when they had. Reported by teou1 and siongui in #40.
+
+- **Shizuku is started again when CallVault has to stop it.** CallVault sometimes restarts Android's
+  debugging service, which takes any running Shizuku server down with it — including one other apps
+  were using. It now puts it back, and says so. Reported by johnwick113 in #39.
+
+- **The "CallVault cannot record right now" warning now goes away by itself** once recording is
+  working again, instead of staying until the next restart.
+
+- **The USB debugging switch in Settings no longer flips itself back off** after you turn it on.
+
 ## [2.3.0] — 2026-09-11
 
 ### Added
