@@ -102,7 +102,10 @@ object SetupPrerequisites {
         }
 
         if (!isPaired) return Prerequisite.ADB_PAIRING
-        if (devOptionsDisabled) return Prerequisite.DEVELOPER_OPTIONS
+        // A connected daemon outranks this flag, for the same reason it outranks Shizuku's status above
+        // and the grant below: recording is flowing right now, so calling the setup incomplete would
+        // excuse a genuine failure and write "this call was not recorded" against calls that were.
+        if (devOptionsDisabled && !daemonConnected) return Prerequisite.DEVELOPER_OPTIONS
         // The grant is only needed to relaunch a DEAD daemon; while one is already connected, recording
         // works right now regardless of the grant, so this only counts as missing when BOTH are true.
         if (!hasSecureSettings && !daemonConnected) return Prerequisite.SECURE_SETTINGS_GRANT

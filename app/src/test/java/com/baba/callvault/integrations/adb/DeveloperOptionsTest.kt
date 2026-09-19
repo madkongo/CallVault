@@ -47,10 +47,17 @@ class DeveloperOptionsTest {
     }
 
     @Test
-    fun zero_setting_is_explicitly_disabled() {
-        // putString mirrors real framework storage (Settings.Global.putInt writes the string form).
+    fun zero_setting_alone_is_not_enough_to_call_it_disabled() {
+        // ⚠️ This test used to assert the opposite, and that premise is what Android 17 broke: a `0` read
+        // proves nothing there, because the platform returns `0` to every app whatever the truth. So a
+        // bare zero with nothing corroborating it is UNKNOWN, not "explicitly disabled".
+        //
+        // On a real phone the corroborator is `init.svc.adbd`, which reads "stopped" when Developer
+        // options really are off, giving OFF as before. Robolectric cannot supply that property, so this
+        // case lands on the honest "cannot prove it" branch. The full truth table lives in
+        // DeveloperOptionsPolicyTest, which needs no Android at all.
         Settings.Global.putString(context.contentResolver, Settings.Global.DEVELOPMENT_SETTINGS_ENABLED, "0")
-        assertTrue(DeveloperOptions.isExplicitlyDisabled(context))
+        assertFalse(DeveloperOptions.isExplicitlyDisabled(context))
     }
 
     @Test

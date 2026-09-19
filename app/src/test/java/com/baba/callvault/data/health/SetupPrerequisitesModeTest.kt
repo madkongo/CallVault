@@ -134,4 +134,36 @@ class SetupPrerequisitesModeTest {
             )
         )
     }
+
+    // ---- a live daemon outranks the Developer-options flag (Android 17, issue #40) ----
+
+    @Test
+    fun a_connected_daemon_outranks_developer_options_being_reported_off() {
+        // Recording is flowing over the daemon's binder right now. Calling setup incomplete here is what
+        // wrote "this call was not recorded -- developer options were off" against calls that recorded
+        // perfectly, on every Android 17 phone. The same rule already applies to Shizuku's status and to
+        // the secure-settings grant; this line was the one that did not have it.
+        assertEquals(
+            null,
+            SetupPrerequisites.firstMissing(
+                mode = PrivilegedMode.STANDALONE, hasFolder = true, isPaired = true,
+                devOptionsDisabled = true, hasSecureSettings = true, daemonConnected = true,
+                shizuku = ready,
+            )
+        )
+    }
+
+    @Test
+    fun without_a_daemon_developer_options_being_off_is_still_reported() {
+        // The guard must not swallow a real problem: with nothing recording, a proven-off Developer
+        // options is exactly what the user needs told.
+        assertEquals(
+            Prerequisite.DEVELOPER_OPTIONS,
+            SetupPrerequisites.firstMissing(
+                mode = PrivilegedMode.STANDALONE, hasFolder = true, isPaired = true,
+                devOptionsDisabled = true, hasSecureSettings = true, daemonConnected = false,
+                shizuku = ready,
+            )
+        )
+    }
 }

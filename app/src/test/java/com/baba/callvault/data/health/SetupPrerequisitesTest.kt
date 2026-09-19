@@ -69,11 +69,16 @@ class SetupPrerequisitesTest {
     }
 
     @Test
-    fun `developer options explicitly disabled is reported once folder and pairing are fine`() {
+    fun `a bare zero from the developer-options setting no longer blocks setup`() {
+        // ⚠️ Used to assert DEVELOPER_OPTIONS here. Android 17 returns `0` to every app whatever the
+        // truth, so that assertion made every Android 17 phone report a broken setup and log "this call
+        // was not recorded" against calls that recorded perfectly. A zero now has to be corroborated --
+        // see DeveloperOptionsPolicy -- and Robolectric cannot supply the corroborator, so nothing is
+        // claimed. The decision itself is covered exhaustively in SetupPrerequisitesModeTest.
         satisfyAllPrerequisites()
         Settings.Global.putString(context.contentResolver, Settings.Global.DEVELOPMENT_SETTINGS_ENABLED, "0")
 
-        assertEquals(Prerequisite.DEVELOPER_OPTIONS, SetupPrerequisites.missing(context))
+        assertEquals(null, SetupPrerequisites.missing(context))
     }
 
     @Test

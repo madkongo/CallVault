@@ -220,6 +220,9 @@ fun PermissionsContent(
     // ON_RESUME so returning from the system Developer Options / Wireless debugging screen reflects
     // the new state immediately.
     var devOptionsEnabled by remember { mutableStateOf(isDeveloperOptionsEnabled(context)) }
+    // Distinct from `!devOptionsEnabled`: a phone that will not say is neither on nor off, and must not
+    // be sent to About phone. See [shouldOfferBuildNumberStep] and issue #40.
+    var offerBuildNumberStep by remember { mutableStateOf(shouldOfferBuildNumberStep(context)) }
     // Re-read after any change to the backend choice; Shizuku's server can also stop on its own.
     var backendRefresh by remember { mutableIntStateOf(0) }
     val privilegedMode = remember(backendRefresh) { AppPreferences(context).getPrivilegedMode() }
@@ -257,6 +260,7 @@ fun PermissionsContent(
         val observer = LifecycleEventObserver { _, event ->
             if (event == Lifecycle.Event.ON_RESUME) {
                 devOptionsEnabled = isDeveloperOptionsEnabled(context)
+                offerBuildNumberStep = shouldOfferBuildNumberStep(context)
                 wirelessDebuggingEnabled = AdbShell.isWirelessDebuggingEnabled(context)
             }
         }
@@ -344,6 +348,7 @@ fun PermissionsContent(
                         AdbPermissionCard(
                             adbConnected = status.adbConnected,
                             devOptionsEnabled = devOptionsEnabled,
+                            devOptionsProvenOff = offerBuildNumberStep,
                             wirelessDebuggingEnabled = wirelessDebuggingEnabled
                         )
                     }
@@ -423,7 +428,9 @@ fun PermissionsContent(
             val adbStepLabel: String? = if (isAdbStep) stringResource(R.string.permission_adb_pair) else null
             val adbStepAction: (() -> Unit)? = when {
                 !isAdbStep             -> null
-                !devOptionsEnabled     -> { { context.openDeviceInfoSettings() } }
+                // Only a PROVEN off routes here. Anything else falls through to pairing, which is the
+                // step that can actually advance -- see [shouldOfferBuildNumberStep].
+                offerBuildNumberStep   -> { { context.openDeviceInfoSettings() } }
                 // WD off → arm the pairing service (it waits on the adb_wifi_enabled setting and
                 // auto-starts discovery the moment WD is toggled on), THEN deep-link to the Wireless
                 // debugging toggle. The user never has to return to CallVault to tap Authorize.
@@ -475,6 +482,17 @@ private fun isDeveloperOptionsEnabled(context: android.content.Context): Boolean
     DeveloperOptions.isEnabled(context)
 
 /**
+ * Whether to send the user to Settings ▸ About phone to tap Build number.
+ *
+ * Only a **proven** off. Asking `!isDeveloperOptionsEnabled()` instead is what made issue #40 fatal: on a
+ * build that redacts `DEVELOPMENT_SETTINGS_ENABLED` the read is permanently `0`, so the ADB step's button
+ * opened About phone every time and pairing could never be reached. The reporter had already tapped Build
+ * number seven times; nothing he could do would change that read.
+ */
+private fun shouldOfferBuildNumberStep(context: android.content.Context): Boolean =
+    DeveloperOptions.state(context).shouldOfferBuildNumberStep
+
+/**
  * The dedicated, full-width ADB hero card.
  *
  * Unlike the generic [PermissionCard] (icon-left / text-middle / pill-right), the ADB step uses its
@@ -495,6 +513,12 @@ private fun isDeveloperOptionsEnabled(context: android.content.Context): Boolean
 private fun AdbPermissionCard(
     adbConnected: Boolean,
     devOptionsEnabled: Boolean,
+    /**
+     * Whether Developer options are PROVEN off. Distinct from `!devOptionsEnabled`, which on a phone that
+     * redacts the setting is true forever — and used to put a permanent, false "Developer options are
+     * off" warning on the first screen a new user sees (issue #40).
+     */
+    devOptionsProvenOff: Boolean,
     wirelessDebuggingEnabled: Boolean
 ) {
     val primary = MaterialTheme.colorScheme.primary
@@ -575,7 +599,7 @@ private fun AdbPermissionCard(
         // Developer Options + Wireless-debugging status lines. The bottom CTA owns the matching
         // action (open device info / open Wireless debugging / authorize), so no button is shown here.
         Spacer(Modifier.height(12.dp))
-        if (!devOptionsEnabled) {
+        if (devOptionsProvenOff) {
             // Can't pair without Developer Options, and the app can't auto-enable it.
             DevModeStatusLine(text = stringResource(R.string.permission_devmode_off), color = brand.warning)
             Spacer(Modifier.height(4.dp))
