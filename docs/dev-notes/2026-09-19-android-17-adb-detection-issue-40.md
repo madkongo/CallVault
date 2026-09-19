@@ -631,3 +631,78 @@ endless picker)"*.
 - The structural lesson stands and is now better evidenced: **writes are fine; only read-gates break.**
   Upstream Shizuku is immune because it never reads. `kitsumed/ShizuCallRecorder` is immune for the same
   reason. CallVault is affected because it reads — in ten places.
+
+## First real Android 17 data — `siongui`'s report, 2026-09-20 00:05 (+07:00)
+
+A second reporter on #40, distinct from `teou1`, attached a debug report from a **Pixel 8 on Android 17**.
+Kept at `attachments/2026-09-19-issue40-siongui-android17-report.txt`. This is the only Android 17 device
+evidence we have; everything before it was read out of AOSP.
+
+### ✅ The build number is settled
+
+```
+Android Version: 17 (API 37)
+ROM Build: CP3A.260905.009
+ROM Fingerprint: google/shiba/shiba:17/CP3A.260905.009/16091614:user/release-keys
+```
+
+**`CP3A.260905.009` is correct.** An earlier research pass claimed `…010` and this note was softened to
+avoid asserting either; the device settles it. (Which QPR it is called still does not matter — we gate on
+evidence, never on a build string.)
+
+### ✅ A uid-2000 shell host exists and runs on Android 17
+
+```
+recorder host identity: uid=2000 pid=19660 opPackage=<none>
+    groups=[gid1004,…,gid3012] context=u:r:shell:s0
+```
+
+This is the precondition for the one escape the research found: both redaction sites exempt
+`uid < FIRST_APPLICATION_UID`, and **our recorder host is uid 2000 in `u:r:shell:s0` on a real Android 17
+phone**. So the hypothesis "our own daemon can still read the true value" now rests on a confirmed uid
+rather than on an assumption.
+
+It is still **untested** — `IRecorderService` has no way to read a setting (`grantAppOp` and `grantRole`
+are the only privileged reads/writes it exposes), so settling it means adding an AIDL method. Worth doing;
+deliberately not slipped into this change.
+
+### What he was actually complaining about — same dead end as `teou1`
+
+His header says `Privileged mode: SHIZUKU`, `Status: READY`, `Binder connected: true` — **Shizuku mode is
+working, and it records.** So where does "CallVault always complains developer options off" come from,
+when `SetupPrerequisites` returns at the `mode.needsShizuku` branch before the dev-options check and
+`computeStatus` goes through it?
+
+The journal answers it. He switched modes while investigating:
+
+```
+00:04:45.963  Leaving Shizuku mode; releasing the user service
+00:04:46.072  Privileged mode is now STANDALONE
+00:04:46.179  Wireless debugging :44347 unavailable (unarmed/refused): ADB pairing is required.
+...           Attempt 1/3, 2/3, 3/3 -- ensureServerRunning gave up after 3 attempts
+00:05:11.384  Privileged mode is now SHIZUKU
+00:05:11.756  Shizuku started the recorder service
+```
+
+In STANDALONE, `isPrivilegedTransportSetUp()` is `isAdbPaired()`, which is false — he has never paired
+CallVault's embedded ADB. So `adbConnected` goes false, onboarding reappears, and he lands on exactly
+`teou1`'s screen: the ADB card's "Developer options are off" line and a button that opens About phone
+forever.
+
+**So both reporters hit the same code path**, from opposite directions, and the fix in `dc24126c` covers
+both. His Wireless debugging is on — mDNS finds the service at `44347` — so `DeveloperOptionsPolicy`
+resolves his phone to a **proven ON**, the false line disappears, and the button routes to pairing.
+
+That also corrects the mapping earlier in this note: Shizuku mode is spared the dev-options damage **only
+while the user stays in Shizuku mode**. A mode switch, or anything that clears `isAdbPaired`, drops a
+Shizuku user straight into the standalone onboarding path. The gate is on the *mode*, not on the user.
+
+### Two more things the report shows
+
+- **He has no `WRITE_SECURE_SETTINGS`**, and the heal fires repeatedly and fails:
+  `WRITE_SECURE_SETTINGS heal did NOT land (ADB connect/grant failed); recording still works while the
+  daemon is warm` — twice within 150 ms, each preceded by its own mDNS discovery. Correct outcome, but it
+  is two full discovery round trips to learn something that was already known (never paired ⇒ no ADB).
+  Not urgent; noted.
+- **`Shizuku can work correctly without problem`**, said independently by both reporters, is now backed by
+  a working `Status: READY` on 17. The withdrawal earlier in this note was right.

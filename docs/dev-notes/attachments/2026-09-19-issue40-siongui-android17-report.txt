@@ -1,0 +1,136 @@
+===== callvault_debug_report.txt =====
+=== CallVault AppLogger Export ===
+Generated: 2026-09-20 00:05:32 GMT+07:00
+App Version: 2.3.0 (20350)
+Scrcpy Server: 4.0
+Manufacturer: Google
+Model: Pixel 8
+Device: shiba
+Product: shiba
+Android Version: 17 (API 37)
+ROM Build: CP3A.260905.009
+ROM Incremental: 16091614
+ROM Fingerprint: google/shiba/shiba:17/CP3A.260905.009/16091614:user/release-keys
+Device Country Iso Estimation: th
+--- Configuration ---
+Privileged mode: SHIZUKU
+Shizuku manager: moe.shizuku.privileged.api
+Record phone calls: on
+Auto-record incoming: on
+Auto-record outgoing: on
+Resilient recording (handoff): off
+VoIP recording: off
+VoIP auto-start: off
+Offline recording (loopback): off
+Audio source: voice-call
+Ignore anonymous incoming: off
+Ignore cross-country in/out: off/off
+Storage target: LOCAL
+--- Recorder ---
+Binder connected: true
+Host uid: 2000
+--- Shizuku ---
+Status: READY
+Capture path: scrcpy (a Shizuku-hosted process cannot start an AudioRecord)
+Not available in this mode: resilient recording, VoIP, offline recording, speaker attribution
+===========================================
+
+Recorder host lines: 6, merged in below by timestamp
+===========================================
+
+--- Setup journal (always on; the first run, kept as it happened) ---
+=== CallVault setup journal — restarted after the log was deleted ===
+2026-09-20 00:04:45.963 [I] CV:RecorderBackend: Leaving Shizuku mode; releasing the user service
+2026-09-20 00:04:45.967 [I] CV:RecorderConn: A previous recorder's binder died; the current one is alive - keeping it
+2026-09-20 00:04:46.015 [W] CV:RecorderConn: Daemon binder died; clearing RecorderConnection
+2026-09-20 00:04:46.026 [W] CV:ShizukuBackend: Shizuku's recorder service disconnected
+2026-09-20 00:04:46.068 [I] CV:RecorderBackend: Previous recorder is gone; starting the STANDALONE backend
+2026-09-20 00:04:46.071 [I] CV:RecorderBackend: Turned back on (supported again in STANDALONE): VOIP_RECORDING
+2026-09-20 00:04:46.072 [I] CV:RecorderBackend: Privileged mode is now STANDALONE
+2026-09-20 00:04:46.076 [D] CV:AdbMdns: Discovering _adb-tls-connect._tcp
+2026-09-20 00:04:46.138 [D] CV:AdbMdns: Found adb-39021FDJH0010H-0UyKRF (_adb-tls-connect._tcp); resolving
+2026-09-20 00:04:46.149 [I] CV:AdbMdns: Accepted adb-39021FDJH0010H-0UyKRF at 192.168.1.107:44347
+2026-09-20 00:04:46.179 [D] CV:AdbShell: Wireless debugging :44347 unavailable (unarmed/refused): ADB pairing is required.
+2026-09-20 00:04:46.181 [W] CV:RecorderLauncher: Attempt 1/3: ADB not connected; retrying
+2026-09-20 00:04:46.184 [D] CV:AdbMdns: Discovering _adb-tls-connect._tcp
+2026-09-20 00:04:46.193 [D] CV:AdbMdns: Found adb-39021FDJH0010H-0UyKRF (_adb-tls-connect._tcp); resolving
+2026-09-20 00:04:46.211 [I] CV:AdbMdns: Accepted adb-39021FDJH0010H-0UyKRF at 192.168.1.107:44347
+2026-09-20 00:04:46.256 [D] CV:AdbShell: Wireless debugging :44347 unavailable (unarmed/refused): ADB pairing is required.
+2026-09-20 00:04:46.257 [W] CV:RecorderLauncher: Attempt 2/3: ADB not connected; retrying
+2026-09-20 00:04:46.259 [D] CV:AdbMdns: Discovering _adb-tls-connect._tcp
+2026-09-20 00:04:46.271 [D] CV:AdbMdns: Found adb-39021FDJH0010H-0UyKRF (_adb-tls-connect._tcp); resolving
+2026-09-20 00:04:46.278 [I] CV:AdbMdns: Accepted adb-39021FDJH0010H-0UyKRF at 192.168.1.107:44347
+2026-09-20 00:04:46.310 [D] CV:AdbShell: Wireless debugging :44347 unavailable (unarmed/refused): ADB pairing is required.
+2026-09-20 00:04:46.311 [W] CV:RecorderLauncher: Attempt 3/3: ADB not connected; retrying
+2026-09-20 00:04:46.312 [W] CV:RecorderLauncher: ensureServerRunning gave up after 3 attempts; connected=false
+2026-09-20 00:04:46.313 [D] CV:AdbShell: ADB user done: the daemon launch (last=true)
+2026-09-20 00:04:46.315 [I] CV:AdbShell: Leaving Wireless debugging on after the daemon launch: the user switched it on, not us
+2026-09-20 00:04:46.319 [I] CV:RecorderBackend: Switch to STANDALONE complete: connected=false voipArmed=false
+2026-09-20 00:05:11.375 [I] CV:RecorderBackend: Leaving standalone mode; stopping our daemon
+2026-09-20 00:05:11.377 [I] CV:RecorderBackend: Previous recorder is gone; starting the SHIZUKU backend
+2026-09-20 00:05:11.383 [I] CV:RecorderBackend: Turned off (unsupported in SHIZUKU): VOIP_RECORDING
+2026-09-20 00:05:11.384 [I] CV:RecorderBackend: Privileged mode is now SHIZUKU
+2026-09-20 00:05:11.756 [I] CV:ShizukuBackend: Shizuku started the recorder service
+2026-09-20 00:05:11.756 [I] CV:RecorderConn: RecorderConnection received daemon binder
+=== a recorder connected; setup finished [journal-end] ===
+===========================================
+
+2026-09-20 00:04:35.589 [I] CV:SystemLog: Logcat ring was 256 KiB; growing to 8M
+2026-09-20 00:04:45.963 [I] CV:RecorderBackend: Leaving Shizuku mode; releasing the user service
+2026-09-20 00:04:45.967 [I] CV:RecorderConn: A previous recorder's binder died; the current one is alive - keeping it
+2026-09-20 00:04:46.015 [W] CV:RecorderConn: Daemon binder died; clearing RecorderConnection
+2026-09-20 00:04:46.026 [W] CV:ShizukuBackend: Shizuku's recorder service disconnected
+2026-09-20 00:04:46.068 [I] CV:RecorderBackend: Previous recorder is gone; starting the STANDALONE backend
+2026-09-20 00:04:46.071 [I] CV:RecorderBackend: Turned back on (supported again in STANDALONE): VOIP_RECORDING
+2026-09-20 00:04:46.072 [I] CV:RecorderBackend: Privileged mode is now STANDALONE
+2026-09-20 00:04:46.076 [D] CV:AdbMdns: Discovering _adb-tls-connect._tcp
+2026-09-20 00:04:46.138 [D] CV:AdbMdns: Found adb-39021FDJH0010H-0UyKRF (_adb-tls-connect._tcp); resolving
+2026-09-20 00:04:46.149 [I] CV:AdbMdns: Accepted adb-39021FDJH0010H-0UyKRF at 192.168.1.107:44347
+2026-09-20 00:04:46.179 [D] CV:AdbShell: Wireless debugging :44347 unavailable (unarmed/refused): ADB pairing is required.
+2026-09-20 00:04:46.181 [W] CV:RecorderLauncher: Attempt 1/3: ADB not connected; retrying
+2026-09-20 00:04:46.184 [D] CV:AdbMdns: Discovering _adb-tls-connect._tcp
+2026-09-20 00:04:46.193 [D] CV:AdbMdns: Found adb-39021FDJH0010H-0UyKRF (_adb-tls-connect._tcp); resolving
+2026-09-20 00:04:46.211 [I] CV:AdbMdns: Accepted adb-39021FDJH0010H-0UyKRF at 192.168.1.107:44347
+2026-09-20 00:04:46.256 [D] CV:AdbShell: Wireless debugging :44347 unavailable (unarmed/refused): ADB pairing is required.
+2026-09-20 00:04:46.257 [W] CV:RecorderLauncher: Attempt 2/3: ADB not connected; retrying
+2026-09-20 00:04:46.259 [D] CV:AdbMdns: Discovering _adb-tls-connect._tcp
+2026-09-20 00:04:46.271 [D] CV:AdbMdns: Found adb-39021FDJH0010H-0UyKRF (_adb-tls-connect._tcp); resolving
+2026-09-20 00:04:46.278 [I] CV:AdbMdns: Accepted adb-39021FDJH0010H-0UyKRF at 192.168.1.107:44347
+2026-09-20 00:04:46.310 [D] CV:AdbShell: Wireless debugging :44347 unavailable (unarmed/refused): ADB pairing is required.
+2026-09-20 00:04:46.311 [W] CV:RecorderLauncher: Attempt 3/3: ADB not connected; retrying
+2026-09-20 00:04:46.312 [W] CV:RecorderLauncher: ensureServerRunning gave up after 3 attempts; connected=false
+2026-09-20 00:04:46.313 [D] CV:AdbShell: ADB user done: the daemon launch (last=true)
+2026-09-20 00:04:46.315 [I] CV:AdbShell: Leaving Wireless debugging on after the daemon launch: the user switched it on, not us
+2026-09-20 00:04:46.319 [I] CV:RecorderBackend: Switch to STANDALONE complete: connected=false voipArmed=false
+2026-09-20 00:05:11.375 [I] CV:RecorderBackend: Leaving standalone mode; stopping our daemon
+2026-09-20 00:05:11.377 [I] CV:RecorderBackend: Previous recorder is gone; starting the SHIZUKU backend
+2026-09-20 00:05:11.383 [I] CV:RecorderBackend: Turned off (unsupported in SHIZUKU): VOIP_RECORDING
+2026-09-20 00:05:11.384 [I] CV:RecorderBackend: Privileged mode is now SHIZUKU
+2026-09-20 00:05:11.756 [I] CV:ShizukuBackend: Shizuku started the recorder service
+2026-09-20 00:05:11.756 [I] CV:RecorderConn: RecorderConnection received daemon binder
+2026-09-20 00:05:11.758 [I] CV:RecorderServer: Diagnostics ring enabled in the recorder host
+2026-09-20 00:05:11.760 [I] CV:RecorderServer: recorder host identity: uid=2000 pid=19660 opPackage=<none> groups=[gid1004,gid1007,gid1011,gid1015,gid1028,gid1078,gid1079,gid3001,gid3002,gid3003,gid3006,gid3009,gid3011,gid3012] context=u:r:shell:s0 
+2026-09-20 00:05:12.158 [D] CV:RecorderServer: No other recorder processes to clear
+2026-09-20 00:05:12.160 [I] CV:RecorderBackend: Switch to SHIZUKU complete: connected=true voipArmed=true
+2026-09-20 00:05:16.635 [I] CV:RetentionScheduler: Retention sweep cancelled (no age period and no size cap).
+2026-09-20 00:05:16.636 [I] CV:SyncScheduler: Periodic sweep cancelled (target=LOCAL mode=IMMEDIATE).
+2026-09-20 00:05:16.653 [I] CV:DaemonKeepAlive: Shizuku mode: not starting the keep-alive; Shizuku owns the recorder
+2026-09-20 00:05:16.660 [I] CV:ShizukuBackend: Shizuku started the recorder service
+2026-09-20 00:05:16.661 [I] CV:RecorderConn: RecorderConnection received daemon binder
+2026-09-20 00:05:16.661 [I] CV:RecorderServer: Diagnostics ring enabled in the recorder host
+2026-09-20 00:05:16.662 [I] CV:RecorderServer: recorder host identity: uid=2000 pid=19660 opPackage=<none> groups=[gid1004,gid1007,gid1011,gid1015,gid1028,gid1078,gid1079,gid3001,gid3002,gid3003,gid3006,gid3009,gid3011,gid3012] context=u:r:shell:s0 
+2026-09-20 00:05:16.685 [I] CV:AdbShell: WRITE_SECURE_SETTINGS missing; healing over live transport (WD/loopback already up)
+2026-09-20 00:05:16.695 [D] CV:AdbMdns: Discovering _adb-tls-connect._tcp
+2026-09-20 00:05:16.700 [I] CV:AdbShell: WRITE_SECURE_SETTINGS missing; healing over live transport (WD/loopback already up)
+2026-09-20 00:05:16.762 [D] CV:AdbMdns: Found adb-39021FDJH0010H-0UyKRF (_adb-tls-connect._tcp); resolving
+2026-09-20 00:05:16.768 [I] CV:AdbMdns: Accepted adb-39021FDJH0010H-0UyKRF at 192.168.1.107:44347
+2026-09-20 00:05:16.786 [D] CV:AdbShell: Wireless debugging :44347 unavailable (unarmed/refused): ADB pairing is required.
+2026-09-20 00:05:16.787 [W] CV:AdbShell: WRITE_SECURE_SETTINGS heal did NOT land (ADB connect/grant failed); recording still works while the daemon is warm
+2026-09-20 00:05:16.787 [D] CV:AdbMdns: Discovering _adb-tls-connect._tcp
+2026-09-20 00:05:16.791 [D] CV:AdbMdns: Found adb-39021FDJH0010H-0UyKRF (_adb-tls-connect._tcp); resolving
+2026-09-20 00:05:16.799 [I] CV:AdbMdns: Accepted adb-39021FDJH0010H-0UyKRF at 192.168.1.107:44347
+2026-09-20 00:05:16.822 [D] CV:AdbShell: Wireless debugging :44347 unavailable (unarmed/refused): ADB pairing is required.
+2026-09-20 00:05:16.823 [W] CV:AdbShell: WRITE_SECURE_SETTINGS heal did NOT land (ADB connect/grant failed); recording still works while the daemon is warm
+2026-09-20 00:05:16.825 [I] CV:RecordingsRepo: Listed 0 recordings in 0ms (0 duration probe(s))
+2026-09-20 00:05:16.858 [I] CV:RecordingsRepo: Listed 0 recordings in 0ms (0 duration probe(s))
+2026-09-20 00:05:17.061 [D] CV:RecorderServer: No other recorder processes to clear
