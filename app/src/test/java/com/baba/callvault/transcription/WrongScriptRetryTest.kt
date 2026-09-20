@@ -119,4 +119,36 @@ class WrongScriptRetryTest {
 
         assertTrue(outcome.exceptionOrNull() is kotlinx.coroutines.CancellationException)
     }
+
+    @Test
+    fun `a fallback with a third alphabet in it is passed over for a clean one`() = runBlocking<Unit> {
+        // Measured on the OP12, 2026-09-20 16:07: the first fallback recovered Hebrew but wrote
+        // "זה 1 Behindração שת달ים" where "זה 1 פלוס 12" was said. Mostly Hebrew, so it passed — with a
+        // Korean letter in the middle of it. A letter from neither the pinned alphabet nor Latin is never
+        // a loanword; it is whisper coming apart.
+        val english = said("God, God, God is 1 plus 12.")
+        val dirty = said("בדיקה, בדיקה, בדיקה, זה 1 Behindração שת달ים.")
+        val clean = said("בדיקה, בדיקה, בדיקה זה 1 פלוס 12.")
+        var calls = 0
+
+        val chosen = WrongScriptRetry.recover(english, "he") { if (++calls == 1) dirty else clean }
+
+        assertEquals(clean, chosen)
+    }
+
+    @Test
+    fun `a dirty recovery still beats the wrong language when nothing clean turns up`() = runBlocking<Unit> {
+        val english = said("God, God, God is 1 plus 12.")
+        val dirty = said("בדיקה, בדיקה, בדיקה, זה 1 Behindração שת달ים.")
+
+        val chosen = WrongScriptRetry.recover(english, "he") { dirty }
+
+        assertEquals(dirty, chosen)
+    }
+
+    @Test
+    fun `latin words inside the pinned language are not dirt`() {
+        assertFalse(WrongScriptRetry.hasStrayScript(said("בדיקה זה OnePlus 12, OK?"), "he"))
+        assertTrue(WrongScriptRetry.hasStrayScript(said("בדיקה זה 1 שת달ים"), "he"))
+    }
 }

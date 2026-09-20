@@ -80,6 +80,23 @@ object WrongScriptRetry {
         return inExpected < MIN_EXPECTED_FRACTION * letters.size
     }
 
+    /**
+     * Whether the transcript carries letters from a THIRD alphabet — neither the pinned language's nor
+     * Latin. Latin inside Hebrew is a brand name; Korean inside Hebrew is whisper coming apart. Measured
+     * on the OP12: a fallback that recovered Hebrew wrote "זה 1 Behindração שת달ים" for "זה 1 פלוס 12".
+     */
+    fun hasStrayScript(segments: List<TranscriptSegment>, language: String?): Boolean {
+        if (language == null || !LanguageScript.isNonLatin(language)) return false
+        val expected = LanguageScript.of(language)
+        return segments.any { segment ->
+            segment.text.codePoints().anyMatch { point ->
+                Character.isLetter(point) && Character.UnicodeScript.of(point).let {
+                    it != expected && it != Character.UnicodeScript.LATIN && it != Character.UnicodeScript.COMMON
+                }
+            }
+        }
+    }
+
     fun shouldRetry(segments: List<TranscriptSegment>, language: String?, audioMs: Long): Boolean =
         // A KNOWN length inside the limit. Unknown is not "short": a container that declares no duration
         // can be an hour long, and tripling that on a guess is the one way this could make a run worse.
@@ -96,6 +113,9 @@ object WrongScriptRetry {
         language: String?,
         decode: suspend (DecodeSettings) -> List<TranscriptSegment>,
     ): List<TranscriptSegment> {
+        // The first CLEAN recovery wins. One that is in the right alphabet but carries a third one is
+        // kept in hand and only used if nothing clean turns up: it still beats the wrong language.
+        var dirty: List<TranscriptSegment>? = null
         FALLBACKS.forEach { settings ->
             val again = runCatching { decode(settings) }
                 .onFailure {
@@ -105,11 +125,22 @@ object WrongScriptRetry {
                     AppLogger.w(TAG, "Retry with $settings failed: ${it.message}")
                 }
                 .getOrNull() ?: return@forEach
-            if (again.isNotEmpty() && !isWrongScript(again, language)) {
-                AppLogger.i(TAG, "Recovered the pinned language ($language) with $settings")
-                return again
+            when {
+                again.isEmpty() || isWrongScript(again, language) ->
+                    AppLogger.i(TAG, "Still the wrong script with $settings")
+                hasStrayScript(again, language) -> {
+                    AppLogger.i(TAG, "Right script but a stray alphabet in it with $settings; looking for a clean one")
+                    dirty = dirty ?: again
+                }
+                else -> {
+                    AppLogger.i(TAG, "Recovered the pinned language ($language) with $settings")
+                    return again
+                }
             }
-            AppLogger.i(TAG, "Still the wrong script with $settings")
+        }
+        dirty?.let {
+            AppLogger.w(TAG, "No clean recovery of $language; keeping the first one in the right script")
+            return it
         }
         AppLogger.w(TAG, "No fallback recovered $language; keeping the first transcript")
         return first
