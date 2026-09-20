@@ -78,3 +78,20 @@ reader for both the buffer and the chunked path — offers a cut at every VAD se
 Not measured: a long real call; a chunked (multi-pass) call; built-in mode, where the turns come from the
 live capture rather than the file; what `token_timestamps` costs in time (this run: 31 s for 16 s of
 audio, the same as before it, but one run is not a measurement).
+
+## One row per turn (added 2026-09-20 15:08, 🧪 VERIFYING)
+
+✅ The maintainer confirmed the cut itself on the OP9 the same afternoon: "the labels are perfect and the
+transcription looks good" (12:25 and 11:52 calls). He then pointed at the opposite problem on the 11:52
+call: seven short sentences for two turns — the contact's name three times, "You" twice, and **the last two
+rows with no name at all**. "It would have made much more sense that 0:04-0:08 is one line and 0:15-0:22
+another."
+
+`SpeakerTurnLines.merge` runs after the cut: rows are joined while no handover sits between them (an
+unnamed row goes with the speaker before it), the pause between them is ≤ 1 s, and the joined row stays
+≤ 30 s. No speaker data → untouched. The unnamed rows were the morning's voice-bleed problem on short
+rows; joined into their turn they are named.
+
+Measured on the OP9, same 11:52 recording: `Produced 7 segments` → `Laid 7 segment(s) out as 2 row(s),
+one per turn`. The 1 s and 30 s numbers are judgement, not measurement — a real conversation is what will
+show whether they are right.
