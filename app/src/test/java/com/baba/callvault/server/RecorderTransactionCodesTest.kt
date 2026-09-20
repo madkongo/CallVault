@@ -55,6 +55,7 @@ class RecorderTransactionCodesTest {
         assertEquals(first + 22, IRecorderService.Stub.TRANSACTION_diagnosticDump)
         // Appended for issue #28b's overrun counter.
         assertEquals(first + 23, IRecorderService.Stub.TRANSACTION_captureDiagnostics)
+        assertEquals(first + 24, IRecorderService.Stub.TRANSACTION_hostApkPath)
     }
 
     @Test
