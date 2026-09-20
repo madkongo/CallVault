@@ -62,6 +62,28 @@ class SpeakerTurnDetector(sampleRate: Int) {
     }
 
     /**
+     * Accumulates [length] samples of interleaved stereo PCM-16 held as shorts.
+     *
+     * The live capture reads bytes from an AudioRecord; a file read back through `AudioDecoder` is
+     * already shorts. Converting one to the other would allocate a copy of every chunk, which on a
+     * whole-call single pass is tens of megabytes at the moment memory is tightest.
+     *
+     * [StereoSeparationMeterTest] pins that the two doors agree on the same audio.
+     */
+    fun accept(pcm: ShortArray, length: Int) {
+        val limit = min(length, pcm.size)
+        var index = 0
+
+        while (index + SAMPLES_PER_FRAME <= limit) {
+            sumLeft += abs(pcm[index].toInt())
+            sumRight += abs(pcm[index + 1].toInt())
+            index += SAMPLES_PER_FRAME
+
+            if (++framesInWindow == framesPerWindow) closeWindow()
+        }
+    }
+
+    /**
      * Ends the recording and returns the turns, oldest first.
      *
      * Empty when no audio was ever offered — which is exactly what a mono capture produces, and what
@@ -115,6 +137,9 @@ class SpeakerTurnDetector(sampleRate: Int) {
     private companion object {
         /** How finely a turn boundary is placed. Finer costs storage and buys nothing legible. */
         const val WINDOW_MS = 100L
+
+        /** Samples per stereo frame — one left, one right. */
+        const val SAMPLES_PER_FRAME = 2
 
         /** Mean |sample| below which a channel counts as quiet (PCM-16 full scale is 32767). */
         const val SILENCE_FLOOR = 300L

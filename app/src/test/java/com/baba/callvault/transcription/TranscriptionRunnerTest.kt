@@ -72,7 +72,7 @@ class TranscriptionRunnerTest {
         // One undecodable file must not stall a whole night's backlog.
         catalogued("bad.ogg")
         catalogued("good.ogg")
-        val runner = TranscriptionRunner(context) { _, uri, _, _, _ ->
+        val runner = TranscriptionRunner(context) { _, uri, _, _, _, _ ->
             if (uri.toString().contains("bad")) error("cannot decode")
             listOf(TranscriptSegment(0, 1, "fine"))
         }
@@ -92,7 +92,7 @@ class TranscriptionRunnerTest {
         // the ones it already paid for.
         catalogued("already.ogg")
         var calls = 0
-        val runner = TranscriptionRunner(context) { _, _, _, _, _ ->
+        val runner = TranscriptionRunner(context) { _, _, _, _, _, _ ->
             calls++
             listOf(TranscriptSegment(0, 1, "first pass"))
         }
@@ -112,7 +112,7 @@ class TranscriptionRunnerTest {
         catalogued("one.ogg")
         catalogued("two.ogg")
         var calls = 0
-        val runner = TranscriptionRunner(context) { _, _, _, _, _ ->
+        val runner = TranscriptionRunner(context) { _, _, _, _, _, _ ->
             calls++
             listOf(TranscriptSegment(0, 1, "x"))
         }
@@ -147,7 +147,7 @@ class TranscriptionRunnerTest {
     fun skips_a_recording_that_has_vanished_from_the_catalog() = runBlocking {
         // Deleted between being queued and being reached. Nothing to decode, and nothing to record.
         var calls = 0
-        val runner = TranscriptionRunner(context) { _, _, _, _, _ ->
+        val runner = TranscriptionRunner(context) { _, _, _, _, _, _ ->
             calls++
             emptyList()
         }
@@ -168,7 +168,7 @@ class TranscriptionRunnerTest {
         // Removing the row is the honest state: the row offers "Transcribe" again, and a recording
         // with no transcript row is exactly what the queue considers pending.
         catalogued("stopped.ogg")
-        val runner = TranscriptionRunner(context) { _, _, _, _, _ ->
+        val runner = TranscriptionRunner(context) { _, _, _, _, _, _ ->
             throw kotlinx.coroutines.CancellationException("stopped")
         }
 
@@ -199,7 +199,7 @@ class TranscriptionRunnerTest {
         // only reliable signal.
         catalogued("interrupted.ogg")
         var stopping = false
-        val runner = TranscriptionRunner(context) { _, _, _, _, _ ->
+        val runner = TranscriptionRunner(context) { _, _, _, _, _, _ ->
             stopping = true                       // the worker has been told to stop…
             error("interrupted")                  // …and the native call dies with an ordinary error
         }
@@ -227,7 +227,7 @@ class TranscriptionRunnerTest {
         catalogued("aborted.ogg")
         val runner = TranscriptionRunner(
             context,
-            transcriber = { _, _, _, _, _ -> listOf(TranscriptSegment(0, 1000, "only the first bit")) },
+            transcriber = { _, _, _, _, _, _ -> listOf(TranscriptSegment(0, 1000, "only the first bit")) },
             wasAborted = { true }
         )
 
@@ -250,7 +250,7 @@ class TranscriptionRunnerTest {
         catalogued("raced.ogg")
         val runner = TranscriptionRunner(
             context,
-            transcriber = { _, _, _, _, _ -> error("decode stopped") },
+            transcriber = { _, _, _, _, _, _ -> error("decode stopped") },
             wasAborted = { true }
         )
 
@@ -281,6 +281,61 @@ class TranscriptionRunnerTest {
     }
 
     @Test
+    fun labels_segments_from_turns_the_decode_itself_produced() = runBlocking {
+        // Issue #38: a Shizuku recording has no turns from the capture -- scrcpy encodes inside its own
+        // process, so the raw channels are never seen. They are worked out from the transcription's own
+        // decode instead, and this pins the ORDER that makes that usable.
+        //
+        // ⚠️ The first version stored them after the segments were written. The turns landed in the
+        // database and every segment came out unlabelled -- right data, too late to be used. Measured
+        // on the OP9 on 2026-09-20: 31 turns stored, 0 segments labelled, and nothing looked broken.
+        catalogued("shizuku.ogg")
+        // No storeTurns() here on purpose: the capture gave nothing, exactly as in Shizuku mode.
+        val runner = TranscriptionRunner(
+            context,
+            transcriber = { _, _, _, _, _, speakers ->
+                // Stand in for the decode: one side talks, then the other, as decodeRange would offer it.
+                speakers?.accept(stereoChunk(ms = 600, left = 0.5, right = 0.0), 57_600, 2, 48_000, 0L)
+                speakers?.accept(stereoChunk(ms = 600, left = 0.0, right = 0.5), 57_600, 2, 48_000, 600L)
+                listOf(TranscriptSegment(0, 500, "שלום"), TranscriptSegment(700, 1100, "היי"))
+            },
+        )
+
+        runner.runBatch(MODEL_ID, MODEL_PATH, LANGUAGE, listOf("shizuku.ogg"))
+
+        assertEquals(listOf("A", "B"), transcript("shizuku.ogg")!!.segments.map { it.speaker })
+    }
+
+    @Test
+    fun a_mono_recording_still_stores_unlabelled_segments() = runBlocking {
+        // Every standalone recording is mono and goes through the same path. It must produce no labels
+        // and no noise -- not an error, and not a stored row of nothings.
+        catalogued("mono.ogg")
+        val runner = TranscriptionRunner(
+            context,
+            transcriber = { _, _, _, _, _, speakers ->
+                speakers?.accept(ShortArray(48_000) { 6_000 }, 48_000, 1, 48_000, 0L)
+                listOf(TranscriptSegment(0, 1500, "שלום"))
+            },
+        )
+
+        runner.runBatch(MODEL_ID, MODEL_PATH, LANGUAGE, listOf("mono.ogg"))
+
+        assertEquals(listOf(null), transcript("mono.ogg")!!.segments.map { it.speaker })
+    }
+
+    /** Interleaved stereo PCM-16 at a fixed level per channel, as the decoder hands it over. */
+    private fun stereoChunk(ms: Int, left: Double, right: Double): ShortArray {
+        val frames = 48_000 * ms / 1000
+        val out = ShortArray(frames * 2)
+        for (i in 0 until frames) {
+            out[i * 2] = (left * Short.MAX_VALUE).toInt().toShort()
+            out[i * 2 + 1] = (right * Short.MAX_VALUE).toInt().toShort()
+        }
+        return out
+    }
+
+    @Test
     fun stores_unlabelled_segments_when_the_capture_recorded_no_turns() = runBlocking {
         // A mono capture, a daemon too old to report turns, or any call recorded before speaker
         // tracking existed. Unlabelled is the ordinary case, not a failure.
@@ -302,7 +357,7 @@ class TranscriptionRunnerTest {
         val runner = TranscriptionRunner(
             context,
             audioDurationMs = { OVER_THE_LIMIT_MS },
-            transcriber = { _, _, _, _, _ ->
+            transcriber = { _, _, _, _, _, _ ->
                 calls++
                 emptyList()
             }
@@ -327,7 +382,7 @@ class TranscriptionRunnerTest {
         val runner = TranscriptionRunner(
             context,
             audioDurationMs = { OVER_THE_LIMIT_MS },
-            transcriber = { _, _, _, _, _ -> emptyList() }
+            transcriber = { _, _, _, _, _, _ -> emptyList() }
         )
 
         // Act
@@ -346,7 +401,7 @@ class TranscriptionRunnerTest {
         val runner = TranscriptionRunner(
             context,
             audioDurationMs = { UNKNOWN_LENGTH_MS },
-            transcriber = { _, _, _, _, _ -> listOf(TranscriptSegment(0, 1000, "שלום")) }
+            transcriber = { _, _, _, _, _, _ -> listOf(TranscriptSegment(0, 1000, "שלום")) }
         )
 
         runner.runBatch(MODEL_ID, MODEL_PATH, LANGUAGE, listOf("undated.ogg"))
@@ -361,7 +416,7 @@ class TranscriptionRunnerTest {
         val runner = TranscriptionRunner(
             context,
             audioDurationMs = { UNDER_THE_LIMIT_MS },
-            transcriber = { _, _, _, _, _ -> listOf(TranscriptSegment(0, 1000, "שלום")) }
+            transcriber = { _, _, _, _, _, _ -> listOf(TranscriptSegment(0, 1000, "שלום")) }
         )
 
         runner.runBatch(MODEL_ID, MODEL_PATH, LANGUAGE, listOf("ordinary.ogg"))
@@ -397,7 +452,7 @@ class TranscriptionRunnerTest {
         // retryable, and a retry needs the file.
         val name = transcribeOnlyName()
         catalogued(name)
-        val runner = TranscriptionRunner(context) { _, _, _, _, _ -> error("cannot decode") }
+        val runner = TranscriptionRunner(context) { _, _, _, _, _, _ -> error("cannot decode") }
 
         runner.runBatch(MODEL_ID, MODEL_PATH, LANGUAGE, listOf(name))
 
@@ -416,7 +471,7 @@ class TranscriptionRunnerTest {
         catalogued(name)
         val runner = TranscriptionRunner(
             context,
-            transcriber = { _, _, _, _, _ -> listOf(TranscriptSegment(0, 1000, "only the first bit")) },
+            transcriber = { _, _, _, _, _, _ -> listOf(TranscriptSegment(0, 1000, "only the first bit")) },
             wasAborted = { true },
         )
 
@@ -436,7 +491,7 @@ class TranscriptionRunnerTest {
         val runner = TranscriptionRunner(
             context,
             audioDurationMs = { OVER_THE_LIMIT_MS },
-            transcriber = { _, _, _, _, _ -> emptyList() },
+            transcriber = { _, _, _, _, _, _ -> emptyList() },
         )
 
         runner.runBatch(MODEL_ID, MODEL_PATH, LANGUAGE, listOf(name))
@@ -472,7 +527,7 @@ class TranscriptionRunnerTest {
         val runner = TranscriptionRunner(
             context,
             onFinished = { name, outcome -> reported += name to outcome },
-            transcriber = { _, _, _, _, _ -> listOf(TranscriptSegment(0, 1000, "שלום")) },
+            transcriber = { _, _, _, _, _, _ -> listOf(TranscriptSegment(0, 1000, "שלום")) },
         )
 
         runner.runBatch(MODEL_ID, MODEL_PATH, LANGUAGE, listOf("said.ogg"))
@@ -490,7 +545,7 @@ class TranscriptionRunnerTest {
         val runner = TranscriptionRunner(
             context,
             onFinished = { name, outcome -> reported += name to outcome },
-            transcriber = { _, _, _, _, _ -> error("cannot decode") },
+            transcriber = { _, _, _, _, _, _ -> error("cannot decode") },
         )
 
         runner.runBatch(MODEL_ID, MODEL_PATH, LANGUAGE, listOf("broken.ogg"))
@@ -508,7 +563,7 @@ class TranscriptionRunnerTest {
         val runner = TranscriptionRunner(
             context,
             onFinished = { n, outcome -> reported += n to outcome },
-            transcriber = { _, _, _, _, _ -> listOf(TranscriptSegment(0, 1000, "שלום")) },
+            transcriber = { _, _, _, _, _, _ -> listOf(TranscriptSegment(0, 1000, "שלום")) },
         )
 
         runner.runBatch(MODEL_ID, MODEL_PATH, LANGUAGE, listOf(name))
@@ -526,7 +581,7 @@ class TranscriptionRunnerTest {
             context,
             audioDurationMs = { OVER_THE_LIMIT_MS },
             onFinished = { name, _ -> reported += name },
-            transcriber = { _, _, _, _, _ -> emptyList() },
+            transcriber = { _, _, _, _, _, _ -> emptyList() },
         )
 
         runner.runBatch(MODEL_ID, MODEL_PATH, LANGUAGE, listOf("marathon2.ogg"))
@@ -543,7 +598,7 @@ class TranscriptionRunnerTest {
         val runner = TranscriptionRunner(
             context,
             onFinished = { _, _ -> error("no notification manager") },
-            transcriber = { _, _, _, _, _ -> listOf(TranscriptSegment(0, 1000, "שלום")) },
+            transcriber = { _, _, _, _, _, _ -> listOf(TranscriptSegment(0, 1000, "שלום")) },
         )
 
         val transcribed = runner.runBatch(MODEL_ID, MODEL_PATH, LANGUAGE, listOf("noisy.ogg"))
@@ -577,7 +632,7 @@ class TranscriptionRunnerTest {
     }
 
     private fun runnerReturning(segments: List<TranscriptSegment>) =
-        TranscriptionRunner(context) { _, _, _, _, _ -> segments }
+        TranscriptionRunner(context) { _, _, _, _, _, _ -> segments }
 
     private suspend fun catalogued(name: String) {
         RecordingCatalog.recordLocal(context, name, "content://local/$name".toUri(), 10L, 100L)

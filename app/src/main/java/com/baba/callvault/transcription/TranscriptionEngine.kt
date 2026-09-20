@@ -12,6 +12,7 @@ import android.content.Context
 import android.net.Uri
 import android.os.SystemClock
 import androidx.annotation.VisibleForTesting
+import com.baba.callvault.server.speakers.OfflineSpeakerLabeller
 import com.baba.callvault.utils.AppLogger
 import kotlinx.coroutines.asCoroutineDispatcher
 import kotlinx.coroutines.withContext
@@ -264,7 +265,13 @@ object TranscriptionEngine {
          * How to decode. Overridden only by the instrumented benchmark, which measures variants of
          * it against each other — see [DecodeSettings] for what each field costs and buys.
          */
-        settings: DecodeSettings = DecodeSettings.DEFAULT
+        settings: DecodeSettings = DecodeSettings.DEFAULT,
+        /**
+         * Offered every decoded chunk before the mono downmix, so who-spoke can be worked out from the
+         * decode this call is already doing (issue #38). Null for none — which is what a caller that
+         * does not want speaker labels passes, and what every test passes.
+         */
+        speakers: OfflineSpeakerLabeller? = null,
     ): List<TranscriptSegment> = withContext(dispatcher) {
         abortRequested.set(false)
         // Set before the decode, not after: decoding the audio is itself minutes of CPU on a long
@@ -322,6 +329,15 @@ object TranscriptionEngine {
                     context, uri,
                     fromMs = if (singlePass) 0L else chunk.decodeFromMs,
                     toMs = if (singlePass || chunk.endMs <= 0L) Long.MAX_VALUE else chunk.endMs,
+                    // Wrapped: speaker labels are a bonus on top of a transcript, and nothing about
+                    // them is worth losing the transcript for.
+                    onInterleaved = speakers?.let { labeller ->
+                        { pcm, length, channels, rate, startMs ->
+                            runCatching { labeller.accept(pcm, length, channels, rate, startMs) }
+                                .onFailure { AppLogger.w(TAG, "speaker labelling skipped this chunk: ${it.message}") }
+                            Unit
+                        }
+                    },
                 ) { abortRequested.get() }
 
                 // The number that would have caught the first failure without a benchmark: where the

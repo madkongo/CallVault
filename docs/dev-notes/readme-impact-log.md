@@ -453,3 +453,17 @@ The group link was replaced with `https://t.me/+GmXjAcXxXh42Y2I8` at the maintai
 **two** places, because the invite is not only a README claim: `README.md:190` and
 `SystemIntentHelpers.TELEGRAM_GROUP_URL`, which is what the hub's Telegram card and its top-bar shortcut
 open. Pushed to GitHub `main` as `ceaea29e` on 2026-09-19 (README only; the app constant ships with 2.4.0).
+
+## 2026-09-20 — Shizuku recordings now get speaker labels (#38), merged to `main`, unreleased (2.4.1)
+
+✅ VERIFIED 2026-09-20 by the maintainer on the OP9. Ships in 2.4.1; nothing public changes until then.
+
+- **README:** grepped for Shizuku + speaker/label claims — it makes none, so nothing to correct.
+- **🚨 The app itself now says something false.** `mode_switch_ready_shizuku` (shown after switching to
+  Shizuku mode) reads "VoIP calls, resilient recording and **speaker names** are not available in this
+  mode." Speaker names now are. The string exists in **11 locales**, so it was NOT changed in the merge —
+  it needs rewording and re-translating before 2.4.1 ships. VoIP and resilient recording remain true.
+- **Still true, unchanged:** Shizuku mode has no VoIP capture and no resilient recording.
+- Also noticed: `CHANGELOG.md` still heads the shipped release as "[2.4.0] — unreleased" although `v2.4.0`
+  is tagged. Left alone; it wants the real release date.
+

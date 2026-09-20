@@ -1938,7 +1938,22 @@ which CallVault is a fork of — into CallVault, so they sit in the same list an
 and whether a "find recordings in my folder that aren't in the list" action would serve ShizuCallRecorder users more
 cheaply than a picker. Related: #36, which would let an import carry its own metadata.
 
-## Speaker labels for Shizuku recordings (issue #38)
+## Speaker labels for Shizuku recordings (issue #38) — ✅ VERIFIED 2026-09-20
+
+**✅ VERIFIED 2026-09-20 by the maintainer on the OP9** (Shizuku mode, real carrier call, branch
+`feat/shizuku-speaker-labels`, not merged or released): after "Transcribe again" on the 11:52 call, both
+lines carry a speaker label. Built as the opening below describes — labels at transcription time, from the
+decode. Two bugs were found and fixed on the way, both from his reports:
+
+- **No labels at all** — the turns were stored *after* `labelled()` had read them (`ef2dc3b9`).
+- **One label of two** — Shizuku's channels are not the ~60 dB isolated pair the direct path gives. One
+  voice reaches the other channel at about half level, those windows read as BOTH, and a segment only one
+  person spoke in fell to 59% < 66%. Dominance is now judged between the sides' time alone (`8d79713e`).
+
+Not verified: a long real conversation with genuine double-talk, a second Shizuku phone, and whether the
+bleed was acoustic (both test phones in one room — never confirmed). A missing *line* is a different thing
+from a missing label: see `2026-09-05-greedy-vad-drops-an-utterance.md` before blaming this feature.
+
 
 **Requested 2026-09-10 by mirror176.** In Shizuku mode the app says the two sides cannot be told apart in
 transcripts — yet his Shizuku recordings are stereo with the mic on the left and the other party on the right, so the

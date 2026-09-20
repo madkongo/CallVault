@@ -16,6 +16,8 @@ import com.baba.callvault.data.ChannelMapCorroboration
 import com.baba.callvault.data.transcripts.db.SpeakerTurnsEntry
 import com.baba.callvault.data.transcripts.db.TranscriptDatabase
 import com.baba.callvault.server.RecorderConnection
+import com.baba.callvault.server.speakers.SpeakerTurn
+import com.baba.callvault.server.speakers.SpeakerTurnCodec
 import com.baba.callvault.utils.AppLogger
 
 /**
@@ -113,6 +115,45 @@ object SpeakerTurnsRepository {
      * exactly one source of truth that way, and the answer can never be a stale belief left behind
      * by calls that have since been deleted.
      */
+    /**
+     * Stores speaker turns worked out from a recording after the fact (issue #38).
+     *
+     * For Shizuku recordings, where the live capture never sees the raw channels because scrcpy does
+     * the capture and the encode inside its own process. [collectAfterCall] finds nothing for those,
+     * so this is the only route by which they ever get labels.
+     *
+     * **Never overwrites what the live capture found.** That answer came from the samples themselves
+     * before any encoding; this one is read back out of a lossy file, so where both exist the live one
+     * wins. Empty turns store nothing at all — that is the normal answer for a mono recording.
+     *
+     * @return true when something was stored.
+     */
+    suspend fun storeFromRecording(context: Context, displayName: String, turns: List<SpeakerTurn>): Boolean {
+        if (turns.isEmpty()) return false
+
+        return runCatching {
+            val dao = TranscriptDatabase.get(context).speakerTurnsDao()
+            if (dao.turnsFor(displayName) != null) {
+                AppLogger.i(TAG, "Speaker turns already stored for this recording; leaving the capture's own answer")
+                return false
+            }
+            dao.upsert(
+                SpeakerTurnsEntry(
+                    displayName = displayName,
+                    turns = SpeakerTurnCodec.encode(turns),
+                    // Read back from a file, so there is no call direction to learn a channel map
+                    // from — that inference belongs to the live path, which knows the call.
+                    outgoing = false,
+                    observedMap = ChannelMap.UNKNOWN.key,
+                    updatedAt = System.currentTimeMillis(),
+                )
+            )
+            AppLogger.i(TAG, "Stored ${turns.size} speaker turns worked out from the recording")
+            true
+        }.onFailure { AppLogger.w(TAG, "Could not store speaker turns from the recording: ${it.message}") }
+            .getOrDefault(false)
+    }
+
     suspend fun trustedMap(context: Context): ChannelMap {
         // Being told beats working it out. The user can see the transcript and knows which words are
         // theirs; nothing the app derives should be able to argue with that.

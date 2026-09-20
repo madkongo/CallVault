@@ -3,6 +3,30 @@
 All notable changes to CallVault are documented here. The format is based on
 [Keep a Changelog](https://keepachangelog.com/), and this project uses semantic-ish versioning.
 
+## [2.4.1] — unreleased
+
+### Added
+
+- **Shizuku recordings get speaker labels (#38).** A Shizuku recording is already stereo — you on one
+  side, the other person on the other — but CallVault had no way to read that, so transcripts came out
+  as unattributed text. It now works out who spoke from the file itself while transcribing it, so the
+  labels appear on the transcript exactly as they do in built-in mode. Recordings made before this
+  update get them too: open one and choose **Transcribe again**.
+
+### Fixed
+
+- **An update in Shizuku mode no longer costs you the next call.** Installing an update left the old
+  recorder running with a path to an app file that no longer existed. It kept answering, so nothing
+  looked wrong — and the next call recorded nothing, with no error, until the app was next opened. The
+  old recorder is now properly retired as part of the update, and a fresh one is ready before any call
+  arrives. If a call is being recorded at the moment an update lands, that recording is left alone.
+  Present in every earlier version with Shizuku mode, including 2.4.0.
+
+- **A transcript line could go unlabelled even though only one person spoke in it.** On some phones a
+  voice is faintly picked up on the other side's channel as well, and those moments were being read as
+  both people talking at once — enough of them and the line was left without a name. A speaker is now
+  named when they are the only one who spoke alone in that line.
+
 ## [2.4.0] — unreleased
 
 ### Added
