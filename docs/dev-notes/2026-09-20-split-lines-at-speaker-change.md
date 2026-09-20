@@ -1,7 +1,8 @@
 # 2026-09-20 — a transcript line shared by both speakers gets no label; split it where the speaker changes
 
-Status: **🧪 VERIFYING** — design measured on the desktop, implementation in progress on
-`feat/split-lines-at-speaker-change`. Nothing here is confirmed on a phone yet.
+Status: **🧪 VERIFYING** — built on `feat/split-lines-at-speaker-change` (commit `55d91fea`), 1701 unit
+tests green, and measured once on the OP9 (below). Waiting on the maintainer: re-open the 12:25 call, and
+then a REAL conversation — the one thing a scripted test call cannot show is whether it shreds lines.
 
 ## The report
 
@@ -53,3 +54,27 @@ pause stay one shared, unlabelled line — exactly as today, so nothing gets wor
 
 Re-transcribe the 12:25 call on the OP9 in Hebrew: two lines, each labelled. Then a real conversation,
 to see it does not shred lines where one person simply paused (same speaker both sides → no cut).
+
+## Measured on the OP9, 2026-09-20 14:55 (🧪 one scripted call, by the assistant — not the maintainer)
+
+Same 12:25 recording, Hebrew pinned, "Transcribe again":
+
+```
+VAD kept 2 speech stretches
+Produced 1 segments across 1 pass(es)
+Speaker channels read as SEPARATED; 25 turn(s)
+Cut 1 segment(s) into 2 line(s) where the speaker changed
+```
+
+On screen: `0:04 פרוזה — בדיקה, בדיקה, בדיקה זה 1 plus 12,` and `0:11 You — בדיקה, בדיקה, זה 1 plus 19.`
+Before the change the same run gave one unlabelled line.
+
+How it is built: `whispercv.cpp` turns `token_timestamps` on and adds `segmentWords()` (words assembled
+natively, because a token is bytes, not characters); `TranscriptionEngine.readSegments` — now the single
+reader for both the buffer and the chunked path — offers a cut at every VAD seam via
+`SpeakerSeamSplit.atSeams` (`TranscriptSegment.parts`, shifted by `ChunkPlan.stitch`); and
+`TranscriptionRunner.labelled` settles them with `joinSameSpeaker` once it has the turns.
+
+Not measured: a long real call; a chunked (multi-pass) call; built-in mode, where the turns come from the
+live capture rather than the file; what `token_timestamps` costs in time (this run: 31 s for 16 s of
+audio, the same as before it, but one run is not a measurement).
