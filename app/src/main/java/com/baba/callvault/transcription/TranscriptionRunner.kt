@@ -404,9 +404,16 @@ class TranscriptionRunner(
         displayName: String
     ): List<TranscriptSegmentEntry> {
         val turns = SpeakerLabeller.decode(SpeakerTurnsRepository.turnsFor(context, displayName))
-        val speakers = SpeakerLabeller.labelAll(turns, map { it.startMs to it.endMs })
+        // A line both people share is cut at the pause between them BEFORE it is labelled — shared, it
+        // belongs to neither and gets no name at all. Measured on the OP9: the same call was two
+        // labelled lines in English and one unlabelled line in Hebrew. See SpeakerSeamSplit.
+        val lines = flatMap { SpeakerSeamSplit.joinSameSpeaker(it, turns) }
+        if (lines.size != size) {
+            AppLogger.i(TAG, "Cut $size segment(s) into ${lines.size} line(s) where the speaker changed")
+        }
+        val speakers = SpeakerLabeller.labelAll(turns, lines.map { it.startMs to it.endMs })
 
-        return mapIndexed { index, segment ->
+        return lines.mapIndexed { index, segment ->
             TranscriptSegmentEntry(
                 displayName = displayName,
                 startMs = segment.startMs,

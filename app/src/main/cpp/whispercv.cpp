@@ -248,6 +248,10 @@ Java_com_baba_callvault_transcription_WhisperNative_transcribe(
     params.offset_ms        = 0;
     params.no_context       = true;
     params.single_segment   = false;
+    // Token times cost a post-pass over the result and do not change the text. They exist for
+    // segmentWords() below: a line both speakers share is cut at the pause between them, and whisper's
+    // own segment times cannot say which words fall on which side of it.
+    params.token_timestamps = true;
 
     // How much gibberish counts as gibberish.
     //
@@ -436,6 +440,44 @@ Java_com_baba_callvault_transcription_WhisperNative_segmentStartMs(JNIEnv *, job
 JNIEXPORT jlong JNICALL
 Java_com_baba_callvault_transcription_WhisperNative_segmentEndMs(JNIEnv *, jobject, jlong ptr, jint i) {
     return whisper_full_get_segment_t1(ctx_of(ptr), i) * 10;
+}
+
+// The i-th segment's words, one per line as "<start in ms>\t<word>\n".
+//
+// Times are on the VAD's COMPRESSED timeline when VAD is on -- the audio whisper actually decoded, with
+// the silence taken out -- which is exactly what SpeakerSeamSplit wants: it places each word in a kept
+// stretch by that time. Measured with whisper-cli -ojf on a real call: 0.01 -> 4.74 s for one speaker,
+// 5.07 -> 8.53 s for the other, the seam between the two kept stretches exactly in the gap.
+//
+// Words are assembled HERE, not in Kotlin, because a token is a run of bytes and not a run of characters:
+// a Hebrew word is several tokens and a character can straddle two of them. A token starting with a space
+// starts a word; everything else continues the one before. Special tokens (>= eot) carry no text.
+extern "C" JNIEXPORT jstring JNICALL
+Java_com_baba_callvault_transcription_WhisperNative_segmentWords(JNIEnv *env, jobject, jlong ptr, jint i) {
+    whisper_context *ctx = ctx_of(ptr);
+    const whisper_token eot = whisper_token_eot(ctx);
+    const int n = whisper_full_n_tokens(ctx, i);
+
+    std::string out;
+    std::string word;
+    int64_t word_t0 = 0;
+    auto flush = [&]() {
+        if (!word.empty()) out += std::to_string(word_t0 * 10) + "\t" + word + "\n";
+        word.clear();
+    };
+    for (int j = 0; j < n; ++j) {
+        if (whisper_full_get_token_id(ctx, i, j) >= eot) continue;
+        const char *text = whisper_full_get_token_text(ctx, i, j);
+        if (text == nullptr || text[0] == '\0') continue;
+        if (text[0] == ' ') flush();
+        if (word.empty()) word_t0 = whisper_full_get_token_data(ctx, i, j).t0;
+        for (const char *c = text; *c != '\0'; ++c) {
+            // The separators of this format must not appear inside a word.
+            if (*c != '\t' && *c != '\n' && !(word.empty() && *c == ' ')) word += *c;
+        }
+    }
+    flush();
+    return env->NewStringUTF(to_modified_utf8(out.c_str()).c_str());
 }
 
 JNIEXPORT jstring JNICALL
