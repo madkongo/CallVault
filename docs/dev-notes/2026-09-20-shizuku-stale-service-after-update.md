@@ -143,3 +143,19 @@ over a live Shizuku call to watch this guard fire.
 
 Fix direction 2 above (ask the host whether its APK still exists, before a call) is **still not written**
 and is still worth having: it would catch a stale host however it came about.
+
+## Controlled re-test, 2026-09-20 12:25 (🧪 still VERIFYING — measured by log, awaiting the maintainer's word)
+
+The earlier post-fix calls (11:07, 11:52) could not settle it: the maintainer was not sure whether the
+app had been opened between install and call, and opening it repairs the old bug on its own. So it was
+run again with the log as the witness.
+
+- 12:25:18 install-over, phone idle on the home screen. 12:25:23 `Started by Shizuku … pid=16360`,
+  `Post-replace recovery done`. Old recorder pid 7138 gone.
+- **No CallVault activity was started between the install and the call** — no `START u0` or
+  `Displayed` line for `com.baba.callvault` in ActivityTaskManager for the whole window.
+- 12:25:52 carrier call. pid 16360 answered `startRecording`, extracted scrcpy from the *current*
+  `base.apk`, `Capture start check: STARTED`, and published a 58 KB file: 16.1 s, 2 ch, mean −35 dB,
+  peak −6.3 dB. No `stale` line anywhere.
+
+This is the exact reproduction recipe from above, and it recorded. Promotion to ✅ is the maintainer's.
