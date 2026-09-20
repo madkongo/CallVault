@@ -281,6 +281,61 @@ class TranscriptionRunnerTest {
     }
 
     @Test
+    fun labels_segments_from_turns_the_decode_itself_produced() = runBlocking {
+        // Issue #38: a Shizuku recording has no turns from the capture -- scrcpy encodes inside its own
+        // process, so the raw channels are never seen. They are worked out from the transcription's own
+        // decode instead, and this pins the ORDER that makes that usable.
+        //
+        // ⚠️ The first version stored them after the segments were written. The turns landed in the
+        // database and every segment came out unlabelled -- right data, too late to be used. Measured
+        // on the OP9 on 2026-09-20: 31 turns stored, 0 segments labelled, and nothing looked broken.
+        catalogued("shizuku.ogg")
+        // No storeTurns() here on purpose: the capture gave nothing, exactly as in Shizuku mode.
+        val runner = TranscriptionRunner(
+            context,
+            transcriber = { _, _, _, _, _, speakers ->
+                // Stand in for the decode: one side talks, then the other, as decodeRange would offer it.
+                speakers?.accept(stereoChunk(ms = 600, left = 0.5, right = 0.0), 57_600, 2, 48_000, 0L)
+                speakers?.accept(stereoChunk(ms = 600, left = 0.0, right = 0.5), 57_600, 2, 48_000, 600L)
+                listOf(TranscriptSegment(0, 500, "שלום"), TranscriptSegment(700, 1100, "היי"))
+            },
+        )
+
+        runner.runBatch(MODEL_ID, MODEL_PATH, LANGUAGE, listOf("shizuku.ogg"))
+
+        assertEquals(listOf("A", "B"), transcript("shizuku.ogg")!!.segments.map { it.speaker })
+    }
+
+    @Test
+    fun a_mono_recording_still_stores_unlabelled_segments() = runBlocking {
+        // Every standalone recording is mono and goes through the same path. It must produce no labels
+        // and no noise -- not an error, and not a stored row of nothings.
+        catalogued("mono.ogg")
+        val runner = TranscriptionRunner(
+            context,
+            transcriber = { _, _, _, _, _, speakers ->
+                speakers?.accept(ShortArray(48_000) { 6_000 }, 48_000, 1, 48_000, 0L)
+                listOf(TranscriptSegment(0, 1500, "שלום"))
+            },
+        )
+
+        runner.runBatch(MODEL_ID, MODEL_PATH, LANGUAGE, listOf("mono.ogg"))
+
+        assertEquals(listOf(null), transcript("mono.ogg")!!.segments.map { it.speaker })
+    }
+
+    /** Interleaved stereo PCM-16 at a fixed level per channel, as the decoder hands it over. */
+    private fun stereoChunk(ms: Int, left: Double, right: Double): ShortArray {
+        val frames = 48_000 * ms / 1000
+        val out = ShortArray(frames * 2)
+        for (i in 0 until frames) {
+            out[i * 2] = (left * Short.MAX_VALUE).toInt().toShort()
+            out[i * 2 + 1] = (right * Short.MAX_VALUE).toInt().toShort()
+        }
+        return out
+    }
+
+    @Test
     fun stores_unlabelled_segments_when_the_capture_recorded_no_turns() = runBlocking {
         // A mono capture, a daemon too old to report turns, or any call recorded before speaker
         // tracking existed. Unlabelled is the ordinary case, not a failure.

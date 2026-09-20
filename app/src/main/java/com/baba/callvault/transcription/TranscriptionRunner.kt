@@ -210,6 +210,19 @@ class TranscriptionRunner(
 
         return attempt.fold(
             onSuccess = { segments ->
+                // BEFORE `labelled()`, which reads the turns straight back out to put a speaker on
+                // each segment. Storing them after -- where this first went -- left the turns in the
+                // database and every segment unlabelled: the data was right and arrived too late to
+                // be used. Measured on the OP9, 2026-09-20: 31 turns stored, 0 segments labelled.
+                //
+                // Guarded, so a failure here costs the labels and never the transcript.
+                withContext(NonCancellable) {
+                    runCatching {
+                        val turns = speakers.finish()
+                        AppLogger.i(TAG, "Speaker channels read as ${speakers.separation()}; ${turns.size} turn(s)")
+                        SpeakerTurnsRepository.storeFromRecording(context, displayName, turns)
+                    }.onFailure { AppLogger.w(TAG, "Speaker labels skipped: ${it.message}") }
+                }
                 dao.replaceSegments(displayName, segments.labelled(displayName))
                 mark(displayName, TranscriptState.DONE, modelId, language)
                 // A file the user imported to read rather than to keep loses its audio HERE, and
@@ -237,18 +250,6 @@ class TranscriptionRunner(
                 // What it really cost on this phone, so the next estimate is measured rather than
                 // inherited from whatever hardware the published figure came from.
                 recordSpeed(modelId, audioMs, SystemClock.elapsedRealtime() - startedAt)
-                // Who spoke, worked out from the decode this run already did (issue #38). Stored
-                // AFTER the words and the DONE row, guarded and NonCancellable, because labels are a
-                // bonus on top of a transcript and nothing here is worth risking one for. Stores
-                // nothing for a mono recording, nothing where the encode collapsed the channels, and
-                // never over the live capture's own answer.
-                withContext(NonCancellable) {
-                    runCatching {
-                        val turns = speakers.finish()
-                        AppLogger.i(TAG, "Speaker channels read as ${speakers.separation()}; ${turns.size} turn(s)")
-                        SpeakerTurnsRepository.storeFromRecording(context, displayName, turns)
-                    }.onFailure { AppLogger.w(TAG, "Speaker labels skipped: ${it.message}") }
-                }
                 // Count, never content: a transcript is the substance of a private call.
                 AppLogger.i(TAG, "Transcribed $displayName (${segments.size} segment(s))")
                 // After the words, the DONE row and the audio decision are all settled, so the
