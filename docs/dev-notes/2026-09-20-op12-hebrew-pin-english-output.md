@@ -1,7 +1,9 @@
 # 2026-09-20 — Hebrew pinned, English out (first seen on the OP12). Cause NOT found
 
-Status: **❌ NOT WORKING 2026-09-20** — cause narrowed to "nothing is broken, the decode is low-margin" (see
-the last section); no fix written. One explanation was proposed, built, installed and **disproved the same
+Status: **🧪 VERIFYING** — a fix is built (`fix/wrong-script-retry`) and measured once on the OP12 by the
+assistant (last section). Waiting on the maintainer: open the 12:25 "Feroza" call on the OP12 and read it,
+then watch for the next real call that would have come out English. History: ❌ NOT WORKING 2026-09-20;
+cause narrowed to "nothing is broken, the decode is low-margin". One explanation was proposed, built, installed and **disproved the same
 day**; it is recorded here so it is not proposed again.
 
 ## The report
@@ -113,3 +115,30 @@ the slowness is unexplained — not investigated. The test app and the 874 MB mo
 **So which retry recovers Hebrew on a phone is still unknown.** The honest options for finding out:
 the benchmark again with the cause of the slowness found, or building the script check with a retry
 behind it and measuring THAT on a release build, on the 12:25 "Feroza" file, which both phones still have.
+
+## The fix, and what it measured on the OP12 (2026-09-20 16:11, 🧪)
+
+`WrongScriptRetry`: a non-Latin language pinned and a transcript under 20% in that script (≥ 12 letters) is
+a failed decode. A recording of KNOWN length ≤ 3 min is decoded again through `FALLBACKS` — VAD off, then
+beam 5, then both — and the first CLEAN result wins. "Clean" was added after the first device run: VAD-off
+recovered Hebrew but wrote `זה 1 Behindração שת달ים` for "זה 1 פלוס 12", so a letter from a third
+alphabet (neither the pin's nor Latin) now marks a candidate dirty; a dirty one is kept in hand and used
+only if nothing clean turns up. Nothing recovers → the FIRST transcript is kept. Retries get no speaker
+detector; a stop is still a stop. `LanguageScript` is the one table this and `TranscriptionPrompt` share.
+
+Measured, the same "Feroza" file, release build, "Transcribe again":
+
+```
+16:11:10 lang=he beam=1 vad=on                         → English            (15 s)
+16:11:25 Transcript is not in the pinned language's script (he); decoding again
+16:11:26 lang=he beam=1 vad=off                        → Hebrew + a stray alphabet  (17 s)
+16:11:44 lang=he beam=5 vad=on                         → clean Hebrew       (12 s)
+```
+
+On screen: `0:00 You — בדיקה, בדיקה, בדיקה זה 1 פלוס 12.` / `0:07 Feroza — בדיקה, בדיקה, בדיקה זה 1 פלוס 19.`
+
+Costs and unknowns, plainly: this call took 45 s instead of 15 s. The fallback ORDER is still reasoned
+rather than measured — one clip, and on it the second fallback was the one that worked, which argues for
+trying beam first; not changed on a sample of one. The percentage shown during a run restarts with each
+retry (see `progress-state-belongs-to-the-run`). Arabic, Russian and Chinese share the code path and have
+never been tried. A long call is never retried by design.
