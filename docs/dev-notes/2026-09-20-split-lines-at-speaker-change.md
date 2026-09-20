@@ -79,7 +79,7 @@ Not measured: a long real call; a chunked (multi-pass) call; built-in mode, wher
 live capture rather than the file; what `token_timestamps` costs in time (this run: 31 s for 16 s of
 audio, the same as before it, but one run is not a measurement).
 
-## One row per turn (added 2026-09-20 15:08, 🧪 VERIFYING)
+## One row per turn (added 2026-09-20 15:08) — ✅ VERIFIED 2026-09-20 on the OP9
 
 ✅ The maintainer confirmed the cut itself on the OP9 the same afternoon: "the labels are perfect and the
 transcription looks good" (12:25 and 11:52 calls). He then pointed at the opposite problem on the 11:52
@@ -95,3 +95,7 @@ rows; joined into their turn they are named.
 Measured on the OP9, same 11:52 recording: `Produced 7 segments` → `Laid 7 segment(s) out as 2 row(s),
 one per turn`. The 1 s and 30 s numbers are judgement, not measurement — a real conversation is what will
 show whether they are right.
+
+✅ VERIFIED 2026-09-20 by the maintainer on the OP9, after re-opening the 11:52 and 12:25 calls: "yes it
+looks perfect". That covers two scripted test calls in Shizuku mode. A real conversation, a chunked call
+and built-in mode are still unverified.
