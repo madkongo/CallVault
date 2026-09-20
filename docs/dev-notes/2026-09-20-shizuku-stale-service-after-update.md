@@ -1,0 +1,95 @@
+# 2026-09-20 — an update in Shizuku mode silently costs the next call
+
+Status: **❌ NOT WORKING 2026-09-20** — reproduced on the OP9 with a real carrier call. **Not fixed.**
+Present in **2.4.0 as published**, and in every earlier version with Shizuku mode. Found while testing
+issue #38; unrelated to that work.
+
+## What happened
+
+A new build was installed over the app while the OP9 was in Shizuku mode (10:32:54). A carrier call at
+10:36:53 recorded **nothing** — no file, no error the user could see until afterwards.
+
+```
+10:36:53.005 D CV:RecorderBackend:   Recorder already connected; reusing existing binder
+10:36:53.013 I CV:RecorderServer:    startRecording source=voice-call codec=opus bitRate=24000
+10:36:53.165 W CV:RecorderServer:    Direct capture unavailable, falling back to scrcpy: AudioRecord failed to enter RECORDING state
+10:36:53.167 E CV:RecorderServer:    startRecording failed (all paths): This recorder process is stale: its APK
+                                     (/data/app/~~DG2O3iyNvGYlnxGkSgumnA==/com.baba.callvault-…/base.apk) no longer
+                                     exists, so scrcpy cannot be extracted. The app was updated while the service
+                                     kept running; the service must be restarted…
+10:37:19.033 W CV:AudioRecordingEngine: Staged recording is empty — publishing nothing (capture never produced audio)
+```
+
+The app diagnosed itself perfectly. It just did so **at call time**, which is too late — the call is
+already happening and cannot be recovered.
+
+## Why the existing recovery did not save it
+
+This is *known* and there is already code for it. `UpdatePackageReplacedReceiver` fired with the right
+plan:
+
+```
+10:32:54.507 I CV:UpdateReplacedRecv: Package replaced; now 2.4.0
+10:32:54.518 I CV:UpdateReplacedRecv: App replaced (mode=SHIZUKU, grant survived=false):
+                                      Plan(healGrant=false, ensureRecorder=true,
+                                           restartShizukuService=true, restartKeepAlive=false)
+```
+
+`restartShizukuService=true` is correct, and `ShizukuBackend.stop(remove = true)` is what should have
+retired the stale process. **It did not.** Two lines later:
+
+```
+10:32:54.521 D CV:ShizukuBackend: Already bound
+10:32:54.525 I CV:ShizukuBackend: Shizuku started the recorder service
+10:32:54.526 I CV:RecorderConn:   RecorderConnection received daemon binder
+10:32:54.527 I CV:RecorderServer: Diagnostics ring disabled in the recorder host   ← pid 29485, the OLD one
+10:32:54.742 I CV:RecorderServer: Clearing 1 other recorder process(es): [10404] (I am 29485)
+10:32:54.744 I CV:UpdateReplacedRecv: Post-replace recovery done
+```
+
+**pid 29485 is the pre-update process**, and it is still the one answering at 10:36:53. The recovery
+completed in **237 ms** and reported success while leaving the stale service in place — it rebound to
+the old process rather than replacing it, and "Already bound" is the tell.
+
+Note the irony: the old service *did* clear other recorder processes, so the one survivor was the stale
+one.
+
+After the call, opening the app at 10:37:37 finally produced a fresh host (pid 18445) which cleared three
+leftovers. So the restart works — just not from the replace path, and not before the next call.
+
+## Why this matters more than it looks
+
+- It is **silent**. The user sees a call that simply is not there. On the OP9 the only visible sign was
+  the absence of a file.
+- It fires on **every** install-over in Shizuku mode: our own dev installs, and a user taking an update
+  through the in-app updater. 2.4.0 shipped with it.
+- The existing code and comments show this was understood and fixed once before — the receiver's own
+  KDoc describes the 13-minute call this class of bug cost on 2026-09-06. The plan is right; the
+  execution does not achieve it.
+
+## Where to look
+
+- `system/updates/UpdatePackageReplacedReceiver.kt:99-102` — the `restartShizukuService` branch, calling
+  `ShizukuBackend.stop(remove = true)`.
+- `server/ShizukuBackend.kt` — why `stop(remove = true)` left the process running, and what "Already
+  bound" means at that moment. Suspicion, untested: the stop is asynchronous, or `remove` does not force
+  a rebind, and `RecorderBackend.ensureRunning` immediately after re-bound to the survivor rather than
+  waiting for it to die.
+- `server/RecorderServiceImpl.kt:457` — `startWithFallback`, which raises the stale-APK IOException. It
+  knows the process is stale. **Nothing asks it that question until a call starts.**
+
+## Two fix directions, neither written
+
+1. **Make the replace path actually replace it.** Wait for the old process to die before rebinding, and
+   verify the new host's pid differs. The current code cannot tell "restarted" from "rebound to the same
+   process", which is exactly the distinction that failed here.
+2. **Ask before the call, not during it.** The staleness test is cheap and local — the host knows its own
+   APK path and can `File.exists()` it. A readiness check at bind time, or on the keep-alive's tick,
+   would turn a silently lost call into a self-heal. This is the stronger fix: it catches the same
+   failure however the service came to be stale.
+
+## Reproducing it
+
+On a phone in Shizuku mode: install any build over the top, then make a carrier call **without opening
+the app in between** — opening it is what repaired the OP9. Expect a call with no file and the
+`This recorder process is stale` line in the log.
