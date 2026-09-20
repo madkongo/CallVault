@@ -175,6 +175,10 @@ class TranscriptionRunner(
         // Named before the words are decoded, so a brand or a contact is spelled rather than
         // guessed at. Best-effort: no glossary and no resolvable name simply means no prompt.
         val prompt = runCatching { promptFor(displayName, language) }.getOrNull()
+        // Length only, never the words: the prompt is a contact's name. Logged because a prompt in the
+        // wrong script can turn the language pin off, and without this line a transcript in the wrong
+        // language cannot be told apart from one that was never primed at all.
+        AppLogger.i(TAG, "Prompt: ${prompt?.length ?: 0} char(s), language ${language ?: "auto"}")
         // Claimed for exactly as long as the engine is busy with this recording, so a delete
         // arriving mid-run knows there is something to abandon — see [TranscriptionInFlight].
         TranscriptionInFlight.claim(displayName)
