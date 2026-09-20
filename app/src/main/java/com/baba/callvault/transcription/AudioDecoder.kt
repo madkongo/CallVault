@@ -404,7 +404,7 @@ object AudioDecoder {
          * every existing trailing-lambda call site silently rebinds to this one instead. The compiler
          * caught that immediately, but only because the types differ — it would not always.
          */
-        onInterleaved: ((pcm: ShortArray, length: Int, channels: Int, startMs: Long) -> Unit)? = null,
+        onInterleaved: ((pcm: ShortArray, length: Int, channels: Int, sampleRate: Int, startMs: Long) -> Unit)? = null,
         shouldStop: () -> Boolean = { false },
     ): DecodedRange {
         val extractor = MediaExtractor()
@@ -449,7 +449,7 @@ object AudioDecoder {
                     if (wholeFile) "" else " from ${decoded.startMs} ms",
             )
             // Before the downmix, because the downmix is exactly what destroys the answer.
-            onInterleaved?.invoke(decoded.pcm, decoded.length, decoded.channels, decoded.startMs)
+            onInterleaved?.invoke(decoded.pcm, decoded.length, decoded.channels, decoded.sampleRate, decoded.startMs)
 
             return DecodedRange(
                 audio = pcm16ToMono16k(decoded.pcm, decoded.channels, decoded.sampleRate, decoded.length),

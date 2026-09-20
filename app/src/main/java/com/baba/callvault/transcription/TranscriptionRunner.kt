@@ -23,6 +23,7 @@ import com.baba.callvault.data.transcripts.db.TranscriptEntry
 import com.baba.callvault.data.transcripts.db.TranscriptSegmentEntry
 import com.baba.callvault.data.transcripts.db.TranscriptState
 import com.baba.callvault.transcription.model.TranscriptionModel
+import com.baba.callvault.server.speakers.OfflineSpeakerLabeller
 import com.baba.callvault.utils.AppLogger
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.NonCancellable
@@ -38,7 +39,12 @@ fun interface Transcriber {
         uri: Uri,
         modelPath: String,
         language: String?,
-        prompt: String?
+        prompt: String?,
+        /**
+         * Offered every decoded chunk before the mono downmix, so who-spoke can be read out of the
+         * decode that is happening anyway (issue #38). Null for none.
+         */
+        speakers: OfflineSpeakerLabeller?,
     ): List<TranscriptSegment>
 }
 
@@ -65,7 +71,12 @@ class TranscriptionRunner(
     private val onFinished: suspend (String, TranscriptNotice.Outcome) -> Unit =
         { displayName, outcome -> TranscriptNotifier.announce(context, displayName, outcome) },
     // Last, so `TranscriptionRunner(context) { ... }` still reads as "a runner with this transcriber".
-    private val transcriber: Transcriber = Transcriber(TranscriptionEngine::transcribe)
+    // A lambda rather than `TranscriptionEngine::transcribe`: the engine's `settings` parameter sits
+    // between `prompt` and `speakers`, so a method reference no longer lines up with this interface.
+    private val transcriber: Transcriber =
+        Transcriber { ctx, uri, modelPath, language, prompt, speakers ->
+            TranscriptionEngine.transcribe(ctx, uri, modelPath, language, prompt, speakers = speakers)
+        }
 ) {
 
     private val dao get() = TranscriptDatabase.get(context).transcriptDao()
@@ -167,8 +178,13 @@ class TranscriptionRunner(
         // Claimed for exactly as long as the engine is busy with this recording, so a delete
         // arriving mid-run knows there is something to abandon — see [TranscriptionInFlight].
         TranscriptionInFlight.claim(displayName)
+        // Rides on the decode the transcription is about to do anyway, so a Shizuku recording gets
+        // speaker labels for free -- its live capture never saw the raw channels (issue #38). Produces
+        // nothing for a mono recording, which is every standalone one, and nothing where the encode
+        // collapsed the channels. See OfflineSpeakerLabeller.
+        val speakers = OfflineSpeakerLabeller()
         val attempt = try {
-            runCatching { transcriber.transcribe(context, uri, modelPath, language, prompt) }
+            runCatching { transcriber.transcribe(context, uri, modelPath, language, prompt, speakers = speakers) }
         } finally {
             TranscriptionInFlight.release(displayName)
         }
@@ -221,6 +237,18 @@ class TranscriptionRunner(
                 // What it really cost on this phone, so the next estimate is measured rather than
                 // inherited from whatever hardware the published figure came from.
                 recordSpeed(modelId, audioMs, SystemClock.elapsedRealtime() - startedAt)
+                // Who spoke, worked out from the decode this run already did (issue #38). Stored
+                // AFTER the words and the DONE row, guarded and NonCancellable, because labels are a
+                // bonus on top of a transcript and nothing here is worth risking one for. Stores
+                // nothing for a mono recording, nothing where the encode collapsed the channels, and
+                // never over the live capture's own answer.
+                withContext(NonCancellable) {
+                    runCatching {
+                        val turns = speakers.finish()
+                        AppLogger.i(TAG, "Speaker channels read as ${speakers.separation()}; ${turns.size} turn(s)")
+                        SpeakerTurnsRepository.storeFromRecording(context, displayName, turns)
+                    }.onFailure { AppLogger.w(TAG, "Speaker labels skipped: ${it.message}") }
+                }
                 // Count, never content: a transcript is the substance of a private call.
                 AppLogger.i(TAG, "Transcribed $displayName (${segments.size} segment(s))")
                 // After the words, the DONE row and the audio decision are all settled, so the
