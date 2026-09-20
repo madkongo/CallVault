@@ -1,7 +1,8 @@
 # 2026-09-20 — Hebrew pinned, English out (first seen on the OP12). Cause NOT found
 
-Status: **❌ NOT WORKING 2026-09-20** — open. One explanation was proposed, built, installed and
-**disproved the same day**; it is recorded here so it is not proposed again.
+Status: **❌ NOT WORKING 2026-09-20** — cause narrowed to "nothing is broken, the decode is low-margin" (see
+the last section); no fix written. One explanation was proposed, built, installed and **disproved the same
+day**; it is recorded here so it is not proposed again.
 
 ## The report
 
@@ -69,3 +70,34 @@ Two things the phones share and the desktop does not:
 **Next discriminator:** a 16 kHz mono WAV of the same audio, made by ffmpeg, imported on a phone
 (`/sdcard/Download/op12_test_wav.wav` is on the OP9). Hebrew → the Opus decode is the culprit. English →
 it is whisper on ARM, and the next step is `whisper-cli` built with the NDK and run on the phone itself.
+
+## Evening of 2026-09-20 — the WAV came out Hebrew, and the phone's decode is NOT broken
+
+Maintainer ran the WAV discriminator on the OP9: **Hebrew.** So whisper on the phone is fine with this
+audio, and the difference is upstream of it — which pointed at MediaCodec's Opus decode. Measured on the
+OP9 with a throwaway instrumented test (`AudioDecoder.decodeToMono16k` on the file, compared sample by
+sample with the ffmpeg decode run through the same resampler):
+
+```
+samples phone=195952 ref=196056          rms phone=-36.2 dB ref=-36.2 dB    peak 0.386 / 0.386
+best lag=-104 samples (-6.5 ms), correlation=0.9880        per-second levels: equal to 0.0–0.2 dB
+```
+
+**The two decodes are the same audio.** The only structural difference is 104 samples = 312 @ 48 kHz =
+Opus's standard pre-skip, which Android does not trim; the rest is ordinary decoder-to-decoder rounding.
+On the desktop, shifting the good audio by 6.5 / 13 / 50 ms changes whisper's SEGMENTATION every time
+(4, 2 and 1 segments) but never the language.
+
+So nothing in the pipeline is broken. On this clip whisper sits on a knife-edge: on the desktop every
+perturbation tried lands on Hebrew, on ARM the WAV lands on Hebrew and the Opus decode lands on English.
+**The language pin is a strong hint to whisper, not a guarantee** — and a clip of "בדיקה, בדיקה… וואן פלוס
+12" (a loanword-heavy test phrase, spoken twice) is about the easiest thing there is to tip over.
+
+## Where a fix can come from
+
+Not from the decode. From noticing the failure, which is cheap and unambiguous: **a language pinned to a
+non-Latin script, and a transcript that is (nearly) all Latin letters.** `TranscriptionPrompt` already
+knows each language's script. On that signal, decode again another way. Which way actually recovers Hebrew
+ON A PHONE is being measured with `DecodeVariantBenchmark` on the OP9 (baseline / vad / beam / vad_beam
+over this file) — results below when it finishes. Do not pick the retry from the desktop: the desktop has
+never once reproduced the English.
