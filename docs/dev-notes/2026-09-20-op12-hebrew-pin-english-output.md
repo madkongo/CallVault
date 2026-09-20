@@ -101,3 +101,15 @@ knows each language's script. On that signal, decode again another way. Which wa
 ON A PHONE is being measured with `DecodeVariantBenchmark` on the OP9 (baseline / vad / beam / vad_beam
 over this file) — results below when it finishes. Do not pick the retry from the desktop: the desktop has
 never once reproduced the English.
+
+## The on-phone retry measurement did not happen (2026-09-20, ~15:45)
+
+`DecodeVariantBenchmark` was run on the OP9 under the isolated test app (installed by hand, because the
+Gradle-run install has no read access to `/sdcard/Download` and is uninstalled before one can be granted;
+`appops set … MANAGE_EXTERNAL_STORAGE allow` fixes that). The first variant was still decoding a 12 s clip
+after ten minutes and the run was stopped. Native code is already `-O3` in debug (`CMakeLists.txt:32`), so
+the slowness is unexplained — not investigated. The test app and the 874 MB model were removed afterwards.
+
+**So which retry recovers Hebrew on a phone is still unknown.** The honest options for finding out:
+the benchmark again with the cause of the slowness found, or building the script check with a retry
+behind it and measuring THAT on a release build, on the 12:25 "Feroza" file, which both phones still have.
