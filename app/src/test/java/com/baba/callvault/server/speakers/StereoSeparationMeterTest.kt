@@ -89,4 +89,46 @@ class StereoSeparationMeterTest {
         val meter = StereoSeparationMeter().apply { accept(ragged, ragged.size) }
         assertEquals(StereoSeparation.SEPARATED, meter.separation())
     }
+
+    // ---- The ShortArray path the decoder actually uses ----
+
+    /** Interleaved PCM-16 as shorts, the shape AudioDecoder hands out. */
+    private fun shorts(frames: Int, left: (Int) -> Double, right: (Int) -> Double): ShortArray {
+        val out = ShortArray(frames * 2)
+        for (i in 0 until frames) {
+            out[i * 2] = (left(i) * Short.MAX_VALUE).toInt().toShort()
+            out[i * 2 + 1] = (right(i) * Short.MAX_VALUE).toInt().toShort()
+        }
+        return out
+    }
+
+    @Test
+    fun `the short path agrees with the byte path`() {
+        // Both are fed by real code -- bytes from the live capture, shorts from the decoder -- so a
+        // disagreement between them would make a file's verdict depend on which door it came through.
+        val l = { i: Int -> sin(2 * PI * 440 * i / 48000.0) * 0.5 }
+        val r = { i: Int -> sin(2 * PI * 1310 * i / 48000.0) * 0.5 }
+
+        val viaBytes = verdict(pcm(8000, l, r))
+        val viaShorts = StereoSeparationMeter().apply { accept(shorts(8000, l, r), 16000, 2) }.separation()
+
+        assertEquals(viaBytes, viaShorts)
+        assertEquals(StereoSeparation.SEPARATED, viaShorts)
+    }
+
+    @Test
+    fun `a mono file is ignored rather than judged`() {
+        // One channel cannot hold two parties, and folding anything else into a left/right question
+        // would invent an answer. UNKNOWN is the honest output, and it stops labelling.
+        val mono = ShortArray(4000) { (sin(2 * PI * 440 * it / 48000.0) * 0.5 * Short.MAX_VALUE).toInt().toShort() }
+        val meter = StereoSeparationMeter().apply { accept(mono, mono.size, channels = 1) }
+        assertEquals(StereoSeparation.UNKNOWN, meter.separation())
+    }
+
+    @Test
+    fun `more than two channels is ignored too`() {
+        val surround = ShortArray(6000) { 1000 }
+        val meter = StereoSeparationMeter().apply { accept(surround, surround.size, channels = 6) }
+        assertEquals(StereoSeparation.UNKNOWN, meter.separation())
+    }
 }

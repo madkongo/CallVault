@@ -392,6 +392,19 @@ object AudioDecoder {
         uri: Uri,
         fromMs: Long = 0L,
         toMs: Long = Long.MAX_VALUE,
+        /**
+         * Offered the interleaved PCM-16 **before** the mono downmix, with the channel count and the
+         * chunk's real start — which a seek may move earlier than [fromMs].
+         *
+         * Exists so a caller that is already decoding can also ask who was speaking, without decoding
+         * the file a second time (issue #38). Null by default, so every existing caller behaves exactly
+         * as before; the samples are the accumulator's live buffer and must not be retained.
+         *
+         * Declared **before** [shouldStop] on purpose: [shouldStop] has to stay the last parameter or
+         * every existing trailing-lambda call site silently rebinds to this one instead. The compiler
+         * caught that immediately, but only because the types differ — it would not always.
+         */
+        onInterleaved: ((pcm: ShortArray, length: Int, channels: Int, startMs: Long) -> Unit)? = null,
         shouldStop: () -> Boolean = { false },
     ): DecodedRange {
         val extractor = MediaExtractor()
@@ -435,6 +448,9 @@ object AudioDecoder {
                     "(${frames * 1000L / decoded.sampleRate.coerceAtLeast(1)} ms)" +
                     if (wholeFile) "" else " from ${decoded.startMs} ms",
             )
+            // Before the downmix, because the downmix is exactly what destroys the answer.
+            onInterleaved?.invoke(decoded.pcm, decoded.length, decoded.channels, decoded.startMs)
+
             return DecodedRange(
                 audio = pcm16ToMono16k(decoded.pcm, decoded.channels, decoded.sampleRate, decoded.length),
                 startMs = decoded.startMs,

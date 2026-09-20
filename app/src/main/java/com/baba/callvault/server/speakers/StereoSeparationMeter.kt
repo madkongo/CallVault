@@ -57,6 +57,30 @@ class StereoSeparationMeter {
     }
 
     /**
+     * Accumulates [length] samples of interleaved PCM-16 held as shorts, with [channels] per frame.
+     *
+     * This is the shape `AudioDecoder` already has, so the offline path costs no byte round-trip. A
+     * file with anything other than two channels is ignored outright: there is no second party to
+     * find in a mono recording, and folding 5.1 into a left/right question would invent an answer.
+     */
+    fun accept(pcm: ShortArray, length: Int, channels: Int) {
+        if (channels != STEREO) return
+        val limit = min(length, pcm.size)
+        var index = 0
+
+        while (index + STEREO <= limit) {
+            val mid = (pcm[index] + pcm[index + 1]) * HALF
+            val side = (pcm[index] - pcm[index + 1]) * HALF
+
+            sumMidSq += mid * mid
+            sumSideSq += side * side
+            frames++
+
+            index += STEREO
+        }
+    }
+
+    /**
      * The verdict for everything accepted so far.
      *
      * [StereoSeparation.UNKNOWN] when nothing was ever offered — a mono file decoded through here, or a
@@ -83,5 +107,6 @@ class StereoSeparationMeter {
         const val BYTES_PER_FRAME = BYTES_PER_SAMPLE * 2
         const val FULL_SCALE = 32767.0
         const val HALF = 0.5
+        const val STEREO = 2
     }
 }
