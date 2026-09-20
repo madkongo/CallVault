@@ -97,8 +97,13 @@ class UpdatePackageReplacedReceiver : BroadcastReceiver() {
             // and reported success. Shizuku only restarts a service whose version changed, so a
             // same-version reinstall (every development install) needs this too.
             if (plan.restartShizukuService) {
-                runCatching { ShizukuBackend.stop(remove = true) }
-                    .onFailure { AppLogger.w(TAG, "Could not stop the stale Shizuku service: ${it.message}") }
+                // NOT a bare `ShizukuBackend.stop(remove = true)`, which is what this was. Shizuku does
+                // not kill the process when asked to remove it, a live binder is never dropped by a
+                // plain stop, and the ensureRunning below then "reused" the stale service and had it
+                // kill the fresh one. Measured on the OP9 on 2026-09-20; the call that followed the
+                // update recorded nothing.
+                runCatching { RecorderBackend.retireShizukuService("it predates the update that just installed") }
+                    .onFailure { AppLogger.w(TAG, "Could not retire the stale Shizuku service: ${it.message}") }
             }
             val healed = if (plan.healGrant) {
                 runCatching { AdbShell.tryHealWriteSecureSettings(context) }.getOrDefault(false)

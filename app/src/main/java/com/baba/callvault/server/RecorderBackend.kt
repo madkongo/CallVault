@@ -66,6 +66,78 @@ object RecorderBackend {
     }
 
     /**
+     * Retires the Shizuku-hosted recorder and does not return until this process holds no recorder.
+     *
+     * The service is asked to exit ITSELF first. `stop(remove = true)` only asks *Shizuku* to destroy
+     * it, and measured on the OP9 it does not: the process was still alive 30s later, so its binder
+     * never died, [RecorderConnection.onBinderDied] rightly kept a binder that was still alive, and the
+     * next `ensureRunning` "reused" the very recorder that had just been retired. We hold that binder
+     * and destroy() exits the process, so this is the one teardown that does not depend on another app
+     * acting on our behalf.
+     *
+     * Two callers, one failure each before they shared this:
+     *  - leaving Shizuku mode, where the survivor left a STANDALONE app recording through scrcpy;
+     *  - an install-over in Shizuku mode (2026-09-20), where the survivor was the pre-update process,
+     *    holding a path to an APK that no longer existed. It answered `killStaleRecorders` by killing
+     *    the fresh process Shizuku had just started, and the next call recorded nothing.
+     *
+     * A binder still held when [timeoutMs] runs out is dropped on purpose rather than carried forward:
+     * whichever recorder comes up next clears the survivor, because `killStaleRecorders` runs on every
+     * start — but only if the app is no longer attached to the survivor when it asks.
+     *
+     * @param evenIfRecording a mode switch is the user's own explicit act and always goes through; the
+     *   post-update recovery is nobody's act and must never end a call in progress.
+     * @return false when the service was left alone because it is recording.
+     */
+    fun retireShizukuService(
+        reason: String,
+        timeoutMs: Long = TEARDOWN_TIMEOUT_MS,
+        evenIfRecording: Boolean = false,
+    ): Boolean {
+        // destroy() stops the recording and exits the process, and a daemon(true) service survives an
+        // install — so it may be mid-call when the post-update recovery gets here. A stale host is a
+        // problem for the NEXT call; ending this one to fix it trades a possible loss for a certain one.
+        // An unanswered isRecording() counts as idle: a host that cannot answer is not one to protect.
+        val isRecording = runCatching { RecorderConnection.service?.isRecording == true }.getOrDefault(false)
+        if (isRecording && !evenIfRecording) {
+            AppLogger.w(TAG, "Not retiring the Shizuku service: it is recording a call right now")
+            return false
+        }
+        runCatching { RecorderConnection.service?.destroy() }
+            .onFailure { AppLogger.d(TAG, "The user service did not answer destroy(): ${it.message}") }
+        runCatching { ShizukuBackend.stop(remove = true) }
+            .onFailure { AppLogger.w(TAG, "Could not stop the Shizuku service: ${it.message}") }
+        awaitTeardown(reason, timeoutMs)
+        return true
+    }
+
+    /**
+     * Waits for a torn-down recorder to actually be GONE before anyone asks whether one is running.
+     *
+     * destroy()/unbind only *ask*; the binder's death arrives asynchronously. Measured on the OP9:
+     * the mode switch asked the ADB daemon to die at 16:11:56.731, and 3ms later ensureRunning saw
+     * RecorderConnection still connected, reported "already connected; reusing existing binder",
+     * and declared the switch ready — about the very daemon it had just killed. Shizuku was never
+     * bound. The death landed 17ms after that, far too late to matter.
+     */
+    private fun awaitTeardown(reason: String, timeoutMs: Long = TEARDOWN_TIMEOUT_MS) {
+        val clearedBy = SystemClock.elapsedRealtime() + timeoutMs
+        while (RecorderConnection.isConnected && SystemClock.elapsedRealtime() < clearedBy) {
+            Thread.sleep(POLL_MS)
+        }
+        if (!RecorderConnection.isConnected) {
+            AppLogger.i(TAG, "Previous recorder is gone")
+            return
+        }
+        // Do NOT carry this binder forward. It belongs to the host we just tore down, and keeping it
+        // is how the app ended up in standalone mode recording through a Shizuku service — reported as
+        // "Ready — using CallVault", with handoff, VoIP arming and speaker attribution all silently
+        // absent. Dropping it makes the next ensureRunning start the right backend, or fail honestly.
+        AppLogger.w(TAG, "The previous recorder is still connected after ${timeoutMs}ms")
+        RecorderConnection.forceClear(reason)
+    }
+
+    /**
      * Mirrors the user's logging preference into the recorder host.
      *
      * The host is another process running as shell: it cannot read the app's preferences, so it cannot
@@ -175,53 +247,16 @@ object RecorderBackend {
                 AppLogger.i(TAG, "Leaving standalone mode; stopping our daemon")
                 runCatching { RecorderConnection.service?.destroy() }
                     .onFailure { AppLogger.w(TAG, "Could not stop the daemon: ${it.message}") }
+                awaitTeardown("it belongs to $from, and we are switching to $to")
             }
             BackendChoice.SHIZUKU -> {
                 AppLogger.i(TAG, "Leaving Shizuku mode; releasing the user service")
-                // Ask the service ITSELF to exit first, exactly as the ADB branch above does.
-                //
-                // `stop(remove = true)` only asks *Shizuku* to destroy the service, and measured on the
-                // OP9 it did not: the process was still alive 30s later, so its binder never died, the
-                // teardown wait below ran out its full 5s, and ensureServerRunning then "reused" that
-                // very binder — leaving the app in STANDALONE mode talking to a Shizuku-hosted recorder
-                // while the switch dialog said "Ready — using CallVault". Silently, that costs every
-                // standalone-only feature at once: handoff, VoIP arming and speaker attribution all
-                // quietly do nothing, because capture is really going through scrcpy.
-                //
-                // We hold that binder and destroy() exits the process, so this is the one teardown that
-                // does not depend on another app acting on our behalf.
-                runCatching { RecorderConnection.service?.destroy() }
-                    .onFailure { AppLogger.d(TAG, "The user service did not answer destroy(): ${it.message}") }
-                runCatching { ShizukuBackend.stop(remove = true) }
-                    .onFailure { AppLogger.w(TAG, "Could not stop the Shizuku service: ${it.message}") }
+                retireShizukuService("it belongs to $from, and we are switching to $to", evenIfRecording = true)
             }
             null -> {
                 AppLogger.d(TAG, "Mode unchanged ($to); leaving the running recorder alone")
                 return
             }
-        }
-
-        // Wait for the old recorder to actually be GONE before anyone asks whether one is running.
-        //
-        // destroy()/unbind only *ask*; the binder's death arrives asynchronously. Measured on the OP9:
-        // the mode switch asked the ADB daemon to die at 16:11:56.731, and 3ms later ensureRunning saw
-        // RecorderConnection still connected, reported "already connected; reusing existing binder",
-        // and declared the switch ready — about the very daemon it had just killed. Shizuku was never
-        // bound. The death landed 17ms after that, far too late to matter.
-        val clearedBy = SystemClock.elapsedRealtime() + TEARDOWN_TIMEOUT_MS
-        while (RecorderConnection.isConnected && SystemClock.elapsedRealtime() < clearedBy) {
-            Thread.sleep(POLL_MS)
-        }
-        if (RecorderConnection.isConnected) {
-            // Do NOT carry this binder into the new mode. It belongs to the host we just tore down, and
-            // keeping it is how the app ended up in standalone mode recording through a Shizuku service
-            // — reported as "Ready — using CallVault", with handoff, VoIP arming and speaker
-            // attribution all silently absent. Dropping it makes the next ensureRunning start the
-            // backend the user actually chose, or fail honestly.
-            AppLogger.w(TAG, "The previous recorder is still connected after ${TEARDOWN_TIMEOUT_MS}ms")
-            RecorderConnection.forceClear("it belongs to $from, and we are switching to $to")
-        } else {
-            AppLogger.i(TAG, "Previous recorder is gone; starting the $to backend")
         }
 
         prefs.setPrivilegedMode(to)
