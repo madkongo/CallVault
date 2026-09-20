@@ -1,9 +1,12 @@
 # 2026-09-20 — an update in Shizuku mode silently costs the next call
 
-Status: **🧪 VERIFYING** — cause found and fixed on 2026-09-20, unit-tested, and one install-over on the
-OP9 came back with a fresh recorder without the app being opened. **No real call has been made after an
-install-over with the fix yet**, and that is the only thing that settles it: install a build over the
-top in Shizuku mode, do NOT open the app, make a carrier call, and check the file exists.
+Status: **✅ VERIFIED 2026-09-20** by the maintainer on the OP9 — install-over at 12:25:18 in Shizuku mode,
+CallVault never opened (proved from ActivityTaskManager), carrier call at 12:25:52 recorded through the
+fresh recorder, and he confirmed the recording is in the app and plays ("worked"). Branch
+`feat/shizuku-speaker-labels`, **not merged and not released — 2.4.0 as published still has the bug.**
+
+Still not verified: the mid-call guard (📐 nobody has installed over a live Shizuku call), an update taken
+through the in-app updater rather than adb, and any phone other than the OP9.
 
 History: ❌ NOT WORKING 2026-09-20 (10:36 call lost on the OP9). Present in **2.4.0 as published**, and in
 every earlier version with Shizuku mode. Found while testing issue #38; unrelated to that work.
@@ -144,7 +147,7 @@ over a live Shizuku call to watch this guard fire.
 Fix direction 2 above (ask the host whether its APK still exists, before a call) is **still not written**
 and is still worth having: it would catch a stale host however it came about.
 
-## Controlled re-test, 2026-09-20 12:25 (🧪 still VERIFYING — measured by log, awaiting the maintainer's word)
+## Controlled re-test, 2026-09-20 12:25 (✅ the run the maintainer confirmed)
 
 The earlier post-fix calls (11:07, 11:52) could not settle it: the maintainer was not sure whether the
 app had been opened between install and call, and opening it repairs the old bug on its own. So it was
@@ -158,4 +161,5 @@ run again with the log as the witness.
   `base.apk`, `Capture start check: STARTED`, and published a 58 KB file: 16.1 s, 2 ch, mean −35 dB,
   peak −6.3 dB. No `stale` line anywhere.
 
-This is the exact reproduction recipe from above, and it recorded. Promotion to ✅ is the maintainer's.
+This is the exact reproduction recipe from above, and it recorded. The maintainer then opened the app,
+found the 12:25 call in the list and played it: ✅ VERIFIED 2026-09-20.
