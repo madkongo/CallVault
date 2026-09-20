@@ -1,10 +1,11 @@
 # 2026-09-20 — Hebrew pinned, English out (first seen on the OP12). Cause NOT found
 
-Status: **🧪 VERIFYING** — a fix is built (`fix/wrong-script-retry`) and measured once on the OP12 by the
-assistant (last section). Waiting on the maintainer: open the 12:25 "Feroza" call on the OP12 and read it,
-then watch for the next real call that would have come out English. History: ❌ NOT WORKING 2026-09-20;
-cause narrowed to "nothing is broken, the decode is low-margin". One explanation was proposed, built, installed and **disproved the same
-day**; it is recorded here so it is not proposed again.
+Status: **✅ VERIFIED 2026-09-20 for the one call it was found on** — the maintainer opened the 12:25
+"Feroza" call on the OP12 after the fix and confirmed it reads correctly ("ok it looks good"). That is one
+clip. Still 🧪: whether ordinary Hebrew calls ever trip it, a false alarm on a real call, the fallback
+order (n = 1), and Arabic / Russian / Chinese, which share the code and have never been tried.
+Fix: `fix/wrong-script-retry`, unmerged. History: ❌ NOT WORKING 2026-09-20; cause narrowed to "nothing is
+broken, the decode is low-margin".
 
 ## The report
 
