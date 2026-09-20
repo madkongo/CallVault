@@ -105,6 +105,19 @@ class ChunkPlanTest {
     // ---- stitching ----
 
     @Test
+    fun `the candidate parts of a segment are shifted with it`() {
+        // Left behind in the chunk's own timeline they would be compared with speaker turns that are in
+        // the call's, and every chunk after the first would be cut in the wrong place or not at all.
+        val chunk = ChunkPlan.Chunk(decodeFromMs = 290_000, keepFromMs = 300_000, endMs = 600_000)
+        val parts = listOf(TranscriptSegment(15_000, 16_000, "hel"), TranscriptSegment(17_000, 18_000, "lo"))
+        val raw = listOf(TranscriptSegment(startMs = 15_000, endMs = 18_000, text = "hello", parts = parts))
+
+        val out = ChunkPlan.stitch(raw, chunk)
+
+        assertEquals(listOf(305_000L to 306_000L, 307_000L to 308_000L), out[0].parts.map { it.startMs to it.endMs })
+    }
+
+    @Test
     fun `segment times are shifted into the whole call's timeline`() {
         // whisper reports times relative to the chunk it was given; a transcript that jumps back to
         // zero every five minutes would break every tap-to-seek in the app.

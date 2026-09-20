@@ -19,4 +19,11 @@ data class TranscriptSegment(
     val startMs: Long,
     val endMs: Long,
     val text: String,
+    /**
+     * Where this segment could be cut, offered by the engine and settled by the runner: the same words
+     * as [text], divided at every pause the VAD found. Empty when there was no pause inside it, which is
+     * nearly always. See [SpeakerSeamSplit] — the engine cannot decide, because it decodes before the
+     * speaker turns exist.
+     */
+    val parts: List<TranscriptSegment> = emptyList(),
 )

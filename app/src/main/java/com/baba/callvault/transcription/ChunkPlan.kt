@@ -116,6 +116,12 @@ object ChunkPlan {
                 it.copy(
                     startMs = it.startMs + chunk.decodeFromMs,
                     endMs = it.endMs + chunk.decodeFromMs,
+                    parts = it.parts.map { part ->
+                        part.copy(
+                            startMs = part.startMs + chunk.decodeFromMs,
+                            endMs = part.endMs + chunk.decodeFromMs,
+                        )
+                    },
                 )
             }
             .filter { it.endMs > chunk.keepFromMs }

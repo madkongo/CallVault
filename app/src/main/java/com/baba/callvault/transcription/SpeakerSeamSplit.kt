@@ -49,6 +49,10 @@ object SpeakerSeamSplit {
     /**
      * [segment] as one piece per run of stretches a single speaker held, or unchanged.
      *
+     * The whole rule in one call, which is what the tests measure against the real call. The app runs it
+     * as its two halves, [atSeams] in the engine and [joinSameSpeaker] in the runner, because the engine
+     * decodes chunk by chunk before the speaker turns exist.
+     *
      * @param words the segment's words in order, on the compressed timeline. Empty when token times
      *   are unavailable, which leaves the segment alone.
      * @param speech what the VAD kept, in ORIGINAL time. Fewer than two leaves nothing to cut at.
@@ -59,41 +63,70 @@ object SpeakerSeamSplit {
         words: List<Word>,
         speech: List<Speech>,
         turns: List<SpeakerTurn>,
-    ): List<TranscriptSegment> {
-        if (words.isEmpty() || speech.size < 2 || turns.isEmpty()) return listOf(segment)
+    ): List<TranscriptSegment> = joinSameSpeaker(atSeams(segment, words, speech), turns)
+
+    /**
+     * The engine's half: [segment] with its [TranscriptSegment.parts] filled in, one per kept stretch it
+     * has words in. Knows nothing about speakers. Unchanged when there is no pause inside the segment.
+     */
+    fun atSeams(segment: TranscriptSegment, words: List<Word>, speech: List<Speech>): TranscriptSegment {
+        if (words.isEmpty() || speech.size < 2) return segment
 
         val ordered = speech.sortedBy { it.startMs }
-        val speakerOf = ordered.map { SpeakerLabeller.label(turns, it.startMs, it.endMs) }
-        val stretchOf = words.map { stretchIndexAt(it.compressedStartMs, ordered) }
+        val byStretch = words.groupBy { stretchIndexAt(it.compressedStartMs, ordered) }.toSortedMap()
+        if (byStretch.size < 2) return segment
 
-        val pieces = mutableListOf<List<Int>>()
-        var current = mutableListOf(0)
-        for (i in 1 until words.size) {
-            if (isHandover(stretchOf[i - 1], stretchOf[i], speakerOf)) {
-                pieces += current
-                current = mutableListOf()
-            }
-            current += i
-        }
-        pieces += current
-        if (pieces.size == 1) return listOf(segment)
-
-        return pieces.map { indices ->
+        val parts = byStretch.map { (index, spoken) ->
             TranscriptSegment(
-                startMs = maxOf(segment.startMs, ordered[stretchOf[indices.first()]].startMs),
-                endMs = minOf(segment.endMs, ordered[stretchOf[indices.last()]].endMs),
-                text = indices.joinToString(" ") { words[it].text },
+                startMs = maxOf(segment.startMs, ordered[index].startMs),
+                endMs = minOf(segment.endMs, ordered[index].endMs),
+                text = spoken.joinToString(" ") { it.text },
             )
         }
+        return segment.copy(parts = parts)
     }
 
-    /** Whether the step from one word's stretch to the next crosses from one named speaker to another. */
-    private fun isHandover(from: Int, to: Int, speakerOf: List<String?>): Boolean {
-        if (from == to) return false
-        val before = speakerOf[from] ?: return false
-        val after = speakerOf[to] ?: return false
-        return before != after
+    /**
+     * The runner's half: the candidates one speaker held joined back together, the cut kept only where
+     * [SpeakerLabeller] names a different side before and after it. Never returns leftover candidates.
+     */
+    fun joinSameSpeaker(segment: TranscriptSegment, turns: List<SpeakerTurn>): List<TranscriptSegment> {
+        val whole = segment.copy(parts = emptyList())
+        if (segment.parts.size < 2 || turns.isEmpty()) return listOf(whole)
+
+        // A run is compared by the last speaker NAMED in it, not by its neighbour: B, then a stretch of
+        // double-talk nobody can be named for, then A, is still a handover from B to A.
+        val runs = segment.parts.fold(emptyList<Run>()) { runs, part ->
+            val speaker = SpeakerLabeller.label(turns, part.startMs, part.endMs)
+            val open = runs.lastOrNull()
+            if (open == null || isHandover(open.speaker, speaker)) runs + Run(part, speaker)
+            else runs.dropLast(1) + open.joinedWith(part, speaker)
+        }
+        val pieces = runs.map { it.segment }
+        return if (pieces.size == 1) listOf(whole) else pieces
     }
+
+    /** Parses the native layer's words: one per line, `<compressed start in ms>\t<text>`. Bad lines are skipped. */
+    fun parseWords(encoded: String): List<Word> =
+        encoded.lineSequence().mapNotNull { line ->
+            val tab = line.indexOf('\t')
+            if (tab <= 0) return@mapNotNull null
+            val startMs = line.substring(0, tab).toLongOrNull() ?: return@mapNotNull null
+            val text = line.substring(tab + 1).trim()
+            if (text.isEmpty()) null else Word(text, startMs)
+        }.toList()
+
+    /** Consecutive candidates held by one speaker, and the last speaker named among them. */
+    private data class Run(val segment: TranscriptSegment, val speaker: String?) {
+        fun joinedWith(part: TranscriptSegment, partSpeaker: String?) = Run(
+            segment = segment.copy(endMs = part.endMs, text = "${segment.text} ${part.text}"),
+            speaker = partSpeaker ?: speaker,
+        )
+    }
+
+    /** Whether a run and the candidate after it belong to two named, different speakers. */
+    private fun isHandover(before: String?, after: String?): Boolean =
+        before != null && after != null && before != after
 
     /**
      * Which kept stretch a compressed-timeline moment falls in.
