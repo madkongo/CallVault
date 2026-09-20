@@ -95,22 +95,11 @@ object TranscriptionPrompt {
      */
     private fun isWrittenIn(name: String, language: String?): Boolean {
         if (language == null) return true
-        val expected = SCRIPT_OF[language] ?: Character.UnicodeScript.LATIN
+        val expected = LanguageScript.of(language)
         return name.codePoints()
             .filter { Character.isLetter(it) }
             .allMatch { Character.UnicodeScript.of(it) == expected }
     }
-
-    /**
-     * The script of each offered language that is not written in Latin letters. Everything absent is
-     * Latin, which is every other entry in [TranscriptionLanguageChoice.SUPPORTED] today.
-     */
-    private val SCRIPT_OF = mapOf(
-        "he" to Character.UnicodeScript.HEBREW,
-        "ar" to Character.UnicodeScript.ARABIC,
-        "ru" to Character.UnicodeScript.CYRILLIC,
-        "zh" to Character.UnicodeScript.HAN,
-    )
 
     private fun isPhoneNumber(name: String): Boolean =
         name.count { it.isDigit() } >= name.count { !it.isWhitespace() } / 2
