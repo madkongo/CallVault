@@ -81,7 +81,9 @@ object WrongScriptRetry {
     }
 
     fun shouldRetry(segments: List<TranscriptSegment>, language: String?, audioMs: Long): Boolean =
-        audioMs <= MAX_RETRY_AUDIO_MS && isWrongScript(segments, language)
+        // A KNOWN length inside the limit. Unknown is not "short": a container that declares no duration
+        // can be an hour long, and tripling that on a guess is the one way this could make a run worse.
+        audioMs in 1..MAX_RETRY_AUDIO_MS && isWrongScript(segments, language)
 
     /**
      * [first] decoded again through each of [FALLBACKS] until one comes back in the right script.

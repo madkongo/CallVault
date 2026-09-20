@@ -45,6 +45,12 @@ fun interface Transcriber {
          * decode that is happening anyway (issue #38). Null for none.
          */
         speakers: OfflineSpeakerLabeller?,
+        /**
+         * How to decode. [DecodeSettings.DEFAULT] for every ordinary run; something else only when
+         * [WrongScriptRetry] is decoding a recording again because the first attempt came back in the
+         * wrong alphabet.
+         */
+        settings: DecodeSettings,
     ): List<TranscriptSegment>
 }
 
@@ -74,8 +80,8 @@ class TranscriptionRunner(
     // A lambda rather than `TranscriptionEngine::transcribe`: the engine's `settings` parameter sits
     // between `prompt` and `speakers`, so a method reference no longer lines up with this interface.
     private val transcriber: Transcriber =
-        Transcriber { ctx, uri, modelPath, language, prompt, speakers ->
-            TranscriptionEngine.transcribe(ctx, uri, modelPath, language, prompt, speakers = speakers)
+        Transcriber { ctx, uri, modelPath, language, prompt, speakers, settings ->
+            TranscriptionEngine.transcribe(ctx, uri, modelPath, language, prompt, settings, speakers = speakers)
         }
 ) {
 
@@ -188,7 +194,22 @@ class TranscriptionRunner(
         // collapsed the channels. See OfflineSpeakerLabeller.
         val speakers = OfflineSpeakerLabeller()
         val attempt = try {
-            runCatching { transcriber.transcribe(context, uri, modelPath, language, prompt, speakers = speakers) }
+            runCatching {
+                val first = transcriber.transcribe(
+                    context, uri, modelPath, language, prompt, speakers, DecodeSettings.DEFAULT,
+                )
+                // The language pin is a hint to whisper, not a guarantee: a Hebrew call came back in
+                // English on two phones with nothing in the pipeline broken. See WrongScriptRetry.
+                // Retries get no speaker detector — the first decode already heard the whole file, and
+                // feeding it again would count every turn twice.
+                if (!WrongScriptRetry.shouldRetry(first, language, audioMs)) first
+                else {
+                    AppLogger.w(TAG, "Transcript is not in the pinned language's script ($language); decoding again")
+                    WrongScriptRetry.recover(first, language) { settings ->
+                        transcriber.transcribe(context, uri, modelPath, language, prompt, null, settings)
+                    }
+                }
+            }
         } finally {
             TranscriptionInFlight.release(displayName)
         }

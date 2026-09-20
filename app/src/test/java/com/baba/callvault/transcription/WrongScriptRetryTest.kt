@@ -67,6 +67,10 @@ class WrongScriptRetryTest {
         // A retry costs the whole decode again. Short clips are where whisper has the least to go on and
         // tips over; an hour of English under a Hebrew pin is a wrong setting, not a knife-edge.
         assertFalse(WrongScriptRetry.shouldRetry(english, "he", audioMs = WrongScriptRetry.MAX_RETRY_AUDIO_MS + 1))
+        // Unknown length is not "short". A container that declares no duration can be an hour long, and
+        // tripling that on a guess is the one way this could make a run much worse.
+        assertFalse(WrongScriptRetry.shouldRetry(english, "he", audioMs = 0))
+        assertFalse(WrongScriptRetry.shouldRetry(english, "he", audioMs = -1))
     }
 
     @Test
