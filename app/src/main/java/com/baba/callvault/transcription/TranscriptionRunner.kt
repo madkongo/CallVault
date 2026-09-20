@@ -407,9 +407,11 @@ class TranscriptionRunner(
         // A line both people share is cut at the pause between them BEFORE it is labelled — shared, it
         // belongs to neither and gets no name at all. Measured on the OP9: the same call was two
         // labelled lines in English and one unlabelled line in Hebrew. See SpeakerSeamSplit.
-        val lines = flatMap { SpeakerSeamSplit.joinSameSpeaker(it, turns) }
+        // ...and then the rows one person holds are joined, so a turn is one row rather than one row
+        // per sentence. In that order: a shared row has to be cut before its halves can join anything.
+        val lines = SpeakerTurnLines.merge(flatMap { SpeakerSeamSplit.joinSameSpeaker(it, turns) }, turns)
         if (lines.size != size) {
-            AppLogger.i(TAG, "Cut $size segment(s) into ${lines.size} line(s) where the speaker changed")
+            AppLogger.i(TAG, "Laid $size segment(s) out as ${lines.size} row(s), one per turn")
         }
         val speakers = SpeakerLabeller.labelAll(turns, lines.map { it.startMs to it.endMs })
 
