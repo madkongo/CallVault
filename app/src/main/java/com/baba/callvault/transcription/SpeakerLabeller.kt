@@ -31,12 +31,27 @@ import com.baba.callvault.server.speakers.SpeakerTurnCodec
 object SpeakerLabeller {
 
     /**
-     * How much of a segment's voiced time one side must hold to be named.
+     * How much of the time the two sides spoke ALONE one of them must hold to be named.
      *
      * Two thirds rather than a bare majority: a segment split 55/45 across a handover is not
      * evidence of anything, and there is no cost to leaving it neutral.
      */
     private const val DOMINANCE_FRACTION = 0.66
+
+    /**
+     * How much of a segment's voiced time the winner must hold **alone**, whatever else is true.
+     *
+     * BOTH is not always two people. On a Shizuku recording one voice reaches the other channel at
+     * about half level — far-end echo, or a test with both phones in one room — and those windows read
+     * as double-talk. Measured on the OP9 on 2026-09-20: 3.0 s alone, 2.1 s "both", the other side
+     * 0.0 s, so 59% of voiced and no label for a segment only one person spoke in. Dominance is
+     * therefore judged between the two sides' time ALONE, and this floor keeps a segment that is nearly
+     * all double-talk from being named after a sliver.
+     *
+     * Strictly looser than judging against all voiced time, which is what this used to do: every
+     * label the old rule gave is still given, and only some nulls become names.
+     */
+    private const val MIN_ALONE_FRACTION = 0.33
 
     /** Decodes stored turns, yielding an empty list for anything unreadable. */
     fun decode(encoded: String): List<SpeakerTurn> = SpeakerTurnCodec.decode(encoded)
@@ -75,7 +90,8 @@ object SpeakerLabeller {
         if (voiced <= 0) return null
 
         val winner = maxOf(a, b)
-        if (winner < DOMINANCE_FRACTION * voiced) return null
+        if (winner < DOMINANCE_FRACTION * (a + b)) return null
+        if (winner < MIN_ALONE_FRACTION * voiced) return null
 
         return if (a > b) SpeakerChannel.A.key else SpeakerChannel.B.key
     }

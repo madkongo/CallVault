@@ -60,6 +60,42 @@ class SpeakerLabellerTest {
     }
 
     @Test
+    fun `names the only side that ever spoke alone, even when its voice bled into the other channel`() {
+        // Measured on the OP9 on 2026-09-20, a Shizuku call: one person spoke for 8 s and nobody else
+        // did. Their voice also reached the other channel at about half level, so 2.1 s of it read as
+        // BOTH. 3.0 s of 5.1 s voiced is 59% — under two thirds — and the segment went unlabelled with
+        // the other side holding exactly nothing. Bleed is not a second speaker.
+        val turns = listOf(
+            SpeakerTurn(0, SpeakerChannel.A),
+            SpeakerTurn(3_000, SpeakerChannel.BOTH)
+        )
+
+        assertEquals("A", SpeakerLabeller.label(turns, 0, 5_100))
+    }
+
+    @Test
+    fun `still returns null when one side's lead is a sliver beside the double-talk`() {
+        // The relaxation above must not turn a segment that is nearly all double-talk into a name.
+        val turns = listOf(
+            SpeakerTurn(0, SpeakerChannel.A),
+            SpeakerTurn(1_000, SpeakerChannel.BOTH)
+        )
+
+        assertNull(SpeakerLabeller.label(turns, 0, 10_000))
+    }
+
+    @Test
+    fun `still returns null when both sides spoke alone and neither clearly led`() {
+        val turns = listOf(
+            SpeakerTurn(0, SpeakerChannel.A),
+            SpeakerTurn(3_000, SpeakerChannel.B),
+            SpeakerTurn(5_000, SpeakerChannel.BOTH)
+        )
+
+        assertNull(SpeakerLabeller.label(turns, 0, 7_000))
+    }
+
+    @Test
     fun `ignores silence, which is most of a call and belongs to nobody`() {
         // A segment surrounded by silence is still attributable: only the voiced part counts.
         val turns = listOf(
