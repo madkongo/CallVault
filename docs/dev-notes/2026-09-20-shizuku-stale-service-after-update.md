@@ -1,8 +1,12 @@
 # 2026-09-20 — an update in Shizuku mode silently costs the next call
 
-Status: **❌ NOT WORKING 2026-09-20** — reproduced on the OP9 with a real carrier call. **Not fixed.**
-Present in **2.4.0 as published**, and in every earlier version with Shizuku mode. Found while testing
-issue #38; unrelated to that work.
+Status: **🧪 VERIFYING** — cause found and fixed on 2026-09-20, unit-tested, and one install-over on the
+OP9 came back with a fresh recorder without the app being opened. **No real call has been made after an
+install-over with the fix yet**, and that is the only thing that settles it: install a build over the
+top in Shizuku mode, do NOT open the app, make a carrier call, and check the file exists.
+
+History: ❌ NOT WORKING 2026-09-20 (10:36 call lost on the OP9). Present in **2.4.0 as published**, and in
+every earlier version with Shizuku mode. Found while testing issue #38; unrelated to that work.
 
 ## What happened
 
@@ -93,3 +97,49 @@ leftovers. So the restart works — just not from the replace path, and not befo
 On a phone in Shizuku mode: install any build over the top, then make a carrier call **without opening
 the app in between** — opening it is what repaired the OP9. Expect a call with no file and the
 `This recorder process is stale` line in the log.
+
+## Root cause (added later on 2026-09-20 — corrects the section above)
+
+**"It rebound to the old process" above was wrong about the mechanism, and "the stop is asynchronous" was
+only half of it.** Shizuku's own server log (`UserServiceManager`, pid 28124), which the first pass did
+not read, shows a fresh process WAS started at 10:32:54.526 — and the stale one killed it. There are two
+independent ways the stale service stays attached, and the OP9 produced one on each of two installs:
+
+1. **A late answer to an earlier bind** (10:32 install). App start bound the surviving service at .505.
+   The recovery ran `stop(remove = true)` at ~.52, and at .525 the first bind's `onServiceConnected`
+   arrived on the main thread and put the *removed* service's binder into `RecorderConnection`.
+   `ensureRunning` found "a recorder" and called `killStaleRecorders` on it — so stale pid 29485 killed
+   fresh pid 10404, then 10407, 10412, 10409 and 10413 as Shizuku kept retrying.
+2. **`stop()` does not detach a live binder** (10:55 install, with only fix 1 in place). The binder
+   arrived *before* the stop. `stop()` detaches through `RecorderConnection.onBinderDied()`, which keeps
+   any binder that is still alive — correct for the case it was written for — and Shizuku's `remove`
+   does not kill the process on this phone. Log: `A previous recorder's binder died; the current one is
+   alive - keeping it`, then `Recorder already connected; reusing existing binder` 1 ms later.
+
+`RecorderBackend.switchTo` had already met cause 2 and solved it (ask the service to `destroy()` itself,
+wait, then `forceClear`). The post-update path simply never got the same treatment.
+
+## The fix
+
+- `ShizukuBackend`: a connection's callbacks ignore themselves once they are no longer the current
+  binding, and the binding is claimed before `bindUserService` rather than after.
+  Test: `ShizukuBackendStaleCallbackTest`.
+- `RecorderBackend.retireShizukuService`: the mode switch's teardown, extracted and shared — `destroy()`
+  the service, ask Shizuku to remove it, wait for the binder to go, drop it on purpose if it will not.
+  `UpdatePackageReplacedReceiver` now calls this instead of a bare `stop`. Test: `RetireShizukuServiceTest`.
+
+Measured on the OP9 at 10:58 with both in place: stale pid 18445 (two installs old) gone, recorder pid
+20954 running from the *current* `base.apk` (checked in `/proc/20954/fd`), app never opened.
+
+Measured again at 11:04 after the review fixes below: recorder pid 21977 from the current `base.apk`, and
+the log shows cause 1 being caught in the act — `Ignoring a recorder binder for a binding that was
+already stopped`.
+
+Review (kotlin-reviewer) found one thing that mattered: the new teardown calls `destroy()`, which stops
+a recording and exits, and a `daemon(true)` service can be **mid-call** when an install lands. The
+post-update path now leaves a recording service alone (`retireShizukuService` returns false); a mode
+switch, being the user's own act, still goes through. 📐 CALCULATED, not measured: nobody has installed
+over a live Shizuku call to watch this guard fire.
+
+Fix direction 2 above (ask the host whether its APK still exists, before a call) is **still not written**
+and is still worth having: it would catch a stale host however it came about.
