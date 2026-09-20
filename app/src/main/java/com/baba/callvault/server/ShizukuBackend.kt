@@ -158,12 +158,30 @@ object ShizukuBackend {
 
         val conn = object : ServiceConnection {
             override fun onServiceConnected(name: ComponentName?, binder: IBinder?) {
-                if (binder == null || !binder.pingBinder()) {
-                    AppLogger.e(TAG, "Shizuku returned a dead binder for the recorder service")
-                    return
+                // Shizuku answers a bind on the main thread, later, and a stop() can land in between.
+                // Measured on the OP9 on 2026-09-20, after an install-over: app start bound the
+                // surviving pre-update service, the post-update recovery removed it 13 ms later, and
+                // 4 ms after that THIS callback delivered the removed service's binder. ensureRunning
+                // then found "a recorder", asked it to clear the others, and the stale process killed
+                // all five fresh ones Shizuku started. The next call recorded nothing.
+                //
+                // Under bindLock, so a stop() cannot land between the check and the store: it either
+                // finishes first and this is ignored, or runs afterwards and sees what was stored — which
+                // is what lets RecorderBackend.retireShizukuService find the binder and drop it.
+                val accepted = synchronized(bindLock) {
+                    if (connection !== this) {
+                        AppLogger.i(TAG, "Ignoring a recorder binder for a binding that was already stopped")
+                        return@synchronized false
+                    }
+                    if (binder == null || !binder.pingBinder()) {
+                        AppLogger.e(TAG, "Shizuku returned a dead binder for the recorder service")
+                        return@synchronized false
+                    }
+                    AppLogger.i(TAG, "Shizuku started the recorder service")
+                    RecorderConnection.onBinderReceived(IRecorderService.Stub.asInterface(binder))
+                    true
                 }
-                AppLogger.i(TAG, "Shizuku started the recorder service")
-                RecorderConnection.onBinderReceived(IRecorderService.Stub.asInterface(binder))
+                if (!accepted || binder == null) return
                 // Same death handling the daemon path gets: the holder must clear itself, or callers
                 // meet a DeadObjectException instead of an honest "not connected".
                 runCatching { binder.linkToDeath(RecorderConnection.deathRecipient, 0) }
@@ -171,16 +189,26 @@ object ShizukuBackend {
             }
 
             override fun onServiceDisconnected(name: ComponentName?) {
-                AppLogger.w(TAG, "Shizuku's recorder service disconnected")
-                RecorderConnection.onBinderDied()
+                // The same rule as above: a stopped binding's service going away says nothing about
+                // the recorder the current binding delivered.
+                synchronized(bindLock) {
+                    if (connection !== this) return
+                    AppLogger.w(TAG, "Shizuku's recorder service disconnected")
+                    RecorderConnection.onBinderDied()
+                }
             }
         }
 
+        // Claimed BEFORE the bind, because the callbacks above compare against it and the answer is
+        // delivered on another thread: set afterwards, a fast answer would find itself "not current".
+        connection = conn
         return runCatching {
             Shizuku.bindUserService(userServiceArgs, conn)
-            connection = conn
             true
-        }.onFailure { AppLogger.e(TAG, "bindUserService failed: ${it.message}", it) }.getOrDefault(false)
+        }.onFailure {
+            connection = null
+            AppLogger.e(TAG, "bindUserService failed: ${it.message}", it)
+        }.getOrDefault(false)
     }
 
     /**
