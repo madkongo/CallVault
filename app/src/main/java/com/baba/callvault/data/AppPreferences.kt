@@ -96,6 +96,7 @@ class AppPreferences(context: Context) {
         const val CARRIER_RECORDING_ENABLED = true
         const val AUTO_RECORD_INCOMING = false
         const val AUTO_RECORD_OUTGOING = false
+        const val RECORD_FROM_ANSWER = false
         
         // --- Filters & Contacts ---
         const val IGNORE_ANONYMOUS_INCOMING = false
@@ -327,6 +328,7 @@ class AppPreferences(context: Context) {
         CARRIER_RECORDING_ENABLED("carrier_recording_enabled"),
         AUTO_RECORD_INCOMING("auto_record_incoming"),
         AUTO_RECORD_OUTGOING("auto_record_outgoing"),
+        RECORD_FROM_ANSWER("record_from_answer"),
         
         // --- Filters & Contacts ---
         IGNORE_ANONYMOUS_INCOMING("ignore_anonymous_incoming"),
@@ -1130,6 +1132,14 @@ class AppPreferences(context: Context) {
     
     /** Sets whether auto-recording for outgoing calls is enabled. */
     fun setAutoRecordOutgoingEnabled(enabled: Boolean) = setBoolean(Key.AUTO_RECORD_OUTGOING, enabled)
+
+    /**
+     * Whether an outgoing phone call is recorded from the moment it is answered rather than from the
+     * dial. Phone calls only: an app call has no answer signal to wait for. See AnswerWait.
+     */
+    fun isRecordFromAnswerEnabled() = getBoolean(Key.RECORD_FROM_ANSWER, DefaultsValue.RECORD_FROM_ANSWER)
+
+    fun setRecordFromAnswerEnabled(enabled: Boolean) = setBoolean(Key.RECORD_FROM_ANSWER, enabled)
 
     // -------- Filters & Contacts --------
 

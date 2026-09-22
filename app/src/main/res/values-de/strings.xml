@@ -181,6 +181,8 @@
     <string name="settings_audio_source">Audioquelle</string>
     <string name="settings_auto_record_incoming">Automatisch eingehende Anrufe aufnehmen</string>
     <string name="settings_auto_record_outgoing">Automatisch ausgehende Anrufe aufnehmen</string>
+    <string name="settings_record_from_answer">Erst bei Annahme starten</string>
+    <string name="settings_record_from_answer_description">Ausgehende Telefonanrufe werden ab dem Moment aufgenommen, in dem die Gegenseite abhebt, nicht ab dem Wählen. Nur Telefonanrufe — App-Anrufe melden keine Annahme.</string>
     <string name="settings_bugreport_active_warning">Debug-Protokollierung ist EIN. Denken Sie daran, sie auszuschalten, wenn Sie fertig sind, um Speicherplatz zu sparen.</string>
     <string name="settings_bugreport_share">Teilen</string>
     <string name="settings_bugreport_share_chooser">Debug-Protokolle teilen</string>

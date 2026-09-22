@@ -79,6 +79,13 @@ object DiagnosticDumps {
         // See docs/dev-notes/2026-09-19-android-17-adb-detection-issue-40.md.
         "setting_adb_enabled" -> arrayOf(SETTINGS, "get", "global", "adb_enabled")
         "setting_dev_options" -> arrayOf(SETTINGS, "get", "global", "development_settings_enabled")
+        // The precise state of the foreground call — DIALING, ALERTING, ACTIVE — which "start when
+        // they answer" polls for. `READ_PRECISE_PHONE_STATE` is a signature permission the app can
+        // never hold; the registry's dump prints the field for the shell. Filtered here because the
+        // full dump is thousands of lines and this is read every half second while a call rings.
+        // One line per phone: on a dual-SIM device the SIM not in the call says IDLE, so every line
+        // is returned and the reader picks the one that is in a call (see AnswerWait).
+        "call_state" -> arrayOf(SH, "-c", "$DUMPSYS telephony.registry | grep mForegroundCallState")
         else -> null
     }
 

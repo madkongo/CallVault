@@ -51,6 +51,8 @@ interface SettingsActions {
     fun setCarrierRecording(enabled: Boolean)
     fun setAutoRecordIncoming(enabled: Boolean)
     fun setAutoRecordOutgoing(enabled: Boolean)
+    /** Outgoing phone calls are recorded from the answer rather than from the dial. */
+    fun setRecordFromAnswer(enabled: Boolean)
     fun setVibrationEnabled(enabled: Boolean)
     fun setIgnoreAnonymousIncoming(enabled: Boolean)
     fun setIgnoreCrossCountryIncoming(enabled: Boolean)
@@ -215,6 +217,11 @@ class SettingsViewModel(application: Application) : AndroidViewModel(application
      */
     override fun setAutoRecordOutgoing(enabled: Boolean) {
         preferences.setAutoRecordOutgoingEnabled(enabled)
+        refresh()
+    }
+
+    override fun setRecordFromAnswer(enabled: Boolean) {
+        preferences.setRecordFromAnswerEnabled(enabled)
         refresh()
     }
 

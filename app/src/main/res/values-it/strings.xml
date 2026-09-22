@@ -181,6 +181,8 @@
     <string name="settings_audio_source">Sorgente audio</string>
     <string name="settings_auto_record_incoming">Registra automaticamente le chiamate in entrata</string>
     <string name="settings_auto_record_outgoing">Registra automaticamente le chiamate in uscita</string>
+    <string name="settings_record_from_answer">Avvia quando rispondono</string>
+    <string name="settings_record_from_answer_description">Le chiamate telefoniche in uscita vengono registrate dal momento in cui l\'altra persona risponde, non dalla composizione. Solo chiamate telefoniche: le chiamate delle app non segnalano la risposta.</string>
     <string name="settings_bugreport_active_warning">La registrazione di debug è ATTIVA. Ricordi di disattivarla al termine per risparmiare spazio.</string>
     <string name="settings_bugreport_share">Condividi</string>
     <string name="settings_bugreport_share_chooser">Condividi log di debug</string>

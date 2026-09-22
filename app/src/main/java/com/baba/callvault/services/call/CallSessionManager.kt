@@ -24,6 +24,7 @@ import com.baba.callvault.services.recording.RecordingForegroundService
 import com.baba.callvault.services.recording.RecordingPolicy
 import com.baba.callvault.services.recording.VoipRecordingCoordinator
 import com.baba.callvault.services.recording.VoipTelephonyGate
+import com.baba.callvault.server.RecorderConnection
 import com.baba.callvault.system.permissions.PermissionChecks
 import com.baba.callvault.utils.AppLogger
 import com.baba.callvault.utils.PhoneNumberManager
@@ -158,6 +159,12 @@ class CallSessionManager private constructor(context: Context) {
      */
     private var sessionJob: Job? = null
 
+    /**
+     * The poll that waits for an outgoing call to be answered before starting the recording — see
+     * [AnswerWait]. Cancelled by IDLE, so a call that is never picked up records nothing.
+     */
+    private var answerJob: Job? = null
+
 
     init {
         AppLogger.d(TAG, "CallSessionManager initialised")
@@ -200,6 +207,7 @@ class CallSessionManager private constructor(context: Context) {
         // 1. Handle IDLE (Stop, no longer in a call)
         if (receivedCallState == TelephonyManager.CALL_STATE_IDLE) {
             sessionJob?.cancel() // Cancel pending verification window or ongoing session if any
+            answerJob?.cancel()
             // Only trigger stop logic if we were previously in an active session. Prevents redundant stop commands on possible repeated IDLE broadcasts.
             if (session.isSessionActive) {
                 AppLogger.d(TAG, "Phone state is now idle (call ended). Sending stop INTENT for ${session.currentMetadata?.direction} call to RecordingForegroundService.")
@@ -315,8 +323,16 @@ class CallSessionManager private constructor(context: Context) {
 
             RecordingPolicy.CarrierAction.RECORD -> {
                 reportGapIfPrerequisiteMissing(sessionMetadata)
-                AppLogger.i(TAG, "Sending start INTENT for ${sessionMetadata.direction} call to RecordingForegroundService.")
-                sendServiceCommand(RecordingForegroundService.ACTION_START_RECORDING, sessionMetadata)
+                if (sessionMetadata.direction == RecordingDirection.OUTGOING && preferences.isRecordFromAnswerEnabled()) {
+                    // Standby warms the daemon at the dial, exactly as it does for a call that is
+                    // offered rather than recorded; the start follows when the far end picks up.
+                    AppLogger.i(TAG, "Sending standby INTENT for ${sessionMetadata.direction} call; recording starts when it is answered.")
+                    sendServiceCommand(RecordingForegroundService.ACTION_STANDBY, sessionMetadata)
+                    answerJob = managerScope.launch { startWhenAnswered(sessionMetadata) }
+                } else {
+                    AppLogger.i(TAG, "Sending start INTENT for ${sessionMetadata.direction} call to RecordingForegroundService.")
+                    sendServiceCommand(RecordingForegroundService.ACTION_START_RECORDING, sessionMetadata)
+                }
             }
 
             RecordingPolicy.CarrierAction.OFFER -> {
@@ -380,6 +396,35 @@ class CallSessionManager private constructor(context: Context) {
     /**
      * Builds and fires an Intent to the [RecordingForegroundService].
      */
+    /**
+     * Polls the recorder host for the precise call state and sends the start the moment the call is
+     * ACTIVE. Every outcome but "still ringing" starts the recording — a host that cannot say, or a
+     * wait that runs too long, must not cost the call. See [AnswerWait] for the rule.
+     */
+    private suspend fun startWhenAnswered(metadata: RecordingMetadata) {
+        val startedAt = System.currentTimeMillis()
+        var polls = 0
+        while (true) {
+            val dump = withContext(Dispatchers.IO) {
+                runCatching { RecorderConnection.service?.diagnosticDump("call_state", null) }.getOrNull()
+            }
+            val state = AnswerWait.parseState(dump)
+            val elapsed = System.currentTimeMillis() - startedAt
+            polls++
+            if (AnswerWait.decide(state, elapsed) == AnswerWait.Decision.START) {
+                val why = when {
+                    state == null -> "no call state readable from the host"
+                    elapsed >= AnswerWait.MAX_WAIT_MS -> "waited ${elapsed / 1000}s without an answer"
+                    else -> "call answered"
+                }
+                AppLogger.i(TAG, "Sending start INTENT for ${metadata.direction} call after $polls polls: $why (state=$state, ${elapsed}ms).")
+                sendServiceCommand(RecordingForegroundService.ACTION_START_RECORDING, metadata)
+                return
+            }
+            delay(AnswerWait.POLL_MS)
+        }
+    }
+
     private fun sendServiceCommand(action: String, metadata: RecordingMetadata? = null) {
         val intent = Intent(appContext, RecordingForegroundService::class.java).apply {
             this.action = action

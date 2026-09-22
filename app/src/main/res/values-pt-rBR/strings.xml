@@ -184,6 +184,8 @@
     <string name="settings_audio_source">Fonte de áudio</string>
     <string name="settings_auto_record_incoming">Gravar automaticamente as chamadas recebidas</string>
     <string name="settings_auto_record_outgoing">Gravar automaticamente as chamadas efetuadas</string>
+    <string name="settings_record_from_answer">Começar quando atenderem</string>
+    <string name="settings_record_from_answer_description">As chamadas telefônicas de saída são gravadas a partir do momento em que a outra pessoa atende, não da discagem. Somente chamadas telefônicas — chamadas de apps não sinalizam o atendimento.</string>
     <string name="settings_bugreport_active_warning">O registro de depuração está ATIVADO. Lembre-se de desativá-lo quando terminar, para economizar espaço.</string>
     <string name="settings_bugreport_share">Compartilhar</string>
     <string name="settings_bugreport_share_chooser">Compartilhar os registros de depuração</string>

@@ -181,6 +181,8 @@
     <string name="settings_audio_source">Hangforrás</string>
     <string name="settings_auto_record_incoming">Automatikus bejövő hívás rögzítés</string>
     <string name="settings_auto_record_outgoing">Automatikus kimenő hívás rögzítés</string>
+    <string name="settings_record_from_answer">Indítás a hívás fogadásakor</string>
+    <string name="settings_record_from_answer_description">A kimenő telefonhívások felvétele attól a pillanattól indul, amikor a másik fél felveszi, nem a tárcsázástól. Csak telefonhívásokra — az alkalmazáshívások nem jelzik a fogadást.</string>
     <string name="settings_bugreport_active_warning">A hibakeresési naplózás BE van kapcsolva. Ne felejtse el kikapcsolni, ha végzett, hogy helyet takarítson meg.</string>
     <string name="settings_bugreport_share">Megosztás</string>
     <string name="settings_bugreport_share_chooser">Hibakeresési naplók megosztása</string>

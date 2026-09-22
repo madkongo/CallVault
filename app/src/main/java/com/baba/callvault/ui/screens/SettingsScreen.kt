@@ -35,6 +35,7 @@ import androidx.compose.material.icons.automirrored.filled.CallReceived
 import androidx.compose.material.icons.filled.BugReport
 import androidx.compose.material.icons.automirrored.filled.ListAlt
 import androidx.compose.material.icons.filled.Groups
+import androidx.compose.material.icons.filled.PhoneInTalk
 import androidx.compose.material.icons.filled.Smartphone
 import androidx.compose.material.icons.filled.SystemUpdate
 import androidx.compose.material.icons.filled.Cloud
@@ -660,6 +661,7 @@ private fun RecordingSection(
     val carrierRecording = remember(updateTrigger) { preferences.isCarrierRecordingEnabled() }
     val autoRecordIncoming = remember(updateTrigger) { preferences.isAutoRecordIncomingEnabled() }
     val autoRecordOutgoing = remember(updateTrigger) { preferences.isAutoRecordOutgoingEnabled() }
+    val recordFromAnswer = remember(updateTrigger) { preferences.isRecordFromAnswerEnabled() }
     val ignoreAnonymousIncoming = remember(updateTrigger) { preferences.isIgnoreAnonymousIncomingEnabled() }
     val ignoreCrossCountryIncoming = remember(updateTrigger) { preferences.isIgnoreCrossCountryIncomingEnabled() }
     val ignoreContactsModeIncoming = remember(updateTrigger) { preferences.getIgnoreContactsModeIncoming() }
@@ -768,6 +770,16 @@ private fun RecordingSection(
             label = stringResource(R.string.settings_auto_record_outgoing),
             checked = autoRecordOutgoing,
             onCheckedChange = { actions.setAutoRecordOutgoing(it) }
+        )
+        // Phone calls only: an app call has no answer signal to wait for (AnswerWait). Not nested
+        // under the automatic switch because a call started from the Record prompt is already past
+        // the dial by the time the button is pressed — this only ever changes an automatic start.
+        SettingsToggleRow(
+            icon = Icons.Filled.PhoneInTalk,
+            label = stringResource(R.string.settings_record_from_answer),
+            description = stringResource(R.string.settings_record_from_answer_description),
+            checked = recordFromAnswer,
+            onCheckedChange = { actions.setRecordFromAnswer(it) }
         )
         AnimatedVisibility(
             visible = autoRecordOutgoing,
@@ -3137,6 +3149,7 @@ private fun SettingsScreenPreview() {
             override fun setCarrierRecording(enabled: Boolean) {}
             override fun setAutoRecordIncoming(enabled: Boolean) {}
             override fun setAutoRecordOutgoing(enabled: Boolean) {}
+            override fun setRecordFromAnswer(enabled: Boolean) {}
             override fun setVibrationEnabled(enabled: Boolean) {}
             override fun setIgnoreAnonymousIncoming(enabled: Boolean) {}
             override fun setIgnoreCrossCountryIncoming(enabled: Boolean) {}
