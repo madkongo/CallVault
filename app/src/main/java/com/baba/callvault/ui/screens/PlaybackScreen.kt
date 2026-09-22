@@ -92,6 +92,7 @@ import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Label
 import com.baba.callvault.data.transcripts.TagName
 import com.baba.callvault.ui.common.CvCard
+import com.baba.callvault.ui.common.rememberNoteDraft
 import com.baba.callvault.ui.common.CvScaffold
 import com.baba.callvault.ui.common.RecordingLabel
 import com.baba.callvault.ui.common.SummaryCard
@@ -242,7 +243,7 @@ fun PlaybackScreen(
                 onRenameTag = onRenameTag,
                 onDeleteTagEverywhere = onDeleteTagEverywhere
             )
-            NoteCard(note = note, onNoteChange = onNoteChange)
+            NoteCard(note = note, recordingKey = item.displayName, onNoteChange = onNoteChange)
         }
     }
 }
@@ -950,8 +951,14 @@ private fun ManageTagDialog(
 /** Enough to jog a memory, few enough that the dialog does not become a list to read. */
 private const val MAX_TAG_SUGGESTIONS = 8
 
+/**
+ * The field shows its own draft and saves a moment after the typing stops — see [NoteDraft] for the
+ * swapped-letters bug that binding it to the stored value caused. "Saved" beside the title is the
+ * only sign there is that the note is kept; without it the card read as a field with no Save button.
+ */
 @Composable
-private fun NoteCard(note: String, onNoteChange: (String) -> Unit) {
+private fun NoteCard(note: String, recordingKey: String, onNoteChange: (String) -> Unit) {
+    val draft = rememberNoteDraft(stored = note, key = recordingKey, onSave = onNoteChange)
     CvCard(contentPadding = PaddingValues(16.dp)) {
         Row(verticalAlignment = Alignment.CenterVertically) {
             Icon(
@@ -966,11 +973,19 @@ private fun NoteCard(note: String, onNoteChange: (String) -> Unit) {
                 style = MaterialTheme.typography.titleSmall,
                 fontWeight = FontWeight.SemiBold
             )
+            Spacer(Modifier.weight(1f))
+            if (draft.text.isNotBlank() || !draft.isSaved) {
+                Text(
+                    text = stringResource(if (draft.isSaved) R.string.note_saved else R.string.note_saving),
+                    style = MaterialTheme.typography.labelSmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+            }
         }
         Spacer(Modifier.height(8.dp))
         OutlinedTextField(
-            value = note,
-            onValueChange = onNoteChange,
+            value = draft.text,
+            onValueChange = draft::edit,
             placeholder = { Text(stringResource(R.string.playback_note_hint)) },
             modifier = Modifier.fillMaxWidth().heightIn(min = 96.dp),
             // Content direction: these notes are written in the same language the call was in.

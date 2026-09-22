@@ -678,4 +678,6 @@
     <string name="search_clear">Wyczyść</string>
     <string name="search_no_matches_title">Brak wyników</string>
     <string name="search_no_matches_hint">Nic tutaj nie zawiera „%1$s”. Słowa dopasowywane są od początku – krótsza forma może znaleźć więcej.</string>
+    <string name="note_saved">Zapisano</string>
+    <string name="note_saving">Zapisywanie…</string>
 </resources>

@@ -676,4 +676,6 @@
     <string name="search_clear">Borrar</string>
     <string name="search_no_matches_title">Sin coincidencias</string>
     <string name="search_no_matches_hint">Nada aquí contiene «%1$s». Las palabras se comparan desde el inicio; una forma más corta puede encontrar más.</string>
+    <string name="note_saved">Guardado</string>
+    <string name="note_saving">Guardando…</string>
 </resources>

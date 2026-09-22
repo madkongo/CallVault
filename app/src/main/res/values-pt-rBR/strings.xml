@@ -679,4 +679,6 @@
     <string name="search_clear">Limpar</string>
     <string name="search_no_matches_title">Nada encontrado</string>
     <string name="search_no_matches_hint">Nada aqui contém “%1$s”. As palavras são comparadas desde o início; uma forma mais curta pode encontrar mais.</string>
+    <string name="note_saved">Salvo</string>
+    <string name="note_saving">Salvando…</string>
 </resources>

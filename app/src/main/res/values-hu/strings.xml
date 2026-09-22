@@ -676,4 +676,6 @@
     <string name="search_clear">Törlés</string>
     <string name="search_no_matches_title">Nincs találat</string>
     <string name="search_no_matches_hint">Itt semmi sem tartalmazza: „%1$s”. A szavak az elejüktől illeszkednek, rövidebb alak többet találhat.</string>
+    <string name="note_saved">Mentve</string>
+    <string name="note_saving">Mentés…</string>
 </resources>

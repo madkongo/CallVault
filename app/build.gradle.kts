@@ -435,6 +435,9 @@ dependencies {
     // Lets tests exercise code that enqueues work. Without it WorkManager throws "not initialized"
     // the moment a test touches a scheduler, which would otherwise push that code out of test reach.
     testImplementation("androidx.work:work-testing:2.10.0")
+    // Virtual time for the few pieces that debounce: a note draft's save can be asserted without
+    // sleeping through it. Same version as the runtime coroutines.
+    testImplementation("org.jetbrains.kotlinx:kotlinx-coroutines-test:1.9.0")
 
     // Instrumented tests — the only way to exercise the whisper.cpp JNI bridge, which a JVM unit
     // test cannot load. Deliberately minimal: runner + JUnit extensions, no UI-testing stack.
