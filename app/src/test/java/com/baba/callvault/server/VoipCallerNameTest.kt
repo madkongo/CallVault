@@ -118,4 +118,55 @@ class VoipCallerNameTest {
     fun `returns null when the package is unknown`() {
         assertNull(VoipCallerName.extractFromDump(record("com.whatsapp", "Feroza"), ""))
     }
+
+    // ---- Android 14, where the flags are hex and the word ONGOING_EVENT never appears ----
+
+    /**
+     * Shaped after a real `cmd notification get` record on the OP9 (Android 14, 2026-09-22): the flags
+     * are printed as `flags=0x62` — `Notification.flagsToString` exists only from Android 15. Every
+     * WhatsApp call on that phone was nameless because of it: 1 of 6 named, versus 18 of 18 on Android 16.
+     */
+    private fun android14Record(pkg: String, title: String, text: String, flagsHex: String, titleClass: String = "String") = """
+        NotificationRecord(0x08230341: pkg=$pkg user=UserHandle{0} id=201 tag=null importance=4 key=0|$pkg|201|null|10135: Notification(channel=voip_notification flags=0x$flagsHex color=0xff25d366 vis=PRIVATE))
+          icon=Icon(typ=RESOURCE pkg=$pkg id=0x7f081bab)
+          flags=0x$flagsHex
+                android.title=null
+                android.title=$titleClass ($title)
+                android.text=String ($text)
+    """.trimIndent()
+
+    @Test
+    fun `an android 14 record with the ongoing bit set in hex flags is a call`() {
+        val dump = android14Record("com.whatsapp", "Feroza", "Ongoing voice call", flagsHex = "62")
+
+        assertEquals("Feroza", VoipCallerName.extractFromDump(dump, "com.whatsapp"))
+    }
+
+    @Test
+    fun `an android 14 record without the ongoing bit is not a call`() {
+        // 0x200 = LOCAL_ONLY-style flags of an ordinary message notification: no 0x2 bit.
+        val dump = android14Record("com.whatsapp", "Feroza", "new message", flagsHex = "200")
+
+        assertNull(VoipCallerName.extractFromDump(dump, "com.whatsapp"))
+    }
+
+    @Test
+    fun `a title that crossed binder as a spannable string is still a title`() {
+        // Any Spanned title arrives as SpannableString and dumps as such; seen on the OP9 for other apps.
+        val dump = android14Record("com.whatsapp", "Feroza", "Ongoing voice call", flagsHex = "62", titleClass = "SpannableString")
+
+        assertEquals("Feroza", VoipCallerName.extractFromDump(dump, "com.whatsapp"))
+    }
+
+    @Test
+    fun `the keys of one package are picked out of the shell's notification list`() {
+        val list = """
+            0|com.google.android.googlequicksearchbox|0|1524207345::SUMMARY::wx|10135
+            0|com.whatsapp|201|null|10135
+            0|com.whatsapp|1|null|10135
+            0|org.telegram.messenger|2|null|10304
+        """.trimIndent()
+
+        assertEquals(listOf("0|com.whatsapp|201|null|10135", "0|com.whatsapp|1|null|10135"), VoipCallerName.keysFor(list, "com.whatsapp"))
+    }
 }
