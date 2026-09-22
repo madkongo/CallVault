@@ -61,8 +61,12 @@ internal object VoipCallerName {
         extractFromDump(dump, packageName)
     }.onFailure { AppLogger.d(TAG, "Caller lookup failed: ${it.message}") }.getOrNull()
 
-    /** Whether the call behind [packageName]'s ongoing notification has been picked up. */
-    enum class AnswerState { ANSWERED, RINGING, UNKNOWN }
+    /**
+     * Whether the call behind [packageName]'s ongoing notification has been picked up. The two
+     * "does not say" cases are kept apart: a notification that is not there yet may still come (they
+     * post a moment after the audio), one that is there without a timer never will.
+     */
+    enum class AnswerState { ANSWERED, RINGING, NO_TIMER, NO_NOTIFICATION }
 
     /**
      * Whether [packageName]'s call is answered, read from the call timer on its notification.
@@ -73,24 +77,26 @@ internal object VoipCallerName {
      * is read instead of the text, which belongs to the app and the locale. Blocking, like [resolve].
      */
     fun answerState(packageName: String): AnswerState = runCatching {
-        val dump = readPackageRecords(packageName) ?: readNotificationDump() ?: return AnswerState.UNKNOWN
+        val dump = readPackageRecords(packageName) ?: readNotificationDump() ?: return AnswerState.NO_NOTIFICATION
         extractAnswerState(dump, packageName)
-    }.onFailure { AppLogger.d(TAG, "Answer lookup failed: ${it.message}") }.getOrDefault(AnswerState.UNKNOWN)
+    }.onFailure { AppLogger.d(TAG, "Answer lookup failed: ${it.message}") }.getOrDefault(AnswerState.NO_NOTIFICATION)
 
     /**
-     * [AnswerState] from [packageName]'s first ongoing record that carries the timer flag at all;
-     * [AnswerState.UNKNOWN] when none does — an app that shows no timer never says, and the caller
-     * treats that as "record now", never as "keep waiting".
+     * [AnswerState] from [packageName]'s first ongoing record that carries the timer flag;
+     * [AnswerState.NO_TIMER] when its ongoing records have none, [AnswerState.NO_NOTIFICATION] when
+     * it has no ongoing record at all.
      */
     internal fun extractAnswerState(dump: String, packageName: String): AnswerState {
-        if (packageName.isBlank()) return AnswerState.UNKNOWN
+        if (packageName.isBlank()) return AnswerState.NO_NOTIFICATION
+        var ongoingSeen = false
         for (record in dump.split("NotificationRecord(")) {
             if (!record.contains("pkg=$packageName ")) continue
             if (!isOngoing(record)) continue
+            ongoingSeen = true
             val running = CHRONOMETER_REGEX.find(record)?.groupValues?.get(1) ?: continue
             return if (running == "true") AnswerState.ANSWERED else AnswerState.RINGING
         }
-        return AnswerState.UNKNOWN
+        return if (ongoingSeen) AnswerState.NO_TIMER else AnswerState.NO_NOTIFICATION
     }
 
     /**

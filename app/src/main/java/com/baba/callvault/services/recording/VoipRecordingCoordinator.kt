@@ -192,16 +192,19 @@ object VoipRecordingCoordinator {
     private fun holdUntilAnswered(context: Context, callPackage: String): Job = CoroutineScope(Dispatchers.IO).launch {
         val startedAt = System.currentTimeMillis()
         var polls = 0
+        var seenRinging = false
         while (recording) {
             val answered = runCatching { RecorderConnection.service?.voipCallAnswered(callPackage) }.getOrNull()
             val elapsed = System.currentTimeMillis() - startedAt
             polls++
-            if (VoipAnswerHold.decide(answered, elapsed) == VoipAnswerHold.Decision.RELEASE) {
+            if (answered == RecorderServiceImpl.VOIP_RINGING) seenRinging = true
+            if (VoipAnswerHold.decide(answered, elapsed, seenRinging) == VoipAnswerHold.Decision.RELEASE) {
                 val why = when {
+                    answered == RecorderServiceImpl.VOIP_ANSWERED -> "call answered"
+                    elapsed >= VoipAnswerHold.MAX_HOLD_MS -> "held ${elapsed / 1000}s without an answer"
                     answered == null -> "the host has no answer to give (older daemon?)"
-                    answered == RecorderServiceImpl.VOIP_ANSWER_UNKNOWN -> "this app's notification shows no call timer"
-                    answered == RecorderServiceImpl.VOIP_RINGING -> "held ${elapsed / 1000}s without an answer"
-                    else -> "call answered"
+                    answered == RecorderServiceImpl.VOIP_NO_TIMER -> "this app's notification shows no call timer"
+                    else -> "no call notification appeared within ${elapsed / 1000}s"
                 }
                 if (heldForAnswer) {
                     holdEncode(context, false)

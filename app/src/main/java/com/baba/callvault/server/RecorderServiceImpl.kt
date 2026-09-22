@@ -226,10 +226,11 @@ open class RecorderServiceImpl(private val apkPath: String) : IRecorderService.S
             .getOrNull()
 
     override fun voipCallAnswered(packageName: String?): Int =
-        when (packageName?.let { VoipCallerName.answerState(it) } ?: VoipCallerName.AnswerState.UNKNOWN) {
+        when (packageName?.let { VoipCallerName.answerState(it) } ?: VoipCallerName.AnswerState.NO_NOTIFICATION) {
             VoipCallerName.AnswerState.ANSWERED -> VOIP_ANSWERED
             VoipCallerName.AnswerState.RINGING -> VOIP_RINGING
-            VoipCallerName.AnswerState.UNKNOWN -> VOIP_ANSWER_UNKNOWN
+            VoipCallerName.AnswerState.NO_TIMER -> VOIP_NO_TIMER
+            VoipCallerName.AnswerState.NO_NOTIFICATION -> VOIP_NO_NOTIFICATION
         }
 
     override fun voipFarPartyHeard(): Boolean = lastVoipSession?.farPartyHeard ?: false
@@ -500,7 +501,8 @@ open class RecorderServiceImpl(private val apkPath: String) : IRecorderService.S
         /** [voipCallAnswered] answers; the binder carries an int, so the enum stops here. */
         const val VOIP_ANSWERED = 1
         const val VOIP_RINGING = 0
-        const val VOIP_ANSWER_UNKNOWN = -1
+        const val VOIP_NO_TIMER = -1
+        const val VOIP_NO_NOTIFICATION = -2
 
         /**
          * How to recognise a CallVault recorder process, of either kind.

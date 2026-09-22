@@ -28,12 +28,30 @@ object VoipAnswerHold {
     /** The same ceiling as the phone-call wait, for the same reason: a hold must never eat a call. */
     const val MAX_HOLD_MS = AnswerWait.MAX_WAIT_MS
 
+    /**
+     * How long a notification that is not there yet is waited for. Call notifications follow the
+     * audio by a moment — the late-caller retries exist for the same reason — and a hold that gave
+     * up on the first poll would miss most calls it was meant to help.
+     */
+    const val NOTIFICATION_GRACE_MS = 5_000L
+
     enum class Decision { HOLD, RELEASE }
 
-    /** What to do on a poll that got [answered] from the host (null = the host has no such method). */
-    fun decide(answered: Int?, elapsedMs: Long): Decision = when {
-        answered != RecorderServiceImpl.VOIP_RINGING -> Decision.RELEASE
+    /**
+     * What to do on a poll that got [answered] from the host (null = the host has no such method),
+     * [elapsedMs] into the hold, given whether an earlier poll already [seenRinging].
+     *
+     * Once the ringing has been seen, only an answer releases: at hang-up WhatsApp removes its
+     * notification before the audio mode drops (measured 2026-09-22), and releasing on that
+     * published the last 1.5 s of an unanswered call as a recording. The call's end discards a
+     * hold that is still on, so waiting costs nothing.
+     */
+    fun decide(answered: Int?, elapsedMs: Long, seenRinging: Boolean): Decision = when {
         elapsedMs >= MAX_HOLD_MS -> Decision.RELEASE
-        else -> Decision.HOLD
+        answered == RecorderServiceImpl.VOIP_ANSWERED -> Decision.RELEASE
+        seenRinging -> Decision.HOLD
+        answered == RecorderServiceImpl.VOIP_RINGING -> Decision.HOLD
+        answered == RecorderServiceImpl.VOIP_NO_NOTIFICATION && elapsedMs < NOTIFICATION_GRACE_MS -> Decision.HOLD
+        else -> Decision.RELEASE
     }
 }

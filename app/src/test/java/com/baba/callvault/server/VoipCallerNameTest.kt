@@ -65,23 +65,25 @@ class VoipCallerNameTest {
     }
 
     @Test
-    fun `an app whose notification carries no timer flag does not say`() {
-        // Nothing to wait for: the caller treats UNKNOWN as "record now", never as "keep waiting".
+    fun `an ongoing notification without the timer flag means this app never says`() {
         val dump = record("org.telegram.messenger", "Ongoing Telegram call", text = "Feroza")
-        assertEquals(VoipCallerName.AnswerState.UNKNOWN, VoipCallerName.extractAnswerState(dump, "org.telegram.messenger"))
+        assertEquals(VoipCallerName.AnswerState.NO_TIMER, VoipCallerName.extractAnswerState(dump, "org.telegram.messenger"))
     }
 
     @Test
-    fun `no ongoing notification for the package does not say either`() {
-        assertEquals(VoipCallerName.AnswerState.UNKNOWN, VoipCallerName.extractAnswerState("", "com.whatsapp"))
+    fun `no ongoing notification for the package is a different answer from no timer`() {
+        // Not posted yet (they follow the audio by a moment) or already gone (WhatsApp removes it at
+        // hang-up BEFORE the audio mode drops — measured 2026-09-22, an unanswered call published a
+        // 6 KB stub because this read as "does not say" and released the hold).
+        assertEquals(VoipCallerName.AnswerState.NO_NOTIFICATION, VoipCallerName.extractAnswerState("", "com.whatsapp"))
         val chat = record("com.whatsapp", "Feroza", text = "hi", ongoing = false, chronometer = true)
-        assertEquals(VoipCallerName.AnswerState.UNKNOWN, VoipCallerName.extractAnswerState(chat, "com.whatsapp"))
+        assertEquals(VoipCallerName.AnswerState.NO_NOTIFICATION, VoipCallerName.extractAnswerState(chat, "com.whatsapp"))
     }
 
     @Test
     fun `the timer flag of another app's notification is not read`() {
         val other = record("org.telegram.messenger", "Ongoing Telegram call", chronometer = true)
-        assertEquals(VoipCallerName.AnswerState.UNKNOWN, VoipCallerName.extractAnswerState(other, "com.whatsapp"))
+        assertEquals(VoipCallerName.AnswerState.NO_NOTIFICATION, VoipCallerName.extractAnswerState(other, "com.whatsapp"))
     }
 
     @Test

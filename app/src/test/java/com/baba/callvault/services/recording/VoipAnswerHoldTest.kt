@@ -8,7 +8,10 @@
 
 package com.baba.callvault.services.recording
 
-import com.baba.callvault.server.RecorderServiceImpl
+import com.baba.callvault.server.RecorderServiceImpl.Companion.VOIP_ANSWERED
+import com.baba.callvault.server.RecorderServiceImpl.Companion.VOIP_NO_NOTIFICATION
+import com.baba.callvault.server.RecorderServiceImpl.Companion.VOIP_NO_TIMER
+import com.baba.callvault.server.RecorderServiceImpl.Companion.VOIP_RINGING
 import com.baba.callvault.services.recording.VoipAnswerHold.Decision
 import org.junit.Assert.assertEquals
 import org.junit.Test
@@ -22,26 +25,50 @@ class VoipAnswerHoldTest {
 
     @Test
     fun `a ringing call is held`() {
-        assertEquals(Decision.HOLD, VoipAnswerHold.decide(RecorderServiceImpl.VOIP_RINGING, elapsedMs = 0))
-        assertEquals(Decision.HOLD, VoipAnswerHold.decide(RecorderServiceImpl.VOIP_RINGING, elapsedMs = 30_000))
+        assertEquals(Decision.HOLD, VoipAnswerHold.decide(VOIP_RINGING, elapsedMs = 0, seenRinging = false))
+        assertEquals(Decision.HOLD, VoipAnswerHold.decide(VOIP_RINGING, elapsedMs = 30_000, seenRinging = true))
     }
 
     @Test
     fun `an answered call is released`() {
-        assertEquals(Decision.RELEASE, VoipAnswerHold.decide(RecorderServiceImpl.VOIP_ANSWERED, elapsedMs = 9_000))
+        assertEquals(Decision.RELEASE, VoipAnswerHold.decide(VOIP_ANSWERED, elapsedMs = 9_000, seenRinging = true))
+        assertEquals(Decision.RELEASE, VoipAnswerHold.decide(VOIP_ANSWERED, elapsedMs = 0, seenRinging = false))
     }
 
     @Test
-    fun `an app that does not say is released at once`() {
-        // No timer on the notification, no notification yet, or an older host without the method:
-        // the option is simply off for this call. Never a two-minute wait for a signal that will not come.
-        assertEquals(Decision.RELEASE, VoipAnswerHold.decide(RecorderServiceImpl.VOIP_ANSWER_UNKNOWN, elapsedMs = 0))
-        assertEquals(Decision.RELEASE, VoipAnswerHold.decide(null, elapsedMs = 0))
+    fun `an app whose notification has no timer is released at once`() {
+        // This app never says. Never a two-minute wait for a signal that will not come.
+        assertEquals(Decision.RELEASE, VoipAnswerHold.decide(VOIP_NO_TIMER, elapsedMs = 0, seenRinging = false))
+    }
+
+    @Test
+    fun `an older host without the method is released at once`() {
+        assertEquals(Decision.RELEASE, VoipAnswerHold.decide(null, elapsedMs = 0, seenRinging = false))
+    }
+
+    @Test
+    fun `a notification not posted yet is waited for briefly`() {
+        // Call notifications follow the audio by a moment (the late-caller retries exist for the
+        // same reason). A short grace, then it is treated as an app that never says.
+        assertEquals(Decision.HOLD, VoipAnswerHold.decide(VOIP_NO_NOTIFICATION, elapsedMs = 0, seenRinging = false))
+        assertEquals(Decision.HOLD, VoipAnswerHold.decide(VOIP_NO_NOTIFICATION, elapsedMs = VoipAnswerHold.NOTIFICATION_GRACE_MS - 1, seenRinging = false))
+        assertEquals(Decision.RELEASE, VoipAnswerHold.decide(VOIP_NO_NOTIFICATION, elapsedMs = VoipAnswerHold.NOTIFICATION_GRACE_MS, seenRinging = false))
+    }
+
+    @Test
+    fun `once ringing was seen, only an answer releases`() {
+        // Measured 2026-09-22 on the OP9: at hang-up WhatsApp removes its notification BEFORE the
+        // audio mode drops. Releasing on that published 1.5 s of nothing as a recording. A hold that
+        // has seen the ringing waits for the answer or the end of the call, whichever comes.
+        assertEquals(Decision.HOLD, VoipAnswerHold.decide(VOIP_NO_NOTIFICATION, elapsedMs = 13_000, seenRinging = true))
+        assertEquals(Decision.HOLD, VoipAnswerHold.decide(VOIP_NO_TIMER, elapsedMs = 13_000, seenRinging = true))
+        assertEquals(Decision.HOLD, VoipAnswerHold.decide(null, elapsedMs = 13_000, seenRinging = true))
     }
 
     @Test
     fun `the hold has the same ceiling as the phone-call wait`() {
-        assertEquals(Decision.HOLD, VoipAnswerHold.decide(RecorderServiceImpl.VOIP_RINGING, elapsedMs = VoipAnswerHold.MAX_HOLD_MS - 1))
-        assertEquals(Decision.RELEASE, VoipAnswerHold.decide(RecorderServiceImpl.VOIP_RINGING, elapsedMs = VoipAnswerHold.MAX_HOLD_MS))
+        assertEquals(Decision.HOLD, VoipAnswerHold.decide(VOIP_RINGING, elapsedMs = VoipAnswerHold.MAX_HOLD_MS - 1, seenRinging = true))
+        assertEquals(Decision.RELEASE, VoipAnswerHold.decide(VOIP_RINGING, elapsedMs = VoipAnswerHold.MAX_HOLD_MS, seenRinging = true))
+        assertEquals(Decision.RELEASE, VoipAnswerHold.decide(VOIP_NO_NOTIFICATION, elapsedMs = VoipAnswerHold.MAX_HOLD_MS, seenRinging = true))
     }
 }
