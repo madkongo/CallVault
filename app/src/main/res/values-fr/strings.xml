@@ -181,6 +181,8 @@
     <string name="settings_audio_source">Source audio</string>
     <string name="settings_auto_record_incoming">Enregistrement automatique des appels entrants</string>
     <string name="settings_auto_record_outgoing">Enregistrement automatique des appels sortants</string>
+    <string name="settings_record_from_answer">Démarrer quand on décroche</string>
+    <string name="settings_record_from_answer_description">Les appels téléphoniques sortants sont enregistrés à partir du moment où l\'interlocuteur décroche, pas dès la numérotation. Appels téléphoniques seulement — les appels d\'applications ne signalent pas la réponse.</string>
     <string name="settings_bugreport_active_warning">La journalisation de débogage est ACTIVÉE. Pensez à la désactiver une fois terminé pour économiser de l\'espace.</string>
     <string name="settings_bugreport_share">Partager</string>
     <string name="settings_bugreport_share_chooser">Partager les journaux de débogage</string>

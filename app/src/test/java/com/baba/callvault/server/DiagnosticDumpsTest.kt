@@ -30,7 +30,7 @@ class DiagnosticDumpsTest {
     fun `each known dump maps to a command`() {
         listOf(
             "logcat_size", "logcat_grow", "logcat_dump", "dumpsys_audio", "appops_mic", "appops_all", "processes",
-            "setting_adb_enabled", "setting_dev_options",
+            "setting_adb_enabled", "setting_dev_options", "call_state",
         )
             .forEach { key ->
                 assertTrue("$key must be runnable", DiagnosticDumps.commandFor(key, null) != null)
@@ -110,5 +110,17 @@ class DiagnosticDumpsTest {
                 // An argument must not be able to redirect it -- only logcat_restore takes one at all.
                 assertTrue("$key must ignore any argument", DiagnosticDumps.commandFor(key, "put global x 1")!!.contentEquals(command))
             }
+    }
+
+    @Test
+    fun `the call state read is the precise foreground state, fixed, and takes no caller input`() {
+        // "Start when they answer" needs DIALING/ALERTING vs ACTIVE, which sits behind a signature
+        // permission for the app but is in the telephony registry's dump for the shell. The key names
+        // the field; nothing crossing the binder can widen the read.
+        val command = DiagnosticDumps.commandFor("call_state", null)!!
+        val line = command.joinToString(" ")
+        assertTrue("must read the telephony registry", line.contains("dumpsys telephony.registry"))
+        assertTrue("must select the foreground call state", line.contains("mForegroundCallState"))
+        assertTrue("must ignore any argument", DiagnosticDumps.commandFor("call_state", "; id")!!.contentEquals(command))
     }
 }

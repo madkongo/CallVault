@@ -480,3 +480,15 @@ open. Pushed to GitHub `main` as `ceaea29e` on 2026-09-19 (README only; the app 
 - **README screenshot `05-transcript-search.png`** (line 59, "Search") shows the old bottom sheet. Needs a
   new screenshot of a page with the search line and an excerpt under a row.
 - Lines 102 and 110 ("search" identical in Shizuku mode) stay true.
+
+## 2026-09-22 — "Start when they answer" for outgoing phone calls (`feat/record-on-answer`, unmerged, 2.4.1)
+
+🧪 VERIFYING — built and unit-tested, not yet on a phone.
+
+- **README:** makes no claim about when an outgoing recording starts, and its feature list does not
+  enumerate the Outgoing-calls settings, so nothing to correct. Screenshot `06-settings.png` (line 59)
+  shows the Settings page; the new toggle sits in a collapsed subsection, so the screenshot stays true.
+- Worth a line under the features list once verified: recording an outgoing call from the pickup is
+  something competitors advertise, and a user asked for it.
+- Lines 102/110 (Shizuku-mode table): the option works in both modes — the host is shell either way —
+  so no ❌ row is needed. 📐 not yet tried in Shizuku mode.
