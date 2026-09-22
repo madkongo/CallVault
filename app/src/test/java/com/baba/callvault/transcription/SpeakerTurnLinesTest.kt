@@ -79,6 +79,36 @@ class SpeakerTurnLinesTest {
     }
 
     @Test
+    fun `a row may reach the limit exactly, and one sentence past it starts the next row`() {
+        val sameSpeaker = listOf(SpeakerTurn(0, SpeakerChannel.A))
+        val limit = SpeakerTurnLines.MAX_ROW_MS
+        val exactly = listOf(TranscriptSegment(0, limit - 1_000, "most of it."), TranscriptSegment(limit - 1_000, limit, "and the rest."))
+        val over = exactly + TranscriptSegment(limit, limit + 1, "too far.")
+
+        assertEquals(1, SpeakerTurnLines.merge(exactly, sameSpeaker).size)
+        assertEquals(2, SpeakerTurnLines.merge(over, sameSpeaker).size)
+    }
+
+    @Test
+    fun `a call that opens with double-talk joins the first speaker who can be named`() {
+        val opensInBoth = listOf(
+            SpeakerTurn(0, SpeakerChannel.BOTH),
+            SpeakerTurn(2_000, SpeakerChannel.A),
+            SpeakerTurn(6_000, SpeakerChannel.B),
+        )
+        val lines = listOf(
+            TranscriptSegment(0, 2_000, "hello?"),
+            TranscriptSegment(2_000, 6_000, "yes, hello."),
+            TranscriptSegment(6_000, 8_000, "hi there."),
+        )
+
+        val rows = SpeakerTurnLines.merge(lines, opensInBoth)
+
+        assertEquals(listOf("hello? yes, hello.", "hi there."), rows.map { it.text })
+        assertEquals("A", SpeakerLabeller.label(opensInBoth, rows[0].startMs, rows[0].endMs))
+    }
+
+    @Test
     fun `a transcript with no speaker data is left exactly as whisper wrote it`() {
         assertEquals(sentences, SpeakerTurnLines.merge(sentences, emptyList()))
     }

@@ -436,6 +436,26 @@ class TranscriptionRunnerTest {
     }
 
     @Test
+    fun a_recording_of_unknown_length_in_the_wrong_alphabet_is_not_decoded_again() = runBlocking {
+        // The retry is bounded by length; with no length there is no bound, so there is no retry.
+        catalogued("undated-english.ogg")
+        var decodes = 0
+        val runner = TranscriptionRunner(
+            context,
+            audioDurationMs = { UNKNOWN_LENGTH_MS },
+            transcriber = { _, _, _, _, _, _, _ ->
+                decodes++
+                listOf(TranscriptSegment(0, 1000, "God, God, God, God, God is 1 plus 12."))
+            }
+        )
+
+        runner.runBatch(MODEL_ID, MODEL_PATH, LANGUAGE, listOf("undated-english.ogg"))
+
+        assertEquals(1, decodes)
+        assertEquals(TranscriptState.DONE, transcript("undated-english.ogg")!!.transcript.state)
+    }
+
+    @Test
     fun transcribes_a_recording_whose_length_is_unknown() = runBlocking {
         // Deliberate, and the reason the limit is not applied to file size: a container that declares
         // no duration is ordinary, and refusing on "unknown" would silently drop short calls whose

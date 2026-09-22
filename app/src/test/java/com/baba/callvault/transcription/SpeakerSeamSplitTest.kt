@@ -94,6 +94,16 @@ class SpeakerSeamSplitTest {
     }
 
     @Test
+    fun `a word timed past the last stretch lands in the last piece rather than nowhere`() {
+        // Both stretches together are 9.2 s of compressed time; whisper's token times can overshoot it.
+        val overshoot = listOf(Word("first", 10), Word("second", 5_070), Word("stray", 9_900))
+
+        val pieces = SpeakerSeamSplit.split(shared, overshoot, speech, turns)
+
+        assertEquals(listOf("first", "second stray"), pieces.map { it.text })
+    }
+
+    @Test
     fun `cuts more than once when the speakers swap more than once`() {
         val three = listOf(Speech(1_000, 3_000), Speech(4_000, 6_000), Speech(7_000, 9_000))
         val swapping = listOf(

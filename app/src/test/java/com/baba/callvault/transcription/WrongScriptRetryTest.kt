@@ -109,6 +109,27 @@ class WrongScriptRetryTest {
     }
 
     @Test
+    fun `the fallbacks after a throwing one are still tried`() = runBlocking<Unit> {
+        // Throwing on every call cannot tell "skipped and carried on" from "gave up at the first
+        // failure"; this one throws in the middle and expects the one after it to be reached.
+        val english = said("God, God, God is 1 plus 12.")
+        val hebrew = said("בדיקה, בדיקה, בדיקה זה 1 פלוס 12.")
+        val tried = mutableListOf<DecodeSettings>()
+
+        val chosen = WrongScriptRetry.recover(english, "he") { settings ->
+            tried += settings
+            when (tried.size) {
+                2 -> error("decode failed")
+                3 -> hebrew
+                else -> english
+            }
+        }
+
+        assertEquals(hebrew, chosen)
+        assertEquals(WrongScriptRetry.FALLBACKS, tried)
+    }
+
+    @Test
     fun `a stop during a retry is a stop, not a failed fallback`() {
         // Swallowed, the run would carry on decoding a recording the user just told it to leave alone.
         val english = said("God, God, God is 1 plus 12.")
