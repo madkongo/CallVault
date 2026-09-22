@@ -13,6 +13,7 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
@@ -23,13 +24,23 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalLayoutDirection
+import androidx.compose.ui.text.SpanStyle
+import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.dp
+import com.baba.callvault.data.recordings.RecordingsRepository.RecordingItem
+import com.baba.callvault.data.transcripts.PageSearch
+import com.baba.callvault.data.transcripts.db.RecordingLabelEntry
+import com.baba.callvault.ui.common.BidiText
 import com.baba.callvault.ui.common.CvCard
 import com.baba.callvault.ui.common.ImportedBadge
+import com.baba.callvault.ui.common.RecordingLabel
 import com.baba.callvault.ui.common.TextOnlyBadge
 import com.baba.callvault.ui.common.TranscriptAudio
 
@@ -73,6 +84,12 @@ internal fun LibraryNameRow(
     selected: Boolean = false,
     /** Null on a row that cannot be selected, which is also what makes long-press do nothing there. */
     onToggleSelected: (() -> Unit)? = null,
+    /**
+     * Why this row is in a search result: the words around the match, the match itself in bold.
+     * Drawn under the subtitle in the direction of its own text, since a Hebrew excerpt under an
+     * English file name is the common case rather than the odd one.
+     */
+    excerpt: PageSearch.Excerpt? = null,
 ) {
     val selectable = onToggleSelected != null
 
@@ -133,6 +150,25 @@ internal fun LibraryNameRow(
                         overflow = TextOverflow.Ellipsis,
                     )
                 }
+                excerpt?.let { found ->
+                    Spacer(Modifier.height(4.dp))
+                    val direction = if (BidiText.isRtl(found.text)) LayoutDirection.Rtl else LayoutDirection.Ltr
+                    CompositionLocalProvider(LocalLayoutDirection provides direction) {
+                        Text(
+                            text = buildAnnotatedString {
+                                append(found.text)
+                                if (found.matchEnd > found.matchStart) {
+                                    addStyle(SpanStyle(fontWeight = FontWeight.Bold), found.matchStart, found.matchEnd)
+                                }
+                            },
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurface,
+                            maxLines = 2,
+                            overflow = TextOverflow.Ellipsis,
+                            modifier = Modifier.fillMaxWidth(),
+                        )
+                    }
+                }
             }
             // The tick takes the slot while selecting, so a row shows what a tap would do to it
             // rather than an action it is no longer offering.
@@ -150,6 +186,21 @@ internal fun LibraryNameRow(
         }
     }
 }
+
+/**
+ * What a library row is called and dated, in order of what is known: the recording in the list,
+ * else what it was last called ([RecordingLabelEntry], while the list is still loading or the audio
+ * is gone), else the file name alone. A cached label that IS the file name defers to [RecordingLabel.forName],
+ * which knows how to read an import's name out of it.
+ */
+internal fun libraryRowTitle(item: RecordingItem?, cached: RecordingLabelEntry?, displayName: String): String =
+    RecordingLabel.of(item)
+        ?: cached?.label?.takeUnless { it == displayName }?.let(BidiText::isolate)
+        ?: RecordingLabel.forName(displayName)
+
+/** The date line under a library row, from the list if it is there, else from what was last known. */
+internal fun libraryRowSubtitle(item: RecordingItem?, cached: RecordingLabelEntry?): String? =
+    item?.displayDate ?: cached?.subtitle
 
 /**
  * The trailing slot's size, fixed rather than wrapped.

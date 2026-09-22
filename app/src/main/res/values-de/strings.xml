@@ -80,7 +80,6 @@
     <string name="home_recordings_empty">Noch keine Aufnahmen.</string>
     <string name="home_recordings_title">Aufnahmen</string>
     <string name="home_row_menu">Weitere Optionen</string>
-    <string name="home_search_transcripts">Nach Gesagtem suchen</string>
     <string name="home_share">Teilen</string>
     <string name="home_share_chooser">Aufnahme teilen</string>
     <string name="home_status_dev_options_off_suggestion">CallVault nimmt über das drahtlose Debugging auf, das die Entwickleroptionen benötigt. Die Aufnahme funktioniert erst wieder, wenn Sie die Entwickleroptionen (und das drahtlose Debugging) in den Systemeinstellungen aktivieren.</string>
@@ -417,9 +416,6 @@
     <string name="transcript_retranscribe">Erneut transkribieren</string>
     <string name="transcript_note_add">Notiz hinzufügen</string>
     <string name="transcript_note_hint">Worum es ging, oder was noch zu tun ist…</string>
-    <string name="transcript_search_empty">Kein Anruf enthält diese Wörter. Es werden nur ganze Wörter gefunden — versuchen Sie eine andere Wortform.</string>
-    <string name="transcript_search_hint">Nach Gesagtem suchen</string>
-    <string name="transcript_search_idle">Geben Sie ein Wort ein, um alle Ihre Transkripte zu durchsuchen.</string>
     <string name="transcript_share">Teilen</string>
     <string name="transcript_export_chooser">Transkript teilen</string>
     <string name="transcript_export_failed">Transkript konnte nicht exportiert werden</string>
@@ -670,4 +666,12 @@
         <item quantity="one">Bei %1$d davon gibt es keine Aufnahme mehr — dort ist der Text alles, was bleibt. Das lässt sich nicht rückgängig machen.</item>
         <item quantity="other">Bei %1$d davon gibt es keine Aufnahme mehr — dort ist der Text alles, was bleibt. Das lässt sich nicht rückgängig machen.</item>
     </plurals>
+
+    <!-- The search line at the head of the Recordings, Transcripts and Summaries pages. %1$s = what was typed. -->
+    <string name="home_search_contacts_hint">Nach Kontakt suchen</string>
+    <string name="transcripts_search_hint">Gesagtes durchsuchen</string>
+    <string name="summaries_search_hint">Zusammenfassungen durchsuchen</string>
+    <string name="search_clear">Löschen</string>
+    <string name="search_no_matches_title">Keine Treffer</string>
+    <string name="search_no_matches_hint">Nichts hier enthält „%1$s“. Wörter werden vom Anfang an abgeglichen – eine kürzere Form findet vielleicht mehr.</string>
 </resources>

@@ -7,10 +7,6 @@
     <string name="home_delete_confirm_drive_message">Удалить копию «%1$s» в Drive? Копия на устройстве будет сохранена.</string>
     <string name="home_delete_copy_device_content_desc">Удалить копию на устройстве</string>
     <string name="home_delete_copy_drive_content_desc">Удалить копию в Drive</string>
-    <string name="home_filter_contact_all">Все контакты</string>
-    <string name="home_filter_contact_all_short">Все</string>
-    <string name="home_filter_contact_chip">Контакт: %1$s</string>
-    <string name="home_filter_contact_label">Контакт</string>
     <string name="home_filter_date_all">Все даты</string>
     <string name="home_filter_date_all_short">Все</string>
     <string name="home_filter_date_chip">Дата: %1$s</string>

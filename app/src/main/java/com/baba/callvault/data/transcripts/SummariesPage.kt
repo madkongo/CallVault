@@ -65,6 +65,16 @@ object SummariesPage {
     ) {
         /** Nothing at all to show — the page's empty state, not merely "nothing readable". */
         val isEmpty: Boolean get() = working.isEmpty() && failed.isEmpty() && ready.isEmpty()
+
+        /**
+         * The groups as the search line shows them: only the stored summaries named in [names], in
+         * their order. A summary being written has no words yet, so a search shows none of those.
+         */
+        fun matching(names: Set<String>): Groups = Groups(
+            working = emptyList(),
+            failed = emptyList(),
+            ready = ready.filter { it in names },
+        )
     }
 
     /**

@@ -22,12 +22,6 @@
     <string name="home_filter_direction_incoming">Incoming</string>
     <string name="home_filter_direction_outgoing">Outgoing</string>
 
-    <!-- Contact facet (chip label + "all" option). %1$s = current value shown on the chip. -->
-    <string name="home_filter_contact_label">Contact</string>
-    <string name="home_filter_contact_chip">Contact: %1$s</string>
-    <string name="home_filter_contact_all">All contacts</string>
-    <!-- Compact value shown on the Contact chip itself, so it fits one line. -->
-    <string name="home_filter_contact_all_short">All</string>
 
     <!-- Date facet (chip label + "all" option). %1$s = current value shown on the chip. -->
     <string name="home_filter_date_label">Date</string>

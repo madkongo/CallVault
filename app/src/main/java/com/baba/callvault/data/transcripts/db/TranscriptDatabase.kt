@@ -47,9 +47,10 @@ import androidx.sqlite.db.SupportSQLiteDatabase
         SpeakerTurnsEntry::class,
         RecordingTagEntry::class,
         RecordingFavouriteEntry::class,
-        RecordingFlagEntry::class
+        RecordingFlagEntry::class,
+        RecordingLabelEntry::class
     ],
-    version = 8,
+    version = 9,
     exportSchema = true
 )
 @TypeConverters(TranscriptStateConverter::class)
@@ -68,6 +69,8 @@ abstract class TranscriptDatabase : RoomDatabase() {
     abstract fun favouriteDao(): RecordingFavouriteDao
 
     abstract fun flagDao(): RecordingFlagDao
+
+    abstract fun labelDao(): RecordingLabelDao
 
     companion object {
 
@@ -269,13 +272,34 @@ abstract class TranscriptDatabase : RoomDatabase() {
         }
 
         /**
+         * v8 → v9: the last-known name and date of each recording, for the Transcripts and Summaries
+         * pages to title a row before the recordings list has loaded.
+         *
+         * Nothing to backfill: the table is filled the first time the list loads after the upgrade,
+         * which is the first thing the app does. Hand-written like the rest because this database
+         * has no destructive fallback, and a destructive bump here would take the notes, tags and
+         * stars with it for the sake of a cache.
+         */
+        internal val MIGRATION_8_9_SQL = listOf(
+            "CREATE TABLE IF NOT EXISTS `recording_labels` (" +
+                "`displayName` TEXT NOT NULL, " +
+                "`label` TEXT NOT NULL, " +
+                "`subtitle` TEXT, " +
+                "PRIMARY KEY(`displayName`))"
+        )
+
+        private val MIGRATION_8_9 = object : Migration(8, 9) {
+            override fun migrate(db: SupportSQLiteDatabase) = MIGRATION_8_9_SQL.forEach(db::execSQL)
+        }
+
+        /**
          * Every migration, in one place, used by both [get] and the migration test.
          *
          * One list rather than two so a migration that is written but never registered cannot
          * happen — that mistake would look exactly like a correct build until an upgrading user
          * opened the app, and this database has no destructive fallback to catch them.
          */
-        internal val MIGRATIONS: Array<Migration> = arrayOf(MIGRATION_1_2, MIGRATION_2_3, MIGRATION_3_4, MIGRATION_4_5, MIGRATION_5_6, MIGRATION_6_7, MIGRATION_7_8)
+        internal val MIGRATIONS: Array<Migration> = arrayOf(MIGRATION_1_2, MIGRATION_2_3, MIGRATION_3_4, MIGRATION_4_5, MIGRATION_5_6, MIGRATION_6_7, MIGRATION_7_8, MIGRATION_8_9)
 
         @Volatile
         private var INSTANCE: TranscriptDatabase? = null

@@ -80,7 +80,6 @@
     <string name="home_recordings_empty">Chưa có bản ghi âm nào.</string>
     <string name="home_recordings_title">Bản ghi âm</string>
     <string name="home_row_menu">Tùy chọn khác</string>
-    <string name="home_search_transcripts">Tìm trong nội dung đã nói</string>
     <string name="home_share">Chia sẻ</string>
     <string name="home_share_chooser">Chia sẻ bản ghi</string>
     <string name="home_status_dev_options_off_suggestion">CallVault ghi âm qua gỡ lỗi không dây, tính năng này cần Tùy chọn nhà phát triển. Không thể ghi âm cho đến khi bạn bật lại Tùy chọn nhà phát triển (và Gỡ lỗi không dây) trong cài đặt hệ thống.</string>
@@ -417,9 +416,6 @@
     <string name="transcript_retranscribe">Chuyển lại</string>
     <string name="transcript_note_add">Thêm ghi chú</string>
     <string name="transcript_note_hint">Nội dung là gì, hoặc cần làm gì tiếp…</string>
-    <string name="transcript_search_empty">Không cuộc gọi nào chứa những từ đó. Chỉ khớp từ nguyên vẹn, hãy thử dạng khác của từ.</string>
-    <string name="transcript_search_hint">Tìm trong nội dung đã nói</string>
-    <string name="transcript_search_idle">Nhập một từ để tìm trong mọi bản chép lời của bạn.</string>
     <string name="transcript_share">Chia sẻ</string>
     <string name="transcript_export_chooser">Chia sẻ bản ghi</string>
     <string name="transcript_export_failed">Không thể xuất bản ghi</string>
@@ -669,4 +665,12 @@
         <item quantity="one">%1$d trong số này không còn bản ghi phía sau, nên phần chữ là tất cả những gì còn lại. Phần đó không hoàn tác được.</item>
         <item quantity="other">%1$d trong số này không còn bản ghi phía sau, nên phần chữ là tất cả những gì còn lại. Phần đó không hoàn tác được.</item>
     </plurals>
+
+    <!-- The search line at the head of the Recordings, Transcripts and Summaries pages. %1$s = what was typed. -->
+    <string name="home_search_contacts_hint">Tìm theo liên hệ</string>
+    <string name="transcripts_search_hint">Tìm những gì đã nói</string>
+    <string name="summaries_search_hint">Tìm trong các bản tóm tắt</string>
+    <string name="search_clear">Xóa</string>
+    <string name="search_no_matches_title">Không có kết quả</string>
+    <string name="search_no_matches_hint">Không có gì ở đây chứa “%1$s”. Từ được so khớp từ đầu, nên dạng ngắn hơn có thể tìm được nhiều hơn.</string>
 </resources>

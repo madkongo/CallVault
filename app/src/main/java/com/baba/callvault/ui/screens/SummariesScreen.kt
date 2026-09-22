@@ -36,11 +36,14 @@ import com.baba.callvault.R
 import com.baba.callvault.data.recordings.ImportedRecording
 import com.baba.callvault.data.recordings.RecordingsRepository.RecordingItem
 import com.baba.callvault.data.transcripts.LibraryRowActions
+import com.baba.callvault.data.transcripts.PageSearch
+import com.baba.callvault.data.transcripts.db.RecordingLabelEntry
 import com.baba.callvault.data.transcripts.SummariesPage
 import com.baba.callvault.data.transcripts.export.TranscriptFormat
 import com.baba.callvault.ui.common.CvScaffold
 import com.baba.callvault.ui.common.CvSectionHeader
 import com.baba.callvault.ui.common.RecordingLabel
+import com.baba.callvault.ui.common.SearchLine
 import com.baba.callvault.ui.common.TranscriptAudio
 import com.baba.callvault.ui.common.WorkProgressRing
 
@@ -98,6 +101,12 @@ fun SummariesScreen(
     listState: LazyListState,
     onBack: () -> Unit,
     onOpenSettings: () -> Unit,
+    /** What the search line holds, and the stored summaries it found with their excerpts. */
+    query: String,
+    onQueryChange: (String) -> Unit,
+    excerpts: Map<String, PageSearch.Excerpt>,
+    /** What each recording was last called, for a row whose recording is not in [recordings] yet. */
+    labels: Map<String, RecordingLabelEntry>,
     onOpen: (String) -> Unit,
     onShare: (String) -> Unit,
     onSave: (String, TranscriptFormat) -> Unit,
@@ -149,12 +158,33 @@ fun SummariesScreen(
             ),
             verticalArrangement = Arrangement.spacedBy(10.dp)
         ) {
+            // The search line at the head of the list, as on the other two pages. Only once there
+            // is something to search — on an empty page it would be a field that can only ever find
+            // nothing.
+            val searching = query.isNotBlank()
+            if (!selection.active && (searching || !groups.isEmpty)) {
+                item {
+                    SearchLine(
+                        query = query,
+                        onQueryChange = onQueryChange,
+                        placeholder = stringResource(R.string.summaries_search_hint),
+                    )
+                }
+            }
+
             if (groups.isEmpty) {
                 item {
-                    LibrarySectionEmpty(
-                        title = stringResource(R.string.home_summaries_empty_title),
-                        hint = stringResource(R.string.home_summaries_empty_hint),
-                    )
+                    if (searching) {
+                        LibrarySectionEmpty(
+                            title = stringResource(R.string.search_no_matches_title),
+                            hint = stringResource(R.string.search_no_matches_hint, query.trim()),
+                        )
+                    } else {
+                        LibrarySectionEmpty(
+                            title = stringResource(R.string.home_summaries_empty_title),
+                            hint = stringResource(R.string.home_summaries_empty_hint),
+                        )
+                    }
                 }
                 return@LazyColumn
             }
@@ -165,6 +195,7 @@ fun SummariesScreen(
                     SummaryRow(
                         displayName = working.displayName,
                         item = byName[working.displayName],
+                        cached = labels[working.displayName],
                         // Never selectable: there is no summary row yet to share or delete, which is
                         // the asymmetry this whole page is built around.
                         selectionMode = selection.active,
@@ -202,6 +233,7 @@ fun SummariesScreen(
                     // no row behind, so a bulk delete would have nothing of its to take.
                     selection = null,
                     selectionMode = selection.active,
+                    labels = labels,
                 )
             }
 
@@ -223,6 +255,8 @@ fun SummariesScreen(
                 onDelete,
                 selection = selection,
                 selectionMode = selection.active,
+                excerpts = excerpts,
+                labels = labels,
             )
         }
     }
@@ -246,12 +280,16 @@ private fun LazyListScope.summaryRows(
     /** Null where the group's rows cannot be picked, which is also where they have no menu. */
     selection: LibrarySelectionUi?,
     selectionMode: Boolean,
+    excerpts: Map<String, PageSearch.Excerpt> = emptyMap(),
+    labels: Map<String, RecordingLabelEntry> = emptyMap(),
 ) {
     items(displayNames, key = { it }) { displayName ->
         SummaryRow(
             displayName = displayName,
             item = byName[displayName],
+            cached = labels[displayName],
             onOpen = { onOpen(displayName) },
+            excerpt = excerpts[displayName],
             selectionMode = selectionMode,
             selected = selection?.selected?.contains(displayName) == true,
             onToggleSelected = selection?.let { picker -> { picker.onToggle(displayName) } },
@@ -285,13 +323,15 @@ private fun SummaryRow(
     displayName: String,
     item: RecordingItem?,
     onOpen: (() -> Unit)?,
+    cached: RecordingLabelEntry? = null,
     trailing: (@Composable () -> Unit)? = null,
     selectionMode: Boolean = false,
     selected: Boolean = false,
     onToggleSelected: (() -> Unit)? = null,
+    excerpt: PageSearch.Excerpt? = null,
 ) = LibraryNameRow(
-    title = item?.let { RecordingLabel.of(it) } ?: RecordingLabel.forName(displayName),
-    subtitle = item?.displayDate,
+    title = libraryRowTitle(item, cached, displayName),
+    subtitle = libraryRowSubtitle(item, cached),
     // A missing row is the audio being gone, which is what the badge says first: it changes what the
     // row can do. Where the audio IS there, "imported" is read from the NAME rather than from the
     // row, because saying nothing would make an import read as a call whose details all failed to
@@ -305,6 +345,7 @@ private fun SummaryRow(
     selectionMode = selectionMode,
     selected = selected,
     onToggleSelected = onToggleSelected,
+    excerpt = excerpt,
 )
 
 /**

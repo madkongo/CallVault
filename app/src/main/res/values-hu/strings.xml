@@ -80,7 +80,6 @@
     <string name="home_recordings_empty">Még nincsenek felvételek.</string>
     <string name="home_recordings_title">Felvételek</string>
     <string name="home_row_menu">További lehetőségek</string>
-    <string name="home_search_transcripts">Keresés az elhangzottak között</string>
     <string name="home_share">Megosztás</string>
     <string name="home_share_chooser">Felvétel megosztása</string>
     <string name="home_status_dev_options_off_suggestion">A CallVault a vezeték nélküli hibakeresésen keresztül rögzít, amelyhez a fejlesztői beállítások szükségesek. A rögzítés nem működik, amíg újra nem engedélyezi a fejlesztői beállításokat (és a vezeték nélküli hibakeresést) a rendszerbeállításokban.</string>
@@ -417,9 +416,6 @@
     <string name="transcript_retranscribe">Átírás újra</string>
     <string name="transcript_note_add">Jegyzet hozzáadása</string>
     <string name="transcript_note_hint">Miről szólt, vagy mi a teendő vele…</string>
-    <string name="transcript_search_empty">Egyetlen hívás sem tartalmazza ezeket a szavakat. Csak teljes szavakra keres, próbáljon másik szóalakot.</string>
-    <string name="transcript_search_hint">Keresés az elhangzottak között</string>
-    <string name="transcript_search_idle">Írjon be egy szót az összes átirat átkereséséhez.</string>
     <string name="transcript_share">Megosztás</string>
     <string name="transcript_export_chooser">Átirat megosztása</string>
     <string name="transcript_export_failed">Az átirat exportálása nem sikerült</string>
@@ -670,4 +666,12 @@
         <item quantity="one">Ezek közül %1$d mögött nincs felvétel, így ott csak a szöveg maradt. Ez a rész nem vonható vissza.</item>
         <item quantity="other">Ezek közül %1$d mögött nincs felvétel, így ott csak a szöveg maradt. Ez a rész nem vonható vissza.</item>
     </plurals>
+
+    <!-- The search line at the head of the Recordings, Transcripts and Summaries pages. %1$s = what was typed. -->
+    <string name="home_search_contacts_hint">Keresés névjegy szerint</string>
+    <string name="transcripts_search_hint">Keresés az elhangzottakban</string>
+    <string name="summaries_search_hint">Keresés az összefoglalókban</string>
+    <string name="search_clear">Törlés</string>
+    <string name="search_no_matches_title">Nincs találat</string>
+    <string name="search_no_matches_hint">Itt semmi sem tartalmazza: „%1$s”. A szavak az elejüktől illeszkednek, rövidebb alak többet találhat.</string>
 </resources>

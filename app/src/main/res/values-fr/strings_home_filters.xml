@@ -7,10 +7,6 @@
     <string name="home_delete_confirm_drive_message">Supprimer la copie de %1$s sur Drive ? La copie sur l\'appareil est conservée.</string>
     <string name="home_delete_copy_device_content_desc">Supprimer la copie sur l\'appareil</string>
     <string name="home_delete_copy_drive_content_desc">Supprimer la copie sur Drive</string>
-    <string name="home_filter_contact_all">Tous les contacts</string>
-    <string name="home_filter_contact_all_short">Tous</string>
-    <string name="home_filter_contact_chip">Contact : %1$s</string>
-    <string name="home_filter_contact_label">Contact</string>
     <string name="home_filter_date_all">Toutes les dates</string>
     <string name="home_filter_date_all_short">Toutes</string>
     <string name="home_filter_date_chip">Date : %1$s</string>

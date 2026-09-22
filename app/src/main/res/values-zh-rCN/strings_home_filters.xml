@@ -7,10 +7,6 @@
     <string name="home_delete_confirm_drive_message">删除 %1$s 的 Drive 副本？设备副本将保留。</string>
     <string name="home_delete_copy_device_content_desc">删除设备副本</string>
     <string name="home_delete_copy_drive_content_desc">删除 Drive 副本</string>
-    <string name="home_filter_contact_all">所有联系人</string>
-    <string name="home_filter_contact_all_short">全部</string>
-    <string name="home_filter_contact_chip">联系人：%1$s</string>
-    <string name="home_filter_contact_label">联系人</string>
     <string name="home_filter_date_all">所有日期</string>
     <string name="home_filter_date_all_short">全部</string>
     <string name="home_filter_date_chip">日期：%1$s</string>

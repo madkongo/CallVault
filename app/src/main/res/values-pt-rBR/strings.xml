@@ -83,7 +83,6 @@
     <string name="home_recordings_empty">Nenhuma gravação ainda.</string>
     <string name="home_recordings_title">Gravações</string>
     <string name="home_row_menu">Mais opções</string>
-    <string name="home_search_transcripts">Buscar o que foi dito</string>
     <string name="home_share">Compartilhar</string>
     <string name="home_share_chooser">Compartilhar gravação</string>
     <string name="home_status_dev_options_off_suggestion">O CallVault grava por meio da Depuração sem fio, que depende das Opções do desenvolvedor. A gravação não tem como funcionar até você reativar as Opções do desenvolvedor (e a Depuração sem fio) nas configurações do sistema.</string>
@@ -420,9 +419,6 @@
     <string name="transcript_retranscribe">Transcrever novamente</string>
     <string name="transcript_note_add">Adicionar uma nota</string>
     <string name="transcript_note_hint">Sobre o que foi, ou o que fazer a respeito…</string>
-    <string name="transcript_search_empty">Nenhuma chamada contém essas palavras. Só há correspondência de palavras inteiras, tente outra forma da palavra.</string>
-    <string name="transcript_search_hint">Buscar o que foi dito</string>
-    <string name="transcript_search_idle">Digite uma palavra para buscar em todas as suas transcrições.</string>
     <string name="transcript_share">Compartilhar</string>
     <string name="transcript_export_chooser">Compartilhar transcrição</string>
     <string name="transcript_export_failed">Não foi possível exportar a transcrição</string>
@@ -673,4 +669,12 @@
         <item quantity="one">%1$d delas não tem gravação por trás, então o texto é tudo o que resta. Essa parte não dá para desfazer.</item>
         <item quantity="other">%1$d delas não têm gravação por trás, então o texto é tudo o que resta. Essa parte não dá para desfazer.</item>
     </plurals>
+
+    <!-- The search line at the head of the Recordings, Transcripts and Summaries pages. %1$s = what was typed. -->
+    <string name="home_search_contacts_hint">Buscar por contato</string>
+    <string name="transcripts_search_hint">Buscar o que foi dito</string>
+    <string name="summaries_search_hint">Buscar nos resumos</string>
+    <string name="search_clear">Limpar</string>
+    <string name="search_no_matches_title">Nada encontrado</string>
+    <string name="search_no_matches_hint">Nada aqui contém “%1$s”. As palavras são comparadas desde o início; uma forma mais curta pode encontrar mais.</string>
 </resources>

@@ -53,6 +53,17 @@ object TranscriptsPage {
         /** Nothing at all to show — the page's empty state, not merely "nothing readable". */
         val isEmpty: Boolean
             get() = working.isEmpty() && failed.isEmpty() && ready.isEmpty() && waiting.isEmpty()
+
+        /**
+         * The groups as the search line shows them: only the readable transcripts named in [names],
+         * in their order. The other groups have no words to search yet, so a search shows none of
+         * them — a row with nothing in it that could have matched is not a result.
+         */
+        fun matching(names: Set<String>): Groups = Groups(
+            working = emptyList(),
+            failed = emptyList(),
+            ready = ready.filter { it.displayName in names },
+        )
     }
 
     /**
