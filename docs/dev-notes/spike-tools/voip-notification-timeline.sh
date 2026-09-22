@@ -10,7 +10,7 @@ S=${1:?serial}; PKG=${2:-com.whatsapp}; OUT=${3:-/tmp/voip-timeline}
 mkdir -p "$OUT"
 echo "waiting for MODE_IN_COMMUNICATION on $S (audio mode polled every 0.5 s)…"
 while :; do
-  MODE=$(adb -s "$S" shell dumpsys audio 2>/dev/null | grep -m1 -o "mode (internal) = [A-Z_]*\|Audio mode: [A-Z_]*")
+  MODE=$(adb -s "$S" shell dumpsys audio 2>/dev/null | grep -m1 -oE "Actual mode = [A-Z_]+|mode \(internal\) = [A-Z_]+")
   case "$MODE" in *IN_COMMUNICATION*) break;; esac
   sleep 0.5
 done

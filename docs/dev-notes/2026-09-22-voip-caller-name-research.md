@@ -88,3 +88,24 @@ Recommendation: 1 and 2 together; 3 held.
 placed to or from the OP9: shows, second by second from the mode flip, when WhatsApp's record appears, its
 flags, and whether the name is a `String` or `SpannableString` in the title or text. Raw dumps hold names —
 delete them afterwards.
+
+## Fix built (12:10, 🧪 VERIFYING) — branch `fix/voip-caller-name-android14`, `491f9856`
+
+Options 1 and 2, on the maintainer's word:
+- `VoipCallerName`: ongoing by the word `ONGOING_EVENT` OR the 0x2 bit of a hex `flags=0x…`; title/text may
+  be `String` or `SpannableString`; records read one at a time via `cmd notification list` → `get <key>`
+  (unredacted, a few KB each), the whole dump as fallback. Tests shaped after the OP9's real record.
+- `VoipLateCaller` + `VoipRecordingCoordinator`: when the first lookup at the mode flip finds nothing, ask
+  again 3, 8 and 20 s in; the file is published only at the end, so the late name goes into the name it is
+  published under. No rename.
+
+**Live WhatsApp call, OP12 ↔ OP9, 12:02–12:05.** Captured mid-call on the OP9 with `cmd notification get`:
+`flags=0x206a`, `android.title=String (פרוזה)`, `android.text=String (Ongoing…)`, `android.callType=2`,
+CallStyle template — the hex-flags shape the old parser rejected, with the name where the new one reads it.
+On the OP12: `flags=ONGOING_EVENT|ONLY_ALERT_ONCE|NO_CLEAR|FOREGROUND_SERVICE|NO_DISMISS`, same fields.
+The OP12 (old build, Android 16) recorded both calls with names, as it has 18 times before.
+
+**The OP9 recorded nothing — and that is expected: it is in Shizuku mode, which does not support VoIP
+capture** (no audio policy registered there; the OP12 shows one). So the Android 14 fix has NOT been seen
+to work on a phone: it needs an Android 14 phone in built-in mode, i.e. the OP9 switched over for one call.
+The probe script's first version grepped the ringer-mode line and never fired; fixed to `Actual mode =`.
