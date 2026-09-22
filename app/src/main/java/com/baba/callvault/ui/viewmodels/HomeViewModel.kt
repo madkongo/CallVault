@@ -243,16 +243,28 @@ class HomeViewModel(application: Application) : AndroidViewModel(application) {
          * recording behind it would complete to an empty list. And names only, not the number or
          * file name a nameless recording is listed under — seen on the OP9, the menu was a column
          * of `20260730_175604…voip-WhatsApp.ogg`. Typing still finds those; they are not offered.
+         *
+         * A name is whatever the row is titled with that is not a phone number: the recorder writes
+         * the caller's NAME into the file where it has no number (`…_out_פרוזה.ogg` on the OP9), so
+         * it arrives in [RecordingItem.number] with no contact behind it, and is a name all the same.
          */
         val contactSuggestions: List<String>
             get() {
                 val typed = contactQuery.trim()
                 if (typed.isEmpty()) return emptyList()
-                val names = recordings.mapNotNull { it.contactName }.distinct().sortedWith(String.CASE_INSENSITIVE_ORDER)
+                val names = recordings.mapNotNull { suggestionName(it) }.distinct().sortedWith(String.CASE_INSENSITIVE_ORDER)
                 val matching = names.filter { it.contains(typed, ignoreCase = true) }
                 if (matching.size == 1 && matching[0].equals(typed, ignoreCase = true)) return emptyList()
                 return matching.take(MAX_CONTACT_SUGGESTIONS)
             }
+
+        /** What [item] is titled with when that is a name: the contact, else a number slot holding a name. */
+        private fun suggestionName(item: RecordingItem): String? =
+            item.contactName ?: item.number?.takeUnless { it.isBlank() || isPhoneNumber(it) }
+
+        /** Digits with the punctuation a dialler accepts and nothing else. */
+        private fun isPhoneNumber(text: String): Boolean =
+            text.all { it.isDigit() || it in "+-() .*#" }
 
         /** Whether [item]'s contact key contains what is typed; every recording for nothing typed. */
         private fun matchesContact(item: RecordingItem): Boolean {

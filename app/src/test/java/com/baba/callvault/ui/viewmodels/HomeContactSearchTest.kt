@@ -86,6 +86,16 @@ class HomeContactSearchTest {
     }
 
     @Test
+    fun `a name the recorder wrote where the number goes is offered like any other name`() {
+        // The OP9's Shizuku recordings: `20260920_122553…_out_פרוזה.ogg`. The recorder had the name and
+        // not the number, so the parser's number field holds the name and the contact lookup finds
+        // nothing. The row is titled with it, the filter matched 44 rows on it — and no menu offered it.
+        val namedInNumberSlot = listOf(item("6.m4a", contactName = null, number = "פרוזה"))
+
+        assertEquals(listOf("פרוזה"), HomeViewModel.HomeUiState(recordings = namedInNumberSlot, contactQuery = "פ").contactSuggestions)
+    }
+
+    @Test
     fun `nothing is offered for an empty query or one already completed`() {
         assertEquals(emptyList<String>(), HomeViewModel.HomeUiState(recordings = recordings, contactQuery = "").contactSuggestions)
         assertEquals(emptyList<String>(), HomeViewModel.HomeUiState(recordings = recordings, contactQuery = "Daniel").contactSuggestions)

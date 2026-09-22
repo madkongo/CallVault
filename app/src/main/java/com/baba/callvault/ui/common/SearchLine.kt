@@ -8,16 +8,16 @@
 
 package com.baba.callvault.ui.common
 
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Clear
 import androidx.compose.material.icons.filled.Search
+import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
-import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.ExposedDropdownMenuAnchorType
-import androidx.compose.material3.ExposedDropdownMenuBox
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -26,12 +26,16 @@ import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.layout.onSizeChanged
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.input.ImeAction
+import androidx.compose.ui.window.PopupProperties
 import com.baba.callvault.R
 
 /**
@@ -39,14 +43,18 @@ import com.baba.callvault.R
  * something to clear, and — when [suggestions] are given — a menu of completions under it.
  *
  * One composable for the three pages so they read as the same control. It holds no state of its
- * own beyond whether the menu is open: what is typed belongs to the page, which is what filters on
- * it, and the page decides what (if anything) is offered to complete it.
+ * own beyond whether the menu was waved away: what is typed belongs to the page, which is what
+ * filters on it, and the page decides what (if anything) is offered to complete it.
+ *
+ * A plain [DropdownMenu] rather than Material's `ExposedDropdownMenuBox`: that box opens and closes
+ * on its own rules about taps and focus, and on the OP9 a Hebrew letter typed into the field showed
+ * no menu although a match existed. Here the menu is open exactly when there is something in it and
+ * it has not been dismissed, and it takes no focus, so the keyboard stays up while it is shown.
  *
  * @param suggestions completions for what is typed; empty hides the menu. A page with nothing to
  *   complete (a word search) passes none and gets a plain field.
  * @param onSuggestionPicked called with the completion chosen; the page usually sets the query to it.
  */
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun SearchLine(
     query: String,
@@ -56,22 +64,18 @@ fun SearchLine(
     suggestions: List<String> = emptyList(),
     onSuggestionPicked: (String) -> Unit = onQueryChange,
 ) {
-    // Open only while there is something to show; the box's own toggle would open an empty menu
-    // on every tap into the field.
+    // Waving the menu away holds until the query changes; the next keystroke is a new question.
     var dismissed by remember(query) { mutableStateOf(false) }
-    val expanded = suggestions.isNotEmpty() && !dismissed
+    var fieldWidthPx by remember { mutableIntStateOf(0) }
+    val fieldWidth = with(LocalDensity.current) { fieldWidthPx.toDp() }
 
-    ExposedDropdownMenuBox(
-        expanded = expanded,
-        onExpandedChange = { if (!it) dismissed = true },
-        modifier = modifier,
-    ) {
+    Box(modifier = modifier) {
         OutlinedTextField(
             value = query,
             onValueChange = onQueryChange,
             modifier = Modifier
-                .menuAnchor(type = ExposedDropdownMenuAnchorType.PrimaryEditable)
-                .fillMaxWidth(),
+                .fillMaxWidth()
+                .onSizeChanged { fieldWidthPx = it.width },
             placeholder = { Text(placeholder) },
             leadingIcon = { Icon(Icons.Default.Search, contentDescription = null) },
             trailingIcon = {
@@ -89,9 +93,12 @@ fun SearchLine(
                 unfocusedContainerColor = MaterialTheme.colorScheme.surface,
             ),
         )
-        ExposedDropdownMenu(
-            expanded = expanded,
+        DropdownMenu(
+            expanded = suggestions.isNotEmpty() && !dismissed,
             onDismissRequest = { dismissed = true },
+            // Not focusable: taking focus would drop the keyboard mid-word.
+            properties = PopupProperties(focusable = false),
+            modifier = Modifier.width(fieldWidth),
         ) {
             suggestions.forEach { suggestion ->
                 DropdownMenuItem(
