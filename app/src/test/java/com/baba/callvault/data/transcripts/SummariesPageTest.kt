@@ -180,4 +180,18 @@ class SummariesPageTest {
 
         assertFalse(groups.isEmpty)
     }
+
+    @Test
+    fun `a search keeps only the stored summaries it named, in their order`() {
+        val groups = SummariesPage.Groups(
+            working = listOf(SummariesPage.Working("w.m4a", 40)),
+            failed = listOf("f.m4a"),
+            ready = listOf("a.m4a", "b.m4a", "c.m4a"),
+        )
+
+        val found = groups.matching(setOf("c.m4a", "a.m4a", "w.m4a"))
+
+        assertEquals(listOf("a.m4a", "c.m4a"), found.ready)
+        assertTrue(found.working.isEmpty() && found.failed.isEmpty())
+    }
 }

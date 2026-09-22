@@ -80,7 +80,6 @@
     <string name="home_recordings_empty">Записей пока нет.</string>
     <string name="home_recordings_title">Записи</string>
     <string name="home_row_menu">Другие действия</string>
-    <string name="home_search_transcripts">Поиск по сказанному</string>
     <string name="home_share">Отправить</string>
     <string name="home_share_chooser">Отправить запись</string>
     <string name="home_status_dev_options_off_suggestion">CallVault записывает через беспроводную отладку, для которой нужны параметры разработчика. Запись не будет работать, пока вы не включите параметры разработчика (и беспроводную отладку) в настройках системы.</string>
@@ -417,9 +416,6 @@
     <string name="transcript_retranscribe">Расшифровать заново</string>
     <string name="transcript_note_add">Добавить заметку</string>
     <string name="transcript_note_hint">О чём это было или что с этим делать…</string>
-    <string name="transcript_search_empty">Ни в одном звонке нет этих слов. Совпадают только целые слова — попробуйте другую форму слова.</string>
-    <string name="transcript_search_hint">Поиск по сказанному</string>
-    <string name="transcript_search_idle">Введите слово, чтобы искать по всем вашим расшифровкам.</string>
     <string name="transcript_share">Поделиться</string>
     <string name="transcript_export_chooser">Поделиться расшифровкой</string>
     <string name="transcript_export_failed">Не удалось экспортировать расшифровку</string>
@@ -672,4 +668,12 @@
         <item quantity="one">У части из них (%1$d) записи нет — там текст это всё, что осталось. Эту часть не отменить.</item>
         <item quantity="other">У части из них (%1$d) записи нет — там текст это всё, что осталось. Эту часть не отменить.</item>
     </plurals>
+
+    <!-- The search line at the head of the Recordings, Transcripts and Summaries pages. %1$s = what was typed. -->
+    <string name="home_search_contacts_hint">Поиск по контакту</string>
+    <string name="transcripts_search_hint">Поиск по сказанному</string>
+    <string name="summaries_search_hint">Поиск по сводкам</string>
+    <string name="search_clear">Очистить</string>
+    <string name="search_no_matches_title">Ничего не найдено</string>
+    <string name="search_no_matches_hint">Здесь ничего не содержит «%1$s». Слова сопоставляются с начала — более короткая форма может найти больше.</string>
 </resources>

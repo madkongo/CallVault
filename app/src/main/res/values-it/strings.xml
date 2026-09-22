@@ -80,7 +80,6 @@
     <string name="home_recordings_empty">Ancora nessuna registrazione.</string>
     <string name="home_recordings_title">Registrazioni</string>
     <string name="home_row_menu">Altre opzioni</string>
-    <string name="home_search_transcripts">Cerca ciò che è stato detto</string>
     <string name="home_share">Condividi</string>
     <string name="home_share_chooser">Condividi registrazione</string>
     <string name="home_status_dev_options_off_suggestion">CallVault registra tramite il debug wireless, che richiede le opzioni sviluppatore. La registrazione non può funzionare finché non riattivi le opzioni sviluppatore (e il debug wireless) nelle impostazioni di sistema.</string>
@@ -417,9 +416,6 @@
     <string name="transcript_retranscribe">Trascrivi di nuovo</string>
     <string name="transcript_note_add">Aggiungi una nota</string>
     <string name="transcript_note_hint">Di cosa si trattava, o cosa c\'è da fare…</string>
-    <string name="transcript_search_empty">Nessuna chiamata contiene quelle parole. Vengono trovate solo parole intere, prova un\'altra forma della parola.</string>
-    <string name="transcript_search_hint">Cerca ciò che è stato detto</string>
-    <string name="transcript_search_idle">Digita una parola per cercare in tutte le tue trascrizioni.</string>
     <string name="transcript_share">Condividi</string>
     <string name="transcript_export_chooser">Condividi trascrizione</string>
     <string name="transcript_export_failed">Impossibile esportare la trascrizione</string>
@@ -670,4 +666,12 @@
         <item quantity="one">%1$d di queste non ha più una registrazione: il suo testo è tutto ciò che resta. Quella parte non si può annullare.</item>
         <item quantity="other">%1$d di queste non hanno più una registrazione: il loro testo è tutto ciò che resta. Quella parte non si può annullare.</item>
     </plurals>
+
+    <!-- The search line at the head of the Recordings, Transcripts and Summaries pages. %1$s = what was typed. -->
+    <string name="home_search_contacts_hint">Cerca per contatto</string>
+    <string name="transcripts_search_hint">Cerca ciò che è stato detto</string>
+    <string name="summaries_search_hint">Cerca nei riassunti</string>
+    <string name="search_clear">Cancella</string>
+    <string name="search_no_matches_title">Nessun risultato</string>
+    <string name="search_no_matches_hint">Niente qui contiene “%1$s”. Le parole corrispondono dall’inizio: una forma più corta potrebbe trovare di più.</string>
 </resources>

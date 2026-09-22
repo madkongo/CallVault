@@ -80,7 +80,6 @@
     <string name="home_recordings_empty">Aucun enregistrement pour l\'instant.</string>
     <string name="home_recordings_title">Enregistrements</string>
     <string name="home_row_menu">Plus d\'options</string>
-    <string name="home_search_transcripts">Rechercher ce qui a été dit</string>
     <string name="home_share">Partager</string>
     <string name="home_share_chooser">Partager l\'enregistrement</string>
     <string name="home_status_dev_options_off_suggestion">CallVault enregistre via le débogage sans fil, qui nécessite les options pour les développeurs. L\'enregistrement ne peut pas fonctionner tant que vous ne réactivez pas les options pour les développeurs (et le débogage sans fil) dans les paramètres du système.</string>
@@ -417,9 +416,6 @@
     <string name="transcript_retranscribe">Transcrire à nouveau</string>
     <string name="transcript_note_add">Ajouter une note</string>
     <string name="transcript_note_hint">De quoi il s\'agissait, ou ce qu\'il reste à faire…</string>
-    <string name="transcript_search_empty">Aucun appel ne contient ces mots. Seuls les mots entiers correspondent, essayez une autre forme du mot.</string>
-    <string name="transcript_search_hint">Rechercher ce qui a été dit</string>
-    <string name="transcript_search_idle">Saisissez un mot pour chercher dans toutes vos transcriptions.</string>
     <string name="transcript_share">Partager</string>
     <string name="transcript_export_chooser">Partager la transcription</string>
     <string name="transcript_export_failed">Impossible d\'exporter la transcription</string>
@@ -670,4 +666,12 @@
         <item quantity="one">%1$d d\'entre elles n\'a plus d\'enregistrement : son texte est tout ce qui reste. Cette partie est irréversible.</item>
         <item quantity="other">%1$d d\'entre elles n\'ont plus d\'enregistrement : leur texte est tout ce qui reste. Cette partie est irréversible.</item>
     </plurals>
+
+    <!-- The search line at the head of the Recordings, Transcripts and Summaries pages. %1$s = what was typed. -->
+    <string name="home_search_contacts_hint">Rechercher par contact</string>
+    <string name="transcripts_search_hint">Rechercher ce qui a été dit</string>
+    <string name="summaries_search_hint">Rechercher dans les résumés</string>
+    <string name="search_clear">Effacer</string>
+    <string name="search_no_matches_title">Aucun résultat</string>
+    <string name="search_no_matches_hint">Rien ici ne contient « %1$s ». Les mots sont comparés depuis leur début : une forme plus courte en trouvera peut-être plus.</string>
 </resources>

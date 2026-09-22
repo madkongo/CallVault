@@ -150,7 +150,8 @@ import com.baba.callvault.ui.common.formatEstimate
 import com.baba.callvault.ui.common.TranscribingSheet
 import com.baba.callvault.ui.common.rememberTranscribingDisplay
 import com.baba.callvault.ui.common.rememberTranscribingPillState
-import com.baba.callvault.ui.common.TranscriptSearchSheet
+import com.baba.callvault.ui.common.SearchLine
+import com.baba.callvault.ui.common.rememberPageSearch
 import com.baba.callvault.ui.common.MergeCallsDialog
 import com.baba.callvault.ui.common.UnMergeDialog
 import com.baba.callvault.ui.common.MergeProgressState
@@ -414,7 +415,6 @@ fun HomeScreen(
     var confirmDeleteFor by rememberSaveable { mutableStateOf<String?>(null) }
 
     /** Whether the search-across-transcripts sheet is open. */
-    var showTranscriptSearch by rememberSaveable { mutableStateOf(false) }
 
     /** What transcription is doing right now, for the pill beside the title. Hidden when idle. */
     val transcribing by rememberTranscribingPillState()
@@ -946,8 +946,12 @@ fun HomeScreen(
         // The transcribe-only imports go in as well, so one that nothing else is accounting for —
         // a stopped run, a refusal, a process death before the queue heard about it — is listed
         // here rather than existing on disk and in no list at all. See TranscriptsPage.Groups.waiting.
-        val groups = remember(entries, uiState.transcribeOnly) {
-            TranscriptsPage.group(entries, uiState.transcribeOnly.map { it.displayName })
+        // The search line's state lives here with the entries it searches, not in the screen: the
+        // page is a branch of this composable and its query has to outlive a rotation the same way.
+        val search = rememberPageSearch(TranscriptRepository.PageIndex.TRANSCRIPTS, version = entries)
+        val groups = remember(entries, uiState.transcribeOnly, search.query, search.excerpts) {
+            val all = TranscriptsPage.group(entries, uiState.transcribeOnly.map { it.displayName })
+            if (search.isActive) all.matching(search.excerpts.keys) else all
         }
 
         TranscriptsScreen(
@@ -959,7 +963,9 @@ fun HomeScreen(
             onBack = { onSelectSection(HomeSection.Hub) },
             onOpenSettings = onOpenSettings,
             titleTrailing = titleTrailing,
-            onSearch = { showTranscriptSearch = true },
+            query = search.query,
+            onQueryChange = search.onQueryChange,
+            excerpts = search.excerpts,
             onOpenQueue = { showTranscribingSheet = true },
             // A page of its own, not the sheet. Here the transcript is the destination rather than a
             // look at something you are already standing on, and a sheet over a list of transcripts
@@ -1029,8 +1035,10 @@ fun HomeScreen(
         val workInfos by remember(workManager) {
             workManager.getWorkInfosForUniqueWorkFlow(SummaryScheduler.WORK_NAME)
         }.collectAsState(initial = emptyList())
-        val groups = remember(names, workInfos) {
-            SummariesPage.group(names, SummariesPage.jobsOf(workInfos))
+        val search = rememberPageSearch(TranscriptRepository.PageIndex.SUMMARIES, version = names)
+        val groups = remember(names, workInfos, search.query, search.excerpts) {
+            val all = SummariesPage.group(names, SummariesPage.jobsOf(workInfos))
+            if (search.isActive) all.matching(search.excerpts.keys) else all
         }
 
         SummariesScreen(
@@ -1041,6 +1049,9 @@ fun HomeScreen(
             onBack = { onSelectSection(HomeSection.Hub) },
             onOpenSettings = onOpenSettings,
             titleTrailing = titleTrailing,
+            query = search.query,
+            onQueryChange = search.onQueryChange,
+            excerpts = search.excerpts,
             // The reading view, not the recording's own screen, for three reasons that all point
             // the same way. It already carries the summary at the top, above the words it was
             // written from — which is what anyone checks when a summary looks wrong. It is the same
@@ -1123,13 +1134,6 @@ fun HomeScreen(
                     )
                 }
             } else {
-                IconButton(onClick = { showTranscriptSearch = true }) {
-                    Icon(
-                        imageVector = Icons.Filled.Search,
-                        contentDescription = stringResource(R.string.home_search_transcripts),
-                        tint = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
-                }
                 IconButton(onClick = onOpenSettings) {
                     Icon(
                         imageVector = Icons.Filled.Tune,
@@ -1158,6 +1162,20 @@ fun HomeScreen(
 
             val recordings = uiState.filteredRecordings
 
+            // The search line, first: it is the one control on this page that takes typing, and
+            // what it completes with comes from the list itself, so it is only offered once there
+            // is a list. Typing narrows by contact; the chips below narrow by everything else.
+            if (uiState.recordings.isNotEmpty()) {
+                item {
+                    SearchLine(
+                        query = uiState.contactQuery,
+                        onQueryChange = { viewModel.setContactQuery(it) },
+                        placeholder = stringResource(R.string.home_search_contacts_hint),
+                        suggestions = uiState.contactSuggestions,
+                    )
+                }
+            }
+
             // The count alone. The section header that used to sit beside it said "RECORDINGS"
             // under a bar that now says the same thing, because this is a section with its own
             // title rather than one block on a single Home screen.
@@ -1178,9 +1196,7 @@ fun HomeScreen(
                     RecordingFilterBar(
                         sourceFilter = uiState.sourceFilter,
                         directionFilter = uiState.directionFilter,
-                        contactFilter = uiState.contactFilter,
                         dateFilter = uiState.dateFilter,
-                        availableContacts = uiState.availableContacts,
                         availableDates = uiState.availableDates,
                         tagFilter = uiState.tagFilter,
                         availableTags = uiState.availableTags,
@@ -1190,7 +1206,6 @@ fun HomeScreen(
                         onFavouritesOnlyChange = { viewModel.setFavouritesOnly(it) },
                         onSourceFilterChange = { viewModel.setSourceFilter(it) },
                         onDirectionFilterChange = { viewModel.setDirectionFilter(it) },
-                        onContactFilterChange = { viewModel.setContactFilter(it) },
                         onDateFilterChange = { viewModel.setDateFilter(it) }
                     )
                 }
@@ -1304,28 +1319,6 @@ fun HomeScreen(
             recordings = libraryRecordings,
             onDismiss = { showTranscribingSheet = false },
             onStopped = { showTranscribingSheet = false }
-        )
-    }
-
-    if (showTranscriptSearch) {
-        TranscriptSearchSheet(
-            // The whole library, not uiState.filteredRecordings: someone searching is looking for
-            // a call they could not find by scrolling, and an active filter would hide it.
-            recordings = libraryRecordings,
-            onDismiss = { showTranscriptSearch = false },
-            onOpen = { row ->
-                showTranscriptSearch = false
-                // Raised from the Transcripts page, a hit opens the transcript it was found in and
-                // plays from there. On the recordings list it only plays, unchanged: there the row
-                // is tinted behind the dismissed sheet, so something on screen owns the sound —
-                // whereas a list of transcripts shows nothing about playback, and starting a private
-                // call out loud over it would leave nothing anywhere to stop it (#27).
-                if (section == HomeSection.Transcripts) {
-                    readingFor = row.displayName
-                    readingFromSummary = false
-                }
-                viewModel.playFrom(row.uri, row.startMs.toInt())
-            }
         )
     }
 
@@ -2399,9 +2392,7 @@ private data class FilterOption<T>(val value: T, val label: String)
 private fun RecordingFilterBar(
     sourceFilter: SourceFilter,
     directionFilter: DirectionFilter,
-    contactFilter: String?,
     dateFilter: String?,
-    availableContacts: List<String>,
     availableDates: List<String>,
     tagFilter: String?,
     availableTags: List<String>,
@@ -2411,7 +2402,6 @@ private fun RecordingFilterBar(
     onFavouritesOnlyChange: (Boolean) -> Unit,
     onSourceFilterChange: (SourceFilter) -> Unit,
     onDirectionFilterChange: (DirectionFilter) -> Unit,
-    onContactFilterChange: (String?) -> Unit,
     onDateFilterChange: (String?) -> Unit
 ) {
     // Source facet options + current value label.
@@ -2429,16 +2419,6 @@ private fun RecordingFilterBar(
         FilterOption(DirectionFilter.OUTGOING, stringResource(R.string.home_filter_direction_outgoing))
     )
     val directionValueLabel = directionOptions.first { it.value == directionFilter }.label
-
-    // Contact facet: dropdown keeps the full "All contacts" wording; the chip itself shows the
-    // compact "All" so Contact + Date fit together on one line.
-    val allContactsLabel = stringResource(R.string.home_filter_contact_all)
-    val allContactsShort = stringResource(R.string.home_filter_contact_all_short)
-    val contactOptions = buildList<FilterOption<String?>> {
-        add(FilterOption(null, allContactsLabel))
-        availableContacts.forEach { add(FilterOption(it, it)) }
-    }
-    val contactValueLabel = contactFilter ?: allContactsShort
 
     // Date facet: dropdown keeps "All dates"; the chip itself shows the compact "All".
     val allDatesLabel = stringResource(R.string.home_filter_date_all)
@@ -2486,13 +2466,6 @@ private fun RecordingFilterBar(
             options = directionOptions,
             selected = directionFilter,
             onSelected = onDirectionFilterChange
-        )
-        FilterChip(
-            text = stringResource(R.string.home_filter_contact_chip, contactValueLabel),
-            active = contactFilter != null,
-            options = contactOptions,
-            selected = contactFilter,
-            onSelected = onContactFilterChange
         )
         if (availableTags.isNotEmpty()) {
             FilterChip(

@@ -7,10 +7,6 @@
     <string name="home_delete_confirm_drive_message">Törli %1$s Drive-on tárolt másolatát? Az eszközön lévő másolat megmarad.</string>
     <string name="home_delete_copy_device_content_desc">Eszközön lévő másolat törlése</string>
     <string name="home_delete_copy_drive_content_desc">Drive-on lévő másolat törlése</string>
-    <string name="home_filter_contact_all">Összes névjegy</string>
-    <string name="home_filter_contact_all_short">Mind</string>
-    <string name="home_filter_contact_chip">Névjegy: %1$s</string>
-    <string name="home_filter_contact_label">Névjegy</string>
     <string name="home_filter_date_all">Összes dátum</string>
     <string name="home_filter_date_all_short">Mind</string>
     <string name="home_filter_date_chip">Dátum: %1$s</string>

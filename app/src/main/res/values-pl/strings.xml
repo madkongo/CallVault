@@ -80,7 +80,6 @@
     <string name="home_recordings_empty">Brak nagrań.</string>
     <string name="home_recordings_title">Nagrania</string>
     <string name="home_row_menu">Więcej opcji</string>
-    <string name="home_search_transcripts">Szukaj w wypowiedziach</string>
     <string name="home_share">Udostępnij</string>
     <string name="home_share_chooser">Udostępnij nagranie</string>
     <string name="home_status_dev_options_off_suggestion">CallVault nagrywa przez debugowanie bezprzewodowe, które wymaga opcji programistycznych. Nagrywanie nie będzie działać, dopóki nie włączysz ponownie opcji programistycznych (i debugowania bezprzewodowego) w ustawieniach systemu.</string>
@@ -417,9 +416,6 @@
     <string name="transcript_retranscribe">Transkrybuj ponownie</string>
     <string name="transcript_note_add">Dodaj notatkę</string>
     <string name="transcript_note_hint">O czym to było albo co trzeba zrobić…</string>
-    <string name="transcript_search_empty">Żadna rozmowa nie zawiera tych słów. Dopasowywane są tylko całe słowa — spróbuj innej formy.</string>
-    <string name="transcript_search_hint">Szukaj w wypowiedziach</string>
-    <string name="transcript_search_idle">Wpisz słowo, aby przeszukać wszystkie swoje transkrypcje.</string>
     <string name="transcript_share">Udostępnij</string>
     <string name="transcript_export_chooser">Udostępnij transkrypcję</string>
     <string name="transcript_export_failed">Nie udało się wyeksportować transkrypcji</string>
@@ -672,4 +668,12 @@
         <item quantity="one">Za częścią z nich (%1$d) nie ma nagrania — tam tekst to wszystko, co zostało. Tego nie da się cofnąć.</item>
         <item quantity="other">Za częścią z nich (%1$d) nie ma nagrania — tam tekst to wszystko, co zostało. Tego nie da się cofnąć.</item>
     </plurals>
+
+    <!-- The search line at the head of the Recordings, Transcripts and Summaries pages. %1$s = what was typed. -->
+    <string name="home_search_contacts_hint">Szukaj po kontakcie</string>
+    <string name="transcripts_search_hint">Szukaj w wypowiedziach</string>
+    <string name="summaries_search_hint">Szukaj w podsumowaniach</string>
+    <string name="search_clear">Wyczyść</string>
+    <string name="search_no_matches_title">Brak wyników</string>
+    <string name="search_no_matches_hint">Nic tutaj nie zawiera „%1$s”. Słowa dopasowywane są od początku – krótsza forma może znaleźć więcej.</string>
 </resources>

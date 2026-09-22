@@ -7,10 +7,6 @@
     <string name="home_delete_confirm_drive_message">Xóa bản sao trên Drive của %1$s? Bản sao trên Thiết bị vẫn được giữ lại.</string>
     <string name="home_delete_copy_device_content_desc">Xóa bản sao trên Thiết bị</string>
     <string name="home_delete_copy_drive_content_desc">Xóa bản sao trên Drive</string>
-    <string name="home_filter_contact_all">Tất cả liên hệ</string>
-    <string name="home_filter_contact_all_short">Tất cả</string>
-    <string name="home_filter_contact_chip">Liên hệ: %1$s</string>
-    <string name="home_filter_contact_label">Liên hệ</string>
     <string name="home_filter_date_all">Tất cả các ngày</string>
     <string name="home_filter_date_all_short">Tất cả</string>
     <string name="home_filter_date_chip">Ngày: %1$s</string>

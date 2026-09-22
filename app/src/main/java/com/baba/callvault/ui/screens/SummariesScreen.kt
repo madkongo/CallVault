@@ -36,11 +36,13 @@ import com.baba.callvault.R
 import com.baba.callvault.data.recordings.ImportedRecording
 import com.baba.callvault.data.recordings.RecordingsRepository.RecordingItem
 import com.baba.callvault.data.transcripts.LibraryRowActions
+import com.baba.callvault.data.transcripts.PageSearch
 import com.baba.callvault.data.transcripts.SummariesPage
 import com.baba.callvault.data.transcripts.export.TranscriptFormat
 import com.baba.callvault.ui.common.CvScaffold
 import com.baba.callvault.ui.common.CvSectionHeader
 import com.baba.callvault.ui.common.RecordingLabel
+import com.baba.callvault.ui.common.SearchLine
 import com.baba.callvault.ui.common.TranscriptAudio
 import com.baba.callvault.ui.common.WorkProgressRing
 
@@ -98,6 +100,10 @@ fun SummariesScreen(
     listState: LazyListState,
     onBack: () -> Unit,
     onOpenSettings: () -> Unit,
+    /** What the search line holds, and the stored summaries it found with their excerpts. */
+    query: String,
+    onQueryChange: (String) -> Unit,
+    excerpts: Map<String, PageSearch.Excerpt>,
     onOpen: (String) -> Unit,
     onShare: (String) -> Unit,
     onSave: (String, TranscriptFormat) -> Unit,
@@ -149,12 +155,33 @@ fun SummariesScreen(
             ),
             verticalArrangement = Arrangement.spacedBy(10.dp)
         ) {
+            // The search line at the head of the list, as on the other two pages. Only once there
+            // is something to search — on an empty page it would be a field that can only ever find
+            // nothing.
+            val searching = query.isNotBlank()
+            if (!selection.active && (searching || !groups.isEmpty)) {
+                item {
+                    SearchLine(
+                        query = query,
+                        onQueryChange = onQueryChange,
+                        placeholder = stringResource(R.string.summaries_search_hint),
+                    )
+                }
+            }
+
             if (groups.isEmpty) {
                 item {
-                    LibrarySectionEmpty(
-                        title = stringResource(R.string.home_summaries_empty_title),
-                        hint = stringResource(R.string.home_summaries_empty_hint),
-                    )
+                    if (searching) {
+                        LibrarySectionEmpty(
+                            title = stringResource(R.string.search_no_matches_title),
+                            hint = stringResource(R.string.search_no_matches_hint, query.trim()),
+                        )
+                    } else {
+                        LibrarySectionEmpty(
+                            title = stringResource(R.string.home_summaries_empty_title),
+                            hint = stringResource(R.string.home_summaries_empty_hint),
+                        )
+                    }
                 }
                 return@LazyColumn
             }
@@ -223,6 +250,7 @@ fun SummariesScreen(
                 onDelete,
                 selection = selection,
                 selectionMode = selection.active,
+                excerpts = excerpts,
             )
         }
     }
@@ -246,12 +274,14 @@ private fun LazyListScope.summaryRows(
     /** Null where the group's rows cannot be picked, which is also where they have no menu. */
     selection: LibrarySelectionUi?,
     selectionMode: Boolean,
+    excerpts: Map<String, PageSearch.Excerpt> = emptyMap(),
 ) {
     items(displayNames, key = { it }) { displayName ->
         SummaryRow(
             displayName = displayName,
             item = byName[displayName],
             onOpen = { onOpen(displayName) },
+            excerpt = excerpts[displayName],
             selectionMode = selectionMode,
             selected = selection?.selected?.contains(displayName) == true,
             onToggleSelected = selection?.let { picker -> { picker.onToggle(displayName) } },
@@ -289,6 +319,7 @@ private fun SummaryRow(
     selectionMode: Boolean = false,
     selected: Boolean = false,
     onToggleSelected: (() -> Unit)? = null,
+    excerpt: PageSearch.Excerpt? = null,
 ) = LibraryNameRow(
     title = item?.let { RecordingLabel.of(it) } ?: RecordingLabel.forName(displayName),
     subtitle = item?.displayDate,
@@ -305,6 +336,7 @@ private fun SummaryRow(
     selectionMode = selectionMode,
     selected = selected,
     onToggleSelected = onToggleSelected,
+    excerpt = excerpt,
 )
 
 /**

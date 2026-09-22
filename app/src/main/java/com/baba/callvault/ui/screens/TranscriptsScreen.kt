@@ -49,6 +49,7 @@ import com.baba.callvault.R
 import com.baba.callvault.data.recordings.ImportedRecording
 import com.baba.callvault.data.recordings.RecordingsRepository.RecordingItem
 import com.baba.callvault.data.transcripts.LibraryRowActions
+import com.baba.callvault.data.transcripts.PageSearch
 import com.baba.callvault.data.transcripts.TranscriptStatus
 import com.baba.callvault.data.transcripts.TranscriptsPage
 import com.baba.callvault.data.transcripts.db.TranscriptEntry
@@ -57,6 +58,7 @@ import com.baba.callvault.ui.common.CvCard
 import com.baba.callvault.ui.common.CvScaffold
 import com.baba.callvault.ui.common.CvSectionHeader
 import com.baba.callvault.ui.common.RecordingLabel
+import com.baba.callvault.ui.common.SearchLine
 import com.baba.callvault.ui.common.TranscribingPillState
 import com.baba.callvault.ui.common.TranscriptActionButton
 import com.baba.callvault.ui.common.TranscriptAudio
@@ -129,7 +131,10 @@ fun TranscriptsScreen(
     listState: LazyListState,
     onBack: () -> Unit,
     onOpenSettings: () -> Unit,
-    onSearch: () -> Unit,
+    /** What the search line holds, and the readable transcripts it found with their excerpts. */
+    query: String,
+    onQueryChange: (String) -> Unit,
+    excerpts: Map<String, PageSearch.Excerpt>,
     onOpenQueue: () -> Unit,
     onOpen: (String) -> Unit,
     onRetry: (String) -> Unit,
@@ -168,17 +173,6 @@ fun TranscriptsScreen(
                 LibrarySelectionActions(selection)
                 return@CvScaffold
             }
-            // The same sheet the recordings list raises, not a field on this page. A hit is a moment
-            // inside a call rather than a transcript, so inline results would replace this list with
-            // rows that mean something else — and a second search would be a second FTS query to
-            // keep correct, over an index whose quoting rules have already caused one crash.
-            IconButton(onClick = onSearch) {
-                Icon(
-                    imageVector = Icons.Filled.Search,
-                    contentDescription = stringResource(R.string.home_search_transcripts),
-                    tint = MaterialTheme.colorScheme.onSurfaceVariant
-                )
-            }
             IconButton(onClick = onOpenSettings) {
                 Icon(
                     imageVector = Icons.Filled.Tune,
@@ -205,16 +199,36 @@ fun TranscriptsScreen(
             // Not while selecting: bringing a new file in is not something anybody does in the
             // middle of picking rows, and the card carries two live buttons where every other tap on
             // the page has become a toggle.
-            if (!selection.active) {
+            // The search line above the import card: a word search over what is here, the rows it
+            // finds each carrying the words around the match. Only once there is something to
+            // search — on an empty page it would be a field that can only ever find nothing.
+            val searching = query.isNotBlank()
+            if (!selection.active && (searching || !groups.isEmpty)) {
+                item {
+                    SearchLine(
+                        query = query,
+                        onQueryChange = onQueryChange,
+                        placeholder = stringResource(R.string.transcripts_search_hint),
+                    )
+                }
+            }
+            if (!selection.active && !searching) {
                 item { ImportAudioCard(importing = importing, onImport = onImport) }
             }
 
             if (groups.isEmpty) {
                 item {
-                    LibrarySectionEmpty(
-                        title = stringResource(R.string.home_transcripts_empty_title),
-                        hint = stringResource(R.string.home_transcripts_empty_hint),
-                    )
+                    if (searching) {
+                        LibrarySectionEmpty(
+                            title = stringResource(R.string.search_no_matches_title),
+                            hint = stringResource(R.string.search_no_matches_hint, query.trim()),
+                        )
+                    } else {
+                        LibrarySectionEmpty(
+                            title = stringResource(R.string.home_transcripts_empty_title),
+                            hint = stringResource(R.string.home_transcripts_empty_hint),
+                        )
+                    }
                 }
                 return@LazyColumn
             }
@@ -307,6 +321,7 @@ fun TranscriptsScreen(
                 onDelete = onDelete,
                 selection = selection,
                 percentFor = { 0 },
+                excerpts = excerpts,
             )
         }
     }
@@ -378,6 +393,7 @@ private fun LazyListScope.transcriptRows(
     onDelete: (String) -> Unit,
     selection: LibrarySelectionUi,
     percentFor: (String) -> Int,
+    excerpts: Map<String, PageSearch.Excerpt> = emptyMap(),
 ) {
     items(entries, key = { it.displayName }) { entry ->
         // Null when the transcript has outlived its recording, which is rare but real: the two are
@@ -404,6 +420,7 @@ private fun LazyListScope.transcriptRows(
             // Only a finished transcript can be picked. A bulk share or delete over a queued, failed
             // or waiting row would mean nothing — there are no words there to send or destroy.
             onToggleSelected = if (isDone) ({ selection.onToggle(entry.displayName) }) else null,
+            excerpt = excerpts[entry.displayName],
             // A finished transcript needs no "open" icon — the card is the affordance, and a button
             // on a card that opens says it twice — so its slot carries the overflow menu instead.
             // Every other state keeps the one action it has: transcribe, in progress, or retry.

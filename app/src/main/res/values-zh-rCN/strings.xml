@@ -80,7 +80,6 @@
     <string name="home_recordings_empty">暂无录音。</string>
     <string name="home_recordings_title">录音</string>
     <string name="home_row_menu">更多选项</string>
-    <string name="home_search_transcripts">搜索通话内容</string>
     <string name="home_share">分享</string>
     <string name="home_share_chooser">分享录音</string>
     <string name="home_status_dev_options_off_suggestion">CallVault 通过无线调试进行录音，需要开发者选项。在系统设置中重新启用开发者选项（和无线调试）之前，无法录音。</string>
@@ -417,9 +416,6 @@
     <string name="transcript_retranscribe">重新转写</string>
     <string name="transcript_note_add">添加备注</string>
     <string name="transcript_note_hint">内容是什么，或接下来要做什么…</string>
-    <string name="transcript_search_empty">没有通话包含这些词。只匹配完整词语，请换一种词形试试。</string>
-    <string name="transcript_search_hint">搜索通话内容</string>
-    <string name="transcript_search_idle">输入词语即可搜索你的全部文字记录。</string>
     <string name="transcript_share">分享</string>
     <string name="transcript_export_chooser">分享转录文本</string>
     <string name="transcript_export_failed">无法导出转录文本</string>
@@ -669,4 +665,12 @@
         <item quantity="one">其中 %1$d 条背后已经没有录音，文字就是仅存的内容。这一部分无法撤销。</item>
         <item quantity="other">其中 %1$d 条背后已经没有录音，文字就是仅存的内容。这一部分无法撤销。</item>
     </plurals>
+
+    <!-- The search line at the head of the Recordings, Transcripts and Summaries pages. %1$s = what was typed. -->
+    <string name="home_search_contacts_hint">按联系人搜索</string>
+    <string name="transcripts_search_hint">搜索通话内容</string>
+    <string name="summaries_search_hint">搜索摘要</string>
+    <string name="search_clear">清除</string>
+    <string name="search_no_matches_title">没有匹配项</string>
+    <string name="search_no_matches_hint">这里没有包含“%1$s”的内容。词语按开头匹配，输入更短的形式可能找到更多。</string>
 </resources>

@@ -139,7 +139,7 @@ class HomeViewModel(application: Application) : AndroidViewModel(application) {
     /**
      * Aggregate UI state for Home.
      *
-     * Four independent filter facets — [sourceFilter], [directionFilter], [contactFilter] and
+     * Four independent filter facets — [sourceFilter], [directionFilter], [contactQuery] and
      * [dateFilter] — each default to "All" and combine with AND. The result is always sorted
      * newest-first (the repository's order is preserved).
      *
@@ -151,7 +151,7 @@ class HomeViewModel(application: Application) : AndroidViewModel(application) {
      *   honest answer is "not known yet" — which is not the same message.
      * @param sourceFilter    The active storage-source facet.
      * @param directionFilter The active call-direction facet.
-     * @param contactFilter   The selected contact key, or null for "all contacts".
+     * @param contactQuery    What is typed in the search line; empty for "all contacts".
      * @param dateFilter      The selected day key, or null for "all dates".
      */
     data class HomeUiState(
@@ -174,7 +174,7 @@ class HomeViewModel(application: Application) : AndroidViewModel(application) {
         val hasLoaded: Boolean = false,
         val sourceFilter: SourceFilter = SourceFilter.ALL,
         val directionFilter: DirectionFilter = DirectionFilter.ALL,
-        val contactFilter: String? = null,
+        val contactQuery: String = "",
         val dateFilter: String? = null,
         /** The selected tag, or null for "all tags". */
         val tagFilter: String? = null,
@@ -235,14 +235,30 @@ class HomeViewModel(application: Application) : AndroidViewModel(application) {
         val importRefusal: AudioImport.Reason? = null,
     ) {
         /**
-         * The distinct contact keys present in [recordings], sorted A→Z case-insensitively. Each
-         * recording maps to exactly one key via [contactKey], so these options always match what
-         * [filteredRecordings] filters on.
+         * The names the search line offers to complete [contactQuery] with: the contacts that have
+         * recordings and contain what was typed, A→Z, at most [MAX_CONTACT_SUGGESTIONS]. Nothing for
+         * an empty query, and nothing once the query IS a name — the list is already there.
+         *
+         * Deliberately from the recordings and not from the phone's contact book: a name with no
+         * recording behind it would complete to an empty list. And names only, not the number or
+         * file name a nameless recording is listed under — seen on the OP9, the menu was a column
+         * of `20260730_175604…voip-WhatsApp.ogg`. Typing still finds those; they are not offered.
          */
-        val availableContacts: List<String>
-            get() = recordings.map { contactKey(it) }
-                .distinct()
-                .sortedWith(String.CASE_INSENSITIVE_ORDER)
+        val contactSuggestions: List<String>
+            get() {
+                val typed = contactQuery.trim()
+                if (typed.isEmpty()) return emptyList()
+                val names = recordings.mapNotNull { it.contactName }.distinct().sortedWith(String.CASE_INSENSITIVE_ORDER)
+                val matching = names.filter { it.contains(typed, ignoreCase = true) }
+                if (matching.size == 1 && matching[0].equals(typed, ignoreCase = true)) return emptyList()
+                return matching.take(MAX_CONTACT_SUGGESTIONS)
+            }
+
+        /** Whether [item]'s contact key contains what is typed; every recording for nothing typed. */
+        private fun matchesContact(item: RecordingItem): Boolean {
+            val typed = contactQuery.trim()
+            return typed.isEmpty() || contactKey(item).contains(typed, ignoreCase = true)
+        }
 
         /**
          * The distinct day keys present in [recordings], newest day first. Derived via
@@ -279,7 +295,7 @@ class HomeViewModel(application: Application) : AndroidViewModel(application) {
             get() = recordings.filter { item ->
                 matchesSource(item) &&
                     matchesDirection(item) &&
-                    (contactFilter == null || contactKey(item) == contactFilter) &&
+                    matchesContact(item) &&
                     (dateFilter == null || RecordingsRepository.dayKey(item) == dateFilter) &&
                     (tagFilter == null || tagsByRecording[item.displayName]?.contains(tagFilter) == true) &&
                     (!favouritesOnly || item.displayName in favourites)
@@ -300,6 +316,9 @@ class HomeViewModel(application: Application) : AndroidViewModel(application) {
         }
 
         companion object {
+            /** How many names the search line offers at once; more is a list to scroll, not a completion. */
+            const val MAX_CONTACT_SUGGESTIONS = 8
+
             /** The single display key used for a recording's contact facet (name, else number, else file). */
             fun contactKey(item: RecordingItem): String =
                 item.contactName ?: item.number ?: item.displayName
@@ -625,16 +644,15 @@ class HomeViewModel(application: Application) : AndroidViewModel(application) {
             val (recordings, transcribeOnly) =
                 listed.partition { !ImportedRecording.isTranscribeOnly(it.displayName) }
             _uiState.update { state ->
-                // Drop a contact/date selection that no longer exists in the reloaded set so the
-                // user can never get stuck on an empty, un-clearable filter.
-                val contacts = recordings.map { HomeUiState.contactKey(it) }.toSet()
+                // Drop a date selection that no longer exists in the reloaded set so the user can
+                // never get stuck on an empty, un-clearable filter. The contact query is typed text
+                // and clears with its own × button, so it stays.
                 val days = recordings.map { RecordingsRepository.dayKey(it) }.toSet()
                 state.copy(
                     recordings = recordings,
                     transcribeOnly = transcribeOnly,
                     isLoading = false,
                     hasLoaded = true,
-                    contactFilter = state.contactFilter?.takeIf { it in contacts },
                     dateFilter = state.dateFilter?.takeIf { it in days }
                 )
             }
@@ -762,9 +780,9 @@ class HomeViewModel(application: Application) : AndroidViewModel(application) {
         _uiState.update { it.copy(favouritesOnly = on) }
     }
 
-    /** Selects a specific contact key to filter to, or null for "all contacts". */
-    fun setContactFilter(contactKey: String?) {
-        _uiState.update { it.copy(contactFilter = contactKey) }
+    /** Sets what the search line holds; empty for "all contacts". */
+    fun setContactQuery(query: String) {
+        _uiState.update { it.copy(contactQuery = query) }
     }
 
     /** Selects a specific day key to filter to, or null for "all dates". */

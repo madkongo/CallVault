@@ -7,10 +7,6 @@
     <string name="home_delete_confirm_drive_message">Usunąć kopię %1$s z Drive? Kopia na urządzeniu zostanie zachowana.</string>
     <string name="home_delete_copy_device_content_desc">Usuń kopię z urządzenia</string>
     <string name="home_delete_copy_drive_content_desc">Usuń kopię z Drive</string>
-    <string name="home_filter_contact_all">Wszystkie kontakty</string>
-    <string name="home_filter_contact_all_short">Wszystkie</string>
-    <string name="home_filter_contact_chip">Kontakt: %1$s</string>
-    <string name="home_filter_contact_label">Kontakt</string>
     <string name="home_filter_date_all">Wszystkie daty</string>
     <string name="home_filter_date_all_short">Wszystkie</string>
     <string name="home_filter_date_chip">Data: %1$s</string>

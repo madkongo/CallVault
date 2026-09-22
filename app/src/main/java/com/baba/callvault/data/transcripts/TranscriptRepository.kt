@@ -192,6 +192,37 @@ object TranscriptRepository {
         return mergeHits(segments, summaries, notes)
     }
 
+    /** Which page's index a [searchPage] call reads. */
+    enum class PageIndex { TRANSCRIPTS, SUMMARIES }
+
+    /**
+     * The search line on the Transcripts or Summaries page: every recording whose [index] holds all
+     * the typed words, the last one as a prefix, each with the excerpt to draw under its row.
+     *
+     * One index per page, unlike [search]: a word found in a summary is not a reason to list a
+     * transcript. The same guards as [search] — the quoting, the missing-database answer, the
+     * per-index `runCatching` — because the crash they exist for does not care which page asked.
+     */
+    suspend fun searchPage(context: Context, index: PageIndex, query: String): Map<String, PageSearch.Excerpt> {
+        val prepared = PageSearch.matchExpression(query, prefixLast = true)
+        if (prepared.isEmpty()) return emptyMap()
+        if (!TranscriptDatabase.exists(context)) return emptyMap()
+
+        val db = TranscriptDatabase.get(context)
+        val hits = when (index) {
+            PageIndex.TRANSCRIPTS -> attempt("transcripts") { db.transcriptDao().search(prepared) }
+            PageIndex.SUMMARIES -> {
+                backfillSummarySearchText(context)
+                attempt("summaries") { db.summaryDao().search(prepared) }
+            }
+        }
+        return buildMap {
+            hits.forEach { hit ->
+                PageSearch.excerpt(hit.snippet, query)?.let { putIfAbsent(hit.displayName, it) }
+            }
+        }
+    }
+
     /**
      * The three result sets as one, preferring the hit that can be acted on.
      *
@@ -255,9 +286,5 @@ object TranscriptRepository {
      * escaping rule. That treats the input as words to find rather than as operators, which is what
      * someone typing into a search box means.
      */
-    private fun quoteForFts(query: String): String =
-        query.trim()
-            .split(Regex("\\s+"))
-            .filter { it.isNotBlank() }
-            .joinToString(" ") { "\"${it.replace("\"", "\"\"")}\"" }
+    private fun quoteForFts(query: String): String = PageSearch.matchExpression(query, prefixLast = false)
 }

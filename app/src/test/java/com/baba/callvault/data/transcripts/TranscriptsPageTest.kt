@@ -142,4 +142,27 @@ class TranscriptsPageTest {
         assertTrue(groups.waiting.isEmpty())
     }
 
+    // ---- the search line
+
+    @Test
+    fun a_search_keeps_only_the_readable_transcripts_it_named_in_their_order() {
+        val groups = TranscriptsPage.Groups(
+            working = listOf(entry("w.m4a", TranscriptState.RUNNING)),
+            failed = listOf(entry("f.m4a", TranscriptState.FAILED)),
+            ready = listOf(entry("a.m4a", TranscriptState.DONE), entry("b.m4a", TranscriptState.DONE), entry("c.m4a", TranscriptState.DONE)),
+            waiting = listOf("x.m4a"),
+        )
+
+        val found = groups.matching(setOf("c.m4a", "a.m4a", "w.m4a"))
+
+        assertEquals(listOf("a.m4a", "c.m4a"), found.ready.map { it.displayName })
+        assertTrue(found.working.isEmpty() && found.failed.isEmpty() && found.waiting.isEmpty())
+    }
+
+    @Test
+    fun a_search_that_finds_nothing_is_an_empty_page() {
+        val groups = TranscriptsPage.Groups(emptyList(), emptyList(), listOf(entry("a.m4a", TranscriptState.DONE)))
+
+        assertTrue(groups.matching(emptySet()).isEmpty)
+    }
 }
