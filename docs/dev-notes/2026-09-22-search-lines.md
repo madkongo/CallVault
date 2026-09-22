@@ -64,3 +64,16 @@ here so a second sighting is not a first one.
 The maintainer's own use; the menu with a Hebrew name in it (adb cannot type Hebrew); Summaries with any
 summaries in them (the OP9 has none); a library of thousands (the contact filter is a linear scan per
 keystroke over the in-memory list, which is what the chips already did).
+
+## Label cache for the text pages (added 11:35, 🧪 VERIFYING)
+
+Built on the maintainer's "go with the label cache", with the correction that it is not the autocomplete:
+`recording_labels` (transcripts DB v9) holds each recording's last-known title and date, written after every
+list load for the rows that changed (`LibraryLabels.changed`), read by `libraryRowTitle`/`libraryRowSubtitle`
+only when the recording is not in the loaded list. A cached label that is the file name defers to
+`RecordingLabel.forName`, which knows an import's name. Migration `MIGRATION_8_9_SQL` is checked
+byte-for-byte against Room's exported `9.json` like the seven before it.
+
+Measured on the OP9: a cold start onto Transcripts shows names at ~1 s. But the OP9 lists 60 recordings in
+34 ms, so the window this fills is barely there on this phone; it is a library of thousands, on a cold start,
+where it would show — 📐 not measured. The maintainer's sighting was on Recordings, which this does not touch.
