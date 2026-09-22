@@ -1,9 +1,8 @@
 # "Start when they answer" — recording an outgoing call from the pickup, not the dial
 
-🧪 VERIFYING as of 2026-09-22 — built, 18 new unit tests pass, not yet on a phone. To settle it: on the
-OP12 with the toggle on, place one outgoing call that is answered and one that is not; the first file
-should begin at the pickup (no ringing), the second should not exist. The log line to look for is
-`Sending start INTENT for OUTGOING call after N polls: call answered`.
+✅ VERIFIED 2026-09-22 by the maintainer on the OP9 (built-in mode): one answered call recorded from the
+pickup ("sounds good"), one unanswered call left no file. Still 🧪: Shizuku mode, a dual-SIM call from
+SIM 2, and a Samsung. The log line to look for is `Sending start INTENT for OUTGOING call after N polls`.
 
 Requested by a user (2026-09-22, "Please add an option to start recording only when the other party
 answers"). Feasibility in `2026-09-22-three-requests-feasibility.md`; the maintainer chose the
@@ -39,7 +38,7 @@ ACTIVE rather than at OFFHOOK (the dial). Phone calls only; the setting says so.
   connected, a ROM without the line) → start at once, as if the option were off; 120 s without ACTIVE →
   start anyway. Both are logged with the reason.
 
-## First real call — OP9, built-in mode, 2026-09-22 13:23 (🧪 file not yet listened to)
+## First real call — OP9, built-in mode, 2026-09-22 13:23 (✅ maintainer listened: "sounds good")
 
 Outgoing carrier call, toggle on, automatic outgoing recording on. From logcat:
 

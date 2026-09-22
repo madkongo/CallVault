@@ -19,8 +19,6 @@ All notable changes to CallVault are documented here. The format is based on
   place begins at the pickup instead of at the dial, so the file holds the conversation and not the
   ringing. Phone calls only: an app call gives no sign of being answered. If the phone cannot say
   whether the call was answered, it is recorded from the dial as before — the option never costs a call.
-  <!-- 🧪 VERIFYING as of 2026-09-22: built and unit-tested, not yet used on a phone. See
-       docs/dev-notes/2026-09-22-record-from-answer.md. -->
 
 - **Shizuku recordings get speaker labels (#38).** A Shizuku recording is already stereo — you on one
   side, the other person on the other — but CallVault had no way to read that, so transcripts came out
