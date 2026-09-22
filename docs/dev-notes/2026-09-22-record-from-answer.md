@@ -85,15 +85,32 @@ locale-independent, on the notification the host already reads with `cmd notific
 caller's name. The audio players are no signal: the voice track is started from the dial and carries the
 ringback. 🧪 Telegram and Signal not yet looked at.
 
-Design if built: the VoIP capture still starts at the audio-mode flip (arming cannot be retried) but is
-held **paused** (`setVoipPaused`, drops frames, never touches the mic) while the host is polled every
-500 ms; unpause at `showChronometer=true`. A notification without the flag at all means "this app does
-not say" → unpause at once; the same 120 s ceiling applies. Direction-free: the timer starts at
-connect for incoming calls too. The file name keeps the dial time.
+**Built the same afternoon** (`feat/record-on-answer-voip`, same toggle): the VoIP capture still starts
+at the audio-mode flip (arming cannot be retried) but is held **paused** (`setVoipPaused`, drops frames,
+never touches the mic) while the host is polled every 500 ms through the new `voipCallAnswered(package)`
+— appended LAST in the AIDL, transaction codes are positional; `RecorderTransactionCodesTest` pins it.
+Released at ANSWERED. UNKNOWN (no timer flag, no notification, an older host) releases at once; the
+same 120 s ceiling applies. The user's Pause outranks the release; their Resume ends the hold.
+Direction-free: the timer starts at connect for incoming calls too. The file name keeps the dial time.
+
+**First real call, OP9, 2026-09-22 13:36, WhatsApp to the OP12 (🧪 file not yet listened to):**
+
+```
+13:36:34.062  App-call recording held until the call is answered
+13:36:46.845  App-call recording released after 17 polls: call answered (13055ms)
+13:36:55.837  VoIP capture finished: 8s, 6 silence-filled chunks, farPartyHeard=true
+```
+
+The file is **8.4 s** for a 22 s call; the 13:28 probe call, recorded from the dial by the previous
+build, is 21.8 s. Named פרוזה (the late-caller retry ran alongside the hold). Still 🧪: an unanswered app
+call (expected: an empty-ish file of a few hundred ms is NOT what happens — a held recording that ends
+unanswered still publishes a file holding only the chunks before the hold engaged, ~300 ms; whether that
+stub should be discarded is a decision for the maintainer), Telegram and Signal.
 
 ## Not covered
 
-- App calls: see above — possible, not built.
+- An unanswered app call leaves a stub file (see above) — unlike the carrier path, where nothing is
+  created. Decide before release.
 - Incoming calls: unaffected by design — OFFHOOK *is* the answer there.
 - A call started from the Record prompt (automatic recording off): unaffected; the button is pressed
   after the dial anyway.
