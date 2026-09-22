@@ -54,8 +54,11 @@ Rang 4.9 s, answered, recorded ~4 s, stopped at IDLE. **Measured: pipeline up 54
 ACTIVE** — up to 500 ms of poll interval on top of that is the most that can be lost of the pickup.
 The file: `20260922_132356.485+0300_out_פרוזה.ogg`, **3.84 s**, stamped at the pickup (13:23:56), not the
 dial (13:23:51) — from the dial it would have been ~9 s. The maintainer: "turned the feature on, answered,
-said a few words and hanged up." Whether the far party's first word survived is for his ears. The
-unanswered case is still to be seen.
+said a few words and hanged up." Whether the far party's first word survived is for his ears.
+
+**Second call, 13:25, not answered:** standby at 13:25:19.692, rang 13.5 s, IDLE at 13:25:33 → the wait
+was cancelled, no start line, "exiting standby state", and the folder holds no 13:25 file. The
+unanswered case is as designed.
 
 ## What it costs
 
