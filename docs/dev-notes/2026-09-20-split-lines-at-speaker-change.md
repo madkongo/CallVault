@@ -104,3 +104,15 @@ looks perfect". That covers two scripted test calls in Shizuku mode.
 (4 passes) — "it looks good". That closes the three cases the line above listed as open. What it does not
 tell us is the numbers (how many seams were cut, how many rows came out of how many segments): the OP12's
 transport dropped during the run and its logcat ring had rolled by the time it came back.
+
+## 2026-09-22 — review finding on the row merge (🧪)
+
+A line whose `startMs` is before the previous row's `endMs` was joined to it: `pauseMs <= 1 s` is true of a
+negative pause. Within one decode whisper's lines never overlap, so that only happens at a chunk seam —
+the next chunk re-transcribes the last 10 s of the one before (`ChunkPlan.OVERLAP_MS`) and the segment
+straddling the seam starts inside them. Joined, the repeated seconds sat inside one row with nothing to show
+where the repeat began. Fixed in `6a5e7e84`: a negative pause is an overlap and starts a new row, which is
+what every chunked call showed before rows existed. The maintainer's 15-minute call read well WITH the
+join, so at most three rows change on a call that length; a re-read after the fix would settle it but is not
+owed. The underlying repeat itself (a straddling segment kept whole, on purpose, since chunking shipped)
+is unchanged.

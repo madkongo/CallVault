@@ -194,3 +194,12 @@ logged `The recorder is running from /data/app/~~vuJv…/base.apk, not the insta
 
 Still open: every install-over spawns several recorder processes (`Clearing 4 other recorder
 process(es)`), which the winner then kills. It ends correctly, but it is churn, and it is unexplained.
+
+## 2026-09-22 — review finding on fix 3 (🧪, not seen on a phone)
+
+`retireIfStale` asked one binder where it runs from and then called `retireShizukuService`, which re-read
+`RecorderConnection.service` before `destroy()`. Nothing serialises that check against a bind callback,
+so a fresh binder landing in that window would have been the one destroyed while the stale process lived
+on. Fixed in `56b310ac`: the diagnosed host is passed in and is the only one acted on. Test:
+`the_host_that_was_found_stale_is_the_one_destroyed_even_if_a_fresh_one_arrived_meanwhile`. The window is
+milliseconds wide and was never observed; the fix is cheap and removes a whole class of ordering.
