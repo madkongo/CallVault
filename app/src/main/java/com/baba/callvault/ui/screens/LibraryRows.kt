@@ -34,10 +34,13 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.dp
+import com.baba.callvault.data.recordings.RecordingsRepository.RecordingItem
 import com.baba.callvault.data.transcripts.PageSearch
+import com.baba.callvault.data.transcripts.db.RecordingLabelEntry
 import com.baba.callvault.ui.common.BidiText
 import com.baba.callvault.ui.common.CvCard
 import com.baba.callvault.ui.common.ImportedBadge
+import com.baba.callvault.ui.common.RecordingLabel
 import com.baba.callvault.ui.common.TextOnlyBadge
 import com.baba.callvault.ui.common.TranscriptAudio
 
@@ -183,6 +186,21 @@ internal fun LibraryNameRow(
         }
     }
 }
+
+/**
+ * What a library row is called and dated, in order of what is known: the recording in the list,
+ * else what it was last called ([RecordingLabelEntry], while the list is still loading or the audio
+ * is gone), else the file name alone. A cached label that IS the file name defers to [RecordingLabel.forName],
+ * which knows how to read an import's name out of it.
+ */
+internal fun libraryRowTitle(item: RecordingItem?, cached: RecordingLabelEntry?, displayName: String): String =
+    RecordingLabel.of(item)
+        ?: cached?.label?.takeUnless { it == displayName }?.let(BidiText::isolate)
+        ?: RecordingLabel.forName(displayName)
+
+/** The date line under a library row, from the list if it is there, else from what was last known. */
+internal fun libraryRowSubtitle(item: RecordingItem?, cached: RecordingLabelEntry?): String? =
+    item?.displayDate ?: cached?.subtitle
 
 /**
  * The trailing slot's size, fixed rather than wrapped.

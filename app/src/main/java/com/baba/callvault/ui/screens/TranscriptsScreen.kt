@@ -52,6 +52,7 @@ import com.baba.callvault.data.transcripts.LibraryRowActions
 import com.baba.callvault.data.transcripts.PageSearch
 import com.baba.callvault.data.transcripts.TranscriptStatus
 import com.baba.callvault.data.transcripts.TranscriptsPage
+import com.baba.callvault.data.transcripts.db.RecordingLabelEntry
 import com.baba.callvault.data.transcripts.db.TranscriptEntry
 import com.baba.callvault.data.transcripts.export.TranscriptFormat
 import com.baba.callvault.ui.common.CvCard
@@ -135,6 +136,8 @@ fun TranscriptsScreen(
     query: String,
     onQueryChange: (String) -> Unit,
     excerpts: Map<String, PageSearch.Excerpt>,
+    /** What each recording was last called, for a row whose recording is not in [recordings] yet. */
+    labels: Map<String, RecordingLabelEntry>,
     onOpenQueue: () -> Unit,
     onOpen: (String) -> Unit,
     onRetry: (String) -> Unit,
@@ -273,6 +276,7 @@ fun TranscriptsScreen(
                     onSave = onSave,
                     onDelete = onDelete,
                     selection = selection,
+                labels = labels,
                     percentFor = transcribing::percentFor,
                 )
             }
@@ -299,6 +303,7 @@ fun TranscriptsScreen(
                     onSave = onSave,
                     onDelete = onDelete,
                     selection = selection,
+                labels = labels,
                     percentFor = { 0 },
                 )
             }
@@ -320,6 +325,7 @@ fun TranscriptsScreen(
                 onSave = onSave,
                 onDelete = onDelete,
                 selection = selection,
+                labels = labels,
                 percentFor = { 0 },
                 excerpts = excerpts,
             )
@@ -394,6 +400,7 @@ private fun LazyListScope.transcriptRows(
     selection: LibrarySelectionUi,
     percentFor: (String) -> Int,
     excerpts: Map<String, PageSearch.Excerpt> = emptyMap(),
+    labels: Map<String, RecordingLabelEntry> = emptyMap(),
 ) {
     items(entries, key = { it.displayName }) { entry ->
         // Null when the transcript has outlived its recording, which is rare but real: the two are
@@ -404,8 +411,8 @@ private fun LazyListScope.transcriptRows(
         val status = TranscriptStatus.of(entry.state)
         val isDone = status == TranscriptStatus.DONE
         LibraryNameRow(
-            title = item?.let { RecordingLabel.of(it) } ?: RecordingLabel.forName(entry.displayName),
-            subtitle = item?.displayDate,
+            title = libraryRowTitle(item, labels[entry.displayName], entry.displayName),
+            subtitle = libraryRowSubtitle(item, labels[entry.displayName]),
             // A missing row is the audio being gone, which is what the badge says first: it changes
             // what the row can do. Where the audio IS there, "imported" is read from the NAME rather
             // than from the row, because saying nothing would make an import read as a call whose

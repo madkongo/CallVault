@@ -17,6 +17,7 @@ import androidx.lifecycle.viewModelScope
 import com.baba.callvault.R
 import com.baba.callvault.data.AppPreferences
 import com.baba.callvault.data.transcripts.FavouriteRepository
+import com.baba.callvault.data.transcripts.LibraryLabels
 import com.baba.callvault.data.transcripts.TagRepository
 import com.baba.callvault.data.PrivilegedMode
 import com.baba.callvault.data.health.CallGapDetector
@@ -669,6 +670,9 @@ class HomeViewModel(application: Application) : AndroidViewModel(application) {
                 )
             }
             precomputeWaveforms(recordings)
+            // What each recording is called, for the library pages to title a row before this list
+            // is loaded next time. Off the UI path: the list is already on screen.
+            LibraryLabels.refresh(appContext, recordings)
             // Exactly one catch-up pass, whatever number of refreshes arrived while this one ran.
             if (listReloadPending) {
                 listReloadPending = false

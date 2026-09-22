@@ -128,6 +128,7 @@ import com.baba.callvault.data.transcripts.LibraryCounts
 import com.baba.callvault.data.transcripts.SummariesPage
 import com.baba.callvault.data.transcripts.LibraryRowActions
 import com.baba.callvault.data.transcripts.db.TranscriptState
+import com.baba.callvault.data.transcripts.LibraryLabels
 import com.baba.callvault.data.transcripts.TranscriptRepository
 import com.baba.callvault.data.transcripts.TranscriptsPage
 import com.baba.callvault.data.waveform.RecordingExtrasRepository
@@ -297,6 +298,10 @@ fun HomeScreen(
     val libraryRecordings = remember(uiState.recordings, uiState.transcribeOnly) {
         uiState.recordings + uiState.transcribeOnly
     }
+    // What each recording was last called, for a library row whose recording is not in the list
+    // yet — the list is a scan with a contact lookup per file, and for the seconds it takes on a
+    // cold start a row titled by its file name reads as a date and time.
+    val libraryLabels by remember { LibraryLabels.observe(context) }.collectAsState(initial = emptyMap())
 
     /**
      * What a library row is called, the same way every list and dialog names the same call.
@@ -966,6 +971,7 @@ fun HomeScreen(
             query = search.query,
             onQueryChange = search.onQueryChange,
             excerpts = search.excerpts,
+            labels = libraryLabels,
             onOpenQueue = { showTranscribingSheet = true },
             // A page of its own, not the sheet. Here the transcript is the destination rather than a
             // look at something you are already standing on, and a sheet over a list of transcripts
@@ -1052,6 +1058,7 @@ fun HomeScreen(
             query = search.query,
             onQueryChange = search.onQueryChange,
             excerpts = search.excerpts,
+            labels = libraryLabels,
             // The reading view, not the recording's own screen, for three reasons that all point
             // the same way. It already carries the summary at the top, above the words it was
             // written from — which is what anyone checks when a summary looks wrong. It is the same

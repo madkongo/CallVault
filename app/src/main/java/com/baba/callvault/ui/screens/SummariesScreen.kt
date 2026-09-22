@@ -37,6 +37,7 @@ import com.baba.callvault.data.recordings.ImportedRecording
 import com.baba.callvault.data.recordings.RecordingsRepository.RecordingItem
 import com.baba.callvault.data.transcripts.LibraryRowActions
 import com.baba.callvault.data.transcripts.PageSearch
+import com.baba.callvault.data.transcripts.db.RecordingLabelEntry
 import com.baba.callvault.data.transcripts.SummariesPage
 import com.baba.callvault.data.transcripts.export.TranscriptFormat
 import com.baba.callvault.ui.common.CvScaffold
@@ -104,6 +105,8 @@ fun SummariesScreen(
     query: String,
     onQueryChange: (String) -> Unit,
     excerpts: Map<String, PageSearch.Excerpt>,
+    /** What each recording was last called, for a row whose recording is not in [recordings] yet. */
+    labels: Map<String, RecordingLabelEntry>,
     onOpen: (String) -> Unit,
     onShare: (String) -> Unit,
     onSave: (String, TranscriptFormat) -> Unit,
@@ -192,6 +195,7 @@ fun SummariesScreen(
                     SummaryRow(
                         displayName = working.displayName,
                         item = byName[working.displayName],
+                        cached = labels[working.displayName],
                         // Never selectable: there is no summary row yet to share or delete, which is
                         // the asymmetry this whole page is built around.
                         selectionMode = selection.active,
@@ -229,6 +233,7 @@ fun SummariesScreen(
                     // no row behind, so a bulk delete would have nothing of its to take.
                     selection = null,
                     selectionMode = selection.active,
+                    labels = labels,
                 )
             }
 
@@ -251,6 +256,7 @@ fun SummariesScreen(
                 selection = selection,
                 selectionMode = selection.active,
                 excerpts = excerpts,
+                labels = labels,
             )
         }
     }
@@ -275,11 +281,13 @@ private fun LazyListScope.summaryRows(
     selection: LibrarySelectionUi?,
     selectionMode: Boolean,
     excerpts: Map<String, PageSearch.Excerpt> = emptyMap(),
+    labels: Map<String, RecordingLabelEntry> = emptyMap(),
 ) {
     items(displayNames, key = { it }) { displayName ->
         SummaryRow(
             displayName = displayName,
             item = byName[displayName],
+            cached = labels[displayName],
             onOpen = { onOpen(displayName) },
             excerpt = excerpts[displayName],
             selectionMode = selectionMode,
@@ -315,14 +323,15 @@ private fun SummaryRow(
     displayName: String,
     item: RecordingItem?,
     onOpen: (() -> Unit)?,
+    cached: RecordingLabelEntry? = null,
     trailing: (@Composable () -> Unit)? = null,
     selectionMode: Boolean = false,
     selected: Boolean = false,
     onToggleSelected: (() -> Unit)? = null,
     excerpt: PageSearch.Excerpt? = null,
 ) = LibraryNameRow(
-    title = item?.let { RecordingLabel.of(it) } ?: RecordingLabel.forName(displayName),
-    subtitle = item?.displayDate,
+    title = libraryRowTitle(item, cached, displayName),
+    subtitle = libraryRowSubtitle(item, cached),
     // A missing row is the audio being gone, which is what the badge says first: it changes what the
     // row can do. Where the audio IS there, "imported" is read from the NAME rather than from the
     // row, because saying nothing would make an import read as a call whose details all failed to
