@@ -90,6 +90,20 @@ class SpeakerTurnLinesTest {
     }
 
     @Test
+    fun `a line that starts before the previous one ended is an overlap, not a pause, and is not joined`() {
+        // Only a chunk seam produces this: the next chunk re-transcribes the last seconds of the one
+        // before, and the segment straddling the seam starts inside them. Glued into one row, the same
+        // seconds would read twice in a single line, with nothing to show where the repeat begins.
+        val sameSpeaker = listOf(SpeakerTurn(0, SpeakerChannel.A))
+        val acrossTheSeam = listOf(
+            TranscriptSegment(295_000, 300_000, "the end of the chunk before."),
+            TranscriptSegment(297_000, 303_000, "of the chunk before, and on it goes."),
+        )
+
+        assertEquals(2, SpeakerTurnLines.merge(acrossTheSeam, sameSpeaker).size)
+    }
+
+    @Test
     fun `a call that opens with double-talk joins the first speaker who can be named`() {
         val opensInBoth = listOf(
             SpeakerTurn(0, SpeakerChannel.BOTH),

@@ -56,9 +56,12 @@ object SpeakerTurnLines {
 
         fun takes(line: TranscriptSegment, lineSpeaker: String?): Boolean {
             val isHandover = speaker != null && lineSpeaker != null && speaker != lineSpeaker
+            // A negative pause is an overlap, and whisper's lines never overlap within one decode: it
+            // is the segment straddling a chunk seam, which repeats the seconds the chunk before it
+            // ended on. Joined, the repeat would sit inside one row with nothing to show where it begins.
             val pauseMs = line.startMs - segment.endMs
             val joinedMs = line.endMs - segment.startMs
-            return !isHandover && pauseMs <= MAX_PAUSE_MS && joinedMs <= MAX_ROW_MS
+            return !isHandover && pauseMs in 0..MAX_PAUSE_MS && joinedMs <= MAX_ROW_MS
         }
 
         fun joinedWith(line: TranscriptSegment, lineSpeaker: String?) = Row(
