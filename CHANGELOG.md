@@ -14,6 +14,14 @@ All notable changes to CallVault are documented here. The format is based on
   the list narrows as you type. The magnifier in the header, and the search sheet it opened, are gone —
   the search is on the page itself.
 
+- **An option to start recording an outgoing call only when the other person answers.** Off by default,
+  under Settings → Recording → Outgoing calls. With it on, an automatically recorded phone call you
+  place begins at the pickup instead of at the dial, so the file holds the conversation and not the
+  ringing. Phone calls only: an app call gives no sign of being answered. If the phone cannot say
+  whether the call was answered, it is recorded from the dial as before — the option never costs a call.
+  <!-- 🧪 VERIFYING as of 2026-09-22: built and unit-tested, not yet used on a phone. See
+       docs/dev-notes/2026-09-22-record-from-answer.md. -->
+
 - **Shizuku recordings get speaker labels (#38).** A Shizuku recording is already stereo — you on one
   side, the other person on the other — but CallVault had no way to read that, so transcripts came out
   as unattributed text. It now works out who spoke from the file itself while transcribing it, so the
