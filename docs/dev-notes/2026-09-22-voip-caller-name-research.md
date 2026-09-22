@@ -1,7 +1,8 @@
 # 2026-09-22 — contact names for VoIP calls: why the OP9 gets none, and what else could give them
 
-Status: **📐 RESEARCH, no code.** Cause of the OP9's misses found by reading AOSP and confirmed on both phones
-without a call. The fix is not written. One live measurement still owed (below).
+Status: **🧪 VERIFYING** — cause found by reading AOSP, confirmed on both phones, fix built on
+`fix/voip-caller-name-android14` (last section). Not yet seen working on a phone: the OP9 is in Shizuku mode,
+which records no VoIP calls, so the Android 14 path needs the OP9 in built-in mode for one WhatsApp call.
 
 ## The report
 
