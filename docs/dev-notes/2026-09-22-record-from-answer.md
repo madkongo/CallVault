@@ -52,8 +52,10 @@ Outgoing carrier call, toggle on, automatic outgoing recording on. From logcat:
 
 Rang 4.9 s, answered, recorded ~4 s, stopped at IDLE. **Measured: pipeline up 547 ms after the poll saw
 ACTIVE** — up to 500 ms of poll interval on top of that is the most that can be lost of the pickup.
-Whether the far party's first word survived is for the maintainer's ears. The unanswered case is still
-to be seen.
+The file: `20260922_132356.485+0300_out_פרוזה.ogg`, **3.84 s**, stamped at the pickup (13:23:56), not the
+dial (13:23:51) — from the dial it would have been ~9 s. The maintainer: "turned the feature on, answered,
+said a few words and hanged up." Whether the far party's first word survived is for his ears. The
+unanswered case is still to be seen.
 
 ## What it costs
 
