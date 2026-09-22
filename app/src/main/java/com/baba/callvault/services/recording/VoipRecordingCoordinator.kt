@@ -9,7 +9,10 @@
 package com.baba.callvault.services.recording
 
 import android.content.Context
+import android.media.AudioDeviceInfo
+import android.media.AudioManager
 import android.net.Uri
+import android.os.Build
 import androidx.documentfile.provider.DocumentFile
 import com.baba.callvault.R
 import com.baba.callvault.data.AppPreferences
@@ -74,6 +77,9 @@ object VoipRecordingCoordinator {
 
     /** Mirrors `VoipAppIdentity.UID_UNKNOWN`, which lives in the daemon-side package. */
     private const val UID_UNKNOWN = -1
+
+    /** How far into an app call the route and mixer latencies are read: past setup, well before the end. */
+    private const val ROUTE_REPORT_DELAY_MS = 5_000L
 
     @Volatile private var recording = false
 
@@ -183,10 +189,64 @@ object VoipRecordingCoordinator {
         // instant the audio mode flipped. Ask again a few times into the call; the file is only
         // published at the end, so a late answer still names it.
         if (caller == null && callPackage != null) lateCallerJob = askAgainForCaller(callPackage)
+        routeJob?.cancel()
+        routeJob = reportAudioRoute(context, callPackage)
         answerHoldJob?.cancel()
         heldForAnswer = false
         // The capture had to open now; what waits for the pickup is the encode. See VoipAnswerHold.
         if (callPackage != null && prefs.isRecordFromAnswerEnabled()) answerHoldJob = holdUntilAnswered(context, callPackage)
+    }
+
+    /** The route/latency report of the call in flight — see [reportAudioRoute]. */
+    private var routeJob: Job? = null
+
+    /**
+     * Writes, a few seconds into the call, what the capture's sync ledger cannot see from inside the
+     * host: where the far party is being played (earpiece, speaker, Bluetooth — a Bluetooth route
+     * adds output latency the far-party tap sits ahead of), the mixer threads' latencies, and the
+     * calling app's version. Issue #41 is read from these lines together with the host's
+     * `VoIP sync` lines. Diagnostics only; nothing here may touch the recording.
+     */
+    private fun reportAudioRoute(context: Context, callPackage: String?): Job = CoroutineScope(Dispatchers.IO).launch {
+        runCatching {
+            val am = context.getSystemService(Context.AUDIO_SERVICE) as AudioManager
+            val appVersion = callPackage?.let { pkg ->
+                runCatching { context.packageManager.getPackageInfo(pkg, 0).versionName }.getOrNull()
+            }
+            AppLogger.i(TAG, "App-call route at start: ${describeRoute(am)} app=$callPackage/$appVersion")
+        }.onFailure { AppLogger.d(TAG, "route report failed: ${it.message}") }
+        delay(ROUTE_REPORT_DELAY_MS)
+        if (!recording) return@launch
+        runCatching {
+            val am = context.getSystemService(Context.AUDIO_SERVICE) as AudioManager
+            AppLogger.i(TAG, "App-call route at ${ROUTE_REPORT_DELAY_MS / 1000}s: ${describeRoute(am)}")
+            val latency = RecorderConnection.service?.diagnosticDump("audio_latency", null)
+                ?.lineSequence()?.map { it.trim() }?.filter { it.isNotEmpty() }?.joinToString(" | ")
+            AppLogger.i(TAG, "App-call output threads: ${latency ?: "(unavailable)"}")
+        }.onFailure { AppLogger.d(TAG, "route report failed: ${it.message}") }
+    }
+
+    private fun describeRoute(am: AudioManager): String {
+        val comm = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+            am.communicationDevice?.let { "${deviceTypeName(it.type)}:${it.productName}" } ?: "none"
+        } else "n/a"
+        val outputs = am.getDevices(AudioManager.GET_DEVICES_OUTPUTS)
+            .filter { it.type != AudioDeviceInfo.TYPE_TELEPHONY }
+            .joinToString(",") { deviceTypeName(it.type) }
+        @Suppress("DEPRECATION")
+        return "mode=${am.mode} commDevice=$comm speakerphone=${am.isSpeakerphoneOn} sco=${am.isBluetoothScoOn} " +
+            "a2dp=${am.isBluetoothA2dpOn} outputs=[$outputs]"
+    }
+
+    private fun deviceTypeName(type: Int): String = when (type) {
+        AudioDeviceInfo.TYPE_BUILTIN_EARPIECE -> "earpiece"
+        AudioDeviceInfo.TYPE_BUILTIN_SPEAKER -> "speaker"
+        AudioDeviceInfo.TYPE_WIRED_HEADSET, AudioDeviceInfo.TYPE_WIRED_HEADPHONES -> "wired"
+        AudioDeviceInfo.TYPE_BLUETOOTH_SCO -> "bt-sco"
+        AudioDeviceInfo.TYPE_BLUETOOTH_A2DP -> "bt-a2dp"
+        AudioDeviceInfo.TYPE_BLE_HEADSET, AudioDeviceInfo.TYPE_BLE_SPEAKER -> "bt-le"
+        AudioDeviceInfo.TYPE_USB_HEADSET, AudioDeviceInfo.TYPE_USB_DEVICE -> "usb"
+        else -> "type$type"
     }
 
     private fun holdUntilAnswered(context: Context, callPackage: String): Job = CoroutineScope(Dispatchers.IO).launch {
@@ -434,6 +494,8 @@ object VoipRecordingCoordinator {
         lateCallerJob = null
         answerHoldJob?.cancel()
         answerHoldJob = null
+        routeJob?.cancel()
+        routeJob = null
         // Ending while still held means nobody picked up: whatever the file holds is the moment
         // before the hold engaged, not a conversation. Discarded rather than published, so an
         // unanswered app call leaves nothing behind — the same as an unanswered phone call.
@@ -451,6 +513,13 @@ object VoipRecordingCoordinator {
         isSuspendedForCarrierCall = false
         runCatching { RecorderConnection.service?.stopRecording() }
             .onFailure { AppLogger.w(TAG, "stopRecording failed: ${it.message}") }
+        // The capture's own account of how its two sides lined up, written to the APP's log — the
+        // same route the carrier path uses — so a report carries it even when the host's ring was
+        // not on for the whole call. Issue #41 is diagnosed from this line. Empty from an older host.
+        runCatching { RecorderConnection.service?.captureDiagnostics() }
+            .getOrNull()
+            ?.takeIf { it.isNotBlank() }
+            ?.let { AppLogger.i(TAG, "App-call capture health: $it") }
 
         // A recording where the far party was never audible is one-sided. Say so now rather than let it
         // be discovered weeks later — the app may have opted out of capture, or this OEM build may not

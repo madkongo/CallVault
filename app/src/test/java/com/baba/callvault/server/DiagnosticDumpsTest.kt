@@ -30,7 +30,7 @@ class DiagnosticDumpsTest {
     fun `each known dump maps to a command`() {
         listOf(
             "logcat_size", "logcat_grow", "logcat_dump", "dumpsys_audio", "appops_mic", "appops_all", "processes",
-            "setting_adb_enabled", "setting_dev_options", "call_state",
+            "setting_adb_enabled", "setting_dev_options", "call_state", "audio_latency",
         )
             .forEach { key ->
                 assertTrue("$key must be runnable", DiagnosticDumps.commandFor(key, null) != null)
