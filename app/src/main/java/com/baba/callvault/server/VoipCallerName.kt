@@ -38,8 +38,14 @@ internal object VoipCallerName {
     /** Characters unsafe or annoying in a filename, plus anything non-printable. */
     private val UNSAFE = Regex("""[/\\:*?"<>|\p{Cntrl}]""")
 
-    private val TITLE_REGEX = Regex("""android\.title=String \((.+?)\)""")
-    private val TEXT_REGEX = Regex("""android\.text=String \((.+?)\)""")
+    // `String` or `SpannableString`: a title that was Spanned on the app side crosses Binder as the
+    // latter and dumps as such (TextUtils.CHAR_SEQUENCE_CREATOR). Seen on the OP9 for other apps.
+    private val TITLE_REGEX = Regex("""android\.title=(?:Spannable)?String \((.+?)\)""")
+    private val TEXT_REGEX = Regex("""android\.text=(?:Spannable)?String \((.+?)\)""")
+
+    /** Android 14 and earlier print the flags as a number; 15+ as words. Both are checked. */
+    private val HEX_FLAGS_REGEX = Regex("""flags=0x([0-9a-fA-F]+)""")
+    private const val FLAG_ONGOING_EVENT = 0x2
 
     /**
      * The name shown on [packageName]'s ongoing-call notification, or null.
@@ -47,7 +53,10 @@ internal object VoipCallerName {
      * Blocking (spawns `dumpsys`), so keep it off the critical path — it runs once per call.
      */
     fun resolve(packageName: String): String? = runCatching {
-        val dump = readNotificationDump() ?: return null
+        // One record at a time through `cmd notification get`, unredacted and a few KB each, rather
+        // than the whole multi-megabyte dump under a timeout. The dump stays as the fallback for a
+        // ROM whose shell command answers differently.
+        val dump = readPackageRecords(packageName) ?: readNotificationDump() ?: return null
         extractFromDump(dump, packageName)
     }.onFailure { AppLogger.d(TAG, "Caller lookup failed: ${it.message}") }.getOrNull()
 
@@ -69,7 +78,7 @@ internal object VoipCallerName {
         for (record in dump.split("NotificationRecord(")) {
             if (!record.contains("pkg=$packageName ")) continue
             // Call notifications are ongoing; this skips the app's chat and message notifications.
-            if (!record.contains("ONGOING_EVENT")) continue
+            if (!isOngoing(record)) continue
 
             val candidates = listOfNotNull(
                 TITLE_REGEX.find(record)?.groupValues?.get(1),
@@ -90,6 +99,22 @@ internal object VoipCallerName {
      * Rejects anything that merely restates the app: Telegram's title is "Ongoing Telegram call", a
      * status line rather than a person, and that string in a filename is worse than no name at all.
      */
+    /**
+     * Whether the record's flags carry ONGOING_EVENT — as the word Android 15+ prints, or as the 0x2
+     * bit in the hex Android 14 and earlier print (`flags=0x62`). Measured 2026-09-22: the OP9
+     * (Android 14) dump held the word nowhere and the hex 868 times, so the word alone had rejected
+     * every WhatsApp call on that phone — 1 of 6 named, against 18 of 18 on the Android 16 OP12.
+     */
+    internal fun isOngoing(record: String): Boolean {
+        if (record.contains("ONGOING_EVENT")) return true
+        val hex = HEX_FLAGS_REGEX.find(record)?.groupValues?.get(1) ?: return false
+        return (hex.toLongOrNull(16) ?: return false) and FLAG_ONGOING_EVENT.toLong() != 0L
+    }
+
+    /** The keys in a `cmd notification list` output that belong to [packageName]: `user|pkg|id|tag|uid`. */
+    internal fun keysFor(list: String, packageName: String): List<String> =
+        list.lineSequence().map { it.trim() }.filter { it.split('|').getOrNull(1) == packageName }.toList()
+
     private fun sanitize(raw: String, packageName: String): String? {
         val cleaned = UNSAFE.replace(raw, "").trim().trimEnd('.')
         if (cleaned.isEmpty()) return null
@@ -107,10 +132,26 @@ internal object VoipCallerName {
 
     private val GENERIC_PACKAGE_PARTS = setOf("com", "org", "net", "android", "messenger", "app", "mobile")
 
-    private fun readNotificationDump(): String? {
+    /**
+     * [packageName]'s notification records, each from `cmd notification get <key>`, joined; null when
+     * the list command is unavailable or lists nothing for the package — the caller then falls back to
+     * the whole dump, which answers the same question more slowly.
+     */
+    private fun readPackageRecords(packageName: String): String? {
+        val list = shell("cmd notification list") ?: return null
+        val keys = keysFor(list, packageName)
+        if (keys.isEmpty()) return null
+        return keys.mapNotNull { key -> shell("cmd notification get '${key.replace("'", "")}'") }
+            .joinToString("\n")
+            .takeIf { it.isNotBlank() }
+    }
+
+    private fun readNotificationDump(): String? = shell("dumpsys notification --noredact")
+
+    private fun shell(command: String): String? {
         // Absolute path — see VoipAppIdentity. resolve() already returns null on any failure, so a
         // missing shell costs the caller name and nothing else.
-        val proc = ProcessBuilder(SHELL, "-c", "dumpsys notification --noredact")
+        val proc = ProcessBuilder(SHELL, "-c", command)
             .redirectErrorStream(true).start()
         return try {
             val text = proc.inputStream.bufferedReader().readText()

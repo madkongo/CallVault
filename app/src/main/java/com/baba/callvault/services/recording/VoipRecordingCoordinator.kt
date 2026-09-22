@@ -30,6 +30,8 @@ import com.baba.callvault.transcription.TranscriptionScheduler
 import com.baba.callvault.system.storage.StorageRouter
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import com.baba.callvault.utils.AppLogger
 import com.baba.callvault.transcription.AudioDecoder
@@ -77,6 +79,9 @@ object VoipRecordingCoordinator {
     /** True while a VoIP recording is running, so the UI can say so. */
     val isRecording: Boolean get() = recording
     @Volatile private var pending: SafHelper.SafResult? = null
+    /** A caller learned after the recording started; goes into the name at publish. See [VoipLateCaller]. */
+    @Volatile private var lateCaller: String? = null
+    private var lateCallerJob: Job? = null
     @Volatile private var codecMime: String = "audio/ogg"
 
     /** Starts a VoIP recording. No-op when the feature is off, already recording, or unavailable. */
@@ -166,6 +171,29 @@ object VoipRecordingCoordinator {
         isSuspendedForCarrierCall = false
         VoipRecordingNotification.show(context, appLabel)
         AppLogger.i(TAG, "VoIP recording started -> $fileName")
+        lateCaller = null
+        lateCallerJob?.cancel()
+        // The notification is the only place the name exists, and it may not be posted yet at the
+        // instant the audio mode flipped. Ask again a few times into the call; the file is only
+        // published at the end, so a late answer still names it.
+        if (caller == null && callPackage != null) lateCallerJob = askAgainForCaller(callPackage)
+    }
+
+    private fun askAgainForCaller(callPackage: String): Job = CoroutineScope(Dispatchers.IO).launch {
+        var elapsed = 0L
+        for (at in VoipLateCaller.RETRY_DELAYS_MS) {
+            delay(at - elapsed)
+            elapsed = at
+            if (!recording) return@launch
+            val service = RecorderConnection.service ?: return@launch
+            val found = runCatching { service.voipCallerName(callPackage) }.getOrNull()
+            if (found != null) {
+                lateCaller = found
+                AppLogger.i(TAG, "Caller name found ${at / 1000} s into the call")
+                return@launch
+            }
+        }
+        AppLogger.i(TAG, "No caller name on the call notification after ${elapsed / 1000} s; the recording stays nameless")
     }
 
     /**
@@ -335,6 +363,10 @@ object VoipRecordingCoordinator {
         recording = false
         val saf = pending
         pending = null
+        lateCallerJob?.cancel()
+        lateCallerJob = null
+        val caller = lateCaller
+        lateCaller = null
         // Straight away, not after the file work below: the controls describe a recording that has
         // already stopped, and a Stop button that lingers invites a second press at a moment when
         // the next call may already be starting.
@@ -365,7 +397,7 @@ object VoipRecordingCoordinator {
         val published: Uri? = saf?.let { result ->
             val staging = result.stagingFile
             val folder = result.folderUri
-            val outName = result.fileName
+            val outName = result.fileName?.let { name -> caller?.let { VoipLateCaller.withCaller(name, it) } ?: name }
             val mime = result.mimeType
             if (staging == null || folder == null || outName == null || mime == null) {
                 AppLogger.e(TAG, "VoIP recording cannot be published: staging details are missing")
@@ -393,7 +425,7 @@ object VoipRecordingCoordinator {
         // RecordingForegroundService, which the VoIP path deliberately does not go through.
         if (saf != null && published != null) {
             val safUri = published
-            val name = saf.displayName.substringAfterLast('/')
+            val name = saf.displayName.substringAfterLast('/').let { n -> caller?.let { VoipLateCaller.withCaller(n, it) } ?: n }
             CoroutineScope(Dispatchers.IO).launch {
                 runCatching {
                     val size = SafHelper.fileSize(context, safUri)
