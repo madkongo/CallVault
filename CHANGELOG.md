@@ -7,6 +7,13 @@ All notable changes to CallVault are documented here. The format is based on
 
 ### Added
 
+- **A search line at the top of Recordings, Transcripts and Summaries.** On Recordings, type a name and
+  the list narrows to that contact, with the names of contacts you have recordings with offered as you
+  type; it replaces the Contact filter chip. On Transcripts and Summaries, type a word and only the calls
+  in which it was said remain, each showing the words around the match. Words match from their start, so
+  the list narrows as you type. The magnifier in the header, and the search sheet it opened, are gone —
+  the search is on the page itself.
+
 - **Shizuku recordings get speaker labels (#38).** A Shizuku recording is already stereo — you on one
   side, the other person on the other — but CallVault had no way to read that, so transcripts came out
   as unattributed text. It now works out who spoke from the file itself while transcribing it, so the

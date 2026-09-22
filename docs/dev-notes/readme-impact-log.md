@@ -469,3 +469,14 @@ open. Pushed to GitHub `main` as `ceaea29e` on 2026-09-19 (README only; the app 
 - Also noticed: `CHANGELOG.md` still heads the shipped release as "[2.4.0] — unreleased" although `v2.4.0`
   is tagged. **Done 2026-09-22:** now "[2.4.0] — 2026-09-19", the tag's date.
 
+
+## 2026-09-22 — search lines on the three library pages (`feat/search-lines`, unmerged, 2.4.1)
+
+🧪 VERIFYING — installed on the OP9, not yet used by the maintainer.
+
+- **README line 36** "Full-text search across transcripts, summaries and **your own notes**" — notes are
+  no longer searched anywhere (the bottom sheet that searched them is gone). The word "notes" must come
+  out when 2.4.1 ships, or note search must come back. Everything else on that line stays true.
+- **README screenshot `05-transcript-search.png`** (line 59, "Search") shows the old bottom sheet. Needs a
+  new screenshot of a page with the search line and an excerpt under a row.
+- Lines 102 and 110 ("search" identical in Shizuku mode) stay true.
