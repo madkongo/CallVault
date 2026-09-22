@@ -577,7 +577,9 @@ private fun TranscriptNoteDialog(
     onNoteChange: (String) -> Unit,
     onDismiss: () -> Unit,
 ) {
-    var draft by remember { mutableStateOf(note) }
+    // One draft per dialog: saved a moment after the typing pauses and when the dialog closes,
+    // rather than on every keystroke.
+    val draft = rememberNoteDraft(stored = note, key = Unit, onSave = onNoteChange)
 
     AlertDialog(
         onDismissRequest = onDismiss,
@@ -588,11 +590,8 @@ private fun TranscriptNoteDialog(
         title = { Text(stringResource(R.string.playback_note_title)) },
         text = {
             OutlinedTextField(
-                value = draft,
-                onValueChange = {
-                    draft = it
-                    onNoteChange(it)
-                },
+                value = draft.text,
+                onValueChange = draft::edit,
                 placeholder = { Text(stringResource(R.string.transcript_note_hint)) },
                 modifier = Modifier.fillMaxWidth().heightIn(min = 120.dp),
                 // Content direction: a note is written in the language the call was in, not the

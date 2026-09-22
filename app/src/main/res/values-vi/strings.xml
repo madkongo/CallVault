@@ -675,4 +675,6 @@
     <string name="search_clear">Xóa</string>
     <string name="search_no_matches_title">Không có kết quả</string>
     <string name="search_no_matches_hint">Không có gì ở đây chứa “%1$s”. Từ được so khớp từ đầu, nên dạng ngắn hơn có thể tìm được nhiều hơn.</string>
+    <string name="note_saved">Đã lưu</string>
+    <string name="note_saving">Đang lưu…</string>
 </resources>

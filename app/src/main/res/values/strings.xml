@@ -881,4 +881,6 @@
     <string name="search_clear">Clear</string>
     <string name="search_no_matches_title">Nothing matches</string>
     <string name="search_no_matches_hint">Nothing here contains “%1$s”. Words match from their start, so a shorter form may find more.</string>
+    <string name="note_saved">Saved</string>
+    <string name="note_saving">Saving…</string>
 </resources>

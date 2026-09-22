@@ -675,4 +675,6 @@
     <string name="search_clear">清除</string>
     <string name="search_no_matches_title">没有匹配项</string>
     <string name="search_no_matches_hint">这里没有包含“%1$s”的内容。词语按开头匹配，输入更短的形式可能找到更多。</string>
+    <string name="note_saved">已保存</string>
+    <string name="note_saving">正在保存…</string>
 </resources>

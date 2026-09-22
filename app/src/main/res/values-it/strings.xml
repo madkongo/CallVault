@@ -676,4 +676,6 @@
     <string name="search_clear">Cancella</string>
     <string name="search_no_matches_title">Nessun risultato</string>
     <string name="search_no_matches_hint">Niente qui contiene “%1$s”. Le parole corrispondono dall’inizio: una forma più corta potrebbe trovare di più.</string>
+    <string name="note_saved">Salvato</string>
+    <string name="note_saving">Salvataggio…</string>
 </resources>

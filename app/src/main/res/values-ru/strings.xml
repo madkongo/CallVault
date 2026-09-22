@@ -678,4 +678,6 @@
     <string name="search_clear">Очистить</string>
     <string name="search_no_matches_title">Ничего не найдено</string>
     <string name="search_no_matches_hint">Здесь ничего не содержит «%1$s». Слова сопоставляются с начала — более короткая форма может найти больше.</string>
+    <string name="note_saved">Сохранено</string>
+    <string name="note_saving">Сохранение…</string>
 </resources>

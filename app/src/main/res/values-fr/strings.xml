@@ -676,4 +676,6 @@
     <string name="search_clear">Effacer</string>
     <string name="search_no_matches_title">Aucun résultat</string>
     <string name="search_no_matches_hint">Rien ici ne contient « %1$s ». Les mots sont comparés depuis leur début : une forme plus courte en trouvera peut-être plus.</string>
+    <string name="note_saved">Enregistré</string>
+    <string name="note_saving">Enregistrement…</string>
 </resources>
