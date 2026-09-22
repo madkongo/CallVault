@@ -114,6 +114,18 @@
     <string name="merge_note_will_keep">Die anderen Anrufe bleiben ebenfalls auf dem Telefon.</string>
     <string name="home_scroll_to_top">Nach oben</string>
     <string name="home_whatsnew_full_notes">Vollständige Versionshinweise</string>
+    <string name="whatsnew_241_title">Suche auf jeder Seite, und Aufnahme erst bei Annahme</string>
+    <string-array name="whatsnew_241_items">
+        <item>Neu — Eine Suchzeile bei Aufnahmen, Transkripten und Zusammenfassungen: ein Kontakt oder ein gesagtes Wort</item>
+        <item>Neu — Ausgehende Anrufe erst aufnehmen, wenn die Gegenseite abhebt (standardmäßig aus)</item>
+        <item>Neu — Shizuku-Aufnahmen bekommen Sprecherkennzeichnungen</item>
+        <item>Behoben — App-Anrufe auf Android 14 und älter tragen den Kontaktnamen</item>
+        <item>Behoben — Ein Update im Shizuku-Modus kostet nicht mehr den nächsten Anruf</item>
+        <item>Behoben — Eine von beiden Sprechern geteilte Zeile wird beim Sprecherwechsel getrennt</item>
+        <item>Behoben — Ein Transkript im falschen Alphabet wird erneut dekodiert</item>
+        <item>Behoben — Eine Zeile, in der nur eine Person sprach, bleibt nicht mehr unbenannt</item>
+    </string-array>
+    <string name="whatsnew_241_where">Einstellungen ▸ Aufnahme ▸ Ausgehende Anrufe ▸ Erst bei Annahme starten</string>
     <string name="whatsnew_240_title">Aufnahmen, Transkripte und Zusammenfassungen haben jetzt ihren eigenen Ort</string>
     <string-array name="whatsnew_240_items">
         <item>Neu — Ein Startbildschirm mit Aufnahmen, Transkripten und Zusammenfassungen, der dort öffnet, wo du warst</item>

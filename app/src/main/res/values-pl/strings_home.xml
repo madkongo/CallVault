@@ -114,6 +114,18 @@
     <string name="merge_note_will_keep">Pozostałe rozmowy zostaną też zachowane w telefonie.</string>
     <string name="home_scroll_to_top">Do góry</string>
     <string name="home_whatsnew_full_notes">Pełne informacje o wydaniu</string>
+    <string name="whatsnew_241_title">Wyszukiwanie na każdej stronie i nagrywanie po odebraniu</string>
+    <string-array name="whatsnew_241_items">
+        <item>Nowość — Pole wyszukiwania w Nagraniach, Transkrypcjach i Podsumowaniach: kontakt albo wypowiedziane słowo</item>
+        <item>Nowość — Nagrywanie połączenia wychodzącego dopiero po odebraniu przez rozmówcę (domyślnie wyłączone)</item>
+        <item>Nowość — Nagrania Shizuku mają etykiety mówców</item>
+        <item>Naprawiono — Połączenia z aplikacji na Androidzie 14 i starszym mają nazwę kontaktu</item>
+        <item>Naprawiono — Aktualizacja w trybie Shizuku nie kosztuje już następnego połączenia</item>
+        <item>Naprawiono — Wiersz wspólny dla obu mówców jest dzielony przy zmianie mówcy</item>
+        <item>Naprawiono — Transkrypcja w złym alfabecie jest dekodowana ponownie</item>
+        <item>Naprawiono — Wiersz, w którym mówiła tylko jedna osoba, nie zostaje już bez nazwy</item>
+    </string-array>
+    <string name="whatsnew_241_where">Ustawienia ▸ Nagrywanie ▸ Połączenia wychodzące ▸ Zacznij po odebraniu</string>
     <string name="whatsnew_240_title">Nagrania, transkrypcje i podsumowania mają własne miejsce</string>
     <string-array name="whatsnew_240_items">
         <item>Nowość — Ekran główny z Nagraniami, Transkrypcjami i Podsumowaniami, otwierany tam, gdzie skończyłeś</item>

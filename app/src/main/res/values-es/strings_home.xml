@@ -114,6 +114,18 @@
     <string name="merge_note_will_keep">Las demás llamadas también se conservan en el teléfono.</string>
     <string name="home_scroll_to_top">Arriba</string>
     <string name="home_whatsnew_full_notes">Notas de versión completas</string>
+    <string name="whatsnew_241_title">Búsqueda en cada página, y grabar cuando contesten</string>
+    <string-array name="whatsnew_241_items">
+        <item>Nuevo — Una línea de búsqueda en Grabaciones, Transcripciones y Resúmenes: un contacto o una palabra dicha</item>
+        <item>Nuevo — Grabar una llamada saliente solo cuando la otra persona contesta (desactivado por defecto)</item>
+        <item>Nuevo — Las grabaciones con Shizuku tienen etiquetas de hablante</item>
+        <item>Corregido — Las llamadas de apps en Android 14 y anteriores llevan el nombre del contacto</item>
+        <item>Corregido — Una actualización en modo Shizuku ya no cuesta la siguiente llamada</item>
+        <item>Corregido — Una línea compartida por ambos hablantes se separa donde cambia el hablante</item>
+        <item>Corregido — Una transcripción en el alfabeto equivocado se decodifica de nuevo</item>
+        <item>Corregido — Una línea en la que solo habló una persona ya no queda sin nombre</item>
+    </string-array>
+    <string name="whatsnew_241_where">Ajustes ▸ Grabación ▸ Llamadas salientes ▸ Empezar cuando contesten</string>
     <string name="whatsnew_240_title">Las grabaciones, transcripciones y resúmenes tienen cada uno su sitio</string>
     <string-array name="whatsnew_240_items">
         <item>Nuevo — Una pantalla de inicio con Grabaciones, Transcripciones y Resúmenes, que abre donde lo dejaste</item>

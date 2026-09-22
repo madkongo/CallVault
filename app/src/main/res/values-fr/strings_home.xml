@@ -115,6 +115,18 @@
     <string name="merge_note_will_keep">Les autres appels sont également conservés sur le téléphone.</string>
     <string name="home_scroll_to_top">Haut</string>
     <string name="home_whatsnew_full_notes">Notes de version complètes</string>
+    <string name="whatsnew_241_title">La recherche sur chaque page, et l\'enregistrement au décroché</string>
+    <string-array name="whatsnew_241_items">
+        <item>Nouveau — Une ligne de recherche dans Enregistrements, Transcriptions et Résumés : un contact ou un mot prononcé</item>
+        <item>Nouveau — N\'enregistrer un appel sortant qu\'une fois décroché (désactivé par défaut)</item>
+        <item>Nouveau — Les enregistrements Shizuku ont des étiquettes de locuteur</item>
+        <item>Corrigé — Les appels d\'applications sur Android 14 et antérieur portent le nom du contact</item>
+        <item>Corrigé — Une mise à jour en mode Shizuku ne coûte plus l\'appel suivant</item>
+        <item>Corrigé — Une ligne partagée par les deux locuteurs est coupée au changement de locuteur</item>
+        <item>Corrigé — Une transcription dans le mauvais alphabet est décodée à nouveau</item>
+        <item>Corrigé — Une ligne où une seule personne a parlé n\'est plus laissée sans nom</item>
+    </string-array>
+    <string name="whatsnew_241_where">Paramètres ▸ Enregistrement ▸ Appels sortants ▸ Démarrer quand on décroche</string>
     <string name="whatsnew_240_title">Enregistrements, transcriptions et résumés ont chacun leur place</string>
     <string-array name="whatsnew_240_items">
         <item>Nouveau — Un écran d\'accueil avec Enregistrements, Transcriptions et Résumés, qui rouvre là où vous étiez</item>

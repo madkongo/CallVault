@@ -114,6 +114,18 @@
     <string name="merge_note_will_keep">Le altre chiamate restano anche sul telefono.</string>
     <string name="home_scroll_to_top">Su</string>
     <string name="home_whatsnew_full_notes">Note di rilascio complete</string>
+    <string name="whatsnew_241_title">Ricerca in ogni pagina, e registrazione quando rispondono</string>
+    <string-array name="whatsnew_241_items">
+        <item>Nuovo — Una riga di ricerca in Registrazioni, Trascrizioni e Riepiloghi: un contatto o una parola detta</item>
+        <item>Nuovo — Registrare una chiamata in uscita solo quando l\'altra persona risponde (disattivato per impostazione predefinita)</item>
+        <item>Nuovo — Le registrazioni Shizuku hanno le etichette dei parlanti</item>
+        <item>Corretto — Le chiamate delle app su Android 14 e precedenti portano il nome del contatto</item>
+        <item>Corretto — Un aggiornamento in modalità Shizuku non costa più la chiamata successiva</item>
+        <item>Corretto — Una riga condivisa da entrambi i parlanti viene divisa dove cambia il parlante</item>
+        <item>Corretto — Una trascrizione nell\'alfabeto sbagliato viene decodificata di nuovo</item>
+        <item>Corretto — Una riga in cui ha parlato una sola persona non resta più senza nome</item>
+    </string-array>
+    <string name="whatsnew_241_where">Impostazioni ▸ Registrazione ▸ Chiamate in uscita ▸ Avvia quando rispondono</string>
     <string name="whatsnew_240_title">Registrazioni, trascrizioni e riepiloghi hanno ciascuno il proprio posto</string>
     <string-array name="whatsnew_240_items">
         <item>Nuovo — Una schermata iniziale con Registrazioni, Trascrizioni e Riepiloghi, che riapre dove eri rimasto</item>

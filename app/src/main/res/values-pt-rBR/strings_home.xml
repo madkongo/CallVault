@@ -114,6 +114,18 @@
     <string name="merge_note_will_keep">As outras chamadas também são mantidas no telefone.</string>
     <string name="home_scroll_to_top">Topo</string>
     <string name="home_whatsnew_full_notes">Notas de versão completas</string>
+    <string name="whatsnew_241_title">Busca em cada página, e gravar quando atenderem</string>
+    <string-array name="whatsnew_241_items">
+        <item>Novo — Uma linha de busca em Gravações, Transcrições e Resumos: um contato ou uma palavra dita</item>
+        <item>Novo — Gravar uma chamada de saída só quando a outra pessoa atende (desligado por padrão)</item>
+        <item>Novo — Gravações com Shizuku ganham rótulos de falante</item>
+        <item>Corrigido — Chamadas de apps no Android 14 e anteriores levam o nome do contato</item>
+        <item>Corrigido — Uma atualização no modo Shizuku não custa mais a próxima chamada</item>
+        <item>Corrigido — Uma linha compartilhada pelos dois falantes é cortada onde o falante muda</item>
+        <item>Corrigido — Uma transcrição no alfabeto errado é decodificada de novo</item>
+        <item>Corrigido — Uma linha em que só uma pessoa falou não fica mais sem nome</item>
+    </string-array>
+    <string name="whatsnew_241_where">Configurações ▸ Gravação ▸ Chamadas de saída ▸ Começar quando atenderem</string>
     <string name="whatsnew_240_title">Gravações, transcrições e resumos têm cada um o seu lugar</string>
     <string-array name="whatsnew_240_items">
         <item>Novo — Uma tela inicial com Gravações, Transcrições e Resumos, que abre onde você parou</item>

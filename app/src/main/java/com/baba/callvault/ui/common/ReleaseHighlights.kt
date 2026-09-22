@@ -47,6 +47,13 @@ object ReleaseHighlights {
 
     private val ALL = listOf(
         ReleaseHighlight(
+            version = "2.4.1",
+            title = R.string.whatsnew_241_title,
+            items = R.array.whatsnew_241_items,
+            // The one new switch in the release, and it is off by default, so the pointer names it.
+            whereToFind = R.string.whatsnew_241_where,
+        ),
+        ReleaseHighlight(
             version = "2.4.0",
             title = R.string.whatsnew_240_title,
             items = R.array.whatsnew_240_items,

@@ -114,6 +114,18 @@
     <string name="merge_note_will_keep">其余通话也会保留在手机上。</string>
     <string name="home_scroll_to_top">回到顶部</string>
     <string name="home_whatsnew_full_notes">完整发行说明</string>
+    <string name="whatsnew_241_title">每个页面都能搜索，并可在对方接听后再录音</string>
+    <string-array name="whatsnew_241_items">
+        <item>新增 — 录音、转写和摘要页面各有搜索栏：按联系人或说过的词查找</item>
+        <item>新增 — 去电可设为对方接听后才开始录音（默认关闭）</item>
+        <item>新增 — Shizuku 录音也有说话人标签</item>
+        <item>修复 — Android 14 及更早版本上的应用通话带有联系人姓名</item>
+        <item>修复 — Shizuku 模式下更新不再丢失下一通电话</item>
+        <item>修复 — 两人共用的一行会在说话人切换处拆开</item>
+        <item>修复 — 转写成错误字母表的文本会重新解码</item>
+        <item>修复 — 只有一人说话的行不再缺少名字</item>
+    </string-array>
+    <string name="whatsnew_241_where">设置 ▸ 录音 ▸ 去电 ▸ 对方接听后再开始</string>
     <string name="whatsnew_240_title">录音、转写和摘要各有自己的位置</string>
     <string-array name="whatsnew_240_items">
         <item>新增 — 主屏幕分为录音、转写和摘要，并从你上次离开的地方打开</item>

@@ -114,6 +114,18 @@
     <string name="merge_note_will_keep">Các cuộc gọi kia cũng được giữ lại trên máy.</string>
     <string name="home_scroll_to_top">Lên đầu</string>
     <string name="home_whatsnew_full_notes">Ghi chú phát hành đầy đủ</string>
+    <string name="whatsnew_241_title">Tìm kiếm trên mọi trang, và ghi âm khi họ bắt máy</string>
+    <string-array name="whatsnew_241_items">
+        <item>Mới — Ô tìm kiếm ở Bản ghi, Bản chép lời và Bản tóm tắt: một liên hệ, hoặc một từ đã nói</item>
+        <item>Mới — Chỉ ghi âm cuộc gọi đi khi người kia bắt máy (mặc định tắt)</item>
+        <item>Mới — Bản ghi qua Shizuku có nhãn người nói</item>
+        <item>Đã sửa — Cuộc gọi qua ứng dụng trên Android 14 trở xuống có tên liên hệ</item>
+        <item>Đã sửa — Cập nhật ở chế độ Shizuku không còn làm mất cuộc gọi tiếp theo</item>
+        <item>Đã sửa — Dòng chung của hai người nói được tách tại chỗ đổi người nói</item>
+        <item>Đã sửa — Bản chép lời sai bảng chữ cái được giải mã lại</item>
+        <item>Đã sửa — Dòng chỉ có một người nói không còn bị bỏ trống tên</item>
+    </string-array>
+    <string name="whatsnew_241_where">Cài đặt ▸ Ghi âm ▸ Cuộc gọi đi ▸ Bắt đầu khi họ bắt máy</string>
     <string name="whatsnew_240_title">Bản ghi, bản chép lời và bản tóm tắt đều có chỗ riêng</string>
     <string-array name="whatsnew_240_items">
         <item>Mới — Màn hình chính với Bản ghi, Bản chép lời và Bản tóm tắt, mở lại đúng chỗ bạn dừng</item>

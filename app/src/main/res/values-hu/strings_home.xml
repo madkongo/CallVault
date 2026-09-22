@@ -114,6 +114,18 @@
     <string name="merge_note_will_keep">A többi hívás is a telefonon marad.</string>
     <string name="home_scroll_to_top">Az elejére</string>
     <string name="home_whatsnew_full_notes">Teljes kiadási jegyzék</string>
+    <string name="whatsnew_241_title">Keresés minden oldalon, és felvétel a hívás fogadásától</string>
+    <string-array name="whatsnew_241_items">
+        <item>Új — Keresősor a Felvételek, Leiratok és Összefoglalók oldalon: egy név vagy egy elhangzott szó</item>
+        <item>Új — Kimenő hívás felvétele csak akkor, ha a másik fél felveszi (alapból kikapcsolva)</item>
+        <item>Új — A Shizuku-felvételek beszélőcímkéket kapnak</item>
+        <item>Javítva — Az alkalmazáshívások Android 14 és korábbi rendszeren a névjegy nevét viselik</item>
+        <item>Javítva — Egy frissítés Shizuku módban már nem kerül a következő hívásba</item>
+        <item>Javítva — A két beszélő közös sora a beszélőváltásnál elválik</item>
+        <item>Javítva — A rossz ábécével készült leirat újra dekódolódik</item>
+        <item>Javítva — Egy sor, ahol csak egy ember beszélt, már nem marad név nélkül</item>
+    </string-array>
+    <string name="whatsnew_241_where">Beállítások ▸ Felvétel ▸ Kimenő hívások ▸ Indítás a hívás fogadásakor</string>
     <string name="whatsnew_240_title">A felvételeknek, leiratoknak és összefoglalóknak saját helyük lett</string>
     <string-array name="whatsnew_240_items">
         <item>Új — Kezdőképernyő Felvételek, Leiratok és Összefoglalók résszel, ott nyílik, ahol abbahagytad</item>
