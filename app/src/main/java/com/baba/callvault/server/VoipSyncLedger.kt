@@ -21,8 +21,13 @@ import java.util.Locale
  *  - **The offset itself.** Every chunk carries the real time its audio was captured, from the HAL
  *    (`AudioRecord.getTimestamp`) when the device gives one, else the moment it was read. For each
  *    pair written to the file the ledger takes near minus far. **Positive = the near audio at that
- *    file position is newer than the far audio beside it = the far party sounds early**, which is the
- *    reported symptom. Sampled into the log every few seconds so a drift shows as a trend.
+ *    file position is newer than the far audio beside it, so the far audio sits LATER in the file
+ *    than it happened: the far party sounds late.** Negative = the far party sounds early, which is
+ *    what issue #41 reports. (Worked through with a 1 s near stall at the start: near frame 0 was
+ *    captured at t=1 s, far frame 0 at t=0, offset +1 s; a far word at t=0.5 lands at file 0.5 s next
+ *    to the near reply from t=1.5 — the far word has moved later by the stall.) Sampled into the log
+ *    every few seconds so a drift shows as a trend. Measured on the OP9 2026-09-22: +106 ms at the
+ *    start, +372 ms after three mic re-takes — the far party late there, not early.
  *  - **Every way a side can lose time**, per side: chunks read, silence stand-ins (with the longest
  *    run — one long stall and many short ones are different faults), chunks dropped on a full queue
  *    (uncounted until now), all-zero chunks and mic re-takes with the gap each cost.
@@ -108,7 +113,7 @@ internal class VoipSyncLedger(private val sampleRate: Int, private val chunkFram
     fun summary(fileFrames: Long, wallNanos: Long): String =
         "VoIP sync summary file=${seconds(fileFrames)} wall=${wallSeconds(wallNanos)} " +
             "offset first=${ms(firstOffsetMs)} last=${ms(lastOffsetMs)} min=${ms(minOffsetMs)} max=${ms(maxOffsetMs)} " +
-            "(+ = far party early) ${near.format(0)} ${far.format(0)}"
+            "(+ = far party late, - = early) ${near.format(0)} ${far.format(0)}"
 
     private fun seconds(frames: Long) = String.format(Locale.US, "%.1fs", frames.toDouble() / sampleRate)
     private fun wallSeconds(nanos: Long) = String.format(Locale.US, "%.1fs", nanos / 1_000_000_000.0)

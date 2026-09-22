@@ -43,8 +43,9 @@ class VoipSyncLedgerTest {
     @Test
     fun `the offset is near content time minus far content time, in the file's own frame`() {
         // Sign convention, fixed here because everything downstream reads it: POSITIVE means the
-        // near audio at a file position is NEWER than the far audio beside it — the far party sounds
-        // EARLY, which is what issue #41 reports.
+        // near audio at a file position is NEWER than the far audio beside it — the far audio has
+        // moved LATER in the file, the far party sounds late. Issue #41 (far party early) is
+        // NEGATIVE. Got wrong once in the first draft; see VoipSyncLedger's header for the worked case.
         val ledger = VoipSyncLedger(rate, chunkFrames)
         ledger.paired(nearContentNanos = 2_000_000_000L, farContentNanos = 1_500_000_000L)
         assertEquals(500L, ledger.lastOffsetMs)
