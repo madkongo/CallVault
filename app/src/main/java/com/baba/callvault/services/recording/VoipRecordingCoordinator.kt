@@ -431,6 +431,10 @@ object VoipRecordingCoordinator {
         lateCallerJob = null
         answerHoldJob?.cancel()
         answerHoldJob = null
+        // Ending while still held means nobody picked up: whatever the file holds is the moment
+        // before the hold engaged, not a conversation. Discarded rather than published, so an
+        // unanswered app call leaves nothing behind — the same as an unanswered phone call.
+        val unanswered = heldForAnswer
         heldForAnswer = false
         val caller = lateCaller
         lateCaller = null
@@ -456,6 +460,17 @@ object VoipRecordingCoordinator {
                 RecordingNotificationHelper(context)
                     .showErrorNotification(context.getString(R.string.voip_one_sided_warning))
             }.onFailure { AppLogger.w(TAG, "Could not warn about the one-sided recording: ${it.message}") }
+        }
+
+        if (unanswered) {
+            AppLogger.i(TAG, "App call ended before it was answered; discarding the held recording")
+            runCatching { saf?.descriptor?.close() }
+            runCatching { saf?.stagingFile?.delete() }
+            // Written straight to the folder on a build without staging: the document exists and must go.
+            saf?.uri?.let { uri ->
+                runCatching { SafHelper.deleteDocument(DocumentFile.fromSingleUri(context, uri), "the unanswered app call") }
+            }
+            return
         }
 
         // Publish now, and only now. The recording was written to app-private storage for the whole
