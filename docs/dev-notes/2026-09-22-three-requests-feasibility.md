@@ -128,6 +128,12 @@ not something to build on. If this ships, it ships as a carrier-call option and 
 in `CallSessionManager`, tests for the state machine, then one outgoing call on the OP12 to watch
 `mForegroundCallState` change — the emulator can also do this (`gsm` console accepts an outgoing call).
 
+**2026-09-22 afternoon:** request 3 built and ✅ (phone and app calls, `docs/dev-notes/2026-09-22-record-from-answer.md`);
+#41 step 1 built, `2026-09-22-voip-sync-instrumentation.md` — and its first two calls on the OP9 disproved
+this note's guess that the re-take mechanism explains the reporter: re-takes push the far party LATE
+(+650 ms here), the reporter hears it EARLY. Output latency to the ear is the new lead; the log now
+carries the route.
+
 ## Ranking, easiest first
 
 1. **#38** — reply and ship 2.4.1; optionally the one-parameter fix so Shizuku-only phones get names.

@@ -48,6 +48,14 @@ All notable changes to CallVault are documented here. The format is based on
        backstop (fix 3, fix/shizuku-stale-host-check) yet. Do not ship 2.4.1 with this comment in place;
        see docs/dev-notes/2026-09-20-shizuku-stale-service-after-update.md. -->
 
+- **App-call recordings now report how their two sides lined up (#41).** A user hears the other person
+  a beat early in WhatsApp recordings. The two sides of an app call are captured separately and
+  combined, and until now nothing measured how well; with debug logs on, every app call now logs the
+  offset between the two sides as it goes, everything that can shift one side (a silenced or re-taken
+  microphone, a dropped or late chunk), and where the sound was playing — earpiece, speaker or
+  Bluetooth. Diagnostics only; the recording itself is unchanged. If you hear this, turn on debug logs,
+  make one call, and share the log from Settings → Debug.
+
 - **A transcript line shared by both speakers is cut where the speaker changes.** Whisper decides where a
   line ends by the sentence, not by who is talking, so when one person answered the other inside a single
   line the transcript could show neither name for it, or one long unbroken paragraph. A line is now split
