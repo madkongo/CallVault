@@ -254,7 +254,7 @@
     <string name="mode_switch_problem_title">Noch nicht bereit</string>
     <string name="mode_switch_done_shizuku">Bereit — mit Shizuku</string>
     <string name="mode_switch_done_standalone">Bereit — mit CallVault</string>
-    <string name="mode_switch_ready_shizuku">CallVault zeichnet über Shizuku auf. VoIP-Anrufe, robuste Aufnahme und Sprechernamen sind in diesem Modus nicht verfügbar.</string>
+    <string name="mode_switch_ready_shizuku">CallVault zeichnet über Shizuku auf. VoIP-Anrufe und robuste Aufnahme sind in diesem Modus nicht verfügbar.</string>
     <string name="mode_switch_ready_standalone">CallVault zeichnet mit dem eigenen Recorder auf. Alles ist verfügbar, auch VoIP-Anrufe und Sprechernamen.</string>
     <string name="mode_switch_ready">Der Recorder läuft. Anrufe werden aufgezeichnet.</string>
     <string name="mode_switch_shizuku_not_installed">Shizuku ist nicht installiert, es gibt nichts, wohin gewechselt werden könnte.</string>

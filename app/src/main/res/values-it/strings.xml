@@ -254,7 +254,7 @@
     <string name="mode_switch_problem_title">Non ancora pronto</string>
     <string name="mode_switch_done_shizuku">Pronto — con Shizuku</string>
     <string name="mode_switch_done_standalone">Pronto — con CallVault</string>
-    <string name="mode_switch_ready_shizuku">CallVault registra tramite Shizuku. Le chiamate VoIP, la registrazione resiliente e i nomi degli interlocutori non sono disponibili in questa modalità.</string>
+    <string name="mode_switch_ready_shizuku">CallVault registra tramite Shizuku. Le chiamate VoIP e la registrazione resiliente non sono disponibili in questa modalità.</string>
     <string name="mode_switch_ready_standalone">CallVault registra con il proprio registratore. È tutto disponibile, comprese le chiamate VoIP e i nomi degli interlocutori.</string>
     <string name="mode_switch_ready">Il registratore è in funzione. Le chiamate verranno registrate.</string>
     <string name="mode_switch_shizuku_not_installed">Shizuku non è installato, quindi non c\'è nulla a cui passare.</string>

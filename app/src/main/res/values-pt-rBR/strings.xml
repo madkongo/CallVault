@@ -257,7 +257,7 @@
     <string name="mode_switch_problem_title">Ainda não está pronto</string>
     <string name="mode_switch_done_shizuku">Pronto — usando o Shizuku</string>
     <string name="mode_switch_done_standalone">Pronto — usando o CallVault</string>
-    <string name="mode_switch_ready_shizuku">O CallVault grava através do Shizuku. Chamadas VoIP, gravação resiliente e nomes de interlocutores não estão disponíveis neste modo.</string>
+    <string name="mode_switch_ready_shizuku">O CallVault grava através do Shizuku. Chamadas VoIP e gravação resiliente não estão disponíveis neste modo.</string>
     <string name="mode_switch_ready_standalone">O CallVault grava com o próprio gravador. Tudo está disponível, inclusive chamadas VoIP e nomes de interlocutores.</string>
     <string name="mode_switch_ready">O gravador está em execução. As chamadas serão gravadas.</string>
     <string name="mode_switch_shizuku_not_installed">O Shizuku não está instalado, então não há para onde mudar.</string>

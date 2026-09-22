@@ -254,7 +254,7 @@
     <string name="mode_switch_problem_title">Még nem áll készen</string>
     <string name="mode_switch_done_shizuku">Kész — Shizukuval</string>
     <string name="mode_switch_done_standalone">Kész — CallVaulttal</string>
-    <string name="mode_switch_ready_shizuku">A CallVault a Shizukun keresztül rögzít. A VoIP-hívások, az ellenálló rögzítés és a beszélőnevek ebben a módban nem érhetők el.</string>
+    <string name="mode_switch_ready_shizuku">A CallVault a Shizukun keresztül rögzít. A VoIP-hívások és az ellenálló rögzítés ebben a módban nem érhetők el.</string>
     <string name="mode_switch_ready_standalone">A CallVault a saját felvevőjével rögzít. Minden elérhető, a VoIP-hívásokat és a beszélőneveket is beleértve.</string>
     <string name="mode_switch_ready">A felvevő fut. A hívások rögzítésre kerülnek.</string>
     <string name="mode_switch_shizuku_not_installed">A Shizuku nincs telepítve, így nincs mire váltani.</string>

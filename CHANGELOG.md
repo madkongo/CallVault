@@ -19,15 +19,32 @@ All notable changes to CallVault are documented here. The format is based on
   recorder running with a path to an app file that no longer existed. It kept answering, so nothing
   looked wrong — and the next call recorded nothing, with no error, until the app was next opened. The
   old recorder is now properly retired as part of the update, and a fresh one is ready before any call
-  arrives. If a call is being recorded at the moment an update lands, that recording is left alone.
-  Present in every earlier version with Shizuku mode, including 2.4.0.
+  arrives. As a backstop, every recorder CallVault talks to is asked which app file it was started from,
+  and one started from an app that has since been replaced is retired on the spot. If a call is being
+  recorded at the moment an update lands, that recording is left alone. Present in every earlier version
+  with Shizuku mode, including 2.4.0.
+  <!-- 🧪 VERIFYING as of 2026-09-22: six clean install-overs on the OP9, but no real call after the
+       backstop (fix 3, fix/shizuku-stale-host-check) yet. Do not ship 2.4.1 with this comment in place;
+       see docs/dev-notes/2026-09-20-shizuku-stale-service-after-update.md. -->
+
+- **A transcript line shared by both speakers is cut where the speaker changes.** Whisper decides where a
+  line ends by the sentence, not by who is talking, so when one person answered the other inside a single
+  line the transcript could show neither name for it, or one long unbroken paragraph. A line is now split
+  at a pause where the other person takes over, and the pieces of one person's turn are shown as one row
+  each — one row per turn — instead of one row per sentence.
+
+- **A transcript that came out in the wrong alphabet is decoded again.** With the language pinned to
+  Hebrew (or Arabic, Russian, Chinese) a short call could still come back in English on some phones —
+  the language setting is a strong hint to the recogniser, not a guarantee. When the text comes back in
+  Latin letters under a non-Latin pin, the recording is transcribed again with different decoding
+  settings and the first clean result is kept. Recordings longer than three minutes are not retried.
 
 - **A transcript line could go unlabelled even though only one person spoke in it.** On some phones a
   voice is faintly picked up on the other side's channel as well, and those moments were being read as
   both people talking at once — enough of them and the line was left without a name. A speaker is now
   named when they are the only one who spoke alone in that line.
 
-## [2.4.0] — unreleased
+## [2.4.0] — 2026-09-19
 
 ### Added
 

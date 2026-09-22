@@ -254,7 +254,7 @@
     <string name="mode_switch_problem_title">尚未就绪</string>
     <string name="mode_switch_done_shizuku">已就绪——通过 Shizuku</string>
     <string name="mode_switch_done_standalone">已就绪——通过 CallVault</string>
-    <string name="mode_switch_ready_shizuku">CallVault 正通过 Shizuku 录音。此模式下不支持 VoIP 通话、可靠录音和说话人姓名。</string>
+    <string name="mode_switch_ready_shizuku">CallVault 正通过 Shizuku 录音。此模式下不支持 VoIP 通话和可靠录音。</string>
     <string name="mode_switch_ready_standalone">CallVault 正使用自带录音器录音。所有功能均可用，包括 VoIP 通话和说话人姓名。</string>
     <string name="mode_switch_ready">录音器正在运行，通话将被录制。</string>
     <string name="mode_switch_shizuku_not_installed">未安装 Shizuku，没有可切换的对象。</string>
