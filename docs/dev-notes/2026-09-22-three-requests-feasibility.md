@@ -51,8 +51,10 @@ correction** anywhere. The file is mono, so nothing can be re-aligned afterwards
 
 1. *Silence stand-ins are lossy.* A side that stalls for 120 ms gets ONE 20 ms silence chunk, then the loop
    moves on. A stalled side loses ~5/6 of every stall from its timeline, so its later audio lands earlier
-   in the file. The near side is the one that stalls (below), so **far audio ends up earlier relative to
-   near** — the reported symptom. (Note the asymmetry is in *which side stalls*, not in the loop.)
+   in the file. ~~The near side is the one that stalls (below), so far audio ends up earlier relative to
+   near — the reported symptom.~~ **❌ WRONG, measured 2026-09-22 14:19 on the OP9:** a near stall makes
+   the near audio land earlier, i.e. the FAR party LATER (+96 → +650 ms over five re-takes). The
+   reporter's far-EARLY is the other sign; see `2026-09-22-voip-sync-instrumentation.md`.
 2. *The near side stalls constantly on One UI.* `2026-07-30-voip-near-party-silenced-on-one-ui.md`: Samsung
    arbitrates the MIC to one client and CallVault re-takes it (`retakeMic`, `:362-378, 394-414`) — **10
    re-takes in a 50 s call** on the reference Galaxy. Each re-take is a window where near produces nothing
