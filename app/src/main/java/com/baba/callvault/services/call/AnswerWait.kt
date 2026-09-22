@@ -41,6 +41,13 @@ object AnswerWait {
      */
     const val MAX_WAIT_MS = 120_000L
 
+    /**
+     * How long a host that is not connected yet is waited for. Standby asks for the daemon at the
+     * dial and the binder follows a moment later; a few seconds covers a relaunch without turning
+     * a dead host into a two-minute wait.
+     */
+    const val HOST_GRACE_MS = 5_000L
+
     enum class Decision { WAIT, START }
 
     private val STATE_LINE = Regex("""mForegroundCallState=(\d+)""")
@@ -63,8 +70,12 @@ object AnswerWait {
             ?: STATE_IDLE
     }
 
-    /** What to do on a poll that read [state] (null = nothing readable) [elapsedMs] into the wait. */
-    fun decide(state: Int?, elapsedMs: Long): Decision = when {
+    /**
+     * What to do on a poll that read [state] (null = nothing readable) [elapsedMs] into the wait.
+     * [hostConnected] is false when there was no host to ask at all, which is waited out briefly.
+     */
+    fun decide(state: Int?, elapsedMs: Long, hostConnected: Boolean = true): Decision = when {
+        state == null && !hostConnected && elapsedMs < HOST_GRACE_MS -> Decision.WAIT
         state == null -> Decision.START
         elapsedMs >= MAX_WAIT_MS -> Decision.START
         state == STATE_ACTIVE || state == STATE_HOLDING -> Decision.START

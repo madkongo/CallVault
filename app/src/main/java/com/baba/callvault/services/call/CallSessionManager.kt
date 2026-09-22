@@ -405,14 +405,16 @@ class CallSessionManager private constructor(context: Context) {
         val startedAt = System.currentTimeMillis()
         var polls = 0
         while (true) {
+            val host = RecorderConnection.service
             val dump = withContext(Dispatchers.IO) {
-                runCatching { RecorderConnection.service?.diagnosticDump("call_state", null) }.getOrNull()
+                runCatching { host?.diagnosticDump("call_state", null) }.getOrNull()
             }
             val state = AnswerWait.parseState(dump)
             val elapsed = System.currentTimeMillis() - startedAt
             polls++
-            if (AnswerWait.decide(state, elapsed) == AnswerWait.Decision.START) {
+            if (AnswerWait.decide(state, elapsed, hostConnected = host != null) == AnswerWait.Decision.START) {
                 val why = when {
+                    state == null && host == null -> "no recorder host to ask"
                     state == null -> "no call state readable from the host"
                     elapsed >= AnswerWait.MAX_WAIT_MS -> "waited ${elapsed / 1000}s without an answer"
                     else -> "call answered"

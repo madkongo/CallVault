@@ -25,8 +25,8 @@ class AnswerWaitTest {
 
     @Test
     fun `the foreground call state is read out of the registry dump`() {
-        // The host runs `dumpsys telephony.registry | grep -m1 mForegroundCallState`, so the value
-        // arrives as that one line — but be forgiving about what surrounds it.
+        // The host runs `dumpsys telephony.registry | grep mForegroundCallState`, so the value
+        // arrives as that line — but be forgiving about what surrounds it.
         assertEquals(4, AnswerWait.parseState("mForegroundCallState=4"))
         assertEquals(1, AnswerWait.parseState("  mForegroundCallState=1\n"))
         assertEquals(0, AnswerWait.parseState("mCallState=2\nmRingingCallState=0\nmForegroundCallState=0\n"))
@@ -81,6 +81,19 @@ class AnswerWaitTest {
         // An older host that refuses the dump, a host that is not connected, a ROM whose dump lacks
         // the line: none of these may cost the call. Without a signal the option is simply off.
         assertEquals(Decision.START, AnswerWait.decide(state = null, elapsedMs = 0))
+    }
+
+    @Test
+    fun `a host that is not connected yet is given a moment before the option is given up`() {
+        // Standby asks for the daemon at the dial; the binder can arrive a second or two later. A
+        // null read from no host is "not yet", not "no signal" — but only for a few seconds, after
+        // which it is the same as any other missing signal and the call is recorded from there.
+        assertEquals(Decision.WAIT, AnswerWait.decide(state = null, elapsedMs = 0, hostConnected = false))
+        assertEquals(Decision.WAIT, AnswerWait.decide(state = null, elapsedMs = AnswerWait.HOST_GRACE_MS - 1, hostConnected = false))
+        assertEquals(Decision.START, AnswerWait.decide(state = null, elapsedMs = AnswerWait.HOST_GRACE_MS, hostConnected = false))
+        // A connected host that returns nothing readable gets no grace: it has answered, and the
+        // answer is that this ROM's dump has no such line.
+        assertEquals(Decision.START, AnswerWait.decide(state = null, elapsedMs = 0, hostConnected = true))
     }
 
     @Test
