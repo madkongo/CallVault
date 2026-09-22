@@ -145,7 +145,7 @@
     <string name="mode_switch_problem_title">Not ready yet</string>
     <string name="mode_switch_done_shizuku">Ready — using Shizuku</string>
     <string name="mode_switch_done_standalone">Ready — using CallVault</string>
-    <string name="mode_switch_ready_shizuku">CallVault is recording through Shizuku. VoIP calls, resilient recording and speaker names are not available in this mode.</string>
+    <string name="mode_switch_ready_shizuku">CallVault is recording through Shizuku. VoIP calls and resilient recording are not available in this mode.</string>
     <string name="mode_switch_ready_standalone">CallVault is recording with its own recorder. Everything is available, including VoIP calls and speaker names.</string>
     <string name="mode_switch_ready">The recorder is running. Calls will be recorded.</string>
     <string name="mode_switch_shizuku_not_installed">Shizuku is not installed, so there is nothing to switch to.</string>

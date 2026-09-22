@@ -1,12 +1,13 @@
 # 2026-09-20 — an update in Shizuku mode silently costs the next call
 
-Status: **✅ VERIFIED 2026-09-20** by the maintainer on the OP9 — install-over at 12:25:18 in Shizuku mode,
-CallVault never opened (proved from ActivityTaskManager), carrier call at 12:25:52 recorded through the
-fresh recorder, and he confirmed the recording is in the app and plays ("worked"). Branch
-`feat/shizuku-speaker-labels`, **not merged and not released — 2.4.0 as published still has the bug.**
-
-Still not verified: the mid-call guard (📐 nobody has installed over a live Shizuku call), an update taken
-through the in-app updater rather than adb, and any phone other than the OP9.
+Status: **🧪 VERIFYING** — and the ✅ this carried earlier on 2026-09-20 was **wrong to stand alone**. The
+maintainer's 12:25 test was real and did pass, but it passed on one ORDER of events. At 13:00 an ordinary
+install-over on the OP9 took a third order, got past both fixes, and left the stale recorder attached
+again (see "Third cause" below). A third fix — asking the host which APK it runs from — is on branch
+`fix/shizuku-stale-host-check`. Five install-overs in a row then ended on a current recorder, one of them
+exercising the new check. **Not yet followed by a real call.** To settle: install-over in Shizuku mode,
+do not open the app, make a call, check the file — and do it more than once, because once has already
+been shown not to be enough.
 
 History: ❌ NOT WORKING 2026-09-20 (10:36 call lost on the OP9). Present in **2.4.0 as published**, and in
 every earlier version with Shizuku mode. Found while testing issue #38; unrelated to that work.
@@ -163,3 +164,42 @@ run again with the log as the witness.
 
 This is the exact reproduction recipe from above, and it recorded. The maintainer then opened the app,
 found the 12:25 call in the list and played it: ✅ VERIFIED 2026-09-20.
+
+## Third cause, 2026-09-20 13:00 — and why the first two fixes could never be enough
+
+❌ NOT WORKING 2026-09-20 13:00 with fixes 1 and 2 in place: after an install-over the OP9's only recorder
+was pid 16360, running from `…==deleted==/base.apk`.
+
+```
+13:00:31.827 UserServiceManager: Found existing service record (2548a9e9…)      ← app start binds the OLD one
+13:00:31.869 CV:RecorderBackend: Previous recorder is gone                       ← retire ran with no binder held yet
+13:00:31.876 UserServiceManager: New service record (bfd21b67…) … Starting process
+13:00:31.881 CV:ShizukuBackend:  Shizuku started the recorder service            ← 5 ms later: not the new process
+13:00:31.882 CV:RecorderConn:    RecorderConnection received daemon binder       ← the OLD binder, on the NEW binding
+```
+
+**Shizuku dispatches a service's binder by service name, not by connection object.** The old record's
+pending answer was delivered to whatever connection was registered for that name — by then the new one —
+so the identity check from fix 1 saw a current connection and accepted it. Fixes 1 and 2 are both real
+and both stay, but they are ordering logic, and there is always another order.
+
+**Fix 3** is the "ask before the call" direction this note called the stronger one from the start:
+`IRecorderService.hostApkPath()` (last in the AIDL), compared with `applicationInfo.sourceDir` in
+`RecorderBackend.retireIfStale`. Asked before `killStaleRecorders` and on the already-connected fast path,
+so it also heals at call time. A host too old to answer counts as stale; a dead one is just dropped; a
+stale host that is recording is left alone. Test: `StaleShizukuHostTest`.
+
+Measured after it, five install-overs: all five ended on a recorder running from the installed APK. Run 1
+logged `The recorder is running from /data/app/~~vuJv…/base.apk, not the installed APK` and recovered.
+
+Still open: every install-over spawns several recorder processes (`Clearing 4 other recorder
+process(es)`), which the winner then kills. It ends correctly, but it is churn, and it is unexplained.
+
+## 2026-09-22 — review finding on fix 3 (🧪, not seen on a phone)
+
+`retireIfStale` asked one binder where it runs from and then called `retireShizukuService`, which re-read
+`RecorderConnection.service` before `destroy()`. Nothing serialises that check against a bind callback,
+so a fresh binder landing in that window would have been the one destroyed while the stale process lived
+on. Fixed in `56b310ac`: the diagnosed host is passed in and is the only one acted on. Test:
+`the_host_that_was_found_stale_is_the_one_destroyed_even_if_a_fresh_one_arrived_meanwhile`. The window is
+milliseconds wide and was never observed; the fix is cheap and removes a whole class of ordering.

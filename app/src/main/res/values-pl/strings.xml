@@ -254,7 +254,7 @@
     <string name="mode_switch_problem_title">Jeszcze nie gotowy</string>
     <string name="mode_switch_done_shizuku">Gotowe — przez Shizuku</string>
     <string name="mode_switch_done_standalone">Gotowe — przez CallVault</string>
-    <string name="mode_switch_ready_shizuku">CallVault nagrywa przez Shizuku. Połączenia VoIP, nagrywanie odporne na awarie i nazwy rozmówców nie są dostępne w tym trybie.</string>
+    <string name="mode_switch_ready_shizuku">CallVault nagrywa przez Shizuku. Połączenia VoIP i nagrywanie odporne na awarie nie są dostępne w tym trybie.</string>
     <string name="mode_switch_ready_standalone">CallVault nagrywa własnym rejestratorem. Dostępne jest wszystko, w tym połączenia VoIP i nazwy rozmówców.</string>
     <string name="mode_switch_ready">Rejestrator działa. Połączenia będą nagrywane.</string>
     <string name="mode_switch_shizuku_not_installed">Shizuku nie jest zainstalowane, więc nie ma na co przełączać.</string>

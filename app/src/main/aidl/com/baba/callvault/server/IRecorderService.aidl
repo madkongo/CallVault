@@ -280,4 +280,17 @@ interface IRecorderService {
      * already happened, in a report from someone who was not debugging at the time.
      */
     String captureDiagnostics();
+
+    /**
+     * The APK this recorder process was started from.
+     *
+     * A {@code daemon(true)} Shizuku service outlives an app update and goes on answering from an APK
+     * that no longer exists — until a call needs the scrcpy jar out of it and records nothing. The app
+     * compares this with the APK installed now and retires a host that does not match. A host too old
+     * to have this method fails the call, which the app reads as the same answer.
+     *
+     * LAST in the file on purpose: transaction codes are positional, and an older host must keep
+     * understanding every method above.
+     */
+    String hostApkPath();
 }

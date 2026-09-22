@@ -224,15 +224,36 @@ object TranscriptionEngine {
         } finally {
             whisperActive = false
         }
-        val count = WhisperNative.segmentCount(ptr)
-        val segments = (0 until count).map { i ->
-            TranscriptSegment(
+        return readSegments(ptr, vadOn = vadModelPath != null)
+    }
+
+    /**
+     * The run that just finished, as segments in the timeline of the audio it was given.
+     *
+     * One reader for both callers, so the single-buffer path the harness measures and the chunked path
+     * the app runs cannot drift apart in what they do to whisper's output:
+     *  - [SpeechGapSnap] puts a line stamped inside a removed pause back where it was spoken (#25);
+     *  - [SpeakerSeamSplit.atSeams] offers the places a line could be cut, for the runner to settle once
+     *    it has the speaker turns. Guarded: a native layer that cannot give words costs the cut, never
+     *    the transcript.
+     */
+    private fun readSegments(ptr: Long, vadOn: Boolean): List<TranscriptSegment> {
+        val speech = speechStretches(ptr, vadOn)
+        val indexed = (0 until WhisperNative.segmentCount(ptr)).map { i ->
+            i to TranscriptSegment(
                 startMs = WhisperNative.segmentStartMs(ptr, i),
                 endMs = WhisperNative.segmentEndMs(ptr, i),
                 text = WhisperNative.segmentText(ptr, i).trim(),
             )
-        }.filter { it.text.isNotEmpty() }
-        return SpeechGapSnap.apply(segments, speechStretches(ptr, vadModelPath != null))
+        }.filter { (_, segment) -> segment.text.isNotEmpty() }
+
+        val snapped = SpeechGapSnap.apply(indexed.map { it.second }, speech)
+        return snapped.mapIndexed { position, segment ->
+            val words = runCatching {
+                SpeakerSeamSplit.parseWords(WhisperNative.segmentWords(ptr, indexed[position].first))
+            }.getOrDefault(emptyList())
+            SpeakerSeamSplit.atSeams(segment, words, speech)
+        }
     }
 
     /**
@@ -378,17 +399,9 @@ object TranscriptionEngine {
                     AppLogger.i(TAG, "VAD kept ${WhisperNative.vadSegmentCount(ptr)} speech stretches")
                 }
 
-                val count = WhisperNative.segmentCount(ptr)
-                val raw = (0 until count).map { i ->
-                    TranscriptSegment(
-                        startMs = WhisperNative.segmentStartMs(ptr, i),
-                        endMs = WhisperNative.segmentEndMs(ptr, i),
-                        text = WhisperNative.segmentText(ptr, i).trim(),
-                    )
-                }.filter { it.text.isNotEmpty() }
-                    // Before the chunk offset is added, so the stretches and the segments are in the
-                    // same (chunk-local) timeline — issue #25.
-                    .let { SpeechGapSnap.apply(it, speechStretches(ptr, vadModelPath != null)) }
+                // Before the chunk offset is added, so the stretches and the segments are in the same
+                // (chunk-local) timeline — issue #25.
+                val raw = readSegments(ptr, vadOn = vadModelPath != null)
 
                 // Stitched against where the audio REALLY started, which a seek may have moved earlier
                 // than the plan asked for. Using the planned offset instead would skew every timestamp

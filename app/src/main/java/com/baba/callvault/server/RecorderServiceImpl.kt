@@ -323,6 +323,8 @@ open class RecorderServiceImpl(private val apkPath: String) : IRecorderService.S
 
     override fun hostUid(): Int = android.os.Process.myUid()
 
+    override fun hostApkPath(): String = apkPath
+
     override fun setDiagnosticsEnabled(enabled: Boolean) {
         AppLogger.setRingEnabled(enabled)
         // Logged after enabling so the very first line in the ring says when collection began — which is

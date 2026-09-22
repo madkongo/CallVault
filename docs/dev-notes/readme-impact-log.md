@@ -463,7 +463,9 @@ open. Pushed to GitHub `main` as `ceaea29e` on 2026-09-19 (README only; the app 
   Shizuku mode) reads "VoIP calls, resilient recording and **speaker names** are not available in this
   mode." Speaker names now are. The string exists in **11 locales**, so it was NOT changed in the merge —
   it needs rewording and re-translating before 2.4.1 ships. VoIP and resilient recording remain true.
+  **Done 2026-09-22** on `fix/wrong-script-retry`: all 11 copies now read "VoIP calls and resilient
+  recording are not available in this mode." — the speaker-names clause dropped, nothing else touched.
 - **Still true, unchanged:** Shizuku mode has no VoIP capture and no resilient recording.
 - Also noticed: `CHANGELOG.md` still heads the shipped release as "[2.4.0] — unreleased" although `v2.4.0`
-  is tagged. Left alone; it wants the real release date.
+  is tagged. **Done 2026-09-22:** now "[2.4.0] — 2026-09-19", the tag's date.
 

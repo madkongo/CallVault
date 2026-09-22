@@ -37,6 +37,9 @@ object RecorderBackend {
 
     private const val POLL_MS = 100L
 
+    /** How many stale hosts in a row one bind will retire before giving up. */
+    private const val MAX_STALE_RETIREMENTS = 2
+
     /**
      * How long to wait for a torn-down recorder's binder to actually die before starting the next one.
      * Generous: getting this wrong reports the wrong backend as ready, which is worse than a slow switch.
@@ -87,28 +90,65 @@ object RecorderBackend {
      *
      * @param evenIfRecording a mode switch is the user's own explicit act and always goes through; the
      *   post-update recovery is nobody's act and must never end a call in progress.
+     * @param host the recorder to retire. Named by the caller, not re-read here: nothing serialises a
+     *   caller against a bind callback, and a fresh binder that lands between a caller's diagnosis and
+     *   this call must not be the one destroyed while the diagnosed one lives on.
      * @return false when the service was left alone because it is recording.
      */
     fun retireShizukuService(
         reason: String,
         timeoutMs: Long = TEARDOWN_TIMEOUT_MS,
         evenIfRecording: Boolean = false,
+        host: IRecorderService? = RecorderConnection.service,
     ): Boolean {
         // destroy() stops the recording and exits the process, and a daemon(true) service survives an
         // install — so it may be mid-call when the post-update recovery gets here. A stale host is a
         // problem for the NEXT call; ending this one to fix it trades a possible loss for a certain one.
         // An unanswered isRecording() counts as idle: a host that cannot answer is not one to protect.
-        val isRecording = runCatching { RecorderConnection.service?.isRecording == true }.getOrDefault(false)
+        val isRecording = runCatching { host?.isRecording == true }.getOrDefault(false)
         if (isRecording && !evenIfRecording) {
             AppLogger.w(TAG, "Not retiring the Shizuku service: it is recording a call right now")
             return false
         }
-        runCatching { RecorderConnection.service?.destroy() }
+        runCatching { host?.destroy() }
             .onFailure { AppLogger.d(TAG, "The user service did not answer destroy(): ${it.message}") }
         runCatching { ShizukuBackend.stop(remove = true) }
             .onFailure { AppLogger.w(TAG, "Could not stop the Shizuku service: ${it.message}") }
         awaitTeardown(reason, timeoutMs)
         return true
+    }
+
+    /**
+     * Retires the recorder this process holds when it is not running from the APK installed now.
+     *
+     * The answer to "is this the right recorder?" that does not depend on the ORDER things happened in.
+     * Two fixes before it each closed one order of events after an install-over — a late answer to a
+     * stopped bind, and a stop that does not detach a live binder — and a third order got past both,
+     * measured on the OP9 on 2026-09-20 at 13:00: Shizuku delivers a binder by service NAME, not by
+     * connection, so the pre-update process's binder arrived on the new binding 5 ms after the fresh
+     * process was started, was accepted as current, and was then told to clear "the others". It killed
+     * the fresh process. The next call would have recorded nothing.
+     *
+     * A host that cannot answer — every build up to 2.4.0 — predates the question and so predates the
+     * installed APK. A failed call is therefore read as stale, not as unknown.
+     *
+     * @return true when a stale host was retired and a new one must be bound; false when the host is
+     *   current, when there is none, or when it is stale but recording a call (see
+     *   [retireShizukuService] — a stale host is the next call's problem, never this one's).
+     */
+    fun retireIfStale(installedApkPath: String, timeoutMs: Long = TEARDOWN_TIMEOUT_MS): Boolean {
+        val service = RecorderConnection.service ?: return false
+        // A host that is already dead cannot answer, and must not be mistaken for one too old to: it
+        // needs dropping, not retiring, and must not spend the caller's retry budget.
+        if (!runCatching { service.asBinder().isBinderAlive }.getOrDefault(false)) {
+            RecorderConnection.onBinderDied()
+            return false
+        }
+        val hostApkPath = runCatching { service.hostApkPath() }.getOrNull()
+        if (hostApkPath == installedApkPath) return false
+
+        AppLogger.w(TAG, "The recorder is running from ${hostApkPath ?: "a build too old to say"}, not the installed APK")
+        return retireShizukuService("it is running from an APK that was replaced", timeoutMs, host = service)
     }
 
     /**
@@ -312,7 +352,8 @@ object RecorderBackend {
     )
 
     private fun ensureShizukuRunning(context: Context): Boolean {
-        if (RecorderConnection.isConnected) {
+        val installedApk = context.applicationInfo.sourceDir
+        if (RecorderConnection.isConnected && !retireIfStale(installedApk)) {
             AppLogger.d(TAG, "Recorder already connected; reusing existing binder")
             return true
         }
@@ -328,7 +369,15 @@ object RecorderBackend {
         // The bind is asynchronous: Shizuku starts the process, then calls back. Poll the holder the
         // callback fills, exactly as the ADB path polls for its pushed binder.
         val deadline = SystemClock.elapsedRealtime() + SHIZUKU_BIND_TIMEOUT_MS
+        var retirements = 0
         while (SystemClock.elapsedRealtime() < deadline) {
+            // Asked BEFORE killStaleRecorders, which is the whole point: a stale host told to clear the
+            // others kills the fresh one. Bounded, so a phone that keeps handing back a stale host ends
+            // in an honest "no recorder" rather than in a loop.
+            if (RecorderConnection.isConnected && retireIfStale(installedApk)) {
+                if (++retirements > MAX_STALE_RETIREMENTS || !ShizukuBackend.start()) return false
+                continue
+            }
             if (RecorderConnection.isConnected) {
                 // Our own detached ADB daemon survives the app and is not stopped by anything here —
                 // so without this, both backends run and either may hold the binder the app talks to.

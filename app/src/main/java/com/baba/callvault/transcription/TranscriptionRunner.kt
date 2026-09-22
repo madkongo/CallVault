@@ -45,6 +45,12 @@ fun interface Transcriber {
          * decode that is happening anyway (issue #38). Null for none.
          */
         speakers: OfflineSpeakerLabeller?,
+        /**
+         * How to decode. [DecodeSettings.DEFAULT] for every ordinary run; something else only when
+         * [WrongScriptRetry] is decoding a recording again because the first attempt came back in the
+         * wrong alphabet.
+         */
+        settings: DecodeSettings,
     ): List<TranscriptSegment>
 }
 
@@ -74,8 +80,8 @@ class TranscriptionRunner(
     // A lambda rather than `TranscriptionEngine::transcribe`: the engine's `settings` parameter sits
     // between `prompt` and `speakers`, so a method reference no longer lines up with this interface.
     private val transcriber: Transcriber =
-        Transcriber { ctx, uri, modelPath, language, prompt, speakers ->
-            TranscriptionEngine.transcribe(ctx, uri, modelPath, language, prompt, speakers = speakers)
+        Transcriber { ctx, uri, modelPath, language, prompt, speakers, settings ->
+            TranscriptionEngine.transcribe(ctx, uri, modelPath, language, prompt, settings, speakers = speakers)
         }
 ) {
 
@@ -174,7 +180,11 @@ class TranscriptionRunner(
         val startedAt = SystemClock.elapsedRealtime()
         // Named before the words are decoded, so a brand or a contact is spelled rather than
         // guessed at. Best-effort: no glossary and no resolvable name simply means no prompt.
-        val prompt = runCatching { promptFor(displayName) }.getOrNull()
+        val prompt = runCatching { promptFor(displayName, language) }.getOrNull()
+        // Length only, never the words: the prompt is a contact's name. Logged because a prompt in the
+        // wrong script can turn the language pin off, and without this line a transcript in the wrong
+        // language cannot be told apart from one that was never primed at all.
+        AppLogger.i(TAG, "Prompt: ${prompt?.length ?: 0} char(s), language ${language ?: "auto"}")
         // Claimed for exactly as long as the engine is busy with this recording, so a delete
         // arriving mid-run knows there is something to abandon — see [TranscriptionInFlight].
         TranscriptionInFlight.claim(displayName)
@@ -184,7 +194,22 @@ class TranscriptionRunner(
         // collapsed the channels. See OfflineSpeakerLabeller.
         val speakers = OfflineSpeakerLabeller()
         val attempt = try {
-            runCatching { transcriber.transcribe(context, uri, modelPath, language, prompt, speakers = speakers) }
+            runCatching {
+                val first = transcriber.transcribe(
+                    context, uri, modelPath, language, prompt, speakers, DecodeSettings.DEFAULT,
+                )
+                // The language pin is a hint to whisper, not a guarantee: a Hebrew call came back in
+                // English on two phones with nothing in the pipeline broken. See WrongScriptRetry.
+                // Retries get no speaker detector — the first decode already heard the whole file, and
+                // feeding it again would count every turn twice.
+                if (!WrongScriptRetry.shouldRetry(first, language, audioMs)) first
+                else {
+                    AppLogger.w(TAG, "Transcript is not in the pinned language's script ($language); decoding again")
+                    WrongScriptRetry.recover(first, language) { settings ->
+                        transcriber.transcribe(context, uri, modelPath, language, prompt, null, settings)
+                    }
+                }
+            }
         } finally {
             TranscriptionInFlight.release(displayName)
         }
@@ -355,11 +380,11 @@ class TranscriptionRunner(
      * The contact is looked up the same way the list does it, so the prompt names the person by the
      * name shown on screen rather than by a number.
      */
-    private suspend fun promptFor(displayName: String): String? {
+    private suspend fun promptFor(displayName: String, language: String?): String? {
         val contact = RecordingsRepository.listRecordings(context)
             .firstOrNull { it.displayName == displayName }
             ?.contactName
-        return TranscriptionPrompt.build(contact)
+        return TranscriptionPrompt.build(contact, language)
     }
 
     private suspend fun localUriFor(displayName: String): Uri? =
@@ -404,9 +429,18 @@ class TranscriptionRunner(
         displayName: String
     ): List<TranscriptSegmentEntry> {
         val turns = SpeakerLabeller.decode(SpeakerTurnsRepository.turnsFor(context, displayName))
-        val speakers = SpeakerLabeller.labelAll(turns, map { it.startMs to it.endMs })
+        // A line both people share is cut at the pause between them BEFORE it is labelled — shared, it
+        // belongs to neither and gets no name at all. Measured on the OP9: the same call was two
+        // labelled lines in English and one unlabelled line in Hebrew. See SpeakerSeamSplit.
+        // ...and then the rows one person holds are joined, so a turn is one row rather than one row
+        // per sentence. In that order: a shared row has to be cut before its halves can join anything.
+        val lines = SpeakerTurnLines.merge(flatMap { SpeakerSeamSplit.joinSameSpeaker(it, turns) }, turns)
+        if (lines.size != size) {
+            AppLogger.i(TAG, "Laid $size segment(s) out as ${lines.size} row(s), one per turn")
+        }
+        val speakers = SpeakerLabeller.labelAll(turns, lines.map { it.startMs to it.endMs })
 
-        return mapIndexed { index, segment ->
+        return lines.mapIndexed { index, segment ->
             TranscriptSegmentEntry(
                 displayName = displayName,
                 startMs = segment.startMs,

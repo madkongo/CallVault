@@ -8,6 +8,8 @@
 
 package com.baba.callvault.transcription
 
+import com.baba.callvault.server.speakers.SpeakerChannel
+import com.baba.callvault.server.speakers.SpeakerTurn
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Test
@@ -103,6 +105,38 @@ class ChunkPlanTest {
     }
 
     // ---- stitching ----
+
+    @Test
+    fun `the candidate parts of a segment are shifted with it`() {
+        // Left behind in the chunk's own timeline they would be compared with speaker turns that are in
+        // the call's, and every chunk after the first would be cut in the wrong place or not at all.
+        val chunk = ChunkPlan.Chunk(decodeFromMs = 290_000, keepFromMs = 300_000, endMs = 600_000)
+        val parts = listOf(TranscriptSegment(15_000, 16_000, "hel"), TranscriptSegment(17_000, 18_000, "lo"))
+        val raw = listOf(TranscriptSegment(startMs = 15_000, endMs = 18_000, text = "hello", parts = parts))
+
+        val out = ChunkPlan.stitch(raw, chunk)
+
+        assertEquals(listOf(305_000L to 306_000L, 307_000L to 308_000L), out[0].parts.map { it.startMs to it.endMs })
+    }
+
+    @Test
+    fun `a straddling segment cut at the seam says each word once, as the whole segment did`() {
+        // The segment is kept whole because it ends after the seam; its parts are the same words split,
+        // so cutting it must not say the part from before the seam a second time, nor lose it.
+        val chunk = ChunkPlan.Chunk(decodeFromMs = 290_000, keepFromMs = 300_000, endMs = 600_000)
+        val parts = listOf(TranscriptSegment(8_000, 9_500, "before the seam"), TranscriptSegment(11_000, 13_000, "after it"))
+        val raw = listOf(TranscriptSegment(startMs = 8_000, endMs = 13_000, text = "before the seam after it", parts = parts))
+        val turns = listOf(
+            SpeakerTurn(0, SpeakerChannel.B),
+            SpeakerTurn(300_000, SpeakerChannel.SILENCE),
+            SpeakerTurn(301_000, SpeakerChannel.A),
+        )
+
+        val rows = ChunkPlan.stitch(raw, chunk).flatMap { SpeakerSeamSplit.joinSameSpeaker(it, turns) }
+
+        assertEquals(listOf("before the seam", "after it"), rows.map { it.text })
+        assertEquals(listOf(298_000L to 299_500L, 301_000L to 303_000L), rows.map { it.startMs to it.endMs })
+    }
 
     @Test
     fun `segment times are shifted into the whole call's timeline`() {

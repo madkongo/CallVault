@@ -121,4 +121,11 @@ object WhisperNative {
     external fun segmentEndMs(ptr: Long, index: Int): Long
 
     external fun segmentText(ptr: Long, index: Int): String
+
+    /**
+     * The i-th segment's words, one per line as `<start in ms>\t<word>`, on the VAD's compressed
+     * timeline. Parsed by [SpeakerSeamSplit.parseWords]; see the native side for why words are assembled
+     * there rather than here.
+     */
+    external fun segmentWords(ptr: Long, index: Int): String
 }

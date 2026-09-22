@@ -254,7 +254,7 @@
     <string name="mode_switch_problem_title">Пока не готов</string>
     <string name="mode_switch_done_shizuku">Готово — через Shizuku</string>
     <string name="mode_switch_done_standalone">Готово — через CallVault</string>
-    <string name="mode_switch_ready_shizuku">CallVault записывает через Shizuku. Звонки VoIP, устойчивая запись и имена говорящих в этом режиме недоступны.</string>
+    <string name="mode_switch_ready_shizuku">CallVault записывает через Shizuku. Звонки VoIP и устойчивая запись в этом режиме недоступны.</string>
     <string name="mode_switch_ready_standalone">CallVault записывает собственным рекордером. Доступно всё, включая звонки VoIP и имена говорящих.</string>
     <string name="mode_switch_ready">Рекордер работает. Звонки будут записываться.</string>
     <string name="mode_switch_shizuku_not_installed">Shizuku не установлен, переключаться не на что.</string>

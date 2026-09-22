@@ -254,7 +254,7 @@
     <string name="mode_switch_problem_title">Chưa sẵn sàng</string>
     <string name="mode_switch_done_shizuku">Sẵn sàng — dùng Shizuku</string>
     <string name="mode_switch_done_standalone">Sẵn sàng — dùng CallVault</string>
-    <string name="mode_switch_ready_shizuku">CallVault ghi âm qua Shizuku. Cuộc gọi VoIP, ghi âm bền bỉ và tên người nói không khả dụng ở chế độ này.</string>
+    <string name="mode_switch_ready_shizuku">CallVault ghi âm qua Shizuku. Cuộc gọi VoIP và ghi âm bền bỉ không khả dụng ở chế độ này.</string>
     <string name="mode_switch_ready_standalone">CallVault ghi âm bằng trình ghi riêng. Mọi thứ đều khả dụng, gồm cả cuộc gọi VoIP và tên người nói.</string>
     <string name="mode_switch_ready">Trình ghi đang chạy. Các cuộc gọi sẽ được ghi âm.</string>
     <string name="mode_switch_shizuku_not_installed">Shizuku chưa được cài đặt nên không có gì để chuyển sang.</string>
