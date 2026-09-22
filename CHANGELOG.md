@@ -3,7 +3,7 @@
 All notable changes to CallVault are documented here. The format is based on
 [Keep a Changelog](https://keepachangelog.com/), and this project uses semantic-ish versioning.
 
-## [2.4.1] — unreleased
+## [2.4.1] — 2026-09-22
 
 ### Added
 
@@ -44,9 +44,6 @@ All notable changes to CallVault are documented here. The format is based on
   and one started from an app that has since been replaced is retired on the spot. If a call is being
   recorded at the moment an update lands, that recording is left alone. Present in every earlier version
   with Shizuku mode, including 2.4.0.
-  <!-- 🧪 VERIFYING as of 2026-09-22: six clean install-overs on the OP9, but no real call after the
-       backstop (fix 3, fix/shizuku-stale-host-check) yet. Do not ship 2.4.1 with this comment in place;
-       see docs/dev-notes/2026-09-20-shizuku-stale-service-after-update.md. -->
 
 - **App-call recordings now report how their two sides lined up (#41).** A user hears the other person
   a beat early in WhatsApp recordings. The two sides of an app call are captured separately and

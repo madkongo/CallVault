@@ -2,7 +2,8 @@
 
 ✅ VERIFIED 2026-09-22 by the maintainer on the OP9 (built-in mode): one answered phone call recorded from
 the pickup ("sounds good"), one unanswered left no file; one answered WhatsApp call held through the
-ringing ("it sounds good"), one unanswered discarded. Still 🧪: Shizuku mode, a dual-SIM call from
+ringing ("it sounds good"), one unanswered discarded. **Shizuku mode ✅ 2026-09-22 14:49:** the OP9 in
+Shizuku mode, 7 polls, start at the answer — the `call_state` read works through the Shizuku host too. Still 🧪: Shizuku mode, a dual-SIM call from
 SIM 2, and a Samsung. The log line to look for is `Sending start INTENT for OUTGOING call after N polls`.
 
 Requested by a user (2026-09-22, "Please add an option to start recording only when the other party

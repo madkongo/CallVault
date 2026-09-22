@@ -1,3 +1,9 @@
+> ✅ VERIFIED 2026-09-22 14:49 on the OP9: 2.4.1 (20410) installed over 2.4.0 in Shizuku mode, the update
+> receiver restarted the service (two user services started, one binder taken, the extras cleared, one
+> `com.baba.callvault:recorder` left), and the very next phone call recorded — standby at dial, start at
+> the answer, `Capture start check: STARTED (daemon reachable=true, recording=true)`, file published.
+> That is the real call after an install-over that fix 3 had been waiting for.
+
 # 2026-09-20 — an update in Shizuku mode silently costs the next call
 
 Status: **🧪 VERIFYING** — and the ✅ this carried earlier on 2026-09-20 was **wrong to stand alone**. The
