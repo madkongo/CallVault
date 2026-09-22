@@ -1,8 +1,8 @@
 # 2026-09-22 — contact names for VoIP calls: why the OP9 gets none, and what else could give them
 
-Status: **🧪 VERIFYING** — cause found by reading AOSP, confirmed on both phones, fix built on
-`fix/voip-caller-name-android14`, and one WhatsApp call on the OP9 (Android 14, built-in mode) came out
-NAMED at 12:17 (last section). Waiting on the maintainer to see it in the app.
+Status: **✅ VERIFIED 2026-09-22** by the maintainer on the OP9 (Android 14, built-in mode): the 12:17
+WhatsApp recording shows its contact name in the app ("name appears fine"). Merged to `main` (`ee1ff4f1`).
+Still 🧪: the retry path on its own, Telegram/Signal on Android 14, `SpannableString` titles.
 
 ## The report
 

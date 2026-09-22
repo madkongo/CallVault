@@ -22,6 +22,12 @@ All notable changes to CallVault are documented here. The format is based on
 
 ### Fixed
 
+- **App-call recordings on Android 14 and earlier now carry the contact's name.** The name comes from the
+  calling app's own call notification, and on Android 14 the way the system describes that notification
+  differs from Android 15 and later — CallVault only understood the newer form, so every WhatsApp, Telegram
+  or Signal recording on an Android 14 phone was named by time alone. Both forms are read now, and if the
+  notification is not there yet at the instant the call starts, CallVault looks again a few seconds in.
+
 - **An update in Shizuku mode no longer costs you the next call.** Installing an update left the old
   recorder running with a path to an app file that no longer existed. It kept answering, so nothing
   looked wrong — and the next call recorded nothing, with no error, until the app was next opened. The
