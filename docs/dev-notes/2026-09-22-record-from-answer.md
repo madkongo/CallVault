@@ -68,10 +68,32 @@ Known cosmetic point: while waiting, the service is in `Standby`, whose notifica
 start recording" — pressing it starts early, which is harmless, but the wording says "offer", not
 "waiting for an answer". Left for the maintainer to judge on the phone before any notice work.
 
+## App calls — the pickup IS visible, in the notification (measured 2026-09-22 13:28, OP9, WhatsApp 2.26.36.74)
+
+WhatsApp registers nothing with Telecom (`dumpsys telecom` on both phones lists only Google Meet as a
+self-managed account), so there is no call state to poll. `spike-tools/voip-answer-timeline.sh` sampled
+the call notification, WhatsApp's audio players and the mic once a second through an outgoing WhatsApp
+call from the OP9, answered on the OP12 after 13 s:
+
+| time | `android.text` | `android.showChronometer` | WhatsApp players |
+|---|---|---|---|
+| 13:28:51 – 13:29:04 | `Ringing…` | **false** | SoundPool idle + OpenSL `started`, both VOICE_COMMUNICATION |
+| 13:29:05 – hang-up | `Ongoing voice call` | **true** | unchanged |
+
+**`showChronometer` flips false → true at the answer** — the platform flag behind the call timer,
+locale-independent, on the notification the host already reads with `cmd notification get` for the
+caller's name. The audio players are no signal: the voice track is started from the dial and carries the
+ringback. 🧪 Telegram and Signal not yet looked at.
+
+Design if built: the VoIP capture still starts at the audio-mode flip (arming cannot be retried) but is
+held **paused** (`setVoipPaused`, drops frames, never touches the mic) while the host is polled every
+500 ms; unpause at `showChronometer=true`. A notification without the flag at all means "this app does
+not say" → unpause at once; the same 120 s ceiling applies. Direction-free: the timer starts at
+connect for incoming calls too. The file name keeps the dial time.
+
 ## Not covered
 
-- App calls: the audio mode flips at call setup, not at pickup, and the far sink is silent until the
-  app plays the remote voice; the only hint is the app's notification text, per app and per locale.
+- App calls: see above — possible, not built.
 - Incoming calls: unaffected by design — OFFHOOK *is* the answer there.
 - A call started from the Record prompt (automatic recording off): unaffected; the button is pressed
   after the dial anyway.
