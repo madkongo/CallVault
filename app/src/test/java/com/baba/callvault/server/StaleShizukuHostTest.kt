@@ -106,6 +106,27 @@ class StaleShizukuHostTest {
     }
 
     @Test
+    fun the_host_that_was_found_stale_is_the_one_destroyed_even_if_a_fresh_one_arrived_meanwhile() {
+        // Nothing serialises this check against a bind callback. If the fresh recorder's binder lands
+        // between the question and destroy(), destroying "whatever is current" kills the fresh process
+        // and leaves the stale one alive — the very thing this check exists to stop.
+        val fresh = mockk<IRecorderService>(relaxed = true) {
+            every { asBinder() } returns mockk(relaxed = true) { every { isBinderAlive } returns true }
+            every { hostApkPath() } returns installedApk
+        }
+        val stale = hostRunningFrom {
+            RecorderConnection.onBinderReceived(fresh)
+            "/data/app/~~old==/com.baba.callvault-old==/base.apk"
+        }
+        RecorderConnection.onBinderReceived(stale)
+
+        assertTrue(RecorderBackend.retireIfStale(installedApk, timeoutMs = 0))
+
+        verify { stale.destroy() }
+        verify(exactly = 0) { fresh.destroy() }
+    }
+
+    @Test
     fun nothing_happens_when_no_recorder_is_held() {
         assertFalse(RecorderBackend.retireIfStale(installedApk, timeoutMs = 0))
     }

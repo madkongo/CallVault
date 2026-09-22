@@ -90,23 +90,27 @@ object RecorderBackend {
      *
      * @param evenIfRecording a mode switch is the user's own explicit act and always goes through; the
      *   post-update recovery is nobody's act and must never end a call in progress.
+     * @param host the recorder to retire. Named by the caller, not re-read here: nothing serialises a
+     *   caller against a bind callback, and a fresh binder that lands between a caller's diagnosis and
+     *   this call must not be the one destroyed while the diagnosed one lives on.
      * @return false when the service was left alone because it is recording.
      */
     fun retireShizukuService(
         reason: String,
         timeoutMs: Long = TEARDOWN_TIMEOUT_MS,
         evenIfRecording: Boolean = false,
+        host: IRecorderService? = RecorderConnection.service,
     ): Boolean {
         // destroy() stops the recording and exits the process, and a daemon(true) service survives an
         // install — so it may be mid-call when the post-update recovery gets here. A stale host is a
         // problem for the NEXT call; ending this one to fix it trades a possible loss for a certain one.
         // An unanswered isRecording() counts as idle: a host that cannot answer is not one to protect.
-        val isRecording = runCatching { RecorderConnection.service?.isRecording == true }.getOrDefault(false)
+        val isRecording = runCatching { host?.isRecording == true }.getOrDefault(false)
         if (isRecording && !evenIfRecording) {
             AppLogger.w(TAG, "Not retiring the Shizuku service: it is recording a call right now")
             return false
         }
-        runCatching { RecorderConnection.service?.destroy() }
+        runCatching { host?.destroy() }
             .onFailure { AppLogger.d(TAG, "The user service did not answer destroy(): ${it.message}") }
         runCatching { ShizukuBackend.stop(remove = true) }
             .onFailure { AppLogger.w(TAG, "Could not stop the Shizuku service: ${it.message}") }
@@ -144,7 +148,7 @@ object RecorderBackend {
         if (hostApkPath == installedApkPath) return false
 
         AppLogger.w(TAG, "The recorder is running from ${hostApkPath ?: "a build too old to say"}, not the installed APK")
-        return retireShizukuService("it is running from an APK that was replaced", timeoutMs)
+        return retireShizukuService("it is running from an APK that was replaced", timeoutMs, host = service)
     }
 
     /**
