@@ -33,7 +33,7 @@ Recording call audio needs shell-level privilege. CallVault gets it one of two w
 - 📝 **Transcripts** — 13 languages, written on the phone.
 - 🧾 **Summaries** — intent, key points, decisions, action items.
 - 🗣️ **Speaker labels** — who said which line, on phone calls.
-- 🔎 **Full-text search** across transcripts, summaries and your own notes.
+- 🔎 **Search** — a contact on the Recordings page, a word across transcripts or summaries, right on the page.
 - 🏷️ **Tags and stars** — label a call, star the ones worth keeping, filter the list by either.
 - 📤 **Export a transcript** as text, Markdown, SRT, VTT or JSON.
 - ▶️ **Playback with a waveform** you can scrub, plus a note per call.

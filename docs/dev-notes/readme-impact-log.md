@@ -474,11 +474,12 @@ open. Pushed to GitHub `main` as `ceaea29e` on 2026-09-19 (README only; the app 
 
 🧪 VERIFYING — installed on the OP9, not yet used by the maintainer.
 
-- **README line 36** "Full-text search across transcripts, summaries and **your own notes**" — notes are
-  no longer searched anywhere (the bottom sheet that searched them is gone). The word "notes" must come
-  out when 2.4.1 ships, or note search must come back. Everything else on that line stays true.
-- **README screenshot `05-transcript-search.png`** (line 59, "Search") shows the old bottom sheet. Needs a
-  new screenshot of a page with the search line and an excerpt under a row.
+- ~~**README line 36** "Full-text search across transcripts, summaries and **your own notes**"~~ **Done
+  2026-09-22:** now "Search — a contact on the Recordings page, a word across transcripts or summaries,
+  right on the page." Notes are not searched and the line no longer says they are.
+- ~~**README screenshot `05-transcript-search.png`** shows the old bottom sheet.~~ **Done 2026-09-22:**
+  re-shot on the emulator (dark, demo data re-staged by SQL after the 09-16 import tests had replaced
+  it): the Transcripts page with "Thursday" in the search line and the bold match in two excerpts.
 - Lines 102 and 110 ("search" identical in Shizuku mode) stay true.
 
 ## 2026-09-22 — "Start when they answer" for outgoing phone calls (`feat/record-on-answer`, unmerged, 2.4.1)
