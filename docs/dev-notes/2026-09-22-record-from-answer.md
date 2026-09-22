@@ -1,7 +1,8 @@
 # "Start when they answer" — recording an outgoing call from the pickup, not the dial
 
-✅ VERIFIED 2026-09-22 by the maintainer on the OP9 (built-in mode): one answered call recorded from the
-pickup ("sounds good"), one unanswered call left no file. Still 🧪: Shizuku mode, a dual-SIM call from
+✅ VERIFIED 2026-09-22 by the maintainer on the OP9 (built-in mode): one answered phone call recorded from
+the pickup ("sounds good"), one unanswered left no file; one answered WhatsApp call held through the
+ringing ("it sounds good"), one unanswered discarded. Still 🧪: Shizuku mode, a dual-SIM call from
 SIM 2, and a Samsung. The log line to look for is `Sending start INTENT for OUTGOING call after N polls`.
 
 Requested by a user (2026-09-22, "Please add an option to start recording only when the other party
@@ -93,7 +94,7 @@ Released at ANSWERED. UNKNOWN (no timer flag, no notification, an older host) re
 same 120 s ceiling applies. The user's Pause outranks the release; their Resume ends the hold.
 Direction-free: the timer starts at connect for incoming calls too. The file name keeps the dial time.
 
-**First real call, OP9, 2026-09-22 13:36, WhatsApp to the OP12 (🧪 file not yet listened to):**
+**First real call, OP9, 2026-09-22 13:36, WhatsApp to the OP12 (✅ maintainer listened 14:05: "it sounds good"):**
 
 ```
 13:36:34.062  App-call recording held until the call is answered
@@ -112,7 +113,7 @@ a recording that ends while still held is discarded (`454f5582`).
 **Second try (13:56):** held at 13:56:29, rang 14 s, hung up → "App call ended before it was answered;
 discarding the held recording"; no file. As designed.
 
-Still 🧪: the maintainer's ear on the 13:36 file, Telegram and Signal (NO_TIMER → recorded from the
+Still 🧪: Telegram and Signal (NO_TIMER → recorded from the
 start, which is the safe answer but not the feature), an incoming app call.
 
 ## Not covered
