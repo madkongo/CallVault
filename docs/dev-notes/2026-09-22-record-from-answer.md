@@ -102,15 +102,22 @@ Direction-free: the timer starts at connect for incoming calls too. The file nam
 ```
 
 The file is **8.4 s** for a 22 s call; the 13:28 probe call, recorded from the dial by the previous
-build, is 21.8 s. Named פרוזה (the late-caller retry ran alongside the hold). Still 🧪: an unanswered app
-call (expected: an empty-ish file of a few hundred ms is NOT what happens — a held recording that ends
-unanswered still publishes a file holding only the chunks before the hold engaged, ~300 ms; whether that
-stub should be discarded is a decision for the maintainer), Telegram and Signal.
+build, is 21.8 s. Named פרוזה (the late-caller retry ran alongside the hold).
+
+**Unanswered app call, first try (13:39) — ❌ a 6 KB stub was published.** At hang-up WhatsApp removes
+its notification BEFORE the audio mode drops, so the poll read "no timer" → released → the last 1.5 s
+went into a file. Fixed `b82eef03`: the host tells NO_NOTIFICATION from NO_TIMER; once ringing has been
+seen only ANSWERED (or the 120 s ceiling) releases; a notification not posted yet gets 5 s of grace; and
+a recording that ends while still held is discarded (`454f5582`).
+**Second try (13:56):** held at 13:56:29, rang 14 s, hung up → "App call ended before it was answered;
+discarding the held recording"; no file. As designed.
+
+Still 🧪: the maintainer's ear on the 13:36 file, Telegram and Signal (NO_TIMER → recorded from the
+start, which is the safe answer but not the feature), an incoming app call.
 
 ## Not covered
 
-- An unanswered app call leaves a stub file (see above) — unlike the carrier path, where nothing is
-  created. Decide before release.
+- App calls whose notification shows no call timer: recorded from the start, as before the option.
 - Incoming calls: unaffected by design — OFFHOOK *is* the answer there.
 - A call started from the Record prompt (automatic recording off): unaffected; the button is pressed
   after the dial anyway.
