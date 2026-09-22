@@ -39,6 +39,22 @@ ACTIVE rather than at OFFHOOK (the dial). Phone calls only; the setting says so.
   connected, a ROM without the line) → start at once, as if the option were off; 120 s without ACTIVE →
   start anyway. Both are logged with the reason.
 
+## First real call — OP9, built-in mode, 2026-09-22 13:23 (🧪 file not yet listened to)
+
+Outgoing carrier call, toggle on, automatic outgoing recording on. From logcat:
+
+```
+13:23:51.508  Sending standby INTENT for OUTGOING call; recording starts when it is answered.
+13:23:56.440  Sending start INTENT for OUTGOING call after 8 polls: call answered (state=1, 4873ms).
+13:23:56.987  Recording pipeline started successfully        (startHandoff returned true in 127ms)
+13:24:00.876  Stopping active recording session
+```
+
+Rang 4.9 s, answered, recorded ~4 s, stopped at IDLE. **Measured: pipeline up 547 ms after the poll saw
+ACTIVE** — up to 500 ms of poll interval on top of that is the most that can be lost of the pickup.
+Whether the far party's first word survived is for the maintainer's ears. The unanswered case is still
+to be seen.
+
 ## What it costs
 
 📐 The file starts up to ~0.5 s (poll) plus the pipeline start after the pickup; the daemon is already
