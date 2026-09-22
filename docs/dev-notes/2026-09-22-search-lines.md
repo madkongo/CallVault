@@ -46,6 +46,19 @@ letters and digits alone, since unquoted punctuation is an operator and one such
 it, RTL. Recordings, "2026" → the menu listed WhatsApp *file names* as completions — nameless recordings are
 keyed by file name — fixed the same minute: completions are saved names only; typing still finds the rest.
 
+**Maintainer, 11:20: "I entered פ and expected פרוזה, that didn't happen."** Reproduced by tapping the
+Hebrew keyboard over adb: 44 rows matched, no menu, no popup window in `dumpsys window`. Cause: the file is
+`20260920_122553.184+0300_out_פרוזה.ogg` — the recorder writes the caller's NAME where it has no number, so
+`RecordingItem.number` = "פרוזה", the contact lookup finds nothing, `contactName` is null, and the
+"saved names only" rule of 11:00 excluded exactly the name on screen. Completions are now whatever the row
+is titled with that is not a phone number (digits and dialler punctuation). Also replaced
+`ExposedDropdownMenuBox` with a plain non-focusable `DropdownMenu` so the menu is open exactly when there is
+something in it. Measured after: פ → menu "פרוזה"; tapping it fills the field, 44 rows.
+
+**Also reported, on Recordings: rows briefly showed the date/time instead of the name after the install.**
+Not reproduced on a cold start (names present before any touch); the maintainer said to leave it. Noted
+here so a second sighting is not a first one.
+
 ## Not measured
 
 The maintainer's own use; the menu with a Hebrew name in it (adb cannot type Hebrew); Summaries with any
