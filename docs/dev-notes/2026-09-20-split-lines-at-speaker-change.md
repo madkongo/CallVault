@@ -1,8 +1,9 @@
 # 2026-09-20 — a transcript line shared by both speakers gets no label; split it where the speaker changes
 
-Status: **🧪 VERIFYING** — built on `feat/split-lines-at-speaker-change` (commit `55d91fea`), 1701 unit
-tests green, and measured once on the OP9 (below). Waiting on the maintainer: re-open the 12:25 call, and
-then a REAL conversation — the one thing a scripted test call cannot show is whether it shreds lines.
+Status: **✅ VERIFIED 2026-09-22** by the maintainer on a real ~15-minute Hebrew call on the OP12
+(built-in mode, chunked into 4 passes): "i transcribed the last call and it looks good". Earlier ✅ on
+2026-09-20 covered two scripted calls on the OP9. Built on `feat/split-lines-at-speaker-change`.
+Still unmeasured: how often a real call trips a seam (no log survived — the OP12's USB dropped mid-run).
 
 ## The report
 
@@ -97,5 +98,9 @@ one per turn`. The 1 s and 30 s numbers are judgement, not measurement — a rea
 show whether they are right.
 
 ✅ VERIFIED 2026-09-20 by the maintainer on the OP9, after re-opening the 11:52 and 12:25 calls: "yes it
-looks perfect". That covers two scripted test calls in Shizuku mode. A real conversation, a chunked call
-and built-in mode are still unverified.
+looks perfect". That covers two scripted test calls in Shizuku mode.
+
+✅ VERIFIED 2026-09-22 by the maintainer on the OP12: a real ~15-minute Hebrew call, built-in mode, chunked
+(4 passes) — "it looks good". That closes the three cases the line above listed as open. What it does not
+tell us is the numbers (how many seams were cut, how many rows came out of how many segments): the OP12's
+transport dropped during the run and its logcat ring had rolled by the time it came back.

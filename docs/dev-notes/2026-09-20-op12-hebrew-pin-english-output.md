@@ -2,8 +2,10 @@
 
 Status: **✅ VERIFIED 2026-09-20 for the one call it was found on** — the maintainer opened the 12:25
 "Feroza" call on the OP12 after the fix and confirmed it reads correctly ("ok it looks good"). That is one
-clip. Still 🧪: whether ordinary Hebrew calls ever trip it, a false alarm on a real call, the fallback
-order (n = 1), and Arabic / Russian / Chinese, which share the code and have never been tried.
+clip. 2026-09-22: a real ~15-minute Hebrew call transcribed on the OP12 with this build "looks good"
+(maintainer) — so the retry did no visible harm on a real call; whether it fired at all is unknown, the
+log was lost. Still 🧪: whether ordinary Hebrew calls ever trip it, the fallback order (n = 1), and
+Arabic / Russian / Chinese, which share the code and have never been tried.
 Fix: `fix/wrong-script-retry`, unmerged. History: ❌ NOT WORKING 2026-09-20; cause narrowed to "nothing is
 broken, the decode is low-margin".
 
