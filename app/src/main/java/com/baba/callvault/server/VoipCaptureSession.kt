@@ -43,10 +43,14 @@ import java.util.concurrent.atomic.AtomicBoolean
  * encoder, matching what [DirectAudioRecorderSession] does for a stereo carrier capture, so recordings
  * from both paths sound alike.
  *
- * Because the streams are separate free-running `AudioRecord`s, the muxer aligns them on wall-clock:
- * it pairs one chunk from each and substitutes silence for whichever side has nothing ready. A stalled
- * or silenced side therefore costs its own channel and never the timeline. Measured on real calls, no
- * substitution was needed over 40 s, so the two clocks track closely in practice.
+ * Because the streams are separate free-running `AudioRecord`s, the muxer pairs one chunk from each
+ * BY ARRIVAL and substitutes silence for whichever side has nothing ready within [CHUNK_WAIT_MS]. That
+ * is not an alignment: a side that stalls gets one 20 ms stand-in per 120 ms of stall, a side whose
+ * queue fills drops chunks, and nothing ever re-aligns them. "No substitution over 40 s" was measured
+ * once, on ColorOS, and is not true on One UI, where the mic is re-taken many times a call — issue #41
+ * reports the far party a beat early on a Galaxy S21 Ultra. [VoipSyncLedger] measures the offset and
+ * counts every loss so one log from that phone can say what moved; the pairing is to be rebuilt on
+ * content time once it has (docs/dev-notes/2026-09-22-voip-sync-instrumentation.md).
  */
 internal class VoipCaptureSession(
     private val codec: ScrcpyAudioCodec,
@@ -77,6 +81,19 @@ internal class VoipCaptureSession(
     @Volatile private var speakerTurnsEncoded: String = ""
 
     override fun speakerTurns(): String = speakerTurnsEncoded
+
+    /** The sync summary of the finished capture, for the app's log; empty until the loop ends. */
+    @Volatile private var syncSummary: String = ""
+
+    override fun captureDiagnostics(): String = syncSummary
+
+    private val ledger = VoipSyncLedger(SAMPLE_RATE, CHUNK_FRAMES)
+
+    /** The monotonic moment the two records were started; the wall clock of every sync line. */
+    @Volatile private var startedNanos = 0L
+
+    /** A chunk of one side with the real time its audio was captured (see [VoipSyncLedger]). */
+    private class Chunk(val bytes: ByteArray, val contentNanos: Long)
 
     @Volatile private var farRecord: AudioRecord? = null
     @Volatile private var nearRecord: AudioRecord? = null
@@ -129,9 +146,16 @@ internal class VoipCaptureSession(
         muxer = mux
 
         enc.start()
+        startedNanos = System.nanoTime()
         far.startRecording()
         near.startRecording()
         AppLogger.i(TAG, "VoIP capture started: codec=${codec.cliKey} rate=$SAMPLE_RATE bitRate=$bitRate")
+        AppLogger.i(
+            TAG,
+            "VoIP sync start: near buf=${near.bufferSizeInFrames} frames far buf=${far.bufferSizeInFrames} frames " +
+                "chunk=$CHUNK_FRAMES frames wait=${CHUNK_WAIT_MS}ms queue=$QUEUE_CHUNKS; " +
+                "sdk=${android.os.Build.VERSION.SDK_INT} ${android.os.Build.MANUFACTURER} ${android.os.Build.MODEL}",
+        )
 
         muxThread = Thread {
             runCatching { captureLoop(enc, mux) }
@@ -239,10 +263,12 @@ internal class VoipCaptureSession(
     }
 
     private fun captureLoop(enc: MediaCodec, mux: MediaMuxer) {
-        val qNear: BlockingQueue<ByteArray> = ArrayBlockingQueue(QUEUE_CHUNKS)
-        val qFar: BlockingQueue<ByteArray> = ArrayBlockingQueue(QUEUE_CHUNKS)
-        val readers = listOf(feeder(qNear, "near"), feeder(qFar, "far"))
+        val qNear: BlockingQueue<Chunk> = ArrayBlockingQueue(QUEUE_CHUNKS)
+        val qFar: BlockingQueue<Chunk> = ArrayBlockingQueue(QUEUE_CHUNKS)
+        val readers = listOf(feeder(qNear, ledger.near), feeder(qFar, ledger.far))
         readers.forEach { it.start() }
+        var nearPeak = 0
+        var nextSnapshotFrames = SNAPSHOT_FRAMES
 
         val silence = ByteArray(CHUNK_BYTES)
         val stereo = ByteArray(CHUNK_BYTES * 2)
@@ -259,8 +285,11 @@ internal class VoipCaptureSession(
 
         try {
             while (!stopRequested.get()) {
-                val n = qNear.poll(CHUNK_WAIT_MS, TimeUnit.MILLISECONDS) ?: silence.also { substituted++ }
-                val f = qFar.poll(CHUNK_WAIT_MS, TimeUnit.MILLISECONDS) ?: silence
+                val nearChunk = qNear.poll(CHUNK_WAIT_MS, TimeUnit.MILLISECONDS)
+                val farChunk = qFar.poll(CHUNK_WAIT_MS, TimeUnit.MILLISECONDS)
+                val n = nearChunk?.bytes ?: silence.also { substituted++; ledger.near.substituted() }
+                val f = farChunk?.bytes ?: silence.also { ledger.far.substituted() }
+                ledger.paired(nearChunk?.contentNanos, farChunk?.contentNanos)
                 // Paused: the chunks were read above and are now dropped. The AudioRecords and the
                 // feeder threads are untouched — capture itself does not change shape when a user
                 // pauses — but nothing reaches the encoder, the speaker detector or the frame count,
@@ -275,6 +304,9 @@ internal class VoipCaptureSession(
                     val fs = ((f[i].toInt() and 0xFF) or (f[i + 1].toInt() shl 8)).toShort().toInt()
                     val fa = if (fs < 0) -fs else fs
                     if (fa > farPeak) farPeak = fa
+                    val ns = ((n[i].toInt() and 0xFF) or (n[i + 1].toInt() shl 8)).toShort().toInt()
+                    val na = if (ns < 0) -ns else ns
+                    if (na > nearPeak) nearPeak = na
                     o += 4
                 }
                 // A silenced mix is EXACTLY zero, so any real signal clears the threshold easily; the
@@ -300,12 +332,25 @@ internal class VoipCaptureSession(
                 enc.queueInputBuffer(inIdx, 0, len, totalFrames * 1_000_000L / SAMPLE_RATE, 0)
                 totalFrames += len / (2 * ENCODE_CHANNELS)
                 muxerStarted = drainEncoder(enc, mux, info, muxerStarted)
+                if (totalFrames >= nextSnapshotFrames) {
+                    nextSnapshotFrames += SNAPSHOT_FRAMES
+                    // The peaks say whether a side was silent while the counters say it was late;
+                    // an all-zero near side with no re-take is a silencing the re-take missed.
+                    AppLogger.i(
+                        TAG,
+                        ledger.snapshot(totalFrames, System.nanoTime() - startedNanos, qNear.size, qFar.size) +
+                            " peak near=$nearPeak far=$farPeak",
+                    )
+                    nearPeak = 0; farPeak = 0
+                }
             }
 
             val inIdx = enc.dequeueInputBuffer(END_OF_STREAM_TIMEOUT_US)
             if (inIdx >= 0) enc.queueInputBuffer(inIdx, 0, 0, 0, MediaCodec.BUFFER_FLAG_END_OF_STREAM)
             drainEncoder(enc, mux, info, muxerStarted, drainToEos = true)
             AppLogger.i(TAG, "VoIP capture finished: ${totalFrames / SAMPLE_RATE}s, $substituted silence-filled chunks, farPartyHeard=$farPartyHeard")
+            syncSummary = ledger.summary(totalFrames, System.nanoTime() - startedNanos)
+            AppLogger.i(TAG, syncSummary)
             if (!farPartyHeard) {
                 AppLogger.w(TAG, "Far party was never audible — this app blocks capture, or the OEM did not attach the call to our mix")
             }
@@ -317,15 +362,33 @@ internal class VoipCaptureSession(
         }
     }
 
-    /** Reads whole chunks from one direction into its queue; drops rather than blocks if the muxer lags. */
-    private fun feeder(q: BlockingQueue<ByteArray>, tag: String) = Thread {
+    /**
+     * Reads whole chunks from one direction into its queue; drops rather than blocks if the muxer lags.
+     *
+     * Each chunk is stamped with the real time its audio was captured: the HAL's own fix
+     * (`getTimestamp`, refreshed every [TIMESTAMP_EVERY_CHUNKS]) applied to the chunk's frame index,
+     * or the read moment where the device gives no fix. That stamp is what [VoipSyncLedger] measures
+     * the two sides' offset from.
+     */
+    private fun feeder(q: BlockingQueue<Chunk>, side: VoipSyncLedger.Side) = Thread {
+        val tag = side.name
         val buf = ByteArray(CHUNK_BYTES)
         var silentChunks = 0
+        var current: AudioRecord? = null
+        var frameIndex = 0L
+        var firstReadLogged = false
+        val ts = android.media.AudioTimestamp()
         while (!stopRequested.get()) {
             // Read the record from the field on every pass rather than holding the one we started
             // with. A suspend releases it and a resume installs a different one, and a thread
             // clutching the original would be reading a released object.
             val record = if (tag == "near") nearRecord else farRecord
+            if (record !== current) {
+                // A fresh record numbers its frames from zero and carries its own HAL clock.
+                current = record
+                frameIndex = 0L
+                side.newRecord()
+            }
             if (record == null || suspended.get()) {
                 // Waiting, not dying. The old feeder ended itself the moment a read failed, which is
                 // right for a broken capture and fatal for a suspended one — the thread would be gone
@@ -347,6 +410,19 @@ internal class VoipCaptureSession(
                 off += r
             }
             if (interrupted) continue
+            val readAt = System.nanoTime()
+            if (!firstReadLogged) {
+                firstReadLogged = true
+                AppLogger.i(TAG, "VoIP sync: first $tag chunk ${(readAt - startedNanos) / 1_000_000L}ms after start")
+            }
+            if (side.chunksRead % TIMESTAMP_EVERY_CHUNKS == 0L) {
+                val ok = runCatching { record.getTimestamp(ts, android.media.AudioTimestamp.TIMEBASE_MONOTONIC) }
+                    .getOrDefault(AudioRecord.ERROR)
+                if (ok == AudioRecord.SUCCESS) side.timestamp(ts.framePosition, ts.nanoTime)
+            }
+            val contentNanos = side.contentNanos(frameIndex, readAt)
+            frameIndex += CHUNK_FRAMES
+            side.read()
             // Re-take the mic when the platform has silenced us.
             //
             // On One UI only one client gets the mic, and the most recent starter wins: when the VoIP
@@ -360,11 +436,17 @@ internal class VoipCaptureSession(
             // regardless of what the arbitration reports. Only the NEAR source needs this — the far
             // party arrives through the policy submix, outside the mic arbitration entirely.
             if (tag == "near") {
-                if (isAllZero(buf)) silentChunks++ else silentChunks = 0
+                if (isAllZero(buf)) { silentChunks++; side.zeroChunk() } else silentChunks = 0
                 if (silentChunks >= SILENT_CHUNKS_BEFORE_RETAKE) {
                     silentChunks = 0
+                    val retakeStart = System.nanoTime()
                     val fresh = retakeMic(record)
                     if (fresh != null) {
+                        // The gap is what the near side loses: from the last chunk of the old record
+                        // to the fresh one being started. Its first read adds one buffer on top.
+                        val gap = System.nanoTime() - retakeStart
+                        side.retake(gap)
+                        AppLogger.i(TAG, "VoIP sync: re-take #${side.retakes} at ${(retakeStart - startedNanos) / 1_000_000L}ms took ${gap / 1_000_000L}ms; ${side.zeroChunks} zero chunks so far")
                         // The platform took the mic away and we opened another. Without closing the
                         // old id and opening a new one, every re-take would read as a leaked capture
                         // — and this happens several times in a normal call.
@@ -376,9 +458,9 @@ internal class VoipCaptureSession(
                     }
                 }
             }
-            q.offer(buf.copyOf())
+            if (!q.offer(Chunk(buf.copyOf(), contentNanos))) side.dropped()
         }
-    }.apply { isDaemon = true; name = "voip-$tag" }
+    }.apply { isDaemon = true; name = "voip-${side.name}" }
 
     /** True when every sample in the chunk is exactly zero — the fingerprint of a silenced capture. */
     private fun isAllZero(buf: ByteArray): Boolean {
@@ -501,6 +583,10 @@ internal class VoipCaptureSession(
         private const val CHUNK_BYTES = CHUNK_FRAMES * 2     // mono PCM-16
         private const val QUEUE_CHUNKS = 400                 // ~8 s of slack per direction
         private const val CHUNK_WAIT_MS = 120L
+        /** A sync snapshot every this many file frames — 10 s; 60 lines an hour in the ring. */
+        private const val SNAPSHOT_FRAMES = SAMPLE_RATE * 10L
+        /** How often a side refreshes its HAL time fix; the fix drifts by nothing in a second. */
+        private const val TIMESTAMP_EVERY_CHUNKS = 50L
         private const val MAX_INPUT_SIZE = 16_384
         private const val DEQUEUE_TIMEOUT_US = 10_000L
         private const val END_OF_STREAM_TIMEOUT_US = 100_000L

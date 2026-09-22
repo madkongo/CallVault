@@ -1,0 +1,114 @@
+/*
+ * CallVault: FOSS call recording, self-contained over embedded ADB
+ *  Copyright (C) 2026-present The CallVault Authors
+ *  This software is licensed under the GNU General Public License v3 or later, with additional terms as permitted under Section 7.
+ *  The full license text is available in the LICENSE file at the root of this project.
+ *  This software is distributed WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+ */
+
+package com.baba.callvault.server
+
+import org.junit.Assert.assertEquals
+import org.junit.Assert.assertNull
+import org.junit.Assert.assertTrue
+import org.junit.Test
+
+/**
+ * The sync ledger of a VoIP capture: what it counts about the two sides and how it reports the
+ * offset between them, so that one call's log from a phone we do not have (issue #41) says which
+ * side moved, by how much, and why.
+ */
+class VoipSyncLedgerTest {
+
+    private val rate = 48_000
+    private val chunkFrames = 960
+
+    @Test
+    fun `a chunk's content time comes from the HAL timestamp when there is one`() {
+        // The HAL said frame 48_000 was captured at t=10 s; the chunk starting at frame 96_000 is
+        // therefore 1 s of audio later.
+        val side = VoipSyncLedger.Side("near", rate)
+        side.timestamp(framePosition = 48_000, nanos = 10_000_000_000L)
+        assertEquals(11_000_000_000L, side.contentNanos(frameIndex = 96_000, readAtNanos = 99L))
+        assertEquals("hal", side.timeSource)
+    }
+
+    @Test
+    fun `without a HAL timestamp the read time stands in, and the report says so`() {
+        val side = VoipSyncLedger.Side("far", rate)
+        assertEquals(5_000L, side.contentNanos(frameIndex = 96_000, readAtNanos = 5_000L))
+        assertEquals("read", side.timeSource)
+    }
+
+    @Test
+    fun `the offset is near content time minus far content time, in the file's own frame`() {
+        // Sign convention, fixed here because everything downstream reads it: POSITIVE means the
+        // near audio at a file position is NEWER than the far audio beside it — the far party sounds
+        // EARLY, which is what issue #41 reports.
+        val ledger = VoipSyncLedger(rate, chunkFrames)
+        ledger.paired(nearContentNanos = 2_000_000_000L, farContentNanos = 1_500_000_000L)
+        assertEquals(500L, ledger.lastOffsetMs)
+        ledger.paired(nearContentNanos = 3_000_000_000L, farContentNanos = 3_100_000_000L)
+        assertEquals(-100L, ledger.lastOffsetMs)
+        assertEquals(-100L, ledger.minOffsetMs)
+        assertEquals(500L, ledger.maxOffsetMs)
+    }
+
+    @Test
+    fun `a pair with a silence stand-in has no offset and does not disturb the extremes`() {
+        val ledger = VoipSyncLedger(rate, chunkFrames)
+        ledger.paired(nearContentNanos = 2_000_000_000L, farContentNanos = null)
+        assertNull(ledger.lastOffsetMs)
+        assertNull(ledger.minOffsetMs)
+    }
+
+    @Test
+    fun `every kind of loss is counted per side`() {
+        val ledger = VoipSyncLedger(rate, chunkFrames)
+        ledger.near.read(); ledger.near.read(); ledger.near.read()
+        ledger.far.read()
+        ledger.near.dropped()
+        ledger.far.substituted(); ledger.far.substituted()
+        ledger.near.zeroChunk(); ledger.near.retake(gapNanos = 600_000_000L)
+        assertEquals(3, ledger.near.chunksRead)
+        assertEquals(1, ledger.near.chunksDropped)
+        assertEquals(2, ledger.far.chunksSubstituted)
+        assertEquals(1, ledger.near.zeroChunks)
+        assertEquals(1, ledger.near.retakes)
+        assertEquals(600L, ledger.near.retakeGapTotalMs)
+    }
+
+    @Test
+    fun `the longest stall on each side is kept, not just the count`() {
+        // Ten stand-ins in a row is one 1.2 s stall (20 ms each at a 120 ms wait); ten spread over
+        // a call is jitter. The report needs to tell them apart.
+        val ledger = VoipSyncLedger(rate, chunkFrames)
+        repeat(3) { ledger.near.substituted() }
+        ledger.near.read()
+        repeat(5) { ledger.near.substituted() }
+        ledger.near.read()
+        assertEquals(5, ledger.near.longestStallChunks)
+    }
+
+    @Test
+    fun `the snapshot line carries everything a reader needs, on one line`() {
+        val ledger = VoipSyncLedger(rate, chunkFrames)
+        ledger.near.read(); ledger.far.read()
+        ledger.paired(nearContentNanos = 1_050_000_000L, farContentNanos = 1_000_000_000L)
+        val line = ledger.snapshot(fileFrames = 48_000L, wallNanos = 1_100_000_000L, nearQueued = 1, farQueued = 7)
+        listOf("t=1.0s", "wall=1.1s", "offset=+50ms", "near{", "far{", "read=1", "q=7", "sub=0", "drop=0").forEach {
+            assertTrue("snapshot must carry '$it': $line", line.contains(it))
+        }
+    }
+
+    @Test
+    fun `the summary names the offset's drift over the call`() {
+        val ledger = VoipSyncLedger(rate, chunkFrames)
+        ledger.paired(nearContentNanos = 1_000_000_000L, farContentNanos = 1_000_000_000L)
+        ledger.paired(nearContentNanos = 61_000_000_000L, farContentNanos = 60_200_000_000L)
+        val line = ledger.summary(fileFrames = 48_000L * 60, wallNanos = 60_500_000_000L)
+        listOf("first=+0ms", "last=+800ms", "min=+0ms", "max=+800ms", "file=60.0s", "wall=60.5s").forEach {
+            assertTrue("summary must carry '$it': $line", line.contains(it))
+        }
+    }
+}

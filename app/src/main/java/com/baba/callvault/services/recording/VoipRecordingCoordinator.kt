@@ -451,6 +451,13 @@ object VoipRecordingCoordinator {
         isSuspendedForCarrierCall = false
         runCatching { RecorderConnection.service?.stopRecording() }
             .onFailure { AppLogger.w(TAG, "stopRecording failed: ${it.message}") }
+        // The capture's own account of how its two sides lined up, written to the APP's log — the
+        // same route the carrier path uses — so a report carries it even when the host's ring was
+        // not on for the whole call. Issue #41 is diagnosed from this line. Empty from an older host.
+        runCatching { RecorderConnection.service?.captureDiagnostics() }
+            .getOrNull()
+            ?.takeIf { it.isNotBlank() }
+            ?.let { AppLogger.i(TAG, "App-call capture health: $it") }
 
         // A recording where the far party was never audible is one-sided. Say so now rather than let it
         // be discovered weeks later — the app may have opted out of capture, or this OEM build may not
