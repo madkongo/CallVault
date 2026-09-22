@@ -1,8 +1,8 @@
 # 2026-09-22 — contact names for VoIP calls: why the OP9 gets none, and what else could give them
 
 Status: **🧪 VERIFYING** — cause found by reading AOSP, confirmed on both phones, fix built on
-`fix/voip-caller-name-android14` (last section). Not yet seen working on a phone: the OP9 is in Shizuku mode,
-which records no VoIP calls, so the Android 14 path needs the OP9 in built-in mode for one WhatsApp call.
+`fix/voip-caller-name-android14`, and one WhatsApp call on the OP9 (Android 14, built-in mode) came out
+NAMED at 12:17 (last section). Waiting on the maintainer to see it in the app.
 
 ## The report
 
@@ -110,3 +110,12 @@ The OP12 (old build, Android 16) recorded both calls with names, as it has 18 ti
 capture** (no audio policy registered there; the OP12 shows one). So the Android 14 fix has NOT been seen
 to work on a phone: it needs an Android 14 phone in built-in mode, i.e. the OP9 switched over for one call.
 The probe script's first version grepped the ringer-mode line and never fired; fixed to `Actual mode =`.
+
+## Measured on the OP9 in built-in mode, 12:17 (🧪 by the assistant; the maintainer has not opened it)
+
+The maintainer switched the OP9 to built-in mode (`1 AudioMix` registered) and made a WhatsApp call. The
+OP9 published **`20260922_121732.336+0300_voip-WhatsApp_פרוזה.ogg`** (127 KB) — named, on the Android 14
+phone where 5 of the 6 earlier WhatsApp recordings had no name. Whether the first lookup or a retry found it
+is unknown: this ROM keeps no `CV:` lines in logcat and the probe script did not fire a second time (its
+mode poll never matched; not chased). Still owed: the maintainer's own look at the row in the app, and a
+Telegram or Signal call on Android 14 — the same parser, but the name sits in `android.text` for Telegram.
