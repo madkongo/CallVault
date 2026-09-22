@@ -225,6 +225,14 @@ open class RecorderServiceImpl(private val apkPath: String) : IRecorderService.S
             .onFailure { AppLogger.d(TAG, "voipCallerName failed: ${it.message}") }
             .getOrNull()
 
+    override fun voipCallAnswered(packageName: String?): Int =
+        when (packageName?.let { VoipCallerName.answerState(it) } ?: VoipCallerName.AnswerState.NO_NOTIFICATION) {
+            VoipCallerName.AnswerState.ANSWERED -> VOIP_ANSWERED
+            VoipCallerName.AnswerState.RINGING -> VOIP_RINGING
+            VoipCallerName.AnswerState.NO_TIMER -> VOIP_NO_TIMER
+            VoipCallerName.AnswerState.NO_NOTIFICATION -> VOIP_NO_NOTIFICATION
+        }
+
     override fun voipFarPartyHeard(): Boolean = lastVoipSession?.farPartyHeard ?: false
 
     /**
@@ -489,6 +497,12 @@ open class RecorderServiceImpl(private val apkPath: String) : IRecorderService.S
          * demo `IUserService.aidl` (`void destroy() = 16777114;`) on 2026-08-24.
          */
         const val SHIZUKU_DESTROY_TRANSACTION = 16777114
+
+        /** [voipCallAnswered] answers; the binder carries an int, so the enum stops here. */
+        const val VOIP_ANSWERED = 1
+        const val VOIP_RINGING = 0
+        const val VOIP_NO_TIMER = -1
+        const val VOIP_NO_NOTIFICATION = -2
 
         /**
          * How to recognise a CallVault recorder process, of either kind.

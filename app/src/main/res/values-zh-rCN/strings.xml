@@ -182,7 +182,7 @@
     <string name="settings_auto_record_incoming">被叫自动录音</string>
     <string name="settings_auto_record_outgoing">主叫自动录音</string>
     <string name="settings_record_from_answer">对方接听后再开始</string>
-    <string name="settings_record_from_answer_description">去电从对方接听的那一刻开始录音，而不是从拨号开始。仅限电话通话——应用通话没有接听信号。</string>
+    <string name="settings_record_from_answer_description">去电从对方接听的那一刻开始录音，而不是从拨号开始。应用通话也一样，只要应用在通知中显示通话计时（WhatsApp 会显示）。</string>
     <string name="settings_bugreport_active_warning">调试日志已开启。完成后请记得关闭以节省空间。</string>
     <string name="settings_bugreport_share">分享</string>
     <string name="settings_bugreport_share_chooser">分享调试日志</string>

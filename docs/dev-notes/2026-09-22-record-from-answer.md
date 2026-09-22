@@ -85,15 +85,39 @@ locale-independent, on the notification the host already reads with `cmd notific
 caller's name. The audio players are no signal: the voice track is started from the dial and carries the
 ringback. 🧪 Telegram and Signal not yet looked at.
 
-Design if built: the VoIP capture still starts at the audio-mode flip (arming cannot be retried) but is
-held **paused** (`setVoipPaused`, drops frames, never touches the mic) while the host is polled every
-500 ms; unpause at `showChronometer=true`. A notification without the flag at all means "this app does
-not say" → unpause at once; the same 120 s ceiling applies. Direction-free: the timer starts at
-connect for incoming calls too. The file name keeps the dial time.
+**Built the same afternoon** (`feat/record-on-answer-voip`, same toggle): the VoIP capture still starts
+at the audio-mode flip (arming cannot be retried) but is held **paused** (`setVoipPaused`, drops frames,
+never touches the mic) while the host is polled every 500 ms through the new `voipCallAnswered(package)`
+— appended LAST in the AIDL, transaction codes are positional; `RecorderTransactionCodesTest` pins it.
+Released at ANSWERED. UNKNOWN (no timer flag, no notification, an older host) releases at once; the
+same 120 s ceiling applies. The user's Pause outranks the release; their Resume ends the hold.
+Direction-free: the timer starts at connect for incoming calls too. The file name keeps the dial time.
+
+**First real call, OP9, 2026-09-22 13:36, WhatsApp to the OP12 (🧪 file not yet listened to):**
+
+```
+13:36:34.062  App-call recording held until the call is answered
+13:36:46.845  App-call recording released after 17 polls: call answered (13055ms)
+13:36:55.837  VoIP capture finished: 8s, 6 silence-filled chunks, farPartyHeard=true
+```
+
+The file is **8.4 s** for a 22 s call; the 13:28 probe call, recorded from the dial by the previous
+build, is 21.8 s. Named פרוזה (the late-caller retry ran alongside the hold).
+
+**Unanswered app call, first try (13:39) — ❌ a 6 KB stub was published.** At hang-up WhatsApp removes
+its notification BEFORE the audio mode drops, so the poll read "no timer" → released → the last 1.5 s
+went into a file. Fixed `b82eef03`: the host tells NO_NOTIFICATION from NO_TIMER; once ringing has been
+seen only ANSWERED (or the 120 s ceiling) releases; a notification not posted yet gets 5 s of grace; and
+a recording that ends while still held is discarded (`454f5582`).
+**Second try (13:56):** held at 13:56:29, rang 14 s, hung up → "App call ended before it was answered;
+discarding the held recording"; no file. As designed.
+
+Still 🧪: the maintainer's ear on the 13:36 file, Telegram and Signal (NO_TIMER → recorded from the
+start, which is the safe answer but not the feature), an incoming app call.
 
 ## Not covered
 
-- App calls: see above — possible, not built.
+- App calls whose notification shows no call timer: recorded from the start, as before the option.
 - Incoming calls: unaffected by design — OFFHOOK *is* the answer there.
 - A call started from the Record prompt (automatic recording off): unaffected; the button is pressed
   after the dial anyway.

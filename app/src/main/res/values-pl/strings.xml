@@ -182,7 +182,7 @@
     <string name="settings_auto_record_incoming">Automatyczne nagrywaj połączenia przychodzące</string>
     <string name="settings_auto_record_outgoing">Automatyczne nagrywaj połączenia wychodzące</string>
     <string name="settings_record_from_answer">Zacznij po odebraniu</string>
-    <string name="settings_record_from_answer_description">Wychodzące połączenia telefoniczne są nagrywane od chwili, gdy rozmówca odbierze, a nie od wybrania numeru. Tylko połączenia telefoniczne — połączenia z aplikacji nie sygnalizują odebrania.</string>
+    <string name="settings_record_from_answer_description">Wychodzące połączenia telefoniczne są nagrywane od chwili, gdy rozmówca odbierze, a nie od wybrania numeru. Połączenia z aplikacji również, gdy aplikacja pokazuje licznik czasu rozmowy w powiadomieniu (WhatsApp to robi).</string>
     <string name="settings_bugreport_active_warning">Rejestrowanie diagnostyczne jest WŁĄCZONE. Pamiętaj, aby je wyłączyć po zakończeniu, aby zaoszczędzić miejsce.</string>
     <string name="settings_bugreport_share">Udostępnij</string>
     <string name="settings_bugreport_share_chooser">Udostępnij logi diagnostyczne</string>

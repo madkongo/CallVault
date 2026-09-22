@@ -271,7 +271,7 @@
     <string name="settings_auto_record_incoming">Automatically record incoming calls</string>
     <string name="settings_auto_record_outgoing">Automatically record outgoing calls</string>
     <string name="settings_record_from_answer">Start when they answer</string>
-    <string name="settings_record_from_answer_description">Outgoing phone calls are recorded from the moment the other person picks up, not from the dial. Phone calls only — app calls have no answer signal.</string>
+    <string name="settings_record_from_answer_description">Outgoing phone calls are recorded from the moment the other person picks up, not from the dial. App calls too, when the app shows a call timer on its notification (WhatsApp does).</string>
     <string name="settings_ignore_anonymous_incoming">Ignore anonymous incoming calls</string>
     <string name="settings_ignore_cross_country_incoming">Ignore cross-country incoming calls</string>
     <string name="settings_ignore_cross_country_outgoing">Ignore cross-country outgoing calls</string>
