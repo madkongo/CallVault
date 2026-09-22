@@ -293,4 +293,14 @@ interface IRecorderService {
      * understanding every method above.
      */
     String hostApkPath();
+
+    /**
+     * Whether the given package's call has been answered, from the call timer on its ongoing
+     * notification: 1 answered, 0 still ringing, -1 when the app does not say (no ongoing
+     * notification, or one without the timer flag). Polled by "start when they answer".
+     *
+     * Appended last: transaction codes are positional, and an older host must keep answering the
+     * codes it knows (see RecorderTransactionCodesTest).
+     */
+    int voipCallAnswered(String packageName);
 }

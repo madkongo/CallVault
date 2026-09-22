@@ -182,7 +182,7 @@
     <string name="settings_auto_record_incoming">Автоматическая запись входящий вызовов</string>
     <string name="settings_auto_record_outgoing">Автоматическая запись исходящий вызовов</string>
     <string name="settings_record_from_answer">Начинать после ответа</string>
-    <string name="settings_record_from_answer_description">Исходящие телефонные звонки записываются с момента, когда собеседник ответит, а не с набора номера. Только телефонные звонки — звонки через приложения не сообщают об ответе.</string>
+    <string name="settings_record_from_answer_description">Исходящие телефонные звонки записываются с момента, когда собеседник ответит, а не с набора номера. Звонки через приложения тоже, если приложение показывает таймер звонка в уведомлении (WhatsApp показывает).</string>
     <string name="settings_bugreport_active_warning">Отладочное логирование ВКЛЮЧЕНО. Не забудьте выключить его по завершении, чтобы сэкономить место.</string>
     <string name="settings_bugreport_share">Поделиться</string>
     <string name="settings_bugreport_share_chooser">Отправить отладочные журналы</string>

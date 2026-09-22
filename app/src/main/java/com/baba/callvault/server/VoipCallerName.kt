@@ -45,6 +45,7 @@ internal object VoipCallerName {
 
     /** Android 14 and earlier print the flags as a number; 15+ as words. Both are checked. */
     private val HEX_FLAGS_REGEX = Regex("""flags=0x([0-9a-fA-F]+)""")
+    private val CHRONOMETER_REGEX = Regex("""android\.showChronometer=Boolean \((true|false)\)""")
     private const val FLAG_ONGOING_EVENT = 0x2
 
     /**
@@ -59,6 +60,38 @@ internal object VoipCallerName {
         val dump = readPackageRecords(packageName) ?: readNotificationDump() ?: return null
         extractFromDump(dump, packageName)
     }.onFailure { AppLogger.d(TAG, "Caller lookup failed: ${it.message}") }.getOrNull()
+
+    /** Whether the call behind [packageName]'s ongoing notification has been picked up. */
+    enum class AnswerState { ANSWERED, RINGING, UNKNOWN }
+
+    /**
+     * Whether [packageName]'s call is answered, read from the call timer on its notification.
+     *
+     * Measured 2026-09-22 on the OP9 (WhatsApp): through the ringing the ongoing notification says
+     * "Ringing…" with `android.showChronometer=Boolean (false)`; at the pickup it becomes "Ongoing
+     * voice call" with the flag true. The flag is the platform's (`EXTRA_SHOW_CHRONOMETER`), so it
+     * is read instead of the text, which belongs to the app and the locale. Blocking, like [resolve].
+     */
+    fun answerState(packageName: String): AnswerState = runCatching {
+        val dump = readPackageRecords(packageName) ?: readNotificationDump() ?: return AnswerState.UNKNOWN
+        extractAnswerState(dump, packageName)
+    }.onFailure { AppLogger.d(TAG, "Answer lookup failed: ${it.message}") }.getOrDefault(AnswerState.UNKNOWN)
+
+    /**
+     * [AnswerState] from [packageName]'s first ongoing record that carries the timer flag at all;
+     * [AnswerState.UNKNOWN] when none does — an app that shows no timer never says, and the caller
+     * treats that as "record now", never as "keep waiting".
+     */
+    internal fun extractAnswerState(dump: String, packageName: String): AnswerState {
+        if (packageName.isBlank()) return AnswerState.UNKNOWN
+        for (record in dump.split("NotificationRecord(")) {
+            if (!record.contains("pkg=$packageName ")) continue
+            if (!isOngoing(record)) continue
+            val running = CHRONOMETER_REGEX.find(record)?.groupValues?.get(1) ?: continue
+            return if (running == "true") AnswerState.ANSWERED else AnswerState.RINGING
+        }
+        return AnswerState.UNKNOWN
+    }
 
     /**
      * Finds [packageName]'s ongoing notification and reads the contact from it.

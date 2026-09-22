@@ -23,6 +23,7 @@ import com.baba.callvault.data.health.record
 import com.baba.callvault.integrations.scrcpy.ScrcpyAudioCodec
 import com.baba.callvault.server.IRecorderService
 import com.baba.callvault.server.RecorderConnection
+import com.baba.callvault.server.RecorderServiceImpl
 import com.baba.callvault.system.storage.SafHelper
 import com.baba.callvault.data.recordings.RecordingCatalog
 import com.baba.callvault.data.waveform.RecordingExtrasRepository
@@ -82,6 +83,11 @@ object VoipRecordingCoordinator {
     /** A caller learned after the recording started; goes into the name at publish. See [VoipLateCaller]. */
     @Volatile private var lateCaller: String? = null
     private var lateCallerJob: Job? = null
+
+    /** "Start when they answer": the poll that holds the encode until the app's call timer runs. */
+    private var answerHoldJob: Job? = null
+    /** True while the encode is held for the answer; the user's own pause is [paused]. */
+    @Volatile private var heldForAnswer = false
     @Volatile private var codecMime: String = "audio/ogg"
 
     /** Starts a VoIP recording. No-op when the feature is off, already recording, or unavailable. */
@@ -177,6 +183,56 @@ object VoipRecordingCoordinator {
         // instant the audio mode flipped. Ask again a few times into the call; the file is only
         // published at the end, so a late answer still names it.
         if (caller == null && callPackage != null) lateCallerJob = askAgainForCaller(callPackage)
+        answerHoldJob?.cancel()
+        heldForAnswer = false
+        // The capture had to open now; what waits for the pickup is the encode. See VoipAnswerHold.
+        if (callPackage != null && prefs.isRecordFromAnswerEnabled()) answerHoldJob = holdUntilAnswered(context, callPackage)
+    }
+
+    private fun holdUntilAnswered(context: Context, callPackage: String): Job = CoroutineScope(Dispatchers.IO).launch {
+        val startedAt = System.currentTimeMillis()
+        var polls = 0
+        while (recording) {
+            val answered = runCatching { RecorderConnection.service?.voipCallAnswered(callPackage) }.getOrNull()
+            val elapsed = System.currentTimeMillis() - startedAt
+            polls++
+            if (VoipAnswerHold.decide(answered, elapsed) == VoipAnswerHold.Decision.RELEASE) {
+                val why = when {
+                    answered == null -> "the host has no answer to give (older daemon?)"
+                    answered == RecorderServiceImpl.VOIP_ANSWER_UNKNOWN -> "this app's notification shows no call timer"
+                    answered == RecorderServiceImpl.VOIP_RINGING -> "held ${elapsed / 1000}s without an answer"
+                    else -> "call answered"
+                }
+                if (heldForAnswer) {
+                    holdEncode(context, false)
+                    AppLogger.i(TAG, "App-call recording released after $polls polls: $why (${elapsed}ms)")
+                } else {
+                    AppLogger.i(TAG, "App-call recording not held: $why")
+                }
+                return@launch
+            }
+            if (!heldForAnswer) {
+                holdEncode(context, true)
+                AppLogger.i(TAG, "App-call recording held until the call is answered")
+            }
+            delay(VoipAnswerHold.POLL_MS)
+        }
+    }
+
+    /**
+     * Holds or releases the encode for the answer wait, through the same binder pause the user's
+     * Pause button uses. The user's own pause outranks a release: a recording they paused while it
+     * was held stays paused when the call is answered.
+     */
+    @Synchronized
+    private fun holdEncode(context: Context, hold: Boolean) {
+        if (!recording) return
+        heldForAnswer = hold
+        if (!hold && paused) return
+        runCatching { RecorderConnection.service?.setVoipPaused(hold) }
+            .onFailure { AppLogger.w(TAG, "setVoipPaused for the answer hold failed: ${it.message}") }
+        if (hold) clock.pause() else clock.resume()
+        VoipRecordingNotification.show(context, currentAppLabel, PendingFlags.count(), paused || hold)
     }
 
     private fun askAgainForCaller(callPackage: String): Job = CoroutineScope(Dispatchers.IO).launch {
@@ -317,6 +373,14 @@ object VoipRecordingCoordinator {
         if (!ok) return
 
         paused = pause
+        // Resume pressed while the encode is held for the answer: the user has decided to record
+        // now, so the hold is over rather than re-applied on the next poll.
+        if (!pause && heldForAnswer) {
+            heldForAnswer = false
+            answerHoldJob?.cancel()
+            answerHoldJob = null
+            AppLogger.i(TAG, "App-call recording released by the user before the answer")
+        }
         // The clock follows the encode, or every mark placed after a pause lands late in the file by
         // the length of that pause — the same rule the carrier path follows.
         if (pause) clock.pause() else clock.resume()
@@ -365,6 +429,9 @@ object VoipRecordingCoordinator {
         pending = null
         lateCallerJob?.cancel()
         lateCallerJob = null
+        answerHoldJob?.cancel()
+        answerHoldJob = null
+        heldForAnswer = false
         val caller = lateCaller
         lateCaller = null
         // Straight away, not after the file work below: the controls describe a recording that has

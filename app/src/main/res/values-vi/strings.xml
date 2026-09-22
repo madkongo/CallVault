@@ -182,7 +182,7 @@
     <string name="settings_auto_record_incoming">Tự động ghi âm cuộc gọi đến</string>
     <string name="settings_auto_record_outgoing">Tự động ghi âm cuộc gọi đi</string>
     <string name="settings_record_from_answer">Bắt đầu khi họ bắt máy</string>
-    <string name="settings_record_from_answer_description">Cuộc gọi điện thoại đi được ghi từ lúc người kia bắt máy, không phải từ lúc quay số. Chỉ áp dụng cho cuộc gọi điện thoại — cuộc gọi qua ứng dụng không báo khi được trả lời.</string>
+    <string name="settings_record_from_answer_description">Cuộc gọi điện thoại đi được ghi từ lúc người kia bắt máy, không phải từ lúc quay số. Cuộc gọi qua ứng dụng cũng vậy, khi ứng dụng hiển thị đồng hồ cuộc gọi trên thông báo (WhatsApp có).</string>
     <string name="settings_bugreport_active_warning">Ghi nhật ký gỡ lỗi đang BẬT. Hãy nhớ tắt khi xong để tiết kiệm dung lượng.</string>
     <string name="settings_bugreport_share">Chia sẻ</string>
     <string name="settings_bugreport_share_chooser">Chia sẻ nhật ký gỡ lỗi</string>

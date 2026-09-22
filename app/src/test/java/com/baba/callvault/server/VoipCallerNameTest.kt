@@ -33,6 +33,7 @@ class VoipCallerNameTest {
         text: String = "tap to return to the call",
         ongoing: Boolean = true,
         category: String? = null,
+        chronometer: Boolean? = null,
     ) = """
         NotificationRecord(0x01: pkg=$pkg user=UserHandle{0} id=201 tag=null
           Notification(channel=Other flags=${if (ongoing) "ONGOING_EVENT|NO_CLEAR|FOREGROUND_SERVICE" else "0"})
@@ -40,8 +41,48 @@ class VoipCallerNameTest {
           extras={
                 android.title=String ($title)
                 android.text=String ($text)
+                ${chronometer?.let { "android.showChronometer=Boolean ($it)" } ?: ""}
           }
     """.trimIndent()
+
+    // --- "Start when they answer" for app calls: the call timer on the notification -----------------
+    //
+    // Measured 2026-09-22 on the OP9 (WhatsApp 2.26.36.74): through 13 s of ringing the ongoing
+    // notification said "Ringing…" with android.showChronometer=Boolean (false); at the pickup it
+    // became "Ongoing voice call" with showChronometer=Boolean (true). The flag is the platform's, so
+    // it is read rather than the text, which is the app's and the locale's.
+
+    @Test
+    fun `a call notification whose timer is not running is still ringing`() {
+        val dump = record("com.whatsapp", "Feroza", text = "Ringing…", chronometer = false)
+        assertEquals(VoipCallerName.AnswerState.RINGING, VoipCallerName.extractAnswerState(dump, "com.whatsapp"))
+    }
+
+    @Test
+    fun `a call notification with a running timer is answered`() {
+        val dump = record("com.whatsapp", "Feroza", text = "Ongoing voice call", chronometer = true)
+        assertEquals(VoipCallerName.AnswerState.ANSWERED, VoipCallerName.extractAnswerState(dump, "com.whatsapp"))
+    }
+
+    @Test
+    fun `an app whose notification carries no timer flag does not say`() {
+        // Nothing to wait for: the caller treats UNKNOWN as "record now", never as "keep waiting".
+        val dump = record("org.telegram.messenger", "Ongoing Telegram call", text = "Feroza")
+        assertEquals(VoipCallerName.AnswerState.UNKNOWN, VoipCallerName.extractAnswerState(dump, "org.telegram.messenger"))
+    }
+
+    @Test
+    fun `no ongoing notification for the package does not say either`() {
+        assertEquals(VoipCallerName.AnswerState.UNKNOWN, VoipCallerName.extractAnswerState("", "com.whatsapp"))
+        val chat = record("com.whatsapp", "Feroza", text = "hi", ongoing = false, chronometer = true)
+        assertEquals(VoipCallerName.AnswerState.UNKNOWN, VoipCallerName.extractAnswerState(chat, "com.whatsapp"))
+    }
+
+    @Test
+    fun `the timer flag of another app's notification is not read`() {
+        val other = record("org.telegram.messenger", "Ongoing Telegram call", chronometer = true)
+        assertEquals(VoipCallerName.AnswerState.UNKNOWN, VoipCallerName.extractAnswerState(other, "com.whatsapp"))
+    }
 
     @Test
     fun `reads the caller from the title when the app puts it there`() {
