@@ -7,6 +7,16 @@ All notable changes to CallVault are documented here. The format is based on
 
 ### Fixed
 
+- **App-call recordings stay in sync (#41).** In WhatsApp and other app calls the two sides — your
+  microphone and the other person's voice — are captured separately and combined, and until now they
+  were combined in the order they arrived. On phones that keep taking the microphone away and giving it
+  back during a call, your side kept stalling and the other person drifted later and later — more than
+  six seconds by the end of a two-minute call on a Galaxy S21 Ultra. The two sides are now combined by
+  the moment each was captured, so a stall on one side leaves a gap on that side and never moves the
+  other. Present since app-call recording was introduced.
+  <!-- 🧪 VERIFYING as of 2026-09-23: measured flat (−8…+10 ms over 40 s with 20 mic re-takes) on the OP9;
+       not yet heard by the maintainer, not yet on the reporter's phone. -->
+
 - **Typing a note works again.** The note field on a recording's page was being redrawn from the
   database after every keystroke, so fast typing lost letters or swapped them, and nothing said the
   note had been kept — it read as "you cannot save a note". The field now keeps what you type, saves
