@@ -85,7 +85,35 @@ alone (`App-call capture health`) is still worth having.
 - `ts=read` on either side → that phone gives no HAL timestamp; the offset is then read-time based and
   worth less; the counters still hold.
 
-## The fix, when the log has spoken (step 2, not built)
+## The reporter's log — 2026-09-22 20:33, Galaxy S21 Ultra (SM-G998U1), Android 15, WhatsApp Business 2.26.36.72
+
+Two-minute outgoing call, earpiece at the start, **speaker from 5 s**, `ts=hal` on both sides.
+
+```
+t=10s  offset=+761ms   near{read=496  zero=336  retake=18/1191ms}  far{q=38}
+t=60s  offset=+3422ms  near{read=2996 zero=1698 retake=89/4304ms}  far{q=172}
+t=120s offset=+5922ms  near{read=5993 zero=3094 retake=155/7215ms} far{q=320}
+summary file=120.7s wall=127.2s offset first=+26ms last=+6418ms  near{sub=7 drop=0} far{sub=0 drop=0}
+```
+
+1. **The drift is linear and huge: +6.4 s over two minutes**, ~50 ms per second of call. No drops, seven
+   stand-ins: it is the by-arrival pairing consuming the far queue at the near side's pace while the
+   near side keeps stalling. The far backlog (q=320 = 6.4 s) is the same number seen from the queue.
+2. **155 mic re-takes in 120 s, 310 with the silencing lines, 14.4 s of re-take gaps, and 3094 of 6028
+   near chunks all-zero** — half of the reporter's own voice is digital silence. The re-take and
+   WhatsApp's own restart ping-pong: silenced → we re-take (~45 ms) → ~300 ms later silenced again.
+   The July measurement (10 in 50 s on an S24 FE) was the mild form of this.
+3. **Sign.** Measured: the far tap lands LATE (+). Reported: the far party sounds EARLY. Speakerphone
+   from 5 s explains it: the mic hears the far party acoustically, in step with the reporter's own
+   words, and the tap's copy — full-scale, `peak far=32768`, i.e. clipping — trails by the drift. He
+   hears them once in time and once late, and calls the loud late copy "them". Same drift, same fix.
+4. Route: earpiece → speaker at 5 s; mixer output thread on the speaker with ave write latency 131 ms
+   (the "Start latency" numbers were eaten by the log redactor — they look like phone numbers).
+
+**What 2.4.2 fixes:** the pairing (below). **What it does not:** the re-take storm and the half-silent
+near side, which the reporter had in 2.4.0 too and did not report; scoped separately.
+
+## The fix (step 2, 2.4.2)
 
 Pair by content time instead of arrival: walk the file in 20 ms slots of real time, take each side's
 chunk for the slot, pad a gap with silence and discard surplus, so start latency, stalls, re-takes and
