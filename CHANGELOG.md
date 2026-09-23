@@ -21,8 +21,6 @@ All notable changes to CallVault are documented here. The format is based on
   database after every keystroke, so fast typing lost letters or swapped them, and nothing said the
   note had been kept — it read as "you cannot save a note". The field now keeps what you type, saves
   a moment after you stop, and says **Saved** beside its title. Present since 2.2.0; reported on 2.4.1.
-  <!-- 🧪 VERIFYING as of 2026-09-22: reproduced and fixed on the emulator (adb-typed text intact,
-       DB holds it); not yet typed on a phone keyboard. See docs/dev-notes/2026-09-22-note-draft.md. -->
 
 ## [2.4.1] — 2026-09-22
 

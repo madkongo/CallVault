@@ -1,9 +1,7 @@
 # The note field lost letters — 2026-09-22
 
-🧪 VERIFYING as of 2026-09-22 evening: reproduced on the emulator (2.4.1 debug build), fixed, the fix
-measured on the emulator; not yet typed on a phone keyboard. To settle: on the OP12, open a recording,
-type a sentence quickly into the note, see every letter and "Saved" beside the title, leave and come
-back, the note is there.
+✅ VERIFIED 2026-09-23 by the maintainer on the OP12 ("tested the note and its fine"). Reproduced on the
+emulator (2.4.1 debug build) the evening before, fixed, measured there first.
 
 ## The report
 
