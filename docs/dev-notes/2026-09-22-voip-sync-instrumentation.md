@@ -100,8 +100,10 @@ summary file=120.7s wall=127.2s offset first=+26ms last=+6418ms  near{sub=7 drop
    stand-ins: it is the by-arrival pairing consuming the far queue at the near side's pace while the
    near side keeps stalling. The far backlog (q=320 = 6.4 s) is the same number seen from the queue.
 2. **155 mic re-takes in 120 s, 310 with the silencing lines, 14.4 s of re-take gaps, and 3094 of 6028
-   near chunks all-zero** — half of the reporter's own voice is digital silence. The re-take and
-   WhatsApp's own restart ping-pong: silenced → we re-take (~45 ms) → ~300 ms later silenced again.
+   near chunks all-zero** — ~~half of the reporter's own voice is digital silence. The re-take and
+   WhatsApp's own restart ping-pong: silenced → we re-take (~45 ms) → ~300 ms later silenced again.~~
+   **Wrong, 2026-09-23:** inferred from our own log line, never from the platform. The zeros are most
+   likely pauses; the re-take chain is ours. See `2026-09-23-voip-near-side-zeros.md`.
    The July measurement (10 in 50 s on an S24 FE) was the mild form of this.
 3. **Sign.** Measured: the far tap lands LATE (+). Reported: the far party sounds EARLY. Speakerphone
    from 5 s explains it: the mic hears the far party acoustically, in step with the reporter's own
@@ -143,5 +145,7 @@ are the same length (2149 vs 2045+103), nothing was discarded. Before the fix th
 +96 → +650 ms in 20 s with five re-takes.
 
 **Still open, and now the bigger problem:** `zero=595` of 2045 near chunks on the OP9 (29 %), 3094 of 6028
-on the reporter's Galaxy (51 %): the mic re-take and WhatsApp's own capture restart fight for the mic,
-and the user's own voice is silence for that share of the call. Not a sync fault; scoped separately.
+on the reporter's Galaxy (51 %): ~~the mic re-take and WhatsApp's own capture restart fight for the mic,
+and the user's own voice is silence for that share of the call.~~ **Wrong, 2026-09-23:** on the OP9
+`dumpsys audio` shows no silencing and no WhatsApp restart in that call; the zeros are mostly pauses and
+the real loss is our own re-take gaps. See `2026-09-23-voip-near-side-zeros.md`. Not a sync fault.

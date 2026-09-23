@@ -150,3 +150,10 @@ arbitration reports about it. Winning the mic does not cost the user their conve
 
 4. **Do not** re-start our capture on detecting silence to win arbitration back — it would fight the
    VoIP app for the mic during a call, and losing that fight degrades the user's actual conversation.
+
+## 2026-09-23 — the re-take's trigger is too broad
+
+On phones where WhatsApp captures with `VOICE_COMMUNICATION` (OP9, OP12) there is no arbitration to
+lose, yet the 15-zero-chunk trigger still fires through every pause and re-opens the mic in chains.
+The re-take remains right for the case measured here (WhatsApp on `src:MIC`); what is wrong is
+deciding "silenced" from zeros alone. See `2026-09-23-voip-near-side-zeros.md`.
