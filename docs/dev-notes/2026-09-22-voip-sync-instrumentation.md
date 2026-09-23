@@ -113,9 +113,35 @@ summary file=120.7s wall=127.2s offset first=+26ms last=+6418ms  near{sub=7 drop
 **What 2.4.2 fixes:** the pairing (below). **What it does not:** the re-take storm and the half-silent
 near side, which the reporter had in 2.4.0 too and did not report; scoped separately.
 
-## The fix (step 2, 2.4.2)
+## The fix (step 2, 2.4.2) — `fix/voip-slot-pairing`, `b54c2b8f`
 
-Pair by content time instead of arrival: walk the file in 20 ms slots of real time, take each side's
-chunk for the slot, pad a gap with silence and discard surplus, so start latency, stalls, re-takes and
-clock drift are all one case and the two sides cannot drift. Then correct a constant tap-to-ear offset
-by delaying the far side by the mixer latency on the active route. Unit-testable with synthetic streams.
+🧪 VERIFYING as of 2026-09-23 10:36: measured on the OP9, not yet heard by the maintainer, not yet on the
+reporter's Galaxy. To settle: the maintainer listens to `20260923_1036…_voip-WhatsApp` on the OP9 (the
+far party in step with his own words), then the reporter's 2.4.2 log shows `offset` flat and `disc=0`.
+
+`SlotPairer`: the file is a run of 20 ms slots of real time. For each slot each side contributes the
+chunk whose capture time (HAL `getTimestamp`, or the read moment less a latency learned from the last
+fix) falls in it; silence where its next chunk is later; a chunk older than the slot is discarded. The
+file runs 250 ms behind real time (`GRACE_NANOS`) so a chunk still in a record buffer is not silenced.
+The first slot is the earlier of the two first captures. Six `SlotPairerTest`s, including a scripted
+1 s near stall that leaves every far chunk in its own slot.
+
+**Measured on the OP9, 2026-09-23 10:36, WhatsApp to the OP12, 40 s, earpiece:**
+
+```
+first far chunk 163ms / first near chunk 238ms / file anchored 102ms after start
+t=10s offset=+1ms  near{sub=15  disc=0 q=11 zero=133 retake=2/225ms}  far{q=11}
+t=20s offset=-2ms  near{sub=34  disc=0 q=11 zero=295 retake=6/678ms}  far{q=11}
+t=30s offset=-3ms  near{sub=66  disc=0 q=12 zero=445 retake=13/1462ms} far{q=11}
+t=40s offset=-1ms  near{sub=103 disc=0 q=10 zero=595 retake=20/2272ms} far{q=11}
+summary file=40.5s wall=43.1s offset first=-8ms last=-1ms min=-8ms max=+10ms  far{read=2149} near{read=2045 sub=103}
+```
+
+Twenty re-takes, 2.3 s of gaps, and the far party did not move: the far queue sits at the grace (11
+chunks) instead of growing, near got 103 silence slots for the audio it did not have, the two timelines
+are the same length (2149 vs 2045+103), nothing was discarded. Before the fix the same phone drifted
++96 → +650 ms in 20 s with five re-takes.
+
+**Still open, and now the bigger problem:** `zero=595` of 2045 near chunks on the OP9 (29 %), 3094 of 6028
+on the reporter's Galaxy (51 %): the mic re-take and WhatsApp's own capture restart fight for the mic,
+and the user's own voice is silence for that share of the call. Not a sync fault; scoped separately.

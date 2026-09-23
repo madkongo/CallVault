@@ -23,7 +23,6 @@ import com.baba.callvault.utils.AppLogger
 import com.baba.callvault.utils.PcmDownmix
 import java.util.concurrent.ArrayBlockingQueue
 import java.util.concurrent.BlockingQueue
-import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicBoolean
 
 /**
@@ -43,14 +42,13 @@ import java.util.concurrent.atomic.AtomicBoolean
  * encoder, matching what [DirectAudioRecorderSession] does for a stereo carrier capture, so recordings
  * from both paths sound alike.
  *
- * Because the streams are separate free-running `AudioRecord`s, the muxer pairs one chunk from each
- * BY ARRIVAL and substitutes silence for whichever side has nothing ready within [CHUNK_WAIT_MS]. That
- * is not an alignment: a side that stalls gets one 20 ms stand-in per 120 ms of stall, a side whose
- * queue fills drops chunks, and nothing ever re-aligns them. "No substitution over 40 s" was measured
- * once, on ColorOS, and is not true on One UI, where the mic is re-taken many times a call — issue #41
- * reports the far party a beat early on a Galaxy S21 Ultra. [VoipSyncLedger] measures the offset and
- * counts every loss so one log from that phone can say what moved; the pairing is to be rebuilt on
- * content time once it has (docs/dev-notes/2026-09-22-voip-sync-instrumentation.md).
+ * Because the streams are separate free-running `AudioRecord`s, the muxer pairs them by the real
+ * time their audio was captured ([SlotPairer]): the file is a run of 20 ms slots, each side fills
+ * the slot its chunk belongs to, silence fills a gap, and neither side can push the other along.
+ * Until 2.4.2 it paired BY ARRIVAL — one chunk from each queue per loop — which consumed the far
+ * queue at the near side's pace; on a Galaxy S21 Ultra where the mic was re-taken 155 times in two
+ * minutes (issue #41) the far party ended 6.4 s late. [VoipSyncLedger] measures the offset and
+ * counts every loss (docs/dev-notes/2026-09-22-voip-sync-instrumentation.md).
  */
 internal class VoipCaptureSession(
     private val codec: ScrcpyAudioCodec,
@@ -153,7 +151,7 @@ internal class VoipCaptureSession(
         AppLogger.i(
             TAG,
             "VoIP sync start: near buf=${near.bufferSizeInFrames} frames far buf=${far.bufferSizeInFrames} frames " +
-                "chunk=$CHUNK_FRAMES frames wait=${CHUNK_WAIT_MS}ms queue=$QUEUE_CHUNKS; " +
+                "chunk=$CHUNK_FRAMES frames grace=${SlotPairer.GRACE_NANOS / 1_000_000L}ms queue=$QUEUE_CHUNKS; " +
                 "sdk=${android.os.Build.VERSION.SDK_INT} ${android.os.Build.MANUFACTURER} ${android.os.Build.MODEL}",
         )
 
@@ -282,13 +280,31 @@ internal class VoipCaptureSession(
         var muxerStarted = false
         var totalFrames = 0L
         var substituted = 0L
+        // The file is a run of slots of real time — see SlotPairer for why arrival order is not.
+        val pairer = SlotPairer(CHUNK_NANOS)
+        var slotNanos = -1L
 
         try {
             while (!stopRequested.get()) {
-                val nearChunk = qNear.poll(CHUNK_WAIT_MS, TimeUnit.MILLISECONDS)
-                val farChunk = qFar.poll(CHUNK_WAIT_MS, TimeUnit.MILLISECONDS)
-                val n = nearChunk?.bytes ?: silence.also { substituted++; ledger.near.substituted() }
-                val f = farChunk?.bytes ?: silence.also { ledger.far.substituted() }
+                if (slotNanos < 0) {
+                    // Anchor on the earlier first capture, waiting briefly for the other side so a
+                    // slow start is padded at the head rather than the file starting without it.
+                    val n = qNear.peek()
+                    val f = qFar.peek()
+                    val waited = System.nanoTime() - startedNanos
+                    if ((n == null || f == null) && waited < ANCHOR_WAIT_NANOS) { Thread.sleep(SLOT_POLL_MS); continue }
+                    if (n == null && f == null) { Thread.sleep(SLOT_POLL_MS); continue }
+                    slotNanos = pairer.anchor(n?.contentNanos, f?.contentNanos)
+                    AppLogger.i(TAG, "VoIP sync: file anchored ${(slotNanos - startedNanos) / 1_000_000L}ms after start (near=${n != null} far=${f != null})")
+                }
+                // Not before the slot's audio has had time to be read; a burst of due slots after
+                // an encoder stall is written back to back, so the file never falls behind for long.
+                if (!pairer.due(slotNanos, System.nanoTime())) { Thread.sleep(SLOT_POLL_MS); continue }
+                val nearChunk = takeForSlot(qNear, slotNanos, pairer, ledger.near)
+                val farChunk = takeForSlot(qFar, slotNanos, pairer, ledger.far)
+                slotNanos += CHUNK_NANOS
+                val n = nearChunk?.bytes ?: silence.also { substituted++ }
+                val f = farChunk?.bytes ?: silence
                 ledger.paired(nearChunk?.contentNanos, farChunk?.contentNanos)
                 // Paused: the chunks were read above and are now dropped. The AudioRecords and the
                 // feeder threads are untouched — capture itself does not change shape when a user
@@ -363,6 +379,20 @@ internal class VoipCaptureSession(
     }
 
     /**
+     * The chunk of [q] that belongs to the slot at [slotNanos], or null for silence there. Chunks
+     * older than the slot are discarded on the way: their moment has already been written.
+     */
+    private fun takeForSlot(q: BlockingQueue<Chunk>, slotNanos: Long, pairer: SlotPairer, side: VoipSyncLedger.Side): Chunk? {
+        while (true) {
+            when (pairer.classify(slotNanos, q.peek()?.contentNanos)) {
+                SlotPairer.Take.TAKE -> return q.poll()
+                SlotPairer.Take.SILENCE -> { side.substituted(); return null }
+                SlotPairer.Take.DISCARD -> { q.poll(); side.discarded() }
+            }
+        }
+    }
+
+    /**
      * Reads whole chunks from one direction into its queue; drops rather than blocks if the muxer lags.
      *
      * Each chunk is stamped with the real time its audio was captured: the HAL's own fix
@@ -415,7 +445,7 @@ internal class VoipCaptureSession(
                 firstReadLogged = true
                 AppLogger.i(TAG, "VoIP sync: first $tag chunk ${(readAt - startedNanos) / 1_000_000L}ms after start")
             }
-            if (side.chunksRead % TIMESTAMP_EVERY_CHUNKS == 0L) {
+            if (side.needsTimestamp || side.chunksRead % TIMESTAMP_EVERY_CHUNKS == 0L) {
                 val ok = runCatching { record.getTimestamp(ts, android.media.AudioTimestamp.TIMEBASE_MONOTONIC) }
                     .getOrDefault(AudioRecord.ERROR)
                 if (ok == AudioRecord.SUCCESS) side.timestamp(ts.framePosition, ts.nanoTime)
@@ -582,7 +612,11 @@ internal class VoipCaptureSession(
         private const val CHUNK_FRAMES = 960                 // 20 ms at 48 kHz
         private const val CHUNK_BYTES = CHUNK_FRAMES * 2     // mono PCM-16
         private const val QUEUE_CHUNKS = 400                 // ~8 s of slack per direction
-        private const val CHUNK_WAIT_MS = 120L
+        private const val CHUNK_NANOS = CHUNK_FRAMES * 1_000_000_000L / SAMPLE_RATE
+        /** How long the mux thread sleeps between checks of the slot clock. */
+        private const val SLOT_POLL_MS = 5L
+        /** How long the file waits for the second side's first chunk before anchoring on the first alone. */
+        private const val ANCHOR_WAIT_NANOS = 1_000_000_000L
         /** A sync snapshot every this many file frames — 10 s; 60 lines an hour in the ring. */
         private const val SNAPSHOT_FRAMES = SAMPLE_RATE * 10L
         /** How often a side refreshes its HAL time fix; the fix drifts by nothing in a second. */

@@ -42,19 +42,30 @@ internal class VoipSyncLedger(private val sampleRate: Int, private val chunkFram
         @Volatile var chunksRead = 0L; private set
         @Volatile var chunksDropped = 0L; private set
         @Volatile var chunksSubstituted = 0L; private set
+        @Volatile var chunksDiscarded = 0L; private set
         @Volatile var zeroChunks = 0L; private set
         @Volatile var retakes = 0; private set
         @Volatile var retakeGapTotalMs = 0L; private set
         @Volatile var longestStallChunks = 0; private set
         @Volatile var currentStallChunks = 0; private set
 
-        /** "hal" once a HAL timestamp has been seen, "read" while the read moment stands in. */
+        /**
+         * "hal" while a HAL fix is in hand, "read" while the raw read moment stands in, "read-" while
+         * the read moment corrected by a latency learned from an earlier fix stands in.
+         */
         @Volatile var timeSource = "read"; private set
         @Volatile private var tsFrame = -1L
         @Volatile private var tsNanos = 0L
 
+        /** Read moment minus content time, learned whenever a fix is in hand; -1 until then. */
+        @Volatile private var learnedLatencyNanos = -1L
+
+        /** Whether the current record still has no fix — the feeder asks the HAL every chunk until it does. */
+        val needsTimestamp: Boolean get() = tsFrame < 0
+
         fun read() { chunksRead++; currentStallChunks = 0 }
         fun dropped() { chunksDropped++ }
+        fun discarded() { chunksDiscarded++ }
         fun substituted() {
             chunksSubstituted++
             currentStallChunks++
@@ -69,19 +80,25 @@ internal class VoipSyncLedger(private val sampleRate: Int, private val chunkFram
         }
 
         /** Forgets the fix: a fresh record (re-take, resume) numbers its frames from zero again. */
-        fun newRecord() { tsFrame = -1L }
+        fun newRecord() {
+            tsFrame = -1L
+            timeSource = if (learnedLatencyNanos >= 0) "read-" else "read"
+        }
 
         /**
          * When the audio starting at [frameIndex] of the current record was captured, in the
-         * monotonic clock — from the HAL fix when there is one, else [readAtNanos].
+         * monotonic clock — from the HAL fix when there is one; else [readAtNanos] less the read
+         * latency learned from an earlier fix; else [readAtNanos] itself.
          */
         fun contentNanos(frameIndex: Long, readAtNanos: Long): Long {
-            if (tsFrame < 0) return readAtNanos
-            return tsNanos + (frameIndex - tsFrame) * 1_000_000_000L / sampleRate
+            if (tsFrame < 0) return if (learnedLatencyNanos >= 0) readAtNanos - learnedLatencyNanos else readAtNanos
+            val content = tsNanos + (frameIndex - tsFrame) * 1_000_000_000L / sampleRate
+            learnedLatencyNanos = (readAtNanos - content).coerceAtLeast(0L)
+            return content
         }
 
         fun format(queued: Int): String =
-            "$name{read=$chunksRead sub=$chunksSubstituted stall=${longestStallChunks} drop=$chunksDropped q=$queued" +
+            "$name{read=$chunksRead sub=$chunksSubstituted stall=${longestStallChunks} drop=$chunksDropped disc=$chunksDiscarded q=$queued" +
                 (if (name == "near") " zero=$zeroChunks retake=$retakes/${retakeGapTotalMs}ms" else "") +
                 " ts=$timeSource}"
     }
