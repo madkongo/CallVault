@@ -41,6 +41,28 @@ class VoipSyncLedgerTest {
     }
 
     @Test
+    fun `a fresh record without a fix yet uses the read latency the side has already learned`() {
+        // A re-taken record has no HAL fix for its first moments, and its read moment runs a
+        // buffer late; on the reporter's phone that was 155 records in two minutes. The latency of
+        // a source with the same buffer is the same, so the last one learned stands in.
+        val side = VoipSyncLedger.Side("near", rate)
+        side.timestamp(framePosition = 0, nanos = 10_000_000_000L)
+        // Chunk at frame 48_000 has content time 11.0 s; it was read at 11.16 s → latency 160 ms.
+        side.contentNanos(frameIndex = 48_000, readAtNanos = 11_160_000_000L)
+        side.newRecord()
+        assertEquals(20_000_000_000L, side.contentNanos(frameIndex = 0, readAtNanos = 20_160_000_000L))
+        assertEquals("read-", side.timeSource)
+    }
+
+    @Test
+    fun `chunks discarded for being older than their slot are counted`() {
+        val ledger = VoipSyncLedger(rate, chunkFrames)
+        ledger.far.discarded(); ledger.far.discarded()
+        assertEquals(2, ledger.far.chunksDiscarded)
+        assertTrue(ledger.snapshot(0, 0, 0, 0).contains("disc=2"))
+    }
+
+    @Test
     fun `the offset is near content time minus far content time, in the file's own frame`() {
         // Sign convention, fixed here because everything downstream reads it: POSITIVE means the
         // near audio at a file position is NEWER than the far audio beside it — the far audio has
