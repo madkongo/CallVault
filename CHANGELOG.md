@@ -14,8 +14,8 @@ All notable changes to CallVault are documented here. The format is based on
   six seconds by the end of a two-minute call on a Galaxy S21 Ultra. The two sides are now combined by
   the moment each was captured, so a stall on one side leaves a gap on that side and never moves the
   other. Present since app-call recording was introduced.
-  <!-- 🧪 VERIFYING as of 2026-09-23: measured flat (−8…+10 ms over 40 s with 20 mic re-takes) on the OP9;
-       not yet heard by the maintainer, not yet on the reporter's phone. -->
+  <!-- ✅ VERIFIED 2026-09-26: the #41 reporter confirmed the sync is fixed on v2.4.2-rc1 (Galaxy S21 Ultra),
+       relayed by the maintainer. Also measured flat on the OP9 (−8…+10 ms over 40 s). -->
 
 - **Typing a note works again.** The note field on a recording's page was being redrawn from the
   database after every keystroke, so fast typing lost letters or swapped them, and nothing said the

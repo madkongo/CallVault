@@ -117,8 +117,9 @@ near side, which the reporter had in 2.4.0 too and did not report; scoped separa
 
 ## The fix (step 2, 2.4.2) — `fix/voip-slot-pairing`, `b54c2b8f`
 
-🧪 VERIFYING as of 2026-09-23 10:36: measured on the OP9, not yet heard by the maintainer, not yet on the
-reporter's Galaxy. To settle: the maintainer listens to `20260923_1036…_voip-WhatsApp` on the OP9 (the
+✅ VERIFIED 2026-09-26: the reporter confirmed on v2.4.2-rc1 (Galaxy S21 Ultra) that the sync is fixed,
+as relayed by the maintainer; no log with it. Before that, as of 2026-09-23 10:36: measured on the OP9, not
+yet on the reporter's Galaxy. To settle: the maintainer listens to `20260923_1036…_voip-WhatsApp` on the OP9 (the
 far party in step with his own words), then the reporter's 2.4.2 log shows `offset` flat and `disc=0`.
 
 `SlotPairer`: the file is a run of 20 ms slots of real time. For each slot each side contributes the
