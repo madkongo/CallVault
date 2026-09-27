@@ -8,8 +8,11 @@ package (AI-assisted patches, PATCH_NOTES, one debug report) is attached to the 
 
 1. **He is right, and we predicted it.** On Android 13 and older the shell user is not given the one
    permission app-call capture needs (`CAPTURE_VOICE_COMMUNICATION_OUTPUT`). Android adds it to the shell
-   only from Android 14. So on Android 12/13 **app calls are never recorded** — and today the app says
-   nothing: the setting stays on, the log says "policy refused", no file is made.
+   only from Android 14. So on Android 12/13 **app calls are never recorded**. ~~and today the app says
+   nothing~~ **Corrected 2026-09-27:** Settings does show *"Couldn't enable on this device — VoIP recording
+   isn't available here"* once, at the moment the toggle is switched on (`VoipRecordingToggle`,
+   `voip_recording_unavailable`). But the toggle stays on, nothing says it again later, and the reason
+   (Android version) is not named.
 2. **There is no clean way around it without root.** The permission is role-managed and cannot be
    granted; Android 13 refuses a capture of call audio without it, and other capture routes exclude call
    audio by design. What is left is his idea: record the **microphone**. On speakerphone that hears both
@@ -60,3 +63,40 @@ package (AI-assisted patches, PATCH_NOTES, one debug report) is attached to the 
 
 Side note from his log: `capture#2 opened … (now live: 2)` on the fallback start — a first capture
 still open. Worth a look if (2) is built, not before.
+
+## 2026-09-27 — can we take his changes without harming current users? (maintainer's question)
+
+**Short answer: yes for the microphone fallback, as an opt-in that only exists where today nothing is
+recorded. No for the voicemail change as written; a narrow version is possible but is a product call.**
+
+### Microphone fallback — safe if gated, because its trigger is "we would have recorded nothing"
+
+- It runs only where `armVoipCapture` fails. On every phone that records app calls today (Android 14+,
+  standalone) arming succeeds, so the new path is never reached — no change to them.
+- **Shizuku mode is already excluded** (`ModeCapability.VOIP_RECORDING` greys the toggle out), which
+  matters: a microphone `AudioRecord` in a Shizuku-hosted process is forbidden by our own rules
+  (memory `shizuku-mode-capture-rules`). The gate must stay "standalone and arming refused".
+- **Must be opt-in, not automatic** as in his patch: on the earpiece it records only the user, and a
+  recording that silently lacks the other person is worse than a clear "not available".
+- **Must not lie about the far party**: his patch returns `voipFarPartyHeard() = true`; our health
+  tracking (`CallOutcome.of`) would then never flag a one-sided recording. Report "microphone only"
+  honestly instead.
+- **Risk to the call itself (📐):** on a phone where the VoIP app opens a plain `MIC` rather than
+  `VOICE_COMMUNICATION`, Android gives the mic to the latest starter — our capture could silence the
+  app's own mic. The July S24 FE separated-rooms test says the far end kept hearing; his POCO works; not
+  proven for every phone. The opt-in and the reporter's testing are the mitigation; he should confirm
+  the other side always heard him.
+- Worth checking when built: his log shows `capture#2 opened … (now live: 2)` on the fallback start — a
+  first capture already open. Could be harmless (the sync ledger) or a leak; a device log decides.
+
+### Voicemail continuation — not as written
+
+- His trigger is "any `USAGE_MEDIA` playing after the app call": music resuming after a WhatsApp call
+  would keep the microphone recording for up to 10 minutes. Real harm to every fallback user.
+- A narrow version is possible: continue only when the playback belongs to the **same app uid** that
+  set `MODE_IN_COMMUNICATION`. The app process cannot see playback uids (his `ownerUid=-1`), but the
+  shell daemon can (`AudioPlaybackConfiguration` uid, mode owner from `dumpsys audio`). Medium work.
+- It only matters in microphone mode (the normal capture taps call audio, not media playback), and it
+  records a voicemail being listened to — whether CallVault should do that is the maintainer's call.
+- Today on his phone each voicemail play leaves a ~1 s junk recording; with the narrow rule it becomes a
+  full voicemail recording, without it the junk stays (same as any Android ≤13 user never sees).
