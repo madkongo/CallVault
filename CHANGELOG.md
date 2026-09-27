@@ -22,6 +22,15 @@ All notable changes to CallVault are documented here. The format is based on
   note had been kept — it read as "you cannot save a note". The field now keeps what you type, saves
   a moment after you stop, and says **Saved** beside its title. Present since 2.2.0; reported on 2.4.1.
 
+- **No "Call in progress" notification left behind after a call.** Sometimes, after a call ended, the
+  call's notification stayed in the shade — "Recording in progress" or "Call in progress — Press to start
+  recording". Swiping it brought it straight back, and tapping Record raised "An unexpected error
+  occurred"; only force-stopping the app cleared it. The notification is no longer re-posted as the
+  recording stops, a leftover one is replaced by "Ready to record calls" within a couple of seconds, and
+  tapping a leftover's buttons now simply clears it. Seen on 2.4.1 on a OnePlus 12, a Samsung and a LAVA.
+  <!-- 🧪 VERIFYING as of 2026-09-27: race forced on the emulator (leftover healed; Pause on a leftover
+       ends the stray service); normal and offered calls clean. Not yet on a real phone. -->
+
 ## [2.4.1] — 2026-09-22
 
 ### Added

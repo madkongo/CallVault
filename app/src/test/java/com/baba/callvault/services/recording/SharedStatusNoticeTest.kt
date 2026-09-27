@@ -101,4 +101,53 @@ class SharedStatusNoticeTest {
         assertEquals(4720, SharedStatusNotice.ID)
         assertNull(SharedStatusNotice.onReleased)
     }
+
+    /**
+     * A leftover recording notification can sit on the shared id after the call (LAVA LXX508): the STOP's
+     * own post, delivered by system_server after "Ready" was put back. The keep-alive checks what is
+     * actually posted and puts "Ready" back when it is not its own.
+     */
+    @Test
+    fun a_posted_notification_from_another_channel_is_stale_when_no_call_holds_the_id() {
+        assertTrue(SharedStatusNotice.isStale(postedChannelId = "recording_channel_service", ownChannelId = "recorder_keepalive"))
+    }
+
+    @Test
+    fun the_keep_alives_own_notification_is_not_stale() {
+        assertFalse(SharedStatusNotice.isStale(postedChannelId = "recorder_keepalive", ownChannelId = "recorder_keepalive"))
+    }
+
+    @Test
+    fun nothing_posted_is_not_stale() {
+        assertFalse(SharedStatusNotice.isStale(postedChannelId = null, ownChannelId = "recorder_keepalive"))
+    }
+
+    /** During a recorded call the recording's notification is exactly what should be showing. */
+    @Test
+    fun the_recording_notification_is_not_stale_while_a_call_holds_the_id() {
+        SharedStatusNotice.claim(notification("Recording call"))
+        assertFalse(SharedStatusNotice.isStale(postedChannelId = "recording_channel_service", ownChannelId = "recorder_keepalive"))
+    }
+
+    /** An orphaned command ends its service without ever claiming; the keep-alive must still be told. */
+    @Test
+    fun a_refresh_request_tells_the_keep_alive_even_when_nothing_was_claimed() {
+        var told = 0
+        SharedStatusNotice.onReleased = { told++ }
+
+        SharedStatusNotice.requestRefresh()
+
+        assertEquals(1, told)
+    }
+
+    @Test
+    fun a_refresh_request_during_a_recorded_call_tells_nobody() {
+        var told = 0
+        SharedStatusNotice.onReleased = { told++ }
+        SharedStatusNotice.claim(notification("Recording call"))
+
+        SharedStatusNotice.requestRefresh()
+
+        assertEquals(0, told)
+    }
 }

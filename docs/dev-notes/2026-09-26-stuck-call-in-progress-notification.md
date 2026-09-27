@@ -1,6 +1,6 @@
 # "Call in progress / Press to start recording" stays up after the call
 
-**Status:** 🧪 OPEN — 2026-09-27: a third report came WITH logs; likely cause found (📐 from logs + AOSP source, not reproduced). See the section at the end.
+**Status:** 🧪 VERIFYING as of 2026-09-27 — fix built on `fix/stuck-call-notification` (`2b73eec3`), proven on the emulator with the race forced; not yet on a real phone. To settle: the maintainer runs the build on the OP12 for a few days of normal calls (and ideally the LAVA/Samsung reporters), and no call notification outlives its call.
 
 Original status: cause of the first appearance not found. No logs exist (neither the maintainer's
 OP12 nor the reporter's Samsung had debug logging on). The maintainer and the reporter will reproduce
@@ -117,3 +117,23 @@ instance created by one of those never re-posts "Ready" on release. Minor, same 
 
 Test: unit tests for (3)'s decision; on the emulator, delay the release to force the order and show
 the shade heals; then the maintainer and a reporter on real phones.
+
+## 2026-09-27 — built and tested on the emulator (`2b73eec3`)
+
+All four parts of the proposal, as proposed. 1821 unit tests, 0 failures (new: `RecordingCommandPolicyTest`
+5, `SharedStatusNoticeTest` +6).
+
+Emulator (Android 16), simulated calls. To force the race, a throw-away build re-posted the recording
+notification on id 4720 2 s after each stop (not committed), with the heal delay raised to 20 s so the
+leftover could be touched:
+
+| Test | Result |
+|---|---|
+| Forced leftover, untouched | "Recording in progress" stayed 18 s after the call, then `A leftover call notification (recording_channel_service) was still up after the call; putting "Ready" back` |
+| Forced leftover, tap **Pause** (the LAVA sequence) | `'…PAUSE_RECORDING' arrived with no call in progress; ending this service instead of re-posting`; "Ready" back. Before the fix this is what created the immortal "Press to start recording". |
+| Real build: outgoing, record-from-answer, hang up | recorded; "Ready" back within 5 s |
+| Real build: incoming offered, tap **Record** mid-call, hang up | recording started from the button; "Ready" back |
+
+Note: a first attempt with the late post at 0.4 s landed *before* "Ready" and changed nothing — the
+race only bites when the stray post arrives after the keep-alive's, which is what system_server's
+asynchronous delivery allows on a slow phone.
