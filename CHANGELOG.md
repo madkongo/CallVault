@@ -3,7 +3,11 @@
 All notable changes to CallVault are documented here. The format is based on
 [Keep a Changelog](https://keepachangelog.com/), and this project uses semantic-ish versioning.
 
-## [2.4.2] — unreleased
+## [2.4.3] — unreleased
+
+There was no 2.4.2 release: 2.4.2 existed only as the test builds `v2.4.2-rc1` and `v2.4.2-rc2`. The next
+release is numbered 2.4.3 so that people on those test builds are offered it — the updater of their
+build cannot see a final 2.4.2 as newer (fixed below, for every test build from now on).
 
 ### Fixed
 
@@ -21,6 +25,12 @@ All notable changes to CallVault are documented here. The format is based on
   database after every keystroke, so fast typing lost letters or swapped them, and nothing said the
   note had been kept — it read as "you cannot save a note". The field now keeps what you type, saves
   a moment after you stop, and says **Saved** beside its title. Present since 2.2.0; reported on 2.4.1.
+
+- **People on a test build are offered the final release.** The in-app updater ignored everything after
+  the "-" in a version, so a phone on `2.4.2-rc2` counted as already having 2.4.2 and was never offered it.
+  A test build now counts as older than the final release of the same number.
+  <!-- 🧪 VERIFYING as of 2026-09-27: unit-tested only (UpdateVersionTest). Proof in the field comes with the
+       first test build that carries this fix and is then updated to its final. -->
 
 - **No "Call in progress" notification left behind after a call.** Sometimes, after a call ended, the
   call's notification stayed in the shade — "Recording in progress" or "Call in progress — Press to start

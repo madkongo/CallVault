@@ -114,6 +114,13 @@
     <string name="merge_note_will_keep">As outras chamadas também são mantidas no telefone.</string>
     <string name="home_scroll_to_top">Topo</string>
     <string name="home_whatsnew_full_notes">Notas de versão completas</string>
+    <string name="whatsnew_243_title">Chamadas por app ficam sincronizadas e as notas são salvas enquanto você digita</string>
+    <string-array name="whatsnew_243_items">
+        <item>Corrigido — Em chamadas por app, a outra pessoa não fica mais fora de sincronia com você</item>
+        <item>Corrigido — Digitar uma nota não perde nenhuma letra, e mostra Salvo</item>
+        <item>Corrigido — Nenhuma notificação de chamada fica para trás depois da ligação</item>
+        <item>Corrigido — Se você instalou uma versão de teste, a atualização final é oferecida</item>
+    </string-array>
     <string name="whatsnew_241_title">Busca em cada página, e gravar quando atenderem</string>
     <string-array name="whatsnew_241_items">
         <item>Novo — Uma linha de busca em Gravações, Transcrições e Resumos: um contato ou uma palavra dita</item>

@@ -114,6 +114,13 @@
     <string name="merge_note_will_keep">Các cuộc gọi kia cũng được giữ lại trên máy.</string>
     <string name="home_scroll_to_top">Lên đầu</string>
     <string name="home_whatsnew_full_notes">Ghi chú phát hành đầy đủ</string>
+    <string name="whatsnew_243_title">Cuộc gọi qua ứng dụng luôn khớp, ghi chú được lưu khi bạn gõ</string>
+    <string-array name="whatsnew_243_items">
+        <item>Đã sửa — Trong cuộc gọi qua ứng dụng, người kia không còn bị lệch nhịp với bạn</item>
+        <item>Đã sửa — Gõ ghi chú không mất chữ nào và hiện Đã lưu</item>
+        <item>Đã sửa — Không còn thông báo cuộc gọi sót lại sau khi gọi xong</item>
+        <item>Đã sửa — Nếu bạn đã cài bản thử nghiệm, bạn sẽ được đề xuất bản cập nhật chính thức</item>
+    </string-array>
     <string name="whatsnew_241_title">Tìm kiếm trên mọi trang, và ghi âm khi họ bắt máy</string>
     <string-array name="whatsnew_241_items">
         <item>Mới — Ô tìm kiếm ở Bản ghi, Bản chép lời và Bản tóm tắt: một liên hệ, hoặc một từ đã nói</item>

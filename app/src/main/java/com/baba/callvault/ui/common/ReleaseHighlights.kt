@@ -47,6 +47,12 @@ object ReleaseHighlights {
 
     private val ALL = listOf(
         ReleaseHighlight(
+            version = "2.4.3",
+            title = R.string.whatsnew_243_title,
+            items = R.array.whatsnew_243_items,
+            // Fixes only: nothing new to go and find, so no pointer.
+        ),
+        ReleaseHighlight(
             version = "2.4.1",
             title = R.string.whatsnew_241_title,
             items = R.array.whatsnew_241_items,

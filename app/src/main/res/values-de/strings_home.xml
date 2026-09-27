@@ -114,6 +114,13 @@
     <string name="merge_note_will_keep">Die anderen Anrufe bleiben ebenfalls auf dem Telefon.</string>
     <string name="home_scroll_to_top">Nach oben</string>
     <string name="home_whatsnew_full_notes">Vollständige Versionshinweise</string>
+    <string name="whatsnew_243_title">App-Anrufe bleiben synchron, Notizen werden beim Tippen gespeichert</string>
+    <string-array name="whatsnew_243_items">
+        <item>Behoben — Bei App-Anrufen gerät die andere Person nicht mehr aus dem Takt mit Ihnen</item>
+        <item>Behoben — Beim Tippen einer Notiz geht kein Buchstabe verloren, und sie zeigt „Gespeichert“</item>
+        <item>Behoben — Nach einem Anruf bleibt keine Anruf-Benachrichtigung mehr stehen</item>
+        <item>Behoben — Wer eine Testversion installiert hat, bekommt das endgültige Update angeboten</item>
+    </string-array>
     <string name="whatsnew_241_title">Suche auf jeder Seite, und Aufnahme erst bei Annahme</string>
     <string-array name="whatsnew_241_items">
         <item>Neu — Eine Suchzeile bei Aufnahmen, Transkripten und Zusammenfassungen: ein Kontakt oder ein gesagtes Wort</item>

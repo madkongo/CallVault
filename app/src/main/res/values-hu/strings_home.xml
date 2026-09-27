@@ -114,6 +114,13 @@
     <string name="merge_note_will_keep">A többi hívás is a telefonon marad.</string>
     <string name="home_scroll_to_top">Az elejére</string>
     <string name="home_whatsnew_full_notes">Teljes kiadási jegyzék</string>
+    <string name="whatsnew_243_title">Az alkalmazáshívások szinkronban maradnak, a jegyzetek gépelés közben mentődnek</string>
+    <string-array name="whatsnew_243_items">
+        <item>Javítva — Alkalmazáshívásokban a másik fél már nem csúszik el önhöz képest</item>
+        <item>Javítva — Jegyzet gépelésekor egy betű sem vész el, és megjelenik: Mentve</item>
+        <item>Javítva — Hívás után nem marad fenn hívásértesítés</item>
+        <item>Javítva — Ha tesztverziót telepített, felajánljuk a végleges frissítést</item>
+    </string-array>
     <string name="whatsnew_241_title">Keresés minden oldalon, és felvétel a hívás fogadásától</string>
     <string-array name="whatsnew_241_items">
         <item>Új — Keresősor a Felvételek, Leiratok és Összefoglalók oldalon: egy név vagy egy elhangzott szó</item>

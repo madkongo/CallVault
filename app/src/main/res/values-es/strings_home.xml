@@ -114,6 +114,13 @@
     <string name="merge_note_will_keep">Las demás llamadas también se conservan en el teléfono.</string>
     <string name="home_scroll_to_top">Arriba</string>
     <string name="home_whatsnew_full_notes">Notas de versión completas</string>
+    <string name="whatsnew_243_title">Las llamadas por app quedan sincronizadas y las notas se guardan al escribir</string>
+    <string-array name="whatsnew_243_items">
+        <item>Corregido — En las llamadas por app, la otra persona ya no se desfasa respecto a ti</item>
+        <item>Corregido — Al escribir una nota no se pierde ninguna letra, y muestra Guardado</item>
+        <item>Corregido — Ya no queda una notificación de llamada después de colgar</item>
+        <item>Corregido — Si instalaste una versión de prueba, se te ofrece la actualización definitiva</item>
+    </string-array>
     <string name="whatsnew_241_title">Búsqueda en cada página, y grabar cuando contesten</string>
     <string-array name="whatsnew_241_items">
         <item>Nuevo — Una línea de búsqueda en Grabaciones, Transcripciones y Resúmenes: un contacto o una palabra dicha</item>

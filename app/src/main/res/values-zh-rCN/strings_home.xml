@@ -114,6 +114,13 @@
     <string name="merge_note_will_keep">其余通话也会保留在手机上。</string>
     <string name="home_scroll_to_top">回到顶部</string>
     <string name="home_whatsnew_full_notes">完整发行说明</string>
+    <string name="whatsnew_243_title">应用通话保持同步，笔记边输入边保存</string>
+    <string-array name="whatsnew_243_items">
+        <item>修复 — 应用通话中，对方的声音不再与您逐渐错位</item>
+        <item>修复 — 输入笔记不再丢字，并显示“已保存”</item>
+        <item>修复 — 通话结束后不再残留通话通知</item>
+        <item>修复 — 若安装过测试版，现在会收到正式版更新</item>
+    </string-array>
     <string name="whatsnew_241_title">每个页面都能搜索，并可在对方接听后再录音</string>
     <string-array name="whatsnew_241_items">
         <item>新增 — 录音、转写和摘要页面各有搜索栏：按联系人或说过的词查找</item>
