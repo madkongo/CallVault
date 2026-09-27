@@ -217,9 +217,9 @@
     <string name="settings_handoff_persist_label">Grabación resistente</string>
     <string name="settings_ignore_anonymous_incoming">Ignorar las llamadas entrantes anónimas</string>
     <string name="settings_ignore_contacts_all">Ignorar todos los contactos</string>
-    <string name="settings_ignore_contacts_incoming">Ignorar contactos (entrantes)</string>
+    <string name="settings_ignore_contacts_incoming">Qué contactos grabar (entrantes)</string>
     <string name="settings_ignore_contacts_none">Guardar todos los contactos</string>
-    <string name="settings_ignore_contacts_outgoing">Ignorar contactos (salientes)</string>
+    <string name="settings_ignore_contacts_outgoing">Qué contactos grabar (salientes)</string>
     <string name="settings_ignore_contacts_selected">Ignorar los contactos seleccionados</string>
     <string name="settings_ignore_cross_country_incoming">Ignorar las llamadas entrantes internacionales</string>
     <string name="settings_ignore_cross_country_outgoing">Ignorar las llamadas salientes internacionales</string>
@@ -289,6 +289,10 @@
     <string name="settings_select_contacts">Seleccionar contactos (%1$d)</string>
     <string name="settings_select_contacts_incoming">Seleccionar contactos (entrantes)</string>
     <string name="settings_select_contacts_outgoing">Seleccionar contactos (salientes)</string>
+    <string name="settings_record_only_selected_contacts">Grabar solo los contactos seleccionados</string>
+    <string name="settings_record_only_selected_hint">Solo se graban automáticamente los contactos que elijas. En las demás llamadas, incluidos los números ocultos, aparece el botón Grabar.</string>
+    <string name="settings_select_record_only_incoming">Contactos que grabar (entrantes)</string>
+    <string name="settings_select_record_only_outgoing">Contactos que grabar (salientes)</string>
     <string name="settings_show_toasts">Mostrar notificaciones emergentes</string>
     <string name="settings_storage_section">Almacenamiento</string>
     <string name="settings_storage_target_label">Dónde guardar las grabaciones</string>

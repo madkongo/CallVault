@@ -217,9 +217,9 @@
     <string name="settings_handoff_persist_label">Устойчивая запись</string>
     <string name="settings_ignore_anonymous_incoming">Игнорировать анонимные входящие вызовы</string>
     <string name="settings_ignore_contacts_all">Игнорировать все контакты</string>
-    <string name="settings_ignore_contacts_incoming">Игнорировать контакты (входящие)</string>
+    <string name="settings_ignore_contacts_incoming">Какие контакты записывать (входящие)</string>
     <string name="settings_ignore_contacts_none">Записывать все контакты</string>
-    <string name="settings_ignore_contacts_outgoing">Игнорировать контакты (исходящие)</string>
+    <string name="settings_ignore_contacts_outgoing">Какие контакты записывать (исходящие)</string>
     <string name="settings_ignore_contacts_selected">Игнорировать выбранные контакты</string>
     <string name="settings_ignore_cross_country_incoming">Игнорировать международные входящие вызовы</string>
     <string name="settings_ignore_cross_country_outgoing">Игнорировать международные исходящие вызовы</string>
@@ -289,6 +289,10 @@
     <string name="settings_select_contacts">Выбрать контакты (%1$d)</string>
     <string name="settings_select_contacts_incoming">Выбрать входящие контакты</string>
     <string name="settings_select_contacts_outgoing">Выбрать исходящие контакты</string>
+    <string name="settings_record_only_selected_contacts">Записывать только выбранные контакты</string>
+    <string name="settings_record_only_selected_hint">Автоматически записываются только выбранные контакты. Для остальных звонков, включая скрытые номера, вместо этого появляется кнопка «Записать».</string>
+    <string name="settings_select_record_only_incoming">Контакты для записи (входящие)</string>
+    <string name="settings_select_record_only_outgoing">Контакты для записи (исходящие)</string>
     <string name="settings_show_toasts">Показывать всплывающие уведомления</string>
     <string name="settings_storage_section">Хранилище</string>
     <string name="settings_storage_target_label">Куда сохранять записи</string>

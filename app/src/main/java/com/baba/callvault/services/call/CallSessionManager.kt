@@ -470,7 +470,7 @@ class CallSessionManager private constructor(context: Context) {
                     return false
                 }
 
-                if (shouldIgnoreContact(normalisedNumber, preferences.getIgnoreContactsModeIncoming(), preferences.getIgnoredContactsIncoming())) {
+                if (shouldIgnoreContact(normalisedNumber, preferences.getIgnoreContactsModeIncoming(), preferences.getIgnoredContactsIncoming(), preferences.getRecordOnlyContactsIncoming())) {
                     AppLogger.i(TAG, "Auto-record is ignoring incoming call based on contact filtering.")
                     return false
                 }
@@ -489,7 +489,7 @@ class CallSessionManager private constructor(context: Context) {
                     return false
                 }
 
-                if (shouldIgnoreContact(normalisedNumber, preferences.getIgnoreContactsModeOutgoing(), preferences.getIgnoredContactsOutgoing())) {
+                if (shouldIgnoreContact(normalisedNumber, preferences.getIgnoreContactsModeOutgoing(), preferences.getIgnoredContactsOutgoing(), preferences.getRecordOnlyContactsOutgoing())) {
                     AppLogger.i(TAG, "Auto-record is ignoring outgoing call for based on contact filtering.")
                     return false
                 }
@@ -503,10 +503,18 @@ class CallSessionManager private constructor(context: Context) {
     /**
      * Determines whether a call from/to a specific phone number should be ignored based on the user's contact filtering preferences.
      */
-    private fun shouldIgnoreContact(normalisedNumber: String, mode: AppPreferences.IgnoreContactsMode, ignoredNumbers: Set<String>): Boolean =
-        ContactIgnoreRule.shouldIgnore(normalisedNumber, mode, ignoredNumbers) {
-            isSavedContact(normalisedNumber)
-        }
+    private fun shouldIgnoreContact(
+        normalisedNumber: String,
+        mode: AppPreferences.IgnoreContactsMode,
+        ignoredNumbers: Set<String>,
+        recordOnlyNumbers: Set<String>,
+    ): Boolean = ContactIgnoreRule.shouldIgnore(
+        normalisedNumber = normalisedNumber,
+        mode = mode,
+        ignoredNumbers = ignoredNumbers,
+        isKnownContact = { isSavedContact(normalisedNumber) },
+        recordOnlyNumbers = recordOnlyNumbers,
+    )
 
     /**
      * Whether [normalisedNumber] belongs to a saved contact.

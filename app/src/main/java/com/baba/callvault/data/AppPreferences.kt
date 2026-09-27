@@ -106,6 +106,8 @@ class AppPreferences(context: Context) {
         val IGNORE_CONTACTS_MODE_OUTGOING = IgnoreContactsMode.NONE
         val IGNORED_CONTACTS_INCOMING = emptySet<String>()
         val IGNORED_CONTACTS_OUTGOING = emptySet<String>()
+        val RECORD_ONLY_CONTACTS_INCOMING = emptySet<String>()
+        val RECORD_ONLY_CONTACTS_OUTGOING = emptySet<String>()
         
         // --- Developer & Debug ---
         const val LOGGING_ENABLED = false
@@ -338,6 +340,8 @@ class AppPreferences(context: Context) {
         IGNORE_CONTACTS_MODE_OUTGOING("ignore_contacts_mode_outgoing"),
         IGNORED_CONTACTS_INCOMING("ignored_contacts_incoming"),
         IGNORED_CONTACTS_OUTGOING("ignored_contacts_outgoing"),
+        RECORD_ONLY_CONTACTS_INCOMING("record_only_contacts_incoming"),
+        RECORD_ONLY_CONTACTS_OUTGOING("record_only_contacts_outgoing"),
         
         // --- Developer & Debug ---
         LOGGING_ENABLED("logging_enabled"),
@@ -381,7 +385,13 @@ class AppPreferences(context: Context) {
         /** Skip recording for all numbers that appear in the device's Contacts. */
         ALL("all"),
         /** Skip recording only for the numbers explicitly added to the ignore list. */
-        SELECTED("selected");
+        SELECTED("selected"),
+        /**
+         * Record automatically ONLY the numbers on a separate "record only" list; every other call is
+         * offered with the Record button instead (user request, 2026-09-27). Its own list, so switching
+         * between this and [SELECTED] can never silently invert what a list means.
+         */
+        ONLY_SELECTED("only_selected");
 
         companion object {
             /**
@@ -1184,6 +1194,16 @@ class AppPreferences(context: Context) {
     
     /** Sets the set of specific contact numbers to ignore for outgoing calls. */
     fun setIgnoredContactsOutgoing(numbers: Set<String>) = setStringSet(Key.IGNORED_CONTACTS_OUTGOING, numbers)
+
+    /** Numbers recorded automatically on incoming calls when the mode is [IgnoreContactsMode.ONLY_SELECTED]. */
+    fun getRecordOnlyContactsIncoming() = getStringSet(Key.RECORD_ONLY_CONTACTS_INCOMING, DefaultsValue.RECORD_ONLY_CONTACTS_INCOMING)
+
+    fun setRecordOnlyContactsIncoming(numbers: Set<String>) = setStringSet(Key.RECORD_ONLY_CONTACTS_INCOMING, numbers)
+
+    /** Numbers recorded automatically on outgoing calls when the mode is [IgnoreContactsMode.ONLY_SELECTED]. */
+    fun getRecordOnlyContactsOutgoing() = getStringSet(Key.RECORD_ONLY_CONTACTS_OUTGOING, DefaultsValue.RECORD_ONLY_CONTACTS_OUTGOING)
+
+    fun setRecordOnlyContactsOutgoing(numbers: Set<String>) = setStringSet(Key.RECORD_ONLY_CONTACTS_OUTGOING, numbers)
 
     // -------- Debug --------
 

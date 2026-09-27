@@ -217,9 +217,9 @@
     <string name="settings_handoff_persist_label">弹性录音</string>
     <string name="settings_ignore_anonymous_incoming">如果对方隐藏了来电显示（仅部分国家运营商支持）则不录音</string>
     <string name="settings_ignore_contacts_all">不要录制所有联系人的通话</string>
-    <string name="settings_ignore_contacts_incoming">不要录制联系人被叫</string>
+    <string name="settings_ignore_contacts_incoming">录制哪些联系人（来电）</string>
     <string name="settings_ignore_contacts_none">录制所有联系人的通话</string>
-    <string name="settings_ignore_contacts_outgoing">不要录制联系人主叫</string>
+    <string name="settings_ignore_contacts_outgoing">录制哪些联系人（去电）</string>
     <string name="settings_ignore_contacts_selected">不要录制选定的联系人</string>
     <string name="settings_ignore_cross_country_incoming">不要录制境外被叫</string>
     <string name="settings_ignore_cross_country_outgoing">不要录制国际I-D-D主叫</string>
@@ -289,6 +289,10 @@
     <string name="settings_select_contacts">选择联系人（已选%1$d人）</string>
     <string name="settings_select_contacts_incoming">选择联系人（仅应用于被叫）</string>
     <string name="settings_select_contacts_outgoing">选择联系人（仅应用于主叫）</string>
+    <string name="settings_record_only_selected_contacts">仅录制选定的联系人</string>
+    <string name="settings_record_only_selected_hint">只有您选定的联系人会被自动录制。其他通话（包括隐藏号码）将显示“录制”按钮。</string>
+    <string name="settings_select_record_only_incoming">要录制的联系人（来电）</string>
+    <string name="settings_select_record_only_outgoing">要录制的联系人（去电）</string>
     <string name="settings_show_toasts">显示一句话消息（Toast）</string>
     <string name="settings_storage_section">存储</string>
     <string name="settings_storage_target_label">录音保存位置</string>
