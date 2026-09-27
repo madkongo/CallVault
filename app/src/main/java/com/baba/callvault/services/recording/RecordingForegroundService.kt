@@ -255,28 +255,31 @@ class RecordingForegroundService : Service() {
             }
         }
 
-        // A new command means this instance is in use again, even if it had started to stop.
-        isShuttingDown = false
-
-        // Quickly show a notification to satisfy Android's foreground service requirements,
-        // as starting/waiting for the privileged daemon can take long enough for the OS to kill the service.
-        // It describes the state this command is about to enter, not the one the service is in: a
-        // freshly started service is in Standby, and posting that first flashed "Press to start
-        // recording" on every automatically recorded call (issue #31). See [RecordingNoticePolicy].
-        val isStartRequest = action == ACTION_START_RECORDING || action == ACTION_MANUAL_START
-        val voipCall = isStartRequest && isVoipCallInProgress()
-        if (isStartRequest) sharesStatusNotice = !voipCall
-        val opening = RecordingNoticePolicy.opening(
-            isStartRequest = isStartRequest,
-            hasSession = hasSession || isCurrentlyRecording,
-            hasMetadata = currentMeta != null,
-            isVoipCall = voipCall,
-        )
-        val openingState = currentMeta
-            ?.takeIf { opening == RecordingNoticePolicy.Opening.PREPARING }
-            ?.let { RecordingServiceState.Starting(it) }
-            ?: currentState
-        startForegroundWithType(notificationHelper.getNotification(openingState))
+        // Whether this command posts first, just acts, or has no call behind it at all. See
+        // [RecordingCommandPolicy]: a STOP that posted on its way out could land after "Ready" and stay in the
+        // shade, and every action on that leftover started a service with no call that never went away.
+        val hasCall = hasSession || isCurrentlyRecording || currentMeta != null
+        // Asked once, with the opening post, so the notice and the decision below cannot disagree.
+        var voipCall = false
+        when (RecordingCommandPolicy.handling(action, hasCall)) {
+            RecordingCommandPolicy.Handling.END_ORPHAN -> {
+                AppLogger.i(TAG, "'$action' arrived with no call in progress; ending this service instead of re-posting")
+                val claimed = SharedStatusNotice.isHeldByRecording
+                stopRecordingSessionAndService()
+                // Nothing was claimed by this instance, so the release above told nobody — but a leftover
+                // recording notification may be what the user just touched. Put "Ready" back regardless.
+                if (!claimed) SharedStatusNotice.requestRefresh()
+                return START_NOT_STICKY
+            }
+            RecordingCommandPolicy.Handling.HANDLE_ONLY -> {
+                // A new command means this instance is in use again, even if it had started to stop.
+                isShuttingDown = false
+            }
+            RecordingCommandPolicy.Handling.POST_THEN_HANDLE -> {
+                isShuttingDown = false
+                voipCall = postOpeningNotice(action, currentMeta)
+            }
+        }
 
         when (action) {
             ACTION_START_RECORDING, ACTION_MANUAL_START -> {
@@ -398,6 +401,32 @@ class RecordingForegroundService : Service() {
             }
         }
         return START_NOT_STICKY
+    }
+
+    /**
+     * Posts the notification a foreground start must show straight away. It describes the state this command
+     * is about to enter, not the one the service is in: a freshly started service is in Standby, and posting
+     * that first flashed "Press to start recording" on every automatically recorded call (issue #31). See
+     * [RecordingNoticePolicy].
+     *
+     * @return whether the VoIP recorder already has this call, for the start that follows.
+     */
+    private fun postOpeningNotice(action: String?, currentMeta: RecordingMetadata?): Boolean {
+        val isStartRequest = action == ACTION_START_RECORDING || action == ACTION_MANUAL_START
+        val voipCall = isStartRequest && isVoipCallInProgress()
+        if (isStartRequest) sharesStatusNotice = !voipCall
+        val opening = RecordingNoticePolicy.opening(
+            isStartRequest = isStartRequest,
+            hasSession = hasSession || isCurrentlyRecording,
+            hasMetadata = currentMeta != null,
+            isVoipCall = voipCall,
+        )
+        val openingState = currentMeta
+            ?.takeIf { opening == RecordingNoticePolicy.Opening.PREPARING }
+            ?.let { RecordingServiceState.Starting(it) }
+            ?: currentState
+        startForegroundWithType(notificationHelper.getNotification(openingState))
+        return voipCall
     }
 
     override fun onDestroy() {
