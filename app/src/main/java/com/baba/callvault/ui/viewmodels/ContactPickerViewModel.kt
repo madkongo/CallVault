@@ -38,12 +38,15 @@ enum class ContactPickerType {
  *
  * @param type            Whether the picker is for incoming or outgoing calls.
  * @param contacts        The list of contacts loaded from the device.
- * @param selectedNumbers Phone numbers that are already saved as ignored (shown pre-checked).
+ * @param selectedNumbers Phone numbers already on the list being edited (shown pre-checked).
+ * @param recordOnly      True when the list being edited is the "record only these" list
+ *                        ([AppPreferences.IgnoreContactsMode.ONLY_SELECTED]) rather than the skip list.
  */
 data class ContactPickerState(
     val type: ContactPickerType,
     val contacts: List<ContactEntry>,
-    val selectedNumbers: Set<String>
+    val selectedNumbers: Set<String>,
+    val recordOnly: Boolean = false,
 )
 
 /**
@@ -88,29 +91,40 @@ class ContactPickerViewModel(application: Application) : AndroidViewModel(applic
      */
     fun openContactPicker(type: ContactPickerType) {
         if (!PermissionChecks.hasContactsPermission(appContext)) return
+        // The mode chosen for this direction decides which list the picker edits: each list mode keeps
+        // its own, so switching modes never turns a skip list into a record list.
+        val mode = when (type) {
+            ContactPickerType.INCOMING -> preferences.getIgnoreContactsModeIncoming()
+            ContactPickerType.OUTGOING -> preferences.getIgnoreContactsModeOutgoing()
+        }
+        val recordOnly = mode == AppPreferences.IgnoreContactsMode.ONLY_SELECTED
         // Run in the background so loading contacts doesn't freeze the screen.
         viewModelScope.launch {
             val contacts = loadContactsFromDevice()
             val selectedNumbers = when (type) {
-                ContactPickerType.INCOMING -> preferences.getIgnoredContactsIncoming()
-                ContactPickerType.OUTGOING -> preferences.getIgnoredContactsOutgoing()
+                ContactPickerType.INCOMING ->
+                    if (recordOnly) preferences.getRecordOnlyContactsIncoming() else preferences.getIgnoredContactsIncoming()
+                ContactPickerType.OUTGOING ->
+                    if (recordOnly) preferences.getRecordOnlyContactsOutgoing() else preferences.getIgnoredContactsOutgoing()
             }
-            _contactPickerState.value = ContactPickerState(type, contacts, selectedNumbers)
+            _contactPickerState.value = ContactPickerState(type, contacts, selectedNumbers, recordOnly)
         }
     }
 
     /**
-     * Saves the contacts the user selected in the [ContactSelectionDialog] and closes the dialog.
-     * Call [SettingsViewModel.refresh] afterwards to update the settings screen with the new list.
+     * Saves the contacts the user selected in the [ContactSelectionDialog] to the list it was opened for,
+     * and closes the dialog. Call [SettingsViewModel.refresh] afterwards to update the settings screen.
      *
-     * @param numbers The phone numbers the user chose to ignore.
+     * @param numbers The phone numbers the user selected.
      */
     fun confirmContactPicker(numbers: Set<String>) {
-        val currentType = _contactPickerState.value?.type
-        when (currentType) {
-            ContactPickerType.INCOMING -> preferences.setIgnoredContactsIncoming(numbers)
-            ContactPickerType.OUTGOING -> preferences.setIgnoredContactsOutgoing(numbers)
-            null -> Unit // Dialog was closed before confirming; nothing to save.
+        val picker = _contactPickerState.value
+        when {
+            picker == null -> Unit // Dialog was closed before confirming; nothing to save.
+            picker.type == ContactPickerType.INCOMING && picker.recordOnly -> preferences.setRecordOnlyContactsIncoming(numbers)
+            picker.type == ContactPickerType.INCOMING -> preferences.setIgnoredContactsIncoming(numbers)
+            picker.recordOnly -> preferences.setRecordOnlyContactsOutgoing(numbers)
+            else -> preferences.setIgnoredContactsOutgoing(numbers)
         }
         _contactPickerState.value = null
     }

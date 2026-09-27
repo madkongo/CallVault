@@ -594,8 +594,12 @@ fun SettingsContent(
     contactPickerState?.let { picker ->
         ContactSelectionDialog(
             title = when (picker.type) {
-                ContactPickerType.INCOMING -> stringResource(R.string.settings_select_contacts_incoming)
-                ContactPickerType.OUTGOING -> stringResource(R.string.settings_select_contacts_outgoing)
+                ContactPickerType.INCOMING ->
+                    if (picker.recordOnly) stringResource(R.string.settings_select_record_only_incoming)
+                    else stringResource(R.string.settings_select_contacts_incoming)
+                ContactPickerType.OUTGOING ->
+                    if (picker.recordOnly) stringResource(R.string.settings_select_record_only_outgoing)
+                    else stringResource(R.string.settings_select_contacts_outgoing)
             },
             contacts = picker.contacts,
             initialSelection = picker.selectedNumbers,
@@ -667,8 +671,15 @@ private fun RecordingSection(
     val ignoreContactsModeIncoming = remember(updateTrigger) { preferences.getIgnoreContactsModeIncoming() }
     val ignoreContactsModeOutgoing = remember(updateTrigger) { preferences.getIgnoreContactsModeOutgoing() }
     val ignoreCrossCountryOutgoing = remember(updateTrigger) { preferences.isIgnoreCrossCountryOutgoingEnabled() }
-    val ignoredContactsIncomingCount = remember(updateTrigger) { preferences.getIgnoredContactsIncoming().size }
-    val ignoredContactsOutgoingCount = remember(updateTrigger) { preferences.getIgnoredContactsOutgoing().size }
+    // The count on the "Select contacts" button belongs to whichever list the chosen mode uses.
+    val ignoredContactsIncomingCount = remember(updateTrigger, ignoreContactsModeIncoming) {
+        if (ignoreContactsModeIncoming == AppPreferences.IgnoreContactsMode.ONLY_SELECTED) preferences.getRecordOnlyContactsIncoming().size
+        else preferences.getIgnoredContactsIncoming().size
+    }
+    val ignoredContactsOutgoingCount = remember(updateTrigger, ignoreContactsModeOutgoing) {
+        if (ignoreContactsModeOutgoing == AppPreferences.IgnoreContactsMode.ONLY_SELECTED) preferences.getRecordOnlyContactsOutgoing().size
+        else preferences.getIgnoredContactsOutgoing().size
+    }
 
     var showFileNameFormatDialog by remember { mutableStateOf(false) }
 
@@ -3116,13 +3127,27 @@ private fun IgnoreContactsOptions(
                         AppPreferences.IgnoreContactsMode.NONE -> stringResource(R.string.settings_ignore_contacts_none)
                         AppPreferences.IgnoreContactsMode.ALL -> stringResource(R.string.settings_ignore_contacts_all)
                         AppPreferences.IgnoreContactsMode.SELECTED   -> stringResource(R.string.settings_ignore_contacts_selected)
+                        AppPreferences.IgnoreContactsMode.ONLY_SELECTED -> stringResource(R.string.settings_record_only_selected_contacts)
                     },
                     style = MaterialTheme.typography.bodyMedium
                 )
             }
         }
 
-        if (selectedEnum == AppPreferences.IgnoreContactsMode.SELECTED) {
+        // Both list modes pick contacts; each mode keeps its own list (see IgnoreContactsMode.ONLY_SELECTED).
+        val usesList = selectedEnum == AppPreferences.IgnoreContactsMode.SELECTED ||
+            selectedEnum == AppPreferences.IgnoreContactsMode.ONLY_SELECTED
+        if (selectedEnum == AppPreferences.IgnoreContactsMode.ONLY_SELECTED) {
+            // Said plainly, because it is the opposite of every other choice here: a call that cannot be
+            // matched — a withheld number — is not recorded automatically.
+            Spacer(modifier = Modifier.height(4.dp))
+            Text(
+                text = stringResource(R.string.settings_record_only_selected_hint),
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+        }
+        if (usesList) {
             Spacer(modifier = Modifier.height(8.dp))
             Button(
                 onClick  = onSelectContacts,

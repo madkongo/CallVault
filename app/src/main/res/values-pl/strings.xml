@@ -217,9 +217,9 @@
     <string name="settings_handoff_persist_label">Odporne nagrywanie</string>
     <string name="settings_ignore_anonymous_incoming">Ignoruj anonimowe połączenia przychodzące</string>
     <string name="settings_ignore_contacts_all">Ignoruj wszystkie kontakty</string>
-    <string name="settings_ignore_contacts_incoming">Ignoruj kontakty (przychodzące)</string>
+    <string name="settings_ignore_contacts_incoming">Które kontakty nagrywać (przychodzące)</string>
     <string name="settings_ignore_contacts_none">Nagrywaj wszystkie kontakty</string>
-    <string name="settings_ignore_contacts_outgoing">Ignoruj kontakty (wychodzące)</string>
+    <string name="settings_ignore_contacts_outgoing">Które kontakty nagrywać (wychodzące)</string>
     <string name="settings_ignore_contacts_selected">Ignoruj wybrane kontakty</string>
     <string name="settings_ignore_cross_country_incoming">Ignoruj połączenia przychodzące z innych krajów</string>
     <string name="settings_ignore_cross_country_outgoing">Ignoruj połączenia wychodzące w innych krajach</string>
@@ -289,6 +289,10 @@
     <string name="settings_select_contacts">Wybierz kontakty (%1$d)</string>
     <string name="settings_select_contacts_incoming">Wybierz przychodzące kontakty</string>
     <string name="settings_select_contacts_outgoing">Wybierz wychodzące kontakty</string>
+    <string name="settings_record_only_selected_contacts">Nagrywaj tylko wybrane kontakty</string>
+    <string name="settings_record_only_selected_hint">Automatycznie nagrywane są tylko wybrane kontakty. Przy pozostałych połączeniach, także z ukrytych numerów, pojawia się przycisk Nagrywaj.</string>
+    <string name="settings_select_record_only_incoming">Kontakty do nagrywania (przychodzące)</string>
+    <string name="settings_select_record_only_outgoing">Kontakty do nagrywania (wychodzące)</string>
     <string name="settings_show_toasts">Pokaż powiadomienia Toast</string>
     <string name="settings_storage_section">Pamięć</string>
     <string name="settings_storage_target_label">Gdzie zapisywać nagrania</string>

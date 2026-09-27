@@ -217,9 +217,9 @@
     <string name="settings_handoff_persist_label">Ghi âm bền bỉ</string>
     <string name="settings_ignore_anonymous_incoming">Bỏ qua các cuộc gọi đến ẩn danh</string>
     <string name="settings_ignore_contacts_all">Bỏ qua tất cả các liên hệ</string>
-    <string name="settings_ignore_contacts_incoming">Bỏ qua các liên hệ (cuộc gọi đến)</string>
+    <string name="settings_ignore_contacts_incoming">Ghi âm liên hệ nào (cuộc gọi đến)</string>
     <string name="settings_ignore_contacts_none">Ghi lại tất cả các liên hệ</string>
-    <string name="settings_ignore_contacts_outgoing">Bỏ qua các liên hệ (cuộc gọi đi)</string>
+    <string name="settings_ignore_contacts_outgoing">Ghi âm liên hệ nào (cuộc gọi đi)</string>
     <string name="settings_ignore_contacts_selected">Bỏ qua các liên hệ đã chọn</string>
     <string name="settings_ignore_cross_country_incoming">Bỏ qua các cuộc gọi đến từ các quốc gia khác</string>
     <string name="settings_ignore_cross_country_outgoing">Bỏ qua các cuộc gọi đi xuyên quốc gia</string>
@@ -289,6 +289,10 @@
     <string name="settings_select_contacts">Chọn danh bạ (%1$d)</string>
     <string name="settings_select_contacts_incoming">Chọn liên hệ gọi đến</string>
     <string name="settings_select_contacts_outgoing">Chọn liên hệ gọi đi</string>
+    <string name="settings_record_only_selected_contacts">Chỉ ghi âm các liên hệ đã chọn</string>
+    <string name="settings_record_only_selected_hint">Chỉ các liên hệ bạn chọn mới được ghi âm tự động. Các cuộc gọi khác, kể cả số ẩn, sẽ hiện nút Ghi âm.</string>
+    <string name="settings_select_record_only_incoming">Liên hệ cần ghi âm (cuộc gọi đến)</string>
+    <string name="settings_select_record_only_outgoing">Liên hệ cần ghi âm (cuộc gọi đi)</string>
     <string name="settings_show_toasts">Hiển thị thông báo dạng pop-up</string>
     <string name="settings_storage_section">Bộ nhớ</string>
     <string name="settings_storage_target_label">Nơi lưu bản ghi âm</string>

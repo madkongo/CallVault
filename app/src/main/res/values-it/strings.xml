@@ -217,9 +217,9 @@
     <string name="settings_handoff_persist_label">Registrazione resiliente</string>
     <string name="settings_ignore_anonymous_incoming">Ignora le chiamate anonime in entrata</string>
     <string name="settings_ignore_contacts_all">Ignora tutti i contatti</string>
-    <string name="settings_ignore_contacts_incoming">Ignora i contatti (in entrata)</string>
+    <string name="settings_ignore_contacts_incoming">Quali contatti registrare (in entrata)</string>
     <string name="settings_ignore_contacts_none">Registra tutti i contatti</string>
-    <string name="settings_ignore_contacts_outgoing">Ignora i contatti (in uscita)</string>
+    <string name="settings_ignore_contacts_outgoing">Quali contatti registrare (in uscita)</string>
     <string name="settings_ignore_contacts_selected">Ignora i contatti selezionati</string>
     <string name="settings_ignore_cross_country_incoming">Ignora le chiamate internazionali in entrata</string>
     <string name="settings_ignore_cross_country_outgoing">Ignora le chiamate internazionali in uscita</string>
@@ -289,6 +289,10 @@
     <string name="settings_select_contacts">Seleziona contatti (%1$d)</string>
     <string name="settings_select_contacts_incoming">Seleziona contatti in entrata</string>
     <string name="settings_select_contacts_outgoing">Seleziona contatti in uscita</string>
+    <string name="settings_record_only_selected_contacts">Registra solo i contatti selezionati</string>
+    <string name="settings_record_only_selected_hint">Vengono registrati automaticamente solo i contatti scelti. Per le altre chiamate, compresi i numeri nascosti, compare invece il pulsante Registra.</string>
+    <string name="settings_select_record_only_incoming">Contatti da registrare (in entrata)</string>
+    <string name="settings_select_record_only_outgoing">Contatti da registrare (in uscita)</string>
     <string name="settings_show_toasts">Mostra notifiche toast</string>
     <string name="settings_storage_section">Archiviazione</string>
     <string name="settings_storage_target_label">Dove salvare le registrazioni</string>

@@ -275,14 +275,18 @@
     <string name="settings_ignore_anonymous_incoming">Ignore anonymous incoming calls</string>
     <string name="settings_ignore_cross_country_incoming">Ignore cross-country incoming calls</string>
     <string name="settings_ignore_cross_country_outgoing">Ignore cross-country outgoing calls</string>
-    <string name="settings_ignore_contacts_incoming">Ignore contacts (incoming)</string>
-    <string name="settings_ignore_contacts_outgoing">Ignore contacts (outgoing)</string>
+    <string name="settings_ignore_contacts_incoming">Which contacts to record (incoming)</string>
+    <string name="settings_ignore_contacts_outgoing">Which contacts to record (outgoing)</string>
     <string name="settings_ignore_contacts_none">Record all contacts</string>
     <string name="settings_ignore_contacts_all">Ignore all contacts</string>
     <string name="settings_ignore_contacts_selected">Ignore selected contacts</string>
     <string name="settings_select_contacts">Select contacts (%1$d)</string>
     <string name="settings_select_contacts_incoming">Select incoming contacts</string>
     <string name="settings_select_contacts_outgoing">Select outgoing contacts</string>
+    <string name="settings_record_only_selected_contacts">Record only selected contacts</string>
+    <string name="settings_record_only_selected_hint">Only the contacts you pick are recorded automatically. Other calls, including hidden numbers, show the Record button instead.</string>
+    <string name="settings_select_record_only_incoming">Contacts to record (incoming)</string>
+    <string name="settings_select_record_only_outgoing">Contacts to record (outgoing)</string>
 
     <!-- Settings Screen: Visual Section -->
     <string name="settings_language">Language</string>

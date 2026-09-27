@@ -87,4 +87,95 @@ class ContactIgnoreRuleTest {
 
         assertFalse(ContactIgnoreRule.shouldIgnore("+972500000000", IgnoreContactsMode.SELECTED, emptySet(), exploding))
     }
+
+    // --- Record only selected contacts (user request, 2026-09-27) --------------------------------------
+    //
+    // The inverse of SELECTED: only the numbers on this list are recorded automatically; every other call
+    // is offered with the Record button instead. Here "ignore" is the normal answer, so the asymmetry
+    // above does not apply: a call that cannot be matched is not recorded automatically — the user asked
+    // for these people only.
+
+    @Test
+    fun `mode ONLY_SELECTED records a number on the list`() {
+        assertFalse(
+            ContactIgnoreRule.shouldIgnore(
+                "+972500000000", IgnoreContactsMode.ONLY_SELECTED, emptySet(), neverAContact,
+                recordOnlyNumbers = setOf("+972500000000"),
+            )
+        )
+    }
+
+    @Test
+    fun `mode ONLY_SELECTED matches a list entry written differently`() {
+        // The picker stores numbers as the address book has them — spaces, dashes, a national prefix —
+        // while the phone reports the caller in international form. Missing that match would silently
+        // leave unrecorded the very people the user chose, so the national number matches its
+        // international form by its trailing digits.
+        assertFalse(
+            ContactIgnoreRule.shouldIgnore(
+                "+972500000000", IgnoreContactsMode.ONLY_SELECTED, emptySet(), neverAContact,
+                recordOnlyNumbers = setOf("050-000 0000"),
+            )
+        )
+        assertFalse(
+            ContactIgnoreRule.shouldIgnore(
+                "0500000000", IgnoreContactsMode.ONLY_SELECTED, emptySet(), neverAContact,
+                recordOnlyNumbers = setOf("+972 50-000-0000"),
+            )
+        )
+    }
+
+    @Test
+    fun `mode ONLY_SELECTED does not match short codes by their tail`() {
+        // Trailing-digit matching is for full numbers only; "1234" must not match "+97221234".
+        assertTrue(
+            ContactIgnoreRule.shouldIgnore(
+                "1234", IgnoreContactsMode.ONLY_SELECTED, emptySet(), neverAContact,
+                recordOnlyNumbers = setOf("+97221234"),
+            )
+        )
+    }
+
+    @Test
+    fun `mode ONLY_SELECTED skips a number that is not on the list`() {
+        assertTrue(
+            ContactIgnoreRule.shouldIgnore(
+                "+972500000001", IgnoreContactsMode.ONLY_SELECTED, emptySet(), alwaysAContact,
+                recordOnlyNumbers = setOf("+972500000000"),
+            )
+        )
+    }
+
+    @Test
+    fun `mode ONLY_SELECTED with an empty list records nobody automatically`() {
+        assertTrue(
+            ContactIgnoreRule.shouldIgnore("+972500000000", IgnoreContactsMode.ONLY_SELECTED, emptySet(), alwaysAContact)
+        )
+    }
+
+    @Test
+    fun `mode ONLY_SELECTED skips a call with no number, which can never be on the list`() {
+        assertTrue(
+            ContactIgnoreRule.shouldIgnore("", IgnoreContactsMode.ONLY_SELECTED, emptySet(), neverAContact,
+                recordOnlyNumbers = setOf("", "+972500000000"))
+        )
+    }
+
+    @Test
+    fun `mode ONLY_SELECTED ignores the skip list entirely`() {
+        // Two lists, one per mode, so switching modes can never silently invert what a list means.
+        assertTrue(
+            ContactIgnoreRule.shouldIgnore(
+                "+972500000000", IgnoreContactsMode.ONLY_SELECTED, setOf("+972500000000"), neverAContact,
+            )
+        )
+    }
+
+    @Test
+    fun `the record-only list means nothing in the other modes`() {
+        val onlyList = setOf("+972500000000")
+        assertFalse(ContactIgnoreRule.shouldIgnore("+972500000001", IgnoreContactsMode.NONE, emptySet(), neverAContact, onlyList))
+        assertFalse(ContactIgnoreRule.shouldIgnore("+972500000001", IgnoreContactsMode.SELECTED, emptySet(), neverAContact, onlyList))
+    }
 }
+
