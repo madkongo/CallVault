@@ -114,8 +114,10 @@
     <string name="merge_note_will_keep">其余通话也会保留在手机上。</string>
     <string name="home_scroll_to_top">回到顶部</string>
     <string name="home_whatsnew_full_notes">完整发行说明</string>
-    <string name="whatsnew_243_title">应用通话保持同步，笔记边输入边保存</string>
+    <string name="whatsnew_243_title">应用通话保持同步，笔记边输入边保存，仅录制您选择的人</string>
+    <string name="whatsnew_243_where">设置 ▸ 录音 ▸ 来电 ▸ 仅录制选定的联系人</string>
     <string-array name="whatsnew_243_items">
+        <item>新增 — 仅录制您选定的联系人，适用于来电或去电</item>
         <item>修复 — 应用通话中，对方的声音不再与您逐渐错位</item>
         <item>修复 — 输入笔记不再丢字，并显示“已保存”</item>
         <item>修复 — 通话结束后不再残留通话通知</item>

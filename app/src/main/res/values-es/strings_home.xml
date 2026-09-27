@@ -114,8 +114,10 @@
     <string name="merge_note_will_keep">Las demás llamadas también se conservan en el teléfono.</string>
     <string name="home_scroll_to_top">Arriba</string>
     <string name="home_whatsnew_full_notes">Notas de versión completas</string>
-    <string name="whatsnew_243_title">Las llamadas por app quedan sincronizadas y las notas se guardan al escribir</string>
+    <string name="whatsnew_243_title">Llamadas por app sincronizadas, notas que se guardan al escribir y grabar solo a quien elijas</string>
+    <string name="whatsnew_243_where">Ajustes ▸ Grabación ▸ Llamadas entrantes ▸ Grabar solo los contactos seleccionados</string>
     <string-array name="whatsnew_243_items">
+        <item>Nuevo — Graba solo los contactos que elijas, en llamadas entrantes o salientes</item>
         <item>Corregido — En las llamadas por app, la otra persona ya no se desfasa respecto a ti</item>
         <item>Corregido — Al escribir una nota no se pierde ninguna letra, y muestra Guardado</item>
         <item>Corregido — Ya no queda una notificación de llamada después de colgar</item>

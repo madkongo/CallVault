@@ -9,6 +9,18 @@ There was no 2.4.2 release: 2.4.2 existed only as the test builds `v2.4.2-rc1` a
 release is numbered 2.4.3 so that people on those test builds are offered it — the updater of their
 build cannot see a final 2.4.2 as newer (fixed below, for every test build from now on).
 
+### Added
+
+- **Record only the contacts you choose.** For incoming and outgoing phone calls separately, a fourth
+  choice beside record all / ignore all / ignore selected: **Record only selected contacts**. Only the
+  numbers you pick are recorded automatically; every other call shows the Record button instead, so you
+  can still record one by hand. A call with a hidden number cannot match the list, so it is not recorded
+  automatically — the option says so. It keeps its own list, separate from the ignore list. The section
+  heading is now "Which contacts to record". User request.
+  <!-- 🧪 VERIFYING as of 2026-09-27: emulator, simulated incoming calls — listed number recorded, unlisted
+       offered, 2 runs each; settings screen and picker checked. Outgoing path shares the rule, not run.
+       Not yet on a real phone. -->
+
 ### Fixed
 
 - **App-call recordings stay in sync (#41).** In WhatsApp and other app calls the two sides — your

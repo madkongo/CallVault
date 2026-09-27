@@ -136,8 +136,10 @@
     <string name="merge_note_will_keep">The other calls are kept on the phone as well.</string>
     <string name="home_scroll_to_top">Top</string>
     <string name="home_whatsnew_full_notes">Full release notes</string>
-    <string name="whatsnew_243_title">App calls stay in sync, and notes save as you type</string>
+    <string name="whatsnew_243_title">App calls stay in sync, notes save as you type, and record only who you choose</string>
+    <string name="whatsnew_243_where">Settings ▸ Recording ▸ Incoming calls ▸ Record only selected contacts</string>
     <string-array name="whatsnew_243_items">
+        <item>New — Record only the contacts you choose, for incoming or outgoing calls</item>
         <item>Fixed — In app calls, the other person no longer drifts out of step with you</item>
         <item>Fixed — Typing a note keeps every letter, and says Saved</item>
         <item>Fixed — No call notification is left behind after a call</item>

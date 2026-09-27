@@ -114,8 +114,10 @@
     <string name="merge_note_will_keep">A többi hívás is a telefonon marad.</string>
     <string name="home_scroll_to_top">Az elejére</string>
     <string name="home_whatsnew_full_notes">Teljes kiadási jegyzék</string>
-    <string name="whatsnew_243_title">Az alkalmazáshívások szinkronban maradnak, a jegyzetek gépelés közben mentődnek</string>
+    <string name="whatsnew_243_title">Szinkronban maradó alkalmazáshívások, gépelés közben mentett jegyzetek, és csak a kiválasztottak rögzítése</string>
+    <string name="whatsnew_243_where">Beállítások ▸ Felvétel ▸ Bejövő hívások ▸ Csak a kiválasztott névjegyek rögzítése</string>
     <string-array name="whatsnew_243_items">
+        <item>Új — Csak a kiválasztott névjegyek rögzítése, bejövő vagy kimenő hívásoknál</item>
         <item>Javítva — Alkalmazáshívásokban a másik fél már nem csúszik el önhöz képest</item>
         <item>Javítva — Jegyzet gépelésekor egy betű sem vész el, és megjelenik: Mentve</item>
         <item>Javítva — Hívás után nem marad fenn hívásértesítés</item>
