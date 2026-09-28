@@ -114,6 +114,18 @@
     <string name="merge_note_will_keep">Le altre chiamate restano anche sul telefono.</string>
     <string name="home_scroll_to_top">Su</string>
     <string name="home_whatsnew_full_notes">Note di rilascio complete</string>
+    <string name="whatsnew_243_title">Chiamate via app sincronizzate, note salvate mentre scrivi e registra solo chi scegli</string>
+    <string name="whatsnew_243_where">Impostazioni ▸ Registrazione ▸ Chiamate in entrata ▸ Registra solo i contatti selezionati</string>
+    <string-array name="whatsnew_243_items">
+        <item>Novità — Registra solo i contatti scelti, per le chiamate in entrata o in uscita</item>
+        <item>Corretto — Nelle chiamate via app l\'altra persona non va più fuori tempo rispetto a te</item>
+        <item>Corretto — Scrivendo una nota non si perde nessuna lettera, e compare Salvata</item>
+        <item>Corretto — Dopo una chiamata non resta più la notifica della chiamata</item>
+        <item>Corretto — Se hai installato una versione di prova, ti viene proposto l\'aggiornamento definitivo</item>
+        <item>Corretto — Un download del modello andato male viene ripulito e riscaricato, invece di fallire come danneggiato</item>
+        <item>Corretto — Con la registrazione resiliente attiva, alcuni telefoni perdevano una chiamata su due</item>
+        <item>Corretto — Le chiamate via app si registrano sui telefoni vivo e iQOO</item>
+    </string-array>
     <string name="whatsnew_241_title">Ricerca in ogni pagina, e registrazione quando rispondono</string>
     <string-array name="whatsnew_241_items">
         <item>Nuovo — Una riga di ricerca in Registrazioni, Trascrizioni e Riepiloghi: un contatto o una parola detta</item>

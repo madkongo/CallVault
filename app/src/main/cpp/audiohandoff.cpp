@@ -167,6 +167,7 @@ Java_com_baba_callvault_services_recording_handoff_AudioHandoffNative_nativeFind
     struct dirent *e;
     char p[64], t[256];
     int result = -1;
+    int skippedInvalid = 0;
     const uint32_t fc = static_cast<uint32_t>(expectedFrameCount);
     while ((e = readdir(d)) != nullptr) {
         if (e->d_name[0] == '.') continue;
@@ -181,8 +182,14 @@ Java_com_baba_callvault_services_recording_handoff_AudioHandoffNative_nativeFind
         void *m = mmap(nullptr, sz, PROT_READ, MAP_SHARED, fd, 0);
         if (m == MAP_FAILED) continue;
         uint32_t w42 = static_cast<volatile uint32_t *>(m)[42];   // frameCount field
+        int32_t flags = static_cast<volatile int32_t *>(m)[44];   // audio_track_cblk_t::mFlags
         munmap(m, sz);
-        if (w42 == fc) { result = dup(fd); LOGI("nativeFindCblkFd: fd=%d sz=%d w42=%u -> dup=%d", fd, sz, w42, result); break; }
+        if (w42 != fc) continue;
+        // A block AudioFlinger has already invalidated belongs to a track that is gone — a previous call's,
+        // still mapped because some fd kept it alive. Handing it over fails the new capture on its first
+        // read with CBLK_INVALID and 0 bytes (every second call on a Redmi Note 10 Pro, 2026-09-27).
+        if (flags & 0x04 /* CBLK_INVALID */) { skippedInvalid++; LOGI("nativeFindCblkFd: fd=%d is an invalidated block; skipped", fd); continue; }
+        result = dup(fd); LOGI("nativeFindCblkFd: fd=%d sz=%d w42=%u -> dup=%d (skipped %d invalidated)", fd, sz, w42, result, skippedInvalid); break;
     }
     closedir(d);
     if (result < 0) LOGI("nativeFindCblkFd: no ashmem with frameCount=%u found", fc);

@@ -220,9 +220,9 @@
     <string name="settings_handoff_persist_label">Gravação resiliente</string>
     <string name="settings_ignore_anonymous_incoming">Ignorar chamadas recebidas anônimas</string>
     <string name="settings_ignore_contacts_all">Ignorar todos os contatos</string>
-    <string name="settings_ignore_contacts_incoming">Ignorar contatos (recebidas)</string>
+    <string name="settings_ignore_contacts_incoming">Quais contatos gravar (recebidas)</string>
     <string name="settings_ignore_contacts_none">Gravar todos os contatos</string>
-    <string name="settings_ignore_contacts_outgoing">Ignorar contatos (efetuadas)</string>
+    <string name="settings_ignore_contacts_outgoing">Quais contatos gravar (realizadas)</string>
     <string name="settings_ignore_contacts_selected">Ignorar os contatos selecionados</string>
     <string name="settings_ignore_cross_country_incoming">Ignorar chamadas internacionais recebidas</string>
     <string name="settings_ignore_cross_country_outgoing">Ignorar chamadas internacionais efetuadas</string>
@@ -292,6 +292,10 @@
     <string name="settings_select_contacts">Selecionar contatos (%1$d)</string>
     <string name="settings_select_contacts_incoming">Selecionar contatos de chamadas recebidas</string>
     <string name="settings_select_contacts_outgoing">Selecionar contatos de chamadas efetuadas</string>
+    <string name="settings_record_only_selected_contacts">Gravar somente os contatos selecionados</string>
+    <string name="settings_record_only_selected_hint">Somente os contatos escolhidos são gravados automaticamente. Nas outras chamadas, incluindo números ocultos, aparece o botão Gravar.</string>
+    <string name="settings_select_record_only_incoming">Contatos para gravar (recebidas)</string>
+    <string name="settings_select_record_only_outgoing">Contatos para gravar (realizadas)</string>
     <string name="settings_show_toasts">Mostrar notificações rápidas</string>
     <string name="settings_storage_section">Armazenamento</string>
     <string name="settings_storage_target_label">Onde salvar as gravações</string>

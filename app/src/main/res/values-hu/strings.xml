@@ -217,9 +217,9 @@
     <string name="settings_handoff_persist_label">Ellenálló rögzítés</string>
     <string name="settings_ignore_anonymous_incoming">Privát / rejtett számos hívások figyelmen kívül hagyása</string>
     <string name="settings_ignore_contacts_all">Az összes ismert névjegytől érkező hívás figyelmen kívül hagyása</string>
-    <string name="settings_ignore_contacts_incoming">Ismert névjegytől érkező bejövő hívások figyelmen kívül hagyása</string>
+    <string name="settings_ignore_contacts_incoming">Mely névjegyek hívásait rögzítse (bejövő)</string>
     <string name="settings_ignore_contacts_none">Az összes ismert névjegytől érkező hívás rögzítése</string>
-    <string name="settings_ignore_contacts_outgoing">Ismert névjegy felé kimenő hívások figyelmen kívül hagyása</string>
+    <string name="settings_ignore_contacts_outgoing">Mely névjegyek hívásait rögzítse (kimenő)</string>
     <string name="settings_ignore_contacts_selected">Az kiválasztott névjegyektől érkező hívások figyelmen kívül hagyása</string>
     <string name="settings_ignore_cross_country_incoming">Külföldi bejövő hívások figyelmen kívül hagyása</string>
     <string name="settings_ignore_cross_country_outgoing">Külföldi kimenő hívások figyelmen kívül hagyása</string>
@@ -289,6 +289,10 @@
     <string name="settings_select_contacts">Névjegyek kiválasztása (%1$d)</string>
     <string name="settings_select_contacts_incoming">Bejövő névjegyek kiválasztása</string>
     <string name="settings_select_contacts_outgoing">Kimenő névjegyek kiválasztása</string>
+    <string name="settings_record_only_selected_contacts">Csak a kiválasztott névjegyek rögzítése</string>
+    <string name="settings_record_only_selected_hint">Csak a kiválasztott névjegyek hívásai rögzülnek automatikusan. A többi hívásnál, a rejtett számokat is beleértve, a Rögzítés gomb jelenik meg.</string>
+    <string name="settings_select_record_only_incoming">Rögzítendő névjegyek (bejövő)</string>
+    <string name="settings_select_record_only_outgoing">Rögzítendő névjegyek (kimenő)</string>
     <string name="settings_show_toasts">Toast értesítés megjelenítése</string>
     <string name="settings_storage_section">Tárhely</string>
     <string name="settings_storage_target_label">Hová mentse a felvételeket</string>

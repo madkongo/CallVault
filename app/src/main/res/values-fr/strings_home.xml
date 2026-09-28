@@ -115,6 +115,18 @@
     <string name="merge_note_will_keep">Les autres appels sont également conservés sur le téléphone.</string>
     <string name="home_scroll_to_top">Haut</string>
     <string name="home_whatsnew_full_notes">Notes de version complètes</string>
+    <string name="whatsnew_243_title">Appels d\'applis synchronisés, notes enregistrées pendant la saisie, et n\'enregistrer que qui vous voulez</string>
+    <string name="whatsnew_243_where">Paramètres ▸ Enregistrement ▸ Appels entrants ▸ N\'enregistrer que les contacts sélectionnés</string>
+    <string-array name="whatsnew_243_items">
+        <item>Nouveau — N\'enregistrer que les contacts choisis, pour les appels entrants ou sortants</item>
+        <item>Corrigé — Dans les appels d\'applis, l\'autre personne ne se décale plus par rapport à vous</item>
+        <item>Corrigé — Saisir une note garde chaque lettre, et affiche Enregistré</item>
+        <item>Corrigé — Plus de notification d\'appel qui reste affichée après l\'appel</item>
+        <item>Corrigé — Si vous avez installé une version de test, la mise à jour finale vous est proposée</item>
+        <item>Corrigé — Un téléchargement de modèle raté est nettoyé et relancé, au lieu d\'échouer comme endommagé</item>
+        <item>Corrigé — Avec l\'enregistrement résilient activé, certains téléphones perdaient un appel sur deux</item>
+        <item>Corrigé — Les appels d\'applis s\'enregistrent sur les téléphones vivo et iQOO</item>
+    </string-array>
     <string name="whatsnew_241_title">La recherche sur chaque page, et l\'enregistrement au décroché</string>
     <string-array name="whatsnew_241_items">
         <item>Nouveau — Une ligne de recherche dans Enregistrements, Transcriptions et Résumés : un contact ou un mot prononcé</item>

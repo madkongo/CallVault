@@ -109,8 +109,30 @@ class DaemonKeepAliveService : Service() {
                 // binder blip doesn't trigger a relaunch (which would kill+respawn a daemon that was fine).
                 if (downStreak >= DOWN_STREAK_THRESHOLD) maybeRewarm()
             }
+            healSharedNotice()
             watchdogHandler.postDelayed(this, WATCHDOG_INTERVAL_MS)
         }
+    }
+
+    private val healSharedNoticeRunnable = Runnable { healSharedNotice() }
+
+    /**
+     * Puts "Ready" back when what is actually posted under the shared id is a leftover from a call.
+     *
+     * A service's notification is posted asynchronously by system_server, while "Ready" goes straight to
+     * NotificationManager — so a recording post can land after "Ready" and sit in the shade with nothing to
+     * replace it: "Recording in progress" 30 s after the call, on a LAVA LXX508 (2026-09-26). This reads the
+     * posted notification rather than trusting the order things were sent in. Runs a moment after each
+     * release and on every watchdog tick.
+     */
+    private fun healSharedNotice() {
+        val posted = runCatching {
+            getSystemService(NotificationManager::class.java).activeNotifications
+                .firstOrNull { it.id == NOTIF_ID }?.notification?.channelId
+        }.getOrNull()
+        if (!SharedStatusNotice.isStale(posted, CHANNEL_ID)) return
+        AppLogger.i(TAG, "A leftover call notification ($posted) was still up after the call; putting \"Ready\" back")
+        updateNotification(isDaemonAlive())
     }
 
     /**
@@ -335,6 +357,16 @@ class DaemonKeepAliveService : Service() {
             stopSelf()
             return START_NOT_STICKY
         }
+        // A recorded call has let go of the shared notification. Android does not cancel an id this service
+        // still holds, so the recording's content would stay up after the call unless "Ready" goes back.
+        // Set before the VoIP actions below return early: an instance started by one of them used to never
+        // put "Ready" back. The second, delayed look catches a recording post that system_server delivers
+        // after this one (LAVA LXX508) — see [healSharedNotice].
+        SharedStatusNotice.onReleased = {
+            watchdogHandler.post { updateNotification(isDaemonAlive()) }
+            watchdogHandler.removeCallbacks(healSharedNoticeRunnable)
+            watchdogHandler.postDelayed(healSharedNoticeRunnable, SHARED_NOTICE_HEAL_DELAY_MS)
+        }
         // The Record button on the "Ask me" prompt. Handled after startForeground above, so the
         // service is always in a legal foreground state before any work begins.
         if (intent?.action == ACTION_VOIP_STOP) {
@@ -360,9 +392,6 @@ class DaemonKeepAliveService : Service() {
         // Recover the INSTANT the daemon dies (binder linkToDeath) — don't wait for the next poll.
         // On a real incoming call this is what races (and hopefully beats) the call after a long idle.
         RecorderConnection.onDeath = { onDaemonDiedImmediate() }
-        // A recorded call has let go of the shared notification. Android does not cancel an id this service
-        // still holds, so the recording's content would stay up after the call unless "Ready" goes back.
-        SharedStatusNotice.onReleased = { watchdogHandler.post { updateNotification(isDaemonAlive()) } }
         // VoIP detection lives here rather than in its own component: this service is already a
         // permanent foreground presence, so watching for VoIP calls costs no extra process and no
         // second notification, and VoIP gets exactly the same lifetime as carrier recording.
@@ -631,6 +660,7 @@ class DaemonKeepAliveService : Service() {
         runCatching { contentResolver.unregisterContentObserver(developerOptionsObserver) }
         runCatching { voipDetector.stop() }
         watchdogHandler.removeCallbacks(watchdog)
+        watchdogHandler.removeCallbacks(healSharedNoticeRunnable)
         RecorderConnection.onDeath = null
         SharedStatusNotice.onReleased = null
         super.onDestroy()
@@ -705,6 +735,9 @@ class DaemonKeepAliveService : Service() {
 
         /** How often the watchdog checks the daemon is alive. Cheap (a binder ping). */
         private const val WATCHDOG_INTERVAL_MS = 60_000L
+
+        /** How long after a release the posted notification is checked again. Covers a late system_server post. */
+        private const val SHARED_NOTICE_HEAL_DELAY_MS = 1_500L
 
         /** How long a restore waits for the switch observer to say who turned Wireless debugging off. */
         private const val RESTORE_SETTLE_MS = 1_000L

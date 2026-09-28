@@ -114,6 +114,18 @@
     <string name="merge_note_will_keep">Pozostałe rozmowy zostaną też zachowane w telefonie.</string>
     <string name="home_scroll_to_top">Do góry</string>
     <string name="home_whatsnew_full_notes">Pełne informacje o wydaniu</string>
+    <string name="whatsnew_243_title">Zsynchronizowane rozmowy w aplikacjach, notatki zapisywane podczas pisania i nagrywanie tylko wybranych</string>
+    <string name="whatsnew_243_where">Ustawienia ▸ Nagrywanie ▸ Połączenia przychodzące ▸ Nagrywaj tylko wybrane kontakty</string>
+    <string-array name="whatsnew_243_items">
+        <item>Nowość — Nagrywaj tylko wybrane kontakty, przy połączeniach przychodzących lub wychodzących</item>
+        <item>Naprawiono — W rozmowach w aplikacjach druga osoba nie rozjeżdża się już względem Ciebie</item>
+        <item>Naprawiono — Pisanie notatki nie gubi liter i pokazuje „Zapisano”</item>
+        <item>Naprawiono — Po rozmowie nie zostaje już powiadomienie o połączeniu</item>
+        <item>Naprawiono — Jeśli zainstalowano wersję testową, proponowana jest aktualizacja końcowa</item>
+        <item>Naprawiono — Nieudane pobieranie modelu jest czyszczone i ponawiane, zamiast kończyć się błędem uszkodzenia</item>
+        <item>Naprawiono — Przy włączonym odpornym nagrywaniu niektóre telefony gubiły co drugą rozmowę</item>
+        <item>Naprawiono — Rozmowy w aplikacjach nagrywają się na telefonach vivo i iQOO</item>
+    </string-array>
     <string name="whatsnew_241_title">Wyszukiwanie na każdej stronie i nagrywanie po odebraniu</string>
     <string-array name="whatsnew_241_items">
         <item>Nowość — Pole wyszukiwania w Nagraniach, Transkrypcjach i Podsumowaniach: kontakt albo wypowiedziane słowo</item>

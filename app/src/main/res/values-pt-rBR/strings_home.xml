@@ -114,6 +114,18 @@
     <string name="merge_note_will_keep">As outras chamadas também são mantidas no telefone.</string>
     <string name="home_scroll_to_top">Topo</string>
     <string name="home_whatsnew_full_notes">Notas de versão completas</string>
+    <string name="whatsnew_243_title">Chamadas por app sincronizadas, notas salvas enquanto você digita e grave só quem você escolher</string>
+    <string name="whatsnew_243_where">Configurações ▸ Gravação ▸ Chamadas recebidas ▸ Gravar somente os contatos selecionados</string>
+    <string-array name="whatsnew_243_items">
+        <item>Novo — Grave somente os contatos que você escolher, em chamadas recebidas ou realizadas</item>
+        <item>Corrigido — Em chamadas por app, a outra pessoa não fica mais fora de sincronia com você</item>
+        <item>Corrigido — Digitar uma nota não perde nenhuma letra, e mostra Salvo</item>
+        <item>Corrigido — Nenhuma notificação de chamada fica para trás depois da ligação</item>
+        <item>Corrigido — Se você instalou uma versão de teste, a atualização final é oferecida</item>
+        <item>Corrigido — Um download de modelo que deu errado é limpo e baixado de novo, em vez de falhar como danificado</item>
+        <item>Corrigido — Com a gravação resiliente ativada, alguns celulares perdiam uma a cada duas chamadas</item>
+        <item>Corrigido — Chamadas por app são gravadas em celulares vivo e iQOO</item>
+    </string-array>
     <string name="whatsnew_241_title">Busca em cada página, e gravar quando atenderem</string>
     <string-array name="whatsnew_241_items">
         <item>Novo — Uma linha de busca em Gravações, Transcrições e Resumos: um contato ou uma palavra dita</item>

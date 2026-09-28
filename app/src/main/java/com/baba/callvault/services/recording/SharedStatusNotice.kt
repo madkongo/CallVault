@@ -56,6 +56,27 @@ object SharedStatusNotice {
         onReleased?.invoke()
     }
 
+    /**
+     * Asks the keep-alive to put its own content back although nothing was claimed. For a recording-service
+     * instance that ends without having posted — an orphaned notification action — while a leftover
+     * recording notification may still sit on [ID]. Ignored while a call holds the id.
+     */
+    fun requestRefresh() {
+        if (recordingNotification != null) return
+        onReleased?.invoke()
+    }
+
+    /**
+     * Whether the notification actually posted under [ID] is left over from a call: it belongs to another
+     * channel than the keep-alive's own, and no recorded call holds the id.
+     *
+     * It happens because a service's notification is posted asynchronously by system_server, while the
+     * keep-alive re-posts "Ready" directly — a recording post can land after "Ready" and stay (LAVA
+     * LXX508, 2026-09-26). The keep-alive reads what is posted and heals it.
+     */
+    fun isStale(postedChannelId: String?, ownChannelId: String): Boolean =
+        recordingNotification == null && postedChannelId != null && postedChannelId != ownChannelId
+
     /** What the keep-alive should post under [ID]: the recorded call's notification if there is one, else [own]. */
     fun contentForKeepAlive(own: Notification): Notification = recordingNotification ?: own
 

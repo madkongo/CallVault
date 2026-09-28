@@ -217,9 +217,9 @@
     <string name="settings_handoff_persist_label">Enregistrement résilient</string>
     <string name="settings_ignore_anonymous_incoming">Ignorez les appels entrants anonymes</string>
     <string name="settings_ignore_contacts_all">Ignorer tous les contacts</string>
-    <string name="settings_ignore_contacts_incoming">Ignorer les contacts (entrants)</string>
+    <string name="settings_ignore_contacts_incoming">Quels contacts enregistrer (entrants)</string>
     <string name="settings_ignore_contacts_none">Enregistrez tous les contacts</string>
-    <string name="settings_ignore_contacts_outgoing">Ignorer les contacts (sortants)</string>
+    <string name="settings_ignore_contacts_outgoing">Quels contacts enregistrer (sortants)</string>
     <string name="settings_ignore_contacts_selected">Ignorer les contacts sélectionnés</string>
     <string name="settings_ignore_cross_country_incoming">Ignorez les appels entrants intercontinentaux</string>
     <string name="settings_ignore_cross_country_outgoing">Ignorer les appels sortants intercontinentaux</string>
@@ -289,6 +289,10 @@
     <string name="settings_select_contacts">Sélectionner les contacts (%1$d)</string>
     <string name="settings_select_contacts_incoming">Sélectionnez les contacts entrants</string>
     <string name="settings_select_contacts_outgoing">Sélectionner les contacts sortants</string>
+    <string name="settings_record_only_selected_contacts">N\'enregistrer que les contacts sélectionnés</string>
+    <string name="settings_record_only_selected_hint">Seuls les contacts choisis sont enregistrés automatiquement. Pour les autres appels, y compris les numéros masqués, le bouton Enregistrer s\'affiche à la place.</string>
+    <string name="settings_select_record_only_incoming">Contacts à enregistrer (entrants)</string>
+    <string name="settings_select_record_only_outgoing">Contacts à enregistrer (sortants)</string>
     <string name="settings_show_toasts">Afficher les notifications Toast</string>
     <string name="settings_storage_section">Stockage</string>
     <string name="settings_storage_target_label">Où enregistrer les enregistrements</string>

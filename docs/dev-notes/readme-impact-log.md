@@ -493,3 +493,11 @@ open. Pushed to GitHub `main` as `ceaea29e` on 2026-09-19 (README only; the app 
   something competitors advertise, and a user asked for it.
 - Lines 102/110 (Shizuku-mode table): the option works in both modes — the host is shell either way —
   so no ❌ row is needed. 📐 not yet tried in Shizuku mode.
+
+## 2026-09-28 — 2.4.3 (record only selected contacts; vivo app calls; Resilient recording; model downloads)
+
+- **README:** grepped for contact filtering, vivo, Android versions, Resilient recording and model downloads —
+  it makes no claim any of these changes contradicts, and its feature list does not enumerate the
+  per-direction contact choices. Nothing to correct.
+- Worth a line once verified by users: "Record only selected contacts" (a user request), and app calls on
+  vivo/iQOO. Both 🧪 as of release.

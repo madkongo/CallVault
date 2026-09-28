@@ -217,9 +217,9 @@
     <string name="settings_handoff_persist_label">Robuste Aufnahme</string>
     <string name="settings_ignore_anonymous_incoming">Anonyme eingehende Anrufe ignorieren</string>
     <string name="settings_ignore_contacts_all">Alle Kontakte ignorieren</string>
-    <string name="settings_ignore_contacts_incoming">Kontakte ignorieren (eingehend)</string>
+    <string name="settings_ignore_contacts_incoming">Welche Kontakte aufnehmen (eingehend)</string>
     <string name="settings_ignore_contacts_none">Alle Kontakte aufzeichnen</string>
-    <string name="settings_ignore_contacts_outgoing">Kontakte ignorieren (ausgehend)</string>
+    <string name="settings_ignore_contacts_outgoing">Welche Kontakte aufnehmen (ausgehend)</string>
     <string name="settings_ignore_contacts_selected">Ausgewählte Kontakte ignorieren</string>
     <string name="settings_ignore_cross_country_incoming">Eingehende Inlandsanrufe ignorieren</string>
     <string name="settings_ignore_cross_country_outgoing">Ausgehende Inlandsanrufe ignorieren</string>
@@ -289,6 +289,10 @@
     <string name="settings_select_contacts">Kontakte auswählen (%1$d)</string>
     <string name="settings_select_contacts_incoming">Eingehende Kontakte auswählen</string>
     <string name="settings_select_contacts_outgoing">Ausgehende Kontakte auswählen</string>
+    <string name="settings_record_only_selected_contacts">Nur ausgewählte Kontakte aufnehmen</string>
+    <string name="settings_record_only_selected_hint">Nur die ausgewählten Kontakte werden automatisch aufgenommen. Bei anderen Anrufen, auch mit unterdrückter Nummer, erscheint stattdessen die Schaltfläche „Aufnehmen“.</string>
+    <string name="settings_select_record_only_incoming">Aufzunehmende Kontakte (eingehend)</string>
+    <string name="settings_select_record_only_outgoing">Aufzunehmende Kontakte (ausgehend)</string>
     <string name="settings_show_toasts">Zeige Toast-Benachrichtigungen an</string>
     <string name="settings_storage_section">Speicher</string>
     <string name="settings_storage_target_label">Speicherort für Aufnahmen</string>

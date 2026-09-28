@@ -3,9 +3,56 @@
 All notable changes to CallVault are documented here. The format is based on
 [Keep a Changelog](https://keepachangelog.com/), and this project uses semantic-ish versioning.
 
-## [2.4.2] — unreleased
+## [2.4.3] — 2026-09-28
+
+There was no 2.4.2 release: 2.4.2 existed only as the test builds `v2.4.2-rc1` and `v2.4.2-rc2`. The next
+release is numbered 2.4.3 so that people on those test builds are offered it — the updater of their
+build cannot see a final 2.4.2 as newer (fixed below, for every test build from now on).
+
+### Added
+
+- **Record only the contacts you choose.** For incoming and outgoing phone calls separately, a fourth
+  choice beside record all / ignore all / ignore selected: **Record only selected contacts**. Only the
+  numbers you pick are recorded automatically; every other call shows the Record button instead, so you
+  can still record one by hand. A call with a hidden number cannot match the list, so it is not recorded
+  automatically — the option says so. It keeps its own list, separate from the ignore list. The section
+  heading is now "Which contacts to record". User request.
+  <!-- 🧪 VERIFYING as of 2026-09-27: emulator, simulated incoming calls — listed number recorded, unlisted
+       offered, 2 runs each; settings screen and picker checked. Outgoing path shares the rule, not run.
+       Not yet on a real phone. -->
 
 ### Fixed
+
+- **Model downloads no longer end in "The download was damaged".** A download of a transcription or summary
+  model that had gone wrong on the phone — interrupted and resumed badly, or written by two attempts at
+  once — failed its check and was offered back as "190 MB of 190 MB, Resume", which failed again every
+  time. The app now looks at what an earlier attempt left before downloading: a damaged file is deleted and
+  fetched again, a finished one is checked and installed, a partial one is resumed only from exactly where
+  it stopped, and only one attempt writes the file at a time. A failed check downloads once more from the
+  start before saying anything. The debug log now records each download attempt — resumed or fresh, how far
+  it got, how fast, and why it ended — so a report like this can be read instead of guessed. User report.
+  <!-- 🧪 VERIFYING as of 2026-09-28: emulator, real downloads of the small model — a planted full-length
+       damaged leftover was deleted and re-fetched, a genuine 60 MB partial resumed and verified. The
+       stop-and-restart race itself was not reproduced. Not yet on a real phone or the reporter's. -->
+
+- **With Resilient recording on, every call records.** On some phones (reported on a Redmi Note 10 Pro,
+  Android 13) every second phone call was lost: the recorder handed the new call an audio buffer left over
+  from the previous one, and the capture died in its first moment with nothing recorded. It now lets go of
+  each call's buffer when the call is handed over, and never picks up a dead one. Private report.
+  <!-- 🧪 VERIFYING as of 2026-09-28: built from the log and code reading; NOT reproduced — the emulator
+       cannot run the handoff at all (Android 16), and our phones showed no leftover buffers. To settle:
+       Resilient recording on (OP9, Android 14), three phone calls in a row, all three recorded; then the
+       reporter's phone. The fallback to normal capture when a handoff dies at call start is NOT built. -->
+
+- **App calls record on vivo and iQOO phones.** On vivo's Android (OriginOS / Funtouch) every WhatsApp,
+  Telegram or other app call failed to record: vivo changed a part of Android that CallVault's recorder uses,
+  and it crashed there. CallVault now builds that part of the recording the way scrcpy does for the same
+  crash, only on phones where the normal way fails, so no other phone changes. Private report (iQOO,
+  Android 16).
+  <!-- 🧪 VERIFYING as of 2026-09-28: the new route was forced on the OP9 (Android 14) in a throwaway build —
+       WhatsApp call, sink built without the vendor constructor (state=1), far side read in full (peak 23915,
+       no stand-ins), sync ±10 ms, audio for all 29 s. Never run on a vivo phone. To settle: the reporter's
+       app call on his iQOO. -->
 
 - **App-call recordings stay in sync (#41).** In WhatsApp and other app calls the two sides — your
   microphone and the other person's voice — are captured separately and combined, and until now they
@@ -21,6 +68,21 @@ All notable changes to CallVault are documented here. The format is based on
   database after every keystroke, so fast typing lost letters or swapped them, and nothing said the
   note had been kept — it read as "you cannot save a note". The field now keeps what you type, saves
   a moment after you stop, and says **Saved** beside its title. Present since 2.2.0; reported on 2.4.1.
+
+- **People on a test build are offered the final release.** The in-app updater ignored everything after
+  the "-" in a version, so a phone on `2.4.2-rc2` counted as already having 2.4.2 and was never offered it.
+  A test build now counts as older than the final release of the same number.
+  <!-- 🧪 VERIFYING as of 2026-09-27: unit-tested only (UpdateVersionTest). Proof in the field comes with the
+       first test build that carries this fix and is then updated to its final. -->
+
+- **No "Call in progress" notification left behind after a call.** Sometimes, after a call ended, the
+  call's notification stayed in the shade — "Recording in progress" or "Call in progress — Press to start
+  recording". Swiping it brought it straight back, and tapping Record raised "An unexpected error
+  occurred"; only force-stopping the app cleared it. The notification is no longer re-posted as the
+  recording stops, a leftover one is replaced by "Ready to record calls" within a couple of seconds, and
+  tapping a leftover's buttons now simply clears it. Seen on 2.4.1 on a OnePlus 12, a Samsung and a LAVA.
+  <!-- 🧪 VERIFYING as of 2026-09-27: race forced on the emulator (leftover healed; Pause on a leftover
+       ends the stray service); normal and offered calls clean. Not yet on a real phone. -->
 
 ## [2.4.1] — 2026-09-22
 

@@ -10,7 +10,9 @@ package com.baba.callvault.system.updates
 
 /**
  * Compares release-tag versions ("v1.2.3") against the installed [android.os.Build] version name.
- * Suffixes after '-' (e.g. "1.2.3-test1") are ignored: a test build of X.Y.Z is treated as X.Y.Z.
+ * A suffix after '-' ("1.2.3-rc2", "1.2.3-test1") marks a test build, which comes BEFORE the final X.Y.Z:
+ * the final is an update for it, nothing else of the same number is. Until 2026-09-27 the suffix was simply
+ * dropped, so a phone on a pre-release never saw the final of the same version.
  * Unparseable input never reports "newer" — a bad tag must not trigger an update.
  */
 object UpdateVersion {
@@ -25,8 +27,12 @@ object UpdateVersion {
             val l = local.getOrElse(i) { 0 }
             if (r != l) return r > l
         }
-        return false
+        // Same number: only the final is newer, and only than a test build of it.
+        return !isTestBuild(remoteTag) && isTestBuild(installed)
     }
+
+    /** "1.2.3-rc2" and "v1.2.3-test1" are test builds; "1.2.3" is not. */
+    private fun isTestBuild(raw: String): Boolean = raw.trim().contains('-')
 
     /** "v1.2.3-test1" → [1, 2, 3]; null when any numeric part fails to parse. */
     private fun parse(raw: String): List<Int>? {
