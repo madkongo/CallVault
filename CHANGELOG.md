@@ -29,7 +29,8 @@ build cannot see a final 2.4.2 as newer (fixed below, for every test build from 
   time. The app now looks at what an earlier attempt left before downloading: a damaged file is deleted and
   fetched again, a finished one is checked and installed, a partial one is resumed only from exactly where
   it stopped, and only one attempt writes the file at a time. A failed check downloads once more from the
-  start before saying anything. User report.
+  start before saying anything. The debug log now records each download attempt — resumed or fresh, how far
+  it got, how fast, and why it ended — so a report like this can be read instead of guessed. User report.
   <!-- 🧪 VERIFYING as of 2026-09-28: emulator, real downloads of the small model — a planted full-length
        damaged leftover was deleted and re-fetched, a genuine 60 MB partial resumed and verified. The
        stop-and-restart race itself was not reproduced. Not yet on a real phone or the reporter's. -->
