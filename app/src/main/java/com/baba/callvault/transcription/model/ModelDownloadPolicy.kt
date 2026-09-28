@@ -105,5 +105,39 @@ object ModelDownloadPolicy {
 
     private const val HTTP_OK = 200
     private const val HTTP_PARTIAL = 206
+
+    /**
+     * The log line at the start of each attempt: which attempt, fresh or resumed, and the server's answer.
+     * Before 2.4.3 a download logged only that it failed, so a "damaged" report could not say why (2026-09-28).
+     *
+     * Sizes are in MB, never raw byte counts: the log's redactor reads a run of 8+ digits as a phone number
+     * and blanks it, which is what happened to the first version of these lines.
+     */
+    fun attemptStartLine(
+        modelId: String, attempt: Int, resumeFrom: Long, sizeBytes: Long, status: Int, contentRange: String?,
+    ): String {
+        val from = if (resumeFrom > 0L) "resuming at ${mb(resumeFrom)} of ${mb(sizeBytes)}" else "from the start (${mb(sizeBytes)})"
+        val served = contentRange
+            ?.let { CONTENT_RANGE_START.find(it)?.groupValues?.get(1)?.toLongOrNull() }
+            ?.let { ", server continues at ${mb(it)}" }
+            ?: contentRange?.let { ", unreadable Content-Range" }.orEmpty()
+        return "$modelId: download attempt $attempt, $from; HTTP $status$served"
+    }
+
+    /** The log line at the end of each attempt: why it ended, how far it got, how long, how fast. */
+    fun attemptEndLine(
+        modelId: String, why: String, attemptBytes: Long, totalBytes: Long, sizeBytes: Long, elapsedMs: Long,
+    ): String {
+        val kbPerSecond = if (elapsedMs > 0L) attemptBytes * MS_PER_SECOND / elapsedMs / BYTES_PER_KB else 0L
+        return "$modelId: download attempt ended — $why; ${mb(attemptBytes)} this attempt, ${mb(totalBytes)} of " +
+            "${mb(sizeBytes)} on disk, ${elapsedMs / MS_PER_SECOND} s, $kbPerSecond KB/s"
+    }
+
+    /** A size for the log, in MB — never a raw byte count, which the redactor blanks as a phone number. */
+    fun mb(bytes: Long): String = "%.1f MB".format(java.util.Locale.ROOT, bytes / BYTES_PER_MB)
+
+    private const val BYTES_PER_KB = 1024L
+    private const val BYTES_PER_MB = 1024.0 * 1024.0
+    private const val MS_PER_SECOND = 1000L
 }
 

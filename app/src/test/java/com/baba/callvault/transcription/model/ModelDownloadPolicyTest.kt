@@ -161,5 +161,46 @@ class ModelDownloadPolicyTest {
         assertTrue(ModelDownloadPolicy.retryCleanAfterDigestFailure(cleanRetriesUsed = 0))
         assertFalse(ModelDownloadPolicy.retryCleanAfterDigestFailure(cleanRetriesUsed = 1))
     }
+
+    // ---- what a download attempt writes to the log -----------------------------------------------------
+
+    @Test
+    fun `the start line says whether the attempt resumed and how the server answered`() {
+        val line = ModelDownloadPolicy.attemptStartLine("small-q5_1", attempt = 3, resumeFrom = 62_914_560L,
+            sizeBytes = 190_085_487L, status = 206, contentRange = "bytes 62914560-190085486/190085487")
+        listOf("small-q5_1", "attempt 3", "resuming at 60.0 MB of 181.3 MB", "HTTP 206", "server continues at 60.0 MB").forEach {
+            assertTrue("start line must carry '$it': $line", line.contains(it))
+        }
+    }
+
+    @Test
+    fun `the start line of a fresh attempt says so`() {
+        val line = ModelDownloadPolicy.attemptStartLine("small-q5_1", 1, 0L, 190_085_487L, 200, null)
+        assertTrue(line, line.contains("from the start"))
+    }
+
+    @Test
+    fun `the end line gives how far it got, how long it took, the speed and why it ended`() {
+        val line = ModelDownloadPolicy.attemptEndLine("small-q5_1", why = "stopped by Android (timeout)",
+            attemptBytes = 60L * 1024 * 1024, totalBytes = 122_914_560L, sizeBytes = 190_085_487L, elapsedMs = 600_000L)
+        listOf("stopped by Android (timeout)", "60.0 MB this attempt", "117.2 MB of 181.3 MB on disk", "600 s", "102 KB/s").forEach {
+            assertTrue("end line must carry '$it': $line", line.contains(it))
+        }
+    }
+
+    @Test
+    fun `no line carries a run of digits the log redactor would blank as a phone number`() {
+        val lines = listOf(
+            ModelDownloadPolicy.attemptStartLine("m", 2, 62_914_560L, 2_620_370_976L, 206, "bytes 62914560-2620370975/2620370976"),
+            ModelDownloadPolicy.attemptEndLine("m", "complete", 2_557_456_416L, 2_620_370_976L, 2_620_370_976L, 1_234_567L),
+        )
+        lines.forEach { assertFalse("8+ digits in: $it", Regex("""\d{8,}""").containsMatchIn(it)) }
+    }
+
+    @Test
+    fun `the end line survives an attempt that took no time`() {
+        val line = ModelDownloadPolicy.attemptEndLine("m", "complete", 0L, 0L, 10L, elapsedMs = 0L)
+        assertTrue(line, line.contains("0 KB/s"))
+    }
 }
 
