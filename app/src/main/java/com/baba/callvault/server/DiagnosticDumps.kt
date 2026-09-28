@@ -102,7 +102,9 @@ object DiagnosticDumps {
         // voice-communication rule and its address?
         "voip_policy" -> arrayOf(
             SH, "-c",
-            "$DUMPSYS media.audio_policy | sed -n '/Audio Policy Mix:/,/Preferred mixer/p' | head -n 80",
+            // From "Inputs" on: each open recording input with its device and address (where our sink is
+            // really attached), then the mixes — so the two addresses can be compared.
+            "$DUMPSYS media.audio_policy | sed -n '/^ Inputs (/,/Preferred mixer/p' | head -n 120",
         )
         // Who is playing right now, with usage and flags — is the calling app's track VOICE_COMMUNICATION,
         // and does it carry a no-capture flag? Idle players are left out.

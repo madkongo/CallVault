@@ -147,6 +147,9 @@ internal object VoipAudioPolicy {
      * Creates the reader for the far-party stream. Valid on a call already in progress — only the
      * POLICY has to predate the call. Returns null when not armed or the sink won't initialise.
      */
+    /** The package uid 2000 owns; the identity scrcpy captures audio with. */
+    private const val SHELL_PACKAGE = "com.android.shell"
+
     @Synchronized
     fun createSink(): AudioRecord? {
         val p = policy ?: run { AppLogger.w(TAG, "createSink with no armed policy"); return null }
@@ -193,6 +196,13 @@ internal object VoipAudioPolicy {
             channelCount = format.channelCount,
             encoding = format.encoding,
             bufferSizeInBytes = AudioRecord.getMinBufferSize(format.sampleRate, AudioFormat.CHANNEL_IN_STEREO, format.encoding),
+            // vivo only (this path runs only after vivo's constructor crash). With the identity the public
+            // constructor would use ("uid:2000") the sink opened but read pure silence while Telegram's audio
+            // was demonstrably being copied into our mix (V2507A, 2026-09-28 17:37). vivo's skipped check asks
+            // whether a PACKAGE may record the remote submix, and scrcpy — which records audio on vivo —
+            // identifies as com.android.shell, the package uid 2000 owns. The microphone keeps the old identity:
+            // it records on vivo as it is.
+            packageName = SHELL_PACKAGE,
         ).also { AppLogger.i(TAG, "VoIP sink built without the vendor constructor (state=${it.state})") }
     }.onFailure { AppLogger.e(TAG, "createSink without the vendor constructor failed too: ${it.message}", it) }.getOrNull()
 }
