@@ -15,6 +15,7 @@ import androidx.work.Data
 import androidx.work.ExistingWorkPolicy
 import androidx.work.NetworkType
 import androidx.work.OneTimeWorkRequestBuilder
+import androidx.work.WorkInfo
 import androidx.work.WorkManager
 import androidx.work.WorkerParameters
 import androidx.work.workDataOf
@@ -96,7 +97,7 @@ class ModelDownloadWorker(
             // front with a reason is the kinder outcome, and retrying cannot conjure storage.
             val remaining = model.sizeBytes - resumeFrom
             if (!ModelDownloadPolicy.hasRoomFor(dir.usableSpace, remaining)) {
-                AppLogger.w(TAG, "Not enough free space for ${model.id}: needs $remaining bytes")
+                AppLogger.w(TAG, "Not enough free space for ${model.id}: needs ${ModelDownloadPolicy.mb(remaining)} plus headroom, has ${ModelDownloadPolicy.mb(dir.usableSpace)}")
                 return Result.failure(workDataOf(KEY_ERROR to ERROR_NO_SPACE))
             }
 
@@ -174,8 +175,14 @@ class ModelDownloadWorker(
         val dropOnCancel = launch {
             try { awaitCancellation() } finally { connection.disconnect() }
         }
+        val startedAt = android.os.SystemClock.elapsedRealtime()
+        var written = resumeFrom
+        var why = "error"
         try {
             val status = connection.responseCode
+            AppLogger.i(TAG, ModelDownloadPolicy.attemptStartLine(
+                model.id, runAttemptCount + 1, resumeFrom, model.sizeBytes, status, connection.getHeaderField("Content-Range"),
+            ))
             val append = when (ModelDownloadPolicy.reply(status, resumeFrom, connection.getHeaderField("Content-Range"))) {
                 ModelDownloadPolicy.Reply.APPEND -> true
                 // A server that ignores the Range header replies 200 with the whole file, so anything
@@ -184,19 +191,23 @@ class ModelDownloadWorker(
                 ModelDownloadPolicy.Reply.DISCARD_AND_RETRY -> {
                     AppLogger.w(TAG, "${model.id}: server resumed from '${connection.getHeaderField("Content-Range")}', not byte $resumeFrom; starting over")
                     part.delete()
+                    why = "the server resumed from the wrong place; leftover deleted"
                     return@coroutineScope Outcome.RESTART
                 }
-                ModelDownloadPolicy.Reply.ERROR -> throw IOException("HTTP $status")
+                ModelDownloadPolicy.Reply.ERROR -> { why = "HTTP $status"; throw IOException("HTTP $status") }
             }
 
-            var written = if (append) resumeFrom else 0L
+            written = if (append) resumeFrom else 0L
             var lastPublished = NOTHING_PUBLISHED
 
             connection.inputStream.use { input ->
                 java.io.FileOutputStream(part, append).use { output ->
                     val buffer = ByteArray(BUFFER_BYTES)
                     while (true) {
-                        if (isStopped) return@coroutineScope Outcome.STOPPED
+                        if (isStopped) {
+                            why = "stopped by Android (${stopReasonName()})"
+                            return@coroutineScope Outcome.STOPPED
+                        }
 
                         val read = input.read(buffer)
                         if (read <= 0) break
@@ -216,11 +227,36 @@ class ModelDownloadWorker(
                 }
             }
 
-            if (written >= model.sizeBytes) Outcome.COMPLETE else Outcome.STOPPED
+            if (written >= model.sizeBytes) { why = "complete"; Outcome.COMPLETE }
+            else { why = "the server closed the connection early"; Outcome.STOPPED }
+        } catch (e: IOException) {
+            // A stopped attempt usually lands here: its connection is dropped under a blocking read.
+            why = if (isStopped) "stopped by Android (${stopReasonName()})" else "error: ${e.message}"
+            throw e
         } finally {
             dropOnCancel.cancel()
             connection.disconnect()
+            AppLogger.i(TAG, ModelDownloadPolicy.attemptEndLine(
+                model.id, why, (written - resumeFrom).coerceAtLeast(0L), written, model.sizeBytes,
+                android.os.SystemClock.elapsedRealtime() - startedAt,
+            ))
         }
+    }
+
+    /** Android's reason for stopping this attempt, readable in a log. The 10-minute limit reads "timeout". */
+    private fun stopReasonName(): String = when (stopReason) {
+        WorkInfo.STOP_REASON_TIMEOUT -> "timeout"
+        WorkInfo.STOP_REASON_CONSTRAINT_CONNECTIVITY -> "network lost or no longer unmetered"
+        WorkInfo.STOP_REASON_CONSTRAINT_STORAGE_NOT_LOW -> "storage low"
+        WorkInfo.STOP_REASON_CANCELLED_BY_APP -> "cancelled in the app"
+        WorkInfo.STOP_REASON_USER -> "stopped by the user"
+        WorkInfo.STOP_REASON_QUOTA -> "background quota"
+        WorkInfo.STOP_REASON_APP_STANDBY -> "app standby"
+        WorkInfo.STOP_REASON_BACKGROUND_RESTRICTION -> "background restriction"
+        WorkInfo.STOP_REASON_DEVICE_STATE -> "device state"
+        WorkInfo.STOP_REASON_PREEMPT -> "preempted"
+        WorkInfo.STOP_REASON_SYSTEM_PROCESSING -> "system processing"
+        else -> "reason $stopReason"
     }
 
     companion object {

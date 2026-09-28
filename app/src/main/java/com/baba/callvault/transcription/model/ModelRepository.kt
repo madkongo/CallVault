@@ -147,7 +147,7 @@ object ModelRepository {
         val length = part.length()
         return when {
             length > expectedSize -> {
-                AppLogger.w(TAG, "Deleting a leftover download of ${model.id} longer than the model ($length > $expectedSize bytes)")
+                AppLogger.w(TAG, "Deleting a leftover download of ${model.id} longer than the model (${ModelDownloadPolicy.mb(length)} > ${ModelDownloadPolicy.mb(expectedSize)})")
                 part.delete()
                 Leftover.Discarded
             }
