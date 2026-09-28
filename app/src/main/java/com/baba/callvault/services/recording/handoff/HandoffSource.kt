@@ -13,6 +13,7 @@ import android.media.AudioRecord
 import com.baba.callvault.integrations.scrcpy.androidAudioSourceForKey
 import com.baba.callvault.server.BinderDelivery
 import com.baba.callvault.server.CaptureAudit
+import com.baba.callvault.server.HostAudioRecord
 import com.baba.callvault.utils.AppLogger
 
 /**
@@ -92,10 +93,11 @@ object HandoffSource {
             val ch = if (mask == AudioFormat.CHANNEL_IN_STEREO) 2 else 1
             val mb = AudioRecord.getMinBufferSize(rate, mask, AudioFormat.ENCODING_PCM_16BIT)
             if (mb <= 0) continue
-            @Suppress("MissingPermission")
-            val rec = runCatching {
-                AudioRecord(source, rate, mask, AudioFormat.ENCODING_PCM_16BIT, mb * BUFFER_FACTOR)
-            }.getOrNull()
+            // Through the host's one opener: on vivo the public constructor crashes here, which is why Resilient
+            // recording could never start on vivo (2026-09-28).
+            val rec = HostAudioRecord.open(
+                "handoff (source=$sourceCliKey, ch=$ch)", source, rate, mask, AudioFormat.ENCODING_PCM_16BIT, mb * BUFFER_FACTOR,
+            )
             if (rec != null && rec.state == AudioRecord.STATE_INITIALIZED) {
                 ar = rec; channelCount = ch; minBuffer = mb; break
             }

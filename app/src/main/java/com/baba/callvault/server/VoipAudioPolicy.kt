@@ -157,14 +157,14 @@ internal object VoipAudioPolicy {
             policyCls.getMethod("createAudioRecordSink", mixCls).invoke(p, m) as AudioRecord?
         }
         val ar = normal.getOrElse { error ->
-            if (!isVendorConstructorCrash(error)) {
+            if (!VendorConstructorCrash.matches(error)) {
                 AppLogger.e(TAG, "createSink failed: ${error.message}", error)
                 return null
             }
             // vivo's AudioRecord constructor dereferences a Context the recorder host does not have. Build
             // the very same sink without running that constructor (scrcpy's fix for the identical crash).
             AppLogger.w(TAG, "createSink: the ROM's AudioRecord constructor crashed without a Context " +
-                "(${rootCause(error).message}); building the sink without it")
+                "(${VendorConstructorCrash.rootCause(error).message}); building the sink without it")
             createSinkBypassingConstructor(m) ?: return null
         }
         if (ar == null || ar.state != AudioRecord.STATE_INITIALIZED) {
@@ -195,22 +195,4 @@ internal object VoipAudioPolicy {
             bufferSizeInBytes = AudioRecord.getMinBufferSize(format.sampleRate, AudioFormat.CHANNEL_IN_STEREO, format.encoding),
         ).also { AppLogger.i(TAG, "VoIP sink built without the vendor constructor (state=${it.state})") }
     }.onFailure { AppLogger.e(TAG, "createSink without the vendor constructor failed too: ${it.message}", it) }.getOrNull()
-
-    /** The vivo crash: a NullPointerException raised inside the ROM's AudioRecord constructor. */
-    internal fun isVendorConstructorCrash(error: Throwable): Boolean {
-        val root = rootCause(error)
-        if (root !is NullPointerException) return false
-        val frames = root.stackTrace
-        // Thrown from code the constructor CALLED (vivo: VivoAudioRecordImpl.isSupportSubMixRecording), not from
-        // the constructor itself: the frame that raised it is not AudioRecord, and a frame below it is
-        // AudioRecord.<init>.
-        val ctor = frames.indexOfFirst { it.className == "android.media.AudioRecord" && it.methodName == "<init>" }
-        return ctor > 0 && frames[0].className != "android.media.AudioRecord"
-    }
-
-    private fun rootCause(error: Throwable): Throwable {
-        var e = error
-        while (e.cause != null && e.cause !== e) e = e.cause!!
-        return e
-    }
 }

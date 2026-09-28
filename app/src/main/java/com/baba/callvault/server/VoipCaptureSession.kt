@@ -173,12 +173,12 @@ internal class VoipCaptureSession(
             AppLogger.w(TAG, "VoIP mic minBufferSize=$minBuf")
             return null
         }
-        val rec = runCatching {
-            AudioRecord(
-                MediaRecorder.AudioSource.MIC, SAMPLE_RATE, AudioFormat.CHANNEL_IN_MONO,
-                AudioFormat.ENCODING_PCM_16BIT, minBuf * BUFFER_FACTOR,
-            )
-        }.getOrNull()
+        // Through the host's one AudioRecord opener: on vivo the public constructor crashes in this process,
+        // and swallowing that is how app calls kept failing on 2.4.3 with no reason in the log.
+        val rec = HostAudioRecord.open(
+            "VoIP mic", MediaRecorder.AudioSource.MIC, SAMPLE_RATE, AudioFormat.CHANNEL_IN_MONO,
+            AudioFormat.ENCODING_PCM_16BIT, minBuf * BUFFER_FACTOR,
+        )
         if (rec == null || rec.state != AudioRecord.STATE_INITIALIZED) {
             runCatching { rec?.release() }
             return null
@@ -507,13 +507,10 @@ internal class VoipCaptureSession(
         AppLogger.i(TAG, "near capture silenced by the platform — re-taking the mic")
         val minBuf = AudioRecord.getMinBufferSize(SAMPLE_RATE, AudioFormat.CHANNEL_IN_MONO, AudioFormat.ENCODING_PCM_16BIT)
         if (minBuf <= 0) return null
-        @Suppress("MissingPermission")
-        val fresh = runCatching {
-            AudioRecord(
-                MediaRecorder.AudioSource.MIC, SAMPLE_RATE, AudioFormat.CHANNEL_IN_MONO,
-                AudioFormat.ENCODING_PCM_16BIT, minBuf * BUFFER_FACTOR,
-            )
-        }.getOrNull()
+        val fresh = HostAudioRecord.open(
+            "VoIP mic re-take", MediaRecorder.AudioSource.MIC, SAMPLE_RATE, AudioFormat.CHANNEL_IN_MONO,
+            AudioFormat.ENCODING_PCM_16BIT, minBuf * BUFFER_FACTOR,
+        )
         if (fresh == null || fresh.state != AudioRecord.STATE_INITIALIZED) {
             AppLogger.w(TAG, "re-take failed to initialise; keeping the silenced capture")
             runCatching { fresh?.release() }

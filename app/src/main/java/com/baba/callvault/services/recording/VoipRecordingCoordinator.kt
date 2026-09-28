@@ -526,7 +526,13 @@ object VoipRecordingCoordinator {
         // attach calls to our mix; from here the two are indistinguishable.
         val farHeard = runCatching { RecorderConnection.service?.voipFarPartyHeard() ?: true }
             .getOrDefault(true)   // no service, or an error: assume fine; never cry wolf
-        if (!farHeard) {
+        // A capture that never started wrote nothing, and "the far party was not heard" is then trivially
+        // true — which used to blame the other app ("it blocks capture") for our own failure to open the
+        // microphone (vivo, 2026-09-28). Nothing recorded is reported as that, below; not as one-sided.
+        val wroteAnything = saf?.stagingFile?.let { it.exists() && it.length() > 0L } ?: true
+        if (!wroteAnything) {
+            AppLogger.w(TAG, "VoIP capture never started — nothing was recorded (the recorder's reason is logged above)")
+        } else if (!farHeard) {
             AppLogger.w(TAG, "VoIP recording captured only your side — the other app blocks capture")
             runCatching {
                 RecordingNotificationHelper(context)

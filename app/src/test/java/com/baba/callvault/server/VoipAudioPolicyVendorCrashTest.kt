@@ -32,24 +32,24 @@ class VoipAudioPolicyVendorCrashTest {
             "android.media.AudioRecord" to "<init>",
             "android.media.audiopolicy.AudioPolicy" to "createAudioRecordSink",
         )
-        assertTrue(VoipAudioPolicy.isVendorConstructorCrash(InvocationTargetException(cause)))
+        assertTrue(VendorConstructorCrash.matches(InvocationTargetException(cause)))
     }
 
     @Test
     fun a_null_pointer_in_aosp_code_alone_is_not_a_vendor_crash() {
         val cause = npe("android.media.AudioRecord" to "<init>", "android.media.audiopolicy.AudioPolicy" to "createAudioRecordSink")
-        assertFalse(VoipAudioPolicy.isVendorConstructorCrash(InvocationTargetException(cause)))
+        assertFalse(VendorConstructorCrash.matches(InvocationTargetException(cause)))
     }
 
     @Test
     fun a_null_pointer_outside_the_constructor_is_not_a_vendor_crash() {
         val cause = npe("android.media.VivoAudioRecordImpl" to "somethingElse", "com.baba.callvault.server.VoipAudioPolicy" to "createSink")
-        assertFalse(VoipAudioPolicy.isVendorConstructorCrash(InvocationTargetException(cause)))
+        assertFalse(VendorConstructorCrash.matches(InvocationTargetException(cause)))
     }
 
     @Test
     fun other_errors_are_not_vendor_crashes() {
-        assertFalse(VoipAudioPolicy.isVendorConstructorCrash(InvocationTargetException(IllegalStateException("no policy"))))
-        assertFalse(VoipAudioPolicy.isVendorConstructorCrash(SecurityException("EX_SECURITY")))
+        assertFalse(VendorConstructorCrash.matches(InvocationTargetException(IllegalStateException("no policy"))))
+        assertFalse(VendorConstructorCrash.matches(SecurityException("EX_SECURITY")))
     }
 }
