@@ -123,6 +123,7 @@
         <item>Corrigé — Saisir une note garde chaque lettre, et affiche Enregistré</item>
         <item>Corrigé — Plus de notification d\'appel qui reste affichée après l\'appel</item>
         <item>Corrigé — Si vous avez installé une version de test, la mise à jour finale vous est proposée</item>
+        <item>Corrigé — Un téléchargement de modèle raté est nettoyé et relancé, au lieu d\'échouer comme endommagé</item>
     </string-array>
     <string name="whatsnew_241_title">La recherche sur chaque page, et l\'enregistrement au décroché</string>
     <string-array name="whatsnew_241_items">

@@ -23,6 +23,17 @@ build cannot see a final 2.4.2 as newer (fixed below, for every test build from 
 
 ### Fixed
 
+- **Model downloads no longer end in "The download was damaged".** A download of a transcription or summary
+  model that had gone wrong on the phone — interrupted and resumed badly, or written by two attempts at
+  once — failed its check and was offered back as "190 MB of 190 MB, Resume", which failed again every
+  time. The app now looks at what an earlier attempt left before downloading: a damaged file is deleted and
+  fetched again, a finished one is checked and installed, a partial one is resumed only from exactly where
+  it stopped, and only one attempt writes the file at a time. A failed check downloads once more from the
+  start before saying anything. User report.
+  <!-- 🧪 VERIFYING as of 2026-09-28: emulator, real downloads of the small model — a planted full-length
+       damaged leftover was deleted and re-fetched, a genuine 60 MB partial resumed and verified. The
+       stop-and-restart race itself was not reproduced. Not yet on a real phone or the reporter's. -->
+
 - **App-call recordings stay in sync (#41).** In WhatsApp and other app calls the two sides — your
   microphone and the other person's voice — are captured separately and combined, and until now they
   were combined in the order they arrived. On phones that keep taking the microphone away and giving it

@@ -122,6 +122,7 @@
         <item>Corrigido — Digitar uma nota não perde nenhuma letra, e mostra Salvo</item>
         <item>Corrigido — Nenhuma notificação de chamada fica para trás depois da ligação</item>
         <item>Corrigido — Se você instalou uma versão de teste, a atualização final é oferecida</item>
+        <item>Corrigido — Um download de modelo que deu errado é limpo e baixado de novo, em vez de falhar como danificado</item>
     </string-array>
     <string name="whatsnew_241_title">Busca em cada página, e gravar quando atenderem</string>
     <string-array name="whatsnew_241_items">

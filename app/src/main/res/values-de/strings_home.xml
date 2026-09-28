@@ -122,6 +122,7 @@
         <item>Behoben — Beim Tippen einer Notiz geht kein Buchstabe verloren, und sie zeigt „Gespeichert“</item>
         <item>Behoben — Nach einem Anruf bleibt keine Anruf-Benachrichtigung mehr stehen</item>
         <item>Behoben — Wer eine Testversion installiert hat, bekommt das endgültige Update angeboten</item>
+        <item>Behoben — Ein fehlerhafter Modell-Download wird bereinigt und neu geladen, statt als beschädigt abzubrechen</item>
     </string-array>
     <string name="whatsnew_241_title">Suche auf jeder Seite, und Aufnahme erst bei Annahme</string>
     <string-array name="whatsnew_241_items">

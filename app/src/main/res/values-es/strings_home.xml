@@ -122,6 +122,7 @@
         <item>Corregido — Al escribir una nota no se pierde ninguna letra, y muestra Guardado</item>
         <item>Corregido — Ya no queda una notificación de llamada después de colgar</item>
         <item>Corregido — Si instalaste una versión de prueba, se te ofrece la actualización definitiva</item>
+        <item>Corregido — Una descarga de modelo que salió mal se limpia y se descarga de nuevo, en lugar de fallar como dañada</item>
     </string-array>
     <string name="whatsnew_241_title">Búsqueda en cada página, y grabar cuando contesten</string>
     <string-array name="whatsnew_241_items">

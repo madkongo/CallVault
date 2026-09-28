@@ -122,6 +122,7 @@
         <item>Đã sửa — Gõ ghi chú không mất chữ nào và hiện Đã lưu</item>
         <item>Đã sửa — Không còn thông báo cuộc gọi sót lại sau khi gọi xong</item>
         <item>Đã sửa — Nếu bạn đã cài bản thử nghiệm, bạn sẽ được đề xuất bản cập nhật chính thức</item>
+        <item>Đã sửa — Tải mô hình bị lỗi sẽ được dọn và tải lại, thay vì báo hỏng</item>
     </string-array>
     <string name="whatsnew_241_title">Tìm kiếm trên mọi trang, và ghi âm khi họ bắt máy</string>
     <string-array name="whatsnew_241_items">

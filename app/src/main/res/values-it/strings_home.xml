@@ -122,6 +122,7 @@
         <item>Corretto — Scrivendo una nota non si perde nessuna lettera, e compare Salvata</item>
         <item>Corretto — Dopo una chiamata non resta più la notifica della chiamata</item>
         <item>Corretto — Se hai installato una versione di prova, ti viene proposto l\'aggiornamento definitivo</item>
+        <item>Corretto — Un download del modello andato male viene ripulito e riscaricato, invece di fallire come danneggiato</item>
     </string-array>
     <string name="whatsnew_241_title">Ricerca in ogni pagina, e registrazione quando rispondono</string>
     <string-array name="whatsnew_241_items">
