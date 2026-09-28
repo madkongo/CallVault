@@ -368,6 +368,7 @@ internal class VoipCaptureSession(
                     if (!recordStatusLogged) {
                         recordStatusLogged = true
                         AppLogger.i(TAG, "VoIP record status: far{${recordStatus(farRecord)}} near{${recordStatus(nearRecord)}}")
+                        AppLogger.i(TAG, "VoIP vendor audio lists: ${vendorAudioLists()}")
                     }
                 }
             }
@@ -503,6 +504,18 @@ internal class VoipCaptureSession(
         }
     }.apply { isDaemon = true; name = "voip-${side.name}" }
 
+    /**
+     * The allow-lists vivo's audioserver consults before zero-filling a remote-submix record during a call (keys found
+     * in its binary, 2026-09-28), read with getParameters — read-only; nothing here sets anything. Empty on other
+     * ROMs, which do not answer these keys.
+     */
+    private fun vendorAudioLists(): String = runCatching {
+        val get = Class.forName("android.media.AudioSystem").getMethod("getParameters", String::class.java)
+        listOf("LiveAppList", "RemoteProtectList", "RemoteSubmixSupp", "APPShare").joinToString(" ") { key ->
+            "$key=[${(get.invoke(null, key) as String?).orEmpty().take(VENDOR_LIST_MAX_CHARS)}]"
+        }
+    }.getOrElse { "unavailable (${it.javaClass.simpleName})" }
+
     /** Android's own account of a record: silenced or not, routed device, source, session. Diagnostics only. */
     private fun recordStatus(record: AudioRecord?): String = runCatching {
         if (record == null) return@runCatching "none"
@@ -615,6 +628,9 @@ internal class VoipCaptureSession(
     }
 
     companion object {
+        /** Cap on each vendor audio list in the log; the value is for reading, not for completeness. */
+        private const val VENDOR_LIST_MAX_CHARS = 300
+
         /**
          * Consecutive all-zero chunks before we conclude the platform has silenced us rather than the
          * room simply being quiet. A real mic never returns exact zeros — even silence carries a noise

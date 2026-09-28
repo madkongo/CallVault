@@ -125,8 +125,17 @@ object DiagnosticDumps {
         // far party was never heard. Fixed command; any argument is ignored.
         "voip_audio_log" -> arrayOf(
             SH, "-c",
+            // vivo's own record-silencing decision (strings found in vivo's audioserver, 2026-09-28):
+            // updateRecordCaptureState … allowCapture, setRecordSilenced, isRemoteSubMixApp/isLiveApp, WhitePkgList.
             "$LOGCAT -d -b main -b system | grep -iE 'submix|remote_support|remote_showstatus|AudioFeature|VivoAudio|" +
-                "isLiveApp|gamecube|AudioPolicyMix|silenc|playback.?capture' | grep -v 'adbd' | tail -n 120",
+                "isLiveApp|gamecube|AudioPolicyMix|silenc|playback.?capture|allowCapture|updateRecordCaptureState|" +
+                "WhitePkgList|LiveApp|isRemoteSubMixApp|isSpecialCapture' | grep -v 'adbd' | tail -n 150",
+        )
+        // vivo's audio switches, read-only — e.g. persist.sys.audio.vapc.record.share_record.enable, which its
+        // policy XML ships "off" (iQOO firmware dump, 2026-09-28). Harmless elsewhere: matches nothing.
+        "vivo_audio_props" -> arrayOf(
+            SH, "-c",
+            "/system/bin/getprop | grep -iE 'vapc|vivo.*audio|audio.*vivo|liveapp|remote_?submix' | head -n 40",
         )
         else -> null
     }

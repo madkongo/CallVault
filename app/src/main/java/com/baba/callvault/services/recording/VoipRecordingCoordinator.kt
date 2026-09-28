@@ -546,7 +546,13 @@ object VoipRecordingCoordinator {
         if (!wroteAnything) {
             AppLogger.w(TAG, "VoIP capture never started — nothing was recorded (the recorder's reason is logged above)")
         } else if (!farHeard) {
-            // What the audio stack logged during the call — for a far party that stayed silent.
+            // What the audio stack logged during the call — for a far party that stayed silent — and the
+            // vendor's audio switches.
+            runCatching {
+                RecorderConnection.service?.diagnosticDump("vivo_audio_props", null)
+                    ?.lineSequence()?.map { it.trim() }?.filter { it.isNotEmpty() }?.joinToString(" | ")
+                    ?.let { AppLogger.i(TAG, "App-call vivo_audio_props: $it") }
+            }
             runCatching {
                 RecorderConnection.service?.diagnosticDump("voip_audio_log", null)
                     ?.lineSequence()?.map { it.trim() }?.filter { it.isNotEmpty() }?.toList().orEmpty()
