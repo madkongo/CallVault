@@ -93,3 +93,29 @@ hitting report 1's bug too. Needs a log with debug logging on and two or three p
   expected to "cooperatively abort … closing open handles to databases and files". The old worker did not
   (blocking read, file open). Long-running workers need `setForeground` + a `dataSync` foreground-service type
   on Android 14+ — not adopted; the stop is now handled safely instead.
+
+## 2026-09-28 15:30 — scrunscotty on 2.4.3: app calls still fail, one step later; phone calls now save
+
+Log `callvault_report_2026-09-28_15-30.txt` (vivo V2507A, Android 16, 2.4.3, Resilient on, VoIP on).
+
+- **The 2.4.3 fix works:** `createSink: the ROM's AudioRecord constructor crashed without a Context … building
+  the sink without it` → `VoIP sink built without the vendor constructor (state=1)`. The far side opened.
+- **Then the near side fails:** 15 ms later `startVoipRecording failed: VoIP mic capture failed to initialise`
+  (`VoipCaptureSession.newNearRecord`). Same cause: the MIC `AudioRecord` is built with the public constructor,
+  vivo's hook throws, and `runCatching { … }.getOrNull()` swallows it without logging. Four Telegram calls,
+  all identical; the app then says "captured only your side — the other app blocks capture", which is false.
+- **Phone calls DO record on 2.4.3.** 15:30 incoming call: Resilient recording's capture would not initialise
+  (`deliver: voice-call AudioRecord not initialized`), the direct capture would not either
+  (`AudioRecord would not initialise for source 4`), and the host fell back to **scrcpy**, which carries the vivo
+  workaround itself — 6 s stereo recording published; his library went from 0 to 1 recording.
+
+**Every public-constructor `AudioRecord` in the host fails on vivo:** `VoipCaptureSession.newNearRecord` and
+`retakeMic` (app calls — no fallback, so app calls fail), `DirectAudioRecorderSession.openAudioRecord` and
+`HandoffSource.deliverToApp` (phone calls — rescued by scrcpy, but Resilient recording can never work on vivo).
+2.4.3 fixed only the far-party sink.
+
+**Fix proposal (not built):** one host helper that opens an `AudioRecord` with the public constructor and, only
+on the vendor-constructor crash, builds it through `BypassedAudioRecord` (same preset, same identity), logging
+the cause; used at all four sites. App calls then work on vivo, and phone calls use our own capture (and
+Resilient recording) instead of scrcpy. Also: log the constructor failure instead of swallowing it, and stop
+the "other app blocks capture" message when the capture never started.
