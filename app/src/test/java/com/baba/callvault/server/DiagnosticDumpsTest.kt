@@ -31,6 +31,7 @@ class DiagnosticDumpsTest {
         listOf(
             "logcat_size", "logcat_grow", "logcat_dump", "dumpsys_audio", "appops_mic", "appops_all", "processes",
             "setting_adb_enabled", "setting_dev_options", "call_state", "audio_latency",
+            "voip_policy", "voip_players", "voip_tracks",
         )
             .forEach { key ->
                 assertTrue("$key must be runnable", DiagnosticDumps.commandFor(key, null) != null)
@@ -123,4 +124,17 @@ class DiagnosticDumpsTest {
         assertTrue("must select the foreground call state", line.contains("mForegroundCallState"))
         assertTrue("must ignore any argument", DiagnosticDumps.commandFor("call_state", "; id")!!.contentEquals(command))
     }
+
+    @Test
+    fun `the app-call routing dumps take no argument and are capped on the device`() {
+        // vivo, 2026-09-28: the far party of an app call was silent with the sink open. These three answer
+        // where the call's audio went. Fixed commands, no caller input; each is cut short on the device so a
+        // multi-megabyte dump never crosses the binder.
+        listOf("voip_policy", "voip_players", "voip_tracks").forEach { key ->
+            val cmd = DiagnosticDumps.commandFor(key, "ignored; rm -rf /")!!.joinToString(" ")
+            assertTrue("$key must be capped: $cmd", cmd.contains("head -n") || cmd.contains("tail -n"))
+            assertTrue("$key must not carry the argument: $cmd", !cmd.contains("rm -rf"))
+        }
+    }
 }
+

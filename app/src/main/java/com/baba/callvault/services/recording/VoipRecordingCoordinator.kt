@@ -81,6 +81,9 @@ object VoipRecordingCoordinator {
     /** How far into an app call the route and mixer latencies are read: past setup, well before the end. */
     private const val ROUTE_REPORT_DELAY_MS = 5_000L
 
+    /** Dump lines folded into one log line; keeps each log line readable and under the logger's limits. */
+    private const val ROUTING_LINES_PER_LOG_LINE = 25
+
     @Volatile private var recording = false
 
     /** True while a VoIP recording is running, so the UI can say so. */
@@ -223,6 +226,16 @@ object VoipRecordingCoordinator {
             val latency = RecorderConnection.service?.diagnosticDump("audio_latency", null)
                 ?.lineSequence()?.map { it.trim() }?.filter { it.isNotEmpty() }?.joinToString(" | ")
             AppLogger.i(TAG, "App-call output threads: ${latency ?: "(unavailable)"}")
+            // Where the call's audio is going, for a far party that comes out silent — see DiagnosticDumps.
+            // Several lines per dump, each capped, so a report carries them whole.
+            listOf("voip_policy", "voip_players", "voip_tracks").forEach { key ->
+                val dump = RecorderConnection.service?.diagnosticDump(key, null)
+                    ?.lineSequence()?.map { it.trim() }?.filter { it.isNotEmpty() }?.toList().orEmpty()
+                if (dump.isEmpty()) AppLogger.i(TAG, "App-call $key: (unavailable)")
+                dump.chunked(ROUTING_LINES_PER_LOG_LINE).forEachIndexed { i, part ->
+                    AppLogger.i(TAG, "App-call $key [${i + 1}]: ${part.joinToString(" | ")}")
+                }
+            }
         }.onFailure { AppLogger.d(TAG, "route report failed: ${it.message}") }
     }
 

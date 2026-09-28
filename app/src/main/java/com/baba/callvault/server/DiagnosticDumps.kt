@@ -94,6 +94,30 @@ object DiagnosticDumps {
             SH, "-c",
             "$DUMPSYS media.audio_flinger | grep -iE 'Output thread|Output devices|latency|Standby: |Sample rate'",
         )
+        // Where an app call's audio goes — for a far party that stays digital silence with the sink open
+        // (vivo V2507A, 2026-09-28). Read a few seconds into the call. Each is cut short on the device: the
+        // raw dumps run to megabytes. Fixed commands; any argument is ignored.
+        //
+        // The audio policy's registered dynamic mixes and their rules: is our loop-back mix there, with the
+        // voice-communication rule and its address?
+        "voip_policy" -> arrayOf(
+            SH, "-c",
+            "$DUMPSYS media.audio_policy | sed -n '/Audio Policy Mix:/,/Preferred mixer/p' | head -n 80",
+        )
+        // Who is playing right now, with usage and flags — is the calling app's track VOICE_COMMUNICATION,
+        // and does it carry a no-capture flag? Idle players are left out.
+        "voip_players" -> arrayOf(
+            SH, "-c",
+            "$DUMPSYS audio | sed -n '/^  players:/,/ducked players/p' | grep -v 'state:idle' | head -n 40",
+        )
+        // Each mixer output, its device, and its track table (the Usg column is the usage) — is the call's
+        // track on the remote-submix output our sink reads, or on a voice/VoIP output the mix never sees?
+        "voip_tracks" -> arrayOf(
+            SH, "-c",
+            "$DUMPSYS media.audio_flinger | awk '/^Output thread/{print} /Output devices/{print} " +
+                "/Tracks of which|^  [0-9]+ Tracks/{print; t=1; next} t && (/^ *\$/ || /Effect Chains|Local log/){t=0} t{print}' " +
+                "| head -n 150",
+        )
         else -> null
     }
 
