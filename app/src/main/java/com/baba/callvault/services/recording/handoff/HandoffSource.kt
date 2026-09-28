@@ -133,7 +133,17 @@ object HandoffSource {
         }.getOrNull()
         AppLogger.i(T, "deliver: extracted IAudioRecord ping=${runCatching { binder.pingBinder() }.getOrNull()} cblkFd=${cblkPfd?.fd} — delivering to app")
 
-        val ok = BinderDelivery.deliverHandoffToApp(binder, authority, cblkPfd, frameCount, rate, channelCount)
+        val ok = try {
+            BinderDelivery.deliverHandoffToApp(binder, authority, cblkPfd, frameCount, rate, channelCount)
+        } finally {
+            // The app received its own copy of the fd with the (synchronous) delivery. Ours is a dup made
+            // by nativeFindCblkFd, and it used to be left for the garbage collector — so after one call the
+            // host still held that call's dead control block, same frame count, and the next call's scan
+            // could hand the app THAT one: "TRACK INVALIDATED" within milliseconds, 0 bytes, every second
+            // call (Xiaomi Redmi Note 10 Pro, Android 13, 2026-09-27). Close it now.
+            runCatching { cblkPfd?.close() }
+                .onFailure { AppLogger.w(T, "deliver: could not close the host's copy of the cblk fd: ${it.message}") }
+        }
         AppLogger.i(T, "deliver: BinderDelivery.deliverHandoffToApp ok=$ok")
         ok
     }.onFailure { AppLogger.e(T, "deliverToApp failed: ${it.message}", it) }.getOrDefault(false)
