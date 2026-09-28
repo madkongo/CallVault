@@ -75,3 +75,21 @@ phone can confirm AudioFlinger accepts it.
 
 **Phone calls on his vivo:** unknown — nothing in this log. With Resilient recording on he could be
 hitting report 1's bug too. Needs a log with debug logging on and two or three phone calls.
+
+## 2026-09-28 — research pass (done after the analysis above; should have come first)
+
+- **vivo (report 2):** scrcpy hit the identical crash — same frame, `VivoAudioRecordImpl.isSupportSubMixRecording`
+  NPE on `getOpPackageName()` — in Genymobile/scrcpy #3805 (vivo/iQOO, Android 13) and #3791 (vivo V2055A,
+  Android 12). Fixed by scrcpy PR #5154, confirmed on vivo by the reporter: `Workarounds.createAudioRecord`
+  builds the `AudioRecord` through its private `(long)` constructor and `native_setup` by reflection, so vivo's
+  modified public constructor never runs. For us the crash is inside `AudioPolicy.createAudioRecordSink`, so the
+  port is: build the far-party sink ourselves the same way, with the attributes `createAudioRecordSink` would
+  use (REMOTE_SUBMIX preset + the mix's address tag) and the attribution we already rely on —
+  `AttributionSource.myAttributionSource()`, uid 2000 with no package — so every non-vivo phone keeps today's
+  proven identity. Only on vivo (or when the normal path throws that NPE).
+- **Handoff (report 1):** no prior art — the cblk handoff is our own mechanism (memory: scrcpy/sndcpy/Shizuku/SCR
+  all keep the privileged process alive and stream out). Fix built from the code reading: `fix/handoff-stale-cblk`.
+- **Downloads:** Android's WorkManager docs — a worker gets 10 minutes, is then stopped and rescheduled, and is
+  expected to "cooperatively abort … closing open handles to databases and files". The old worker did not
+  (blocking read, file open). Long-running workers need `setForeground` + a `dataSync` foreground-service type
+  on Android 14+ — not adopted; the stop is now handled safely instead.
