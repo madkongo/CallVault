@@ -126,7 +126,7 @@ object DiagnosticDumps {
         "voip_audio_log" -> arrayOf(
             SH, "-c",
             "$LOGCAT -d -b main -b system | grep -iE 'submix|remote_support|remote_showstatus|AudioFeature|VivoAudio|" +
-                "isLiveApp|gamecube|AudioPolicyMix|silenc|playback.?capture' | tail -n 120",
+                "isLiveApp|gamecube|AudioPolicyMix|silenc|playback.?capture' | grep -v 'adbd' | tail -n 120",
         )
         else -> null
     }
