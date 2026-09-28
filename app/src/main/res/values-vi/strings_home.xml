@@ -124,6 +124,7 @@
         <item>Đã sửa — Nếu bạn đã cài bản thử nghiệm, bạn sẽ được đề xuất bản cập nhật chính thức</item>
         <item>Đã sửa — Tải mô hình bị lỗi sẽ được dọn và tải lại, thay vì báo hỏng</item>
         <item>Đã sửa — Khi bật Ghi âm bền bỉ, một số điện thoại mất một nửa số cuộc gọi</item>
+        <item>Đã sửa — Cuộc gọi qua ứng dụng được ghi âm trên điện thoại vivo và iQOO</item>
     </string-array>
     <string name="whatsnew_241_title">Tìm kiếm trên mọi trang, và ghi âm khi họ bắt máy</string>
     <string-array name="whatsnew_241_items">

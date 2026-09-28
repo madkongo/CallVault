@@ -124,6 +124,7 @@
         <item>Behoben — Wer eine Testversion installiert hat, bekommt das endgültige Update angeboten</item>
         <item>Behoben — Ein fehlerhafter Modell-Download wird bereinigt und neu geladen, statt als beschädigt abzubrechen</item>
         <item>Behoben — Mit „Robuste Aufnahme“ verloren manche Telefone jeden zweiten Anruf</item>
+        <item>Behoben — App-Anrufe werden auf vivo- und iQOO-Telefonen aufgenommen</item>
     </string-array>
     <string name="whatsnew_241_title">Suche auf jeder Seite, und Aufnahme erst bei Annahme</string>
     <string-array name="whatsnew_241_items">

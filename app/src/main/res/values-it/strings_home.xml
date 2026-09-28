@@ -124,6 +124,7 @@
         <item>Corretto — Se hai installato una versione di prova, ti viene proposto l\'aggiornamento definitivo</item>
         <item>Corretto — Un download del modello andato male viene ripulito e riscaricato, invece di fallire come danneggiato</item>
         <item>Corretto — Con la registrazione resiliente attiva, alcuni telefoni perdevano una chiamata su due</item>
+        <item>Corretto — Le chiamate via app si registrano sui telefoni vivo e iQOO</item>
     </string-array>
     <string name="whatsnew_241_title">Ricerca in ogni pagina, e registrazione quando rispondono</string>
     <string-array name="whatsnew_241_items">

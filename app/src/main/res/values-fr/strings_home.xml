@@ -125,6 +125,7 @@
         <item>Corrigé — Si vous avez installé une version de test, la mise à jour finale vous est proposée</item>
         <item>Corrigé — Un téléchargement de modèle raté est nettoyé et relancé, au lieu d\'échouer comme endommagé</item>
         <item>Corrigé — Avec l\'enregistrement résilient activé, certains téléphones perdaient un appel sur deux</item>
+        <item>Corrigé — Les appels d\'applis s\'enregistrent sur les téléphones vivo et iQOO</item>
     </string-array>
     <string name="whatsnew_241_title">La recherche sur chaque page, et l\'enregistrement au décroché</string>
     <string-array name="whatsnew_241_items">

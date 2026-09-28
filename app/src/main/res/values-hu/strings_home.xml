@@ -124,6 +124,7 @@
         <item>Javítva — Ha tesztverziót telepített, felajánljuk a végleges frissítést</item>
         <item>Javítva — A hibás modellletöltést az alkalmazás törli és újra letölti, ahelyett hogy sérültként leállna</item>
         <item>Javítva — Bekapcsolt ellenálló rögzítésnél egyes telefonok minden második hívást elvesztették</item>
+        <item>Javítva — Az alkalmazáshívások rögzülnek vivo és iQOO telefonokon</item>
     </string-array>
     <string name="whatsnew_241_title">Keresés minden oldalon, és felvétel a hívás fogadásától</string>
     <string-array name="whatsnew_241_items">

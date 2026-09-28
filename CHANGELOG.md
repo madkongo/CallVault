@@ -44,6 +44,16 @@ build cannot see a final 2.4.2 as newer (fixed below, for every test build from 
        Resilient recording on (OP9, Android 14), three phone calls in a row, all three recorded; then the
        reporter's phone. The fallback to normal capture when a handoff dies at call start is NOT built. -->
 
+- **App calls record on vivo and iQOO phones.** On vivo's Android (OriginOS / Funtouch) every WhatsApp,
+  Telegram or other app call failed to record: vivo changed a part of Android that CallVault's recorder uses,
+  and it crashed there. CallVault now builds that part of the recording the way scrcpy does for the same
+  crash, only on phones where the normal way fails, so no other phone changes. Private report (iQOO,
+  Android 16).
+  <!-- 🧪 VERIFYING as of 2026-09-28: the new route was forced on the OP9 (Android 14) in a throwaway build —
+       WhatsApp call, sink built without the vendor constructor (state=1), far side read in full (peak 23915,
+       no stand-ins), sync ±10 ms, audio for all 29 s. Never run on a vivo phone. To settle: the reporter's
+       app call on his iQOO. -->
+
 - **App-call recordings stay in sync (#41).** In WhatsApp and other app calls the two sides — your
   microphone and the other person's voice — are captured separately and combined, and until now they
   were combined in the order they arrived. On phones that keep taking the microphone away and giving it
