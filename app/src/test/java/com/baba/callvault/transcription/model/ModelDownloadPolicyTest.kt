@@ -110,4 +110,56 @@ class ModelDownloadPolicyTest {
         // refuse a download that is 90% done on a phone that has room for the rest.
         assertTrue(ModelDownloadPolicy.hasRoomFor(freeBytes = 1_000_000_000L, remainingBytes = 100_000_000L))
     }
+
+    // ---- resuming, and a damaged download (report 2026-09-28: "the download was damaged") ----------
+    //
+    // The published files were checked byte for byte and are fine, so a digest failure is made on the
+    // phone. These are the decisions that keep a leftover file from carrying bad bytes into the next try.
+
+    @Test
+    fun `a resume is appended only when the server continues exactly where the file ends`() {
+        assertEquals(
+            ModelDownloadPolicy.Reply.APPEND,
+            ModelDownloadPolicy.reply(status = 206, resumeFrom = 1_000L, contentRange = "bytes 1000-1999/2000"),
+        )
+    }
+
+    @Test
+    fun `a resume that continues from anywhere else discards the leftover`() {
+        // Appending bytes that start somewhere other than the end of the file writes a hole or an
+        // overlap into it — a file of the right length that can never pass its digest.
+        assertEquals(
+            ModelDownloadPolicy.Reply.DISCARD_AND_RETRY,
+            ModelDownloadPolicy.reply(status = 206, resumeFrom = 1_000L, contentRange = "bytes 0-1999/2000"),
+        )
+    }
+
+    @Test
+    fun `a partial reply without a readable range is not trusted`() {
+        assertEquals(
+            ModelDownloadPolicy.Reply.DISCARD_AND_RETRY,
+            ModelDownloadPolicy.reply(status = 206, resumeFrom = 1_000L, contentRange = null),
+        )
+    }
+
+    @Test
+    fun `a whole-file reply starts the file again from nothing`() {
+        // A server that ignores Range sends everything; what is on disk must go, not be prefixed.
+        assertEquals(ModelDownloadPolicy.Reply.START_OVER, ModelDownloadPolicy.reply(200, resumeFrom = 1_000L, contentRange = null))
+        assertEquals(ModelDownloadPolicy.Reply.START_OVER, ModelDownloadPolicy.reply(200, resumeFrom = 0L, contentRange = null))
+    }
+
+    @Test
+    fun `any other status is an error`() {
+        assertEquals(ModelDownloadPolicy.Reply.ERROR, ModelDownloadPolicy.reply(416, resumeFrom = 1_000L, contentRange = null))
+        assertEquals(ModelDownloadPolicy.Reply.ERROR, ModelDownloadPolicy.reply(503, resumeFrom = 0L, contentRange = null))
+    }
+
+    @Test
+    fun `a failed digest gets one clean download before the user is told`() {
+        // The failure is almost always made by the interrupted attempt, not by the file itself.
+        assertTrue(ModelDownloadPolicy.retryCleanAfterDigestFailure(cleanRetriesUsed = 0))
+        assertFalse(ModelDownloadPolicy.retryCleanAfterDigestFailure(cleanRetriesUsed = 1))
+    }
 }
+

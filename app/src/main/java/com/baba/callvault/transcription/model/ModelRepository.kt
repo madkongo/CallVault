@@ -109,6 +109,59 @@ object ModelRepository {
         }
     }
 
+    /** What a new download attempt found on disk from an earlier one, after dealing with it. */
+    sealed interface Leftover {
+        /** Nothing there: download from the first byte. */
+        data object None : Leftover
+
+        /** A partial file that can be continued from [bytes]. */
+        data class Resume(val bytes: Long) : Leftover
+
+        /** A complete file that verified, and is now installed — nothing to download. */
+        data object Installed : Leftover
+
+        /** A file that could not be trusted — too long, or full length but damaged — and was deleted. */
+        data object Discarded : Leftover
+    }
+
+    /**
+     * Looks at what an earlier attempt left in `.part` and settles it before anything is fetched:
+     *
+     * - longer than the model: not this file; deleted;
+     * - exactly the model's length: an attempt that finished writing but never got verified. Verified now —
+     *   installed if it passes, **deleted if it is damaged**. Resuming a damaged full-length file would fetch
+     *   nothing and fail the digest again on every try, which is how a user ends up seeing "the download was
+     *   damaged" forever (report 2026-09-28);
+     * - shorter: resumed from its length.
+     *
+     * [expectedSize] and [expectedSha256] default to the model's; tests pass small stand-ins.
+     */
+    fun settleLeftover(
+        dir: File,
+        model: DownloadableModel,
+        expectedSize: Long = model.sizeBytes,
+        expectedSha256: String = model.sha256,
+    ): Leftover {
+        val part = partFileFor(dir, model)
+        if (!part.isFile) return Leftover.None
+        val length = part.length()
+        return when {
+            length > expectedSize -> {
+                AppLogger.w(TAG, "Deleting a leftover download of ${model.id} longer than the model ($length > $expectedSize bytes)")
+                part.delete()
+                Leftover.Discarded
+            }
+            length == expectedSize ->
+                if (finalizeDownload(dir, model, expectedSha256)) Leftover.Installed
+                else {
+                    AppLogger.w(TAG, "A complete leftover download of ${model.id} was damaged; deleted before downloading again")
+                    part.delete()
+                    Leftover.Discarded
+                }
+            else -> Leftover.Resume(length)
+        }
+    }
+
     /** The in-progress download file for [model]. */
     fun partFileFor(dir: File, model: DownloadableModel): File =
         File(dir, model.fileName + PART_SUFFIX)

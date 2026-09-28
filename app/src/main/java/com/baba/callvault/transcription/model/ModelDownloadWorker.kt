@@ -20,7 +20,13 @@ import androidx.work.WorkerParameters
 import androidx.work.workDataOf
 import com.baba.callvault.utils.AppLogger
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.awaitCancellation
+import kotlinx.coroutines.coroutineScope
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.withContext
+import java.util.concurrent.ConcurrentHashMap
 import java.io.File
 import java.io.IOException
 import java.net.HttpURLConnection
@@ -62,37 +68,65 @@ class ModelDownloadWorker(
             return@withContext Result.success()
         }
 
-        val part = ModelRepository.partFileFor(dir, model)
-
-        // Checked before a byte is fetched. At 3.46 GB a download that runs the phone out of space
-        // does not merely fail — the system starts shedding processes on the way there. Failing up
-        // front with a reason is the kinder outcome, and retrying cannot conjure storage.
-        val remaining = model.sizeBytes - (if (part.isFile) part.length() else 0L)
-        if (!ModelDownloadPolicy.hasRoomFor(dir.usableSpace, remaining)) {
-            AppLogger.w(TAG, "Not enough free space for ${model.id}: needs $remaining bytes")
-            return@withContext Result.failure(workDataOf(KEY_ERROR to ERROR_NO_SPACE))
-        }
-
-        runCatching { download(model, part) }
-            .fold(
-                onSuccess = { completed ->
-                    when {
-                        // Stopped mid-flight. The partial file stays, so the retry resumes.
-                        !completed -> Result.retry()
-                        ModelRepository.finalizeDownload(dir, model) -> Result.success()
-                        // Digest mismatch: finalizeDownload has already discarded the file. Retrying
-                        // would re-download from the same source, so surface it instead of looping.
-                        else -> Result.failure(
-                            workDataOf(KEY_ERROR to ERROR_VERIFICATION_FAILED)
-                        )
-                    }
-                },
-                onFailure = { error ->
-                    AppLogger.w(TAG, "Download of ${model.id} failed: ${error.message}")
-                    Result.retry()
-                }
-            )
+        // One writer per model file, across every attempt in this process. Android stops a long download
+        // after ten minutes of background work and starts it again; if the stopped attempt is still inside
+        // a blocking read when the new one begins, both used to append to the same .part — a duplicated
+        // chunk, a file that fails its digest, "the download was damaged" (report 2026-09-28). The new
+        // attempt now waits here until the old one has let go of the file.
+        writerFor(model).withLock { downloadAndInstall(dir, model) }
     }
+
+    /** Settles what an earlier attempt left, downloads the rest, verifies, installs. Runs under [writerFor]. */
+    private suspend fun downloadAndInstall(dir: File, model: DownloadableModel): Result {
+        var cleanRetriesUsed = 0
+        while (true) {
+            // Asked again under the lock: the attempt this one waited for may have finished the job.
+            if (ModelRepository.isInstalled(dir, model)) return Result.success()
+            val resumeFrom = when (val leftover = ModelRepository.settleLeftover(dir, model)) {
+                ModelRepository.Leftover.Installed -> {
+                    AppLogger.i(TAG, "${model.id}: an earlier attempt had finished it; verified and installed")
+                    return Result.success()
+                }
+                is ModelRepository.Leftover.Resume -> leftover.bytes
+                ModelRepository.Leftover.None, ModelRepository.Leftover.Discarded -> 0L
+            }
+
+            // Checked before a byte is fetched. At 3.46 GB a download that runs the phone out of space
+            // does not merely fail — the system starts shedding processes on the way there. Failing up
+            // front with a reason is the kinder outcome, and retrying cannot conjure storage.
+            val remaining = model.sizeBytes - resumeFrom
+            if (!ModelDownloadPolicy.hasRoomFor(dir.usableSpace, remaining)) {
+                AppLogger.w(TAG, "Not enough free space for ${model.id}: needs $remaining bytes")
+                return Result.failure(workDataOf(KEY_ERROR to ERROR_NO_SPACE))
+            }
+
+            val part = ModelRepository.partFileFor(dir, model)
+            val outcome = runCatching { download(model, part, resumeFrom) }.getOrElse { error ->
+                AppLogger.w(TAG, "Download of ${model.id} failed: ${error.message}")
+                return Result.retry()
+            }
+            when (outcome) {
+                // Stopped mid-flight. The partial file stays, so the retry resumes.
+                Outcome.STOPPED -> return Result.retry()
+                // The server continued from the wrong place; the leftover is gone, start again from nothing.
+                Outcome.RESTART -> continue
+                Outcome.COMPLETE -> Unit
+            }
+            if (ModelRepository.finalizeDownload(dir, model)) return Result.success()
+            // Digest mismatch: finalizeDownload has already deleted the file. One clean download from
+            // nothing first — the damage is almost always made by an interrupted attempt — and only then
+            // tell the user.
+            if (ModelDownloadPolicy.retryCleanAfterDigestFailure(cleanRetriesUsed)) {
+                cleanRetriesUsed++
+                AppLogger.w(TAG, "${model.id} failed its digest; downloading it once more from the start")
+                continue
+            }
+            return Result.failure(workDataOf(KEY_ERROR to ERROR_VERIFICATION_FAILED))
+        }
+    }
+
+    /** How one pass over the network ended. */
+    private enum class Outcome { COMPLETE, STOPPED, RESTART }
 
     /**
      * The model this request is for, assembled from the work's own input.
@@ -125,35 +159,35 @@ class ModelDownloadWorker(
     ) : DownloadableModel
 
     /**
-     * Streams [model] into [part], continuing from whatever is already there.
+     * Streams [model] into [part] from [resumeFrom] (0 = a fresh file).
      *
-     * @return true when the file is complete; false when the worker was stopped part-way.
+     * The connection is dropped the moment this work is cancelled: a blocking read is not interrupted by
+     * coroutine cancellation, and a stopped attempt left reading would keep the file — and [writerFor] —
+     * for as long as the socket stays up.
      */
-    private suspend fun download(model: DownloadableModel, part: File): Boolean {
-        val alreadyHave = if (part.isFile) part.length() else 0L
-        if (alreadyHave > model.sizeBytes) {
-            // Longer than the published size means this is not the file we think it is.
-            AppLogger.w(TAG, "Discarding oversized partial download of ${model.id}")
-            part.delete()
-        }
-
-        val resumeFrom = if (part.isFile) part.length() else 0L
+    private suspend fun download(model: DownloadableModel, part: File, resumeFrom: Long): Outcome = coroutineScope {
         val connection = (URL(model.url).openConnection() as HttpURLConnection).apply {
             connectTimeout = CONNECT_TIMEOUT_MS
             readTimeout = READ_TIMEOUT_MS
             if (resumeFrom > 0L) setRequestProperty("Range", "bytes=$resumeFrom-")
         }
-
+        val dropOnCancel = launch {
+            try { awaitCancellation() } finally { connection.disconnect() }
+        }
         try {
             val status = connection.responseCode
-            if (status != HttpURLConnection.HTTP_OK && status != HttpURLConnection.HTTP_PARTIAL) {
-                throw IOException("HTTP $status")
+            val append = when (ModelDownloadPolicy.reply(status, resumeFrom, connection.getHeaderField("Content-Range"))) {
+                ModelDownloadPolicy.Reply.APPEND -> true
+                // A server that ignores the Range header replies 200 with the whole file, so anything
+                // already written has to go or the two would be concatenated into garbage.
+                ModelDownloadPolicy.Reply.START_OVER -> { part.delete(); false }
+                ModelDownloadPolicy.Reply.DISCARD_AND_RETRY -> {
+                    AppLogger.w(TAG, "${model.id}: server resumed from '${connection.getHeaderField("Content-Range")}', not byte $resumeFrom; starting over")
+                    part.delete()
+                    return@coroutineScope Outcome.RESTART
+                }
+                ModelDownloadPolicy.Reply.ERROR -> throw IOException("HTTP $status")
             }
-
-            // A server that ignores the Range header replies 200 with the whole file, so anything
-            // already written has to go or the two would be concatenated into garbage.
-            val append = status == HttpURLConnection.HTTP_PARTIAL && resumeFrom > 0L
-            if (!append && part.exists()) part.delete()
 
             var written = if (append) resumeFrom else 0L
             var lastPublished = NOTHING_PUBLISHED
@@ -162,7 +196,7 @@ class ModelDownloadWorker(
                 java.io.FileOutputStream(part, append).use { output ->
                     val buffer = ByteArray(BUFFER_BYTES)
                     while (true) {
-                        if (isStopped) return false
+                        if (isStopped) return@coroutineScope Outcome.STOPPED
 
                         val read = input.read(buffer)
                         if (read <= 0) break
@@ -182,8 +216,9 @@ class ModelDownloadWorker(
                 }
             }
 
-            return written >= model.sizeBytes
+            if (written >= model.sizeBytes) Outcome.COMPLETE else Outcome.STOPPED
         } finally {
+            dropOnCancel.cancel()
             connection.disconnect()
         }
     }
@@ -210,6 +245,11 @@ class ModelDownloadWorker(
         private const val CONNECT_TIMEOUT_MS = 30_000
         private const val READ_TIMEOUT_MS = 60_000
         private const val BUFFER_BYTES = 1 shl 16
+
+        /** One lock per model file, shared by every attempt in this process. See [doWork]. */
+        private val writers = ConcurrentHashMap<String, Mutex>()
+
+        private fun writerFor(model: DownloadableModel): Mutex = writers.getOrPut(model.fileName) { Mutex() }
 
         /** No figure has reached the progress store yet, so even 0% is news. */
         private const val NOTHING_PUBLISHED = -1

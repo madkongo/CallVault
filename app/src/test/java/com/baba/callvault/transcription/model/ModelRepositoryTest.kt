@@ -151,4 +151,52 @@ class ModelRepositoryTest {
 
     private fun sha256Of(bytes: ByteArray): String =
         MessageDigest.getInstance("SHA-256").digest(bytes).joinToString("") { "%02x".format(it) }
+
+    // ---- what a new attempt finds on disk ---------------------------------------------------------
+
+    private val leftoverModel = object : DownloadableModel {
+        override val id = "test-model"
+        override val fileName = "test-model.bin"
+        override val url = "https://example.invalid/test-model.bin"
+        override val sha256 = sha256Of("0123456789".toByteArray())
+        override val sizeBytes = 10L
+    }
+
+    private fun part(bytes: ByteArray) =
+        File(tempFolder.root, leftoverModel.fileName + ModelRepository.PART_SUFFIX).apply { writeBytes(bytes) }
+
+    @Test
+    fun nothing_on_disk_starts_a_fresh_download() {
+        assertEquals(ModelRepository.Leftover.None, ModelRepository.settleLeftover(tempFolder.root, leftoverModel))
+    }
+
+    @Test
+    fun a_partial_file_is_resumed_from_its_length() {
+        part("01234".toByteArray())
+        assertEquals(ModelRepository.Leftover.Resume(5L), ModelRepository.settleLeftover(tempFolder.root, leftoverModel))
+    }
+
+    @Test
+    fun a_leftover_longer_than_the_model_is_deleted() {
+        val f = part("0123456789ABC".toByteArray())
+        assertEquals(ModelRepository.Leftover.Discarded, ModelRepository.settleLeftover(tempFolder.root, leftoverModel))
+        assertFalse(f.exists())
+    }
+
+    @Test
+    fun a_complete_leftover_that_verifies_is_installed_without_downloading() {
+        part("0123456789".toByteArray())
+        assertEquals(ModelRepository.Leftover.Installed, ModelRepository.settleLeftover(tempFolder.root, leftoverModel))
+        assertTrue(ModelRepository.isInstalled(tempFolder.root, leftoverModel))
+    }
+
+    @Test
+    fun a_complete_leftover_that_is_damaged_is_deleted_before_the_new_download() {
+        // The state the report describes: a full-length file with bad bytes in it. Resuming from it would
+        // fetch nothing and fail the digest again, every time.
+        val f = part("0123456780".toByteArray())
+        assertEquals(ModelRepository.Leftover.Discarded, ModelRepository.settleLeftover(tempFolder.root, leftoverModel))
+        assertFalse(f.exists())
+    }
 }
+
