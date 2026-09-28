@@ -3,7 +3,7 @@
 All notable changes to CallVault are documented here. The format is based on
 [Keep a Changelog](https://keepachangelog.com/), and this project uses semantic-ish versioning.
 
-## [2.4.3] — unreleased
+## [2.4.3] — 2026-09-28
 
 There was no 2.4.2 release: 2.4.2 existed only as the test builds `v2.4.2-rc1` and `v2.4.2-rc2`. The next
 release is numbered 2.4.3 so that people on those test builds are offered it — the updater of their
