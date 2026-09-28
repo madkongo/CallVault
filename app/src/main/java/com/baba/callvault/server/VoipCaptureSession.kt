@@ -94,6 +94,9 @@ internal class VoipCaptureSession(
     private class Chunk(val bytes: ByteArray, val contentNanos: Long)
 
     @Volatile private var farRecord: AudioRecord? = null
+
+    /** Whether [recordStatus] has been logged for this call. */
+    private var recordStatusLogged = false
     @Volatile private var nearRecord: AudioRecord? = null
     @Volatile private var encoder: MediaCodec? = null
     @Volatile private var muxer: MediaMuxer? = null
@@ -358,6 +361,14 @@ internal class VoipCaptureSession(
                             " peak near=$nearPeak far=$farPeak",
                     )
                     nearPeak = 0; farPeak = 0
+                    // Once per call, at the first snapshot: what Android itself says about each record —
+                    // silenced by the platform, and the device it is really routed to. A far side that reads
+                    // pure zeros while "not silenced" and routed to the right submix is being zeroed below the
+                    // framework (vivo V2507A, 2026-09-28).
+                    if (!recordStatusLogged) {
+                        recordStatusLogged = true
+                        AppLogger.i(TAG, "VoIP record status: far{${recordStatus(farRecord)}} near{${recordStatus(nearRecord)}}")
+                    }
                 }
             }
 
@@ -491,6 +502,15 @@ internal class VoipCaptureSession(
             if (!q.offer(Chunk(buf.copyOf(), contentNanos))) side.dropped()
         }
     }.apply { isDaemon = true; name = "voip-${side.name}" }
+
+    /** Android's own account of a record: silenced or not, routed device, source, session. Diagnostics only. */
+    private fun recordStatus(record: AudioRecord?): String = runCatching {
+        if (record == null) return@runCatching "none"
+        val cfg = record.activeRecordingConfiguration
+        val dev = record.routedDevice
+        "silenced=${cfg?.isClientSilenced} routed=${dev?.type}:${dev?.address} source=${cfg?.clientAudioSource} " +
+            "session=${record.audioSessionId} state=${record.recordingState}"
+    }.getOrElse { "unavailable (${it.javaClass.simpleName})" }
 
     /** True when every sample in the chunk is exactly zero — the fingerprint of a silenced capture. */
     private fun isAllZero(buf: ByteArray): Boolean {

@@ -546,6 +546,13 @@ object VoipRecordingCoordinator {
         if (!wroteAnything) {
             AppLogger.w(TAG, "VoIP capture never started — nothing was recorded (the recorder's reason is logged above)")
         } else if (!farHeard) {
+            // What the audio stack logged during the call — for a far party that stayed silent.
+            runCatching {
+                RecorderConnection.service?.diagnosticDump("voip_audio_log", null)
+                    ?.lineSequence()?.map { it.trim() }?.filter { it.isNotEmpty() }?.toList().orEmpty()
+                    .chunked(ROUTING_LINES_PER_LOG_LINE)
+                    .forEachIndexed { i, part -> AppLogger.i(TAG, "App-call voip_audio_log [${i + 1}]: ${part.joinToString(" | ")}") }
+            }.onFailure { AppLogger.d(TAG, "voip_audio_log failed: ${it.message}") }
             AppLogger.w(TAG, "VoIP recording captured only your side — the other app blocks capture")
             runCatching {
                 RecordingNotificationHelper(context)

@@ -120,6 +120,14 @@ object DiagnosticDumps {
                 "/Tracks of which|^  [0-9]+ Tracks/{print; t=1; next} t && (/^ *\$/ || /Effect Chains|Local log/){t=0} t{print}' " +
                 "| head -n 150",
         )
+        // The audio stack's own log lines around an app call — submix HAL, vendor audio features, anything
+        // "silenced" — which the report's system-log filter leaves out. Read at the end of an app call whose
+        // far party was never heard. Fixed command; any argument is ignored.
+        "voip_audio_log" -> arrayOf(
+            SH, "-c",
+            "$LOGCAT -d -b main -b system | grep -iE 'submix|remote_support|remote_showstatus|AudioFeature|VivoAudio|" +
+                "isLiveApp|gamecube|AudioPolicyMix|silenc|playback.?capture' | tail -n 120",
+        )
         else -> null
     }
 
