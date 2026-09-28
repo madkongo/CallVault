@@ -35,6 +35,15 @@ build cannot see a final 2.4.2 as newer (fixed below, for every test build from 
        damaged leftover was deleted and re-fetched, a genuine 60 MB partial resumed and verified. The
        stop-and-restart race itself was not reproduced. Not yet on a real phone or the reporter's. -->
 
+- **With Resilient recording on, every call records.** On some phones (reported on a Redmi Note 10 Pro,
+  Android 13) every second phone call was lost: the recorder handed the new call an audio buffer left over
+  from the previous one, and the capture died in its first moment with nothing recorded. It now lets go of
+  each call's buffer when the call is handed over, and never picks up a dead one. Private report.
+  <!-- 🧪 VERIFYING as of 2026-09-28: built from the log and code reading; NOT reproduced — the emulator
+       cannot run the handoff at all (Android 16), and our phones showed no leftover buffers. To settle:
+       Resilient recording on (OP9, Android 14), three phone calls in a row, all three recorded; then the
+       reporter's phone. The fallback to normal capture when a handoff dies at call start is NOT built. -->
+
 - **App-call recordings stay in sync (#41).** In WhatsApp and other app calls the two sides — your
   microphone and the other person's voice — are captured separately and combined, and until now they
   were combined in the order they arrived. On phones that keep taking the microphone away and giving it

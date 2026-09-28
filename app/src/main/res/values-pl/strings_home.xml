@@ -123,6 +123,7 @@
         <item>Naprawiono — Po rozmowie nie zostaje już powiadomienie o połączeniu</item>
         <item>Naprawiono — Jeśli zainstalowano wersję testową, proponowana jest aktualizacja końcowa</item>
         <item>Naprawiono — Nieudane pobieranie modelu jest czyszczone i ponawiane, zamiast kończyć się błędem uszkodzenia</item>
+        <item>Naprawiono — Przy włączonym odpornym nagrywaniu niektóre telefony gubiły co drugą rozmowę</item>
     </string-array>
     <string name="whatsnew_241_title">Wyszukiwanie na każdej stronie i nagrywanie po odebraniu</string>
     <string-array name="whatsnew_241_items">

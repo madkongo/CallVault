@@ -145,6 +145,7 @@
         <item>Fixed — No call notification is left behind after a call</item>
         <item>Fixed — If you installed a test build, you are offered the final update</item>
         <item>Fixed — A model download that went wrong is cleaned up and downloaded again, instead of failing as damaged</item>
+        <item>Fixed — With Resilient recording on, some phones lost every second call</item>
     </string-array>
     <string name="whatsnew_241_title">Search on every page, and start recording when they answer</string>
     <string-array name="whatsnew_241_items">
