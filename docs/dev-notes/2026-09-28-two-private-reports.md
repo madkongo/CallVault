@@ -165,3 +165,32 @@ REMOTE_SUBMIX capture (address 0) on vivo — unknown whether voice-call audio i
 **What rc1–rc3 did achieve on vivo:** no crash; the user's own side records; phone calls record (and use our
 own capture instead of the scrcpy fallback). The identity change (rc3) should be dropped before 2.4.4 — it
 fixed nothing and every line kept is a line to maintain.
+
+## 2026-09-28 — deep research: vivo zero-fills remote-submix capture for apps not on its allow-lists
+
+Research pass (maintainer rejected "stop here"): decompiled vivo framework repos (imwangwang/vivo-framework,
+imwangwang/vivo-apps, imwangwang/vivo-service, SivanLiu/VivoFramework) and an iQOO firmware dump
+(el-vertedero/iqoo_canoe_dump, branch qssi_64-user-17-CP2A…): its `vivoaudiopolicy/*.xml` and the strings of
+`bin/audioserver`, `lib64/libaudioclient.so`, `lib64/libaudiopolicymanagerdefault.so`.
+
+- **The gate is vivo-added code in the native audioserver.** Strings: `updateRecordCaptureState,c_uid:%d,t_uid:%d,
+  …,allowCapture:%d,…,isInCommunication:%d,isSpecialCapture:%d`; `isRemoteSubMixApp:%d isLiveApp: %d isVgcApp: %d`;
+  `setRecordSilenced portId:%d, silenced:%d`; `WhitePkgList allowCapture!`; `AudioServerOrRootUid allowCapture!`;
+  `isLiveApp setRecordSilenced true in COMMUNICATION MODE if not open AllowLiveAppCaptureMicData`; params
+  `LiveAppList=`, `RemoteProtectList=`, `RemoteSubmixSupp`. It zero-fills the record while leaving it "Active" —
+  exactly the three logs.
+- **The allow-lists are vivo-system only** (`vivo_audiopolicy_common_whitelist.xml`): LiveApp = `com.duowan.kiwi`;
+  record/voip/call "share special" = vivo's own recorders and assistants; `persist.sys.audio.vapc.record.share_record.enable`
+  ships off. uid 2000 / com.android.shell is on none — so the rc3 identity change could not help.
+- **`isSupportSubMixRecording` does not gate audio** (only a notification + "gamecube" signal) — bypassing it is harmless.
+- **MIC is not gated** by this path, which is why the user's own voice records.
+- No public report of any non-system app getting non-silent internal audio on vivo/iQOO (scrcpy #3805 is only the NPE).
+
+Rejected: spoofing a listed package (e.g. com.duowan.kiwi) on the AttributionSource — AudioFlinger replaces a
+package the calling uid does not own, and impersonating another app is not acceptable. Not done without the
+maintainer: `AudioSystem.setParameters("LiveAppList=…")` — it would change a vivo system audio setting.
+
+**rc4 (2.4.4-rc4, 20434, private):** read-only diagnostics to confirm the branch on his phone in one call —
+vivo's own decision lines (`allowCapture` / `setRecordSilenced` / `LiveApp` …) pulled at the end of a one-sided
+app call; vivo audio properties; the lists the audioserver consults read with `AudioSystem.getParameters`
+(`LiveAppList`, `RemoteProtectList`, `RemoteSubmixSupp`, `APPShare`); per-record `isClientSilenced` + routed device.
