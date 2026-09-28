@@ -39,8 +39,12 @@ import java.lang.ref.WeakReference
  * [AudioRecord.SUBMIX_FIXED_VOLUME] tag is not passed down but turned into the full-volume flag.
  *
  * Used only after the normal path has failed — never the first choice.
+ *
+ * **Hidden APIs, and why lint is told so.** This runs only inside the recorder host — an `app_process` started
+ * as the shell user, like scrcpy's server — never in the app process. The hidden-API policy lint enforces for
+ * an app targeting API 36 does not govern that host, which already reaches `AudioPolicy` the same way.
  */
-@SuppressLint("DiscouragedPrivateApi", "SoonBlockedPrivateApi", "PrivateApi")
+@SuppressLint("DiscouragedPrivateApi", "SoonBlockedPrivateApi", "PrivateApi", "BlockedPrivateApi")
 internal object BypassedAudioRecord {
 
     /** The tag the public constructor strips and turns into `mIsSubmixFullVolume`. Hidden constant, same value on 11–16. */
