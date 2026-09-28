@@ -142,3 +142,26 @@ Log `callvault_report_2026-09-28_16-41.txt` (V2507A, Android 16, 2.4.4-rc1), thr
 
 Next step proposed (not built): a diagnostic rc that, during an app call, dumps the audio policy's mixes and
 where Telegram's track is routed, so the next log shows whether the mix is registered, matched, or bypassed.
+
+## 2026-09-28 18:18 — scrunscotty on 2.4.4-rc3: identity change did not help; our side is proven correct
+
+Log `callvault_report_2026-09-28_18-18.txt` (V2507A, 2.4.4-rc3).
+
+- The policy's `Inputs (2)` now shows our sink **attached exactly right**: an input on
+  `AUDIO_DEVICE_IN_REMOTE_SUBMIX @:<id>:ap:29mixp:0`, client uid 2000, `Source: 8 (REMOTE_SUBMIX)`,
+  `Tags: addr=<id>:ap:29mixp:0`, **State: Active** — the same address as our mix
+  (`Audio Policy Mix 1 … device address: <id>:ap:29mixp:0`, `RULE_MATCH_ATTRIBUTE_USAGE VOICE_COMMUNICATION`).
+- Far side still pure silence: `far{read=507 sub=0 drop=0} peak far=0`, `farPartyHeard=false`. 48 mic re-takes.
+- So, end to end on his phone: mix registered ✔, Telegram's tracks copied onto the submix output ✔ (rc2),
+  our record client on the matching submix input, active ✔ (rc3) — and the data between them is zeros.
+  Attribution to `com.android.shell` changed nothing.
+
+**Conclusion (📐, from three logs):** vivo's audio stack delivers silence on the remote submix for this
+capture, below anything an app can configure — consistent with its `vivo_remote_support` allow-list (package +
+signing certificate, queried by `isSupportSubMixRecording`), which we cannot join. No further configuration on
+our side is left to try with evidence behind it. Remaining ideas are guesses: scrcpy-style whole-output
+REMOTE_SUBMIX capture (address 0) on vivo — unknown whether voice-call audio is in it at all.
+
+**What rc1–rc3 did achieve on vivo:** no crash; the user's own side records; phone calls record (and use our
+own capture instead of the scrcpy fallback). The identity change (rc3) should be dropped before 2.4.4 — it
+fixed nothing and every line kept is a line to maintain.
