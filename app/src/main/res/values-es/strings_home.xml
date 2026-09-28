@@ -123,7 +123,7 @@
         <item>Corregido — Ya no queda una notificación de llamada después de colgar</item>
         <item>Corregido — Si instalaste una versión de prueba, se te ofrece la actualización definitiva</item>
         <item>Corregido — Una descarga de modelo que salió mal se limpia y se descarga de nuevo, en lugar de fallar como dañada</item>
-        <item>Corregido — Con la grabación resistente activada, algunos teléfonos perdían una de cada dos llamadas</item>
+        <item>Corregido — Con la Grabación resistente activada, algunos teléfonos perdían una de cada dos llamadas</item>
     </string-array>
     <string name="whatsnew_241_title">Búsqueda en cada página, y grabar cuando contesten</string>
     <string-array name="whatsnew_241_items">

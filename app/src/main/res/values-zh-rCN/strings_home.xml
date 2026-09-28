@@ -123,7 +123,7 @@
         <item>修复 — 通话结束后不再残留通话通知</item>
         <item>修复 — 若安装过测试版，现在会收到正式版更新</item>
         <item>修复 — 下载失败的模型会被清理并重新下载，而不再报告已损坏</item>
-        <item>修复 — 开启可靠录音后，部分手机每隔一通电话就会丢失录音</item>
+        <item>修复 — 开启弹性录音后，部分手机每隔一通电话就会丢失录音</item>
     </string-array>
     <string name="whatsnew_241_title">每个页面都能搜索，并可在对方接听后再录音</string>
     <string-array name="whatsnew_241_items">
