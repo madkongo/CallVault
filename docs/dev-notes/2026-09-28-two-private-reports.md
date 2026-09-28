@@ -119,3 +119,26 @@ on the vendor-constructor crash, builds it through `BypassedAudioRecord` (same p
 the cause; used at all four sites. App calls then work on vivo, and phone calls use our own capture (and
 Resilient recording) instead of scrcpy. Also: log the constructor failure instead of swallowing it, and stop
 the "other app blocks capture" message when the capture never started.
+
+## 2026-09-28 16:41 — scrunscotty on v2.4.4-rc1: both sides open, the other side is silent
+
+Log `callvault_report_2026-09-28_16-41.txt` (V2507A, Android 16, 2.4.4-rc1), three Telegram calls.
+
+- **rc1 did what it was built for:** `createSink … built without the vendor constructor (state=1)` and
+  `HostAudioRecord: VoIP mic: built without the vendor constructor (state=1)`; capture started, file anchored,
+  sync flat (−8…+11 ms), recordings published (20–32 KB). His own voice is recorded.
+- **The other side is digital silence:** `far{read=570 sub=5 drop=0}` — the sink delivers every chunk on time —
+  but `peak far=0` in every window and `farPartyHeard=false`. Telegram's audio never reaches our mix.
+- **Not Telegram:** we recorded Telegram both ways on our own phone (2026-07-26, memory
+  `voip-recording-feasibility`), and Telegram's source plays calls as `USAGE_VOICE_COMMUNICATION` with no
+  capture opt-out (`DrKLO/Telegram` `VoIPService` / `WebRtcAudioTrack`). So: vivo.
+- **Not the check we skip:** vivo's decompiled `AudioRecord` constructor (quoted in scrcpy #3805) calls
+  `isSupportSubMixRecording()` only AFTER `native_setup` has succeeded, and the answer only switches on a
+  "live app" flag and a Game-cube notification. It gates nothing about the audio.
+- **What remains unknown:** whether vivo's audio policy honours a dynamic loop-back mix for voice-communication
+  playback at all. scrcpy's audio works on vivo — but through direct REMOTE_SUBMIX output capture, not a policy
+  mix. His report has no audio-policy dump, so nothing here can tell which.
+- **Also:** 58 mic re-takes in 11 s — the re-take chain from `2026-09-23-voip-near-side-zeros.md`, worse here.
+
+Next step proposed (not built): a diagnostic rc that, during an app call, dumps the audio policy's mixes and
+where Telegram's track is routed, so the next log shows whether the mix is registered, matched, or bypassed.
