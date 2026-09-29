@@ -30,7 +30,7 @@ The maintainer picks the order.
 | # | Item | From | Where the detail is |
 |---|---|---|---|
 | 1 | **Features match the phone's Android version**: detect the version at setup and in Settings, build a feature→version table, grey out what can't work | coonrw (Redmi, A12) | section below |
-| 2 | 🧪 **BUILT 2026-09-29 on `release/2.4.4` (`9c0c9137`, rc6)** — **Detect a lost ADB pairing + "Pair again"**: stop the endless retry on `AdbPairingRequiredException`, clear `adb_paired`, Home card with a Pair-again button, plus a permanent Pair-again row in Settings | issue #43 (reporter's own suggestion, maintainer agreed) | `2026-09-28-issue-43-pairing-expires.md` (read its correction first) |
+| 2 | ✅ **VERIFIED 2026-09-29 on the OP9 by the maintainer (rc11: card, notifications, re-pair; + a pre-existing false "Recording is down" fixed)** — **Detect a lost ADB pairing + "Pair again"**: stop the endless retry on `AdbPairingRequiredException`, clear `adb_paired`, Home card with a Pair-again button, plus a permanent Pair-again row in Settings | issue #43 (reporter's own suggestion, maintainer agreed) | `2026-09-28-issue-43-pairing-expires.md` (read its correction first) |
 | 3 | **Stop the pairing expiring**: recommend Offline recording (its loopback connects reset Android's 7-day clock), or switch the timeout off with consent. A Wi-Fi reconnect does **not** reset it | issue #43 | same dev-note |
 | 4 | **Recover a recording cut off by the app being killed**: at start-up, finish/publish a leftover `rec_stage_*.tmp` and tell the user the call was cut short | voarch (OnePlus lost a 13-min call) | memory `field-reports-2026-09-29` |
 | 5 | **Say when a call was lost** to the app being killed, instead of silence | voarch | same |
