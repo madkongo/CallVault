@@ -57,6 +57,7 @@ object SilentFailureNotifier {
     private const val ID_SHIZUKU_STOPPED = 4718
     private const val ID_PAIRING_LOST = 4719
     private const val ID_CUT_OFF_SAVED = 4723
+    private const val ID_TURNED_OFF_FOR_ANDROID = 4724
 
     /**
      * The recorder could not be started. Posted from the boot path, where a failure is invisible.
@@ -112,6 +113,23 @@ object SilentFailureNotifier {
         id = ID_CUT_OFF_SAVED,
         title = context.getString(R.string.notif_cut_off_saved_title),
         text = context.getString(R.string.notif_cut_off_saved_text, fileName),
+    )
+
+    /**
+     * Settings this phone's Android version can never honour were switched off (backlog #1).
+     *
+     * Posted once: the switches are off afterwards, so the next start finds nothing to turn off. Said out
+     * loud because an existing user chose these, and a setting that quietly flips itself off reads as a bug.
+     */
+    fun noteTurnedOffForAndroidVersion(context: Context, settingLabels: List<String>) = post(
+        context,
+        id = ID_TURNED_OFF_FOR_ANDROID,
+        title = context.getString(R.string.notif_turned_off_for_android_title),
+        text = context.getString(
+            R.string.notif_turned_off_for_android_text,
+            settingLabels.joinToString(", "),
+            android.os.Build.VERSION.RELEASE.orEmpty(),
+        ),
     )
 
     /** The pairing works again. */

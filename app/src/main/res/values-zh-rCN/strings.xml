@@ -690,4 +690,7 @@
     <string name="notif_cut_off_saved_title">一次通话被中断</string>
     <string name="notif_cut_off_saved_text">手机在通话过程中关闭了 CallVault。此前录下的内容已保存为 %1$s。</string>
     <string name="home_health_failed_cut_off">你上一次通话在手机关闭 CallVault 时被中断——此前录下的部分已保存。</string>
+    <string name="settings_needs_newer_android">需要 Android %1$s 或更高版本——此手机运行的是 Android %2$s。</string>
+    <string name="notif_turned_off_for_android_title">部分设置已关闭</string>
+    <string name="notif_turned_off_for_android_text">%1$s：需要比此手机（Android %2$s）更新的 Android 版本，因此已关闭。电话通话仍会录音。</string>
 </resources>

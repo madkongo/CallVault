@@ -881,12 +881,17 @@ class AppPreferences(context: Context) {
      * cannot silently re-enable something the user had deliberately turned off. They stay off until the
      * user asks for them again, which is the safe direction to be wrong in.
      */
-    fun disableWhatModeCannotDo(mode: PrivilegedMode): Set<ModeCapability> {
+    fun disableWhatModeCannotDo(
+        mode: PrivilegedMode,
+        sdk: Int = android.os.Build.VERSION.SDK_INT,
+    ): Set<ModeCapability> {
         val turnedOff = mutableSetOf<ModeCapability>()
         val marks = getStringSet(Key.MODE_AUTO_DISABLED).toMutableSet()
 
         gatedSwitches().forEach { gated ->
-            if (gated.capability.isAvailableIn(mode) || !gated.isOn()) return@forEach
+            // The Android version counts too (backlog #1): a switch this phone can never honour — app calls
+            // below Android 14 — is off, exactly like one the mode cannot honour.
+            if (gated.capability.isAvailable(mode, sdk) || !gated.isOn()) return@forEach
             gated.set(false)
             // Remember that WE turned this one off, so [restoreWhatModeCanDoAgain] can undo exactly
             // this and nothing else. Recorded per switch rather than per capability: VoIP recording and
@@ -915,7 +920,10 @@ class AppPreferences(context: Context) {
      * never recorded. A restored switch's record is consumed, so a later reconcile cannot resurrect
      * something the user turned off in the meantime.
      */
-    fun restoreWhatModeCanDoAgain(mode: PrivilegedMode): Set<ModeCapability> {
+    fun restoreWhatModeCanDoAgain(
+        mode: PrivilegedMode,
+        sdk: Int = android.os.Build.VERSION.SDK_INT,
+    ): Set<ModeCapability> {
         val marks = getStringSet(Key.MODE_AUTO_DISABLED)
         if (marks.isEmpty()) return emptySet()
 
@@ -925,7 +933,7 @@ class AppPreferences(context: Context) {
         gatedSwitches().forEach { gated ->
             // Still impossible in this mode? Keep the record rather than dropping it — an app start in
             // Shizuku mode must be a no-op, not an amnesia.
-            if (gated.id !in marks || !gated.capability.isAvailableIn(mode)) return@forEach
+            if (gated.id !in marks || !gated.capability.isAvailable(mode, sdk)) return@forEach
             gated.set(true)
             remaining -= gated.id
             restored += gated.capability

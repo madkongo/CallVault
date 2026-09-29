@@ -143,4 +143,32 @@ class ModeSwitchRestoreTest {
     fun `nothing to restore is not an error`() {
         assertTrue(prefs.restoreWhatModeCanDoAgain(PrivilegedMode.STANDALONE).isEmpty())
     }
+
+    // ---- Android version (backlog #1)
+
+    @Test
+    fun `an existing user's app-call switch is turned off on Android 13, and reported`() {
+        prefs.setVoipRecordingEnabled(true)
+        prefs.setHandoffPersistEnabled(true)
+        val turnedOff = prefs.disableWhatModeCannotDo(PrivilegedMode.STANDALONE, sdk = 33)
+        assertFalse(prefs.isVoipRecordingEnabled())
+        assertTrue("Resilient works on 13, so it stays on", prefs.isHandoffPersistEnabled())
+        assertEquals(setOf(ModeCapability.VOIP_RECORDING), turnedOff)
+    }
+
+    @Test
+    fun `nothing is turned off on Android 14 and newer`() {
+        prefs.setVoipRecordingEnabled(true)
+        prefs.setHandoffPersistEnabled(true)
+        assertTrue(prefs.disableWhatModeCannotDo(PrivilegedMode.STANDALONE, sdk = 34).isEmpty())
+        assertTrue(prefs.isVoipRecordingEnabled())
+    }
+
+    @Test
+    fun `a version-blocked switch is never turned back on by a restore`() {
+        prefs.setVoipRecordingEnabled(true)
+        prefs.disableWhatModeCannotDo(PrivilegedMode.STANDALONE, sdk = 33)
+        prefs.restoreWhatModeCanDoAgain(PrivilegedMode.STANDALONE, sdk = 33)
+        assertFalse(prefs.isVoipRecordingEnabled())
+    }
 }

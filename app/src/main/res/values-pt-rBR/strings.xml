@@ -694,4 +694,7 @@
     <string name="notif_cut_off_saved_title">Uma chamada foi interrompida</string>
     <string name="notif_cut_off_saved_text">Seu telefone fechou o CallVault durante uma chamada. O que foi gravado até ali foi salvo como %1$s.</string>
     <string name="home_health_failed_cut_off">Sua última chamada foi interrompida quando o telefone fechou o CallVault — a parte gravada até ali foi salva.</string>
+    <string name="settings_needs_newer_android">Requer Android %1$s ou mais recente — este telefone usa Android %2$s.</string>
+    <string name="notif_turned_off_for_android_title">Algumas configurações foram desativadas</string>
+    <string name="notif_turned_off_for_android_text">%1$s: requer uma versão do Android mais nova que a deste telefone (Android %2$s), então foi desativado. As chamadas telefônicas continuam sendo gravadas.</string>
 </resources>

@@ -896,4 +896,7 @@
     <string name="notif_cut_off_saved_title">A call was cut off</string>
     <string name="notif_cut_off_saved_text">Your phone closed CallVault during a call. What was recorded before that was saved as %1$s.</string>
     <string name="home_health_failed_cut_off">Your last call was cut off when the phone closed CallVault — the part recorded before that was saved.</string>
+    <string name="settings_needs_newer_android">Needs Android %1$s or newer — this phone runs Android %2$s.</string>
+    <string name="notif_turned_off_for_android_title">Some settings were turned off</string>
+    <string name="notif_turned_off_for_android_text">%1$s: this needs a newer Android version than the one on this phone (Android %2$s), so it was switched off. Phone calls still record.</string>
 </resources>

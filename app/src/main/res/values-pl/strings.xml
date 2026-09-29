@@ -693,4 +693,7 @@
     <string name="notif_cut_off_saved_title">Połączenie zostało przerwane</string>
     <string name="notif_cut_off_saved_text">Telefon zamknął CallVault podczas połączenia. To, co nagrano do tego momentu, zapisano jako %1$s.</string>
     <string name="home_health_failed_cut_off">Twoje ostatnie połączenie zostało przerwane, gdy telefon zamknął CallVault — nagrana do tego momentu część została zapisana.</string>
+    <string name="settings_needs_newer_android">Wymaga Androida %1$s lub nowszego — ten telefon ma Androida %2$s.</string>
+    <string name="notif_turned_off_for_android_title">Niektóre ustawienia zostały wyłączone</string>
+    <string name="notif_turned_off_for_android_text">%1$s: wymaga nowszej wersji Androida niż ta w tym telefonie (Android %2$s), więc zostało wyłączone. Połączenia telefoniczne są nadal nagrywane.</string>
 </resources>

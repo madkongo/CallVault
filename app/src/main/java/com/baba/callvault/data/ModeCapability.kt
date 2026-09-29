@@ -78,7 +78,36 @@ enum class ModeCapability {
         CARRIER_RECORDING, TRANSCRIPTION, CLOUD_SYNC -> true
     }
 
+    /**
+     * The oldest Android API level this works on (backlog #1). Evidence and gaps:
+     * docs/dev-notes/2026-09-29-feature-android-version-map.md.
+     *  - App calls need 34: before Android 14 the shell has no `CAPTURE_VOICE_COMMUNICATION_OUTPUT`
+     *    (coonrw's Android 12 failed at `setTargetMixRole`, #42's Android 13 at policy registration).
+     *  - Resilient recording needs 33: it captured nothing on Android 12 (coonrw) and was never tested on 11.
+     * Everything else works from the app's minimum (Android 11).
+     */
+    val minSdk: Int get() = when (this) {
+        VOIP_RECORDING -> ANDROID_14
+        RESILIENT_RECORDING -> ANDROID_13
+        else -> 0
+    }
+
+    /** The Android release a user would recognise, for "Needs Android N or newer". */
+    val minAndroidRelease: String get() = when (minSdk) {
+        ANDROID_14 -> "14"
+        ANDROID_13 -> "13"
+        else -> ""
+    }
+
+    fun isAvailableOn(sdk: Int): Boolean = sdk >= minSdk
+
+    /** Both halves: the mode can do it and this Android version can. */
+    fun isAvailable(mode: PrivilegedMode, sdk: Int): Boolean = isAvailableIn(mode) && isAvailableOn(sdk)
+
     companion object {
+        private const val ANDROID_13 = 33
+        private const val ANDROID_14 = 34
+
         /** Everything [mode] cannot do — what Settings greys out and the mode switch turns off. */
         fun unavailableIn(mode: PrivilegedMode): Set<ModeCapability> =
             entries.filterNot { it.isAvailableIn(mode) }.toSet()

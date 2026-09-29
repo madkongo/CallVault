@@ -2252,14 +2252,24 @@ private fun VoipAppPicker(prefs: AppPreferences) {
 @Composable
 internal fun capabilityAvailable(capability: ModeCapability): Boolean {
     val context = LocalContext.current
-    return capability.isAvailableIn(AppPreferences(context).getPrivilegedMode())
+    return capability.isAvailable(AppPreferences(context).getPrivilegedMode(), android.os.Build.VERSION.SDK_INT)
 }
 
-/** The one-line reason a row is greyed out, or null when it is not. */
+/**
+ * The one-line reason a row is greyed out, or null when it is not. The phone's Android version is named
+ * first when it is the reason (backlog #1): no mode switch can fix that, so offering Shizuku's reason
+ * would send the user looking for a fix that does not exist.
+ */
 @Composable
-internal fun unavailableReason(capability: ModeCapability): String? =
-    if (capabilityAvailable(capability)) null
-    else stringResource(R.string.settings_unavailable_in_shizuku)
+internal fun unavailableReason(capability: ModeCapability): String? = when {
+    capabilityAvailable(capability) -> null
+    !capability.isAvailableOn(android.os.Build.VERSION.SDK_INT) -> stringResource(
+        R.string.settings_needs_newer_android,
+        capability.minAndroidRelease,
+        android.os.Build.VERSION.RELEASE.orEmpty(),
+    )
+    else -> stringResource(R.string.settings_unavailable_in_shizuku)
+}
 
 /**
  * @param onEnabledChange Notified whenever the opt-in is persisted. The wizard needs it to tell whether

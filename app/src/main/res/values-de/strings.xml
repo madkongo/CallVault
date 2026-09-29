@@ -691,4 +691,7 @@
     <string name="notif_cut_off_saved_title">Ein Anruf wurde abgeschnitten</string>
     <string name="notif_cut_off_saved_text">Dein Handy hat CallVault während eines Anrufs geschlossen. Was bis dahin aufgenommen wurde, ist als %1$s gespeichert.</string>
     <string name="home_health_failed_cut_off">Dein letzter Anruf wurde abgeschnitten, als das Handy CallVault geschlossen hat – der bis dahin aufgenommene Teil wurde gespeichert.</string>
+    <string name="settings_needs_newer_android">Erfordert Android %1$s oder neuer – dieses Handy läuft mit Android %2$s.</string>
+    <string name="notif_turned_off_for_android_title">Einige Einstellungen wurden ausgeschaltet</string>
+    <string name="notif_turned_off_for_android_text">%1$s: Dafür ist eine neuere Android-Version nötig als die auf diesem Handy (Android %2$s), daher wurde es ausgeschaltet. Telefonanrufe werden weiterhin aufgenommen.</string>
 </resources>

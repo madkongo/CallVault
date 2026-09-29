@@ -691,4 +691,7 @@
     <string name="notif_cut_off_saved_title">Un appel a été interrompu</string>
     <string name="notif_cut_off_saved_text">Votre téléphone a fermé CallVault pendant un appel. Ce qui avait été enregistré jusque-là a été sauvegardé sous %1$s.</string>
     <string name="home_health_failed_cut_off">Votre dernier appel a été interrompu quand le téléphone a fermé CallVault — la partie enregistrée jusque-là a été sauvegardée.</string>
+    <string name="settings_needs_newer_android">Nécessite Android %1$s ou plus récent — ce téléphone est sous Android %2$s.</string>
+    <string name="notif_turned_off_for_android_title">Certains réglages ont été désactivés</string>
+    <string name="notif_turned_off_for_android_text">%1$s : nécessite une version d\'Android plus récente que celle de ce téléphone (Android %2$s), donc désactivé. Les appels téléphoniques sont toujours enregistrés.</string>
 </resources>

@@ -71,4 +71,41 @@ class ModeCapabilityTest {
     fun nothing_is_unavailable_in_standalone() {
         assertTrue(ModeCapability.unavailableIn(PrivilegedMode.STANDALONE).isEmpty())
     }
+
+    // ---- Android version (backlog #1; evidence: docs/dev-notes/2026-09-29-feature-android-version-map.md)
+
+    @Test
+    fun app_calls_need_android_14() {
+        // Before 14 the shell has no CAPTURE_VOICE_COMMUNICATION_OUTPUT: coonrw's A12 and #42's A13 failed.
+        assertFalse(ModeCapability.VOIP_RECORDING.isAvailableOn(33))
+        assertTrue(ModeCapability.VOIP_RECORDING.isAvailableOn(34))
+    }
+
+    @Test
+    fun resilient_recording_needs_android_13() {
+        // Captured 0 bytes on coonrw's Android 12; worked on Android 13 and newer.
+        assertFalse(ModeCapability.RESILIENT_RECORDING.isAvailableOn(32))
+        assertTrue(ModeCapability.RESILIENT_RECORDING.isAvailableOn(33))
+    }
+
+    @Test
+    fun everything_else_works_from_the_oldest_supported_android() {
+        val gated = setOf(ModeCapability.VOIP_RECORDING, ModeCapability.RESILIENT_RECORDING)
+        ModeCapability.entries.filterNot { it in gated }.forEach {
+            assertTrue("$it should work on Android 11", it.isAvailableOn(30))
+        }
+    }
+
+    @Test
+    fun a_capability_needs_both_the_mode_and_the_version() {
+        assertTrue(ModeCapability.VOIP_RECORDING.isAvailable(PrivilegedMode.STANDALONE, 34))
+        assertFalse(ModeCapability.VOIP_RECORDING.isAvailable(PrivilegedMode.STANDALONE, 33))
+        assertFalse(ModeCapability.VOIP_RECORDING.isAvailable(PrivilegedMode.SHIZUKU, 36))
+    }
+
+    @Test
+    fun the_reason_names_the_android_release_not_the_api_level() {
+        assertEquals("14", ModeCapability.VOIP_RECORDING.minAndroidRelease)
+        assertEquals("13", ModeCapability.RESILIENT_RECORDING.minAndroidRelease)
+    }
 }

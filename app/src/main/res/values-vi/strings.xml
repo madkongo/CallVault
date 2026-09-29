@@ -690,4 +690,7 @@
     <string name="notif_cut_off_saved_title">Một cuộc gọi đã bị cắt</string>
     <string name="notif_cut_off_saved_text">Điện thoại đã đóng CallVault trong khi gọi. Phần đã ghi trước đó được lưu thành %1$s.</string>
     <string name="home_health_failed_cut_off">Cuộc gọi gần nhất bị cắt khi điện thoại đóng CallVault — phần đã ghi trước đó đã được lưu.</string>
+    <string name="settings_needs_newer_android">Cần Android %1$s trở lên — điện thoại này chạy Android %2$s.</string>
+    <string name="notif_turned_off_for_android_title">Một số cài đặt đã bị tắt</string>
+    <string name="notif_turned_off_for_android_text">%1$s: cần phiên bản Android mới hơn phiên bản trên điện thoại này (Android %2$s), nên đã được tắt. Cuộc gọi điện thoại vẫn được ghi âm.</string>
 </resources>

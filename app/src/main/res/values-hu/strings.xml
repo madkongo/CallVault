@@ -691,4 +691,7 @@
     <string name="notif_cut_off_saved_title">Egy hívás megszakadt</string>
     <string name="notif_cut_off_saved_text">A telefon hívás közben bezárta a CallVaultot. Az addig rögzített részt %1$s néven mentettük.</string>
     <string name="home_health_failed_cut_off">Az utolsó hívásod megszakadt, amikor a telefon bezárta a CallVaultot – az addig rögzített részt mentettük.</string>
+    <string name="settings_needs_newer_android">Android %1$s vagy újabb szükséges – ezen a telefonon Android %2$s fut.</string>
+    <string name="notif_turned_off_for_android_title">Néhány beállítás ki lett kapcsolva</string>
+    <string name="notif_turned_off_for_android_text">%1$s: ehhez újabb Android-verzió kell, mint ami ezen a telefonon van (Android %2$s), ezért kikapcsoltuk. A telefonhívások rögzítése továbbra is működik.</string>
 </resources>

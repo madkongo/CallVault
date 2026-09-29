@@ -164,7 +164,15 @@ class CallVaultApplication : Application() {
             }
             val turnedOff = prefs.disableWhatModeCannotDo(mode)
             if (turnedOff.isNotEmpty()) {
-                AppLogger.i(TAG, "Turned off on start (unsupported in this mode): ${turnedOff.joinToString()}")
+                AppLogger.i(TAG, "Turned off on start (unsupported in this mode or on Android ${android.os.Build.VERSION.SDK_INT}): ${turnedOff.joinToString()}")
+            }
+            // The ones the Android version rules out are said out loud, once (backlog #1) — the user chose them.
+            val tooOld = turnedOff.filterNot { it.isAvailableOn(android.os.Build.VERSION.SDK_INT) }
+            if (tooOld.isNotEmpty()) {
+                SilentFailureNotifier.noteTurnedOffForAndroidVersion(
+                    applicationContext,
+                    tooOld.mapNotNull { capabilityLabel(it)?.let(::getString) },
+                )
             }
         }.onFailure { AppLogger.w(TAG, "Capability reconcile failed: ${it.message}") }
 
@@ -210,5 +218,12 @@ class CallVaultApplication : Application() {
                 CutOffRescueWorker.schedule(applicationContext)
             }.apply { isDaemon = true }.start()
         }
+    }
+
+    /** The Settings label of a switch a version gate can turn off; see [ModeCapability.minSdk]. */
+    private fun capabilityLabel(capability: com.baba.callvault.data.ModeCapability): Int? = when (capability) {
+        com.baba.callvault.data.ModeCapability.VOIP_RECORDING -> R.string.settings_voip_recording_label
+        com.baba.callvault.data.ModeCapability.RESILIENT_RECORDING -> R.string.settings_handoff_persist_label
+        else -> null
     }
 }

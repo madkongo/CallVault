@@ -691,4 +691,7 @@
     <string name="notif_cut_off_saved_title">Una llamada se cortó</string>
     <string name="notif_cut_off_saved_text">Tu teléfono cerró CallVault durante una llamada. Lo grabado hasta ese momento se guardó como %1$s.</string>
     <string name="home_health_failed_cut_off">Tu última llamada se cortó cuando el teléfono cerró CallVault; se guardó la parte grabada hasta entonces.</string>
+    <string name="settings_needs_newer_android">Requiere Android %1$s o posterior; este teléfono usa Android %2$s.</string>
+    <string name="notif_turned_off_for_android_title">Se desactivaron algunos ajustes</string>
+    <string name="notif_turned_off_for_android_text">%1$s: necesita una versión de Android más nueva que la de este teléfono (Android %2$s), así que se desactivó. Las llamadas telefónicas se siguen grabando.</string>
 </resources>

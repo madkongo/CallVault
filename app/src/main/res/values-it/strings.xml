@@ -691,4 +691,7 @@
     <string name="notif_cut_off_saved_title">Una chiamata è stata interrotta</string>
     <string name="notif_cut_off_saved_text">Il telefono ha chiuso CallVault durante una chiamata. Quanto registrato fino a quel momento è stato salvato come %1$s.</string>
     <string name="home_health_failed_cut_off">La tua ultima chiamata è stata interrotta quando il telefono ha chiuso CallVault: la parte registrata fino ad allora è stata salvata.</string>
+    <string name="settings_needs_newer_android">Richiede Android %1$s o successivo: questo telefono usa Android %2$s.</string>
+    <string name="notif_turned_off_for_android_title">Alcune impostazioni sono state disattivate</string>
+    <string name="notif_turned_off_for_android_text">%1$s: richiede una versione di Android più recente di quella di questo telefono (Android %2$s), quindi è stata disattivata. Le chiamate telefoniche vengono ancora registrate.</string>
 </resources>
