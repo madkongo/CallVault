@@ -14,6 +14,7 @@ import com.baba.callvault.data.PrivilegedMode
 import com.baba.callvault.server.RecorderBackend
 import com.baba.callvault.server.ShizukuStatus
 import com.baba.callvault.integrations.adb.AdbShell
+import com.baba.callvault.integrations.adb.AdbdState
 import com.baba.callvault.integrations.adb.DeveloperOptions
 import com.baba.callvault.server.RecorderConnection
 
@@ -70,6 +71,12 @@ object SetupPrerequisites {
             daemonConnected = RecorderConnection.isConnected,
             // Only consulted in Shizuku mode, and cheap: three local checks, no I/O.
             shizuku = if (mode.needsShizuku) RecorderBackend.shizukuStatus(context) else ShizukuStatus.READY,
+            // Cheap reads (a setting and two system properties); only matters when the grant is missing.
+            canRelaunchWithoutGrant = !mode.needsShizuku && canRelaunchWithoutGrant(
+                wirelessDebuggingOn = AdbShell.isWirelessDebuggingEnabled(context),
+                loopbackArmed = AdbShell.isLoopbackArmed(context),
+                adbd = AdbShell.adbdState(),
+            ),
         )
     }
 
@@ -89,6 +96,7 @@ object SetupPrerequisites {
         hasSecureSettings: Boolean,
         daemonConnected: Boolean,
         shizuku: ShizukuStatus,
+        canRelaunchWithoutGrant: Boolean = false,
     ): Prerequisite? {
         // Asked first in both modes: it is about where recordings go, not about privileges.
         if (!hasFolder) return Prerequisite.RECORDING_FOLDER
@@ -108,9 +116,18 @@ object SetupPrerequisites {
         if (devOptionsDisabled && !daemonConnected) return Prerequisite.DEVELOPER_OPTIONS
         // The grant is only needed to relaunch a DEAD daemon; while one is already connected, recording
         // works right now regardless of the grant, so this only counts as missing when BOTH are true.
-        if (!hasSecureSettings && !daemonConnected) return Prerequisite.SECURE_SETTINGS_GRANT
+        //
+        // And only when it is the ONLY way back: the grant exists to switch Wireless debugging on. With
+        // Wireless debugging already on, or an armed off-Wi-Fi listener, the recorder restarts without it —
+        // voarch's OnePlus refuses the grant outright and recorded all day on the listener, while Home told
+        // him after every app kill to turn Wireless debugging on, which cannot restore a refused grant.
+        if (!hasSecureSettings && !daemonConnected && !canRelaunchWithoutGrant) return Prerequisite.SECURE_SETTINGS_GRANT
         return null
     }
+
+    /** Whether the recorder can be restarted without the grant: see [firstMissing]. */
+    fun canRelaunchWithoutGrant(wirelessDebuggingOn: Boolean, loopbackArmed: Boolean, adbd: AdbdState): Boolean =
+        wirelessDebuggingOn || (loopbackArmed && adbd != AdbdState.STOPPED)
 }
 
 /**

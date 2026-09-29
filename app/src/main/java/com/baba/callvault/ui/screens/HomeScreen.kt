@@ -8,6 +8,10 @@
 
 package com.baba.callvault.ui.screens
 
+import com.baba.callvault.system.openDeveloperSettings
+import com.baba.callvault.ui.common.bodyFor
+import com.baba.callvault.integrations.adb.AdbShell
+import com.baba.callvault.integrations.adb.ShellGrantGate
 import android.net.Uri
 import android.text.format.DateUtils
 import android.widget.Toast
@@ -907,12 +911,27 @@ fun HomeScreen(
             // places to dismiss it, and the point of the hub is that the list is only the list.
             statusCards = {
                 Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                    // When the phone itself refuses the grant (OnePlus/OPPO/realme, Xiaomi), turning Wireless
+                    // debugging on cannot restore it — voarch did it twice. Name the phone's own switch instead,
+                    // and open Developer options where it lives (backlog #6).
+                    val grantBlockedBy by produceState<ShellGrantGate.OemGate?>(null, uiState.status) {
+                        value = if (uiState.status != HomeViewModel.HomeStatus.UPDATE_REGRANT_NEEDED) null else withContext(Dispatchers.IO) {
+                            if (ShellGrantGate.shouldAdvise(AdbShell.shellGrantState(context), AdbShell.hasWriteSecureSettings(context))) {
+                                AdbShell.oemGate(context)
+                            } else {
+                                null
+                            }
+                        }
+                    }
                     HeroStatusCard(
                         status = uiState.status,
                         health = uiState.setupHealth,
                         mode = uiState.privilegedMode,
+                        suggestionOverride = grantBlockedBy?.let { stringResource(bodyFor(it)) },
                         onAction = when (uiState.status) {
-                            HomeViewModel.HomeStatus.UPDATE_REGRANT_NEEDED -> { { context.openWirelessDebugging() } }
+                            HomeViewModel.HomeStatus.UPDATE_REGRANT_NEEDED -> {
+                                if (grantBlockedBy != null) { { context.openDeveloperSettings() } } else { { context.openWirelessDebugging() } }
+                            }
                             // The same pairing flow as setup: its notification takes the code, and Wireless
                             // debugging's page is where "Pair device with pairing code" lives (issue #43).
                             HomeViewModel.HomeStatus.PAIRING_LOST -> {
@@ -2236,6 +2255,7 @@ private fun HeroStatusCard(
     health: SetupHealth,
     mode: PrivilegedMode,
     onAction: (() -> Unit)? = null,
+    suggestionOverride: String? = null,
 ) {
     val brand = LocalCvBrand.current
     // A healthy setup that has never been proved still reads as ready; only a real problem flips the card.
@@ -2304,7 +2324,7 @@ private fun HeroStatusCard(
         }
         Spacer(Modifier.height(14.dp))
         Text(
-            text = if (status.isReady) healthMessage(health) else stringResource(status.suggestionResId),
+            text = if (status.isReady) healthMessage(health) else suggestionOverride ?: stringResource(status.suggestionResId),
             style = MaterialTheme.typography.bodyMedium,
             color = MaterialTheme.colorScheme.onSurfaceVariant
         )

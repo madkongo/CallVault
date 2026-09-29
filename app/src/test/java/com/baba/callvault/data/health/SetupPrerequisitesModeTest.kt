@@ -12,6 +12,7 @@ import com.baba.callvault.data.PrivilegedMode
 import com.baba.callvault.server.ShizukuStatus
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNull
+import com.baba.callvault.integrations.adb.AdbdState
 import org.junit.Test
 
 /**
@@ -165,5 +166,42 @@ class SetupPrerequisitesModeTest {
                 shizuku = ready,
             )
         )
+    }
+
+    // ---- the grant matters only when nothing else can restart the recorder (backlog #6) ----------
+    // voarch (OnePlus, 2026-09-28): the phone refuses the grant, Offline recording restarts the recorder
+    // without it, yet every app kill put "turn Wireless debugging on" on Home — advice that could not work.
+
+    @Test
+    fun a_missing_grant_is_not_missing_when_offline_recording_can_restart_the_recorder() {
+        assertNull(
+            SetupPrerequisites.firstMissing(
+                mode = PrivilegedMode.STANDALONE, hasFolder = true, isPaired = true,
+                devOptionsDisabled = false, hasSecureSettings = false, daemonConnected = false,
+                shizuku = ready, canRelaunchWithoutGrant = true,
+            )
+        )
+    }
+
+    @Test
+    fun a_missing_grant_still_counts_when_it_is_the_only_way_back() {
+        assertEquals(
+            Prerequisite.SECURE_SETTINGS_GRANT,
+            SetupPrerequisites.firstMissing(
+                mode = PrivilegedMode.STANDALONE, hasFolder = true, isPaired = true,
+                devOptionsDisabled = false, hasSecureSettings = false, daemonConnected = false,
+                shizuku = ready, canRelaunchWithoutGrant = false,
+            )
+        )
+    }
+
+    @Test
+    fun the_restart_route_is_wireless_debugging_or_an_armed_listener_on_a_running_adbd() {
+        assertEquals(true, SetupPrerequisites.canRelaunchWithoutGrant(wirelessDebuggingOn = true, loopbackArmed = false, adbd = AdbdState.STOPPED))
+        assertEquals(true, SetupPrerequisites.canRelaunchWithoutGrant(wirelessDebuggingOn = false, loopbackArmed = true, adbd = AdbdState.RUNNING))
+        // An unreadable adbd is not "down" — the same rule the rest of the transport code follows.
+        assertEquals(true, SetupPrerequisites.canRelaunchWithoutGrant(wirelessDebuggingOn = false, loopbackArmed = true, adbd = AdbdState.UNKNOWN))
+        assertEquals(false, SetupPrerequisites.canRelaunchWithoutGrant(wirelessDebuggingOn = false, loopbackArmed = true, adbd = AdbdState.STOPPED))
+        assertEquals(false, SetupPrerequisites.canRelaunchWithoutGrant(wirelessDebuggingOn = false, loopbackArmed = false, adbd = AdbdState.RUNNING))
     }
 }

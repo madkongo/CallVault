@@ -113,8 +113,11 @@ fun OemGateNotice(modifier: Modifier = Modifier) {
     }
 }
 
-/** vivo and Meizu block a narrower set and their wording is unverified, so they get the general text. */
-private fun bodyFor(gate: ShellGrantGate.OemGate): Int = when (gate) {
+/**
+ * vivo and Meizu block a narrower set and their wording is unverified, so they get the general text.
+ * Shared with Home's status card, which gives the same advice when a missing grant is blocked (backlog #6).
+ */
+internal fun bodyFor(gate: ShellGrantGate.OemGate): Int = when (gate) {
     ShellGrantGate.OemGate.OPPO -> R.string.oem_gate_body_oppo
     ShellGrantGate.OemGate.XIAOMI -> R.string.oem_gate_body_xiaomi
     else -> R.string.oem_gate_body_other
