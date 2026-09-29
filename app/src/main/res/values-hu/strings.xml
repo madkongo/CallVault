@@ -690,4 +690,5 @@
     <string name="notif_readiness_pairing_lost_text">Az Android elfelejtette a CallVault párosítását, ezért a hívások nem rögzíthetők. Nyisd meg a CallVaultot, és koppints az állapotkártyára az újrapárosításhoz.</string>
     <string name="notif_cut_off_saved_title">Egy hívás megszakadt</string>
     <string name="notif_cut_off_saved_text">A telefon hívás közben bezárta a CallVaultot. Az addig rögzített részt %1$s néven mentettük.</string>
+    <string name="home_health_failed_cut_off">Az utolsó hívásod megszakadt, amikor a telefon bezárta a CallVaultot – az addig rögzített részt mentettük.</string>
 </resources>

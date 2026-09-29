@@ -692,4 +692,5 @@
     <string name="notif_readiness_pairing_lost_text">Android zapomniał parowanie CallVault, więc nie można nagrywać połączeń. Otwórz CallVault i dotknij karty stanu, aby sparować ponownie.</string>
     <string name="notif_cut_off_saved_title">Połączenie zostało przerwane</string>
     <string name="notif_cut_off_saved_text">Telefon zamknął CallVault podczas połączenia. To, co nagrano do tego momentu, zapisano jako %1$s.</string>
+    <string name="home_health_failed_cut_off">Twoje ostatnie połączenie zostało przerwane, gdy telefon zamknął CallVault — nagrana do tego momentu część została zapisana.</string>
 </resources>

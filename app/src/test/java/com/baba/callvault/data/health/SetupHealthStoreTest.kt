@@ -218,4 +218,23 @@ class SetupHealthStoreTest {
 
         assertNull(store.read().lastFailureReason)
     }
+
+    @Test
+    fun `a cut-off call replaces its own not-recorded warning with the cut-off one`() {
+        // voarch: the sweep saw a call with no recording (the app had been killed mid-call); the rescue
+        // then saved the part recorded before the cut. The card must say what really happened.
+        store.recordGap(5_000L, "Anne")
+        store.recordCutOff(atMillis = 9_000L, callStartedAt = 5_000L, callEndedAt = 8_000L, label = "Anne")
+        val facts = store.read()
+        assertEquals(0L, facts.lastGapAt)
+        assertEquals(FailureReason.CUT_OFF, facts.lastFailureReason)
+        assertTrue(facts.observedCallEnds.contains(8_000L))
+    }
+
+    @Test
+    fun `a cut-off call leaves another call's not-recorded warning alone`() {
+        store.recordGap(5_000L, "Anne")
+        store.recordCutOff(atMillis = 9_000L, callStartedAt = 7_000L, callEndedAt = 8_000L, label = "Bob")
+        assertEquals(5_000L, store.read().lastGapAt)
+    }
 }

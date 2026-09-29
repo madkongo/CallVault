@@ -690,4 +690,5 @@
     <string name="notif_readiness_pairing_lost_text">Android a oublié l\'association de CallVault : les appels ne peuvent pas être enregistrés. Ouvrez CallVault et touchez la carte d\'état pour associer à nouveau.</string>
     <string name="notif_cut_off_saved_title">Un appel a été interrompu</string>
     <string name="notif_cut_off_saved_text">Votre téléphone a fermé CallVault pendant un appel. Ce qui avait été enregistré jusque-là a été sauvegardé sous %1$s.</string>
+    <string name="home_health_failed_cut_off">Votre dernier appel a été interrompu quand le téléphone a fermé CallVault — la partie enregistrée jusque-là a été sauvegardée.</string>
 </resources>

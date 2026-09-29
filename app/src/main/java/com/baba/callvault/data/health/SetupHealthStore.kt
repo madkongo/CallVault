@@ -19,7 +19,12 @@ import androidx.core.content.edit
  * a header-only file means the recorder started, produced a container, and captured no samples. They
  * have different causes and the status card should not blur them.
  */
-enum class FailureReason { EMPTY_FILE, NO_AUDIO, DAEMON_DIED, ONE_SIDED }
+enum class FailureReason {
+    EMPTY_FILE, NO_AUDIO, DAEMON_DIED, ONE_SIDED,
+
+    /** The phone closed CallVault mid-call; the part recorded before that was saved (backlog #4). */
+    CUT_OFF,
+}
 
 /**
  * Everything the status card knows about whether recording actually works. All timestamps are epoch
@@ -104,6 +109,36 @@ class SetupHealthStore(context: Context) {
         putString(KEY_FAILURE_REASON, reason.name)
         putString(KEY_FAILURE_LABEL, label)
     }
+
+    /**
+     * A call cut off by the phone closing CallVault, whose recorded part has now been saved (backlog #4).
+     *
+     * The call was never observed — the app was dead when it ended — so the sweep reports it as "not
+     * recorded". That is no longer true: part of it is. So the call is marked observed (the sweep will not
+     * raise it again), its own not-recorded warning is cleared (matched on the call-log start the sweep
+     * stored), and the card says it was cut off instead. Any other call's warning is left alone.
+     */
+    fun recordCutOff(atMillis: Long, callStartedAt: Long?, callEndedAt: Long?, label: String?) {
+        if (callEndedAt != null) observeCall(callEndedAt)
+        prefs.edit {
+            if (callStartedAt != null && prefs.getLong(KEY_GAP_AT, 0L) == callStartedAt) {
+                remove(KEY_GAP_AT); remove(KEY_GAP_LABEL)
+            }
+            putLong(KEY_FAILURE_AT, atMillis)
+            putString(KEY_FAILURE_REASON, FailureReason.CUT_OFF.name)
+            putString(KEY_FAILURE_LABEL, label)
+        }
+    }
+
+    /** Calls [listener] when the card's facts change; see [CARD_KEYS]. Keep the returned listener to remove it. */
+    fun registerCardListener(listener: () -> Unit): android.content.SharedPreferences.OnSharedPreferenceChangeListener {
+        val l = android.content.SharedPreferences.OnSharedPreferenceChangeListener { _, key -> if (key in CARD_KEYS) listener() }
+        prefs.registerOnSharedPreferenceChangeListener(l)
+        return l
+    }
+
+    fun unregisterCardListener(l: android.content.SharedPreferences.OnSharedPreferenceChangeListener) =
+        prefs.unregisterOnSharedPreferenceChangeListener(l)
 
     /**
      * Persists that a call CallVault never observed happened at [atMillis], surviving past the sweep
@@ -198,6 +233,9 @@ class SetupHealthStore(context: Context) {
         private const val KEY_NOTREADY_PREREQUISITE = "last_notready_prerequisite"
         private const val KEY_SWEEP_WATERMARK = "sweep_watermark"
         private const val KEY_OBSERVED_ENDS = "observed_call_ends"
+
+        /** The keys whose change alters what the card says (not the sweep's bookkeeping). */
+        private val CARD_KEYS = setOf(KEY_VERIFIED_AT, KEY_FAILURE_AT, KEY_FAILURE_REASON, KEY_GAP_AT, KEY_NOTREADY_AT)
         private const val KEY_WINDOW_START = "observation_window_start"
     }
 }

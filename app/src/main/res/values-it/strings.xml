@@ -690,4 +690,5 @@
     <string name="notif_readiness_pairing_lost_text">Android ha dimenticato l\'associazione di CallVault, quindi le chiamate non possono essere registrate. Apri CallVault e tocca la scheda di stato per associare di nuovo.</string>
     <string name="notif_cut_off_saved_title">Una chiamata è stata interrotta</string>
     <string name="notif_cut_off_saved_text">Il telefono ha chiuso CallVault durante una chiamata. Quanto registrato fino a quel momento è stato salvato come %1$s.</string>
+    <string name="home_health_failed_cut_off">La tua ultima chiamata è stata interrotta quando il telefono ha chiuso CallVault: la parte registrata fino ad allora è stata salvata.</string>
 </resources>

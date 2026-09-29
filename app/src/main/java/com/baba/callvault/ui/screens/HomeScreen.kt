@@ -2368,6 +2368,7 @@ private fun healthMessage(health: SetupHealth): String {
                 FailureReason.NO_AUDIO -> R.string.home_health_failed_no_audio
                 FailureReason.DAEMON_DIED -> R.string.home_health_failed_daemon
                 FailureReason.ONE_SIDED -> R.string.home_health_failed_one_sided
+                FailureReason.CUT_OFF -> R.string.home_health_failed_cut_off
             }
         )
     }

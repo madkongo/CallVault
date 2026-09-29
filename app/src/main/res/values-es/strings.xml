@@ -690,4 +690,5 @@
     <string name="notif_readiness_pairing_lost_text">Android olvidó el emparejamiento de CallVault, así que no se pueden grabar llamadas. Abre CallVault y toca la tarjeta de estado para emparejar de nuevo.</string>
     <string name="notif_cut_off_saved_title">Una llamada se cortó</string>
     <string name="notif_cut_off_saved_text">Tu teléfono cerró CallVault durante una llamada. Lo grabado hasta ese momento se guardó como %1$s.</string>
+    <string name="home_health_failed_cut_off">Tu última llamada se cortó cuando el teléfono cerró CallVault; se guardó la parte grabada hasta entonces.</string>
 </resources>

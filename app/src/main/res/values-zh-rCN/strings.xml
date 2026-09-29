@@ -689,4 +689,5 @@
     <string name="notif_readiness_pairing_lost_text">Android 忘记了 CallVault 的配对，因此无法录制通话。打开 CallVault 并点按状态卡片以重新配对。</string>
     <string name="notif_cut_off_saved_title">一次通话被中断</string>
     <string name="notif_cut_off_saved_text">手机在通话过程中关闭了 CallVault。此前录下的内容已保存为 %1$s。</string>
+    <string name="home_health_failed_cut_off">你上一次通话在手机关闭 CallVault 时被中断——此前录下的部分已保存。</string>
 </resources>

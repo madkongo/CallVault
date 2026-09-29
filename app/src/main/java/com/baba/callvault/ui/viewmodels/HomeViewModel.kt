@@ -354,6 +354,9 @@ class HomeViewModel(application: Application) : AndroidViewModel(application) {
      * appears/disappears the instant an update is found or cleared — not only on the next screen
      * resume. Registered for the ViewModel's lifetime; removed in [onCleared].
      */
+    /** See [reloadHealthQuietly]. Held here because SharedPreferences keeps its listeners only weakly. */
+    private var healthListener: android.content.SharedPreferences.OnSharedPreferenceChangeListener? = null
+
     private val prefsListener =
         android.content.SharedPreferences.OnSharedPreferenceChangeListener { _, key ->
             if (key == AppPreferences.AVAILABLE_UPDATE_TAG_KEY) {
@@ -379,6 +382,22 @@ class HomeViewModel(application: Application) : AndroidViewModel(application) {
         observeFavourites()
         preferences.registerChangeListener(prefsListener)
         observeRecoveryState()
+        healthListener = SetupHealthStore(appContext).registerCardListener { reloadHealthQuietly() }
+    }
+
+    /**
+     * Keeps the status card's second line in step with facts written in the background — a cut-off call
+     * rescued minutes after the app opened replaces "was not recorded" (backlog #4). Derive only: running the
+     * sweep here would write to the same store from inside its own change listener.
+     */
+    private fun reloadHealthQuietly() {
+        viewModelScope.launch {
+            val health = withContext(Dispatchers.IO) {
+                runCatching { SetupHealthDeriver.derive(SetupHealthStore(appContext).read(), SetupFingerprint.of(preferences)) }
+                    .getOrNull()
+            } ?: return@launch
+            _uiState.update { it.copy(setupHealth = health) }
+        }
     }
 
     /**
@@ -1136,6 +1155,7 @@ class HomeViewModel(application: Application) : AndroidViewModel(application) {
 
     override fun onCleared() {
         preferences.unregisterChangeListener(prefsListener)
+        healthListener?.let { SetupHealthStore(appContext).unregisterCardListener(it) }
         playbackController.release()
         super.onCleared()
     }

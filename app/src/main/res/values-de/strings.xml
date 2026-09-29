@@ -690,4 +690,5 @@
     <string name="notif_readiness_pairing_lost_text">Android hat die Kopplung von CallVault vergessen, daher können keine Anrufe aufgenommen werden. Öffne CallVault und tippe auf die Statuskarte, um erneut zu koppeln.</string>
     <string name="notif_cut_off_saved_title">Ein Anruf wurde abgeschnitten</string>
     <string name="notif_cut_off_saved_text">Dein Handy hat CallVault während eines Anrufs geschlossen. Was bis dahin aufgenommen wurde, ist als %1$s gespeichert.</string>
+    <string name="home_health_failed_cut_off">Dein letzter Anruf wurde abgeschnitten, als das Handy CallVault geschlossen hat – der bis dahin aufgenommene Teil wurde gespeichert.</string>
 </resources>

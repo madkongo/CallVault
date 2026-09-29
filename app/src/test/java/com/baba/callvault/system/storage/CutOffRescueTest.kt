@@ -8,6 +8,7 @@
 
 package com.baba.callvault.system.storage
 
+import com.baba.callvault.data.health.CallLogEntry
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNull
 import org.junit.Test
@@ -82,6 +83,37 @@ class CutOffRescueTest {
     fun a_generic_name_carries_the_time_and_the_right_extension() {
         assertEquals("recovered_20260928_1226.ogg", CutOffRescuePolicy.unnamedFileName("20260928_1226", StagedContainer.OGG))
         assertEquals("recovered_20260928_1226.m4a", CutOffRescuePolicy.unnamedFileName("20260928_1226", StagedContainer.MP4))
+    }
+
+    // Which call the rescued recording belongs to, so the "call was not recorded" warning for it can be
+    // replaced by the truth. voarch: call-log start 12:26:04, recording started 12:26:07, cut at 12:39.
+
+    private val minute = 60_000L
+    private val callStart = 1_000_000_000L
+    private val theCall = CallLogEntry(startedAt = callStart, durationSeconds = 19 * 60, isIncoming = true, label = "Anne")
+    private val earlierCall = CallLogEntry(startedAt = callStart - 60 * minute, durationSeconds = 120, isIncoming = false, label = "Bob")
+
+    @Test
+    fun the_call_that_was_up_when_the_recording_stopped_is_the_one_it_belongs_to() {
+        val match = CutOffRescuePolicy.matchCall(listOf(theCall, earlierCall), recordingStartedAt = callStart + 3_000, cutAt = callStart + 13 * minute)
+        assertEquals(theCall, match)
+    }
+
+    @Test
+    fun a_file_without_a_note_is_matched_by_the_moment_it_was_cut_off() {
+        assertEquals(theCall, CutOffRescuePolicy.matchCall(listOf(theCall, earlierCall), recordingStartedAt = null, cutAt = callStart + 13 * minute))
+    }
+
+    @Test
+    fun no_call_matches_when_none_was_up_at_the_cut() {
+        assertNull(CutOffRescuePolicy.matchCall(listOf(earlierCall), recordingStartedAt = null, cutAt = callStart + 13 * minute))
+    }
+
+    @Test
+    fun a_call_that_started_long_before_the_recording_is_not_claimed() {
+        // A long earlier call still "up" by duration must not be taken for this recording's call.
+        val longEarlier = earlierCall.copy(durationSeconds = 90 * 60)
+        assertNull(CutOffRescuePolicy.matchCall(listOf(longEarlier), recordingStartedAt = callStart + 3_000, cutAt = callStart + 13 * minute))
     }
 
     private fun decide(

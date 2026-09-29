@@ -693,4 +693,5 @@
     <string name="notif_readiness_pairing_lost_text">O Android esqueceu o pareamento do CallVault, então as chamadas não podem ser gravadas. Abra o CallVault e toque no cartão de status para parear de novo.</string>
     <string name="notif_cut_off_saved_title">Uma chamada foi interrompida</string>
     <string name="notif_cut_off_saved_text">Seu telefone fechou o CallVault durante uma chamada. O que foi gravado até ali foi salvo como %1$s.</string>
+    <string name="home_health_failed_cut_off">Sua última chamada foi interrompida quando o telefone fechou o CallVault — a parte gravada até ali foi salva.</string>
 </resources>

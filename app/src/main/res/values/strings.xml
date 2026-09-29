@@ -895,4 +895,5 @@
     <string name="notif_readiness_pairing_lost_text">Android forgot CallVault\'s pairing, so calls can\'t be recorded. Open CallVault and tap the status card to pair again.</string>
     <string name="notif_cut_off_saved_title">A call was cut off</string>
     <string name="notif_cut_off_saved_text">Your phone closed CallVault during a call. What was recorded before that was saved as %1$s.</string>
+    <string name="home_health_failed_cut_off">Your last call was cut off when the phone closed CallVault — the part recorded before that was saved.</string>
 </resources>

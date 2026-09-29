@@ -689,4 +689,5 @@
     <string name="notif_readiness_pairing_lost_text">Android đã quên ghép nối của CallVault nên không thể ghi âm cuộc gọi. Mở CallVault và nhấn vào thẻ trạng thái để ghép nối lại.</string>
     <string name="notif_cut_off_saved_title">Một cuộc gọi đã bị cắt</string>
     <string name="notif_cut_off_saved_text">Điện thoại đã đóng CallVault trong khi gọi. Phần đã ghi trước đó được lưu thành %1$s.</string>
+    <string name="home_health_failed_cut_off">Cuộc gọi gần nhất bị cắt khi điện thoại đóng CallVault — phần đã ghi trước đó đã được lưu.</string>
 </resources>
