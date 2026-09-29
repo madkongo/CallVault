@@ -94,6 +94,49 @@ object DiagnosticDumps {
             SH, "-c",
             "$DUMPSYS media.audio_flinger | grep -iE 'Output thread|Output devices|latency|Standby: |Sample rate'",
         )
+        // Where an app call's audio goes — for a far party that stays digital silence with the sink open
+        // (vivo V2507A, 2026-09-28). Read a few seconds into the call. Each is cut short on the device: the
+        // raw dumps run to megabytes. Fixed commands; any argument is ignored.
+        //
+        // The audio policy's registered dynamic mixes and their rules: is our loop-back mix there, with the
+        // voice-communication rule and its address?
+        "voip_policy" -> arrayOf(
+            SH, "-c",
+            // From "Inputs" on: each open recording input with its device and address (where our sink is
+            // really attached), then the mixes — so the two addresses can be compared.
+            "$DUMPSYS media.audio_policy | sed -n '/^ Inputs (/,/Preferred mixer/p' | head -n 120",
+        )
+        // Who is playing right now, with usage and flags — is the calling app's track VOICE_COMMUNICATION,
+        // and does it carry a no-capture flag? Idle players are left out.
+        "voip_players" -> arrayOf(
+            SH, "-c",
+            "$DUMPSYS audio | sed -n '/^  players:/,/ducked players/p' | grep -v 'state:idle' | head -n 40",
+        )
+        // Each mixer output, its device, and its track table (the Usg column is the usage) — is the call's
+        // track on the remote-submix output our sink reads, or on a voice/VoIP output the mix never sees?
+        "voip_tracks" -> arrayOf(
+            SH, "-c",
+            "$DUMPSYS media.audio_flinger | awk '/^Output thread/{print} /Output devices/{print} " +
+                "/Tracks of which|^  [0-9]+ Tracks/{print; t=1; next} t && (/^ *\$/ || /Effect Chains|Local log/){t=0} t{print}' " +
+                "| head -n 150",
+        )
+        // The audio stack's own log lines around an app call — submix HAL, vendor audio features, anything
+        // "silenced" — which the report's system-log filter leaves out. Read at the end of an app call whose
+        // far party was never heard. Fixed command; any argument is ignored.
+        "voip_audio_log" -> arrayOf(
+            SH, "-c",
+            // vivo's own record-silencing decision (strings found in vivo's audioserver, 2026-09-28):
+            // updateRecordCaptureState … allowCapture, setRecordSilenced, isRemoteSubMixApp/isLiveApp, WhitePkgList.
+            "$LOGCAT -d -b main -b system | grep -iE 'submix|remote_support|remote_showstatus|AudioFeature|VivoAudio|" +
+                "isLiveApp|gamecube|AudioPolicyMix|silenc|playback.?capture|allowCapture|updateRecordCaptureState|" +
+                "WhitePkgList|LiveApp|isRemoteSubMixApp|isSpecialCapture' | grep -v 'adbd' | tail -n 150",
+        )
+        // vivo's audio switches, read-only — e.g. persist.sys.audio.vapc.record.share_record.enable, which its
+        // policy XML ships "off" (iQOO firmware dump, 2026-09-28). Harmless elsewhere: matches nothing.
+        "vivo_audio_props" -> arrayOf(
+            SH, "-c",
+            "/system/bin/getprop | grep -iE 'vapc|vivo.*audio|audio.*vivo|liveapp|remote_?submix' | head -n 40",
+        )
         else -> null
     }
 

@@ -451,10 +451,12 @@ internal class DirectAudioRecorderSession(
             val channels = if (channelMask == AudioFormat.CHANNEL_IN_STEREO) 2 else 1
             val minBuf = AudioRecord.getMinBufferSize(SAMPLE_RATE, channelMask, AudioFormat.ENCODING_PCM_16BIT)
             if (minBuf <= 0) continue
-            val rec = runCatching {
-                @Suppress("MissingPermission") // shell uid holds CAPTURE_AUDIO_OUTPUT; the daemon is not an app.
-                AudioRecord(androidSource, SAMPLE_RATE, channelMask, AudioFormat.ENCODING_PCM_16BIT, minBuf * BUFFER_FACTOR)
-            }.getOrNull()
+            // shell uid holds CAPTURE_AUDIO_OUTPUT; the daemon is not an app. Opened through the host's one opener,
+            // which survives vivo's modified constructor (otherwise every vivo phone call fell back to scrcpy).
+            val rec = HostAudioRecord.open(
+                "direct capture (source=$androidSource, ch=$channels)", androidSource, SAMPLE_RATE, channelMask,
+                AudioFormat.ENCODING_PCM_16BIT, minBuf * BUFFER_FACTOR,
+            )
             if (rec != null && rec.state == AudioRecord.STATE_INITIALIZED) return rec to channels
             runCatching { rec?.release() }
         }

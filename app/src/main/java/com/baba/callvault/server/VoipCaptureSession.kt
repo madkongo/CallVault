@@ -94,6 +94,9 @@ internal class VoipCaptureSession(
     private class Chunk(val bytes: ByteArray, val contentNanos: Long)
 
     @Volatile private var farRecord: AudioRecord? = null
+
+    /** Whether [recordStatus] has been logged for this call. */
+    private var recordStatusLogged = false
     @Volatile private var nearRecord: AudioRecord? = null
     @Volatile private var encoder: MediaCodec? = null
     @Volatile private var muxer: MediaMuxer? = null
@@ -173,12 +176,12 @@ internal class VoipCaptureSession(
             AppLogger.w(TAG, "VoIP mic minBufferSize=$minBuf")
             return null
         }
-        val rec = runCatching {
-            AudioRecord(
-                MediaRecorder.AudioSource.MIC, SAMPLE_RATE, AudioFormat.CHANNEL_IN_MONO,
-                AudioFormat.ENCODING_PCM_16BIT, minBuf * BUFFER_FACTOR,
-            )
-        }.getOrNull()
+        // Through the host's one AudioRecord opener: on vivo the public constructor crashes in this process,
+        // and swallowing that is how app calls kept failing on 2.4.3 with no reason in the log.
+        val rec = HostAudioRecord.open(
+            "VoIP mic", MediaRecorder.AudioSource.MIC, SAMPLE_RATE, AudioFormat.CHANNEL_IN_MONO,
+            AudioFormat.ENCODING_PCM_16BIT, minBuf * BUFFER_FACTOR,
+        )
         if (rec == null || rec.state != AudioRecord.STATE_INITIALIZED) {
             runCatching { rec?.release() }
             return null
@@ -358,6 +361,15 @@ internal class VoipCaptureSession(
                             " peak near=$nearPeak far=$farPeak",
                     )
                     nearPeak = 0; farPeak = 0
+                    // Once per call, at the first snapshot: what Android itself says about each record —
+                    // silenced by the platform, and the device it is really routed to. A far side that reads
+                    // pure zeros while "not silenced" and routed to the right submix is being zeroed below the
+                    // framework (vivo V2507A, 2026-09-28).
+                    if (!recordStatusLogged) {
+                        recordStatusLogged = true
+                        AppLogger.i(TAG, "VoIP record status: far{${recordStatus(farRecord)}} near{${recordStatus(nearRecord)}}")
+                        AppLogger.i(TAG, "VoIP vendor audio lists: ${vendorAudioLists()}")
+                    }
                 }
             }
 
@@ -492,6 +504,27 @@ internal class VoipCaptureSession(
         }
     }.apply { isDaemon = true; name = "voip-${side.name}" }
 
+    /**
+     * The allow-lists vivo's audioserver consults before zero-filling a remote-submix record during a call (keys found
+     * in its binary, 2026-09-28), read with getParameters — read-only; nothing here sets anything. Empty on other
+     * ROMs, which do not answer these keys.
+     */
+    private fun vendorAudioLists(): String = runCatching {
+        val get = Class.forName("android.media.AudioSystem").getMethod("getParameters", String::class.java)
+        listOf("LiveAppList", "RemoteProtectList", "RemoteSubmixSupp", "APPShare").joinToString(" ") { key ->
+            "$key=[${(get.invoke(null, key) as String?).orEmpty().take(VENDOR_LIST_MAX_CHARS)}]"
+        }
+    }.getOrElse { "unavailable (${it.javaClass.simpleName})" }
+
+    /** Android's own account of a record: silenced or not, routed device, source, session. Diagnostics only. */
+    private fun recordStatus(record: AudioRecord?): String = runCatching {
+        if (record == null) return@runCatching "none"
+        val cfg = record.activeRecordingConfiguration
+        val dev = record.routedDevice
+        "silenced=${cfg?.isClientSilenced} routed=${dev?.type}:${dev?.address} source=${cfg?.clientAudioSource} " +
+            "session=${record.audioSessionId} state=${record.recordingState}"
+    }.getOrElse { "unavailable (${it.javaClass.simpleName})" }
+
     /** True when every sample in the chunk is exactly zero — the fingerprint of a silenced capture. */
     private fun isAllZero(buf: ByteArray): Boolean {
         for (b in buf) if (b.toInt() != 0) return false
@@ -507,13 +540,10 @@ internal class VoipCaptureSession(
         AppLogger.i(TAG, "near capture silenced by the platform — re-taking the mic")
         val minBuf = AudioRecord.getMinBufferSize(SAMPLE_RATE, AudioFormat.CHANNEL_IN_MONO, AudioFormat.ENCODING_PCM_16BIT)
         if (minBuf <= 0) return null
-        @Suppress("MissingPermission")
-        val fresh = runCatching {
-            AudioRecord(
-                MediaRecorder.AudioSource.MIC, SAMPLE_RATE, AudioFormat.CHANNEL_IN_MONO,
-                AudioFormat.ENCODING_PCM_16BIT, minBuf * BUFFER_FACTOR,
-            )
-        }.getOrNull()
+        val fresh = HostAudioRecord.open(
+            "VoIP mic re-take", MediaRecorder.AudioSource.MIC, SAMPLE_RATE, AudioFormat.CHANNEL_IN_MONO,
+            AudioFormat.ENCODING_PCM_16BIT, minBuf * BUFFER_FACTOR,
+        )
         if (fresh == null || fresh.state != AudioRecord.STATE_INITIALIZED) {
             AppLogger.w(TAG, "re-take failed to initialise; keeping the silenced capture")
             runCatching { fresh?.release() }
@@ -598,6 +628,9 @@ internal class VoipCaptureSession(
     }
 
     companion object {
+        /** Cap on each vendor audio list in the log; the value is for reading, not for completeness. */
+        private const val VENDOR_LIST_MAX_CHARS = 300
+
         /**
          * Consecutive all-zero chunks before we conclude the platform has silenced us rather than the
          * room simply being quiet. A real mic never returns exact zeros — even silence carries a noise
