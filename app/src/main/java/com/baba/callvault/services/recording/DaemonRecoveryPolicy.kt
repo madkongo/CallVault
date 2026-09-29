@@ -8,6 +8,10 @@
 
 package com.baba.callvault.services.recording
 
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
+
 /** What the keep-alive should do on this relaunch attempt. */
 enum class RecoveryStep {
     /** A usable endpoint exists and nothing is obviously wrong — just connect and launch. */
@@ -76,6 +80,11 @@ class DaemonRecoveryPolicy(
 
     private var consecutiveFailures = 0
 
+    private val _stuckState = MutableStateFlow(false)
+
+    /** [isStuck] as a flow, so Home's card changes the moment recovery gets stuck or comes back. */
+    val stuckState: StateFlow<Boolean> = _stuckState.asStateFlow()
+
     /**
      * Whether recovery has failed enough times running to be worth telling the user about.
      *
@@ -119,12 +128,14 @@ class DaemonRecoveryPolicy(
         // Saturate rather than overflow: this counter is only compared against a small threshold, and a
         // device left down for days must not wrap back into looking healthy.
         if (consecutiveFailures < Int.MAX_VALUE) consecutiveFailures++
+        _stuckState.value = isStuck
     }
 
     /** Records a relaunch that brought the daemon up, clearing the streak. */
     @Synchronized
     fun onAttemptSucceeded() {
         consecutiveFailures = 0
+        _stuckState.value = false
     }
 
     companion object {

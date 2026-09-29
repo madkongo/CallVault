@@ -378,6 +378,20 @@ class HomeViewModel(application: Application) : AndroidViewModel(application) {
         observeTags()
         observeFavourites()
         preferences.registerChangeListener(prefsListener)
+        observeRecoveryState()
+    }
+
+    /**
+     * Follows "Recording is down" live. The status was only recomputed on resume, so after a re-pair —
+     * which brings the recorder back seconds after Home last looked — the card stayed on "Recording is down"
+     * while recording worked (OP9, 2026-09-29).
+     */
+    private fun observeRecoveryState() {
+        viewModelScope.launch {
+            DaemonKeepAliveService.stuckRecovery.stuckState.drop(1).collect {
+                _uiState.update { state -> state.copy(status = computeStatus()) }
+            }
+        }
     }
 
     /** The last uri whose playback ERROR we handled, so we prune it at most once per failure. */

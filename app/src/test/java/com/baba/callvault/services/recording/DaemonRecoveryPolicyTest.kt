@@ -202,4 +202,18 @@ class DaemonRecoveryPolicyTest {
         policy.onAttemptSucceeded()
         assertFalse(policy.isStuck)
     }
+
+    @Test
+    fun `the stuck state is published so Home can follow it live`() {
+        // After a re-pair the recorder came back 4 s after Home last looked, and the card stayed on
+        // "Recording is down" until the screen was reopened (OP9, 2026-09-29).
+        val policy = DaemonRecoveryPolicy(escalateAfterFailures = 2)
+        assertFalse(policy.stuckState.value)
+        policy.onAttemptFailed()
+        assertFalse(policy.stuckState.value)
+        policy.onAttemptFailed()
+        assertTrue(policy.stuckState.value)
+        policy.onAttemptSucceeded()
+        assertFalse(policy.stuckState.value)
+    }
 }
