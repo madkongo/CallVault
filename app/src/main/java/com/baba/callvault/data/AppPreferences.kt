@@ -315,6 +315,7 @@ class AppPreferences(context: Context) {
         AVAILABLE_UPDATE_TAG("available_update_tag"),
         PENDING_UPDATE_TAG("pending_update_tag"),
         LAST_NOTIFIED_UPDATE_TAG("last_notified_update_tag"),
+        UPDATE_POPUP_SHOWN_TAG("update_popup_shown_tag"),
         LAST_UPDATE_CHECK_MILLIS("last_update_check_millis"),
         UPDATE_INSTALL_ARMED("update_install_armed"),
         LAST_SEEN_VERSION_CODE("last_seen_version_code"),
@@ -563,6 +564,10 @@ class AppPreferences(context: Context) {
     /** Last tag the "update available" notification was posted for, so one tag notifies only once. */
     fun getLastNotifiedUpdateTag() = getString(Key.LAST_NOTIFIED_UPDATE_TAG)
     fun setLastNotifiedUpdateTag(tag: String?) = setString(Key.LAST_NOTIFIED_UPDATE_TAG, tag)
+
+    /** The version the update popup was last shown for — so it appears once per version, never nags. */
+    fun getUpdatePopupShownTag() = getString(Key.UPDATE_POPUP_SHOWN_TAG)
+    fun setUpdatePopupShownTag(tag: String?) = setString(Key.UPDATE_POPUP_SHOWN_TAG, tag)
 
     /** Epoch millis of the last completed update check; throttles the check-on-open trigger. */
     fun getLastUpdateCheckMillis() = getLong(Key.LAST_UPDATE_CHECK_MILLIS)

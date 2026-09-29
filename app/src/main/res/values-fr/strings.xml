@@ -694,4 +694,8 @@
     <string name="settings_needs_newer_android">Nécessite Android %1$s ou plus récent — ce téléphone est sous Android %2$s.</string>
     <string name="notif_turned_off_for_android_title">Certains réglages ont été désactivés</string>
     <string name="notif_turned_off_for_android_text">%1$s : nécessite une version d\'Android plus récente que celle de ce téléphone (Android %2$s), donc désactivé. Les appels téléphoniques sont toujours enregistrés.</string>
+    <string name="update_popup_title">CallVault %1$s est disponible</string>
+    <string name="update_popup_text">Une nouvelle version est prête à installer. La mise à jour garde l\'enregistrement fiable et apporte les derniers correctifs.</string>
+    <string name="update_popup_update_now">Mettre à jour</string>
+    <string name="update_popup_later">Plus tard</string>
 </resources>

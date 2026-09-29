@@ -694,4 +694,8 @@
     <string name="settings_needs_newer_android">Android %1$s vagy újabb szükséges – ezen a telefonon Android %2$s fut.</string>
     <string name="notif_turned_off_for_android_title">Néhány beállítás ki lett kapcsolva</string>
     <string name="notif_turned_off_for_android_text">%1$s: ehhez újabb Android-verzió kell, mint ami ezen a telefonon van (Android %2$s), ezért kikapcsoltuk. A telefonhívások rögzítése továbbra is működik.</string>
+    <string name="update_popup_title">A CallVault %1$s elérhető</string>
+    <string name="update_popup_text">Új verzió telepíthető. A frissítés megbízhatóan tartja a rögzítést, és tartalmazza a legújabb javításokat.</string>
+    <string name="update_popup_update_now">Frissítés most</string>
+    <string name="update_popup_later">Később</string>
 </resources>

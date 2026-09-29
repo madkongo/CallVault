@@ -693,4 +693,8 @@
     <string name="settings_needs_newer_android">需要 Android %1$s 或更高版本——此手机运行的是 Android %2$s。</string>
     <string name="notif_turned_off_for_android_title">部分设置已关闭</string>
     <string name="notif_turned_off_for_android_text">%1$s：需要比此手机（Android %2$s）更新的 Android 版本，因此已关闭。电话通话仍会录音。</string>
+    <string name="update_popup_title">CallVault %1$s 可用</string>
+    <string name="update_popup_text">新版本已可安装。更新可保持录音稳定并带来最新修复。</string>
+    <string name="update_popup_update_now">立即更新</string>
+    <string name="update_popup_later">稍后</string>
 </resources>

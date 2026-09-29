@@ -694,4 +694,8 @@
     <string name="settings_needs_newer_android">Richiede Android %1$s o successivo: questo telefono usa Android %2$s.</string>
     <string name="notif_turned_off_for_android_title">Alcune impostazioni sono state disattivate</string>
     <string name="notif_turned_off_for_android_text">%1$s: richiede una versione di Android più recente di quella di questo telefono (Android %2$s), quindi è stata disattivata. Le chiamate telefoniche vengono ancora registrate.</string>
+    <string name="update_popup_title">CallVault %1$s è disponibile</string>
+    <string name="update_popup_text">Una nuova versione è pronta per l\'installazione. L\'aggiornamento mantiene affidabile la registrazione e porta le ultime correzioni.</string>
+    <string name="update_popup_update_now">Aggiorna ora</string>
+    <string name="update_popup_later">Più tardi</string>
 </resources>

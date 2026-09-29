@@ -30,10 +30,16 @@ object UpdateScheduler {
     private const val TAG = "CV:UpdateScheduler"
     private const val WORK_NAME = "cv_update_check"
     private const val CHECK_NOW_WORK_NAME = "cv_update_check_now"
-    private const val PERIOD_HOURS = 24L
+    // Every 6 h, not 24 (2026-09-29): a user who rarely opens the app still learns of a release the
+    // same day. A single conditional GitHub GET, well inside the 60/h anonymous rate limit.
+    private const val PERIOD_HOURS = 6L
 
-    /** Minimum gap between check-on-open triggers, so relaunches can't hammer the GitHub API. */
-    private const val CHECK_ON_OPEN_THROTTLE_MS = 6 * 60 * 60 * 1000L
+    /**
+     * Minimum gap between check-on-open triggers, so relaunches can't hammer the GitHub API. 30 min
+     * (was 6 h): the point of the on-open check is that opening the app surfaces a release promptly,
+     * which a 6 h gate defeated for anyone who had opened it earlier the same day.
+     */
+    private const val CHECK_ON_OPEN_THROTTLE_MS = 30 * 60 * 1000L
 
     /** Unique name of the user-initiated install work; the Home banner observes its state. */
     const val INSTALL_WORK_NAME = "cv_update_install"
@@ -50,7 +56,9 @@ object UpdateScheduler {
                 Constraints.Builder().setRequiredNetworkType(NetworkType.CONNECTED).build()
             )
             .build()
-        workManager.enqueueUniquePeriodicWork(WORK_NAME, ExistingPeriodicWorkPolicy.KEEP, request)
+        // UPDATE, not KEEP: an install already carrying the old 24 h schedule must pick up the 6 h one,
+        // rather than keep the stale period for the life of the install. Matches the other schedulers.
+        workManager.enqueueUniquePeriodicWork(WORK_NAME, ExistingPeriodicWorkPolicy.UPDATE, request)
     }
 
     /**

@@ -694,4 +694,8 @@
     <string name="settings_needs_newer_android">Erfordert Android %1$s oder neuer – dieses Handy läuft mit Android %2$s.</string>
     <string name="notif_turned_off_for_android_title">Einige Einstellungen wurden ausgeschaltet</string>
     <string name="notif_turned_off_for_android_text">%1$s: Dafür ist eine neuere Android-Version nötig als die auf diesem Handy (Android %2$s), daher wurde es ausgeschaltet. Telefonanrufe werden weiterhin aufgenommen.</string>
+    <string name="update_popup_title">CallVault %1$s ist verfügbar</string>
+    <string name="update_popup_text">Eine neue Version kann installiert werden. Das Update hält die Aufnahme zuverlässig und bringt die neuesten Korrekturen.</string>
+    <string name="update_popup_update_now">Jetzt aktualisieren</string>
+    <string name="update_popup_later">Später</string>
 </resources>

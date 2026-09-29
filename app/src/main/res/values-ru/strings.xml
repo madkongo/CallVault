@@ -696,4 +696,8 @@
     <string name="settings_needs_newer_android">Нужен Android %1$s или новее — на этом телефоне Android %2$s.</string>
     <string name="notif_turned_off_for_android_title">Некоторые настройки отключены</string>
     <string name="notif_turned_off_for_android_text">%1$s: нужна более новая версия Android, чем на этом телефоне (Android %2$s), поэтому это отключено. Телефонные звонки по-прежнему записываются.</string>
+    <string name="update_popup_title">Доступен CallVault %1$s</string>
+    <string name="update_popup_text">Новая версия готова к установке. Обновление сохраняет надёжность записи и приносит последние исправления.</string>
+    <string name="update_popup_update_now">Обновить сейчас</string>
+    <string name="update_popup_later">Позже</string>
 </resources>

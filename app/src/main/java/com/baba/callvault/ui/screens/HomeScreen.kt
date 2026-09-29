@@ -504,6 +504,33 @@ fun HomeScreen(
 
     LaunchedEffect(uiState.recordings.size) { mergedCounts = viewModel.mergedCounts() }
 
+    // The one-time "update available" popup. Held in local state so marking it seen (which clears the
+    // VM flag) does not yank the open dialog out from under the user; the VM persists "shown" once per
+    // version, so it never reappears for the same release. The dashboard banner stays regardless.
+    var updatePrompt by remember { mutableStateOf<String?>(null) }
+    LaunchedEffect(uiState.updatePopupTag) {
+        val tag = uiState.updatePopupTag ?: return@LaunchedEffect
+        updatePrompt = tag
+        viewModel.markUpdatePopupSeen(tag)
+    }
+    updatePrompt?.let { tag ->
+        AlertDialog(
+            onDismissRequest = { updatePrompt = null },
+            title = { Text(stringResource(R.string.update_popup_title, tag.removePrefix("v"))) },
+            text = { Text(stringResource(R.string.update_popup_text)) },
+            confirmButton = {
+                TextButton(onClick = { updatePrompt = null; viewModel.installAvailableUpdate() }) {
+                    Text(stringResource(R.string.update_popup_update_now))
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { updatePrompt = null }) {
+                    Text(stringResource(R.string.update_popup_later))
+                }
+            },
+        )
+    }
+
     /**
      * The SAF picker for an audio file to import.
      *

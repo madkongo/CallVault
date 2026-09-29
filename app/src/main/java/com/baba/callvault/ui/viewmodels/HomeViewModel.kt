@@ -209,6 +209,12 @@ class HomeViewModel(application: Application) : AndroidViewModel(application) {
         val privilegedMode: PrivilegedMode = PrivilegedMode.STANDALONE,
         /** True while the banner's Update action is downloading/dispatching the install. */
         val isUpdateInstalling: Boolean = false,
+        /**
+         * The version to show the one-time "update available" popup for, or null. Distinct from
+         * [availableUpdateTag] (which drives the always-present banner): this is set only until the popup
+         * has been shown once for that version — see [markUpdatePopupSeen].
+         */
+        val updatePopupTag: String? = null,
         /** Download percentage (0-100) while installing, or -1 before the download reports. */
         val updateProgressPercent: Int = -1,
         /** Version name to show a dismissable "updated successfully" banner for, or null. */
@@ -360,7 +366,7 @@ class HomeViewModel(application: Application) : AndroidViewModel(application) {
     private val prefsListener =
         android.content.SharedPreferences.OnSharedPreferenceChangeListener { _, key ->
             if (key == AppPreferences.AVAILABLE_UPDATE_TAG_KEY) {
-                _uiState.update { it.copy(availableUpdateTag = preferences.getAvailableUpdateTag()) }
+                _uiState.update { it.copy(availableUpdateTag = preferences.getAvailableUpdateTag(), updatePopupTag = updatePopupTag()) }
             }
             if (key == AppPreferences.PRIVILEGED_MODE_KEY) {
                 _uiState.update { it.copy(privilegedMode = preferences.getPrivilegedMode()) }
@@ -659,6 +665,7 @@ class HomeViewModel(application: Application) : AndroidViewModel(application) {
                 status = status,
                 isLoading = true,
                 availableUpdateTag = preferences.getAvailableUpdateTag(),
+                updatePopupTag = updatePopupTag(),
                 privilegedMode = preferences.getPrivilegedMode(),
                 updatedToVersion = updatedTo,
                 // Shown only after an update, and only once for a given version.
@@ -791,6 +798,19 @@ class HomeViewModel(application: Application) : AndroidViewModel(application) {
      * banner spinner is driven by [observeInstallWork] watching that job's state — never by this
      * call directly — so it can't get stuck if the ViewModel is torn down mid-install.
      */
+    /** The version to prompt about once, or null when there is none or its popup was already shown. */
+    private fun updatePopupTag(): String? =
+        preferences.getAvailableUpdateTag()?.takeIf { it != preferences.getUpdatePopupShownTag() }
+
+    /**
+     * Records that the popup has been shown for [tag], so it appears once per version and never nags.
+     * Called when the dialog is first shown; the banner and the notification are left untouched.
+     */
+    fun markUpdatePopupSeen(tag: String) {
+        preferences.setUpdatePopupShownTag(tag)
+        _uiState.update { it.copy(updatePopupTag = null) }
+    }
+
     fun installAvailableUpdate() {
         if (_uiState.value.isUpdateInstalling) return
         // Arm the one-shot consent flag so the worker runs for THIS tap only; an interrupted re-run
@@ -811,7 +831,8 @@ class HomeViewModel(application: Application) : AndroidViewModel(application) {
                         it.copy(
                             isUpdateInstalling = running != null,
                             updateProgressPercent = percent,
-                            availableUpdateTag = preferences.getAvailableUpdateTag()
+                            availableUpdateTag = preferences.getAvailableUpdateTag(),
+                            updatePopupTag = updatePopupTag()
                         )
                     }
                 }

@@ -693,4 +693,8 @@
     <string name="settings_needs_newer_android">Cần Android %1$s trở lên — điện thoại này chạy Android %2$s.</string>
     <string name="notif_turned_off_for_android_title">Một số cài đặt đã bị tắt</string>
     <string name="notif_turned_off_for_android_text">%1$s: cần phiên bản Android mới hơn phiên bản trên điện thoại này (Android %2$s), nên đã được tắt. Cuộc gọi điện thoại vẫn được ghi âm.</string>
+    <string name="update_popup_title">Đã có CallVault %1$s</string>
+    <string name="update_popup_text">Phiên bản mới đã sẵn sàng để cài đặt. Cập nhật giúp ghi âm ổn định và mang đến các bản sửa lỗi mới nhất.</string>
+    <string name="update_popup_update_now">Cập nhật ngay</string>
+    <string name="update_popup_later">Để sau</string>
 </resources>

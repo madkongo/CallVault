@@ -694,4 +694,8 @@
     <string name="settings_needs_newer_android">Requiere Android %1$s o posterior; este teléfono usa Android %2$s.</string>
     <string name="notif_turned_off_for_android_title">Se desactivaron algunos ajustes</string>
     <string name="notif_turned_off_for_android_text">%1$s: necesita una versión de Android más nueva que la de este teléfono (Android %2$s), así que se desactivó. Las llamadas telefónicas se siguen grabando.</string>
+    <string name="update_popup_title">CallVault %1$s está disponible</string>
+    <string name="update_popup_text">Hay una nueva versión lista para instalar. Actualizar mantiene la grabación fiable e incluye las últimas correcciones.</string>
+    <string name="update_popup_update_now">Actualizar ahora</string>
+    <string name="update_popup_later">Más tarde</string>
 </resources>
