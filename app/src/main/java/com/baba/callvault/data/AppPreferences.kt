@@ -36,6 +36,9 @@ class AppPreferences(context: Context) {
         /** Public key id for the privileged mode, so the UI can react the moment it changes. */
         const val PRIVILEGED_MODE_KEY = "privileged_mode"
 
+        /** Public key id for [getPairingRefusals], so Home's "Pairing expired" card can follow it live. */
+        const val PAIRING_REFUSALS_KEY = "pairing_refusals"
+
         /**
          * Range for the randomly-chosen loopback ADB port ([getLoopbackAdbPort]). Deliberately an
          * uncommon high range: above the ephemeral/registered clutter, and NOT the well-known adb
@@ -302,7 +305,7 @@ class AppPreferences(context: Context) {
 
         // --- ADB ---
         ADB_PAIRED("adb_paired"),
-        PAIRING_REFUSALS("pairing_refusals"),
+        PAIRING_REFUSALS(PAIRING_REFUSALS_KEY),
         LOOPBACK_ADB_PORT("loopback_adb_port"),
         OFFLINE_RECORDING_ENABLED("offline_recording_enabled"),
         KEEP_ORIGINALS_AFTER_MERGE("keep_originals_after_merge"),

@@ -362,6 +362,12 @@ class HomeViewModel(application: Application) : AndroidViewModel(application) {
             if (key == AppPreferences.PRIVILEGED_MODE_KEY) {
                 _uiState.update { it.copy(privilegedMode = preferences.getPrivilegedMode()) }
             }
+            // The pairing is lost or restored by the recorder launcher and the pairing service, never by this
+            // screen — so without this the "Pairing expired" card waited for the next resume to appear, and
+            // stayed up after a successful re-pair (seen on the OP9, 2026-09-29).
+            if (key == AppPreferences.PAIRING_REFUSALS_KEY) {
+                _uiState.update { it.copy(status = computeStatus()) }
+            }
         }
 
     init {
