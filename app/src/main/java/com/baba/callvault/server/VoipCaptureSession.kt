@@ -481,14 +481,18 @@ internal class VoipCaptureSession(
                 if (isAllZero(buf)) { silentChunks++; side.zeroChunk() } else silentChunks = 0
                 if (silentChunks >= SILENT_CHUNKS_BEFORE_RETAKE) {
                     silentChunks = 0
+                    // Asked BEFORE the re-take, of the record that went quiet: did Android silence it, or is
+                    // this a pause? Recorded only (backlog #9, step 1) — the re-take happens either way, as
+                    // before. Null when the platform will not say.
+                    val platformSilenced = runCatching { record.activeRecordingConfiguration?.isClientSilenced }.getOrNull()
                     val retakeStart = System.nanoTime()
                     val fresh = retakeMic(record)
                     if (fresh != null) {
                         // The gap is what the near side loses: from the last chunk of the old record
                         // to the fresh one being started. Its first read adds one buffer on top.
                         val gap = System.nanoTime() - retakeStart
-                        side.retake(gap)
-                        AppLogger.i(TAG, "VoIP sync: re-take #${side.retakes} at ${(retakeStart - startedNanos) / 1_000_000L}ms took ${gap / 1_000_000L}ms; ${side.zeroChunks} zero chunks so far")
+                        side.retake(gap, platformSilenced)
+                        AppLogger.i(TAG, "VoIP sync: re-take #${side.retakes} at ${(retakeStart - startedNanos) / 1_000_000L}ms took ${gap / 1_000_000L}ms; ${side.zeroChunks} zero chunks so far; Android says silenced=$platformSilenced")
                         // The platform took the mic away and we opened another. Without closing the
                         // old id and opening a new one, every re-take would read as a leaked capture
                         // — and this happens several times in a normal call.
@@ -537,7 +541,9 @@ internal class VoipCaptureSession(
      * here degrades to today's behaviour rather than ending the recording.
      */
     private fun retakeMic(current: AudioRecord): AudioRecord? {
-        AppLogger.i(TAG, "near capture silenced by the platform — re-taking the mic")
+        // "Went quiet", not "silenced": most re-takes follow a pause, not the platform (2026-09-23 note);
+        // the caller logs Android's own answer.
+        AppLogger.i(TAG, "near capture went quiet for ${SILENT_CHUNKS_BEFORE_RETAKE} chunks — re-taking the mic")
         val minBuf = AudioRecord.getMinBufferSize(SAMPLE_RATE, AudioFormat.CHANNEL_IN_MONO, AudioFormat.ENCODING_PCM_16BIT)
         if (minBuf <= 0) return null
         val fresh = HostAudioRecord.open(

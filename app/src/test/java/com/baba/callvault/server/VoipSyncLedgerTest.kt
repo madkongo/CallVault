@@ -102,6 +102,23 @@ class VoipSyncLedgerTest {
     }
 
     @Test
+    fun `each re-take records what Android said about the silencing`() {
+        // Backlog #9, step 1 — evidence only, behaviour unchanged. The re-take fires on 15 zero chunks;
+        // Android's own answer (isClientSilenced) says whether that was real silencing or a pause. The
+        // count decides, per phone, whether the re-take can later be skipped for pauses.
+        val ledger = VoipSyncLedger(rate, chunkFrames)
+        ledger.near.retake(gapNanos = 100_000_000L, platformSilenced = true)
+        ledger.near.retake(gapNanos = 100_000_000L, platformSilenced = false)
+        ledger.near.retake(gapNanos = 100_000_000L, platformSilenced = false)
+        ledger.near.retake(gapNanos = 100_000_000L, platformSilenced = null)
+        assertEquals(4, ledger.near.retakes)
+        assertEquals(1, ledger.near.retakesSilenced)
+        assertEquals(2, ledger.near.retakesNotSilenced)
+        assertEquals(1, ledger.near.retakesUnknown)
+        assertTrue(ledger.near.format(0).contains("retake=4/400ms(silenced=1 quiet=2 unknown=1)"))
+    }
+
+    @Test
     fun `the longest stall on each side is kept, not just the count`() {
         // Ten stand-ins in a row is one 1.2 s stall (20 ms each at a 120 ms wait); ten spread over
         // a call is jitter. The report needs to tell them apart.

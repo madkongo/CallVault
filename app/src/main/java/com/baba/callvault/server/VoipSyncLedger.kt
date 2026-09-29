@@ -46,6 +46,14 @@ internal class VoipSyncLedger(private val sampleRate: Int, private val chunkFram
         @Volatile var zeroChunks = 0L; private set
         @Volatile var retakes = 0; private set
         @Volatile var retakeGapTotalMs = 0L; private set
+
+        /**
+         * What Android said at each re-take (`isClientSilenced`): true = it really had silenced us, false =
+         * the zeros were a pause, unknown = it would not say. Evidence for backlog #9 — nothing reads these.
+         */
+        @Volatile var retakesSilenced = 0; private set
+        @Volatile var retakesNotSilenced = 0; private set
+        @Volatile var retakesUnknown = 0; private set
         @Volatile var longestStallChunks = 0; private set
         @Volatile var currentStallChunks = 0; private set
 
@@ -72,7 +80,15 @@ internal class VoipSyncLedger(private val sampleRate: Int, private val chunkFram
             if (currentStallChunks > longestStallChunks) longestStallChunks = currentStallChunks
         }
         fun zeroChunk() { zeroChunks++ }
-        fun retake(gapNanos: Long) { retakes++; retakeGapTotalMs += gapNanos / 1_000_000L }
+        fun retake(gapNanos: Long, platformSilenced: Boolean? = null) {
+            retakes++
+            retakeGapTotalMs += gapNanos / 1_000_000L
+            when (platformSilenced) {
+                true -> retakesSilenced++
+                false -> retakesNotSilenced++
+                null -> retakesUnknown++
+            }
+        }
 
         /** The HAL's latest (frame, time) fix for the record currently feeding this side. */
         fun timestamp(framePosition: Long, nanos: Long) {
@@ -99,7 +115,10 @@ internal class VoipSyncLedger(private val sampleRate: Int, private val chunkFram
 
         fun format(queued: Int): String =
             "$name{read=$chunksRead sub=$chunksSubstituted stall=${longestStallChunks} drop=$chunksDropped disc=$chunksDiscarded q=$queued" +
-                (if (name == "near") " zero=$zeroChunks retake=$retakes/${retakeGapTotalMs}ms" else "") +
+                (if (name == "near") {
+                    " zero=$zeroChunks retake=$retakes/${retakeGapTotalMs}ms" +
+                        "(silenced=$retakesSilenced quiet=$retakesNotSilenced unknown=$retakesUnknown)"
+                } else "") +
                 " ts=$timeSource}"
     }
 
