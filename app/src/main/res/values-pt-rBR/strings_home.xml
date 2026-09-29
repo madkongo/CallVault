@@ -114,6 +114,10 @@
     <string name="merge_note_will_keep">As outras chamadas também são mantidas no telefone.</string>
     <string name="home_scroll_to_top">Topo</string>
     <string name="home_whatsnew_full_notes">Notas de versão completas</string>
+    <string name="whatsnew_245_title">Corrigido um aviso falso de «chamada interrompida»</string>
+    <string-array name="whatsnew_245_items">
+        <item>Corrigido — Sem mais aviso «Uma chamada foi interrompida» para uma chamada que gravou bem</item>
+    </string-array>
     <string name="whatsnew_244_title">Gravação mais confiável, reemparelhamento fácil e avisos de atualização</string>
     <string name="whatsnew_244_where">Configurações ▸ Confiabilidade ▸ Emparelhar de novo</string>
     <string-array name="whatsnew_244_items">

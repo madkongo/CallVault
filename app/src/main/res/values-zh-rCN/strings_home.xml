@@ -114,6 +114,10 @@
     <string name="merge_note_will_keep">其余通话也会保留在手机上。</string>
     <string name="home_scroll_to_top">回到顶部</string>
     <string name="home_whatsnew_full_notes">完整发行说明</string>
+    <string name="whatsnew_245_title">修复了错误的“通话被中断”提示</string>
+    <string-array name="whatsnew_245_items">
+        <item>修复 — 对正常录制的通话不再显示“一次通话被中断”</item>
+    </string-array>
     <string name="whatsnew_244_title">录音更可靠、轻松重新配对，以及更新提醒</string>
     <string name="whatsnew_244_where">设置 ▸ 可靠性 ▸ 重新配对</string>
     <string-array name="whatsnew_244_items">

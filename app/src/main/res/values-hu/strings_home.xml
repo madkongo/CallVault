@@ -114,6 +114,10 @@
     <string name="merge_note_will_keep">A többi hívás is a telefonon marad.</string>
     <string name="home_scroll_to_top">Az elejére</string>
     <string name="home_whatsnew_full_notes">Teljes kiadási jegyzék</string>
+    <string name="whatsnew_245_title">Javítva a téves „hívás megszakadt” üzenet</string>
+    <string-array name="whatsnew_245_items">
+        <item>Javítva — Nincs több „Egy hívás megszakadt” értesítés olyan hívásnál, amely rendben rögzült</item>
+    </string-array>
     <string name="whatsnew_244_title">Megbízhatóbb rögzítés, egyszerű újrapárosítás és frissítési értesítések</string>
     <string name="whatsnew_244_where">Beállítások ▸ Megbízhatóság ▸ Újrapárosítás</string>
     <string-array name="whatsnew_244_items">

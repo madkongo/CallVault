@@ -114,6 +114,10 @@
     <string name="merge_note_will_keep">Остальные звонки также останутся на телефоне.</string>
     <string name="home_scroll_to_top">Наверх</string>
     <string name="home_whatsnew_full_notes">Полный список изменений</string>
+    <string name="whatsnew_245_title">Исправлено ложное сообщение «звонок прерван»</string>
+    <string-array name="whatsnew_245_items">
+        <item>Исправлено — Больше нет уведомления «Звонок был прерван» для звонка, который записался нормально</item>
+    </string-array>
     <string name="whatsnew_244_title">Более надёжная запись, простое повторное сопряжение и уведомления об обновлениях</string>
     <string name="whatsnew_244_where">Настройки ▸ Надёжность ▸ Повторное сопряжение</string>
     <string-array name="whatsnew_244_items">

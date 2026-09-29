@@ -114,6 +114,10 @@
     <string name="merge_note_will_keep">Pozostałe rozmowy zostaną też zachowane w telefonie.</string>
     <string name="home_scroll_to_top">Do góry</string>
     <string name="home_whatsnew_full_notes">Pełne informacje o wydaniu</string>
+    <string name="whatsnew_245_title">Naprawiono fałszywy komunikat „połączenie przerwane”</string>
+    <string-array name="whatsnew_245_items">
+        <item>Naprawiono — Koniec z komunikatem „Połączenie zostało przerwane” dla połączenia, które nagrało się poprawnie</item>
+    </string-array>
     <string name="whatsnew_244_title">Pewniejsze nagrywanie, łatwe ponowne parowanie i powiadomienia o aktualizacjach</string>
     <string name="whatsnew_244_where">Ustawienia ▸ Niezawodność ▸ Sparuj ponownie</string>
     <string-array name="whatsnew_244_items">

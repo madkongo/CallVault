@@ -114,6 +114,10 @@
     <string name="merge_note_will_keep">Le altre chiamate restano anche sul telefono.</string>
     <string name="home_scroll_to_top">Su</string>
     <string name="home_whatsnew_full_notes">Note di rilascio complete</string>
+    <string name="whatsnew_245_title">Corretto un falso avviso «chiamata interrotta»</string>
+    <string-array name="whatsnew_245_items">
+        <item>Corretto — Niente più avviso «Una chiamata è stata interrotta» per una chiamata registrata correttamente</item>
+    </string-array>
     <string name="whatsnew_244_title">Registrazione più affidabile, riassociazione facile e avvisi di aggiornamento</string>
     <string name="whatsnew_244_where">Impostazioni ▸ Affidabilità ▸ Riassocia</string>
     <string-array name="whatsnew_244_items">

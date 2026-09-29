@@ -3,6 +3,21 @@
 All notable changes to CallVault are documented here. The format is based on
 [Keep a Changelog](https://keepachangelog.com/), and this project uses semantic-ish versioning.
 
+## [2.4.5] — 2026-09-29
+
+2.4.4 was published briefly and pulled the same day after this bug was found; 2.4.5 is 2.4.4 plus the fix.
+
+### Fixed
+
+- **No false "a call was cut off" message.** In 2.4.4 the new cut-off rescue could show "a call was cut
+  off" for a call that had actually recorded fine — it mistook a leftover temporary file from an older
+  version (which carried no recovery note) for an interrupted call. The rescue now only acts on a file it
+  can attribute to a real interruption; an unlabelled leftover is left alone, never published and never
+  reported.
+  <!-- 🧪 VERIFYING 2026-09-29: unit-tested (a no-note staged file is left alone, never saved/notified);
+  the OP12's triggering leftover was already consumed by the 2.4.4 build, so the fix was not re-triggered
+  on-device. -->
+
 ## [2.4.4] — 2026-09-29
 
 ### Added
