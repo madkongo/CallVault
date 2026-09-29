@@ -103,6 +103,11 @@ class DaemonKeepAliveService : Service() {
             }
             if (alive) {
                 downStreak = 0
+                // A live daemon ends any failure streak, however it came back. The streak used to clear only
+                // when OUR relaunch succeeded, so a recorder brought back by something else — a re-pair from
+                // the "Pairing expired" card, or a call's own launch — left Home on "Recording is down" while
+                // it recorded fine (OP9, 2026-09-29).
+                recoveryPolicy.onAttemptSucceeded()
             } else {
                 downStreak++
                 // Debounce: act only after DOWN_STREAK_THRESHOLD consecutive down reads, so a transient
