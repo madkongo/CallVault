@@ -59,31 +59,21 @@ class CutOffRescueTest {
     }
 
     @Test
-    fun a_file_from_before_notes_existed_is_saved_under_a_generic_name() {
-        // voarch's 13 minutes are in such a file: written by 2.4.1, with no note beside it.
-        assertEquals(RescueDecision.SAVE_UNNAMED, decide(hasNote = false))
+    fun a_file_with_no_note_is_left_alone_never_reported() {
+        // A no-note temp is unclassifiable — a real cut-off from an old build OR a normally-finished
+        // call's orphaned temp. Reporting it "cut off" cried wolf on a pre-2.4.4 leftover (OP12,
+        // 2026-09-29). So it is left in place, never published, never notified.
+        assertEquals(RescueDecision.LEAVE_UNATTRIBUTED, decide(hasNote = false))
     }
 
     @Test
-    fun an_empty_file_holds_no_audio_and_is_only_cleaned_up() {
+    fun an_empty_note_bearing_file_holds_no_audio_and_is_cleaned_up() {
         assertEquals(RescueDecision.DISCARD_EMPTY, decide(sizeBytes = 0))
-        assertEquals(RescueDecision.DISCARD_EMPTY, decide(hasNote = false, sizeBytes = 0))
+        // A no-note file is left alone even when empty — we never touch what we cannot attribute.
+        assertEquals(RescueDecision.LEAVE_UNATTRIBUTED, decide(hasNote = false, sizeBytes = 0))
     }
 
-    @Test
-    fun the_container_is_recognised_from_its_first_bytes() {
-        assertEquals(StagedContainer.OGG, StagedContainer.sniff("OggS".toByteArray() + ByteArray(8)))
-        val mp4 = ByteArray(4) + "ftypM4A ".toByteArray()
-        assertEquals(StagedContainer.MP4, StagedContainer.sniff(mp4))
-        assertEquals(StagedContainer.UNKNOWN, StagedContainer.sniff(ByteArray(12)))
-        assertEquals(StagedContainer.UNKNOWN, StagedContainer.sniff(ByteArray(2)))
-    }
 
-    @Test
-    fun a_generic_name_carries_the_time_and_the_right_extension() {
-        assertEquals("recovered_20260928_1226.ogg", CutOffRescuePolicy.unnamedFileName("20260928_1226", StagedContainer.OGG))
-        assertEquals("recovered_20260928_1226.m4a", CutOffRescuePolicy.unnamedFileName("20260928_1226", StagedContainer.MP4))
-    }
 
     // Which call the rescued recording belongs to, so the "call was not recorded" warning for it can be
     // replaced by the truth. voarch: call-log start 12:26:04, recording started 12:26:07, cut at 12:39.

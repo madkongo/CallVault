@@ -18,33 +18,27 @@ enum class RescueDecision {
     /** Publish it under the name its note gives. */
     SAVE_NAMED,
 
-    /** No note (written before notes existed): publish it under a generic "recovered_" name. */
-    SAVE_UNNAMED,
+    /**
+     * A non-empty staged file with NO note beside it: we cannot tell a genuine cut-off from a
+     * normally-finished call whose temp was merely orphaned. Left in place — never published, never
+     * reported. See [decide].
+     */
+    LEAVE_UNATTRIBUTED,
 
     /** Zero bytes: there is no audio to save, only a file to remove. */
     DISCARD_EMPTY,
 }
 
-/** The container a staged file holds, read from its first bytes. */
-enum class StagedContainer(val extension: String, val mimeType: String) {
-    OGG("ogg", "audio/ogg"),
-    MP4("m4a", "audio/mp4"),
-    UNKNOWN("bin", "application/octet-stream");
-
-    companion object {
-        /** `OggS` at 0 for Ogg; `ftyp` at 4 for MP4/M4A. Anything else is unknown. */
-        fun sniff(head: ByteArray): StagedContainer = when {
-            head.size >= 4 && String(head, 0, 4, Charsets.US_ASCII) == "OggS" -> OGG
-            head.size >= 8 && String(head, 4, 4, Charsets.US_ASCII) == "ftyp" -> MP4
-            else -> UNKNOWN
-        }
-    }
-}
-
 /**
  * The rules for saving a recording cut off by CallVault being killed (backlog #4, voarch 2026-09-28).
  *
- * Two promises: a recording still being made is never touched, and nothing holding audio is ever deleted.
+ * Three promises: a recording still being made is never touched; nothing holding audio is ever deleted;
+ * and a call is only reported "cut off" when we can actually attribute the file to an interrupted
+ * recording — i.e. it has a [StagingNote]. A staged temp with no note is UNCLASSIFIABLE: it is equally a
+ * cut-off from an old build OR a normally-published call whose temp lingered. The first release guessed
+ * "cut off" for these and cried wolf on a pre-2.4.4 leftover (OP12, 2026-09-29, `recovered_20260928_…`),
+ * so a no-note file is now left alone. The cost is that a genuine cut-off from before notes existed is
+ * not auto-recovered; that is far better than a false "a call was cut off" on a call that recorded fine.
  */
 object CutOffRescuePolicy {
     /**
@@ -56,9 +50,14 @@ object CutOffRescuePolicy {
     fun decide(hasNote: Boolean, sizeBytes: Long, ageMs: Long, callActive: Boolean): RescueDecision = when {
         callActive -> RescueDecision.WAIT
         ageMs < QUIET_MS -> RescueDecision.WAIT
-        sizeBytes <= 0L -> RescueDecision.DISCARD_EMPTY
+        // A note is what proves this file is an interrupted recording (the publish path deletes the temp
+        // on success, so a note-bearing temp that survived is genuinely a cut-off). Empty-vs-note order:
+        // an empty note-bearing temp still holds no audio, so cleaning it is right.
+        hasNote && sizeBytes <= 0L -> RescueDecision.DISCARD_EMPTY
         hasNote -> RescueDecision.SAVE_NAMED
-        else -> RescueDecision.SAVE_UNNAMED
+        // No note: unclassifiable. Leave it — do not publish, do not notify, do not delete (it may hold
+        // audio from an old-build cut-off the user could still want).
+        else -> RescueDecision.LEAVE_UNATTRIBUTED
     }
 
     /** Slack around a call's logged start/end: the log's clock, ringing and hang-up are all a little off. */
@@ -80,7 +79,4 @@ object CutOffRescuePolicy {
                 call.startedAt in (recordingStartedAt - MAX_RING_BEFORE_RECORDING_MS)..(recordingStartedAt + CALL_MATCH_SLACK_MS)
             upAtCut && startsWithRecording
         }.maxByOrNull { it.startedAt }
-
-    /** `recovered_<stamp>.<ext>` for a file that has no note to name it. */
-    fun unnamedFileName(stamp: String, container: StagedContainer): String = "recovered_$stamp.${container.extension}"
 }

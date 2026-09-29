@@ -17,16 +17,12 @@ import androidx.work.ExistingWorkPolicy
 import androidx.work.OneTimeWorkRequestBuilder
 import androidx.work.WorkManager
 import androidx.work.WorkerParameters
-import com.baba.callvault.data.AppPreferences
 import com.baba.callvault.data.health.CallLogReader
 import com.baba.callvault.data.health.SetupHealthStore
 import com.baba.callvault.data.recordings.RecordingCatalog
 import com.baba.callvault.system.health.SilentFailureNotifier
 import com.baba.callvault.utils.AppLogger
 import java.io.File
-import java.text.SimpleDateFormat
-import java.util.Date
-import java.util.Locale
 import java.util.concurrent.TimeUnit
 
 /**
@@ -75,24 +71,12 @@ class CutOffRescueWorker(ctx: Context, params: WorkerParameters) : CoroutineWork
                 runCatching { file.delete(); noteFile.delete() }
             }
             RescueDecision.SAVE_NAMED -> note?.let { publish(file, noteFile, it.folderUri, it.fileName, it.mimeType, it.startedAtMillis) }
-            RescueDecision.SAVE_UNNAMED -> publishUnnamed(file, noteFile)
+            // No note beside it: we cannot tell an interrupted recording from a normally-finished call's
+            // orphaned temp, so we say nothing and touch nothing. Left in place (may hold old-build audio).
+            RescueDecision.LEAVE_UNATTRIBUTED ->
+                AppLogger.d(TAG, "${file.name} has no recovery note; leaving it, not reporting a cut-off")
         }
         return decision
-    }
-
-    private suspend fun publishUnnamed(file: File, noteFile: File) {
-        val container = StagedContainer.sniff(readHead(file))
-        if (container == StagedContainer.UNKNOWN) {
-            // Not audio we can name a type for; publishing it would put an unplayable blob in the folder.
-            AppLogger.w(TAG, "${file.name} (${file.length()} bytes) is not a recognised recording; leaving it in place")
-            return
-        }
-        val folder = AppPreferences(applicationContext).getRecordingFolderUri()?.toString() ?: run {
-            AppLogger.w(TAG, "No recording folder set; cannot save ${file.name} yet")
-            return
-        }
-        val stamp = SimpleDateFormat("yyyyMMdd_HHmm", Locale.US).format(Date(file.lastModified()))
-        publish(file, noteFile, folder, CutOffRescuePolicy.unnamedFileName(stamp, container), container.mimeType, startedAt = null)
     }
 
     private suspend fun publish(file: File, noteFile: File, folderUri: String, fileName: String, mimeType: String, startedAt: Long?) {
@@ -123,20 +107,6 @@ class CutOffRescueWorker(ctx: Context, params: WorkerParameters) : CoroutineWork
         SilentFailureNotifier.noteCutOffRecordingSaved(applicationContext, fileName)
     }
 
-    /** The first [HEAD_BYTES] bytes (fewer if the file is shorter); `readNBytes` needs API 33. */
-    private fun readHead(file: File): ByteArray = runCatching {
-        file.inputStream().use { input ->
-            val buf = ByteArray(HEAD_BYTES)
-            var read = 0
-            while (read < HEAD_BYTES) {
-                val n = input.read(buf, read, HEAD_BYTES - read)
-                if (n < 0) break
-                read += n
-            }
-            buf.copyOf(read)
-        }
-    }.getOrDefault(ByteArray(0))
-
     private fun isCallActive(): Boolean = runCatching {
         val mode = applicationContext.getSystemService(AudioManager::class.java)?.mode
         val inCall = mode == AudioManager.MODE_IN_CALL || mode == AudioManager.MODE_IN_COMMUNICATION
@@ -148,7 +118,6 @@ class CutOffRescueWorker(ctx: Context, params: WorkerParameters) : CoroutineWork
     companion object {
         private const val TAG = "CV:CutOffRescue"
         private const val WORK_NAME = "cut_off_rescue"
-        private const val HEAD_BYTES = 12
 
         /** How far back the call log is read to find the cut-off call: longer than any plausible call. */
         private const val CALL_LOOKBACK_MS = 12 * 60 * 60_000L
