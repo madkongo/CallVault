@@ -302,6 +302,7 @@ class AppPreferences(context: Context) {
 
         // --- ADB ---
         ADB_PAIRED("adb_paired"),
+        PAIRING_REFUSALS("pairing_refusals"),
         LOOPBACK_ADB_PORT("loopback_adb_port"),
         OFFLINE_RECORDING_ENABLED("offline_recording_enabled"),
         KEEP_ORIGINALS_AFTER_MERGE("keep_originals_after_merge"),
@@ -492,6 +493,11 @@ class AppPreferences(context: Context) {
 
     /** Marks the one-time ADB pairing as completed (set after the first successful connection). */
     fun setAdbPaired(paired: Boolean) = setBoolean(Key.ADB_PAIRED, paired)
+
+    /** Wireless-debugging pairing refusals in a row; see [com.baba.callvault.integrations.adb.PairingLoss]. */
+    fun getPairingRefusals() = getInt(Key.PAIRING_REFUSALS, 0)
+
+    fun setPairingRefusals(refusals: Int) = setInt(Key.PAIRING_REFUSALS, refusals)
 
     /**
      * Returns this install's fixed loopback ADB port for the classic `adb tcpip` listener

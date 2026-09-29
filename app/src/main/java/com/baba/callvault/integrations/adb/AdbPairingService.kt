@@ -199,6 +199,7 @@ class AdbPairingService : Service() {
                 // refresh. pair() itself does not set this — only AdbShell.ensureConnected does, and
                 // we want the onboarding card to read "Granted" even before the first shell connect.
                 AppPreferences(applicationContext).setAdbPaired(true)
+                PairingLoss.recordConnected(applicationContext)
                 // Pairing itself is the slow-but-bounded part the user is waiting on (~a few seconds).
                 // The privileged daemon is NOT needed until the first recording, and launching it is the
                 // slow ~10s dance — so we DON'T block the "done" signal on it. Post the tappable success

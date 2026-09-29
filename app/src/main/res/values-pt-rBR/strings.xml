@@ -685,4 +685,9 @@
     <string name="search_no_matches_hint">Nada aqui contém “%1$s”. As palavras são comparadas desde o início; uma forma mais curta pode encontrar mais.</string>
     <string name="note_saved">Salvo</string>
     <string name="note_saving">Salvando…</string>
+    <string name="home_status_pairing_lost_title">Pareamento expirado</string>
+    <string name="home_status_pairing_lost_suggestion">O Android esqueceu o pareamento de depuração por Wi-Fi do CallVault, então o gravador não consegue reiniciar. Toque aqui para parear de novo — suas gravações e configurações continuam como estão.</string>
+    <string name="settings_pair_again_label">Parear de novo</string>
+    <string name="settings_pair_again_value">Parear o CallVault com a depuração por Wi-Fi</string>
+    <string name="settings_pair_again_hint">Use se o Android esqueceu o pareamento do CallVault. Suas gravações e configurações continuam como estão. Ativar a gravação offline impede que o pareamento expire.</string>
 </resources>

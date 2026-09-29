@@ -682,4 +682,9 @@
     <string name="search_no_matches_hint">Nada aquí contiene «%1$s». Las palabras se comparan desde el inicio; una forma más corta puede encontrar más.</string>
     <string name="note_saved">Guardado</string>
     <string name="note_saving">Guardando…</string>
+    <string name="home_status_pairing_lost_title">Emparejamiento caducado</string>
+    <string name="home_status_pairing_lost_suggestion">Android olvidó el emparejamiento de depuración inalámbrica de CallVault, así que la grabadora no puede reiniciarse. Toca aquí para emparejar de nuevo; tus grabaciones y ajustes se conservan.</string>
+    <string name="settings_pair_again_label">Emparejar de nuevo</string>
+    <string name="settings_pair_again_value">Emparejar CallVault con la depuración inalámbrica</string>
+    <string name="settings_pair_again_hint">Úsalo si Android olvidó el emparejamiento de CallVault. Tus grabaciones y ajustes se conservan. Activar la grabación sin conexión evita que el emparejamiento caduque.</string>
 </resources>

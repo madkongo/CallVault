@@ -684,4 +684,9 @@
     <string name="search_no_matches_hint">Здесь ничего не содержит «%1$s». Слова сопоставляются с начала — более короткая форма может найти больше.</string>
     <string name="note_saved">Сохранено</string>
     <string name="note_saving">Сохранение…</string>
+    <string name="home_status_pairing_lost_title">Сопряжение истекло</string>
+    <string name="home_status_pairing_lost_suggestion">Android забыл сопряжение отладки по Wi-Fi для CallVault, поэтому запись не может перезапуститься. Нажмите, чтобы выполнить сопряжение заново — записи и настройки сохранятся.</string>
+    <string name="settings_pair_again_label">Выполнить сопряжение заново</string>
+    <string name="settings_pair_again_value">Сопрячь CallVault с отладкой по Wi-Fi</string>
+    <string name="settings_pair_again_hint">Используйте, если Android забыл сопряжение CallVault. Записи и настройки сохранятся. Включение офлайн-записи не даёт сопряжению истечь.</string>
 </resources>

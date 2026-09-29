@@ -887,4 +887,9 @@
     <string name="search_no_matches_hint">Nothing here contains “%1$s”. Words match from their start, so a shorter form may find more.</string>
     <string name="note_saved">Saved</string>
     <string name="note_saving">Saving…</string>
+    <string name="home_status_pairing_lost_title">Pairing expired</string>
+    <string name="home_status_pairing_lost_suggestion">Android forgot CallVault\'s Wireless debugging pairing, so the recorder can\'t restart. Tap here to pair again — your recordings and settings stay as they are.</string>
+    <string name="settings_pair_again_label">Pair again</string>
+    <string name="settings_pair_again_value">Pair CallVault with Wireless debugging</string>
+    <string name="settings_pair_again_hint">Use this if Android forgot CallVault\'s pairing. Your recordings and settings stay as they are. Turning on Offline recording keeps the pairing from expiring.</string>
 </resources>

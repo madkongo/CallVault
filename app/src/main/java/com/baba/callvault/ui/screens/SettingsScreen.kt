@@ -58,6 +58,8 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import android.widget.Toast
+import com.baba.callvault.system.openWirelessDebugging
+import com.baba.callvault.integrations.adb.AdbPairingService
 import com.baba.callvault.system.diagnostics.ReportBundle
 import com.baba.callvault.ui.common.verticalScrollbar
 import com.baba.callvault.ui.common.horizontalScrollbar
@@ -2135,6 +2137,7 @@ private fun ExperimentalSubSection() {
         WirelessDebuggingEnforceToggle()
         SettingsDivider()
         UsbDefaultConfigRow()
+        PairAgainRow()
 
         SettingsSubHeader(stringResource(R.string.settings_subsection_voip), nested = true)
         VoipRecordingToggle()
@@ -2430,6 +2433,31 @@ internal fun WirelessDebuggingEnforceToggle() {
         onCheckedChange = { on ->
             prefs.setWirelessDebuggingEnforced(on)
             enforced = on
+        },
+    )
+}
+
+/**
+ * Pairs CallVault with Wireless debugging again, from anywhere, without reinstalling (issue #43).
+ *
+ * Before this row the pairing flow lived only in onboarding, so when Android forgot the pairing the
+ * reporter's only way back was to uninstall — losing settings along the way. It runs the same flow as
+ * setup (the notification that takes the code) and opens Wireless debugging's page, where "Pair device
+ * with pairing code" is. Recordings and settings are untouched. Built-in mode only: Shizuku pairs itself.
+ */
+@Composable
+private fun PairAgainRow() {
+    val context = LocalContext.current
+    if (!capabilityAvailable(ModeCapability.WIRELESS_DEBUGGING_CONTROL)) return
+    SettingsDivider()
+    NavigationRow(
+        icon = Icons.Filled.Wifi,
+        label = stringResource(R.string.settings_pair_again_label),
+        value = stringResource(R.string.settings_pair_again_value),
+        supporting = stringResource(R.string.settings_pair_again_hint),
+        onClick = {
+            AdbPairingService.start(context)
+            context.openWirelessDebugging()
         },
     )
 }

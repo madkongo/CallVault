@@ -16,6 +16,7 @@ import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import com.baba.callvault.R
 import com.baba.callvault.data.AppPreferences
+import com.baba.callvault.integrations.adb.PairingLoss
 import com.baba.callvault.data.transcripts.FavouriteRepository
 import com.baba.callvault.data.transcripts.LibraryLabels
 import com.baba.callvault.data.transcripts.TagRepository
@@ -104,6 +105,8 @@ class HomeViewModel(application: Application) : AndroidViewModel(application) {
         NO_FOLDER(R.string.home_status_no_folder_title, R.string.home_status_no_folder_suggestion),
         NOT_PAIRED(R.string.home_status_not_paired_title, R.string.home_status_not_paired_suggestion),
         DEV_OPTIONS_OFF(R.string.home_status_dev_options_off_title, R.string.home_status_dev_options_off_suggestion),
+        /** Android forgot CallVault's Wireless-debugging pairing (issue #43); tapping the card pairs again. */
+        PAIRING_LOST(R.string.home_status_pairing_lost_title, R.string.home_status_pairing_lost_suggestion),
         UPDATE_REGRANT_NEEDED(R.string.home_status_update_regrant_title, R.string.home_status_update_regrant_suggestion),
         SHIZUKU_NOT_READY(R.string.home_status_shizuku_title, R.string.home_status_shizuku_suggestion),
         RECOVERY_STUCK(R.string.home_status_recovery_stuck_title, R.string.home_status_recovery_stuck_suggestion),
@@ -840,7 +843,19 @@ class HomeViewModel(application: Application) : AndroidViewModel(application) {
      * All checks are synchronous, cheap reads (AppPreferences + one Settings.Global int); none
      * launch the daemon or do I/O.
      */
-    private fun computeStatus(): HomeStatus = when (SetupPrerequisites.missing(appContext)) {
+    private fun computeStatus(): HomeStatus {
+        val base = baseStatus()
+        // A lost pairing outranks what follows from it: with Android refusing our key the grant cannot be
+        // healed and the recorder cannot be relaunched, and "Pair again" is the only thing that fixes either.
+        // Built-in mode only — Shizuku users never pair with CallVault. See [PairingLoss].
+        val pairingDependent = base == HomeStatus.READY || base == HomeStatus.RECOVERY_STUCK ||
+            base == HomeStatus.UPDATE_REGRANT_NEEDED
+        return if (pairingDependent && !AppPreferences(appContext).getPrivilegedMode().needsShizuku &&
+            PairingLoss.isLost(appContext)
+        ) HomeStatus.PAIRING_LOST else base
+    }
+
+    private fun baseStatus(): HomeStatus = when (SetupPrerequisites.missing(appContext)) {
         Prerequisite.RECORDING_FOLDER -> HomeStatus.NO_FOLDER
         Prerequisite.ADB_PAIRING -> HomeStatus.NOT_PAIRED
         Prerequisite.DEVELOPER_OPTIONS -> HomeStatus.DEV_OPTIONS_OFF

@@ -681,4 +681,9 @@
     <string name="search_no_matches_hint">Không có gì ở đây chứa “%1$s”. Từ được so khớp từ đầu, nên dạng ngắn hơn có thể tìm được nhiều hơn.</string>
     <string name="note_saved">Đã lưu</string>
     <string name="note_saving">Đang lưu…</string>
+    <string name="home_status_pairing_lost_title">Ghép nối đã hết hạn</string>
+    <string name="home_status_pairing_lost_suggestion">Android đã quên ghép nối gỡ lỗi không dây của CallVault nên trình ghi âm không thể khởi động lại. Nhấn vào đây để ghép nối lại — bản ghi và cài đặt vẫn được giữ nguyên.</string>
+    <string name="settings_pair_again_label">Ghép nối lại</string>
+    <string name="settings_pair_again_value">Ghép nối CallVault với gỡ lỗi không dây</string>
+    <string name="settings_pair_again_hint">Dùng khi Android quên ghép nối của CallVault. Bản ghi và cài đặt vẫn được giữ nguyên. Bật ghi âm ngoại tuyến giúp ghép nối không hết hạn.</string>
 </resources>

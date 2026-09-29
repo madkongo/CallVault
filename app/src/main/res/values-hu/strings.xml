@@ -682,4 +682,9 @@
     <string name="search_no_matches_hint">Itt semmi sem tartalmazza: „%1$s”. A szavak az elejüktől illeszkednek, rövidebb alak többet találhat.</string>
     <string name="note_saved">Mentve</string>
     <string name="note_saving">Mentés…</string>
+    <string name="home_status_pairing_lost_title">A párosítás lejárt</string>
+    <string name="home_status_pairing_lost_suggestion">Az Android elfelejtette a CallVault vezeték nélküli hibakeresési párosítását, ezért a rögzítő nem tud újraindulni. Koppints ide az újrapárosításhoz – a felvételek és beállítások megmaradnak.</string>
+    <string name="settings_pair_again_label">Újrapárosítás</string>
+    <string name="settings_pair_again_value">CallVault párosítása a vezeték nélküli hibakereséssel</string>
+    <string name="settings_pair_again_hint">Használd, ha az Android elfelejtette a CallVault párosítását. A felvételek és beállítások megmaradnak. Az offline rögzítés bekapcsolásával a párosítás nem jár le.</string>
 </resources>

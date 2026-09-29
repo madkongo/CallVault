@@ -13,6 +13,7 @@ import android.os.SystemClock
 import com.baba.callvault.data.AppPreferences
 import com.baba.callvault.server.ShizukuBackend
 import com.baba.callvault.utils.AppLogger
+import io.github.muntashirakon.adb.AdbPairingRequiredException
 import io.github.muntashirakon.adb.AdbStream
 
 /** Thin facade over the embedded ADB connection for the recording pipeline. */
@@ -99,6 +100,7 @@ object AdbShell {
     fun ensureConnected(context: Context): Boolean {
         val mgr = AdbConnectionManager.getInstance(context)
         if (mgr.isConnected) {
+            PairingLoss.recordConnected(context)
             AppPreferences(context).setAdbPaired(true)
             grantSecureSettingsIfNeeded(context)
             return true
@@ -129,6 +131,7 @@ object AdbShell {
             }
             if (ok) {
                 Thread.sleep(CONNECT_SETTLE_MS)
+                PairingLoss.recordConnected(context)
                 AppPreferences(context).setAdbPaired(true)
                 grantSecureSettingsIfNeeded(context)
             }
@@ -309,6 +312,8 @@ object AdbShell {
         WIRELESS_DEBUGGING_REFUSED,
         NO_ADB_SERVICE,
         CONNECT_REFUSED,
+        /** adbd refused our key: Android has forgotten CallVault's pairing (issue #43), or a TLS blip. */
+        PAIRING_REQUIRED,
     }
 
     @Synchronized
@@ -346,9 +351,23 @@ object AdbShell {
         // flaky TLS handshake (SSLProtocolException: CERTIFICATE_UNKNOWN). Callers branch on the
         // boolean — propagating crashed the app at onboarding's "Setup ADB" step — so it stays swallowed
         // to false inside the bounded worker.
-        val ok = connectBounded(context, "Wireless debugging :$port") { mgr.connect("127.0.0.1", port) }
-        if (!ok) return BaseConnect.CONNECT_REFUSED
+        //
+        // AdbPairingRequiredException is kept apart from the rest (issue #43): it is how Android's forgotten
+        // pairing looks, and PairingLoss turns a run of them into "Pair again" on Home. Still a non-connection
+        // to every caller, exactly as before.
+        var pairingRequired = false
+        val ok = connectBounded(context, "Wireless debugging :$port", onFailure = { pairingRequired = it is AdbPairingRequiredException }) {
+            mgr.connect("127.0.0.1", port)
+        }
+        if (!ok) {
+            if (pairingRequired) {
+                PairingLoss.recordRefusal(context)
+                return BaseConnect.PAIRING_REQUIRED
+            }
+            return BaseConnect.CONNECT_REFUSED
+        }
         Thread.sleep(CONNECT_SETTLE_MS)
+        PairingLoss.recordConnected(context)
         AppPreferences(context).setAdbPaired(true)
         grantSecureSettingsIfNeeded(context)
         return BaseConnect.CONNECTED
@@ -530,11 +549,16 @@ object AdbShell {
      * object's monitor, so the caller returning false releases both locks and the next attempt gets a
      * clean run. We also drop the connection so the stranded thread can unwind if it is able to.
      */
-    private fun connectBounded(context: Context, what: String, connect: () -> Boolean): Boolean {
+    private fun connectBounded(
+        context: Context,
+        what: String,
+        onFailure: (Throwable) -> Unit = {},
+        connect: () -> Boolean,
+    ): Boolean {
         val ok = java.util.concurrent.atomic.AtomicBoolean(false)
         val worker = Thread {
             runCatching { ok.set(connect()) }
-                .onFailure { AppLogger.d(TAG, "$what unavailable (unarmed/refused): ${it.message}") }
+                .onFailure { AppLogger.d(TAG, "$what unavailable (unarmed/refused): ${it.message}"); onFailure(it) }
         }.apply { isDaemon = true; name = "cv-adb-connect" }
         worker.start()
         runCatching { worker.join(CONNECT_BUDGET_MS) }

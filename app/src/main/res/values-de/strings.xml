@@ -682,4 +682,9 @@
     <string name="search_no_matches_hint">Nichts hier enthält „%1$s“. Wörter werden vom Anfang an abgeglichen – eine kürzere Form findet vielleicht mehr.</string>
     <string name="note_saved">Gespeichert</string>
     <string name="note_saving">Wird gespeichert…</string>
+    <string name="home_status_pairing_lost_title">Kopplung abgelaufen</string>
+    <string name="home_status_pairing_lost_suggestion">Android hat die WLAN-Debugging-Kopplung von CallVault vergessen, daher kann der Rekorder nicht neu starten. Hier tippen, um erneut zu koppeln – Aufnahmen und Einstellungen bleiben erhalten.</string>
+    <string name="settings_pair_again_label">Erneut koppeln</string>
+    <string name="settings_pair_again_value">CallVault mit WLAN-Debugging koppeln</string>
+    <string name="settings_pair_again_hint">Nutze dies, wenn Android die Kopplung von CallVault vergessen hat. Aufnahmen und Einstellungen bleiben erhalten. Mit „Offline-Aufnahme“ läuft die Kopplung nicht ab.</string>
 </resources>

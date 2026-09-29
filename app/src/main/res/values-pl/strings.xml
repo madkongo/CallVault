@@ -684,4 +684,9 @@
     <string name="search_no_matches_hint">Nic tutaj nie zawiera „%1$s”. Słowa dopasowywane są od początku – krótsza forma może znaleźć więcej.</string>
     <string name="note_saved">Zapisano</string>
     <string name="note_saving">Zapisywanie…</string>
+    <string name="home_status_pairing_lost_title">Parowanie wygasło</string>
+    <string name="home_status_pairing_lost_suggestion">Android zapomniał parowanie debugowania bezprzewodowego CallVault, więc rejestrator nie może się ponownie uruchomić. Dotknij, aby sparować ponownie – nagrania i ustawienia pozostaną bez zmian.</string>
+    <string name="settings_pair_again_label">Sparuj ponownie</string>
+    <string name="settings_pair_again_value">Sparuj CallVault z debugowaniem bezprzewodowym</string>
+    <string name="settings_pair_again_hint">Użyj, jeśli Android zapomniał parowanie CallVault. Nagrania i ustawienia pozostaną bez zmian. Włączenie nagrywania offline zapobiega wygaśnięciu parowania.</string>
 </resources>

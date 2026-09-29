@@ -25,6 +25,7 @@ import androidx.compose.material.icons.filled.Favorite
 import androidx.compose.material.icons.filled.Star
 import androidx.compose.material.icons.filled.StarBorder
 import androidx.compose.material3.Surface
+import com.baba.callvault.integrations.adb.AdbPairingService
 import com.baba.callvault.system.openWirelessDebugging
 import com.baba.callvault.data.merge.MergeCandidates
 import com.baba.callvault.data.recordings.AudioImport
@@ -910,10 +911,17 @@ fun HomeScreen(
                         status = uiState.status,
                         health = uiState.setupHealth,
                         mode = uiState.privilegedMode,
-                        onAction = if (uiState.status == HomeViewModel.HomeStatus.UPDATE_REGRANT_NEEDED) {
-                            { context.openWirelessDebugging() }
-                        } else {
-                            null
+                        onAction = when (uiState.status) {
+                            HomeViewModel.HomeStatus.UPDATE_REGRANT_NEEDED -> { { context.openWirelessDebugging() } }
+                            // The same pairing flow as setup: its notification takes the code, and Wireless
+                            // debugging's page is where "Pair device with pairing code" lives (issue #43).
+                            HomeViewModel.HomeStatus.PAIRING_LOST -> {
+                                {
+                                    AdbPairingService.start(context)
+                                    context.openWirelessDebugging()
+                                }
+                            }
+                            else -> null
                         },
                     )
                     if (uiState.usbScreenLockRisk) {
@@ -2240,6 +2248,8 @@ private fun HeroStatusCard(
         HomeViewModel.HomeStatus.NO_FOLDER -> CvTone.Error
         HomeViewModel.HomeStatus.DEV_OPTIONS_OFF -> CvTone.Error
         HomeViewModel.HomeStatus.UPDATE_REGRANT_NEEDED -> CvTone.Warning
+        // Error: with the pairing gone the recorder cannot be restarted, so the next call can be missed.
+        HomeViewModel.HomeStatus.PAIRING_LOST -> CvTone.Error
         // Error, not Warning: the recorder is down and the next call will be missed.
         HomeViewModel.HomeStatus.RECOVERY_STUCK -> CvTone.Error
         // Error for the same reason: with Shizuku stopped nothing can record, and it stops on every
@@ -2252,6 +2262,7 @@ private fun HeroStatusCard(
         HomeViewModel.HomeStatus.NO_FOLDER -> stringResource(R.string.home_hero_pill_no_folder)
         HomeViewModel.HomeStatus.DEV_OPTIONS_OFF -> stringResource(R.string.home_hero_pill_dev_options_off)
         HomeViewModel.HomeStatus.UPDATE_REGRANT_NEEDED -> stringResource(R.string.home_hero_pill_update_regrant)
+        HomeViewModel.HomeStatus.PAIRING_LOST -> stringResource(R.string.home_hero_pill_recovery_stuck)
         HomeViewModel.HomeStatus.RECOVERY_STUCK -> stringResource(R.string.home_hero_pill_recovery_stuck)
         HomeViewModel.HomeStatus.SHIZUKU_NOT_READY -> stringResource(R.string.home_hero_pill_shizuku)
     }

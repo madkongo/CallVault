@@ -682,4 +682,9 @@
     <string name="search_no_matches_hint">Niente qui contiene “%1$s”. Le parole corrispondono dall’inizio: una forma più corta potrebbe trovare di più.</string>
     <string name="note_saved">Salvato</string>
     <string name="note_saving">Salvataggio…</string>
+    <string name="home_status_pairing_lost_title">Associazione scaduta</string>
+    <string name="home_status_pairing_lost_suggestion">Android ha dimenticato l\'associazione del debug wireless di CallVault, quindi il registratore non può riavviarsi. Tocca qui per associare di nuovo: registrazioni e impostazioni restano invariate.</string>
+    <string name="settings_pair_again_label">Associa di nuovo</string>
+    <string name="settings_pair_again_value">Associa CallVault al debug wireless</string>
+    <string name="settings_pair_again_hint">Usalo se Android ha dimenticato l\'associazione di CallVault. Registrazioni e impostazioni restano invariate. Attivare la registrazione offline evita che l\'associazione scada.</string>
 </resources>
