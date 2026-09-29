@@ -43,6 +43,13 @@ The maintainer picks the order.
 Waiting on users, not on us: benjamin (Wi-Fi-calling vs Android 17 test calls), scrunscotty (rc4 log).
 Still open from before: #42 Android 13 mic fallback (decision pending).
 
+**Added 2026-09-29 (field request — "notify immediately when an update is available"):**
+🧪 BUILT on `release/2.4.4` (`fc493e6c`, rc19): once-per-version update popup on open (Update now / Later;
+banner + notification untouched); background check 24 h→6 h (UPDATE policy); check-on-open throttle 6 h→30 min.
+The notification already existed (UpdateCheckWorker → notifyAvailableOnce, once per tag) — the popup covers
+users who never allowed notifications. Truly-instant push declined (no backend; poll model). Popup logic
+unit-covered; on-screen appearance not yet seen (needs a genuinely newer release than the installed build).
+
 ---
 
 ## 🔵 Features that match the phone's Android version — agreed 2026-09-29, not started
