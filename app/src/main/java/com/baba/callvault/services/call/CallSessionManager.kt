@@ -13,6 +13,7 @@ import android.content.Intent
 import android.net.Uri
 import android.provider.ContactsContract
 import android.telephony.TelephonyManager
+import com.baba.callvault.system.storage.CutOffRescueWorker
 import com.baba.callvault.data.AppPreferences
 import com.baba.callvault.data.health.SetupHealthStore
 import com.baba.callvault.data.health.SetupPrerequisites
@@ -208,6 +209,9 @@ class CallSessionManager private constructor(context: Context) {
         if (receivedCallState == TelephonyManager.CALL_STATE_IDLE) {
             sessionJob?.cancel() // Cancel pending verification window or ongoing session if any
             answerJob?.cancel()
+            // Any call's end — even one this process never saw start, because the phone killed and restarted
+            // CallVault mid-call — is when a recording that call left behind can be saved (backlog #4).
+            CutOffRescueWorker.schedule(appContext)
             // Only trigger stop logic if we were previously in an active session. Prevents redundant stop commands on possible repeated IDLE broadcasts.
             if (session.isSessionActive) {
                 AppLogger.d(TAG, "Phone state is now idle (call ended). Sending stop INTENT for ${session.currentMetadata?.direction} call to RecordingForegroundService.")

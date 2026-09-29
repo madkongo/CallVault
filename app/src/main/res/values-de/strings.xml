@@ -688,4 +688,6 @@
     <string name="settings_pair_again_value">CallVault mit WLAN-Debugging koppeln</string>
     <string name="settings_pair_again_hint">Nutze dies, wenn Android die Kopplung von CallVault vergessen hat. Aufnahmen und Einstellungen bleiben erhalten. Mit „Offline-Aufnahme“ läuft die Kopplung nicht ab.</string>
     <string name="notif_readiness_pairing_lost_text">Android hat die Kopplung von CallVault vergessen, daher können keine Anrufe aufgenommen werden. Öffne CallVault und tippe auf die Statuskarte, um erneut zu koppeln.</string>
+    <string name="notif_cut_off_saved_title">Ein Anruf wurde abgeschnitten</string>
+    <string name="notif_cut_off_saved_text">Dein Handy hat CallVault während eines Anrufs geschlossen. Was bis dahin aufgenommen wurde, ist als %1$s gespeichert.</string>
 </resources>

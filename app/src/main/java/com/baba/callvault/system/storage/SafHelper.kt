@@ -29,6 +29,9 @@ object SafHelper {
 
     /** Prefix for the app-private staging temp files used when a provider rejects `"rw"`. */
     private const val STAGING_TEMP_PREFIX = "rec_stage_"
+
+    /** Staged output that is not a call (a merge): [CutOffRescueWorker] must never publish it. */
+    private const val NON_RECOVERABLE_TEMP_PREFIX = "merge_stage_"
     private const val STAGING_TEMP_SUFFIX = ".tmp"
 
     /** Sub-directory of `filesDir` holding recordings that are still being made. */
@@ -79,7 +82,13 @@ object SafHelper {
      * @param mimeType   The MIME type of the file (e.g. "audio/webm" for Opus, "audio/mp4" for AAC).
      * @return A [SafResult] with the URI, open FD, display name, and optional staging file; or null on failure.
      */
-    fun createAudioFile(context: Context, folderUri: Uri, fileName: String, mimeType: String): SafResult? {
+    fun createAudioFile(
+        context: Context,
+        folderUri: Uri,
+        fileName: String,
+        mimeType: String,
+        recoverable: Boolean = true,
+    ): SafResult? {
         val directory = DocumentFile.fromTreeUri(context, folderUri) ?: return null
         // Checked here rather than discovered at finalize: a folder the user has revoked or unmounted
         // must fail the recording immediately, while there is still someone to tell.
@@ -96,8 +105,18 @@ object SafHelper {
         //
         // So nothing appears in the user's folder until there is a complete recording to put there.
         // The cost is one extra copy of a few megabytes, which is nothing beside losing the call.
-        val tempFile = runCatching { File.createTempFile(STAGING_TEMP_PREFIX, STAGING_TEMP_SUFFIX, stagingDir(context)) }
+        val prefix = if (recoverable) STAGING_TEMP_PREFIX else NON_RECOVERABLE_TEMP_PREFIX
+        val tempFile = runCatching { File.createTempFile(prefix, STAGING_TEMP_SUFFIX, stagingDir(context)) }
             .getOrElse { e -> AppLogger.e(TAG, "Failed to create staging temp file", e); return null }
+        // Where this recording is going, beside it, so a call cut off by the app being killed can still be
+        // saved under its own name (CutOffRescueWorker). Best effort: without it the rescue uses a generic name.
+        if (recoverable) {
+            runCatching {
+                StagingNote.fileFor(tempFile).writeText(
+                    StagingNote(folderUri.toString(), fileName, mimeType, System.currentTimeMillis()).encode(),
+                )
+            }.onFailure { AppLogger.w(TAG, "Could not write the staging note for ${tempFile.name}: ${it.message}") }
+        }
         val tempFd = runCatching {
             ParcelFileDescriptor.open(tempFile, ParcelFileDescriptor.MODE_READ_WRITE or ParcelFileDescriptor.MODE_TRUNCATE)
         }.getOrElse { e ->
@@ -127,6 +146,14 @@ object SafHelper {
      */
     private fun stagingDir(context: Context): File =
         File(context.filesDir, STAGING_DIR_NAME).apply { mkdirs() }
+
+    /** The staging directory if it exists, without creating it. */
+    fun stagingDirOrNull(context: Context): File? =
+        File(context.filesDir, STAGING_DIR_NAME).takeIf { it.isDirectory }
+
+    /** A call recording's staged file (not a merge, not a note). */
+    fun isStagedRecording(file: File): Boolean =
+        file.isFile && file.name.startsWith(STAGING_TEMP_PREFIX) && file.name.endsWith(STAGING_TEMP_SUFFIX)
 
     /**
      * Creates the destination file and writes [srcFile] into it, once there is a finished recording.

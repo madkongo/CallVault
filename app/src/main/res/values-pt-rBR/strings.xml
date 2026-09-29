@@ -691,4 +691,6 @@
     <string name="settings_pair_again_value">Parear o CallVault com a depuração por Wi-Fi</string>
     <string name="settings_pair_again_hint">Use se o Android esqueceu o pareamento do CallVault. Suas gravações e configurações continuam como estão. Ativar a gravação offline impede que o pareamento expire.</string>
     <string name="notif_readiness_pairing_lost_text">O Android esqueceu o pareamento do CallVault, então as chamadas não podem ser gravadas. Abra o CallVault e toque no cartão de status para parear de novo.</string>
+    <string name="notif_cut_off_saved_title">Uma chamada foi interrompida</string>
+    <string name="notif_cut_off_saved_text">Seu telefone fechou o CallVault durante uma chamada. O que foi gravado até ali foi salvo como %1$s.</string>
 </resources>

@@ -89,7 +89,7 @@ object MergeService {
         val mime = mimeFor(extension)
 
         // 1. Join into app-private staging. Nothing of the user's is touched yet.
-        val staged = SafHelper.createAudioFile(context, folderUri, primaryName, mime)
+        val staged = SafHelper.createAudioFile(context, folderUri, primaryName, mime, recoverable = false)
             ?: return Outcome.Failed("Could not open the recordings folder for writing")
         val stagingFile = staged.stagingFile
             ?: run {

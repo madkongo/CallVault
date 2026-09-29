@@ -14,6 +14,7 @@ import android.media.AudioPlaybackConfiguration
 import android.os.Build
 import android.os.Handler
 import android.os.Looper
+import com.baba.callvault.system.storage.CutOffRescueWorker
 import com.baba.callvault.data.AppPreferences
 import com.baba.callvault.utils.AppLogger
 import java.util.concurrent.Executor
@@ -92,6 +93,7 @@ class VoipCallDetector(private val context: Context) {
             VoipRecordPrompt.cancel(context)
             runCatching { VoipRecordingCoordinator.onCallEnded(context) }
                 .onFailure { AppLogger.w(TAG, "VoIP stop failed: ${it.message}") }
+            CutOffRescueWorker.schedule(context)
             isRecording = false
             onRecordingStateChanged?.invoke()
         }

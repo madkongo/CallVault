@@ -688,4 +688,6 @@
     <string name="settings_pair_again_value">Associer CallVault au débogage sans fil</string>
     <string name="settings_pair_again_hint">À utiliser si Android a oublié l\'association de CallVault. Vos enregistrements et réglages sont conservés. Activer l\'enregistrement hors ligne empêche l\'association d\'expirer.</string>
     <string name="notif_readiness_pairing_lost_text">Android a oublié l\'association de CallVault : les appels ne peuvent pas être enregistrés. Ouvrez CallVault et touchez la carte d\'état pour associer à nouveau.</string>
+    <string name="notif_cut_off_saved_title">Un appel a été interrompu</string>
+    <string name="notif_cut_off_saved_text">Votre téléphone a fermé CallVault pendant un appel. Ce qui avait été enregistré jusque-là a été sauvegardé sous %1$s.</string>
 </resources>

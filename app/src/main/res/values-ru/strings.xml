@@ -690,4 +690,6 @@
     <string name="settings_pair_again_value">Сопрячь CallVault с отладкой по Wi-Fi</string>
     <string name="settings_pair_again_hint">Используйте, если Android забыл сопряжение CallVault. Записи и настройки сохранятся. Включение офлайн-записи не даёт сопряжению истечь.</string>
     <string name="notif_readiness_pairing_lost_text">Android забыл сопряжение CallVault, поэтому звонки не записываются. Откройте CallVault и нажмите на карточку состояния, чтобы выполнить сопряжение заново.</string>
+    <string name="notif_cut_off_saved_title">Звонок был прерван</string>
+    <string name="notif_cut_off_saved_text">Телефон закрыл CallVault во время звонка. Записанное до этого момента сохранено как %1$s.</string>
 </resources>

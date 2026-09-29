@@ -56,6 +56,7 @@ object SilentFailureNotifier {
     private const val ID_SYNC_STALLED = 4717
     private const val ID_SHIZUKU_STOPPED = 4718
     private const val ID_PAIRING_LOST = 4719
+    private const val ID_CUT_OFF_SAVED = 4723
 
     /**
      * The recorder could not be started. Posted from the boot path, where a failure is invisible.
@@ -98,6 +99,19 @@ object SilentFailureNotifier {
         title = context.getString(R.string.home_status_pairing_lost_title),
         // Not Home's card text: that one says "tap here", and here a tap opens Home, not the pairing flow.
         text = context.getString(R.string.notif_readiness_pairing_lost_text),
+    )
+
+    /**
+     * A call was cut off because the phone closed CallVault, and what had been recorded was saved (backlog #5).
+     *
+     * Before this, such a call simply had no recording and nothing said why — voarch found out only by
+     * looking for it. Says what happened, that the part up to the cut was kept, and which file it is.
+     */
+    fun noteCutOffRecordingSaved(context: Context, fileName: String) = post(
+        context,
+        id = ID_CUT_OFF_SAVED,
+        title = context.getString(R.string.notif_cut_off_saved_title),
+        text = context.getString(R.string.notif_cut_off_saved_text, fileName),
     )
 
     /** The pairing works again. */

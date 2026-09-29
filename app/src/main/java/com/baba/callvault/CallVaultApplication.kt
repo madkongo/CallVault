@@ -9,6 +9,7 @@
 package com.baba.callvault
 
 import android.app.Application
+import com.baba.callvault.system.storage.CutOffRescueWorker
 import com.baba.callvault.data.AppPreferences
 import com.baba.callvault.server.RecorderBackend
 import com.baba.callvault.server.ShizukuBackend
@@ -205,6 +206,8 @@ class CallVaultApplication : Application() {
                 CoroutineScope(Dispatchers.IO).launch {
                     SilentFailureNotifier.checkSyncHealth(applicationContext)
                 }
+                // A recording left behind by a call the phone cut off, e.g. by killing this process mid-call.
+                CutOffRescueWorker.schedule(applicationContext)
             }.apply { isDaemon = true }.start()
         }
     }

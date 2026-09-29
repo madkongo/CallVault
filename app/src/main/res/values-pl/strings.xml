@@ -690,4 +690,6 @@
     <string name="settings_pair_again_value">Sparuj CallVault z debugowaniem bezprzewodowym</string>
     <string name="settings_pair_again_hint">Użyj, jeśli Android zapomniał parowanie CallVault. Nagrania i ustawienia pozostaną bez zmian. Włączenie nagrywania offline zapobiega wygaśnięciu parowania.</string>
     <string name="notif_readiness_pairing_lost_text">Android zapomniał parowanie CallVault, więc nie można nagrywać połączeń. Otwórz CallVault i dotknij karty stanu, aby sparować ponownie.</string>
+    <string name="notif_cut_off_saved_title">Połączenie zostało przerwane</string>
+    <string name="notif_cut_off_saved_text">Telefon zamknął CallVault podczas połączenia. To, co nagrano do tego momentu, zapisano jako %1$s.</string>
 </resources>
