@@ -240,3 +240,28 @@ audio setting and is the maintainer's decision. His own voice and phone calls ar
 
 Proposed next private build (awaiting the maintainer): on vivo only, turn that log tag on at each app-call start
 (auto-heals after a reboot) and pull vivo's decision lines at call end. Choose a lever only once they are read.
+
+## vivo on rc18 — verbose tag ON, decision still not exposed (report 2026-09-29 21:53)
+
+📐 Read from the reporter's log. 4 Telegram calls, all one-sided.
+
+- **The verbose-log auto-heal works.** First call `before=[] after=[true]` (cleared — reboot/first run),
+  next calls `before=[true]` (survived). So `vivo_verbose_arm` re-arms per call and the reboot signal is real.
+- **But vivo's decision lines never appear**, even with `log.tag.audio.vivo.verbose=true`: no
+  `updateRecordCaptureState`, `setRecordSilenced`, `allowCapture`, `checkop` in `-b main -b system`. On this
+  retail/release-keys build those verbose ALOGs are compiled out or written to a buffer the shell doesn't get;
+  the vivo bool prop did not re-enable them. Only our own lines and `PlaybackCaptureProtectSupport=<pkg>` show.
+- **What Android itself reports about our record (rc4 `recordStatus`):**
+  `far{silenced=false routed=25(REMOTE_SUBMIX):<ourAddr> source=8(REMOTE_SUBMIX) state=3}`,
+  `near{silenced=false routed=15 source=1(MIC) state=3}`. So the far record is attached to the correct submix at
+  our mix address, RECORDING, and **the policy does not mark it silenced** — yet every far read is pure zeros.
+
+**Verdict (HIGH confidence, convergent):** the far side is zero-filled in vivo's **native** audioserver, below the
+policy layer — which is exactly why `isClientSilenced=false` (the policy never denied us; the buffer is just
+zeroed). The gate is on system-only allow-lists (`LiveAppList` = Chinese streaming apps; firmware string
+`isLiveApp setRecordSilenced true in COMMUNICATION MODE if not open AllowLiveAppCaptureMicData`) and system-only
+props (`persist.sys.audio.vapc.*`, not shell-settable). The one app-reachable lever, `LiveAppList` via
+setParameters, its own binary says SILENCES a live app in a call unless a system prop is on. No public case of a
+non-system app capturing internal call audio on vivo/iQOO. **Not possible for a third-party app without root or a
+system/vendor privilege we do not have.** The only remaining diagnostic that could add anything is reading ALL
+logcat buffers (`-b all`) to be certain vivo isn't logging its decision somewhere unread.
