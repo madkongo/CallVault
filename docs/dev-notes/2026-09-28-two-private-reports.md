@@ -219,3 +219,24 @@ phone call in this log.
 **Conclusion (unchanged, better supported):** vivo zero-fills the far side below anything an app controls; the only
 lever found is adding a package to `LiveAppList` via `AudioSystem.setParameters`, which changes a vivo system
 audio setting and is the maintainer's decision. His own voice and phone calls are what 2.4.4 can deliver on vivo.
+
+## Before touching `LiveAppList` — what the audioserver binary says (2026-09-29, 📐 strings only)
+
+`strings` of `system/system/bin/audioserver` from the iQOO dump (same firmware family as the reporter's V2507A):
+
+- **`LiveAppList` is probably the WRONG lever.** vivo's own messages: `isLiveApp setRecordSilenced true in
+  COMMUNICATION MODE if not open AllowLiveAppCaptureMicData` and `AllowLiveAppCaptureMicData %d, should mute %d`.
+  A live-streaming app is *silenced* during a call unless a separate switch is on. Adding CallVault there could
+  mute the part that works today (his own voice). **Not built.**
+- **The deciding check is an app-op check:** `checkop cause allowCapture false!currentUid = %d @@@` and
+  `checkop cause allowCapture false but force allowCapture true pkgName:%s`. The force-allow list is fed by the
+  firmware XML whitelists (`vivo_audio_policy_record_not_silence_whitelist`, `…mustrecord_whitelist`,
+  `…needrecord_voip_whitelist`, …) — not writable by an app.
+- **vivo can log its decision:** the binary reads the log tag **`log.tag.audio.vivo.verbose`**. A `log.tag.*`
+  property is settable by the shell, only changes logging, and is cleared by a reboot. With it on, the
+  `updateRecordCaptureState … allowCapture …` / `checkop …` lines should appear and name the exact reason.
+- Other switches seen: `persist.sys.audio.vapc.record.share_record.enable` (off),
+  `persist.sys.audio.vapc.voip.reroute_record.enable`, `persist.sys.audio.vapc.record.enable`.
+
+Proposed next private build (awaiting the maintainer): on vivo only, turn that log tag on at each app-call start
+(auto-heals after a reboot) and pull vivo's decision lines at call end. Choose a lever only once they are read.
