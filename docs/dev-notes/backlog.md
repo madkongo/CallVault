@@ -22,6 +22,33 @@ with `&&`/`||` chains and silently reported the opposite answer while this was b
 
 ---
 
+## 🔵 Features that match the phone's Android version — agreed 2026-09-29, not started
+
+**Why.** coonrw (Redmi 12 Pro, Android 12) had "Record app calls" switched on and six WhatsApp calls
+went unrecorded without a word: app-call capture needs Android 14 (`AudioMixingRule.Builder.setTargetMixRole`
+is API 34), and the app never said so. He had also turned on Resilient recording, which captured 0 bytes
+on Android 12, a version it was never tested on. The maintainer decided the app should know which
+features a phone can run and say so, instead of letting users switch on things that cannot work.
+
+1. **Detect the Android version** (and, where it matters, the OEM) during onboarding, and again for
+   existing users when Settings opens, so people who installed before this change are covered too.
+2. **Build a feature → Android version table** before writing code. Sources: the app's own gates
+   (`SDK_INT` checks, `@RequiresApi`), comments, dev-notes, memory and field reports, plus AOSP/vendor docs
+   and a web pass. For every feature, mark it supported, unsupported or untested per version, with the
+   evidence. Known starting points: app calls need A14+ (#42, coonrw); Resilient recording is only
+   proven on A14+ (coonrw's A12 gave 0 bytes; meti.sh's A13 worked on its first call); vivo zero-fills
+   the far side of app calls whatever the version ([[private-reports-2026-09-28]]). **Never gate on
+   `SDK_INT` alone where Android 17 reads settings as "0"** (see the Android 17 memory).
+3. **Grey out and switch off** the settings the phone can't run, each with a one-line reason
+   ("Needs Android 14 or newer"). For existing users who already switched one on, turn it off and tell
+   them once, rather than switching it off silently.
+
+Related parked ideas from the same round of reports (memory `field-reports-2026-09-29`): fall back to
+normal recording when Resilient captures nothing; recover recordings cut off by the phone killing the
+app; stop the "turn Wireless debugging on" card on phones that block the grant.
+
+---
+
 ## 🐞 The transcript sheet's height follows its content — one line explains most of #27's follow-up
 
 **Read from source on 2026-09-07, not measured.** `TranscriptSheet.kt:201`:
