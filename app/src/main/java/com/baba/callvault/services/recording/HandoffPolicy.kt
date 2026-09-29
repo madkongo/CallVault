@@ -33,10 +33,15 @@ import com.baba.callvault.data.PrivilegedMode
 object HandoffPolicy {
 
     /**
-     * @param enabled the user's "resilient recording" opt-in.
-     * @param sourceSupported whether this audio source can be captured by a Java `AudioRecord` at all.
-     * @param mode where privileges come from; [PrivilegedMode.SHIZUKU] rules the path out entirely.
+     * Resilient recording (audio handoff) bypasses DirectAudioRecorderSession by holding a raw ashmem fd.
+     * When the user switches audio routes mid-call (e.g. earpiece to speakerphone or bluetooth), AudioFlinger
+     * invalidates the track (CBLK_INVALID), which immediately terminates the recording because the app process
+     * lacks the system privileges to rebuild the AudioRecord.
+     *
+     * In contrast, DirectAudioRecorderSession runs inside the privileged daemon (UID 2000) and contains our
+     * dynamic route-reconnection loop that seamlessly catches route changes without dropping the file.
+     * Therefore, handoff is disabled to guarantee full route-transition resilience across all calls.
      */
-    fun isUsable(enabled: Boolean, sourceSupported: Boolean, mode: PrivilegedMode): Boolean =
-        enabled && sourceSupported && !mode.needsShizuku
+    fun isUsable(enabled: Boolean, sourceSupported: Boolean, mode: PrivilegedMode): Boolean = false
 }
+

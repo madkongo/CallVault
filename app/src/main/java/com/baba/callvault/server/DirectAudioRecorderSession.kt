@@ -121,7 +121,7 @@ internal class DirectAudioRecorderSession(
         }
         AppLogger.i(TAG, "Direct capture started: source=${source.cliKey} codec=${codec.cliKey} captureCh=$captureChannels encodeCh=$ENCODE_CHANNELS rate=$SAMPLE_RATE")
 
-        readThread = Thread { runCatching { captureLoop(record, enc, mux, captureChannels) }
+        readThread = Thread { runCatching { captureLoop(record, enc, mux, captureChannels, androidSource) }
             .onFailure { AppLogger.w(TAG, "Direct capture loop ended: ${it.message}") } }
             .apply { isDaemon = true; name = "direct-capture" }
             .also { it.start() }
@@ -132,10 +132,12 @@ internal class DirectAudioRecorderSession(
      * signals EOS. Standard synchronous MediaCodec drive: queue input with a monotonic sample-count PTS,
      * drain output, add the track on INFO_OUTPUT_FORMAT_CHANGED (its format carries the Opus/AAC CSD).
      */
-    private fun captureLoop(record: AudioRecord, enc: MediaCodec, mux: MediaMuxer, captureChannels: Int) {
+    private fun captureLoop(record: AudioRecord, enc: MediaCodec, mux: MediaMuxer, captureChannels: Int, androidSource: Int) {
         val pcm = ByteArray(READ_CHUNK_BYTES)
         val mono = ByteArray(READ_CHUNK_BYTES / 2)   // downmix target (half the samples of stereo input)
-        val downmix = captureChannels == 2
+        var currentRecord = record
+        var currentCaptureChannels = captureChannels
+        var downmix = currentCaptureChannels == 2
         // Speaker turns come free from the stereo buffer we already hold: the two directions are on
         // separate channels here, and that information is destroyed by the downmix below. Only a
         // stereo capture carries it — a mono route has nothing to compare.
@@ -144,10 +146,59 @@ internal class DirectAudioRecorderSession(
         var muxerStarted = false
         var totalFrames = 0L
         val bytesPerFrame = 2 * ENCODE_CHANNELS // PCM-16, mono → 2 bytes/frame (matches what we feed the encoder)
+        var consecutiveErrors = 0
 
         while (!stopRequested.get()) {
-            val read = record.read(pcm, 0, pcm.size)
-            if (read <= 0) continue
+            val read = runCatching { currentRecord.read(pcm, 0, pcm.size) }.getOrDefault(-1)
+            if (read <= 0) {
+                consecutiveErrors++
+                // Handle dynamic hardware route transition (earpiece <-> speakerphone / bluetooth)
+                if (consecutiveErrors > 3 && !stopRequested.get()) {
+                    AppLogger.w(TAG, "AudioRecord read returned $read ($consecutiveErrors consecutive errors). Reconnecting audio session with 2s grace window...")
+                    runCatching { currentRecord.stop() }
+                    runCatching { currentRecord.release() }
+
+                    var reconnectedRecord: AudioRecord? = null
+                    var reconnectedChannels = currentCaptureChannels
+                    val retryStart = System.currentTimeMillis()
+                    val maxRetryMs = 2000L
+
+                    while (!stopRequested.get() && (System.currentTimeMillis() - retryStart) < maxRetryMs) {
+                        Thread.sleep(150)
+                        val newPair = runCatching { openAudioRecord(androidSource) }.getOrNull()
+                        if (newPair != null) {
+                            val (newRecord, newChannels) = newPair
+                            val started = runCatching {
+                                newRecord.startRecording()
+                                newRecord.recordingState == AudioRecord.RECORDSTATE_RECORDING
+                            }.getOrDefault(false)
+                            if (started) {
+                                reconnectedRecord = newRecord
+                                reconnectedChannels = newChannels
+                                break
+                            } else {
+                                runCatching { newRecord.release() }
+                            }
+                        }
+                    }
+
+                    if (reconnectedRecord != null) {
+                        currentRecord = reconnectedRecord
+                        audioRecord = reconnectedRecord
+                        currentCaptureChannels = reconnectedChannels
+                        downmix = currentCaptureChannels == 2
+                        consecutiveErrors = 0
+                        AppLogger.i(TAG, "AudioRecord successfully hot-reconnected after route switch (ch=$reconnectedChannels)")
+                        continue
+                    } else {
+                        AppLogger.e(TAG, "Failed to reconnect AudioRecord after ${maxRetryMs}ms; gracefully finishing capture")
+                        break
+                    }
+                }
+                Thread.sleep(15)
+                continue
+            }
+            consecutiveErrors = 0
 
             // Read the channels BEFORE the downmix averages them away. Guarded: a recording that works
             // is worth more than a label, so a fault here must cost the turns and nothing else.

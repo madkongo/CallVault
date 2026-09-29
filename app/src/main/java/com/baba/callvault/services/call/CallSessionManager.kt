@@ -68,6 +68,9 @@ class CallSessionManager private constructor(context: Context) {
         const val ACTION_DEBUG_IDLE     = "com.baba.callvault.action.DEBUG_IDLE"
         const val ACTION_DEBUG_RINGING  = "com.baba.callvault.action.DEBUG_RINGING"
         const val ACTION_DEBUG_OFFHOOK  = "com.baba.callvault.action.DEBUG_OFFHOOK"
+
+        /** Grace period to hold recording open on IDLE to absorb call waiting and route glitches */
+        private const val IDLE_DEBOUNCE_MS = 2000L
     }
 
     /**
@@ -139,6 +142,8 @@ class CallSessionManager private constructor(context: Context) {
             wasRecordingServiceStartIntentSend = false
             // We clear the temporary cache to prevent any stale data from being used in future sessions
             temporaryCache.clear()
+            idleDebounceJob?.cancel()
+            idleDebounceJob = null
         }
     }
 
@@ -157,6 +162,12 @@ class CallSessionManager private constructor(context: Context) {
      * Holds a reference to a pending decision [Job] that is scheduled to run after the 500ms verification window when we receive a blank/anonymous number.
      */
     private var sessionJob: Job? = null
+
+    /**
+     * Holds a reference to a pending IDLE debounce [Job] that delays stopping recording by 2000ms.
+     */
+    private var idleDebounceJob: Job? = null
+
 
 
     init {
@@ -197,14 +208,41 @@ class CallSessionManager private constructor(context: Context) {
 
         AppLogger.i(TAG, "Received new phone state: $stateString (TelephonyManagerINT:$receivedCallState) | Number: ${phoneNumber}")
 
+        // Cancel any pending IDLE debounce when any non-IDLE state arrives (RINGING or OFFHOOK)
+        if (receivedCallState != TelephonyManager.CALL_STATE_IDLE) {
+            if (idleDebounceJob?.isActive == true) {
+                AppLogger.i(TAG, "Cancelling pending IDLE debounce because active call state resumed: $stateString")
+                idleDebounceJob?.cancel()
+                idleDebounceJob = null
+            }
+        }
+
         // 1. Handle IDLE (Stop, no longer in a call)
         if (receivedCallState == TelephonyManager.CALL_STATE_IDLE) {
             sessionJob?.cancel() // Cancel pending verification window or ongoing session if any
             // Only trigger stop logic if we were previously in an active session. Prevents redundant stop commands on possible repeated IDLE broadcasts.
             if (session.isSessionActive) {
-                AppLogger.d(TAG, "Phone state is now idle (call ended). Sending stop INTENT for ${session.currentMetadata?.direction} call to RecordingForegroundService.")
-                sendServiceCommand(RecordingForegroundService.ACTION_STOP_RECORDING)
-                session.clear()
+                if (idleDebounceJob?.isActive == true) {
+                    AppLogger.d(TAG, "IDLE received while debounce is already active; keeping debounce timer running.")
+                    return
+                }
+                AppLogger.i(TAG, "Phone state reported IDLE. Holding call recording open for ${IDLE_DEBOUNCE_MS}ms grace period before stopping...")
+                idleDebounceJob = managerScope.launch {
+                    delay(IDLE_DEBOUNCE_MS)
+                    val tm = appContext.getSystemService(TelephonyManager::class.java)
+                    val liveCallState = runCatching { tm?.callState }.getOrNull()
+                    if (liveCallState == TelephonyManager.CALL_STATE_OFFHOOK) {
+                        AppLogger.i(TAG, "IDLE debounce elapsed, but TelephonyManager is still OFFHOOK (secondary call ended / call still in progress). Continuing recording!")
+                        return@launch
+                    }
+                    withContext(Dispatchers.Main) {
+                        if (session.isSessionActive) {
+                            AppLogger.d(TAG, "Phone state confirmed idle after ${IDLE_DEBOUNCE_MS}ms grace period. Sending stop INTENT for ${session.currentMetadata?.direction} call to RecordingForegroundService.")
+                            sendServiceCommand(RecordingForegroundService.ACTION_STOP_RECORDING)
+                            session.clear()
+                        }
+                    }
+                }
             }
             return
         }
