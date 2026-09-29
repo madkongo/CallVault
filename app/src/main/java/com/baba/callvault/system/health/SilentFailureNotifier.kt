@@ -96,7 +96,8 @@ object SilentFailureNotifier {
         context,
         id = ID_PAIRING_LOST,
         title = context.getString(R.string.home_status_pairing_lost_title),
-        text = context.getString(R.string.home_status_pairing_lost_suggestion),
+        // Not Home's card text: that one says "tap here", and here a tap opens Home, not the pairing flow.
+        text = context.getString(R.string.notif_readiness_pairing_lost_text),
     )
 
     /** The pairing works again. */
