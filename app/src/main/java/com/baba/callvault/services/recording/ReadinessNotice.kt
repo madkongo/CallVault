@@ -14,6 +14,7 @@ import com.baba.callvault.R
 import com.baba.callvault.data.AppPreferences
 import com.baba.callvault.integrations.adb.AdbShell
 import com.baba.callvault.integrations.adb.LoopbackBorrowPolicy
+import com.baba.callvault.integrations.adb.PairingLoss
 import com.baba.callvault.integrations.adb.UsbDebuggingState
 import com.baba.callvault.integrations.adb.WifiState
 
@@ -51,6 +52,9 @@ enum class ReadinessNotice {
     /** The user switched Wireless debugging off and it is needed; CallVault respects that by default. */
     WD_OFF_BY_USER,
 
+    /** Android forgot CallVault's Wireless-debugging pairing (issue #43); only pairing again fixes it. */
+    PAIRING_LOST,
+
     /** Recovery keeps failing for a reason these switches do not explain. */
     STUCK;
 
@@ -66,6 +70,7 @@ enum class ReadinessNotice {
             wirelessDebuggingOffByUser: Boolean,
             enforced: Boolean,
             offlineRecordingOn: Boolean,
+            pairingLost: Boolean = false,
         ): ReadinessNotice = when {
             // Only a PROVEN "off" pauses off-Wi-Fi recording in the text. On a build that redacts the
             // setting (Android 17), an unreadable state used to read as off and told every off-Wi-Fi
@@ -77,6 +82,9 @@ enum class ReadinessNotice {
             // Only a positive "no Wi-Fi" counts; an unreadable state is not evidence.
             wifi == WifiState.NOT_CONNECTED && usbDebugging.isOff -> NEEDS_WIFI
             wifi == WifiState.NOT_CONNECTED && !loopbackArmed -> NEEDS_WIFI_TO_RESTART
+            // After the Wi-Fi notices (pairing again needs Wi-Fi), before the switches: with the pairing gone
+            // nothing the switches offer can bring the recorder back.
+            pairingLost -> PAIRING_LOST
             usbDebugging.isOff && !wirelessDebuggingOn && !hasGrant -> NO_DEBUGGING
             // Needed only when nothing else can be dialled: USB debugging with an armed listener restarts
             // the recorder without it, and an unarmed listener CallVault may borrow the switch to re-arm
@@ -118,6 +126,7 @@ object ReadinessNoticeText {
             wirelessDebuggingOffByUser = prefs.wasWirelessDebuggingTurnedOffByUser(),
             enforced = prefs.isWirelessDebuggingEnforced(),
             offlineRecordingOn = prefs.isOfflineRecordingEnabled(),
+            pairingLost = PairingLoss.isLost(context),
         )
     }
 
@@ -129,6 +138,7 @@ object ReadinessNoticeText {
         ReadinessNotice.NEEDS_WIFI,
         ReadinessNotice.NEEDS_WIFI_TO_RESTART,
         ReadinessNotice.WD_OFF_BY_USER,
+        ReadinessNotice.PAIRING_LOST,
         ReadinessNotice.STUCK -> R.string.notif_readiness_down_title
     }
 
@@ -141,6 +151,7 @@ object ReadinessNoticeText {
         ReadinessNotice.NO_DEBUGGING -> R.string.notif_readiness_no_debugging_text
         ReadinessNotice.NEEDS_WIFI -> R.string.notif_readiness_needs_wifi_text
         ReadinessNotice.NEEDS_WIFI_TO_RESTART -> R.string.notif_readiness_needs_wifi_restart_text
+        ReadinessNotice.PAIRING_LOST -> R.string.notif_readiness_pairing_lost_text
         ReadinessNotice.STUCK -> R.string.notif_readiness_stuck_text
     }
 }

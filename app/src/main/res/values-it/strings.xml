@@ -687,4 +687,5 @@
     <string name="settings_pair_again_label">Associa di nuovo</string>
     <string name="settings_pair_again_value">Associa CallVault al debug wireless</string>
     <string name="settings_pair_again_hint">Usalo se Android ha dimenticato l\'associazione di CallVault. Registrazioni e impostazioni restano invariate. Attivare la registrazione offline evita che l\'associazione scada.</string>
+    <string name="notif_readiness_pairing_lost_text">Android ha dimenticato l\'associazione di CallVault, quindi le chiamate non possono essere registrate. Apri CallVault e tocca la scheda di stato per associare di nuovo.</string>
 </resources>

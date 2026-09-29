@@ -55,6 +55,7 @@ object SilentFailureNotifier {
     private const val ID_RECORDER_UNAVAILABLE = 4716
     private const val ID_SYNC_STALLED = 4717
     private const val ID_SHIZUKU_STOPPED = 4718
+    private const val ID_PAIRING_LOST = 4719
 
     /**
      * The recorder could not be started. Posted from the boot path, where a failure is invisible.
@@ -83,6 +84,23 @@ object SilentFailureNotifier {
             text = context.getString(text)
         )
     }
+
+    /**
+     * Android forgot CallVault's Wireless-debugging pairing (issue #43).
+     *
+     * Posted once, when [com.baba.callvault.integrations.adb.PairingLoss] first decides the pairing is gone,
+     * because the user may not open the app for days — the reporter found out only when calls stopped
+     * recording. The tap opens Home, whose status card runs the pairing flow.
+     */
+    fun warnPairingLost(context: Context) = post(
+        context,
+        id = ID_PAIRING_LOST,
+        title = context.getString(R.string.home_status_pairing_lost_title),
+        text = context.getString(R.string.home_status_pairing_lost_suggestion),
+    )
+
+    /** The pairing works again. */
+    fun clearPairingLost(context: Context) = clear(context, ID_PAIRING_LOST)
 
     /** The recorder came up. Clears any standing warning. */
     fun clearRecorderUnavailable(context: Context) = clear(context, ID_RECORDER_UNAVAILABLE)

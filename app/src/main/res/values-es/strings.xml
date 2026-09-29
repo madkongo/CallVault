@@ -687,4 +687,5 @@
     <string name="settings_pair_again_label">Emparejar de nuevo</string>
     <string name="settings_pair_again_value">Emparejar CallVault con la depuración inalámbrica</string>
     <string name="settings_pair_again_hint">Úsalo si Android olvidó el emparejamiento de CallVault. Tus grabaciones y ajustes se conservan. Activar la grabación sin conexión evita que el emparejamiento caduque.</string>
+    <string name="notif_readiness_pairing_lost_text">Android olvidó el emparejamiento de CallVault, así que no se pueden grabar llamadas. Abre CallVault y toca la tarjeta de estado para emparejar de nuevo.</string>
 </resources>

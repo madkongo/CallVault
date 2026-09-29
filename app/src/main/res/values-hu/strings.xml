@@ -687,4 +687,5 @@
     <string name="settings_pair_again_label">Újrapárosítás</string>
     <string name="settings_pair_again_value">CallVault párosítása a vezeték nélküli hibakereséssel</string>
     <string name="settings_pair_again_hint">Használd, ha az Android elfelejtette a CallVault párosítását. A felvételek és beállítások megmaradnak. Az offline rögzítés bekapcsolásával a párosítás nem jár le.</string>
+    <string name="notif_readiness_pairing_lost_text">Az Android elfelejtette a CallVault párosítását, ezért a hívások nem rögzíthetők. Nyisd meg a CallVaultot, és koppints az állapotkártyára az újrapárosításhoz.</string>
 </resources>

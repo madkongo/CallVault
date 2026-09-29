@@ -892,4 +892,5 @@
     <string name="settings_pair_again_label">Pair again</string>
     <string name="settings_pair_again_value">Pair CallVault with Wireless debugging</string>
     <string name="settings_pair_again_hint">Use this if Android forgot CallVault\'s pairing. Your recordings and settings stay as they are. Turning on Offline recording keeps the pairing from expiring.</string>
+    <string name="notif_readiness_pairing_lost_text">Android forgot CallVault\'s pairing, so calls can\'t be recorded. Open CallVault and tap the status card to pair again.</string>
 </resources>

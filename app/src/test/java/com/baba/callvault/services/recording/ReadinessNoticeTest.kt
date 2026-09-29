@@ -33,12 +33,13 @@ class ReadinessNoticeTest {
         wdOffByUser: Boolean = false,
         enforced: Boolean = false,
         offlineOn: Boolean = false,
+        pairingLost: Boolean = false,
     ) = ReadinessNotice.of(
         ready, stuck,
         // The tests were written when this was a boolean. `true` is a proven ON and `false` a proven OFF,
         // which is exactly what those cases meant; the unreadable third state gets its own tests below.
         if (usbOn) UsbDebuggingState.ON else UsbDebuggingState.OFF,
-        wdOn, wifi, loopbackArmed, hasGrant, wdOffByUser, enforced, offlineOn,
+        wdOn, wifi, loopbackArmed, hasGrant, wdOffByUser, enforced, offlineOn, pairingLost,
     )
 
     private fun ofUnknownUsb(
@@ -174,5 +175,28 @@ class ReadinessNoticeTest {
     @Test
     fun `an unreadable USB switch does not tell an off-Wi-Fi user their recording is paused`() {
         assertEquals(ReadinessNotice.READY, ofUnknownUsb(ready = true, offlineOn = true))
+    }
+
+    // Issue #43: Android forgot CallVault's pairing. The permanent notification must say so, because the
+    // user may never open the app — "starting up" would promise a restart that cannot happen.
+
+    @Test
+    fun `a lost pairing is named instead of starting up`() {
+        assertEquals(ReadinessNotice.PAIRING_LOST, of(pairingLost = true))
+    }
+
+    @Test
+    fun `a lost pairing outranks the generic stuck notice`() {
+        assertEquals(ReadinessNotice.PAIRING_LOST, of(stuck = true, pairingLost = true))
+    }
+
+    @Test
+    fun `a working recorder is ready even if refusals were counted`() {
+        assertEquals(ReadinessNotice.READY, of(ready = true, pairingLost = true))
+    }
+
+    @Test
+    fun `no Wi-Fi is said first, because pairing again needs Wi-Fi`() {
+        assertEquals(ReadinessNotice.NEEDS_WIFI, of(usbOn = false, wifi = WifiState.NOT_CONNECTED, pairingLost = true))
     }
 }

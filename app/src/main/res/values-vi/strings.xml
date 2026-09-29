@@ -686,4 +686,5 @@
     <string name="settings_pair_again_label">Ghép nối lại</string>
     <string name="settings_pair_again_value">Ghép nối CallVault với gỡ lỗi không dây</string>
     <string name="settings_pair_again_hint">Dùng khi Android quên ghép nối của CallVault. Bản ghi và cài đặt vẫn được giữ nguyên. Bật ghi âm ngoại tuyến giúp ghép nối không hết hạn.</string>
+    <string name="notif_readiness_pairing_lost_text">Android đã quên ghép nối của CallVault nên không thể ghi âm cuộc gọi. Mở CallVault và nhấn vào thẻ trạng thái để ghép nối lại.</string>
 </resources>

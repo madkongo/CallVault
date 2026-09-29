@@ -686,4 +686,5 @@
     <string name="settings_pair_again_label">重新配对</string>
     <string name="settings_pair_again_value">将 CallVault 与无线调试重新配对</string>
     <string name="settings_pair_again_hint">如果 Android 忘记了 CallVault 的配对，请使用此项。你的录音和设置保持不变。开启离线录音可防止配对过期。</string>
+    <string name="notif_readiness_pairing_lost_text">Android 忘记了 CallVault 的配对，因此无法录制通话。打开 CallVault 并点按状态卡片以重新配对。</string>
 </resources>

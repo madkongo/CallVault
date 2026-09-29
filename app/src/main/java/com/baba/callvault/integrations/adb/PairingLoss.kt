@@ -10,6 +10,7 @@ package com.baba.callvault.integrations.adb
 
 import android.content.Context
 import com.baba.callvault.data.AppPreferences
+import com.baba.callvault.system.health.SilentFailureNotifier
 import com.baba.callvault.utils.AppLogger
 
 /**
@@ -50,6 +51,7 @@ object PairingLoss {
         prefs.setPairingRefusals(after)
         if (isLost(after) && !isLost(before)) {
             AppLogger.w(TAG, "Android no longer trusts CallVault's pairing ($after refusals in a row) — the user must pair again")
+            SilentFailureNotifier.warnPairingLost(context)
         } else if (!isLost(after)) {
             AppLogger.w(TAG, "Wireless debugging refused CallVault's pairing ($after of $REFUSALS_BEFORE_LOST before it counts as lost)")
         }
@@ -59,7 +61,10 @@ object PairingLoss {
     fun recordConnected(context: Context) {
         val prefs = AppPreferences(context)
         if (prefs.getPairingRefusals() == 0) return
-        if (isLost(prefs.getPairingRefusals())) AppLogger.i(TAG, "CallVault's pairing works again")
+        if (isLost(prefs.getPairingRefusals())) {
+            AppLogger.i(TAG, "CallVault's pairing works again")
+            SilentFailureNotifier.clearPairingLost(context)
+        }
         prefs.setPairingRefusals(afterConnected())
     }
 
