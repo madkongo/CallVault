@@ -108,3 +108,19 @@ part that matters.
 Marking our capture privacy-sensitive (`AudioRecord.Builder.setPrivacySensitive(true)`) to "win" the
 mic: on a phone where WhatsApp captures with plain `MIC`, AOSP then silences **WhatsApp** for as long as
 we record — the other side would stop hearing the user. Never.
+
+## 🧪 Step 1 evidence — OP9, 2026-09-29 (2.4.4-rc16)
+
+Built the recording-only half first (`ccbc0ebf`): each re-take now logs Android's own answer
+(`activeRecordingConfiguration.isClientSilenced`) and the sync summary counts it. No behaviour change.
+
+One answered WhatsApp call, 49 s, earpiece, normal talk with pauses:
+
+`retake=31/3459ms(silenced=0 quiet=31 unknown=0)`
+
+- **31 re-takes, Android said "not silenced" for every one.** On the OP9 every re-take is a pause, as predicted.
+- **3.46 s of audio thrown away in 49 s (~7 %)**, ~100–120 ms per re-take, in chains every ~0.4 s through
+  each pause (a short unanswered call: 1 re-take, also `silenced=false`).
+- Step 2 (skip the re-take when Android says `false`) is now supported by evidence **for the OP9**. Still
+  missing: a Samsung/One UI log — the phone the re-take was added for (v1.5.5) — to confirm Samsung reports
+  real silencing as `true`. Until then step 2 stays unbuilt, per the maintainer.
