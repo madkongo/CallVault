@@ -115,6 +115,16 @@ object VoipRecordingCoordinator {
             return
         }
 
+        // vivo only: turn its audioserver's verbose logging on BEFORE the call opens, so vivo writes its own
+        // record-silencing decision for THIS call (voip_audio_log reads it at the end). Re-armed every call,
+        // which is the reboot auto-heal — the tag is volatile, so a post-reboot call sets it again; the reply
+        // says whether it had survived. A log tag only; no audio behaviour changes, and nothing runs off vivo.
+        if (android.os.Build.MANUFACTURER.equals("vivo", ignoreCase = true)) {
+            runCatching { service.diagnosticDump("vivo_verbose_arm", null) }
+                .getOrNull()?.trim()?.takeIf { it.isNotEmpty() }
+                ?.let { AppLogger.i(TAG, "vivo verbose logging armed for this call: $it") }
+        }
+
         val codec = runCatching { ScrcpyAudioCodec.fromKey(prefs.getAudioCodec()) }
             .getOrDefault(ScrcpyAudioCodec.OPUS)
         val bitRate = prefs.getAudioBitRate().takeIf { it > 0 } ?: codec.defaultBitRate

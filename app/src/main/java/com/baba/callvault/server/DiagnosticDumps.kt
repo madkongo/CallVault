@@ -41,6 +41,18 @@ object DiagnosticDumps {
     private const val DUMPSYS = "/system/bin/dumpsys"
     private const val PS = "/system/bin/ps"
     private const val SETTINGS = "/system/bin/settings"
+    private const val GETPROP = "/system/bin/getprop"
+    private const val SETPROP = "/system/bin/setprop"
+
+    /**
+     * vivo's audioserver decides whether to zero-fill a remote-submix record during a call, and logs the
+     * decision (`updateRecordCaptureState … allowCapture`, `setRecordSilenced`, `isLiveApp`) only at verbose
+     * level — gated on this property (found via `property_get_bool` in `bin/audioserver`, iQOO A16 dump). Off
+     * by default, so the reporter's earlier logs never carried the decision. The shell may set `log.tag.*`,
+     * and the value is volatile — a reboot clears it, which is the signal we use to tell "survived" from
+     * "was cleared". Turning it on only makes vivo log more; it changes no audio behaviour.
+     */
+    private const val VIVO_VERBOSE_TAG = "log.tag.audio.vivo.verbose"
 
     /** A logcat buffer size and nothing else — digits with an optional unit. */
     private val SIZE = Regex("^[0-9]{1,7}[KMG]?$")
@@ -130,6 +142,15 @@ object DiagnosticDumps {
             "$LOGCAT -d -b main -b system | grep -iE 'submix|remote_support|remote_showstatus|AudioFeature|VivoAudio|" +
                 "isLiveApp|gamecube|AudioPolicyMix|silenc|playback.?capture|allowCapture|updateRecordCaptureState|" +
                 "WhitePkgList|LiveApp|isRemoteSubMixApp|isSpecialCapture' | grep -v 'adbd' | tail -n 150",
+        )
+        // Turns vivo's own audioserver verbose logging on so THIS call's silencing decision is written, and
+        // reports whether it had been on beforehand — empty means a reboot (or first run) cleared it, which is
+        // the auto-heal signal: re-armed at every app-call start, so a post-reboot call sets it again. Sets a
+        // log tag only; on a non-vivo phone it is a harmless unused property. Fixed command; any argument ignored.
+        "vivo_verbose_arm" -> arrayOf(
+            SH, "-c",
+            "was=$($GETPROP $VIVO_VERBOSE_TAG); $SETPROP $VIVO_VERBOSE_TAG true; " +
+                "echo \"$VIVO_VERBOSE_TAG before=[\$was] after=[$($GETPROP $VIVO_VERBOSE_TAG)]\"",
         )
         // vivo's audio switches, read-only — e.g. persist.sys.audio.vapc.record.share_record.enable, which its
         // policy XML ships "off" (iQOO firmware dump, 2026-09-28). Harmless elsewhere: matches nothing.
