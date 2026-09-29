@@ -48,8 +48,10 @@ Still open from before: #42 Android 13 mic fallback (decision pending).
 ## 🔵 Features that match the phone's Android version — agreed 2026-09-29, not started
 
 **Why.** coonrw (Redmi 12 Pro, Android 12) had "Record app calls" switched on and six WhatsApp calls
-went unrecorded without a word: app-call capture needs Android 14 (`AudioMixingRule.Builder.setTargetMixRole`
-is API 34), and the app never said so. He had also turned on Resilient recording, which captured 0 bytes
+went unrecorded without a word: app-call capture needs Android 14 (the shell only gets
+`CAPTURE_VOICE_COMMUNICATION_OUTPUT` from 14; Android 12 fails even earlier on the missing
+`setTargetMixRole`, which is API 33 — corrected 2026-09-29), and the app never said so.
+**The feature → version map is written: `2026-09-29-feature-android-version-map.md`.** He had also turned on Resilient recording, which captured 0 bytes
 on Android 12, a version it was never tested on. The maintainer decided the app should know which
 features a phone can run and say so, instead of letting users switch on things that cannot work.
 
