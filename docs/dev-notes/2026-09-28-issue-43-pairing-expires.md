@@ -3,7 +3,32 @@
 **Status:** 📐 researched 2026-09-28 (AOSP source, our code, other projects). Nothing built.
 Reporter: likefreddy-lab, Galaxy S24, CallVault 2.4.1, built-in mode, VoIP on, Google Drive storage.
 
-## In plain words
+## ⚠️ CORRECTION 2026-09-29 — the first version of this note was wrong; read this first
+
+The maintainer challenged "it is Android, on every phone": his OP12 has never needed a re-pair. He was right to.
+Re-reading AOSP (`AdbDebuggingManager`, android14-release **and** main; `libs/adbd_auth/adbd_auth.cpp`) shows the
+rule is narrower, and one of the proposed cures does not work:
+
+- adbd tells the framework about a connection in two different ways. A **key-authenticated** connection (USB, or
+  `adb tcpip` — which is what CallVault's **Offline recording / loopback** uses) sends `CK` →
+  `MESSAGE_ADB_CONNECTED_KEY` → `setLastConnectionTime()`: **the 7-day clock resets.** A **Wireless-debugging
+  (TLS) connection** sends `WE` → `MSG_WIFI_DEVICE_CONNECTED`, which only marks the device "connected" in the UI
+  and **never touches the clock** (`MESSAGE_ADB_UPDATE_KEYSTORE` also refreshes only `mConnectedKeys`, not
+  `mWifiConnectedKeys`).
+- So on a phone with the default timeout, **a Wireless-debugging pairing is forgotten 7 days after it was paired
+  (or last used over a key-authenticated link), however often it is used over Wi-Fi.** Field reports match:
+  XDA "Android 14 Wireless Debugging Paired Devices keep disappearing".
+- **Who is safe:** phones with "Disable adb authorization timeout" on (`adb_allowed_connection_time=0`, like our
+  OP9), and anyone with CallVault's **Offline recording on** — every loopback connect is key-authenticated and
+  resets the clock (voarch's log shows one on every app start). Offline recording is **off by default**, so a user
+  who skipped it in setup is exposed. 📐 Expected to be why the OP12 never lost it — confirm its Offline recording
+  setting.
+- **Correction to the proposal:** cure 3(a) "a short Wireless-debugging connection every ~3 days" would **not**
+  reset the clock. A refresh has to be key-authenticated — i.e. the loopback (`adb tcpip`) connection, or the
+  timeout switched off.
+- 📐 All of this is from source, not measured. Vendors (Samsung) could differ.
+
+## In plain words (original, 2026-09-28 — point 1 is wrong as written, see the correction above)
 
 1. **It is Android, by design, on every phone — not a Samsung bug.** Android deletes an ADB pairing that has
    not been *used to connect* for 7 days. CallVault connects over ADB only to start its recorder; once the
