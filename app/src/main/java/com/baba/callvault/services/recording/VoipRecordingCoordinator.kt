@@ -496,6 +496,31 @@ object VoipRecordingCoordinator {
         return true
     }
 
+    /**
+     * What the audio stack logged during a call whose far party stayed silent, and the vendor's audio switches
+     * (the vivo investigation, 2.4.4-rc4).
+     *
+     * **Off the main thread, always.** `voip_audio_log` greps the device log in the recorder host and takes
+     * many seconds; run inline from [onCallEnded] — which the call detector calls on the main thread, holding
+     * this object's lock — it froze the app until Android declared it not responding (OP9, 2026-09-29, after
+     * an unanswered WhatsApp call). Diagnostics may be late; the app may never wait for them.
+     */
+    private fun logOneSidedDiagnostics() {
+        Thread {
+            runCatching {
+                RecorderConnection.service?.diagnosticDump("vivo_audio_props", null)
+                    ?.lineSequence()?.map { it.trim() }?.filter { it.isNotEmpty() }?.joinToString(" | ")
+                    ?.let { AppLogger.i(TAG, "App-call vivo_audio_props: $it") }
+            }
+            runCatching {
+                RecorderConnection.service?.diagnosticDump("voip_audio_log", null)
+                    ?.lineSequence()?.map { it.trim() }?.filter { it.isNotEmpty() }?.toList().orEmpty()
+                    .chunked(ROUTING_LINES_PER_LOG_LINE)
+                    .forEachIndexed { i, part -> AppLogger.i(TAG, "App-call voip_audio_log [${i + 1}]: ${part.joinToString(" | ")}") }
+            }.onFailure { AppLogger.d(TAG, "voip_audio_log failed: ${it.message}") }
+        }.apply { isDaemon = true; name = "cv-voip-diagnostics" }.start()
+    }
+
     /** Stops the in-flight VoIP recording, if any. Idempotent. */
     @Synchronized
     fun onCallEnded(context: Context) {
@@ -546,19 +571,7 @@ object VoipRecordingCoordinator {
         if (!wroteAnything) {
             AppLogger.w(TAG, "VoIP capture never started — nothing was recorded (the recorder's reason is logged above)")
         } else if (!farHeard) {
-            // What the audio stack logged during the call — for a far party that stayed silent — and the
-            // vendor's audio switches.
-            runCatching {
-                RecorderConnection.service?.diagnosticDump("vivo_audio_props", null)
-                    ?.lineSequence()?.map { it.trim() }?.filter { it.isNotEmpty() }?.joinToString(" | ")
-                    ?.let { AppLogger.i(TAG, "App-call vivo_audio_props: $it") }
-            }
-            runCatching {
-                RecorderConnection.service?.diagnosticDump("voip_audio_log", null)
-                    ?.lineSequence()?.map { it.trim() }?.filter { it.isNotEmpty() }?.toList().orEmpty()
-                    .chunked(ROUTING_LINES_PER_LOG_LINE)
-                    .forEachIndexed { i, part -> AppLogger.i(TAG, "App-call voip_audio_log [${i + 1}]: ${part.joinToString(" | ")}") }
-            }.onFailure { AppLogger.d(TAG, "voip_audio_log failed: ${it.message}") }
+            logOneSidedDiagnostics()
             AppLogger.w(TAG, "VoIP recording captured only your side — the other app blocks capture")
             runCatching {
                 RecordingNotificationHelper(context)
