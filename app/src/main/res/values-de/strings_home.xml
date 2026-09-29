@@ -114,6 +114,14 @@
     <string name="merge_note_will_keep">Die anderen Anrufe bleiben ebenfalls auf dem Telefon.</string>
     <string name="home_scroll_to_top">Nach oben</string>
     <string name="home_whatsnew_full_notes">Vollständige Versionshinweise</string>
+    <string name="whatsnew_244_title">Zuverlässigeres Aufnehmen, einfaches Neu-Koppeln und Update-Hinweise</string>
+    <string name="whatsnew_244_where">Einstellungen ▸ Zuverlässigkeit ▸ Erneut koppeln</string>
+    <string-array name="whatsnew_244_items">
+        <item>Neu — Schließt dein Handy CallVault während eines Anrufs, wird der bis dahin aufgenommene Teil gespeichert und du wirst informiert</item>
+        <item>Neu — In den Einstellungen erneut koppeln, wenn die Rekorder-Verbindung verloren geht, ohne Neuinstallation</item>
+        <item>Neu — Ein Popup und häufigere Prüfungen melden dir sofort eine neue Version</item>
+        <item>Geändert — Einstellungen, die deine Android-Version nicht unterstützt, sind ausgegraut, mit Begründung</item>
+    </string-array>
     <string name="whatsnew_243_title">App-Anrufe bleiben synchron, Notizen werden beim Tippen gespeichert, nur gewählte Kontakte aufnehmen</string>
     <string name="whatsnew_243_where">Einstellungen ▸ Aufnahme ▸ Eingehende Anrufe ▸ Nur ausgewählte Kontakte aufnehmen</string>
     <string-array name="whatsnew_243_items">

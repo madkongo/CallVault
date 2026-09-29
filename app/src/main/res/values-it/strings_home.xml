@@ -114,6 +114,14 @@
     <string name="merge_note_will_keep">Le altre chiamate restano anche sul telefono.</string>
     <string name="home_scroll_to_top">Su</string>
     <string name="home_whatsnew_full_notes">Note di rilascio complete</string>
+    <string name="whatsnew_244_title">Registrazione più affidabile, riassociazione facile e avvisi di aggiornamento</string>
+    <string name="whatsnew_244_where">Impostazioni ▸ Affidabilità ▸ Riassocia</string>
+    <string-array name="whatsnew_244_items">
+        <item>Nuovo — Se il telefono chiude CallVault durante una chiamata, la parte registrata fino a quel momento viene salvata e te lo diciamo</item>
+        <item>Nuovo — Riassocia dalle Impostazioni se si perde la connessione con il registratore, senza reinstallare</item>
+        <item>Nuovo — Un popup e controlli più frequenti ti avvisano appena è disponibile una nuova versione</item>
+        <item>Modificato — Le impostazioni non supportate dalla versione di Android del telefono sono in grigio, con il motivo</item>
+    </string-array>
     <string name="whatsnew_243_title">Chiamate via app sincronizzate, note salvate mentre scrivi e registra solo chi scegli</string>
     <string name="whatsnew_243_where">Impostazioni ▸ Registrazione ▸ Chiamate in entrata ▸ Registra solo i contatti selezionati</string>
     <string-array name="whatsnew_243_items">

@@ -114,6 +114,14 @@
     <string name="merge_note_will_keep">Las demás llamadas también se conservan en el teléfono.</string>
     <string name="home_scroll_to_top">Arriba</string>
     <string name="home_whatsnew_full_notes">Notas de versión completas</string>
+    <string name="whatsnew_244_title">Grabación más fiable, reemparejamiento fácil y avisos de actualización</string>
+    <string name="whatsnew_244_where">Ajustes ▸ Fiabilidad ▸ Volver a emparejar</string>
+    <string-array name="whatsnew_244_items">
+        <item>Nuevo — Si tu teléfono cierra CallVault durante una llamada, se guarda la parte grabada hasta entonces y se te avisa</item>
+        <item>Nuevo — Vuelve a emparejar desde Ajustes si se pierde la conexión con la grabadora, sin reinstalar</item>
+        <item>Nuevo — Un aviso emergente y comprobaciones más frecuentes te avisan en cuanto hay una versión nueva</item>
+        <item>Cambiado — Los ajustes que tu versión de Android no admite aparecen atenuados, con el motivo</item>
+    </string-array>
     <string name="whatsnew_243_title">Llamadas por app sincronizadas, notas que se guardan al escribir y grabar solo a quien elijas</string>
     <string name="whatsnew_243_where">Ajustes ▸ Grabación ▸ Llamadas entrantes ▸ Grabar solo los contactos seleccionados</string>
     <string-array name="whatsnew_243_items">

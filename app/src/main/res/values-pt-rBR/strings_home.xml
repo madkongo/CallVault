@@ -114,6 +114,14 @@
     <string name="merge_note_will_keep">As outras chamadas também são mantidas no telefone.</string>
     <string name="home_scroll_to_top">Topo</string>
     <string name="home_whatsnew_full_notes">Notas de versão completas</string>
+    <string name="whatsnew_244_title">Gravação mais confiável, reemparelhamento fácil e avisos de atualização</string>
+    <string name="whatsnew_244_where">Configurações ▸ Confiabilidade ▸ Emparelhar de novo</string>
+    <string-array name="whatsnew_244_items">
+        <item>Novo — Se o telefone fechar o CallVault durante uma chamada, a parte gravada até ali é salva e você é avisado</item>
+        <item>Novo — Emparelhe de novo nas Configurações se a conexão com o gravador cair, sem reinstalar</item>
+        <item>Novo — Um pop-up e verificações mais frequentes avisam assim que há uma nova versão</item>
+        <item>Alterado — Configurações que a versão do Android não suporta ficam esmaecidas, com o motivo</item>
+    </string-array>
     <string name="whatsnew_243_title">Chamadas por app sincronizadas, notas salvas enquanto você digita e grave só quem você escolher</string>
     <string name="whatsnew_243_where">Configurações ▸ Gravação ▸ Chamadas recebidas ▸ Gravar somente os contatos selecionados</string>
     <string-array name="whatsnew_243_items">

@@ -115,6 +115,14 @@
     <string name="merge_note_will_keep">Les autres appels sont également conservés sur le téléphone.</string>
     <string name="home_scroll_to_top">Haut</string>
     <string name="home_whatsnew_full_notes">Notes de version complètes</string>
+    <string name="whatsnew_244_title">Enregistrement plus fiable, réassociation facile et alertes de mise à jour</string>
+    <string name="whatsnew_244_where">Réglages ▸ Fiabilité ▸ Réassocier</string>
+    <string-array name="whatsnew_244_items">
+        <item>Nouveau — Si votre téléphone ferme CallVault pendant un appel, la partie déjà enregistrée est sauvegardée et vous êtes prévenu</item>
+        <item>Nouveau — Réassociez depuis les Réglages si la connexion à l\'enregistreur est perdue, sans réinstaller</item>
+        <item>Nouveau — Une fenêtre et des vérifications plus fréquentes vous préviennent dès qu\'une nouvelle version est disponible</item>
+        <item>Modifié — Les réglages que votre version d\'Android ne prend pas en charge sont grisés, avec la raison</item>
+    </string-array>
     <string name="whatsnew_243_title">Appels d\'applis synchronisés, notes enregistrées pendant la saisie, et n\'enregistrer que qui vous voulez</string>
     <string name="whatsnew_243_where">Paramètres ▸ Enregistrement ▸ Appels entrants ▸ N\'enregistrer que les contacts sélectionnés</string>
     <string-array name="whatsnew_243_items">

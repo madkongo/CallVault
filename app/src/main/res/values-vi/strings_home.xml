@@ -114,6 +114,14 @@
     <string name="merge_note_will_keep">Các cuộc gọi kia cũng được giữ lại trên máy.</string>
     <string name="home_scroll_to_top">Lên đầu</string>
     <string name="home_whatsnew_full_notes">Ghi chú phát hành đầy đủ</string>
+    <string name="whatsnew_244_title">Ghi âm đáng tin cậy hơn, ghép nối lại dễ dàng và thông báo cập nhật</string>
+    <string name="whatsnew_244_where">Cài đặt ▸ Độ tin cậy ▸ Ghép nối lại</string>
+    <string-array name="whatsnew_244_items">
+        <item>Mới — Nếu điện thoại đóng CallVault giữa cuộc gọi, phần đã ghi trước đó được lưu và bạn được báo</item>
+        <item>Mới — Ghép nối lại từ Cài đặt nếu mất kết nối với trình ghi âm, không cần cài lại</item>
+        <item>Mới — Cửa sổ bật lên và kiểm tra thường xuyên hơn báo ngay khi có phiên bản mới</item>
+        <item>Đã thay đổi — Các cài đặt mà phiên bản Android không hỗ trợ bị làm mờ, kèm lý do</item>
+    </string-array>
     <string name="whatsnew_243_title">Cuộc gọi qua ứng dụng luôn khớp, ghi chú lưu khi gõ, và chỉ ghi âm người bạn chọn</string>
     <string name="whatsnew_243_where">Cài đặt ▸ Ghi âm ▸ Cuộc gọi đến ▸ Chỉ ghi âm các liên hệ đã chọn</string>
     <string-array name="whatsnew_243_items">

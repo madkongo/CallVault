@@ -114,6 +114,14 @@
     <string name="merge_note_will_keep">A többi hívás is a telefonon marad.</string>
     <string name="home_scroll_to_top">Az elejére</string>
     <string name="home_whatsnew_full_notes">Teljes kiadási jegyzék</string>
+    <string name="whatsnew_244_title">Megbízhatóbb rögzítés, egyszerű újrapárosítás és frissítési értesítések</string>
+    <string name="whatsnew_244_where">Beállítások ▸ Megbízhatóság ▸ Újrapárosítás</string>
+    <string-array name="whatsnew_244_items">
+        <item>Új — Ha a telefon hívás közben bezárja a CallVaultot, az addig rögzített rész elmentődik, és értesítést kapsz</item>
+        <item>Új — Párosíts újra a Beállításokból, ha megszakad a kapcsolat a rögzítővel, újratelepítés nélkül</item>
+        <item>Új — Egy felugró ablak és gyakoribb ellenőrzés azonnal jelzi, ha új verzió érhető el</item>
+        <item>Módosítva — A telefon Android-verziója által nem támogatott beállítások kiszürkítve jelennek meg, az indoklással</item>
+    </string-array>
     <string name="whatsnew_243_title">Szinkronban maradó alkalmazáshívások, gépelés közben mentett jegyzetek, és csak a kiválasztottak rögzítése</string>
     <string name="whatsnew_243_where">Beállítások ▸ Felvétel ▸ Bejövő hívások ▸ Csak a kiválasztott névjegyek rögzítése</string>
     <string-array name="whatsnew_243_items">

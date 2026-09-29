@@ -3,6 +3,52 @@
 All notable changes to CallVault are documented here. The format is based on
 [Keep a Changelog](https://keepachangelog.com/), and this project uses semantic-ish versioning.
 
+## [2.4.4] — 2026-09-29
+
+### Added
+
+- **A cut-off call is saved.** If your phone closes CallVault in the middle of a call (some phones do this
+  to save battery), the part that was recorded before it closed is now kept, published to your recordings,
+  and a notification tells you the call was cut short — instead of the call simply vanishing.
+  <!-- 🧪 VERIFYING 2026-09-29: verified on the OP9 (force-stop mid-call, Opus recording plays up to the cut,
+  card + notification shown). AAC/m4a cut-off files not yet tested; a very old build's leftover has no
+  recovery note and saves under a generic name. -->
+- **Pair again without reinstalling.** If Android forgets CallVault's Wireless-debugging pairing (it deletes
+  one that has gone unused for about a week), CallVault now notices, tells you, and offers **Pair again** on
+  the Home card and in Settings ▸ Reliability — so you no longer have to reinstall to recover. Turning on
+  Offline recording keeps the pairing from expiring.
+  <!-- 🧪 VERIFYING 2026-09-29: verified on the OP9 (forget pairing → card + notification → pair again →
+  recorder back, card clears itself). -->
+- **You are told sooner when an update is out.** A popup when you open the app (once per version) and a
+  notification, alongside the existing dashboard banner; the background check now runs every 6 hours and the
+  check-on-open is no longer gated for hours. Truly instant push is not possible (there is no server; the
+  app polls GitHub).
+  <!-- 🧪 VERIFYING 2026-09-29: logic unit-tested; the on-screen popup needs a release newer than the
+  installed build to appear, so it is first seen by users updating past 2.4.4. -->
+
+### Changed
+
+- **Settings your phone's Android version cannot use are greyed out**, with the reason ("Needs Android 14 or
+  newer"), instead of appearing to work and silently doing nothing. Recording app (VoIP) calls needs
+  Android 14; Resilient recording needs Android 13. If one was already on, it is switched off once and a
+  notification says which and why. Phones on Android 14 and newer are unaffected.
+  <!-- 🧪 VERIFYING 2026-09-29: version rules unit-tested both sides; not yet seen on an Android 12/13 device. -->
+
+### Fixed
+
+- **vivo/iQOO app calls: the crash that stopped recording is fixed, and a freeze after a one-sided call is
+  gone.** On vivo phones your own voice in app calls, and normal phone calls, now record. **The other
+  person's voice in app calls still cannot be recorded on vivo/iQOO** — the phone's own audio system blocks
+  it below anything an app can reach; see SUPPORT.md. CallVault now says so plainly after such a call rather
+  than leaving a silent recording.
+  <!-- 🧪 VERIFYING 2026-09-29: crash/own-voice confirmed by the reporter; far-side impossibility established
+  by firmware analysis + four research passes (dev-note 2026-09-28-two-private-reports.md). -->
+- No misleading "an update removed a permission — turn Wireless debugging on" message on phones whose
+  maker blocks that permission and where recording is working anyway; it now points to the correct
+  device setting instead.
+  <!-- 🧪 VERIFYING 2026-09-29: verified on the OP9 (no card while the recorder relaunches over Offline
+  recording without the grant). -->
+
 ## [2.4.3] — 2026-09-28
 
 There was no 2.4.2 release: 2.4.2 existed only as the test builds `v2.4.2-rc1` and `v2.4.2-rc2`. The next

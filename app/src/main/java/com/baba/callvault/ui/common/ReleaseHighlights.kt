@@ -47,6 +47,13 @@ object ReleaseHighlights {
 
     private val ALL = listOf(
         ReleaseHighlight(
+            version = "2.4.4",
+            title = R.string.whatsnew_244_title,
+            items = R.array.whatsnew_244_items,
+            // "Pair again" is the one thing here someone would go looking for; it lives in Settings.
+            whereToFind = R.string.whatsnew_244_where,
+        ),
+        ReleaseHighlight(
             version = "2.4.3",
             title = R.string.whatsnew_243_title,
             items = R.array.whatsnew_243_items,

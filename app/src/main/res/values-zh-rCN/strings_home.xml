@@ -114,6 +114,14 @@
     <string name="merge_note_will_keep">其余通话也会保留在手机上。</string>
     <string name="home_scroll_to_top">回到顶部</string>
     <string name="home_whatsnew_full_notes">完整发行说明</string>
+    <string name="whatsnew_244_title">录音更可靠、轻松重新配对，以及更新提醒</string>
+    <string name="whatsnew_244_where">设置 ▸ 可靠性 ▸ 重新配对</string>
+    <string-array name="whatsnew_244_items">
+        <item>新增 — 如果手机在通话中关闭 CallVault，此前录下的部分会被保存并通知你</item>
+        <item>新增 — 若与录音器的连接断开，可在设置中重新配对，无需重装</item>
+        <item>新增 — 弹窗和更频繁的检查会在有新版本时立即提醒你</item>
+        <item>变更 — 手机 Android 版本不支持的设置会变灰并说明原因</item>
+    </string-array>
     <string name="whatsnew_243_title">应用通话保持同步，笔记边输入边保存，仅录制您选择的人</string>
     <string name="whatsnew_243_where">设置 ▸ 录音 ▸ 来电 ▸ 仅录制选定的联系人</string>
     <string-array name="whatsnew_243_items">

@@ -114,6 +114,14 @@
     <string name="merge_note_will_keep">Pozostałe rozmowy zostaną też zachowane w telefonie.</string>
     <string name="home_scroll_to_top">Do góry</string>
     <string name="home_whatsnew_full_notes">Pełne informacje o wydaniu</string>
+    <string name="whatsnew_244_title">Pewniejsze nagrywanie, łatwe ponowne parowanie i powiadomienia o aktualizacjach</string>
+    <string name="whatsnew_244_where">Ustawienia ▸ Niezawodność ▸ Sparuj ponownie</string>
+    <string-array name="whatsnew_244_items">
+        <item>Nowość — Jeśli telefon zamknie CallVault w trakcie połączenia, nagrana do tego momentu część zostaje zapisana, a Ty dostajesz informację</item>
+        <item>Nowość — Sparuj ponownie z Ustawień, gdy połączenie z rejestratorem zostanie utracone, bez ponownej instalacji</item>
+        <item>Nowość — Wyskakujące okno i częstsze sprawdzanie informują, gdy tylko pojawi się nowa wersja</item>
+        <item>Zmieniono — Ustawienia nieobsługiwane przez wersję Androida są wyszarzone, z podaniem powodu</item>
+    </string-array>
     <string name="whatsnew_243_title">Zsynchronizowane rozmowy w aplikacjach, notatki zapisywane podczas pisania i nagrywanie tylko wybranych</string>
     <string name="whatsnew_243_where">Ustawienia ▸ Nagrywanie ▸ Połączenia przychodzące ▸ Nagrywaj tylko wybrane kontakty</string>
     <string-array name="whatsnew_243_items">
