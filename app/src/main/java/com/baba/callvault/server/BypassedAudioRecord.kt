@@ -54,8 +54,6 @@ internal object BypassedAudioRecord {
      * @param capturePreset the `MediaRecorder.AudioSource` preset the attributes carry.
      * @param tags          attribute tags, e.g. the mix address; [SUBMIX_FIXED_VOLUME] is handled like AOSP does.
      * @param channelMask   an IN channel mask.
-     * @param packageName   the package to attribute the capture to; null keeps what the public constructor would
-     *   use (`uid:<uid>`). Only the app-call far-party sink passes one — see [VoipAudioPolicy].
      */
     fun create(
         capturePreset: Int,
@@ -65,7 +63,6 @@ internal object BypassedAudioRecord {
         channelCount: Int,
         encoding: Int,
         bufferSizeInBytes: Int,
-        packageName: String? = null,
     ): AudioRecord {
         val cls = AudioRecord::class.java
         val record = cls.getDeclaredConstructor(Long::class.javaPrimitiveType).apply { isAccessible = true }
@@ -95,7 +92,7 @@ internal object BypassedAudioRecord {
         val rates = intArrayOf(sampleRate)
         val session = intArrayOf(android.media.AudioManager.AUDIO_SESSION_ID_GENERATE)
         val nativeBuffer = field("mNativeBufferSizeInBytes").getInt(record)
-        val result = nativeSetup(record, attributes, rates, channelMask, record.audioFormat, nativeBuffer, session, packageName)
+        val result = nativeSetup(record, attributes, rates, channelMask, record.audioFormat, nativeBuffer, session)
         check(result == AudioRecord.SUCCESS) { "native_setup returned $result" }
 
         field("mSampleRate").setInt(record, rates[0])
@@ -109,7 +106,7 @@ internal object BypassedAudioRecord {
 
     private fun nativeSetup(
         record: AudioRecord, attributes: AudioAttributes, rates: IntArray, channelMask: Int,
-        format: Int, bufferBytes: Int, session: IntArray, packageName: String?,
+        format: Int, bufferBytes: Int, session: IntArray,
     ): Int {
         val cls = AudioRecord::class.java
         val i = Int::class.javaPrimitiveType
@@ -124,16 +121,6 @@ internal object BypassedAudioRecord {
                 .invoke(record, WeakReference(record), attributes, rates, channelMask, 0, format, bufferBytes, session, opPackage, 0L) as Int
         }
         var source = AttributionSource.myAttributionSource()
-        if (packageName != null) {
-            // An explicit package — "com.android.shell", the identity scrcpy records with on vivo — for the one
-            // capture whose silence suggests vivo feeds audio only to packages it recognises. Same uid (2000,
-            // which owns com.android.shell), same pid and token; only the package differs.
-            // If this cannot be done, keep the identity the public constructor would use rather than fail the capture.
-            source = runCatching {
-                AttributionSource::class.java.getMethod("withPackageName", String::class.java)
-                    .invoke(source, packageName) as AttributionSource
-            }.getOrElse { source }
-        }
         if (source.packageName == null) {
             // What the public constructor does for a command-line caller (Android 13 and later).
             source = runCatching {
