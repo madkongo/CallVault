@@ -194,3 +194,28 @@ maintainer: `AudioSystem.setParameters("LiveAppList=…")` — it would change a
 vivo's own decision lines (`allowCapture` / `setRecordSilenced` / `LiveApp` …) pulled at the end of a one-sided
 app call; vivo audio properties; the lists the audioserver consults read with `AudioSystem.getParameters`
 (`LiveAppList`, `RemoteProtectList`, `RemoteSubmixSupp`, `APPShare`); per-record `isClientSilenced` + routed device.
+
+## vivo on 2.4.4-rc4 — the diagnostics answered (report 2026-09-29 19:18)
+
+📐 Read from the reporter's log; nothing new built. 8 Telegram calls, all one-sided (`farPartyHeard=false`); no
+phone call in this log.
+
+- **Our far record is NOT silenced as far as Android's policy knows:** `silenced=false`, routed to device 25
+  (REMOTE_SUBMIX) at our own mix address, every call. So vivo does not mark the record silenced through the
+  policy manager. That fits a native zero-fill in audioserver/AudioFlinger below the policy (the firmware
+  finding) but does not prove it: none of the strings we grep for (`allowCapture`, `setRecordSilenced`,
+  `updateRecordCaptureState`) appear at this log level.
+- **vivo's lists, read with `AudioSystem.getParameters`:** `LiveAppList` = only Chinese live-streaming apps
+  (com.duowan.kiwi, com.duowan.live, com.kuaishou.nebula, com.kwai.livepartner, com.smile.gifmaker,
+  com.ss.android.ugc.aweme(.lite), com.ss.android.ugc.livepro); `RemoteProtectList` empty; `RemoteSubmixSupp=true`;
+  `APPShare` empty.
+- **New:** vivo's framework inside each app calls `AudioSystem.setParameters("PlaybackCaptureProtectSupport=<pkg>")`
+  whenever that app starts playing (pid = Telegram's own; also Messenger `com.facebook.orca`). Public GitHub logs
+  show the same line for Instagram and ordinary apps, so it is a per-playback registration of the player's package,
+  not a list of protected apps. No documentation exists (web + GitHub, 2026-09-29).
+- **rc4's end-of-call dumps block the main thread ~5 s per one-sided call** in his log too (19:18:15.78 →
+  19:18:20.78) — the freeze fixed in rc16 (`e598175a`). He must not stay on rc4.
+
+**Conclusion (unchanged, better supported):** vivo zero-fills the far side below anything an app controls; the only
+lever found is adding a package to `LiveAppList` via `AudioSystem.setParameters`, which changes a vivo system
+audio setting and is the maintainer's decision. His own voice and phone calls are what 2.4.4 can deliver on vivo.
