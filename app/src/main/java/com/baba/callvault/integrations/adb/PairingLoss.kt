@@ -29,7 +29,7 @@ import com.baba.callvault.utils.AppLogger
  * onboarding. This only drives a Home card and a log line; recordings and settings are never touched.
  */
 object PairingLoss {
-    private const val TAG = "PairingLoss"
+    private const val TAG = "CV:PairingLoss"
 
     /** Refusals in a row, with no success between them, before the pairing counts as gone. */
     const val REFUSALS_BEFORE_LOST = 3
