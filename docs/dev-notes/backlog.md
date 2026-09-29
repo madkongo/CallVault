@@ -22,6 +22,29 @@ with `&&`/`||` chains and silently reported the opposite answer while this was b
 
 ---
 
+## 🔵 Next release (2.4.4) — parked list, gathered 2026-09-29, nothing built
+
+All 📐 from field logs and source reading; each needs a build and a real phone before anything is claimed.
+The maintainer picks the order.
+
+| # | Item | From | Where the detail is |
+|---|---|---|---|
+| 1 | **Features match the phone's Android version**: detect the version at setup and in Settings, build a feature→version table, grey out what can't work | coonrw (Redmi, A12) | section below |
+| 2 | **Detect a lost ADB pairing + "Pair again"**: stop the endless retry on `AdbPairingRequiredException`, clear `adb_paired`, Home card with a Pair-again button, plus a permanent Pair-again row in Settings | issue #43 (reporter's own suggestion, maintainer agreed) | `2026-09-28-issue-43-pairing-expires.md` (read its correction first) |
+| 3 | **Stop the pairing expiring**: recommend Offline recording (its loopback connects reset Android's 7-day clock), or switch the timeout off with consent. A Wi-Fi reconnect does **not** reset it | issue #43 | same dev-note |
+| 4 | **Recover a recording cut off by the app being killed**: at start-up, finish/publish a leftover `rec_stage_*.tmp` and tell the user the call was cut short | voarch (OnePlus lost a 13-min call) | memory `field-reports-2026-09-29` |
+| 5 | **Say when a call was lost** to the app being killed, instead of silence | voarch | same |
+| 6 | **Fix the misleading "update removed a permission — turn Wireless debugging on" card**: don't show it when the phone blocks shell grants or loopback already works; point to the OEM switch instead | voarch | same |
+| 7 | **Resilient recording falls back to normal recording** when it captures nothing in the first seconds | coonrw (A12, 0 bytes); meti.sh (Xiaomi) | memory `field-reports-2026-09-29`, `private-reports-2026-09-28` |
+| 8 | **No phantom 1-second app-call file at hang-up** (Samsung switched to IN_COMMUNICATION before the carrier IDLE arrived) | benjamin (Samsung, A17) | memory `field-reports-2026-09-29` |
+| 9 | **VoIP mic re-take**: gate re-takes on `isClientSilenced` instead of 15 zero chunks (clipped word starts) | issue #41 follow-up | `2026-09-23-voip-near-side-zeros.md` |
+| 10 | **vivo, before 2.4.4 final**: drop the rc3 sink-identity change, merge `fix/vivo-all-audiorecords` (rc1 crash fix + rc4 diagnostics); what to do about vivo's allow-list is the maintainer's call | scrunscotty | `2026-09-28-two-private-reports.md` |
+
+Waiting on users, not on us: benjamin (Wi-Fi-calling vs Android 17 test calls), scrunscotty (rc4 log).
+Still open from before: #42 Android 13 mic fallback (decision pending).
+
+---
+
 ## 🔵 Features that match the phone's Android version — agreed 2026-09-29, not started
 
 **Why.** coonrw (Redmi 12 Pro, Android 12) had "Record app calls" switched on and six WhatsApp calls
