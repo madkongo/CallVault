@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  ~ CallVault: FOSS call recording, self-contained over embedded ADB
+  ~  Copyright (C) 2026-present The CallVault Authors
+  ~  This software is licensed under the GNU General Public License v3 or later, with additional terms as permitted under Section 7.
+  ~  The full license text is available in the LICENSE file at the root of this project.
+  ~  This software is distributed WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+  -->
+<resources>
+
+    <string name="disclaimer_ui_hero_subtitle">ضبط تماس متن‌باز، مطابق خواست شما. لطفاً پیش از ادامه، سلب مسئولیت را مطالعه کنید.</string>
+    <string name="disclaimer_ui_body_header">سلب مسئولیت</string>
+    <string name="disclaimer_ui_scroll_hint">برای فعال شدن کادر تأیید، تا انتها پایین بروید.</string>
+
+    <string name="permissions_ui_eyebrow">راه‌اندازی</string>
+    <string name="permissions_ui_hero_title">بیایید شروع کنیم</string>
+    <string name="permissions_ui_hero_subtitle">چند مجوز لازم است تا CallVault بتواند تماس‌های شما را ضبط و برچسب‌گذاری کند. هر مورد زیر را تأیید کنید.</string>
+    <string name="permissions_ui_section_label">مجوزها</string>
+    <string name="permission_adb_hint">روی «مجاز کردن» ضربه بزنید و سپس کد مرتبط‌سازی را از اعلان وارد کنید.</string>
+    <string name="permission_adb_desc_short">برای راه‌اندازی ضبط‌کننده لازم است. به Wi-Fi نیاز دارد.</string>
+    <string name="permissions_status_adb_not_connected">متصل نیست</string>
+    <string name="permissions_status_adb_connected">متصل</string>
+
+    <string name="permission_devmode_on">گزینه‌های توسعه‌دهنده: روشن</string>
+    <string name="permission_devmode_off">گزینه‌های توسعه‌دهنده خاموش است</string>
+    <string name="permission_devmode_open_wd">باز کردن اشکال‌زدایی بی‌سیم</string>
+    <string name="permission_devmode_enable_hint">برای فعال‌سازی: تنظیمات ← دربارهٔ تلفن ← ۷ بار روی شمارهٔ ساخت ضربه بزنید.</string>
+    <string name="permission_devmode_open_device_info">باز کردن اطلاعات دستگاه</string>
+
+    <string name="permission_wd_on">اشکال‌زدایی بی‌سیم: روشن</string>
+    <string name="permission_wd_off">اشکال‌زدایی بی‌سیم خاموش است</string>
+    <string name="permission_wd_enable_hint">برای روشن کردن: گزینه‌های توسعه‌دهنده ← اشکال‌زدایی بی‌سیم.</string>
+    <string name="permission_adb_hint_wd_on">روی «مجاز کردن» ضربه بزنید و سپس کد مرتبط‌سازی را از صفحهٔ اشکال‌زدایی بی‌سیم وارد کنید.</string>
+
+    <string name="permission_adb_open_device_info">باز کردن اطلاعات دستگاه</string>
+    <string name="permission_adb_open_wd">باز کردن اشکال‌زدایی بی‌سیم</string>
+
+    <string name="permission_adb_pair">مرتبط‌سازی</string>
+</resources>

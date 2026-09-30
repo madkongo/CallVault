@@ -1,0 +1,795 @@
+<!--
+  ~ CallVault: FOSS call recording, self-contained over embedded ADB
+  ~  Copyright (C) 2026-present The CallVault Authors
+  ~  This software is licensed under the GNU General Public License v3 or later, with additional terms as permitted under Section 7.
+  ~  The full license text is available in the LICENSE file at the root of this project.
+  ~  This software is distributed WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+  -->
+
+<resources>
+    <!-- ========================================== -->
+    <!-- GENERAL MESSAGES & APP LEVEL               -->
+    <!-- ========================================== -->
+    <string name="general_close">بستن</string>
+    <string name="voicemail_contact_label">پست صوتی</string>
+    <string name="general_recommended">توصیه‌شده</string>
+    <string name="general_continue">ادامه</string>
+    <string name="general_ok">تأیید</string>
+    <string name="general_cancel">لغو</string>
+    <string name="general_settings">تنظیمات</string>
+    <string name="general_licenses">مجوزها</string>
+    <string name="general_copied_to_clipboard">در کلیپ‌بورد کپی شد</string>
+    <string name="general_record">ضبط</string>
+    <string name="general_pause">مکث</string>
+    <string name="general_resume">ادامه</string>
+    <string name="general_incoming">ورودی</string>
+    <string name="general_outgoing">خروجی</string>
+    <string name="general_reset">بازنشانی</string>
+    <string name="general_system_limitation">محدودیت سیستم</string>
+    <string name="general_system_limitation_message">CallVault روی این دستگاه کار نمی‌کند چون برنامه شل شما مجوزهای لازم را ندارد:\n\n%1$s\n\nکاری از دست شما برنمی‌آید؛ برنامه نمی‌تواند کار کند و اکنون بسته می‌شود.</string>
+
+    <!-- ========================================== -->
+    <!-- UI SECTIONS                                -->
+    <!-- ========================================== -->
+
+    <!-- Disclaimer Screen -->
+    <string name="disclaimer_title">به CallVault خوش آمدید</string>
+    <string name="disclaimer_introduction">لطفاً پیش از ادامه، سلب مسئولیت زیر را با دقت بخوانید.</string>
+    <string name="disclaimer_checkbox_label">سلب مسئولیت را خواندم و الزامات قانونی، مسئولیت‌ها و محدودیت‌های فنی این نرم‌افزار را درک می‌کنم.</string>
+    <string name="disclaimer_must_read">باید سلب مسئولیت را بخوانید.</string>
+
+    <!-- Permissions Screen -->
+    <string name="permissions_title">راه‌اندازی مجوزها</string>
+    <string name="permissions_intro">برای شروع ضبط به چند مجوز نیاز داریم. روی «اعطای دسترسی» بزنید و هر مورد را تأیید کنید.</string>
+    <string name="permissions_grant_access">اعطای دسترسی</string>
+    <string name="permissions_status_granted">اعطا شد</string>
+    <string name="permissions_status_required">لازم</string>
+
+    <string name="permission_notifications_label">اعلان‌ها</string>
+    <string name="permission_notifications_description">برای وضعیت ضبط و هشدارهای خطا استفاده می‌شود.</string>
+
+    <string name="permission_contacts_label">مخاطبین</string>
+    <string name="permission_contacts_description">برای فیلتر کردن مخاطبین شناخته‌شده در قوانین نادیده‌گرفتن استفاده می‌شود.</string>
+
+    <string name="permission_phone_state_label">وضعیت تلفن</string>
+    <string name="permission_phone_state_description">برای تشخیص شروع یا پایان تماس لازم است.</string>
+
+    <string name="permission_call_log_label">گزارش تماس</string>
+    <string name="permission_call_log_description">لازم است تا در رویدادهای وضعیت تلفن، شماره تلفن بدون سانسور را دریافت کنیم.</string>
+
+    <string name="permission_usb_debugging_label">اشکال‌زدایی USB</string>
+    <string name="permission_usb_debugging_description">توصیه می‌شود. ضبط را هنگام دور بودن از Wi-Fi فعال نگه می‌دارد و به CallVault اجازه می‌دهد پس از راه‌اندازی، اشکال‌زدایی بی‌سیم را خاموش کند. نیازی به کابل نیست.</string>
+    <string name="permission_battery_label">بهینه‌سازی باتری</string>
+    <string name="permission_battery_description">برنامه را در مواقع لازم زنده نگه می‌دارد و اجازه می‌دهد محدودیت‌های احتمالی اجرای پس‌زمینه دور زده شود. در برخی گوشی‌ها (مثلاً OnePlus/OxygenOS) حالت باتری این برنامه را نیز روی \"اجازه فعالیت در پس‌زمینه\" بگذارید.</string>
+    <string name="permission_battery_oem_hint">معافیت باتری تنظیم شد. اکنون در همین صفحه اطلاعات برنامه، روی \"باتری\" بزنید، سپس \"اجازه فعالیت در پس‌زمینه\" (بدون محدودیت) را انتخاب کنید — این برای زنده ماندن ضبط در پس‌زمینه روی OnePlus/OxygenOS لازم است.</string>
+
+    <!-- Same label as settings_recording_folder_label -->
+    <string name="permission_storage_description">انتخاب کنید فایل‌های ضبط‌شده کجا ذخیره شوند.</string>
+
+    <string name="permission_adb_description">برای راه‌اندازی و شروع ضبط‌کننده لازم است و فقط روی Wi-Fi کار می‌کند. یک‌بار از طریق اعلان مرتبط‌سازی کنید، سپس به‌صورت خودکار متصل می‌شود.</string>
+    <string name="permission_adb_not_connected">متصل نیست — برای راه‌اندازی بزنید</string>
+    <string name="permission_adb_setup">اجازه دادن</string>
+
+    <!-- Settings Screen: Section Titles -->
+    <string name="settings_section_about">درباره</string>
+    <string name="settings_section_recording">ضبط</string>
+    <string name="settings_section_storage">فضای ذخیره‌سازی</string>
+    <string name="settings_section_retention">نگه‌داری</string>
+
+    <!-- Retention (auto-delete old recordings) -->
+    <string name="retention_keep_forever">نگه‌داری همیشگی</string>
+    <string name="retention_daily">روزانه (۱ روز)</string>
+    <string name="retention_weekly">هفتگی (۷ روز)</string>
+    <string name="retention_biweekly">دوهفته‌ای (۱۴ روز)</string>
+    <string name="retention_monthly">ماهانه (۳۰ روز)</string>
+    <string name="retention_linked_label">دوره یکسان برای دستگاه و Drive</string>
+    <string name="retention_period_label">حذف خودکار فایل‌های ضبط‌شده</string>
+    <string name="retention_local_label">فایل‌های ضبط‌شده دستگاه</string>
+    <string name="retention_drive_label">فایل‌های ضبط‌شده Drive</string>
+    <string name="retention_description">فایل‌های ضبط‌شده قدیمی‌تر از دوره انتخاب‌شده برای همیشه حذف می‌شوند. روزی یک‌بار در زمان زیر بررسی می‌شود.</string>
+    <string name="retention_time_label">اجرا در (زمان محلی شما)</string>
+    <string name="retention_confirm_title">حذف خودکار فعال شود؟</string>
+    <string name="retention_confirm_message">فایل‌های ضبط‌شده قدیمی‌تر از دوره انتخاب‌شده برای همیشه از دستگاه و/یا Google Drive شما حذف می‌شوند. این کار قابل بازگشت نیست.</string>
+    <string name="retention_confirm_enable">فعال کردن</string>
+    <string name="settings_section_recording_storage">ضبط و فضای ذخیره‌سازی</string>
+    <string name="permissions_shizuku_offer_title">Shizuku روی این گوشی در حال اجراست</string>
+    <string name="permissions_shizuku_offer_body">CallVault می‌تواند از آن استفاده کند و مرتبط‌سازی را کاملاً کنار بگذارد. یا CallVault را به‌تنهایی راه‌اندازی کنید تا به هیچ چیز دیگری در حال اجرا نیاز نداشته باشد.</string>
+    <string name="permissions_shizuku_needs_permission">برای تکمیل، به CallVault در Shizuku اجازه دهید. تا آن زمان چیزی ضبط نمی‌شود.</string>
+    <string name="permissions_shizuku_active">در حال استفاده از Shizuku. چیزی برای مرتبط‌سازی نیست — راه‌اندازی انجام شد.</string>
+    <string name="permissions_shizuku_use">استفاده از Shizuku</string>
+    <string name="permissions_shizuku_use_callvault">استفاده از CallVault</string>
+    <string name="permissions_shizuku_offer_title_stopped">Shizuku در حال اجرا نیست</string>
+    <string name="permissions_shizuku_offer_stopped">آن را از برنامه Shizuku اجرا کنید و برگردید تا CallVault بتواند به‌جای مرتبط‌سازی از آن استفاده کند. یا CallVault را به‌تنهایی راه‌اندازی کنید — به هیچ چیز دیگری در حال اجرا نیاز ندارد.</string>
+    <string name="home_hero_pill_shizuku">Shizuku متوقف شد</string>
+    <string name="home_status_shizuku_title">Shizuku آماده نیست</string>
+    <string name="home_status_shizuku_suggestion">Shizuku را باز کنید و اجرایش کنید. هر بار که گوشی راه‌اندازی مجدد شود متوقف می‌شود و تا زمانی که در حال اجرا نباشد CallVault نمی‌تواند ضبط کند.</string>
+    <string name="home_health_missed_shizuku">%1$s ضبط نشد — Shizuku در حال اجرا نبود</string>
+    <string name="home_health_missed_shizuku_unnamed">یک تماس ضبط نشد — Shizuku در حال اجرا نبود</string>
+    <string name="settings_unavailable_in_shizuku">در حالت Shizuku در دسترس نیست — این به ضبط‌کننده اختصاصی CallVault نیاز دارد.</string>
+    <string name="mode_switch_to_shizuku">در حال تغییر به Shizuku…</string>
+    <string name="mode_switch_to_standalone">در حال تغییر به CallVault…</string>
+    <string name="mode_switch_working">در حال متوقف کردن ضبط‌کننده قبلی و اجرای ضبط‌کننده جدید. این چند ثانیه طول می‌کشد.</string>
+    <string name="mode_switch_done_title">آماده ضبط</string>
+    <string name="mode_switch_problem_title">هنوز آماده نیست</string>
+    <string name="mode_switch_done_shizuku">آماده — با استفاده از Shizuku</string>
+    <string name="mode_switch_done_standalone">آماده — با استفاده از CallVault</string>
+    <string name="mode_switch_ready_shizuku">CallVault از طریق Shizuku ضبط می‌کند. تماس‌های VoIP و ضبط تاب‌آور در این حالت در دسترس نیستند.</string>
+    <string name="mode_switch_ready_standalone">CallVault با ضبط‌کننده اختصاصی خودش ضبط می‌کند. همه‌چیز در دسترس است، از جمله تماس‌های VoIP و نام گویندگان.</string>
+    <string name="mode_switch_ready">ضبط‌کننده در حال اجراست. تماس‌ها ضبط خواهند شد.</string>
+    <string name="mode_switch_shizuku_not_installed">Shizuku نصب نیست، پس چیزی برای تغییر به آن وجود ندارد.</string>
+    <string name="mode_switch_shizuku_not_running">Shizuku در حال اجرا نیست. Shizuku را باز کنید و اجرایش کنید، سپس دوباره تلاش کنید — هر بار که گوشی راه‌اندازی مجدد شود متوقف می‌شود.</string>
+    <string name="mode_switch_shizuku_not_permitted">Shizuku هنوز به CallVault اجازه استفاده نداده است. Shizuku را باز کنید و اجازه دهید، سپس دوباره تلاش کنید.</string>
+    <string name="mode_switch_voip_not_armed">تغییر انجام شد، اما ضبط تماس درون‌برنامه‌ای آماده نشد. تماس‌های تلفنی ضبط می‌شوند؛ تماس‌های درون‌برنامه‌ای شاید تا زمانی که CallVault را دوباره باز نکنید ضبط نشوند.</string>
+    <string name="mode_switch_recorder_failed">ضبط‌کننده اجرا نشد. تا زمانی که اجرا نشود چیزی ضبط نخواهد شد.</string>
+    <string name="home_hero_pill_with_mode">%1$s · %2$s</string>
+    <string name="home_mode_badge_standalone">CallVault</string>
+    <string name="home_mode_badge_shizuku">Shizuku</string>
+    <string name="settings_subsection_privileges">چگونه CallVault مجوز می‌گیرد</string>
+    <string name="settings_shizuku_mode">حالت Shizuku</string>
+    <string name="settings_shizuku_not_installed">Shizuku نصب نیست. CallVault به آن نیازی ندارد — این فقط برای کسانی است که همین حالا از آن استفاده می‌کنند.</string>
+    <string name="settings_shizuku_not_running">Shizuku نصب است اما در حال اجرا نیست. باید پس از هر بار راه‌اندازی مجدد گوشی دوباره اجرا شود.</string>
+    <string name="settings_shizuku_no_permission">Shizuku در حال اجراست، اما هنوز به CallVault اجازه استفاده نداده است.</string>
+    <string name="settings_shizuku_ready">Shizuku در حال اجرا و آماده است. با روشن بودن این، CallVault به مرتبط‌سازی اختصاصی خودش نیاز ندارد.</string>
+    <string name="settings_shizuku_grant">اجازه دادن به CallVault در Shizuku</string>
+    <string name="settings_shizuku_grant_description">Shizuku را باز می‌کند تا بتوانید اجازه دهید. تا آن زمان چیزی ضبط نمی‌شود.</string>
+    <string name="settings_section_general">عمومی</string>
+    <string name="settings_section_visual">تنظیمات ظاهری</string>
+    <string name="settings_section_audio">پیکربندی صدا</string>
+    <string name="settings_section_reliability">قابلیت اطمینان</string>
+    <string name="settings_section_experimental">آزمایشی</string>
+    <string name="settings_subsection_incoming">تماس‌های ورودی</string>
+    <string name="settings_subsection_outgoing">تماس‌های خروجی</string>
+    <string name="settings_subsection_resilience">تاب‌آوری</string>
+    <string name="settings_subsection_voip">تماس‌های VoIP</string>
+    <string name="settings_voip_recording_label">ضبط تماس‌های VoIP</string>
+    <string name="settings_voip_recording_description">تماس‌های انجام‌شده در برنامه‌هایی مانند WhatsApp، Signal و Telegram را نیز ضبط می‌کند. آزمایشی — برخی برنامه‌ها ضبط را مسدود می‌کنند و این تا زمانی که تماس در جریان باشد قابل تشخیص نیست.</string>
+    <string name="settings_voip_auto_start_label">شروع خودکار</string>
+    <string name="settings_voip_auto_start_description">خاموش یعنی CallVault ابتدا می‌پرسد: هنگام شروع یک تماس درون‌برنامه‌ای، اعلانی با دکمه ضبط ظاهر می‌شود.</string>
+    <string name="voip_prompt_title">تماس درون‌برنامه‌ای در جریان است</string>
+    <string name="voip_prompt_text">برای ضبط این تماس، روی ضبط بزنید.</string>
+    <string name="voip_prompt_text_named">تماس %1$s. برای ضبط آن، روی ضبط بزنید.</string>
+    <string name="voip_recording_warning_title">تماس‌های VoIP ضبط شوند؟</string>
+    <string name="voip_recording_warning_message">ضبط تماس‌های درون‌برنامه‌ای سخت‌گیرانه‌تر از ضبط تماس‌های تلفنی تنظیم شده است و در بسیاری از جاها همه شرکت‌کنندگان باید ابتدا موافقت کنند. لطفاً مطمئن شوید که مجاز به این کار هستید.\n\nاین قابلیت آزمایشی است: با برخی برنامه‌ها کار می‌کند و با برخی نه، و یک برنامه می‌تواند در هر به‌روزرسانی‌ای ضبط را مسدود کند.</string>
+    <string name="voip_recording_warning_continue">متوجه شدم، روشنش کن</string>
+    <string name="voip_recording_arming">در حال آماده‌سازی ضبط VoIP…</string>
+    <string name="notif_voip_recording_title">در حال ضبط تماس VoIP</string>
+    <string name="notif_voip_recording_text">CallVault در حال ضبط یک تماس درون‌برنامه‌ای است.</string>
+    <string name="voip_missed_not_ready">یک تماس درون‌برنامه‌ای ضبط نشد — CallVault به‌موقع آماده نبود. این ممکن است برای مدت کوتاهی پس از پایان یک تماس تلفنی رخ دهد. تماس بعدی باید به‌طور عادی ضبط شود.</string>
+    <string name="voip_missed_no_folder">یک تماس درون‌برنامه‌ای ضبط نشد — پوشه فایل‌های ضبط‌شده وجود ندارد یا قابل نوشتن نیست. آن را دوباره در تنظیمات انتخاب کنید.</string>
+    <string name="voip_missed_label">تماس درون‌برنامه‌ای</string>
+    <string name="voip_one_sided_warning">فقط صدای شما از آن تماس درون‌برنامه‌ای ضبط شد — برنامه دیگر اجازه نمی‌دهد صدای تماسش گرفته شود.</string>
+    <string name="voip_one_sided_warning_vivo">فقط صدای شما از آن تماس درون‌برنامه‌ای ضبط شد. در vivo، برنامه ضبط صدا ← ضبط تماس درون‌برنامه‌ای را باز کنید و آن را (به همراه شروع خودکار ضبط) روشن کنید تا صدای طرف مقابل هم ضبط شود.</string>
+    <string name="voip_recording_unavailable">در این دستگاه قابل فعال‌سازی نبود — ضبط VoIP اینجا در دسترس نیست.</string>
+    <string name="voip_recording_names_hint">نام مخاطبین از اعلان تماس خودِ برنامه تماس‌گیرنده می‌آید. اگر اعلان‌های آن برنامه خاموش باشند، فایل‌های ضبط‌شده‌اش بدون نام ذخیره می‌شوند.</string>
+    <string name="settings_usb_debugging_label">اشکال‌زدایی USB</string>
+    <string name="settings_usb_debugging_description">توصیه می‌شود. ضبط را هنگامی که از Wi-Fi خارج می‌شوید فعال نگه می‌دارد و به CallVault اجازه می‌دهد اشکال‌زدایی بی‌سیم را خاموش کند. نیازی به کابل نیست.</string>
+    <string name="settings_usb_debugging_recommended">بدون این، ضبط فقط روی Wi-Fi کار می‌کند و اشکال‌زدایی بی‌سیم باید روشن بماند.</string>
+    <string name="settings_usb_debugging_on_hint">CallVault می‌تواند اشکال‌زدایی بی‌سیم را خاموش نگه دارد. اگر این را خاموش کنید، ضبط برای چند ثانیه متوقف می‌شود تا CallVault آن را روی Wi-Fi دوباره راه‌اندازی کند — و دور از Wi-Fi نمی‌تواند دوباره راه‌اندازی کند.</string>
+    <string name="settings_usb_debugging_shizuku_hint">هنگام استفاده از Shizuku، اشکال‌زدایی USB را روشن بگذارید. سرویس Shizuku از طریق سرویس اشکال‌زدایی Android اجرا می‌شود و با آن متوقف می‌شود — CallVault در حالت Shizuku به این کلید نیازی ندارد.</string>
+    <string name="settings_usb_debugging_failed">نشد تغییرش داد — CallVault به مجوزی که هنگام راه‌اندازی می‌گیرد نیاز دارد.</string>
+    <string name="notif_info_channel">اطلاعیه‌های CallVault</string>
+    <string name="notif_wd_required">چون اشکال‌زدایی USB خاموش است، اشکال‌زدایی بی‌سیم باید روشن بماند. اشکال‌زدایی USB را در تنظیمات ▸ آزمایشی روشن کنید تا CallVault دوباره اشکال‌زدایی بی‌سیم را خاموش کند.</string>
+    <string name="settings_section_debug">اشکال‌زدایی</string>
+    <string name="settings_section_security">امنیت</string>
+    <string name="settings_section_recorder_server">سرویس ضبط‌کننده</string>
+
+    <!-- Settings Screen: Recorder Service Section -->
+    <string name="settings_persistent_server">سرور ضبط‌کننده پایدار</string>
+    <string name="settings_persistent_server_description">تماس‌ها را از طریق یک سرویس ممتاز پس‌زمینه ضبط می‌کند تا اشکال‌زدایی بی‌سیم بتواند بین تماس‌ها خاموش بماند. آزمایشی.</string>
+    <string name="settings_wd_disable_when_idle">خاموش کردن اشکال‌زدایی بی‌سیم در زمان بی‌کاری</string>
+    <string name="settings_wd_disable_when_idle_description">پس از اتصال سرویس ضبط‌کننده، اشکال‌زدایی بی‌سیم را غیرفعال می‌کند؛ فقط در صورت نیاز به‌طور کوتاه دوباره فعال می‌شود.</string>
+
+    <!-- Settings Screen: Storage Section -->
+    <string name="settings_storage_section">فضای ذخیره‌سازی</string>
+    <string name="settings_storage_target_label">محل ذخیره فایل‌های ضبط‌شده</string>
+    <string name="storage_target_local">فقط روی این دستگاه</string>
+    <string name="storage_target_drive">فقط Google Drive</string>
+    <string name="storage_target_both">دستگاه + Google Drive</string>
+    <string name="settings_drive_folder_label">پوشه Google Drive</string>
+    <string name="settings_drive_folder_desc">پوشه‌ای (در برنامه Google Drive) برای کپی فایل‌های ضبط‌شده انتخاب کنید.</string>
+    <string name="general_not_set">تنظیم‌نشده</string>
+
+    <!-- Settings Screen: Security Section -->
+
+    <!-- Settings Screen: Recording Section -->
+    <string name="settings_tap_to_select_folder">برای انتخاب پوشه بزنید...</string>
+    <string name="settings_recording_folder_label">پوشه ضبط</string>
+    <string name="folder_cloud_rejected">پوشه‌های ابری (مانند Google Drive) را نمی‌توان برای ضبط استفاده کرد. فضای ذخیره‌سازی روی دستگاه را انتخاب کنید — برای کپی‌های ابری از گزینه پشتیبان‌گیری Google Drive استفاده کنید.</string>
+    <string name="folder_cloud_warning">⚠ این پوشه ضبط در فضای ابری است، که برای ضبط قابل اعتماد نیست. یک پوشه روی دستگاه انتخاب کنید.</string>
+
+    <!-- Offline recording (loopback) opt-in + security warning -->
+    <string name="settings_offline_recording_label">ضبط آفلاین (بدون Wi-Fi)</string>
+    <string name="settings_offline_recording_desc">تماس‌ها را حتی وقتی هیچ شبکه Wi-Fi وجود ندارد ضبط می‌کند. به روشن بودن اشکال‌زدایی USB نیاز دارد.</string>
+    <string name="settings_handoff_persist_label">ضبط تاب‌آور</string>
+    <string name="settings_handoff_persist_description">ضبط را حتی اگر دستیار پس‌زمینه در میانه تماس از کار بیفتد (مثلاً وقتی صفحه را قفل می‌کنید) ادامه می‌دهد. آزمایشی.</string>
+    <string name="settings_usb_default_label">USB هنگام باز شدن قفل صفحه</string>
+    <string name="settings_usb_default_hint">\"فقط شارژ\" ضبط را در صورت قفل کردن صفحه در حین تماس زنده نگه می‌دارد. حالت‌های دیگر اجازه انتقال داده از USB را می‌دهند اما می‌توانند هنگام قفل کردن گوشی، ضبط را قطع کنند.</string>
+    <string name="settings_usb_default_applying">در حال اعمال…</string>
+    <string name="settings_usb_default_shizuku_hint">هنگام استفاده از Shizuku این را دست نزنید. تغییر آن سرویس اشکال‌زدایی Android را دوباره راه‌اندازی می‌کند و Shizuku با آن متوقف می‌شود — باید پیش از آنکه تماس بعدی ضبط شود، Shizuku را دوباره اجرا کنید.</string>
+    <string name="settings_usb_default_busy">تغییر نکرد: ضبطی در جریان است. تغییر این، سرویس اشکال‌زدایی Android را دوباره راه‌اندازی می‌کند که ضبط را پایان می‌دهد.</string>
+    <string name="usb_mode_charging">فقط شارژ (بدون داده)</string>
+    <string name="usb_mode_debugging_only">فقط اشکال‌زدایی</string>
+    <string name="usb_mode_file_transfer">انتقال فایل</string>
+    <string name="usb_mode_ptp">PTP</string>
+    <string name="usb_mode_tethering">اشتراک اینترنت با USB</string>
+    <string name="usb_mode_midi">MIDI</string>
+    <string name="offline_recording_warning_title">ضبط آفلاین فعال شود؟</string>
+    <string name="offline_recording_warning_message">این کار یک درگاه اشکال‌زدایی محلی روی گوشی شما باز می‌کند تا تماس‌ها بدون Wi-Fi ضبط شوند. با کلید دستگاه شما محافظت می‌شود، اما یک بده‌بستان امنیتی کوچک است. فقط در صورتی آن را فعال کنید که نیاز دارید تماس‌ها را بدون Wi-Fi ضبط کنید.</string>
+    <string name="offline_recording_warning_shizuku">Shizuku در حال اجراست. روشن کردن این، سرویس اشکال‌زدایی Android را دوباره راه‌اندازی می‌کند که Shizuku را متوقف می‌کند — CallVault بلافاصله پس از آن دوباره اجرایش می‌کند و اگر نتواند به شما اطلاع می‌دهد.</string>
+    <string name="offline_recording_warning_continue">به‌هرحال ادامه بده</string>
+
+    <string name="settings_file_name_template">الگوی نام فایل</string>
+    <string name="settings_file_name_template_preset">پیش‌تنظیم</string>
+    <string name="settings_file_name_preset_date_direction_number">تاریخ · جهت · شماره</string>
+    <string name="settings_file_name_preset_date_number">تاریخ · شماره</string>
+    <string name="settings_file_name_preset_date_contact">تاریخ · مخاطب</string>
+    <string name="settings_file_name_preset_date_direction_contact">تاریخ · جهت · مخاطب</string>
+    <string name="settings_file_name_preset_custom">سفارشی</string>
+    <string name="settings_file_name_template_placeholders">جانگهدارها:</string>
+    <string name="settings_file_name_template_placeholders_preview">پیش‌نمایش: %1$s</string>
+    <string name="settings_file_name_template_example">مثال: %1$s</string>
+    <string name="placeholder_date_desc">تاریخ و زمان کنونی</string>
+    <string name="placeholder_direction_desc">جهت تماس (ورودی/خروجی)</string>
+    <string name="placeholder_phone_number_desc">شماره تلفن</string>
+    <string name="placeholder_contact_name_desc">نام مخاطب، در صورت وجود</string>
+    <string name="placeholder_cross_country_desc">نشان می‌دهد تماس بین‌کشوری است یا نه (درست/نادرست)</string>
+
+    <string name="settings_subsection_phone_calls">تماس‌های تلفنی</string>
+    <string name="settings_carrier_recording">ضبط تماس‌های تلفنی</string>
+    <string name="settings_carrier_recording_description">خاموش: تماس‌های تلفنی کاملاً نادیده گرفته می‌شوند — نه ضبطی، نه اعلانی. تماس‌های درون‌برنامه‌ای تحت تأثیر قرار نمی‌گیرند.</string>
+    <string name="settings_auto_record_incoming">ضبط خودکار تماس‌های ورودی</string>
+    <string name="settings_auto_record_outgoing">ضبط خودکار تماس‌های خروجی</string>
+    <string name="settings_record_from_answer">شروع هنگام پاسخ دادن آن‌ها</string>
+    <string name="settings_record_from_answer_description">تماس‌های تلفنی خروجی از لحظه‌ای که طرف مقابل جواب می‌دهد ضبط می‌شوند، نه از زمان شماره‌گیری. تماس‌های درون‌برنامه‌ای هم، وقتی برنامه یک زمان‌شمار تماس در اعلانش نشان دهد (WhatsApp نشان می‌دهد).</string>
+    <string name="settings_ignore_anonymous_incoming">نادیده گرفتن تماس‌های ورودی ناشناس</string>
+    <string name="settings_ignore_cross_country_incoming">نادیده گرفتن تماس‌های ورودی بین‌کشوری</string>
+    <string name="settings_ignore_cross_country_outgoing">نادیده گرفتن تماس‌های خروجی بین‌کشوری</string>
+    <string name="settings_ignore_contacts_incoming">کدام مخاطبین ضبط شوند (ورودی)</string>
+    <string name="settings_ignore_contacts_outgoing">کدام مخاطبین ضبط شوند (خروجی)</string>
+    <string name="settings_ignore_contacts_none">ضبط همه مخاطبین</string>
+    <string name="settings_ignore_contacts_all">نادیده گرفتن همه مخاطبین</string>
+    <string name="settings_ignore_contacts_selected">نادیده گرفتن مخاطبین انتخاب‌شده</string>
+    <string name="settings_select_contacts">انتخاب مخاطبین (%1$d)</string>
+    <string name="settings_select_contacts_incoming">انتخاب مخاطبین ورودی</string>
+    <string name="settings_select_contacts_outgoing">انتخاب مخاطبین خروجی</string>
+    <string name="settings_record_only_selected_contacts">فقط ضبط مخاطبین انتخاب‌شده</string>
+    <string name="settings_record_only_selected_hint">فقط مخاطبینی که انتخاب می‌کنید به‌صورت خودکار ضبط می‌شوند. تماس‌های دیگر، از جمله شماره‌های پنهان، به‌جای آن دکمه ضبط را نشان می‌دهند.</string>
+    <string name="settings_select_record_only_incoming">مخاطبین برای ضبط (ورودی)</string>
+    <string name="settings_select_record_only_outgoing">مخاطبین برای ضبط (خروجی)</string>
+
+    <!-- Settings Screen: Visual Section -->
+    <string name="settings_language">زبان</string>
+    <string name="settings_language_system">پیش‌فرض سیستم</string>
+    <string name="settings_theme_mode">حالت پوسته</string>
+    <string name="settings_dynamic_color">رنگ پوسته پویا</string>
+    <string name="settings_show_toasts">نمایش اعلان‌های Toast</string>
+    <string name="settings_vibration_enabled">لرزش هنگام شروع/توقف</string>
+
+    <string name="settings_theme_mode_system">پیش‌فرض سیستم</string>
+    <string name="settings_theme_mode_light">روشن</string>
+    <string name="settings_theme_mode_dark">تیره</string>
+
+    <!-- Settings Screen: Audio Section -->
+    <string name="settings_audio_codec">کدک صدا</string>
+    <string name="settings_audio_bitrate_recommendation">اگر با مشکل مواجه شدید، AAC را امتحان کنید؛ به‌طور گسترده توسط سازندگان پشتیبانی می‌شود.</string>
+
+    <string name="settings_audio_bitrate">نرخ بیت صدا</string>
+
+    <string name="settings_audio_source">منبع صدا</string>
+    <string name="audio_source_voice_comm_description">منبع صدای میکروفون تنظیم‌شده برای ارتباطات صوتی. با حذف اکوی داخلی.</string>
+
+    <string name="audio_source_mic_description">صدا را مستقیماً از میکروفون اصلی دستگاه می‌گیرد. کاهش نویز جزئی.</string>
+
+    <string name="audio_source_voice_call_description">هر دو طرف یک تماس تلفنی را ضبط می‌کند. صدای خام، همراه با بوق‌های تلفن.</string>
+
+    <string name="audio_source_playback_description">صدا را از برنامه‌های دیگر می‌گیرد، به‌جز آن‌هایی که ضبط را محدود می‌کنند (پرچم‌های انصراف برنامه را رعایت می‌کند).</string>
+
+    <string name="audio_source_output_description">صدای نهایی و ترکیب‌شده را دقیقاً همان‌گونه که به بلندگوهای شما فرستاده می‌شود می‌گیرد.</string>
+
+    <string name="audio_source_mic_unprocessed_description">صدای خام و طبیعی میکروفون را بدون هیچ فیلتر یا بهبود خودکاری می‌گیرد.</string>
+
+    <string name="audio_source_mic_camcorder_description">تنظیم‌شده برای ضبط ویدیو، با تمرکز بر صدای جهت دوربین.</string>
+
+    <string name="audio_source_mic_voice_recognition_description">میکروفون با پردازش تنظیم‌شده برای تشخیص گفتار (نویز کاهش‌یافته).</string>
+
+    <string name="audio_source_voice_call_uplink_description">فقط صدای شما را از یک تماس تلفنی (اپ‌لینک) ضبط می‌کند.</string>
+
+    <string name="audio_source_voice_call_downlink_description">فقط صدای طرف مقابل را از یک تماس تلفنی (داون‌لینک) ضبط می‌کند.</string>
+
+    <string name="audio_source_voice_performance_description">حالت میکروفون پرسرعت طراحی‌شده برای موسیقی زنده و برنامه‌های صوتی بلادرنگ.</string>
+
+    <!-- Settings Screen: Debug section (always visible) -->
+    <string name="settings_debug_logging_enabled">فعال کردن ضبط گزارش</string>
+    <string name="settings_debug_logging_enabled_description">برای گزارش یک اشکال، این را فعال کنید، مشکل را بازتولید کنید، سپس خاموشش کنید و گزارش‌ها را به اشتراک بگذارید.</string>
+    <string name="settings_bugreport_active_warning">ضبط گزارش اشکال‌زدایی روشن است. یادتان باشد وقتی کارتان تمام شد برای صرفه‌جویی در فضا آن را خاموش کنید.</string>
+    <string name="settings_bugreport_share_hint">گزارش‌های آخرین جلسه اشکال‌زدایی شما آماده اشتراک‌گذاری است.</string>
+    <string name="settings_bugreport_share">اشتراک‌گذاری</string>
+    <string name="settings_bugreport_preparing">در حال آماده‌سازی گزارش اشکال‌زدایی…</string>
+    <string name="settings_bugreport_share_empty">هنوز گزارشی نیست. ضبط اشکال‌زدایی را فعال کنید، مشکل را بازتولید کنید، سپس روی اشتراک‌گذاری بزنید.</string>
+    <string name="settings_bugreport_share_chooser">اشتراک‌گذاری گزارش‌های اشکال‌زدایی</string>
+
+    <!-- Persistent reminder that debug logging is enabled -->
+    <string name="debug_notification_channel_name">ضبط گزارش اشکال‌زدایی</string>
+    <string name="debug_notification_title">ضبط گزارش اشکال‌زدایی روشن است</string>
+    <string name="debug_notification_text">برای باز کردن CallVault و خاموش کردنش پس از پایان کار، بزنید.</string>
+
+    <!-- Settings Screen: About/Server Section -->
+    <string name="settings_copy_version">کپی نسخه</string>
+    <string name="settings_view_licenses">مشاهده مجوزها</string>
+    <string name="settings_support_label">حمایت از توسعه</string>
+    <string name="settings_support_value">در Ko-fi برایم یک قهوه بخر</string>
+    <string name="settings_support_supporting">Ko-fi را در مرورگر شما باز می‌کند</string>
+
+    <!-- ContactSelection Dialog -->
+    <string name="contact_search_hint">جستجو بر اساس نام یا شماره...</string>
+    <string name="contact_select_all">انتخاب همه</string>
+    <string name="contact_unselect_all">لغو انتخاب همه</string>
+
+    <!-- ========================================== -->
+    <!-- SERVICES & BACKGROUND                      -->
+    <!-- ========================================== -->
+
+    <!-- Recording Service: Notifications -->
+    <string name="recording_standby_notification_title">تماس در جریان است</string>
+    <string name="recording_notification_cross_country_tip">🌐بین‌کشوری</string>
+    <string name="recording_notification_current_country_tip">🏠داخل‌کشوری</string>
+    <string name="recording_notification_title">ضبط در جریان است</string>
+    <string name="recording_notification_press_to_start">برای شروع ضبط فشار دهید</string>
+    <string name="recording_notification_waiting">در حال آماده‌سازی برای ضبط…</string>
+    <string name="recording_notification_press_to_pause">برای مکث ضبط فشار دهید</string>
+    <string name="recording_notification_press_to_resume">برای ادامه ضبط فشار دهید</string>
+    <string name="recording_toast_standby">ورود به حالت آماده‌باش برای تماس %1$s.</string>
+    <string name="recording_toast_ended">تماس پایان یافت. ضبط متوقف شد.</string>
+    <string name="recording_toast_paused">ضبط مکث شد.</string>
+    <string name="recording_toast_resumed">ضبط از سر گرفته شد.</string>
+    <string name="recording_started">ضبط شروع شد.</string>
+    <!-- Recording Service: Errors -->
+    <string name="recording_error_title">خطای ضبط</string>
+    <string name="recording_error_folder_missing">پوشه خروجی انتخاب‌شده وجود ندارد، نامعتبر است، یا اجازه نوشتن در آن را نداریم. یکی را در تنظیمات برنامه انتخاب کنید.</string>
+    <string name="recording_error_server_missing">فایل باینری scrcpy-server وجود ندارد یا بررسی امنیتی SHA256 ناموفق بود. این نباید رخ دهد، لطفاً آن را گزارش کنید.</string>
+    <string name="recording_error_file_creation">ایجاد فایل ضبط ناموفق بود. لطفاً مجوزهای فضای ذخیره‌سازی را بررسی کنید و/یا یک پوشه ضبط جدید در تنظیمات برنامه انتخاب کنید.</string>
+    <string name="recording_error_start_failed">شروع ضبط ناموفق بود. هنگام فراخوانی متد بایندر ShellService خطایی رخ داد.</string>
+    <string name="recording_error_empty_file_shizuku">ضبط خالی است — هیچ صدایی گرفته نشد. Shizuku را باز کنید و بررسی کنید که هنوز در حال اجراست؛ هر بار که گوشی راه‌اندازی مجدد شود متوقف می‌شود.</string>
+    <string name="recording_error_empty_file">ضبط خالی است — هیچ صدایی گرفته نشد چون دیمن ضبط‌کننده در حال اجرا نبود. بررسی کنید که گزینه‌های توسعه‌دهنده و اشکال‌زدایی بی‌سیم فعال باشند.</string>
+    <string name="recording_error_daemon_died">دیمن ضبط‌کننده متوقف شد — این تماس ضبط نمی‌شود. بررسی کنید که گزینه‌های توسعه‌دهنده و اشکال‌زدایی بی‌سیم فعال باشند.</string>
+    <string name="recording_error_capture_never_started">ضبط شروع نشد — یک قالب صدای دیگر را در تنظیمات امتحان کنید</string>
+    <string name="recording_error_drive_copy_failed">یک فایل ضبط‌شده نتوانست در پوشه ابری شما کپی شود. هنوز روی این دستگاه ذخیره است — پوشه را در تنظیمات بررسی کنید.</string>
+    <string name="recording_unexpected_error">خطای غیرمنتظره‌ای در حین ضبط رخ داد. لطفاً آن را همراه با مراحل بازتولید و گزارش‌های برنامه گزارش کنید.</string>
+
+    <!-- Setup Wizard -->
+    <string name="wizard_title">راه‌اندازی CallVault</string>
+    <string name="wizard_step_of">مرحله %1$d از %2$d</string>
+    <string name="wizard_back">بازگشت</string>
+    <string name="wizard_next">بعدی</string>
+    <string name="wizard_finish">پایان</string>
+    <string name="wizard_choose_folder">انتخاب پوشه</string>
+    <!-- Wizard: Storage step -->
+    <string name="wizard_storage_title">محل ذخیره فایل‌های ضبط‌شده</string>
+    <string name="wizard_storage_subtitle">انتخاب کنید فایل‌های ضبط‌شده شما کجا ذخیره شوند. می‌توانید این را بعداً در تنظیمات تغییر دهید.</string>
+    <string name="wizard_storage_drive_note">با Google Drive، نسخه روی این دستگاه موقتی است و پس از بارگذاری حذف می‌شود.</string>
+    <!-- Wizard: Schedule step -->
+    <string name="wizard_schedule_title">زمان بارگذاری در Drive</string>
+    <string name="wizard_schedule_subtitle">انتخاب کنید فایل‌های ضبط‌شده هر چند وقت یک‌بار در پوشه Google Drive شما بارگذاری شوند.</string>
+    <string name="wizard_schedule_mode_label">زمان‌بندی بارگذاری</string>
+    <string name="wizard_schedule_immediate">بی‌درنگ</string>
+    <string name="wizard_schedule_daily">روزانه</string>
+    <string name="wizard_schedule_weekly">هفتگی</string>
+    <string name="wizard_schedule_immediate_note">هر تماس به‌محض پایان به‌طور خودکار بارگذاری می‌شود.</string>
+    <string name="wizard_schedule_day_label">روز هفته</string>
+    <string name="wizard_schedule_hour_label">ساعت</string>
+    <string name="wizard_schedule_minute_label">دقیقه</string>
+    <string name="wizard_day_sunday">یکشنبه</string>
+    <string name="wizard_day_monday">دوشنبه</string>
+    <string name="wizard_day_tuesday">سه‌شنبه</string>
+    <string name="wizard_day_wednesday">چهارشنبه</string>
+    <string name="wizard_day_thursday">پنجشنبه</string>
+    <string name="wizard_day_friday">جمعه</string>
+    <string name="wizard_day_saturday">شنبه</string>
+    <!-- Wizard: Auto-record step -->
+    <string name="wizard_auto_record_title">ضبط خودکار</string>
+    <string name="wizard_auto_record_subtitle">انتخاب کنید کدام تماس‌ها به‌طور خودکار ضبط شوند. می‌توانید این را بعداً در تنظیمات دقیق‌تر تنظیم کنید.</string>
+    <string name="wizard_auto_record_nothing_warning">با خاموش بودن هر دوی تماس‌های تلفنی و درون‌برنامه‌ای، CallVault چیزی ضبط نمی‌کند. مگر اینکه همین را بخواهید، دست‌کم یکی را روشن کنید.</string>
+    <!-- Wizard: Audio step -->
+    <string name="wizard_experimental_title">افزودنی‌های اختیاری</string>
+    <string name="wizard_experimental_subtitle">قابلیتی که هنوز در حال اثبات است. به‌طور پیش‌فرض خاموش است — می‌توانید بعداً آن را در تنظیمات روشن کنید.</string>
+    <string name="wizard_updates_title">به‌روز ماندن</string>
+    <string name="wizard_updates_subtitle">CallVault در فروشگاه برنامه نیست، بنابراین خودش GitHub را برای نسخه‌های جدید بررسی می‌کند.</string>
+    <string name="wizard_reliability_title">ضبط قابل اعتماد</string>
+    <string name="wizard_reliability_subtitle">دو تنظیم اختیاری که ضبط را در شرایط دشوار فعال نگه می‌دارند. می‌توانید این‌ها را رد کنید و بعداً در تنظیمات تغییر دهید.</string>
+    <string name="wizard_reliability_usb_title">ضبط را هنگام قفل شدن صفحه ادامه بده</string>
+    <string name="wizard_reliability_usb_desc">در برخی گوشی‌ها، قفل کردن صفحه در حین تماس می‌تواند ضبط را متوقف کند. تنظیم USB روی \"فقط شارژ\" از این جلوگیری می‌کند. (گوشی شما پس از آن هنگام اتصال به رایانه به‌طور پیش‌فرض روی شارژ می‌رود — وقتی لازم داشتید انتقال فایل را دستی انتخاب کنید.)</string>
+    <string name="wizard_reliability_usb_button">تنظیم USB روی فقط شارژ</string>
+    <string name="wizard_reliability_usb_done">USB روی فقط شارژ تنظیم شد</string>
+    <string name="wizard_transcription_title">تبدیل تماس‌ها به متن</string>
+    <string name="wizard_transcription_subtitle">CallVault می‌تواند یک فایل ضبط‌شده را روی خود گوشی به متن تبدیل کند و از آن یک خلاصه کوتاه بنویسد — چیزی به جایی فرستاده نمی‌شود. انتخاب کنید این کار چه زمانی انجام شود، تماس‌های شما به چه زبانی هستند، و آنچه لازم است دانلود کنید.</string>
+    <string name="wizard_transcription_language_note">روی زبانی تنظیم کنید که این گوشی روی آن تنظیم شده است. مشخص کردن آن بسیار قابل‌اعتمادتر از این است که بگذارید برنامه حدس بزند، و همچنان می‌توانید بعداً برای هر تماس زبان دیگری انتخاب کنید.</string>
+    <string name="wizard_transcription_model_note">رونویسی ابتدا به یک مدل گفتار روی گوشی نیاز دارد: %1$s برابر %2$d مگابایت است، %3$s برابر %4$d مگابایت. رونویسی یک تماس سپس تقریباً به اندازه طول تماس زمان می‌برد و پردازنده را سخت به کار می‌گیرد.</string>
+    <string name="wizard_transcription_model_sizes_note">رونویسی ابتدا به یک مدل گفتار روی گوشی نیاز دارد: %1$s. رونویسی یک تماس سپس تقریباً به اندازه طول تماس زمان می‌برد و پردازنده را سخت به کار می‌گیرد.</string>
+    <string name="wizard_transcription_model_size">%1$s برابر %2$d مگابایت است</string>
+    <!-- Joins the list above. A resource because the comma is not the right separator everywhere. -->
+    <string name="list_separator">"، "</string>
+    <string name="wizard_transcription_summary_heading">خلاصه‌ها</string>
+    <string name="wizard_transcription_summary_body">پس از اینکه یک تماس رونوشت داشته باشد، CallVault می‌تواند یک خلاصه کوتاه از آن هم بنویسد — روی گوشی، مثل هر چیز دیگری اینجا.</string>
+    <string name="wizard_transcription_background_note">هر دو دانلود فقط روی Wi-Fi اجرا می‌شوند و در پس‌زمینه ادامه می‌یابند. می‌توانید همین حالا ادامه دهید و راه‌اندازی را تمام کنید — تنظیمات ▸ رونویسی و خلاصه‌ها بعداً همان پیشرفت را نشان می‌دهد.</string>
+
+    <string name="wizard_audio_title">کیفیت صدا</string>
+    <string name="wizard_audio_subtitle">قالب ضبط و نرخ بیت را انتخاب کنید. Opus با ۱۶ kbps برای صدای شفاف با اندازه فایل کوچک توصیه می‌شود.</string>
+    <string name="wizard_filename_title">قالب نام فایل</string>
+    <string name="wizard_filename_subtitle">انتخاب کنید فایل‌های ضبط‌شده چگونه نام‌گذاری شوند.</string>
+
+    <!-- Home -->
+    <string name="home_all_set_message">همه‌چیز آماده است. CallVault برای ضبط تماس‌های شما آماده است.</string>
+    <string name="home_open_settings">تنظیمات</string>
+
+    <!-- Home: status card -->
+    <string name="home_status_no_folder_title">پوشه ضبط تنظیم نشده است</string>
+    <string name="home_status_no_folder_suggestion">تنظیمات را باز کنید تا محل ذخیره فایل‌های ضبط‌شده را انتخاب کنید.</string>
+    <string name="home_status_not_paired_title">راه‌اندازی کامل نشده است</string>
+    <string name="home_status_not_paired_suggestion">مرتبط‌سازی اشکال‌زدایی بی‌سیم را در راه‌اندازی تمام کنید.</string>
+    <string name="home_status_dev_options_off_title">گزینه‌های توسعه‌دهنده خاموش است</string>
+    <string name="home_status_dev_options_off_suggestion">CallVault از طریق اشکال‌زدایی بی‌سیم ضبط می‌کند، که به گزینه‌های توسعه‌دهنده نیاز دارد. تا زمانی که گزینه‌های توسعه‌دهنده (و اشکال‌زدایی بی‌سیم) را در تنظیمات سیستم دوباره فعال نکنید، ضبط نمی‌تواند کار کند.</string>
+    <string name="home_status_update_regrant_title">برای ادامه ضبط دوباره متصل شوید</string>
+    <string name="home_status_update_regrant_suggestion">یک به‌روزرسانی مجوزی را که CallVault برای راه‌اندازی مجدد ضبط لازم دارد حذف کرد. ممکن است فعلاً هنوز کار کند — اینجا بزنید، سپس یک‌بار اشکال‌زدایی بی‌سیم را روشن کنید تا بازیابی شود. نیازی به نصب مجدد نیست.</string>
+    <string name="home_status_ready_title">آماده ضبط</string>
+    <string name="home_status_ready_suggestion">CallVault تماس‌ها را طبق تنظیمات شما به‌طور خودکار ضبط می‌کند.</string>
+
+    <!-- Home: recordings list -->
+    <string name="home_recordings_title">فایل‌های ضبط‌شده</string>
+    <string name="home_recordings_empty">هنوز فایل ضبط‌شده‌ای نیست.</string>
+
+    <!-- Home: inline player -->
+    <string name="home_player_play">پخش</string>
+    <string name="home_player_pause">مکث</string>
+    <string name="home_player_stop">توقف</string>
+    <string name="home_player_loading">در حال بارگذاری…</string>
+    <string name="home_player_error">نشد این فایل را پخش کرد.</string>
+
+    <!-- Home: delete recording -->
+    <string name="home_share">اشتراک‌گذاری</string>
+    <string name="home_share_chooser">اشتراک‌گذاری فایل ضبط‌شده</string>
+    <string name="home_row_menu">گزینه‌های بیشتر</string>
+    <string name="home_delete">حذف</string>
+    <string name="home_delete_confirm_title">فایل ضبط‌شده حذف شود؟</string>
+    <string name="home_delete_confirm_message">این کار %1$s را برای همیشه حذف می‌کند.</string>
+    <string name="home_delete_scope_message">این فایل ضبط‌شده روی این دستگاه و در Drive ذخیره شده است.</string>
+    <string name="home_delete_scope_option_size">%1$s (%2$s)</string>
+    <string name="settings_section_updates">به‌روزرسانی‌ها</string>
+    <string name="settings_update_check_label">بررسی به‌روزرسانی‌ها</string>
+    <string name="settings_update_check_description">روزی یک‌بار، در GitHub به‌دنبال نسخه جدید بگرد.</string>
+    <string name="support_appeal_title">ساخته یک نفر 👋</string>
+    <string name="support_appeal_body">CallVault را به‌تنهایی و در وقت آزادم می‌سازم — رایگان، متن‌باز، بدون تبلیغ، بدون ردیابی. ☕ اگر برایتان مفید است، یک انعام کوچک مرا سرِ پا نگه می‌دارد. در هر صورت، ممنون! 🙏</string>
+    <string name="support_not_now">حالا نه</string>
+    <string name="home_bulk_delete_message">این کار قابل بازگشت نیست.</string>
+    <string name="home_bulk_delete_scope_message">برخی هم روی این دستگاه و هم در Drive ذخیره شده‌اند.</string>
+    <string name="home_bulk_delete_device_only">فقط دستگاه</string>
+    <string name="home_bulk_delete_drive_only">فقط Drive</string>
+    <string name="home_bulk_delete_both">هر دو نسخه</string>
+    <plurals name="home_selected_count">
+        <item quantity="one">%1$d انتخاب شد</item>
+        <item quantity="other">%1$d انتخاب شد</item>
+    </plurals>
+    <plurals name="home_bulk_delete_title">
+        <item quantity="one">%1$d فایل ضبط‌شده حذف شود؟</item>
+        <item quantity="other">%1$d فایل ضبط‌شده حذف شود؟</item>
+    </plurals>
+    <string name="home_bulk_delete_scope_label">نسخه‌هایی که حذف شوند</string>
+    <string name="home_bulk_delete_option_count">%1$s (%2$d از %3$d)</string>
+    <string name="home_bulk_delete_kept_drive">%1$s نگه داشته می‌شود — فقط در Drive.</string>
+    <string name="home_bulk_delete_kept_device">%1$s نگه داشته می‌شود — فقط روی این دستگاه.</string>
+    <plurals name="home_bulk_delete_kept_count">
+        <item quantity="one">%1$d فایل ضبط‌شده</item>
+        <item quantity="other">%1$d فایل ضبط‌شده</item>
+    </plurals>
+    <string name="settings_debug_log_file">فایل گزارش</string>
+    <string name="settings_debug_journal_hint">شامل دفترچه راه‌اندازی است، که همیشه از اولین اجرا نگه داشته می‌شود. برای خواندنش بزنید.</string>
+    <string name="settings_debug_log_view_hint">برای خواندن جدیدترین ورودی‌ها بزنید.</string>
+    <string name="settings_debug_log_delete">حذف گزارش</string>
+    <string name="settings_debug_log_delete_title">گزارش حذف شود؟</string>
+    <string name="settings_debug_log_delete_message">ورودی‌های جمع‌آوری‌شده تا کنون حذف می‌شوند. اگر ثبت گزارش هنوز روشن باشد، بلافاصله یک گزارش جدید شروع می‌شود.</string>
+    <string name="settings_debug_log_empty">گزارش خالی است.</string>
+    <!-- Transcription (on-device speech to text) -->
+    <string name="settings_section_transcription_and_summaries">رونویسی و خلاصه‌ها</string>
+    <string name="settings_section_transcription">رونویسی</string>
+    <string name="transcription_mode_label">رونویسی</string>
+    <string name="transcription_mode_manual">دستی</string>
+    <string name="transcription_mode_after_each_call">پس از هر تماس</string>
+    <string name="transcription_mode_automatic">خودکار</string>
+    <string name="transcription_hour_label">ساعت</string>
+    <string name="transcription_minute_label">دقیقه</string>
+    <string name="transcription_time_label">اجرا در</string>
+    <string name="transcription_warning_title">رونویسی کند و سنگین است</string>
+    <string name="transcription_warning_message">یک تماس تقریباً به اندازه طول خودش برای رونویسی زمان می‌برد و در این حین از هر هسته گوشی شما استفاده می‌کند. انتظار داشته باشید گرم شود و باتری قابل‌توجهی مصرف کند.\n\nمی‌توانید هر اجرا را در هر زمان از نشانِ کنار عنوان متوقف کنید.</string>
+    <string name="transcription_warning_confirm">روشنش کن</string>
+    <string name="transcription_charging_title">فقط هنگام شارژ</string>
+    <string name="transcription_charging_subtitle">رونویسی از پردازنده به‌شدت استفاده می‌کند و باتری را تخلیه خواهد کرد.</string>
+    <string name="heavy_work_channel_name">پردازش پس‌زمینه</string>
+    <string name="heavy_work_notification_text">ممکن است گوشی شما در حین این کار گرم شود.</string>
+    <string name="heavy_work_transcribing">در حال رونویسی یک فایل ضبط‌شده</string>
+    <string name="heavy_work_summarising">در حال خلاصه‌سازی یک فایل ضبط‌شده</string>
+    <string name="transcription_model_label">مدل</string>
+    <string name="transcription_model_small">سریع</string>
+    <string name="transcription_model_best">بهترین کیفیت</string>
+    <string name="transcription_model_best_small_download">بهترین کیفیت، دانلود کوچک‌تر</string>
+    <string name="transcription_model_download">دانلود مدل</string>
+    <string name="transcription_model_download_subtitle">%1$d مگابایت، فقط روی Wi-Fi</string>
+    <string name="transcription_model_delete">حذف مدل</string>
+    <string name="transcription_model_installed">دانلود شد و آماده است</string>
+    <string name="transcription_model_downloading">در حال دانلود… %1$d%%</string>
+    <string name="transcription_model_waiting">در انتظار Wi-Fi</string>
+    <string name="transcription_model_resume">ادامه دانلود</string>
+    <string name="transcription_model_resume_subtitle">%1$d مگابایت از %2$d مگابایت قبلاً دانلود شده</string>
+    <string name="transcription_model_failed_space">فضای آزاد کافی نیست. کمی فضا آزاد کنید و دوباره تلاش کنید.</string>
+    <string name="transcription_model_failed_verify">دانلود آسیب دیده بود و کنار گذاشته شد. دوباره تلاش کنید.</string>
+    <string name="transcription_model_failed">دانلود کامل نشد. دوباره تلاش کنید.</string>
+
+    <string name="summary_model_download">دانلود خلاصه‌ساز</string>
+    <string name="summary_model_download_subtitle">%1$.1f گیگابایت، فقط روی Wi-Fi</string>
+    <string name="summary_model_delete">حذف خلاصه‌ساز</string>
+    <string name="summary_model_installed">دانلود شد و آماده است</string>
+    <string name="summary_model_downloading">در حال دانلود… %1$d%%</string>
+    <string name="summary_model_waiting">در انتظار Wi-Fi</string>
+    <string name="summary_model_cancel">لغو دانلود</string>
+    <string name="summary_model_resume">ادامه دانلود</string>
+    <string name="summary_model_resume_subtitle">%1$.1f گیگابایت از %2$.1f گیگابایت قبلاً دانلود شده</string>
+    <string name="summary_model_discard">دور انداختن آنچه دانلود شده</string>
+    <string name="summary_model_discard_subtitle">%1$.1f گیگابایت آزاد می‌کند</string>
+    <string name="summary_model_failed_space">فضای آزاد کافی نیست. کمی فضا آزاد کنید و دوباره تلاش کنید.</string>
+    <string name="summary_model_failed_verify">دانلود آسیب دیده بود و کنار گذاشته شد. دوباره تلاش کنید.</string>
+    <string name="summary_model_failed">دانلود کامل نشد. دوباره تلاش کنید.</string>
+    <string name="summary_requirements_title">آنچه این نیاز دارد</string>
+    <string name="summary_requirements_body">خلاصه‌ها روی گوشی شما نوشته می‌شوند — چیزی به جایی فرستاده نمی‌شود. این کار %1$.1f گیگابایت دانلود و حدود %2$.1f گیگابایت حافظه در حین اجرا هزینه دارد، بنابراین به یک گوشی جدید با فضای کافی نیاز دارد. یک تماس کوتاه یکی دو دقیقه طول می‌کشد.</string>
+    <string name="summary_model_licence">خلاصه‌ساز، Gemma 4 از Google است که تحت مجوز Apache 2.0 استفاده می‌شود. به‌جای گنجانده شدن در CallVault، جداگانه دانلود می‌شود.</string>
+
+    <string name="summary_card_title">خلاصه</string>
+    <string name="summary_card_decisions">تصمیم‌ها</string>
+    <string name="summary_card_actions">کارهای انجام‌شدنی</string>
+    <string name="summary_card_key_points">نکات کلیدی</string>
+    <string name="summary_card_facts">ارزش نگه‌داری</string>
+    <string name="summary_card_provenance">ساخته‌شده از رونوشت</string>
+    <string name="summary_card_redo">دوباره بنویس</string>
+    <string name="summary_card_create">این تماس را خلاصه کن</string>
+    <string name="summary_card_create_subtitle">روی گوشی شما نوشته می‌شود، حدود یکی دو دقیقه</string>
+    <string name="summary_card_running">در حال خلاصه‌سازی… %1$d%%</string>
+    <string name="summary_card_stop">توقف</string>
+    <string name="summary_card_blocked_no_transcript">ابتدا این تماس را رونویسی کنید — خلاصه از روی رونوشت نوشته می‌شود.</string>
+    <string name="summary_card_blocked_unfinished">در انتظار پایان رونوشت.</string>
+    <string name="summary_card_blocked_empty">این رونوشت هیچ کلمه‌ای ندارد، پس چیزی برای خلاصه کردن نیست.</string>
+    <string name="summary_card_blocked_model">ابتدا خلاصه‌ساز را در تنظیمات دانلود کنید.</string>
+    <string name="summary_card_blocked_transcribing">در انتظار پایان رونویسی — این دو نمی‌توانند هم‌زمان از گوشی استفاده کنند.</string>
+    <string name="summary_card_blocked_summarising">یک تماس دیگر در حال خلاصه‌سازی است.</string>
+    <string name="summary_card_failed">آن یک خلاصه قابل‌استفاده تولید نکرد. می‌توانید دوباره تلاش کنید.</string>
+
+    <string name="summary_requirements_heading">پیش از دانلود</string>
+    <string name="summary_requirements_download">%1$.1f گیگابایت برای دانلود، فقط روی Wi-Fi</string>
+    <string name="summary_requirements_memory">حدود %1$.1f گیگابایت حافظه در حین اجرا</string>
+    <string name="summary_requirements_time">تقریباً یکی دو دقیقه برای یک تماس کوتاه، بیشتر برای تماس طولانی</string>
+    <string name="summary_requirements_private">همه‌چیز روی گوشی شما اتفاق می‌افتد. چیزی به جایی فرستاده نمی‌شود.</string>
+    <string name="summary_requirements_phone">به یک گوشی جدید با فضای کافی نیاز دارد. روی گوشی قدیمی‌تر ممکن است کند باشد یا ناموفق شود.</string>
+    <string name="summary_requirements_continue">دانلود</string>
+    <string name="summary_requirements_cancel">حالا نه</string>
+    <string name="summary_requirements_dont_ask">دیگر این را نشان نده</string>
+    <string name="summary_requirements_toggle_description">پیش از دانلود خلاصه‌ساز، هزینه‌های آن را نشان بده</string>
+    <string name="summary_delete_confirm_title">خلاصه‌ساز حذف شود؟</string>
+    <string name="summary_delete_confirm_body">این کار %1$.1f گیگابایت آزاد می‌کند. خلاصه‌هایی که قبلاً نوشته‌اید نگه داشته می‌شوند، اما برای نوشتن خلاصه‌های بیشتر باید دوباره آن را دانلود کنید.</string>
+    <string name="summary_delete_confirm_confirm">حذف</string>
+    <string name="summary_discard_confirm_title">دانلود دور انداخته شود؟</string>
+    <string name="summary_discard_confirm_body">این کار %1$.1f گیگابایتی را که قبلاً دانلود شده دور می‌اندازد. شروع دوباره، همه آن را از ابتدا دریافت می‌کند.</string>
+    <string name="summary_discard_confirm_confirm">دور انداختن</string>
+    <string name="transcription_language_label">زبان</string>
+    <string name="transcription_language_hebrew">عبری</string>
+    <string name="transcription_language_english">انگلیسی</string>
+    <string name="transcription_language_arabic">عربی</string>
+    <string name="transcription_language_russian">روسی</string>
+    <string name="transcription_language_french">فرانسوی</string>
+    <string name="transcription_language_spanish">اسپانیایی</string>
+    <string name="transcription_language_chinese">چینی</string>
+    <string name="transcription_language_german">آلمانی</string>
+    <string name="transcription_language_hungarian">مجاری</string>
+    <string name="transcription_language_italian">ایتالیایی</string>
+    <string name="transcription_language_polish">لهستانی</string>
+    <string name="transcription_language_portuguese">پرتغالی</string>
+    <string name="transcription_language_vietnamese">ویتنامی</string>
+    <string name="transcription_language_auto">تشخیص خودکار</string>
+    <string name="transcription_language_auto_hint">تشخیص برای زبان‌هایی که با حروف لاتین نوشته نمی‌شوند قابل اعتماد نیست — عبری، عربی، روسی و چینی اغلب با حروف انگلیسی هجی‌شده برمی‌گردند، یا به‌صورت یک بلوک طولانی متن. اگر می‌توانید زبان را مشخص کنید.</string>
+    <string name="transcription_note_manual">رونوشت‌ها فقط وقتی درخواست کنید ساخته می‌شوند، از دکمه روی یک فایل ضبط‌شده.</string>
+    <string name="transcription_note_after_each_call">هر تماس به‌محض پایان رونویسی می‌شود. تماس‌های قدیمی‌تر دست‌نخورده می‌مانند — آن‌ها را از دکمه روی یک فایل ضبط‌شده رونویسی کنید.</string>
+    <string name="transcription_note_automatic">تماس‌هایی که هنوز رونوشت ندارند در زمان انتخاب‌شده رونویسی می‌شوند. یک تماس ۳۰ دقیقه‌ای حدود ۳۰ دقیقه طول می‌کشد.</string>
+    <string name="transcription_batch_label">تماس در هر اجرا</string>
+    <string name="transcription_batch_no_limit">بدون محدودیت</string>
+    <string name="playback_title">فایل ضبط‌شده</string>
+    <string name="playback_skip_back">۱۰ ثانیه به عقب</string>
+    <string name="playback_skip_forward">۱۰ ثانیه به جلو</string>
+    <string name="playback_speed">%1$s×</string>
+    <string name="playback_open_transcript">رونوشت را بخوان</string>
+    <string name="playback_note_title">یادداشت</string>
+    <string name="playback_note_hint">این تماس درباره چه بود…</string>
+    <string name="transcript_action_transcribe">این تماس را رونویسی کن</string>
+    <string name="transcript_action_transcribe_short">رونویسی</string>
+    <string name="transcribe_estimate_under_minute">یک دقیقه</string>
+    <string name="transcribe_estimate_minutes">%1$d دقیقه</string>
+    <string name="transcribe_estimate_hours">%1$d ساعت و %2$d دقیقه</string>
+    <string name="transcribe_confirm_title">این حدود %1$s طول می‌کشد</string>
+    <string name="transcribe_confirm_title_unknown">این تماس رونویسی شود؟</string>
+    <string name="transcribe_confirm_title_first_run">اولی ممکن است کمی طول بکشد</string>
+    <string name="transcribe_confirm_message">رونویسی %1$s گوشی شما را مشغول نگه می‌دارد و باتری قابل‌توجهی مصرف می‌کند. می‌توانید هر زمان آن را متوقف کنید.\n\nاین پرسش را می‌توان دوباره در بخش رونویسی در تنظیمات روشن کرد.</string>
+    <string name="transcribe_confirm_dont_ask">دیگر نپرس</string>
+    <string name="transcribe_language_title">کدام زبان؟</string>
+    <string name="transcribe_language_message">رونویسی %1$s به زبان:</string>
+    <string name="transcribe_language_confirm">رونویسی</string>
+    <string name="transcription_ask_language_title">هر بار زبان را بپرس</string>
+    <string name="transcription_ask_language_subtitle">به‌جای استفاده همیشگی از زبان بالا، برای هر فایل ضبط‌شده زبان را انتخاب کنید. فقط برای همان فایل ضبط‌شده اعمال می‌شود.</string>
+    <string name="transcription_confirm_title">پیش از رونویسی بپرس</string>
+    <string name="transcription_confirm_subtitle">نشان می‌دهد چقدر طول می‌کشد و به شما اجازه لغو می‌دهد.</string>
+    <string name="transcript_action_busy">در حال رونویسی…</string>
+    <string name="transcript_action_open">رونوشت را بخوان</string>
+    <string name="transcript_action_retry">رونویسی ناموفق بود — دوباره تلاش کنید</string>
+    <string name="transcript_loading">در حال بارگذاری رونوشت…</string>
+    <string name="transcript_none">برای این تماس رونوشتی وجود ندارد. یا هرگز رونویسی نشده، یا متن حذف شده است.</string>
+    <string name="transcript_no_speech">هیچ گفتاری در این فایل ضبط‌شده شناسایی نشد.</string>
+    <string name="transcript_speakers_which_is_you">کدام‌یک شما هستید؟</string>
+    <string name="transcript_speakers_guessed">نام‌هایی که به‌طور خودکار مشخص شدند</string>
+    <string name="transcript_speakers_swap_names">جابه‌جایی نام‌ها</string>
+    <string name="transcript_speakers_swap">جابه‌جایی</string>
+    <string name="transcript_speakers_correct">درست است</string>
+    <string name="transcript_speaker_you">شما</string>
+    <string name="transcript_speaker_a">گوینده الف</string>
+    <string name="transcript_speaker_b">گوینده ب</string>
+    <string name="transcript_share">اشتراک‌گذاری</string>
+    <string name="transcript_export_chooser">اشتراک‌گذاری رونوشت</string>
+    <string name="transcript_export_failed">نشد رونوشت را صادر کرد</string>
+    <string name="transcript_retranscribe">دوباره رونویسی کن</string>
+    <string name="transcript_note_add">افزودن یادداشت</string>
+    <string name="transcript_note_hint">درباره چه بود، یا چه باید درباره‌اش کرد…</string>
+    <string name="transcript_too_long_title">برای رونویسی خیلی طولانی است</string>
+    <string name="transcript_too_long_message">این تماس حدود %1$d دقیقه طول دارد. CallVault فعلاً فقط می‌تواند فایل‌های ضبط‌شده تا %2$d دقیقه را روی دستگاه رونویسی کند — طولانی‌ترها در میانه راه حافظه کم می‌آورند. خود فایل ضبط‌شده در امان است.</string>
+    <string name="transcript_no_model_title">هنوز مدل گفتاری نیست</string>
+    <string name="transcript_no_model_message">رونویسی روی این گوشی انجام می‌شود، بنابراین ابتدا به یک مدل گفتار دانلودشده نیاز دارد. می‌توانید یکی را در تنظیمات انتخاب و دانلود کنید.</string>
+    <string name="transcript_no_model_open_settings">باز کردن تنظیمات</string>
+    <string name="transcribing_pill_working">در حال رونویسی</string>
+    <string name="transcribing_pill_progress">%1$d/%2$d</string>
+    <string name="transcribing_pill_percent">%1$d%%</string>
+    <string name="transcribing_pill_progress_percent">%1$d/%2$d · %3$d%%</string>
+    <string name="transcribing_sheet_title">در حال رونویسی</string>
+    <string name="transcribing_sheet_starting">در حال شروع…</string>
+    <string name="transcribing_sheet_remaining">باقی‌مانده: %1$d</string>
+    <string name="transcribing_sheet_stop">توقف</string>
+    <string name="transcript_delete">حذف متن</string>
+    <string name="transcript_delete_confirm_title">این رونوشت حذف شود؟</string>
+    <string name="transcript_delete_confirm_message">رونوشت %1$s حذف خواهد شد. خود فایل ضبط‌شده نگه داشته می‌شود و می‌توانید بعداً دوباره آن را رونویسی کنید.</string>
+    <string name="home_status_recovery_stuck_title">ضبط از کار افتاده است</string>
+    <string name="home_status_recovery_stuck_suggestion">CallVault مدام در راه‌اندازی مجدد ضبط‌کننده‌اش ناموفق می‌شود، بنابراین تماس‌ها ضبط نمی‌شوند. باز کردن دوباره برنامه معمولاً آن را برطرف می‌کند.</string>
+    <string name="home_hero_pill_recovery_stuck">ضبط نمی‌شود</string>
+    <string name="app_lock_prompt_title">باز کردن قفل CallVault</string>
+    <string name="app_lock_locked">قفل‌شده</string>
+    <string name="app_lock_unlock">باز کردن قفل</string>
+    <string name="settings_section_privacy">حریم خصوصی</string>
+    <string name="settings_app_lock_title">نیاز به باز کردن قفل</string>
+    <string name="settings_app_lock_description">پیش از نمایش فایل‌های ضبط‌شده و رونوشت‌ها، قفل صفحه شما را می‌خواهد. همچنین آن‌ها را از تصاویر صفحه و جابه‌جاگر برنامه‌ها دور نگه می‌دارد.</string>
+    <string name="settings_app_lock_unavailable">برای استفاده از این، روی گوشی خود یک قفل صفحه تنظیم کنید.</string>
+    <string name="playback_tags_title">برچسب‌ها</string>
+    <string name="playback_tags_add">افزودن برچسب</string>
+    <string name="playback_tags_remove">حذف برچسب</string>
+    <string name="playback_tags_hint">مثلاً خانه، بیمه</string>
+    <string name="playback_tags_manage_title">برچسب</string>
+    <string name="playback_tags_manage_explain">تغییر نام، این برچسب را روی هر فایل ضبط‌شده‌ای که آن را دارد تغییر می‌دهد. تغییر نام آن به برچسبی که از قبل وجود دارد، آن دو را ادغام می‌کند.</string>
+    <string name="playback_tags_rename">تغییر نام</string>
+    <string name="playback_tags_delete_everywhere">حذف از همه‌جا</string>
+    <string name="transcript_share_text">متن</string>
+    <string name="playback_star">ستاره‌دار کردن این فایل ضبط‌شده</string>
+    <string name="playback_unstar">حذف ستاره</string>
+    <string name="home_filter_favourites_chip">ستاره‌دار</string>
+    <string name="min_duration_label">دور انداختن فایل‌های ضبط‌شده کوتاه</string>
+    <string name="min_duration_off">نگه‌داری همه</string>
+    <string name="min_duration_seconds">کوتاه‌تر از %1$d ثانیه</string>
+    <string name="min_duration_one_minute">کوتاه‌تر از یک دقیقه</string>
+    <string name="min_duration_caption">یک شماره‌گیری اشتباه یا تماسی که بی‌پاسخ زنگ خورده، همان لحظه که تمام شود حذف می‌شود، پیش از آنکه رونویسی یا بارگذاری شود. چیزی که قبلاً ضبط شده تحت تأثیر قرار نمی‌گیرد.</string>
+    <string name="storage_cap_label">محدود کردن فضای مصرفی</string>
+    <string name="storage_cap_off">بدون محدودیت</string>
+    <string name="storage_cap_gigabytes">%1$d گیگابایت روی این گوشی</string>
+    <string name="storage_cap_caption">وقتی فایل‌های ضبط‌شده شما از این فراتر روند، پاک‌سازی روزانه قدیمی‌ترین‌ها را از این گوشی حذف می‌کند تا جا شوند. فایل‌های ضبط‌شده ستاره‌دار هرگز حذف نمی‌شوند، حتی اگر به معنای فراتر رفتن از حد باشد. فایل ضبط‌شده‌ای که در Drive هم نگه داشته می‌شود فقط نسخه اینجای خود را از دست می‌دهد. صدایی که وارد کرده‌اید هم هرگز با این محدودیت حذف نمی‌شود: نسخه‌ای در Drive ندارد، پس این گوشی تنها نسخه را دارد.</string>
+    <string name="storage_cap_confirm_message">هر وقت فایل‌های ضبط‌شده از حد فراتر روند، از این گوشی حذف می‌شوند، ابتدا قدیمی‌ترین‌ها. فایل‌های ضبط‌شده ستاره‌دار هرگز برداشته نمی‌شوند. این کار قابل بازگشت نیست.</string>
+    <string name="notif_health_channel">مشکلاتی که به شما نیاز دارند</string>
+    <string name="notif_health_recorder_title">CallVault همین حالا نمی‌تواند ضبط کند</string>
+    <string name="notif_health_shizuku_stopped_title">Shizuku متوقف شد</string>
+    <string name="notif_health_shizuku_stopped_text">CallVault مجبور شد سرویس اشکال‌زدایی Android را دوباره راه‌اندازی کند، و آن Shizuku را متوقف می‌کند. اگر با برنامه‌های دیگر از آن استفاده می‌کنید، Shizuku را باز کنید و دوباره اجرایش کنید.</string>
+    <string name="notif_health_shizuku_restarted_title">Shizuku دوباره اجرا شد</string>
+    <string name="notif_health_shizuku_restarted_text">CallVault مجبور شد سرویس اشکال‌زدایی Android را دوباره راه‌اندازی کند، که Shizuku را متوقف می‌کند، بنابراین Shizuku را برای شما دوباره اجرا کرد. کاری برای انجام دادن نیست.</string>
+    <string name="notif_health_shizuku_restart_failed_title">Shizuku متوقف شد</string>
+    <string name="notif_health_shizuku_restart_failed_text">CallVault مجبور شد سرویس اشکال‌زدایی Android را دوباره راه‌اندازی کند، و آن Shizuku را متوقف می‌کند. تلاش کرد Shizuku را دوباره اجرا کند و نتوانست — Shizuku را باز کنید و خودتان اجرایش کنید.</string>
+    <string name="notif_health_recorder_text">تا زمانی که این گوشی یک‌بار به یک شبکه Wi-Fi بپیوندد، تماس‌ها ضبط نخواهند شد. هر شبکه‌ای مناسب است و نیازی به اینترنت ندارد — چند ثانیه کافی است، سپس حتی بدون Wi-Fi هم به کار ادامه می‌دهد.</string>
+    <string name="notif_health_sync_title">فایل‌های ضبط‌شده به Drive نمی‌رسند</string>
+    <string name="notif_health_sync_text">کپی به Google Drive مدتی پیش متوقف شد. چیزی از دست نرفته — فایل‌های ضبط‌شده هنوز روی این گوشی هستند — اما پشتیبان‌گیری نمی‌شوند. برای بررسی تنظیمات فضای ذخیره‌سازی خود CallVault را باز کنید.</string>
+    <string name="notif_health_recorder_text_shizuku">تا زمانی که Shizuku دوباره در حال اجرا باشد، تماس‌ها ضبط نخواهند شد. یک راه‌اندازی مجدد آن را متوقف می‌کند، پس باید یک‌بار پس از راه‌اندازی مجدد گوشی اجرا شود.</string>
+    <string name="settings_offline_recording_reboot_note">پس از راه‌اندازی مجدد، این تا زمانی که گوشی یک‌بار به یک شبکه Wi-Fi بپیوندد کار نمی‌کند. هر شبکه‌ای مناسب است و نیازی به اینترنت ندارد — چند ثانیه کافی است. CallVault وقتی این لازم باشد به شما اطلاع می‌دهد.</string>
+    <string name="general_stop">توقف</string>
+    <string name="settings_metadata_file_label">نوشتن یک فایل جزئیات</string>
+    <string name="settings_metadata_file_desc">یک فایل .json کوچک کنار هر فایل ضبط‌شده ذخیره کن</string>
+    <string name="settings_metadata_file_hint">از همان قالب BCR استفاده می‌کند، بنابراین برنامه‌های ساخته‌شده برای آن — مانند bcr-gui — می‌توانند جزئیات فایل‌های ضبط‌شده شما را بخوانند. فقط اگر از یکی از آن‌ها استفاده می‌کنید ارزش روشن کردن دارد.</string>
+    <string name="general_flag">نشان‌گذاری</string>
+    <string name="recording_flag_added">لحظه نشان‌گذاری شد (%1$d)</string>
+    <string name="voip_recording_title">در حال ضبط یک تماس درون‌برنامه‌ای</string>
+    <string name="voip_recording_title_named">در حال ضبط یک تماس %1$s</string>
+    <string name="voip_recording_text">یک لحظه را نشان‌گذاری کنید تا بعداً پیدایش کنید، یا ضبط را متوقف کنید.</string>
+    <string name="playback_marked_moments">لحظه‌های نشان‌گذاری‌شده</string>
+    <string name="settings_voip_apps_label">انتخاب کنید کدام برنامه‌ها ضبط شوند</string>
+    <string name="settings_voip_apps_loading">در حال جستجوی برنامه‌ها…</string>
+    <string name="settings_voip_apps_all">هر برنامه‌ای ضبط می‌شود</string>
+    <plurals name="settings_voip_apps_some">
+        <item quantity="one">%1$d برنامه ضبط نخواهد شد</item>
+        <item quantity="other">%1$d برنامه ضبط نخواهد شد</item>
+    </plurals>
+    <string name="settings_voip_apps_hint">یک برنامه را خاموش کنید و تماس‌هایش هرگز ضبط نمی‌شوند. تا وقتی تغییرش ندهید همه‌چیز روشن است. برنامه‌هایی که نمی‌توانند صدا ضبط کنند فهرست نمی‌شوند، چون نمی‌توانند از نوع تماسی که این می‌گیرد برقرار کنند.</string>
+    <string name="general_flag_count">نشان‌گذاری (%1$d)</string>
+    <string name="voip_recording_paused">متوقف شد. همین حالا چیزی ذخیره نمی‌شود.</string>
+    <string name="voip_recording_held">برای یک تماس تلفنی نگه داشته شد. این ضبط وقتی برگردید ادامه می‌یابد.</string>
+    <string name="general_back">بازگشت</string>
+    <string name="export_heading_transcript">رونوشت</string>
+    <string name="settings_bugreport_save">ذخیره</string>
+    <string name="settings_bugreport_saved">گزارش ذخیره شد</string>
+    <string name="settings_bugreport_save_failed">نشد گزارش را ذخیره کرد</string>
+    <string name="settings_debug_log_wrap">شکستن خطوط</string>
+    <string name="usb_debugging_off_warn_title">اشکال‌زدایی USB خاموش شود؟</string>
+    <string name="usb_debugging_off_warn_no_way_in">شما روی Wi-Fi نیستید، بنابراین CallVault هیچ راهی برای رسیدن به ضبط‌کننده نخواهد داشت. تا زمانی که به Wi-Fi متصل شوید یا این را دوباره روشن کنید، تماس‌ها ضبط نمی‌شوند.</string>
+    <string name="usb_debugging_off_warn_offline">ضبط بدون Wi-Fi به اشکال‌زدایی USB نیاز دارد. با خاموش بودن آن، تماس‌های انجام‌شده دور از Wi-Fi ضبط نمی‌شوند.</string>
+    <string name="usb_debugging_off_confirm">به‌هرحال خاموش کن</string>
+    <string name="usb_debugging_off_keep">روشن نگهش دار</string>
+    <string name="settings_wd_enforce_label">اشکال‌زدایی بی‌سیم را برای ضبط روشن نگه دار</string>
+    <string name="settings_wd_enforce_description">اگر اشکال‌زدایی بی‌سیم را خاموش کنید در حالی که هیچ چیز دیگری به CallVault اجازه دسترسی نمی‌دهد، آن را دوباره روشن می‌کند تا تماس‌ها ضبط بمانند. وقتی این خاموش باشد، کلید شما خاموش می‌ماند و اعلان می‌گوید ضبط متوقف شده است.</string>
+    <string name="oem_gate_title">گوشی شما این مرحله را مسدود می‌کند</string>
+    <string name="oem_gate_body_oppo">گوشی‌های OnePlus، OPPO و realme تا زمانی که \"Disable system optimization\" را در گزینه‌های توسعه‌دهنده روشن نکنید به برنامه‌ها این مجوز را نمی‌دهند — نزدیک پایین، زیر Apps. نسخه‌های قدیمی‌تر آن را \"Disable permission monitoring\" می‌نامند. آن را روشن کنید و دوباره تلاش کنید. اگر نمی‌توانید پیدایش کنید، گوشی را به انگلیسی تغییر دهید، روشنش کنید، سپس برگردید.</string>
+    <string name="oem_gate_body_xiaomi">گوشی‌های Xiaomi، Redmi و POCO تا زمانی که \"USB debugging (Security settings)\" را در گزینه‌های توسعه‌دهنده روشن نکنید به برنامه‌ها این مجوز را نمی‌دهند. این از اشکال‌زدایی USB جداست و لازم است به یک حساب Mi وارد شده باشید. آن را روشن کنید و دوباره تلاش کنید.</string>
+    <string name="oem_gate_body_other">این گوشی از دادن مجوزی که CallVault لازم دارد امتناع می‌کند. در گزینه‌های توسعه‌دهنده، دنبال کلیدی درباره نظارت بر مجوزها یا بهینه‌سازی سیستم بگردید، آن را روشن کنید و دوباره تلاش کنید.</string>
+    <string name="oem_gate_open_dev_options">باز کردن گزینه‌های توسعه‌دهنده</string>
+    <string name="oem_gate_continue_hint">می‌توانید فعلاً ادامه دهید، اما تا زمانی که این انجام نشود تماس‌ها ضبط نمی‌شوند.</string>
+    <string name="home_hub_community_eyebrow">بپیوندید</string>
+    <string name="home_hub_community_title">گروه Telegram</string>
+    <string name="home_hub_community_body">سؤالی بپرسید، بگویید چه چیزی کار نمی‌کند، از نسخه‌های جدید باخبر شوید.</string>
+    <string name="home_community_pill">Telegram</string>
+    <string name="home_community_tucked_hint">به کنار «حمایت» منتقل شد. برای بازگرداندن کارت، آنجا روی آن فشار طولانی دهید.</string>
+    <string name="home_community_restored_hint">به صفحه اصلی بازگشت.</string>
+    <string name="library_row_save">ذخیره به‌صورت فایل</string>
+    <string name="library_nothing_to_share">دیگر چیزی برای اشتراک‌گذاری آنجا نیست.</string>
+    <string name="transcript_delete_confirm_message_text_only">هیچ فایل ضبط‌شده‌ای پشت این کلمات نیست: حذف رونوشت %1$s کل آن را حذف می‌کند و قابل بازگرداندن نیست.</string>
+    <string name="library_summary_delete_confirm_title">این خلاصه حذف شود؟</string>
+    <string name="library_summary_delete_confirm_message">خلاصه %1$s حذف خواهد شد. رونوشت و فایل ضبط‌شده نگه داشته می‌شوند و می‌توانید دوباره آن را بنویسانید.</string>
+    <string name="library_bulk_delete_transcripts_message">کلمات حذف خواهند شد. فایل‌های ضبط‌شده نگه داشته می‌شوند و می‌توانید بعداً دوباره آن‌ها را رونویسی کنید.</string>
+    <string name="library_bulk_delete_summaries_message">خلاصه‌ها حذف خواهند شد. رونوشت‌ها و فایل‌های ضبط‌شده نگه داشته می‌شوند.</string>
+    <plurals name="library_bulk_delete_transcripts_title">
+        <item quantity="one">%1$d رونوشت حذف شود؟</item>
+        <item quantity="other">%1$d رونوشت حذف شود؟</item>
+    </plurals>
+    <plurals name="library_bulk_delete_summaries_title">
+        <item quantity="one">%1$d خلاصه حذف شود؟</item>
+        <item quantity="other">%1$d خلاصه حذف شود؟</item>
+    </plurals>
+    <plurals name="library_bulk_delete_text_only_warning">
+        <item quantity="one">%1$d مورد از این‌ها هیچ فایل ضبط‌شده‌ای پشتش ندارد، پس کلماتش تنها چیزی است که باقی مانده. آن بخش قابل بازگشت نیست.</item>
+        <item quantity="other">%1$d مورد از این‌ها هیچ فایل ضبط‌شده‌ای پشتشان ندارند، پس کلماتشان تنها چیزی است که باقی مانده. آن بخش قابل بازگشت نیست.</item>
+    </plurals>
+
+    <!-- The search line at the head of the Recordings, Transcripts and Summaries pages. %1$s = what was typed. -->
+    <string name="home_search_contacts_hint">جستجو بر اساس مخاطب</string>
+    <string name="transcripts_search_hint">جستجوی آنچه گفته شد</string>
+    <string name="summaries_search_hint">جستجوی خلاصه‌ها</string>
+    <string name="search_clear">پاک کردن</string>
+    <string name="search_no_matches_title">چیزی مطابقت ندارد</string>
+    <string name="search_no_matches_hint">هیچ چیزی اینجا شامل «%1$s» نیست. کلمات از ابتدایشان مطابقت داده می‌شوند، پس یک شکل کوتاه‌تر ممکن است موارد بیشتری پیدا کند.</string>
+    <string name="note_saved">ذخیره شد</string>
+    <string name="note_saving">در حال ذخیره…</string>
+    <string name="home_status_pairing_lost_title">مرتبط‌سازی منقضی شد</string>
+    <string name="home_status_pairing_lost_suggestion">Android مرتبط‌سازی اشکال‌زدایی بی‌سیم CallVault را فراموش کرد، بنابراین ضبط‌کننده نمی‌تواند دوباره راه‌اندازی شود. برای مرتبط‌سازی دوباره اینجا بزنید — فایل‌های ضبط‌شده و تنظیمات شما همان‌طور که هستند می‌مانند.</string>
+    <string name="settings_pair_again_label">مرتبط‌سازی دوباره</string>
+    <string name="settings_pair_again_value">مرتبط‌سازی CallVault با اشکال‌زدایی بی‌سیم</string>
+    <string name="settings_pair_again_hint">اگر Android مرتبط‌سازی CallVault را فراموش کرد از این استفاده کنید. فایل‌های ضبط‌شده و تنظیمات شما همان‌طور که هستند می‌مانند. روشن کردن ضبط آفلاین از منقضی شدن مرتبط‌سازی جلوگیری می‌کند.</string>
+    <string name="notif_readiness_pairing_lost_text">Android مرتبط‌سازی CallVault را فراموش کرد، بنابراین تماس‌ها ضبط نمی‌شوند. CallVault را باز کنید و روی کارت وضعیت بزنید تا دوباره مرتبط‌سازی کنید.</string>
+    <string name="notif_cut_off_saved_title">یک تماس قطع شد</string>
+    <string name="notif_cut_off_saved_text">گوشی شما CallVault را در حین یک تماس بست. آنچه پیش از آن ضبط شده بود به‌صورت %1$s ذخیره شد.</string>
+    <string name="home_health_failed_cut_off">آخرین تماس شما وقتی گوشی CallVault را بست قطع شد — بخشی که پیش از آن ضبط شده بود ذخیره شد.</string>
+    <string name="settings_needs_newer_android">به Android %1$s یا جدیدتر نیاز دارد — این گوشی Android %2$s را اجرا می‌کند.</string>
+    <string name="notif_turned_off_for_android_title">برخی تنظیمات خاموش شدند</string>
+    <string name="notif_turned_off_for_android_text">%1$s: این به نسخه Android جدیدتری از نسخه روی این گوشی (Android %2$s) نیاز دارد، بنابراین خاموش شد. تماس‌های تلفنی همچنان ضبط می‌شوند.</string>
+    <string name="update_popup_title">CallVault %1$s در دسترس است</string>
+    <string name="update_popup_text">نسخه جدیدی برای نصب آماده است. به‌روزرسانی، ضبط را قابل اعتماد نگه می‌دارد و جدیدترین رفع‌اشکال‌ها را می‌آورد.</string>
+    <string name="update_popup_update_now">اکنون به‌روزرسانی کن</string>
+    <string name="update_popup_later">بعداً</string>
+</resources>

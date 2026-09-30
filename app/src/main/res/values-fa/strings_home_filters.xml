@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  ~ CallVault: FOSS call recording, self-contained over embedded ADB
+  ~  Copyright (C) 2026-present The CallVault Authors
+  ~  This software is licensed under the GNU General Public License v3 or later, with additional terms as permitted under Section 7.
+  ~  The full license text is available in the LICENSE file at the root of this project.
+  ~  This software is distributed WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+  -->
+<resources>
+
+    <string name="home_filter_source_label">منبع</string>
+    <string name="home_filter_source_chip">منبع: %1$s</string>
+    <string name="home_filter_source_all">همه</string>
+    <string name="home_filter_source_local">فقط روی دستگاه</string>
+    <string name="home_filter_source_drive">فقط Drive</string>
+
+    <string name="home_filter_direction_label">جهت تماس</string>
+    <string name="home_filter_direction_chip">جهت تماس: %1$s</string>
+    <string name="home_filter_direction_all">همه</string>
+    <string name="home_filter_direction_incoming">ورودی</string>
+    <string name="home_filter_direction_outgoing">خروجی</string>
+
+
+    <string name="home_filter_date_label">تاریخ</string>
+    <string name="home_filter_date_chip">تاریخ: %1$s</string>
+    <string name="home_filter_date_all">همه تاریخ‌ها</string>
+    <string name="home_filter_date_all_short">همه</string>
+
+    <string name="home_source_badge_local">دستگاه</string>
+    <string name="home_source_badge_drive">Drive</string>
+    <string name="home_source_badge_both">دستگاه + Drive</string>
+
+    <string name="home_copy_device">دستگاه</string>
+    <string name="home_copy_drive">Drive</string>
+
+    <string name="home_delete_confirm_device_message">نسخهٔ روی دستگاهِ %1$s حذف شود؟ نسخهٔ Drive نگه داشته می‌شود.</string>
+    <string name="home_delete_confirm_drive_message">نسخهٔ Driveِ %1$s حذف شود؟ نسخهٔ روی دستگاه نگه داشته می‌شود.</string>
+    <string name="home_delete_copy_device_content_desc">حذف نسخهٔ روی دستگاه</string>
+    <string name="home_delete_copy_drive_content_desc">حذف نسخهٔ Drive</string>
+
+
+    <string name="home_filter_tag_label">برچسب</string>
+    <string name="home_filter_tag_chip">برچسب: %1$s</string>
+    <string name="home_filter_tag_all">همه برچسب‌ها</string>
+    <string name="home_filter_tag_all_short">همه</string>
+
+</resources>
