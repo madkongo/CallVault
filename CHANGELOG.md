@@ -52,12 +52,17 @@ All notable changes to CallVault are documented here. The format is based on
 ### Fixed
 
 - **vivo/iQOO app calls: the crash that stopped recording is fixed, and a freeze after a one-sided call is
-  gone.** On vivo phones your own voice in app calls, and normal phone calls, now record. **The other
-  person's voice in app calls still cannot be recorded on vivo/iQOO** — the phone's own audio system blocks
-  it below anything an app can reach; see SUPPORT.md. CallVault now says so plainly after such a call rather
-  than leaving a silent recording.
-  <!-- 🧪 VERIFYING 2026-09-29: crash/own-voice confirmed by the reporter; far-side impossibility established
-  by firmware analysis + four research passes (dev-note 2026-09-28-two-private-reports.md). -->
+  gone.** On vivo phones your own voice in app calls, and normal phone calls, now record. **To record the
+  other person's voice in app calls, turn on vivo's own "In-app call recording" in the built-in Recorder
+  app** (Recorder → In-app call recording + Auto-start recording); vivo blocks apps from capturing the
+  internal call audio until that is on. See SUPPORT.md for the steps.
+  <!-- 🧪 VERIFYING 2026-09-30: crash/own-voice confirmed by the reporter; far-side capture reported working
+  by a vivo user after enabling OriginOS Recorder's In-app call recording toggle (dev-note
+  2026-09-30-vivo-in-app-call-recording-toggle.md). Earlier "impossible without root" verdict held only with
+  that toggle OFF (the default). Not yet maintainer-confirmed on a vivo device. -->
+- <!-- If publishing a build after 2026-09-30: the whatsnew string_home item and the in-call/one-sided
+  message that say the far side "cannot be recorded on vivo" should point to the Recorder toggle instead. -->
+
 - No misleading "an update removed a permission — turn Wireless debugging on" message on phones whose
   maker blocks that permission and where recording is working anyway; it now points to the correct
   device setting instead.
