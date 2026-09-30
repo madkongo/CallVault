@@ -3,9 +3,26 @@
 All notable changes to CallVault are documented here. The format is based on
 [Keep a Changelog](https://keepachangelog.com/), and this project uses semantic-ish versioning.
 
-## [2.4.5] — 2026-09-29
+## [2.4.5] — 2026-09-30
 
-2.4.4 was published briefly and pulled the same day after this bug was found; 2.4.5 is 2.4.4 plus the fix.
+2.4.4 was published briefly and pulled the same day after the cut-off bug below was found; 2.4.5 is 2.4.4
+plus that fix, a new language, and a vivo tip.
+
+### Added
+
+- **Persian (Farsi) app language.** The app interface can now be set to Persian (فارسی) — Settings →
+  Language. Right-to-left layout throughout.
+  <!-- 🧪 VERIFYING 2026-09-30: full values-fa translation, build + tests green, fa in the locale config;
+  machine-translated, awaiting a native Farsi speaker's review before it is trusted. -->
+
+### Changed
+
+- **vivo/iQOO: a useful tip when only your side of an app call records.** On vivo phones the other
+  person's voice in app calls is silent until you turn on vivo's own "In-app call recording" (Recorder
+  app → In-app call recording + Auto-start recording). When that happens, CallVault now points you to
+  that setting instead of blaming the other app. See SUPPORT.md.
+  <!-- 🧪 VERIFYING 2026-09-30: reported working by a vivo user; not yet confirmed on a vivo by the
+  maintainer. dev-note 2026-09-30-vivo-in-app-call-recording-toggle.md. -->
 
 ### Fixed
 
@@ -60,8 +77,6 @@ All notable changes to CallVault are documented here. The format is based on
   by a vivo user after enabling OriginOS Recorder's In-app call recording toggle (dev-note
   2026-09-30-vivo-in-app-call-recording-toggle.md). Earlier "impossible without root" verdict held only with
   that toggle OFF (the default). Not yet maintainer-confirmed on a vivo device. -->
-- <!-- If publishing a build after 2026-09-30: the whatsnew string_home item and the in-call/one-sided
-  message that say the far side "cannot be recorded on vivo" should point to the Recorder toggle instead. -->
 
 - No misleading "an update removed a permission — turn Wireless debugging on" message on phones whose
   maker blocks that permission and where recording is working anyway; it now points to the correct
