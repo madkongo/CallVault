@@ -9,6 +9,7 @@
     <string name="home_health_failed_empty">Ihr letzter Anruf ergab eine leere Aufnahme (0 Bytes).</string>
     <string name="home_health_failed_no_audio">Ihr letzter Anruf wurde gespeichert, enthält aber keine Audiodaten.</string>
     <string name="home_health_failed_one_sided">Bei Ihrem letzten App-Anruf wurde nur Ihre Seite aufgezeichnet.</string>
+    <string name="home_health_failed_one_sided_vivo">Bei Ihrem letzten App-Anruf wurde nur Ihre Seite aufgenommen. Auf vivo: App „Recorder“ öffnen → In-App-Anrufaufnahme einschalten (samt automatischem Aufnahmestart).</string>
     <string name="home_health_missed_adb_pairing">Ein Anruf wurde nicht aufgezeichnet — die Einrichtung war zu diesem Zeitpunkt nicht abgeschlossen, %1$s.</string>
     <string name="home_health_missed_adb_pairing_unnamed">Ein Anruf wurde nicht aufgezeichnet — die Einrichtung war zu diesem Zeitpunkt nicht abgeschlossen.</string>
     <string name="home_health_missed_developer_options">Ein Anruf wurde nicht aufgezeichnet — die Entwickleroptionen waren zu diesem Zeitpunkt deaktiviert, %1$s.</string>

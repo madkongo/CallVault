@@ -38,6 +38,7 @@ import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import com.baba.callvault.utils.AppLogger
+import com.baba.callvault.utils.DeviceInfo
 import com.baba.callvault.transcription.AudioDecoder
 import com.baba.callvault.system.storage.MinDurationPolicy
 import com.baba.callvault.system.interop.MetadataSidecar
@@ -119,7 +120,7 @@ object VoipRecordingCoordinator {
         // record-silencing decision for THIS call (voip_audio_log reads it at the end). Re-armed every call,
         // which is the reboot auto-heal — the tag is volatile, so a post-reboot call sets it again; the reply
         // says whether it had survived. A log tag only; no audio behaviour changes, and nothing runs off vivo.
-        if (android.os.Build.MANUFACTURER.equals("vivo", ignoreCase = true)) {
+        if (DeviceInfo.isVivo()) {
             runCatching { service.diagnosticDump("vivo_verbose_arm", null) }
                 .getOrNull()?.trim()?.takeIf { it.isNotEmpty() }
                 ?.let { AppLogger.i(TAG, "vivo verbose logging armed for this call: $it") }
@@ -583,9 +584,13 @@ object VoipRecordingCoordinator {
         } else if (!farHeard) {
             logOneSidedDiagnostics()
             AppLogger.w(TAG, "VoIP recording captured only your side — the other app blocks capture")
+            // On vivo the far side is silenced by the phone until the user turns on vivo's own "In-app call
+            // recording" (Recorder app), so point vivo users to that toggle instead of blaming the app.
+            val warning = if (DeviceInfo.isVivo()) R.string.voip_one_sided_warning_vivo
+                          else R.string.voip_one_sided_warning
             runCatching {
                 RecordingNotificationHelper(context)
-                    .showErrorNotification(context.getString(R.string.voip_one_sided_warning))
+                    .showErrorNotification(context.getString(warning))
             }.onFailure { AppLogger.w(TAG, "Could not warn about the one-sided recording: ${it.message}") }
         }
 

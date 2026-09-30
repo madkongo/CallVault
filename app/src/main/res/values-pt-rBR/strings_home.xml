@@ -9,6 +9,7 @@
     <string name="home_health_failed_empty">Sua última chamada gerou uma gravação vazia (0 bytes).</string>
     <string name="home_health_failed_no_audio">Sua última chamada foi salva, mas não contém áudio.</string>
     <string name="home_health_failed_one_sided">Só o seu lado foi gravado na sua última chamada de app.</string>
+    <string name="home_health_failed_one_sided_vivo">Na sua última chamada por app, somente o seu lado foi gravado. No vivo: abra o app Gravador → Gravação de chamadas em apps e ative-a (com Início automático).</string>
     <string name="home_health_missed_adb_pairing">Uma chamada não foi gravada — a configuração não estava concluída no momento, %1$s.</string>
     <string name="home_health_missed_adb_pairing_unnamed">Uma chamada não foi gravada — a configuração não estava concluída no momento.</string>
     <string name="home_health_missed_developer_options">Uma chamada não foi gravada — as Opções do desenvolvedor estavam desativadas no momento, %1$s.</string>

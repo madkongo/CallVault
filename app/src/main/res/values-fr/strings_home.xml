@@ -10,6 +10,7 @@
     <string name="home_health_failed_empty">Votre dernier appel a produit un enregistrement vide (0 octet).</string>
     <string name="home_health_failed_no_audio">Votre dernier appel a été enregistré, mais ne contient aucun son.</string>
     <string name="home_health_failed_one_sided">Seul votre côté a été enregistré lors de votre dernier appel via une application.</string>
+    <string name="home_health_failed_one_sided_vivo">Lors de votre dernier appel via une application, seul votre côté a été enregistré. Sur vivo : ouvrez l\'application Enregistreur → Enregistrement des appels dans les applications et activez-la (avec le démarrage automatique).</string>
     <string name="home_health_missed_adb_pairing">Un appel n\'a pas été enregistré — la configuration n\'était pas terminée à ce moment-là, %1$s.</string>
     <string name="home_health_missed_adb_pairing_unnamed">Un appel n\'a pas été enregistré — la configuration n\'était pas terminée à ce moment-là.</string>
     <string name="home_health_missed_developer_options">Un appel n\'a pas été enregistré — les options pour développeurs étaient désactivées à ce moment-là, %1$s.</string>

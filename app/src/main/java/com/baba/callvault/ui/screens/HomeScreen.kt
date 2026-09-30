@@ -188,6 +188,7 @@ import com.baba.callvault.ui.common.CallOriginBadge
 import androidx.compose.foundation.Image
 import androidx.compose.material.icons.filled.Groups
 import com.baba.callvault.R
+import com.baba.callvault.utils.DeviceInfo
 import com.baba.callvault.system.shareTranscriptFile
 import com.baba.callvault.data.transcripts.FavouriteRepository
 import com.baba.callvault.data.transcripts.FlagRepository
@@ -2414,7 +2415,9 @@ private fun healthMessage(health: SetupHealth): String {
                 FailureReason.EMPTY_FILE -> R.string.home_health_failed_empty
                 FailureReason.NO_AUDIO -> R.string.home_health_failed_no_audio
                 FailureReason.DAEMON_DIED -> R.string.home_health_failed_daemon
-                FailureReason.ONE_SIDED -> R.string.home_health_failed_one_sided
+                FailureReason.ONE_SIDED ->
+                    if (DeviceInfo.isVivo()) R.string.home_health_failed_one_sided_vivo
+                    else R.string.home_health_failed_one_sided
                 FailureReason.CUT_OFF -> R.string.home_health_failed_cut_off
             }
         )

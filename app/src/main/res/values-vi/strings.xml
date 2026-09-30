@@ -503,6 +503,7 @@
     <string name="voip_missed_no_folder">Một cuộc gọi trong ứng dụng không được ghi — thư mục ghi âm bị thiếu hoặc không ghi được. Hãy chọn lại trong Cài đặt.</string>
     <string name="voip_missed_label">Cuộc gọi trong ứng dụng</string>
     <string name="voip_one_sided_warning">Chỉ có phía bạn được ghi trong cuộc gọi đó — ứng dụng kia không cho phép ghi âm thanh cuộc gọi của nó.</string>
+    <string name="voip_one_sided_warning_vivo">Chỉ có phía bạn trong cuộc gọi qua ứng dụng đó được ghi lại. Trên vivo, mở ứng dụng Ghi âm → Ghi âm cuộc gọi trong ứng dụng và bật nó (cùng với Tự động bắt đầu ghi) để ghi cả người kia.</string>
     <string name="voip_prompt_text">Nhấn Ghi âm để ghi lại cuộc gọi này.</string>
     <string name="voip_prompt_text_named">Cuộc gọi %1$s. Nhấn Ghi âm để ghi lại.</string>
     <string name="voip_prompt_title">Đang có cuộc gọi trong ứng dụng</string>

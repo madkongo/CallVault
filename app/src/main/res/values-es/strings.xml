@@ -503,6 +503,7 @@
     <string name="voip_missed_no_folder">Una llamada de aplicación no se grabó — falta la carpeta de grabaciones o no se puede escribir en ella. Vuelve a elegirla en Ajustes.</string>
     <string name="voip_missed_label">Llamada de app</string>
     <string name="voip_one_sided_warning">De esa llamada solo se grabó tu lado: la otra app no permite capturar el audio de sus llamadas.</string>
+    <string name="voip_one_sided_warning_vivo">De esa llamada de app solo se grabó tu lado. En teléfonos vivo, abre la app Grabadora → Grabación de llamadas en apps y actívala (con Inicio automático) para grabar también a la otra persona.</string>
     <string name="voip_prompt_text">Toca Grabar para grabar esta llamada.</string>
     <string name="voip_prompt_text_named">Llamada de %1$s. Toca Grabar para grabarla.</string>
     <string name="voip_prompt_title">Llamada de app en curso</string>

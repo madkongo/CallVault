@@ -503,6 +503,7 @@
     <string name="voip_missed_no_folder">一通应用通话未被录制 — 录音文件夹缺失或无法写入。请在设置中重新选择。</string>
     <string name="voip_missed_label">应用通话</string>
     <string name="voip_one_sided_warning">那通应用内通话只录到了你这一方——对方应用不允许捕获其通话音频。</string>
+    <string name="voip_one_sided_warning_vivo">该应用通话仅录下了你这一方。在 vivo 手机上，打开“录音机”应用 → 应用内通话录音并开启（同时开启自动开始录音），即可同时录下对方。</string>
     <string name="voip_prompt_text">点按“录制”即可录制此通话。</string>
     <string name="voip_prompt_text_named">%1$s 通话。点按“录制”即可录制。</string>
     <string name="voip_prompt_title">应用内通话进行中</string>

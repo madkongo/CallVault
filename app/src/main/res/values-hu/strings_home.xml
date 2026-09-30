@@ -9,6 +9,7 @@
     <string name="home_health_failed_empty">Az utolsó hívása üres felvételt eredményezett (0 bájt).</string>
     <string name="home_health_failed_no_audio">A legutóbbi hívás mentve lett, de nem tartalmaz hangot.</string>
     <string name="home_health_failed_one_sided">Az utolsó alkalmazáshívásából csak az Ön oldala lett rögzítve.</string>
+    <string name="home_health_failed_one_sided_vivo">A legutóbbi alkalmazáson keresztüli hívásnál csak az Ön oldala került rögzítésre. vivo készüléken: nyissa meg a Hangrögzítő alkalmazást → Alkalmazáson belüli hívásrögzítés, és kapcsolja be (az automatikus indítással együtt).</string>
     <string name="home_health_missed_adb_pairing">Egy hívás nem lett rögzítve — a beállítás akkor még nem fejeződött be, %1$s.</string>
     <string name="home_health_missed_adb_pairing_unnamed">Egy hívás nem lett rögzítve — a beállítás akkor még nem fejeződött be.</string>
     <string name="home_health_missed_developer_options">Egy hívás nem lett rögzítve — a fejlesztői beállítások akkor ki voltak kapcsolva, %1$s.</string>

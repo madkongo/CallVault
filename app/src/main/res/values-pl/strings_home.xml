@@ -9,6 +9,7 @@
     <string name="home_health_failed_empty">Twoje ostatnie połączenie dało puste nagranie (0 bajtów).</string>
     <string name="home_health_failed_no_audio">Ostatnia rozmowa została zapisana, ale nie zawiera dźwięku.</string>
     <string name="home_health_failed_one_sided">W twoim ostatnim połączeniu w aplikacji nagrano tylko twoją stronę.</string>
+    <string name="home_health_failed_one_sided_vivo">Podczas ostatniej rozmowy przez aplikację nagrano tylko Twoją stronę. Na vivo: otwórz aplikację Dyktafon → Nagrywanie rozmów w aplikacjach i włącz je (wraz z automatycznym startem).</string>
     <string name="home_health_missed_adb_pairing">Połączenie nie zostało nagrane — konfiguracja nie była wtedy ukończona, %1$s.</string>
     <string name="home_health_missed_adb_pairing_unnamed">Połączenie nie zostało nagrane — konfiguracja nie była wtedy ukończona.</string>
     <string name="home_health_missed_developer_options">Połączenie nie zostało nagrane — opcje programistyczne były wtedy wyłączone, %1$s.</string>

@@ -9,6 +9,7 @@
     <string name="home_health_failed_empty">Ваш последний вызов дал пустую запись (0 байт).</string>
     <string name="home_health_failed_no_audio">Последний звонок сохранён, но не содержит звука.</string>
     <string name="home_health_failed_one_sided">В вашем последнем звонке в приложении записана только ваша сторона.</string>
+    <string name="home_health_failed_one_sided_vivo">В последнем звонке через приложение записана только ваша сторона. На vivo: откройте приложение «Диктофон» → Запись звонков в приложениях и включите её (вместе с автозапуском).</string>
     <string name="home_health_missed_adb_pairing">Вызов не был записан — настройка на тот момент не была завершена, %1$s.</string>
     <string name="home_health_missed_adb_pairing_unnamed">Вызов не был записан — настройка на тот момент не была завершена.</string>
     <string name="home_health_missed_developer_options">Вызов не был записан — параметры разработчика на тот момент были отключены, %1$s.</string>

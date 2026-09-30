@@ -90,6 +90,7 @@
     <string name="home_health_failed_no_audio">Your last call was saved but contains no audio.</string>
     <string name="home_health_failed_daemon">The recorder stopped during your last call.</string>
     <string name="home_health_failed_one_sided">Only your side was recorded on your last app call.</string>
+    <string name="home_health_failed_one_sided_vivo">Only your side was recorded on your last app call. On vivo: open the Recorder app → In-app call recording and turn it on (with Auto-start recording).</string>
     <string name="home_date_today">Today</string>
     <string name="home_date_yesterday">Yesterday</string>
     <string name="whatsnew_221_title">Faster to open, and quieter about problems that are not there</string>

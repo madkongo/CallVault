@@ -190,6 +190,7 @@
     <string name="voip_missed_no_folder">An app call was not recorded — the recordings folder is missing or cannot be written to. Choose it again in Settings.</string>
     <string name="voip_missed_label">App call</string>
     <string name="voip_one_sided_warning">Only your side of that app call was recorded — the other app does not allow its call audio to be captured.</string>
+    <string name="voip_one_sided_warning_vivo">Only your side of that app call was recorded. On vivo, open the Recorder app → In-app call recording and turn it on (with Auto-start recording) to record the other person too.</string>
     <string name="voip_recording_unavailable">Couldn\'t enable on this device — VoIP recording isn\'t available here.</string>
     <string name="voip_recording_names_hint">Contact names come from the calling app\'s own call notification. If notifications are turned off for that app, its recordings are saved without a name.</string>
     <string name="settings_usb_debugging_label">USB debugging</string>

@@ -9,6 +9,7 @@
     <string name="home_health_failed_empty">La tua ultima chiamata ha prodotto una registrazione vuota (0 byte).</string>
     <string name="home_health_failed_no_audio">L\'ultima chiamata è stata salvata, ma non contiene audio.</string>
     <string name="home_health_failed_one_sided">Nella tua ultima chiamata da app è stato registrato solo il tuo lato.</string>
+    <string name="home_health_failed_one_sided_vivo">Nell\'ultima chiamata tramite app è stato registrato solo il tuo lato. Su vivo: apri l\'app Registratore → Registrazione delle chiamate nelle app e attivala (con Avvio automatico).</string>
     <string name="home_health_missed_adb_pairing">Una chiamata non è stata registrata — la configurazione non era completata in quel momento, %1$s.</string>
     <string name="home_health_missed_adb_pairing_unnamed">Una chiamata non è stata registrata — la configurazione non era completata in quel momento.</string>
     <string name="home_health_missed_developer_options">Una chiamata non è stata registrata — le opzioni sviluppatore erano disattivate in quel momento, %1$s.</string>

@@ -503,6 +503,7 @@
     <string name="voip_missed_no_folder">Un appel d\'application n\'a pas été enregistré — le dossier d\'enregistrement est absent ou non accessible en écriture. Choisissez-le à nouveau dans les Réglages.</string>
     <string name="voip_missed_label">Appel d\'application</string>
     <string name="voip_one_sided_warning">Seule votre voix a été enregistrée pour cet appel — l\'autre application n\'autorise pas la capture de l\'audio de ses appels.</string>
+    <string name="voip_one_sided_warning_vivo">Seul votre côté de cet appel via une application a été enregistré. Sur vivo, ouvrez l\'application Enregistreur → Enregistrement des appels dans les applications et activez-la (avec le démarrage automatique) pour enregistrer aussi l\'autre personne.</string>
     <string name="voip_prompt_text">Appuyez sur Enregistrer pour enregistrer cet appel.</string>
     <string name="voip_prompt_text_named">Appel %1$s. Appuyez sur Enregistrer pour l\'enregistrer.</string>
     <string name="voip_prompt_title">Appel en cours dans une appli</string>

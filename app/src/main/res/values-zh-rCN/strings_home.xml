@@ -9,6 +9,7 @@
     <string name="home_health_failed_empty">你上一通通话生成了空录音（0 字节）。</string>
     <string name="home_health_failed_no_audio">上次通话已保存，但不含音频。</string>
     <string name="home_health_failed_one_sided">上一通应用内通话只录到了你这一方。</string>
+    <string name="home_health_failed_one_sided_vivo">上次应用通话仅录下了你这一方。在 vivo 手机上：打开“录音机”应用 → 应用内通话录音并开启（同时开启自动开始录音）。</string>
     <string name="home_health_missed_adb_pairing">有一通通话未被录音 — 当时设置尚未完成，%1$s。</string>
     <string name="home_health_missed_adb_pairing_unnamed">有一通通话未被录音 — 当时设置尚未完成。</string>
     <string name="home_health_missed_developer_options">有一通通话未被录音 — 当时开发者选项处于关闭状态，%1$s。</string>

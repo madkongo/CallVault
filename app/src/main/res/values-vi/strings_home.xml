@@ -9,6 +9,7 @@
     <string name="home_health_failed_empty">Cuộc gọi gần nhất của bạn tạo ra một bản ghi rỗng (0 byte).</string>
     <string name="home_health_failed_no_audio">Cuộc gọi gần nhất đã được lưu nhưng không có âm thanh.</string>
     <string name="home_health_failed_one_sided">Chỉ có phía bạn được ghi trong cuộc gọi ứng dụng gần nhất.</string>
+    <string name="home_health_failed_one_sided_vivo">Trong cuộc gọi qua ứng dụng gần nhất, chỉ có phía bạn được ghi lại. Trên vivo: mở ứng dụng Ghi âm → Ghi âm cuộc gọi trong ứng dụng và bật nó (cùng với Tự động bắt đầu ghi).</string>
     <string name="home_health_missed_adb_pairing">Một cuộc gọi đã không được ghi âm — lúc đó phần thiết lập chưa hoàn tất, %1$s.</string>
     <string name="home_health_missed_adb_pairing_unnamed">Một cuộc gọi đã không được ghi âm — lúc đó phần thiết lập chưa hoàn tất.</string>
     <string name="home_health_missed_developer_options">Một cuộc gọi đã không được ghi âm — lúc đó Tùy chọn nhà phát triển đang tắt, %1$s.</string>

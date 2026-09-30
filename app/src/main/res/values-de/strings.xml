@@ -503,6 +503,7 @@
     <string name="voip_missed_no_folder">Ein App-Anruf wurde nicht aufgezeichnet — der Aufnahmeordner fehlt oder ist nicht beschreibbar. Wähle ihn in den Einstellungen erneut aus.</string>
     <string name="voip_missed_label">App-Anruf</string>
     <string name="voip_one_sided_warning">Von diesem App-Anruf wurde nur deine Seite aufgenommen — die andere App erlaubt es nicht, ihr Gesprächsaudio aufzuzeichnen.</string>
+    <string name="voip_one_sided_warning_vivo">Von diesem App-Anruf wurde nur Ihre Seite aufgenommen. Öffnen Sie auf vivo die App „Recorder“ → In-App-Anrufaufnahme und schalten Sie sie ein (samt automatischem Aufnahmestart), um auch die andere Person aufzunehmen.</string>
     <string name="voip_prompt_text">Auf „Aufnehmen“ tippen, um diesen Anruf aufzunehmen.</string>
     <string name="voip_prompt_text_named">%1$s-Anruf. Auf „Aufnehmen“ tippen, um ihn aufzunehmen.</string>
     <string name="voip_prompt_title">App-Anruf läuft</string>

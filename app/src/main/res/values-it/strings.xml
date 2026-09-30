@@ -503,6 +503,7 @@
     <string name="voip_missed_no_folder">Una chiamata da app non è stata registrata — la cartella delle registrazioni manca o non è scrivibile. Selezionala di nuovo nelle Impostazioni.</string>
     <string name="voip_missed_label">Chiamata da app</string>
     <string name="voip_one_sided_warning">Di quella chiamata è stato registrato solo il tuo lato: l\'altra app non consente di catturare l\'audio delle sue chiamate.</string>
+    <string name="voip_one_sided_warning_vivo">Di quella chiamata tramite app è stato registrato solo il tuo lato. Su vivo, apri l\'app Registratore → Registrazione delle chiamate nelle app e attivala (con Avvio automatico) per registrare anche l\'altra persona.</string>
     <string name="voip_prompt_text">Tocca Registra per registrare questa chiamata.</string>
     <string name="voip_prompt_text_named">Chiamata %1$s. Tocca Registra per registrarla.</string>
     <string name="voip_prompt_title">Chiamata in un\'app in corso</string>

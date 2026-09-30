@@ -506,6 +506,7 @@
     <string name="voip_missed_no_folder">Uma chamada de aplicativo não foi gravada — a pasta de gravações está ausente ou não pode ser gravada. Escolha-a novamente nas Configurações.</string>
     <string name="voip_missed_label">Chamada de aplicativo</string>
     <string name="voip_one_sided_warning">Só o seu lado dessa chamada de app foi gravado — o outro app não permite que o áudio da chamada dele seja capturado.</string>
+    <string name="voip_one_sided_warning_vivo">Somente o seu lado dessa chamada por app foi gravado. No vivo, abra o app Gravador → Gravação de chamadas em apps e ative-a (com Início automático) para gravar também a outra pessoa.</string>
     <string name="voip_prompt_text">Toque em Gravar para gravar esta chamada.</string>
     <string name="voip_prompt_text_named">Chamada do %1$s. Toque em Gravar para gravá-la.</string>
     <string name="voip_prompt_title">Chamada de app em andamento</string>

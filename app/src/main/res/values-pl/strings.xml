@@ -503,6 +503,7 @@
     <string name="voip_missed_no_folder">Połączenie w aplikacji nie zostało nagrane — brakuje folderu nagrań lub nie można w nim zapisywać. Wybierz go ponownie w Ustawieniach.</string>
     <string name="voip_missed_label">Połączenie w aplikacji</string>
     <string name="voip_one_sided_warning">Z tej rozmowy nagrano tylko twoją stronę — druga aplikacja nie pozwala na przechwytywanie dźwięku swoich połączeń.</string>
+    <string name="voip_one_sided_warning_vivo">Z tej rozmowy przez aplikację nagrano tylko Twoją stronę. Na vivo otwórz aplikację Dyktafon → Nagrywanie rozmów w aplikacjach i włącz je (wraz z automatycznym startem), aby nagrywać także drugą osobę.</string>
     <string name="voip_prompt_text">Dotknij Nagrywaj, aby nagrać to połączenie.</string>
     <string name="voip_prompt_text_named">Połączenie %1$s. Dotknij Nagrywaj, aby je nagrać.</string>
     <string name="voip_prompt_title">Trwa połączenie w aplikacji</string>
