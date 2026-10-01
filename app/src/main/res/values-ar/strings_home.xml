@@ -1,0 +1,322 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  CallVault: FOSS call recording, self-contained over embedded ADB
+  Copyright (C) 2026-present The CallVault Authors
+  Strings added for the Signal redesign of the Home screen. Kept in a separate
+  resources file to avoid conflicts with parallel work on strings.xml.
+-->
+<resources>
+    <string name="home_hero_status_label">الحالة</string>
+    <string name="home_hero_pill_ready">نشط</string>
+    <string name="home_hero_pill_not_paired">الإجراء مطلوب</string>
+    <string name="home_hero_pill_no_folder">الإجراء مطلوب</string>
+    <string name="home_hero_pill_dev_options_off">التسجيل معطل</string>
+    <string name="home_hero_pill_update_regrant">الإجراء مطلوب</string>
+    <string name="home_support_pill">الدعم</string>
+    <string name="home_usb_advisory_title">قد يتوقف التسجيل عند قفل الشاشة</string>
+    <string name="home_usb_advisory_text">تم تعيين USB على وضع البيانات. انقر لتعيينه على الشحن فقط.</string>
+    <string name="home_usb_advisory_fix">إصلاح</string>
+    <string name="home_recordings_count">%1$d تم حفظها</string>
+    <string name="home_recordings_empty_title">لا توجد تسجيلات حتى الآن</string>
+    <string name="home_recordings_empty_hint">عندما يسجل CallVault مكالمة، ستظهر هنا. قم بإجراء أو تلقي مكالمة للبدء.</string>
+    <string name="home_play_recording">تشغيل التسجيل</string>
+    <string name="home_update_banner_title">تحديث متاح: %1$s</string>
+    <string name="home_update_banner_text">يتوفر إصدار جديد للتنزيل من GitHub.</string>
+    <string name="home_update_banner_button">تحديث</string>
+    <string name="home_update_banner_downloading">جارٍ التنزيل… %1$d%%</string>
+    <string name="home_update_banner_installing">جارٍ التثبيت…</string>
+    <string name="home_updated_banner_text">تم تحديث CallVault إلى %1$s</string>
+    <string name="home_whatsnew_title">ما الجديد</string>
+    <string name="home_whatsnew_body">• يتعافى التسجيل الآن بنفسه إذا توقف في أي وقت
+• تخبرك الصفحة الرئيسية عندما يكون التسجيل معطلاً، بدلاً من البقاء صامتًا
+• لم تعد المكالمة الهاتفية تعتبر مكالمة تطبيق</string>
+    <string name="home_whatsnew_offline_cta">تشغيل التسجيل بدون Wi-Fi</string>
+    <string name="home_whatsnew_offline_enabled">تم تمكين التسجيل بدون اتصال.</string>
+    <string name="offline_failed_needs_wd">تعذر التمكين — تصحيح أخطاء اللاسلكي متوقف ولم يتمكن CallVault من تشغيله. قم بتشغيله في خيارات المطور، ثم حاول مرة أخرى.</string>
+    <string name="offline_failed_no_service">تعذر التمكين — لم يتمكن CallVault من الوصول إلى خدمة تصحيح أخطاء الهاتف. تحقق من اتصالك بـ Wi-Fi مع تشغيل تصحيح أخطاء اللاسلكي، ثم حاول مرة أخرى.</string>
+    <string name="offline_failed_port">تعذر التمكين — لم يعد المنفذ المحلي للعمل. حاول مرة أخرى بعد قليل.</string>
+    <string name="home_whatsnew_offline_enabling">جارٍ تمكين التسجيل بدون Wi-Fi…</string>
+    <string name="home_whatsnew_resilient_title">جديد: تسجيل مرن</string>
+    <string name="home_whatsnew_resilient_body">يجعل تسجيل المكالمات أكثر مقاومة للانقطاعات.
+
+يمكن لنظام Android إيقاف مساعد CallVault في الخلفية في أي وقت. مع تمكين هذا، لا يتأثر التسجيل الجاري حاليًا عند حدوث ذلك.
+
+معطل افتراضيًا — يمكنك أيضًا تشغيله لاحقًا في الإعدادات ▸ الموثوقية.</string>
+    <string name="home_whatsnew_resilient_cta">تشغيله</string>
+    <string name="home_whatsnew_resilient_enabled">التسجيل المرن قيد التشغيل. لم يعد التسجيل الجاري حاليًا يتأثر إذا أوقف Android مساعد CallVault في الخلفية.</string>
+    <string name="home_whatsnew_settings_cta">فتح الإعدادات</string>
+    <string name="whatsnew_153_title">إعدادك، يتم التحقق منه بواسطة مكالماتك الخاصة</string>
+    <string name="whatsnew_155_title">الإعدادات في لوحة، ومكالمات تسجل بشكل أكثر موثوقية</string>
+    <string name="whatsnew_155_body">تنزلق الإعدادات الآن فوق التطبيق بدلاً من استبدالها، مجمعة بحيث تكون كل شاشة قائمة قصيرة بدلاً من كل شيء دفعة واحدة. تظهر التسجيلات متى حدثت المكالمة وكم استغرقت.
+
+تحت السطح: تم إصلاح عدة طرق يمكن أن يفقد بها التسجيل أو يتلف، بما في ذلك الصوت المتشوش مع التسجيل المرن، واختفاء جانب واحد من مكالمات VoIP على هواتف Samsung.</string>
+    <string name="whatsnew_154_title">تسجيل يتعافى تلقائيًا</string>
+    <string name="whatsnew_154_body">يمكن أن يؤدي توقف نادر في الاتصال بالمسجل إلى إيقاف التسجيل بصمت حتى تتم إعادة تشغيل التطبيق — دون أي شيء على الشاشة للإشارة إلى ذلك. يتم الآن إيقافه واستعادته تلقائيًا.
+
+يمكنك أيضًا اختيار وقت تحميل التسجيلات إلى Drive: فورًا، يوميًا، أو أسبوعيًا. يمكنك العثور على ذلك ضمن الإعدادات ▸ التخزين، بالإضافة إلى "الاحتفاظ"، الذي انتقل إلى نفس القسم.</string>
+    <string name="whatsnew_153_body">تخبرك بطاقة الحالة الآن ما إذا كان التسجيل قد عمل بالفعل، بناءً على مكالماتك الحقيقية بدلاً من ضوء أخضر يعني فقط أن التطبيق بدأ. إذا لم يتم تسجيل مكالمة، فإنه يقول ذلك ولماذا — مجلد لم يتم تعيينه أبدًا، أو إيقاف تشغيل خيارات المطور، أو فقدان إذن بسبب تحديث.
+
+أيضًا: يتحدث CallVault الآن بالبرتغالية البرازيلية، وتم تحديث جميع اللغات الأخرى.</string>
+    <string name="whatsnew_150_title">إيقاف تصحيح أخطاء اللاسلكي</string>
+    <string name="whatsnew_150_body">يؤدي تشغيل تصحيح أخطاء USB إلى السماح لـ CallVault بإيقاف تشغيل تصحيح أخطاء اللاسلكي وإبقائه متوقفًا. لا حاجة لكابل، وعلى عكس تصحيح أخطاء اللاسلكي، فإنه لا يفتح أي منفذ شبكة — لذا فهو الأكثر أمانًا من الاثنين لتركه قيد التشغيل. اختياري: يعمل التسجيل بأي طريقة.
+
+تم إصلاح أيضًا: قد يؤدي إيقاف تشغيل تصحيح أخطاء USB إلى ترك CallVault غير قادر على التسجيل، دون الإشارة إلى ذلك.</string>
+    <string name="whatsnew_150_where">الإعدادات ▸ تجريبي ▸ تصحيح أخطاء USB</string>
+    <string name="whatsnew_148_title">بدء تشغيل أكثر موثوقية</string>
+    <string name="whatsnew_148_body">على بعض الهواتف، يمكن لـ CallVault الاستمرار في تشغيل تصحيح أخطاء اللاسلكي وإيقاف تشغيله دون أن يصبح جاهزًا للتسجيل. تم إصلاح ذلك. حيث يكون تصحيح أخطاء اللاسلكي هو الطريقة الوحيدة للوصول، يتركه CallVault الآن قيد التشغيل ويخبرك بالإعداد الذي سيسمح بإيقاف تشغيله مرة أخرى.
+
+تم إصلاح أيضًا: يمكن أن تبلغ مكالمة تطبيق عن فشل على الرغم من أنها سجلت بشكل جيد، ويمكن أن تُصنف بالتطبيق الخطأ.</string>
+    <string name="whatsnew_147_title">تسجيل مكالمات التطبيق (VoIP)</string>
+    <string name="whatsnew_147_body">يمكن لـ CallVault الآن تسجيل المكالمات التي تتم داخل تطبيقات مثل WhatsApp وSignal وTelegram — كلا الجانبين من المحادثة، وليس صوتك فقط. تظهر التسجيلات التطبيق الذي تم إجراء المكالمة فيه، واسم جهة الاتصال عندما يوفره التطبيق.
+
+تجريبي: يعمل مع بعض التطبيقات وليس غيرها، ويمكن للتطبيق منع التسجيل في أي وقت في تحديث.</string>
+    <string name="whatsnew_147_where">الإعدادات ▸ تجريبي ▸ مكالمات VoIP</string>
+    <string name="whatsnew_146_title">تسجيل مرن</string>
+    <string name="whatsnew_146_body">يمكن لنظام Android إيقاف مساعد CallVault في الخلفية في أي وقت، والذي كان يؤدي إلى قطع التسجيل مبكرًا وتركك بنصف مكالمة. مع تشغيل هذا، يستمر التسجيل الجاري حتى النهاية بغض النظر عن ذلك.</string>
+    <string name="whatsnew_146_where">الإعدادات ▸ تجريبي ▸ المرونة</string>
+    <string name="whatsnew_145_title">استمر في التسجيل عند قفل الشاشة</string>
+    <string name="whatsnew_145_body">على العديد من الهواتف، كان قفل الشاشة أثناء المكالمة يؤدي إلى إيقاف المسجل في منتصف المكالمة. تم إصلاح ذلك، ويحذرك CallVault الآن إذا كان إعداد USB بهاتفك هو السبب في ذلك.</string>
+    <string name="offline_recording_on">التسجيل بدون Wi-Fi قيد التشغيل.</string>
+    <string name="offline_recording_disabling">جارٍ إيقاف التسجيل بدون Wi-Fi…</string>
+    <string name="home_health_verified">آخر تحقق %1$s.</string>
+    <string name="home_health_verified_just_now">آخر تحقق الآن.</string>
+    <string name="home_health_unverified">ستؤكد مكالمتك التالية أن التسجيل يعمل.</string>
+    <string name="home_health_setup_changed">تغير الإعداد منذ مكالمتك الأخيرة — ستؤكد مكالمتك التالية أنها لا تزال تعمل.</string>
+    <string name="home_health_call_not_recorded">لم يتم تسجيل مكالمة — %1$s، %2$s.</string>
+    <string name="home_health_call_not_recorded_unnamed">لم يتم تسجيل مكالمة — %1$s.</string>
+    <string name="home_health_missed_recording_folder">لم يتم تسجيل مكالمة — لم يتم تعيين مجلد تسجيل في ذلك الوقت، %1$s.</string>
+    <string name="home_health_missed_recording_folder_unnamed">لم يتم تسجيل مكالمة — لم يتم تعيين مجلد تسجيل في ذلك الوقت.</string>
+    <string name="home_health_missed_adb_pairing">لم يتم تسجيل مكالمة — لم يكتمل الإعداد في ذلك الوقت، %1$s.</string>
+    <string name="home_health_missed_adb_pairing_unnamed">لم يتم تسجيل مكالمة — لم يكتمل الإعداد في ذلك الوقت.</string>
+    <string name="home_health_missed_developer_options">لم يتم تسجيل مكالمة — كانت خيارات المطور متوقفة في ذلك الوقت، %1$s.</string>
+    <string name="home_health_missed_developer_options_unnamed">لم يتم تسجيل مكالمة — كانت خيارات المطور متوقفة في ذلك الوقت.</string>
+    <string name="home_health_missed_secure_settings">لم يتم تسجيل مكالمة — فقد CallVault الإذن لبدء المسجل، %1$s.</string>
+    <string name="home_health_missed_secure_settings_unnamed">لم يتم تسجيل مكالمة — فقد CallVault الإذن لبدء المسجل.</string>
+    <string name="home_health_failed_empty">أنتجت مكالمتك الأخيرة تسجيلًا فارغًا (0 بايت).</string>
+    <string name="home_health_failed_no_audio">تم حفظ مكالمتك الأخيرة ولكنها لا تحتوي على صوت.</string>
+    <string name="home_health_failed_daemon">توقف مسجل الصوت أثناء مكالمتك الأخيرة.</string>
+    <string name="home_health_failed_one_sided">تم تسجيل جانبك فقط في مكالمة تطبيقك الأخيرة.</string>
+    <string name="home_health_failed_one_sided_vivo">تم تسجيل جانبك فقط في مكالمة تطبيقك الأخيرة. على هواتف vivo: افتح تطبيق المسجّل ▸ «In-app call recording» وشغّله (مع «Auto-start recording»).</string>
+    <string name="home_date_today">اليوم</string>
+    <string name="home_date_yesterday">أمس</string>
+    <string name="whatsnew_221_title">أسرع في الفتح، وأكثر هدوءًا بشأن المشكلات غير الموجودة</string>
+    <string name="whatsnew_221_body">أصبح فتح CallVault سريعًا مرة أخرى، ويظل سريعًا مهما كان عدد المكالمات التي تحتفظ بها. كان الإصدار 2.2.0 يعيد قراءة طول كل تسجيل في كل مرة يتم فيها رسم القائمة، لذلك بمجرد أن يكون لديك بضع عشرات من المكالمات، كانت القائمة بطيئة بما يكفي لدرجة أن مكالمة سجلت قبل دقائق قليلة يمكن أن تبدو وكأنها لم تسجل على الإطلاق.
+
+لم يعد التحذير بأن التسجيلات توقفت عن الوصول إلى Google Drive يظهر عندما لم تتوقف. قيل لشخصين أن النسخ الاحتياطي الخاص بهما قد فشل بينما كانت جميع التسجيلات تصل بشكل مثالي.
+
+تتبع العناوين داخل نص مكتوب تم تصديره، وعدد التطبيقات المحددة، وزر الرجوع الآن اللغة التي اخترتها بدلاً من البقاء باللغة الإنجليزية. يمكن لتقرير تصحيح الأخطاء أيضًا أن يذكر أي تطبيق يحتفظ بالميكروفون، لمشكلة يصعب اكتشافها.</string>
+    <string name="whatsnew_220_title">ابحث عن مكالمة مرة أخرى، وتحكم فيها أثناء حدوثها</string>
+    <string name="whatsnew_220_body">ضع علامة على لحظة بينما لا تزال تتحدث. يضع زر على إشعار المكالمة إشارة مرجعية حيث تضغط عليها، وتظهر التسجيلات كشرائح يتم تشغيلها من هناك — في المكالمات الهاتفية ومكالمات التطبيق على حد سواء. تحتوي مكالمات التطبيق الآن على عناصر تحكم بالكامل: إيقاف مؤقت، استئناف، إيقاف، ووضع علامة، حيث كان يمكن بدء واحدة وإنهاؤها فقط من قبل.
+
+العثور على مكالمة مرة أخرى أسهل: قم بتمييز المكالمات التي تستحق الاحتفاظ بها بنجمة، وقم بتسميتها بكلماتك الخاصة، وابحث عبر الملخصات وملاحظاتك الخاصة بدلاً من الكلمات المنطوقة فقط. يتم تصدير النصوص كنص، Markdown، SRT، VTT، أو JSON.
+
+يتحدث CallVault أيضًا بصوت عالٍ عندما يتوقف عن العمل بصمت — إذا لم يتمكن التسجيل من البدء بعد إعادة التشغيل، أو توقفت التسجيلات عن الوصول إلى Drive. كان كلاهما صامتًا في السابق. يمكن أن تحد عملية التنظيف الجديدة من المساحة التي تشغلها التسجيلات أو تحذف التسجيلات القصيرة جدًا. كل ذلك معطل افتراضيًا، ولا يتم حذف تسجيل مميز بنجمة تلقائيًا أبدًا.</string>
+    <string name="whatsnew_220_where">الإعدادات ▸ التخزين ▸ الاحتفاظ بخيارات التنظيف</string>
+    <string name="whatsnew_211_title">نصوص أفضل، ملخصات أفضل</string>
+    <string name="whatsnew_211_body">يتجاهل التحويل إلى نص الآن الصمت قبل أن يقرأ النموذج مكالمة، ويزن عدة تحويلات محتملة بدلاً من أخذ الكلمة الأولى التي تخطر على البال. لقد أصبح أسرع قليلاً من ذي قبل على الرغم من قيامه بالمزيد، وفي مكالمة اختبارية استعاد جملة كاملة أسقطها الإصدار السابق.
+
+لم تعد الملخصات تكرر نفسها، وهو ما حدث لأن قائمة النقاط لم تكن لها حدود حقيقية. يمكنها أيضًا قول المزيد: كانت العناصر محددة بخمسة عناصر وطلب من كل منها أن يكون سطرًا قصيرًا واحدًا، وكلاهما كان يتم اتباعه على حساب المحتوى. لم يعد الملخص الطويل بلغة تتطلب المزيد من الكلمات يتم التخلص منه بسبب نفاد المساحة.
+
+كانت التسجيلات أيضًا تتدهور بصمت عند الدخول — تقليلها إلى المعدل الذي يتوقعه النموذج كان يضيف ضوضاء إلى الكلام بدلاً من تصفيتها. تأثرت المكالمات الصادرة بشكل أكبر، لأنها تحمل معظم صوتك الخاص.</string>
+    <string name="whatsnew_210_title">تظهر النصوص من كان يتحدث</string>
+    <string name="whatsnew_210_body">يتم الآن تحويل المكالمات المسجلة من الآن فصاعدًا إلى نص مع المتحدث بجانب كل سطر.
+
+يتم قراءتها من المكالمة أثناء تسجيلها — يحافظ هاتفك على فصل الجانبين قبل مزجهما معًا — لذا لا يكلف وقتًا إضافيًا، ولا تنزيلًا إضافيًا، ولا تخمينًا. لا يمكن فعل ذلك للمكالمات الموجودة بالفعل على الهاتف، لأن تلك المعلومات لا توجد إلا أثناء تسجيل المكالمة.
+
+يبدأ الجانبان كالمتحدث A والمتحدث B. بمجرد أن تتفق مكالمتان صادرتان على أي جانب هو أي جانب، يصبحان أنت والشخص الذي كنت تتحدث إليه — في النص المكتوب، وفي ما تنسخه أو تشاركه، وفي الملخص.</string>
+    <string name="whatsnew_210_where">أي مكالمة مسجلة من الآن فصاعدًا، في نصها المكتوب</string>
+    <string name="whatsnew_200_title">مكالماتك، مكتوبة — وملخصة</string>
+    <string name="whatsnew_200_body">إضافتان كبيرتان، كلاهما يعملان بالكامل على هاتفك. لا يتم تحميل أي شيء وكلاهما يعمل بدون أي شبكة على الإطلاق.
+
+يحول النسخ التسجيل إلى نص يمكنك قراءته والبحث فيه، بأربع عشرة لغة. انقر على سطر للانتقال إلى تلك اللحظة في المكالمة.
+
+تذهب الملخصات خطوة إلى الأمام: ما كانت المكالمة تدور حوله، وما تم اتخاذه من قرارات، وما قاله أي شخص أنه سيفعله — مع أوقات بجانب النقاط التي تحتوي على واحدة، بحيث يؤدي النقر إلى الانتقال مباشرة إلى هناك.
+
+يحتاج كل منهما إلى نموذج يتم تنزيله عبر Wi-Fi أولاً؛ يخبرك التطبيق بتكلفة كل منهما قبل البدء.</string>
+    <string name="whatsnew_200_where">الإعدادات ▸ التحويل إلى نص والإعدادات ▸ ملخصات المكالمات</string>
+    <string name="whatsnew_157_title">الحذف التلقائي يزيل الآن كل ما يجب</string>
+    <string name="whatsnew_157_body">إذا قمت بتعيين التسجيلات للحذف التلقائي، فقد احتفظ ببعضها بصمت إلى الأبد — كان الفحص يبحث فقط عن التسجيلات التي لا يزال CallVault يحتفظ بسجل لها، ولم يتم حذف أي تسجيلات فقد تتبعها مهما بلغت من العمر. على هاتف تم إعداده للاحتفاظ بأسبوع، تجاوز 131 ملفًا ذلك.
+
+يقرأ الفحص اليومي الآن مجلدات التسجيل الخاصة بك أيضًا، لذا فإن العمر وحده يحدد. لا يتم المساس إلا بالملفات التي سمّاها CallVault، ويتم ترك أي شيء لا يمكن تحديد تاريخه.
+
+يؤدي تغيير وقت تشغيل الفحص أيضًا إلى سريان مفعوله على الفور بدلاً من الانتظار ليوم واحد.</string>
+    <string name="whatsnew_157_where">الإعدادات ▸ التخزين ▸ الاحتفاظ</string>
+    <string name="whatsnew_156_title">حدد ما يتم تسجيله، ونظم التسجيلات</string>
+    <string name="whatsnew_156_body">يمكن لكل من المكالمات الهاتفية ومكالمات التطبيق التسجيل تلقائيًا، أو السؤال أولاً، أو يتم تجاهلها تمامًا — لذا فإن "مكالمات التطبيق فقط" هي الآن إعداد حقيقي بدلاً من مجموعة كان عليك اكتشافها.
+
+يمكن مشاركة التسجيلات، والضغط عليها لتحديد عدة تسجيلات في وقت واحد للمشاركة أو الحذف. يؤدي حذف تسجيل محتفظ به على الجهاز وفي Drive الآن إلى السؤال عن النسخ المراد إزالتها.</string>
+    <string name="whatsnew_156_where">الإعدادات ▸ التسجيل ▸ المكالمات الهاتفية</string>
+    <string name="merge_confirm">دمج</string>
+    <string name="merge_menu_action">دمج مع مكالمة أخرى</string>
+    <string name="merge_menu_take_apart">إلغاء الدمج</string>
+    <string name="merge_no_candidates">لا توجد مكالمات أخرى بهذا الرقم على الهاتف.</string>
+    <string name="merge_only_in_drive">في Drive فقط</string>
+    <string name="merge_pick_hint">حدد ما يتبعه. الأرقام تتبع ترتيب تحديدك.</string>
+    <string name="merge_primary_hint">تبدأ المكالمة المدمجة</string>
+    <string name="merge_title">دمج المكالمات مع %1$s</string>
+    <string name="settings_merge_keep_originals_description">بعد الدمج، اترك المكالمات التي تم إنشاؤها منها على الهاتف أيضًا. معطل افتراضيًا، لذا يترك الدمج تسجيلًا واحدًا. يعمل فصل المكالمة المدمجة بأي طريقة.</string>
+    <string name="settings_merge_keep_originals_title">احتفظ بالمكالمات الأصلية</string>
+    <string name="unmerge_confirm">إلغاء الدمج</string>
+    <string name="unmerge_message">تصبح هذه المكالمات مرة أخرى، كل منها بالنص والعلامات التي كانت عليها:</string>
+    <string name="unmerge_title">إلغاء دمج هذه المكالمة؟</string>
+    <plurals name="merge_row_badge">
+        <item quantity="zero">%1$d مكالمة</item>
+        <item quantity="one">%1$d مكالمة</item>
+        <item quantity="two">%1$d مكالمتان</item>
+        <item quantity="few">%1$d مكالمات</item>
+        <item quantity="many">%1$d مكالمةً</item>
+        <item quantity="other">%1$d مكالمة</item>
+    </plurals>
+    <plurals name="merge_summary">
+        <item quantity="zero">%1$d مكالمة · %2$s</item>
+        <item quantity="one">%1$d مكالمة · %2$s</item>
+        <item quantity="two">%1$d مكالمتان · %2$s</item>
+        <item quantity="few">%1$d مكالمات · %2$s</item>
+        <item quantity="many">%1$d مكالمةً · %2$s</item>
+        <item quantity="other">%1$d مكالمة · %2$s</item>
+    </plurals>
+    <string name="merge_note_will_delete">يتم إزالة المكالمات الأخرى. إلغاء الدمج لاحقًا يعيدها.</string>
+    <string name="merge_note_will_keep">يتم الاحتفاظ بالمكالمات الأخرى على الهاتف أيضًا.</string>
+    <string name="home_scroll_to_top">الأعلى</string>
+    <string name="home_whatsnew_full_notes">ملاحظات الإصدار الكاملة</string>
+    <string name="whatsnew_245_title">تم إصلاح رسالة «قُطِعت مكالمة» الخاطئة</string>
+    <string-array name="whatsnew_245_items">
+        <item>تم الإصلاح — لم يعد يظهر إشعار «قُطِعت مكالمة» لمكالمة سُجِّلت بشكل سليم</item>
+    </string-array>
+    <string name="whatsnew_244_title">تسجيل أكثر موثوقية، وإعادة اقتران سهلة، وتنبيهات التحديث</string>
+    <string name="whatsnew_244_where">الإعدادات ▸ الموثوقية ▸ إعادة الاقتران</string>
+    <string-array name="whatsnew_244_items">
+        <item>جديد — إذا أغلق هاتفك CallVault في منتصف مكالمة، يتم حفظ الجزء الذي سُجِّل قبل ذلك، ويتم إبلاغك</item>
+        <item>جديد — أعد الاقتران من الإعدادات إذا فُقد اتصال المسجل، دون إعادة تثبيت</item>
+        <item>جديد — نافذة منبثقة وفحوصات أسرع تخبرك فور توفر إصدار جديد</item>
+        <item>تغيير — الإعدادات التي لا يدعمها إصدار Android لديك تظهر باهتة، مع ذكر السبب</item>
+    </string-array>
+    <string name="whatsnew_243_title">مكالمات التطبيق تظل متزامنة، الملاحظات تحفظ أثناء الكتابة، وتسجل فقط من تختار</string>
+    <string name="whatsnew_243_where">الإعدادات ▸ التسجيل ▸ المكالمات الواردة ▸ تسجيل جهات الاتصال المحددة فقط</string>
+    <string-array name="whatsnew_243_items">
+        <item>جديد — سجّل فقط جهات الاتصال التي تختارها، للمكالمات الواردة أو الصادرة</item>
+        <item>تم الإصلاح — في مكالمات التطبيق، لم يعد الطرف الآخر يفقد التزامن معك</item>
+        <item>تم الإصلاح — كتابة ملاحظة تحتفظ بكل حرف، وتقول «تم الحفظ»</item>
+        <item>تم الإصلاح — لم يعد يبقى أي إشعار مكالمة بعد انتهاء المكالمة</item>
+        <item>تم الإصلاح — إذا كنت قد ثبّتّ نسخة اختبارية، يُعرض عليك التحديث النهائي</item>
+        <item>تم الإصلاح — تنزيل النموذج الذي يفشل يتم تنظيفه وتنزيله من جديد، بدلاً من الفشل كملف تالف</item>
+        <item>تم الإصلاح — مع تشغيل التسجيل المرن، كانت بعض الهواتف تفقد كل مكالمة ثانية</item>
+        <item>تم الإصلاح — مكالمات التطبيق تُسجَّل على هواتف vivo وiQOO</item>
+    </string-array>
+    <string name="whatsnew_241_title">ابحث في كل صفحة، وابدأ التسجيل عندما يردون</string>
+    <string-array name="whatsnew_241_items">
+        <item>جديد — سطر بحث في التسجيلات والنصوص والملخصات: جهة اتصال، أو كلمة قيلت</item>
+        <item>جديد — ابدأ تسجيل المكالمة الصادرة فقط عندما يرد الطرف الآخر (متوقف افتراضيًا)</item>
+        <item>جديد — تسجيلات Shizuku تحصل على أسماء المتحدثين</item>
+        <item>تم الإصلاح — مكالمات التطبيق على Android 14 والأقدم تحمل اسم جهة الاتصال</item>
+        <item>تم الإصلاح — التحديث في وضع Shizuku لم يعد يكلفك المكالمة التالية</item>
+        <item>تم الإصلاح — السطر الذي يتشاركه المتحدثان يتم تقسيمه عند تغيّر المتحدث</item>
+        <item>تم الإصلاح — النص المكتوب بأبجدية خاطئة تتم إعادة فك ترميزه</item>
+        <item>تم الإصلاح — السطر الذي تحدث فيه شخص واحد فقط لم يعد يُترك بلا اسم</item>
+    </string-array>
+    <string name="whatsnew_241_where">الإعدادات ▸ التسجيل ▸ المكالمات الصادرة ▸ البدء عند الرد</string>
+    <string name="whatsnew_240_title">التسجيلات والنصوص والملخصات لكل منها مكانها</string>
+    <string-array name="whatsnew_240_items">
+        <item>جديد — شاشة رئيسية بها التسجيلات والنصوص والملخصات، تفتح من حيث توقفت</item>
+        <item>جديد — استورد ملفًا صوتيًا، أو شاركه إلى CallVault من تطبيق آخر</item>
+        <item>جديد — استورد من أجل الكلمات فقط: يُحذف الصوت بمجرد أن يصبح النص جاهزًا</item>
+        <item>جديد — اقرأ النص في صفحة خاصة به، وأضف إليه ملاحظة</item>
+        <item>جديد — اختر عدة نصوص أو ملخصات دفعة واحدة لحذفها أو مشاركتها أو حفظها</item>
+        <item>جديد — إشعار عند انتهاء التحويل إلى نص</item>
+        <item>تم الإصلاح — إعادة تشغيل الهاتف لم تعد تتركه غير مسجِّل</item>
+        <item>تم الإصلاح — تتم إعادة تشغيل Shizuku عندما يضطر CallVault إلى إيقافه</item>
+        <item>تم الإصلاح — الإعداد يعمل على Android 17</item>
+    </string-array>
+    <string name="whatsnew_240_where">الرئيسية ▸ النصوص ▸ استيراد صوت</string>
+    <string name="whatsnew_230_title">المكالمات التي كانت محادثة واحدة يمكن أن تكون تسجيلًا واحدًا</string>
+    <string-array name="whatsnew_230_items">
+        <item>جديد — ادمج المكالمات التي كانت محادثة واحدة في تسجيل واحد</item>
+        <item>جديد — احفظ تقرير الخطأ في مجلد تختاره</item>
+        <item>تم الإصلاح — تدوير الهاتف يحافظ على مكانك</item>
+        <item>تم الإصلاح — لا مزيد من التشويش في التسجيلات</item>
+        <item>تم الإصلاح — التسجيل الذي يفشل في البدء يخبرك بذلك الآن</item>
+        <item>تم الإصلاح — التبديل إلى AAC يحافظ على المكالمة التالية</item>
+        <item>تم الإصلاح — البريد الصوتي لم يعد يُسجَّل كمكالمة فاشلة</item>
+        <item>تم الإصلاح — الطوابع الزمنية في النص بعد توقف طويل أصبحت صحيحة</item>
+        <item>تم الإصلاح — التحديث يحافظ على تسجيل المكالمة التالية</item>
+        <item>تم الإصلاح — دعم وضع الإخفاء في Shizuku</item>
+        <item>تم الإصلاح — تصحيح أخطاء اللاسلكي الذي شغّلته يبقى قيد التشغيل</item>
+        <item>تم الإصلاح — التسجيل بدون Wi-Fi يخبرك بما فشل فعلاً</item>
+        <item>تم الإصلاح — نقطة الميكروفون لم تعد تبقى مضيئة بعد المكالمة</item>
+        <item>تم الإصلاح — تقدم التحويل إلى نص لم يعد يبدأ من جديد عند التدوير</item>
+        <item>تم الإصلاح — حذف مكالمة يوقف تحويلها إلى نص</item>
+        <item>تم الإصلاح — لا إشعار بسخونة الهاتف لتحويل إلى نص بدأته بنفسك</item>
+        <item>تم الإصلاح — المكالمات المسجلة تلقائيًا لم تعد تُظهر زر «تسجيل» وامضًا</item>
+        <item>تم الإصلاح — تقدم التحويل إلى نص لم يعد يتوقف عند ثلاثة أرباع</item>
+        <item>تم الإصلاح — المكالمة المسجلة تُظهر إشعارًا واحدًا، لا اثنين</item>
+        <item>تم الإصلاح — عارض السجل يملأ الشاشة ويلف الأسطر الطويلة</item>
+    </string-array>
+    <string name="whatsnew_230_where">قائمة ⋮ في أي تسجيل ▸ دمج مع مكالمة أخرى</string>
+    <string name="merge_progress_title">جارٍ الدمج</string>
+    <string name="unmerge_progress_title">جارٍ إلغاء الدمج</string>
+    <string name="merge_progress_step">المكالمة %1$d من %2$d</string>
+    <string name="merge_progress_done">تم الدمج بنجاح</string>
+    <string name="unmerge_progress_done">تم إلغاء الدمج بنجاح</string>
+    <string name="progress_closing_in">جارٍ الإغلاق في %1$ds</string>
+    <string name="merge_progress_working">جارٍ ضم المكالمات</string>
+    <string name="unmerge_progress_working">جارٍ فصل المكالمات</string>
+    <string name="offline_failed_no_wifi">تعذر التمكين — أنت غير متصل بـ Wi-Fi. اتصل بأي شبكة Wi-Fi مرة واحدة، ثم حاول مرة أخرى.</string>
+    <string name="offline_failed_wd_refused">تعذر التمكين — لم يسمح Android بتصحيح أخطاء اللاسلكي على هذه الشبكة. قم بتشغيله مرة واحدة في خيارات المطور، واقبل المطالبة، ثم حاول مرة أخرى.</string>
+    <string name="offline_failed_needs_usb">قم بتشغيل تصحيح أخطاء USB أولاً — لا يمكن أن يعمل التسجيل بدون Wi-Fi بدونه. الإعدادات ▸ التجريبي ▸ تصحيح أخطاء USB.</string>
+    <string name="home_hub_library_title">المكتبة</string>
+    <string name="home_hub_recordings_body">كل مكالمة سجلها CallVault.</string>
+    <string name="home_hub_transcripts_body">مكالماتك كنصوص — وأي صوت تجلبه.</string>
+    <string name="home_hub_summaries_body">ملخصات AI، مكتوبة على هاتفك.</string>
+    <string name="home_transcripts_title">النصوص</string>
+    <string name="home_summaries_title">الملخصات</string>
+    <string name="home_transcripts_count">%1$d تم تحويلها إلى نص</string>
+    <string name="home_summaries_count">%1$d ملخص</string>
+    <string name="home_transcripts_empty_title">لم يتم تحويل أي شيء إلى نص بعد</string>
+    <string name="home_transcripts_empty_hint">اطلب نصًا من قائمة التسجيل، أو استورد ملفًا صوتيًا أعلاه. يظهر أي منهما هنا بمجرد كتابته.</string>
+    <string name="home_summaries_empty_title">لم يتم تلخيص أي شيء بعد</string>
+    <string name="home_summaries_empty_hint">افتح مكالمة تحتوي على نص واطلب ملخصًا؛ سيظهر هنا بمجرد كتابته.</string>
+    <string name="transcripts_working_header">جارٍ التحويل إلى نص</string>
+    <string name="transcripts_failed_header">لم ينتهِ</string>
+    <string name="transcripts_failed_hint">انقر على واحد للمحاولة مرة أخرى.</string>
+    <string name="transcripts_waiting_header">في انتظار التحويل إلى نص</string>
+    <string name="transcripts_waiting_hint">لقد شاركت هذه ليتم قراءتها، وليس للاحتفاظ بها. انقر على واحدة للبدء، أو افتحها للاستماع إليها أو حذفها.</string>
+    <string name="summaries_working_header">جارٍ التلخيص</string>
+    <string name="summaries_failed_header">لم ينتهِ</string>
+    <string name="summaries_failed_hint">افتح واحدًا لطلبه مرة أخرى.</string>
+    <string name="transcripts_import_title">استيراد صوت</string>
+    <string name="transcripts_import_working">جارٍ الاستيراد…</string>
+    <string name="transcripts_import_body">تحويل مذكرة صوتية أو أي ملف صوتي آخر موجود على هاتفك إلى نص.</string>
+    <string name="import_failed_title">تعذر استيراد هذا الملف</string>
+    <string name="import_failed_not_audio">لا يمكن لـ CallVault قراءة هذا النوع من الملفات. حاول تسجيل .opus أو .ogg أو .m4a أو .mp3 أو .wav.</string>
+    <string name="import_failed_empty">هذا الملف فارغ، لذا لن يكون هناك شيء للتحويل إلى نص.</string>
+    <string name="import_failed_no_folder">لا يوجد مجلد تسجيل للاحتفاظ به. اختر واحدًا في الإعدادات، ثم حاول مرة أخرى.</string>
+    <string name="import_failed_copy">تعذر كتابة الملف في مجلد التسجيلات الخاص بك. تحقق من وجود مساحة في الهاتف وأن المجلد لا يزال متاحًا.</string>
+    <string name="import_failed_undecodable">لا يمكن لهذا الهاتف قراءة الصوت داخل هذا الملف، لذا لا يمكن تحويله إلى نص أبدًا. قد يكون تالفًا، أو بتنسيق لا يقوم Android بفك تشفيره.</string>
+    <string name="home_row_imported">مستورد</string>
+    <string name="home_row_text_only">نص فقط</string>
+    <string name="share_import_label">استيراد صوت</string>
+    <string name="share_import_working_body">جارٍ نسخه والتحقق من أن هذا الهاتف يمكنه قراءته.</string>
+    <string name="share_import_done_title">تمت الإضافة إلى تسجيلاتك</string>
+    <string name="share_import_done_body">إنه في CallVault الآن. افتحه للاستماع، أو لطلب نص مكتوب.</string>
+    <string name="share_import_open">فتح</string>
+    <string name="share_import_open_app">فتح CallVault</string>
+    <string name="share_import_close">إغلاق</string>
+    <string name="share_import_nothing">لم يأتِ أي شيء مع هذه المشاركة. حاول مشاركة ملف الصوت نفسه بدلاً من الرسالة المحيطة به.</string>
+    <string name="share_import_not_set_up_title">أكمل إعداد CallVault أولاً</string>
+    <string name="share_import_not_set_up_body">لم يكمل CallVault إعداده لمرة واحدة، لذا لا يوجد مكان للاحتفاظ بهذا الملف بعد. افتحه، أكمل الإعداد، ثم شارك هذا مرة أخرى.</string>
+    <string name="share_import_choice_title">ماذا يجب أن يفعل CallVault بهذا؟</string>
+    <string name="share_import_choice_unnamed">الصوت المشترك</string>
+    <string name="import_choice_keep">استيراد ونسخ</string>
+    <string name="import_choice_keep_hint">يحافظ على الصوت في تسجيلاتك ويقوم بتحويله إلى نص.</string>
+    <string name="import_choice_transcribe_only">تحويل إلى نص فقط</string>
+    <string name="import_choice_transcribe_only_hint">يقوم بتحويله إلى نص، ثم يحذف الصوت. لا يظهر أبدًا في تسجيلاتك — فقط الكلمات، تحت النصوص.</string>
+    <string name="share_import_queued_keep_title">تمت الإضافة، وتمت إضافته إلى قائمة الانتظار</string>
+    <string name="share_import_queued_keep_body">إنه في تسجيلاتك. سيظهر النص تحت النصوص عند الانتهاء.</string>
+    <string name="share_import_queued_only_title">في قائمة الانتظار للتحويل إلى نص</string>
+    <string name="share_import_queued_only_body">ستجد الكلمات تحت النصوص. يتم حذف الصوت بمجرد تخزين النص.</string>
+    <string name="share_import_kept_title">تم الحفظ، ولكن لم يتم تحويله إلى نص</string>
+    <string name="share_import_kept_body">إنه في تسجيلاتك. يمكنك بدء النسخ من هناك متى شئت.</string>
+    <string name="share_import_kept_only_body">إنه ينتظر تحت النصوص. ابدأه من هناك متى شئت، أو احذفه من نفس المكان.</string>
+    <string name="share_import_too_long">هذا الصوت يبلغ %1$d دقيقة، ولا يمكن لـ CallVault تحويل أكثر من %2$d دقيقة في المرة الواحدة. تم حفظ الملف، لذا لا يزال بإمكانك الاستماع إليه.</string>
+    <string name="share_import_no_model">لم يتم تثبيت نموذج تحويل إلى نص بعد، لذا لا يمكن لـ CallVault قراءة هذا. تم حفظ الصوت — قم بتثبيت نموذج في الإعدادات، ثم ابدأ تشغيله من النصوص.</string>
+</resources>

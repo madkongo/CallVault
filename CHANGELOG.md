@@ -10,10 +10,12 @@ plus that fix, a new language, and a vivo tip.
 
 ### Added
 
-- **Persian (Farsi) app language.** The app interface can now be set to Persian (فارسی) — Settings →
-  Language. Right-to-left layout throughout.
-  <!-- 🧪 VERIFYING 2026-09-30: full values-fa translation, build + tests green, fa in the locale config;
-  machine-translated, awaiting a native Farsi speaker's review before it is trusted. -->
+- **Persian (Farsi) and Arabic app languages.** The app interface can now be set to Persian (فارسی) or
+  Arabic (العربية) — Settings → Language. Right-to-left layout throughout.
+  <!-- 🧪 VERIFYING 2026-09-30: full values-fa + values-ar, build + tests green, both in the locale config.
+  Persian is machine-translated (awaiting a native review). Arabic is a community contribution covering
+  ~98%; the ~22 newest strings, the What's-new arrays and the plurals were machine-filled and are flagged
+  for the contributor to review. -->
 
 ### Changed
 

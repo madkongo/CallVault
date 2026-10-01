@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  ~ CallVault: FOSS call recording, self-contained over embedded ADB
+  ~  Copyright (C) 2026-present The CallVault Authors
+  ~  This software is licensed under the GNU General Public License v3 or later, with additional terms as permitted under Section 7.
+  ~  The full license text is available in the LICENSE file at the root of this project.
+  ~  This software is distributed WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+  -->
+<resources>
+    <string name="wizard_ui_eyebrow">إعداد</string>
+    <string name="wizard_ui_storage_local_desc">تبقى التسجيلات على هذا الهاتف. لا يغادر أي شيء الجهاز.</string>
+    <string name="wizard_ui_storage_drive_desc">يتم تحميل التسجيلات إلى مجلد Google Drive الخاص بك، ثم يتم مسحها من هذا الهاتف.</string>
+    <string name="wizard_ui_storage_both_desc">احتفظ بنسخة على هذا الهاتف وانسخها احتياطيًا إلى Google Drive.</string>
+    <string name="wizard_ui_folder_choose">اختيار مجلد</string>
+    <string name="wizard_ui_schedule_immediate_desc">تحميل كل مكالمة بمجرد انتهائها.</string>
+    <string name="wizard_ui_schedule_daily_desc">تجميع مكالمات اليوم وتحميلها مرة واحدة يوميًا.</string>
+    <string name="wizard_ui_schedule_weekly_desc">تجميع مكالمات الأسبوع وتحميلها مرة واحدة أسبوعيًا.</string>
+    <string name="wizard_ui_auto_incoming_desc">بدء التسجيل تلقائيًا عند ورود مكالمة.</string>
+    <string name="wizard_ui_auto_outgoing_desc">بدء التسجيل تلقائيًا عند إجراء مكالمة.</string>
+</resources>

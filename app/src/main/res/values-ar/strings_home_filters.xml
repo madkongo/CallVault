@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  ~ CallVault: FOSS call recording, self-contained over embedded ADB
+  ~  Copyright (C) 2026-present The CallVault Authors
+  ~  This software is licensed under the GNU General Public License v3 or later, with additional terms as permitted under Section 7.
+  ~  The full license text is available in the LICENSE file at the root of this project.
+  ~  This software is distributed WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+  -->
+<resources>
+    <string name="home_filter_source_label">المصدر</string>
+    <string name="home_filter_source_chip">المصدر: %1$s</string>
+    <string name="home_filter_source_all">الكل</string>
+    <string name="home_filter_source_local">محلي فقط</string>
+    <string name="home_filter_source_drive">Drive فقط</string>
+    <string name="home_filter_direction_label">الاتجاه</string>
+    <string name="home_filter_direction_chip">الاتجاه: %1$s</string>
+    <string name="home_filter_direction_all">الكل</string>
+    <string name="home_filter_direction_incoming">واردة</string>
+    <string name="home_filter_direction_outgoing">صادرة</string>
+    <string name="home_filter_date_label">التاريخ</string>
+    <string name="home_filter_date_chip">التاريخ: %1$s</string>
+    <string name="home_filter_date_all">جميع التواريخ</string>
+    <string name="home_filter_date_all_short">الكل</string>
+    <string name="home_source_badge_local">الجهاز</string>
+    <string name="home_source_badge_drive">Drive</string>
+    <string name="home_source_badge_both">الجهاز + Drive</string>
+    <string name="home_copy_device">الجهاز</string>
+    <string name="home_copy_drive">Drive</string>
+    <string name="home_delete_confirm_device_message">حذف نسخة الجهاز من %1$s؟ يتم الاحتفاظ بنسخة Drive.</string>
+    <string name="home_delete_confirm_drive_message">حذف نسخة Drive من %1$s؟ يتم الاحتفاظ بنسخة الجهاز.</string>
+    <string name="home_delete_copy_device_content_desc">حذف نسخة الجهاز</string>
+    <string name="home_delete_copy_drive_content_desc">حذف نسخة Drive</string>
+    <string name="home_filter_tag_label">العلامة</string>
+    <string name="home_filter_tag_chip">العلامة: %1$s</string>
+    <string name="home_filter_tag_all">جميع العلامات</string>
+    <string name="home_filter_tag_all_short">الكل</string>
+</resources>

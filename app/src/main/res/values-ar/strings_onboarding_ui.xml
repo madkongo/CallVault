@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  ~ CallVault: FOSS call recording, self-contained over embedded ADB
+  ~  Copyright (C) 2026-present The CallVault Authors
+  ~  This software is licensed under the GNU General Public License v3 or later, with additional terms as permitted under Section 7.
+  ~  The full license text is available in the LICENSE file at the root of this project.
+  ~  This software is distributed WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+  -->
+<resources>
+    <string name="disclaimer_ui_hero_subtitle">تسجيل مكالمات مفتوح المصدر (FOSS)، بشروطك. يرجى مراجعة إخلاء المسؤولية قبل المتابعة.</string>
+    <string name="disclaimer_ui_body_header">إخلاء المسؤولية</string>
+    <string name="disclaimer_ui_scroll_hint">انتقل إلى النهاية لتمكين مربع الاختيار.</string>
+    <string name="permissions_ui_eyebrow">إعداد</string>
+    <string name="permissions_ui_hero_title">لنبدأ الإعداد</string>
+    <string name="permissions_ui_hero_subtitle">بعض الأذونات حتى يتمكن CallVault من التقاط مكالماتك وتسميتها. وافق على كل عنصر أدناه.</string>
+    <string name="permissions_ui_section_label">الأذونات</string>
+    <string name="permission_adb_hint">انقر على "تخويل"، ثم أدخل رمز الاقتران من الإشعار.</string>
+    <string name="permission_adb_desc_short">مطلوب لإعداد المسجل. يحتاج إلى Wi-Fi.</string>
+    <string name="permissions_status_adb_not_connected">غير متصل</string>
+    <string name="permissions_status_adb_connected">متصل</string>
+    <string name="permission_devmode_on">خيارات المطور: قيد التشغيل</string>
+    <string name="permission_devmode_off">خيارات المطور متوقفة</string>
+    <string name="permission_devmode_open_wd">فتح تصحيح أخطاء اللاسلكي</string>
+    <string name="permission_devmode_enable_hint">قم بتمكينه: الإعدادات ← حول الهاتف ← انقر على رقم البناء 7 مرات.</string>
+    <string name="permission_devmode_open_device_info">فتح معلومات الجهاز</string>
+    <string name="permission_wd_on">تصحيح أخطاء اللاسلكي: قيد التشغيل</string>
+    <string name="permission_wd_off">تصحيح أخطاء اللاسلكي متوقف</string>
+    <string name="permission_wd_enable_hint">قم بتشغيله: خيارات المطور ← تصحيح أخطاء اللاسلكي.</string>
+    <string name="permission_adb_hint_wd_on">انقر على "تخويل"، ثم أدخل رمز الاقتران من شاشة "تصحيح أخطاء اللاسلكي".</string>
+    <string name="permission_adb_open_device_info">فتح معلومات الجهاز</string>
+    <string name="permission_adb_open_wd">فتح تصحيح أخطاء اللاسلكي</string>
+    <string name="permission_adb_pair">اقتران</string>
+</resources>
