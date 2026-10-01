@@ -115,10 +115,13 @@
     <string name="merge_note_will_keep">Le altre chiamate restano anche sul telefono.</string>
     <string name="home_scroll_to_top">Su</string>
     <string name="home_whatsnew_full_notes">Note di rilascio complete</string>
-    <string name="whatsnew_245_title">Nuove lingue e un consiglio per vivo</string>
+    <string name="whatsnew_245_title">Nuove lingue, backup e altro</string>
     <string-array name="whatsnew_245_items">
         <item>Persiano e arabo — due nuove lingue dell\'app, da destra a sinistra</item>
         <item>Chiamate via app su vivo — per registrare l\'altra persona, attiva il Registratore di vivo → Registrazione delle chiamate nelle app</item>
+        <item>Backup delle trascrizioni — salva trascrizioni e note come testo accanto a ogni registrazione</item>
+        <item>Modelli per i nomi dei file — nuovi ordini con contatto o numero per primi</item>
+        <item>Esportazione e importazione — fai il backup delle tue impostazioni in un file</item>
         <item>Corretto — niente più falso «Una chiamata è stata interrotta»</item>
     </string-array>
     <string name="whatsnew_244_title">Registrazione più affidabile, riassociazione facile e avvisi di aggiornamento</string>

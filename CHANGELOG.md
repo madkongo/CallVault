@@ -16,6 +16,20 @@ plus that fix, a new language, and a vivo tip.
   Persian is machine-translated (awaiting a native review). Arabic is a community contribution covering
   ~98%; the ~22 newest strings, the What's-new arrays and the plurals were machine-filled and are flagged
   for the contributor to review. -->
+- **Save transcripts and notes beside your recordings.** A new Settings option (off by default) writes the
+  transcript, notes and summary as a `.md` text file with the same name as the recording, in the same
+  folder — so copying the folder to a PC carries the text with the audio. Turning it on also backs up the
+  ones you already have.
+  <!-- 🧪 VERIFYING 2026-10-01: TranscriptSidecar reuses MetadataSidecar + the transcript renderer; written
+  when a transcript completes or a note is saved, removed when the recording is deleted; build + tests
+  green; not yet confirmed on a device. -->
+- **More filename templates.** Added contact- and number-first orders (Contact · Number · Date, Number ·
+  Contact · Date, Contact · Date, Number · Date), so a PC folder can be grouped by who the call was with.
+- **Export and import your settings.** A row at the bottom of Settings saves your preferences to a file and
+  restores them from one — handy for a new phone. Device-specific things (pairing, folders, this phone's
+  setup) are deliberately left out.
+  <!-- 🧪 VERIFYING 2026-10-01: AppPreferences.export/importToJson with a vetted allow-list; build + tests
+  green (round-trip + device-key exclusion); not yet confirmed on a device. -->
 
 ### Changed
 

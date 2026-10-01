@@ -116,10 +116,13 @@
     <string name="merge_note_will_keep">Les autres appels sont également conservés sur le téléphone.</string>
     <string name="home_scroll_to_top">Haut</string>
     <string name="home_whatsnew_full_notes">Notes de version complètes</string>
-    <string name="whatsnew_245_title">Nouvelles langues et une astuce vivo</string>
+    <string name="whatsnew_245_title">Nouvelles langues, sauvegardes et plus encore</string>
     <string-array name="whatsnew_245_items">
         <item>Persan et arabe — deux nouvelles langues de l\'appli, de droite à gauche</item>
         <item>Appels d\'applis sur vivo — pour enregistrer l\'autre personne, activez l\'Enregistreur de vivo → Enregistrement des appels dans les applications</item>
+        <item>Sauvegardes de transcriptions — enregistrez les transcriptions et les notes en texte à côté de chaque enregistrement</item>
+        <item>Modèles de nom de fichier — nouveaux ordres commençant par le contact ou le numéro</item>
+        <item>Export et import — sauvegardez vos paramètres dans un fichier</item>
         <item>Corrigé — fini le faux « Un appel a été interrompu »</item>
     </string-array>
     <string name="whatsnew_244_title">Enregistrement plus fiable, réassociation facile et alertes de mise à jour</string>

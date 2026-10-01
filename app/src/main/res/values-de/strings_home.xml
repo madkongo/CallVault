@@ -115,10 +115,13 @@
     <string name="merge_note_will_keep">Die anderen Anrufe bleiben ebenfalls auf dem Telefon.</string>
     <string name="home_scroll_to_top">Nach oben</string>
     <string name="home_whatsnew_full_notes">Vollständige Versionshinweise</string>
-    <string name="whatsnew_245_title">Neue Sprachen und ein vivo-Tipp</string>
+    <string name="whatsnew_245_title">Neue Sprachen, Sicherungen und mehr</string>
     <string-array name="whatsnew_245_items">
         <item>Persisch und Arabisch — zwei neue App-Sprachen, von rechts nach links</item>
         <item>vivo-App-Anrufe — um die andere Person aufzunehmen, in vivos „Recorder“ → In-App-Anrufaufnahme einschalten</item>
+        <item>Transkript-Sicherungen — Transkripte und Notizen als Text neben jeder Aufnahme speichern</item>
+        <item>Dateinamenvorlagen — neue Reihenfolgen mit Kontakt oder Nummer zuerst</item>
+        <item>Export und Import — sichere deine Einstellungen in einer Datei</item>
         <item>Behoben — keine falsche Meldung „Ein Anruf wurde abgeschnitten“ mehr</item>
     </string-array>
     <string name="whatsnew_244_title">Zuverlässigeres Aufnehmen, einfaches Neu-Koppeln und Update-Hinweise</string>

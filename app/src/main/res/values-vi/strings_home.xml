@@ -115,10 +115,13 @@
     <string name="merge_note_will_keep">Các cuộc gọi kia cũng được giữ lại trên máy.</string>
     <string name="home_scroll_to_top">Lên đầu</string>
     <string name="home_whatsnew_full_notes">Ghi chú phát hành đầy đủ</string>
-    <string name="whatsnew_245_title">Ngôn ngữ mới và một mẹo cho vivo</string>
+    <string name="whatsnew_245_title">Ngôn ngữ mới, bản sao lưu và hơn thế nữa</string>
     <string-array name="whatsnew_245_items">
         <item>Tiếng Ba Tư và tiếng Ả Rập — hai ngôn ngữ ứng dụng mới, viết từ phải sang trái</item>
         <item>Cuộc gọi qua ứng dụng trên vivo — để ghi cả người kia, bật Ghi âm của vivo → Ghi âm cuộc gọi trong ứng dụng</item>
+        <item>Sao lưu bản chép lời — lưu bản chép lời và ghi chú dưới dạng văn bản bên cạnh mỗi bản ghi âm</item>
+        <item>Mẫu tên tệp — các thứ tự mới bắt đầu bằng liên hệ hoặc số</item>
+        <item>Xuất và nhập — sao lưu cài đặt của bạn vào một tệp</item>
         <item>Đã sửa — không còn báo nhầm « Một cuộc gọi đã bị cắt »</item>
     </string-array>
     <string name="whatsnew_244_title">Ghi âm đáng tin cậy hơn, ghép nối lại dễ dàng và thông báo cập nhật</string>

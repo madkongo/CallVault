@@ -137,10 +137,13 @@
     <string name="merge_note_will_keep">تماس‌های دیگر نیز روی گوشی نگه داشته می‌شوند.</string>
     <string name="home_scroll_to_top">بالا</string>
     <string name="home_whatsnew_full_notes">یادداشت‌های کامل نسخه</string>
-    <string name="whatsnew_245_title">زبان‌های جدید و یک نکته برای vivo</string>
+    <string name="whatsnew_245_title">زبان‌های جدید، پشتیبان‌گیری و موارد دیگر</string>
     <string-array name="whatsnew_245_items">
         <item>فارسی و عربی — دو زبان جدید برنامه، راست‌به‌چپ</item>
         <item>تماس‌های درون‌برنامه‌ای در vivo — برای ضبط طرف مقابل، در vivo برنامه ضبط صدا ▸ «In-app call recording» را روشن کنید</item>
+        <item>پشتیبان رونوشت — رونوشت و یادداشت‌ها را به‌صورت متن کنار هر ضبط ذخیره کنید</item>
+        <item>الگوهای نام فایل — ترتیب‌های جدید با مخاطب یا شماره در ابتدا</item>
+        <item>صادر کردن و وارد کردن — از تنظیمات خود در یک فایل پشتیبان بگیرید</item>
         <item>برطرف شد — دیگر اعلان نادرست «تماس قطع شد» نمایش داده نمی‌شود</item>
     </string-array>
     <string name="whatsnew_244_title">ضبط مطمئن‌تر، مرتبط‌سازی مجدد آسان، و هشدارهای به‌روزرسانی</string>

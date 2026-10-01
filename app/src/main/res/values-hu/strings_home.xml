@@ -115,10 +115,13 @@
     <string name="merge_note_will_keep">A többi hívás is a telefonon marad.</string>
     <string name="home_scroll_to_top">Az elejére</string>
     <string name="home_whatsnew_full_notes">Teljes kiadási jegyzék</string>
-    <string name="whatsnew_245_title">Új nyelvek és egy vivo-tipp</string>
+    <string name="whatsnew_245_title">Új nyelvek, biztonsági mentések és még több</string>
     <string-array name="whatsnew_245_items">
         <item>Perzsa és arab — két új alkalmazásnyelv, jobbról balra</item>
         <item>vivo alkalmazáshívások — a másik fél rögzítéséhez kapcsolja be a vivo Hangrögzítő → Alkalmazáson belüli hívásrögzítés funkcióját</item>
+        <item>Átiratok mentése — az átiratok és jegyzetek szövegként minden felvétel mellé</item>
+        <item>Fájlnévsablonok — új sorrendek a névjeggyel vagy a számmal az elején</item>
+        <item>Exportálás és importálás — mentsd a beállításaidat egy fájlba</item>
         <item>Javítva — nincs több téves „Egy hívás megszakadt“ értesítés</item>
     </string-array>
     <string name="whatsnew_244_title">Megbízhatóbb rögzítés, egyszerű újrapárosítás és frissítési értesítések</string>

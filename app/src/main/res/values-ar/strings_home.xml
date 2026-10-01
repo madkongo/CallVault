@@ -179,10 +179,13 @@
     <string name="merge_note_will_keep">يتم الاحتفاظ بالمكالمات الأخرى على الهاتف أيضًا.</string>
     <string name="home_scroll_to_top">الأعلى</string>
     <string name="home_whatsnew_full_notes">ملاحظات الإصدار الكاملة</string>
-    <string name="whatsnew_245_title">لغات جديدة ونصيحة لهواتف vivo</string>
+    <string name="whatsnew_245_title">لغات جديدة ونسخ احتياطية والمزيد</string>
     <string-array name="whatsnew_245_items">
         <item>الفارسية والعربية — لغتان جديدتان للتطبيق، من اليمين إلى اليسار</item>
         <item>مكالمات التطبيق على هواتف vivo — لتسجيل الطرف الآخر، شغّل في vivo تطبيق المسجّل ▸ «In-app call recording»</item>
+        <item>نسخ احتياطية للنصوص — احفظ النصوص والملاحظات كنص بجانب كل تسجيل</item>
+        <item>قوالب أسماء الملفات — ترتيبات جديدة تبدأ بجهة الاتصال أو الرقم</item>
+        <item>التصدير والاستيراد — انسخ إعداداتك احتياطيًا في ملف</item>
         <item>تم الإصلاح — لا مزيد من إشعار «قُطِعت مكالمة» الخاطئ</item>
     </string-array>
     <string name="whatsnew_244_title">تسجيل أكثر موثوقية، وإعادة اقتران سهلة، وتنبيهات التحديث</string>

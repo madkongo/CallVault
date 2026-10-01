@@ -115,10 +115,13 @@
     <string name="merge_note_will_keep">As outras chamadas também são mantidas no telefone.</string>
     <string name="home_scroll_to_top">Topo</string>
     <string name="home_whatsnew_full_notes">Notas de versão completas</string>
-    <string name="whatsnew_245_title">Novos idiomas e uma dica para vivo</string>
+    <string name="whatsnew_245_title">Novos idiomas, backups e mais</string>
     <string-array name="whatsnew_245_items">
         <item>Persa e árabe — dois novos idiomas do app, da direita para a esquerda</item>
         <item>Chamadas por app no vivo — para gravar a outra pessoa, ative o Gravador do vivo → Gravação de chamadas em apps</item>
+        <item>Backups de transcrição — salve transcrições e notas como texto ao lado de cada gravação</item>
+        <item>Modelos de nome de arquivo — novas ordens começando por contato ou número</item>
+        <item>Exportar e importar — faça backup das suas configurações em um arquivo</item>
         <item>Corrigido — sem mais falso «Uma chamada foi interrompida»</item>
     </string-array>
     <string name="whatsnew_244_title">Gravação mais confiável, reemparelhamento fácil e avisos de atualização</string>

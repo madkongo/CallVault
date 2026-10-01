@@ -115,10 +115,13 @@
     <string name="merge_note_will_keep">其余通话也会保留在手机上。</string>
     <string name="home_scroll_to_top">回到顶部</string>
     <string name="home_whatsnew_full_notes">完整发行说明</string>
-    <string name="whatsnew_245_title">新增语言和一个 vivo 小贴士</string>
+    <string name="whatsnew_245_title">新增语言、备份以及更多</string>
     <string-array name="whatsnew_245_items">
         <item>波斯语和阿拉伯语 — 两种新的应用语言，从右到左</item>
         <item>vivo 应用通话 — 要录下对方，请在 vivo 上开启“录音机” → 应用内通话录音</item>
+        <item>转写备份 — 将转写和备注以文本形式保存在每条录音旁</item>
+        <item>文件名模板 — 新增以联系人或号码开头的排列</item>
+        <item>导出与导入 — 将你的设置备份到文件</item>
         <item>修复 — 不再误报“一次通话被中断”</item>
     </string-array>
     <string name="whatsnew_244_title">录音更可靠、轻松重新配对，以及更新提醒</string>

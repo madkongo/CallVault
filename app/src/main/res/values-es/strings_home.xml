@@ -115,10 +115,13 @@
     <string name="merge_note_will_keep">Las demás llamadas también se conservan en el teléfono.</string>
     <string name="home_scroll_to_top">Arriba</string>
     <string name="home_whatsnew_full_notes">Notas de versión completas</string>
-    <string name="whatsnew_245_title">Nuevos idiomas y un consejo para vivo</string>
+    <string name="whatsnew_245_title">Nuevos idiomas, copias de seguridad y más</string>
     <string-array name="whatsnew_245_items">
         <item>Persa y árabe — dos nuevos idiomas de la app, de derecha a izquierda</item>
         <item>Llamadas por app en teléfonos vivo — para grabar a la otra persona, activa la Grabadora de vivo → Grabación de llamadas en apps</item>
+        <item>Copias de transcripciones — guarda transcripciones y notas como texto junto a cada grabación</item>
+        <item>Plantillas de nombre de archivo — nuevos órdenes empezando por contacto o número</item>
+        <item>Exportar e importar — haz una copia de seguridad de tus ajustes en un archivo</item>
         <item>Corregido — no más falso «Una llamada se cortó»</item>
     </string-array>
     <string name="whatsnew_244_title">Grabación más fiable, reemparejamiento fácil y avisos de actualización</string>
