@@ -26,6 +26,7 @@ import com.baba.callvault.summary.SummaryModel
 import com.baba.callvault.transcription.model.ModelDownloadWorker
 import com.baba.callvault.transcription.model.ModelRepository
 import com.baba.callvault.transcription.model.TranscriptionModel
+import com.baba.callvault.system.interop.TranscriptSidecarBackfillWorker
 import com.baba.callvault.system.storage.RetentionScheduler
 import com.baba.callvault.system.storage.SyncScheduler
 import com.baba.callvault.system.updates.UpdateScheduler
@@ -75,6 +76,9 @@ interface SettingsActions {
     fun setMinDurationSeconds(seconds: Int)
 
     fun setWriteMetadataFileEnabled(enabled: Boolean)
+    fun setWriteTranscriptSidecarEnabled(enabled: Boolean)
+    fun exportSettingsJson(): String
+    fun importSettings(json: String): Int
 
     fun setStorageCapBytes(bytes: Long)
 
@@ -352,6 +356,21 @@ class SettingsViewModel(application: Application) : AndroidViewModel(application
     override fun setWriteMetadataFileEnabled(enabled: Boolean) {
         preferences.setWriteMetadataFileEnabled(enabled)
         refresh()
+    }
+
+    override fun setWriteTranscriptSidecarEnabled(enabled: Boolean) {
+        preferences.setWriteTranscriptSidecarEnabled(enabled)
+        refresh()
+        // Turning it on backs up transcripts/notes that already exist, in the background.
+        if (enabled) TranscriptSidecarBackfillWorker.enqueue(getApplication())
+    }
+
+    override fun exportSettingsJson(): String = preferences.exportToJson()
+
+    override fun importSettings(json: String): Int {
+        val applied = preferences.importFromJson(json)
+        if (applied >= 0) refresh()
+        return applied
     }
 
     /**

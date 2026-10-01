@@ -304,6 +304,43 @@ fun SettingsScreen(
         viewModel.refresh()
     }
 
+    // Export settings to a JSON file the user names — the system save dialog picks place + name, no
+    // permission needed. Only device-independent preferences are written (see AppPreferences.EXPORTABLE_KEYS).
+    val exportSettingsLauncher = rememberLauncherForActivityResult(ActivityResultContracts.CreateDocument("application/json")) { uri ->
+        if (uri == null) return@rememberLauncherForActivityResult
+        scope.launch {
+            val saved = withContext(Dispatchers.IO) {
+                runCatching {
+                    context.contentResolver.openOutputStream(uri, "wt")
+                        ?.use { it.write(viewModel.exportSettingsJson().toByteArray()) } != null
+                }.onFailure { AppLogger.w("CV:Settings", "Settings export failed: ${it.message}") }
+                    .getOrDefault(false)
+            }
+            Toast.makeText(
+                context,
+                if (saved) R.string.settings_export_done else R.string.settings_export_failed,
+                Toast.LENGTH_LONG,
+            ).show()
+        }
+    }
+
+    // Import settings: pick a JSON file, read it, then confirm before overwriting.
+    var pendingImportJson by remember { mutableStateOf<String?>(null) }
+    val importSettingsLauncher = rememberLauncherForActivityResult(ActivityResultContracts.OpenDocument()) { uri ->
+        if (uri == null) return@rememberLauncherForActivityResult
+        scope.launch {
+            val text = withContext(Dispatchers.IO) {
+                runCatching { context.contentResolver.openInputStream(uri)?.bufferedReader()?.use { it.readText() } }
+                    .getOrNull()
+            }
+            if (text.isNullOrBlank()) {
+                Toast.makeText(context, R.string.settings_import_failed, Toast.LENGTH_LONG).show()
+            } else {
+                pendingImportJson = text
+            }
+        }
+    }
+
     SettingsContent(
         preferences = viewModel.preferences,
         updateTrigger = updateTrigger,
@@ -349,6 +386,8 @@ fun SettingsScreen(
                 )
             }
         },
+        onExportSettings = { exportSettingsLauncher.launch("CallVault-settings-${java.time.LocalDate.now()}.json") },
+        onImportSettings = { importSettingsLauncher.launch(arrayOf("application/json", "text/*")) },
         modifier = modifier
     )
 
@@ -363,6 +402,32 @@ fun SettingsScreen(
                     CircularProgressIndicator(modifier = Modifier.size(20.dp), strokeWidth = 2.dp)
                     Spacer(Modifier.width(16.dp))
                     Text(stringResource(R.string.settings_bugreport_preparing))
+                }
+            },
+        )
+    }
+
+    // Confirm before overwriting the current settings with an imported file.
+    pendingImportJson?.let { json ->
+        AlertDialog(
+            onDismissRequest = { pendingImportJson = null },
+            title = { Text(stringResource(R.string.settings_import_confirm_title)) },
+            text = { Text(stringResource(R.string.settings_import_confirm_text)) },
+            confirmButton = {
+                TextButton(onClick = {
+                    pendingImportJson = null
+                    val applied = viewModel.importSettings(json)
+                    Toast.makeText(
+                        context,
+                        if (applied >= 0) context.getString(R.string.settings_import_done, applied)
+                        else context.getString(R.string.settings_import_failed),
+                        Toast.LENGTH_LONG,
+                    ).show()
+                }) { Text(stringResource(R.string.settings_import_confirm_apply)) }
+            },
+            dismissButton = {
+                TextButton(onClick = { pendingImportJson = null }) {
+                    Text(stringResource(R.string.general_cancel))
                 }
             },
         )
@@ -394,6 +459,33 @@ fun SettingsScreen(
 /** Hard ceiling on the optional system-log half of a debug report. See the share handler. */
 private const val SYSTEM_REPORT_BUDGET_MS = 45_000L
 
+/**
+ * Back up or restore settings — a section-less row at the very bottom of Settings. Export writes a JSON
+ * file of your device-independent preferences; Import reads one back (after a confirm).
+ */
+@Composable
+private fun ExportImportRow(onExport: () -> Unit, onImport: () -> Unit) {
+    Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+        Text(
+            text = stringResource(R.string.settings_backup_title),
+            style = MaterialTheme.typography.titleMedium,
+        )
+        Text(
+            text = stringResource(R.string.settings_backup_desc),
+            style = MaterialTheme.typography.bodySmall,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+        )
+        Row(horizontalArrangement = Arrangement.spacedBy(12.dp), modifier = Modifier.fillMaxWidth()) {
+            OutlinedButton(onClick = onExport, modifier = Modifier.weight(1f)) {
+                Text(stringResource(R.string.settings_export))
+            }
+            OutlinedButton(onClick = onImport, modifier = Modifier.weight(1f)) {
+                Text(stringResource(R.string.settings_import))
+            }
+        }
+    }
+}
+
 @Composable
 fun SettingsContent(
     preferences: AppPreferences,
@@ -409,6 +501,8 @@ fun SettingsContent(
     onDismissContacts: () -> Unit,
     onShareLogs: () -> Unit,
     onSaveLogs: () -> Unit,
+    onExportSettings: () -> Unit,
+    onImportSettings: () -> Unit,
     modifier: Modifier = Modifier
 ) {
     var showLicensesDialog by remember { mutableStateOf(false) }
@@ -551,6 +645,10 @@ fun SettingsContent(
                     expanded = openSection == SECTION_ABOUT,
                     onToggle = { onToggleSection(SECTION_ABOUT) }
                 )
+            }
+            // Section-less, at the very bottom: back up or restore your settings.
+            item {
+                ExportImportRow(onExport = onExportSettings, onImport = onImportSettings)
             }
         }
     }
@@ -902,6 +1000,15 @@ private fun StorageSection(
             onCheckedChange = { actions.setWriteMetadataFileEnabled(it) }
         )
         SettingsHint(stringResource(R.string.settings_metadata_file_hint))
+
+        // Also a destination choice: a text copy of the transcript + notes in the folder, for PC backup.
+        SettingsToggleRow(
+            label = stringResource(R.string.settings_transcript_sidecar_label),
+            description = stringResource(R.string.settings_transcript_sidecar_desc),
+            checked = remember(updateTrigger) { preferences.isWriteTranscriptSidecarEnabled() },
+            onCheckedChange = { actions.setWriteTranscriptSidecarEnabled(it) }
+        )
+        SettingsHint(stringResource(R.string.settings_transcript_sidecar_hint))
 
         SettingsDivider()
 
@@ -3234,6 +3341,9 @@ private fun SettingsScreenPreview() {
             override fun setRetentionLinked(linked: Boolean) {}
             override fun setMinDurationSeconds(seconds: Int) {}
             override fun setWriteMetadataFileEnabled(enabled: Boolean) {}
+            override fun setWriteTranscriptSidecarEnabled(enabled: Boolean) {}
+            override fun exportSettingsJson(): String = "{}"
+            override fun importSettings(json: String): Int = 0
             override fun setStorageCapBytes(bytes: Long) {}
             override fun setRetentionLocalDays(days: Int) {}
             override fun setRetentionDriveDays(days: Int) {}
@@ -3274,7 +3384,9 @@ private fun SettingsScreenPreview() {
             onConfirmContacts = {},
             onDismissContacts = {},
             onShareLogs = {},
-            onSaveLogs = {}
+            onSaveLogs = {},
+            onExportSettings = {},
+            onImportSettings = {}
         )
     }
 }

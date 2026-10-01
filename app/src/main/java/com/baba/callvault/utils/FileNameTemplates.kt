@@ -30,7 +30,12 @@ val FILE_NAME_TEMPLATE_PRESETS = listOf(
     FileNameTemplatePreset(R.string.settings_file_name_preset_date_direction_number, "{date}_{direction}_{phone_number}"),
     FileNameTemplatePreset(R.string.settings_file_name_preset_date_number, "{date}_{phone_number}"),
     FileNameTemplatePreset(R.string.settings_file_name_preset_date_contact, "{date}_{contact_name}"),
-    FileNameTemplatePreset(R.string.settings_file_name_preset_date_direction_contact, "{date}_{direction}_{contact_name}")
+    FileNameTemplatePreset(R.string.settings_file_name_preset_date_direction_contact, "{date}_{direction}_{contact_name}"),
+    // Contact/number-first orders, so a PC file listing groups by who the call was with rather than by time.
+    FileNameTemplatePreset(R.string.settings_file_name_preset_contact_number_date, "{contact_name}_{phone_number}_{date}"),
+    FileNameTemplatePreset(R.string.settings_file_name_preset_number_contact_date, "{phone_number}_{contact_name}_{date}"),
+    FileNameTemplatePreset(R.string.settings_file_name_preset_contact_date, "{contact_name}_{date}"),
+    FileNameTemplatePreset(R.string.settings_file_name_preset_number_date, "{phone_number}_{date}")
 )
 
 /**

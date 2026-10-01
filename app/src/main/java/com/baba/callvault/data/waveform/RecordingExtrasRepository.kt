@@ -13,6 +13,7 @@ import android.net.Uri
 import com.baba.callvault.data.transcripts.db.RecordingNoteEntry
 import com.baba.callvault.data.transcripts.db.RecordingWaveformEntry
 import com.baba.callvault.data.transcripts.db.TranscriptDatabase
+import com.baba.callvault.system.interop.TranscriptSidecar
 import com.baba.callvault.transcription.AudioDecoder
 import com.baba.callvault.utils.AppLogger
 import kotlinx.coroutines.Dispatchers
@@ -43,15 +44,18 @@ object RecordingExtrasRepository {
         val dao = dao(context)
         if (text.isBlank()) {
             dao.deleteNote(displayName)
-            return
-        }
-        dao.upsertNote(
-            RecordingNoteEntry(
-                displayName = displayName,
-                text = text,
-                updatedAt = System.currentTimeMillis()
+        } else {
+            dao.upsertNote(
+                RecordingNoteEntry(
+                    displayName = displayName,
+                    text = text,
+                    updatedAt = System.currentTimeMillis()
+                )
             )
-        )
+        }
+        // Keep the beside-the-audio transcript/notes file in step with the edited note (no-op when the
+        // sidecar setting is off; never throws).
+        TranscriptSidecar.writeOrClear(context, displayName)
     }
 
     /**

@@ -20,6 +20,9 @@ import com.baba.callvault.transcription.TranscriptionEstimate
 import com.baba.callvault.transcription.TranscriptionLanguageChoice
 import com.baba.callvault.transcription.model.TranscriptionModel
 import com.baba.callvault.ui.navigation.HomeSection
+import com.baba.callvault.utils.AppLogger
+import org.json.JSONArray
+import org.json.JSONObject
 
 /**
  * AppPreferences wraps [android.content.SharedPreferences] to provide typed access to all
@@ -29,6 +32,45 @@ class AppPreferences(context: Context) {
 
     companion object {
         private const val PREFS_NAME = "callvault_prefs"
+
+        /**
+         * The settings that may be exported and imported — an explicit ALLOW-list, device-independent
+         * user preferences only. It is a positive list on purpose: anything not named here (ADB pairing
+         * and transport state, SAF folder grants, per-device calibration, the log salt, install/update/
+         * wizard state, debug toggles, the dynamically-suffixed transcription calibration keys which are
+         * not in [Key] at all) is left out, so a new setting is NOT exported until someone decides it is
+         * safe to carry to another device. A unit test checks every id here is a real [Key] id.
+         */
+        internal val EXPORTABLE_KEYS: Set<String> = setOf(
+            // Recording automation
+            "carrier_recording_enabled", "auto_record_incoming", "auto_record_outgoing", "record_from_answer",
+            // Who to record / ignore
+            "ignore_anonymous_incoming", "ignore_cross_country_incoming", "ignore_cross_country_outgoing",
+            "ignore_contacts_mode_incoming", "ignore_contacts_mode_outgoing",
+            "ignored_contacts_incoming", "ignored_contacts_outgoing",
+            "record_only_contacts_incoming", "record_only_contacts_outgoing",
+            // Audio + file naming
+            "audio_source", "audio_codec", "audio_bitrate", "file_name_template",
+            // UI
+            "theme_mode", "dynamic_color", "show_toasts", "vibration_enabled",
+            // Retention / storage policy (not the folder URIs, which are per-device)
+            "retention_linked", "retention_local_days", "retention_drive_days",
+            "retention_time_hour", "retention_time_minute", "storage_cap_bytes", "min_duration_seconds",
+            "write_metadata_file", "write_transcript_sidecar", "keep_originals_after_merge",
+            // Sync schedule
+            "sync_schedule_mode", "sync_time_hour", "sync_time_minute", "sync_day_of_week",
+            // Transcription + summary policy
+            "transcription_mode", "transcription_hour", "transcription_minute", "transcription_requires_charging",
+            "transcription_batch_limit", "transcription_confirm_before_run", "transcription_model_id",
+            "transcription_language", "transcription_ask_language",
+            "summary_confirm_requirements", "summary_language",
+            // App (VoIP) calls policy
+            "voip_recording_enabled", "voip_auto_start", "voip_excluded_packages",
+            // Updates
+            "update_check_enabled",
+        )
+
+        private const val EXPORT_TAG = "CV:SettingsExport"
 
         /** Public key id for the available-update tag, for change-listener comparisons. */
         const val AVAILABLE_UPDATE_TAG_KEY = "available_update_tag"
@@ -181,6 +223,7 @@ class AppPreferences(context: Context) {
         // Off. It puts a second file in the user's folder for every call — a visible change to
         // something they look at — and it only earns its keep for someone using a tool that reads it.
         const val WRITE_METADATA_FILE = false
+        const val WRITE_TRANSCRIPT_SIDECAR = false
 
         const val MIN_DURATION_SECONDS = 0
 
@@ -295,6 +338,7 @@ class AppPreferences(context: Context) {
         // --- Retention ---
         RETENTION_LINKED("retention_linked"),
         WRITE_METADATA_FILE("write_metadata_file"),
+        WRITE_TRANSCRIPT_SIDECAR("write_transcript_sidecar"),
         VOIP_EXCLUDED_PACKAGES("voip_excluded_packages"),
         MIN_DURATION_SECONDS("min_duration_seconds"),
         STORAGE_CAP_BYTES("storage_cap_bytes"),
@@ -1095,6 +1139,12 @@ class AppPreferences(context: Context) {
     /** Sets whether a `.json` details file is written beside each recording. */
     fun setWriteMetadataFileEnabled(enabled: Boolean) = setBoolean(Key.WRITE_METADATA_FILE, enabled)
 
+    /** Whether to write a `.md` transcript + notes file beside each recording (for PC backup). */
+    fun isWriteTranscriptSidecarEnabled() = getBoolean(Key.WRITE_TRANSCRIPT_SIDECAR, DefaultsValue.WRITE_TRANSCRIPT_SIDECAR)
+
+    /** Sets whether a transcript + notes sidecar is written beside each recording. */
+    fun setWriteTranscriptSidecarEnabled(enabled: Boolean) = setBoolean(Key.WRITE_TRANSCRIPT_SIDECAR, enabled)
+
     /** Discard finished recordings shorter than this many seconds (0 = keep every recording). */
     fun getMinDurationSeconds() = getInt(Key.MIN_DURATION_SECONDS, DefaultsValue.MIN_DURATION_SECONDS)
 
@@ -1401,5 +1451,75 @@ class AppPreferences(context: Context) {
 
     /** Sets whether toast notifications are enabled. */
     fun setShowToastsEnabled(enabled: Boolean) = setBoolean(Key.SHOW_TOASTS, enabled)
+
+    // ----- Export / import -----
+
+    /**
+     * Serialises the exportable settings ([EXPORTABLE_KEYS]) to a JSON string. Each value carries its
+     * type so an import restores it faithfully (an Int imported as a Long, or vice versa, would crash
+     * `SharedPreferences` on the next read). Device-specific settings are never included.
+     */
+    fun exportToJson(): String {
+        val settings = JSONObject()
+        val all = prefs.all
+        for (key in EXPORTABLE_KEYS) {
+            val v = all[key] ?: continue
+            val entry = JSONObject()
+            when (v) {
+                is Boolean -> entry.put("type", "bool").put("value", v)
+                is Int -> entry.put("type", "int").put("value", v)
+                is Long -> entry.put("type", "long").put("value", v)
+                is String -> entry.put("type", "string").put("value", v)
+                is Set<*> -> entry.put("type", "set").put("value", JSONArray(v.map { it.toString() }))
+                else -> continue
+            }
+            settings.put(key, entry)
+        }
+        return JSONObject()
+            .put("app", "CallVault")
+            .put("format", 1)
+            .put("settings", settings)
+            .toString(2)
+    }
+
+    /**
+     * Applies settings from a JSON string produced by [exportToJson]. Only [EXPORTABLE_KEYS] are applied;
+     * any other key in the file is ignored, so a tampered or old file can never set device-specific state.
+     *
+     * @return the number of settings applied, or -1 if the JSON could not be parsed.
+     */
+    fun importFromJson(json: String): Int {
+        val settings = runCatching {
+            val root = JSONObject(json)
+            root.optJSONObject("settings") ?: root
+        }.getOrElse {
+            AppLogger.w(EXPORT_TAG, "Could not parse settings import: ${it.message}")
+            return -1
+        }
+        val editor = prefs.edit()
+        var applied = 0
+        for (key in settings.keys()) {
+            if (key !in EXPORTABLE_KEYS) continue
+            val entry = settings.optJSONObject(key) ?: continue
+            val ok = runCatching {
+                when (entry.optString("type")) {
+                    "bool" -> editor.putBoolean(key, entry.getBoolean("value"))
+                    "int" -> editor.putInt(key, entry.getInt("value"))
+                    "long" -> editor.putLong(key, entry.getLong("value"))
+                    "string" -> editor.putString(key, entry.getString("value"))
+                    "set" -> {
+                        val arr = entry.getJSONArray("value")
+                        editor.putStringSet(key, (0 until arr.length()).map { arr.getString(it) }.toSet())
+                    }
+                    else -> return@runCatching false
+                }
+                true
+            }.getOrDefault(false)
+            if (ok) applied++
+        }
+        editor.apply()
+        AppLogger.i(EXPORT_TAG, "Imported $applied setting(s).")
+        return applied
+    }
 
 }

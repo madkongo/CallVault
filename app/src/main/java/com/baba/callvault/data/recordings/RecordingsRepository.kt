@@ -17,6 +17,7 @@ import com.baba.callvault.data.AppPreferences
 import com.baba.callvault.data.StorageTarget
 import com.baba.callvault.data.recordings.db.RecordingDatabase
 import com.baba.callvault.data.recordings.db.RecordingEntry
+import com.baba.callvault.system.interop.TranscriptSidecar
 import com.baba.callvault.system.permissions.PermissionChecks
 import com.baba.callvault.utils.AppLogger
 import com.baba.callvault.utils.VoicemailLabel
@@ -369,8 +370,11 @@ object RecordingsRepository {
         for (folderUri in folders) {
             runCatching {
                 val tree = DocumentFile.fromTreeUri(context, folderUri) ?: return@runCatching
+                val sidecar = TranscriptSidecar.sidecarNameFor(item.displayName)
                 for (doc in tree.listFiles()) {
-                    if (doc.isFile && doc.name == item.displayName) {
+                    // The audio copy, and the transcript/notes sidecar beside it, so the text does not
+                    // outlive the recording it belongs to.
+                    if (doc.isFile && (doc.name == item.displayName || doc.name == sidecar)) {
                         if (doc.delete()) deletedAny = true
                     }
                 }

@@ -13,6 +13,7 @@ import android.net.Uri
 import android.os.SystemClock
 import androidx.core.net.toUri
 import com.baba.callvault.data.AppPreferences
+import com.baba.callvault.system.interop.TranscriptSidecar
 import com.baba.callvault.data.recordings.ImportedRecording
 import com.baba.callvault.data.recordings.RecordingCatalog
 import com.baba.callvault.data.recordings.RecordingsRepository
@@ -250,6 +251,10 @@ class TranscriptionRunner(
                 }
                 dao.replaceSegments(displayName, segments.labelled(displayName))
                 mark(displayName, TranscriptState.DONE, modelId, language)
+                // Mirror the finished transcript (+ notes/summary) to a file beside the audio, when the
+                // user has turned on sidecar backups. Guarded inside; NonCancellable so a stopping worker
+                // still writes it.
+                withContext(NonCancellable) { TranscriptSidecar.writeOrClear(context, displayName) }
                 // A file the user imported to read rather than to keep loses its audio HERE, and
                 // nowhere else — after the words and the DONE row are both written, on the success
                 // path alone. Every other way out of this function (a stop, an abort, a failure, a
