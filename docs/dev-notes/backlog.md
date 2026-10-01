@@ -47,7 +47,7 @@ fix, vivo far-side toggle (hint + SUPPORT doc), Samsung Wi-Fi-calling doc (#45).
 
 *🔼 HIGHER priority — new feature requests (detail in the "Higher-priority feature requests" section below):*
 1. ✅ **Save transcription + notes beside the audio** — SHIPPED in 2.4.5 (🧪, `83369db1`; opt-in `.md` sidecar).
-2. **Record Button overlay** — a floating on-screen button to start/stop recording. *(still open)*
+2. **Record Button overlay** — a floating on-screen button to start/stop recording, plus an in-call note bubble that attaches a note to the call. *(still open)*
 3. ✅ **More filename templates** — SHIPPED in 2.4.5 (🧪, `83369db1`; contact/number-first orders).
 4. ✅ **Export / import settings** — SHIPPED in 2.4.5 (🧪, `83369db1`; section-less row at the bottom of Settings).
 5. **View call history inside the app.** *(still open)*
@@ -86,6 +86,15 @@ visible option, a decision on onboarding — the wizard can't be re-run, see [[n
    (`SYSTEM_ALERT_WINDOW`); decide when it shows (always / during calls / toggle), and how it maps to the
    capture paths (manual start on the current call). Useful where auto-start can miss or the user wants
    explicit control.
+
+   **Related idea — in-call note bubble (user request, 2026-10-01):** the same floating bubble, shown
+   *during a call*, that lets you jot a quick note which is attached to that call's recording. We already
+   store a note per recording (`RecordingExtrasRepository.saveNote`, keyed by the recording's displayName)
+   and now also mirror it to the `.md` sidecar — so the missing piece is only the in-call overlay UI plus
+   knowing which recording the live call will become (the displayName is formed at record-finish, so the
+   note would be held against the active call/session and written once the recording is published). Pairs
+   naturally with the Record Button overlay — one bubble, two actions (record + note). `SYSTEM_ALERT_WINDOW`
+   again. Consider: what if recording is off/failed for that call (keep the note as a standalone jot?).
 
 3. **More filename templates.** Extend the recording-name templates (`FileNameTemplates.kt` /
    `RecordingFileNameFormatter.kt`) with more field orders — Contact–Phone–Date, Phone–Contact–Date, etc.
