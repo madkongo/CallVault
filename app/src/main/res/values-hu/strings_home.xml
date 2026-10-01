@@ -115,9 +115,11 @@
     <string name="merge_note_will_keep">A többi hívás is a telefonon marad.</string>
     <string name="home_scroll_to_top">Az elejére</string>
     <string name="home_whatsnew_full_notes">Teljes kiadási jegyzék</string>
-    <string name="whatsnew_245_title">Javítva a téves „hívás megszakadt” üzenet</string>
+    <string name="whatsnew_245_title">Új nyelvek és egy vivo-tipp</string>
     <string-array name="whatsnew_245_items">
-        <item>Javítva — Nincs több „Egy hívás megszakadt” értesítés olyan hívásnál, amely rendben rögzült</item>
+        <item>Perzsa és arab — két új alkalmazásnyelv, jobbról balra</item>
+        <item>vivo alkalmazáshívások — a másik fél rögzítéséhez kapcsolja be a vivo Hangrögzítő → Alkalmazáson belüli hívásrögzítés funkcióját</item>
+        <item>Javítva — nincs több téves „Egy hívás megszakadt“ értesítés</item>
     </string-array>
     <string name="whatsnew_244_title">Megbízhatóbb rögzítés, egyszerű újrapárosítás és frissítési értesítések</string>
     <string name="whatsnew_244_where">Beállítások ▸ Megbízhatóság ▸ Újrapárosítás</string>

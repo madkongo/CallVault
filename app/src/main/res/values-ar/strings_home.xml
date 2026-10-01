@@ -179,9 +179,11 @@
     <string name="merge_note_will_keep">يتم الاحتفاظ بالمكالمات الأخرى على الهاتف أيضًا.</string>
     <string name="home_scroll_to_top">الأعلى</string>
     <string name="home_whatsnew_full_notes">ملاحظات الإصدار الكاملة</string>
-    <string name="whatsnew_245_title">تم إصلاح رسالة «قُطِعت مكالمة» الخاطئة</string>
+    <string name="whatsnew_245_title">لغات جديدة ونصيحة لهواتف vivo</string>
     <string-array name="whatsnew_245_items">
-        <item>تم الإصلاح — لم يعد يظهر إشعار «قُطِعت مكالمة» لمكالمة سُجِّلت بشكل سليم</item>
+        <item>الفارسية والعربية — لغتان جديدتان للتطبيق، من اليمين إلى اليسار</item>
+        <item>مكالمات التطبيق على هواتف vivo — لتسجيل الطرف الآخر، شغّل في vivo تطبيق المسجّل ▸ «In-app call recording»</item>
+        <item>تم الإصلاح — لا مزيد من إشعار «قُطِعت مكالمة» الخاطئ</item>
     </string-array>
     <string name="whatsnew_244_title">تسجيل أكثر موثوقية، وإعادة اقتران سهلة، وتنبيهات التحديث</string>
     <string name="whatsnew_244_where">الإعدادات ▸ الموثوقية ▸ إعادة الاقتران</string>

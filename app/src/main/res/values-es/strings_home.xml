@@ -115,9 +115,11 @@
     <string name="merge_note_will_keep">Las demás llamadas también se conservan en el teléfono.</string>
     <string name="home_scroll_to_top">Arriba</string>
     <string name="home_whatsnew_full_notes">Notas de versión completas</string>
-    <string name="whatsnew_245_title">Se corrige un aviso falso de «llamada cortada»</string>
+    <string name="whatsnew_245_title">Nuevos idiomas y un consejo para vivo</string>
     <string-array name="whatsnew_245_items">
-        <item>Corregido — Ya no aparece «Una llamada se cortó» para una llamada que se grabó bien</item>
+        <item>Persa y árabe — dos nuevos idiomas de la app, de derecha a izquierda</item>
+        <item>Llamadas por app en teléfonos vivo — para grabar a la otra persona, activa la Grabadora de vivo → Grabación de llamadas en apps</item>
+        <item>Corregido — no más falso «Una llamada se cortó»</item>
     </string-array>
     <string name="whatsnew_244_title">Grabación más fiable, reemparejamiento fácil y avisos de actualización</string>
     <string name="whatsnew_244_where">Ajustes ▸ Fiabilidad ▸ Volver a emparejar</string>

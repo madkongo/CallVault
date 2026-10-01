@@ -137,9 +137,11 @@
     <string name="merge_note_will_keep">The other calls are kept on the phone as well.</string>
     <string name="home_scroll_to_top">Top</string>
     <string name="home_whatsnew_full_notes">Full release notes</string>
-    <string name="whatsnew_245_title">A false ‘call was cut off’ message is fixed</string>
+    <string name="whatsnew_245_title">New languages and a vivo tip</string>
     <string-array name="whatsnew_245_items">
-        <item>Fixed — No more ‘a call was cut off’ notice for a call that recorded fine</item>
+        <item>Persian &amp; Arabic — two new app languages, right-to-left</item>
+        <item>vivo app calls — to record the other side, turn on vivo\'s Recorder → In-app call recording</item>
+        <item>Fixed — no more false ‘call was cut off’</item>
     </string-array>
     <string name="whatsnew_244_title">More reliable recording, easy re-pairing, and update alerts</string>
     <string name="whatsnew_244_where">Settings ▸ Reliability ▸ Pair again</string>

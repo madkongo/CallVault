@@ -115,9 +115,11 @@
     <string name="merge_note_will_keep">Pozostałe rozmowy zostaną też zachowane w telefonie.</string>
     <string name="home_scroll_to_top">Do góry</string>
     <string name="home_whatsnew_full_notes">Pełne informacje o wydaniu</string>
-    <string name="whatsnew_245_title">Naprawiono fałszywy komunikat „połączenie przerwane”</string>
+    <string name="whatsnew_245_title">Nowe języki i wskazówka dla vivo</string>
     <string-array name="whatsnew_245_items">
-        <item>Naprawiono — Koniec z komunikatem „Połączenie zostało przerwane” dla połączenia, które nagrało się poprawnie</item>
+        <item>Perski i arabski — dwa nowe języki aplikacji, od prawej do lewej</item>
+        <item>Rozmowy w aplikacjach na vivo — aby nagrać drugą osobę, włącz w vivo Dyktafon → Nagrywanie rozmów w aplikacjach</item>
+        <item>Naprawiono — koniec z fałszywym „Połączenie zostało przerwane“</item>
     </string-array>
     <string name="whatsnew_244_title">Pewniejsze nagrywanie, łatwe ponowne parowanie i powiadomienia o aktualizacjach</string>
     <string name="whatsnew_244_where">Ustawienia ▸ Niezawodność ▸ Sparuj ponownie</string>

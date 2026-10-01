@@ -115,9 +115,11 @@
     <string name="merge_note_will_keep">Các cuộc gọi kia cũng được giữ lại trên máy.</string>
     <string name="home_scroll_to_top">Lên đầu</string>
     <string name="home_whatsnew_full_notes">Ghi chú phát hành đầy đủ</string>
-    <string name="whatsnew_245_title">Sửa thông báo sai « cuộc gọi bị cắt »</string>
+    <string name="whatsnew_245_title">Ngôn ngữ mới và một mẹo cho vivo</string>
     <string-array name="whatsnew_245_items">
-        <item>Đã sửa — Không còn thông báo « Một cuộc gọi đã bị cắt » cho cuộc gọi đã ghi bình thường</item>
+        <item>Tiếng Ba Tư và tiếng Ả Rập — hai ngôn ngữ ứng dụng mới, viết từ phải sang trái</item>
+        <item>Cuộc gọi qua ứng dụng trên vivo — để ghi cả người kia, bật Ghi âm của vivo → Ghi âm cuộc gọi trong ứng dụng</item>
+        <item>Đã sửa — không còn báo nhầm « Một cuộc gọi đã bị cắt »</item>
     </string-array>
     <string name="whatsnew_244_title">Ghi âm đáng tin cậy hơn, ghép nối lại dễ dàng và thông báo cập nhật</string>
     <string name="whatsnew_244_where">Cài đặt ▸ Độ tin cậy ▸ Ghép nối lại</string>

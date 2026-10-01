@@ -115,9 +115,11 @@
     <string name="merge_note_will_keep">Die anderen Anrufe bleiben ebenfalls auf dem Telefon.</string>
     <string name="home_scroll_to_top">Nach oben</string>
     <string name="home_whatsnew_full_notes">Vollständige Versionshinweise</string>
-    <string name="whatsnew_245_title">Behebt eine falsche Meldung „Anruf abgeschnitten“</string>
+    <string name="whatsnew_245_title">Neue Sprachen und ein vivo-Tipp</string>
     <string-array name="whatsnew_245_items">
-        <item>Behoben — Keine Meldung „Ein Anruf wurde abgeschnitten“ mehr für einen Anruf, der einwandfrei aufgenommen wurde</item>
+        <item>Persisch und Arabisch — zwei neue App-Sprachen, von rechts nach links</item>
+        <item>vivo-App-Anrufe — um die andere Person aufzunehmen, in vivos „Recorder“ → In-App-Anrufaufnahme einschalten</item>
+        <item>Behoben — keine falsche Meldung „Ein Anruf wurde abgeschnitten“ mehr</item>
     </string-array>
     <string name="whatsnew_244_title">Zuverlässigeres Aufnehmen, einfaches Neu-Koppeln und Update-Hinweise</string>
     <string name="whatsnew_244_where">Einstellungen ▸ Zuverlässigkeit ▸ Erneut koppeln</string>

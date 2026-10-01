@@ -115,9 +115,11 @@
     <string name="merge_note_will_keep">Остальные звонки также останутся на телефоне.</string>
     <string name="home_scroll_to_top">Наверх</string>
     <string name="home_whatsnew_full_notes">Полный список изменений</string>
-    <string name="whatsnew_245_title">Исправлено ложное сообщение «звонок прерван»</string>
+    <string name="whatsnew_245_title">Новые языки и совет для vivo</string>
     <string-array name="whatsnew_245_items">
-        <item>Исправлено — Больше нет уведомления «Звонок был прерван» для звонка, который записался нормально</item>
+        <item>Персидский и арабский — два новых языка приложения, справа налево</item>
+        <item>Звонки через приложения на vivo — чтобы записать собеседника, включите в vivo «Диктофон» → Запись звонков в приложениях</item>
+        <item>Исправлено — больше нет ложного «Звонок был прерван»</item>
     </string-array>
     <string name="whatsnew_244_title">Более надёжная запись, простое повторное сопряжение и уведомления об обновлениях</string>
     <string name="whatsnew_244_where">Настройки ▸ Надёжность ▸ Повторное сопряжение</string>
