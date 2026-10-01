@@ -46,11 +46,11 @@ fix, vivo far-side toggle (hint + SUPPORT doc), Samsung Wi-Fi-calling doc (#45).
 **Open work — priority set by the maintainer 2026-10-01.**
 
 *🔼 HIGHER priority — new feature requests (detail in the "Higher-priority feature requests" section below):*
-1. **Save transcription + notes beside the audio** — same folder, same filename as the recording — so they copy to a PC as backup.
-2. **Record Button overlay** — a floating on-screen button to start/stop recording.
-3. **More filename templates** — e.g. Contact–Phone–Date, Phone–Contact–Date, and similar orders.
-4. **Export / import settings.**
-5. **View call history inside the app.**
+1. ✅ **Save transcription + notes beside the audio** — SHIPPED in 2.4.5 (🧪, `83369db1`; opt-in `.md` sidecar).
+2. **Record Button overlay** — a floating on-screen button to start/stop recording. *(still open)*
+3. ✅ **More filename templates** — SHIPPED in 2.4.5 (🧪, `83369db1`; contact/number-first orders).
+4. ✅ **Export / import settings** — SHIPPED in 2.4.5 (🧪, `83369db1`; section-less row at the bottom of Settings).
+5. **View call history inside the app.** *(still open)*
 
 *🔽 LOWER priority — everything previously queued:*
 - *Parked on a user/log:* VoIP mic re-take step 2 (#9 — gate on `isClientSilenced`, needs a Samsung log);
