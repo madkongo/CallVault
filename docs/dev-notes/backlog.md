@@ -22,7 +22,49 @@ with `&&`/`||` chains and silently reported the opposite answer while this was b
 
 ---
 
-## 🔵 Next release (2.4.4) — parked list, gathered 2026-09-29, nothing built
+## Current state — 2026-10-01
+
+**Treat this block as the summary of record; the dated blocks lower down (2026-09-11, 2026-08-24, 2026-08-05)
+are stale history kept only for context.**
+
+**Public latest: `v2.4.3`.** `v2.4.4` (20450) was published 2026-09-29 and **pulled the same day** (a false
+"call was cut off"); the public download is back at 2.4.3.
+
+**Built but NOT published: `2.4.5` (20451)** — on `main`, installed on the OP9 + OP12, held for review.
+2.4.5 = everything that was in 2.4.4, plus the cut-off-false-positive fix, **Persian + Arabic** UI locales,
+and the **vivo one-sided-call hint**. Before publishing: native Farsi review, Arabic gap review
+(`~/Downloads/CallVault-arabic-gaps-to-review.md`), then the release checklist ([[release-version-bump]]);
+the whatsnew_245 note is already written (terse style, [[release-notes-style]]).
+
+**Shipped since this file was last reconciled (2.3.0 → 2.4.5), so OFF the backlog:**
+import an audio file (#37, 2.4.0), Shizuku speaker labels (#38, 2.4.1), the transcription stack (2.4.1),
+record-only-selected-contacts (2.4.3), stuck "Call in progress" fix (2.4.3), and the whole 2.4.4/2.4.5
+batch — version-aware settings (#1), pair-again (#43), cut-off rescue + "call was lost" (#4/#5),
+regrant-card fix (#6), update popup + faster checks, manual "Check for updates" row, vivo app-call crash
+fix, vivo far-side toggle (hint + SUPPORT doc), Samsung Wi-Fi-calling doc (#45).
+
+**Still open (nothing started):**
+- *Parked on a user/log:* VoIP mic re-take step 2 (#9 — gate on `isClientSilenced`, needs a Samsung log);
+  Android-13 app-call mic fallback (#42 — decision pending).
+- *Features:* "Test my setup" path-check; per-app VoIP support checked at runtime; a confirmation when a
+  VoIP recording ends; Matroska `.mka` storage (#36); transcript reading design (#27, mirror176) + the
+  transcript-sheet auto-height follow-up.
+- *Engineering:* `AdbShell.ensureConnected` unbounded handshake on the record-start path; our captures
+  don't register with `AudioService` record tracking; targeting Android 17 (API 37) will break mDNS
+  discovery until we request it; a setting to stop CallVault managing Wireless debugging (#30 follow-up);
+  split `AppPreferences` into per-domain interfaces.
+- *Quality / housekeeping:* no instrumentation tests at all (`androidTest`); transcript lines whisper
+  invents from noise (#32); F-Droid readiness; README stale since 1.5.5 + stale screenshots + dead
+  `WD_DISABLE_WHEN_IDLE` pref + deliberately-broken CI signing.
+
+---
+
+## ✅ Next release batch — SHIPPED in 2.4.4 (pulled) → 2.4.5. Parked list gathered 2026-09-29.
+
+Per-row statuses below were written as each item was built; the batch as a whole shipped in 2.4.4 (20450,
+pulled) and is carried by the unpublished 2.4.5 (20451). Still open from this list: **#9 step 2** (needs a
+Samsung log) and **#3's "switch the timeout off with consent"** part (the Offline-recording recommendation
+did ship, in the Pair-again hint). #7 DROPPED, #8 PARKED.
 
 All 📐 from field logs and source reading; each needs a build and a real phone before anything is claimed.
 The maintainer picks the order.
@@ -52,7 +94,7 @@ unit-covered; on-screen appearance not yet seen (needs a genuinely newer release
 
 ---
 
-## 🔵 Features that match the phone's Android version — agreed 2026-09-29, not started
+## ✅ Features that match the phone's Android version — SHIPPED in 2.4.4 (pulled) → 2.4.5 (`53529e65`, rc17); not yet seen on an Android 12/13 device
 
 **Why.** coonrw (Redmi 12 Pro, Android 12) had "Record app calls" switched on and six WhatsApp calls
 went unrecorded without a word: app-call capture needs Android 14 (the shell only gets
@@ -181,7 +223,7 @@ port open; the setting's description should say so.
 
 ---
 
-## Current state — 2026-09-11
+## Current state — 2026-09-11 (STALE — superseded by the 2026-10-01 block at the top; kept as history)
 
 **Released:** `v2.3.0` (versionCode **20350**), published 2026-09-11. Asset `CallVault.apk`, downloaded back
 and verified byte-identical to the tested build (sha256 `5b795a26…0add`). `origin/main` = `756f27a`.
@@ -1466,7 +1508,7 @@ Raised by issue #18, which closed unexplained — see
 
 ---
 
-## 🔵 Manual "Check for updates" in Settings
+## ✅ Manual "Check for updates" in Settings — SHIPPED (wired in `SettingsScreen.kt` + `WizardScreen.kt`, `settings_update_check_label`)
 
 **Why.** A release only surfaces two ways: a check when the app opens, throttled to once per 6 hours
 (`UpdateScheduler.checkNowIfDue`), and a 24-hour periodic worker. Open the app shortly *before* a
@@ -1970,7 +2012,7 @@ package holds the same id, so the shade shows one notification throughout.
 Cheaper half-measure if wanted: have the keep-alive show a recording title during carrier recordings, as it
 already does for VoIP. Still two notifications, but they would stop contradicting each other.
 
-## Import an audio file recorded elsewhere (issue #37)
+## ✅ Import an audio file recorded elsewhere (issue #37) — SHIPPED in 2.4.0 (`HomeViewModel.importAudio`, `ShareImportScreen`, `ImportedRecording`)
 
 **Requested 2026-09-10 by mirror176.** Bring recordings made by other apps — including ShizuCallRecorder,
 which CallVault is a fork of — into CallVault, so they sit in the same list and can be transcribed.
