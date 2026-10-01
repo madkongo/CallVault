@@ -43,7 +43,16 @@ batch — version-aware settings (#1), pair-again (#43), cut-off rescue + "call 
 regrant-card fix (#6), update popup + faster checks, manual "Check for updates" row, vivo app-call crash
 fix, vivo far-side toggle (hint + SUPPORT doc), Samsung Wi-Fi-calling doc (#45).
 
-**Still open (nothing started):**
+**Open work — priority set by the maintainer 2026-10-01.**
+
+*🔼 HIGHER priority — new feature requests (detail in the "Higher-priority feature requests" section below):*
+1. **Save transcription + notes beside the audio** — same folder, same filename as the recording — so they copy to a PC as backup.
+2. **Record Button overlay** — a floating on-screen button to start/stop recording.
+3. **More filename templates** — e.g. Contact–Phone–Date, Phone–Contact–Date, and similar orders.
+4. **Export / import settings.**
+5. **View call history inside the app.**
+
+*🔽 LOWER priority — everything previously queued:*
 - *Parked on a user/log:* VoIP mic re-take step 2 (#9 — gate on `isClientSilenced`, needs a Samsung log);
   Android-13 app-call mic fallback (#42 — decision pending).
 - *Features:* "Test my setup" path-check; per-app VoIP support checked at runtime; a confirmation when a
@@ -56,6 +65,39 @@ fix, vivo far-side toggle (hint + SUPPORT doc), Samsung Wi-Fi-calling doc (#45).
 - *Quality / housekeeping:* no instrumentation tests at all (`androidTest`); transcript lines whisper
   invents from noise (#32); F-Droid readiness; README stale since 1.5.5 + stale screenshots + dead
   `WD_DISABLE_WHEN_IDLE` pref + deliberately-broken CI signing.
+
+---
+
+## 🔼 Higher-priority feature requests — agreed 2026-10-01, not started
+
+Maintainer-prioritised above the older backlog. Each needs a design pass before code (and, where it adds a
+visible option, a decision on onboarding — the wizard can't be re-run, see [[new-features-consider-onboarding]]).
+
+1. **Save the transcription and notes next to the recording, for PC backup.** Write the transcript and the
+   user's notes into the *same* folder as the audio, with the *same base filename* as the recording (e.g.
+   `20260930_172621_in_פרוזה.ogg` → `…_in_פרוזה.txt` / `.md`), so a user copying the folder to a PC gets
+   audio + text together. Today transcripts/notes live in the app's own store, not as sidecar files.
+   Decisions: format (plain `.txt`, `.md`, and/or `.srt` for timestamps); notes in the same file or a
+   separate one; keep it in sync when a transcript/notes change; SAF write to the chosen recording folder
+   (we already write audio there). Possibly a setting to turn sidecar export on/off.
+
+2. **Record Button overlay.** A floating, draggable on-screen button (bubble) to start/stop recording
+   manually, as an alternative to the automatic call trigger. Needs the draw-over-other-apps permission
+   (`SYSTEM_ALERT_WINDOW`); decide when it shows (always / during calls / toggle), and how it maps to the
+   capture paths (manual start on the current call). Useful where auto-start can miss or the user wants
+   explicit control.
+
+3. **More filename templates.** Extend the recording-name templates (`FileNameTemplates.kt` /
+   `RecordingFileNameFormatter.kt`) with more field orders — Contact–Phone–Date, Phone–Contact–Date, etc.
+   Mostly additive: define the new ordered templates, expose them in the existing name-format setting.
+
+4. **Export / import settings.** Export app settings to a file the user can save/restore (new phone, re-
+   install). Decisions: scope (just `AppPreferences`? include the recorded-contacts list?), format (JSON),
+   and that some settings are device-specific (don't clobber pairing/transport state on import).
+
+5. **View call history inside the app.** Show the device call log in-app, ideally marking which calls have a
+   recording (we already read the call log via `CallLogReader` for cut-off matching, and hold
+   `READ_CALL_LOG`). Decisions: list design, correlation to recordings, and what a tap does.
 
 ---
 
