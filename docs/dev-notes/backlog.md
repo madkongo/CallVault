@@ -59,9 +59,12 @@ fix, vivo far-side toggle (hint + SUPPORT doc), Samsung Wi-Fi-calling doc (#45).
   don't register with `AudioService` record tracking; targeting Android 17 (API 37) will break mDNS
   discovery until we request it; a setting to stop CallVault managing Wireless debugging (#30 follow-up);
   split `AppPreferences` into per-domain interfaces.
-- *Bugs:* with the app lock (fingerprint/biometric) on, **screenshots of the app can't be taken** — a
-  side effect of `FLAG_SECURE` and unwanted from a user's view (detail in the "App lock blocks screenshots"
-  section below).
+- *Bugs:*
+  - **Merge with another call fails for Drive-storage users** — a same-contact call that's already on Drive
+    is never offered, and the dialog wrongly says "no other calls with this number" (detail in the "Merge
+    can't see Drive-only calls" section below). Live in 2.4.3–2.4.5.
+  - With the app lock (fingerprint/biometric) on, **screenshots of the app can't be taken** — a side effect
+    of `FLAG_SECURE` and unwanted from a user's view (detail in the "App lock blocks screenshots" section below).
 - *Quality / housekeeping:* no instrumentation tests at all (`androidTest`); transcript lines whisper
   invents from noise (#32); F-Droid readiness; README stale since 1.5.5 + stale screenshots + dead
   `WD_DISABLE_WHEN_IDLE` pref + deliberately-broken CI signing.
@@ -107,6 +110,49 @@ visible option, a decision on onboarding — the wizard can't be re-run, see [[n
 5. **View call history inside the app.** Show the device call log in-app, ideally marking which calls have a
    recording (we already read the call log via `CallLogReader` for cut-off matching, and hold
    `READ_CALL_LOG`). Decisions: list design, correlation to recordings, and what a tap does.
+
+---
+
+## 🐞 Merge can't see Drive-only calls — reported 2026-10-02 (user "gene rator")
+
+**Report:** two recordings with the same contact (one outgoing 09:40, one incoming 09:43, right after
+hanging up). "Merge with another call" on one said **"There are no other calls with this number on the
+phone."** Screenshots confirm the same contact ("Stephen …") and that **both rows carry the cloud badge**
+(stored on Drive). Reporter on **2.4.3 (20430)**, OnePlus CPH2653, Android 16, **Storage target: DRIVE**.
+
+**Root cause (confirmed in code):** the merge-candidate filter `MergeCandidates.of` requires every candidate
+to be physically on the phone — `other.localUri != null` (`data/merge/MergeCandidates.kt:44-47`), because the
+stream-copy merge reads encoded frames via MediaExtractor on a local file. **In DRIVE mode the local file is
+deleted after upload and the catalog's local reference is cleared** (`RecordingCopyWorker.kt:84` deletes the
+device copy; `RecordingCatalog.markDrive` → `clearLocal` at `RecordingCatalog.kt:88-89`), so
+`RecordingItem.localUri` is null for *every* Drive-synced call (`RecordingsRepository.toItem`, `localUri`
+fed straight from the catalog row). Result: with DRIVE storage, all candidates are filtered out regardless
+of how well the contact matches. The merge menu still opens because `canMerge` only checks `isImported`, not
+`localUri` — so the user reaches a dialog that then reports zero candidates. **Live in 2.4.3 through 2.4.5
+(`MergeCandidates` unchanged on `main`).** Two wrongs: the feature doesn't work for Drive users at all, and
+the message claims the calls don't exist when they do (just not locally).
+
+**Secondary bug the trace turned up (masked here, bites others):** the key is `contactName ?: number` with
+**no number normalization** — `number` is parsed raw from the filename (`RecordingsRepository.parseName`,
+~:604-613). An incoming `+35679…` and an outgoing `079…` to the same person only key-match if PhoneLookup
+resolves *both* to the same `contactName`; if lookup misses (READ_CONTACTS denied, or one format not stored)
+the raw numbers differ and the merge fails **even for two local calls**. No `normalizeNumber`/E.164/last-N
+canonicalisation anywhere in the key path, unlike the record-only-selected matcher (last-9-digit).
+
+**Fix direction (needs a design pass + decision):**
+- *Make merge work for Drive users:* when a same-contact candidate is Drive-only, **download it to a temp
+  local file first** (reuse the existing Drive-restore path — un-merge/restore already pulls files back from
+  Drive), run the normal merge, then re-upload the merged result and clean up temps. Needs network + space;
+  show progress; handle offline. This is the real fix.
+- *At minimum, stop the lie:* if same-contact calls exist only on Drive, say so ("the matching calls are on
+  Drive; merging needs them on the phone") instead of "no other calls with this number" — and/or list them
+  disabled with a "download to merge" affordance.
+- *Separately, normalise the key:* compare on a canonical number (last-N digits / E.164) before falling back,
+  so in/out pairs match even when contact lookup misses. Small, helps all storage modes.
+
+Recommend: ship the message fix + number normalisation first (small, honest), then the download-then-merge as
+the full fix. A new visible path → onboarding not affected (no wizard step), but the download cost is a UX
+decision.
 
 ---
 
