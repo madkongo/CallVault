@@ -27,14 +27,11 @@ with `&&`/`||` chains and silently reported the opposite answer while this was b
 **Treat this block as the summary of record; the dated blocks lower down (2026-09-11, 2026-08-24, 2026-08-05)
 are stale history kept only for context.**
 
-**Public latest: `v2.4.3`.** `v2.4.4` (20450) was published 2026-09-29 and **pulled the same day** (a false
-"call was cut off"); the public download is back at 2.4.3.
-
-**Built but NOT published: `2.4.5` (20451)** — on `main`, installed on the OP9 + OP12, held for review.
-2.4.5 = everything that was in 2.4.4, plus the cut-off-false-positive fix, **Persian + Arabic** UI locales,
-and the **vivo one-sided-call hint**. Before publishing: native Farsi review, Arabic gap review
-(`~/Downloads/CallVault-arabic-gaps-to-review.md`), then the release checklist ([[release-version-bump]]);
-the whatsnew_245 note is already written (terse style, [[release-notes-style]]).
+**Public latest: `v2.4.5` (20451)** — PUBLISHED 2026-10-02 (Latest, not a pre-release) after the maintainer
+ran it ~2 days on the OP12. 2.4.5 = everything that was in 2.4.4 (published 2026-09-29, pulled the same day
+for a false "call was cut off"), plus the cut-off-false-positive fix, **Persian + Arabic** UI locales (first
+RTL, shipped unreviewed by decision), the **vivo one-sided-call hint**, and three features (transcript/notes
+`.md` sidecar #1, more filename templates #3, export/import settings #4). Next release must exceed 20451.
 
 **Shipped since this file was last reconciled (2.3.0 → 2.4.5), so OFF the backlog:**
 import an audio file (#37, 2.4.0), Shizuku speaker labels (#38, 2.4.1), the transcription stack (2.4.1),
@@ -62,6 +59,9 @@ fix, vivo far-side toggle (hint + SUPPORT doc), Samsung Wi-Fi-calling doc (#45).
   don't register with `AudioService` record tracking; targeting Android 17 (API 37) will break mDNS
   discovery until we request it; a setting to stop CallVault managing Wireless debugging (#30 follow-up);
   split `AppPreferences` into per-domain interfaces.
+- *Bugs:* with the app lock (fingerprint/biometric) on, **screenshots of the app can't be taken** — a
+  side effect of `FLAG_SECURE` and unwanted from a user's view (detail in the "App lock blocks screenshots"
+  section below).
 - *Quality / housekeeping:* no instrumentation tests at all (`androidTest`); transcript lines whisper
   invents from noise (#32); F-Droid readiness; README stale since 1.5.5 + stale screenshots + dead
   `WD_DISABLE_WHEN_IDLE` pref + deliberately-broken CI signing.
@@ -107,6 +107,33 @@ visible option, a decision on onboarding — the wizard can't be re-run, see [[n
 5. **View call history inside the app.** Show the device call log in-app, ideally marking which calls have a
    recording (we already read the call log via `CallLogReader` for cut-off matching, and hold
    `READ_CALL_LOG`). Decisions: list design, correlation to recordings, and what a tap does.
+
+---
+
+## 🐞 App lock blocks screenshots — reported 2026-10-02
+
+**Report (user):** when the app lock (fingerprint/biometric) is enabled, screenshots of the app can't be
+taken. From a user's perspective there's no reason it shouldn't work — treated as a bug.
+
+**Cause (confirmed in code):** `MainActivity.onResume` applies `FLAG_SECURE` to the window whenever
+`AppLock.isEnabled(this)` (`MainActivity.kt:243-244`; cleared at :246). `FLAG_SECURE` is the single flag
+that both blanks the Recents thumbnail **and** blocks the OS screenshot — Android gives no way to keep one
+without the other. `ShareImportActivity` sets it too (:228), but only for the brief share-import screen.
+
+**Why it's there:** deliberate privacy hardening — a locked-behind-biometric app shouldn't leak its
+contents (contacts, call text) to the Recents preview or a casual screenshot. So this is working as coded,
+not a regression; the tension is that it also stops the *owner* screenshotting their own app.
+
+**Options for the fix (needs a decision):**
+- *Decouple the two concerns:* keep hiding the Recents thumbnail (e.g. `setRecentsScreenshotEnabled(false)`
+  on Android 13+ / an exclude-from-recents approach) but drop `FLAG_SECURE` so manual screenshots work.
+  Caveat: pre-13 has no clean split, and even on 13+ this changes the privacy posture.
+- *Make it a setting:* "Allow screenshots" toggle (default off to preserve today's behaviour), that clears
+  `FLAG_SECURE` when on. Simplest, keeps the secure default, puts the choice with the user.
+- *Scope it:* only apply `FLAG_SECURE` to screens that actually show sensitive content, not the whole app.
+
+Recommend the setting unless we want to rework per-screen. Small change either way; the work is the
+decision + onboarding note (a new visible option — see [[new-features-consider-onboarding]]).
 
 ---
 
