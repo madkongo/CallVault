@@ -57,3 +57,37 @@ script navigates Settings ▸ General ▸ Experimental, which the new default la
 read "-". Its VoIP-policy check also reads the event log rather than the live policies, and app-call
 recording was off on the OP9 after `pm clear`. Neither is an app regression; the script needs updating for the
 new layout.
+
+## 2026-10-25 field report on 2.4.7 (rik297981, two Honor Magic 8 Pro BKQ-N49, MagicOS 11.0.0.130)
+
+🧪 VERIFYING — reporter's report, not confirmed by the maintainer. rik297981 says WhatsApp calls now record on
+both phones. The logs agree: "the ROM's startRecording() needs an Application (null); giving the recorder a
+shell one" → "started after the shell Application was installed", then both sides captured. Both phones are
+standalone mode, so the Shizuku host is still untested.
+
+**New problem, on the second phone (MARIANNA): the recording runs on after the call ends.** The reporter says
+it keeps recording until WhatsApp is closed. The two logs are the same calls seen from each end
+(sidecar names match):
+
+| call | Riccardo: answered → ended | Marianna: answered → ended | overrun |
+|---|---|---|---|
+| 2 | 12:24:53 → 12:25:31 | 12:24:54 → 12:27:28 | ~1 min 57 s |
+| 3 | 12:29:02 → 12:29:50 | 12:29:02 → 12:30:07 | ~17 s |
+
+In call 3 the far side's peak drops to 0 right after 12:29:50, so the call really was over on her phone too.
+Riccardo said he hung up both times, so the overrun is on the phone whose far party hung up, which in both
+calls was also the caller.
+
+Cause, from the code: `VoipCallDetector` ends an app call **only** when the audio mode leaves
+`MODE_IN_COMMUNICATION`. On her phone WhatsApp kept the mode after the call had ended, until she closed it.
+There is no second end signal.
+
+Candidate fix, 📐 not built: while the mode still says "in a call", also watch `CallEvidence` (no
+VOICE_COMMUNICATION capture by any app means nobody is on a call), and end once it has been absent for a few
+seconds. Unknowns that need checking before it ships:
+- Does WhatsApp keep its capture open while muted? If not, muting would end the recording, which is far worse
+  than an overrun.
+- Does Honor's ROM answer `getActiveRecordingConfigurations()` from the app?
+
+Also open: Riccardo's first call (12:21:50–12:22:14, sidecar "MARIANNA") is missing from her log; her phone
+logged nothing between 12:17 and 12:23. Nobody has explained it yet, and we need to ask.
