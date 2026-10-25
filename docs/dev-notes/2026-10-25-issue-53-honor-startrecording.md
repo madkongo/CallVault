@@ -91,3 +91,26 @@ seconds. Unknowns that need checking before it ships:
 
 Also open: Riccardo's first call (12:21:50–12:22:14, sidecar "MARIANNA") is missing from her log; her phone
 logged nothing between 12:17 and 12:23. Nobody has explained it yet, and we need to ask.
+
+### 2026-10-25 research: a better end-of-call signal (📐 code and web reading only)
+
+The maintainer rejected anything that could end a recording because the user muted. Options:
+
+- **ShizuCallRecorder v2.0.0 (2026-10-24, read at tag v2.0.0, not built).** App calls are detected only by
+  an `InCallService` declared with `INCLUDE_SELF_MANAGED_CALLS` and `IN_CALL_SERVICE_UI=false`. Telecom binds
+  it because the `android:manage_ongoing_calls` app-op is granted through the shell, with companion-role
+  fallbacks for Chinese ROMs. The call ends on `onCallRemoved`, which is Telecom's own answer and does not
+  depend on audio mode, mute or silence. Their phone-state path covers carrier calls only. Limit, in their
+  own release notes: apps that do not report calls to Telecom are invisible (their #131 plans a CallStyle
+  notification listener for those). One of their testers (#13, 2026-10-18) says WhatsApp records
+  "flawlessly", so WhatsApp must report to Telecom on that phone.
+- **This contradicts our `CallEvidence` comment** (OP12, 2026-09-06: "WhatsApp registers no self-managed
+  ConnectionService"; `isInCall()` false during a WhatsApp call). It may differ by phone or by WhatsApp
+  version. Settle it with `dumpsys telecom` on a phone that has WhatsApp, during a call.
+- **The WhatsApp ongoing-call notification** (CallStyle, Android 12+) goes away on hang-up whatever the audio
+  mode. It needs notification-listener access, which the shell can grant. It does not depend on mute.
+- **The capture-evidence idea** (no VOICE_COMMUNICATION capture) is rejected: it is mute-sensitive.
+
+Proposed order: (1) measure on a phone with WhatsApp which signals change at hang-up; (2) build Telecom
+`onCallRemoved` as the end signal where the app reports to Telecom, with the notification as the fallback,
+and the audio mode kept as the last resort.
