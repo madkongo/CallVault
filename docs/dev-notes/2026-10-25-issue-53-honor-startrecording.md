@@ -114,3 +114,18 @@ The maintainer rejected anything that could end a recording because the user mut
 Proposed order: (1) measure on a phone with WhatsApp which signals change at hang-up; (2) build Telecom
 `onCallRemoved` as the end signal where the app reports to Telecom, with the notification as the fallback,
 and the audio mode kept as the last resort.
+
+### 2026-10-25 15:47 reporter's answer (rik297981)
+
+"The problem with the recording not stopping on Marianna's phone occurs when Riccardo ends the conversation.
+Marianna's phone returns to the chat. Only when she switches to the desktop do I feel the vibration that
+indicates she's finished recording. Riccardo and Marianna have the same settings."
+
+So the overrun happens when **the other party hangs up**: WhatsApp drops back to the chat screen and keeps
+`MODE_IN_COMMUNICATION` while it stays in the foreground. The mode is released when she leaves WhatsApp for the
+home screen; the vibration is our stop haptic. This matches the log: Riccardo hung up both overrun calls.
+Questions 1 (does a call notification or bar stay) and 3 (the missing 12:21 call) were not answered.
+
+It should be reproducible on any phone with WhatsApp: the other party hangs up, you stay on the chat screen,
+and you watch the mode. That is the measurement planned above (mode, Telecom calls, WhatsApp call
+notification, WhatsApp audio tracks, once a second), now with a known trigger.
