@@ -1,11 +1,4 @@
-<!--
-  ~ CallVault: FOSS call recording, self-contained over embedded ADB
-  ~  Copyright (C) 2026-present The CallVault Authors
-  ~  This software is licensed under the GNU General Public License v3 or later, with additional terms as permitted under Section 7.
-  ~  The full license text is available in the LICENSE file at the root of this project.
-  ~  This software is distributed WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
-  -->
-
+<?xml version='1.0' encoding='utf-8'?>
 <resources>
     <string name="general_close">إغلاق</string>
     <string name="voicemail_contact_label">البريد الصوتي</string>
@@ -42,17 +35,17 @@
     <string name="permission_contacts_label">جهات الاتصال</string>
     <string name="permission_contacts_description">يستخدم لتصفية جهات الاتصال المعروفة لقواعد التجاهل.</string>
     <string name="permission_phone_state_label">حالة الهاتف</string>
-    <string name="permission_phone_state_description">مطلوب لاكتشاف متى تبدأ المكالمة أو تنتهي.</string>
+    <string name="permission_phone_state_description">مطلوب لاكتشاف بدء المكالمات وانتهائها بدقة في اللحظة المناسبة.</string>
     <string name="permission_call_log_label">سجل المكالمات</string>
-    <string name="permission_call_log_description">مطلوب حتى نتلقى رقم الهاتف غير المعدل عند أحداث حالة الهاتف.</string>
+    <string name="permission_call_log_description">مطلوب للحصول على رقم الهاتف الدقيق غير المشفر عند وقوع أحداث المكالمات.</string>
     <string name="permission_usb_debugging_label">تصحيح أخطاء USB</string>
-    <string name="permission_usb_debugging_description">مُوصى به. يحافظ على عمل التسجيل بعيدًا عن Wi-Fi، ويسمح لـ CallVault بإيقاف تشغيل تصحيح أخطاء اللاسلكي بعد الإعداد. لا حاجة لكابل.</string>
-    <string name="permission_battery_label">تحسين البطارية</string>
-    <string name="permission_battery_description">يحافظ على تشغيل التطبيق عند الحاجة ويسمح بتجاوز قيود بدء التشغيل في الخلفية المحتملة. على بعض الهواتف (مثل OnePlus/OxygenOS) قم أيضًا بتعيين وضع بطارية هذا التطبيق على "السماح بالنشاط في الخلفية".</string>
-    <string name="permission_battery_oem_hint">تم تعيين إعفاء البطارية. الآن في صفحة معلومات التطبيق هذه، انقر على "البطارية"، ثم اختر "السماح بالنشاط في الخلفية" (غير مقيد) — مطلوب لكي يستمر التسجيل في الخلفية على OnePlus/OxygenOS.</string>
+    <string name="permission_usb_debugging_description">مُوصى به بشدة. يحافظ على جاهزية التسجيل عندما تكون بعيدًا عن شبكات Wi-Fi، ويسمح للتطبيق بإيقاف تشغيل تصحيح الأخطاء اللاسلكي بعد اكتمال الإعداد. لا يلزم استخدام كابل.</string>
+    <string name="permission_battery_label">تحسين استهلاك البطارية</string>
+    <string name="permission_battery_description">يضمن بقاء التطبيق قيد التشغيل عند الحاجة وتجاوز قيود قتل التطبيقات في الخلفية. على هواتف OnePlus و OxygenOS، يرجى ضبط وضع البطارية على "السماح بالنشاط في الخلفية (غير مقيد)".</string>
+    <string name="permission_battery_oem_hint">تم تعيين إعفاء البطارية. الآن في صفحة معلومات التطبيق هذه، انقر على "البطارية"، ثم اختر "السماح بالنشاط في الخلفية" (غير مقيد)؛ مطلوب لكي يستمر التسجيل في الخلفية على OnePlus/OxygenOS.</string>
     <string name="permission_storage_description">حدد مكان حفظ التسجيلات.</string>
     <string name="permission_adb_description">مطلوب لإعداد وبدء المسجل، ويعمل فقط على Wi-Fi. قم بالاقتران مرة واحدة عبر الإشعار، ثم يتصل تلقائيًا.</string>
-    <string name="permission_adb_not_connected">غير متصل — انقر للإعداد</string>
+    <string name="permission_adb_not_connected">غير متصل: انقر للإعداد</string>
     <string name="permission_adb_setup">تخويل</string>
     <string name="settings_section_about">حول</string>
     <string name="settings_section_recording">تسجيل</string>
@@ -76,29 +69,29 @@
     <string name="permissions_shizuku_offer_title">Shizuku يعمل على هذا الهاتف</string>
     <string name="permissions_shizuku_offer_body">يمكن لـ CallVault استخدامه بدلاً من ذلك، وتجاوز الاقتران بالكامل. أو قم بإعداد CallVault بمفرده، بحيث لا يحتاج إلى تشغيل أي شيء آخر.</string>
     <string name="permissions_shizuku_needs_permission">امنح CallVault إذنًا في Shizuku للانتهاء. لا يتم تسجيل أي شيء حتى تفعل ذلك.</string>
-    <string name="permissions_shizuku_active">يستخدم Shizuku. لا يوجد شيء لإقرانه — تم الإعداد.</string>
+    <string name="permissions_shizuku_active">يستخدم Shizuku. لا يوجد شيء لإقرانه: تم الإعداد.</string>
     <string name="permissions_shizuku_use">استخدام Shizuku</string>
     <string name="permissions_shizuku_use_callvault">استخدام CallVault</string>
     <string name="permissions_shizuku_offer_title_stopped">Shizuku لا يعمل</string>
-    <string name="permissions_shizuku_offer_stopped">ابدأ تشغيله من تطبيق Shizuku وعد، ويمكن لـ CallVault استخدامه بدلاً من الاقتران. أو قم بإعداد CallVault بمفرده — لا يحتاج إلى تشغيل أي شيء آخر.</string>
+    <string name="permissions_shizuku_offer_stopped">ابدأ تشغيله من تطبيق Shizuku وعد، ويمكن لـ CallVault استخدامه بدلاً من الاقتران. أو قم بإعداد CallVault بمفرده، لا يحتاج إلى تشغيل أي شيء آخر.</string>
     <string name="home_hero_pill_shizuku">Shizuku توقف</string>
     <string name="home_status_shizuku_title">Shizuku ليس جاهزًا</string>
     <string name="home_status_shizuku_suggestion">افتح Shizuku وشغّله. يتوقف كلما أعيد تشغيل الهاتف، ولا يمكن لـ CallVault التسجيل حتى يعمل.</string>
-    <string name="home_health_missed_shizuku">%1$s لم يتم تسجيلها — لم يكن Shizuku قيد التشغيل</string>
-    <string name="home_health_missed_shizuku_unnamed">لم يتم تسجيل مكالمة — لم يكن Shizuku قيد التشغيل</string>
-    <string name="settings_unavailable_in_shizuku">غير متاح في وضع Shizuku — هذا يحتاج إلى مسجل CallVault الخاص.</string>
+    <string name="home_health_missed_shizuku">%1$s لم يتم تسجيلها: لم يكن Shizuku قيد التشغيل</string>
+    <string name="home_health_missed_shizuku_unnamed">لم يتم تسجيل مكالمة: لم يكن Shizuku قيد التشغيل</string>
+    <string name="settings_unavailable_in_shizuku">غير متاح في وضع Shizuku: هذا يحتاج إلى مسجل CallVault الخاص.</string>
     <string name="mode_switch_to_shizuku">جارٍ التبديل إلى Shizuku…</string>
     <string name="mode_switch_to_standalone">جارٍ التبديل إلى CallVault…</string>
     <string name="mode_switch_working">جارٍ إيقاف المسجل القديم وبدء المسجل الجديد. يستغرق هذا بضع ثوانٍ.</string>
     <string name="mode_switch_done_title">جاهز للتسجيل</string>
     <string name="mode_switch_problem_title">ليس جاهزًا بعد</string>
-    <string name="mode_switch_done_shizuku">جاهز — يستخدم Shizuku</string>
-    <string name="mode_switch_done_standalone">جاهز — يستخدم CallVault</string>
+    <string name="mode_switch_done_shizuku">جاهز: يستخدم Shizuku</string>
+    <string name="mode_switch_done_standalone">جاهز: يستخدم CallVault</string>
     <string name="mode_switch_ready_shizuku">يسجّل CallVault عبر Shizuku. كل الميزات متاحة ما عدا التسجيل بعيدًا عن Wi-Fi، الذي يحتاج إلى مسجّل CallVault الخاص.</string>
     <string name="mode_switch_ready_standalone">يسجل CallVault باستخدام مسجله الخاص. كل شيء متاح، بما في ذلك مكالمات VoIP وأسماء المتحدثين.</string>
     <string name="mode_switch_ready">المسجل يعمل. سيتم تسجيل المكالمات.</string>
     <string name="mode_switch_shizuku_not_installed">لم يتم تثبيت Shizuku، لذا لا يوجد شيء للتبديل إليه.</string>
-    <string name="mode_switch_shizuku_not_running">Shizuku لا يعمل. افتح Shizuku وقم بتشغيله، ثم حاول مرة أخرى — يتوقف كلما أعيد تشغيل الهاتف.</string>
+    <string name="mode_switch_shizuku_not_running">Shizuku لا يعمل. افتح Shizuku وقم بتشغيله، ثم حاول مرة أخرى؛ يتوقف كلما أعيد تشغيل الهاتف.</string>
     <string name="mode_switch_shizuku_not_permitted">لم يسمح Shizuku لـ CallVault باستخدامه بعد. افتح Shizuku وامنحه الإذن، ثم حاول مرة أخرى.</string>
     <string name="mode_switch_voip_not_armed">تم التبديل، ولكن تعذر تفعيل تسجيل مكالمات التطبيق. سيتم تسجيل المكالمات الهاتفية؛ قد لا يتم تسجيل مكالمات التطبيق حتى تعيد فتح CallVault.</string>
     <string name="mode_switch_recorder_failed">لم يبدأ المسجل. لن يتم تسجيل أي شيء حتى يبدأ.</string>
@@ -107,7 +100,7 @@
     <string name="home_mode_badge_shizuku">Shizuku</string>
     <string name="settings_subsection_privileges">كيف يحصل CallVault على الإذن</string>
     <string name="settings_shizuku_mode">وضع Shizuku</string>
-    <string name="settings_shizuku_not_installed">لم يتم تثبيت Shizuku. لا يحتاجه CallVault — هذا مخصص فقط للأشخاص الذين يستخدمونه بالفعل.</string>
+    <string name="settings_shizuku_not_installed">لم يتم تثبيت Shizuku. لا يحتاجه CallVault: هذا مخصص فقط للأشخاص الذين يستخدمونه بالفعل.</string>
     <string name="settings_shizuku_not_running">Shizuku مثبت ولكنه لا يعمل. يجب تشغيله مرة أخرى بعد كل إعادة تشغيل للهاتف.</string>
     <string name="settings_shizuku_no_permission">Shizuku يعمل، ولكنه لم يسمح لـ CallVault باستخدامه بعد.</string>
     <string name="settings_shizuku_ready">Shizuku يعمل وجاهز. مع تشغيل هذا، لا يحتاج CallVault إلى اقترانه الخاص.</string>
@@ -123,7 +116,7 @@
     <string name="settings_subsection_resilience">المرونة</string>
     <string name="settings_subsection_voip">مكالمات VoIP</string>
     <string name="settings_voip_recording_label">تسجيل مكالمات VoIP</string>
-    <string name="settings_voip_recording_description">أيضًا تسجيل المكالمات التي تتم في تطبيقات مثل WhatsApp وSignal وTelegram — كلا الجانبين من المحادثة، وليس صوتك فقط. تظهر التسجيلات التطبيق الذي تم إجراء المكالمة فيه، واسم جهة الاتصال عندما يوفره التطبيق. بعض التطبيقات تمنع التسجيل، ولا يمكن معرفة ذلك إلا بعد بدء المكالمة.</string>
+    <string name="settings_voip_recording_description">أيضًا تسجيل المكالمات التي تتم في تطبيقات مثل WhatsApp وSignal وTelegram؛ كلا الجانبين من المحادثة، وليس صوتك فقط. تظهر التسجيلات التطبيق الذي تم إجراء المكالمة فيه، واسم جهة الاتصال عندما يوفره التطبيق. بعض التطبيقات تمنع التسجيل، ولا يمكن معرفة ذلك إلا بعد بدء المكالمة.</string>
     <string name="settings_voip_auto_start_label">البدء تلقائيًا</string>
     <string name="settings_voip_auto_start_description">يعني "إيقاف" أن CallVault يسأل أولاً: يظهر إشعار بزر "تسجيل" عند بدء مكالمة تطبيق.</string>
     <string name="voip_prompt_title">مكالمة تطبيق جارية</string>
@@ -137,28 +130,28 @@
     <string name="voip_recording_arming">جارٍ إعداد تسجيل VoIP…</string>
     <string name="notif_voip_recording_title">تسجيل مكالمة VoIP</string>
     <string name="notif_voip_recording_text">يسجل CallVault مكالمة تطبيق.</string>
-    <string name="voip_missed_not_ready">لم يتم تسجيل مكالمة تطبيق — لم يكن CallVault جاهزًا في الوقت المناسب. يمكن أن يحدث هذا لفترة قصيرة بعد انتهاء المكالمة الهاتفية. يجب أن تسجل المكالمة التالية بشكل طبيعي.</string>
-    <string name="voip_missed_no_folder">لم يتم تسجيل مكالمة تطبيق — مجلد التسجيلات مفقود أو لا يمكن الكتابة فيه. اختره مرة أخرى في الإعدادات.</string>
+    <string name="voip_missed_not_ready">لم يتم تسجيل مكالمة تطبيق: لم يكن CallVault جاهزًا في الوقت المناسب. يمكن أن يحدث هذا لفترة قصيرة بعد انتهاء المكالمة الهاتفية. يجب أن تسجل المكالمة التالية بشكل طبيعي.</string>
+    <string name="voip_missed_no_folder">لم يتم تسجيل مكالمة تطبيق: مجلد التسجيلاتات مفقود أو لا يمكن الكتابة فيه. اختره مرة أخرى في الإعدادات.</string>
     <string name="voip_missed_label">مكالمة تطبيق</string>
-    <string name="voip_one_sided_warning">تم تسجيل جانبك فقط من مكالمة التطبيق هذه — التطبيق الآخر لا يسمح بالتقاط صوت المكالمة.</string>
+    <string name="voip_one_sided_warning">تم تسجيل جانبك فقط من مكالمة التطبيق هذه؛ التطبيق الآخر لا يسمح بالتقاط صوت المكالمة.</string>
     <string name="voip_one_sided_warning_vivo">تم تسجيل جانبك فقط من مكالمة التطبيق تلك. على هواتف vivo، افتح تطبيق المسجّل ▸ «In-app call recording» وشغّله (مع «Auto-start recording») لتسجيل الطرف الآخر أيضًا.</string>
-    <string name="voip_recording_unavailable">تعذر التمكين على هذا الجهاز — تسجيل VoIP غير متاح هنا.</string>
+    <string name="voip_recording_unavailable">تعذر التمكين على هذا الجهاز؛ تسجيل VoIP غير متاح هنا.</string>
     <string name="voip_recording_names_hint">تأتي أسماء جهات الاتصال من إشعار المكالمة الخاص بالتطبيق المتصل. إذا تم إيقاف تشغيل الإشعارات لهذا التطبيق، يتم حفظ تسجيلاته بدون اسم.</string>
     <string name="settings_usb_debugging_label">تصحيح أخطاء USB</string>
-    <string name="settings_usb_debugging_description">مُوصى به. يحافظ على عمل التسجيل عندما تغادر شبكة Wi-Fi، ويسمح لـ CallVault بإيقاف تشغيل تصحيح أخطاء اللاسلكي. لا حاجة لكابل.</string>
-    <string name="settings_usb_debugging_recommended">بدون هذا، يعمل التسجيل فقط على Wi-Fi، ويجب أن يظل تصحيح أخطاء اللاسلكي قيد التشغيل.</string>
-    <string name="settings_usb_debugging_on_hint">يمكن لـ CallVault إبقاء تصحيح أخطاء اللاسلكي متوقفًا. إذا أوقفت تشغيل هذا، يتوقف التسجيل لبضع ثوانٍ بينما يعيد CallVault تشغيله عبر Wi-Fi — وبعيدًا عن Wi-Fi لا يمكنه إعادة التشغيل.</string>
-    <string name="settings_usb_debugging_shizuku_hint">اترك تصحيح أخطاء USB قيد التشغيل أثناء استخدام Shizuku. يتم بدء خدمة Shizuku عبر خدمة تصحيح أخطاء Android وتتوقف عندما تتوقف — لا يحتاج CallVault إلى هذا المفتاح في وضع Shizuku.</string>
-    <string name="settings_usb_debugging_failed">تعذر التغيير — يحتاج CallVault إلى الإذن الذي يحصل عليه أثناء الإعداد.</string>
+    <string name="settings_usb_debugging_description">مُوصى به. يحافظ على عمل التسجيل عندما تغادر شبكة Wi-Fi، ويسمح لـ CallVault بإيقاف تشغيل تصحيح الأخطاء اللاسلكي. لا حاجة لكابل.</string>
+    <string name="settings_usb_debugging_recommended">بدون هذا، يعمل التسجيل فقط على Wi-Fi، ويجب أن يظل تصحيح الأخطاء اللاسلكي قيد التشغيل.</string>
+    <string name="settings_usb_debugging_on_hint">يمكن لـ CallVault إبقاء تصحيح الأخطاء اللاسلكي متوقفًا. إذا أوقفت تشغيل هذا، يتوقف التسجيل لبضع ثوانٍ بينما يعيد CallVault تشغيله عبر Wi-Fi؛ وبعيدًا عن Wi-Fi لا يمكنه إعادة التشغيل.</string>
+    <string name="settings_usb_debugging_shizuku_hint">اترك تصحيح أخطاء USB قيد التشغيل أثناء استخدام Shizuku. يتم بدء خدمة Shizuku عبر خدمة تصحيح أخطاء Android وتتوقف عندما تتوقف، لا يحتاج CallVault إلى هذا المفتاح في وضع Shizuku.</string>
+    <string name="settings_usb_debugging_failed">تعذر التغيير؛ يحتاج CallVault إلى الإذن الذي يحصل عليه أثناء الإعداد.</string>
     <string name="notif_info_channel">إشعارات CallVault</string>
-    <string name="notif_wd_required">يجب أن يظل تصحيح أخطاء اللاسلكي قيد التشغيل لأن تصحيح أخطاء USB متوقف. قم بتشغيل تصحيح أخطاء USB في إعدادات CallVault وسيقوم CallVault بإيقاف تشغيل تصحيح أخطاء اللاسلكي مرة أخرى.</string>
+    <string name="notif_wd_required">يجب أن يظل تصحيح الأخطاء اللاسلكي قيد التشغيل لأن تصحيح أخطاء USB غير مفعّل. قم بتفعيل تصحيح أخطاء USB في الإعدادات وسيقوم CallVault بإيقاف تشغيل اللاسلكي تلقائيًا.</string>
     <string name="settings_section_debug">تصحيح الأخطاء</string>
     <string name="settings_section_security">الأمان</string>
     <string name="settings_section_recorder_server">خدمة المسجل</string>
     <string name="settings_persistent_server">خادم تسجيل دائم</string>
-    <string name="settings_persistent_server_description">تسجيل المكالمات عبر خدمة مميزة في الخلفية بحيث يمكن أن يظل تصحيح أخطاء اللاسلكي متوقفًا بين المكالمات.</string>
-    <string name="settings_wd_disable_when_idle">إيقاف تصحيح أخطاء اللاسلكي عند عدم النشاط</string>
-    <string name="settings_wd_disable_when_idle_description">تعطيل تصحيح أخطاء اللاسلكي بمجرد توصيل خدمة المسجل؛ يتم إعادة تمكينه لفترة وجيزة فقط عند الحاجة.</string>
+    <string name="settings_persistent_server_description">تسجيل المكالمات عبر خدمة خلفية متميزة بحيث يمكن إبقاء تصحيح الأخطاء اللاسلكي متوقفًا بين المكالمات.</string>
+    <string name="settings_wd_disable_when_idle">إيقاف تصحيح الأخطاء اللاسلكي عند خمول التطبيق</string>
+    <string name="settings_wd_disable_when_idle_description">تعطيل تصحيح الأخطاء اللاسلكي فور اتصال خدمة المسجل، وإعادة تفعيله لحظيًا فقط عند الحاجة.</string>
     <string name="settings_storage_section">التخزين</string>
     <string name="settings_storage_target_label">أين يتم حفظ التسجيلات</string>
     <string name="storage_target_local">على هذا الجهاز فقط</string>
@@ -168,17 +161,17 @@
     <string name="settings_drive_folder_desc">اختر مجلدًا (في تطبيق Google Drive) لنسخ التسجيلات إليه.</string>
     <string name="general_not_set">لم يتم الضبط</string>
     <string name="settings_tap_to_select_folder">انقر لتحديد المجلد...</string>
-    <string name="settings_recording_folder_label">مجلد التسجيل</string>
+    <string name="settings_recording_folder_label">مجلد التسجيلات</string>
     <string name="folder_cloud_rejected">لا يمكن استخدام المجلدات السحابية (مثل Google Drive) للتسجيل. اختر تخزينًا على الجهاز - استخدم خيار النسخ الاحتياطي على Google Drive للحصول على نسخ سحابية.</string>
-    <string name="folder_cloud_warning">⚠ مجلد التسجيل هذا موجود في السحابة، وهو غير موثوق به لالتقاط الصوت. اختر مجلدًا على الجهاز.</string>
-    <string name="settings_offline_recording_label">التسجيل بدون اتصال بالإنترنت (بدون Wi-Fi)</string>
+    <string name="folder_cloud_warning">⚠ مجلد التسجيلات هذا موجود في السحابة، وهو غير موثوق به لالتقاط الصوت. اختر مجلدًا على الجهاز.</string>
+    <string name="settings_offline_recording_label">التسجيل بدون إنترنت بالإنترنت (بدون Wi-Fi)</string>
     <string name="settings_offline_recording_desc">تسجيل المكالمات حتى عندما لا توجد شبكة Wi-Fi. يحتاج إلى تصحيح أخطاء USB.</string>
     <string name="settings_handoff_persist_label">تسجيل مرن</string>
     <string name="settings_handoff_persist_description">استمر في التسجيل حتى لو تم قتل المساعد في الخلفية أثناء المكالمة (على سبيل المثال، عند قفل الشاشة).</string>
     <string name="settings_usb_default_label">USB عند إلغاء قفل الشاشة</string>
     <string name="settings_usb_default_hint">يؤدي الشحن فقط إلى إبقاء التسجيل حيًا إذا قمت بقفل الشاشة أثناء المكالمة. تسمح الأوضاع الأخرى لـ USB بنقل البيانات ولكن يمكنها مقاطعة التسجيل عند قفل الهاتف.</string>
     <string name="settings_usb_default_applying">جارٍ التطبيق…</string>
-    <string name="settings_usb_default_shizuku_hint">اترك هذا كما هو أثناء استخدام Shizuku. يؤدي تغيير هذا إلى إعادة تشغيل خدمة تصحيح أخطاء Android، ويتوقف Shizuku معها — سيتعين عليك بدء Shizuku مرة أخرى قبل أن يتم تسجيل المكالمة التالية.</string>
+    <string name="settings_usb_default_shizuku_hint">اترك هذا كما هو أثناء استخدام Shizuku. يؤدي تغيير هذا إلى إعادة تشغيل خدمة تصحيح أخطاء Android، ويتوقف Shizuku معها؛ سيتعين عليك بدء Shizuku مرة أخرى قبل أن يتم تسجيل المكالمة التالية.</string>
     <string name="settings_usb_default_busy">لم يتغير: تسجيل قيد التقدم. يؤدي تغيير هذا إلى إعادة تشغيل خدمة تصحيح أخطاء Android، مما سينهي التسجيل.</string>
     <string name="usb_mode_charging">الشحن فقط (بلا بيانات)</string>
     <string name="usb_mode_debugging_only">تصحيح الأخطاء فقط</string>
@@ -186,9 +179,9 @@
     <string name="usb_mode_ptp">PTP</string>
     <string name="usb_mode_tethering">ربط USB</string>
     <string name="usb_mode_midi">MIDI</string>
-    <string name="offline_recording_warning_title">تمكين التسجيل بدون اتصال بالإنترنت؟</string>
+    <string name="offline_recording_warning_title">تمكين التسجيل بدون إنترنت بالإنترنت؟</string>
     <string name="offline_recording_warning_message">يؤدي هذا إلى فتح منفذ تصحيح أخطاء محلي على هاتفك بحيث يمكن تسجيل المكالمات بدون Wi-Fi. إنه محمي بمفتاح جهازك، ولكنه يمثل تضحية أمنية صغيرة. قم بتمكينه فقط إذا كنت بحاجة إلى تسجيل المكالمات بدون Wi-Fi.</string>
-    <string name="offline_recording_warning_shizuku">Shizuku قيد التشغيل. يؤدي تشغيل هذا إلى إعادة تشغيل خدمة تصحيح أخطاء Android، مما يوقف Shizuku — سيبدأ CallVault تشغيله مرة أخرى مباشرة بعد ذلك، وسيخبرك إذا لم يتمكن.</string>
+    <string name="offline_recording_warning_shizuku">Shizuku قيد التشغيل. يؤدي تشغيل هذا إلى إعادة تشغيل خدمة تصحيح أخطاء Android، مما يوقف Shizuku؛ سيبدأ CallVault تشغيله مرة أخرى مباشرة بعد ذلك، وسيخبرك إذا لم يتمكن.</string>
     <string name="offline_recording_warning_continue">متابعة على أي حال</string>
     <string name="settings_file_name_template">قالب اسم الملف</string>
     <string name="settings_file_name_template_preset">جاهز</string>
@@ -215,7 +208,7 @@
     <string name="placeholder_cross_country_desc">يشير إلى ما إذا كانت المكالمة عابرة للبلدان (صحيح/خطأ)</string>
     <string name="settings_subsection_phone_calls">المكالمات الهاتفية</string>
     <string name="settings_carrier_recording">تسجيل المكالمات الهاتفية</string>
-    <string name="settings_carrier_recording_description">إيقاف: يتم تجاهل المكالمات الهاتفية تمامًا — لا تسجيل، لا إشعار. لا تتأثر مكالمات التطبيق.</string>
+    <string name="settings_carrier_recording_description">إيقاف: يتم تجاهل المكالمات الهاتفية تمامًا، لا تسجيل، لا إشعار. لا تتأثر مكالمات التطبيق.</string>
     <string name="settings_auto_record_incoming">تسجيل المكالمات الواردة تلقائيًا</string>
     <string name="settings_auto_record_outgoing">تسجيل المكالمات الصادرة تلقائيًا</string>
     <string name="settings_record_from_answer">البدء عند الرد</string>
@@ -245,8 +238,8 @@
     <string name="settings_theme_mode_light">فاتح</string>
     <string name="settings_theme_mode_dark">داكن</string>
     <string name="settings_audio_codec">برنامج ترميز الصوت</string>
-    <string name="settings_audio_bitrate_recommendation">إذا واجهت صعوبات، جرب AAC، فهو مدعوم على نطاق واسع من قبل مصنعي المعدات الأصلية.</string>
-    <string name="settings_audio_bitrate">معدل بت الصوت</string>
+    <string name="settings_audio_bitrate_recommendation">إذا واجهت أي مشاكل في التوافق، اختر ترميز AAC فهو مدعوم عتاديًا لدى معظم الشركات المصنعة للهواتف.</string>
+    <string name="settings_audio_bitrate">معدل البت للصوت (Bitrate)</string>
     <string name="settings_audio_source">مصدر الصوت</string>
     <string name="audio_source_voice_comm_description">مصدر صوت الميكروفون مضبوط للاتصالات الصوتية. إلغاء الصدى مدمج.</string>
     <string name="audio_source_mic_description">يلتقط الصوت مباشرة من الميكروفون الرئيسي للجهاز. تقليل الضوضاء بشكل طفيف.</string>
@@ -294,13 +287,13 @@
     <string name="recording_error_title">خطأ في التسجيل</string>
     <string name="recording_error_folder_missing">مجلد الإخراج المحدد مفقود، أو غير صالح، أو ليس لدينا إذن للكتابة فيه. حدد واحدًا في إعدادات التطبيق.</string>
     <string name="recording_error_server_missing">ملف scrcpy-server الثنائي مفقود أو فشل التحقق الأمني SHA256. لا ينبغي أن يحدث هذا، يرجى الإبلاغ عنه.</string>
-    <string name="recording_error_file_creation">فشل في إنشاء ملف التسجيل. يرجى التحقق من أذونات التخزين و/أو تحديد مجلد تسجيل جديد في إعدادات التطبيق.</string>
+    <string name="recording_error_file_creation">فشل في إنشاء ملف التسجيل. يرجى التحقق من أذونات التخزين و/أو تحديد مجلد تسجيلات جديد في إعدادات التطبيق.</string>
     <string name="recording_error_start_failed">فشل في بدء التسجيل. حدث خطأ عند استدعاء طريقة ربط ShellService.</string>
-    <string name="recording_error_empty_file_shizuku">التسجيل فارغ — لم يتم التقاط أي صوت. افتح Shizuku وتحقق من أنه لا يزال يعمل؛ يتوقف كلما أعيد تشغيل الهاتف.</string>
-    <string name="recording_error_empty_file">التسجيل فارغ — لم يتم التقاط أي صوت لأن عملية التسجيل الخلفية لم تكن تعمل. تحقق من تمكين خيارات المطور وتصحيح أخطاء اللاسلكي.</string>
-    <string name="recording_error_daemon_died">توقفت عملية التسجيل الخلفية — هذه المكالمة لم يتم تسجيلها. تحقق من تمكين خيارات المطور وتصحيح أخطاء اللاسلكي.</string>
-    <string name="recording_error_capture_never_started">لم يبدأ التسجيل — حاول تنسيق صوت مختلف في الإعدادات</string>
-    <string name="recording_error_drive_copy_failed">تعذر نسخ تسجيل إلى مجلدك السحابي. لا يزال محفوظًا على هذا الجهاز — تحقق من المجلد في الإعدادات.</string>
+    <string name="recording_error_empty_file_shizuku">التسجيل فارغ: لم يتم التقاط أي صوت. افتح Shizuku وتحقق من أنه لا يزال يعمل؛ يتوقف كلما أعيد تشغيل الهاتف.</string>
+    <string name="recording_error_empty_file">التسجيل فارغ: لم يتم التقاط الصوت لأن ديمون التسجيل الخلفي لم يكن قيد التشغيل. تحقق من تفعيل خيارات المطور وتصحيح الأخطاء اللاسلكي.</string>
+    <string name="recording_error_daemon_died">توقف ديمون التسجيل في الخلفية: لم يتم تسجيل هذه المكالمة. تحقق من استمرار تفعيل خيارات المطور وتصحيح الأخطاء اللاسلكي.</string>
+    <string name="recording_error_capture_never_started">لم يبدأ التسجيل؛ حاول تنسيق صوت مختلف في الإعدادات</string>
+    <string name="recording_error_drive_copy_failed">تعذر نسخ تسجيل إلى مجلدك السحابي. لا يزال محفوظًا على هذا الجهاز. تحقق من المجلد في الإعدادات.</string>
     <string name="recording_unexpected_error">حدث خطأ غير متوقع أثناء التسجيل. يرجى الإبلاغ عن هذا مع خطوات إعادة الإنتاج وسجلات التطبيق.</string>
     <string name="wizard_title">إعداد CallVault</string>
     <string name="wizard_step_of">الخطوة %1$d من %2$d</string>
@@ -335,7 +328,7 @@
     <string name="wizard_auto_record_line">اختر المكالمات التي تُسجَّل تلقائيًا.</string>
     <string name="wizard_auto_record_nothing_warning">مع إيقاف تشغيل كل من المكالمات الهاتفية ومكالمات التطبيق، لن يسجل CallVault أي شيء. قم بتشغيل واحد على الأقل ما لم يكن هذا هو ما تريده.</string>
     <string name="wizard_experimental_title">إضافات اختيارية</string>
-    <string name="wizard_experimental_subtitle">هي متوقفة افتراضيًا — يمكنك تشغيلها لاحقًا في الإعدادات.</string>
+    <string name="wizard_experimental_subtitle">هي متوقفة افتراضيًا؛ يمكنك تشغيلها لاحقًا في الإعدادات.</string>
     <string name="wizard_experimental_line">متوقف افتراضيًا.</string>
     <string name="wizard_updates_title">البقاء على اطلاع</string>
     <string name="wizard_updates_subtitle">لا يتوفر CallVault في متجر تطبيقات، لذا فإنه يتحقق من GitHub بحثًا عن إصدارات جديدة بنفسه.</string>
@@ -344,20 +337,20 @@
     <string name="wizard_reliability_subtitle">إعدادان اختياريان يحافظان على عمل التسجيل في الظروف الصعبة. يمكنك تخطي هذه وتغييرها لاحقًا في الإعدادات.</string>
     <string name="wizard_reliability_line">خياران اختياريان للأمان.</string>
     <string name="wizard_reliability_usb_title">استمر في التسجيل عند قفل الشاشة</string>
-    <string name="wizard_reliability_usb_desc">على بعض الهواتف، يمكن أن يؤدي قفل الشاشة أثناء المكالمة إلى إيقاف التسجيل. يمنع تعيين USB على "الشحن فقط" ذلك. (ثم يعود هاتفك إلى الشحن عند توصيله بجهاز كمبيوتر — اختر "نقل الملفات" يدويًا عند الحاجة.)</string>
+    <string name="wizard_reliability_usb_desc">على بعض الهواتف، يمكن أن يؤدي قفل الشاشة أثناء المكالمة إلى إيقاف التسجيل. يمنع تعيين USB على "الشحن فقط" ذلك. (ثم يعود هاتفك إلى الشحن عند توصيله بجهاز كمبيوتر؛ اختر "نقل الملفات" يدويًا عند الحاجة.)</string>
     <string name="wizard_reliability_usb_button">تعيين USB على الشحن فقط</string>
     <string name="wizard_reliability_usb_done">تم تعيين USB على الشحن فقط</string>
     <string name="wizard_transcription_title">تحويل المكالمات إلى نص</string>
-    <string name="wizard_transcription_subtitle">يمكن لـ CallVault تحويل تسجيل إلى نص على الهاتف نفسه، وكتابة ملخص قصير منه — لا يتم إرسال أي شيء إلى أي مكان. اختر متى يحدث ذلك، وما هي لغة مكالماتك، وقم بتنزيل ما يحتاجه.</string>
+    <string name="wizard_transcription_subtitle">يمكن لـ CallVault تحويل تسجيل إلى نص على الهاتف نفسه، وكتابة ملخص قصير منه، لا يتم إرسال أي شيء إلى أي مكان. اختر متى يحدث ذلك، وما هي لغة مكالماتك، وقم بتنزيل ما يحتاجه.</string>
     <string name="wizard_transcription_line">حوّل المكالمات إلى نص على هذا الهاتف.</string>
     <string name="wizard_transcription_language_note">تم التعيين على اللغة التي تم ضبط هذا الهاتف عليها. تسميتها أكثر موثوقية بكثير من ترك التطبيق يخمن، ولا يزال بإمكانك اختيار لغة مختلفة لكل مكالمة لاحقًا.</string>
-    <string name="wizard_transcription_model_note">يحتاج التحويل إلى نص إلى نموذج كلام على الهاتف أولاً: %1$s يبلغ حجمه %2$d ميجابايت، و%3$s يبلغ حجمه %4$d ميجابايت. يستغرق تحويل مكالمة إلى نص بعد ذلك تقريبًا مدة المكالمة ويعمل على معالج الجهاز بكثافة.</string>
-    <string name="wizard_transcription_model_sizes_note">يحتاج التحويل إلى نص إلى نموذج كلام على الهاتف أولاً: %1$s. يستغرق تحويل مكالمة إلى نص بعد ذلك تقريبًا مدة المكالمة ويعمل على معالج الجهاز بكثافة.</string>
+    <string name="wizard_transcription_model_note">يحتاج التفريغ الصوتي إلى نموذج التعرف الصوتي على الهاتف أولاً: %1$s يبلغ حجمه %2$d ميجابايت، و%3$s يبلغ حجمه %4$d ميجابايت. يستغرق تفريغ مكالمة صوتيًا بعد ذلك تقريبًا مدة المكالمة ويعمل على معالج الجهاز بكثافة.</string>
+    <string name="wizard_transcription_model_sizes_note">يحتاج التفريغ الصوتي إلى نموذج التعرف الصوتي على الهاتف أولاً: %1$s. يستغرق تفريغ مكالمة صوتيًا بعد ذلك تقريبًا مدة المكالمة ويعمل على معالج الجهاز بكثافة.</string>
     <string name="wizard_transcription_model_size">%1$s بحجم %2$d ميجابايت</string>
     <string name="list_separator">، </string>
     <string name="wizard_transcription_summary_heading">الملخصات</string>
-    <string name="wizard_transcription_summary_body">بمجرد أن تحتوي المكالمة على نص، يمكن لـ CallVault أيضًا كتابة ملخص قصير لها — على الهاتف، مثل أي شيء آخر هنا.</string>
-    <string name="wizard_transcription_background_note">يتم تشغيل كلا التنزيلين عبر Wi-Fi فقط، ويستمران في الخلفية. يمكنك المتابعة وإنهاء الإعداد الآن — تُظهر إعدادات CallVault نفس التقدم بعد ذلك.</string>
+    <string name="wizard_transcription_summary_body">بمجرد أن تحتوي المكالمة على نص، يمكن لـ CallVault أيضًا كتابة ملخص قصير لها؛ على الهاتف، مثل أي شيء آخر هنا.</string>
+    <string name="wizard_transcription_background_note">يتم تشغيل كلا التنزيلين عبر Wi-Fi فقط، ويستمران في الخلفية. يمكنك المتابعة وإنهاء الإعداد الآن. تُظهر إعدادات CallVault نفس التقدم بعد ذلك.</string>
     <string name="wizard_audio_title">جودة الصوت</string>
     <string name="wizard_audio_subtitle">اختر تنسيق التسجيل ومعدل البت. يوصى بـ Opus بسرعة 16 كيلوبت/ثانية للحصول على صوت واضح بحجم ملف صغير.</string>
     <string name="wizard_audio_line">اختر الصيغة والجودة.</string>
@@ -366,14 +359,14 @@
     <string name="wizard_filename_line">اختر طريقة تسمية الملفات.</string>
     <string name="home_all_set_message">أنت جاهز تمامًا. CallVault جاهز لتسجيل مكالماتك.</string>
     <string name="home_open_settings">الإعدادات</string>
-    <string name="home_status_no_folder_title">لم يتم تعيين مجلد تسجيل</string>
+    <string name="home_status_no_folder_title">لم يتم تعيين مجلد تسجيلات</string>
     <string name="home_status_no_folder_suggestion">افتح الإعدادات لاختيار مكان حفظ التسجيلات.</string>
     <string name="home_status_not_paired_title">الإعداد غير مكتمل</string>
-    <string name="home_status_not_paired_suggestion">أكمل اقتران تصحيح أخطاء اللاسلكي في الإعداد.</string>
+    <string name="home_status_not_paired_suggestion">أكمل عملية اقتران تصحيح الأخطاء اللاسلكي من شاشة الإعداد.</string>
     <string name="home_status_dev_options_off_title">خيارات المطور متوقفة</string>
-    <string name="home_status_dev_options_off_suggestion">يسجل CallVault من خلال تصحيح أخطاء اللاسلكي، والذي يتطلب خيارات المطور. لا يمكن أن يعمل التسجيل حتى تعيد تمكين خيارات المطور (وتصحيح أخطاء اللاسلكي) في إعدادات النظام.</string>
+    <string name="home_status_dev_options_off_suggestion">يعتمد CallVault على تصحيح الأخطاء اللاسلكي الذي يتطلب خيارات المطور. لن يعمل التسجيل حتى تعيد تفعيل خيارات المطور وتصحيح الأخطاء اللاسلكي في إعدادات النظام.</string>
     <string name="home_status_update_regrant_title">أعد الاتصال للاستمرار في التسجيل</string>
-    <string name="home_status_update_regrant_suggestion">أزال تحديث إذنًا يحتاجه CallVault لإعادة تشغيل التسجيل. قد يستمر في العمل في الوقت الحالي — انقر هنا، ثم قم بتشغيل تصحيح أخطاء اللاسلكي مرة واحدة لاستعادته. لا حاجة لإعادة التثبيت.</string>
+    <string name="home_status_update_regrant_suggestion">أزال تحديث النظام إذنًا يحتاجه CallVault لإعادة تشغيل المسجل. قد يستمر التسجيل حاليًا: انقر هنا ثم فعّل تصحيح الأخطاء اللاسلكي مرة واحدة لاستعادة الإذن دون الحاجة لإعادة التثبيت.</string>
     <string name="home_status_ready_title">جاهز للتسجيل</string>
     <string name="home_status_ready_suggestion">يسجل CallVault المكالمات تلقائيًا حسب إعداداتك.</string>
     <string name="home_recordings_title">التسجيلات</string>
@@ -397,7 +390,7 @@
     <string name="settings_update_check_label">التحقق من وجود تحديثات</string>
     <string name="settings_update_check_description">مرة واحدة يوميًا، ابحث عن إصدار جديد على GitHub.</string>
     <string name="support_appeal_title">صنع بواسطة شخص واحد 👋</string>
-    <string name="support_appeal_body">أقوم ببناء CallVault بنفسي، في وقت فراغي — مجاني ومفتوح المصدر وبدون إعلانات وبدون تتبع. ☕ إذا كان مفيدًا لك، فإن نصيحة صغيرة تبقيني مستمرًا. في كلتا الحالتين، شكرًا! 🙏</string>
+    <string name="support_appeal_body">أقوم ببناء CallVault بنفسي، في وقت فراغي؛ مجاني ومفتوح المصدر وبدون إعلانات وبدون تتبع. ☕ إذا كان مفيدًا لك، فإن نصيحة صغيرة تبقيني مستمرًا. في كلتا الحالتين، شكرًا! 🙏</string>
     <string name="support_not_now">ليس الآن</string>
     <string name="home_bulk_delete_message">لا يمكن التراجع عن هذا.</string>
     <string name="home_bulk_delete_scope_message">تم حفظ بعضها على هذا الجهاز وفي Drive.</string>
@@ -422,8 +415,8 @@
     </plurals>
     <string name="home_bulk_delete_scope_label">النسخ المراد حذفها</string>
     <string name="home_bulk_delete_option_count">%1$s (%2$d من %3$d)</string>
-    <string name="home_bulk_delete_kept_drive">سيتم الاحتفاظ بـ %1$s — في Drive فقط.</string>
-    <string name="home_bulk_delete_kept_device">سيتم الاحتفاظ بـ %1$s — على هذا الجهاز فقط.</string>
+    <string name="home_bulk_delete_kept_drive">سيتم الاحتفاظ بـ %1$s في Drive فقط.</string>
+    <string name="home_bulk_delete_kept_device">سيتم الاحتفاظ بـ %1$s على هذا الجهاز فقط.</string>
     <plurals name="home_bulk_delete_kept_count">
         <item quantity="zero">%1$d تسجيل</item>
         <item quantity="one">%1$d تسجيل</item>
@@ -439,22 +432,22 @@
     <string name="settings_debug_log_delete_title">حذف السجل؟</string>
     <string name="settings_debug_log_delete_message">يتم إزالة الإدخالات التي تم جمعها حتى الآن. إذا كان التسجيل لا يزال قيد التشغيل، يبدأ سجل جديد على الفور.</string>
     <string name="settings_debug_log_empty">السجل فارغ.</string>
-    <string name="settings_section_transcription_and_summaries">التحويل إلى نص والملخصات</string>
-    <string name="settings_section_transcription">التحويل إلى نص</string>
-    <string name="transcription_mode_label">تحويل إلى نص</string>
+    <string name="settings_section_transcription_and_summaries">التفريغ الصوتي والملخصات</string>
+    <string name="settings_section_transcription">التفريغ الصوتي</string>
+    <string name="transcription_mode_label">تفريغ صوتي</string>
     <string name="transcription_mode_manual">يدويًا</string>
     <string name="transcription_mode_after_each_call">بعد كل مكالمة</string>
     <string name="transcription_mode_automatic">تلقائيًا</string>
     <string name="transcription_hour_label">ساعة</string>
     <string name="transcription_minute_label">دقيقة</string>
     <string name="transcription_time_label">التشغيل في</string>
-    <string name="transcription_warning_title">التحويل إلى نص بطيء وثقيل</string>
-    <string name="transcription_warning_message">تستغرق المكالمة تقريبًا نفس مدتها للتحويل إلى نص، وتستخدم كل نوى هاتفك أثناء ذلك. توقع أن يسخن ويستهلك بطارية ملحوظة.
+    <string name="transcription_warning_title">عملية التفريغ الصوتي تستهلك موارد المعالج</string>
+    <string name="transcription_warning_message">تستغرق معالجة المكالمة وقتًا مقاربًا لمدتها الفعلية وتستخدم أنوية المعالج بكثافة، مما قد يرفع حرارة الهاتف ويزيد استهلاك البطارية.
 
-يمكنك إيقاف التشغيل في أي وقت من الشارة بجانب العنوان.</string>
+يمكنك إيقاف المعالجة في أي وقت عبر النقر على الشارة المجاورة للعنوان.</string>
     <string name="transcription_warning_confirm">تشغيله</string>
     <string name="transcription_charging_title">فقط أثناء الشحن</string>
-    <string name="transcription_charging_subtitle">يستخدم التحويل إلى نص المعالج بكثافة وسوف يستنزف البطارية.</string>
+    <string name="transcription_charging_subtitle">تفريغ الصوت يستهلك طاقة المعالج بكثافة وقد يستنزف البطارية.</string>
     <string name="heavy_work_channel_name">معالجة الخلفية</string>
     <string name="heavy_work_notification_text">قد يصبح هاتفك دافئًا أثناء تشغيله.</string>
     <string name="heavy_work_transcribing">تحويل تسجيل إلى نص</string>
@@ -462,53 +455,53 @@
     <string name="heavy_work_importing_model">استيراد نموذج</string>
     <string name="heavy_work_backing_up_model">نسخ نموذج احتياطيًا</string>
     <string name="transcription_model_label">النموذج</string>
-    <string name="transcription_model_small">سريع</string>
-    <string name="transcription_model_best">أفضل جودة</string>
-    <string name="transcription_model_best_small_download">أفضل جودة، تنزيل أصغر</string>
+    <string name="transcription_model_small">سريع وخفيف (جودة أساسية)</string>
+    <string name="transcription_model_best">أعلى جودة (موصى به)</string>
+    <string name="transcription_model_best_small_download">أعلى جودة بحجم أصغر</string>
     <string name="transcription_model_download">تنزيل النموذج</string>
-    <string name="transcription_model_download_subtitle">%1$d ميجابايت، عبر Wi-Fi فقط</string>
+    <string name="transcription_model_download_subtitle">%1 ميغابايت، عبر Wi-Fi فقط</string>
     <string name="transcription_model_delete">حذف النموذج</string>
-    <string name="transcription_model_installed">تم التنزيل وجاهز</string>
+    <string name="transcription_model_installed">مُنزَّل وجاهز للاستخدام</string>
     <string name="transcription_model_downloading">جارٍ التنزيل… %1$d%%</string>
-    <string name="transcription_model_waiting">في انتظار Wi-Fi</string>
-    <string name="model_importing">جارٍ الاستيراد… %1$d%%</string>
-    <string name="model_import_waiting">جارٍ التحضير للاستيراد…</string>
-    <string name="model_import">استيراد من ملف</string>
-    <string name="model_import_subtitle">استخدم نسخة لديك بالفعل</string>
-    <string name="model_import_info">اختر ملف النموذج الرسمي (%1$s، %2$d ميغابايت). يتحقق CallVault من أنه هذا الملف بالضبط قبل استخدامه، ويترك نسختك في مكانها.</string>
-    <string name="model_import_failed_wrong_file">هذا ليس الملف الصحيح. اختر %1$s.</string>
-    <string name="model_import_failed_other_model">هذا ملف نموذج آخر (%1$s). اختر ذلك النموذج أولًا، ثم استورد.</string>
-    <string name="model_import_failed_unreadable">تعذّرت قراءة هذا الملف. اختره مرة أخرى.</string>
-    <string name="model_import_failed_space">لا توجد مساحة كافية لاستيراده.</string>
-    <string name="model_backup">نسخ احتياطي</string>
-    <string name="model_backup_subtitle">احفظ نسخة تبقى بعد إعادة التثبيت</string>
-    <string name="model_backup_info">يحفظ ملف النموذج في مجلد تختاره. بعد إعادة التثبيت أو على هاتف جديد، استخدم الاستيراد مع ذلك الملف بدلًا من التنزيل مجددًا.</string>
-    <string name="model_backing_up">جارٍ النسخ الاحتياطي… %1$d%%</string>
+    <string name="transcription_model_waiting">في انتظار شبكة Wi-Fi</string>
+    <string name="model_importing">جارٍ الاستيراد والتحقق… %1%%</string>
+    <string name="model_import_waiting">جارٍ التجهيز للاستيراد…</string>
+    <string name="model_import">استيراد من ملف محلي</string>
+    <string name="model_import_subtitle">استخدام نسخة محفوظة مسبقًا على هاتفك</string>
+    <string name="model_import_info">اختر ملف النموذج الرسمي المتطابق (%1، بحجم %2 ميغابايت). سيتحقق CallVault من سلامة الملف وبصمته بدقة قبل اعتماده، مع الإبقاء على نسختك الأصلية دون تعديل.</string>
+    <string name="model_import_failed_wrong_file">هذا الملف غير صحيح، يرجى اختيار الملف: %1.</string>
+    <string name="model_import_failed_other_model">هذا الملف يخص نموذجًا آخر (%1). اختر ذلك النموذج أولاً ثم أعد الاستيراد.</string>
+    <string name="model_import_failed_unreadable">تعذّرت قراءة الملف، يرجى اختياره مجددًا.</string>
+    <string name="model_import_failed_space">لا توجد مساحة تخزينية كافية لاستيراد النموذج.</string>
+    <string name="model_backup">نسخ احتياطي للنموذج</string>
+    <string name="model_backup_subtitle">حفظ نسخة خارجية للاستعادة بعد إعادة التثبيت</string>
+    <string name="model_backup_info">حفظ ملف النموذج في مجلد تختاره في الذاكرة العامة. بعد إعادة تثبيت التطبيق أو عند الانتقال لهاتف جديد، يمكنك استخدام خيار "الاستيراد" لتجنب إعادة تنزيله.</string>
+    <string name="model_backing_up">جارٍ النسخ الاحتياطي… %1%%</string>
     <string name="model_backup_waiting">جارٍ التحضير للنسخ الاحتياطي…</string>
-    <string name="model_backup_done">تم الحفظ</string>
-    <string name="model_backup_failed">لم يكتمل النسخ الاحتياطي. حاول مرة أخرى.</string>
+    <string name="model_backup_done">تم حفظ النسخة بنجاح</string>
+    <string name="model_backup_failed">تعذر اكتمال النسخ الاحتياطي، يرجى المحاولة مجددًا.</string>
     <string name="transcription_model_resume">استئناف التنزيل</string>
-    <string name="transcription_model_resume_subtitle">تم تنزيل %1$d ميجابايت من %2$d ميجابايت بالفعل</string>
-    <string name="transcription_model_failed_space">مساحة خالية غير كافية. قم بتحرير بعض المساحة وحاول مرة أخرى.</string>
-    <string name="transcription_model_failed_verify">التنزيل تالف وتم التخلص منه. حاول مرة أخرى.</string>
-    <string name="transcription_model_failed">لم ينتهِ التنزيل. حاول مرة أخرى.</string>
-    <string name="summary_model_download">تنزيل أداة التلخيص</string>
+    <string name="transcription_model_resume_subtitle">تم تنزيل %1 ميغابايت من أصل %2 ميغابايت</string>
+    <string name="transcription_model_failed_space">لا توجد مساحة كافية. يرجى توفير مساحة تخزين ثم المحاولة مجددًا.</string>
+    <string name="transcription_model_failed_verify">ملف التنزيل تالف وتم حذفه. يرجى إعادة المحاولة.</string>
+    <string name="transcription_model_failed">تعذر اكتمال التنزيل، يرجى المحاولة مجددًا.</string>
+    <string name="summary_model_download">تنزيل نموذج التلخيص</string>
     <string name="summary_model_download_subtitle">%1$.1f جيجابايت، عبر Wi-Fi فقط</string>
-    <string name="summary_model_delete">حذف أداة التلخيص</string>
-    <string name="summary_model_installed">تم التنزيل وجاهز</string>
+    <string name="summary_model_delete">حذف نموذج التلخيص</string>
+    <string name="summary_model_installed">مُنزَّل وجاهز للاستخدام</string>
     <string name="summary_model_downloading">جارٍ التنزيل… %1$d%%</string>
-    <string name="summary_model_waiting">في انتظار Wi-Fi</string>
+    <string name="summary_model_waiting">في انتظار اتصال Wi-Fi</string>
     <string name="summary_model_cancel">إلغاء التنزيل</string>
     <string name="summary_model_resume">استئناف التنزيل</string>
-    <string name="summary_model_resume_subtitle">تم تنزيل %1$.1f جيجابايت من %2$.1f جيجابايت بالفعل</string>
-    <string name="summary_model_discard">تجاهل ما تم تنزيله</string>
-    <string name="summary_model_discard_subtitle">يحرر %1$.1f جيجابايت</string>
-    <string name="summary_model_failed_space">مساحة خالية غير كافية. قم بتحرير بعض المساحة وحاول مرة أخرى.</string>
-    <string name="summary_model_failed_verify">التنزيل تالف وتم التخلص منه. حاول مرة أخرى.</string>
-    <string name="summary_model_failed">لم ينتهِ التنزيل. حاول مرة أخرى.</string>
+    <string name="summary_model_resume_subtitle">تم تنزيل %1$.1f جيجابايت من أصل %2$.1f جيجابايت</string>
+    <string name="summary_model_discard">حذف الملف غير المكتمل</string>
+    <string name="summary_model_discard_subtitle">يحرر مساحة %1$.1f جيجابايت</string>
+    <string name="summary_model_failed_space">لا توجد مساحة كافية على الهاتف. يرجى تحرير بعض المساحة والمحاولة مجددًا.</string>
+    <string name="summary_model_failed_verify">ملف التنزيل تالف وتم حذفه تلقائيًا. يرجى إعادة التنزيل.</string>
+    <string name="summary_model_failed">تعذر اكتمال التنزيل، يرجى المحاولة مجددًا.</string>
     <string name="summary_requirements_title">ماذا يتطلب هذا</string>
-    <string name="summary_requirements_body">تُكتب الملخصات على هاتفك — لا يتم إرسال أي شيء إلى أي مكان. يتطلب ذلك تنزيل %1$.1f جيجابايت وحوالي %2$.1f جيجابايت من الذاكرة أثناء التشغيل، لذا فهو يحتاج إلى هاتف حديث مع مساحة احتياطية. تستغرق المكالمة القصيرة دقيقة أو دقيقتين.</string>
-    <string name="summary_model_licence">أداة التلخيص هي Gemma 4 من Google، وتستخدم بموجب ترخيص Apache 2.0. يتم تنزيلها بشكل منفصل بدلاً من تضمينها في CallVault.</string>
+    <string name="summary_requirements_body">تُكتب الملخصات على هاتفك، لا يتم إرسال أي شيء إلى أي مكان. يتطلب ذلك تنزيل %1$.1f جيجابايت وحوالي %2$.1f جيجابايت من الذاكرة أثناء التشغيل، لذا فهو يحتاج إلى هاتف حديث مع مساحة احتياطية. تستغرق المكالمة القصيرة دقيقة أو دقيقتين.</string>
+    <string name="summary_model_licence">يعتمد نموذج التلخيص على Gemma 4 من Google، والمتاح بترخيص Apache 2.0 مفتوح المصدر. يتم تنزيله بشكل مستقل ومباشر.</string>
     <string name="summary_card_title">ملخص</string>
     <string name="summary_card_decisions">القرارات</string>
     <string name="summary_card_actions">للقيام به</string>
@@ -520,11 +513,11 @@
     <string name="summary_card_create_subtitle">مكتوب على هاتفك، حوالي دقيقة أو دقيقتين</string>
     <string name="summary_card_running">جارٍ التلخيص… %1$d%%</string>
     <string name="summary_card_stop">إيقاف</string>
-    <string name="summary_card_blocked_no_transcript">قم بتحويل هذه المكالمة إلى نص أولاً — يتم كتابة الملخص من النص.</string>
+    <string name="summary_card_blocked_no_transcript">قم بتحويل هذه المكالمة إلى نص أولاً؛ يتم كتابة الملخص من النص.</string>
     <string name="summary_card_blocked_unfinished">في انتظار انتهاء النص.</string>
     <string name="summary_card_blocked_empty">لا يحتوي هذا النص على كلمات، لذا لا يوجد شيء لتلخيصه.</string>
-    <string name="summary_card_blocked_model">قم بتنزيل أداة التلخيص في الإعدادات أولاً.</string>
-    <string name="summary_card_blocked_transcribing">في انتظار انتهاء التحويل إلى نص — لا يمكنهما مشاركة الهاتف.</string>
+    <string name="summary_card_blocked_model">يرجى تنزيل نموذج التلخيص من الإعدادات أولاً.</string>
+    <string name="summary_card_blocked_transcribing">في انتظار انتهاء التفريغ الصوتي، لا يمكنهما مشاركة الهاتف.</string>
     <string name="summary_card_blocked_summarising">جارٍ تلخيص مكالمة أخرى.</string>
     <string name="summary_card_failed">لم ينتج عن ذلك ملخص قابل للاستخدام. يمكنك المحاولة مرة أخرى.</string>
     <string name="summary_requirements_heading">قبل التنزيل</string>
@@ -536,8 +529,8 @@
     <string name="summary_requirements_continue">تنزيل</string>
     <string name="summary_requirements_cancel">ليس الآن</string>
     <string name="summary_requirements_dont_ask">لا تظهر هذا مرة أخرى</string>
-    <string name="summary_requirements_toggle_description">إظهار تكلفة أداة التلخيص قبل تنزيلها</string>
-    <string name="summary_delete_confirm_title">حذف أداة التلخيص؟</string>
+    <string name="summary_requirements_toggle_description">إظهار تكلفة نموذج التلخيص قبل تنزيلها</string>
+    <string name="summary_delete_confirm_title">حذف نموذج التلخيص؟</string>
     <string name="summary_delete_confirm_body">يؤدي هذا إلى تحرير %1$.1f جيجابايت. يتم الاحتفاظ بالملخصات التي كتبتها بالفعل، ولكن ستحتاج إلى تنزيلها مرة أخرى لكتابة المزيد.</string>
     <string name="summary_delete_confirm_confirm">حذف</string>
     <string name="summary_discard_confirm_title">تجاهل التنزيل؟</string>
@@ -561,9 +554,9 @@
     <string name="transcription_language_persian">الفارسية</string>
     <string name="transcription_language_ukrainian">الأوكرانية</string>
     <string name="transcription_language_auto">الكشف تلقائياً</string>
-    <string name="transcription_language_auto_hint">الكشف غير موثوق به للغات التي لا تكتب بالحروف اللاتينية — غالبًا ما تعود العبرية والعربية والروسية والصينية مكتوبة بأحرف إنجليزية، أو ككتلة نصية طويلة. سمِ اللغة إذا استطعت.</string>
+    <string name="transcription_language_auto_hint">الكشف غير موثوق به للغات التي لا تكتب بالحروف اللاتينية؛ غالبًا ما تعود العبرية والعربية والروسية والصينية مكتوبة بأحرف إنجليزية، أو ككتلة نصية طويلة. سمِ اللغة إذا استطعت.</string>
     <string name="transcription_note_manual">يتم إنشاء النصوص فقط عندما تطلب ذلك، من الزر الموجود على التسجيل.</string>
-    <string name="transcription_note_after_each_call">يتم تحويل كل مكالمة إلى نص بمجرد انتهائها. لا يتم المساس بالمكالمات القديمة — قم بتحويلها إلى نص من الزر الموجود على التسجيل.</string>
+    <string name="transcription_note_after_each_call">يتم تحويل كل مكالمة إلى نص بمجرد انتهائها. لا يتم المساس بالمكالمات القديمة؛ قم بتفريغها صوتيًا من الزر الموجود على التسجيل.</string>
     <string name="transcription_note_automatic">يتم تحويل المكالمات التي لا تحتوي على نص بعد إلى نص في الوقت المختار. تستغرق مكالمة مدتها 30 دقيقة حوالي 30 دقيقة.</string>
     <string name="transcription_batch_label">المكالمات لكل تشغيل</string>
     <string name="transcription_batch_no_limit">بلا حدود</string>
@@ -575,7 +568,7 @@
     <string name="playback_note_title">ملاحظة</string>
     <string name="playback_note_hint">حول ماذا كانت هذه المكالمة…</string>
     <string name="transcript_action_transcribe">تحويل هذه المكالمة إلى نص</string>
-    <string name="transcript_action_transcribe_short">تحويل إلى نص</string>
+    <string name="transcript_action_transcribe_short">تفريغ صوتي</string>
     <string name="transcribe_estimate_under_minute">دقيقة</string>
     <string name="transcribe_estimate_minutes">%1$d دقيقة</string>
     <string name="transcribe_estimate_hours">%1$d ساعة %2$d دقيقة</string>
@@ -584,21 +577,21 @@
     <string name="transcribe_confirm_title_first_run">قد يستغرق الأول بعض الوقت</string>
     <string name="transcribe_confirm_message">يؤدي تحويل %1$s إلى نص إلى إشغال هاتفك واستهلاك ملحوظ للبطارية. يمكنك إيقافه في أي وقت.
 
-يمكن إعادة تشغيل هذا السؤال ضمن "التحويل إلى نص" في الإعدادات.</string>
+يمكن إعادة تشغيل هذا السؤال ضمن "التفريغ الصوتي" في الإعدادات.</string>
     <string name="transcribe_confirm_dont_ask">لا تسأل مرة أخرى</string>
     <string name="transcribe_language_title">أي لغة؟</string>
     <string name="transcribe_language_message">تحويل %1$s إلى نص في:</string>
-    <string name="transcribe_language_confirm">تحويل إلى نص</string>
+    <string name="transcribe_language_confirm">تفريغ صوتي</string>
     <string name="transcription_ask_language_title">اسأل عن اللغة في كل مرة</string>
     <string name="transcription_ask_language_subtitle">اختر اللغة لكل تسجيل بدلاً من استخدام اللغة المذكورة أعلاه دائمًا. ينطبق ذلك على هذا التسجيل فقط.</string>
-    <string name="transcription_confirm_title">اسأل قبل التحويل إلى نص</string>
+    <string name="transcription_confirm_title">اسأل قبل التفريغ الصوتي</string>
     <string name="transcription_confirm_subtitle">يظهر المدة التي سيستغرقها ويسمح لك بالإلغاء.</string>
-    <string name="transcript_action_busy">جارٍ التحويل إلى نص…</string>
+    <string name="transcript_action_busy">جارٍ التفريغ الصوتي…</string>
     <string name="transcript_action_open">قراءة النص المكتوب</string>
-    <string name="transcript_action_retry">فشل التحويل إلى نص — حاول مرة أخرى</string>
+    <string name="transcript_action_retry">فشل التفريغ الصوتي؛ حاول مرة أخرى</string>
     <string name="transcript_loading">جارٍ تحميل النص…</string>
-    <string name="transcript_none">لا يوجد نص لهذه المكالمة. لم يتم تحويلها إلى نص أبدًا، أو تم حذف النص.</string>
-    <string name="transcript_no_speech">لم يتم التعرف على أي كلام في هذا التسجيل.</string>
+    <string name="transcript_none">لا يوجد نص لهذه المكالمة. لم يتم تفريغها صوتيًا أبدًا، أو تم حذف النص.</string>
+    <string name="transcript_no_speech">لم يتم رصد أي صوت بشري واضح في هذا التسجيل.</string>
     <string name="transcript_speakers_which_is_you">من هو أنت؟</string>
     <string name="transcript_speakers_guessed">أسماء تم استنتاجها تلقائيًا</string>
     <string name="transcript_speakers_swap_names">تبديل الأسماء</string>
@@ -610,25 +603,25 @@
     <string name="transcript_share">مشاركة</string>
     <string name="transcript_export_chooser">مشاركة النص</string>
     <string name="transcript_export_failed">تعذر تصدير النص</string>
-    <string name="transcript_retranscribe">إعادة التحويل إلى نص</string>
+    <string name="transcript_retranscribe">إعادة التفريغ الصوتي</string>
     <string name="transcript_note_add">إضافة ملاحظة</string>
     <string name="transcript_note_hint">عن ماذا كانت، أو ماذا تفعل حيالها…</string>
-    <string name="transcript_too_long_title">طويل جدًا للتحويل إلى نص</string>
-    <string name="transcript_too_long_message">تبلغ مدة هذه المكالمة حوالي %1$d دقيقة. يمكن لـ CallVault تحويل التسجيلات إلى نص حتى %2$d دقيقة على الجهاز في الوقت الحالي فقط — ستنفد الذاكرة من التسجيلات الأطول في المنتصف. التسجيل نفسه آمن.</string>
-    <string name="transcript_no_model_title">لا يوجد نموذج كلام بعد</string>
-    <string name="transcript_no_model_message">يحدث التحويل إلى نص على هذا الهاتف، لذا فإنه يحتاج إلى نموذج كلام يتم تنزيله أولاً. يمكنك اختيار وتنزيل واحد في الإعدادات.</string>
+    <string name="transcript_too_long_title">التسجيل طويل جدًا للتفريغ في خطوة واحدة</string>
+    <string name="transcript_too_long_message">تبلغ مدة هذه المكالمة حوالي %1$d دقيقة. يمكن لـ CallVault تحويل التسجيلات إلى نص حتى %2$d دقيقة على الجهاز في الوقت الحالي فقط؛ ستنفد الذاكرة من التسجيلات الأطول في المنتصف. التسجيل نفسه آمن.</string>
+    <string name="transcript_no_model_title">لا يتوفر نموذج تفريغ صوتي بعد</string>
+    <string name="transcript_no_model_message">تتم معالجة التفريغ الصوتي محليًا على هذا الهاتف لحماية خصوصيتك، لذا يلزم توفر نموذج التعرف الصوتي أولاً. يمكنك تنزيل النموذج أو استيراده من الإعدادات.</string>
     <string name="transcript_no_model_open_settings">فتح الإعدادات</string>
-    <string name="transcribing_pill_working">جارٍ التحويل إلى نص</string>
+    <string name="transcribing_pill_working">جارٍ التفريغ الصوتي…</string>
     <string name="transcribing_pill_progress">%1$d/%2$d</string>
     <string name="transcribing_pill_percent">%1$d%%</string>
     <string name="transcribing_pill_progress_percent">%1$d/%2$d · %3$d%%</string>
-    <string name="transcribing_sheet_title">جارٍ التحويل إلى نص</string>
+    <string name="transcribing_sheet_title">جارٍ التفريغ الصوتي</string>
     <string name="transcribing_sheet_starting">جارٍ البدء…</string>
     <string name="transcribing_sheet_remaining">المتبقي: %1$d</string>
     <string name="transcribing_sheet_stop">إيقاف</string>
     <string name="transcript_delete">حذف النص</string>
     <string name="transcript_delete_confirm_title">حذف هذا النص؟</string>
-    <string name="transcript_delete_confirm_message">سيتم حذف نص %1$s. يتم الاحتفاظ بالتسجيل نفسه، ويمكنك تحويله إلى نص مرة أخرى لاحقًا.</string>
+    <string name="transcript_delete_confirm_message">سيتم حذف نص %1$s. يتم الاحتفاظ بالتسجيل نفسه، ويمكنك تفريغه صوتيًا مرة أخرى لاحقًا.</string>
     <string name="home_status_recovery_stuck_title">التسجيل معطل</string>
     <string name="home_status_recovery_stuck_suggestion">يفشل CallVault باستمرار في إعادة تشغيل المسجل، لذا لا يتم تسجيل المكالمات. عادةً ما يؤدي إعادة فتح التطبيق إلى مسح هذا.</string>
     <string name="home_hero_pill_recovery_stuck">لا يتم التسجيل</string>
@@ -657,7 +650,7 @@
     <string name="min_duration_off">احتفظ بها كلها</string>
     <string name="min_duration_seconds">أقصر من %1$d ثوانٍ</string>
     <string name="min_duration_one_minute">أقصر من دقيقة</string>
-    <string name="min_duration_caption">يتم حذف مكالمة خاطئة أو مكالمة لم يتم الرد عليها بمجرد انتهائها، قبل تحويلها إلى نص أو تحميلها. لا يتأثر أي شيء تم تسجيله بالفعل.</string>
+    <string name="min_duration_caption">يتم حذف مكالمة خاطئة أو مكالمة لم يتم الرد عليها بمجرد انتهائها، قبل تفريغها صوتيًا أو تحميلها. لا يتأثر أي شيء تم تسجيله بالفعل.</string>
     <string name="storage_cap_label">الحد الأقصى للمساحة المستخدمة</string>
     <string name="storage_cap_off">بلا حدود</string>
     <string name="storage_cap_gigabytes">%1$d جيجابايت على هذا الهاتف</string>
@@ -670,22 +663,22 @@
     <string name="notif_health_shizuku_restarted_title">تمت إعادة تشغيل Shizuku</string>
     <string name="notif_health_shizuku_restarted_text">اضطر CallVault إلى إعادة تشغيل خدمة تصحيح أخطاء Android، مما يوقف Shizuku، لذا فقد بدأ Shizuku مرة أخرى لك. لا يوجد شيء تفعله.</string>
     <string name="notif_health_shizuku_restart_failed_title">تم إيقاف Shizuku</string>
-    <string name="notif_health_shizuku_restart_failed_text">اضطر CallVault إلى إعادة تشغيل خدمة تصحيح أخطاء Android، وهذا يوقف Shizuku. حاول بدء Shizuku مرة أخرى ولم يتمكن — افتح Shizuku وشغّله بنفسك.</string>
-    <string name="notif_health_recorder_text">لن يتم تسجيل المكالمات حتى يتصل هذا الهاتف بشبكة Wi-Fi مرة واحدة. ستفي أي شبكة بالغرض ولا تحتاج إلى إنترنت — بضع ثوانٍ تكفي، ثم يستمر في العمل حتى بدون Wi-Fi.</string>
+    <string name="notif_health_shizuku_restart_failed_text">اضطر CallVault إلى إعادة تشغيل خدمة تصحيح أخطاء Android، وهذا يوقف Shizuku. حاول بدء Shizuku مرة أخرى ولم يتمكن؛ افتح Shizuku وشغّله بنفسك.</string>
+    <string name="notif_health_recorder_text">لن يتم تسجيل المكالمات حتى يتصل هذا الهاتف بشبكة Wi-Fi مرة واحدة. ستفي أي شبكة بالغرض ولا تحتاج إلى إنترنت؛ بضع ثوانٍ تكفي، ثم يستمر في العمل حتى بدون Wi-Fi.</string>
     <string name="notif_health_sync_title">التسجيلات لا تصل إلى Drive</string>
-    <string name="notif_health_sync_text">توقف النسخ إلى Google Drive منذ بعض الوقت. لم يُفقد أي شيء — التسجيلات لا تزال على هذا الهاتف — ولكنها ليست مدعومة. افتح CallVault للتحقق من إعدادات التخزين الخاصة بك.</string>
+    <string name="notif_health_sync_text">توقف النسخ إلى Google Drive منذ بعض الوقت. لم يُفقد أي شيء؛ التسجيلات لا تزال على هذا الهاتف؛ ولكنها ليست مدعومة. افتح CallVault للتحقق من إعدادات التخزين الخاصة بك.</string>
     <string name="notif_health_recorder_text_shizuku">لن يتم تسجيل المكالمات حتى يعمل Shizuku مرة أخرى. تؤدي إعادة التشغيل إلى إيقافه، لذا يجب تشغيله مرة واحدة بعد إعادة تشغيل الهاتف.</string>
-    <string name="settings_offline_recording_reboot_note">بعد إعادة التشغيل، يتوقف هذا عن العمل حتى يتصل الهاتف بشبكة Wi-Fi مرة واحدة. ستفي أي شبكة بالغرض ولا تحتاج إلى إنترنت — بضع ثوانٍ تكفي. سيخبرك CallVault عندما يكون ذلك ضروريًا.</string>
+    <string name="settings_offline_recording_reboot_note">بعد إعادة التشغيل، يتوقف هذا عن العمل حتى يتصل الهاتف بشبكة Wi-Fi مرة واحدة. ستفي أي شبكة بالغرض ولا تحتاج إلى إنترنت؛ بضع ثوانٍ تكفي. سيخبرك CallVault عندما يكون ذلك ضروريًا.</string>
     <string name="general_stop">إيقاف</string>
     <string name="settings_metadata_file_label">كتابة ملف تفاصيل</string>
     <string name="settings_metadata_file_desc">احفظ ملف .json صغير بجانب كل تسجيل</string>
-    <string name="settings_metadata_file_hint">يستخدم نفس التنسيق مثل BCR، بحيث يمكن للتطبيقات المبنية عليه — مثل bcr-gui — قراءة تفاصيل تسجيلاتك. يستحق التشغيل فقط إذا كنت تستخدم واحدًا.</string>
+    <string name="settings_metadata_file_hint">يستخدم نفس التنسيق مثل BCR، بحيث يمكن للتطبيقات المبنية عليه؛ مثل bcr-gui؛ قراءة تفاصيل تسجيلاتك. يستحق التشغيل فقط إذا كنت تستخدم واحدًا.</string>
     <string name="settings_transcript_sidecar_label">حفظ النص والملاحظات بجانب التسجيل</string>
     <string name="settings_transcript_sidecar_desc">إنشاء ملف نصي .md بجانب كل تسجيل</string>
     <string name="settings_transcript_sidecar_hint">يحفظ النص والملاحظات والملخص كملف نصي بالاسم نفسه الخاص بالتسجيل، بحيث يبقى النص مع الصوت عند نسخ مجلدك إلى حاسوب. تفعيله يحفظ أيضًا ما لديك بالفعل.</string>
     <string name="settings_hide_recordings_label">إخفاء التسجيلات</string>
     <string name="settings_hide_recordings_desc">إبقاء تسجيلاتك خارج مشغلات الموسيقى والمعارض وتطبيقات الوسائط الأخرى</string>
-    <string name="settings_hide_recordings_hint">يضيف ملف ‎.nomedia‎ مخفيًا إلى مجلد التسجيلات، وتحترمه معظم التطبيقات. تحتفظ التسجيلات بأسمائها وتستمر مزامنتها. ستظل مديرات الملفات تعرضها — لإخفائها هناك أيضًا، اجعل اسم المجلد يبدأ بنقطة.</string>
+    <string name="settings_hide_recordings_hint">يضيف ملف ‎.nomedia‎ مخفيًا إلى مجلد التسجيلاتات، وتحترمه معظم التطبيقات. تحتفظ التسجيلات بأسمائها وتستمر مزامنتها. ستظل مديرات الملفات تعرضها؛ لإخفائها هناك أيضًا، اجعل اسم المجلد يبدأ بنقطة.</string>
     <string name="settings_backup_title">نسخ احتياطي للإعدادات</string>
     <string name="settings_backup_desc">احفظ إعداداتك في ملف، أو استعِدها من ملف.</string>
     <string name="settings_export">تصدير</string>
@@ -706,7 +699,7 @@
     <string name="settings_voip_apps_label">اختر التطبيقات التي سيتم تسجيلها</string>
     <string name="settings_voip_ignore_contacts_label">تخطَّ أيضًا جهات الاتصال المتجاهَلة</string>
     <string name="settings_voip_ignore_contacts_desc">طبّق قائمة جهات الاتصال المتجاهَلة على مكالمات التطبيقات أيضًا</string>
-    <string name="settings_voip_ignore_contacts_hint">تتم المطابقة بالاسم أو الرقم الذي يعرضه التطبيق للمكالمة، بشكل مطابق تمامًا — الاسم المطابق جزئيًا يُسجَّل مع ذلك. قد يعرض Telegram اسمه الخاص للشخص بدلًا من اسم جهة الاتصال لديك، لذا قد لا يتطابق هناك. الضغط على «تسجيل» بنفسك يسجّل المكالمة دائمًا.</string>
+    <string name="settings_voip_ignore_contacts_hint">تتم المطابقة بالاسم أو الرقم الذي يعرضه التطبيق للمكالمة، بشكل مطابق تمامًا؛ الاسم المطابق جزئيًا يُسجَّل مع ذلك. قد يعرض Telegram اسمه الخاص للشخص بدلًا من اسم جهة الاتصال لديك، لذا قد لا يتطابق هناك. الضغط على «تسجيل» بنفسك يسجّل المكالمة دائمًا.</string>
     <string name="settings_voip_apps_loading">جارٍ البحث عن التطبيقات…</string>
     <string name="settings_voip_apps_all">يتم تسجيل كل تطبيق</string>
     <plurals name="settings_voip_apps_some">
@@ -732,12 +725,12 @@
     <string name="usb_debugging_off_warn_offline">التسجيل بدون Wi-Fi يحتاج إلى تصحيح أخطاء USB. مع إيقافه، لن يتم تسجيل المكالمات التي تتم بعيدًا عن Wi-Fi.</string>
     <string name="usb_debugging_off_confirm">إيقاف التشغيل على أي حال</string>
     <string name="usb_debugging_off_keep">ابقِهِ قيد التشغيل</string>
-    <string name="settings_wd_enforce_label">حافظ على تشغيل تصحيح أخطاء اللاسلكي للتسجيل</string>
-    <string name="settings_wd_enforce_description">إذا أوقفت تشغيل تصحيح أخطاء اللاسلكي بينما لا يوجد شيء آخر يسمح لـ CallVault بالوصول، فإنه يعيد تشغيله بحيث تستمر المكالمات في التسجيل. عندما يكون هذا متوقفًا، يظل مفتاحك متوقفًا ويقول الإشعار إن التسجيل متوقف مؤقتًا.</string>
+    <string name="settings_wd_enforce_label">إبقاء تصحيح الأخطاء اللاسلكي قيد التشغيل للتسجيل</string>
+    <string name="settings_wd_enforce_description">إذا قمت بإيقاف تصحيح الأخطاء اللاسلكي دون توفر وسيلة اتصال بديلة، سيقوم CallVault بإعادة تفعيله لضمان استمرار تسجيل المكالمات.</string>
     <string name="settings_wd_auto_approve_label">الموافقة تلقائيًا على شبكات Wi-Fi الجديدة</string>
-    <string name="settings_wd_auto_approve_description">عندما يتصل الهاتف بشبكة Wi-Fi، يجيب CallVault بنفسه على سؤال Android \"السماح بتصحيح أخطاء اللاسلكي على هذه الشبكة؟\"، فلا ينتظر التسجيل نقرتك. يعمل ما دام المسجّل قيد التشغيل. لا يمكن أن تتصل إلا الأجهزة المقترنة مسبقًا بهذا الهاتف.</string>
+    <string name="settings_wd_auto_approve_description">عندما يتصل الهاتف بشبكة Wi-Fi، يجيب CallVault بنفسه على سؤال Android \"السماح بتصحيح الأخطاء اللاسلكي على هذه الشبكة؟\"، فلا ينتظر التسجيل نقرتك. يعمل ما دام المسجّل قيد التشغيل. لا يمكن أن تتصل إلا الأجهزة المقترنة مسبقًا بهذا الهاتف.</string>
     <string name="oem_gate_title">يمنع هاتفك هذه الخطوة</string>
-    <string name="oem_gate_body_oppo">ترفض هواتف OnePlus وOPPO وrealme منح التطبيقات هذا الإذن حتى تقوم بتشغيل "تعطيل تحسين النظام" في خيارات المطور — بالقرب من الأسفل، تحت التطبيقات. تسميها الإصدارات القديمة "تعطيل مراقبة الأذونات". قم بتشغيلها وحاول مرة أخرى. إذا لم تتمكن من العثور عليها، قم بتحويل الهاتف إلى اللغة الإنجليزية، ثم قم بتشغيلها، ثم عد إلى لغتك.</string>
+    <string name="oem_gate_body_oppo">ترفض هواتف OnePlus وOPPO وrealme منح التطبيقات هذا الإذن حتى تقوم بتشغيل "تعطيل تحسين النظام" في خيارات المطور؛ بالقرب من الأسفل، تحت التطبيقات. تسميها الإصدارات القديمة "تعطيل مراقبة الأذونات". قم بتشغيلها وحاول مرة أخرى. إذا لم تتمكن من العثور عليها، قم بتحويل الهاتف إلى اللغة الإنجليزية، ثم قم بتشغيلها، ثم عد إلى لغتك.</string>
     <string name="oem_gate_body_xiaomi">ترفض هواتف Xiaomi وRedmi وPOCO منح التطبيقات هذا الإذن حتى تقوم بتشغيل "تصحيح أخطاء USB (إعدادات الأمان)" في خيارات المطور. إنه منفصل عن تصحيح أخطاء USB، ويتطلب منك تسجيل الدخول إلى حساب Mi. قم بتشغيله وحاول مرة أخرى.</string>
     <string name="oem_gate_body_other">يرفض هذا الهاتف منح CallVault الإذن الذي يحتاجه. في خيارات المطور، ابحث عن مفتاح يتعلق بمراقبة الأذونات أو تحسين النظام، قم بتشغيله، وحاول مرة أخرى.</string>
     <string name="oem_gate_open_dev_options">فتح خيارات المطور</string>
@@ -753,7 +746,7 @@
     <string name="transcript_delete_confirm_message_text_only">لا يوجد تسجيل خلف هذه الكلمات: حذف نص %1$s يحذف كل شيء، ولا يمكن استعادته.</string>
     <string name="library_summary_delete_confirm_title">حذف هذا الملخص؟</string>
     <string name="library_summary_delete_confirm_message">سيتم حذف ملخص %1$s. يتم الاحتفاظ بالنص والتسجيل، ويمكنك كتابته مرة أخرى.</string>
-    <string name="library_bulk_delete_transcripts_message">سيتم حذف الكلمات. يتم الاحتفاظ بالتسجيلات، ويمكنك تحويلها إلى نص مرة أخرى لاحقًا.</string>
+    <string name="library_bulk_delete_transcripts_message">سيتم حذف الكلمات. يتم الاحتفاظ بالتسجيلات، ويمكنك تفريغها صوتيًا مرة أخرى لاحقًا.</string>
     <string name="library_bulk_delete_summaries_message">سيتم حذف الملخصات. يتم الاحتفاظ بالنصوص والتسجيلات.</string>
     <plurals name="library_bulk_delete_transcripts_title">
         <item quantity="zero">حذف %1$d نص؟</item>
@@ -788,22 +781,22 @@
     <string name="note_saved">تم الحفظ</string>
     <string name="note_saving">جارٍ الحفظ…</string>
     <string name="home_status_pairing_lost_title">انتهت صلاحية الاقتران</string>
-    <string name="home_status_pairing_lost_suggestion">نسي Android اقتران تصحيح أخطاء اللاسلكي الخاص بـ CallVault، لذا لا يمكن للمسجل أن يبدأ من جديد. انقر هنا لإعادة الاقتران — تبقى تسجيلاتك وإعداداتك كما هي.</string>
+    <string name="home_status_pairing_lost_suggestion">فقد نظام أندرويد اقتران تصحيح الأخطاء اللاسلكي مع CallVault، لذا لا يمكن إعادة تشغيل المسجل. انقر هنا لإعادة الاقتران؛ ستبقى كافة تسجيلاتك وإعداداتك كما هي.</string>
     <string name="settings_pair_again_label">إعادة الاقتران</string>
-    <string name="settings_pair_again_value">اقتران CallVault بتصحيح أخطاء اللاسلكي</string>
-    <string name="settings_pair_again_hint">استخدم هذا إذا نسي Android اقتران CallVault. تبقى تسجيلاتك وإعداداتك كما هي. يؤدي تشغيل التسجيل بدون اتصال إلى منع انتهاء صلاحية الاقتران.</string>
+    <string name="settings_pair_again_value">إقران CallVault عبر تصحيح الأخطاء اللاسلكي</string>
+    <string name="settings_pair_again_hint">استخدم هذا إذا نسي Android اقتران CallVault. تبقى تسجيلاتك وإعداداتك كما هي. يؤدي تشغيل التسجيل بدون إنترنت إلى منع انتهاء صلاحية الاقتران.</string>
     <string name="notif_readiness_pairing_lost_text">نسي Android اقتران CallVault، لذا لا يمكن تسجيل المكالمات. افتح CallVault وانقر على بطاقة الحالة لإعادة الاقتران.</string>
     <string name="notif_cut_off_saved_title">قُطِعت مكالمة</string>
     <string name="notif_cut_off_saved_text">أغلق هاتفك CallVault أثناء مكالمة. تم حفظ ما سُجِّل قبل ذلك باسم %1$s.</string>
-    <string name="home_health_failed_cut_off">قُطِعت مكالمتك الأخيرة عندما أغلق الهاتف CallVault — تم حفظ الجزء الذي سُجِّل قبل ذلك.</string>
-    <string name="settings_needs_newer_android">يتطلب Android %1$s أو أحدث — يعمل هذا الهاتف بنظام Android %2$s.</string>
+    <string name="home_health_failed_cut_off">قُطِعت مكالمتك الأخيرة عندما أغلق الهاتف CallVault؛ تم حفظ الجزء الذي سُجِّل قبل ذلك.</string>
+    <string name="settings_needs_newer_android">يتطلب Android %1$s أو أحدث؛ يعمل هذا الهاتف بنظام Android %2$s.</string>
     <string name="notif_turned_off_for_android_title">تم إيقاف بعض الإعدادات</string>
     <string name="notif_turned_off_for_android_text">%1$s: يتطلب هذا إصدار Android أحدث من الموجود على هذا الهاتف (Android %2$s)، لذا تم إيقافه. لا تزال المكالمات الهاتفية تُسجَّل.</string>
     <string name="update_popup_title">يتوفر CallVault %1$s</string>
     <string name="update_popup_text">يتوفر إصدار جديد جاهز للتثبيت. يحافظ التحديث على موثوقية التسجيل ويجلب أحدث الإصلاحات.</string>
     <string name="update_popup_update_now">التحديث الآن</string>
     <string name="update_popup_later">لاحقًا</string>
-    <!-- Master recording On/Off switch -->
+    
     <string name="home_status_stopped_title">تم إيقاف التسجيل</string>
     <string name="home_status_stopped_suggestion">‏CallVault متوقّف، لن يتم تسجيل المكالمات.</string>
     <string name="home_hero_pill_stopped">متوقّف</string>
@@ -813,7 +806,7 @@
     <string name="tile_recording_stopped">متوقّف</string>
     <string name="home_hero_pill_starting">جارٍ التشغيل…</string>
 
-    <!-- New Settings screen (settings per page, step 2). -->
+    
     <string name="settings_title_recordings">إعدادات التسجيلات</string>
     <string name="settings_title_transcripts">إعدادات النصوص</string>
     <string name="settings_title_summaries">إعدادات الملخصات</string>
@@ -829,11 +822,11 @@
     <string name="settings_summary_recording_manual">يدويًا فقط</string>
     <string name="settings_summary_not_downloaded">لم يُنزَّل</string>
 
-    <!-- New Settings screen: the ⓘ button that explains a row. -->
+    
     <string name="settings_info_about">حول %1$s</string>
     <string name="settings_info_got_it">فهمت</string>
 
-    <!-- New Settings screen, round 2: groups by what you want to do. -->
+    
     <string name="settings_group_calls_to_record">التسجيل</string>
     <string name="settings_group_calls_to_skip">المكالمات المراد تخطيها</string>
     <string name="settings_group_sound_and_names">الصوت وأسماء الملفات</string>
@@ -841,7 +834,7 @@
     <string name="settings_group_cleaning_up">التنظيف</string>
     <string name="settings_group_connection">الاتصال</string>
     <string name="settings_group_model_and_language">النموذج واللغة</string>
-    <string name="settings_group_when_to_transcribe">متى يتم التحويل إلى نص</string>
+    <string name="settings_group_when_to_transcribe">توقيت بدء التفريغ الصوتي</string>
     <string name="settings_group_app">التطبيق</string>
     <string name="settings_group_help_and_about">المساعدة وحول التطبيق</string>
     <string name="settings_summary_calls_phone_and_app">المكالمات الهاتفية ومكالمات التطبيقات</string>
@@ -850,12 +843,12 @@
     <string name="settings_summary_nothing_skipped">لا يتم تخطي شيء</string>
     <string name="settings_summary_skip_rules_on">قواعد التخطي المفعّلة: %1$d</string>
 
-    <!-- New Settings screen, round 4: the Recording group's sub-headers. -->
+    
     <string name="settings_subheader_app_calls">مكالمات التطبيقات</string>
     <string name="settings_subheader_all_calls">كل المكالمات</string>
     <string name="settings_voip_auto_start_record_label">تسجيل مكالمات التطبيقات تلقائيًا</string>
 
-    <!-- The card at the top of both Settings screens that switches between the new and classic layouts. -->
+    
     <string name="settings_layout_try_new_title">جرّب التصميم الجديد للإعدادات</string>
     <string name="settings_layout_try_new_subtitle">تعرض كل صفحة إعداداتها فقط</string>
     <string name="settings_layout_back_to_classic_title">التبديل إلى العرض الكلاسيكي</string>
