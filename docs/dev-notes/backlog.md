@@ -81,6 +81,32 @@ fix, vivo far-side toggle (hint + SUPPORT doc), Samsung Wi-Fi-calling doc (#45).
 
 ---
 
+## 🔵 Samsung Wi-Fi Calling: detect it and warn, plus the stray app-call file at hang-up — agreed 2026-10-25, not started
+
+Raised by mac's S24 report (SM-S921U, A17, 2.4.7): phone calls over Wi-Fi Calling record only his side. That is
+Samsung's #45 limit, not fixable. Detail: `2026-10-25-report-mac-samsung-s24-wifi-calling.md`.
+
+1. **Detect Wi-Fi Calling and warn (Samsung behaviour, not brand).** 📐 The recorder runs as the shell, which
+   holds READ_PRIVILEGED_PHONE_STATE and READ_PRECISE_PHONE_STATE (checked on the OP9 2026-10-25). So it can
+   ask `ImsMmTelManager` for: `isVoWiFiSettingEnabled()` (on/off), `getVoWiFiModeSetting()` (Wi-Fi preferred,
+   Mobile network preferred or Wi-Fi only) and `getRegistrationTransportType()` (registered over Wi-Fi now).
+   The OP9's ServiceState already shows "IMS APN connected over WLAN, mIsIwlanPreferred=true". During a call,
+   Samsung's AudioFlinger also logs `bearer=WIFI`, which confirms it on Samsung. Dead ends: the `siminfo`
+   table (refused for the shell) and OEM keys such as OnePlus `vowifi_call_status1` (not portable).
+   Use: a card saying "Wi-Fi calls record only your side; switch to Mobile network preferred", and a mark on
+   a recording made over Wi-Fi instead of a silently one-sided file. Only where Wi-Fi calls lose the far
+   side: the OP9 records Wi-Fi calls fine. Needs an onboarding decision. Test the three readings on the OP9
+   (Wi-Fi Calling on, off, each preference). mac would be the first Samsung confirmation.
+2. **Our bug: a stray 1 s `_voip` file + "the other app blocks capture" at every Wi-Fi-call hang-up.** Samsung
+   keeps the mode at IN_COMMUNICATION during a Wi-Fi call. Telecom drops the call about 1.5 s before IDLE, so
+   `VoipTelephonyGate` lets an app-call start through. With a minimum length of 0 the file is kept. Fix: no
+   app-call start while the carrier recorder is still running, or for a few seconds after a carrier call ends.
+   Same branch as item 1.
+3. Lead, unexplored: Samsung opens a REMOTE_SUBMIX `crwfcmix:<n>` (16 kHz) when our VOICE_CALL capture starts
+   during a Wi-Fi call. It may be the hook Samsung's own recorder uses.
+
+---
+
 ## 🔵 Android 17 — researched 2026-10-20, not started
 
 Research: `2026-10-20-android-17-call-recording-research.md` (📐 desk research; no Android 17 phone).
