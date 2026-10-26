@@ -4,7 +4,16 @@ Requested by "shine n rise": listen through a run of calls without opening each 
 ("play in place, drag to seek"), chosen by the maintainer on 2026-10-26 from the canvas
 https://claude.ai/artifact/NUiGzMV8e8Q5CseKYuMg1z
 
-## What it does
+## Revision 2026-10-26 (maintainer, after trying it on the OP9)
+
+"I don't want the card to change, just add the bars." The playing card now looks exactly like any other:
+no teal outline, no colour change, no progress ring, details line unchanged (only a file that fails to
+play replaces it with the error). The only addition is a row under it: elapsed · seek bar · length
+(maintainer chose "small times beside the bar"). The play button still turns into pause. The
+descriptions below of the ring, outline and "1:12 of 4:23" line are the FIRST version and no longer
+apply; "1:12 of 4:23" survives only as the bar's screen-reader state.
+
+## What it does (first version)
 
 - The play button on a row plays that recording **in the row**. A second tap pauses, a third resumes.
   While it plays, the button shows pause with a progress ring, the details line reads "1:12 of 4:23",

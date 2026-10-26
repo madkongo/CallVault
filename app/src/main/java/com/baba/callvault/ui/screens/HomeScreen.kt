@@ -166,12 +166,7 @@ import com.baba.callvault.ui.common.MergeProgressState
 import com.baba.callvault.ui.common.DeleteCopiesDialog
 import com.baba.callvault.ui.common.ListPlayback
 import com.baba.callvault.ui.common.ListSeekBar
-import androidx.compose.foundation.Canvas
 import androidx.compose.ui.layout.layout
-import androidx.compose.ui.geometry.Offset
-import androidx.compose.ui.geometry.Size
-import androidx.compose.ui.graphics.StrokeCap
-import androidx.compose.ui.graphics.drawscope.Stroke
 import com.baba.callvault.ui.common.DeleteRecordingDialog
 import com.baba.callvault.ui.common.SeekBar
 import com.baba.callvault.ui.common.TranscriptPresentation
@@ -3248,7 +3243,8 @@ private fun RecordingRow(
         // so selected rows came out maroon and read as an error or a pending deletion. Selection is
         // neutral, and the brand colour is teal — the same teal as the tick.
         selected -> MaterialTheme.colorScheme.primaryContainer
-        isRowActive -> MaterialTheme.colorScheme.surfaceContainerHigh
+        // No colour for the playing row: the card looks as it always did; the seek bar under it is
+        // what marks it (maintainer's call, 2026-10-26).
         else -> MaterialTheme.colorScheme.surface
     }
 
@@ -3262,8 +3258,7 @@ private fun RecordingRow(
         onClick = onCardClick,
         onLongClick = onToggleSelected,
         color = cardColor,
-        contentPadding = PaddingValues(14.dp),
-        borderColor = if (isRowActive && !selected) MaterialTheme.colorScheme.primary else null
+        contentPadding = PaddingValues(14.dp)
     ) {
         Row(verticalAlignment = Alignment.CenterVertically) {
             // BOTH rows aren't directly playable from the disc; show a non-active disc as an affordance
@@ -3293,8 +3288,7 @@ private fun RecordingRow(
                 ) {
                     PlayDisc(
                         isActive = isRowActive,
-                        playback = playback,
-                        progress = if (showsSeekBar) ListPlayback.fraction(shownMs, playback.durationMs) else null
+                        playback = playback
                     )
                 }
                 CallOriginBadge(item.direction, item.voipApp)
@@ -3392,16 +3386,9 @@ private fun RecordingRow(
                 SourceBadge(source = item.source)
             }
             Spacer(Modifier.width(META_INDENT - PLAY_DISC_SIZE))
-            // While the row plays, its details line becomes "1:12 of 4:23"; the details come back
-            // when it stops.
+            // The details line stays as it is while playing; only a file that will not play replaces
+            // it, since there is no seek bar then to show anything happened.
             val (metaText, metaColor) = when {
-                showsSeekBar -> stringResource(
-                    R.string.home_player_position_of,
-                    formatClock(shownMs),
-                    formatClock(playback.durationMs)
-                ) to MaterialTheme.colorScheme.primary
-                isRowActive && playback.phase == RecordingPlaybackController.Phase.LOADING ->
-                    stringResource(R.string.home_player_loading) to MaterialTheme.colorScheme.onSurfaceVariant
                 isRowActive && playback.phase == RecordingPlaybackController.Phase.ERROR ->
                     stringResource(R.string.home_player_error) to MaterialTheme.colorScheme.error
                 else -> buildSubtitle(item, mergedPartCount) to MaterialTheme.colorScheme.onSurfaceVariant
@@ -3421,22 +3408,38 @@ private fun RecordingRow(
                 formatClock(playback.positionMs),
                 formatClock(playback.durationMs)
             )
-            ListSeekBar(
-                positionMs = playback.positionMs,
-                durationMs = playback.durationMs,
-                label = stringResource(R.string.home_player_seek),
-                stateText = positionText,
-                onSeek = onSeek,
-                onPreview = { previewMs = it },
-                formatTime = ::formatClock,
-                // The touch strip is taller than the space it takes: it overhangs into the gap
-                // above and the card's bottom padding, so the card grows by the bar, not the strip.
-                modifier = Modifier.layout { measurable, constraints ->
-                    val strip = measurable.measure(constraints)
-                    val taken = SEEK_BAR_SPACE.roundToPx()
-                    layout(strip.width, taken) { strip.place(0, (taken - strip.height) / 2) }
-                }
-            )
+            // Elapsed, the bar, the length: the only thing the playing card adds.
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Text(
+                    text = formatClock(shownMs),
+                    style = MaterialTheme.typography.labelSmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+                ListSeekBar(
+                    positionMs = playback.positionMs,
+                    durationMs = playback.durationMs,
+                    label = stringResource(R.string.home_player_seek),
+                    stateText = positionText,
+                    onSeek = onSeek,
+                    onPreview = { previewMs = it },
+                    formatTime = ::formatClock,
+                    // The touch strip is taller than the space it takes: it overhangs into the gap
+                    // above and the card's bottom padding, so the card grows by the bar, not the strip.
+                    modifier = Modifier
+                        .weight(1f)
+                        .padding(horizontal = 10.dp)
+                        .layout { measurable, constraints ->
+                            val strip = measurable.measure(constraints)
+                            val taken = SEEK_BAR_SPACE.roundToPx()
+                            layout(strip.width, taken) { strip.place(0, (taken - strip.height) / 2) }
+                        }
+                )
+                Text(
+                    text = formatClock(playback.durationMs),
+                    style = MaterialTheme.typography.labelSmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+            }
         }
 
         // Kept, not deleted, and deliberately unreachable: playback belongs on the recording's own
@@ -3612,9 +3615,7 @@ private fun CopySubEntry(
 @Composable
 private fun PlayDisc(
     isActive: Boolean,
-    playback: RecordingPlaybackController.PlaybackState,
-    /** How far through the playing recording is, drawn as a ring round the disc; null for none. */
-    progress: Float? = null
+    playback: RecordingPlaybackController.PlaybackState
 ) {
     val primary = MaterialTheme.colorScheme.primary
     val isLoading = isActive && playback.phase == RecordingPlaybackController.Phase.LOADING
@@ -3625,7 +3626,8 @@ private fun PlayDisc(
             modifier = Modifier
                 .size(PLAY_DISC_SIZE)
                 .clip(CircleShape)
-                .background(primary.copy(alpha = if (isActive) 0.22f else 0.14f)),
+                // Same tint playing or not: only the glyph changes, so the card looks as it always did.
+                .background(primary.copy(alpha = 0.14f)),
             contentAlignment = Alignment.Center
         ) {
             when {
@@ -3646,20 +3648,6 @@ private fun PlayDisc(
                     ),
                     tint = primary,
                     modifier = Modifier.size(24.dp)
-                )
-            }
-        }
-        if (progress != null) {
-            val ringTrack = primary.copy(alpha = 0.25f)
-            Canvas(Modifier.size(PLAY_DISC_SIZE)) {
-                val stroke = PROGRESS_RING_WIDTH.toPx()
-                val inset = stroke / 2
-                val arcSize = Size(size.width - stroke, size.height - stroke)
-                val topLeft = Offset(inset, inset)
-                drawArc(ringTrack, 0f, 360f, false, topLeft, arcSize, style = Stroke(stroke))
-                drawArc(
-                    primary, -90f, 360f * progress, false, topLeft, arcSize,
-                    style = Stroke(stroke, cap = StrokeCap.Round)
                 )
             }
         }
@@ -3776,8 +3764,6 @@ private val BADGE_GLYPH_SIZE = 13.dp
 /** The height the playing row's seek bar adds to its card; its touch strip overhangs this. */
 private val SEEK_BAR_SPACE = 18.dp
 
-/** The progress ring drawn round the play disc of the recording playing in the list. */
-private val PROGRESS_RING_WIDTH = 3.dp
 
 private val META_INDENT = 62.dp
 
