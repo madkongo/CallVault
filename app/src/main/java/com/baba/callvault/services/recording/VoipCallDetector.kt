@@ -68,7 +68,36 @@ class VoipCallDetector(private val context: Context) {
     /** Notified when [isRecording] changes, so the keep-alive notification can show the state. */
     var onRecordingStateChanged: (() -> Unit)? = null
 
-    private val modeListener = AudioManager.OnModeChangedListener { mode -> evaluate(mode) }
+    private val modeListener = AudioManager.OnModeChangedListener { mode ->
+        evaluate(mode)
+        probe("mode")
+    }
+
+    // ---- #53 diagnostic: logs only, decides nothing (see [VoipEndProbe]) ----
+    private var lastProbe: VoipEndProbe.Snapshot? = null
+    private var probeTailUntil = 0L
+    private var heartbeatScheduled = false
+
+    /** Logs the end-of-call signals when they change, while a call is up and for a while after. */
+    private fun probe(reason: String, always: Boolean = false) {
+        val am = audioManager ?: return
+        if (!callActive && android.os.SystemClock.elapsedRealtime() > probeTailUntil) return
+        val now = runCatching { VoipEndProbe.capture(am) }.getOrNull() ?: return
+        if (always || VoipEndProbe.isWorthLogging(lastProbe, now)) {
+            AppLogger.i(TAG, "endprobe[$reason] callActive=$callActive ${VoipEndProbe.describe(now)}")
+        }
+        lastProbe = now
+        if (!heartbeatScheduled) {
+            heartbeatScheduled = true
+            handler.postDelayed(probeHeartbeat, PROBE_HEARTBEAT_MS)
+        }
+    }
+
+    /** Shows the mode still being held (or not) when nothing changes — the Honor symptom. */
+    private val probeHeartbeat: Runnable = Runnable {
+        heartbeatScheduled = false
+        probe("tick", always = true)
+    }
 
     /**
      * Secondary trigger for API 30, where [AudioManager.OnModeChangedListener] does not exist. The
@@ -78,6 +107,7 @@ class VoipCallDetector(private val context: Context) {
     private val playbackTrigger = object : AudioManager.AudioPlaybackCallback() {
         override fun onPlaybackConfigChanged(configs: MutableList<AudioPlaybackConfiguration>) {
             evaluate(audioManager?.mode ?: AudioManager.MODE_NORMAL)
+            probe("playback")
         }
     }
 
@@ -88,6 +118,8 @@ class VoipCallDetector(private val context: Context) {
             suspendedForCarrier = false
             handler.removeCallbacks(suspendTimeout)
             AppLogger.i(TAG, "VoIP call ended")
+            probeTailUntil = android.os.SystemClock.elapsedRealtime() + PROBE_TAIL_MS
+            probe("ended", always = true)
             // Take the prompt down with the call. Leaving it would offer to record a call that is
             // over, and tapping it would start a recording of nothing.
             VoipRecordPrompt.cancel(context)
@@ -276,6 +308,8 @@ class VoipCallDetector(private val context: Context) {
     fun stop() {
         handler.removeCallbacks(endCallRunnable)
         if (callActive) endCallRunnable.run()
+        handler.removeCallbacks(probeHeartbeat)
+        heartbeatScheduled = false
         if (!registered || audioManager == null) return
         runCatching {
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
@@ -295,6 +329,10 @@ class VoipCallDetector(private val context: Context) {
     private companion object {
         const val TAG = "CV:VoipDetect"
         const val END_DEBOUNCE_MS = 1_500L
+
+        /** #53 diagnostic: heartbeat while a call is up, and how long to keep logging after it ends. */
+        const val PROBE_HEARTBEAT_MS = 5_000L
+        const val PROBE_TAIL_MS = 60_000L
 
         /**
          * How long an app call may stay held for a carrier call before it is finalised anyway.
