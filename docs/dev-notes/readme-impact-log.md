@@ -599,3 +599,11 @@ backed up to a folder you choose before a reinstall". The network paragraph (lin
   "Pair"; if the README ever quotes it, quote "Pair".
 
 README.md was not edited (held).
+
+## 2026-10-26 — Play from the Recordings list (`feat/play-from-list`)
+
+🧪 VERIFYING — emulator only. README line ~39 ("Playback with a waveform you can scrub") stays true.
+Once confirmed it could add: "or play straight from the list, with a seek bar on the playing row". The
+Recordings screenshot (`docs/screenshots/01-home.png`) still matches when nothing is playing.
+
+README.md was not edited (held).

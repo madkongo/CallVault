@@ -546,6 +546,10 @@
     <string name="home_player_stop">Stop</string>
     <string name="home_player_loading">Loading…</string>
     <string name="home_player_error">Couldn\'t play this file.</string>
+    <!-- Recordings list, the row that is playing: "1:12 of 4:23" (position, then length). -->
+    <string name="home_player_position_of">%1$s of %2$s</string>
+    <!-- Screen-reader name of the seek bar on the playing row. -->
+    <string name="home_player_seek">Playback position</string>
 
     <!-- Home: delete recording -->
     <string name="home_share">Share</string>
