@@ -146,10 +146,13 @@ fun CvCard(
     color: Color = MaterialTheme.colorScheme.surface,
     border: Boolean = true,
     contentPadding: PaddingValues = PaddingValues(18.dp),
+    /** Overrides the outline colour, e.g. to mark the recording that is playing. */
+    borderColor: Color? = null,
     content: @Composable ColumnScope.() -> Unit,
 ) {
     val shape = MaterialTheme.shapes.large
-    val borderStroke = if (border) BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant) else null
+    val borderStroke =
+        if (border) BorderStroke(1.dp, borderColor ?: MaterialTheme.colorScheme.outlineVariant) else null
 
     // Long-press needs `combinedClickable`, which Surface's own onClick cannot express. Only cards
     // that ask for it take this path, so every existing caller keeps the Surface-click behaviour it

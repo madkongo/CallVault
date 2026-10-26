@@ -164,6 +164,14 @@ import com.baba.callvault.ui.common.MergeCallsDialog
 import com.baba.callvault.ui.common.UnMergeDialog
 import com.baba.callvault.ui.common.MergeProgressState
 import com.baba.callvault.ui.common.DeleteCopiesDialog
+import com.baba.callvault.ui.common.ListPlayback
+import com.baba.callvault.ui.common.ListSeekBar
+import androidx.compose.foundation.Canvas
+import androidx.compose.ui.layout.layout
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.geometry.Size
+import androidx.compose.ui.graphics.StrokeCap
+import androidx.compose.ui.graphics.drawscope.Stroke
 import com.baba.callvault.ui.common.DeleteRecordingDialog
 import com.baba.callvault.ui.common.SeekBar
 import com.baba.callvault.ui.common.TranscriptPresentation
@@ -789,6 +797,15 @@ fun HomeScreen(
     // list being what the user happens to be looking at, which stops being true the moment there is
     // more than one section. Exactly one observer exists, and it is in the shell.
 
+    // Audio started on the list stops when the list goes, as it does when a recording's page is
+    // closed — except when the list was left for the playing recording's own page, which takes it on.
+    val recordingsListShowing = section == HomeSection.Recordings && playbackFor == null && readingFor == null
+    LaunchedEffect(recordingsListShowing) {
+        if (ListPlayback.stopsOnLeavingList(recordingsListShowing, playbackFor) &&
+            playback.phase != RecordingPlaybackController.Phase.IDLE
+        ) viewModel.stopPlayback()
+    }
+
     // While a track is playing, tick the player position so the slider tracks playback.
     LaunchedEffect(playback.phase) {
         while (playback.phase == RecordingPlaybackController.Phase.PLAYING) {
@@ -1347,18 +1364,21 @@ fun HomeScreen(
                             selection = if (item.uri in selection) selection - item.uri
                                         else selection + item.uri
                         },
-                        // Playing opens the recording's own screen and starts it there. The inline
-                        // strip could hold a play button and a slider and nothing else; skipping back
-                        // over a missed sentence, and speed, are what a long call actually needs.
-                        onPlayUri = { uri ->
-                            playbackFor = item.displayName
-                            viewModel.play(uri)
-                        },
+                        // Plays in place, on the list: asked for so a run of calls can be listened
+                        // through without opening each one. Skipping and speed stay on the page.
+                        onPlayUri = { uri -> viewModel.play(uri) },
                         // Opens the recording. Deliberately does NOT start it: a tap meant to look
                         // at a call would begin playing it out loud, which on a recording of a
                         // private conversation is the wrong default in a room with other people.
-                        // The play button is right there and says what it does.
-                        onOpenPlayback = { playbackFor = item.displayName },
+                        // If THIS row is already playing, the page carries on from the same spot;
+                        // if another row is, that one stops, since nothing on screen would own it.
+                        onOpenPlayback = {
+                            val active = playback.activeUri
+                            val isActive = active != null &&
+                                active in listOfNotNull(item.uri, item.localUri, item.driveUri)
+                            if (active != null && ListPlayback.stopsOnOpening(isActive)) viewModel.stopPlayback()
+                            playbackFor = item.displayName
+                        },
                         onPause = { viewModel.pausePlayback() },
                         onResume = { viewModel.resumePlayback() },
                         onSeek = { viewModel.seekTo(it) },
@@ -3178,6 +3198,10 @@ private fun RecordingRow(
     val rowUris = remember(item) { listOfNotNull(item.uri, item.localUri, item.driveUri) }
     val activeUri = playback.activeUri
     val isRowActive = activeUri != null && activeUri in rowUris
+    val showsSeekBar = ListPlayback.showsSeekBar(isRowActive, playback.phase)
+    // Where a drag on the seek bar would land, so the ring and the time line move with the finger.
+    var previewMs by remember { mutableStateOf<Int?>(null) }
+    val shownMs = previewMs ?: playback.positionMs
 
     // Prefer the contact name, then the parsed number, then the raw file name.
     val primaryLabel = RecordingLabel.of(item) ?: item.displayName
@@ -3238,7 +3262,8 @@ private fun RecordingRow(
         onClick = onCardClick,
         onLongClick = onToggleSelected,
         color = cardColor,
-        contentPadding = PaddingValues(14.dp)
+        contentPadding = PaddingValues(14.dp),
+        borderColor = if (isRowActive && !selected) MaterialTheme.colorScheme.primary else null
     ) {
         Row(verticalAlignment = Alignment.CenterVertically) {
             // BOTH rows aren't directly playable from the disc; show a non-active disc as an affordance
@@ -3252,14 +3277,24 @@ private fun RecordingRow(
             // the circle's edge. It looked like the badge was cut off; the cause was an ancestor two
             // levels up. Giving the badge an outline made the cut MORE obvious rather than fixing it.
             Box(contentAlignment = Alignment.Center) {
+                // Plays in the row (a second tap pauses). The rest of the card still opens the page.
+                val discAction = ListPlayback.discAction(isRowActive, playback.phase)
                 Box(
                     modifier = Modifier
                         .clip(CircleShape)
-                        .clickable(enabled = !selectionMode) { onOpenPlayback() }
+                        .clickable(enabled = !selectionMode) {
+                            when (discAction) {
+                                ListPlayback.DiscAction.PLAY -> onPlayUri(item.uri)
+                                ListPlayback.DiscAction.PAUSE -> onPause()
+                                ListPlayback.DiscAction.RESUME -> onResume()
+                                ListPlayback.DiscAction.NONE -> Unit
+                            }
+                        }
                 ) {
                     PlayDisc(
-                        isActive = !isBoth && isRowActive,
-                        playback = playback
+                        isActive = isRowActive,
+                        playback = playback,
+                        progress = if (showsSeekBar) ListPlayback.fraction(shownMs, playback.durationMs) else null
                     )
                 }
                 CallOriginBadge(item.direction, item.voipApp)
@@ -3357,12 +3392,50 @@ private fun RecordingRow(
                 SourceBadge(source = item.source)
             }
             Spacer(Modifier.width(META_INDENT - PLAY_DISC_SIZE))
+            // While the row plays, its details line becomes "1:12 of 4:23"; the details come back
+            // when it stops.
+            val (metaText, metaColor) = when {
+                showsSeekBar -> stringResource(
+                    R.string.home_player_position_of,
+                    formatClock(shownMs),
+                    formatClock(playback.durationMs)
+                ) to MaterialTheme.colorScheme.primary
+                isRowActive && playback.phase == RecordingPlaybackController.Phase.LOADING ->
+                    stringResource(R.string.home_player_loading) to MaterialTheme.colorScheme.onSurfaceVariant
+                isRowActive && playback.phase == RecordingPlaybackController.Phase.ERROR ->
+                    stringResource(R.string.home_player_error) to MaterialTheme.colorScheme.error
+                else -> buildSubtitle(item, mergedPartCount) to MaterialTheme.colorScheme.onSurfaceVariant
+            }
             Text(
-                text = buildSubtitle(item, mergedPartCount),
+                text = metaText,
                 style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                color = metaColor,
                 maxLines = 1,
                 overflow = TextOverflow.Ellipsis
+            )
+        }
+
+        if (showsSeekBar) {
+            val positionText = stringResource(
+                R.string.home_player_position_of,
+                formatClock(playback.positionMs),
+                formatClock(playback.durationMs)
+            )
+            ListSeekBar(
+                positionMs = playback.positionMs,
+                durationMs = playback.durationMs,
+                label = stringResource(R.string.home_player_seek),
+                stateText = positionText,
+                onSeek = onSeek,
+                onPreview = { previewMs = it },
+                formatTime = ::formatClock,
+                // The touch strip is taller than the space it takes: it overhangs into the gap
+                // above and the card's bottom padding, so the card grows by the bar, not the strip.
+                modifier = Modifier.layout { measurable, constraints ->
+                    val strip = measurable.measure(constraints)
+                    val taken = SEEK_BAR_SPACE.roundToPx()
+                    layout(strip.width, taken) { strip.place(0, (taken - strip.height) / 2) }
+                }
             )
         }
 
@@ -3539,7 +3612,9 @@ private fun CopySubEntry(
 @Composable
 private fun PlayDisc(
     isActive: Boolean,
-    playback: RecordingPlaybackController.PlaybackState
+    playback: RecordingPlaybackController.PlaybackState,
+    /** How far through the playing recording is, drawn as a ring round the disc; null for none. */
+    progress: Float? = null
 ) {
     val primary = MaterialTheme.colorScheme.primary
     val isLoading = isActive && playback.phase == RecordingPlaybackController.Phase.LOADING
@@ -3561,9 +3636,30 @@ private fun PlayDisc(
                 )
                 else -> Icon(
                     imageVector = if (isPlaying) Icons.Filled.Pause else Icons.Filled.PlayArrow,
-                    contentDescription = stringResource(R.string.home_play_recording),
+                    contentDescription = stringResource(
+                        when {
+                            isPlaying -> R.string.home_player_pause
+                            isActive && playback.phase == RecordingPlaybackController.Phase.PAUSED ->
+                                R.string.home_player_play
+                            else -> R.string.home_play_recording
+                        }
+                    ),
                     tint = primary,
                     modifier = Modifier.size(24.dp)
+                )
+            }
+        }
+        if (progress != null) {
+            val ringTrack = primary.copy(alpha = 0.25f)
+            Canvas(Modifier.size(PLAY_DISC_SIZE)) {
+                val stroke = PROGRESS_RING_WIDTH.toPx()
+                val inset = stroke / 2
+                val arcSize = Size(size.width - stroke, size.height - stroke)
+                val topLeft = Offset(inset, inset)
+                drawArc(ringTrack, 0f, 360f, false, topLeft, arcSize, style = Stroke(stroke))
+                drawArc(
+                    primary, -90f, 360f * progress, false, topLeft, arcSize,
+                    style = Stroke(stroke, cap = StrokeCap.Round)
                 )
             }
         }
@@ -3677,6 +3773,12 @@ private val PLAY_DISC_SIZE = 46.dp
 /** Badge glyphs, sized so two of them plus padding fit within [PLAY_DISC_SIZE]. */
 private val BADGE_GLYPH_SIZE = 13.dp
 
+/** The height the playing row's seek bar adds to its card; its touch strip overhangs this. */
+private val SEEK_BAR_SPACE = 18.dp
+
+/** The progress ring drawn round the play disc of the recording playing in the list. */
+private val PROGRESS_RING_WIDTH = 3.dp
+
 private val META_INDENT = 62.dp
 
 /**
@@ -3761,6 +3863,9 @@ private fun formatDuration(seconds: Long): String {
 
 /** Formats a byte count as a compact human-readable size (e.g. "1.2 MB"). */
 private fun formatSize(bytes: Long): String = formatByteSize(bytes)
+
+/** "1:12" for a position, "1:05:30" past the hour — a long call must not read as "65:30". */
+private fun formatClock(millis: Int): String = formatDuration((millis / 1000L).coerceAtLeast(0L))
 
 /** Formats a millisecond duration as m:ss. */
 private fun formatMillis(millis: Int): String {
