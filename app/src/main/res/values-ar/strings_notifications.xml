@@ -36,19 +36,19 @@
     <string name="notif_usb_lock_warning">قد يؤدي قفل الشاشة أثناء المكالمة إلى إيقاف التسجيل. اضبط خيار «USB عند إلغاء قفل الشاشة» على «الشحن فقط» من إعدادات CallVault.</string>
     <string name="transcript_notice_channel">التفريغات الصوتية</string>
     <string name="transcript_notice_failed_many_text">انقر للاطلاع عليها.</string>
-    <string name="transcript_notice_failed_many_title">عمليات تفريغ لم تكتمل: %1</string>
-    <string name="transcript_notice_failed_text">%1. انقر للمحاولة مجددًا.</string>
+    <string name="transcript_notice_failed_many_title">عمليات تفريغ لم تكتمل: %1$d</string>
+    <string name="transcript_notice_failed_text">%1$s. انقر للمحاولة مجددًا.</string>
     <string name="transcript_notice_failed_title">لم يكتمل التفريغ الصوتي</string>
-    <string name="transcript_notice_ready_deleted_text">%1؛ تم حذف التسجيل الصوتي بناءً على طلبك.</string>
+    <string name="transcript_notice_ready_deleted_text">%1$s؛ تم حذف التسجيل الصوتي بناءً على طلبك.</string>
     <string name="transcript_notice_ready_many_text">انقر لقراءتها.</string>
-    <string name="transcript_notice_ready_many_title">التفريغات الصوتية الجاهزة: %1</string>
+    <string name="transcript_notice_ready_many_title">التفريغات الصوتية الجاهزة: %1$d</string>
     <string name="transcript_notice_ready_title">التفريغ الصوتي جاهز</string>
     <string name="update_notif_available_text">افتح التطبيق وانقر على «تحديث» لتثبيته.</string>
-    <string name="update_notif_available_title">يتوفر إصدار جديد من CallVault (%1)</string>
+    <string name="update_notif_available_title">يتوفر إصدار جديد من CallVault (%1$s)</string>
     <string name="update_notif_channel">تحديثات التطبيق</string>
     <string name="update_notif_downloading_title">جارٍ تنزيل التحديث…</string>
     <string name="update_notif_failure_download_text">تعذر تنزيل التحديث. انقر لتنزيله يدويًا من GitHub.</string>
     <string name="update_notif_failure_install_text">تعذر تثبيت التحديث. انقر لتنزيله يدويًا من GitHub.</string>
     <string name="update_notif_failure_title">فشل التحديث</string>
     <string name="update_notif_failure_verify_text">فشل التحديث الذي تم تنزيله في فحص الأمان وتم حذفه. انقر للحصول عليه من GitHub.</string>
-    <string name="update_notif_installing_title">جارٍ تثبيت التحديث…</string><string name="update_notif_success_title">تم تثبيت التحديث بنجاح</string><string name="update_notif_success_text">أصبح CallVault الآن بالإصدار %1.</string></resources>
+    <string name="update_notif_installing_title">جارٍ تثبيت التحديث…</string><string name="update_notif_success_title">تم تثبيت التحديث بنجاح</string><string name="update_notif_success_text">أصبح CallVault الآن بالإصدار %1$s.</string></resources>

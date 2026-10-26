@@ -154,20 +154,20 @@
     <string name="unmerge_message">سيتم تفكيك هذا التسجيل إلى المكالمات الأصلية، محتفظةً بكل تفريغ صوتي وعلامة تمييز كانت عليها:</string>
     <string name="unmerge_title">إلغاء دمج هذه المكالمة؟</string>
     <plurals name="merge_row_badge">
-        <item quantity="zero">لا مكالمات (%1)</item>
-        <item quantity="one">مكالمة واحدة (%1)</item>
-        <item quantity="two">مكالمتان (%1)</item>
-        <item quantity="few">%1 مكالمات</item>
-        <item quantity="many">%1 مكالمة</item>
-        <item quantity="other">%1 مكالمة</item>
+        <item quantity="zero">لا مكالمات (%1$d)</item>
+        <item quantity="one">مكالمة واحدة (%1$d)</item>
+        <item quantity="two">مكالمتان (%1$d)</item>
+        <item quantity="few">%1$d مكالمات</item>
+        <item quantity="many">%1$d مكالمة</item>
+        <item quantity="other">%1$d مكالمة</item>
     </plurals>
     <plurals name="merge_summary">
-        <item quantity="zero">لا مكالمات (%1) · %2</item>
-        <item quantity="one">مكالمة واحدة (%1) · %2</item>
-        <item quantity="two">مكالمتان (%1) · %2</item>
-        <item quantity="few">%1 مكالمات · %2</item>
-        <item quantity="many">%1 مكالمة · %2</item>
-        <item quantity="other">%1 مكالمة · %2</item>
+        <item quantity="zero">لا مكالمات (%1$d) · %2$s</item>
+        <item quantity="one">مكالمة واحدة (%1$d) · %2$s</item>
+        <item quantity="two">مكالمتان (%1$d) · %2$s</item>
+        <item quantity="few">%1$d مكالمات · %2$s</item>
+        <item quantity="many">%1$d مكالمة · %2$s</item>
+        <item quantity="other">%1$d مكالمة · %2$s</item>
     </plurals>
     <string name="merge_note_will_delete">يتم إزالة المكالمات الأخرى. إلغاء الدمج لاحقًا يعيدها.</string>
     <string name="merge_note_will_keep">يتم الاحتفاظ بالمكالمات الأخرى على الهاتف أيضًا.</string>
@@ -295,7 +295,7 @@
     <string name="home_hub_summaries_body">ملخصات AI، مكتوبة على هاتفك.</string>
     <string name="home_transcripts_title">التفريغات الصوتية</string>
     <string name="home_summaries_title">الملخصات</string>
-    <string name="home_transcripts_count">%1 مكالمة مفرّغة</string>
+    <string name="home_transcripts_count">%1$d مكالمة مفرّغة</string>
     <string name="home_summaries_count">%1$d ملخص</string>
     <string name="home_transcripts_empty_title">لا توجد تفريغات صوتية بعد</string>
     <string name="home_transcripts_empty_hint">اطلب تفريغ المكالمة صوتيًا من قائمة خيارات التسجيل، أو استورد ملفًا صوتيًا من الأعلى. سيظهر التفريغ هنا فور انتهائه.</string>
@@ -343,6 +343,6 @@
     <string name="share_import_kept_title">تم الحفظ بدون تفريغ صوتي</string>
     <string name="share_import_kept_body">تم حفظ الملف في تسجيلاتك، ويمكنك بدء تفريغه صوتيًا في أي وقت.</string>
     <string name="share_import_kept_only_body">الملف بانتظارك في تبويب التفريغات الصوتية. يمكنك بدء تفريغه متى شئت، أو حذفه من نفس المكان.</string>
-    <string name="share_import_too_long">تبلغ مدة هذا الصوت %1 دقيقة، والحد الأقصى للتفريغ في CallVault هو %2 دقيقة في المرة الواحدة. تم حفظ الملف للاستماع إليه.</string>
+    <string name="share_import_too_long">تبلغ مدة هذا الصوت %1$d دقيقة، والحد الأقصى للتفريغ في CallVault هو %2$d دقيقة في المرة الواحدة. تم حفظ الملف للاستماع إليه.</string>
     <string name="share_import_no_model">لم يتم تثبيت نموذج تفريغ صوتي بعد، لذا لا يمكن لـ CallVault قراءة هذا الملف. تم حفظ الصوت؛ ثبّت نموذجًا من الإعدادات، ثم ابدأ التفريغ من تبويب التفريغات.</string>
 </resources>
