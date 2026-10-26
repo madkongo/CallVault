@@ -157,3 +157,19 @@ Results:
 
 Next step proposed: a test build for rik297981 that only LOGS these signals at hang-up (no behaviour
 change), so their debug log shows whether the player goes idle while the mode stays.
+
+## Log-only test build for the reporter — 2026-10-26 (🧪 VERIFYING)
+
+`2.4.7-endprobe2` = the v2.4.7 tag + `VoipEndProbe` (branch `diag/voip-end-probe-53`, 1fa45102). Logs
+`endprobe[...]` lines (mode, vcPlay = active voice-call players, every player's usage:contentType, vcRec)
+on change and every 5 s while an app call is up, and for 60 s after. Decides nothing.
+
+Checked on the OP12 with endprobe1 (same probe, counted "speech" instead): WhatsApp's call audio is
+`[2:0]` — usage VOICE_COMMUNICATION, content type UNKNOWN. So **the usage is visible to the app on this
+ROM** (VoipCallDetector's header says it is anonymised; that was true where it was written, not here).
+Hang-up: player gone 16:44:44.303, mode NORMAL 16:44:44.330, "VoIP call ended" 16:44:46.887 (debounce).
+
+What the reporter's log will settle: after the far side hangs up on the Honor, does `vcPlay` drop to 0
+while `mode=IN_COMMUNICATION` holds? If yes, "the call app's voice-call playback stopped" is a mute-proof
+end signal for that phone. If the player stays too, WhatsApp holds the whole call open and only the
+notification route is left.
