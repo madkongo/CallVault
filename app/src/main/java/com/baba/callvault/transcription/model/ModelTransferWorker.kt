@@ -150,8 +150,19 @@ class ModelTransferWorker(
         }
         // A stale temp left by a killed process would otherwise count against the free space.
         temp.delete()
-        if (!ModelDownloadPolicy.hasRoomFor(dir.usableSpace, model.sizeBytes)) {
-            return fail(OP_IMPORT, model, ERROR_NO_SPACE, startedAt)
+        val partial = ModelRepository.partFileFor(dir, model)
+        val partialBytes = partial.length()
+        val freeBytes = dir.usableSpace
+        val room = ModelDownloadPolicy.importRoom(freeBytes, partialBytes, model.sizeBytes)
+        AppLogger.i(TAG, "Import room for ${model.id}: free=${ModelDownloadPolicy.mb(freeBytes)} paused=${ModelDownloadPolicy.mb(partialBytes)} -> $room")
+        when (room) {
+            ModelDownloadPolicy.ImportRoom.FITS -> Unit
+            ModelDownloadPolicy.ImportRoom.NO_ROOM -> return fail(OP_IMPORT, model, ERROR_NO_SPACE, startedAt)
+            // GitHub #60: the paused download is the only thing in the way of the file the user chose.
+            ModelDownloadPolicy.ImportRoom.FITS_IF_PARTIAL_DISCARDED -> {
+                if (!partial.delete()) return fail(OP_IMPORT, model, ERROR_NO_SPACE, startedAt)
+                log(OP_IMPORT, model, "discarded the paused download to make room", partialBytes, startedAt)
+            }
         }
 
         val copied = openInput(uri).use { input ->

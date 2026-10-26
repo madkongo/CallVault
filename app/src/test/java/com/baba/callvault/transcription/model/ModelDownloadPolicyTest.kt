@@ -111,6 +111,46 @@ class ModelDownloadPolicyTest {
         assertTrue(ModelDownloadPolicy.hasRoomFor(freeBytes = 1_000_000_000L, remainingBytes = 100_000_000L))
     }
 
+    // ---- importing over a paused download (GitHub #60) -------------------------------------------
+    //
+    // The import copies the picked file in beside the paused `.part`, which used to count against the
+    // free space. On a full phone the import was refused, the paused download had no discard, and
+    // clearing the app's data was the only way out.
+
+    @Test
+    fun `an import that fits beside the paused download keeps it`() {
+        assertEquals(
+            ModelDownloadPolicy.ImportRoom.FITS,
+            ModelDownloadPolicy.importRoom(freeBytes = 5_000_000_000L, partialBytes = 400_000_000L, modelBytes = 874_000_000L)
+        )
+    }
+
+    @Test
+    fun `an import that fits only without the paused download discards it`() {
+        // 900 MB free, a 400 MB .part: the 874 MB model plus headroom fits once the .part goes.
+        assertEquals(
+            ModelDownloadPolicy.ImportRoom.FITS_IF_PARTIAL_DISCARDED,
+            ModelDownloadPolicy.importRoom(freeBytes = 900_000_000L, partialBytes = 400_000_000L, modelBytes = 874_000_000L)
+        )
+    }
+
+    @Test
+    fun `an import that would not fit even without the paused download keeps it`() {
+        // Deleting the .part would lose the user's progress and still not make room.
+        assertEquals(
+            ModelDownloadPolicy.ImportRoom.NO_ROOM,
+            ModelDownloadPolicy.importRoom(freeBytes = 300_000_000L, partialBytes = 400_000_000L, modelBytes = 874_000_000L)
+        )
+    }
+
+    @Test
+    fun `with no paused download a short phone is simply out of room`() {
+        assertEquals(
+            ModelDownloadPolicy.ImportRoom.NO_ROOM,
+            ModelDownloadPolicy.importRoom(freeBytes = 900_000_000L, partialBytes = 0L, modelBytes = 874_000_000L)
+        )
+    }
+
     // ---- resuming, and a damaged download (report 2026-09-28: "the download was damaged") ----------
     //
     // The published files were checked byte for byte and are fine, so a digest failure is made on the

@@ -60,6 +60,22 @@ object ModelDownloadPolicy {
     fun hasRoomFor(freeBytes: Long, remainingBytes: Long): Boolean =
         freeBytes >= remainingBytes + HEADROOM_BYTES
 
+    /** Whether an import fits, and at what cost to a paused download of the same model. */
+    enum class ImportRoom { FITS, FITS_IF_PARTIAL_DISCARDED, NO_ROOM }
+
+    /**
+     * Room for importing a [modelBytes] file while a paused download holds [partialBytes] of it (GitHub #60).
+     *
+     * The paused `.part` is only given up when it is the one thing in the way: the user chose a file
+     * they already have over the download, and a successful import deletes the `.part` anyway. When
+     * the import would not fit even without it, it is kept, so a refusal costs no progress.
+     */
+    fun importRoom(freeBytes: Long, partialBytes: Long, modelBytes: Long): ImportRoom = when {
+        hasRoomFor(freeBytes, modelBytes) -> ImportRoom.FITS
+        partialBytes > 0L && hasRoomFor(freeBytes + partialBytes, modelBytes) -> ImportRoom.FITS_IF_PARTIAL_DISCARDED
+        else -> ImportRoom.NO_ROOM
+    }
+
     /** What to do with a server's reply to a download request. */
     enum class Reply {
         /** A partial reply that continues exactly where the file on disk ends. */
