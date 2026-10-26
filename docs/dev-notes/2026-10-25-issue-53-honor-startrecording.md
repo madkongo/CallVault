@@ -129,3 +129,31 @@ Questions 1 (does a call notification or bar stay) and 3 (the missing 12:21 call
 It should be reproducible on any phone with WhatsApp: the other party hangs up, you stay on the chat screen,
 and you watch the mode. That is the measurement planned above (mode, Telecom calls, WhatsApp call
 notification, WhatsApp audio tracks, once a second), now with a known trigger.
+
+## OP12 end-of-call probe — 2026-10-26 (📐 measured once, one phone)
+
+Maintainer's WhatsApp call on the OP12 (6011b07e, 2.4.7), read-only probe sampling every ~1.5 s
+(`voip-end-probe.sh`). Muted ~5 s mid-call; far side hung up; stayed on the chat ~30 s, then home.
+
+| Signal | During call | At far-side hang-up (16:29:01) | Mute |
+|---|---|---|---|
+| Audio mode | MODE_IN_COMMUNICATION (owner WhatsApp uid 10394) | → MODE_NORMAL immediately | no change |
+| WhatsApp VOICE_COMMUNICATION player | `started` | → `idle` same sample; gone ~16 s later | no change |
+| VOICE_COMMUNICATION record count | 1 | → 0 same sample | no change |
+| Telecom call list | 0 calls; WhatsApp not in Telecom | — | — |
+| WhatsApp notifications (probe grep) | nothing matched | — | — |
+
+Results:
+- **No overrun on the OP12.** Call 16:28:34–16:29:01; recording 28.4 s, i.e. hang-up + the 1.5 s
+  `END_DEBOUNCE_MS`. The "recording saved" notice the maintainer saw ~10 s later is post-save work,
+  not recording time. So the overrun is Honor-specific: WhatsApp there keeps the mode after hang-up.
+- **Mode is mute-safe here**: muting changed none of the signals.
+- **Telecom `onCallRemoved` is dead as a candidate** for WhatsApp: it never appears in Telecom on this phone.
+- **Notification candidate: inconclusive** — the probe's grep matched nothing during the call (likely the
+  grep, not proof the notification is absent). Needs a better probe before ruling it in or out.
+- **New candidate: WhatsApp's own VOICE_COMMUNICATION playback going `started` → `idle`** at hang-up. It is
+  playback, so mute cannot touch it. Only useful if on the Honor this player goes idle while the mode stays
+  held — unknown until the reporter's phone is measured.
+
+Next step proposed: a test build for rik297981 that only LOGS these signals at hang-up (no behaviour
+change), so their debug log shows whether the player goes idle while the mode stays.
