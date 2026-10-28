@@ -84,6 +84,29 @@ internal class PcmShortSink(initialCapacity: Int) {
             return samples.toLong().coerceIn(DEFAULT_CAPACITY.toLong(), MAX_CAPACITY.toLong()).toInt()
         }
 
+        /**
+         * How much audio a decode of [fromUs]..[toUs] is expected to produce, for [capacityFor].
+         *
+         * A range, not the whole file. Sizing a five-minute window from the call's declared length
+         * reserved the WHOLE call for every window — 264 MB per window of a 45-minute call — so the
+         * windowed waveform and transcription paths could run a 256 MB heap out on exactly the long
+         * calls they exist for (issue #63). [SEEK_RUN_UP_US] covers a seek that lands early, on the
+         * sync point before [fromUs]. 0 when nothing is known, which [capacityFor] treats as "small".
+         */
+        fun spanUs(declaredUs: Long, fromUs: Long = 0L, toUs: Long = Long.MAX_VALUE): Long {
+            val start = fromUs.coerceAtLeast(0L)
+            val end = when {
+                toUs == Long.MAX_VALUE -> declaredUs
+                declaredUs > 0L -> minOf(toUs, declaredUs)
+                else -> toUs
+            }
+            if (end <= start) return 0L
+            return end - start + if (start > 0L) SEEK_RUN_UP_US else 0L
+        }
+
+        /** Room for a seek that lands on the sync point before the one asked for. */
+        private const val SEEK_RUN_UP_US = 2_000_000L
+
         private const val HEADROOM = 1.02
 
         /** 64 Ki samples — a couple of seconds of mono, and nothing on a heap this size. */

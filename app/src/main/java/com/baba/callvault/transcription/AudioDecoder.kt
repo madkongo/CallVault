@@ -492,12 +492,14 @@ object AudioDecoder {
         var sampleRate = inputFormat.getInteger(MediaFormat.KEY_SAMPLE_RATE)
         var channels = inputFormat.getInteger(MediaFormat.KEY_CHANNEL_COUNT)
 
-        // Sized from the declared duration so a whole call normally fits without ever growing. A
-        // container that lies only costs a reallocation; the capacity is capped so it cannot cost an
-        // OutOfMemoryError.
+        // Sized from the part being decoded, so it normally fits without ever growing. A container
+        // that lies only costs a reallocation; the capacity is capped so it cannot cost an
+        // OutOfMemoryError. The range, never the whole file: see PcmShortSink.spanUs (issue #63).
         val declaredUs =
             if (inputFormat.containsKey(MediaFormat.KEY_DURATION)) inputFormat.getLong(MediaFormat.KEY_DURATION) else 0L
-        val sink = PcmShortSink(PcmShortSink.capacityFor(declaredUs, sampleRate, channels))
+        val sink = PcmShortSink(
+            PcmShortSink.capacityFor(PcmShortSink.spanUs(declaredUs, fromUs, toUs), sampleRate, channels)
+        )
 
         try {
             codec.configure(inputFormat, null, null, 0)
