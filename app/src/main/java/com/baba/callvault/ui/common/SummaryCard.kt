@@ -151,7 +151,11 @@ fun SummarySheetStrip(
                 Row(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .clickable { expanded = !expanded }
+                        .expandableHeader(
+                            expanded = expanded,
+                            stateText = stringResource(expandStateRes(expanded)),
+                            onToggle = { expanded = !expanded },
+                        )
                         .padding(vertical = 8.dp),
                     verticalAlignment = Alignment.CenterVertically
                 ) {

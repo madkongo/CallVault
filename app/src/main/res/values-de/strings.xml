@@ -74,6 +74,8 @@
     <string name="general_back">Zurück</string>
     <string name="general_cancel">Abbrechen</string>
     <string name="general_close">Schließen</string>
+    <string name="general_expanded">Ausgeklappt</string>
+    <string name="general_collapsed">Eingeklappt</string>
     <string name="general_continue">Fortfahren</string>
     <string name="general_copied_to_clipboard">In die Zwischenablage kopiert</string>
     <string name="general_flag">Markieren</string>

@@ -228,6 +228,8 @@
     <string name="general_back">Πίσω</string>
     <string name="general_cancel">Ακύρωση</string>
     <string name="general_close">Κλείσιμο</string>
+    <string name="general_expanded">Αναπτυγμένο</string>
+    <string name="general_collapsed">Συμπτυγμένο</string>
     <string name="general_continue">Συνέχεια</string>
     <string name="general_copied_to_clipboard">Αντιγράφηκε στο πρόχειρο</string>
     <string name="general_flag">Σήμανση</string>

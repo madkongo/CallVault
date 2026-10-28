@@ -15,6 +15,7 @@ import androidx.compose.animation.shrinkVertically
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.selection.toggleable
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
@@ -27,6 +28,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.runtime.getValue
@@ -34,6 +36,8 @@ import androidx.compose.runtime.setValue
 import com.baba.callvault.ui.common.CvCard
 import com.baba.callvault.ui.common.CvSectionHeader
 import com.baba.callvault.ui.common.M3DropdownField
+import com.baba.callvault.ui.common.expandStateRes
+import com.baba.callvault.ui.common.expandableHeader
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.material.icons.filled.ArrowDropDown
@@ -191,7 +195,7 @@ internal fun SettingsSection(
             modifier = Modifier
                 .fillMaxWidth()
                 .clip(RoundedCornerShape(12.dp))
-                .clickable { onToggle() },
+                .expandableHeader(expanded, stringResource(expandStateRes(expanded)), onToggle),
             verticalAlignment = Alignment.CenterVertically
         ) {
             CvSectionHeader(text = title, modifier = Modifier.weight(1f))
@@ -249,7 +253,7 @@ internal fun SettingsSubSection(
             modifier = Modifier
                 .fillMaxWidth()
                 .clip(RoundedCornerShape(10.dp))
-                .clickable { onToggle() },
+                .expandableHeader(expanded, stringResource(expandStateRes(expanded)), onToggle),
             verticalAlignment = Alignment.CenterVertically
         ) {
             SettingsSubHeader(title, modifier = Modifier.weight(1f))
@@ -449,7 +453,14 @@ internal fun SettingsToggleRow(
     Column(
         modifier = Modifier
             .fillMaxWidth()
-            .clickable(enabled = enabled) { onCheckedChange(!checked) }
+            // The row is the switch: one TalkBack stop that reads the label, the state and the role.
+            // The ⓘ button inside stays its own stop.
+            .toggleable(
+                value = checked,
+                enabled = enabled,
+                role = Role.Switch,
+                onValueChange = onCheckedChange,
+            )
             .padding(horizontal = 16.dp, vertical = 10.dp)
     ) {
         Row(verticalAlignment = Alignment.CenterVertically) {
@@ -472,7 +483,13 @@ internal fun SettingsToggleRow(
             if (infoText != null) {
                 SettingsInfoButton(label = label, explanation = infoText)
             }
-            Switch(checked = checked, onCheckedChange = onCheckedChange, enabled = enabled)
+            // Display only (the row toggles). The minimum size keeps the 48dp slot a clickable Switch has.
+            Switch(
+                checked = checked,
+                onCheckedChange = null,
+                enabled = enabled,
+                modifier = Modifier.minimumInteractiveComponentSize(),
+            )
         }
         if (descriptionBelow && description != null && !descriptionAsInfo) {
             // Full width, under the switch rather than in the narrow column beside it.
