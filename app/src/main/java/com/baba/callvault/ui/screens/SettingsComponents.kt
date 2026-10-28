@@ -36,6 +36,8 @@ import androidx.compose.runtime.setValue
 import com.baba.callvault.ui.common.CvCard
 import com.baba.callvault.ui.common.CvSectionHeader
 import com.baba.callvault.ui.common.M3DropdownField
+import com.baba.callvault.ui.common.expandStateRes
+import com.baba.callvault.ui.common.expandableHeader
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.material.icons.filled.ArrowDropDown
@@ -193,7 +195,7 @@ internal fun SettingsSection(
             modifier = Modifier
                 .fillMaxWidth()
                 .clip(RoundedCornerShape(12.dp))
-                .clickable { onToggle() },
+                .expandableHeader(expanded, stringResource(expandStateRes(expanded)), onToggle),
             verticalAlignment = Alignment.CenterVertically
         ) {
             CvSectionHeader(text = title, modifier = Modifier.weight(1f))
@@ -251,7 +253,7 @@ internal fun SettingsSubSection(
             modifier = Modifier
                 .fillMaxWidth()
                 .clip(RoundedCornerShape(10.dp))
-                .clickable { onToggle() },
+                .expandableHeader(expanded, stringResource(expandStateRes(expanded)), onToggle),
             verticalAlignment = Alignment.CenterVertically
         ) {
             SettingsSubHeader(title, modifier = Modifier.weight(1f))

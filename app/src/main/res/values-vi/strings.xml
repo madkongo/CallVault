@@ -73,6 +73,8 @@
     <string name="general_back">Quay lại</string>
     <string name="general_cancel">Huỷ bỏ</string>
     <string name="general_close">Đóng</string>
+    <string name="general_expanded">Đã mở rộng</string>
+    <string name="general_collapsed">Đã thu gọn</string>
     <string name="general_continue">Tiếp tục</string>
     <string name="general_copied_to_clipboard">Đã sao chép vào bảng nhớ tạm</string>
     <string name="general_flag">Đánh dấu</string>

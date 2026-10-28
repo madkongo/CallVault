@@ -111,6 +111,8 @@
     <string name="general_back">رجوع</string>
     <string name="general_cancel">إلغاء</string>
     <string name="general_close">إغلاق</string>
+    <string name="general_expanded">موسَّع</string>
+    <string name="general_collapsed">مطوي</string>
     <string name="general_continue">متابعة</string>
     <string name="general_copied_to_clipboard">تم النسخ إلى الحافظة</string>
     <string name="general_flag">وضع علامة</string>

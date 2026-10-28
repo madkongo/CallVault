@@ -76,6 +76,8 @@
     <string name="general_back">Wstecz</string>
     <string name="general_cancel">Anuluj</string>
     <string name="general_close">Zamknij</string>
+    <string name="general_expanded">Rozwinięte</string>
+    <string name="general_collapsed">Zwinięte</string>
     <string name="general_continue">Kontynuuj</string>
     <string name="general_copied_to_clipboard">Skopiowano do schowka</string>
     <string name="general_flag">Oznacz</string>

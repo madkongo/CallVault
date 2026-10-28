@@ -84,6 +84,8 @@
     <string name="general_back">Назад</string>
     <string name="general_cancel">Скасувати</string>
     <string name="general_close">Закрити</string>
+    <string name="general_expanded">Розгорнуто</string>
+    <string name="general_collapsed">Згорнуто</string>
     <string name="general_continue">Продовжити</string>
     <string name="general_copied_to_clipboard">Скопійовано до буфера обміну</string>
     <string name="general_flag">Позначити</string>
