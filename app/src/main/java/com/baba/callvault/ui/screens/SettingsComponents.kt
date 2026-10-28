@@ -15,6 +15,7 @@ import androidx.compose.animation.shrinkVertically
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.selection.toggleable
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
@@ -27,6 +28,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.runtime.getValue
@@ -449,7 +451,14 @@ internal fun SettingsToggleRow(
     Column(
         modifier = Modifier
             .fillMaxWidth()
-            .clickable(enabled = enabled) { onCheckedChange(!checked) }
+            // The row is the switch: one TalkBack stop that reads the label, the state and the role.
+            // The ⓘ button inside stays its own stop.
+            .toggleable(
+                value = checked,
+                enabled = enabled,
+                role = Role.Switch,
+                onValueChange = onCheckedChange,
+            )
             .padding(horizontal = 16.dp, vertical = 10.dp)
     ) {
         Row(verticalAlignment = Alignment.CenterVertically) {
@@ -472,7 +481,13 @@ internal fun SettingsToggleRow(
             if (infoText != null) {
                 SettingsInfoButton(label = label, explanation = infoText)
             }
-            Switch(checked = checked, onCheckedChange = onCheckedChange, enabled = enabled)
+            // Display only (the row toggles). The minimum size keeps the 48dp slot a clickable Switch has.
+            Switch(
+                checked = checked,
+                onCheckedChange = null,
+                enabled = enabled,
+                modifier = Modifier.minimumInteractiveComponentSize(),
+            )
         }
         if (descriptionBelow && description != null && !descriptionAsInfo) {
             // Full width, under the switch rather than in the narrow column beside it.

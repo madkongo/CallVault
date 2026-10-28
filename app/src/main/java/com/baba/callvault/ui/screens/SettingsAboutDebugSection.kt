@@ -12,6 +12,7 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.selection.toggleable
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.BugReport
@@ -25,6 +26,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.unit.dp
 import com.baba.callvault.ui.common.verticalScrollbar
 import com.baba.callvault.ui.common.horizontalScrollbar
@@ -268,12 +270,26 @@ private fun DebugLogViewer(onDismiss: () -> Unit) {
                         style = MaterialTheme.typography.titleLarge,
                         modifier = Modifier.weight(1f),
                     )
-                    Text(
-                        text = stringResource(R.string.settings_debug_log_wrap),
-                        style = MaterialTheme.typography.labelLarge,
-                    )
-                    Spacer(modifier = Modifier.width(8.dp))
-                    Switch(checked = wrap, onCheckedChange = { wrap = it })
+                    // Label and switch toggle together, so TalkBack reads "Wrap, Switch, On" as one stop.
+                    Row(
+                        modifier = Modifier.toggleable(
+                            value = wrap,
+                            role = Role.Switch,
+                            onValueChange = { wrap = it },
+                        ),
+                        verticalAlignment = Alignment.CenterVertically,
+                    ) {
+                        Text(
+                            text = stringResource(R.string.settings_debug_log_wrap),
+                            style = MaterialTheme.typography.labelLarge,
+                        )
+                        Spacer(modifier = Modifier.width(8.dp))
+                        Switch(
+                            checked = wrap,
+                            onCheckedChange = null,
+                            modifier = Modifier.minimumInteractiveComponentSize(),
+                        )
+                    }
                 }
                 HorizontalDivider()
                 Box(modifier = Modifier.weight(1f).fillMaxWidth()) {

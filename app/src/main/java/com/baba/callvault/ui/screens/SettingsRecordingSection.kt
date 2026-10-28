@@ -12,7 +12,8 @@ import android.os.Build
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.expandVertically
 import androidx.compose.animation.shrinkVertically
-import androidx.compose.foundation.clickable
+import androidx.compose.foundation.selection.selectable
+import androidx.compose.foundation.selection.selectableGroup
 import androidx.compose.foundation.layout.*
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.CallMade
@@ -28,6 +29,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.runtime.LaunchedEffect
@@ -299,26 +301,39 @@ internal fun IgnoreContactsOptions(
         Spacer(modifier = Modifier.height(8.dp))
 
         val enumEntries = AppPreferences.IgnoreContactsMode.entries
-        enumEntries.forEach { ignoreContactMode ->
-            Row(
-                verticalAlignment = Alignment.CenterVertically,
-                modifier = Modifier
-                    .fillMaxWidth()
-                    // This make the box/text next to the radio button clickable, not just the button itself, which is more user-friendly.
-                    .clickable { onSelected(ignoreContactMode) }
-                    .padding(vertical = 4.dp)
-            ) {
-                // Make the actual radio button (circle) clickable (it's quite small)
-                RadioButton(selected = selectedEnum == ignoreContactMode, onClick = { onSelected(ignoreContactMode) })
-                Text(
-                    text = when (ignoreContactMode) {
-                        AppPreferences.IgnoreContactsMode.NONE -> stringResource(R.string.settings_ignore_contacts_none)
-                        AppPreferences.IgnoreContactsMode.ALL -> stringResource(R.string.settings_ignore_contacts_all)
-                        AppPreferences.IgnoreContactsMode.SELECTED   -> stringResource(R.string.settings_ignore_contacts_selected)
-                        AppPreferences.IgnoreContactsMode.ONLY_SELECTED -> stringResource(R.string.settings_record_only_selected_contacts)
-                    },
-                    style = MaterialTheme.typography.bodyMedium
-                )
+        // selectableGroup + selectable rows: TalkBack reads each choice as "Radio button, selected/not
+        // selected, n of 4", and the whole row (circle and text) is one target and one stop.
+        Column(modifier = Modifier.selectableGroup()) {
+            enumEntries.forEach { ignoreContactMode ->
+                val isSelected = selectedEnum == ignoreContactMode
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .selectable(
+                            selected = isSelected,
+                            role = Role.RadioButton,
+                            onClick = { onSelected(ignoreContactMode) },
+                        )
+                        .padding(vertical = 4.dp)
+                ) {
+                    // Display only; the row above owns the tap and the semantics. The minimum size keeps
+                    // the 48dp slot the clickable button had, so the rows keep their height.
+                    RadioButton(
+                        selected = isSelected,
+                        onClick = null,
+                        modifier = Modifier.minimumInteractiveComponentSize(),
+                    )
+                    Text(
+                        text = when (ignoreContactMode) {
+                            AppPreferences.IgnoreContactsMode.NONE -> stringResource(R.string.settings_ignore_contacts_none)
+                            AppPreferences.IgnoreContactsMode.ALL -> stringResource(R.string.settings_ignore_contacts_all)
+                            AppPreferences.IgnoreContactsMode.SELECTED   -> stringResource(R.string.settings_ignore_contacts_selected)
+                            AppPreferences.IgnoreContactsMode.ONLY_SELECTED -> stringResource(R.string.settings_record_only_selected_contacts)
+                        },
+                        style = MaterialTheme.typography.bodyMedium
+                    )
+                }
             }
         }
 
