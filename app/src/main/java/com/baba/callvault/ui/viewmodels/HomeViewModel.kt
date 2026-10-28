@@ -9,7 +9,6 @@
 package com.baba.callvault.ui.viewmodels
 
 import android.app.Application
-import android.media.AudioManager
 import android.net.Uri
 import android.os.SystemClock
 import com.baba.callvault.server.RecorderConnection
@@ -56,7 +55,7 @@ import com.baba.callvault.integrations.adb.UsbSetResult
 import com.baba.callvault.system.updates.UpdateInstallWorker
 import com.baba.callvault.system.updates.UpdateScheduler
 import androidx.work.WorkManager
-import com.baba.callvault.data.waveform.RecordingExtrasRepository
+import com.baba.callvault.data.waveform.WaveformDrawWorker
 import com.baba.callvault.transcription.TranscriptionEngine
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.Dispatchers
@@ -612,11 +611,8 @@ class HomeViewModel(application: Application) : AndroidViewModel(application) {
      * Recomputes the [HomeStatus] (synchronous, cheap) and reloads the recordings list off the main
      * thread. Safe to call on first composition and on every ON_RESUME.
      */
-    /** The background draw pass; cancelled and restarted on every reload so it cannot pile up. */
-    private var waveformJob: Job? = null
-
     /**
-     * The list reload. Guarded for the same reason [precomputeWaveforms] is: [refresh] runs on every
+     * The list reload. Guarded because [refresh] runs on every
      * ON_RESUME, so opening the app, leaving it and coming back used to stack several full passes over
      * the whole library, each competing with the others for the same disk and the same media codecs.
      * A pass already running is left to finish — it is reading the same rows this call would.
@@ -815,56 +811,17 @@ class HomeViewModel(application: Application) : AndroidViewModel(application) {
      * Only recordings made since the shape started being cached at call end have one; everything
      * recorded before that arrives here uncached, which is why this exists at all.
      *
-     * Newest first, matching the list order, because that is the order they get opened in. Strictly
-     * sequential: this is background work behind whatever the user is actually doing, and running
-     * several decodes at once would compete with playback for the same cores.
+     * Newest first, matching the list order, because that is the order they get opened in. The queue
+     * ([WaveformDrawWorker]) draws them one at a time, behind whatever the user is actually doing.
      */
     private fun precomputeWaveforms(recordings: List<RecordingItem>) {
-        // NOT cancel-and-restart. refresh() runs on every ON_RESUME, and restarting meant beginning
-        // again at the top of the list every time the app came forward — so a long recording near
-        // the top was decoded from scratch, interrupted, and decoded again, forever. That is minutes
-        // of the media codec burning for a picture nobody is waiting for, and it competes with a
-        // transcription for the same cores. A pass that is already going is left alone to finish.
-        if (waveformJob?.isActive == true) return
-
-        waveformJob = viewModelScope.launch(Dispatchers.IO) {
-            val audio = appContext.getSystemService(AudioManager::class.java)
-            recordings
-                .asSequence()
-                // Skip the long ones. Drawing a recording means decoding every sample of it, so a
-                // ninety-minute call costs far more than any other and is the least likely to be
-                // opened. The resting line covers those until someone actually asks.
-                .filter { (it.durationSeconds ?: 0L) <= WAVEFORM_PRECOMPUTE_MAX_SECONDS }
-                .take(WAVEFORM_PRECOMPUTE_LIMIT)
-                .forEach { item ->
-                // Cheap and cached-checked inside, so a second pass over a drawn library costs one
-                // indexed lookup each. ensureActive so leaving the screen actually stops the work.
-                ensureActive()
-
-                // Never while a call is up. Drawing means running the audio decoder, and the one
-                // job this app must not disturb is the recording of the call happening right now.
-                // Abandoning the pass rather than pausing it: the next reload starts it again, and
-                // the recording that just ended gets drawn by the call-end path anyway.
-                if (audio?.mode != AudioManager.MODE_NORMAL) {
-                    AppLogger.i(TAG, "Not drawing recordings while a call is in progress")
-                    return@launch
-                }
-
-                // Transcription owns the CPU while it runs. Drawing alongside it does not merely
-                // make both slower — it inflates the time the estimate learns from, so every future
-                // "this will take about N minutes" inherits the interference.
-                if (TranscriptionEngine.isRunning) {
-                    AppLogger.i(TAG, "Not drawing recordings while a transcription is running")
-                    return@launch
-                }
-
-                RecordingExtrasRepository.precomputeWaveform(appContext, item.displayName, item.uri)
-
-                // Breathe between recordings. This is a picture nobody has asked for yet; it must
-                // never feel like the phone is busy.
-                delay(WAVEFORM_PRECOMPUTE_GAP_MS)
-            }
-        }
+        // Queued, not run here. A draw owned by this screen died with it, and a long call takes
+        // minutes to draw (issue #63). The queue runs one at a time, waits out calls and
+        // transcriptions, and skips anything already drawn, so queueing again on every resume is
+        // cheap. Long calls are no longer skipped: the queue is what makes drawing them affordable.
+        recordings
+            .take(WAVEFORM_PRECOMPUTE_LIMIT)
+            .forEach { WaveformDrawWorker.enqueue(appContext, it.displayName, it.uri) }
     }
 
     /**
@@ -1340,11 +1297,6 @@ class HomeViewModel(application: Application) : AndroidViewModel(application) {
          */
         private const val WAVEFORM_PRECOMPUTE_LIMIT = 5
 
-        /** Past a quarter of an hour, drawing ahead costs more than it can possibly save. */
-        private const val WAVEFORM_PRECOMPUTE_MAX_SECONDS = 15 * 60L
-
-        /** A pause between recordings, so background work stays in the background. */
-        private const val WAVEFORM_PRECOMPUTE_GAP_MS = 500L
 
         /**
          * Whether the release note is due: only right after an update, and only once per version.
