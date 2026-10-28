@@ -576,7 +576,12 @@ private fun PlayerCard(
                     WaveformBar(
                         peaks = peaks,
                         progress = if (duration > 0) position / duration.toFloat() else 0f,
-                        onSeekTo = { fraction -> onSeek((fraction * duration).toInt()) }
+                        onSeekTo = { fraction -> onSeek((fraction * duration).toInt()) },
+                        stateText = stringResource(
+                            R.string.home_player_position_of,
+                            TranscriptTimestamp.format(position.toLong()),
+                            TranscriptTimestamp.format(duration.toLong()),
+                        ),
                     )
                     Spacer(Modifier.height(2.dp))
                     Row(
