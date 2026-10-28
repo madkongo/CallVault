@@ -69,6 +69,9 @@ import androidx.compose.ui.text.style.TextDirection
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.Constraints
+import androidx.compose.ui.layout.layout
+import androidx.compose.ui.semantics.Role
 import com.baba.callvault.R
 import com.baba.callvault.data.recordings.RecordingDirection
 import com.baba.callvault.data.recordings.RecordingsRepository.RecordingItem
@@ -777,15 +780,7 @@ private fun TagCard(
                     // control that sometimes means the library and sometimes means this recording.
                     onClick = { managing = tag },
                     label = { Text(tag) },
-                    trailingIcon = {
-                        Icon(
-                            imageVector = Icons.Filled.Close,
-                            contentDescription = stringResource(R.string.playback_tags_remove),
-                            modifier = Modifier
-                                .size(16.dp)
-                                .clickable { onRemoveTag(tag) }
-                        )
-                    },
+                    trailingIcon = { TagRemoveButton(onClick = { onRemoveTag(tag) }) },
                     colors = InputChipDefaults.inputChipColors(
                         containerColor = MaterialTheme.colorScheme.surfaceVariant,
                         labelColor = MaterialTheme.colorScheme.onSurfaceVariant,
@@ -955,6 +950,42 @@ private fun ManageTagDialog(
 
 /** Enough to jog a memory, few enough that the dialog does not become a list to read. */
 private const val MAX_TAG_SUGGESTIONS = 8
+
+/**
+ * The × on a tag chip: takes the tag off this call.
+ *
+ * It was a bare 16dp icon, a hard target to hit and one TalkBack did not call a button. The target is
+ * now [TAG_REMOVE_TARGET] square, centred on the icon, with the Button role. It is laid out as the
+ * 16dp icon all the same, so the chip keeps its size and look: the larger target only overhangs the
+ * chip's own end padding and the gap before the label. 32dp is the chip's full height — a 48dp
+ * target would need a taller chip, and the chip's clip would cut anything bigger.
+ */
+@Composable
+private fun TagRemoveButton(onClick: () -> Unit) {
+    Box(
+        contentAlignment = Alignment.Center,
+        modifier = Modifier
+            .layout { measurable, _ ->
+                val target = TAG_REMOVE_TARGET.roundToPx()
+                val shown = TAG_REMOVE_ICON.roundToPx()
+                val placeable = measurable.measure(Constraints.fixed(target, target))
+                layout(shown, shown) {
+                    placeable.place((shown - target) / 2, (shown - target) / 2)
+                }
+            }
+            .clip(CircleShape)
+            .clickable(role = Role.Button, onClick = onClick)
+    ) {
+        Icon(
+            imageVector = Icons.Filled.Close,
+            contentDescription = stringResource(R.string.playback_tags_remove),
+            modifier = Modifier.size(TAG_REMOVE_ICON)
+        )
+    }
+}
+
+private val TAG_REMOVE_ICON = 16.dp
+private val TAG_REMOVE_TARGET = 32.dp
 
 /**
  * The field shows its own draft and saves a moment after the typing stops — see [NoteDraft] for the
