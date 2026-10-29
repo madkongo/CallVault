@@ -7,6 +7,13 @@ All notable changes to CallVault are documented here. The format is based on
 
 ### Added
 
+- **Transcribe with your own key** (#48). Settings → Where to transcribe: keep transcribing on the phone, or
+  send the call audio to Groq (recommended), OpenRouter or any OpenAI-compatible server with your own key,
+  which is much faster. A Test button checks the key. The first time you pick a service it asks before
+  anything is sent; calls go over Wi-Fi only unless you allow mobile data. The key is stored encrypted, and
+  is never in the settings export or the logs. Summaries stay on the phone.
+  <!-- 🧪 VERIFYING: unit tests only; no real request sent to any service, not run on a phone.
+       docs/dev-notes/2026-10-29-issue-48-byok-transcription.md -->
 - **Play from the Recordings list.** The play button on a recording plays it right there and turns into
   pause; a thin bar under the card shows where you are and lets you drag to any point. The card itself still
   opens the recording. Playback stops when you leave the list. Requested by a user.
