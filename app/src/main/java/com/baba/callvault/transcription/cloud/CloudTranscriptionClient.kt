@@ -67,7 +67,12 @@ class CloudTranscriptionClient(private val http: HttpPoster = UrlConnectionPoste
     private fun send(endpoint: CloudEndpoint, apiKey: String, wav: ByteArray, language: String?): String {
         if (apiKey.isBlank()) throw CloudError.notSetUp(endpoint.label)
         val form = MultipartForm()
-        val payload = form.build(fields(endpoint, language), "file", "chunk.wav", "audio/wav", wav)
+        val payload = try {
+            form.build(fields(endpoint, language), "file", "chunk.wav", "audio/wav", wav)
+        } catch (e: IllegalArgumentException) {
+            // A Custom model name with a quote or a line break in it: refused, never sent.
+            throw CloudError(CloudError.Kind.REJECTED, "The model name for ${endpoint.label} has a character it cannot contain.")
+        }
         val reply = try {
             http.post(
                 endpoint.transcriptionsUrl,
