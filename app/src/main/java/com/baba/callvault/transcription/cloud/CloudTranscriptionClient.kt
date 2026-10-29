@@ -41,8 +41,18 @@ class CloudTranscriptionClient(private val http: HttpPoster = UrlConnectionPoste
     }
 
     /** @throws CloudError for every way this can fail. */
-    fun transcribe(endpoint: CloudEndpoint, apiKey: String, wav: ByteArray, language: String?): List<TranscriptSegment> {
-        val body = send(endpoint, apiKey, wav, language)
+    fun transcribe(endpoint: CloudEndpoint, apiKey: String, wav: ByteArray, language: String?): List<TranscriptSegment> =
+        transcribe(endpoint, apiKey, wav, WAV, language)
+
+    /** As above, for audio in another container — the recording's own bytes, see [UploadFormat]. */
+    fun transcribe(
+        endpoint: CloudEndpoint,
+        apiKey: String,
+        audio: ByteArray,
+        format: UploadFormat.Named,
+        language: String?,
+    ): List<TranscriptSegment> {
+        val body = send(endpoint, apiKey, audio, format, language)
         return VerboseJsonParser.segments(body, endpoint.label)
     }
 
@@ -52,7 +62,7 @@ class CloudTranscriptionClient(private val http: HttpPoster = UrlConnectionPoste
     /** One second of silence: proves the key, the address and the model, and that timings come back. */
     fun test(endpoint: CloudEndpoint, apiKey: String): TestOutcome {
         val body = try {
-            send(endpoint, apiKey, WavEncoder.silence(), language = null)
+            send(endpoint, apiKey, WavEncoder.silence(), WAV, language = null)
         } catch (e: CloudError) {
             return when (e.kind) {
                 CloudError.Kind.BAD_KEY -> TestOutcome.BAD_KEY
@@ -64,7 +74,13 @@ class CloudTranscriptionClient(private val http: HttpPoster = UrlConnectionPoste
         return if (result.hasSegmentsField) TestOutcome.WORKS else TestOutcome.NO_TIMINGS
     }
 
-    private fun send(endpoint: CloudEndpoint, apiKey: String, wav: ByteArray, language: String?): String {
+    private fun send(
+        endpoint: CloudEndpoint,
+        apiKey: String,
+        audio: ByteArray,
+        format: UploadFormat.Named,
+        language: String?,
+    ): String {
         if (apiKey.isBlank()) throw CloudError.notSetUp(endpoint.label)
         // A header value must be printable ASCII; anything else makes HttpURLConnection throw an
         // exception whose message can quote the header — the key. Refused here with our own words.
@@ -73,7 +89,7 @@ class CloudTranscriptionClient(private val http: HttpPoster = UrlConnectionPoste
         }
         val form = MultipartForm()
         val payload = try {
-            form.build(fields(endpoint, language), "file", "chunk.wav", "audio/wav", wav)
+            form.build(fields(endpoint, language), "file", format.fileName, format.contentType, audio)
         } catch (e: IllegalArgumentException) {
             // A Custom model name with a quote or a line break in it: refused, never sent.
             throw CloudError(CloudError.Kind.REJECTED, "The model name for ${endpoint.label} has a character it cannot contain.")
@@ -96,6 +112,7 @@ class CloudTranscriptionClient(private val http: HttpPoster = UrlConnectionPoste
     }
 
     companion object {
+        private val WAV = UploadFormat.Named("chunk.wav", "audio/wav")
         private val HTTP_OK_RANGE = 200..299
         private const val ISO_639_1_LENGTH = 2
 
