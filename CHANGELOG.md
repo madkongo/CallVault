@@ -49,6 +49,13 @@ All notable changes to CallVault are documented here. The format is based on
 
 ### Fixed
 
+- **Phones that never announce Wireless debugging's connect address (seen on a Realme GT 7) can now connect:
+  CallVault finds the port itself** (#65). It tries the port that worked last time, then the usual
+  announcement, then searches the phone's own local ports (a few seconds, at most once per Wireless-debugging
+  session). Nothing to type.
+  <!-- 🧪 VERIFYING: unit tests only; not run on a phone. Check on the OP9 with Settings → Debug → "Skip mDNS
+       when connecting" on (shown while log recording is on), then on the reporter's Realme.
+       docs/dev-notes/2026-10-29-issue-65-connect-port-fallback.md -->
 - **Long calls get their waveform** (#63). Drawing the waveform of a long call takes a few minutes; it was
   stopped when you left the recording, and calls over 15 minutes were never drawn ahead of time. It now runs
   in the background until it finishes, and the bars appear as soon as they are ready.
