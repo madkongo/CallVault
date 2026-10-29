@@ -68,8 +68,10 @@ internal fun ModelsStep(
     var modelId by remember { mutableStateOf(prefs.getTranscriptionModelId()) }
     val selectedModel = TranscriptionModel.fromId(modelId) ?: TranscriptionModel.DEFAULT
 
-    // Built from the catalogue, so a new model tier is described without touching this.
-    val modelSizes = TranscriptionModel.entries.map { model ->
+    // The same tiers the dropdown lists (a Persian-only tier appears once Persian is pinned, #55),
+    // built from the catalogue so a new tier is described without touching this.
+    val offeredModels = rememberOfferedTranscriptionModels(language, modelId)
+    val modelSizes = offeredModels.map { model ->
         stringResource(
             R.string.wizard_transcription_model_size,
             stringResource(TranscriptionLabels.titleOf(model)),
@@ -122,6 +124,7 @@ internal fun ModelsStep(
             ) {
                 TranscriptionModelField(
                     modelId = modelId,
+                    offered = offeredModels,
                     onModelChange = { chosen ->
                         modelId = chosen
                         prefs.setTranscriptionModelId(chosen)

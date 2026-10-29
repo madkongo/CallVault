@@ -865,6 +865,8 @@
     <string name="transcription_mode_manual">Χειροκίνητα</string>
     <string name="transcription_model_best">Βέλτιστη ποιότητα</string>
     <string name="transcription_model_best_small_download">Βέλτιστη ποιότητα, μικρότερη λήψη</string>
+    <string name="transcription_model_persian">Βελτιστοποιημένο για Περσικά</string>
+    <string name="transcription_model_persian_licence">Καλύτερη ποιότητα, εκπαιδευμένο σε περσική ομιλία. Whisper large-v3-turbo Persian από τον givia, άδεια CC BY 4.0, κβαντισμένο για το whisper.cpp. Λαμβάνεται χωριστά και δεν περιλαμβάνεται στο CallVault.</string>
     <string name="transcription_model_delete">Διαγραφή μοντέλου</string>
     <string name="transcription_model_download">Λήψη μοντέλου</string>
     <string name="transcription_model_download_subtitle">%1$d MB</string>

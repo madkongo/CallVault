@@ -746,6 +746,8 @@
     <string name="transcription_mode_manual">يدويًا</string>
     <string name="transcription_model_best">أعلى جودة (موصى به)</string>
     <string name="transcription_model_best_small_download">أعلى جودة بحجم أصغر</string>
+    <string name="transcription_model_persian">مُحسَّن للفارسية</string>
+    <string name="transcription_model_persian_licence">أفضل جودة، مُدرَّب على الكلام الفارسي. نموذج Whisper large-v3-turbo Persian من givia، بترخيص CC BY 4.0، ومضغوط لـ whisper.cpp. يُنزَّل بشكل منفصل ولا يُضمَّن في CallVault.</string>
     <string name="transcription_model_delete">حذف النموذج</string>
     <string name="transcription_model_download">تنزيل النموذج</string>
     <string name="transcription_model_download_subtitle">%1$d ميغابايت</string>

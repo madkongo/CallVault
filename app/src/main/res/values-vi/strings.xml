@@ -710,6 +710,8 @@
     <string name="transcription_mode_manual">Thủ công</string>
     <string name="transcription_model_best">Chất lượng tốt nhất</string>
     <string name="transcription_model_best_small_download">Chất lượng tốt nhất, tải về nhẹ hơn</string>
+    <string name="transcription_model_persian">Tối ưu cho tiếng Ba Tư</string>
+    <string name="transcription_model_persian_licence">Chất lượng tốt nhất, được huấn luyện trên giọng nói tiếng Ba Tư. Whisper large-v3-turbo Persian của givia, giấy phép CC BY 4.0, đã lượng tử hóa cho whisper.cpp. Mô hình được tải về riêng, không đi kèm CallVault.</string>
     <string name="transcription_model_delete">Xoá mô hình</string>
     <string name="transcription_model_download">Tải mô hình</string>
     <string name="transcription_model_download_subtitle">%1$d MB</string>

@@ -123,6 +123,20 @@ object TranscriptionLabels {
         TranscriptionModel.SMALL_Q5_1 -> R.string.transcription_model_small
         TranscriptionModel.LARGE_V3_TURBO_Q5_0 -> R.string.transcription_model_best_small_download
         TranscriptionModel.LARGE_V3_TURBO_Q8_0 -> R.string.transcription_model_best
+        TranscriptionModel.LARGE_V3_TURBO_PERSIAN_Q5_0 -> R.string.transcription_model_persian
+    }
+
+    /**
+     * The credit a tier's licence requires, shown under its download rows; null for the general
+     * tiers, which are OpenAI's MIT-licensed Whisper as converted by whisper.cpp. Exhaustive for the
+     * same reason as [titleOf]: a new third-party tier must not compile without deciding this.
+     */
+    @StringRes
+    fun creditOf(model: TranscriptionModel): Int? = when (model) {
+        TranscriptionModel.SMALL_Q5_1,
+        TranscriptionModel.LARGE_V3_TURBO_Q5_0,
+        TranscriptionModel.LARGE_V3_TURBO_Q8_0 -> null
+        TranscriptionModel.LARGE_V3_TURBO_PERSIAN_Q5_0 -> R.string.transcription_model_persian_licence
     }
 
     /** Maps a language code (or null for auto-detect) to its label. */

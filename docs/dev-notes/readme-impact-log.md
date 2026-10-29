@@ -1,5 +1,19 @@
 # README impact log
 
+## 2026-10-29 — Persian-tuned speech model (#55)
+
+🧪 VERIFYING (unit tests and build only; nothing seen on a phone). With the transcription language
+pinned to Persian, the Model picker offers a fourth tier, **Persian-tuned** (givia's
+whisper-large-v3-turbo-persian, CC BY 4.0, 574 MB, downloaded separately). See
+`docs/dev-notes/2026-10-29-issue-55-persian-model.md`.
+
+**What this makes wrong in the README, when this ships:** any sentence that says there are three
+speech models, or that every model is multilingual — the new one is offered for Persian only.
+
+**Not claimable:** better Persian call transcripts. It was deliberately not quality-tested on calls,
+and one outside tester found it ~3x slower with temperature fallback on, which CallVault keeps on. If
+the README ever names it, credit givia and the CC BY 4.0 licence.
+
 ## 2026-10-28 — vivo/iQOO app calls: far side is China-firmware only
 
 📐 research, not device-confirmed. The README makes no vivo claim, so nothing to correct. But the 2.4.3
