@@ -6,6 +6,28 @@ Test (expect "The key works."), then transcribe a two-sided call of a few minute
 (two passes) and check: words, timestamps (tap a line → playback seeks there), speaker labels, and the
 engine shown in an export (`cloud:groq/whisper-large-v3-turbo`).
 
+## Phone test 2026-10-29 (maintainer, OP9, real Groq key) — build before the three fixes below
+
+- Test → "The key works"; 9 s Hebrew call correct; 9.4-min Hebrew call → 177 segments, 46 s total in 2
+  passes, of which ~20–22 s per pass was the local decode to WAV (Opus decode ~12–15x real time) and ~2 s
+  upload + answer. Key never in logcat.
+- Three faults found, fixed after (🧪 VERIFYING, unit tests only):
+  1. The on-device "keeps your phone busy" confirmation still showed for a cloud run → skipped for cloud
+     (`TranscriptionRouting.skipsRunConfirmation`), in Home (every entry point goes through
+     `continueTranscription`) and in share-import.
+  2. Seam: pass 1's last segment (294180–300020 "…זאת אומרת, לוינטר כ") was cut at the chunk end and pass 2
+     repeated it (299193–300952 "לוינטר כבר היום…"). → `CloudSeam`: drop a pass's tail that runs to its end
+     (within 1 s) when the next pass has words; cloud passes get a 30 s run-up so that tail is heard whole;
+     keep only next-pass segments whose middle is after the last kept segment. Tested with these numbers.
+  3. Speed → the recording's own bytes go up **whole, in one request**, when under 20 MB and in a container
+     Groq lists (ogg/opus, m4a, mp4, mp3, wav, flac, webm). 📐 Opus at the default 24 kbps is ~3 KB/s: the
+     9.4-min call is ~1.7 MB, the 60-min limit ~10.8 MB — so every call goes in one pass and has no seam at
+     all. Larger or other files go in passes **remuxed** with MediaMuxer (Opus → Ogg, AAC → MPEG-4; no
+     re-encode); WAV decode stays as the fallback when the service refuses the container (400/415/413) or
+     the remux fails. A **mono** file is not decoded at all (the speaker labeller gets nothing from it); a
+     **stereo** one is decoded only for the labeller, concurrently with the upload.
+     📐 expected for the 9.4-min mono call: ~2–5 s instead of 46 s. Not measured.
+
 ## Decisions (maintainer, before the build)
 
 - Presets we chose; the user only pastes a key. Groq is the recommended default preset; Custom (advanced)
@@ -37,10 +59,9 @@ with "answered without timings" (never stores untimed text) and the Test button 
   CR/LF/quote in fields), `VerboseJsonParser`, `CloudError` (kind + whether retryable),
   `CloudTranscriptionClient` (+ `UrlConnectionPoster`, HttpURLConnection, redirects off), `CloudTranscriber`,
   `CloudKeyStore`.
-- **Audio is still decoded on the phone**, one `ChunkPlan` pass at a time (`ChunkDecode`, now shared with
-  the on-device engine). That decode feeds `OfflineSpeakerLabeller` exactly as before, so speaker labels
-  work the same; each pass is uploaded as WAV (📐 ~9.6 MB per 5 min, max ~11.5 MB per 6-min pass — under
-  25 MB). Segments are offset with `ChunkPlan.stitch` against where the decode really started.
+- **(Superseded by fix 3 above.)** v1 decoded each `ChunkPlan` pass on the phone and uploaded WAV (📐 ~9.6 MB
+  per 5 min). WAV passes now exist only as the fallback; their segments are offset by where the decode
+  really started and joined by `CloudSeam`.
 - Fields sent: `model`, `response_format=verbose_json`, `timestamp_granularities[]=segment`,
   `temperature=0`, and `language` when one is pinned and it is a 2-letter code. **The contact-name prompt
   is not sent** (more than the service needs to hear).
@@ -64,8 +85,8 @@ with "answered without timings" (never stores untimed text) and the Test button 
   **not** asked again when the server address changes — known v1 limit (security review, MEDIUM).
 - Keys with characters outside printable ASCII are refused before sending (a header exception could quote
   the key); replies over 5 MB are refused (a hostile Custom server cannot run the heap out).
-- Home / share-import: "No speech model yet" is not shown for cloud; the confirm dialog quotes 📐
-  3 s + 0.1 × call length (a guess with headroom, not measured) and never the first-run wording.
+- Home / share-import: neither "No speech model yet" nor the run confirmation is shown for cloud. The 📐
+  3 s + 0.1 × call length cost is now only the progress pill's prediction.
 - Length limit stays at 60 min for cloud too (unchanged; relaxing it is trivial later, but the local
   decode is the same, and a longer cap is a separate decision).
 
@@ -103,8 +124,10 @@ with "answered without timings" (never stores untimed text) and the Test button 
 1. Settings → Where to transcribe → Groq → consent dialog → "Use Groq". Paste key → Test → "The key works."
    Try a wrong key → "The key was refused…".
 2. On Wi-Fi, transcribe a 2–3 min two-sided call. Expect seconds, timestamps that seek, speaker labels.
-3. Transcribe a call over 5 minutes (two passes); check lines around the 5:00 seam are neither lost nor
-   doubled.
+3. Transcribe the 9.4-min call again: expect no confirmation dialog, one pass ("Sending the recording
+   whole" in the log), a few seconds, and no doubled words near 5:00. A stereo (Shizuku) call should still
+   get speaker labels. The remuxed-pass path only runs for files over 20 MB or unusual formats — an import
+   of a long, high-bitrate m4a would exercise it.
 4. Wi-Fi off, mobile data on, switch off: tap Transcribe → it waits (spinner). Connect Wi-Fi → it runs.
    Then turn on "Also use mobile data", Wi-Fi off, tap Transcribe on another call → it runs on mobile data.
 5. Settings → export settings → open the file: no key, no where-to-transcribe settings.

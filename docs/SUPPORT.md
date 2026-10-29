@@ -24,8 +24,8 @@ transcribe** you can instead pick **Groq** (recommended), **OpenRouter** or **Cu
 OpenAI-compatible server that returns `verbose_json` with segment timings — and paste your own key from that
 service. Press **Test** to check it.
 
-- When a cloud service is chosen, the **call audio is sent to that service** to be written out, in pieces of
-  about five minutes; the words come back to the phone. That service's own privacy terms apply. CallVault
+- When a cloud service is chosen, the **call audio is sent to that service** to be written out (as one file for
+  ordinary calls; very large files in pieces); the words come back to the phone. That service's own privacy terms apply. CallVault
   asks before the first use.
 - Calls are sent over **Wi-Fi only** unless you turn on **Also use mobile data**.
 - Summaries still run on the phone.
