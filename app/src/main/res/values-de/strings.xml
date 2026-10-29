@@ -181,6 +181,10 @@
     <string name="min_duration_off">Alle behalten</string>
     <string name="min_duration_one_minute">Kürzer als eine Minute</string>
     <string name="min_duration_seconds">Kürzer als %1$d Sekunden</string>
+    <string name="mobile_data_download_body">Dieses Modell ist %1$s groß. Jetzt über mobile Daten herunterladen oder warten, bis der Download im WLAN von selbst startet?</string>
+    <string name="mobile_data_download_now">Jetzt über mobile Daten laden</string>
+    <string name="mobile_data_download_title">Sie sind nicht im WLAN</string>
+    <string name="mobile_data_download_wait">Auf WLAN warten</string>
     <string name="mode_switch_done_shizuku">Bereit — mit Shizuku</string>
     <string name="mode_switch_done_standalone">Bereit — mit CallVault</string>
     <string name="mode_switch_done_title">Aufnahmebereit</string>
@@ -594,7 +598,7 @@
     <string name="summary_model_discard">Heruntergeladenes verwerfen</string>
     <string name="summary_model_discard_subtitle">Gibt %1$.1f GB frei</string>
     <string name="summary_model_download">Zusammenfasser herunterladen</string>
-    <string name="summary_model_download_subtitle">%1$.1f GB, nur über WLAN</string>
+    <string name="summary_model_download_subtitle">%1$.1f GB</string>
     <string name="summary_model_downloading">Wird heruntergeladen … %1$d %%</string>
     <string name="summary_model_failed">Der Download wurde nicht abgeschlossen. Bitte erneut versuchen.</string>
     <string name="summary_model_failed_space">Nicht genug freier Speicher. Schaffen Sie Platz und versuchen Sie es erneut.</string>
@@ -608,7 +612,7 @@
     <string name="summary_requirements_cancel">Jetzt nicht</string>
     <string name="summary_requirements_continue">Herunterladen</string>
     <string name="summary_requirements_dont_ask">Nicht mehr anzeigen</string>
-    <string name="summary_requirements_download">%1$.1f GB Download, nur über WLAN</string>
+    <string name="summary_requirements_download">%1$.1f GB Download</string>
     <string name="summary_requirements_heading">Vor dem Herunterladen</string>
     <string name="summary_requirements_memory">Etwa %1$.1f GB Arbeitsspeicher während der Ausführung</string>
     <string name="summary_requirements_phone">Es braucht ein neueres Telefon mit Reserven. Auf einem älteren kann es langsam sein oder fehlschlagen.</string>
@@ -709,7 +713,7 @@
     <string name="transcription_model_best_small_download">Beste Qualität, kleinerer Download</string>
     <string name="transcription_model_delete">Modell löschen</string>
     <string name="transcription_model_download">Modell herunterladen</string>
-    <string name="transcription_model_download_subtitle">%1$d MB, nur über WLAN</string>
+    <string name="transcription_model_download_subtitle">%1$d MB</string>
     <string name="transcription_model_downloading">Wird heruntergeladen … %1$d %%</string>
     <string name="transcription_model_failed">Der Download wurde nicht abgeschlossen. Bitte erneut versuchen.</string>
     <string name="transcription_model_failed_space">Nicht genug freier Speicher. Schaffen Sie Platz und versuchen Sie es erneut.</string>
@@ -811,7 +815,7 @@
     <string name="wizard_storage_subtitle">Wählen Sie, wo Ihre Aufnahmen gespeichert werden. Sie können dies später in den Einstellungen ändern.</string>
     <string name="wizard_storage_title">Speicherort für Aufnahmen</string>
     <string name="wizard_title">CallVault einrichten</string>
-    <string name="wizard_transcription_background_note">Beide Downloads laufen nur über WLAN und werden im Hintergrund fortgesetzt. Sie können jetzt weitermachen und die Einrichtung abschließen — die Einstellungen von CallVault zeigen danach denselben Fortschritt.</string>
+    <string name="wizard_transcription_background_note">Beide Downloads werden im Hintergrund fortgesetzt. Sie können jetzt weitermachen und die Einrichtung abschließen — die Einstellungen von CallVault zeigen danach denselben Fortschritt.</string>
     <string name="wizard_transcription_language_note">Eingestellt ist die Sprache, auf die dieses Telefon eingestellt ist. Sie zu benennen ist weit zuverlässiger, als die App raten zu lassen, und Sie können später pro Anruf eine andere wählen.</string>
     <string name="wizard_transcription_line">Anrufe auf diesem Handy in Text umwandeln.</string>
     <string name="wizard_transcription_model_note">Zum Transkribieren braucht das Telefon zuerst ein Sprachmodell: %1$s hat %2$d MB, %3$s hat %4$d MB. Ein Anruf braucht dann etwa seine eigene Länge und belastet den Prozessor stark.</string>

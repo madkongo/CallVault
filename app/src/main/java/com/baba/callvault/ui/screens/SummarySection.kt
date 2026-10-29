@@ -31,8 +31,10 @@ import com.baba.callvault.data.AppPreferences
 import com.baba.callvault.ui.common.ConfirmDialog
 import com.baba.callvault.ui.common.SummaryRequirementsDialog
 import com.baba.callvault.summary.SummaryModel
+import com.baba.callvault.transcription.model.DownloadNetwork
 import com.baba.callvault.transcription.model.ModelDownloadWorker
 import com.baba.callvault.ui.common.ModelDownloadState
+import com.baba.callvault.ui.common.rememberMobileDataDownloadPrompt
 import com.baba.callvault.ui.common.rememberModelDownloadState
 
 /**
@@ -56,7 +58,7 @@ import com.baba.callvault.ui.common.rememberModelDownloadState
 @Composable
 internal fun SummaryRows(
     updateTrigger: Int,
-    onDownload: (SummaryModel) -> Unit,
+    onDownload: (SummaryModel, DownloadNetwork) -> Unit,
     onCancel: (SummaryModel) -> Unit,
     onDelete: (SummaryModel) -> Unit,
     onImport: (SummaryModel, Uri) -> Unit,
@@ -89,7 +91,10 @@ internal fun SummaryRows(
             proceed()
         }
     }
-    val startDownload = { askThen { onDownload(model) } }
+    // The requirements first, then, on mobile data, which network: the costs before the fetch.
+    val askNetwork = rememberMobileDataDownloadPrompt()
+    val sizeText = stringResource(R.string.summary_model_download_subtitle, model.sizeBytes.toGigabytes())
+    val startDownload = { askThen { askNetwork(sizeText) { network -> onDownload(model, network) } } }
 
     if (showRequirements) {
         SummaryRequirementsDialog(

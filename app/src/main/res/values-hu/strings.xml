@@ -181,6 +181,10 @@
     <string name="min_duration_off">Mindet megtartani</string>
     <string name="min_duration_one_minute">Egy percnél rövidebb</string>
     <string name="min_duration_seconds">%1$d másodpercnél rövidebb</string>
+    <string name="mobile_data_download_body">Ez a modell %1$s. Letölti most mobiladaton, vagy megvárja, hogy magától elinduljon, amikor Wi-Fi-n lesz?</string>
+    <string name="mobile_data_download_now">Letöltés most mobiladaton</string>
+    <string name="mobile_data_download_title">Nem Wi-Fi-n van</string>
+    <string name="mobile_data_download_wait">Várakozás Wi-Fire</string>
     <string name="mode_switch_done_shizuku">Kész — Shizukuval</string>
     <string name="mode_switch_done_standalone">Kész — CallVaulttal</string>
     <string name="mode_switch_done_title">Készen áll a rögzítésre</string>
@@ -594,7 +598,7 @@
     <string name="summary_model_discard">Letöltött adatok eldobása</string>
     <string name="summary_model_discard_subtitle">%1$.1f GB szabadul fel</string>
     <string name="summary_model_download">Összefoglaló letöltése</string>
-    <string name="summary_model_download_subtitle">%1$.1f GB, csak Wi-Fin</string>
+    <string name="summary_model_download_subtitle">%1$.1f GB</string>
     <string name="summary_model_downloading">Letöltés… %1$d %%</string>
     <string name="summary_model_failed">A letöltés nem fejeződött be. Próbálja újra.</string>
     <string name="summary_model_failed_space">Nincs elég szabad hely. Szabadítson fel valamennyit, és próbálja újra.</string>
@@ -608,7 +612,7 @@
     <string name="summary_requirements_cancel">Most nem</string>
     <string name="summary_requirements_continue">Letöltés</string>
     <string name="summary_requirements_dont_ask">Ne jelenjen meg többé</string>
-    <string name="summary_requirements_download">%1$.1f GB letöltés, csak Wi-Fin</string>
+    <string name="summary_requirements_download">%1$.1f GB letöltés</string>
     <string name="summary_requirements_heading">Letöltés előtt</string>
     <string name="summary_requirements_memory">Futás közben körülbelül %1$.1f GB memória</string>
     <string name="summary_requirements_phone">Újabb telefon kell, tartalékkal. Régebbin lassú lehet, vagy meghiúsulhat.</string>
@@ -709,7 +713,7 @@
     <string name="transcription_model_best_small_download">Legjobb minőség, kisebb letöltés</string>
     <string name="transcription_model_delete">Modell törlése</string>
     <string name="transcription_model_download">Modell letöltése</string>
-    <string name="transcription_model_download_subtitle">%1$d MB, csak Wi-Fi-n</string>
+    <string name="transcription_model_download_subtitle">%1$d MB</string>
     <string name="transcription_model_downloading">Letöltés… %1$d %%</string>
     <string name="transcription_model_failed">A letöltés nem fejeződött be. Próbálja újra.</string>
     <string name="transcription_model_failed_space">Nincs elég szabad hely. Szabadítson fel valamennyit, és próbálja újra.</string>
@@ -811,7 +815,7 @@
     <string name="wizard_storage_subtitle">Válassza ki, hová mentse a felvételeit. Ezt később a Beállításokban módosíthatja.</string>
     <string name="wizard_storage_title">Hová mentse a felvételeket</string>
     <string name="wizard_title">CallVault beállítása</string>
-    <string name="wizard_transcription_background_note">Mindkét letöltés csak Wi-Fi-n fut, és a háttérben folytatódik. Most nyugodtan továbbléphet, és befejezheti a beállítást — ugyanez az állapot később a CallVault beállításaiban is látszik.</string>
+    <string name="wizard_transcription_background_note">Mindkét letöltés a háttérben folytatódik. Most nyugodtan továbbléphet, és befejezheti a beállítást — ugyanez az állapot később a CallVault beállításaiban is látszik.</string>
     <string name="wizard_transcription_language_note">A telefon nyelvére van állítva. Ha megnevezi a nyelvet, az sokkal megbízhatóbb, mintha az alkalmazás találgatna, és később hívásonként is választhat másikat.</string>
     <string name="wizard_transcription_line">Hívások szöveggé alakítása ezen a telefonon.</string>
     <string name="wizard_transcription_model_note">Az átíráshoz előbb egy beszédmodell kell a telefonra: %1$s: %2$d MB, %3$s: %4$d MB. Egy hívás átírása utána nagyjából annyi ideig tart, mint maga a hívás, és erősen igénybe veszi a processzort.</string>

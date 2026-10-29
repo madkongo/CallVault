@@ -607,3 +607,14 @@ Once confirmed it could add: "or play straight from the list, with a seek bar on
 Recordings screenshot (`docs/screenshots/01-home.png`) still matches when nothing is playing.
 
 README.md was not edited (held).
+
+## 2026-10-29 — Model downloads can use mobile data, after asking (`feat/mobile-data-models`)
+
+🧪 VERIFYING — unit tests only, nothing seen on a phone. Tapping Download (or Resume) on mobile data
+now asks "You're not on Wi-Fi": wait for Wi-Fi (as before) or download now on mobile data. On Wi-Fi
+nothing changes. The rows no longer say "over Wi-Fi only".
+
+**What this makes wrong in the README, once confirmed:** line ~67, "downloaded once over Wi-Fi". Could
+read "downloaded once — over Wi-Fi, or on mobile data if you say so".
+
+README.md was not edited.

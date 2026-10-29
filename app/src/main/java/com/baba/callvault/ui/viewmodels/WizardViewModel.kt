@@ -16,6 +16,7 @@ import com.baba.callvault.data.AppPreferences
 import com.baba.callvault.data.StorageTarget
 import com.baba.callvault.data.SyncScheduleMode
 import com.baba.callvault.system.storage.SyncScheduler
+import com.baba.callvault.transcription.model.DownloadNetwork
 import com.baba.callvault.transcription.model.DownloadableModel
 import com.baba.callvault.transcription.model.ModelDownloadWorker
 import com.baba.callvault.transcription.model.ModelRepository
@@ -150,7 +151,7 @@ class WizardViewModel(application: Application) : AndroidViewModel(application) 
      * Queues a model for download and leaves it running.
      *
      * **Deliberately not tied to this screen.** [ModelDownloadWorker] is unique WorkManager work
-     * enqueued against the application context and constrained to an unmetered network, so it
+     * enqueued against the application context (Wi-Fi only unless the user chose mobile data), so it
      * outlives the wizard, the Activity and — with a foreground download in flight — a good deal
      * else. That is the whole point: the summariser is 3.46 GB, the wizard has four steps left, and
      * making either wait for the other would be absurd. Nothing here cancels on navigation, and
@@ -160,8 +161,8 @@ class WizardViewModel(application: Application) : AndroidViewModel(application) 
      * versa: both screens read it back through `rememberModelDownloadState`, which observes the
      * work rather than the calendar.
      */
-    fun downloadModel(model: DownloadableModel) {
-        ModelDownloadWorker.enqueue(appContext, model)
+    fun downloadModel(model: DownloadableModel, network: DownloadNetwork) {
+        ModelDownloadWorker.enqueue(appContext, model, network)
         bump()
     }
 

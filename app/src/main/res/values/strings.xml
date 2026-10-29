@@ -506,7 +506,7 @@
     <string name="list_separator">", "</string>
     <string name="wizard_transcription_summary_heading">Summaries</string>
     <string name="wizard_transcription_summary_body">Once a call has a transcript, CallVault can also write a short summary of it — on the phone, like everything else here.</string>
-    <string name="wizard_transcription_background_note">Both downloads only run over Wi-Fi, and they keep going in the background. You can carry on and finish setup now — CallVault\'s settings show the same progress afterwards.</string>
+    <string name="wizard_transcription_background_note">Both downloads keep going in the background. You can carry on and finish setup now — CallVault\'s settings show the same progress afterwards.</string>
 
     <string name="wizard_audio_title">Audio quality</string>
     <string name="wizard_audio_subtitle">Pick the recording format and bit rate. Opus at 16 kbps is recommended for clear voice at small file sizes.</string>
@@ -634,7 +634,7 @@
     <string name="transcription_model_best">Best quality</string>
     <string name="transcription_model_best_small_download">Best quality, smaller download</string>
     <string name="transcription_model_download">Download model</string>
-    <string name="transcription_model_download_subtitle">%1$d MB, over Wi-Fi only</string>
+    <string name="transcription_model_download_subtitle">%1$d MB</string>
     <string name="transcription_model_delete">Delete model</string>
     <string name="transcription_model_installed">Downloaded and ready</string>
     <!--
@@ -676,11 +676,16 @@
       when the model does — do not hardcode one into a string.
     -->
     <string name="summary_model_download">Download the summariser</string>
-    <string name="summary_model_download_subtitle">%1$.1f GB, over Wi-Fi only</string>
+    <string name="summary_model_download_subtitle">%1$.1f GB</string>
     <string name="summary_model_delete">Delete the summariser</string>
     <string name="summary_model_installed">Downloaded and ready</string>
     <string name="summary_model_downloading">Downloading… %1$d%%</string>
     <string name="summary_model_waiting">Waiting for Wi-Fi</string>
+    <!-- Asked when Download is tapped on mobile data. %1$s is the size as the download row shows it ("190 MB", "3.5 GB"). -->
+    <string name="mobile_data_download_title">You\'re not on Wi-Fi</string>
+    <string name="mobile_data_download_body">This model is %1$s. Download it now on mobile data, or wait and let it start by itself when you\'re on Wi-Fi?</string>
+    <string name="mobile_data_download_wait">Wait for Wi-Fi</string>
+    <string name="mobile_data_download_now">Download now on mobile data</string>
     <string name="summary_model_cancel">Cancel the download</string>
     <string name="summary_model_resume">Resume the download</string>
     <string name="summary_model_resume_subtitle">%1$.1f GB of %2$.1f GB already downloaded</string>
@@ -724,7 +729,7 @@
       per-minute rate.
     -->
     <string name="summary_requirements_heading">Before you download</string>
-    <string name="summary_requirements_download">%1$.1f GB to download, over Wi-Fi only</string>
+    <string name="summary_requirements_download">%1$.1f GB to download</string>
     <string name="summary_requirements_memory">About %1$.1f GB of memory while it runs</string>
     <string name="summary_requirements_time">Roughly a minute or two for a short call, longer for a long one</string>
     <string name="summary_requirements_private">Everything happens on your phone. Nothing is sent anywhere.</string>
