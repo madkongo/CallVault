@@ -711,6 +711,8 @@
     <string name="transcription_mode_manual">Manuellement</string>
     <string name="transcription_model_best">Meilleure qualité</string>
     <string name="transcription_model_best_small_download">Meilleure qualité, téléchargement plus léger</string>
+    <string name="transcription_model_persian">Optimisé pour le persan</string>
+    <string name="transcription_model_persian_licence">Meilleure qualité, entraîné sur de la parole persane. Whisper large-v3-turbo Persian par givia, licence CC BY 4.0, quantifié pour whisper.cpp. Il est téléchargé séparément et n\'est pas inclus dans CallVault.</string>
     <string name="transcription_model_delete">Supprimer le modèle</string>
     <string name="transcription_model_download">Télécharger le modèle</string>
     <string name="transcription_model_download_subtitle">%1$d Mo</string>

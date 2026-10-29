@@ -20,6 +20,7 @@ import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Download
 import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -34,6 +35,7 @@ import com.baba.callvault.transcription.model.ModelDownloadWorker
 import com.baba.callvault.transcription.model.TranscriptionModel
 import com.baba.callvault.ui.common.ConfirmDialog
 import com.baba.callvault.ui.common.ModelDownloadState
+import com.baba.callvault.ui.common.TranscriptionLabels
 import com.baba.callvault.ui.common.rememberMobileDataDownloadPrompt
 import com.baba.callvault.ui.common.rememberModelDownloadState
 
@@ -171,7 +173,25 @@ internal fun TranscriptionModelRows(
                 importRow(null)
             }
         }
+
+        TranscriptionLabels.creditOf(model)?.let { ModelCreditParagraph(stringResource(it)) }
     }
+}
+
+/**
+ * What a third-party tier is and whose work it is, under its rows in every state (GitHub #55).
+ *
+ * Drawn as plain text rather than as an [ExplanationParagraph], which ⓘ mode folds away: the credit is
+ * a condition of the CC BY licence, not an explanation, so it must not depend on a display setting.
+ */
+@Composable
+private fun ModelCreditParagraph(text: String) {
+    Text(
+        text = text,
+        style = MaterialTheme.typography.bodySmall,
+        color = MaterialTheme.colorScheme.onSurfaceVariant,
+        modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp)
+    )
 }
 
 /** "Resume the download", with what is already banked: the row for a model stopped part-way. */

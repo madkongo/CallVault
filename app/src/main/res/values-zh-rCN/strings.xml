@@ -710,6 +710,8 @@
     <string name="transcription_mode_manual">手动</string>
     <string name="transcription_model_best">最佳质量</string>
     <string name="transcription_model_best_small_download">最佳质量（下载更小）</string>
+    <string name="transcription_model_persian">波斯语优化</string>
+    <string name="transcription_model_persian_licence">质量最佳，使用波斯语语音训练。Whisper large-v3-turbo Persian，作者 givia，CC BY 4.0 许可，已为 whisper.cpp 量化。需单独下载，不包含在 CallVault 中。</string>
     <string name="transcription_model_delete">删除模型</string>
     <string name="transcription_model_download">下载模型</string>
     <string name="transcription_model_download_subtitle">%1$d MB</string>

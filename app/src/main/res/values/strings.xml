@@ -634,6 +634,8 @@
     -->
     <string name="transcription_model_best">Best quality</string>
     <string name="transcription_model_best_small_download">Best quality, smaller download</string>
+    <string name="transcription_model_persian">Persian-tuned</string>
+    <string name="transcription_model_persian_licence">Best quality, trained on Persian speech. Whisper large-v3-turbo Persian by givia, CC BY 4.0 licence, quantised for whisper.cpp. It is downloaded separately rather than included in CallVault.</string>
     <string name="transcription_model_download">Download model</string>
     <string name="transcription_model_download_subtitle">%1$d MB</string>
     <string name="transcription_model_delete">Delete model</string>
