@@ -64,3 +64,24 @@ ON = far side captured. That is a complete, consistent explanation of every prio
 - Which exact prop/state the toggle flips (`share_record.enable` vs an app-op) is inferred, not read.
 - Whether it also needs "Auto-start recording" on, or just the master toggle — the reporter enabled both.
 - Consider a vivo-only onboarding/health hint that points users to this toggle (not built; maintainer's call).
+
+## 2026-10-28 update — the toggle is China-firmware only 📐
+
+📐 CALCULATED (firmware code + public getprop dumps; not confirmed on a device or by a user).
+"In-app call recording" ships only on **China-market** vivo/iQOO firmware (model suffix "A", e.g. V2507A;
+OriginOS 4+). The decider is `persist.vivo.audio.feature.voip_bbkrecord.enable` — `true` on China builds,
+`false`/absent on overseas builds (`ro.vivo.product.overseas=yes`: Funtouch, global OriginOS, e.g. iQOO
+Z10x I2404). Overseas builds have no toggle and no other non-root way to turn it on, so "it is not impossible
+without root" above holds **only for China firmware**. Detail: memory `private-reports-2026-09-28.md`.
+
+Changes (branch `fix/vivo-overseas-wording`), 🧪 VERIFYING:
+- `docs/SUPPORT.md` §vivo now says China-only; overseas = your side only, no workaround without root.
+- New `voip_one_sided_warning_vivo_overseas` + `home_health_failed_one_sided_vivo_overseas`, chosen by
+  `DeviceInfo.vivoInAppRecording()`: shown only when the switch prop is false/missing AND
+  `ro.vivo.product.overseas=yes`; anything unclear keeps the "turn it on" message.
+- To settle: a #64 reporter (overseas iQOO) runs
+  `adb shell getprop persist.vivo.audio.feature.voip_bbkrecord.enable` and
+  `adb shell getprop ro.vivo.product.overseas` (expect `false`/empty and `yes`), and sees the new message
+  after a one-sided app call. Also unproven: that an untrusted app can read both props (SELinux); if it
+  cannot, the old message keeps showing — wrong, but no worse than today.
+

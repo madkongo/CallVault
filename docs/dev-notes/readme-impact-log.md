@@ -1,5 +1,13 @@
 # README impact log
 
+## 2026-10-28 — vivo/iQOO app calls: far side is China-firmware only
+
+📐 research, not device-confirmed. The README makes no vivo claim, so nothing to correct. But the 2.4.3
+entry below parked "app calls on vivo/iQOO" as a possible feature line — if it is ever added, it must say
+the other side of app calls records **only on China-market vivo/iQOO firmware** (vivo's "In-app call
+recording" option); overseas vivo/iQOO phones record your side only, no workaround without root. Carrier
+calls record both sides on all of them. See `docs/SUPPORT.md` §vivo.
+
 ## 2026-10-23 — the emulator's README demo data is gone
 
 Not a claim change: a **screenshot-shoot blocker.** The #58 emulator run
