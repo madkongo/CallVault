@@ -248,6 +248,11 @@ class ShareImportViewModel(application: Application) : AndroidViewModel(applicat
     fun languageChosen(displayName: String, label: String, language: String?) {
         val context = getApplication<Application>()
         val prefs = AppPreferences(context)
+        // A cloud service (#48) has no "keeps your phone busy" cost to confirm; sending was agreed to once.
+        if (TranscriptionRouting.skipsRunConfirmation(prefs)) {
+            confirmed(displayName, language, dontAskAgain = false)
+            return
+        }
         val estimate = if (importedDurationMs <= 0L) null else {
             TranscriptionEstimate.estimateMs(audioMs = importedDurationMs, cost = TranscriptionRouting.runCost(prefs))
         }

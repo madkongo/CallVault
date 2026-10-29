@@ -694,7 +694,10 @@ fun HomeScreen(
         // language they speak; an imported file is neither, and may be an hour of a lecture. See
         // startTranscription for the same argument about the language.
         val isImport = ImportedRecording.isImported(displayName)
-        if (!isImport && !prefs.getTranscriptionConfirmBeforeRun()) {
+        // A cloud service (#48) takes seconds and keeps the phone idle, so the "keeps your phone busy"
+        // dialog does not apply; sending was agreed to once, when the service was chosen.
+        val isCloud = TranscriptionRouting.skipsRunConfirmation(prefs)
+        if (!isImport && !isCloud && !prefs.getTranscriptionConfirmBeforeRun()) {
             enqueueTranscription(displayName, language)
         } else {
             // Estimating is arithmetic on a duration read from the container — microseconds — so the
@@ -712,6 +715,8 @@ fun HomeScreen(
                 // regardless, costs nothing and turns a silent nothing-happens into a sentence.
                 if (TranscriptionLengthLimit.isTooLong(audioMs)) {
                     tooLongMinutes = (audioMs / 60_000L).toInt()
+                } else if (isCloud) {
+                    enqueueTranscription(displayName, language)
                 } else {
                     val estimate = if (audioMs <= 0L) null else TranscriptionEstimate.estimateMs(
                         audioMs = audioMs,

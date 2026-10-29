@@ -125,6 +125,14 @@ class CloudRunTest {
         assertTrue(stored.errorMessage!!.contains("key"))
     }
 
+    @Test
+    fun `a cloud service skips the keeps-your-phone-busy confirmation, on this phone keeps it`() {
+        val prefs = AppPreferences(context)
+        assertFalse(TranscriptionRouting.skipsRunConfirmation(prefs))
+        prefs.setTranscriptionService(TranscriptionService.GROQ)
+        assertTrue(TranscriptionRouting.skipsRunConfirmation(prefs))
+    }
+
     // ── Scheduler ───────────────────────────────────────────────────────────────────────────
 
     @Test

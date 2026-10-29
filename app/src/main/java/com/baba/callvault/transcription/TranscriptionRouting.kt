@@ -65,6 +65,12 @@ object TranscriptionRouting {
         return prefs.getRunCost(model)
     }
 
+    /**
+     * Whether tapping Transcribe skips the "this keeps your phone busy" confirmation: with a cloud service
+     * the phone stays idle and the run takes seconds, and the send itself was agreed to once, in Settings.
+     */
+    fun skipsRunConfirmation(prefs: AppPreferences): Boolean = prefs.getTranscriptionService().isCloud
+
     /** Whether to word the estimate as "may take a while": only an on-device model never timed here. */
     fun isFirstRun(prefs: AppPreferences): Boolean {
         if (prefs.getTranscriptionService().isCloud) return false
