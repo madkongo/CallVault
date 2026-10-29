@@ -147,7 +147,26 @@ object LogRedaction {
      *
      * @param salt this install's random salt, from `AppPreferences.getLogPseudonymSalt`.
      */
-    fun redact(message: String, salt: String): String {
+    fun redact(message: String, salt: String): String = redactPeople(redactApiKeys(message), salt)
+
+    /**
+     * API keys for cloud transcription (issue #48), in case one ever reaches a line: Groq's `gsk_…`,
+     * OpenRouter's and OpenAI's `sk-…`, and anything after `Bearer `. Nothing logs a key on purpose —
+     * this is the net under that rule, so a mistake costs a placeholder rather than someone's account.
+     *
+     * First, so the phone rule never sees a key's digits. Idempotent: the placeholder matches nothing.
+     */
+    fun redactApiKeys(message: String): String =
+        if (!message.contains("sk") && !message.contains("Bearer", ignoreCase = true)) message
+        else API_KEY_REGEX.replace(message, KEY_PLACEHOLDER)
+
+    private const val KEY_PLACEHOLDER = "[KEY_REDACTED]"
+
+    private val API_KEY_REGEX = Regex(
+        "(?i)(?:\\bbearer\\s+[A-Za-z0-9._~+/=-]{8,}|\\b(?:gsk_|sk-or-v1-|sk-proj-|sk-)[A-Za-z0-9_-]{12,})"
+    )
+
+    private fun redactPeople(message: String, salt: String): String {
         if (!mayContainRecordingName(message)) return PHONE_REGEX.replace(message, PHONE_PLACEHOLDER)
 
         val out = StringBuilder(message.length + 16)
