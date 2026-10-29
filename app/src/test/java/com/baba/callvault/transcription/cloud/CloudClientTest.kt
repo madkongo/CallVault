@@ -133,6 +133,18 @@ class CloudClientTest {
     }
 
     @Test
+    fun `a key that cannot go in a header is refused without sending anything`() {
+        val client = CloudTranscriptionClient { _, _, _ -> error("must not be called") }
+        try {
+            client.transcribe(groq, "gsk_ab\ncd\u00e9", WavEncoder.silence(), null)
+            fail()
+        } catch (e: CloudError) {
+            assertEquals(CloudError.Kind.BAD_KEY, e.kind)
+            assertFalse(e.message!!.contains("gsk_ab"))
+        }
+    }
+
+    @Test
     fun `the test button tells a working key from a bad one and from a model without timings`() {
         fun outcome(reply: HttpReply) = CloudTranscriptionClient { _, _, _ -> reply }.test(groq, "k")
         assertEquals(CloudTranscriptionClient.TestOutcome.WORKS, outcome(HttpReply(200, """{"text":"","segments":[]}""")))

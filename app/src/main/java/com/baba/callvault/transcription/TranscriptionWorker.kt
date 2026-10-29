@@ -233,7 +233,8 @@ class TranscriptionWorker(
             )
             TranscriptionRouting.Route.CLOUD -> {
                 val endpoint = prefs.getCloudEndpoint(service)
-                val key = CloudKeyStore(applicationContext).get(service)
+                // Consent is checked here too, not only in Settings: nothing sends audio without it.
+                val key = CloudKeyStore(applicationContext).get(service).takeIf { prefs.hasCloudConsent(service) }
                 if ((endpoint == null || key == null) && !isNamedRun) return EngineChoice.CloudNotSetUp
                 val label = endpoint?.label ?: service.preset?.displayName ?: service.key
                 val transcriber = endpoint?.let { CloudTranscriber(it, key).asTranscriber() }

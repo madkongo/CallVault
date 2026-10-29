@@ -66,6 +66,11 @@ class CloudTranscriptionClient(private val http: HttpPoster = UrlConnectionPoste
 
     private fun send(endpoint: CloudEndpoint, apiKey: String, wav: ByteArray, language: String?): String {
         if (apiKey.isBlank()) throw CloudError.notSetUp(endpoint.label)
+        // A header value must be printable ASCII; anything else makes HttpURLConnection throw an
+        // exception whose message can quote the header — the key. Refused here with our own words.
+        if (!isPlausibleKey(apiKey.trim())) {
+            throw CloudError(CloudError.Kind.BAD_KEY, "The ${endpoint.label} key has characters a key cannot contain. Paste it again.")
+        }
         val form = MultipartForm()
         val payload = try {
             form.build(fields(endpoint, language), "file", "chunk.wav", "audio/wav", wav)
@@ -98,6 +103,11 @@ class CloudTranscriptionClient(private val http: HttpPoster = UrlConnectionPoste
          * The pinned language as ISO-639-1, or null to let the service detect it. Whisper's few
          * longer codes ("haw", "yue") are not ISO-639-1 and are left to detection.
          */
+        private val PRINTABLE_ASCII = '!'..'~'
+
+        /** Whether [key] can travel in a header at all: printable ASCII, no spaces. */
+        fun isPlausibleKey(key: String): Boolean = key.isNotEmpty() && key.all { it in PRINTABLE_ASCII }
+
         fun isoLanguage(language: String?): String? =
             language?.trim()?.lowercase()?.takeIf { it.length == ISO_639_1_LENGTH && it.all(Char::isLetter) }
     }
@@ -123,10 +133,9 @@ class UrlConnectionPoster(
             connection.outputStream.use { it.write(body) }
             val status = connection.responseCode
             val text = if (status in 200..299) {
-                connection.inputStream.use { it.readBytes().toString(Charsets.UTF_8) }
+                connection.inputStream.use { readCapped(it) }.toString(Charsets.UTF_8)
             } else {
-                // Drained and discarded so the connection can be reused; never surfaced — see CloudError.
-                runCatching { connection.errorStream?.use { it.readBytes() } }
+                // Discarded unread: never surfaced — see CloudError — and of no use to us.
                 ""
             }
             return HttpReply(status, text)
@@ -135,7 +144,22 @@ class UrlConnectionPoster(
         }
     }
 
+    /** At most [MAX_REPLY_BYTES]: a server that answers without end must not run the heap out. */
+    private fun readCapped(input: java.io.InputStream): ByteArray {
+        val out = java.io.ByteArrayOutputStream()
+        val buffer = ByteArray(BUFFER_BYTES)
+        while (true) {
+            val read = input.read(buffer)
+            if (read < 0) return out.toByteArray()
+            if (out.size() + read > MAX_REPLY_BYTES) throw IOException("Reply larger than $MAX_REPLY_BYTES bytes")
+            out.write(buffer, 0, read)
+        }
+    }
+
     private companion object {
+        /** 📐 Hours of segments in verbose_json fit in far less; one pass is at most six minutes. */
+        const val MAX_REPLY_BYTES = 5 * 1024 * 1024
+        const val BUFFER_BYTES = 16 * 1024
         const val CONNECT_TIMEOUT_MS = 20_000
 
         /** OpenRouter says upstream providers time out after 60 s; this leaves room for the upload. */

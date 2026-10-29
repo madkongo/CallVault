@@ -60,6 +60,10 @@ with "answered without timings" (never stores untimed text) and the Test button 
   on — the switch changes the constraint of the nightly sweep and of runs started after it, not of work
   WorkManager already holds (and a tap queued behind it waits too). Re-enqueueing waiting runs safely needs
   each one's per-recording language, so it was left out of v1.
+- Consent is checked in the worker too (no consent = not set up). It is per service, so for Custom it is
+  **not** asked again when the server address changes — known v1 limit (security review, MEDIUM).
+- Keys with characters outside printable ASCII are refused before sending (a header exception could quote
+  the key); replies over 5 MB are refused (a hostile Custom server cannot run the heap out).
 - Home / share-import: "No speech model yet" is not shown for cloud; the confirm dialog quotes 📐
   3 s + 0.1 × call length (a guess with headroom, not measured) and never the first-run wording.
 - Length limit stays at 60 min for cloud too (unchanged; relaxing it is trivial later, but the local
