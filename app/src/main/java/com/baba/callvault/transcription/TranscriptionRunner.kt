@@ -24,6 +24,8 @@ import com.baba.callvault.data.transcripts.db.TranscriptDatabase
 import com.baba.callvault.data.transcripts.db.TranscriptEntry
 import com.baba.callvault.data.transcripts.db.TranscriptSegmentEntry
 import com.baba.callvault.data.transcripts.db.TranscriptState
+import com.baba.callvault.transcription.cloud.CloudEndpoint
+import com.baba.callvault.transcription.cloud.CloudError
 import com.baba.callvault.transcription.model.TranscriptionModel
 import com.baba.callvault.server.speakers.OfflineSpeakerLabeller
 import com.baba.callvault.utils.AppLogger
@@ -90,6 +92,14 @@ class TranscriptionRunner(
     private val dao get() = TranscriptDatabase.get(context).transcriptDao()
 
     /**
+     * Set when a cloud run (issue #48) met a passing failure — rate limit, server error, no network —
+     * and left its recording QUEUED for WorkManager's back-off instead of marking it failed. The batch
+     * stops there: the next recording would meet the same wall.
+     */
+    var retryRequested: Boolean = false
+        private set
+
+    /**
      * Transcribes each of [displayNames] in turn.
      *
      * @param shouldStop consulted between recordings; when it returns true the batch ends early and
@@ -104,6 +114,8 @@ class TranscriptionRunner(
         language: String?,
         displayNames: List<String>,
         shouldStop: () -> Boolean = { false },
+        /** A cloud run may leave a passing failure QUEUED for a retry rather than FAILED. */
+        canRetryLater: Boolean = false,
         onProgress: suspend (completed: Int, total: Int, current: String) -> Unit = { _, _, _ -> }
     ): Int {
         var transcribed = 0
@@ -118,7 +130,11 @@ class TranscriptionRunner(
             // the run forward, and a counter that stalls on a bad file looks like a hang.
             onProgress(reached, displayNames.size, displayName)
             reached++
-            if (runOne(modelId, modelPath, language, displayName, shouldStop)) transcribed++
+            if (runOne(modelId, modelPath, language, displayName, shouldStop, canRetryLater)) transcribed++
+            if (retryRequested) {
+                AppLogger.i(TAG, "Stopping the batch: the service asked to wait; the rest stay queued")
+                break
+            }
         }
 
         return transcribed
@@ -137,8 +153,12 @@ class TranscriptionRunner(
         modelPath: String,
         language: String?,
         displayName: String,
-        shouldStop: () -> Boolean = { false }
+        shouldStop: () -> Boolean = { false },
+        canRetryLater: Boolean = false,
     ): Boolean {
+        // A cloud engine (issue #48) skips everything that exists to repair or time whisper.cpp on this
+        // phone, and sends no contact name: the prompt is more than a service needs to hear.
+        val isCloud = CloudEndpoint.isCloudEngineId(modelId)
         // The checkpoint. A resumed run re-offers everything it was given, so finished work must be
         // recognised and skipped rather than paid for twice.
         if (dao.findTranscript(displayName)?.state == TranscriptState.DONE) {
@@ -182,7 +202,7 @@ class TranscriptionRunner(
         val startedAt = SystemClock.elapsedRealtime()
         // Named before the words are decoded, so a brand or a contact is spelled rather than
         // guessed at. Best-effort: no glossary and no resolvable name simply means no prompt.
-        val prompt = runCatching { promptFor(displayName, language) }.getOrNull()
+        val prompt = if (isCloud) null else runCatching { promptFor(displayName, language) }.getOrNull()
         // Length only, never the words: the prompt is a contact's name. Logged because a prompt in the
         // wrong script can turn the language pin off, and without this line a transcript in the wrong
         // language cannot be told apart from one that was never primed at all.
@@ -204,7 +224,7 @@ class TranscriptionRunner(
                 // English on two phones with nothing in the pipeline broken. See WrongScriptRetry.
                 // Retries get no speaker detector — the first decode already heard the whole file, and
                 // feeding it again would count every turn twice.
-                if (!WrongScriptRetry.shouldRetry(first, language, audioMs)) first
+                if (isCloud || !WrongScriptRetry.shouldRetry(first, language, audioMs)) first
                 else {
                     AppLogger.w(TAG, "Transcript is not in the pinned language's script ($language); decoding again")
                     WrongScriptRetry.recover(first, language) { settings ->
@@ -288,7 +308,7 @@ class TranscriptionRunner(
                     withContext(NonCancellable) { localUriFor(displayName) } == null
                 // What it really cost on this phone, so the next estimate is measured rather than
                 // inherited from whatever hardware the published figure came from.
-                recordSpeed(modelId, audioMs, SystemClock.elapsedRealtime() - startedAt)
+                if (!isCloud) recordSpeed(modelId, audioMs, SystemClock.elapsedRealtime() - startedAt)
                 // Count, never content: a transcript is the substance of a private call.
                 AppLogger.i(TAG, "Transcribed '$displayName' (${segments.size} segment(s))")
                 // After the words, the DONE row and the audio decision are all settled, so the
@@ -305,12 +325,20 @@ class TranscriptionRunner(
                 true
             },
             onFailure = { failure ->
-                AppLogger.w(TAG, "Failed to transcribe '$displayName': ${failure.message}")
-                mark(displayName, TranscriptState.FAILED, modelId, language, failure.message)
-                // A failure was as silent as a success until now: the row gained a red icon on a
-                // page the user had been given no reason to open. Only a real failure reaches here
-                // — a stop, an abort and a refusal for length have all returned above.
-                announce(displayName, TranscriptNotice.Outcome.Failed)
+                if (canRetryLater && failure is CloudError && failure.isRetryable) {
+                    // Not a failure of this recording: the service or the network will be back. QUEUED
+                    // keeps it in line for the retry, with the reason on the row for anyone who looks.
+                    AppLogger.w(TAG, "Will retry '$displayName' later: ${failure.message}")
+                    mark(displayName, TranscriptState.QUEUED, modelId, language, failure.message)
+                    retryRequested = true
+                } else {
+                    AppLogger.w(TAG, "Failed to transcribe '$displayName': ${failure.message}")
+                    mark(displayName, TranscriptState.FAILED, modelId, language, failure.message)
+                    // A failure was as silent as a success until now: the row gained a red icon on a
+                    // page the user had been given no reason to open. Only a real failure reaches here
+                    // — a stop, an abort and a refusal for length have all returned above.
+                    announce(displayName, TranscriptNotice.Outcome.Failed)
+                }
                 false
             }
         )

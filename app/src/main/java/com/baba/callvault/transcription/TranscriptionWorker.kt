@@ -18,6 +18,10 @@ import androidx.work.workDataOf
 import com.baba.callvault.R
 import com.baba.callvault.data.AppPreferences
 import com.baba.callvault.data.recordings.RecordingCatalog
+import com.baba.callvault.transcription.cloud.CloudEndpoint
+import com.baba.callvault.transcription.cloud.CloudError
+import com.baba.callvault.transcription.cloud.CloudKeyStore
+import com.baba.callvault.transcription.cloud.CloudTranscriber
 import com.baba.callvault.transcription.model.ModelRepository
 import com.baba.callvault.transcription.model.TranscriptionModel
 import com.baba.callvault.utils.AppLogger
@@ -64,16 +68,22 @@ class TranscriptionWorker(
 
         val model = TranscriptionModel.fromId(prefs.getTranscriptionModelId())
             ?: TranscriptionModel.DEFAULT
+        val single = inputData.getString(KEY_DISPLAY_NAME)
 
-        // Retry rather than fail: the model may still be downloading, and the work should pick up
-        // once it lands instead of the user having to ask again.
-        val modelPath = ModelRepository.pathFor(applicationContext, model)?.absolutePath
-            ?: run {
+        val engine = when (val chosen = chooseEngine(prefs, model, isNamedRun = single != null)) {
+            is EngineChoice.Run -> chosen
+            // Retry rather than fail: the model may still be downloading, and the work should pick up
+            // once it lands instead of the user having to ask again.
+            EngineChoice.WaitForModel -> {
                 AppLogger.i(TAG, "Model ${model.id} is not installed yet; will retry")
                 return@withContext Result.retry()
             }
-
-        val single = inputData.getString(KEY_DISPLAY_NAME)
+            // A sweep with no key set up would mark every waiting call failed; it waits instead.
+            EngineChoice.CloudNotSetUp -> {
+                AppLogger.i(TAG, "Cloud transcription is chosen but not set up; nothing transcribed")
+                return@withContext Result.success()
+            }
+        }
         val names = if (single != null) {
             listOf(single)
         } else {
@@ -85,12 +95,12 @@ class TranscriptionWorker(
             return@withContext Result.success()
         }
 
-        AppLogger.i(TAG, "Transcribing ${names.size} recording(s) with ${model.id}")
+        AppLogger.i(TAG, "Transcribing ${names.size} recording(s) with ${engine.modelId}")
 
         if (userRequested) {
             // A user request always names one recording. Its length is read from the container, which
             // costs milliseconds and happens before the model is loaded.
-            val estimatedMs = single?.let { estimatedMsFor(it, model, prefs) } ?: 0L
+            val estimatedMs = single?.let { estimatedMsFor(it, prefs) } ?: 0L
             if (TranscriptionNoticePolicy.showsNotification(userRequested = true, estimatedMs = estimatedMs)) {
                 AppLogger.i(TAG, "Showing the notification: this run may outlast Android's job limit (~${estimatedMs / 1000}s)")
                 promote()
@@ -140,7 +150,7 @@ class TranscriptionWorker(
                 // boundaries, so the tracker fills the long gaps between its anchors.
                 publishProgress(
                     progress.percent(
-                        reportedPercent = TranscriptionEngine.progressPercent(),
+                        reportedPercent = engine.progressPercent(),
                         nowMs = SystemClock.elapsedRealtime(),
                     )
                 )
@@ -148,15 +158,21 @@ class TranscriptionWorker(
             }
         }
 
-        val transcribed = TranscriptionRunner(applicationContext).runBatch(
-            modelId = model.id,
-            modelPath = modelPath,
+        val runner = engine.transcriber
+            ?.let { TranscriptionRunner(applicationContext, transcriber = it) }
+            ?: TranscriptionRunner(applicationContext)
+        // A passing cloud failure (429, 5xx, no network) is retried with back-off, a few times only.
+        val canRetryLater = engine.isCloud && TranscriptionRouting.mayRetryCloud(runAttemptCount)
+        val transcribed = runner.runBatch(
+            modelId = engine.modelId,
+            modelPath = engine.modelPath,
             language = TranscriptionLanguageChoice.resolve(
                 chosen = inputData.getString(KEY_LANGUAGE),
                 setting = prefs.getTranscriptionLanguage()
             ),
             displayNames = names,
             shouldStop = { isStopped },
+            canRetryLater = canRetryLater,
             onProgress = { completed, total, current ->
                 // Remembered as well as published, because the abort watcher republishes the whole
                 // set every tick and setProgress replaces rather than merges — dropping these would
@@ -167,7 +183,7 @@ class TranscriptionWorker(
                 // A new recording is a new clock; announcing the same one again changes nothing.
                 progress.startRecording(
                     displayName = current,
-                    estimatedMs = estimatedMsFor(current, model, prefs),
+                    estimatedMs = estimatedMsFor(current, prefs),
                     nowMs = SystemClock.elapsedRealtime(),
                 )
                 publishProgress(progress.percent(reportedPercent = 0, nowMs = SystemClock.elapsedRealtime()))
@@ -177,7 +193,60 @@ class TranscriptionWorker(
         abortWatcher.cancel()
 
         // Anything left unfinished stays queued, so a later run resumes rather than restarts.
-        if (isStopped && transcribed < names.size) Result.retry() else Result.success()
+        when {
+            runner.retryRequested -> Result.retry()
+            isStopped && transcribed < names.size -> Result.retry()
+            else -> Result.success()
+        }
+    }
+
+    /** Which engine this run uses, or why it cannot run yet. */
+    private sealed interface EngineChoice {
+        data class Run(
+            val modelId: String,
+            val modelPath: String,
+            /** Null for the default on-device engine. */
+            val transcriber: Transcriber?,
+            val isCloud: Boolean,
+            val progressPercent: () -> Int,
+        ) : EngineChoice
+
+        data object WaitForModel : EngineChoice
+        data object CloudNotSetUp : EngineChoice
+    }
+
+    /**
+     * On this phone with the installed model, or the chosen cloud service with its key (issue #48).
+     *
+     * A cloud service never waits for a model. Not set up (no key, or an incomplete Custom): a named
+     * run still goes ahead so that one recording fails with a message saying what to fix; a sweep
+     * does nothing, rather than fail every waiting call.
+     */
+    private fun chooseEngine(prefs: AppPreferences, model: TranscriptionModel, isNamedRun: Boolean): EngineChoice {
+        val service = prefs.getTranscriptionService()
+        val modelPath = if (service.isCloud) null else ModelRepository.pathFor(applicationContext, model)?.absolutePath
+        return when (TranscriptionRouting.route(service, modelInstalled = modelPath != null)) {
+            TranscriptionRouting.Route.WAIT_FOR_MODEL -> EngineChoice.WaitForModel
+            TranscriptionRouting.Route.ON_DEVICE -> EngineChoice.Run(
+                model.id, modelPath.orEmpty(), transcriber = null, isCloud = false,
+                progressPercent = { TranscriptionEngine.progressPercent() },
+            )
+            TranscriptionRouting.Route.CLOUD -> {
+                val endpoint = prefs.getCloudEndpoint(service)
+                val key = CloudKeyStore(applicationContext).get(service)
+                if ((endpoint == null || key == null) && !isNamedRun) return EngineChoice.CloudNotSetUp
+                val label = endpoint?.label ?: service.preset?.displayName ?: service.key
+                val transcriber = endpoint?.let { CloudTranscriber(it, key).asTranscriber() }
+                    ?: Transcriber { _, _, _, _, _, _, _ -> throw CloudError.notSetUp(label) }
+                EngineChoice.Run(
+                    modelId = endpoint?.engineId ?: "${CloudEndpoint.ENGINE_PREFIX}${service.key}",
+                    modelPath = "",
+                    transcriber = transcriber,
+                    isCloud = true,
+                    progressPercent = { CloudTranscriber.progressPercent },
+                )
+            }
+        }
     }
 
     /**
@@ -191,7 +260,6 @@ class TranscriptionWorker(
      */
     private suspend fun estimatedMsFor(
         displayName: String,
-        model: TranscriptionModel,
         prefs: AppPreferences,
     ): Long {
         val uri = RecordingCatalog.all(applicationContext)
@@ -200,7 +268,7 @@ class TranscriptionWorker(
             ?.toUri()
             ?: return 0L
         val audioMs = runCatching { AudioDecoder.durationMs(applicationContext, uri) }.getOrDefault(0L)
-        return if (audioMs <= 0L) 0L else TranscriptionEstimate.estimateMs(audioMs, prefs.getRunCost(model))
+        return if (audioMs <= 0L) 0L else TranscriptionEstimate.estimateMs(audioMs, TranscriptionRouting.runCost(prefs))
     }
 
     companion object {
