@@ -5,6 +5,62 @@ All notable changes to CallVault are documented here. The format is based on
 
 ## [Unreleased]
 
+### Added
+
+- **Play from the Recordings list.** The play button on a recording plays it right there and turns into
+  pause; a thin bar under the card shows where you are and lets you drag to any point. The card itself still
+  opens the recording. Playback stops when you leave the list. Requested by a user.
+  <!-- ✅ VERIFIED 2026-10-26 (maintainer, OP9: "ok it works", then "ok looks good" after the plain-card
+       revision). docs/dev-notes/2026-10-26-play-from-list.md -->
+- **Download models on mobile data.** Tapping Download (or Resume/Retry) for a speech model or the
+  summariser while on mobile data now asks: wait for Wi-Fi, or download now on mobile data. On Wi-Fi nothing
+  changes. The setup wizard asks the same way. Before, downloads silently waited for Wi-Fi.
+  <!-- 🧪 VERIFYING: unit tests only (a491ad7b). Check: Wi-Fi off, tap Download model → the dialog. -->
+- **Persian-tuned speech model** (#55). With the transcription language set to Persian, the model list
+  offers "Persian-tuned", a version of the Best quality model trained on Persian speech by givia (CC BY 4.0).
+  Optional, 574 MB. Suggested by shabgardetanha.
+  <!-- 🧪 VERIFYING: not run on a phone; not quality-tested on calls (maintainer's call). One outside user
+       found it ~3x slower with temperature fallback on, which CallVault keeps on.
+       docs/dev-notes/2026-10-29-issue-55-persian-model.md -->
+
+### Changed
+
+- **Better with TalkBack** (#61). Switch, radio and checkbox rows read as one control with their state;
+  fold-open headers say "Expanded" or "Collapsed"; the playback waveform and transcript scrubber read
+  "Playback position, 1:12 of 4:23" and can be moved with TalkBack's adjust gestures; the remove × on tags is
+  bigger and announced as a button. Thanks to AbdulAziz-Hatem for the audit.
+  <!-- 🧪 VERIFYING: unit tests only (71358f9a, edbea8a4, c1512100, 619e6fa8); needs a TalkBack pass on a phone. -->
+- **vivo and iQOO: honest about app calls.** vivo's "In-app call recording" option, which lets the other
+  person's voice be recorded in app calls, exists only on China-market vivo/iQOO firmware. On overseas phones
+  CallVault's message after a one-sided app call now says it cannot be enabled, instead of pointing to a
+  setting the phone does not have. SUPPORT.md updated. (#64)
+  <!-- 📐 CALCULATED from firmware code + public getprop dumps, not device-confirmed. Unknown: whether a normal
+       app can read persist.vivo.audio.feature.voip_bbkrecord.enable on a real vivo; if not, the old message
+       shows. docs/dev-notes/2026-09-30-vivo-in-app-call-recording-toggle.md -->
+- **Arabic translation polished.** Thanks to AbdulAziz-Hatem (#59).
+  <!-- 🧪 merged fbc691ba; 43 broken placeholders repaired before merge (143afe43). Close PR #59 at release. -->
+
+### Fixed
+
+- **Long calls get their waveform** (#63). Drawing the waveform of a long call takes a few minutes; it was
+  stopped when you left the recording, and calls over 15 minutes were never drawn ahead of time. It now runs
+  in the background until it finishes, and the bars appear as soon as they are ready.
+  <!-- 🧪 VERIFYING: OP9, 45:00 Opus file drawn in the background and shown on open (2026-10-28). Needs a real
+       >40-min call on the OP12. docs/dev-notes/2026-10-28-issue-63-long-call-waveform.md -->
+- **Long calls could not be transcribed or imported.** Each 5-minute piece of a long recording reserved
+  memory for the whole call, so calls of around 45–50 minutes or more ran out of memory: transcription
+  failed, the waveform never appeared and imports were refused as unreadable. Reported by a user.
+  <!-- 🧪 VERIFYING: reproduced on the OP9 2026-10-29 — official 2.4.7 tried a 587 MB allocation on a 50-min
+       two-sided file and refused the import; the fixed build imports and reads it at ~80 MB heap (9a650b71).
+       Transcription of a long call not yet run on a phone. -->
+- **Importing a model with a paused download** (#60). A paused download no longer blocks importing the same
+  model from a file, and a paused download can now be discarded.
+  <!-- 🧪 VERIFYING: emulator only (8a2c2bc2). docs/dev-notes/2026-10-26-issue-60-paused-download-blocks-import.md -->
+
+<!-- NOT user-facing, decide before release: the #53 log-only app-call end probe (3af62f8d, VoipEndProbe +
+     endprobe[...] log lines every 5 s during app calls) is merged into integration/next. Keep it for the
+     next release (more logs from Honor users) or revert it first. -->
+
 ## [2.4.7] — 2026-10-25
 
 ### Added
