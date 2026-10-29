@@ -1,5 +1,25 @@
 # README impact log
 
+## 2026-10-29 — Transcribe with your own key (#48)
+
+🧪 VERIFYING (unit tests and build only; no real request sent, nothing seen on a phone). Settings → Where to
+transcribe can send call audio to Groq, OpenRouter or a custom OpenAI-compatible server, with the user's
+own key. Off by default ("On this phone"), asked before first use, Wi-Fi only unless mobile data is
+allowed. See `docs/dev-notes/2026-10-29-issue-48-byok-transcription.md`.
+
+**What this makes wrong in the README, when this ships** (README is held — not edited):
+- ~line 13, "Nothing leaves your phone unless you switch on Drive backup" — untrue once a cloud service is
+  chosen: call audio is uploaded to it.
+- ~line 65, "Both run on the phone, on the CPU, with no account and no network" — transcription can now
+  run on a cloud service (summaries still on the phone).
+- ~line 76 table "What leaves your device": Recordings → also "if you choose a cloud service for
+  transcription"; the "CallVault reaches the network in three places" sentence gains a fourth (the chosen
+  transcription service).
+
+**Not claimable:** any price, cost or "free" for those services (maintainer rule), any speed figure as
+measured (the "seconds per call" wording is the service's general reputation, not our measurement), and
+OpenRouter timings until a real multipart request has been seen to return segments.
+
 ## 2026-10-29 — Persian-tuned speech model (#55)
 
 🧪 VERIFYING (unit tests and build only; nothing seen on a phone). With the transcription language

@@ -68,8 +68,11 @@ object TranscriptionScheduler {
 
         // Charging and battery-not-low by default: a backlog can be hours of sustained CPU, which is
         // not something to spend someone's battery on while they are out with the phone in a pocket.
+        // A cloud service (issue #48) also needs a network: Wi-Fi unless mobile data was allowed.
+        val run = runConstraints(prefs, requiresCharging = prefs.getTranscriptionRequiresCharging())
         val constraints = Constraints.Builder()
-            .setRequiresCharging(prefs.getTranscriptionRequiresCharging())
+            .setRequiresCharging(run.requiresCharging)
+            .setRequiredNetworkType(run.networkType)
             .setRequiresBatteryNotLow(true)
             .setRequiresStorageNotLow(true)
             .build()
@@ -88,7 +91,8 @@ object TranscriptionScheduler {
     /**
      * Transcribes now, on request.
      *
-     * Runs with **no constraints**: the user asked for this one and is presumably waiting, so making
+     * Runs with **no constraints** on the phone (a cloud run still needs its network): the user asked
+     * for this one and is presumably waiting, so making
      * them find a charger first would be obtuse. [displayName] names a single recording; null drains
      * the queue.
      *
@@ -120,9 +124,14 @@ object TranscriptionScheduler {
                         )
                     )
                 }
-                if (requiresCharging) {
-                    setConstraints(Constraints.Builder().setRequiresCharging(true).build())
-                }
+                // A cloud run waits for its network even when tapped: Wi-Fi only means Wi-Fi only.
+                val run = runConstraints(AppPreferences(context), requiresCharging)
+                setConstraints(
+                    Constraints.Builder()
+                        .setRequiresCharging(run.requiresCharging)
+                        .setRequiredNetworkType(run.networkType)
+                        .build()
+                )
             }
             .build()
 
@@ -191,6 +200,14 @@ object TranscriptionScheduler {
         )
         runNow(context, displayName, requiresCharging)
     }
+
+    /** The constraints for one run under the current where-to-transcribe settings. */
+    private fun runConstraints(prefs: AppPreferences, requiresCharging: Boolean): TranscriptionRouting.RunConstraints =
+        TranscriptionRouting.constraints(
+            isCloud = prefs.getTranscriptionService().isCloud,
+            allowMobileData = prefs.getTranscriptionCloudMobileData(),
+            requiresCharging = requiresCharging,
+        )
 
     /** Millis from now until the next occurrence of [hour]:[minute] (today if ahead, else tomorrow). */
     private fun nextDailyDelayMillis(hour: Int, minute: Int): Long {

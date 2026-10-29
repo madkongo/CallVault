@@ -66,13 +66,17 @@ internal fun TranscriptionSection(
     ) {
         TranscriptionScheduleRows(preferences, updateTrigger, actions)
 
-        TranscriptionModelChoiceRow(preferences, updateTrigger, actions)
+        TranscriptionServiceRows(preferences, updateTrigger, actions)
+
+        // The speech model only matters on this phone; a cloud service (#48) brings its own.
+        val onDevice = remember(updateTrigger) { !preferences.getTranscriptionService().isCloud }
+        if (onDevice) TranscriptionModelChoiceRow(preferences, updateTrigger, actions)
 
         TranscriptionLanguageRows(preferences, updateTrigger, actions)
 
         TranscriptionConfirmRow(preferences, updateTrigger, actions)
 
-        TranscriptionModelDownloadRows(preferences, updateTrigger, actions)
+        if (onDevice) TranscriptionModelDownloadRows(preferences, updateTrigger, actions)
 
         TranscriptionModeNote(preferences, updateTrigger)
 

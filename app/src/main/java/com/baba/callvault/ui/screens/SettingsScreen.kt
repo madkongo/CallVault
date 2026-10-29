@@ -642,6 +642,8 @@ private fun SettingsScreenPreview() {
             override fun setTranscriptionModelId(id: String) {}
             override fun setTranscriptionLanguage(language: String?) {}
             override fun setTranscriptionAskLanguage(ask: Boolean) {}
+            override fun setTranscriptionService(service: com.baba.callvault.transcription.cloud.TranscriptionService) {}
+            override fun setTranscriptionCloudMobileData(allowed: Boolean) {}
             override fun downloadTranscriptionModel(model: TranscriptionModel, network: DownloadNetwork) {}
             override fun cancelTranscriptionModelDownload(model: TranscriptionModel) {}
             override fun deleteTranscriptionModel(model: TranscriptionModel) {}

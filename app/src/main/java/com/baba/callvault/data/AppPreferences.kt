@@ -18,6 +18,8 @@ import com.baba.callvault.data.StorageTarget
 import com.baba.callvault.data.SyncScheduleMode
 import com.baba.callvault.transcription.TranscriptionEstimate
 import com.baba.callvault.transcription.TranscriptionLanguageChoice
+import com.baba.callvault.transcription.cloud.CloudEndpoint
+import com.baba.callvault.transcription.cloud.TranscriptionService
 import com.baba.callvault.transcription.model.TranscriptionModel
 import com.baba.callvault.ui.navigation.HomeSection
 import com.baba.callvault.utils.AppLogger
@@ -346,6 +348,13 @@ class AppPreferences(context: Context) {
         TRANSCRIPTION_MODEL_ID("transcription_model_id"),
         TRANSCRIPTION_LANGUAGE("transcription_language"),
         TRANSCRIPTION_ASK_LANGUAGE("transcription_ask_language"),
+        // Where calls are written out (#48). Device-only, deliberately NOT in EXPORTABLE_KEYS: the key
+        // they need is not exported, and agreeing to send call audio is this phone owner's decision.
+        TRANSCRIPTION_SERVICE("transcription_service"),
+        TRANSCRIPTION_CLOUD_MOBILE_DATA("transcription_cloud_mobile_data"),
+        TRANSCRIPTION_CLOUD_CONSENT("transcription_cloud_consent"),
+        TRANSCRIPTION_CUSTOM_BASE_URL("transcription_custom_base_url"),
+        TRANSCRIPTION_CUSTOM_MODEL("transcription_custom_model"),
         PRIVILEGED_MODE("privileged_mode"),
         /** Which switches *CallVault* turned off for the current mode, so a round trip can undo it. */
         MODE_AUTO_DISABLED("mode_auto_disabled"),
@@ -931,6 +940,38 @@ class AppPreferences(context: Context) {
 
     /** Sets whether tapping Transcribe asks which language. */
     fun setTranscriptionAskLanguage(ask: Boolean) = setBoolean(Key.TRANSCRIPTION_ASK_LANGUAGE, ask)
+
+    // -------- Where to transcribe (issue #48) --------
+
+    /** On this phone, or a cloud service with the user's own key. Unknown values read as on this phone. */
+    fun getTranscriptionService(): TranscriptionService =
+        TranscriptionService.fromKey(getString(Key.TRANSCRIPTION_SERVICE))
+
+    fun setTranscriptionService(service: TranscriptionService) = setString(Key.TRANSCRIPTION_SERVICE, service.key)
+
+    /** Whether cloud transcription may upload over mobile data. Off: Wi-Fi (unmetered) only. */
+    fun getTranscriptionCloudMobileData() = getBoolean(Key.TRANSCRIPTION_CLOUD_MOBILE_DATA, false)
+
+    fun setTranscriptionCloudMobileData(allowed: Boolean) = setBoolean(Key.TRANSCRIPTION_CLOUD_MOBILE_DATA, allowed)
+
+    /** Whether the user has agreed, in the consent dialog, to send call audio to [service]. */
+    fun hasCloudConsent(service: TranscriptionService): Boolean =
+        service.key in getStringSet(Key.TRANSCRIPTION_CLOUD_CONSENT)
+
+    fun recordCloudConsent(service: TranscriptionService) =
+        setStringSet(Key.TRANSCRIPTION_CLOUD_CONSENT, getStringSet(Key.TRANSCRIPTION_CLOUD_CONSENT) + service.key)
+
+    fun getTranscriptionCustomBaseUrl(): String = getString(Key.TRANSCRIPTION_CUSTOM_BASE_URL).orEmpty()
+
+    fun setTranscriptionCustomBaseUrl(url: String) = setString(Key.TRANSCRIPTION_CUSTOM_BASE_URL, url.trim())
+
+    fun getTranscriptionCustomModel(): String = getString(Key.TRANSCRIPTION_CUSTOM_MODEL).orEmpty()
+
+    fun setTranscriptionCustomModel(model: String) = setString(Key.TRANSCRIPTION_CUSTOM_MODEL, model.trim())
+
+    /** The endpoint for the chosen service, or null when on this phone or Custom is incomplete. */
+    fun getCloudEndpoint(service: TranscriptionService = getTranscriptionService()): CloudEndpoint? =
+        CloudEndpoint.resolve(service, getTranscriptionCustomBaseUrl(), getTranscriptionCustomModel())
 
     // -------- Where privileges come from --------
 

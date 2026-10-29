@@ -26,6 +26,7 @@ import com.baba.callvault.summary.SummaryModel
 import com.baba.callvault.transcription.model.ModelRepository
 import com.baba.callvault.ui.common.TranscriptionLabels
 import com.baba.callvault.ui.viewmodels.SettingsActions
+import com.baba.callvault.transcription.cloud.TranscriptionService
 
 /**
  * The one-line summary under a group card's title, read from the same preferences as the group's rows.
@@ -70,9 +71,15 @@ internal fun groupSummaryText(
     SettingsGroup.MODEL_AND_LANGUAGE -> {
         val modelId = remember(updateTrigger) { preferences.getTranscriptionModelId() }
         val model = TranscriptionModel.fromId(modelId) ?: TranscriptionModel.DEFAULT
+        val service = remember(updateTrigger) { preferences.getTranscriptionService() }
         joinSummary(
             listOf(
-                stringResource(TranscriptionLabels.titleOf(model)),
+                // A cloud service (#48) names itself; on this phone, the model does.
+                when (service) {
+                    TranscriptionService.ON_DEVICE -> stringResource(TranscriptionLabels.titleOf(model))
+                    TranscriptionService.CUSTOM -> stringResource(R.string.transcription_where_custom)
+                    else -> service.preset?.displayName.orEmpty()
+                },
                 sharedLanguageLabel(preferences, updateTrigger),
             )
         )

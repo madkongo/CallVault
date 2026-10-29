@@ -17,6 +17,24 @@ If CallVault is getting killed in the background or not starting when a call com
 
 For a reproducible bug — a crash, wrong behavior, or unexpected error — please open an issue with detailed steps, logs (Settings → generate report), and your device/Android version.
 
+## Transcribing with your own key (cloud)
+
+By default calls are transcribed **on the phone** and nothing is sent anywhere. In **Settings → Where to
+transcribe** you can instead pick **Groq** (recommended), **OpenRouter** or **Custom (advanced)** — any
+OpenAI-compatible server that returns `verbose_json` with segment timings — and paste your own key from that
+service. Press **Test** to check it.
+
+- When a cloud service is chosen, the **call audio is sent to that service** to be written out (as one file for
+  ordinary calls; very large files in pieces); the words come back to the phone. That service's own privacy terms apply. CallVault
+  asks before the first use.
+- Calls are sent over **Wi-Fi only** unless you turn on **Also use mobile data**.
+- Summaries still run on the phone.
+- The key is stored encrypted on the phone and is never included in the settings export or in a bug report.
+- "The key was refused": the key is wrong or revoked — paste it again. "Answered without timings": that
+  model cannot be used, because CallVault needs the timings to line words up with the call; pick another.
+- A transcription that fails because the service is busy or the network dropped is retried by itself a few
+  times before it is marked failed.
+
 ## Device-specific limitations
 
 ### vivo and iQOO phones — app calls may record your side only

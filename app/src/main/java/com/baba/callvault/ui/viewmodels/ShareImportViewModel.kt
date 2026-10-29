@@ -8,6 +8,7 @@
 
 package com.baba.callvault.ui.viewmodels
 
+import com.baba.callvault.transcription.TranscriptionRouting
 import android.app.Application
 import android.content.Context
 import android.net.Uri
@@ -21,8 +22,6 @@ import com.baba.callvault.data.recordings.SharedAudio
 import com.baba.callvault.data.transcripts.TranscriptRepository
 import com.baba.callvault.onboarding.OnboardingStatus
 import com.baba.callvault.transcription.TranscriptionEstimate
-import com.baba.callvault.transcription.model.ModelRepository
-import com.baba.callvault.transcription.model.TranscriptionModel
 import com.baba.callvault.utils.AppLogger
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -223,7 +222,7 @@ class ShareImportViewModel(application: Application) : AndroidViewModel(applicat
         val label = ImportedRecording.labelOf(imported.displayName) ?: imported.displayName
 
         val isModelInstalled =
-            withContext(Dispatchers.IO) { ModelRepository.isInstalled(context, modelOf(context)) }
+            withContext(Dispatchers.IO) { TranscriptionRouting.canStart(context) }
         importedDurationMs = imported.durationMs
         importedKind = kind
         _state.value = when (val step = ImportFollowUp.after(imported.durationMs, isModelInstalled)) {
@@ -248,10 +247,14 @@ class ShareImportViewModel(application: Application) : AndroidViewModel(applicat
     /** The language has been picked; move on to the estimate. */
     fun languageChosen(displayName: String, label: String, language: String?) {
         val context = getApplication<Application>()
-        val model = modelOf(context)
         val prefs = AppPreferences(context)
+        // A cloud service (#48) has no "keeps your phone busy" cost to confirm; sending was agreed to once.
+        if (TranscriptionRouting.skipsRunConfirmation(prefs)) {
+            confirmed(displayName, language, dontAskAgain = false)
+            return
+        }
         val estimate = if (importedDurationMs <= 0L) null else {
-            TranscriptionEstimate.estimateMs(audioMs = importedDurationMs, cost = prefs.getRunCost(model))
+            TranscriptionEstimate.estimateMs(audioMs = importedDurationMs, cost = TranscriptionRouting.runCost(prefs))
         }
         _state.value = State.Confirm(
             displayName = displayName,
@@ -260,7 +263,7 @@ class ShareImportViewModel(application: Application) : AndroidViewModel(applicat
             // Before this phone has timed a run the figure comes from published numbers for other
             // hardware — right to within a factor of two or three, which is not a promise worth
             // making to someone about to watch a progress bar (issue #26).
-            isFirstRun = !prefs.hasMeasuredRun(model.id),
+            isFirstRun = TranscriptionRouting.isFirstRun(prefs),
             language = language,
         )
     }
@@ -291,10 +294,6 @@ class ShareImportViewModel(application: Application) : AndroidViewModel(applicat
         AppLogger.i(TAG, "Transcription of '$displayName' was not started; the audio is kept")
         _state.value = State.NotTranscribed(displayName, importedKind)
     }
-
-    private fun modelOf(context: Context): TranscriptionModel =
-        TranscriptionModel.fromId(AppPreferences(context).getTranscriptionModelId())
-            ?: TranscriptionModel.DEFAULT
 
     /**
      * Whether the app has finished its one-time setup.

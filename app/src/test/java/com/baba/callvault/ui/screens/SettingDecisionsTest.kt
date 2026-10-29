@@ -109,6 +109,13 @@ class SettingDecisionsTest {
         "offline_recording" to Decision(Wizard(WizardStep.RELIABILITY), ModeCapability.OFFLINE_RECORDING),
         "persistent_server" to Decision(SettingsOnly("legacy keep-alive switch"), ModeCapability.DAEMON_KEEP_ALIVE),
         "wd_disable_when_idle" to Decision(SettingsOnly("transport detail"), ModeCapability.WIRELESS_DEBUGGING_CONTROL),
+        // Where to transcribe (#48). Device-only (not exported): the wizard cannot be re-run and has no
+        // place to paste a key, and sending call audio away is a choice made knowingly, in Settings.
+        "transcription_service" to Decision(SettingsOnly("#48: needs the user's own key, pasted in Settings; never in the wizard")),
+        "transcription_cloud_mobile_data" to Decision(SettingsOnly("#48: only shown under a chosen cloud service")),
+        "transcription_cloud_consent" to Decision(SettingsOnly("#48: asked by the consent dialog when a service is first chosen")),
+        "transcription_custom_base_url" to Decision(SettingsOnly("#48: Custom (advanced) only")),
+        "transcription_custom_model" to Decision(SettingsOnly("#48: Custom (advanced) only")),
         "wd_auto_approve_network" to Decision(
             SettingsOnly("off by default; only matters to people who move between Wi-Fi networks, found next to Keep Wireless debugging on"),
             ModeCapability.WIRELESS_DEBUGGING_CONTROL,
@@ -118,9 +125,24 @@ class SettingDecisionsTest {
     private val prefs = AppPreferences(ApplicationProvider.getApplicationContext())
     private val gated = prefs.gatedSwitchCapabilities()
 
+    /** User settings kept off the export on purpose, each still owed an onboarding decision. */
+    private val deviceOnlySettings = setOf(
+        "transcription_service", "transcription_cloud_mobile_data", "transcription_cloud_consent",
+        "transcription_custom_base_url", "transcription_custom_model",
+    )
+
+    @Test
+    fun `device-only settings are real keys and stay out of the export`() {
+        val ids = AppPreferences.Key.entries.map { it.id }.toSet()
+        deviceOnlySettings.forEach {
+            assertTrue("$it is not a Key", it in ids)
+            assertTrue("$it must not be exported", it !in AppPreferences.EXPORTABLE_KEYS)
+        }
+    }
+
     @Test
     fun `every user setting and every gated switch has a written decision`() {
-        val required = AppPreferences.EXPORTABLE_KEYS + gated.keys
+        val required = AppPreferences.EXPORTABLE_KEYS + gated.keys + deviceOnlySettings
         val missing = required - decisions.keys
         val stale = decisions.keys - required
         assertTrue("Decide onboarding + modes for: $missing", missing.isEmpty())
