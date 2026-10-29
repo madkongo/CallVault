@@ -378,6 +378,8 @@
     <string name="settings_debug_log_file">日志文件</string>
     <string name="settings_debug_log_view_hint">点按可查看最近的条目。</string>
     <string name="settings_debug_log_wrap">自动换行</string>
+    <string name="settings_debug_skip_mdns">连接时跳过 mDNS（测试端口搜索）</string>
+    <string name="settings_debug_skip_mdns_description">用于测试。下一次无线调试连接将忽略 mDNS 和上次可用的端口，通过搜索本机的本地端口来找到端口。仅在日志记录开启时有效。</string>
     <string name="settings_debug_logging_enabled">记录运行日志</string>
     <string name="settings_debug_logging_enabled_description">若要反馈Bug，请先开启此开关，然后在重启App之后再重复您刚才的操作。</string>
     <string name="settings_drive_folder_desc">选择一个文件夹（在 Google Drive 应用中）用于复制录音。</string>

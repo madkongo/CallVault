@@ -379,6 +379,8 @@
     <string name="settings_debug_log_file">Protokolldatei</string>
     <string name="settings_debug_log_view_hint">Tippen, um die neuesten Einträge zu lesen.</string>
     <string name="settings_debug_log_wrap">Zeilen umbrechen</string>
+    <string name="settings_debug_skip_mdns">mDNS beim Verbinden überspringen (Portsuche testen)</string>
+    <string name="settings_debug_skip_mdns_description">Zum Testen. Die nächste Verbindung über WLAN-Debugging ignoriert mDNS und den zuletzt bekannten Port und findet den Port durch Suchen in den lokalen Ports dieses Telefons. Wirkt nur, solange die Protokollaufzeichnung an ist.</string>
     <string name="settings_debug_logging_enabled">Logging aktivieren</string>
     <string name="settings_debug_logging_enabled_description">Um einen Fehler zu melden, aktivieren Sie diese Einstellung, starten Sie die App neu und reproduzieren die das Problem.</string>
     <string name="settings_drive_folder_desc">Wählen Sie einen Ordner (in der Google Drive-App), in den Aufnahmen kopiert werden.</string>

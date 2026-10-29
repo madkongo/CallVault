@@ -381,6 +381,8 @@
     <string name="settings_debug_log_file">Файл журнала</string>
     <string name="settings_debug_log_view_hint">Нажмите, чтобы прочитать последние записи.</string>
     <string name="settings_debug_log_wrap">Перенос строк</string>
+    <string name="settings_debug_skip_mdns">Пропускать mDNS при подключении (проверка поиска порта)</string>
+    <string name="settings_debug_skip_mdns_description">Для тестирования. Следующее подключение отладки по Wi-Fi не использует mDNS и последний известный порт, а находит порт перебором локальных портов телефона. Работает, только пока включена запись журнала.</string>
     <string name="settings_debug_logging_enabled">Включить логи записи</string>
     <string name="settings_debug_logging_enabled_description">Чтобы сообщить об ошибке, включите это, перезапустите приложение, и повторите проблему.</string>
     <string name="settings_drive_folder_desc">Выберите папку (в приложении Google Drive), куда копировать записи.</string>

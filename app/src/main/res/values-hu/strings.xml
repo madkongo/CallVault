@@ -379,6 +379,8 @@
     <string name="settings_debug_log_file">Naplófájl</string>
     <string name="settings_debug_log_view_hint">Koppintson a legutóbbi bejegyzések elolvasásához.</string>
     <string name="settings_debug_log_wrap">Sortörés</string>
+    <string name="settings_debug_skip_mdns">mDNS kihagyása csatlakozáskor (portkeresés tesztelése)</string>
+    <string name="settings_debug_skip_mdns_description">Teszteléshez. A következő vezeték nélküli hibakeresési kapcsolat figyelmen kívül hagyja az mDNS-t és az utolsó ismert portot, és a telefon helyi portjainak átkeresésével találja meg a portot. Csak bekapcsolt naplózás mellett működik.</string>
     <string name="settings_debug_logging_enabled">Naplózás bekapcsolása</string>
     <string name="settings_debug_logging_enabled_description">Hibajelentéshez engedélyezd ezt a beállítást, indítsd újra az alkalmazást majd próbáld reprodukálni a problémát.</string>
     <string name="settings_drive_folder_desc">Válasszon egy mappát (a Google Drive alkalmazásban), ahová a felvételek másolódnak.</string>

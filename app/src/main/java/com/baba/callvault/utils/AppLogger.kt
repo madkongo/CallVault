@@ -525,6 +525,9 @@ object AppLogger {
             // `adbd` is what the state is actually corroborated against, so it is printed too.
             writer.println("USB debugging: ${runCatching { AdbShell.usbDebuggingState(context).name }.getOrDefault("?")}")
             writer.println("init.svc.adbd: ${runCatching { AdbShell.adbdState().name }.getOrDefault("?")}")
+            // adbd advertises the connect port through mdnsd; a ROM without it pairs but is never found (#65).
+            writer.println("init.svc.mdnsd: ${runCatching { AdbShell.mdnsdStateForReport() }.getOrDefault("?")}")
+            writer.println("Connect port search: ${runCatching { com.baba.callvault.integrations.adb.ConnectPortFinder.lastOutcome }.getOrDefault("?")}")
             // What the DAEMON sees. It is uid 2000, which the platform's redaction exempts, so on a phone
             // that lies to the app process these two lines carry the truth and the ones above do not.
             // "(app cannot ask)" means no daemon was connected, not that the read failed.

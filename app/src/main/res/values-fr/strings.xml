@@ -379,6 +379,8 @@
     <string name="settings_debug_log_file">Fichier journal</string>
     <string name="settings_debug_log_view_hint">Appuyez pour lire les entrées les plus récentes.</string>
     <string name="settings_debug_log_wrap">Retour à la ligne</string>
+    <string name="settings_debug_skip_mdns">Ignorer mDNS à la connexion (tester la recherche de port)</string>
+    <string name="settings_debug_skip_mdns_description">Pour les tests. La prochaine connexion de débogage sans fil ignore mDNS et le dernier port connu, et trouve le port en parcourant les ports locaux de ce téléphone. Ne fonctionne que lorsque l\'enregistrement du journal est activé.</string>
     <string name="settings_debug_logging_enabled">Activer l\'enregistrement des journaux</string>
     <string name="settings_debug_logging_enabled_description">Pour signaler un bug, activez cette option, redémarrez l\'application et reproduisez le problème.</string>
     <string name="settings_drive_folder_desc">Choisissez un dossier (dans l\'application Google Drive) où copier les enregistrements.</string>
