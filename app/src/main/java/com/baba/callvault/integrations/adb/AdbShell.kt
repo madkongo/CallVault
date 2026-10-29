@@ -202,6 +202,13 @@ object AdbShell {
     fun adbdState(): AdbdState = AdbdState.of(getSystemProperty("init.svc.adbd"))
 
     /**
+     * `init.svc.mdnsd` as Android reports it, for the debug report — "(unset)" when the ROM has no such
+     * service. adbd advertises Wireless debugging's connect port through this old `mdnsd`; a ROM where it is
+     * missing or stopped pairs fine but is never found by mDNS (#65).
+     */
+    fun mdnsdStateForReport(): String = getSystemProperty("init.svc.mdnsd").ifBlank { "(unset)" }
+
+    /**
      * Brings adbd back when a debugging switch says it should be up and it is not. Blocking; call off the
      * main thread.
      *
@@ -347,7 +354,12 @@ object AdbShell {
                 return BaseConnect.WIRELESS_DEBUGGING_REFUSED
             }
         }
-        val port = AdbMdns.discoverPort(context, AdbMdns.TLS_CONNECT, MDNS_TIMEOUT_MS)
+        // Last good port → mDNS → loopback search (#65: some ROMs never advertise the connect service).
+        // The search runs under whatever locks the caller holds — heavyOperationLock on the launcher and
+        // arming paths — but it is bounded (ConnectPortFinder.SCAN_BUDGET_MS) and runs at most once per
+        // Wireless-debugging session, so it never adds more than that to a wait mDNS already imposed.
+        val excluded = setOfNotNull(AppPreferences(context).getLoopbackAdbPort(), adbdTcpPort())
+        val port = ConnectPortFinder.find(context, MDNS_TIMEOUT_MS, excluded, adbdState())?.port
             ?: return BaseConnect.NO_ADB_SERVICE
         // Bounded for the same reason as the loopback connect: this call runs the whole CNXN/AUTH
         // handshake with no timeout of its own, and it is reached from armLoopbackIfNeeded, which holds
@@ -374,6 +386,7 @@ object AdbShell {
             }
             return BaseConnect.CONNECT_REFUSED
         }
+        ConnectPortFinder.recordSuccess(context, port)
         Thread.sleep(CONNECT_SETTLE_MS)
         PairingLoss.recordConnected(context)
         AppPreferences(context).setAdbPaired(true)
@@ -901,6 +914,8 @@ object AdbShell {
     private fun markOwnWirelessDebuggingWrite(value: Int) {
         ownWdWriteValue = value
         ownWdWriteAtMs = android.os.SystemClock.elapsedRealtime()
+        // A new Wireless-debugging session means a new adbd port: a failed port search no longer holds.
+        ConnectPortFinder.onWirelessDebuggingChanged()
     }
 
     @Volatile private var ownAdbdRestartAtMs = 0L

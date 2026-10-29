@@ -31,9 +31,30 @@ class AppPreferencesExportTest {
             "adb_paired", "loopback_adb_port", "privileged_mode", "recording_folder_uri",
             "drive_folder_uri", "log_pseudonym_salt", "wizard_completed", "disclaimer_accepted",
             "available_update_tag", "wd_enabled_by_us", "shell_grant_state", "classic_settings_screen",
+            "adb_last_connect_port", "debug_skip_mdns_connect",
         ).forEach { key ->
             assertFalse("$key must not be exportable", AppPreferences.EXPORTABLE_KEYS.contains(key))
         }
+    }
+
+    @Test
+    fun `the last good connect port is kept on this phone and left out of the export (#65)`() {
+        val prefs = AppPreferences(context)
+        assertEquals(null, prefs.getLastAdbConnectPort())
+        prefs.setLastAdbConnectPort(41_234)
+        assertEquals(41_234, AppPreferences(context).getLastAdbConnectPort())
+        assertFalse(prefs.exportToJson().contains("adb_last_connect_port"))
+        prefs.setLastAdbConnectPort(0)
+        assertEquals("0 is no port", null, prefs.getLastAdbConnectPort())
+    }
+
+    @Test
+    fun `the skip-mDNS test switch is off by default and not exported`() {
+        val prefs = AppPreferences(context)
+        assertFalse(prefs.isDebugSkipMdnsConnect())
+        prefs.setDebugSkipMdnsConnect(true)
+        assertTrue(AppPreferences(context).isDebugSkipMdnsConnect())
+        assertFalse(prefs.exportToJson().contains("debug_skip_mdns_connect"))
     }
 
     @Test

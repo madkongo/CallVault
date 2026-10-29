@@ -382,6 +382,7 @@ class AppPreferences(context: Context) {
         ADB_PAIRED("adb_paired"),
         PAIRING_REFUSALS(PAIRING_REFUSALS_KEY),
         LOOPBACK_ADB_PORT("loopback_adb_port"),
+        ADB_LAST_CONNECT_PORT("adb_last_connect_port"),
         OFFLINE_RECORDING_ENABLED("offline_recording_enabled"),
         KEEP_ORIGINALS_AFTER_MERGE("keep_originals_after_merge"),
 
@@ -433,6 +434,7 @@ class AppPreferences(context: Context) {
         LOGCAT_RING_PREVIOUS_KIB("logcat_ring_previous_kib"),
         DEBUG_ENABLED("debug_enabled"),
         DEBUG_CALLER_NUMBER("debug_caller_number"),
+        DEBUG_SKIP_MDNS_CONNECT("debug_skip_mdns_connect"),
         DEVELOPER_MODE_UNLOCKED("developer_mode_unlocked"),
         
         // --- Audio/Scrcpy Quality ---
@@ -598,6 +600,17 @@ class AppPreferences(context: Context) {
         setInt(Key.LOOPBACK_ADB_PORT, port)
         return port
     }
+
+    /**
+     * The Wireless-debugging connect port that last produced a working connection, or null (issue #65).
+     *
+     * Tried before mDNS, and the middle of the loopback search when mDNS finds nothing. adbd keeps its port
+     * until Wireless debugging or adbd restarts, so it is usually right; when it is not, the probe is
+     * refused at once. Device state, so never exported.
+     */
+    fun getLastAdbConnectPort(): Int? = getInt(Key.ADB_LAST_CONNECT_PORT, 0).takeIf { it in 1..65_535 }
+
+    fun setLastAdbConnectPort(port: Int) = setInt(Key.ADB_LAST_CONNECT_PORT, port)
 
     /**
      * Whether the user has OPTED IN to "offline recording (no Wi-Fi)" — the loopback `adb tcpip` mode.
@@ -1478,6 +1491,15 @@ class AppPreferences(context: Context) {
     
     /** Sets whether debug features are enabled. */
     fun setDebugEnabled(enabled: Boolean) = setBoolean(Key.DEBUG_ENABLED, enabled)
+
+    /**
+     * Debug-only test switch (Settings → Debug, shown while log recording is on): skip mDNS and the last good
+     * port, so the next Wireless-debugging connect has to find its port with the loopback search (#65). Lets
+     * the search be checked on a phone whose mDNS works. Not exported; off by default.
+     */
+    fun isDebugSkipMdnsConnect() = getBoolean(Key.DEBUG_SKIP_MDNS_CONNECT, false)
+
+    fun setDebugSkipMdnsConnect(enabled: Boolean) = setBoolean(Key.DEBUG_SKIP_MDNS_CONNECT, enabled)
 
     /** Gets the caller number override used for debugging. */
     fun getDebugCallerNumber() = getString(Key.DEBUG_CALLER_NUMBER, DefaultsValue.DEBUG_CALLER_NUMBER) ?: DefaultsValue.DEBUG_CALLER_NUMBER

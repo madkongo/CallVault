@@ -242,6 +242,8 @@ class DaemonKeepAliveService : Service() {
      */
     private val wirelessDebuggingObserver = object : ContentObserver(watchdogHandler) {
         override fun onChange(selfChange: Boolean) {
+            // Any switch of Wireless debugging gives adbd a new port, so a port search that failed may run again (#65).
+            com.baba.callvault.integrations.adb.ConnectPortFinder.onWirelessDebuggingChanged()
             val on = AdbShell.isWirelessDebuggingEnabled(applicationContext)
             val prefs = AppPreferences(applicationContext)
             if (on) {
