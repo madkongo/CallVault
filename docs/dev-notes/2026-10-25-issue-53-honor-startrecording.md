@@ -173,3 +173,24 @@ What the reporter's log will settle: after the far side hangs up on the Honor, d
 while `mode=IN_COMMUNICATION` holds? If yes, "the call app's voice-call playback stopped" is a mute-proof
 end signal for that phone. If the player stays too, WhatsApp holds the whole call open and only the
 notification route is left.
+
+## 2026-10-29 — endprobe2 results: the "WhatsApp keeps the mode" theory was WRONG (📐 read from two reports)
+
+rik297981 ran 2.4.7-endprobe2 on two Honor BKQ-N49 phones (MagicOS 11 / Android 17), 4 WhatsApp calls between them.
+
+- **Riccardo's phone: no overrun on any call.** At every hang-up WhatsApp's voice-communication player `[2:0]`
+  disappeared, then the mode went NORMAL 85–106 ms later; "VoIP call ended" ~2.5 s after (1.5 s debounce). The mode
+  **never** stayed IN_COMMUNICATION after a hang-up. Same pattern as the OP12.
+- **Marianna's phone: CallVault's app process stops running for tens of seconds while WhatsApp is on screen.** The 5 s
+  heartbeat and the answer-wait polling (both app-process) go silent while the recorder host (uid 2000) keeps logging;
+  queued callbacks arrive in a burst when the app wakes. Effects: calls 1–2 (she was called) were "detected" only after
+  they ended → 1 s files, "only your side" warning (wrong blame), discarded (<10 s); calls 3–4 saved with ~10–11 s
+  overrun — including when SHE hung up, so the overrun is not "remote hang-up only" either.
+- Likely cause (guess, strongly supported): Honor power management freezing/throttling the app process.
+- **Earlier claims in this note that WhatsApp holds MODE_IN_COMMUNICATION after the call are not supported** — the
+  probe shows the mode drops on time; the late end came from our frozen app process. Do not build on that theory.
+- Player-stopped end signal: led the mode by ~0.1 s on all hang-ups; brief 10–36 ms blips at answer/route changes
+  (1.5 s debounce covers them); far-side silence did not stop the player. Still useless while the app is frozen.
+- Next steps (not built): compare Honor App-launch/battery settings between the two phones; move call-end detection
+  into the recorder host process; ignore a "call detected" signal when a fresh mode read is already NORMAL, and don't
+  show the one-sided warning for recordings under the minimum length.
