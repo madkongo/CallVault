@@ -8,6 +8,7 @@
 
 package com.baba.callvault.ui.screens
 
+import com.baba.callvault.transcription.TranscriptionRouting
 import com.baba.callvault.system.openDeveloperSettings
 import com.baba.callvault.ui.common.bodyFor
 import com.baba.callvault.integrations.adb.AdbShell
@@ -142,8 +143,6 @@ import com.baba.callvault.data.waveform.RecordingExtrasRepository
 import com.baba.callvault.data.waveform.WaveformDrawWorker
 import com.baba.callvault.data.transcripts.TranscriptStatus
 import com.baba.callvault.ui.common.TranscriptActionButton
-import com.baba.callvault.transcription.model.ModelRepository
-import com.baba.callvault.transcription.model.TranscriptionModel
 import com.baba.callvault.transcription.AudioDecoder
 import com.baba.callvault.transcription.TranscriptionEstimate
 import com.baba.callvault.transcription.TranscriptionLengthLimit
@@ -690,7 +689,6 @@ fun HomeScreen(
      */
     val continueTranscription: (String, String?) -> Unit = { displayName, language ->
         val prefs = AppPreferences(context)
-        val model = TranscriptionModel.fromId(prefs.getTranscriptionModelId()) ?: TranscriptionModel.DEFAULT
         // An import ALWAYS confirms, whatever the setting says. The setting was turned off by
         // someone who had seen the estimate for their own calls, which are minutes long and in the
         // language they speak; an imported file is neither, and may be an hour of a lecture. See
@@ -717,7 +715,7 @@ fun HomeScreen(
                 } else {
                     val estimate = if (audioMs <= 0L) null else TranscriptionEstimate.estimateMs(
                         audioMs = audioMs,
-                        cost = prefs.getRunCost(model),
+                        cost = TranscriptionRouting.runCost(prefs),
                     )
                     confirmTranscribe = Triple(displayName, estimate, language)
                 }
@@ -736,7 +734,6 @@ fun HomeScreen(
      */
     val startTranscription: (String) -> Unit = { displayName ->
         val prefs = AppPreferences(context)
-        val model = TranscriptionModel.fromId(prefs.getTranscriptionModelId()) ?: TranscriptionModel.DEFAULT
         // Refuse a long recording before anything else. Transcription decodes the whole file into
         // memory first, so a long call ends in a crash or a job that dies silently after a long wait —
         // saying no immediately, with a reason, is strictly better than trying and failing. A stopgap
@@ -745,7 +742,8 @@ fun HomeScreen(
             .firstOrNull { it.displayName == displayName }?.durationSeconds
         if (TranscriptionLengthLimit.isTooLong(recordingSeconds)) {
             tooLongMinutes = ((recordingSeconds ?: 0L) / 60L).toInt()
-        } else if (!ModelRepository.isInstalled(context, model)) {
+        } else if (!TranscriptionRouting.canStart(context)) {
+            // A cloud service (#48) never needs the model; only "on this phone" can be missing one.
             showModelMissing = true
         } else if (ImportedRecording.isImported(displayName) || prefs.getTranscriptionAskLanguage()) {
             // An import ALWAYS asks, whatever the setting says. The setting means "my calls are in
@@ -1824,10 +1822,7 @@ fun HomeScreen(
         // making to someone watching a progress bar. Say so plainly instead; every run after the
         // first quotes a measured figure.
         val isFirstRun = remember(displayName) {
-            val prefs = AppPreferences(context)
-            val model = TranscriptionModel.fromId(prefs.getTranscriptionModelId())
-                ?: TranscriptionModel.DEFAULT
-            !prefs.hasMeasuredRun(model.id)
+            TranscriptionRouting.isFirstRun(AppPreferences(context))
         }
         TranscribeConfirmDialog(
             title = RecordingLabel.forDisplayName(libraryRecordings, displayName),
