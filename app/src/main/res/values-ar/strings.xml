@@ -783,6 +783,7 @@
     <string name="voip_missed_not_ready">لم يتم تسجيل مكالمة تطبيق: لم يكن CallVault جاهزًا في الوقت المناسب. يمكن أن يحدث هذا لفترة قصيرة بعد انتهاء المكالمة الهاتفية. يجب أن تسجل المكالمة التالية بشكل طبيعي.</string>
     <string name="voip_one_sided_warning">تم تسجيل جانبك فقط من مكالمة التطبيق هذه؛ التطبيق الآخر لا يسمح بالتقاط صوت المكالمة.</string>
     <string name="voip_one_sided_warning_vivo">تم تسجيل جانبك فقط من مكالمة التطبيق تلك. على هواتف vivo، افتح تطبيق المسجّل ▸ «In-app call recording» وشغّله (مع «Auto-start recording») لتسجيل الطرف الآخر أيضًا.</string>
+    <string name="voip_one_sided_warning_vivo_overseas">تم تسجيل جانبك فقط من مكالمة التطبيق تلك. يمنع هاتف vivo هذا التطبيقات من تسجيل الطرف الآخر في مكالمات التطبيقات، ولا يحتوي تطبيق المسجّل فيه على خيار للسماح بذلك. المكالمات الهاتفية العادية لا تزال تُسجَّل من الجانبين.</string>
     <string name="voip_prompt_text">انقر على "تسجيل" لتسجيل هذه المكالمة.</string>
     <string name="voip_prompt_text_named">مكالمة %1$s. انقر على "تسجيل" لتسجيلها.</string>
     <string name="voip_prompt_title">مكالمة تطبيق جارية</string>

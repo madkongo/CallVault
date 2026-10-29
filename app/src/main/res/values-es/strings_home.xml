@@ -10,6 +10,7 @@
     <string name="home_health_failed_no_audio">Tu última llamada se guardó, pero no contiene audio.</string>
     <string name="home_health_failed_one_sided">En tu última llamada de app solo se grabó tu lado.</string>
     <string name="home_health_failed_one_sided_vivo">En tu última llamada de app solo se grabó tu lado. En teléfonos vivo: abre la app Grabadora → Grabación de llamadas en apps y actívala (con Inicio automático).</string>
+    <string name="home_health_failed_one_sided_vivo_overseas">En tu última llamada de app solo se grabó tu lado. Este teléfono vivo impide que las apps graben a la otra persona en llamadas de apps, sin ninguna opción para permitirlo. Las llamadas telefónicas normales se graban por ambos lados.</string>
     <string name="home_health_missed_adb_pairing">Una llamada no se grabó: la configuración no estaba terminada en ese momento, %1$s.</string>
     <string name="home_health_missed_adb_pairing_unnamed">Una llamada no se grabó: la configuración no estaba terminada en ese momento.</string>
     <string name="home_health_missed_developer_options">Una llamada no se grabó: las opciones de desarrollador estaban desactivadas en ese momento, %1$s.</string>

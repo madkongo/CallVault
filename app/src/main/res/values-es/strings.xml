@@ -749,6 +749,7 @@
     <string name="voip_missed_not_ready">Una llamada de aplicación no se grabó — CallVault no estaba listo a tiempo. Puede ocurrir durante un rato después de terminar una llamada telefónica. La siguiente debería grabarse con normalidad.</string>
     <string name="voip_one_sided_warning">De esa llamada solo se grabó tu lado: la otra app no permite capturar el audio de sus llamadas.</string>
     <string name="voip_one_sided_warning_vivo">De esa llamada de app solo se grabó tu lado. En teléfonos vivo, abre la app Grabadora → Grabación de llamadas en apps y actívala (con Inicio automático) para grabar también a la otra persona.</string>
+    <string name="voip_one_sided_warning_vivo_overseas">De esa llamada de app solo se grabó tu lado. Este teléfono vivo impide que las apps graben a la otra persona en llamadas de apps, y su app Grabadora no tiene ninguna opción para permitirlo. Las llamadas telefónicas normales se siguen grabando por ambos lados.</string>
     <string name="voip_prompt_text">Toca Grabar para grabar esta llamada.</string>
     <string name="voip_prompt_text_named">Llamada de %1$s. Toca Grabar para grabarla.</string>
     <string name="voip_prompt_title">Llamada de app en curso</string>

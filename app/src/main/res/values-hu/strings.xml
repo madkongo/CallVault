@@ -749,6 +749,7 @@
     <string name="voip_missed_not_ready">Egy alkalmazáshívás nem lett rögzítve — a CallVault nem állt készen időben. Ez egy telefonhívás vége után egy rövid ideig előfordulhat. A következő hívás már rendben rögzül.</string>
     <string name="voip_one_sided_warning">Abból az alkalmazáshívásból csak a te oldalad rögzült — a másik alkalmazás nem engedi a hívás hangjának rögzítését.</string>
     <string name="voip_one_sided_warning_vivo">Ennél az alkalmazáson keresztüli hívásnál csak az Ön oldala került rögzítésre. vivo készüléken nyissa meg a Hangrögzítő alkalmazást → Alkalmazáson belüli hívásrögzítés, és kapcsolja be (az automatikus indítással együtt), hogy a másik felet is rögzítse.</string>
+    <string name="voip_one_sided_warning_vivo_overseas">Ennél az alkalmazáson keresztüli hívásnál csak az Ön oldala került rögzítésre. Ez a vivo telefon megakadályozza, hogy az alkalmazások rögzítsék a másik felet az alkalmazáson keresztüli hívásokban, és a Hangrögzítő alkalmazásában nincs ezt engedélyező beállítás. A normál telefonhívások továbbra is mindkét oldalon rögzítésre kerülnek.</string>
     <string name="voip_prompt_text">Koppintson a Rögzítés gombra a hívás rögzítéséhez.</string>
     <string name="voip_prompt_text_named">%1$s hívás. Koppintson a Rögzítés gombra a rögzítéséhez.</string>
     <string name="voip_prompt_title">Alkalmazáshívás folyamatban</string>
