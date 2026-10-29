@@ -191,6 +191,10 @@
     <string name="min_duration_off">Зберігати всі</string>
     <string name="min_duration_one_minute">Коротші за хвилину</string>
     <string name="min_duration_seconds">Коротші за %1$d секунд</string>
+    <string name="mobile_data_download_body">Розмір моделі — %1$s. Завантажити зараз через мобільний інтернет чи зачекати, доки завантаження саме почнеться в мережі Wi-Fi?</string>
+    <string name="mobile_data_download_now">Завантажити зараз через мобільний інтернет</string>
+    <string name="mobile_data_download_title">Ви не підключені до Wi-Fi</string>
+    <string name="mobile_data_download_wait">Чекати на Wi-Fi</string>
     <string name="mode_switch_done_shizuku">Готово — Shizuku</string>
     <string name="mode_switch_done_standalone">Готово — CallVault</string>
     <string name="mode_switch_done_title">Готово до запису</string>
@@ -604,7 +608,7 @@
     <string name="summary_model_discard">Видалити завантажені дані</string>
     <string name="summary_model_discard_subtitle">Звільниться %1$.1f ГБ</string>
     <string name="summary_model_download">Завантажити модель підсумків</string>
-    <string name="summary_model_download_subtitle">%1$.1f ГБ, лише через Wi-Fi</string>
+    <string name="summary_model_download_subtitle">%1$.1f ГБ</string>
     <string name="summary_model_downloading">Завантаження… %1$d%%</string>
     <string name="summary_model_failed">Завантаження не завершено. Спробуйте ще раз.</string>
     <string name="summary_model_failed_space">Недостатньо вільного місця. Звільніть памʼять і повторіть.</string>
@@ -618,7 +622,7 @@
     <string name="summary_requirements_cancel">Не зараз</string>
     <string name="summary_requirements_continue">Завантажити</string>
     <string name="summary_requirements_dont_ask">Більше не показувати</string>
-    <string name="summary_requirements_download">%1$.1f ГБ для завантаження, лише через Wi-Fi</string>
+    <string name="summary_requirements_download">%1$.1f ГБ для завантаження</string>
     <string name="summary_requirements_heading">Перед завантаженням</string>
     <string name="summary_requirements_memory">Приблизно %1$.1f ГБ оперативної памʼяті</string>
     <string name="summary_requirements_phone">Потрібен сучасний телефон із достатньою кількістю памʼяті.</string>
@@ -719,7 +723,7 @@
     <string name="transcription_model_best_small_download">Найкраща якість, менше завантаження</string>
     <string name="transcription_model_delete">Видалити модель</string>
     <string name="transcription_model_download">Завантажити модель</string>
-    <string name="transcription_model_download_subtitle">%1$d МБ, лише через Wi-Fi</string>
+    <string name="transcription_model_download_subtitle">%1$d МБ</string>
     <string name="transcription_model_downloading">Завантаження… %1$d%%</string>
     <string name="transcription_model_failed">Завантаження не завершено. Спробуйте ще раз.</string>
     <string name="transcription_model_failed_space">Недостатньо вільного місця. Звільніть памʼять і повторіть.</string>
@@ -821,7 +825,7 @@
     <string name="wizard_storage_subtitle">Виберіть місце збереження записів. Пізніше це можна змінити в налаштуваннях.</string>
     <string name="wizard_storage_title">Де зберігати записи</string>
     <string name="wizard_title">Налаштування CallVault</string>
-    <string name="wizard_transcription_background_note">Моделі завантажуються лише через Wi-Fi. Завантаження може тривати у фоні; стан можна переглянути в налаштуваннях CallVault.</string>
+    <string name="wizard_transcription_background_note">Завантаження може тривати у фоні; стан можна переглянути в налаштуваннях CallVault.</string>
     <string name="wizard_transcription_language_note">Виберіть мову розмови. Так надійніше, ніж автоматичне визначення; пізніше можна змінити для кожного запису.</string>
     <string name="wizard_transcription_line">Дзвінки в текст просто на цьому телефоні.</string>
     <string name="wizard_transcription_model_note">Для транскрипції потрібно завантажити модель: %1$s — %2$d МБ, %3$s — %4$d МБ. Розпізнавання тривалого дзвінка потребує часу й ресурсів.</string>

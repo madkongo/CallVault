@@ -180,6 +180,10 @@
     <string name="min_duration_off">Giữ tất cả</string>
     <string name="min_duration_one_minute">Ngắn hơn một phút</string>
     <string name="min_duration_seconds">Ngắn hơn %1$d giây</string>
+    <string name="mobile_data_download_body">Mô hình này nặng %1$s. Tải ngay bằng dữ liệu di động, hay chờ để tự bắt đầu khi bạn có Wi-Fi?</string>
+    <string name="mobile_data_download_now">Tải ngay bằng dữ liệu di động</string>
+    <string name="mobile_data_download_title">Bạn không dùng Wi-Fi</string>
+    <string name="mobile_data_download_wait">Chờ Wi-Fi</string>
     <string name="mode_switch_done_shizuku">Sẵn sàng — dùng Shizuku</string>
     <string name="mode_switch_done_standalone">Sẵn sàng — dùng CallVault</string>
     <string name="mode_switch_done_title">Sẵn sàng ghi âm</string>
@@ -593,7 +597,7 @@
     <string name="summary_model_discard">Bỏ phần đã tải</string>
     <string name="summary_model_discard_subtitle">Giải phóng %1$.1f GB</string>
     <string name="summary_model_download">Tải trình tóm tắt</string>
-    <string name="summary_model_download_subtitle">%1$.1f GB, chỉ qua Wi-Fi</string>
+    <string name="summary_model_download_subtitle">%1$.1f GB</string>
     <string name="summary_model_downloading">Đang tải… %1$d %%</string>
     <string name="summary_model_failed">Tải xuống chưa hoàn tất. Hãy thử lại.</string>
     <string name="summary_model_failed_space">Không đủ dung lượng trống. Hãy giải phóng bớt rồi thử lại.</string>
@@ -607,7 +611,7 @@
     <string name="summary_requirements_cancel">Để sau</string>
     <string name="summary_requirements_continue">Tải xuống</string>
     <string name="summary_requirements_dont_ask">Không hiện lại</string>
-    <string name="summary_requirements_download">%1$.1f GB cần tải, chỉ qua Wi-Fi</string>
+    <string name="summary_requirements_download">%1$.1f GB cần tải</string>
     <string name="summary_requirements_heading">Trước khi tải</string>
     <string name="summary_requirements_memory">Khoảng %1$.1f GB bộ nhớ khi chạy</string>
     <string name="summary_requirements_phone">Cần điện thoại đời mới còn dư tài nguyên. Máy cũ có thể chạy chậm hoặc thất bại.</string>
@@ -708,7 +712,7 @@
     <string name="transcription_model_best_small_download">Chất lượng tốt nhất, tải về nhẹ hơn</string>
     <string name="transcription_model_delete">Xoá mô hình</string>
     <string name="transcription_model_download">Tải mô hình</string>
-    <string name="transcription_model_download_subtitle">%1$d MB, chỉ qua Wi-Fi</string>
+    <string name="transcription_model_download_subtitle">%1$d MB</string>
     <string name="transcription_model_downloading">Đang tải… %1$d %%</string>
     <string name="transcription_model_failed">Tải xuống chưa hoàn tất. Hãy thử lại.</string>
     <string name="transcription_model_failed_space">Không đủ dung lượng trống. Hãy giải phóng bớt rồi thử lại.</string>
@@ -810,7 +814,7 @@
     <string name="wizard_storage_subtitle">Chọn nơi lưu các bản ghi âm. Bạn có thể thay đổi sau trong Cài đặt.</string>
     <string name="wizard_storage_title">Nơi lưu bản ghi âm</string>
     <string name="wizard_title">Thiết lập CallVault</string>
-    <string name="wizard_transcription_background_note">Cả hai bản tải xuống đều chỉ chạy qua Wi-Fi và vẫn tiếp tục ở nền. Bạn có thể đi tiếp và hoàn tất thiết lập ngay bây giờ — sau đó cài đặt của CallVault cũng hiện đúng tiến trình này.</string>
+    <string name="wizard_transcription_background_note">Cả hai bản tải xuống vẫn tiếp tục ở nền. Bạn có thể đi tiếp và hoàn tất thiết lập ngay bây giờ — sau đó cài đặt của CallVault cũng hiện đúng tiến trình này.</string>
     <string name="wizard_transcription_language_note">Đang đặt theo ngôn ngữ của điện thoại này. Nêu rõ ngôn ngữ đáng tin cậy hơn nhiều so với để ứng dụng đoán, và sau này bạn vẫn có thể chọn ngôn ngữ khác cho từng cuộc gọi.</string>
     <string name="wizard_transcription_line">Chuyển cuộc gọi thành văn bản ngay trên điện thoại.</string>
     <string name="wizard_transcription_model_note">Việc chép lời cần có một mô hình giọng nói trên máy trước: %1$s nặng %2$d MB, %3$s nặng %4$d MB. Sau đó, chép lời một cuộc gọi mất khoảng đúng bằng độ dài cuộc gọi và chiếm dụng bộ xử lý rất nặng.</string>

@@ -274,6 +274,10 @@
     <string name="min_duration_off">نگه‌داری همه</string>
     <string name="min_duration_one_minute">کوتاه‌تر از یک دقیقه</string>
     <string name="min_duration_seconds">کوتاه‌تر از %1$d ثانیه</string>
+    <string name="mobile_data_download_body">حجم این مدل %1$s است. همین حالا با داده تلفن همراه دانلود شود، یا صبر کنید تا وقتی به Wi-Fi وصل شدید خودش شروع شود؟</string>
+    <string name="mobile_data_download_now">دانلود همین حالا با داده تلفن همراه</string>
+    <string name="mobile_data_download_title">به Wi-Fi وصل نیستید</string>
+    <string name="mobile_data_download_wait">صبر تا Wi-Fi</string>
     <string name="mode_switch_done_shizuku">آماده — با استفاده از Shizuku</string>
     <string name="mode_switch_done_standalone">آماده — با استفاده از CallVault</string>
     <string name="mode_switch_done_title">آماده ضبط</string>
@@ -687,7 +691,7 @@
     <string name="summary_model_discard">دور انداختن آنچه دانلود شده</string>
     <string name="summary_model_discard_subtitle">%1$.1f گیگابایت آزاد می‌کند</string>
     <string name="summary_model_download">دانلود خلاصه‌ساز</string>
-    <string name="summary_model_download_subtitle">%1$.1f گیگابایت، فقط روی Wi-Fi</string>
+    <string name="summary_model_download_subtitle">%1$.1f گیگابایت</string>
     <string name="summary_model_downloading">در حال دانلود… %1$d%%</string>
     <string name="summary_model_failed">دانلود کامل نشد. دوباره تلاش کنید.</string>
     <string name="summary_model_failed_space">فضای آزاد کافی نیست. کمی فضا آزاد کنید و دوباره تلاش کنید.</string>
@@ -701,7 +705,7 @@
     <string name="summary_requirements_cancel">حالا نه</string>
     <string name="summary_requirements_continue">دانلود</string>
     <string name="summary_requirements_dont_ask">دیگر این را نشان نده</string>
-    <string name="summary_requirements_download">%1$.1f گیگابایت برای دانلود، فقط روی Wi-Fi</string>
+    <string name="summary_requirements_download">%1$.1f گیگابایت برای دانلود</string>
     <string name="summary_requirements_heading">پیش از دانلود</string>
     <string name="summary_requirements_memory">حدود %1$.1f گیگابایت حافظه در حین اجرا</string>
     <string name="summary_requirements_phone">به یک گوشی جدید با فضای کافی نیاز دارد. روی گوشی قدیمی‌تر ممکن است کند باشد یا ناموفق شود.</string>
@@ -802,7 +806,7 @@
     <string name="transcription_model_best_small_download">بهترین کیفیت، دانلود کوچک‌تر</string>
     <string name="transcription_model_delete">حذف مدل</string>
     <string name="transcription_model_download">دانلود مدل</string>
-    <string name="transcription_model_download_subtitle">%1$d مگابایت، فقط روی Wi-Fi</string>
+    <string name="transcription_model_download_subtitle">%1$d مگابایت</string>
     <string name="transcription_model_downloading">در حال دانلود… %1$d%%</string>
     <string name="transcription_model_failed">دانلود کامل نشد. دوباره تلاش کنید.</string>
     <string name="transcription_model_failed_space">فضای آزاد کافی نیست. کمی فضا آزاد کنید و دوباره تلاش کنید.</string>
@@ -904,7 +908,7 @@
     <string name="wizard_storage_subtitle">انتخاب کنید فایل‌های ضبط‌شده شما کجا ذخیره شوند. می‌توانید این را بعداً در تنظیمات تغییر دهید.</string>
     <string name="wizard_storage_title">محل ذخیره فایل‌های ضبط‌شده</string>
     <string name="wizard_title">راه‌اندازی CallVault</string>
-    <string name="wizard_transcription_background_note">هر دو دانلود فقط روی Wi-Fi اجرا می‌شوند و در پس‌زمینه ادامه می‌یابند. می‌توانید همین حالا ادامه دهید و راه‌اندازی را تمام کنید — تنظیمات CallVault بعداً همان پیشرفت را نشان می‌دهد.</string>
+    <string name="wizard_transcription_background_note">هر دو دانلود در پس‌زمینه ادامه می‌یابند. می‌توانید همین حالا ادامه دهید و راه‌اندازی را تمام کنید — تنظیمات CallVault بعداً همان پیشرفت را نشان می‌دهد.</string>
     <string name="wizard_transcription_language_note">روی زبانی تنظیم کنید که این گوشی روی آن تنظیم شده است. مشخص کردن آن بسیار قابل‌اعتمادتر از این است که بگذارید برنامه حدس بزند، و همچنان می‌توانید بعداً برای هر تماس زبان دیگری انتخاب کنید.</string>
     <string name="wizard_transcription_line">تماس‌ها را روی همین گوشی به متن تبدیل کنید.</string>
     <string name="wizard_transcription_model_note">رونویسی ابتدا به یک مدل گفتار روی گوشی نیاز دارد: %1$s برابر %2$d مگابایت است، %3$s برابر %4$d مگابایت. رونویسی یک تماس سپس تقریباً به اندازه طول تماس زمان می‌برد و پردازنده را سخت به کار می‌گیرد.</string>

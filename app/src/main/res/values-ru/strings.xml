@@ -183,6 +183,10 @@
     <string name="min_duration_off">Оставлять все</string>
     <string name="min_duration_one_minute">Короче минуты</string>
     <string name="min_duration_seconds">Короче %1$d секунд</string>
+    <string name="mobile_data_download_body">Размер модели — %1$s. Скачать сейчас через мобильный интернет или подождать, пока загрузка сама начнётся в сети Wi-Fi?</string>
+    <string name="mobile_data_download_now">Скачать сейчас через мобильный интернет</string>
+    <string name="mobile_data_download_title">Вы не подключены к Wi-Fi</string>
+    <string name="mobile_data_download_wait">Ждать Wi-Fi</string>
     <string name="mode_switch_done_shizuku">Готово — через Shizuku</string>
     <string name="mode_switch_done_standalone">Готово — через CallVault</string>
     <string name="mode_switch_done_title">Готов к записи</string>
@@ -596,7 +600,7 @@
     <string name="summary_model_discard">Удалить скачанное</string>
     <string name="summary_model_discard_subtitle">Освободит %1$.1f ГБ</string>
     <string name="summary_model_download">Скачать модуль сводок</string>
-    <string name="summary_model_download_subtitle">%1$.1f ГБ, только по Wi-Fi</string>
+    <string name="summary_model_download_subtitle">%1$.1f ГБ</string>
     <string name="summary_model_downloading">Скачивание… %1$d %%</string>
     <string name="summary_model_failed">Скачивание не завершилось. Попробуйте снова.</string>
     <string name="summary_model_failed_space">Недостаточно места. Освободите его и попробуйте снова.</string>
@@ -610,7 +614,7 @@
     <string name="summary_requirements_cancel">Не сейчас</string>
     <string name="summary_requirements_continue">Скачать</string>
     <string name="summary_requirements_dont_ask">Больше не показывать</string>
-    <string name="summary_requirements_download">%1$.1f ГБ загрузки, только по Wi-Fi</string>
+    <string name="summary_requirements_download">%1$.1f ГБ загрузки</string>
     <string name="summary_requirements_heading">Перед скачиванием</string>
     <string name="summary_requirements_memory">Около %1$.1f ГБ памяти во время работы</string>
     <string name="summary_requirements_phone">Нужен современный телефон с запасом. На старом может работать медленно или не работать вовсе.</string>
@@ -711,7 +715,7 @@
     <string name="transcription_model_best_small_download">Лучшее качество, меньший размер загрузки</string>
     <string name="transcription_model_delete">Удалить модель</string>
     <string name="transcription_model_download">Скачать модель</string>
-    <string name="transcription_model_download_subtitle">%1$d МБ, только по Wi-Fi</string>
+    <string name="transcription_model_download_subtitle">%1$d МБ</string>
     <string name="transcription_model_downloading">Скачивание… %1$d %%</string>
     <string name="transcription_model_failed">Скачивание не завершилось. Попробуйте снова.</string>
     <string name="transcription_model_failed_space">Недостаточно места. Освободите его и попробуйте снова.</string>
@@ -813,7 +817,7 @@
     <string name="wizard_storage_subtitle">Выберите, где будут храниться ваши записи. Это можно изменить позже в настройках.</string>
     <string name="wizard_storage_title">Куда сохранять записи</string>
     <string name="wizard_title">Настройка CallVault</string>
-    <string name="wizard_transcription_background_note">Обе загрузки идут только по Wi-Fi и продолжаются в фоне. Вы можете продолжить и завершить настройку сейчас — тот же прогресс потом виден в настройках CallVault.</string>
+    <string name="wizard_transcription_background_note">Обе загрузки продолжаются в фоне. Вы можете продолжить и завершить настройку сейчас — тот же прогресс потом виден в настройках CallVault.</string>
     <string name="wizard_transcription_language_note">Выбран язык, на который настроен этот телефон. Указать его гораздо надёжнее, чем позволять приложению угадывать, а позже для отдельного звонка можно выбрать другой.</string>
     <string name="wizard_transcription_line">Звонки в текст прямо на этом телефоне.</string>
     <string name="wizard_transcription_model_note">Для расшифровки на телефон сначала нужна речевая модель: %1$s — %2$d МБ, %3$s — %4$d МБ. Расшифровка звонка потом занимает примерно столько же, сколько сам звонок, и сильно нагружает процессор.</string>

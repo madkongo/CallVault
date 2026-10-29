@@ -181,6 +181,10 @@
     <string name="min_duration_off">Conservale tutte</string>
     <string name="min_duration_one_minute">Meno di un minuto</string>
     <string name="min_duration_seconds">Meno di %1$d secondi</string>
+    <string name="mobile_data_download_body">Questo modello occupa %1$s. Scaricarlo ora con i dati mobili, o aspettare che parta da solo quando sarai in Wi-Fi?</string>
+    <string name="mobile_data_download_now">Scarica ora con i dati mobili</string>
+    <string name="mobile_data_download_title">Non sei in Wi-Fi</string>
+    <string name="mobile_data_download_wait">Aspetta il Wi-Fi</string>
     <string name="mode_switch_done_shizuku">Pronto — con Shizuku</string>
     <string name="mode_switch_done_standalone">Pronto — con CallVault</string>
     <string name="mode_switch_done_title">Pronto a registrare</string>
@@ -594,7 +598,7 @@
     <string name="summary_model_discard">Elimina quanto scaricato</string>
     <string name="summary_model_discard_subtitle">Libera %1$.1f GB</string>
     <string name="summary_model_download">Scarica il riassuntore</string>
-    <string name="summary_model_download_subtitle">%1$.1f GB, solo via Wi-Fi</string>
+    <string name="summary_model_download_subtitle">%1$.1f GB</string>
     <string name="summary_model_downloading">Download in corso… %1$d %%</string>
     <string name="summary_model_failed">Il download non è stato completato. Riprova.</string>
     <string name="summary_model_failed_space">Spazio insufficiente. Liberane un po\' e riprova.</string>
@@ -608,7 +612,7 @@
     <string name="summary_requirements_cancel">Non ora</string>
     <string name="summary_requirements_continue">Scarica</string>
     <string name="summary_requirements_dont_ask">Non mostrare più</string>
-    <string name="summary_requirements_download">%1$.1f GB da scaricare, solo via Wi-Fi</string>
+    <string name="summary_requirements_download">%1$.1f GB da scaricare</string>
     <string name="summary_requirements_heading">Prima di scaricare</string>
     <string name="summary_requirements_memory">Circa %1$.1f GB di memoria durante l\'esecuzione</string>
     <string name="summary_requirements_phone">Serve un telefono recente con margine. Su uno più vecchio può essere lento o fallire.</string>
@@ -709,7 +713,7 @@
     <string name="transcription_model_best_small_download">Qualità migliore, download più piccolo</string>
     <string name="transcription_model_delete">Elimina il modello</string>
     <string name="transcription_model_download">Scarica il modello</string>
-    <string name="transcription_model_download_subtitle">%1$d MB, solo via Wi-Fi</string>
+    <string name="transcription_model_download_subtitle">%1$d MB</string>
     <string name="transcription_model_downloading">Download in corso… %1$d %%</string>
     <string name="transcription_model_failed">Il download non è stato completato. Riprova.</string>
     <string name="transcription_model_failed_space">Spazio insufficiente. Liberane un po\' e riprova.</string>
@@ -811,7 +815,7 @@
     <string name="wizard_storage_subtitle">Scelga dove archiviare le registrazioni. Potrà modificarlo in seguito nelle Impostazioni.</string>
     <string name="wizard_storage_title">Dove salvare le registrazioni</string>
     <string name="wizard_title">Configura CallVault</string>
-    <string name="wizard_transcription_background_note">Entrambi i download avvengono solo tramite Wi-Fi e proseguono in background. Puoi andare avanti e finire la configurazione adesso: lo stesso avanzamento si trova poi nelle impostazioni di CallVault.</string>
+    <string name="wizard_transcription_background_note">Entrambi i download proseguono in background. Puoi andare avanti e finire la configurazione adesso: lo stesso avanzamento si trova poi nelle impostazioni di CallVault.</string>
     <string name="wizard_transcription_language_note">È impostata la lingua a cui è impostato questo telefono. Indicarla è molto più affidabile che lasciar indovinare l\'app, e puoi comunque sceglierne un\'altra per la singola chiamata.</string>
     <string name="wizard_transcription_line">Trasforma le chiamate in testo su questo telefono.</string>
     <string name="wizard_transcription_model_note">Per trascrivere serve prima un modello vocale sul telefono: %1$s occupa %2$d MB, %3$s occupa %4$d MB. Trascrivere una chiamata richiede poi all\'incirca la sua stessa durata e impegna molto il processore.</string>

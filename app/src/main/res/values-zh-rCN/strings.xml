@@ -180,6 +180,10 @@
     <string name="min_duration_off">全部保留</string>
     <string name="min_duration_one_minute">短于一分钟</string>
     <string name="min_duration_seconds">短于 %1$d 秒</string>
+    <string name="mobile_data_download_body">此模型大小为 %1$s。现在使用移动数据下载，还是等连上 Wi-Fi 后自动开始？</string>
+    <string name="mobile_data_download_now">现在使用移动数据下载</string>
+    <string name="mobile_data_download_title">你没有连接 Wi-Fi</string>
+    <string name="mobile_data_download_wait">等待 Wi-Fi</string>
     <string name="mode_switch_done_shizuku">已就绪——通过 Shizuku</string>
     <string name="mode_switch_done_standalone">已就绪——通过 CallVault</string>
     <string name="mode_switch_done_title">已可录音</string>
@@ -593,7 +597,7 @@
     <string name="summary_model_discard">丢弃已下载的部分</string>
     <string name="summary_model_discard_subtitle">可释放 %1$.1f GB</string>
     <string name="summary_model_download">下载摘要模型</string>
-    <string name="summary_model_download_subtitle">%1$.1f GB，仅通过 Wi-Fi</string>
+    <string name="summary_model_download_subtitle">%1$.1f GB</string>
     <string name="summary_model_downloading">正在下载… %1$d%%</string>
     <string name="summary_model_failed">下载未完成。请重试。</string>
     <string name="summary_model_failed_space">存储空间不足。请清理后重试。</string>
@@ -607,7 +611,7 @@
     <string name="summary_requirements_cancel">暂不</string>
     <string name="summary_requirements_continue">下载</string>
     <string name="summary_requirements_dont_ask">不再显示</string>
-    <string name="summary_requirements_download">需下载 %1$.1f GB，仅通过 Wi-Fi</string>
+    <string name="summary_requirements_download">需下载 %1$.1f GB</string>
     <string name="summary_requirements_heading">下载之前</string>
     <string name="summary_requirements_memory">运行时约占 %1$.1f GB 内存</string>
     <string name="summary_requirements_phone">需要一台配置较新、余量充足的手机。较旧的手机可能很慢或无法完成。</string>
@@ -708,7 +712,7 @@
     <string name="transcription_model_best_small_download">最佳质量（下载更小）</string>
     <string name="transcription_model_delete">删除模型</string>
     <string name="transcription_model_download">下载模型</string>
-    <string name="transcription_model_download_subtitle">%1$d MB，仅通过 Wi-Fi</string>
+    <string name="transcription_model_download_subtitle">%1$d MB</string>
     <string name="transcription_model_downloading">正在下载… %1$d%%</string>
     <string name="transcription_model_failed">下载未完成。请重试。</string>
     <string name="transcription_model_failed_space">存储空间不足。请清理后重试。</string>
@@ -810,7 +814,7 @@
     <string name="wizard_storage_subtitle">选择录音的存储位置。你之后可以在设置中更改。</string>
     <string name="wizard_storage_title">录音保存位置</string>
     <string name="wizard_title">设置 CallVault</string>
-    <string name="wizard_transcription_background_note">两项下载都只通过 Wi-Fi 进行，并且会在后台继续。你现在可以继续完成设置——之后在 CallVault 的设置中也能看到同样的进度。</string>
+    <string name="wizard_transcription_background_note">两项下载都会在后台继续。你现在可以继续完成设置——之后在 CallVault 的设置中也能看到同样的进度。</string>
     <string name="wizard_transcription_language_note">已按这部手机的系统语言设定。指明语言比让应用去猜可靠得多，之后你仍然可以为单通电话选择别的语言。</string>
     <string name="wizard_transcription_line">在本机把通话转成文字。</string>
     <string name="wizard_transcription_model_note">转写需要先在手机上准备一个语音模型：%1$s 为 %2$d MB，%3$s 为 %4$d MB。之后转写一通电话所需的时间大致与通话本身一样长，并且会重度占用处理器。</string>

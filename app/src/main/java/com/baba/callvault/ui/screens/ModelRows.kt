@@ -29,10 +29,12 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import com.baba.callvault.R
+import com.baba.callvault.transcription.model.DownloadNetwork
 import com.baba.callvault.transcription.model.ModelDownloadWorker
 import com.baba.callvault.transcription.model.TranscriptionModel
 import com.baba.callvault.ui.common.ConfirmDialog
 import com.baba.callvault.ui.common.ModelDownloadState
+import com.baba.callvault.ui.common.rememberMobileDataDownloadPrompt
 import com.baba.callvault.ui.common.rememberModelDownloadState
 
 /**
@@ -61,7 +63,7 @@ import com.baba.callvault.ui.common.rememberModelDownloadState
 internal fun TranscriptionModelRows(
     model: TranscriptionModel,
     updateTrigger: Int,
-    onDownload: (TranscriptionModel) -> Unit,
+    onDownload: (TranscriptionModel, DownloadNetwork) -> Unit,
     onCancel: (TranscriptionModel) -> Unit,
     onDelete: (TranscriptionModel) -> Unit,
     onImport: (TranscriptionModel, Uri) -> Unit,
@@ -70,6 +72,13 @@ internal fun TranscriptionModelRows(
     onCancelBackup: (TranscriptionModel) -> Unit = {}
 ) {
     val state by rememberModelDownloadState(model, refreshKey = updateTrigger)
+    // Every download and resume below goes through this, so on mobile data each one asks first.
+    // The size reads exactly as the download row's subtitle does.
+    val askNetwork = rememberMobileDataDownloadPrompt()
+    val sizeText = stringResource(R.string.transcription_model_download_subtitle, model.sizeBytes / BYTES_PER_MB)
+    val download: (TranscriptionModel) -> Unit = { chosen ->
+        askNetwork(sizeText) { network -> onDownload(chosen, network) }
+    }
     // Above the `when`, so a state change while the picker is open cannot drop the pick.
     val launchPicker = rememberModelImportPicker { onImport(model, it) }
     val importRow: @Composable (String?) -> Unit = { failure ->
@@ -94,7 +103,7 @@ internal fun TranscriptionModelRows(
             }
 
             ModelDownloadState.Absent -> {
-                TranscriptionDownloadRow(model, onDownload)
+                TranscriptionDownloadRow(model, download)
                 importRow(null)
             }
 
@@ -106,7 +115,7 @@ internal fun TranscriptionModelRows(
             // reclaims it", but no delete row is shown in this state, so a paused download could
             // only be removed by clearing the app's data.
             is ModelDownloadState.Paused -> {
-                TranscriptionResumeRow(model, current.downloadedBytes, onDownload)
+                TranscriptionResumeRow(model, current.downloadedBytes, download)
                 TranscriptionDiscardRow(model, current.downloadedBytes, onDelete)
                 importRow(null)
             }
@@ -136,10 +145,10 @@ internal fun TranscriptionModelRows(
             // import row says what went wrong with the file, where tapping it picks another.
             is ModelDownloadState.ImportFailed -> {
                 if (current.partialBytes > 0L) {
-                    TranscriptionResumeRow(model, current.partialBytes, onDownload)
+                    TranscriptionResumeRow(model, current.partialBytes, download)
                     TranscriptionDiscardRow(model, current.partialBytes, onDelete)
                 } else {
-                    TranscriptionDownloadRow(model, onDownload)
+                    TranscriptionDownloadRow(model, download)
                 }
                 importRow(importFailureText(current.reason, model, current.otherModelId))
             }
@@ -157,7 +166,7 @@ internal fun TranscriptionModelRows(
                             else -> R.string.transcription_model_failed
                         }
                     ),
-                    onClick = { onDownload(model) }
+                    onClick = { download(model) }
                 )
                 importRow(null)
             }

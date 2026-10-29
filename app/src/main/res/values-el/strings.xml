@@ -335,6 +335,10 @@
     <string name="min_duration_off">Διατήρηση όλων</string>
     <string name="min_duration_one_minute">Μικρότερες από ένα λεπτό</string>
     <string name="min_duration_seconds">Μικρότερες από %1$d δευτερόλεπτα</string>
+    <string name="mobile_data_download_body">Αυτό το μοντέλο είναι %1$s. Λήψη τώρα με δεδομένα κινητής ή αναμονή ώστε να ξεκινήσει μόνο του όταν συνδεθείτε σε Wi-Fi;</string>
+    <string name="mobile_data_download_now">Λήψη τώρα με δεδομένα κινητής</string>
+    <string name="mobile_data_download_title">Δεν είστε σε Wi-Fi</string>
+    <string name="mobile_data_download_wait">Αναμονή για Wi-Fi</string>
     <string name="mode_switch_done_shizuku">Έτοιμο — χρήση Shizuku</string>
     <string name="mode_switch_done_standalone">Έτοιμο — χρήση CallVault</string>
     <string name="mode_switch_done_title">Έτοιμο για εγγραφή</string>
@@ -748,7 +752,7 @@
     <string name="summary_model_discard">Απόρριψη αυτών που λήφθηκαν</string>
     <string name="summary_model_discard_subtitle">Ελευθερώνει %1$.1f GB</string>
     <string name="summary_model_download">Λήψη του συντάκτη περιλήψεων</string>
-    <string name="summary_model_download_subtitle">%1$.1f GB, μόνο μέσω Wi-Fi</string>
+    <string name="summary_model_download_subtitle">%1$.1f GB</string>
     <string name="summary_model_downloading">Λήψη… %1$d%%</string>
     <string name="summary_model_failed">Η λήψη δεν ολοκληρώθηκε. Δοκιμάστε ξανά.</string>
     <string name="summary_model_failed_space">Δεν υπάρχει αρκετός ελεύθερος χώρος. Ελευθερώστε λίγο και δοκιμάστε ξανά.</string>
@@ -762,7 +766,7 @@
     <string name="summary_requirements_cancel">Όχι τώρα</string>
     <string name="summary_requirements_continue">Λήψη</string>
     <string name="summary_requirements_dont_ask">Να μην εμφανιστεί ξανά</string>
-    <string name="summary_requirements_download">%1$.1f GB προς λήψη, μόνο μέσω Wi-Fi</string>
+    <string name="summary_requirements_download">%1$.1f GB προς λήψη</string>
     <string name="summary_requirements_heading">Πριν κατεβάσετε</string>
     <string name="summary_requirements_memory">Περίπου %1$.1f GB μνήμης όσο εκτελείται</string>
     <string name="summary_requirements_phone">Χρειάζεται ένα πρόσφατο τηλέφωνο με αρκετό χώρο. Σε ένα παλαιότερο μπορεί να είναι αργό ή να αποτύχει.</string>
@@ -863,7 +867,7 @@
     <string name="transcription_model_best_small_download">Βέλτιστη ποιότητα, μικρότερη λήψη</string>
     <string name="transcription_model_delete">Διαγραφή μοντέλου</string>
     <string name="transcription_model_download">Λήψη μοντέλου</string>
-    <string name="transcription_model_download_subtitle">%1$d MB, μόνο μέσω Wi-Fi</string>
+    <string name="transcription_model_download_subtitle">%1$d MB</string>
     <string name="transcription_model_downloading">Λήψη… %1$d%%</string>
     <string name="transcription_model_failed">Η λήψη δεν ολοκληρώθηκε. Δοκιμάστε ξανά.</string>
     <string name="transcription_model_failed_space">Δεν υπάρχει αρκετός ελεύθερος χώρος. Ελευθερώστε λίγο και δοκιμάστε ξανά.</string>
@@ -965,7 +969,7 @@
     <string name="wizard_storage_subtitle">Επιλέξτε πού αποθηκεύονται οι εγγραφές σας. Μπορείτε να το αλλάξετε αργότερα στις Ρυθμίσεις.</string>
     <string name="wizard_storage_title">Πού θα αποθηκεύονται οι εγγραφές</string>
     <string name="wizard_title">Ρύθμιση CallVault</string>
-    <string name="wizard_transcription_background_note">Και οι δύο λήψεις γίνονται μόνο μέσω Wi-Fi, και συνεχίζονται στο παρασκήνιο. Μπορείτε να συνεχίσετε και να ολοκληρώσετε τη ρύθμιση τώρα — οι ρυθμίσεις του CallVault δείχνουν την ίδια πρόοδο αργότερα.</string>
+    <string name="wizard_transcription_background_note">Και οι δύο λήψεις συνεχίζονται στο παρασκήνιο. Μπορείτε να συνεχίσετε και να ολοκληρώσετε τη ρύθμιση τώρα — οι ρυθμίσεις του CallVault δείχνουν την ίδια πρόοδο αργότερα.</string>
     <string name="wizard_transcription_language_note">Ορίστε την στη γλώσσα στην οποία είναι ρυθμισμένο αυτό το τηλέφωνο. Το να την ονομάσετε είναι πολύ πιο αξιόπιστο από το να αφήσετε την εφαρμογή να μαντέψει, και μπορείτε ακόμα να επιλέξετε διαφορετική ανά κλήση αργότερα.</string>
     <string name="wizard_transcription_line">Μετατροπή κλήσεων σε κείμενο σε αυτό το τηλέφωνο.</string>
     <string name="wizard_transcription_model_note">Η απομαγνητοφώνηση χρειάζεται πρώτα ένα μοντέλο ομιλίας στο τηλέφωνο: το %1$s είναι %2$d MB, το %3$s είναι %4$d MB. Η απομαγνητοφώνηση μιας κλήσης τότε διαρκεί περίπου όσο η διάρκεια της κλήσης και επιβαρύνει έντονα τον επεξεργαστή.</string>

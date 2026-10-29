@@ -23,6 +23,7 @@ import androidx.compose.ui.unit.dp
 import com.baba.callvault.R
 import com.baba.callvault.data.AppPreferences
 import com.baba.callvault.transcription.TranscriptionScheduler
+import com.baba.callvault.transcription.model.DownloadNetwork
 import com.baba.callvault.transcription.model.DownloadableModel
 import com.baba.callvault.transcription.model.TranscriptionModel
 import com.baba.callvault.ui.common.TranscriptionLabels
@@ -44,7 +45,7 @@ import com.baba.callvault.ui.common.CvCard
  *
  * **The downloads start here and nothing waits for them.** The step used to say the button was in
  * Settings, which asked someone who has just been told about the feature to go and find it later.
- * They are WorkManager jobs on an unmetered network, so Next and Finish stay enabled throughout
+ * They are WorkManager jobs (Wi-Fi only unless the user says yes to mobile data at the tap), so Next and Finish stay enabled throughout
  * ([canAdvanceFrom] never asks about this step) and the download carries on while the user finishes
  * setup and lands on Home.
  *
@@ -54,7 +55,7 @@ import com.baba.callvault.ui.common.CvCard
 @Composable
 internal fun ModelsStep(
     updateTrigger: Int,
-    onDownloadModel: (DownloadableModel) -> Unit,
+    onDownloadModel: (DownloadableModel, DownloadNetwork) -> Unit,
     onCancelModelDownload: (DownloadableModel) -> Unit,
     onDeleteModel: (DownloadableModel) -> Unit,
     onImportModel: (DownloadableModel, Uri) -> Unit,

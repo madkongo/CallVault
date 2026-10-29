@@ -5,6 +5,10 @@
 %1$s
 
 لا يمكنك فعل أي شيء حيال هذا، التطبيق لا يمكنه العمل وسيتم إغلاقه الآن.</string>
+    <string name="mobile_data_download_body">حجم هذا النموذج %1$s. هل تريد تنزيله الآن عبر بيانات الجوال، أم الانتظار ليبدأ تلقائيًا عند اتصالك بشبكة Wi-Fi؟</string>
+    <string name="mobile_data_download_now">التنزيل الآن عبر بيانات الجوال</string>
+    <string name="mobile_data_download_title">أنت غير متصل بشبكة Wi-Fi</string>
+    <string name="mobile_data_download_wait">انتظار Wi-Fi</string>
     <string name="voip_recording_warning_message">يخضع تسجيل مكالمات التطبيق لتنظيم أكثر صرامة من تسجيل المكالمات الهاتفية، وفي العديد من الأماكن يجب أن يوافق جميع المشاركين أولاً. يرجى التأكد من أنك مسموح لك بذلك.
 
 يعمل مع بعض التطبيقات وليس غيرها، ويمكن للتطبيق منع التسجيل في أي وقت في تحديث.</string>
@@ -630,7 +634,7 @@
     <string name="summary_model_discard">حذف الملف غير المكتمل</string>
     <string name="summary_model_discard_subtitle">يحرر مساحة %1$.1f جيجابايت</string>
     <string name="summary_model_download">تنزيل نموذج التلخيص</string>
-    <string name="summary_model_download_subtitle">%1$.1f جيجابايت، عبر Wi-Fi فقط</string>
+    <string name="summary_model_download_subtitle">%1$.1f جيجابايت</string>
     <string name="summary_model_downloading">جارٍ التنزيل… %1$d%%</string>
     <string name="summary_model_failed">تعذر اكتمال التنزيل، يرجى المحاولة مجددًا.</string>
     <string name="summary_model_failed_space">لا توجد مساحة كافية على الهاتف. يرجى تحرير بعض المساحة والمحاولة مجددًا.</string>
@@ -644,7 +648,7 @@
     <string name="summary_requirements_cancel">ليس الآن</string>
     <string name="summary_requirements_continue">تنزيل</string>
     <string name="summary_requirements_dont_ask">لا تظهر هذا مرة أخرى</string>
-    <string name="summary_requirements_download">%1$.1f جيجابايت للتنزيل، عبر Wi-Fi فقط</string>
+    <string name="summary_requirements_download">%1$.1f جيجابايت للتنزيل</string>
     <string name="summary_requirements_heading">قبل التنزيل</string>
     <string name="summary_requirements_memory">حوالي %1$.1f جيجابايت من الذاكرة أثناء التشغيل</string>
     <string name="summary_requirements_phone">يحتاج إلى هاتف حديث مع مساحة احتياطية. على هاتف أقدم قد يكون بطيئًا أو يفشل.</string>
@@ -744,7 +748,7 @@
     <string name="transcription_model_best_small_download">أعلى جودة بحجم أصغر</string>
     <string name="transcription_model_delete">حذف النموذج</string>
     <string name="transcription_model_download">تنزيل النموذج</string>
-    <string name="transcription_model_download_subtitle">%1$d ميغابايت، عبر Wi-Fi فقط</string>
+    <string name="transcription_model_download_subtitle">%1$d ميغابايت</string>
     <string name="transcription_model_downloading">جارٍ التنزيل… %1$d%%</string>
     <string name="transcription_model_failed">تعذر اكتمال التنزيل، يرجى المحاولة مجددًا.</string>
     <string name="transcription_model_failed_space">لا توجد مساحة كافية. يرجى توفير مساحة تخزين ثم المحاولة مجددًا.</string>
@@ -844,7 +848,7 @@
     <string name="wizard_storage_subtitle">اختر مكان تخزين تسجيلاتك. يمكنك تغيير هذا لاحقًا في الإعدادات.</string>
     <string name="wizard_storage_title">مكان حفظ التسجيلات</string>
     <string name="wizard_title">إعداد CallVault</string>
-    <string name="wizard_transcription_background_note">يتم تشغيل كلا التنزيلين عبر Wi-Fi فقط، ويستمران في الخلفية. يمكنك المتابعة وإنهاء الإعداد الآن. تُظهر إعدادات CallVault نفس التقدم بعد ذلك.</string>
+    <string name="wizard_transcription_background_note">يستمر كلا التنزيلين في الخلفية. يمكنك المتابعة وإنهاء الإعداد الآن. تُظهر إعدادات CallVault نفس التقدم بعد ذلك.</string>
     <string name="wizard_transcription_language_note">تم التعيين على اللغة التي تم ضبط هذا الهاتف عليها. تسميتها أكثر موثوقية بكثير من ترك التطبيق يخمن، ولا يزال بإمكانك اختيار لغة مختلفة لكل مكالمة لاحقًا.</string>
     <string name="wizard_transcription_line">حوّل المكالمات إلى نص على هذا الهاتف.</string>
     <string name="wizard_transcription_model_note">يحتاج التفريغ الصوتي إلى نموذج التعرف الصوتي على الهاتف أولاً: %1$s يبلغ حجمه %2$d ميجابايت، و%3$s يبلغ حجمه %4$d ميجابايت. يستغرق تفريغ مكالمة صوتيًا بعد ذلك تقريبًا مدة المكالمة ويعمل على معالج الجهاز بكثافة.</string>

@@ -13,7 +13,7 @@ import androidx.work.Constraints
 import androidx.work.CoroutineWorker
 import androidx.work.Data
 import androidx.work.ExistingWorkPolicy
-import androidx.work.NetworkType
+import androidx.work.OneTimeWorkRequest
 import androidx.work.OneTimeWorkRequestBuilder
 import androidx.work.WorkInfo
 import androidx.work.WorkManager
@@ -293,9 +293,27 @@ class ModelDownloadWorker(
         /** Unique work name for [model], so tapping download twice does not fetch it twice. */
         fun workNameFor(model: DownloadableModel): String = "cv_model_download_${model.id}"
 
-        /** Queues [model] for download over an unmetered network. Idempotent. */
-        fun enqueue(context: Context, model: DownloadableModel) {
-            val request = OneTimeWorkRequestBuilder<ModelDownloadWorker>()
+        /**
+         * Queues [model] for download over [network]: Wi-Fi only unless the user said yes to mobile
+         * data for this one download. Idempotent.
+         *
+         * **KEEP, not REPLACE, even when [network] differs from a queued request.** A Download or
+         * Resume button is only shown while no download work is live (`ModelDownloadState` maps
+         * ENQUEUED, BLOCKED and RUNNING to Waiting/Downloading, whose only action is Cancel), and a
+         * cancelled request is finished, which KEEP does not keep. So a tap never meets a waiting
+         * request to replace. REPLACE would be the dangerous choice: on a double tap it cancels a
+         * running worker that is still writing the `.part` while its replacement opens the same file.
+         * The `.part` is never touched by the constraint either way; the next run resumes from it.
+         */
+        fun enqueue(context: Context, model: DownloadableModel, network: DownloadNetwork = DownloadNetwork.WIFI_ONLY) {
+            WorkManager.getInstance(context)
+                .enqueueUniqueWork(workNameFor(model), ExistingWorkPolicy.KEEP, buildRequest(model, network))
+            AppLogger.i(TAG, "Queued download of ${model.id} over ${network.name}")
+        }
+
+        /** The request [enqueue] queues. Separate so its constraints can be checked in a test. */
+        internal fun buildRequest(model: DownloadableModel, network: DownloadNetwork): OneTimeWorkRequest =
+            OneTimeWorkRequestBuilder<ModelDownloadWorker>()
                 .setInputData(
                     workDataOf(
                         KEY_MODEL_ID to model.id,
@@ -307,16 +325,11 @@ class ModelDownloadWorker(
                 )
                 .setConstraints(
                     Constraints.Builder()
-                        .setRequiredNetworkType(NetworkType.UNMETERED)
+                        .setRequiredNetworkType(network.networkType)
                         .setRequiresStorageNotLow(true)
                         .build()
                 )
                 .build()
-
-            WorkManager.getInstance(context)
-                .enqueueUniqueWork(workNameFor(model), ExistingWorkPolicy.KEEP, request)
-            AppLogger.i(TAG, "Queued download of ${model.id}")
-        }
 
         /** Cancels an in-progress download. The partial file is kept so a later retry resumes. */
         fun cancel(context: Context, model: DownloadableModel) {

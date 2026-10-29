@@ -219,7 +219,7 @@ internal fun TranscriptionModelDownloadRows(preferences: AppPreferences, updateT
     TranscriptionModelRows(
         model = selectedModel,
         updateTrigger = updateTrigger,
-        onDownload = { actions.downloadTranscriptionModel(it) },
+        onDownload = { model, network -> actions.downloadTranscriptionModel(model, network) },
         onCancel = { actions.cancelTranscriptionModelDownload(it) },
         onDelete = { actions.deleteTranscriptionModel(it) },
         onImport = { model, uri -> actions.importModel(model, uri) },
