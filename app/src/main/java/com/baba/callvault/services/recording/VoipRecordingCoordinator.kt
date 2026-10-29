@@ -632,9 +632,13 @@ object VoipRecordingCoordinator {
             logOneSidedDiagnostics()
             AppLogger.w(TAG, "VoIP recording captured only your side — the other app blocks capture")
             // On vivo the far side is silenced by the phone until the user turns on vivo's own "In-app call
-            // recording" (Recorder app), so point vivo users to that toggle instead of blaming the app.
-            val warning = if (DeviceInfo.isVivo()) R.string.voip_one_sided_warning_vivo
-                          else R.string.voip_one_sided_warning
+            // recording" (Recorder app), so point vivo users to that toggle instead of blaming the app —
+            // unless this is overseas firmware, which has no such toggle (see DeviceInfo.vivoInAppRecording).
+            val warning = when {
+                !DeviceInfo.isVivo() -> R.string.voip_one_sided_warning
+                DeviceInfo.isVivoWithoutInAppRecording() -> R.string.voip_one_sided_warning_vivo_overseas
+                else -> R.string.voip_one_sided_warning_vivo
+            }
             runCatching {
                 RecordingNotificationHelper(context)
                     .showErrorNotification(context.getString(warning))

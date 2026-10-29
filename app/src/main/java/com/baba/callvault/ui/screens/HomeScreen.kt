@@ -2550,8 +2550,12 @@ private fun healthMessage(health: SetupHealth): String {
                 FailureReason.NO_AUDIO -> R.string.home_health_failed_no_audio
                 FailureReason.DAEMON_DIED -> R.string.home_health_failed_daemon
                 FailureReason.ONE_SIDED ->
-                    if (DeviceInfo.isVivo()) R.string.home_health_failed_one_sided_vivo
-                    else R.string.home_health_failed_one_sided
+                    when {
+                        !DeviceInfo.isVivo() -> R.string.home_health_failed_one_sided
+                        DeviceInfo.isVivoWithoutInAppRecording() ->
+                            R.string.home_health_failed_one_sided_vivo_overseas
+                        else -> R.string.home_health_failed_one_sided_vivo
+                    }
                 FailureReason.CUT_OFF -> R.string.home_health_failed_cut_off
             }
         )

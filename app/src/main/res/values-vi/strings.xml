@@ -752,6 +752,7 @@
     <string name="voip_missed_not_ready">Một cuộc gọi trong ứng dụng không được ghi — CallVault chưa sẵn sàng kịp. Điều này có thể xảy ra trong chốc lát sau khi một cuộc gọi điện thoại kết thúc. Cuộc gọi tiếp theo sẽ ghi bình thường.</string>
     <string name="voip_one_sided_warning">Chỉ có phía bạn được ghi trong cuộc gọi đó — ứng dụng kia không cho phép ghi âm thanh cuộc gọi của nó.</string>
     <string name="voip_one_sided_warning_vivo">Chỉ có phía bạn trong cuộc gọi qua ứng dụng đó được ghi lại. Trên vivo, mở ứng dụng Ghi âm → Ghi âm cuộc gọi trong ứng dụng và bật nó (cùng với Tự động bắt đầu ghi) để ghi cả người kia.</string>
+    <string name="voip_one_sided_warning_vivo_overseas">Chỉ có phía bạn trong cuộc gọi qua ứng dụng đó được ghi lại. Điện thoại vivo này chặn các ứng dụng ghi âm người kia trong cuộc gọi qua ứng dụng, và ứng dụng Ghi âm của máy không có tùy chọn nào để cho phép. Cuộc gọi điện thoại thông thường vẫn được ghi cả hai phía.</string>
     <string name="voip_prompt_text">Nhấn Ghi âm để ghi lại cuộc gọi này.</string>
     <string name="voip_prompt_text_named">Cuộc gọi %1$s. Nhấn Ghi âm để ghi lại.</string>
     <string name="voip_prompt_title">Đang có cuộc gọi trong ứng dụng</string>

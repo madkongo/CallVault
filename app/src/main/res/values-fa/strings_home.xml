@@ -91,6 +91,7 @@
     <string name="home_health_failed_daemon">ضبط‌کننده در حین آخرین تماس شما متوقف شد.</string>
     <string name="home_health_failed_one_sided">در آخرین تماس درون‌برنامه‌ای شما فقط صدای شما ضبط شد.</string>
     <string name="home_health_failed_one_sided_vivo">در آخرین تماس درون‌برنامه‌ای شما فقط صدای شما ضبط شد. در vivo: برنامه ضبط صدا را باز کنید، گزینه «In-app call recording» را پیدا کرده و آن را روشن کنید (به‌همراه «Auto-start recording»).</string>
+    <string name="home_health_failed_one_sided_vivo_overseas">در آخرین تماس درون‌برنامه‌ای شما فقط صدای شما ضبط شد. این گوشی vivo اجازه نمی‌دهد برنامه‌ها صدای طرف مقابل را در تماس‌های درون‌برنامه‌ای ضبط کنند و گزینه‌ای برای اجازه دادن ندارد. تماس‌های تلفنی معمولی از هر دو طرف ضبط می‌شوند.</string>
     <string name="home_date_today">امروز</string>
     <string name="home_date_yesterday">دیروز</string>
     <string name="whatsnew_221_title">بازشدن سریع‌تر، و سکوت درباره مشکلاتی که وجود ندارند</string>

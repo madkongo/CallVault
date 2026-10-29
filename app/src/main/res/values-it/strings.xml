@@ -753,6 +753,7 @@
     <string name="voip_missed_not_ready">Una chiamata da app non è stata registrata — CallVault non era pronto in tempo. Può succedere per un breve periodo dopo la fine di una telefonata. La prossima dovrebbe registrarsi normalmente.</string>
     <string name="voip_one_sided_warning">Di quella chiamata è stato registrato solo il tuo lato: l\'altra app non consente di catturare l\'audio delle sue chiamate.</string>
     <string name="voip_one_sided_warning_vivo">Di quella chiamata tramite app è stato registrato solo il tuo lato. Su vivo, apri l\'app Registratore → Registrazione delle chiamate nelle app e attivala (con Avvio automatico) per registrare anche l\'altra persona.</string>
+    <string name="voip_one_sided_warning_vivo_overseas">Di quella chiamata tramite app è stato registrato solo il tuo lato. Questo telefono vivo impedisce alle app di registrare l\'altra persona nelle chiamate tramite app, e la sua app Registratore non ha alcuna opzione per consentirlo. Le normali chiamate telefoniche vengono comunque registrate da entrambi i lati.</string>
     <string name="voip_prompt_text">Tocca Registra per registrare questa chiamata.</string>
     <string name="voip_prompt_text_named">Chiamata %1$s. Tocca Registra per registrarla.</string>
     <string name="voip_prompt_title">Chiamata in un\'app in corso</string>

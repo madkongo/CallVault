@@ -147,6 +147,7 @@
     <string name="home_health_missed_secure_settings">Дзвінок не записано: CallVault утратив дозвіл на запуск рекордера, %1$s.</string>
     <string name="home_health_missed_secure_settings_unnamed">Дзвінок не записано: втрачено дозвіл на запуск рекордера.</string>
     <string name="home_health_failed_one_sided_vivo">Записано лише ваш голос. На vivo перевірте параметр запису дзвінків із застосунків у системному диктофоні.</string>
+    <string name="home_health_failed_one_sided_vivo_overseas">Записано лише ваш голос. Цей телефон vivo не дозволяє застосункам записувати співрозмовника в дзвінках через застосунки, і дозволити це неможливо. Звичайні телефонні дзвінки записуються з обох сторін.</string>
     <string name="whatsnew_221_title">Швидший запуск і менше хибних попереджень</string>
     <string name="whatsnew_221_body">CallVault швидко відкривається навіть із великим архівом: програма більше не перечитує тривалість усіх записів щоразу під час показу списку.\n\nТакож покращено діагностику резервного копіювання в Google Drive.</string>
     <string name="whatsnew_220_title">Швидкий пошук та керування під час дзвінка</string>

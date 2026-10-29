@@ -24,4 +24,50 @@ object DeviceInfo {
      */
     fun isVivo(manufacturer: String = Build.MANUFACTURER): Boolean =
         manufacturer.equals("vivo", ignoreCase = true)
+
+    /** Whether this vivo build ships vivo's "In-app call recording" option (Recorder app). */
+    enum class VivoInAppRecording { AVAILABLE, ABSENT, UNKNOWN }
+
+    /** vivo's own switch for the option: "true" on builds that have it (China firmware), else false/missing. */
+    const val VIVO_VOIP_RECORD_PROP = "persist.vivo.audio.feature.voip_bbkrecord.enable"
+
+    /** "yes" on overseas (non-China) vivo/iQOO firmware. */
+    const val VIVO_OVERSEAS_PROP = "ro.vivo.product.overseas"
+
+    /**
+     * Decides from the two vivo properties whether the "In-app call recording" option exists.
+     *
+     * Research 2026-10-28 (firmware code + public getprop dumps, not device-confirmed): the option exists
+     * only on China-market firmware, where [VIVO_VOIP_RECORD_PROP] is "true". Overseas builds report it
+     * false or not at all, and [VIVO_OVERSEAS_PROP] = "yes".
+     *
+     * ABSENT needs BOTH signs, so an unreadable property can never tell a phone that has the option that
+     * it does not; anything else is UNKNOWN and keeps the existing "turn it on" message.
+     */
+    fun vivoInAppRecording(voipRecordProp: String, overseasProp: String): VivoInAppRecording {
+        val voip = voipRecordProp.trim().lowercase()
+        val overseas = overseasProp.trim().lowercase()
+        return when {
+            voip == "true" -> VivoInAppRecording.AVAILABLE
+            (voip.isEmpty() || voip == "false") && overseas == "yes" -> VivoInAppRecording.ABSENT
+            else -> VivoInAppRecording.UNKNOWN
+        }
+    }
+
+    /**
+     * True only on a vivo/iQOO phone whose firmware definitely lacks the "In-app call recording" option,
+     * so the far side of app calls cannot be recorded there without root. False when unsure.
+     */
+    fun isVivoWithoutInAppRecording(): Boolean =
+        isVivo() && vivoInAppRecording(
+            systemProperty(VIVO_VOIP_RECORD_PROP),
+            systemProperty(VIVO_OVERSEAS_PROP),
+        ) == VivoInAppRecording.ABSENT
+
+    /** Reads a system property via the hidden `SystemProperties.get` (reflection); "" when unreadable. */
+    private fun systemProperty(key: String): String = runCatching {
+        Class.forName("android.os.SystemProperties")
+            .getMethod("get", String::class.java)
+            .invoke(null, key) as? String ?: ""
+    }.getOrDefault("")
 }

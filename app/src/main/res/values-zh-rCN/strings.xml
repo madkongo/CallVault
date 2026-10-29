@@ -752,6 +752,7 @@
     <string name="voip_missed_not_ready">一通应用通话未被录制 — CallVault 未能及时就绪。这可能出现在通话结束后的短时间内。下一通通话应可正常录制。</string>
     <string name="voip_one_sided_warning">那通应用内通话只录到了你这一方——对方应用不允许捕获其通话音频。</string>
     <string name="voip_one_sided_warning_vivo">该应用通话仅录下了你这一方。在 vivo 手机上，打开“录音机”应用 → 应用内通话录音并开启（同时开启自动开始录音），即可同时录下对方。</string>
+    <string name="voip_one_sided_warning_vivo_overseas">该应用通话仅录下了你这一方。这台 vivo 手机不允许应用在应用通话中录制对方的声音，且其“录音机”应用没有可开启此功能的选项。普通电话通话仍会录下双方。</string>
     <string name="voip_prompt_text">点按“录制”即可录制此通话。</string>
     <string name="voip_prompt_text_named">%1$s 通话。点按“录制”即可录制。</string>
     <string name="voip_prompt_title">应用内通话进行中</string>
