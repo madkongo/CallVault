@@ -1,6 +1,8 @@
 # Issue #65 — finding Wireless debugging's connect port without mDNS
 
-🧪 VERIFYING — built, JVM tests pass, **not run on any phone**. Branch `fix/adb-connect-port-fallback-65`.
+✅ VERIFIED 2026-10-29 by the reporter on the Realme GT 7 (RMX5061), relayed by the maintainer: v2.4.7-fix65 installed over the old app, Wireless debugging turned back on, status went to "Ready to record", and a real outgoing carrier call recorded correctly. Which fallback step found the port is unknown (no report sent). Branch `fix/adb-connect-port-fallback-65`.
+
+(Was: 🧪 VERIFYING, built, JVM tests pass, emulator-only.)
 
 ## The report
 
