@@ -37,6 +37,8 @@ import java.net.ServerSocket
 class AdbMdns(
     context: Context,
     private val serviceType: String,
+    /** True while a run of failed searches is being kept quiet: the "Discovering" line is skipped too. */
+    private val quiet: Boolean = false,
     private val onPort: (Int) -> Unit,
 ) {
     private var registered = false
@@ -49,7 +51,7 @@ class AdbMdns(
         if (running) return
         running = true
         if (!registered) {
-            AppLogger.d(TAG, "Discovering $serviceType")
+            if (!quiet) AppLogger.d(TAG, "Discovering $serviceType")
             nsdManager.discoverServices(serviceType, NsdManager.PROTOCOL_DNS_SD, listener)
         }
     }
@@ -159,6 +161,10 @@ class AdbMdns(
         const val TLS_PAIRING = "_adb-tls-pairing._tcp"
         private const val TAG = "CV:AdbMdns"
 
+        /** A failed search is reported at most this often while it keeps failing (issue #65's log). */
+        private const val NOTHING_FOUND_LOG_INTERVAL_MS = 5 * 60_000L
+        private val nothingFound = java.util.concurrent.ConcurrentHashMap<String, RepeatedWarning>()
+
         /**
          * Blocks (up to [timeoutMs]) until an mDNS service of [serviceType] is found,
          * returning its port or null on timeout. Must be called off the main thread.
@@ -166,7 +172,9 @@ class AdbMdns(
         fun discoverPort(context: Context, serviceType: String, timeoutMs: Long): Int? {
             val portRef = java.util.concurrent.atomic.AtomicInteger(-1)
             val latch = java.util.concurrent.CountDownLatch(1)
-            val mdns = AdbMdns(context, serviceType) { port ->
+            val warning = nothingFound.getOrPut(serviceType) { RepeatedWarning(NOTHING_FOUND_LOG_INTERVAL_MS) }
+            val quiet = warning.isQuiet(android.os.SystemClock.elapsedRealtime())
+            val mdns = AdbMdns(context, serviceType, quiet) { port ->
                 if (port > 0) {
                     portRef.set(port)
                     latch.countDown()
@@ -178,9 +186,14 @@ class AdbMdns(
                     // The line the reporter of #23 needed and did not have: the search ended with
                     // nothing, which is a different failure from a service found and rejected (logged
                     // above) and from a refused connection (logged by the caller).
-                    AppLogger.w(TAG, "No $serviceType service accepted within ${timeoutMs}ms")
+                    // Reported once per few minutes while it keeps failing, with the count of quiet repeats.
+                    warning.next(android.os.SystemClock.elapsedRealtime())?.let { repeats ->
+                        val more = if (repeats > 0) " ($repeats more times since the last report)" else ""
+                        AppLogger.w(TAG, "No $serviceType service accepted within ${timeoutMs}ms$more")
+                    }
                     null
                 } else {
+                    warning.reset()
                     portRef.get().takeIf { it > 0 }
                 }
             } finally {
