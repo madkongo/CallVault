@@ -472,6 +472,8 @@
     <string name="settings_debug_log_file">فایل گزارش</string>
     <string name="settings_debug_log_view_hint">برای خواندن جدیدترین ورودی‌ها بزنید.</string>
     <string name="settings_debug_log_wrap">شکستن خطوط</string>
+    <string name="settings_debug_skip_mdns">رد کردن mDNS هنگام اتصال (آزمایش جستجوی درگاه)</string>
+    <string name="settings_debug_skip_mdns_description">برای آزمایش. اتصال بعدی اشکال‌زدایی بی‌سیم mDNS و آخرین درگاه شناخته‌شده را نادیده می‌گیرد و درگاه را با جستجو در درگاه‌های محلی این گوشی پیدا می‌کند. فقط وقتی ثبت گزارش روشن است کار می‌کند.</string>
     <string name="settings_debug_logging_enabled">فعال کردن ضبط گزارش</string>
     <string name="settings_debug_logging_enabled_description">برای گزارش یک اشکال، این را فعال کنید، مشکل را بازتولید کنید، سپس خاموشش کنید و گزارش‌ها را به اشتراک بگذارید.</string>
     <string name="settings_drive_folder_desc">پوشه‌ای (در برنامه Google Drive) برای کپی فایل‌های ضبط‌شده انتخاب کنید.</string>

@@ -415,6 +415,8 @@
     <string name="settings_debug_log_file">ملف السجل</string>
     <string name="settings_debug_log_view_hint">انقر لقراءة أحدث الإدخالات.</string>
     <string name="settings_debug_log_wrap">طي الأسطر</string>
+    <string name="settings_debug_skip_mdns">تخطي mDNS عند الاتصال (اختبار البحث عن المنفذ)</string>
+    <string name="settings_debug_skip_mdns_description">للاختبار. يتجاهل اتصال تصحيح الأخطاء اللاسلكي التالي mDNS وآخر منفذ معروف، ويعثر على المنفذ بالبحث في المنافذ المحلية لهذا الهاتف. يعمل فقط أثناء تشغيل تسجيل السجل.</string>
     <string name="settings_debug_logging_enabled">تمكين تسجيل السجل</string>
     <string name="settings_debug_logging_enabled_description">للإبلاغ عن خطأ، قم بتمكين هذا، أعد إنتاج المشكلة، ثم قم بإيقاف تشغيله وشارك السجلات.</string>
     <string name="settings_drive_folder_desc">اختر مجلدًا (في تطبيق Google Drive) لنسخ التسجيلات إليه.</string>

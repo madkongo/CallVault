@@ -378,6 +378,8 @@
     <string name="settings_debug_log_file">Tệp nhật ký</string>
     <string name="settings_debug_log_view_hint">Nhấn để đọc các mục gần đây nhất.</string>
     <string name="settings_debug_log_wrap">Xuống dòng</string>
+    <string name="settings_debug_skip_mdns">Bỏ qua mDNS khi kết nối (thử tìm cổng)</string>
+    <string name="settings_debug_skip_mdns_description">Để thử nghiệm. Lần kết nối gỡ lỗi không dây tiếp theo bỏ qua mDNS và cổng đã biết gần nhất, rồi tìm cổng bằng cách dò các cổng cục bộ của điện thoại. Chỉ hoạt động khi đang bật ghi nhật ký.</string>
     <string name="settings_debug_logging_enabled">Bật ghi nhật ký</string>
     <string name="settings_debug_logging_enabled_description">Để báo cáo lỗi, hãy bật chức năng này, khởi động lại ứng dụng và tái hiện lỗi.</string>
     <string name="settings_drive_folder_desc">Chọn một thư mục (trong ứng dụng Google Drive) để sao chép bản ghi âm vào.</string>

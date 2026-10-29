@@ -379,6 +379,8 @@
     <string name="settings_debug_log_file">Archivo de registro</string>
     <string name="settings_debug_log_view_hint">Toca para leer las entradas más recientes.</string>
     <string name="settings_debug_log_wrap">Ajustar líneas</string>
+    <string name="settings_debug_skip_mdns">Omitir mDNS al conectar (probar la búsqueda de puerto)</string>
+    <string name="settings_debug_skip_mdns_description">Para pruebas. La próxima conexión de depuración inalámbrica ignora mDNS y el último puerto conocido, y encuentra el puerto buscando entre los puertos locales de este teléfono. Solo funciona mientras el registro está activado.</string>
     <string name="settings_debug_logging_enabled">Activar el registro de eventos</string>
     <string name="settings_debug_logging_enabled_description">Para informar de un error, activa esta opción, reinicia la aplicación y reproduce el problema.</string>
     <string name="settings_drive_folder_desc">Elija una carpeta (en la app de Google Drive) a la que copiar las grabaciones.</string>

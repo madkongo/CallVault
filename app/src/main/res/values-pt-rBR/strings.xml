@@ -382,6 +382,8 @@
     <string name="settings_debug_log_file">Arquivo de log</string>
     <string name="settings_debug_log_view_hint">Toque para ler as entradas mais recentes.</string>
     <string name="settings_debug_log_wrap">Quebrar linhas</string>
+    <string name="settings_debug_skip_mdns">Pular mDNS ao conectar (testar a busca de porta)</string>
+    <string name="settings_debug_skip_mdns_description">Para testes. A próxima conexão de depuração por Wi-Fi ignora o mDNS e a última porta conhecida, e encontra a porta procurando nas portas locais deste telefone. Só funciona enquanto a gravação de log está ativada.</string>
     <string name="settings_debug_logging_enabled">Ativar o registro de logs</string>
     <string name="settings_debug_logging_enabled_description">Para relatar um problema, ative esta opção, reproduza o problema, desative-a e compartilhe os registros.</string>
     <string name="settings_drive_folder_desc">Escolha uma pasta (no app do Google Drive) para onde copiar as gravações.</string>

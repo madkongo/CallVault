@@ -74,6 +74,8 @@ interface SettingsActions {
     fun setShowToastsEnabled(enabled: Boolean)
     fun setAppLanguage(languageCode: String)
     fun setLoggingEnabled(enabled: Boolean)
+    /** Debug test switch for #65: the next Wireless-debugging connect skips mDNS and searches loopback ports. */
+    fun setSkipMdnsConnectForTest(enabled: Boolean)
     fun getAppVersion(): String
     fun setFileNameTemplate(template: String)
     fun setStorageTarget(target: StorageTarget)
@@ -718,6 +720,11 @@ class SettingsViewModel(application: Application) : AndroidViewModel(application
      *
      * @param enabled `true` to start capturing application logs.
      */
+    override fun setSkipMdnsConnectForTest(enabled: Boolean) {
+        preferences.setDebugSkipMdnsConnect(enabled)
+        refresh()
+    }
+
     override fun setLoggingEnabled(enabled: Boolean) {
         if (enabled) {
             AppLogger.clearLogs()

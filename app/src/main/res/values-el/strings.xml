@@ -533,6 +533,8 @@
     <string name="settings_debug_log_file">Αρχείο καταγραφής</string>
     <string name="settings_debug_log_view_hint">Πατήστε για να διαβάσετε τις πιο πρόσφατες καταχωρήσεις.</string>
     <string name="settings_debug_log_wrap">Αναδίπλωση γραμμών</string>
+    <string name="settings_debug_skip_mdns">Παράλειψη mDNS κατά τη σύνδεση (δοκιμή αναζήτησης θύρας)</string>
+    <string name="settings_debug_skip_mdns_description">Για δοκιμή. Η επόμενη σύνδεση ασύρματου εντοπισμού σφαλμάτων αγνοεί το mDNS και την τελευταία γνωστή θύρα και βρίσκει τη θύρα ψάχνοντας στις τοπικές θύρες του τηλεφώνου. Λειτουργεί μόνο όσο η καταγραφή αρχείου είναι ενεργή.</string>
     <string name="settings_debug_logging_enabled">Ενεργοποίηση καταγραφής αρχείου καταγραφής</string>
     <string name="settings_debug_logging_enabled_description">Για να αναφέρετε ένα σφάλμα, ενεργοποιήστε το, αναπαραγάγετε το πρόβλημα, μετά απενεργοποιήστε το και μοιραστείτε τα αρχεία καταγραφής.</string>
     <string name="settings_drive_folder_desc">Επιλέξτε έναν φάκελο (στην εφαρμογή Google Drive) για την αντιγραφή των εγγραφών.</string>

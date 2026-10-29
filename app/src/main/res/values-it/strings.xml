@@ -379,6 +379,8 @@
     <string name="settings_debug_log_file">File di log</string>
     <string name="settings_debug_log_view_hint">Tocca per leggere le voci più recenti.</string>
     <string name="settings_debug_log_wrap">A capo automatico</string>
+    <string name="settings_debug_skip_mdns">Salta mDNS durante la connessione (prova la ricerca della porta)</string>
+    <string name="settings_debug_skip_mdns_description">Per i test. La prossima connessione di debug wireless ignora mDNS e l\'ultima porta nota, e trova la porta cercando tra le porte locali di questo telefono. Funziona solo mentre la registrazione del log è attiva.</string>
     <string name="settings_debug_logging_enabled">Attiva la registrazione dei log</string>
     <string name="settings_debug_logging_enabled_description">Per segnalare un bug, attivi questa opzione, riproduca il problema, poi la disattivi e condivida i log.</string>
     <string name="settings_drive_folder_desc">Scelga una cartella (nell\'app Google Drive) in cui copiare le registrazioni.</string>

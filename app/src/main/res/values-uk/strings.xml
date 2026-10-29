@@ -389,6 +389,8 @@
     <string name="settings_debug_log_file">Файл журналу</string>
     <string name="settings_debug_log_view_hint">Натисніть, щоб переглянути останні записи.</string>
     <string name="settings_debug_log_wrap">Переносити рядки</string>
+    <string name="settings_debug_skip_mdns">Пропускати mDNS під час підключення (перевірка пошуку порту)</string>
+    <string name="settings_debug_skip_mdns_description">Для тестування. Наступне підключення бездротового налагодження не використовує mDNS і останній відомий порт, а знаходить порт перебором локальних портів телефона. Працює, лише поки ввімкнено запис журналу.</string>
     <string name="settings_debug_logging_enabled">Записувати діагностичний журнал</string>
     <string name="settings_debug_logging_enabled_description">Щоб повідомити про помилку, увімкніть журнал, відтворіть проблему та поділіться звітом.</string>
     <string name="settings_drive_folder_desc">Виберіть папку в застосунку Google Drive для копій записів.</string>

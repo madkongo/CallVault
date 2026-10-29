@@ -381,6 +381,8 @@
     <string name="settings_debug_log_file">Plik dziennika</string>
     <string name="settings_debug_log_view_hint">Dotknij, aby przeczytać najnowsze wpisy.</string>
     <string name="settings_debug_log_wrap">Zawijaj wiersze</string>
+    <string name="settings_debug_skip_mdns">Pomiń mDNS przy łączeniu (test wyszukiwania portu)</string>
+    <string name="settings_debug_skip_mdns_description">Do testów. Następne połączenie debugowania bezprzewodowego pomija mDNS i ostatni znany port, a port znajduje, przeszukując lokalne porty tego telefonu. Działa tylko, gdy zapisywanie logów jest włączone.</string>
     <string name="settings_debug_logging_enabled">Włącz rejestrowanie logów</string>
     <string name="settings_debug_logging_enabled_description">Aby zgłosić błąd, włącz tę opcję, uruchom ponownie aplikację i spróbuj odtworzyć problem.</string>
     <string name="settings_drive_folder_desc">Wybierz folder (w aplikacji Google Drive), do którego będą kopiowane nagrania.</string>
