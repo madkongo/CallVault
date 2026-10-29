@@ -24,6 +24,7 @@ import com.baba.callvault.integrations.scrcpy.ScrcpyAudioCodec
 import com.baba.callvault.data.SyncScheduleMode
 import com.baba.callvault.data.TranscriptionMode
 import com.baba.callvault.transcription.TranscriptionScheduler
+import com.baba.callvault.transcription.cloud.TranscriptionService
 import com.baba.callvault.summary.SummaryModel
 import com.baba.callvault.transcription.model.DownloadNetwork
 import com.baba.callvault.transcription.model.DownloadableModel
@@ -109,6 +110,12 @@ interface SettingsActions {
 
     /** Whether tapping Transcribe asks which language, for phones that take calls in several. */
     fun setTranscriptionAskLanguage(ask: Boolean)
+
+    /** On this phone or a cloud service (#48). The consent dialog has already been answered. */
+    fun setTranscriptionService(service: TranscriptionService)
+
+    /** Whether cloud transcription may upload over mobile data. */
+    fun setTranscriptionCloudMobileData(allowed: Boolean)
     fun downloadTranscriptionModel(model: TranscriptionModel, network: DownloadNetwork)
 
     /** Stops a download in progress. The partial file is kept, so resuming does not re-fetch it. */
@@ -536,6 +543,20 @@ class SettingsViewModel(application: Application) : AndroidViewModel(application
     /** Saves whether tapping Transcribe asks which language first. */
     override fun setTranscriptionAskLanguage(ask: Boolean) {
         preferences.setTranscriptionAskLanguage(ask)
+        refresh()
+    }
+
+    /** Saves where calls are transcribed, and re-applies the sweep: a cloud run needs a network. */
+    override fun setTranscriptionService(service: TranscriptionService) {
+        preferences.setTranscriptionService(service)
+        TranscriptionScheduler.apply(appContext)
+        refresh()
+    }
+
+    /** Saves the mobile-data choice and re-applies the sweep's network constraint. */
+    override fun setTranscriptionCloudMobileData(allowed: Boolean) {
+        preferences.setTranscriptionCloudMobileData(allowed)
+        TranscriptionScheduler.apply(appContext)
         refresh()
     }
 
