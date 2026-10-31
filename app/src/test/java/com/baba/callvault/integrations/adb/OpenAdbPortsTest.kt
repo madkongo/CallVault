@@ -105,32 +105,75 @@ class OpenAdbPortsTest {
     fun `asks the first time`() {
         val gate = OpenAdbPortGate()
 
-        assertEquals(listOf(5555), gate.portsToProbe(listOf(5555)))
+        assertEquals(listOf(5555), gate.portsToProbe(listOf(5555), nowMs = 0))
     }
 
     @Test
     fun `after a miss the same ports are not asked again`() {
         val gate = OpenAdbPortGate()
-        gate.recordMiss(listOf(5555))
+        gate.recordMiss(listOf(5555), nowMs = 1_000)
 
-        assertEquals(emptyList<Int>(), gate.portsToProbe(listOf(5555)))
+        assertEquals(emptyList<Int>(), gate.portsToProbe(listOf(5555), nowMs = 2_000))
+    }
+
+    @Test
+    fun `a miss expires after ten minutes`() {
+        val gate = OpenAdbPortGate()
+        gate.recordMiss(listOf(5555), nowMs = 1_000)
+
+        assertEquals(listOf(5555), gate.portsToProbe(listOf(5555), nowMs = 1_000 + OpenAdbPortGate.MISS_TTL_MS))
     }
 
     @Test
     fun `a change in adbd's ports asks again despite the miss`() {
         val gate = OpenAdbPortGate()
-        gate.recordMiss(listOf(5555))
+        gate.recordMiss(listOf(5555), nowMs = 0)
 
-        assertEquals(listOf(41_000, 5555), gate.portsToProbe(listOf(41_000, 5555)))
+        assertEquals(listOf(41_000, 5555), gate.portsToProbe(listOf(41_000, 5555), nowMs = 1))
     }
 
     @Test
     fun `a hit clears the miss so a lost connection asks again at once`() {
         val gate = OpenAdbPortGate()
-        gate.recordMiss(listOf(5555))
+        gate.recordMiss(listOf(5555), nowMs = 0)
         gate.recordHit()
 
-        assertEquals(listOf(5555), gate.portsToProbe(listOf(5555)))
+        assertEquals(listOf(5555), gate.portsToProbe(listOf(5555), nowMs = 1))
+    }
+
+    @Test
+    fun `scan connects to the first port that answers as adb`() {
+        val connected = mutableListOf<Int>()
+
+        val outcome = OpenAdbPortScan.run(
+            listOf(1, 2, 3),
+            probe = { if (it == 1) PortProbe.CLOSED else PortProbe.ADB_PLAIN },
+            connect = { connected += it; true },
+        )
+
+        assertEquals(OpenAdbPortScan.Outcome.CONNECTED, outcome)
+        assertEquals(listOf(2), connected)
+    }
+
+    @Test
+    fun `scan where nothing answers as adb is a miss and connects to nothing`() {
+        var connects = 0
+
+        val outcome = OpenAdbPortScan.run(
+            listOf(1, 2, 3),
+            probe = { if (it == 2) PortProbe.ADB_TLS else PortProbe.OPEN_NOT_ADB },
+            connect = { connects++; true },
+        )
+
+        assertEquals(OpenAdbPortScan.Outcome.NOTHING_ANSWERED, outcome)
+        assertEquals(0, connects)
+    }
+
+    @Test
+    fun `an adb answer whose connect fails is not a miss`() {
+        val outcome = OpenAdbPortScan.run(listOf(1), probe = { PortProbe.ADB_PLAIN }, connect = { false })
+
+        assertEquals(OpenAdbPortScan.Outcome.ADB_ANSWERED_NOT_CONNECTED, outcome)
     }
 
     private companion object {

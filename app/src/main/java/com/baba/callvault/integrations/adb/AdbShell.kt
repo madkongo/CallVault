@@ -219,8 +219,8 @@ object AdbShell {
      * - each port is first asked with one plain `CNXN` ([AdbWireProbe], bounded by [OPEN_PORT_CONNECT_TIMEOUT_MS] +
      *   [OPEN_PORT_READ_TIMEOUT_MS]); on phones where no property names a port, nothing is dialled at all;
      * - only a port that answers as classic adbd gets a real (bounded, [CONNECT_BUDGET_MS]) connect;
-     * - a miss is remembered for this process ([OpenAdbPortGate]) until adbd's tcp ports change, so it is
-     *   asked once, not on every connect.
+     * - a miss (nothing answered as adb) is remembered in memory ([OpenAdbPortGate]) for 10 min or until adbd's
+     *   tcp ports change, so it is not asked on every connect.
      *
      * The connect authenticates with CallVault's key. If adbd did not know that key it would show Android's
      * "Allow debugging?" prompt, so nothing is probed at all until CallVault has connected once with it
@@ -236,22 +236,29 @@ object AdbShell {
             alreadyTried = alreadyTried,
             ourPort = AppPreferences(context).getLoopbackAdbPort(),
         )
-        val ports = openPortGate.portsToProbe(candidates)
+        val ports = openPortGate.portsToProbe(candidates, SystemClock.elapsedRealtime())
         if (ports.isEmpty()) return false
         val mgr = AdbConnectionManager.getInstance(context)
-        for (port in ports) {
-            val probe = AdbWireProbe.probe(LOOPBACK_HOST, port, OPEN_PORT_CONNECT_TIMEOUT_MS, OPEN_PORT_READ_TIMEOUT_MS)
-            if (!LoopbackPorts.isAlreadyOpenAdb(probe)) continue
-            if (connectBounded(context, "already-open adb tcp :$port") { mgr.connect(LOOPBACK_HOST, port) }) {
-                openPortGate.recordHit()
-                AppLogger.i(TAG, "Connected over adbd's already-open tcp port :$port (no Wi-Fi or Wireless debugging needed)")
-                return true
+        val outcome = OpenAdbPortScan.run(
+            ports,
+            probe = { AdbWireProbe.probe(LOOPBACK_HOST, it, OPEN_PORT_CONNECT_TIMEOUT_MS, OPEN_PORT_READ_TIMEOUT_MS) },
+            connect = { port ->
+                connectBounded(context, "already-open adb tcp :$port") { mgr.connect(LOOPBACK_HOST, port) }.also { ok ->
+                    if (ok) AppLogger.i(TAG, "Connected over adbd's already-open tcp port :$port (no Wi-Fi or Wireless debugging needed)")
+                    else AppLogger.i(TAG, "adbd answers on tcp :$port but the connect did not complete (key refused, or adbd restarting)")
+                }
+            },
+        )
+        when (outcome) {
+            OpenAdbPortScan.Outcome.CONNECTED -> openPortGate.recordHit()
+            // Not cached: an adb answer with a failed connect is usually adbd mid-restart; the next connect asks again.
+            OpenAdbPortScan.Outcome.ADB_ANSWERED_NOT_CONNECTED -> Unit
+            OpenAdbPortScan.Outcome.NOTHING_ANSWERED -> {
+                openPortGate.recordMiss(candidates, SystemClock.elapsedRealtime())
+                AppLogger.d(TAG, "No already-open adb tcp port answered ($ports); not asking again for 10 min or until adbd's tcp ports change")
             }
-            AppLogger.i(TAG, "adbd answers on tcp :$port but did not accept CallVault's key (or did not finish the handshake)")
         }
-        openPortGate.recordMiss(candidates)
-        AppLogger.d(TAG, "No already-open adb tcp port to use ($ports); not asking again until adbd's tcp ports change")
-        return false
+        return outcome == OpenAdbPortScan.Outcome.CONNECTED
     }
 
     /**
