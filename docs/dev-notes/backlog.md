@@ -53,8 +53,11 @@ Conscrypt 2.7.0, targetSdk 37 + ACCESS_LOCAL_NETWORK when we move); pairing time
 a too-long recorded call still skips transcription silently; the ensureConnected leftovers.
 
 **Open — bugs / waiting on users:** #53 Honor app-call end (settings result); alex_812 recorder dies with no
-alert (parked); #9 VoIP mic re-take step 2 (needs a Samsung log); #32 whisper invents lines from noise; wrong
-contact label on some recordings (undiagnosed); Note10+ and zeref logs.
+alert (parked).
+
+**Closed 2026-10-31 by the maintainer (solved or dropped, no user feedback):** #9 VoIP mic re-take step 2;
+#32 whisper invents lines from noise; wrong contact label on some recordings; Note10+ and zeref (no logs came).
+Reopen only on a new report.
 
 **Parked:** health-gated status probe (built, on a tag); trash/recycle bin; in-app bug report; capture ladder;
 non-UI InCallService; VoIP direction; call-waiting split (alex_812 a); Android 12 bypass; pl/ru plurals; ivrit.
