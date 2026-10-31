@@ -1,5 +1,14 @@
 # Samsung Wi-Fi Calling (VoWiFi) records a full-length but SILENT file — not fixable without root
 
+> **⚠️ CORRECTION 2026-10-31 — this note's verdict is partly WRONG.** Upstream ShizuCallRecorder issue #136
+> (Galaxy S25 Ultra, One UI 9 / Android 17, AT&T Wi-Fi Calling) recorded **both sides** once Wi-Fi calls were
+> sent down its app-call path (far side captured from playback + mic). The phone is in `MODE_IN_COMMUNICATION`
+> during a Samsung Wi-Fi call (it flips there ~350 ms after OFFHOOK). The claim below that app-call capture
+> "also fails" was reasoning, never tested. VOICE_CALL being silent is still true. Fix commit upstream:
+> kitsumed/ShizuCallRecorder 0ad3c69e7b. For CallVault: route a carrier call that goes into
+> MODE_IN_COMMUNICATION (or reports PROPERTY_WIFI) to the VoIP capture instead — 📐 not built, needs a Samsung tester.
+
+
 **Status: 📐 RESEARCH ONLY, 2026-09-30. Nothing built.** Verdict from three parallel research passes
 (GitHub → vendor/AOSP docs → web), all converging at **HIGH confidence**. Issue #45 (Benjamin-67).
 Confidence markers: **M** measured on a device · **C** read from code · **D** docs/AOSP/vendor · **G** inference.
