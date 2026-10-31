@@ -248,7 +248,7 @@
     <string name="home_transcripts_count">已转写 %1$d 个</string>
     <string name="home_summaries_count">已摘要 %1$d 个</string>
     <string name="home_transcripts_empty_title">还没有转写</string>
-    <string name="home_transcripts_empty_hint">在某个录音的菜单中请求转写，或在上方导入一个音频文件——两者写好后都会出现在这里。</string>
+    <string name="home_transcripts_empty_hint">在录音的菜单中请求文字记录，或点按“导入”添加音频文件。写好后会显示在这里。</string>
     <string name="home_summaries_empty_title">还没有摘要</string>
     <string name="home_summaries_empty_hint">打开一通已有转写的通话并请求摘要，写好后就会出现在这里。</string>
 
@@ -264,7 +264,11 @@
     <!-- Transcripts: bringing in audio CallVault did not record -->
     <string name="transcripts_import_title">导入音频</string>
     <string name="transcripts_import_working">正在导入…</string>
-    <string name="transcripts_import_body">转写一条语音留言，或手机上任何其他音频文件。</string>
+    <string name="transcripts_import_fab">导入</string>
+    <string name="import_sheet_keep">保留音频</string>
+    <string name="import_sheet_keep_hint">显示在你的录音中</string>
+    <string name="import_sheet_transcript_only">仅文字记录</string>
+    <string name="import_sheet_transcript_only_hint">之后会删除音频</string>
     <string name="import_failed_title">无法导入该文件</string>
     <string name="import_failed_not_audio">CallVault 读不了这种文件。请试试 .opus、.ogg、.m4a、.mp3 或 .wav 录音。</string>
     <string name="import_failed_empty">该文件是空的，没有内容可转写。</string>

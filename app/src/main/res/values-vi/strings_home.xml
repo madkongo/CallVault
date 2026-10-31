@@ -248,7 +248,7 @@
     <string name="home_transcripts_count">Đã chép lời %1$d</string>
     <string name="home_summaries_count">Đã tóm tắt %1$d</string>
     <string name="home_transcripts_empty_title">Chưa có bản chép lời nào</string>
-    <string name="home_transcripts_empty_hint">Hãy yêu cầu chép lời từ menu của một bản ghi âm, hoặc nhập một tệp âm thanh ở trên; cả hai đều sẽ xuất hiện ở đây khi viết xong.</string>
+    <string name="home_transcripts_empty_hint">Yêu cầu bản chép lời từ menu của một bản ghi, hoặc chạm Nhập để thêm tệp âm thanh. Bản chép lời sẽ hiện ở đây khi xong.</string>
     <string name="home_summaries_empty_title">Chưa có bản tóm tắt nào</string>
     <string name="home_summaries_empty_hint">Hãy mở một cuộc gọi đã có bản chép lời và yêu cầu tóm tắt; nó sẽ xuất hiện ở đây khi viết xong.</string>
 
@@ -264,7 +264,11 @@
     <!-- Transcripts: bringing in audio CallVault did not record -->
     <string name="transcripts_import_title">Nhập tệp âm thanh</string>
     <string name="transcripts_import_working">Đang nhập…</string>
-    <string name="transcripts_import_body">Chép lời một tin nhắn thoại hoặc bất kỳ tệp âm thanh nào đã có trên điện thoại.</string>
+    <string name="transcripts_import_fab">Nhập</string>
+    <string name="import_sheet_keep">Giữ âm thanh</string>
+    <string name="import_sheet_keep_hint">Hiện cùng các bản ghi của bạn</string>
+    <string name="import_sheet_transcript_only">Chỉ bản chép lời</string>
+    <string name="import_sheet_transcript_only_hint">Âm thanh sẽ bị xóa sau đó</string>
     <string name="import_failed_title">Không nhập được tệp đó</string>
     <string name="import_failed_not_audio">CallVault không đọc được loại tệp này. Hãy thử bản ghi .opus, .ogg, .m4a, .mp3 hoặc .wav.</string>
     <string name="import_failed_empty">Tệp đó rỗng, nên sẽ không có gì để chép lời.</string>

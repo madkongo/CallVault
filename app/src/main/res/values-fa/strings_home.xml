@@ -265,7 +265,7 @@
     <string name="home_transcripts_count">%1$d رونویسی‌شده</string>
     <string name="home_summaries_count">%1$d خلاصه‌شده</string>
     <string name="home_transcripts_empty_title">هنوز چیزی رونویسی نشده است</string>
-    <string name="home_transcripts_empty_hint">از منوی یک فایل ضبط‌شده رونوشت بخواهید، یا در بالا یک فایل صوتی وارد کنید. هر کدام پس از نوشته شدن اینجا نمایان می‌شود.</string>
+    <string name="home_transcripts_empty_hint">از منوی یک ضبط، متن آن را بخواهید یا روی «وارد کردن» بزنید تا یک فایل صوتی اضافه کنید. هر کدام پس از نوشته شدن اینجا نمایش داده می‌شود.</string>
     <string name="home_summaries_empty_title">هنوز چیزی خلاصه نشده است</string>
     <string name="home_summaries_empty_hint">تماسی را که رونوشت دارد باز کنید و خلاصه بخواهید؛ پس از نوشته شدن اینجا نمایان می‌شود.</string>
 
@@ -282,7 +282,11 @@
     <!-- Transcripts: bringing in audio CallVault did not record -->
     <string name="transcripts_import_title">وارد کردن صدا</string>
     <string name="transcripts_import_working">در حال وارد کردن…</string>
-    <string name="transcripts_import_body">یک پیام صوتی یا هر فایل صوتی دیگری را که از پیش روی گوشی‌تان دارید رونویسی کنید.</string>
+    <string name="transcripts_import_fab">وارد کردن</string>
+    <string name="import_sheet_keep">نگه داشتن صدا</string>
+    <string name="import_sheet_keep_hint">در کنار ضبط‌هایتان نمایش داده می‌شود</string>
+    <string name="import_sheet_transcript_only">فقط متن</string>
+    <string name="import_sheet_transcript_only_hint">صدا پس از آن حذف می‌شود</string>
     <string name="import_failed_title">وارد کردن آن فایل ممکن نشد</string>
     <string name="import_failed_not_audio">CallVault نمی‌تواند آن نوع فایل را بخواند. یک فایل ضبط‌شده با قالب ‎.opus‎، ‎.ogg‎، ‎.m4a‎، ‎.mp3‎ یا ‎.wav‎ را امتحان کنید.</string>
     <string name="import_failed_empty">آن فایل خالی است، بنابراین چیزی برای رونویسی وجود نخواهد داشت.</string>

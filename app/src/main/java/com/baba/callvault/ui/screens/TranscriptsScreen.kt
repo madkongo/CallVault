@@ -8,6 +8,20 @@
 
 package com.baba.callvault.ui.screens
 
+import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.material.icons.automirrored.filled.Notes
+import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.LibraryMusic
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.ExtendedFloatingActionButton
+import androidx.compose.material3.ModalBottomSheet
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.setValue
+import androidx.compose.ui.semantics.Role
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -154,6 +168,16 @@ fun TranscriptsScreen(
     // Resolved once for the whole page rather than per row: a row that looked itself up would put a
     // walk of the recordings list behind every visible line of the screen.
     val byName = recordings.associateBy { it.displayName }
+    var showImportSheet by rememberSaveable { mutableStateOf(false) }
+    if (showImportSheet) {
+        ImportChoiceSheet(
+            onDismiss = { showImportSheet = false },
+            onChoose = { transcribeOnly ->
+                showImportSheet = false
+                onImport(transcribeOnly)
+            },
+        )
+    }
 
     CvScaffold(
         modifier = modifier.fillMaxSize(),
@@ -183,7 +207,19 @@ fun TranscriptsScreen(
                     tint = MaterialTheme.colorScheme.onSurfaceVariant
                 )
             }
-        }
+        },
+        // The way in for imports. It replaced a card that took a fifth of the page to explain one
+        // button; the two choices are explained on the sheet it opens, when they are being made.
+        // Not while selecting, where every tap on the page has become a toggle.
+        floatingActionButton = {
+            if (!selection.active) {
+                ImportFab(
+                    importing = importing,
+                    expanded = !listState.isScrollInProgress,
+                    onClick = { showImportSheet = true },
+                )
+            }
+        },
     ) { innerPadding ->
         LazyColumn(
             state = listState,
@@ -192,7 +228,8 @@ fun TranscriptsScreen(
                 start = 20.dp,
                 end = 20.dp,
                 top = innerPadding.calculateTopPadding() + 8.dp,
-                bottom = innerPadding.calculateBottomPadding() + 28.dp
+                // Room under the last row for the floating Import button, so it never covers it at rest.
+                bottom = innerPadding.calculateBottomPadding() + 96.dp
             ),
             verticalArrangement = Arrangement.spacedBy(10.dp)
         ) {
@@ -227,9 +264,6 @@ fun TranscriptsScreen(
                         placeholder = stringResource(R.string.transcripts_search_hint),
                     )
                 }
-            }
-            if (!selection.active && !searching) {
-                item { ImportAudioCard(importing = importing, onImport = onImport) }
             }
 
             if (groups.isEmpty) {
@@ -470,116 +504,92 @@ private fun LazyListScope.transcriptRows(
 }
 
 /**
- * The way in for a file CallVault did not record.
+ * The floating Import button. Shrinks to a round + while the list is moving so it covers less of the
+ * rows, and grows back when it stops.
  *
- * A card rather than an icon in the bar: this is the one action on the page that creates something,
- * it needs a sentence to explain what it is for, and a glyph in a row of glyphs would be read as
- * another way to filter the list. It sits at the top on purpose — under the search and settings
- * actions, above everything the page is otherwise listing.
- *
- * **Two buttons, the same two the share card offers, in the same words.** Asking on one door and not
- * the other would make "keep it or not" look like a property of how the file arrived rather than of
- * what the user wants from it — and the in-app door is the one someone reaches for when the file is
- * already on their phone, which is at least as likely to be "just read this" as a share is. The
- * difference from the share card is that the answer is given BEFORE the picker rather than after,
- * because there is nothing to describe until a file is chosen.
- *
- * While a copy is running the card says so and stops taking taps. The copy and the decode check are
- * not instant for a long recording, and a second picker raised over the first would import the same
- * file twice, under two names, with two rows and two transcripts.
+ * While a chosen file is being copied it says so and takes no taps: the copy is not instant for a
+ * long recording, and a second picker raised over the first would import the same file twice.
  */
 @Composable
-private fun ImportAudioCard(importing: Boolean, onImport: (transcribeOnly: Boolean) -> Unit) {
-    CvCard(contentPadding = PaddingValues(horizontal = 16.dp, vertical = 14.dp)) {
-        Row(verticalAlignment = Alignment.CenterVertically) {
-            Box(modifier = Modifier.size(IMPORT_GLYPH_SLOT), contentAlignment = Alignment.Center) {
-                if (importing) {
-                    CircularProgressIndicator(
-                        modifier = Modifier.size(20.dp),
-                        strokeWidth = 2.dp,
-                        // Stated, not defaulted: several of M3's own roles resolve to CoralDeep in
-                        // this scheme, and a red spinner in a teal app reads as a failure.
-                        color = MaterialTheme.colorScheme.primary,
-                    )
-                } else {
-                    Icon(
-                        imageVector = Icons.Filled.AudioFile,
-                        contentDescription = null,
-                        tint = MaterialTheme.colorScheme.primary,
-                        modifier = Modifier.size(24.dp),
-                    )
-                }
-            }
-            Spacer(Modifier.width(14.dp))
-            Column(modifier = Modifier.weight(1f)) {
-                Text(
-                    text = stringResource(
-                        if (importing) R.string.transcripts_import_working else R.string.transcripts_import_title
-                    ),
-                    style = MaterialTheme.typography.titleSmall,
-                    fontWeight = FontWeight.SemiBold,
-                    color = MaterialTheme.colorScheme.onSurface,
+private fun ImportFab(importing: Boolean, expanded: Boolean, onClick: () -> Unit) {
+    ExtendedFloatingActionButton(
+        onClick = { if (!importing) onClick() },
+        expanded = expanded || importing,
+        icon = {
+            if (importing) {
+                CircularProgressIndicator(
+                    modifier = Modifier.size(20.dp),
+                    strokeWidth = 2.dp,
+                    // Stated, not defaulted: several M3 roles resolve to coral in this scheme.
+                    color = MaterialTheme.colorScheme.onPrimary,
                 )
-                Spacer(Modifier.height(2.dp))
-                Text(
-                    text = stringResource(R.string.transcripts_import_body),
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                )
+            } else {
+                Icon(Icons.Filled.Add, contentDescription = null)
             }
-        }
-        if (!importing) {
-            Spacer(Modifier.height(12.dp))
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(10.dp),
-            ) {
-                Button(
-                    onClick = { onImport(false) },
-                    modifier = Modifier.weight(1f),
-                    contentPadding = PaddingValues(horizontal = 8.dp, vertical = 10.dp),
-                ) {
-                    Text(
-                        text = stringResource(R.string.import_choice_keep),
-                        maxLines = 2,
-                        textAlign = TextAlign.Center,
-                        style = MaterialTheme.typography.labelLarge,
-                    )
-                }
-                OutlinedButton(
-                    onClick = { onImport(true) },
-                    modifier = Modifier.weight(1f),
-                    contentPadding = PaddingValues(horizontal = 8.dp, vertical = 10.dp),
-                    // Stated, not defaulted: an OutlinedButton takes its content colour from the
-                    // primary role, and several of M3's own roles resolve to CoralDeep here — which
-                    // would put the quieter of the two answers in the app's error colour.
-                    colors = ButtonDefaults.outlinedButtonColors(
-                        contentColor = MaterialTheme.colorScheme.primary,
-                    ),
-                ) {
-                    Text(
-                        text = stringResource(R.string.import_choice_transcribe_only),
-                        maxLines = 2,
-                        textAlign = TextAlign.Center,
-                        style = MaterialTheme.typography.labelLarge,
-                    )
-                }
-            }
-            Spacer(Modifier.height(4.dp))
-            Text(
-                // One line under both, saying what the quieter answer does — the asymmetry is the
-                // thing worth spelling out, and two hints under two buttons on a card this size
-                // would be more words than the page they sit above.
-                text = stringResource(R.string.import_choice_transcribe_only_hint),
-                style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-            )
-        }
+        },
+        text = {
+            Text(stringResource(if (importing) R.string.transcripts_import_working else R.string.transcripts_import_fab))
+        },
+        containerColor = MaterialTheme.colorScheme.primary,
+        contentColor = MaterialTheme.colorScheme.onPrimary,
+    )
+}
+
+/** The two ways to import, each explained in one line, shown when the Import button is tapped. */
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun ImportChoiceSheet(onDismiss: () -> Unit, onChoose: (transcribeOnly: Boolean) -> Unit) {
+    ModalBottomSheet(onDismissRequest = onDismiss) {
+        Text(
+            text = stringResource(R.string.transcripts_import_title),
+            style = MaterialTheme.typography.titleMedium,
+            modifier = Modifier.padding(start = 24.dp, end = 24.dp, bottom = 8.dp),
+        )
+        ImportChoiceRow(
+            icon = Icons.Filled.LibraryMusic,
+            title = stringResource(R.string.import_sheet_keep),
+            hint = stringResource(R.string.import_sheet_keep_hint),
+            onClick = { onChoose(false) },
+        )
+        ImportChoiceRow(
+            icon = Icons.AutoMirrored.Filled.Notes,
+            title = stringResource(R.string.import_sheet_transcript_only),
+            hint = stringResource(R.string.import_sheet_transcript_only_hint),
+            onClick = { onChoose(true) },
+        )
+        Spacer(Modifier.height(24.dp))
     }
 }
 
-/** Matches the trailing slot on a transcript row, so the card's text starts on the same column. */
-private val IMPORT_GLYPH_SLOT = 40.dp
+@Composable
+private fun ImportChoiceRow(
+    icon: androidx.compose.ui.graphics.vector.ImageVector,
+    title: String,
+    hint: String,
+    onClick: () -> Unit,
+) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clickable(role = Role.Button, onClick = onClick)
+            .padding(horizontal = 24.dp, vertical = 12.dp),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        Box(
+            modifier = Modifier
+                .size(40.dp)
+                .background(MaterialTheme.colorScheme.primary.copy(alpha = 0.14f), CircleShape),
+            contentAlignment = Alignment.Center,
+        ) {
+            Icon(icon, contentDescription = null, tint = MaterialTheme.colorScheme.primary, modifier = Modifier.size(22.dp))
+        }
+        Spacer(Modifier.width(16.dp))
+        Column(modifier = Modifier.weight(1f)) {
+            Text(title, style = MaterialTheme.typography.bodyLarge, color = MaterialTheme.colorScheme.onSurface)
+            Text(hint, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+        }
+    }
+}
 
 /**
  * The heading over what is being transcribed, with the way to stop it.

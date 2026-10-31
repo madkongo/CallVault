@@ -248,7 +248,7 @@
     <string name="home_transcripts_count">Расшифровок: %1$d</string>
     <string name="home_summaries_count">Сводок: %1$d</string>
     <string name="home_transcripts_empty_title">Расшифровок пока нет</string>
-    <string name="home_transcripts_empty_hint">Запросите расшифровку в меню записи или импортируйте звуковой файл выше — и то и другое появится здесь, когда будет готово.</string>
+    <string name="home_transcripts_empty_hint">Запросите расшифровку в меню записи или нажмите «Импорт», чтобы добавить аудиофайл. Она появится здесь, когда будет готова.</string>
     <string name="home_summaries_empty_title">Сводок пока нет</string>
     <string name="home_summaries_empty_hint">Откройте звонок с расшифровкой и запросите сводку; она появится здесь, когда будет готова.</string>
 
@@ -264,7 +264,11 @@
     <!-- Transcripts: bringing in audio CallVault did not record -->
     <string name="transcripts_import_title">Импортировать аудио</string>
     <string name="transcripts_import_working">Импортируется…</string>
-    <string name="transcripts_import_body">Расшифруйте голосовое сообщение или любой другой звуковой файл, который уже есть на телефоне.</string>
+    <string name="transcripts_import_fab">Импорт</string>
+    <string name="import_sheet_keep">Сохранить аудио</string>
+    <string name="import_sheet_keep_hint">Появится среди ваших записей</string>
+    <string name="import_sheet_transcript_only">Только расшифровка</string>
+    <string name="import_sheet_transcript_only_hint">Аудио затем удаляется</string>
     <string name="import_failed_title">Не удалось импортировать файл</string>
     <string name="import_failed_not_audio">CallVault не умеет читать такие файлы. Попробуйте запись .opus, .ogg, .m4a, .mp3 или .wav.</string>
     <string name="import_failed_empty">Файл пуст — расшифровывать нечего.</string>
