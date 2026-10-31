@@ -719,6 +719,7 @@
     <string name="tile_recording_on">ضبط فعال</string>
     <string name="tile_recording_stopped">متوقف</string>
     <string name="transcribe_confirm_dont_ask">دیگر نپرس</string>
+    <string name="transcribe_long_call_line">این تماس %1$s است. در این گوشی، رونویسی حدود %2$s برابر مدت تماس طول می‌کشد — یعنی حدود %3$s.</string>
     <string name="transcribe_confirm_message">رونویسی %1$s گوشی شما را مشغول نگه می‌دارد و باتری قابل‌توجهی مصرف می‌کند. می‌توانید هر زمان آن را متوقف کنید.\n\nاین پرسش را می‌توان دوباره در بخش رونویسی در تنظیمات روشن کرد.</string>
     <string name="transcribe_confirm_title">این حدود %1$s طول می‌کشد</string>
     <string name="transcribe_confirm_title_first_run">اولی ممکن است کمی طول بکشد</string>

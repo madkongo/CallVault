@@ -636,6 +636,7 @@
     <string name="tile_recording_on">Запис увімкнений</string>
     <string name="tile_recording_stopped">Зупинено</string>
     <string name="transcribe_confirm_dont_ask">Більше не запитувати</string>
+    <string name="transcribe_long_call_line">Цей дзвінок триває %1$s. На цьому телефоні розпізнавання займає приблизно в %2$s раза більше часу — близько %3$s.</string>
     <string name="transcribe_confirm_message">Розпізнавання %1$s навантажує телефон і витрачає заряд батареї. Процес можна зупинити.\n\nЗапит підтвердження можна налаштувати пізніше.</string>
     <string name="transcribe_confirm_title">Це займе приблизно %1$s</string>
     <string name="transcribe_confirm_title_first_run">Перший запуск може тривати довше</string>

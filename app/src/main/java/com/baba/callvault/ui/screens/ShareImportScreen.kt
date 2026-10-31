@@ -55,6 +55,7 @@ import com.baba.callvault.ui.common.CvCard
 import com.baba.callvault.ui.common.TranscribeConfirmDialog
 import com.baba.callvault.ui.common.TranscribeLanguageDialog
 import com.baba.callvault.ui.common.formatEstimate
+import com.baba.callvault.ui.common.longCallLine
 import com.baba.callvault.ui.viewmodels.ShareImportViewModel
 
 /**
@@ -239,6 +240,8 @@ fun ShareImportScreen(
             title = state.label,
             estimate = state.estimateMs?.let { formatEstimate(it) },
             isFirstRun = state.isFirstRun,
+            // A share is never on a cloud engine here: that path skips this dialog altogether.
+            longCallLine = longCallLine(state.audioMs, state.estimateMs, state.isFirstRun),
             onDismiss = { onDecline(state.displayName) },
             onConfirm = { dontAskAgain -> onConfirm(state.displayName, state.language, dontAskAgain) },
         )

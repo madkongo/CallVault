@@ -625,6 +625,7 @@
     <string name="tile_recording_on">录音已开启</string>
     <string name="tile_recording_stopped">已停止</string>
     <string name="transcribe_confirm_dont_ask">不再询问</string>
+    <string name="transcribe_long_call_line">这通电话时长 %1$s。在此手机上，转写大约需要通话时长的 %2$s 倍——约 %3$s。</string>
     <string name="transcribe_confirm_message">转写 %1$s 会占用手机并明显耗电。你可以随时停止。\n\n可在设置的“转写”中重新开启此提示。</string>
     <string name="transcribe_confirm_title">大约需要 %1$s</string>
     <string name="transcribe_confirm_title_first_run">第一次可能需要一些时间</string>

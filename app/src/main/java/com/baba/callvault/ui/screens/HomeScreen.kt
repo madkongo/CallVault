@@ -144,6 +144,7 @@ import com.baba.callvault.data.waveform.WaveformDrawWorker
 import com.baba.callvault.data.transcripts.TranscriptStatus
 import com.baba.callvault.ui.common.TranscriptActionButton
 import com.baba.callvault.transcription.AudioDecoder
+import com.baba.callvault.transcription.LongTranscriptionWarning
 import com.baba.callvault.transcription.TranscriptionEstimate
 import com.baba.callvault.ui.common.ImportedBadge
 import com.baba.callvault.ui.common.RecordingLabel
@@ -154,6 +155,7 @@ import com.baba.callvault.summary.SummaryScheduler
 import com.baba.callvault.ui.common.rememberSummaryState
 import com.baba.callvault.ui.common.TranscribingPill
 import com.baba.callvault.ui.common.formatEstimate
+import com.baba.callvault.ui.common.longCallLine
 import com.baba.callvault.ui.common.TranscribingSheet
 import com.baba.callvault.ui.common.rememberTranscribingDisplay
 import com.baba.callvault.ui.common.rememberTranscribingPillState
@@ -689,8 +691,9 @@ fun HomeScreen(
     }
 
     /**
-     * Everything after the language is settled: the estimate confirmation if it is on, otherwise straight
-     * to the queue. [language] is a per-recording pick, null meaning "use the setting".
+     * Everything after the language is settled: the estimate confirmation if it is on (or, with it
+     * off, only the long-call line for a long call on the phone), otherwise straight to the queue.
+     * [language] is a per-recording pick, null meaning "use the setting".
      */
     val continueTranscription: (String, String?) -> Unit = { displayName, language ->
         val prefs = AppPreferences(context)
@@ -702,24 +705,31 @@ fun HomeScreen(
         // A cloud service (#48) takes seconds and keeps the phone idle, so the "keeps your phone busy"
         // dialog does not apply; sending was agreed to once, when the service was chosen.
         val isCloud = TranscriptionRouting.skipsRunConfirmation(prefs)
-        if (!isImport && !isCloud && !prefs.getTranscriptionConfirmBeforeRun()) {
+        if (isCloud) {
             enqueueTranscription(displayName, language)
         } else {
             // Estimating is arithmetic on a duration read from the container — microseconds — so the
-            // dialog can open with the answer already in it rather than spinning first.
+            // dialog can open with the answer already in it rather than spinning first. Read even
+            // when the notice is off: a long call still gets the long-call line.
             transcriptScope.launch {
                 val audioMs = withContext(Dispatchers.IO) {
                     val uri = libraryRecordings.firstOrNull { it.displayName == displayName }?.uri
                     uri?.let { AudioDecoder.durationMs(context, it) } ?: 0L
                 }
-                if (isCloud) {
+                val confirmation = LongTranscriptionWarning.confirmation(
+                    isCloud = false,
+                    isImport = isImport,
+                    confirmBeforeRun = prefs.getTranscriptionConfirmBeforeRun(),
+                    audioMs = audioMs,
+                )
+                if (confirmation == LongTranscriptionWarning.Confirmation.NONE) {
                     enqueueTranscription(displayName, language)
                 } else {
                     val estimate = if (audioMs <= 0L) null else TranscriptionEstimate.estimateMs(
                         audioMs = audioMs,
                         cost = TranscriptionRouting.runCost(prefs),
                     )
-                    confirmTranscribe = Triple(displayName, estimate, language)
+                    confirmTranscribe = TranscribeRequest(displayName, estimate, language, audioMs)
                 }
             }
         }
@@ -1847,7 +1857,7 @@ fun HomeScreen(
         }
     }
 
-    confirmTranscribe?.let { (displayName, estimateMs, language) ->
+    confirmTranscribe?.let { (displayName, estimateMs, language, audioMs) ->
         // Before this phone has timed a single run, the number comes from figures published for
         // other hardware — right to within a factor of two or three, which is not a promise worth
         // making to someone watching a progress bar. Say so plainly instead; every run after the
@@ -1855,10 +1865,22 @@ fun HomeScreen(
         val isFirstRun = remember(displayName) {
             TranscriptionRouting.isFirstRun(AppPreferences(context))
         }
+        // FULL is the usual notice; LONG_CALL_ONLY means the user turned the notice off, so only the
+        // long-call line is shown, without the battery text or a second "Don't ask again".
+        val showsBatteryNotice = remember(displayName) {
+            LongTranscriptionWarning.confirmation(
+                isCloud = false,
+                isImport = ImportedRecording.isImported(displayName),
+                confirmBeforeRun = AppPreferences(context).getTranscriptionConfirmBeforeRun(),
+                audioMs = audioMs,
+            ) != LongTranscriptionWarning.Confirmation.LONG_CALL_ONLY
+        }
         TranscribeConfirmDialog(
             title = RecordingLabel.forDisplayName(libraryRecordings, displayName),
             estimate = estimateMs?.let { formatEstimate(it) },
             isFirstRun = isFirstRun,
+            longCallLine = longCallLine(audioMs, estimateMs, isFirstRun),
+            showsBatteryNotice = showsBatteryNotice,
             onDismiss = { confirmTranscribe = null },
             onConfirm = { dontAskAgain ->
                 if (dontAskAgain) AppPreferences(context).setTranscriptionConfirmBeforeRun(false)

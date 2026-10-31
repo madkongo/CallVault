@@ -93,6 +93,8 @@ class ShareImportViewModel(application: Application) : AndroidViewModel(applicat
             val estimateMs: Long?,
             val isFirstRun: Boolean,
             val language: String?,
+            /** The file's own length, 0 when unknown; a long one gets the long-call line. */
+            val audioMs: Long = 0L,
         ) : State
 
         /** Imported and queued. [kind] decides what the card promises will happen to the audio. */
@@ -254,6 +256,7 @@ class ShareImportViewModel(application: Application) : AndroidViewModel(applicat
             // making to someone about to watch a progress bar (issue #26).
             isFirstRun = TranscriptionRouting.isFirstRun(prefs),
             language = language,
+            audioMs = importedDurationMs,
         )
     }
 

@@ -626,6 +626,7 @@
     <string name="tile_recording_on">Enregistrement activé</string>
     <string name="tile_recording_stopped">Arrêté</string>
     <string name="transcribe_confirm_dont_ask">Ne plus demander</string>
+    <string name="transcribe_long_call_line">Cet appel dure %1$s. Sur ce téléphone, la transcription prend environ %2$s fois sa durée — soit environ %3$s.</string>
     <string name="transcribe_confirm_message">Transcrire %1$s occupe le téléphone et consomme nettement de la batterie. Vous pouvez arrêter à tout moment.\n\nCette question peut être réactivée sous Transcription, dans les paramètres.</string>
     <string name="transcribe_confirm_title">Cela prendra environ %1$s</string>
     <string name="transcribe_confirm_title_first_run">La première fois peut prendre un moment</string>
