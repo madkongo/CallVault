@@ -14,6 +14,8 @@ All notable changes to CallVault are documented here. The format is based on
   <!-- 🧪 VERIFYING: unit tests only, not run on a phone. Maintainer to tap Transcribe on a >30-min call with
        the local model (with the notice on and with "Don't ask again" ticked) and with Groq, and let a >60-min
        call transcribe automatically. -->
+  If automatic transcription is on, older calls over an hour that were skipped before are transcribed on the next
+  automatic run, which can keep the phone busy for a while.
 
 ## [2.4.8] — 2026-10-31
 
