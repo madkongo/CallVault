@@ -865,7 +865,8 @@
     <string name="wizard_updates_subtitle">CallVault n\'est sur aucune boutique d\'applications : il cherche donc lui-même les nouvelles versions sur GitHub.</string>
     <string name="wizard_updates_title">Rester à jour</string>
     <string name="wifi_call_switch_failed">Cet appel semble passer par le Wi-Fi, mais la capture qui enregistre les deux côtés n\'a pas pu démarrer. Il est enregistré de la manière habituelle, qui peut manquer votre interlocuteur.</string>
-    <string name="wifi_call_one_sided">Seul votre côté de cet appel Wi-Fi a été enregistré. Si cela se reproduit, réglez les appels Wi-Fi sur « Réseau mobile de préférence » dans les paramètres de l\'application Téléphone.</string>
+    <string name="wifi_call_one_sided">CallVault n\'a pas pu capter directement l\'autre côté de cet appel Wi-Fi. Écoutez pour vérifier qu\'il y est ; sinon, réglez les appels Wi-Fi sur « réseau mobile de préférence » dans les paramètres de votre application Téléphone.</string>
+    <string name="wifi_call_check_title">Vérifiez cet appel Wi-Fi</string>
     <string name="settings_debug_force_wifi_route">Forcer la capture des appels Wi-Fi</string>
     <string name="settings_debug_force_wifi_route_description">Pour les tests. Chaque appel téléphonique bascule en cours d\'appel vers la capture des appels d\'applications, comme le ferait un appel Wi-Fi. Sur un téléphone sans appels Wi-Fi, l\'autre côté manquera et une erreur devrait s\'afficher. Nécessite l\'enregistrement des appels d\'applications. Ne fonctionne que si l\'enregistrement du journal est activé.</string>
     <string name="wifi_call_switch_aborted">L\'enregistrement de cet appel Wi-Fi s\'est arrêté plus tôt : la capture n\'a pas pu être changée sans risque. La partie déjà enregistrée est conservée.</string>

@@ -898,7 +898,8 @@
     <string name="wizard_updates_subtitle">لا يتوفر CallVault في متجر تطبيقات، لذا فإنه يتحقق من GitHub بحثًا عن إصدارات جديدة بنفسه.</string>
     <string name="wizard_updates_title">البقاء على اطلاع</string>
     <string name="wifi_call_switch_failed">يبدو أن هذه مكالمة عبر Wi-Fi، لكن تعذّر بدء التسجيل الذي يلتقط الطرفين. يجري تسجيلها بالطريقة المعتادة، وقد لا يُسمع فيها الطرف الآخر.</string>
-    <string name="wifi_call_one_sided">سُجّل جانبك فقط من مكالمة Wi-Fi هذه. إذا تكرر ذلك، اضبط الاتصال عبر Wi-Fi على تفضيل شبكة الجوال في إعدادات تطبيق الهاتف.</string>
+    <string name="wifi_call_one_sided">لم يتمكن CallVault من التقاط صوت الطرف الآخر في مكالمة Wi-Fi هذه مباشرةً. استمع للتأكد من وجوده؛ وإن لم يكن، فاضبط الاتصال عبر Wi-Fi على تفضيل شبكة الجوال في إعدادات تطبيق الهاتف.</string>
+    <string name="wifi_call_check_title">تحقّق من مكالمة Wi-Fi هذه</string>
     <string name="settings_debug_force_wifi_route">فرض مسار تسجيل مكالمات Wi-Fi</string>
     <string name="settings_debug_force_wifi_route_description">للاختبار. تنتقل كل مكالمة هاتفية أثناءها إلى تسجيل مكالمات التطبيقات، كما تفعل مكالمة Wi-Fi. على هاتف بلا اتصال عبر Wi-Fi سيغيب الطرف الآخر ويجب أن يظهر خطأ. يتطلب تفعيل تسجيل مكالمات التطبيقات. يعمل فقط أثناء تسجيل السجل.</string>
     <string name="wifi_call_switch_aborted">توقف تسجيل مكالمة Wi-Fi هذه مبكرًا: تعذّر تبديل طريقة التسجيل بأمان. حُفظ الجزء الذي سُجّل حتى الآن.</string>
