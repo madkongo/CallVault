@@ -8,7 +8,6 @@
   all behavioral strings continue to live in strings.xml.
 -->
 <resources>
-    <string name="settings_ui_subtitle">Ρυθμίστε την καταγραφή, τον ήχο και την εμφάνιση</string>
     <string name="settings_ui_about_app">CallVault</string>
     <string name="settings_ui_recording_server_label">Μηχανή καταγραφέα</string>
     <string name="settings_ui_open_repo_hint">Πατήστε για να ανοίξετε το έργο προέλευσης</string>

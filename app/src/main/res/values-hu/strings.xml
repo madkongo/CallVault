@@ -43,7 +43,6 @@
 
     <!-- New Settings screen, round 4: the Recording group's sub-headers. -->
 
-    <!-- The card at the top of both Settings screens that switches between the new and classic layouts. -->
     <string name="app_lock_locked">Zárolva</string>
     <string name="app_lock_prompt_title">CallVault feloldása</string>
     <string name="app_lock_unlock">Feloldás</string>
@@ -436,10 +435,6 @@
     <string name="settings_language">Nyelv</string>
     <string name="settings_language_change_in_transcripts">Az átiratok beállításaiban módosítható</string>
     <string name="settings_language_system">Rendszer alapértelmezett beállítás</string>
-    <string name="settings_layout_back_to_classic_subtitle">Minden beállítás egyetlen hosszú listában, mint korábban</string>
-    <string name="settings_layout_back_to_classic_title">Váltás a klasszikus nézetre</string>
-    <string name="settings_layout_try_new_subtitle">Minden oldal csak a saját beállításait mutatja</string>
-    <string name="settings_layout_try_new_title">Próbáld ki az új beállítási elrendezést</string>
     <string name="settings_link_all_settings">Összes beállítás</string>
     <string name="settings_link_share_debug_report">Hibakeresési jelentés megosztása</string>
     <string name="settings_metadata_file_desc">Kis .json mentése minden felvétel mellé</string>
@@ -462,20 +457,14 @@
     <string name="settings_section_about">Névjegy</string>
     <string name="settings_section_audio">Hangbeállítások</string>
     <string name="settings_section_debug">Debug beállítások</string>
-    <string name="settings_section_experimental">Kísérleti</string>
-    <string name="settings_section_general">Általános</string>
     <string name="settings_section_privacy">Adatvédelem</string>
     <string name="settings_section_recorder_server">Rögzítőszolgáltatás</string>
-    <string name="settings_section_recording">Felvétel</string>
     <string name="settings_section_recording_storage">Rögzítés és tárhely</string>
     <string name="settings_section_reliability">Megbízhatóság</string>
-    <string name="settings_section_retention">Megőrzés</string>
     <string name="settings_section_security">Biztonság</string>
     <string name="settings_section_storage">Tárhely</string>
     <string name="settings_section_transcription">Átirat</string>
-    <string name="settings_section_transcription_and_summaries">Átirat és összefoglalók</string>
     <string name="settings_section_updates">Frissítések</string>
-    <string name="settings_section_visual">Megjelenítési beállítások</string>
     <string name="settings_select_contacts">Névjegyek kiválasztása (%1$d)</string>
     <string name="settings_select_contacts_incoming">Bejövő névjegyek kiválasztása</string>
     <string name="settings_select_contacts_outgoing">Kimenő névjegyek kiválasztása</string>
@@ -493,12 +482,8 @@
     <string name="settings_storage_target_label">Hová mentse a felvételeket</string>
     <string name="settings_subheader_all_calls">Minden hívás</string>
     <string name="settings_subheader_app_calls">Alkalmazáshívások</string>
-    <string name="settings_subsection_incoming">Bejövő hívások</string>
-    <string name="settings_subsection_outgoing">Kimenő hívások</string>
     <string name="settings_subsection_phone_calls">Telefonhívások</string>
     <string name="settings_subsection_privileges">Honnan kapja a CallVault a jogosultságokat</string>
-    <string name="settings_subsection_resilience">Ellenállóság</string>
-    <string name="settings_subsection_voip">VoIP-hívások</string>
     <string name="settings_summary_calls_app_only">Csak alkalmazáshívások</string>
     <string name="settings_summary_calls_phone_and_app">Telefon- és alkalmazáshívások</string>
     <string name="settings_summary_calls_phone_only">Csak telefonhívások</string>

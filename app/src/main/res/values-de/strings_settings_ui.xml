@@ -4,5 +4,4 @@
     <string name="settings_ui_about_app">CallVault</string>
     <string name="settings_ui_open_repo_hint">Tippen, um das Upstream-Projekt zu öffnen</string>
     <string name="settings_ui_recording_server_label">Aufnahme-Engine</string>
-    <string name="settings_ui_subtitle">Aufnahme, Audio und Darstellung anpassen</string>
 </resources>

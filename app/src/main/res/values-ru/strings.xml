@@ -45,7 +45,6 @@
 
     <!-- New Settings screen, round 4: the Recording group's sub-headers. -->
 
-    <!-- The card at the top of both Settings screens that switches between the new and classic layouts. -->
     <string name="app_lock_locked">Заблокировано</string>
     <string name="app_lock_prompt_title">Разблокировать CallVault</string>
     <string name="app_lock_unlock">Разблокировать</string>
@@ -438,10 +437,6 @@
     <string name="settings_language">Язык</string>
     <string name="settings_language_change_in_transcripts">Меняется в настройках расшифровок</string>
     <string name="settings_language_system">Системный</string>
-    <string name="settings_layout_back_to_classic_subtitle">Все настройки одним длинным списком, как раньше</string>
-    <string name="settings_layout_back_to_classic_title">Вернуться к классическому виду</string>
-    <string name="settings_layout_try_new_subtitle">Каждая страница показывает только свои настройки</string>
-    <string name="settings_layout_try_new_title">Попробовать новый вид настроек</string>
     <string name="settings_link_all_settings">Все настройки</string>
     <string name="settings_link_share_debug_report">Поделиться отчётом для отладки</string>
     <string name="settings_metadata_file_desc">Сохранять небольшой .json рядом с каждой записью</string>
@@ -464,20 +459,14 @@
     <string name="settings_section_about">О приложении</string>
     <string name="settings_section_audio">Настройки аудио</string>
     <string name="settings_section_debug">Настройки отладки</string>
-    <string name="settings_section_experimental">Экспериментальное</string>
-    <string name="settings_section_general">Общие</string>
     <string name="settings_section_privacy">Конфиденциальность</string>
     <string name="settings_section_recorder_server">Служба записи</string>
-    <string name="settings_section_recording">Запись</string>
     <string name="settings_section_recording_storage">Запись и хранилище</string>
     <string name="settings_section_reliability">Надёжность</string>
-    <string name="settings_section_retention">Срок хранения</string>
     <string name="settings_section_security">Безопасность</string>
     <string name="settings_section_storage">Хранилище</string>
     <string name="settings_section_transcription">Расшифровка</string>
-    <string name="settings_section_transcription_and_summaries">Расшифровка и краткое содержание</string>
     <string name="settings_section_updates">Обновления</string>
-    <string name="settings_section_visual">Визуальные настройки</string>
     <string name="settings_select_contacts">Выбрать контакты (%1$d)</string>
     <string name="settings_select_contacts_incoming">Выбрать входящие контакты</string>
     <string name="settings_select_contacts_outgoing">Выбрать исходящие контакты</string>
@@ -495,12 +484,8 @@
     <string name="settings_storage_target_label">Куда сохранять записи</string>
     <string name="settings_subheader_all_calls">Все звонки</string>
     <string name="settings_subheader_app_calls">Звонки в приложениях</string>
-    <string name="settings_subsection_incoming">Входящие звонки</string>
-    <string name="settings_subsection_outgoing">Исходящие звонки</string>
     <string name="settings_subsection_phone_calls">Телефонные звонки</string>
     <string name="settings_subsection_privileges">Откуда CallVault получает права</string>
-    <string name="settings_subsection_resilience">Устойчивость</string>
-    <string name="settings_subsection_voip">Звонки VoIP</string>
     <string name="settings_summary_calls_app_only">Только звонки в приложениях</string>
     <string name="settings_summary_calls_phone_and_app">Обычные звонки и звонки в приложениях</string>
     <string name="settings_summary_calls_phone_only">Только обычные звонки</string>

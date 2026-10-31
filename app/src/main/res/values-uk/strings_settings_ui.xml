@@ -1,7 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!-- Українська локалізація Zilla Recorder. Незазначені ключі використовують англійську локаль Android. -->
 <resources>
-    <string name="settings_ui_subtitle">Налаштуйте запис, звук і вигляд програми</string>
     <string name="settings_ui_about_app">CallVault</string>
     <string name="settings_ui_recording_server_label">Служба запису</string>
     <string name="settings_ui_open_repo_hint">Натисніть, щоб відкрити вихідний проєкт</string>
