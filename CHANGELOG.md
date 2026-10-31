@@ -7,6 +7,13 @@ All notable changes to CallVault are documented here. The format is based on
 
 ### Added
 
+- **Recording without Wi-Fi on phones whose adbd already listens on the network port.** A few phones (some TV,
+  OEM and developer builds) keep their debugging port open from boot. When the usual connection fails,
+  CallVault now uses such a port when the phone's own settings name it, with no Wi-Fi or Wireless debugging —
+  only once CallVault has been paired. On other phones nothing changes.
+  <!-- 🧪 VERIFYING: built 2026-10-31 on feat/open-adb-port-probe; unit tests only, untested on a phone. None of
+       our phones opens this port by itself; to settle: a phone/emulator with persist.adb.tcp.port set (or a
+       Shizuku TCP-mode listener in built-in mode), Wi-Fi off, and a call that records. -->
 - **Never turn Wireless debugging off** (#30). A new switch in Settings → Connection, built-in mode only. With
   it on, CallVault never switches Wireless debugging off; it may still switch it on when the recorder needs
   it, and the debugging port stays open on your Wi-Fi. A line under the switch now says when CallVault is
