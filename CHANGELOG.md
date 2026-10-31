@@ -29,6 +29,14 @@ All notable changes to CallVault are documented here. The format is based on
   If automatic transcription is on, older calls over an hour that were skipped before are transcribed on the next
   automatic run, which can keep the phone busy for a while.
 
+### Fixed
+
+- **A file the phone cannot decode no longer hangs.** If reading a recording's audio stops making progress for
+  two minutes, CallVault gives up on it: the transcription shows as failed, the waveform stays blank, and an
+  import says the file cannot be read. Slow phones and long calls are not affected. Idea from @slman890's fork.
+  <!-- 🧪 VERIFYING: built 2026-10-31 on fix/decode-time-limit (2.4.8-decode); JVM tests of the stall rule only.
+       Not seen on a phone; no truly stalling file tested. Maintainer: confirm a long call still transcribes. -->
+
 ## [2.4.8] — 2026-10-31
 
 ### Added
