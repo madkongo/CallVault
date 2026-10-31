@@ -16,6 +16,12 @@ All notable changes to CallVault are documented here. The format is based on
        the recorder start and off again; on → after a recorder restart WD stayed on, log "Leaving Wireless
        debugging on … 'Never turn it off' is on", and the line under the row showed. Greyed in Shizuku mode.
        Maintainer to confirm. -->
+- **Type to find a language in the language list.** The language list (Settings, setup, and "Which
+  language?" before a transcription or import) now opens with a search box. Type a language's name in the
+  app's language, in English or in the language itself (עברית, Ελληνικά, Español), or its code; the × clears it.
+  <!-- 🧪 VERIFYING: unit tests + release build only, not yet run on a phone. Maintainer to check on a
+       phone: open each of the three lists, type, clear with ×; keyboard does not cover the list; Arabic or
+       Persian UI shows the × on the left; TalkBack reads the box and "Clear search, button". -->
 
 ### Changed
 
