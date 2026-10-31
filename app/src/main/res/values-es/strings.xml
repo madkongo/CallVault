@@ -555,6 +555,10 @@
     <string name="settings_voip_recording_description">Graba también las llamadas hechas en apps como WhatsApp, Signal y Telegram. Algunas apps bloquean la grabación, y no se sabe hasta que la llamada está en curso.</string>
     <string name="settings_voip_recording_label">Grabar llamadas VoIP</string>
     <string name="settings_wd_auto_approve_description">Cuando el teléfono se conecta a una red Wi-Fi, CallVault responde por sí mismo a la pregunta de Android «¿Permitir la depuración inalámbrica en esta red?», para que la grabación no espere a que toques. Funciona mientras el grabador está en marcha. Solo pueden conectarse los dispositivos ya vinculados con este teléfono.</string>
+    <string name="settings_wd_never_off_label">No desactivar nunca la depuración inalámbrica</string>
+    <string name="settings_wd_never_off_description">CallVault no desactivará la depuración inalámbrica, así que el puerto de depuración queda abierto en tu red Wi-Fi. CallVault aún puede activarla cuando el grabador la necesite. Solo en el modo integrado.</string>
+    <string name="settings_wd_left_on_by_setting">La depuración inalámbrica está activa. CallVault la deja activa por este ajuste.</string>
+    <string name="settings_wd_left_on_by_user">La depuración inalámbrica está activa. La activaste tú, así que CallVault la deja activa.</string>
     <string name="settings_wd_auto_approve_label">Aprobar automáticamente redes Wi-Fi nuevas</string>
     <string name="settings_wd_disable_when_idle">Desactivar la Depuración inalámbrica cuando esté inactiva</string>
     <string name="settings_wd_disable_when_idle_description">Desactiva la Depuración inalámbrica una vez que el servicio de grabación está conectado; se reactiva brevemente solo cuando es necesario.</string>

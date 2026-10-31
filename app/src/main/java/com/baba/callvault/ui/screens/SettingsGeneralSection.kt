@@ -296,6 +296,8 @@ internal fun ResilienceRows() {
     SettingsDivider()
     WifiNetworkAutoApproveToggle()
     SettingsDivider()
+    WirelessDebuggingNeverOffToggle()
+    SettingsDivider()
     UsbDefaultConfigRow()
     PairAgainRow()
 }
@@ -316,6 +318,8 @@ internal fun ConnectionRows() {
     WirelessDebuggingEnforceToggle()
     SettingsDivider()
     WifiNetworkAutoApproveToggle()
+    SettingsDivider()
+    WirelessDebuggingNeverOffToggle()
     SettingsDivider()
     UsbDefaultConfigRow()
     PairAgainRow()

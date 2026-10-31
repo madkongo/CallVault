@@ -49,7 +49,8 @@ verify() { # $1 = expected mode
     check "'$label' enabled" "enabled" "$(echo "$r" | grep -F "$label:" | awk -F': ' '{print $2}')"
   done
   local off; [ "$want" = SHIZUKU ] && off=DISABLED || off=enabled
-  for label in "Offline recording (no Wi-Fi)" "Keep Wireless debugging on for recording"; do
+  for label in "Offline recording (no Wi-Fi)" "Keep Wireless debugging on for recording" \
+               "Never turn Wireless debugging off"; do
     check "'$label' $off" "$off" "$(echo "$r" | grep -F "$label:" | awk -F': ' '{print $2}')"
   done
 }

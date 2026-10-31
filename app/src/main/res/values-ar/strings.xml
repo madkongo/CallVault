@@ -591,6 +591,10 @@
     <string name="settings_voip_recording_description">أيضًا تسجيل المكالمات التي تتم في تطبيقات مثل WhatsApp وSignal وTelegram؛ كلا الجانبين من المحادثة، وليس صوتك فقط. تظهر التسجيلات التطبيق الذي تم إجراء المكالمة فيه، واسم جهة الاتصال عندما يوفره التطبيق. بعض التطبيقات تمنع التسجيل، ولا يمكن معرفة ذلك إلا بعد بدء المكالمة.</string>
     <string name="settings_voip_recording_label">تسجيل مكالمات VoIP</string>
     <string name="settings_wd_auto_approve_description">عندما يتصل الهاتف بشبكة Wi-Fi، يجيب CallVault بنفسه على سؤال Android \"السماح بتصحيح الأخطاء اللاسلكي على هذه الشبكة؟\"، فلا ينتظر التسجيل نقرتك. يعمل ما دام المسجّل قيد التشغيل. لا يمكن أن تتصل إلا الأجهزة المقترنة مسبقًا بهذا الهاتف.</string>
+    <string name="settings_wd_never_off_label">عدم إيقاف تصحيح الأخطاء اللاسلكي أبدًا</string>
+    <string name="settings_wd_never_off_description">لن يوقف CallVault تصحيح الأخطاء اللاسلكي، لذا يبقى منفذ تصحيح الأخطاء مفتوحًا على شبكة Wi-Fi لديك. قد يشغّله CallVault مع ذلك عندما يحتاج إليه المسجّل. في الوضع المدمج فقط.</string>
+    <string name="settings_wd_left_on_by_setting">تصحيح الأخطاء اللاسلكي قيد التشغيل. يتركه CallVault قيد التشغيل بسبب هذا الإعداد.</string>
+    <string name="settings_wd_left_on_by_user">تصحيح الأخطاء اللاسلكي قيد التشغيل. أنت شغّلته، لذا يتركه CallVault قيد التشغيل.</string>
     <string name="settings_wd_auto_approve_label">الموافقة تلقائيًا على شبكات Wi-Fi الجديدة</string>
     <string name="settings_wd_disable_when_idle">إيقاف تصحيح الأخطاء اللاسلكي عند خمول التطبيق</string>
     <string name="settings_wd_disable_when_idle_description">تعطيل تصحيح الأخطاء اللاسلكي فور اتصال خدمة المسجل، وإعادة تفعيله لحظيًا فقط عند الحاجة.</string>

@@ -709,6 +709,10 @@
     <string name="settings_voip_recording_description">Εγγραφή και κλήσεων που γίνονται σε εφαρμογές όπως WhatsApp, Signal και Telegram. Ορισμένες εφαρμογές εμποδίζουν την εγγραφή, και αυτό δεν μπορεί να γίνει γνωστό μέχρι να είναι σε εξέλιξη μια κλήση.</string>
     <string name="settings_voip_recording_label">Εγγραφή κλήσεων VoIP</string>
     <string name="settings_wd_auto_approve_description">Όταν το τηλέφωνο συνδέεται σε δίκτυο Wi-Fi, το CallVault απαντά μόνο του στην ερώτηση του Android «Να επιτρέπεται ο ασύρματος εντοπισμός σφαλμάτων σε αυτό το δίκτυο;», ώστε η εγγραφή να μην περιμένει το πάτημά σας. Λειτουργεί όσο τρέχει η εγγραφή. Μόνο συσκευές που έχουν ήδη συζευχθεί με αυτό το τηλέφωνο μπορούν να συνδεθούν.</string>
+    <string name="settings_wd_never_off_label">Ποτέ απενεργοποίηση του ασύρματου εντοπισμού σφαλμάτων</string>
+    <string name="settings_wd_never_off_description">Το CallVault δεν θα απενεργοποιεί τον ασύρματο εντοπισμό σφαλμάτων, οπότε η θύρα εντοπισμού σφαλμάτων μένει ανοιχτή στο δίκτυο Wi-Fi σας. Το CallVault μπορεί ακόμη να τον ενεργοποιεί όταν τον χρειάζεται η εγγραφή. Μόνο στην ενσωματωμένη λειτουργία.</string>
+    <string name="settings_wd_left_on_by_setting">Ο ασύρματος εντοπισμός σφαλμάτων είναι ενεργός. Το CallVault τον αφήνει ενεργό λόγω αυτής της ρύθμισης.</string>
+    <string name="settings_wd_left_on_by_user">Ο ασύρματος εντοπισμός σφαλμάτων είναι ενεργός. Τον ενεργοποιήσατε εσείς, οπότε το CallVault τον αφήνει ενεργό.</string>
     <string name="settings_wd_auto_approve_label">Αυτόματη έγκριση νέων δικτύων Wi-Fi</string>
     <string name="settings_wd_disable_when_idle">Απενεργοποίηση ασύρματου εντοπισμού σφαλμάτων σε αδράνεια</string>
     <string name="settings_wd_disable_when_idle_description">Απενεργοποίηση του ασύρματου εντοπισμού σφαλμάτων μόλις συνδεθεί η υπηρεσία εγγραφής· ενεργοποιείται ξανά για λίγο μόνο όταν χρειάζεται.</string>

@@ -135,7 +135,7 @@ class ScopedSettingsScreenTest {
         val general = source("SettingsGeneralSection.kt")
         val rows = listOf(
             "UsbDebuggingToggle", "OfflineRecordingToggle", "HandoffPersistToggle", "WirelessDebuggingEnforceToggle",
-            "WifiNetworkAutoApproveToggle", "UsbDefaultConfigRow", "PairAgainRow",
+            "WifiNetworkAutoApproveToggle", "WirelessDebuggingNeverOffToggle", "UsbDefaultConfigRow", "PairAgainRow",
         )
         val connection = bodyOf("ConnectionRows", general)
         val resilience = bodyOf("ResilienceRows", general)
@@ -143,7 +143,8 @@ class ScopedSettingsScreenTest {
             assertTrue("ConnectionRows lacks $it", calls(it, connection))
             assertTrue("ResilienceRows lacks $it", calls(it, resilience))
         }
-        // The agreed order (round 2): USB debugging, offline, handoff, keep WD on, approve networks, USB mode, pair.
+        // The agreed order (round 2): USB debugging, offline, handoff, keep WD on, approve networks, never turn WD
+        // off (#30), USB mode, pair.
         assertEquals(rows, rows.sortedBy { connection.indexOf("$it(") })
     }
 
@@ -171,7 +172,7 @@ class ScopedSettingsScreenTest {
         )
         val connection = listOf(
             "UsbDebuggingToggle", "OfflineRecordingToggle", "HandoffPersistToggle", "WirelessDebuggingEnforceToggle",
-            "WifiNetworkAutoApproveToggle", "UsbDefaultConfigRow", "PairAgainRow",
+            "WifiNetworkAutoApproveToggle", "WirelessDebuggingNeverOffToggle", "UsbDefaultConfigRow", "PairAgainRow",
         )
         val placed = SettingsGroups.forScope(SettingsScope.ALL).flatMap { SettingsGroups.rowsOf(it) }.toSet() + connection
         val missing = declared - notRows - placed
@@ -192,6 +193,7 @@ class ScopedSettingsScreenTest {
         "settings_usb_debugging_shizuku_hint", "settings_usb_debugging_failed",
         "settings_usb_debugging_on_hint", "settings_usb_debugging_recommended",
         "settings_usb_default_busy", "transcription_language_auto_hint",
+        "settings_wd_left_on_by_setting", "settings_wd_left_on_by_user",
     )
 
     /** Explanations: inline on the classic screen, behind an ⓘ on the new one. */
