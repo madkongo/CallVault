@@ -6,15 +6,21 @@ that opens adbd's tcp port by itself, so the success path is unproven anywhere).
 ## What changed
 
 - `AdbShell.ensureConnected` gained one last-resort transport, `connectAlreadyOpenPort`: a tcp port adbd was
-  **already** listening on without anyone arming it — `service.adb.tcp.port`, the ROM's `persist.adb.tcp.port`,
-  the `tcp:` entries of `service.adb.listen_addrs`, then 5555 (`LoopbackPorts.alreadyOpenCandidates`).
+  **already** listening on without anyone arming it. Candidates are ONLY ports a system property names —
+  `service.adb.tcp.port` (unless CallVault armed it itself), the ROM's `persist.adb.tcp.port`, the `tcp:`
+  entries of `service.adb.listen_addrs` (`LoopbackPorts.alreadyOpenCandidates`). Never a guessed 5555: any app
+  can bind that and get CallVault's key to sign its AUTH token.
   - Built-in mode: tried only **after** the Wireless-debugging connect has failed.
   - Offline mode: tried only **after** the loopback connect and its self-heal wait have failed, leaving out
     the ports that were just refused.
-  - Each port is first asked with a plain `CNXN` (`AdbWireProbe`, 150 ms connect / 500 ms read); only a port
-    answering as classic adbd (`AUTH`/`CNXN`) gets a real connect (bounded 8 s).
-  - A miss is remembered in memory (`OpenAdbPortGate`) until adbd's tcp ports change; nothing is persisted.
-- New: `OpenAdbPortGate.kt`, and three functions + one constant in `LoopbackPorts.kt`.
+  - Skipped entirely until CallVault's key is authorised (`isAdbPaired()`), so Android's "Allow debugging?"
+    prompt never appears because of it.
+  - Each port is first asked with a plain `CNXN` (`AdbWireProbe`, 150 ms connect / 500 ms read; probing stops
+    after 2 s). Only the FIRST port answering as classic adbd (`AUTH`/`CNXN`) gets a real connect (bounded 8 s);
+    whole call ≤ ~10.7 s 📐 (`OpenAdbPortScan`).
+  - Only "nothing answered as adb" is remembered (`OpenAdbPortGate`, in memory, 10 min or until the port list
+    changes); an adb answer whose connect failed is retried next time. Nothing is persisted.
+- New: `OpenAdbPortGate.kt`, `OpenAdbPortScan.kt`, and three functions in `LoopbackPorts.kt`.
 - Small refactor: the settle/record-connected block shared by both connect paths is now `onConnected`.
 - No preferences, no data, no migrations.
 
@@ -26,8 +32,7 @@ git revert -m 1 MERGE_SHA
 
 ## What users would notice after a rollback
 
-Almost everyone: nothing (their phones have no already-open adb tcp port, and the probe ran only after
-the normal path had failed). On a phone whose ROM keeps adbd on tcp (some TV/OEM/eng builds), or where
+Almost everyone: nothing (no property names an adb tcp port on their phones, so nothing was dialled). On a phone whose ROM keeps adbd on tcp (some TV/OEM/eng builds), or where
 another app (a Shizuku fork's TCP mode) left adbd on tcp while CallVault is in built-in mode, recording
 would again need Wi-Fi + Wireless debugging whenever the normal path fails.
 
@@ -35,7 +40,7 @@ would again need Wi-Fi + Wireless debugging whenever the normal path fails.
 
 - Log shows `Connected over adbd's already-open tcp port :N` followed by recorder deaths / missed calls that
   did not happen before (a listener that does not stay up, e.g. one another app keeps moving).
-- An unexpected Android "Allow USB debugging?" prompt for CallVault's key appearing after a failed
-  Wireless-debugging connect, which users find confusing.
+- An unexpected Android "Allow USB debugging?" prompt for CallVault's key (should be impossible: the probe
+  waits for `isAdbPaired()`).
 - A slower recorder start on failure paths traced to `already-open adb tcp :N did not complete the ADB
-  handshake within 8000ms` (a port that accepts but never answers; capped once per port list per process).
+  handshake within 8000ms` (a port that accepts but never answers; one connect per attempt, ≤ ~10.7 s).
