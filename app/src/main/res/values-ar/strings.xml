@@ -722,7 +722,7 @@
     <string name="transcription_cloud_get_key">احصل على مفتاح من %1$s</string>
     <string name="transcription_cloud_custom_url">عنوان الخادم</string>
     <string name="transcription_cloud_custom_url_hint">https://… (الجزء الذي يسبق /audio/transcriptions)</string>
-    <string name="transcription_cloud_custom_url_invalid">استخدم عنوانًا يبدأ بـ https://.</string>
+    <string name="transcription_cloud_custom_url_invalid">استخدم عنوانًا يبدأ بـ http(s)://.</string>
     <string name="transcription_cloud_custom_model">النموذج</string>
     <string name="transcription_cloud_mobile_data">استخدام بيانات الجوال أيضًا</string>
     <string name="transcription_cloud_mobile_data_desc">عند الإيقاف، تنتظر المكالمات شبكة Wi-Fi قبل إرسالها.</string>

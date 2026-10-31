@@ -688,7 +688,7 @@
     <string name="transcription_cloud_get_key">Получить ключ %1$s</string>
     <string name="transcription_cloud_custom_url">Адрес сервера</string>
     <string name="transcription_cloud_custom_url_hint">https://… (часть до /audio/transcriptions)</string>
-    <string name="transcription_cloud_custom_url_invalid">Укажите адрес с https://.</string>
+    <string name="transcription_cloud_custom_url_invalid">Укажите адрес с http(s)://.</string>
     <string name="transcription_cloud_custom_model">Модель</string>
     <string name="transcription_cloud_mobile_data">Использовать и мобильный интернет</string>
     <string name="transcription_cloud_mobile_data_desc">Если выключено, звонки ждут Wi-Fi и только потом отправляются.</string>

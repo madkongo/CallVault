@@ -119,15 +119,18 @@ data class CloudEndpoint(
         }
 
         /**
-         * [raw] trimmed and without a trailing slash, or null unless it is an https URL with a host.
+         * [raw] trimmed and without a trailing slash, or null unless it is an http(s) URL with a host.
          *
-         * HTTPS only: the request carries the user's key and their call audio, and Android blocks
-         * cleartext for this app anyway — refusing here says so instead of failing obscurely later.
+         * Plain http is allowed for the custom server only (issue #67): people run their own server on
+         * their network or behind a VPN, where the link is already private. The built-in services are
+         * fixed https addresses and never take this path. The manifest's usesCleartextTraffic is what
+         * lets the request through; without it Android refuses http for this app.
          */
         fun validCustomBaseUrl(raw: String?): String? {
             val trimmed = raw?.trim()?.trimEnd('/')?.takeIf { it.isNotEmpty() } ?: return null
             val uri = runCatching { URI(trimmed) }.getOrNull() ?: return null
-            if (!uri.scheme.equals("https", ignoreCase = true)) return null
+            val scheme = uri.scheme?.lowercase() ?: return null
+            if (scheme != "https" && scheme != "http") return null
             if (uri.host.isNullOrBlank()) return null
             if (uri.rawQuery != null || uri.rawFragment != null || uri.rawUserInfo != null) return null
             return trimmed

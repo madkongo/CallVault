@@ -779,7 +779,7 @@
     <string name="transcription_cloud_get_key">دریافت کلید از %1$s</string>
     <string name="transcription_cloud_custom_url">نشانی سرور</string>
     <string name="transcription_cloud_custom_url_hint">https://… (بخش پیش از /audio/transcriptions)</string>
-    <string name="transcription_cloud_custom_url_invalid">از نشانی https:// استفاده کنید.</string>
+    <string name="transcription_cloud_custom_url_invalid">از نشانی http(s):// استفاده کنید.</string>
     <string name="transcription_cloud_custom_model">مدل</string>
     <string name="transcription_cloud_mobile_data">استفاده از داده تلفن همراه هم</string>
     <string name="transcription_cloud_mobile_data_desc">وقتی خاموش است، تماس‌ها پیش از ارسال منتظر Wi-Fi می‌مانند.</string>

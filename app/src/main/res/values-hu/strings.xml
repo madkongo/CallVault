@@ -686,7 +686,7 @@
     <string name="transcription_cloud_get_key">Kulcs igénylése (%1$s)</string>
     <string name="transcription_cloud_custom_url">Szervercím</string>
     <string name="transcription_cloud_custom_url_hint">https://… (a /audio/transcriptions előtti rész)</string>
-    <string name="transcription_cloud_custom_url_invalid">https:// kezdetű címet adjon meg.</string>
+    <string name="transcription_cloud_custom_url_invalid">http(s):// kezdetű címet adjon meg.</string>
     <string name="transcription_cloud_custom_model">Modell</string>
     <string name="transcription_cloud_mobile_data">Mobiladat használata is</string>
     <string name="transcription_cloud_mobile_data_desc">Kikapcsolva a hívások a küldés előtt Wi-Fi-re várnak.</string>

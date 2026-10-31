@@ -685,7 +685,7 @@
     <string name="transcription_cloud_get_key">获取 %1$s 密钥</string>
     <string name="transcription_cloud_custom_url">服务器地址</string>
     <string name="transcription_cloud_custom_url_hint">https://…（/audio/transcriptions 之前的部分）</string>
-    <string name="transcription_cloud_custom_url_invalid">请使用 https:// 地址。</string>
+    <string name="transcription_cloud_custom_url_invalid">请使用 http(s):// 地址。</string>
     <string name="transcription_cloud_custom_model">模型</string>
     <string name="transcription_cloud_mobile_data">也使用移动数据</string>
     <string name="transcription_cloud_mobile_data_desc">关闭时，通话会等连上 Wi-Fi 后再发送。</string>

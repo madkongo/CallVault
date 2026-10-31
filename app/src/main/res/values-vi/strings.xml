@@ -685,7 +685,7 @@
     <string name="transcription_cloud_get_key">Lấy khóa %1$s</string>
     <string name="transcription_cloud_custom_url">Địa chỉ máy chủ</string>
     <string name="transcription_cloud_custom_url_hint">https://… (phần trước /audio/transcriptions)</string>
-    <string name="transcription_cloud_custom_url_invalid">Hãy dùng địa chỉ https://.</string>
+    <string name="transcription_cloud_custom_url_invalid">Hãy dùng địa chỉ http(s)://.</string>
     <string name="transcription_cloud_custom_model">Mô hình</string>
     <string name="transcription_cloud_mobile_data">Dùng cả dữ liệu di động</string>
     <string name="transcription_cloud_mobile_data_desc">Khi tắt, cuộc gọi sẽ chờ có Wi-Fi rồi mới được gửi.</string>

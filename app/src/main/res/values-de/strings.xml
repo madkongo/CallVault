@@ -686,7 +686,7 @@
     <string name="transcription_cloud_get_key">Schlüssel für %1$s holen</string>
     <string name="transcription_cloud_custom_url">Serveradresse</string>
     <string name="transcription_cloud_custom_url_hint">https://… (der Teil vor /audio/transcriptions)</string>
-    <string name="transcription_cloud_custom_url_invalid">Verwenden Sie eine https://-Adresse.</string>
+    <string name="transcription_cloud_custom_url_invalid">Verwenden Sie eine http(s)://-Adresse.</string>
     <string name="transcription_cloud_custom_model">Modell</string>
     <string name="transcription_cloud_mobile_data">Auch mobile Daten verwenden</string>
     <string name="transcription_cloud_mobile_data_desc">Wenn aus, warten Anrufe auf WLAN, bevor sie gesendet werden.</string>

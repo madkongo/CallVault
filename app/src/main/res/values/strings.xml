@@ -804,7 +804,7 @@
     <string name="transcription_cloud_get_key">Get a %1$s key</string>
     <string name="transcription_cloud_custom_url">Server address</string>
     <string name="transcription_cloud_custom_url_hint">https://… (the part before /audio/transcriptions)</string>
-    <string name="transcription_cloud_custom_url_invalid">Use an https:// address.</string>
+    <string name="transcription_cloud_custom_url_invalid">Use an http(s):// address.</string>
     <string name="transcription_cloud_custom_model">Model</string>
     <string name="transcription_cloud_mobile_data">Also use mobile data</string>
     <string name="transcription_cloud_mobile_data_desc">When off, calls wait for Wi-Fi before they are sent.</string>
