@@ -162,6 +162,14 @@ android {
         // output is unchanged.
         manifestPlaceholders["recorderAuthority"] = "com.baba.callvault.recorder"
 
+        // 16 KB page sizes (Android 15+ devices that run with 16 KB pages). NDK 27 still links with
+        // 4 KB LOAD-segment alignment by default, and a 4 KB-aligned .so fails to load on such a phone.
+        // This flag makes the NDK toolchain add -Wl,-z,max-page-size=16384 to every library we build
+        // (whisper, llama, ggml and its CPU variants, audiohandoff). NDK 28+ does this by default.
+        externalNativeBuild {
+            cmake { arguments += "-DANDROID_SUPPORT_FLEXIBLE_PAGE_SIZES=ON" }
+        }
+
         buildConfigField("String", "CI_BUILD_NUMBER", "\"${ciBuildNumber.get()}\"")
 
         buildConfigField("String", "SCRCPY_VERSION", "\"$scrcpyVersion\"")
@@ -276,7 +284,15 @@ android {
         // app_process DAEMON has no app classloader library-search path, so it can only load
         // libaudiohandoff.so from an explicit on-disk path (<apkDir>/lib/arm64/). Left uncompressed
         // inside the APK it would not exist as a file for the daemon to load.
-        jniLibs { useLegacyPackaging = true }
+        jniLibs {
+            useLegacyPackaging = true
+            // F-Droid reproducible builds: Gradle's own strip step (llvm-strip at packaging time) is a
+            // known source of intermittent non-reproducible .so files, so it is turned off. Our CMake
+            // libraries are stripped at LINK time instead (see src/main/cpp/CMakeLists.txt), which is
+            // deterministic and keeps the APK the same size. The prebuilt .so files from AARs
+            // (Conscrypt, androidx.graphics, spake2) already ship stripped.
+            keepDebugSymbols += "**/*.so"
+        }
     }
     androidResources {
         generateLocaleConfig = true
