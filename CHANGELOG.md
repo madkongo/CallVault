@@ -20,6 +20,10 @@ All notable changes to CallVault are documented here. The format is based on
   opens the recording. Playback stops when you leave the list. Requested by a user.
   <!-- ✅ VERIFIED 2026-10-26 (maintainer, OP9: "ok it works", then "ok looks good" after the plain-card
        revision). docs/dev-notes/2026-10-26-play-from-list.md -->
+- **A smaller way to import on the Transcripts page.** The import card is gone; an Import button sits in
+  the corner and asks one short question when tapped: keep the audio, or keep only the transcript.
+  <!-- 🧪 VERIFYING: OP9 2026-10-31 (Claude-run, 2.4.7-fab1): button at rest, sheet with both choices,
+       "Transcript only" opened the file picker. An actual import through it not run. -->
 - **Move between calls while reading a transcript** (#27). Two cards under the transcript name the call
   before and after it in the list you came from, in that list's order; tap one to open it. A "Follow
   playback" switch keeps the playing line lit and in view, or, turned off, leaves the text still while you
