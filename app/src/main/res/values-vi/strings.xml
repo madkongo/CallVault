@@ -664,6 +664,9 @@
     <string name="transcript_note_hint">Nội dung là gì, hoặc cần làm gì tiếp…</string>
     <string name="transcript_retranscribe">Chuyển lại</string>
     <string name="transcript_share">Chia sẻ</string>
+    <string name="transcript_previous_call">Trước</string>
+    <string name="transcript_next_call">Tiếp</string>
+    <string name="transcript_follow_playback">Theo dõi khi phát</string>
     <string name="transcript_share_text">Văn bản</string>
     <string name="transcript_speaker_a">Người nói A</string>
     <string name="transcript_speaker_b">Người nói B</string>

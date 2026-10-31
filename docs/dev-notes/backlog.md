@@ -40,7 +40,7 @@ message (#64), Arabic polish (#59), #65 connect-port search (✅ reporter), long
 3. Samsung Wi-Fi Calling (#45) — NEW LEAD 2026-10-31: upstream records it via the app-call path; route these
    calls to the VoIP capture (+ fixes the stray 1 s file). Needs a Samsung tester.
 4. KK: SenseVoice + Qwen/other GGUF summaries (not triaged).
-5. #27 leftovers: previous/next call inside a transcript; clear a highlighted line.
+5. ~~#27 leftovers~~ — 🧪 BUILT 2026-10-31 (named Previous/Next cards + one "Follow playback" switch), merged into integration/next.
 6. Per-app capture status (works / blocks capture) on the VoIP app list.
 7. Forks leftovers: decode time limit, SIM label per call, dialer mode as an option.
 8. Matroska `.mka` (#36) — needs a native muxer.

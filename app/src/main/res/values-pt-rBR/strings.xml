@@ -668,6 +668,9 @@
     <string name="transcript_note_hint">Sobre o que foi, ou o que fazer a respeito…</string>
     <string name="transcript_retranscribe">Transcrever novamente</string>
     <string name="transcript_share">Compartilhar</string>
+    <string name="transcript_previous_call">Anterior</string>
+    <string name="transcript_next_call">Próxima</string>
+    <string name="transcript_follow_playback">Acompanhar a reprodução</string>
     <string name="transcript_share_text">Texto</string>
     <string name="transcript_speaker_a">Interlocutor A</string>
     <string name="transcript_speaker_b">Interlocutor B</string>

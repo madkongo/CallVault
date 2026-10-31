@@ -758,6 +758,9 @@
     <string name="transcript_note_hint">درباره چه بود، یا چه باید درباره‌اش کرد…</string>
     <string name="transcript_retranscribe">دوباره رونویسی کن</string>
     <string name="transcript_share">اشتراک‌گذاری</string>
+    <string name="transcript_previous_call">قبلی</string>
+    <string name="transcript_next_call">بعدی</string>
+    <string name="transcript_follow_playback">دنبال کردن پخش</string>
     <string name="transcript_share_text">متن</string>
     <string name="transcript_speaker_a">گوینده الف</string>
     <string name="transcript_speaker_b">گوینده ب</string>

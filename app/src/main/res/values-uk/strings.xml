@@ -675,6 +675,9 @@
     <string name="transcript_note_hint">Про що домовилися чи що потрібно зробити…</string>
     <string name="transcript_retranscribe">Розпізнати ще раз</string>
     <string name="transcript_share">Поділитися</string>
+    <string name="transcript_previous_call">Попередній</string>
+    <string name="transcript_next_call">Наступний</string>
+    <string name="transcript_follow_playback">Стежити за відтворенням</string>
     <string name="transcript_share_text">Текст</string>
     <string name="transcript_speaker_a">Мовець A</string>
     <string name="transcript_speaker_b">Мовець B</string>

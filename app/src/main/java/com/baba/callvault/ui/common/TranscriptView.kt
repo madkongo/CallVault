@@ -43,6 +43,9 @@ import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.key
+import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
@@ -201,7 +204,19 @@ fun TranscriptView(
     /** The summary for this recording, so the sheet can show a stored one rather than rewrite it. */
     summaryState: SummaryCardState,
     onSummarise: () -> Unit,
-    onStopSummary: () -> Unit
+    onStopSummary: () -> Unit,
+    /**
+     * Which call this is. Moving to another call keeps the frame and swaps the content, so the list's
+     * scroll position and the follow state are kept per call rather than carried across (#27).
+     */
+    callKey: String = title,
+    /** The call before and after this one in the list it was opened from, or null (#27). */
+    previousCall: TranscriptNeighbour? = null,
+    nextCall: TranscriptNeighbour? = null,
+    onOpenCall: (String) -> Unit = {},
+    /** Whether the playing line is lit and kept in view, and how to change it (#27). */
+    followPlayback: Boolean = true,
+    onFollowPlaybackChange: (Boolean) -> Unit = {},
 ) {
     // Built once and handed to whichever frame is drawing. The single call site is the point: it is
     // what stops the two presentations becoming two argument lists that fall out of step.
@@ -235,8 +250,14 @@ fun TranscriptView(
             onSummarise = onSummarise,
             onStopSummary = onStopSummary,
             summaryFirst = summaryFirst,
+            previousCall = previousCall,
+            nextCall = nextCall,
+            onOpenCall = onOpenCall,
+            followPlayback = followPlayback,
+            onFollowPlaybackChange = onFollowPlaybackChange,
         )
     }
+    val keyedBody: @Composable ColumnScope.() -> Unit = { key(callKey) { body() } }
 
     when (presentation) {
         TranscriptPresentation.Sheet -> {
@@ -258,7 +279,7 @@ fun TranscriptView(
                         modifier = Modifier.padding(start = 24.dp, end = 24.dp, bottom = 8.dp),
                     )
                 }
-                body()
+                keyedBody()
             }
         }
 
@@ -281,7 +302,7 @@ fun TranscriptView(
                         top = innerPadding.calculateTopPadding(),
                         bottom = innerPadding.calculateBottomPadding(),
                     ),
-                content = body,
+                content = keyedBody,
             )
         }
     }
@@ -327,6 +348,11 @@ private fun ColumnScope.TranscriptBody(
     onSummarise: () -> Unit,
     onStopSummary: () -> Unit,
     summaryFirst: Boolean,
+    previousCall: TranscriptNeighbour?,
+    nextCall: TranscriptNeighbour?,
+    onOpenCall: (String) -> Unit,
+    followPlayback: Boolean,
+    onFollowPlaybackChange: (Boolean) -> Unit,
 ) {
     // Directly under the title, above the words. Someone who opened the transcript to find out
     // what a call was about is answered here without reading it — and a summary that already
@@ -381,16 +407,34 @@ private fun ColumnScope.TranscriptBody(
         )
 
         else -> {
-            val active = remember(segments, positionMs) {
-                if (positionMs < 0) -1
+            // Off means no lit line at all, not a lit line that stays put (#27): the user asked for
+            // one switch, where "off" is simply off.
+            val active = remember(segments, positionMs, followPlayback) {
+                if (positionMs < 0 || !followPlayback) -1
                 else TranscriptFollow.activeIndex(segments.map { it.startMs }, positionMs)
             }
             val listState = rememberLazyListState()
 
-            // Follow the speaker, but only while it is actually moving: scrolling the list out
-            // from under someone who is reading it would be worse than not following at all.
+            // The line last scrolled to, kept across rotation. Without it the effect below ran again on
+            // the first frame after turning the phone and pulled the list back to the playing line,
+            // over the position the list had just restored (#27).
+            var followedTo by rememberSaveable { mutableIntStateOf(-1) }
             LaunchedEffect(active) {
-                if (active >= 0) listState.animateScrollToItem(active)
+                if (active >= 0 && active != followedTo) {
+                    followedTo = active
+                    listState.animateScrollToItem(active)
+                }
+            }
+
+            if (playable) {
+                FollowPlaybackChip(
+                    follow = followPlayback,
+                    onChange = { on ->
+                        // Turning it back on goes straight to the playing line.
+                        if (on) followedTo = -1
+                        onFollowPlaybackChange(on)
+                    },
+                )
             }
 
             if (hasSpeakers && speakerNames.isGuess) {
@@ -451,6 +495,8 @@ private fun ColumnScope.TranscriptBody(
             modifier = Modifier.padding(top = 4.dp)
         )
     }
+
+    TranscriptCallCards(previous = previousCall, next = nextCall, onOpen = onOpenCall)
 
     // FlowRow, not Row: four actions do not fit on one line on a narrow screen in every locale,
     // and wrapping is better than squeezing labels until they ellipsize.

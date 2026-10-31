@@ -667,6 +667,9 @@
     <string name="transcript_note_hint">O czym to było albo co trzeba zrobić…</string>
     <string name="transcript_retranscribe">Transkrybuj ponownie</string>
     <string name="transcript_share">Udostępnij</string>
+    <string name="transcript_previous_call">Poprzednia</string>
+    <string name="transcript_next_call">Następna</string>
+    <string name="transcript_follow_playback">Śledź odtwarzanie</string>
     <string name="transcript_share_text">Tekst</string>
     <string name="transcript_speaker_a">Rozmówca A</string>
     <string name="transcript_speaker_b">Rozmówca B</string>

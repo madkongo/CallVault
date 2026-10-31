@@ -667,6 +667,9 @@
     <string name="transcript_note_hint">О чём это было или что с этим делать…</string>
     <string name="transcript_retranscribe">Расшифровать заново</string>
     <string name="transcript_share">Поделиться</string>
+    <string name="transcript_previous_call">Предыдущий</string>
+    <string name="transcript_next_call">Следующий</string>
+    <string name="transcript_follow_playback">Следить за воспроизведением</string>
     <string name="transcript_share_text">Текст</string>
     <string name="transcript_speaker_a">Говорящий A</string>
     <string name="transcript_speaker_b">Говорящий B</string>
