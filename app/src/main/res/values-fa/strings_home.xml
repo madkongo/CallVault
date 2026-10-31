@@ -330,6 +330,5 @@
     <string name="share_import_kept_title">ذخیره شد، اما رونویسی نشد</string>
     <string name="share_import_kept_body">در فایل‌های ضبط‌شده شماست. هر وقت خواستید می‌توانید رونوشت را از همان‌جا آغاز کنید.</string>
     <string name="share_import_kept_only_body">در بخش رونوشت‌ها در انتظار است. هر وقت خواستید آن را همان‌جا آغاز کنید، یا از همان‌جا حذفش کنید.</string>
-    <string name="share_import_too_long">آن صدا %1$d دقیقه است، و CallVault هر بار تنها می‌تواند تا %2$d دقیقه را رونویسی کند. فایل ذخیره شد، بنابراین همچنان می‌توانید به آن گوش دهید.</string>
     <string name="share_import_no_model">هنوز هیچ مدل رونویسی نصب نشده است، بنابراین CallVault نمی‌تواند این را بخواند. صدا ذخیره شد — یک مدل را در تنظیمات نصب کنید، سپس از بخش رونوشت‌ها آن را آغاز کنید.</string>
 </resources>

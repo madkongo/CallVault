@@ -676,8 +676,6 @@
     <string name="transcript_speakers_swap">对调</string>
     <string name="transcript_speakers_swap_names">对调姓名</string>
     <string name="transcript_speakers_which_is_you">哪一位是你？</string>
-    <string name="transcript_too_long_message">这通电话约 %1$d 分钟。目前 CallVault 在设备上只能转录不超过 %2$d 分钟的录音，更长的会在中途耗尽内存。录音本身不受影响。</string>
-    <string name="transcript_too_long_title">太长，无法转录</string>
     <string name="transcription_ask_language_subtitle">为每条录音单独选择语言，而不是始终使用上面的设置。仅对该条录音生效。</string>
     <!-- Where to transcribe: on this phone or with the user's own cloud key (issue #48). No prices anywhere. -->
     <string name="transcription_where_title">在哪里转写</string>

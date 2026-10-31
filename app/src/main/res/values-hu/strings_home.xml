@@ -312,6 +312,5 @@
     <string name="share_import_kept_title">Elmentve, de nincs átírva</string>
     <string name="share_import_kept_body">Ott van a felvételeid között. Az átírást bármikor elindíthatod onnan.</string>
     <string name="share_import_kept_only_body">Az Átiratok alatt vár. Onnan indíthatod bármikor, vagy ugyanott törölheted.</string>
-    <string name="share_import_too_long">Ez a hangfájl %1$d perc hosszú, a CallVault pedig egyszerre legfeljebb %2$d percet tud átírni. A fájl elmentve, tehát továbbra is meghallgathatod.</string>
     <string name="share_import_no_model">Még nincs telepítve átíró modell, így a CallVault nem tudja elolvasni. A hangfájl elmentve — telepíts egy modellt a Beállításokban, majd indítsd el az Átiratok alól.</string>
 </resources>

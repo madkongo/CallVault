@@ -712,8 +712,6 @@
     <string name="transcript_speakers_swap">تبديل</string>
     <string name="transcript_speakers_swap_names">تبديل الأسماء</string>
     <string name="transcript_speakers_which_is_you">من هو أنت؟</string>
-    <string name="transcript_too_long_message">تبلغ مدة هذه المكالمة حوالي %1$d دقيقة. يمكن لـ CallVault تحويل التسجيلات إلى نص حتى %2$d دقيقة على الجهاز في الوقت الحالي فقط؛ ستنفد الذاكرة من التسجيلات الأطول في المنتصف. التسجيل نفسه آمن.</string>
-    <string name="transcript_too_long_title">التسجيل طويل جدًا للتفريغ في خطوة واحدة</string>
     <string name="transcription_ask_language_subtitle">اختر اللغة لكل تسجيل بدلاً من استخدام اللغة المذكورة أعلاه دائمًا. ينطبق ذلك على هذا التسجيل فقط.</string>
     <!-- Where to transcribe: on this phone or with the user's own cloud key (issue #48). No prices anywhere. -->
     <string name="transcription_where_title">مكان التفريغ الصوتي</string>

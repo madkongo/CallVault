@@ -51,7 +51,6 @@ import com.baba.callvault.data.AppPreferences
 import com.baba.callvault.data.recordings.AudioImport
 import com.baba.callvault.data.recordings.ImportedRecording
 import com.baba.callvault.data.recordings.SharedAudio
-import com.baba.callvault.transcription.TranscriptionLengthLimit
 import com.baba.callvault.ui.common.CvCard
 import com.baba.callvault.ui.common.TranscribeConfirmDialog
 import com.baba.callvault.ui.common.TranscribeLanguageDialog
@@ -179,17 +178,8 @@ fun ShareImportScreen(
                     onClose = onClose,
                 )
 
-                // Both of these keep the audio, and both say where it is: neither is a refusal of
-                // the file, only of reading it right now.
-                is ShareImportViewModel.State.TooLong -> RefusedBody(
-                    body = stringResource(
-                        R.string.share_import_too_long,
-                        state.minutes,
-                        TranscriptionLengthLimit.MAX_MINUTES,
-                    ),
-                    onClose = onClose,
-                )
-
+                // Keeps the audio and says where it is: not a refusal of the file, only of reading
+                // it right now.
                 ShareImportViewModel.State.NoModel -> RefusedBody(
                     body = stringResource(R.string.share_import_no_model),
                     onClose = onClose,

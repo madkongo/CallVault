@@ -849,8 +849,6 @@
     <string name="transcript_retranscribe">Transcribe again</string>
     <string name="transcript_note_add">Add a note</string>
     <string name="transcript_note_hint">What it was about, or what to do about it…</string>
-    <string name="transcript_too_long_title">Too long to transcribe</string>
-    <string name="transcript_too_long_message">This call is about %1$d minutes long. CallVault can only transcribe recordings up to %2$d minutes on the device for now — longer ones would run out of memory partway through. The recording itself is safe.</string>
     <string name="transcript_no_model_title">No speech model yet</string>
     <string name="transcript_no_model_message">Transcribing happens on this phone, so it needs a speech model downloaded first. You can choose and download one in Settings.</string>
     <string name="transcript_no_model_open_settings">Open settings</string>

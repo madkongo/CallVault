@@ -348,48 +348,23 @@ class TranscriptionRunnerTest {
     }
 
     @Test
-    fun refuses_a_recording_that_is_too_long_to_decode() = runBlocking {
-        // The per-call path: a call that has just ended is handed straight to the runner by name, so it
-        // never passes the queue's filter. Attempting it decodes the whole recording into memory and
-        // ends in a job that dies having produced nothing — after burning the CPU to get there.
+    fun transcribes_a_recording_of_any_length() = runBlocking {
+        // No length limit: a three-hour call is decoded and stored like a short one.
         catalogued("marathon.ogg")
         var calls = 0
         val runner = TranscriptionRunner(
             context,
-            audioDurationMs = { OVER_THE_LIMIT_MS },
+            audioDurationMs = { THREE_HOURS_MS },
             transcriber = { _, _, _, _, _, _, _ ->
                 calls++
-                emptyList()
+                listOf(TranscriptSegment(0, 1000, "שלום"))
             }
         )
 
-        // Act
         runner.runBatch(MODEL_ID, MODEL_PATH, LANGUAGE, listOf("marathon.ogg"))
 
-        // Assert
-        assertEquals("a recording over the limit must not be attempted", 0, calls)
-        assertNull("refusing is not a transcript, and not a failure either", transcript("marathon.ogg"))
-    }
-
-    @Test
-    fun a_refused_recording_does_not_strand_the_row_a_tap_queued() = runBlocking {
-        // A tap marks the row QUEUED before enqueuing, and QUEUED renders as the busy indicator. Left
-        // in place it would spin for ever with nothing running behind it.
-        catalogued("tapped.ogg")
-        TranscriptDatabase.get(context).transcriptDao().upsertTranscript(
-            TranscriptEntry(displayName = "tapped.ogg", state = TranscriptState.QUEUED)
-        )
-        val runner = TranscriptionRunner(
-            context,
-            audioDurationMs = { OVER_THE_LIMIT_MS },
-            transcriber = { _, _, _, _, _, _, _ -> emptyList() }
-        )
-
-        // Act
-        runner.runBatch(MODEL_ID, MODEL_PATH, LANGUAGE, listOf("tapped.ogg"))
-
-        // Assert
-        assertNull("the row must go back to offering Transcribe", transcript("tapped.ogg"))
+        assertEquals(1, calls)
+        assertEquals(TranscriptState.DONE, transcript("marathon.ogg")!!.transcript.state)
     }
 
     @Test
@@ -457,9 +432,7 @@ class TranscriptionRunnerTest {
 
     @Test
     fun transcribes_a_recording_whose_length_is_unknown() = runBlocking {
-        // Deliberate, and the reason the limit is not applied to file size: a container that declares
-        // no duration is ordinary, and refusing on "unknown" would silently drop short calls whose
-        // metadata happens to be missing.
+        // A container that declares no duration is ordinary; it must still be transcribed.
         catalogued("undated.ogg")
         val runner = TranscriptionRunner(
             context,
@@ -470,21 +443,6 @@ class TranscriptionRunnerTest {
         runner.runBatch(MODEL_ID, MODEL_PATH, LANGUAGE, listOf("undated.ogg"))
 
         assertEquals(TranscriptState.DONE, transcript("undated.ogg")!!.transcript.state)
-    }
-
-    @Test
-    fun transcribes_a_recording_inside_the_limit() = runBlocking {
-        // The guard must refuse long recordings without quietly costing us the ordinary ones.
-        catalogued("ordinary.ogg")
-        val runner = TranscriptionRunner(
-            context,
-            audioDurationMs = { UNDER_THE_LIMIT_MS },
-            transcriber = { _, _, _, _, _, _, _ -> listOf(TranscriptSegment(0, 1000, "שלום")) }
-        )
-
-        runner.runBatch(MODEL_ID, MODEL_PATH, LANGUAGE, listOf("ordinary.ogg"))
-
-        assertEquals(TranscriptState.DONE, transcript("ordinary.ogg")!!.transcript.state)
     }
 
     // ---- the file the user asked us to read and not to keep
@@ -543,24 +501,6 @@ class TranscriptionRunnerTest {
         assertNull("a partial result must not be stored", transcript(name))
         assertNotNull(
             "a stopped run must leave the audio catalogued",
-            RecordingCatalog.all(context).firstOrNull { it.displayName == name },
-        )
-    }
-
-    @Test
-    fun a_transcribe_only_import_refused_for_length_keeps_its_audio() = runBlocking {
-        val name = transcribeOnlyName()
-        catalogued(name)
-        val runner = TranscriptionRunner(
-            context,
-            audioDurationMs = { OVER_THE_LIMIT_MS },
-            transcriber = { _, _, _, _, _, _, _ -> emptyList() },
-        )
-
-        runner.runBatch(MODEL_ID, MODEL_PATH, LANGUAGE, listOf(name))
-
-        assertNotNull(
-            "a refusal must leave the audio catalogued",
             RecordingCatalog.all(context).firstOrNull { it.displayName == name },
         )
     }
@@ -635,24 +575,6 @@ class TranscriptionRunnerTest {
     }
 
     @Test
-    fun says_nothing_about_a_recording_it_refused_for_length() = runBlocking {
-        // Nothing happened to it: no transcript, no failure, and a dialog has already told whoever
-        // asked. A notification here would report an event the user has no way to act on.
-        catalogued("marathon2.ogg")
-        val reported = mutableListOf<String>()
-        val runner = TranscriptionRunner(
-            context,
-            audioDurationMs = { OVER_THE_LIMIT_MS },
-            onFinished = { name, _ -> reported += name },
-            transcriber = { _, _, _, _, _, _, _ -> emptyList() },
-        )
-
-        runner.runBatch(MODEL_ID, MODEL_PATH, LANGUAGE, listOf("marathon2.ogg"))
-
-        assertEquals(emptyList<String>(), reported)
-    }
-
-    @Test
     fun a_shade_that_cannot_be_written_to_does_not_lose_a_transcript() = runBlocking {
         // The reporting is the least important thing that happens on the success path: the words are
         // already stored, and a NotificationManager that throws must not turn a finished
@@ -712,15 +634,7 @@ class TranscriptionRunnerTest {
         /** 2026-09-16; only the shape of the stamp an import name carries matters. */
         const val IMPORTED_AT = 1_789_567_810_000L
 
-        /**
-         * Comfortably past [TranscriptionLengthLimit.MAX_MINUTES], **derived from it**.
-         *
-         * This was a literal 50 minutes and broke the day the limit moved past it — the second time a
-         * test pinned this number instead of the behaviour. The limit is documented as a stopgap meant
-         * to change; a test that fails when it changes fails for the one reason that is not a bug.
-         */
-        val OVER_THE_LIMIT_MS = (TranscriptionLengthLimit.MAX_MINUTES + 5L) * 60 * 1000
-        const val UNDER_THE_LIMIT_MS = 5L * 60 * 1000
+        const val THREE_HOURS_MS = 3L * 60 * 60 * 1000
 
         /** What a container that declares no duration reports. */
         const val UNKNOWN_LENGTH_MS = 0L

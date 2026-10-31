@@ -161,7 +161,7 @@ class AudioDecoderTest {
     //
     // `pcm16ToMonoFloat` followed by `resampleTo16k` held a float32 copy of the whole call *at the
     // input rate* — 172.8 MB for fifteen minutes at 48 kHz, alongside the 86.4 MB of PCM it was
-    // widened from. 259 MB against a 256 MB heap is where TranscriptionLengthLimit.MAX_MINUTES=15
+    // widened from. 259 MB against a 256 MB heap is where the old 15-minute length limit
     // came from: the limit was measuring this allocation without anyone realising it.
     //
     // These tests pin the replacement to the pipeline it replaces. Equivalence is the whole point —

@@ -679,8 +679,6 @@
     <string name="transcript_speakers_swap">Zamień</string>
     <string name="transcript_speakers_swap_names">Zamień imiona</string>
     <string name="transcript_speakers_which_is_you">Który to ty?</string>
-    <string name="transcript_too_long_message">To połączenie trwa około %1$d minut. Na razie CallVault może transkrybować na urządzeniu tylko nagrania do %2$d minut — dłuższym zabrakłoby pamięci w połowie. Samo nagranie jest bezpieczne.</string>
-    <string name="transcript_too_long_title">Za długie, aby transkrybować</string>
     <string name="transcription_ask_language_subtitle">Wybierz język dla każdego nagrania zamiast zawsze używać powyższego. Dotyczy tylko tego nagrania.</string>
     <!-- Where to transcribe: on this phone or with the user's own cloud key (issue #48). No prices anywhere. -->
     <string name="transcription_where_title">Gdzie transkrybować</string>

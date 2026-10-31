@@ -831,8 +831,6 @@
     <string name="transcript_speakers_swap">Εναλλαγή</string>
     <string name="transcript_speakers_swap_names">Εναλλαγή ονομάτων</string>
     <string name="transcript_speakers_which_is_you">Ποιος είστε εσείς;</string>
-    <string name="transcript_too_long_message">Αυτή η κλήση διαρκεί περίπου %1$d λεπτά. Το CallVault μπορεί προς το παρόν να απομαγνητοφωνεί στη συσκευή εγγραφές μόνο έως %2$d λεπτά — οι μεγαλύτερες θα εξαντλούσαν τη μνήμη στη μέση. Η ίδια η εγγραφή είναι ασφαλής.</string>
-    <string name="transcript_too_long_title">Πολύ μεγάλη για απομαγνητοφώνηση</string>
     <string name="transcription_ask_language_subtitle">Επιλέξτε τη γλώσσα ανά εγγραφή αντί να χρησιμοποιείτε πάντα την παραπάνω. Ισχύει μόνο για εκείνη την εγγραφή.</string>
     <!-- Where to transcribe: on this phone or with the user's own cloud key (issue #48). No prices anywhere. -->
     <string name="transcription_where_title">Πού γίνεται η απομαγνητοφώνηση</string>

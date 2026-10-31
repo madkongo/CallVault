@@ -687,8 +687,6 @@
     <string name="transcript_speakers_swap">Поміняти</string>
     <string name="transcript_speakers_swap_names">Поміняти імена</string>
     <string name="transcript_speakers_which_is_you">Хто з них ви?</string>
-    <string name="transcript_too_long_message">Тривалість дзвінка приблизно %1$d хв. Зараз CallVault може розпізнавати записи до %2$d хв, оскільки для довших може бракувати памʼяті. Сам аудіозапис залишиться.</string>
-    <string name="transcript_too_long_title">Запис надто довгий для розпізнавання</string>
     <string name="transcription_ask_language_subtitle">Вибирати мову для кожного запису замість того, щоб завжди використовувати вказану вище. Вибір стосується лише цього запису.</string>
     <!-- Where to transcribe: on this phone or with the user's own cloud key (issue #48). No prices anywhere. -->
     <string name="transcription_where_title">Де розпізнавати</string>
