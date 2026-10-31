@@ -36,3 +36,23 @@ App calls are saved as stereo: LEFT = near (MIC), RIGHT = far (policy submix); O
 calls unchanged. APK sha256 566238ad94b5d26e769ec9c4d275821983462d34b0c522ef0c67d53cdfed2311.
 What to read from his file: far voice audible in LEFT → mic picks up the earpiece (fix = echo cancelling with
 RIGHT as reference). RIGHT itself reverberant → the doubling is upstream of us.
+
+## Probe result (2026-10-31, two stereo calls from 2.4.8-echoprobe) — cause found
+Files arrived intact (2 ch, sizes equal to the app's own log). L = mic, R = far.
+- The far voice is **in the mic channel**, delayed and steady through each call:
+  WhatsApp call **≈76 ms** (24 strong windows, 72–82 ms); second app **≈59 ms** (38 windows, 54–63 ms after the
+  first seconds). Per-window correlation up to 0.9–0.95.
+- Its level there is **as loud or louder than the clean far copy** (least-squares gain 1–5×; in far-talking
+  windows the far signal explains up to 93 % of the mic energy). The hot raw `MIC` on this phone (peaks ≈31 000
+  every window) amplifies what the earpiece leaks.
+- Mixed to mono, the clean far voice + its 60–76 ms copy = the "reverberant" far side the maintainer heard.
+  The OP9 does not do this (maintainer listened), so it is device-dependent, but the mechanism is ours: an
+  unprocessed `MIC` near side with no echo cancelling.
+- ffmpeg's `anlms` (plain NLMS) was tried offline as a quick demo and is not good enough (no double-talk
+  handling, eps capped); a real AEC is needed.
+
+## Fix direction (📐 not built; integration to be designed with the maintainer)
+Acoustic echo cancelling on the near channel with the far channel as the reference, before the downmix, in
+`VoipCaptureSession`. Delay ≈60–100 ms here → tail ≥150 ms. Candidates: speexdsp MDF (BSD, small C) or WebRTC
+AEC3 (`webrtc-audio-processing`, BSD, stronger double-talk + residual suppression). Must not touch carrier
+calls. Prove offline on these two files first (A/B for the maintainer), then a probe build for Евгений.
