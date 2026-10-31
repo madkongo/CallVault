@@ -18,10 +18,10 @@ real stalled file has been fed to it.
 ## How to roll back
 
 ```
-git revert -m 1 MERGE_SHA
+git revert -m 1 2f142765
 ```
 
-(`MERGE_SHA` = the merge of `fix/decode-time-limit` into integration/next or main.) Nothing to migrate.
+(`2f142765` = the merge of `fix/decode-time-limit` into integration/next or main.) Nothing to migrate.
 
 ## What users notice after a rollback
 

@@ -13,10 +13,10 @@ The new per-page screen has been the default since v2.4.7.
 All of the removal is on one branch, merged with `--no-ff`. One command undoes all of it:
 
 ```
-git revert -m 1 MERGE_SHA
+git revert -m 1 c7827a1b
 ```
 
-`MERGE_SHA` = the merge commit of `chore/remove-classic-settings` into `integration/next`. **Fill it in at merge.**
+`c7827a1b` = the merge commit of `chore/remove-classic-settings` into `integration/next`. **Fill it in at merge.**
 
 The revert brings back the code, the 15 strings in all 15 languages, the tests and the device check exactly as
 they were. No data step is needed: no preference was renamed, moved or migrated.

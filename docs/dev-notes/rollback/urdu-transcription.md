@@ -22,7 +22,7 @@ language-filtered for Urdu (only the Persian-tuned tier is, for `"fa"`).
 ## Revert
 
 ```
-git revert -m 1 MERGE_SHA
+git revert -m 1 207a5f84
 ```
 
 ## What users would notice after a rollback
