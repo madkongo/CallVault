@@ -1059,6 +1059,10 @@ class RecordingForegroundService : Service() {
         if (mix.appCallMix && mix.farHeard == false) {
             AppLogger.e(WifiCallRoute.TAG, "Wi-Fi call '$name': the other side was not heard — only the user's side is on it")
             notificationHelper.showErrorNotification(getString(R.string.wifi_call_one_sided))
+        } else if (mix.appCallMix && mix.farHeard == null) {
+            // Unknown is not a success. A lost recorder has already said so, more usefully.
+            AppLogger.e(WifiCallRoute.TAG, "Wi-Fi call '$name': could not check that the other side was heard")
+            if (!daemonLossNotified) notificationHelper.showErrorNotification(getString(R.string.wifi_call_far_unknown))
         }
 
         // Record this finished recording in CallVault's own catalog (the Home list's source of truth).
@@ -1173,6 +1177,6 @@ class RecordingForegroundService : Service() {
 
 /** How a finished carrier recording was captured, for the end-of-call checks (#45). */
 private data class MixResult(val appCallMix: Boolean, val farHeard: Boolean?) {
-    /** Only the app-call capture can tell whether the far side was heard. */
-    val healthFarHeard: Boolean? get() = if (appCallMix) farHeard else null
+    /** Only the app-call capture can tell whether the far side was heard; unknown counts as not. */
+    val healthFarHeard: Boolean? get() = if (appCallMix) farHeard ?: false else null
 }

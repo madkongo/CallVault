@@ -869,4 +869,5 @@
     <string name="settings_debug_force_wifi_route">Forzar la captura de llamadas por Wi-Fi</string>
     <string name="settings_debug_force_wifi_route_description">Para pruebas. Cada llamada telefónica cambia durante la llamada a la captura de llamadas de apps, como haría una llamada por Wi-Fi. En un teléfono sin llamadas por Wi-Fi faltará la otra parte y debería aparecer un error. Requiere activar la grabación de llamadas de apps. Solo funciona con el registro activado.</string>
     <string name="wifi_call_switch_aborted">La grabación de esta llamada por Wi-Fi se detuvo antes de tiempo: no se pudo cambiar la captura de forma segura. Se conserva lo grabado hasta ahora.</string>
+    <string name="wifi_call_far_unknown">Esta llamada por Wi-Fi se grabó, pero CallVault no pudo comprobar que la otra parte esté en ella. Escucha la grabación.</string>
 </resources>

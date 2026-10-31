@@ -962,4 +962,5 @@
     <string name="settings_debug_force_wifi_route">اجبار مسیر ضبط تماس Wi-Fi</string>
     <string name="settings_debug_force_wifi_route_description">برای آزمایش. هر تماس تلفنی در میانهٔ تماس به ضبط تماس برنامه‌ها می‌رود، همان‌طور که تماس Wi-Fi می‌رود. در گوشی بدون تماس Wi-Fi صدای طرف مقابل نخواهد بود و باید خطا نمایش داده شود. ضبط تماس برنامه‌ها باید روشن باشد. فقط وقتی ثبت گزارش روشن است کار می‌کند.</string>
     <string name="wifi_call_switch_aborted">ضبط این تماس Wi-Fi زودتر متوقف شد: روش ضبط با اطمینان عوض نشد. بخشی که تا اینجا ضبط شده نگه داشته می‌شود.</string>
+    <string name="wifi_call_far_unknown">این تماس Wi-Fi ضبط شد، اما CallVault نتوانست بررسی کند که صدای طرف مقابل در آن هست. لطفاً به ضبط گوش دهید.</string>
 </resources>

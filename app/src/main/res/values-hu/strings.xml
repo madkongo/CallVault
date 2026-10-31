@@ -869,4 +869,5 @@
     <string name="settings_debug_force_wifi_route">Wi-Fi-hívás rögzítési útvonal kényszerítése</string>
     <string name="settings_debug_force_wifi_route_description">Teszteléshez. Minden telefonhívás hívás közben átvált az alkalmazáshívás-rögzítésre, ahogy egy Wi-Fi-hívás tenné. Wi-Fi-hívás nélküli telefonon a másik fél hiányozni fog, és hibának kell megjelennie. Bekapcsolt alkalmazáshívás-rögzítés kell hozzá. Csak bekapcsolt naplózás mellett működik.</string>
     <string name="wifi_call_switch_aborted">Ennek a Wi-Fi-hívásnak a rögzítése idő előtt leállt: a felvételt nem lehetett biztonságosan átváltani. Az eddig rögzített rész megmarad.</string>
+    <string name="wifi_call_far_unknown">Ez a Wi-Fi-hívás rögzítve lett, de a CallVault nem tudta ellenőrizni, hogy a másik fél hallható-e rajta. Kérjük, hallgassa meg a felvételt.</string>
 </resources>

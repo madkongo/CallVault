@@ -868,4 +868,5 @@
     <string name="settings_debug_force_wifi_route">强制使用 WLAN 通话录音方式</string>
     <string name="settings_debug_force_wifi_route_description">用于测试。每通电话会在通话中切换到应用通话录音方式，就像 WLAN 通话那样。在不支持 WLAN 通话的手机上会缺少对方的声音，并应显示错误。需要开启应用通话录音。仅在开启日志记录时生效。</string>
     <string name="wifi_call_switch_aborted">这通 WLAN 通话的录音提前停止了：无法安全地切换录音方式。已录下的部分会保留。</string>
+    <string name="wifi_call_far_unknown">这通 WLAN 通话已录音，但 CallVault 无法确认其中录到了对方的声音。请收听录音确认。</string>
 </resources>

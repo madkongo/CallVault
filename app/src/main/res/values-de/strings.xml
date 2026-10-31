@@ -869,4 +869,5 @@
     <string name="settings_debug_force_wifi_route">WLAN-Anruf-Aufnahmeweg erzwingen</string>
     <string name="settings_debug_force_wifi_route_description">Zum Testen. Jeder Telefonanruf wechselt während des Gesprächs zur App-Anruf-Aufnahme, wie es ein WLAN-Anruf täte. Auf einem Telefon ohne WLAN-Anrufe fehlt die andere Seite, und es sollte ein Fehler erscheinen. Erfordert eingeschaltete App-Anruf-Aufnahme. Wirkt nur, solange die Protokollaufzeichnung an ist.</string>
     <string name="wifi_call_switch_aborted">Die Aufnahme dieses WLAN-Anrufs wurde vorzeitig beendet: Die Aufnahme ließ sich nicht sicher umschalten. Der bisher aufgenommene Teil bleibt erhalten.</string>
+    <string name="wifi_call_far_unknown">Dieser WLAN-Anruf wurde aufgenommen, aber CallVault konnte nicht prüfen, ob die andere Seite darauf ist. Bitte hören Sie sich die Aufnahme an.</string>
 </resources>

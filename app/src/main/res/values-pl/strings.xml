@@ -871,4 +871,5 @@
     <string name="settings_debug_force_wifi_route">Wymuś ścieżkę nagrywania połączeń Wi-Fi</string>
     <string name="settings_debug_force_wifi_route_description">Do testów. Każde połączenie telefoniczne w trakcie przełącza się na nagrywanie połączeń z aplikacji, tak jak zrobiłoby to połączenie przez Wi-Fi. Na telefonie bez połączeń przez Wi-Fi zabraknie drugiej strony i powinien pojawić się błąd. Wymaga włączonego nagrywania połączeń z aplikacji. Działa tylko przy włączonym zapisie dziennika.</string>
     <string name="wifi_call_switch_aborted">Nagrywanie tego połączenia przez Wi-Fi zatrzymało się wcześniej: nie udało się bezpiecznie przełączyć nagrywania. Nagrana dotąd część zostaje zachowana.</string>
+    <string name="wifi_call_far_unknown">To połączenie przez Wi-Fi zostało nagrane, ale CallVault nie mógł sprawdzić, czy jest na nim druga strona. Odsłuchaj nagranie.</string>
 </resources>

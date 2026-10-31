@@ -902,4 +902,5 @@
     <string name="settings_debug_force_wifi_route">فرض مسار تسجيل مكالمات Wi-Fi</string>
     <string name="settings_debug_force_wifi_route_description">للاختبار. تنتقل كل مكالمة هاتفية أثناءها إلى تسجيل مكالمات التطبيقات، كما تفعل مكالمة Wi-Fi. على هاتف بلا اتصال عبر Wi-Fi سيغيب الطرف الآخر ويجب أن يظهر خطأ. يتطلب تفعيل تسجيل مكالمات التطبيقات. يعمل فقط أثناء تسجيل السجل.</string>
     <string name="wifi_call_switch_aborted">توقف تسجيل مكالمة Wi-Fi هذه مبكرًا: تعذّر تبديل طريقة التسجيل بأمان. حُفظ الجزء الذي سُجّل حتى الآن.</string>
+    <string name="wifi_call_far_unknown">سُجّلت مكالمة Wi-Fi هذه، لكن تعذّر على CallVault التحقق من وجود صوت الطرف الآخر فيها. يُرجى الاستماع إلى التسجيل.</string>
 </resources>

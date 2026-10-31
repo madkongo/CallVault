@@ -869,4 +869,5 @@
     <string name="settings_debug_force_wifi_route">Forza la cattura delle chiamate Wi-Fi</string>
     <string name="settings_debug_force_wifi_route_description">Per i test. Ogni chiamata telefonica passa durante la chiamata alla cattura delle chiamate delle app, come farebbe una chiamata Wi-Fi. Su un telefono senza chiamate Wi-Fi l\'altra parte mancherà e dovrebbe comparire un errore. Richiede la registrazione delle chiamate delle app attiva. Funziona solo con la registrazione del log attiva.</string>
     <string name="wifi_call_switch_aborted">La registrazione di questa chiamata Wi-Fi si è interrotta prima: non è stato possibile cambiare la cattura in modo sicuro. La parte registrata finora viene conservata.</string>
+    <string name="wifi_call_far_unknown">Questa chiamata Wi-Fi è stata registrata, ma CallVault non ha potuto verificare che l\'altra parte sia presente. Ascolta la registrazione.</string>
 </resources>
