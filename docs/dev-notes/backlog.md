@@ -45,7 +45,9 @@ fix, vivo far-side toggle (hint + SUPPORT doc), Samsung Wi-Fi-calling doc (#45).
 *🔼 HIGHER priority — new feature requests (detail in the "Higher-priority feature requests" section below). The original #1/#3/#4 shipped in 2.4.5 — see the Completed section; the still-open ones are renumbered:*
 1. **Record Button overlay** — a floating on-screen button to start/stop recording, plus an in-call note bubble that attaches a note to the call.
 2. **View call history inside the app.**
-3. **"Select all" in multi-select mode** — one-tap select-all when a library page is in selection mode.
+3. ~~**"Select all" in multi-select mode**~~ — ✅ DONE: verified by the maintainer 2026-10-12, shipped in v2.4.6
+   (`ff401b8c`). This line said "open" until 2026-10-31 although the entry below was already ✅; a status
+   summary was given from it by mistake.
 
 *🔽 LOWER priority — everything previously queued:*
 - *Parked on a user/log:* VoIP mic re-take step 2 (#9 — gate on `isClientSilenced`, needs a Samsung log);
@@ -222,7 +224,7 @@ section. The still-open requests are renumbered below.)*
    recording (we already read the call log via `CallLogReader` for cut-off matching, and hold
    `READ_CALL_LOG`). Decisions: list design, correlation to recordings, and what a tap does.
 
-3. **"Select all" in multi-select mode (user request, 2026-10-04).**
+3. **✅ SHIPPED in v2.4.6 — "Select all" in multi-select mode (user request, 2026-10-04).**
    > **✅ VERIFIED 2026-10-12 by the maintainer on device ("feels fine", select/deselect + delete confirmed).**
    > Merged into `main` 2026-10-12 (`ff401b8c`).
    > First cut was an app-bar select-all⇄clear icon (`40c1395b`); the maintainer found the lone icon
