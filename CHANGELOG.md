@@ -5,6 +5,17 @@ All notable changes to CallVault are documented here. The format is based on
 
 ## [Unreleased]
 
+### Added
+
+- **Never turn Wireless debugging off** (#30). A new switch in Settings → Connection, built-in mode only. With
+  it on, CallVault never switches Wireless debugging off; it may still switch it on when the recorder needs
+  it, and the debugging port stays open on your Wi-Fi. A line under the switch now says when CallVault is
+  leaving Wireless debugging on, because of this switch or because you turned it on yourself. Asked by
+  mirror176.
+  <!-- 🧪 VERIFYING: unit tests only (WirelessDebuggingNeverTurnOffTest), not run on a phone. To settle: in
+       built-in mode with USB debugging on, turn the switch on, make a call, check Wireless debugging is
+       still on afterwards and the line shows; turn it off, check CallVault switches it off again. -->
+
 ## [2.4.8] — 2026-10-31
 
 ### Added
