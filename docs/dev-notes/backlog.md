@@ -177,6 +177,24 @@ visible option, a decision on onboarding — the wizard can't be re-run, see [[n
 section. The still-open requests are renumbered below.)*
 
 1. **Record Button overlay.** A floating, draggable on-screen button (bubble) to start/stop recording
+## 🔵 KK — SenseVoice for transcription + Qwen/other small GGUF for summaries — requested 2026-10-31, not triaged
+
+User **KK** asked: "Any plans to add SenseVoice as a built-in/catalog ASR option? And for summaries, could the
+backend be opened up to Qwen or other smaller GGUF models instead of being locked to Gemma? SenseVoice + Qwen
+would be nice."
+
+Nothing decided, nothing researched. Notes for whoever picks it up:
+- **SenseVoice** is a different engine, not just another model file. Transcription today is whisper.cpp only
+  (`TranscriptionModel` catalog, `WhisperNative`). SenseVoice would need its own runtime (e.g. sherpa-onnx)
+  and has no word timings like Whisper's, which our speaker turns, seam splitting and chunking lean on.
+  Its language list is narrow (zh/en/yue/ja/ko); **no Hebrew**. Check the language fit before anything.
+- **Qwen / other GGUF for summaries:** the runtime is already llama.cpp, so this is mainly the catalog and
+  prompt side. `SummaryModel` has one entry (Gemma 4 E2B). Per-model risk: chat template, the GBNF grammar
+  (`SummaryGrammar`), and summary quality in Hebrew and other pinned languages. A free "any GGUF" import
+  would need a template check. Test candidates first on the desktop harness (memory
+  `llama-desktop-harness`).
+- Both add visible options, so they need an onboarding decision (see [[new-features-consider-onboarding]]).
+
    manually, as an alternative to the automatic call trigger. Needs the draw-over-other-apps permission
    (`SYSTEM_ALERT_WINDOW`); decide when it shows (always / during calls / toggle), and how it maps to the
    capture paths (manual start on the current call). Useful where auto-start can miss or the user wants
