@@ -74,8 +74,6 @@
     <string name="general_back">Vissza</string>
     <string name="general_cancel">Mégsem</string>
     <string name="general_close">Közeli</string>
-    <string name="general_expanded">Kibontva</string>
-    <string name="general_collapsed">Összecsukva</string>
     <string name="general_continue">Folytatás</string>
     <string name="general_copied_to_clipboard">A vágólapra másolva</string>
     <string name="general_flag">Jelölés</string>

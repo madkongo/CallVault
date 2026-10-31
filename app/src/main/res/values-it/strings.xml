@@ -74,8 +74,6 @@
     <string name="general_back">Indietro</string>
     <string name="general_cancel">Cancella</string>
     <string name="general_close">Chiudi</string>
-    <string name="general_expanded">Espanso</string>
-    <string name="general_collapsed">Compresso</string>
     <string name="general_continue">Continua</string>
     <string name="general_copied_to_clipboard">Copiato in</string>
     <string name="general_flag">Segna</string>

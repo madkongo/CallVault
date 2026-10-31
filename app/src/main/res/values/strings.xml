@@ -13,8 +13,6 @@
     <string name="app_name" translatable="false">CallVault</string>
     <string name="general_close">Close</string>
     <!-- Spoken by TalkBack for a section header that folds open and shut. -->
-    <string name="general_expanded">Expanded</string>
-    <string name="general_collapsed">Collapsed</string>
     <string name="voicemail_contact_label">Voicemail</string>
     <string name="general_recommended">Recommended</string>
     <string name="general_continue">Continue</string>

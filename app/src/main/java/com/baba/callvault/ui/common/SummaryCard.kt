@@ -153,7 +153,6 @@ fun SummarySheetStrip(
                         .fillMaxWidth()
                         .expandableHeader(
                             expanded = expanded,
-                            stateText = stringResource(expandStateRes(expanded)),
                             onToggle = { expanded = !expanded },
                         )
                         .padding(vertical = 8.dp),
