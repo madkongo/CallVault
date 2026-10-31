@@ -148,7 +148,13 @@ suggested, only project-SIMPLE handles this prompt, by clicking it with an acces
 
 ---
 
-## 🔵 Settings per page — PLANNED 2026-10-20, not started, no date
+## ✅ Settings per page — SHIPPED in v2.4.7 as the default (heading said "not started" until 2026-10-31)
+
+Built in steps 2026-10-21 (merges 2d7c38e0, bdc8a299, 348cd5d7, 3119a8f8, c1435ec8), default since
+feat/new-settings-default; Experimental's switches live in their groups on the new screen, the Telegram
+invite is a card on the main screen. **Only open item:** delete the classic screen (and its Experimental
+section, `SUB_EXPERIMENTAL`) one release after the new one has proved itself, as the rollback plan says.
+
 
 Plan: `2026-10-20-settings-per-page-plan.md`. Confirmed by the maintainer: Settings opened from a page shows
 that page's settings (the main screen shows everything); the Experimental section goes and its switches move,
