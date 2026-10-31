@@ -222,11 +222,13 @@ object AdbShell {
      * - a miss is remembered for this process ([OpenAdbPortGate]) until adbd's tcp ports change, so it is
      *   asked once, not on every connect.
      *
-     * The connect authenticates with CallVault's key. If adbd does not know that key (`ro.adb.secure=1` and
-     * never paired), Android shows its own "Allow debugging?" prompt once; until it is accepted this fails
-     * and is not asked again until the ports change or the app restarts.
+     * The connect authenticates with CallVault's key. If adbd did not know that key it would show Android's
+     * "Allow debugging?" prompt, so nothing is probed at all until CallVault has connected once with it
+     * ([AppPreferences.isAdbPaired]) — the pairing that authorised the key for Wireless debugging authorises it
+     * for adbd's tcp listener too.
      */
     private fun connectAlreadyOpenPort(context: Context, alreadyTried: Set<Int>): Boolean {
+        if (!AppPreferences(context).isAdbPaired()) return false
         val candidates = LoopbackPorts.alreadyOpenCandidates(
             serviceTcpPort = adbdTcpPort(),
             persistTcpPort = LoopbackPorts.parse(getSystemProperty("persist.adb.tcp.port")),
