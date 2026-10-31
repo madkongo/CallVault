@@ -116,6 +116,17 @@
     <string name="merge_note_will_keep">Các cuộc gọi kia cũng được giữ lại trên máy.</string>
     <string name="home_scroll_to_top">Lên đầu</string>
     <string name="home_whatsnew_full_notes">Ghi chú phát hành đầy đủ</string>
+    <string name="whatsnew_248_title">Khóa chép lời riêng của bạn và đọc dễ hơn</string>
+    <string-array name="whatsnew_248_items">
+        <item>Chép lời bằng khóa của bạn — Groq, OpenRouter hoặc máy chủ riêng, chỉ vài giây thay vì vài phút (Cài đặt ▸ Chép lời ở đâu)</item>
+        <item>Phát ngay trong danh sách bản ghi, có thanh để nhảy tới bất kỳ điểm nào</item>
+        <item>Trước và Tiếp khi đọc bản chép lời, và công tắc «Theo dõi khi phát»</item>
+        <item>Nhập trên trang Bản chép lời giờ là một nút: giữ âm thanh hoặc chỉ giữ bản chép lời</item>
+        <item>Cuộc gọi dài từ 45 phút trở lên lại chép lời, nhập và hiện dạng sóng được</item>
+        <item>Tải mô hình bằng dữ liệu di động sẽ hỏi trước thay vì chờ Wi-Fi</item>
+        <item>Mô hình giọng nói dành cho tiếng Ba Tư và hỗ trợ TalkBack tốt hơn</item>
+        <item>Kết nối được trên điện thoại ẩn địa chỉ gỡ lỗi không dây</item>
+    </string-array>
     <string name="whatsnew_247_title">Cài đặt mới, Shizuku bắt kịp và tiếng Ukraina</string>
     <string-array name="whatsnew_247_items">
         <item>Bố cục cài đặt mới — mỗi trang chỉ hiện cài đặt của riêng nó, chi tiết nằm sau ⓘ; giao diện cổ điển chỉ cách một lần chạm</item>

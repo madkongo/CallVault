@@ -116,6 +116,17 @@
     <string name="merge_note_will_keep">A többi hívás is a telefonon marad.</string>
     <string name="home_scroll_to_top">Az elejére</string>
     <string name="home_whatsnew_full_notes">Teljes kiadási jegyzék</string>
+    <string name="whatsnew_248_title">Saját átírókulcs és könnyebb olvasás</string>
+    <string-array name="whatsnew_248_items">
+        <item>Átírás saját kulccsal — Groq, OpenRouter vagy saját szerver, percek helyett másodpercek alatt (Beállítások ▸ Hol történjen az átírás)</item>
+        <item>Lejátszás közvetlenül a felvételek listájából, sávval bármely pontra ugráshoz</item>
+        <item>Előző és Következő átirat olvasás közben, és „Lejátszás követése” kapcsoló</item>
+        <item>Az importálás az Átiratok oldalon most egy gomb: a hang megtartása vagy csak az átirat</item>
+        <item>A 45 perces vagy hosszabb hívások ismét átírhatók, importálhatók és mutatják a hullámformájukat</item>
+        <item>A modellek letöltése mobiladaton előbb rákérdez, ahelyett hogy Wi-Fire várna</item>
+        <item>Perzsára hangolt beszédmodell és jobb TalkBack-támogatás</item>
+        <item>Csatlakozik azokon a telefonokon is, amelyek elrejtik a vezeték nélküli hibakeresés címét</item>
+    </string-array>
     <string name="whatsnew_247_title">Új beállítások, a Shizuku felzárkózik, és ukrán nyelv</string>
     <string-array name="whatsnew_247_items">
         <item>Új beállításelrendezés — minden oldal csak a saját beállításait mutatja, a részletek az ⓘ mögött; a klasszikus nézet egy koppintásra van</item>

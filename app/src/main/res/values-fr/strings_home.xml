@@ -117,6 +117,17 @@
     <string name="merge_note_will_keep">Les autres appels sont également conservés sur le téléphone.</string>
     <string name="home_scroll_to_top">Haut</string>
     <string name="home_whatsnew_full_notes">Notes de version complètes</string>
+    <string name="whatsnew_248_title">Votre propre clé de transcription, et une lecture plus simple</string>
+    <string-array name="whatsnew_248_items">
+        <item>Transcrire avec votre propre clé — Groq, OpenRouter ou votre serveur, en secondes plutôt qu\'en minutes (Paramètres ▸ Où transcrire)</item>
+        <item>Lecture directe depuis la liste des enregistrements, avec une barre pour aller n\'importe où</item>
+        <item>Précédent et Suivant pendant la lecture d\'une transcription, et un bouton « Suivre la lecture »</item>
+        <item>L\'import sur la page Transcriptions tient en un bouton : garder l\'audio ou seulement la transcription</item>
+        <item>Les longs appels de 45 minutes ou plus se transcrivent, s\'importent et affichent à nouveau leur forme d\'onde</item>
+        <item>Les téléchargements de modèles sur données mobiles demandent d\'abord, au lieu d\'attendre le Wi-Fi</item>
+        <item>Un modèle vocal adapté au persan et une meilleure prise en charge de TalkBack</item>
+        <item>Se connecte sur les téléphones qui masquent l\'adresse du débogage sans fil</item>
+    </string-array>
     <string name="whatsnew_247_title">Nouveaux réglages, Shizuku rattrape son retard, et l’ukrainien</string>
     <string-array name="whatsnew_247_items">
         <item>Nouvelle présentation des réglages — chaque page n’affiche que ses propres réglages, avec les détails derrière ⓘ ; la vue classique est à un toucher</item>
