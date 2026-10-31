@@ -80,6 +80,18 @@ object AdbShell {
      */
     private const val CONNECT_BUDGET_MS = 8_000L
 
+    private const val LOOPBACK_HOST = "127.0.0.1"
+
+    /**
+     * The already-open-port probe's look at one port: the same values ConnectPortFinder's loopback search uses
+     * (a loopback connect is accepted or refused at once; these only bound a wedged stack).
+     */
+    private const val OPEN_PORT_CONNECT_TIMEOUT_MS = 150
+    private const val OPEN_PORT_READ_TIMEOUT_MS = 500
+
+    /** Remembers an already-open-port miss so it is not asked again on every connect. See [connectAlreadyOpenPort]. */
+    private val openPortGate = OpenAdbPortGate()
+
     /**
      * How long a caller waits to ENTER [ensureConnected] / [forceReconnect] / the Wireless-debugging connect
      * while another thread is inside, before giving up with "not connected".
@@ -172,15 +184,71 @@ object AdbShell {
                 val waited = SystemClock.elapsedRealtime() - startedAt
                 if (ok) AppLogger.i(TAG, "Loopback self-healed after ${waited}ms (adbd restart) — no WD needed")
             }
-            if (ok) {
-                Thread.sleep(CONNECT_SETTLE_MS)
-                PairingLoss.recordConnected(context)
-                AppPreferences(context).setAdbPaired(true)
-                grantSecureSettingsIfNeeded(context)
+            // Last, a tcp listener the ROM itself opened (persist.adb.tcp.port, listen_addrs, 5555), leaving out
+            // the ports connectLoopback was just refused on. Free when there is none: see [connectAlreadyOpenPort].
+            if (!ok) {
+                val tried = LoopbackPorts.candidates(AppPreferences(context).getLoopbackAdbPort(), adbdTcpPort()).toSet()
+                ok = connectAlreadyOpenPort(context, alreadyTried = tried)
             }
+            if (ok) onConnected(context)
             return ok
         }
-        return connectViaWirelessDebugging(context)
+        if (connectViaWirelessDebugging(context)) return true
+        // Only once Wireless debugging could not give us a connection, so a phone where it works behaves
+        // exactly as before. This is the case that matters: no Wi-Fi, on a ROM whose adbd listens on tcp anyway.
+        if (!connectAlreadyOpenPort(context, alreadyTried = emptySet())) return false
+        onConnected(context)
+        return true
+    }
+
+    /** What every new connection does before it is handed out: settle, and record that the key is accepted. */
+    private fun onConnected(context: Context) {
+        Thread.sleep(CONNECT_SETTLE_MS)
+        PairingLoss.recordConnected(context)
+        AppPreferences(context).setAdbPaired(true)
+        grantSecureSettingsIfNeeded(context)
+    }
+
+    /**
+     * Connects over a tcp port adbd was **already** listening on without anyone arming it — the ROM's own
+     * `persist.adb.tcp.port` / `service.adb.listen_addrs`, or 5555 — so no Wi-Fi and no Wireless debugging are
+     * needed. See [LoopbackPorts.alreadyOpenCandidates] for how this differs from the offline-mode listener.
+     *
+     * Never slows the normal path:
+     * - each port is first asked with one plain `CNXN` ([AdbWireProbe], bounded by [OPEN_PORT_CONNECT_TIMEOUT_MS] +
+     *   [OPEN_PORT_READ_TIMEOUT_MS]); a refused loopback connect — every phone with nothing listening —
+     *   returns in about a millisecond;
+     * - only a port that answers as classic adbd gets a real (bounded, [CONNECT_BUDGET_MS]) connect;
+     * - a miss is remembered for this process ([OpenAdbPortGate]) until adbd's tcp ports change, so it is
+     *   asked once, not on every connect.
+     *
+     * The connect authenticates with CallVault's key. If adbd does not know that key (`ro.adb.secure=1` and
+     * never paired), Android shows its own "Allow debugging?" prompt once; until it is accepted this fails
+     * and is not asked again until the ports change or the app restarts.
+     */
+    private fun connectAlreadyOpenPort(context: Context, alreadyTried: Set<Int>): Boolean {
+        val candidates = LoopbackPorts.alreadyOpenCandidates(
+            serviceTcpPort = adbdTcpPort(),
+            persistTcpPort = LoopbackPorts.parse(getSystemProperty("persist.adb.tcp.port")),
+            listenAddrPorts = LoopbackPorts.parseListenAddrs(getSystemProperty("service.adb.listen_addrs")),
+            alreadyTried = alreadyTried,
+        )
+        val ports = openPortGate.portsToProbe(candidates)
+        if (ports.isEmpty()) return false
+        val mgr = AdbConnectionManager.getInstance(context)
+        for (port in ports) {
+            val probe = AdbWireProbe.probe(LOOPBACK_HOST, port, OPEN_PORT_CONNECT_TIMEOUT_MS, OPEN_PORT_READ_TIMEOUT_MS)
+            if (!LoopbackPorts.isAlreadyOpenAdb(probe)) continue
+            if (connectBounded(context, "already-open adb tcp :$port") { mgr.connect(LOOPBACK_HOST, port) }) {
+                openPortGate.recordHit()
+                AppLogger.i(TAG, "Connected over adbd's already-open tcp port :$port (no Wi-Fi or Wireless debugging needed)")
+                return true
+            }
+            AppLogger.i(TAG, "adbd answers on tcp :$port but did not accept CallVault's key (or did not finish the handshake)")
+        }
+        openPortGate.recordMiss(candidates)
+        AppLogger.d(TAG, "No already-open adb tcp port to use ($ports); not asking again until adbd's tcp ports change")
+        return false
     }
 
     /**
