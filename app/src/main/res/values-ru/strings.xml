@@ -76,8 +76,6 @@
     <string name="general_back">Назад</string>
     <string name="general_cancel">Отменить</string>
     <string name="general_close">Закрыть</string>
-    <string name="general_expanded">Развёрнуто</string>
-    <string name="general_collapsed">Свёрнуто</string>
     <string name="general_continue">Продолжить</string>
     <string name="general_copied_to_clipboard">Скопировано в буфер обмена</string>
     <string name="general_flag">Метка</string>

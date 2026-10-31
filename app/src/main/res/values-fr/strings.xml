@@ -74,8 +74,6 @@
     <string name="general_back">Retour</string>
     <string name="general_cancel">Annuler</string>
     <string name="general_close">Fermer</string>
-    <string name="general_expanded">Développé</string>
-    <string name="general_collapsed">Réduit</string>
     <string name="general_continue">Continuer</string>
     <string name="general_copied_to_clipboard">Copié dans le presse-papiers</string>
     <string name="general_flag">Repère</string>

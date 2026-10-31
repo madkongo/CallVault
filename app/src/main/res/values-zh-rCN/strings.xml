@@ -73,8 +73,6 @@
     <string name="general_back">返回</string>
     <string name="general_cancel">取消</string>
     <string name="general_close">关闭</string>
-    <string name="general_expanded">已展开</string>
-    <string name="general_collapsed">已收起</string>
     <string name="general_continue">继续</string>
     <string name="general_copied_to_clipboard">已复制到剪贴板</string>
     <string name="general_flag">标记</string>
