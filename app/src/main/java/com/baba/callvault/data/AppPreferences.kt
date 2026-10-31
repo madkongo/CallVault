@@ -456,7 +456,11 @@ class AppPreferences(context: Context) {
 
         // Which Settings screen opens: the classic list, or the new per-page one. Device-only on purpose
         // (not in EXPORTABLE_KEYS): it is a rollback switch for this phone, not a preference to carry over.
-        CLASSIC_SETTINGS_SCREEN("classic_settings_screen");
+        CLASSIC_SETTINGS_SCREEN("classic_settings_screen"),
+
+        // The transcript reader's "Follow playback" switch (#27). A remembered view choice, like a sort
+        // order: device-only and not a Settings row.
+        TRANSCRIPT_FOLLOW_PLAYBACK("transcript_follow_playback");
     }
 
     // -------- Nested enums
@@ -1582,6 +1586,14 @@ class AppPreferences(context: Context) {
     fun isClassicSettingsScreen() = getBoolean(Key.CLASSIC_SETTINGS_SCREEN, CLASSIC_SETTINGS_SCREEN_DEFAULT)
 
     fun setClassicSettingsScreen(classic: Boolean) = setBoolean(Key.CLASSIC_SETTINGS_SCREEN, classic)
+
+    /**
+     * Whether the transcript reader follows playback (#27): on lights the playing line and keeps it in
+     * view; off lights nothing and never scrolls on its own. On by default, which is how it always behaved.
+     */
+    fun isTranscriptFollowPlayback() = getBoolean(Key.TRANSCRIPT_FOLLOW_PLAYBACK, true)
+
+    fun setTranscriptFollowPlayback(follow: Boolean) = setBoolean(Key.TRANSCRIPT_FOLLOW_PLAYBACK, follow)
 
     /**
      * The raw key of the section of Home the user was last in, or null if they have never been

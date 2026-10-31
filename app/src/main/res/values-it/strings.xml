@@ -665,6 +665,9 @@
     <string name="transcript_note_hint">Di cosa si trattava, o cosa c\'è da fare…</string>
     <string name="transcript_retranscribe">Trascrivi di nuovo</string>
     <string name="transcript_share">Condividi</string>
+    <string name="transcript_previous_call">Precedente</string>
+    <string name="transcript_next_call">Successiva</string>
+    <string name="transcript_follow_playback">Segui la riproduzione</string>
     <string name="transcript_share_text">Testo</string>
     <string name="transcript_speaker_a">Interlocutore A</string>
     <string name="transcript_speaker_b">Interlocutore B</string>

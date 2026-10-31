@@ -819,6 +819,9 @@
     <string name="transcript_note_hint">Για ποιο θέμα ήταν, ή τι πρέπει να γίνει γι\' αυτό…</string>
     <string name="transcript_retranscribe">Απομαγνητοφώνηση ξανά</string>
     <string name="transcript_share">Κοινοποίηση</string>
+    <string name="transcript_previous_call">Προηγούμενη</string>
+    <string name="transcript_next_call">Επόμενη</string>
+    <string name="transcript_follow_playback">Ακολούθηση αναπαραγωγής</string>
     <string name="transcript_share_text">Κείμενο</string>
     <string name="transcript_speaker_a">Ομιλητής Α</string>
     <string name="transcript_speaker_b">Ομιλητής Β</string>

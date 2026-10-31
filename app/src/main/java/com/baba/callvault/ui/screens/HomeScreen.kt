@@ -166,6 +166,8 @@ import com.baba.callvault.ui.common.MergeProgressState
 import com.baba.callvault.ui.common.DeleteCopiesDialog
 import com.baba.callvault.ui.common.ListPlayback
 import com.baba.callvault.ui.common.ListSeekBar
+import com.baba.callvault.ui.common.TranscriptNeighbour
+import com.baba.callvault.ui.common.TranscriptNeighbours
 import com.baba.callvault.ui.common.rememberSpokenPositionMs
 import androidx.compose.ui.layout.layout
 import com.baba.callvault.ui.common.DeleteRecordingDialog
@@ -386,6 +388,11 @@ fun HomeScreen(
     // summary tapped on the Summaries page must not open as a one-line strip above someone else's
     // words, which is what it did the first time this page was built.
     var readingFromSummary by rememberSaveable { mutableStateOf(false) }
+
+    // The list the open transcript came from, in the order the user saw it, for the Previous / Next
+    // cards (#27). Taken once at the tap; empty where there is no list to walk (a recording's own
+    // screen, a notification), which hides the cards.
+    var readingOrder by rememberSaveable { mutableStateOf(ArrayList<String>()) }
 
     /** Which recording's transcript is awaiting a delete confirmation, or null. */
     var deleteTranscriptFor by rememberSaveable { mutableStateOf<String?>(null) }
@@ -644,6 +651,7 @@ fun HomeScreen(
         onSelectSection(HomeSection.Transcripts)
         playbackFor = null
         readingFromSummary = false
+        readingOrder = ArrayList()
         readingFor = requested
         onOpenTranscriptHandled()
     }
@@ -914,7 +922,11 @@ fun HomeScreen(
                 onSeek = { viewModel.seekTo(it) },
                 onSkip = { viewModel.skipPlayback(it) },
                 onCycleSpeed = { viewModel.cyclePlaybackSpeed() },
-                onOpenTranscript = { transcriptFor = displayName },
+                onOpenTranscript = {
+                    // Over a recording's own screen another call would clash with its player.
+                    readingOrder = ArrayList()
+                    transcriptFor = displayName
+                },
                 onTranscribe = { startTranscription(displayName) },
                 // Confirm first, and ask which copies when there are two of them — the same
                 // question the row's menu asks. This used to delete on the spot with nothing to
@@ -1087,6 +1099,7 @@ fun HomeScreen(
             // look at something you are already standing on, and a sheet over a list of transcripts
             // would be a transcript over a list of transcripts.
             onOpen = { displayName ->
+                readingOrder = ArrayList(groups.ready.map { it.displayName })
                 readingFor = displayName
                 readingFromSummary = false
             },
@@ -1179,6 +1192,7 @@ fun HomeScreen(
             //
             // Leaving it stops the audio, which the page frame already does for Transcripts (#27).
             onOpen = { displayName ->
+                readingOrder = ArrayList(groups.ready)
                 readingFor = displayName
                 readingFromSummary = true
             },
@@ -1398,7 +1412,13 @@ fun HomeScreen(
                         // happens to be queued keeps spinning, because none of them has started.
                         transcriptPercent = transcribingShown.percentFor(item.displayName),
                         onTranscribe = { startTranscription(item.displayName) },
-                        onOpenTranscript = { transcriptFor = item.displayName },
+                        onOpenTranscript = {
+                            // Only calls with a finished transcript, in the list's own sort and filters.
+                            readingOrder = ArrayList(
+                                listedNames.filter { transcriptStatuses[it] == TranscriptStatus.DONE }
+                            )
+                            transcriptFor = item.displayName
+                        },
                         // Retry runs through the same gate: without a model it would fail exactly the
                         // same silent way a first attempt does.
                         onRetryTranscript = { startTranscription(item.displayName) },
@@ -1666,6 +1686,17 @@ fun HomeScreen(
         // English while the screen behind it shows them translated.
         val exportLabels = rememberExportLabels()
 
+        // Previous / Next (#27): named the way the list names them, dated the way the header is.
+        val neighbours = remember(readingOrder, displayName, libraryRecordings) {
+            val (before, after) = TranscriptNeighbours.around(readingOrder, displayName)
+            fun describe(name: String?): TranscriptNeighbour? = name?.let { n ->
+                val r = libraryRecordings.firstOrNull { it.displayName == n }
+                TranscriptNeighbour(n, RecordingLabel.of(r) ?: RecordingLabel.forName(n), r?.displayDate)
+            }
+            describe(before) to describe(after)
+        }
+        var followPlayback by remember { mutableStateOf(AppPreferences(context).isTranscriptFollowPlayback()) }
+
         /**
          * Leaving the transcript.
          *
@@ -1793,7 +1824,20 @@ fun HomeScreen(
             },
             summaryState = sheetSummary,
             onSummarise = { SummaryScheduler.runNow(context, displayName) },
-            onStopSummary = { SummaryScheduler.stopNow(context) }
+            onStopSummary = { SummaryScheduler.stopNow(context) },
+            callKey = displayName,
+            previousCall = neighbours.first,
+            nextCall = neighbours.second,
+            onOpenCall = { next ->
+                // The audio belongs to the call being left; moving on stops it, as leaving the page does.
+                viewModel.stopPlayback()
+                if (readingPresentation) readingFor = next else transcriptFor = next
+            },
+            followPlayback = followPlayback,
+            onFollowPlaybackChange = { on ->
+                followPlayback = on
+                AppPreferences(context).setTranscriptFollowPlayback(on)
+            },
         )
     }
 

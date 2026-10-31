@@ -841,6 +841,9 @@
     <string name="transcript_speaker_a">Speaker A</string>
     <string name="transcript_speaker_b">Speaker B</string>
     <string name="transcript_share">Share</string>
+    <string name="transcript_previous_call">Previous</string>
+    <string name="transcript_next_call">Next</string>
+    <string name="transcript_follow_playback">Follow playback</string>
     <string name="transcript_export_chooser">Share transcript</string>
     <string name="transcript_export_failed">Could not export the transcript</string>
     <string name="transcript_retranscribe">Transcribe again</string>

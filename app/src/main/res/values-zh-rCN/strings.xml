@@ -664,6 +664,9 @@
     <string name="transcript_note_hint">内容是什么，或接下来要做什么…</string>
     <string name="transcript_retranscribe">重新转写</string>
     <string name="transcript_share">分享</string>
+    <string name="transcript_previous_call">上一个</string>
+    <string name="transcript_next_call">下一个</string>
+    <string name="transcript_follow_playback">跟随播放</string>
     <string name="transcript_share_text">文本</string>
     <string name="transcript_speaker_a">说话人 A</string>
     <string name="transcript_speaker_b">说话人 B</string>

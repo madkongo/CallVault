@@ -665,6 +665,9 @@
     <string name="transcript_note_hint">Miről szólt, vagy mi a teendő vele…</string>
     <string name="transcript_retranscribe">Átírás újra</string>
     <string name="transcript_share">Megosztás</string>
+    <string name="transcript_previous_call">Előző</string>
+    <string name="transcript_next_call">Következő</string>
+    <string name="transcript_follow_playback">Lejátszás követése</string>
     <string name="transcript_share_text">Szöveg</string>
     <string name="transcript_speaker_a">A beszélő</string>
     <string name="transcript_speaker_b">B beszélő</string>

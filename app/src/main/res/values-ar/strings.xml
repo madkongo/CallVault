@@ -700,6 +700,9 @@
     <string name="transcript_note_hint">عن ماذا كانت، أو ماذا تفعل حيالها…</string>
     <string name="transcript_retranscribe">إعادة التفريغ الصوتي</string>
     <string name="transcript_share">مشاركة</string>
+    <string name="transcript_previous_call">السابقة</string>
+    <string name="transcript_next_call">التالية</string>
+    <string name="transcript_follow_playback">متابعة التشغيل</string>
     <string name="transcript_share_text">نص</string>
     <string name="transcript_speaker_a">المتحدث أ</string>
     <string name="transcript_speaker_b">المتحدث ب</string>
