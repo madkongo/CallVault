@@ -3,13 +3,15 @@
 #
 #   tools/device-checks/mode-switch-check.sh <adb-serial>
 #
-# From Settings > General > Experimental it switches built-in -> Shizuku -> built-in WITHOUT leaving the
-# screen, and after each switch checks: which rows are greyed (read from the UI tree, not guessed), which
+# From Settings (opened from the main screen: the Shizuku mode row above the groups) it switches built-in ->
+# Shizuku -> built-in WITHOUT leaving the screen, and after each switch checks: which rows are greyed (read from the UI tree, not guessed), which
 # recorder process runs, and that the VoIP policy was registered by that recorder. Prints PASS/FAIL per
 # check and exits non-zero on any FAIL. Leaves the phone in the mode it started in.
 #
 # Born 2026-10-19: Settings kept the old mode's greyed rows until reopened, and nobody saw it because
 # nobody switched modes and looked at the same screen. Never uninstalls; touches only CallVault's UI.
+# 2026-10-31: moved from the removed classic screen (General > Experimental) to the per-page screen's groups:
+# Connection, Recording and Calls to skip. Not yet run on a phone after the move.
 set -u
 S=${1:?usage: $0 <adb-serial>}
 DIR=$(cd "$(dirname "$0")" && pwd)
@@ -18,20 +20,27 @@ FAILS=0
 a() { adb -s "$S" "$@"; }
 
 dump() { a shell uiautomator dump /sdcard/cv_ui.xml >/dev/null 2>&1; a pull /sdcard/cv_ui.xml "$TMP/ui.xml" >/dev/null 2>&1; }
-tap() { # tap the first node whose text contains $1
+tap() { # tap the first node whose text contains $1 (exactly equals it when $2 = exact)
   dump
-  local xy; xy=$(python3 -I "$DIR/ui_find.py" "$TMP/ui.xml" "$1") || { echo "  (could not find '$1')"; return 1; }
+  local xy; xy=$(python3 -I "$DIR/ui_find.py" "$TMP/ui.xml" "$1" ${2:-}) || { echo "  (could not find '$1')"; return 1; }
   a shell input tap $xy
 }
-open_experimental() {
+to_top() { for i in 1 2 3 4 5 6 7 8; do a shell input swipe 700 600 700 2800 300; done; sleep 1; }
+open_settings() {
   a shell am force-stop com.baba.callvault
   a shell 'monkey -p com.baba.callvault -c android.intent.category.LAUNCHER 1 >/dev/null 2>&1'; sleep 6
-  tap Settings; sleep 2; tap GENERAL; sleep 1; tap Experimental; sleep 2
+  tap Settings; sleep 2
 }
-rows() { # scroll through, collect, scroll back
-  local files=""
-  for i in 1 2 3 4 5 6; do dump; cp "$TMP/ui.xml" "$TMP/ui_$i.xml"; files="$files $TMP/ui_$i.xml"; a shell input swipe 700 2600 700 1500 400; sleep 1; done
-  for i in 1 2 3 4 5 6 7 8; do a shell input swipe 700 600 700 2800 300; done
+rows() { # open each group that holds a tracked row (one group is open at a time), scroll through, collect
+  local files="" n=0
+  for group in Connection Recording "Calls to skip"; do
+    to_top; tap "$group" exact; sleep 2
+    for i in 1 2 3 4; do
+      n=$((n+1)); dump; cp "$TMP/ui.xml" "$TMP/ui_$n.xml"; files="$files $TMP/ui_$n.xml"
+      a shell input swipe 700 2600 700 1500 400; sleep 1
+    done
+  done
+  to_top
   python3 -I "$DIR/ui_rows.py" $files
 }
 mode() { if a shell pidof com.baba.callvault:recorder >/dev/null 2>&1; then echo SHIZUKU; else echo STANDALONE; fi; }
@@ -57,7 +66,7 @@ verify() { # $1 = expected mode
 switch() { tap "Shizuku mode"; sleep 30; tap OK; sleep 1; }
 
 start=$(mode); other=$([ "$start" = SHIZUKU ] && echo STANDALONE || echo SHIZUKU)
-echo "== starting in $start"; open_experimental; verify "$start"
+echo "== starting in $start"; open_settings; verify "$start"
 echo "== switched to $other (same screen)"; switch; verify "$other"
 echo "== switched back to $start (same screen)"; switch; verify "$start"
 rm -rf "$TMP"
