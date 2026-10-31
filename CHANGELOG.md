@@ -23,11 +23,15 @@ All notable changes to CallVault are documented here. The format is based on
 - **Download models on mobile data.** Tapping Download (or Resume/Retry) for a speech model or the
   summariser while on mobile data now asks: wait for Wi-Fi, or download now on mobile data. On Wi-Fi nothing
   changes. The setup wizard asks the same way. Before, downloads silently waited for Wi-Fi.
-  <!-- 🧪 VERIFYING: unit tests only (a491ad7b). Check: Wi-Fi off, tap Download model → the dialog. -->
+  <!-- 🧪 VERIFYING: run on the OP9 2026-10-31 (Claude-run): Wi-Fi off on real LTE → Download the summariser →
+       "You're not on Wi-Fi, this model is 2.6 GB" dialog; Wait for Wi-Fi → "Waiting for Wi-Fi", nothing
+       written; Wi-Fi back on → download started by itself and finished. On Wi-Fi no dialog. Maintainer to confirm. -->
 - **Persian-tuned speech model** (#55). With the transcription language set to Persian, the model list
   offers "Persian-tuned", a version of the Best quality model trained on Persian speech by givia (CC BY 4.0).
   Optional, 574 MB. Suggested by shabgardetanha.
-  <!-- 🧪 VERIFYING: not run on a phone; not quality-tested on calls (maintainer's call). One outside user
+  <!-- 🧪 VERIFYING: OP9 2026-10-31 (Claude-run): offered only with Persian set, downloaded, size + sha256 match the
+       pin; a 64 s two-sided synthetic Persian dialogue (edge-tts, no real call) transcribed near word-perfect,
+       both speakers right, 1.39x real time. Still not tested on real calls (maintainer's call). One outside user
        found it ~3x slower with temperature fallback on, which CallVault keeps on.
        docs/dev-notes/2026-10-29-issue-55-persian-model.md -->
 
@@ -37,7 +41,11 @@ All notable changes to CallVault are documented here. The format is based on
   fold-open headers say "Expanded" or "Collapsed"; the playback waveform and transcript scrubber read
   "Playback position, 1:12 of 4:23" and can be moved with TalkBack's adjust gestures; the remove × on tags is
   bigger and announced as a button. Thanks to AbdulAziz-Hatem for the audit.
-  <!-- 🧪 VERIFYING: unit tests only (71358f9a, edbea8a4, c1512100, 619e6fa8); needs a TalkBack pass on a phone. -->
+  <!-- 🧪 VERIFYING: TalkBack 17.1 pass on the OP9 2026-10-31 (Claude-run, speech read from TalkBack's log). OK:
+       switch rows ("On. Record phone calls. Switch"), radio rows ("Selected. On this phone… Radio button,
+       1 of 4"), tag × ("Remove tag. Button"), transcript-sheet bar. Two faults found and fixed (c525a946,
+       ed6f4550): headers said the state twice; the waveform and list bars could not be focused. Re-checked
+       on 2.4.7-a11y1: fixed. Open: a focused bar announces the position every second while playing. -->
 - **vivo and iQOO: honest about app calls.** vivo's "In-app call recording" option, which lets the other
   person's voice be recorded in app calls, exists only on China-market vivo/iQOO firmware. On overseas phones
   CallVault's message after a one-sided app call now says it cannot be enabled, instead of pointing to a
@@ -60,14 +68,15 @@ All notable changes to CallVault are documented here. The format is based on
 - **Long calls get their waveform** (#63). Drawing the waveform of a long call takes a few minutes; it was
   stopped when you left the recording, and calls over 15 minutes were never drawn ahead of time. It now runs
   in the background until it finishes, and the bars appear as soon as they are ready.
-  <!-- 🧪 VERIFYING: OP9, 45:00 Opus file drawn in the background and shown on open (2026-10-28). Needs a real
-       >40-min call on the OP12. docs/dev-notes/2026-10-28-issue-63-long-call-waveform.md -->
+  <!-- 🧪 VERIFYING: OP9, 45:00 Opus file drawn in the background and shown on open (2026-10-28); 2026-10-31 a real
+       57:45 call from the OP12, imported on the OP9, drew its waveform after transcription. docs/dev-notes/2026-10-28-issue-63-long-call-waveform.md -->
 - **Long calls could not be transcribed or imported.** Each 5-minute piece of a long recording reserved
   memory for the whole call, so calls of around 45–50 minutes or more ran out of memory: transcription
   failed, the waveform never appeared and imports were refused as unreadable. Reported by a user.
   <!-- 🧪 VERIFYING: reproduced on the OP9 2026-10-29 — official 2.4.7 tried a 587 MB allocation on a 50-min
        two-sided file and refused the import; the fixed build imports and reads it at ~80 MB heap (9a650b71).
-       Transcription of a long call not yet run on a phone. -->
+       2026-10-31: a real 57:45 call from the OP12 imported and transcribed on the OP9 (Hebrew, Best quality):
+       1373 lines to 57.7 min, 92 min work (1.6x), Java heap ~60-80 MB, no OOM. -->
 - **Importing a model with a paused download** (#60). A paused download no longer blocks importing the same
   model from a file, and a paused download can now be discarded.
   <!-- 🧪 VERIFYING: emulator only (8a2c2bc2). docs/dev-notes/2026-10-26-issue-60-paused-download-blocks-import.md -->
