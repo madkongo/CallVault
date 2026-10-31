@@ -46,6 +46,10 @@ object AudioDecoder {
 
     private const val DEQUEUE_TIMEOUT_US = 10_000L
 
+    private const val NANOS_PER_MS = 1_000_000L
+
+    private fun nowMs(): Long = System.nanoTime() / NANOS_PER_MS
+
     /**
      * How far the decoded length may stray from the container's declared duration before it is
      * treated as a bug rather than as ordinary imprecision. Generous on purpose: the point is to catch
@@ -363,6 +367,7 @@ object AudioDecoder {
      * @throws IllegalStateException if the decode produces an implausible amount of audio, rather than
      *   letting a malformed buffer reach whisper where it costs minutes of silent CPU burn.
      * @throws InterruptedException if [shouldStop] becomes true while decoding.
+     * @throws DecodeStalledException if the decoder produces nothing for [DecodeStall.LIMIT_MS].
      */
     fun decodeToMono16k(
         context: Context,
@@ -508,8 +513,12 @@ object AudioDecoder {
             val info = MediaCodec.BufferInfo()
             var sawInputEnd = false
             var sawOutputEnd = false
+            // Monotonic, and it does not run on in deep sleep: a phone that dozes mid-decode has not
+            // watched a decoder stall. See DecodeStall.
+            var lastProgressMs = nowMs()
 
             while (!sawOutputEnd) {
+                var progressed = false
                 // Decoding a long recording takes a while and is otherwise uninterruptible: a
                 // 1.5-hour call spent ~12 seconds here after Stop was tapped, still burning CPU. The
                 // check is per output buffer, so it costs nothing and reacts within milliseconds.
@@ -549,6 +558,7 @@ object AudioDecoder {
                                 "Reading float samples as shorts would double the sample count and produce noise."
                         }
                         AppLogger.i(TAG, "Decoder output format: ${sampleRate} Hz, $channels ch")
+                        progressed = true
                     }
 
                     else -> if (outIndex >= 0) {
@@ -563,6 +573,20 @@ object AudioDecoder {
                         }
                         codec.releaseOutputBuffer(outIndex, false)
                         if (info.flags and MediaCodec.BUFFER_FLAG_END_OF_STREAM != 0) sawOutputEnd = true
+                        progressed = true
+                    }
+                }
+
+                // On progress, never on total time: a long or slow decode that keeps producing output
+                // is never failed here. The codec and extractor are released by the finally blocks.
+                when (val verdict = DecodeStall.next(lastProgressMs, nowMs(), progressed, sawOutputEnd)) {
+                    is DecodeStall.Verdict.Continue -> lastProgressMs = verdict.lastProgressMs
+                    DecodeStall.Verdict.Finished -> Unit
+                    is DecodeStall.Verdict.Stalled -> {
+                        val message = "Decoder stalled: no output for ${verdict.idleMs / 1000} s " +
+                            "($mime, ${sink.size} samples decoded so far) — giving up on this decode"
+                        AppLogger.w(TAG, message)
+                        throw DecodeStalledException(message)
                     }
                 }
             }
