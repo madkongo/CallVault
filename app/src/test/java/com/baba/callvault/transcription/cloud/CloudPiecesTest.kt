@@ -52,8 +52,9 @@ class CloudPiecesTest {
     }
 
     @Test
-    fun `custom needs an https address and a model`() {
-        assertNull(CloudEndpoint.resolve(TranscriptionService.CUSTOM, "http://plain.example/v1", "m"))
+    fun `custom needs an http or https address and a model`() {
+        val plain = CloudEndpoint.resolve(TranscriptionService.CUSTOM, "http://10.8.0.2:8080/v1", "m")!!
+        assertEquals("http://10.8.0.2:8080/v1/audio/transcriptions", plain.transcriptionsUrl)
         assertNull(CloudEndpoint.resolve(TranscriptionService.CUSTOM, "https://ok.example/v1", " "))
         assertNull(CloudEndpoint.resolve(TranscriptionService.CUSTOM, null, "m"))
         val ok = CloudEndpoint.resolve(TranscriptionService.CUSTOM, " https://ok.example/v1/ ", " whisper-1 ")!!
@@ -67,6 +68,8 @@ class CloudPiecesTest {
         assertNull(CloudEndpoint.validCustomBaseUrl("https://host.example/v1?key=1"))
         assertNull(CloudEndpoint.validCustomBaseUrl("https:///v1"))
         assertNull(CloudEndpoint.validCustomBaseUrl("ftp://host.example"))
+        assertNull(CloudEndpoint.validCustomBaseUrl("http:///v1"))
+        assertNull(CloudEndpoint.validCustomBaseUrl("host.example/v1"))
     }
 
     @Test

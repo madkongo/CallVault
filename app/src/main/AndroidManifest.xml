@@ -80,7 +80,8 @@
         android:label="@string/app_name"
         android:roundIcon="@mipmap/ic_launcher_round"
         android:supportsRtl="true"
-        android:theme="@style/Theme.CallVault">
+        android:theme="@style/Theme.CallVault"
+        android:usesCleartextTraffic="true">
         <!-- MainActivity must be run when Android want to show the application UI (with the app launcher) -->
         <activity
             android:name=".MainActivity"

@@ -840,7 +840,7 @@
     <string name="transcription_cloud_get_key">Λήψη κλειδιού για %1$s</string>
     <string name="transcription_cloud_custom_url">Διεύθυνση διακομιστή</string>
     <string name="transcription_cloud_custom_url_hint">https://… (το τμήμα πριν από το /audio/transcriptions)</string>
-    <string name="transcription_cloud_custom_url_invalid">Χρησιμοποιήστε διεύθυνση https://.</string>
+    <string name="transcription_cloud_custom_url_invalid">Χρησιμοποιήστε διεύθυνση http(s)://.</string>
     <string name="transcription_cloud_custom_model">Μοντέλο</string>
     <string name="transcription_cloud_mobile_data">Χρήση και δεδομένων κινητής</string>
     <string name="transcription_cloud_mobile_data_desc">Όταν είναι ανενεργό, οι κλήσεις περιμένουν Wi-Fi πριν σταλούν.</string>

@@ -686,7 +686,7 @@
     <string name="transcription_cloud_get_key">Obtener una clave para %1$s</string>
     <string name="transcription_cloud_custom_url">Dirección del servidor</string>
     <string name="transcription_cloud_custom_url_hint">https://… (la parte antes de /audio/transcriptions)</string>
-    <string name="transcription_cloud_custom_url_invalid">Usa una dirección https://.</string>
+    <string name="transcription_cloud_custom_url_invalid">Usa una dirección http(s)://.</string>
     <string name="transcription_cloud_custom_model">Modelo</string>
     <string name="transcription_cloud_mobile_data">Usar también datos móviles</string>
     <string name="transcription_cloud_mobile_data_desc">Si está desactivado, las llamadas esperan al Wi-Fi antes de enviarse.</string>
