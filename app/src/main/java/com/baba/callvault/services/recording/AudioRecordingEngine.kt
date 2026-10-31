@@ -72,6 +72,10 @@ class AudioRecordingEngine {
 
         /** Capture rate for the resilient-recording (handoff) path — matches DirectAudioRecorderSession. */
         private const val HANDOFF_SAMPLE_RATE = 48000
+
+        /** How long a just-dispatched app-call capture is watched for a failed open. */
+        private const val VOIP_START_CONFIRM_MS = 1_000L
+        private const val VOIP_START_POLL_MS = 100L
     }
 
     /**
@@ -479,6 +483,29 @@ class AudioRecordingEngine {
     }
 
     /**
+     * startVoipRecording answers before its worker opens the capture; a failed open clears the
+     * recorder's "recording" flag. Watched for a moment so a failure can still fall back.
+     */
+    private fun voipCaptureConfirmed(service: com.baba.callvault.server.IRecorderService): Boolean {
+        val deadline = android.os.SystemClock.elapsedRealtime() + VOIP_START_CONFIRM_MS
+        while (android.os.SystemClock.elapsedRealtime() < deadline) {
+            val recording = runCatching { service.isRecording() }.getOrDefault(false)
+            if (!recording) return false
+            Thread.sleep(VOIP_START_POLL_MS)
+        }
+        return runCatching { service.isRecording() }.getOrDefault(false)
+    }
+
+    /** Empties the staging file before the carrier capture reuses the fd after a failed mix start. */
+    private fun rewindOutput() {
+        val fd = outputPfd?.fileDescriptor ?: return
+        runCatching {
+            android.system.Os.ftruncate(fd, 0)
+            android.system.Os.lseek(fd, 0, android.system.OsConstants.SEEK_SET)
+        }.onFailure { AppLogger.w(TAG, "Could not rewind the output after a failed app-call start: ${it.message}") }
+    }
+
+    /**
      * The app-call capture for a Wi-Fi call: the daemon records the voice-comm loopback mix + mic into
      * [outputPfd], exactly as for an app call. Needs the app-call policy armed before the call began.
      *
@@ -507,6 +534,11 @@ class AudioRecordingEngine {
             .getOrDefault(false)
         AppLogger.i(WifiCallRoute.TAG, "startVoipRecording -> $started")
         if (!started) return false
+        if (!voipCaptureConfirmed(service)) {
+            AppLogger.w(WifiCallRoute.TAG, "App-call capture was accepted but did not start")
+            rewindOutput()
+            return false
+        }
         daemonRecording = true
         livenessHandler.postDelayed(livenessWatch, DAEMON_LIVENESS_POLL_MS)
         livenessHandler.postDelayed(captureStartWatch, CAPTURE_START_CHECK_MS)
