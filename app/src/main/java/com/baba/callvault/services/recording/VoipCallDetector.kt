@@ -259,7 +259,6 @@ class VoipCallDetector(private val context: Context) {
             val verdict = VoipStrayStartPolicy.verdict(
                 latched = carrierEpisode,
                 managedCall = !VoipTelephonyGate.mayStartNow(context),
-                carrierSession = RecordingForegroundService.isCarrierSessionActive,
             )
             if (verdict != VoipStrayStartPolicy.Verdict.START) {
                 carrierEpisode = VoipStrayStartPolicy.latchAfterVerdict(carrierEpisode, verdict)

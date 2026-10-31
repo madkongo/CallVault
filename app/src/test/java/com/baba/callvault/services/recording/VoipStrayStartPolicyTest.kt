@@ -27,19 +27,14 @@ class VoipStrayStartPolicyTest {
 
         // During the call: IN_COMMUNICATION with a managed call. Refused, and the latch is set.
         latched = VoipStrayStartPolicy.latchAfterMode(latched, comm)
-        var v = VoipStrayStartPolicy.verdict(latched, managedCall = true, carrierSession = true)
+        var v = VoipStrayStartPolicy.verdict(latched, managedCall = true)
         assertEquals(Verdict.REFUSE_MANAGED_CALL, v)
         latched = VoipStrayStartPolicy.latchAfterVerdict(latched, v)
         assertTrue(latched)
 
-        // Hang-up: Telecom drops the call, the mode is still IN_COMMUNICATION, the carrier
-        // recorder still running. This was the stray start.
+        // Hang-up: Telecom drops the call, the mode is still IN_COMMUNICATION. This was the stray start.
         latched = VoipStrayStartPolicy.latchAfterMode(latched, comm)
-        v = VoipStrayStartPolicy.verdict(latched, managedCall = false, carrierSession = true)
-        assertEquals(Verdict.REFUSE_CARRIER_EPISODE, v)
-
-        // Carrier recorder gone too, mode still IN_COMMUNICATION: still refused by the latch.
-        v = VoipStrayStartPolicy.verdict(latched, managedCall = false, carrierSession = false)
+        v = VoipStrayStartPolicy.verdict(latched, managedCall = false)
         assertEquals(Verdict.REFUSE_CARRIER_EPISODE, v)
 
         // The mode leaves IN_COMMUNICATION: the episode is over.
@@ -51,15 +46,14 @@ class VoipStrayStartPolicyTest {
     fun `a fresh app call after the mode went normal starts`() {
         val latched = VoipStrayStartPolicy.latchAfterMode(true, normal)
         val again = VoipStrayStartPolicy.latchAfterMode(latched, comm)
-        assertEquals(Verdict.START, VoipStrayStartPolicy.verdict(again, managedCall = false, carrierSession = false))
+        assertEquals(Verdict.START, VoipStrayStartPolicy.verdict(again, managedCall = false))
     }
 
     @Test
-    fun `a carrier recording session alone refuses a start`() {
-        assertEquals(
-            Verdict.REFUSE_CARRIER_SESSION,
-            VoipStrayStartPolicy.verdict(latched = false, managedCall = false, carrierSession = true)
-        )
+    fun `WhatsApp call where OFFHOOK arrives before IN_COMMUNICATION and no managed call starts`() {
+        // One UI: OFFHOOK first (our carrier service is starting), then the mode; Telecom has no managed call.
+        val latched = VoipStrayStartPolicy.latchAfterMode(false, comm)
+        assertEquals(Verdict.START, VoipStrayStartPolicy.verdict(latched, managedCall = false))
     }
 
     @Test
@@ -71,13 +65,12 @@ class VoipStrayStartPolicyTest {
     @Test
     fun `only a managed-call refusal sets the latch`() {
         assertTrue(VoipStrayStartPolicy.latchAfterVerdict(false, Verdict.REFUSE_MANAGED_CALL))
-        assertFalse(VoipStrayStartPolicy.latchAfterVerdict(false, Verdict.REFUSE_CARRIER_SESSION))
         assertFalse(VoipStrayStartPolicy.latchAfterVerdict(false, Verdict.START))
         assertTrue(VoipStrayStartPolicy.latchAfterVerdict(true, Verdict.REFUSE_CARRIER_EPISODE))
     }
 
     @Test
     fun `an ordinary app call with no carrier anywhere starts`() {
-        assertEquals(Verdict.START, VoipStrayStartPolicy.verdict(false, managedCall = false, carrierSession = false))
+        assertEquals(Verdict.START, VoipStrayStartPolicy.verdict(false, managedCall = false))
     }
 }

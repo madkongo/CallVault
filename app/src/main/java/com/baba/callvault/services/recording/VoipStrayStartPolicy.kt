@@ -26,14 +26,15 @@ object VoipStrayStartPolicy {
         REFUSE_MANAGED_CALL,
         /** Same IN_COMMUNICATION stretch as a carrier call that just ended. */
         REFUSE_CARRIER_EPISODE,
-        /** Our carrier recorder is still running. */
-        REFUSE_CARRIER_SESSION,
     }
 
-    fun verdict(latched: Boolean, managedCall: Boolean, carrierSession: Boolean): Verdict = when {
+    /**
+     * Deliberately not "our carrier recorder is running": on One UI a WhatsApp call raises OFFHOOK
+     * ~230 ms before the mode changes, so the carrier service is up for a genuine app call too.
+     */
+    fun verdict(latched: Boolean, managedCall: Boolean): Verdict = when {
         managedCall -> Verdict.REFUSE_MANAGED_CALL
         latched -> Verdict.REFUSE_CARRIER_EPISODE
-        carrierSession -> Verdict.REFUSE_CARRIER_SESSION
         else -> Verdict.START
     }
 
