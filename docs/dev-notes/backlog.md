@@ -27,9 +27,9 @@ with `&&`/`||` chains and silently reported the opposite answer while this was b
 **This block is the summary of record. The 2026-10-01 block below it and the older dated blocks are history.**
 Audited 2026-10-31 by checking every open-looking item against the code, `git tag --contains` and CHANGELOG.
 Two items the maintainer caught (Select all, Settings per page) had been shipped for weeks while still listed
-open; the audit found about 20 more. Latest public release: **v2.4.7** (20470). Next must exceed 20470.
+open; the audit found about 20 more. Latest public release: **v2.4.8** (20480, published 2026-10-31). Next must exceed 20480.
 
-**Ready for the next release (merged into integration/next, see CHANGELOG [Unreleased]):** own-key transcription
+**Shipped in v2.4.8 (2026-10-31):** own-key transcription
 (#48), play from the list, mobile-data download prompt, Persian model (#55), TalkBack fixes (#61), vivo honest
 message (#64), Arabic polish (#59), #65 connect-port search (✅ reporter), long-call waveform + memory fixes
 (#63), paused-download import (#60); the #53 log-only probe ships too (decided 2026-10-31).
@@ -37,14 +37,14 @@ message (#64), Arabic polish (#59), #65 connect-port search (✅ reporter), long
 **Open — features (maintainer priority first):**
 1. Floating record button + in-call note bubble.
 2. Call history inside the app.
-3. Samsung Wi-Fi Calling (#45) — NEW LEAD 2026-10-31: upstream records it via the app-call path; route these
-   calls to the VoIP capture (+ fixes the stray 1 s file). Needs a Samsung tester.
+3. Samsung Wi-Fi Calling (#45) — 🧪 BUILT 2026-10-31, pre-release v2.4.7-wifi45 only (branch fix/samsung-wifi-calling-45,
+   not in integration/next). Waiting on a Samsung tester (Benjamin/mac).
 4. KK: SenseVoice + Qwen/other GGUF summaries (not triaged).
 5. ~~#27 leftovers~~ — 🧪 BUILT 2026-10-31 (named Previous/Next cards + one "Follow playback" switch), merged into integration/next.
 6. Per-app capture status (works / blocks capture) on the VoIP app list.
 7. Forks leftovers: decode time limit, SIM label per call, dialer mode as an option.
 8. Matroska `.mka` (#36) — needs a native muxer.
-9. Delete the classic Settings screen (one release after the new one).
+9. Delete the classic Settings screen — now due (new screen default since 2.4.7, one release passed).
 
 **Open — engineering:** captures don't register with AudioService record tracking; #30 setting to stop managing
 Wireless debugging; split AppPreferences; loopback adbd probe; R8 minification; release provenance (cosign);
