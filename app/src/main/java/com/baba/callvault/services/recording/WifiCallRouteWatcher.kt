@@ -27,7 +27,10 @@ class WifiCallRouteWatcher(context: Context, private val onEvent: () -> Unit) {
     private val audioManager = context.getSystemService(AudioManager::class.java)
     private val handler = Handler(Looper.getMainLooper())
     private val executor = Executor { handler.post(it) }
-    private var registered = false
+    // Tracked apart, so a failure registering one never leaves the other behind.
+    private var modeRegistered = false
+    private var playbackRegistered = false
+    @Volatile private var started = false
 
     private val modeListener = AudioManager.OnModeChangedListener { onEvent() }
 
@@ -37,23 +40,30 @@ class WifiCallRouteWatcher(context: Context, private val onEvent: () -> Unit) {
 
     fun start() {
         val am = audioManager ?: return
-        if (registered) return
-        runCatching {
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) am.addOnModeChangedListener(executor, modeListener)
-            am.registerAudioPlaybackCallback(playbackCallback, handler)
-            registered = true
-        }.onFailure { AppLogger.w(WifiCallRoute.TAG, "Could not watch the call route: ${it.message}") }
+        if (started) return
+        started = true
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+            runCatching { am.addOnModeChangedListener(executor, modeListener) }
+                .onSuccess { modeRegistered = true }
+                .onFailure { AppLogger.w(WifiCallRoute.TAG, "Could not watch the audio mode: ${it.message}") }
+        }
+        runCatching { am.registerAudioPlaybackCallback(playbackCallback, handler) }
+            .onSuccess { playbackRegistered = true }
+            .onFailure { AppLogger.w(WifiCallRoute.TAG, "Could not watch playback: ${it.message}") }
         // The mode may have changed while the capture was starting.
-        handler.post { onEvent() }
+        handler.post { if (started) onEvent() }
     }
 
     fun stop() {
         val am = audioManager ?: return
-        if (!registered) return
-        registered = false
-        runCatching {
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) am.removeOnModeChangedListener(modeListener)
-            am.unregisterAudioPlaybackCallback(playbackCallback)
+        started = false
+        if (modeRegistered && Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+            runCatching { am.removeOnModeChangedListener(modeListener) }
+            modeRegistered = false
+        }
+        if (playbackRegistered) {
+            runCatching { am.unregisterAudioPlaybackCallback(playbackCallback) }
+            playbackRegistered = false
         }
     }
 }
