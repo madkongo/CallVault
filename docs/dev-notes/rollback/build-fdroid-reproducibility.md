@@ -14,7 +14,7 @@ make one call (libaudiohandoff.so in the daemon).
 
 ## Revert
 ```
-git revert -m 1 MERGE_SHA   # MERGE_SHA = the merge of build/fdroid-reproducibility into integration/next
+git revert -m 1 c0895aec   # c0895aec = the merge of build/fdroid-reproducibility into integration/next
 ```
 Then a clean native rebuild (`rm -rf app/.cxx app/build` before `assembleRelease`) so stale CMake caches do
 not keep the old flags.

@@ -12,7 +12,7 @@
 
 ## Revert
 ```
-git revert -m 1 MERGE_SHA   # MERGE_SHA = the merge of build/release-provenance into integration/next
+git revert -m 1 4d7fd78d   # 4d7fd78d = the merge of build/release-provenance into integration/next
 ```
 
 ## What changes after rollback

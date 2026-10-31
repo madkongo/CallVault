@@ -23,10 +23,10 @@ type, clear with ×, try an Arabic/Persian UI and TalkBack.
 ## How to roll back
 
 ```
-git revert -m 1 MERGE_SHA
+git revert -m 1 7e8beaae
 ```
 
-where `MERGE_SHA` is the merge commit of `feat/language-picker-search` into `integration/next` (or `main`).
+where `7e8beaae` is the merge commit of `feat/language-picker-search` into `integration/next` (or `main`).
 Everything is on that branch, so the revert removes it alone. Nothing to clean up on phones.
 
 ## What users would notice
