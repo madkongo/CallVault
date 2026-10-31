@@ -29,3 +29,5 @@ not keep the old flags.
 - The recorder daemon cannot load libaudiohandoff.so after install-over.
 - The APK grows noticeably (it should not: measured numbers are in the backlog entry).
 - A crash report becomes impossible to symbolicate and that matters more than reproducibility.
+
+**OP9 check 2026-10-31 (2.4.8-next4, install-over):** libllamacv loaded and Gemma wrote a summary (90 s); libwhispercv loaded and large-v3-turbo transcribed a 15 s call (0.77× real time). Still 🧪 until the maintainer confirms; the APK hash reproducibility itself is not tested.

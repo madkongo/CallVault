@@ -40,3 +40,5 @@ Everything is on that branch, so the revert removes it alone. Nothing to clean u
 - The keyboard covers the list so rows cannot be reached.
 - A crash when opening the list, in particular from the "Which language?" dialog (a dialog opened over a
   dialog).
+
+**OP9 check 2026-10-31 (2.4.8-next4):** search box shown; "ur" → Urdu only, ✕ clears back to the full list, the code "fa" → Persian. Still 🧪 until the maintainer uses it.

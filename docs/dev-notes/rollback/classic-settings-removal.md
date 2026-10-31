@@ -100,3 +100,5 @@ Settings, and that `ConnectionRows` holds all eight connection switches.
   `readme-impact-log.md`.
 - Some code comments still describe rows "as on the classic screen" (history of where a row came from). Left
   as they are; they are true as history.
+
+**OP9 check 2026-10-31 (2.4.8-next4):** the Settings list shows only the per-page screen, with no classic-view switch anywhere down to Help and about. Still 🧪 until the maintainer confirms.
