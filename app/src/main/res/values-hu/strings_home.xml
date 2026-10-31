@@ -248,7 +248,7 @@
     <string name="home_transcripts_count">%1$d átírva</string>
     <string name="home_summaries_count">%1$d összefoglalva</string>
     <string name="home_transcripts_empty_title">Még nincs átirat</string>
-    <string name="home_transcripts_empty_hint">Kérj átiratot egy felvétel menüjéből, vagy importálj fentebb egy hangfájlt – mindkettő itt jelenik meg, amint elkészül.</string>
+    <string name="home_transcripts_empty_hint">Kérj átiratot egy felvétel menüjéből, vagy koppints az Importálás gombra egy hangfájl hozzáadásához. Itt jelenik meg, amint elkészül.</string>
     <string name="home_summaries_empty_title">Még nincs összefoglaló</string>
     <string name="home_summaries_empty_hint">Nyiss meg egy hívást, amelynek van átirata, és kérj összefoglalót; amint elkészül, itt jelenik meg.</string>
 
@@ -264,7 +264,11 @@
     <!-- Transcripts: bringing in audio CallVault did not record -->
     <string name="transcripts_import_title">Hang importálása</string>
     <string name="transcripts_import_working">Importálás…</string>
-    <string name="transcripts_import_body">Írass át egy hangüzenetet vagy bármilyen más hangfájlt, ami már a telefonodon van.</string>
+    <string name="transcripts_import_fab">Importálás</string>
+    <string name="import_sheet_keep">Hang megtartása</string>
+    <string name="import_sheet_keep_hint">A felvételeid között jelenik meg</string>
+    <string name="import_sheet_transcript_only">Csak átirat</string>
+    <string name="import_sheet_transcript_only_hint">A hang utána törlődik</string>
     <string name="import_failed_title">Nem sikerült importálni a fájlt</string>
     <string name="import_failed_not_audio">A CallVault nem tudja olvasni ezt a fájltípust. Próbálj .opus, .ogg, .m4a, .mp3 vagy .wav felvételt.</string>
     <string name="import_failed_empty">Ez a fájl üres, így nem lenne mit átírni.</string>

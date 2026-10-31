@@ -82,7 +82,11 @@
     <string name="summaries_failed_hint">Відкрийте, щоб повторити.</string>
     <string name="transcripts_import_title">Імпортувати аудіо</string>
     <string name="transcripts_import_working">Імпортування…</string>
-    <string name="transcripts_import_body">Розпізнавайте голосові повідомлення та інші аудіофайли з телефону.</string>
+    <string name="transcripts_import_fab">Імпорт</string>
+    <string name="import_sheet_keep">Зберегти аудіо</string>
+    <string name="import_sheet_keep_hint">З\'явиться серед ваших записів</string>
+    <string name="import_sheet_transcript_only">Лише розшифровка</string>
+    <string name="import_sheet_transcript_only_hint">Аудіо потім видаляється</string>
     <string name="import_failed_title">Не вдалося імпортувати файл</string>
     <string name="import_failed_not_audio">Непідтримуваний формат. Спробуйте .opus, .ogg, .m4a, .mp3 або .wav.</string>
     <string name="import_failed_empty">Файл порожній — немає звуку для розпізнавання.</string>
@@ -191,7 +195,7 @@
     <string name="offline_failed_no_wifi">Не вдалося ввімкнути: немає Wi-Fi. Один раз підключіться до будь-якої мережі й повторіть.</string>
     <string name="offline_failed_wd_refused">Android заборонив бездротове налагодження в цій мережі. Увімкніть його в параметрах розробника та підтвердьте.</string>
     <string name="offline_failed_needs_usb">Спочатку ввімкніть налагодження USB у налаштуваннях CallVault. Воно потрібне для запису без Wi-Fi.</string>
-    <string name="home_transcripts_empty_hint">Виберіть «Розпізнати» в меню запису або імпортуйте аудіо. Текст зʼявиться тут після обробки.</string>
+    <string name="home_transcripts_empty_hint">Попросіть розшифровку в меню запису або натисніть «Імпорт», щоб додати аудіофайл. Вона з\'явиться тут, щойно буде готова.</string>
     <string name="home_summaries_empty_hint">Відкрийте розмову з транскрипцією та створіть підсумок. Він зʼявиться тут.</string>
     <string name="transcripts_waiting_hint">Ці файли додані для розпізнавання. Натисніть, щоб розпочати, або відкрийте для прослуховування чи видалення.</string>
     <string name="import_failed_undecodable">Телефон не може прочитати аудіо в цьому файлі. Він може бути пошкоджений або мати непідтримуваний формат.</string>

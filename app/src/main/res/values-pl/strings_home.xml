@@ -248,7 +248,7 @@
     <string name="home_transcripts_count">%1$d przepisanych</string>
     <string name="home_summaries_count">%1$d podsumowanych</string>
     <string name="home_transcripts_empty_title">Brak transkrypcji</string>
-    <string name="home_transcripts_empty_hint">Poproś o transkrypcję z menu nagrania albo zaimportuj powyżej plik dźwiękowy — jedno i drugie pojawi się tutaj, gdy będzie gotowe.</string>
+    <string name="home_transcripts_empty_hint">Poproś o transkrypcję z menu nagrania albo dotknij Importuj, aby dodać plik audio. Pojawi się tutaj, gdy zostanie zapisana.</string>
     <string name="home_summaries_empty_title">Brak podsumowań</string>
     <string name="home_summaries_empty_hint">Otwórz rozmowę, która ma transkrypcję, i poproś o podsumowanie; pojawi się tutaj, gdy będzie gotowe.</string>
 
@@ -264,7 +264,11 @@
     <!-- Transcripts: bringing in audio CallVault did not record -->
     <string name="transcripts_import_title">Importuj dźwięk</string>
     <string name="transcripts_import_working">Importowanie…</string>
-    <string name="transcripts_import_body">Przepisz wiadomość głosową lub dowolny inny plik dźwiękowy, który masz już w telefonie.</string>
+    <string name="transcripts_import_fab">Importuj</string>
+    <string name="import_sheet_keep">Zachowaj nagranie</string>
+    <string name="import_sheet_keep_hint">Pojawi się wśród Twoich nagrań</string>
+    <string name="import_sheet_transcript_only">Tylko transkrypcja</string>
+    <string name="import_sheet_transcript_only_hint">Dźwięk zostanie potem usunięty</string>
     <string name="import_failed_title">Nie udało się zaimportować pliku</string>
     <string name="import_failed_not_audio">CallVault nie potrafi odczytać tego rodzaju pliku. Spróbuj nagrania .opus, .ogg, .m4a, .mp3 lub .wav.</string>
     <string name="import_failed_empty">Ten plik jest pusty, więc nie byłoby czego przepisywać.</string>

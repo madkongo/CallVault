@@ -248,7 +248,7 @@
     <string name="home_transcripts_count">%1$d transcritas</string>
     <string name="home_summaries_count">%1$d resumidas</string>
     <string name="home_transcripts_empty_title">Nada transcrito ainda</string>
-    <string name="home_transcripts_empty_hint">Peça uma transcrição no menu de uma gravação ou importe um arquivo de áudio acima; qualquer um dos dois aparece aqui assim que ficar pronto.</string>
+    <string name="home_transcripts_empty_hint">Peça uma transcrição no menu de uma gravação ou toque em Importar para adicionar um arquivo de áudio. Ela aparece aqui assim que for escrita.</string>
     <string name="home_summaries_empty_title">Nada resumido ainda</string>
     <string name="home_summaries_empty_hint">Abra uma chamada que tenha transcrição e peça um resumo; ele aparece aqui assim que ficar pronto.</string>
 
@@ -264,7 +264,11 @@
     <!-- Transcripts: bringing in audio CallVault did not record -->
     <string name="transcripts_import_title">Importar áudio</string>
     <string name="transcripts_import_working">Importando…</string>
-    <string name="transcripts_import_body">Transcreva um áudio de voz ou qualquer outro arquivo de som que já esteja no celular.</string>
+    <string name="transcripts_import_fab">Importar</string>
+    <string name="import_sheet_keep">Manter o áudio</string>
+    <string name="import_sheet_keep_hint">Aparece com suas gravações</string>
+    <string name="import_sheet_transcript_only">Só a transcrição</string>
+    <string name="import_sheet_transcript_only_hint">O áudio é apagado depois</string>
     <string name="import_failed_title">Não foi possível importar o arquivo</string>
     <string name="import_failed_not_audio">O CallVault não consegue ler esse tipo de arquivo. Tente uma gravação .opus, .ogg, .m4a, .mp3 ou .wav.</string>
     <string name="import_failed_empty">Esse arquivo está vazio, então não haveria nada para transcrever.</string>

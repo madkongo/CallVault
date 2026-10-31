@@ -299,7 +299,7 @@
     <string name="home_transcripts_count">%1$d مكالمة مفرّغة</string>
     <string name="home_summaries_count">%1$d ملخص</string>
     <string name="home_transcripts_empty_title">لا توجد تفريغات صوتية بعد</string>
-    <string name="home_transcripts_empty_hint">اطلب تفريغ المكالمة صوتيًا من قائمة خيارات التسجيل، أو استورد ملفًا صوتيًا من الأعلى. سيظهر التفريغ هنا فور انتهائه.</string>
+    <string name="home_transcripts_empty_hint">اطلب تفريغ المكالمة من قائمة خيارات التسجيل، أو اضغط استيراد لإضافة ملف صوتي. سيظهر التفريغ هنا فور انتهائه.</string>
     <string name="home_summaries_empty_title">لا توجد ملخصات بعد</string>
     <string name="home_summaries_empty_hint">افتح أي مكالمة مفرّغة واطلب تلخيصها؛ وسيظهر الملخص هنا فور اكتماله.</string>
     <string name="transcripts_working_header">جارٍ التفريغ الصوتي…</string>
@@ -312,7 +312,11 @@
     <string name="summaries_failed_hint">افتح واحدًا لطلبه مرة أخرى.</string>
     <string name="transcripts_import_title">استيراد صوت</string>
     <string name="transcripts_import_working">جارٍ الاستيراد…</string>
-    <string name="transcripts_import_body">تفريغ رسالة صوتية أو أي تسجيل صوتي آخر محفوظ على هاتفك.</string>
+    <string name="transcripts_import_fab">استيراد</string>
+    <string name="import_sheet_keep">الاحتفاظ بالصوت</string>
+    <string name="import_sheet_keep_hint">يظهر مع تسجيلاتك</string>
+    <string name="import_sheet_transcript_only">التفريغ النصي فقط</string>
+    <string name="import_sheet_transcript_only_hint">يُحذف الصوت بعد ذلك</string>
     <string name="import_failed_title">تعذر استيراد الملف</string>
     <string name="import_failed_not_audio">لا يمكن لـ CallVault قراءة هذا النوع من الملفات. حاول تسجيل .opus أو .ogg أو .m4a أو .mp3 أو .wav.</string>
     <string name="import_failed_empty">هذا الملف فارغ، ولا يحتوي على أي صوت لتفريغه.</string>

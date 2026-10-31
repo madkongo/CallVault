@@ -265,7 +265,7 @@
     <string name="home_transcripts_count">%1$d απομαγνητοφωνημένες</string>
     <string name="home_summaries_count">%1$d σε περίληψη</string>
     <string name="home_transcripts_empty_title">Τίποτα δεν έχει απομαγνητοφωνηθεί ακόμη</string>
-    <string name="home_transcripts_empty_hint">Ζητήστε μια απομαγνητοφώνηση από το μενού μιας εγγραφής, ή εισαγάγετε ένα αρχείο ήχου παραπάνω. Όποιο από τα δύο εμφανίζεται εδώ μόλις γραφτεί.</string>
+    <string name="home_transcripts_empty_hint">Ζητήστε απομαγνητοφώνηση από το μενού μιας ηχογράφησης ή πατήστε Εισαγωγή για να προσθέσετε ένα αρχείο ήχου. Θα εμφανιστεί εδώ μόλις γραφτεί.</string>
     <string name="home_summaries_empty_title">Τίποτα δεν έχει μπει σε περίληψη ακόμη</string>
     <string name="home_summaries_empty_hint">Ανοίξτε μια κλήση που έχει απομαγνητοφώνηση και ζητήστε περίληψη· εμφανίζεται εδώ μόλις γραφτεί.</string>
 
@@ -282,7 +282,11 @@
     <!-- Transcripts: bringing in audio CallVault did not record -->
     <string name="transcripts_import_title">Εισαγωγή ήχου</string>
     <string name="transcripts_import_working">Εισαγωγή…</string>
-    <string name="transcripts_import_body">Απομαγνητοφωνήστε ένα ηχητικό μήνυμα ή οποιοδήποτε άλλο αρχείο ήχου υπάρχει ήδη στο τηλέφωνό σας.</string>
+    <string name="transcripts_import_fab">Εισαγωγή</string>
+    <string name="import_sheet_keep">Διατήρηση ήχου</string>
+    <string name="import_sheet_keep_hint">Εμφανίζεται στις ηχογραφήσεις σας</string>
+    <string name="import_sheet_transcript_only">Μόνο απομαγνητοφώνηση</string>
+    <string name="import_sheet_transcript_only_hint">Ο ήχος διαγράφεται μετά</string>
     <string name="import_failed_title">Δεν ήταν δυνατή η εισαγωγή αυτού του αρχείου</string>
     <string name="import_failed_not_audio">Το CallVault δεν μπορεί να διαβάσει αυτού του είδους το αρχείο. Δοκιμάστε μια εγγραφή .opus, .ogg, .m4a, .mp3 ή .wav.</string>
     <string name="import_failed_empty">Αυτό το αρχείο είναι κενό, οπότε δεν θα υπήρχε τίποτα να απομαγνητοφωνηθεί.</string>
