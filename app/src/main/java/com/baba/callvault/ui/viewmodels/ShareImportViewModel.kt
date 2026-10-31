@@ -93,6 +93,8 @@ class ShareImportViewModel(application: Application) : AndroidViewModel(applicat
             val estimateMs: Long?,
             val isFirstRun: Boolean,
             val language: String?,
+            /** The file's own length, 0 when unknown; a long one gets the long-call line. */
+            val audioMs: Long = 0L,
         ) : State
 
         /** Imported and queued. [kind] decides what the card promises will happen to the audio. */
@@ -105,12 +107,6 @@ class ShareImportViewModel(application: Application) : AndroidViewModel(applicat
          * file is on the phone. Where it is depends on [kind], and the card says so.
          */
         data class NotTranscribed(val displayName: String, val kind: ImportedRecording.Kind) : State
-
-        /**
-         * Imported, but longer than transcription can decode. The audio is kept either way — see the
-         * note in [afterImport] for where a transcribe-only file then shows up.
-         */
-        data class TooLong(val minutes: Int) : State
 
         /** Imported, but there is no model to read it with. The audio is kept. */
         data object NoModel : State
@@ -205,13 +201,12 @@ class ShareImportViewModel(application: Application) : AndroidViewModel(applicat
     /**
      * What happens between a finished copy and a queued transcription.
      *
-     * The order mirrors the in-app path's exactly, and the order is the point: refuse a file that is
-     * too long before anything else (the decode would exhaust the heap after a long wait, producing
-     * nothing), then say so if there is no model (the worker retries for ever while one is missing,
-     * so a tap would appear to do nothing at all), and only then ask questions.
+     * The order mirrors the in-app path's exactly: say so if there is no model (the worker retries
+     * for ever while one is missing, so a tap would appear to do nothing at all), and only then ask
+     * questions. There is no length limit.
      *
-     * **Both refusals keep the audio.** For a kept import that is obvious — it is in Recordings. For
-     * a transcribe-only one it matters more: it is deliberately not in Recordings, and it is the
+     * **A missing model keeps the audio.** For a kept import that is obvious — it is in Recordings.
+     * For a transcribe-only one it matters more: it is deliberately not in Recordings, and it is the
      * Transcripts page's *waiting* group that stops it being a file in no list at all.
      */
     private suspend fun afterImport(
@@ -225,11 +220,7 @@ class ShareImportViewModel(application: Application) : AndroidViewModel(applicat
             withContext(Dispatchers.IO) { TranscriptionRouting.canStart(context) }
         importedDurationMs = imported.durationMs
         importedKind = kind
-        _state.value = when (val step = ImportFollowUp.after(imported.durationMs, isModelInstalled)) {
-            is ImportFollowUp.Step.TooLong -> {
-                AppLogger.w(TAG, "Imported '${imported.displayName}' is too long to transcribe")
-                State.TooLong(step.minutes)
-            }
+        _state.value = when (ImportFollowUp.after(isModelInstalled)) {
             ImportFollowUp.Step.NoModel -> {
                 AppLogger.w(TAG, "Imported '${imported.displayName}' but no model is installed")
                 State.NoModel
@@ -265,6 +256,7 @@ class ShareImportViewModel(application: Application) : AndroidViewModel(applicat
             // making to someone about to watch a progress bar (issue #26).
             isFirstRun = TranscriptionRouting.isFirstRun(prefs),
             language = language,
+            audioMs = importedDurationMs,
         )
     }
 

@@ -30,7 +30,7 @@ import kotlin.math.sin
  * remains proportional to call length — but it is now one buffer of PCM plus the 16 kHz output, rather
  * than the four overlapping full-length buffers this used to build. For fifteen minutes at 48 kHz that
  * is roughly 144 MB where it was about 259 MB, which is what
- * [TranscriptionLengthLimit.MAX_MINUTES] was really measuring. See [pcm16ToMono16k] and [PcmShortSink]
+ * the old transcription length limit (removed) was really measuring. See [pcm16ToMono16k] and [PcmShortSink]
  * for the two allocations that were removed.
  *
  * The remaining fix is chunked, VAD-segmented decoding, which the pipeline wants anyway for
@@ -113,7 +113,7 @@ object AudioDecoder {
      * 48 kHz that is 4 bytes per sample where the source had 2, so fifteen minutes costs 86.4 MB of
      * `ShortArray` plus 172.8 MB of `FloatArray` — **259 MB against a 256 MB heap**.
      *
-     * That is where [TranscriptionLengthLimit.MAX_MINUTES] came from. The limit was set empirically at
+     * That is where the old transcription length limit (since removed) came from. The limit was set empirically at
      * the point transcription started failing, and this allocation is what it was measuring; nobody
      * realised the number had a cause. Reading the shorts directly and only ever materialising the
      * 16 kHz output takes the peak to roughly 144 MB, because the resampled array is a third the
@@ -374,8 +374,8 @@ object AudioDecoder {
      * 16 kHz mono float for part of [uri], and where that audio really starts.
      *
      * The point of the range: peak memory stops depending on call length. Decoding a five-minute slice
-     * costs the same whether the call is five minutes or two hours, so
-     * [TranscriptionLengthLimit.MAX_MINUTES] stops being a memory limit and can eventually go. See
+     * costs the same whether the call is five minutes or two hours, which is what let the old
+     * transcription length limit go. See
      * [ChunkPlan] for how the slices are chosen.
      *
      * **[DecodedRange.startMs] is the honest answer, not the request.** Seeking lands on the container's

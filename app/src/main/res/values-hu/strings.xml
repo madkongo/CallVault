@@ -626,6 +626,7 @@
     <string name="tile_recording_on">Rögzítés bekapcsolva</string>
     <string name="tile_recording_stopped">Leállítva</string>
     <string name="transcribe_confirm_dont_ask">Ne kérdezze többet</string>
+    <string name="transcribe_long_call_line">Ez a hívás %1$s hosszú. Ezen a telefonon az átírás nagyjából %2$s× ennyi ideig tart — körülbelül %3$s.</string>
     <string name="transcribe_confirm_message">A(z) %1$s átírása leköti a telefont, és érezhetően fogyasztja az akkumulátort. Bármikor leállíthatja.\n\nEz a kérdés a Beállítások Átírás részében kapcsolható vissza.</string>
     <string name="transcribe_confirm_title">Ez körülbelül %1$s lesz</string>
     <string name="transcribe_confirm_title_first_run">Az első eltarthat egy ideig</string>
@@ -677,8 +678,6 @@
     <string name="transcript_speakers_swap">Csere</string>
     <string name="transcript_speakers_swap_names">Nevek cseréje</string>
     <string name="transcript_speakers_which_is_you">Melyik vagy te?</string>
-    <string name="transcript_too_long_message">Ez a hívás körülbelül %1$d perc. A CallVault egyelőre csak %2$d percnél nem hosszabb felvételeket tud az eszközön átirattá alakítani — a hosszabbaknál menet közben elfogyna a memória. Maga a felvétel biztonságban van.</string>
-    <string name="transcript_too_long_title">Túl hosszú az átirathoz</string>
     <string name="transcription_ask_language_subtitle">Válasszon nyelvet felvételenként a fenti helyett. Csak az adott felvételre vonatkozik.</string>
     <!-- Where to transcribe: on this phone or with the user's own cloud key (issue #48). No prices anywhere. -->
     <string name="transcription_where_title">Hol történjen az átírás</string>

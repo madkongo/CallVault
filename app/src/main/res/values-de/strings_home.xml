@@ -312,6 +312,5 @@
     <string name="share_import_kept_title">Gespeichert, aber nicht transkribiert</string>
     <string name="share_import_kept_body">Sie ist in deinen Aufnahmen. Du kannst das Transkript jederzeit von dort aus starten.</string>
     <string name="share_import_kept_only_body">Sie wartet unter Transkripte. Starte sie dort, wann du willst, oder lösche sie an derselben Stelle.</string>
-    <string name="share_import_too_long">Diese Audiodatei ist %1$d Minuten lang, und CallVault kann höchstens %2$d Minuten am Stück transkribieren. Die Datei wurde gespeichert, du kannst sie also weiterhin anhören.</string>
     <string name="share_import_no_model">Es ist noch kein Transkriptionsmodell installiert, daher kann CallVault das nicht lesen. Die Audiodatei wurde gespeichert — installiere in den Einstellungen ein Modell und starte sie dann unter Transkripte.</string>
 </resources>

@@ -626,6 +626,7 @@
     <string name="tile_recording_on">Aufnahme aktiv</string>
     <string name="tile_recording_stopped">Gestoppt</string>
     <string name="transcribe_confirm_dont_ask">Nicht mehr fragen</string>
+    <string name="transcribe_long_call_line">Dieser Anruf dauert %1$s. Auf diesem Telefon dauert das Transkribieren etwa %2$s-mal so lange — also etwa %3$s.</string>
     <string name="transcribe_confirm_message">Das Transkribieren von %1$s hält Ihr Telefon beschäftigt und verbraucht spürbar Akku. Sie können es jederzeit anhalten.\n\nDiese Frage lässt sich unter Transkription in den Einstellungen wieder aktivieren.</string>
     <string name="transcribe_confirm_title">Das dauert etwa %1$s</string>
     <string name="transcribe_confirm_title_first_run">Der erste Durchlauf kann etwas dauern</string>
@@ -677,8 +678,6 @@
     <string name="transcript_speakers_swap">Tauschen</string>
     <string name="transcript_speakers_swap_names">Namen tauschen</string>
     <string name="transcript_speakers_which_is_you">Wer davon bist du?</string>
-    <string name="transcript_too_long_message">Dieser Anruf dauert etwa %1$d Minuten. CallVault kann vorerst nur Aufnahmen bis zu %2$d Minuten auf dem Gerät transkribieren — bei längeren geht mittendrin der Speicher aus. Die Aufnahme selbst ist sicher.</string>
-    <string name="transcript_too_long_title">Zu lang zum Transkribieren</string>
     <string name="transcription_ask_language_subtitle">Sprache pro Aufnahme wählen, statt immer die obige zu verwenden. Gilt nur für diese Aufnahme.</string>
     <!-- Where to transcribe: on this phone or with the user's own cloud key (issue #48). No prices anywhere. -->
     <string name="transcription_where_title">Wo transkribieren</string>

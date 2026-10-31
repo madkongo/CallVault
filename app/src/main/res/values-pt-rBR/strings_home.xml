@@ -312,6 +312,5 @@
     <string name="share_import_kept_title">Salvo, mas não transcrito</string>
     <string name="share_import_kept_body">Está nas suas gravações. Você pode iniciar a transcrição por lá quando quiser.</string>
     <string name="share_import_kept_only_body">Está esperando em Transcrições. Inicie por lá quando quiser, ou apague no mesmo lugar.</string>
-    <string name="share_import_too_long">Esse áudio tem %1$d minutos, e o CallVault só transcreve até %2$d minutos de uma vez. O arquivo foi salvo, então você ainda pode ouvi-lo.</string>
     <string name="share_import_no_model">Ainda não há nenhum modelo de transcrição instalado, então o CallVault não consegue ler isto. O áudio foi salvo — instale um modelo em Configurações e depois inicie em Transcrições.</string>
 </resources>

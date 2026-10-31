@@ -312,6 +312,5 @@
     <string name="share_import_kept_title">已保存，但未转写</string>
     <string name="share_import_kept_body">它已在你的录音里。你随时可以从那里开始转写。</string>
     <string name="share_import_kept_only_body">它正在“转写”中等待。你可以随时从那里开始转写，也可以在同一处删除它。</string>
-    <string name="share_import_too_long">这段音频有 %1$d 分钟，而 CallVault 一次最多只能转写 %2$d 分钟。文件已保存，你仍然可以收听。</string>
     <string name="share_import_no_model">还没有安装转写模型，CallVault 读不了这个文件。音频已保存——请先在设置中安装模型，再从“转写”中开始。</string>
 </resources>

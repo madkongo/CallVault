@@ -786,6 +786,7 @@
     <string name="transcribe_confirm_title_first_run">The first one may take a while</string>
     <string name="transcribe_confirm_message">Transcribing %1$s keeps your phone busy and uses noticeable battery. You can stop it at any time.\n\nThis question can be turned back on under Transcription in Settings.</string>
     <string name="transcribe_confirm_dont_ask">Don\'t ask again</string>
+    <string name="transcribe_long_call_line">This call is %1$s. On this phone, transcribing takes about %2$s× as long — about %3$s.</string>
     <string name="transcribe_language_title">Which language?</string>
     <string name="transcribe_language_message">Transcribe %1$s in:</string>
     <string name="transcribe_language_confirm">Transcribe</string>
@@ -849,8 +850,6 @@
     <string name="transcript_retranscribe">Transcribe again</string>
     <string name="transcript_note_add">Add a note</string>
     <string name="transcript_note_hint">What it was about, or what to do about it…</string>
-    <string name="transcript_too_long_title">Too long to transcribe</string>
-    <string name="transcript_too_long_message">This call is about %1$d minutes long. CallVault can only transcribe recordings up to %2$d minutes on the device for now — longer ones would run out of memory partway through. The recording itself is safe.</string>
     <string name="transcript_no_model_title">No speech model yet</string>
     <string name="transcript_no_model_message">Transcribing happens on this phone, so it needs a speech model downloaded first. You can choose and download one in Settings.</string>
     <string name="transcript_no_model_open_settings">Open settings</string>

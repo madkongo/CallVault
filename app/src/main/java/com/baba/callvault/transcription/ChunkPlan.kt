@@ -12,9 +12,9 @@ package com.baba.callvault.transcription
  * How a long call is cut up before whisper sees it, and how the pieces are put back together.
  *
  * **What this buys.** Transcription decoded the whole call into memory first, so cost grew with length
- * until the heap ran out — which is what `TranscriptionLengthLimit` exists to refuse in advance. Decode
+ * until the heap ran out — which is what the old length limit refused in advance. Decode
  * one chunk at a time and peak memory stops depending on call length: a two-hour call costs what a
- * five-minute one does, and the limit can eventually go.
+ * five-minute one does, which is why the limit is gone.
  *
  * **Why the chunks are large.** The obvious size is whisper's own 30-second window, and that is what
  * the comparable open-source project uses. It would be a mistake here. whisper carries text state

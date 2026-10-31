@@ -312,6 +312,5 @@
     <string name="share_import_kept_title">Salvato, ma non trascritto</string>
     <string name="share_import_kept_body">È fra le tue registrazioni. Puoi avviare la trascrizione da lì quando vuoi.</string>
     <string name="share_import_kept_only_body">È in attesa in Trascrizioni. Avvialo da lì quando vuoi, oppure eliminalo dallo stesso posto.</string>
-    <string name="share_import_too_long">Quell\'audio dura %1$d minuti e CallVault può trascrivere al massimo %2$d minuti per volta. Il file è stato salvato, quindi puoi comunque ascoltarlo.</string>
     <string name="share_import_no_model">Non è ancora installato alcun modello di trascrizione, perciò CallVault non può leggerlo. L\'audio è stato salvato: installa un modello nelle Impostazioni, poi avvialo da Trascrizioni.</string>
 </resources>

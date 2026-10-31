@@ -65,37 +65,43 @@ class StateSaversTest {
         assertEquals(decodeUriSet(encodeUriSet(setOf(a, b))), decodeUriSet(encodeUriSet(setOf(b, a))))
     }
 
-    // ---- pending transcribe confirmation (name, estimate, language) ----
+    // ---- pending transcribe confirmation (name, estimate, language, length) ----
 
     @Test
     fun `a transcribe request survives with every field set`() {
-        val request = Triple("call.ogg", 90_000L, "he")
+        val request = TranscribeRequest("call.ogg", 90_000L, "he", audioMs = 45L * 60_000L)
         assertEquals(request, decodeTranscribeRequest(encodeTranscribeRequest(request)))
     }
 
     @Test
     fun `a null estimate stays null rather than becoming zero`() {
         // Zero would be quoted to the user as "this will take about 0 seconds".
-        val restored = decodeTranscribeRequest(encodeTranscribeRequest(Triple("call.ogg", null, "en")))
-        assertNull(restored.second)
+        val restored = decodeTranscribeRequest(encodeTranscribeRequest(TranscribeRequest("call.ogg", null, "en")))
+        assertNull(restored.estimateMs)
     }
 
     @Test
     fun `a null language stays null so the setting still decides`() {
         // "" is not the same as null here: null means "use the configured language".
-        val restored = decodeTranscribeRequest(encodeTranscribeRequest(Triple("call.ogg", 1_000L, null)))
-        assertNull(restored.third)
+        val restored = decodeTranscribeRequest(encodeTranscribeRequest(TranscribeRequest("call.ogg", 1_000L, null)))
+        assertNull(restored.language)
     }
 
     @Test
     fun `a zero estimate is preserved and not confused with null`() {
-        assertEquals(0L, decodeTranscribeRequest(encodeTranscribeRequest(Triple("c.ogg", 0L, null))).second)
+        assertEquals(0L, decodeTranscribeRequest(encodeTranscribeRequest(TranscribeRequest("c.ogg", 0L, null))).estimateMs)
     }
 
     @Test
     fun `a name containing the field separator survives`() {
-        val request = Triple("weird|name.ogg", 5L, "en")
+        val request = TranscribeRequest("weird|name.ogg", 5L, "en")
         assertEquals(request, decodeTranscribeRequest(encodeTranscribeRequest(request)))
+    }
+
+    @Test
+    fun `a request saved before the length field existed restores with an unknown length`() {
+        val restored = decodeTranscribeRequest(listOf("call.ogg", "1000", "he"))
+        assertEquals(TranscribeRequest("call.ogg", 1_000L, "he", audioMs = 0L), restored)
     }
 
     // ---- delete scope (enum) ----
@@ -116,7 +122,7 @@ class StateSaversTest {
     @Test
     fun `encoded forms are plain strings so the framework can bundle them`() {
         assertTrue(encodeUriSet(setOf(Uri.parse("content://x"))).all { it is String })
-        assertTrue(encodeTranscribeRequest(Triple("a", 1L, "b")).all { it is String })
+        assertTrue(encodeTranscribeRequest(TranscribeRequest("a", 1L, "b")).all { it is String })
         assertTrue(encodeLibrarySelection(LibrarySelection.EMPTY).all { it is String })
     }
 

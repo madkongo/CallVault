@@ -28,9 +28,13 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import com.baba.callvault.R
+import com.baba.callvault.transcription.LongTranscriptionWarning
+import java.text.NumberFormat
+import java.util.Locale
 
 /**
  * A duration a person would say out loud: "under a minute", "16 minutes", "1 h 30 min".
@@ -78,6 +82,34 @@ internal fun quotedMinutes(ms: Long): Int {
 private const val MS_PER_MINUTE = 60_000L
 private const val MINUTES_PER_HOUR = 60
 
+/** The "1.5" in "about 1.5× as long", in the reader's own digits and decimal mark. */
+internal fun formatSlowdown(factor: Double, locale: Locale): String =
+    NumberFormat.getNumberInstance(locale).apply {
+        minimumFractionDigits = 1
+        maximumFractionDigits = 1
+    }.format(factor)
+
+/**
+ * "This call is 1 h 20 min. On this phone, transcribing takes about 1.5× as long — about 2 h 0 min.",
+ * or null when [audioMs] is short of [LongTranscriptionWarning.THRESHOLD_MINUTES]. Only for a run on
+ * the phone; a cloud run never reaches this dialog.
+ *
+ * @param estimateMs this phone's estimate. Ignored on a first run, when it rests on figures from
+ *   other hardware; the flat [LongTranscriptionWarning.DEFAULT_SLOWDOWN] is quoted instead.
+ */
+@Composable
+fun longCallLine(audioMs: Long, estimateMs: Long?, isFirstRun: Boolean): String? {
+    if (!LongTranscriptionWarning.shouldWarn(isCloud = false, audioMs = audioMs)) return null
+    val quotedMs = LongTranscriptionWarning.estimateMs(audioMs, if (isFirstRun) null else estimateMs)
+    val locale = LocalConfiguration.current.locales[0]
+    return stringResource(
+        R.string.transcribe_long_call_line,
+        formatEstimate(audioMs),
+        formatSlowdown(LongTranscriptionWarning.slowdown(audioMs, quotedMs), locale),
+        formatEstimate(quotedMs),
+    )
+}
+
 /**
  * Asks before starting a transcription, saying how long it is expected to take.
  *
@@ -92,6 +124,9 @@ private const val MINUTES_PER_HOUR = 60
  *   rests on figures published for other hardware, which are right to within a factor of two or
  *   three — so the dialog says the run may take a while rather than naming a number it cannot yet
  *   stand behind. Issue #26's reporter asked for exactly this, having been quoted hours.
+ * @param longCallLine how long a long call takes on the phone, or null for a short one.
+ * @param showsBatteryNotice false when the user turned this notice off and it is shown only for
+ *   [longCallLine]: then the battery text and the "Don't ask again" box are left out.
  * @param onConfirm receives whether the user asked not to be shown this again.
  */
 @Composable
@@ -99,6 +134,8 @@ fun TranscribeConfirmDialog(
     title: String,
     estimate: String?,
     isFirstRun: Boolean = false,
+    longCallLine: String? = null,
+    showsBatteryNotice: Boolean = true,
     onDismiss: () -> Unit,
     onConfirm: (dontAskAgain: Boolean) -> Unit
 ) {
@@ -118,26 +155,10 @@ fun TranscribeConfirmDialog(
         },
         text = {
             Column {
-                Text(stringResource(R.string.transcribe_confirm_message, title))
-
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(top = 16.dp)
-                        .toggleable(
-                            value = dontAskAgain,
-                            onValueChange = { dontAskAgain = it },
-                            role = androidx.compose.ui.semantics.Role.Checkbox
-                        ),
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Checkbox(checked = dontAskAgain, onCheckedChange = null)
-                    Text(
-                        text = stringResource(R.string.transcribe_confirm_dont_ask),
-                        style = MaterialTheme.typography.bodyMedium,
-                        modifier = Modifier.padding(start = 8.dp)
-                    )
+                longCallLine?.let { line ->
+                    Text(line, modifier = Modifier.padding(bottom = if (showsBatteryNotice) 12.dp else 0.dp))
                 }
+                if (showsBatteryNotice) BatteryNotice(title, dontAskAgain) { dontAskAgain = it }
             }
         },
         confirmButton = {
@@ -149,4 +170,31 @@ fun TranscribeConfirmDialog(
             TextButton(onClick = onDismiss) { Text(stringResource(R.string.general_cancel)) }
         }
     )
+}
+
+/** The usual "keeps your phone busy" text with its "Don't ask again" box. */
+@Composable
+private fun BatteryNotice(title: String, dontAskAgain: Boolean, onDontAskAgain: (Boolean) -> Unit) {
+    Column {
+        Text(stringResource(R.string.transcribe_confirm_message, title))
+
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(top = 16.dp)
+                .toggleable(
+                    value = dontAskAgain,
+                    onValueChange = onDontAskAgain,
+                    role = androidx.compose.ui.semantics.Role.Checkbox
+                ),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Checkbox(checked = dontAskAgain, onCheckedChange = null)
+            Text(
+                text = stringResource(R.string.transcribe_confirm_dont_ask),
+                style = MaterialTheme.typography.bodyMedium,
+                modifier = Modifier.padding(start = 8.dp)
+            )
+        }
+    }
 }

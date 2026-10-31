@@ -628,6 +628,7 @@
     <string name="tile_recording_on">Запись включена</string>
     <string name="tile_recording_stopped">Остановлено</string>
     <string name="transcribe_confirm_dont_ask">Больше не спрашивать</string>
+    <string name="transcribe_long_call_line">Этот звонок длится %1$s. На этом телефоне расшифровка занимает примерно в %2$s раза больше времени — около %3$s.</string>
     <string name="transcribe_confirm_message">Расшифровка %1$s займёт телефон и заметно потратит заряд. Остановить можно в любой момент.\n\nЭтот вопрос можно вернуть в разделе «Расшифровка» в настройках.</string>
     <string name="transcribe_confirm_title">Это займёт около %1$s</string>
     <string name="transcribe_confirm_title_first_run">Первая расшифровка может занять некоторое время</string>
@@ -679,8 +680,6 @@
     <string name="transcript_speakers_swap">Поменять</string>
     <string name="transcript_speakers_swap_names">Поменять имена</string>
     <string name="transcript_speakers_which_is_you">Кто из них вы?</string>
-    <string name="transcript_too_long_message">Этот звонок длится около %1$d минут. Пока CallVault может расшифровывать на устройстве только записи до %2$d минут — на более длинных посреди процесса закончится память. Сама запись в сохранности.</string>
-    <string name="transcript_too_long_title">Слишком длинная для расшифровки</string>
     <string name="transcription_ask_language_subtitle">Выбирайте язык для каждой записи вместо того, чтобы всегда использовать указанный выше. Действует только для этой записи.</string>
     <!-- Where to transcribe: on this phone or with the user's own cloud key (issue #48). No prices anywhere. -->
     <string name="transcription_where_title">Где расшифровывать</string>

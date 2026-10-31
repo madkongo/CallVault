@@ -625,6 +625,7 @@
     <string name="tile_recording_on">Đang ghi âm</string>
     <string name="tile_recording_stopped">Đã dừng</string>
     <string name="transcribe_confirm_dont_ask">Đừng hỏi lại</string>
+    <string name="transcribe_long_call_line">Cuộc gọi này dài %1$s. Trên điện thoại này, chép lời mất khoảng %2$s lần thời lượng cuộc gọi — khoảng %3$s.</string>
     <string name="transcribe_confirm_message">Chép lời %1$s sẽ khiến máy bận và hao pin rõ rệt. Bạn có thể dừng bất cứ lúc nào.\n\nCâu hỏi này có thể bật lại trong mục Chép lời ở Cài đặt.</string>
     <string name="transcribe_confirm_title">Việc này mất khoảng %1$s</string>
     <string name="transcribe_confirm_title_first_run">Lần đầu tiên có thể mất một lúc</string>
@@ -676,8 +677,6 @@
     <string name="transcript_speakers_swap">Đổi</string>
     <string name="transcript_speakers_swap_names">Đổi tên hai bên</string>
     <string name="transcript_speakers_which_is_you">Bên nào là bạn?</string>
-    <string name="transcript_too_long_message">Cuộc gọi này dài khoảng %1$d phút. Hiện tại CallVault chỉ có thể chuyển thành văn bản các bản ghi tối đa %2$d phút trên thiết bị — dài hơn sẽ hết bộ nhớ giữa chừng. Bản ghi vẫn an toàn.</string>
-    <string name="transcript_too_long_title">Quá dài để chuyển thành văn bản</string>
     <string name="transcription_ask_language_subtitle">Chọn ngôn ngữ cho từng bản ghi thay vì luôn dùng ngôn ngữ ở trên. Chỉ áp dụng cho bản ghi đó.</string>
     <!-- Where to transcribe: on this phone or with the user's own cloud key (issue #48). No prices anywhere. -->
     <string name="transcription_where_title">Chép lời ở đâu</string>

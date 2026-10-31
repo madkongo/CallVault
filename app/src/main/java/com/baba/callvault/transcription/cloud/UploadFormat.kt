@@ -26,8 +26,7 @@ object UploadFormat {
     /**
      * 📐 The largest recording sent in one piece. Under the 25 MB upload limit Groq and OpenRouter state,
      * with room for the multipart framing. Opus at the app's default 24 kbps is ~3 KB/s, so this is about
-     * 1 h 50 min of call — every call under the 60-minute transcription limit goes up in ONE pass, with
-     * no seam at all. Larger files (or other formats) are cut into passes.
+     * 1 h 50 min of call — anything shorter goes up in ONE pass, with no seam at all. Larger files (or other formats) are cut into passes.
      */
     const val SINGLE_UPLOAD_MAX_BYTES = 20L * 1024 * 1024
 

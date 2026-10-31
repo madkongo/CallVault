@@ -359,6 +359,5 @@
     <string name="share_import_kept_title">تم الحفظ بدون تفريغ صوتي</string>
     <string name="share_import_kept_body">تم حفظ الملف في تسجيلاتك، ويمكنك بدء تفريغه صوتيًا في أي وقت.</string>
     <string name="share_import_kept_only_body">الملف بانتظارك في تبويب التفريغات الصوتية. يمكنك بدء تفريغه متى شئت، أو حذفه من نفس المكان.</string>
-    <string name="share_import_too_long">تبلغ مدة هذا الصوت %1$d دقيقة، والحد الأقصى للتفريغ في CallVault هو %2$d دقيقة في المرة الواحدة. تم حفظ الملف للاستماع إليه.</string>
     <string name="share_import_no_model">لم يتم تثبيت نموذج تفريغ صوتي بعد، لذا لا يمكن لـ CallVault قراءة هذا الملف. تم حفظ الصوت؛ ثبّت نموذجًا من الإعدادات، ثم ابدأ التفريغ من تبويب التفريغات.</string>
 </resources>

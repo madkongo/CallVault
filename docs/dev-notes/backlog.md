@@ -1613,7 +1613,18 @@ These bite any app shipping native code, and CallVault already does:
 The existing CMake/submodule setup is otherwise already on the right side of F-Droid's scanner, because
 anything compiled in the `build:` phase runs after the scan and never needs a `scanignore`.
 
-### 🔵 PARTIAL (limit now 60 min, not 15; recorded calls still skip silently, imports show it) — A call skipped for being too long says so only in the log — found 2026-08-25
+### 🧪 BUILT on `feat/no-transcription-length-limit` (limit removed) — A call skipped for being too long says so only in the log — found 2026-08-25
+
+> **🧪 VERIFYING (2026-10-31, unit tests only, not run on a phone).** The maintainer chose "no limit, just a
+> warning": the 60-minute limit is gone from every path (tap, per-call, scheduled, both imports), so nothing
+> is skipped for length any more and this gap no longer exists. A manual run on the phone's own model for a
+> call of 30 min or more adds one line to the confirmation saying it takes about 1.5× the call's length
+> (the phone's measured speed once it has one); with "Don't ask again" ticked, a long call still shows the
+> dialog with only that line. Cloud and automatic runs never warn. See `LongTranscriptionWarning`.
+> **To settle:** on the OP9, tap Transcribe on a call over 30 min with the local model (line shown), with
+> the notice off (dialog with only the line), and with Groq (no dialog); let a >60-min call transcribe
+> automatically after it ends. The text below is the history.
+
 
 The 15-minute transcription limit is now enforced in `TranscriptionRunner.runOne` and
 `TranscriptionQueue.pending`, so every route inherits it — nightly sweep, per-call, manual tap and
