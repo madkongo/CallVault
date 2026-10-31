@@ -22,6 +22,13 @@ All notable changes to CallVault are documented here. The format is based on
        transcribe a real Urdu call (local model and, if set up, Groq) and check the transcript is in Urdu
        script and the summary is in Urdu. -->
 
+- **Type to find a language in the language list.** The language list (Settings, setup, and "Which
+  language?" before a transcription or import) now opens with a search box. Type a language's name in the
+  app's language, in English or in the language itself (עברית, Ελληνικά, Español), or its code; the × clears it.
+  <!-- 🧪 VERIFYING: unit tests + release build only, not yet run on a phone. Maintainer to check on a
+       phone: open each of the three lists, type, clear with ×; keyboard does not cover the list; Arabic or
+       Persian UI shows the × on the left; TalkBack reads the box and "Clear search, button". -->
+
 ### Changed
 
 - **Long calls are transcribed too.** The 60-minute limit is gone: long calls are no longer skipped, whether

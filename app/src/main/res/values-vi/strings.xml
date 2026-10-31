@@ -710,6 +710,9 @@
     <string name="transcription_hour_label">Giờ</string>
     <string name="transcription_language_arabic">Tiếng Ả Rập</string>
     <string name="transcription_language_auto">Tự động nhận diện</string>
+    <string name="language_search_placeholder">Tìm ngôn ngữ</string>
+    <string name="language_search_clear">Xóa tìm kiếm</string>
+    <string name="language_search_no_match">Không có ngôn ngữ phù hợp</string>
     <string name="transcription_language_auto_hint">Việc nhận diện không đáng tin với những ngôn ngữ không viết bằng chữ Latinh — tiếng Do Thái, tiếng Ả Rập, tiếng Nga và tiếng Trung thường trả về dưới dạng chữ cái tiếng Anh, hoặc thành một khối văn bản dài liền mạch. Nếu được, hãy chọn đúng ngôn ngữ.</string>
     <string name="transcription_language_chinese">Tiếng Trung</string>
     <string name="transcription_language_english">Tiếng Anh</string>

@@ -26,7 +26,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import com.baba.callvault.R
-import com.baba.callvault.transcription.TranscriptionLanguageChoice
 
 /**
  * Asks which language to transcribe one recording in.
@@ -35,10 +34,11 @@ import com.baba.callvault.transcription.TranscriptionLanguageChoice
  * the answer applies to that recording alone: a phone that takes calls in two languages should not
  * have to visit Settings twice a day, and should not have its default silently rewritten either.
  *
- * **A dropdown, not a list of radio rows.** Thirteen languages plus auto-detect drew a scrolling wall
+ * **A single field, not a list of radio rows.** Thirteen languages plus auto-detect drew a scrolling wall
  * inside a dialog — a question the size of a screen, asked before every import, to which the answer is
  * nearly always the one already selected. Collapsed to a single field it reads as what it is: a
- * setting shown for confirmation, with the whole list one tap away and auto-detect still in it.
+ * setting shown for confirmation, with the whole list one tap away — searchable, and auto-detect still
+ * in it ([TranscriptionLanguagePicker], the same picker Settings and the wizard use).
  *
  * The **"(your usual)"** suffix that used to mark the pinned language is gone with the rows. It earned
  * its place in a list of fourteen, where it said which one to look for; in a field showing exactly one
@@ -63,13 +63,6 @@ fun TranscribeLanguageDialog(
         mutableStateOf(TranscriptionLabels.preselectedLanguageKey(setting))
     }
 
-    val options = TranscriptionLabels.sortLanguageOptions(
-        TranscriptionLabels.LANGUAGE_OPTIONS.map { code ->
-            TranscriptionLanguageChoice.encode(code) to
-                stringResource(TranscriptionLabels.languageOf(code))
-        }
-    ).map { (key, label) -> OptionItem(key, label) }
-
     AlertDialog(
         onDismissRequest = onDismiss,
         icon = { Icon(imageVector = Icons.Filled.Translate, contentDescription = null) },
@@ -85,13 +78,10 @@ fun TranscribeLanguageDialog(
                     style = MaterialTheme.typography.bodyMedium,
                     modifier = Modifier.padding(bottom = 8.dp)
                 )
-                M3DropdownField(
+                TranscriptionLanguagePicker(
                     label = stringResource(R.string.transcription_language_label),
-                    // Never null: the options always contain auto-detect, and `picked` is only ever
-                    // set from a key that came out of this same list.
-                    selected = options.first { it.key == picked },
-                    options = options,
-                    onOptionSelected = { picked = it.key },
+                    selectedKey = picked,
+                    onSelected = { picked = it },
                 )
             }
         },

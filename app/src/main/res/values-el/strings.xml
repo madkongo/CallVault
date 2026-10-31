@@ -865,6 +865,9 @@
     <string name="transcription_hour_label">Ώρα</string>
     <string name="transcription_language_arabic">Αραβικά</string>
     <string name="transcription_language_auto">Αυτόματη ανίχνευση</string>
+    <string name="language_search_placeholder">Αναζήτηση γλωσσών</string>
+    <string name="language_search_clear">Εκκαθάριση αναζήτησης</string>
+    <string name="language_search_no_match">Καμία γλώσσα δεν ταιριάζει</string>
     <string name="transcription_language_auto_hint">Η ανίχνευση είναι αναξιόπιστη για γλώσσες που δεν γράφονται με λατινικούς χαρακτήρες — τα Εβραϊκά, τα Αραβικά, τα Ρωσικά και τα Κινεζικά συχνά επιστρέφουν γραμμένα με αγγλικούς χαρακτήρες, ή ως ένα μεγάλο μπλοκ κειμένου. Ονομάστε τη γλώσσα αν μπορείτε.</string>
     <string name="transcription_language_chinese">Κινεζικά</string>
     <string name="transcription_language_english">Αγγλικά</string>

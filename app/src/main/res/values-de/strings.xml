@@ -711,6 +711,9 @@
     <string name="transcription_hour_label">Stunde</string>
     <string name="transcription_language_arabic">Arabisch</string>
     <string name="transcription_language_auto">Automatisch erkennen</string>
+    <string name="language_search_placeholder">Sprachen suchen</string>
+    <string name="language_search_clear">Suche löschen</string>
+    <string name="language_search_no_match">Keine passende Sprache</string>
     <string name="transcription_language_auto_hint">Bei Sprachen, die nicht in lateinischen Buchstaben geschrieben werden, ist die Erkennung unzuverlässig — Hebräisch, Arabisch, Russisch und Chinesisch kommen oft in englischen Buchstaben zurück oder als ein einziger langer Textblock. Nennen Sie die Sprache, wenn Sie können.</string>
     <string name="transcription_language_chinese">Chinesisch</string>
     <string name="transcription_language_english">Englisch</string>

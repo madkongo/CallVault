@@ -711,6 +711,9 @@
     <string name="transcription_hour_label">Heure</string>
     <string name="transcription_language_arabic">Arabe</string>
     <string name="transcription_language_auto">Détecter automatiquement</string>
+    <string name="language_search_placeholder">Rechercher une langue</string>
+    <string name="language_search_clear">Effacer la recherche</string>
+    <string name="language_search_no_match">Aucune langue ne correspond</string>
     <string name="transcription_language_auto_hint">La détection n\'est pas fiable pour les langues qui ne s\'écrivent pas en caractères latins : l\'hébreu, l\'arabe, le russe et le chinois reviennent souvent écrits en lettres anglaises, ou en un seul long bloc de texte. Indiquez la langue si vous le pouvez.</string>
     <string name="transcription_language_chinese">Chinois</string>
     <string name="transcription_language_english">Anglais</string>

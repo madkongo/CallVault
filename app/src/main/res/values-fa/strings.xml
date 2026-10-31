@@ -804,6 +804,9 @@
     <string name="transcription_hour_label">ساعت</string>
     <string name="transcription_language_arabic">عربی</string>
     <string name="transcription_language_auto">تشخیص خودکار</string>
+    <string name="language_search_placeholder">جستجوی زبان</string>
+    <string name="language_search_clear">پاک کردن جستجو</string>
+    <string name="language_search_no_match">هیچ زبانی پیدا نشد</string>
     <string name="transcription_language_auto_hint">تشخیص برای زبان‌هایی که با حروف لاتین نوشته نمی‌شوند قابل اعتماد نیست — عبری، عربی، روسی و چینی اغلب با حروف انگلیسی هجی‌شده برمی‌گردند، یا به‌صورت یک بلوک طولانی متن. اگر می‌توانید زبان را مشخص کنید.</string>
     <string name="transcription_language_chinese">چینی</string>
     <string name="transcription_language_english">انگلیسی</string>

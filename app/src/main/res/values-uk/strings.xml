@@ -721,6 +721,9 @@
     <string name="transcription_hour_label">Година</string>
     <string name="transcription_language_arabic">Арабська</string>
     <string name="transcription_language_auto">Визначати автоматично</string>
+    <string name="language_search_placeholder">Пошук мови</string>
+    <string name="language_search_clear">Очистити пошук</string>
+    <string name="language_search_no_match">Немає відповідних мов</string>
     <string name="transcription_language_auto_hint">Автовизначення ненадійне для мов із нелатинською абеткою. Для української, російської, арабської та інших краще явно вибрати мову.</string>
     <string name="transcription_language_chinese">Китайська</string>
     <string name="transcription_language_english">Англійська</string>

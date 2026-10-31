@@ -27,7 +27,9 @@ import com.baba.callvault.transcription.model.ModelRepository
 import com.baba.callvault.transcription.model.TranscriptionModel
 import com.baba.callvault.transcription.model.TranscriptionModelOffer
 import androidx.compose.ui.platform.LocalContext
+import com.baba.callvault.transcription.TranscriptionLanguageChoice
 import com.baba.callvault.ui.common.TranscriptionLabels
+import com.baba.callvault.ui.common.TranscriptionLanguagePicker
 import com.baba.callvault.ui.common.TranscriptionTimeDialog
 import com.baba.callvault.ui.common.formatRunTime
 import com.baba.callvault.ui.common.M3DropdownField
@@ -343,25 +345,13 @@ internal fun TranscriptionLanguageField(
     language: String?,
     onLanguageChange: (String?) -> Unit,
 ) {
-    // Sorted by the translated name, so the list reads A-Z in whatever language the app is in.
-    val languageOptions = TranscriptionLabels
-        .sortLanguageOptions(
-            TranscriptionLabels.LANGUAGE_OPTIONS.map { code ->
-                (code ?: TranscriptionLabels.AUTO_DETECT_KEY) to
-                    stringResource(TranscriptionLabels.languageOf(code))
-            }
-        )
-        .map { (key, label) -> OptionItem(key, label) }
-
     DropdownRow {
-        M3DropdownField(
+        // The shared picker: sorted by translated name, with type-to-find (see TranscriptionLanguagePicker).
+        TranscriptionLanguagePicker(
             label = stringResource(R.string.transcription_language_label),
-            selected = languageOptions.find {
-                it.key == (language ?: TranscriptionLabels.AUTO_DETECT_KEY)
-            } ?: languageOptions.first(),
-            options = languageOptions,
-            onOptionSelected = {
-                onLanguageChange(it.key.takeIf { k -> k != TranscriptionLabels.AUTO_DETECT_KEY })
+            selectedKey = TranscriptionLanguageChoice.encode(language),
+            onSelected = { key ->
+                onLanguageChange(key.takeIf { k -> k != TranscriptionLabels.AUTO_DETECT_KEY })
             }
         )
         if (language == null) {
