@@ -56,3 +56,16 @@ Acoustic echo cancelling on the near channel with the far channel as the referen
 `VoipCaptureSession`. Delay ≈60–100 ms here → tail ≥150 ms. Candidates: speexdsp MDF (BSD, small C) or WebRTC
 AEC3 (`webrtc-audio-processing`, BSD, stronger double-talk + residual suppression). Must not touch carrier
 calls. Prove offline on these two files first (A/B for the maintainer), then a probe build for Евгений.
+
+## Offline A/B (2026-10-31) — files in ~/Downloads/echo-AB/, tools in scratchpad echo-tools/
+Mic channel scored on both calls (far-talk windows: mic level drop = echo removed, includes any double-talk loss;
+far-silent windows: own voice change):
+| method | far talking | own voice alone |
+|---|---|---|
+| speexdsp 1.2.1 MDF + residual suppressor, 300 ms tail | −4 dB | ≤0.4 dB |
+| WebRTC AEC3 (livekit 1.2.0 APM, 48 kHz, EC only) | **−15 / −30 dB** | ≤0.5 dB |
+| own whole-call least-squares (STFT, 150 ms) + mild suppressor | −5 / −7 dB | 0 dB |
+Linear methods top out near 5 dB → the echo is largely nonlinear (hot mic). AEC3's suppressor does the work.
+📐 Double-talk damage not measured — needs listening.
+Research (subagent, verified): LocalVQE (github.com/localai-org/LocalVQE, Apache-2.0, GGML, v1.4-AEC 203K params,
+pushed 2026-10-19) is the one newer candidate; not run (building third-party code needs the maintainer's OK).
