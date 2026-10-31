@@ -20,6 +20,13 @@ All notable changes to CallVault are documented here. The format is based on
   opens the recording. Playback stops when you leave the list. Requested by a user.
   <!-- ✅ VERIFIED 2026-10-26 (maintainer, OP9: "ok it works", then "ok looks good" after the plain-card
        revision). docs/dev-notes/2026-10-26-play-from-list.md -->
+- **Move between calls while reading a transcript** (#27). Two cards under the transcript name the call
+  before and after it in the list you came from, in that list's order; tap one to open it. A "Follow
+  playback" switch keeps the playing line lit and in view, or, turned off, leaves the text still while you
+  read. Turning the phone no longer jumps the text back to the playing line. Suggested by mirror176.
+  <!-- 🧪 VERIFYING: OP9 2026-10-31 (Claude-run, 2.4.7-t27b): cards on the Recordings sheet and the
+       Transcripts page, Next opened the next call and stopped the audio, follow on = lit + followed, off =
+       no light and no scroll. Rotation not checked. Maintainer to confirm. -->
 - **Download models on mobile data.** Tapping Download (or Resume/Retry) for a speech model or the
   summariser while on mobile data now asks: wait for Wi-Fi, or download now on mobile data. On Wi-Fi nothing
   changes. The setup wizard asks the same way. Before, downloads silently waited for Wi-Fi.
