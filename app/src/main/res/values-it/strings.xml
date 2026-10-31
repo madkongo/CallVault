@@ -866,4 +866,6 @@
     <string name="wizard_updates_title">Restare aggiornati</string>
     <string name="wifi_call_switch_failed">Sembra una chiamata Wi-Fi, ma non è stato possibile avviare la registrazione che cattura entrambe le parti. Viene registrata nel modo consueto, che potrebbe non includere l\'altra persona.</string>
     <string name="wifi_call_one_sided">Di questa chiamata Wi-Fi è stata registrata solo la tua parte. Se succede ancora, imposta le chiamate Wi-Fi su «Preferisci rete mobile» nelle impostazioni dell\'app Telefono.</string>
+    <string name="settings_debug_force_wifi_route">Forza la cattura delle chiamate Wi-Fi</string>
+    <string name="settings_debug_force_wifi_route_description">Per i test. Ogni chiamata telefonica passa durante la chiamata alla cattura delle chiamate delle app, come farebbe una chiamata Wi-Fi. Su un telefono senza chiamate Wi-Fi l\'altra parte mancherà e dovrebbe comparire un errore. Richiede la registrazione delle chiamate delle app attiva. Funziona solo con la registrazione del log attiva.</string>
 </resources>

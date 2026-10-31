@@ -899,4 +899,6 @@
     <string name="wizard_updates_title">البقاء على اطلاع</string>
     <string name="wifi_call_switch_failed">يبدو أن هذه مكالمة عبر Wi-Fi، لكن تعذّر بدء التسجيل الذي يلتقط الطرفين. يجري تسجيلها بالطريقة المعتادة، وقد لا يُسمع فيها الطرف الآخر.</string>
     <string name="wifi_call_one_sided">سُجّل جانبك فقط من مكالمة Wi-Fi هذه. إذا تكرر ذلك، اضبط الاتصال عبر Wi-Fi على تفضيل شبكة الجوال في إعدادات تطبيق الهاتف.</string>
+    <string name="settings_debug_force_wifi_route">فرض مسار تسجيل مكالمات Wi-Fi</string>
+    <string name="settings_debug_force_wifi_route_description">للاختبار. تنتقل كل مكالمة هاتفية أثناءها إلى تسجيل مكالمات التطبيقات، كما تفعل مكالمة Wi-Fi. على هاتف بلا اتصال عبر Wi-Fi سيغيب الطرف الآخر ويجب أن يظهر خطأ. يتطلب تفعيل تسجيل مكالمات التطبيقات. يعمل فقط أثناء تسجيل السجل.</string>
 </resources>

@@ -589,7 +589,9 @@ class RecordingForegroundService : Service() {
     private fun onRouteEvent() {
         val active = currentState as? RecordingServiceState.Active ?: return
         if (stopRequested || isShuttingDown) return
-        val decision = routeDecision("change", engineCanSwitch = !active.engine.isLocalFallback, forced = false)
+        // Debug switch: honoured only while logging is on, the only time its result can be read.
+        val forced = appPreferences.isDebugForceWifiRoute() && appPreferences.isLoggingEnabled()
+        val decision = routeDecision("change", engineCanSwitch = !active.engine.isLocalFallback, forced = forced)
         if (decision.route != WifiCallRoute.Route.APP_CALL_MIX) return
         synchronized(switchLock) {
             if (switchInProgress || switchedToMix) return

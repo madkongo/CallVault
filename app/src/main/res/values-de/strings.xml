@@ -866,4 +866,6 @@
     <string name="wizard_updates_title">Auf dem neuesten Stand bleiben</string>
     <string name="wifi_call_switch_failed">Das scheint ein WLAN-Anruf zu sein, aber die Aufnahme, die beide Seiten erfasst, konnte nicht starten. Er wird wie gewohnt aufgenommen, dabei fehlt womöglich die andere Person.</string>
     <string name="wifi_call_one_sided">Von diesem WLAN-Anruf wurde nur Ihre Seite aufgenommen. Wenn das öfter passiert, stellen Sie WLAN-Anrufe in den Einstellungen der Telefon-App auf „Mobilfunknetz bevorzugt“.</string>
+    <string name="settings_debug_force_wifi_route">WLAN-Anruf-Aufnahmeweg erzwingen</string>
+    <string name="settings_debug_force_wifi_route_description">Zum Testen. Jeder Telefonanruf wechselt während des Gesprächs zur App-Anruf-Aufnahme, wie es ein WLAN-Anruf täte. Auf einem Telefon ohne WLAN-Anrufe fehlt die andere Seite, und es sollte ein Fehler erscheinen. Erfordert eingeschaltete App-Anruf-Aufnahme. Wirkt nur, solange die Protokollaufzeichnung an ist.</string>
 </resources>
