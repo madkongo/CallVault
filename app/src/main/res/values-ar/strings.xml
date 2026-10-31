@@ -761,6 +761,9 @@
     <string name="transcription_hour_label">ساعة</string>
     <string name="transcription_language_arabic">العربية</string>
     <string name="transcription_language_auto">الكشف تلقائياً</string>
+    <string name="language_search_placeholder">البحث عن لغة</string>
+    <string name="language_search_clear">مسح البحث</string>
+    <string name="language_search_no_match">لا توجد لغة مطابقة</string>
     <string name="transcription_language_auto_hint">الكشف غير موثوق به للغات التي لا تكتب بالحروف اللاتينية؛ غالبًا ما تعود العبرية والعربية والروسية والصينية مكتوبة بأحرف إنجليزية، أو ككتلة نصية طويلة. سمِ اللغة إذا استطعت.</string>
     <string name="transcription_language_chinese">الصينية</string>
     <string name="transcription_language_english">الإنجليزية</string>

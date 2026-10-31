@@ -728,6 +728,9 @@
     <string name="transcription_hour_label">Час</string>
     <string name="transcription_language_arabic">Арабский</string>
     <string name="transcription_language_auto">Определять автоматически</string>
+    <string name="language_search_placeholder">Поиск языка</string>
+    <string name="language_search_clear">Очистить поиск</string>
+    <string name="language_search_no_match">Нет подходящих языков</string>
     <string name="transcription_language_auto_hint">Для языков с нелатинской письменностью определение работает ненадёжно — иврит, арабский, русский и китайский часто возвращаются записанными английскими буквами или одним сплошным куском текста. Если можете, укажите язык.</string>
     <string name="transcription_language_chinese">Китайский</string>
     <string name="transcription_language_english">Английский</string>

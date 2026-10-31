@@ -726,6 +726,9 @@
     <string name="transcription_hour_label">Óra</string>
     <string name="transcription_language_arabic">Arab</string>
     <string name="transcription_language_auto">Automatikus felismerés</string>
+    <string name="language_search_placeholder">Nyelvek keresése</string>
+    <string name="language_search_clear">Keresés törlése</string>
+    <string name="language_search_no_match">Nincs egyező nyelv</string>
     <string name="transcription_language_auto_hint">A felismerés megbízhatatlan azoknál a nyelveknél, amelyeket nem latin betűkkel írnak — a héber, az arab, az orosz és a kínai gyakran angol betűkkel kiírva jön vissza, vagy egyetlen hosszú szövegtömbként. Ha teheti, nevezze meg a nyelvet.</string>
     <string name="transcription_language_chinese">Kínai</string>
     <string name="transcription_language_english">Angol</string>

@@ -763,6 +763,9 @@
     <string name="transcription_language_persian">Persian</string>
     <string name="transcription_language_ukrainian">Ukrainian</string>
     <string name="transcription_language_auto">Detect automatically</string>
+    <string name="language_search_placeholder">Search languages</string>
+    <string name="language_search_clear">Clear search</string>
+    <string name="language_search_no_match">No language matches</string>
     <string name="transcription_language_auto_hint">Detection is unreliable for languages that are not written in Latin letters — Hebrew, Arabic, Russian and Chinese often come back spelled out in English letters, or as one long block of text. Name the language if you can.</string>
     <string name="transcription_note_manual">Transcripts are made only when you ask for one, from the button on a recording.</string>
     <string name="transcription_note_after_each_call">Each call is transcribed as soon as it ends. Older calls are left alone — transcribe those from the button on a recording.</string>

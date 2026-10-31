@@ -728,6 +728,9 @@
     <string name="transcription_hour_label">Godzina</string>
     <string name="transcription_language_arabic">Arabski</string>
     <string name="transcription_language_auto">Wykryj automatycznie</string>
+    <string name="language_search_placeholder">Szukaj języków</string>
+    <string name="language_search_clear">Wyczyść wyszukiwanie</string>
+    <string name="language_search_no_match">Brak pasującego języka</string>
     <string name="transcription_language_auto_hint">Wykrywanie jest zawodne przy językach, których nie zapisuje się alfabetem łacińskim — hebrajski, arabski, rosyjski i chiński często wracają zapisane literami angielskimi albo jako jeden długi blok tekstu. Jeśli możesz, wskaż język.</string>
     <string name="transcription_language_chinese">Chiński</string>
     <string name="transcription_language_english">Angielski</string>
