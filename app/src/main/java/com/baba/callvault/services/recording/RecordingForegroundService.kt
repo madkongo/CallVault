@@ -49,6 +49,8 @@ import com.baba.callvault.system.interop.MetadataSidecar
 import com.baba.callvault.data.recordings.RecordingsRepository
 import com.baba.callvault.data.transcripts.FlagRepository
 import com.baba.callvault.data.transcripts.CapturedSpeakerTurns
+import com.baba.callvault.server.RecorderConnection
+import com.baba.callvault.services.recording.handoff.HandoffReceiver
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
@@ -724,6 +726,14 @@ class RecordingForegroundService : Service() {
             }
             runCatching { engine.release(discard = true) }
                 .onFailure { AppLogger.w(WifiCallRoute.TAG, "cleanup after a failed replacement: ${it.message}") }
+            // The engine may not have recorded its mode before failing, so its release can miss a
+            // capture the recorder already accepted. Ask directly; both calls are idempotent.
+            runCatching { RecorderConnection.service?.stopRecording() }
+                .onFailure { AppLogger.w(WifiCallRoute.TAG, "stopRecording after a failed replacement: ${it.message}") }
+            if (HandoffReceiver.isLive) {
+                runCatching { HandoffReceiver.abort() }
+                runCatching { RecorderConnection.service?.stopHandoff() }
+            }
             null
         }
     }
