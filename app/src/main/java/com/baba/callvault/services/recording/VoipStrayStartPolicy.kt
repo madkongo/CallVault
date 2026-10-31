@@ -16,9 +16,17 @@ import android.media.AudioManager
  * On Samsung a Wi-Fi call keeps the mode at MODE_IN_COMMUNICATION. At hang-up Telecom drops the call
  * about 1.5 s before the mode leaves, so [VoipTelephonyGate] let a start through and every Wi-Fi call
  * left a stray 1 s `_voip` file. A "carrier episode" latch closes that window: it is set when a start
- * is refused because a carrier call is up, and cleared only when the mode leaves IN_COMMUNICATION.
+ * is refused because a carrier call is up, and cleared when the mode leaves IN_COMMUNICATION or
+ * [TAIL_MS] after the carrier call has gone, whichever is first. The tail is what lets a WhatsApp call
+ * that carries on after the phone call ended still be recorded.
  */
 object VoipStrayStartPolicy {
+
+    /** Hang-up protection after the managed call drops. Samsung leaves the mode ~1.5 s later. */
+    const val TAIL_MS = 3_000L
+
+    /** @param managedEndedAt when the managed call was first seen gone (elapsedRealtime), or null. */
+    data class Latch(val active: Boolean = false, val managedEndedAt: Long? = null)
 
     enum class Verdict {
         START,
@@ -39,10 +47,23 @@ object VoipStrayStartPolicy {
     }
 
     /** The latch after a mode event: leaving IN_COMMUNICATION ends the episode. */
-    fun latchAfterMode(latched: Boolean, mode: Int): Boolean =
-        latched && mode == AudioManager.MODE_IN_COMMUNICATION
+    fun afterMode(latch: Latch, mode: Int): Latch =
+        if (mode == AudioManager.MODE_IN_COMMUNICATION) latch else Latch()
+
+    /** The latch as of [nowMs]: a managed call keeps it, its absence starts and then ends the tail. */
+    fun afterTime(latch: Latch, managedCall: Boolean, nowMs: Long): Latch = when {
+        !latch.active -> latch
+        managedCall -> Latch(active = true)
+        latch.managedEndedAt == null -> Latch(active = true, managedEndedAt = nowMs)
+        nowMs - latch.managedEndedAt >= TAIL_MS -> Latch()
+        else -> latch
+    }
 
     /** The latch after a start was judged: a managed-call refusal starts an episode. */
-    fun latchAfterVerdict(latched: Boolean, verdict: Verdict): Boolean =
-        latched || verdict == Verdict.REFUSE_MANAGED_CALL
+    fun afterVerdict(latch: Latch, verdict: Verdict): Latch =
+        if (verdict == Verdict.REFUSE_MANAGED_CALL) Latch(active = true) else latch
+
+    /** How long until the tail ends, so the caller can look again then; null when not in a tail. */
+    fun tailRemainingMs(latch: Latch, nowMs: Long): Long? =
+        latch.managedEndedAt?.takeIf { latch.active }?.let { (TAIL_MS - (nowMs - it)).coerceAtLeast(0L) }
 }
