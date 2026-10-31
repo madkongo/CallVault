@@ -484,7 +484,8 @@ class AudioRecordingEngine {
 
     /**
      * startVoipRecording answers before its worker opens the capture; a failed open clears the
-     * recorder's "recording" flag. Watched for a moment so a failure can still fall back.
+     * recorder's "recording" flag. Watched for a moment so a failure can still fall back. A binder
+     * error reads as false here, and the caller then stops the capture first.
      */
     private fun voipCaptureConfirmed(service: com.baba.callvault.server.IRecorderService): Boolean {
         val deadline = android.os.SystemClock.elapsedRealtime() + VOIP_START_CONFIRM_MS
@@ -529,13 +530,17 @@ class AudioRecordingEngine {
             AppLogger.w(WifiCallRoute.TAG, "App-call capture: daemon unavailable (connected=$connected)")
             return false
         }
-        val started = runCatching { service.startVoipRecording(codecEnum.cliKey, bitRate, outputPfd) }
+        val call = runCatching { service.startVoipRecording(codecEnum.cliKey, bitRate, outputPfd) }
             .onFailure { AppLogger.w(WifiCallRoute.TAG, "startVoipRecording threw: ${it.message}") }
-            .getOrDefault(false)
+        val started = call.getOrDefault(false)
         AppLogger.i(WifiCallRoute.TAG, "startVoipRecording -> $started")
-        if (!started) return false
-        if (!voipCaptureConfirmed(service)) {
-            AppLogger.w(WifiCallRoute.TAG, "App-call capture was accepted but did not start")
+        // A plain refusal opened nothing. A binder error is unknown, so it is stopped like a failed open.
+        if (!started && call.isSuccess) return false
+        if (!started || !voipCaptureConfirmed(service)) {
+            AppLogger.w(WifiCallRoute.TAG, "App-call capture did not confirm it started; stopping it before the fallback")
+            // Idempotent. Closes anything a half-open start left, so it never runs beside the fallback.
+            runCatching { service.stopRecording() }
+                .onFailure { AppLogger.w(WifiCallRoute.TAG, "stopRecording before the fallback failed: ${it.message}") }
             rewindOutput()
             return false
         }
