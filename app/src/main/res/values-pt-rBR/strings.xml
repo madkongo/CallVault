@@ -868,8 +868,7 @@
     <string name="wizard_updates_subtitle">O CallVault não está em nenhuma loja de aplicativos, então ele mesmo procura novas versões no GitHub.</string>
     <string name="wizard_updates_title">Manter-se atualizado</string>
     <string name="wifi_call_switch_failed">Esta parece uma chamada por Wi-Fi, mas a captura que grava os dois lados não pôde começar. Ela está sendo gravada do jeito normal, que pode deixar de fora a outra pessoa.</string>
-    <string name="wifi_call_one_sided">O CallVault não conseguiu captar diretamente o outro lado desta chamada por Wi-Fi. Ouça para conferir se ele está lá; se não, defina as chamadas por Wi-Fi para preferir a rede móvel nas configurações do app de telefone.</string>
-    <string name="wifi_call_check_title">Confira esta chamada por Wi-Fi</string>
+    <string name="wifi_call_one_sided">Só o seu lado desta chamada por Wi-Fi foi gravado. Se continuar acontecendo, configure as chamadas por Wi-Fi para preferir a rede móvel nas configurações do app Telefone.</string>
     <string name="settings_debug_force_wifi_route">Forçar a captura de chamadas por Wi-Fi</string>
     <string name="settings_debug_force_wifi_route_description">Para testes. Cada chamada telefônica muda durante a chamada para a captura de chamadas de apps, como faria uma chamada por Wi-Fi. Em um telefone sem chamadas por Wi-Fi o outro lado vai faltar e deve aparecer um erro. Requer a gravação de chamadas de apps ativada. Só funciona com o registro de log ativado.</string>
     <string name="wifi_call_switch_aborted">A gravação desta chamada por Wi-Fi parou antes da hora: não foi possível trocar a captura com segurança. A parte gravada até agora foi mantida.</string>

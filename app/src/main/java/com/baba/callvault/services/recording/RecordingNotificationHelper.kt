@@ -311,10 +311,10 @@ class RecordingNotificationHelper(private val context: Context) {
      *
      * @param message Human-readable error description to show in the notification body.
      */
-    fun showErrorNotification(message: String, title: String = context.getString(R.string.recording_error_title)) {
+    fun showErrorNotification(message: String) {
         val notification = NotificationCompat.Builder(context, CHANNEL_ID_ERROR)
             .setSmallIcon(R.drawable.ic_mic)
-            .setContentTitle(title)
+            .setContentTitle(context.getString(R.string.recording_error_title))
             .setContentText(message)
             .setStyle(NotificationCompat.BigTextStyle().bigText(message))
             .setAutoCancel(false)

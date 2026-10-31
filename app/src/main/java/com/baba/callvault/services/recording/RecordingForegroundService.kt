@@ -1069,17 +1069,11 @@ class RecordingForegroundService : Service() {
             }
         }
 
-        // Never a quiet near-only success (#45). The file is kept and the health card records it as
-        // one-sided; the notice asks the user to listen, since the phone's own mic can still pick up
-        // some of the other side.
+        // Both sides or a failure, never a quiet near-only success (#45). The file is kept, as an
+        // app call that came out one-sided is, and the health card records it as one-sided.
         if (mix.appCallMix && mix.farHeard == false) {
             AppLogger.e(WifiCallRoute.TAG, "Wi-Fi call '$name': the other side was not heard — only the user's side is on it")
-            // Worded as "check it": on the OnePlus test (2026-10-31) the far capture was empty yet the
-            // other side was audible through the room; with the recording phone muted it was gone.
-            notificationHelper.showErrorNotification(
-                getString(R.string.wifi_call_one_sided),
-                title = getString(R.string.wifi_call_check_title),
-            )
+            notificationHelper.showErrorNotification(getString(R.string.wifi_call_one_sided))
         } else if (mix.appCallMix && mix.farHeard == null) {
             // Unknown is not a success. A lost recorder has already said so, more usefully.
             AppLogger.e(WifiCallRoute.TAG, "Wi-Fi call '$name': could not check that the other side was heard")
