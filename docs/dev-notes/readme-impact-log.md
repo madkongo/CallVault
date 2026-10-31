@@ -12,6 +12,19 @@ the "Switch to the classic view" card and the classic screen are gone. See
 - Screenshot `docs/screenshots/06-settings.png` ("Recordings settings") shows the classic-view card under the
   Shizuku row. The card no longer exists; re-shoot when the README is next updated.
 
+## 2026-10-31 — Urdu as a pinnable transcription language
+
+🧪 VERIFYING (unit tests and build only; nothing seen on a phone). Urdu ("ur") joins the transcription
+language list, and summaries of Urdu-script transcripts are written in Urdu. Rollback notes:
+`docs/dev-notes/rollback/urdu-transcription.md`.
+
+**What this makes wrong in the README, when this ships** (README is held — not edited):
+- ~line 33, "Transcripts — 13 languages" — already stale before this change (16 were offered); with Urdu
+  the picker offers **17**.
+
+**Not claimable:** good Urdu transcripts. No Urdu call has been transcribed; Urdu is not an app UI
+language, only a transcription language.
+
 ## 2026-10-29 — Transcribe with your own key (#48)
 
 🧪 VERIFYING (unit tests and build only; no real request sent, nothing seen on a phone). Settings → Where to

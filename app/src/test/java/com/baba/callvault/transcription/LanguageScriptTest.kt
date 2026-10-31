@@ -28,6 +28,7 @@ class LanguageScriptTest {
         "he" to UnicodeScript.HEBREW,
         "ar" to UnicodeScript.ARABIC,
         "fa" to UnicodeScript.ARABIC,
+        "ur" to UnicodeScript.ARABIC,
         "ru" to UnicodeScript.CYRILLIC,
         "uk" to UnicodeScript.CYRILLIC,
         "zh" to UnicodeScript.HAN,

@@ -16,6 +16,11 @@ All notable changes to CallVault are documented here. The format is based on
        the recorder start and off again; on → after a recorder restart WD stayed on, log "Leaving Wireless
        debugging on … 'Never turn it off' is on", and the line under the row showed. Greyed in Shizuku mode.
        Maintainer to confirm. -->
+- **Urdu can be pinned as a transcription language.** Pick it in Settings → Transcription → Language, or in
+  the per-call language question. Summaries of Urdu calls are written in Urdu.
+  <!-- 🧪 VERIFYING: unit tests and build only (2.4.8-urdu); nothing seen on a phone. Maintainer to pin Urdu,
+       transcribe a real Urdu call (local model and, if set up, Groq) and check the transcript is in Urdu
+       script and the summary is in Urdu. -->
 
 ### Changed
 
