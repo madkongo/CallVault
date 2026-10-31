@@ -1,6 +1,6 @@
 # Report: "Restricted by Advanced Protection" popup — Jose, OnePlus CPH2749, Android 17 (2026-10-31)
 
-📐 Diagnosed from the log; nothing built.
+✅ Report closed 2026-10-31: the maintainer replied to Jose (cause = in-app updater vs Advanced Protection). The updater fix below is not built or scheduled.
 
 **Phone:** OnePlus CPH2749, Android 17 (CPH2749_17.0.0.102), Shizuku mode, **2.4.7** (still — the update never landed).
 Log: ~/Downloads/DOC-20261031-WA0049.txt (WhatsApp attachment).
