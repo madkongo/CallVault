@@ -49,6 +49,7 @@ object SummaryPrompt {
         "pt" to "Portuguese",
         "ru" to "Russian",
         "uk" to "Ukrainian",
+        "ur" to "Urdu",
         "vi" to "Vietnamese",
         "zh" to "Chinese"
     )

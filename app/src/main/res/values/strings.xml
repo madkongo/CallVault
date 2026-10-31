@@ -761,6 +761,7 @@
     <string name="transcription_language_vietnamese">Vietnamese</string>
     <string name="transcription_language_greek">Greek</string>
     <string name="transcription_language_persian">Persian</string>
+    <string name="transcription_language_urdu">Urdu</string>
     <string name="transcription_language_ukrainian">Ukrainian</string>
     <string name="transcription_language_auto">Detect automatically</string>
     <string name="transcription_language_auto_hint">Detection is unreliable for languages that are not written in Latin letters — Hebrew, Arabic, Russian and Chinese often come back spelled out in English letters, or as one long block of text. Name the language if you can.</string>

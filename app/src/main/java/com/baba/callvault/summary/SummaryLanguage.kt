@@ -89,7 +89,7 @@ object SummaryLanguage {
         // Enough letters to be the text rather than a quotation inside it.
         if (count < MINIMUM_LETTERS) return null
         return when {
-            language == "ar" && writesPersian(text) -> "fa"
+            language == "ar" -> arabicScriptLanguage(text)
             language == "ru" && writesUkrainian(text) -> "uk"
             else -> language
         }
@@ -107,17 +107,35 @@ object SummaryLanguage {
     }
 
     /**
-     * Whether Arabic-script [text] is Persian (#55). They share the script, so only the letters each one
-     * alone uses can tell them apart: Persian adds پ چ ژ گ and writes its own ی and ک, where Arabic writes
-     * ي ك and ة. Weighed rather than spotted, like the scripts above — one loanword must not decide it.
+     * Which Arabic-script language [text] is: Arabic, Persian (#55) or Urdu. They share the script, so
+     * only the letters each one alone uses can tell them apart, and every step is weighed rather than
+     * spotted, like the scripts above — one loanword must not decide it.
+     *
+     * 1. Arabic or not. Persian and Urdu both add پ چ ژ گ and write their own ی and ک, where Arabic writes
+     *    ي ك and ة. This is the original Persian-vs-Arabic rule, unchanged for any text with no Urdu letter.
+     * 2. Persian or Urdu. Those shared letters cannot split them, so Urdu's own letters do: ٹ ڈ ڑ ں ے and
+     *    its own heh forms ہ ھ ۃ. Persian writes plain ه where Urdu writes ہ, so ه is what Urdu letters are
+     *    weighed against — a stray ے in a Persian sentence is outvoted by its ه.
      */
-    private fun writesPersian(text: String): Boolean {
-        val persian = text.count { it in PERSIAN_ONLY }
+    private fun arabicScriptLanguage(text: String): String {
+        val urdu = text.count { it in URDU_ONLY }
+        val persianOrUrdu = text.count { it in PERSIAN_OR_URDU }
         val arabic = text.count { it in ARABIC_ONLY }
-        return persian > arabic
+        return when {
+            persianOrUrdu + urdu <= arabic -> "ar"
+            urdu > text.count { it == PLAIN_HEH } -> "ur"
+            else -> "fa"
+        }
     }
 
-    private const val PERSIAN_ONLY = "\u067E\u0686\u0698\u06AF\u06CC\u06A9"
+    /** پ چ ژ گ ی ک: written by Persian and Urdu, not by Arabic. */
+    private const val PERSIAN_OR_URDU = "\u067E\u0686\u0698\u06AF\u06CC\u06A9"
+
+    /** ٹ ڈ ڑ ں ے ہ ھ ۃ: written by Urdu only, of the languages on offer. */
+    private const val URDU_ONLY = "\u0679\u0688\u0691\u06BA\u06D2\u06C1\u06BE\u06C3"
+
+    /** ه: Persian's and Arabic's heh, which Urdu writes as ہ or ھ. */
+    private const val PLAIN_HEH = '\u0647'
     private const val ARABIC_ONLY = "\u064A\u0643\u0629"
     private const val UKRAINIAN_ONLY = "іїєґІЇЄҐ"
     private const val RUSSIAN_ONLY = "ыэъёЫЭЪЁ"
