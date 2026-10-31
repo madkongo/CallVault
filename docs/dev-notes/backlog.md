@@ -104,7 +104,12 @@ fix, vivo far-side toggle (hint + SUPPORT doc), Samsung Wi-Fi-calling doc (#45).
   don't register with `AudioService` record tracking; targeting Android 17 (API 37) will break mDNS
   discovery until we request it; a setting to stop CallVault managing Wireless debugging (#30 follow-up);
   split `AppPreferences` into per-domain interfaces.
-  - **Already-listening adbd loopback probe (free, no Wi-Fi).** 🔵 At startup, detect devices where adbd
+  - **Already-listening adbd loopback probe (free, no Wi-Fi).** 🧪 BUILT 2026-10-31 on `feat/open-adb-port-probe`,
+    untested on a phone: `AdbShell.connectAlreadyOpenPort` asks `service.adb.tcp.port`, `persist.adb.tcp.port`,
+    `service.adb.listen_addrs` tcp ports and 5555 with a plain-CNXN wire probe (150/500 ms), connects only to a
+    classic-adb answer, and only after the normal path failed (WD in built-in mode; loopback + self-heal in
+    offline mode); misses cached in memory until the port list changes. Rollback:
+    `docs/dev-notes/rollback/feat-open-adb-port-probe.md`. Original note: 🔵 At startup, detect devices where adbd
     already listens on loopback with NO Wi-Fi/WD — a minority of OEM/TV-derived or eng/userdebug builds
     bake `persist.adb.tcp.port` / `service.adb.listen_addrs` or drop `ro.adb.secure`. Check: `getprop
     persist.adb.tcp.port`, `service.adb.tcp.port`, `service.adb.listen_addrs` (via the existing shell
