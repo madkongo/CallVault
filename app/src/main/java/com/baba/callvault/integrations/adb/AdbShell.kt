@@ -89,6 +89,9 @@ object AdbShell {
     private const val OPEN_PORT_CONNECT_TIMEOUT_MS = 150
     private const val OPEN_PORT_READ_TIMEOUT_MS = 500
 
+    /** Probing for already-open ports stops after this; at most one real connect follows. See [OpenAdbPortScan]. */
+    private const val OPEN_PORT_PROBE_BUDGET_MS = 2_000L
+
     /** Remembers an already-open-port miss so it is not asked again on every connect. See [connectAlreadyOpenPort]. */
     private val openPortGate = OpenAdbPortGate()
 
@@ -218,7 +221,9 @@ object AdbShell {
      * Never slows the normal path:
      * - each port is first asked with one plain `CNXN` ([AdbWireProbe], bounded by [OPEN_PORT_CONNECT_TIMEOUT_MS] +
      *   [OPEN_PORT_READ_TIMEOUT_MS]); on phones where no property names a port, nothing is dialled at all;
-     * - only a port that answers as classic adbd gets a real (bounded, [CONNECT_BUDGET_MS]) connect;
+     * - only the FIRST port that answers as classic adbd gets a real (bounded, [CONNECT_BUDGET_MS]) connect, and
+     *   probing stops after [OPEN_PORT_PROBE_BUDGET_MS] — so the whole call is ≤ 2 + 0.65 + 8 ≈ 10.7 s 📐, which
+     *   keeps offline mode's worst case (≈ 48 s before this) inside the 60 s [CONNECT_ENTRY_WAIT_MS];
      * - a miss (nothing answered as adb) is remembered in memory ([OpenAdbPortGate]) for 10 min or until adbd's
      *   tcp ports change, so it is not asked on every connect.
      *
@@ -241,6 +246,9 @@ object AdbShell {
         val mgr = AdbConnectionManager.getInstance(context)
         val outcome = OpenAdbPortScan.run(
             ports,
+            probeBudgetMs = OPEN_PORT_PROBE_BUDGET_MS,
+            now = { SystemClock.elapsedRealtime() },
+            isConnected = { mgr.isConnected },
             probe = { AdbWireProbe.probe(LOOPBACK_HOST, it, OPEN_PORT_CONNECT_TIMEOUT_MS, OPEN_PORT_READ_TIMEOUT_MS) },
             connect = { port ->
                 connectBounded(context, "already-open adb tcp :$port") { mgr.connect(LOOPBACK_HOST, port) }.also { ok ->
@@ -251,6 +259,9 @@ object AdbShell {
         )
         when (outcome) {
             OpenAdbPortScan.Outcome.CONNECTED -> openPortGate.recordHit()
+            OpenAdbPortScan.Outcome.ALREADY_CONNECTED -> Unit
+            OpenAdbPortScan.Outcome.BUDGET_SPENT ->
+                AppLogger.i(TAG, "Already-open adb tcp probe ran out of its ${OPEN_PORT_PROBE_BUDGET_MS}ms budget ($ports)")
             // Not cached: an adb answer with a failed connect is usually adbd mid-restart; the next connect asks again.
             OpenAdbPortScan.Outcome.ADB_ANSWERED_NOT_CONNECTED -> Unit
             OpenAdbPortScan.Outcome.NOTHING_ANSWERED -> {
@@ -258,7 +269,7 @@ object AdbShell {
                 AppLogger.d(TAG, "No already-open adb tcp port answered ($ports); not asking again for 10 min or until adbd's tcp ports change")
             }
         }
-        return outcome == OpenAdbPortScan.Outcome.CONNECTED
+        return outcome == OpenAdbPortScan.Outcome.CONNECTED || outcome == OpenAdbPortScan.Outcome.ALREADY_CONNECTED
     }
 
     /**
