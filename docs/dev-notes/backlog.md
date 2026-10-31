@@ -22,6 +22,44 @@ with `&&`/`||` chains and silently reported the opposite answer while this was b
 
 ---
 
+## Current state — 2026-10-31 (AUDITED against code + release tags)
+
+**This block is the summary of record. The 2026-10-01 block below it and the older dated blocks are history.**
+Audited 2026-10-31 by checking every open-looking item against the code, `git tag --contains` and CHANGELOG.
+Two items the maintainer caught (Select all, Settings per page) had been shipped for weeks while still listed
+open; the audit found about 20 more. Latest public release: **v2.4.7** (20470). Next must exceed 20470.
+
+**Ready for the next release (merged into integration/next, see CHANGELOG [Unreleased]):** own-key transcription
+(#48), play from the list, mobile-data download prompt, Persian model (#55), TalkBack fixes (#61), vivo honest
+message (#64), Arabic polish (#59), #65 connect-port search (✅ reporter), long-call waveform + memory fixes
+(#63), paused-download import (#60); the #53 log-only probe ships too (decided 2026-10-31).
+
+**Open — features (maintainer priority first):**
+1. Floating record button + in-call note bubble.
+2. Call history inside the app.
+3. Samsung Wi-Fi Calling (#45) — NEW LEAD 2026-10-31: upstream records it via the app-call path; route these
+   calls to the VoIP capture (+ fixes the stray 1 s file). Needs a Samsung tester.
+4. KK: SenseVoice + Qwen/other GGUF summaries (not triaged).
+5. #27 leftovers: previous/next call inside a transcript; clear a highlighted line.
+6. Per-app capture status (works / blocks capture) on the VoIP app list.
+7. Forks leftovers: decode time limit, SIM label per call, dialer mode as an option.
+8. Matroska `.mka` (#36) — needs a native muxer.
+9. Delete the classic Settings screen (one release after the new one).
+
+**Open — engineering:** captures don't register with AudioService record tracking; #30 setting to stop managing
+Wireless debugging; split AppPreferences; loopback adbd probe; R8 minification; release provenance (cosign);
+F-Droid: doNotStrip + 16 KB zipalign; Android 17 items (WD read-back, vivo bypass on API 37, pairing fallback,
+Conscrypt 2.7.0, targetSdk 37 + ACCESS_LOCAL_NETWORK when we move); pairing timeout off with consent (#3);
+a too-long recorded call still skips transcription silently; the ensureConnected leftovers.
+
+**Open — bugs / waiting on users:** #53 Honor app-call end (settings result); alex_812 recorder dies with no
+alert (parked); #9 VoIP mic re-take step 2 (needs a Samsung log); #32 whisper invents lines from noise; wrong
+contact label on some recordings (undiagnosed); Note10+ and zeref logs.
+
+**Parked:** health-gated status probe (built, on a tag); trash/recycle bin; in-app bug report; capture ladder;
+non-UI InCallService; VoIP direction; call-waiting split (alex_812 a); Android 12 bypass; pl/ru plurals; ivrit.
+**Not our bug:** Shizuku on HyperOS 3; Samsung turning USB debugging off. **Dead:** #42 Android 13 mic fallback.
+
 ## Current state — 2026-10-01
 
 **Treat this block as the summary of record; the dated blocks lower down (2026-09-11, 2026-08-24, 2026-08-05)
@@ -136,7 +174,7 @@ Call audio is unchanged; the transport around it is what changed.
 
 ---
 
-## 🧪 Auto-approve "Allow wireless debugging on this network?" — feature request 2026-10-21, BUILT, merged into integration/next; untrusted hotspot ✅ VERIFIED 2026-10-21 (maintainer); restart + Android 17 still 🧪
+## ✅ SHIPPED v2.4.7 — Auto-approve "Allow wireless debugging on this network?" — feature request 2026-10-21; untrusted hotspot ✅ VERIFIED 2026-10-21 (maintainer); restart + Android 17 still 🧪
 
 Dev-note: `2026-10-21-auto-approve-new-wifi-network.md` (📐 read from AOSP 16 + 17; nothing built). The shell uid
 holds `MANAGE_DEBUGGING`, so our daemon (or Shizuku's server) can call `IAdbManager.allowWirelessDebugging` for
@@ -163,7 +201,7 @@ Design picked 2026-10-21: option C (folded groups) with B's Shizuku switch row; 
 
 ---
 
-## 🔵 From the forks review — added 2026-10-20, not started
+## 🔵 From the forks review — added 2026-10-20 — PARTLY SHIPPED (audit 2026-10-31: sendBinder check, SAF-delete fix, model import (#58), Ukrainian all in v2.4.7; open: decode time limit, SIM label, dialer mode; parked: Android 12 bypass, pl/ru plurals)
 
 Source: `2026-10-20-forks-review.md` and the per-fork files beside it. 📐 code read only, nothing built.
 **Credit the authors.** When we adopt a fork's code, keep them as the commit author, or add a `Co-authored-by:`
@@ -259,7 +297,7 @@ section. The still-open requests are renumbered below.)*
 
 ---
 
-## 🧪 Merge can't see Drive-only calls — FIXED (Merge-Drive-only), merged into `main` 2026-10-12 — reported 2026-10-02 (user "gene rator")
+## ✅ SHIPPED v2.4.6 (🧪 no affected user confirmed) — Merge can't see Drive-only calls — FIXED (Merge-Drive-only) — reported 2026-10-02 (user "gene rator")
 
 > **🧪 FIXED and merged into `main` 2026-10-12 (`06bf6f62`; code `1d8eb92f`).** `MergeCandidates.of` no longer
 > requires a local file; `MergeService` downloads Drive-only parts to a cache dir, merges, and cleans up.
@@ -339,7 +377,7 @@ decision + onboarding note (a new visible option — see [[new-features-consider
 
 ---
 
-## 🐞 Shizuku mode fails on HyperOS 3 (POCO X7 Pro) — reported 2026-10-03 (users "doctor divago" + "voss")
+## ⏸️ NOT OUR BUG (HyperOS kills Shizuku's fork; use standalone) — watchdog fight fixed in v2.4.7, 🧪 voss unconfirmed; in-app "try standalone" hint not built — Shizuku mode fails on HyperOS 3 (POCO X7 Pro) — reported 2026-10-03 (users "doctor divago" + "voss")
 
 **Two users, same device + ROM:** POCO X7 Pro (`2412DPC0AG` / `rodin`), **HyperOS OS3.0.302.0, Android 16**
 (`BP2A.250605.031.A3`), on 2.4.5. Both report Shizuku mode doesn't record; divago: "can't use Shizuku,
@@ -413,7 +451,7 @@ locale. German (`values-de`) is a complete LTR locale to use as the template. Gr
 
 ---
 
-## 🐞 Samsung One UI turns USB debugging off by itself — reported 2026-10-05 (user "UserX")
+## ⏸️ NOT OUR BUG (One UI resets it; Auto Blocker suspected) — Samsung hint not built, waiting on UserX — Samsung One UI turns USB debugging off by itself — reported 2026-10-05 (user "UserX")
 
 **Report:** on a **Galaxy S24 FE (SM-S721B)**, One UI / Android 16 (Iran), 2.4.5, STANDALONE + Offline(loopback)
 + Resilient, the **USB debugging toggle keeps turning off by itself** and the user re-enables it by hand.
@@ -444,7 +482,7 @@ generic readiness notice. Do NOT auto-re-assert `adb_enabled` — that starts a 
 
 ---
 
-## 🧪 Issue #49 — sidecar files (.json details, .md transcript) never reach Drive with "Immediately" sync — MERGED into `main` 2026-10-12, APPROVED for next release (reported 2026-10-10, eduardozacour)
+## ✅ SHIPPED v2.4.6 (🧪 no user confirmation) — Issue #49 — sidecar files (.json details, .md transcript) never reach Drive with "Immediately" sync (reported 2026-10-10, eduardozacour)
 
 > **🧪 Merged into `main` 2026-10-12 (`06bf6f62`; code `513933e0`); APPROVED for the next release — the
 > maintainer accepts the risk ("#49 will be merged and released as part of the new version and if there will
@@ -475,7 +513,7 @@ nag). The `.json` is now also matched in the delete cascade (4) via `MetadataSid
 
 ---
 
-## 🧪 Issue #52 — long calls draw no waveform and can't be scrubbed — FIXED, MERGED into `main` 2026-10-13, installed on both phones, device-verified on OP9 (reported 2026-10-12, StateConscious)
+## ✅ SHIPPED v2.4.6 (follow-ups #63 + per-window buffer in [Unreleased]) — Issue #52 — long calls draw no waveform and can't be scrubbed — installed on both phones, device-verified on OP9 (reported 2026-10-12, StateConscious)
 
 > **🧪 FIXED (both parts), MERGED into `main` 2026-10-13 (`3a05cd93` + `57ad1e35`; merge commit on `main`).
 > Installed on both phones; recorder confirmed back up after install-over (OP9 `:recorder`, OP12 `app_process`).
@@ -524,7 +562,7 @@ the OOM is gone; the clearer log covers diagnosis.
 
 ## 📋 Field reports 2026-10-10 — abdo kamel, foxcam, alex_812
 
-### 🐞 abdo kamel — short calls save empty recordings (Shizuku on a low-end Redmi) — self-reported as "low RAM"
+### 🧪 PROBABLY FIXED in v2.4.7 (Shizuku records directly, no scrcpy start-up; abdo unconfirmed) — abdo kamel — short calls save empty recordings (Shizuku on a low-end Redmi) — self-reported as "low RAM"
 Redmi `gale` (23106RN0DA), Android 13, MIUI V14, Egypt, 2.4.5, **SHIZUKU** mode, storage BOTH. Log report (12).
 NOT a RAM kill (no lmkd/OOM; recorder pid stable). Real cause: **Shizuku can't do direct AudioRecord**, so the
 daemon tries direct (`source=4`), it "failed to enter RECORDING state", and falls back to **scrcpy — a ~2 s cold
@@ -642,7 +680,7 @@ deleted — live resolution with a safe fallback. Stays 🧪 (not maintainer-con
 
 ---
 
-## 🔼 Truthful, health-gated recorder status + rebind-at-call — RESEARCHED 2026-10-07 (fixes "Active but missed the call")
+## 🔼 PARTIAL — round-trip probe + honest card BUILT but PARKED on tag `parked/health-gated-recorder-status` (not merged); Shizuku rebind-on-stale shipped v2.4.7 — Truthful, health-gated recorder status + rebind-at-call — RESEARCHED 2026-10-07 (fixes "Active but missed the call")
 
 **Why:** multiple HyperOS/Shizuku reports (UserW Redmi `emerald`, UserZ, and the divago/voss family) where the
 Home card shows **"Active / Ready"** but a real call is **silently not recorded**. Full cited research +
@@ -729,7 +767,7 @@ The batch shipped in 2.4.4 (pulled) → 2.4.5; the shipped pieces are in **Compl
 
 ---
 
-## 🐞 The transcript sheet's height follows its content — one line explains most of #27's follow-up
+## ✅ SHIPPED v2.3.0 (830459f9; a ✅ fix of this heading was lost in merge 06bf6f62) — The transcript sheet's height follows its content — one line explains most of #27's follow-up
 
 **Read from source on 2026-09-07, not measured.** `TranscriptSheet.kt:201`:
 
@@ -968,7 +1006,7 @@ continuous carrier file.
 phone call. If it does not, the second half is near-side only — logged explicitly rather than failing
 silently, so the log will say so.
 
-### 🅿️ Original framing — D5 "flag a moment", before the decision
+### ✅ SHIPPED v2.2.0 (abd5ae04, mark a moment) — Original framing — D5 "flag a moment", before the decision
 
 Pause/Resume already existed. Stop is done. Flag is the remaining third and it is **carrier-only**
 unless a whole ongoing notification is built for the VoIP path, which today posts only error and
@@ -1434,7 +1472,7 @@ Kept rather than deleted, because the log evidence below is real and would matte
 build nobody was changing. But it should **not** be cited as an open field defect, and it was — the
 capture fallback ladder was argued for partly on its strength.
 
-### 🔵 Original report — kept for the evidence
+### ⏸️ PARKED (🟢 since 2026-08-29, likely our own testing) — Original report — kept for the evidence
 
 
 Found while verifying the 2.1.0 install on the maintainer's daily driver. Seven consecutive **carrier**
@@ -1480,7 +1518,7 @@ in order: the `CaptureAudit` line for the capture (was a microphone opened at al
 the `AudioRecord` ever reach RECORDING), the config header (mode, resilient, transport), and whether a
 teardown or mode switch lands inside the call. See [[diagnosing-a-user-report]].
 
-### 🔵 Transcribing long calls — the blow-up is our decoder, not whisper — researched 2026-08-26
+### ✅ SHIPPED v2.2.0 (chunked passes) + per-window buffer fix in [Unreleased] — Transcribing long calls — the blow-up is our decoder, not whisper — researched 2026-08-26
 
 The 15-minute refusal exists because `AudioDecoder` builds the **entire** file in memory, four times over,
 before whisper sees a single sample (`AudioDecoder.kt`, `decodePcm`):
@@ -1559,7 +1597,7 @@ implemented separately. Do not ship a button that encourages users to attach log
 **Known limitation of option A:** it needs a GitHub account, so some users will file nothing. Ship A
 first and find out whether that is actually a problem before paying for C.
 
-### 🔵 F-Droid reproducibility traps that already apply — noted 2026-08-26
+### 🔵 PARTIAL (NDK pinned; doNotStrip + 16 KB zipalign not done) — F-Droid reproducibility traps that already apply — noted 2026-08-26
 
 These bite any app shipping native code, and CallVault already does:
 
@@ -1572,7 +1610,7 @@ These bite any app shipping native code, and CallVault already does:
 The existing CMake/submodule setup is otherwise already on the right side of F-Droid's scanner, because
 anything compiled in the `build:` phase runs after the scan and never needs a `scanignore`.
 
-### 🔵 A call skipped for being too long says so only in the log — found 2026-08-25
+### 🔵 PARTIAL (limit now 60 min, not 15; recorded calls still skip silently, imports show it) — A call skipped for being too long says so only in the log — found 2026-08-25
 
 The 15-minute transcription limit is now enforced in `TranscriptionRunner.runOne` and
 `TranscriptionQueue.pending`, so every route inherits it — nightly sweep, per-call, manual tap and
@@ -1657,7 +1695,7 @@ removes one way the logs could hide it.
 2. Ask the reporter whether it is reproducible, and for a report captured **within a minute** of the
    call while the mic indicator is still lit.
 
-### 🔵 Direction for VoIP calls — investigated 2026-08-25, parked
+### ⏸️ PARKED — Direction for VoIP calls — investigated 2026-08-25, parked
 
 A phone call shows incoming/outgoing; an app call shows only which app it came from. Whether the
 direction is obtainable at all was investigated rather than guessed:
@@ -1690,7 +1728,7 @@ present and the mode passes through `MODE_RINGTONE`, the cheap option works. If 
 Until then the current behaviour is honest: the app badge says where the call happened, and no direction
 is invented that we cannot know.
 
-### 🔵 The release gate, agreed 2026-08-24
+### 🗄️ OBSOLETE (gated the 2.x release; 10+ releases since) — The release gate, agreed 2026-08-24
 
 Judged by **which failures are silent**, since a call recorder's worst outcome is losing a call
 without anyone noticing.
@@ -1710,7 +1748,7 @@ already says you can stop at any time. The long call in #4 re-measures it for fr
 ringback detector), and the CHANGELOG corrected — it told users the attribution came from the
 network's ringback tone, which is both deleted and never true on this phone.
 
-### 🔵 App calls get no speaker labels — found 2026-08-24, not scheduled
+### ✅ SHIPPED v2.2.0 (a475f170) — App calls get no speaker labels — found 2026-08-24
 
 `VoipCaptureSession` is a **third** capture path beside the daemon's direct one and the app's handoff
 one, and the only one with no `SpeakerTurnDetector`. So VoIP transcripts cannot be labelled at all.
@@ -1721,7 +1759,7 @@ detector is small. The real question it raises: the trusted mapping is currently
 per device**, while VoIP's is fixed and the carrier's is an OEM detail — the two cannot share one
 value on a phone where they disagree.
 
-### 🔵 "A call was not recorded" may be a false positive
+### 🔵 PARTIAL (two causes fixed in v2.4.5/v2.4.6; original case never reproduced) — "A call was not recorded" may be a false positive
 
 On 2026-08-21 the status card warned **"A call was not recorded — 13:06"**, and
 `20260821_130658.098+0300_in_גבריאל 2b.ogg` (689 KB) was sitting in the recordings folder the whole
@@ -1736,7 +1774,7 @@ Two other list oddities seen the same day, possibly the same root: a recording p
 not appear in the list at all (today's 08:54), and the saved count moved 61 → 60 → 59 across a
 session without anything being deleted.
 
-### 🔵 Known gaps, agreed but not done
+### 🔵 Known gaps (audit 2026-10-31: summaries ✅ shipped; two-part estimate ✅ shipped v2.3.0; ivrit fine-tune parked)
 
 - **Per-recording summaries** — SHIPPED in 2.0.0. Plan at
   `docs/dev-notes/2026-08-21-summarisation-ui-plan.md`.
@@ -1985,7 +2023,7 @@ second-hand answers. The analysis above stands as a hypothesis until then.
 
 ---
 
-## 🔵 README is out of date after 1.5.5
+## ✅ DONE v2.4.7 (README + screenshots redone 2026-10-21) — README is out of date after 1.5.5
 
 Screenshots predate the Settings panel and the two new wizard steps; **"Settings ▸ Experimental"** is
 referenced throughout but the path is now **Settings ▸ General ▸ Experimental**; and the VoIP
@@ -2066,7 +2104,7 @@ failure re-enables it and never retries. That still leaves OnePlus-class devices
 
 ---
 
-## 🔵 "Test my setup" — prove the whole path works, before it matters
+## 🗄️ OBSOLETE (superseded by the setup-health card, v1.5.3) — "Test my setup" — prove the whole path works, before it matters
 
 > **Superseded (2026-07-28) by [the setup-health design](2026-07-28-setup-health-status-design.md).**
 > The button is gone: a test the user has to remember to press is not read by the people who need it
@@ -2098,7 +2136,7 @@ it checked. Reuse `voipFarPartyHeard`'s honesty pattern — report what was actu
 
 ---
 
-## 🔵 Per-app VoIP support, checked at runtime
+## 🔵 PARTIAL (per-app on/off list shipped v2.2.0; per-app capture status not built) — Per-app VoIP support, checked at runtime
 
 **Why.** Settings currently says VoIP recording is experimental and "some apps block recording, and
 this cannot be known until a call is under way". Half of that is now avoidable: whether an app opts out
@@ -2117,7 +2155,7 @@ promising a prediction. Feeds the README's tested-devices table.
 
 ---
 
-## 🔵 `AdbShell.ensureConnected` is unbounded on the recording-start path
+## ✅ MOSTLY DONE v1.5.5 (handshake bounded; left: ~26 s worst case per WD attempt 📐, unbounded wait on the synchronized entry) — `AdbShell.ensureConnected` is unbounded on the recording-start path
 
 **Why.** It can block for ~75 s while a recording is trying to start. 1.4.6 capped one such read at
 1.5 s after it caused calls to be missed entirely; this is the same class of problem, not yet fixed.
@@ -2125,7 +2163,7 @@ It was the agreed next priority before VoIP took over.
 
 ---
 
-## 🔵 Smaller, known, and worth not forgetting
+## 🔵 Smaller, known, and worth not forgetting (audit 2026-10-31: screenshots ✅ redone; androidTest EXISTS (19 files) since v2.2.0; WD_DISABLE_WHEN_IDLE is read again since v2.4.7; CI signing naming still deliberate; wrong contact label still undiagnosed)
 
 - **✅ Translations are complete and now enforced (2026-07-29).** Ten locales — pt-BR added, the other
   nine backfilled — at 445 translatable strings each. `./gradlew :app:checkTranslations` fails the
