@@ -65,9 +65,10 @@ fun SeekBar(
     // Read the same way as the Recordings list's bar (ListSeekBar): "Playback position, 1:12 of 4:23",
     // and adjustable with TalkBack's seek gestures while there is something loaded to seek in.
     val label = stringResource(R.string.home_player_seek)
+    val spokenMs = rememberSpokenPositionMs(positionMs)
     val stateText = stringResource(
         R.string.home_player_position_of,
-        TranscriptTimestamp.format(positionMs.toLong()),
+        TranscriptTimestamp.format(spokenMs.toLong()),
         TranscriptTimestamp.format(durationMs.toLong()),
     )
     Box(
@@ -81,7 +82,7 @@ fun SeekBar(
                 contentDescription = label
                 stateDescription = stateText
                 progressBarRangeInfo = ProgressBarRangeInfo(
-                    current = positionMs.coerceIn(0, total).toFloat(),
+                    current = spokenMs.coerceIn(0, total).toFloat(),
                     range = 0f..SeekSemantics.rangeEndMs(durationMs),
                 )
                 if (enabled) {

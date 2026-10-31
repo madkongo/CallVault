@@ -86,6 +86,7 @@ fun ListSeekBar(
     }
 
     val shownMs = dragMs ?: positionMs
+    val spokenMs = rememberSpokenPositionMs(positionMs)
     val fraction = ListPlayback.fraction(shownMs, durationMs)
     val dragging = dragMs != null
     val primary = MaterialTheme.colorScheme.primary
@@ -119,7 +120,7 @@ fun ListSeekBar(
                 contentDescription = label
                 stateDescription = stateText
                 progressBarRangeInfo = ProgressBarRangeInfo(
-                    current = positionMs.toFloat(),
+                    current = spokenMs.toFloat(),
                     range = 0f..durationMs.coerceAtLeast(1).toFloat(),
                 )
                 setProgress { target ->

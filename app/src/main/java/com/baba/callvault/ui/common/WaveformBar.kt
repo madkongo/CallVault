@@ -48,6 +48,7 @@ import kotlin.math.roundToInt
  * @param progress how far through, 0..1.
  * @param onSeekTo fraction of the recording to jump to.
  * @param stateText what TalkBack says for the position, e.g. "1:12 of 4:23"; null reads a percentage.
+ * @param spokenProgress the position TalkBack reports, throttled by [rememberSpokenPositionMs].
  */
 @Composable
 fun WaveformBar(
@@ -56,6 +57,7 @@ fun WaveformBar(
     onSeekTo: (Float) -> Unit,
     modifier: Modifier = Modifier,
     stateText: String? = null,
+    spokenProgress: Float = progress,
 ) {
     val played = MaterialTheme.colorScheme.primary
     val remaining = MaterialTheme.colorScheme.primary.copy(alpha = 0.22f)
@@ -82,7 +84,7 @@ fun WaveformBar(
             .semantics {
                 contentDescription = label
                 if (stateText != null) stateDescription = stateText
-                progressBarRangeInfo = ProgressBarRangeInfo(SeekSemantics.fractionFor(progress), 0f..1f)
+                progressBarRangeInfo = ProgressBarRangeInfo(SeekSemantics.fractionFor(spokenProgress), 0f..1f)
                 setProgress { target ->
                     seek(SeekSemantics.fractionFor(target))
                     true
