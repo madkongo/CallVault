@@ -23,6 +23,11 @@ All notable changes to CallVault are documented here. The format is based on
        the recorder start and off again; on → after a recorder restart WD stayed on, log "Leaving Wireless
        debugging on … 'Never turn it off' is on", and the line under the row showed. Greyed in Shizuku mode.
        Maintainer to confirm. -->
+- **Your own transcription server can use http://** (#67). In Settings → Where to transcribe → Custom, an
+  address starting with http:// is now accepted, for a server on your own network or behind a VPN. The audio
+  and key travel unencrypted to it, so use https for anything on the open internet. Asked by QBANIN.
+  <!-- 🧪 VERIFYING: unit tests + checkTranslations only (2026-10-31). Not tried against a real http server on a
+       phone. To settle: point Custom at an http:// Whisper-compatible server, tap Test, transcribe one call. -->
 - **Urdu can be pinned as a transcription language.** Pick it in Settings → Transcription → Language, or in
   the per-call language question. Summaries of Urdu calls are written in Urdu.
   <!-- 🧪 VERIFYING: unit tests and build only (2.4.8-urdu); nothing seen on a phone. Maintainer to pin Urdu,
