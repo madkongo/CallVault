@@ -677,9 +677,10 @@ class RecordingForegroundService : Service() {
         }
         val discardedMs = recordingClock.audioElapsedMs()
         if (!old.release(discard = true)) {
-            // Possibly still live: opening the mix and mic now would make two voice captures.
-            // Its file was kept, and is published with the call's details at the end.
-            AppLogger.w(WifiCallRoute.TAG, "switch from=$from aborted: the first capture did not stop cleanly; keeping its file")
+            // Possibly still live: opening the mix and mic now would make two voice captures. The
+            // old engine stays the session untouched; the call-end stop asks it to stop again and
+            // finalises one file (the part before the failed stop, or the whole call if it kept going).
+            AppLogger.w(WifiCallRoute.TAG, "switch from=$from abandoned: the first capture did not confirm it stopped; it stays the session")
             notificationHelper.showErrorNotification(getString(R.string.wifi_call_switch_aborted))
             return
         }

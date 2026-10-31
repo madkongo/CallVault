@@ -720,12 +720,13 @@ class AudioRecordingEngine {
      *
      * @param discard close the capture but publish nothing: the staged file is deleted. Used when a
      *                Wi-Fi call switches capture mid-call (#45). Not [cancel], which publishes first.
-     *                If the capture did not stop cleanly the file is published instead: it may still
-     *                be the only recording of this call.
-     * @return whether the capture is known to have stopped. Idempotent: a second call does nothing.
+     *                If the capture did not stop cleanly, nothing is closed, published or deleted and
+     *                the engine stays usable: the caller keeps it as the session, and the call-end
+     *                release asks again and finalises one complete file.
+     * @return whether the capture is known to have stopped. After a full release, later calls do nothing.
      */
     fun release(discard: Boolean = false): Boolean {
-        if (released) return releasedCleanly
+        if (released) return true
         released = true
         AppLogger.i(TAG, "Releasing session resources and recording pipeline...")
         livenessHandler.removeCallbacks(livenessWatch)
@@ -755,9 +756,10 @@ class AudioRecordingEngine {
                     .onFailure { AppLogger.w(TAG, "Daemon stopHandoff failed during release: ${it.message}") }
                     .isSuccess
             }
+            if (discard && !(appStopped && daemonStopped)) return keepForCallEnd()
             runCatching { outputPfd?.close() }
             handoffRecording = false
-            return finishRelease(discard, clean = appStopped && daemonStopped)
+            return finishRelease(discard)
         }
 
         if (daemonMode) {
@@ -786,12 +788,14 @@ class AudioRecordingEngine {
                     farPartyHeard = runCatching { daemon.voipFarPartyHeard() }.getOrNull()
                 }
             }
+            if (discard && !stopped) return keepForCallEnd()
             runCatching { outputPfd?.close() }
             daemonRecording = false
-            return finishRelease(discard, clean = stopped)
+            return finishRelease(discard)
         }
 
         val launcherStopped = runCatching { scrcpyLauncher?.stop() }.isSuccess
+        if (discard && !launcherStopped) return keepForCallEnd()
         scrcpyLauncher = null
 
         runCatching {
@@ -806,19 +810,25 @@ class AudioRecordingEngine {
         runCatching { audioPipeReadScope?.cancel() }
         runCatching { scrcpyAudioMuxer?.close() }
         runCatching { outputPfd?.close() }
-        return finishRelease(discard, clean = launcherStopped)
+        return finishRelease(discard)
     }
 
     private var released = false
-    private var releasedCleanly = true
 
-    private fun finishRelease(discard: Boolean, clean: Boolean): Boolean {
-        releasedCleanly = clean
-        if (discard && !clean) {
-            AppLogger.w(TAG, "Capture did not stop cleanly; keeping its file instead of discarding it")
-        }
-        if (discard && clean) discardStaging() else finalizeStagingIfNeeded()
-        return clean
+    private fun finishRelease(discard: Boolean): Boolean {
+        if (discard) discardStaging() else finalizeStagingIfNeeded()
+        return true
+    }
+
+    /**
+     * A discard whose stop was not confirmed: the capture may still be writing. Nothing is closed or
+     * published, and the engine is not marked released, so the call-end release asks the recorder
+     * to stop again and finalises the whole call into one file.
+     */
+    private fun keepForCallEnd(): Boolean {
+        released = false
+        AppLogger.w(TAG, "Capture did not confirm it stopped; leaving it in place for the call-end release")
+        return false
     }
 
     /** Deletes the staged capture without publishing it. Nothing ever reaches the user's folder. */
