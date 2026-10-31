@@ -902,7 +902,12 @@ verification** (real carrier + VoIP call + daemon-up-after-install-over on both 
 Realistic floor ~30–40 MB, not the 6–9 MB of a call-recorder-only app — the transcription/ADB stack stays.
 Medium effort, **real risk** (a wrong keep set = silent no-record). Own branch.
 
-### 🟡 2. Attested / immutable releases (immutable DONE)
+### 🧪 BUILT on `build/release-provenance` (provenance step; immutable DONE) — 2. Attested / immutable releases
+
+> **🧪 VERIFYING (2026-10-31, dry-run only).** `tools/release/attest.sh` signs the locally built APK with cosign
+> keyless and writes `.sigstore.json` + `.sha256` to attach to the DRAFT release. Never run for real: needs
+> `brew install cosign` and a browser login at the next release. Details in the dev-note.
+
 CI (`build-app.yml`) wires up `actions/attest-build-provenance`, but releases are **built locally and
 published with `gh release create`**, so the **published APKs are not attested**. Steps, cheapest first:
 (1) ✅ **immutable releases — DONE 2026-10-13 (maintainer)**; (2) **provenance for the shipped APK** —
