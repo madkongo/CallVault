@@ -59,6 +59,12 @@ class VoipCallDetector(private val context: Context) {
      */
     private var suspendedForCarrier = false
 
+    /**
+     * Set while the mode is in the IN_COMMUNICATION stretch of a carrier call (a Samsung Wi-Fi call).
+     * See [VoipStrayStartPolicy]: without it the hang-up left a stray 1 s `_voip` file (#45).
+     */
+    private var carrierEpisode = false
+
 
     /** Set while a recording is running, so the host can reflect it in its notification. */
     @Volatile
@@ -81,7 +87,7 @@ class VoipCallDetector(private val context: Context) {
     /** Logs the end-of-call signals when they change, while a call is up and for a while after. */
     private fun probe(reason: String, always: Boolean = false) {
         val am = audioManager ?: return
-        if (!callActive && android.os.SystemClock.elapsedRealtime() > probeTailUntil) return
+        if (!callActive && !carrierEpisode && android.os.SystemClock.elapsedRealtime() > probeTailUntil) return
         val now = runCatching { VoipEndProbe.capture(am) }.getOrNull() ?: return
         if (always || VoipEndProbe.isWorthLogging(lastProbe, now)) {
             AppLogger.i(TAG, "endprobe[$reason] callActive=$callActive ${VoipEndProbe.describe(now)}")
@@ -213,6 +219,12 @@ class VoipCallDetector(private val context: Context) {
      * carries the decision out.
      */
     private fun evaluate(mode: Int) {
+        val latched = VoipStrayStartPolicy.latchAfterMode(carrierEpisode, mode)
+        if (carrierEpisode && !latched) {
+            AppLogger.i(TAG, "Carrier episode over (mode=${VoipEndProbe.modeName(mode)}); app-call starts allowed again")
+            probeTailUntil = android.os.SystemClock.elapsedRealtime() + PROBE_TAIL_MS
+        }
+        carrierEpisode = latched
         when (VoipSwitchPolicy.decide(mode, callActive, suspendedForCarrier)) {
             VoipSwitchPolicy.Action.NOTHING -> return
 
@@ -244,8 +256,15 @@ class VoipCallDetector(private val context: Context) {
             // on it would record a phone call the carrier path is already recording — see
             // [VoipTelephonyGate]. Deliberately NOT marking callActive: we believe no app call is up,
             // so a later mode event is free to reconsider once the phone call is over.
-            if (!VoipTelephonyGate.mayStartNow(context)) {
-                AppLogger.i(TAG, "mode=IN_COMMUNICATION but the carrier has a call up — not an app call")
+            val verdict = VoipStrayStartPolicy.verdict(
+                latched = carrierEpisode,
+                managedCall = !VoipTelephonyGate.mayStartNow(context),
+                carrierSession = RecordingForegroundService.isCarrierSessionActive,
+            )
+            if (verdict != VoipStrayStartPolicy.Verdict.START) {
+                carrierEpisode = VoipStrayStartPolicy.latchAfterVerdict(carrierEpisode, verdict)
+                AppLogger.i(TAG, "mode=IN_COMMUNICATION but not an app call: $verdict (carrierEpisode=$carrierEpisode)")
+                probe("refused")
                 return
             }
             handler.removeCallbacks(endCallRunnable)

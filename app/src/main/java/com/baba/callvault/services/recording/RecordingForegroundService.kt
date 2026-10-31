@@ -105,6 +105,11 @@ class RecordingForegroundService : Service() {
 
         /** Intent action sent to this service when the user dismisses the notification (Android 14+). */
         const val ACTION_NOTIFICATION_DISMISSED = "com.baba.callvault.SERVICE_NOTIFICATION_DISMISSED"
+
+        /** True from a carrier START until the session stops. The app-call detector reads it (#45). */
+        @Volatile
+        var isCarrierSessionActive: Boolean = false
+            private set
     }
 
     // ── Dependencies ──────────────────────────────────────────────────────────
@@ -324,6 +329,7 @@ class RecordingForegroundService : Service() {
                 }
 
                 stopRequested = false
+                isCarrierSessionActive = true
                 currentState = RecordingServiceState.Starting(currentMeta)
 
                 // IO dispatcher: AdbShell.ensureConnected + ScrcpyLauncher do real network I/O over the
@@ -531,6 +537,7 @@ class RecordingForegroundService : Service() {
         // First, so no state change from here on re-posts the notification this is about to remove.
         // The finished recording keeps showing as it was until the notification goes.
         isShuttingDown = true
+        isCarrierSessionActive = false
         // The timeline belongs to the call that just ended; leaving it running would date the next
         // call's marks from this one's start.
         recordingClock.reset()
