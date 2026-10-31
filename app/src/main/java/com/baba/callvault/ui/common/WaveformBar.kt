@@ -8,6 +8,7 @@
 
 package com.baba.callvault.ui.common
 
+import androidx.compose.foundation.focusable
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.gestures.detectHorizontalDragGestures
 import androidx.compose.foundation.gestures.detectTapGestures
@@ -72,6 +73,10 @@ fun WaveformBar(
         modifier = modifier
             .fillMaxWidth()
             .height(HEIGHT)
+            // focusable: setProgress makes the node scrollable, and TalkBack 17 then treats it as a
+            // container and will not land on it ("failed all focusability tests", OP9 2026-10-31).
+            // Compose's own Slider is focusable for the same reason.
+            .focusable()
             // An adjustable control to TalkBack, like the other seek bars: the drawn bars are not
             // focusable on their own, so without this the scrubber did not exist for a screen reader.
             .semantics {
