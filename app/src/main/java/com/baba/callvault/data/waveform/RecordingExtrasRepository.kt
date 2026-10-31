@@ -60,6 +60,18 @@ object RecordingExtrasRepository {
     }
 
     /**
+     * The recording's cached shape as it changes: empty until drawn, then the bars.
+     *
+     * The open recording's page watches this instead of drawing for itself, because a long call
+     * takes minutes to draw and a draw owned by the page died the moment the page closed (issue #63).
+     * The drawing itself is queued with [WaveformDrawWorker], which outlives the page.
+     */
+    fun observeWaveform(context: Context, displayName: String): Flow<FloatArray> =
+        dao(context).observeWaveform(displayName).map { cached ->
+            cached?.let { Waveform.decode(it) } ?: FloatArray(0)
+        }
+
+    /**
      * The recording's drawn shape, computing and caching it the first time.
      *
      * Decoding is the expensive part — about twelve seconds for a ninety-minute call — so it happens

@@ -2,14 +2,11 @@
 <!--
   CallVault: FOSS call recording, self-contained over embedded ADB
   Copyright (C) 2026-present The CallVault Authors
-  Licensed under the GNU General Public License v3 or later, with additional terms under Section 7.
-
-  Strings used ONLY by the redesigned ("Signal") Settings screen. Visual-layer copy only;
-  all behavioral strings continue to live in strings.xml.
+  Licensed under the GNU General Public License v3 or later.
 -->
 <resources>
-    <string name="settings_ui_subtitle">ضبط التسجيل والصوت والمظهر</string>
     <string name="settings_ui_about_app">CallVault</string>
+    <string name="settings_ui_open_repo_hint">انقر لفتح المستودع الأصلي للمشروع</string>
     <string name="settings_ui_recording_server_label">محرك التسجيل</string>
-    <string name="settings_ui_open_repo_hint">انقر لفتح المشروع الأصلي</string>
+    <string name="settings_ui_subtitle">تخصيص التسجيل والصوت والمظهر</string>
 </resources>

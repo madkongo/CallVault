@@ -8,6 +8,7 @@
 
 package com.baba.callvault.ui.common
 
+import androidx.compose.foundation.focusable
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.gestures.detectHorizontalDragGestures
 import androidx.compose.foundation.gestures.detectTapGestures
@@ -22,7 +23,15 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.ProgressBarRangeInfo
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.progressBarRangeInfo
+import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.semantics.setProgress
+import androidx.compose.ui.semantics.stateDescription
 import androidx.compose.ui.unit.dp
+import com.baba.callvault.R
 import kotlin.math.max
 import kotlin.math.roundToInt
 
@@ -38,13 +47,17 @@ import kotlin.math.roundToInt
  * @param peaks    one value per bar in 0..1, or empty while it is still being computed.
  * @param progress how far through, 0..1.
  * @param onSeekTo fraction of the recording to jump to.
+ * @param stateText what TalkBack says for the position, e.g. "1:12 of 4:23"; null reads a percentage.
+ * @param spokenProgress the position TalkBack reports, throttled by [rememberSpokenPositionMs].
  */
 @Composable
 fun WaveformBar(
     peaks: FloatArray,
     progress: Float,
     onSeekTo: (Float) -> Unit,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    stateText: String? = null,
+    spokenProgress: Float = progress,
 ) {
     val played = MaterialTheme.colorScheme.primary
     val remaining = MaterialTheme.colorScheme.primary.copy(alpha = 0.22f)
@@ -56,11 +69,27 @@ fun WaveformBar(
     // call whose shape failed to decode is exactly the case that made this matter — see issue #52.
     // rememberUpdatedState so the keyed-on-Unit detectors always call the current onSeekTo.
     val seek by rememberUpdatedState(onSeekTo)
+    val label = stringResource(R.string.home_player_seek)
 
     Box(
         modifier = modifier
             .fillMaxWidth()
             .height(HEIGHT)
+            // focusable: setProgress makes the node scrollable, and TalkBack 17 then treats it as a
+            // container and will not land on it ("failed all focusability tests", OP9 2026-10-31).
+            // Compose's own Slider is focusable for the same reason.
+            .focusable()
+            // An adjustable control to TalkBack, like the other seek bars: the drawn bars are not
+            // focusable on their own, so without this the scrubber did not exist for a screen reader.
+            .semantics {
+                contentDescription = label
+                if (stateText != null) stateDescription = stateText
+                progressBarRangeInfo = ProgressBarRangeInfo(SeekSemantics.fractionFor(spokenProgress), 0f..1f)
+                setProgress { target ->
+                    seek(SeekSemantics.fractionFor(target))
+                    true
+                }
+            }
             .pointerInput(Unit) {
                 detectTapGestures { offset -> seek((offset.x / size.width).coerceIn(0f, 1f)) }
             }

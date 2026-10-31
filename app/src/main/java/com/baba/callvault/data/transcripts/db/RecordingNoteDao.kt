@@ -56,6 +56,10 @@ interface RecordingNoteDao {
     @Query("SELECT peaks FROM recording_waveforms WHERE displayName = :displayName")
     suspend fun waveform(displayName: String): String?
 
+    /** [waveform], as it changes: lets an open recording show its bars the moment a background draw saves them. */
+    @Query("SELECT peaks FROM recording_waveforms WHERE displayName = :displayName")
+    fun observeWaveform(displayName: String): Flow<String?>
+
     @Upsert
     suspend fun upsertWaveform(entry: RecordingWaveformEntry)
 

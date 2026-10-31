@@ -8,16 +8,18 @@
 
 package com.baba.callvault.ui.common
 
-import androidx.compose.foundation.clickable
+import androidx.compose.foundation.selection.toggleable
 import androidx.compose.foundation.layout.Column
 import androidx.compose.material3.ListItem
 import androidx.compose.material3.ListItemDefaults
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
+import androidx.compose.material3.minimumInteractiveComponentSize
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.tooling.preview.Preview
 import com.baba.callvault.ui.theme.CallVaultTheme
 
@@ -41,12 +43,27 @@ fun ToggleListItem(
 ) {
     val contentAlpha = if (enabled) 1f else 0.38f
     ListItem(
-        modifier        = modifier.clickable(enabled = enabled) { onCheckedChange(!checked) },
+        // One toggleable node for the whole row, so TalkBack reads the label with the switch's state
+        // ("…, Switch, On") instead of the label and an unlabelled switch as two stops.
+        modifier        = modifier.toggleable(
+            value = checked,
+            enabled = enabled,
+            role = Role.Switch,
+            onValueChange = onCheckedChange,
+        ),
         headlineContent = { Text(label, color = MaterialTheme.colorScheme.onSurface.copy(alpha = contentAlpha)) },
         supportingContent = if (description != null) {
             { Text(description, color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = contentAlpha)) }
         } else null,
-        trailingContent = { Switch(checked = checked, onCheckedChange = onCheckedChange, enabled = enabled) },
+        // Display only (the row toggles). The minimum size keeps the 48dp slot a clickable Switch has.
+        trailingContent = {
+            Switch(
+                checked = checked,
+                onCheckedChange = null,
+                enabled = enabled,
+                modifier = Modifier.minimumInteractiveComponentSize(),
+            )
+        },
         colors          = ListItemDefaults.colors(containerColor = Color.Transparent)
     )
 }

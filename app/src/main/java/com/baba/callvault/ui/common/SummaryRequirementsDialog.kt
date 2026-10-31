@@ -9,6 +9,7 @@
 package com.baba.callvault.ui.common
 
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.selection.toggleable
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -27,6 +28,7 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
+import androidx.compose.material3.minimumInteractiveComponentSize
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -36,6 +38,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.unit.dp
 import com.baba.callvault.R
 import com.baba.callvault.summary.SummaryModel
@@ -98,11 +101,23 @@ fun SummaryRequirementsDialog(
 
                 Spacer(Modifier.height(8.dp))
                 // Undoable from Settings. A dialog that can permanently remove itself is a trap.
+                // The row toggles, so the label and the box are one TalkBack stop ("Don't ask again,
+                // Checkbox, not checked") instead of an unlabelled checkbox beside loose text.
                 Row(
-                    modifier = Modifier.fillMaxWidth(),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .toggleable(
+                            value = dontAskAgain,
+                            role = Role.Checkbox,
+                            onValueChange = { dontAskAgain = it },
+                        ),
                     verticalAlignment = Alignment.CenterVertically
                 ) {
-                    Checkbox(checked = dontAskAgain, onCheckedChange = { dontAskAgain = it })
+                    Checkbox(
+                        checked = dontAskAgain,
+                        onCheckedChange = null,
+                        modifier = Modifier.minimumInteractiveComponentSize(),
+                    )
                     Text(
                         text = stringResource(R.string.summary_requirements_dont_ask),
                         style = MaterialTheme.typography.bodySmall

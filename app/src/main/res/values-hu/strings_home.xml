@@ -10,6 +10,7 @@
     <string name="home_health_failed_no_audio">A legutóbbi hívás mentve lett, de nem tartalmaz hangot.</string>
     <string name="home_health_failed_one_sided">Az utolsó alkalmazáshívásából csak az Ön oldala lett rögzítve.</string>
     <string name="home_health_failed_one_sided_vivo">A legutóbbi alkalmazáson keresztüli hívásnál csak az Ön oldala került rögzítésre. vivo készüléken: nyissa meg a Hangrögzítő alkalmazást → Alkalmazáson belüli hívásrögzítés, és kapcsolja be (az automatikus indítással együtt).</string>
+    <string name="home_health_failed_one_sided_vivo_overseas">A legutóbbi alkalmazáson keresztüli hívásnál csak az Ön oldala került rögzítésre. Ez a vivo telefon megakadályozza, hogy az alkalmazások rögzítsék a másik felet az alkalmazáson keresztüli hívásokban, és nincs ezt engedélyező beállítás. A normál telefonhívások mindkét oldalon rögzítésre kerülnek.</string>
     <string name="home_health_missed_adb_pairing">Egy hívás nem lett rögzítve — a beállítás akkor még nem fejeződött be, %1$s.</string>
     <string name="home_health_missed_adb_pairing_unnamed">Egy hívás nem lett rögzítve — a beállítás akkor még nem fejeződött be.</string>
     <string name="home_health_missed_developer_options">Egy hívás nem lett rögzítve — a fejlesztői beállítások akkor ki voltak kapcsolva, %1$s.</string>
@@ -115,6 +116,17 @@
     <string name="merge_note_will_keep">A többi hívás is a telefonon marad.</string>
     <string name="home_scroll_to_top">Az elejére</string>
     <string name="home_whatsnew_full_notes">Teljes kiadási jegyzék</string>
+    <string name="whatsnew_248_title">Saját átírókulcs és könnyebb olvasás</string>
+    <string-array name="whatsnew_248_items">
+        <item>Átírás saját kulccsal — Groq, OpenRouter vagy saját szerver, percek helyett másodpercek alatt (Beállítások ▸ Hol történjen az átírás)</item>
+        <item>Lejátszás közvetlenül a felvételek listájából, sávval bármely pontra ugráshoz</item>
+        <item>Előző és Következő átirat olvasás közben, és „Lejátszás követése” kapcsoló</item>
+        <item>Az importálás az Átiratok oldalon most egy gomb: a hang megtartása vagy csak az átirat</item>
+        <item>A 45 perces vagy hosszabb hívások ismét átírhatók, importálhatók és mutatják a hullámformájukat</item>
+        <item>A modellek letöltése mobiladaton előbb rákérdez, ahelyett hogy Wi-Fire várna</item>
+        <item>Perzsára hangolt beszédmodell és jobb TalkBack-támogatás</item>
+        <item>Csatlakozik azokon a telefonokon is, amelyek elrejtik a vezeték nélküli hibakeresés címét</item>
+    </string-array>
     <string name="whatsnew_247_title">Új beállítások, a Shizuku felzárkózik, és ukrán nyelv</string>
     <string-array name="whatsnew_247_items">
         <item>Új beállításelrendezés — minden oldal csak a saját beállításait mutatja, a részletek az ⓘ mögött; a klasszikus nézet egy koppintásra van</item>
@@ -247,7 +259,7 @@
     <string name="home_transcripts_count">%1$d átírva</string>
     <string name="home_summaries_count">%1$d összefoglalva</string>
     <string name="home_transcripts_empty_title">Még nincs átirat</string>
-    <string name="home_transcripts_empty_hint">Kérj átiratot egy felvétel menüjéből, vagy importálj fentebb egy hangfájlt – mindkettő itt jelenik meg, amint elkészül.</string>
+    <string name="home_transcripts_empty_hint">Kérj átiratot egy felvétel menüjéből, vagy koppints az Importálás gombra egy hangfájl hozzáadásához. Itt jelenik meg, amint elkészül.</string>
     <string name="home_summaries_empty_title">Még nincs összefoglaló</string>
     <string name="home_summaries_empty_hint">Nyiss meg egy hívást, amelynek van átirata, és kérj összefoglalót; amint elkészül, itt jelenik meg.</string>
 
@@ -263,7 +275,11 @@
     <!-- Transcripts: bringing in audio CallVault did not record -->
     <string name="transcripts_import_title">Hang importálása</string>
     <string name="transcripts_import_working">Importálás…</string>
-    <string name="transcripts_import_body">Írass át egy hangüzenetet vagy bármilyen más hangfájlt, ami már a telefonodon van.</string>
+    <string name="transcripts_import_fab">Importálás</string>
+    <string name="import_sheet_keep">Hang megtartása</string>
+    <string name="import_sheet_keep_hint">A felvételeid között jelenik meg</string>
+    <string name="import_sheet_transcript_only">Csak átirat</string>
+    <string name="import_sheet_transcript_only_hint">A hang utána törlődik</string>
     <string name="import_failed_title">Nem sikerült importálni a fájlt</string>
     <string name="import_failed_not_audio">A CallVault nem tudja olvasni ezt a fájltípust. Próbálj .opus, .ogg, .m4a, .mp3 vagy .wav felvételt.</string>
     <string name="import_failed_empty">Ez a fájl üres, így nem lenne mit átírni.</string>

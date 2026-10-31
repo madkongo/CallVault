@@ -39,3 +39,17 @@ MIT licence text:
 > COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER
 > IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
 > CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+
+## Downloaded third-party model weights
+
+These are **not** bundled: the app downloads them only when the user chooses them.
+
+- **Persian-tuned speech model** (offered when transcription is pinned to Persian, GitHub #55) —
+  "Whisper large-v3-turbo — Persian (Farsi)" by givia
+  (https://huggingface.co/givia/whisper-large-v3-turbo-persian), licensed under
+  CC BY 4.0 (https://creativecommons.org/licenses/by/4.0/). It is a fine-tune of
+  openai/whisper-large-v3-turbo (MIT). Changes: quantised to q5_0 for whisper.cpp,
+  as published at https://huggingface.co/pejmans21/whisper-large-v3-turbo-persian-ggml
+  (file `ggml-large-v3-turbo-persian-q5_0.bin`, SHA-256
+  d832fe5cd81c756bc1962765cff4a33cacde00a7701809837875245870b6d5a8). CallVault does
+  not modify the file. The credit is also shown in the app under the model's download rows.

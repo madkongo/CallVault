@@ -23,6 +23,7 @@ import androidx.compose.ui.unit.dp
 import com.baba.callvault.R
 import com.baba.callvault.data.AppPreferences
 import com.baba.callvault.transcription.TranscriptionScheduler
+import com.baba.callvault.transcription.model.DownloadNetwork
 import com.baba.callvault.transcription.model.DownloadableModel
 import com.baba.callvault.transcription.model.TranscriptionModel
 import com.baba.callvault.ui.common.TranscriptionLabels
@@ -44,7 +45,7 @@ import com.baba.callvault.ui.common.CvCard
  *
  * **The downloads start here and nothing waits for them.** The step used to say the button was in
  * Settings, which asked someone who has just been told about the feature to go and find it later.
- * They are WorkManager jobs on an unmetered network, so Next and Finish stay enabled throughout
+ * They are WorkManager jobs (Wi-Fi only unless the user says yes to mobile data at the tap), so Next and Finish stay enabled throughout
  * ([canAdvanceFrom] never asks about this step) and the download carries on while the user finishes
  * setup and lands on Home.
  *
@@ -54,7 +55,7 @@ import com.baba.callvault.ui.common.CvCard
 @Composable
 internal fun ModelsStep(
     updateTrigger: Int,
-    onDownloadModel: (DownloadableModel) -> Unit,
+    onDownloadModel: (DownloadableModel, DownloadNetwork) -> Unit,
     onCancelModelDownload: (DownloadableModel) -> Unit,
     onDeleteModel: (DownloadableModel) -> Unit,
     onImportModel: (DownloadableModel, Uri) -> Unit,
@@ -67,8 +68,10 @@ internal fun ModelsStep(
     var modelId by remember { mutableStateOf(prefs.getTranscriptionModelId()) }
     val selectedModel = TranscriptionModel.fromId(modelId) ?: TranscriptionModel.DEFAULT
 
-    // Built from the catalogue, so a new model tier is described without touching this.
-    val modelSizes = TranscriptionModel.entries.map { model ->
+    // The same tiers the dropdown lists (a Persian-only tier appears once Persian is pinned, #55),
+    // built from the catalogue so a new tier is described without touching this.
+    val offeredModels = rememberOfferedTranscriptionModels(language, modelId)
+    val modelSizes = offeredModels.map { model ->
         stringResource(
             R.string.wizard_transcription_model_size,
             stringResource(TranscriptionLabels.titleOf(model)),
@@ -121,6 +124,7 @@ internal fun ModelsStep(
             ) {
                 TranscriptionModelField(
                     modelId = modelId,
+                    offered = offeredModels,
                     onModelChange = { chosen ->
                         modelId = chosen
                         prefs.setTranscriptionModelId(chosen)

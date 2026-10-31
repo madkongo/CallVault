@@ -10,7 +10,7 @@ package com.baba.callvault.ui.common
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
-import androidx.compose.foundation.clickable
+import androidx.compose.foundation.selection.toggleable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -48,6 +48,7 @@ import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.baba.callvault.R
@@ -238,7 +239,15 @@ private fun MergeRow(
         modifier = Modifier
             .fillMaxWidth()
             .clip(RoundedCornerShape(10.dp))
-            .then(if (enabled) Modifier.clickable(onClick = onToggle) else Modifier)
+            // toggleable, not clickable: TalkBack then says "Checkbox, checked" rather than only
+            // "double-tap to activate" with no hint of whether the call is in the merge. The primary row
+            // passes enabled = false and reads as checked and unavailable, which is what it is.
+            .toggleable(
+                value = checked,
+                enabled = enabled,
+                role = Role.Checkbox,
+                onValueChange = { onToggle() },
+            )
             .padding(vertical = 6.dp, horizontal = 4.dp)
     ) {
         Box(modifier = Modifier.size(MARK_BOX), contentAlignment = Alignment.Center) {

@@ -82,7 +82,11 @@
     <string name="summaries_failed_hint">Відкрийте, щоб повторити.</string>
     <string name="transcripts_import_title">Імпортувати аудіо</string>
     <string name="transcripts_import_working">Імпортування…</string>
-    <string name="transcripts_import_body">Розпізнавайте голосові повідомлення та інші аудіофайли з телефону.</string>
+    <string name="transcripts_import_fab">Імпорт</string>
+    <string name="import_sheet_keep">Зберегти аудіо</string>
+    <string name="import_sheet_keep_hint">З\'явиться серед ваших записів</string>
+    <string name="import_sheet_transcript_only">Лише розшифровка</string>
+    <string name="import_sheet_transcript_only_hint">Аудіо потім видаляється</string>
     <string name="import_failed_title">Не вдалося імпортувати файл</string>
     <string name="import_failed_not_audio">Непідтримуваний формат. Спробуйте .opus, .ogg, .m4a, .mp3 або .wav.</string>
     <string name="import_failed_empty">Файл порожній — немає звуку для розпізнавання.</string>
@@ -147,6 +151,7 @@
     <string name="home_health_missed_secure_settings">Дзвінок не записано: CallVault утратив дозвіл на запуск рекордера, %1$s.</string>
     <string name="home_health_missed_secure_settings_unnamed">Дзвінок не записано: втрачено дозвіл на запуск рекордера.</string>
     <string name="home_health_failed_one_sided_vivo">Записано лише ваш голос. На vivo перевірте параметр запису дзвінків із застосунків у системному диктофоні.</string>
+    <string name="home_health_failed_one_sided_vivo_overseas">Записано лише ваш голос. Цей телефон vivo не дозволяє застосункам записувати співрозмовника в дзвінках через застосунки, і дозволити це неможливо. Звичайні телефонні дзвінки записуються з обох сторін.</string>
     <string name="whatsnew_221_title">Швидший запуск і менше хибних попереджень</string>
     <string name="whatsnew_221_body">CallVault швидко відкривається навіть із великим архівом: програма більше не перечитує тривалість усіх записів щоразу під час показу списку.\n\nТакож покращено діагностику резервного копіювання в Google Drive.</string>
     <string name="whatsnew_220_title">Швидкий пошук та керування під час дзвінка</string>
@@ -168,6 +173,17 @@
     <string name="whatsnew_156_where">Налаштування ▸ Запис ▸ Телефонні дзвінки</string>
     <string name="settings_merge_keep_originals_description">Після обʼєднання залишати початкові записи на телефоні. За замовчуванням вимкнено. Обʼєднану розмову можна розділити.</string>
     <string name="unmerge_message">Знову зʼявляться ці дзвінки з їхніми транскрипціями та мітками:</string>
+    <string name="whatsnew_248_title">Власний ключ для розшифровки та зручніше читання</string>
+    <string-array name="whatsnew_248_items">
+        <item>Розшифровка з власним ключем — Groq, OpenRouter або власний сервер, за секунди замість хвилин (Налаштування ▸ Де розпізнавати)</item>
+        <item>Відтворення просто зі списку записів, зі смугою для переходу в будь-яке місце</item>
+        <item>«Попередній» і «Наступний» під час читання розшифровки та перемикач «Стежити за відтворенням»</item>
+        <item>Імпорт на сторінці розшифровок тепер одна кнопка: зберегти аудіо або лише розшифровку</item>
+        <item>Довгі дзвінки від 45 хвилин знову розшифровуються, імпортуються й показують хвилю</item>
+        <item>Завантаження моделей мобільним інтернетом спершу питає, а не чекає на Wi-Fi</item>
+        <item>Мовна модель, навчена на перській, і краща підтримка TalkBack</item>
+        <item>Під\'єднується на телефонах, які приховують адресу налагодження через Wi-Fi</item>
+    </string-array>
     <string name="whatsnew_247_title">Нові налаштування, Shizuku надолужує, і українська</string>
     <string-array name="whatsnew_247_items">
         <item>Новий вигляд налаштувань — кожна сторінка показує лише свої налаштування, подробиці за ⓘ; класичний вигляд за один дотик</item>
@@ -190,7 +206,7 @@
     <string name="offline_failed_no_wifi">Не вдалося ввімкнути: немає Wi-Fi. Один раз підключіться до будь-якої мережі й повторіть.</string>
     <string name="offline_failed_wd_refused">Android заборонив бездротове налагодження в цій мережі. Увімкніть його в параметрах розробника та підтвердьте.</string>
     <string name="offline_failed_needs_usb">Спочатку ввімкніть налагодження USB у налаштуваннях CallVault. Воно потрібне для запису без Wi-Fi.</string>
-    <string name="home_transcripts_empty_hint">Виберіть «Розпізнати» в меню запису або імпортуйте аудіо. Текст зʼявиться тут після обробки.</string>
+    <string name="home_transcripts_empty_hint">Попросіть розшифровку в меню запису або натисніть «Імпорт», щоб додати аудіофайл. Вона з\'явиться тут, щойно буде готова.</string>
     <string name="home_summaries_empty_hint">Відкрийте розмову з транскрипцією та створіть підсумок. Він зʼявиться тут.</string>
     <string name="transcripts_waiting_hint">Ці файли додані для розпізнавання. Натисніть, щоб розпочати, або відкрийте для прослуховування чи видалення.</string>
     <string name="import_failed_undecodable">Телефон не може прочитати аудіо в цьому файлі. Він може бути пошкоджений або мати непідтримуваний формат.</string>

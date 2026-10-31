@@ -111,4 +111,51 @@ class PcmShortSinkTest {
         assertEquals(1, sink.size)
         assertEquals(42.toShort(), sink.array[0])
     }
+
+    // --- spanUs: issue #63, a window must reserve its own length, not the whole call ---
+
+    private val call45MinUs = 45L * 60 * 1_000_000
+
+    @Test
+    fun a_whole_file_decode_reserves_the_declared_length() {
+        assertEquals(call45MinUs, PcmShortSink.spanUs(call45MinUs))
+    }
+
+    @Test
+    fun a_five_minute_window_reserves_five_minutes_plus_seek_room_not_the_call() {
+        val from = 10L * 60 * 1_000_000
+        val to = 15L * 60 * 1_000_000
+        assertEquals(5L * 60 * 1_000_000 + 2_000_000, PcmShortSink.spanUs(call45MinUs, from, to))
+    }
+
+    @Test
+    fun the_first_window_needs_no_seek_room() {
+        assertEquals(300_000_000L, PcmShortSink.spanUs(call45MinUs, 0L, 300_000_000L))
+    }
+
+    @Test
+    fun a_window_past_the_end_is_cut_at_the_declared_length() {
+        val from = 44L * 60 * 1_000_000
+        assertEquals(60_000_000L + 2_000_000, PcmShortSink.spanUs(call45MinUs, from, call45MinUs + 300_000_000L))
+    }
+
+    @Test
+    fun a_short_probe_reserves_only_the_probe() {
+        assertEquals(2_000_000L, PcmShortSink.spanUs(call45MinUs, 0L, 2_000_000L))
+    }
+
+    @Test
+    fun nothing_known_means_nothing_reserved_beyond_the_default() {
+        assertEquals(0L, PcmShortSink.spanUs(0L))
+        assertEquals(0L, PcmShortSink.spanUs(call45MinUs, call45MinUs, Long.MAX_VALUE))
+    }
+
+    @Test
+    fun a_window_of_a_long_call_fits_a_256_mb_heap() {
+        // 48 kHz stereo, the larger of the two layouts CallVault writes. Shorts are 2 bytes.
+        val bytes = 2L * PcmShortSink.capacityFor(
+            PcmShortSink.spanUs(call45MinUs, 600_000_000L, 960_000_000L), 48_000, 2,
+        )
+        assertTrue("a 6-minute window reserved $bytes bytes", bytes < 80L * 1024 * 1024)
+    }
 }

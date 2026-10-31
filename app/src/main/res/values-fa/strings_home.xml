@@ -91,6 +91,7 @@
     <string name="home_health_failed_daemon">ضبط‌کننده در حین آخرین تماس شما متوقف شد.</string>
     <string name="home_health_failed_one_sided">در آخرین تماس درون‌برنامه‌ای شما فقط صدای شما ضبط شد.</string>
     <string name="home_health_failed_one_sided_vivo">در آخرین تماس درون‌برنامه‌ای شما فقط صدای شما ضبط شد. در vivo: برنامه ضبط صدا را باز کنید، گزینه «In-app call recording» را پیدا کرده و آن را روشن کنید (به‌همراه «Auto-start recording»).</string>
+    <string name="home_health_failed_one_sided_vivo_overseas">در آخرین تماس درون‌برنامه‌ای شما فقط صدای شما ضبط شد. این گوشی vivo اجازه نمی‌دهد برنامه‌ها صدای طرف مقابل را در تماس‌های درون‌برنامه‌ای ضبط کنند و گزینه‌ای برای اجازه دادن ندارد. تماس‌های تلفنی معمولی از هر دو طرف ضبط می‌شوند.</string>
     <string name="home_date_today">امروز</string>
     <string name="home_date_yesterday">دیروز</string>
     <string name="whatsnew_221_title">بازشدن سریع‌تر، و سکوت درباره مشکلاتی که وجود ندارند</string>
@@ -137,6 +138,17 @@
     <string name="merge_note_will_keep">تماس‌های دیگر نیز روی گوشی نگه داشته می‌شوند.</string>
     <string name="home_scroll_to_top">بالا</string>
     <string name="home_whatsnew_full_notes">یادداشت‌های کامل نسخه</string>
+    <string name="whatsnew_248_title">کلید رونویسی خودتان و خواندن آسان‌تر</string>
+    <string-array name="whatsnew_248_items">
+        <item>رونویسی با کلید خودتان — Groq، OpenRouter یا سرور خودتان، در چند ثانیه به‌جای چند دقیقه (تنظیمات ◂ محل رونویسی)</item>
+        <item>پخش مستقیم از فهرست ضبط‌ها، با نواری برای رفتن به هر نقطه</item>
+        <item>قبلی و بعدی هنگام خواندن متن، و کلید «دنبال کردن پخش»</item>
+        <item>وارد کردن در صفحهٔ متن‌ها حالا یک دکمه است: صدا را نگه دارید یا فقط متن را</item>
+        <item>تماس‌های طولانی ۴۵ دقیقه یا بیشتر دوباره رونویسی و وارد می‌شوند و شکل موجشان نمایش داده می‌شود</item>
+        <item>دانلود مدل با دادهٔ همراه اول می‌پرسد، به‌جای اینکه منتظر وای‌فای بماند</item>
+        <item>یک مدل گفتار مخصوص فارسی و پشتیبانی بهتر از TalkBack</item>
+        <item>روی گوشی‌هایی که نشانی اشکال‌زدایی بی‌سیم را پنهان می‌کنند هم وصل می‌شود</item>
+    </string-array>
     <string name="whatsnew_247_title">تنظیمات تازه، Shizuku عقب‌ماندگی را جبران می‌کند، و اوکراینی</string>
     <string-array name="whatsnew_247_items">
         <item>چیدمان تازهٔ تنظیمات — هر صفحه فقط تنظیمات خودش را نشان می‌دهد و جزئیات پشت ⓘ است؛ نمای کلاسیک با یک لمس در دسترس است</item>
@@ -264,7 +276,7 @@
     <string name="home_transcripts_count">%1$d رونویسی‌شده</string>
     <string name="home_summaries_count">%1$d خلاصه‌شده</string>
     <string name="home_transcripts_empty_title">هنوز چیزی رونویسی نشده است</string>
-    <string name="home_transcripts_empty_hint">از منوی یک فایل ضبط‌شده رونوشت بخواهید، یا در بالا یک فایل صوتی وارد کنید. هر کدام پس از نوشته شدن اینجا نمایان می‌شود.</string>
+    <string name="home_transcripts_empty_hint">از منوی یک ضبط، متن آن را بخواهید یا روی «وارد کردن» بزنید تا یک فایل صوتی اضافه کنید. هر کدام پس از نوشته شدن اینجا نمایش داده می‌شود.</string>
     <string name="home_summaries_empty_title">هنوز چیزی خلاصه نشده است</string>
     <string name="home_summaries_empty_hint">تماسی را که رونوشت دارد باز کنید و خلاصه بخواهید؛ پس از نوشته شدن اینجا نمایان می‌شود.</string>
 
@@ -281,7 +293,11 @@
     <!-- Transcripts: bringing in audio CallVault did not record -->
     <string name="transcripts_import_title">وارد کردن صدا</string>
     <string name="transcripts_import_working">در حال وارد کردن…</string>
-    <string name="transcripts_import_body">یک پیام صوتی یا هر فایل صوتی دیگری را که از پیش روی گوشی‌تان دارید رونویسی کنید.</string>
+    <string name="transcripts_import_fab">وارد کردن</string>
+    <string name="import_sheet_keep">نگه داشتن صدا</string>
+    <string name="import_sheet_keep_hint">در کنار ضبط‌هایتان نمایش داده می‌شود</string>
+    <string name="import_sheet_transcript_only">فقط متن</string>
+    <string name="import_sheet_transcript_only_hint">صدا پس از آن حذف می‌شود</string>
     <string name="import_failed_title">وارد کردن آن فایل ممکن نشد</string>
     <string name="import_failed_not_audio">CallVault نمی‌تواند آن نوع فایل را بخواند. یک فایل ضبط‌شده با قالب ‎.opus‎، ‎.ogg‎، ‎.m4a‎، ‎.mp3‎ یا ‎.wav‎ را امتحان کنید.</string>
     <string name="import_failed_empty">آن فایل خالی است، بنابراین چیزی برای رونویسی وجود نخواهد داشت.</string>

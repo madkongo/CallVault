@@ -24,7 +24,9 @@ import com.baba.callvault.integrations.scrcpy.ScrcpyAudioCodec
 import com.baba.callvault.data.SyncScheduleMode
 import com.baba.callvault.data.TranscriptionMode
 import com.baba.callvault.transcription.TranscriptionScheduler
+import com.baba.callvault.transcription.cloud.TranscriptionService
 import com.baba.callvault.summary.SummaryModel
+import com.baba.callvault.transcription.model.DownloadNetwork
 import com.baba.callvault.transcription.model.DownloadableModel
 import com.baba.callvault.transcription.model.ModelDownloadWorker
 import com.baba.callvault.transcription.model.ModelTransferWorker
@@ -72,6 +74,8 @@ interface SettingsActions {
     fun setShowToastsEnabled(enabled: Boolean)
     fun setAppLanguage(languageCode: String)
     fun setLoggingEnabled(enabled: Boolean)
+    /** Debug test switch for #65: the next Wireless-debugging connect skips mDNS and searches loopback ports. */
+    fun setSkipMdnsConnectForTest(enabled: Boolean)
     fun getAppVersion(): String
     fun setFileNameTemplate(template: String)
     fun setStorageTarget(target: StorageTarget)
@@ -108,14 +112,20 @@ interface SettingsActions {
 
     /** Whether tapping Transcribe asks which language, for phones that take calls in several. */
     fun setTranscriptionAskLanguage(ask: Boolean)
-    fun downloadTranscriptionModel(model: TranscriptionModel)
+
+    /** On this phone or a cloud service (#48). The consent dialog has already been answered. */
+    fun setTranscriptionService(service: TranscriptionService)
+
+    /** Whether cloud transcription may upload over mobile data. */
+    fun setTranscriptionCloudMobileData(allowed: Boolean)
+    fun downloadTranscriptionModel(model: TranscriptionModel, network: DownloadNetwork)
 
     /** Stops a download in progress. The partial file is kept, so resuming does not re-fetch it. */
     fun cancelTranscriptionModelDownload(model: TranscriptionModel)
     fun deleteTranscriptionModel(model: TranscriptionModel)
 
     /** The summarisation model, which uses the same download machinery at six times the size. */
-    fun downloadSummaryModel(model: SummaryModel)
+    fun downloadSummaryModel(model: SummaryModel, network: DownloadNetwork)
 
     /** Stops a download in progress. The partial file is kept, so resuming does not re-fetch it. */
     fun cancelSummaryModelDownload(model: SummaryModel)
@@ -538,9 +548,23 @@ class SettingsViewModel(application: Application) : AndroidViewModel(application
         refresh()
     }
 
-    /** Queues a model download (unmetered network only). */
-    override fun downloadTranscriptionModel(model: TranscriptionModel) {
-        ModelDownloadWorker.enqueue(appContext, model)
+    /** Saves where calls are transcribed, and re-applies the sweep: a cloud run needs a network. */
+    override fun setTranscriptionService(service: TranscriptionService) {
+        preferences.setTranscriptionService(service)
+        TranscriptionScheduler.apply(appContext)
+        refresh()
+    }
+
+    /** Saves the mobile-data choice and re-applies the sweep's network constraint. */
+    override fun setTranscriptionCloudMobileData(allowed: Boolean) {
+        preferences.setTranscriptionCloudMobileData(allowed)
+        TranscriptionScheduler.apply(appContext)
+        refresh()
+    }
+
+    /** Queues a model download over [network]: Wi-Fi only unless the user chose mobile data. */
+    override fun downloadTranscriptionModel(model: TranscriptionModel, network: DownloadNetwork) {
+        ModelDownloadWorker.enqueue(appContext, model, network)
         refresh()
     }
 
@@ -555,9 +579,9 @@ class SettingsViewModel(application: Application) : AndroidViewModel(application
         refresh()
     }
 
-    /** Queues the summariser for download (unmetered network only). */
-    override fun downloadSummaryModel(model: SummaryModel) {
-        ModelDownloadWorker.enqueue(appContext, model)
+    /** Queues the summariser for download over [network]: Wi-Fi only unless the user chose mobile data. */
+    override fun downloadSummaryModel(model: SummaryModel, network: DownloadNetwork) {
+        ModelDownloadWorker.enqueue(appContext, model, network)
         refresh()
     }
 
@@ -696,6 +720,11 @@ class SettingsViewModel(application: Application) : AndroidViewModel(application
      *
      * @param enabled `true` to start capturing application logs.
      */
+    override fun setSkipMdnsConnectForTest(enabled: Boolean) {
+        preferences.setDebugSkipMdnsConnect(enabled)
+        refresh()
+    }
+
     override fun setLoggingEnabled(enabled: Boolean) {
         if (enabled) {
             AppLogger.clearLogs()

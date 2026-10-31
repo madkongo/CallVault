@@ -12,6 +12,7 @@
     <!-- ========================================== -->
     <string name="app_name" translatable="false">CallVault</string>
     <string name="general_close">Close</string>
+    <!-- Spoken by TalkBack for a section header that folds open and shut. -->
     <string name="voicemail_contact_label">Voicemail</string>
     <string name="general_recommended">Recommended</string>
     <string name="general_continue">Continue</string>
@@ -191,6 +192,7 @@
     <string name="voip_missed_label">App call</string>
     <string name="voip_one_sided_warning">Only your side of that app call was recorded — the other app does not allow its call audio to be captured.</string>
     <string name="voip_one_sided_warning_vivo">Only your side of that app call was recorded. On vivo, open the Recorder app → In-app call recording and turn it on (with Auto-start recording) to record the other person too.</string>
+    <string name="voip_one_sided_warning_vivo_overseas">Only your side of that app call was recorded. This vivo phone blocks apps from recording the other person in app calls, and its Recorder app has no option to allow it. Normal phone calls still record both sides.</string>
     <string name="voip_recording_unavailable">Couldn\'t enable on this device — VoIP recording isn\'t available here.</string>
     <string name="voip_recording_names_hint">Contact names come from the calling app\'s own call notification. If notifications are turned off for that app, its recordings are saved without a name.</string>
     <string name="settings_usb_debugging_label">USB debugging</string>
@@ -503,7 +505,7 @@
     <string name="list_separator">", "</string>
     <string name="wizard_transcription_summary_heading">Summaries</string>
     <string name="wizard_transcription_summary_body">Once a call has a transcript, CallVault can also write a short summary of it — on the phone, like everything else here.</string>
-    <string name="wizard_transcription_background_note">Both downloads only run over Wi-Fi, and they keep going in the background. You can carry on and finish setup now — CallVault\'s settings show the same progress afterwards.</string>
+    <string name="wizard_transcription_background_note">Both downloads keep going in the background. You can carry on and finish setup now — CallVault\'s settings show the same progress afterwards.</string>
 
     <string name="wizard_audio_title">Audio quality</string>
     <string name="wizard_audio_subtitle">Pick the recording format and bit rate. Opus at 16 kbps is recommended for clear voice at small file sizes.</string>
@@ -546,6 +548,10 @@
     <string name="home_player_stop">Stop</string>
     <string name="home_player_loading">Loading…</string>
     <string name="home_player_error">Couldn\'t play this file.</string>
+    <!-- Recordings list, the row that is playing: "1:12 of 4:23" (position, then length). -->
+    <string name="home_player_position_of">%1$s of %2$s</string>
+    <!-- Screen-reader name of the seek bar on the playing row. -->
+    <string name="home_player_seek">Playback position</string>
 
     <!-- Home: delete recording -->
     <string name="home_share">Share</string>
@@ -626,8 +632,10 @@
     -->
     <string name="transcription_model_best">Best quality</string>
     <string name="transcription_model_best_small_download">Best quality, smaller download</string>
+    <string name="transcription_model_persian">Persian-tuned</string>
+    <string name="transcription_model_persian_licence">Best quality, trained on Persian speech. Whisper large-v3-turbo Persian by givia, CC BY 4.0 licence, quantised for whisper.cpp. It is downloaded separately rather than included in CallVault.</string>
     <string name="transcription_model_download">Download model</string>
-    <string name="transcription_model_download_subtitle">%1$d MB, over Wi-Fi only</string>
+    <string name="transcription_model_download_subtitle">%1$d MB</string>
     <string name="transcription_model_delete">Delete model</string>
     <string name="transcription_model_installed">Downloaded and ready</string>
     <!--
@@ -669,11 +677,16 @@
       when the model does — do not hardcode one into a string.
     -->
     <string name="summary_model_download">Download the summariser</string>
-    <string name="summary_model_download_subtitle">%1$.1f GB, over Wi-Fi only</string>
+    <string name="summary_model_download_subtitle">%1$.1f GB</string>
     <string name="summary_model_delete">Delete the summariser</string>
     <string name="summary_model_installed">Downloaded and ready</string>
     <string name="summary_model_downloading">Downloading… %1$d%%</string>
     <string name="summary_model_waiting">Waiting for Wi-Fi</string>
+    <!-- Asked when Download is tapped on mobile data. %1$s is the size as the download row shows it ("190 MB", "3.5 GB"). -->
+    <string name="mobile_data_download_title">You\'re not on Wi-Fi</string>
+    <string name="mobile_data_download_body">This model is %1$s. Download it now on mobile data, or wait and let it start by itself when you\'re on Wi-Fi?</string>
+    <string name="mobile_data_download_wait">Wait for Wi-Fi</string>
+    <string name="mobile_data_download_now">Download now on mobile data</string>
     <string name="summary_model_cancel">Cancel the download</string>
     <string name="summary_model_resume">Resume the download</string>
     <string name="summary_model_resume_subtitle">%1$.1f GB of %2$.1f GB already downloaded</string>
@@ -717,7 +730,7 @@
       per-minute rate.
     -->
     <string name="summary_requirements_heading">Before you download</string>
-    <string name="summary_requirements_download">%1$.1f GB to download, over Wi-Fi only</string>
+    <string name="summary_requirements_download">%1$.1f GB to download</string>
     <string name="summary_requirements_memory">About %1$.1f GB of memory while it runs</string>
     <string name="summary_requirements_time">Roughly a minute or two for a short call, longer for a long one</string>
     <string name="summary_requirements_private">Everything happens on your phone. Nothing is sent anywhere.</string>
@@ -778,6 +791,39 @@
     <string name="transcribe_language_confirm">Transcribe</string>
     <string name="transcription_ask_language_title">Ask which language each time</string>
     <string name="transcription_ask_language_subtitle">Choose the language per recording instead of always using the one above. It applies to that recording only.</string>
+    <!-- Where to transcribe: on this phone or with the user's own cloud key (issue #48). No prices anywhere. -->
+    <string name="transcription_where_title">Where to transcribe</string>
+    <string name="transcription_where_on_device">On this phone</string>
+    <string name="transcription_where_on_device_desc">Private. Slower: about 1.5 min per minute of call.</string>
+    <string name="transcription_where_groq_desc">Fast: usually seconds per call.</string>
+    <string name="transcription_where_openrouter_desc">One key for many services. Microsoft MAI-Transcribe.</string>
+    <string name="transcription_where_custom">Custom (advanced)</string>
+    <string name="transcription_where_custom_desc">Any OpenAI-compatible server.</string>
+    <string name="transcription_where_custom_service">your server</string>
+    <string name="transcription_where_recommended">Recommended</string>
+    <string name="transcription_cloud_key_label">Your %1$s key</string>
+    <string name="transcription_cloud_key_show">Show key</string>
+    <string name="transcription_cloud_key_hide">Hide key</string>
+    <string name="transcription_cloud_test">Test</string>
+    <string name="transcription_cloud_testing">Testing…</string>
+    <string name="transcription_cloud_get_key">Get a %1$s key</string>
+    <string name="transcription_cloud_custom_url">Server address</string>
+    <string name="transcription_cloud_custom_url_hint">https://… (the part before /audio/transcriptions)</string>
+    <string name="transcription_cloud_custom_url_invalid">Use an https:// address.</string>
+    <string name="transcription_cloud_custom_model">Model</string>
+    <string name="transcription_cloud_mobile_data">Also use mobile data</string>
+    <string name="transcription_cloud_mobile_data_desc">When off, calls wait for Wi-Fi before they are sent.</string>
+    <string name="transcription_cloud_privacy_note">Call audio is sent to %1$s to be written out. The words come back to this phone; %1$s\'s privacy terms apply. Wi-Fi only unless you allow mobile data.</string>
+    <string name="transcription_cloud_consent_title">Send call audio to %1$s?</string>
+    <string name="transcription_cloud_consent_body">When a call is transcribed, its audio is sent to %1$s with your key, and the words come back to this phone. %1$s\'s privacy terms apply. Summaries stay on this phone.</string>
+    <string name="transcription_cloud_consent_confirm">Use %1$s</string>
+    <string name="transcription_cloud_test_ok">The key works.</string>
+    <string name="transcription_cloud_test_bad_key">The key was refused. Check it and try again.</string>
+    <string name="transcription_cloud_test_no_timings">The service answered without timings, so it cannot be used. Try another model.</string>
+    <string name="transcription_cloud_test_unreachable">Could not reach the service. Check the connection and try again.</string>
+    <string name="transcription_cloud_test_refused">The service refused the request. Check the address and the model.</string>
+    <string name="transcription_cloud_test_no_key">Paste a key first.</string>
+    <string name="transcription_cloud_test_incomplete">Fill in the server address and the model first.</string>
     <string name="transcription_confirm_title">Ask before transcribing</string>
     <string name="transcription_confirm_subtitle">Shows how long it will take and lets you cancel.</string>
     <string name="transcript_action_busy">Transcribing…</string>
@@ -795,6 +841,9 @@
     <string name="transcript_speaker_a">Speaker A</string>
     <string name="transcript_speaker_b">Speaker B</string>
     <string name="transcript_share">Share</string>
+    <string name="transcript_previous_call">Previous</string>
+    <string name="transcript_next_call">Next</string>
+    <string name="transcript_follow_playback">Follow playback</string>
     <string name="transcript_export_chooser">Share transcript</string>
     <string name="transcript_export_failed">Could not export the transcript</string>
     <string name="transcript_retranscribe">Transcribe again</string>
@@ -910,6 +959,8 @@
     <string name="settings_bugreport_saved">Report saved</string>
     <string name="settings_bugreport_save_failed">Could not save the report</string>
     <string name="settings_debug_log_wrap">Wrap lines</string>
+    <string name="settings_debug_skip_mdns">Skip mDNS when connecting (test the port search)</string>
+    <string name="settings_debug_skip_mdns_description">For testing. The next Wireless debugging connection ignores mDNS and the last known port, and finds the port by searching this phone\'s local ports. Only works while log recording is on.</string>
     <string name="usb_debugging_off_warn_title">Turn off USB debugging?</string>
     <string name="usb_debugging_off_warn_no_way_in">You\'re not on Wi-Fi, so CallVault will have no way to reach the recorder. Calls won\'t be recorded until you connect to Wi-Fi or turn this back on.</string>
     <string name="usb_debugging_off_warn_offline">Off-Wi-Fi recording needs USB debugging. With it off, calls made away from Wi-Fi won\'t be recorded.</string>

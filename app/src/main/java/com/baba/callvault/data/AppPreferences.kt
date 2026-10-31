@@ -18,6 +18,8 @@ import com.baba.callvault.data.StorageTarget
 import com.baba.callvault.data.SyncScheduleMode
 import com.baba.callvault.transcription.TranscriptionEstimate
 import com.baba.callvault.transcription.TranscriptionLanguageChoice
+import com.baba.callvault.transcription.cloud.CloudEndpoint
+import com.baba.callvault.transcription.cloud.TranscriptionService
 import com.baba.callvault.transcription.model.TranscriptionModel
 import com.baba.callvault.ui.navigation.HomeSection
 import com.baba.callvault.utils.AppLogger
@@ -346,6 +348,13 @@ class AppPreferences(context: Context) {
         TRANSCRIPTION_MODEL_ID("transcription_model_id"),
         TRANSCRIPTION_LANGUAGE("transcription_language"),
         TRANSCRIPTION_ASK_LANGUAGE("transcription_ask_language"),
+        // Where calls are written out (#48). Device-only, deliberately NOT in EXPORTABLE_KEYS: the key
+        // they need is not exported, and agreeing to send call audio is this phone owner's decision.
+        TRANSCRIPTION_SERVICE("transcription_service"),
+        TRANSCRIPTION_CLOUD_MOBILE_DATA("transcription_cloud_mobile_data"),
+        TRANSCRIPTION_CLOUD_CONSENT("transcription_cloud_consent"),
+        TRANSCRIPTION_CUSTOM_BASE_URL("transcription_custom_base_url"),
+        TRANSCRIPTION_CUSTOM_MODEL("transcription_custom_model"),
         PRIVILEGED_MODE("privileged_mode"),
         /** Which switches *CallVault* turned off for the current mode, so a round trip can undo it. */
         MODE_AUTO_DISABLED("mode_auto_disabled"),
@@ -373,6 +382,7 @@ class AppPreferences(context: Context) {
         ADB_PAIRED("adb_paired"),
         PAIRING_REFUSALS(PAIRING_REFUSALS_KEY),
         LOOPBACK_ADB_PORT("loopback_adb_port"),
+        ADB_LAST_CONNECT_PORT("adb_last_connect_port"),
         OFFLINE_RECORDING_ENABLED("offline_recording_enabled"),
         KEEP_ORIGINALS_AFTER_MERGE("keep_originals_after_merge"),
 
@@ -424,6 +434,7 @@ class AppPreferences(context: Context) {
         LOGCAT_RING_PREVIOUS_KIB("logcat_ring_previous_kib"),
         DEBUG_ENABLED("debug_enabled"),
         DEBUG_CALLER_NUMBER("debug_caller_number"),
+        DEBUG_SKIP_MDNS_CONNECT("debug_skip_mdns_connect"),
         DEVELOPER_MODE_UNLOCKED("developer_mode_unlocked"),
         
         // --- Audio/Scrcpy Quality ---
@@ -445,7 +456,11 @@ class AppPreferences(context: Context) {
 
         // Which Settings screen opens: the classic list, or the new per-page one. Device-only on purpose
         // (not in EXPORTABLE_KEYS): it is a rollback switch for this phone, not a preference to carry over.
-        CLASSIC_SETTINGS_SCREEN("classic_settings_screen");
+        CLASSIC_SETTINGS_SCREEN("classic_settings_screen"),
+
+        // The transcript reader's "Follow playback" switch (#27). A remembered view choice, like a sort
+        // order: device-only and not a Settings row.
+        TRANSCRIPT_FOLLOW_PLAYBACK("transcript_follow_playback");
     }
 
     // -------- Nested enums
@@ -589,6 +604,17 @@ class AppPreferences(context: Context) {
         setInt(Key.LOOPBACK_ADB_PORT, port)
         return port
     }
+
+    /**
+     * The Wireless-debugging connect port that last produced a working connection, or null (issue #65).
+     *
+     * Tried before mDNS, and the middle of the loopback search when mDNS finds nothing. adbd keeps its port
+     * until Wireless debugging or adbd restarts, so it is usually right; when it is not, the probe is
+     * refused at once. Device state, so never exported.
+     */
+    fun getLastAdbConnectPort(): Int? = getInt(Key.ADB_LAST_CONNECT_PORT, 0).takeIf { it in 1..65_535 }
+
+    fun setLastAdbConnectPort(port: Int) = setInt(Key.ADB_LAST_CONNECT_PORT, port)
 
     /**
      * Whether the user has OPTED IN to "offline recording (no Wi-Fi)" — the loopback `adb tcpip` mode.
@@ -931,6 +957,38 @@ class AppPreferences(context: Context) {
 
     /** Sets whether tapping Transcribe asks which language. */
     fun setTranscriptionAskLanguage(ask: Boolean) = setBoolean(Key.TRANSCRIPTION_ASK_LANGUAGE, ask)
+
+    // -------- Where to transcribe (issue #48) --------
+
+    /** On this phone, or a cloud service with the user's own key. Unknown values read as on this phone. */
+    fun getTranscriptionService(): TranscriptionService =
+        TranscriptionService.fromKey(getString(Key.TRANSCRIPTION_SERVICE))
+
+    fun setTranscriptionService(service: TranscriptionService) = setString(Key.TRANSCRIPTION_SERVICE, service.key)
+
+    /** Whether cloud transcription may upload over mobile data. Off: Wi-Fi (unmetered) only. */
+    fun getTranscriptionCloudMobileData() = getBoolean(Key.TRANSCRIPTION_CLOUD_MOBILE_DATA, false)
+
+    fun setTranscriptionCloudMobileData(allowed: Boolean) = setBoolean(Key.TRANSCRIPTION_CLOUD_MOBILE_DATA, allowed)
+
+    /** Whether the user has agreed, in the consent dialog, to send call audio to [service]. */
+    fun hasCloudConsent(service: TranscriptionService): Boolean =
+        service.key in getStringSet(Key.TRANSCRIPTION_CLOUD_CONSENT)
+
+    fun recordCloudConsent(service: TranscriptionService) =
+        setStringSet(Key.TRANSCRIPTION_CLOUD_CONSENT, getStringSet(Key.TRANSCRIPTION_CLOUD_CONSENT) + service.key)
+
+    fun getTranscriptionCustomBaseUrl(): String = getString(Key.TRANSCRIPTION_CUSTOM_BASE_URL).orEmpty()
+
+    fun setTranscriptionCustomBaseUrl(url: String) = setString(Key.TRANSCRIPTION_CUSTOM_BASE_URL, url.trim())
+
+    fun getTranscriptionCustomModel(): String = getString(Key.TRANSCRIPTION_CUSTOM_MODEL).orEmpty()
+
+    fun setTranscriptionCustomModel(model: String) = setString(Key.TRANSCRIPTION_CUSTOM_MODEL, model.trim())
+
+    /** The endpoint for the chosen service, or null when on this phone or Custom is incomplete. */
+    fun getCloudEndpoint(service: TranscriptionService = getTranscriptionService()): CloudEndpoint? =
+        CloudEndpoint.resolve(service, getTranscriptionCustomBaseUrl(), getTranscriptionCustomModel())
 
     // -------- Where privileges come from --------
 
@@ -1438,6 +1496,15 @@ class AppPreferences(context: Context) {
     /** Sets whether debug features are enabled. */
     fun setDebugEnabled(enabled: Boolean) = setBoolean(Key.DEBUG_ENABLED, enabled)
 
+    /**
+     * Debug-only test switch (Settings → Debug, shown while log recording is on): skip mDNS and the last good
+     * port, so the next Wireless-debugging connect has to find its port with the loopback search (#65). Lets
+     * the search be checked on a phone whose mDNS works. Not exported; off by default.
+     */
+    fun isDebugSkipMdnsConnect() = getBoolean(Key.DEBUG_SKIP_MDNS_CONNECT, false)
+
+    fun setDebugSkipMdnsConnect(enabled: Boolean) = setBoolean(Key.DEBUG_SKIP_MDNS_CONNECT, enabled)
+
     /** Gets the caller number override used for debugging. */
     fun getDebugCallerNumber() = getString(Key.DEBUG_CALLER_NUMBER, DefaultsValue.DEBUG_CALLER_NUMBER) ?: DefaultsValue.DEBUG_CALLER_NUMBER
 
@@ -1519,6 +1586,14 @@ class AppPreferences(context: Context) {
     fun isClassicSettingsScreen() = getBoolean(Key.CLASSIC_SETTINGS_SCREEN, CLASSIC_SETTINGS_SCREEN_DEFAULT)
 
     fun setClassicSettingsScreen(classic: Boolean) = setBoolean(Key.CLASSIC_SETTINGS_SCREEN, classic)
+
+    /**
+     * Whether the transcript reader follows playback (#27): on lights the playing line and keeps it in
+     * view; off lights nothing and never scrolls on its own. On by default, which is how it always behaved.
+     */
+    fun isTranscriptFollowPlayback() = getBoolean(Key.TRANSCRIPT_FOLLOW_PLAYBACK, true)
+
+    fun setTranscriptFollowPlayback(follow: Boolean) = setBoolean(Key.TRANSCRIPT_FOLLOW_PLAYBACK, follow)
 
     /**
      * The raw key of the section of Home the user was last in, or null if they have never been

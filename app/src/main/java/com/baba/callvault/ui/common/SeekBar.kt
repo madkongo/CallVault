@@ -8,6 +8,7 @@
 
 package com.baba.callvault.ui.common
 
+import androidx.compose.foundation.focusable
 import androidx.compose.foundation.background
 import androidx.compose.foundation.gestures.detectHorizontalDragGestures
 import androidx.compose.foundation.gestures.detectTapGestures
@@ -23,8 +24,17 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.onSizeChanged
+import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.ProgressBarRangeInfo
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.disabled
+import androidx.compose.ui.semantics.progressBarRangeInfo
+import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.semantics.setProgress
+import androidx.compose.ui.semantics.stateDescription
 import androidx.compose.ui.unit.dp
 import androidx.compose.material3.MaterialTheme
+import com.baba.callvault.R
 
 /**
  * A thin, thumbless progress bar — cleaner than a Slider but still tap- and drag-seekable: tapping
@@ -52,9 +62,38 @@ fun SeekBar(
         val w = widthPx.value
         if (w > 0) onSeek(((x / w).coerceIn(0f, 1f) * total).toInt())
     }
+    // Read the same way as the Recordings list's bar (ListSeekBar): "Playback position, 1:12 of 4:23",
+    // and adjustable with TalkBack's seek gestures while there is something loaded to seek in.
+    val label = stringResource(R.string.home_player_seek)
+    val spokenMs = rememberSpokenPositionMs(positionMs)
+    val stateText = stringResource(
+        R.string.home_player_position_of,
+        TranscriptTimestamp.format(spokenMs.toLong()),
+        TranscriptTimestamp.format(durationMs.toLong()),
+    )
     Box(
         modifier = modifier
             .height(28.dp)
+            // focusable: setProgress makes the node scrollable, and TalkBack 17 then treats it as a
+            // container and will not land on it ("failed all focusability tests", OP9 2026-10-31).
+            // Compose's own Slider is focusable for the same reason.
+            .focusable()
+            .semantics {
+                contentDescription = label
+                stateDescription = stateText
+                progressBarRangeInfo = ProgressBarRangeInfo(
+                    current = spokenMs.coerceIn(0, total).toFloat(),
+                    range = 0f..SeekSemantics.rangeEndMs(durationMs),
+                )
+                if (enabled) {
+                    setProgress { target ->
+                        onSeek(SeekSemantics.positionFor(target, durationMs))
+                        true
+                    }
+                } else {
+                    disabled()
+                }
+            }
             .onSizeChanged { widthPx.value = it.width }
             // Keyed on `enabled`: pointerInput caches its block, so a bar that started disabled would
             // stay deaf after the track loaded if the key never changed.

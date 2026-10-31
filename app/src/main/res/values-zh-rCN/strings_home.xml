@@ -10,6 +10,7 @@
     <string name="home_health_failed_no_audio">上次通话已保存，但不含音频。</string>
     <string name="home_health_failed_one_sided">上一通应用内通话只录到了你这一方。</string>
     <string name="home_health_failed_one_sided_vivo">上次应用通话仅录下了你这一方。在 vivo 手机上：打开“录音机”应用 → 应用内通话录音并开启（同时开启自动开始录音）。</string>
+    <string name="home_health_failed_one_sided_vivo_overseas">上次应用通话仅录下了你这一方。这台 vivo 手机不允许应用在应用通话中录制对方的声音，且没有可开启此功能的选项。普通电话通话会录下双方。</string>
     <string name="home_health_missed_adb_pairing">有一通通话未被录音 — 当时设置尚未完成，%1$s。</string>
     <string name="home_health_missed_adb_pairing_unnamed">有一通通话未被录音 — 当时设置尚未完成。</string>
     <string name="home_health_missed_developer_options">有一通通话未被录音 — 当时开发者选项处于关闭状态，%1$s。</string>
@@ -115,6 +116,17 @@
     <string name="merge_note_will_keep">其余通话也会保留在手机上。</string>
     <string name="home_scroll_to_top">回到顶部</string>
     <string name="home_whatsnew_full_notes">完整发行说明</string>
+    <string name="whatsnew_248_title">使用你自己的转写密钥，阅读更方便</string>
+    <string-array name="whatsnew_248_items">
+        <item>用你自己的密钥转写——Groq、OpenRouter 或自己的服务器，几秒而不是几分钟（设置 ▸ 在哪里转写）</item>
+        <item>直接在录音列表中播放，并可用进度条跳到任意位置</item>
+        <item>阅读转写时可切换上一个和下一个通话，并有“跟随播放”开关</item>
+        <item>转写页面的导入现在只是一个按钮：保留音频，或只保留文字记录</item>
+        <item>45 分钟以上的长通话又能转写、导入并显示波形</item>
+        <item>用移动数据下载模型时会先询问，而不是一直等待 WLAN</item>
+        <item>针对波斯语训练的语音模型，以及更好的 TalkBack 支持</item>
+        <item>在隐藏无线调试地址的手机上也能连接</item>
+    </string-array>
     <string name="whatsnew_247_title">全新设置、Shizuku 补齐功能、乌克兰语</string>
     <string-array name="whatsnew_247_items">
         <item>全新设置布局 — 每个页面只显示自己的设置，详细说明收在 ⓘ 后面；经典视图一点即回</item>
@@ -247,7 +259,7 @@
     <string name="home_transcripts_count">已转写 %1$d 个</string>
     <string name="home_summaries_count">已摘要 %1$d 个</string>
     <string name="home_transcripts_empty_title">还没有转写</string>
-    <string name="home_transcripts_empty_hint">在某个录音的菜单中请求转写，或在上方导入一个音频文件——两者写好后都会出现在这里。</string>
+    <string name="home_transcripts_empty_hint">在录音的菜单中请求文字记录，或点按“导入”添加音频文件。写好后会显示在这里。</string>
     <string name="home_summaries_empty_title">还没有摘要</string>
     <string name="home_summaries_empty_hint">打开一通已有转写的通话并请求摘要，写好后就会出现在这里。</string>
 
@@ -263,7 +275,11 @@
     <!-- Transcripts: bringing in audio CallVault did not record -->
     <string name="transcripts_import_title">导入音频</string>
     <string name="transcripts_import_working">正在导入…</string>
-    <string name="transcripts_import_body">转写一条语音留言，或手机上任何其他音频文件。</string>
+    <string name="transcripts_import_fab">导入</string>
+    <string name="import_sheet_keep">保留音频</string>
+    <string name="import_sheet_keep_hint">显示在你的录音中</string>
+    <string name="import_sheet_transcript_only">仅文字记录</string>
+    <string name="import_sheet_transcript_only_hint">之后会删除音频</string>
     <string name="import_failed_title">无法导入该文件</string>
     <string name="import_failed_not_audio">CallVault 读不了这种文件。请试试 .opus、.ogg、.m4a、.mp3 或 .wav 录音。</string>
     <string name="import_failed_empty">该文件是空的，没有内容可转写。</string>

@@ -10,6 +10,7 @@
     <string name="home_health_failed_no_audio">Tu última llamada se guardó, pero no contiene audio.</string>
     <string name="home_health_failed_one_sided">En tu última llamada de app solo se grabó tu lado.</string>
     <string name="home_health_failed_one_sided_vivo">En tu última llamada de app solo se grabó tu lado. En teléfonos vivo: abre la app Grabadora → Grabación de llamadas en apps y actívala (con Inicio automático).</string>
+    <string name="home_health_failed_one_sided_vivo_overseas">En tu última llamada de app solo se grabó tu lado. Este teléfono vivo impide que las apps graben a la otra persona en llamadas de apps, sin ninguna opción para permitirlo. Las llamadas telefónicas normales se graban por ambos lados.</string>
     <string name="home_health_missed_adb_pairing">Una llamada no se grabó: la configuración no estaba terminada en ese momento, %1$s.</string>
     <string name="home_health_missed_adb_pairing_unnamed">Una llamada no se grabó: la configuración no estaba terminada en ese momento.</string>
     <string name="home_health_missed_developer_options">Una llamada no se grabó: las opciones de desarrollador estaban desactivadas en ese momento, %1$s.</string>
@@ -115,6 +116,17 @@
     <string name="merge_note_will_keep">Las demás llamadas también se conservan en el teléfono.</string>
     <string name="home_scroll_to_top">Arriba</string>
     <string name="home_whatsnew_full_notes">Notas de versión completas</string>
+    <string name="whatsnew_248_title">Tu propia clave de transcripción y lectura más fácil</string>
+    <string-array name="whatsnew_248_items">
+        <item>Transcribe con tu propia clave — Groq, OpenRouter o tu servidor, en segundos en lugar de minutos (Ajustes ▸ Dónde transcribir)</item>
+        <item>Reproduce directamente desde la lista de grabaciones, con una barra para saltar a cualquier punto</item>
+        <item>Anterior y Siguiente mientras lees una transcripción, y un interruptor «Seguir la reproducción»</item>
+        <item>Importar en la página de transcripciones es ahora un botón: conserva el audio o solo la transcripción</item>
+        <item>Las llamadas largas de 45 minutos o más vuelven a transcribirse, importarse y mostrar su forma de onda</item>
+        <item>Las descargas de modelos con datos móviles preguntan antes, en lugar de esperar al Wi-Fi</item>
+        <item>Un modelo de voz ajustado al persa y mejor compatibilidad con TalkBack</item>
+        <item>Se conecta en teléfonos que ocultan la dirección de la depuración inalámbrica</item>
+    </string-array>
     <string name="whatsnew_247_title">Nuevos ajustes, Shizuku se pone al día y ucraniano</string>
     <string-array name="whatsnew_247_items">
         <item>Nuevo diseño de ajustes — cada página muestra solo sus propios ajustes, con los detalles tras ⓘ; la vista clásica está a un toque</item>
@@ -247,7 +259,7 @@
     <string name="home_transcripts_count">%1$d transcritas</string>
     <string name="home_summaries_count">%1$d resumidas</string>
     <string name="home_transcripts_empty_title">Aún no hay transcripciones</string>
-    <string name="home_transcripts_empty_hint">Pide una transcripción desde el menú de una grabación o importa arriba un archivo de audio: cualquiera de los dos aparecerá aquí en cuanto esté escrito.</string>
+    <string name="home_transcripts_empty_hint">Pide una transcripción desde el menú de una grabación o toca Importar para añadir un archivo de audio. Aparecerá aquí cuando esté escrita.</string>
     <string name="home_summaries_empty_title">Aún no hay resúmenes</string>
     <string name="home_summaries_empty_hint">Abre una llamada que tenga transcripción y pide un resumen; aparecerá aquí en cuanto esté escrito.</string>
 
@@ -263,7 +275,11 @@
     <!-- Transcripts: bringing in audio CallVault did not record -->
     <string name="transcripts_import_title">Importar audio</string>
     <string name="transcripts_import_working">Importando…</string>
-    <string name="transcripts_import_body">Transcribe una nota de voz o cualquier otro archivo de audio que ya tengas en el teléfono.</string>
+    <string name="transcripts_import_fab">Importar</string>
+    <string name="import_sheet_keep">Conservar el audio</string>
+    <string name="import_sheet_keep_hint">Aparece con tus grabaciones</string>
+    <string name="import_sheet_transcript_only">Solo la transcripción</string>
+    <string name="import_sheet_transcript_only_hint">El audio se borra después</string>
     <string name="import_failed_title">No se pudo importar el archivo</string>
     <string name="import_failed_not_audio">CallVault no puede leer ese tipo de archivo. Prueba con una grabación .opus, .ogg, .m4a, .mp3 o .wav.</string>
     <string name="import_failed_empty">Ese archivo está vacío, así que no habría nada que transcribir.</string>

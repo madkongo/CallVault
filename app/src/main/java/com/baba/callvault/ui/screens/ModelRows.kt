@@ -20,15 +20,23 @@ import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Download
 import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import com.baba.callvault.R
+import com.baba.callvault.transcription.model.DownloadNetwork
 import com.baba.callvault.transcription.model.ModelDownloadWorker
 import com.baba.callvault.transcription.model.TranscriptionModel
+import com.baba.callvault.ui.common.ConfirmDialog
 import com.baba.callvault.ui.common.ModelDownloadState
+import com.baba.callvault.ui.common.TranscriptionLabels
+import com.baba.callvault.ui.common.rememberMobileDataDownloadPrompt
 import com.baba.callvault.ui.common.rememberModelDownloadState
 
 /**
@@ -57,7 +65,7 @@ import com.baba.callvault.ui.common.rememberModelDownloadState
 internal fun TranscriptionModelRows(
     model: TranscriptionModel,
     updateTrigger: Int,
-    onDownload: (TranscriptionModel) -> Unit,
+    onDownload: (TranscriptionModel, DownloadNetwork) -> Unit,
     onCancel: (TranscriptionModel) -> Unit,
     onDelete: (TranscriptionModel) -> Unit,
     onImport: (TranscriptionModel, Uri) -> Unit,
@@ -66,6 +74,13 @@ internal fun TranscriptionModelRows(
     onCancelBackup: (TranscriptionModel) -> Unit = {}
 ) {
     val state by rememberModelDownloadState(model, refreshKey = updateTrigger)
+    // Every download and resume below goes through this, so on mobile data each one asks first.
+    // The size reads exactly as the download row's subtitle does.
+    val askNetwork = rememberMobileDataDownloadPrompt()
+    val sizeText = stringResource(R.string.transcription_model_download_subtitle, model.sizeBytes / BYTES_PER_MB)
+    val download: (TranscriptionModel) -> Unit = { chosen ->
+        askNetwork(sizeText) { network -> onDownload(chosen, network) }
+    }
     // Above the `when`, so a state change while the picker is open cannot drop the pick.
     val launchPicker = rememberModelImportPicker { onImport(model, it) }
     val importRow: @Composable (String?) -> Unit = { failure ->
@@ -90,17 +105,20 @@ internal fun TranscriptionModelRows(
             }
 
             ModelDownloadState.Absent -> {
-                TranscriptionDownloadRow(model, onDownload)
+                TranscriptionDownloadRow(model, download)
                 importRow(null)
             }
 
             // Stopped part-way. Saying so is the point: those bytes are banked and the server
             // resumes from exactly that offset, so a row reading "Download, 574 MB" would hide
-            // what the user has already paid for. Same reasoning as the summariser's rows, at a
-            // sixth of the size — which is also why discarding needs no separate row here: the
-            // delete row below reclaims it, and 574 MB is not a hostage worth its own control.
+            // what the user has already paid for. Same reasoning as the summariser's rows.
+            //
+            // Discard has its own row (GitHub #60). This comment used to say "the delete row below
+            // reclaims it", but no delete row is shown in this state, so a paused download could
+            // only be removed by clearing the app's data.
             is ModelDownloadState.Paused -> {
-                TranscriptionResumeRow(model, current.downloadedBytes, onDownload)
+                TranscriptionResumeRow(model, current.downloadedBytes, download)
+                TranscriptionDiscardRow(model, current.downloadedBytes, onDelete)
                 importRow(null)
             }
 
@@ -129,9 +147,10 @@ internal fun TranscriptionModelRows(
             // import row says what went wrong with the file, where tapping it picks another.
             is ModelDownloadState.ImportFailed -> {
                 if (current.partialBytes > 0L) {
-                    TranscriptionResumeRow(model, current.partialBytes, onDownload)
+                    TranscriptionResumeRow(model, current.partialBytes, download)
+                    TranscriptionDiscardRow(model, current.partialBytes, onDelete)
                 } else {
-                    TranscriptionDownloadRow(model, onDownload)
+                    TranscriptionDownloadRow(model, download)
                 }
                 importRow(importFailureText(current.reason, model, current.otherModelId))
             }
@@ -149,12 +168,30 @@ internal fun TranscriptionModelRows(
                             else -> R.string.transcription_model_failed
                         }
                     ),
-                    onClick = { onDownload(model) }
+                    onClick = { download(model) }
                 )
                 importRow(null)
             }
         }
+
+        TranscriptionLabels.creditOf(model)?.let { ModelCreditParagraph(stringResource(it)) }
     }
+}
+
+/**
+ * What a third-party tier is and whose work it is, under its rows in every state (GitHub #55).
+ *
+ * Drawn as plain text rather than as an [ExplanationParagraph], which ⓘ mode folds away: the credit is
+ * a condition of the CC BY licence, not an explanation, so it must not depend on a display setting.
+ */
+@Composable
+private fun ModelCreditParagraph(text: String) {
+    Text(
+        text = text,
+        style = MaterialTheme.typography.bodySmall,
+        color = MaterialTheme.colorScheme.onSurfaceVariant,
+        modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp)
+    )
 }
 
 /** "Resume the download", with what is already banked: the row for a model stopped part-way. */
@@ -175,6 +212,43 @@ private fun TranscriptionResumeRow(
         onClick = { onDownload(model) }
     )
 }
+
+/**
+ * "Discard what was downloaded": throws away a paused download, after asking (GitHub #60).
+ *
+ * The wording is the summariser's (`summary_model_discard*`, `summary_discard_confirm_*`). None of it
+ * names the model, so both share one set of strings and no locale needs a new translation.
+ */
+@Composable
+private fun TranscriptionDiscardRow(
+    model: TranscriptionModel,
+    downloadedBytes: Long,
+    onDelete: (TranscriptionModel) -> Unit
+) {
+    val gigabytes = downloadedBytes / BYTES_PER_GB
+    var confirming by remember { mutableStateOf(false) }
+    if (confirming) {
+        ConfirmDialog(
+            title = stringResource(R.string.summary_discard_confirm_title),
+            body = stringResource(R.string.summary_discard_confirm_body, gigabytes),
+            confirmLabel = stringResource(R.string.summary_discard_confirm_confirm),
+            onDismiss = { confirming = false },
+            onConfirm = {
+                confirming = false
+                onDelete(model)
+            }
+        )
+    }
+    NavigationRow(
+        icon = Icons.Filled.Delete,
+        label = stringResource(R.string.summary_model_discard),
+        value = stringResource(R.string.summary_model_discard_subtitle, gigabytes),
+        onClick = { confirming = true }
+    )
+}
+
+/** The summariser's unit (SummarySection's `toGigabytes`), so both discard rows read the same. */
+private const val BYTES_PER_GB = 1_000_000_000f
 
 /** "Download the model", with its size: the row for a model with nothing on disk. */
 @Composable

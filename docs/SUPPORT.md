@@ -17,38 +17,52 @@ If CallVault is getting killed in the background or not starting when a call com
 
 For a reproducible bug — a crash, wrong behavior, or unexpected error — please open an issue with detailed steps, logs (Settings → generate report), and your device/Android version.
 
+## Transcribing with your own key (cloud)
+
+By default calls are transcribed **on the phone** and nothing is sent anywhere. In **Settings → Where to
+transcribe** you can instead pick **Groq** (recommended), **OpenRouter** or **Custom (advanced)** — any
+OpenAI-compatible server that returns `verbose_json` with segment timings — and paste your own key from that
+service. Press **Test** to check it.
+
+- When a cloud service is chosen, the **call audio is sent to that service** to be written out (as one file for
+  ordinary calls; very large files in pieces); the words come back to the phone. That service's own privacy terms apply. CallVault
+  asks before the first use.
+- Calls are sent over **Wi-Fi only** unless you turn on **Also use mobile data**.
+- Summaries still run on the phone.
+- The key is stored encrypted on the phone and is never included in the settings export or in a bug report.
+- "The key was refused": the key is wrong or revoked — paste it again. "Answered without timings": that
+  model cannot be used, because CallVault needs the timings to line words up with the call; pick another.
+- A transcription that fails because the service is busy or the network dropped is retried by itself a few
+  times before it is marked failed.
+
 ## Device-specific limitations
 
-### vivo and iQOO phones — turn on vivo's "In-app call recording" to record the other person's voice in app calls
+### vivo and iQOO phones — app calls may record your side only
 
-On **vivo** and **iQOO** phones (Funtouch OS / OriginOS), app (VoIP) calls — WhatsApp, Telegram, Signal
-and the like — may at first record **your side only**: your own voice is captured, and normal carrier
-phone calls record both sides, but the **other party's voice in an app call comes out silent**.
+On **vivo** and **iQOO** phones, app (VoIP) calls — WhatsApp, Telegram, Signal and the like — can record
+**your side only**: the other person's voice comes out silent. vivo's audio system blocks apps from
+recording it unless vivo's own **In-app call recording** option is turned on. Normal carrier phone calls
+are not affected: they record both sides.
 
-The fix is a vivo setting. vivo's audio system blocks apps from capturing internal call audio until you
-turn on vivo's own in-app recording feature; once it is on, that block is lifted and CallVault records
-both sides of app calls normally.
+**That option exists only on China-market vivo/iQOO firmware** (models whose number ends in "A", such as
+V2507A, running OriginOS 4 or later). Overseas and global phones (Funtouch OS or global OriginOS — for
+example India, Bangladesh, Europe) do not have it at all. On those phones the other person in app calls
+**cannot be recorded by any app without root**; there is no setting, code or region change that adds it.
 
-**How to enable it:**
+**On a China-firmware phone, turn it on like this:**
 
-1. Open the built-in **Recorder** app (vivo's own, called *Recorder*).
+1. Open vivo's built-in **Recorder** app.
 2. Open its settings and find **In-app call recording**.
-3. Turn on **In-app call recording**, and also turn on **Auto-start recording**.
+3. Turn on **In-app call recording**, and also **Auto-start recording**.
 
-That's all — you do **not** need your app (WhatsApp/Telegram/etc.) to appear in vivo's "Enable apps" list;
-that list is only for vivo's own recorder. Turning the master toggle on is what lets CallVault capture the
-other party. After enabling it, place an app call and check that both sides are recorded.
+You do **not** need to add WhatsApp/Telegram/etc. to vivo's "Enable apps" list. After turning it on, make
+an app call and check that both sides are recorded.
 
-(This was reported by a vivo user and matches how vivo's audio system works; if it does not resolve it on
-your vivo/iQOO model, please open an issue and say which model and OriginOS/Funtouch version you are on.)
+**If your Recorder settings show no "In-app call recording"** (often just *About* and *Check for updates*),
+your phone has overseas firmware and the other side of app calls cannot be recorded. Your own voice, and
+normal phone calls, still record. The dialer codes (e.g. `*#*#556688#*#*`) and "change region" guides online
+turn on the dialer's recording of *carrier* calls — which CallVault already does — not this option.
 
-**If your Recorder app has no "In-app call recording" setting at all** (its Settings show only *About* and
-*Check for updates*), vivo has removed that feature from your phone's regional build. It is gated by region,
-not by OriginOS vs Funtouch — vivo ships it in some markets and strips it in others for legal reasons. On such
-a build the far party in app calls **cannot** be recorded by any app (confirmed: iQOO Z10x, OriginOS 6,
-Bangladesh — CallVault set up the capture correctly and vivo's audio system still returned silence for the
-other side, because the system switch that controls it is off and there is no toggle to turn it on). Your own
-voice, and normal carrier phone calls, still record. Note: the hidden dialer codes (e.g. `*#*#556688#*#*`) and
-"change region to enable call recording" guides you may find online unlock vivo's **phone-dialer** recording of
-*carrier* calls — which CallVault already does — not the in-app toggle that the other party in an app call
-needs, so they will not fix one-sided app-call recordings.
+To check which kind of firmware you have, over ADB: `adb shell getprop persist.vivo.audio.feature.voip_bbkrecord.enable`
+prints `true` when the option exists. If yours says otherwise but you see the option, please open an issue
+with your model and OS version.

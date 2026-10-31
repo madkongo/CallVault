@@ -11,6 +11,7 @@
     <string name="home_health_failed_no_audio">Votre dernier appel a été enregistré, mais ne contient aucun son.</string>
     <string name="home_health_failed_one_sided">Seul votre côté a été enregistré lors de votre dernier appel via une application.</string>
     <string name="home_health_failed_one_sided_vivo">Lors de votre dernier appel via une application, seul votre côté a été enregistré. Sur vivo : ouvrez l\'application Enregistreur → Enregistrement des appels dans les applications et activez-la (avec le démarrage automatique).</string>
+    <string name="home_health_failed_one_sided_vivo_overseas">Lors de votre dernier appel via une application, seul votre côté a été enregistré. Ce téléphone vivo empêche les applications d\'enregistrer l\'autre personne lors des appels via une application, sans option pour l\'autoriser. Les appels téléphoniques normaux sont enregistrés des deux côtés.</string>
     <string name="home_health_missed_adb_pairing">Un appel n\'a pas été enregistré — la configuration n\'était pas terminée à ce moment-là, %1$s.</string>
     <string name="home_health_missed_adb_pairing_unnamed">Un appel n\'a pas été enregistré — la configuration n\'était pas terminée à ce moment-là.</string>
     <string name="home_health_missed_developer_options">Un appel n\'a pas été enregistré — les options pour développeurs étaient désactivées à ce moment-là, %1$s.</string>
@@ -116,6 +117,17 @@
     <string name="merge_note_will_keep">Les autres appels sont également conservés sur le téléphone.</string>
     <string name="home_scroll_to_top">Haut</string>
     <string name="home_whatsnew_full_notes">Notes de version complètes</string>
+    <string name="whatsnew_248_title">Votre propre clé de transcription, et une lecture plus simple</string>
+    <string-array name="whatsnew_248_items">
+        <item>Transcrire avec votre propre clé — Groq, OpenRouter ou votre serveur, en secondes plutôt qu\'en minutes (Paramètres ▸ Où transcrire)</item>
+        <item>Lecture directe depuis la liste des enregistrements, avec une barre pour aller n\'importe où</item>
+        <item>Précédent et Suivant pendant la lecture d\'une transcription, et un bouton « Suivre la lecture »</item>
+        <item>L\'import sur la page Transcriptions tient en un bouton : garder l\'audio ou seulement la transcription</item>
+        <item>Les longs appels de 45 minutes ou plus se transcrivent, s\'importent et affichent à nouveau leur forme d\'onde</item>
+        <item>Les téléchargements de modèles sur données mobiles demandent d\'abord, au lieu d\'attendre le Wi-Fi</item>
+        <item>Un modèle vocal adapté au persan et une meilleure prise en charge de TalkBack</item>
+        <item>Se connecte sur les téléphones qui masquent l\'adresse du débogage sans fil</item>
+    </string-array>
     <string name="whatsnew_247_title">Nouveaux réglages, Shizuku rattrape son retard, et l’ukrainien</string>
     <string-array name="whatsnew_247_items">
         <item>Nouvelle présentation des réglages — chaque page n’affiche que ses propres réglages, avec les détails derrière ⓘ ; la vue classique est à un toucher</item>
@@ -248,7 +260,7 @@
     <string name="home_transcripts_count">%1$d transcrits</string>
     <string name="home_summaries_count">%1$d résumés</string>
     <string name="home_transcripts_empty_title">Aucune transcription pour l\'instant</string>
-    <string name="home_transcripts_empty_hint">Demandez une transcription depuis le menu d\'un enregistrement, ou importez un fichier audio ci-dessus ; l\'une comme l\'autre apparaîtra ici une fois écrite.</string>
+    <string name="home_transcripts_empty_hint">Demandez une transcription depuis le menu d\'un enregistrement, ou appuyez sur Importer pour ajouter un fichier audio. Elle apparaîtra ici une fois écrite.</string>
     <string name="home_summaries_empty_title">Aucun résumé pour l\'instant</string>
     <string name="home_summaries_empty_hint">Ouvrez un appel qui a une transcription et demandez un résumé ; il apparaîtra ici une fois écrit.</string>
 
@@ -264,7 +276,11 @@
     <!-- Transcripts: bringing in audio CallVault did not record -->
     <string name="transcripts_import_title">Importer un fichier audio</string>
     <string name="transcripts_import_working">Importation…</string>
-    <string name="transcripts_import_body">Transcrivez un message vocal ou n\'importe quel autre fichier audio déjà sur votre téléphone.</string>
+    <string name="transcripts_import_fab">Importer</string>
+    <string name="import_sheet_keep">Garder l\'audio</string>
+    <string name="import_sheet_keep_hint">Apparaît avec vos enregistrements</string>
+    <string name="import_sheet_transcript_only">Transcription seule</string>
+    <string name="import_sheet_transcript_only_hint">L\'audio est supprimé ensuite</string>
     <string name="import_failed_title">Impossible d\'importer ce fichier</string>
     <string name="import_failed_not_audio">CallVault ne sait pas lire ce type de fichier. Essayez un enregistrement .opus, .ogg, .m4a, .mp3 ou .wav.</string>
     <string name="import_failed_empty">Ce fichier est vide : il n\'y aurait rien à transcrire.</string>

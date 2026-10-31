@@ -91,6 +91,7 @@
     <string name="home_health_failed_daemon">The recorder stopped during your last call.</string>
     <string name="home_health_failed_one_sided">Only your side was recorded on your last app call.</string>
     <string name="home_health_failed_one_sided_vivo">Only your side was recorded on your last app call. On vivo: open the Recorder app → In-app call recording and turn it on (with Auto-start recording).</string>
+    <string name="home_health_failed_one_sided_vivo_overseas">Only your side was recorded on your last app call. This vivo phone blocks apps from recording the other person in app calls, with no option to allow it. Normal phone calls record both sides.</string>
     <string name="home_date_today">Today</string>
     <string name="home_date_yesterday">Yesterday</string>
     <string name="whatsnew_221_title">Faster to open, and quieter about problems that are not there</string>
@@ -137,6 +138,17 @@
     <string name="merge_note_will_keep">The other calls are kept on the phone as well.</string>
     <string name="home_scroll_to_top">Top</string>
     <string name="home_whatsnew_full_notes">Full release notes</string>
+    <string name="whatsnew_248_title">Your own transcription key, and easier reading</string>
+    <string-array name="whatsnew_248_items">
+        <item>Transcribe with your own key — Groq, OpenRouter or your own server, in seconds instead of minutes (Settings ▸ Where to transcribe)</item>
+        <item>Play straight from the Recordings list, with a bar to jump to any point</item>
+        <item>Previous and Next while reading a transcript, and a Follow playback switch</item>
+        <item>Import on the Transcripts page is now one button: keep the audio, or keep only the transcript</item>
+        <item>Long calls of 45 minutes or more transcribe, import and draw their waveform again</item>
+        <item>Model downloads on mobile data ask first instead of waiting for Wi-Fi</item>
+        <item>A Persian-tuned speech model, and better TalkBack support</item>
+        <item>Connects on phones that hide Wireless debugging\'s address</item>
+    </string-array>
     <string name="whatsnew_247_title">New Settings, Shizuku catches up, and Ukrainian</string>
     <string-array name="whatsnew_247_items">
         <item>New Settings layout — each page shows only its own settings, with details behind ⓘ; the classic view is one tap away</item>
@@ -264,7 +276,7 @@
     <string name="home_transcripts_count">%1$d transcribed</string>
     <string name="home_summaries_count">%1$d summarised</string>
     <string name="home_transcripts_empty_title">Nothing transcribed yet</string>
-    <string name="home_transcripts_empty_hint">Ask for a transcript from a recording\'s menu, or import an audio file above. Either one appears here once it is written.</string>
+    <string name="home_transcripts_empty_hint">Ask for a transcript from a recording\'s menu, or tap Import to bring in an audio file. Either one appears here once it is written.</string>
     <string name="home_summaries_empty_title">Nothing summarised yet</string>
     <string name="home_summaries_empty_hint">Open a call that has a transcript and ask for a summary; it appears here once it is written.</string>
 
@@ -281,7 +293,11 @@
     <!-- Transcripts: bringing in audio CallVault did not record -->
     <string name="transcripts_import_title">Import audio</string>
     <string name="transcripts_import_working">Importing…</string>
-    <string name="transcripts_import_body">Transcribe a voice note or any other audio file already on your phone.</string>
+    <string name="transcripts_import_fab">Import</string>
+    <string name="import_sheet_keep">Keep the audio</string>
+    <string name="import_sheet_keep_hint">Listed with your recordings</string>
+    <string name="import_sheet_transcript_only">Transcript only</string>
+    <string name="import_sheet_transcript_only_hint">The audio is deleted afterwards</string>
     <string name="import_failed_title">Couldn\'t import that file</string>
     <string name="import_failed_not_audio">CallVault can\'t read that kind of file. Try an .opus, .ogg, .m4a, .mp3 or .wav recording.</string>
     <string name="import_failed_empty">That file is empty, so there would be nothing to transcribe.</string>

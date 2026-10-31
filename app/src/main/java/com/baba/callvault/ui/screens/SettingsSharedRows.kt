@@ -76,7 +76,7 @@ internal fun ExportImportRow(onExport: () -> Unit, onImport: () -> Unit) {
 internal fun SummarySettingsRows(preferences: AppPreferences, updateTrigger: Int, actions: SettingsActions) {
     SummaryRows(
         updateTrigger = updateTrigger,
-        onDownload = { actions.downloadSummaryModel(it) },
+        onDownload = { model, network -> actions.downloadSummaryModel(model, network) },
         onCancel = { actions.cancelSummaryModelDownload(it) },
         onDelete = { actions.deleteSummaryModel(it) },
         onImport = { model, uri -> actions.importModel(model, uri) },

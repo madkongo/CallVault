@@ -8,6 +8,7 @@
 
 package com.baba.callvault.ui.screens
 
+import com.baba.callvault.transcription.TranscriptionRouting
 import com.baba.callvault.system.openDeveloperSettings
 import com.baba.callvault.ui.common.bodyFor
 import com.baba.callvault.integrations.adb.AdbShell
@@ -139,10 +140,9 @@ import com.baba.callvault.data.transcripts.LibraryLabels
 import com.baba.callvault.data.transcripts.TranscriptRepository
 import com.baba.callvault.data.transcripts.TranscriptsPage
 import com.baba.callvault.data.waveform.RecordingExtrasRepository
+import com.baba.callvault.data.waveform.WaveformDrawWorker
 import com.baba.callvault.data.transcripts.TranscriptStatus
 import com.baba.callvault.ui.common.TranscriptActionButton
-import com.baba.callvault.transcription.model.ModelRepository
-import com.baba.callvault.transcription.model.TranscriptionModel
 import com.baba.callvault.transcription.AudioDecoder
 import com.baba.callvault.transcription.TranscriptionEstimate
 import com.baba.callvault.transcription.TranscriptionLengthLimit
@@ -164,6 +164,12 @@ import com.baba.callvault.ui.common.MergeCallsDialog
 import com.baba.callvault.ui.common.UnMergeDialog
 import com.baba.callvault.ui.common.MergeProgressState
 import com.baba.callvault.ui.common.DeleteCopiesDialog
+import com.baba.callvault.ui.common.ListPlayback
+import com.baba.callvault.ui.common.ListSeekBar
+import com.baba.callvault.ui.common.TranscriptNeighbour
+import com.baba.callvault.ui.common.TranscriptNeighbours
+import com.baba.callvault.ui.common.rememberSpokenPositionMs
+import androidx.compose.ui.layout.layout
 import com.baba.callvault.ui.common.DeleteRecordingDialog
 import com.baba.callvault.ui.common.SeekBar
 import com.baba.callvault.ui.common.TranscriptPresentation
@@ -382,6 +388,11 @@ fun HomeScreen(
     // summary tapped on the Summaries page must not open as a one-line strip above someone else's
     // words, which is what it did the first time this page was built.
     var readingFromSummary by rememberSaveable { mutableStateOf(false) }
+
+    // The list the open transcript came from, in the order the user saw it, for the Previous / Next
+    // cards (#27). Taken once at the tap; empty where there is no list to walk (a recording's own
+    // screen, a notification), which hides the cards.
+    var readingOrder by rememberSaveable { mutableStateOf(ArrayList<String>()) }
 
     /** Which recording's transcript is awaiting a delete confirmation, or null. */
     var deleteTranscriptFor by rememberSaveable { mutableStateOf<String?>(null) }
@@ -640,6 +651,7 @@ fun HomeScreen(
         onSelectSection(HomeSection.Transcripts)
         playbackFor = null
         readingFromSummary = false
+        readingOrder = ArrayList()
         readingFor = requested
         onOpenTranscriptHandled()
     }
@@ -686,13 +698,15 @@ fun HomeScreen(
      */
     val continueTranscription: (String, String?) -> Unit = { displayName, language ->
         val prefs = AppPreferences(context)
-        val model = TranscriptionModel.fromId(prefs.getTranscriptionModelId()) ?: TranscriptionModel.DEFAULT
         // An import ALWAYS confirms, whatever the setting says. The setting was turned off by
         // someone who had seen the estimate for their own calls, which are minutes long and in the
         // language they speak; an imported file is neither, and may be an hour of a lecture. See
         // startTranscription for the same argument about the language.
         val isImport = ImportedRecording.isImported(displayName)
-        if (!isImport && !prefs.getTranscriptionConfirmBeforeRun()) {
+        // A cloud service (#48) takes seconds and keeps the phone idle, so the "keeps your phone busy"
+        // dialog does not apply; sending was agreed to once, when the service was chosen.
+        val isCloud = TranscriptionRouting.skipsRunConfirmation(prefs)
+        if (!isImport && !isCloud && !prefs.getTranscriptionConfirmBeforeRun()) {
             enqueueTranscription(displayName, language)
         } else {
             // Estimating is arithmetic on a duration read from the container — microseconds — so the
@@ -710,10 +724,12 @@ fun HomeScreen(
                 // regardless, costs nothing and turns a silent nothing-happens into a sentence.
                 if (TranscriptionLengthLimit.isTooLong(audioMs)) {
                     tooLongMinutes = (audioMs / 60_000L).toInt()
+                } else if (isCloud) {
+                    enqueueTranscription(displayName, language)
                 } else {
                     val estimate = if (audioMs <= 0L) null else TranscriptionEstimate.estimateMs(
                         audioMs = audioMs,
-                        cost = prefs.getRunCost(model),
+                        cost = TranscriptionRouting.runCost(prefs),
                     )
                     confirmTranscribe = Triple(displayName, estimate, language)
                 }
@@ -732,7 +748,6 @@ fun HomeScreen(
      */
     val startTranscription: (String) -> Unit = { displayName ->
         val prefs = AppPreferences(context)
-        val model = TranscriptionModel.fromId(prefs.getTranscriptionModelId()) ?: TranscriptionModel.DEFAULT
         // Refuse a long recording before anything else. Transcription decodes the whole file into
         // memory first, so a long call ends in a crash or a job that dies silently after a long wait —
         // saying no immediately, with a reason, is strictly better than trying and failing. A stopgap
@@ -741,7 +756,8 @@ fun HomeScreen(
             .firstOrNull { it.displayName == displayName }?.durationSeconds
         if (TranscriptionLengthLimit.isTooLong(recordingSeconds)) {
             tooLongMinutes = ((recordingSeconds ?: 0L) / 60L).toInt()
-        } else if (!ModelRepository.isInstalled(context, model)) {
+        } else if (!TranscriptionRouting.canStart(context)) {
+            // A cloud service (#48) never needs the model; only "on this phone" can be missing one.
             showModelMissing = true
         } else if (ImportedRecording.isImported(displayName) || prefs.getTranscriptionAskLanguage()) {
             // An import ALWAYS asks, whatever the setting says. The setting means "my calls are in
@@ -789,6 +805,15 @@ fun HomeScreen(
     // list being what the user happens to be looking at, which stops being true the moment there is
     // more than one section. Exactly one observer exists, and it is in the shell.
 
+    // Audio started on the list stops when the list goes, as it does when a recording's page is
+    // closed — except when the list was left for the playing recording's own page, which takes it on.
+    val recordingsListShowing = section == HomeSection.Recordings && playbackFor == null && readingFor == null
+    LaunchedEffect(recordingsListShowing) {
+        if (ListPlayback.stopsOnLeavingList(recordingsListShowing, playbackFor) &&
+            playback.phase != RecordingPlaybackController.Phase.IDLE
+        ) viewModel.stopPlayback()
+    }
+
     // While a track is playing, tick the player position so the slider tracks playback.
     LaunchedEffect(playback.phase) {
         while (playback.phase == RecordingPlaybackController.Phase.PLAYING) {
@@ -814,11 +839,20 @@ fun HomeScreen(
             }
             BackHandler { closePlayback() }
 
-            // Computed off the main thread and cached, so a ninety-minute call is decoded once. Keyed
-            // by the recording, so opening a different one starts again rather than showing the last.
+            // Watched, not drawn here. A long call takes minutes to draw, and a draw owned by this
+            // page died when the page closed, so it never finished (issue #63). The queued draw
+            // outlives the page, and the bars appear the moment it saves them. Keyed by the
+            // recording, so opening a different one starts again rather than showing the last.
             val peaks by produceState(FloatArray(0), displayName) {
                 value = FloatArray(0)
-                value = RecordingExtrasRepository.waveform(context, displayName, openItem.uri)
+                var queued = false
+                RecordingExtrasRepository.observeWaveform(context, displayName).collect { drawn ->
+                    value = drawn
+                    if (drawn.isEmpty() && !queued) {
+                        queued = true
+                        WaveformDrawWorker.enqueue(context, displayName, openItem.uri)
+                    }
+                }
             }
             val note by remember(displayName) {
                 RecordingExtrasRepository.note(context, displayName)
@@ -888,7 +922,11 @@ fun HomeScreen(
                 onSeek = { viewModel.seekTo(it) },
                 onSkip = { viewModel.skipPlayback(it) },
                 onCycleSpeed = { viewModel.cyclePlaybackSpeed() },
-                onOpenTranscript = { transcriptFor = displayName },
+                onOpenTranscript = {
+                    // Over a recording's own screen another call would clash with its player.
+                    readingOrder = ArrayList()
+                    transcriptFor = displayName
+                },
                 onTranscribe = { startTranscription(displayName) },
                 // Confirm first, and ask which copies when there are two of them — the same
                 // question the row's menu asks. This used to delete on the spot with nothing to
@@ -1061,6 +1099,7 @@ fun HomeScreen(
             // look at something you are already standing on, and a sheet over a list of transcripts
             // would be a transcript over a list of transcripts.
             onOpen = { displayName ->
+                readingOrder = ArrayList(groups.ready.map { it.displayName })
                 readingFor = displayName
                 readingFromSummary = false
             },
@@ -1153,6 +1192,7 @@ fun HomeScreen(
             //
             // Leaving it stops the audio, which the page frame already does for Transcripts (#27).
             onOpen = { displayName ->
+                readingOrder = ArrayList(groups.ready)
                 readingFor = displayName
                 readingFromSummary = true
             },
@@ -1347,18 +1387,21 @@ fun HomeScreen(
                             selection = if (item.uri in selection) selection - item.uri
                                         else selection + item.uri
                         },
-                        // Playing opens the recording's own screen and starts it there. The inline
-                        // strip could hold a play button and a slider and nothing else; skipping back
-                        // over a missed sentence, and speed, are what a long call actually needs.
-                        onPlayUri = { uri ->
-                            playbackFor = item.displayName
-                            viewModel.play(uri)
-                        },
+                        // Plays in place, on the list: asked for so a run of calls can be listened
+                        // through without opening each one. Skipping and speed stay on the page.
+                        onPlayUri = { uri -> viewModel.play(uri) },
                         // Opens the recording. Deliberately does NOT start it: a tap meant to look
                         // at a call would begin playing it out loud, which on a recording of a
                         // private conversation is the wrong default in a room with other people.
-                        // The play button is right there and says what it does.
-                        onOpenPlayback = { playbackFor = item.displayName },
+                        // If THIS row is already playing, the page carries on from the same spot;
+                        // if another row is, that one stops, since nothing on screen would own it.
+                        onOpenPlayback = {
+                            val active = playback.activeUri
+                            val isActive = active != null &&
+                                active in listOfNotNull(item.uri, item.localUri, item.driveUri)
+                            if (active != null && ListPlayback.stopsOnOpening(isActive)) viewModel.stopPlayback()
+                            playbackFor = item.displayName
+                        },
                         onPause = { viewModel.pausePlayback() },
                         onResume = { viewModel.resumePlayback() },
                         onSeek = { viewModel.seekTo(it) },
@@ -1369,7 +1412,13 @@ fun HomeScreen(
                         // happens to be queued keeps spinning, because none of them has started.
                         transcriptPercent = transcribingShown.percentFor(item.displayName),
                         onTranscribe = { startTranscription(item.displayName) },
-                        onOpenTranscript = { transcriptFor = item.displayName },
+                        onOpenTranscript = {
+                            // Only calls with a finished transcript, in the list's own sort and filters.
+                            readingOrder = ArrayList(
+                                listedNames.filter { transcriptStatuses[it] == TranscriptStatus.DONE }
+                            )
+                            transcriptFor = item.displayName
+                        },
                         // Retry runs through the same gate: without a model it would fail exactly the
                         // same silent way a first attempt does.
                         onRetryTranscript = { startTranscription(item.displayName) },
@@ -1637,6 +1686,17 @@ fun HomeScreen(
         // English while the screen behind it shows them translated.
         val exportLabels = rememberExportLabels()
 
+        // Previous / Next (#27): named the way the list names them, dated the way the header is.
+        val neighbours = remember(readingOrder, displayName, libraryRecordings) {
+            val (before, after) = TranscriptNeighbours.around(readingOrder, displayName)
+            fun describe(name: String?): TranscriptNeighbour? = name?.let { n ->
+                val r = libraryRecordings.firstOrNull { it.displayName == n }
+                TranscriptNeighbour(n, RecordingLabel.of(r) ?: RecordingLabel.forName(n), r?.displayDate)
+            }
+            describe(before) to describe(after)
+        }
+        var followPlayback by remember { mutableStateOf(AppPreferences(context).isTranscriptFollowPlayback()) }
+
         /**
          * Leaving the transcript.
          *
@@ -1764,7 +1824,20 @@ fun HomeScreen(
             },
             summaryState = sheetSummary,
             onSummarise = { SummaryScheduler.runNow(context, displayName) },
-            onStopSummary = { SummaryScheduler.stopNow(context) }
+            onStopSummary = { SummaryScheduler.stopNow(context) },
+            callKey = displayName,
+            previousCall = neighbours.first,
+            nextCall = neighbours.second,
+            onOpenCall = { next ->
+                // The audio belongs to the call being left; moving on stops it, as leaving the page does.
+                viewModel.stopPlayback()
+                if (readingPresentation) readingFor = next else transcriptFor = next
+            },
+            followPlayback = followPlayback,
+            onFollowPlaybackChange = { on ->
+                followPlayback = on
+                AppPreferences(context).setTranscriptFollowPlayback(on)
+            },
         )
     }
 
@@ -1799,10 +1872,7 @@ fun HomeScreen(
         // making to someone watching a progress bar. Say so plainly instead; every run after the
         // first quotes a measured figure.
         val isFirstRun = remember(displayName) {
-            val prefs = AppPreferences(context)
-            val model = TranscriptionModel.fromId(prefs.getTranscriptionModelId())
-                ?: TranscriptionModel.DEFAULT
-            !prefs.hasMeasuredRun(model.id)
+            TranscriptionRouting.isFirstRun(AppPreferences(context))
         }
         TranscribeConfirmDialog(
             title = RecordingLabel.forDisplayName(libraryRecordings, displayName),
@@ -2525,8 +2595,12 @@ private fun healthMessage(health: SetupHealth): String {
                 FailureReason.NO_AUDIO -> R.string.home_health_failed_no_audio
                 FailureReason.DAEMON_DIED -> R.string.home_health_failed_daemon
                 FailureReason.ONE_SIDED ->
-                    if (DeviceInfo.isVivo()) R.string.home_health_failed_one_sided_vivo
-                    else R.string.home_health_failed_one_sided
+                    when {
+                        !DeviceInfo.isVivo() -> R.string.home_health_failed_one_sided
+                        DeviceInfo.isVivoWithoutInAppRecording() ->
+                            R.string.home_health_failed_one_sided_vivo_overseas
+                        else -> R.string.home_health_failed_one_sided_vivo
+                    }
                 FailureReason.CUT_OFF -> R.string.home_health_failed_cut_off
             }
         )
@@ -3178,6 +3252,10 @@ private fun RecordingRow(
     val rowUris = remember(item) { listOfNotNull(item.uri, item.localUri, item.driveUri) }
     val activeUri = playback.activeUri
     val isRowActive = activeUri != null && activeUri in rowUris
+    val showsSeekBar = ListPlayback.showsSeekBar(isRowActive, playback.phase)
+    // Where a drag on the seek bar would land, so the ring and the time line move with the finger.
+    var previewMs by remember { mutableStateOf<Int?>(null) }
+    val shownMs = previewMs ?: playback.positionMs
 
     // Prefer the contact name, then the parsed number, then the raw file name.
     val primaryLabel = RecordingLabel.of(item) ?: item.displayName
@@ -3224,7 +3302,8 @@ private fun RecordingRow(
         // so selected rows came out maroon and read as an error or a pending deletion. Selection is
         // neutral, and the brand colour is teal — the same teal as the tick.
         selected -> MaterialTheme.colorScheme.primaryContainer
-        isRowActive -> MaterialTheme.colorScheme.surfaceContainerHigh
+        // No colour for the playing row: the card looks as it always did; the seek bar under it is
+        // what marks it (maintainer's call, 2026-10-26).
         else -> MaterialTheme.colorScheme.surface
     }
 
@@ -3252,13 +3331,22 @@ private fun RecordingRow(
             // the circle's edge. It looked like the badge was cut off; the cause was an ancestor two
             // levels up. Giving the badge an outline made the cut MORE obvious rather than fixing it.
             Box(contentAlignment = Alignment.Center) {
+                // Plays in the row (a second tap pauses). The rest of the card still opens the page.
+                val discAction = ListPlayback.discAction(isRowActive, playback.phase)
                 Box(
                     modifier = Modifier
                         .clip(CircleShape)
-                        .clickable(enabled = !selectionMode) { onOpenPlayback() }
+                        .clickable(enabled = !selectionMode) {
+                            when (discAction) {
+                                ListPlayback.DiscAction.PLAY -> onPlayUri(item.uri)
+                                ListPlayback.DiscAction.PAUSE -> onPause()
+                                ListPlayback.DiscAction.RESUME -> onResume()
+                                ListPlayback.DiscAction.NONE -> Unit
+                            }
+                        }
                 ) {
                     PlayDisc(
-                        isActive = !isBoth && isRowActive,
+                        isActive = isRowActive,
                         playback = playback
                     )
                 }
@@ -3357,13 +3445,61 @@ private fun RecordingRow(
                 SourceBadge(source = item.source)
             }
             Spacer(Modifier.width(META_INDENT - PLAY_DISC_SIZE))
+            // The details line stays as it is while playing; only a file that will not play replaces
+            // it, since there is no seek bar then to show anything happened.
+            val (metaText, metaColor) = when {
+                isRowActive && playback.phase == RecordingPlaybackController.Phase.ERROR ->
+                    stringResource(R.string.home_player_error) to MaterialTheme.colorScheme.error
+                else -> buildSubtitle(item, mergedPartCount) to MaterialTheme.colorScheme.onSurfaceVariant
+            }
             Text(
-                text = buildSubtitle(item, mergedPartCount),
+                text = metaText,
                 style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                color = metaColor,
                 maxLines = 1,
                 overflow = TextOverflow.Ellipsis
             )
+        }
+
+        if (showsSeekBar) {
+            val spokenMs = rememberSpokenPositionMs(playback.positionMs)
+            val positionText = stringResource(
+                R.string.home_player_position_of,
+                formatClock(spokenMs),
+                formatClock(playback.durationMs)
+            )
+            // Elapsed, the bar, the length: the only thing the playing card adds.
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Text(
+                    text = formatClock(shownMs),
+                    style = MaterialTheme.typography.labelSmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+                ListSeekBar(
+                    positionMs = playback.positionMs,
+                    durationMs = playback.durationMs,
+                    label = stringResource(R.string.home_player_seek),
+                    stateText = positionText,
+                    onSeek = onSeek,
+                    onPreview = { previewMs = it },
+                    formatTime = ::formatClock,
+                    // The touch strip is taller than the space it takes: it overhangs into the gap
+                    // above and the card's bottom padding, so the card grows by the bar, not the strip.
+                    modifier = Modifier
+                        .weight(1f)
+                        .padding(horizontal = 10.dp)
+                        .layout { measurable, constraints ->
+                            val strip = measurable.measure(constraints)
+                            val taken = SEEK_BAR_SPACE.roundToPx()
+                            layout(strip.width, taken) { strip.place(0, (taken - strip.height) / 2) }
+                        }
+                )
+                Text(
+                    text = formatClock(playback.durationMs),
+                    style = MaterialTheme.typography.labelSmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+            }
         }
 
         // Kept, not deleted, and deliberately unreachable: playback belongs on the recording's own
@@ -3550,7 +3686,8 @@ private fun PlayDisc(
             modifier = Modifier
                 .size(PLAY_DISC_SIZE)
                 .clip(CircleShape)
-                .background(primary.copy(alpha = if (isActive) 0.22f else 0.14f)),
+                // Same tint playing or not: only the glyph changes, so the card looks as it always did.
+                .background(primary.copy(alpha = 0.14f)),
             contentAlignment = Alignment.Center
         ) {
             when {
@@ -3561,7 +3698,14 @@ private fun PlayDisc(
                 )
                 else -> Icon(
                     imageVector = if (isPlaying) Icons.Filled.Pause else Icons.Filled.PlayArrow,
-                    contentDescription = stringResource(R.string.home_play_recording),
+                    contentDescription = stringResource(
+                        when {
+                            isPlaying -> R.string.home_player_pause
+                            isActive && playback.phase == RecordingPlaybackController.Phase.PAUSED ->
+                                R.string.home_player_play
+                            else -> R.string.home_play_recording
+                        }
+                    ),
                     tint = primary,
                     modifier = Modifier.size(24.dp)
                 )
@@ -3677,6 +3821,10 @@ private val PLAY_DISC_SIZE = 46.dp
 /** Badge glyphs, sized so two of them plus padding fit within [PLAY_DISC_SIZE]. */
 private val BADGE_GLYPH_SIZE = 13.dp
 
+/** The height the playing row's seek bar adds to its card; its touch strip overhangs this. */
+private val SEEK_BAR_SPACE = 18.dp
+
+
 private val META_INDENT = 62.dp
 
 /**
@@ -3761,6 +3909,9 @@ private fun formatDuration(seconds: Long): String {
 
 /** Formats a byte count as a compact human-readable size (e.g. "1.2 MB"). */
 private fun formatSize(bytes: Long): String = formatByteSize(bytes)
+
+/** "1:12" for a position, "1:05:30" past the hour — a long call must not read as "65:30". */
+private fun formatClock(millis: Int): String = formatDuration((millis / 1000L).coerceAtLeast(0L))
 
 /** Formats a millisecond duration as m:ss. */
 private fun formatMillis(millis: Int): String {

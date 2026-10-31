@@ -91,6 +91,7 @@
     <string name="home_health_failed_daemon">Ο εγγραφέας σταμάτησε κατά τη διάρκεια της τελευταίας σας κλήσης.</string>
     <string name="home_health_failed_one_sided">Στην τελευταία σας κλήση εφαρμογής καταγράφηκε μόνο η δική σας πλευρά.</string>
     <string name="home_health_failed_one_sided_vivo">Στην τελευταία σας κλήση εφαρμογής καταγράφηκε μόνο η δική σας πλευρά. Σε vivo: ανοίξτε την εφαρμογή Recorder → Εγγραφή κλήσεων εντός εφαρμογής και ενεργοποιήστε την (μαζί με την Αυτόματη έναρξη εγγραφής).</string>
+    <string name="home_health_failed_one_sided_vivo_overseas">Στην τελευταία σας κλήση εφαρμογής καταγράφηκε μόνο η δική σας πλευρά. Αυτό το τηλέφωνο vivo εμποδίζει τις εφαρμογές να καταγράφουν το άλλο άτομο σε κλήσεις εφαρμογών, χωρίς επιλογή για να το επιτρέψει. Οι κανονικές τηλεφωνικές κλήσεις καταγράφονται και από τις δύο πλευρές.</string>
     <string name="home_date_today">Σήμερα</string>
     <string name="home_date_yesterday">Χθες</string>
     <string name="whatsnew_221_title">Πιο γρήγορο άνοιγμα, και πιο ήσυχο για προβλήματα που δεν υπάρχουν</string>
@@ -137,6 +138,17 @@
     <string name="merge_note_will_keep">Οι άλλες κλήσεις κρατιούνται και στο τηλέφωνο.</string>
     <string name="home_scroll_to_top">Κορυφή</string>
     <string name="home_whatsnew_full_notes">Πλήρεις σημειώσεις έκδοσης</string>
+    <string name="whatsnew_248_title">Δικό σας κλειδί απομαγνητοφώνησης και ευκολότερη ανάγνωση</string>
+    <string-array name="whatsnew_248_items">
+        <item>Απομαγνητοφώνηση με δικό σας κλειδί — Groq, OpenRouter ή δικός σας διακομιστής, σε δευτερόλεπτα αντί για λεπτά (Ρυθμίσεις ▸ Πού γίνεται η απομαγνητοφώνηση)</item>
+        <item>Αναπαραγωγή απευθείας από τη λίστα ηχογραφήσεων, με μπάρα για μετάβαση σε οποιοδήποτε σημείο</item>
+        <item>Προηγούμενη και Επόμενη κατά την ανάγνωση, και διακόπτης «Ακολούθηση αναπαραγωγής»</item>
+        <item>Η εισαγωγή στη σελίδα απομαγνητοφωνήσεων είναι πλέον ένα κουμπί: κρατήστε τον ήχο ή μόνο το κείμενο</item>
+        <item>Οι μεγάλες κλήσεις 45 λεπτών και άνω απομαγνητοφωνούνται, εισάγονται και δείχνουν ξανά την κυματομορφή τους</item>
+        <item>Οι λήψεις μοντέλων μέσω δεδομένων κινητής ρωτούν πρώτα, αντί να περιμένουν Wi-Fi</item>
+        <item>Μοντέλο ομιλίας για τα περσικά και καλύτερη υποστήριξη TalkBack</item>
+        <item>Συνδέεται σε τηλέφωνα που κρύβουν τη διεύθυνση της ασύρματης αποσφαλμάτωσης</item>
+    </string-array>
     <string name="whatsnew_247_title">Νέες ρυθμίσεις, το Shizuku προλαβαίνει, και Ουκρανικά</string>
     <string-array name="whatsnew_247_items">
         <item>Νέα διάταξη ρυθμίσεων — κάθε σελίδα δείχνει μόνο τις δικές της ρυθμίσεις, με λεπτομέρειες πίσω από το ⓘ· η κλασική προβολή είναι ένα πάτημα μακριά</item>
@@ -264,7 +276,7 @@
     <string name="home_transcripts_count">%1$d απομαγνητοφωνημένες</string>
     <string name="home_summaries_count">%1$d σε περίληψη</string>
     <string name="home_transcripts_empty_title">Τίποτα δεν έχει απομαγνητοφωνηθεί ακόμη</string>
-    <string name="home_transcripts_empty_hint">Ζητήστε μια απομαγνητοφώνηση από το μενού μιας εγγραφής, ή εισαγάγετε ένα αρχείο ήχου παραπάνω. Όποιο από τα δύο εμφανίζεται εδώ μόλις γραφτεί.</string>
+    <string name="home_transcripts_empty_hint">Ζητήστε απομαγνητοφώνηση από το μενού μιας ηχογράφησης ή πατήστε Εισαγωγή για να προσθέσετε ένα αρχείο ήχου. Θα εμφανιστεί εδώ μόλις γραφτεί.</string>
     <string name="home_summaries_empty_title">Τίποτα δεν έχει μπει σε περίληψη ακόμη</string>
     <string name="home_summaries_empty_hint">Ανοίξτε μια κλήση που έχει απομαγνητοφώνηση και ζητήστε περίληψη· εμφανίζεται εδώ μόλις γραφτεί.</string>
 
@@ -281,7 +293,11 @@
     <!-- Transcripts: bringing in audio CallVault did not record -->
     <string name="transcripts_import_title">Εισαγωγή ήχου</string>
     <string name="transcripts_import_working">Εισαγωγή…</string>
-    <string name="transcripts_import_body">Απομαγνητοφωνήστε ένα ηχητικό μήνυμα ή οποιοδήποτε άλλο αρχείο ήχου υπάρχει ήδη στο τηλέφωνό σας.</string>
+    <string name="transcripts_import_fab">Εισαγωγή</string>
+    <string name="import_sheet_keep">Διατήρηση ήχου</string>
+    <string name="import_sheet_keep_hint">Εμφανίζεται στις ηχογραφήσεις σας</string>
+    <string name="import_sheet_transcript_only">Μόνο απομαγνητοφώνηση</string>
+    <string name="import_sheet_transcript_only_hint">Ο ήχος διαγράφεται μετά</string>
     <string name="import_failed_title">Δεν ήταν δυνατή η εισαγωγή αυτού του αρχείου</string>
     <string name="import_failed_not_audio">Το CallVault δεν μπορεί να διαβάσει αυτού του είδους το αρχείο. Δοκιμάστε μια εγγραφή .opus, .ogg, .m4a, .mp3 ή .wav.</string>
     <string name="import_failed_empty">Αυτό το αρχείο είναι κενό, οπότε δεν θα υπήρχε τίποτα να απομαγνητοφωνηθεί.</string>

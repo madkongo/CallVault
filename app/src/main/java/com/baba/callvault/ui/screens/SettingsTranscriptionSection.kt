@@ -23,7 +23,10 @@ import kotlinx.coroutines.flow.first
 import com.baba.callvault.data.AppPreferences
 import com.baba.callvault.data.TranscriptionMode
 import com.baba.callvault.transcription.TranscriptionQueue
+import com.baba.callvault.transcription.model.ModelRepository
 import com.baba.callvault.transcription.model.TranscriptionModel
+import com.baba.callvault.transcription.model.TranscriptionModelOffer
+import androidx.compose.ui.platform.LocalContext
 import com.baba.callvault.ui.common.TranscriptionLabels
 import com.baba.callvault.ui.common.TranscriptionTimeDialog
 import com.baba.callvault.ui.common.formatRunTime
@@ -63,13 +66,17 @@ internal fun TranscriptionSection(
     ) {
         TranscriptionScheduleRows(preferences, updateTrigger, actions)
 
-        TranscriptionModelChoiceRow(preferences, updateTrigger, actions)
+        TranscriptionServiceRows(preferences, updateTrigger, actions)
+
+        // The speech model only matters on this phone; a cloud service (#48) brings its own.
+        val onDevice = remember(updateTrigger) { !preferences.getTranscriptionService().isCloud }
+        if (onDevice) TranscriptionModelChoiceRow(preferences, updateTrigger, actions)
 
         TranscriptionLanguageRows(preferences, updateTrigger, actions)
 
         TranscriptionConfirmRow(preferences, updateTrigger, actions)
 
-        TranscriptionModelDownloadRows(preferences, updateTrigger, actions)
+        if (onDevice) TranscriptionModelDownloadRows(preferences, updateTrigger, actions)
 
         TranscriptionModeNote(preferences, updateTrigger)
 
@@ -154,8 +161,10 @@ internal fun TranscriptionScheduleRows(preferences: AppPreferences, updateTrigge
 @Composable
 internal fun TranscriptionModelChoiceRow(preferences: AppPreferences, updateTrigger: Int, actions: SettingsActions) {
     val modelId = remember(updateTrigger) { preferences.getTranscriptionModelId() }
+    val language = remember(updateTrigger) { preferences.getTranscriptionLanguage() }
     TranscriptionModelField(
         modelId = modelId,
+        offered = rememberOfferedTranscriptionModels(language, modelId),
         onModelChange = { actions.setTranscriptionModelId(it) }
     )
 }
@@ -219,7 +228,7 @@ internal fun TranscriptionModelDownloadRows(preferences: AppPreferences, updateT
     TranscriptionModelRows(
         model = selectedModel,
         updateTrigger = updateTrigger,
-        onDownload = { actions.downloadTranscriptionModel(it) },
+        onDownload = { model, network -> actions.downloadTranscriptionModel(model, network) },
         onCancel = { actions.cancelTranscriptionModelDownload(it) },
         onDelete = { actions.deleteTranscriptionModel(it) },
         onImport = { model, uri -> actions.importModel(model, uri) },
@@ -248,7 +257,21 @@ internal fun transcriptionModeNoteRes(mode: TranscriptionMode): Int = when (mode
 internal const val BYTES_PER_MB = 1_000_000L
 
 /**
- * The speech-model dropdown, listing every tier in the catalogue.
+ * The tiers the picker lists for this language and selection — see [TranscriptionModelOffer]. Reads
+ * which models are on the phone once per change of either key; it is a stat per catalogue entry.
+ */
+@Composable
+internal fun rememberOfferedTranscriptionModels(language: String?, modelId: String): List<TranscriptionModel> {
+    val context = LocalContext.current
+    return remember(language, modelId) {
+        val installedIds = ModelRepository.installedModels(context).map { it.id }.toSet()
+        TranscriptionModelOffer.offered(language, modelId, installedIds)
+    }
+}
+
+/**
+ * The speech-model dropdown, listing the tiers in [offered] — every general tier, plus a
+ * single-language one only where [TranscriptionModelOffer] says so.
  *
  * Extracted for the setup wizard, which offers the download and therefore has to let the user say
  * *which* model is being fetched — 190 MB against 874 MB is the difference between a minute and
@@ -258,10 +281,15 @@ internal const val BYTES_PER_MB = 1_000_000L
  * being downloaded.
  *
  * @param modelId The stored id; anything unrecognised falls back to [TranscriptionModel.DEFAULT].
+ * @param offered From [rememberOfferedTranscriptionModels]; always holds every general tier, so DEFAULT.
  */
 @Composable
-internal fun TranscriptionModelField(modelId: String, onModelChange: (String) -> Unit) {
-    val modelOptions = TranscriptionModel.entries.map {
+internal fun TranscriptionModelField(
+    modelId: String,
+    offered: List<TranscriptionModel>,
+    onModelChange: (String) -> Unit
+) {
+    val modelOptions = offered.map {
         OptionItem(it.id, stringResource(TranscriptionLabels.titleOf(it)))
     }
     DropdownRow {

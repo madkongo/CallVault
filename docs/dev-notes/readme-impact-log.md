@@ -1,5 +1,47 @@
 # README impact log
 
+## 2026-10-29 — Transcribe with your own key (#48)
+
+🧪 VERIFYING (unit tests and build only; no real request sent, nothing seen on a phone). Settings → Where to
+transcribe can send call audio to Groq, OpenRouter or a custom OpenAI-compatible server, with the user's
+own key. Off by default ("On this phone"), asked before first use, Wi-Fi only unless mobile data is
+allowed. See `docs/dev-notes/2026-10-29-issue-48-byok-transcription.md`.
+
+**What this makes wrong in the README, when this ships** (README is held — not edited):
+- ~line 13, "Nothing leaves your phone unless you switch on Drive backup" — untrue once a cloud service is
+  chosen: call audio is uploaded to it.
+- ~line 65, "Both run on the phone, on the CPU, with no account and no network" — transcription can now
+  run on a cloud service (summaries still on the phone).
+- ~line 76 table "What leaves your device": Recordings → also "if you choose a cloud service for
+  transcription"; the "CallVault reaches the network in three places" sentence gains a fourth (the chosen
+  transcription service).
+
+**Not claimable:** any price, cost or "free" for those services (maintainer rule), any speed figure as
+measured (the "seconds per call" wording is the service's general reputation, not our measurement), and
+OpenRouter timings until a real multipart request has been seen to return segments.
+
+## 2026-10-29 — Persian-tuned speech model (#55)
+
+🧪 VERIFYING (unit tests and build only; nothing seen on a phone). With the transcription language
+pinned to Persian, the Model picker offers a fourth tier, **Persian-tuned** (givia's
+whisper-large-v3-turbo-persian, CC BY 4.0, 574 MB, downloaded separately). See
+`docs/dev-notes/2026-10-29-issue-55-persian-model.md`.
+
+**What this makes wrong in the README, when this ships:** any sentence that says there are three
+speech models, or that every model is multilingual — the new one is offered for Persian only.
+
+**Not claimable:** better Persian call transcripts. It was deliberately not quality-tested on calls,
+and one outside tester found it ~3x slower with temperature fallback on, which CallVault keeps on. If
+the README ever names it, credit givia and the CC BY 4.0 licence.
+
+## 2026-10-28 — vivo/iQOO app calls: far side is China-firmware only
+
+📐 research, not device-confirmed. The README makes no vivo claim, so nothing to correct. But the 2.4.3
+entry below parked "app calls on vivo/iQOO" as a possible feature line — if it is ever added, it must say
+the other side of app calls records **only on China-market vivo/iQOO firmware** (vivo's "In-app call
+recording" option); overseas vivo/iQOO phones record your side only, no workaround without root. Carrier
+calls record both sides on all of them. See `docs/SUPPORT.md` §vivo.
+
 ## 2026-10-23 — the emulator's README demo data is gone
 
 Not a claim change: a **screenshot-shoot blocker.** The #58 emulator run
@@ -599,3 +641,22 @@ backed up to a folder you choose before a reinstall". The network paragraph (lin
   "Pair"; if the README ever quotes it, quote "Pair".
 
 README.md was not edited (held).
+
+## 2026-10-26 — Play from the Recordings list (`feat/play-from-list`)
+
+🧪 VERIFYING — emulator only. README line ~39 ("Playback with a waveform you can scrub") stays true.
+Once confirmed it could add: "or play straight from the list, with a seek bar on the playing row". The
+Recordings screenshot (`docs/screenshots/01-home.png`) still matches when nothing is playing.
+
+README.md was not edited (held).
+
+## 2026-10-29 — Model downloads can use mobile data, after asking (`feat/mobile-data-models`)
+
+🧪 VERIFYING — unit tests only, nothing seen on a phone. Tapping Download (or Resume) on mobile data
+now asks "You're not on Wi-Fi": wait for Wi-Fi (as before) or download now on mobile data. On Wi-Fi
+nothing changes. The rows no longer say "over Wi-Fi only".
+
+**What this makes wrong in the README, once confirmed:** line ~67, "downloaded once over Wi-Fi". Could
+read "downloaded once — over Wi-Fi, or on mobile data if you say so".
+
+README.md was not edited.

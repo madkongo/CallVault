@@ -37,6 +37,7 @@ import com.baba.callvault.R
 import com.baba.callvault.system.PersistentFolderPickerContract
 import com.baba.callvault.system.diagnostics.SystemLogCollector
 import com.baba.callvault.system.shareLogFiles
+import com.baba.callvault.transcription.model.DownloadNetwork
 import com.baba.callvault.utils.AppLogger
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -615,6 +616,7 @@ private fun SettingsScreenPreview() {
             override fun setShowToastsEnabled(enabled: Boolean) {}
             override fun setAppLanguage(languageCode: String) {}
             override fun setLoggingEnabled(enabled: Boolean) {}
+            override fun setSkipMdnsConnectForTest(enabled: Boolean) {}
             override fun getAppVersion(): String = "Version 1.0.0 (Mock)"
             override fun setFileNameTemplate(template: String) {}
             override fun setStorageTarget(target: StorageTarget) {}
@@ -641,10 +643,12 @@ private fun SettingsScreenPreview() {
             override fun setTranscriptionModelId(id: String) {}
             override fun setTranscriptionLanguage(language: String?) {}
             override fun setTranscriptionAskLanguage(ask: Boolean) {}
-            override fun downloadTranscriptionModel(model: TranscriptionModel) {}
+            override fun setTranscriptionService(service: com.baba.callvault.transcription.cloud.TranscriptionService) {}
+            override fun setTranscriptionCloudMobileData(allowed: Boolean) {}
+            override fun downloadTranscriptionModel(model: TranscriptionModel, network: DownloadNetwork) {}
             override fun cancelTranscriptionModelDownload(model: TranscriptionModel) {}
             override fun deleteTranscriptionModel(model: TranscriptionModel) {}
-            override fun downloadSummaryModel(model: SummaryModel) {}
+            override fun downloadSummaryModel(model: SummaryModel, network: DownloadNetwork) {}
             override fun cancelSummaryModelDownload(model: SummaryModel) {}
             override fun deleteSummaryModel(model: SummaryModel) {}
             override fun importModel(model: DownloadableModel, source: Uri) {}

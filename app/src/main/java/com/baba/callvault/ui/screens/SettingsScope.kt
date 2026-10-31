@@ -46,7 +46,7 @@ enum class SettingsGroup(val key: String) {
     /** The classic Experimental ▸ Resilience rows, in the order of [ConnectionRows]. */
     CONNECTION("group_connection"),
 
-    /** Speech model (with its download), the shared language, ask the language each time. */
+    /** Where to transcribe (#48), speech model (with its download), the shared language, ask each time. */
     MODEL_AND_LANGUAGE("group_model_and_language"),
 
     /** Transcription mode, run time, calls per run, only while charging, ask before transcribing. */
@@ -126,7 +126,8 @@ object SettingsGroups {
         SettingsGroup.CLEANING_UP -> listOf("RetentionPolicyRows", "MergeSubSection")
         SettingsGroup.CONNECTION -> listOf("ConnectionRows")
         SettingsGroup.MODEL_AND_LANGUAGE -> listOf(
-            "TranscriptionModelChoiceRow", "TranscriptionModelDownloadRows", "TranscriptionLanguageRows",
+            "TranscriptionServiceRows", "TranscriptionModelChoiceRow", "TranscriptionModelDownloadRows",
+            "TranscriptionLanguageRows",
         )
         SettingsGroup.WHEN_TO_TRANSCRIBE -> listOf(
             "TranscriptionScheduleRows", "TranscriptionConfirmRow", "TranscriptionModeNote",
@@ -165,7 +166,9 @@ object SettingsGroups {
         )
         SettingsGroup.CONNECTION -> listOf("handoff_persist", "offline_recording", "wd_enforced", "wd_auto_approve_network")
         SettingsGroup.MODEL_AND_LANGUAGE -> listOf(
-            "transcription_model_id", "transcription_language", "transcription_ask_language",
+            "transcription_service", "transcription_cloud_mobile_data", "transcription_custom_base_url",
+            "transcription_custom_model", "transcription_model_id", "transcription_language",
+            "transcription_ask_language",
         )
         SettingsGroup.WHEN_TO_TRANSCRIBE -> listOf(
             "transcription_mode", "transcription_hour", "transcription_minute",

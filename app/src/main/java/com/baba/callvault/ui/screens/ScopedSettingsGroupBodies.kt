@@ -184,8 +184,14 @@ private fun ConnectionBody() {
 
 @Composable
 private fun ModelAndLanguageBody(preferences: AppPreferences, updateTrigger: Int, actions: SettingsActions) {
-    TranscriptionModelChoiceRow(preferences, updateTrigger, actions)
-    TranscriptionModelDownloadRows(preferences, updateTrigger, actions)
+    TranscriptionServiceRows(preferences, updateTrigger, actions)
+    // The speech model only matters on this phone; a cloud service (#48) brings its own.
+    val onDevice = remember(updateTrigger) { !preferences.getTranscriptionService().isCloud }
+    if (onDevice) {
+        SettingsDivider()
+        TranscriptionModelChoiceRow(preferences, updateTrigger, actions)
+        TranscriptionModelDownloadRows(preferences, updateTrigger, actions)
+    }
     SettingsDivider()
     TranscriptionLanguageRows(preferences, updateTrigger, actions)
 }

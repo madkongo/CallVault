@@ -12,9 +12,11 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.selection.toggleable
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.BugReport
+import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.automirrored.filled.ListAlt
 import androidx.compose.material.icons.filled.ContentCopy
 import androidx.compose.material3.*
@@ -25,6 +27,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.unit.dp
 import com.baba.callvault.ui.common.verticalScrollbar
 import com.baba.callvault.ui.common.horizontalScrollbar
@@ -115,6 +118,16 @@ internal fun BugReportSection(
                 )
                 Spacer(modifier = Modifier.height(4.dp))
             }
+            // A test switch for the maintainer's device check of #65, shown only while logging is on — the
+            // only time its result can be read — and only honoured then (see isDebugSkipMdnsConnect).
+            val skipMdns = remember(updateTrigger) { preferences.isDebugSkipMdnsConnect() }
+            SettingsToggleRow(
+                icon            = Icons.Filled.Search,
+                label           = stringResource(R.string.settings_debug_skip_mdns),
+                checked         = skipMdns,
+                onCheckedChange = { actions.setSkipMdnsConnectForTest(it) },
+                description     = stringResource(R.string.settings_debug_skip_mdns_description)
+            )
         } else {
             // Offered whenever logging is off, with no precondition on there being a log: the report
             // always carries the configuration header, and the setup journal when there is one. The
@@ -268,12 +281,26 @@ private fun DebugLogViewer(onDismiss: () -> Unit) {
                         style = MaterialTheme.typography.titleLarge,
                         modifier = Modifier.weight(1f),
                     )
-                    Text(
-                        text = stringResource(R.string.settings_debug_log_wrap),
-                        style = MaterialTheme.typography.labelLarge,
-                    )
-                    Spacer(modifier = Modifier.width(8.dp))
-                    Switch(checked = wrap, onCheckedChange = { wrap = it })
+                    // Label and switch toggle together, so TalkBack reads "Wrap, Switch, On" as one stop.
+                    Row(
+                        modifier = Modifier.toggleable(
+                            value = wrap,
+                            role = Role.Switch,
+                            onValueChange = { wrap = it },
+                        ),
+                        verticalAlignment = Alignment.CenterVertically,
+                    ) {
+                        Text(
+                            text = stringResource(R.string.settings_debug_log_wrap),
+                            style = MaterialTheme.typography.labelLarge,
+                        )
+                        Spacer(modifier = Modifier.width(8.dp))
+                        Switch(
+                            checked = wrap,
+                            onCheckedChange = null,
+                            modifier = Modifier.minimumInteractiveComponentSize(),
+                        )
+                    }
                 }
                 HorizontalDivider()
                 Box(modifier = Modifier.weight(1f).fillMaxWidth()) {

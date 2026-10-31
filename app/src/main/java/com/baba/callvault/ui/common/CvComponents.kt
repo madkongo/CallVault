@@ -68,6 +68,7 @@ fun CvScaffold(
     titleTrailing: (@Composable () -> Unit)? = null,
     actions: @Composable RowScope.() -> Unit = {},
     bottomBar: @Composable () -> Unit = {},
+    floatingActionButton: @Composable () -> Unit = {},
     content: @Composable (PaddingValues) -> Unit,
 ) {
     Scaffold(
@@ -133,6 +134,7 @@ fun CvScaffold(
             }
         },
         bottomBar = bottomBar,
+        floatingActionButton = floatingActionButton,
         content = content,
     )
 }
