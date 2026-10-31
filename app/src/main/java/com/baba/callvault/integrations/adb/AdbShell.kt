@@ -75,10 +75,42 @@ object AdbShell {
     /**
      * Hard cap on one ADB connect INCLUDING its CNXN/AUTH handshake. The library's connect has no
      * timeout of its own, so without this a handshake interrupted by an adbd restart parks the caller
-     * forever while it holds this object's monitor and (usually) [heavyOperationLock]. Generous enough
+     * forever while it holds [connectLock] and (usually) [heavyOperationLock]. Generous enough
      * for a healthy local handshake, which is milliseconds over loopback.
      */
     private const val CONNECT_BUDGET_MS = 8_000L
+
+    /**
+     * How long a caller waits to ENTER [ensureConnected] / [forceReconnect] / the Wireless-debugging connect
+     * while another thread is inside, before giving up with "not connected".
+     *
+     * Every step inside is bounded, so a healthy holder leaves within its longest bounded run. 📐 CALCULATED
+     * from the constants, not measured:
+     * - Wireless debugging: WD settle 0.75 s + last-good probe 0.6 s + mDNS 12 s + loopback search 5 s +
+     *   handshake 8 s ≈ 26.4 s on failure; ≈ 29 s with the 2.5 s settle on success.
+     * - Offline (loopback): two candidate ports × 8 s + the 12 s self-heal window + one more round that
+     *   starts just inside it (1.5 s pause + 2 × 8 s) + 2.5 s settle ≈ 48 s, the worst being adbd accepting
+     *   TCP and never answering the handshake on every attempt.
+     *
+     * 60 s sits above both, so a second caller behind a slow-but-healthy holder still waits and then finds
+     * the connection, exactly as it did with `@Synchronized`. Only a holder parked somewhere nobody bounded
+     * (libadb's own lock, a shell read with no EOF) makes it give up — where before it waited forever.
+     */
+    private const val CONNECT_ENTRY_WAIT_MS = 60_000L
+
+    /**
+     * Serialises the connect paths, replacing the old `@Synchronized` object monitor (see [BoundedEntryLock]).
+     * Re-entrant like the monitor; lock order is unchanged: [heavyOperationLock] first, then this.
+     */
+    private val connectLock = BoundedEntryLock(CONNECT_ENTRY_WAIT_MS)
+
+    private fun logConnectBusy(what: String, holder: String?) {
+        AppLogger.w(
+            TAG,
+            "$what: another connect still holds the ADB connect lock after ${CONNECT_ENTRY_WAIT_MS}ms " +
+                "(held by ${holder ?: "a thread that has just left"}) — giving up on this attempt instead of waiting forever",
+        )
+    }
 
     /**
      * Ensures the ADB connection is up (mDNS-discover the connect port, connect, settle).
@@ -88,16 +120,21 @@ object AdbShell {
      * If Wireless debugging is off (e.g. after an OEM reboot) and the app holds
      * WRITE_SECURE_SETTINGS, it re-enables Wireless debugging before starting mDNS discovery.
      *
-     * **@Synchronized**: when a call wakes the app, the launch auto-connect (CallVaultApplication) and
-     * the recording path both call this at once. Without serialization they raced — one connected
-     * while the other checked `isConnected` a moment too early, tried its own connect, lost, and
-     * reported "not connected". Serializing makes the second caller wait, then see the live
-     * connection and return true.
+     * **Serialised** (was `@Synchronized`, now [connectLock]): when a call wakes the app, the launch
+     * auto-connect (CallVaultApplication) and the recording path both call this at once. Without
+     * serialization they raced — one connected while the other checked `isConnected` a moment too early,
+     * tried its own connect, lost, and reported "not connected". Serializing makes the second caller wait,
+     * then see the live connection and return true. The wait is bounded by [CONNECT_ENTRY_WAIT_MS]: behind
+     * a holder that never comes back, this returns false rather than parking forever.
      *
      * @return true if already connected or newly connected successfully; false on failure.
      */
-    @Synchronized
-    fun ensureConnected(context: Context): Boolean {
+    fun ensureConnected(context: Context): Boolean =
+        connectLock.withLockOrElse(onBusy = { logConnectBusy("ensureConnected", it); false }) {
+            ensureConnectedLocked(context)
+        }
+
+    private fun ensureConnectedLocked(context: Context): Boolean {
         val mgr = AdbConnectionManager.getInstance(context)
         if (mgr.isConnected) {
             PairingLoss.recordConnected(context)
@@ -120,13 +157,19 @@ object AdbShell {
             // for it rather than re-arm via WD (which is what caused the transient WD "blips" on unplug).
             // Only when the port is genuinely gone (e.g. tcpip cleared on reboot) do we let the caller
             // re-arm — distinguished by isLoopbackArmed() so a post-reboot connect isn't delayed here.
+            //
+            // The window is measured on the clock, not by adding up the sleeps: each connect inside it can take
+            // up to CONNECT_BUDGET_MS per port when adbd accepts TCP and never answers the handshake, and
+            // counting only the sleeps let eight such rounds run ~140 s past a "12 s" window. When connects are
+            // refused at once (the normal case) the two are the same.
             if (!ok && isLoopbackArmed(context)) {
-                var waited = 0L
-                while (!ok && waited < LOOPBACK_SELFHEAL_MS) {
+                val startedAt = SystemClock.elapsedRealtime()
+                val deadline = startedAt + LOOPBACK_SELFHEAL_MS
+                while (!ok && SystemClock.elapsedRealtime() < deadline) {
                     Thread.sleep(LOOPBACK_RETRY_INTERVAL_MS)
-                    waited += LOOPBACK_RETRY_INTERVAL_MS
                     ok = connectLoopback(context)
                 }
+                val waited = SystemClock.elapsedRealtime() - startedAt
                 if (ok) AppLogger.i(TAG, "Loopback self-healed after ${waited}ms (adbd restart) — no WD needed")
             }
             if (ok) {
@@ -311,8 +354,9 @@ object AdbShell {
      * recording path and by [armLoopbackIfNeeded] for the one-time base connection it needs to arm the
      * loopback listener (arming inherently needs a transport once).
      *
-     * @Synchronized (instance monitor) — where both are held it is always acquired AFTER
-     * [heavyOperationLock], matching every other lock site (heavy → instance), so no inversion.
+     * Holds [connectLock] — where both are held it is always acquired AFTER [heavyOperationLock], matching
+     * every other lock site (heavy → connect), so no inversion. Its entry wait is bounded too: the arming
+     * path calls this while holding [heavyOperationLock], so queueing forever here froze every ADB user.
      */
     private fun connectViaWirelessDebugging(context: Context): Boolean =
         connectViaWirelessDebuggingWithReason(context) == BaseConnect.CONNECTED
@@ -329,10 +373,16 @@ object AdbShell {
         CONNECT_REFUSED,
         /** adbd refused our key: Android has forgotten CallVault's pairing (issue #43), or a TLS blip. */
         PAIRING_REQUIRED,
+        /** Another connect held [connectLock] past [CONNECT_ENTRY_WAIT_MS]; this attempt did not run. */
+        CONNECT_LOCK_BUSY,
     }
 
-    @Synchronized
-    private fun connectViaWirelessDebuggingWithReason(context: Context): BaseConnect {
+    private fun connectViaWirelessDebuggingWithReason(context: Context): BaseConnect =
+        connectLock.withLockOrElse(onBusy = { logConnectBusy("Wireless-debugging connect", it); BaseConnect.CONNECT_LOCK_BUSY }) {
+            connectViaWirelessDebuggingLocked(context)
+        }
+
+    private fun connectViaWirelessDebuggingLocked(context: Context): BaseConnect {
         val mgr = AdbConnectionManager.getInstance(context)
         if (mgr.isConnected) return BaseConnect.CONNECTED
         // Re-enable Wireless debugging if the OEM turned it off on reboot (needs WRITE_SECURE_SETTINGS).
@@ -400,17 +450,18 @@ object AdbShell {
      * mDNS port and reconnect. Used by the recorder-server launcher to recover from intermittent
      * "Stream closed" failures on the flaky wireless link.
      *
-     * Call off the main thread. @Synchronized for the same reason as [ensureConnected] (serialise
-     * concurrent connect attempts). Re-entrant with [ensureConnected] (same thread).
+     * Call off the main thread. Holds [connectLock] for the same reason as [ensureConnected] (serialise
+     * concurrent connect attempts), with the same bounded entry wait. Re-entrant with [ensureConnected]
+     * (same thread).
      *
      * @return true if a live connection is up after the reconnect attempt.
      */
-    @Synchronized
-    fun forceReconnect(context: Context): Boolean {
-        runCatching { AdbConnectionManager.getInstance(context).disconnect() }
-            .onFailure { AppLogger.d(TAG, "forceReconnect disconnect ignored: ${it.message}") }
-        return ensureConnected(context)
-    }
+    fun forceReconnect(context: Context): Boolean =
+        connectLock.withLockOrElse(onBusy = { logConnectBusy("forceReconnect", it); false }) {
+            runCatching { AdbConnectionManager.getInstance(context).disconnect() }
+                .onFailure { AppLogger.d(TAG, "forceReconnect disconnect ignored: ${it.message}") }
+            ensureConnected(context)
+        }
 
     /**
      * Drops the ADB connection WITHOUT reconnecting, to unblock a caller wedged on a half-dead socket.
@@ -421,9 +472,9 @@ object AdbShell {
      * Closing the connection from another thread is what lets the blocked one unwind and release the
      * lock — the same technique `probeShellOnce` uses on its own hung read.
      *
-     * **Deliberately NOT `@Synchronized`, and this is the whole point.** The thread we are trying to
-     * rescue is typically blocked *inside* [ensureConnected], which holds this object's monitor — so a
-     * synchronized rescue would wait on the very lock it exists to release, and deadlock instead of
+     * **Deliberately does NOT take [connectLock], and this is the whole point.** The thread we are trying to
+     * rescue is typically blocked *inside* [ensureConnected], which holds that lock — so a locked rescue
+     * would wait on the very lock it exists to release, and deadlock (or, now, time out) instead of
      * recovering. Do not "tidy" this to match its neighbours.
      *
      * Does not reconnect either: whoever needs a connection builds a fresh one through
@@ -542,7 +593,7 @@ object AdbShell {
      * port has been armed since the last reboot (see [armLoopbackIfNeeded]). Returns false FAST
      * (connection refused) when unarmed, so callers fall back to Wireless Debugging. libadb-android
      * reacts to the daemon's AUTH-vs-STLS message dynamically, so the same identity authenticates over
-     * this plain RSA-AUTH port. Holds no lock itself — callers order locks (heavy → monitor).
+     * this plain RSA-AUTH port. Holds no lock itself — callers order locks (heavy → connect).
      */
     private fun connectLoopback(context: Context): Boolean {
         val ourPort = AppPreferences(context).getLoopbackAdbPort()
@@ -566,7 +617,7 @@ object AdbShell {
      * handshake. On this ROM `adbd` restarts on screen on/off transitions, and a TCP connect can succeed
      * against a listener whose `adbd` is mid-restart — so the handshake reply never arrives, the reader
      * dies, and nothing ever signals the waiter. The caller then parks **forever**, and because
-     * [ensureConnected] is `@Synchronized` and its callers hold [heavyOperationLock], it parks holding
+     * [ensureConnected] holds [connectLock] and its callers hold [heavyOperationLock], it parks holding
      * both — freezing every ADB operation in the process.
      *
      * That is not hypothetical: on 2026-07-30 it cost a device ~16 hours of silently missed recordings
@@ -574,8 +625,8 @@ object AdbShell {
      * behind the parked thread. See `2026-07-30-keepalive-rewarm-latch-wedge.md`.
      *
      * The work runs on a throwaway daemon thread and is abandoned on timeout — the same technique
-     * [probeShellOnce] uses. Abandoning is safe *because it is a separate thread*: it never entered this
-     * object's monitor, so the caller returning false releases both locks and the next attempt gets a
+     * [probeShellOnce] uses. Abandoning is safe *because it is a separate thread*: it never took
+     * [connectLock], so the caller returning false releases both locks and the next attempt gets a
      * clean run. We also drop the connection so the stranded thread can unwind if it is able to.
      */
     private fun connectBounded(
@@ -610,8 +661,8 @@ object AdbShell {
      * calls record off-WiFi until the next reboot (tcpip mode clears on reboot → re-arm on next
      * connectivity). No-op (returns true) if the loopback port is already armed and reachable.
      *
-     * Lock order: takes [heavyOperationLock] FIRST, then [ensureConnected] acquires the AdbShell
-     * monitor — matching the recorder launcher's heavy→monitor order so the two never deadlock.
+     * Lock order: takes [heavyOperationLock] FIRST, then the connect path acquires [connectLock] —
+     * matching the recorder launcher's heavy→connect order so the two never deadlock.
      *
      * @return true if the loopback listener is armed and reachable after the call.
      */
