@@ -45,7 +45,8 @@ All notable changes to CallVault are documented here. The format is based on
        switch rows ("On. Record phone calls. Switch"), radio rows ("Selected. On this phone… Radio button,
        1 of 4"), tag × ("Remove tag. Button"), transcript-sheet bar. Two faults found and fixed (c525a946,
        ed6f4550): headers said the state twice; the waveform and list bars could not be focused. Re-checked
-       on 2.4.7-a11y1: fixed. Open: a focused bar announces the position every second while playing. -->
+       on 2.4.7-a11y1: fixed. A focused bar also read the time every second while playing; now 30 s steps,
+       exact when paused (2.4.7-a11y2, re-checked on the OP9). -->
 - **vivo and iQOO: honest about app calls.** vivo's "In-app call recording" option, which lets the other
   person's voice be recorded in app calls, exists only on China-market vivo/iQOO firmware. On overseas phones
   CallVault's message after a one-sided app call now says it cannot be enabled, instead of pointing to a
@@ -81,9 +82,9 @@ All notable changes to CallVault are documented here. The format is based on
   model from a file, and a paused download can now be discarded.
   <!-- 🧪 VERIFYING: emulator only (8a2c2bc2). docs/dev-notes/2026-10-26-issue-60-paused-download-blocks-import.md -->
 
-<!-- NOT user-facing, decide before release: the #53 log-only app-call end probe (3af62f8d, VoipEndProbe +
-     endprobe[...] log lines every 5 s during app calls) is merged into integration/next. Keep it for the
-     next release (more logs from Honor users) or revert it first. -->
+<!-- NOT user-facing: the #53 log-only app-call end probe (3af62f8d, VoipEndProbe + endprobe[...] log lines
+     every 5 s during app calls) SHIPS in the next release — maintainer decided 2026-10-31 to keep it for more
+     logs from Honor/other users. Reads AudioManager only, no shell commands, decides nothing. -->
 
 ## [2.4.7] — 2026-10-25
 
