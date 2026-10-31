@@ -430,6 +430,7 @@ class AppPreferences(context: Context) {
         WD_TURNED_OFF_BY_USER("wd_turned_off_by_user"),
         WD_ENFORCED("wd_enforced"),
         WD_AUTO_APPROVE_NETWORK("wd_auto_approve_network"),
+        WD_NEVER_TURN_OFF("wd_never_turn_off"),
         LOG_PSEUDONYM_SALT("log_pseudonym_salt"),
         LOGCAT_RING_PREVIOUS_KIB("logcat_ring_previous_kib"),
         DEBUG_ENABLED("debug_enabled"),
@@ -1124,6 +1125,10 @@ class AppPreferences(context: Context) {
             "wd_auto_approve_network", ModeCapability.WIRELESS_DEBUGGING_CONTROL,
             ::isWifiNetworkAutoApproveEnabled, ::setWifiNetworkAutoApproveEnabled,
         ),
+        GatedSwitch(
+            "wd_never_turn_off", ModeCapability.WIRELESS_DEBUGGING_CONTROL,
+            ::isWirelessDebuggingNeverTurnOff, ::setWirelessDebuggingNeverTurnOff,
+        ),
     )
 
     /**
@@ -1464,6 +1469,16 @@ class AppPreferences(context: Context) {
     fun isWifiNetworkAutoApproveEnabled() = getBoolean(Key.WD_AUTO_APPROVE_NETWORK, false)
 
     fun setWifiNetworkAutoApproveEnabled(enabled: Boolean) = setBoolean(Key.WD_AUTO_APPROVE_NETWORK, enabled)
+
+    /**
+     * The opt-in "Never turn Wireless debugging off" setting (#30 follow-up). Off by default: CallVault then
+     * turns it off only if it turned it on. On: CallVault never turns it off, but may still turn it on.
+     * A new key rather than the old `wd_disable_when_idle`, whose meaning is the opposite and which
+     * [com.baba.callvault.integrations.adb.NetworkApprovalPolicy.alwaysAllow] still reads.
+     */
+    fun isWirelessDebuggingNeverTurnOff() = getBoolean(Key.WD_NEVER_TURN_OFF, false)
+
+    fun setWirelessDebuggingNeverTurnOff(enabled: Boolean) = setBoolean(Key.WD_NEVER_TURN_OFF, enabled)
 
     /** Sets whether logging features are enabled. */
     fun setLoggingEnabled(enabled: Boolean) = setBoolean(Key.LOGGING_ENABLED, enabled)

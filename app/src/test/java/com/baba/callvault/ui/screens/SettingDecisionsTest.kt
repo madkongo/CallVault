@@ -120,6 +120,10 @@ class SettingDecisionsTest {
             SettingsOnly("off by default; only matters to people who move between Wi-Fi networks, found next to Keep Wireless debugging on"),
             ModeCapability.WIRELESS_DEBUGGING_CONTROL,
         ),
+        "wd_never_turn_off" to Decision(
+            SettingsOnly("power-user setting, built-in mode only"),
+            ModeCapability.WIRELESS_DEBUGGING_CONTROL,
+        ),
     )
 
     private val prefs = AppPreferences(ApplicationProvider.getApplicationContext())
