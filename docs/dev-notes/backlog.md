@@ -57,6 +57,15 @@ fix, vivo far-side toggle (hint + SUPPORT doc), Samsung Wi-Fi-calling doc (#45).
   don't register with `AudioService` record tracking; targeting Android 17 (API 37) will break mDNS
   discovery until we request it; a setting to stop CallVault managing Wireless debugging (#30 follow-up);
   split `AppPreferences` into per-domain interfaces.
+  - **Already-listening adbd loopback probe (free, no Wi-Fi).** 🔵 At startup, detect devices where adbd
+    already listens on loopback with NO Wi-Fi/WD — a minority of OEM/TV-derived or eng/userdebug builds
+    bake `persist.adb.tcp.port` / `service.adb.listen_addrs` or drop `ro.adb.secure`. Check: `getprop
+    persist.adb.tcp.port`, `service.adb.tcp.port`, `service.adb.listen_addrs` (via the existing shell
+    path if we have one, else they are app-readable getprops), and attempt a `connect()` to
+    `127.0.0.1:5555` (+ the baked port) while Wi-Fi is off; if it answers the adb handshake, use it as a
+    zero-Wi-Fi foothold. Most phones return nothing — but it costs nothing and needs no new permission.
+    Rationale + source (`daemon/main.cpp` tcp/vsock 5555 fallback, the prop gating) in
+    `2026-10-23-wifi-free-adb-bootstrap-research.md`. Does NOT help OnePlus/OP12. Low effort, opportunistic.
 - *Bugs:*
   - **Merge with another call fails for Drive-storage users** — a same-contact call that's already on Drive
     is never offered, and the dialog wrongly says "no other calls with this number" (detail in the "Merge
