@@ -19,7 +19,7 @@
 ## Revert
 
 ```
-git revert -m 1 MERGE_SHA
+git revert -m 1 f90ff314
 ```
 
 Self-contained: nothing else depends on `BoundedEntryLock` or `CONNECT_LOCK_BUSY`.
