@@ -74,6 +74,9 @@ class RecordingForegroundService : Service() {
         /** Reads of the call log while waiting for the just-ended call's entry (Honor preset, #56): 8 × 500 ms. */
         private const val HONOR_LOG_ATTEMPTS = 8
         private const val HONOR_LOG_RETRY_MS = 500L
+
+        /** Slack for a switch queued inside [WifiCallRoute.SWITCH_WINDOW_MS] to reach the release. */
+        private const val SWITCH_QUEUE_GRACE_MS = 1_000L
         private const val TAG = "CV:RecordingForegroundService"
 
         // -- Intent action for controlling and initializing the service lifecycle. --
@@ -196,6 +199,10 @@ class RecordingForegroundService : Service() {
 
     @Volatile
     private var lastRouteObservation: WifiCallRoute.Observation? = null
+
+    /** When the carrier capture started (elapsedRealtime); the switch window counts from here. */
+    @Volatile
+    private var captureStartedAt = 0L
 
     /** Guards [switchInProgress] and [stopDuringSwitch]; held only for a moment, never across I/O. */
     private val switchLock = Any()
@@ -515,7 +522,7 @@ class RecordingForegroundService : Service() {
             // 2. Try to start the pipeline. Pass our stop flag so the (slow, daemon-cold-start) start
             //    aborts before touching the daemon if the call already ended — preventing a mic that
             //    turns on after the call with nothing to stop it.
-            val wanted = routeDecision("start", engineCanSwitch = true, forced = false).route
+            val wanted = routeDecision("start", engineCanSwitch = true, forced = false, msSinceCaptureStart = 0).route
             val started = activeSession.startPipeline(this, metadata, { stopRequested }, wanted)
             if (started == WifiCallRoute.Route.APP_CALL_MIX) {
                 switchedToMix = true
@@ -525,6 +532,7 @@ class RecordingForegroundService : Service() {
                 notificationHelper.showErrorNotification(getString(R.string.wifi_call_switch_failed))
             }
             // 3. Success
+            captureStartedAt = android.os.SystemClock.elapsedRealtime()
             currentState = RecordingServiceState.Active(activeSession, false, metadata)
             AppLogger.i(TAG, "Recording pipeline started successfully")
             serviceScope.launch { startRouteWatch() }
@@ -564,13 +572,23 @@ class RecordingForegroundService : Service() {
     // ── Wi-Fi call route (#45) ─────────────────────────────────────────────────────
 
     /** Decides the route from a live snapshot and logs it when it or what it saw changed. */
-    private fun routeDecision(where: String, engineCanSwitch: Boolean, forced: Boolean): WifiCallRoute.Decision {
-        val (raw, seen) = WifiCallRoute.snapshot(this, switchedToMix, forced)
+    private fun routeDecision(
+        where: String,
+        engineCanSwitch: Boolean,
+        forced: Boolean,
+        msSinceCaptureStart: Long,
+    ): WifiCallRoute.Decision {
+        val (raw, seen) = WifiCallRoute.snapshot(
+            this, switchedToMix, forced, appPreferences.isVoipRecordingEnabled(), msSinceCaptureStart
+        )
         val inputs = raw.copy(daemonConnected = raw.daemonConnected && engineCanSwitch)
         val decision = WifiCallRoute.decide(inputs)
         val observation = WifiCallRoute.Observation(decision, seen)
         if (WifiCallRoute.isWorthLogging(lastRouteObservation, observation)) {
             AppLogger.i(WifiCallRoute.TAG, "route[$where] ${decision.route} (${decision.reason}) $seen")
+            if (decision.reason == WifiCallRoute.Reason.NOT_SAMSUNG) {
+                AppLogger.i(WifiCallRoute.TAG, "Would have switched to the app-call capture, but this is not a Samsung; decision only")
+            }
             if (decision.reason == WifiCallRoute.Reason.APP_CALLS_OFF) {
                 AppLogger.i(WifiCallRoute.TAG, "This looks like a Wi-Fi call; with app-call recording on it could be recorded with both sides")
             }
@@ -591,7 +609,16 @@ class RecordingForegroundService : Service() {
         if (stopRequested || isShuttingDown) return
         // Debug switch: honoured only while logging is on, the only time its result can be read.
         val forced = appPreferences.isDebugForceWifiRoute() && appPreferences.isLoggingEnabled()
-        val decision = routeDecision("change", engineCanSwitch = !active.engine.isLocalFallback, forced = forced)
+        val sinceStart = android.os.SystemClock.elapsedRealtime() - captureStartedAt
+        val decision = routeDecision(
+            "change", engineCanSwitch = !active.engine.isLocalFallback, forced = forced, msSinceCaptureStart = sinceStart
+        )
+        if (decision.reason == WifiCallRoute.Reason.WINDOW_PASSED) {
+            // Never switches after the window, so stop watching.
+            routeWatcher?.stop()
+            routeWatcher = null
+            return
+        }
         if (decision.route != WifiCallRoute.Route.APP_CALL_MIX) return
         synchronized(switchLock) {
             if (switchInProgress || switchedToMix) return
@@ -613,6 +640,13 @@ class RecordingForegroundService : Service() {
             val active = currentState as? RecordingServiceState.Active
             if (active == null || stopRequested) {
                 AppLogger.i(WifiCallRoute.TAG, "switch skipped: the call is ending")
+                return
+            }
+            // The window bounds what a switch can discard (and what a STOP racing the release can
+            // lose): the switch was queued inside it; re-checked here in case the queue was slow.
+            val sinceStart = android.os.SystemClock.elapsedRealtime() - captureStartedAt
+            if (sinceStart > WifiCallRoute.SWITCH_WINDOW_MS + SWITCH_QUEUE_GRACE_MS) {
+                AppLogger.w(WifiCallRoute.TAG, "switch skipped: ${sinceStart}ms since the capture started, past the window")
                 return
             }
             val old = active.engine

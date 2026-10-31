@@ -27,6 +27,8 @@ class WifiCallRouteTest {
         alreadySwitched = false,
         appCallHeld = false,
         forced = false,
+        msSinceCaptureStart = 400,
+        isSamsung = true,
     )
 
     private fun decide(inputs: WifiCallRoute.Inputs) = WifiCallRoute.decide(inputs)
@@ -124,7 +126,8 @@ class WifiCallRouteTest {
         for (mode in modes) for (managed in bools) for (players in listOf(0, 2)) for (armed in bools)
             for (daemon in bools) for (switched in bools) for (held in bools) {
                 val d = decide(
-                    WifiCallRoute.Inputs(mode, managed, players, armed, daemon, switched, held, forced = false)
+                    WifiCallRoute.Inputs(mode, managed, players, armed, daemon, switched, held, forced = false,
+                        msSinceCaptureStart = 400, isSamsung = true)
                 )
                 if (d.route == Route.APP_CALL_MIX) {
                     switching++
@@ -133,6 +136,41 @@ class WifiCallRouteTest {
                 }
             }
         assertEquals(1, switching)
+    }
+
+    @Test
+    fun `no switch after the window, so a later app call on hold cannot replace the recording`() {
+        val d = decide(wifiCall.copy(msSinceCaptureStart = WifiCallRoute.SWITCH_WINDOW_MS + 1))
+        assertEquals(WifiCallRoute.Decision(Route.CALL_SOURCE, Reason.WINDOW_PASSED), d)
+    }
+
+    @Test
+    fun `the window edge still switches and START counts as zero`() {
+        assertEquals(Route.APP_CALL_MIX, decide(wifiCall.copy(msSinceCaptureStart = WifiCallRoute.SWITCH_WINDOW_MS)).route)
+        assertEquals(Route.APP_CALL_MIX, decide(wifiCall.copy(msSinceCaptureStart = 0)).route)
+    }
+
+    @Test
+    fun `the debug force is bound by the window too`() {
+        val d = decide(wifiCall.copy(forced = true, msSinceCaptureStart = WifiCallRoute.SWITCH_WINDOW_MS + 1))
+        assertEquals(Reason.WINDOW_PASSED, d.reason)
+    }
+
+    @Test
+    fun `other makers only log what would have happened`() {
+        assertEquals(WifiCallRoute.Decision(Route.CALL_SOURCE, Reason.NOT_SAMSUNG), decide(wifiCall.copy(isSamsung = false)))
+    }
+
+    @Test
+    fun `NOT_SAMSUNG is reported only when everything else would switch`() {
+        assertEquals(Reason.MODE_NOT_IN_COMMUNICATION,
+            decide(wifiCall.copy(isSamsung = false, mode = AudioManager.MODE_IN_CALL)).reason)
+        assertEquals(Reason.APP_CALLS_OFF, decide(wifiCall.copy(isSamsung = false, voipArmed = false)).reason)
+    }
+
+    @Test
+    fun `the debug force works on any maker`() {
+        assertEquals(Route.APP_CALL_MIX, decide(wifiCall.copy(isSamsung = false, forced = true)).route)
     }
 
     @Test

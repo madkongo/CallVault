@@ -11,8 +11,8 @@ package com.baba.callvault.services.recording
 import android.annotation.SuppressLint
 import android.content.Context
 import android.media.AudioManager
+import android.os.Build
 import android.telephony.TelephonyManager
-import com.baba.callvault.data.AppPreferences
 import com.baba.callvault.server.RecorderConnection
 
 /**
@@ -31,6 +31,13 @@ object WifiCallRoute {
     /** Log tag for every route decision, switch and end line. */
     const val TAG = "CV:WifiRoute"
 
+    /**
+     * How long after the carrier capture starts a switch is still allowed. Samsung reaches
+     * IN_COMMUNICATION ~350 ms after OFFHOOK; later, the mode is someone else's (a held call, a
+     * WhatsApp call taken on top). It also bounds the audio a switch can discard.
+     */
+    const val SWITCH_WINDOW_MS = 5_000L
+
     enum class Route { CALL_SOURCE, APP_CALL_MIX }
 
     enum class Reason {
@@ -38,11 +45,14 @@ object WifiCallRoute {
         FORCED,
         ALREADY_SWITCHED,
         NOT_MANAGED,
+        WINDOW_PASSED,
         MODE_NOT_IN_COMMUNICATION,
         NO_VOICE_COMM_PLAYER,
         APP_CALL_HELD,
         APP_CALLS_OFF,
         DAEMON_DOWN,
+        /** Everything else said switch; only Samsung is known to need it. Logged, never acted on. */
+        NOT_SAMSUNG,
     }
 
     data class Decision(val route: Route, val reason: Reason)
@@ -60,14 +70,18 @@ object WifiCallRoute {
         val alreadySwitched: Boolean,
         /** An app call is held open behind this phone call; the daemon is busy with it. */
         val appCallHeld: Boolean,
-        /** Debug switch: skip the mode and player checks. */
+        /** Debug switch: skip the mode, player and maker checks. */
         val forced: Boolean,
+        /** Time since the carrier capture started; 0 at START. */
+        val msSinceCaptureStart: Long,
+        val isSamsung: Boolean,
     )
 
     fun decide(i: Inputs): Decision {
         fun stay(reason: Reason) = Decision(Route.CALL_SOURCE, reason)
         if (i.alreadySwitched) return stay(Reason.ALREADY_SWITCHED)
         if (!i.managedCall) return stay(Reason.NOT_MANAGED)
+        if (i.msSinceCaptureStart > SWITCH_WINDOW_MS) return stay(Reason.WINDOW_PASSED)
         if (!i.forced) {
             if (i.mode != AudioManager.MODE_IN_COMMUNICATION) return stay(Reason.MODE_NOT_IN_COMMUNICATION)
             if (i.voiceCallPlayers < 1) return stay(Reason.NO_VOICE_COMM_PLAYER)
@@ -75,6 +89,7 @@ object WifiCallRoute {
         if (i.appCallHeld) return stay(Reason.APP_CALL_HELD)
         if (!i.voipArmed) return stay(Reason.APP_CALLS_OFF)
         if (!i.daemonConnected) return stay(Reason.DAEMON_DOWN)
+        if (!i.forced && !i.isSamsung) return stay(Reason.NOT_SAMSUNG)
         return Decision(Route.APP_CALL_MIX, if (i.forced) Reason.FORCED else Reason.WIFI_CALL)
     }
 
@@ -83,19 +98,27 @@ object WifiCallRoute {
 
     fun isWorthLogging(previous: Observation?, current: Observation): Boolean = previous != current
 
-    /** Reads the live inputs. [forced] and [alreadySwitched] come from the caller. */
-    fun snapshot(context: Context, alreadySwitched: Boolean, forced: Boolean): Pair<Inputs, String> {
+    /** Reads the live inputs; the caller supplies its own state and settings. */
+    fun snapshot(
+        context: Context,
+        alreadySwitched: Boolean,
+        forced: Boolean,
+        voipEnabled: Boolean,
+        msSinceCaptureStart: Long,
+    ): Pair<Inputs, String> {
         val am = context.getSystemService(AudioManager::class.java)
         val probe = am?.let { runCatching { VoipEndProbe.capture(it) }.getOrNull() }
         val inputs = Inputs(
             mode = probe?.mode ?: AudioManager.MODE_NORMAL,
             managedCall = VoipTelephonyGate.managedCallInProgress(context),
             voiceCallPlayers = probe?.voiceCallPlayers ?: 0,
-            voipArmed = AppPreferences(context).isVoipRecordingEnabled(),
+            voipArmed = voipEnabled,
             daemonConnected = RecorderConnection.isConnected,
             alreadySwitched = alreadySwitched,
             appCallHeld = VoipRecordingCoordinator.isRecording,
             forced = forced,
+            msSinceCaptureStart = msSinceCaptureStart,
+            isSamsung = Build.MANUFACTURER.equals("samsung", ignoreCase = true),
         )
         val seen = (probe?.let { VoipEndProbe.describe(it) } ?: "mode=unknown") +
             " managed=${inputs.managedCall} voiceNet=${voiceNetworkName(context)}"
