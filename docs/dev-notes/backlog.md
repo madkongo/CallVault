@@ -57,6 +57,15 @@ fix, vivo far-side toggle (hint + SUPPORT doc), Samsung Wi-Fi-calling doc (#45).
   don't register with `AudioService` record tracking; targeting Android 17 (API 37) will break mDNS
   discovery until we request it; a setting to stop CallVault managing Wireless debugging (#30 follow-up);
   split `AppPreferences` into per-domain interfaces.
+  - **Already-listening adbd loopback probe (free, no Wi-Fi).** 🔵 At startup, detect devices where adbd
+    already listens on loopback with NO Wi-Fi/WD — a minority of OEM/TV-derived or eng/userdebug builds
+    bake `persist.adb.tcp.port` / `service.adb.listen_addrs` or drop `ro.adb.secure`. Check: `getprop
+    persist.adb.tcp.port`, `service.adb.tcp.port`, `service.adb.listen_addrs` (via the existing shell
+    path if we have one, else they are app-readable getprops), and attempt a `connect()` to
+    `127.0.0.1:5555` (+ the baked port) while Wi-Fi is off; if it answers the adb handshake, use it as a
+    zero-Wi-Fi foothold. Most phones return nothing — but it costs nothing and needs no new permission.
+    Rationale + source (`daemon/main.cpp` tcp/vsock 5555 fallback, the prop gating) in
+    `2026-10-23-wifi-free-adb-bootstrap-research.md`. Does NOT help OnePlus/OP12. Low effort, opportunistic.
 - *Bugs:*
   - **Merge with another call fails for Drive-storage users** — a same-contact call that's already on Drive
     is never offered, and the dialog wrongly says "no other calls with this number" (detail in the "Merge
@@ -168,15 +177,6 @@ Their code is GPLv3 like ours, so taking it is allowed.
 
 ---
 
-## 🔼 Higher-priority feature requests — agreed 2026-10-01, not started
-
-Maintainer-prioritised above the older backlog. Each needs a design pass before code (and, where it adds a
-visible option, a decision on onboarding — the wizard can't be re-run, see [[new-features-consider-onboarding]]).
-
-*(The original #1 sidecar, #3 filename templates and #4 export/import shipped in 2.4.5 — see the Completed
-section. The still-open requests are renumbered below.)*
-
-1. **Record Button overlay.** A floating, draggable on-screen button (bubble) to start/stop recording
 ## 🔵 KK — SenseVoice for transcription + Qwen/other small GGUF for summaries — requested 2026-10-31, not triaged
 
 User **KK** asked: "Any plans to add SenseVoice as a built-in/catalog ASR option? And for summaries, could the
@@ -195,6 +195,15 @@ Nothing decided, nothing researched. Notes for whoever picks it up:
   `llama-desktop-harness`).
 - Both add visible options, so they need an onboarding decision (see [[new-features-consider-onboarding]]).
 
+## 🔼 Higher-priority feature requests — agreed 2026-10-01, not started
+
+Maintainer-prioritised above the older backlog. Each needs a design pass before code (and, where it adds a
+visible option, a decision on onboarding — the wizard can't be re-run, see [[new-features-consider-onboarding]]).
+
+*(The original #1 sidecar, #3 filename templates and #4 export/import shipped in 2.4.5 — see the Completed
+section. The still-open requests are renumbered below.)*
+
+1. **Record Button overlay.** A floating, draggable on-screen button (bubble) to start/stop recording
    manually, as an alternative to the automatic call trigger. Needs the draw-over-other-apps permission
    (`SYSTEM_ALERT_WINDOW`); decide when it shows (always / during calls / toggle), and how it maps to the
    capture paths (manual start on the current call). Useful where auto-start can miss or the user wants
