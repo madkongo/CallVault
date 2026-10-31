@@ -166,6 +166,7 @@ import com.baba.callvault.ui.common.MergeProgressState
 import com.baba.callvault.ui.common.DeleteCopiesDialog
 import com.baba.callvault.ui.common.ListPlayback
 import com.baba.callvault.ui.common.ListSeekBar
+import com.baba.callvault.ui.common.rememberSpokenPositionMs
 import androidx.compose.ui.layout.layout
 import com.baba.callvault.ui.common.DeleteRecordingDialog
 import com.baba.callvault.ui.common.SeekBar
@@ -3417,9 +3418,10 @@ private fun RecordingRow(
         }
 
         if (showsSeekBar) {
+            val spokenMs = rememberSpokenPositionMs(playback.positionMs)
             val positionText = stringResource(
                 R.string.home_player_position_of,
-                formatClock(playback.positionMs),
+                formatClock(spokenMs),
                 formatClock(playback.durationMs)
             )
             // Elapsed, the bar, the length: the only thing the playing card adds.

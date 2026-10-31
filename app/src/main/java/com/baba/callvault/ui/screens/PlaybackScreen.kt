@@ -96,6 +96,7 @@ import androidx.compose.material.icons.filled.Label
 import com.baba.callvault.data.transcripts.TagName
 import com.baba.callvault.ui.common.CvCard
 import com.baba.callvault.ui.common.rememberNoteDraft
+import com.baba.callvault.ui.common.rememberSpokenPositionMs
 import com.baba.callvault.ui.common.CvScaffold
 import com.baba.callvault.ui.common.RecordingLabel
 import com.baba.callvault.ui.common.SummaryCard
@@ -576,13 +577,15 @@ private fun PlayerCard(
                     // The waveform IS the scrubber. A Material Slider on top of it would be a second
                     // control for one job — and its thumb is far heavier than the inline player's
                     // thin bar, which is what made this card look like a different app.
+                    val spokenPosition = rememberSpokenPositionMs(position)
                     WaveformBar(
                         peaks = peaks,
                         progress = if (duration > 0) position / duration.toFloat() else 0f,
+                        spokenProgress = if (duration > 0) spokenPosition / duration.toFloat() else 0f,
                         onSeekTo = { fraction -> onSeek((fraction * duration).toInt()) },
                         stateText = stringResource(
                             R.string.home_player_position_of,
-                            TranscriptTimestamp.format(position.toLong()),
+                            TranscriptTimestamp.format(spokenPosition.toLong()),
                             TranscriptTimestamp.format(duration.toLong()),
                         ),
                     )
