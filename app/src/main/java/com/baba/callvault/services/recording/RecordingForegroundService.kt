@@ -48,6 +48,7 @@ import com.baba.callvault.system.storage.MinDurationPolicy
 import com.baba.callvault.system.interop.MetadataSidecar
 import com.baba.callvault.data.recordings.RecordingsRepository
 import com.baba.callvault.data.transcripts.FlagRepository
+import com.baba.callvault.data.transcripts.CapturedSpeakerTurns
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
@@ -109,6 +110,11 @@ class RecordingForegroundService : Service() {
         /** True from a carrier START until the session stops. The app-call detector reads it (#45). */
         @Volatile
         var isCarrierSessionActive: Boolean = false
+            private set
+
+        /** True while the carrier call is recorded through the app-call capture (#45). */
+        @Volatile
+        var isAppMixSession: Boolean = false
             private set
     }
 
@@ -179,6 +185,22 @@ class RecordingForegroundService : Service() {
      */
     @Volatile
     private var daemonLossNotified: Boolean = false
+
+    // ── Wi-Fi call route (#45) ─────────────────────────────────────────────────────
+
+    private var routeWatcher: WifiCallRouteWatcher? = null
+
+    /** One-way latch: set when the app-call capture is chosen, cleared only by the next START. */
+    @Volatile
+    private var switchedToMix = false
+
+    @Volatile
+    private var lastRouteObservation: WifiCallRoute.Observation? = null
+
+    /** Guards [switchInProgress] and [stopDuringSwitch]; held only for a moment, never across I/O. */
+    private val switchLock = Any()
+    private var switchInProgress = false
+    private var stopDuringSwitch = false
 
     /** True while a recording session object is present (initializing, active, or pending teardown). */
     private val hasSession: Boolean
@@ -480,35 +502,32 @@ class RecordingForegroundService : Service() {
         }
 
         // 1. Create a new session (declared here to allow cleanup if startPipeline fails)
-        val activeSession = AudioRecordingEngine()
+        val activeSession = newEngine()
         daemonLossNotified = false
         // A fresh timeline and a fresh mark buffer for this call. beginCall() also drops anything a
         // previous call left behind after ending badly, so marks can never spill onto the next one.
         recordingClock.start()
         PendingFlags.beginCall()
-        // Surface a mid-call daemon death immediately — the pipeline "started successfully" only
-        // proves the dispatch worked, and a daemon that dies right after leaves an empty file.
-        activeSession.onDaemonLostDuringRecording = {
-            daemonLossNotified = true
-            notificationHelper.showErrorNotification(getString(R.string.recording_error_daemon_died))
-        }
-
-        // A live daemon that never started a capture — typically a codec or bit rate the device
-        // refuses. Silent until now: the app believed it was recording, and the user found out by
-        // there being no file. Not routed through daemonLossNotified, because the daemon is alive
-        // and the two messages say different things.
-        activeSession.onCaptureNeverStarted = {
-            notificationHelper.showErrorNotification(getString(R.string.recording_error_capture_never_started))
-        }
+        switchedToMix = false
+        lastRouteObservation = null
 
         try {
             // 2. Try to start the pipeline. Pass our stop flag so the (slow, daemon-cold-start) start
             //    aborts before touching the daemon if the call already ended — preventing a mic that
             //    turns on after the call with nothing to stop it.
-            activeSession.startPipeline(this, metadata) { stopRequested }
+            val wanted = routeDecision("start", engineCanSwitch = true, forced = false).route
+            val started = activeSession.startPipeline(this, metadata, { stopRequested }, wanted)
+            if (started == WifiCallRoute.Route.APP_CALL_MIX) {
+                switchedToMix = true
+                isAppMixSession = true
+            } else if (wanted == WifiCallRoute.Route.APP_CALL_MIX) {
+                switchedToMix = true // tried once; no loops
+                notificationHelper.showErrorNotification(getString(R.string.wifi_call_switch_failed))
+            }
             // 3. Success
             currentState = RecordingServiceState.Active(activeSession, false, metadata)
             AppLogger.i(TAG, "Recording pipeline started successfully")
+            serviceScope.launch { startRouteWatch() }
             // Belt-and-suspenders: if a STOP landed in the tiny window after the daemon accepted the
             // recording but before we reached here, tear it down immediately so capture (and the mic)
             // does not linger past the call.
@@ -526,6 +545,116 @@ class RecordingForegroundService : Service() {
         }
     }
 
+    /** A recording engine with the service's failure callbacks attached. */
+    private fun newEngine(): AudioRecordingEngine = AudioRecordingEngine().apply {
+        // Surface a mid-call daemon death immediately — the pipeline "started successfully" only
+        // proves the dispatch worked, and a daemon that dies right after leaves an empty file.
+        onDaemonLostDuringRecording = {
+            daemonLossNotified = true
+            notificationHelper.showErrorNotification(getString(R.string.recording_error_daemon_died))
+        }
+        // A live daemon that never started a capture — typically a codec or bit rate the device
+        // refuses. Not routed through daemonLossNotified, because the daemon is alive and the two
+        // messages say different things.
+        onCaptureNeverStarted = {
+            notificationHelper.showErrorNotification(getString(R.string.recording_error_capture_never_started))
+        }
+    }
+
+    // ── Wi-Fi call route (#45) ─────────────────────────────────────────────────────
+
+    /** Decides the route from a live snapshot and logs it when it or what it saw changed. */
+    private fun routeDecision(where: String, engineCanSwitch: Boolean, forced: Boolean): WifiCallRoute.Decision {
+        val (raw, seen) = WifiCallRoute.snapshot(this, switchedToMix, forced)
+        val inputs = raw.copy(daemonConnected = raw.daemonConnected && engineCanSwitch)
+        val decision = WifiCallRoute.decide(inputs)
+        val observation = WifiCallRoute.Observation(decision, seen)
+        if (WifiCallRoute.isWorthLogging(lastRouteObservation, observation)) {
+            AppLogger.i(WifiCallRoute.TAG, "route[$where] ${decision.route} (${decision.reason}) $seen")
+            if (decision.reason == WifiCallRoute.Reason.APP_CALLS_OFF) {
+                AppLogger.i(WifiCallRoute.TAG, "This looks like a Wi-Fi call; with app-call recording on it could be recorded with both sides")
+            }
+        }
+        lastRouteObservation = observation
+        return decision
+    }
+
+    private fun startRouteWatch() {
+        if (isShuttingDown || currentState !is RecordingServiceState.Active) return
+        routeWatcher?.stop()
+        routeWatcher = WifiCallRouteWatcher(this) { onRouteEvent() }.also { it.start() }
+    }
+
+    /** Main thread. Starts the one-way switch when the call turns out to be a Wi-Fi call. */
+    private fun onRouteEvent() {
+        val active = currentState as? RecordingServiceState.Active ?: return
+        if (stopRequested || isShuttingDown) return
+        val decision = routeDecision("change", engineCanSwitch = !active.engine.isLocalFallback, forced = false)
+        if (decision.route != WifiCallRoute.Route.APP_CALL_MIX) return
+        synchronized(switchLock) {
+            if (switchInProgress || switchedToMix) return
+            switchedToMix = true
+            switchInProgress = true
+        }
+        serviceScope.launch(Dispatchers.IO) { switchToAppCallMix(decision.reason) }
+    }
+
+    /**
+     * Replaces the carrier capture with the app-call capture, mid-call, once.
+     *
+     * The first capture is fully closed and its file discarded BEFORE the mix and mic open: two voice
+     * captures at once silently drop the user's own side. If the daemon refuses the mix, the engine
+     * falls back to the carrier capture into the same file name, once.
+     */
+    private fun switchToAppCallMix(reason: WifiCallRoute.Reason) {
+        try {
+            val active = currentState as? RecordingServiceState.Active
+            if (active == null || stopRequested) {
+                AppLogger.i(WifiCallRoute.TAG, "switch skipped: the call is ending")
+                return
+            }
+            val old = active.engine
+            val from = when {
+                old.handoffRecording -> "handoff"
+                old.daemonRecording -> "daemon"
+                else -> "local"
+            }
+            val discardedMs = recordingClock.audioElapsedMs()
+            old.release(discard = true)
+            // Turns measured by the discarded capture must not label the new file.
+            CapturedSpeakerTurns.clear()
+            recordingClock.start()
+            PendingFlags.beginCall()
+            val fresh = newEngine()
+            val started = try {
+                fresh.startPipeline(this, active.metadata, { stopRequested }, WifiCallRoute.Route.APP_CALL_MIX, old.currentStartedAt)
+            } catch (e: CancellationException) {
+                AppLogger.i(WifiCallRoute.TAG, "switch from=$from: the call ended during the switch (${e.message})")
+                currentState = RecordingServiceState.Standby(active.metadata)
+                return
+            } catch (e: PipelineInitializationException) {
+                AppLogger.e(WifiCallRoute.TAG, "switch from=$from failed: ${e.message}", e.cause ?: e)
+                notificationHelper.showErrorNotification(e.userFriendlyMessage)
+                currentState = RecordingServiceState.Standby(active.metadata)
+                stopRequested = true
+                return
+            }
+            val mix = started == WifiCallRoute.Route.APP_CALL_MIX
+            AppLogger.i(WifiCallRoute.TAG, "switch from=$from reason=$reason discarded=${discardedMs}ms startVoip=$mix")
+            isAppMixSession = mix
+            if (!mix) notificationHelper.showErrorNotification(getString(R.string.wifi_call_switch_failed))
+            currentState = RecordingServiceState.Active(fresh, false, active.metadata)
+        } finally {
+            val stopNow = synchronized(switchLock) {
+                switchInProgress = false
+                stopDuringSwitch.also { stopDuringSwitch = false }
+            }
+            // Directly, not through serviceScope: onDestroy may already have cancelled it, and a
+            // stop that never runs would leave the new capture (and the mic) on.
+            if (stopNow || stopRequested) stopRecordingSessionAndService()
+        }
+    }
+
     /**
      * Stops the current recording session and stop the foreground recording service.
      *
@@ -534,10 +663,21 @@ class RecordingForegroundService : Service() {
      * removes the foreground notification, and stops the service.
      */
     private fun stopRecordingSessionAndService() {
+        // A Wi-Fi-call switch is closing one capture and opening another; it finishes the stop itself.
+        val deferred = synchronized(switchLock) {
+            if (switchInProgress) stopDuringSwitch = true
+            switchInProgress
+        }
+        if (deferred) {
+            AppLogger.i(TAG, "Stop requested during a capture switch; the switch will finish it")
+            return
+        }
         // First, so no state change from here on re-posts the notification this is about to remove.
         // The finished recording keeps showing as it was until the notification goes.
         isShuttingDown = true
         isCarrierSessionActive = false
+        routeWatcher?.stop()
+        routeWatcher = null
         // The timeline belongs to the call that just ended; leaving it running would date the next
         // call's marks from this one's start.
         recordingClock.reset()
@@ -558,9 +698,16 @@ class RecordingForegroundService : Service() {
         val mimeType = activeSession.currentCodecEnum.mimeType
         // And the start time, for the same reason: the rename below runs later, on another thread.
         val startedAt = activeSession.currentStartedAt
+        val appCallMix = activeSession.isAppCallMix
 
         // Release all resources held by the recording session, stopping the ADB transport and finalizing the recording file.
         activeSession.release()
+        isAppMixSession = false
+        val farHeard = activeSession.farPartyHeard
+        if (appCallMix || switchedToMix) {
+            AppLogger.i(WifiCallRoute.TAG, "end appCallMix=$appCallMix farHeard=$farHeard bytes=${activeSession.lastCapturedByteCount}")
+        }
+        val mix = MixResult(appCallMix, farHeard)
 
         // Read the URI AFTER release, never before. The destination document does not exist while the
         // call is in progress — the recording is staged to app-private storage and published by
@@ -623,7 +770,7 @@ class RecordingForegroundService : Service() {
 
                 // Route exactly once, after any rename has been applied.
                 routeFinalRecording(
-                    finalUri, mimeType, activeSession.lastCapturedByteCount, originalMetadata.direction
+                    finalUri, mimeType, activeSession.lastCapturedByteCount, originalMetadata.direction, mix
                 )
             }
         } else if (uriToRename != null && originalMetadata != null && startedAt != null && isHonorPreset) {
@@ -642,13 +789,13 @@ class RecordingForegroundService : Service() {
                 } else {
                     uriToRename
                 }
-                routeFinalRecording(finalUri, mimeType, activeSession.lastCapturedByteCount, originalMetadata.direction)
+                routeFinalRecording(finalUri, mimeType, activeSession.lastCapturedByteCount, originalMetadata.direction, mix)
             }
         } else if (uriToRename != null) {
             // Phone number was already known at recording start — no rename needed.
             // Route the file with its current name immediately (once).
             routeFinalRecording(
-                uriToRename, mimeType, activeSession.lastCapturedByteCount, originalMetadata?.direction
+                uriToRename, mimeType, activeSession.lastCapturedByteCount, originalMetadata?.direction, mix
             )
         }
         // A capture AudioFlinger invalidated mid-call can leave the microphone indicator on with nothing recording;
@@ -746,7 +893,7 @@ class RecordingForegroundService : Service() {
      * Everything it reports is read back out of the final file name rather than carried down from
      * the call, so the two capture paths derive it identically and neither can drift from the other.
      */
-    private suspend fun writeMetadataSidecar(name: String, lastModified: Long, packageName: String) {
+    private suspend fun writeMetadataSidecar(name: String, lastModified: Long, packageName: String, appCallMix: Boolean) {
         val parsed = RecordingsRepository.parseName(name)
         MetadataSidecar.writeIfEnabled(
             context = applicationContext,
@@ -764,7 +911,8 @@ class RecordingForegroundService : Service() {
             durationSecsEncoded = null,
             // Carrier capture mixes the two directions onto channels whose order is an OEM detail, so
             // name the near side only when the learned mapping is trusted; null otherwise (issue #50).
-            nearChannel = SpeakerTurnsRepository.trustedMap(applicationContext).nearChannelKey()
+            // The app-call capture puts the near side on the left by construction (#45).
+            nearChannel = if (appCallMix) "A" else SpeakerTurnsRepository.trustedMap(applicationContext).nearChannelKey()
         )
     }
 
@@ -779,7 +927,8 @@ class RecordingForegroundService : Service() {
         uri: Uri,
         mimeType: String,
         knownByteCount: Long? = null,
-        direction: RecordingDirection? = null
+        direction: RecordingDirection? = null,
+        mix: MixResult = MixResult(appCallMix = false, farHeard = null),
     ) {
         val doc = DocumentFile.fromSingleUri(applicationContext, uri) ?: return
         val name = doc.name ?: return
@@ -809,7 +958,7 @@ class RecordingForegroundService : Service() {
                 notificationHelper.showErrorNotification(getString(emptyFileMessage))
             }
             SafHelper.deleteDocument(doc, "the empty recording '$name'")
-            recordHealth(sizeBytes, name)
+            recordHealth(sizeBytes, name, mix.healthFarHeard)
             return
         }
         // Too short to be worth keeping, if the user asked for that. Before the catalog, the
@@ -834,6 +983,13 @@ class RecordingForegroundService : Service() {
             }
         }
 
+        // Both sides or a failure, never a quiet near-only success (#45). The file is kept, as an
+        // app call that came out one-sided is, and the health card records it as one-sided.
+        if (mix.appCallMix && mix.farHeard == false) {
+            AppLogger.e(WifiCallRoute.TAG, "Wi-Fi call '$name': the other side was not heard — only the user's side is on it")
+            notificationHelper.showErrorNotification(getString(R.string.wifi_call_one_sided))
+        }
+
         // Record this finished recording in CallVault's own catalog (the Home list's source of truth).
         // The file is on the device now, so this is the local copy; the copy/sweep workers later stamp
         // the Drive copy onto this same row by name. Done on a detached IO scope because the service may
@@ -853,14 +1009,16 @@ class RecordingForegroundService : Service() {
             // The daemon gathered them during the call, from the two capture channels before the
             // mono downmix averaged them away. They cannot be recovered from the finished file —
             // it is mono — so this is the only moment they can be collected at all.
+            // Not "outgoing" for the app-call capture: its channel layout is fixed, and feeding it to
+            // the learned carrier mapping would teach that mapping the wrong thing.
             SpeakerTurnsRepository.collectAfterCall(
-                applicationContext, name, outgoing = direction == RecordingDirection.OUTGOING
+                applicationContext, name, outgoing = direction == RecordingDirection.OUTGOING && !mix.appCallMix
             )
             // The BCR-compatible details file, when the user asked for one. Driven off the FINAL
             // name, after any call-log rename: a sidecar written against the pre-rename name would
             // sit beside nothing and be invisible to every tool that looks for it. After the turns
             // above, so the `callvault` block can carry them.
-            writeMetadataSidecar(name, lastModified, "com.android.phone")
+            writeMetadataSidecar(name, lastModified, "com.android.phone", mix.appCallMix)
             // Route the .json details to Drive too (issue #49). Must be here, after the write above,
             // because the audio's StorageRouter.route runs synchronously below while this coroutine is
             // still going — routing the sidecar from there could fire before the file exists. In
@@ -876,18 +1034,18 @@ class RecordingForegroundService : Service() {
             // off a call, and they have not asked to wait for anything yet.
             WaveformDrawWorker.enqueue(applicationContext, name, uri)
         }
-        recordHealth(sizeBytes, name)
+        recordHealth(sizeBytes, name, mix.healthFarHeard)
         StorageRouter.route(applicationContext, uri, name, mimeType)
     }
 
     /**
      * Records what this call proved, for the Home status card. Best-effort: a store that cannot be
-     * written leaves the previous state rather than corrupting it. `farPartyHeard` is null because the
-     * carrier capture path cannot observe silence — see the follow-on plan.
+     * written leaves the previous state rather than corrupting it. `farPartyHeard` is null for the
+     * carrier capture, which cannot observe silence; the app-call capture of a Wi-Fi call can.
      */
-    private fun recordHealth(sizeBytes: Long, name: String) {
+    private fun recordHealth(sizeBytes: Long, name: String, farPartyHeard: Boolean?) {
         runCatching {
-            val outcome = CallOutcomes.of(sizeBytes, daemonLossNotified, farPartyHeard = null)
+            val outcome = CallOutcomes.of(sizeBytes, daemonLossNotified, farPartyHeard = farPartyHeard)
             SetupHealthStore(applicationContext)
                 .record(outcome, System.currentTimeMillis(), name, SetupFingerprint.of(appPreferences))
         }.onFailure { AppLogger.w(TAG, "Could not record setup health for '$name': ${it.message}") }
@@ -940,4 +1098,10 @@ class RecordingForegroundService : Service() {
             )
         }
     }
+}
+
+/** How a finished carrier recording was captured, for the end-of-call checks (#45). */
+private data class MixResult(val appCallMix: Boolean, val farHeard: Boolean?) {
+    /** Only the app-call capture can tell whether the far side was heard. */
+    val healthFarHeard: Boolean? get() = if (appCallMix) farHeard else null
 }

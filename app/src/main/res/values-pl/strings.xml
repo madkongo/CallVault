@@ -866,4 +866,6 @@
     <string name="wizard_updates_line">Jak CallVault znajduje nowe wersje.</string>
     <string name="wizard_updates_subtitle">CallVault nie jest w żadnym sklepie z aplikacjami, więc sam sprawdza nowe wersje na GitHubie.</string>
     <string name="wizard_updates_title">Bądź na bieżąco</string>
+    <string name="wifi_call_switch_failed">To wygląda na połączenie przez Wi-Fi, ale nie udało się uruchomić nagrywania obu stron. Jest nagrywane w zwykły sposób, który może pominąć rozmówcę.</string>
+    <string name="wifi_call_one_sided">Z tego połączenia przez Wi-Fi nagrano tylko Twoją stronę. Jeśli to się powtarza, w ustawieniach aplikacji Telefon ustaw połączenia przez Wi-Fi tak, by preferowały sieć komórkową.</string>
 </resources>

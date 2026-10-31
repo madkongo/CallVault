@@ -863,4 +863,6 @@
     <string name="wizard_updates_line">Cách CallVault tìm phiên bản mới.</string>
     <string name="wizard_updates_subtitle">CallVault không có trên kho ứng dụng nào, nên tự tìm phiên bản mới trên GitHub.</string>
     <string name="wizard_updates_title">Luôn được cập nhật</string>
+    <string name="wifi_call_switch_failed">Đây có vẻ là cuộc gọi qua Wi-Fi, nhưng không thể bắt đầu ghi âm cả hai bên. Cuộc gọi đang được ghi theo cách thông thường, có thể thiếu tiếng người bên kia.</string>
+    <string name="wifi_call_one_sided">Chỉ phía bạn trong cuộc gọi Wi-Fi này được ghi lại. Nếu vẫn xảy ra, hãy đặt Gọi qua Wi-Fi ưu tiên mạng di động trong cài đặt ứng dụng Điện thoại.</string>
 </resources>

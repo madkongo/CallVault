@@ -864,4 +864,6 @@
     <string name="wizard_updates_line">Hogyan talál új verziókat a CallVault.</string>
     <string name="wizard_updates_subtitle">A CallVault nincs alkalmazásboltban, ezért maga keresi az új verziókat a GitHubon.</string>
     <string name="wizard_updates_title">Naprakészen tartás</string>
+    <string name="wifi_call_switch_failed">Ez Wi-Fi-hívásnak tűnik, de a mindkét felet rögzítő felvétel nem indult el. A szokásos módon készül a felvétel, amelyből a másik fél hiányozhat.</string>
+    <string name="wifi_call_one_sided">Ebből a Wi-Fi-hívásból csak az Ön oldala lett rögzítve. Ha ez ismétlődik, a Telefon alkalmazás beállításaiban állítsa a Wi-Fi-hívást a mobilhálózat előnyben részesítésére.</string>
 </resources>

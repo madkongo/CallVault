@@ -1018,4 +1018,6 @@
     <string name="wizard_updates_line">Πώς βρίσκει το CallVault νέες εκδόσεις.</string>
     <string name="wizard_updates_subtitle">Το CallVault δεν βρίσκεται σε κατάστημα εφαρμογών, οπότε ελέγχει μόνο του το GitHub για νέες εκδόσεις.</string>
     <string name="wizard_updates_title">Παραμένοντας ενημερωμένοι</string>
+    <string name="wifi_call_switch_failed">Αυτή μοιάζει με κλήση μέσω Wi-Fi, αλλά η εγγραφή που καταγράφει και τις δύο πλευρές δεν ξεκίνησε. Καταγράφεται με τον συνηθισμένο τρόπο, που ίσως χάσει τον άλλο συνομιλητή.</string>
+    <string name="wifi_call_one_sided">Καταγράφηκε μόνο η δική σας πλευρά αυτής της κλήσης Wi-Fi. Αν συμβαίνει συχνά, ορίστε τις κλήσεις Wi-Fi να προτιμούν το δίκτυο κινητής στις ρυθμίσεις της εφαρμογής Τηλέφωνο.</string>
 </resources>

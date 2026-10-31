@@ -863,4 +863,6 @@
     <string name="wizard_updates_line">CallVault 如何查找新版本。</string>
     <string name="wizard_updates_subtitle">CallVault 不在任何应用商店上架，因此会自行到 GitHub 查看新版本。</string>
     <string name="wizard_updates_title">保持最新</string>
+    <string name="wifi_call_switch_failed">这似乎是一通 WLAN 通话，但无法启动双方录音。正在按常规方式录音，可能录不到对方的声音。</string>
+    <string name="wifi_call_one_sided">这通 WLAN 通话只录到了您这一方。如果反复出现，请在电话应用的设置中将 WLAN 通话设为“首选移动网络”。</string>
 </resources>

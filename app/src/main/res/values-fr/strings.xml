@@ -864,4 +864,6 @@
     <string name="wizard_updates_line">Comment CallVault trouve les nouvelles versions.</string>
     <string name="wizard_updates_subtitle">CallVault n\'est sur aucune boutique d\'applications : il cherche donc lui-même les nouvelles versions sur GitHub.</string>
     <string name="wizard_updates_title">Rester à jour</string>
+    <string name="wifi_call_switch_failed">Cet appel semble passer par le Wi-Fi, mais la capture qui enregistre les deux côtés n\'a pas pu démarrer. Il est enregistré de la manière habituelle, qui peut manquer votre interlocuteur.</string>
+    <string name="wifi_call_one_sided">Seul votre côté de cet appel Wi-Fi a été enregistré. Si cela se reproduit, réglez les appels Wi-Fi sur « Réseau mobile de préférence » dans les paramètres de l\'application Téléphone.</string>
 </resources>

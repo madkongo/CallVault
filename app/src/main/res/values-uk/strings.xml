@@ -874,4 +874,6 @@
     <string name="wizard_updates_line">Як CallVault знаходить нові версії.</string>
     <string name="wizard_updates_subtitle">CallVault перевіряє оновлення через GitHub.</string>
     <string name="wizard_updates_title">Оновлення</string>
+    <string name="wifi_call_switch_failed">Схоже, це дзвінок через Wi-Fi, але запис, що захоплює обидві сторони, не запустився. Він записується звичайним способом, і співрозмовника може бути не чути.</string>
+    <string name="wifi_call_one_sided">З цього дзвінка через Wi-Fi записано лише вашу сторону. Якщо це повторюється, у налаштуваннях застосунку «Телефон» увімкніть для дзвінків через Wi-Fi пріоритет мобільної мережі.</string>
 </resources>

@@ -864,4 +864,6 @@
     <string name="wizard_updates_line">So findet CallVault neue Versionen.</string>
     <string name="wizard_updates_subtitle">CallVault ist in keinem App-Store, daher sucht es selbst auf GitHub nach neuen Versionen.</string>
     <string name="wizard_updates_title">Auf dem neuesten Stand bleiben</string>
+    <string name="wifi_call_switch_failed">Das scheint ein WLAN-Anruf zu sein, aber die Aufnahme, die beide Seiten erfasst, konnte nicht starten. Er wird wie gewohnt aufgenommen, dabei fehlt womöglich die andere Person.</string>
+    <string name="wifi_call_one_sided">Von diesem WLAN-Anruf wurde nur Ihre Seite aufgenommen. Wenn das öfter passiert, stellen Sie WLAN-Anrufe in den Einstellungen der Telefon-App auf „Mobilfunknetz bevorzugt“.</string>
 </resources>

@@ -864,4 +864,6 @@
     <string name="wizard_updates_line">Come CallVault trova le nuove versioni.</string>
     <string name="wizard_updates_subtitle">CallVault non è su nessuno store, quindi cerca da sé le nuove versioni su GitHub.</string>
     <string name="wizard_updates_title">Restare aggiornati</string>
+    <string name="wifi_call_switch_failed">Sembra una chiamata Wi-Fi, ma non è stato possibile avviare la registrazione che cattura entrambe le parti. Viene registrata nel modo consueto, che potrebbe non includere l\'altra persona.</string>
+    <string name="wifi_call_one_sided">Di questa chiamata Wi-Fi è stata registrata solo la tua parte. Se succede ancora, imposta le chiamate Wi-Fi su «Preferisci rete mobile» nelle impostazioni dell\'app Telefono.</string>
 </resources>

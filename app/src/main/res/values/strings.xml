@@ -1072,4 +1072,6 @@
     <string name="settings_layout_try_new_subtitle">Each page shows only its own settings</string>
     <string name="settings_layout_back_to_classic_title">Switch to the classic view</string>
     <string name="settings_layout_back_to_classic_subtitle">All settings in one long list, as before</string>
+    <string name="wifi_call_switch_failed">This looks like a Wi-Fi call, but the capture that records both sides could not start. It is being recorded the usual way, which may miss the other person.</string>
+    <string name="wifi_call_one_sided">Only your side of this Wi-Fi call was recorded. If it keeps happening, set Wi-Fi Calling to prefer the mobile network in your phone app\'s settings.</string>
 </resources>

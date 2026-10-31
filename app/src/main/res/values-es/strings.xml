@@ -864,4 +864,6 @@
     <string name="wizard_updates_line">Cómo encuentra CallVault versiones nuevas.</string>
     <string name="wizard_updates_subtitle">CallVault no está en ninguna tienda de aplicaciones, así que busca nuevas versiones en GitHub por su cuenta.</string>
     <string name="wizard_updates_title">Mantente al día</string>
+    <string name="wifi_call_switch_failed">Parece una llamada por Wi-Fi, pero no se pudo iniciar la captura que graba a ambas partes. Se está grabando de la forma habitual, que puede no incluir a la otra persona.</string>
+    <string name="wifi_call_one_sided">Solo se grabó tu lado de esta llamada por Wi-Fi. Si sigue pasando, configura las llamadas por Wi-Fi para preferir la red móvil en los ajustes de la app Teléfono.</string>
 </resources>
