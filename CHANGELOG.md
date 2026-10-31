@@ -5,6 +5,16 @@ All notable changes to CallVault are documented here. The format is based on
 
 ## [Unreleased]
 
+### Changed
+
+- **Long calls are transcribed too.** The 60-minute limit is gone: long calls are no longer skipped, whether
+  you tap Transcribe, they are transcribed automatically after the call or overnight, or you import them.
+  When you start one of 30 minutes or more on the phone, the confirmation says how long it will take — about
+  1.5× the call's length. With a cloud service there is no warning; it takes seconds.
+  <!-- 🧪 VERIFYING: unit tests only, not run on a phone. Maintainer to tap Transcribe on a >30-min call with
+       the local model (with the notice on and with "Don't ask again" ticked) and with Groq, and let a >60-min
+       call transcribe automatically. -->
+
 ## [2.4.8] — 2026-10-31
 
 ### Added
