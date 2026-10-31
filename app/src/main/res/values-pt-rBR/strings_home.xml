@@ -116,6 +116,17 @@
     <string name="merge_note_will_keep">As outras chamadas também são mantidas no telefone.</string>
     <string name="home_scroll_to_top">Topo</string>
     <string name="home_whatsnew_full_notes">Notas de versão completas</string>
+    <string name="whatsnew_248_title">Sua própria chave de transcrição e leitura mais fácil</string>
+    <string-array name="whatsnew_248_items">
+        <item>Transcreva com sua própria chave — Groq, OpenRouter ou seu servidor, em segundos em vez de minutos (Configurações ▸ Onde transcrever)</item>
+        <item>Toque direto da lista de gravações, com uma barra para pular para qualquer ponto</item>
+        <item>Anterior e Próxima enquanto lê uma transcrição, e a chave «Acompanhar a reprodução»</item>
+        <item>Importar na página de Transcrições agora é um botão: manter o áudio ou só a transcrição</item>
+        <item>Chamadas longas de 45 minutos ou mais voltam a ser transcritas, importadas e a mostrar a forma de onda</item>
+        <item>Downloads de modelos nos dados móveis perguntam antes, em vez de esperar o Wi-Fi</item>
+        <item>Um modelo de voz ajustado para persa e melhor suporte ao TalkBack</item>
+        <item>Conecta em celulares que escondem o endereço da depuração sem fio</item>
+    </string-array>
     <string name="whatsnew_247_title">Novas configurações, Shizuku em dia e ucraniano</string>
     <string-array name="whatsnew_247_items">
         <item>Novo layout de configurações — cada página mostra só as próprias configurações, com os detalhes atrás de ⓘ; a visão clássica está a um toque</item>

@@ -116,6 +116,17 @@
     <string name="merge_note_will_keep">Le altre chiamate restano anche sul telefono.</string>
     <string name="home_scroll_to_top">Su</string>
     <string name="home_whatsnew_full_notes">Note di rilascio complete</string>
+    <string name="whatsnew_248_title">La tua chiave di trascrizione e una lettura più facile</string>
+    <string-array name="whatsnew_248_items">
+        <item>Trascrivi con la tua chiave — Groq, OpenRouter o il tuo server, in secondi invece che minuti (Impostazioni ▸ Dove trascrivere)</item>
+        <item>Riproduci direttamente dall\'elenco delle registrazioni, con una barra per saltare a qualsiasi punto</item>
+        <item>Precedente e Successiva mentre leggi una trascrizione, e l\'interruttore «Segui la riproduzione»</item>
+        <item>L\'importazione nella pagina Trascrizioni ora è un pulsante: mantieni l\'audio o solo la trascrizione</item>
+        <item>Le chiamate lunghe da 45 minuti in su tornano a essere trascritte, importate e a mostrare la forma d\'onda</item>
+        <item>I download dei modelli su rete mobile chiedono prima, invece di aspettare il Wi-Fi</item>
+        <item>Un modello vocale addestrato sul persiano e un miglior supporto a TalkBack</item>
+        <item>Si collega sui telefoni che nascondono l\'indirizzo del debug wireless</item>
+    </string-array>
     <string name="whatsnew_247_title">Nuove impostazioni, Shizuku si mette in pari e l’ucraino</string>
     <string-array name="whatsnew_247_items">
         <item>Nuovo layout delle impostazioni — ogni pagina mostra solo le proprie impostazioni, con i dettagli dietro ⓘ; la vista classica è a un tocco</item>

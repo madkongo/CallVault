@@ -5,6 +5,8 @@ All notable changes to CallVault are documented here. The format is based on
 
 ## [Unreleased]
 
+## [2.4.8] — 2026-10-31
+
 ### Added
 
 - **Transcribe with your own key** (#48). Settings → Where to transcribe: keep transcribing on the phone, or

@@ -116,6 +116,17 @@
     <string name="merge_note_will_keep">其余通话也会保留在手机上。</string>
     <string name="home_scroll_to_top">回到顶部</string>
     <string name="home_whatsnew_full_notes">完整发行说明</string>
+    <string name="whatsnew_248_title">使用你自己的转写密钥，阅读更方便</string>
+    <string-array name="whatsnew_248_items">
+        <item>用你自己的密钥转写——Groq、OpenRouter 或自己的服务器，几秒而不是几分钟（设置 ▸ 在哪里转写）</item>
+        <item>直接在录音列表中播放，并可用进度条跳到任意位置</item>
+        <item>阅读转写时可切换上一个和下一个通话，并有“跟随播放”开关</item>
+        <item>转写页面的导入现在只是一个按钮：保留音频，或只保留文字记录</item>
+        <item>45 分钟以上的长通话又能转写、导入并显示波形</item>
+        <item>用移动数据下载模型时会先询问，而不是一直等待 WLAN</item>
+        <item>针对波斯语训练的语音模型，以及更好的 TalkBack 支持</item>
+        <item>在隐藏无线调试地址的手机上也能连接</item>
+    </string-array>
     <string name="whatsnew_247_title">全新设置、Shizuku 补齐功能、乌克兰语</string>
     <string-array name="whatsnew_247_items">
         <item>全新设置布局 — 每个页面只显示自己的设置，详细说明收在 ⓘ 后面；经典视图一点即回</item>

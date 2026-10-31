@@ -116,6 +116,17 @@
     <string name="merge_note_will_keep">Pozostałe rozmowy zostaną też zachowane w telefonie.</string>
     <string name="home_scroll_to_top">Do góry</string>
     <string name="home_whatsnew_full_notes">Pełne informacje o wydaniu</string>
+    <string name="whatsnew_248_title">Własny klucz do transkrypcji i wygodniejsze czytanie</string>
+    <string-array name="whatsnew_248_items">
+        <item>Transkrypcja z własnym kluczem — Groq, OpenRouter lub własny serwer, w sekundy zamiast minut (Ustawienia ▸ Gdzie transkrybować)</item>
+        <item>Odtwarzanie prosto z listy nagrań, z paskiem do przeskakiwania w dowolne miejsce</item>
+        <item>Poprzednia i Następna podczas czytania transkrypcji oraz przełącznik „Śledź odtwarzanie”</item>
+        <item>Import na stronie Transkrypcji to teraz jeden przycisk: zachowaj dźwięk albo tylko transkrypcję</item>
+        <item>Długie rozmowy od 45 minut znów da się transkrybować, importować i zobaczyć ich wykres fali</item>
+        <item>Pobieranie modeli przez dane komórkowe najpierw pyta, zamiast czekać na Wi-Fi</item>
+        <item>Model mowy dostrojony do perskiego i lepsza obsługa TalkBack</item>
+        <item>Łączy się na telefonach, które ukrywają adres debugowania bezprzewodowego</item>
+    </string-array>
     <string name="whatsnew_247_title">Nowe ustawienia, Shizuku nadrabia i ukraiński</string>
     <string-array name="whatsnew_247_items">
         <item>Nowy układ ustawień — każda strona pokazuje tylko swoje ustawienia, szczegóły pod ⓘ; widok klasyczny jest o jedno dotknięcie</item>

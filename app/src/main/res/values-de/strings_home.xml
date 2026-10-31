@@ -116,6 +116,17 @@
     <string name="merge_note_will_keep">Die anderen Anrufe bleiben ebenfalls auf dem Telefon.</string>
     <string name="home_scroll_to_top">Nach oben</string>
     <string name="home_whatsnew_full_notes">Vollständige Versionshinweise</string>
+    <string name="whatsnew_248_title">Eigener Transkriptions-Schlüssel und leichteres Lesen</string>
+    <string-array name="whatsnew_248_items">
+        <item>Mit eigenem Schlüssel transkribieren — Groq, OpenRouter oder dein eigener Server, in Sekunden statt Minuten (Einstellungen ▸ Wo transkribieren)</item>
+        <item>Direkt in der Aufnahmeliste abspielen, mit einer Leiste zum Springen</item>
+        <item>Vorheriger und Nächster beim Lesen eines Transkripts, plus ein Schalter „Wiedergabe folgen“</item>
+        <item>Import auf der Transkript-Seite ist jetzt ein Knopf: Audio behalten oder nur das Transkript</item>
+        <item>Lange Anrufe ab 45 Minuten werden wieder transkribiert, importiert und zeigen ihre Wellenform</item>
+        <item>Modell-Downloads über mobile Daten fragen zuerst, statt auf WLAN zu warten</item>
+        <item>Ein für Persisch trainiertes Sprachmodell und bessere TalkBack-Unterstützung</item>
+        <item>Verbindet sich auf Handys, die die Adresse des kabellosen Debuggings verstecken</item>
+    </string-array>
     <string name="whatsnew_247_title">Neue Einstellungen, Shizuku holt auf, und Ukrainisch</string>
     <string-array name="whatsnew_247_items">
         <item>Neues Einstellungs-Layout — jede Seite zeigt nur ihre eigenen Einstellungen, Details hinter ⓘ; die klassische Ansicht ist einen Tipp entfernt</item>
