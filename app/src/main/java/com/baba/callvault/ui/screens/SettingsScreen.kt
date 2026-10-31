@@ -617,6 +617,7 @@ private fun SettingsScreenPreview() {
             override fun setAppLanguage(languageCode: String) {}
             override fun setLoggingEnabled(enabled: Boolean) {}
             override fun setSkipMdnsConnectForTest(enabled: Boolean) {}
+            override fun setForceWifiRouteForTest(enabled: Boolean) {}
             override fun getAppVersion(): String = "Version 1.0.0 (Mock)"
             override fun setFileNameTemplate(template: String) {}
             override fun setStorageTarget(target: StorageTarget) {}

@@ -59,6 +59,15 @@ class VoipCallDetector(private val context: Context) {
      */
     private var suspendedForCarrier = false
 
+    /**
+     * Set while the mode is in the IN_COMMUNICATION stretch of a carrier call (a Samsung Wi-Fi call).
+     * See [VoipStrayStartPolicy]: without it the hang-up left a stray 1 s `_voip` file (#45).
+     */
+    private var carrierEpisode = VoipStrayStartPolicy.Latch()
+
+    /** Looks again when a carrier-episode tail ends, in case an app call carried on through it. */
+    private val tailRecheck = Runnable { evaluate(audioManager?.mode ?: AudioManager.MODE_NORMAL) }
+
 
     /** Set while a recording is running, so the host can reflect it in its notification. */
     @Volatile
@@ -81,7 +90,7 @@ class VoipCallDetector(private val context: Context) {
     /** Logs the end-of-call signals when they change, while a call is up and for a while after. */
     private fun probe(reason: String, always: Boolean = false) {
         val am = audioManager ?: return
-        if (!callActive && android.os.SystemClock.elapsedRealtime() > probeTailUntil) return
+        if (!callActive && !carrierEpisode.active && android.os.SystemClock.elapsedRealtime() > probeTailUntil) return
         val now = runCatching { VoipEndProbe.capture(am) }.getOrNull() ?: return
         if (always || VoipEndProbe.isWorthLogging(lastProbe, now)) {
             AppLogger.i(TAG, "endprobe[$reason] callActive=$callActive ${VoipEndProbe.describe(now)}")
@@ -97,6 +106,8 @@ class VoipCallDetector(private val context: Context) {
     private val probeHeartbeat: Runnable = Runnable {
         heartbeatScheduled = false
         probe("tick", always = true)
+        // A carrier call that ends with no audio event would otherwise leave the latch up.
+        if (carrierEpisode.active) evaluate(audioManager?.mode ?: AudioManager.MODE_NORMAL)
     }
 
     /**
@@ -213,6 +224,12 @@ class VoipCallDetector(private val context: Context) {
      * carries the decision out.
      */
     private fun evaluate(mode: Int) {
+        val latched = VoipStrayStartPolicy.afterMode(carrierEpisode, mode)
+        if (carrierEpisode.active && !latched.active) {
+            AppLogger.i(TAG, "Carrier episode over (mode=${VoipEndProbe.modeName(mode)}); app-call starts allowed again")
+            probeTailUntil = android.os.SystemClock.elapsedRealtime() + PROBE_TAIL_MS
+        }
+        carrierEpisode = latched
         when (VoipSwitchPolicy.decide(mode, callActive, suspendedForCarrier)) {
             VoipSwitchPolicy.Action.NOTHING -> return
 
@@ -244,8 +261,18 @@ class VoipCallDetector(private val context: Context) {
             // on it would record a phone call the carrier path is already recording — see
             // [VoipTelephonyGate]. Deliberately NOT marking callActive: we believe no app call is up,
             // so a later mode event is free to reconsider once the phone call is over.
-            if (!VoipTelephonyGate.mayStartNow(context)) {
-                AppLogger.i(TAG, "mode=IN_COMMUNICATION but the carrier has a call up — not an app call")
+            val managed = !VoipTelephonyGate.mayStartNow(context)
+            val now = android.os.SystemClock.elapsedRealtime()
+            carrierEpisode = VoipStrayStartPolicy.afterTime(carrierEpisode, managed, now)
+            val verdict = VoipStrayStartPolicy.verdict(latched = carrierEpisode.active, managedCall = managed)
+            if (verdict != VoipStrayStartPolicy.Verdict.START) {
+                carrierEpisode = VoipStrayStartPolicy.afterVerdict(carrierEpisode, verdict)
+                VoipStrayStartPolicy.tailRemainingMs(carrierEpisode, now)?.let { wait ->
+                    handler.removeCallbacks(tailRecheck)
+                    handler.postDelayed(tailRecheck, wait + TAIL_RECHECK_SLACK_MS)
+                }
+                AppLogger.i(TAG, "mode=IN_COMMUNICATION but not an app call: $verdict (carrierEpisode=$carrierEpisode)")
+                probe("refused")
                 return
             }
             handler.removeCallbacks(endCallRunnable)
@@ -307,6 +334,8 @@ class VoipCallDetector(private val context: Context) {
     /** Stops watching and ends any in-flight recording. Idempotent. */
     fun stop() {
         handler.removeCallbacks(endCallRunnable)
+        handler.removeCallbacks(tailRecheck)
+        carrierEpisode = VoipStrayStartPolicy.Latch()
         if (callActive) endCallRunnable.run()
         handler.removeCallbacks(probeHeartbeat)
         heartbeatScheduled = false
@@ -329,6 +358,9 @@ class VoipCallDetector(private val context: Context) {
     private companion object {
         const val TAG = "CV:VoipDetect"
         const val END_DEBOUNCE_MS = 1_500L
+
+        /** Looked at just after the carrier-episode tail, never on its edge. */
+        const val TAIL_RECHECK_SLACK_MS = 50L
 
         /** #53 diagnostic: heartbeat while a call is up, and how long to keep logging after it ends. */
         const val PROBE_HEARTBEAT_MS = 5_000L

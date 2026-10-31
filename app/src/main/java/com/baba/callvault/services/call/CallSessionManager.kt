@@ -231,8 +231,11 @@ class CallSessionManager private constructor(context: Context) {
         // call would arrive here as OFFHOOK and stop its own recording. Telecom is asked whether the
         // call is actually the carrier's.
         val carrierCallUp = VoipTelephonyGate.managedCallInProgress(appContext)
+        // Never for our own Wi-Fi-call recording through the app-call capture (#45): that is this
+        // phone call, not an app call to hold.
         if (VoipTelephonyGate.mustStop(receivedCallState, carrierCallUp) &&
-            VoipRecordingCoordinator.isRecording
+            VoipRecordingCoordinator.isRecording &&
+            !RecordingForegroundService.isAppMixSession
         ) {
             AppLogger.i(TAG, "Carrier call answered while an app call was recording — stopping it.")
             runCatching {

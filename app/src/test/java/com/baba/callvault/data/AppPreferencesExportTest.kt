@@ -31,7 +31,7 @@ class AppPreferencesExportTest {
             "adb_paired", "loopback_adb_port", "privileged_mode", "recording_folder_uri",
             "drive_folder_uri", "log_pseudonym_salt", "wizard_completed", "disclaimer_accepted",
             "available_update_tag", "wd_enabled_by_us", "shell_grant_state", "classic_settings_screen",
-            "adb_last_connect_port", "debug_skip_mdns_connect",
+            "adb_last_connect_port", "debug_skip_mdns_connect", "debug_force_wifi_route",
         ).forEach { key ->
             assertFalse("$key must not be exportable", AppPreferences.EXPORTABLE_KEYS.contains(key))
         }
@@ -55,6 +55,15 @@ class AppPreferencesExportTest {
         prefs.setDebugSkipMdnsConnect(true)
         assertTrue(AppPreferences(context).isDebugSkipMdnsConnect())
         assertFalse(prefs.exportToJson().contains("debug_skip_mdns_connect"))
+    }
+
+    @Test
+    fun `the force-Wi-Fi-route test switch is off by default and not exported`() {
+        val prefs = AppPreferences(context)
+        assertFalse(prefs.isDebugForceWifiRoute())
+        prefs.setDebugForceWifiRoute(true)
+        assertTrue(AppPreferences(context).isDebugForceWifiRoute())
+        assertFalse(prefs.exportToJson().contains("debug_force_wifi_route"))
     }
 
     @Test
