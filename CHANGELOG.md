@@ -31,6 +31,11 @@ All notable changes to CallVault are documented here. The format is based on
 
 ### Changed
 
+- **A stuck connection no longer blocks recording forever.** When one attempt to reach the recorder got stuck,
+  every later attempt — including the one starting a recording — used to wait behind it with no end. They now
+  give up after a minute and try again, and the off-Wi-Fi retry window really is 12 seconds.
+  <!-- 🧪 VERIFYING: built 2026-10-31 on fix/adb-connect-leftovers; unit tests only, untested on a phone.
+       Maintainer to confirm: a normal day of calls with no missed recording and no "connect lock" log line. -->
 - **Long calls are transcribed too.** The 60-minute limit is gone: long calls are no longer skipped, whether
   you tap Transcribe, they are transcribed automatically after the call or overnight, or you import them.
   When you start one of 30 minutes or more on the phone, the confirmation says how long it will take — about

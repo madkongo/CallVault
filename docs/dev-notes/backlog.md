@@ -2181,7 +2181,19 @@ promising a prediction. Feeds the README's tested-devices table.
 
 ---
 
-## ✅ MOSTLY DONE v1.5.5 (handshake bounded; left: ~26 s worst case per WD attempt 📐, unbounded wait on the synchronized entry) — `AdbShell.ensureConnected` is unbounded on the recording-start path
+## 🧪 BUILT on `fix/adb-connect-leftovers` 2026-10-31, untested on a phone (v1.5.5 bounded the handshake; this branch bounds the entry wait and the offline self-heal window) — `AdbShell.ensureConnected` is unbounded on the recording-start path
+
+**🧪 BUILT 2026-10-31 on `fix/adb-connect-leftovers` — the two leftovers.** (1) The wait to *enter*
+`ensureConnected` / `forceReconnect` / the Wireless-debugging connect is now bounded at 60 s
+(`CONNECT_ENTRY_WAIT_MS`, a `BoundedEntryLock` replacing `@Synchronized`): behind a parked holder the caller
+gets "not connected" instead of queueing forever. 60 s sits above the longest *healthy* hold — 📐 CALCULATED
+≈ 29 s Wireless debugging, ≈ 48 s offline — so a second caller behind a slow-but-healthy connect still waits
+and succeeds as before. (2) The offline self-heal window counted only its sleeps, so with adbd accepting TCP
+but never answering, each 8 s handshake went uncounted (📐 ~140 s worst case); it now runs on the clock. The
+~26 s per Wireless-debugging attempt (0.75 + 0.6 + 12 mDNS + 5 search + 8 handshake) was **left as it is**:
+each step is bounded and needed, and an overall cap would cut a slow-but-working mDNS or search short.
+Rollback: `docs/dev-notes/rollback/fix-adb-connect-leftovers.md`. To settle: a normal day of calls on the
+OP12/OP9 with no "connect lock" line in the log, and no missed recording.
 
 **Why.** It can block for ~75 s while a recording is trying to start. 1.4.6 capped one such read at
 1.5 s after it caused calls to be missed entirely; this is the same class of problem, not yet fixed.
