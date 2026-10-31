@@ -197,7 +197,6 @@
 
     <!-- New Settings screen, round 4: the Recording group's sub-headers. -->
 
-    <!-- The card at the top of both Settings screens that switches between the new and classic layouts. -->
     <string name="app_lock_locked">Κλειδωμένο</string>
     <string name="app_lock_prompt_title">Ξεκλείδωμα CallVault</string>
     <string name="app_lock_unlock">Ξεκλείδωμα</string>
@@ -590,10 +589,6 @@
     <string name="settings_language">Γλώσσα</string>
     <string name="settings_language_change_in_transcripts">Αλλάζει στις ρυθμίσεις απομαγνητοφωνήσεων</string>
     <string name="settings_language_system">Προεπιλογή συστήματος</string>
-    <string name="settings_layout_back_to_classic_subtitle">Όλες οι ρυθμίσεις σε μία μεγάλη λίστα, όπως πριν</string>
-    <string name="settings_layout_back_to_classic_title">Μετάβαση στην κλασική προβολή</string>
-    <string name="settings_layout_try_new_subtitle">Κάθε σελίδα δείχνει μόνο τις δικές της ρυθμίσεις</string>
-    <string name="settings_layout_try_new_title">Δοκιμάστε τη νέα διάταξη ρυθμίσεων</string>
     <string name="settings_link_all_settings">Όλες οι ρυθμίσεις</string>
     <string name="settings_link_share_debug_report">Κοινοποίηση αναφοράς σφαλμάτων</string>
     <string name="settings_metadata_file_desc">Αποθήκευση ενός μικρού .json δίπλα σε κάθε εγγραφή</string>
@@ -616,20 +611,14 @@
     <string name="settings_section_about">Σχετικά</string>
     <string name="settings_section_audio">Διαμόρφωση ήχου</string>
     <string name="settings_section_debug">Εντοπισμός σφαλμάτων</string>
-    <string name="settings_section_experimental">Πειραματικά</string>
-    <string name="settings_section_general">Γενικά</string>
     <string name="settings_section_privacy">Απόρρητο</string>
     <string name="settings_section_recorder_server">Υπηρεσία εγγραφής</string>
-    <string name="settings_section_recording">Εγγραφή</string>
     <string name="settings_section_recording_storage">Εγγραφή &amp; αποθηκευτικός χώρος</string>
     <string name="settings_section_reliability">Αξιοπιστία</string>
-    <string name="settings_section_retention">Διατήρηση</string>
     <string name="settings_section_security">Ασφάλεια</string>
     <string name="settings_section_storage">Αποθηκευτικός χώρος</string>
     <string name="settings_section_transcription">Απομαγνητοφώνηση</string>
-    <string name="settings_section_transcription_and_summaries">Απομαγνητοφώνηση &amp; περιλήψεις</string>
     <string name="settings_section_updates">Ενημερώσεις</string>
-    <string name="settings_section_visual">Ρυθμίσεις εμφάνισης</string>
     <string name="settings_select_contacts">Επιλογή επαφών (%1$d)</string>
     <string name="settings_select_contacts_incoming">Επιλογή εισερχόμενων επαφών</string>
     <string name="settings_select_contacts_outgoing">Επιλογή εξερχόμενων επαφών</string>
@@ -647,12 +636,8 @@
     <string name="settings_storage_target_label">Πού θα αποθηκεύονται οι εγγραφές</string>
     <string name="settings_subheader_all_calls">Όλες οι κλήσεις</string>
     <string name="settings_subheader_app_calls">Κλήσεις εφαρμογών</string>
-    <string name="settings_subsection_incoming">Εισερχόμενες κλήσεις</string>
-    <string name="settings_subsection_outgoing">Εξερχόμενες κλήσεις</string>
     <string name="settings_subsection_phone_calls">Τηλεφωνικές κλήσεις</string>
     <string name="settings_subsection_privileges">Πώς το CallVault αποκτά δικαιώματα</string>
-    <string name="settings_subsection_resilience">Ανθεκτικότητα</string>
-    <string name="settings_subsection_voip">Κλήσεις VoIP</string>
     <string name="settings_summary_calls_app_only">Μόνο κλήσεις εφαρμογών</string>
     <string name="settings_summary_calls_phone_and_app">Τηλεφωνικές κλήσεις και κλήσεις εφαρμογών</string>
     <string name="settings_summary_calls_phone_only">Μόνο τηλεφωνικές κλήσεις</string>

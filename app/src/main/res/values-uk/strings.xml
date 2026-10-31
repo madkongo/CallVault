@@ -53,7 +53,6 @@
 
     <!-- New Settings screen, round 4: the Recording group's sub-headers. -->
 
-    <!-- The card at the top of both Settings screens that switches between the new and classic layouts. -->
     <string name="app_lock_locked">Заблоковано</string>
     <string name="app_lock_prompt_title">Розблокувати CallVault</string>
     <string name="app_lock_unlock">Розблокувати</string>
@@ -446,10 +445,6 @@
     <string name="settings_language">Мова</string>
     <string name="settings_language_change_in_transcripts">Змінюється в налаштуваннях транскрипцій</string>
     <string name="settings_language_system">Мова системи</string>
-    <string name="settings_layout_back_to_classic_subtitle">Усі налаштування одним довгим списком, як раніше</string>
-    <string name="settings_layout_back_to_classic_title">Повернутися до класичного вигляду</string>
-    <string name="settings_layout_try_new_subtitle">Кожна сторінка показує лише свої налаштування</string>
-    <string name="settings_layout_try_new_title">Спробувати новий вигляд налаштувань</string>
     <string name="settings_link_all_settings">Усі налаштування</string>
     <string name="settings_link_share_debug_report">Поділитися звітом діагностики</string>
     <string name="settings_metadata_file_desc">Зберігати невеликий .json поряд із записом</string>
@@ -472,20 +467,14 @@
     <string name="settings_section_about">Про програму</string>
     <string name="settings_section_audio">Налаштування звуку</string>
     <string name="settings_section_debug">Діагностика</string>
-    <string name="settings_section_experimental">Експериментальні</string>
-    <string name="settings_section_general">Загальні</string>
     <string name="settings_section_privacy">Конфіденційність</string>
     <string name="settings_section_recorder_server">Служба запису</string>
-    <string name="settings_section_recording">Запис</string>
     <string name="settings_section_recording_storage">Записи та сховище</string>
     <string name="settings_section_reliability">Надійність</string>
-    <string name="settings_section_retention">Зберігання та очищення</string>
     <string name="settings_section_security">Безпека</string>
     <string name="settings_section_storage">Сховище</string>
     <string name="settings_section_transcription">Транскрипція</string>
-    <string name="settings_section_transcription_and_summaries">Транскрипції та підсумки</string>
     <string name="settings_section_updates">Оновлення</string>
-    <string name="settings_section_visual">Оформлення</string>
     <string name="settings_select_contacts">Вибрати контакти (%1$d)</string>
     <string name="settings_select_contacts_incoming">Вибрати вхідні контакти</string>
     <string name="settings_select_contacts_outgoing">Вибрати вихідні контакти</string>
@@ -503,12 +492,8 @@
     <string name="settings_storage_target_label">Де зберігати записи</string>
     <string name="settings_subheader_all_calls">Усі дзвінки</string>
     <string name="settings_subheader_app_calls">Дзвінки в застосунках</string>
-    <string name="settings_subsection_incoming">Вхідні дзвінки</string>
-    <string name="settings_subsection_outgoing">Вихідні дзвінки</string>
     <string name="settings_subsection_phone_calls">Телефонні дзвінки</string>
     <string name="settings_subsection_privileges">Як CallVault отримує дозволи</string>
-    <string name="settings_subsection_resilience">Стійкість запису</string>
-    <string name="settings_subsection_voip">Дзвінки VoIP</string>
     <string name="settings_summary_calls_app_only">Лише дзвінки в застосунках</string>
     <string name="settings_summary_calls_phone_and_app">Звичайні дзвінки й дзвінки в застосунках</string>
     <string name="settings_summary_calls_phone_only">Лише звичайні дзвінки</string>

@@ -29,6 +29,16 @@ All notable changes to CallVault are documented here. The format is based on
   If automatic transcription is on, older calls over an hour that were skipped before are transcribed on the next
   automatic run, which can keep the phone busy for a while.
 
+### Removed
+
+- **The classic Settings view.** Settings now always opens the per-page layout, the default since 2.4.7, and the
+  "Switch to the classic view" card is gone. Nothing moves and no setting changes: the old Experimental switches
+  are under **Connection** (Wireless debugging, USB, offline and resilient recording, pairing) and **Recording**
+  (app calls).
+  <!-- 🧪 VERIFYING: branch chore/remove-classic-settings, 2026-10-31 — unit tests + release build only; not seen
+       on a phone. Maintainer to open Settings from the main screen and each page and confirm every group is
+       there. Rollback: docs/dev-notes/rollback/classic-settings-removal.md. -->
+
 ## [2.4.8] — 2026-10-31
 
 ### Added

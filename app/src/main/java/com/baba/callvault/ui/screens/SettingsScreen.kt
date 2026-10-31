@@ -77,14 +77,14 @@ import androidx.compose.material.icons.filled.Info
 import androidx.compose.material.icons.filled.Save
 
 /**
- * Stateful wrapper for the Settings screen that connects [SettingsViewModel] to [SettingsContent].
+ * Stateful wrapper for the Settings screen that connects [SettingsViewModel] to [ScopedSettingsContent].
  *
  * @param viewModel Handles saving whenever the user changes a setting.
  * @param onBack    Called when the user taps the top-bar back affordance; the router maps this to
  *                  [com.baba.callvault.ui.viewmodels.AppNavViewModel.navigateBack].
  * @param modifier  Optional modifier for the root scaffold.
- * @param settingsScope The page Settings was opened from; only the new screen uses it.
- * @param onScopeChange Called when the new screen's links move to another page's settings.
+ * @param settingsScope The page Settings was opened from.
+ * @param onScopeChange Called when the screen's links move to another page's settings.
  */
 @Composable
 fun SettingsScreen(
@@ -250,9 +250,6 @@ fun SettingsScreen(
     // Read straight from preferences inside each row, the rows kept the old mode's state until Settings
     // was reopened (OP9, 2026-10-19) — leaving offline recording looking available in Shizuku mode.
     val privilegedMode = remember(updateTrigger) { viewModel.preferences.getPrivilegedMode() }
-    // Which screen opens. Re-read on every refresh, so the Debug switch takes effect at once. Rollback layer 1
-    // of the settings-per-page plan: the classic screen is untouched; the new one is the default since 2026-10-21.
-    val useClassicScreen = remember(updateTrigger) { viewModel.preferences.isClassicSettingsScreen() }
 
     // Seed each picker with its OWN current folder so it opens there, instead of letting
     // Android's DocumentsUI reopen at the last-browsed location (which, after setting Drive,
@@ -297,47 +294,26 @@ fun SettingsScreen(
     val onImportSettings = { importSettingsLauncher.launch(arrayOf("application/json", "text/*")) }
 
     CompositionLocalProvider(LocalPrivilegedMode provides privilegedMode) {
-        if (useClassicScreen) {
-            SettingsContent(
-                preferences = viewModel.preferences,
-                updateTrigger = updateTrigger,
-                actions = viewModel,
-                contactPickerState = contactPickerState,
-                onBack = onBack,
-                onSelectFolder = onSelectFolder,
-                onSelectDriveFolder = onSelectDriveFolder,
-                onOpenContactsIncoming = onOpenContactsIncoming,
-                onOpenContactsOutgoing = onOpenContactsOutgoing,
-                onConfirmContacts = onConfirmContacts,
-                onDismissContacts = onDismissContacts,
-                onShareLogs = onShareLogs,
-                onSaveLogs = onSaveLogs,
-                onExportSettings = onExportSettings,
-                onImportSettings = onImportSettings,
-                modifier = modifier
-            )
-        } else {
-            ScopedSettingsContent(
-                preferences = viewModel.preferences,
-                updateTrigger = updateTrigger,
-                actions = viewModel,
-                contactPickerState = contactPickerState,
-                onBack = onBack,
-                onSelectFolder = onSelectFolder,
-                onSelectDriveFolder = onSelectDriveFolder,
-                onOpenContactsIncoming = onOpenContactsIncoming,
-                onOpenContactsOutgoing = onOpenContactsOutgoing,
-                onConfirmContacts = onConfirmContacts,
-                onDismissContacts = onDismissContacts,
-                onShareLogs = onShareLogs,
-                onSaveLogs = onSaveLogs,
-                onExportSettings = onExportSettings,
-                onImportSettings = onImportSettings,
-                scope = settingsScope,
-                onScopeChange = onScopeChange,
-                modifier = modifier
-            )
-        }
+        ScopedSettingsContent(
+            preferences = viewModel.preferences,
+            updateTrigger = updateTrigger,
+            actions = viewModel,
+            contactPickerState = contactPickerState,
+            onBack = onBack,
+            onSelectFolder = onSelectFolder,
+            onSelectDriveFolder = onSelectDriveFolder,
+            onOpenContactsIncoming = onOpenContactsIncoming,
+            onOpenContactsOutgoing = onOpenContactsOutgoing,
+            onConfirmContacts = onConfirmContacts,
+            onDismissContacts = onDismissContacts,
+            onShareLogs = onShareLogs,
+            onSaveLogs = onSaveLogs,
+            onExportSettings = onExportSettings,
+            onImportSettings = onImportSettings,
+            scope = settingsScope,
+            onScopeChange = onScopeChange,
+            modifier = modifier
+        )
     }
 
     // Modal on purpose: it gives the tap an immediate answer, and it stops a second tap or a walk
@@ -383,207 +359,8 @@ fun SettingsScreen(
     }
 }
 
-/**
- * Stateless visual layer for the Settings screen, redesigned on the "Signal" design system.
- *
- * Each section is a [CvSectionHeader] followed by a [CvCard] grouping its rows. Every existing
- * setting, action, dialog, and the hidden developer-unlock gesture is preserved; only the layout
- * is restyled.
- *
- * @param preferences            The [AppPreferences] instance to read data from.
- * @param updateTrigger          Trigger value to force/detect recomposition when settings change.
- * @param actions                Implementation of [SettingsActions] to handle user interaction.
- * @param contactPickerState     Current state of the contact picker dialog.
- * @param onBack                 Called when the user taps the top-bar back affordance.
- * @param onSelectFolder         Called when the user taps the recording-folder row.
- * @param onSelectDriveFolder    Called when the user taps the Drive-folder row; opens the SAF picker.
- * @param onOpenContactsIncoming Called to open picker for incoming contacts.
- * @param onOpenContactsOutgoing Called to open picker for outgoing contacts.
- * @param onConfirmContacts      Called when contacts are confirmed from the dialog.
- * @param onDismissContacts      Called when we want to close the dialog without confirmation/saving.
- * @param onShareLogs            Called to share diagnostic logs via the system share-sheet (Debug section).
- * @param onSaveLogs             Called to save diagnostic logs to a file the user picks (Debug section).
- * @param modifier               Optional size/position modifier.
- */
 /** Hard ceiling on the optional system-log half of a debug report. See the share handler. */
 private const val SYSTEM_REPORT_BUDGET_MS = 45_000L
-
-@Composable
-fun SettingsContent(
-    preferences: AppPreferences,
-    updateTrigger: Int,
-    actions: SettingsActions,
-    contactPickerState: ContactPickerState?,
-    onBack: () -> Unit,
-    onSelectFolder: () -> Unit,
-    onSelectDriveFolder: () -> Unit,
-    onOpenContactsIncoming: () -> Unit,
-    onOpenContactsOutgoing: () -> Unit,
-    onConfirmContacts: (Set<String>) -> Unit,
-    onDismissContacts: () -> Unit,
-    onShareLogs: () -> Unit,
-    onSaveLogs: () -> Unit,
-    onExportSettings: () -> Unit,
-    onImportSettings: () -> Unit,
-    modifier: Modifier = Modifier
-) {
-    var showLicensesDialog by remember { mutableStateOf(false) }
-
-    // Accordion: at most one section open at a time; Recording & storage is open on entry. State is
-    // hoisted here (above the LazyColumn) so it is shared across all sections. Tapping the open section
-    // closes it (null = none open); tapping any other section opens it and closes the previous one.
-    // Everything closed on entry: the panel then opens on a short list of section names, which is
-    // navigable at a glance. Auto-opening one buried the other five under a screenful of its rows.
-    var openSection by rememberSaveable { mutableStateOf<String?>(null) }
-    val onToggleSection: (String) -> Unit = { id -> openSection = if (openSection == id) null else id }
-
-    CvScaffold(
-        modifier = modifier.fillMaxSize(),
-        title = stringResource(R.string.general_settings),
-        subtitle = stringResource(R.string.settings_ui_subtitle),
-        onBack = onBack
-    ) { innerPadding ->
-        LazyColumn(
-            modifier = Modifier
-                .fillMaxSize()
-                .navigationBarsPadding(),
-            contentPadding = PaddingValues(
-                start = 20.dp,
-                end = 20.dp,
-                top = innerPadding.calculateTopPadding() + 8.dp,
-                bottom = innerPadding.calculateBottomPadding() + 28.dp
-            ),
-            verticalArrangement = Arrangement.spacedBy(20.dp)
-        ) {
-            item {
-                // Above every section and outside all of them, so it is the first thing on the screen.
-                //
-                // It decides which of two completely different recording engines runs — and therefore
-                // which features exist at all — so burying it three taps down under GENERAL >
-                // Privileges made the single most consequential setting the hardest one to find. It is
-                // also the first thing worth checking when something is not working, which is exactly
-                // when nobody wants to go hunting for it.
-                PrivilegedModeSubSection(onModeChanged = { actions.refreshSettings() })
-                // The wizard cannot be re-run, so a phone whose OEM blocks the grant needs to be able to
-                // find this out here too. Self-hiding when it does not apply.
-                OemGateNotice(modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp))
-            }
-            // The same card as at the top of the new screen, with its own wording: the one way between them.
-            item { SettingsLayoutSwitchCard(preferences, actions) }
-            item {
-                RecordingSection(
-                    preferences = preferences,
-                    updateTrigger = updateTrigger,
-                    actions = actions,
-                    expanded = openSection == SECTION_RECORDING,
-                    onToggle = { onToggleSection(SECTION_RECORDING) },
-                    onOpenContactsIncoming = onOpenContactsIncoming,
-                    onOpenContactsOutgoing = onOpenContactsOutgoing
-                )
-            }
-            item {
-                StorageSection(
-                    preferences = preferences,
-                    updateTrigger = updateTrigger,
-                    actions = actions,
-                    // SECTION_RETENTION also opens Storage: retention used to be its own accordion, and a
-                    // user whose saved open-section is the old key should land on the section that now
-                    // contains it rather than on a collapsed screen.
-                    expanded = openSection == SECTION_STORAGE || openSection == SECTION_RETENTION,
-                    onToggle = { onToggleSection(SECTION_STORAGE) },
-                    onSelectFolder = onSelectFolder,
-                    onSelectDriveFolder = onSelectDriveFolder
-                )
-            }
-            item {
-                AudioSection(
-                    preferences, updateTrigger, actions,
-                    expanded = openSection == SECTION_AUDIO,
-                    onToggle = { onToggleSection(SECTION_AUDIO) }
-                )
-            }
-            item {
-                // Summaries live inside this section rather than beside it. A summary is read from
-                // a transcript and is useless without one, and — the reason this moved — they used
-                // to have a language setting each. Setting the wrong one produced a transcript in
-                // the wrong language with no hint as to why, which is exactly what happened.
-                TranscriptionSection(
-                    preferences, updateTrigger, actions,
-                    expanded = openSection == SECTION_TRANSCRIPTION,
-                    onToggle = { onToggleSection(SECTION_TRANSCRIPTION) },
-                    summaryRows = { SummarySettingsRows(preferences, updateTrigger, actions) }
-                )
-            }
-            item {
-                GeneralSection(
-                    preferences = preferences,
-                    updateTrigger = updateTrigger,
-                    actions = actions,
-                    // Old keys still open General, so a user whose saved section was Visual,
-                    // Experimental or Updates lands on the section that now contains it.
-                    expanded = openSection in setOf(SECTION_GENERAL, SECTION_VISUAL, SECTION_EXPERIMENTAL, SECTION_UPDATES),
-                    onToggle = { onToggleSection(SECTION_GENERAL) }
-                )
-            }
-            // Debug section: always visible so anyone can enable logging and share logs to report an issue.
-            item {
-                BugReportSection(
-                    preferences, updateTrigger, actions, onShareLogs, onSaveLogs,
-                    expanded = openSection == SECTION_BUG_REPORT,
-                    onToggle = { onToggleSection(SECTION_BUG_REPORT) }
-                )
-            }
-            // About moved to the bottom; the fork attribution stays visible (GPLv3 §7 requirement).
-            item {
-                AboutSection(
-                    versionString = actions.getAppVersion(),
-                    onShowLicenses = { showLicensesDialog = true },
-                    expanded = openSection == SECTION_ABOUT,
-                    onToggle = { onToggleSection(SECTION_ABOUT) }
-                )
-            }
-            // Section-less, at the very bottom: back up or restore your settings.
-            item {
-                ExportImportRow(onExport = onExportSettings, onImport = onImportSettings)
-            }
-        }
-    }
-
-    if (showLicensesDialog) {
-        LicensesDialog(onDismiss = { showLicensesDialog = false })
-    }
-
-    // The contact-picker dialog sits on top of the settings content.
-    SettingsContactPicker(contactPickerState, onConfirmContacts, onDismissContacts)
-}
-
-// Settings accordion: stable keys identifying each section. At most one section is open at a time;
-// [SECTION_RECORDING] is the one open when Settings is first entered.
-private const val SECTION_RECORDING = "recording"
-private const val SECTION_STORAGE = "storage"
-private const val SECTION_RETENTION = "retention"
-private const val SECTION_AUDIO = "audio"
-private const val SECTION_TRANSCRIPTION = "transcription"
-private const val SECTION_GENERAL = "general"
-
-// Sub-section keys. Scoped to their parent section, so the same value can never collide across two.
-internal const val SUB_FILE_NAME = "sub_file_name"
-internal const val SUB_PHONE_CALLS = "sub_phone_calls"
-internal const val SUB_INCOMING = "sub_incoming"
-internal const val SUB_OUTGOING = "sub_outgoing"
-internal const val SUB_WHERE = "sub_where"
-internal const val SUB_UPLOAD = "sub_upload"
-internal const val SUB_RETENTION = "sub_retention"
-internal const val SUB_VISUAL = "sub_visual"
-internal const val SUB_PRIVACY = "sub_privacy"
-internal const val SUB_EXPERIMENTAL = "sub_experimental"
-internal const val SUB_UPDATES = "sub_updates"
-private const val SUB_PRIVILEGES = "privileges"
-private const val SECTION_VISUAL = "visual"
-private const val SECTION_EXPERIMENTAL = "reliability"   // key kept so a user's open-section state survives the rename
-private const val SECTION_BUG_REPORT = "bug_report"
-private const val SECTION_UPDATES = "updates"
-private const val SECTION_ABOUT = "about"
 
 // ── Settings sections ──────────────────────────────────────────────────────────────────────
 
@@ -661,7 +438,7 @@ private fun SettingsScreenPreview() {
             override fun setUpdateCheckEnabled(enabled: Boolean) {}
         }
 
-        SettingsContent(
+        ScopedSettingsContent(
             preferences = dummyPreferences,
             updateTrigger = 0,
             actions = dummyActions,
@@ -676,7 +453,9 @@ private fun SettingsScreenPreview() {
             onShareLogs = {},
             onSaveLogs = {},
             onExportSettings = {},
-            onImportSettings = {}
+            onImportSettings = {},
+            scope = SettingsScope.ALL,
+            onScopeChange = {},
         )
     }
 }

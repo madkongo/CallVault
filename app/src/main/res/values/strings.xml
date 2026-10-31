@@ -105,9 +105,7 @@
 
     <!-- Settings Screen: Section Titles -->
     <string name="settings_section_about">About</string>
-    <string name="settings_section_recording">Recording</string>
     <string name="settings_section_storage">Storage</string>
-    <string name="settings_section_retention">Retention</string>
 
     <!-- Retention (auto-delete old recordings) -->
     <string name="retention_keep_forever">Keep forever</string>
@@ -165,15 +163,8 @@
     <string name="settings_shizuku_ready">Shizuku is running and ready. With this on, CallVault does not need its own pairing.</string>
     <string name="settings_shizuku_grant">Allow CallVault in Shizuku</string>
     <string name="settings_shizuku_grant_description">Opens Shizuku so you can allow it. Nothing records until you do.</string>
-    <string name="settings_section_general">General</string>
-    <string name="settings_section_visual">Visual settings</string>
     <string name="settings_section_audio">Audio configuration</string>
     <string name="settings_section_reliability">Reliability</string>
-    <string name="settings_section_experimental">Experimental</string>
-    <string name="settings_subsection_incoming">Incoming calls</string>
-    <string name="settings_subsection_outgoing">Outgoing calls</string>
-    <string name="settings_subsection_resilience">Resilience</string>
-    <string name="settings_subsection_voip">VoIP calls</string>
     <string name="settings_voip_recording_label">Record VoIP calls</string>
     <string name="settings_voip_recording_description">Also record calls made in apps like WhatsApp, Signal and Telegram. Some apps block recording, and this cannot be known until a call is under way.</string>
     <string name="settings_voip_auto_start_label">Start automatically</string>
@@ -601,7 +592,6 @@
     <string name="settings_debug_log_delete_message">The entries collected so far are removed. If logging is still on, a new log starts immediately.</string>
     <string name="settings_debug_log_empty">The log is empty.</string>
     <!-- Transcription (on-device speech to text) -->
-    <string name="settings_section_transcription_and_summaries">Transcription &amp; summaries</string>
     <string name="settings_section_transcription">Transcription</string>
     <string name="transcription_mode_label">Transcribe</string>
     <string name="transcription_mode_manual">Manually</string>
@@ -1073,9 +1063,4 @@
     <string name="settings_subheader_all_calls">All calls</string>
     <string name="settings_voip_auto_start_record_label">Record app calls automatically</string>
 
-    <!-- The card at the top of both Settings screens that switches between the new and classic layouts. -->
-    <string name="settings_layout_try_new_title">Try the new Settings layout</string>
-    <string name="settings_layout_try_new_subtitle">Each page shows only its own settings</string>
-    <string name="settings_layout_back_to_classic_title">Switch to the classic view</string>
-    <string name="settings_layout_back_to_classic_subtitle">All settings in one long list, as before</string>
 </resources>

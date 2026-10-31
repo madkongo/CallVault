@@ -109,11 +109,11 @@ class SettingsGroupsTest {
     }
 
     @Test
-    fun `the device-only switches the classic screen shows have a home too`() {
+    fun `the device-only switches have a home too`() {
         val placed = all.flatMap { SettingsGroups.settingKeysOf(it) }.toSet()
         listOf(
             "wd_enforced", "storage_target", "recording_folder_uri", "drive_folder_uri",
-            // classic_settings_screen is not in a group: the layout switch card above the groups holds it.
+            // classic_settings_screen has no row: the classic screen it chose was removed (key kept for a revert).
             "logging_enabled",
         ).forEach { assertTrue("$it has no group", it in placed) }
     }
@@ -134,7 +134,7 @@ class SettingsGroupsTest {
     }
 
     @Test
-    fun `group keys are unique and do not reuse the classic screen's section keys`() {
+    fun `group keys are unique and do not reuse the removed classic screen's section keys`() {
         val keys = SettingsGroup.entries.map { it.key }
         assertEquals(keys.size, keys.toSet().size)
         val classic = setOf(

@@ -42,7 +42,6 @@
 
     <!-- New Settings screen, round 4: the Recording group's sub-headers. -->
 
-    <!-- The card at the top of both Settings screens that switches between the new and classic layouts. -->
     <string name="app_lock_locked">已锁定</string>
     <string name="app_lock_prompt_title">解锁 CallVault</string>
     <string name="app_lock_unlock">解锁</string>
@@ -435,10 +434,6 @@
     <string name="settings_language">选择语言/Change Language</string>
     <string name="settings_language_change_in_transcripts">在转写设置中更改</string>
     <string name="settings_language_system">系统默认</string>
-    <string name="settings_layout_back_to_classic_subtitle">所有设置集中在一个长列表中，与以前一样</string>
-    <string name="settings_layout_back_to_classic_title">切换到经典视图</string>
-    <string name="settings_layout_try_new_subtitle">每个页面只显示自己的设置</string>
-    <string name="settings_layout_try_new_title">试用新的设置布局</string>
     <string name="settings_link_all_settings">全部设置</string>
     <string name="settings_link_share_debug_report">分享调试报告</string>
     <string name="settings_metadata_file_desc">在每个录音旁保存一个小的 .json 文件</string>
@@ -461,20 +456,14 @@
     <string name="settings_section_about">关于</string>
     <string name="settings_section_audio">音源选项</string>
     <string name="settings_section_debug">调试选项</string>
-    <string name="settings_section_experimental">实验性功能</string>
-    <string name="settings_section_general">通用</string>
     <string name="settings_section_privacy">隐私</string>
     <string name="settings_section_recorder_server">录音服务</string>
-    <string name="settings_section_recording">自动录音触发条件</string>
     <string name="settings_section_recording_storage">录音与存储</string>
     <string name="settings_section_reliability">可靠性</string>
-    <string name="settings_section_retention">保留期</string>
     <string name="settings_section_security">安全性选项</string>
     <string name="settings_section_storage">存储</string>
     <string name="settings_section_transcription">转写</string>
-    <string name="settings_section_transcription_and_summaries">转写与摘要</string>
     <string name="settings_section_updates">更新</string>
-    <string name="settings_section_visual">页面风格选项</string>
     <string name="settings_select_contacts">选择联系人（已选%1$d人）</string>
     <string name="settings_select_contacts_incoming">选择联系人（仅应用于被叫）</string>
     <string name="settings_select_contacts_outgoing">选择联系人（仅应用于主叫）</string>
@@ -492,12 +481,8 @@
     <string name="settings_storage_target_label">录音保存位置</string>
     <string name="settings_subheader_all_calls">所有通话</string>
     <string name="settings_subheader_app_calls">应用通话</string>
-    <string name="settings_subsection_incoming">来电</string>
-    <string name="settings_subsection_outgoing">去电</string>
     <string name="settings_subsection_phone_calls">电话通话</string>
     <string name="settings_subsection_privileges">CallVault 的权限来源</string>
-    <string name="settings_subsection_resilience">弹性</string>
-    <string name="settings_subsection_voip">VoIP 通话</string>
     <string name="settings_summary_calls_app_only">仅应用通话</string>
     <string name="settings_summary_calls_phone_and_app">电话和应用通话</string>
     <string name="settings_summary_calls_phone_only">仅电话</string>

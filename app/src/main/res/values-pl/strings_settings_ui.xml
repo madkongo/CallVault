@@ -4,5 +4,4 @@
     <string name="settings_ui_about_app">CallVault</string>
     <string name="settings_ui_open_repo_hint">Dotknij, aby otworzyć projekt źródłowy</string>
     <string name="settings_ui_recording_server_label">Silnik nagrywania</string>
-    <string name="settings_ui_subtitle">Dostosuj nagrywanie, dźwięk i wygląd</string>
 </resources>

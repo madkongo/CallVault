@@ -156,7 +156,7 @@ class OnboardingInfoModeTest {
     /** Callees whose explanation arguments are shown behind (i) when LocalSettingsDescriptionsAsInfo is on. */
     private val infoAwareCallees = setOf(
         "SettingsInfoButton", "WithInfo", "SettingsToggleRow", "SettingsNavigationRow", "NavigationRow",
-        "SettingsSection", "SettingsSubSection", "joinExplanations",
+        "SettingsSection", "joinExplanations",
         // Onboarding's own rows whose explanation argument is drawn only as (i): wizard/WizardCards.kt
         // OptionCard, PermissionsScreen.kt PermissionRow.
         "OptionCard", "PermissionRow",

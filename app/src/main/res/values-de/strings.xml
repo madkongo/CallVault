@@ -43,7 +43,6 @@
 
     <!-- New Settings screen, round 4: the Recording group's sub-headers. -->
 
-    <!-- The card at the top of both Settings screens that switches between the new and classic layouts. -->
     <string name="app_lock_locked">Gesperrt</string>
     <string name="app_lock_prompt_title">CallVault entsperren</string>
     <string name="app_lock_unlock">Entsperren</string>
@@ -436,10 +435,6 @@
     <string name="settings_language">Sprache</string>
     <string name="settings_language_change_in_transcripts">In den Transkript-Einstellungen änderbar</string>
     <string name="settings_language_system">Systemstandard</string>
-    <string name="settings_layout_back_to_classic_subtitle">Alle Einstellungen in einer langen Liste, wie bisher</string>
-    <string name="settings_layout_back_to_classic_title">Zur klassischen Ansicht wechseln</string>
-    <string name="settings_layout_try_new_subtitle">Jede Seite zeigt nur ihre eigenen Einstellungen</string>
-    <string name="settings_layout_try_new_title">Neues Einstellungs-Layout ausprobieren</string>
     <string name="settings_link_all_settings">Alle Einstellungen</string>
     <string name="settings_link_share_debug_report">Debug-Bericht teilen</string>
     <string name="settings_metadata_file_desc">Kleine .json-Datei neben jeder Aufnahme speichern</string>
@@ -462,20 +457,14 @@
     <string name="settings_section_about">Über</string>
     <string name="settings_section_audio">Tonkonfiguration</string>
     <string name="settings_section_debug">Debug-Optionen</string>
-    <string name="settings_section_experimental">Experimentell</string>
-    <string name="settings_section_general">Allgemein</string>
     <string name="settings_section_privacy">Datenschutz</string>
     <string name="settings_section_recorder_server">Aufnahmedienst</string>
-    <string name="settings_section_recording">Aufnahme</string>
     <string name="settings_section_recording_storage">Aufnahme &amp; Speicher</string>
     <string name="settings_section_reliability">Zuverlässigkeit</string>
-    <string name="settings_section_retention">Aufbewahrung</string>
     <string name="settings_section_security">Sicherheit</string>
     <string name="settings_section_storage">Speicher</string>
     <string name="settings_section_transcription">Transkription</string>
-    <string name="settings_section_transcription_and_summaries">Transkription &amp; Zusammenfassungen</string>
     <string name="settings_section_updates">Updates</string>
-    <string name="settings_section_visual">Visuelle Einstellungen</string>
     <string name="settings_select_contacts">Kontakte auswählen (%1$d)</string>
     <string name="settings_select_contacts_incoming">Eingehende Kontakte auswählen</string>
     <string name="settings_select_contacts_outgoing">Ausgehende Kontakte auswählen</string>
@@ -493,12 +482,8 @@
     <string name="settings_storage_target_label">Speicherort für Aufnahmen</string>
     <string name="settings_subheader_all_calls">Alle Anrufe</string>
     <string name="settings_subheader_app_calls">App-Anrufe</string>
-    <string name="settings_subsection_incoming">Eingehende Anrufe</string>
-    <string name="settings_subsection_outgoing">Ausgehende Anrufe</string>
     <string name="settings_subsection_phone_calls">Telefonanrufe</string>
     <string name="settings_subsection_privileges">Woher CallVault seine Rechte bezieht</string>
-    <string name="settings_subsection_resilience">Robustheit</string>
-    <string name="settings_subsection_voip">VoIP-Anrufe</string>
     <string name="settings_summary_calls_app_only">Nur App-Anrufe</string>
     <string name="settings_summary_calls_phone_and_app">Telefon- und App-Anrufe</string>
     <string name="settings_summary_calls_phone_only">Nur Telefonanrufe</string>
