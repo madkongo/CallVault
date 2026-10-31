@@ -12,8 +12,9 @@ All notable changes to CallVault are documented here. The format is based on
   which is much faster. A Test button checks the key. The first time you pick a service it asks before
   anything is sent; calls go over Wi-Fi only unless you allow mobile data. The key is stored encrypted, and
   is never in the settings export or the logs. Summaries stay on the phone.
-  <!-- 🧪 VERIFYING: unit tests only; no real request sent to any service, not run on a phone.
-       docs/dev-notes/2026-10-29-issue-48-byok-transcription.md -->
+  <!-- 🧪 VERIFYING: Groq run on the OP9 2026-10-29 with the maintainer's key (Test button, Hebrew 9.4-min call
+       in 3.9 s, real two-phone call with speaker labels). OpenRouter, Custom, the remux path and the WAV
+       fallback not run live. docs/dev-notes/2026-10-29-issue-48-byok-transcription.md -->
 - **Play from the Recordings list.** The play button on a recording plays it right there and turns into
   pause; a thin bar under the card shows where you are and lets you drag to any point. The card itself still
   opens the recording. Playback stops when you leave the list. Requested by a user.
@@ -53,8 +54,8 @@ All notable changes to CallVault are documented here. The format is based on
   CallVault finds the port itself** (#65). It tries the port that worked last time, then the usual
   announcement, then searches the phone's own local ports (a few seconds, at most once per Wireless-debugging
   session). Nothing to type.
-  <!-- 🧪 VERIFYING: unit tests only; not run on a phone. Check on the OP9 with Settings → Debug → "Skip mDNS
-       when connecting" on (shown while log recording is on), then on the reporter's Realme.
+  <!-- ✅ VERIFIED 2026-10-29 by the #65 reporter on a Realme GT 7 (pre-release v2.4.7-fix65): "Ready to record"
+       and a real outgoing call recorded. Emulator-proven before that.
        docs/dev-notes/2026-10-29-issue-65-connect-port-fallback.md -->
 - **Long calls get their waveform** (#63). Drawing the waveform of a long call takes a few minutes; it was
   stopped when you left the recording, and calls over 15 minutes were never drawn ahead of time. It now runs
