@@ -600,8 +600,11 @@ class RecordingForegroundService : Service() {
         if (isShuttingDown || currentState !is RecordingServiceState.Active) return
         routeWatcher?.stop()
         routeWatcher = WifiCallRouteWatcher(this) {
-            runCatching { onRouteEvent() }
-                .onFailure { AppLogger.w(WifiCallRoute.TAG, "route check failed: ${it.message}") }
+            try {
+                onRouteEvent()
+            } catch (t: Throwable) {
+                AppLogger.w(WifiCallRoute.TAG, "route check failed: ${t.message}")
+            }
         }.also { it.start() }
     }
 
@@ -641,7 +644,8 @@ class RecordingForegroundService : Service() {
     private fun switchToAppCallMix(reason: WifiCallRoute.Reason) {
         try {
             runSwitch(reason)
-        } catch (e: Exception) {
+        } catch (e: Throwable) {
+            // Throwable, not Exception: an Error from native handoff code must not crash the app mid-call.
             AppLogger.e(WifiCallRoute.TAG, "switch failed unexpectedly: ${e.message}", e)
             notificationHelper.showErrorNotification(getString(R.string.wifi_call_switch_aborted))
             // An Active state still holding the old engine is fine: release() is idempotent and
@@ -718,7 +722,7 @@ class RecordingForegroundService : Service() {
         return try {
             engine.startPipeline(this, metadata, { stopRequested }, route, startedAt)
             engine
-        } catch (e: Exception) {
+        } catch (e: Throwable) {
             when (e) {
                 is CancellationException -> AppLogger.i(WifiCallRoute.TAG, "replacement $route: the call ended (${e.message})")
                 is PipelineInitializationException -> AppLogger.e(WifiCallRoute.TAG, "replacement $route failed: ${e.message}", e.cause ?: e)
