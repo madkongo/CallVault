@@ -1612,7 +1612,18 @@ implemented separately. Do not ship a button that encourages users to attach log
 **Known limitation of option A:** it needs a GitHub account, so some users will file nothing. Ship A
 first and find out whether that is actually a problem before paying for C.
 
-### 🔵 PARTIAL (NDK pinned; doNotStrip + 16 KB zipalign not done) — F-Droid reproducibility traps that already apply — noted 2026-08-26
+### 🧪 BUILT on `build/fdroid-reproducibility` (no Gradle strip + 16 KB .so; Conscrypt left) — F-Droid reproducibility traps that already apply — noted 2026-08-26
+
+> **🧪 VERIFYING (2026-10-31, built + 2292 unit tests, not installed on a phone).** Gradle no longer strips
+> .so files (`keepDebugSymbols`); our CMake libraries are stripped at link time instead, with
+> `--build-id=none` and `-ffile-prefix-map`, and linked 16 KB-aligned (`ANDROID_SUPPORT_FLEXIBLE_PAGE_SIZES`).
+> Measured on the 2.4.8-build release APK: **68,990,525 → 68,988,021 bytes (−2.5 KB)**; `zipalign -c -P 16`
+> passes (every .so is compressed, `useLegacyPackaging`); LOAD alignment 0x1000 → **0x4000 on all 15 of our
+> .so**, no `.symtab`/debug sections, no build-id, no `/Users/` paths; same cert `c875ffd0…`, not debuggable.
+> **Still 4 KB: `libconscrypt_jni.so`** (prebuilt in Conscrypt 2.5.2) — needs the Conscrypt 2.7.0 bump (Android
+> 17 item 8), kept separate because it touches TLS pairing. Not checked: a second clean build giving
+> byte-identical .so files. To settle: install-over on a phone, load a transcription and a summary model, make
+> a call. Rollback: `docs/dev-notes/rollback/build-fdroid-reproducibility.md`.
 
 These bite any app shipping native code, and CallVault already does:
 

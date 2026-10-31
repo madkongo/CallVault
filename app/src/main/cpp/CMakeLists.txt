@@ -3,6 +3,21 @@
 cmake_minimum_required(VERSION 3.22.1)
 project(audiohandoff)
 
+# --- Reproducible release libraries (F-Droid) ---
+#
+# Placed first so every target below, including the whisper.cpp / llama.cpp submodules, inherits it.
+#  - Strip at link time in non-Debug builds. app/build.gradle.kts turns Gradle's packaging-time strip
+#    off (keepDebugSymbols), because F-Droid reports that step as non-reproducible. AGP builds release
+#    as RelWithDebInfo, so without this the APK would carry full DWARF with absolute build paths.
+#    --strip-all only removes .symtab/.debug_*; .dynsym (JNI entry points, the ggml_backend_init that
+#    GGML_BACKEND_DL dlsym's) is untouched. Debug builds keep their symbols for ndk-stack/lldb.
+#  - No build-id note and no absolute source paths (ggml's __FILE__ in abort messages), per
+#    https://f-droid.org/docs/Reproducible_Builds/.
+add_link_options($<$<NOT:$<CONFIG:Debug>>:-Wl,--strip-all>)
+add_link_options("LINKER:--build-id=none")
+get_filename_component(CALLVAULT_REPO_ROOT ${CMAKE_CURRENT_SOURCE_DIR}/../../../.. ABSOLUTE)
+add_compile_options("-ffile-prefix-map=${CALLVAULT_REPO_ROOT}=.")
+
 add_library(audiohandoff SHARED audiohandoff.cpp)
 
 find_library(log-lib log)
