@@ -25,3 +25,14 @@ Phone held to the ear (earpiece). Every messenger: Max, WhatsApp, Telegram.
 ## Open
 - Need a timestamp from the reporter where the echo is heard, and whose voice it is.
 - Mono files cannot separate the sides. A two-channel debug capture (near L / far R) would settle it.
+
+## Maintainer listened (2026-10-31)
+OP9 app calls do NOT sound like this. Евгений's files: the far party sounds **reverberant** whenever they speak,
+throughout the call. Fits a short (<20 ms) second copy of the far voice via the hot mic; unproven from mono.
+
+## Probe build sent to the reporter (not tested on our phones, by the maintainer's choice)
+`2.4.8-echoprobe` (versionCode 20480), branch `probe/voip-stereo-echo` off v2.4.8, commit on that branch only.
+App calls are saved as stereo: LEFT = near (MIC), RIGHT = far (policy submix); Opus bitrate doubled. Carrier
+calls unchanged. APK sha256 566238ad94b5d26e769ec9c4d275821983462d34b0c522ef0c67d53cdfed2311.
+What to read from his file: far voice audible in LEFT → mic picks up the earpiece (fix = echo cancelling with
+RIGHT as reference). RIGHT itself reverberant → the doubling is upstream of us.
