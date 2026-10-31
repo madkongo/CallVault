@@ -23,29 +23,47 @@ import org.junit.Test
 class OpenAdbPortsTest {
 
     @Test
-    fun `with no adbd tcp property set, only the default port is asked`() {
-        val ports = LoopbackPorts.alreadyOpenCandidates(null, null, emptyList(), emptySet())
+    fun `with no adbd tcp property set, nothing is asked`() {
+        val ports = LoopbackPorts.alreadyOpenCandidates(null, null, emptyList(), emptySet(), OUR_PORT)
 
-        assertEquals(listOf(5555), ports)
+        assertEquals(emptyList<Int>(), ports)
     }
 
     @Test
-    fun `the live listener, then the ROM's persistent port, then listen_addrs, then the default`() {
+    fun `5555 is never a candidate unless a property names it`() {
+        // Any app can bind 127.0.0.1:5555 and pose as adbd to get CallVault's key to sign its token.
+        val unnamed = LoopbackPorts.alreadyOpenCandidates(41_000, 6_000, listOf(7_000), emptySet(), OUR_PORT)
+        val named = LoopbackPorts.alreadyOpenCandidates(null, 5555, emptyList(), emptySet(), OUR_PORT)
+
+        assertFalse(5555 in unnamed)
+        assertEquals(listOf(5555), named)
+    }
+
+    @Test
+    fun `the live listener, then the ROM's persistent port, then listen_addrs`() {
         val ports = LoopbackPorts.alreadyOpenCandidates(
             serviceTcpPort = 41_000,
             persistTcpPort = 6_000,
             listenAddrPorts = listOf(7_000),
             alreadyTried = emptySet(),
+            ourPort = OUR_PORT,
         )
 
-        assertEquals(listOf(41_000, 6_000, 7_000, 5555), ports)
+        assertEquals(listOf(41_000, 6_000, 7_000), ports)
     }
 
     @Test
     fun `a port named twice is asked once`() {
-        val ports = LoopbackPorts.alreadyOpenCandidates(5555, 5555, listOf(5555), emptySet())
+        val ports = LoopbackPorts.alreadyOpenCandidates(5555, 5555, listOf(5555), emptySet(), OUR_PORT)
 
         assertEquals(listOf(5555), ports)
+    }
+
+    @Test
+    fun `the listener CallVault armed itself is not asked`() {
+        val ports = LoopbackPorts.alreadyOpenCandidates(OUR_PORT, null, emptyList(), emptySet(), OUR_PORT)
+
+        assertEquals(emptyList<Int>(), ports)
     }
 
     @Test
@@ -53,8 +71,9 @@ class OpenAdbPortsTest {
         val ports = LoopbackPorts.alreadyOpenCandidates(
             serviceTcpPort = 41_000,
             persistTcpPort = 6_000,
-            listenAddrPorts = emptyList(),
+            listenAddrPorts = listOf(5555),
             alreadyTried = setOf(41_000, 5555),
+            ourPort = OUR_PORT,
         )
 
         assertEquals(listOf(6_000), ports)
@@ -112,5 +131,9 @@ class OpenAdbPortsTest {
         gate.recordHit()
 
         assertEquals(listOf(5555), gate.portsToProbe(listOf(5555)))
+    }
+
+    private companion object {
+        const val OUR_PORT = 45_678
     }
 }

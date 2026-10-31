@@ -54,12 +54,14 @@ object LoopbackPorts {
     // is gone after a reboot. What follows is the other kind: a few OEM / TV-derived / eng or userdebug builds
     // have adbd listening on tcp from boot, because the ROM sets `persist.adb.tcp.port` (adbd reads it when
     // `service.adb.tcp.port` is unset) or `service.adb.listen_addrs`. On those phones CallVault can reach adbd
-    // with no Wi-Fi and no Wireless debugging at all. Most phones set neither; then 5555, adbd's default, is the
-    // only candidate and the check is one refused loopback connect. Rationale and AOSP source:
+    // with no Wi-Fi and no Wireless debugging at all. Most phones set neither; then there is no candidate and
+    // nothing is dialled. Rationale and AOSP source:
     // `docs/dev-notes/2026-10-23-wifi-free-adb-bootstrap-research.md` (adbd `daemon/main.cpp`).
-
-    /** adbd's default tcp port: `adb tcpip` with no argument, and AOSP's own fallback listener. */
-    const val ADB_DEFAULT_TCP_PORT = 5555
+    //
+    // 🚨 SECURITY: only ports a system property names are candidates — never a well-known port such as 5555 on
+    // a guess. Any app can bind 127.0.0.1:5555, answer CNXN/AUTH like adbd, and so get CallVault to sign its AUTH
+    // token with CallVault's ADB key (a relay to the real adbd). A port named by adbd's own properties is the
+    // one adbd is listening on, and an app cannot set those properties.
 
     /**
      * The tcp ports in `service.adb.listen_addrs` (comma-separated socket specs such as `tcp:5555`,
@@ -75,19 +77,23 @@ object LoopbackPorts {
 
     /**
      * Ports where adbd may already be listening on tcp, in the order to ask them: the live listener
-     * (`service.adb.tcp.port`), the ROM's persistent one (`persist.adb.tcp.port`), the `listen_addrs` ones, then
-     * [ADB_DEFAULT_TCP_PORT]. Ports in [alreadyTried] are left out — in offline mode those are the ones
-     * [candidates] has just been refused on.
+     * (`service.adb.tcp.port`), the ROM's persistent one (`persist.adb.tcp.port`), then the `listen_addrs` ones.
+     * Only property-named ports, never a guessed default (see the SECURITY note above). Left out: ports in
+     * [alreadyTried] (in offline mode, the ones [candidates] has just been refused on) and the live listener
+     * when it is the one CallVault armed itself ([isOurs]) — that one belongs to the offline-mode path.
      */
     fun alreadyOpenCandidates(
         serviceTcpPort: Int?,
         persistTcpPort: Int?,
         listenAddrPorts: List<Int>,
         alreadyTried: Set<Int>,
-    ): List<Int> =
-        (listOfNotNull(serviceTcpPort, persistTcpPort) + listenAddrPorts + ADB_DEFAULT_TCP_PORT)
+        ourPort: Int,
+    ): List<Int> {
+        val live = serviceTcpPort?.takeUnless { isOurs(ourPort, it) }
+        return (listOfNotNull(live, persistTcpPort) + listenAddrPorts)
             .distinct()
             .filterNot { it in alreadyTried }
+    }
 
     /**
      * Whether a probed port is worth a real connect. Only a port that answered our `CNXN` as classic adbd

@@ -211,13 +211,13 @@ object AdbShell {
 
     /**
      * Connects over a tcp port adbd was **already** listening on without anyone arming it — the ROM's own
-     * `persist.adb.tcp.port` / `service.adb.listen_addrs`, or 5555 — so no Wi-Fi and no Wireless debugging are
+     * `persist.adb.tcp.port` / `service.adb.listen_addrs`, or a live `service.adb.tcp.port` CallVault did not arm —
+     * so no Wi-Fi and no Wireless debugging are
      * needed. See [LoopbackPorts.alreadyOpenCandidates] for how this differs from the offline-mode listener.
      *
      * Never slows the normal path:
      * - each port is first asked with one plain `CNXN` ([AdbWireProbe], bounded by [OPEN_PORT_CONNECT_TIMEOUT_MS] +
-     *   [OPEN_PORT_READ_TIMEOUT_MS]); a refused loopback connect — every phone with nothing listening —
-     *   returns in about a millisecond;
+     *   [OPEN_PORT_READ_TIMEOUT_MS]); on phones where no property names a port, nothing is dialled at all;
      * - only a port that answers as classic adbd gets a real (bounded, [CONNECT_BUDGET_MS]) connect;
      * - a miss is remembered for this process ([OpenAdbPortGate]) until adbd's tcp ports change, so it is
      *   asked once, not on every connect.
@@ -232,6 +232,7 @@ object AdbShell {
             persistTcpPort = LoopbackPorts.parse(getSystemProperty("persist.adb.tcp.port")),
             listenAddrPorts = LoopbackPorts.parseListenAddrs(getSystemProperty("service.adb.listen_addrs")),
             alreadyTried = alreadyTried,
+            ourPort = AppPreferences(context).getLoopbackAdbPort(),
         )
         val ports = openPortGate.portsToProbe(candidates)
         if (ports.isEmpty()) return false
