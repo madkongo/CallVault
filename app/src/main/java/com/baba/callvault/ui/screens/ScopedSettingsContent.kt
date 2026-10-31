@@ -50,15 +50,12 @@ import com.baba.callvault.ui.viewmodels.SettingsActions
 
 /**
  * The new Settings screen (design option C): the groups for [scope] as folding cards, each with a one-line
- * summary, the Shizuku mode row above them, and two links at the foot. It sits BESIDE the classic
- * [SettingsContent], not in place of it; Debug ▸ "Use the classic Settings screen" picks which one opens.
- *
- * Every card's body is made of the classic screen's own rows, so both screens read and write the same
- * preferences and neither can offer a setting the other lacks. See
+ * summary, the Shizuku mode row above them, and two links at the foot. The only Settings screen since the
+ * classic one was removed (`docs/dev-notes/rollback/classic-settings-removal.md`). See
  * `docs/dev-notes/2026-10-20-settings-per-page-plan.md`.
  *
- * Takes the same callbacks as [SettingsContent], plus the scope and a way to change it (the "All settings"
- * link, and the Summaries language row's link to Transcripts).
+ * Takes the screen's callbacks plus the scope and a way to change it (the "All settings" link, and the
+ * Summaries language row's link to Transcripts).
  */
 @Composable
 fun ScopedSettingsContent(
@@ -84,7 +81,7 @@ fun ScopedSettingsContent(
     var showLicensesDialog by remember { mutableStateOf(false) }
 
     // The open group, remembered per scope (scope name -> group key), so Recordings does not reopen on
-    // whatever was open under Transcripts. New keys: the classic screen's section state is left alone.
+    // whatever was open under Transcripts. Its own keys, apart from the removed classic screen's section state.
     // A HashMap so it saves into the Bundle as it is.
     // A page with a single group (Transcripts, Summaries) opens it straight away: a lone folded card is
     // one tap of nothing. Closing it is remembered as "" so it stays closed.
@@ -111,8 +108,8 @@ fun ScopedSettingsContent(
     // could open scrolled to wherever the previous page's were left.
     LaunchedEffect(scope, scrollRequest) {
         val groupIndex = openGroup?.let { groups.indexOf(it) }?.takeIf { it >= 0 }
-        // Items above the groups: the mode row (where shown) and the layout switch card.
-        val itemsAbove = (if (showsModeRow) 1 else 0) + 1
+        // Items above the groups: the mode row, where shown.
+        val itemsAbove = if (showsModeRow) 1 else 0
         val index = if (groupIndex == null) 0 else groupIndex + itemsAbove
         listState.animateScrollToItem(index)
     }
@@ -154,16 +151,14 @@ fun ScopedSettingsContent(
         ) {
             if (showsModeRow) {
                 item(key = "mode") {
-                    // The same row as the classic screen, kept on purpose (maintainer, 2026-10-21): it decides
-                    // which recording engine runs, so it stays the first thing on the recording pages.
+                    // Kept on purpose (maintainer, 2026-10-21): it decides which recording engine runs, so it
+                    // stays the first thing on the recording pages.
                     Column {
                         PrivilegedModeSubSection(onModeChanged = { actions.refreshSettings() })
                         OemGateNotice(modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp))
                     }
                 }
             }
-            // Under the mode row where there is one, otherwise first: the same card as on the classic screen.
-            item(key = "layout_switch") { SettingsLayoutSwitchCard(preferences, actions) }
             items(groups, key = { it.key }) { group ->
                 val expanded = openGroup == group
                 SettingsGroupCard(

@@ -14,18 +14,17 @@ import com.baba.callvault.ui.navigation.HomeSection
 /**
  * Which page Settings was opened from, and therefore which groups the new Settings screen shows.
  *
- * The classic screen ignores it and always shows everything. See
- * `docs/dev-notes/2026-10-20-settings-per-page-plan.md`.
+ * See `docs/dev-notes/2026-10-20-settings-per-page-plan.md`.
  */
 enum class SettingsScope { RECORDINGS, TRANSCRIPTS, SUMMARIES, ALL }
 
 /**
  * One card on the new Settings screen, grouped by what the user wants to do (round 2, agreed 2026-10-21).
- * Each one wraps rows that also exist on the classic screen; no group owns a setting of its own, so both
- * screens read and write the same preferences.
+ * The rows came from the removed classic screen and still read and write the same preferences, so a revert
+ * of that removal (docs/dev-notes/rollback/classic-settings-removal.md) loses nothing.
  *
- * [key] is what the screen remembers as "the open group". It is new, and does not reuse the classic
- * screen's section keys, so neither screen can disturb the other's state.
+ * [key] is what the screen remembers as "the open group". It does not reuse the removed classic screen's
+ * section keys, so a revert finds that screen's state undisturbed.
  */
 enum class SettingsGroup(val key: String) {
     /** "Recording": phone calls, app calls, then what applies to all calls (round 4). */
@@ -43,7 +42,7 @@ enum class SettingsGroup(val key: String) {
     /** Retention, the space limit and when it runs, and keeping originals after a merge. */
     CLEANING_UP("group_cleaning_up"),
 
-    /** The classic Experimental ▸ Resilience rows, in the order of [ConnectionRows]. */
+    /** The removed classic Experimental ▸ Resilience rows, in the order of [ConnectionRows]. */
     CONNECTION("group_connection"),
 
     /** Where to transcribe (#48), speech model (with its download), the shared language, ask each time. */
@@ -58,7 +57,7 @@ enum class SettingsGroup(val key: String) {
     /** The app itself: language, look, toasts, app lock, screenshots, updates, settings backup. */
     APP("group_app"),
 
-    /** Debug (with the classic-screen switch), then About. */
+    /** Debug, then About. */
     HELP_AND_ABOUT("group_help_and_about");
 
     companion object {
@@ -82,7 +81,7 @@ object SettingsGroups {
 
     private val SUMMARIES = listOf(SettingsGroup.SUMMARIES)
 
-    /** Everything the classic screen offers, nothing lost: each page's groups, then the app-wide ones. */
+    /** Every setting, nothing lost: each page's groups, then the app-wide ones. */
     private val ALL = RECORDINGS + TRANSCRIPTS + SUMMARIES + listOf(
         SettingsGroup.APP,
         SettingsGroup.HELP_AND_ABOUT,
@@ -104,8 +103,8 @@ object SettingsGroups {
     }
 
     /**
-     * The row composables each group's body calls, by name. `SettingsGroupsTest` checks every row the classic
-     * screen calls is in some group of ALL, and `ScopedSettingsScreenTest` checks each body really calls these.
+     * The row composables each group's body calls, by name. `ScopedSettingsScreenTest` checks every Settings row
+     * is in some group of ALL, and `ScopedSettingsScreenTest` checks each body really calls these.
      */
     fun rowsOf(group: SettingsGroup): List<String> = when (group) {
         SettingsGroup.CALLS_TO_RECORD -> listOf(

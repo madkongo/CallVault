@@ -199,7 +199,7 @@ internal fun SettingsSection(
         ) {
             CvSectionHeader(text = title, modifier = Modifier.weight(1f))
             // A section takes the accent, matching its teal dash; a sub-section gets a small muted
-            // triangle instead (see [SettingsSubSection]). Differing in BOTH shape and colour is what
+            // triangle instead (the removed SettingsSubSection). Differing in BOTH shape and colour is what
             // makes the two levels tellable apart at a glance — size alone did not.
             Icon(
                 imageVector = Icons.Filled.ExpandMore,
@@ -221,56 +221,6 @@ internal fun SettingsSection(
             } else {
                 Column(verticalArrangement = Arrangement.spacedBy(6.dp)) { content() }
             }
-        }
-    }
-}
-
-/**
- * A collapsible group INSIDE a section — Storage ▸ Retention, General ▸ Updates, and so on.
- *
- * Same interaction as [SettingsSection] so the two levels behave alike, and the same shape: a bare
- * header row, with the card around the CONTENT once it opens. The header is quieter than a section
- * title — ordinary text rather than the accent colour — so it reads as a level down rather than as a
- * competing heading.
- *
- * Callers hold the open key themselves, one per parent section, which makes the sub-sections an
- * accordion within their own section only — opening Retention cannot close something in General.
- */
-@Composable
-internal fun SettingsSubSection(
-    title: String,
-    expanded: Boolean,
-    onToggle: () -> Unit,
-    content: @Composable ColumnScope.() -> Unit
-) {
-    val chevronRotation by animateFloatAsState(
-        targetValue = if (expanded) 180f else 0f,
-        label = "settingsSubSectionChevron"
-    )
-    Column {
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .clip(RoundedCornerShape(10.dp))
-                .expandableHeader(expanded, onToggle),
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            SettingsSubHeader(title, modifier = Modifier.weight(1f))
-            // Triangle, not a chevron, and muted rather than accented — the opposite of the section
-            // marker above it on both counts.
-            Icon(
-                imageVector = Icons.Filled.ArrowDropDown,
-                contentDescription = null,
-                tint = MaterialTheme.colorScheme.onSurfaceVariant,
-                modifier = Modifier.padding(end = 6.dp).size(24.dp).rotate(chevronRotation)
-            )
-        }
-        AnimatedVisibility(
-            visible = expanded,
-            enter = fadeIn() + expandVertically(),
-            exit = fadeOut() + shrinkVertically()
-        ) {
-            CvCard(contentPadding = PaddingValues(vertical = 8.dp)) { content() }
         }
     }
 }

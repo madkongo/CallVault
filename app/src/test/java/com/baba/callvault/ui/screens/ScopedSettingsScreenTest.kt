@@ -20,8 +20,8 @@ import org.robolectric.RobolectricTestRunner
 import org.robolectric.annotation.Config
 
 /**
- * The new Settings screen beside the classic one (settings per page, step 2): the rollback switch, and the
- * rules the screen's source must keep. Read from source like [com.baba.callvault.ui.ModeAwareUiTest],
+ * The per-page Settings screen, the only one since the classic screen was removed
+ * (docs/dev-notes/rollback/classic-settings-removal.md): the rules the screen's source must keep. Read from source like [com.baba.callvault.ui.ModeAwareUiTest],
  * because the rules are about which composables are called, not about pixels.
  */
 @RunWith(RobolectricTestRunner::class)
@@ -36,22 +36,9 @@ class ScopedSettingsScreenTest {
     private fun source(name: String) = File(screensDir, name).readText()
 
     @Test
-    fun `the new screen is the default, and the classic one is opt-in`() {
-        val prefs = AppPreferences(ApplicationProvider.getApplicationContext())
-        assertFalse(prefs.isClassicSettingsScreen())
-    }
-
-    @Test
-    fun `the classic screen switch is stored and read back`() {
-        val prefs = AppPreferences(ApplicationProvider.getApplicationContext())
-        prefs.setClassicSettingsScreen(false)
-        assertFalse(prefs.isClassicSettingsScreen())
-        prefs.setClassicSettingsScreen(true)
-        assertTrue(prefs.isClassicSettingsScreen())
-    }
-
-    @Test
-    fun `the classic screen switch is device-only`() {
+    fun `the classic screen's preference key is kept for a revert, still device-only`() {
+        // A revert of the removal must find each user's saved choice where it left it.
+        assertEquals("classic_settings_screen", AppPreferences.Key.CLASSIC_SETTINGS_SCREEN.id)
         assertFalse(AppPreferences.EXPORTABLE_KEYS.contains("classic_settings_screen"))
     }
 
@@ -72,10 +59,14 @@ class ScopedSettingsScreenTest {
         group.name.lowercase().split('_').joinToString("") { it.replaceFirstChar(Char::uppercase) } + "Body"
 
     @Test
-    fun `the new screen has no Experimental and no classic General section, while the classic one keeps it`() {
-        assertFalse(newScreen.contains("ExperimentalSubSection"))
-        assertFalse(calls("GeneralSection", newScreen))
-        assertTrue(source("SettingsGeneralSection.kt").contains("{ ExperimentalSubSection() }"))
+    fun `the classic screen, its Experimental section and the layout switch are gone`() {
+        val all = settingsSources.values.joinToString("\n") + newScreen
+        listOf("fun SettingsContent(", "ExperimentalSubSection", "GeneralSection(", "ResilienceRows",
+            "SettingsLayoutSwitchCard", "isClassicSettingsScreen", "setClassicSettingsScreen").forEach {
+            assertFalse("$it is back", all.contains(it))
+        }
+        assertFalse(File(screensDir, "SettingsLayoutSwitchCard.kt").exists())
+        assertTrue(source("SettingsScreen.kt").contains("ScopedSettingsContent("))
     }
 
     @Test
@@ -90,31 +81,11 @@ class ScopedSettingsScreenTest {
     }
 
     @Test
-    fun `the switch between the screens is one card at the top of both, and Debug no longer has it`() {
+    fun `debug has no classic-screen switch, and the debug report is drawn once`() {
         val debug = source("SettingsAboutDebugSection.kt")
         assertFalse(debug.contains("ClassicSettingsScreenToggle"))
         assertFalse(debug.contains("setClassicSettingsScreen"))
         assertEquals(1, Regex("""BugReportSection\(""").findAll(newScreen).count())
-
-        // Classic: right under the Shizuku mode row, above Recording.
-        val classic = bodyOf("SettingsContent", source("SettingsScreen.kt"))
-        val classicCard = classic.indexOf("SettingsLayoutSwitchCard(preferences, actions)")
-        assertTrue(classicCard > classic.indexOf("OemGateNotice("))
-        assertTrue(classicCard < classic.indexOf("RecordingSection("))
-
-        // New: under the mode row where there is one, otherwise first; always above the groups.
-        val scoped = source("ScopedSettingsContent.kt")
-        val scopedCard = scoped.indexOf("SettingsLayoutSwitchCard(preferences, actions)")
-        assertTrue(scopedCard > scoped.indexOf("OemGateNotice("))
-        assertTrue(scopedCard < scoped.indexOf("items(groups"))
-        // At the list's own level (same indent as the mode row's `if`), so Transcripts and Summaries show it too.
-        assertTrue(scoped.contains("\n            if (showsModeRow) {"))
-        assertTrue(scoped.contains("\n            item(key = \"layout_switch\") { SettingsLayoutSwitchCard(preferences, actions) }"))
-        // The card flips the stored choice and refreshes, so the other screen shows at once.
-        val card = bodyOf("SettingsLayoutSwitchCard", source("SettingsLayoutSwitchCard.kt"))
-        assertTrue(card.contains("preferences.setClassicSettingsScreen(!isClassic)"))
-        assertTrue(card.contains("actions.refreshSettings()"))
-        assertTrue(card.contains("role = Role.Button"))
     }
 
     @Test
@@ -131,25 +102,21 @@ class ScopedSettingsScreenTest {
     }
 
     @Test
-    fun `connection holds the same switches as the classic resilience rows`() {
+    fun `connection holds every switch of the removed Experimental section`() {
         val general = source("SettingsGeneralSection.kt")
         val rows = listOf(
             "UsbDebuggingToggle", "OfflineRecordingToggle", "HandoffPersistToggle", "WirelessDebuggingEnforceToggle",
             "WifiNetworkAutoApproveToggle", "WirelessDebuggingNeverOffToggle", "UsbDefaultConfigRow", "PairAgainRow",
         )
         val connection = bodyOf("ConnectionRows", general)
-        val resilience = bodyOf("ResilienceRows", general)
-        rows.forEach {
-            assertTrue("ConnectionRows lacks $it", calls(it, connection))
-            assertTrue("ResilienceRows lacks $it", calls(it, resilience))
-        }
+        rows.forEach { assertTrue("ConnectionRows lacks $it", calls(it, connection)) }
         // The agreed order (round 2): USB debugging, offline, handoff, keep WD on, approve networks, never turn WD
         // off (#30), USB mode, pair.
         assertEquals(rows, rows.sortedBy { connection.indexOf("$it(") })
     }
 
     @Test
-    fun `every settings row the classic screen draws has a home in all settings`() {
+    fun `every settings row has a home in all settings`() {
         // Every row-like composable declared for Settings. A new one fails here until it is placed in a group
         // (SettingsGroups.rowsOf) or listed below as a container or a part of a listed row.
         val files = screensDir.listFiles { f -> f.name.startsWith("Settings") && f.extension == "kt" }!!.toList() +
@@ -159,12 +126,10 @@ class ScopedSettingsScreenTest {
                 .findAll(f.readText()).map { it.groupValues[1] }.toList()
         }.toSet()
         val notRows = setOf(
-            // Building blocks and classic containers whose rows are listed one by one.
-            "SettingsToggleRow", "NavigationRow", "DropdownRow", "SettingsSection", "SettingsSubSection",
-            "RecordingSection", "StorageSection", "TranscriptionSection", "GeneralSection",
-            "ExperimentalSubSection", "VisualSubSection", "RetentionSubSection",
-            // Composites: the classic screen's bundles of rows that the new screen places one by one.
-            "ResilienceRows", "VoipRecordingToggle",
+            // Building blocks.
+            "SettingsToggleRow", "NavigationRow", "DropdownRow", "SettingsSection",
+            // The wizard's bundle of VoIP rows, which the screen places one by one.
+            "VoipRecordingToggle",
             // Parts of a listed row: drawn inside BugReportSection, SummarySettingsRows, the download rows.
             "SummaryRows", "TranscriptionModelRows",
             // A dialog over either screen, not a row.
@@ -177,7 +142,7 @@ class ScopedSettingsScreenTest {
         val placed = SettingsGroups.forScope(SettingsScope.ALL).flatMap { SettingsGroups.rowsOf(it) }.toSet() + connection
         val missing = declared - notRows - placed
         assertTrue("Settings rows with no group on the new screen: $missing", missing.isEmpty())
-        // The classic VoIP bundle is exactly the four rows the new screen places.
+        // The wizard's VoIP bundle (the removed Experimental section's too) is exactly the four rows the screen places.
         val voip = bodyOf("VoipRecordingToggle", source("SettingsVoipRows.kt"))
         listOf("VoipRecordingSwitch", "VoipAutoStartRow", "VoipAppPicker", "VoipIgnoreContactsRow").forEach {
             assertTrue("VoipRecordingToggle lacks $it", calls(it, voip))
@@ -196,7 +161,7 @@ class ScopedSettingsScreenTest {
         "settings_wd_left_on_by_setting", "settings_wd_left_on_by_user",
     )
 
-    /** Explanations: inline on the classic screen, behind an ⓘ on the new one. */
+    /** Explanations: inline in the wizard, behind an ⓘ on the Settings screen. */
     private val explanatoryHints = setOf(
         "settings_metadata_file_hint", "settings_transcript_sidecar_hint", "settings_hide_recordings_hint",
         "min_duration_caption", "storage_cap_caption", "retention_description",
@@ -291,7 +256,7 @@ class ScopedSettingsScreenTest {
     @Test
     fun `only the new screen calls the app-call automatic switch by its longer name`() {
         assertTrue(source("ScopedSettingsGroupBodies.kt").contains("VoipAutoStartRow(label = stringResource(R.string.settings_voip_auto_start_record_label))"))
-        // The classic screen and the wizard use the default label.
+        // The wizard uses the default label.
         assertTrue(bodyOf("VoipRecordingToggle", source("SettingsVoipRows.kt")).contains("VoipAutoStartRow()"))
         assertTrue(source("SettingsVoipRows.kt").contains("label: String = stringResource(R.string.settings_voip_auto_start_label)"))
     }

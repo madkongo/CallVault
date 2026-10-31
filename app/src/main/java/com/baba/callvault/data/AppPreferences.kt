@@ -36,13 +36,6 @@ class AppPreferences(context: Context) {
         private const val PREFS_NAME = "callvault_prefs"
 
         /**
-         * The new Settings layout is the default (maintainer, 2026-10-21, after trying it on the OP9). The
-         * classic one stays one tap away on the card at the top of Settings, and is deleted a release later.
-         * A user who already picked a layout keeps their pick: only an unset value follows this.
-         */
-        internal const val CLASSIC_SETTINGS_SCREEN_DEFAULT = false
-
-        /**
          * The settings that may be exported and imported — an explicit ALLOW-list, device-independent
          * user preferences only. It is a positive list on purpose: anything not named here (ADB pairing
          * and transport state, SAF folder grants, per-device calibration, the log salt, install/update/
@@ -455,8 +448,8 @@ class AppPreferences(context: Context) {
         // a state with its own meaning — see HomeSection.opening — so there is no DefaultsValue entry.
         LAST_HOME_SECTION("last_home_section"),
 
-        // Which Settings screen opens: the classic list, or the new per-page one. Device-only on purpose
-        // (not in EXPORTABLE_KEYS): it is a rollback switch for this phone, not a preference to carry over.
+        // Unused since the classic Settings screen was removed (docs/dev-notes/rollback/classic-settings-removal.md):
+        // kept so a revert of the classic-screen removal restores users' choice. Device-only (not in EXPORTABLE_KEYS).
         CLASSIC_SETTINGS_SCREEN("classic_settings_screen"),
 
         // The transcript reader's "Follow playback" switch (#27). A remembered view choice, like a sort
@@ -1592,15 +1585,6 @@ class AppPreferences(context: Context) {
     
     /** Sets whether dynamic color is enabled. */
     fun setDynamicColorEnabled(enabled: Boolean) = setBoolean(Key.DYNAMIC_COLOR, enabled)
-
-    /**
-     * Whether Settings opens the classic screen rather than the new per-page one (Debug ▸ "Use the classic
-     * Settings screen"). On by default until the new screen is verified on phones; both screens read and
-     * write the same preferences, so switching loses nothing.
-     */
-    fun isClassicSettingsScreen() = getBoolean(Key.CLASSIC_SETTINGS_SCREEN, CLASSIC_SETTINGS_SCREEN_DEFAULT)
-
-    fun setClassicSettingsScreen(classic: Boolean) = setBoolean(Key.CLASSIC_SETTINGS_SCREEN, classic)
 
     /**
      * Whether the transcript reader follows playback (#27): on lights the playing line and keeps it in
