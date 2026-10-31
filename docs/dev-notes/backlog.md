@@ -44,7 +44,9 @@ message (#64), Arabic polish (#59), #65 connect-port search (✅ reporter), long
 6. Per-app capture status (works / blocks capture) on the VoIP app list.
 7. Forks leftovers: decode time limit, SIM label per call, dialer mode as an option.
 8. Matroska `.mka` (#36) — needs a native muxer.
-9. Delete the classic Settings screen — now due (new screen default since 2.4.7, one release passed).
+9. Delete the classic Settings screen — 🧪 BUILT 2026-10-31 on `chore/remove-classic-settings` (not merged):
+   classic screen, its Experimental section and the layout switch card removed; `classic_settings_screen` key
+   kept for a revert. Rollback: `rollback/classic-settings-removal.md`. Waiting on a look on a phone.
 
 **Built 2026-10-31, in integration/next for 2.4.9 (🧪):** #30 "Never turn Wireless debugging off" (Settings ▸
 Connection); transcription length limit removed + long-call time line (local model only).
@@ -196,7 +198,8 @@ suggested, only project-SIMPLE handles this prompt, by clicking it with an acces
 Built in steps 2026-10-21 (merges 2d7c38e0, bdc8a299, 348cd5d7, 3119a8f8, c1435ec8), default since
 feat/new-settings-default; Experimental's switches live in their groups on the new screen, the Telegram
 invite is a card on the main screen. **Only open item:** delete the classic screen (and its Experimental
-section, `SUB_EXPERIMENTAL`) one release after the new one has proved itself, as the rollback plan says.
+section, `SUB_EXPERIMENTAL`) one release after the new one has proved itself, as the rollback plan says —
+🧪 BUILT 2026-10-31 on `chore/remove-classic-settings`; see `rollback/classic-settings-removal.md`.
 
 
 Plan: `2026-10-20-settings-per-page-plan.md`. Confirmed by the maintainer: Settings opened from a page shows

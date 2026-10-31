@@ -1,5 +1,17 @@
 # README impact log
 
+## 2026-10-31 — Classic Settings view removed (`chore/remove-classic-settings`)
+
+🧪 VERIFYING (unit tests and build only; nothing seen on a phone). Settings always opens the per-page layout;
+the "Switch to the classic view" card and the classic screen are gone. See
+`docs/dev-notes/rollback/classic-settings-removal.md`.
+
+**What this makes wrong in the README, when this ships** (README is held — not edited):
+- ~line 177: "under **Connection** (classic layout: *Settings ▸ General ▸ Experimental*; you're also asked
+  during setup)" — drop the classic-layout path; keep "under **Connection**" and the setup mention.
+- Screenshot `docs/screenshots/06-settings.png` ("Recordings settings") shows the classic-view card under the
+  Shizuku row. The card no longer exists; re-shoot when the README is next updated.
+
 ## 2026-10-29 — Transcribe with your own key (#48)
 
 🧪 VERIFYING (unit tests and build only; no real request sent, nothing seen on a phone). Settings → Where to
