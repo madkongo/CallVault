@@ -27,7 +27,7 @@ that opens adbd's tcp port by itself, so the success path is unproven anywhere).
 ## Revert
 
 ```
-git revert -m 1 MERGE_SHA
+git revert -m 1 c0a67b84
 ```
 
 ## What users would notice after a rollback
