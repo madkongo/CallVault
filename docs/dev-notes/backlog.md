@@ -46,11 +46,13 @@ message (#64), Arabic polish (#59), #65 connect-port search (✅ reporter), long
 8. Matroska `.mka` (#36) — needs a native muxer.
 9. Delete the classic Settings screen — now due (new screen default since 2.4.7, one release passed).
 
-**Open — engineering:** captures don't register with AudioService record tracking; #30 setting to stop managing
-Wireless debugging; split AppPreferences; loopback adbd probe; R8 minification; release provenance (cosign);
+**Built 2026-10-31, in integration/next for 2.4.9 (🧪):** #30 "Never turn Wireless debugging off" (Settings ▸
+Connection); transcription length limit removed + long-call time line (local model only).
+
+**Open — engineering:** captures don't register with AudioService record tracking; split AppPreferences; loopback adbd probe; R8 minification; release provenance (cosign);
 F-Droid: doNotStrip + 16 KB zipalign; Android 17 items (WD read-back, vivo bypass on API 37, pairing fallback,
 Conscrypt 2.7.0, targetSdk 37 + ACCESS_LOCAL_NETWORK when we move); pairing timeout off with consent (#3);
-a too-long recorded call still skips transcription silently; the ensureConnected leftovers.
+the ensureConnected leftovers.
 
 **Open — bugs / waiting on users:** #53 Honor app-call end (settings result); alex_812 recorder dies with no
 alert (parked).
