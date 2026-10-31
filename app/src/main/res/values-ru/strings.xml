@@ -557,6 +557,10 @@
     <string name="settings_voip_recording_description">Записывает и звонки в приложениях вроде WhatsApp, Signal и Telegram. Некоторые приложения блокируют запись, и узнать об этом можно только во время звонка.</string>
     <string name="settings_voip_recording_label">Записывать звонки VoIP</string>
     <string name="settings_wd_auto_approve_description">Когда телефон подключается к сети Wi-Fi, CallVault сам отвечает на вопрос Android «Разрешить отладку по Wi-Fi в этой сети?», чтобы запись не ждала вашего нажатия. Работает, пока запущен рекордер. Подключиться могут только устройства, уже сопряжённые с этим телефоном.</string>
+    <string name="settings_wd_never_off_label">Никогда не выключать отладку по Wi-Fi</string>
+    <string name="settings_wd_never_off_description">CallVault не будет выключать отладку по Wi-Fi, поэтому порт отладки остаётся открытым в вашей сети Wi-Fi. CallVault всё равно может включать её, когда она нужна рекордеру. Только во встроенном режиме.</string>
+    <string name="settings_wd_left_on_by_setting">Отладка по Wi-Fi включена. CallVault оставляет её включённой из-за этой настройки.</string>
+    <string name="settings_wd_left_on_by_user">Отладка по Wi-Fi включена. Вы включили её сами, поэтому CallVault оставляет её включённой.</string>
     <string name="settings_wd_auto_approve_label">Автоматически одобрять новые сети Wi-Fi</string>
     <string name="settings_wd_disable_when_idle">Выключать отладку по Wi-Fi в режиме ожидания</string>
     <string name="settings_wd_disable_when_idle_description">Отключать отладку по Wi-Fi после подключения службы записи; ненадолго включать снова только при необходимости.</string>

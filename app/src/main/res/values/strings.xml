@@ -969,6 +969,10 @@
     <string name="settings_wd_enforce_description">If you switch Wireless debugging off while nothing else lets CallVault in, it turns it back on so calls keep recording. When this is off, your switch stays off and the notification says recording is paused.</string>
     <string name="settings_wd_auto_approve_label">Approve new Wi-Fi networks automatically</string>
     <string name="settings_wd_auto_approve_description">When the phone joins a Wi-Fi network, CallVault answers Android\'s \"Allow wireless debugging on this network?\" itself, so recording does not wait for your tap. Works while the recorder is running. Only devices already paired with this phone can connect.</string>
+    <string name="settings_wd_never_off_label">Never turn Wireless debugging off</string>
+    <string name="settings_wd_never_off_description">CallVault won\'t switch Wireless debugging off, so the debugging port stays open on your Wi-Fi network. CallVault may still switch it on when the recorder needs it. Built-in mode only.</string>
+    <string name="settings_wd_left_on_by_setting">Wireless debugging is on. CallVault is leaving it on because of this setting.</string>
+    <string name="settings_wd_left_on_by_user">Wireless debugging is on. You switched it on, so CallVault is leaving it on.</string>
     <string name="oem_gate_title">Your phone is blocking this step</string>
     <string name="oem_gate_body_oppo">OnePlus, OPPO and realme phones refuse to give apps this permission until you turn on \"Disable system optimization\" in Developer options — near the bottom, under Apps. Older versions call it \"Disable permission monitoring\". Turn it on and try again. If you cannot find it, switch the phone to English, turn it on, then switch back.</string>
     <string name="oem_gate_body_xiaomi">Xiaomi, Redmi and POCO phones refuse to give apps this permission until you turn on \"USB debugging (Security settings)\" in Developer options. It is separate from USB debugging, and needs you to be signed in to a Mi account. Turn it on and try again.</string>

@@ -5,15 +5,27 @@ All notable changes to CallVault are documented here. The format is based on
 
 ## [Unreleased]
 
+### Added
+
+- **Never turn Wireless debugging off** (#30). A new switch in Settings → Connection, built-in mode only. With
+  it on, CallVault never switches Wireless debugging off; it may still switch it on when the recorder needs
+  it, and the debugging port stays open on your Wi-Fi. A line under the switch now says when CallVault is
+  leaving Wireless debugging on, because of this switch or because you turned it on yourself. Asked by
+  mirror176.
+  <!-- 🧪 VERIFYING: OP9 2026-10-31 (Claude-run, 2.4.8-wd30, built-in mode): off → CallVault turned WD on for
+       the recorder start and off again; on → after a recorder restart WD stayed on, log "Leaving Wireless
+       debugging on … 'Never turn it off' is on", and the line under the row showed. Greyed in Shizuku mode.
+       Maintainer to confirm. -->
+
 ### Changed
 
 - **Long calls are transcribed too.** The 60-minute limit is gone: long calls are no longer skipped, whether
   you tap Transcribe, they are transcribed automatically after the call or overnight, or you import them.
   When you start one of 30 minutes or more on the phone, the confirmation says how long it will take — about
   1.5× the call's length. With a cloud service there is no warning; it takes seconds.
-  <!-- 🧪 VERIFYING: unit tests only, not run on a phone. Maintainer to tap Transcribe on a >30-min call with
-       the local model (with the notice on and with "Don't ask again" ticked) and with Groq, and let a >60-min
-       call transcribe automatically. -->
+  <!-- 🧪 VERIFYING: OP9 2026-10-31 (Claude-run, 2.4.8-long1): a 50-min call with the local model showed "This
+       call is 50 min … about 1.6× as long — about 1 h 20 min" (measured speed) instead of being refused.
+       Not yet: "Don't ask again" ticked, Groq, an automatic >60-min run. -->
   If automatic transcription is on, older calls over an hour that were skipped before are transcribed on the next
   automatic run, which can keep the phone busy for a while.
 

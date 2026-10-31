@@ -648,6 +648,10 @@
     <string name="settings_voip_recording_description">تماس‌های انجام‌شده در برنامه‌هایی مانند WhatsApp، Signal و Telegram را نیز ضبط می‌کند. برخی برنامه‌ها ضبط را مسدود می‌کنند و این تا زمانی که تماس در جریان باشد قابل تشخیص نیست.</string>
     <string name="settings_voip_recording_label">ضبط تماس‌های VoIP</string>
     <string name="settings_wd_auto_approve_description">وقتی گوشی به یک شبکهٔ Wi-Fi وصل می‌شود، CallVault خودش به پرسش Android «اجازهٔ اشکال‌زدایی بی‌سیم در این شبکه داده شود؟» پاسخ می‌دهد تا ضبط منتظر لمس شما نماند. تا وقتی ضبط‌کننده در حال اجراست کار می‌کند. فقط دستگاه‌هایی که از قبل با این گوشی جفت شده‌اند می‌توانند وصل شوند.</string>
+    <string name="settings_wd_never_off_label">هرگز اشکال‌زدایی بی‌سیم را خاموش نکن</string>
+    <string name="settings_wd_never_off_description">CallVault اشکال‌زدایی بی‌سیم را خاموش نمی‌کند، پس درگاه اشکال‌زدایی روی شبکهٔ Wi-Fi شما باز می‌ماند. CallVault همچنان ممکن است وقتی ضبط‌کننده به آن نیاز دارد روشنش کند. فقط در حالت داخلی.</string>
+    <string name="settings_wd_left_on_by_setting">اشکال‌زدایی بی‌سیم روشن است. CallVault به‌خاطر این تنظیم آن را روشن نگه می‌دارد.</string>
+    <string name="settings_wd_left_on_by_user">اشکال‌زدایی بی‌سیم روشن است. شما آن را روشن کردید، پس CallVault آن را روشن نگه می‌دارد.</string>
     <string name="settings_wd_auto_approve_label">تأیید خودکار شبکه‌های Wi-Fi جدید</string>
     <string name="settings_wd_disable_when_idle">خاموش کردن اشکال‌زدایی بی‌سیم در زمان بی‌کاری</string>
     <string name="settings_wd_disable_when_idle_description">پس از اتصال سرویس ضبط‌کننده، اشکال‌زدایی بی‌سیم را غیرفعال می‌کند؛ فقط در صورت نیاز به‌طور کوتاه دوباره فعال می‌شود.</string>

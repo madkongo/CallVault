@@ -555,6 +555,10 @@
     <string name="settings_voip_recording_description">Enregistre aussi les appels passés dans des applis comme WhatsApp, Signal et Telegram. Certaines applis bloquent l\'enregistrement, et cela ne se sait qu\'une fois l\'appel en cours.</string>
     <string name="settings_voip_recording_label">Enregistrer les appels VoIP</string>
     <string name="settings_wd_auto_approve_description">Quand le téléphone rejoint un réseau Wi-Fi, CallVault répond lui-même à la question d\'Android « Autoriser le débogage sans fil sur ce réseau ? », pour que l\'enregistrement n\'attende pas votre appui. Fonctionne tant que l\'enregistreur tourne. Seuls les appareils déjà associés à ce téléphone peuvent se connecter.</string>
+    <string name="settings_wd_never_off_label">Ne jamais désactiver le débogage sans fil</string>
+    <string name="settings_wd_never_off_description">CallVault ne désactivera pas le débogage sans fil : le port de débogage reste donc ouvert sur votre réseau Wi-Fi. CallVault peut quand même l\'activer quand l\'enregistreur en a besoin. Mode intégré uniquement.</string>
+    <string name="settings_wd_left_on_by_setting">Le débogage sans fil est activé. CallVault le laisse activé à cause de ce réglage.</string>
+    <string name="settings_wd_left_on_by_user">Le débogage sans fil est activé. Vous l\'avez activé, donc CallVault le laisse activé.</string>
     <string name="settings_wd_auto_approve_label">Approuver automatiquement les nouveaux réseaux Wi-Fi</string>
     <string name="settings_wd_disable_when_idle">Désactiver le débogage sans fil en cas d\'inactivité</string>
     <string name="settings_wd_disable_when_idle_description">Désactiver le débogage sans fil une fois le service d\'enregistrement connecté ; réactivé brièvement uniquement au besoin.</string>

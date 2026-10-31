@@ -554,6 +554,10 @@
     <string name="settings_voip_recording_description">同时录制在 WhatsApp、Signal、Telegram 等应用中进行的通话。部分应用会阻止录音，而这只有在通话进行时才能得知。</string>
     <string name="settings_voip_recording_label">录制 VoIP 通话</string>
     <string name="settings_wd_auto_approve_description">手机连接到 WLAN 网络时，CallVault 会自行回答 Android 的“要在此网络上允许无线调试吗？”，录音无需等你点按。录音程序运行时有效。只有已与此手机配对的设备才能连接。</string>
+    <string name="settings_wd_never_off_label">永不关闭无线调试</string>
+    <string name="settings_wd_never_off_description">CallVault 不会关闭无线调试，因此调试端口会在你的 WLAN 网络上保持开放。录音程序需要时，CallVault 仍可能开启它。仅限内置模式。</string>
+    <string name="settings_wd_left_on_by_setting">无线调试已开启。由于此设置，CallVault 让它保持开启。</string>
+    <string name="settings_wd_left_on_by_user">无线调试已开启。是你开启的，因此 CallVault 让它保持开启。</string>
     <string name="settings_wd_auto_approve_label">自动允许新的 WLAN 网络</string>
     <string name="settings_wd_disable_when_idle">空闲时关闭无线调试</string>
     <string name="settings_wd_disable_when_idle_description">录音服务连接后即关闭无线调试；仅在需要时短暂重新启用。</string>

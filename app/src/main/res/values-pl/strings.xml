@@ -557,6 +557,10 @@
     <string name="settings_voip_recording_description">Nagrywa także rozmowy prowadzone w aplikacjach takich jak WhatsApp, Signal i Telegram. Niektóre aplikacje blokują nagrywanie, a dowiesz się o tym dopiero w trakcie rozmowy.</string>
     <string name="settings_voip_recording_label">Nagrywaj połączenia VoIP</string>
     <string name="settings_wd_auto_approve_description">Gdy telefon łączy się z siecią Wi-Fi, CallVault sam odpowiada na pytanie Androida „Zezwolić na debugowanie bezprzewodowe w tej sieci?”, więc nagrywanie nie czeka na Twoje dotknięcie. Działa, gdy rejestrator jest uruchomiony. Połączyć mogą się tylko urządzenia już sparowane z tym telefonem.</string>
+    <string name="settings_wd_never_off_label">Nigdy nie wyłączaj debugowania bezprzewodowego</string>
+    <string name="settings_wd_never_off_description">CallVault nie wyłączy debugowania bezprzewodowego, więc port debugowania pozostaje otwarty w Twojej sieci Wi-Fi. CallVault może je jednak włączyć, gdy potrzebuje go rejestrator. Tylko w trybie wbudowanym.</string>
+    <string name="settings_wd_left_on_by_setting">Debugowanie bezprzewodowe jest włączone. CallVault zostawia je włączone z powodu tego ustawienia.</string>
+    <string name="settings_wd_left_on_by_user">Debugowanie bezprzewodowe jest włączone. Zostało włączone przez Ciebie, więc CallVault zostawia je włączone.</string>
     <string name="settings_wd_auto_approve_label">Automatycznie zatwierdzaj nowe sieci Wi-Fi</string>
     <string name="settings_wd_disable_when_idle">Wyłączaj Debugowanie bezprzewodowe w stanie bezczynności</string>
     <string name="settings_wd_disable_when_idle_description">Wyłączaj Debugowanie bezprzewodowe po połączeniu usługi nagrywania; włączane na krótko tylko w razie potrzeby.</string>

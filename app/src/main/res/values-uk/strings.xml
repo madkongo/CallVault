@@ -565,6 +565,10 @@
     <string name="settings_voip_recording_description">Запис дзвінків із WhatsApp, Signal і Telegram. Деякі програми або прошивки блокують захоплення звуку.</string>
     <string name="settings_voip_recording_label">Записувати дзвінки VoIP</string>
     <string name="settings_wd_auto_approve_description">Коли телефон підключається до мережі Wi-Fi, CallVault сам відповідає на запитання Android «Дозволити бездротове налагодження в цій мережі?», щоб запис не чекав вашого натискання. Працює, поки запущено рекордер. Підключитися можуть лише пристрої, уже з’єднані з цим телефоном.</string>
+    <string name="settings_wd_never_off_label">Ніколи не вимикати бездротове налагодження</string>
+    <string name="settings_wd_never_off_description">CallVault не вимикатиме бездротове налагодження, тож порт налагодження лишається відкритим у вашій мережі Wi-Fi. CallVault однаково може вмикати його, коли воно потрібне рекордеру. Лише у вбудованому режимі.</string>
+    <string name="settings_wd_left_on_by_setting">Бездротове налагодження ввімкнено. CallVault залишає його ввімкненим через це налаштування.</string>
+    <string name="settings_wd_left_on_by_user">Бездротове налагодження ввімкнено. Ви ввімкнули його самі, тож CallVault залишає його ввімкненим.</string>
     <string name="settings_wd_auto_approve_label">Автоматично схвалювати нові мережі Wi-Fi</string>
     <string name="settings_wd_disable_when_idle">Вимикати бездротове налагодження в простої</string>
     <string name="settings_wd_disable_when_idle_description">Вимикає бездротове налагодження після підключення служби запису.</string>

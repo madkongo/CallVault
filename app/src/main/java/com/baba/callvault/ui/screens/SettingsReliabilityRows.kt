@@ -50,6 +50,7 @@ import com.baba.callvault.integrations.adb.UsbDefaultMode
 import com.baba.callvault.integrations.adb.UsbSetResult
 import com.baba.callvault.integrations.adb.UsbDebuggingState
 import com.baba.callvault.integrations.adb.WifiState
+import com.baba.callvault.integrations.adb.WirelessDebuggingRelease
 import com.baba.callvault.ui.common.M3DropdownField
 import com.baba.callvault.ui.common.OptionItem
 import androidx.compose.animation.fadeIn
@@ -156,6 +157,69 @@ internal fun WifiNetworkAutoApproveToggle() {
             on = turnOn
         },
     )
+}
+
+/**
+ * "Never turn Wireless debugging off" (#30 follow-up, asked by mirror176). Off by default: CallVault then turns
+ * it off only if it turned it on. On: it never turns it off, though it may still turn it on for the recorder.
+ * Built-in mode only. The check is in [com.baba.callvault.integrations.adb.AdbShell.releaseWirelessDebugging].
+ *
+ * Under it, a live line says when CallVault is leaving Wireless debugging on (this setting, or the user's own
+ * switch), which before was only a log line.
+ */
+@Composable
+internal fun WirelessDebuggingNeverOffToggle() {
+    val context = LocalContext.current
+    val prefs = remember { AppPreferences(context) }
+    var on by remember { mutableStateOf(prefs.isWirelessDebuggingNeverTurnOff()) }
+    val supported = capabilityAvailable(ModeCapability.WIRELESS_DEBUGGING_CONTROL)
+    SettingsToggleRow(
+        icon = Icons.Filled.Wifi,
+        label = stringResource(R.string.settings_wd_never_off_label),
+        description = unavailableReason(ModeCapability.WIRELESS_DEBUGGING_CONTROL)
+            ?: stringResource(R.string.settings_wd_never_off_description),
+        checked = on && supported,
+        enabled = supported,
+        onCheckedChange = { turnOn ->
+            prefs.setWirelessDebuggingNeverTurnOff(turnOn)
+            on = turnOn
+        },
+    )
+    if (supported) WirelessDebuggingLeftOnHint(settingOn = on)
+}
+
+/** One line under the row while Wireless debugging is on and CallVault is choosing to leave it on. */
+@Composable
+private fun WirelessDebuggingLeftOnHint(settingOn: Boolean) {
+    val context = LocalContext.current
+    val wdOn = rememberWirelessDebuggingOn()
+    val decision = remember(settingOn, wdOn) {
+        if (wdOn) runCatching { AdbShell.releaseDecision(context) }.getOrNull() else null
+    }
+    when (decision) {
+        WirelessDebuggingRelease.LEAVE_SETTING_ON -> SettingsHint(stringResource(R.string.settings_wd_left_on_by_setting))
+        WirelessDebuggingRelease.LEAVE_USERS_SWITCH -> SettingsHint(stringResource(R.string.settings_wd_left_on_by_user))
+        else -> Unit
+    }
+}
+
+/** Whether Wireless debugging is on, kept live while the row is on screen. */
+@Composable
+private fun rememberWirelessDebuggingOn(): Boolean {
+    val context = LocalContext.current
+    var on by remember { mutableStateOf(AdbShell.isWirelessDebuggingEnabled(context)) }
+    DisposableEffect(Unit) {
+        val observer = object : android.database.ContentObserver(android.os.Handler(android.os.Looper.getMainLooper())) {
+            override fun onChange(selfChange: Boolean) {
+                on = AdbShell.isWirelessDebuggingEnabled(context)
+            }
+        }
+        runCatching {
+            context.contentResolver.registerContentObserver(Settings.Global.getUriFor("adb_wifi_enabled"), false, observer)
+        }
+        onDispose { runCatching { context.contentResolver.unregisterContentObserver(observer) } }
+    }
+    return on
 }
 
 /**

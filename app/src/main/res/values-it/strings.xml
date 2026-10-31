@@ -555,6 +555,10 @@
     <string name="settings_voip_recording_description">Registra anche le chiamate fatte in app come WhatsApp, Signal e Telegram. Alcune app bloccano la registrazione, e non è possibile saperlo prima che la chiamata sia in corso.</string>
     <string name="settings_voip_recording_label">Registra le chiamate VoIP</string>
     <string name="settings_wd_auto_approve_description">Quando il telefono si collega a una rete Wi-Fi, CallVault risponde da solo alla domanda di Android «Consentire il debug wireless su questa rete?», così la registrazione non aspetta il tuo tocco. Funziona finché il registratore è attivo. Possono connettersi solo i dispositivi già associati a questo telefono.</string>
+    <string name="settings_wd_never_off_label">Non disattivare mai il debug wireless</string>
+    <string name="settings_wd_never_off_description">CallVault non disattiverà il debug wireless, quindi la porta di debug resta aperta sulla tua rete Wi-Fi. CallVault può comunque attivarlo quando il registratore ne ha bisogno. Solo in modalità integrata.</string>
+    <string name="settings_wd_left_on_by_setting">Il debug wireless è attivo. CallVault lo lascia attivo per questa impostazione.</string>
+    <string name="settings_wd_left_on_by_user">Il debug wireless è attivo. L\'hai attivato tu, quindi CallVault lo lascia attivo.</string>
     <string name="settings_wd_auto_approve_label">Approva automaticamente le nuove reti Wi-Fi</string>
     <string name="settings_wd_disable_when_idle">Disattiva il Debug wireless quando inattivo</string>
     <string name="settings_wd_disable_when_idle_description">Disattiva il Debug wireless una volta che il servizio di registrazione è connesso; viene riattivato brevemente solo quando necessario.</string>

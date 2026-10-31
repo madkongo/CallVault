@@ -1,6 +1,7 @@
 # Usage: python3 -I ui_rows.py dump.xml... -> "label: enabled|DISABLED" for the tracked Settings rows.
 import sys, xml.etree.ElementTree as ET
 TRACK = ["Resilient recording", "Offline recording (no Wi-Fi)", "Keep Wireless debugging on for recording",
+         "Never turn Wireless debugging off",
          "Record VoIP calls", "Start automatically", "Also skip ignored contacts"]
 found = {}
 for path in sys.argv[1:]:

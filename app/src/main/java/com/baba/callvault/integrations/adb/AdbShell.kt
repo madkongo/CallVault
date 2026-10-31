@@ -985,6 +985,19 @@ object AdbShell {
     }
 
     /**
+     * What [releaseWirelessDebugging] would do now. Also read by Settings to show when Wireless debugging is
+     * being left on (#30 follow-up).
+     */
+    fun releaseDecision(context: Context, plan: WirelessDebuggingPlan = wirelessDebuggingPlan(context)): WirelessDebuggingRelease {
+        val prefs = AppPreferences(context)
+        return WirelessDebuggingPolicy.releaseDecision(
+            plan = plan,
+            weEnabledIt = prefs.wasWirelessDebuggingEnabledByUs(),
+            neverTurnOff = prefs.isWirelessDebuggingNeverTurnOff(),
+        )
+    }
+
+    /**
      * Switches Wireless debugging off if it is on and it is safe to do so, saying why when it is not.
      *
      * "WD only when needed" applies to **CallVault's own** use of the switch. A switch the user turned
@@ -1003,13 +1016,20 @@ object AdbShell {
         }
 
         val plan = wirelessDebuggingPlan(context)
-        if (!AppPreferences(context).wasWirelessDebuggingEnabledByUs()) {
-            AppLogger.i(TAG, "Leaving Wireless debugging on after $reason: the user switched it on, not us")
-            return
-        }
-        if (WirelessDebuggingPolicy.mustKeepWirelessDebugging(plan)) {
-            AppLogger.i(TAG, "Keeping Wireless debugging on after $reason: it is adbd's only transport")
-            return
+        when (releaseDecision(context, plan)) {
+            WirelessDebuggingRelease.LEAVE_SETTING_ON -> {
+                AppLogger.i(TAG, "Leaving Wireless debugging on after $reason: \"Never turn it off\" is on")
+                return
+            }
+            WirelessDebuggingRelease.LEAVE_USERS_SWITCH -> {
+                AppLogger.i(TAG, "Leaving Wireless debugging on after $reason: the user switched it on, not us")
+                return
+            }
+            WirelessDebuggingRelease.KEEP_ONLY_TRANSPORT -> {
+                AppLogger.i(TAG, "Keeping Wireless debugging on after $reason: it is adbd's only transport")
+                return
+            }
+            WirelessDebuggingRelease.SWITCH_OFF -> Unit
         }
         if (disableWirelessDebugging(context)) {
             AppLogger.i(TAG, "Wireless debugging disabled after $reason ($plan)")

@@ -555,6 +555,10 @@
     <string name="settings_voip_recording_description">Nimmt auch Anrufe in Apps wie WhatsApp, Signal und Telegram auf. Manche Apps blockieren die Aufnahme, und das lässt sich erst während eines Anrufs feststellen.</string>
     <string name="settings_voip_recording_label">VoIP-Anrufe aufnehmen</string>
     <string name="settings_wd_auto_approve_description">Verbindet sich das Telefon mit einem WLAN, beantwortet CallVault die Android-Frage „WLAN-Debugging in diesem Netzwerk zulassen?“ selbst, damit die Aufnahme nicht auf dein Tippen wartet. Funktioniert, solange der Rekorder läuft. Verbinden können sich nur Geräte, die bereits mit diesem Telefon gekoppelt sind.</string>
+    <string name="settings_wd_never_off_label">WLAN-Debugging nie ausschalten</string>
+    <string name="settings_wd_never_off_description">CallVault schaltet WLAN-Debugging nicht aus, daher bleibt der Debugging-Port in deinem WLAN offen. CallVault kann es trotzdem einschalten, wenn der Rekorder es braucht. Nur im integrierten Modus.</string>
+    <string name="settings_wd_left_on_by_setting">WLAN-Debugging ist an. CallVault lässt es wegen dieser Einstellung an.</string>
+    <string name="settings_wd_left_on_by_user">WLAN-Debugging ist an. Du hast es eingeschaltet, daher lässt CallVault es an.</string>
     <string name="settings_wd_auto_approve_label">Neue WLAN-Netze automatisch zulassen</string>
     <string name="settings_wd_disable_when_idle">Drahtloses Debugging im Leerlauf ausschalten</string>
     <string name="settings_wd_disable_when_idle_description">Drahtloses Debugging deaktivieren, sobald der Aufnahmedienst verbunden ist; nur bei Bedarf kurz wieder aktiviert.</string>

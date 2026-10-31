@@ -841,7 +841,14 @@ Reference: <https://developer.android.com/privacy-and-security/local-network-per
 
 ---
 
-## 🔵 #30 follow-up: a setting to stop CallVault managing Wireless debugging
+## 🧪 #30 follow-up: a setting to stop CallVault managing Wireless debugging — BUILT on `feat/never-turn-off-wd-30` (2026-10-31), not on a phone
+
+🧪 VERIFYING: unit tests only. Built as "Never turn Wireless debugging off" (new key `wd_never_turn_off`,
+standalone-gated) in Settings → Connection and the classic Resilience rows, checked only in
+`AdbShell.releaseWirelessDebugging` via `WirelessDebuggingPolicy.releaseDecision`. The visible sign is a live
+line under that row while Wireless debugging is on and is being left on (this setting, or the user's own
+switch). `wd_disable_when_idle` was NOT reused: its meaning is the opposite, and
+`NetworkApprovalPolicy.alwaysAllow` still reads it. To settle: try it on a phone in built-in mode.
 
 Asked for by mirror176 in #30 (2026-09-10). Agreed by the maintainer 2026-09-11, and promised in the
 issue.

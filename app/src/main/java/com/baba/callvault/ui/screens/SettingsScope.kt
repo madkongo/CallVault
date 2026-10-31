@@ -164,7 +164,9 @@ object SettingsGroups {
             "retention_linked", "retention_local_days", "retention_drive_days",
             "retention_time_hour", "retention_time_minute", "storage_cap_bytes", "keep_originals_after_merge",
         )
-        SettingsGroup.CONNECTION -> listOf("handoff_persist", "offline_recording", "wd_enforced", "wd_auto_approve_network")
+        SettingsGroup.CONNECTION -> listOf(
+            "handoff_persist", "offline_recording", "wd_enforced", "wd_auto_approve_network", "wd_never_turn_off",
+        )
         SettingsGroup.MODEL_AND_LANGUAGE -> listOf(
             "transcription_service", "transcription_cloud_mobile_data", "transcription_custom_base_url",
             "transcription_custom_model", "transcription_model_id", "transcription_language",

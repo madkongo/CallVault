@@ -34,6 +34,23 @@ enum class WirelessDebuggingPlan {
     KEEP_ONLY_TRANSPORT,
 }
 
+/** What [AdbShell.releaseWirelessDebugging] does with a Wireless debugging switch that is on. */
+enum class WirelessDebuggingRelease(
+    /** True when CallVault is choosing to leave it on, which the Connection settings show (#30). */
+    val leavesItOn: Boolean,
+) {
+    SWITCH_OFF(false),
+
+    /** "Never turn Wireless debugging off" is on. */
+    LEAVE_SETTING_ON(true),
+
+    /** The user switched it on, not us. */
+    LEAVE_USERS_SWITCH(true),
+
+    /** It is adbd's only transport; the notification already says so. */
+    KEEP_ONLY_TRANSPORT(false),
+}
+
 object WirelessDebuggingPolicy {
 
     /**
@@ -77,4 +94,21 @@ object WirelessDebuggingPolicy {
      */
     fun mayRelease(plan: WirelessDebuggingPlan, weEnabledIt: Boolean): Boolean =
         weEnabledIt && !mustKeepWirelessDebugging(plan)
+
+    /**
+     * The one decision [AdbShell.releaseWirelessDebugging] acts on.
+     *
+     * [neverTurnOff] is the user's "Never turn Wireless debugging off" setting (#30 follow-up): with it on,
+     * nothing is switched off, whoever turned it on. With it off, this is [mayRelease] as before.
+     */
+    fun releaseDecision(
+        plan: WirelessDebuggingPlan,
+        weEnabledIt: Boolean,
+        neverTurnOff: Boolean,
+    ): WirelessDebuggingRelease = when {
+        neverTurnOff -> WirelessDebuggingRelease.LEAVE_SETTING_ON
+        !weEnabledIt -> WirelessDebuggingRelease.LEAVE_USERS_SWITCH
+        mustKeepWirelessDebugging(plan) -> WirelessDebuggingRelease.KEEP_ONLY_TRANSPORT
+        else -> WirelessDebuggingRelease.SWITCH_OFF
+    }
 }
