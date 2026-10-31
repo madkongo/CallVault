@@ -28,6 +28,9 @@ import com.baba.callvault.server.RecorderConnection
  */
 object WifiCallRoute {
 
+    /** Log tag for every route decision, switch and end line. */
+    const val TAG = "CV:WifiRoute"
+
     enum class Route { CALL_SOURCE, APP_CALL_MIX }
 
     enum class Reason {
