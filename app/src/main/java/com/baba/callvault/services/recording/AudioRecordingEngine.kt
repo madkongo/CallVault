@@ -720,8 +720,13 @@ class AudioRecordingEngine {
      *
      * @param discard close the capture but publish nothing: the staged file is deleted. Used when a
      *                Wi-Fi call switches capture mid-call (#45). Not [cancel], which publishes first.
+     *                If the capture did not stop cleanly the file is published instead: it may still
+     *                be the only recording of this call.
+     * @return whether the capture is known to have stopped. Idempotent: a second call does nothing.
      */
-    fun release(discard: Boolean = false) {
+    fun release(discard: Boolean = false): Boolean {
+        if (released) return releasedCleanly
+        released = true
         AppLogger.i(TAG, "Releasing session resources and recording pipeline...")
         livenessHandler.removeCallbacks(livenessWatch)
         livenessHandler.removeCallbacks(captureStartWatch)
@@ -731,8 +736,10 @@ class AudioRecordingEngine {
             // encoder finalises the container trailer into outputPfd; only then close our fd handle. Then
             // best-effort ask the daemon to release its held track (ignored if the daemon already died —
             // which is exactly the case this path exists to survive).
-            runCatching { HandoffReceiver.stop() }
+            val appStopped = runCatching { HandoffReceiver.stop() }
                 .onFailure { AppLogger.w(TAG, "Handoff stop error during release: ${it.message}") }
+                .isSuccess && !HandoffReceiver.isLive
+            var daemonStopped = true
             // Say which of the two happened. `service?.stopHandoff()` on a null binder is a silent
             // no-op that runCatching then reports as success, so "the daemon released its microphone"
             // and "there was nobody to ask" produced identical logs — and the daemon is precisely the
@@ -743,25 +750,29 @@ class AudioRecordingEngine {
             if (daemon == null) {
                 AppLogger.w(TAG, "No daemon binder at release: its handoff AudioRecord was never asked to stop")
             } else {
-                runCatching { daemon.stopHandoff() }
+                daemonStopped = runCatching { daemon.stopHandoff() }
                     .onSuccess { AppLogger.i(TAG, "Asked the daemon to release its handoff capture") }
                     .onFailure { AppLogger.w(TAG, "Daemon stopHandoff failed during release: ${it.message}") }
+                    .isSuccess
             }
             runCatching { outputPfd?.close() }
             handoffRecording = false
-            finishStaging(discard)
-            return
+            return finishRelease(discard, clean = appStopped && daemonStopped)
         }
 
         if (daemonMode) {
             // Ask the daemon to stop + finalise the container, then close our local fd handle. The local
             // muxer/launcher/client/scope do not exist in this mode, so there is nothing else to tear down.
             val daemon = RecorderConnection.service
+            var stopped = false
             if (daemon == null) {
                 AppLogger.w(TAG, "No daemon binder at release: its recording was never asked to stop")
             } else {
-                runCatching { daemon.stopRecording() }
+                stopped = runCatching { daemon.stopRecording() }
                     .onFailure { AppLogger.w(TAG, "Daemon stopRecording failed during release: ${it.message}") }
+                    .isSuccess
+                // stopRecording waits only so long for the teardown; ask whether it is really over.
+                stopped = stopped && runCatching { !daemon.isRecording() }.getOrDefault(false)
                 // Ask what the capture noticed about itself, and write it to the APP's log — the
                 // daemon's own log reaches a report only via logcat, which exists only if debug
                 // logging was already on when the call happened (issue #28b). An older daemon has no
@@ -777,11 +788,10 @@ class AudioRecordingEngine {
             }
             runCatching { outputPfd?.close() }
             daemonRecording = false
-            finishStaging(discard)
-            return
+            return finishRelease(discard, clean = stopped)
         }
 
-        runCatching { scrcpyLauncher?.stop() }
+        val launcherStopped = runCatching { scrcpyLauncher?.stop() }.isSuccess
         scrcpyLauncher = null
 
         runCatching {
@@ -796,11 +806,19 @@ class AudioRecordingEngine {
         runCatching { audioPipeReadScope?.cancel() }
         runCatching { scrcpyAudioMuxer?.close() }
         runCatching { outputPfd?.close() }
-        finishStaging(discard)
+        return finishRelease(discard, clean = launcherStopped)
     }
 
-    private fun finishStaging(discard: Boolean) {
-        if (discard) discardStaging() else finalizeStagingIfNeeded()
+    private var released = false
+    private var releasedCleanly = true
+
+    private fun finishRelease(discard: Boolean, clean: Boolean): Boolean {
+        releasedCleanly = clean
+        if (discard && !clean) {
+            AppLogger.w(TAG, "Capture did not stop cleanly; keeping its file instead of discarding it")
+        }
+        if (discard && clean) discardStaging() else finalizeStagingIfNeeded()
+        return clean
     }
 
     /** Deletes the staged capture without publishing it. Nothing ever reaches the user's folder. */

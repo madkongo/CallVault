@@ -867,4 +867,5 @@
     <string name="wifi_call_one_sided">Chỉ phía bạn trong cuộc gọi Wi-Fi này được ghi lại. Nếu vẫn xảy ra, hãy đặt Gọi qua Wi-Fi ưu tiên mạng di động trong cài đặt ứng dụng Điện thoại.</string>
     <string name="settings_debug_force_wifi_route">Buộc dùng cách ghi cuộc gọi Wi-Fi</string>
     <string name="settings_debug_force_wifi_route_description">Để thử nghiệm. Mỗi cuộc gọi điện thoại sẽ chuyển giữa chừng sang cách ghi cuộc gọi ứng dụng, như một cuộc gọi Wi-Fi. Trên điện thoại không có gọi qua Wi-Fi sẽ thiếu phía bên kia và sẽ có thông báo lỗi. Cần bật ghi cuộc gọi ứng dụng. Chỉ hoạt động khi đang ghi nhật ký.</string>
+    <string name="wifi_call_switch_aborted">Việc ghi cuộc gọi Wi-Fi này đã dừng sớm: không thể chuyển cách ghi một cách an toàn. Phần đã ghi được vẫn được giữ lại.</string>
 </resources>

@@ -650,7 +650,13 @@ class RecordingForegroundService : Service() {
                 else -> "local"
             }
             val discardedMs = recordingClock.audioElapsedMs()
-            old.release(discard = true)
+            if (!old.release(discard = true)) {
+                // Possibly still live: opening the mix and mic now would make two voice captures.
+                // Its file was kept, and is published with the call's details at the end.
+                AppLogger.w(WifiCallRoute.TAG, "switch from=$from aborted: the first capture did not stop cleanly; keeping its file")
+                notificationHelper.showErrorNotification(getString(R.string.wifi_call_switch_aborted))
+                return
+            }
             // Turns measured by the discarded capture must not label the new file.
             CapturedSpeakerTurns.clear()
             recordingClock.start()
