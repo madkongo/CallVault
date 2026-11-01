@@ -678,6 +678,7 @@
     <string name="transcription_where_custom_service">máy chủ của bạn</string>
     <string name="transcription_where_recommended">Đề xuất</string>
     <string name="transcription_cloud_key_label">Khóa của bạn cho %1$s</string>
+    <string name="transcription_cloud_key_label_custom">Khóa máy chủ của bạn</string>
     <string name="transcription_cloud_key_show">Hiện khóa</string>
     <string name="transcription_cloud_key_hide">Ẩn khóa</string>
     <string name="transcription_cloud_test">Kiểm tra</string>

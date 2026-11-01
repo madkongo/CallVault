@@ -678,6 +678,7 @@
     <string name="transcription_where_custom_service">你的服务器</string>
     <string name="transcription_where_recommended">推荐</string>
     <string name="transcription_cloud_key_label">用于 %1$s 的密钥</string>
+    <string name="transcription_cloud_key_label_custom">你的服务器的密钥</string>
     <string name="transcription_cloud_key_show">显示密钥</string>
     <string name="transcription_cloud_key_hide">隐藏密钥</string>
     <string name="transcription_cloud_test">测试</string>

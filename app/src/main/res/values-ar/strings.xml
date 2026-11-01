@@ -715,6 +715,7 @@
     <string name="transcription_where_custom_service">خادمك</string>
     <string name="transcription_where_recommended">مُوصى به</string>
     <string name="transcription_cloud_key_label">مفتاحك لدى %1$s</string>
+    <string name="transcription_cloud_key_label_custom">مفتاح خادمك</string>
     <string name="transcription_cloud_key_show">إظهار المفتاح</string>
     <string name="transcription_cloud_key_hide">إخفاء المفتاح</string>
     <string name="transcription_cloud_test">اختبار</string>

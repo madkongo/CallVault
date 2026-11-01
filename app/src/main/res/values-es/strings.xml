@@ -679,6 +679,7 @@
     <string name="transcription_where_custom_service">tu servidor</string>
     <string name="transcription_where_recommended">Recomendado</string>
     <string name="transcription_cloud_key_label">Tu clave para %1$s</string>
+    <string name="transcription_cloud_key_label_custom">Clave de tu servidor</string>
     <string name="transcription_cloud_key_show">Mostrar clave</string>
     <string name="transcription_cloud_key_hide">Ocultar clave</string>
     <string name="transcription_cloud_test">Probar</string>
