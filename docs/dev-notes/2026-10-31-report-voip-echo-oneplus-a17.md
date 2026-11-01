@@ -85,3 +85,4 @@ pushed 2026-10-19) is the one newer candidate; not run (building third-party cod
 - Fix idea, 📐 not built: per call, measure the lag between the far channel and its copy in the mic. If the copy is strong, delay the far channel by that lag before the downmix. With a headset (no leak) nothing changes.
 - Waiting on the maintainer's ear for mix 2 against mix 1.
 - 2026-11-01, maintainer by ear: mix 2 (aligned) removes the echo. Mix 3 (mic only) sounds "slightly better than 2 but its a really small difference". Next step: design the in-app fix together (see the options in the chat of that date).
+- 2026-11-01: maintainer chose "line up only": never turn the far side down, never use the mic alone. Built and merged as f1288975; see `docs/dev-notes/rollback/voip-echo-align.md`. The test APK `2.4.8-echofix` is waiting for Евгений. Listening file of the app's actual output: `~/Downloads/echo-AB/mixes/*_4_app_fix_as_recorded.wav`.
