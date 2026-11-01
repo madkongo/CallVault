@@ -26,8 +26,8 @@ All notable changes to CallVault are documented here. The format is based on
 - **Your own transcription server can use http://** (#67). In Settings → Where to transcribe → Custom, an
   address starting with http:// is now accepted, for a server on your own network or behind a VPN. The audio
   and key travel unencrypted to it, so use https for anything on the open internet. Asked by QBANIN.
-  <!-- 🧪 VERIFYING: unit tests + checkTranslations only (2026-10-31). Not tried against a real http server on a
-       phone. To settle: point Custom at an http:// Whisper-compatible server, tap Test, transcribe one call. -->
+  <!-- 🧪 VERIFYING: OP9 2026-11-01 (Claude-run, 2.4.8-next5): an http:// stand-in server on the LAN, Test OK, one call
+       transcribed through it. Not tried with a real model server; maintainer to confirm. -->
 - **Credit to ShizuCallRecorder** (#66). The welcome screen now says CallVault is a fork of ShizuCallRecorder,
   with a link and its author's copyright, and the support dialog names the original project. Raised by kitsumed.
   <!-- 🧪 VERIFYING: unit tests + checkTranslations only (2026-11-01). To settle: open Settings → Support

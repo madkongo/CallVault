@@ -1,7 +1,8 @@
 # Rollback: upstream attribution fixes (#66)
 
 🧪 VERIFYING — built on `fix/upstream-attribution-66` 2026-11-01; unit tests (2344) and checkTranslations pass.
-Not yet seen on a phone. To settle:
+Support dialog seen on the OP9 2026-11-01 (2.4.8-next5): new title and English text shown correctly (Claude-run).
+The welcome screen has not been seen on a phone. To settle:
 - **Support dialog:** Settings ▸ Support development. Check the new title and text, in English and one other language.
 - **Welcome screen:** it only shows on first launch. Check it on a fresh install (emulator), or in the Compose preview of `DisclaimerScreen`.
   - The fork line and both copyright lines show.
