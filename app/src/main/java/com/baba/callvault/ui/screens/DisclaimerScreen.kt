@@ -62,6 +62,7 @@ import com.baba.callvault.R
 import com.baba.callvault.ui.common.CvCard
 import com.baba.callvault.ui.common.CvHero
 import com.baba.callvault.ui.common.CvPrimaryButton
+import com.baba.callvault.ui.common.linkifyUrls
 import com.baba.callvault.ui.common.CvSectionHeader
 import com.baba.callvault.ui.theme.CallVaultTheme
 
@@ -153,7 +154,11 @@ fun DisclaimerScreen(onContinue: () -> Unit, modifier: Modifier = Modifier) {
                 )
                 SelectionContainer {
                     Text(
-                        text = stringResource(R.string.disclaimer_body),
+                        // URLs (the fork notice's upstream link, the Wikipedia page) open in the browser.
+                        text = linkifyUrls(
+                            stringResource(R.string.disclaimer_body),
+                            MaterialTheme.colorScheme.primary
+                        ),
                         modifier = Modifier
                             .verticalScroll(scrollState)
                             .padding(horizontal = 18.dp, vertical = 12.dp),
