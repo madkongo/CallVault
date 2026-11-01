@@ -46,6 +46,44 @@ class VoipLateCallerTest {
     }
 
     @Test
+    fun `an app found late goes onto the marker of a name that has none`() {
+        // Telegram's call audio appears about 2.5 s after the mode flips, past the start-time
+        // lookup, so its recordings were saved as plain "_voip" with no app (2026-11-01 report).
+        assertEquals(
+            "20261101_152259.569+0300_voip-Telegram.ogg",
+            VoipLateCaller.withApp("20261101_152259.569+0300_voip.ogg", "Telegram"),
+        )
+    }
+
+    @Test
+    fun `an app found late sits before a caller already in the name`() {
+        assertEquals(
+            "20261101_152259.569+0300_voip-Telegram_Feroza.ogg",
+            VoipLateCaller.withApp("20261101_152259.569+0300_voip_Feroza.ogg", "Telegram"),
+        )
+    }
+
+    @Test
+    fun `a name that already carries an app keeps it`() {
+        val named = "20261101_152434.360+0300_voip-WhatsApp.ogg"
+
+        assertEquals(named, VoipLateCaller.withApp(named, "Telegram"))
+    }
+
+    @Test
+    fun `a blank app or a name that is not an app call changes nothing`() {
+        assertEquals("x_voip.ogg", VoipLateCaller.withApp("x_voip.ogg", " "))
+        assertEquals("20261101_120000_in_Feroza.ogg", VoipLateCaller.withApp("20261101_120000_in_Feroza.ogg", "Telegram"))
+    }
+
+    @Test
+    fun `app and caller both found late give the full name`() {
+        val name = VoipLateCaller.withCaller(VoipLateCaller.withApp("s_voip.ogg", "Telegram"), "Feroza")
+
+        assertEquals("s_voip-Telegram_Feroza.ogg", name)
+    }
+
+    @Test
     fun `the retries are spread over the first half minute of the call`() {
         // Early enough to catch a notification posted a moment after the audio, late enough that a
         // slow app still gets a chance, and over before a short call ends.

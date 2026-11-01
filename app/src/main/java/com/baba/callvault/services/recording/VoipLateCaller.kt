@@ -29,6 +29,23 @@ object VoipLateCaller {
     private val VOIP_MARKER = Regex("""_voip(-[^_.]+)?(_[^.]+)?(\.[A-Za-z0-9]+)$""")
 
     /**
+     * [fileName] with [app] on its marker — `{stamp}_voip-{app}[_{caller}].ext` — when it has none.
+     *
+     * For an app identified after the recording started: Telegram's call audio appears about 2.5 s
+     * after the audio mode flips, past the start-time lookup. [app] must already be safe for a file
+     * name. A name that already has an app, a blank app, or a name that is not a VoIP recording's is
+     * returned unchanged.
+     */
+    fun withApp(fileName: String, app: String): String {
+        val label = app.trim()
+        if (label.isEmpty()) return fileName
+        val match = VOIP_MARKER.find(fileName) ?: return fileName
+        val (existing, caller, extension) = match.destructured
+        if (existing.isNotEmpty()) return fileName
+        return fileName.substring(0, match.range.first) + "_voip-$label" + caller + extension
+    }
+
+    /**
      * [fileName] with [caller] in its caller slot — `{stamp}_voip[-App]_{caller}.ext` — when the slot
      * is empty. A name that already has a caller, a blank caller, or a name that is not a VoIP
      * recording's is returned unchanged.
