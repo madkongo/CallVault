@@ -623,8 +623,8 @@
     <string name="summary_requirements_time">Um ou dois minutos para uma chamada curta, mais para uma longa</string>
     <string name="summary_requirements_title">O que isso exige</string>
     <string name="summary_requirements_toggle_description">Mostrar o que o resumidor custa antes de baixá-lo</string>
-    <string name="support_appeal_body">Eu desenvolvo o CallVault sozinho, no meu tempo livre — grátis, código aberto, sem anúncios nem rastreamento. ☕ Se ele te é útil, uma pequena contribuição me ajuda a continuar. De todo modo, obrigado! 🙏</string>
-    <string name="support_appeal_title">Feito por uma pessoa só 👋</string>
+    <string name="support_appeal_body">Eu mantenho o CallVault no meu tempo livre. Ele começou como um fork do ShizuCallRecorder, de kitsumed, e cresceu muito desde então. Grátis, código aberto, sem anúncios nem rastreamento. Se ele te é útil, uma pequena contribuição me ajuda a continuar. Obrigado! 🙏</string>
+    <string name="support_appeal_title">Uma gorjeta para o CallVault ☕</string>
     <string name="support_not_now">Agora não</string>
     <string name="tile_recording_on">Gravação ativada</string>
     <string name="tile_recording_stopped">Interrompido</string>

@@ -620,8 +620,8 @@
     <string name="summary_requirements_time">Etwa ein bis zwei Minuten für ein kurzes Gespräch, länger für ein langes</string>
     <string name="summary_requirements_title">Was dafür nötig ist</string>
     <string name="summary_requirements_toggle_description">Vor dem Herunterladen zeigen, was der Zusammenfasser kostet</string>
-    <string name="support_appeal_body">Ich entwickle CallVault allein, in meiner Freizeit – kostenlos, quelloffen, ohne Werbung, ohne Tracking. ☕ Wenn es dir nützt, hält mich eine kleine Spende am Ball. So oder so: danke! 🙏</string>
-    <string name="support_appeal_title">Von einer Person gemacht 👋</string>
+    <string name="support_appeal_body">Ich pflege CallVault in meiner Freizeit. Es begann als Fork von ShizuCallRecorder von kitsumed und ist seitdem stark gewachsen. Kostenlos, quelloffen, ohne Werbung, ohne Tracking. Wenn es dir nützt, hält mich eine kleine Spende am Ball. Danke! 🙏</string>
+    <string name="support_appeal_title">Ein Trinkgeld für CallVault ☕</string>
     <string name="support_not_now">Jetzt nicht</string>
     <string name="tile_recording_on">Aufnahme aktiv</string>
     <string name="tile_recording_stopped">Gestoppt</string>

@@ -620,8 +620,8 @@
     <string name="summary_requirements_time">Une à deux minutes pour un appel court, plus pour un appel long</string>
     <string name="summary_requirements_title">Ce qu\'il faut</string>
     <string name="summary_requirements_toggle_description">Afficher ce que coûte le résumeur avant de le télécharger</string>
-    <string name="support_appeal_body">Je développe CallVault seul, sur mon temps libre : gratuit, open source, sans publicité ni pistage. ☕ Si l\'appli vous est utile, un petit pourboire m\'aide à continuer. Dans tous les cas, merci ! 🙏</string>
-    <string name="support_appeal_title">Fait par une seule personne 👋</string>
+    <string name="support_appeal_body">Je maintiens CallVault sur mon temps libre. L\'appli a commencé comme un fork de ShizuCallRecorder, de kitsumed, et a beaucoup évolué depuis. Gratuite, open source, sans publicité ni pistage. Si elle vous est utile, un petit pourboire m\'aide à continuer. Merci ! 🙏</string>
+    <string name="support_appeal_title">Un pourboire pour CallVault ☕</string>
     <string name="support_not_now">Pas maintenant</string>
     <string name="tile_recording_on">Enregistrement activé</string>
     <string name="tile_recording_stopped">Arrêté</string>

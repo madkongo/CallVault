@@ -619,8 +619,8 @@
     <string name="summary_requirements_time">短通话约一两分钟，长通话更久</string>
     <string name="summary_requirements_title">需要什么</string>
     <string name="summary_requirements_toggle_description">下载前显示摘要模型的资源需求</string>
-    <string name="support_appeal_body">CallVault 由我一个人利用业余时间开发——免费、开源、无广告、无追踪。☕ 如果它对你有用，一点小小的支持能让我继续做下去。无论如何，谢谢！🙏</string>
-    <string name="support_appeal_title">由一个人开发 👋</string>
+    <string name="support_appeal_body">我利用业余时间维护 CallVault。它最初是 kitsumed 的 ShizuCallRecorder 的一个分支（fork），此后成长了许多。免费、开源、无广告、无追踪。如果它对你有用，一点小小的支持能让我继续做下去。谢谢！🙏</string>
+    <string name="support_appeal_title">给 CallVault 一点小费 ☕</string>
     <string name="support_not_now">以后再说</string>
     <string name="tile_recording_on">录音已开启</string>
     <string name="tile_recording_stopped">已停止</string>
