@@ -37,3 +37,9 @@ git revert -m 1 054b941f
 
 (`054b941f` = the merge into integration/next.) Rolling back puts the license problem from #66 back. Only do it
 together with another fix for that issue.
+
+## Pushed for kitsumed (2026-11-01)
+
+The same three commits were cherry-picked onto `origin/main` (2.4.8) and pushed as branch
+`fix/upstream-attribution-66-main`: 9490cf9d, e9369ab0, a12cef88. 2284 unit tests and checkTranslations pass there.
+It was not merged into main. The rest of integration/next stays unpushed.
