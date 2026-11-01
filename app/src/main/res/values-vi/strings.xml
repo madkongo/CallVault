@@ -608,8 +608,8 @@
     <string name="summary_requirements_time">Một đến hai phút cho cuộc gọi ngắn, lâu hơn với cuộc gọi dài</string>
     <string name="summary_requirements_title">Yêu cầu</string>
     <string name="summary_requirements_toggle_description">Hiện yêu cầu của trình tóm tắt trước khi tải</string>
-    <string name="support_appeal_body">Tôi tự phát triển CallVault trong thời gian rảnh — miễn phí, mã nguồn mở, không quảng cáo, không theo dõi. ☕ Nếu thấy hữu ích, một khoản nhỏ giúp tôi tiếp tục. Dù sao thì, cảm ơn bạn! 🙏</string>
-    <string name="support_appeal_title">Do một người làm 👋</string>
+    <string name="support_appeal_body">Tôi duy trì CallVault trong thời gian rảnh. Ứng dụng bắt đầu là một bản fork của ShizuCallRecorder do kitsumed phát triển và đã lớn lên nhiều kể từ đó. Miễn phí, mã nguồn mở, không quảng cáo, không theo dõi. Nếu thấy hữu ích, một khoản nhỏ giúp tôi tiếp tục. Cảm ơn bạn! 🙏</string>
+    <string name="support_appeal_title">Ủng hộ CallVault ☕</string>
     <string name="support_not_now">Để sau</string>
     <string name="tile_recording_on">Đang ghi âm</string>
     <string name="tile_recording_stopped">Đã dừng</string>

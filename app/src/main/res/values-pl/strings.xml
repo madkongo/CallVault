@@ -611,8 +611,8 @@
     <string name="summary_requirements_time">Minuta lub dwie dla krótkiej rozmowy, dłużej dla długiej</string>
     <string name="summary_requirements_title">Czego to wymaga</string>
     <string name="summary_requirements_toggle_description">Pokaż, czego wymaga moduł podsumowań, przed pobraniem</string>
-    <string name="support_appeal_body">Tworzę CallVault sam, po godzinach — za darmo, otwartoźródłowo, bez reklam i śledzenia. ☕ Jeśli aplikacja Ci się przydaje, drobne wsparcie pomaga mi działać dalej. Tak czy inaczej — dzięki! 🙏</string>
-    <string name="support_appeal_title">Tworzy to jedna osoba 👋</string>
+    <string name="support_appeal_body">Rozwijam CallVault po godzinach. Aplikacja powstała jako fork ShizuCallRecorder autorstwa kitsumed i od tego czasu bardzo się rozrosła. Za darmo, otwartoźródłowo, bez reklam i śledzenia. Jeśli Ci się przydaje, drobne wsparcie pomaga mi działać dalej. Dzięki! 🙏</string>
+    <string name="support_appeal_title">Napiwek dla CallVault ☕</string>
     <string name="support_not_now">Nie teraz</string>
     <string name="tile_recording_on">Nagrywanie włączone</string>
     <string name="tile_recording_stopped">Zatrzymane</string>
