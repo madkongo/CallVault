@@ -1,5 +1,12 @@
 # Rollback: line the far side up with its echo (VoIP)
 
+
+**Field result 2026-11-01 (Евгений, via the maintainer, build 2.4.8-echofix):** "There is a bit of an echo at the
+beginning of the conversation, then it gets good, without an echo." The log shows a lock-on in both calls: Telegram
+73.6 ms at about 7.5 s, WhatsApp 81.2 ms at about 13 s. In all three of his files the echo is measurable from second
+3 to second 7, then gone. Still 🧪: the echo at the start is open. The maintainer turned down "start from the last
+call's delay"; research (look-ahead mix plus an accumulating estimator) is waiting on a decision.
+
 🧪 VERIFYING — merged 2026-11-01. 2353 unit tests pass, and the logic was checked on the two report calls. No phone
 has run it yet. To settle: Евгений (OnePlus CPH2747, A17, Shizuku, earpiece) installs `2.4.8-echofix` and makes
 one WhatsApp call of at least 30 s.

@@ -1,6 +1,7 @@
 # Report: "the other person is recorded with an echo" — OnePlus CPH2747, Android 17 (2026-10-31)
 
-📐 Investigation in progress. Nothing fixed, nothing built.
+🧪 2026-11-01: the alignment fix (2.4.8-echofix) removes the echo once it locks on, 7–13 s into the call; the
+reporter still hears the echo at the start. See `rollback/voip-echo-align.md`. (The original line "Investigation in progress. Nothing fixed, nothing built" is out of date.)
 
 **Reporter:** Евгений (Telegram). OnePlus CPH2747, Android 17 (CPH2747_17.0.0.102), Shizuku mode, 2.4.8.
 Phone held to the ear (earpiece). Every messenger: Max, WhatsApp, Telegram.
