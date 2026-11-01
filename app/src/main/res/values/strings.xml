@@ -41,6 +41,9 @@
     <string name="disclaimer_body" translatable="false">
         By using this application, you confirm that you have read this disclaimer and acknowledge that this software is licensed under the GNU General Public License v3.0 with additional clauses under Section 7.\n\n
 
+        This software is a fork of ShizuCallRecorder, available at https://github.com/kitsumed/ShizuCallRecorder\n\n
+
+        Copyright © 2026 Kitsumed (Med) (ShizuCallRecorder)\n
         Copyright © 2026 The CallVault Authors\n\n
 
         This program is free software: you can redistribute it and/or modify it under the terms of the GNU General Public License as published by the Free Software Foundation, either version 3 of the License, or (at your option) any later version.\n\n
@@ -568,8 +571,8 @@
     <string name="settings_section_updates">Updates</string>
     <string name="settings_update_check_label">Check for updates</string>
     <string name="settings_update_check_description">Once a day, look for a new version on GitHub.</string>
-    <string name="support_appeal_title">Made by one person 👋</string>
-    <string name="support_appeal_body">I build CallVault on my own, in my free time — free, open source, no ads, no tracking. ☕ If it\'s useful to you, a small tip keeps me going. Either way, thanks! 🙏</string>
+    <string name="support_appeal_title">A tip for CallVault ☕</string>
+    <string name="support_appeal_body">I maintain CallVault in my free time. It started as a fork of ShizuCallRecorder by kitsumed and has grown a lot since. Free, open source, no ads, no tracking. If it\'s useful to you, a small tip keeps me going. Thanks! 🙏</string>
     <string name="support_kofi" translatable="false">Ko-fi</string>
     <string name="support_paypal" translatable="false">PayPal</string>
     <string name="support_not_now">Not now</string>
