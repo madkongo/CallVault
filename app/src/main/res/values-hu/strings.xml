@@ -609,8 +609,8 @@
     <string name="summary_requirements_time">Rövid híváshoz egy-két perc, hosszabbhoz több</string>
     <string name="summary_requirements_title">Mi kell hozzá</string>
     <string name="summary_requirements_toggle_description">Mutassa a letöltés előtt, mit igényel az összefoglaló</string>
-    <string name="support_appeal_body">A CallVaultot egyedül fejlesztem, a szabadidőmben – ingyenes, nyílt forráskódú, nincs hirdetés és nyomkövetés. ☕ Ha hasznos neked, egy kis támogatás segít folytatni. Így is, úgy is: köszönöm! 🙏</string>
-    <string name="support_appeal_title">Egyetlen ember készíti 👋</string>
+    <string name="support_appeal_body">A CallVaultot a szabadidőmben tartom karban. kitsumed ShizuCallRecorder projektjének forkjaként indult, és azóta sokat fejlődött. Ingyenes, nyílt forráskódú, nincs hirdetés és nyomkövetés. Ha hasznos neked, egy kis támogatás segít folytatni. Köszönöm! 🙏</string>
+    <string name="support_appeal_title">Egy kis borravaló a CallVaultnak ☕</string>
     <string name="support_not_now">Most nem</string>
     <string name="tile_recording_on">Rögzítés bekapcsolva</string>
     <string name="tile_recording_stopped">Leállítva</string>

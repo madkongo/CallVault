@@ -702,8 +702,8 @@
     <string name="summary_requirements_time">تقریباً یکی دو دقیقه برای یک تماس کوتاه، بیشتر برای تماس طولانی</string>
     <string name="summary_requirements_title">آنچه این نیاز دارد</string>
     <string name="summary_requirements_toggle_description">پیش از دانلود خلاصه‌ساز، هزینه‌های آن را نشان بده</string>
-    <string name="support_appeal_body">CallVault را به‌تنهایی و در وقت آزادم می‌سازم — رایگان، متن‌باز، بدون تبلیغ، بدون ردیابی. ☕ اگر برایتان مفید است، یک انعام کوچک مرا سرِ پا نگه می‌دارد. در هر صورت، ممنون! 🙏</string>
-    <string name="support_appeal_title">ساخته یک نفر 👋</string>
+    <string name="support_appeal_body">CallVault را در وقت آزادم نگهداری می‌کنم. این برنامه به‌صورت فورکی از ShizuCallRecorder ساخته kitsumed شروع شد و از آن زمان خیلی رشد کرده است. رایگان، متن‌باز، بدون تبلیغ، بدون ردیابی. اگر برایتان مفید است، یک انعام کوچک مرا سرِ پا نگه می‌دارد. ممنون! 🙏</string>
+    <string name="support_appeal_title">انعامی برای CallVault ☕</string>
     <string name="support_not_now">حالا نه</string>
     <string name="tile_recording_on">ضبط فعال</string>
     <string name="tile_recording_stopped">متوقف</string>

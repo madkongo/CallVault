@@ -763,8 +763,8 @@
     <string name="summary_requirements_time">Περίπου ένα ή δύο λεπτά για μια σύντομη κλήση, περισσότερο για μια μεγάλη</string>
     <string name="summary_requirements_title">Τι χρειάζεται αυτό</string>
     <string name="summary_requirements_toggle_description">Εμφάνιση του κόστους του συντάκτη περιλήψεων πριν τη λήψη του</string>
-    <string name="support_appeal_body">Φτιάχνω το CallVault μόνος μου, στον ελεύθερο χρόνο μου — δωρεάν, ανοιχτού κώδικα, χωρίς διαφημίσεις, χωρίς παρακολούθηση. ☕ Αν σας είναι χρήσιμο, μια μικρή φιλοδώρηση με βοηθά να συνεχίζω. Έτσι κι αλλιώς, ευχαριστώ! 🙏</string>
-    <string name="support_appeal_title">Φτιάχτηκε από ένα άτομο 👋</string>
+    <string name="support_appeal_body">Συντηρώ το CallVault στον ελεύθερο χρόνο μου. Ξεκίνησε ως fork του ShizuCallRecorder του kitsumed και έχει μεγαλώσει πολύ από τότε. Δωρεάν, ανοιχτού κώδικα, χωρίς διαφημίσεις, χωρίς παρακολούθηση. Αν σας είναι χρήσιμο, μια μικρή φιλοδώρηση με βοηθά να συνεχίζω. Ευχαριστώ! 🙏</string>
+    <string name="support_appeal_title">Ένα φιλοδώρημα για το CallVault ☕</string>
     <string name="support_not_now">Όχι τώρα</string>
     <string name="tile_recording_on">Εγγραφή ενεργή</string>
     <string name="tile_recording_stopped">Διακόπηκε</string>

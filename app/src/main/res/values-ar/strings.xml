@@ -646,8 +646,8 @@
     <string name="summary_requirements_time">حوالي دقيقة أو دقيقتين لمكالمة قصيرة، أطول للمكالمات الطويلة</string>
     <string name="summary_requirements_title">ماذا يتطلب هذا</string>
     <string name="summary_requirements_toggle_description">إظهار تكلفة نموذج التلخيص قبل تنزيلها</string>
-    <string name="support_appeal_body">أقوم ببناء CallVault بنفسي، في وقت فراغي؛ مجاني ومفتوح المصدر وبدون إعلانات وبدون تتبع. ☕ إذا كان مفيدًا لك، فإن نصيحة صغيرة تبقيني مستمرًا. في كلتا الحالتين، شكرًا! 🙏</string>
-    <string name="support_appeal_title">صنع بواسطة شخص واحد 👋</string>
+    <string name="support_appeal_body">أعتني بـ CallVault في وقت فراغي. بدأ كنسخة متفرعة (fork) من ShizuCallRecorder من تطوير kitsumed، وقد نما كثيرًا منذ ذلك الحين. مجاني ومفتوح المصدر وبدون إعلانات وبدون تتبع. إذا كان مفيدًا لك، فإن إكرامية صغيرة تساعدني على الاستمرار. شكرًا! 🙏</string>
+    <string name="support_appeal_title">إكرامية لـ CallVault ☕</string>
     <string name="support_not_now">ليس الآن</string>
     <string name="tile_recording_on">التسجيل مُفعّل</string>
     <string name="tile_recording_stopped">متوقّف</string>

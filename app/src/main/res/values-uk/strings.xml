@@ -619,8 +619,8 @@
     <string name="summary_requirements_time">Для короткого дзвінка приблизно кілька хвилин, для довгого — більше.</string>
     <string name="summary_requirements_title">Що потрібно</string>
     <string name="summary_requirements_toggle_description">Показувати вимоги до моделі перед завантаженням.</string>
-    <string name="support_appeal_body">CallVault — безплатна програма з відкритим кодом, без реклами та відстеження. ☕ Якщо вона корисна, можна підтримати розробника. Дякуємо! 🙏</string>
-    <string name="support_appeal_title">Програму створює одна людина 👋</string>
+    <string name="support_appeal_body">Я підтримую CallVault у вільний час. Програма починалася як форк ShizuCallRecorder від kitsumed і відтоді дуже виросла. Безплатно, з відкритим кодом, без реклами та відстеження. Якщо вона корисна, невелика підтримка допомагає продовжувати. Дякую! 🙏</string>
+    <string name="support_appeal_title">Підтримати CallVault ☕</string>
     <string name="support_not_now">Не зараз</string>
     <string name="tile_recording_on">Запис увімкнений</string>
     <string name="tile_recording_stopped">Зупинено</string>
