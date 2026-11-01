@@ -84,3 +84,4 @@ pushed 2026-10-19) is the one newer candidate; not run (building third-party cod
 - After the shift, the far copy in the mic sits at +0.0 ms in both calls (it was at +75.3 and +58.7).
 - Fix idea, 📐 not built: per call, measure the lag between the far channel and its copy in the mic. If the copy is strong, delay the far channel by that lag before the downmix. With a headset (no leak) nothing changes.
 - Waiting on the maintainer's ear for mix 2 against mix 1.
+- 2026-11-01, maintainer by ear: mix 2 (aligned) removes the echo. Mix 3 (mic only) sounds "slightly better than 2 but its a really small difference". Next step: design the in-app fix together (see the options in the chat of that date).
