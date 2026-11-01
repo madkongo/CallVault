@@ -69,3 +69,18 @@ Linear methods top out near 5 dB → the echo is largely nonlinear (hot mic). AE
 📐 Double-talk damage not measured — needs listening.
 Research (subagent, verified): LocalVQE (github.com/localai-org/LocalVQE, Apache-2.0, GGML, v1.4-AEC 203K params,
 pushed 2026-10-19) is the one newer candidate; not run (building third-party code needs the maintainer's OK).
+
+## 2026-11-01 — the echo comes from the mix, not the mic (🧪 by ear, maintainer)
+
+- The maintainer listened to the three single-channel files:
+  - `B_his_mic_only_before.wav` (raw mic alone): "there is no echo at all and both sound very clear".
+  - The far-channel-only file and the AEC "after" files did not fix it.
+- So the mic channel alone carries both voices cleanly. The echo is made by our mono downmix: it adds the clean far copy to the far voice that has already leaked into the mic 60–76 ms later. Two copies of the same voice that far apart are heard as echo or reverb. That is why echo cancelling (−15 dB on the leak) did not change what was heard.
+- Delay per 1 s block (GCC-PHAT): steady through each call, 75.3 ms (WhatsApp) and 58.7 ms (the other app). It is fixed per call, not drifting. The earlier "54–98 ms drift" came from blocks where his own voice dominates.
+- Test mixes are in `~/Downloads/echo-AB/mixes/`:
+  - `*_1_now_mixed` — as the app mixes today
+  - `*_2_fixed_far_delayed` — far channel delayed by the measured lag before mixing
+  - `*_3_mic_only`
+- After the shift, the far copy in the mic sits at +0.0 ms in both calls (it was at +75.3 and +58.7).
+- Fix idea, 📐 not built: per call, measure the lag between the far channel and its copy in the mic. If the copy is strong, delay the far channel by that lag before the downmix. With a headset (no leak) nothing changes.
+- Waiting on the maintainer's ear for mix 2 against mix 1.
