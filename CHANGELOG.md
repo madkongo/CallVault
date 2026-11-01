@@ -28,6 +28,10 @@ All notable changes to CallVault are documented here. The format is based on
   and key travel unencrypted to it, so use https for anything on the open internet. Asked by QBANIN.
   <!-- 🧪 VERIFYING: unit tests + checkTranslations only (2026-10-31). Not tried against a real http server on a
        phone. To settle: point Custom at an http:// Whisper-compatible server, tap Test, transcribe one call. -->
+- **Credit to ShizuCallRecorder** (#66). The welcome screen now says CallVault is a fork of ShizuCallRecorder,
+  with a link and its author's copyright, and the support dialog names the original project. Raised by kitsumed.
+  <!-- 🧪 VERIFYING: unit tests + checkTranslations only (2026-11-01). To settle: open Settings → Support
+       development, and see the welcome screen on a fresh install. -->
 - **Urdu can be pinned as a transcription language.** Pick it in Settings → Transcription → Language, or in
   the per-call language question. Summaries of Urdu calls are written in Urdu.
   <!-- 🧪 VERIFYING: unit tests and build only (2.4.8-urdu); nothing seen on a phone. Maintainer to pin Urdu,
