@@ -268,7 +268,13 @@ private fun CloudServiceDetails(service: TranscriptionService, preferences: AppP
                 key = it
                 test = null
             },
-            label = { Text(stringResource(R.string.transcription_cloud_key_label, label)) },
+            label = {
+                Text(
+                    // Custom gets its own wording: "Your %1$s key" with "your server" read "Your your server key".
+                    if (service.preset == null) stringResource(R.string.transcription_cloud_key_label_custom)
+                    else stringResource(R.string.transcription_cloud_key_label, label)
+                )
+            },
             singleLine = true,
             visualTransformation = if (keyVisible) VisualTransformation.None else PasswordVisualTransformation(),
             keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password, autoCorrectEnabled = false),

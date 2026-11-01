@@ -833,6 +833,7 @@
     <string name="transcription_where_custom_service">διακομιστή σας</string>
     <string name="transcription_where_recommended">Προτείνεται</string>
     <string name="transcription_cloud_key_label">Το κλειδί σας για %1$s</string>
+    <string name="transcription_cloud_key_label_custom">Το κλειδί του διακομιστή σας</string>
     <string name="transcription_cloud_key_show">Εμφάνιση κλειδιού</string>
     <string name="transcription_cloud_key_hide">Απόκρυψη κλειδιού</string>
     <string name="transcription_cloud_test">Δοκιμή</string>

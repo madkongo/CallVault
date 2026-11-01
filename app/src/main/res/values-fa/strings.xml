@@ -772,6 +772,7 @@
     <string name="transcription_where_custom_service">سرور شما</string>
     <string name="transcription_where_recommended">پیشنهادی</string>
     <string name="transcription_cloud_key_label">کلید شما برای %1$s</string>
+    <string name="transcription_cloud_key_label_custom">کلید سرور شما</string>
     <string name="transcription_cloud_key_show">نمایش کلید</string>
     <string name="transcription_cloud_key_hide">پنهان کردن کلید</string>
     <string name="transcription_cloud_test">آزمایش</string>

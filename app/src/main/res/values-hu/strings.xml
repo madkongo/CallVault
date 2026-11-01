@@ -679,6 +679,7 @@
     <string name="transcription_where_custom_service">saját szerver</string>
     <string name="transcription_where_recommended">Ajánlott</string>
     <string name="transcription_cloud_key_label">Az Ön kulcsa (%1$s)</string>
+    <string name="transcription_cloud_key_label_custom">A saját szerver kulcsa</string>
     <string name="transcription_cloud_key_show">Kulcs megjelenítése</string>
     <string name="transcription_cloud_key_hide">Kulcs elrejtése</string>
     <string name="transcription_cloud_test">Teszt</string>

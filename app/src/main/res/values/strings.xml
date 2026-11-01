@@ -801,6 +801,7 @@
     <string name="transcription_where_custom_service">your server</string>
     <string name="transcription_where_recommended">Recommended</string>
     <string name="transcription_cloud_key_label">Your %1$s key</string>
+    <string name="transcription_cloud_key_label_custom">Your server\'s key</string>
     <string name="transcription_cloud_key_show">Show key</string>
     <string name="transcription_cloud_key_hide">Hide key</string>
     <string name="transcription_cloud_test">Test</string>

@@ -681,6 +681,7 @@
     <string name="transcription_where_custom_service">ваш сервер</string>
     <string name="transcription_where_recommended">Рекомендуется</string>
     <string name="transcription_cloud_key_label">Ваш ключ (%1$s)</string>
+    <string name="transcription_cloud_key_label_custom">Ключ вашего сервера</string>
     <string name="transcription_cloud_key_show">Показать ключ</string>
     <string name="transcription_cloud_key_hide">Скрыть ключ</string>
     <string name="transcription_cloud_test">Проверить</string>
