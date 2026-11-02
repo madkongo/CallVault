@@ -366,24 +366,44 @@ object VoipRecordingCoordinator {
             val service = RecorderConnection.service ?: return@launch
             val pkg = runCatching { resolveCallPackage(context, service) }.getOrNull() ?: continue
             if (!recording) return@launch
-            onAppFoundLate(context, service, pkg, at, manual)
+            val excluded = AppPreferences(context).getVoipExcludedPackages()
+            // A switched-off app costs the whole call, so it is looked up a second time first.
+            val second = if (VoipAppPolicy.shouldRecord(pkg, excluded)) null else {
+                delay(VoipLateCaller.CONFIRM_DELAY_MS)
+                elapsed += VoipLateCaller.CONFIRM_DELAY_MS
+                if (!recording) return@launch
+                runCatching { resolveCallPackage(context, service) }.getOrNull()
+            }
+            when (VoipLateCaller.verdict(pkg, second, excluded)) {
+                VoipLateCaller.LateAppVerdict.UNSURE -> {
+                    AppLogger.i(TAG, "Call app looked like $pkg (switched off), then $second; recording on, asking again later")
+                    continue
+                }
+                VoipLateCaller.LateAppVerdict.DISCARD -> onSwitchedOffAppFoundLate(context, pkg, at)
+                VoipLateCaller.LateAppVerdict.RECORD -> onAppFoundLate(context, service, pkg, at, manual)
+            }
             return@launch
         }
         AppLogger.i(TAG, "No app found for this call after ${elapsed / 1000} s; the recording stays unnamed")
+    }
+
+    /**
+     * The user's per-app choice, as at the start, for an app found late and confirmed by a second
+     * lookup. Nothing has been published yet — the recording is still in private staging — so ending
+     * and discarding it here leaves no trace.
+     */
+    @Synchronized
+    private fun onSwitchedOffAppFoundLate(context: Context, pkg: String, atMs: Long) {
+        if (!recording) return
+        AppLogger.i(TAG, "Call app found ${atMs / 1000} s into the call and confirmed: $pkg is switched off; stopping and discarding this recording")
+        discardAsIgnored = true
+        onCallEnded(context)
     }
 
     @Synchronized
     private fun onAppFoundLate(context: Context, service: IRecorderService, pkg: String, atMs: Long, manual: Boolean) {
         if (!recording) return
         AppLogger.i(TAG, "Call app found ${atMs / 1000} s into the call: $pkg")
-        // The user's per-app choice, as at the start. Nothing has been published yet — the recording
-        // is still in private staging — so ending and discarding it here leaves no trace.
-        if (!VoipAppPolicy.shouldRecord(pkg, AppPreferences(context).getVoipExcludedPackages())) {
-            AppLogger.i(TAG, "$pkg is switched off for recording; stopping and discarding this recording")
-            discardAsIgnored = true
-            onCallEnded(context)
-            return
-        }
         val label = appLabelFor(context, pkg)?.let { sanitiseForFileName(it) }?.takeIf { it.isNotEmpty() }
         lateAppLabel = label
         currentAppLabel = label

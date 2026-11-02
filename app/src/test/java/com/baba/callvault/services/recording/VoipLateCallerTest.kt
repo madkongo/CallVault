@@ -89,4 +89,26 @@ class VoipLateCallerTest {
         // slow app still gets a chance, and over before a short call ends.
         assertEquals(listOf(3_000L, 8_000L, 20_000L), VoipLateCaller.RETRY_DELAYS_MS)
     }
+
+    private val off = setOf("com.whatsapp")
+
+    @Test
+    fun `an app the user records is named straight away, with no second lookup`() {
+        assertEquals(VoipLateCaller.LateAppVerdict.RECORD, VoipLateCaller.verdict("org.telegram.messenger", null, off))
+    }
+
+    @Test
+    fun `a switched-off app named by both lookups is discarded`() {
+        assertEquals(VoipLateCaller.LateAppVerdict.DISCARD, VoipLateCaller.verdict("com.whatsapp", "com.whatsapp", off))
+    }
+
+    @Test
+    fun `a switched-off app that the second lookup does not name keeps recording`() {
+        assertEquals(VoipLateCaller.LateAppVerdict.UNSURE, VoipLateCaller.verdict("com.whatsapp", "org.telegram.messenger", off))
+    }
+
+    @Test
+    fun `a switched-off app that the second lookup cannot find keeps recording`() {
+        assertEquals(VoipLateCaller.LateAppVerdict.UNSURE, VoipLateCaller.verdict("com.whatsapp", null, off))
+    }
 }
