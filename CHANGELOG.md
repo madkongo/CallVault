@@ -80,6 +80,21 @@ All notable changes to CallVault are documented here. The format is based on
   <!-- 🧪 VERIFYING: built 2026-10-31 on fix/decode-time-limit (2.4.8-decode); JVM tests of the stall rule only.
        Not seen on a phone; no truly stalling file tested. Maintainer: confirm a long call still transcribes. -->
 
+- **Less echo on app calls on phones whose mic picks up the earpiece.** On some phones the other person was
+  recorded twice, a fraction of a second apart, which sounds like an echo. CallVault now finds that delay
+  during the call and lines the two up. The echo can still be heard for the first few seconds of a call.
+  <!-- ✅ VERIFIED 2026-11-02 on one OnePlus CPH2747 (A17, Shizuku), via the maintainer. Other phones untested. -->
+- **Telegram calls no longer stop recording after a few seconds.** Telegram briefly leaves call mode while a
+  call connects, and CallVault took that as the call ending. Every other Telegram call was cut short.
+  <!-- ✅ VERIFIED 2026-11-02 on the same OnePlus CPH2747. -->
+- **Telegram recordings carry the Telegram name and icon.** Telegram is identified a few seconds into the call
+  now, instead of the recording going out unnamed.
+  <!-- ✅ VERIFIED 2026-11-02 on the same OnePlus CPH2747. The two-lookup check before discarding a
+       switched-off app (82465bc7) is 🧪 VERIFYING. -->
+- **An app call that ends before the recording starts leaves nothing behind** (#68). It used to leave a
+  sub-second file and a wrong "the other app blocks capture" warning. Reported by ofirmgr.
+  <!-- 🧪 VERIFYING: unit tests only (2026-11-02). To settle: the reporter's POCO X5 Pro over a few days. -->
+
 ## [2.4.8] — 2026-10-31
 
 ### Added

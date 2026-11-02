@@ -1,5 +1,6 @@
 # Rollback: line the far side up with its echo (VoIP)
 
+✅ VERIFIED 2026-11-02 on Евгений's OnePlus CPH2747 (Android 17, Shizuku), build 2.4.8-echofix2, reported via the maintainer: the echo goes after the first few seconds; he can live with what is left at the start. Other phones untested; the start-of-call echo stays open (parked).
 
 **Field result 2026-11-01 (Евгений, via the maintainer, build 2.4.8-echofix):** "There is a bit of an echo at the
 beginning of the conversation, then it gets good, without an echo." The log shows a lock-on in both calls: Telegram
