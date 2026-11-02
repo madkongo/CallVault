@@ -260,7 +260,13 @@ class VoipCallDetector(private val context: Context) {
                 return
             }
 
-            VoipSwitchPolicy.Action.START -> Unit   // handled below
+            VoipSwitchPolicy.Action.START -> {
+                val live = audioManager?.mode ?: mode
+                if (!VoipSwitchPolicy.stillStarting(live, callActive, suspendedForCarrier)) {
+                    AppLogger.i(TAG, "mode=IN_COMMUNICATION was reported, but the mode is already $live — the app call is over, not recording")
+                    return
+                }
+            }
         }
         run {
             // The mode alone does not prove this is an app call. A carrier call carried over IMS

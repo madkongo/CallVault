@@ -681,6 +681,7 @@ object VoipRecordingCoordinator {
         // already stopped, and a Stop button that lingers invites a second press at a moment when
         // the next call may already be starting.
         VoipRecordingNotification.dismiss(context)
+        val recordedMs = clock.audioElapsedMs()
         clock.reset()
         currentAppLabel = null
         paused = false
@@ -715,6 +716,17 @@ object VoipRecordingCoordinator {
         // true — which used to blame the other app ("it blocks capture") for our own failure to open the
         // microphone (vivo, 2026-09-28). Nothing recorded is reported as that, below; not as one-sided.
         val wroteAnything = saf?.stagingFile?.let { it.exists() && it.length() > 0L } ?: true
+        if (wroteAnything && VoipStubPolicy.endedBeforeCapture(recordedMs, farHeard)) {
+            // #68: WhatsApp was back to MODE_NORMAL before the recording opened, and the 0.7 s of mic
+            // that followed was reported as the other app blocking capture.
+            AppLogger.i(TAG, "The app call ended before the recording got going (${recordedMs} ms, far side never heard); discarding it, no warning")
+            runCatching { saf?.descriptor?.close() }
+            runCatching { saf?.stagingFile?.delete() }
+            saf?.uri?.let { uri ->
+                runCatching { SafHelper.deleteDocument(DocumentFile.fromSingleUri(context, uri), "the app call that ended before recording") }
+            }
+            return
+        }
         if (!wroteAnything) {
             AppLogger.w(TAG, "VoIP capture never started — nothing was recorded (the recorder's reason is logged above)")
         } else if (!farHeard) {

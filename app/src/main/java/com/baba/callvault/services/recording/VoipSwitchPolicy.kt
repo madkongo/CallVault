@@ -70,6 +70,16 @@ object VoipSwitchPolicy {
     }
 
     /**
+     * Asked before acting on a START: does the mode as it is NOW still say an app call is up?
+     *
+     * The listener hands over the mode it was posted with, and it runs later on the main thread. On a
+     * POCO X5 Pro (#68) WhatsApp held MODE_IN_COMMUNICATION for 80 ms; by the time the START ran the mode
+     * was back to normal, and a call that was already over got recorded.
+     */
+    fun stillStarting(liveMode: Int, callActive: Boolean, suspendedForCarrier: Boolean): Boolean =
+        decide(liveMode, callActive, suspendedForCarrier) == Action.START
+
+    /**
      * Asked again when the end debounce runs out: does the mode still say the app call is over?
      *
      * The debounce exists for a mode that wobbles, so it must look at the mode as it is NOW, not as
