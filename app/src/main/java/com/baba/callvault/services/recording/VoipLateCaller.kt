@@ -8,6 +8,8 @@
 
 package com.baba.callvault.services.recording
 
+import com.baba.callvault.data.voip.VoipAppPolicy
+
 /**
  * A caller learned after the recording started, and how it reaches the file name.
  *
@@ -24,6 +26,35 @@ object VoipLateCaller {
      * before a short call ends — the notification is usually gone by the time the end is detected.
      */
     val RETRY_DELAYS_MS: List<Long> = listOf(3_000L, 8_000L, 20_000L)
+
+    /**
+     * How long to wait before asking a second time about an app the user switched off. Throwing a
+     * recording away mid-call costs the whole call, so one lookup is not enough to do it.
+     */
+    const val CONFIRM_DELAY_MS: Long = 1_000L
+
+    /** What to do with an app found after the recording started. */
+    enum class LateAppVerdict {
+        /** Recording is allowed for it: name the file after it. */
+        RECORD,
+
+        /** Switched off, and a second lookup named the same app: stop and discard. */
+        DISCARD,
+
+        /** Switched off, but a second lookup disagreed: keep recording, unnamed, and ask again later. */
+        UNSURE,
+    }
+
+    /**
+     * Decides on a late-found app. [first] is the app the lookup found; [second] is a second lookup
+     * made [CONFIRM_DELAY_MS] later, needed only when [first] is switched off. A wrong lookup must not
+     * discard a call the user wanted, so a switched-off app needs both lookups to agree.
+     */
+    fun verdict(first: String, second: String?, excluded: Set<String>): LateAppVerdict = when {
+        VoipAppPolicy.shouldRecord(first, excluded) -> LateAppVerdict.RECORD
+        second == first -> LateAppVerdict.DISCARD
+        else -> LateAppVerdict.UNSURE
+    }
 
     /** The marker every VoIP file name carries, with or without an app after it. */
     private val VOIP_MARKER = Regex("""_voip(-[^_.]+)?(_[^.]+)?(\.[A-Za-z0-9]+)$""")
