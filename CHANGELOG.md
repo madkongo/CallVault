@@ -7,6 +7,10 @@ All notable changes to CallVault are documented here. The format is based on
 
 ### Added
 
+- **Search settings.** A search line at the top of Settings: type a word ("contacts", "WhatsApp", "Wi-Fi") and every
+  group with a matching setting opens, showing only those settings; the rest are dimmed.
+  <!-- 🧪 VERIFYING: OP9 2026-11-03 (2.4.9-search1); maintainer to try. -->
+
 - **Which SIM each call used** (opt-in). Settings ▸ Sound and file names ▸ "Show which SIM each call used": phone
   calls show the name you gave the SIM, or SIM 1 / SIM 2, in the list, on the playback screen and in the details file.
   Idea from @slman890's fork.
