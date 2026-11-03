@@ -97,6 +97,9 @@
     <string name="heavy_work_notification_text">Votre téléphone peut chauffer pendant l\'opération.</string>
     <string name="heavy_work_summarising">Résumé d\'un enregistrement</string>
     <string name="heavy_work_transcribing">Transcription d\'un enregistrement</string>
+    <string name="drive_copy_title">Copie des enregistrements vers Drive</string>
+    <string name="drive_copy_progress">%1$d sur %2$d copiés</string>
+    <string name="drive_copy_stop">Arrêter pour l\'instant</string>
     <string name="home_all_set_message">Tout est prêt. CallVault est prêt à enregistrer vos appels.</string>
     <string name="home_bulk_delete_both">Les deux copies</string>
     <string name="home_bulk_delete_device_only">Appareil uniquement</string>

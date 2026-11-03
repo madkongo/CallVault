@@ -615,6 +615,9 @@
     <string name="heavy_work_summarising">Summarising a recording</string>
     <string name="heavy_work_importing_model">Importing a model</string>
     <string name="heavy_work_backing_up_model">Backing up a model</string>
+    <string name="drive_copy_title">Copying recordings to Drive</string>
+    <string name="drive_copy_progress">%1$d of %2$d copied</string>
+    <string name="drive_copy_stop">Stop for now</string>
     <string name="transcription_model_label">Model</string>
     <string name="transcription_model_small">Fast</string>
     <!--
