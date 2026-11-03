@@ -404,7 +404,13 @@ internal class DirectAudioRecorderSession(
         // Releasing the record also unblocks a read wedged in the HAL, which is the only way the reader
         // can miss the flag.
         runCatching { audioRecord?.stop() }
-        runCatching { audioRecord?.release() }
+        // Tell the ledger the mic is closed, or every carrier call leaves a false "STILL OPEN" in the log.
+        val releaseError = runCatching { audioRecord?.release() }.exceptionOrNull()
+        if (auditId != 0) {
+            CaptureAudit.released(auditId, releaseError)
+            auditId = 0
+            CaptureAudit.assertNoneLive("after stopping direct capture")
+        }
         // Belt and braces for exactly that case: close the queue ourselves, so the encoder is never left
         // waiting for a chunk that is not coming.
         readerFinished.set(true)
