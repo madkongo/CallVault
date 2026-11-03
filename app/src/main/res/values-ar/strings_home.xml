@@ -34,9 +34,7 @@
     <string name="home_update_banner_installing">جارٍ التثبيت…</string>
     <string name="home_updated_banner_text">تم تحديث CallVault إلى %1$s</string>
     <string name="home_whatsnew_title">ما الجديد</string>
-    <string name="home_whatsnew_body">• يتعافى التسجيل الآن بنفسه إذا توقف في أي وقت
-• تخبرك الصفحة الرئيسية عندما يكون التسجيل معطلاً، بدلاً من البقاء صامتًا
-• لم تعد المكالمة الهاتفية تعتبر مكالمة تطبيق</string>
+    <string name="home_whatsnew_body">• يتعافى التسجيل الآن بنفسه إذا توقف في أي وقت\n• تخبرك الصفحة الرئيسية عندما يكون التسجيل معطلاً، بدلاً من البقاء صامتًا\n• لم تعد المكالمة الهاتفية تعتبر مكالمة تطبيق</string>
     <string name="home_whatsnew_offline_cta">تشغيل التسجيل بدون Wi-Fi</string>
     <string name="home_whatsnew_offline_enabled">«مواصلة التسجيل بدون Wi-Fi» قيد التشغيل.</string>
     <string name="offline_failed_needs_wd">تعذر التمكين؛ تصحيح الأخطاء اللاسلكي متوقف ولم يتمكن CallVault من تشغيله. قم بتشغيله في خيارات المطور، ثم حاول مرة أخرى.</string>
