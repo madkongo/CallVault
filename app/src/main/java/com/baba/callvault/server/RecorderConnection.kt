@@ -58,7 +58,17 @@ object RecorderConnection {
         // The VoIP capture policy lives in the daemon process, so a relaunch loses it. Re-arm on every
         // fresh binder — it must be registered BEFORE a call starts, and there is no later chance.
         onDaemonReady?.invoke()
+        runCatching { onConnected?.invoke() }.onFailure { AppLogger.w(TAG, "onConnected hook failed: ${it.message}") }
     }
+
+    /**
+     * Fired whenever a fresh binder arrives, for the keep-alive's "ready" notification. Without it the
+     * notification learned of a recorder brought up by someone else (the app start, the update receiver)
+     * only at its next 60 s check, and said "starting up" for a minute after an update while the recorder
+     * was ready (OP9, 2026-11-02/03). Runs on the caller's thread, so it must not block.
+     */
+    @Volatile
+    var onConnected: (() -> Unit)? = null
 
     /**
      * Invoked whenever a fresh daemon binder arrives, for state the daemon cannot keep across a

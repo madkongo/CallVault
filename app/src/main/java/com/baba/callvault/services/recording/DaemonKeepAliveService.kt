@@ -455,6 +455,17 @@ class DaemonKeepAliveService : Service() {
         // Recover the INSTANT the daemon dies (binder linkToDeath) — don't wait for the next poll.
         // On a real incoming call this is what races (and hopefully beats) the call after a long idle.
         RecorderConnection.onDeath = { onDaemonDiedImmediate() }
+        // And say "ready" the moment any recorder connects, whoever started it.
+        RecorderConnection.onConnected = {
+            watchdogHandler.post {
+                val alive = isDaemonAlive()
+                if (alive != (lastReady == true)) {
+                    lastReady = alive
+                    updateNotification(alive)
+                    AppLogger.d(TAG, "keep-alive: recorder connected; daemon alive=$alive")
+                }
+            }
+        }
         // VoIP detection lives here rather than in its own component: this service is already a
         // permanent foreground presence, so watching for VoIP calls costs no extra process and no
         // second notification, and VoIP gets exactly the same lifetime as carrier recording.
@@ -749,6 +760,7 @@ class DaemonKeepAliveService : Service() {
         watchdogHandler.removeCallbacks(watchdog)
         watchdogHandler.removeCallbacks(healSharedNoticeRunnable)
         RecorderConnection.onDeath = null
+        RecorderConnection.onConnected = null
         SharedStatusNotice.onReleased = null
         super.onDestroy()
     }
