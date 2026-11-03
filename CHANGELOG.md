@@ -114,6 +114,12 @@ All notable changes to CallVault are documented here. The format is based on
 - **No false "USB is in data mode" warning on Honor.** On a Honor phone set to Charging only, the warning came
   back minutes after the fix button cleared it: CallVault read Honor's own USB default instead of the setting.
   <!-- 🧪 VERIFYING: unit tests only (2026-11-03). To settle: the Honor BVL-N49 reporter, a day without the warning. -->
+- **Scheduled Drive copies finish, newest first.** The daily or weekly copy was stopped by Android after about ten
+  minutes, so a large backlog never finished and the "not reaching Drive" warning came up. It now shows "Copying
+  recordings to Drive · N of M copied" while it runs, uploads the newest calls first, and "Stop for now" stops it
+  between files; the next scheduled run copies the rest along with new calls. A file reaching Drive is always
+  recorded as copied, even if the copy is stopped right then.
+  <!-- 🧪 VERIFYING: unit tests (2026-11-03); OP9 Drive run pending. To settle: Eugene (Honor BVL-N49) a cycle without the warning. -->
 
 ## [2.4.8] — 2026-10-31
 
