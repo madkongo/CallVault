@@ -452,6 +452,15 @@
     <string name="settings_link_share_debug_report">Поділитися звітом діагностики</string>
     <string name="settings_metadata_file_desc">Зберігати невеликий .json поряд із записом</string>
     <string name="settings_metadata_file_hint">Використовує формат BCR, тому сумісні застосунки, наприклад bcr-gui, зможуть читати метадані записів.</string>
+    <string name="settings_search_hint">Пошук у налаштуваннях</string>
+    <string name="settings_search_no_matches">Немає збігів</string>
+    <string name="settings_search_none">Немає налаштувань, що відповідають «%1$s»</string>
+    <plurals name="settings_search_matches">
+        <item quantity="one">%d збіг</item>
+        <item quantity="few">%d збіги</item>
+        <item quantity="many">%d збігів</item>
+        <item quantity="other">%d збігу</item>
+    </plurals>
     <string name="settings_sim_label_label">Показувати, яку SIM використано для дзвінка</string>
     <string name="settings_sim_label_desc">Для телефонів із двома SIM: показує назву, яку ви дали SIM-карті, або SIM 1 / SIM 2</string>
     <string name="sim_label_word">SIM</string>

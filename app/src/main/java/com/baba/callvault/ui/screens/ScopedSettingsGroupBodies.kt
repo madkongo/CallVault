@@ -88,28 +88,28 @@ private fun CallsToRecordBody(preferences: AppPreferences, updateTrigger: Int, a
     var isAppOn by remember { mutableStateOf(prefs.isVoipRecordingEnabled()) }
 
     SettingsSubHeader(stringResource(R.string.settings_subsection_phone_calls))
-    CarrierRecordingRow(preferences, updateTrigger, actions)
+    SearchFiltered("CarrierRecordingRow") { CarrierRecordingRow(preferences, updateTrigger, actions) }
     ShownWhen(isPhoneOn) {
         Column {
-            AutoRecordIncomingRow(preferences, updateTrigger, actions)
-            AutoRecordOutgoingRow(preferences, updateTrigger, actions)
+            SearchFiltered("AutoRecordIncomingRow") { AutoRecordIncomingRow(preferences, updateTrigger, actions) }
+            SearchFiltered("AutoRecordOutgoingRow") { AutoRecordOutgoingRow(preferences, updateTrigger, actions) }
         }
     }
 
     SettingsSubHeader(stringResource(R.string.settings_subheader_app_calls))
-    VoipRecordingSwitch(enabled = isAppOn, onEnabledChange = { isAppOn = it })
+    SearchFiltered("VoipRecordingSwitch") { VoipRecordingSwitch(enabled = isAppOn, onEnabledChange = { isAppOn = it }) }
     ShownWhen(isAppOn) {
         Column {
-            VoipAppPicker(prefs)
-            VoipAutoStartRow(label = stringResource(R.string.settings_voip_auto_start_record_label))
+            SearchFiltered("VoipAppPicker") { VoipAppPicker(prefs) }
+            SearchFiltered("VoipAutoStartRow") { VoipAutoStartRow(label = stringResource(R.string.settings_voip_auto_start_record_label)) }
         }
     }
 
     SettingsSubHeader(stringResource(R.string.settings_subheader_all_calls))
     // Covers app calls too (when the app shows a call timer), so under "All calls" it shows while either
     // kind of call is recorded, not only phone calls as it did under "When to start".
-    ShownWhen(isPhoneOn || isAppOn) { RecordFromAnswerRow(preferences, updateTrigger, actions) }
-    VibrationRow(preferences, updateTrigger, actions)
+    ShownWhen(isPhoneOn || isAppOn) { SearchFiltered("RecordFromAnswerRow") { RecordFromAnswerRow(preferences, updateTrigger, actions) } }
+    SearchFiltered("VibrationRow") { VibrationRow(preferences, updateTrigger, actions) }
 }
 
 /** Every rule that keeps a call from being recorded, phone and app calls alike, and the short-call cut-off. */
@@ -123,25 +123,25 @@ private fun CallsToSkipBody(
     val context = LocalContext.current
     val isAppOn = remember(updateTrigger) { AppPreferences(context).isVoipRecordingEnabled() }
 
-    IgnoreContactsIncomingRow(preferences, updateTrigger, actions, callbacks.onOpenContactsIncoming)
-    IgnoreContactsOutgoingRow(preferences, updateTrigger, actions, callbacks.onOpenContactsOutgoing)
+    SearchFiltered("IgnoreContactsIncomingRow") { IgnoreContactsIncomingRow(preferences, updateTrigger, actions, callbacks.onOpenContactsIncoming) }
+    SearchFiltered("IgnoreContactsOutgoingRow") { IgnoreContactsOutgoingRow(preferences, updateTrigger, actions, callbacks.onOpenContactsOutgoing) }
     SettingsDivider()
-    IgnoreAnonymousIncomingRow(preferences, updateTrigger, actions)
-    IgnoreCrossCountryIncomingRow(preferences, updateTrigger, actions)
-    IgnoreCrossCountryOutgoingRow(preferences, updateTrigger, actions)
+    SearchFiltered("IgnoreAnonymousIncomingRow") { IgnoreAnonymousIncomingRow(preferences, updateTrigger, actions) }
+    SearchFiltered("IgnoreCrossCountryIncomingRow") { IgnoreCrossCountryIncomingRow(preferences, updateTrigger, actions) }
+    SearchFiltered("IgnoreCrossCountryOutgoingRow") { IgnoreCrossCountryOutgoingRow(preferences, updateTrigger, actions) }
     // Only means something while app calls are recorded, as under the VoIP switch on the classic screen.
-    if (isAppOn) VoipIgnoreContactsRow()
+    if (isAppOn) SearchFiltered("VoipIgnoreContactsRow") { VoipIgnoreContactsRow() }
     SettingsDivider()
-    MinDurationRow(preferences, updateTrigger, actions)
+    SearchFiltered("MinDurationRow") { MinDurationRow(preferences, updateTrigger, actions) }
 }
 
 @Composable
 private fun SoundAndNamesBody(preferences: AppPreferences, updateTrigger: Int, actions: SettingsActions) {
-    AudioSection(preferences, updateTrigger, actions, expanded = true, onToggle = {})
+    SearchFiltered("AudioSection") { AudioSection(preferences, updateTrigger, actions, expanded = true, onToggle = {}) }
     SettingsDivider()
-    FileNameTemplateRow(preferences, updateTrigger, actions)
+    SearchFiltered("FileNameTemplateRow") { FileNameTemplateRow(preferences, updateTrigger, actions) }
     SettingsDivider()
-    SimLabelRow(preferences, updateTrigger, actions)
+    SearchFiltered("SimLabelRow") { SimLabelRow(preferences, updateTrigger, actions) }
 }
 
 @Composable
@@ -154,54 +154,54 @@ private fun SaveAndSyncBody(
     val storageTarget = remember(updateTrigger) { preferences.getStorageTarget() }
     SaveAndSyncRows.visibleRows(storageTarget).forEach { row ->
         when (row) {
-            SaveAndSyncRow.STORAGE_TARGET -> StorageTargetRow(preferences, updateTrigger, actions)
-            SaveAndSyncRow.RECORDING_FOLDER -> RecordingFolderRow(preferences, updateTrigger, callbacks.onSelectFolder)
-            SaveAndSyncRow.DRIVE_FOLDER -> DriveFolderRow(preferences, updateTrigger, callbacks.onSelectDriveFolder)
+            SaveAndSyncRow.STORAGE_TARGET -> SearchFiltered("StorageTargetRow") { StorageTargetRow(preferences, updateTrigger, actions) }
+            SaveAndSyncRow.RECORDING_FOLDER -> SearchFiltered("RecordingFolderRow") { RecordingFolderRow(preferences, updateTrigger, callbacks.onSelectFolder) }
+            SaveAndSyncRow.DRIVE_FOLDER -> SearchFiltered("DriveFolderRow") { DriveFolderRow(preferences, updateTrigger, callbacks.onSelectDriveFolder) }
             SaveAndSyncRow.UPLOAD_SCHEDULE -> {
                 SettingsSubHeader(stringResource(R.string.wizard_schedule_title))
-                UploadScheduleSubSection(preferences, updateTrigger, actions)
+                SearchFiltered("UploadScheduleSubSection") { UploadScheduleSubSection(preferences, updateTrigger, actions) }
             }
             SaveAndSyncRow.HIDE_RECORDINGS -> {
                 SettingsDivider()
-                HideRecordingsRow(preferences, updateTrigger, actions)
+                SearchFiltered("HideRecordingsRow") { HideRecordingsRow(preferences, updateTrigger, actions) }
             }
-            SaveAndSyncRow.METADATA_FILE -> MetadataFileRow(preferences, updateTrigger, actions)
-            SaveAndSyncRow.TRANSCRIPT_SIDECAR -> TranscriptSidecarRow(preferences, updateTrigger, actions)
+            SaveAndSyncRow.METADATA_FILE -> SearchFiltered("MetadataFileRow") { MetadataFileRow(preferences, updateTrigger, actions) }
+            SaveAndSyncRow.TRANSCRIPT_SIDECAR -> SearchFiltered("TranscriptSidecarRow") { TranscriptSidecarRow(preferences, updateTrigger, actions) }
         }
     }
 }
 
 @Composable
 private fun CleaningUpBody(preferences: AppPreferences, updateTrigger: Int, actions: SettingsActions) {
-    RetentionPolicyRows(preferences, updateTrigger, actions)
+    SearchFiltered("RetentionPolicyRows") { RetentionPolicyRows(preferences, updateTrigger, actions) }
     SettingsDivider()
-    MergeSubSection(preferences, updateTrigger)
+    SearchFiltered("MergeSubSection") { MergeSubSection(preferences, updateTrigger) }
 }
 
 @Composable
 private fun ConnectionBody() {
-    ConnectionRows()
+    SearchFiltered("ConnectionRows") { ConnectionRows() }
 }
 
 @Composable
 private fun ModelAndLanguageBody(preferences: AppPreferences, updateTrigger: Int, actions: SettingsActions) {
-    TranscriptionServiceRows(preferences, updateTrigger, actions)
+    SearchFiltered("TranscriptionServiceRows") { TranscriptionServiceRows(preferences, updateTrigger, actions) }
     // The speech model only matters on this phone; a cloud service (#48) brings its own.
     val onDevice = remember(updateTrigger) { !preferences.getTranscriptionService().isCloud }
     if (onDevice) {
         SettingsDivider()
-        TranscriptionModelChoiceRow(preferences, updateTrigger, actions)
-        TranscriptionModelDownloadRows(preferences, updateTrigger, actions)
+        SearchFiltered("TranscriptionModelChoiceRow") { TranscriptionModelChoiceRow(preferences, updateTrigger, actions) }
+        SearchFiltered("TranscriptionModelDownloadRows") { TranscriptionModelDownloadRows(preferences, updateTrigger, actions) }
     }
     SettingsDivider()
-    TranscriptionLanguageRows(preferences, updateTrigger, actions)
+    SearchFiltered("TranscriptionLanguageRows") { TranscriptionLanguageRows(preferences, updateTrigger, actions) }
 }
 
 @Composable
 private fun WhenToTranscribeBody(preferences: AppPreferences, updateTrigger: Int, actions: SettingsActions) {
-    TranscriptionScheduleRows(preferences, updateTrigger, actions)
-    TranscriptionConfirmRow(preferences, updateTrigger, actions)
-    TranscriptionModeNote(preferences, updateTrigger)
+    SearchFiltered("TranscriptionScheduleRows") { TranscriptionScheduleRows(preferences, updateTrigger, actions) }
+    SearchFiltered("TranscriptionConfirmRow") { TranscriptionConfirmRow(preferences, updateTrigger, actions) }
+    SearchFiltered("TranscriptionModeNote") { TranscriptionModeNote(preferences, updateTrigger) }
 }
 
 /** Transcripts and summaries share ONE language on purpose; here it is read-only, with a link to it. */
@@ -221,7 +221,7 @@ private fun SummariesBody(
         keepSupportingInline = true,
     )
     SettingsDivider()
-    SummarySettingsRows(preferences, updateTrigger, actions)
+    SearchFiltered("SummarySettingsRows") { SummarySettingsRows(preferences, updateTrigger, actions) }
 }
 
 @Composable
@@ -231,14 +231,14 @@ private fun AppBody(
     actions: SettingsActions,
     callbacks: GroupBodyCallbacks,
 ) {
-    AppearanceRows(preferences, updateTrigger, actions)
+    SearchFiltered("AppearanceRows") { AppearanceRows(preferences, updateTrigger, actions) }
     SettingsSubHeader(stringResource(R.string.settings_section_privacy))
-    PrivacySubSection(preferences, updateTrigger)
+    SearchFiltered("PrivacySubSection") { PrivacySubSection(preferences, updateTrigger) }
     SettingsSubHeader(stringResource(R.string.settings_section_updates))
-    UpdatesSubSection(preferences, updateTrigger, actions)
+    SearchFiltered("UpdatesSubSection") { UpdatesSubSection(preferences, updateTrigger, actions) }
     SettingsDivider()
     Column(Modifier.padding(horizontal = 16.dp, vertical = 8.dp)) {
-        ExportImportRow(onExport = callbacks.onExportSettings, onImport = callbacks.onImportSettings)
+        SearchFiltered("ExportImportRow") { ExportImportRow(onExport = callbacks.onExportSettings, onImport = callbacks.onImportSettings) }
     }
 }
 
@@ -250,17 +250,21 @@ private fun HelpAndAboutBody(
     actions: SettingsActions,
     callbacks: GroupBodyCallbacks,
 ) {
-    BugReportSection(
-        preferences, updateTrigger, actions, callbacks.onShareLogs, callbacks.onSaveLogs,
-        expanded = true, onToggle = {},
-    )
+    SearchFiltered("BugReportSection") {
+        BugReportSection(
+            preferences, updateTrigger, actions, callbacks.onShareLogs, callbacks.onSaveLogs,
+            expanded = true, onToggle = {},
+        )
+    }
     SettingsSubHeader(stringResource(R.string.settings_section_about))
-    AboutSection(
-        versionString = actions.getAppVersion(),
-        onShowLicenses = callbacks.onShowLicenses,
-        expanded = true,
-        onToggle = {},
-    )
+    SearchFiltered("AboutSection") {
+        AboutSection(
+            versionString = actions.getAppVersion(),
+            onShowLicenses = callbacks.onShowLicenses,
+            expanded = true,
+            onToggle = {},
+        )
+    }
 }
 
 /** Rows that only apply while a switch is on fold in and out with it, as on the classic screen. */

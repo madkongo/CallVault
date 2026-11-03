@@ -441,6 +441,12 @@
     <string name="settings_link_share_debug_report">分享调试报告</string>
     <string name="settings_metadata_file_desc">在每个录音旁保存一个小的 .json 文件</string>
     <string name="settings_metadata_file_hint">使用与 BCR 相同的格式，因此为其开发的应用（例如 bcr-gui）可以读取你的录音详情。只有在使用这类应用时才值得开启。</string>
+    <string name="settings_search_hint">搜索设置</string>
+    <string name="settings_search_no_matches">无匹配项</string>
+    <string name="settings_search_none">没有与“%1$s”匹配的设置</string>
+    <plurals name="settings_search_matches">
+        <item quantity="other">%d 项匹配</item>
+    </plurals>
     <string name="settings_sim_label_label">显示每通电话使用的 SIM 卡</string>
     <string name="settings_sim_label_desc">适用于双卡手机：显示你为 SIM 卡设置的名称，或“卡 1”/“卡 2”</string>
     <string name="sim_label_word">卡</string>

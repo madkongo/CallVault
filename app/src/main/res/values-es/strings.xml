@@ -442,6 +442,13 @@
     <string name="settings_link_share_debug_report">Compartir un informe de depuración</string>
     <string name="settings_metadata_file_desc">Guardar un pequeño .json junto a cada grabación</string>
     <string name="settings_metadata_file_hint">Usa el mismo formato que BCR, así las apps hechas para él —como bcr-gui— pueden leer los detalles de tus grabaciones. Solo merece la pena si usas alguna.</string>
+    <string name="settings_search_hint">Buscar en los ajustes</string>
+    <string name="settings_search_no_matches">Sin coincidencias</string>
+    <string name="settings_search_none">Ningún ajuste coincide con «%1$s»</string>
+    <plurals name="settings_search_matches">
+        <item quantity="one">%d coincidencia</item>
+        <item quantity="other">%d coincidencias</item>
+    </plurals>
     <string name="settings_sim_label_label">Mostrar qué SIM usó cada llamada</string>
     <string name="settings_sim_label_desc">Para teléfonos con dos SIM: muestra el nombre que le diste a la SIM, o SIM 1 / SIM 2</string>
     <string name="sim_label_word">SIM</string>

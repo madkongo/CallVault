@@ -914,6 +914,13 @@
     <string name="notif_health_recorder_text_shizuku">Calls will not be recorded until Shizuku is running again. A reboot stops it, so it has to be started once after the phone restarts.</string>
     <string name="settings_offline_recording_reboot_note">After a restart this stops working until the phone joins a Wi-Fi network once. Any network will do and it does not need internet — a few seconds is enough. CallVault will tell you when that is needed.</string>
     <string name="general_stop">Stop</string>
+    <string name="settings_search_hint">Search settings</string>
+    <string name="settings_search_no_matches">No matches</string>
+    <string name="settings_search_none">No setting matches “%1$s”</string>
+    <plurals name="settings_search_matches">
+        <item quantity="one">%d match</item>
+        <item quantity="other">%d matches</item>
+    </plurals>
     <string name="settings_sim_label_label">Show which SIM each call used</string>
     <string name="settings_sim_label_desc">For phones with two SIMs: shows the name you gave the SIM, or SIM 1 / SIM 2</string>
     <string name="sim_label_word">SIM</string>
