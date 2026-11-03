@@ -47,15 +47,15 @@
     <string name="home_whatsnew_title">What\'s new</string>
     <string name="home_whatsnew_body">• Recording now recovers by itself if it ever gets stuck\n• Home tells you when recording is down, instead of staying quiet\n• A phone call is no longer mistaken for an app call</string>
     <string name="home_whatsnew_offline_cta">Turn on off-Wi-Fi recording</string>
-    <string name="home_whatsnew_offline_enabled">Offline recording enabled.</string>
+    <string name="home_whatsnew_offline_enabled">\"Keep recording off Wi-Fi\" is on.</string>
     <string name="offline_failed_needs_wd">Couldn\'t enable — Wireless debugging is off and CallVault couldn\'t switch it on. Turn it on in Developer options, then try again.</string>
     <string name="offline_failed_no_service">Couldn\'t enable — CallVault couldn\'t reach the phone\'s debugging service. Check you\'re on Wi-Fi with Wireless debugging on, then try again.</string>
     <string name="offline_failed_port">Couldn\'t enable — the local port didn\'t come back up. Try again in a moment.</string>
     <string name="home_whatsnew_offline_enabling">Enabling off-Wi-Fi recording…</string>
-    <string name="home_whatsnew_resilient_title">New: Resilient recording</string>
-    <string name="home_whatsnew_resilient_body">Makes call recording more resistant to interruptions.\n\nAndroid can stop CallVault\'s background helper at any time. With this on, a recording already in progress is no longer affected when that happens.\n\nOff by default — you can also turn it on later in Settings ▸ Reliability.</string>
+    <string name="home_whatsnew_resilient_title">New: Keep recording if the helper stops</string>
+    <string name="home_whatsnew_resilient_body">Makes call recording more resistant to interruptions.\n\nAndroid can stop CallVault\'s background helper at any time. With this on, a recording already in progress is no longer affected when that happens.\n\nOff by default — you can also turn it on later in Settings ▸ Connection.</string>
     <string name="home_whatsnew_resilient_cta">Turn it on</string>
-    <string name="home_whatsnew_resilient_enabled">Resilient recording is on. A recording already in progress is no longer affected if Android stops CallVault\'s background helper.</string>
+    <string name="home_whatsnew_resilient_enabled">\"Keep recording if the helper stops\" is on. A recording already in progress is no longer affected if Android stops CallVault\'s background helper.</string>
 
     <!-- Post-update note: one entry per release, newest first. Keep in sync with CHANGELOG.md. -->
     <string name="home_whatsnew_settings_cta">Open Settings</string>
@@ -135,7 +135,7 @@
     <string name="merge_primary_hint">Starts the merged call</string>
     <string name="merge_title">Merge calls with %1$s</string>
     <string name="settings_merge_keep_originals_description">After merging, leave the calls it was made from on the phone as well. Off by default, so a merge leaves one recording. Taking a merged call apart works either way.</string>
-    <string name="settings_merge_keep_originals_title">Keep the original calls</string>
+    <string name="settings_merge_keep_originals_title">Keep originals after merging</string>
     <string name="unmerge_confirm">Un-merge</string>
     <string name="unmerge_message">It becomes these calls again, each with the transcript and marks it had:</string>
     <string name="unmerge_title">Un-merge this call?</string>

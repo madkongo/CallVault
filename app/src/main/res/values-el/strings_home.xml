@@ -47,15 +47,15 @@
     <string name="home_whatsnew_title">Τι νέο υπάρχει</string>
     <string name="home_whatsnew_body">• Η εγγραφή ανακάμπτει πλέον από μόνη της αν ποτέ κολλήσει\n• Η αρχική σελίδα σάς ενημερώνει όταν η εγγραφή δεν λειτουργεί, αντί να μένει σιωπηλή\n• Μια τηλεφωνική κλήση δεν μπερδεύεται πλέον με κλήση εφαρμογής</string>
     <string name="home_whatsnew_offline_cta">Ενεργοποίηση εγγραφής εκτός Wi-Fi</string>
-    <string name="home_whatsnew_offline_enabled">Η εγγραφή εκτός σύνδεσης ενεργοποιήθηκε.</string>
+    <string name="home_whatsnew_offline_enabled">Η ρύθμιση «Συνέχιση εγγραφής χωρίς Wi-Fi» είναι ενεργή.</string>
     <string name="offline_failed_needs_wd">Δεν ήταν δυνατή η ενεργοποίηση — ο Ασύρματος εντοπισμός σφαλμάτων είναι ανενεργός και το CallVault δεν μπόρεσε να τον ενεργοποιήσει. Ενεργοποιήστε τον στις Επιλογές προγραμματιστή και δοκιμάστε ξανά.</string>
     <string name="offline_failed_no_service">Δεν ήταν δυνατή η ενεργοποίηση — το CallVault δεν μπόρεσε να επικοινωνήσει με την υπηρεσία εντοπισμού σφαλμάτων του τηλεφώνου. Βεβαιωθείτε ότι είστε σε Wi-Fi με ενεργό τον Ασύρματο εντοπισμό σφαλμάτων και δοκιμάστε ξανά.</string>
     <string name="offline_failed_port">Δεν ήταν δυνατή η ενεργοποίηση — η τοπική θύρα δεν επανήλθε. Δοκιμάστε ξανά σε λίγο.</string>
     <string name="home_whatsnew_offline_enabling">Ενεργοποίηση εγγραφής εκτός Wi-Fi…</string>
-    <string name="home_whatsnew_resilient_title">Νέο: Ανθεκτική εγγραφή</string>
-    <string name="home_whatsnew_resilient_body">Κάνει την εγγραφή κλήσεων πιο ανθεκτική στις διακοπές.\n\nΤο Android μπορεί να σταματήσει τον βοηθό παρασκηνίου του CallVault ανά πάσα στιγμή. Με αυτό ενεργό, μια εγγραφή που βρίσκεται ήδη σε εξέλιξη δεν επηρεάζεται πλέον όταν συμβεί αυτό.\n\nΑνενεργό από προεπιλογή — μπορείτε επίσης να το ενεργοποιήσετε αργότερα στις Ρυθμίσεις ▸ Αξιοπιστία.</string>
+    <string name="home_whatsnew_resilient_title">Νέο: Συνέχιση εγγραφής αν σταματήσει ο βοηθός</string>
+    <string name="home_whatsnew_resilient_body">Κάνει την εγγραφή κλήσεων πιο ανθεκτική στις διακοπές.\n\nΤο Android μπορεί να σταματήσει τον βοηθό παρασκηνίου του CallVault ανά πάσα στιγμή. Με αυτό ενεργό, μια εγγραφή που βρίσκεται ήδη σε εξέλιξη δεν επηρεάζεται πλέον όταν συμβεί αυτό.\n\nΑνενεργό από προεπιλογή — μπορείτε επίσης να το ενεργοποιήσετε αργότερα στις Ρυθμίσεις ▸ Σύνδεση.</string>
     <string name="home_whatsnew_resilient_cta">Ενεργοποίηση</string>
-    <string name="home_whatsnew_resilient_enabled">Η ανθεκτική εγγραφή είναι ενεργή. Μια εγγραφή που βρίσκεται ήδη σε εξέλιξη δεν επηρεάζεται πλέον αν το Android σταματήσει τον βοηθό παρασκηνίου του CallVault.</string>
+    <string name="home_whatsnew_resilient_enabled">Η ρύθμιση «Συνέχιση εγγραφής αν σταματήσει ο βοηθός» είναι ενεργή. Μια εγγραφή που βρίσκεται ήδη σε εξέλιξη δεν επηρεάζεται πλέον αν το Android σταματήσει τον βοηθό παρασκηνίου του CallVault.</string>
 
     <!-- Post-update note: one entry per release, newest first. Keep in sync with CHANGELOG.md. -->
     <string name="home_whatsnew_settings_cta">Άνοιγμα Ρυθμίσεων</string>
@@ -135,7 +135,7 @@
     <string name="merge_primary_hint">Ξεκινά τη συγχωνευμένη κλήση</string>
     <string name="merge_title">Συγχώνευση κλήσεων με %1$s</string>
     <string name="settings_merge_keep_originals_description">Μετά τη συγχώνευση, αφήστε και τις κλήσεις από τις οποίες προέκυψε στο τηλέφωνο. Ανενεργό από προεπιλογή, ώστε μια συγχώνευση να αφήνει μία εγγραφή. Ο διαχωρισμός μιας συγχωνευμένης κλήσης λειτουργεί και με τους δύο τρόπους.</string>
-    <string name="settings_merge_keep_originals_title">Διατήρηση των αρχικών κλήσεων</string>
+    <string name="settings_merge_keep_originals_title">Διατήρηση πρωτοτύπων μετά τη συγχώνευση</string>
     <string name="unmerge_confirm">Διαχωρισμός</string>
     <string name="unmerge_message">Γίνεται ξανά αυτές οι κλήσεις, η καθεμία με την απομαγνητοφώνηση και τις σημειώσεις που είχε:</string>
     <string name="unmerge_title">Διαχωρισμός αυτής της κλήσης;</string>

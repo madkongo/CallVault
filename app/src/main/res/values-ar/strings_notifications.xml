@@ -19,7 +19,7 @@
     <string name="notif_pairing_working_title">جارٍ الاقتران…</string>
     <string name="notif_readiness_channel">حالة جاهزية مسجل المكالمات</string>
     <string name="notif_readiness_down_title">المكالمات لا تُسجَّل حاليًا</string>
-    <string name="notif_readiness_needs_wifi_restart_text">توقف المسجل ويلزم الاتصال بشبكة Wi-Fi لإعادة تشغيله. تفعيل «التسجيل بدون إنترنت» أثناء الاتصال بـ Wi-Fi يمنع هذا التوقف.</string>
+    <string name="notif_readiness_needs_wifi_restart_text">توقف المسجل ويلزم الاتصال بشبكة Wi-Fi لإعادة تشغيله. تفعيل «مواصلة التسجيل بدون Wi-Fi» أثناء الاتصال بـ Wi-Fi يمنع هذا التوقف.</string>
     <string name="notif_readiness_needs_wifi_text">تصحيح أخطاء USB غير مفعّل ولا يوجد اتصال Wi-Fi. يرجى الاتصال بـ Wi-Fi أو تفعيل تصحيح أخطاء USB.</string>
     <string name="notif_readiness_no_debugging_text">تصحيح أخطاء USB وتصحيح الأخطاء اللاسلكي كلاهما متوقف. يرجى تفعيل أحدهما في خيارات المطور.</string>
     <string name="notif_readiness_offline_paused_text">تم إيقاف التسجيل بدون Wi-Fi مؤقتًا: يتطلب تفعيل تصحيح أخطاء USB. لا تزال المكالمات عبر Wi-Fi تُسجَّل طبيعيًا.</string>
