@@ -99,6 +99,9 @@
     <string name="heavy_work_notification_text">Телефон может нагреваться во время работы.</string>
     <string name="heavy_work_summarising">Создание краткого пересказа</string>
     <string name="heavy_work_transcribing">Расшифровка записи</string>
+    <string name="drive_copy_title">Копирование записей в Drive</string>
+    <string name="drive_copy_progress">Скопировано %1$d из %2$d</string>
+    <string name="drive_copy_stop">Остановить пока</string>
     <string name="home_all_set_message">Всё готово. CallVault готов записывать ваши звонки.</string>
     <string name="home_bulk_delete_both">Обе копии</string>
     <string name="home_bulk_delete_device_only">Только на устройстве</string>

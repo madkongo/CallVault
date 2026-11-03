@@ -14,6 +14,8 @@ import com.baba.callvault.data.recordings.db.RecordingDatabase
 import com.baba.callvault.data.recordings.db.RecordingEntry
 import com.baba.callvault.data.transcripts.TranscriptCascade
 import com.baba.callvault.utils.AppLogger
+import kotlinx.coroutines.NonCancellable
+import kotlinx.coroutines.withContext
 
 /**
  * App-facing facade over the recordings catalog ([RecordingEntry] / Room). This is CallVault's source
@@ -71,7 +73,10 @@ object RecordingCatalog {
         driveSizeBytes: Long?,
         deleteLocalAfter: Boolean,
         lastModified: Long = 0L,
-    ) {
+    ) = withContext(NonCancellable) {
+        // Not cancellable: by the time this runs the file IS in Drive. A worker stopped at this moment
+        // ("markDrive failed: Job was cancelled", Honor BVL-N49, 2026-11-03) left the row looking unsynced,
+        // which is the symptom the "not reaching Drive" warning counts. It is one small database write.
         runCatching {
             val dao = dao(context)
             val size = driveSizeBytes?.takeIf { it > 0L }
@@ -89,6 +94,7 @@ object RecordingCatalog {
                 if (deleteLocalAfter) dao.clearLocal(displayName)
             }
         }.onFailure { AppLogger.w(TAG, "markDrive('$displayName') failed: ${it.message}") }
+        Unit
     }
 
     /**

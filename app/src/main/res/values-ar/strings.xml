@@ -138,6 +138,9 @@
     <string name="heavy_work_notification_text">قد يصبح هاتفك دافئًا أثناء تشغيله.</string>
     <string name="heavy_work_summarising">تلخيص تسجيل</string>
     <string name="heavy_work_transcribing">تحويل تسجيل إلى نص</string>
+    <string name="drive_copy_title">نسخ التسجيلات إلى Drive</string>
+    <string name="drive_copy_progress">تم نسخ %1$d من %2$d</string>
+    <string name="drive_copy_stop">إيقاف حاليًا</string>
     <string name="home_all_set_message">أنت جاهز تمامًا. CallVault جاهز لتسجيل مكالماتك.</string>
     <string name="home_bulk_delete_both">كلتا النسختين</string>
     <string name="home_bulk_delete_device_only">الجهاز فقط</string>
