@@ -5,6 +5,8 @@ All notable changes to CallVault are documented here. The format is based on
 
 ## [Unreleased]
 
+## [2.4.9] — 2026-11-03
+
 ### Added
 
 - **Recording without Wi-Fi on phones whose adbd already listens on the network port.** A few phones (some TV,
