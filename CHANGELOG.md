@@ -5,6 +5,12 @@ All notable changes to CallVault are documented here. The format is based on
 
 ## [Unreleased]
 
+### Fixed
+
+- **Switching to Drive starts the upload schedule at once.** Choosing "Device + Google Drive" or "Google Drive only"
+  with a daily or weekly schedule queued no copy until the app was restarted or a call came in.
+  <!-- 🧪 VERIFYING: unit test only (2026-11-03). -->
+
 ## [2.4.9] — 2026-11-03
 
 ### Added
