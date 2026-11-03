@@ -442,6 +442,9 @@
     <string name="settings_link_share_debug_report">Condividi un report di debug</string>
     <string name="settings_metadata_file_desc">Salva un piccolo .json accanto a ogni registrazione</string>
     <string name="settings_metadata_file_hint">Usa lo stesso formato di BCR, così le app pensate per esso — come bcr-gui — possono leggere i dettagli delle tue registrazioni. Conviene attivarlo solo se ne usi una.</string>
+    <string name="settings_sim_label_label">Mostra quale SIM ha usato ogni chiamata</string>
+    <string name="settings_sim_label_desc">Per i telefoni con due SIM: mostra il nome che hai dato alla SIM, oppure SIM 1 / SIM 2</string>
+    <string name="sim_label_word">SIM</string>
     <string name="settings_metadata_file_label">Scrivi un file di dettagli</string>
     <string name="settings_needs_newer_android">Richiede Android %1$s o successivo: questo telefono usa Android %2$s.</string>
     <string name="settings_offline_recording_desc">Registra le chiamate anche senza rete Wi-Fi. Richiede il debug USB attivo.</string>

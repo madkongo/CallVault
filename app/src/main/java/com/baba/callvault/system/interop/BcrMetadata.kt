@@ -60,7 +60,9 @@ object BcrMetadata {
         val channelCount: Int?,
         val durationSecsEncoded: Double?,
         val speakerTurns: String? = null,
-        val nearChannel: String? = null
+        val nearChannel: String? = null,
+        /** 1-based SIM slot the call used, when the opt-in SIM label is on and the call log says; else null. */
+        val simSlot: Int? = null,
     )
 
     /** The `callvault` block's schema version, so a reader can tell what to expect of it. */
@@ -80,7 +82,7 @@ object BcrMetadata {
         root.putOrNull("package_name", input.packageName)
         root.putOrNull("direction", input.direction)
         // We do not read the SIM slot anywhere, and BCR's contract already has a word for that.
-        root.put("sim_slot", JSONObject.NULL)
+        root.put("sim_slot", input.simSlot ?: JSONObject.NULL)
         root.put("call_log_name", JSONObject.NULL)
 
         val call = JSONObject()

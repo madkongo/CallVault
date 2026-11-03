@@ -117,7 +117,7 @@ object SettingsGroups {
             "IgnoreCrossCountryIncomingRow", "IgnoreCrossCountryOutgoingRow", "VoipIgnoreContactsRow",
             "MinDurationRow",
         )
-        SettingsGroup.SOUND_AND_NAMES -> listOf("AudioSection", "FileNameTemplateRow")
+        SettingsGroup.SOUND_AND_NAMES -> listOf("AudioSection", "FileNameTemplateRow", "SimLabelRow")
         SettingsGroup.SAVE_AND_SYNC -> listOf(
             "StorageTargetRow", "RecordingFolderRow", "DriveFolderRow", "UploadScheduleSubSection",
             "HideRecordingsRow", "MetadataFileRow", "TranscriptSidecarRow",
@@ -153,7 +153,7 @@ object SettingsGroups {
             "ignore_anonymous_incoming", "ignore_cross_country_incoming", "ignore_cross_country_outgoing",
             "voip_apply_ignored_contacts", "min_duration_seconds",
         )
-        SettingsGroup.SOUND_AND_NAMES -> listOf("audio_source", "audio_codec", "audio_bitrate", "file_name_template")
+        SettingsGroup.SOUND_AND_NAMES -> listOf("audio_source", "audio_codec", "audio_bitrate", "file_name_template", "show_sim_label")
         SettingsGroup.SAVE_AND_SYNC -> listOf(
             "storage_target", "recording_folder_uri", "drive_folder_uri",
             "sync_schedule_mode", "sync_time_hour", "sync_time_minute", "sync_day_of_week",

@@ -596,6 +596,9 @@
     <string name="settings_link_share_debug_report">Κοινοποίηση αναφοράς σφαλμάτων</string>
     <string name="settings_metadata_file_desc">Αποθήκευση ενός μικρού .json δίπλα σε κάθε εγγραφή</string>
     <string name="settings_metadata_file_hint">Χρησιμοποιεί την ίδια μορφή με το BCR, ώστε εφαρμογές φτιαγμένες γι\' αυτό — όπως το bcr-gui — να μπορούν να διαβάζουν τις λεπτομέρειες των εγγραφών σας. Αξίζει να το ενεργοποιήσετε μόνο αν χρησιμοποιείτε κάποια.</string>
+    <string name="settings_sim_label_label">Εμφάνιση της SIM που χρησιμοποίησε κάθε κλήση</string>
+    <string name="settings_sim_label_desc">Για τηλέφωνα με δύο SIM: δείχνει το όνομα που δώσατε στη SIM ή SIM 1 / SIM 2</string>
+    <string name="sim_label_word">SIM</string>
     <string name="settings_metadata_file_label">Εγγραφή αρχείου λεπτομερειών</string>
     <string name="settings_needs_newer_android">Χρειάζεται Android %1$s ή νεότερο — αυτό το τηλέφωνο εκτελεί Android %2$s.</string>
     <string name="settings_offline_recording_desc">Εγγραφή κλήσεων ακόμα και όταν δεν υπάρχει δίκτυο Wi-Fi. Χρειάζεται ενεργό εντοπισμό σφαλμάτων USB.</string>

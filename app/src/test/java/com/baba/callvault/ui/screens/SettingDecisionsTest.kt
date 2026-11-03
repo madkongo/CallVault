@@ -77,6 +77,7 @@ class SettingDecisionsTest {
         "storage_cap_bytes" to Decision(SettingsOnly("retention")),
         "min_duration_seconds" to Decision(SettingsOnly("a filter worth setting only once short calls annoy")),
         "write_metadata_file" to Decision(SettingsOnly("only for users of BCR-compatible tools")),
+        "show_sim_label" to Decision(SettingsOnly("only matters on dual-SIM phones; off by default")),
         "write_transcript_sidecar" to Decision(SettingsOnly("PC-backup users; changeable any time and back-fills")),
         "hide_recordings" to Decision(SettingsOnly("privacy opt-in; changeable any time and applies at once")),
         "keep_originals_after_merge" to Decision(SettingsOnly("only meaningful once merging is used")),

@@ -30,7 +30,8 @@ class BcrMetadataTest {
         contactName: String? = "John Doe",
         direction: String? = "in",
         speakerTurns: String? = "0:A;1200:+;3400:-",
-        nearChannel: String? = "B"
+        nearChannel: String? = "B",
+        simSlot: Int? = null,
     ) = BcrMetadata.Input(
         timestampUnixMs = 1689817988931L,
         packageName = "com.android.phone",
@@ -46,8 +47,17 @@ class BcrMetadataTest {
         channelCount = 1,
         durationSecsEncoded = 12.5,
         speakerTurns = speakerTurns,
-        nearChannel = nearChannel
+        nearChannel = nearChannel,
+        simSlot = simSlot,
     )
+
+    @Test
+    fun `the SIM slot is written when known and an explicit null otherwise`() {
+        assertEquals(2, JSONObject(BcrMetadata.build(input(simSlot = 2))).getInt("sim_slot"))
+        val unknown = JSONObject(BcrMetadata.build(input()))
+        assertTrue(unknown.has("sim_slot"))
+        assertTrue(unknown.isNull("sim_slot"))
+    }
 
     @Test
     fun `writes the exact top-level keys BCR documents`() {
