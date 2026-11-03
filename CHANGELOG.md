@@ -5,6 +5,13 @@ All notable changes to CallVault are documented here. The format is based on
 
 ## [Unreleased]
 
+### Added
+
+- **Which SIM each call used** (opt-in). Settings ▸ Sound and file names ▸ "Show which SIM each call used": phone
+  calls show the name you gave the SIM, or SIM 1 / SIM 2, in the list, on the playback screen and in the details file.
+  Idea from @slman890's fork.
+  <!-- 🧪 VERIFYING: unit tests only (2026-11-03); needs a dual-SIM phone. -->
+
 ### Fixed
 
 - **Switching to Drive starts the upload schedule at once.** Choosing "Device + Google Drive" or "Google Drive only"
