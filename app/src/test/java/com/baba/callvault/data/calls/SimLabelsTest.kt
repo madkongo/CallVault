@@ -43,4 +43,20 @@ class SimLabelsTest {
     fun `the word for SIM can be translated`() {
         assertEquals("SIM-карта 2", SimLabels.label("", null, 1, simWord = "SIM-карта"))
     }
+
+    @Test
+    fun `on Android 14+ the name source decides, not the pattern`() {
+        // A carrier-set name that does not look like a default is still not the user's.
+        assertEquals("SIM 1", SimLabels.label("Partner Mobile", "Partner", 0, nameSource = "CARRIER"))
+        assertEquals("Work", SimLabels.label("Work", "Partner", 1, nameSource = "USER_INPUT"))
+    }
+
+    @Test
+    fun `the name source is read from SubscriptionInfo's text`() {
+        val text = "[SubscriptionInfo: id=1 iccId=8997[****] simSlotIndex=0 displayName=SIM1 " +
+            "displayNameSource=CARRIER carrierName=Partner isOpportunistic=false]"
+        assertEquals("CARRIER", SimLabels.nameSourceOf(text))
+        assertNull(SimLabels.nameSourceOf("[SubscriptionInfo: id=1 displayName=SIM1]"))
+        assertNull(SimLabels.nameSourceOf(null))
+    }
 }

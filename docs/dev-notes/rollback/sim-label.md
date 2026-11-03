@@ -22,3 +22,17 @@ on the playback screen, and as `sim_slot` in the details file (if that is on).
 git revert -m 1 49911fd9
 ```
 (`49911fd9` = the merge of `feat/sim-label` into integration/next.) The pref key stays harmless if left in old exports.
+
+## Follow-up 2026-11-03: name source + single SIM (merge 64e4c5bd, branch fix/sim-label-name-source) 🧪
+
+Prior-art research (subagent, sources read): BCR gets the slot at call time (`Call.Details.accountHandle` →
+`getSubscriptionId` → `simSlotIndex`, try/catch for SecurityException); Fossify Phone and the AOSP/Lineage Dialer
+show `PhoneAccount.label` (built by Telephony from `SubscriptionInfo.displayName`, needs READ_PHONE_NUMBERS on
+target 31+), and the Dialer shows nothing with ≤1 call-capable account. `PHONE_ACCOUNT_ID` is the ICCID on
+Android 10–12 and the subId on 13+; `getSubscriptionId(handle)` only resolves SIMs that are active now.
+Android 14+ prints `displayNameSource=` in the public `SubscriptionInfo.toString()`.
+- Now: on 14+ `displayNameSource=USER_INPUT` decides; 11–13 keep the name-pattern guess. No label when fewer than
+  two SIMs are active. Debug log `CV:SimLabels`.
+- Testing: the standard emulator has one modem only; Cuttlefish (`--modem_simulator_count=2`) needs a Linux KVM
+  host. A real second SIM is the practical test.
+- Roll back this part alone: `git revert -m 1 64e4c5bd`.
