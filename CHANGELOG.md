@@ -111,6 +111,9 @@ All notable changes to CallVault are documented here. The format is based on
 - **The notification says "Ready" as soon as the recorder is.** After an update it could say "Call recorder
   starting up…" for a minute while calls were already being recorded.
   <!-- 🧪 VERIFYING: OP9 2026-11-03, 2.4.8-next9: "Ready" within ~1 s of the recorder connecting, 6 of 6. -->
+- **No false "USB is in data mode" warning on Honor.** On a Honor phone set to Charging only, the warning came
+  back minutes after the fix button cleared it: CallVault read Honor's own USB default instead of the setting.
+  <!-- 🧪 VERIFYING: unit tests only (2026-11-03). To settle: the Honor BVL-N49 reporter, a day without the warning. -->
 
 ## [2.4.8] — 2026-10-31
 
