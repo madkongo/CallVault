@@ -17,6 +17,7 @@ import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import com.baba.callvault.R
 import com.baba.callvault.data.AppPreferences
+import com.baba.callvault.data.recordings.DriveCatalogRepair
 import com.baba.callvault.data.calls.CallHistory
 import com.baba.callvault.data.calls.PhoneCall
 import com.baba.callvault.data.calls.PhoneCallReader
@@ -807,6 +808,8 @@ class HomeViewModel(application: Application) : AndroidViewModel(application) {
         listJob = viewModelScope.launch {
             val health = withContext(Dispatchers.IO) { sweepSetupHealth(status.isReady) }
             _uiState.update { it.copy(setupHealth = health) }
+            // A recording deleted in Drive itself stays listed until something notices; this does, every few hours.
+            withContext(Dispatchers.IO) { DriveCatalogRepair.forgetDeletedIfDue(appContext) }
             val listed = withContext(Dispatchers.IO) { RecordingsRepository.listRecordings(appContext) }
             // Split once, here, from the name alone. The name is the only place the kind lives, so a
             // catalog re-seed cannot lose it and no row anywhere has to carry a flag that could be
