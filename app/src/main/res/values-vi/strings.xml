@@ -551,6 +551,13 @@
     <string name="settings_voip_recording_description">Ghi âm cả những cuộc gọi thực hiện trong các ứng dụng như WhatsApp, Signal và Telegram. Một số ứng dụng chặn việc ghi âm, và chỉ khi cuộc gọi đang diễn ra mới biết được.</string>
     <string name="settings_voip_recording_label">Ghi âm cuộc gọi VoIP</string>
     <string name="settings_wd_auto_approve_description">Khi điện thoại kết nối với một mạng Wi-Fi, CallVault tự trả lời câu hỏi của Android \"Cho phép gỡ lỗi không dây trên mạng này?\", để việc ghi âm không phải chờ bạn chạm. Hoạt động khi trình ghi đang chạy. Chỉ những thiết bị đã ghép nối với điện thoại này mới có thể kết nối.</string>
+    <string name="settings_wd_mode_label">Gỡ lỗi không dây</string>
+    <string name="settings_wd_mode_when_needed">Chỉ khi cần</string>
+    <string name="settings_wd_mode_keep_on">Giữ bật</string>
+    <string name="settings_wd_mode_keep_on_always">Giữ bật, kể cả khi tôi tắt</string>
+    <string name="settings_wd_mode_when_needed_desc">CallVault bật tính năng này để ghi âm và tắt lại khi không cần. Nếu bạn tắt, nó sẽ vẫn tắt.</string>
+    <string name="settings_wd_mode_keep_on_desc">CallVault không bao giờ tắt tính năng này, nên cổng gỡ lỗi luôn mở trên mạng Wi-Fi của bạn. Nếu bạn tắt, nó sẽ vẫn tắt.</string>
+    <string name="settings_wd_mode_keep_on_always_desc">CallVault không bao giờ tắt tính năng này và bật lại nếu bạn tắt, để cuộc gọi tiếp tục được ghi âm. Cổng gỡ lỗi luôn mở trên mạng Wi-Fi của bạn.</string>
     <string name="settings_wd_never_off_label">Không bao giờ tắt gỡ lỗi không dây</string>
     <string name="settings_wd_never_off_description">CallVault sẽ không tắt gỡ lỗi không dây, nên cổng gỡ lỗi vẫn mở trên mạng Wi-Fi của bạn. CallVault vẫn có thể bật nó khi trình ghi cần. Chỉ ở chế độ tích hợp.</string>
     <string name="settings_wd_left_on_by_setting">Gỡ lỗi không dây đang bật. CallVault để nguyên vì cài đặt này.</string>

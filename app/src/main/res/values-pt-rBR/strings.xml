@@ -556,6 +556,13 @@
     <string name="settings_voip_recording_description">Grave também as chamadas feitas em apps como WhatsApp, Signal e Telegram. Alguns apps bloqueiam a gravação, e isso não tem como ser sabido antes de a chamada começar.</string>
     <string name="settings_voip_recording_label">Gravar chamadas VoIP</string>
     <string name="settings_wd_auto_approve_description">Quando o telefone se conecta a uma rede Wi-Fi, o CallVault responde sozinho à pergunta do Android \"Permitir a depuração por Wi-Fi nesta rede?\", para a gravação não esperar seu toque. Funciona enquanto o gravador está em execução. Só dispositivos já pareados com este telefone podem se conectar.</string>
+    <string name="settings_wd_mode_label">Depuração por Wi-Fi</string>
+    <string name="settings_wd_mode_when_needed">Só quando necessário</string>
+    <string name="settings_wd_mode_keep_on">Manter ativada</string>
+    <string name="settings_wd_mode_keep_on_always">Manter ativada, mesmo se eu desativar</string>
+    <string name="settings_wd_mode_when_needed_desc">O CallVault a ativa para gravar e a desativa de novo quando não é necessária. Se você desativar, ela continua desativada.</string>
+    <string name="settings_wd_mode_keep_on_desc">O CallVault nunca a desativa, então a porta de depuração fica aberta no seu Wi-Fi. Se você desativar, ela continua desativada.</string>
+    <string name="settings_wd_mode_keep_on_always_desc">O CallVault nunca a desativa e a reativa se você desativar, para que as chamadas continuem sendo gravadas. A porta de depuração fica aberta no seu Wi-Fi.</string>
     <string name="settings_wd_never_off_label">Nunca desativar a depuração por Wi-Fi</string>
     <string name="settings_wd_never_off_description">O CallVault não vai desativar a depuração por Wi-Fi, então a porta de depuração fica aberta na sua rede Wi-Fi. O CallVault ainda pode ativá-la quando o gravador precisar. Só no modo integrado.</string>
     <string name="settings_wd_left_on_by_setting">A depuração por Wi-Fi está ativada. O CallVault a mantém ativada por causa desta configuração.</string>

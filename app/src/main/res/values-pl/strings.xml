@@ -557,6 +557,13 @@
     <string name="settings_voip_recording_description">Nagrywa także rozmowy prowadzone w aplikacjach takich jak WhatsApp, Signal i Telegram. Niektóre aplikacje blokują nagrywanie, a dowiesz się o tym dopiero w trakcie rozmowy.</string>
     <string name="settings_voip_recording_label">Nagrywaj połączenia VoIP</string>
     <string name="settings_wd_auto_approve_description">Gdy telefon łączy się z siecią Wi-Fi, CallVault sam odpowiada na pytanie Androida „Zezwolić na debugowanie bezprzewodowe w tej sieci?”, więc nagrywanie nie czeka na Twoje dotknięcie. Działa, gdy rejestrator jest uruchomiony. Połączyć mogą się tylko urządzenia już sparowane z tym telefonem.</string>
+    <string name="settings_wd_mode_label">Debugowanie bezprzewodowe</string>
+    <string name="settings_wd_mode_when_needed">Tylko gdy potrzebne</string>
+    <string name="settings_wd_mode_keep_on">Pozostaw włączone</string>
+    <string name="settings_wd_mode_keep_on_always">Pozostaw włączone, nawet jeśli je wyłączę</string>
+    <string name="settings_wd_mode_when_needed_desc">CallVault włącza je do nagrywania i wyłącza ponownie, gdy nie jest potrzebne. Jeśli je wyłączysz, pozostanie wyłączone.</string>
+    <string name="settings_wd_mode_keep_on_desc">CallVault nigdy go nie wyłącza, więc port debugowania pozostaje otwarty w Twojej sieci Wi-Fi. Jeśli je wyłączysz, pozostanie wyłączone.</string>
+    <string name="settings_wd_mode_keep_on_always_desc">CallVault nigdy go nie wyłącza i włącza je ponownie, jeśli je wyłączysz, aby połączenia nadal były nagrywane. Port debugowania pozostaje otwarty w Twojej sieci Wi-Fi.</string>
     <string name="settings_wd_never_off_label">Nigdy nie wyłączaj debugowania bezprzewodowego</string>
     <string name="settings_wd_never_off_description">CallVault nie wyłączy debugowania bezprzewodowego, więc port debugowania pozostaje otwarty w Twojej sieci Wi-Fi. CallVault może je jednak włączyć, gdy potrzebuje go rejestrator. Tylko w trybie wbudowanym.</string>
     <string name="settings_wd_left_on_by_setting">Debugowanie bezprzewodowe jest włączone. CallVault zostawia je włączone z powodu tego ustawienia.</string>
