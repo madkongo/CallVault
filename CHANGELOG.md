@@ -11,6 +11,11 @@ All notable changes to CallVault are documented here. The format is based on
   calls show the name you gave the SIM, or SIM 1 / SIM 2, in the list, on the playback screen and in the details file.
   Idea from @slman890's fork.
   <!-- 🧪 VERIFYING: unit tests only (2026-11-03); needs a dual-SIM phone. -->
+- **Call history.** Recordings now has a "Recordings | Call history" switch: every call in your phone's call log,
+  newest first, showing which were recorded and how (phone call or the app's name) and playing them from the row.
+  Calls that were not recorded, missed or declined are listed too. Filters: All, Recorded, Not recorded, Missed.
+  App calls appear only when CallVault recorded them, because Android does not log them.
+  <!-- 🧪 VERIFYING: look approved on the OP9 2026-11-03 (fake call-log rows); everyday use pending. -->
 
 ### Fixed
 
