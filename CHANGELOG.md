@@ -22,6 +22,10 @@ All notable changes to CallVault are documented here. The format is based on
 - **Switching to Drive starts the upload schedule at once.** Choosing "Device + Google Drive" or "Google Drive only"
   with a daily or weekly schedule queued no copy until the app was restarted or a call came in.
   <!-- 🧪 VERIFYING: unit test only (2026-11-03). -->
+- **Recordings deleted in Drive leave the list.** A recording you delete for good in Google Drive no longer stays
+  in CallVault's list pointing at nothing; if the phone still has its copy, only the Drive copy is dropped.
+  Recordings in Drive's Bin still count as there until the Bin is emptied.
+  <!-- 🧪 VERIFYING: unit tests; OP9 check ran (Bin = still present). Needs a forever-deleted Drive file. -->
 
 ## [2.4.9] — 2026-11-03
 
