@@ -982,6 +982,13 @@
     <string name="settings_wd_enforce_description">If you switch Wireless debugging off while nothing else lets CallVault in, it turns it back on so calls keep recording. When this is off, your switch stays off and the notification says recording is paused.</string>
     <string name="settings_wd_auto_approve_label">Approve new Wi-Fi networks automatically</string>
     <string name="settings_wd_auto_approve_description">When the phone joins a Wi-Fi network, CallVault answers Android\'s \"Allow wireless debugging on this network?\" itself, so recording does not wait for your tap. Works while the recorder is running. Only devices already paired with this phone can connect.</string>
+    <string name="settings_wd_mode_label">Wireless debugging</string>
+    <string name="settings_wd_mode_when_needed">Only when needed</string>
+    <string name="settings_wd_mode_keep_on">Keep on</string>
+    <string name="settings_wd_mode_keep_on_always">Keep on, even if I switch it off</string>
+    <string name="settings_wd_mode_when_needed_desc">CallVault turns it on for recording and off again when it is not needed. If you switch it off, it stays off.</string>
+    <string name="settings_wd_mode_keep_on_desc">CallVault never switches it off, so the debugging port stays open on your Wi-Fi. If you switch it off, it stays off.</string>
+    <string name="settings_wd_mode_keep_on_always_desc">CallVault never switches it off and turns it back on if you switch it off, so calls keep recording. The debugging port stays open on your Wi-Fi.</string>
     <string name="settings_wd_never_off_label">Never turn Wireless debugging off</string>
     <string name="settings_wd_never_off_description">CallVault won\'t switch Wireless debugging off, so the debugging port stays open on your Wi-Fi network. CallVault may still switch it on when the recorder needs it. Built-in mode only.</string>
     <string name="settings_wd_left_on_by_setting">Wireless debugging is on. CallVault is leaving it on because of this setting.</string>

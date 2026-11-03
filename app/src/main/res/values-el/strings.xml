@@ -708,6 +708,13 @@
     <string name="settings_voip_recording_description">Εγγραφή και κλήσεων που γίνονται σε εφαρμογές όπως WhatsApp, Signal και Telegram. Ορισμένες εφαρμογές εμποδίζουν την εγγραφή, και αυτό δεν μπορεί να γίνει γνωστό μέχρι να είναι σε εξέλιξη μια κλήση.</string>
     <string name="settings_voip_recording_label">Εγγραφή κλήσεων εφαρμογών</string>
     <string name="settings_wd_auto_approve_description">Όταν το τηλέφωνο συνδέεται σε δίκτυο Wi-Fi, το CallVault απαντά μόνο του στην ερώτηση του Android «Να επιτρέπεται ο ασύρματος εντοπισμός σφαλμάτων σε αυτό το δίκτυο;», ώστε η εγγραφή να μην περιμένει το πάτημά σας. Λειτουργεί όσο τρέχει η εγγραφή. Μόνο συσκευές που έχουν ήδη συζευχθεί με αυτό το τηλέφωνο μπορούν να συνδεθούν.</string>
+    <string name="settings_wd_mode_label">Ασύρματος εντοπισμός σφαλμάτων</string>
+    <string name="settings_wd_mode_when_needed">Μόνο όταν χρειάζεται</string>
+    <string name="settings_wd_mode_keep_on">Να μένει ενεργός</string>
+    <string name="settings_wd_mode_keep_on_always">Να μένει ενεργός, ακόμη κι αν τον απενεργοποιήσω</string>
+    <string name="settings_wd_mode_when_needed_desc">Το CallVault τον ενεργοποιεί για την εγγραφή και τον απενεργοποιεί ξανά όταν δεν χρειάζεται. Αν τον απενεργοποιήσετε, μένει ανενεργός.</string>
+    <string name="settings_wd_mode_keep_on_desc">Το CallVault δεν τον απενεργοποιεί ποτέ, οπότε η θύρα εντοπισμού σφαλμάτων μένει ανοιχτή στο Wi-Fi σας. Αν τον απενεργοποιήσετε, μένει ανενεργός.</string>
+    <string name="settings_wd_mode_keep_on_always_desc">Το CallVault δεν τον απενεργοποιεί ποτέ και τον ενεργοποιεί ξανά αν τον απενεργοποιήσετε, ώστε οι κλήσεις να συνεχίζουν να εγγράφονται. Η θύρα εντοπισμού σφαλμάτων μένει ανοιχτή στο Wi-Fi σας.</string>
     <string name="settings_wd_never_off_label">Ποτέ απενεργοποίηση του ασύρματου εντοπισμού σφαλμάτων</string>
     <string name="settings_wd_never_off_description">Το CallVault δεν θα απενεργοποιεί τον ασύρματο εντοπισμό σφαλμάτων, οπότε η θύρα εντοπισμού σφαλμάτων μένει ανοιχτή στο δίκτυο Wi-Fi σας. Το CallVault μπορεί ακόμη να τον ενεργοποιεί όταν τον χρειάζεται η εγγραφή. Μόνο στην ενσωματωμένη λειτουργία.</string>
     <string name="settings_wd_left_on_by_setting">Ο ασύρματος εντοπισμός σφαλμάτων είναι ενεργός. Το CallVault τον αφήνει ενεργό λόγω αυτής της ρύθμισης.</string>

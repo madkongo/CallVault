@@ -105,13 +105,13 @@ class ScopedSettingsScreenTest {
     fun `connection holds every switch of the removed Experimental section`() {
         val general = source("SettingsGeneralSection.kt")
         val rows = listOf(
-            "UsbDebuggingToggle", "OfflineRecordingToggle", "HandoffPersistToggle", "WirelessDebuggingEnforceToggle",
-            "WifiNetworkAutoApproveToggle", "WirelessDebuggingNeverOffToggle", "UsbDefaultConfigRow", "PairAgainRow",
+            "UsbDebuggingToggle", "OfflineRecordingToggle", "HandoffPersistToggle", "WirelessDebuggingModeRow",
+            "WifiNetworkAutoApproveToggle", "UsbDefaultConfigRow", "PairAgainRow",
         )
         val connection = bodyOf("ConnectionRows", general)
         rows.forEach { assertTrue("ConnectionRows lacks $it", calls(it, connection)) }
-        // The agreed order (round 2): USB debugging, offline, handoff, keep WD on, approve networks, never turn WD
-        // off (#30), USB mode, pair.
+        // The agreed order (round 2): USB debugging, offline, handoff, Wireless debugging (one choice since
+        // 2026-11-03, was "keep WD on" + "never turn WD off" #30), approve networks, USB mode, pair.
         assertEquals(rows, rows.sortedBy { connection.indexOf("$it(") })
     }
 
@@ -134,10 +134,12 @@ class ScopedSettingsScreenTest {
             "SummaryRows", "TranscriptionModelRows",
             // A dialog over either screen, not a row.
             "SettingsContactPicker",
+            // Setup (onboarding) only since Settings shows WirelessDebuggingModeRow instead (2026-11-03).
+            "WirelessDebuggingEnforceToggle",
         )
         val connection = listOf(
-            "UsbDebuggingToggle", "OfflineRecordingToggle", "HandoffPersistToggle", "WirelessDebuggingEnforceToggle",
-            "WifiNetworkAutoApproveToggle", "WirelessDebuggingNeverOffToggle", "UsbDefaultConfigRow", "PairAgainRow",
+            "UsbDebuggingToggle", "OfflineRecordingToggle", "HandoffPersistToggle", "WirelessDebuggingModeRow",
+            "WifiNetworkAutoApproveToggle", "UsbDefaultConfigRow", "PairAgainRow",
         )
         val placed = SettingsGroups.forScope(SettingsScope.ALL).flatMap { SettingsGroups.rowsOf(it) }.toSet() + connection
         val missing = declared - notRows - placed

@@ -647,6 +647,13 @@
     <string name="settings_voip_recording_description">تماس‌های انجام‌شده در برنامه‌هایی مانند WhatsApp، Signal و Telegram را نیز ضبط می‌کند. برخی برنامه‌ها ضبط را مسدود می‌کنند و این تا زمانی که تماس در جریان باشد قابل تشخیص نیست.</string>
     <string name="settings_voip_recording_label">ضبط تماس‌های برنامه‌ها</string>
     <string name="settings_wd_auto_approve_description">وقتی گوشی به یک شبکهٔ Wi-Fi وصل می‌شود، CallVault خودش به پرسش Android «اجازهٔ اشکال‌زدایی بی‌سیم در این شبکه داده شود؟» پاسخ می‌دهد تا ضبط منتظر لمس شما نماند. تا وقتی ضبط‌کننده در حال اجراست کار می‌کند. فقط دستگاه‌هایی که از قبل با این گوشی جفت شده‌اند می‌توانند وصل شوند.</string>
+    <string name="settings_wd_mode_label">اشکال‌زدایی بی‌سیم</string>
+    <string name="settings_wd_mode_when_needed">فقط در صورت نیاز</string>
+    <string name="settings_wd_mode_keep_on">روشن بماند</string>
+    <string name="settings_wd_mode_keep_on_always">روشن بماند، حتی اگر خاموشش کنم</string>
+    <string name="settings_wd_mode_when_needed_desc">CallVault آن را برای ضبط روشن می‌کند و وقتی لازم نیست دوباره خاموشش می‌کند. اگر خودتان خاموشش کنید، خاموش می‌ماند.</string>
+    <string name="settings_wd_mode_keep_on_desc">CallVault هرگز آن را خاموش نمی‌کند، بنابراین درگاه اشکال‌زدایی روی Wi-Fi شما باز می‌ماند. اگر خودتان خاموشش کنید، خاموش می‌ماند.</string>
+    <string name="settings_wd_mode_keep_on_always_desc">CallVault هرگز آن را خاموش نمی‌کند و اگر خاموشش کنید دوباره روشنش می‌کند تا تماس‌ها همچنان ضبط شوند. درگاه اشکال‌زدایی روی Wi-Fi شما باز می‌ماند.</string>
     <string name="settings_wd_never_off_label">هرگز اشکال‌زدایی بی‌سیم را خاموش نکن</string>
     <string name="settings_wd_never_off_description">CallVault اشکال‌زدایی بی‌سیم را خاموش نمی‌کند، پس درگاه اشکال‌زدایی روی شبکهٔ Wi-Fi شما باز می‌ماند. CallVault همچنان ممکن است وقتی ضبط‌کننده به آن نیاز دارد روشنش کند. فقط در حالت داخلی.</string>
     <string name="settings_wd_left_on_by_setting">اشکال‌زدایی بی‌سیم روشن است. CallVault به‌خاطر این تنظیم آن را روشن نگه می‌دارد.</string>

@@ -554,6 +554,13 @@
     <string name="settings_voip_recording_description">Graba también las llamadas hechas en apps como WhatsApp, Signal y Telegram. Algunas apps bloquean la grabación, y no se sabe hasta que la llamada está en curso.</string>
     <string name="settings_voip_recording_label">Grabar llamadas de apps</string>
     <string name="settings_wd_auto_approve_description">Cuando el teléfono se conecta a una red Wi-Fi, CallVault responde por sí mismo a la pregunta de Android «¿Permitir la depuración inalámbrica en esta red?», para que la grabación no espere a que toques. Funciona mientras el grabador está en marcha. Solo pueden conectarse los dispositivos ya vinculados con este teléfono.</string>
+    <string name="settings_wd_mode_label">Depuración inalámbrica</string>
+    <string name="settings_wd_mode_when_needed">Solo cuando sea necesario</string>
+    <string name="settings_wd_mode_keep_on">Mantener activada</string>
+    <string name="settings_wd_mode_keep_on_always">Mantener activada aunque la desactive</string>
+    <string name="settings_wd_mode_when_needed_desc">CallVault la activa para grabar y la vuelve a desactivar cuando no hace falta. Si la desactivas, se queda desactivada.</string>
+    <string name="settings_wd_mode_keep_on_desc">CallVault nunca la desactiva, así que el puerto de depuración queda abierto en tu Wi-Fi. Si la desactivas, se queda desactivada.</string>
+    <string name="settings_wd_mode_keep_on_always_desc">CallVault nunca la desactiva y la vuelve a activar si la desactivas, para que las llamadas se sigan grabando. El puerto de depuración queda abierto en tu Wi-Fi.</string>
     <string name="settings_wd_never_off_label">No desactivar nunca la depuración inalámbrica</string>
     <string name="settings_wd_never_off_description">CallVault no desactivará la depuración inalámbrica, así que el puerto de depuración queda abierto en tu red Wi-Fi. CallVault aún puede activarla cuando el grabador la necesite. Solo en el modo integrado.</string>
     <string name="settings_wd_left_on_by_setting">La depuración inalámbrica está activa. CallVault la deja activa por este ajuste.</string>
