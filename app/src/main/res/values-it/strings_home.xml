@@ -116,6 +116,18 @@
     <string name="merge_note_will_keep">Le altre chiamate restano anche sul telefono.</string>
     <string name="home_scroll_to_top">Su</string>
     <string name="home_whatsnew_full_notes">Note di rilascio complete</string>
+    <string name="whatsnew_249_title">Chiamate delle app più chiare e pronto subito dopo gli aggiornamenti</string>
+    <string-array name="whatsnew_249_items">
+        <item>Meno eco nelle chiamate delle app sui telefoni il cui microfono capta la capsula auricolare</item>
+        <item>Le chiamate Telegram si registrano fino alla fine, con il nome e l\'icona di Telegram</item>
+        <item>Le chiamate delle app che finiscono prima dell\'avvio della registrazione non lasciano più un file vuoto</item>
+        <item>La registrazione è pronta pochi secondi dopo un aggiornamento</item>
+        <item>Si possono trascrivere chiamate di qualsiasi durata; per quelle lunghe viene indicato quanto ci vorrà</item>
+        <item>Scrivi per trovare una lingua nell\'elenco delle lingue, e l\'urdu per la trascrizione</item>
+        <item>Non disattivare mai il debug wireless — un nuovo interruttore in Impostazioni ▸ Connessione</item>
+        <item>Il tuo server di trascrizione può usare http:// sulla tua rete</item>
+        <item>Le Impostazioni si aprono sempre con il layout a pagine; la vista classica non c\'è più</item>
+    </string-array>
     <string name="whatsnew_248_title">La tua chiave di trascrizione e una lettura più facile</string>
     <string-array name="whatsnew_248_items">
         <item>Trascrivi con la tua chiave — Groq, OpenRouter o il tuo server, in secondi invece che minuti (Impostazioni ▸ Dove trascrivere)</item>

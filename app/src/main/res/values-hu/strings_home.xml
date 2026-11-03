@@ -116,6 +116,18 @@
     <string name="merge_note_will_keep">A többi hívás is a telefonon marad.</string>
     <string name="home_scroll_to_top">Az elejére</string>
     <string name="home_whatsnew_full_notes">Teljes kiadási jegyzék</string>
+    <string name="whatsnew_249_title">Tisztább alkalmazáshívások, és frissítés után azonnal kész</string>
+    <string-array name="whatsnew_249_items">
+        <item>Kevesebb visszhang alkalmazáshívásoknál azokon a telefonokon, amelyek mikrofonja felveszi a hallgató hangját</item>
+        <item>A Telegram-hívások a végéig rögzülnek, a Telegram nevével és ikonjával</item>
+        <item>Azok az alkalmazáshívások, amelyek a felvétel indulása előtt véget érnek, már nem hagynak üres fájlt</item>
+        <item>A felvétel néhány másodperccel a frissítés után kész</item>
+        <item>Bármilyen hosszú hívás átírható; hosszabbaknál kiírja, mennyi ideig tart</item>
+        <item>Nyelvkeresés gépeléssel a nyelvlistában, és urdu az átíráshoz</item>
+        <item>Vezeték nélküli hibakeresés soha ne kapcsoljon ki — új kapcsoló itt: Beállítások ▸ Kapcsolat</item>
+        <item>A saját átíró szerver használhat http://-t a saját hálózaton</item>
+        <item>A Beállítások mindig oldalankénti elrendezésben nyílik meg; a klasszikus nézet megszűnt</item>
+    </string-array>
     <string name="whatsnew_248_title">Saját átírókulcs és könnyebb olvasás</string>
     <string-array name="whatsnew_248_items">
         <item>Átírás saját kulccsal — Groq, OpenRouter vagy saját szerver, percek helyett másodpercek alatt (Beállítások ▸ Hol történjen az átírás)</item>

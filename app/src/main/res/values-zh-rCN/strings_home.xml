@@ -116,6 +116,18 @@
     <string name="merge_note_will_keep">其余通话也会保留在手机上。</string>
     <string name="home_scroll_to_top">回到顶部</string>
     <string name="home_whatsnew_full_notes">完整发行说明</string>
+    <string name="whatsnew_249_title">应用通话更清晰，更新后立即就绪</string>
+    <string-array name="whatsnew_249_items">
+        <item>在麦克风会收进听筒声音的手机上，应用通话回声更少</item>
+        <item>Telegram 通话可录到结束，并显示 Telegram 的名称和图标</item>
+        <item>在开始录音前就结束的应用通话不再留下空文件</item>
+        <item>更新后几秒内即可录音</item>
+        <item>任意时长的通话都能转写；长通话会提示需要多久</item>
+        <item>在语言列表中输入即可搜索语言，并新增乌尔都语转写</item>
+        <item>永不关闭无线调试——设置 ▸ 连接 中的新开关</item>
+        <item>你自己的转写服务器可以在自己的网络中使用 http://</item>
+        <item>设置始终以分页布局打开；经典视图已移除</item>
+    </string-array>
     <string name="whatsnew_248_title">使用你自己的转写密钥，阅读更方便</string>
     <string-array name="whatsnew_248_items">
         <item>用你自己的密钥转写——Groq、OpenRouter 或自己的服务器，几秒而不是几分钟（设置 ▸ 在哪里转写）</item>

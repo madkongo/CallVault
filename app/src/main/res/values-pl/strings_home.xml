@@ -116,6 +116,18 @@
     <string name="merge_note_will_keep">Pozostałe rozmowy zostaną też zachowane w telefonie.</string>
     <string name="home_scroll_to_top">Do góry</string>
     <string name="home_whatsnew_full_notes">Pełne informacje o wydaniu</string>
+    <string name="whatsnew_249_title">Wyraźniejsze połączenia w aplikacjach i gotowość zaraz po aktualizacji</string>
+    <string-array name="whatsnew_249_items">
+        <item>Mniej echa w połączeniach w aplikacjach na telefonach, których mikrofon łapie dźwięk z głośnika rozmów</item>
+        <item>Połączenia Telegram nagrywają się do końca, z nazwą i ikoną aplikacji Telegram</item>
+        <item>Połączenia w aplikacjach, które kończą się przed startem nagrywania, nie zostawiają już pustego pliku</item>
+        <item>Nagrywanie jest gotowe kilka sekund po aktualizacji</item>
+        <item>Rozmowy dowolnej długości można transkrybować; przy długich widać, ile to potrwa</item>
+        <item>Wpisz, aby znaleźć język na liście języków, oraz urdu do transkrypcji</item>
+        <item>Nigdy nie wyłączaj debugowania bezprzewodowego — nowy przełącznik w Ustawienia ▸ Łączność</item>
+        <item>Własny serwer transkrypcji może używać http:// we własnej sieci</item>
+        <item>Ustawienia zawsze otwierają się w układzie stron; widoku klasycznego już nie ma</item>
+    </string-array>
     <string name="whatsnew_248_title">Własny klucz do transkrypcji i wygodniejsze czytanie</string>
     <string-array name="whatsnew_248_items">
         <item>Transkrypcja z własnym kluczem — Groq, OpenRouter lub własny serwer, w sekundy zamiast minut (Ustawienia ▸ Gdzie transkrybować)</item>
