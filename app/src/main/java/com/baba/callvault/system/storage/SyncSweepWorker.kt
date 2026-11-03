@@ -72,6 +72,8 @@ class SyncSweepWorker(ctx: Context, params: WorkerParameters) : CoroutineWorker(
         var copied = 0
         var failures = 0
         var skipped = 0
+        // First pass: what Drive already has is stamped; the rest is collected and uploaded below, newest first.
+        val pending = ArrayList<DriveSweepOrder.Pending<SweepFile>>()
         for (file in sourceDir.listFiles()) {
             val name = file.name ?: continue
             if (!file.isFile) continue
@@ -115,6 +117,16 @@ class SyncSweepWorker(ctx: Context, params: WorkerParameters) : CoroutineWorker(
                 continue
             }
 
+            pending += DriveSweepOrder.Pending(
+                name, runCatching { file.lastModified() }.getOrDefault(0L), SweepFile(file, sourceSize),
+            )
+        }
+
+        AppLogger.i(TAG, "Sweep: ${pending.size} recording(s) to copy to Drive, newest first")
+        for (entry in DriveSweepOrder.newestFirst(pending)) {
+            val name = entry.name
+            val file = entry.item.file
+            val sourceSize = entry.item.sizeBytes
             val mime = file.type ?: DEFAULT_MIME
             val driveUri = when (val result = SafHelper.copyFileToFolder(applicationContext, file.uri, driveFolderUri, name, mime, sourceSize)) {
                 is SafHelper.CopyResult.AlreadyPresent -> result.uri
@@ -140,6 +152,9 @@ class SyncSweepWorker(ctx: Context, params: WorkerParameters) : CoroutineWorker(
         // picks the stragglers up anyway, so there is nothing to gain from an unbounded retry chain.
         return if (failures > 0 && !CloudCopyPolicy.isLastAttempt(runAttemptCount)) Result.retry() else Result.success()
     }
+
+    /** A recording still to upload: the device document and its byte length. */
+    private data class SweepFile(val file: DocumentFile, val sizeBytes: Long)
 
     /** A file already present in the Drive folder: where it is, and how much of it arrived. */
     private data class DriveCopy(val uri: android.net.Uri, val sizeBytes: Long)
