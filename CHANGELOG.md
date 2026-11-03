@@ -23,6 +23,15 @@ All notable changes to CallVault are documented here. The format is based on
 
 ### Fixed
 
+- **Clearer setting names.** Nineteen settings were renamed to say what they do — for example "Skip ignored contacts
+  on app calls" (was "Also skip ignored contacts"), "Record app calls" (was "Record VoIP calls"), "Keep recording off
+  Wi-Fi", "Scheduled" transcription. The two look-alike Wireless debugging switches are now one choice: Only when
+  needed, Keep on, or Keep on even if I switch it off.
+  <!-- 🧪 VERIFYING: OP9 2026-11-03 (2.4.9-names1); translations unreviewed. -->
+- **Auto-delete keeps starred recordings.** It deleted them once they were old enough, although the space-limit
+  setting beside it says starred recordings are never deleted.
+  <!-- 🧪 VERIFYING: unit test (2026-11-03). -->
+
 - **Switching to Drive starts the upload schedule at once.** Choosing "Device + Google Drive" or "Google Drive only"
   with a daily or weekly schedule queued no copy until the app was restarted or a call came in.
   <!-- 🧪 VERIFYING: unit test only (2026-11-03). -->
