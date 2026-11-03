@@ -17,6 +17,10 @@ import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import com.baba.callvault.R
 import com.baba.callvault.data.AppPreferences
+import com.baba.callvault.data.calls.CallHistory
+import com.baba.callvault.data.calls.PhoneCall
+import com.baba.callvault.data.calls.PhoneCallReader
+import com.baba.callvault.data.calls.SimLabels
 import com.baba.callvault.integrations.adb.PairingLoss
 import com.baba.callvault.data.transcripts.FavouriteRepository
 import com.baba.callvault.data.transcripts.LibraryLabels
@@ -208,6 +212,16 @@ class HomeViewModel(application: Application) : AndroidViewModel(application) {
         val favouritesOnly: Boolean = false,
         /** How the filtered list is ordered; see [RecordingSort]. */
         val sortOrder: RecordingSort = RecordingSort.NEWEST,
+        /** True while the Recordings page shows "All calls" (the call log lined up with recordings). */
+        val callsView: Boolean = false,
+        /** The "All calls" filter chip. */
+        val callFilter: CallHistory.Filter = CallHistory.Filter.ALL,
+        /** The system call log, newest first; loaded only while [callsView] is on. */
+        val phoneCalls: List<PhoneCall> = emptyList(),
+        /** The opt-in SIM label of each call in [phoneCalls], by its start time. */
+        val callSimLabels: Map<Long, String> = emptyMap(),
+        /** True once the call log has been read for [callsView]. */
+        val callsLoaded: Boolean = false,
         /**
          * The starred recordings, by display name.
          *
@@ -338,6 +352,30 @@ class HomeViewModel(application: Application) : AndroidViewModel(application) {
          * repo reload. NEWEST preserves the repository's own newest-first order rather than re-sorting
          * it, so the default path is unchanged.
          */
+        /**
+         * The "All calls" rows: the call log lined up with [recordings], narrowed by [callFilter] and the
+         * search line (name, number or cached name). Derived on read, like [filteredRecordings].
+         */
+        val callHistory: List<CallHistory.Entry>
+            get() {
+                val all = CallHistory.build(
+                    phoneCalls, recordings,
+                    startOf = { it.startedAtMillis },
+                    isPhoneCall = { RecordingsRepository.isCarrierCall(it.displayName) },
+                )
+                val q = contactQuery.trim().lowercase()
+                return CallHistory.filter(all, callFilter).filter { entry ->
+                    if (q.isEmpty()) return@filter true
+                    val words = when (entry) {
+                        is CallHistory.Entry.NotRecorded -> listOfNotNull(entry.call.cachedName, entry.call.number)
+                        is CallHistory.Entry.Recorded<*> -> (entry.recording as? RecordingItem).let {
+                            listOfNotNull(it?.contactName, it?.number, it?.voipApp, entry.call?.cachedName)
+                        }
+                    }
+                    words.any { it.lowercase().contains(q) }
+                }
+            }
+
         val filteredRecordings: List<RecordingItem>
             get() {
                 val filtered = recordings.filter { item ->
@@ -789,6 +827,7 @@ class HomeViewModel(application: Application) : AndroidViewModel(application) {
                     dateFilter = state.dateFilter?.takeIf { it in days }
                 )
             }
+            if (_uiState.value.callsView) loadCalls()
             precomputeWaveforms(recordings)
             // What each recording is called, for the library pages to title a row before this list
             // is loaded next time. Off the UI path: the list is already on screen.
@@ -894,6 +933,32 @@ class HomeViewModel(application: Application) : AndroidViewModel(application) {
     /** Sets how the list is ordered; the derived list re-sorts on the next read. */
     fun setSortOrder(order: RecordingSort) {
         _uiState.update { it.copy(sortOrder = order) }
+    }
+
+    /** Switches the Recordings page between its recordings and "All calls"; reads the call log when shown. */
+    fun setCallsView(on: Boolean) {
+        _uiState.update { it.copy(callsView = on) }
+        if (on) loadCalls()
+    }
+
+    /** Sets the "All calls" filter chip. */
+    fun setCallFilter(filter: CallHistory.Filter) {
+        _uiState.update { it.copy(callFilter = filter) }
+    }
+
+    /** Reads the call log (and, when the opt-in is on, each call's SIM) for "All calls". */
+    private fun loadCalls() {
+        viewModelScope.launch {
+            val (calls, sims) = withContext(Dispatchers.IO) {
+                val calls = PhoneCallReader.since(appContext, 0L, CALL_HISTORY_LIMIT)
+                val sims = if (!preferences.isShowSimLabelEnabled()) emptyMap() else {
+                    val resolver = SimLabels.Resolver(appContext, appContext.getString(R.string.sim_label_word))
+                    calls.mapNotNull { c -> resolver.simFor(c.accountComponent, c.accountId)?.let { c.startedAt to it.label } }.toMap()
+                }
+                calls to sims
+            }
+            _uiState.update { it.copy(phoneCalls = calls, callSimLabels = sims, callsLoaded = true) }
+        }
     }
 
     /** Sets what the search line holds; empty for "all contacts". */
@@ -1272,6 +1337,8 @@ class HomeViewModel(application: Application) : AndroidViewModel(application) {
     }
 
     companion object {
+        /** How many call-log entries "All calls" reads: plenty for scrolling back weeks, bounded for a big log. */
+        private const val CALL_HISTORY_LIMIT = 500
         /** How long the catalog must stop changing before the list is re-read. */
         private const val CATALOG_SETTLE_MS = 400L
 

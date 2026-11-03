@@ -19,6 +19,19 @@
     <string name="home_usb_advisory_fix">رفع</string>
 
     <!-- Recordings section -->
+    <string name="home_view_recordings">فایل‌های ضبط‌شده</string>
+    <string name="home_view_all_calls">همه تماس‌ها</string>
+    <string name="home_calls_filter_all">همه</string>
+    <string name="home_calls_filter_recorded">ضبط‌شده</string>
+    <string name="home_calls_filter_not_recorded">ضبط‌نشده</string>
+    <string name="home_calls_filter_missed">بی‌پاسخ</string>
+    <string name="home_call_origin_phone">تماس تلفنی</string>
+    <string name="home_call_not_recorded">ضبط‌نشده</string>
+    <string name="home_call_missed">بی‌پاسخ</string>
+    <string name="home_call_declined">ردشده</string>
+    <string name="home_call_unknown_number">شماره ناشناس</string>
+    <string name="home_calls_empty">هنوز تماسی در گزارش تماس گوشی نیست.</string>
+    <string name="home_calls_no_permission">CallVault نمی‌تواند گزارش تماس را بخواند. برای دیدن همه تماس‌ها در اینجا، در تنظیمات برنامه‌های Android به CallVault اجازه \"گزارش‌های تماس\" را بدهید.</string>
     <string name="home_recordings_count">%1$d ذخیره‌شده</string>
     <string name="home_recordings_empty_title">هنوز هیچ فایل ضبط‌شده‌ای نیست</string>
     <string name="home_recordings_empty_hint">وقتی CallVault تماسی را ضبط کند، اینجا نمایش داده می‌شود. برای شروع، تماسی بگیرید یا پاسخ دهید.</string>

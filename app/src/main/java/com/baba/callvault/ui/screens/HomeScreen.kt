@@ -11,6 +11,9 @@ package com.baba.callvault.ui.screens
 import com.baba.callvault.transcription.TranscriptionRouting
 import com.baba.callvault.system.openDeveloperSettings
 import com.baba.callvault.ui.common.bodyFor
+import androidx.compose.foundation.lazy.itemsIndexed
+import com.baba.callvault.data.calls.CallHistory
+import com.baba.callvault.system.permissions.PermissionChecks
 import com.baba.callvault.integrations.adb.AdbShell
 import com.baba.callvault.integrations.adb.ShellGrantGate
 import android.net.Uri
@@ -1274,6 +1277,73 @@ fun HomeScreen(
         }
     ) { innerPadding ->
         Box(modifier = Modifier.fillMaxSize()) {
+        // One recording row, shared by the recordings list and "All calls" (which adds how it was recorded).
+        val recordingRow: @Composable (RecordingItem, String?) -> Unit = { item, originLabel ->
+            RecordingRow(
+                originLabel = originLabel,
+                item = item,
+                playback = playback,
+                deleting = item.uri in uiState.deletingUris,
+                selectionMode = selectionMode,
+                selected = item.uri in selection,
+                onToggleSelected = {
+                    // Long-press enters selection mode; while in it, a tap toggles. Setting
+                    // the flag here means un-picking down to zero no longer drops out of the
+                    // mode — only the back arrow / clearSelection does.
+                    recordingsSelecting = true
+                    selection = if (item.uri in selection) selection - item.uri
+                                else selection + item.uri
+                },
+                // Plays in place, on the list: asked for so a run of calls can be listened
+                // through without opening each one. Skipping and speed stay on the page.
+                onPlayUri = { uri -> viewModel.play(uri) },
+                // Opens the recording. Deliberately does NOT start it: a tap meant to look
+                // at a call would begin playing it out loud, which on a recording of a
+                // private conversation is the wrong default in a room with other people.
+                // If THIS row is already playing, the page carries on from the same spot;
+                // if another row is, that one stops, since nothing on screen would own it.
+                onOpenPlayback = {
+                    val active = playback.activeUri
+                    val isActive = active != null &&
+                        active in listOfNotNull(item.uri, item.localUri, item.driveUri)
+                    if (active != null && ListPlayback.stopsOnOpening(isActive)) viewModel.stopPlayback()
+                    playbackFor = item.displayName
+                },
+                onPause = { viewModel.pausePlayback() },
+                onResume = { viewModel.resumePlayback() },
+                onSeek = { viewModel.seekTo(it) },
+                onDeleteAll = { viewModel.deleteRecording(item) },
+                onDeleteUri = { uri -> viewModel.deleteUri(uri) },
+                transcriptStatus = transcriptStatuses[item.displayName] ?: TranscriptStatus.NONE,
+                // Only the recording actually in hand gets the number; every other row that
+                // happens to be queued keeps spinning, because none of them has started.
+                transcriptPercent = transcribingShown.percentFor(item.displayName),
+                onTranscribe = { startTranscription(item.displayName) },
+                onOpenTranscript = {
+                    // Only calls with a finished transcript, in the list's own sort and filters.
+                    readingOrder = ArrayList(
+                        listedNames.filter { transcriptStatuses[it] == TranscriptStatus.DONE }
+                    )
+                    transcriptFor = item.displayName
+                },
+                // Retry runs through the same gate: without a model it would fail exactly the
+                // same silent way a first attempt does.
+                onRetryTranscript = { startTranscription(item.displayName) },
+                onMerge = { mergeFor = item },
+                // Only offered on a recording that actually came from a merge; there is
+                // nothing to take apart otherwise.
+                mergedPartCount = mergedCounts[item.displayName] ?: 0,
+                onUnMerge = if (item.displayName in mergedCounts) {
+                    {
+                        mergeScope.launch {
+                            unMergeLabels = viewModel.mergedPartLabels(item.displayName)
+                            unMergeFor = item
+                        }
+                    }
+                } else null
+            )
+        }
+
         LazyColumn(
             state = listState,
             modifier = Modifier.fillMaxSize(),
@@ -1290,6 +1360,41 @@ fun HomeScreen(
             // hub, and drawing them in both places would make each of them two things to dismiss.
 
             val recordings = uiState.filteredRecordings
+
+            // "Recordings | All calls" (option D, 2026-11-03): the same page shows either the recordings or
+            // every call in the phone's call log, lined up with the recordings that were made of them.
+            item { CallsViewSwitch(callsView = uiState.callsView, onChange = { viewModel.setCallsView(it) }) }
+
+            if (uiState.callsView) {
+                item {
+                    SearchLine(
+                        query = uiState.contactQuery,
+                        onQueryChange = { viewModel.setContactQuery(it) },
+                        placeholder = stringResource(R.string.home_search_contacts_hint),
+                        suggestions = uiState.contactSuggestions,
+                    )
+                }
+                item { CallFilterChips(selected = uiState.callFilter, onSelect = { viewModel.setCallFilter(it) }) }
+                val entries = uiState.callHistory
+                if (entries.isEmpty()) {
+                    if (uiState.callsLoaded) item { EmptyCalls(hasPermission = PermissionChecks.hasCallLogPermission(context)) }
+                } else {
+                    itemsIndexed(entries, key = { i, e ->
+                        when (e) {
+                            is CallHistory.Entry.Recorded<*> -> "rec-" + (e.recording as RecordingItem).uri
+                            is CallHistory.Entry.NotRecorded -> "call-${e.call.startedAt}-$i"
+                        }
+                    }) { _, entry ->
+                        when (entry) {
+                            is CallHistory.Entry.Recorded<*> -> (entry.recording as RecordingItem).let { rec ->
+                                recordingRow(rec, originLabelOf(rec))
+                            }
+                            is CallHistory.Entry.NotRecorded ->
+                                CallHistoryRow(entry.call, uiState.callSimLabels[entry.call.startedAt])
+                        }
+                    }
+                }
+            } else {
 
             // The search line, first: it is the one control on this page that takes typing, and
             // what it completes with comes from the list itself, so it is only offered once there
@@ -1363,71 +1468,9 @@ fun HomeScreen(
                         )
                     }
                 }
-                items(recordings, key = { it.uri.toString() }) { item ->
-                    RecordingRow(
-                        item = item,
-                        playback = playback,
-                        deleting = item.uri in uiState.deletingUris,
-                        selectionMode = selectionMode,
-                        selected = item.uri in selection,
-                        onToggleSelected = {
-                            // Long-press enters selection mode; while in it, a tap toggles. Setting
-                            // the flag here means un-picking down to zero no longer drops out of the
-                            // mode — only the back arrow / clearSelection does.
-                            recordingsSelecting = true
-                            selection = if (item.uri in selection) selection - item.uri
-                                        else selection + item.uri
-                        },
-                        // Plays in place, on the list: asked for so a run of calls can be listened
-                        // through without opening each one. Skipping and speed stay on the page.
-                        onPlayUri = { uri -> viewModel.play(uri) },
-                        // Opens the recording. Deliberately does NOT start it: a tap meant to look
-                        // at a call would begin playing it out loud, which on a recording of a
-                        // private conversation is the wrong default in a room with other people.
-                        // If THIS row is already playing, the page carries on from the same spot;
-                        // if another row is, that one stops, since nothing on screen would own it.
-                        onOpenPlayback = {
-                            val active = playback.activeUri
-                            val isActive = active != null &&
-                                active in listOfNotNull(item.uri, item.localUri, item.driveUri)
-                            if (active != null && ListPlayback.stopsOnOpening(isActive)) viewModel.stopPlayback()
-                            playbackFor = item.displayName
-                        },
-                        onPause = { viewModel.pausePlayback() },
-                        onResume = { viewModel.resumePlayback() },
-                        onSeek = { viewModel.seekTo(it) },
-                        onDeleteAll = { viewModel.deleteRecording(item) },
-                        onDeleteUri = { uri -> viewModel.deleteUri(uri) },
-                        transcriptStatus = transcriptStatuses[item.displayName] ?: TranscriptStatus.NONE,
-                        // Only the recording actually in hand gets the number; every other row that
-                        // happens to be queued keeps spinning, because none of them has started.
-                        transcriptPercent = transcribingShown.percentFor(item.displayName),
-                        onTranscribe = { startTranscription(item.displayName) },
-                        onOpenTranscript = {
-                            // Only calls with a finished transcript, in the list's own sort and filters.
-                            readingOrder = ArrayList(
-                                listedNames.filter { transcriptStatuses[it] == TranscriptStatus.DONE }
-                            )
-                            transcriptFor = item.displayName
-                        },
-                        // Retry runs through the same gate: without a model it would fail exactly the
-                        // same silent way a first attempt does.
-                        onRetryTranscript = { startTranscription(item.displayName) },
-                        onMerge = { mergeFor = item },
-                        // Only offered on a recording that actually came from a merge; there is
-                        // nothing to take apart otherwise.
-                        mergedPartCount = mergedCounts[item.displayName] ?: 0,
-                        onUnMerge = if (item.displayName in mergedCounts) {
-                            {
-                                mergeScope.launch {
-                                    unMergeLabels = viewModel.mergedPartLabels(item.displayName)
-                                    unMergeFor = item
-                                }
-                            }
-                        } else null
-                    )
-                }
+                items(recordings, key = { it.uri.toString() }) { item -> recordingRow(item, null) }
             }
+            } // end of the recordings view
         }
 
         // Back to the top from anywhere, without flinging. Appears only once scrolling has actually
@@ -3217,7 +3260,9 @@ private fun RecordingRow(
     mergedPartCount: Int = 0,
     /** Null unless this recording was made by merging. */
     onUnMerge: (() -> Unit)? = null,
-    transcriptPercent: Int = 0
+    transcriptPercent: Int = 0,
+    /** "Phone call" or the app's name, shown first in the subtitle on the "All calls" list; null elsewhere. */
+    originLabel: String? = null,
 ) {
     // The pending delete target drives the confirm dialog: null = closed.
     //
@@ -3432,7 +3477,8 @@ private fun RecordingRow(
             val (metaText, metaColor) = when {
                 isRowActive && playback.phase == RecordingPlaybackController.Phase.ERROR ->
                     stringResource(R.string.home_player_error) to MaterialTheme.colorScheme.error
-                else -> buildSubtitle(item, mergedPartCount) to MaterialTheme.colorScheme.onSurfaceVariant
+                else -> listOfNotNull(originLabel, buildSubtitle(item, mergedPartCount)).joinToString(" · ") to
+                    MaterialTheme.colorScheme.onSurfaceVariant
             }
             Text(
                 text = metaText,
@@ -3868,28 +3914,11 @@ private fun formatWhen(item: RecordingItem): String? {
         // timestamp is only evidence about the file.
         ?: item.lastModified.takeIf { item.displayDate == null && it > 0L }
         ?: return item.displayDate
-    val time = SimpleDateFormat("HH:mm", Locale.getDefault()).format(Date(millis))
-    val day = Calendar.getInstance().apply { timeInMillis = millis }
-    val today = Calendar.getInstance()
-    val yesterday = Calendar.getInstance().apply { add(Calendar.DAY_OF_YEAR, -1) }
-    fun sameDay(a: Calendar, b: Calendar) =
-        a.get(Calendar.YEAR) == b.get(Calendar.YEAR) &&
-            a.get(Calendar.DAY_OF_YEAR) == b.get(Calendar.DAY_OF_YEAR)
-    return when {
-        sameDay(day, today) -> "${stringResource(R.string.home_date_today)} $time"
-        sameDay(day, yesterday) -> "${stringResource(R.string.home_date_yesterday)} $time"
-        else -> SimpleDateFormat("dd/MM/yy HH:mm", Locale.getDefault()).format(Date(millis))
-    }
+    return callTimeLabel(millis)
 }
 
 /** "12:41" for a call under an hour, "1:05:30" beyond it. */
-private fun formatDuration(seconds: Long): String {
-    val h = seconds / 3600
-    val m = (seconds % 3600) / 60
-    val sec = seconds % 60
-    return if (h > 0) String.format(Locale.US, "%d:%02d:%02d", h, m, sec)
-    else String.format(Locale.US, "%d:%02d", m, sec)
-}
+private fun formatDuration(seconds: Long): String = formatCallDuration(seconds)
 
 /** Formats a byte count as a compact human-readable size (e.g. "1.2 MB"). */
 private fun formatSize(bytes: Long): String = formatByteSize(bytes)

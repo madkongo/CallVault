@@ -19,6 +19,19 @@
     <string name="home_usb_advisory_fix">Διόρθωση</string>
 
     <!-- Recordings section -->
+    <string name="home_view_recordings">Εγγραφές</string>
+    <string name="home_view_all_calls">Όλες οι κλήσεις</string>
+    <string name="home_calls_filter_all">Όλες</string>
+    <string name="home_calls_filter_recorded">Με εγγραφή</string>
+    <string name="home_calls_filter_not_recorded">Χωρίς εγγραφή</string>
+    <string name="home_calls_filter_missed">Αναπάντητες</string>
+    <string name="home_call_origin_phone">Τηλεφωνική κλήση</string>
+    <string name="home_call_not_recorded">Χωρίς εγγραφή</string>
+    <string name="home_call_missed">Αναπάντητη</string>
+    <string name="home_call_declined">Απορρίφθηκε</string>
+    <string name="home_call_unknown_number">Άγνωστος αριθμός</string>
+    <string name="home_calls_empty">Δεν υπάρχουν ακόμη κλήσεις στο αρχείο κλήσεων του τηλεφώνου.</string>
+    <string name="home_calls_no_permission">Το CallVault δεν μπορεί να διαβάσει το αρχείο κλήσεων. Επιτρέψτε τα \"Αρχεία καταγραφής κλήσεων\" για το CallVault στις ρυθμίσεις εφαρμογών του Android για να βλέπετε εδώ όλες τις κλήσεις.</string>
     <string name="home_recordings_count">%1$d αποθηκευμένες</string>
     <string name="home_recordings_empty_title">Δεν υπάρχουν ακόμη εγγραφές</string>
     <string name="home_recordings_empty_hint">Όταν το CallVault καταγράψει μια κλήση, θα εμφανιστεί εδώ. Κάντε ή δεχτείτε μια κλήση για να ξεκινήσετε.</string>
