@@ -102,6 +102,13 @@ All notable changes to CallVault are documented here. The format is based on
 - **The debug log no longer reports microphones as "still open" after phone calls** (#69). Every normal call
   added a false entry; the microphone itself was always released.
   <!-- 🧪 VERIFYING: OP9 2026-11-03 (2.4.8-next8), one carrier call logged "no capture left open". -->
+- **Recording is ready seconds after an update in Shizuku mode.** Sometimes the recorder stayed down for about a
+  minute after CallVault updated, and a call in that minute was not recorded.
+  <!-- 🧪 VERIFYING: OP9 2026-11-03, 2.4.8-next9: 6 of 6 install-overs ready in ~2 s (before: 1 of 4 down 62 s).
+       Maintainer to confirm on a real update. -->
+- **The notification says "Ready" as soon as the recorder is.** After an update it could say "Call recorder
+  starting up…" for a minute while calls were already being recorded.
+  <!-- 🧪 VERIFYING: OP9 2026-11-03, 2.4.8-next9: "Ready" within ~1 s of the recorder connecting, 6 of 6. -->
 
 ## [2.4.8] — 2026-10-31
 
