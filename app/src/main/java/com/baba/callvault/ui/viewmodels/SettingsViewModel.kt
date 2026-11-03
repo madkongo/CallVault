@@ -360,6 +360,9 @@ class SettingsViewModel(application: Application) : AndroidViewModel(application
      */
     override fun setStorageTarget(target: StorageTarget) {
         preferences.setStorageTarget(target)
+        // The schedule depends on the target too: switching to Drive with a daily/weekly schedule set no
+        // sweep until the next app start or call, and switching to the phone only left one queued (OP9, 2026-11-03).
+        SyncScheduler.apply(appContext)
         refresh()
     }
 
@@ -369,6 +372,7 @@ class SettingsViewModel(application: Application) : AndroidViewModel(application
      */
     override fun setDriveFolderUri(uri: android.net.Uri?) {
         preferences.setDriveFolderUri(uri)
+        SyncScheduler.apply(appContext)
         refresh()
     }
 
