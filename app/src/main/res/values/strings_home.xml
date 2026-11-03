@@ -19,6 +19,19 @@
     <string name="home_usb_advisory_fix">Fix</string>
 
     <!-- Recordings section -->
+    <string name="home_view_recordings">Recordings</string>
+    <string name="home_view_all_calls">Call history</string>
+    <string name="home_calls_filter_all">All</string>
+    <string name="home_calls_filter_recorded">Recorded</string>
+    <string name="home_calls_filter_not_recorded">Not recorded</string>
+    <string name="home_calls_filter_missed">Missed</string>
+    <string name="home_call_origin_phone">Phone call</string>
+    <string name="home_call_not_recorded">Not recorded</string>
+    <string name="home_call_missed">Missed</string>
+    <string name="home_call_declined">Declined</string>
+    <string name="home_call_unknown_number">Unknown number</string>
+    <string name="home_calls_empty">No calls in the phone\'s call log yet.</string>
+    <string name="home_calls_no_permission">CallVault cannot read the call log. Allow \"Call logs\" for CallVault in Android\'s app settings to see all calls here.</string>
     <string name="home_recordings_count">%1$d saved</string>
     <string name="home_recordings_empty_title">No recordings yet</string>
     <string name="home_recordings_empty_hint">When CallVault records a call, it shows up here. Make or take a call to get started.</string>
