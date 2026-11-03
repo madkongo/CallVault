@@ -442,6 +442,13 @@
     <string name="settings_link_share_debug_report">Debug-Bericht teilen</string>
     <string name="settings_metadata_file_desc">Kleine .json-Datei neben jeder Aufnahme speichern</string>
     <string name="settings_metadata_file_hint">Verwendet dasselbe Format wie BCR, damit dafür gebaute Apps — etwa bcr-gui — die Details Ihrer Aufnahmen lesen können. Nur sinnvoll, wenn Sie so eine App nutzen.</string>
+    <string name="settings_search_hint">Einstellungen durchsuchen</string>
+    <string name="settings_search_no_matches">Keine Treffer</string>
+    <string name="settings_search_none">Keine Einstellung passt zu „%1$s“</string>
+    <plurals name="settings_search_matches">
+        <item quantity="one">%d Treffer</item>
+        <item quantity="other">%d Treffer</item>
+    </plurals>
     <string name="settings_sim_label_label">Anzeigen, welche SIM jeder Anruf genutzt hat</string>
     <string name="settings_sim_label_desc">Für Telefone mit zwei SIMs: zeigt den Namen, den Sie der SIM gegeben haben, oder SIM 1 / SIM 2</string>
     <string name="sim_label_word">SIM</string>

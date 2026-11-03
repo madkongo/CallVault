@@ -535,6 +535,13 @@
     <string name="settings_link_share_debug_report">اشتراک‌گذاری گزارش اشکال‌زدایی</string>
     <string name="settings_metadata_file_desc">یک فایل .json کوچک کنار هر فایل ضبط‌شده ذخیره کن</string>
     <string name="settings_metadata_file_hint">از همان قالب BCR استفاده می‌کند، بنابراین برنامه‌های ساخته‌شده برای آن — مانند bcr-gui — می‌توانند جزئیات فایل‌های ضبط‌شده شما را بخوانند. فقط اگر از یکی از آن‌ها استفاده می‌کنید ارزش روشن کردن دارد.</string>
+    <string name="settings_search_hint">جستجو در تنظیمات</string>
+    <string name="settings_search_no_matches">موردی پیدا نشد</string>
+    <string name="settings_search_none">هیچ تنظیمی با «%1$s» جور نیست</string>
+    <plurals name="settings_search_matches">
+        <item quantity="one">%d مورد</item>
+        <item quantity="other">%d مورد</item>
+    </plurals>
     <string name="settings_sim_label_label">نمایش سیم‌کارتی که هر تماس از آن استفاده کرد</string>
     <string name="settings_sim_label_desc">برای گوشی‌های دو سیم‌کارته: نامی را که به سیم‌کارت داده‌اید نشان می‌دهد، یا سیم 1 / سیم 2</string>
     <string name="sim_label_word">سیم</string>

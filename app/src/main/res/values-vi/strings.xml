@@ -441,6 +441,12 @@
     <string name="settings_link_share_debug_report">Chia sẻ báo cáo gỡ lỗi</string>
     <string name="settings_metadata_file_desc">Lưu một tệp .json nhỏ bên cạnh mỗi bản ghi</string>
     <string name="settings_metadata_file_hint">Dùng cùng định dạng với BCR, nên các ứng dụng làm cho nó — như bcr-gui — có thể đọc chi tiết bản ghi của bạn. Chỉ nên bật nếu bạn dùng một trong số đó.</string>
+    <string name="settings_search_hint">Tìm trong cài đặt</string>
+    <string name="settings_search_no_matches">Không có kết quả</string>
+    <string name="settings_search_none">Không có cài đặt nào khớp với “%1$s”</string>
+    <plurals name="settings_search_matches">
+        <item quantity="other">%d kết quả</item>
+    </plurals>
     <string name="settings_sim_label_label">Hiện SIM được dùng cho mỗi cuộc gọi</string>
     <string name="settings_sim_label_desc">Cho điện thoại hai SIM: hiện tên bạn đã đặt cho SIM, hoặc SIM 1 / SIM 2</string>
     <string name="sim_label_word">SIM</string>

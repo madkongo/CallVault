@@ -442,6 +442,13 @@
     <string name="settings_link_share_debug_report">Hibakeresési jelentés megosztása</string>
     <string name="settings_metadata_file_desc">Kis .json mentése minden felvétel mellé</string>
     <string name="settings_metadata_file_hint">Ugyanazt a formátumot használja, mint a BCR, így az arra épülő alkalmazások — például a bcr-gui — el tudják olvasni a felvételek adatait. Csak akkor érdemes bekapcsolni, ha használ ilyet.</string>
+    <string name="settings_search_hint">Keresés a beállításokban</string>
+    <string name="settings_search_no_matches">Nincs találat</string>
+    <string name="settings_search_none">Egy beállítás sem egyezik ezzel: „%1$s”</string>
+    <plurals name="settings_search_matches">
+        <item quantity="one">%d találat</item>
+        <item quantity="other">%d találat</item>
+    </plurals>
     <string name="settings_sim_label_label">A hívásokhoz használt SIM megjelenítése</string>
     <string name="settings_sim_label_desc">Kétkártyás telefonokhoz: a SIM-nek adott nevet mutatja, vagy SIM 1 / SIM 2</string>
     <string name="sim_label_word">SIM</string>

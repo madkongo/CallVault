@@ -479,6 +479,17 @@
     <string name="settings_link_share_debug_report">مشاركة تقرير تصحيح الأخطاء</string>
     <string name="settings_metadata_file_desc">احفظ ملف .json صغير بجانب كل تسجيل</string>
     <string name="settings_metadata_file_hint">يستخدم نفس التنسيق مثل BCR، بحيث يمكن للتطبيقات المبنية عليه؛ مثل bcr-gui؛ قراءة تفاصيل تسجيلاتك. يستحق التشغيل فقط إذا كنت تستخدم واحدًا.</string>
+    <string name="settings_search_hint">البحث في الإعدادات</string>
+    <string name="settings_search_no_matches">لا توجد نتائج</string>
+    <string name="settings_search_none">لا يوجد إعداد يطابق «%1$s»</string>
+    <plurals name="settings_search_matches">
+        <item quantity="zero">لا توجد نتائج</item>
+        <item quantity="one">نتيجة واحدة</item>
+        <item quantity="two">نتيجتان</item>
+        <item quantity="few">%d نتائج</item>
+        <item quantity="many">%d نتيجة</item>
+        <item quantity="other">%d نتيجة</item>
+    </plurals>
     <string name="settings_sim_label_label">إظهار شريحة SIM التي استُخدمت في كل مكالمة</string>
     <string name="settings_sim_label_desc">للهواتف ذات شريحتين: يعرض الاسم الذي أعطيته للشريحة، أو SIM 1 / SIM 2</string>
     <string name="sim_label_word">SIM</string>

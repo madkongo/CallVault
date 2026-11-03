@@ -444,6 +444,15 @@
     <string name="settings_link_share_debug_report">Udostępnij raport debugowania</string>
     <string name="settings_metadata_file_desc">Zapisuj mały plik .json obok każdego nagrania</string>
     <string name="settings_metadata_file_hint">Używa tego samego formatu co BCR, więc aplikacje stworzone dla niego — np. bcr-gui — mogą odczytać szczegóły nagrań. Warto włączyć tylko, jeśli takiej używasz.</string>
+    <string name="settings_search_hint">Szukaj w ustawieniach</string>
+    <string name="settings_search_no_matches">Brak wyników</string>
+    <string name="settings_search_none">Żadne ustawienie nie pasuje do „%1$s”</string>
+    <plurals name="settings_search_matches">
+        <item quantity="one">%d wynik</item>
+        <item quantity="few">%d wyniki</item>
+        <item quantity="many">%d wyników</item>
+        <item quantity="other">%d wyniku</item>
+    </plurals>
     <string name="settings_sim_label_label">Pokazuj, której karty SIM użyto w każdym połączeniu</string>
     <string name="settings_sim_label_desc">Dla telefonów z dwiema kartami SIM: pokazuje nazwę nadaną karcie SIM lub SIM 1 / SIM 2</string>
     <string name="sim_label_word">SIM</string>
