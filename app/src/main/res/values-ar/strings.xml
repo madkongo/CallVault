@@ -479,6 +479,9 @@
     <string name="settings_link_share_debug_report">مشاركة تقرير تصحيح الأخطاء</string>
     <string name="settings_metadata_file_desc">احفظ ملف .json صغير بجانب كل تسجيل</string>
     <string name="settings_metadata_file_hint">يستخدم نفس التنسيق مثل BCR، بحيث يمكن للتطبيقات المبنية عليه؛ مثل bcr-gui؛ قراءة تفاصيل تسجيلاتك. يستحق التشغيل فقط إذا كنت تستخدم واحدًا.</string>
+    <string name="settings_sim_label_label">إظهار شريحة SIM التي استُخدمت في كل مكالمة</string>
+    <string name="settings_sim_label_desc">للهواتف ذات شريحتين: يعرض الاسم الذي أعطيته للشريحة، أو SIM 1 / SIM 2</string>
+    <string name="sim_label_word">SIM</string>
     <string name="settings_metadata_file_label">كتابة ملف تفاصيل</string>
     <string name="settings_needs_newer_android">يتطلب Android %1$s أو أحدث؛ يعمل هذا الهاتف بنظام Android %2$s.</string>
     <string name="settings_offline_recording_desc">تسجيل المكالمات حتى عندما لا توجد شبكة Wi-Fi. يحتاج إلى تصحيح أخطاء USB.</string>

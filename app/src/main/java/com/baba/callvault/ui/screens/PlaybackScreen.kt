@@ -409,7 +409,8 @@ private fun CallHeaderCard(
                         DirectionChip(it)
                         Spacer(Modifier.width(8.dp))
                     }
-                    playbackDate(item)?.let { date ->
+                    // The opt-in SIM label rides on the date line too: "3 Nov 2026 11:02 · Work".
+                    playbackDate(item)?.let { date -> listOfNotNull(date, item.simLabel).joinToString(" · ") }?.let { date ->
                         Text(
                             text = date,
                             style = MaterialTheme.typography.labelSmall,

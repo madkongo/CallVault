@@ -442,6 +442,9 @@
     <string name="settings_link_share_debug_report">Hibakeresési jelentés megosztása</string>
     <string name="settings_metadata_file_desc">Kis .json mentése minden felvétel mellé</string>
     <string name="settings_metadata_file_hint">Ugyanazt a formátumot használja, mint a BCR, így az arra épülő alkalmazások — például a bcr-gui — el tudják olvasni a felvételek adatait. Csak akkor érdemes bekapcsolni, ha használ ilyet.</string>
+    <string name="settings_sim_label_label">A hívásokhoz használt SIM megjelenítése</string>
+    <string name="settings_sim_label_desc">Kétkártyás telefonokhoz: a SIM-nek adott nevet mutatja, vagy SIM 1 / SIM 2</string>
+    <string name="sim_label_word">SIM</string>
     <string name="settings_metadata_file_label">Adatfájl írása</string>
     <string name="settings_needs_newer_android">Android %1$s vagy újabb szükséges – ezen a telefonon Android %2$s fut.</string>
     <string name="settings_offline_recording_desc">Hívások rögzítése Wi-Fi-hálózat nélkül is. Bekapcsolt USB-hibakeresés kell hozzá.</string>

@@ -442,6 +442,9 @@
     <string name="settings_link_share_debug_report">Debug-Bericht teilen</string>
     <string name="settings_metadata_file_desc">Kleine .json-Datei neben jeder Aufnahme speichern</string>
     <string name="settings_metadata_file_hint">Verwendet dasselbe Format wie BCR, damit dafür gebaute Apps — etwa bcr-gui — die Details Ihrer Aufnahmen lesen können. Nur sinnvoll, wenn Sie so eine App nutzen.</string>
+    <string name="settings_sim_label_label">Anzeigen, welche SIM jeder Anruf genutzt hat</string>
+    <string name="settings_sim_label_desc">Für Telefone mit zwei SIMs: zeigt den Namen, den Sie der SIM gegeben haben, oder SIM 1 / SIM 2</string>
+    <string name="sim_label_word">SIM</string>
     <string name="settings_metadata_file_label">Detaildatei schreiben</string>
     <string name="settings_needs_newer_android">Erfordert Android %1$s oder neuer – dieses Handy läuft mit Android %2$s.</string>
     <string name="settings_offline_recording_desc">Anrufe auch ohne WLAN-Netz aufnehmen. Benötigt eingeschaltetes USB-Debugging.</string>

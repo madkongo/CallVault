@@ -24,6 +24,9 @@ import android.telephony.PhoneNumberUtils
 import android.provider.DocumentsContract
 import androidx.documentfile.provider.DocumentFile
 import com.baba.callvault.data.AppPreferences
+import com.baba.callvault.data.calls.PhoneCallMatch
+import com.baba.callvault.data.calls.PhoneCallReader
+import com.baba.callvault.data.calls.SimLabels
 import com.baba.callvault.data.health.CallOutcomes
 import com.baba.callvault.data.health.SetupFingerprint
 import com.baba.callvault.data.health.SetupHealthStore
@@ -758,8 +761,18 @@ class RecordingForegroundService : Service() {
             durationSecsEncoded = null,
             // Carrier capture mixes the two directions onto channels whose order is an OEM detail, so
             // name the near side only when the learned mapping is trusted; null otherwise (issue #50).
-            nearChannel = SpeakerTurnsRepository.trustedMap(applicationContext).nearChannelKey()
+            nearChannel = SpeakerTurnsRepository.trustedMap(applicationContext).nearChannelKey(),
+            simSlot = simSlotFor(parsed.startedAtMillis ?: lastModified),
         )
+    }
+
+    /** The 1-based SIM slot of the call that started at [startedAt], when the opt-in SIM label is on; else null. */
+    private fun simSlotFor(startedAt: Long): Int? {
+        if (!AppPreferences(applicationContext).isShowSimLabelEnabled()) return null
+        val calls = PhoneCallReader.since(applicationContext, startedAt - PhoneCallMatch.TOLERANCE_MS)
+        val call = PhoneCallMatch.nearest(calls, startedAt) ?: return null
+        return SimLabels.Resolver(applicationContext, getString(R.string.sim_label_word))
+            .simFor(call.accountComponent, call.accountId)?.slot
     }
 
     /**

@@ -442,6 +442,9 @@
     <string name="settings_link_share_debug_report">Compartir un informe de depuración</string>
     <string name="settings_metadata_file_desc">Guardar un pequeño .json junto a cada grabación</string>
     <string name="settings_metadata_file_hint">Usa el mismo formato que BCR, así las apps hechas para él —como bcr-gui— pueden leer los detalles de tus grabaciones. Solo merece la pena si usas alguna.</string>
+    <string name="settings_sim_label_label">Mostrar qué SIM usó cada llamada</string>
+    <string name="settings_sim_label_desc">Para teléfonos con dos SIM: muestra el nombre que le diste a la SIM, o SIM 1 / SIM 2</string>
+    <string name="sim_label_word">SIM</string>
     <string name="settings_metadata_file_label">Escribir un archivo de detalles</string>
     <string name="settings_needs_newer_android">Requiere Android %1$s o posterior; este teléfono usa Android %2$s.</string>
     <string name="settings_offline_recording_desc">Graba llamadas incluso sin red Wi-Fi. Requiere la depuración USB activada.</string>

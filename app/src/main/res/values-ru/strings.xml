@@ -444,6 +444,9 @@
     <string name="settings_link_share_debug_report">Поделиться отчётом для отладки</string>
     <string name="settings_metadata_file_desc">Сохранять небольшой .json рядом с каждой записью</string>
     <string name="settings_metadata_file_hint">Использует тот же формат, что и BCR, поэтому приложения для него — например bcr-gui — смогут читать сведения о ваших записях. Включать стоит, только если вы таким пользуетесь.</string>
+    <string name="settings_sim_label_label">Показывать, какая SIM использовалась для звонка</string>
+    <string name="settings_sim_label_desc">Для телефонов с двумя SIM: показывает имя, которое вы дали SIM-карте, или SIM 1 / SIM 2</string>
+    <string name="sim_label_word">SIM</string>
     <string name="settings_metadata_file_label">Записывать файл сведений</string>
     <string name="settings_needs_newer_android">Нужен Android %1$s или новее — на этом телефоне Android %2$s.</string>
     <string name="settings_offline_recording_desc">Записывать звонки даже без сети Wi-Fi. Требуется включённая отладка по USB.</string>

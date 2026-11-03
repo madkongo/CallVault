@@ -188,3 +188,17 @@ internal fun FileNameTemplateRow(preferences: AppPreferences, updateTrigger: Int
         )
     }
 }
+
+/**
+ * Opt-in: each phone call shows which SIM it used — the SIM's own name, else "SIM 1" / "SIM 2".
+ * Read from the call log when the list is drawn, so it also labels calls recorded before it was turned on.
+ */
+@Composable
+internal fun SimLabelRow(preferences: AppPreferences, updateTrigger: Int, actions: SettingsActions) {
+    SettingsToggleRow(
+        label = stringResource(R.string.settings_sim_label_label),
+        description = stringResource(R.string.settings_sim_label_desc),
+        checked = remember(updateTrigger) { preferences.isShowSimLabelEnabled() },
+        onCheckedChange = { actions.setShowSimLabelEnabled(it) },
+    )
+}

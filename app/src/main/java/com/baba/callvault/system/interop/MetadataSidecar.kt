@@ -71,7 +71,8 @@ object MetadataSidecar {
         phoneNumber: String?,
         contactName: String?,
         durationSecsEncoded: Double?,
-        nearChannel: String?
+        nearChannel: String?,
+        simSlot: Int? = null,
     ) {
         val prefs = AppPreferences(context)
         if (!prefs.isWriteMetadataFileEnabled()) return
@@ -106,7 +107,8 @@ object MetadataSidecar {
                     channelCount = 1,
                     durationSecsEncoded = durationSecsEncoded,
                     speakerTurns = speakerTurns,
-                    nearChannel = nearChannel
+                    nearChannel = nearChannel,
+                    simSlot = simSlot,
                 )
             )
 

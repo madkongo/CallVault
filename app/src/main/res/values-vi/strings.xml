@@ -441,6 +441,9 @@
     <string name="settings_link_share_debug_report">Chia sẻ báo cáo gỡ lỗi</string>
     <string name="settings_metadata_file_desc">Lưu một tệp .json nhỏ bên cạnh mỗi bản ghi</string>
     <string name="settings_metadata_file_hint">Dùng cùng định dạng với BCR, nên các ứng dụng làm cho nó — như bcr-gui — có thể đọc chi tiết bản ghi của bạn. Chỉ nên bật nếu bạn dùng một trong số đó.</string>
+    <string name="settings_sim_label_label">Hiện SIM được dùng cho mỗi cuộc gọi</string>
+    <string name="settings_sim_label_desc">Cho điện thoại hai SIM: hiện tên bạn đã đặt cho SIM, hoặc SIM 1 / SIM 2</string>
+    <string name="sim_label_word">SIM</string>
     <string name="settings_metadata_file_label">Ghi tệp chi tiết</string>
     <string name="settings_needs_newer_android">Cần Android %1$s trở lên — điện thoại này chạy Android %2$s.</string>
     <string name="settings_offline_recording_desc">Ghi âm cuộc gọi ngay cả khi không có mạng Wi-Fi. Cần bật gỡ lỗi USB.</string>

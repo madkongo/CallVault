@@ -53,7 +53,7 @@ class AppPreferences(context: Context) {
             "ignored_contacts_incoming", "ignored_contacts_outgoing", "voip_apply_ignored_contacts",
             "record_only_contacts_incoming", "record_only_contacts_outgoing",
             // Audio + file naming
-            "audio_source", "audio_codec", "audio_bitrate", "file_name_template",
+            "audio_source", "audio_codec", "audio_bitrate", "file_name_template", "show_sim_label",
             // UI
             "theme_mode", "dynamic_color", "show_toasts", "vibration_enabled",
             // Retention / storage policy (not the folder URIs, which are per-device)
@@ -229,6 +229,7 @@ class AppPreferences(context: Context) {
         // Off. It puts a second file in the user's folder for every call — a visible change to
         // something they look at — and it only earns its keep for someone using a tool that reads it.
         const val WRITE_METADATA_FILE = false
+        const val SHOW_SIM_LABEL = false
         const val WRITE_TRANSCRIPT_SIDECAR = false
         // Off. Hiding recordings from every media app is a privacy choice for the user to make.
         const val HIDE_RECORDINGS = false
@@ -360,6 +361,7 @@ class AppPreferences(context: Context) {
         // --- Retention ---
         RETENTION_LINKED("retention_linked"),
         WRITE_METADATA_FILE("write_metadata_file"),
+        SHOW_SIM_LABEL("show_sim_label"),
         WRITE_TRANSCRIPT_SIDECAR("write_transcript_sidecar"),
         HIDE_RECORDINGS("hide_recordings"),
         NOMEDIA_CREATED_BY_US("nomedia_created_by_us"),
@@ -1265,6 +1267,12 @@ class AppPreferences(context: Context) {
 
     /** Sets whether a `.json` details file is written beside each recording. */
     fun setWriteMetadataFileEnabled(enabled: Boolean) = setBoolean(Key.WRITE_METADATA_FILE, enabled)
+
+    /** Whether each phone call shows which SIM it used (opt-in, for dual-SIM phones). */
+    fun isShowSimLabelEnabled() = getBoolean(Key.SHOW_SIM_LABEL, DefaultsValue.SHOW_SIM_LABEL)
+
+    /** Sets whether each phone call shows which SIM it used. */
+    fun setShowSimLabelEnabled(enabled: Boolean) = setBoolean(Key.SHOW_SIM_LABEL, enabled)
 
     /** Whether to write a `.md` transcript + notes file beside each recording (for PC backup). */
     fun isWriteTranscriptSidecarEnabled() = getBoolean(Key.WRITE_TRANSCRIPT_SIDECAR, DefaultsValue.WRITE_TRANSCRIPT_SIDECAR)

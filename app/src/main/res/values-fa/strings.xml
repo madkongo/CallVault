@@ -535,6 +535,9 @@
     <string name="settings_link_share_debug_report">اشتراک‌گذاری گزارش اشکال‌زدایی</string>
     <string name="settings_metadata_file_desc">یک فایل .json کوچک کنار هر فایل ضبط‌شده ذخیره کن</string>
     <string name="settings_metadata_file_hint">از همان قالب BCR استفاده می‌کند، بنابراین برنامه‌های ساخته‌شده برای آن — مانند bcr-gui — می‌توانند جزئیات فایل‌های ضبط‌شده شما را بخوانند. فقط اگر از یکی از آن‌ها استفاده می‌کنید ارزش روشن کردن دارد.</string>
+    <string name="settings_sim_label_label">نمایش سیم‌کارتی که هر تماس از آن استفاده کرد</string>
+    <string name="settings_sim_label_desc">برای گوشی‌های دو سیم‌کارته: نامی را که به سیم‌کارت داده‌اید نشان می‌دهد، یا سیم 1 / سیم 2</string>
+    <string name="sim_label_word">سیم</string>
     <string name="settings_metadata_file_label">نوشتن یک فایل جزئیات</string>
     <string name="settings_needs_newer_android">به Android %1$s یا جدیدتر نیاز دارد — این گوشی Android %2$s را اجرا می‌کند.</string>
     <string name="settings_offline_recording_desc">تماس‌ها را حتی وقتی هیچ شبکه Wi-Fi وجود ندارد ضبط می‌کند. به روشن بودن اشکال‌زدایی USB نیاز دارد.</string>

@@ -140,6 +140,8 @@ private fun SoundAndNamesBody(preferences: AppPreferences, updateTrigger: Int, a
     AudioSection(preferences, updateTrigger, actions, expanded = true, onToggle = {})
     SettingsDivider()
     FileNameTemplateRow(preferences, updateTrigger, actions)
+    SettingsDivider()
+    SimLabelRow(preferences, updateTrigger, actions)
 }
 
 @Composable

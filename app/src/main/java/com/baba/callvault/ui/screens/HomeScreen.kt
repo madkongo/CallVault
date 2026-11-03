@@ -3836,6 +3836,8 @@ private fun buildSubtitle(item: RecordingItem, mergedPartCount: Int = 0): String
     val parts = buildList {
         formatWhen(item)?.let { add(it) }
         item.durationSeconds?.let { add(formatDuration(it)) }
+        // The opt-in SIM label ("Work", "SIM 2"), next to when and how long: it describes the call.
+        item.simLabel?.let { add(it) }
         if (item.sizeBytes > 0) add(formatSize(item.sizeBytes))
         // Last, so it reads as a note about the row rather than competing with when and how long.
         // Without it a merged call is indistinguishable from an ordinary one that happens to be

@@ -442,6 +442,9 @@
     <string name="settings_link_share_debug_report">Partager un rapport de débogage</string>
     <string name="settings_metadata_file_desc">Enregistrer un petit .json à côté de chaque enregistrement</string>
     <string name="settings_metadata_file_hint">Utilise le même format que BCR, pour que les applis conçues pour lui — comme bcr-gui — puissent lire les détails de vos enregistrements. Utile seulement si vous en utilisez une.</string>
+    <string name="settings_sim_label_label">Afficher la SIM utilisée pour chaque appel</string>
+    <string name="settings_sim_label_desc">Pour les téléphones à deux SIM : affiche le nom que vous avez donné à la SIM, ou SIM 1 / SIM 2</string>
+    <string name="sim_label_word">SIM</string>
     <string name="settings_metadata_file_label">Écrire un fichier de détails</string>
     <string name="settings_needs_newer_android">Nécessite Android %1$s ou plus récent — ce téléphone est sous Android %2$s.</string>
     <string name="settings_offline_recording_desc">Enregistrer les appels même sans réseau Wi-Fi. Nécessite le débogage USB activé.</string>

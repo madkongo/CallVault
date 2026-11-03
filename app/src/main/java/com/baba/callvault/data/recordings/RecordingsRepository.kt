@@ -13,7 +13,11 @@ import android.net.Uri
 import android.provider.ContactsContract
 import androidx.core.net.toUri
 import androidx.documentfile.provider.DocumentFile
+import com.baba.callvault.R
 import com.baba.callvault.data.AppPreferences
+import com.baba.callvault.data.calls.PhoneCallMatch
+import com.baba.callvault.data.calls.PhoneCallReader
+import com.baba.callvault.data.calls.SimLabels
 import com.baba.callvault.data.StorageTarget
 import com.baba.callvault.data.recordings.db.RecordingDatabase
 import com.baba.callvault.data.recordings.db.RecordingEntry
@@ -106,6 +110,8 @@ object RecordingsRepository {
         val contactName: String? = null,
         /** Non-null only for VoIP recordings: the app the call was made in, for a badge/icon. */
         val voipApp: String? = null,
+        /** Which SIM a phone call used ("Work", "SIM 2"), when the opt-in SIM label is on; else null. */
+        val simLabel: String? = null,
         /**
          * True for a file the user imported rather than a call CallVault recorded.
          *
@@ -240,7 +246,7 @@ object RecordingsRepository {
                     }
                     if (name.isEmpty()) withDuration else withDuration.copy(contactName = name)
                 }
-            }.also {
+            }.let { rows -> withSimLabels(context, rows) }.also {
                 // One line, always, so a "the list is slow" report can be answered with a number
                 // instead of a guess. After the first pass `probes` is 0 and this is the cheap path.
                 val ms = (System.nanoTime() - startedAtNs) / 1_000_000
@@ -719,6 +725,34 @@ object RecordingsRepository {
      * and not an import: neither is in the call log, and a phone call at the same minute must not lend
      * them its arrow.
      */
+    /**
+     * Adds the SIM each phone call used, when the opt-in setting is on. Read from the call log at list time,
+     * so recordings made before the setting was turned on get a label too and nothing is stored. App calls
+     * and imports never get one: they are not in the call log, and a carrier call at the same minute must
+     * not lend them its SIM.
+     */
+    private fun withSimLabels(context: Context, rows: List<RecordingItem>): List<RecordingItem> {
+        if (!AppPreferences(context).isShowSimLabelEnabled()) return rows
+        val starts = rows.filter { isCarrierCall(it.displayName) }.mapNotNull { it.startedAtMillis }
+        if (starts.isEmpty()) return rows
+        val calls = PhoneCallReader.since(context, starts.min() - PhoneCallMatch.TOLERANCE_MS)
+        if (calls.isEmpty()) return rows
+        val resolver = SimLabels.Resolver(context, context.getString(R.string.sim_label_word))
+        return rows.map { row ->
+            val start = row.startedAtMillis
+            if (start == null || !isCarrierCall(row.displayName)) return@map row
+            val call = PhoneCallMatch.nearest(calls, start) ?: return@map row
+            resolver.simFor(call.accountComponent, call.accountId)?.let { row.copy(simLabel = it.label) } ?: row
+        }
+    }
+
+    /** A phone (carrier) call recording: not an app call and not an imported file. */
+    internal fun isCarrierCall(displayName: String): Boolean {
+        if (ImportedRecording.isImported(displayName)) return false
+        val parts = displayName.substringBeforeLast('.').split('_')
+        return parts.none { it == VOIP_TOKEN || it.startsWith(VOIP_APP_PREFIX) }
+    }
+
     internal fun isCarrierCallWithoutDirection(displayName: String): Boolean {
         if (ImportedRecording.isImported(displayName)) return false
         val parts = displayName.substringBeforeLast('.').split('_')

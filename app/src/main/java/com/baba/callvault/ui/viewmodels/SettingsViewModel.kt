@@ -85,6 +85,7 @@ interface SettingsActions {
     fun setMinDurationSeconds(seconds: Int)
 
     fun setWriteMetadataFileEnabled(enabled: Boolean)
+    fun setShowSimLabelEnabled(enabled: Boolean)
     fun setHideRecordingsEnabled(enabled: Boolean)
     fun setWriteTranscriptSidecarEnabled(enabled: Boolean)
     fun exportSettingsJson(): String
@@ -393,6 +394,12 @@ class SettingsViewModel(application: Application) : AndroidViewModel(application
 
     override fun setWriteMetadataFileEnabled(enabled: Boolean) {
         preferences.setWriteMetadataFileEnabled(enabled)
+        refresh()
+    }
+
+    /** Saves whether each phone call shows which SIM it used. */
+    override fun setShowSimLabelEnabled(enabled: Boolean) {
+        preferences.setShowSimLabelEnabled(enabled)
         refresh()
     }
 
