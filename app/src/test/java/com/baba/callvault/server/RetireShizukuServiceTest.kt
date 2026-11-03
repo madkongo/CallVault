@@ -101,4 +101,41 @@ class RetireShizukuServiceTest {
         verify(exactly = 0) { ShizukuBackend.stop(any()) }
         assertTrue(RecorderConnection.isConnected)
     }
+
+    @Test
+    fun a_retire_that_waited_behind_another_leaves_the_fresh_recorder_alone() {
+        // After an install-over the update receiver named the old host, then another caller replaced it.
+        // Retiring "the old host" must not stop the binding that now holds the fresh one (OP9, 2026-11-03).
+        val deadOld = mockk<IRecorderService>(relaxed = true) {
+            every { asBinder() } returns mockk<IBinder>(relaxed = true) { every { isBinderAlive } returns false }
+        }
+        RecorderConnection.onBinderReceived(stubbornService)
+
+        val retired = RecorderBackend.retireShizukuService("test", timeoutMs = 0, host = deadOld)
+
+        assertTrue(retired)
+        verify(exactly = 0) { ShizukuBackend.stop(any()) }
+        verify(exactly = 0) { stubbornService.destroy() }
+        assertTrue(RecorderConnection.isConnected)
+    }
+
+    @Test
+    fun two_retires_never_run_at_the_same_time() {
+        // Overlapping retire-and-bind is what made Shizuku lose track of the recorder after an update.
+        val inside = java.util.concurrent.atomic.AtomicInteger(0)
+        val overlapped = java.util.concurrent.atomic.AtomicBoolean(false)
+        every { ShizukuBackend.stop(any()) } answers {
+            if (inside.incrementAndGet() > 1) overlapped.set(true)
+            Thread.sleep(50)
+            inside.decrementAndGet()
+            RecorderConnection.onBinderDied()
+        }
+        val threads = List(4) { Thread { RecorderBackend.retireShizukuService("test", timeoutMs = 0, host = null) } }
+
+        threads.forEach { it.start() }
+        threads.forEach { it.join(5_000) }
+
+        assertFalse(overlapped.get())
+        verify(exactly = 4) { ShizukuBackend.stop(true) }
+    }
 }

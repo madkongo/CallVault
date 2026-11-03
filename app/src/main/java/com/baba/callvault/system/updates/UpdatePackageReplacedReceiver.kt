@@ -102,7 +102,11 @@ class UpdatePackageReplacedReceiver : BroadcastReceiver() {
                 // plain stop, and the ensureRunning below then "reused" the stale service and had it
                 // kill the fresh one. Measured on the OP9 on 2026-09-20; the call that followed the
                 // update recorded nothing.
-                runCatching { RecorderBackend.retireShizukuService("it predates the update that just installed") }
+                //
+                // Only a host running from the replaced APK. A blind retire could tear down the fresh recorder
+                // that the app start or the keep-alive brought up a moment earlier (OP9, 2026-11-03). A stale
+                // host that is not connected yet is caught by ensureRunning's own check when it arrives.
+                runCatching { RecorderBackend.retireIfStale(context.applicationInfo.sourceDir) }
                     .onFailure { AppLogger.w(TAG, "Could not retire the stale Shizuku service: ${it.message}") }
             }
             val healed = if (plan.healGrant) {
