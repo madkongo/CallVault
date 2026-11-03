@@ -33,18 +33,18 @@ All notable changes to CallVault are documented here. The format is based on
   it on, CallVault never switches Wireless debugging off; it may still switch it on when the recorder needs
   it, and the debugging port stays open on your Wi-Fi. A line under the switch now says when CallVault is
   leaving Wireless debugging on, because of this switch or because you turned it on yourself. Asked by
-  mirror176.
+  @mirror176.
   <!-- 🧪 VERIFYING: OP9 2026-10-31 (Claude-run, 2.4.8-wd30, built-in mode): off → CallVault turned WD on for
        the recorder start and off again; on → after a recorder restart WD stayed on, log "Leaving Wireless
        debugging on … 'Never turn it off' is on", and the line under the row showed. Greyed in Shizuku mode.
        Maintainer to confirm. -->
 - **Your own transcription server can use http://** (#67). In Settings → Where to transcribe → Custom, an
   address starting with http:// is now accepted, for a server on your own network or behind a VPN. The audio
-  and key travel unencrypted to it, so use https for anything on the open internet. Asked by QBANIN.
+  and key travel unencrypted to it, so use https for anything on the open internet. Asked by @QBANIN.
   <!-- 🧪 VERIFYING: OP9 2026-11-01 (Claude-run, 2.4.8-next5): an http:// stand-in server on the LAN, Test OK, one call
        transcribed through it. Not tried with a real model server; maintainer to confirm. -->
 - **Credit to ShizuCallRecorder** (#66). The welcome screen now says CallVault is a fork of ShizuCallRecorder,
-  with a link and its author's copyright, and the support dialog names the original project. Raised by kitsumed.
+  with a link and its author's copyright, and the support dialog names the original project. Raised by @kitsumed.
   <!-- 🧪 VERIFYING: unit tests + checkTranslations only (2026-11-01). To settle: open Settings → Support
        development, and see the welcome screen on a fresh install. -->
 - **Urdu can be pinned as a transcription language.** Pick it in Settings → Transcription → Language, or in
@@ -108,7 +108,7 @@ All notable changes to CallVault are documented here. The format is based on
   <!-- ✅ VERIFIED 2026-11-02 on the same OnePlus CPH2747. The two-lookup check before discarding a
        switched-off app (82465bc7) is 🧪 VERIFYING. -->
 - **An app call that ends before the recording starts leaves nothing behind** (#68). It used to leave a
-  sub-second file and a wrong "the other app blocks capture" warning. Reported by ofirmgr.
+  sub-second file and a wrong "the other app blocks capture" warning. Reported by @ofirmgr.
   <!-- 🧪 VERIFYING: unit tests only (2026-11-02). To settle: the reporter's POCO X5 Pro over a few days. -->
 - **App icons show for a messenger installed while CallVault is running.** Such a call showed a grey
   placeholder until CallVault was restarted.
@@ -158,7 +158,7 @@ All notable changes to CallVault are documented here. The format is based on
 - **Move between calls while reading a transcript** (#27). Two cards under the transcript name the call
   before and after it in the list you came from, in that list's order; tap one to open it. A "Follow
   playback" switch keeps the playing line lit and in view, or, turned off, leaves the text still while you
-  read. Turning the phone no longer jumps the text back to the playing line. Suggested by mirror176.
+  read. Turning the phone no longer jumps the text back to the playing line. Suggested by @mirror176.
   <!-- 🧪 VERIFYING: OP9 2026-10-31 (Claude-run, 2.4.7-t27b): cards on the Recordings sheet and the
        Transcripts page, Next opened the next call and stopped the audio, follow on = lit + followed, off =
        no light and no scroll. Rotation not checked. Maintainer to confirm. -->
@@ -182,7 +182,7 @@ All notable changes to CallVault are documented here. The format is based on
 - **Better with TalkBack** (#61). Switch, radio and checkbox rows read as one control with their state;
   fold-open headers say "Expanded" or "Collapsed"; the playback waveform and transcript scrubber read
   "Playback position, 1:12 of 4:23" and can be moved with TalkBack's adjust gestures; the remove × on tags is
-  bigger and announced as a button. Thanks to AbdulAziz-Hatem for the audit.
+  bigger and announced as a button. Thanks to @AbdulAziz-Hatem for the audit.
   <!-- 🧪 VERIFYING: TalkBack 17.1 pass on the OP9 2026-10-31 (Claude-run, speech read from TalkBack's log). OK:
        switch rows ("On. Record phone calls. Switch"), radio rows ("Selected. On this phone… Radio button,
        1 of 4"), tag × ("Remove tag. Button"), transcript-sheet bar. Two faults found and fixed (c525a946,
@@ -196,7 +196,7 @@ All notable changes to CallVault are documented here. The format is based on
   <!-- 📐 CALCULATED from firmware code + public getprop dumps, not device-confirmed. Unknown: whether a normal
        app can read persist.vivo.audio.feature.voip_bbkrecord.enable on a real vivo; if not, the old message
        shows. docs/dev-notes/2026-09-30-vivo-in-app-call-recording-toggle.md -->
-- **Arabic translation polished.** Thanks to AbdulAziz-Hatem (#59).
+- **Arabic translation polished.** Thanks to @AbdulAziz-Hatem (#59).
   <!-- 🧪 merged fbc691ba; 43 broken placeholders repaired before merge (143afe43). Close PR #59 at release. -->
 
 ### Fixed
@@ -215,7 +215,7 @@ All notable changes to CallVault are documented here. The format is based on
        57:45 call from the OP12, imported on the OP9, drew its waveform after transcription. docs/dev-notes/2026-10-28-issue-63-long-call-waveform.md -->
 - **Long calls could not be transcribed or imported.** Each 5-minute piece of a long recording reserved
   memory for the whole call, so calls of around 45–50 minutes or more ran out of memory: transcription
-  failed, the waveform never appeared and imports were refused as unreadable. Reported by a user.
+  failed, the waveform never appeared and imports were refused as unreadable. Reported by @AbdulAziz-Hatem (#63).
   <!-- 🧪 VERIFYING: reproduced on the OP9 2026-10-29 — official 2.4.7 tried a 587 MB allocation on a 50-min
        two-sided file and refused the import; the fixed build imports and reads it at ~80 MB heap (9a650b71).
        2026-10-31: a real 57:45 call from the OP12 imported and transcribed on the OP9 (Hebrew, Best quality):
@@ -404,7 +404,7 @@ the maintainer's real-use confirmation; ✅ = maintainer-confirmed.
   <!-- ✅ VERIFIED 2026-10-12 (maintainer). -->
 - **Select all / clear all** in selection mode, on every library page — Recordings, Transcripts and
   Summaries. Shown as a row at the top of the list; tap again to clear, which keeps you in selection mode.
-  (#1) <!-- ✅ VERIFIED 2026-10-12 (maintainer, "feels fine"). -->
+  <!-- (#1 was a backlog number, not a GitHub issue) ✅ VERIFIED 2026-10-12 (maintainer, "feels fine"). -->
 - **Sort the call list** by newest, oldest, longest, or name, from a Sort chip. (#27)
   <!-- ✅ VERIFIED 2026-10-12 on device (OP9, maintainer-delegated). -->
 - **Call identity in the transcript header** — the number, date and time now show at the top of a
@@ -422,7 +422,7 @@ the maintainer's real-use confirmation; ✅ = maintainer-confirmed.
        and a real WhatsApp VOIP call's .json carried version 1, near_channel "A" (near on the left
        by construction) and real speaker_turns with A/B/both(+)/silence. Shizuku path carries no
        speaker_turns by design (scrcpy captures+encodes in its own process). -->
-  <!-- Thanks eduardozacour for the report and the design. -->
+  <!-- Thanks @eduardozacour for the report and the design. -->
 
 
 ### Changed
@@ -437,7 +437,7 @@ the maintainer's real-use confirmation; ✅ = maintainer-confirmed.
   are routed on Immediately as well, and deleting a recording also removes the `.json`. (#49)
   <!-- 🧪 merged 2026-10-12; shipping on the maintainer's accepted risk; not real-user-confirmed. -->
 - **Transcribe again** is gone from a finished transcript's reading view; a **failed** transcription still
-  offers retry. (#4/#27) <!-- ✅ VERIFIED 2026-10-12 (maintainer "#4 is fine"). -->
+  offers retry. (#27, @mirror176) <!-- ✅ VERIFIED 2026-10-12 (maintainer "#4 is fine"). -->
 
 ### Fixed
 
@@ -738,11 +738,11 @@ build cannot see a final 2.4.2 as newer (fixed below, for every test build from 
   options and USB debugging are on, so CallVault believed they were off and sent people to a settings
   screen they had already visited, with no way forward. It now works this out for itself instead of
   asking Android. Existing users on Android 17 were also told, wrongly, that their setup was broken
-  and that calls had not been recorded when they had. Reported by teou1 and siongui in #40.
+  and that calls had not been recorded when they had. Reported by @teou1 and @siongui in #40.
 
 - **Shizuku is started again when CallVault has to stop it.** CallVault sometimes restarts Android's
   debugging service, which takes any running Shizuku server down with it — including one other apps
-  were using. It now puts it back, and says so. Reported by johnwick113 in #39.
+  were using. It now puts it back, and says so. Reported by @johnwick113 in #39.
 
 - **The "CallVault cannot record right now" warning now goes away by itself** once recording is
   working again, instead of staying until the next restart.
@@ -777,7 +777,7 @@ build cannot see a final 2.4.2 as newer (fixed below, for every test build from 
   save dialog so you choose the folder and the name. Both halves of the report go into one text file.
   The report used to exist only in CallVault's private storage, where no file manager — and no
   `adb pull` — can reach it, so the only way to get it off the phone was to send it through another
-  app. Asked for by mirror176 in #28 and #29.
+  app. Asked for by @mirror176 in #28 and #29.
 
 ### Changed
 
@@ -785,12 +785,12 @@ build cannot see a final 2.4.2 as newer (fixed below, for every test build from 
   five seconds whether or not you had read anything. A forced wait does not make anyone read; it
   makes them wait, and it charged the time again on every reinstall and every phone someone set up.
   The notice still has to be scrolled to the end and acknowledged — both of which are the reader's
-  own doing. Reported by mirror176 in #27.
+  own doing. Reported by @mirror176 in #27.
 
 - **What's New says one line per change instead of several paragraphs.** The newest release is
   written out as a scannable list, releases you skipped keep their headline so you can see you
   missed them, and a link goes to the full release notes on GitHub, where being thorough costs
-  nobody anything. Reported by mirror176 in #27, who had to "parse through" the 2.3.0 note.
+  nobody anything. Reported by @mirror176 in #27, who had to "parse through" the 2.3.0 note.
 
 - **A journal of the first setup is now always kept, and can be shared.** The debug log is off until
   you switch it on, so the first minutes after an install — when setup either works or does not —
@@ -806,12 +806,12 @@ build cannot see a final 2.4.2 as newer (fixed below, for every test build from 
   just confirmed a dialog saying the same thing. Automatic transcriptions — nightly, or after a call —
   still show it, since nothing else tells you they are running. A run you started that is expected to
   take eight minutes or more keeps it too: without it Android may stop the job at ten minutes, and a
-  stopped transcription starts again from nothing. Reported by mirror176 in #31.
+  stopped transcription starts again from nothing. Reported by @mirror176 in #31.
 
 - **Automatically recorded calls no longer flash "Press to start recording".** The recording
   notification was posted before the service had acted on the call, so for a moment it offered a
   Record button for a call that was already being recorded — and did the same again as the recording
-  ended. Recording was never affected. Reported by mirror176 in #31.
+  ended. Recording was never affected. Reported by @mirror176 in #31.
 
 - **A recorded call shows one notification instead of two.** While a phone call was being recorded, "Ready
   to record calls" stayed in the shade next to the recording notification — saying the app was ready to record
@@ -822,19 +822,19 @@ build cannot see a final 2.4.2 as newer (fixed below, for every test build from 
   figure between whisper's own reports was drawn on a curve that read 75% at the moment the job was
   expected to finish, so a quarter of the bar was never used. It now follows the clock to about 90% by
   the expected finish, and keeps creeping if the job runs long. Summaries get the same fix. Reported by
-  mirror176 in #33.
+  @mirror176 in #33.
 
 - **Rotating the phone no longer looks like it restarts a transcription.** The percentage is
   predicted between whisper's own reports, and the clock behind that prediction lived on the screen
   showing it — so turning the phone threw it away and the figure fell back to 1% and climbed again.
   The transcription itself was never affected and always finished on time, but there was no way to
   tell that from the outside. The figure now belongs to the run producing it, and a rotation cannot
-  touch it. Reported by mirror176 in #34.
+  touch it. Reported by @mirror176 in #34.
 
 - **Deleting a call now stops its transcription.** The run used to carry on to the end, producing a
   transcript of a recording that no longer existed — and because one transcription runs at a time,
   everything queued behind it waited for a result that was thrown away. Deleting the recording now
-  ends its run, and the queue moves straight on. Reported by mirror176 in #35.
+  ends its run, and the queue moves straight on. Reported by @mirror176 in #35.
 
 - **The microphone indicator no longer stays on after a call.** When Android tears a capture down
   mid-call, CallVault rebuilds it and the recording continues whole — but Android can leave the torn-down
@@ -848,13 +848,13 @@ build cannot see a final 2.4.2 as newer (fixed below, for every test build from 
 - **CallVault no longer switches off a debugging switch you turned on yourself.** Wireless debugging
   that CallVault enabled is still switched off when it is done with it — but a switch you flipped is
   yours, and it is left alone. It used to be taken away within a second, with a note suggesting you
-  disable USB debugging instead, which costs you the thing you wanted. Reported by mirror176 in #30,
+  disable USB debugging instead, which costs you the thing you wanted. Reported by @mirror176 in #30,
   who uses it to reach his phone from a PC.
 
 - **Turning on off-Wi-Fi recording says what actually failed.** Every failure produced the same
   sentence — "connect to Wi-Fi once, then try from Settings" — including on a phone already on Wi-Fi
   with Wireless debugging on. It now distinguishes Wireless debugging being off, the phone's debugging
-  service being unreachable, and the local port not coming back. Reported by mirror176 in #30.
+  service being unreachable, and the local port not coming back. Reported by @mirror176 in #30.
 
 
 - **A bug report can be shared without switching logging on first.** Share was only offered once a log
@@ -873,11 +873,11 @@ build cannot see a final 2.4.2 as newer (fixed below, for every test build from 
   the playback controls out of sight, grew as you scrolled, collapsed again when the phone was turned
   and opened full the next time — because its height followed however much of the text had been drawn
   so far. It is now a stable near-full sheet with the controls where you left them. Reported by
-  mirror176 in #27.
+  @mirror176 in #27.
 
 - **Cancelling a transcript deletion puts the transcript back.** The sheet closes before the
   confirmation so the dialog is not sitting on top of the text it is asking about, but saying no then
-  left you back at the list. Reported by mirror176 in #27.
+  left you back at the list. Reported by @mirror176 in #27.
 
 
 - **Updating the app no longer leaves it unable to record the next call.** Installing an update stops
