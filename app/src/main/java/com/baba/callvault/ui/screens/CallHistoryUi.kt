@@ -69,6 +69,13 @@ internal fun CallsViewSwitch(callsView: Boolean, onChange: (Boolean) -> Unit) {
                 selected = (i == 1) == callsView,
                 onClick = { onChange(i == 1) },
                 shape = SegmentedButtonDefaults.itemShape(index = i, count = labels.size),
+                // Stated, not defaulted: M3's selected colour is secondaryContainer, which in this scheme is
+                // coral, so the default drew a pink tab in a teal app (OP9, 2026-11-03).
+                colors = SegmentedButtonDefaults.colors(
+                    activeContainerColor = MaterialTheme.colorScheme.primaryContainer,
+                    activeContentColor = MaterialTheme.colorScheme.onPrimaryContainer,
+                    activeBorderColor = MaterialTheme.colorScheme.primary,
+                ),
                 label = { Text(label, maxLines = 1) },
             )
         }
