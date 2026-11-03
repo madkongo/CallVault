@@ -5,6 +5,8 @@ To settle: on the OP9, make one carrier call with debug logging on. The log shou
 `capture#N released: direct capture` and `after stopping direct capture: no capture left open in this process`,
 and the next call's `now live:` count should not climb.
 
+**OP9 2026-11-03, build 2.4.8-next8:** the maintainer made one outgoing carrier call (11:02:45–11:03:02). Log: `capture#1 released: direct capture (still live: 0)` then `after stopping direct capture: no capture left open in this process`; the recording was published. Stays 🧪 until the maintainer confirms.
+
 ## What changed
 
 - `DirectAudioRecorderSession.stop()` now calls `CaptureAudit.released(...)` for the AudioRecord it releases, then
