@@ -22,6 +22,20 @@ with `&&`/`||` chains and silently reported the opposite answer while this was b
 
 ---
 
+## Current state — 2026-11-03 (after v2.4.9)
+
+**Released:** v2.4.9 (20490), published 2026-11-03 after a soak on the maintainer's OP12; asset == tested build
+(sha256 034043f8…). Next must exceed 20490. Everything in integration/next as of `ec6e526c` shipped, including #9 of
+the list below (classic Settings removed) and the decode time limit.
+
+**New since 2026-10-31:**
+- 🅿️ Parked by the maintainer: in-app downgrade (RollbackManager works one step back but restores old data; keep-data
+  uninstall loses folder access + battery exemption; memory `in-app-downgrade-research`); start-of-call echo.
+- 🔵 Small bug found 2026-11-03, not fixed: changing "Where to save recordings" alone does not re-apply the Drive
+  schedule (`SettingsViewModel` target change does not call `SyncScheduler.apply`; app start and the next call do).
+- 🧪 Waiting: Eugene (Honor BVL-N49) on the USB warning + Drive copy; Евгений on echo (✅ confirmed) ; #68 ofirmgr;
+  #69 frizzi0303-cyber; a real tap on "Stop for now".
+
 ## Current state — 2026-10-31 (AUDITED against code + release tags)
 
 **This block is the summary of record. The 2026-10-01 block below it and the older dated blocks are history.**
