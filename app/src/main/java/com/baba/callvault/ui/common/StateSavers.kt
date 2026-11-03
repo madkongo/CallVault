@@ -33,8 +33,16 @@ import com.baba.callvault.ui.navigation.LibrarySelection
  * is a bug waiting for the right filename.
  */
 
-/** A recording awaiting its "this will take about N" confirmation: name, estimate, chosen language. */
-typealias TranscribeRequest = Triple<String, Long?, String?>
+/**
+ * A recording awaiting its "this will take about N" confirmation: name, estimate, chosen language,
+ * and the call's own length (0 when unknown) for the long-call line.
+ */
+data class TranscribeRequest(
+    val displayName: String,
+    val estimateMs: Long?,
+    val language: String?,
+    val audioMs: Long = 0L,
+)
 
 /** Marks an absent [Long] or [String] field. No recording name or language tag is ever empty. */
 private const val ABSENT = ""
@@ -91,18 +99,21 @@ val LibrarySelectionStateSaver: Saver<LibrarySelection, Any> = listSaver(
 // ---- pending transcribe confirmation ----
 
 internal fun encodeTranscribeRequest(request: TranscribeRequest): List<String> = listOf(
-    request.first,
-    request.second?.toString() ?: ABSENT,
-    request.third ?: ABSENT,
+    request.displayName,
+    request.estimateMs?.toString() ?: ABSENT,
+    request.language ?: ABSENT,
+    request.audioMs.toString(),
 )
 
-internal fun decodeTranscribeRequest(stored: List<String>): TranscribeRequest = Triple(
+internal fun decodeTranscribeRequest(stored: List<String>): TranscribeRequest = TranscribeRequest(
     stored[0],
     // Deliberately not `?: 0`. A null estimate means "we do not know"; zero would be quoted back
     // to the user as "this will take about 0 seconds".
     stored.getOrNull(1)?.takeIf { it != ABSENT }?.toLongOrNull(),
     // Null means "use the configured language", which is not the same as any particular language.
     stored.getOrNull(2)?.takeIf { it != ABSENT },
+    // Absent in a state saved before the field existed; unknown length means no long-call line.
+    stored.getOrNull(3)?.toLongOrNull() ?: 0L,
 )
 
 /**

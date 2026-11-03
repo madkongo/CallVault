@@ -36,6 +36,12 @@ object VoipSwitchPolicy {
         /** The app call is over. Finalise the recording. */
         END,
 
+        /**
+         * An app call is up and the mode still says so. Cancel any end that is pending: the mode
+         * dipped and came back, which Telegram does for about a second while a call connects.
+         */
+        STAY,
+
         /** Nothing to do. */
         NOTHING,
     }
@@ -59,6 +65,27 @@ object VoipSwitchPolicy {
 
         if (inVoipCall && !callActive) return Action.START
         if (!inVoipCall && callActive) return Action.END
+        if (inVoipCall && callActive) return Action.STAY
         return Action.NOTHING
     }
+
+    /**
+     * Asked before acting on a START: does the mode as it is NOW still say an app call is up?
+     *
+     * The listener hands over the mode it was posted with, and it runs later on the main thread. On a
+     * POCO X5 Pro (#68) WhatsApp held MODE_IN_COMMUNICATION for 80 ms; by the time the START ran the mode
+     * was back to normal, and a call that was already over got recorded.
+     */
+    fun stillStarting(liveMode: Int, callActive: Boolean, suspendedForCarrier: Boolean): Boolean =
+        decide(liveMode, callActive, suspendedForCarrier) == Action.START
+
+    /**
+     * Asked again when the end debounce runs out: does the mode still say the app call is over?
+     *
+     * The debounce exists for a mode that wobbles, so it must look at the mode as it is NOW, not as
+     * it was when the end was scheduled. Without this a 0.7 s Telegram dip ended the recording while
+     * the call went on (2026-11-01, OnePlus CPH2747, Android 17).
+     */
+    fun stillEnded(mode: Int, callActive: Boolean, suspendedForCarrier: Boolean): Boolean =
+        decide(mode, callActive, suspendedForCarrier) == Action.END
 }

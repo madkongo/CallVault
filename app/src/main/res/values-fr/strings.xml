@@ -43,7 +43,6 @@
 
     <!-- New Settings screen, round 4: the Recording group's sub-headers. -->
 
-    <!-- The card at the top of both Settings screens that switches between the new and classic layouts. -->
     <string name="app_lock_locked">Verrouillé</string>
     <string name="app_lock_prompt_title">Déverrouiller CallVault</string>
     <string name="app_lock_unlock">Déverrouiller</string>
@@ -436,10 +435,6 @@
     <string name="settings_language">Langue</string>
     <string name="settings_language_change_in_transcripts">Modifiable dans les paramètres des transcriptions</string>
     <string name="settings_language_system">Langue du système</string>
-    <string name="settings_layout_back_to_classic_subtitle">Tous les paramètres dans une seule longue liste, comme avant</string>
-    <string name="settings_layout_back_to_classic_title">Passer à la vue classique</string>
-    <string name="settings_layout_try_new_subtitle">Chaque page n\'affiche que ses propres paramètres</string>
-    <string name="settings_layout_try_new_title">Essayer la nouvelle présentation des paramètres</string>
     <string name="settings_link_all_settings">Tous les paramètres</string>
     <string name="settings_link_share_debug_report">Partager un rapport de débogage</string>
     <string name="settings_metadata_file_desc">Enregistrer un petit .json à côté de chaque enregistrement</string>
@@ -462,20 +457,14 @@
     <string name="settings_section_about">À propos</string>
     <string name="settings_section_audio">Configuration audio</string>
     <string name="settings_section_debug">Options de débogage</string>
-    <string name="settings_section_experimental">Expérimental</string>
-    <string name="settings_section_general">Général</string>
     <string name="settings_section_privacy">Confidentialité</string>
     <string name="settings_section_recorder_server">Service d\'enregistrement</string>
-    <string name="settings_section_recording">Enregistrement</string>
     <string name="settings_section_recording_storage">Enregistrement et stockage</string>
     <string name="settings_section_reliability">Fiabilité</string>
-    <string name="settings_section_retention">Conservation</string>
     <string name="settings_section_security">Sécurité</string>
     <string name="settings_section_storage">Stockage</string>
     <string name="settings_section_transcription">Transcription</string>
-    <string name="settings_section_transcription_and_summaries">Transcription et résumés</string>
     <string name="settings_section_updates">Mises à jour</string>
-    <string name="settings_section_visual">Paramètres visuels</string>
     <string name="settings_select_contacts">Sélectionner les contacts (%1$d)</string>
     <string name="settings_select_contacts_incoming">Sélectionnez les contacts entrants</string>
     <string name="settings_select_contacts_outgoing">Sélectionner les contacts sortants</string>
@@ -493,12 +482,8 @@
     <string name="settings_storage_target_label">Où enregistrer les enregistrements</string>
     <string name="settings_subheader_all_calls">Tous les appels</string>
     <string name="settings_subheader_app_calls">Appels d\'applis</string>
-    <string name="settings_subsection_incoming">Appels entrants</string>
-    <string name="settings_subsection_outgoing">Appels sortants</string>
     <string name="settings_subsection_phone_calls">Appels téléphoniques</string>
     <string name="settings_subsection_privileges">D\'où CallVault tire ses autorisations</string>
-    <string name="settings_subsection_resilience">Résilience</string>
-    <string name="settings_subsection_voip">Appels VoIP</string>
     <string name="settings_summary_calls_app_only">Appels d\'applis uniquement</string>
     <string name="settings_summary_calls_phone_and_app">Appels téléphoniques et d\'applis</string>
     <string name="settings_summary_calls_phone_only">Appels téléphoniques uniquement</string>
@@ -555,6 +540,10 @@
     <string name="settings_voip_recording_description">Enregistre aussi les appels passés dans des applis comme WhatsApp, Signal et Telegram. Certaines applis bloquent l\'enregistrement, et cela ne se sait qu\'une fois l\'appel en cours.</string>
     <string name="settings_voip_recording_label">Enregistrer les appels VoIP</string>
     <string name="settings_wd_auto_approve_description">Quand le téléphone rejoint un réseau Wi-Fi, CallVault répond lui-même à la question d\'Android « Autoriser le débogage sans fil sur ce réseau ? », pour que l\'enregistrement n\'attende pas votre appui. Fonctionne tant que l\'enregistreur tourne. Seuls les appareils déjà associés à ce téléphone peuvent se connecter.</string>
+    <string name="settings_wd_never_off_label">Ne jamais désactiver le débogage sans fil</string>
+    <string name="settings_wd_never_off_description">CallVault ne désactivera pas le débogage sans fil : le port de débogage reste donc ouvert sur votre réseau Wi-Fi. CallVault peut quand même l\'activer quand l\'enregistreur en a besoin. Mode intégré uniquement.</string>
+    <string name="settings_wd_left_on_by_setting">Le débogage sans fil est activé. CallVault le laisse activé à cause de ce réglage.</string>
+    <string name="settings_wd_left_on_by_user">Le débogage sans fil est activé. Vous l\'avez activé, donc CallVault le laisse activé.</string>
     <string name="settings_wd_auto_approve_label">Approuver automatiquement les nouveaux réseaux Wi-Fi</string>
     <string name="settings_wd_disable_when_idle">Désactiver le débogage sans fil en cas d\'inactivité</string>
     <string name="settings_wd_disable_when_idle_description">Désactiver le débogage sans fil une fois le service d\'enregistrement connecté ; réactivé brièvement uniquement au besoin.</string>
@@ -620,12 +609,13 @@
     <string name="summary_requirements_time">Une à deux minutes pour un appel court, plus pour un appel long</string>
     <string name="summary_requirements_title">Ce qu\'il faut</string>
     <string name="summary_requirements_toggle_description">Afficher ce que coûte le résumeur avant de le télécharger</string>
-    <string name="support_appeal_body">Je développe CallVault seul, sur mon temps libre : gratuit, open source, sans publicité ni pistage. ☕ Si l\'appli vous est utile, un petit pourboire m\'aide à continuer. Dans tous les cas, merci ! 🙏</string>
-    <string name="support_appeal_title">Fait par une seule personne 👋</string>
+    <string name="support_appeal_body">Je maintiens CallVault sur mon temps libre. L\'appli a commencé comme un fork de ShizuCallRecorder, de kitsumed, et a beaucoup évolué depuis. Gratuite, open source, sans publicité ni pistage. Si elle vous est utile, un petit pourboire m\'aide à continuer. Merci ! 🙏</string>
+    <string name="support_appeal_title">Un pourboire pour CallVault ☕</string>
     <string name="support_not_now">Pas maintenant</string>
     <string name="tile_recording_on">Enregistrement activé</string>
     <string name="tile_recording_stopped">Arrêté</string>
     <string name="transcribe_confirm_dont_ask">Ne plus demander</string>
+    <string name="transcribe_long_call_line">Cet appel dure %1$s. Sur ce téléphone, la transcription prend environ %2$s fois sa durée — soit environ %3$s.</string>
     <string name="transcribe_confirm_message">Transcrire %1$s occupe le téléphone et consomme nettement de la batterie. Vous pouvez arrêter à tout moment.\n\nCette question peut être réactivée sous Transcription, dans les paramètres.</string>
     <string name="transcribe_confirm_title">Cela prendra environ %1$s</string>
     <string name="transcribe_confirm_title_first_run">La première fois peut prendre un moment</string>
@@ -677,8 +667,6 @@
     <string name="transcript_speakers_swap">Inverser</string>
     <string name="transcript_speakers_swap_names">Inverser les noms</string>
     <string name="transcript_speakers_which_is_you">Lequel est vous ?</string>
-    <string name="transcript_too_long_message">Cet appel dure environ %1$d minutes. Pour l\'instant, CallVault ne peut transcrire sur l\'appareil que des enregistrements jusqu\'à %2$d minutes — au-delà, la mémoire serait épuisée en cours de route. L\'enregistrement lui-même est intact.</string>
-    <string name="transcript_too_long_title">Trop long pour être transcrit</string>
     <string name="transcription_ask_language_subtitle">Choisissez la langue pour chaque enregistrement au lieu d\'utiliser toujours celle ci-dessus. Ne s\'applique qu\'à cet enregistrement.</string>
     <!-- Where to transcribe: on this phone or with the user's own cloud key (issue #48). No prices anywhere. -->
     <string name="transcription_where_title">Où transcrire</string>
@@ -691,6 +679,7 @@
     <string name="transcription_where_custom_service">votre serveur</string>
     <string name="transcription_where_recommended">Recommandé</string>
     <string name="transcription_cloud_key_label">Votre clé pour %1$s</string>
+    <string name="transcription_cloud_key_label_custom">Clé de votre serveur</string>
     <string name="transcription_cloud_key_show">Afficher la clé</string>
     <string name="transcription_cloud_key_hide">Masquer la clé</string>
     <string name="transcription_cloud_test">Tester</string>
@@ -698,7 +687,7 @@
     <string name="transcription_cloud_get_key">Obtenir une clé pour %1$s</string>
     <string name="transcription_cloud_custom_url">Adresse du serveur</string>
     <string name="transcription_cloud_custom_url_hint">https://… (la partie avant /audio/transcriptions)</string>
-    <string name="transcription_cloud_custom_url_invalid">Utilisez une adresse en https://.</string>
+    <string name="transcription_cloud_custom_url_invalid">Utilisez une adresse en http(s)://.</string>
     <string name="transcription_cloud_custom_model">Modèle</string>
     <string name="transcription_cloud_mobile_data">Utiliser aussi les données mobiles</string>
     <string name="transcription_cloud_mobile_data_desc">Si désactivé, les appels attendent le Wi-Fi avant d\'être envoyés.</string>
@@ -723,6 +712,9 @@
     <string name="transcription_hour_label">Heure</string>
     <string name="transcription_language_arabic">Arabe</string>
     <string name="transcription_language_auto">Détecter automatiquement</string>
+    <string name="language_search_placeholder">Rechercher une langue</string>
+    <string name="language_search_clear">Effacer la recherche</string>
+    <string name="language_search_no_match">Aucune langue ne correspond</string>
     <string name="transcription_language_auto_hint">La détection n\'est pas fiable pour les langues qui ne s\'écrivent pas en caractères latins : l\'hébreu, l\'arabe, le russe et le chinois reviennent souvent écrits en lettres anglaises, ou en un seul long bloc de texte. Indiquez la langue si vous le pouvez.</string>
     <string name="transcription_language_chinese">Chinois</string>
     <string name="transcription_language_english">Anglais</string>
@@ -734,6 +726,7 @@
     <string name="transcription_language_italian">Italien</string>
     <string name="transcription_language_label">Langue</string>
     <string name="transcription_language_persian">Persan</string>
+    <string name="transcription_language_urdu">Ourdou</string>
     <string name="transcription_language_polish">Polonais</string>
     <string name="transcription_language_portuguese">Portugais</string>
     <string name="transcription_language_russian">Russe</string>

@@ -39,7 +39,7 @@ import com.baba.callvault.ui.viewmodels.SettingsActions
 import com.mikepenz.aboutlibraries.ui.compose.android.produceLibraries
 import com.mikepenz.aboutlibraries.ui.compose.m3.LibrariesContainer
 
-// Pieces both Settings screens use: the classic [SettingsContent] and the new [ScopedSettingsContent].
+// Pieces the Settings screen ([ScopedSettingsContent]) uses, some shared with the wizard.
 
 /**
  * Back up or restore settings — a section-less row at the very bottom of Settings. Export writes a JSON

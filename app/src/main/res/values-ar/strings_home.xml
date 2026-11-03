@@ -174,6 +174,18 @@
     <string name="merge_note_will_keep">يتم الاحتفاظ بالمكالمات الأخرى على الهاتف أيضًا.</string>
     <string name="home_scroll_to_top">الأعلى</string>
     <string name="home_whatsnew_full_notes">ملاحظات الإصدار الكاملة</string>
+    <string name="whatsnew_249_title">مكالمات تطبيقات أوضح، وجاهز فور التحديث</string>
+    <string-array name="whatsnew_249_items">
+        <item>صدى أقل في مكالمات التطبيقات على الهواتف التي يلتقط ميكروفونها صوت سماعة الأذن</item>
+        <item>مكالمات Telegram تُسجَّل حتى النهاية، باسم Telegram وأيقونته</item>
+        <item>مكالمات التطبيقات التي تنتهي قبل بدء التسجيل لم تعد تترك ملفًا فارغًا</item>
+        <item>التسجيل جاهز بعد ثوانٍ من التحديث</item>
+        <item>يمكن تفريغ المكالمات بأي طول؛ والطويلة منها تخبرك كم سيستغرق ذلك</item>
+        <item>اكتب للبحث عن لغة في قائمة اللغات، وأُضيفت الأردية للتفريغ</item>
+        <item>عدم إيقاف تصحيح الأخطاء اللاسلكي أبدًا — مفتاح جديد في الإعدادات ◂ الاتصال</item>
+        <item>يمكن لخادم التفريغ الخاص بك استخدام http:// على شبكتك الخاصة</item>
+        <item>الإعدادات تُفتح دائمًا بتخطيط الصفحات؛ وأُزيل العرض الكلاسيكي</item>
+    </string-array>
     <string name="whatsnew_248_title">مفتاح تفريغ خاص بك وقراءة أسهل</string>
     <string-array name="whatsnew_248_items">
         <item>التفريغ بمفتاحك الخاص — Groq أو OpenRouter أو خادمك، في ثوانٍ بدل دقائق (الإعدادات ◂ مكان التفريغ الصوتي)</item>
@@ -359,6 +371,5 @@
     <string name="share_import_kept_title">تم الحفظ بدون تفريغ صوتي</string>
     <string name="share_import_kept_body">تم حفظ الملف في تسجيلاتك، ويمكنك بدء تفريغه صوتيًا في أي وقت.</string>
     <string name="share_import_kept_only_body">الملف بانتظارك في تبويب التفريغات الصوتية. يمكنك بدء تفريغه متى شئت، أو حذفه من نفس المكان.</string>
-    <string name="share_import_too_long">تبلغ مدة هذا الصوت %1$d دقيقة، والحد الأقصى للتفريغ في CallVault هو %2$d دقيقة في المرة الواحدة. تم حفظ الملف للاستماع إليه.</string>
     <string name="share_import_no_model">لم يتم تثبيت نموذج تفريغ صوتي بعد، لذا لا يمكن لـ CallVault قراءة هذا الملف. تم حفظ الصوت؛ ثبّت نموذجًا من الإعدادات، ثم ابدأ التفريغ من تبويب التفريغات.</string>
 </resources>

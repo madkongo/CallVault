@@ -87,6 +87,9 @@ Three layers, so a problem can be undone at whatever level it shows up:
    it can stay even if the new screen is reverted.
 
 The classic screen is deleted only in a **later release**, after the new one has shipped and drawn no reports.
+🧪 BUILT 2026-10-31 on `chore/remove-classic-settings` (one release after 2.4.7): classic screen, Experimental
+section and the layout switch card removed, `classic_settings_screen` key kept. Rollback:
+`rollback/classic-settings-removal.md`.
 Text that points users to a place in Settings (the notifications that say "Settings ▸ Experimental") must name a
 path that exists in **both** screens: rename the classic screen's Experimental section to "Reliability" as well.
 

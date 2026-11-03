@@ -37,88 +37,6 @@ import androidx.compose.material.icons.filled.Folder
 import com.baba.callvault.system.storage.MinDurationPolicy
 import com.baba.callvault.system.storage.StorageCapPolicy
 
-/** Storage destinations: where recordings are saved — the storage target (device / Drive / both),
- * the on-device folder, and the Drive folder. (Recording behaviour lives in [RecordingSection].)
- *
- * @param preferences         The [AppPreferences] instance to read data from.
- * @param updateTrigger       Trigger value to force recomposition when settings change.
- * @param actions             Implementation of [SettingsActions] to handle user interaction.
- * @param expanded            Whether this accordion section is open.
- * @param onToggle            Invoked when the section header is tapped.
- * @param onSelectFolder      Called when the user taps the recording-folder row; opens the SAF picker.
- * @param onSelectDriveFolder Called when the user taps the Drive-folder row; opens the SAF picker.
- */
-@Composable
-internal fun StorageSection(
-    preferences: AppPreferences,
-    updateTrigger: Int,
-    actions: SettingsActions,
-    expanded: Boolean,
-    onToggle: () -> Unit,
-    onSelectFolder: () -> Unit,
-    onSelectDriveFolder: () -> Unit
-) {
-    val storageTarget = remember(updateTrigger) { preferences.getStorageTarget() }
-
-    // One open sub-section at a time, within this section only, and nothing open on entry.
-    var openSub by rememberSaveable { mutableStateOf<String?>(null) }
-
-    // The rows are below, one composable each, shared with the new Settings screen's groups.
-    SettingsSection(
-        title = stringResource(R.string.settings_section_storage),
-        expanded = expanded,
-        onToggle = onToggle,
-        wrapInCard = false,
-    ) {
-      SettingsSubSection(
-        title = stringResource(R.string.settings_storage_target_label),
-        expanded = openSub == SUB_WHERE,
-        onToggle = { openSub = if (openSub == SUB_WHERE) null else SUB_WHERE },
-      ) {
-        StorageTargetRow(preferences, updateTrigger, actions)
-
-        SettingsDivider()
-
-        // Beside the destination rather than with the deletion settings: this is about what lands in
-        // the folder, not about what is removed from it.
-        MetadataFileRow(preferences, updateTrigger, actions)
-
-        // Also a destination choice: a text copy of the transcript + notes in the folder, for PC backup.
-        TranscriptSidecarRow(preferences, updateTrigger, actions)
-
-        // A property of the folder, like the two above: what other apps get to see of it.
-        HideRecordingsRow(preferences, updateTrigger, actions)
-
-        SettingsDivider()
-
-        RecordingFolderRow(preferences, updateTrigger, onSelectFolder)
-
-        DriveFolderRow(preferences, updateTrigger, onSelectDriveFolder)
-
-      }
-
-        // Only meaningful when something is actually uploaded — with LOCAL there is no upload to schedule.
-        if (storageTarget != StorageTarget.LOCAL) {
-            SettingsSubSection(
-                title = stringResource(R.string.wizard_schedule_title),
-                expanded = openSub == SUB_UPLOAD,
-                onToggle = { openSub = if (openSub == SUB_UPLOAD) null else SUB_UPLOAD },
-            ) { UploadScheduleSubSection(preferences, updateTrigger, actions) }
-        }
-
-        SettingsSubSection(
-            title = stringResource(R.string.settings_section_retention),
-            expanded = openSub == SUB_RETENTION,
-            onToggle = { openSub = if (openSub == SUB_RETENTION) null else SUB_RETENTION },
-        ) { RetentionSubSection(preferences, updateTrigger, actions) }
-
-        // Sits under Storage rather than Recording because that is the only thing it changes: what a
-        // merge leaves behind on the phone. It never affects whether a merged call can be taken
-        // apart, which the description says so nobody keeps originals out of misplaced caution.
-        MergeSubSection(preferences, updateTrigger)
-    }
-}
-
 /** Where recordings are saved: this device, Drive, or both. */
 @Composable
 internal fun StorageTargetRow(preferences: AppPreferences, updateTrigger: Int, actions: SettingsActions) {
@@ -320,31 +238,6 @@ private data class PendingDestructiveChange(
     @androidx.annotation.StringRes val messageRes: Int,
     val apply: () -> Unit
 )
-
-/** Retention: auto-delete recordings older than a chosen period. One shared period for device & Drive,
- * or a separate period for each. Destructive, so it defaults to "Keep forever" and a confirmation is
- * shown the first time a non-forever period is chosen.
- *
- * @param preferences   The [AppPreferences] instance to read data from.
- * @param updateTrigger Trigger value to force recomposition when settings change.
- * @param actions       Implementation of [SettingsActions] to handle user interaction.
- * @param expanded      Whether this accordion section is open.
- * @param onToggle      Invoked when the section header is tapped.
- */
-@Composable
-private fun RetentionSubSection(
-    preferences: AppPreferences,
-    updateTrigger: Int,
-    actions: SettingsActions
-) {
-    Column {
-        MinDurationRow(preferences, updateTrigger, actions)
-
-        SettingsDivider()
-
-        RetentionPolicyRows(preferences, updateTrigger, actions)
-    }
-}
 
 /**
  * "Skip calls shorter than". First in Retention, because it is the only control there that decides whether a

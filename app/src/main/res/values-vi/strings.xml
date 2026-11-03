@@ -42,7 +42,6 @@
 
     <!-- New Settings screen, round 4: the Recording group's sub-headers. -->
 
-    <!-- The card at the top of both Settings screens that switches between the new and classic layouts. -->
     <string name="app_lock_locked">Đã khóa</string>
     <string name="app_lock_prompt_title">Mở khóa CallVault</string>
     <string name="app_lock_unlock">Mở khóa</string>
@@ -435,10 +434,6 @@
     <string name="settings_language">Ngôn ngữ</string>
     <string name="settings_language_change_in_transcripts">Thay đổi trong cài đặt bản chép lời</string>
     <string name="settings_language_system">Mặc định hệ thống</string>
-    <string name="settings_layout_back_to_classic_subtitle">Tất cả cài đặt trong một danh sách dài, như trước</string>
-    <string name="settings_layout_back_to_classic_title">Chuyển sang giao diện cổ điển</string>
-    <string name="settings_layout_try_new_subtitle">Mỗi trang chỉ hiện cài đặt của trang đó</string>
-    <string name="settings_layout_try_new_title">Dùng thử bố cục cài đặt mới</string>
     <string name="settings_link_all_settings">Tất cả cài đặt</string>
     <string name="settings_link_share_debug_report">Chia sẻ báo cáo gỡ lỗi</string>
     <string name="settings_metadata_file_desc">Lưu một tệp .json nhỏ bên cạnh mỗi bản ghi</string>
@@ -461,20 +456,14 @@
     <string name="settings_section_about">Về</string>
     <string name="settings_section_audio">Cấu hình âm thanh</string>
     <string name="settings_section_debug">Tùy chọn gỡ lỗi</string>
-    <string name="settings_section_experimental">Thử nghiệm</string>
-    <string name="settings_section_general">Chung</string>
     <string name="settings_section_privacy">Quyền riêng tư</string>
     <string name="settings_section_recorder_server">Dịch vụ ghi âm</string>
-    <string name="settings_section_recording">Ghi âm</string>
     <string name="settings_section_recording_storage">Ghi âm và bộ nhớ</string>
     <string name="settings_section_reliability">Độ tin cậy</string>
-    <string name="settings_section_retention">Thời gian lưu giữ</string>
     <string name="settings_section_security">Bảo mật</string>
     <string name="settings_section_storage">Bộ nhớ</string>
     <string name="settings_section_transcription">Bản ghi lời</string>
-    <string name="settings_section_transcription_and_summaries">Bản ghi lời và tóm tắt</string>
     <string name="settings_section_updates">Cập nhật</string>
-    <string name="settings_section_visual">Cài đặt trực quan</string>
     <string name="settings_select_contacts">Chọn danh bạ (%1$d)</string>
     <string name="settings_select_contacts_incoming">Chọn liên hệ gọi đến</string>
     <string name="settings_select_contacts_outgoing">Chọn liên hệ gọi đi</string>
@@ -492,12 +481,8 @@
     <string name="settings_storage_target_label">Nơi lưu bản ghi âm</string>
     <string name="settings_subheader_all_calls">Tất cả cuộc gọi</string>
     <string name="settings_subheader_app_calls">Cuộc gọi qua ứng dụng</string>
-    <string name="settings_subsection_incoming">Cuộc gọi đến</string>
-    <string name="settings_subsection_outgoing">Cuộc gọi đi</string>
     <string name="settings_subsection_phone_calls">Cuộc gọi điện thoại</string>
     <string name="settings_subsection_privileges">CallVault lấy quyền từ đâu</string>
-    <string name="settings_subsection_resilience">Độ bền bỉ</string>
-    <string name="settings_subsection_voip">Cuộc gọi VoIP</string>
     <string name="settings_summary_calls_app_only">Chỉ cuộc gọi qua ứng dụng</string>
     <string name="settings_summary_calls_phone_and_app">Cuộc gọi điện thoại và qua ứng dụng</string>
     <string name="settings_summary_calls_phone_only">Chỉ cuộc gọi điện thoại</string>
@@ -554,6 +539,10 @@
     <string name="settings_voip_recording_description">Ghi âm cả những cuộc gọi thực hiện trong các ứng dụng như WhatsApp, Signal và Telegram. Một số ứng dụng chặn việc ghi âm, và chỉ khi cuộc gọi đang diễn ra mới biết được.</string>
     <string name="settings_voip_recording_label">Ghi âm cuộc gọi VoIP</string>
     <string name="settings_wd_auto_approve_description">Khi điện thoại kết nối với một mạng Wi-Fi, CallVault tự trả lời câu hỏi của Android \"Cho phép gỡ lỗi không dây trên mạng này?\", để việc ghi âm không phải chờ bạn chạm. Hoạt động khi trình ghi đang chạy. Chỉ những thiết bị đã ghép nối với điện thoại này mới có thể kết nối.</string>
+    <string name="settings_wd_never_off_label">Không bao giờ tắt gỡ lỗi không dây</string>
+    <string name="settings_wd_never_off_description">CallVault sẽ không tắt gỡ lỗi không dây, nên cổng gỡ lỗi vẫn mở trên mạng Wi-Fi của bạn. CallVault vẫn có thể bật nó khi trình ghi cần. Chỉ ở chế độ tích hợp.</string>
+    <string name="settings_wd_left_on_by_setting">Gỡ lỗi không dây đang bật. CallVault để nguyên vì cài đặt này.</string>
+    <string name="settings_wd_left_on_by_user">Gỡ lỗi không dây đang bật. Bạn đã bật nó, nên CallVault để nguyên.</string>
     <string name="settings_wd_auto_approve_label">Tự động chấp thuận mạng Wi-Fi mới</string>
     <string name="settings_wd_disable_when_idle">Tắt Gỡ lỗi không dây khi rảnh</string>
     <string name="settings_wd_disable_when_idle_description">Tắt Gỡ lỗi không dây khi dịch vụ ghi âm đã kết nối; chỉ bật lại trong thời gian ngắn khi cần.</string>
@@ -619,12 +608,13 @@
     <string name="summary_requirements_time">Một đến hai phút cho cuộc gọi ngắn, lâu hơn với cuộc gọi dài</string>
     <string name="summary_requirements_title">Yêu cầu</string>
     <string name="summary_requirements_toggle_description">Hiện yêu cầu của trình tóm tắt trước khi tải</string>
-    <string name="support_appeal_body">Tôi tự phát triển CallVault trong thời gian rảnh — miễn phí, mã nguồn mở, không quảng cáo, không theo dõi. ☕ Nếu thấy hữu ích, một khoản nhỏ giúp tôi tiếp tục. Dù sao thì, cảm ơn bạn! 🙏</string>
-    <string name="support_appeal_title">Do một người làm 👋</string>
+    <string name="support_appeal_body">Tôi duy trì CallVault trong thời gian rảnh. Ứng dụng bắt đầu là một bản fork của ShizuCallRecorder do kitsumed phát triển và đã lớn lên nhiều kể từ đó. Miễn phí, mã nguồn mở, không quảng cáo, không theo dõi. Nếu thấy hữu ích, một khoản nhỏ giúp tôi tiếp tục. Cảm ơn bạn! 🙏</string>
+    <string name="support_appeal_title">Ủng hộ CallVault ☕</string>
     <string name="support_not_now">Để sau</string>
     <string name="tile_recording_on">Đang ghi âm</string>
     <string name="tile_recording_stopped">Đã dừng</string>
     <string name="transcribe_confirm_dont_ask">Đừng hỏi lại</string>
+    <string name="transcribe_long_call_line">Cuộc gọi này dài %1$s. Trên điện thoại này, chép lời mất khoảng %2$s lần thời lượng cuộc gọi — khoảng %3$s.</string>
     <string name="transcribe_confirm_message">Chép lời %1$s sẽ khiến máy bận và hao pin rõ rệt. Bạn có thể dừng bất cứ lúc nào.\n\nCâu hỏi này có thể bật lại trong mục Chép lời ở Cài đặt.</string>
     <string name="transcribe_confirm_title">Việc này mất khoảng %1$s</string>
     <string name="transcribe_confirm_title_first_run">Lần đầu tiên có thể mất một lúc</string>
@@ -676,8 +666,6 @@
     <string name="transcript_speakers_swap">Đổi</string>
     <string name="transcript_speakers_swap_names">Đổi tên hai bên</string>
     <string name="transcript_speakers_which_is_you">Bên nào là bạn?</string>
-    <string name="transcript_too_long_message">Cuộc gọi này dài khoảng %1$d phút. Hiện tại CallVault chỉ có thể chuyển thành văn bản các bản ghi tối đa %2$d phút trên thiết bị — dài hơn sẽ hết bộ nhớ giữa chừng. Bản ghi vẫn an toàn.</string>
-    <string name="transcript_too_long_title">Quá dài để chuyển thành văn bản</string>
     <string name="transcription_ask_language_subtitle">Chọn ngôn ngữ cho từng bản ghi thay vì luôn dùng ngôn ngữ ở trên. Chỉ áp dụng cho bản ghi đó.</string>
     <!-- Where to transcribe: on this phone or with the user's own cloud key (issue #48). No prices anywhere. -->
     <string name="transcription_where_title">Chép lời ở đâu</string>
@@ -690,6 +678,7 @@
     <string name="transcription_where_custom_service">máy chủ của bạn</string>
     <string name="transcription_where_recommended">Đề xuất</string>
     <string name="transcription_cloud_key_label">Khóa của bạn cho %1$s</string>
+    <string name="transcription_cloud_key_label_custom">Khóa máy chủ của bạn</string>
     <string name="transcription_cloud_key_show">Hiện khóa</string>
     <string name="transcription_cloud_key_hide">Ẩn khóa</string>
     <string name="transcription_cloud_test">Kiểm tra</string>
@@ -697,7 +686,7 @@
     <string name="transcription_cloud_get_key">Lấy khóa %1$s</string>
     <string name="transcription_cloud_custom_url">Địa chỉ máy chủ</string>
     <string name="transcription_cloud_custom_url_hint">https://… (phần trước /audio/transcriptions)</string>
-    <string name="transcription_cloud_custom_url_invalid">Hãy dùng địa chỉ https://.</string>
+    <string name="transcription_cloud_custom_url_invalid">Hãy dùng địa chỉ http(s)://.</string>
     <string name="transcription_cloud_custom_model">Mô hình</string>
     <string name="transcription_cloud_mobile_data">Dùng cả dữ liệu di động</string>
     <string name="transcription_cloud_mobile_data_desc">Khi tắt, cuộc gọi sẽ chờ có Wi-Fi rồi mới được gửi.</string>
@@ -722,6 +711,9 @@
     <string name="transcription_hour_label">Giờ</string>
     <string name="transcription_language_arabic">Tiếng Ả Rập</string>
     <string name="transcription_language_auto">Tự động nhận diện</string>
+    <string name="language_search_placeholder">Tìm ngôn ngữ</string>
+    <string name="language_search_clear">Xóa tìm kiếm</string>
+    <string name="language_search_no_match">Không có ngôn ngữ phù hợp</string>
     <string name="transcription_language_auto_hint">Việc nhận diện không đáng tin với những ngôn ngữ không viết bằng chữ Latinh — tiếng Do Thái, tiếng Ả Rập, tiếng Nga và tiếng Trung thường trả về dưới dạng chữ cái tiếng Anh, hoặc thành một khối văn bản dài liền mạch. Nếu được, hãy chọn đúng ngôn ngữ.</string>
     <string name="transcription_language_chinese">Tiếng Trung</string>
     <string name="transcription_language_english">Tiếng Anh</string>
@@ -733,6 +725,7 @@
     <string name="transcription_language_italian">Tiếng Ý</string>
     <string name="transcription_language_label">Ngôn ngữ</string>
     <string name="transcription_language_persian">Tiếng Ba Tư</string>
+    <string name="transcription_language_urdu">Tiếng Urdu</string>
     <string name="transcription_language_polish">Tiếng Ba Lan</string>
     <string name="transcription_language_portuguese">Tiếng Bồ Đào Nha</string>
     <string name="transcription_language_russian">Tiếng Nga</string>

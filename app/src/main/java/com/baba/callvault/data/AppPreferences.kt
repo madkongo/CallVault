@@ -1,5 +1,6 @@
 /*
  * CallVault: FOSS call recording, self-contained over embedded ADB
+ *  Copyright (C) 2026-present kitsumed (Med)
  *  Copyright (C) 2026-present The CallVault Authors
  *  This software is licensed under the GNU General Public License v3 or later, with additional terms as permitted under Section 7.
  *  The full license text is available in the LICENSE file at the root of this project.
@@ -34,13 +35,6 @@ class AppPreferences(context: Context) {
 
     companion object {
         private const val PREFS_NAME = "callvault_prefs"
-
-        /**
-         * The new Settings layout is the default (maintainer, 2026-10-21, after trying it on the OP9). The
-         * classic one stays one tap away on the card at the top of Settings, and is deleted a release later.
-         * A user who already picked a layout keeps their pick: only an unset value follows this.
-         */
-        internal const val CLASSIC_SETTINGS_SCREEN_DEFAULT = false
 
         /**
          * The settings that may be exported and imported — an explicit ALLOW-list, device-independent
@@ -430,6 +424,7 @@ class AppPreferences(context: Context) {
         WD_TURNED_OFF_BY_USER("wd_turned_off_by_user"),
         WD_ENFORCED("wd_enforced"),
         WD_AUTO_APPROVE_NETWORK("wd_auto_approve_network"),
+        WD_NEVER_TURN_OFF("wd_never_turn_off"),
         LOG_PSEUDONYM_SALT("log_pseudonym_salt"),
         LOGCAT_RING_PREVIOUS_KIB("logcat_ring_previous_kib"),
         DEBUG_ENABLED("debug_enabled"),
@@ -454,8 +449,8 @@ class AppPreferences(context: Context) {
         // a state with its own meaning — see HomeSection.opening — so there is no DefaultsValue entry.
         LAST_HOME_SECTION("last_home_section"),
 
-        // Which Settings screen opens: the classic list, or the new per-page one. Device-only on purpose
-        // (not in EXPORTABLE_KEYS): it is a rollback switch for this phone, not a preference to carry over.
+        // Unused since the classic Settings screen was removed (docs/dev-notes/rollback/classic-settings-removal.md):
+        // kept so a revert of the classic-screen removal restores users' choice. Device-only (not in EXPORTABLE_KEYS).
         CLASSIC_SETTINGS_SCREEN("classic_settings_screen"),
 
         // The transcript reader's "Follow playback" switch (#27). A remembered view choice, like a sort
@@ -1124,6 +1119,10 @@ class AppPreferences(context: Context) {
             "wd_auto_approve_network", ModeCapability.WIRELESS_DEBUGGING_CONTROL,
             ::isWifiNetworkAutoApproveEnabled, ::setWifiNetworkAutoApproveEnabled,
         ),
+        GatedSwitch(
+            "wd_never_turn_off", ModeCapability.WIRELESS_DEBUGGING_CONTROL,
+            ::isWirelessDebuggingNeverTurnOff, ::setWirelessDebuggingNeverTurnOff,
+        ),
     )
 
     /**
@@ -1465,6 +1464,16 @@ class AppPreferences(context: Context) {
 
     fun setWifiNetworkAutoApproveEnabled(enabled: Boolean) = setBoolean(Key.WD_AUTO_APPROVE_NETWORK, enabled)
 
+    /**
+     * The opt-in "Never turn Wireless debugging off" setting (#30 follow-up). Off by default: CallVault then
+     * turns it off only if it turned it on. On: CallVault never turns it off, but may still turn it on.
+     * A new key rather than the old `wd_disable_when_idle`, whose meaning is the opposite and which
+     * [com.baba.callvault.integrations.adb.NetworkApprovalPolicy.alwaysAllow] still reads.
+     */
+    fun isWirelessDebuggingNeverTurnOff() = getBoolean(Key.WD_NEVER_TURN_OFF, false)
+
+    fun setWirelessDebuggingNeverTurnOff(enabled: Boolean) = setBoolean(Key.WD_NEVER_TURN_OFF, enabled)
+
     /** Sets whether logging features are enabled. */
     fun setLoggingEnabled(enabled: Boolean) = setBoolean(Key.LOGGING_ENABLED, enabled)
 
@@ -1577,15 +1586,6 @@ class AppPreferences(context: Context) {
     
     /** Sets whether dynamic color is enabled. */
     fun setDynamicColorEnabled(enabled: Boolean) = setBoolean(Key.DYNAMIC_COLOR, enabled)
-
-    /**
-     * Whether Settings opens the classic screen rather than the new per-page one (Debug ▸ "Use the classic
-     * Settings screen"). On by default until the new screen is verified on phones; both screens read and
-     * write the same preferences, so switching loses nothing.
-     */
-    fun isClassicSettingsScreen() = getBoolean(Key.CLASSIC_SETTINGS_SCREEN, CLASSIC_SETTINGS_SCREEN_DEFAULT)
-
-    fun setClassicSettingsScreen(classic: Boolean) = setBoolean(Key.CLASSIC_SETTINGS_SCREEN, classic)
 
     /**
      * Whether the transcript reader follows playback (#27): on lights the playing line and keeps it in

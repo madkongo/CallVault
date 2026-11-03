@@ -11,6 +11,8 @@ package com.baba.callvault.services.recording
 import android.media.AudioManager
 import com.baba.callvault.services.recording.VoipSwitchPolicy.Action
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
+import org.junit.Assert.assertTrue
 import org.junit.Test
 
 /** The full switch sequence, state by state. */
@@ -81,6 +83,36 @@ class VoipSwitchPolicyTest {
     }
 
     @Test
+    fun `the mode coming back while an end is pending keeps the call going`() {
+        // Telegram on a OnePlus (Android 17) drops to NORMAL for 0.7-1.2 s while a call connects,
+        // then returns to IN_COMMUNICATION. Without STAY the pending end was never cancelled and the
+        // recording stopped 1.5 s later with the call still up (2026-11-01 report).
+        assertEquals(
+            Action.STAY,
+            VoipSwitchPolicy.decide(voip, callActive = true, suspendedForCarrier = false)
+        )
+    }
+
+    @Test
+    fun `a short mode blip mid-call does not end the recording`() {
+        assertEquals(Action.START, VoipSwitchPolicy.decide(voip, false, false))
+        // the blip: an end is scheduled, not carried out
+        assertEquals(Action.END, VoipSwitchPolicy.decide(normal, true, false))
+        // the mode returns inside the debounce: the pending end must be cancelled
+        assertEquals(Action.STAY, VoipSwitchPolicy.decide(voip, true, false))
+    }
+
+    @Test
+    fun `when the debounce runs out, only a mode that still says ended ends the call`() {
+        assertEquals(true, VoipSwitchPolicy.stillEnded(normal, callActive = true, suspendedForCarrier = false))
+        assertEquals(false, VoipSwitchPolicy.stillEnded(voip, callActive = true, suspendedForCarrier = false))
+        // a held app call whose mode came back is a resume, not an end
+        assertEquals(false, VoipSwitchPolicy.stillEnded(voip, callActive = true, suspendedForCarrier = true))
+        // nothing is up: there is nothing left to end
+        assertEquals(false, VoipSwitchPolicy.stillEnded(normal, callActive = false, suspendedForCarrier = false))
+    }
+
+    @Test
     fun `the whole switch sequence, in order`() {
         // app call starts
         assertEquals(Action.START, VoipSwitchPolicy.decide(voip, false, false))
@@ -91,5 +123,20 @@ class VoipSwitchPolicyTest {
         assertEquals(Action.RESUME, VoipSwitchPolicy.decide(voip, true, true))
         // app call finally ends
         assertEquals(Action.END, VoipSwitchPolicy.decide(normal, true, false))
+    }
+
+    @Test
+    fun `a start whose mode is already back to normal is not acted on (#68)`() {
+        assertFalse(VoipSwitchPolicy.stillStarting(normal, callActive = false, suspendedForCarrier = false))
+    }
+
+    @Test
+    fun `a start whose mode still says app call goes ahead`() {
+        assertTrue(VoipSwitchPolicy.stillStarting(voip, callActive = false, suspendedForCarrier = false))
+    }
+
+    @Test
+    fun `a start whose mode turned into a phone call is not acted on`() {
+        assertFalse(VoipSwitchPolicy.stillStarting(cell, callActive = false, suspendedForCarrier = false))
     }
 }

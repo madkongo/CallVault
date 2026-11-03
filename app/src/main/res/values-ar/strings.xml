@@ -472,10 +472,6 @@
     <string name="settings_language">اللغة</string>
     <string name="settings_language_change_in_transcripts">تُغيَّر من إعدادات النصوص</string>
     <string name="settings_language_system">افتراضي النظام</string>
-    <string name="settings_layout_back_to_classic_subtitle">كل الإعدادات في قائمة طويلة واحدة، كما في السابق</string>
-    <string name="settings_layout_back_to_classic_title">التبديل إلى العرض الكلاسيكي</string>
-    <string name="settings_layout_try_new_subtitle">تعرض كل صفحة إعداداتها فقط</string>
-    <string name="settings_layout_try_new_title">جرّب التصميم الجديد للإعدادات</string>
     <string name="settings_link_all_settings">كل الإعدادات</string>
     <string name="settings_link_share_debug_report">مشاركة تقرير تصحيح الأخطاء</string>
     <string name="settings_metadata_file_desc">احفظ ملف .json صغير بجانب كل تسجيل</string>
@@ -498,20 +494,14 @@
     <string name="settings_section_about">حول</string>
     <string name="settings_section_audio">تكوين الصوت</string>
     <string name="settings_section_debug">تصحيح الأخطاء</string>
-    <string name="settings_section_experimental">تجريبي</string>
-    <string name="settings_section_general">عام</string>
     <string name="settings_section_privacy">الخصوصية</string>
     <string name="settings_section_recorder_server">خدمة المسجل</string>
-    <string name="settings_section_recording">تسجيل</string>
     <string name="settings_section_recording_storage">التسجيل والتخزين</string>
     <string name="settings_section_reliability">الموثوقية</string>
-    <string name="settings_section_retention">الاحتفاظ</string>
     <string name="settings_section_security">الأمان</string>
     <string name="settings_section_storage">التخزين</string>
     <string name="settings_section_transcription">التفريغ الصوتي</string>
-    <string name="settings_section_transcription_and_summaries">التفريغ الصوتي والملخصات</string>
     <string name="settings_section_updates">التحديثات</string>
-    <string name="settings_section_visual">الإعدادات المرئية</string>
     <string name="settings_select_contacts">تحديد جهات الاتصال (%1$d)</string>
     <string name="settings_select_contacts_incoming">تحديد جهات الاتصال الواردة</string>
     <string name="settings_select_contacts_outgoing">تحديد جهات الاتصال الصادرة</string>
@@ -529,12 +519,8 @@
     <string name="settings_storage_target_label">أين يتم حفظ التسجيلات</string>
     <string name="settings_subheader_all_calls">كل المكالمات</string>
     <string name="settings_subheader_app_calls">مكالمات التطبيقات</string>
-    <string name="settings_subsection_incoming">المكالمات الواردة</string>
-    <string name="settings_subsection_outgoing">المكالمات الصادرة</string>
     <string name="settings_subsection_phone_calls">المكالمات الهاتفية</string>
     <string name="settings_subsection_privileges">كيف يحصل CallVault على الإذن</string>
-    <string name="settings_subsection_resilience">المرونة</string>
-    <string name="settings_subsection_voip">مكالمات VoIP</string>
     <string name="settings_summary_calls_app_only">مكالمات التطبيقات فقط</string>
     <string name="settings_summary_calls_phone_and_app">المكالمات الهاتفية ومكالمات التطبيقات</string>
     <string name="settings_summary_calls_phone_only">المكالمات الهاتفية فقط</string>
@@ -591,6 +577,10 @@
     <string name="settings_voip_recording_description">أيضًا تسجيل المكالمات التي تتم في تطبيقات مثل WhatsApp وSignal وTelegram؛ كلا الجانبين من المحادثة، وليس صوتك فقط. تظهر التسجيلات التطبيق الذي تم إجراء المكالمة فيه، واسم جهة الاتصال عندما يوفره التطبيق. بعض التطبيقات تمنع التسجيل، ولا يمكن معرفة ذلك إلا بعد بدء المكالمة.</string>
     <string name="settings_voip_recording_label">تسجيل مكالمات VoIP</string>
     <string name="settings_wd_auto_approve_description">عندما يتصل الهاتف بشبكة Wi-Fi، يجيب CallVault بنفسه على سؤال Android \"السماح بتصحيح الأخطاء اللاسلكي على هذه الشبكة؟\"، فلا ينتظر التسجيل نقرتك. يعمل ما دام المسجّل قيد التشغيل. لا يمكن أن تتصل إلا الأجهزة المقترنة مسبقًا بهذا الهاتف.</string>
+    <string name="settings_wd_never_off_label">عدم إيقاف تصحيح الأخطاء اللاسلكي أبدًا</string>
+    <string name="settings_wd_never_off_description">لن يوقف CallVault تصحيح الأخطاء اللاسلكي، لذا يبقى منفذ تصحيح الأخطاء مفتوحًا على شبكة Wi-Fi لديك. قد يشغّله CallVault مع ذلك عندما يحتاج إليه المسجّل. في الوضع المدمج فقط.</string>
+    <string name="settings_wd_left_on_by_setting">تصحيح الأخطاء اللاسلكي قيد التشغيل. يتركه CallVault قيد التشغيل بسبب هذا الإعداد.</string>
+    <string name="settings_wd_left_on_by_user">تصحيح الأخطاء اللاسلكي قيد التشغيل. أنت شغّلته، لذا يتركه CallVault قيد التشغيل.</string>
     <string name="settings_wd_auto_approve_label">الموافقة تلقائيًا على شبكات Wi-Fi الجديدة</string>
     <string name="settings_wd_disable_when_idle">إيقاف تصحيح الأخطاء اللاسلكي عند خمول التطبيق</string>
     <string name="settings_wd_disable_when_idle_description">تعطيل تصحيح الأخطاء اللاسلكي فور اتصال خدمة المسجل، وإعادة تفعيله لحظيًا فقط عند الحاجة.</string>
@@ -656,12 +646,13 @@
     <string name="summary_requirements_time">حوالي دقيقة أو دقيقتين لمكالمة قصيرة، أطول للمكالمات الطويلة</string>
     <string name="summary_requirements_title">ماذا يتطلب هذا</string>
     <string name="summary_requirements_toggle_description">إظهار تكلفة نموذج التلخيص قبل تنزيلها</string>
-    <string name="support_appeal_body">أقوم ببناء CallVault بنفسي، في وقت فراغي؛ مجاني ومفتوح المصدر وبدون إعلانات وبدون تتبع. ☕ إذا كان مفيدًا لك، فإن نصيحة صغيرة تبقيني مستمرًا. في كلتا الحالتين، شكرًا! 🙏</string>
-    <string name="support_appeal_title">صنع بواسطة شخص واحد 👋</string>
+    <string name="support_appeal_body">أعتني بـ CallVault في وقت فراغي. بدأ كنسخة متفرعة (fork) من ShizuCallRecorder من تطوير kitsumed، وقد نما كثيرًا منذ ذلك الحين. مجاني ومفتوح المصدر وبدون إعلانات وبدون تتبع. إذا كان مفيدًا لك، فإن إكرامية صغيرة تساعدني على الاستمرار. شكرًا! 🙏</string>
+    <string name="support_appeal_title">إكرامية لـ CallVault ☕</string>
     <string name="support_not_now">ليس الآن</string>
     <string name="tile_recording_on">التسجيل مُفعّل</string>
     <string name="tile_recording_stopped">متوقّف</string>
     <string name="transcribe_confirm_dont_ask">لا تسأل مرة أخرى</string>
+    <string name="transcribe_long_call_line">مدة هذه المكالمة %1$s. على هذا الهاتف، يستغرق تحويلها إلى نص نحو %2$s× مدتها — أي نحو %3$s.</string>
     <string name="transcribe_confirm_title">سيستغرق هذا حوالي %1$s</string>
     <string name="transcribe_confirm_title_first_run">قد يستغرق الأول بعض الوقت</string>
     <string name="transcribe_confirm_title_unknown">تحويل هذه المكالمة إلى نص؟</string>
@@ -712,8 +703,6 @@
     <string name="transcript_speakers_swap">تبديل</string>
     <string name="transcript_speakers_swap_names">تبديل الأسماء</string>
     <string name="transcript_speakers_which_is_you">من هو أنت؟</string>
-    <string name="transcript_too_long_message">تبلغ مدة هذه المكالمة حوالي %1$d دقيقة. يمكن لـ CallVault تحويل التسجيلات إلى نص حتى %2$d دقيقة على الجهاز في الوقت الحالي فقط؛ ستنفد الذاكرة من التسجيلات الأطول في المنتصف. التسجيل نفسه آمن.</string>
-    <string name="transcript_too_long_title">التسجيل طويل جدًا للتفريغ في خطوة واحدة</string>
     <string name="transcription_ask_language_subtitle">اختر اللغة لكل تسجيل بدلاً من استخدام اللغة المذكورة أعلاه دائمًا. ينطبق ذلك على هذا التسجيل فقط.</string>
     <!-- Where to transcribe: on this phone or with the user's own cloud key (issue #48). No prices anywhere. -->
     <string name="transcription_where_title">مكان التفريغ الصوتي</string>
@@ -726,6 +715,7 @@
     <string name="transcription_where_custom_service">خادمك</string>
     <string name="transcription_where_recommended">مُوصى به</string>
     <string name="transcription_cloud_key_label">مفتاحك لدى %1$s</string>
+    <string name="transcription_cloud_key_label_custom">مفتاح خادمك</string>
     <string name="transcription_cloud_key_show">إظهار المفتاح</string>
     <string name="transcription_cloud_key_hide">إخفاء المفتاح</string>
     <string name="transcription_cloud_test">اختبار</string>
@@ -733,7 +723,7 @@
     <string name="transcription_cloud_get_key">احصل على مفتاح من %1$s</string>
     <string name="transcription_cloud_custom_url">عنوان الخادم</string>
     <string name="transcription_cloud_custom_url_hint">https://… (الجزء الذي يسبق /audio/transcriptions)</string>
-    <string name="transcription_cloud_custom_url_invalid">استخدم عنوانًا يبدأ بـ https://.</string>
+    <string name="transcription_cloud_custom_url_invalid">استخدم عنوانًا يبدأ بـ http(s)://.</string>
     <string name="transcription_cloud_custom_model">النموذج</string>
     <string name="transcription_cloud_mobile_data">استخدام بيانات الجوال أيضًا</string>
     <string name="transcription_cloud_mobile_data_desc">عند الإيقاف، تنتظر المكالمات شبكة Wi-Fi قبل إرسالها.</string>
@@ -758,6 +748,9 @@
     <string name="transcription_hour_label">ساعة</string>
     <string name="transcription_language_arabic">العربية</string>
     <string name="transcription_language_auto">الكشف تلقائياً</string>
+    <string name="language_search_placeholder">البحث عن لغة</string>
+    <string name="language_search_clear">مسح البحث</string>
+    <string name="language_search_no_match">لا توجد لغة مطابقة</string>
     <string name="transcription_language_auto_hint">الكشف غير موثوق به للغات التي لا تكتب بالحروف اللاتينية؛ غالبًا ما تعود العبرية والعربية والروسية والصينية مكتوبة بأحرف إنجليزية، أو ككتلة نصية طويلة. سمِ اللغة إذا استطعت.</string>
     <string name="transcription_language_chinese">الصينية</string>
     <string name="transcription_language_english">الإنجليزية</string>
@@ -769,6 +762,7 @@
     <string name="transcription_language_italian">الإيطالية</string>
     <string name="transcription_language_label">اللغة</string>
     <string name="transcription_language_persian">الفارسية</string>
+    <string name="transcription_language_urdu">الأردية</string>
     <string name="transcription_language_polish">البولندية</string>
     <string name="transcription_language_portuguese">البرتغالية</string>
     <string name="transcription_language_russian">الروسية</string>

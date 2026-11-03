@@ -136,7 +136,6 @@
 
     <!-- New Settings screen, round 4: the Recording group's sub-headers. -->
 
-    <!-- The card at the top of both Settings screens that switches between the new and classic layouts. -->
     <string name="app_lock_locked">قفل‌شده</string>
     <string name="app_lock_prompt_title">باز کردن قفل CallVault</string>
     <string name="app_lock_unlock">باز کردن قفل</string>
@@ -529,10 +528,6 @@
     <string name="settings_language">زبان</string>
     <string name="settings_language_change_in_transcripts">در تنظیمات رونوشت‌ها تغییر می‌کند</string>
     <string name="settings_language_system">پیش‌فرض سیستم</string>
-    <string name="settings_layout_back_to_classic_subtitle">همه تنظیمات در یک فهرست بلند، مثل قبل</string>
-    <string name="settings_layout_back_to_classic_title">رفتن به نمای کلاسیک</string>
-    <string name="settings_layout_try_new_subtitle">هر صفحه فقط تنظیمات خودش را نشان می‌دهد</string>
-    <string name="settings_layout_try_new_title">چیدمان جدید تنظیمات را امتحان کنید</string>
     <string name="settings_link_all_settings">همه تنظیمات</string>
     <string name="settings_link_share_debug_report">اشتراک‌گذاری گزارش اشکال‌زدایی</string>
     <string name="settings_metadata_file_desc">یک فایل .json کوچک کنار هر فایل ضبط‌شده ذخیره کن</string>
@@ -555,20 +550,14 @@
     <string name="settings_section_about">درباره</string>
     <string name="settings_section_audio">پیکربندی صدا</string>
     <string name="settings_section_debug">اشکال‌زدایی</string>
-    <string name="settings_section_experimental">آزمایشی</string>
-    <string name="settings_section_general">عمومی</string>
     <string name="settings_section_privacy">حریم خصوصی</string>
     <string name="settings_section_recorder_server">سرویس ضبط‌کننده</string>
-    <string name="settings_section_recording">ضبط</string>
     <string name="settings_section_recording_storage">ضبط و فضای ذخیره‌سازی</string>
     <string name="settings_section_reliability">قابلیت اطمینان</string>
-    <string name="settings_section_retention">نگه‌داری</string>
     <string name="settings_section_security">امنیت</string>
     <string name="settings_section_storage">فضای ذخیره‌سازی</string>
     <string name="settings_section_transcription">رونویسی</string>
-    <string name="settings_section_transcription_and_summaries">رونویسی و خلاصه‌ها</string>
     <string name="settings_section_updates">به‌روزرسانی‌ها</string>
-    <string name="settings_section_visual">تنظیمات ظاهری</string>
     <string name="settings_select_contacts">انتخاب مخاطبین (%1$d)</string>
     <string name="settings_select_contacts_incoming">انتخاب مخاطبین ورودی</string>
     <string name="settings_select_contacts_outgoing">انتخاب مخاطبین خروجی</string>
@@ -586,12 +575,8 @@
     <string name="settings_storage_target_label">محل ذخیره فایل‌های ضبط‌شده</string>
     <string name="settings_subheader_all_calls">همه تماس‌ها</string>
     <string name="settings_subheader_app_calls">تماس‌های برنامه‌ها</string>
-    <string name="settings_subsection_incoming">تماس‌های ورودی</string>
-    <string name="settings_subsection_outgoing">تماس‌های خروجی</string>
     <string name="settings_subsection_phone_calls">تماس‌های تلفنی</string>
     <string name="settings_subsection_privileges">چگونه CallVault مجوز می‌گیرد</string>
-    <string name="settings_subsection_resilience">تاب‌آوری</string>
-    <string name="settings_subsection_voip">تماس‌های VoIP</string>
     <string name="settings_summary_calls_app_only">فقط تماس‌های برنامه‌ها</string>
     <string name="settings_summary_calls_phone_and_app">تماس‌های تلفنی و تماس‌های برنامه‌ها</string>
     <string name="settings_summary_calls_phone_only">فقط تماس‌های تلفنی</string>
@@ -648,6 +633,10 @@
     <string name="settings_voip_recording_description">تماس‌های انجام‌شده در برنامه‌هایی مانند WhatsApp، Signal و Telegram را نیز ضبط می‌کند. برخی برنامه‌ها ضبط را مسدود می‌کنند و این تا زمانی که تماس در جریان باشد قابل تشخیص نیست.</string>
     <string name="settings_voip_recording_label">ضبط تماس‌های VoIP</string>
     <string name="settings_wd_auto_approve_description">وقتی گوشی به یک شبکهٔ Wi-Fi وصل می‌شود، CallVault خودش به پرسش Android «اجازهٔ اشکال‌زدایی بی‌سیم در این شبکه داده شود؟» پاسخ می‌دهد تا ضبط منتظر لمس شما نماند. تا وقتی ضبط‌کننده در حال اجراست کار می‌کند. فقط دستگاه‌هایی که از قبل با این گوشی جفت شده‌اند می‌توانند وصل شوند.</string>
+    <string name="settings_wd_never_off_label">هرگز اشکال‌زدایی بی‌سیم را خاموش نکن</string>
+    <string name="settings_wd_never_off_description">CallVault اشکال‌زدایی بی‌سیم را خاموش نمی‌کند، پس درگاه اشکال‌زدایی روی شبکهٔ Wi-Fi شما باز می‌ماند. CallVault همچنان ممکن است وقتی ضبط‌کننده به آن نیاز دارد روشنش کند. فقط در حالت داخلی.</string>
+    <string name="settings_wd_left_on_by_setting">اشکال‌زدایی بی‌سیم روشن است. CallVault به‌خاطر این تنظیم آن را روشن نگه می‌دارد.</string>
+    <string name="settings_wd_left_on_by_user">اشکال‌زدایی بی‌سیم روشن است. شما آن را روشن کردید، پس CallVault آن را روشن نگه می‌دارد.</string>
     <string name="settings_wd_auto_approve_label">تأیید خودکار شبکه‌های Wi-Fi جدید</string>
     <string name="settings_wd_disable_when_idle">خاموش کردن اشکال‌زدایی بی‌سیم در زمان بی‌کاری</string>
     <string name="settings_wd_disable_when_idle_description">پس از اتصال سرویس ضبط‌کننده، اشکال‌زدایی بی‌سیم را غیرفعال می‌کند؛ فقط در صورت نیاز به‌طور کوتاه دوباره فعال می‌شود.</string>
@@ -713,12 +702,13 @@
     <string name="summary_requirements_time">تقریباً یکی دو دقیقه برای یک تماس کوتاه، بیشتر برای تماس طولانی</string>
     <string name="summary_requirements_title">آنچه این نیاز دارد</string>
     <string name="summary_requirements_toggle_description">پیش از دانلود خلاصه‌ساز، هزینه‌های آن را نشان بده</string>
-    <string name="support_appeal_body">CallVault را به‌تنهایی و در وقت آزادم می‌سازم — رایگان، متن‌باز، بدون تبلیغ، بدون ردیابی. ☕ اگر برایتان مفید است، یک انعام کوچک مرا سرِ پا نگه می‌دارد. در هر صورت، ممنون! 🙏</string>
-    <string name="support_appeal_title">ساخته یک نفر 👋</string>
+    <string name="support_appeal_body">CallVault را در وقت آزادم نگهداری می‌کنم. این برنامه به‌صورت فورکی از ShizuCallRecorder ساخته kitsumed شروع شد و از آن زمان خیلی رشد کرده است. رایگان، متن‌باز، بدون تبلیغ، بدون ردیابی. اگر برایتان مفید است، یک انعام کوچک مرا سرِ پا نگه می‌دارد. ممنون! 🙏</string>
+    <string name="support_appeal_title">انعامی برای CallVault ☕</string>
     <string name="support_not_now">حالا نه</string>
     <string name="tile_recording_on">ضبط فعال</string>
     <string name="tile_recording_stopped">متوقف</string>
     <string name="transcribe_confirm_dont_ask">دیگر نپرس</string>
+    <string name="transcribe_long_call_line">این تماس %1$s است. در این گوشی، رونویسی حدود %2$s برابر مدت تماس طول می‌کشد — یعنی حدود %3$s.</string>
     <string name="transcribe_confirm_message">رونویسی %1$s گوشی شما را مشغول نگه می‌دارد و باتری قابل‌توجهی مصرف می‌کند. می‌توانید هر زمان آن را متوقف کنید.\n\nاین پرسش را می‌توان دوباره در بخش رونویسی در تنظیمات روشن کرد.</string>
     <string name="transcribe_confirm_title">این حدود %1$s طول می‌کشد</string>
     <string name="transcribe_confirm_title_first_run">اولی ممکن است کمی طول بکشد</string>
@@ -770,8 +760,6 @@
     <string name="transcript_speakers_swap">جابه‌جایی</string>
     <string name="transcript_speakers_swap_names">جابه‌جایی نام‌ها</string>
     <string name="transcript_speakers_which_is_you">کدام‌یک شما هستید؟</string>
-    <string name="transcript_too_long_message">این تماس حدود %1$d دقیقه طول دارد. CallVault فعلاً فقط می‌تواند فایل‌های ضبط‌شده تا %2$d دقیقه را روی دستگاه رونویسی کند — طولانی‌ترها در میانه راه حافظه کم می‌آورند. خود فایل ضبط‌شده در امان است.</string>
-    <string name="transcript_too_long_title">برای رونویسی خیلی طولانی است</string>
     <string name="transcription_ask_language_subtitle">به‌جای استفاده همیشگی از زبان بالا، برای هر فایل ضبط‌شده زبان را انتخاب کنید. فقط برای همان فایل ضبط‌شده اعمال می‌شود.</string>
     <!-- Where to transcribe: on this phone or with the user's own cloud key (issue #48). No prices anywhere. -->
     <string name="transcription_where_title">محل رونویسی</string>
@@ -784,6 +772,7 @@
     <string name="transcription_where_custom_service">سرور شما</string>
     <string name="transcription_where_recommended">پیشنهادی</string>
     <string name="transcription_cloud_key_label">کلید شما برای %1$s</string>
+    <string name="transcription_cloud_key_label_custom">کلید سرور شما</string>
     <string name="transcription_cloud_key_show">نمایش کلید</string>
     <string name="transcription_cloud_key_hide">پنهان کردن کلید</string>
     <string name="transcription_cloud_test">آزمایش</string>
@@ -791,7 +780,7 @@
     <string name="transcription_cloud_get_key">دریافت کلید از %1$s</string>
     <string name="transcription_cloud_custom_url">نشانی سرور</string>
     <string name="transcription_cloud_custom_url_hint">https://… (بخش پیش از /audio/transcriptions)</string>
-    <string name="transcription_cloud_custom_url_invalid">از نشانی https:// استفاده کنید.</string>
+    <string name="transcription_cloud_custom_url_invalid">از نشانی http(s):// استفاده کنید.</string>
     <string name="transcription_cloud_custom_model">مدل</string>
     <string name="transcription_cloud_mobile_data">استفاده از داده تلفن همراه هم</string>
     <string name="transcription_cloud_mobile_data_desc">وقتی خاموش است، تماس‌ها پیش از ارسال منتظر Wi-Fi می‌مانند.</string>
@@ -816,6 +805,9 @@
     <string name="transcription_hour_label">ساعت</string>
     <string name="transcription_language_arabic">عربی</string>
     <string name="transcription_language_auto">تشخیص خودکار</string>
+    <string name="language_search_placeholder">جستجوی زبان</string>
+    <string name="language_search_clear">پاک کردن جستجو</string>
+    <string name="language_search_no_match">هیچ زبانی پیدا نشد</string>
     <string name="transcription_language_auto_hint">تشخیص برای زبان‌هایی که با حروف لاتین نوشته نمی‌شوند قابل اعتماد نیست — عبری، عربی، روسی و چینی اغلب با حروف انگلیسی هجی‌شده برمی‌گردند، یا به‌صورت یک بلوک طولانی متن. اگر می‌توانید زبان را مشخص کنید.</string>
     <string name="transcription_language_chinese">چینی</string>
     <string name="transcription_language_english">انگلیسی</string>
@@ -827,6 +819,7 @@
     <string name="transcription_language_italian">ایتالیایی</string>
     <string name="transcription_language_label">زبان</string>
     <string name="transcription_language_persian">فارسی</string>
+    <string name="transcription_language_urdu">اردو</string>
     <string name="transcription_language_polish">لهستانی</string>
     <string name="transcription_language_portuguese">پرتغالی</string>
     <string name="transcription_language_russian">روسی</string>

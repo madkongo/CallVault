@@ -51,7 +51,7 @@ import com.baba.callvault.ui.common.rememberModelDownloadState
  * @param extraRows Rendered between the model's rows and the licence line. Settings puts its
  *   "ask me first" switch here; the setup wizard, which has no business offering a preference about
  *   a dialog it has just shown, passes nothing. A slot rather than a flag so the wizard cannot end
- *   up with a switch it must then explain — the same shape [TranscriptionSection] already uses to
+ *   up with a switch it must then explain — the same shape the transcription rows already use to
  *   host these rows inside itself.
  * @param onBackup Null hides the backup row (the wizard: a fresh install has nothing to save).
  */

@@ -117,6 +117,18 @@
     <string name="merge_note_will_keep">Les autres appels sont également conservés sur le téléphone.</string>
     <string name="home_scroll_to_top">Haut</string>
     <string name="home_whatsnew_full_notes">Notes de version complètes</string>
+    <string name="whatsnew_249_title">Appels d\'applis plus clairs, et prêt juste après les mises à jour</string>
+    <string-array name="whatsnew_249_items">
+        <item>Moins d\'écho sur les appels d\'applis avec les téléphones dont le micro capte l\'écouteur</item>
+        <item>Les appels Telegram s\'enregistrent jusqu\'au bout, avec le nom et l\'icône de Telegram</item>
+        <item>Les appels d\'applis qui se terminent avant le début de l\'enregistrement ne laissent plus de fichier vide</item>
+        <item>L\'enregistrement est prêt quelques secondes après une mise à jour</item>
+        <item>Les appels de toute durée peuvent être transcrits ; pour les longs, la durée prévue s\'affiche</item>
+        <item>Tapez pour trouver une langue dans la liste des langues, et l\'ourdou pour la transcription</item>
+        <item>Ne jamais désactiver le débogage sans fil — un nouveau bouton dans Paramètres ▸ Connexion</item>
+        <item>Votre propre serveur de transcription peut utiliser http:// sur votre propre réseau</item>
+        <item>Les Paramètres s\'ouvrent toujours en pages séparées ; la vue classique a disparu</item>
+    </string-array>
     <string name="whatsnew_248_title">Votre propre clé de transcription, et une lecture plus simple</string>
     <string-array name="whatsnew_248_items">
         <item>Transcrire avec votre propre clé — Groq, OpenRouter ou votre serveur, en secondes plutôt qu\'en minutes (Paramètres ▸ Où transcrire)</item>
@@ -313,6 +325,5 @@
     <string name="share_import_kept_title">Enregistré, mais pas transcrit</string>
     <string name="share_import_kept_body">Il est dans vos enregistrements. Vous pouvez lancer la transcription depuis là quand vous voulez.</string>
     <string name="share_import_kept_only_body">Il attend dans Transcriptions. Lancez-le là quand vous voulez, ou supprimez-le au même endroit.</string>
-    <string name="share_import_too_long">Cet audio dure %1$d minutes, et CallVault ne peut transcrire que %2$d minutes à la fois. Le fichier a été enregistré, vous pouvez donc toujours l\'écouter.</string>
     <string name="share_import_no_model">Aucun modèle de transcription n\'est encore installé, CallVault ne peut donc pas le lire. L\'audio a été enregistré — installez un modèle dans les Réglages, puis lancez-le depuis Transcriptions.</string>
 </resources>

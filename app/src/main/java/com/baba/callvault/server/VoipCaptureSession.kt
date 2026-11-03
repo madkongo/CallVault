@@ -17,6 +17,7 @@ import android.media.MediaMuxer
 import android.media.MediaRecorder
 import android.os.ParcelFileDescriptor
 import com.baba.callvault.integrations.scrcpy.ScrcpyAudioCodec
+import com.baba.callvault.server.echo.SafeFarAligner
 import com.baba.callvault.server.speakers.SpeakerTurnCodec
 import com.baba.callvault.server.speakers.SpeakerTurnDetector
 import com.baba.callvault.utils.AppLogger
@@ -278,6 +279,9 @@ internal class VoipCaptureSession(
         // arrived with no speaker labels at all, while carrier calls had them, for no reason anyone
         // had decided. Here the two sides are known exactly rather than inferred: near is the user.
         val speakers = SpeakerTurnDetector(SAMPLE_RATE)
+        // Lines the far side up with its copy leaking back into the mic, so the mix has one far voice
+        // instead of two 60-76 ms apart (the echo report, OnePlus A17). No leak = far side untouched.
+        val farAligner = SafeFarAligner(CHUNK_BYTES) { AppLogger.i(TAG, it) }
         val mono = ByteArray(CHUNK_BYTES)
         val info = MediaCodec.BufferInfo()
         var muxerStarted = false
@@ -315,11 +319,12 @@ internal class VoipCaptureSession(
                 // so the paused stretch is simply absent from the file. Same result as the carrier
                 // path, reached without going anywhere near the microphone.
                 if (pauseRequested.get() || suspended.get()) continue
+                val fMix = farAligner.align(n, f)
                 var o = 0
                 var farPeak = 0
                 for (i in 0 until CHUNK_BYTES step 2) {
                     stereo[o] = n[i]; stereo[o + 1] = n[i + 1]          // L = near
-                    stereo[o + 2] = f[i]; stereo[o + 3] = f[i + 1]      // R = far
+                    stereo[o + 2] = fMix[i]; stereo[o + 3] = fMix[i + 1] // R = far, lined up
                     val fs = ((f[i].toInt() and 0xFF) or (f[i + 1].toInt() shl 8)).toShort().toInt()
                     val fa = if (fs < 0) -fs else fs
                     if (fa > farPeak) farPeak = fa

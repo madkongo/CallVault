@@ -132,6 +132,21 @@ class VoipCallDetector(private val context: Context) {
     }
 
     /**
+     * The debounced end: [endCallRunnable] only if the mode still says the call is over.
+     *
+     * Scheduled on a mode change, carried out 1.5 s later. The mode is read again at that point,
+     * because a mode that dipped and came back is a call still in progress.
+     */
+    private val debouncedEndRunnable = Runnable {
+        val mode = audioManager?.mode ?: AudioManager.MODE_NORMAL
+        if (!VoipSwitchPolicy.stillEnded(mode, callActive, suspendedForCarrier)) {
+            AppLogger.i(TAG, "The audio mode came back (mode=$mode) — the app call is still up, recording continues")
+            return@Runnable
+        }
+        endCallRunnable.run()
+    }
+
+    /**
      * Last resort. A held recording keeps an encoder, a muxer and the output fd open the whole time,
      * so a signal that never arrives would leak all three and lose the recording outright. If the
      * phone call somehow never reports finishing, finalise what we have.
@@ -175,7 +190,7 @@ class VoipCallDetector(private val context: Context) {
      */
     fun abortForCarrierCall() {
         if (!callActive) return
-        handler.removeCallbacks(endCallRunnable)
+        handler.removeCallbacks(debouncedEndRunnable)
 
         // Hold it open rather than ending it, so returning to the app call continues the SAME file.
         // Splitting one conversation across two recordings is what this replaces.
@@ -221,7 +236,7 @@ class VoipCallDetector(private val context: Context) {
 
             VoipSwitchPolicy.Action.RESUME -> {
                 handler.removeCallbacks(suspendTimeout)
-                handler.removeCallbacks(endCallRunnable)
+                handler.removeCallbacks(debouncedEndRunnable)
                 suspendedForCarrier = false
                 runCatching { VoipRecordingCoordinator.setSuspendedForCarrierCall(context, false) }
                     .onFailure { AppLogger.w(TAG, "VoIP resume failed: ${it.message}") }
@@ -231,12 +246,27 @@ class VoipCallDetector(private val context: Context) {
             }
 
             VoipSwitchPolicy.Action.END -> {
-                handler.removeCallbacks(endCallRunnable)
-                handler.postDelayed(endCallRunnable, END_DEBOUNCE_MS)
+                handler.removeCallbacks(debouncedEndRunnable)
+                handler.postDelayed(debouncedEndRunnable, END_DEBOUNCE_MS)
                 return
             }
 
-            VoipSwitchPolicy.Action.START -> Unit   // handled below
+            // The mode dipped and came back inside the debounce: the call never ended.
+            VoipSwitchPolicy.Action.STAY -> {
+                if (handler.hasCallbacks(debouncedEndRunnable)) {
+                    handler.removeCallbacks(debouncedEndRunnable)
+                    AppLogger.i(TAG, "Audio mode dipped and came back — the app call continues")
+                }
+                return
+            }
+
+            VoipSwitchPolicy.Action.START -> {
+                val live = audioManager?.mode ?: mode
+                if (!VoipSwitchPolicy.stillStarting(live, callActive, suspendedForCarrier)) {
+                    AppLogger.i(TAG, "mode=IN_COMMUNICATION was reported, but the mode is already $live — the app call is over, not recording")
+                    return
+                }
+            }
         }
         run {
             // The mode alone does not prove this is an app call. A carrier call carried over IMS
@@ -248,7 +278,7 @@ class VoipCallDetector(private val context: Context) {
                 AppLogger.i(TAG, "mode=IN_COMMUNICATION but the carrier has a call up — not an app call")
                 return
             }
-            handler.removeCallbacks(endCallRunnable)
+            handler.removeCallbacks(debouncedEndRunnable)
             callActive = true
             AppLogger.i(TAG, "VoIP call detected (mode=IN_COMMUNICATION)")
 
@@ -306,7 +336,7 @@ class VoipCallDetector(private val context: Context) {
 
     /** Stops watching and ends any in-flight recording. Idempotent. */
     fun stop() {
-        handler.removeCallbacks(endCallRunnable)
+        handler.removeCallbacks(debouncedEndRunnable)
         if (callActive) endCallRunnable.run()
         handler.removeCallbacks(probeHeartbeat)
         heartbeatScheduled = false

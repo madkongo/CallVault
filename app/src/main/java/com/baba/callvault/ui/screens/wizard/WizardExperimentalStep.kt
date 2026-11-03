@@ -15,7 +15,8 @@ import androidx.compose.ui.unit.dp
 import com.baba.callvault.ui.common.CvCard
 
 /**
- * The experimental opt-ins, mirroring Settings ▸ General ▸ Experimental so the two group them alike.
+ * The experimental opt-ins. In Settings they sit in the Connection and Recording groups (the classic
+ * screen's General ▸ Experimental section, which this step once mirrored, was removed 2026-10-31).
  *
  * The toggle is the very same composable Settings renders — shared rather than reimplemented, so a
  * change to it reaches both screens at once. The wizard cannot be re-run, so a feature it never

@@ -1,5 +1,6 @@
 <!--
   ~ CallVault: FOSS call recording, self-contained over embedded ADB
+  ~  Copyright (C) 2026-present kitsumed (Med)
   ~  Copyright (C) 2026-present The CallVault Authors
   ~  This software is licensed under the GNU General Public License v3 or later, with additional terms as permitted under Section 7.
   ~  The full license text is available in the LICENSE file at the root of this project.
@@ -40,6 +41,9 @@
     <string name="disclaimer_body" translatable="false">
         By using this application, you confirm that you have read this disclaimer and acknowledge that this software is licensed under the GNU General Public License v3.0 with additional clauses under Section 7.\n\n
 
+        This software is a fork of ShizuCallRecorder, available at https://github.com/kitsumed/ShizuCallRecorder\n\n
+
+        Copyright © 2026 Kitsumed (Med) (ShizuCallRecorder)\n
         Copyright © 2026 The CallVault Authors\n\n
 
         This program is free software: you can redistribute it and/or modify it under the terms of the GNU General Public License as published by the Free Software Foundation, either version 3 of the License, or (at your option) any later version.\n\n
@@ -105,9 +109,7 @@
 
     <!-- Settings Screen: Section Titles -->
     <string name="settings_section_about">About</string>
-    <string name="settings_section_recording">Recording</string>
     <string name="settings_section_storage">Storage</string>
-    <string name="settings_section_retention">Retention</string>
 
     <!-- Retention (auto-delete old recordings) -->
     <string name="retention_keep_forever">Keep forever</string>
@@ -165,15 +167,8 @@
     <string name="settings_shizuku_ready">Shizuku is running and ready. With this on, CallVault does not need its own pairing.</string>
     <string name="settings_shizuku_grant">Allow CallVault in Shizuku</string>
     <string name="settings_shizuku_grant_description">Opens Shizuku so you can allow it. Nothing records until you do.</string>
-    <string name="settings_section_general">General</string>
-    <string name="settings_section_visual">Visual settings</string>
     <string name="settings_section_audio">Audio configuration</string>
     <string name="settings_section_reliability">Reliability</string>
-    <string name="settings_section_experimental">Experimental</string>
-    <string name="settings_subsection_incoming">Incoming calls</string>
-    <string name="settings_subsection_outgoing">Outgoing calls</string>
-    <string name="settings_subsection_resilience">Resilience</string>
-    <string name="settings_subsection_voip">VoIP calls</string>
     <string name="settings_voip_recording_label">Record VoIP calls</string>
     <string name="settings_voip_recording_description">Also record calls made in apps like WhatsApp, Signal and Telegram. Some apps block recording, and this cannot be known until a call is under way.</string>
     <string name="settings_voip_auto_start_label">Start automatically</string>
@@ -567,8 +562,8 @@
     <string name="settings_section_updates">Updates</string>
     <string name="settings_update_check_label">Check for updates</string>
     <string name="settings_update_check_description">Once a day, look for a new version on GitHub.</string>
-    <string name="support_appeal_title">Made by one person 👋</string>
-    <string name="support_appeal_body">I build CallVault on my own, in my free time — free, open source, no ads, no tracking. ☕ If it\'s useful to you, a small tip keeps me going. Either way, thanks! 🙏</string>
+    <string name="support_appeal_title">A tip for CallVault ☕</string>
+    <string name="support_appeal_body">I maintain CallVault in my free time. It started as a fork of ShizuCallRecorder by kitsumed and has grown a lot since. Free, open source, no ads, no tracking. If it\'s useful to you, a small tip keeps me going. Thanks! 🙏</string>
     <string name="support_kofi" translatable="false">Ko-fi</string>
     <string name="support_paypal" translatable="false">PayPal</string>
     <string name="support_not_now">Not now</string>
@@ -601,7 +596,6 @@
     <string name="settings_debug_log_delete_message">The entries collected so far are removed. If logging is still on, a new log starts immediately.</string>
     <string name="settings_debug_log_empty">The log is empty.</string>
     <!-- Transcription (on-device speech to text) -->
-    <string name="settings_section_transcription_and_summaries">Transcription &amp; summaries</string>
     <string name="settings_section_transcription">Transcription</string>
     <string name="transcription_mode_label">Transcribe</string>
     <string name="transcription_mode_manual">Manually</string>
@@ -761,8 +755,12 @@
     <string name="transcription_language_vietnamese">Vietnamese</string>
     <string name="transcription_language_greek">Greek</string>
     <string name="transcription_language_persian">Persian</string>
+    <string name="transcription_language_urdu">Urdu</string>
     <string name="transcription_language_ukrainian">Ukrainian</string>
     <string name="transcription_language_auto">Detect automatically</string>
+    <string name="language_search_placeholder">Search languages</string>
+    <string name="language_search_clear">Clear search</string>
+    <string name="language_search_no_match">No language matches</string>
     <string name="transcription_language_auto_hint">Detection is unreliable for languages that are not written in Latin letters — Hebrew, Arabic, Russian and Chinese often come back spelled out in English letters, or as one long block of text. Name the language if you can.</string>
     <string name="transcription_note_manual">Transcripts are made only when you ask for one, from the button on a recording.</string>
     <string name="transcription_note_after_each_call">Each call is transcribed as soon as it ends. Older calls are left alone — transcribe those from the button on a recording.</string>
@@ -786,6 +784,7 @@
     <string name="transcribe_confirm_title_first_run">The first one may take a while</string>
     <string name="transcribe_confirm_message">Transcribing %1$s keeps your phone busy and uses noticeable battery. You can stop it at any time.\n\nThis question can be turned back on under Transcription in Settings.</string>
     <string name="transcribe_confirm_dont_ask">Don\'t ask again</string>
+    <string name="transcribe_long_call_line">This call is %1$s. On this phone, transcribing takes about %2$s× as long — about %3$s.</string>
     <string name="transcribe_language_title">Which language?</string>
     <string name="transcribe_language_message">Transcribe %1$s in:</string>
     <string name="transcribe_language_confirm">Transcribe</string>
@@ -802,6 +801,7 @@
     <string name="transcription_where_custom_service">your server</string>
     <string name="transcription_where_recommended">Recommended</string>
     <string name="transcription_cloud_key_label">Your %1$s key</string>
+    <string name="transcription_cloud_key_label_custom">Your server\'s key</string>
     <string name="transcription_cloud_key_show">Show key</string>
     <string name="transcription_cloud_key_hide">Hide key</string>
     <string name="transcription_cloud_test">Test</string>
@@ -809,7 +809,7 @@
     <string name="transcription_cloud_get_key">Get a %1$s key</string>
     <string name="transcription_cloud_custom_url">Server address</string>
     <string name="transcription_cloud_custom_url_hint">https://… (the part before /audio/transcriptions)</string>
-    <string name="transcription_cloud_custom_url_invalid">Use an https:// address.</string>
+    <string name="transcription_cloud_custom_url_invalid">Use an http(s):// address.</string>
     <string name="transcription_cloud_custom_model">Model</string>
     <string name="transcription_cloud_mobile_data">Also use mobile data</string>
     <string name="transcription_cloud_mobile_data_desc">When off, calls wait for Wi-Fi before they are sent.</string>
@@ -849,8 +849,6 @@
     <string name="transcript_retranscribe">Transcribe again</string>
     <string name="transcript_note_add">Add a note</string>
     <string name="transcript_note_hint">What it was about, or what to do about it…</string>
-    <string name="transcript_too_long_title">Too long to transcribe</string>
-    <string name="transcript_too_long_message">This call is about %1$d minutes long. CallVault can only transcribe recordings up to %2$d minutes on the device for now — longer ones would run out of memory partway through. The recording itself is safe.</string>
     <string name="transcript_no_model_title">No speech model yet</string>
     <string name="transcript_no_model_message">Transcribing happens on this phone, so it needs a speech model downloaded first. You can choose and download one in Settings.</string>
     <string name="transcript_no_model_open_settings">Open settings</string>
@@ -970,6 +968,10 @@
     <string name="settings_wd_enforce_description">If you switch Wireless debugging off while nothing else lets CallVault in, it turns it back on so calls keep recording. When this is off, your switch stays off and the notification says recording is paused.</string>
     <string name="settings_wd_auto_approve_label">Approve new Wi-Fi networks automatically</string>
     <string name="settings_wd_auto_approve_description">When the phone joins a Wi-Fi network, CallVault answers Android\'s \"Allow wireless debugging on this network?\" itself, so recording does not wait for your tap. Works while the recorder is running. Only devices already paired with this phone can connect.</string>
+    <string name="settings_wd_never_off_label">Never turn Wireless debugging off</string>
+    <string name="settings_wd_never_off_description">CallVault won\'t switch Wireless debugging off, so the debugging port stays open on your Wi-Fi network. CallVault may still switch it on when the recorder needs it. Built-in mode only.</string>
+    <string name="settings_wd_left_on_by_setting">Wireless debugging is on. CallVault is leaving it on because of this setting.</string>
+    <string name="settings_wd_left_on_by_user">Wireless debugging is on. You switched it on, so CallVault is leaving it on.</string>
     <string name="oem_gate_title">Your phone is blocking this step</string>
     <string name="oem_gate_body_oppo">OnePlus, OPPO and realme phones refuse to give apps this permission until you turn on \"Disable system optimization\" in Developer options — near the bottom, under Apps. Older versions call it \"Disable permission monitoring\". Turn it on and try again. If you cannot find it, switch the phone to English, turn it on, then switch back.</string>
     <string name="oem_gate_body_xiaomi">Xiaomi, Redmi and POCO phones refuse to give apps this permission until you turn on \"USB debugging (Security settings)\" in Developer options. It is separate from USB debugging, and needs you to be signed in to a Mi account. Turn it on and try again.</string>
@@ -1070,9 +1072,4 @@
     <string name="settings_subheader_all_calls">All calls</string>
     <string name="settings_voip_auto_start_record_label">Record app calls automatically</string>
 
-    <!-- The card at the top of both Settings screens that switches between the new and classic layouts. -->
-    <string name="settings_layout_try_new_title">Try the new Settings layout</string>
-    <string name="settings_layout_try_new_subtitle">Each page shows only its own settings</string>
-    <string name="settings_layout_back_to_classic_title">Switch to the classic view</string>
-    <string name="settings_layout_back_to_classic_subtitle">All settings in one long list, as before</string>
 </resources>

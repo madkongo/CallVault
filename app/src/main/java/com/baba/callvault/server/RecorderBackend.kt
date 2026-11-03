@@ -10,6 +10,8 @@ package com.baba.callvault.server
 
 import android.content.Context
 import android.os.SystemClock
+import java.util.concurrent.TimeUnit
+import java.util.concurrent.locks.ReentrantLock
 import com.baba.callvault.data.AppPreferences
 import com.baba.callvault.data.PrivilegedMode
 import com.baba.callvault.data.RecordingState
@@ -46,6 +48,37 @@ object RecorderBackend {
      * Generous: getting this wrong reports the wrong backend as ready, which is worse than a slow switch.
      */
     private const val TEARDOWN_TIMEOUT_MS = 5_000L
+
+    /**
+     * How long a caller waits for another thread's retire-and-rebind before giving up. Longer than the
+     * worst case of one holder: a teardown, a bind wait and [MAX_STALE_RETIREMENTS] more teardowns.
+     */
+    private const val SHIZUKU_LOCK_WAIT_MS = 40_000L
+
+    /**
+     * One retire-or-bind at a time in Shizuku mode.
+     *
+     * After an install-over, the update receiver, the app start and the keep-alive all found the old
+     * recorder at once, and each retired it and bound a new one (OP9, 2026-11-02 and 2026-11-03). Shizuku
+     * keeps one record per service: the second bind replaced the first ("unable to find token"), the
+     * recorder that did start answered a binding the app had already dropped, and the app waited for a
+     * binder that never came. Recording was down for about a minute, until the keep-alive's next tick.
+     * Held, the second caller finds the first one's fresh recorder and reuses it. Reentrant, because a
+     * stale check inside a bind retires through [retireShizukuService].
+     */
+    private val shizukuLock = ReentrantLock()
+
+    private inline fun <T> underShizukuLock(what: String, otherwise: T, block: () -> T): T {
+        if (!shizukuLock.tryLock(SHIZUKU_LOCK_WAIT_MS, TimeUnit.MILLISECONDS)) {
+            AppLogger.w(TAG, "Gave up on $what: another recorder start was still running after ${SHIZUKU_LOCK_WAIT_MS}ms")
+            return otherwise
+        }
+        try {
+            return block()
+        } finally {
+            shizukuLock.unlock()
+        }
+    }
 
     /**
      * Makes sure a recorder is running and its binder is in [RecorderConnection].
@@ -111,7 +144,26 @@ object RecorderBackend {
         timeoutMs: Long = TEARDOWN_TIMEOUT_MS,
         evenIfRecording: Boolean = false,
         host: IRecorderService? = RecorderConnection.service,
+    ): Boolean =
+        underShizukuLock("retiring the Shizuku recorder", otherwise = false) {
+            retireShizukuServiceLocked(reason, timeoutMs, evenIfRecording, host)
+        }
+
+    private fun retireShizukuServiceLocked(
+        reason: String,
+        timeoutMs: Long,
+        evenIfRecording: Boolean,
+        host: IRecorderService?,
     ): Boolean {
+        // Waited for the lock, and someone else already replaced this host: it is gone, and the binder
+        // now held is the fresh one, which must not be torn down in its place.
+        val current = RecorderConnection.service
+        if (host != null && current?.asBinder() !== host.asBinder() &&
+            !runCatching { host.asBinder().isBinderAlive }.getOrDefault(false)
+        ) {
+            AppLogger.i(TAG, "The recorder to retire is already gone and was replaced; keeping the current one")
+            return true
+        }
         // destroy() stops the recording and exits the process, and a daemon(true) service survives an
         // install — so it may be mid-call when the post-update recovery gets here. A stale host is a
         // problem for the NEXT call; ending this one to fix it trades a possible loss for a certain one.
@@ -147,7 +199,12 @@ object RecorderBackend {
      *   current, when there is none, or when it is stale but recording a call (see
      *   [retireShizukuService] — a stale host is the next call's problem, never this one's).
      */
-    fun retireIfStale(installedApkPath: String, timeoutMs: Long = TEARDOWN_TIMEOUT_MS): Boolean {
+    fun retireIfStale(installedApkPath: String, timeoutMs: Long = TEARDOWN_TIMEOUT_MS): Boolean =
+        underShizukuLock("checking the Shizuku recorder's APK", otherwise = false) {
+            retireIfStaleLocked(installedApkPath, timeoutMs)
+        }
+
+    private fun retireIfStaleLocked(installedApkPath: String, timeoutMs: Long): Boolean {
         val service = RecorderConnection.service ?: return false
         // A host that is already dead cannot answer, and must not be mistaken for one too old to: it
         // needs dropping, not retiring, and must not spend the caller's retry budget.
@@ -364,7 +421,10 @@ object RecorderBackend {
         isInstalled = ShizukuBackend.isInstalled(context),
     )
 
-    private fun ensureShizukuRunning(context: Context): Boolean {
+    private fun ensureShizukuRunning(context: Context): Boolean =
+        underShizukuLock("starting the Shizuku recorder", otherwise = false) { ensureShizukuRunningLocked(context) }
+
+    private fun ensureShizukuRunningLocked(context: Context): Boolean {
         val installedApk = context.applicationInfo.sourceDir
         if (RecorderConnection.isConnected && !retireIfStale(installedApk)) {
             AppLogger.d(TAG, "Recorder already connected; reusing existing binder")

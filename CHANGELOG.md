@@ -5,6 +5,113 @@ All notable changes to CallVault are documented here. The format is based on
 
 ## [Unreleased]
 
+## [2.4.9] — 2026-11-03
+
+### Added
+
+- **Recording without Wi-Fi on phones whose adbd already listens on the network port.** A few phones (some TV,
+  OEM and developer builds) keep their debugging port open from boot. When the usual connection fails,
+  CallVault now uses such a port when the phone's own settings name it, with no Wi-Fi or Wireless debugging —
+  only once CallVault has been paired. On other phones nothing changes.
+  <!-- 🧪 VERIFYING: built 2026-10-31 on feat/open-adb-port-probe; unit tests only, untested on a phone. None of
+       our phones opens this port by itself; to settle: a phone/emulator with persist.adb.tcp.port set (or a
+       Shizuku TCP-mode listener in built-in mode), Wi-Fi off, and a call that records. -->
+- **Never turn Wireless debugging off** (#30). A new switch in Settings → Connection, built-in mode only. With
+  it on, CallVault never switches Wireless debugging off; it may still switch it on when the recorder needs
+  it, and the debugging port stays open on your Wi-Fi. A line under the switch now says when CallVault is
+  leaving Wireless debugging on, because of this switch or because you turned it on yourself. Asked by
+  mirror176.
+  <!-- 🧪 VERIFYING: OP9 2026-10-31 (Claude-run, 2.4.8-wd30, built-in mode): off → CallVault turned WD on for
+       the recorder start and off again; on → after a recorder restart WD stayed on, log "Leaving Wireless
+       debugging on … 'Never turn it off' is on", and the line under the row showed. Greyed in Shizuku mode.
+       Maintainer to confirm. -->
+- **Your own transcription server can use http://** (#67). In Settings → Where to transcribe → Custom, an
+  address starting with http:// is now accepted, for a server on your own network or behind a VPN. The audio
+  and key travel unencrypted to it, so use https for anything on the open internet. Asked by QBANIN.
+  <!-- 🧪 VERIFYING: OP9 2026-11-01 (Claude-run, 2.4.8-next5): an http:// stand-in server on the LAN, Test OK, one call
+       transcribed through it. Not tried with a real model server; maintainer to confirm. -->
+- **Credit to ShizuCallRecorder** (#66). The welcome screen now says CallVault is a fork of ShizuCallRecorder,
+  with a link and its author's copyright, and the support dialog names the original project. Raised by kitsumed.
+  <!-- 🧪 VERIFYING: unit tests + checkTranslations only (2026-11-01). To settle: open Settings → Support
+       development, and see the welcome screen on a fresh install. -->
+- **Urdu can be pinned as a transcription language.** Pick it in Settings → Transcription → Language, or in
+  the per-call language question. Summaries of Urdu calls are written in Urdu.
+  <!-- 🧪 VERIFYING: unit tests and build only (2.4.8-urdu); nothing seen on a phone. Maintainer to pin Urdu,
+       transcribe a real Urdu call (local model and, if set up, Groq) and check the transcript is in Urdu
+       script and the summary is in Urdu. -->
+
+- **Type to find a language in the language list.** The language list (Settings, setup, and "Which
+  language?" before a transcription or import) now opens with a search box. Type a language's name in the
+  app's language, in English or in the language itself (עברית, Ελληνικά, Español), or its code; the × clears it.
+  <!-- 🧪 VERIFYING: unit tests + release build only, not yet run on a phone. Maintainer to check on a
+       phone: open each of the three lists, type, clear with ×; keyboard does not cover the list; Arabic or
+       Persian UI shows the × on the left; TalkBack reads the box and "Clear search, button". -->
+
+### Changed
+
+- **A stuck connection no longer blocks recording forever.** When one attempt to reach the recorder got stuck,
+  every later attempt — including the one starting a recording — used to wait behind it with no end. They now
+  give up after a minute and try again, and the off-Wi-Fi retry window really is 12 seconds.
+  <!-- 🧪 VERIFYING: built 2026-10-31 on fix/adb-connect-leftovers; unit tests only, untested on a phone.
+       Maintainer to confirm: a normal day of calls with no missed recording and no "connect lock" log line. -->
+- **Long calls are transcribed too.** The 60-minute limit is gone: long calls are no longer skipped, whether
+  you tap Transcribe, they are transcribed automatically after the call or overnight, or you import them.
+  When you start one of 30 minutes or more on the phone, the confirmation says how long it will take — about
+  1.5× the call's length. With a cloud service there is no warning; it takes seconds.
+  <!-- 🧪 VERIFYING: OP9 2026-10-31 (Claude-run, 2.4.8-long1): a 50-min call with the local model showed "This
+       call is 50 min … about 1.6× as long — about 1 h 20 min" (measured speed) instead of being refused.
+       Not yet: "Don't ask again" ticked, Groq, an automatic >60-min run. -->
+  If automatic transcription is on, older calls over an hour that were skipped before are transcribed on the next
+  automatic run, which can keep the phone busy for a while.
+
+### Removed
+
+- **The classic Settings view.** Settings now always opens the per-page layout, the default since 2.4.7, and the
+  "Switch to the classic view" card is gone. Nothing moves and no setting changes: the old Experimental switches
+  are under **Connection** (Wireless debugging, USB, offline and resilient recording, pairing) and **Recording**
+  (app calls).
+  <!-- 🧪 VERIFYING: branch chore/remove-classic-settings, 2026-10-31 — unit tests + release build only; not seen
+       on a phone. Maintainer to open Settings from the main screen and each page and confirm every group is
+       there. Rollback: docs/dev-notes/rollback/classic-settings-removal.md. -->
+
+### Fixed
+
+- **A file the phone cannot decode no longer hangs.** If reading a recording's audio stops making progress for
+  two minutes, CallVault gives up on it: the transcription shows as failed, the waveform stays blank, and an
+  import says the file cannot be read. Slow phones and long calls are not affected. Idea from @slman890's fork.
+  <!-- 🧪 VERIFYING: built 2026-10-31 on fix/decode-time-limit (2.4.8-decode); JVM tests of the stall rule only.
+       Not seen on a phone; no truly stalling file tested. Maintainer: confirm a long call still transcribes. -->
+
+- **Less echo on app calls on phones whose mic picks up the earpiece.** On some phones the other person was
+  recorded twice, a fraction of a second apart, which sounds like an echo. CallVault now finds that delay
+  during the call and lines the two up. The echo can still be heard for the first few seconds of a call. Also
+  reported in #69 (Realme GT 7).
+  <!-- ✅ VERIFIED 2026-11-02 on one OnePlus CPH2747 (A17, Shizuku), via the maintainer. Other phones untested. -->
+- **Telegram calls no longer stop recording after a few seconds.** Telegram briefly leaves call mode while a
+  call connects, and CallVault took that as the call ending. Every other Telegram call was cut short.
+  <!-- ✅ VERIFIED 2026-11-02 on the same OnePlus CPH2747. -->
+- **Telegram recordings carry the Telegram name and icon.** Telegram is identified a few seconds into the call
+  now, instead of the recording going out unnamed.
+  <!-- ✅ VERIFIED 2026-11-02 on the same OnePlus CPH2747. The two-lookup check before discarding a
+       switched-off app (82465bc7) is 🧪 VERIFYING. -->
+- **An app call that ends before the recording starts leaves nothing behind** (#68). It used to leave a
+  sub-second file and a wrong "the other app blocks capture" warning. Reported by ofirmgr.
+  <!-- 🧪 VERIFYING: unit tests only (2026-11-02). To settle: the reporter's POCO X5 Pro over a few days. -->
+- **App icons show for a messenger installed while CallVault is running.** Such a call showed a grey
+  placeholder until CallVault was restarted.
+  <!-- 🧪 VERIFYING: built 2026-11-02 (e8b19172). On the OP9 the restart confirmed the cause; the 30 s retry
+       itself is not yet seen. To settle: install a messenger, call with it, open the list without restarting. -->
+- **The debug log no longer reports microphones as "still open" after phone calls** (#69). Every normal call
+  added a false entry; the microphone itself was always released.
+  <!-- 🧪 VERIFYING: OP9 2026-11-03 (2.4.8-next8), one carrier call logged "no capture left open". -->
+- **Recording is ready seconds after an update in Shizuku mode.** Sometimes the recorder stayed down for about a
+  minute after CallVault updated, and a call in that minute was not recorded.
+  <!-- 🧪 VERIFYING: OP9 2026-11-03, 2.4.8-next9: 6 of 6 install-overs ready in ~2 s (before: 1 of 4 down 62 s).
+       Maintainer to confirm on a real update. -->
+- **The notification says "Ready" as soon as the recorder is.** After an update it could say "Call recorder
+  starting up…" for a minute while calls were already being recorded.
+  <!-- 🧪 VERIFYING: OP9 2026-11-03, 2.4.8-next9: "Ready" within ~1 s of the recorder connecting, 6 of 6. -->
+
 ## [2.4.8] — 2026-10-31
 
 ### Added

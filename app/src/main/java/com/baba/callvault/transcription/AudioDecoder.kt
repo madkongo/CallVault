@@ -30,7 +30,7 @@ import kotlin.math.sin
  * remains proportional to call length — but it is now one buffer of PCM plus the 16 kHz output, rather
  * than the four overlapping full-length buffers this used to build. For fifteen minutes at 48 kHz that
  * is roughly 144 MB where it was about 259 MB, which is what
- * [TranscriptionLengthLimit.MAX_MINUTES] was really measuring. See [pcm16ToMono16k] and [PcmShortSink]
+ * the old transcription length limit (removed) was really measuring. See [pcm16ToMono16k] and [PcmShortSink]
  * for the two allocations that were removed.
  *
  * The remaining fix is chunked, VAD-segmented decoding, which the pipeline wants anyway for
@@ -45,6 +45,10 @@ object AudioDecoder {
     const val TARGET_SAMPLE_RATE = 16_000
 
     private const val DEQUEUE_TIMEOUT_US = 10_000L
+
+    private const val NANOS_PER_MS = 1_000_000L
+
+    private fun nowMs(): Long = System.nanoTime() / NANOS_PER_MS
 
     /**
      * How far the decoded length may stray from the container's declared duration before it is
@@ -113,7 +117,7 @@ object AudioDecoder {
      * 48 kHz that is 4 bytes per sample where the source had 2, so fifteen minutes costs 86.4 MB of
      * `ShortArray` plus 172.8 MB of `FloatArray` — **259 MB against a 256 MB heap**.
      *
-     * That is where [TranscriptionLengthLimit.MAX_MINUTES] came from. The limit was set empirically at
+     * That is where the old transcription length limit (since removed) came from. The limit was set empirically at
      * the point transcription started failing, and this allocation is what it was measuring; nobody
      * realised the number had a cause. Reading the shorts directly and only ever materialising the
      * 16 kHz output takes the peak to roughly 144 MB, because the resampled array is a third the
@@ -363,6 +367,7 @@ object AudioDecoder {
      * @throws IllegalStateException if the decode produces an implausible amount of audio, rather than
      *   letting a malformed buffer reach whisper where it costs minutes of silent CPU burn.
      * @throws InterruptedException if [shouldStop] becomes true while decoding.
+     * @throws DecodeStalledException if the decoder produces nothing for [DecodeStall.LIMIT_MS].
      */
     fun decodeToMono16k(
         context: Context,
@@ -374,8 +379,8 @@ object AudioDecoder {
      * 16 kHz mono float for part of [uri], and where that audio really starts.
      *
      * The point of the range: peak memory stops depending on call length. Decoding a five-minute slice
-     * costs the same whether the call is five minutes or two hours, so
-     * [TranscriptionLengthLimit.MAX_MINUTES] stops being a memory limit and can eventually go. See
+     * costs the same whether the call is five minutes or two hours, which is what let the old
+     * transcription length limit go. See
      * [ChunkPlan] for how the slices are chosen.
      *
      * **[DecodedRange.startMs] is the honest answer, not the request.** Seeking lands on the container's
@@ -508,8 +513,12 @@ object AudioDecoder {
             val info = MediaCodec.BufferInfo()
             var sawInputEnd = false
             var sawOutputEnd = false
+            // Monotonic, and it does not run on in deep sleep: a phone that dozes mid-decode has not
+            // watched a decoder stall. See DecodeStall.
+            var lastProgressMs = nowMs()
 
             while (!sawOutputEnd) {
+                var progressed = false
                 // Decoding a long recording takes a while and is otherwise uninterruptible: a
                 // 1.5-hour call spent ~12 seconds here after Stop was tapped, still burning CPU. The
                 // check is per output buffer, so it costs nothing and reacts within milliseconds.
@@ -549,6 +558,7 @@ object AudioDecoder {
                                 "Reading float samples as shorts would double the sample count and produce noise."
                         }
                         AppLogger.i(TAG, "Decoder output format: ${sampleRate} Hz, $channels ch")
+                        progressed = true
                     }
 
                     else -> if (outIndex >= 0) {
@@ -563,6 +573,20 @@ object AudioDecoder {
                         }
                         codec.releaseOutputBuffer(outIndex, false)
                         if (info.flags and MediaCodec.BUFFER_FLAG_END_OF_STREAM != 0) sawOutputEnd = true
+                        progressed = true
+                    }
+                }
+
+                // On progress, never on total time: a long or slow decode that keeps producing output
+                // is never failed here. The codec and extractor are released by the finally blocks.
+                when (val verdict = DecodeStall.next(lastProgressMs, nowMs(), progressed, sawOutputEnd)) {
+                    is DecodeStall.Verdict.Continue -> lastProgressMs = verdict.lastProgressMs
+                    DecodeStall.Verdict.Finished -> Unit
+                    is DecodeStall.Verdict.Stalled -> {
+                        val message = "Decoder stalled: no output for ${verdict.idleMs / 1000} s " +
+                            "($mime, ${sink.size} samples decoded so far) — giving up on this decode"
+                        AppLogger.w(TAG, message)
+                        throw DecodeStalledException(message)
                     }
                 }
             }

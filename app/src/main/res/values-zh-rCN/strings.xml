@@ -42,7 +42,6 @@
 
     <!-- New Settings screen, round 4: the Recording group's sub-headers. -->
 
-    <!-- The card at the top of both Settings screens that switches between the new and classic layouts. -->
     <string name="app_lock_locked">已锁定</string>
     <string name="app_lock_prompt_title">解锁 CallVault</string>
     <string name="app_lock_unlock">解锁</string>
@@ -435,10 +434,6 @@
     <string name="settings_language">选择语言/Change Language</string>
     <string name="settings_language_change_in_transcripts">在转写设置中更改</string>
     <string name="settings_language_system">系统默认</string>
-    <string name="settings_layout_back_to_classic_subtitle">所有设置集中在一个长列表中，与以前一样</string>
-    <string name="settings_layout_back_to_classic_title">切换到经典视图</string>
-    <string name="settings_layout_try_new_subtitle">每个页面只显示自己的设置</string>
-    <string name="settings_layout_try_new_title">试用新的设置布局</string>
     <string name="settings_link_all_settings">全部设置</string>
     <string name="settings_link_share_debug_report">分享调试报告</string>
     <string name="settings_metadata_file_desc">在每个录音旁保存一个小的 .json 文件</string>
@@ -461,20 +456,14 @@
     <string name="settings_section_about">关于</string>
     <string name="settings_section_audio">音源选项</string>
     <string name="settings_section_debug">调试选项</string>
-    <string name="settings_section_experimental">实验性功能</string>
-    <string name="settings_section_general">通用</string>
     <string name="settings_section_privacy">隐私</string>
     <string name="settings_section_recorder_server">录音服务</string>
-    <string name="settings_section_recording">自动录音触发条件</string>
     <string name="settings_section_recording_storage">录音与存储</string>
     <string name="settings_section_reliability">可靠性</string>
-    <string name="settings_section_retention">保留期</string>
     <string name="settings_section_security">安全性选项</string>
     <string name="settings_section_storage">存储</string>
     <string name="settings_section_transcription">转写</string>
-    <string name="settings_section_transcription_and_summaries">转写与摘要</string>
     <string name="settings_section_updates">更新</string>
-    <string name="settings_section_visual">页面风格选项</string>
     <string name="settings_select_contacts">选择联系人（已选%1$d人）</string>
     <string name="settings_select_contacts_incoming">选择联系人（仅应用于被叫）</string>
     <string name="settings_select_contacts_outgoing">选择联系人（仅应用于主叫）</string>
@@ -492,12 +481,8 @@
     <string name="settings_storage_target_label">录音保存位置</string>
     <string name="settings_subheader_all_calls">所有通话</string>
     <string name="settings_subheader_app_calls">应用通话</string>
-    <string name="settings_subsection_incoming">来电</string>
-    <string name="settings_subsection_outgoing">去电</string>
     <string name="settings_subsection_phone_calls">电话通话</string>
     <string name="settings_subsection_privileges">CallVault 的权限来源</string>
-    <string name="settings_subsection_resilience">弹性</string>
-    <string name="settings_subsection_voip">VoIP 通话</string>
     <string name="settings_summary_calls_app_only">仅应用通话</string>
     <string name="settings_summary_calls_phone_and_app">电话和应用通话</string>
     <string name="settings_summary_calls_phone_only">仅电话</string>
@@ -554,6 +539,10 @@
     <string name="settings_voip_recording_description">同时录制在 WhatsApp、Signal、Telegram 等应用中进行的通话。部分应用会阻止录音，而这只有在通话进行时才能得知。</string>
     <string name="settings_voip_recording_label">录制 VoIP 通话</string>
     <string name="settings_wd_auto_approve_description">手机连接到 WLAN 网络时，CallVault 会自行回答 Android 的“要在此网络上允许无线调试吗？”，录音无需等你点按。录音程序运行时有效。只有已与此手机配对的设备才能连接。</string>
+    <string name="settings_wd_never_off_label">永不关闭无线调试</string>
+    <string name="settings_wd_never_off_description">CallVault 不会关闭无线调试，因此调试端口会在你的 WLAN 网络上保持开放。录音程序需要时，CallVault 仍可能开启它。仅限内置模式。</string>
+    <string name="settings_wd_left_on_by_setting">无线调试已开启。由于此设置，CallVault 让它保持开启。</string>
+    <string name="settings_wd_left_on_by_user">无线调试已开启。是你开启的，因此 CallVault 让它保持开启。</string>
     <string name="settings_wd_auto_approve_label">自动允许新的 WLAN 网络</string>
     <string name="settings_wd_disable_when_idle">空闲时关闭无线调试</string>
     <string name="settings_wd_disable_when_idle_description">录音服务连接后即关闭无线调试；仅在需要时短暂重新启用。</string>
@@ -619,12 +608,13 @@
     <string name="summary_requirements_time">短通话约一两分钟，长通话更久</string>
     <string name="summary_requirements_title">需要什么</string>
     <string name="summary_requirements_toggle_description">下载前显示摘要模型的资源需求</string>
-    <string name="support_appeal_body">CallVault 由我一个人利用业余时间开发——免费、开源、无广告、无追踪。☕ 如果它对你有用，一点小小的支持能让我继续做下去。无论如何，谢谢！🙏</string>
-    <string name="support_appeal_title">由一个人开发 👋</string>
+    <string name="support_appeal_body">我利用业余时间维护 CallVault。它最初是 kitsumed 的 ShizuCallRecorder 的一个分支（fork），此后成长了许多。免费、开源、无广告、无追踪。如果它对你有用，一点小小的支持能让我继续做下去。谢谢！🙏</string>
+    <string name="support_appeal_title">给 CallVault 一点小费 ☕</string>
     <string name="support_not_now">以后再说</string>
     <string name="tile_recording_on">录音已开启</string>
     <string name="tile_recording_stopped">已停止</string>
     <string name="transcribe_confirm_dont_ask">不再询问</string>
+    <string name="transcribe_long_call_line">这通电话时长 %1$s。在此手机上，转写大约需要通话时长的 %2$s 倍——约 %3$s。</string>
     <string name="transcribe_confirm_message">转写 %1$s 会占用手机并明显耗电。你可以随时停止。\n\n可在设置的“转写”中重新开启此提示。</string>
     <string name="transcribe_confirm_title">大约需要 %1$s</string>
     <string name="transcribe_confirm_title_first_run">第一次可能需要一些时间</string>
@@ -676,8 +666,6 @@
     <string name="transcript_speakers_swap">对调</string>
     <string name="transcript_speakers_swap_names">对调姓名</string>
     <string name="transcript_speakers_which_is_you">哪一位是你？</string>
-    <string name="transcript_too_long_message">这通电话约 %1$d 分钟。目前 CallVault 在设备上只能转录不超过 %2$d 分钟的录音，更长的会在中途耗尽内存。录音本身不受影响。</string>
-    <string name="transcript_too_long_title">太长，无法转录</string>
     <string name="transcription_ask_language_subtitle">为每条录音单独选择语言，而不是始终使用上面的设置。仅对该条录音生效。</string>
     <!-- Where to transcribe: on this phone or with the user's own cloud key (issue #48). No prices anywhere. -->
     <string name="transcription_where_title">在哪里转写</string>
@@ -690,6 +678,7 @@
     <string name="transcription_where_custom_service">你的服务器</string>
     <string name="transcription_where_recommended">推荐</string>
     <string name="transcription_cloud_key_label">用于 %1$s 的密钥</string>
+    <string name="transcription_cloud_key_label_custom">你的服务器的密钥</string>
     <string name="transcription_cloud_key_show">显示密钥</string>
     <string name="transcription_cloud_key_hide">隐藏密钥</string>
     <string name="transcription_cloud_test">测试</string>
@@ -697,7 +686,7 @@
     <string name="transcription_cloud_get_key">获取 %1$s 密钥</string>
     <string name="transcription_cloud_custom_url">服务器地址</string>
     <string name="transcription_cloud_custom_url_hint">https://…（/audio/transcriptions 之前的部分）</string>
-    <string name="transcription_cloud_custom_url_invalid">请使用 https:// 地址。</string>
+    <string name="transcription_cloud_custom_url_invalid">请使用 http(s):// 地址。</string>
     <string name="transcription_cloud_custom_model">模型</string>
     <string name="transcription_cloud_mobile_data">也使用移动数据</string>
     <string name="transcription_cloud_mobile_data_desc">关闭时，通话会等连上 Wi-Fi 后再发送。</string>
@@ -722,6 +711,9 @@
     <string name="transcription_hour_label">小时</string>
     <string name="transcription_language_arabic">阿拉伯语</string>
     <string name="transcription_language_auto">自动检测</string>
+    <string name="language_search_placeholder">搜索语言</string>
+    <string name="language_search_clear">清除搜索</string>
+    <string name="language_search_no_match">没有匹配的语言</string>
     <string name="transcription_language_auto_hint">对于不用拉丁字母书写的语言，自动检测并不可靠——希伯来语、阿拉伯语、俄语和中文常常会以英文字母拼写的形式返回，或者变成一整段没有断句的文字。如果可以，请直接指定语言。</string>
     <string name="transcription_language_chinese">中文</string>
     <string name="transcription_language_english">英语</string>
@@ -733,6 +725,7 @@
     <string name="transcription_language_italian">意大利语</string>
     <string name="transcription_language_label">语言</string>
     <string name="transcription_language_persian">波斯语</string>
+    <string name="transcription_language_urdu">乌尔都语</string>
     <string name="transcription_language_polish">波兰语</string>
     <string name="transcription_language_portuguese">葡萄牙语</string>
     <string name="transcription_language_russian">俄语</string>

@@ -38,60 +38,6 @@ import androidx.compose.ui.platform.LocalResources
 import org.xmlpull.v1.XmlPullParser
 import java.util.Locale
 
-/** Shows the theme and dynamic colour settings.
- *
- * @param preferences   The [AppPreferences] instance to read data from.
- * @param updateTrigger Trigger value to force recomposition when settings change.
- * @param actions       Implementation of [SettingsActions] to handle user interaction.
- */
-/**
- * **General** — the settings that are about the app itself rather than about a recording: how it
- * looks, what is switched on experimentally, and how it updates.
- *
- * These were three top-level accordions, which made Settings read as a flat list of everything
- * instead of having a shape. They keep their own section keys as sub-headers so nothing about the
- * user's stored state changes.
- */
-@Composable
-internal fun GeneralSection(
-    preferences: AppPreferences,
-    updateTrigger: Int,
-    actions: SettingsActions,
-    expanded: Boolean,
-    onToggle: () -> Unit
-) {
-    // One open sub-section at a time, within this section only, and nothing open on entry.
-    var openSub by rememberSaveable { mutableStateOf<String?>(null) }
-
-    SettingsSection(
-        title = stringResource(R.string.settings_section_general),
-        expanded = expanded,
-        onToggle = onToggle,
-        wrapInCard = false,
-    ) {
-        SettingsSubSection(
-            title = stringResource(R.string.settings_section_visual),
-            expanded = openSub == SUB_VISUAL,
-            onToggle = { openSub = if (openSub == SUB_VISUAL) null else SUB_VISUAL },
-        ) { VisualSubSection(preferences, updateTrigger, actions) }
-        SettingsSubSection(
-            title = stringResource(R.string.settings_section_privacy),
-            expanded = openSub == SUB_PRIVACY,
-            onToggle = { openSub = if (openSub == SUB_PRIVACY) null else SUB_PRIVACY },
-        ) { PrivacySubSection(preferences, updateTrigger) }
-        SettingsSubSection(
-            title = stringResource(R.string.settings_section_experimental),
-            expanded = openSub == SUB_EXPERIMENTAL,
-            onToggle = { openSub = if (openSub == SUB_EXPERIMENTAL) null else SUB_EXPERIMENTAL },
-        ) { ExperimentalSubSection() }
-        SettingsSubSection(
-            title = stringResource(R.string.settings_section_updates),
-            expanded = openSub == SUB_UPDATES,
-            onToggle = { openSub = if (openSub == SUB_UPDATES) null else SUB_UPDATES },
-        ) { UpdatesSubSection(preferences, updateTrigger, actions) }
-    }
-}
-
 /**
  * The app lock, and for now nothing else.
  *
@@ -144,14 +90,6 @@ internal fun PrivacySubSection(preferences: AppPreferences, updateTrigger: Int) 
             description = stringResource(R.string.settings_allow_screenshots_description),
             descriptionBelow = true,
         )
-    }
-}
-
-@Composable
-private fun VisualSubSection(preferences: AppPreferences, updateTrigger: Int, actions: SettingsActions) {
-    Column {
-        AppearanceRows(preferences, updateTrigger, actions)
-        VibrationRow(preferences, updateTrigger, actions)
     }
 }
 
@@ -265,43 +203,7 @@ internal fun VibrationRow(preferences: AppPreferences, updateTrigger: Int, actio
 }
 
 /**
- * "Reliability" — controls that keep recording working in tricky conditions: recording without Wi-Fi
- * (loopback opt-in) and the Default USB Configuration that stops a screen-lock from killing the recorder
- * mid-call. Grouped together so users have one place to make recording robust.
- */
-@Composable
-private fun ExperimentalSubSection() {
-    Column {
-        SettingsSubHeader(stringResource(R.string.settings_subsection_resilience), nested = true)
-        ResilienceRows()
-
-        SettingsSubHeader(stringResource(R.string.settings_subsection_voip), nested = true)
-        VoipRecordingToggle()
-    }
-}
-
-/**
- * The Resilience rows, in their order. Shared by the classic Experimental sub-section and the new
- * screen's Reliability group, so the two cannot list different switches.
- */
-@Composable
-internal fun ResilienceRows() {
-    HandoffPersistToggle()
-    SettingsDivider()
-    OfflineRecordingToggle()
-    SettingsDivider()
-    UsbDebuggingToggle()
-    SettingsDivider()
-    WirelessDebuggingEnforceToggle()
-    SettingsDivider()
-    WifiNetworkAutoApproveToggle()
-    SettingsDivider()
-    UsbDefaultConfigRow()
-    PairAgainRow()
-}
-
-/**
- * The same rows as [ResilienceRows], in the new Settings screen's "Connection" order (round 2, 2026-10-21):
+ * The removed classic Experimental ▸ Resilience rows, in the Settings screen's "Connection" order (round 2, 2026-10-21):
  * what keeps the recorder reachable first, then what keeps a recording alive, then the Wireless debugging
  * details.
  */
@@ -316,6 +218,8 @@ internal fun ConnectionRows() {
     WirelessDebuggingEnforceToggle()
     SettingsDivider()
     WifiNetworkAutoApproveToggle()
+    SettingsDivider()
+    WirelessDebuggingNeverOffToggle()
     SettingsDivider()
     UsbDefaultConfigRow()
     PairAgainRow()

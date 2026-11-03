@@ -117,6 +117,34 @@ break recording; the one real risk is key custody, avoided by keeping signing lo
 (1) trivial — done. (2) cosign path: small, low risk; CI-signing path: 🚫 not recommended (key exposure).
 (3) medium-large, low security risk. No recording-path code is touched by any of this.
 
+### 🧪 VERIFYING — option 2 built: `tools/release/attest.sh` (2026-10-31, branch `build/release-provenance`)
+
+Dry-run only, on a local 2.4.8-build APK. **Never run for real yet** — a real run needs the maintainer's browser
+login, and no release has carried a bundle. To settle it: install cosign, run it on the next release, and check
+that `cosign verify-blob` passes on the file downloaded back from the release page.
+
+**Choice: cosign keyless `sign-blob`.** Why not the alternatives:
+- `gh attestation` (gh 2.92) has only `download`, `verify` and `trusted-root` — it cannot create an attestation
+  for a local file. GitHub attestations are created by `actions/attest*` inside a workflow run.
+- A workflow that downloads the published APK and attests it would say "built by this workflow", which is false.
+- cosign with a key pair would add a private key to guard and a public key to publish; keyless needs neither.
+
+**Release step (add to the release checklist — it lives in the maintainer's memory, not in `docs/`):**
+1. Build and test the release APK as usual.
+2. `tools/release/attest.sh --identity <login email> app/build/outputs/apk/release/<apk>` — checks the cert pin
+   (`c875ffd0…`) and not-debuggable, writes `<apk>.sha256`, opens a browser login, writes
+   `<apk>.sigstore.json`, and verifies it. `--dry-run` does the local checks without cosign or a login.
+3. Releases are **immutable**, so attach the files before publishing:
+   `gh release create vX.Y.Z --draft … CallVault.apk CallVault.apk.sigstore.json CallVault.apk.sha256`,
+   check the draft, then `gh release edit vX.Y.Z --draft=false`.
+
+Anyone can then check a download with:
+`cosign verify-blob --bundle CallVault.apk.sigstore.json --certificate-identity <login email>
+--certificate-oidc-issuer https://github.com/login/oauth CallVault.apk`.
+
+Trade-off: the login email is written into the public Rekor log and the certificate. Use a login whose email
+is fine to publish. This proves who published the file, not which commit built it.
+
 ---
 
 Related memory: [[fdroid-readiness]], [[distribution-not-play-store]], [[release-build-signing]],

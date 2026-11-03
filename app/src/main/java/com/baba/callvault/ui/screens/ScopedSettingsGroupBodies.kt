@@ -31,8 +31,7 @@ import com.baba.callvault.data.AppPreferences
 import com.baba.callvault.ui.viewmodels.SettingsActions
 
 /**
- * The callbacks a group body may need, so the dispatcher below stays readable. Same callbacks as
- * [SettingsContent]'s, plus the two the new screen adds.
+ * The callbacks a group body may need, so the dispatcher below stays readable.
  */
 internal class GroupBodyCallbacks(
     val onSelectFolder: () -> Unit,
@@ -241,7 +240,7 @@ private fun AppBody(
     }
 }
 
-/** Debug first (what support asks for, and the switch back to the classic screen), then About. */
+/** Debug first (what support asks for), then About. */
 @Composable
 private fun HelpAndAboutBody(
     preferences: AppPreferences,

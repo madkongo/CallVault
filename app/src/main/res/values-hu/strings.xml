@@ -43,7 +43,6 @@
 
     <!-- New Settings screen, round 4: the Recording group's sub-headers. -->
 
-    <!-- The card at the top of both Settings screens that switches between the new and classic layouts. -->
     <string name="app_lock_locked">Zárolva</string>
     <string name="app_lock_prompt_title">CallVault feloldása</string>
     <string name="app_lock_unlock">Feloldás</string>
@@ -436,10 +435,6 @@
     <string name="settings_language">Nyelv</string>
     <string name="settings_language_change_in_transcripts">Az átiratok beállításaiban módosítható</string>
     <string name="settings_language_system">Rendszer alapértelmezett beállítás</string>
-    <string name="settings_layout_back_to_classic_subtitle">Minden beállítás egyetlen hosszú listában, mint korábban</string>
-    <string name="settings_layout_back_to_classic_title">Váltás a klasszikus nézetre</string>
-    <string name="settings_layout_try_new_subtitle">Minden oldal csak a saját beállításait mutatja</string>
-    <string name="settings_layout_try_new_title">Próbáld ki az új beállítási elrendezést</string>
     <string name="settings_link_all_settings">Összes beállítás</string>
     <string name="settings_link_share_debug_report">Hibakeresési jelentés megosztása</string>
     <string name="settings_metadata_file_desc">Kis .json mentése minden felvétel mellé</string>
@@ -462,20 +457,14 @@
     <string name="settings_section_about">Névjegy</string>
     <string name="settings_section_audio">Hangbeállítások</string>
     <string name="settings_section_debug">Debug beállítások</string>
-    <string name="settings_section_experimental">Kísérleti</string>
-    <string name="settings_section_general">Általános</string>
     <string name="settings_section_privacy">Adatvédelem</string>
     <string name="settings_section_recorder_server">Rögzítőszolgáltatás</string>
-    <string name="settings_section_recording">Felvétel</string>
     <string name="settings_section_recording_storage">Rögzítés és tárhely</string>
     <string name="settings_section_reliability">Megbízhatóság</string>
-    <string name="settings_section_retention">Megőrzés</string>
     <string name="settings_section_security">Biztonság</string>
     <string name="settings_section_storage">Tárhely</string>
     <string name="settings_section_transcription">Átirat</string>
-    <string name="settings_section_transcription_and_summaries">Átirat és összefoglalók</string>
     <string name="settings_section_updates">Frissítések</string>
-    <string name="settings_section_visual">Megjelenítési beállítások</string>
     <string name="settings_select_contacts">Névjegyek kiválasztása (%1$d)</string>
     <string name="settings_select_contacts_incoming">Bejövő névjegyek kiválasztása</string>
     <string name="settings_select_contacts_outgoing">Kimenő névjegyek kiválasztása</string>
@@ -493,12 +482,8 @@
     <string name="settings_storage_target_label">Hová mentse a felvételeket</string>
     <string name="settings_subheader_all_calls">Minden hívás</string>
     <string name="settings_subheader_app_calls">Alkalmazáshívások</string>
-    <string name="settings_subsection_incoming">Bejövő hívások</string>
-    <string name="settings_subsection_outgoing">Kimenő hívások</string>
     <string name="settings_subsection_phone_calls">Telefonhívások</string>
     <string name="settings_subsection_privileges">Honnan kapja a CallVault a jogosultságokat</string>
-    <string name="settings_subsection_resilience">Ellenállóság</string>
-    <string name="settings_subsection_voip">VoIP-hívások</string>
     <string name="settings_summary_calls_app_only">Csak alkalmazáshívások</string>
     <string name="settings_summary_calls_phone_and_app">Telefon- és alkalmazáshívások</string>
     <string name="settings_summary_calls_phone_only">Csak telefonhívások</string>
@@ -555,6 +540,10 @@
     <string name="settings_voip_recording_description">A WhatsApp, Signal, Telegram és hasonló alkalmazásokban indított hívásokat is rögzíti. Egyes alkalmazások letiltják a rögzítést, és ez csak hívás közben derül ki.</string>
     <string name="settings_voip_recording_label">VoIP-hívások rögzítése</string>
     <string name="settings_wd_auto_approve_description">Amikor a telefon Wi-Fi-hálózathoz csatlakozik, a CallVault maga válaszol az Android „Engedélyezed a vezeték nélküli hibakeresést ezen a hálózaton?” kérdésére, így a rögzítés nem vár a koppintásodra. Addig működik, amíg a rögzítő fut. Csak a telefonnal már párosított eszközök csatlakozhatnak.</string>
+    <string name="settings_wd_never_off_label">Vezeték nélküli hibakeresés soha ne kapcsoljon ki</string>
+    <string name="settings_wd_never_off_description">A CallVault nem kapcsolja ki a vezeték nélküli hibakeresést, így a hibakeresési port nyitva marad a Wi-Fi-hálózatodon. A CallVault ettől még bekapcsolhatja, ha a rögzítőnek szüksége van rá. Csak beépített módban.</string>
+    <string name="settings_wd_left_on_by_setting">A vezeték nélküli hibakeresés be van kapcsolva. A CallVault e beállítás miatt bekapcsolva hagyja.</string>
+    <string name="settings_wd_left_on_by_user">A vezeték nélküli hibakeresés be van kapcsolva. Te kapcsoltad be, ezért a CallVault bekapcsolva hagyja.</string>
     <string name="settings_wd_auto_approve_label">Új Wi-Fi-hálózatok automatikus jóváhagyása</string>
     <string name="settings_wd_disable_when_idle">Vezeték nélküli hibakeresés kikapcsolása tétlenkor</string>
     <string name="settings_wd_disable_when_idle_description">A vezeték nélküli hibakeresés letiltása, amint a rögzítőszolgáltatás csatlakozott; csak szükség esetén kapcsol be röviden.</string>
@@ -620,12 +609,13 @@
     <string name="summary_requirements_time">Rövid híváshoz egy-két perc, hosszabbhoz több</string>
     <string name="summary_requirements_title">Mi kell hozzá</string>
     <string name="summary_requirements_toggle_description">Mutassa a letöltés előtt, mit igényel az összefoglaló</string>
-    <string name="support_appeal_body">A CallVaultot egyedül fejlesztem, a szabadidőmben – ingyenes, nyílt forráskódú, nincs hirdetés és nyomkövetés. ☕ Ha hasznos neked, egy kis támogatás segít folytatni. Így is, úgy is: köszönöm! 🙏</string>
-    <string name="support_appeal_title">Egyetlen ember készíti 👋</string>
+    <string name="support_appeal_body">A CallVaultot a szabadidőmben tartom karban. kitsumed ShizuCallRecorder projektjének forkjaként indult, és azóta sokat fejlődött. Ingyenes, nyílt forráskódú, nincs hirdetés és nyomkövetés. Ha hasznos neked, egy kis támogatás segít folytatni. Köszönöm! 🙏</string>
+    <string name="support_appeal_title">Egy kis borravaló a CallVaultnak ☕</string>
     <string name="support_not_now">Most nem</string>
     <string name="tile_recording_on">Rögzítés bekapcsolva</string>
     <string name="tile_recording_stopped">Leállítva</string>
     <string name="transcribe_confirm_dont_ask">Ne kérdezze többet</string>
+    <string name="transcribe_long_call_line">Ez a hívás %1$s hosszú. Ezen a telefonon az átírás nagyjából %2$s× ennyi ideig tart — körülbelül %3$s.</string>
     <string name="transcribe_confirm_message">A(z) %1$s átírása leköti a telefont, és érezhetően fogyasztja az akkumulátort. Bármikor leállíthatja.\n\nEz a kérdés a Beállítások Átírás részében kapcsolható vissza.</string>
     <string name="transcribe_confirm_title">Ez körülbelül %1$s lesz</string>
     <string name="transcribe_confirm_title_first_run">Az első eltarthat egy ideig</string>
@@ -677,8 +667,6 @@
     <string name="transcript_speakers_swap">Csere</string>
     <string name="transcript_speakers_swap_names">Nevek cseréje</string>
     <string name="transcript_speakers_which_is_you">Melyik vagy te?</string>
-    <string name="transcript_too_long_message">Ez a hívás körülbelül %1$d perc. A CallVault egyelőre csak %2$d percnél nem hosszabb felvételeket tud az eszközön átirattá alakítani — a hosszabbaknál menet közben elfogyna a memória. Maga a felvétel biztonságban van.</string>
-    <string name="transcript_too_long_title">Túl hosszú az átirathoz</string>
     <string name="transcription_ask_language_subtitle">Válasszon nyelvet felvételenként a fenti helyett. Csak az adott felvételre vonatkozik.</string>
     <!-- Where to transcribe: on this phone or with the user's own cloud key (issue #48). No prices anywhere. -->
     <string name="transcription_where_title">Hol történjen az átírás</string>
@@ -691,6 +679,7 @@
     <string name="transcription_where_custom_service">saját szerver</string>
     <string name="transcription_where_recommended">Ajánlott</string>
     <string name="transcription_cloud_key_label">Az Ön kulcsa (%1$s)</string>
+    <string name="transcription_cloud_key_label_custom">A saját szerver kulcsa</string>
     <string name="transcription_cloud_key_show">Kulcs megjelenítése</string>
     <string name="transcription_cloud_key_hide">Kulcs elrejtése</string>
     <string name="transcription_cloud_test">Teszt</string>
@@ -698,7 +687,7 @@
     <string name="transcription_cloud_get_key">Kulcs igénylése (%1$s)</string>
     <string name="transcription_cloud_custom_url">Szervercím</string>
     <string name="transcription_cloud_custom_url_hint">https://… (a /audio/transcriptions előtti rész)</string>
-    <string name="transcription_cloud_custom_url_invalid">https:// kezdetű címet adjon meg.</string>
+    <string name="transcription_cloud_custom_url_invalid">http(s):// kezdetű címet adjon meg.</string>
     <string name="transcription_cloud_custom_model">Modell</string>
     <string name="transcription_cloud_mobile_data">Mobiladat használata is</string>
     <string name="transcription_cloud_mobile_data_desc">Kikapcsolva a hívások a küldés előtt Wi-Fi-re várnak.</string>
@@ -723,6 +712,9 @@
     <string name="transcription_hour_label">Óra</string>
     <string name="transcription_language_arabic">Arab</string>
     <string name="transcription_language_auto">Automatikus felismerés</string>
+    <string name="language_search_placeholder">Nyelvek keresése</string>
+    <string name="language_search_clear">Keresés törlése</string>
+    <string name="language_search_no_match">Nincs egyező nyelv</string>
     <string name="transcription_language_auto_hint">A felismerés megbízhatatlan azoknál a nyelveknél, amelyeket nem latin betűkkel írnak — a héber, az arab, az orosz és a kínai gyakran angol betűkkel kiírva jön vissza, vagy egyetlen hosszú szövegtömbként. Ha teheti, nevezze meg a nyelvet.</string>
     <string name="transcription_language_chinese">Kínai</string>
     <string name="transcription_language_english">Angol</string>
@@ -734,6 +726,7 @@
     <string name="transcription_language_italian">Olasz</string>
     <string name="transcription_language_label">Nyelv</string>
     <string name="transcription_language_persian">Perzsa</string>
+    <string name="transcription_language_urdu">Urdu</string>
     <string name="transcription_language_polish">Lengyel</string>
     <string name="transcription_language_portuguese">Portugál</string>
     <string name="transcription_language_russian">Orosz</string>

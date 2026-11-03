@@ -4,5 +4,4 @@
     <string name="settings_ui_about_app">CallVault</string>
     <string name="settings_ui_open_repo_hint">点按打开上游项目</string>
     <string name="settings_ui_recording_server_label">录音引擎</string>
-    <string name="settings_ui_subtitle">调整录音、音频和外观</string>
 </resources>

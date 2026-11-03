@@ -4,5 +4,4 @@
     <string name="settings_ui_about_app">CallVault</string>
     <string name="settings_ui_open_repo_hint">Нажмите, чтобы открыть исходный проект</string>
     <string name="settings_ui_recording_server_label">Движок записи</string>
-    <string name="settings_ui_subtitle">Настройте запись, звук и оформление</string>
 </resources>

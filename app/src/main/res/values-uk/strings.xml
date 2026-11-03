@@ -53,7 +53,6 @@
 
     <!-- New Settings screen, round 4: the Recording group's sub-headers. -->
 
-    <!-- The card at the top of both Settings screens that switches between the new and classic layouts. -->
     <string name="app_lock_locked">Заблоковано</string>
     <string name="app_lock_prompt_title">Розблокувати CallVault</string>
     <string name="app_lock_unlock">Розблокувати</string>
@@ -446,10 +445,6 @@
     <string name="settings_language">Мова</string>
     <string name="settings_language_change_in_transcripts">Змінюється в налаштуваннях транскрипцій</string>
     <string name="settings_language_system">Мова системи</string>
-    <string name="settings_layout_back_to_classic_subtitle">Усі налаштування одним довгим списком, як раніше</string>
-    <string name="settings_layout_back_to_classic_title">Повернутися до класичного вигляду</string>
-    <string name="settings_layout_try_new_subtitle">Кожна сторінка показує лише свої налаштування</string>
-    <string name="settings_layout_try_new_title">Спробувати новий вигляд налаштувань</string>
     <string name="settings_link_all_settings">Усі налаштування</string>
     <string name="settings_link_share_debug_report">Поділитися звітом діагностики</string>
     <string name="settings_metadata_file_desc">Зберігати невеликий .json поряд із записом</string>
@@ -472,20 +467,14 @@
     <string name="settings_section_about">Про програму</string>
     <string name="settings_section_audio">Налаштування звуку</string>
     <string name="settings_section_debug">Діагностика</string>
-    <string name="settings_section_experimental">Експериментальні</string>
-    <string name="settings_section_general">Загальні</string>
     <string name="settings_section_privacy">Конфіденційність</string>
     <string name="settings_section_recorder_server">Служба запису</string>
-    <string name="settings_section_recording">Запис</string>
     <string name="settings_section_recording_storage">Записи та сховище</string>
     <string name="settings_section_reliability">Надійність</string>
-    <string name="settings_section_retention">Зберігання та очищення</string>
     <string name="settings_section_security">Безпека</string>
     <string name="settings_section_storage">Сховище</string>
     <string name="settings_section_transcription">Транскрипція</string>
-    <string name="settings_section_transcription_and_summaries">Транскрипції та підсумки</string>
     <string name="settings_section_updates">Оновлення</string>
-    <string name="settings_section_visual">Оформлення</string>
     <string name="settings_select_contacts">Вибрати контакти (%1$d)</string>
     <string name="settings_select_contacts_incoming">Вибрати вхідні контакти</string>
     <string name="settings_select_contacts_outgoing">Вибрати вихідні контакти</string>
@@ -503,12 +492,8 @@
     <string name="settings_storage_target_label">Де зберігати записи</string>
     <string name="settings_subheader_all_calls">Усі дзвінки</string>
     <string name="settings_subheader_app_calls">Дзвінки в застосунках</string>
-    <string name="settings_subsection_incoming">Вхідні дзвінки</string>
-    <string name="settings_subsection_outgoing">Вихідні дзвінки</string>
     <string name="settings_subsection_phone_calls">Телефонні дзвінки</string>
     <string name="settings_subsection_privileges">Як CallVault отримує дозволи</string>
-    <string name="settings_subsection_resilience">Стійкість запису</string>
-    <string name="settings_subsection_voip">Дзвінки VoIP</string>
     <string name="settings_summary_calls_app_only">Лише дзвінки в застосунках</string>
     <string name="settings_summary_calls_phone_and_app">Звичайні дзвінки й дзвінки в застосунках</string>
     <string name="settings_summary_calls_phone_only">Лише звичайні дзвінки</string>
@@ -565,6 +550,10 @@
     <string name="settings_voip_recording_description">Запис дзвінків із WhatsApp, Signal і Telegram. Деякі програми або прошивки блокують захоплення звуку.</string>
     <string name="settings_voip_recording_label">Записувати дзвінки VoIP</string>
     <string name="settings_wd_auto_approve_description">Коли телефон підключається до мережі Wi-Fi, CallVault сам відповідає на запитання Android «Дозволити бездротове налагодження в цій мережі?», щоб запис не чекав вашого натискання. Працює, поки запущено рекордер. Підключитися можуть лише пристрої, уже з’єднані з цим телефоном.</string>
+    <string name="settings_wd_never_off_label">Ніколи не вимикати бездротове налагодження</string>
+    <string name="settings_wd_never_off_description">CallVault не вимикатиме бездротове налагодження, тож порт налагодження лишається відкритим у вашій мережі Wi-Fi. CallVault однаково може вмикати його, коли воно потрібне рекордеру. Лише у вбудованому режимі.</string>
+    <string name="settings_wd_left_on_by_setting">Бездротове налагодження ввімкнено. CallVault залишає його ввімкненим через це налаштування.</string>
+    <string name="settings_wd_left_on_by_user">Бездротове налагодження ввімкнено. Ви ввімкнули його самі, тож CallVault залишає його ввімкненим.</string>
     <string name="settings_wd_auto_approve_label">Автоматично схвалювати нові мережі Wi-Fi</string>
     <string name="settings_wd_disable_when_idle">Вимикати бездротове налагодження в простої</string>
     <string name="settings_wd_disable_when_idle_description">Вимикає бездротове налагодження після підключення служби запису.</string>
@@ -630,12 +619,13 @@
     <string name="summary_requirements_time">Для короткого дзвінка приблизно кілька хвилин, для довгого — більше.</string>
     <string name="summary_requirements_title">Що потрібно</string>
     <string name="summary_requirements_toggle_description">Показувати вимоги до моделі перед завантаженням.</string>
-    <string name="support_appeal_body">CallVault — безплатна програма з відкритим кодом, без реклами та відстеження. ☕ Якщо вона корисна, можна підтримати розробника. Дякуємо! 🙏</string>
-    <string name="support_appeal_title">Програму створює одна людина 👋</string>
+    <string name="support_appeal_body">Я підтримую CallVault у вільний час. Програма починалася як форк ShizuCallRecorder від kitsumed і відтоді дуже виросла. Безплатно, з відкритим кодом, без реклами та відстеження. Якщо вона корисна, невелика підтримка допомагає продовжувати. Дякую! 🙏</string>
+    <string name="support_appeal_title">Підтримати CallVault ☕</string>
     <string name="support_not_now">Не зараз</string>
     <string name="tile_recording_on">Запис увімкнений</string>
     <string name="tile_recording_stopped">Зупинено</string>
     <string name="transcribe_confirm_dont_ask">Більше не запитувати</string>
+    <string name="transcribe_long_call_line">Цей дзвінок триває %1$s. На цьому телефоні розпізнавання займає приблизно в %2$s раза більше часу — близько %3$s.</string>
     <string name="transcribe_confirm_message">Розпізнавання %1$s навантажує телефон і витрачає заряд батареї. Процес можна зупинити.\n\nЗапит підтвердження можна налаштувати пізніше.</string>
     <string name="transcribe_confirm_title">Це займе приблизно %1$s</string>
     <string name="transcribe_confirm_title_first_run">Перший запуск може тривати довше</string>
@@ -687,8 +677,6 @@
     <string name="transcript_speakers_swap">Поміняти</string>
     <string name="transcript_speakers_swap_names">Поміняти імена</string>
     <string name="transcript_speakers_which_is_you">Хто з них ви?</string>
-    <string name="transcript_too_long_message">Тривалість дзвінка приблизно %1$d хв. Зараз CallVault може розпізнавати записи до %2$d хв, оскільки для довших може бракувати памʼяті. Сам аудіозапис залишиться.</string>
-    <string name="transcript_too_long_title">Запис надто довгий для розпізнавання</string>
     <string name="transcription_ask_language_subtitle">Вибирати мову для кожного запису замість того, щоб завжди використовувати вказану вище. Вибір стосується лише цього запису.</string>
     <!-- Where to transcribe: on this phone or with the user's own cloud key (issue #48). No prices anywhere. -->
     <string name="transcription_where_title">Де розпізнавати</string>
@@ -701,6 +689,7 @@
     <string name="transcription_where_custom_service">ваш сервер</string>
     <string name="transcription_where_recommended">Рекомендовано</string>
     <string name="transcription_cloud_key_label">Ваш ключ (%1$s)</string>
+    <string name="transcription_cloud_key_label_custom">Ключ вашого сервера</string>
     <string name="transcription_cloud_key_show">Показати ключ</string>
     <string name="transcription_cloud_key_hide">Сховати ключ</string>
     <string name="transcription_cloud_test">Перевірити</string>
@@ -708,7 +697,7 @@
     <string name="transcription_cloud_get_key">Отримати ключ %1$s</string>
     <string name="transcription_cloud_custom_url">Адреса сервера</string>
     <string name="transcription_cloud_custom_url_hint">https://… (частина перед /audio/transcriptions)</string>
-    <string name="transcription_cloud_custom_url_invalid">Вкажіть адресу з https://.</string>
+    <string name="transcription_cloud_custom_url_invalid">Вкажіть адресу з http(s)://.</string>
     <string name="transcription_cloud_custom_model">Модель</string>
     <string name="transcription_cloud_mobile_data">Також використовувати мобільний інтернет</string>
     <string name="transcription_cloud_mobile_data_desc">Коли вимкнено, дзвінки чекають на Wi-Fi і лише тоді надсилаються.</string>
@@ -733,6 +722,9 @@
     <string name="transcription_hour_label">Година</string>
     <string name="transcription_language_arabic">Арабська</string>
     <string name="transcription_language_auto">Визначати автоматично</string>
+    <string name="language_search_placeholder">Пошук мови</string>
+    <string name="language_search_clear">Очистити пошук</string>
+    <string name="language_search_no_match">Немає відповідних мов</string>
     <string name="transcription_language_auto_hint">Автовизначення ненадійне для мов із нелатинською абеткою. Для української, російської, арабської та інших краще явно вибрати мову.</string>
     <string name="transcription_language_chinese">Китайська</string>
     <string name="transcription_language_english">Англійська</string>
@@ -744,6 +736,7 @@
     <string name="transcription_language_italian">Італійська</string>
     <string name="transcription_language_label">Мова</string>
     <string name="transcription_language_persian">Перська</string>
+    <string name="transcription_language_urdu">Урду</string>
     <string name="transcription_language_polish">Польська</string>
     <string name="transcription_language_portuguese">Португальська</string>
     <string name="transcription_language_russian">Російська</string>

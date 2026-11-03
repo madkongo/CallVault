@@ -95,6 +95,9 @@ object VoipRecordingCoordinator {
     /** A caller learned after the recording started; goes into the name at publish. See [VoipLateCaller]. */
     @Volatile private var lateCaller: String? = null
     private var lateCallerJob: Job? = null
+    /** The app, when it could only be identified after the recording started; goes into the name at publish. */
+    @Volatile private var lateAppLabel: String? = null
+    private var lateAppJob: Job? = null
 
     /** "Start when they answer": the poll that holds the encode until the app's call timer runs. */
     private var answerHoldJob: Job? = null
@@ -219,11 +222,16 @@ object VoipRecordingCoordinator {
         AppLogger.i(TAG, "VoIP recording started -> $fileName")
         lateCaller = null
         lateCallerJob?.cancel()
+        lateAppLabel = null
+        lateAppJob?.cancel()
         // The notification is the only place the name exists, and it may not be posted yet at the
         // instant the audio mode flipped. Ask again a few times into the call; the file is only
         // published at the end, so a late answer still names it.
         discardAsIgnored = false
         if (caller == null && callPackage != null) lateCallerJob = askAgainForCaller(context, callPackage, manual)
+        // Telegram's call audio appears about 2.5 s after the mode flips, past the lookup above, so
+        // its recordings went out with no app and no icon. Ask again into the call, as for the caller.
+        if (callPackage == null) lateAppJob = askAgainForApp(context, manual)
         routeJob?.cancel()
         routeJob = reportAudioRoute(context, callPackage)
         answerHoldJob?.cancel()
@@ -341,6 +349,78 @@ object VoipRecordingCoordinator {
             .onFailure { AppLogger.w(TAG, "setVoipPaused for the answer hold failed: ${it.message}") }
         if (hold) clock.pause() else clock.resume()
         VoipRecordingNotification.show(context, currentAppLabel, PendingFlags.count(), paused || hold)
+    }
+
+    /**
+     * Identifies the app on the call after the recording started, for an app whose call audio was
+     * not up yet when the mode flipped (Telegram). Found, it names the file at publish, labels the
+     * notification, gets the same per-app and ignore-list checks the start path makes, and then
+     * looks for the caller in that app's notification.
+     */
+    private fun askAgainForApp(context: Context, manual: Boolean): Job = CoroutineScope(Dispatchers.IO).launch {
+        var elapsed = 0L
+        for (at in VoipLateCaller.RETRY_DELAYS_MS) {
+            delay(at - elapsed)
+            elapsed = at
+            if (!recording) return@launch
+            val service = RecorderConnection.service ?: return@launch
+            val pkg = runCatching { resolveCallPackage(context, service) }.getOrNull() ?: continue
+            if (!recording) return@launch
+            val excluded = AppPreferences(context).getVoipExcludedPackages()
+            // A switched-off app costs the whole call, so it is looked up a second time first.
+            val second = if (VoipAppPolicy.shouldRecord(pkg, excluded)) null else {
+                delay(VoipLateCaller.CONFIRM_DELAY_MS)
+                elapsed += VoipLateCaller.CONFIRM_DELAY_MS
+                if (!recording) return@launch
+                runCatching { resolveCallPackage(context, service) }.getOrNull()
+            }
+            when (VoipLateCaller.verdict(pkg, second, excluded)) {
+                VoipLateCaller.LateAppVerdict.UNSURE -> {
+                    AppLogger.i(TAG, "Call app looked like $pkg (switched off), then $second; recording on, asking again later")
+                    continue
+                }
+                VoipLateCaller.LateAppVerdict.DISCARD -> onSwitchedOffAppFoundLate(context, pkg, at)
+                VoipLateCaller.LateAppVerdict.RECORD -> onAppFoundLate(context, service, pkg, at, manual)
+            }
+            return@launch
+        }
+        AppLogger.i(TAG, "No app found for this call after ${elapsed / 1000} s; the recording stays unnamed")
+    }
+
+    /**
+     * The user's per-app choice, as at the start, for an app found late and confirmed by a second
+     * lookup. Nothing has been published yet — the recording is still in private staging — so ending
+     * and discarding it here leaves no trace.
+     */
+    @Synchronized
+    private fun onSwitchedOffAppFoundLate(context: Context, pkg: String, atMs: Long) {
+        if (!recording) return
+        AppLogger.i(TAG, "Call app found ${atMs / 1000} s into the call and confirmed: $pkg is switched off; stopping and discarding this recording")
+        discardAsIgnored = true
+        onCallEnded(context)
+    }
+
+    @Synchronized
+    private fun onAppFoundLate(context: Context, service: IRecorderService, pkg: String, atMs: Long, manual: Boolean) {
+        if (!recording) return
+        AppLogger.i(TAG, "Call app found ${atMs / 1000} s into the call: $pkg")
+        val label = appLabelFor(context, pkg)?.let { sanitiseForFileName(it) }?.takeIf { it.isNotEmpty() }
+        lateAppLabel = label
+        currentAppLabel = label
+        VoipRecordingNotification.show(context, label, PendingFlags.count(), paused || heldForAnswer)
+        if (lateCaller != null) return
+        val found = runCatching { service.voipCallerName(pkg) }.getOrNull()
+        if (found == null) {
+            lateCallerJob?.cancel()
+            lateCallerJob = askAgainForCaller(context, pkg, manual)
+            return
+        }
+        lateCaller = found
+        if (!manual && VoipIgnoredCallers.isIgnored(context, found)) {
+            AppLogger.i(TAG, "The caller is on the ignore list; stopping and discarding this recording")
+            discardAsIgnored = true
+            onCallEnded(context)
+        }
     }
 
     private fun askAgainForCaller(context: Context, callPackage: String, manual: Boolean): Job = CoroutineScope(Dispatchers.IO).launch {
@@ -577,6 +657,8 @@ object VoipRecordingCoordinator {
         pending = null
         lateCallerJob?.cancel()
         lateCallerJob = null
+        lateAppJob?.cancel()
+        lateAppJob = null
         answerHoldJob?.cancel()
         answerHoldJob = null
         routeJob?.cancel()
@@ -588,10 +670,18 @@ object VoipRecordingCoordinator {
         heldForAnswer = false
         val caller = lateCaller
         lateCaller = null
+        val lateApp = lateAppLabel
+        lateAppLabel = null
+        // The name the recording is published and catalogued under: what was learned late filled in.
+        val finalName: (String) -> String = { n ->
+            val withApp = lateApp?.let { VoipLateCaller.withApp(n, it) } ?: n
+            caller?.let { VoipLateCaller.withCaller(withApp, it) } ?: withApp
+        }
         // Straight away, not after the file work below: the controls describe a recording that has
         // already stopped, and a Stop button that lingers invites a second press at a moment when
         // the next call may already be starting.
         VoipRecordingNotification.dismiss(context)
+        val recordedMs = clock.audioElapsedMs()
         clock.reset()
         currentAppLabel = null
         paused = false
@@ -626,6 +716,17 @@ object VoipRecordingCoordinator {
         // true — which used to blame the other app ("it blocks capture") for our own failure to open the
         // microphone (vivo, 2026-09-28). Nothing recorded is reported as that, below; not as one-sided.
         val wroteAnything = saf?.stagingFile?.let { it.exists() && it.length() > 0L } ?: true
+        if (wroteAnything && VoipStubPolicy.endedBeforeCapture(recordedMs, farHeard)) {
+            // #68: WhatsApp was back to MODE_NORMAL before the recording opened, and the 0.7 s of mic
+            // that followed was reported as the other app blocking capture.
+            AppLogger.i(TAG, "The app call ended before the recording got going (${recordedMs} ms, far side never heard); discarding it, no warning")
+            runCatching { saf?.descriptor?.close() }
+            runCatching { saf?.stagingFile?.delete() }
+            saf?.uri?.let { uri ->
+                runCatching { SafHelper.deleteDocument(DocumentFile.fromSingleUri(context, uri), "the app call that ended before recording") }
+            }
+            return
+        }
         if (!wroteAnything) {
             AppLogger.w(TAG, "VoIP capture never started — nothing was recorded (the recorder's reason is logged above)")
         } else if (!farHeard) {
@@ -662,7 +763,7 @@ object VoipRecordingCoordinator {
         val published: Uri? = saf?.let { result ->
             val staging = result.stagingFile
             val folder = result.folderUri
-            val outName = result.fileName?.let { name -> caller?.let { VoipLateCaller.withCaller(name, it) } ?: name }
+            val outName = result.fileName?.let(finalName)
             val mime = result.mimeType
             if (staging == null || folder == null || outName == null || mime == null) {
                 AppLogger.e(TAG, "VoIP recording cannot be published: staging details are missing")
@@ -690,7 +791,7 @@ object VoipRecordingCoordinator {
         // RecordingForegroundService, which the VoIP path deliberately does not go through.
         if (saf != null && published != null) {
             val safUri = published
-            val name = saf.displayName.substringAfterLast('/').let { n -> caller?.let { VoipLateCaller.withCaller(n, it) } ?: n }
+            val name = finalName(saf.displayName.substringAfterLast('/'))
             CoroutineScope(Dispatchers.IO).launch {
                 runCatching {
                     val size = SafHelper.fileSize(context, safUri)

@@ -146,6 +146,24 @@ class SummaryLanguageTest {
     }
 
     @Test
+    fun `urdu is told apart from persian and arabic by the letters only urdu uses`() {
+        // Urdu shares پ چ گ ی ک with Persian, so those cannot tell the two apart. Only Urdu writes
+        // ٹ ڈ ڑ ں ے and its own ہ ھ; Persian and Arabic write ه instead.
+        assertEquals("ur", SummaryLanguage.scriptOf("السلام علیکم، آپ کیسے ہیں؟ کل ملتے ہیں، مجھے ایک چھوٹا کام ہے"))
+        assertEquals("ur", SummaryLanguage.scriptOf("میں نے گاڑی ٹھیک کروا لی ہے، بڑا اچھا لگا"))
+        // The Persian and Arabic samples above keep their answers with Urdu on offer.
+        assertEquals("fa", SummaryLanguage.scriptOf("سلام، حالت چطوره؟ فردا می‌بینمت، یک کار کوچک دارم"))
+        assertEquals("fa", SummaryLanguage.scriptOf("این کتاب را به من بده، خیلی ممنونم"))
+        assertEquals("ar", SummaryLanguage.scriptOf("مرحبا، كيف حالك؟ سأراك غدا في المدينة"))
+    }
+
+    @Test
+    fun `one urdu letter does not turn a persian text into urdu`() {
+        // Weighed, not spotted: a single stray ے in a Persian sentence full of ه must not decide it.
+        assertEquals("fa", SummaryLanguage.scriptOf("این کتاب را به من بده، خیلی ممنونم که همه چیز را گفتی ے"))
+    }
+
+    @Test
     fun `ukrainian is told apart from russian by the letters only ukrainian uses`() {
         // Same script, different language. Ukrainian writes і ї є ґ; Russian writes ы э ъ ё.
         assertEquals("uk", SummaryLanguage.scriptOf("Привіт, як справи? Завтра їдемо до тебе, є одна справа"))

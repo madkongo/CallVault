@@ -224,6 +224,7 @@ private fun connectionSummaryText(preferences: AppPreferences, updateTrigger: In
                 SwitchSummaryInput(AdbShell.isUsbDebuggingEnabled(context), usesEmbeddedAdb),
                 SwitchSummaryInput(preferences.isWirelessDebuggingEnforced(), usesEmbeddedAdb),
                 SwitchSummaryInput(preferences.isWifiNetworkAutoApproveEnabled(), wdControlSupported),
+                SwitchSummaryInput(preferences.isWirelessDebuggingNeverTurnOff(), wdControlSupported),
             )
         )
     }

@@ -28,6 +28,8 @@ object LanguageScript {
         // Persian is written in the Arabic script, so a Latin transcript under a Persian pin is caught
         // the same way. Telling Persian from Arabic is not this table's job — see SummaryLanguage.
         "fa" to Character.UnicodeScript.ARABIC,
+        // Urdu too (Nastaliq is a style of the Arabic script, not a script of its own).
+        "ur" to Character.UnicodeScript.ARABIC,
     )
 
     fun of(language: String): Character.UnicodeScript = NON_LATIN[language] ?: Character.UnicodeScript.LATIN

@@ -27,7 +27,9 @@ import com.baba.callvault.transcription.model.ModelRepository
 import com.baba.callvault.transcription.model.TranscriptionModel
 import com.baba.callvault.transcription.model.TranscriptionModelOffer
 import androidx.compose.ui.platform.LocalContext
+import com.baba.callvault.transcription.TranscriptionLanguageChoice
 import com.baba.callvault.ui.common.TranscriptionLabels
+import com.baba.callvault.ui.common.TranscriptionLanguagePicker
 import com.baba.callvault.ui.common.TranscriptionTimeDialog
 import com.baba.callvault.ui.common.formatRunTime
 import com.baba.callvault.ui.common.M3DropdownField
@@ -36,55 +38,6 @@ import com.baba.callvault.ui.viewmodels.SettingsActions
 import androidx.compose.material.icons.filled.BatteryChargingFull
 import androidx.compose.material.icons.filled.Schedule
 import androidx.compose.material.icons.filled.Translate
-
-/**
- * On-device transcription: whether it happens on its own, when, and with which model.
- *
- * The mode dropdown comes first and the scheduling rows appear only under Automatic, so a user who
- * wants to transcribe the occasional call by hand is never shown a run time they do not use. Same
- * shape as [UploadScheduleSubSection], which already does exactly this for the upload cadence.
- *
- * Model and language stay visible in both modes: a manual transcription needs them just as much as an
- * automatic one, and the model has to be downloaded before either can work at all.
- */
-@Composable
-internal fun TranscriptionSection(
-    preferences: AppPreferences,
-    updateTrigger: Int,
-    actions: SettingsActions,
-    expanded: Boolean,
-    onToggle: () -> Unit,
-    /** The summariser's rows, rendered last — see the call site for why they live in here. */
-    summaryRows: @Composable () -> Unit = {}
-) {
-    // The rows are below, one composable each, shared with the new Settings screen's
-    // "Model and language" and "When to transcribe" groups.
-    SettingsSection(
-        title = stringResource(R.string.settings_section_transcription_and_summaries),
-        expanded = expanded,
-        onToggle = onToggle
-    ) {
-        TranscriptionScheduleRows(preferences, updateTrigger, actions)
-
-        TranscriptionServiceRows(preferences, updateTrigger, actions)
-
-        // The speech model only matters on this phone; a cloud service (#48) brings its own.
-        val onDevice = remember(updateTrigger) { !preferences.getTranscriptionService().isCloud }
-        if (onDevice) TranscriptionModelChoiceRow(preferences, updateTrigger, actions)
-
-        TranscriptionLanguageRows(preferences, updateTrigger, actions)
-
-        TranscriptionConfirmRow(preferences, updateTrigger, actions)
-
-        if (onDevice) TranscriptionModelDownloadRows(preferences, updateTrigger, actions)
-
-        TranscriptionModeNote(preferences, updateTrigger)
-
-        // Last, after everything transcription needs: a summary is read from a transcript, so the
-        // order on screen is the order of the dependency.
-        summaryRows()
-    }
-}
 
 /**
  * When transcription runs: the mode, then the run time and batch size (automatic only), then "only while
@@ -392,25 +345,13 @@ internal fun TranscriptionLanguageField(
     language: String?,
     onLanguageChange: (String?) -> Unit,
 ) {
-    // Sorted by the translated name, so the list reads A-Z in whatever language the app is in.
-    val languageOptions = TranscriptionLabels
-        .sortLanguageOptions(
-            TranscriptionLabels.LANGUAGE_OPTIONS.map { code ->
-                (code ?: TranscriptionLabels.AUTO_DETECT_KEY) to
-                    stringResource(TranscriptionLabels.languageOf(code))
-            }
-        )
-        .map { (key, label) -> OptionItem(key, label) }
-
     DropdownRow {
-        M3DropdownField(
+        // The shared picker: sorted by translated name, with type-to-find (see TranscriptionLanguagePicker).
+        TranscriptionLanguagePicker(
             label = stringResource(R.string.transcription_language_label),
-            selected = languageOptions.find {
-                it.key == (language ?: TranscriptionLabels.AUTO_DETECT_KEY)
-            } ?: languageOptions.first(),
-            options = languageOptions,
-            onOptionSelected = {
-                onLanguageChange(it.key.takeIf { k -> k != TranscriptionLabels.AUTO_DETECT_KEY })
+            selectedKey = TranscriptionLanguageChoice.encode(language),
+            onSelected = { key ->
+                onLanguageChange(key.takeIf { k -> k != TranscriptionLabels.AUTO_DETECT_KEY })
             }
         )
         if (language == null) {

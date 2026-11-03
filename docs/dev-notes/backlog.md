@@ -27,9 +27,9 @@ with `&&`/`||` chains and silently reported the opposite answer while this was b
 **This block is the summary of record. The 2026-10-01 block below it and the older dated blocks are history.**
 Audited 2026-10-31 by checking every open-looking item against the code, `git tag --contains` and CHANGELOG.
 Two items the maintainer caught (Select all, Settings per page) had been shipped for weeks while still listed
-open; the audit found about 20 more. Latest public release: **v2.4.7** (20470). Next must exceed 20470.
+open; the audit found about 20 more. Latest public release: **v2.4.8** (20480, published 2026-10-31). Next must exceed 20480.
 
-**Ready for the next release (merged into integration/next, see CHANGELOG [Unreleased]):** own-key transcription
+**Shipped in v2.4.8 (2026-10-31):** own-key transcription
 (#48), play from the list, mobile-data download prompt, Persian model (#55), TalkBack fixes (#61), vivo honest
 message (#64), Arabic polish (#59), #65 connect-port search (✅ reporter), long-call waveform + memory fixes
 (#63), paused-download import (#60); the #53 log-only probe ships too (decided 2026-10-31).
@@ -37,24 +37,31 @@ message (#64), Arabic polish (#59), #65 connect-port search (✅ reporter), long
 **Open — features (maintainer priority first):**
 1. Floating record button + in-call note bubble.
 2. Call history inside the app.
-3. Samsung Wi-Fi Calling (#45) — NEW LEAD 2026-10-31: upstream records it via the app-call path; route these
-   calls to the VoIP capture (+ fixes the stray 1 s file). Needs a Samsung tester.
+3. Samsung Wi-Fi Calling (#45) — 🧪 BUILT 2026-10-31, pre-release v2.4.7-wifi45 only (branch fix/samsung-wifi-calling-45,
+   not in integration/next). Waiting on a Samsung tester (Benjamin/mac).
 4. KK: SenseVoice + Qwen/other GGUF summaries (not triaged).
 5. ~~#27 leftovers~~ — 🧪 BUILT 2026-10-31 (named Previous/Next cards + one "Follow playback" switch), merged into integration/next.
 6. Per-app capture status (works / blocks capture) on the VoIP app list.
 7. Forks leftovers: decode time limit, SIM label per call, dialer mode as an option.
 8. Matroska `.mka` (#36) — needs a native muxer.
-9. Delete the classic Settings screen (one release after the new one).
+9. Delete the classic Settings screen — 🧪 BUILT 2026-10-31 on `chore/remove-classic-settings` (not merged):
+   classic screen, its Experimental section and the layout switch card removed; `classic_settings_screen` key
+   kept for a revert. Rollback: `rollback/classic-settings-removal.md`. Waiting on a look on a phone.
 
-**Open — engineering:** captures don't register with AudioService record tracking; #30 setting to stop managing
-Wireless debugging; split AppPreferences; loopback adbd probe; R8 minification; release provenance (cosign);
+**Built 2026-10-31, in integration/next for 2.4.9 (🧪):** #30 "Never turn Wireless debugging off" (Settings ▸
+Connection); transcription length limit removed + long-call time line (local model only).
+
+**Open — engineering:** captures don't register with AudioService record tracking; split AppPreferences; loopback adbd probe; R8 minification; release provenance (cosign);
 F-Droid: doNotStrip + 16 KB zipalign; Android 17 items (WD read-back, vivo bypass on API 37, pairing fallback,
 Conscrypt 2.7.0, targetSdk 37 + ACCESS_LOCAL_NETWORK when we move); pairing timeout off with consent (#3);
-a too-long recorded call still skips transcription silently; the ensureConnected leftovers.
+the ensureConnected leftovers.
 
 **Open — bugs / waiting on users:** #53 Honor app-call end (settings result); alex_812 recorder dies with no
-alert (parked); #9 VoIP mic re-take step 2 (needs a Samsung log); #32 whisper invents lines from noise; wrong
-contact label on some recordings (undiagnosed); Note10+ and zeref logs.
+alert (parked).
+
+**Closed 2026-10-31 by the maintainer (solved or dropped, no user feedback):** #9 VoIP mic re-take step 2;
+#32 whisper invents lines from noise; wrong contact label on some recordings; Note10+ and zeref (no logs came).
+Reopen only on a new report.
 
 **Parked:** health-gated status probe (built, on a tag); trash/recycle bin; in-app bug report; capture ladder;
 non-UI InCallService; VoIP direction; call-waiting split (alex_812 a); Android 12 bypass; pl/ru plurals; ivrit.
@@ -97,7 +104,15 @@ fix, vivo far-side toggle (hint + SUPPORT doc), Samsung Wi-Fi-calling doc (#45).
   don't register with `AudioService` record tracking; targeting Android 17 (API 37) will break mDNS
   discovery until we request it; a setting to stop CallVault managing Wireless debugging (#30 follow-up);
   split `AppPreferences` into per-domain interfaces.
-  - **Already-listening adbd loopback probe (free, no Wi-Fi).** 🔵 At startup, detect devices where adbd
+  - **Already-listening adbd loopback probe (free, no Wi-Fi).** 🧪 BUILT 2026-10-31 on `feat/open-adb-port-probe`,
+    untested on a phone: `AdbShell.connectAlreadyOpenPort` asks `service.adb.tcp.port`, `persist.adb.tcp.port`,
+    `service.adb.listen_addrs` tcp ports — **never a guessed 5555** (any app could bind it and get our key to
+    sign its AUTH token) and never our own offline listener — with a plain-CNXN wire probe (150/500 ms, 2 s
+    budget), makes at most ONE real connect (first classic-adb answer), only once `isAdbPaired()` (so no
+    "Allow debugging?" prompt), and only after the normal path failed (WD in built-in mode; loopback + self-heal
+    in offline mode). Only "nothing answered as adb" is cached, in memory, 10 min or until the port list
+    changes. Whole call ≤ ~10.7 s 📐, inside the 60 s connect-entry limit. Rollback:
+    `docs/dev-notes/rollback/feat-open-adb-port-probe.md`. Original note: 🔵 At startup, detect devices where adbd
     already listens on loopback with NO Wi-Fi/WD — a minority of OEM/TV-derived or eng/userdebug builds
     bake `persist.adb.tcp.port` / `service.adb.listen_addrs` or drop `ro.adb.secure`. Check: `getprop
     persist.adb.tcp.port`, `service.adb.tcp.port`, `service.adb.listen_addrs` (via the existing shell
@@ -191,7 +206,8 @@ suggested, only project-SIMPLE handles this prompt, by clicking it with an acces
 Built in steps 2026-10-21 (merges 2d7c38e0, bdc8a299, 348cd5d7, 3119a8f8, c1435ec8), default since
 feat/new-settings-default; Experimental's switches live in their groups on the new screen, the Telegram
 invite is a card on the main screen. **Only open item:** delete the classic screen (and its Experimental
-section, `SUB_EXPERIMENTAL`) one release after the new one has proved itself, as the rollback plan says.
+section, `SUB_EXPERIMENTAL`) one release after the new one has proved itself, as the rollback plan says —
+🧪 BUILT 2026-10-31 on `chore/remove-classic-settings`; see `rollback/classic-settings-removal.md`.
 
 
 Plan: `2026-10-20-settings-per-page-plan.md`. Confirmed by the maintainer: Settings opened from a page shows
@@ -201,7 +217,7 @@ Design picked 2026-10-21: option C (folded groups) with B's Shizuku switch row; 
 
 ---
 
-## 🔵 From the forks review — added 2026-10-20 — PARTLY SHIPPED (audit 2026-10-31: sendBinder check, SAF-delete fix, model import (#58), Ukrainian all in v2.4.7; open: decode time limit, SIM label, dialer mode; parked: Android 12 bypass, pl/ru plurals)
+## 🔵 From the forks review — added 2026-10-20 — PARTLY SHIPPED (audit 2026-10-31: sendBinder check, SAF-delete fix, model import (#58), Ukrainian all in v2.4.7; open: SIM label, dialer mode; decode time limit 🧪 built on `fix/decode-time-limit` 2026-10-31; parked: Android 12 bypass, pl/ru plurals)
 
 Source: `2026-10-20-forks-review.md` and the per-fork files beside it. 📐 code read only, nothing built.
 **Credit the authors.** When we adopt a fork's code, keep them as the commit author, or add a `Co-authored-by:`
@@ -213,7 +229,7 @@ Their code is GPLv3 like ours, so taking it is allowed.
 | 1 | **Security: `sendBinder` caller check.** Any app can hand us a fake recorder and get new recordings' output fd. Add the shell/system/own-uid check `sendHandoff` already has (`RecorderBinderProvider.handleSendBinder`). | Vas Vakhulenko (@kabasik007), `7211c263` | 🧪 VERIFYING — fixed 2026-10-20 (`3907971e`, merged into integration/next, Co-authored-by credit). Unit test; on the OP9 the daemon's binder was still accepted after install. Not shown: a real other app being refused (no rogue app to test with). |
 | 2 | **Direct capture: recover from a dead AudioRecord.** `readLoop` spins silently on `read <= 0`, so the rest of the call is lost. Log, reopen, pad with silence, stop cleanly if reopening fails. | Found while reviewing Luis (@lgarvia), `2f988633` | ⛔ NOT NEEDED (checked 2026-10-20). Direct capture uses a real `AudioRecord`, and Android's native client restores an invalidated record by itself (`restoreRecord_l` in `obtainBuffer`), so a route change does not kill it. The resilient path, which bypasses that client, already re-acquires (`HandoffReceiver`, v2.3.0). What is left is only a silent spin if Android's own restore fails (audioserver gone), which is rare and not worth a change. |
 | 3 | **SAF delete that fails keeps the catalog entry.** | Vas Vakhulenko (@kabasik007), `6b341fc1` | 🧪 VERIFYING — checked 2026-10-20: real, and nothing else covers it (the list reads only the catalog; `RecordingsRepository` already guards the user's own Delete the same way, the Drive-only paths did not). His commit cherry-picked as-is (`1a208dd7`, author kept). Unit test only; a refused delete cannot easily be produced on a phone. |
-| 4 | **Decode time limit.** Give up after 120 s with no decoder output and save a clear error. | @slman890, `8534f237` | No user report; a guard. |
+| 4 | **Decode time limit.** Give up after 120 s with no decoder output and save a clear error. | @slman890, `8534f237` | 🧪 BUILT on `fix/decode-time-limit` 2026-10-31: pure rule `DecodeStall` (on progress, never total time) + JVM tests; rollback in `rollback/decode-time-limit.md`. Not seen on a phone. |
 | 5 | **Import a model from a file**, next to Download. | @sanju0070, `0cfcd092` | Take the per-model writer lock, ask before deleting a partial download, check free space, run in a worker, translate the strings. |
 | 6 | **Ukrainian** UI and transcription. | Vas Vakhulenko (@kabasik007), `02e0e691`…`c34d2176` | 🧪 VERIFYING — done 2026-10-20 (`feat/ukrainian`): his 6 commits cherry-picked with authorship, then 11 strings added, 24 shortened ones retranslated, the stale Shizuku text corrected, summary prompt + uk/ru split. Seen rendering on the OP9. Needs a native speaker's look and a real Ukrainian call transcribed and summarised. |
 | 7 | **SIM label per call** (dual SIM). | @slman890, `8534f237` | Idea, no user request. Add the account columns to our call-log lookup, not their DB change. |
@@ -838,7 +854,14 @@ Reference: <https://developer.android.com/privacy-and-security/local-network-per
 
 ---
 
-## 🔵 #30 follow-up: a setting to stop CallVault managing Wireless debugging
+## 🧪 #30 follow-up: a setting to stop CallVault managing Wireless debugging — BUILT on `feat/never-turn-off-wd-30` (2026-10-31), not on a phone
+
+🧪 VERIFYING: unit tests only. Built as "Never turn Wireless debugging off" (new key `wd_never_turn_off`,
+standalone-gated) in Settings → Connection and the classic Resilience rows, checked only in
+`AdbShell.releaseWirelessDebugging` via `WirelessDebuggingPolicy.releaseDecision`. The visible sign is a live
+line under that row while Wireless debugging is on and is being left on (this setting, or the user's own
+switch). `wd_disable_when_idle` was NOT reused: its meaning is the opposite, and
+`NetworkApprovalPolicy.alwaysAllow` still reads it. To settle: try it on a phone in built-in mode.
 
 Asked for by mirror176 in #30 (2026-09-10). Agreed by the maintainer 2026-09-11, and promised in the
 issue.
@@ -890,7 +913,12 @@ verification** (real carrier + VoIP call + daemon-up-after-install-over on both 
 Realistic floor ~30–40 MB, not the 6–9 MB of a call-recorder-only app — the transcription/ADB stack stays.
 Medium effort, **real risk** (a wrong keep set = silent no-record). Own branch.
 
-### 🟡 2. Attested / immutable releases (immutable DONE)
+### 🧪 BUILT on `build/release-provenance` (provenance step; immutable DONE) — 2. Attested / immutable releases
+
+> **🧪 VERIFYING (2026-10-31, dry-run only).** `tools/release/attest.sh` signs the locally built APK with cosign
+> keyless and writes `.sigstore.json` + `.sha256` to attach to the DRAFT release. Never run for real: needs
+> `brew install cosign` and a browser login at the next release. Details in the dev-note.
+
 CI (`build-app.yml`) wires up `actions/attest-build-provenance`, but releases are **built locally and
 published with `gh release create`**, so the **published APKs are not attested**. Steps, cheapest first:
 (1) ✅ **immutable releases — DONE 2026-10-13 (maintainer)**; (2) **provenance for the shipped APK** —
@@ -1597,7 +1625,18 @@ implemented separately. Do not ship a button that encourages users to attach log
 **Known limitation of option A:** it needs a GitHub account, so some users will file nothing. Ship A
 first and find out whether that is actually a problem before paying for C.
 
-### 🔵 PARTIAL (NDK pinned; doNotStrip + 16 KB zipalign not done) — F-Droid reproducibility traps that already apply — noted 2026-08-26
+### 🧪 BUILT on `build/fdroid-reproducibility` (no Gradle strip + 16 KB .so; Conscrypt left) — F-Droid reproducibility traps that already apply — noted 2026-08-26
+
+> **🧪 VERIFYING (2026-10-31, built + 2292 unit tests, not installed on a phone).** Gradle no longer strips
+> .so files (`keepDebugSymbols`); our CMake libraries are stripped at link time instead, with
+> `--build-id=none` and `-ffile-prefix-map`, and linked 16 KB-aligned (`ANDROID_SUPPORT_FLEXIBLE_PAGE_SIZES`).
+> Measured on the 2.4.8-build release APK: **68,990,525 → 68,988,021 bytes (−2.5 KB)**; `zipalign -c -P 16`
+> passes (every .so is compressed, `useLegacyPackaging`); LOAD alignment 0x1000 → **0x4000 on all 15 of our
+> .so**, no `.symtab`/debug sections, no build-id, no `/Users/` paths; same cert `c875ffd0…`, not debuggable.
+> **Still 4 KB: `libconscrypt_jni.so`** (prebuilt in Conscrypt 2.5.2) — needs the Conscrypt 2.7.0 bump (Android
+> 17 item 8), kept separate because it touches TLS pairing. Not checked: a second clean build giving
+> byte-identical .so files. To settle: install-over on a phone, load a transcription and a summary model, make
+> a call. Rollback: `docs/dev-notes/rollback/build-fdroid-reproducibility.md`.
 
 These bite any app shipping native code, and CallVault already does:
 
@@ -1610,7 +1649,18 @@ These bite any app shipping native code, and CallVault already does:
 The existing CMake/submodule setup is otherwise already on the right side of F-Droid's scanner, because
 anything compiled in the `build:` phase runs after the scan and never needs a `scanignore`.
 
-### 🔵 PARTIAL (limit now 60 min, not 15; recorded calls still skip silently, imports show it) — A call skipped for being too long says so only in the log — found 2026-08-25
+### 🧪 BUILT on `feat/no-transcription-length-limit` (limit removed) — A call skipped for being too long says so only in the log — found 2026-08-25
+
+> **🧪 VERIFYING (2026-10-31, unit tests only, not run on a phone).** The maintainer chose "no limit, just a
+> warning": the 60-minute limit is gone from every path (tap, per-call, scheduled, both imports), so nothing
+> is skipped for length any more and this gap no longer exists. A manual run on the phone's own model for a
+> call of 30 min or more adds one line to the confirmation saying it takes about 1.5× the call's length
+> (the phone's measured speed once it has one); with "Don't ask again" ticked, a long call still shows the
+> dialog with only that line. Cloud and automatic runs never warn. See `LongTranscriptionWarning`.
+> **To settle:** on the OP9, tap Transcribe on a call over 30 min with the local model (line shown), with
+> the notice off (dialog with only the line), and with Groq (no dialog); let a >60-min call transcribe
+> automatically after it ends. The text below is the history.
+
 
 The 15-minute transcription limit is now enforced in `TranscriptionRunner.runOne` and
 `TranscriptionQueue.pending`, so every route inherits it — nightly sweep, per-call, manual tap and
@@ -2155,7 +2205,19 @@ promising a prediction. Feeds the README's tested-devices table.
 
 ---
 
-## ✅ MOSTLY DONE v1.5.5 (handshake bounded; left: ~26 s worst case per WD attempt 📐, unbounded wait on the synchronized entry) — `AdbShell.ensureConnected` is unbounded on the recording-start path
+## 🧪 BUILT on `fix/adb-connect-leftovers` 2026-10-31, untested on a phone (v1.5.5 bounded the handshake; this branch bounds the entry wait and the offline self-heal window) — `AdbShell.ensureConnected` is unbounded on the recording-start path
+
+**🧪 BUILT 2026-10-31 on `fix/adb-connect-leftovers` — the two leftovers.** (1) The wait to *enter*
+`ensureConnected` / `forceReconnect` / the Wireless-debugging connect is now bounded at 60 s
+(`CONNECT_ENTRY_WAIT_MS`, a `BoundedEntryLock` replacing `@Synchronized`): behind a parked holder the caller
+gets "not connected" instead of queueing forever. 60 s sits above the longest *healthy* hold — 📐 CALCULATED
+≈ 29 s Wireless debugging, ≈ 48 s offline — so a second caller behind a slow-but-healthy connect still waits
+and succeeds as before. (2) The offline self-heal window counted only its sleeps, so with adbd accepting TCP
+but never answering, each 8 s handshake went uncounted (📐 ~140 s worst case); it now runs on the clock. The
+~26 s per Wireless-debugging attempt (0.75 + 0.6 + 12 mDNS + 5 search + 8 handshake) was **left as it is**:
+each step is bounded and needed, and an overall cap would cut a slow-but-working mDNS or search short.
+Rollback: `docs/dev-notes/rollback/fix-adb-connect-leftovers.md`. To settle: a normal day of calls on the
+OP12/OP9 with no "connect lock" line in the log, and no missed recording.
 
 **Why.** It can block for ~75 s while a recording is trying to start. 1.4.6 capped one such read at
 1.5 s after it caused calls to be missed entirely; this is the same class of problem, not yet fixed.

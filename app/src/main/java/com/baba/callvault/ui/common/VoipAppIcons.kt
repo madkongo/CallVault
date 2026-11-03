@@ -10,6 +10,7 @@ package com.baba.callvault.ui.common
 
 import android.content.Context
 import android.content.pm.PackageManager
+import android.os.SystemClock
 import androidx.compose.ui.graphics.ImageBitmap
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.core.graphics.drawable.toBitmap
@@ -31,14 +32,31 @@ object VoipAppIcons {
     private const val TAG = "CV:VoipIcons"
     private const val ICON_PX = 96
 
+    /**
+     * How long a miss is trusted. An app installed while CallVault runs (Telegram installed at 10:00, its
+     * first call at 10:05, OP9 2026-11-02) is missing from a list built earlier; after this long a miss
+     * rebuilds the list once and tries again, so the badge appears without a restart.
+     */
+    private const val MISS_RETRY_MS = 30_000L
+
     private val iconCache = HashMap<String, ImageBitmap?>()
+    private val missedAt = HashMap<String, Long>()
     @Volatile private var labelToPackage: Map<String, String>? = null
+    private var builtAt = 0L
 
     /** The installed app's icon for [label] (e.g. "WhatsApp"), or null if it can't be resolved. */
     @Synchronized
     fun iconFor(context: Context, label: String): ImageBitmap? {
         val key = label.lowercase()
-        if (iconCache.containsKey(key)) return iconCache[key]
+        val now = SystemClock.elapsedRealtime()
+        if (iconCache.containsKey(key)) {
+            val cached = iconCache[key]
+            val missAge = now - (missedAt[key] ?: now)
+            if (cached != null || missAge < MISS_RETRY_MS) return cached
+            // An old miss: the app may have been installed since. Rebuild the list if it predates the miss.
+            iconCache.remove(key)
+            if (now - builtAt >= MISS_RETRY_MS) labelToPackage = null
+        }
 
         val icon = runCatching {
             val pkg = packageForLabel(context, key) ?: return@runCatching null
@@ -47,6 +65,7 @@ object VoipAppIcons {
         }.onFailure { AppLogger.d(TAG, "No icon for '$label': ${it.message}") }.getOrNull()
 
         iconCache[key] = icon   // cache misses too, so a missing app isn't re-scanned per frame
+        if (icon == null) missedAt[key] = now else missedAt.remove(key)
         return icon
     }
 
@@ -65,7 +84,10 @@ object VoipAppIcons {
             )
         }.onFailure { AppLogger.d(TAG, "Could not enumerate installed apps: ${it.message}") }
             .getOrDefault(emptyMap())
-            .also { labelToPackage = it }
+            .also {
+                labelToPackage = it
+                builtAt = SystemClock.elapsedRealtime()
+            }
         return map[lowercaseLabel]
     }
 
@@ -73,6 +95,7 @@ object VoipAppIcons {
     @Synchronized
     fun invalidate() {
         iconCache.clear()
+        missedAt.clear()
         labelToPackage = null
     }
 }

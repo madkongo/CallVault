@@ -1,5 +1,6 @@
 /*
  * CallVault: FOSS call recording, self-contained over embedded ADB
+ *  Copyright (C) 2026-present kitsumed (Med)
  *  Copyright (C) 2026-present The CallVault Authors
  *  This software is licensed under the GNU General Public License v3 or later, with additional terms as permitted under Section 7.
  *  The full license text is available in the LICENSE file at the root of this project.
@@ -124,8 +125,8 @@ val extractLibphonenumberMetadata = tasks.register<ExtractMetadataTask>("extract
 // Android refuses to install a lower versionCode over a higher one, and uninstalling to get around
 // that would destroy the device's ADB pairing — so a versionCode that goes backwards is not a
 // cosmetic mistake, it strands that device on the old build.
-val ciVersionCode = providers.gradleProperty("versionCode").map { it.toIntOrNull() }.orElse(20480)
-val ciVersionName = providers.gradleProperty("versionName").orElse("2.4.8")
+val ciVersionCode = providers.gradleProperty("versionCode").map { it.toIntOrNull() }.orElse(20490)
+val ciVersionName = providers.gradleProperty("versionName").orElse("2.4.9")
 val ciBuildNumber = providers.gradleProperty("ciBuildNumber").orElse("Local")
 
 // -PisolateTestApp builds the debug variant under its own applicationId so instrumented tests can be
@@ -161,6 +162,14 @@ android {
         // build resolves to exactly the string RecorderBinderProvider.AUTHORITY hardcodes, so release
         // output is unchanged.
         manifestPlaceholders["recorderAuthority"] = "com.baba.callvault.recorder"
+
+        // 16 KB page sizes (Android 15+ devices that run with 16 KB pages). NDK 27 still links with
+        // 4 KB LOAD-segment alignment by default, and a 4 KB-aligned .so fails to load on such a phone.
+        // This flag makes the NDK toolchain add -Wl,-z,max-page-size=16384 to every library we build
+        // (whisper, llama, ggml and its CPU variants, audiohandoff). NDK 28+ does this by default.
+        externalNativeBuild {
+            cmake { arguments += "-DANDROID_SUPPORT_FLEXIBLE_PAGE_SIZES=ON" }
+        }
 
         buildConfigField("String", "CI_BUILD_NUMBER", "\"${ciBuildNumber.get()}\"")
 
@@ -276,7 +285,15 @@ android {
         // app_process DAEMON has no app classloader library-search path, so it can only load
         // libaudiohandoff.so from an explicit on-disk path (<apkDir>/lib/arm64/). Left uncompressed
         // inside the APK it would not exist as a file for the daemon to load.
-        jniLibs { useLegacyPackaging = true }
+        jniLibs {
+            useLegacyPackaging = true
+            // F-Droid reproducible builds: Gradle's own strip step (llvm-strip at packaging time) is a
+            // known source of intermittent non-reproducible .so files, so it is turned off. Our CMake
+            // libraries are stripped at LINK time instead (see src/main/cpp/CMakeLists.txt), which is
+            // deterministic and keeps the APK the same size. The prebuilt .so files from AARs
+            // (Conscrypt, androidx.graphics, spake2) already ship stripped.
+            keepDebugSymbols += "**/*.so"
+        }
     }
     androidResources {
         generateLocaleConfig = true

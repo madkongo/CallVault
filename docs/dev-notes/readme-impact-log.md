@@ -1,5 +1,30 @@
 # README impact log
 
+## 2026-10-31 — Classic Settings view removed (`chore/remove-classic-settings`)
+
+🧪 VERIFYING (unit tests and build only; nothing seen on a phone). Settings always opens the per-page layout;
+the "Switch to the classic view" card and the classic screen are gone. See
+`docs/dev-notes/rollback/classic-settings-removal.md`.
+
+**What this makes wrong in the README, when this ships** (README is held — not edited):
+- ~line 177: "under **Connection** (classic layout: *Settings ▸ General ▸ Experimental*; you're also asked
+  during setup)" — drop the classic-layout path; keep "under **Connection**" and the setup mention.
+- Screenshot `docs/screenshots/06-settings.png` ("Recordings settings") shows the classic-view card under the
+  Shizuku row. The card no longer exists; re-shoot when the README is next updated.
+
+## 2026-10-31 — Urdu as a pinnable transcription language
+
+🧪 VERIFYING (unit tests and build only; nothing seen on a phone). Urdu ("ur") joins the transcription
+language list, and summaries of Urdu-script transcripts are written in Urdu. Rollback notes:
+`docs/dev-notes/rollback/urdu-transcription.md`.
+
+**What this makes wrong in the README, when this ships** (README is held — not edited):
+- ~line 33, "Transcripts — 13 languages" — already stale before this change (16 were offered); with Urdu
+  the picker offers **17**.
+
+**Not claimable:** good Urdu transcripts. No Urdu call has been transcribed; Urdu is not an app UI
+language, only a transcription language.
+
 ## 2026-10-29 — Transcribe with your own key (#48)
 
 🧪 VERIFYING (unit tests and build only; no real request sent, nothing seen on a phone). Settings → Where to
