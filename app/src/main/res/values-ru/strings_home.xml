@@ -31,7 +31,7 @@
     <string name="home_hero_status_label">Статус</string>
     <string name="home_play_recording">Воспроизвести запись</string>
     <string name="home_view_recordings">Записи</string>
-    <string name="home_view_all_calls">Все вызовы</string>
+    <string name="home_view_all_calls">История вызовов</string>
     <string name="home_calls_filter_all">Все</string>
     <string name="home_calls_filter_recorded">Записанные</string>
     <string name="home_calls_filter_not_recorded">Не записанные</string>

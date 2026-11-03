@@ -31,7 +31,7 @@
     <string name="home_hero_status_label">Stan</string>
     <string name="home_play_recording">Odtwórz nagranie</string>
     <string name="home_view_recordings">Nagrania</string>
-    <string name="home_view_all_calls">Wszystkie połączenia</string>
+    <string name="home_view_all_calls">Historia połączeń</string>
     <string name="home_calls_filter_all">Wszystkie</string>
     <string name="home_calls_filter_recorded">Nagrane</string>
     <string name="home_calls_filter_not_recorded">Nienagrane</string>

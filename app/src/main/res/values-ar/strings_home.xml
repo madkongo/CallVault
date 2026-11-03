@@ -11,7 +11,7 @@
     <string name="home_usb_advisory_text">تم تعيين USB على وضع البيانات. انقر لتعيينه على الشحن فقط.</string>
     <string name="home_usb_advisory_fix">إصلاح</string>
     <string name="home_view_recordings">التسجيلات</string>
-    <string name="home_view_all_calls">كل المكالمات</string>
+    <string name="home_view_all_calls">سجل المكالمات</string>
     <string name="home_calls_filter_all">الكل</string>
     <string name="home_calls_filter_recorded">مسجّلة</string>
     <string name="home_calls_filter_not_recorded">غير مسجّلة</string>

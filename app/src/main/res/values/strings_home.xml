@@ -20,7 +20,7 @@
 
     <!-- Recordings section -->
     <string name="home_view_recordings">Recordings</string>
-    <string name="home_view_all_calls">All calls</string>
+    <string name="home_view_all_calls">Call history</string>
     <string name="home_calls_filter_all">All</string>
     <string name="home_calls_filter_recorded">Recorded</string>
     <string name="home_calls_filter_not_recorded">Not recorded</string>

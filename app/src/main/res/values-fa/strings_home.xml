@@ -20,7 +20,7 @@
 
     <!-- Recordings section -->
     <string name="home_view_recordings">فایل‌های ضبط‌شده</string>
-    <string name="home_view_all_calls">همه تماس‌ها</string>
+    <string name="home_view_all_calls">تاریخچه تماس‌ها</string>
     <string name="home_calls_filter_all">همه</string>
     <string name="home_calls_filter_recorded">ضبط‌شده</string>
     <string name="home_calls_filter_not_recorded">ضبط‌نشده</string>

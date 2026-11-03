@@ -31,7 +31,7 @@
     <string name="home_hero_status_label">Trạng thái</string>
     <string name="home_play_recording">Phát bản ghi âm</string>
     <string name="home_view_recordings">Bản ghi âm</string>
-    <string name="home_view_all_calls">Tất cả cuộc gọi</string>
+    <string name="home_view_all_calls">Lịch sử cuộc gọi</string>
     <string name="home_calls_filter_all">Tất cả</string>
     <string name="home_calls_filter_recorded">Đã ghi âm</string>
     <string name="home_calls_filter_not_recorded">Chưa ghi âm</string>

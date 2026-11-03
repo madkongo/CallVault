@@ -12,7 +12,7 @@
     <string name="home_usb_advisory_text">USB працює в режимі передавання даних. Натисніть, щоб перемкнути на «Лише заряджання».</string>
     <string name="home_usb_advisory_fix">Виправити</string>
     <string name="home_view_recordings">Записи</string>
-    <string name="home_view_all_calls">Усі виклики</string>
+    <string name="home_view_all_calls">Історія викликів</string>
     <string name="home_calls_filter_all">Усі</string>
     <string name="home_calls_filter_recorded">Записані</string>
     <string name="home_calls_filter_not_recorded">Не записані</string>

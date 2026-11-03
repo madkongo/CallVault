@@ -31,7 +31,7 @@
     <string name="home_hero_status_label">Status</string>
     <string name="home_play_recording">Aufnahme abspielen</string>
     <string name="home_view_recordings">Aufnahmen</string>
-    <string name="home_view_all_calls">Alle Anrufe</string>
+    <string name="home_view_all_calls">Anrufliste</string>
     <string name="home_calls_filter_all">Alle</string>
     <string name="home_calls_filter_recorded">Aufgezeichnet</string>
     <string name="home_calls_filter_not_recorded">Nicht aufgezeichnet</string>

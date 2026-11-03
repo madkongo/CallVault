@@ -32,7 +32,7 @@
     <string name="home_hero_status_label">État</string>
     <string name="home_play_recording">Lire l\'enregistrement</string>
     <string name="home_view_recordings">Enregistrements</string>
-    <string name="home_view_all_calls">Tous les appels</string>
+    <string name="home_view_all_calls">Historique des appels</string>
     <string name="home_calls_filter_all">Tous</string>
     <string name="home_calls_filter_recorded">Enregistrés</string>
     <string name="home_calls_filter_not_recorded">Non enregistrés</string>

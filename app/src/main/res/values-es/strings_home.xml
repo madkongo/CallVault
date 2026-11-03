@@ -31,7 +31,7 @@
     <string name="home_hero_status_label">Estado</string>
     <string name="home_play_recording">Reproducir grabación</string>
     <string name="home_view_recordings">Grabaciones</string>
-    <string name="home_view_all_calls">Todas las llamadas</string>
+    <string name="home_view_all_calls">Historial de llamadas</string>
     <string name="home_calls_filter_all">Todas</string>
     <string name="home_calls_filter_recorded">Grabadas</string>
     <string name="home_calls_filter_not_recorded">Sin grabar</string>

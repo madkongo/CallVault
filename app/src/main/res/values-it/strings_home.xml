@@ -31,7 +31,7 @@
     <string name="home_hero_status_label">Stato</string>
     <string name="home_play_recording">Riproduci registrazione</string>
     <string name="home_view_recordings">Registrazioni</string>
-    <string name="home_view_all_calls">Tutte le chiamate</string>
+    <string name="home_view_all_calls">Cronologia chiamate</string>
     <string name="home_calls_filter_all">Tutte</string>
     <string name="home_calls_filter_recorded">Registrate</string>
     <string name="home_calls_filter_not_recorded">Non registrate</string>

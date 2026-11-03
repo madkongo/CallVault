@@ -31,7 +31,7 @@
     <string name="home_hero_status_label">状态</string>
     <string name="home_play_recording">播放录音</string>
     <string name="home_view_recordings">录音</string>
-    <string name="home_view_all_calls">所有通话</string>
+    <string name="home_view_all_calls">通话记录</string>
     <string name="home_calls_filter_all">全部</string>
     <string name="home_calls_filter_recorded">已录音</string>
     <string name="home_calls_filter_not_recorded">未录音</string>
