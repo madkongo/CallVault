@@ -11,7 +11,6 @@ package com.baba.callvault.data.recordings
 import android.content.Context
 import android.net.Uri
 import android.provider.DocumentsContract
-import androidx.documentfile.provider.DocumentFile
 import com.baba.callvault.system.storage.SafHelper
 import java.io.FileNotFoundException
 import androidx.core.net.toUri
@@ -186,20 +185,40 @@ object DriveCatalogRepair {
         return candidates.map { it.second }.filter { presence(it) == Presence.GONE }
     }
 
-    /** Names in the Drive folder, or null when it could not be listed. */
+    /**
+     * Names in the Drive folder, or null when it could not be listed.
+     *
+     * Queried directly rather than through `DocumentFile.listFiles()`, which turns a failure into an empty list:
+     * here a failure is null and only a successful query can say "empty".
+     */
     private fun listedNames(context: Context, folder: Uri): Set<String>? = runCatching {
-        DocumentFile.fromTreeUri(context, folder)?.listFiles()?.mapNotNull { it.name }?.toSet()
+        val children = DocumentsContract.buildChildDocumentsUriUsingTree(folder, DocumentsContract.getTreeDocumentId(folder))
+        context.contentResolver.query(
+            children, arrayOf(DocumentsContract.Document.COLUMN_DISPLAY_NAME), null, null, null,
+        )?.use { c -> buildSet { while (c.moveToNext()) c.getString(0)?.let { add(it) } } }
     }.getOrNull()
 
-    /** Asks the provider about one document: no row or "not found" is [Presence.GONE], any other failure unknown. */
+    /**
+     * Whether one Drive document still exists, by trying to open it.
+     *
+     * Querying its details is no proof: measured on the OP9 (2026-11-03), after a folder was deleted forever in
+     * Drive the provider still returned the deleted files' cached name and size. Opening them failed with
+     * FileNotFoundException ("StorageFileLoadException[io_error]"). An offline phone could fail the same way, so
+     * the failure counts as [Presence.GONE] only while the phone has a validated internet connection.
+     */
     private fun presenceOf(context: Context, uri: Uri): Presence = try {
-        context.contentResolver.query(uri, arrayOf(DocumentsContract.Document.COLUMN_DOCUMENT_ID), null, null, null)
-            ?.use { if (it.count == 0) Presence.GONE else Presence.PRESENT }
-            ?: Presence.UNKNOWN
+        context.contentResolver.openFileDescriptor(uri, "r")?.use { Presence.PRESENT } ?: Presence.UNKNOWN
     } catch (e: FileNotFoundException) {
-        Presence.GONE
+        if (isOnline(context)) Presence.GONE else Presence.UNKNOWN
     } catch (e: Exception) {
         AppLogger.d(TAG, "Drive presence unknown for one copy: ${e.javaClass.simpleName}: ${e.message}")
         Presence.UNKNOWN
     }
+
+    /** True with a validated internet connection, so a failed open means the file, not the network. */
+    private fun isOnline(context: Context): Boolean = runCatching {
+        val cm = context.getSystemService(android.net.ConnectivityManager::class.java)
+        val caps = cm?.getNetworkCapabilities(cm.activeNetwork)
+        caps?.hasCapability(android.net.NetworkCapabilities.NET_CAPABILITY_VALIDATED) == true
+    }.getOrDefault(false)
 }
