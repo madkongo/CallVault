@@ -108,4 +108,11 @@ class RetentionPolicyTest {
         assertTrue(RetentionPolicy.agesOut("20260804_101010.123+0300_in_0501234567.ogg"))
         assertTrue(RetentionPolicy.agesOut("20260804_101010.123+0300_voip-WhatsApp_Dana.ogg"))
     }
+
+    @Test
+    fun `a starred recording is never deleted by age`() {
+        val name = "20261101_101010.000+0200_in_[C:abcd].ogg"
+        assertTrue(RetentionPolicy.mayAgeOut(name, emptySet()))
+        assertFalse(RetentionPolicy.mayAgeOut(name, setOf(name)))
+    }
 }
