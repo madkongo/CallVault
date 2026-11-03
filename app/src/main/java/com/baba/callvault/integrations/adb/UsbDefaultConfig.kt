@@ -108,7 +108,7 @@ object UsbDefaultConfig {
      * connection, so it never causes WD/adbd churn. Caches the value on success. Call OFF the main thread.
      */
     fun readViaShell(context: Context): UsbDefaultMode? =
-        parseAndCache(context, runShell(context, READ_CMD, ensure = true)) ?: readFromSystemProperty(context)
+        parseAndCache(context, runShell(context, READ_CMD, ensure = true)) ?: readFromSystemPropertyIfBlank(context)
 
     /**
      * Like [readViaShell] but reads ONLY if an ADB connection is already up — never forces one, so it
@@ -116,7 +116,7 @@ object UsbDefaultConfig {
      * connection (e.g. right after a daemon launch). Returns null when nothing was read. OFF main thread.
      */
     fun readIfConnected(context: Context): UsbDefaultMode? =
-        parseAndCache(context, runShell(context, READ_CMD, ensure = false)) ?: readFromSystemProperty(context)
+        parseAndCache(context, runShell(context, READ_CMD, ensure = false)) ?: readFromSystemPropertyIfBlank(context)
 
     /**
      * Falls back to the `sys.usb.config` system property, for ROMs whose `dumpsys usb` does not print
@@ -143,6 +143,22 @@ object UsbDefaultConfig {
      *
      * Needs no shell, no daemon and no ADB connection — unlike everything else in this file.
      */
+    private fun readFromSystemPropertyIfBlank(context: Context): UsbDefaultMode? {
+        if (!mayUseProperty(cached(context))) return null
+        return readFromSystemProperty(context)
+    }
+
+    /**
+     * The property may fill a blank, never replace a mode already read.
+     *
+     * On a Honor BVL-N49 (Android 16, 2026-11-03) `sys.usb.config` read `hisuite,mtp,mass_storage` while
+     * the phone was set to Charging only: Honor keeps its own default there, not the screen-unlocked
+     * functions. Every time the shell read failed, the property overwrote a correct "Charging only" with
+     * "File transfer", and the warning came back minutes after the user fixed it. A wrong cache left alone
+     * is corrected by the next shell read; a wrong property wins every time the shell fails.
+     */
+    internal fun mayUseProperty(cached: UsbDefaultMode): Boolean = cached == UsbDefaultMode.UNKNOWN
+
     private fun readFromSystemProperty(context: Context): UsbDefaultMode? {
         val raw = systemProperty(USB_CONFIG_PROP)
         val mode = parseProperty(raw)
@@ -184,6 +200,12 @@ object UsbDefaultConfig {
     private fun parseAndCache(context: Context, out: String?): UsbDefaultMode? {
         if (out == null) return null
         // Filter for the relevant line in Kotlin rather than a `| grep` (pipes are fragile over `shell:`).
+        val fromDump = parseDump(out)
+        if (fromDump == UsbDefaultMode.CHARGING && !out.contains("screen_unlocked_functions")) {
+            AppPreferences(context).setUsbDefaultMode(fromDump.name)
+            AppLogger.i(TAG, "dumpsys usb shows the USB state with no screen_unlocked_functions: none set, $fromDump")
+            return fromDump
+        }
         val line = out.lineSequence().firstOrNull { it.contains("screen_unlocked_functions") }
         if (line == null) {
             // The command ran and the field is not in the output. On a OnePlus 12 (ColorOS) that turned
@@ -327,6 +349,25 @@ object UsbDefaultConfig {
     //
     // A wrong cache is self-correcting — the next successful read overwrites it — whereas a wrong "that
     // didn't work" in front of the user is not.
+
+    /**
+     * Classifies a whole `dumpsys usb` output.
+     *
+     * `dumpsys usb` prints in proto form and leaves out empty fields, so when the USB handler's state is
+     * there and `screen_unlocked_functions` is not, none are set: Charging only. Measured on the OP9 and a
+     * OnePlus 12 (the field appears the moment a data mode is chosen), and it is what the Honor BVL-N49 of
+     * 2026-11-03 printed while set to Charging only. Without the handler state there is no evidence.
+     */
+    internal fun parseDump(out: String): UsbDefaultMode {
+        val line = out.lineSequence().firstOrNull { it.contains("screen_unlocked_functions") }
+        return when {
+            line != null -> parse(line)
+            out.contains(USB_HANDLER_STATE) -> UsbDefaultMode.CHARGING
+            else -> UsbDefaultMode.UNKNOWN
+        }
+    }
+
+    private const val USB_HANDLER_STATE = "handler={"
 
     /**
      * Classifies a `screen_unlocked_functions=` line. Data functions win: the value is a comma-separated

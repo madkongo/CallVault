@@ -183,4 +183,50 @@ class UsbDefaultConfigTest {
         val standalone = UsbDefaultConfig.resolveCached("FILE_TRANSFER", PrivilegedMode.STANDALONE)
         assertEquals(UsbNotice.DATA_MODE_RISK, UsbDefaultConfig.noticeFor(standalone, recorderReady = true))
     }
+
+    // A Honor BVL-N49 (Android 16, 2026-11-03) set to Charging only: dumpsys usb printed the USB handler
+    // state without screen_unlocked_functions, and sys.usb.config read 'hisuite,mtp,mass_storage'. The
+    // property won, the app warned "file transfer", the fix button cleared it, and the next read put it back.
+
+    private val handlerWithoutUnlockedFunctions = """
+        USB MANAGER STATE (dumpsys usb):
+        {
+          device_manager={
+            handler={
+              current_functions_applied=true
+              screen_locked=false
+              connected=false
+            }
+          }
+        }
+    """.trimIndent()
+
+    @Test
+    fun `a USB handler dump without screen-unlocked functions means none are set`() {
+        // dumpsys usb leaves out fields that are empty, so the handler with no such field is Charging only.
+        assertEquals(UsbDefaultMode.CHARGING, UsbDefaultConfig.parseDump(handlerWithoutUnlockedFunctions))
+    }
+
+    @Test
+    fun `a dump that carries the field is read from the field`() {
+        val dump = handlerWithoutUnlockedFunctions.replace(
+            "current_functions_applied=true",
+            "current_functions_applied=true\n      screen_unlocked_functions=MTP",
+        )
+        assertEquals(UsbDefaultMode.FILE_TRANSFER, UsbDefaultConfig.parseDump(dump))
+    }
+
+    @Test
+    fun `a dump with no USB handler state says nothing`() {
+        // A shell that printed an error, or a ROM that prints something else entirely: no evidence.
+        assertEquals(UsbDefaultMode.UNKNOWN, UsbDefaultConfig.parseDump("Can't find service: usb"))
+    }
+
+    @Test
+    fun `the system property never overrides a mode already read`() {
+        // On Honor the property holds the vendor default, not the setting, so it may only fill a blank.
+        assertFalse(UsbDefaultConfig.mayUseProperty(cached = UsbDefaultMode.CHARGING))
+        assertFalse(UsbDefaultConfig.mayUseProperty(cached = UsbDefaultMode.FILE_TRANSFER))
+        assertTrue(UsbDefaultConfig.mayUseProperty(cached = UsbDefaultMode.UNKNOWN))
+    }
 }
