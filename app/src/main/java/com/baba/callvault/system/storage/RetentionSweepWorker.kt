@@ -63,6 +63,7 @@ class RetentionSweepWorker(ctx: Context, params: WorkerParameters) : CoroutineWo
         // the catalog pass fails on it for ever while the untracked pass skips the file as already
         // known. Repair those first, so both halves below see a catalog that matches reality.
         DriveCatalogRepair.reconcile(applicationContext)
+        DriveCatalogRepair.forgetDeletedIfDue(applicationContext)
 
         var deletedLocal = 0
         var deletedDrive = 0
