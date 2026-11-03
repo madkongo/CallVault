@@ -18,3 +18,15 @@ and the 81 test entries should leave the list ("N deleted in Drive and forgotten
 git revert -m 1 8469d89a
 ```
 (`8469d89a` = the merge of `fix/forget-deleted-drive-copies` into integration/next.)
+
+## Follow-up 2026-11-03 — the signal that works (merge d9b84c1d, branch fix/drive-gone-signal) 🧪
+
+OP9 probe after the maintainer deleted the test folder forever: the folder listing was 0, but a details query on
+each document still returned its cached name, size and flags=7 — no proof. Opening the document threw
+`FileNotFoundException: StorageFileLoadException[io_error]`. Now: proof 2 = opening fails with
+FileNotFoundException while the phone has a validated connection (offline = unknown, kept); the listing is a direct
+children query (failure = null, not an empty list). OP9 2.4.9-calls5: "100 Drive copies, folder listing 0, 100
+deleted in Drive and forgotten"; list 108 → 22, the 19 real recordings kept their phone copy. Not yet seen: the
+offline path (keeps everything by code; no deleted file was left to test it with).
+Roll back this part alone: `git revert -m 1 d9b84c1d`.
+
