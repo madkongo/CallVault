@@ -234,6 +234,11 @@
             android:exported="false" />
 
         <receiver
+            android:name=".system.storage.DriveCopyStopReceiver"
+            android:enabled="true"
+            android:exported="false" />
+
+        <receiver
             android:name=".services.boot.RetentionTimezoneReceiver"
             android:enabled="true"
             android:exported="false">
