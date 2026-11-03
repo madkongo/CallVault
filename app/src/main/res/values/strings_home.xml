@@ -138,6 +138,18 @@
     <string name="merge_note_will_keep">The other calls are kept on the phone as well.</string>
     <string name="home_scroll_to_top">Top</string>
     <string name="home_whatsnew_full_notes">Full release notes</string>
+    <string name="whatsnew_249_title">Clearer app calls, and ready right after updates</string>
+    <string-array name="whatsnew_249_items">
+        <item>Less echo on app calls on phones whose mic picks up the earpiece</item>
+        <item>Telegram calls record to the end, with Telegram\'s name and icon</item>
+        <item>App calls that end before recording starts no longer leave an empty file</item>
+        <item>Recording is ready seconds after an update</item>
+        <item>Calls of any length can be transcribed; long ones say how long it will take</item>
+        <item>Type to find a language in the language list, and Urdu for transcription</item>
+        <item>Never turn Wireless debugging off — a new switch in Settings ▸ Connection</item>
+        <item>Your own transcription server can use http:// on your own network</item>
+        <item>Settings always opens the per-page layout; the classic view is gone</item>
+    </string-array>
     <string name="whatsnew_248_title">Your own transcription key, and easier reading</string>
     <string-array name="whatsnew_248_items">
         <item>Transcribe with your own key — Groq, OpenRouter or your own server, in seconds instead of minutes (Settings ▸ Where to transcribe)</item>
