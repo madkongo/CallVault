@@ -96,6 +96,9 @@
     <string name="heavy_work_notification_text">Điện thoại có thể nóng lên trong lúc này.</string>
     <string name="heavy_work_summarising">Đang tóm tắt bản ghi</string>
     <string name="heavy_work_transcribing">Đang chuyển bản ghi thành văn bản</string>
+    <string name="drive_copy_title">Đang sao chép bản ghi vào Drive</string>
+    <string name="drive_copy_progress">Đã sao chép %1$d/%2$d</string>
+    <string name="drive_copy_stop">Tạm dừng lúc này</string>
     <string name="home_all_set_message">Mọi thứ đã sẵn sàng. CallVault đã sẵn sàng ghi âm các cuộc gọi của bạn.</string>
     <string name="home_bulk_delete_both">Cả hai bản sao</string>
     <string name="home_bulk_delete_device_only">Chỉ trên thiết bị</string>

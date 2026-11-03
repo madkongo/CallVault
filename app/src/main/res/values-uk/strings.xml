@@ -107,6 +107,9 @@
     <string name="heavy_work_notification_text">Під час роботи телефон може нагріватися.</string>
     <string name="heavy_work_summarising">Створення підсумку</string>
     <string name="heavy_work_transcribing">Розпізнавання запису</string>
+    <string name="drive_copy_title">Копіювання записів на Drive</string>
+    <string name="drive_copy_progress">Скопійовано %1$d з %2$d</string>
+    <string name="drive_copy_stop">Поки що зупинити</string>
     <string name="home_all_set_message">Усе готово! CallVault може записувати дзвінки.</string>
     <string name="home_bulk_delete_both">Обидві копії</string>
     <string name="home_bulk_delete_device_only">Лише на пристрої</string>

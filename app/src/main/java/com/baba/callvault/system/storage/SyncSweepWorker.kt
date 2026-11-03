@@ -11,6 +11,7 @@ package com.baba.callvault.system.storage
 import android.content.Context
 import androidx.documentfile.provider.DocumentFile
 import androidx.work.CoroutineWorker
+import com.baba.callvault.transcription.HeavyWorkNotification
 import androidx.work.WorkerParameters
 import com.baba.callvault.data.AppPreferences
 import com.baba.callvault.data.StorageTarget
@@ -123,7 +124,17 @@ class SyncSweepWorker(ctx: Context, params: WorkerParameters) : CoroutineWorker(
         }
 
         AppLogger.i(TAG, "Sweep: ${pending.size} recording(s) to copy to Drive, newest first")
+        val total = pending.size
+        var done = 0
+        var stoppedByUser = false
+        if (total > 0) {
+            DriveCopyStop.reset()
+            showProgress(done, total)
+        }
         for (entry in DriveSweepOrder.newestFirst(pending)) {
+            // Only ever between files: the one being copied always finishes and is recorded first.
+            if (DriveCopyStop.isRequested()) { stoppedByUser = true; break }
+            if (isStopped) break
             val name = entry.name
             val file = entry.item.file
             val sourceSize = entry.item.sizeBytes
@@ -136,7 +147,7 @@ class SyncSweepWorker(ctx: Context, params: WorkerParameters) : CoroutineWorker(
                     AppLogger.w(TAG, "Failed to copy '$name' to Drive (${result.reason}).")
                     null
                 }
-            } ?: continue
+            }.also { done++; showProgress(done, total) } ?: continue
 
             existingInDrive[name.lowercase()] = DriveCopy(driveUri, sourceSize)
             val deletedLocally = deleteLocal &&
@@ -147,10 +158,28 @@ class SyncSweepWorker(ctx: Context, params: WorkerParameters) : CoroutineWorker(
                 CloudCopyPolicy.shouldClearLocalReference(deleteLocal, deletedLocally))
         }
 
+        if (stoppedByUser) {
+            AppLogger.i(TAG, "Sweep stopped by the user after $done of $total; the rest goes on the next scheduled run (copied=$copied).")
+            return Result.success()
+        }
         AppLogger.i(TAG, "Sweep complete (target=$target copied=$copied failures=$failures skipped=$skipped deleteLocal=$deleteLocal).")
         // A sweep that keeps failing backs off rather than hammering the provider: the next scheduled run
         // picks the stragglers up anyway, so there is nothing to gain from an unbounded retry chain.
         return if (failures > 0 && !CloudCopyPolicy.isLastAttempt(runAttemptCount)) Result.retry() else Result.success()
+    }
+
+    /**
+     * Shows or updates the "Copying recordings to Drive" notification, which also makes this a long-running
+     * job: as a plain background job Android stopped it after ~10 minutes, so a big backlog never finished
+     * (Honor BVL-N49, 2026-11-03). Best-effort: a phone that refuses still copies, and whatever a stopped
+     * run did not reach is picked up by the next one.
+     */
+    private suspend fun showProgress(done: Int, total: Int) {
+        runCatching {
+            setForeground(
+                HeavyWorkNotification.forDriveCopy(applicationContext, done, total, DriveCopyStop.pendingIntent(applicationContext))
+            )
+        }.onFailure { if (done == 0) AppLogger.w(TAG, "Could not show the Drive copy notification: ${it.message}") }
     }
 
     /** A recording still to upload: the device document and its byte length. */

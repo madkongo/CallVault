@@ -190,6 +190,9 @@
     <string name="heavy_work_notification_text">ممکن است گوشی شما در حین این کار گرم شود.</string>
     <string name="heavy_work_summarising">در حال خلاصه‌سازی یک فایل ضبط‌شده</string>
     <string name="heavy_work_transcribing">در حال رونویسی یک فایل ضبط‌شده</string>
+    <string name="drive_copy_title">در حال کپی فایل‌های ضبط‌شده در Drive</string>
+    <string name="drive_copy_progress">%1$d از %2$d کپی شد</string>
+    <string name="drive_copy_stop">فعلاً توقف</string>
     <string name="home_all_set_message">همه‌چیز آماده است. CallVault برای ضبط تماس‌های شما آماده است.</string>
     <string name="home_bulk_delete_both">هر دو نسخه</string>
     <string name="home_bulk_delete_device_only">فقط دستگاه</string>

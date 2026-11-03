@@ -10,6 +10,7 @@ package com.baba.callvault.transcription
 
 import android.app.NotificationChannel
 import android.app.NotificationManager
+import android.app.PendingIntent
 import android.content.Context
 import android.content.pm.ServiceInfo
 import androidx.core.app.NotificationCompat
@@ -66,6 +67,33 @@ object HeavyWorkNotification {
             notification,
             ServiceInfo.FOREGROUND_SERVICE_TYPE_SPECIAL_USE,
         )
+    }
+
+    /** Its own id, so a Drive copy and a transcription running together each keep their notification. */
+    private const val DRIVE_COPY_NOTIFICATION_ID = 43
+
+    /**
+     * The scheduled Drive copy, with a counter, a bar and "Stop for now" (chosen 2026-11-03, option C).
+     *
+     * Same silent channel as transcription. Being foreground is what lets a big backlog run past Android's
+     * ~10-minute limit for background jobs (Honor BVL-N49, 2026-11-03).
+     */
+    fun forDriveCopy(context: Context, copied: Int, total: Int, stop: PendingIntent): ForegroundInfo {
+        ensureChannel(context)
+        val notification = NotificationCompat.Builder(context, CHANNEL_ID)
+            .setSmallIcon(android.R.drawable.stat_sys_upload)
+            .setContentTitle(context.getString(R.string.drive_copy_title))
+            .setContentText(context.getString(R.string.drive_copy_progress, copied, total))
+            .setProgress(total, copied, false)
+            .addAction(0, context.getString(R.string.drive_copy_stop), stop)
+            .setOngoing(true)
+            .setSilent(true)
+            .setOnlyAlertOnce(true)
+            .setPriority(NotificationCompat.PRIORITY_MIN)
+            .setCategory(NotificationCompat.CATEGORY_PROGRESS)
+            .setVisibility(NotificationCompat.VISIBILITY_SECRET)
+            .build()
+        return ForegroundInfo(DRIVE_COPY_NOTIFICATION_ID, notification, ServiceInfo.FOREGROUND_SERVICE_TYPE_SPECIAL_USE)
     }
 
     /** Idempotent: creating an existing channel updates nothing the user has since changed. */

@@ -97,6 +97,9 @@
     <string name="heavy_work_notification_text">A telefon felmelegedhet a művelet alatt.</string>
     <string name="heavy_work_summarising">Felvétel összefoglalója készül</string>
     <string name="heavy_work_transcribing">Felvétel átirata készül</string>
+    <string name="drive_copy_title">Felvételek másolása a Drive-ra</string>
+    <string name="drive_copy_progress">%1$d / %2$d átmásolva</string>
+    <string name="drive_copy_stop">Leállítás egyelőre</string>
     <string name="home_all_set_message">Minden készen áll. A CallVault készen áll a hívásai rögzítésére.</string>
     <string name="home_bulk_delete_both">Mindkét másolat</string>
     <string name="home_bulk_delete_device_only">Csak az eszközön</string>
