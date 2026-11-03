@@ -38,19 +38,15 @@
 • تخبرك الصفحة الرئيسية عندما يكون التسجيل معطلاً، بدلاً من البقاء صامتًا
 • لم تعد المكالمة الهاتفية تعتبر مكالمة تطبيق</string>
     <string name="home_whatsnew_offline_cta">تشغيل التسجيل بدون Wi-Fi</string>
-    <string name="home_whatsnew_offline_enabled">تم تمكين التسجيل بدون اتصال.</string>
+    <string name="home_whatsnew_offline_enabled">«مواصلة التسجيل بدون Wi-Fi» قيد التشغيل.</string>
     <string name="offline_failed_needs_wd">تعذر التمكين؛ تصحيح الأخطاء اللاسلكي متوقف ولم يتمكن CallVault من تشغيله. قم بتشغيله في خيارات المطور، ثم حاول مرة أخرى.</string>
     <string name="offline_failed_no_service">تعذر التمكين: لم يتمكن CallVault من الوصول إلى خدمة تصحيح أخطاء الهاتف. تحقق من اتصالك بـ Wi-Fi مع تشغيل تصحيح الأخطاء اللاسلكي، ثم حاول مرة أخرى.</string>
     <string name="offline_failed_port">تعذر التمكين: لم يعد المنفذ المحلي للعمل. حاول مرة أخرى بعد قليل.</string>
     <string name="home_whatsnew_offline_enabling">جارٍ تمكين التسجيل بدون Wi-Fi…</string>
-    <string name="home_whatsnew_resilient_title">جديد: تسجيل مرن</string>
-    <string name="home_whatsnew_resilient_body">يجعل تسجيل المكالمات أكثر مقاومة للانقطاعات.
-
-يمكن لنظام Android إيقاف مساعد CallVault في الخلفية في أي وقت. مع تمكين هذا، لا يتأثر التسجيل الجاري حاليًا عند حدوث ذلك.
-
-معطل افتراضيًا؛ يمكنك أيضًا تشغيله لاحقًا في الإعدادات ▸ الموثوقية.</string>
+    <string name="home_whatsnew_resilient_title">جديد: مواصلة التسجيل إذا توقف المساعد</string>
+    <string name="home_whatsnew_resilient_body">يجعل تسجيل المكالمات أكثر مقاومة للانقطاعات.\n\nيمكن لنظام Android إيقاف مساعد CallVault في الخلفية في أي وقت. مع تمكين هذا، لا يتأثر التسجيل الجاري حاليًا عند حدوث ذلك.\n\nمعطل افتراضيًا؛ يمكنك أيضًا تشغيله لاحقًا في الإعدادات ▸ الاتصال.</string>
     <string name="home_whatsnew_resilient_cta">تشغيله</string>
-    <string name="home_whatsnew_resilient_enabled">التسجيل المرن قيد التشغيل. لم يعد التسجيل الجاري حاليًا يتأثر إذا أوقف Android مساعد CallVault في الخلفية.</string>
+    <string name="home_whatsnew_resilient_enabled">«مواصلة التسجيل إذا توقف المساعد» قيد التشغيل. لم يعد التسجيل الجاري حاليًا يتأثر إذا أوقف Android مساعد CallVault في الخلفية.</string>
     <string name="home_whatsnew_settings_cta">فتح الإعدادات</string>
     <string name="whatsnew_153_title">إعدادك، يتم التحقق منه بواسطة مكالماتك الخاصة</string>
     <string name="whatsnew_155_title">الإعدادات في لوحة، ومكالمات تسجل بشكل أكثر موثوقية</string>
@@ -163,7 +159,7 @@
     <string name="merge_primary_hint">تبدأ المكالمة المدمجة</string>
     <string name="merge_title">دمج المكالمات مع %1$s</string>
     <string name="settings_merge_keep_originals_description">بعد الدمج، اترك المكالمات التي تم إنشاؤها منها على الهاتف أيضًا. معطل افتراضيًا، لذا يترك الدمج تسجيلًا واحدًا. يعمل فصل المكالمة المدمجة بأي طريقة.</string>
-    <string name="settings_merge_keep_originals_title">احتفظ بالمكالمات الأصلية</string>
+    <string name="settings_merge_keep_originals_title">الاحتفاظ بالأصول بعد الدمج</string>
     <string name="unmerge_confirm">إلغاء الدمج</string>
     <string name="unmerge_message">سيتم تفكيك هذا التسجيل إلى المكالمات الأصلية، محتفظةً بكل تفريغ صوتي وعلامة تمييز كانت عليها:</string>
     <string name="unmerge_title">إلغاء دمج هذه المكالمة؟</string>

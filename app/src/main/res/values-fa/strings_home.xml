@@ -47,15 +47,15 @@
     <string name="home_whatsnew_title">تازه‌ها</string>
     <string name="home_whatsnew_body">• اکنون اگر ضبط زمانی گیر کند، خودبه‌خود بازیابی می‌شود\n• صفحه اصلی وقتی ضبط از کار بیفتد به شما اطلاع می‌دهد، به‌جای اینکه ساکت بماند\n• یک تماس تلفنی دیگر با تماس درون‌برنامه‌ای اشتباه گرفته نمی‌شود</string>
     <string name="home_whatsnew_offline_cta">روشن کردن ضبط بدون Wi-Fi</string>
-    <string name="home_whatsnew_offline_enabled">ضبط آفلاین فعال شد.</string>
+    <string name="home_whatsnew_offline_enabled">«ادامه ضبط بدون Wi-Fi» روشن است.</string>
     <string name="offline_failed_needs_wd">فعال نشد — اشکال‌زدایی بی‌سیم خاموش است و CallVault نتوانست آن را روشن کند. آن را در گزینه‌های توسعه‌دهنده روشن کنید، سپس دوباره تلاش کنید.</string>
     <string name="offline_failed_no_service">فعال نشد — CallVault نتوانست به سرویس اشکال‌زدایی تلفن دسترسی پیدا کند. مطمئن شوید که به Wi-Fi متصل هستید و اشکال‌زدایی بی‌سیم روشن است، سپس دوباره تلاش کنید.</string>
     <string name="offline_failed_port">فعال نشد — درگاه محلی دوباره فعال نشد. لحظاتی دیگر دوباره تلاش کنید.</string>
     <string name="home_whatsnew_offline_enabling">در حال فعال‌سازی ضبط بدون Wi-Fi…</string>
-    <string name="home_whatsnew_resilient_title">جدید: ضبط مقاوم</string>
-    <string name="home_whatsnew_resilient_body">ضبط تماس را در برابر وقفه‌ها مقاوم‌تر می‌کند.\n\nAndroid می‌تواند در هر لحظه دستیار پس‌زمینه CallVault را متوقف کند. با روشن بودن این گزینه، ضبطی که از پیش در جریان است دیگر هنگام رخ دادن این اتفاق تحت تأثیر قرار نمی‌گیرد.\n\nبه‌طور پیش‌فرض خاموش است — می‌توانید بعداً هم آن را در تنظیمات ▸ قابلیت اطمینان روشن کنید.</string>
+    <string name="home_whatsnew_resilient_title">جدید: ادامه ضبط اگر دستیار متوقف شود</string>
+    <string name="home_whatsnew_resilient_body">ضبط تماس را در برابر وقفه‌ها مقاوم‌تر می‌کند.\n\nAndroid می‌تواند در هر لحظه دستیار پس‌زمینه CallVault را متوقف کند. با روشن بودن این گزینه، ضبطی که از پیش در جریان است دیگر هنگام رخ دادن این اتفاق تحت تأثیر قرار نمی‌گیرد.\n\nبه‌طور پیش‌فرض خاموش است — می‌توانید بعداً هم آن را در تنظیمات ▸ اتصال روشن کنید.</string>
     <string name="home_whatsnew_resilient_cta">روشن کردن</string>
-    <string name="home_whatsnew_resilient_enabled">ضبط مقاوم روشن است. اگر Android دستیار پس‌زمینه CallVault را متوقف کند، ضبطی که از پیش در جریان است دیگر تحت تأثیر قرار نمی‌گیرد.</string>
+    <string name="home_whatsnew_resilient_enabled">«ادامه ضبط اگر دستیار متوقف شود» روشن است. اگر Android دستیار پس‌زمینه CallVault را متوقف کند، ضبطی که از پیش در جریان است دیگر تحت تأثیر قرار نمی‌گیرد.</string>
 
     <!-- Post-update note: one entry per release, newest first. Keep in sync with CHANGELOG.md. -->
     <string name="home_whatsnew_settings_cta">باز کردن تنظیمات</string>
@@ -135,7 +135,7 @@
     <string name="merge_primary_hint">تماس ادغام‌شده را آغاز می‌کند</string>
     <string name="merge_title">ادغام تماس‌ها با %1$s</string>
     <string name="settings_merge_keep_originals_description">پس از ادغام، تماس‌هایی را که ادغام از آن‌ها ساخته شده نیز روی گوشی نگه دار. به‌طور پیش‌فرض خاموش است، بنابراین یک ادغام تنها یک فایل ضبط‌شده باقی می‌گذارد. لغو ادغام یک تماس ادغام‌شده در هر دو حالت کار می‌کند.</string>
-    <string name="settings_merge_keep_originals_title">نگه داشتن تماس‌های اصلی</string>
+    <string name="settings_merge_keep_originals_title">نگه داشتن نسخه‌های اصلی پس از ادغام</string>
     <string name="unmerge_confirm">لغو ادغام</string>
     <string name="unmerge_message">دوباره به این تماس‌ها تبدیل می‌شود، هر کدام با رونوشت و نشانه‌هایی که داشت:</string>
     <string name="unmerge_title">این تماس لغو ادغام شود؟</string>

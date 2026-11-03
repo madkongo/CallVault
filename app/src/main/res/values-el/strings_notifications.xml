@@ -44,7 +44,7 @@
     <string name="notif_readiness_no_debugging_text">Ο εντοπισμός σφαλμάτων USB και ο Ασύρματος εντοπισμός σφαλμάτων είναι και οι δύο απενεργοποιημένοι. Ενεργοποιήστε ξανά έναν από τους δύο στις Επιλογές προγραμματιστή.</string>
     <string name="notif_readiness_needs_wifi_text">Ο εντοπισμός σφαλμάτων USB είναι απενεργοποιημένος και δεν υπάρχει Wi-Fi. Συνδεθείτε σε Wi-Fi ή ενεργοποιήστε τον εντοπισμό σφαλμάτων USB.</string>
     <string name="notif_readiness_stuck_text">Ο καταγραφέας αποτυγχάνει συνεχώς να ξεκινήσει. Ανοίξτε το CallVault για να δείτε γιατί.</string>
-    <string name="notif_readiness_needs_wifi_restart_text">Ο καταγραφέας σταμάτησε και χρειάζεται Wi-Fi για να ξεκινήσει ξανά. Η ενεργοποίηση της Καταγραφής εκτός σύνδεσης ενώ είστε σε Wi-Fi αποτρέπει αυτό.</string>
+    <string name="notif_readiness_needs_wifi_restart_text">Ο καταγραφέας σταμάτησε και χρειάζεται Wi-Fi για να ξεκινήσει ξανά. Η ενεργοποίηση της ρύθμισης «Συνέχιση εγγραφής χωρίς Wi-Fi» ενώ είστε σε Wi-Fi το αποτρέπει.</string>
     <string name="notif_readiness_wd_off_by_user_text">Απενεργοποιήσατε τον Ασύρματο εντοπισμό σφαλμάτων και τίποτε άλλο δεν επιτρέπει στο CallVault να επανεκκινήσει τον καταγραφέα. Ενεργοποιήστε τον ξανά ή ενεργοποιήστε τον εντοπισμό σφαλμάτων USB.</string>
     <string name="notif_readiness_offline_paused_text">Η καταγραφή εκτός Wi-Fi είναι σε παύση: χρειάζεται εντοπισμό σφαλμάτων USB. Οι κλήσεις σε Wi-Fi εξακολουθούν να καταγράφονται.</string>
     <string name="notif_action_turn_wd_on">Ενεργοποίηση Ασύρματου εντοπισμού σφαλμάτων</string>
