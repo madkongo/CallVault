@@ -116,6 +116,18 @@
     <string name="merge_note_will_keep">Las demás llamadas también se conservan en el teléfono.</string>
     <string name="home_scroll_to_top">Arriba</string>
     <string name="home_whatsnew_full_notes">Notas de versión completas</string>
+    <string name="whatsnew_249_title">Llamadas de apps más claras y listo justo después de actualizar</string>
+    <string-array name="whatsnew_249_items">
+        <item>Menos eco en las llamadas de apps en teléfonos cuyo micrófono capta el auricular</item>
+        <item>Las llamadas de Telegram se graban hasta el final, con el nombre y el icono de Telegram</item>
+        <item>Las llamadas de apps que terminan antes de empezar a grabar ya no dejan un archivo vacío</item>
+        <item>La grabación está lista segundos después de una actualización</item>
+        <item>Se pueden transcribir llamadas de cualquier duración; las largas indican cuánto tardarán</item>
+        <item>Escribe para buscar un idioma en la lista de idiomas, y Urdu para transcribir</item>
+        <item>No desactivar nunca la depuración inalámbrica — un nuevo interruptor en Ajustes ▸ Conexión</item>
+        <item>Tu propio servidor de transcripción puede usar http:// en tu propia red</item>
+        <item>Ajustes siempre abre el diseño por páginas; la vista clásica ya no existe</item>
+    </string-array>
     <string name="whatsnew_248_title">Tu propia clave de transcripción y lectura más fácil</string>
     <string-array name="whatsnew_248_items">
         <item>Transcribe con tu propia clave — Groq, OpenRouter o tu servidor, en segundos en lugar de minutos (Ajustes ▸ Dónde transcribir)</item>

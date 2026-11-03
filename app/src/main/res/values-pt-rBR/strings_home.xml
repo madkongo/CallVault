@@ -116,6 +116,18 @@
     <string name="merge_note_will_keep">As outras chamadas também são mantidas no telefone.</string>
     <string name="home_scroll_to_top">Topo</string>
     <string name="home_whatsnew_full_notes">Notas de versão completas</string>
+    <string name="whatsnew_249_title">Chamadas de apps mais claras e pronto logo após atualizar</string>
+    <string-array name="whatsnew_249_items">
+        <item>Menos eco nas chamadas de apps em celulares cujo microfone capta o alto-falante de ouvido</item>
+        <item>Chamadas do Telegram são gravadas até o fim, com o nome e o ícone do Telegram</item>
+        <item>Chamadas de apps que terminam antes de a gravação começar não deixam mais um arquivo vazio</item>
+        <item>A gravação fica pronta segundos depois de uma atualização</item>
+        <item>Chamadas de qualquer duração podem ser transcritas; as longas dizem quanto tempo vai levar</item>
+        <item>Digite para encontrar um idioma na lista de idiomas, e Urdu para transcrição</item>
+        <item>Nunca desativar a depuração por Wi-Fi — uma nova chave em Configurações ▸ Conexão</item>
+        <item>Seu próprio servidor de transcrição pode usar http:// na sua rede</item>
+        <item>Configurações sempre abre o layout por páginas; a visualização clássica saiu</item>
+    </string-array>
     <string name="whatsnew_248_title">Sua própria chave de transcrição e leitura mais fácil</string>
     <string-array name="whatsnew_248_items">
         <item>Transcreva com sua própria chave — Groq, OpenRouter ou seu servidor, em segundos em vez de minutos (Configurações ▸ Onde transcrever)</item>
