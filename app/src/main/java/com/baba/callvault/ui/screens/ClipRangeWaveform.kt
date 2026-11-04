@@ -8,6 +8,9 @@
 
 package com.baba.callvault.ui.screens
 
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.gestures.detectDragGestures
 import androidx.compose.foundation.gestures.detectTapGestures
@@ -42,6 +45,31 @@ import kotlin.math.max
 /** Which end of the selection a drag is moving. */
 private enum class ClipEdge { START, END }
 
+/** The stretch of the call the waveform shows, in ms. */
+internal data class ClipView(val startMs: Long, val endMs: Long) {
+    val lengthMs: Long get() = (endMs - startMs).coerceAtLeast(1)
+
+    companion object {
+        /** Up to this long, the whole call is shown; longer calls zoom in on the part. */
+        const val WHOLE_UP_TO_MS = 3 * 60_000L
+        private const val MIN_VIEW_MS = 60_000L
+        private const val CONTEXT_FACTOR = 3
+
+        /**
+         * What to show for [range]: the whole call when it is short, otherwise the part with as much again on each
+         * side (at least a minute) — 30 s of a 57-minute call was 1% of the width, and the two handles sat on top of
+         * each other (OP9, 2026-11-04).
+         */
+        fun around(range: ClipRange, durationMs: Long): ClipView {
+            if (durationMs <= WHOLE_UP_TO_MS) return ClipView(0, durationMs.coerceAtLeast(1))
+            val length = (range.lengthMs * CONTEXT_FACTOR).coerceIn(MIN_VIEW_MS, durationMs)
+            val centre = (range.startMs + range.endMs) / 2
+            val start = (centre - length / 2).coerceIn(0, durationMs - length)
+            return ClipView(start, start + length)
+        }
+    }
+}
+
 /**
  * The recording's waveform with the part to share highlighted between two handles.
  *
@@ -72,6 +100,12 @@ internal fun ClipRangeWaveform(
     val change by rememberUpdatedState(onRangeChange)
     val snapPx = with(LocalDensity.current) { SNAP.toPx() }
     var dragging by remember { mutableStateOf<ClipEdge?>(null) }
+    // Re-fitted whenever the user is not dragging, so the view never moves under a finger.
+    var view by remember { mutableStateOf(ClipView.around(range, durationMs)) }
+    LaunchedEffect(range, durationMs, dragging) {
+        if (dragging == null) view = ClipView.around(range, durationMs)
+    }
+    val viewNow by rememberUpdatedState(view)
 
     val startLabel = stringResource(R.string.share_clip_handle_start, ClipRange.clock(range.startMs))
     val endLabel = stringResource(R.string.share_clip_handle_end, ClipRange.clock(range.endMs))
@@ -79,11 +113,12 @@ internal fun ClipRangeWaveform(
     val later = stringResource(R.string.share_clip_nudge_later)
 
     fun msAt(x: Float, width: Float): Long =
-        if (width <= 0f || durationMs <= 0) 0L else ((x / width).coerceIn(0f, 1f) * durationMs).toLong()
+        if (width <= 0f || durationMs <= 0) 0L
+        else viewNow.startMs + ((x / width).coerceIn(0f, 1f) * viewNow.lengthMs).toLong()
 
     fun snapped(ms: Long, width: Float): Long {
         val near = flags.minByOrNull { abs(it - ms) } ?: return ms
-        val distancePx = abs(near - ms).toFloat() / durationMs.coerceAtLeast(1) * width
+        val distancePx = abs(near - ms).toFloat() / viewNow.lengthMs * width
         return if (distancePx <= snapPx) near else ms
     }
 
@@ -93,8 +128,9 @@ internal fun ClipRangeWaveform(
         )
     }
 
+    Column(modifier = modifier.fillMaxWidth()) {
     Box(
-        modifier = modifier
+        modifier = Modifier
             .fillMaxWidth()
             .height(HEIGHT)
             .semantics {
@@ -139,18 +175,26 @@ internal fun ClipRangeWaveform(
         Canvas(modifier = Modifier.fillMaxWidth().height(HEIGHT)) {
             val w = size.width
             val h = size.height
-            val total = durationMs.coerceAtLeast(1).toFloat()
-            val x0 = range.startMs / total * w
-            val x1 = range.endMs / total * w
+            val span = view.lengthMs.toFloat()
+            fun xOf(ms: Long) = (ms - view.startMs) / span * w
+            val x0 = xOf(range.startMs).coerceIn(0f, w)
+            val x1 = xOf(range.endMs).coerceIn(0f, w)
 
             drawRoundRect(shade, topLeft = Offset(x0, 0f), size = Size(max(1f, x1 - x0), h), cornerRadius = CornerRadius(6.dp.toPx()))
 
+            // Thin bars at a fixed spacing, each reading the stored shape at its own time. The shape of a long call
+            // is coarse (one value per ~15 s on a 57-minute call), and stretching its few values across a zoomed view
+            // drew a handful of blobs (OP9, 2026-11-04).
             if (peaks.isNotEmpty()) {
-                val slot = w / peaks.size
+                val total = durationMs.coerceAtLeast(1).toFloat()
+                val slot = BAR_SLOT.toPx()
+                val count = (w / slot).toInt().coerceAtLeast(1)
                 val barWidth = max(1f, slot * 0.6f)
-                peaks.forEachIndexed { i, p ->
+                for (i in 0 until count) {
+                    val atMs = view.startMs + (i + 0.5f) / count * view.lengthMs
+                    val p = peaks[((atMs / total) * peaks.size).toInt().coerceIn(0, peaks.size - 1)]
                     val barH = max(2.dp.toPx(), p.coerceIn(0f, 1f) * (h - 12.dp.toPx()))
-                    val left = i * slot + (slot - barWidth) / 2f
+                    val left = i * (w / count) + (w / count - barWidth) / 2f
                     val inside = left + barWidth / 2f in x0..x1
                     drawRoundRect(
                         color = if (inside) selected else unselected,
@@ -163,14 +207,14 @@ internal fun ClipRangeWaveform(
                 drawRect(unselected, topLeft = Offset(0f, h / 2f - 1.dp.toPx()), size = Size(w, 2.dp.toPx()))
             }
 
-            flags.forEach { at ->
-                val x = at / total * w
+            flags.filter { it in view.startMs..view.endMs }.forEach { at ->
+                val x = xOf(at)
                 val tri = 5.dp.toPx()
                 drawPath(Path().apply { moveTo(x - tri, 0f); lineTo(x + tri, 0f); lineTo(x, tri * 1.6f); close() }, flagColor)
             }
 
-            playheadMs?.let { at ->
-                val x = at / total * w
+            playheadMs?.takeIf { it in view.startMs..view.endMs }?.let { at ->
+                val x = xOf(at)
                 drawRect(playhead, topLeft = Offset(x - 1.dp.toPx() / 2, 0f), size = Size(1.dp.toPx(), h))
             }
 
@@ -181,8 +225,33 @@ internal fun ClipRangeWaveform(
             }
         }
     }
+    // Zoomed in: a strip of the whole call under it, showing which stretch is in view and where the part is.
+    if (durationMs > ClipView.WHOLE_UP_TO_MS) {
+        val track = MaterialTheme.colorScheme.outlineVariant
+        Canvas(modifier = Modifier.fillMaxWidth().padding(top = 10.dp).height(OVERVIEW_HEIGHT)) {
+            val w = size.width
+            val h = size.height
+            val total = durationMs.toFloat()
+            drawRoundRect(track, size = Size(w, h), cornerRadius = CornerRadius(h / 2))
+            drawRoundRect(
+                shade,
+                topLeft = Offset(view.startMs / total * w, 0f),
+                size = Size(max(2.dp.toPx(), view.lengthMs / total * w), h),
+                cornerRadius = CornerRadius(h / 2),
+            )
+            drawRoundRect(
+                handle,
+                topLeft = Offset(range.startMs / total * w, 0f),
+                size = Size(max(3.dp.toPx(), range.lengthMs / total * w), h),
+                cornerRadius = CornerRadius(h / 2),
+            )
+        }
+    }
+    }
 }
 
 private val HEIGHT = 96.dp
+private val OVERVIEW_HEIGHT = 6.dp
+private val BAR_SLOT = 5.dp
 private val SNAP = 12.dp
 private const val NUDGE_MS = 1_000L

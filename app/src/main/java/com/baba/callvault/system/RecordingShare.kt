@@ -110,6 +110,8 @@ fun Context.shareClip(file: java.io.File, mime: String, text: String?) {
     val chooser = Intent.createChooser(intent, getString(R.string.share_clip_chooser)).apply {
         if (this@shareClip !is Activity) addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
     }
+    // Length only, never the words: this log can end up in a report.
+    AppLogger.i(TAG, "Sharing a clip (${file.length()} bytes) with ${text?.length ?: 0} characters of transcript text")
     runCatching { startActivity(chooser) }
         .onFailure { AppLogger.w(TAG, "Could not open the share sheet for the clip '${file.name}': ${it.message}") }
 }

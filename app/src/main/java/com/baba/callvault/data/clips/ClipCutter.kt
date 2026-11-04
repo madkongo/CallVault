@@ -146,8 +146,7 @@ object ClipCutter {
         var baseUs = -1L
         var written = 0
         try {
-            // Every Opus and AAC frame is a sync frame, so this lands on the frame at or just before the start.
-            extractor.seekTo(fromUs, MediaExtractor.SEEK_TO_PREVIOUS_SYNC)
+            seekAtOrBefore(extractor, fromUs)
             while (true) {
                 val size = extractor.readSampleData(buffer, 0)
                 if (size < 0) break
@@ -172,6 +171,28 @@ object ClipCutter {
         }
         return baseUs.coerceAtLeast(0L)
     }
+
+    /**
+     * Puts [extractor] at or before [targetUs]. Every Opus and AAC frame is a sync frame, but Android's Ogg seek is by
+     * page bisection and can land seconds AFTER the target in a long file — measured on the OP9 2026-11-04: a 30 s
+     * part of a 57-minute call came out 24.5 s, its first 5.5 s missing. So step back until the first frame is not
+     * later than the target; the copy then skips forward frame by frame to the exact start.
+     */
+    private fun seekAtOrBefore(extractor: MediaExtractor, targetUs: Long) {
+        var backUs = 0L
+        while (true) {
+            val at = (targetUs - backUs).coerceAtLeast(0L)
+            extractor.seekTo(at, MediaExtractor.SEEK_TO_PREVIOUS_SYNC)
+            val landed = extractor.sampleTime
+            if (landed in 0..targetUs || at == 0L) {
+                if (backUs > 0) AppLogger.i(TAG, "Seek landed late; stepped back ${backUs / 1000} ms to reach the start")
+                return
+            }
+            backUs = if (backUs == 0L) SEEK_STEP_US else backUs * 2
+        }
+    }
+
+    private const val SEEK_STEP_US = 5_000_000L
 
     /** A frame starting up to this much before the requested start still counts as "at" it (one 20–23 ms frame). */
     private const val FRAME_SLACK_US = 25_000L

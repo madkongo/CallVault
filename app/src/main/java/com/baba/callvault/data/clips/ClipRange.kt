@@ -67,10 +67,14 @@ data class ClipRange(val startMs: Long, val endMs: Long) {
 /** The clip's file name: the recording's name and the range, e.g. `Dana Levi (1-12 – 2-40).ogg`. */
 object ClipNaming {
     private val UNSAFE = Regex("[\\\\/:*?\"<>|\\p{Cntrl}]")
+
+    /** Invisible direction marks (the list wraps names in them); dropped, not replaced. */
+    private val FORMAT = Regex("\\p{Cf}")
     private const val MAX_BASE = 80
 
-    fun fileName(recordingName: String, range: ClipRange, extension: String): String {
-        val base = recordingName.substringBeforeLast('.').replace(UNSAFE, "_").trim().take(MAX_BASE)
+    /** @param name who the call was with, or the recording's file name without its extension. */
+    fun fileName(name: String, range: ClipRange, extension: String): String {
+        val base = name.replace(FORMAT, "").replace(UNSAFE, "_").trim().take(MAX_BASE)
             .ifEmpty { "clip" }
         // Colons are not allowed in file names on many targets, so the clock uses dashes.
         val from = ClipRange.clock(range.startMs).replace(':', '-')

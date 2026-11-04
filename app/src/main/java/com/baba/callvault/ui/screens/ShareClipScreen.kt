@@ -204,7 +204,8 @@ internal fun ShareClipScreen(
         // The part as it was when Share was tapped. Audio, name and text all use this one, even if a handle moves.
         val cutRange = range
         job = scope.launch {
-            val name = ClipNaming.fileName(item.displayName, cutRange, ClipCutter.extensionFor(clipMime))
+            // Named after who the call was with, as the list shows it, not the recording's raw file name.
+            val name = ClipNaming.fileName(item.contactName ?: item.number ?: item.displayName.substringBeforeLast('.'), cutRange, ClipCutter.extensionFor(clipMime))
             val clip = withContext(Dispatchers.IO) {
                 runCatching { ClipCutter.cut(context, item.uri, cutRange, ClipFiles.newFile(context, name)) }
                     .onFailure { AppLogger.w(TAG, "Clip failed: ${it.message}") }

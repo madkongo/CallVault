@@ -36,6 +36,15 @@ class ClipRangeTest {
     @Test fun `file name carries the range and no unsafe characters`() =
         assertEquals(
             "Dana_Levi (1-12 – 2-40).ogg",
-            ClipNaming.fileName("Dana/Levi.ogg", ClipRange(72_000, 160_000), "ogg"),
+            ClipNaming.fileName("Dana/Levi", ClipRange(72_000, 160_000), "ogg"),
+        )
+
+    @Test fun `a dot in a contact's name is kept`() =
+        assertEquals("Dr. Cohen (0-06 – 0-14).ogg", ClipNaming.fileName("Dr. Cohen", ClipRange(6_000, 14_000), "ogg"))
+
+    @Test fun `bidi isolation marks never reach a file name`() =
+        assertEquals(
+            "Dana (0-06 – 0-14).ogg",
+            ClipNaming.fileName("\u2068Dana\u2069", ClipRange(6_000, 14_000), "ogg"),
         )
 }
