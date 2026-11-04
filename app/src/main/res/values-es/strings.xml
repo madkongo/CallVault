@@ -757,6 +757,7 @@
     <string name="transcription_language_label">Idioma</string>
     <string name="transcription_language_persian">Persa</string>
     <string name="transcription_language_urdu">Urdu</string>
+    <string name="transcription_language_bengali">Bengalí</string>
     <string name="transcription_language_polish">Polaco</string>
     <string name="transcription_language_portuguese">Portugués</string>
     <string name="transcription_language_russian">Ruso</string>

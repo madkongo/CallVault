@@ -80,6 +80,8 @@ object SummaryLanguage {
                 // CJK ideographs. Japanese kana are excluded on purpose: this app offers no
                 // Japanese, so a kana-heavy text has no honest answer here.
                 code in 0x4E00..0x9FFF -> "zh"
+                // Bengali script. Assamese shares it, but this app offers no Assamese.
+                code in 0x0980..0x09FF -> "bn"
                 else -> null
             }
             if (language != null) counts[language] = (counts[language] ?: 0) + 1

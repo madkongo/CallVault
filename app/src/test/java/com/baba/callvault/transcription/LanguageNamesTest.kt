@@ -42,6 +42,7 @@ class LanguageNamesTest {
         assertEquals("עברית", LanguageNames.endonymOf("he"))
         assertEquals("فارسی", LanguageNames.endonymOf("fa"))
         assertEquals("اردو", LanguageNames.endonymOf("ur"))
+        assertEquals("বাংলা", LanguageNames.endonymOf("bn"))
     }
 
     @Test

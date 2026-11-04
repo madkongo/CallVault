@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Bengali (বাংলা) translation -->
+<resources>
+    <string name="disclaimer_ui_hero_subtitle">FOSS কল রেকর্ডিং, আপনার শর্তে। এগোনোর আগে দয়া করে দায়মুক্তি বিবৃতিটি পড়ে নিন।</string>
+    <string name="disclaimer_ui_body_header">দায়মুক্তি বিবৃতি</string>
+    <string name="disclaimer_ui_scroll_hint">চেকবক্স চালু করতে একদম শেষ পর্যন্ত স্ক্রল করুন।</string>
+
+    <string name="permissions_ui_eyebrow">সেটআপ</string>
+    <string name="permissions_ui_hero_title">চলুন সেটআপ করি</string>
+    <string name="permissions_ui_hero_subtitle">কয়েকটি অনুমতি দিন, যাতে CallVault আপনার কল রেকর্ড ও চিহ্নিত করতে পারে। নিচের প্রতিটি অনুমোদন করুন।</string>
+    <string name="permissions_ui_hero_line">কল রেকর্ড করতে কয়েকটি অনুমতি।</string>
+    <string name="permissions_ui_section_label">অনুমতি</string>
+    <string name="permission_adb_hint">পেয়ার করুন-এ ট্যাপ করুন, তারপর নোটিফিকেশন থেকে পেয়ারিং কোড দিন।</string>
+    <string name="permission_adb_desc_short">রেকর্ডার সেটআপের জন্য দরকার। Wi-Fi লাগবে।</string>
+    <string name="permissions_status_adb_not_connected">সংযুক্ত নয়</string>
+    <string name="permissions_status_adb_connected">সংযুক্ত</string>
+
+    <string name="permission_status_devmode_off_tap_build">ডেভেলপার অপশন (Developer options) বন্ধ — বিল্ড নম্বরে 7 বার ট্যাপ করুন</string>
+    <string name="permission_devmode_open_wd">ওয়্যারলেস ডিবাগিং খুলুন</string>
+    <string name="permission_devmode_enable_hint">চালু করতে: সেটিংস → ফোন সম্পর্কে → বিল্ড নম্বরে (Build number) 7 বার ট্যাপ করুন।</string>
+    <string name="permission_devmode_open_device_info">ডিভাইসের তথ্য খুলুন</string>
+
+    <string name="permission_status_wd_on_enter_code">পেয়ার করুন-এ ট্যাপ করে পেয়ারিং কোড দিন</string>
+    <string name="permission_wd_off">ওয়্যারলেস ডিবাগিং (Wireless debugging) বন্ধ</string>
+    <string name="permission_wd_enable_hint">চালু করুন: ডেভেলপার অপশন (Developer options) → ওয়্যারলেস ডিবাগিং (Wireless debugging)।</string>
+    <string name="permission_adb_hint_wd_on">পেয়ার করুন-এ ট্যাপ করুন, তারপর ওয়্যারলেস ডিবাগিং (Wireless debugging) স্ক্রিন থেকে পেয়ারিং কোড দিন।</string>
+
+    <string name="permission_adb_open_device_info">ডিভাইসের তথ্য খুলুন</string>
+    <string name="permission_adb_open_wd">ওয়্যারলেস ডিবাগিং খুলুন</string>
+
+    <string name="permission_adb_pair">পেয়ার করুন</string>
+</resources>
