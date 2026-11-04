@@ -61,7 +61,13 @@ Drive folder row. Non-cloud Drive folders are still allowed (a local folder sync
 Immediate advice for the reporter: Settings → "Where to save recordings" → **On this phone**, or pick a real Google
 Drive folder ("Drive" in the picker). Deleted recordings are almost certainly gone.
 
-## 🔵 FOR 2.5.0 — Bengali (Bangla / বাংলা) language — requested 2026-11-04, not started
+## 🧪 BUILT, VERIFYING — Bengali (Bangla / বাংলা) language — requested + built 2026-11-04 (merged into integration/next)
+
+Built 2026-11-04: `values-bn` (all 8 files, translated by four parallel helpers, checkTranslations green) and `bn`
+through the five transcription tables (`a82e6a5f`). OP9 2.5.0-next3: the app displays in Bengali. Dates show Bengali
+digits (Android's own date format) while durations and sizes show Western digits. 🧪 To settle: a Bengali speaker
+reads the screens; a real Bengali call transcribed on-device.
+
 
 Requested by the maintainer for 2.5.0: Bengali (known natively as Bangla / বাংলা), an Indo-Aryan language spoken
 mainly in the Bengal region of South Asia (Bangladesh and the Indian state of West Bengal).
@@ -77,7 +83,14 @@ Scope (both, unless the maintainer narrows it):
       but 📐 its accuracy on Bengali is weak on small models; try a real Bengali clip before claiming quality.
 - [ ] Onboarding/settings language pickers show it (see [[new-features-consider-onboarding]]).
 
-## 🔵 FOR 2.5.0 — Custom file-name template (free editing, like ShizuCallRecorder) — requested 2026-11-04, not started
+## 🧪 BUILT, VERIFYING — Custom file-name template (free editing, like ShizuCallRecorder) — requested + built 2026-11-04 (merged into integration/next)
+
+Built 2026-11-04 (`8afd7966`): ShizuCallRecorder had this editor; we replaced it with presets on 2026-06-11 (`494c1598`).
+Now "Custom" in the preset list: text field, tap-a-tag list, live example; `CustomFileNameTemplate` requires {date},
+refuses bad characters, unknown tags and over 120 characters. The setup wizard keeps presets only. OP9 2.5.0-next3:
+editor, error and save checked. 🧪 To settle: record a call with a custom name and check the list shows date and
+contact; a name not split by "_" shows the whole leftover text as the contact (e.g. "Call-John Doe").
+
 
 User request via the maintainer: "I wish to add in (File Name Template) Custom Edit Like Shizu👌". "Shizu" is
 ShizuCallRecorder, our upstream, which lets the user type their own template.
@@ -108,7 +121,8 @@ the list below (classic Settings removed) and the decode time limit.
 **New since 2026-10-31:**
 - 🧪 Release blocker for 2.5.0 (found 2026-11-04), now fixed on integration/next: "Drive" folder = recording folder
   deleted every recording — see the section above.
-- 🔵 For 2.5.0 (added 2026-11-04): Bengali (Bangla) — app language + transcription language; see the section above.
+- 🧪 For 2.5.0: Bengali (Bangla) — built 2026-11-04; see above.
+- 🧪 For 2.5.0: custom file-name template — built 2026-11-04; see above.
 - 🅿️ Parked by the maintainer: in-app downgrade (RollbackManager works one step back but restores old data; keep-data
   uninstall loses folder access + battery exemption; memory `in-app-downgrade-research`); start-of-call echo.
 - 🔵 Small bug found 2026-11-03, not fixed: changing "Where to save recordings" alone does not re-apply the Drive
