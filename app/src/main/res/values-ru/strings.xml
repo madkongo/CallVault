@@ -71,6 +71,8 @@
     <string name="disclaimer_title">Добро пожаловать в CallVault</string>
     <string name="export_heading_transcript">Расшифровка</string>
     <string name="folder_cloud_rejected">Облачные папки (например, Google Drive) нельзя использовать для записи. Выберите хранилище на устройстве — для копий в облаке используйте функцию резервного копирования в Google Drive.</string>
+    <string name="folder_drive_overlaps_recordings">Папка Drive не может быть папкой записей. Выберите папку Google Диска.</string>
+    <string name="folder_drive_overlap_warning">Это ваша папка записей (или она с ней пересекается), поэтому в Drive ничего не копируется. Выберите папку Google Диска.</string>
     <string name="folder_cloud_warning">⚠ Эта папка для записей находится в облаке, что ненадёжно для записи. Выберите папку на устройстве.</string>
     <string name="general_back">Назад</string>
     <string name="general_cancel">Отменить</string>

@@ -29,6 +29,7 @@ import com.baba.callvault.data.RetentionPeriod
 import com.baba.callvault.data.SyncScheduleMode
 import com.baba.callvault.ui.common.SyncScheduleLabels
 import com.baba.callvault.data.StorageTarget
+import com.baba.callvault.system.storage.FolderOverlap
 import com.baba.callvault.system.storage.SafHelper
 import com.baba.callvault.ui.common.M3DropdownField
 import com.baba.callvault.ui.common.OptionItem
@@ -120,12 +121,18 @@ internal fun RecordingFolderRow(preferences: AppPreferences, updateTrigger: Int,
 internal fun DriveFolderRow(preferences: AppPreferences, updateTrigger: Int, onSelectDriveFolder: () -> Unit) {
     val context = LocalContext.current
     val driveFolderLabel = remember(updateTrigger) { SafHelper.getFolderDisplayNameOrNull(context, preferences.getDriveFolderUri()) }
+    // Set up before 2.5.0 refused it: nothing is copied or deleted while it overlaps, so say why.
+    val overlapsRecordings = remember(updateTrigger) {
+        FolderOverlap.overlaps(preferences.getRecordingFolderUri(), preferences.getDriveFolderUri())
+    }
     NavigationRow(
         icon = Icons.Filled.Cloud,
         label = stringResource(R.string.settings_drive_folder_label),
         value = driveFolderLabel ?: stringResource(R.string.general_not_set),
-        supporting = stringResource(R.string.settings_drive_folder_desc),
-        onClick = onSelectDriveFolder
+        supporting = if (overlapsRecordings) stringResource(R.string.folder_drive_overlap_warning)
+            else stringResource(R.string.settings_drive_folder_desc),
+        onClick = onSelectDriveFolder,
+        keepSupportingInline = overlapsRecordings,
     )
 }
 

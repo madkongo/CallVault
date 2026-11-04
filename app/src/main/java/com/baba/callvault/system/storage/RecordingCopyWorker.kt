@@ -60,6 +60,12 @@ class RecordingCopyWorker(ctx: Context, params: WorkerParameters) : CoroutineWor
 
         return when (val result = SafHelper.copyFileToFolder(applicationContext, src, destFolder, name, mime, srcSize)) {
             is SafHelper.CopyResult.AlreadyPresent -> {
+                if (FolderOverlap.isSameDocument(src, result.uri)) {
+                    // The "Drive" folder is the recording folder: the copy we found is the recording itself.
+                    // Deleting it now would delete the only copy (Xiaomi report, 2026-11-04). Keep it.
+                    AppLogger.e(TAG, "'$name': the Drive folder is the recording folder; keeping the device copy, nothing uploaded")
+                    return Result.success()
+                }
                 AppLogger.i(TAG, "'$name' is already in Drive; not uploading it again")
                 finish(name, result.uri, srcSize, deleteLocal, src, isSidecar)
             }

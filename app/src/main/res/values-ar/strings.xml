@@ -111,6 +111,8 @@
     <string name="disclaimer_title">مرحبًا بك في CallVault</string>
     <string name="export_heading_transcript">النص المكتوب</string>
     <string name="folder_cloud_rejected">لا يمكن استخدام المجلدات السحابية (مثل Google Drive) للتسجيل. اختر تخزينًا على الجهاز - استخدم خيار النسخ الاحتياطي على Google Drive للحصول على نسخ سحابية.</string>
+    <string name="folder_drive_overlaps_recordings">لا يمكن أن يكون مجلد Drive هو مجلد التسجيلات. اختر مجلدًا في Google Drive.</string>
+    <string name="folder_drive_overlap_warning">هذا هو مجلد التسجيلات (أو يتداخل معه)، لذلك لا يُنسخ شيء إلى Drive. اختر مجلدًا في Google Drive.</string>
     <string name="folder_cloud_warning">⚠ مجلد التسجيلات هذا موجود في السحابة، وهو غير موثوق به لالتقاط الصوت. اختر مجلدًا على الجهاز.</string>
     <string name="general_back">رجوع</string>
     <string name="general_cancel">إلغاء</string>

@@ -72,6 +72,8 @@
     <string name="disclaimer_title">Boas-vindas ao CallVault</string>
     <string name="export_heading_transcript">Transcrição</string>
     <string name="folder_cloud_rejected">Pastas na nuvem (como o Google Drive) não podem ser usadas para gravar. Escolha um armazenamento no próprio dispositivo — use a opção de backup no Google Drive para cópias na nuvem.</string>
+    <string name="folder_drive_overlaps_recordings">A pasta do Drive não pode ser a de gravações. Escolha uma pasta do Google Drive.</string>
+    <string name="folder_drive_overlap_warning">Esta é a sua pasta de gravações (ou se sobrepõe a ela), então nada é copiado para o Drive. Escolha uma pasta do Google Drive.</string>
     <string name="folder_cloud_warning">⚠ Esta pasta de gravação está na nuvem, o que não é confiável para a captura. Escolha uma pasta no dispositivo.</string>
     <string name="general_back">Voltar</string>
     <string name="general_cancel">Cancelar</string>

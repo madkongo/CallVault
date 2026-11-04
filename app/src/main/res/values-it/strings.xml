@@ -69,6 +69,8 @@
     <string name="disclaimer_title">Benvenuto in CallVault</string>
     <string name="export_heading_transcript">Trascrizione</string>
     <string name="folder_cloud_rejected">Le cartelle nel cloud (come Google Drive) non possono essere usate per la registrazione. Scelga un\'archiviazione sul dispositivo; usi l\'opzione di backup su Google Drive per le copie nel cloud.</string>
+    <string name="folder_drive_overlaps_recordings">La cartella Drive non può essere quella delle registrazioni. Scegli una cartella di Google Drive.</string>
+    <string name="folder_drive_overlap_warning">Questa è la cartella delle registrazioni (o si sovrappone), quindi nulla viene copiato su Drive. Scegli una cartella di Google Drive.</string>
     <string name="folder_cloud_warning">⚠ Questa cartella di registrazione si trova nel cloud, il che non è affidabile per l\'acquisizione. Scelga una cartella sul dispositivo.</string>
     <string name="general_back">Indietro</string>
     <string name="general_cancel">Cancella</string>

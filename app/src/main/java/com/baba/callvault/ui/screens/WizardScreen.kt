@@ -50,6 +50,7 @@ import com.baba.callvault.R
 import com.baba.callvault.data.StorageTarget
 import com.baba.callvault.integrations.adb.UsbDefaultConfig
 import com.baba.callvault.system.PersistentFolderPickerContract
+import com.baba.callvault.system.storage.FolderOverlap
 import com.baba.callvault.system.storage.SafHelper
 import com.baba.callvault.system.takePersistableFolderPermission
 import com.baba.callvault.ui.common.CvCard
@@ -93,6 +94,8 @@ fun WizardScreen(
         if (uri != null) {
             if (SafHelper.isCloudFolder(uri)) {
                 Toast.makeText(context, context.getString(R.string.folder_cloud_rejected), Toast.LENGTH_LONG).show()
+            } else if (FolderOverlap.overlaps(uri, viewModel.preferences.getDriveFolderUri())) {
+                Toast.makeText(context, context.getString(R.string.folder_drive_overlaps_recordings), Toast.LENGTH_LONG).show()
             } else {
                 context.takePersistableFolderPermission(uri)
                 viewModel.setRecordingFolderUri(uri)
@@ -102,7 +105,10 @@ fun WizardScreen(
 
     // Drive folder picker — same contract.
     val driveFolderPicker = rememberLauncherForActivityResult(PersistentFolderPickerContract()) { uri ->
-        if (uri != null) {
+        if (uri != null && FolderOverlap.overlaps(viewModel.preferences.getRecordingFolderUri(), uri)) {
+            // Same rule as Settings: the recording folder can never be the Drive folder. See [FolderOverlap].
+            Toast.makeText(context, context.getString(R.string.folder_drive_overlaps_recordings), Toast.LENGTH_LONG).show()
+        } else if (uri != null) {
             context.takePersistableFolderPermission(uri)
             viewModel.setDriveFolderUri(uri)
         }

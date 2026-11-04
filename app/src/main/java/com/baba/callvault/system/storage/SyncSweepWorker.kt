@@ -43,6 +43,12 @@ class SyncSweepWorker(ctx: Context, params: WorkerParameters) : CoroutineWorker(
             AppLogger.w(TAG, "Sweep skipped: source or Drive folder not configured (source=$sourceFolderUri drive=$driveFolderUri).")
             return Result.success()
         }
+        if (FolderOverlap.overlaps(sourceFolderUri, driveFolderUri)) {
+            // Copying a folder into itself (or into a folder inside it) only ever finds the recordings
+            // themselves, and Drive-only would then delete them. See [FolderOverlap].
+            AppLogger.e(TAG, "Sweep skipped: the Drive folder is the recording folder or overlaps it.")
+            return Result.success()
+        }
         if (!SafHelper.isFolderValid(applicationContext, driveFolderUri)) {
             AppLogger.w(TAG, "Drive folder not currently valid/writable; retrying later.")
             return Result.retry()
@@ -150,7 +156,8 @@ class SyncSweepWorker(ctx: Context, params: WorkerParameters) : CoroutineWorker(
             }.also { done++; showProgress(done, total) } ?: continue
 
             existingInDrive[name.lowercase()] = DriveCopy(driveUri, sourceSize)
-            val deletedLocally = deleteLocal &&
+            // Never delete the file we were told is the Drive copy (see [FolderOverlap]).
+            val deletedLocally = deleteLocal && !FolderOverlap.isSameDocument(file.uri, driveUri) &&
                 SafHelper.deleteDocument(file, "the device copy of '$name'")
             // A failed SAF delete leaves the local recording intact, so keep the
             // catalog pointer to it. Only clear that pointer on confirmed deletion.

@@ -69,6 +69,8 @@
     <string name="disclaimer_title">Bienvenue sur CallVault</string>
     <string name="export_heading_transcript">Transcription</string>
     <string name="folder_cloud_rejected">Les dossiers cloud (comme Google Drive) ne peuvent pas être utilisés pour l\'enregistrement. Choisissez un stockage sur l\'appareil — utilisez l\'option de sauvegarde Google Drive pour les copies dans le cloud.</string>
+    <string name="folder_drive_overlaps_recordings">Le dossier Drive ne peut pas être celui des enregistrements. Choisissez un dossier Google Drive.</string>
+    <string name="folder_drive_overlap_warning">C\'est votre dossier d\'enregistrements (ou il le chevauche), donc rien n\'est copié vers Drive. Choisissez un dossier Google Drive.</string>
     <string name="folder_cloud_warning">⚠ Ce dossier d\'enregistrement se trouve dans le cloud, ce qui n\'est pas fiable pour la capture. Choisissez un dossier sur l\'appareil.</string>
     <string name="general_back">Retour</string>
     <string name="general_cancel">Annuler</string>
