@@ -53,6 +53,22 @@ Fix (agreed scope, 📐 not built):
 Immediate advice for the reporter: Settings → "Where to save recordings" → **On this phone**, or pick a real Google
 Drive folder ("Drive" in the picker). Deleted recordings are almost certainly gone.
 
+## 🔵 FOR 2.5.0 — Bengali (Bangla / বাংলা) language — requested 2026-11-04, not started
+
+Requested by the maintainer for 2.5.0: Bengali (known natively as Bangla / বাংলা), an Indo-Aryan language spoken
+mainly in the Bengal region of South Asia (Bangladesh and the Indian state of West Bengal).
+
+Today (checked 2026-11-04): no `values-bn` folder (15 UI locales, no Bengali) and no Bengali in the transcription
+language code.
+
+Scope (both, unless the maintainer narrows it):
+- [ ] **App language:** new `values-bn` with every string file, kept complete by `checkTranslations`. Check that
+      Bengali script renders in the app font and that number/plural forms read right.
+- [ ] **Transcription language:** add Bengali (`bn`) as a pinnable language. Memory `adding-a-transcription-language`
+      lists the five tables to touch (Greek shipped touching only one) and the guard tests. Whisper supports Bengali,
+      but 📐 its accuracy on Bengali is weak on small models; try a real Bengali clip before claiming quality.
+- [ ] Onboarding/settings language pickers show it (see [[new-features-consider-onboarding]]).
+
 ## Current state — 2026-11-03 (after v2.4.9)
 
 **Released:** v2.4.9 (20490), published 2026-11-03 after a soak on the maintainer's OP12; asset == tested build
@@ -62,6 +78,7 @@ the list below (classic Settings removed) and the decode time limit.
 **New since 2026-10-31:**
 - 🚨 Release blocker for 2.5.0 (found 2026-11-04): "Drive" folder = recording folder deletes every recording — see
   the MUST FIX section above.
+- 🔵 For 2.5.0 (added 2026-11-04): Bengali (Bangla) — app language + transcription language; see the section above.
 - 🅿️ Parked by the maintainer: in-app downgrade (RollbackManager works one step back but restores old data; keep-data
   uninstall loses folder access + battery exemption; memory `in-app-downgrade-research`); start-of-call echo.
 - 🔵 Small bug found 2026-11-03, not fixed: changing "Where to save recordings" alone does not re-apply the Drive
