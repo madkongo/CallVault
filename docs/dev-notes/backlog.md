@@ -69,6 +69,28 @@ Scope (both, unless the maintainer narrows it):
       but 📐 its accuracy on Bengali is weak on small models; try a real Bengali clip before claiming quality.
 - [ ] Onboarding/settings language pickers show it (see [[new-features-consider-onboarding]]).
 
+## 🔵 FOR 2.5.0 — Custom file-name template (free editing, like ShizuCallRecorder) — requested 2026-11-04, not started
+
+User request via the maintainer: "I wish to add in (File Name Template) Custom Edit Like Shizu👌". "Shizu" is
+ShizuCallRecorder, our upstream, which lets the user type their own template.
+
+Today (checked 2026-11-04): Settings and the setup wizard offer only 9 fixed presets (`FILE_NAME_TEMPLATE_PRESETS` in
+`utils/FileNameTemplates.kt`, chosen in `ui/common/FileNameFormatDialog.kt`); there is no free editing. The formatter
+already supports placeholders `{date}`, `{direction}`, `{phone_number}`, `{contact_name}`, `{cross_country}` (plus
+`{date_compact}`), and each already has a translated description string, so the building blocks exist.
+`presetForTemplateOrFirst` shows a stored custom value as the first preset, so a custom template is never shown
+correctly today (an imported settings file can already hold one).
+
+Proposed (📐, not decided in detail):
+- [ ] A "Custom…" entry at the end of the preset list → a text field with tappable placeholder chips and a live
+      example (`fileNameTemplateExample`).
+- [ ] Validate before saving: at least one of date/number/contact (or names collide), no characters illegal in file
+      names (`/ \ : * ? " < > |`), a length limit, no unknown `{tokens}`.
+- [ ] Show a saved custom template as "Custom" in Settings, not as the first preset.
+- [ ] Check what reads names back: display-time contact resolution, merge, Drive copy and the Honor dialer preset
+      all parse or match file names. A free template must not break them.
+- [ ] Same picker in the wizard (one shared component, see [[new-features-consider-onboarding]]); tests; 15 locales.
+
 ## Current state — 2026-11-03 (after v2.4.9)
 
 **Released:** v2.4.9 (20490), published 2026-11-03 after a soak on the maintainer's OP12; asset == tested build
