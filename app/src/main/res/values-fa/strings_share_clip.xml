@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  ~ CallVault: FOSS call recording, self-contained over embedded ADB
+  ~  Copyright (C) 2026-present The CallVault Authors
+  ~  Licensed under the GNU General Public License v3 or later (see LICENSE).
+  -->
+<!-- "Share a part": sharing a chosen part of a recording as a new file (2026-11-04). -->
+<resources>
+    <string name="share_clip_menu">اشتراک‌گذاری یک بخش</string>
+    <string name="share_clip_share_whole">اشتراک‌گذاری فایل ضبط‌شده</string>
+    <string name="playback_share">اشتراک‌گذاری</string>
+    <string name="share_clip_title">اشتراک‌گذاری یک بخش</string>
+    <string name="share_clip_start">شروع</string>
+    <string name="share_clip_length">مدت</string>
+    <string name="share_clip_end">پایان</string>
+    <string name="share_clip_start_here">شروع از اینجا</string>
+    <string name="share_clip_end_here">پایان اینجا</string>
+    <string name="share_clip_preview">پخش بخش</string>
+    <string name="share_clip_pause">مکث</string>
+    <string name="share_clip_hint">هر یک از دو سر را بکشید، یا جایی را که باید باشد لمس کنید. «شروع از اینجا» و «پایان اینجا» جایی را که در حال گوش دادن هستید به کار می‌برند.</string>
+    <string name="share_clip_handle_start">شروع بخش، %1$s</string>
+    <string name="share_clip_handle_end">پایان بخش، %1$s</string>
+    <string name="share_clip_nudge_earlier">یک ثانیه زودتر</string>
+    <string name="share_clip_nudge_later">یک ثانیه دیرتر</string>
+    <string name="share_clip_include_text">افزودن آنچه گفته شد</string>
+    <string name="share_clip_text_ready">خط‌های رونوشت درون این بخش همراه آن فرستاده می‌شوند.</string>
+    <string name="share_clip_text_none_in_part">در این بخش چیزی گفته نشد، پس متنی همراه آن نمی‌رود.</string>
+    <string name="share_clip_text_call_running">این تماس در حال رونویسی است. خط‌های آن درون این بخش پس از پایان رونویسی به اشتراک گذاشته می‌شوند.</string>
+    <string name="share_clip_transcribe_part">رونویسی فقط همین بخش</string>
+    <string name="share_clip_transcribe_part_detail">سریع‌تر. فقط برای همین اشتراک‌گذاری؛ تماس بدون رونوشت می‌ماند.</string>
+    <string name="share_clip_transcribe_whole">رونویسی کل تماس</string>
+    <string name="share_clip_transcribe_whole_detail">همراه تماس ذخیره می‌شود. فقط خط‌های این بخش به اشتراک گذاشته می‌شوند.</string>
+    <string name="share_clip_share">اشتراک‌گذاری %1$s</string>
+    <string name="share_clip_working_cut">در حال آماده کردن بخش…</string>
+    <string name="share_clip_working_part">در حال رونویسی بخش… %1$d%%</string>
+    <string name="share_clip_working_call">در انتظار رونوشت تماس…</string>
+    <string name="share_clip_share_without_text">اشتراک‌گذاری بدون متن</string>
+    <string name="share_clip_back">بازگشت</string>
+    <string name="share_clip_failed">ساختن بخش ممکن نشد. دوباره تلاش کنید، یا کل فایل ضبط‌شده را به اشتراک بگذارید.</string>
+    <string name="share_clip_busy">رونویسی مشغول تماس دیگری است. بدون متن به اشتراک بگذارید، یا پس از پایان آن دوباره تلاش کنید.</string>
+    <string name="share_clip_not_set_up">رونویسی هنوز راه‌اندازی نشده است. یک مدل بارگیری کنید یا سرویس خود را در تنظیمات اضافه کنید.</string>
+    <string name="share_clip_transcribe_failed">رونویسی این بار انجام نشد. بدون متن به اشتراک گذاشته شود؟</string>
+    <string name="share_clip_unsupported">فقط از فایل‌های ضبط‌شده خودِ CallVault می‌توان بخشی را به اشتراک گذاشت، نه از این فایل واردشده.</string>
+    <string name="share_clip_chooser">اشتراک‌گذاری بخشی از فایل ضبط‌شده</string>
+</resources>

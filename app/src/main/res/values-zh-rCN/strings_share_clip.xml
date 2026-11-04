@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  ~ CallVault: FOSS call recording, self-contained over embedded ADB
+  ~  Copyright (C) 2026-present The CallVault Authors
+  ~  Licensed under the GNU General Public License v3 or later (see LICENSE).
+  -->
+<!-- "Share a part": sharing a chosen part of a recording as a new file (2026-11-04). -->
+<resources>
+    <string name="share_clip_menu">分享片段</string>
+    <string name="share_clip_share_whole">分享录音</string>
+    <string name="playback_share">分享</string>
+    <string name="share_clip_title">分享片段</string>
+    <string name="share_clip_start">开始</string>
+    <string name="share_clip_length">长度</string>
+    <string name="share_clip_end">结束</string>
+    <string name="share_clip_start_here">从这里开始</string>
+    <string name="share_clip_end_here">到这里结束</string>
+    <string name="share_clip_preview">播放片段</string>
+    <string name="share_clip_pause">暂停</string>
+    <string name="share_clip_hint">拖动任意一端，或点按它应在的位置。“从这里开始”和“到这里结束”使用你正在收听的位置。</string>
+    <string name="share_clip_handle_start">片段开头，%1$s</string>
+    <string name="share_clip_handle_end">片段结尾，%1$s</string>
+    <string name="share_clip_nudge_earlier">提前一秒</string>
+    <string name="share_clip_nudge_later">推后一秒</string>
+    <string name="share_clip_include_text">附上说话内容</string>
+    <string name="share_clip_text_ready">此片段内的转写文字会一起发送。</string>
+    <string name="share_clip_text_none_in_part">此片段内没有人说话，因此不附带文字。</string>
+    <string name="share_clip_text_call_running">这通电话正在转写。转写完成后，会分享它在此片段内的文字。</string>
+    <string name="share_clip_transcribe_part">只转写此片段</string>
+    <string name="share_clip_transcribe_part_detail">更快。仅用于这次分享；通话仍不会转写。</string>
+    <string name="share_clip_transcribe_whole">转写整通电话</string>
+    <string name="share_clip_transcribe_whole_detail">随通话一起保存。只分享此片段内的文字。</string>
+    <string name="share_clip_share">分享 %1$s</string>
+    <string name="share_clip_working_cut">正在准备片段…</string>
+    <string name="share_clip_working_part">正在转写片段… %1$d%%</string>
+    <string name="share_clip_working_call">正在等待通话的转写…</string>
+    <string name="share_clip_share_without_text">不带文字分享</string>
+    <string name="share_clip_back">返回</string>
+    <string name="share_clip_failed">无法生成片段。请重试，或分享整段录音。</string>
+    <string name="share_clip_busy">转写正忙于另一通电话。可以不带文字分享，或等它完成后重试。</string>
+    <string name="share_clip_not_set_up">尚未设置转写。请下载模型，或在设置中添加你的服务。</string>
+    <string name="share_clip_transcribe_failed">这次转写没有成功。不带文字分享吗？</string>
+    <string name="share_clip_unsupported">只能从 CallVault 自己的录音中分享片段，不能从这个导入的文件中分享。</string>
+    <string name="share_clip_chooser">分享录音的片段</string>
+</resources>

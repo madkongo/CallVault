@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  ~ CallVault: FOSS call recording, self-contained over embedded ADB
+  ~  Copyright (C) 2026-present The CallVault Authors
+  ~  Licensed under the GNU General Public License v3 or later (see LICENSE).
+  -->
+<!-- "Share a part": sharing a chosen part of a recording as a new file (2026-11-04). -->
+<resources>
+    <string name="share_clip_menu">Udostępnij fragment</string>
+    <string name="share_clip_share_whole">Udostępnij nagranie</string>
+    <string name="playback_share">Udostępnij</string>
+    <string name="share_clip_title">Udostępnij fragment</string>
+    <string name="share_clip_start">Początek</string>
+    <string name="share_clip_length">Długość</string>
+    <string name="share_clip_end">Koniec</string>
+    <string name="share_clip_start_here">Początek tutaj</string>
+    <string name="share_clip_end_here">Koniec tutaj</string>
+    <string name="share_clip_preview">Odtwórz fragment</string>
+    <string name="share_clip_pause">Pauza</string>
+    <string name="share_clip_hint">Przeciągnij dowolny koniec albo stuknij, gdzie ma być. „Początek tutaj” i „Koniec tutaj” biorą miejsce, którego właśnie słuchasz.</string>
+    <string name="share_clip_handle_start">Początek fragmentu, %1$s</string>
+    <string name="share_clip_handle_end">Koniec fragmentu, %1$s</string>
+    <string name="share_clip_nudge_earlier">sekundę wcześniej</string>
+    <string name="share_clip_nudge_later">sekundę później</string>
+    <string name="share_clip_include_text">Dołącz to, co zostało powiedziane</string>
+    <string name="share_clip_text_ready">Linie transkrypcji z tego fragmentu zostaną dołączone.</string>
+    <string name="share_clip_text_none_in_part">W tym fragmencie nic nie zostało powiedziane, więc tekst nie zostanie dołączony.</string>
+    <string name="share_clip_text_call_running">Ta rozmowa jest właśnie transkrybowana. Jej linie z tego fragmentu zostaną udostępnione, gdy transkrypcja się skończy.</string>
+    <string name="share_clip_transcribe_part">Transkrybuj tylko ten fragment</string>
+    <string name="share_clip_transcribe_part_detail">Szybciej. Tylko do tego udostępnienia; rozmowa zostaje bez transkrypcji.</string>
+    <string name="share_clip_transcribe_whole">Transkrybuj całą rozmowę</string>
+    <string name="share_clip_transcribe_whole_detail">Zapisana razem z rozmową. Udostępniane są tylko linie tego fragmentu.</string>
+    <string name="share_clip_share">Udostępnij %1$s</string>
+    <string name="share_clip_working_cut">Przygotowywanie fragmentu…</string>
+    <string name="share_clip_working_part">Transkrypcja fragmentu… %1$d%%</string>
+    <string name="share_clip_working_call">Czekam na transkrypcję rozmowy…</string>
+    <string name="share_clip_share_without_text">Udostępnij bez tekstu</string>
+    <string name="share_clip_back">Wstecz</string>
+    <string name="share_clip_failed">Nie udało się utworzyć fragmentu. Spróbuj ponownie albo udostępnij całe nagranie.</string>
+    <string name="share_clip_busy">Transkrypcja jest zajęta inną rozmową. Udostępnij bez tekstu albo spróbuj ponownie, gdy skończy.</string>
+    <string name="share_clip_not_set_up">Transkrypcja nie jest jeszcze skonfigurowana. Pobierz model albo dodaj swoją usługę w Ustawieniach.</string>
+    <string name="share_clip_transcribe_failed">Tym razem transkrypcja się nie udała. Udostępnić bez tekstu?</string>
+    <string name="share_clip_unsupported">Fragment można udostępnić tylko z własnych nagrań CallVault, nie z tego zaimportowanego pliku.</string>
+    <string name="share_clip_chooser">Udostępnij część nagrania</string>
+</resources>

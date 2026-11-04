@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  ~ CallVault: FOSS call recording, self-contained over embedded ADB
+  ~  Copyright (C) 2026-present The CallVault Authors
+  ~  Licensed under the GNU General Public License v3 or later (see LICENSE).
+  -->
+<!-- "Share a part": sharing a chosen part of a recording as a new file (2026-11-04). -->
+<resources>
+    <string name="share_clip_menu">Κοινοποίηση αποσπάσματος</string>
+    <string name="share_clip_share_whole">Κοινοποίηση εγγραφής</string>
+    <string name="playback_share">Κοινοποίηση</string>
+    <string name="share_clip_title">Κοινοποίηση αποσπάσματος</string>
+    <string name="share_clip_start">Αρχή</string>
+    <string name="share_clip_length">Διάρκεια</string>
+    <string name="share_clip_end">Τέλος</string>
+    <string name="share_clip_start_here">Αρχή εδώ</string>
+    <string name="share_clip_end_here">Τέλος εδώ</string>
+    <string name="share_clip_preview">Αναπαραγωγή αποσπάσματος</string>
+    <string name="share_clip_pause">Παύση</string>
+    <string name="share_clip_hint">Σύρετε οποιοδήποτε άκρο ή πατήστε εκεί που πρέπει να είναι. Τα «Αρχή εδώ» και «Τέλος εδώ» χρησιμοποιούν το σημείο που ακούτε.</string>
+    <string name="share_clip_handle_start">Αρχή του αποσπάσματος, %1$s</string>
+    <string name="share_clip_handle_end">Τέλος του αποσπάσματος, %1$s</string>
+    <string name="share_clip_nudge_earlier">ένα δευτερόλεπτο νωρίτερα</string>
+    <string name="share_clip_nudge_later">ένα δευτερόλεπτο αργότερα</string>
+    <string name="share_clip_include_text">Να συμπεριληφθούν όσα ειπώθηκαν</string>
+    <string name="share_clip_text_ready">Οι γραμμές της απομαγνητοφώνησης μέσα σε αυτό το απόσπασμα στέλνονται μαζί του.</string>
+    <string name="share_clip_text_none_in_part">Δεν ειπώθηκε τίποτα σε αυτό το απόσπασμα, οπότε δεν στέλνεται κείμενο.</string>
+    <string name="share_clip_text_call_running">Αυτή η κλήση απομαγνητοφωνείται τώρα. Οι γραμμές της μέσα σε αυτό το απόσπασμα θα κοινοποιηθούν όταν τελειώσει.</string>
+    <string name="share_clip_transcribe_part">Απομαγνητοφώνηση μόνο αυτού του αποσπάσματος</string>
+    <string name="share_clip_transcribe_part_detail">Πιο γρήγορο. Μόνο για αυτή την κοινοποίηση· η κλήση μένει χωρίς απομαγνητοφώνηση.</string>
+    <string name="share_clip_transcribe_whole">Απομαγνητοφώνηση όλης της κλήσης</string>
+    <string name="share_clip_transcribe_whole_detail">Αποθηκεύεται με την κλήση. Κοινοποιούνται μόνο οι γραμμές αυτού του αποσπάσματος.</string>
+    <string name="share_clip_share">Κοινοποίηση %1$s</string>
+    <string name="share_clip_working_cut">Προετοιμασία του αποσπάσματος…</string>
+    <string name="share_clip_working_part">Απομαγνητοφώνηση του αποσπάσματος… %1$d%%</string>
+    <string name="share_clip_working_call">Αναμονή για την απομαγνητοφώνηση της κλήσης…</string>
+    <string name="share_clip_share_without_text">Κοινοποίηση χωρίς κείμενο</string>
+    <string name="share_clip_back">Πίσω</string>
+    <string name="share_clip_failed">Δεν ήταν δυνατή η δημιουργία του αποσπάσματος. Δοκιμάστε ξανά ή κοινοποιήστε ολόκληρη την εγγραφή.</string>
+    <string name="share_clip_busy">Η απομαγνητοφώνηση είναι απασχολημένη με άλλη κλήση. Κοινοποιήστε χωρίς κείμενο ή δοκιμάστε ξανά όταν τελειώσει.</string>
+    <string name="share_clip_not_set_up">Η απομαγνητοφώνηση δεν έχει ρυθμιστεί ακόμη. Κατεβάστε ένα μοντέλο ή προσθέστε την υπηρεσία σας στις Ρυθμίσεις.</string>
+    <string name="share_clip_transcribe_failed">Η απομαγνητοφώνηση δεν πέτυχε αυτή τη φορά. Κοινοποίηση χωρίς κείμενο;</string>
+    <string name="share_clip_unsupported">Απόσπασμα μπορεί να κοινοποιηθεί μόνο από τις εγγραφές του ίδιου του CallVault, όχι από αυτό το εισαγμένο αρχείο.</string>
+    <string name="share_clip_chooser">Κοινοποίηση μέρους της εγγραφής</string>
+</resources>
