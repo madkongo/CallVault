@@ -271,7 +271,7 @@ Nothing decided, nothing researched. Notes for whoever picks it up:
   `llama-desktop-harness`).
 - Both add visible options, so they need an onboarding decision (see [[new-features-consider-onboarding]]).
 
-## 🔵 Share a part of a recording — requested 2026-11-04, design decided, not started
+## 🧪 Share a part of a recording — BUILT 2026-11-04, merged into integration/next, OP9-tested; maintainer to try
 
 Pick a start and end inside a recording, preview it, share it as a new file; the original is never changed.
 📐 Research and code plan: `docs/dev-notes/2026-11-04-share-part-of-recording.md`.

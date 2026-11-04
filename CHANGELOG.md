@@ -7,6 +7,12 @@ All notable changes to CallVault are documented here. The format is based on
 
 ### Added
 
+- **Share a part of a recording.** Pick a part of a call on its waveform, listen to it, and share just that as a new
+  file — from a recording's ⋮ menu or the new Share button on its page. Optionally with what was said in that part;
+  a call that is not transcribed can have just that part transcribed, or the whole call. The clip keeps the call's
+  quality and is never added to your recordings.
+  <!-- 🧪 VERIFYING: OP9 2026-11-04 (2.5.0-clip6); maintainer to try. Rollback: docs/dev-notes/rollback/share-a-part.md -->
+
 - **Search settings.** A search line at the top of Settings: type a word ("contacts", "WhatsApp", "Wi-Fi") and every
   group with a matching setting opens, showing only those settings; the rest are dimmed.
   <!-- 🧪 VERIFYING: OP9 2026-11-03 (2.4.9-search1); maintainer to try. -->

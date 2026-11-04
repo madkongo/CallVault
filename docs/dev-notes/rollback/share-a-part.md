@@ -38,7 +38,7 @@ Design and research: `docs/dev-notes/2026-11-04-share-part-of-recording.md` (opt
 ## How to roll back
 
 ```
-git revert -m 1 <merge of feat/share-part into integration/next>
+git revert -m 1 632d13ba
 ```
 
 Commits on the branch: `d34cc820` (engine choice moved out of the worker — keep if reverting only the feature),
