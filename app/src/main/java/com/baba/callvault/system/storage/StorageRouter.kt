@@ -46,6 +46,10 @@ object StorageRouter {
             AppLogger.w(TAG, "Storage target is $target but no Drive folder is configured; keeping local copy only.")
             return
         }
+        if (FolderOverlap.overlaps(prefs.getRecordingFolderUri(), driveFolder)) {
+            AppLogger.e(TAG, "The Drive folder is the recording folder or overlaps it; keeping '$displayName' on the device.")
+            return
+        }
 
         // DAILY/WEEKLY: don't copy now — ensure the periodic sweep is scheduled and leave the file on device.
         if (prefs.getSyncScheduleMode() != SyncScheduleMode.IMMEDIATE) {
@@ -88,6 +92,7 @@ object StorageRouter {
         if (prefs.getSyncScheduleMode() != SyncScheduleMode.IMMEDIATE) return // the sweep handles DAILY/WEEKLY
         val driveFolder = prefs.getDriveFolderUri() ?: return
         val recordingFolder = prefs.getRecordingFolderUri()
+        if (FolderOverlap.overlaps(recordingFolder, driveFolder)) return // see route()
         if (recordingFolder == null) {
             AppLogger.w(TAG, "No recording folder; cannot find sidecar '$sidecarName' to copy to Drive.")
             return
