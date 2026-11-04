@@ -72,3 +72,16 @@ git revert -m 1 d8274549
   whether Honor's log is stale or only quiet → `54828936` adds log health (oldest/newest, buffer sizes) and an
   always-on transport timeline so the next report shows the outage itself.
 - Test build 2.4.9-usbprobe2 (sha256 06d1b85c…) at ~/Downloads/CallVault-2.4.9-usbprobe2/. 🧪 Not run on any phone.
+
+## Testers (maintainer, 2026-11-04)
+
+- **Eugene** (Honor BVL-N49): usbprobe1 only. Says everything is fine. 🧪 no debug report read yet.
+- **Igor Pavlovich** (Honor BVL-N59; Reports 1 and 2 are his): usbprobe1, then usbprobe2. He installed **Android 17
+  at about the same time as usbprobe2** and said "no problems, we'll see tomorrow" right after. Not evidence yet: two
+  changes at once, and only hours. To separate them, read his debug report after 1–2 days:
+  - off events followed by restores → the phone still does it; usbprobe2 handles it;
+  - no off events, `allow_charging_adb=1` → maybe our write stopped it (or Android 17);
+  - no off events, `allow_charging_adb=0` → Android 17 most likely;
+  - off events without a restore → our bug; the timeline says where.
+- The "2.4.7/2.4.8 + Android 16 had no issue" claim: a mix-up with another user, per the maintainer. Igor confirmed the
+  problem existed before. Dropped.
