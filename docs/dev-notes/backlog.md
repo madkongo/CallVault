@@ -22,6 +22,37 @@ with `&&`/`||` chains and silently reported the opposite answer while this was b
 
 ---
 
+## 🚨 MUST FIX BEFORE 2.5.0 — "Drive" folder = recording folder deletes every recording — found 2026-11-04, not started
+
+Reported via the maintainer: a Xiaomi user (Redmi 23021RAAEG, Android 15, v2.4.9, standalone) says "the app doesn't
+work". Their debug report shows CallVault records fine and then **deletes each recording about a second later**.
+Data loss, so it blocks the 2.5.0 release.
+
+What the log shows (16:05, one call):
+1. The recording is saved to `primary:Alarms` (36 KB), storage target **Google Drive only**.
+2. `RecordingCopyWorker` logs "'…m4a' is already in Drive; not uploading it again" (`SafHelper.CopyResult.AlreadyPresent`).
+3. `finish(...)` then deletes the local file because the target is Drive-only.
+4. Playback fails (`FileNotFoundException`), the entry is pruned, the list shows 0 recordings.
+
+Cause (📐 read from the v2.4.9 code, not reproduced): the user picked the **same phone folder (Alarms)** as the "Drive"
+folder. The copy step finds the file itself, treats it as already uploaded and deletes the only copy.
+- The Drive folder pickers (`SettingsScreen.kt` ~204-210, `WizardScreen.kt` ~104-109) accept any folder: no
+  `SafHelper.isCloudFolder` check, no same-folder check. `isCloudFolder` is only used the other way round (to refuse a
+  cloud folder as the recording folder).
+- The `AlreadyPresent` branch deletes the local copy without checking that the "Drive" file is a different file.
+
+Fix (agreed scope, 📐 not built):
+- [ ] Pickers (Settings + wizard): refuse a Drive folder that is the recording folder, inside it, or not a cloud
+      provider (Drive / OneDrive / Dropbox), with a clear message.
+- [ ] `RecordingCopyWorker`: never delete the local copy when the destination is the source (same document / same
+      tree) or the destination folder is not a cloud provider. Protects users already set up this way.
+- [ ] Existing installs with this setup: detect it and show a warning (and stop deleting) instead of silently losing calls.
+- [ ] Tests for all three; check how long this path has existed (other users may be affected without knowing).
+- [ ] Reproduce on the OP9 first (pick the recording folder as "Drive", record a call, confirm the file survives).
+
+Immediate advice for the reporter: Settings → "Where to save recordings" → **On this phone**, or pick a real Google
+Drive folder ("Drive" in the picker). Deleted recordings are almost certainly gone.
+
 ## Current state — 2026-11-03 (after v2.4.9)
 
 **Released:** v2.4.9 (20490), published 2026-11-03 after a soak on the maintainer's OP12; asset == tested build
@@ -29,6 +60,8 @@ with `&&`/`||` chains and silently reported the opposite answer while this was b
 the list below (classic Settings removed) and the decode time limit.
 
 **New since 2026-10-31:**
+- 🚨 Release blocker for 2.5.0 (found 2026-11-04): "Drive" folder = recording folder deletes every recording — see
+  the MUST FIX section above.
 - 🅿️ Parked by the maintainer: in-app downgrade (RollbackManager works one step back but restores old data; keep-data
   uninstall loses folder access + battery exemption; memory `in-app-downgrade-research`); start-of-call echo.
 - 🔵 Small bug found 2026-11-03, not fixed: changing "Where to save recordings" alone does not re-apply the Drive
