@@ -286,6 +286,26 @@ Pick a start and end inside a recording, preview it, share it as a new file; the
   end without the Ogg end-of-stream flag (last page flags 0x0). Android/VLC/ffprobe play them; strict players (Firefox)
   may refuse. Fix = BCR's last-page flag + CRC patch after the muxer stops; applies to recordings, merge and clips.
 
+## 🔵 Format choice when sharing (MP3 and others) — requested 2026-11-04, not started
+
+User request via the maintainer (Telegram): "It would also be nice to be able to send in other formats, such as mp3",
+with a screenshot of another recorder's share dialog offering WAV / AMR / MP3 / FLAC / OPUS and "Keep metadata".
+Why it matters: an Opus `.ogg` does not play on some iPhones, on Windows without extra software, or in many office/
+legal systems.
+
+Proposed (📐, not decided in detail):
+- A "Format" choice on sharing — both "Share recording" and "Share a part": **Original** (default, Opus/M4A, smallest),
+  **MP3**, **M4A (AAC)**, **WAV**, maybe **FLAC**. Skip AMR (old, low quality).
+- Recordings stay stored as they are; conversion happens only when sending. Recording directly in MP3 is NOT proposed
+  (it would mean an encoder inside the recorder for no gain over converting at share time).
+- Optional "keep details" tags in the shared file (contact, date, direction), on by default.
+
+Feasibility (checked on the OP12 2026-11-04): Android has encoders for AAC, AMR-NB/WB, FLAC and Opus; **no MP3
+encoder** — MP3 needs LAME bundled (LGPL, compatible with GPLv3; ~0.3–0.4 MB per ABI; F-Droid-friendly; MP3 patents
+expired). Decoding reuses `AudioDecoder.decodeRange` (interleaved PCM at the original rate, before the downmix).
+Muxer: AAC → MP4; FLAC and WAV written by hand; MP3 raw frames + ID3 tags.
+Estimate 📐: M4A/WAV/FLAC ~1 day; MP3 +~1 day. Ties into Share a part ([[share-a-part]]).
+
 ## 🔼 Higher-priority feature requests — agreed 2026-10-01, not started
 
 Maintainer-prioritised above the older backlog. Each needs a design pass before code (and, where it adds a
