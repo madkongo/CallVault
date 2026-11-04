@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  ~ CallVault: FOSS call recording, self-contained over embedded ADB
+  ~  Copyright (C) 2026-present The CallVault Authors
+  ~  Licensed under the GNU General Public License v3 or later (see LICENSE).
+  -->
+<!-- "Share a part": sharing a chosen part of a recording as a new file (2026-11-04). -->
+<resources>
+    <string name="share_clip_menu">Részlet megosztása</string>
+    <string name="share_clip_share_whole">Felvétel megosztása</string>
+    <string name="playback_share">Megosztás</string>
+    <string name="share_clip_title">Részlet megosztása</string>
+    <string name="share_clip_start">Kezdet</string>
+    <string name="share_clip_length">Hossz</string>
+    <string name="share_clip_end">Vég</string>
+    <string name="share_clip_start_here">Kezdés itt</string>
+    <string name="share_clip_end_here">Vége itt</string>
+    <string name="share_clip_preview">Részlet lejátszása</string>
+    <string name="share_clip_pause">Szünet</string>
+    <string name="share_clip_hint">Húzd bármelyik végét, vagy koppints oda, ahol lennie kell. A „Kezdés itt” és a „Vége itt” azt a pontot használja, ahol éppen hallgatod.</string>
+    <string name="share_clip_handle_start">A részlet eleje, %1$s</string>
+    <string name="share_clip_handle_end">A részlet vége, %1$s</string>
+    <string name="share_clip_nudge_earlier">egy másodperccel korábban</string>
+    <string name="share_clip_nudge_later">egy másodperccel később</string>
+    <string name="share_clip_include_text">Az elhangzottak mellékelése</string>
+    <string name="share_clip_text_ready">Az átirat ebbe a részletbe eső sorai is mennek vele.</string>
+    <string name="share_clip_text_none_in_part">Ebben a részletben nem hangzott el semmi, így szöveg nem megy vele.</string>
+    <string name="share_clip_text_call_running">Ennek a hívásnak az átírása folyamatban van. A részletbe eső sorait akkor osztjuk meg, amikor elkészül.</string>
+    <string name="share_clip_transcribe_part">Csak ennek a részletnek az átírása</string>
+    <string name="share_clip_transcribe_part_detail">Gyorsabb. Csak ehhez a megosztáshoz; a hívás átirat nélkül marad.</string>
+    <string name="share_clip_transcribe_whole">Az egész hívás átírása</string>
+    <string name="share_clip_transcribe_whole_detail">A hívással együtt mentődik. Csak ennek a részletnek a sorai kerülnek megosztásra.</string>
+    <string name="share_clip_share">%1$s megosztása</string>
+    <string name="share_clip_working_cut">A részlet előkészítése…</string>
+    <string name="share_clip_working_part">A részlet átírása… %1$d%%</string>
+    <string name="share_clip_working_call">Várakozás a hívás átiratára…</string>
+    <string name="share_clip_share_without_text">Megosztás szöveg nélkül</string>
+    <string name="share_clip_back">Vissza</string>
+    <string name="share_clip_failed">Nem sikerült elkészíteni a részletet. Próbáld újra, vagy oszd meg a teljes felvételt.</string>
+    <string name="share_clip_busy">Az átírás épp egy másik hívással foglalkozik. Oszd meg szöveg nélkül, vagy próbáld újra, ha végzett.</string>
+    <string name="share_clip_not_set_up">Az átírás még nincs beállítva. Tölts le egy modellt, vagy add hozzá a szolgáltatásodat a Beállításokban.</string>
+    <string name="share_clip_transcribe_failed">Az átírás most nem sikerült. Megosztás szöveg nélkül?</string>
+    <string name="share_clip_unsupported">Részletet csak a CallVault saját felvételeiből lehet megosztani, ebből az importált fájlból nem.</string>
+    <string name="share_clip_chooser">A felvétel egy részének megosztása</string>
+</resources>

@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  ~ CallVault: FOSS call recording, self-contained over embedded ADB
+  ~  Copyright (C) 2026-present The CallVault Authors
+  ~  Licensed under the GNU General Public License v3 or later (see LICENSE).
+  -->
+<!-- "Share a part": sharing a chosen part of a recording as a new file (2026-11-04). -->
+<resources>
+    <string name="share_clip_menu">Condividi una parte</string>
+    <string name="share_clip_share_whole">Condividi registrazione</string>
+    <string name="playback_share">Condividi</string>
+    <string name="share_clip_title">Condividi una parte</string>
+    <string name="share_clip_start">Inizio</string>
+    <string name="share_clip_length">Durata</string>
+    <string name="share_clip_end">Fine</string>
+    <string name="share_clip_start_here">Inizia qui</string>
+    <string name="share_clip_end_here">Finisci qui</string>
+    <string name="share_clip_preview">Riproduci la parte</string>
+    <string name="share_clip_pause">Pausa</string>
+    <string name="share_clip_hint">Trascina uno dei due estremi o tocca dove deve stare. Inizia qui e Finisci qui usano il punto che stai ascoltando.</string>
+    <string name="share_clip_handle_start">Inizio della parte, %1$s</string>
+    <string name="share_clip_handle_end">Fine della parte, %1$s</string>
+    <string name="share_clip_nudge_earlier">un secondo prima</string>
+    <string name="share_clip_nudge_later">un secondo dopo</string>
+    <string name="share_clip_include_text">Includi ciò che è stato detto</string>
+    <string name="share_clip_text_ready">Le righe della trascrizione dentro questa parte vengono condivise con essa.</string>
+    <string name="share_clip_text_none_in_part">In questa parte non è stato detto nulla, quindi non viene condiviso alcun testo.</string>
+    <string name="share_clip_text_call_running">Questa chiamata è in fase di trascrizione. Le sue righe dentro questa parte verranno condivise quando avrà finito.</string>
+    <string name="share_clip_transcribe_part">Trascrivi solo questa parte</string>
+    <string name="share_clip_transcribe_part_detail">Più veloce. Usata solo per questa condivisione; la chiamata resta senza trascrizione.</string>
+    <string name="share_clip_transcribe_whole">Trascrivi tutta la chiamata</string>
+    <string name="share_clip_transcribe_whole_detail">Salvata con la chiamata. Vengono condivise solo le righe di questa parte.</string>
+    <string name="share_clip_share">Condividi %1$s</string>
+    <string name="share_clip_working_cut">Preparazione della parte…</string>
+    <string name="share_clip_working_part">Trascrizione della parte… %1$d%%</string>
+    <string name="share_clip_working_call">In attesa della trascrizione della chiamata…</string>
+    <string name="share_clip_share_without_text">Condividi senza testo</string>
+    <string name="share_clip_back">Indietro</string>
+    <string name="share_clip_failed">Impossibile creare la parte. Riprova, oppure condividi l\'intera registrazione.</string>
+    <string name="share_clip_busy">La trascrizione è occupata con un\'altra chiamata. Condividi senza testo o riprova quando ha finito.</string>
+    <string name="share_clip_not_set_up">La trascrizione non è ancora configurata. Scarica un modello o aggiungi il tuo servizio nelle Impostazioni.</string>
+    <string name="share_clip_transcribe_failed">Questa volta la trascrizione non ha funzionato. Condividere senza testo?</string>
+    <string name="share_clip_unsupported">Una parte si può condividere solo dalle registrazioni di CallVault, non da questo file importato.</string>
+    <string name="share_clip_chooser">Condividi parte della registrazione</string>
+</resources>

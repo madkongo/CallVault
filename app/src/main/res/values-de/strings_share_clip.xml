@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  ~ CallVault: FOSS call recording, self-contained over embedded ADB
+  ~  Copyright (C) 2026-present The CallVault Authors
+  ~  Licensed under the GNU General Public License v3 or later (see LICENSE).
+  -->
+<!-- "Share a part": sharing a chosen part of a recording as a new file (2026-11-04). -->
+<resources>
+    <string name="share_clip_menu">Ausschnitt teilen</string>
+    <string name="share_clip_share_whole">Aufnahme teilen</string>
+    <string name="playback_share">Teilen</string>
+    <string name="share_clip_title">Ausschnitt teilen</string>
+    <string name="share_clip_start">Start</string>
+    <string name="share_clip_length">Länge</string>
+    <string name="share_clip_end">Ende</string>
+    <string name="share_clip_start_here">Hier starten</string>
+    <string name="share_clip_end_here">Hier enden</string>
+    <string name="share_clip_preview">Ausschnitt abspielen</string>
+    <string name="share_clip_pause">Pausieren</string>
+    <string name="share_clip_hint">Zieh an einem der Enden oder tippe auf die gewünschte Stelle. „Hier starten“ und „Hier enden“ nehmen die Stelle, die du gerade hörst.</string>
+    <string name="share_clip_handle_start">Anfang des Ausschnitts, %1$s</string>
+    <string name="share_clip_handle_end">Ende des Ausschnitts, %1$s</string>
+    <string name="share_clip_nudge_earlier">eine Sekunde früher</string>
+    <string name="share_clip_nudge_later">eine Sekunde später</string>
+    <string name="share_clip_include_text">Das Gesagte mitsenden</string>
+    <string name="share_clip_text_ready">Die Transkriptzeilen aus diesem Ausschnitt gehen mit.</string>
+    <string name="share_clip_text_none_in_part">In diesem Ausschnitt wurde nichts gesagt, daher geht kein Text mit.</string>
+    <string name="share_clip_text_call_running">Dieser Anruf wird gerade transkribiert. Seine Zeilen aus diesem Ausschnitt werden geteilt, sobald das fertig ist.</string>
+    <string name="share_clip_transcribe_part">Nur diesen Ausschnitt transkribieren</string>
+    <string name="share_clip_transcribe_part_detail">Schneller. Nur für dieses Teilen; der Anruf bleibt ohne Transkript.</string>
+    <string name="share_clip_transcribe_whole">Den ganzen Anruf transkribieren</string>
+    <string name="share_clip_transcribe_whole_detail">Wird beim Anruf gespeichert. Geteilt werden nur die Zeilen dieses Ausschnitts.</string>
+    <string name="share_clip_share">%1$s teilen</string>
+    <string name="share_clip_working_cut">Ausschnitt wird vorbereitet…</string>
+    <string name="share_clip_working_part">Ausschnitt wird transkribiert… %1$d%%</string>
+    <string name="share_clip_working_call">Warte auf das Transkript des Anrufs…</string>
+    <string name="share_clip_share_without_text">Ohne Text teilen</string>
+    <string name="share_clip_back">Zurück</string>
+    <string name="share_clip_failed">Der Ausschnitt konnte nicht erstellt werden. Versuch es noch mal oder teile die ganze Aufnahme.</string>
+    <string name="share_clip_busy">Die Transkription ist mit einem anderen Anruf beschäftigt. Teile ohne Text oder versuch es noch mal, wenn sie fertig ist.</string>
+    <string name="share_clip_not_set_up">Die Transkription ist noch nicht eingerichtet. Lade ein Modell herunter oder füge deinen Dienst in den Einstellungen hinzu.</string>
+    <string name="share_clip_transcribe_failed">Die Transkription hat diesmal nicht geklappt. Ohne Text teilen?</string>
+    <string name="share_clip_unsupported">Ein Ausschnitt lässt sich nur aus CallVaults eigenen Aufnahmen teilen, nicht aus dieser importierten Datei.</string>
+    <string name="share_clip_chooser">Ausschnitt der Aufnahme teilen</string>
+</resources>

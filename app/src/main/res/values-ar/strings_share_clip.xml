@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  ~ CallVault: FOSS call recording, self-contained over embedded ADB
+  ~  Copyright (C) 2026-present The CallVault Authors
+  ~  Licensed under the GNU General Public License v3 or later (see LICENSE).
+  -->
+<!-- "Share a part": sharing a chosen part of a recording as a new file (2026-11-04). -->
+<resources>
+    <string name="share_clip_menu">مشاركة مقطع</string>
+    <string name="share_clip_share_whole">مشاركة التسجيل</string>
+    <string name="playback_share">مشاركة</string>
+    <string name="share_clip_title">مشاركة مقطع</string>
+    <string name="share_clip_start">البداية</string>
+    <string name="share_clip_length">المدة</string>
+    <string name="share_clip_end">النهاية</string>
+    <string name="share_clip_start_here">ابدأ هنا</string>
+    <string name="share_clip_end_here">انتهِ هنا</string>
+    <string name="share_clip_preview">تشغيل المقطع</string>
+    <string name="share_clip_pause">إيقاف مؤقت</string>
+    <string name="share_clip_hint">اسحب أيًّا من الطرفين، أو انقر حيث يجب أن يكون. يستخدم «ابدأ هنا» و«انتهِ هنا» الموضع الذي تستمع إليه الآن.</string>
+    <string name="share_clip_handle_start">بداية المقطع، %1$s</string>
+    <string name="share_clip_handle_end">نهاية المقطع، %1$s</string>
+    <string name="share_clip_nudge_earlier">ثانية واحدة إلى الوراء</string>
+    <string name="share_clip_nudge_later">ثانية واحدة إلى الأمام</string>
+    <string name="share_clip_include_text">تضمين ما قيل</string>
+    <string name="share_clip_text_ready">تُرسل معه أسطر التفريغ الصوتي الواقعة ضمن هذا المقطع.</string>
+    <string name="share_clip_text_none_in_part">لم يُقل شيء في هذا المقطع، لذا لا يُرسل معه أي نص.</string>
+    <string name="share_clip_text_call_running">يجري الآن التفريغ الصوتي لهذه المكالمة. ستتم مشاركة أسطرها الواقعة ضمن هذا المقطع عند انتهائه.</string>
+    <string name="share_clip_transcribe_part">تفريغ هذا المقطع فقط</string>
+    <string name="share_clip_transcribe_part_detail">أسرع. يُستخدم لهذه المشاركة فقط؛ وتبقى المكالمة دون تفريغ.</string>
+    <string name="share_clip_transcribe_whole">تفريغ المكالمة كاملة</string>
+    <string name="share_clip_transcribe_whole_detail">يُحفظ مع المكالمة. لا تُشارك إلا أسطر هذا المقطع.</string>
+    <string name="share_clip_share">مشاركة %1$s</string>
+    <string name="share_clip_working_cut">جارٍ تجهيز المقطع…</string>
+    <string name="share_clip_working_part">جارٍ تفريغ المقطع… %1$d%%</string>
+    <string name="share_clip_working_call">بانتظار التفريغ الصوتي للمكالمة…</string>
+    <string name="share_clip_share_without_text">مشاركة دون نص</string>
+    <string name="share_clip_back">رجوع</string>
+    <string name="share_clip_failed">تعذّر إنشاء المقطع. حاول مرة أخرى، أو شارك التسجيل كاملًا.</string>
+    <string name="share_clip_busy">التفريغ الصوتي مشغول بمكالمة أخرى. شارك دون نص، أو حاول مجددًا عند انتهائه.</string>
+    <string name="share_clip_not_set_up">لم يتم إعداد التفريغ الصوتي بعد. نزّل نموذجًا أو أضف خدمتك من الإعدادات.</string>
+    <string name="share_clip_transcribe_failed">لم ينجح التفريغ الصوتي هذه المرة. المشاركة دون نص؟</string>
+    <string name="share_clip_unsupported">لا يمكن مشاركة مقطع إلا من تسجيلات CallVault نفسها، وليس من هذا الملف المستورد.</string>
+    <string name="share_clip_chooser">مشاركة جزء من التسجيل</string>
+</resources>
