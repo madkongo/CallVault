@@ -69,6 +69,8 @@
     <string name="disclaimer_title">Bienvenido a CallVault</string>
     <string name="export_heading_transcript">Transcripción</string>
     <string name="folder_cloud_rejected">Las carpetas en la nube (como Google Drive) no se pueden usar para grabar. Elige un almacenamiento en el dispositivo; usa la opción de copia de seguridad de Google Drive para las copias en la nube.</string>
+    <string name="folder_drive_overlaps_recordings">La carpeta de Drive no puede ser la de grabaciones. Elige una carpeta de Google Drive.</string>
+    <string name="folder_drive_overlap_warning">Esta es tu carpeta de grabaciones (o se solapa con ella), así que no se copia nada a Drive. Elige una carpeta de Google Drive.</string>
     <string name="folder_cloud_warning">⚠ Esta carpeta de grabación está en la nube, lo que no es fiable para la captura. Elige una carpeta en el dispositivo.</string>
     <string name="general_back">Atrás</string>
     <string name="general_cancel">Cancelar</string>

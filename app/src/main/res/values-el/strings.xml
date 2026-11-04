@@ -223,6 +223,8 @@
     <string name="disclaimer_title">Καλώς ήρθατε στο CallVault</string>
     <string name="export_heading_transcript">Απομαγνητοφώνηση</string>
     <string name="folder_cloud_rejected">Οι φάκελοι cloud (όπως το Google Drive) δεν μπορούν να χρησιμοποιηθούν για εγγραφή. Επιλέξτε αποθηκευτικό χώρο στη συσκευή — χρησιμοποιήστε την επιλογή αντιγράφου ασφαλείας Google Drive για αντίγραφα στο cloud.</string>
+    <string name="folder_drive_overlaps_recordings">Ο φάκελος Drive δεν μπορεί να είναι ο φάκελος εγγραφών. Επιλέξτε φάκελο Google Drive.</string>
+    <string name="folder_drive_overlap_warning">Αυτός είναι ο φάκελος εγγραφών σας (ή επικαλύπτεται με αυτόν), οπότε τίποτα δεν αντιγράφεται στο Drive. Επιλέξτε φάκελο Google Drive.</string>
     <string name="folder_cloud_warning">⚠ Αυτός ο φάκελος εγγραφών είναι στο cloud, που είναι αναξιόπιστο για καταγραφή. Επιλέξτε έναν φάκελο στη συσκευή.</string>
     <string name="general_back">Πίσω</string>
     <string name="general_cancel">Ακύρωση</string>

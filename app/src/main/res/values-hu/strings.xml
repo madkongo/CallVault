@@ -69,6 +69,8 @@
     <string name="disclaimer_title">Üdvözöljük a CallVault alkalmazásban</string>
     <string name="export_heading_transcript">Átirat</string>
     <string name="folder_cloud_rejected">A felhőmappák (például a Google Drive) nem használhatók rögzítésre. Válasszon eszközön lévő tárhelyet – a felhőben tárolt másolatokhoz használja a Google Drive biztonsági mentés lehetőséget.</string>
+    <string name="folder_drive_overlaps_recordings">A Drive-mappa nem lehet a felvételek mappája. Válasszon Google Drive-mappát.</string>
+    <string name="folder_drive_overlap_warning">Ez a felvételek mappája (vagy átfedésben van vele), ezért semmi nem kerül a Drive-ra. Válasszon Google Drive-mappát.</string>
     <string name="folder_cloud_warning">⚠ Ez a rögzítési mappa a felhőben van, ami megbízhatatlan a rögzítéshez. Válasszon egy eszközön lévő mappát.</string>
     <string name="general_back">Vissza</string>
     <string name="general_cancel">Mégsem</string>

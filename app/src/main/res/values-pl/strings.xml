@@ -71,6 +71,8 @@
     <string name="disclaimer_title">Witaj w CallVault</string>
     <string name="export_heading_transcript">Transkrypcja</string>
     <string name="folder_cloud_rejected">Folderów w chmurze (takich jak Google Drive) nie można używać do nagrywania. Wybierz pamięć na urządzeniu — do kopii w chmurze użyj opcji kopii zapasowej Google Drive.</string>
+    <string name="folder_drive_overlaps_recordings">Folder Drive nie może być folderem nagrań. Wybierz folder Google Drive.</string>
+    <string name="folder_drive_overlap_warning">To jest folder nagrań (lub się z nim pokrywa), więc nic nie jest kopiowane na Drive. Wybierz folder Google Drive.</string>
     <string name="folder_cloud_warning">⚠ Ten folder nagrań znajduje się w chmurze, co jest zawodne przy nagrywaniu. Wybierz folder na urządzeniu.</string>
     <string name="general_back">Wstecz</string>
     <string name="general_cancel">Anuluj</string>

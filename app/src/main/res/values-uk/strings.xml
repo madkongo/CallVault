@@ -79,6 +79,8 @@
     <string name="disclaimer_title">Ласкаво просимо до CallVault</string>
     <string name="export_heading_transcript">Транскрипція</string>
     <string name="folder_cloud_rejected">Не можна записувати безпосередньо в хмарну папку. Виберіть сховище телефону, а для хмари — резервування в Google Drive.</string>
+    <string name="folder_drive_overlaps_recordings">Папка Drive не може бути папкою записів. Виберіть папку Google Диска.</string>
+    <string name="folder_drive_overlap_warning">Це ваша папка записів (або вона з нею перетинається), тому до Drive нічого не копіюється. Виберіть папку Google Диска.</string>
     <string name="folder_cloud_warning">⚠ Папка запису розташована у хмарі. Оберіть папку на самому пристрої.</string>
     <string name="general_back">Назад</string>
     <string name="general_cancel">Скасувати</string>

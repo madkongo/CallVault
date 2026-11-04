@@ -162,6 +162,8 @@
     <string name="disclaimer_title">به CallVault خوش آمدید</string>
     <string name="export_heading_transcript">رونوشت</string>
     <string name="folder_cloud_rejected">پوشه‌های ابری (مانند Google Drive) را نمی‌توان برای ضبط استفاده کرد. فضای ذخیره‌سازی روی دستگاه را انتخاب کنید — برای کپی‌های ابری از گزینه پشتیبان‌گیری Google Drive استفاده کنید.</string>
+    <string name="folder_drive_overlaps_recordings">پوشه Drive نمی‌تواند پوشه ضبط‌ها باشد. یک پوشه Google Drive انتخاب کنید.</string>
+    <string name="folder_drive_overlap_warning">این پوشه ضبط‌های شماست (یا با آن هم‌پوشانی دارد)، بنابراین چیزی در Drive کپی نمی‌شود. یک پوشه Google Drive انتخاب کنید.</string>
     <string name="folder_cloud_warning">⚠ این پوشه ضبط در فضای ابری است، که برای ضبط قابل اعتماد نیست. یک پوشه روی دستگاه انتخاب کنید.</string>
     <string name="general_back">بازگشت</string>
     <string name="general_cancel">لغو</string>
