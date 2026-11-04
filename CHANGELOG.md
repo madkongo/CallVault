@@ -7,6 +7,14 @@ All notable changes to CallVault are documented here. The format is based on
 
 ### Added
 
+- **Bengali (বাংলা).** The app is translated into Bengali, and Bengali can be set as the transcription language.
+  <!-- 🧪 VERIFYING: OP9 2026-11-04 (2.5.0-next3): app shown in Bengali; transcription of real Bengali speech untried. -->
+
+- **Your own file-name format.** Settings ▸ Sound and file names ▸ File name template ▸ "Custom": type the format,
+  tap a tag ({date}, {contact_name}, …) to add it, and see an example name as you type, as ShizuCallRecorder had.
+  The date is required, because CallVault reads it back to sort and merge calls.
+  <!-- 🧪 VERIFYING: OP9 2026-11-04 (2.5.0-next3): editor, error, save; no call recorded with a custom name yet. -->
+
 - **Share a part of a recording.** Pick a part of a call on its waveform, listen to it, and share just that as a new
   file — from a recording's ⋮ menu or the new Share button on its page. Optionally with what was said in that part;
   a call that is not transcribed can have just that part transcribed, or the whole call. The clip keeps the call's
