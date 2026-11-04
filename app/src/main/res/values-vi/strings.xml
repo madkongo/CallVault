@@ -748,6 +748,7 @@
     <string name="transcription_language_label">Ngôn ngữ</string>
     <string name="transcription_language_persian">Tiếng Ba Tư</string>
     <string name="transcription_language_urdu">Tiếng Urdu</string>
+    <string name="transcription_language_bengali">Tiếng Bengal</string>
     <string name="transcription_language_polish">Tiếng Ba Lan</string>
     <string name="transcription_language_portuguese">Tiếng Bồ Đào Nha</string>
     <string name="transcription_language_russian">Tiếng Nga</string>

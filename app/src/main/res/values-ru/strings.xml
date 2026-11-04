@@ -754,6 +754,7 @@
     <string name="transcription_language_label">Язык</string>
     <string name="transcription_language_persian">Персидский</string>
     <string name="transcription_language_urdu">Урду</string>
+    <string name="transcription_language_bengali">Бенгальский</string>
     <string name="transcription_language_polish">Польский</string>
     <string name="transcription_language_portuguese">Португальский</string>
     <string name="transcription_language_russian">Русский</string>

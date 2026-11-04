@@ -790,6 +790,7 @@
     <string name="transcription_language_label">اللغة</string>
     <string name="transcription_language_persian">الفارسية</string>
     <string name="transcription_language_urdu">الأردية</string>
+    <string name="transcription_language_bengali">البنغالية</string>
     <string name="transcription_language_polish">البولندية</string>
     <string name="transcription_language_portuguese">البرتغالية</string>
     <string name="transcription_language_russian">الروسية</string>

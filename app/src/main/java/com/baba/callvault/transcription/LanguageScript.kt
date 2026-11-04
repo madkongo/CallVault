@@ -30,6 +30,7 @@ object LanguageScript {
         "fa" to Character.UnicodeScript.ARABIC,
         // Urdu too (Nastaliq is a style of the Arabic script, not a script of its own).
         "ur" to Character.UnicodeScript.ARABIC,
+        "bn" to Character.UnicodeScript.BENGALI,
     )
 
     fun of(language: String): Character.UnicodeScript = NON_LATIN[language] ?: Character.UnicodeScript.LATIN

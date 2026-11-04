@@ -38,7 +38,7 @@ object TranscriptionLanguageChoice {
      * name. Whisper knows far more; these are the ones with a translated label to show for them.
      */
     val SUPPORTED: List<String> =
-        listOf("he", "en", "ar", "zh", "fr", "de", "hu", "it", "pl", "pt", "ru", "es", "vi", "el", "fa", "uk", "ur")
+        listOf("he", "en", "ar", "zh", "fr", "de", "hu", "it", "pl", "pt", "ru", "es", "vi", "el", "fa", "uk", "ur", "bn")
 
     /**
      * The obsolete ISO 639 codes [Locale] still reports, mapped to the modern ones whisper uses.

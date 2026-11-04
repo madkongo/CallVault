@@ -146,6 +146,13 @@ class SummaryLanguageTest {
     }
 
     @Test
+    fun `bengali script is bengali`() {
+        assertEquals("bn", SummaryLanguage.scriptOf("হ্যালো, আপনি কেমন আছেন? কাল দেখা হবে, আমার একটা ছোট কাজ আছে"))
+        // A few English brand names inside a Bengali call do not outvote it.
+        assertEquals("bn", SummaryLanguage.scriptOf("আমি WhatsApp এ মেসেজ পাঠিয়েছি, তুমি দেখেছ কি না জানাও"))
+    }
+
+    @Test
     fun `urdu is told apart from persian and arabic by the letters only urdu uses`() {
         // Urdu shares پ چ گ ی ک with Persian, so those cannot tell the two apart. Only Urdu writes
         // ٹ ڈ ڑ ں ے and its own ہ ھ; Persian and Arabic write ه instead.

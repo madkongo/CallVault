@@ -74,6 +74,13 @@ class TranscriptionLanguageChoiceTest {
     }
 
     @Test
+    fun bengali_is_supported_as_a_device_default_and_explicit_choice() {
+        assertEquals("bn", TranscriptionLanguageChoice.defaultLanguage(Locale.forLanguageTag("bn-BD")))
+        assertEquals("bn", TranscriptionLanguageChoice.defaultLanguage(Locale.forLanguageTag("bn-IN")))
+        assertEquals("bn", TranscriptionLanguageChoice.resolve(chosen = "bn", setting = "en"))
+    }
+
+    @Test
     fun urdu_is_supported_as_a_device_default_and_explicit_choice() {
         assertEquals("ur", TranscriptionLanguageChoice.defaultLanguage(Locale.forLanguageTag("ur-PK")))
         assertEquals("ur", TranscriptionLanguageChoice.resolve(chosen = "ur", setting = "en"))
