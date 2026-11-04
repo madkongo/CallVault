@@ -58,3 +58,17 @@ git revert -m 1 d8274549
 ```
 
 (`d8274549` = the merge of `fix/usb-debugging-turned-off` into integration/next.) Or per commit: `3c425258` (restore + button + observer timing), `a5db080f` (diagnostics only).
+
+## Report 2 — 2026-11-04 15:46 (BVL-N59, 2.4.9-usbprobe1)
+
+- 13:31: USB debugging went OFF with the screen on and unlocked (most likely Honor's Developer options writing 0 on
+  opening, with "Charge only" ADB still off) → ASK, as designed. `allow_charging_adb` was 0 then, 1 by 15:46.
+- USB debugging stayed off afterwards (`adb_enabled as shell: 0`), recording ran on Wireless debugging alone, and a
+  call at 15:41 was missed; the recorder was started again at 15:46:04. Why it was down is not in the report (debug
+  logging off).
+- **Our bug:** the app read USB debugging as UNKNOWN (setting 0 + adbd up + WD on = the Android 17 rule), so the
+  "paused off Wi-Fi" notice and its button never showed. Fixed in `30b8b0c4` (recorder's shell read is trusted).
+- The phone's log: 121k lines, every kept line from the boot on 11-01; the event window read 0 lines. Unknown
+  whether Honor's log is stale or only quiet → `54828936` adds log health (oldest/newest, buffer sizes) and an
+  always-on transport timeline so the next report shows the outage itself.
+- Test build 2.4.9-usbprobe2 (sha256 06d1b85c…) at ~/Downloads/CallVault-2.4.9-usbprobe2/. 🧪 Not run on any phone.
