@@ -271,6 +271,19 @@ Nothing decided, nothing researched. Notes for whoever picks it up:
   `llama-desktop-harness`).
 - Both add visible options, so they need an onboarding decision (see [[new-features-consider-onboarding]]).
 
+## 🔵 Share a part of a recording — requested 2026-11-04, researched, not started
+
+Pick a start and end inside a recording, preview it, share it as a new file; the original is never changed.
+📐 Research and code plan: `docs/dev-notes/2026-11-04-share-part-of-recording.md`.
+
+- Code: reuse `data/merge/AudioSplit` (lossless frame copy, Opus → Ogg, AAC → MP4, keeps stereo); add a time range,
+  80 ms Opus pre-roll, and the Ogg end-of-stream page fix (BCR's `OggContainer.kt`). Clip lives in `cacheDir`, never
+  in the library or Drive. Imported MP3/WAV/FLAC: hide the option at first.
+- UI: options page sent 2026-11-04 — A waveform handles, B select transcript lines, C mark start/end while listening.
+  The playback screen gets a Share button either way (it has none today).
+- Decisions needed: which option; transcript text with the clip; share-only or also "save as new recording".
+- ⚠️ Side finding to check: our merge/split Ogg output probably lacks the end-of-stream flag too (AOSP muxer).
+
 ## 🔼 Higher-priority feature requests — agreed 2026-10-01, not started
 
 Maintainer-prioritised above the older backlog. Each needs a design pass before code (and, where it adds a

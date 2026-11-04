@@ -1,0 +1,68 @@
+# Share a part of a recording — research
+
+📐 RESEARCHED 2026-11-04, nothing built. Requested by the maintainer 2026-11-04. UI direction not chosen yet
+(options page sent the same day).
+
+## What the user gets
+
+Pick a start and an end inside a recording, listen to the selection, and share it through the Android share sheet
+as a new file. The original is never changed.
+
+## What other apps do (sources in the research hand-back, summarised)
+
+| App | How the range is picked | What is shared |
+|---|---|---|
+| Google Recorder (Pixel) | Edit ▸ select audio **or highlight transcript text** ▸ Crop / Remove ▸ "Save copy" | Separate menu: audio, transcript .txt, or a captioned video clip (≤5 min) |
+| Samsung Voice Recorder | Trim icon ▸ two handles on the waveform ▸ preview ▸ "Save as a new file" / "Trim original" | The saved file |
+| Apple Voice Memos | Yellow handles on the waveform, pinch to zoom | Trimmed memo |
+| Telegram (11.12) | Drag start/end of a paused voice message before sending | The message |
+| Gong (calls) | Scissors ▸ bars on the timeline; the transcript follows the trim | The call |
+| Cube ACR, BCR, Fossify | No trimming (Fossify: open request #9) | — |
+
+No call recorder we checked lets you share a clip. Google's "select transcript text" is the pattern that fits
+CallVault best, because almost every recording here has timestamped transcript segments.
+
+## How it would work in code
+
+**The cutter already exists.** `data/merge/AudioSplit.kt` (un-merge) copies encoded frames from a `MediaExtractor`
+into a `MediaMuxer` without re-encoding: Opus → Ogg (`MUXER_OUTPUT_OGG`, API 29+), AAC → MP4. Lossless, keeps both
+stereo channels (ch0 = you, ch1 = the other side), fast enough for an hour-long call.
+
+What a clip adds:
+
+1. **Time → frames.** Opus frames are 20 ms, AAC ~21 ms; every frame is a sync frame, so a range becomes
+   `frameStart`/`frameCount` by sample time. A new `AudioSplit.clip(input, startMs, endMs, output)`.
+2. **Opus pre-roll.** A decoder starting mid-stream needs ~80 ms to settle (RFC 7845 §4.6); starting exactly on the
+   cut gives a click. Start 4 frames early (80 ms extra lead-in). Trimming that exactly via the Ogg pre-skip may not
+   be possible through MediaMuxer (it takes pre-skip from csd); untested.
+3. **End-of-stream page.** AOSP's Ogg muxer never sets the EOS flag on the last page; some players (Firefox) reject
+   such files. BCR fixes the flag and the page CRC after `stop()` (`OggContainer.kt`). ⚠️ Our existing merge/split
+   output probably has the same fault — not checked yet.
+4. **Where the clip goes.** `cacheDir/clips/`, served through the existing FileProvider, deleted on the next app
+   start or after a day — not into the recordings folder or Drive, so it never appears in the library.
+5. **Name.** `<recording name> (01-12 – 02-40).ogg` (times inside the call).
+6. **Sharing.** `ACTION_SEND` with the clip as `EXTRA_STREAM`; optionally the transcript lines in the range, with
+   their times, in `EXTRA_TEXT`. Same `RecordingShare` helpers.
+7. **Drive-only recordings** read through their SAF uri like playback does. **Imported MP3/WAV/FLAC**: MediaMuxer
+   cannot write them; first version hides the option for those (or re-encodes to Opus later).
+8. **Transcript selection** maps lines to `[first.startMs, last.endMs]` from the stored segments.
+
+Size estimate (📐): the cutter + EOS fix + clip file handling ~1 day; the range picker UI 1–2 days depending on the
+option; 15 locales for ~8 strings.
+
+## UI options (see the options page)
+
+- **A. Two handles on the waveform** (Samsung/Apple), in a "Share a part" sheet opened from the playback screen,
+  with "start here / end here" buttons that use the playing position, and snapping to marked moments.
+- **B. Select transcript lines** (Google Recorder): long-press a line, extend the selection, "Share as audio".
+- **C. Mark while listening**: two buttons on the player, "Clip starts here" / "Clip ends here", then Share.
+
+The playback screen has no Share button today (sharing is only from the list), so every option also adds one there:
+"Share recording" / "Share a part".
+
+## Open questions for the maintainer
+
+- Which option, or A + B together?
+- Include the transcript text with the clip — always, never, or a switch in the sheet?
+- Allow saving the clip as a new recording in the library, or share-only? (Share-only is simpler and keeps Drive
+  and the catalog untouched.)
