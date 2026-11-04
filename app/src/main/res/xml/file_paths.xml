@@ -14,4 +14,8 @@
          share-sheet. Its own sub-folder, holding one file at a time, so a share can never reach
          anything else the app has cached. -->
     <cache-path name="transcript_exports" path="exports/" />
+
+    <!-- A shared part of a recording ("Share a part"). Its own sub-folder of temporary clips, deleted after a day;
+         a clip is never saved as a recording. -->
+    <cache-path name="recording_clips" path="clips/" />
 </paths>
