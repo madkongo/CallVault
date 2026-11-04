@@ -58,8 +58,10 @@ option; 15 locales for ~8 strings.
 - **B. Select transcript lines** (Google Recorder): long-press a line, extend the selection, "Share as audio".
 - **C. Mark while listening**: two buttons on the player, "Clip starts here" / "Clip ends here", then Share.
 
-The playback screen has no Share button today (sharing is only from the list), so every option also adds one there:
-"Share recording" / "Share a part".
+**Maintainer 2026-11-04: A looks good** (entry points shown on the options page, awaiting confirmation):
+- Recordings list ▸ row ⋮ menu ▸ new "Share a part" under "Share" → screen A with the whole call selected.
+- Playback screen ▸ new Share button beside Delete on the call card ▸ "Share recording" / "Share a part" → screen A
+  with 30 s selected from the playing position. (The playback screen has no Share button today.)
 
 ## Open questions for the maintainer
 
