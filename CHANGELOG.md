@@ -23,6 +23,14 @@ All notable changes to CallVault are documented here. The format is based on
 
 ### Fixed
 
+- **Phones that switch USB debugging off by themselves.** Honor (and Huawei) turn USB debugging off when the phone is
+  unplugged unless "Allow ADB debugging in 'Charge only' mode" is on; some Samsung phones do it too. Away from Wi-Fi
+  recording then stayed down until the user noticed. CallVault now switches it back on itself when the screen is off
+  or locked, and otherwise offers a "Turn USB debugging on" button on its notification (on Honor/Huawei the button
+  also turns on the charge-only option). Each time it happens is kept in the debug report, with what the phone logged.
+  <!-- 🧪 VERIFYING: OP9 2026-11-04, root-simulated off, back in 1.8 s with no Wi-Fi; test build 2.4.9-usbprobe1 for
+  the Honor BVL-N59 reporter. Rollback: docs/dev-notes/rollback/usb-debugging-restore.md -->
+
 - **Clearer setting names.** Nineteen settings were renamed to say what they do — for example "Skip ignored contacts
   on app calls" (was "Also skip ignored contacts"), "Record app calls" (was "Record VoIP calls"), "Keep recording off
   Wi-Fi", "Scheduled" transcription. The two look-alike Wireless debugging switches are now one choice: Only when

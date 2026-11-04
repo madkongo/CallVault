@@ -54,7 +54,7 @@ phone for a day, then sends a debug report. Look for the "USB debugging switched
 ## How to roll back
 
 ```
-git revert <merge of fix/usb-debugging-turned-off>
+git revert -m 1 d8274549
 ```
 
-Or per commit: `3c425258` (restore + button + observer timing), `a5db080f` (diagnostics only).
+(`d8274549` = the merge of `fix/usb-debugging-turned-off` into integration/next.) Or per commit: `3c425258` (restore + button + observer timing), `a5db080f` (diagnostics only).
