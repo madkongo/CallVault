@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Bengali (বাংলা) translation -->
+<resources>
+    <string name="share_clip_menu">একটি অংশ শেয়ার করুন</string>
+    <string name="share_clip_share_whole">রেকর্ডিং শেয়ার করুন</string>
+    <string name="playback_share">শেয়ার</string>
+    <string name="share_clip_title">একটি অংশ শেয়ার করুন</string>
+    <string name="share_clip_start">শুরু</string>
+    <string name="share_clip_length">দৈর্ঘ্য</string>
+    <string name="share_clip_end">শেষ</string>
+    <string name="share_clip_start_here">এখান থেকে শুরু</string>
+    <string name="share_clip_end_here">এখানে শেষ</string>
+    <string name="share_clip_preview">অংশটি চালান</string>
+    <string name="share_clip_pause">থামান</string>
+    <string name="share_clip_hint">যেকোনো প্রান্ত টেনে আনুন, বা যেখানে হওয়া উচিত সেখানে ট্যাপ করুন। “এখান থেকে শুরু” ও “এখানে শেষ” আপনি যেখানে শুনছেন সেই জায়গা নেয়।</string>
+    <string name="share_clip_handle_start">অংশের শুরু, %1$s</string>
+    <string name="share_clip_handle_end">অংশের শেষ, %1$s</string>
+    <string name="share_clip_nudge_earlier">এক সেকেন্ড আগে</string>
+    <string name="share_clip_nudge_later">এক সেকেন্ড পরে</string>
+    <string name="share_clip_include_text">যা বলা হয়েছে তা-ও যোগ করুন</string>
+    <string name="share_clip_text_ready">এই অংশের ভেতরের ট্রান্সক্রিপ্ট লাইনগুলো সঙ্গে যাবে।</string>
+    <string name="share_clip_text_none_in_part">এই অংশে কিছু বলা হয়নি, তাই কোনো লেখা সঙ্গে যাবে না।</string>
+    <string name="share_clip_text_call_running">এই কলটির ট্রান্সক্রিপশন চলছে। শেষ হলে এই অংশের লাইনগুলো শেয়ার হবে।</string>
+    <string name="share_clip_transcribe_part">শুধু এই অংশ ট্রান্সক্রাইব করুন</string>
+    <string name="share_clip_transcribe_part_detail">দ্রুততর। শুধু এই শেয়ারের জন্য; কলটি ট্রান্সক্রাইব ছাড়াই থাকবে।</string>
+    <string name="share_clip_transcribe_whole">পুরো কল ট্রান্সক্রাইব করুন</string>
+    <string name="share_clip_transcribe_whole_detail">কলের সঙ্গে সংরক্ষিত হবে। শুধু এই অংশের লাইনগুলো শেয়ার হবে।</string>
+    <string name="share_clip_share">%1$s শেয়ার করুন</string>
+    <string name="share_clip_working_cut">অংশটি তৈরি হচ্ছে…</string>
+    <string name="share_clip_working_part">অংশটি ট্রান্সক্রাইব হচ্ছে… %1$d%%</string>
+    <string name="share_clip_working_call">কলের ট্রান্সক্রিপ্টের অপেক্ষায়…</string>
+    <string name="share_clip_share_without_text">লেখা ছাড়া শেয়ার করুন</string>
+    <string name="share_clip_back">ফিরে যান</string>
+    <string name="share_clip_failed">অংশটি তৈরি করা যায়নি। আবার চেষ্টা করুন, বা পুরো রেকর্ডিং শেয়ার করুন।</string>
+    <string name="share_clip_busy">ট্রান্সক্রিপশন এখন অন্য একটি কল নিয়ে ব্যস্ত। লেখা ছাড়া শেয়ার করুন, বা সেটি শেষ হলে আবার চেষ্টা করুন।</string>
+    <string name="share_clip_not_set_up">ট্রান্সক্রিপশন এখনো সেটআপ হয়নি। সেটিংসে একটি মডেল ডাউনলোড করুন বা আপনার সার্ভিস যোগ করুন।</string>
+    <string name="share_clip_transcribe_failed">এবার ট্রান্সক্রিপশন কাজ করেনি। লেখা ছাড়া শেয়ার করবেন?</string>
+    <string name="share_clip_unsupported">শুধু CallVault-এর নিজের রেকর্ডিং থেকেই অংশ শেয়ার করা যায়, এই ইমপোর্ট করা ফাইল থেকে নয়।</string>
+    <string name="share_clip_chooser">রেকর্ডিংয়ের অংশ শেয়ার করুন</string>
+</resources>

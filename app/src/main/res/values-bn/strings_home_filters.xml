@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Bengali (বাংলা) translation -->
+<resources>
+    <string name="home_sort_chip">সাজানো: %1$s</string>
+    <string name="home_sort_newest">নতুন আগে</string>
+    <string name="home_sort_oldest">পুরনো আগে</string>
+    <string name="home_sort_name">নাম A–Z</string>
+    <string name="home_sort_longest">দীর্ঘতম</string>
+
+    <string name="home_filter_source_label">উৎস</string>
+    <string name="home_filter_source_chip">উৎস: %1$s</string>
+    <string name="home_filter_source_all">সব</string>
+    <string name="home_filter_source_local">শুধু ফোনে</string>
+    <string name="home_filter_source_drive">শুধু Drive-এ</string>
+
+    <string name="home_filter_direction_label">দিক</string>
+    <string name="home_filter_direction_chip">দিক: %1$s</string>
+    <string name="home_filter_direction_all">সব</string>
+    <string name="home_filter_direction_incoming">ইনকামিং</string>
+    <string name="home_filter_direction_outgoing">আউটগোয়িং</string>
+
+    <string name="home_filter_date_label">তারিখ</string>
+    <string name="home_filter_date_chip">তারিখ: %1$s</string>
+    <string name="home_filter_date_all">সব তারিখ</string>
+    <string name="home_filter_date_all_short">সব</string>
+
+    <string name="home_source_badge_local">ডিভাইস</string>
+    <string name="home_source_badge_drive">Drive</string>
+    <string name="home_source_badge_both">ডিভাইস + Drive</string>
+
+    <string name="home_copy_device">ডিভাইস</string>
+    <string name="home_copy_drive">Drive</string>
+
+    <string name="home_delete_confirm_device_message">%1$s-এর ডিভাইসের কপি মুছবেন? Drive-এর কপি থেকে যাবে।</string>
+    <string name="home_delete_confirm_drive_message">%1$s-এর Drive-এর কপি মুছবেন? ডিভাইসের কপি থেকে যাবে।</string>
+    <string name="home_delete_copy_device_content_desc">ডিভাইসের কপি মুছুন</string>
+    <string name="home_delete_copy_drive_content_desc">Drive-এর কপি মুছুন</string>
+
+    <string name="home_filter_tag_label">ট্যাগ</string>
+    <string name="home_filter_tag_chip">ট্যাগ: %1$s</string>
+    <string name="home_filter_tag_all">সব ট্যাগ</string>
+    <string name="home_filter_tag_all_short">সব</string>
+</resources>

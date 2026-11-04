@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Bengali (বাংলা) translation -->
+<resources>
+    <string name="wizard_ui_eyebrow">সেটআপ</string>
+    <string name="wizard_ui_storage_local_desc">রেকর্ডিং এই ফোনেই থাকে। কিছুই ডিভাইসের বাইরে যায় না।</string>
+    <string name="wizard_ui_storage_drive_desc">রেকর্ডিং আপনার Google Drive ফোল্ডারে আপলোড হয়, তারপর এই ফোন থেকে মুছে যায়।</string>
+    <string name="wizard_ui_storage_both_desc">এই ফোনে একটি কপি রাখুন এবং Google Drive-এ ব্যাকআপ নিন।</string>
+    <string name="wizard_ui_folder_choose">ফোল্ডার বেছে নিন</string>
+    <string name="wizard_ui_schedule_immediate_desc">প্রতিটি কল শেষ হওয়ামাত্র আপলোড করুন।</string>
+    <string name="wizard_ui_schedule_daily_desc">দিনের সব কল একসাথে দিনে একবার আপলোড করুন।</string>
+    <string name="wizard_ui_schedule_weekly_desc">সপ্তাহের সব কল একসাথে সপ্তাহে একবার আপলোড করুন।</string>
+    <string name="wizard_ui_auto_incoming_desc">কল এলে স্বয়ংক্রিয়ভাবে রেকর্ডিং শুরু করুন।</string>
+    <string name="wizard_ui_auto_outgoing_desc">আপনি কল করলে স্বয়ংক্রিয়ভাবে রেকর্ডিং শুরু করুন।</string>
+</resources>
