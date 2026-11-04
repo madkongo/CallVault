@@ -46,6 +46,7 @@
     <string name="notif_readiness_wd_off_by_user_text">شما اشکال‌زدایی بی‌سیم را خاموش کرده‌اید و راه دیگری برای راه‌اندازی مجدد ضبط‌کننده توسط CallVault وجود ندارد. آن را دوباره روشن کنید یا اشکال‌زدایی USB را روشن کنید.</string>
     <string name="notif_readiness_offline_paused_text">ضبط بدون Wi-Fi متوقف شده است: به اشکال‌زدایی USB نیاز دارد. تماس‌ها در حالت اتصال به Wi-Fi همچنان ضبط می‌شوند.</string>
     <string name="notif_action_turn_wd_on">روشن کردن اشکال‌زدایی بی‌سیم</string>
+    <string name="notif_action_turn_usb_on">روشن کردن اشکال‌زدایی USB</string>
 
     <string name="transcript_notice_channel">رونویسی‌ها</string>
     <string name="transcript_notice_ready_title">رونویسی آماده است</string>

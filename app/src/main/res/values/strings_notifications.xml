@@ -48,6 +48,7 @@
     <string name="notif_readiness_wd_off_by_user_text">You turned Wireless debugging off, and nothing else lets CallVault restart the recorder. Turn it back on, or turn on USB debugging.</string>
     <string name="notif_readiness_offline_paused_text">Off-Wi-Fi recording is paused: it needs USB debugging. Calls on Wi-Fi still record.</string>
     <string name="notif_action_turn_wd_on">Turn Wireless debugging on</string>
+    <string name="notif_action_turn_usb_on">Turn USB debugging on</string>
 
     <!-- Transcription finished / didn't finish -->
     <string name="transcript_notice_channel">Transcripts</string>

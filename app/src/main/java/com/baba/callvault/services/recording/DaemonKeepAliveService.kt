@@ -32,6 +32,7 @@ import com.baba.callvault.data.AppPreferences
 import com.baba.callvault.data.RecordingState
 import com.baba.callvault.data.health.SetupHealthStore
 import com.baba.callvault.integrations.adb.AdbShell
+import com.baba.callvault.integrations.adb.UsbDebuggingRestorer
 import com.baba.callvault.integrations.adb.WifiState
 import com.baba.callvault.integrations.adb.WirelessDebuggingOffCause
 import com.baba.callvault.integrations.adb.DeveloperOptions
@@ -174,6 +175,15 @@ class DaemonKeepAliveService : Service() {
             // The notice names these switches, so it has to follow them immediately.
             updateNotification(isDaemonAlive())
 
+            // The setting has just gone to 0 but adbd has not stopped yet, so the state still reads on — measured on
+            // the OP9 (2026-11-04): this observer then did nothing at all. Look again once adbd has had time to stop.
+            if (!usb.isOff && rawUsbDebuggingOff()) {
+                Thread {
+                    if (waitForUsbDebuggingOff()) watchdogHandler.post { onUsbDebuggingProvenOff() }
+                }.apply { isDaemon = true; name = "cv-usb-off-settle" }.start()
+                return
+            }
+
             // Both directions matter, and both are immediate. Waiting for the next daemon launch to
             // re-evaluate means the user flips a switch and nothing visibly happens, which reads as
             // broken even when it eventually corrects itself.
@@ -182,10 +192,7 @@ class DaemonKeepAliveService : Service() {
                 // debugging reads (init.usb.configfs.rc: sys.usb.config=none → stop adbd), and the daemon
                 // dies with it. This is a user-caused unrecordable window opening RIGHT NOW, so the
                 // observation window restarts immediately.
-                usb.isOff -> {
-                    restartObservationWindow("USB debugging switched off")
-                    "USB debugging switched off — adbd stops with it; restarting it once the USB change settles"
-                }
+                usb.isOff -> return onUsbDebuggingProvenOff()
                 // USB debugging now holds adbd up, so Wireless debugging is no longer needed. Dropping
                 // it here is safe: with USB debugging enabled, toggling Wireless debugging does not
                 // restart adbd (measured — its pid is unchanged), so the daemon is never at risk.
@@ -194,19 +201,55 @@ class DaemonKeepAliveService : Service() {
             }
 
             AppLogger.i(TAG, reason)
-            Thread {
-                runCatching {
-                    if (usb.isOff) {
-                        // The revival waits for the USB change to settle itself before touching Wireless
-                        // debugging — a second wait here made recovery take 10.5 s on the OP9 instead of ~7.
-                        AdbShell.reviveAdbdIfStopped(applicationContext, "USB debugging switched off")
-                    }
-                    // Re-runs the transport policy: with the daemon already connected this is just the
-                    // decision, no relaunch — and it is what switches Wireless debugging off.
-                    RecorderBackend.ensureRunning(applicationContext)
-                }.onFailure { AppLogger.w(TAG, "Could not apply the transport change: ${it.message}") }
-            }.apply { isDaemon = true; name = "cv-transport-change" }.start()
+            applyTransportChange(usbOff = false)
         }
+    }
+
+    /**
+     * USB debugging is proven off: stock Android stops adbd on that change whatever Wireless debugging reads
+     * (init.usb.configfs.rc: sys.usb.config=none → stop adbd), and the daemon dies with it — an unrecordable
+     * window opening right now, so the observation window restarts immediately.
+     */
+    private fun onUsbDebuggingProvenOff() {
+        restartObservationWindow("USB debugging switched off")
+        AppLogger.i(TAG, "USB debugging switched off — adbd stops with it; restarting it once the USB change settles")
+        updateNotification(isDaemonAlive())
+        applyTransportChange(usbOff = true)
+    }
+
+    private fun applyTransportChange(usbOff: Boolean) {
+        Thread {
+            runCatching {
+                // Some phones switch USB debugging off by themselves (Honor's charge-only rule, Samsung).
+                // Switching it back on is the only recovery that works away from Wi-Fi; the policy only does
+                // it when the user cannot have done it by hand. See [UsbDebuggingRestorer].
+                val restored = usbOff &&
+                    UsbDebuggingRestorer.onUsbDebuggingOff(applicationContext, needsAdb = usesAdb())
+                if (usbOff && !restored) {
+                    // The revival waits for the USB change to settle itself before touching Wireless
+                    // debugging — a second wait here made recovery take 10.5 s on the OP9 instead of ~7.
+                    AdbShell.reviveAdbdIfStopped(applicationContext, "USB debugging switched off")
+                }
+                // Re-runs the transport policy: with the daemon already connected this is just the
+                // decision, no relaunch — and it is what switches Wireless debugging off.
+                RecorderBackend.ensureRunning(applicationContext)
+            }.onFailure { AppLogger.w(TAG, "Could not apply the transport change: ${it.message}") }
+        }.apply { isDaemon = true; name = "cv-transport-change" }.start()
+    }
+
+    /** The raw setting reads 0. On a build that redacts it this is always true, so it only ever starts a look. */
+    private fun rawUsbDebuggingOff(): Boolean =
+        runCatching { Settings.Global.getInt(contentResolver, "adb_enabled", 1) == 0 }.getOrDefault(false)
+
+    /** Waits up to [USB_OFF_SETTLE_MS] for USB debugging to be proven off (adbd stopped). Background thread only. */
+    private fun waitForUsbDebuggingOff(): Boolean {
+        val deadline = System.currentTimeMillis() + USB_OFF_SETTLE_MS
+        while (System.currentTimeMillis() < deadline) {
+            if (!rawUsbDebuggingOff()) return false
+            if (AdbShell.usbDebuggingState(applicationContext).isOff) return true
+            Thread.sleep(USB_OFF_POLL_MS)
+        }
+        return false
     }
 
     /**
@@ -457,6 +500,11 @@ class DaemonKeepAliveService : Service() {
         RecorderConnection.onDeath = { onDaemonDiedImmediate() }
         // And say "ready" the moment any recorder connects, whoever started it.
         RecorderConnection.onConnected = {
+            // The phone's log around a USB-debugging-off event can only be read once the recorder is back.
+            Thread {
+                runCatching { UsbDebuggingRestorer.captureLogsIfPending(applicationContext) }
+                    .onFailure { AppLogger.w(TAG, "Could not capture the USB-debugging log window: ${it.message}") }
+            }.apply { isDaemon = true; name = "cv-usb-off-log" }.start()
             watchdogHandler.post {
                 val alive = isDaemonAlive()
                 if (alive != (lastReady == true)) {
@@ -720,6 +768,16 @@ class DaemonKeepAliveService : Service() {
         val noticeOwnsLine = notice != ReadinessNotice.READY && notice != ReadinessNotice.STARTING
         // The reason is the whole message; don't let the collapsed line cut it off (it read "Turn it ba…").
         if (noticeOwnsLine) builder.setStyle(NotificationCompat.BigTextStyle().bigText(baseText))
+        // USB debugging went off and was not switched back on by itself (the screen was on, or the phone kept
+        // switching it off). One tap turns it back on — and on Honor/Huawei also the charge-only ADB option
+        // whose absence is what switches it off.
+        if (UsbDebuggingActionReceiver.offers(this, notice)) {
+            builder.addAction(
+                0,
+                getString(R.string.notif_action_turn_usb_on),
+                UsbDebuggingActionReceiver.pendingIntent(this),
+            )
+        }
         if (notice == ReadinessNotice.WD_OFF_BY_USER) {
             builder.addAction(
                 0,
@@ -777,6 +835,9 @@ class DaemonKeepAliveService : Service() {
     }
 
     companion object {
+        /** How long adbd may take to stop after USB debugging goes off before the off is believed. */
+        private const val USB_OFF_SETTLE_MS = 5_000L
+        private const val USB_OFF_POLL_MS = 200L
         private const val TAG = "CV:DaemonKeepAlive"
         private const val CHANNEL_ID = "recorder_keepalive"
 

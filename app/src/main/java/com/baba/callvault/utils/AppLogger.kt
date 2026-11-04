@@ -371,6 +371,14 @@ object AppLogger {
                     writer.println()
                 }
 
+                // Always on as well: every time USB debugging went off, and the phone's own log around it.
+                com.baba.callvault.integrations.adb.UsbDebuggingEvents.readForReport(context)?.let { events ->
+                    writer.println("--- USB debugging switched off (always on) ---")
+                    writer.println(events.trimEnd())
+                    writer.println("===========================================")
+                    writer.println()
+                }
+
                 // Snapshot the live log under the writer's lock so the copy is consistent.
                 val appEntries = fileMutex.withLock {
                     if (source?.exists() == true) entriesOf(source.readLines()) else emptyList()
@@ -540,6 +548,9 @@ object AppLogger {
             // WHAT IS POSSIBLE: on a blocked phone setup cannot complete, and nothing else in a report says
             // so. See docs/dev-notes/2026-09-16-oem-adb-restrictions-and-onboarding-check.md.
             writer.println("Shell grants (OEM gate): ${runCatching { AdbShell.shellGrantState(context).name }.getOrDefault("?")} (${runCatching { AdbShell.oemGate(context).name }.getOrDefault("?")})")
+            // Honor/Huawei only: with this off, the phone switches USB debugging off whenever USB is in charge-only mode.
+            writer.println("Allow ADB in charge-only mode: ${runCatching { com.baba.callvault.integrations.adb.UsbOffSnapshot.chargingAdb(context)?.toString() ?: "absent" }.getOrDefault("?")}")
+            writer.println("USB default: ${runCatching { com.baba.callvault.integrations.adb.UsbDefaultConfig.cached(context).name }.getOrDefault("?")}")
         }
         writer.println("===========================================")
         writer.println()

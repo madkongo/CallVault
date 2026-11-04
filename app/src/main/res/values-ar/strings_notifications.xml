@@ -1,6 +1,7 @@
 <?xml version='1.0' encoding='utf-8'?>
 <resources>
     <string name="notif_action_turn_wd_on">تشغيل تصحيح الأخطاء اللاسلكي</string>
+    <string name="notif_action_turn_usb_on">تشغيل تصحيح أخطاء USB</string>
     <string name="notif_call_monitor_channel">مراقبة المكالمات</string>
     <string name="notif_pairing_action_enter_code">إدخال رمز الاقتران</string>
     <string name="notif_pairing_action_stop">إيقاف</string>
