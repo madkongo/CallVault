@@ -33,6 +33,8 @@ import com.baba.callvault.data.RecordingState
 import com.baba.callvault.data.health.SetupHealthStore
 import com.baba.callvault.integrations.adb.AdbShell
 import com.baba.callvault.integrations.adb.UsbDebuggingRestorer
+import com.baba.callvault.integrations.adb.UsbDebuggingShellRead
+import com.baba.callvault.integrations.adb.TransportTimeline
 import com.baba.callvault.integrations.adb.WifiState
 import com.baba.callvault.integrations.adb.WirelessDebuggingOffCause
 import com.baba.callvault.integrations.adb.DeveloperOptions
@@ -118,6 +120,8 @@ class DaemonKeepAliveService : Service() {
                 // binder blip doesn't trigger a relaunch (which would kill+respawn a daemon that was fine).
                 if (downStreak >= DOWN_STREAK_THRESHOLD) maybeRewarm()
             }
+            if (alive && usesAdb()) refreshShellUsbRead()
+            if (usesAdb()) timelineSnapshot(alive, "tick")
             healSharedNotice()
             watchdogHandler.postDelayed(this, WATCHDOG_INTERVAL_MS)
         }
@@ -170,6 +174,10 @@ class DaemonKeepAliveService : Service() {
             // Tri-state on purpose: a build that redacts the setting reports every change as "off", and
             // treating that as the user's doing wipes the observation window and manufactures an
             // unrecordable window that never existed. Only a proven off counts as off.
+            // The recorder's read describes the switch as it was; drop it and read again in the background.
+            UsbDebuggingShellRead.forget()
+            refreshShellUsbRead()
+            TransportTimeline.event(applicationContext, "USB debugging switch changed")
             val usb = AdbShell.usbDebuggingState(applicationContext)
             val wdOn = AdbShell.isWirelessDebuggingEnabled(applicationContext)
             // The notice names these switches, so it has to follow them immediately.
@@ -263,6 +271,44 @@ class DaemonKeepAliveService : Service() {
      * Wrapped so a failure here can never destabilise this service — health bookkeeping is strictly
      * secondary to keeping the daemon warm.
      */
+    /**
+     * Re-reads USB debugging through the recorder, off the main thread, and redraws the notice if the answer changed —
+     * the only way to know it is off while Wireless debugging is also on (see [UsbDebuggingShellRead]).
+     */
+    private fun refreshShellUsbRead() {
+        Thread {
+            val before = UsbDebuggingShellRead.current()
+            val now = UsbDebuggingShellRead.refresh()
+            if (now != null && now != before) {
+                AppLogger.i(TAG, "USB debugging as the recorder reads it: ${if (now) "on" else "off"}")
+                watchdogHandler.post { updateNotification(isDaemonAlive()) }
+            }
+        }.apply { isDaemon = true; name = "cv-usb-shell-read" }.start()
+    }
+
+    /** One line of the always-on timeline, off the main thread (it reads several settings). */
+    private fun timelineSnapshot(alive: Boolean, why: String) {
+        Thread { runCatching { TransportTimeline.snapshot(applicationContext, alive, why) } }
+            .apply { isDaemon = true; name = "cv-timeline" }.start()
+    }
+
+    /** A relaunch not attempted, written once per reason in a row so a long outage is one line, not hundreds. */
+    @Volatile private var lastSkip: String? = null
+    private fun timelineSkip(reason: String) {
+        if (reason == lastSkip) return
+        lastSkip = reason
+        TransportTimeline.event(applicationContext, "not relaunching: $reason")
+    }
+
+    /** Screen and lock changes go on the timeline: the screen-off adbd restart is the suspect on these phones. */
+    private val screenReceiver = object : android.content.BroadcastReceiver() {
+        override fun onReceive(context: android.content.Context, intent: android.content.Intent) {
+            if (!usesAdb()) return
+            TransportTimeline.event(applicationContext, intent.action?.substringAfterLast('.') ?: "screen")
+            timelineSnapshot(isDaemonAlive(), "screen")
+        }
+    }
+
     private fun restartObservationWindow(reason: String) {
         runCatching {
             SetupHealthStore(applicationContext).observationWindowStart(isReady = false, System.currentTimeMillis())
@@ -288,6 +334,7 @@ class DaemonKeepAliveService : Service() {
             // Any switch of Wireless debugging gives adbd a new port, so a port search that failed may run again (#65).
             com.baba.callvault.integrations.adb.ConnectPortFinder.onWirelessDebuggingChanged()
             val on = AdbShell.isWirelessDebuggingEnabled(applicationContext)
+            TransportTimeline.event(applicationContext, "Wireless debugging switch changed → ${if (on) "on" else "off"}")
             val prefs = AppPreferences(applicationContext)
             if (on) {
                 // On again, by anyone: nothing left to respect.
@@ -437,6 +484,16 @@ class DaemonKeepAliveService : Service() {
             )
         }.onFailure { AppLogger.w(TAG, "Could not watch the debugging switches: ${it.message}") }
         if (usesAdb()) runCatching {
+            registerReceiver(
+                screenReceiver,
+                android.content.IntentFilter().apply {
+                    addAction(android.content.Intent.ACTION_SCREEN_OFF)
+                    addAction(android.content.Intent.ACTION_SCREEN_ON)
+                    addAction(android.content.Intent.ACTION_USER_PRESENT)
+                },
+            )
+        }.onFailure { AppLogger.w(TAG, "Could not watch the screen: ${it.message}") }
+        if (usesAdb()) runCatching {
             getSystemService(ConnectivityManager::class.java)?.registerNetworkCallback(
                 NetworkRequest.Builder().addTransportType(NetworkCapabilities.TRANSPORT_WIFI).build(),
                 wifiJoinCallback,
@@ -535,6 +592,10 @@ class DaemonKeepAliveService : Service() {
     private fun onDaemonDiedImmediate() {
         watchdogHandler.post {
             AppLogger.i(TAG, "keep-alive: binder-death signal — relaunching immediately")
+            if (usesAdb()) {
+                TransportTimeline.event(applicationContext, "recorder died")
+                timelineSnapshot(false, "death")
+            }
             lastReady = false
             updateNotification(false)
             downStreak = DOWN_STREAK_THRESHOLD // death confirmed — no debounce needed
@@ -575,13 +636,17 @@ class DaemonKeepAliveService : Service() {
             return
         }
         val offline = runCatching { AppPreferences(this).isOfflineRecordingEnabled() }.getOrDefault(false)
-        if (!offline && !isWifiConnected()) return // the WD relaunch path needs Wi-Fi; loopback doesn't
+        if (!offline && !isWifiConnected()) {
+            timelineSkip("no Wi-Fi and off-Wi-Fi recording is off")
+            return // the WD relaunch path needs Wi-Fi; loopback doesn't
+        }
         // Nothing to try while recovery is known to be impossible — the user turned the only way in off, or
         // USB debugging is off with no Wi-Fi. Seen on the emulator: the launcher retried every 12 s, logging a
         // refusal each time, for as long as the switch stayed off. The switch observer comes back here the
         // moment either switch changes, and the watchdog still ticks for Wi-Fi returning.
         val known = ReadinessNoticeText.current(this, ready = false)
         if (known == ReadinessNotice.WD_OFF_BY_USER || known == ReadinessNotice.NEEDS_WIFI) {
+            timelineSkip("recovery impossible: $known")
             updateNotification(false)
             return
         }
@@ -635,6 +700,7 @@ class DaemonKeepAliveService : Service() {
 
                 RecoveryStep.CONNECT -> Unit
             }
+            val startedAt = SystemClock.elapsedRealtime()
             val outcome = try {
                 launchDaemonBounded()
             } finally {
@@ -643,6 +709,11 @@ class DaemonKeepAliveService : Service() {
                 rewarmGate.leave()
             }
             val ok = outcome == LaunchOutcome.CONNECTED
+            TransportTimeline.event(
+                applicationContext,
+                "relaunch (force=$force offline=$offline) → $outcome in ${SystemClock.elapsedRealtime() - startedAt} ms",
+            )
+            timelineSnapshot(ok, "relaunch")
             // Feed the outcome back so a run of failures escalates instead of repeating unchanged. This comes
             // BEFORE the rescue below on purpose: on 2026-09-14 the rescue itself blocked, this line was never
             // reached, and six hours of relaunches never once escalated or told the user.
@@ -809,6 +880,7 @@ class DaemonKeepAliveService : Service() {
     }
 
     override fun onDestroy() {
+        runCatching { unregisterReceiver(screenReceiver) }
         runCatching { contentResolver.unregisterContentObserver(usbDebuggingObserver) }
         runCatching { contentResolver.unregisterContentObserver(wirelessDebuggingObserver) }
         runCatching { contentResolver.unregisterContentObserver(developerOptionsObserver) }

@@ -105,6 +105,14 @@ object SystemLogCollector {
         }
         val capped = SystemLogFilter.capToNewest(kept, MAX_LINES, MAX_BYTES)
 
+        // Whether this phone's log is current at all. On the Honor BVL-N59 (2026-11-04) the dump held 121k lines and
+        // every kept line was from the last boot, three days earlier — a log that stopped, or one that only keeps
+        // what is not ours? This says which, without anyone reading 121k lines.
+        val health = LogcatHealth.render(raw, dump(context, "logcat_size", "logcat -g"))
+        // Every debugging/USB line in the whole log, not only the window around an event: what switched USB
+        // debugging off is the open question on Honor. Keyword lines only, as in UsbOffLogWindow.
+        val usbLines = LogcatHealth.debuggingLines(raw)
+
         // Android's own record of who is holding a microphone. Collected separately from logcat
         // because it answers a question logcat cannot: a capture leaked by a process that has since
         // died, or by a leftover scrcpy server, leaves no log line anywhere — but it is still listed
@@ -142,6 +150,9 @@ object SystemLogCollector {
                 appendLine(micActivity)
                 appendLine(micOps)
                 appendLine(recorders)
+                appendLine(health)
+                appendLine("--- Debugging and USB lines in the whole log (newest ${LogcatHealth.MAX_DEBUG_LINES}) ---")
+                if (usbLines.isEmpty()) appendLine("None.") else usbLines.forEach { appendLine(AppLogger.redactForReport(it)) }
                 appendLine("-----------------------------------------------------------------------------------------")
                 capped.forEach { appendLine(AppLogger.redactForReport(it)) }
             })
