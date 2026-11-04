@@ -46,6 +46,7 @@
     <string name="notif_readiness_wd_off_by_user_text">Вы выключили отладку по Wi-Fi, и у CallVault нет другого способа перезапустить рекордер. Включите её снова или включите отладку по USB.</string>
     <string name="notif_readiness_offline_paused_text">Запись без Wi-Fi приостановлена: для неё нужна отладка по USB. Звонки через Wi-Fi по-прежнему записываются.</string>
     <string name="notif_action_turn_wd_on">Включить отладку по Wi-Fi</string>
+    <string name="notif_action_turn_usb_on">Включить отладку по USB</string>
 
     <!-- Transcription finished / didn't finish -->
     <string name="transcript_notice_channel">Расшифровки</string>

@@ -46,6 +46,7 @@
     <string name="notif_readiness_wd_off_by_user_text">Wyłączyłeś debugowanie bezprzewodowe, a CallVault nie ma innego sposobu na ponowne uruchomienie rejestratora. Włącz je z powrotem albo włącz debugowanie USB.</string>
     <string name="notif_readiness_offline_paused_text">Nagrywanie bez Wi-Fi jest wstrzymane: wymaga debugowania USB. Połączenia przez Wi-Fi są nadal nagrywane.</string>
     <string name="notif_action_turn_wd_on">Włącz debugowanie bezprzewodowe</string>
+    <string name="notif_action_turn_usb_on">Włącz debugowanie USB</string>
 
     <!-- Transcription finished / didn't finish -->
     <string name="transcript_notice_channel">Transkrypcje</string>

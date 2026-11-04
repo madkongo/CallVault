@@ -46,6 +46,7 @@
     <string name="notif_readiness_wd_off_by_user_text">Du hast WLAN-Debugging ausgeschaltet, und CallVault kann den Rekorder sonst nicht neu starten. Schalte es wieder ein oder schalte USB-Debugging ein.</string>
     <string name="notif_readiness_offline_paused_text">Die Aufnahme ohne WLAN ist pausiert: Sie benötigt USB-Debugging. Anrufe im WLAN werden weiter aufgenommen.</string>
     <string name="notif_action_turn_wd_on">WLAN-Debugging einschalten</string>
+    <string name="notif_action_turn_usb_on">USB-Debugging einschalten</string>
 
     <!-- Transcription finished / didn't finish -->
     <string name="transcript_notice_channel">Transkripte</string>
