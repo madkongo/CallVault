@@ -36,8 +36,9 @@ What a clip adds:
    cut gives a click. Start 4 frames early (80 ms extra lead-in). Trimming that exactly via the Ogg pre-skip may not
    be possible through MediaMuxer (it takes pre-skip from csd); untested.
 3. **End-of-stream page.** AOSP's Ogg muxer never sets the EOS flag on the last page; some players (Firefox) reject
-   such files. BCR fixes the flag and the page CRC after `stop()` (`OggContainer.kt`). ⚠️ Our existing merge/split
-   output probably has the same fault — not checked yet.
+   such files. BCR fixes the flag and the page CRC after `stop()` (`OggContainer.kt`). ⚠️ Confirmed 2026-11-04 on
+   the OP9: our ordinary recordings already end without the EOS flag (last page flags 0x0), so this is a fix for all
+   our Ogg output, not only clips.
 4. **Where the clip goes.** `cacheDir/clips/`, served through the existing FileProvider, deleted on the next app
    start or after a day — not into the recordings folder or Drive, so it never appears in the library.
 5. **Name.** `<recording name> (01-12 – 02-40).ogg` (times inside the call).

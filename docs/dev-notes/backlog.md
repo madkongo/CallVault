@@ -282,7 +282,9 @@ Pick a start and end inside a recording, preview it, share it as a new file; the
 - UI: options page sent 2026-11-04 — A waveform handles, B select transcript lines, C mark start/end while listening.
   The playback screen gets a Share button either way (it has none today).
 - Decisions needed: which option; transcript text with the clip; share-only or also "save as new recording".
-- ⚠️ Side finding to check: our merge/split Ogg output probably lacks the end-of-stream flag too (AOSP muxer).
+- ⚠️ Side finding, CONFIRMED 2026-11-04 on the OP9: ordinary recordings (phone call 2026-11-03 and a WhatsApp call)
+  end without the Ogg end-of-stream flag (last page flags 0x0). Android/VLC/ffprobe play them; strict players (Firefox)
+  may refuse. Fix = BCR's last-page flag + CRC patch after the muxer stops; applies to recordings, merge and clips.
 
 ## 🔼 Higher-priority feature requests — agreed 2026-10-01, not started
 
