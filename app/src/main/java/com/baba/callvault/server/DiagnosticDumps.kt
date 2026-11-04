@@ -57,6 +57,9 @@ object DiagnosticDumps {
     /** A logcat buffer size and nothing else — digits with an optional unit. */
     private val SIZE = Regex("^[0-9]{1,7}[KMG]?$")
 
+    /** A logcat `-T` start time and nothing else: `MM-DD hh:mm:ss.mmm`. */
+    private val STAMP = Regex("^[0-9]{2}-[0-9]{2} [0-9]{2}:[0-9]{2}:[0-9]{2}\\.[0-9]{3}$")
+
     /** How long any one dump may take. Generous for `logcat -d` on a full ring, finite for everything. */
     private const val TIMEOUT_SECONDS = 20L
 
@@ -70,6 +73,17 @@ object DiagnosticDumps {
         "logcat_grow" -> arrayOf(LOGCAT, "-b", "main", "-G", "8M")
         "logcat_restore" -> arg?.takeIf { SIZE.matches(it) }?.let { arrayOf(LOGCAT, "-b", "main", "-G", it) }
         "logcat_dump" -> arrayOf(LOGCAT, "-b", "main", "-b", "system", "-d", "-v", "threadtime")
+        // The debugging/USB lines of the log from a given moment on, for USB debugging going off
+        // (UsbDebuggingRestorer). Filtered and capped here: everything since the moment ran past the binder's
+        // 1 MB limit on the OP9 ("Transaction failed on small parcel"). The argument only reaches the shell after
+        // [STAMP] has accepted it — digits, dashes, colons, a space and a dot — and inside single quotes.
+        "logcat_since" -> arg?.takeIf { STAMP.matches(it) }?.let {
+            arrayOf(
+                SH, "-c",
+                "$LOGCAT -b main -b system -b events -d -v threadtime -T '$it' " +
+                    "| grep -E 'Adb|ADB|Usb|USB|(^|[^A-Za-z])(adb|usb)|[Dd]ebugg|[Dd]evelop' | head -n 800",
+            )
+        }
         "dumpsys_audio" -> arrayOf(DUMPSYS, "audio")
         "appops_all" -> arrayOf(DUMPSYS, "appops")
         // Filtered on the device: the raw dump is megabytes and most of it is irrelevant. A pipeline

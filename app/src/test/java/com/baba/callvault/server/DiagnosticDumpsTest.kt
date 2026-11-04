@@ -70,6 +70,23 @@ class DiagnosticDumpsTest {
     }
 
     @Test
+    fun `the log since a moment accepts only a logcat time`() {
+        val command = DiagnosticDumps.commandFor("logcat_since", "11-04 09:30:34.453")!!
+        assertTrue(command.last().contains("-T '11-04 09:30:34.453'"))
+        listOf(
+            "11-04 09:30:34.453; id",
+            "11-04 09:30:34.453\n",
+            "11-04 09:30:34.453' ; id '",
+            "\$(id)",
+            "11-04 09:30:34",
+            "",
+        ).forEach { hostile ->
+            assertNull("must refuse '$hostile'", DiagnosticDumps.commandFor("logcat_since", hostile))
+        }
+        assertNull(DiagnosticDumps.commandFor("logcat_since", null))
+    }
+
+    @Test
     fun `restoring without a size is refused rather than defaulted`() {
         // Guessing a buffer size would silently resize the user's logcat ring to something they
         // never had.
