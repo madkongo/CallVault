@@ -406,6 +406,13 @@
     <string name="settings_file_name_template_placeholders">Marcadores de posición:</string>
     <string name="settings_file_name_template_placeholders_preview">Vista previa: %1$s</string>
     <string name="settings_file_name_template_preset">Predefinido</string>
+    <string name="settings_file_name_custom_desc">Escribe tu propio formato</string>
+    <string name="settings_file_name_custom_tap_tag">Toca una etiqueta para añadirla:</string>
+    <string name="settings_file_name_error_empty">Escribe un formato de nombre de archivo.</string>
+    <string name="settings_file_name_error_needs_date">Añade {date}: CallVault necesita la fecha para ordenar y unir llamadas.</string>
+    <string name="settings_file_name_error_bad_character">Un nombre de archivo no puede contener / \\ : * ? \" &lt; &gt; |</string>
+    <string name="settings_file_name_error_unknown_tag">CallVault no conoce la etiqueta %1$s.</string>
+    <string name="settings_file_name_error_too_long">Menos de %1$d caracteres.</string>
     <string name="settings_group_app">App</string>
     <string name="settings_group_calls_to_record">Grabación</string>
     <string name="settings_group_calls_to_skip">Llamadas que omitir</string>

@@ -406,6 +406,13 @@
     <string name="settings_file_name_template_placeholders">Segnaposto:</string>
     <string name="settings_file_name_template_placeholders_preview">Anteprima: %1$s</string>
     <string name="settings_file_name_template_preset">Preimpostazione</string>
+    <string name="settings_file_name_custom_desc">Scrivi il tuo formato</string>
+    <string name="settings_file_name_custom_tap_tag">Tocca un tag per aggiungerlo:</string>
+    <string name="settings_file_name_error_empty">Scrivi un formato per il nome del file.</string>
+    <string name="settings_file_name_error_needs_date">Aggiungi {date}: CallVault usa la data per ordinare e unire le chiamate.</string>
+    <string name="settings_file_name_error_bad_character">Un nome di file non può contenere / \\ : * ? \" &lt; &gt; |</string>
+    <string name="settings_file_name_error_unknown_tag">CallVault non conosce il tag %1$s.</string>
+    <string name="settings_file_name_error_too_long">Meno di %1$d caratteri.</string>
     <string name="settings_group_app">App</string>
     <string name="settings_group_calls_to_record">Registrazione</string>
     <string name="settings_group_calls_to_skip">Chiamate da saltare</string>

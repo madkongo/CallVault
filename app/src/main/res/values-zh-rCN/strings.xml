@@ -405,6 +405,13 @@
     <string name="settings_file_name_template_placeholders">占位符：</string>
     <string name="settings_file_name_template_placeholders_preview">预览：%1$s</string>
     <string name="settings_file_name_template_preset">预设</string>
+    <string name="settings_file_name_custom_desc">输入你自己的格式</string>
+    <string name="settings_file_name_custom_tap_tag">点按标签即可添加：</string>
+    <string name="settings_file_name_error_empty">请输入文件名格式。</string>
+    <string name="settings_file_name_error_needs_date">请添加 {date}：CallVault 需要日期来排序和合并通话。</string>
+    <string name="settings_file_name_error_bad_character">文件名不能包含 / \\ : * ? \" &lt; &gt; |</string>
+    <string name="settings_file_name_error_unknown_tag">CallVault 不认识标签 %1$s。</string>
+    <string name="settings_file_name_error_too_long">请少于 %1$d 个字符。</string>
     <string name="settings_group_app">应用</string>
     <string name="settings_group_calls_to_record">录音</string>
     <string name="settings_group_calls_to_skip">要跳过的通话</string>
