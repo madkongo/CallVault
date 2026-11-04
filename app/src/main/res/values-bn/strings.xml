@@ -190,6 +190,13 @@
 
     <string name="settings_file_name_template">ফাইলের নামের টেমপ্লেট</string>
     <string name="settings_file_name_template_preset">প্রিসেট</string>
+    <string name="settings_file_name_custom_desc">নিজের ফরম্যাট লিখুন</string>
+    <string name="settings_file_name_custom_tap_tag">যোগ করতে একটি ট্যাগে ট্যাপ করুন:</string>
+    <string name="settings_file_name_error_empty">ফাইলের নামের একটি ফরম্যাট লিখুন।</string>
+    <string name="settings_file_name_error_needs_date">{date} যোগ করুন: কল সাজাতে ও জোড়া দিতে CallVault-এর তারিখ দরকার।</string>
+    <string name="settings_file_name_error_bad_character">ফাইলের নামে / \\ : * ? \" &lt; &gt; | থাকতে পারে না</string>
+    <string name="settings_file_name_error_unknown_tag">CallVault %1$s ট্যাগটি চেনে না।</string>
+    <string name="settings_file_name_error_too_long">%1$d অক্ষরের কম রাখুন।</string>
     <string name="settings_file_name_preset_date_direction_number">তারিখ · দিক · নম্বর</string>
     <string name="settings_file_name_preset_date_number">তারিখ · নম্বর</string>
     <string name="settings_file_name_preset_date_contact">তারিখ · পরিচিতি</string>
