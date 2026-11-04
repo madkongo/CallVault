@@ -72,3 +72,48 @@ fun fileNameTemplateExample(template: String): String = template
     .replace(RecordingFileNameFormatter.FileNamePlaceholder.PHONE_NUMBER.tag, "+15551234")
     .replace(RecordingFileNameFormatter.FileNamePlaceholder.CONTACT_NAME.tag, "John Doe")
     .replace(RecordingFileNameFormatter.FileNamePlaceholder.CROSS_COUNTRY.tag, "false")
+
+/**
+ * A file-name template the user typed, as ShizuCallRecorder allowed (removed here in June 2026 for the presets,
+ * brought back for 2.5.0 on request). Checked before it is saved, because other parts of the app read names back:
+ * the list and merging find the date in the name, so `{date}` is required.
+ */
+object CustomFileNameTemplate {
+
+    enum class Problem { EMPTY, NEEDS_DATE, BAD_CHARACTER, UNKNOWN_TAG, TOO_LONG }
+
+    /** Long enough for any sensible pattern; the filled-in name (contact names) must stay under 255 bytes. */
+    const val MAX_LENGTH = 120
+
+    private val KNOWN_TAGS = RecordingFileNameFormatter.FileNamePlaceholder.entries.map { it.tag }.toSet() +
+        RecordingFileNameFormatter.DATE_COMPACT_TAG
+
+    /** Characters Android's file systems or SAF providers refuse, plus control characters. */
+    private val BAD_CHARACTERS = Regex("""[/\\:*?"<>|\p{Cntrl}]""")
+
+    private val TAG = Regex("""\{[^{}]*\}""")
+
+    /** What is wrong with [template], or null when it can be saved. */
+    fun problemOf(template: String): Problem? {
+        val trimmed = template.trim()
+        return when {
+            trimmed.isEmpty() -> Problem.EMPTY
+            trimmed.length > MAX_LENGTH -> Problem.TOO_LONG
+            BAD_CHARACTERS.containsMatchIn(trimmed) -> Problem.BAD_CHARACTER
+            hasUnknownTag(trimmed) -> Problem.UNKNOWN_TAG
+            !trimmed.contains(RecordingFileNameFormatter.FileNamePlaceholder.DATE.tag) -> Problem.NEEDS_DATE
+            else -> null
+        }
+    }
+
+    /** The first `{…}` the app does not know, for the error message; null when there is none. */
+    fun firstUnknownTag(template: String): String? = TAG.findAll(template).map { it.value }.firstOrNull { it !in KNOWN_TAGS }
+
+    fun isPreset(template: String): Boolean = FILE_NAME_TEMPLATE_PRESETS.any { it.template == template }
+
+    private fun hasUnknownTag(template: String): Boolean {
+        if (firstUnknownTag(template) != null) return true
+        // A stray brace left after removing every whole tag is a tag typed wrong ("{date" or "date}").
+        return TAG.replace(template, "").any { it == '{' || it == '}' }
+    }
+}

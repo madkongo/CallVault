@@ -251,6 +251,13 @@
 
     <string name="settings_file_name_template">File name template</string>
     <string name="settings_file_name_template_preset">Preset</string>
+    <string name="settings_file_name_custom_desc">Type your own format</string>
+    <string name="settings_file_name_custom_tap_tag">Tap a tag to add it:</string>
+    <string name="settings_file_name_error_empty">Type a file name format.</string>
+    <string name="settings_file_name_error_needs_date">Add {date}: CallVault needs the date to sort and merge calls.</string>
+    <string name="settings_file_name_error_bad_character">A file name can\'t contain / \\ : * ? \" &lt; &gt; |</string>
+    <string name="settings_file_name_error_unknown_tag">CallVault doesn\'t know the tag %1$s.</string>
+    <string name="settings_file_name_error_too_long">Keep it under %1$d characters.</string>
     <string name="settings_file_name_preset_date_direction_number">Date · Direction · Number</string>
     <string name="settings_file_name_preset_date_number">Date · Number</string>
     <string name="settings_file_name_preset_date_contact">Date · Contact</string>

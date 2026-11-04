@@ -416,6 +416,13 @@
     <string name="settings_file_name_template_placeholders">Змінні:</string>
     <string name="settings_file_name_template_placeholders_preview">Попередній перегляд: %1$s</string>
     <string name="settings_file_name_template_preset">Варіант</string>
+    <string name="settings_file_name_custom_desc">Введіть власний формат</string>
+    <string name="settings_file_name_custom_tap_tag">Натисніть тег, щоб додати його:</string>
+    <string name="settings_file_name_error_empty">Введіть формат імені файлу.</string>
+    <string name="settings_file_name_error_needs_date">Додайте {date}: CallVault потрібна дата, щоб сортувати й об\'єднувати дзвінки.</string>
+    <string name="settings_file_name_error_bad_character">Ім\'я файлу не може містити / \\ : * ? \" &lt; &gt; |</string>
+    <string name="settings_file_name_error_unknown_tag">CallVault не знає тег %1$s.</string>
+    <string name="settings_file_name_error_too_long">Не більше %1$d символів.</string>
     <string name="settings_group_app">Застосунок</string>
     <string name="settings_group_calls_to_record">Запис</string>
     <string name="settings_group_calls_to_skip">Які дзвінки пропускати</string>

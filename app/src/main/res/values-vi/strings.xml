@@ -405,6 +405,13 @@
     <string name="settings_file_name_template_placeholders">Các biến thay thế:</string>
     <string name="settings_file_name_template_placeholders_preview">Xem trước: %1$s</string>
     <string name="settings_file_name_template_preset">Mẫu có sẵn</string>
+    <string name="settings_file_name_custom_desc">Tự nhập định dạng</string>
+    <string name="settings_file_name_custom_tap_tag">Chạm vào một thẻ để thêm:</string>
+    <string name="settings_file_name_error_empty">Nhập định dạng tên tệp.</string>
+    <string name="settings_file_name_error_needs_date">Thêm {date}: CallVault cần ngày để sắp xếp và gộp cuộc gọi.</string>
+    <string name="settings_file_name_error_bad_character">Tên tệp không được chứa / \\ : * ? \" &lt; &gt; |</string>
+    <string name="settings_file_name_error_unknown_tag">CallVault không biết thẻ %1$s.</string>
+    <string name="settings_file_name_error_too_long">Dưới %1$d ký tự.</string>
     <string name="settings_group_app">Ứng dụng</string>
     <string name="settings_group_calls_to_record">Ghi âm</string>
     <string name="settings_group_calls_to_skip">Cuộc gọi bỏ qua</string>

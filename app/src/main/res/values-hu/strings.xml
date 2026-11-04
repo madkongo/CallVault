@@ -406,6 +406,13 @@
     <string name="settings_file_name_template_placeholders">Kitöltők:</string>
     <string name="settings_file_name_template_placeholders_preview">Előnézet: %1$s</string>
     <string name="settings_file_name_template_preset">Sablon</string>
+    <string name="settings_file_name_custom_desc">Írja be a saját formátumát</string>
+    <string name="settings_file_name_custom_tap_tag">Koppintson egy címkére a hozzáadáshoz:</string>
+    <string name="settings_file_name_error_empty">Írjon be egy fájlnév-formátumot.</string>
+    <string name="settings_file_name_error_needs_date">Adja hozzá a {date} címkét: a CallVault a dátum alapján rendez és egyesít.</string>
+    <string name="settings_file_name_error_bad_character">A fájlnév nem tartalmazhat / \\ : * ? \" &lt; &gt; | karaktert</string>
+    <string name="settings_file_name_error_unknown_tag">A CallVault nem ismeri ezt a címkét: %1$s.</string>
+    <string name="settings_file_name_error_too_long">Legfeljebb %1$d karakter.</string>
     <string name="settings_group_app">Alkalmazás</string>
     <string name="settings_group_calls_to_record">Felvétel</string>
     <string name="settings_group_calls_to_skip">Kihagyandó hívások</string>

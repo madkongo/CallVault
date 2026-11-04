@@ -406,6 +406,13 @@
     <string name="settings_file_name_template_placeholders">Platzhalter:</string>
     <string name="settings_file_name_template_placeholders_preview">Vorschau: %1$s</string>
     <string name="settings_file_name_template_preset">Voreinstellung</string>
+    <string name="settings_file_name_custom_desc">Eigenes Format eingeben</string>
+    <string name="settings_file_name_custom_tap_tag">Tippen Sie auf ein Tag, um es hinzuzufügen:</string>
+    <string name="settings_file_name_error_empty">Geben Sie ein Dateinamen-Format ein.</string>
+    <string name="settings_file_name_error_needs_date">Fügen Sie {date} hinzu: CallVault braucht das Datum zum Sortieren und Zusammenführen.</string>
+    <string name="settings_file_name_error_bad_character">Ein Dateiname darf / \\ : * ? \" &lt; &gt; | nicht enthalten</string>
+    <string name="settings_file_name_error_unknown_tag">CallVault kennt das Tag %1$s nicht.</string>
+    <string name="settings_file_name_error_too_long">Höchstens %1$d Zeichen.</string>
     <string name="settings_group_app">App</string>
     <string name="settings_group_calls_to_record">Aufnahme</string>
     <string name="settings_group_calls_to_skip">Welche Anrufe überspringen</string>

@@ -499,6 +499,13 @@
     <string name="settings_file_name_template_placeholders">جانگهدارها:</string>
     <string name="settings_file_name_template_placeholders_preview">پیش‌نمایش: %1$s</string>
     <string name="settings_file_name_template_preset">پیش‌تنظیم</string>
+    <string name="settings_file_name_custom_desc">قالب خودتان را بنویسید</string>
+    <string name="settings_file_name_custom_tap_tag">برای افزودن، روی یک برچسب بزنید:</string>
+    <string name="settings_file_name_error_empty">یک قالب برای نام فایل بنویسید.</string>
+    <string name="settings_file_name_error_needs_date">{date} را اضافه کنید: CallVault برای مرتب‌سازی و ادغام تماس‌ها به تاریخ نیاز دارد.</string>
+    <string name="settings_file_name_error_bad_character">نام فایل نمی‌تواند شامل / \\ : * ? \" &lt; &gt; | باشد</string>
+    <string name="settings_file_name_error_unknown_tag">CallVault برچسب %1$s را نمی‌شناسد.</string>
+    <string name="settings_file_name_error_too_long">کمتر از %1$d نویسه نگه دارید.</string>
     <string name="settings_group_app">برنامه</string>
     <string name="settings_group_calls_to_record">ضبط</string>
     <string name="settings_group_calls_to_skip">تماس‌هایی که رد شوند</string>
