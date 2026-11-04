@@ -18,11 +18,6 @@ import androidx.work.workDataOf
 import com.baba.callvault.R
 import com.baba.callvault.data.AppPreferences
 import com.baba.callvault.data.recordings.RecordingCatalog
-import com.baba.callvault.transcription.cloud.CloudEndpoint
-import com.baba.callvault.transcription.cloud.CloudError
-import com.baba.callvault.transcription.cloud.CloudKeyStore
-import com.baba.callvault.transcription.cloud.CloudTranscriber
-import com.baba.callvault.transcription.model.ModelRepository
 import com.baba.callvault.transcription.model.TranscriptionModel
 import com.baba.callvault.utils.AppLogger
 import kotlinx.coroutines.Dispatchers
@@ -70,16 +65,16 @@ class TranscriptionWorker(
             ?: TranscriptionModel.DEFAULT
         val single = inputData.getString(KEY_DISPLAY_NAME)
 
-        val engine = when (val chosen = chooseEngine(prefs, model, isNamedRun = single != null)) {
-            is EngineChoice.Run -> chosen
+        val engine = when (val chosen = TranscriptionEngineChoice.choose(applicationContext, prefs, model, isNamedRun = single != null)) {
+            is TranscriptionEngineChoice.Run -> chosen
             // Retry rather than fail: the model may still be downloading, and the work should pick up
             // once it lands instead of the user having to ask again.
-            EngineChoice.WaitForModel -> {
+            TranscriptionEngineChoice.WaitForModel -> {
                 AppLogger.i(TAG, "Model ${model.id} is not installed yet; will retry")
                 return@withContext Result.retry()
             }
             // A sweep with no key set up would mark every waiting call failed; it waits instead.
-            EngineChoice.CloudNotSetUp -> {
+            TranscriptionEngineChoice.CloudNotSetUp -> {
                 AppLogger.i(TAG, "Cloud transcription is chosen but not set up; nothing transcribed")
                 return@withContext Result.success()
             }
@@ -197,56 +192,6 @@ class TranscriptionWorker(
             runner.retryRequested -> Result.retry()
             isStopped && transcribed < names.size -> Result.retry()
             else -> Result.success()
-        }
-    }
-
-    /** Which engine this run uses, or why it cannot run yet. */
-    private sealed interface EngineChoice {
-        data class Run(
-            val modelId: String,
-            val modelPath: String,
-            /** Null for the default on-device engine. */
-            val transcriber: Transcriber?,
-            val isCloud: Boolean,
-            val progressPercent: () -> Int,
-        ) : EngineChoice
-
-        data object WaitForModel : EngineChoice
-        data object CloudNotSetUp : EngineChoice
-    }
-
-    /**
-     * On this phone with the installed model, or the chosen cloud service with its key (issue #48).
-     *
-     * A cloud service never waits for a model. Not set up (no key, or an incomplete Custom): a named
-     * run still goes ahead so that one recording fails with a message saying what to fix; a sweep
-     * does nothing, rather than fail every waiting call.
-     */
-    private fun chooseEngine(prefs: AppPreferences, model: TranscriptionModel, isNamedRun: Boolean): EngineChoice {
-        val service = prefs.getTranscriptionService()
-        val modelPath = if (service.isCloud) null else ModelRepository.pathFor(applicationContext, model)?.absolutePath
-        return when (TranscriptionRouting.route(service, modelInstalled = modelPath != null)) {
-            TranscriptionRouting.Route.WAIT_FOR_MODEL -> EngineChoice.WaitForModel
-            TranscriptionRouting.Route.ON_DEVICE -> EngineChoice.Run(
-                model.id, modelPath.orEmpty(), transcriber = null, isCloud = false,
-                progressPercent = { TranscriptionEngine.progressPercent() },
-            )
-            TranscriptionRouting.Route.CLOUD -> {
-                val endpoint = prefs.getCloudEndpoint(service)
-                // Consent is checked here too, not only in Settings: nothing sends audio without it.
-                val key = CloudKeyStore(applicationContext).get(service).takeIf { prefs.hasCloudConsent(service) }
-                if ((endpoint == null || key == null) && !isNamedRun) return EngineChoice.CloudNotSetUp
-                val label = endpoint?.label ?: service.preset?.displayName ?: service.key
-                val transcriber = endpoint?.let { CloudTranscriber(it, key).asTranscriber() }
-                    ?: Transcriber { _, _, _, _, _, _, _ -> throw CloudError.notSetUp(label) }
-                EngineChoice.Run(
-                    modelId = endpoint?.engineId ?: "${CloudEndpoint.ENGINE_PREFIX}${service.key}",
-                    modelPath = "",
-                    transcriber = transcriber,
-                    isCloud = true,
-                    progressPercent = { CloudTranscriber.progressPercent },
-                )
-            }
         }
     }
 
