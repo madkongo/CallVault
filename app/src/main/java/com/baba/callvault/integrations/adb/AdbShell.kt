@@ -305,6 +305,7 @@ object AdbShell {
         }.getOrDefault(false),
         adbd = adbdState(),
         wirelessDebuggingOn = isWirelessDebuggingEnabled(context),
+        shellSaysOn = UsbDebuggingShellRead.current(),
     )
 
     /**

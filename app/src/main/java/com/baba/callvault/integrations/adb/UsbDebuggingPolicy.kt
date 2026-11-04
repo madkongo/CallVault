@@ -74,8 +74,15 @@ object UsbDebuggingPolicy {
         settingSaysOn: Boolean,
         adbd: AdbdState,
         wirelessDebuggingOn: Boolean,
+        /**
+         * The setting as the shell uid read it, when that is fresh ([UsbDebuggingShellRead]); null when unknown.
+         * The redaction exempts uids below the first app uid, so this is the truth whichever way it reads.
+         */
+        shellSaysOn: Boolean? = null,
     ): UsbDebuggingState = when {
         settingSaysOn -> UsbDebuggingState.ON
+        shellSaysOn == true -> UsbDebuggingState.ON
+        shellSaysOn == false -> UsbDebuggingState.OFF
         // R1: something keeps adbd up, and it is not Wireless debugging.
         adbd == AdbdState.RUNNING && !wirelessDebuggingOn -> UsbDebuggingState.ON
         // R1/R2: nothing is holding adbd up, so USB debugging is not on. Requires the setting to agree,
