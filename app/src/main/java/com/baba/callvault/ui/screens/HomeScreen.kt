@@ -29,6 +29,7 @@ import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.ui.platform.LocalUriHandler
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.material.icons.filled.ContentCut
 import androidx.compose.material.icons.filled.Favorite
 import androidx.compose.material.icons.filled.Star
 import androidx.compose.material.icons.filled.StarBorder
@@ -421,6 +422,9 @@ fun HomeScreen(
      * back, and the audio it belongs to is on it again.
      */
     var playbackFor by rememberSaveable { mutableStateOf<String?>(null) }
+    // "Share a part": the recording being clipped, and where to open the selection (-1 = the whole call).
+    var clipFor by rememberSaveable { mutableStateOf<String?>(null) }
+    var clipFromMs by rememberSaveable { mutableStateOf(-1L) }
     // SECTION state, hoisted deliberately — one per list, all of them above the section switch.
     // Each list leaves composition twice over: while a recording is open (`playbackFor == null`
     // below) and whenever another section is showing. Remembered inside, someone who scrolled to the
@@ -801,7 +805,7 @@ fun HomeScreen(
 
     // Audio started on the list stops when the list goes, as it does when a recording's page is
     // closed — except when the list was left for the playing recording's own page, which takes it on.
-    val recordingsListShowing = section == HomeSection.Recordings && playbackFor == null && readingFor == null
+    val recordingsListShowing = section == HomeSection.Recordings && playbackFor == null && readingFor == null && clipFor == null
     LaunchedEffect(recordingsListShowing) {
         if (ListPlayback.stopsOnLeavingList(recordingsListShowing, playbackFor) &&
             playback.phase != RecordingPlaybackController.Phase.IDLE
@@ -816,7 +820,8 @@ fun HomeScreen(
         }
     }
 
-    playbackFor?.let { displayName ->
+    // Hidden, not closed, while "Share a part" opened from it is showing: back from the clip returns to it.
+    playbackFor?.takeIf { clipFor == null }?.let { displayName ->
         // The combined list, so a transcribe-only import can still be played, shared and deleted
         // from its own screen while it exists. It is kept out of the LIST, not out of the app.
         val openItem = libraryRecordings.firstOrNull { it.displayName == displayName }
@@ -922,10 +927,57 @@ fun HomeScreen(
                     transcriptFor = displayName
                 },
                 onTranscribe = { startTranscription(displayName) },
+                onShare = { context.shareRecording(openItem.localUri ?: openItem.driveUri ?: openItem.uri, displayName) },
+                onSharePart = {
+                    clipFromMs = if (playback.activeUri == openItem.uri) playback.positionMs.toLong() else 0L
+                    clipFor = displayName
+                },
                 // Confirm first, and ask which copies when there are two of them — the same
                 // question the row's menu asks. This used to delete on the spot with nothing to
                 // stop it, on the one screen where a mis-tap costs the whole recording.
                 onDelete = { confirmDeleteFor = displayName }
+            )
+        }
+    }
+
+    // "Share a part", over the list or over the recording's own page.
+    clipFor?.let { displayName ->
+        val clipItem = libraryRecordings.firstOrNull { it.displayName == displayName }
+        if (clipItem == null) {
+            clipFor = null
+        } else {
+            val closeClip = {
+                // Stop a preview only; audio the recording's page was already playing is its own.
+                if (playbackFor == null) viewModel.stopPlayback()
+                clipFor = null
+            }
+            BackHandler { closeClip() }
+            val clipPeaks by produceState(FloatArray(0), displayName) {
+                var queued = false
+                RecordingExtrasRepository.observeWaveform(context, displayName).collect { drawn ->
+                    value = drawn
+                    // Opened from the list, the shape may never have been drawn; queue it as the page does.
+                    if (drawn.isEmpty() && !queued) {
+                        queued = true
+                        WaveformDrawWorker.enqueue(context, displayName, clipItem.uri)
+                    }
+                }
+            }
+            val clipFlags by remember(displayName) {
+                FlagRepository.flagsFor(context, displayName)
+            }.collectAsState(initial = emptyList())
+            ShareClipScreen(
+                item = clipItem,
+                initialPositionMs = clipFromMs.takeIf { it >= 0 },
+                playback = playback,
+                peaks = clipPeaks,
+                flags = clipFlags,
+                transcriptStatus = transcriptStatuses[displayName] ?: TranscriptStatus.NONE,
+                onPlayFrom = { viewModel.playFrom(clipItem.uri, it.toInt()) },
+                onPause = { viewModel.pausePlayback() },
+                onSyncPosition = { viewModel.syncPlaybackPosition() },
+                onTranscribeWholeCall = { startTranscription(displayName) },
+                onBack = closeClip,
             )
         }
     }
@@ -965,7 +1017,8 @@ fun HomeScreen(
     //
     // The switch is here, below every piece of state above it, and that placement is the point: see
     // the function's KDoc. Nothing in a section branch may remember anything it would mind losing.
-    if (playbackFor == null && readingFor == null) when (section) {
+    // "Share a part" replaces the section too.
+    if (playbackFor == null && readingFor == null && clipFor == null) when (section) {
 
     HomeSection.Hub -> {
         // Re-read on arrival rather than once for the life of the shell. The guard inside
@@ -1330,6 +1383,10 @@ fun HomeScreen(
                 // same silent way a first attempt does.
                 onRetryTranscript = { startTranscription(item.displayName) },
                 onMerge = { mergeFor = item },
+                onSharePart = {
+                    clipFromMs = -1L
+                    clipFor = item.displayName
+                },
                 // Only offered on a recording that actually came from a merge; there is
                 // nothing to take apart otherwise.
                 mergedPartCount = mergedCounts[item.displayName] ?: 0,
@@ -3012,6 +3069,7 @@ private fun RecordingRowMenu(
     /** Null on a row nothing can be merged into it — an import, which was never a call. */
     onMerge: (() -> Unit)? = null,
     onUnMerge: (() -> Unit)? = null,
+    onSharePart: () -> Unit = {},
 ) {
     val context = LocalContext.current
     var open by remember { mutableStateOf(false) }
@@ -3032,6 +3090,14 @@ private fun RecordingRowMenu(
                 onClick = {
                     open = false
                     context.shareRecording(shareUri, shareName)
+                }
+            )
+            DropdownMenuItem(
+                text = { Text(stringResource(R.string.share_clip_menu)) },
+                leadingIcon = { Icon(Icons.Filled.ContentCut, contentDescription = null) },
+                onClick = {
+                    open = false
+                    onSharePart()
                 }
             )
             if (onMerge != null) {
@@ -3256,6 +3322,8 @@ private fun RecordingRow(
     onOpenTranscript: () -> Unit,
     onRetryTranscript: () -> Unit,
     onMerge: () -> Unit = {},
+    /** Opens "Share a part" for this recording. */
+    onSharePart: () -> Unit = {},
     /** How many calls this recording was merged from; 0 when it is an ordinary recording. */
     mergedPartCount: Int = 0,
     /** Null unless this recording was made by merging. */
@@ -3452,7 +3520,8 @@ private fun RecordingRow(
                     // Merging joins a dropped call to the redial and deletes the parts. An import is
                     // neither half of that, so it is not offered the action at all.
                     onMerge = onMerge.takeIf { MergeCandidates.canMerge(item) },
-                    onUnMerge = onUnMerge
+                    onUnMerge = onUnMerge,
+                    onSharePart = onSharePart,
                 )
             }
         }

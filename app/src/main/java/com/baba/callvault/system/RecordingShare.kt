@@ -90,3 +90,26 @@ fun Context.shareRecordings(uris: List<Uri>) {
     runCatching { startActivity(chooser) }
         .onFailure { AppLogger.w(TAG, "Could not open the share sheet for ${uris.size} recordings: ${it.message}") }
 }
+
+/**
+ * Shares a clip ("Share a part") with, optionally, what was said in it as the message text.
+ *
+ * The clip is a temporary file in the cache's `clips/` folder, exposed through the FileProvider for the share only.
+ */
+fun Context.shareClip(file: java.io.File, mime: String, text: String?) {
+    val uri = androidx.core.content.FileProvider.getUriForFile(this, "$packageName.fileprovider", file)
+    val intent = Intent(Intent.ACTION_SEND).apply {
+        type = mime
+        putExtra(Intent.EXTRA_STREAM, uri)
+        putExtra(Intent.EXTRA_SUBJECT, file.nameWithoutExtension)
+        if (text != null) putExtra(Intent.EXTRA_TEXT, text)
+        addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+        // The flag alone covers only what the extras name, so the URI has to be in the clip data too.
+        clipData = ClipData.newRawUri(file.name, uri)
+    }
+    val chooser = Intent.createChooser(intent, getString(R.string.share_clip_chooser)).apply {
+        if (this@shareClip !is Activity) addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+    }
+    runCatching { startActivity(chooser) }
+        .onFailure { AppLogger.w(TAG, "Could not open the share sheet for the clip '${file.name}': ${it.message}") }
+}
