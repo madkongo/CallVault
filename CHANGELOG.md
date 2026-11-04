@@ -29,6 +29,11 @@ All notable changes to CallVault are documented here. The format is based on
 
 ### Fixed
 
+- **Recordings deleted when the Drive folder was the recordings folder.** With "Google Drive only" and the same phone
+  folder chosen for both, each recording was deleted right after it was saved. CallVault now refuses that folder
+  choice, warns anyone already set up this way, and never deletes a recording whose "Drive copy" is itself.
+  <!-- 🧪 VERIFYING: reproduced + fixed on the OP9 2026-11-04 (merge with Drive folder = Recordings, 2.5.0-drive2); the Xiaomi reporter to confirm. -->
+
 - **Phones that switch USB debugging off by themselves.** Honor (and Huawei) turn USB debugging off when the phone is
   unplugged unless "Allow ADB debugging in 'Charge only' mode" is on; some Samsung phones do it too. Away from Wi-Fi
   recording then stayed down until the user noticed. CallVault now switches it back on itself when the screen is off

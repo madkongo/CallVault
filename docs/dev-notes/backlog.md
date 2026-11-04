@@ -22,7 +22,7 @@ with `&&`/`||` chains and silently reported the opposite answer while this was b
 
 ---
 
-## 🚨 MUST FIX BEFORE 2.5.0 — "Drive" folder = recording folder deletes every recording — found 2026-11-04, not started
+## 🧪 FIXED, VERIFYING — "Drive" folder = recording folder deletes every recording — found + fixed 2026-11-04 (merged into integration/next)
 
 Reported via the maintainer: a Xiaomi user (Redmi 23021RAAEG, Android 15, v2.4.9, standalone) says "the app doesn't
 work". Their debug report shows CallVault records fine and then **deletes each recording about a second later**.
@@ -49,6 +49,14 @@ Fix (agreed scope, 📐 not built):
 - [ ] Existing installs with this setup: detect it and show a warning (and stop deleting) instead of silently losing calls.
 - [ ] Tests for all three; check how long this path has existed (other users may be affected without knowing).
 - [ ] Reproduce on the OP9 first (pick the recording folder as "Drive", record a call, confirm the file survives).
+
+**Fix (2026-11-04, branch `fix/drive-folder-same-as-recordings`, commits `fd27df67` + `22869086`):** `FolderOverlap`
+(same/nested folder, same document). Copy worker never deletes when the "Drive" copy is the source; router and sweep
+skip an overlapping Drive folder; Settings + wizard refuse the pick both ways; existing setups get a warning on the
+Drive folder row. Non-cloud Drive folders are still allowed (a local folder synced by another app is a real use).
+- Reproduced on the OP9 with 2.5.0-clip6: merge with Drive folder = Recordings → merged file deleted ("already in Drive").
+- Fixed on 2.5.0-drive2: same merge → file kept, log "keeping … on the device"; Settings warning shown; picker refuses.
+- 🧪 To settle: the Xiaomi reporter on 2.5.0 (or a test build) records a call with their old setup and the file stays.
 
 Immediate advice for the reporter: Settings → "Where to save recordings" → **On this phone**, or pick a real Google
 Drive folder ("Drive" in the picker). Deleted recordings are almost certainly gone.
@@ -98,8 +106,8 @@ Proposed (📐, not decided in detail):
 the list below (classic Settings removed) and the decode time limit.
 
 **New since 2026-10-31:**
-- 🚨 Release blocker for 2.5.0 (found 2026-11-04): "Drive" folder = recording folder deletes every recording — see
-  the MUST FIX section above.
+- 🧪 Release blocker for 2.5.0 (found 2026-11-04), now fixed on integration/next: "Drive" folder = recording folder
+  deleted every recording — see the section above.
 - 🔵 For 2.5.0 (added 2026-11-04): Bengali (Bangla) — app language + transcription language; see the section above.
 - 🅿️ Parked by the maintainer: in-app downgrade (RollbackManager works one step back but restores old data; keep-data
   uninstall loses folder access + battery exemption; memory `in-app-downgrade-research`); start-of-call echo.
