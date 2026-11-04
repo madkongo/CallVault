@@ -1,7 +1,6 @@
 # Share a part of a recording — research
 
-📐 RESEARCHED 2026-11-04, nothing built. Requested by the maintainer 2026-11-04. UI direction not chosen yet
-(options page sent the same day).
+📐 RESEARCHED 2026-11-04, nothing built. Requested by the maintainer 2026-11-04. Design DECIDED the same day (below).
 
 ## What the user gets
 
@@ -63,7 +62,23 @@ option; 15 locales for ~8 strings.
 - Playback screen ▸ new Share button beside Delete on the call card ▸ "Share recording" / "Share a part" → screen A
   with 30 s selected from the playing position. (The playback screen has no Share button today.)
 
-## Open questions for the maintainer
+## Decided — maintainer 2026-11-04
+
+1. **Picker: option A**, reached both ways (list row ⋮ ▸ "Share a part"; playback screen ▸ new Share button ▸
+   "Share a part").
+2. **Transcript is offered with the clip as an option** (a switch on the share step). It always carries **only the
+   clipped part's lines**, never the whole transcript.
+   - Call already transcribed: the lines inside the range, with times, go in the share text.
+   - Call not transcribed: the switch offers **"Transcribe just this part"** or **"Transcribe the whole call"**.
+     - Just this part: transcribe the clip file itself (it already exists for sharing), with the user's current
+       engine (on-device or their own cloud key); times offset to the call. Not saved as the call's transcript
+       (📐 assumption — confirm when building).
+     - Whole call: the normal transcription of the recording (saved as usual); when done, its lines inside the range
+       are shared.
+     - Either way the share waits with progress on the share step; Cancel shares without text.
+3. **A clip is never saved as a recording.** Share-only: no library row, no Drive copy, temporary file deleted later.
+
+## Questions answered (kept for history)
 
 - Which option, or A + B together?
 - Include the transcript text with the clip — always, never, or a switch in the sheet?
