@@ -80,6 +80,7 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import kotlinx.coroutines.withTimeoutOrNull
 
 /** How an untranscribed call gets the text that goes with its clip. */
 private enum class TextSource { PART, WHOLE_CALL }
@@ -133,11 +134,12 @@ internal fun ShareClipScreen(
         value = withContext(Dispatchers.IO) { ClipCutter.mimeOf(context, item.uri) }.orEmpty()
     }
 
-    var range by remember(durationMs) {
-        mutableStateOf(
-            initialPositionMs?.let { ClipRange.fromPosition(it, durationMs) } ?: ClipRange.whole(durationMs),
-        )
-    }
+    // The user's choice, kept apart from the duration: the length is first a guess from the call log and then the
+    // container's own figure, and keying the selection on it threw an early edit away (review 2026-11-04).
+    var chosen by remember { mutableStateOf<ClipRange?>(null) }
+    val range = chosen?.let { ClipRange.of(it.startMs, it.endMs, durationMs) }
+        ?: initialPositionMs?.let { ClipRange.fromPosition(it, durationMs) }
+        ?: ClipRange.whole(durationMs)
 
     // The call's own transcript, with who-is-who resolved the way exports do it.
     val transcript by remember(item.displayName) {
@@ -166,6 +168,7 @@ internal fun ShareClipScreen(
     val statusNow by rememberUpdatedState(transcriptStatus)
     val linesNow by rememberUpdatedState(callLines)
 
+    val playbackNow by rememberUpdatedState(playback)
     val isThis = playback.activeUri == item.uri
     val playing = isThis && playback.phase == RecordingPlaybackController.Phase.PLAYING
     var previewing by remember { mutableStateOf(false) }
@@ -176,7 +179,8 @@ internal fun ShareClipScreen(
         while (previewing) {
             onSyncPosition()
             delay(PREVIEW_POLL_MS)
-            if (playback.activeUri == item.uri && playback.positionMs >= rangeNow.endMs) {
+            // playbackNow, not playback: this loop outlives the composition that started it (review 2026-11-04).
+            if (playbackNow.activeUri == item.uri && playbackNow.positionMs >= rangeNow.endMs) {
                 onPause()
                 previewing = false
             }
@@ -189,13 +193,20 @@ internal fun ShareClipScreen(
         work = ClipWork.Idle
     }
 
+    val busy = work == ClipWork.Cutting || work == ClipWork.TranscribingPart || work == ClipWork.WaitingForCall
+
     fun start() {
         val clipMime = mime ?: return
+        // Set before launching, so a second tap in the same frame cannot start a second job.
+        if (busy) return
+        job?.cancel()
+        work = ClipWork.Cutting
+        // The part as it was when Share was tapped. Audio, name and text all use this one, even if a handle moves.
+        val cutRange = range
         job = scope.launch {
-            work = ClipWork.Cutting
-            val name = ClipNaming.fileName(item.displayName, range, ClipCutter.extensionFor(clipMime))
+            val name = ClipNaming.fileName(item.displayName, cutRange, ClipCutter.extensionFor(clipMime))
             val clip = withContext(Dispatchers.IO) {
-                runCatching { ClipCutter.cut(context, item.uri, range, ClipFiles.newFile(context, name)) }
+                runCatching { ClipCutter.cut(context, item.uri, cutRange, ClipFiles.newFile(context, name)) }
                     .onFailure { AppLogger.w(TAG, "Clip failed: ${it.message}") }
                     .getOrNull()
             }
@@ -206,10 +217,14 @@ internal fun ShareClipScreen(
             readyClip = clip
             when {
                 !includeText -> share(clip, null)
-                transcribed -> share(clip, ClipTranscript.render(ClipTranscript.linesIn(callLines, range)))
+                transcribed -> {
+                    // The transcript is read in the background; give it a moment rather than share no text.
+                    val lines = withTimeoutOrNull(LINES_WAIT_MS) { snapshotFlow { linesNow }.first { it.isNotEmpty() } }
+                    share(clip, ClipTranscript.render(ClipTranscript.linesIn(lines ?: linesNow, cutRange)))
+                }
                 source == TextSource.PART && !callInProgress -> {
                     work = ClipWork.TranscribingPart
-                    when (val outcome = ClipTranscriber.transcribe(context, clip, range)) {
+                    when (val outcome = ClipTranscriber.transcribe(context, clip, cutRange)) {
                         is ClipTranscriber.Outcome.Done -> share(clip, ClipTranscript.render(outcome.lines))
                         ClipTranscriber.Outcome.Busy -> work = ClipWork.TextProblem(R.string.share_clip_busy)
                         ClipTranscriber.Outcome.NotSetUp -> work = ClipWork.TextProblem(R.string.share_clip_not_set_up)
@@ -217,14 +232,28 @@ internal fun ShareClipScreen(
                     }
                 }
                 else -> {
-                    // The whole call: through the app's own transcription, then only this part's lines.
-                    if (!callInProgress) onTranscribeWholeCall()
+                    // The whole call: through the app's own transcription (with its own confirmations), then only
+                    // this part's lines.
                     work = ClipWork.WaitingForCall
+                    if (!callInProgress) {
+                        onTranscribeWholeCall()
+                        // A previous run's FAILED must not count as this run's result, and a declined confirmation
+                        // leaves it NONE for ever: wait to see this run start first.
+                        val started = withTimeoutOrNull(START_WAIT_MS) {
+                            snapshotFlow { statusNow }
+                                .first { it == TranscriptStatus.QUEUED || it == TranscriptStatus.RUNNING || it == TranscriptStatus.DONE }
+                        }
+                        if (started == null) {
+                            work = ClipWork.TextProblem(R.string.share_clip_transcribe_failed)
+                            return@launch
+                        }
+                    }
                     val ended = snapshotFlow { statusNow }
                         .first { it == TranscriptStatus.DONE || it == TranscriptStatus.FAILED }
                     if (ended == TranscriptStatus.DONE) {
-                        val lines = snapshotFlow { linesNow }.first { it.isNotEmpty() }
-                        share(clip, ClipTranscript.render(ClipTranscript.linesIn(lines, range)))
+                        // A silent call has no lines at all, so this waits a little and no longer.
+                        val lines = withTimeoutOrNull(LINES_WAIT_MS) { snapshotFlow { linesNow }.first { it.isNotEmpty() } }
+                        share(clip, ClipTranscript.render(ClipTranscript.linesIn(lines ?: emptyList(), cutRange)))
                     } else {
                         work = ClipWork.TextProblem(R.string.share_clip_transcribe_failed)
                     }
@@ -275,7 +304,8 @@ internal fun ShareClipScreen(
                     range = range,
                     flags = flags,
                     playheadMs = if (isThis) playback.positionMs.toLong() else null,
-                    onRangeChange = { range = it },
+                    // Fixed while the part is being prepared, so what is shared is what was chosen.
+                    onRangeChange = { if (!busy) chosen = it },
                 )
                 Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
                     TimeLabel(R.string.share_clip_start, range.startMs)
@@ -285,8 +315,8 @@ internal fun ShareClipScreen(
             }
             Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                 OutlinedButton(
-                    onClick = { range = range.withStart(playback.positionMs.toLong(), durationMs) },
-                    enabled = isThis,
+                    onClick = { chosen = range.withStart(playback.positionMs.toLong(), durationMs) },
+                    enabled = isThis && !busy,
                     modifier = Modifier.weight(1f),
                 ) { Text(stringResource(R.string.share_clip_start_here), maxLines = 1) }
                 FilledIconButton(
@@ -306,8 +336,8 @@ internal fun ShareClipScreen(
                     )
                 }
                 OutlinedButton(
-                    onClick = { range = range.withEnd(playback.positionMs.toLong(), durationMs) },
-                    enabled = isThis,
+                    onClick = { chosen = range.withEnd(playback.positionMs.toLong(), durationMs) },
+                    enabled = isThis && !busy,
                     modifier = Modifier.weight(1f),
                 ) { Text(stringResource(R.string.share_clip_end_here), maxLines = 1) }
             }
@@ -469,3 +499,9 @@ private fun ShareBar(
 
 private const val TAG = "CV:ShareClip"
 private const val PREVIEW_POLL_MS = 100L
+
+/** How long to wait for the call's transcript lines to be read once it is done. */
+private const val LINES_WAIT_MS = 5_000L
+
+/** How long the whole-call transcription has to start (after any confirmation) before giving up. */
+private const val START_WAIT_MS = 120_000L

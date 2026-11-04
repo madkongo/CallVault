@@ -47,12 +47,34 @@ object ClipCutter {
 
     /** The recording's audio type, or null when it cannot be read. */
     fun mimeOf(context: Context, uri: Uri): String? = runCatching {
-        context.contentResolver.openFileDescriptor(uri, "r")?.use { pfd ->
-            val (extractor, format) = MergeFormat.openAudio(pfd.fileDescriptor)
+        withSource(context, uri) { fd ->
+            val (extractor, format) = MergeFormat.openAudio(fd)
             extractor.release()
             format.getString(MediaFormat.KEY_MIME)
         }
-    }.getOrNull()
+    }.onFailure { AppLogger.w(TAG, "Could not read the recording's format: ${it.message}") }.getOrNull()
+
+    /**
+     * Runs [block] on a seekable descriptor of [uri]. A Drive-only recording comes through a provider that may hand back
+     * a pipe, which MediaExtractor cannot seek; then the recording is copied to the cache first and read from there.
+     */
+    private fun <T> withSource(context: Context, uri: Uri, block: (java.io.FileDescriptor) -> T): T {
+        val direct = runCatching {
+            context.contentResolver.openFileDescriptor(uri, "r")?.use { pfd ->
+                // A pipe has no size; a real file does.
+                if (pfd.statSize <= 0L) null else block(pfd.fileDescriptor)
+            }
+        }.getOrNull()
+        if (direct != null) return direct
+        val copy = File(ClipFiles.directory(context), ".source.tmp").apply { parentFile?.mkdirs() }
+        try {
+            context.contentResolver.openInputStream(uri)?.use { input -> copy.outputStream().use { input.copyTo(it) } }
+                ?: error("Cannot open the recording")
+            return java.io.FileInputStream(copy).use { block(it.fd) }
+        } finally {
+            copy.delete()
+        }
+    }
 
     fun extensionFor(mime: String): String = if (mime == MediaFormat.MIMETYPE_AUDIO_OPUS) "ogg" else "m4a"
 
@@ -65,10 +87,9 @@ object ClipCutter {
      * Writes [range] of [source] to [output]. Blocking; call it off the main thread. Throws when the recording cannot
      * be read or is not a format a clip can be made from.
      */
-    fun cut(context: Context, source: Uri, range: ClipRange, output: File): Result {
-        val pfd = context.contentResolver.openFileDescriptor(source, "r") ?: error("Cannot open the recording")
-        pfd.use {
-            val (extractor, format) = MergeFormat.openAudio(it.fileDescriptor)
+    fun cut(context: Context, source: Uri, range: ClipRange, output: File): Result = try {
+        withSource(context, source) { fd ->
+            val (extractor, format) = MergeFormat.openAudio(fd)
             try {
                 val mime = format.getString(MediaFormat.KEY_MIME) ?: error("No audio type")
                 require(canClip(mime)) { "Clips cannot be made from $mime" }
@@ -79,11 +100,15 @@ object ClipCutter {
                 }
                 val actualLeadIn = (range.startMs - firstUs / 1_000).coerceAtLeast(0L)
                 AppLogger.i(TAG, "Clip ${range.startMs}-${range.endMs} ms written (${output.length()} bytes, lead-in $actualLeadIn ms)")
-                return Result(output, actualLeadIn, mime)
+                Result(output, actualLeadIn, mime)
             } finally {
                 extractor.release()
             }
         }
+    } catch (e: Exception) {
+        // Never leave a half-written clip where a later share could pick it up.
+        output.delete()
+        throw e
     }
 
     /** Copies the frames from [fromUs] up to [toUs]; returns the time of the first frame copied. */
@@ -139,11 +164,12 @@ object ClipCutter {
                 }
                 if (!extractor.advance()) break
             }
+            check(written > 0) { "Nothing was copied" }
+            // Not swallowed: a failed stop means an unfinished file, which must not be shared (review 2026-11-04).
+            muxer.stop()
         } finally {
-            runCatching { muxer.stop() }
             runCatching { muxer.release() }
         }
-        check(written > 0) { "Nothing was copied" }
         return baseUs.coerceAtLeast(0L)
     }
 
@@ -164,14 +190,17 @@ object ClipFiles {
 
     fun directory(context: Context): File = File(context.cacheDir, DIRECTORY)
 
-    /** A fresh, empty file named [name] for a new clip; clears clips older than a day first. */
-    fun newFile(context: Context, name: String): File {
-        clearOld(context)
-        val dir = directory(context).apply { mkdirs() }
-        return File(dir, name).also { it.delete() }
+    /**
+     * A new file named [name] for a clip, in a folder of its own: sharing the same part twice must not replace a file an
+     * app is still reading from the first share (review 2026-11-04). Clears clips older than a day first.
+     */
+    fun newFile(context: Context, name: String, now: Long = System.currentTimeMillis()): File {
+        clearOld(context, now)
+        val dir = File(directory(context), now.toString()).apply { mkdirs() }
+        return File(dir, name)
     }
 
     fun clearOld(context: Context, now: Long = System.currentTimeMillis()) {
-        directory(context).listFiles()?.forEach { if (now - it.lastModified() > KEEP_MS) it.delete() }
+        directory(context).listFiles()?.forEach { if (now - it.lastModified() > KEEP_MS) it.deleteRecursively() }
     }
 }

@@ -63,7 +63,9 @@ object ClipTranscriber {
             AppLogger.i(TAG, "Clip transcribed: ${lines.size} lines")
             Outcome.Done(ClipTranscript.fromClipFile(lines, range, clip.leadInMs))
         } catch (e: CancellationException) {
-            if (!engine.isCloud) TranscriptionEngine.requestAbort()
+            // Deliberately no TranscriptionEngine.requestAbort(): that flag is global, and a queued transcription of a
+            // real call may be the run it reaches (review 2026-11-04). The engine runs one job at a time on its own
+            // thread, so a cancelled clip run just finishes there and its result is dropped — a few seconds of CPU.
             throw e
         } catch (e: Exception) {
             AppLogger.w(TAG, "Clip transcription failed: ${e.message}")
