@@ -2600,6 +2600,10 @@ WRITE_SECURE_SETTINGS was re-granted after each install (`granted=true`); both r
 > server unreachable): 4 cloud retries over ~8 min, the call sits under "Being transcribed" meanwhile (old text not
 > readable until then — accepted), then the old Hebrew text came back ✓. The failure notice said "Tap to try again"
 > → now "The previous transcript was kept" (`3e73680d`, unit-tested, NOT yet seen on a phone).
+> **2026-11-05, maintainer looked for it inside the transcript → option C added after all**, as a ⋮ menu in the
+> page's top bar with "Summarise this call" (moved out of the text-like line above the words) and "Transcribe again".
+> OP9: both work from the page; the page keeps the old text during a run, with no progress shown there (a long
+> on-phone run shows its progress only on the Transcripts list).
 > **Not tried:** a run with the summary deleted; a crash mid-run; RTL/other locales on screen. **To settle:** maintainer re-transcribes a bad transcript on his phone.
 
 ### Original request (2026-11-05)
