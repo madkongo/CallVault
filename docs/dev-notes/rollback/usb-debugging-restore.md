@@ -85,3 +85,27 @@ git revert -m 1 d8274549
   - off events without a restore → our bug; the timeline says where.
 - The "2.4.7/2.4.8 + Android 16 had no issue" claim: a mix-up with another user, per the maintainer. Igor confirmed the
   problem existed before. Dropped.
+
+## Report 3 — 2026-11-05 16:23 (BVL-N59, 2.4.9-usbprobe2, Android 17)
+
+- No USB-debugging switch-off in ~27 h. "Allow ADB in Charge only" was on throughout, so the restore never ran:
+  the quiet is not proven to be probe2. 🧪
+- **New: the phone pauses CallVault whenever the screen goes dark mid-call** (3 of 3 cases), while the recorder
+  process keeps running. 15:08 call lost (start paused 48 s), 08:42 handoff call kept 4.4 s of 43 s, 12:29 direct
+  call fine. Honor launch settings were already all-manual/on; no Android battery-optimisation setting on his phone.
+  Battery details: 36 s of background time in 24 h.
+
+## Test build 2.4.9-usbprobe3 — 🧪 VERIFYING, built 2026-11-05
+
+Branch `probe/usbprobe3` (from `fix/usb-debugging-turned-off`), sha256 4bb06f2f…, at
+`~/Downloads/CallVault-2.4.9-usbprobe3/`. Same commits on `fix/handoff-honor-start-repair` (from integration/next),
+not merged.
+1. Handoff start goes through the #53 Honor repair (first call after a recorder restart no longer falls off handoff).
+2. `AppPauseWatch`: 3 s ticker in the keep-alive; an uptime gap ≥ 10 s is a pause, remembered 30 days.
+3. While a pause is remembered: recordings skip handoff (recorder process owns the capture) and the call-start
+   USB-default refresh is skipped. Phones never seen pausing: unchanged. Handoff is opt-in (default off).
+4. Debug report: "Phone power" section (battery exemption, power saving, standby bucket, app pauses).
+
+Rollback: revert the five commits; nothing is stored beyond the `cv_app_pause` prefs file.
+To settle: Igor runs it 1–2 days with calls taken at the ear, then sends a report. Expect "App paused by the phone"
+> 0, "Not using resilient recording" before calls, full-length files, and no "Call ended before the daemon was ready".
