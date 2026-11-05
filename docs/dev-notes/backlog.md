@@ -2595,8 +2595,12 @@ WRITE_SECURE_SETTINGS was re-granted after each install (`granted=true`); both r
 > bulk of 2 on Groq ✓, Stop mid-run on the phone twice → old transcript back and readable ✓, summary checkbox shows
 > when one exists ✓ (cancelled, not run). Found + fixed on device: the worker priced the run by the setting, so a
 > phone run skipped its keep-alive notification; chip colour rendered coral.
-> **Not tried:** a real failure (not a stop) restoring; a run with the summary deleted; a crash mid-run; RTL/other
-> locales on screen. **To settle:** maintainer re-transcribes a bad transcript on his phone.
+> **Mimicked bad transcript on the OP9, 2026-11-05:** a Hebrew call transcribed as English gave "B'dika, B'dika, the
+> one plus shte mesre"; Transcribe again in Hebrew (Groq) gave "בדיקה בדיקה בדיקה…" back ✓. Real failure (Custom
+> server unreachable): 4 cloud retries over ~8 min, the call sits under "Being transcribed" meanwhile (old text not
+> readable until then — accepted), then the old Hebrew text came back ✓. The failure notice said "Tap to try again"
+> → now "The previous transcript was kept" (`3e73680d`, unit-tested, NOT yet seen on a phone).
+> **Not tried:** a run with the summary deleted; a crash mid-run; RTL/other locales on screen. **To settle:** maintainer re-transcribes a bad transcript on his phone.
 
 ### Original request (2026-11-05)
 
