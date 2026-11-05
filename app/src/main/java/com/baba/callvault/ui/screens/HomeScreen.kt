@@ -8,6 +8,7 @@
 
 package com.baba.callvault.ui.screens
 
+import com.baba.callvault.transcription.TranscriptionScheduler
 import com.baba.callvault.ui.common.TranscribeAgainDialog
 import com.baba.callvault.data.transcripts.TranscribeAgain
 import com.baba.callvault.transcription.TranscriptionRouting
@@ -1946,6 +1947,11 @@ fun HomeScreen(
             onSummarise = { SummaryScheduler.runNow(context, displayName) },
             onStopSummary = { SummaryScheduler.stopNow(context) },
             onTranscribeAgain = if (row != null) ({ openTranscribeAgain(listOf(displayName)) }) else null,
+            // Only a finished transcript opens here, so a queued or running row on this page is a re-run.
+            transcribingAgainPercent = transcript?.transcript?.state
+                ?.takeIf { it == TranscriptState.QUEUED || it == TranscriptState.RUNNING }
+                ?.let { transcribingShown.percentFor(displayName) },
+            onStopTranscribing = { transcriptScope.launch { TranscriptionScheduler.stopNow(context) } },
             callKey = displayName,
             previousCall = neighbours.first,
             nextCall = neighbours.second,

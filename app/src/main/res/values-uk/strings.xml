@@ -910,4 +910,6 @@
     <string name="transcribe_again_run_on">Де виконувати</string>
     <string name="transcribe_again_estimate">Близько %1$s.</string>
     <string name="transcribe_again_delete_summary">Видалити й підсумок. Його написано за старим текстом.</string>
+    <string name="transcribe_again_running">Повторне розшифрування… %1$d%%</string>
+    <string name="transcribe_again_waiting">Очікування повторного розшифрування…</string>
 </resources>

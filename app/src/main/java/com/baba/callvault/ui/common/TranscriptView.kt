@@ -35,6 +35,7 @@ import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material.icons.filled.AutoAwesome
 import androidx.compose.material3.IconButton
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -212,6 +213,9 @@ fun TranscriptView(
     onStopSummary: () -> Unit,
     /** Opens the "Transcribe again" dialog (#72); null where there is no recording to hear again. */
     onTranscribeAgain: (() -> Unit)? = null,
+    /** While this call is being transcribed again (#72): its percent (0 = waiting), else null. */
+    transcribingAgainPercent: Int? = null,
+    onStopTranscribing: () -> Unit = {},
     /**
      * Which call this is. Moving to another call keeps the frame and swaps the content, so the list's
      * scroll position and the follow state are kept per call rather than carried across (#27).
@@ -256,6 +260,8 @@ fun TranscriptView(
             summaryState = summaryState,
             onSummarise = onSummarise,
             onStopSummary = onStopSummary,
+            transcribingAgainPercent = transcribingAgainPercent,
+            onStopTranscribing = onStopTranscribing,
             summaryFirst = summaryFirst,
             previousCall = previousCall,
             nextCall = nextCall,
@@ -361,6 +367,8 @@ private fun ColumnScope.TranscriptBody(
     summaryState: SummaryCardState,
     onSummarise: () -> Unit,
     onStopSummary: () -> Unit,
+    transcribingAgainPercent: Int?,
+    onStopTranscribing: () -> Unit,
     summaryFirst: Boolean,
     previousCall: TranscriptNeighbour?,
     nextCall: TranscriptNeighbour?,
@@ -376,6 +384,10 @@ private fun ColumnScope.TranscriptBody(
     // citation are three ways to reach the same player, and a page that hid one of them and kept the
     // other two would be worse than one that kept all three.
     val playable = TranscriptAudio.playbackOffered(hasAudio)
+
+    // A "transcribe again" in progress (#72). The old words stay below until the new ones land, so without
+    // this the page gave no sign a run was going — minutes, on the phone.
+    transcribingAgainPercent?.let { TranscribingAgainStrip(it, onStopTranscribing) }
 
     SummarySheetStrip(
         state = summaryState,
@@ -873,6 +885,34 @@ private fun TranscriptPageMenu(
                     onClick = { open = false; transcribeAgain() },
                 )
             }
+        }
+    }
+}
+
+/** "Transcribing again… N%" with Stop, styled like the summary's running line. A stop keeps the old text. */
+@Composable
+private fun TranscribingAgainStrip(percent: Int, onStop: () -> Unit) {
+    val accent = MaterialTheme.colorScheme.primary
+    Column(modifier = Modifier.fillMaxWidth().padding(horizontal = 24.dp, vertical = 4.dp)) {
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            Text(
+                text = if (percent > 0) stringResource(R.string.transcribe_again_running, percent)
+                       else stringResource(R.string.transcribe_again_waiting),
+                style = MaterialTheme.typography.bodyMedium,
+                modifier = Modifier.weight(1f),
+            )
+            TextButton(onClick = onStop) { Text(stringResource(R.string.summary_card_stop)) }
+        }
+        // Colours stated: left to the theme the track renders coral and reads as an error.
+        if (percent > 0) {
+            LinearProgressIndicator(
+                progress = { percent / 100f },
+                modifier = Modifier.fillMaxWidth(),
+                color = accent,
+                trackColor = accent.copy(alpha = 0.2f),
+            )
+        } else {
+            LinearProgressIndicator(modifier = Modifier.fillMaxWidth(), color = accent, trackColor = accent.copy(alpha = 0.2f))
         }
     }
 }

@@ -991,4 +991,6 @@
     <string name="transcribe_again_run_on">اجرا روی</string>
     <string name="transcribe_again_estimate">حدود %1$s.</string>
     <string name="transcribe_again_delete_summary">خلاصه را هم حذف کن. از متن قبلی نوشته شده بود.</string>
+    <string name="transcribe_again_running">در حال رونویسی دوباره… %1$d%%</string>
+    <string name="transcribe_again_waiting">در انتظار رونویسی دوباره…</string>
 </resources>

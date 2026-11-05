@@ -896,4 +896,6 @@
     <string name="transcribe_again_run_on">运行于</string>
     <string name="transcribe_again_estimate">约 %1$s。</string>
     <string name="transcribe_again_delete_summary">同时删除摘要。它是根据旧文本写的。</string>
+    <string name="transcribe_again_running">正在重新转写… %1$d%%</string>
+    <string name="transcribe_again_waiting">等待重新转写…</string>
 </resources>

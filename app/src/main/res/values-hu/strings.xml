@@ -898,4 +898,6 @@
     <string name="transcribe_again_run_on">Futtatás itt</string>
     <string name="transcribe_again_estimate">Kb. %1$s.</string>
     <string name="transcribe_again_delete_summary">Az összefoglaló törlése is. A régi szövegből készült.</string>
+    <string name="transcribe_again_running">Újra átírás… %1$d%%</string>
+    <string name="transcribe_again_waiting">Várakozás az újra átírásra…</string>
 </resources>

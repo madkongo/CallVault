@@ -896,4 +896,6 @@
     <string name="transcribe_again_run_on">Chạy trên</string>
     <string name="transcribe_again_estimate">Khoảng %1$s.</string>
     <string name="transcribe_again_delete_summary">Xóa cả bản tóm tắt. Nó được viết từ văn bản cũ.</string>
+    <string name="transcribe_again_running">Đang chép lời lại… %1$d%%</string>
+    <string name="transcribe_again_waiting">Đang chờ chép lời lại…</string>
 </resources>

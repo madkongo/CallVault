@@ -898,4 +898,6 @@
     <string name="transcribe_again_run_on">Ejecutar en</string>
     <string name="transcribe_again_estimate">Unos %1$s.</string>
     <string name="transcribe_again_delete_summary">Eliminar también el resumen. Se escribió a partir del texto anterior.</string>
+    <string name="transcribe_again_running">Transcribiendo de nuevo… %1$d %%</string>
+    <string name="transcribe_again_waiting">Esperando para transcribir de nuevo…</string>
 </resources>

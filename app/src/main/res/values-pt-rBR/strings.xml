@@ -901,4 +901,6 @@
     <string name="transcribe_again_run_on">Executar em</string>
     <string name="transcribe_again_estimate">Cerca de %1$s.</string>
     <string name="transcribe_again_delete_summary">Excluir também o resumo. Ele foi escrito a partir do texto antigo.</string>
+    <string name="transcribe_again_running">Transcrevendo de novo… %1$d%%</string>
+    <string name="transcribe_again_waiting">Aguardando para transcrever de novo…</string>
 </resources>

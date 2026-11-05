@@ -917,4 +917,6 @@
     <string name="transcribe_again_run_on">কোথায় চলবে</string>
     <string name="transcribe_again_estimate">প্রায় %1$s।</string>
     <string name="transcribe_again_delete_summary">সারাংশটিও মুছুন। এটি পুরোনো লেখা থেকে লেখা হয়েছিল।</string>
+    <string name="transcribe_again_running">আবার ট্রান্সক্রাইব হচ্ছে… %1$d%%</string>
+    <string name="transcribe_again_waiting">আবার ট্রান্সক্রাইবের অপেক্ষায়…</string>
 </resources>
