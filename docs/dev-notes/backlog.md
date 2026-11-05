@@ -447,7 +447,13 @@ APK **and the in-app updater**: "if the advanced flow is disabled updates to unr
 Timeline (Google FAQ, read 2026-11-05): enforced since 2026-09-30 only for "participating stores" in Brazil,
 Indonesia, Singapore and Thailand. Direct downloads are not affected yet. Global in 2027, date not given.
 
-**What it takes:** a **full distribution** account in the Android Developer Console (outside-Play developers):
+**✅ Account side is done (checked 2026-11-05):** the maintainer's existing Play Console personal account (MadKongo)
+is identity-verified, and it registers outside-Play apps from its "Android developer verification" tab. No new
+account or fee is needed; the notes below about a new account are background only. Still open on that account:
+Play's **trader status** declaration, due February 2027. Not registered yet: CallVault's package (the maintainer will
+say when).
+
+**Background, for a developer without a Play account:** a **full distribution** account in the Android Developer Console (outside-Play developers):
 - **$25**, a Google account, a government photo ID **and** proof of address, and email and phone checked by code.
   Google says about 10 minutes.
 - **As an organization instead:** a D-U-N-S number (free, up to 28 days), a website verified in Search Console and
