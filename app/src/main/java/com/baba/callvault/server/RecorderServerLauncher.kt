@@ -13,6 +13,7 @@ import android.os.SystemClock
 import com.baba.callvault.data.AppPreferences
 import com.baba.callvault.integrations.adb.AdbShell
 import com.baba.callvault.integrations.adb.UsbDefaultConfig
+import com.baba.callvault.services.recording.AppPauseWatch
 import com.baba.callvault.utils.AppLogger
 
 /**
@@ -148,10 +149,10 @@ object RecorderServerLauncher {
     private fun ensureServerRunningLocked(context: Context, timeoutMs: Long): Boolean {
         if (RecorderConnection.isConnected) {
             AppLogger.d(TAG, "Recorder daemon already connected; reusing existing binder")
-            // No USB-default refresh here: this is the start of a call, and an advisory value is not worth
-            // ADB round trips while the phone may pause the app any moment (Honor, 2026-11-05). Real
-            // launches, Settings, setup and the keep-alive still refresh it.
-            applyWdPolicy(context, refreshUsbDefault = false)
+            // On a phone seen pausing the app, skip the advisory USB-default refresh: this is the start of a
+            // call, and an Honor BVL-N59 paused the app inside it and lost the call (2026-11-05). Every other
+            // phone refreshes as before; launches, Settings and setup refresh it too.
+            applyWdPolicy(context, refreshUsbDefault = !AppPauseWatch.preferRecorderCapture(context))
             return true
         }
 
