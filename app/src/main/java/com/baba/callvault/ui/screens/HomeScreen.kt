@@ -1945,6 +1945,7 @@ fun HomeScreen(
             summaryState = sheetSummary,
             onSummarise = { SummaryScheduler.runNow(context, displayName) },
             onStopSummary = { SummaryScheduler.stopNow(context) },
+            onTranscribeAgain = if (row != null) ({ openTranscribeAgain(listOf(displayName)) }) else null,
             callKey = displayName,
             previousCall = neighbours.first,
             nextCall = neighbours.second,

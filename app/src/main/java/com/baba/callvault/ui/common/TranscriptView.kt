@@ -30,6 +30,11 @@ import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material.icons.automirrored.filled.Notes
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material.icons.filled.MoreVert
+import androidx.compose.material.icons.filled.Refresh
+import androidx.compose.material.icons.filled.AutoAwesome
+import androidx.compose.material3.IconButton
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -205,6 +210,8 @@ fun TranscriptView(
     summaryState: SummaryCardState,
     onSummarise: () -> Unit,
     onStopSummary: () -> Unit,
+    /** Opens the "Transcribe again" dialog (#72); null where there is no recording to hear again. */
+    onTranscribeAgain: (() -> Unit)? = null,
     /**
      * Which call this is. Moving to another call keeps the frame and swaps the content, so the list's
      * scroll position and the follow state are kept per call rather than carried across (#27).
@@ -263,14 +270,20 @@ fun TranscriptView(
         TranscriptPresentation.Sheet -> {
             val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
             ModalBottomSheet(onDismissRequest = onDismiss, sheetState = sheetState) {
-                Text(
-                    text = title,
-                    style = MaterialTheme.typography.titleMedium,
-                    modifier = Modifier.padding(
-                        start = 24.dp, end = 24.dp, top = 8.dp,
-                        bottom = if (subtitle != null) 0.dp else 8.dp,
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Text(
+                        text = title,
+                        style = MaterialTheme.typography.titleMedium,
+                        modifier = Modifier
+                            .weight(1f)
+                            .padding(
+                                start = 24.dp, end = 8.dp, top = 8.dp,
+                                bottom = if (subtitle != null) 0.dp else 8.dp,
+                            )
                     )
-                )
+                    TranscriptPageMenu(summaryState, onSummarise, onTranscribeAgain)
+                    Spacer(Modifier.width(12.dp))
+                }
                 if (subtitle != null) {
                     Text(
                         text = subtitle,
@@ -291,6 +304,7 @@ fun TranscriptView(
             title = title,
             subtitle = subtitle,
             onBack = onDismiss,
+            actions = { TranscriptPageMenu(summaryState, onSummarise, onTranscribeAgain) },
         ) { innerPadding ->
             // Inset with a Column rather than passed down: the body ends with a transport bar that
             // has to clear the navigation bar, and its list takes weight(1f), so the frame has to be
@@ -823,3 +837,43 @@ private fun List<TranscriptSegmentEntry>.asPlainText(names: SpeakerNames): Strin
     TranscriptExport.plainText(this, names)
 
 private val TIMESTAMP_WIDTH = 56.dp
+
+/**
+ * The page's own actions, behind ⋮ in its top bar: write a summary, and transcribe the call again (#72).
+ *
+ * "Summarise this call" used to sit above the words as a line that read like text, and there was no way to redo
+ * a transcript from the place you notice it is wrong. A menu keeps both one tap away without putting a button on
+ * a page that is opened to read. No item, no ⋮.
+ */
+@Composable
+private fun TranscriptPageMenu(
+    summaryState: SummaryCardState,
+    onSummarise: () -> Unit,
+    onTranscribeAgain: (() -> Unit)?,
+) {
+    val canSummarise = summaryState == SummaryCardState.Offered || summaryState == SummaryCardState.Failed
+    if (!canSummarise && onTranscribeAgain == null) return
+    var open by remember { mutableStateOf(false) }
+    Box {
+        IconButton(onClick = { open = true }) {
+            Icon(Icons.Filled.MoreVert, contentDescription = stringResource(R.string.home_row_menu))
+        }
+        DropdownMenu(expanded = open, onDismissRequest = { open = false }) {
+            if (canSummarise) {
+                DropdownMenuItem(
+                    text = { Text(stringResource(R.string.summary_card_create)) },
+                    leadingIcon = { Icon(Icons.Filled.AutoAwesome, contentDescription = null) },
+                    onClick = { open = false; onSummarise() },
+                )
+            }
+            onTranscribeAgain?.let { transcribeAgain ->
+                DropdownMenuItem(
+                    text = { Text(stringResource(R.string.transcript_retranscribe)) },
+                    leadingIcon = { Icon(Icons.Filled.Refresh, contentDescription = null) },
+                    onClick = { open = false; transcribeAgain() },
+                )
+            }
+        }
+    }
+}
+
