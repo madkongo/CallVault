@@ -70,4 +70,13 @@ class HandoffPolicyTest {
             )
         )
     }
+
+    @Test
+    fun a_phone_that_pauses_the_app_records_through_the_recorder_instead() {
+        assertFalse(
+            HandoffPolicy.isUsable(
+                enabled = true, sourceSupported = true, mode = PrivilegedMode.STANDALONE, appGetsPaused = true
+            )
+        )
+    }
 }

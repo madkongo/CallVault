@@ -462,6 +462,7 @@ class DaemonKeepAliveService : Service() {
 
     override fun onCreate() {
         super.onCreate()
+        AppPauseWatch.start(applicationContext)
         getSystemService(NotificationManager::class.java).createNotificationChannel(
             NotificationChannel(CHANNEL_ID, getString(R.string.notif_readiness_channel), NotificationManager.IMPORTANCE_MIN).apply {
                 setShowBadge(false)
@@ -880,6 +881,7 @@ class DaemonKeepAliveService : Service() {
     }
 
     override fun onDestroy() {
+        AppPauseWatch.stop()
         runCatching { unregisterReceiver(screenReceiver) }
         runCatching { contentResolver.unregisterContentObserver(usbDebuggingObserver) }
         runCatching { contentResolver.unregisterContentObserver(wirelessDebuggingObserver) }
