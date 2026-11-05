@@ -2604,6 +2604,10 @@ WRITE_SECURE_SETTINGS was re-granted after each install (`granted=true`); both r
 > page's top bar with "Summarise this call" (moved out of the text-like line above the words) and "Transcribe again".
 > OP9: both work from the page; the page keeps the old text during a run, with no progress shown there (a long
 > on-phone run shows its progress only on the Transcripts list).
+> **2026-11-05 progress line added** ("Transcribing again… N%" + Stop on the page). Testing it found a **data-loss
+> race**: Stop's cleanup restored the row and forgot the backup, then the unwinding run deleted the transcript as a
+> first run would (the OP9's HebrewCall9min lost its text — test data). Fixed `12d90d27` with a red→green regression
+> test; the same page Stop on the OP9 kept the text twice.
 > **Not tried:** a run with the summary deleted; a crash mid-run; RTL/other locales on screen. **To settle:** maintainer re-transcribes a bad transcript on his phone.
 
 ### Original request (2026-11-05)
