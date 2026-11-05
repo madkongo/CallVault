@@ -128,6 +128,12 @@ object TranscriptRepository {
      * [language] is the language picked for this recording alone, null meaning "use the setting".
      */
     suspend fun retry(context: Context, displayName: String, language: String? = null) {
+        resetForRun(context, displayName)
+        transcribeNow(context, displayName, language)
+    }
+
+    /** The row half of [retry]: cleared and marked QUEUED, without scheduling anything. */
+    internal suspend fun resetForRun(context: Context, displayName: String) {
         val dao = dao(context)
         // A plain run deletes the words, so a leftover "transcribe again" backup must not survive it (#72).
         TranscribeAgainBackup.clear(context, displayName)
@@ -139,7 +145,6 @@ object TranscriptRepository {
                 updatedAt = System.currentTimeMillis()
             )
         )
-        transcribeNow(context, displayName, language)
     }
 
     /** Removes a transcript, leaving the recording. Someone may want the audio but not the text. */

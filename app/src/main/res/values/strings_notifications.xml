@@ -60,4 +60,5 @@
     <string name="transcript_notice_failed_text">%1$s. Tap to try again.</string>
     <string name="transcript_notice_failed_many_title">Transcriptions that didn\'t finish: %1$d</string>
     <string name="transcript_notice_failed_many_text">Tap to see them.</string>
+    <string name="transcript_notice_failed_kept_text">%1$s. The previous transcript was kept.</string>
 </resources>

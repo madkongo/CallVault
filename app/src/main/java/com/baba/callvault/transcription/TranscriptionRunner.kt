@@ -324,13 +324,17 @@ class TranscriptionRunner(
                 } else {
                     AppLogger.w(TAG, "Failed to transcribe '$displayName': ${failure.message}")
                     // A failed "transcribe again" (#72) keeps the transcript it was meant to replace.
-                    if (!TranscribeAgainBackup.restore(context, dao, displayName)) {
+                    val previousKept = TranscribeAgainBackup.restore(context, dao, displayName)
+                    if (!previousKept) {
                         mark(displayName, TranscriptState.FAILED, modelId, language, failure.message)
                     }
                     // A failure was as silent as a success until now: the row gained a red icon on a
                     // page the user had been given no reason to open. Only a real failure reaches here
                     // — a stop, an abort and a refusal for length have all returned above.
-                    announce(displayName, TranscriptNotice.Outcome.Failed)
+                    announce(
+                        displayName,
+                        if (previousKept) TranscriptNotice.Outcome.FailedPreviousKept else TranscriptNotice.Outcome.Failed,
+                    )
                 }
                 false
             }

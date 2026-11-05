@@ -58,4 +58,5 @@
     <string name="transcript_notice_failed_text">%1$s. Нажмите, чтобы повторить.</string>
     <string name="transcript_notice_failed_many_title">Незавершённых расшифровок: %1$d</string>
     <string name="transcript_notice_failed_many_text">Нажмите, чтобы посмотреть их.</string>
+    <string name="transcript_notice_failed_kept_text">%1$s. Предыдущая расшифровка сохранена.</string>
 </resources>

@@ -556,6 +556,61 @@ class TranscriptionRunnerTest {
         assertEquals(listOf("broken.ogg" to TranscriptNotice.Outcome.Failed), reported)
     }
 
+    // ---- "Transcribe again" (#72): the old text must survive anything but a successful new run ----
+
+    /** A finished transcript of [name], then turned into a queued "transcribe again" exactly as the dialog does. */
+    private suspend fun queuedRedoOf(name: String, oldWords: List<String>) {
+        catalogued(name)
+        runnerReturning(oldWords.mapIndexed { i, w -> TranscriptSegment(i * 1000L, i * 1000L + 900, w) })
+            .runBatch(MODEL_ID, MODEL_PATH, LANGUAGE, listOf(name))
+        val dao = TranscriptDatabase.get(context).transcriptDao()
+        com.baba.callvault.data.transcripts.TranscribeAgainBackup.save(context, dao.findTranscript(name)!!)
+        dao.upsertTranscript(TranscriptEntry(displayName = name, state = TranscriptState.QUEUED, updatedAt = 1L))
+    }
+
+    @Test
+    fun a_failed_transcribe_again_keeps_the_old_words_and_says_so() = runBlocking {
+        queuedRedoOf("redo.ogg", listOf("B'dika", "B'dika"))
+        val reported = mutableListOf<Pair<String, TranscriptNotice.Outcome>>()
+        val runner = TranscriptionRunner(
+            context,
+            onFinished = { name, outcome -> reported += name to outcome },
+            transcriber = { _, _, _, _, _, _, _ -> error("server unreachable") },
+        )
+
+        runner.runBatch(MODEL_ID, MODEL_PATH, LANGUAGE, listOf("redo.ogg"))
+
+        val stored = transcript("redo.ogg")!!
+        assertEquals(TranscriptState.DONE, stored.transcript.state)
+        assertEquals(listOf("B'dika", "B'dika"), stored.segments.map { it.text })
+        assertEquals(listOf("redo.ogg" to TranscriptNotice.Outcome.FailedPreviousKept), reported)
+        assertNull(com.baba.callvault.data.transcripts.TranscribeAgainBackup.peek(context, "redo.ogg"))
+    }
+
+    @Test
+    fun a_successful_transcribe_again_replaces_the_words_and_forgets_the_old_row() = runBlocking {
+        queuedRedoOf("fixed.ogg", listOf("B'dika"))
+
+        runnerReturning(listOf(TranscriptSegment(0, 1000, "בדיקה")))
+            .runBatch(MODEL_ID, MODEL_PATH, LANGUAGE, listOf("fixed.ogg"))
+
+        val stored = transcript("fixed.ogg")!!
+        assertEquals(TranscriptState.DONE, stored.transcript.state)
+        assertEquals(listOf("בדיקה"), stored.segments.map { it.text })
+        assertNull(com.baba.callvault.data.transcripts.TranscribeAgainBackup.peek(context, "fixed.ogg"))
+    }
+
+    @Test
+    fun a_plain_retry_after_a_leftover_backup_never_restores_a_row_without_words() = runBlocking {
+        queuedRedoOf("plain.ogg", listOf("old"))
+        com.baba.callvault.data.transcripts.TranscriptRepository.resetForRun(context, "plain.ogg")
+        val runner = TranscriptionRunner(context, transcriber = { _, _, _, _, _, _, _ -> error("cannot decode") })
+
+        runner.runBatch(MODEL_ID, MODEL_PATH, LANGUAGE, listOf("plain.ogg"))
+
+        assertEquals(TranscriptState.FAILED, transcript("plain.ogg")!!.transcript.state)
+    }
+
     @Test
     fun says_when_the_audio_went_with_the_transcript() = runBlocking {
         // The "Transcribe only" import: its file is deleted as the words land, so this notification

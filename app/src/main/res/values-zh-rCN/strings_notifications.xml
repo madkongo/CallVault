@@ -58,4 +58,5 @@
     <string name="transcript_notice_failed_text">%1$s。点按可重试。</string>
     <string name="transcript_notice_failed_many_title">未完成的转写：%1$d</string>
     <string name="transcript_notice_failed_many_text">点按即可查看。</string>
+    <string name="transcript_notice_failed_kept_text">%1$s。已保留之前的转写。</string>
 </resources>

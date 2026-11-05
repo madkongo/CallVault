@@ -102,6 +102,7 @@ object TranscriptNotifier {
             TranscriptNotice.Outcome.Stored -> stored(context, displayName, label, false)
             TranscriptNotice.Outcome.StoredAndAudioDeleted -> stored(context, displayName, label, true)
             TranscriptNotice.Outcome.Failed -> failed(context, displayName, label)
+            TranscriptNotice.Outcome.FailedPreviousKept -> failed(context, displayName, label, previousKept = true)
         }
     }
 
@@ -139,7 +140,7 @@ object TranscriptNotifier {
     }
 
     /** A transcription ended in failure. The page it opens is the one with the retry on it. */
-    private fun failed(context: Context, displayName: String, label: String) {
+    private fun failed(context: Context, displayName: String, label: String, previousKept: Boolean = false) {
         val shade = TranscriptNotice.after(read(context, ID_FAILED), displayName)
         val one = shade.displayName
 
@@ -158,6 +159,9 @@ object TranscriptNotifier {
             },
             text = if (one == null) {
                 context.getString(R.string.transcript_notice_failed_many_text)
+            } else if (previousKept) {
+                // "Tap to try again" would be wrong: nothing is waiting to be retried, the old text is back.
+                context.getString(R.string.transcript_notice_failed_kept_text, label)
             } else {
                 context.getString(R.string.transcript_notice_failed_text, label)
             },

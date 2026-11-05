@@ -58,4 +58,5 @@
     <string name="transcript_notice_failed_text">%1$s. Toque para tentar de novo.</string>
     <string name="transcript_notice_failed_many_title">Transcrições não concluídas: %1$d</string>
     <string name="transcript_notice_failed_many_text">Toque para vê-las.</string>
+    <string name="transcript_notice_failed_kept_text">%1$s. A transcrição anterior foi mantida.</string>
 </resources>
