@@ -211,3 +211,39 @@ active narrowing. See also the r/fossdroid "Android May Soon Restrict On-Device 
 
 Related: [[debugging-switches-model]], [[loopback-tcpip-offwifi]], [[capture-research-directions]],
 [[shizuku-scr-vs-callvault]], [[android-17-call-recording-research]].
+
+---
+
+## 2026-11-05 — the "spam the setting" race (Shizuku-Next "Start without Wi-Fi"), measured on the OP9
+
+**Why this came back:** issue #71 (chaoscreater, Samsung Galaxy Z Fold 7, Android 16) uses Shizuku-Next's
+experimental "Start without Wi-Fi". This is a different method from the one-write test above, so the earlier
+"race window does not exist" result did not cover it.
+
+**The method** (`rushiranpise/Shizuku-Next` `manager/.../start/ForcedWirelessDebugging.kt`, read 2026-11-05):
+- Bring up a local-only hotspot, which gives mDNS an interface to find the port on.
+- Write `adb_wifi_enabled=1` 80 times at 20 ms, then every 20 ms for up to 2 minutes.
+- It reads the setting before each write, and the fork calls the whole thing best-effort.
+
+Origin: thedjchi/Shizuku#165 (nozza87's Reddit find, chaoscreater's MacroDroid macro). Reproduced there by thedjchi
+(Galaxy S23) and kitsumed (S22 Ultra). Fails on a nubia NX721J, Android 15 (Shizuku-Next #79).
+
+**OP9 measurement (OnePlus 9 Pro, OxygenOS, Android 14), detector = new listening port in `/proc/net/tcp{,6}`:**
+
+| Run | Result |
+|---|---|
+| Positive control, Wi-Fi connected, one write | New port 41913 appeared; gone after writing 0. The detector works. |
+| Wi-Fi off, no hotspot, 146 writes in 40 s | No port. The setting fell back to 0. |
+| Wi-Fi off, hotspot up (`wlan2`, started as root), 132 writes in 60 s | No port. |
+| Wi-Fi off, hotspot up, 12 writers in parallel for 45 s | No port. The setting **stuck at 1** with no server. |
+
+Logcat for the parallel run:
+- `AdbDebuggingManager: Not connected to any wireless network. Not enabling adbwifi.` The Wi-Fi check runs
+  **before** adbd's TLS server starts, so on this build there is no window to win.
+- OnePlus's `SettingsProvider` drops change notices closer than 10 ms apart (`notifyForSettingsChange ignore …
+  minInterval: 10`). That is how the setting ends up stuck at 1 while nothing listens.
+
+**Verdict:** 🧪/📐 works on some Samsung phones (third-party reports); ❌ does not work on the OP9 (measured
+2026-11-05). This is an unpatched Android bug, and its maintainers expect Google to close it. It is not a base to
+build a feature on. The verdict above still holds for OnePlus. A Samsung phone would be needed to measure it
+ourselves.
