@@ -415,6 +415,24 @@ Questions for that discussion (not answers):
 - Drive: what happens if the copy to Drive has already started or finished (Immediately sync, Drive-only).
 - Merged calls, the `.json`/`.md` files next to the recording, and the catalog entry must all go with it.
 - New settings should be considered for the setup wizard ([[new-features-consider-onboarding]]).
+- **Also asked for in issue #71 (2026-11-05, chaoscreater):** "keep or discard the recording at the end of the call",
+  as in skvalex's Call Recorder: record every call, then decide once you know whether it mattered. Same feature;
+  settle both in the one discussion.
+
+## 🔵 Upload to Google Drive directly (Drive API), not through the Drive app — requested 2026-11-05 (#71), not decided
+
+Issue #71 (chaoscreater): our "Google Drive" storage writes through Android's file picker into the **Google Drive
+app's** folder (SAF), so the Drive app has to be installed and allowed to run. They keep Drive and similar apps
+disabled to save battery, and want CallVault to upload itself, as skvalex's Call Recorder does.
+
+📐 Not researched in depth. What a direct upload would involve:
+- A Google sign-in (OAuth) and a Google Cloud project for CallVault. The `drive.file` scope (only files the app
+  created) is the non-sensitive one.
+- An open-source sign-in library (AppAuth) rather than Play Services, so as not to hurt F-Droid
+  ([[fdroid-readiness]]).
+- Network code and an account token inside an app whose pitch is "nothing leaves the phone unless you choose".
+  It is a product decision before it is an engineering one.
+- It would sit beside the current SAF path, not replace it. SAF also covers Nextcloud and other providers.
 
 ## 🔼 Higher-priority feature requests — agreed 2026-10-01, not started
 
