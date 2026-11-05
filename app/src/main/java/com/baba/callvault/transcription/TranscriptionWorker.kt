@@ -100,7 +100,7 @@ class TranscriptionWorker(
         if (userRequested) {
             // A user request always names one recording. Its length is read from the container, which
             // costs milliseconds and happens before the model is loaded.
-            val estimatedMs = single?.let { estimatedMsFor(it, prefs) } ?: 0L
+            val estimatedMs = single?.let { estimatedMsFor(it, prefs, serviceOverride) } ?: 0L
             if (TranscriptionNoticePolicy.showsNotification(userRequested = true, estimatedMs = estimatedMs)) {
                 AppLogger.i(TAG, "Showing the notification: this run may outlast Android's job limit (~${estimatedMs / 1000}s)")
                 promote()
@@ -183,7 +183,7 @@ class TranscriptionWorker(
                 // A new recording is a new clock; announcing the same one again changes nothing.
                 progress.startRecording(
                     displayName = current,
-                    estimatedMs = estimatedMsFor(current, prefs),
+                    estimatedMs = estimatedMsFor(current, prefs, serviceOverride),
                     nowMs = SystemClock.elapsedRealtime(),
                 )
                 publishProgress(progress.percent(reportedPercent = 0, nowMs = SystemClock.elapsedRealtime()))
@@ -212,6 +212,9 @@ class TranscriptionWorker(
     private suspend fun estimatedMsFor(
         displayName: String,
         prefs: AppPreferences,
+        // The engine this run actually uses (#72 can pick one): pricing a phone run at cloud speed skipped
+        // the notification that keeps a 13-minute job alive (measured on the OP9, 2026-11-05).
+        service: TranscriptionService?,
     ): Long {
         val uri = RecordingCatalog.all(applicationContext)
             .firstOrNull { it.displayName == displayName }
@@ -219,7 +222,9 @@ class TranscriptionWorker(
             ?.toUri()
             ?: return 0L
         val audioMs = runCatching { AudioDecoder.durationMs(applicationContext, uri) }.getOrDefault(0L)
-        return if (audioMs <= 0L) 0L else TranscriptionEstimate.estimateMs(audioMs, TranscriptionRouting.runCost(prefs))
+        return if (audioMs <= 0L) 0L else TranscriptionEstimate.estimateMs(
+            audioMs, TranscriptionRouting.runCost(prefs, service ?: prefs.getTranscriptionService()),
+        )
     }
 
     companion object {

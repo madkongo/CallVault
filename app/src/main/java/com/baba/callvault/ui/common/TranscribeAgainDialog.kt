@@ -21,6 +21,7 @@ import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Checkbox
 import androidx.compose.material3.FilterChip
+import androidx.compose.material3.FilterChipDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -94,6 +95,11 @@ fun TranscribeAgainDialog(
                                 selected = option == service,
                                 onClick = { service = option },
                                 label = { Text(serviceName(option)) },
+                                // Stated, not left to Material's default, which renders coral in this theme.
+                                colors = FilterChipDefaults.filterChipColors(
+                                    selectedContainerColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.14f),
+                                    selectedLabelColor = MaterialTheme.colorScheme.primary,
+                                ),
                             )
                         }
                     }
@@ -138,6 +144,6 @@ fun TranscribeAgainDialog(
 @Composable
 private fun serviceName(service: TranscriptionService): String = when (service) {
     TranscriptionService.ON_DEVICE -> stringResource(R.string.transcription_where_on_device)
-    TranscriptionService.CUSTOM -> stringResource(R.string.transcription_where_custom_service)
+    TranscriptionService.CUSTOM -> stringResource(R.string.transcription_where_custom)
     else -> service.preset?.displayName ?: service.key
 }
