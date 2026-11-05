@@ -588,6 +588,29 @@ class TranscriptionRunnerTest {
     }
 
     @Test
+    fun a_stop_whose_handler_restored_first_never_deletes_the_old_words() = runBlocking {
+        // Measured on the OP9 (2026-11-05): Stop's own cleanup put the old row back and forgot the backup;
+        // the run then unwound, found no backup, and deleted the transcript as if it were a first run.
+        queuedRedoOf("race.ogg", listOf("תודה רבה"))
+        val dao = TranscriptDatabase.get(context).transcriptDao()
+        val runner = TranscriptionRunner(
+            context,
+            transcriber = { _, _, _, _, _, _, _ ->
+                runBlocking { com.baba.callvault.data.transcripts.TranscribeAgainBackup.restore(context, dao, "race.ogg") }
+                error("decode stopped")
+            },
+            wasAborted = { true },
+        )
+
+        runner.runBatch(MODEL_ID, MODEL_PATH, LANGUAGE, listOf("race.ogg"), shouldStop = { false })
+
+        val stored = transcript("race.ogg")
+        assertNotNull("the old transcript must survive the stop", stored)
+        assertEquals(TranscriptState.DONE, stored!!.transcript.state)
+        assertEquals(listOf("תודה רבה"), stored.segments.map { it.text })
+    }
+
+    @Test
     fun a_successful_transcribe_again_replaces_the_words_and_forgets_the_old_row() = runBlocking {
         queuedRedoOf("fixed.ogg", listOf("B'dika"))
 

@@ -235,9 +235,13 @@ class TranscriptionRunner(
         if (wasAborted() || shouldStop() || error is CancellationException) {
             // NonCancellable: by now the coroutine is usually cancelled, and a plain suspend call
             // would abandon the very cleanup this exists to do.
-            // A "transcribe again" (#72) gets its previous transcript back instead: its words never left.
+            // A "transcribe again" (#72) gets its previous transcript back instead: its words never left. And a
+            // row that is already finished is never deleted here: Stop's own cleanup can restore it first and
+            // forget the backup, and deleting then threw the old words away (OP9, 2026-11-05).
             withContext(NonCancellable) {
-                if (!TranscribeAgainBackup.restore(context, dao, displayName)) dao.deleteFor(displayName)
+                if (!TranscribeAgainBackup.restore(context, dao, displayName) &&
+                    dao.findTranscript(displayName)?.state != TranscriptState.DONE
+                ) dao.deleteFor(displayName)
             }
             AppLogger.i(TAG, "Transcription of '$displayName' was stopped; left for a later run")
             if (error is CancellationException) throw error
