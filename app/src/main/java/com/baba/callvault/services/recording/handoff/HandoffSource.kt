@@ -109,7 +109,10 @@ object HandoffSource {
         }
         AppLogger.i(T, "deliver: handoff source=$sourceCliKey capture channels=$channelCount rate=$rate startTrack=$startTrack")
         if (startTrack) {
-            record.startRecording()
+            // Through the host's starter, like every other recorder-host capture: on Honor MagicOS 11 the first start
+            // in a fresh recorder process crashes without an Application (#53), which sent each first call off the
+            // handoff path (Honor BVL-N59, 2026-11-05).
+            HostAudioRecord.start("handoff (source=$sourceCliKey, ch=$channelCount)", record)
             // Never hand over a record that did not start. Android can refuse the start while having
             // allowed the create (a Shizuku host presenting the wrong package did exactly that), and a
             // refused record produces no frames: the app would encode nothing and write an empty file
