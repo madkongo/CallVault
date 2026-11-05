@@ -400,6 +400,22 @@ expired). Decoding reuses `AudioDecoder.decodeRange` (interleaved PCM at the ori
 Muxer: AAC → MP4; FLAC and WAV written by hand; MP3 raw frames + ID3 tags.
 Estimate 📐: M4A/WAV/FLAC ~1 day; MP3 +~1 day. Ties into Share a part ([[share-a-part]]).
 
+## 🔵 Delete a recording from a notification after the call ends — requested 2026-11-05, not started, design to be discussed
+
+Maintainer request: after a call ends, offer a way to delete that call's recording straight from a notification,
+without opening the app. **How it works is not decided yet; the maintainer will discuss it first. Do not build
+before that.**
+
+Questions for that discussion (not answers):
+- Which notification carries the button. 📐 From a quick code read on 2026-11-05: a normal carrier call shows no
+  "recording saved" notification today. The recording notification goes away at hang-up; VoIP posts only error and
+  "ended" notices. So this probably means a new post-call notification, opt-in or default.
+- Delete at once, ask to confirm, or "Undo" for a few seconds.
+- How long the notification stays, and whether it also offers Keep / Open / Share.
+- Drive: what happens if the copy to Drive has already started or finished (Immediately sync, Drive-only).
+- Merged calls, the `.json`/`.md` files next to the recording, and the catalog entry must all go with it.
+- New settings should be considered for the setup wizard ([[new-features-consider-onboarding]]).
+
 ## 🔼 Higher-priority feature requests — agreed 2026-10-01, not started
 
 Maintainer-prioritised above the older backlog. Each needs a design pass before code (and, where it adds a
