@@ -2587,7 +2587,18 @@ WRITE_SECURE_SETTINGS was re-granted after each install (`granted=true`); both r
 
 ---
 
-## 🔵 Transcribe again, single and bulk (#72, QBANIN) — requested 2026-11-05, design under discussion
+## 🧪 Transcribe again, single and bulk (#72, QBANIN) — VERIFYING, built 2026-11-05 on `feat/transcribe-again-72`
+
+> **Built (A + B + D, agreed 2026-11-05):** row ⋮ item and selection-bar button on Transcripts, one dialog (language,
+> ready engines, estimate, "also delete the summary"). Old text kept until the new run succeeds; failed/stopped runs
+> restore it. Review fixes in `c20061b0`. **Tried on the OP9 (2.5.0-next4), 2026-11-05:** single re-run on Groq ✓,
+> bulk of 2 on Groq ✓, Stop mid-run on the phone twice → old transcript back and readable ✓, summary checkbox shows
+> when one exists ✓ (cancelled, not run). Found + fixed on device: the worker priced the run by the setting, so a
+> phone run skipped its keep-alive notification; chip colour rendered coral.
+> **Not tried:** a real failure (not a stop) restoring; a run with the summary deleted; a crash mid-run; RTL/other
+> locales on screen. **To settle:** maintainer re-transcribes a bad transcript on his phone.
+
+### Original request (2026-11-05)
 
 Brings back what `ef755692` removed (2026-10-12, #4). The removal reason (one settled model + pinned language) no
 longer holds: several models, BYOK cloud (#48), and #72 reports a repeated-word loop. Options page:
