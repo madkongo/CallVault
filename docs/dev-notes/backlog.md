@@ -449,8 +449,8 @@ Indonesia, Singapore and Thailand. Direct downloads are not affected yet. Global
 
 **✅ Account side is done (checked 2026-11-05):** the maintainer's existing Play Console personal account (MadKongo)
 is identity-verified, and it registers outside-Play apps from its "Android developer verification" tab. No new
-account or fee is needed; the notes below about a new account are background only. Still open on that account:
-Play's **trader status** declaration, due February 2027. Not registered yet: CallVault's package (the maintainer will
+account or fee is needed; the notes below about a new account are background only. Play **trader status**: declared
+**non-trader** on 2026-11-05 (hobbyist, keeps his address private). Switch to trader before earning money from a Play app. Not registered yet: CallVault's package (the maintainer will
 say when).
 
 **Background, for a developer without a Play account:** a **full distribution** account in the Android Developer Console (outside-Play developers):
