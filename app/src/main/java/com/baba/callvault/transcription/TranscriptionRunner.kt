@@ -168,7 +168,9 @@ class TranscriptionRunner(
         }
 
         val uri = localUriFor(displayName) ?: run {
-            // Deleted between being queued and being reached. Nothing to decode and nothing to say.
+            // Deleted between being queued and being reached. Nothing to decode and nothing to say. A
+            // "transcribe again" (#72) gets its finished row back rather than sitting queued.
+            TranscribeAgainBackup.restore(context, dao, displayName)
             AppLogger.i(TAG, "$displayName is no longer in the catalog; skipping")
             return false
         }

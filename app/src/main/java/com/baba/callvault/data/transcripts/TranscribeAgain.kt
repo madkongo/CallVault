@@ -16,6 +16,8 @@ import com.baba.callvault.data.transcripts.db.TranscriptState
 import com.baba.callvault.transcription.TranscriptionScheduler
 import com.baba.callvault.transcription.cloud.TranscriptionService
 import com.baba.callvault.utils.AppLogger
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 
 /**
  * "Transcribe again" on a finished transcript (#72), which keeps the current text until the new run succeeds.
@@ -39,10 +41,16 @@ object TranscribeAgain {
         val db = TranscriptDatabase.get(context)
         val dao = db.transcriptDao()
         val current = dao.findTranscript(displayName)
-        if (current?.state == TranscriptState.DONE) TranscribeAgainBackup.save(context, current)
-        // With nothing kept there is no old text to protect: clear as a plain retry would, so no stale
-        // segments outlive a failure.
-        if (TranscribeAgainBackup.peek(context, displayName) == null) dao.deleteFor(displayName)
+        if (current?.state == TranscriptState.DONE) {
+            // Written to disk before the row changes: if the app dies in between, the cold-start cleanup
+            // must find the backup, or it would delete the text as an ordinary stale run.
+            TranscribeAgainBackup.save(context, current)
+        } else {
+            // Nothing finished to keep. Clear like a plain retry, and drop any leftover backup so a later
+            // failure cannot "restore" a row whose words are gone.
+            TranscribeAgainBackup.clear(context, displayName)
+            dao.deleteFor(displayName)
+        }
         dao.upsertTranscript(
             TranscriptEntry(displayName = displayName, state = TranscriptState.QUEUED, updatedAt = System.currentTimeMillis())
         )
@@ -69,8 +77,11 @@ object TranscribeAgain {
 object TranscribeAgainBackup {
     private const val PREFS = "cv_transcribe_again"
 
-    fun save(context: Context, entry: TranscriptEntry) {
-        prefs(context).edit().putString(entry.displayName, encode(entry)).apply()
+    suspend fun save(context: Context, entry: TranscriptEntry) {
+        val written = withContext(Dispatchers.IO) {
+            prefs(context).edit().putString(entry.displayName, encode(entry)).commit()
+        }
+        check(written) { "could not keep the current transcript aside" }
     }
 
     fun peek(context: Context, displayName: String): TranscriptEntry? =

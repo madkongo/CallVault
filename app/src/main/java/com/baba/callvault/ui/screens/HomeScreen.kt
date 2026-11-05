@@ -129,7 +129,9 @@ import androidx.compose.runtime.produceState
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.saveable.rememberSaveable
+import com.baba.callvault.utils.AppLogger
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.NonCancellable
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import androidx.compose.runtime.setValue
@@ -2049,8 +2051,15 @@ fun HomeScreen(
                 onDismiss = { transcribeAgainFor = null },
                 onConfirm = { language, service, deleteSummary ->
                     transcribeAgainFor = null
+                    // NonCancellable: leaving the page mid-batch must not stop halfway, with some summaries
+                    // deleted and their transcriptions never queued.
                     transcriptScope.launch {
-                        names.forEach { TranscribeAgain.start(context, it, language, service, deleteSummary) }
+                        withContext(NonCancellable) {
+                            names.forEach { name ->
+                                runCatching { TranscribeAgain.start(context, name, language, service, deleteSummary) }
+                                    .onFailure { AppLogger.w("CV:TranscribeAgain", "Not started: ${it.message}") }
+                            }
+                        }
                     }
                 },
             )

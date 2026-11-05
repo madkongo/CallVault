@@ -129,6 +129,8 @@ object TranscriptRepository {
      */
     suspend fun retry(context: Context, displayName: String, language: String? = null) {
         val dao = dao(context)
+        // A plain run deletes the words, so a leftover "transcribe again" backup must not survive it (#72).
+        TranscribeAgainBackup.clear(context, displayName)
         dao.deleteFor(displayName)
         dao.upsertTranscript(
             TranscriptEntry(
