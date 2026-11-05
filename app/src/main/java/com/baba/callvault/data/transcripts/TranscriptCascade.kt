@@ -59,6 +59,7 @@ object TranscriptCascade {
             TranscriptionEngine.requestAbort()
         }
 
+        displayNames.forEach { TranscribeAgainBackup.clear(context, it) }
         if (!TranscriptDatabase.exists(context)) return
 
         runCatching {

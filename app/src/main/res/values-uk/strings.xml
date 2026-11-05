@@ -903,4 +903,11 @@
     <string name="wizard_updates_line">Як CallVault знаходить нові версії.</string>
     <string name="wizard_updates_subtitle">CallVault перевіряє оновлення через GitHub.</string>
     <string name="wizard_updates_title">Оновлення</string>
+    <!-- Transcribe again (#72) -->
+    <string name="transcribe_again_title">Розшифрувати знову?</string>
+    <string name="transcribe_again_message_one">%1$s буде розшифровано знову. Якщо новий запуск не вдасться або його зупинять, поточна розшифровка збережеться.</string>
+    <string name="transcribe_again_message_many">Розшифровок до повтору: %1$d. Якщо запуск не вдасться або його зупинять, ця розшифровка залишиться як є.</string>
+    <string name="transcribe_again_run_on">Де виконувати</string>
+    <string name="transcribe_again_estimate">Близько %1$s.</string>
+    <string name="transcribe_again_delete_summary">Видалити й підсумок. Його написано за старим текстом.</string>
 </resources>

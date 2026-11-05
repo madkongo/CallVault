@@ -17,6 +17,7 @@ import androidx.work.WorkerParameters
 import androidx.work.workDataOf
 import com.baba.callvault.R
 import com.baba.callvault.data.AppPreferences
+import com.baba.callvault.transcription.cloud.TranscriptionService
 import com.baba.callvault.data.recordings.RecordingCatalog
 import com.baba.callvault.transcription.model.TranscriptionModel
 import com.baba.callvault.utils.AppLogger
@@ -65,7 +66,11 @@ class TranscriptionWorker(
             ?: TranscriptionModel.DEFAULT
         val single = inputData.getString(KEY_DISPLAY_NAME)
 
-        val engine = when (val chosen = TranscriptionEngineChoice.choose(applicationContext, prefs, model, isNamedRun = single != null)) {
+        // A per-run engine from "transcribe again" (#72); only a named run carries one.
+        val serviceOverride = inputData.getString(KEY_SERVICE)?.let { TranscriptionService.fromKey(it) }
+        val engine = when (val chosen = TranscriptionEngineChoice.choose(
+            applicationContext, prefs, model, isNamedRun = single != null, serviceOverride = serviceOverride,
+        )) {
             is TranscriptionEngineChoice.Run -> chosen
             // Retry rather than fail: the model may still be downloading, and the work should pick up
             // once it lands instead of the user having to ask again.
@@ -233,6 +238,7 @@ class TranscriptionWorker(
          * [TranscriptionLanguageChoice.encode]. Absent means "use the setting".
          */
         const val KEY_LANGUAGE = "language"
+        const val KEY_SERVICE = "service"
 
         /**
          * Progress keys read by Home's transcribing pill.

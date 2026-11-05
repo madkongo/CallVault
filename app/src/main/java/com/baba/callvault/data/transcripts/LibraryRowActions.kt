@@ -65,9 +65,11 @@ object LibraryRowActions {
         val share: Boolean,
         val save: Boolean,
         val delete: DeleteMeaning?,
+        /** Run the transcription again (#72). Only where the recording is still there to be heard again. */
+        val transcribeAgain: Boolean = false,
     ) {
         /** Nothing to offer, so no menu button is drawn: three dots that open an empty sheet are worse than none. */
-        val isEmpty: Boolean get() = !share && !save && delete == null
+        val isEmpty: Boolean get() = !share && !save && delete == null && !transcribeAgain
     }
 
     /** No menu at all. */
@@ -94,6 +96,7 @@ object LibraryRowActions {
             save = true,
             delete = if (hasAudio) DeleteMeaning.TranscriptKeepingAudio
                      else DeleteMeaning.TranscriptAndNothingLeft,
+            transcribeAgain = hasAudio,
         )
 
     /**

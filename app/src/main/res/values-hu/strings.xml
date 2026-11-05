@@ -891,4 +891,11 @@
     <string name="wizard_updates_line">Hogyan talál új verziókat a CallVault.</string>
     <string name="wizard_updates_subtitle">A CallVault nincs alkalmazásboltban, ezért maga keresi az új verziókat a GitHubon.</string>
     <string name="wizard_updates_title">Naprakészen tartás</string>
+    <!-- Transcribe again (#72) -->
+    <string name="transcribe_again_title">Újra átírod?</string>
+    <string name="transcribe_again_message_one">%1$s újra át lesz írva. Ha az új futás sikertelen vagy leállítod, a jelenlegi átirat megmarad.</string>
+    <string name="transcribe_again_message_many">Újra átírandó átiratok: %1$d. Ha egy futás sikertelen vagy leállítod, az az átirat változatlan marad.</string>
+    <string name="transcribe_again_run_on">Futtatás itt</string>
+    <string name="transcribe_again_estimate">Kb. %1$s.</string>
+    <string name="transcribe_again_delete_summary">Az összefoglaló törlése is. A régi szövegből készült.</string>
 </resources>

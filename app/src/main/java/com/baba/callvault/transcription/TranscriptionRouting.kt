@@ -11,6 +11,7 @@ package com.baba.callvault.transcription
 import android.content.Context
 import androidx.work.NetworkType
 import com.baba.callvault.data.AppPreferences
+import com.baba.callvault.transcription.cloud.CloudKeyStore
 import com.baba.callvault.transcription.cloud.TranscriptionService
 import com.baba.callvault.transcription.model.ModelRepository
 import com.baba.callvault.transcription.model.TranscriptionModel
@@ -59,11 +60,38 @@ object TranscriptionRouting {
     val CLOUD_RUN_COST = TranscriptionEstimate.RunCost(loadMs = 3_000L, rtf = 0.1)
 
     /** The run cost to quote for the current settings. */
-    fun runCost(prefs: AppPreferences): TranscriptionEstimate.RunCost {
-        if (prefs.getTranscriptionService().isCloud) return CLOUD_RUN_COST
+    fun runCost(prefs: AppPreferences): TranscriptionEstimate.RunCost = runCost(prefs, prefs.getTranscriptionService())
+
+    /** The run cost to quote for [service], whatever the setting says ("transcribe again" can pick, #72). */
+    fun runCost(prefs: AppPreferences, service: TranscriptionService): TranscriptionEstimate.RunCost {
+        if (service.isCloud) return CLOUD_RUN_COST
         val model = TranscriptionModel.fromId(prefs.getTranscriptionModelId()) ?: TranscriptionModel.DEFAULT
         return prefs.getRunCost(model)
     }
+
+    /**
+     * The engines a "transcribe again" (#72) can use now: this phone when its model is installed, and every
+     * cloud service already set up (address, key and the user's consent to send). The setting comes first.
+     */
+    fun readyServices(context: Context): List<TranscriptionService> {
+        val prefs = AppPreferences(context)
+        val ready = TranscriptionService.entries.filter { service ->
+            if (!service.isCloud) {
+                val model = TranscriptionModel.fromId(prefs.getTranscriptionModelId()) ?: TranscriptionModel.DEFAULT
+                ModelRepository.isInstalled(context, model)
+            } else runCatching {
+                prefs.getCloudEndpoint(service) != null &&
+                    CloudKeyStore(context).get(service) != null &&
+                    prefs.hasCloudConsent(service)
+            }.getOrDefault(false)
+        }
+        return orderedSettingFirst(ready, prefs.getTranscriptionService())
+    }
+
+    internal fun orderedSettingFirst(
+        ready: List<TranscriptionService>,
+        setting: TranscriptionService,
+    ): List<TranscriptionService> = ready.sortedBy { if (it == setting) 0 else 1 }
 
     /**
      * Whether tapping Transcribe skips the "this keeps your phone busy" confirmation: with a cloud service

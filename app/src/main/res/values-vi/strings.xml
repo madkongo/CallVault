@@ -889,4 +889,11 @@
     <string name="wizard_updates_line">Cách CallVault tìm phiên bản mới.</string>
     <string name="wizard_updates_subtitle">CallVault không có trên kho ứng dụng nào, nên tự tìm phiên bản mới trên GitHub.</string>
     <string name="wizard_updates_title">Luôn được cập nhật</string>
+    <!-- Transcribe again (#72) -->
+    <string name="transcribe_again_title">Chép lời lại?</string>
+    <string name="transcribe_again_message_one">%1$s sẽ được chép lời lại. Nếu lần chạy mới thất bại hoặc bị dừng, bản chép lời hiện tại được giữ nguyên.</string>
+    <string name="transcribe_again_message_many">Số bản chép lời cần làm lại: %1$d. Nếu một lần chạy thất bại hoặc bị dừng, bản chép lời đó được giữ nguyên.</string>
+    <string name="transcribe_again_run_on">Chạy trên</string>
+    <string name="transcribe_again_estimate">Khoảng %1$s.</string>
+    <string name="transcribe_again_delete_summary">Xóa cả bản tóm tắt. Nó được viết từ văn bản cũ.</string>
 </resources>

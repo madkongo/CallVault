@@ -138,4 +138,20 @@ class LibraryRowActionsTest {
             LibraryRowActions.bulkPrompt(LibraryRowActions.Page.Summaries, textOnlyCount = 3)
         )
     }
+
+    @Test
+    fun `a finished transcript with its recording offers transcribe again (#72)`() {
+        assertTrue(LibraryRowActions.forTranscript(TranscriptState.DONE, hasAudio = true).transcribeAgain)
+    }
+
+    @Test
+    fun `a transcript with no recording behind it cannot be transcribed again`() {
+        assertFalse(LibraryRowActions.forTranscript(TranscriptState.DONE, hasAudio = false).transcribeAgain)
+    }
+
+    @Test
+    fun `summaries and unfinished rows never offer it`() {
+        assertFalse(LibraryRowActions.forStoredSummary().transcribeAgain)
+        assertFalse(LibraryRowActions.forTranscript(TranscriptState.RUNNING, hasAudio = true).transcribeAgain)
+    }
 }

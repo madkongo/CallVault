@@ -23,6 +23,7 @@ import com.baba.callvault.data.transcripts.SpeakerTurnsRepository
 import com.baba.callvault.data.transcripts.db.TranscriptDatabase
 import com.baba.callvault.data.transcripts.db.TranscriptEntry
 import com.baba.callvault.data.transcripts.db.TranscriptSegmentEntry
+import com.baba.callvault.data.transcripts.TranscribeAgainBackup
 import com.baba.callvault.data.transcripts.db.TranscriptState
 import com.baba.callvault.transcription.cloud.CloudEndpoint
 import com.baba.callvault.transcription.cloud.CloudError
@@ -232,7 +233,10 @@ class TranscriptionRunner(
         if (wasAborted() || shouldStop() || error is CancellationException) {
             // NonCancellable: by now the coroutine is usually cancelled, and a plain suspend call
             // would abandon the very cleanup this exists to do.
-            withContext(NonCancellable) { dao.deleteFor(displayName) }
+            // A "transcribe again" (#72) gets its previous transcript back instead: its words never left.
+            withContext(NonCancellable) {
+                if (!TranscribeAgainBackup.restore(context, dao, displayName)) dao.deleteFor(displayName)
+            }
             AppLogger.i(TAG, "Transcription of '$displayName' was stopped; left for a later run")
             if (error is CancellationException) throw error
             return false
@@ -255,6 +259,7 @@ class TranscriptionRunner(
                 }
                 dao.replaceSegments(displayName, segments.labelled(displayName))
                 mark(displayName, TranscriptState.DONE, modelId, language)
+                TranscribeAgainBackup.clear(context, displayName)
                 // Mirror the finished transcript (+ notes/summary) to a file beside the audio, when the
                 // user has turned on sidecar backups. Guarded inside; NonCancellable so a stopping worker
                 // still writes it.
@@ -316,7 +321,10 @@ class TranscriptionRunner(
                     retryRequested = true
                 } else {
                     AppLogger.w(TAG, "Failed to transcribe '$displayName': ${failure.message}")
-                    mark(displayName, TranscriptState.FAILED, modelId, language, failure.message)
+                    // A failed "transcribe again" (#72) keeps the transcript it was meant to replace.
+                    if (!TranscribeAgainBackup.restore(context, dao, displayName)) {
+                        mark(displayName, TranscriptState.FAILED, modelId, language, failure.message)
+                    }
                     // A failure was as silent as a success until now: the row gained a red icon on a
                     // page the user had been given no reason to open. Only a real failure reaches here
                     // — a stop, an abort and a refusal for length have all returned above.

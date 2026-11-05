@@ -13,6 +13,7 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.MoreVert
+import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material.icons.filled.Save
 import androidx.compose.material.icons.filled.Share
 import androidx.compose.material3.DropdownMenu
@@ -58,6 +59,7 @@ internal fun LibraryRowMenu(
     onShare: () -> Unit,
     onSave: (TranscriptFormat) -> Unit,
     onDelete: () -> Unit,
+    onTranscribeAgain: () -> Unit = {},
 ) {
     if (menu.isEmpty) return
 
@@ -111,6 +113,16 @@ internal fun LibraryRowMenu(
                     // The only item that does not close the menu: it asks which format, in the
                     // popup that is already open and already pointing at the row it is about.
                     onClick = { showingFormats = true },
+                )
+            }
+            if (menu.transcribeAgain) {
+                DropdownMenuItem(
+                    text = { Text(stringResource(R.string.transcript_retranscribe)) },
+                    leadingIcon = { Icon(Icons.Filled.Refresh, contentDescription = null) },
+                    onClick = {
+                        close()
+                        onTranscribeAgain()
+                    },
                 )
             }
             if (menu.delete != null) {

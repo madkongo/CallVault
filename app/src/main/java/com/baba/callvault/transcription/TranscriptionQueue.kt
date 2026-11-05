@@ -11,6 +11,7 @@ package com.baba.callvault.transcription
 import com.baba.callvault.utils.AppLogger
 import android.content.Context
 import com.baba.callvault.data.recordings.RecordingCatalog
+import com.baba.callvault.data.transcripts.TranscribeAgainBackup
 import com.baba.callvault.data.transcripts.db.TranscriptDatabase
 import com.baba.callvault.data.transcripts.db.TranscriptState
 
@@ -131,7 +132,8 @@ object TranscriptionQueue {
         val dao = TranscriptDatabase.get(context).transcriptDao()
         val stale = dao.displayNamesWithState(TranscriptState.RUNNING) +
             dao.displayNamesWithState(TranscriptState.QUEUED)
-        stale.forEach { dao.deleteFor(it) }
+        // A stopped "transcribe again" (#72) gets its previous transcript back rather than losing it.
+        stale.forEach { if (!TranscribeAgainBackup.restore(context, dao, it)) dao.deleteFor(it) }
         return stale.size
     }
 }

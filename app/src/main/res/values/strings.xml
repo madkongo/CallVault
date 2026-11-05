@@ -1103,4 +1103,11 @@
     <string name="settings_subheader_all_calls">All calls</string>
     <string name="settings_voip_auto_start_record_label">Record app calls automatically</string>
 
+    <!-- Transcribe again (#72) -->
+    <string name="transcribe_again_title">Transcribe again?</string>
+    <string name="transcribe_again_message_one">%1$s will be transcribed again. If the new run fails or is stopped, the current transcript is kept.</string>
+    <string name="transcribe_again_message_many">Transcripts to redo: %1$d. If a run fails or is stopped, that transcript is kept as it is.</string>
+    <string name="transcribe_again_run_on">Run on</string>
+    <string name="transcribe_again_estimate">About %1$s.</string>
+    <string name="transcribe_again_delete_summary">Also delete the summary. It was written from the old text.</string>
 </resources>

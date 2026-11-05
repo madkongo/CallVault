@@ -8,6 +8,8 @@
 
 package com.baba.callvault.ui.screens
 
+import com.baba.callvault.ui.common.TranscribeAgainDialog
+import com.baba.callvault.data.transcripts.TranscribeAgain
 import com.baba.callvault.transcription.TranscriptionRouting
 import com.baba.callvault.system.openDeveloperSettings
 import com.baba.callvault.ui.common.bodyFor
@@ -490,6 +492,25 @@ fun HomeScreen(
         librarySelection = LibrarySelection.EMPTY
     }
 
+    /** Raised when transcription is asked for but the model it needs is not installed. */
+    var showModelMissing by rememberSaveable { mutableStateOf(false) }
+
+    /** The transcripts a "Transcribe again" (#72) is being confirmed for; null when its dialog is closed. */
+    var transcribeAgainFor by rememberSaveable { mutableStateOf<ArrayList<String>?>(null) }
+
+    /**
+     * Opens the "Transcribe again" dialog for [names], keeping only those whose recording is still here to be
+     * heard again. With no engine ready (no model, no service set up) it says so, like every other entry point.
+     */
+    val openTranscribeAgain: (List<String>) -> Unit = { names ->
+        val withAudio = names.filter { name -> libraryRecordings.any { it.displayName == name } }
+        when {
+            withAudio.isEmpty() -> Unit
+            TranscriptionRouting.readyServices(context).isEmpty() -> showModelMissing = true
+            else -> transcribeAgainFor = ArrayList(withAudio)
+        }
+    }
+
     /**
      * Multi-select for one library page, wired to the shell's single piece of state.
      *
@@ -538,6 +559,13 @@ fun HomeScreen(
                     }
                 },
                 onDelete = { showLibraryBulkDelete = true },
+                onTranscribeAgain = if (page == LibraryRowActions.Page.Transcripts) {
+                    {
+                        val picked = librarySelection.on(section).toList()
+                        librarySelection = LibrarySelection.EMPTY
+                        openTranscribeAgain(picked)
+                    }
+                } else null,
             )
         }
 
@@ -677,9 +705,6 @@ fun HomeScreen(
         }
     }
 
-    /** Raised when transcription is asked for but the model it needs is not installed. */
-    var showModelMissing by rememberSaveable { mutableStateOf(false) }
-
     /** The recording awaiting a "this will take N minutes" confirmation, with the language picked for
      *  it (null = use the setting), or null when nothing is waiting. */
     var confirmTranscribe by rememberSaveable(stateSaver = TranscribeRequestStateSaver) {
@@ -689,6 +714,7 @@ fun HomeScreen(
     /** The recording awaiting a "which language?" answer, or null. Only ever set when the user has
      *  turned that ask on; see AppPreferences.getTranscriptionAskLanguage. */
     var askLanguageFor by rememberSaveable { mutableStateOf<String?>(null) }
+
 
     /** Enqueues without asking. retry() clears the row and enqueues; clearing nothing is a no-op, so
      *  it serves a first transcription, a retry and "transcribe again" alike — and the queue skips
@@ -1153,6 +1179,7 @@ fun HomeScreen(
             // The same gate every other entry point uses: without it a retry on a phone whose model
             // has been deleted would fail exactly the silent way the first attempt did.
             onRetry = { displayName -> startTranscription(displayName) },
+            onTranscribeAgain = { displayName -> openTranscribeAgain(listOf(displayName)) },
             // The waiting group's card: its audio is still on the phone, and its own screen is where
             // playing, sharing and deleting it live. Setting playbackFor directly rather than
             // changing section — the recording is deliberately not in Recordings to go back to.
@@ -1988,6 +2015,46 @@ fun HomeScreen(
                 enqueueTranscription(displayName, language)
             }
         )
+    }
+
+    transcribeAgainFor?.let { names ->
+        val services = remember(names) { TranscriptionRouting.readyServices(context) }
+        // Per recording, so a batch's estimate pays each one's model load, as the real runs will.
+        var durations by remember(names) { mutableStateOf<List<Long>?>(null) }
+        var hasSummary by remember(names) { mutableStateOf(false) }
+        LaunchedEffect(names) {
+            durations = withContext(Dispatchers.IO) {
+                names.map { name ->
+                    libraryRecordings.firstOrNull { it.displayName == name }?.uri
+                        ?.let { AudioDecoder.durationMs(context, it) } ?: 0L
+                }
+            }
+            hasSummary = withContext(Dispatchers.IO) { TranscribeAgain.anyHasSummary(context, names) }
+        }
+        if (services.isEmpty()) {
+            transcribeAgainFor = null
+        } else {
+            TranscribeAgainDialog(
+                title = names.singleOrNull()?.let { RecordingLabel.forDisplayName(libraryRecordings, it) },
+                count = names.size,
+                languageSetting = AppPreferences(context).getTranscriptionLanguage(),
+                services = services,
+                estimateMsFor = { service ->
+                    val prefs = AppPreferences(context)
+                    durations?.filter { it > 0L }?.takeIf { it.isNotEmpty() }?.sumOf { ms ->
+                        TranscriptionEstimate.estimateMs(audioMs = ms, cost = TranscriptionRouting.runCost(prefs, service))
+                    }
+                },
+                hasSummary = hasSummary,
+                onDismiss = { transcribeAgainFor = null },
+                onConfirm = { language, service, deleteSummary ->
+                    transcribeAgainFor = null
+                    transcriptScope.launch {
+                        names.forEach { TranscribeAgain.start(context, it, language, service, deleteSummary) }
+                    }
+                },
+            )
+        }
     }
 
     askLanguageFor?.let { displayName ->

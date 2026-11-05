@@ -142,6 +142,7 @@ object TranscriptRepository {
 
     /** Removes a transcript, leaving the recording. Someone may want the audio but not the text. */
     suspend fun delete(context: Context, displayName: String) {
+        TranscribeAgainBackup.clear(context, displayName)
         dao(context).deleteFor(displayName)
     }
 

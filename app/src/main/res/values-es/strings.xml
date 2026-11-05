@@ -891,4 +891,11 @@
     <string name="wizard_updates_line">Cómo encuentra CallVault versiones nuevas.</string>
     <string name="wizard_updates_subtitle">CallVault no está en ninguna tienda de aplicaciones, así que busca nuevas versiones en GitHub por su cuenta.</string>
     <string name="wizard_updates_title">Mantente al día</string>
+    <!-- Transcribe again (#72) -->
+    <string name="transcribe_again_title">¿Transcribir de nuevo?</string>
+    <string name="transcribe_again_message_one">%1$s se transcribirá de nuevo. Si la nueva ejecución falla o se detiene, se conserva la transcripción actual.</string>
+    <string name="transcribe_again_message_many">Transcripciones a rehacer: %1$d. Si una ejecución falla o se detiene, esa transcripción se queda como está.</string>
+    <string name="transcribe_again_run_on">Ejecutar en</string>
+    <string name="transcribe_again_estimate">Unos %1$s.</string>
+    <string name="transcribe_again_delete_summary">Eliminar también el resumen. Se escribió a partir del texto anterior.</string>
 </resources>

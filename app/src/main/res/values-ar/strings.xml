@@ -929,4 +929,11 @@
     <string name="wizard_updates_line">كيف يجد CallVault الإصدارات الجديدة.</string>
     <string name="wizard_updates_subtitle">لا يتوفر CallVault في متجر تطبيقات، لذا فإنه يتحقق من GitHub بحثًا عن إصدارات جديدة بنفسه.</string>
     <string name="wizard_updates_title">البقاء على اطلاع</string>
+    <!-- Transcribe again (#72) -->
+    <string name="transcribe_again_title">إعادة التفريغ؟</string>
+    <string name="transcribe_again_message_one">سيُعاد تفريغ %1$s. إذا فشل التشغيل الجديد أو أُوقف، يُحتفظ بالنص الحالي.</string>
+    <string name="transcribe_again_message_many">النصوص المراد إعادتها: %1$d. إذا فشل تشغيل أو أُوقف، يبقى ذلك النص كما هو.</string>
+    <string name="transcribe_again_run_on">التشغيل على</string>
+    <string name="transcribe_again_estimate">حوالي %1$s.</string>
+    <string name="transcribe_again_delete_summary">احذف الملخص أيضًا. لقد كُتب من النص القديم.</string>
 </resources>
