@@ -434,7 +434,11 @@ disabled to save battery, and want CallVault to upload itself, as skvalex's Call
   It is a product decision before it is an engineering one.
 - It would sit beside the current SAF path, not replace it. SAF also covers Nextcloud and other providers.
 
-## 🔵 Register CallVault for Android developer verification — before the 2027 global rollout — researched 2026-11-05, not started
+## 🔵 Android developer verification (the maintainer's own developer identity, for all his apps; CallVault is one package to register) — before the 2027 global rollout — researched 2026-11-05, decided 2026-11-05: individual account
+
+**Scope (maintainer, 2026-11-05):** this is a general developer registration, not a CallVault task. One verified
+individual account covers every app he distributes; each app's package name and key is then registered under it.
+The CallVault-specific part is only the package step and the debug-key risk below.
 
 **Why:** once enforcement reaches a country, certified Android 7+ phones there refuse to **install or update** an app
 that isn't registered to a verified developer, unless the user has turned on the "advanced flow". That flow means
@@ -448,8 +452,8 @@ Indonesia, Singapore and Thailand. Direct downloads are not affected yet. Global
   Google says about 10 minutes.
 - **As an organization instead:** a D-U-N-S number (free, up to 28 days), a website verified in Search Console and
   company papers. The limited (hobbyist) account is useless for us: 20 devices.
-- What the developer's name or address shows to users is not stated on the pages read. Find out before choosing
-  individual vs organization.
+- **Decided 2026-11-05: individual account.** What the developer's name or address shows to users is not
+  stated on the pages read; check it during signup.
 
 **Registering the package (`com.baba.callvault`):**
 1. Register the package name.
