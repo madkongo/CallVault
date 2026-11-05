@@ -2584,3 +2584,14 @@ Earlier in the session `main` also took the global On/Off master switch (`1c800e
 `build/install-combined-2026-10-12` branch was the pre-merge install artifact and is now redundant.
 WRITE_SECURE_SETTINGS was re-granted after each install (`granted=true`); both recorders verified back up
 (OP12 `app_process` daemon + `recorder_keepalive`; OP9 `:recorder` fork).
+
+---
+
+## 🔵 Transcribe again, single and bulk (#72, QBANIN) — requested 2026-11-05, design under discussion
+
+Brings back what `ef755692` removed (2026-10-12, #4). The removal reason (one settled model + pinned language) no
+longer holds: several models, BYOK cloud (#48), and #72 reports a repeated-word loop. Options page:
+https://claude.ai/artifact/UsAePrr1f4d8d8YFrw9uAW. Recommended: Transcripts row ⋮ item + selection-bar button + one
+confirm dialog (language, engine, estimate, "also delete its summary"), NOT on the reading view. Must keep the old
+transcript until the new run succeeds (today `TranscriptRepository.retry` deletes first). Summaries live in their own
+table, so they survive a re-run unless the dialog deletes them. Unused string `transcript_retranscribe` still exists.
