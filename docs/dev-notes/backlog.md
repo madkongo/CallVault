@@ -434,6 +434,46 @@ disabled to save battery, and want CallVault to upload itself, as skvalex's Call
   It is a product decision before it is an engineering one.
 - It would sit beside the current SAF path, not replace it. SAF also covers Nextcloud and other providers.
 
+## 🔵 Register CallVault for Android developer verification — before the 2027 global rollout — researched 2026-11-05, not started
+
+**Why:** once enforcement reaches a country, certified Android 7+ phones there refuse to **install or update** an app
+that isn't registered to a verified developer, unless the user has turned on the "advanced flow". That flow means
+Developer options, a restart, a 24-hour wait and a biometric check; ADB installs are exempt. It covers our GitHub
+APK **and the in-app updater**: "if the advanced flow is disabled updates to unregistered apps will fail".
+Timeline (Google FAQ, read 2026-11-05): enforced since 2026-09-30 only for "participating stores" in Brazil,
+Indonesia, Singapore and Thailand. Direct downloads are not affected yet. Global in 2027, date not given.
+
+**What it takes:** a **full distribution** account in the Android Developer Console (outside-Play developers):
+- **$25**, a Google account, a government photo ID **and** proof of address, and email and phone checked by code.
+  Google says about 10 minutes.
+- **As an organization instead:** a D-U-N-S number (free, up to 28 days), a website verified in Search Console and
+  company papers. The limited (hobbyist) account is useless for us: 20 devices.
+- What the developer's name or address shows to users is not stated on the pages read. Find out before choosing
+  individual vs organization.
+
+**Registering the package (`com.baba.callvault`):**
+1. Register the package name.
+2. Add the signing key's SHA-256 (`c875ffd0…285ea`).
+3. Prove ownership: the console gives a snippet to put in `app/src/main/assets/adi-registration.properties`.
+   Build a release APK signed with the key and upload it.
+
+The key covering >50% of known installs has priority, which is ours (forks would need their own name). If F-Droid
+ever builds and signs it, add F-Droid's key as well (multiple keys per package are allowed). Status shows in the
+console, or in Android Studio Panda 4+ when building a signed APK.
+
+**🚨 Open risk — our key is a debug certificate.** Every release is signed with this Mac's own debug keystore
+([[release-build-signing]]): unique to us, but its name is `CN=Android Debug, O=Android, C=US`. Play refuses
+debug-signed uploads. Whether the Developer Console accepts one is **unknown** (no source found); adding the key
+in the console will show it.
+- **If refused:** rotate to a proper release key with APK Signature Scheme v3 key rotation. Our minSdk 30 is above
+  the API 28 that rotation needs, so existing installs keep updating. `ApkVerifier` pins `c875ffd0` and would have
+  to accept the new key too.
+- This is the app's update identity. Plan it separately, test it on the OP9 first, and keep the old keystore
+  forever.
+
+Sources: developer.android.com/developer-verification (+ /guides/faq, /guides/android-developer-console,
+/guides/full-distribution, /guides/open-source-app-registration); support.google.com/googleplay/android-developer/answer/16761053.
+
 ## 🔼 Higher-priority feature requests — agreed 2026-10-01, not started
 
 Maintainer-prioritised above the older backlog. Each needs a design pass before code (and, where it adds a
