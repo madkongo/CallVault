@@ -937,5 +937,6 @@
     <string name="transcribe_again_estimate">حوالي %1$s.</string>
     <string name="transcribe_again_delete_summary">احذف الملخص أيضًا. لقد كُتب من النص القديم.</string>
     <string name="transcribe_again_running">جارٍ إعادة التفريغ… %1$d%%</string>
+    <string name="transcribe_again_running_plain">جارٍ إعادة التفريغ…</string>
     <string name="transcribe_again_waiting">في انتظار إعادة التفريغ…</string>
 </resources>

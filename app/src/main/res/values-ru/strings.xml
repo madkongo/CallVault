@@ -903,5 +903,6 @@
     <string name="transcribe_again_estimate">Около %1$s.</string>
     <string name="transcribe_again_delete_summary">Удалить и сводку. Она написана по старому тексту.</string>
     <string name="transcribe_again_running">Повторная расшифровка… %1$d%%</string>
+    <string name="transcribe_again_running_plain">Повторная расшифровка…</string>
     <string name="transcribe_again_waiting">Ожидание повторной расшифровки…</string>
 </resources>

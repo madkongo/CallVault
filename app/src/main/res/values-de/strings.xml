@@ -899,5 +899,6 @@
     <string name="transcribe_again_estimate">Etwa %1$s.</string>
     <string name="transcribe_again_delete_summary">Auch die Zusammenfassung löschen. Sie wurde aus dem alten Text erstellt.</string>
     <string name="transcribe_again_running">Wird erneut transkribiert … %1$d %%</string>
+    <string name="transcribe_again_running_plain">Wird erneut transkribiert …</string>
     <string name="transcribe_again_waiting">Wartet auf erneute Transkription …</string>
 </resources>

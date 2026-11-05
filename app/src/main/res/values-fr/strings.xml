@@ -899,5 +899,6 @@
     <string name="transcribe_again_estimate">Environ %1$s.</string>
     <string name="transcribe_again_delete_summary">Supprimer aussi le résumé. Il a été rédigé à partir de l\'ancien texte.</string>
     <string name="transcribe_again_running">Nouvelle transcription… %1$d %%</string>
+    <string name="transcribe_again_running_plain">Nouvelle transcription…</string>
     <string name="transcribe_again_waiting">En attente d\'une nouvelle transcription…</string>
 </resources>

@@ -1053,5 +1053,6 @@
     <string name="transcribe_again_estimate">Περίπου %1$s.</string>
     <string name="transcribe_again_delete_summary">Διαγραφή και της περίληψης. Γράφτηκε από το παλιό κείμενο.</string>
     <string name="transcribe_again_running">Νέα απομαγνητοφώνηση… %1$d%%</string>
+    <string name="transcribe_again_running_plain">Νέα απομαγνητοφώνηση…</string>
     <string name="transcribe_again_waiting">Αναμονή για νέα απομαγνητοφώνηση…</string>
 </resources>

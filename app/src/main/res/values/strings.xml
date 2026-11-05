@@ -1111,5 +1111,6 @@
     <string name="transcribe_again_estimate">About %1$s.</string>
     <string name="transcribe_again_delete_summary">Also delete the summary. It was written from the old text.</string>
     <string name="transcribe_again_running">Transcribing again… %1$d%%</string>
+    <string name="transcribe_again_running_plain">Transcribing again…</string>
     <string name="transcribe_again_waiting">Waiting to transcribe again…</string>
 </resources>

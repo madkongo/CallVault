@@ -8,6 +8,7 @@
 
 package com.baba.callvault.ui.screens
 
+import com.baba.callvault.transcription.cloud.CloudEndpoint
 import com.baba.callvault.transcription.TranscriptionScheduler
 import com.baba.callvault.ui.common.TranscribeAgainDialog
 import com.baba.callvault.data.transcripts.TranscribeAgain
@@ -1951,6 +1952,10 @@ fun HomeScreen(
             transcribingAgainPercent = transcript?.transcript?.state
                 ?.takeIf { it == TranscriptState.QUEUED || it == TranscriptState.RUNNING }
                 ?.let { transcribingShown.percentFor(displayName) },
+            // A running row carries its engine's id; a cloud one has no honest percent.
+            transcribingAgainOnCloud = transcript?.transcript
+                ?.takeIf { it.state == TranscriptState.RUNNING }
+                ?.modelId?.let { CloudEndpoint.isCloudEngineId(it) } == true,
             onStopTranscribing = { transcriptScope.launch { TranscriptionScheduler.stopNow(context) } },
             callKey = displayName,
             previousCall = neighbours.first,

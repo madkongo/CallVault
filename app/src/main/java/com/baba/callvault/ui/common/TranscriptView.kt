@@ -215,6 +215,8 @@ fun TranscriptView(
     onTranscribeAgain: (() -> Unit)? = null,
     /** While this call is being transcribed again (#72): its percent (0 = waiting), else null. */
     transcribingAgainPercent: Int? = null,
+    /** The re-run is on a cloud service, whose percent is a guess: show the line without a number. */
+    transcribingAgainOnCloud: Boolean = false,
     onStopTranscribing: () -> Unit = {},
     /**
      * Which call this is. Moving to another call keeps the frame and swaps the content, so the list's
@@ -261,6 +263,7 @@ fun TranscriptView(
             onSummarise = onSummarise,
             onStopSummary = onStopSummary,
             transcribingAgainPercent = transcribingAgainPercent,
+            transcribingAgainOnCloud = transcribingAgainOnCloud,
             onStopTranscribing = onStopTranscribing,
             summaryFirst = summaryFirst,
             previousCall = previousCall,
@@ -368,6 +371,7 @@ private fun ColumnScope.TranscriptBody(
     onSummarise: () -> Unit,
     onStopSummary: () -> Unit,
     transcribingAgainPercent: Int?,
+    transcribingAgainOnCloud: Boolean,
     onStopTranscribing: () -> Unit,
     summaryFirst: Boolean,
     previousCall: TranscriptNeighbour?,
@@ -387,7 +391,7 @@ private fun ColumnScope.TranscriptBody(
 
     // A "transcribe again" in progress (#72). The old words stay below until the new ones land, so without
     // this the page gave no sign a run was going — minutes, on the phone.
-    transcribingAgainPercent?.let { TranscribingAgainStrip(it, onStopTranscribing) }
+    transcribingAgainPercent?.let { TranscribingAgainStrip(it, transcribingAgainOnCloud, onStopTranscribing) }
 
     SummarySheetStrip(
         state = summaryState,
@@ -889,22 +893,32 @@ private fun TranscriptPageMenu(
     }
 }
 
-/** "Transcribing again… N%" with Stop, styled like the summary's running line. A stop keeps the old text. */
+/**
+ * "Transcribing again… N%" with Stop, styled like the summary's running line. A stop keeps the old text.
+ *
+ * On a cloud service there is no number: the call goes up in one request, so the real figure is 0 until the
+ * answer arrives and anything in between would be a guess (maintainer, 2026-11-05). The bar then loops instead.
+ */
 @Composable
-private fun TranscribingAgainStrip(percent: Int, onStop: () -> Unit) {
+private fun TranscribingAgainStrip(percent: Int, onCloud: Boolean, onStop: () -> Unit) {
     val accent = MaterialTheme.colorScheme.primary
+    val waiting = percent <= 0 && !onCloud
+    val showsNumber = !onCloud && percent > 0
     Column(modifier = Modifier.fillMaxWidth().padding(horizontal = 24.dp, vertical = 4.dp)) {
         Row(verticalAlignment = Alignment.CenterVertically) {
             Text(
-                text = if (percent > 0) stringResource(R.string.transcribe_again_running, percent)
-                       else stringResource(R.string.transcribe_again_waiting),
+                text = when {
+                    showsNumber -> stringResource(R.string.transcribe_again_running, percent)
+                    waiting -> stringResource(R.string.transcribe_again_waiting)
+                    else -> stringResource(R.string.transcribe_again_running_plain)
+                },
                 style = MaterialTheme.typography.bodyMedium,
                 modifier = Modifier.weight(1f),
             )
             TextButton(onClick = onStop) { Text(stringResource(R.string.summary_card_stop)) }
         }
         // Colours stated: left to the theme the track renders coral and reads as an error.
-        if (percent > 0) {
+        if (showsNumber) {
             LinearProgressIndicator(
                 progress = { percent / 100f },
                 modifier = Modifier.fillMaxWidth(),
@@ -916,4 +930,3 @@ private fun TranscribingAgainStrip(percent: Int, onStop: () -> Unit) {
         }
     }
 }
-
