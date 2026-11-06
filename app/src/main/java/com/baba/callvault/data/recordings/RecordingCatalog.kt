@@ -160,9 +160,10 @@ object RecordingCatalog {
             val row = dao.getAll().firstOrNull { it.localUri == s || it.driveUri == s } ?: return@runCatching
             if (row.localUri == s) dao.clearLocal(row.displayName)
             if (row.driveUri == s) dao.clearDrive(row.displayName)
-            orphaned = dao.getAll()
-                .filter { it.localUri == null && it.driveUri == null }
-                .map { it.displayName }
+            // Only the row this call emptied. Counting every copy-less row would also delete the transcript of
+            // any other row that happened to be empty, which this call was never asked about.
+            val after = dao.findByName(row.displayName)
+            if (after != null && after.localUri == null && after.driveUri == null) orphaned = listOf(row.displayName)
             dao.deleteEmpty()
         }.onFailure { AppLogger.w(TAG, "removeCopyByUri($uri) failed: ${it.message}") }
 

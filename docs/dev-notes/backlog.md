@@ -22,6 +22,23 @@ with `&&`/`||` chains and silently reported the opposite answer while this was b
 
 ---
 
+## 🧪 BUILT, VERIFYING — Pull to refresh + lists that went stale until the app was reopened — requested + built 2026-11-06 (branch `feat/pull-to-refresh`, not merged)
+
+**Asked:** a simple refresh on each page, so lists show the true state without reopening the app.
+
+**What was stale, and the fix (four commits, one concern each):**
+- **Recordings** read the app's own catalog, never the folder: files copied in by hand never appeared; files deleted with a file manager stayed listed. Pull now rescans the device folder (`DeviceFolderRescan`): adds files the catalog lacks (same rule as the first-run seed), forgets a device copy only with two proofs (missing from the listing AND its document reports missing), only copies in the *current* folder, not written in the last 2 min. Drive is not listed (phantoms); the existing Drive deleted-copy check runs on pull (≤15 s wait).
+- **Hub counts, Transcripts, Summaries, labels, row statuses** stayed empty if opened before `transcripts.db` existed. Now they wait for the database and follow it (`onceTranscriptsExist`), never creating it.
+- **Settings**: Shizuku status, USB mode row and calling-app list now re-read on return to the app.
+- Review fix: `RecordingCatalog.removeCopyByUri` cascaded the transcript of *every* copy-less row, not just the one it emptied.
+- Pull gesture (M3 `PullToRefreshBox`, colours stated) on Hub, Recordings, Transcripts, Summaries.
+
+**OP9 (2026-11-06):** pull shows the teal spinner under the top bar on all four pages; a file `cp`'d into `/sdcard/Recordings` appeared after a pull; after `rm` it disappeared after a pull (needed matching Android's "IllegalArgumentException … FileNotFoundException: Missing file" report). Also surfaced 5 old hand-pushed test files that were in the folder but never listed. 2,501 unit tests green.
+
+**Not tried:** Drive-mode or BOTH-mode pull on a real Drive folder; the Settings rows on return (would need stopping Shizuku on the OP9); first-transcript-while-page-open on a fresh install.
+
+**To settle:** maintainer pulls on Recordings after adding/deleting a file outside the app, on his phone.
+
 ## 🧪 FIXED, VERIFYING — "Drive" folder = recording folder deletes every recording — found + fixed 2026-11-04 (merged into integration/next)
 
 Reported via the maintainer: a Xiaomi user (Redmi 23021RAAEG, Android 15, v2.4.9, standalone) says "the app doesn't

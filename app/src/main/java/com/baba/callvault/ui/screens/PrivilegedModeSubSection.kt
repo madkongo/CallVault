@@ -8,6 +8,7 @@
 
 package com.baba.callvault.ui.screens
 
+import com.baba.callvault.ui.common.rememberResumeCount
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Key
 import androidx.compose.material.icons.filled.Link
@@ -56,8 +57,10 @@ fun PrivilegedModeSubSection(onModeChanged: () -> Unit = {}) {
     var switchResult by remember { mutableStateOf<ModeSwitchResult?>(null) }
     val scope = rememberCoroutineScope()
 
-    val mode = remember(refresh) { prefs.getPrivilegedMode() }
-    val status = remember(refresh) { RecorderBackend.shizukuStatus(context) }
+    // Also on coming back: Shizuku is started (or stopped) in its own app, so leaving to do it is the usual case.
+    val resumes = rememberResumeCount()
+    val mode = remember(refresh, resumes) { prefs.getPrivilegedMode() }
+    val status = remember(refresh, resumes) { RecorderBackend.shizukuStatus(context) }
     OnShizukuPermissionAnswer { refresh++ }
 
     SettingsToggleRow(

@@ -14,6 +14,7 @@ import com.baba.callvault.ui.common.TranscribeAgainDialog
 import com.baba.callvault.data.transcripts.TranscribeAgain
 import com.baba.callvault.transcription.TranscriptionRouting
 import com.baba.callvault.system.openDeveloperSettings
+import com.baba.callvault.ui.common.CvPullToRefresh
 import com.baba.callvault.ui.common.bodyFor
 import androidx.compose.foundation.lazy.itemsIndexed
 import com.baba.callvault.data.calls.CallHistory
@@ -353,6 +354,7 @@ fun HomeScreen(
     val libraryExportLabels = rememberExportLabels()
 
     val playback by viewModel.playback.collectAsState()
+    val isPullRefreshing by viewModel.isPullRefreshing.collectAsState()
 
     // Two separate flags, not one: the chooser is opened by the user tapping Support, the appeal
     // arrives on its own after a release note. Sharing a flag would let dismissing one suppress the
@@ -1067,6 +1069,8 @@ fun HomeScreen(
             transcriptsCount = transcriptsCount,
             summariesCount = summariesCount,
             listState = hubGridState,
+            isRefreshing = isPullRefreshing,
+            onRefresh = { viewModel.pullToRefresh() },
             onOpenSection = onSelectSection,
             onOpenSettings = onOpenSettings,
             onOpenCommunity = { context.openTelegramGroup() },
@@ -1159,6 +1163,8 @@ fun HomeScreen(
         }
 
         TranscriptsScreen(
+            isRefreshing = isPullRefreshing,
+            onRefresh = { viewModel.pullToRefresh() },
             modifier = modifier,
             groups = groups,
             recordings = libraryRecordings,
@@ -1249,6 +1255,8 @@ fun HomeScreen(
         }
 
         SummariesScreen(
+            isRefreshing = isPullRefreshing,
+            onRefresh = { viewModel.pullToRefresh() },
             modifier = modifier,
             groups = groups,
             recordings = libraryRecordings,
@@ -1432,133 +1440,139 @@ fun HomeScreen(
             )
         }
 
-        LazyColumn(
-            state = listState,
-            modifier = Modifier.fillMaxSize(),
-            contentPadding = PaddingValues(
-                start = 20.dp,
-                end = 20.dp,
-                top = innerPadding.calculateTopPadding() + 8.dp,
-                bottom = innerPadding.calculateBottomPadding() + 28.dp
-            ),
-            verticalArrangement = Arrangement.spacedBy(10.dp)
+        CvPullToRefresh(
+            isRefreshing = isPullRefreshing,
+            onRefresh = { viewModel.pullToRefresh() },
+            topPadding = innerPadding.calculateTopPadding(),
         ) {
-            // The status card and the update banners are on the hub, not here. They are about the
-            // app rather than about this list, the notifications that raise them now route to the
-            // hub, and drawing them in both places would make each of them two things to dismiss.
+            LazyColumn(
+                state = listState,
+                modifier = Modifier.fillMaxSize(),
+                contentPadding = PaddingValues(
+                    start = 20.dp,
+                    end = 20.dp,
+                    top = innerPadding.calculateTopPadding() + 8.dp,
+                    bottom = innerPadding.calculateBottomPadding() + 28.dp
+                ),
+                verticalArrangement = Arrangement.spacedBy(10.dp)
+            ) {
+                // The status card and the update banners are on the hub, not here. They are about the
+                // app rather than about this list, the notifications that raise them now route to the
+                // hub, and drawing them in both places would make each of them two things to dismiss.
 
-            val recordings = uiState.filteredRecordings
+                val recordings = uiState.filteredRecordings
 
-            // "Recordings | All calls" (option D, 2026-11-03): the same page shows either the recordings or
-            // every call in the phone's call log, lined up with the recordings that were made of them.
-            item { CallsViewSwitch(callsView = uiState.callsView, onChange = { viewModel.setCallsView(it) }) }
+                // "Recordings | All calls" (option D, 2026-11-03): the same page shows either the recordings or
+                // every call in the phone's call log, lined up with the recordings that were made of them.
+                item { CallsViewSwitch(callsView = uiState.callsView, onChange = { viewModel.setCallsView(it) }) }
 
-            if (uiState.callsView) {
-                item {
-                    SearchLine(
-                        query = uiState.contactQuery,
-                        onQueryChange = { viewModel.setContactQuery(it) },
-                        placeholder = stringResource(R.string.home_search_contacts_hint),
-                        suggestions = uiState.contactSuggestions,
-                    )
-                }
-                item { CallFilterChips(selected = uiState.callFilter, onSelect = { viewModel.setCallFilter(it) }) }
-                val entries = uiState.callHistory
-                if (entries.isEmpty()) {
-                    if (uiState.callsLoaded) item { EmptyCalls(hasPermission = PermissionChecks.hasCallLogPermission(context)) }
-                } else {
-                    itemsIndexed(entries, key = { i, e ->
-                        when (e) {
-                            is CallHistory.Entry.Recorded<*> -> "rec-" + (e.recording as RecordingItem).uri
-                            is CallHistory.Entry.NotRecorded -> "call-${e.call.startedAt}-$i"
-                        }
-                    }) { _, entry ->
-                        when (entry) {
-                            is CallHistory.Entry.Recorded<*> -> (entry.recording as RecordingItem).let { rec ->
-                                recordingRow(rec, originLabelOf(rec))
+                if (uiState.callsView) {
+                    item {
+                        SearchLine(
+                            query = uiState.contactQuery,
+                            onQueryChange = { viewModel.setContactQuery(it) },
+                            placeholder = stringResource(R.string.home_search_contacts_hint),
+                            suggestions = uiState.contactSuggestions,
+                        )
+                    }
+                    item { CallFilterChips(selected = uiState.callFilter, onSelect = { viewModel.setCallFilter(it) }) }
+                    val entries = uiState.callHistory
+                    if (entries.isEmpty()) {
+                        if (uiState.callsLoaded) item { EmptyCalls(hasPermission = PermissionChecks.hasCallLogPermission(context)) }
+                    } else {
+                        itemsIndexed(entries, key = { i, e ->
+                            when (e) {
+                                is CallHistory.Entry.Recorded<*> -> "rec-" + (e.recording as RecordingItem).uri
+                                is CallHistory.Entry.NotRecorded -> "call-${e.call.startedAt}-$i"
                             }
-                            is CallHistory.Entry.NotRecorded ->
-                                CallHistoryRow(entry.call, uiState.callSimLabels[entry.call.startedAt])
+                        }) { _, entry ->
+                            when (entry) {
+                                is CallHistory.Entry.Recorded<*> -> (entry.recording as RecordingItem).let { rec ->
+                                    recordingRow(rec, originLabelOf(rec))
+                                }
+                                is CallHistory.Entry.NotRecorded ->
+                                    CallHistoryRow(entry.call, uiState.callSimLabels[entry.call.startedAt])
+                            }
                         }
                     }
-                }
-            } else {
+                } else {
 
-            // The search line, first: it is the one control on this page that takes typing, and
-            // what it completes with comes from the list itself, so it is only offered once there
-            // is a list. Typing narrows by contact; the chips below narrow by everything else.
-            if (uiState.recordings.isNotEmpty()) {
-                item {
-                    SearchLine(
-                        query = uiState.contactQuery,
-                        onQueryChange = { viewModel.setContactQuery(it) },
-                        placeholder = stringResource(R.string.home_search_contacts_hint),
-                        suggestions = uiState.contactSuggestions,
-                    )
-                }
-            }
-
-            // The count alone. The section header that used to sit beside it said "RECORDINGS"
-            // under a bar that now says the same thing, because this is a section with its own
-            // title rather than one block on a single Home screen.
-            if (recordings.isNotEmpty()) {
-                item {
-                    Text(
-                        text = stringResource(R.string.home_recordings_count, recordings.size),
-                        style = MaterialTheme.typography.labelMedium,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        modifier = Modifier.padding(start = 4.dp, top = 4.dp, bottom = 2.dp)
-                    )
-                }
-            }
-
-            // Faceted, non-wrapping filter chips shown once there is anything to filter.
-            if (uiState.recordings.isNotEmpty()) {
-                item {
-                    RecordingFilterBar(
-                        sourceFilter = uiState.sourceFilter,
-                        directionFilter = uiState.directionFilter,
-                        dateFilter = uiState.dateFilter,
-                        availableDates = uiState.availableDates,
-                        tagFilter = uiState.tagFilter,
-                        availableTags = uiState.availableTags,
-                        onTagFilterChange = { viewModel.setTagFilter(it) },
-                        favouritesOnly = uiState.favouritesOnly,
-                        hasFavourites = uiState.favourites.isNotEmpty(),
-                        onFavouritesOnlyChange = { viewModel.setFavouritesOnly(it) },
-                        onSourceFilterChange = { viewModel.setSourceFilter(it) },
-                        onDirectionFilterChange = { viewModel.setDirectionFilter(it) },
-                        onDateFilterChange = { viewModel.setDateFilter(it) },
-                        sortOrder = uiState.sortOrder,
-                        onSortChange = { viewModel.setSortOrder(it) },
-                    )
-                }
-            }
-
-            if (recordings.isEmpty()) {
-                // Only once the list has actually been read. Before that the list is *unknown*, and
-                // announcing "no recordings yet" to someone with sixty of them — for the half second
-                // it takes to read the folder — is simply wrong.
-                if (uiState.hasLoaded) item { EmptyRecordings() }
-            } else {
-                // The "Select all" row, pinned above the rows while selecting (hidden otherwise), so
-                // it sits over the ticks it drives and below the filter bar — "all" means the
-                // currently FILTERED recordings, never every recording behind a filter.
-                if (selectionMode) {
+                // The search line, first: it is the one control on this page that takes typing, and
+                // what it completes with comes from the list itself, so it is only offered once there
+                // is a list. Typing narrows by contact; the chips below narrow by everything else.
+                if (uiState.recordings.isNotEmpty()) {
                     item {
-                        val allVisibleUris = remember(recordings) { recordings.map { it.uri }.toSet() }
-                        val allSel = allVisibleUris.isNotEmpty() && selection.containsAll(allVisibleUris)
-                        LibrarySelectAllRow(
-                            allSelected = allSel,
-                            someSelected = selection.isNotEmpty() && !allSel,
-                            selectedCount = selection.size,
-                            onClick = { selection = if (allSel) emptySet() else allVisibleUris },
+                        SearchLine(
+                            query = uiState.contactQuery,
+                            onQueryChange = { viewModel.setContactQuery(it) },
+                            placeholder = stringResource(R.string.home_search_contacts_hint),
+                            suggestions = uiState.contactSuggestions,
                         )
                     }
                 }
-                items(recordings, key = { it.uri.toString() }) { item -> recordingRow(item, null) }
+
+                // The count alone. The section header that used to sit beside it said "RECORDINGS"
+                // under a bar that now says the same thing, because this is a section with its own
+                // title rather than one block on a single Home screen.
+                if (recordings.isNotEmpty()) {
+                    item {
+                        Text(
+                            text = stringResource(R.string.home_recordings_count, recordings.size),
+                            style = MaterialTheme.typography.labelMedium,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            modifier = Modifier.padding(start = 4.dp, top = 4.dp, bottom = 2.dp)
+                        )
+                    }
+                }
+
+                // Faceted, non-wrapping filter chips shown once there is anything to filter.
+                if (uiState.recordings.isNotEmpty()) {
+                    item {
+                        RecordingFilterBar(
+                            sourceFilter = uiState.sourceFilter,
+                            directionFilter = uiState.directionFilter,
+                            dateFilter = uiState.dateFilter,
+                            availableDates = uiState.availableDates,
+                            tagFilter = uiState.tagFilter,
+                            availableTags = uiState.availableTags,
+                            onTagFilterChange = { viewModel.setTagFilter(it) },
+                            favouritesOnly = uiState.favouritesOnly,
+                            hasFavourites = uiState.favourites.isNotEmpty(),
+                            onFavouritesOnlyChange = { viewModel.setFavouritesOnly(it) },
+                            onSourceFilterChange = { viewModel.setSourceFilter(it) },
+                            onDirectionFilterChange = { viewModel.setDirectionFilter(it) },
+                            onDateFilterChange = { viewModel.setDateFilter(it) },
+                            sortOrder = uiState.sortOrder,
+                            onSortChange = { viewModel.setSortOrder(it) },
+                        )
+                    }
+                }
+
+                if (recordings.isEmpty()) {
+                    // Only once the list has actually been read. Before that the list is *unknown*, and
+                    // announcing "no recordings yet" to someone with sixty of them — for the half second
+                    // it takes to read the folder — is simply wrong.
+                    if (uiState.hasLoaded) item { EmptyRecordings() }
+                } else {
+                    // The "Select all" row, pinned above the rows while selecting (hidden otherwise), so
+                    // it sits over the ticks it drives and below the filter bar — "all" means the
+                    // currently FILTERED recordings, never every recording behind a filter.
+                    if (selectionMode) {
+                        item {
+                            val allVisibleUris = remember(recordings) { recordings.map { it.uri }.toSet() }
+                            val allSel = allVisibleUris.isNotEmpty() && selection.containsAll(allVisibleUris)
+                            LibrarySelectAllRow(
+                                allSelected = allSel,
+                                someSelected = selection.isNotEmpty() && !allSel,
+                                selectedCount = selection.size,
+                                onClick = { selection = if (allSel) emptySet() else allVisibleUris },
+                            )
+                        }
+                    }
+                    items(recordings, key = { it.uri.toString() }) { item -> recordingRow(item, null) }
+                }
+                } // end of the recordings view
             }
-            } // end of the recordings view
         }
 
         // Back to the top from anywhere, without flinging. Appears only once scrolling has actually

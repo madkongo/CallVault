@@ -8,6 +8,7 @@
 
 package com.baba.callvault.ui.screens
 
+import com.baba.callvault.ui.common.CvPullToRefresh
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
@@ -115,6 +116,8 @@ fun SummariesScreen(
     onStop: () -> Unit,
     modifier: Modifier = Modifier,
     titleTrailing: (@Composable () -> Unit)? = null,
+    isRefreshing: Boolean = false,
+    onRefresh: () -> Unit = {},
 ) {
     // Resolved once for the whole page rather than per row: a row that looked itself up would put a
     // walk of the recordings list behind every visible line of the screen.
@@ -147,129 +150,135 @@ fun SummariesScreen(
             }
         }
     ) { innerPadding ->
-        LazyColumn(
-            state = listState,
-            modifier = Modifier.fillMaxSize(),
-            contentPadding = PaddingValues(
-                start = 20.dp,
-                end = 20.dp,
-                top = innerPadding.calculateTopPadding() + 8.dp,
-                bottom = innerPadding.calculateBottomPadding() + 28.dp
-            ),
-            verticalArrangement = Arrangement.spacedBy(10.dp)
+        CvPullToRefresh(
+            isRefreshing = isRefreshing,
+            onRefresh = onRefresh,
+            topPadding = innerPadding.calculateTopPadding(),
         ) {
-            // The "Select all" row, pinned at the top while selecting and hidden otherwise — sitting
-            // directly over the rows whose ticks it drives.
-            if (selection.active) {
-                item {
-                    LibrarySelectAllRow(
-                        allSelected = selection.allSelected,
-                        someSelected = selection.someSelected,
-                        selectedCount = selection.selected.size,
-                        onClick = selection.onSelectAll,
-                    )
-                }
-            }
-            // The search line at the head of the list, as on the other two pages. Only once there
-            // is something to search — on an empty page it would be a field that can only ever find
-            // nothing.
-            val searching = query.isNotBlank()
-            if (!selection.active && (searching || !groups.isEmpty)) {
-                item {
-                    SearchLine(
-                        query = query,
-                        onQueryChange = onQueryChange,
-                        placeholder = stringResource(R.string.summaries_search_hint),
-                    )
-                }
-            }
-
-            if (groups.isEmpty) {
-                item {
-                    if (searching) {
-                        LibrarySectionEmpty(
-                            title = stringResource(R.string.search_no_matches_title),
-                            hint = stringResource(R.string.search_no_matches_hint, query.trim()),
-                        )
-                    } else {
-                        LibrarySectionEmpty(
-                            title = stringResource(R.string.home_summaries_empty_title),
-                            hint = stringResource(R.string.home_summaries_empty_hint),
+            LazyColumn(
+                state = listState,
+                modifier = Modifier.fillMaxSize(),
+                contentPadding = PaddingValues(
+                    start = 20.dp,
+                    end = 20.dp,
+                    top = innerPadding.calculateTopPadding() + 8.dp,
+                    bottom = innerPadding.calculateBottomPadding() + 28.dp
+                ),
+                verticalArrangement = Arrangement.spacedBy(10.dp)
+            ) {
+                // The "Select all" row, pinned at the top while selecting and hidden otherwise — sitting
+                // directly over the rows whose ticks it drives.
+                if (selection.active) {
+                    item {
+                        LibrarySelectAllRow(
+                            allSelected = selection.allSelected,
+                            someSelected = selection.someSelected,
+                            selectedCount = selection.selected.size,
+                            onClick = selection.onSelectAll,
                         )
                     }
                 }
-                return@LazyColumn
-            }
+                // The search line at the head of the list, as on the other two pages. Only once there
+                // is something to search — on an empty page it would be a field that can only ever find
+                // nothing.
+                val searching = query.isNotBlank()
+                if (!selection.active && (searching || !groups.isEmpty)) {
+                    item {
+                        SearchLine(
+                            query = query,
+                            onQueryChange = onQueryChange,
+                            placeholder = stringResource(R.string.summaries_search_hint),
+                        )
+                    }
+                }
 
-            if (groups.working.isNotEmpty()) {
-                item { WorkingHeader(onStop = onStop) }
-                items(groups.working, key = { "working:" + it.displayName }) { working ->
-                    SummaryRow(
-                        displayName = working.displayName,
-                        item = byName[working.displayName],
-                        cached = labels[working.displayName],
-                        // Never selectable: there is no summary row yet to share or delete, which is
-                        // the asymmetry this whole page is built around.
+                if (groups.isEmpty) {
+                    item {
+                        if (searching) {
+                            LibrarySectionEmpty(
+                                title = stringResource(R.string.search_no_matches_title),
+                                hint = stringResource(R.string.search_no_matches_hint, query.trim()),
+                            )
+                        } else {
+                            LibrarySectionEmpty(
+                                title = stringResource(R.string.home_summaries_empty_title),
+                                hint = stringResource(R.string.home_summaries_empty_hint),
+                            )
+                        }
+                    }
+                    return@LazyColumn
+                }
+
+                if (groups.working.isNotEmpty()) {
+                    item { WorkingHeader(onStop = onStop) }
+                    items(groups.working, key = { "working:" + it.displayName }) { working ->
+                        SummaryRow(
+                            displayName = working.displayName,
+                            item = byName[working.displayName],
+                            cached = labels[working.displayName],
+                            // Never selectable: there is no summary row yet to share or delete, which is
+                            // the asymmetry this whole page is built around.
+                            selectionMode = selection.active,
+                            // Nothing to open while the FIRST summary is being written — and a row that
+                            // visibly accepts a tap and does nothing reads as the app having missed it.
+                            // A rewrite is a different matter: its earlier summary is still readable,
+                            // and that row is in the list below, where it opens.
+                            onOpen = null,
+                            trailing = { WorkProgressRing(percent = working.percent) },
+                        )
+                    }
+                }
+
+                if (groups.failed.isNotEmpty()) {
+                    item { CvSectionHeader(text = stringResource(R.string.summaries_failed_header)) }
+                    item {
+                        Text(
+                            text = stringResource(R.string.summaries_failed_hint),
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            modifier = Modifier.padding(start = 4.dp, bottom = 2.dp),
+                        )
+                    }
+                    // No menu: a failed run left no summary row, so there is nothing to share, save or
+                    // delete. What it left is a work info, and Stop above is what clears that.
+                    summaryRows(
+                        groups.failed,
+                        byName,
+                        onOpen,
+                        menu = LibraryRowActions.NONE,
+                        onShare,
+                        onSave,
+                        onDelete,
+                        // Not selectable either, for the same reason it has no menu: a failed run left
+                        // no row behind, so a bulk delete would have nothing of its to take.
+                        selection = null,
                         selectionMode = selection.active,
-                        // Nothing to open while the FIRST summary is being written — and a row that
-                        // visibly accepts a tap and does nothing reads as the app having missed it.
-                        // A rewrite is a different matter: its earlier summary is still readable,
-                        // and that row is in the list below, where it opens.
-                        onOpen = null,
-                        trailing = { WorkProgressRing(percent = working.percent) },
+                        labels = labels,
                     )
                 }
-            }
 
-            if (groups.failed.isNotEmpty()) {
-                item { CvSectionHeader(text = stringResource(R.string.summaries_failed_header)) }
                 item {
                     Text(
-                        text = stringResource(R.string.summaries_failed_hint),
-                        style = MaterialTheme.typography.bodySmall,
+                        text = stringResource(R.string.home_summaries_count, groups.ready.size),
+                        style = MaterialTheme.typography.labelMedium,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        modifier = Modifier.padding(start = 4.dp, bottom = 2.dp),
+                        modifier = Modifier.padding(start = 4.dp, top = 4.dp, bottom = 2.dp),
                     )
                 }
-                // No menu: a failed run left no summary row, so there is nothing to share, save or
-                // delete. What it left is a work info, and Stop above is what clears that.
                 summaryRows(
-                    groups.failed,
+                    groups.ready,
                     byName,
                     onOpen,
-                    menu = LibraryRowActions.NONE,
+                    menu = LibraryRowActions.forStoredSummary(),
                     onShare,
                     onSave,
                     onDelete,
-                    // Not selectable either, for the same reason it has no menu: a failed run left
-                    // no row behind, so a bulk delete would have nothing of its to take.
-                    selection = null,
+                    selection = selection,
                     selectionMode = selection.active,
+                    excerpts = excerpts,
                     labels = labels,
                 )
             }
-
-            item {
-                Text(
-                    text = stringResource(R.string.home_summaries_count, groups.ready.size),
-                    style = MaterialTheme.typography.labelMedium,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    modifier = Modifier.padding(start = 4.dp, top = 4.dp, bottom = 2.dp),
-                )
-            }
-            summaryRows(
-                groups.ready,
-                byName,
-                onOpen,
-                menu = LibraryRowActions.forStoredSummary(),
-                onShare,
-                onSave,
-                onDelete,
-                selection = selection,
-                selectionMode = selection.active,
-                excerpts = excerpts,
-                labels = labels,
-            )
         }
     }
 }

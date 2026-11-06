@@ -9,16 +9,14 @@
 package com.baba.callvault.data.transcripts
 
 import android.content.Context
-import com.baba.callvault.data.transcripts.db.TranscriptDatabase
 import com.baba.callvault.data.transcripts.db.TranscriptEntry
 import com.baba.callvault.data.transcripts.db.TranscriptState
 import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.flowOf
 
 /**
  * What the hub's cards count, and what the Transcripts and Summaries sections list.
  *
- * **Every read here goes through [TranscriptDatabase.exists] first, and that is the whole reason this
+ * **Every read here goes through [onceTranscriptsExist] first, and that is the whole reason this
  * object exists.** The hub is the first screen of the app, so it asks these questions on every open —
  * including on a phone that has never transcribed anything. Asking Room directly would create
  * `transcripts.db` as a side effect of drawing a badge that reads "0", which is the same mistake
@@ -33,14 +31,12 @@ object LibraryCounts {
     /** How many recordings have a finished transcript. QUEUED, RUNNING and FAILED do not count:
      *  the card offers something to read, and only a DONE transcript is readable. */
     fun transcribed(context: Context): Flow<Int> {
-        if (!TranscriptDatabase.exists(context)) return flowOf(0)
-        return TranscriptDatabase.get(context).transcriptDao().countWithState(TranscriptState.DONE)
+        return onceTranscriptsExist(context, 0) { it.transcriptDao().countWithState(TranscriptState.DONE) }
     }
 
     /** How many recordings have a summary. */
     fun summarised(context: Context): Flow<Int> {
-        if (!TranscriptDatabase.exists(context)) return flowOf(0)
-        return TranscriptDatabase.get(context).summaryDao().countAll()
+        return onceTranscriptsExist(context, 0) { it.summaryDao().countAll() }
     }
 
     /**
@@ -52,13 +48,11 @@ object LibraryCounts {
      * small icon on a recordings row nobody scrolls to.
      */
     fun transcripts(context: Context): Flow<List<TranscriptEntry>> {
-        if (!TranscriptDatabase.exists(context)) return flowOf(emptyList())
-        return TranscriptDatabase.get(context).transcriptDao().observeAllOrdered()
+        return onceTranscriptsExist(context, emptyList()) { it.transcriptDao().observeAllOrdered() }
     }
 
     /** The recordings with a summary, newest summary first. */
     fun summarisedNames(context: Context): Flow<List<String>> {
-        if (!TranscriptDatabase.exists(context)) return flowOf(emptyList())
-        return TranscriptDatabase.get(context).summaryDao().observeAllDisplayNames()
+        return onceTranscriptsExist(context, emptyList()) { it.summaryDao().observeAllDisplayNames() }
     }
 }

@@ -17,6 +17,7 @@ import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import com.baba.callvault.R
 import com.baba.callvault.data.AppPreferences
+import com.baba.callvault.data.recordings.DeviceFolderRescan
 import com.baba.callvault.data.recordings.DriveCatalogRepair
 import com.baba.callvault.data.calls.CallHistory
 import com.baba.callvault.data.calls.PhoneCall
@@ -75,7 +76,9 @@ import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.async
 import kotlinx.coroutines.withContext
+import kotlinx.coroutines.withTimeoutOrNull
 
 /**
  * The "Brain" of the [com.baba.callvault.ui.screens.HomeScreen].
@@ -804,6 +807,40 @@ class HomeViewModel(application: Application) : AndroidViewModel(application) {
         startListPass(status)
     }
 
+    private val _isPullRefreshing = MutableStateFlow(false)
+    private var driveCheckJob: kotlinx.coroutines.Deferred<*>? = null
+
+    /** True while a pull-to-refresh is running, for the indicator at the top of the page. */
+    val isPullRefreshing: StateFlow<Boolean> = _isPullRefreshing.asStateFlow()
+
+    /**
+     * Pull-to-refresh: everything [refresh] does, plus looking at the folders themselves.
+     *
+     * The list reads the catalog, so files added or deleted outside CallVault never showed (see
+     * [DeviceFolderRescan]); the Drive check that normally runs every few hours runs now. Bounded, because the
+     * Drive part goes over the network and the indicator must not spin for good on a slow connection.
+     */
+    fun pullToRefresh() {
+        if (_isPullRefreshing.value) return
+        _isPullRefreshing.value = true
+        viewModelScope.launch {
+            try {
+                // Its own job: its file calls block and a timeout cannot interrupt them. If it outlasts the wait it
+                // finishes in the background, and the catalog watch puts its result on screen.
+                // One at a time: a check still running from an earlier pull is waited on, not doubled.
+                val driveCheck = driveCheckJob?.takeIf { it.isActive }
+                    ?: async(Dispatchers.IO) { runCatching { DriveCatalogRepair.forgetDeleted(appContext) } }
+                        .also { driveCheckJob = it }
+                withContext(Dispatchers.IO) { DeviceFolderRescan.run(appContext) }
+                withTimeoutOrNull(PULL_DRIVE_CHECK_MAX_MS) { driveCheck.await() }
+                refresh()
+                listJob?.join()
+            } finally {
+                _isPullRefreshing.value = false
+            }
+        }
+    }
+
     private fun startListPass(status: HomeStatus) {
         listJob = viewModelScope.launch {
             val health = withContext(Dispatchers.IO) { sweepSetupHealth(status.isReady) }
@@ -1351,6 +1388,8 @@ class HomeViewModel(application: Application) : AndroidViewModel(application) {
         private const val STARTING_MAX_MS = 60_000L
         /** How often to re-check the recorder's connection while it warms up. */
         private const val STARTING_POLL_MS = 500L
+        /** The longest a pull-to-refresh waits on the Drive check before showing the list anyway. */
+        private const val PULL_DRIVE_CHECK_MAX_MS = 15_000L
 
         private const val TAG = "CV:HomeViewModel"
 

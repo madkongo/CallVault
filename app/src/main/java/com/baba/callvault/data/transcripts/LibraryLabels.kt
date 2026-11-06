@@ -62,7 +62,8 @@ object LibraryLabels {
 
     /** Every cached label by display name; empty for a library with no transcripts database. */
     fun observe(context: Context): Flow<Map<String, RecordingLabelEntry>> {
-        if (!TranscriptDatabase.exists(context)) return flowOf(emptyMap())
-        return TranscriptDatabase.get(context).labelDao().observeAll().map { all -> all.associateBy { it.displayName } }
+        return onceTranscriptsExist(context, emptyMap()) { db ->
+            db.labelDao().observeAll().map { all -> all.associateBy { it.displayName } }
+        }
     }
 }
