@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- The one Share sheet (recording, transcript, summary). -->
+<resources>
+    <string name="share_sheet_title_one">Chia sẻ “%1$s”</string>
+    <string name="share_sheet_title_many">Chia sẻ mục đã chọn (%1$d)</string>
+    <string name="share_sheet_button">Chia sẻ</string>
+    <string name="share_part_recording">Bản ghi âm</string>
+    <string name="share_part_transcript">Bản chép lời</string>
+    <string name="share_part_summary">Tóm tắt</string>
+    <string name="share_part_recording_hint">Tệp âm thanh</string>
+    <string name="share_part_text_message_hint">Dưới dạng tin nhắn</string>
+    <string name="share_part_text_file_hint">Tệp văn bản, kèm bản ghi âm</string>
+    <string name="share_part_missing_one">Cuộc gọi này không có</string>
+    <string name="share_part_missing_many">Không cuộc gọi nào trong số này có</string>
+    <string name="share_file_word_transcript">bản chép lời</string>
+    <string name="share_file_word_summary">tóm tắt</string>
+</resources>

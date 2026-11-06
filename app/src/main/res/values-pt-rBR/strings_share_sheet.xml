@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- The one Share sheet (recording, transcript, summary). -->
+<resources>
+    <string name="share_sheet_title_one">Compartilhar “%1$s”</string>
+    <string name="share_sheet_title_many">Compartilhar selecionados (%1$d)</string>
+    <string name="share_sheet_button">Compartilhar</string>
+    <string name="share_part_recording">Gravação</string>
+    <string name="share_part_transcript">Transcrição</string>
+    <string name="share_part_summary">Resumo</string>
+    <string name="share_part_recording_hint">Arquivo de áudio</string>
+    <string name="share_part_text_message_hint">Como mensagem</string>
+    <string name="share_part_text_file_hint">Arquivo de texto, junto com a gravação</string>
+    <string name="share_part_missing_one">Esta chamada não tem</string>
+    <string name="share_part_missing_many">Nenhuma dessas chamadas tem</string>
+    <string name="share_file_word_transcript">transcrição</string>
+    <string name="share_file_word_summary">resumo</string>
+</resources>

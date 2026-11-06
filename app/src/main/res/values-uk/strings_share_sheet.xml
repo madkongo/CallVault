@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- The one Share sheet (recording, transcript, summary). -->
+<resources>
+    <string name="share_sheet_title_one">Поділитися «%1$s»</string>
+    <string name="share_sheet_title_many">Поділитися вибраним (%1$d)</string>
+    <string name="share_sheet_button">Поділитися</string>
+    <string name="share_part_recording">Запис</string>
+    <string name="share_part_transcript">Розшифровка</string>
+    <string name="share_part_summary">Підсумок</string>
+    <string name="share_part_recording_hint">Аудіофайл</string>
+    <string name="share_part_text_message_hint">Повідомленням</string>
+    <string name="share_part_text_file_hint">Текстовий файл поруч із записом</string>
+    <string name="share_part_missing_one">У цього дзвінка цього немає</string>
+    <string name="share_part_missing_many">У жодного з цих дзвінків цього немає</string>
+    <string name="share_file_word_transcript">розшифровка</string>
+    <string name="share_file_word_summary">підсумок</string>
+</resources>

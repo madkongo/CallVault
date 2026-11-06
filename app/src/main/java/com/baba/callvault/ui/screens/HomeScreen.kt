@@ -8,6 +8,10 @@
 
 package com.baba.callvault.ui.screens
 
+import com.baba.callvault.ui.common.CallShareSheet
+import com.baba.callvault.data.share.ShareableCalls
+import com.baba.callvault.data.share.ShareableCall
+import com.baba.callvault.data.share.SharePart
 import com.baba.callvault.transcription.cloud.CloudEndpoint
 import com.baba.callvault.transcription.TranscriptionScheduler
 import com.baba.callvault.ui.common.TranscribeAgainDialog
@@ -55,8 +59,6 @@ import com.baba.callvault.ui.common.TranscribeRequestStateSaver
 import com.baba.callvault.ui.common.UriSetStateSaver
 import com.baba.callvault.ui.common.formatByteSize
 import com.baba.callvault.ui.common.SupportDialog
-import com.baba.callvault.system.shareRecordings
-import com.baba.callvault.system.shareRecording
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxScope
@@ -473,6 +475,34 @@ fun HomeScreen(
     val mergeScope = rememberCoroutineScope()
     val listScope = rememberCoroutineScope()
 
+    // The one Share sheet. Every page's Share opens it (Share a part keeps its own screen), with the page's own
+    // part ticked: the recording on Recordings and the playback page, the transcript on Transcripts and the
+    // reading view, the summary on Summaries. See CallSharePlan.
+    var shareRequest by remember { mutableStateOf<CallShareRequest?>(null) }
+    val shareWords = rememberShareWords()
+    shareRequest?.let { request ->
+        val calls by produceState<List<ShareableCall>?>(null, request) {
+            value = ShareableCalls.load(context, request.names, libraryTitleOf) { name ->
+                libraryRecordings.firstOrNull { it.displayName == name }?.let(RecordingSelection::shareUriOf)
+            }
+        }
+        CallShareSheet(
+            calls = calls,
+            start = request.start,
+            onDismiss = { shareRequest = null },
+            onShare = { ticks ->
+                val picked = calls ?: return@CallShareSheet
+                shareRequest = null
+                transcriptScope.launch {
+                    shareCalls(context, picked, ticks, request.subject, shareWords, librarySpeakerLabels, libraryExportLabels)
+                }
+            },
+        )
+    }
+    val openShare: (List<String>, SharePart, String) -> Unit = { names, start, subject ->
+        if (names.isNotEmpty()) shareRequest = CallShareRequest(names, start, subject)
+    }
+
     /** The summary whose delete is awaiting confirmation, raised from a Summaries row's menu. */
     var deleteSummaryFor by rememberSaveable { mutableStateOf<String?>(null) }
 
@@ -553,16 +583,7 @@ fun HomeScreen(
                     // to a page still holding a selection with a delete button over it is the worse
                     // of the two ways to be wrong.
                     librarySelection = LibrarySelection.EMPTY
-                    transcriptScope.launch {
-                        shareLibraryRows(
-                            context = context,
-                            page = page,
-                            rows = picked.map { it to libraryTitleOf(it) },
-                            subject = sectionTitle,
-                            speakers = librarySpeakerLabels,
-                            exportLabels = libraryExportLabels,
-                        )
-                    }
+                    openShare(picked, page.sharePart, sectionTitle)
                 },
                 onDelete = { showLibraryBulkDelete = true },
                 onTranscribeAgain = if (page == LibraryRowActions.Page.Transcripts) {
@@ -959,7 +980,7 @@ fun HomeScreen(
                     transcriptFor = displayName
                 },
                 onTranscribe = { startTranscription(displayName) },
-                onShare = { context.shareRecording(openItem.localUri ?: openItem.driveUri ?: openItem.uri, displayName) },
+                onShare = { openShare(listOf(displayName), SharePart.RECORDING, displayName) },
                 onSharePart = {
                     clipFromMs = if (playback.activeUri == openItem.uri) playback.positionMs.toLong() else 0L
                     clipFor = displayName
@@ -1195,16 +1216,7 @@ fun HomeScreen(
             // changing section — the recording is deliberately not in Recordings to go back to.
             onOpenAudio = { displayName -> playbackFor = displayName },
             onShare = { displayName ->
-                transcriptScope.launch {
-                    shareLibraryRow(
-                        context = context,
-                        page = LibraryRowActions.Page.Transcripts,
-                        displayName = displayName,
-                        title = libraryTitleOf(displayName),
-                        speakers = librarySpeakerLabels,
-                        exportLabels = libraryExportLabels,
-                    )
-                }
+                openShare(listOf(displayName), LibraryRowActions.Page.Transcripts.sharePart, libraryTitleOf(displayName))
             },
             onSave = { displayName, format ->
                 transcriptScope.launch {
@@ -1283,16 +1295,7 @@ fun HomeScreen(
                 readingFromSummary = true
             },
             onShare = { displayName ->
-                transcriptScope.launch {
-                    shareLibraryRow(
-                        context = context,
-                        page = LibraryRowActions.Page.Summaries,
-                        displayName = displayName,
-                        title = libraryTitleOf(displayName),
-                        speakers = librarySpeakerLabels,
-                        exportLabels = libraryExportLabels,
-                    )
-                }
+                openShare(listOf(displayName), LibraryRowActions.Page.Summaries.sharePart, libraryTitleOf(displayName))
             },
             onSave = { displayName, format ->
                 transcriptScope.launch {
@@ -1337,10 +1340,11 @@ fun HomeScreen(
                 // (below). The bar carries only the two things done TO a selection, and both go inert
                 // at zero picked — the mode can now be open with nothing selected.
                 val hasPicked = selection.isNotEmpty()
+                val recordingsTitle = stringResource(R.string.home_recordings_title)
                 IconButton(
                     enabled = hasPicked,
                     onClick = {
-                        context.shareRecordings(RecordingSelection.urisToShare(selectedItems))
+                        openShare(selectedItems.map { it.displayName }, SharePart.RECORDING, recordingsTitle)
                         clearSelection()
                     },
                 ) {
@@ -1388,6 +1392,7 @@ fun HomeScreen(
                 },
                 // Plays in place, on the list: asked for so a run of calls can be listened
                 // through without opening each one. Skipping and speed stay on the page.
+                onShare = { openShare(listOf(item.displayName), SharePart.RECORDING, libraryTitleOf(item.displayName)) },
                 onPlayUri = { uri -> viewModel.play(uri) },
                 // Opens the recording. Deliberately does NOT start it: a tap meant to look
                 // at a call would begin playing it out loud, which on a recording of a
@@ -1898,7 +1903,7 @@ fun HomeScreen(
             onSeek = { viewModel.seekTo(it) },
             onSkip = { viewModel.skipPlayback(it) },
             onCopy = { text -> context.copyToClipboard(displayName, text) },
-            onShare = { text -> context.sharePlainText(displayName, text) },
+            onShare = { _ -> openShare(listOf(displayName), SharePart.TRANSCRIPT, libraryTitleOf(displayName)) },
             onExport = { format, document ->
                 val file = TranscriptExportFile.write(
                     context = context,
@@ -3165,8 +3170,7 @@ private fun EmptyRecordings() {
  */
 @Composable
 private fun RecordingRowMenu(
-    shareUri: Uri,
-    shareName: String,
+    onShare: () -> Unit,
     onDelete: () -> Unit,
     /** Null on a row nothing can be merged into it — an import, which was never a call. */
     onMerge: (() -> Unit)? = null,
@@ -3191,7 +3195,7 @@ private fun RecordingRowMenu(
                 leadingIcon = { Icon(Icons.Filled.Share, contentDescription = null) },
                 onClick = {
                     open = false
-                    context.shareRecording(shareUri, shareName)
+                    onShare()
                 }
             )
             DropdownMenuItem(
@@ -3406,6 +3410,7 @@ private fun deleteByScope(
  */
 @Composable
 private fun RecordingRow(
+    onShare: () -> Unit,
     item: RecordingItem,
     playback: RecordingPlaybackController.PlaybackState,
     deleting: Boolean,
@@ -3614,8 +3619,7 @@ private fun RecordingRow(
                 RecordingRowMenu(
                     // Share the device copy when there is one: it needs no network to read, and for a
                     // BOTH row the two copies are the same audio.
-                    shareUri = item.localUri ?: item.driveUri ?: item.uri,
-                    shareName = item.displayName,
+                    onShare = onShare,
                     onDelete = {
                         deleteTarget = DeleteTarget.Ask
                     },
@@ -4104,3 +4108,7 @@ private fun formatMillis(millis: Int): String {
     val seconds = totalSeconds % 60
     return String.format(Locale.US, "%d:%02d", minutes, seconds)
 }
+
+/** An open Share sheet: which calls, which part the page is about, and what a selection is called. */
+private data class CallShareRequest(val names: List<String>, val start: SharePart, val subject: String)
+
