@@ -244,6 +244,12 @@
             android:enabled="true"
             android:exported="false" />
 
+        <!-- Keep / Delete / Undo on the after-call question. Internal only. -->
+        <receiver
+            android:name=".services.recording.aftercall.AfterCallDecisionReceiver"
+            android:enabled="true"
+            android:exported="false" />
+
         <receiver
             android:name=".services.boot.RetentionTimezoneReceiver"
             android:enabled="true"
