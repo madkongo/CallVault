@@ -7,6 +7,12 @@ All notable changes to CallVault are documented here. The format is based on
 
 ### Added
 
+- **Share a call's recording, transcript and summary together.** Share on any page — Recordings, a recording's
+  page, Transcripts, Summaries, the transcript page, and the selection bars — opens the same sheet: tick the
+  recording, the transcript and the summary, in any combination. With the recording, the texts go as text files
+  named after it; without it, as one message. "Share a part" is unchanged.
+  <!-- 🧪 VERIFYING: OP9 2026-11-06 — Recordings row (audio only), Transcripts row (all three → 3 files), Summaries
+  row (summary + transcript → one message). Not tried: playback page, selection bars, Drive-only recordings. -->
 - **Transcribe again** (#72). A transcript's ⋮ menu, the Transcripts page's selection bar (several at once) and the
   new ⋮ on the transcript page itself can run a transcription again, with a different language or engine. The
   current text stays readable until the new one succeeds; if the new run fails or is stopped, the old one is kept.

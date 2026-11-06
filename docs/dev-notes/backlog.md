@@ -22,6 +22,27 @@ with `&&`/`||` chains and silently reported the opposite answer while this was b
 
 ---
 
+## 🧪 BUILT, VERIFYING — One Share sheet: recording + transcript + summary together — requested + built 2026-11-06 (branch `feat/share-sheet`, not merged)
+
+**Asked:** share a recording's transcript from Recordings (and the recording from Transcripts), and "share all" in
+one go, the same on every page. "Share a part" stays as it is (maintainer's call).
+
+**Chosen design: A** (artifact "Share Options"). Every Share opens one bottom sheet with Recording / Transcript /
+Summary ticks; the page's own part starts ticked; parts the call lacks are greyed ("This call doesn't have one").
+Not remembered between shares. With Recording ticked: audio + `<recording name> — transcript.txt` / `— summary.txt`
+in one ACTION_SEND(_MULTIPLE). Without: one message (summary first, under headings; one part alone has no heading,
+as before); too long → a .txt file. Rules in `CallSharePlan` (unit-tested).
+
+**Entry points switched:** Recordings row ⋮ and selection bar, playback page Share ("Share recording"), Transcripts
+and Summaries rows and selection bars, reading view "As text". Old `shareRecording(s)`, `shareLibraryRow(s)` removed.
+
+**OP9 (2026-11-06):** Recordings row → sheet, audio only offered, chooser with 1 audio file; Transcripts row → all
+three ticked → "3 files in total", WhatsApp/Telegram offered, files named after the recording; Summaries row →
+summary + transcript → one message starting "Summary". 2,530 unit tests, checkTranslations green (16 locales,
+translations by Claude, unreviewed).
+
+**Not tried:** playback page, selection bars (several calls), a Drive-only recording, actually sending into a chat.
+
 ## 🧪 BUILT, VERIFYING — Pull to refresh + lists that went stale until the app was reopened — requested + built 2026-11-06 (branch `feat/pull-to-refresh`, not merged)
 
 **Asked:** a simple refresh on each page, so lists show the true state without reopening the app.
