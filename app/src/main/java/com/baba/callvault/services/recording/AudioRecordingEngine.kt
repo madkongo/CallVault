@@ -350,10 +350,15 @@ class AudioRecordingEngine {
         // an AudioRecord into RECORDING state, and unlike the daemon's own capture the handoff has no
         // fallback: the app would hold a record that never produces a frame and write an empty file
         // while reporting success.
+        val appGetsPaused = AppPauseWatch.preferRecorderCapture(context)
+        if (appGetsPaused && preferences.isHandoffPersistEnabled()) {
+            AppLogger.i(TAG, "Not using resilient recording: this phone has paused CallVault recently, so the recorder process captures")
+        }
         if (HandoffPolicy.isUsable(
                 enabled = preferences.isHandoffPersistEnabled(),
                 sourceSupported = HandoffSource.supportsHandoff(audioSourceEnum.cliKey),
                 mode = preferences.getPrivilegedMode(),
+                appGetsPaused = appGetsPaused,
             ) &&
             startHandoffPipeline(context, audioSourceEnum, codecEnum, bitRate, isCancelled)
         ) {

@@ -42,8 +42,15 @@ object HandoffPolicy {
      * @param sourceSupported whether this audio source can be captured by a Java `AudioRecord` at all.
      * @param mode where privileges come from. Both hosts can take this path now; kept as a parameter so
      *   the decision stays in one place if a mode ever has to be ruled out again.
+     * @param appGetsPaused this phone has been seen pausing CallVault's process ([AppPausePolicy]). The handoff
+     *   only records while the app keeps reading, so there the recorder process must own the capture: a paused
+     *   app cut a 43 s call to 4.4 s on an Honor BVL-N59 (2026-11-05). False on every phone that never paused it.
      */
     @Suppress("UNUSED_PARAMETER")
-    fun isUsable(enabled: Boolean, sourceSupported: Boolean, mode: PrivilegedMode): Boolean =
-        enabled && sourceSupported
+    fun isUsable(
+        enabled: Boolean,
+        sourceSupported: Boolean,
+        mode: PrivilegedMode,
+        appGetsPaused: Boolean = false,
+    ): Boolean = enabled && sourceSupported && !appGetsPaused
 }

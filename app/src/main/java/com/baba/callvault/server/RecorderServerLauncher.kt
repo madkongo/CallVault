@@ -13,6 +13,7 @@ import android.os.SystemClock
 import com.baba.callvault.data.AppPreferences
 import com.baba.callvault.integrations.adb.AdbShell
 import com.baba.callvault.integrations.adb.UsbDefaultConfig
+import com.baba.callvault.services.recording.AppPauseWatch
 import com.baba.callvault.utils.AppLogger
 
 /**
@@ -148,7 +149,10 @@ object RecorderServerLauncher {
     private fun ensureServerRunningLocked(context: Context, timeoutMs: Long): Boolean {
         if (RecorderConnection.isConnected) {
             AppLogger.d(TAG, "Recorder daemon already connected; reusing existing binder")
-            applyWdPolicy(context)
+            // On a phone seen pausing the app, skip the advisory USB-default refresh: this is the start of a
+            // call, and an Honor BVL-N59 paused the app inside it and lost the call (2026-11-05). Every other
+            // phone refreshes as before; launches, Settings and setup refresh it too.
+            applyWdPolicy(context, refreshUsbDefault = !AppPauseWatch.preferRecorderCapture(context))
             return true
         }
 
@@ -211,7 +215,7 @@ object RecorderServerLauncher {
      * transiently). This is unconditional: "WD only when needed" is CallVault's core behaviour, not a
      * user toggle. No-op if WD is already off or WRITE_SECURE_SETTINGS is missing.
      */
-    private fun applyWdPolicy(context: Context) {
+    private fun applyWdPolicy(context: Context, refreshUsbDefault: Boolean = true) {
         // We still hold the ADB shell here (before WD is turned off) — opportunistically refresh the
         // USB-default cache that drives the "locking the screen may stop recording" warning.
         //
@@ -220,7 +224,7 @@ object RecorderServerLauncher {
         // stream read BLOCKS INDEFINITELY — which silently hangs `startPipeline` and loses the whole call
         // (observed repeatedly on-device: the log stops right here and the output file stays 0 bytes).
         // The refresh is opportunistic, so a timeout simply means the cached value stays stale.
-        refreshUsbDefaultBounded(context)
+        if (refreshUsbDefault) refreshUsbDefaultBounded(context)
 
         // `adbd` stops when its LAST transport goes away, and the daemon is a child of an adbd shell —
         // so switching Wireless debugging off while it is the only transport kills the daemon that was

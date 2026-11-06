@@ -516,6 +516,12 @@ object AppLogger {
             "${p.yesNo { isIgnoreCrossCountryIncomingEnabled() }}/${p.yesNo { isIgnoreCrossCountryOutgoingEnabled() }}")
         writer.println("Storage target: ${runCatching { p.getStorageTarget().name }.getOrDefault("?")}")
 
+        writer.println("--- Phone power ---")
+        // A phone that pauses the app mid-call loses calls on the handoff path (Honor, 2026-11-05).
+        writer.println("Battery optimisation exempt: ${runCatching { com.baba.callvault.system.permissions.PermissionChecks.hasBatteryExemption(context) }.getOrDefault("?")}")
+        writer.println("Power saving on: ${runCatching { (context.getSystemService(Context.POWER_SERVICE) as android.os.PowerManager).isPowerSaveMode }.getOrDefault("?")}")
+        writer.println("Standby bucket: ${runCatching { (context.getSystemService(Context.USAGE_STATS_SERVICE) as android.app.usage.UsageStatsManager).appStandbyBucket }.getOrDefault("?")}")
+        writer.println("App paused by the phone: ${runCatching { com.baba.callvault.services.recording.AppPauseWatch.summaryForReport(context) }.getOrDefault("?")}")
         writer.println("--- Recorder ---")
         writer.println("Binder connected: ${runCatching { RecorderConnection.isConnected }.getOrDefault(false)}")
         writer.println("Host uid: ${runCatching { RecorderConnection.service?.hostUid()?.toString() }.getOrNull() ?: "?"}")
