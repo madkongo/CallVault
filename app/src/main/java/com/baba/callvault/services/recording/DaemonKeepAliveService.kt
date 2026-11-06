@@ -145,7 +145,26 @@ class DaemonKeepAliveService : Service() {
         }.getOrNull()
         if (!SharedStatusNotice.isStale(posted, CHANNEL_ID)) return
         AppLogger.i(TAG, "A leftover call notification ($posted) was still up after the call; putting \"Ready\" back")
-        updateNotification(isDaemonAlive())
+        repostAsForeground(isDaemonAlive())
+    }
+
+    /**
+     * Puts "Ready" back through this service's own startForeground rather than NotificationManager.notify.
+     *
+     * On a Pixel 10 Pro XL (Android 17, #73) notify() on the shared id did nothing: the heal ran twice and the
+     * finished call's notification stayed until the user swiped it. startForeground updates the notification
+     * this foreground service holds, which is the slot the leftover sits in. Only this heal uses it, so phones
+     * where notify() works (the OP9, Android 14: three calls, never stale) never take this path.
+     */
+    private fun repostAsForeground(ready: Boolean) {
+        if (ready) runCatching { SilentFailureNotifier.clearRecorderUnavailable(applicationContext) }
+        if (SharedStatusNotice.isHeldByRecording) return
+        runCatching {
+            startForeground(NOTIF_ID, buildNotification(ready), ServiceInfo.FOREGROUND_SERVICE_TYPE_SPECIAL_USE)
+        }.onFailure {
+            AppLogger.w(TAG, "Could not re-post \"Ready\" as the foreground notice (${it.message}); trying notify")
+            updateNotification(ready)
+        }
     }
 
     /**
