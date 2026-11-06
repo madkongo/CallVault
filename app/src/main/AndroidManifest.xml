@@ -21,6 +21,9 @@
     <uses-permission android:name="android.permission.WRITE_SECURE_SETTINGS"
         tools:ignore="ProtectedPermissions" />
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
+    <!-- Keep or delete after the call, "Pop-up over the screen": lets the question open over other apps.
+         Optional: asked for only when the user picks that style; without it the notification asks alone. -->
+    <uses-permission android:name="android.permission.SYSTEM_ALERT_WINDOW" />
     <!-- In-app updater: query GitHub Releases + download the update APK. -->
     <uses-permission android:name="android.permission.INTERNET" />
     <!-- In-app updater: commit a PackageInstaller session for the tap-to-update flow. -->
@@ -170,6 +173,20 @@
                 <data android:mimeType="application/ogg" />
             </intent-filter>
         </activity>
+
+        <!--
+            The keep-or-delete pop-up. Translucent like the share screen; its own empty task affinity and
+            singleInstance so any number of finished calls share ONE window (it asks about the oldest), and
+            excludeFromRecents so a call's name is never left in the app switcher. Not exported: only
+            CallVault opens it. Not shown over the lock screen (no showWhenLocked).
+        -->
+        <activity
+            android:name=".AfterCallQuestionActivity"
+            android:exported="false"
+            android:taskAffinity=""
+            android:launchMode="singleInstance"
+            android:excludeFromRecents="true"
+            android:theme="@style/Theme.CallVault.Share" />
 
         <!-- Foreground service that drives ADB wireless pairing via a notification -->
         <service

@@ -18,9 +18,7 @@ import androidx.core.app.NotificationCompat
 import androidx.core.app.NotificationManagerCompat
 import com.baba.callvault.MainActivity
 import com.baba.callvault.R
-import com.baba.callvault.data.recordings.RecordingsRepository
 import com.baba.callvault.system.permissions.PermissionChecks
-import com.baba.callvault.transcription.AudioDecoder
 import com.baba.callvault.utils.AppLogger
 
 /**
@@ -58,7 +56,7 @@ internal object AfterCallNotifier {
     /** Posts (or re-posts) the keep-or-delete question for [held]. Blocking: reads the duration. */
     fun postQuestion(context: Context, held: AfterCallDecisions.Held) {
         val name = held.displayName
-        val title = titleFor(context, name, durationOf(context, held))
+        val title = AfterCallText.notificationTitle(context, name, AfterCallText.durationOf(context, held))
         val builder = base(context, held)
             .setContentTitle(title)
             .setContentText(context.getString(R.string.after_call_question_text))
@@ -115,27 +113,6 @@ internal object AfterCallNotifier {
         runCatching { NotificationManagerCompat.from(context).notify(notificationId, builder.build()) }
             .onFailure { AppLogger.w(TAG, "Could not post the after-call notification: ${it.message}") }
     }
-
-    /**
-     * Who the call was with, as the file name records it: the contact, else the number, else the app the call
-     * was made in. Parsed from the name rather than carried from the call, so carrier and app calls read the
-     * same way and a renamed file (anonymous number filled in from the call log) is named correctly.
-     */
-    private fun titleFor(context: Context, displayName: String, durationMs: Long): String {
-        val parsed = runCatching { RecordingsRepository.parseName(displayName) }.getOrNull()
-        val party = parsed?.contactName?.takeIf { it.isNotBlank() } ?: parsed?.number?.takeIf { it.isNotBlank() }
-        val app = parsed?.voipApp?.takeIf { it.isNotBlank() }
-        val head = when {
-            party != null -> context.getString(R.string.after_call_title_party, party)
-            app != null -> context.getString(R.string.after_call_title_app, app)
-            else -> context.getString(R.string.after_call_title_plain)
-        }
-        val duration = AfterCallPolicy.formatDuration(durationMs) ?: return head
-        return "$head · $duration"
-    }
-
-    private fun durationOf(context: Context, held: AfterCallDecisions.Held): Long =
-        runCatching { AudioDecoder.durationMs(context, held.uri) }.getOrDefault(0L)
 
     /**
      * Opens CallVault. The per-recording data URI is not decoration: every Intent into MainActivity is

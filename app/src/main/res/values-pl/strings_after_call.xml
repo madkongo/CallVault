@@ -11,4 +11,7 @@
     <string name="after_call_deleted_title">Nagranie usunięte</string>
     <string name="after_call_deleted_text">Zniknie za kilka sekund. Stuknij Cofnij, aby je zachować.</string>
     <string name="after_call_undo">Cofnij</string>
+    <string name="after_call_popup_title">Zachować to nagranie?</string>
+    <string name="after_call_just_now">przed chwilą</string>
+    <string name="after_call_popup_call">Rozmowa</string>
 </resources>

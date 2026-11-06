@@ -11,4 +11,7 @@
     <string name="after_call_deleted_title">Aufnahme gelöscht</string>
     <string name="after_call_deleted_text">Sie wird in wenigen Sekunden entfernt. Tippe auf Rückgängig, um sie zu behalten.</string>
     <string name="after_call_undo">Rückgängig</string>
+    <string name="after_call_popup_title">Diese Aufnahme behalten?</string>
+    <string name="after_call_just_now">gerade eben</string>
+    <string name="after_call_popup_call">Anruf</string>
 </resources>

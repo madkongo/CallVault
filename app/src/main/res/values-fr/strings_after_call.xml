@@ -11,4 +11,7 @@
     <string name="after_call_deleted_title">Enregistrement supprimé</string>
     <string name="after_call_deleted_text">Il sera effacé dans quelques secondes. Touchez Annuler pour le garder.</string>
     <string name="after_call_undo">Annuler</string>
+    <string name="after_call_popup_title">Garder cet enregistrement ?</string>
+    <string name="after_call_just_now">à l’instant</string>
+    <string name="after_call_popup_call">Appel</string>
 </resources>

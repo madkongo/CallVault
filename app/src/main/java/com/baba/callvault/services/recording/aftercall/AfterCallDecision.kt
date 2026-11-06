@@ -8,8 +8,11 @@
 
 package com.baba.callvault.services.recording.aftercall
 
+import android.app.KeyguardManager
+import com.baba.callvault.AfterCallQuestionActivity
 import android.content.Context
 import android.net.Uri
+import android.provider.Settings
 import com.baba.callvault.data.AppPreferences
 import com.baba.callvault.data.recordings.RecordingsRepository
 import com.baba.callvault.system.interop.MetadataSidecar
@@ -48,13 +51,28 @@ object AfterCallDecision {
         return true
     }
 
-    /** Posts the question for a held recording. Called once its catalog row exists, so Keep never races it. */
+    /**
+     * Asks about a held recording at call end. Called once its catalog row exists, so Keep never races it.
+     *
+     * The notification is ALWAYS posted; the pop-up comes on top of it when the user chose it and Android
+     * allows it. So a pop-up that is blocked, fails to start, or is closed unanswered never leaves a call
+     * without its question. Only this call-end path opens the pop-up: startup and Undo re-post the
+     * notification alone, since a window appearing out of nowhere long after the call would be a surprise.
+     */
     fun ask(context: Context, displayName: String) {
         runCatching {
             val held = AfterCallDecisions.peek(context, displayName) ?: return
             AfterCallNotifier.postQuestion(context, held)
         }.onFailure { AppLogger.w(TAG, "Could not ask keep-or-delete: ${it.message}") }
+        runCatching { if (shouldPopUp(context)) AfterCallQuestionActivity.open(context) }
+            .onFailure { AppLogger.w(TAG, "Could not open the keep-or-delete pop-up; the notification stands: ${it.message}") }
     }
+
+    private fun shouldPopUp(context: Context): Boolean = AfterCallPolicy.shouldPopUp(
+        style = AppPreferences(context).getAfterCallAskStyle(),
+        canDrawOverlays = Settings.canDrawOverlays(context),
+        keyguardLocked = context.getSystemService(KeyguardManager::class.java)?.isKeyguardLocked ?: true,
+    )
 
     /** Keep: end the wait and run the held Drive copy, details-file copy and transcription. */
     fun keep(context: Context, displayName: String): Boolean = keep(context, displayName, fromUnansweredCheck = false)

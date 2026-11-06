@@ -116,6 +116,22 @@ object AfterCallDecisions {
     fun setDismissed(context: Context, displayName: String): Held? =
         update(context, displayName) { it.copy(dismissed = true) }
 
+    /**
+     * The recording the pop-up should ask about: the oldest one still waiting for an answer. One with Delete
+     * tapped is not waiting — it is in its Undo window, and the notification carries that.
+     */
+    fun nextToAsk(context: Context): Held? = all(context).filterNot { it.deleteRequested }.minByOrNull { it.askedAt }
+
+    /**
+     * Follows every change to the waiting set, so the pop-up closes when the notification answers first.
+     * SharedPreferences holds listeners weakly: the caller must keep [listener] referenced while registered.
+     */
+    fun registerListener(context: Context, listener: SharedPreferences.OnSharedPreferenceChangeListener) =
+        prefs(context).registerOnSharedPreferenceChangeListener(listener)
+
+    fun unregisterListener(context: Context, listener: SharedPreferences.OnSharedPreferenceChangeListener) =
+        prefs(context).unregisterOnSharedPreferenceChangeListener(listener)
+
     /** Every display name still waiting. Empty when none are, or the store cannot be read. */
     fun pendingNames(context: Context): Set<String> = runCatching {
         prefs(context).all.keys.toSet()

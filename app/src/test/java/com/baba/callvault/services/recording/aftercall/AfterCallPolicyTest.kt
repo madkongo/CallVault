@@ -9,6 +9,7 @@
 package com.baba.callvault.services.recording.aftercall
 
 import android.app.NotificationManager
+import com.baba.callvault.data.AppPreferences.AfterCallAskStyle
 import com.baba.callvault.data.AppPreferences.AfterCallMode
 import com.baba.callvault.data.AppPreferences.AfterCallUnanswered
 import com.baba.callvault.services.recording.aftercall.AfterCallPolicy.UnansweredAction
@@ -73,6 +74,14 @@ class AfterCallPolicyTest {
         assertFalse(AfterCallPolicy.canShowQuestion(false, true, NotificationManager.IMPORTANCE_HIGH))
         assertFalse(AfterCallPolicy.canShowQuestion(true, false, NotificationManager.IMPORTANCE_HIGH))
         assertFalse(AfterCallPolicy.canShowQuestion(true, true, NotificationManager.IMPORTANCE_NONE))
+    }
+
+    @Test
+    fun `the pop-up opens only for the pop-up style, with the overlay permission, on an unlocked phone`() {
+        assertTrue(AfterCallPolicy.shouldPopUp(AfterCallAskStyle.POPUP, canDrawOverlays = true, keyguardLocked = false))
+        assertFalse(AfterCallPolicy.shouldPopUp(AfterCallAskStyle.NOTIFICATION, canDrawOverlays = true, keyguardLocked = false))
+        assertFalse(AfterCallPolicy.shouldPopUp(AfterCallAskStyle.POPUP, canDrawOverlays = false, keyguardLocked = false))
+        assertFalse("never over the lock screen", AfterCallPolicy.shouldPopUp(AfterCallAskStyle.POPUP, canDrawOverlays = true, keyguardLocked = true))
     }
 
     @Test

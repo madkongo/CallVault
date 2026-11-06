@@ -11,4 +11,7 @@
     <string name="after_call_deleted_title">Η ηχογράφηση διαγράφηκε</string>
     <string name="after_call_deleted_text">Θα αφαιρεθεί σε λίγα δευτερόλεπτα. Πατήστε Αναίρεση για να τη διατηρήσετε.</string>
     <string name="after_call_undo">Αναίρεση</string>
+    <string name="after_call_popup_title">Να διατηρηθεί αυτή η ηχογράφηση;</string>
+    <string name="after_call_just_now">μόλις τώρα</string>
+    <string name="after_call_popup_call">Κλήση</string>
 </resources>

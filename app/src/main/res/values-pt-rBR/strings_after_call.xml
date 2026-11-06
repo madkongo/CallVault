@@ -11,4 +11,7 @@
     <string name="after_call_deleted_title">Gravação excluída</string>
     <string name="after_call_deleted_text">Ela será removida em alguns segundos. Toque em Desfazer para mantê-la.</string>
     <string name="after_call_undo">Desfazer</string>
+    <string name="after_call_popup_title">Manter esta gravação?</string>
+    <string name="after_call_just_now">agora mesmo</string>
+    <string name="after_call_popup_call">Ligação</string>
 </resources>

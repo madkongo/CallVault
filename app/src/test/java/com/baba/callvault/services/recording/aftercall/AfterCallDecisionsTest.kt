@@ -109,6 +109,21 @@ class AfterCallDecisionsTest {
     }
 
     @Test
+    fun `the pop-up asks about the oldest recording not already being deleted`() {
+        AfterCallDecisions.hold(context, "newer.ogg", uri, "audio/ogg", isVoip = false, askedAt = 300L)
+        AfterCallDecisions.hold(context, "oldest.ogg", uri, "audio/ogg", isVoip = false, askedAt = 100L)
+        AfterCallDecisions.hold(context, "middle.ogg", uri, "audio/ogg", isVoip = false, askedAt = 200L)
+        AfterCallDecisions.setDeleteRequested(context, "oldest.ogg", true)
+
+        assertEquals("middle.ogg", AfterCallDecisions.nextToAsk(context)?.displayName)
+    }
+
+    @Test
+    fun `nothing to ask when nothing is waiting`() {
+        assertNull(AfterCallDecisions.nextToAsk(context))
+    }
+
+    @Test
     fun `a corrupt entry reads as not waiting rather than throwing`() {
         context.getSharedPreferences("cv_after_call_decisions", Context.MODE_PRIVATE)
             .edit().putString(name, "{not json").commit()

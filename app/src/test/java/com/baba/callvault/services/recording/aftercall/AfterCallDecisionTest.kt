@@ -22,6 +22,8 @@ import androidx.work.WorkManager
 import androidx.work.testing.SynchronousExecutor
 import androidx.work.testing.WorkManagerTestInitHelper
 import com.baba.callvault.data.AppPreferences
+import com.baba.callvault.AfterCallQuestionActivity
+import com.baba.callvault.data.AppPreferences.AfterCallAskStyle
 import com.baba.callvault.data.AppPreferences.AfterCallMode
 import com.baba.callvault.data.recordings.RecordingCatalog
 import kotlinx.coroutines.runBlocking
@@ -37,6 +39,7 @@ import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
 import org.robolectric.Shadows.shadowOf
 import org.robolectric.annotation.Config
+import org.robolectric.shadows.ShadowSettings
 
 /** What each answer does to the held entry and the delayed work. */
 @RunWith(RobolectricTestRunner::class)
@@ -60,7 +63,11 @@ class AfterCallDecisionTest {
     }
 
     @After
-    fun tearDown() = prefs.setAfterCallMode(AfterCallMode.KEEP)
+    fun tearDown() {
+        prefs.setAfterCallMode(AfterCallMode.KEEP)
+        prefs.setAfterCallAskStyle(AfterCallAskStyle.NOTIFICATION)
+        ShadowSettings.setCanDrawOverlays(false)
+    }
 
     @Test
     fun `keep mode never holds`() {
@@ -200,6 +207,40 @@ class AfterCallDecisionTest {
         AfterCallDecision.dismissed(context, name)
 
         assertTrue(AfterCallDecisions.peek(context, name)!!.dismissed)
+    }
+
+    @Test
+    fun `the call-end question opens the pop-up when chosen and allowed`() {
+        AfterCallDecisions.hold(context, name, uri, "audio/ogg", isVoip = false)
+        prefs.setAfterCallAskStyle(AfterCallAskStyle.POPUP)
+        ShadowSettings.setCanDrawOverlays(true)
+
+        AfterCallDecision.ask(context, name)
+
+        val started = shadowOf(context as Application).nextStartedActivity
+        assertEquals(AfterCallQuestionActivity::class.java.name, started?.component?.className)
+    }
+
+    @Test
+    fun `without the overlay permission only the notification asks`() {
+        AfterCallDecisions.hold(context, name, uri, "audio/ogg", isVoip = false)
+        prefs.setAfterCallAskStyle(AfterCallAskStyle.POPUP)
+        ShadowSettings.setCanDrawOverlays(false)
+
+        AfterCallDecision.ask(context, name)
+
+        assertNull(shadowOf(context as Application).nextStartedActivity)
+    }
+
+    @Test
+    fun `startup never opens the pop-up`() {
+        AfterCallDecisions.hold(context, name, uri, "audio/ogg", isVoip = false)
+        prefs.setAfterCallAskStyle(AfterCallAskStyle.POPUP)
+        ShadowSettings.setCanDrawOverlays(true)
+
+        AfterCallDecision.reconcile(context)
+
+        assertNull(shadowOf(context as Application).nextStartedActivity)
     }
 
     private fun state(uniqueName: String): WorkInfo.State? =

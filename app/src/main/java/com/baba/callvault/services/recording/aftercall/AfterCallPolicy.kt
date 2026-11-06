@@ -9,6 +9,7 @@
 package com.baba.callvault.services.recording.aftercall
 
 import android.app.NotificationManager
+import com.baba.callvault.data.AppPreferences.AfterCallAskStyle
 import com.baba.callvault.data.AppPreferences.AfterCallMode
 import com.baba.callvault.data.AppPreferences.AfterCallUnanswered
 import java.util.Locale
@@ -77,6 +78,14 @@ object AfterCallPolicy {
      */
     fun canShowQuestion(hasPermission: Boolean, notificationsEnabled: Boolean, channelImportance: Int?): Boolean =
         hasPermission && notificationsEnabled && channelImportance != NotificationManager.IMPORTANCE_NONE
+
+    /**
+     * Whether a fresh call-end question also opens the pop-up. Only for the Pop-up style, only with the
+     * overlay permission (it is what lets a background app open a window at all), and never over the lock
+     * screen — a locked phone gets the notification, which the lock screen already shows without the name.
+     */
+    fun shouldPopUp(style: AfterCallAskStyle, canDrawOverlays: Boolean, keyguardLocked: Boolean): Boolean =
+        style == AfterCallAskStyle.POPUP && canDrawOverlays && !keyguardLocked
 
     /** Hold only when the user asked to be asked AND the question can be shown. */
     fun shouldHold(mode: AfterCallMode, canShowQuestion: Boolean): Boolean = shouldAsk(mode) && canShowQuestion

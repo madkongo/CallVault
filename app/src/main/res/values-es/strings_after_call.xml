@@ -11,4 +11,7 @@
     <string name="after_call_deleted_title">Grabación eliminada</string>
     <string name="after_call_deleted_text">Se eliminará en unos segundos. Toca Deshacer para conservarla.</string>
     <string name="after_call_undo">Deshacer</string>
+    <string name="after_call_popup_title">¿Conservar esta grabación?</string>
+    <string name="after_call_just_now">ahora mismo</string>
+    <string name="after_call_popup_call">Llamada</string>
 </resources>

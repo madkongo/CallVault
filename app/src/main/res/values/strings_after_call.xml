@@ -11,4 +11,7 @@
     <string name="after_call_deleted_title">Recording deleted</string>
     <string name="after_call_deleted_text">It goes in a few seconds. Tap Undo to keep it.</string>
     <string name="after_call_undo">Undo</string>
+    <string name="after_call_popup_title">Keep this recording?</string>
+    <string name="after_call_just_now">just now</string>
+    <string name="after_call_popup_call">Call</string>
 </resources>
