@@ -8,6 +8,9 @@
 
 package com.baba.callvault.services.recording
 
+import com.baba.callvault.services.recording.aftercall.AfterCallDecision
+import com.baba.callvault.services.recording.aftercall.AfterCallDecisions
+import com.baba.callvault.services.recording.aftercall.AfterCallPolicy
 import android.content.Context
 import android.media.AudioDeviceInfo
 import android.media.AudioManager
@@ -814,6 +817,11 @@ object VoipRecordingCoordinator {
                             return@runCatching
                         }
                     }
+                    // Keep or delete after the call: decided once, here, before the catalog row, so no
+                    // sweep can copy or transcribe it in between. A hold that cannot be stored falls back
+                    // to keeping, as on the carrier path.
+                    val isHeld = AfterCallPolicy.shouldAsk(AppPreferences(context).getAfterCallMode()) &&
+                        AfterCallDecisions.hold(context, name, safUri, codecMime, isVoip = true)
                     RecordingCatalog.recordLocal(context, name, safUri, size, System.currentTimeMillis())
                     // Marks collected during the call, keyed to the final name — the same rule the
                     // carrier path follows and for the same reason.
@@ -853,8 +861,9 @@ object VoipRecordingCoordinator {
                             nearChannel = "A"
                         )
                     }
-                    // Same order as the carrier path: catalog first, then queue.
-                    TranscriptionScheduler.transcribeAfterCallIfEnabled(context, name)
+                    // Same order as the carrier path: catalog first, then queue. Not while a keep-or-delete
+                    // answer is pending: AfterCallDecision.keep queues it then.
+                    if (!isHeld) TranscriptionScheduler.transcribeAfterCallIfEnabled(context, name)
                     // Draw it now rather than when the user opens it: this phone has just come
                     // off a call, and they have not asked to wait for anything yet.
                     WaveformDrawWorker.enqueue(context, name, safUri)
@@ -886,6 +895,11 @@ object VoipRecordingCoordinator {
                         }.onFailure { AppLogger.w(TAG, "Could not record setup health for '$name': ${it.message}") }
                     }
                     AppLogger.i(TAG, "VoIP recording catalogued: $name ($size bytes)")
+                    if (isHeld) {
+                        // The Drive copy and the details-file copy wait for the answer too; Keep runs them.
+                        AfterCallDecision.ask(context, name)
+                        return@runCatching
+                    }
                     StorageRouter.route(context, safUri, name, codecMime)
                     // Route the .json details to Drive too (issue #49). The sidecar was written
                     // earlier in this block, so it exists by now. IMMEDIATE only; the sweep handles

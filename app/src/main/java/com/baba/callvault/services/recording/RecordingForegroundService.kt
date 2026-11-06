@@ -9,6 +9,9 @@
 
 package com.baba.callvault.services.recording
 
+import com.baba.callvault.services.recording.aftercall.AfterCallDecision
+import com.baba.callvault.services.recording.aftercall.AfterCallDecisions
+import com.baba.callvault.services.recording.aftercall.AfterCallPolicy
 import android.app.Notification
 import android.app.Service
 import android.content.Context
@@ -841,6 +844,13 @@ class RecordingForegroundService : Service() {
             }
         }
 
+        // Keep or delete after the call: decided ONCE, here, and both halves below follow it — the catalog
+        // coroutine (details-file copy, transcription) and the synchronous Drive route after it. Held
+        // before either starts, so no sweep can copy it in between. A hold that cannot be stored falls back
+        // to keeping: a recording stranded with no question and no hand-offs would be the worse failure.
+        val isHeld = AfterCallPolicy.shouldAsk(AppPreferences(this).getAfterCallMode()) &&
+            AfterCallDecisions.hold(applicationContext, name, uri, mimeType, isVoip = false)
+
         // Record this finished recording in CallVault's own catalog (the Home list's source of truth).
         // The file is on the device now, so this is the local copy; the copy/sweep workers later stamp
         // the Drive copy onto this same row by name. Done on a detached IO scope because the service may
@@ -868,23 +878,30 @@ class RecordingForegroundService : Service() {
             // sit beside nothing and be invisible to every tool that looks for it. After the turns
             // above, so the `callvault` block can carry them.
             writeMetadataSidecar(name, lastModified, "com.android.phone")
-            // Route the .json details to Drive too (issue #49). Must be here, after the write above,
-            // because the audio's StorageRouter.route runs synchronously below while this coroutine is
-            // still going — routing the sidecar from there could fire before the file exists. In
-            // IMMEDIATE mode only; DAILY/WEEKLY copy it in the folder sweep. No-op if the user did not
-            // ask for a details file (nothing to find).
-            StorageRouter.routeSidecar(
-                applicationContext, name, MetadataSidecar.sidecarNameFor(name), "application/json"
-            )
-            // After the catalog entry exists, never before: the transcription runner resolves the
-            // audio through the catalog, so queueing first would race it to "no longer in the catalog".
-            TranscriptionScheduler.transcribeAfterCallIfEnabled(applicationContext, name)
+            // While a keep-or-delete answer is pending, neither hand-off runs: AfterCallDecision.keep
+            // runs both (and the Drive route below) once the user says keep.
+            if (!isHeld) {
+                // Route the .json details to Drive too (issue #49). Must be here, after the write above,
+                // because the audio's StorageRouter.route runs synchronously below while this coroutine is
+                // still going — routing the sidecar from there could fire before the file exists. In
+                // IMMEDIATE mode only; DAILY/WEEKLY copy it in the folder sweep. No-op if the user did not
+                // ask for a details file (nothing to find).
+                StorageRouter.routeSidecar(
+                    applicationContext, name, MetadataSidecar.sidecarNameFor(name), "application/json"
+                )
+                // After the catalog entry exists, never before: the transcription runner resolves the
+                // audio through the catalog, so queueing first would race it to "no longer in the catalog".
+                TranscriptionScheduler.transcribeAfterCallIfEnabled(applicationContext, name)
+            }
             // Draw it now rather than when the user opens it: this phone has just come
             // off a call, and they have not asked to wait for anything yet.
             WaveformDrawWorker.enqueue(applicationContext, name, uri)
+            // Last, once the catalog row exists: Keep runs the transcription, which resolves the audio
+            // through the catalog and would otherwise race it.
+            if (isHeld) AfterCallDecision.ask(applicationContext, name)
         }
         recordHealth(sizeBytes, name)
-        StorageRouter.route(applicationContext, uri, name, mimeType)
+        if (!isHeld) StorageRouter.route(applicationContext, uri, name, mimeType)
     }
 
     /**

@@ -8,6 +8,8 @@
 
 package com.baba.callvault.system.storage
 
+import com.baba.callvault.services.recording.aftercall.AfterCallDecisions
+import com.baba.callvault.services.recording.aftercall.AfterCallPolicy
 import android.content.Context
 import androidx.documentfile.provider.DocumentFile
 import androidx.work.CoroutineWorker
@@ -81,6 +83,10 @@ class SyncSweepWorker(ctx: Context, params: WorkerParameters) : CoroutineWorker(
         var skipped = 0
         // First pass: what Drive already has is stamped; the rest is collected and uploaded below, newest first.
         val pending = ArrayList<DriveSweepOrder.Pending<SweepFile>>()
+        // Recordings still waiting for a keep-or-delete answer, read once per run. Neither they nor their
+        // sidecars go to Drive until the user says keep: copying one they then delete would leave the call
+        // in the cloud, and under DRIVE-only the copy would take it off the phone before they had answered.
+        val heldNames = AfterCallDecisions.pendingNames(applicationContext)
         for (file in sourceDir.listFiles()) {
             val name = file.name ?: continue
             if (!file.isFile) continue
@@ -94,6 +100,7 @@ class SyncSweepWorker(ctx: Context, params: WorkerParameters) : CoroutineWorker(
             // Nor is a file the user imported: their own audio, which in DRIVE-only mode this sweep
             // would upload and then delete from the phone. See [CloudCopyPolicy.mayGoToCloud].
             if (!CloudCopyPolicy.mayGoToCloud(name)) continue
+            if (AfterCallPolicy.isHeldFile(name, heldNames)) continue
 
             val sourceSize = runCatching { file.length() }.getOrDefault(-1L)
             if (sourceSize <= 0L) {
