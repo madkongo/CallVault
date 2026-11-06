@@ -8,6 +8,12 @@
 
 package com.baba.callvault.ui.screens
 
+import com.baba.callvault.system.shareCallFiles
+import com.baba.callvault.data.share.SharePart
+import com.baba.callvault.data.share.ShareableCall
+import com.baba.callvault.data.share.CallSharePlan
+import androidx.core.net.toUri
+import androidx.core.content.FileProvider
 import android.content.Context
 import android.widget.Toast
 import androidx.compose.runtime.Composable
@@ -74,87 +80,6 @@ private suspend fun speakerNamesFor(
 )
 
 /**
- * The text one row has to offer, or null when it has none.
- *
- * The page decides which text, which is the whole difference between the two menus: Transcripts
- * shares the words, Summaries shares the summary. Both are the same strings the reading view would
- * show, from the same renderers.
- */
-private suspend fun textOf(
-    context: Context,
-    page: LibraryRowActions.Page,
-    displayName: String,
-    title: String,
-    speakers: LibrarySpeakerLabels,
-    exportLabels: ExportLabels,
-): String? = when (page) {
-    LibraryRowActions.Page.Transcripts ->
-        LibraryText.transcriptText(context, displayName, speakerNamesFor(context, title, speakers))
-
-    LibraryRowActions.Page.Summaries ->
-        LibraryText.summaryText(context, displayName, exportLabels)
-}
-
-/** Shares one row's text into the share sheet, as text rather than as a file. */
-internal suspend fun shareLibraryRow(
-    context: Context,
-    page: LibraryRowActions.Page,
-    displayName: String,
-    title: String,
-    speakers: LibrarySpeakerLabels,
-    exportLabels: ExportLabels,
-) {
-    val text = textOf(context, page, displayName, title, speakers, exportLabels)
-    if (text.isNullOrBlank()) {
-        reportNothingToShare(context)
-        return
-    }
-    context.sharePlainText(title, text)
-}
-
-/**
- * Shares the text of several rows as one message, or as one file when there is too much of it.
- *
- * See [BulkTextShare.MAX_INLINE_CHARS] for the crash this chooses between: a large selection put
- * straight into the Intent takes the whole app down at `startActivity` rather than reporting
- * anything. A file travels as a URI and has no such limit.
- *
- * @param subject what the message is called — the section's own title, so a selection of transcripts
- *   arrives called "Transcripts" rather than after whichever row happened to be first.
- */
-internal suspend fun shareLibraryRows(
-    context: Context,
-    page: LibraryRowActions.Page,
-    rows: List<Pair<String, String>>,
-    subject: String,
-    speakers: LibrarySpeakerLabels,
-    exportLabels: ExportLabels,
-) {
-    val items = rows.mapNotNull { (displayName, title) ->
-        textOf(context, page, displayName, title, speakers, exportLabels)
-            ?.let { BulkTextShare.Item(title = title, text = it) }
-    }
-    val joined = BulkTextShare.join(items)
-    if (joined.isBlank()) {
-        reportNothingToShare(context)
-        return
-    }
-
-    if (!BulkTextShare.mustBeAFile(joined)) {
-        context.sharePlainText(subject, joined)
-        return
-    }
-
-    val file = TranscriptExportFile.write(
-        context = context,
-        fileName = "$subject.${TranscriptFormat.TXT.extension}",
-        content = joined,
-    )
-    if (file == null) reportExportFailed(context)
-    else context.shareTranscriptFile(file, TranscriptFormat.TXT.mimeType)
-}
-
-/**
  * Writes one row's document in [format] and offers the file to the share sheet.
  *
  * The same three steps the reading view's export takes, in the same order and through the same
@@ -199,3 +124,94 @@ private fun reportNothingToShare(context: Context) {
 private fun reportExportFailed(context: Context) {
     Toast.makeText(context, R.string.transcript_export_failed, Toast.LENGTH_SHORT).show()
 }
+
+/** The words the Share sheet puts in headings and file names, in the user's language. */
+internal data class ShareWords(
+    val transcriptHeading: String,
+    val summaryHeading: String,
+    val transcriptFile: String,
+    val summaryFile: String,
+)
+
+@Composable
+internal fun rememberShareWords(): ShareWords = ShareWords(
+    transcriptHeading = stringResource(R.string.share_part_transcript),
+    summaryHeading = stringResource(R.string.share_part_summary),
+    transcriptFile = stringResource(R.string.share_file_word_transcript),
+    summaryFile = stringResource(R.string.share_file_word_summary),
+)
+
+/**
+ * What the one Share sheet sends, for one call or a selection. See [CallSharePlan] for the rules.
+ *
+ * @param subject the selection's name (the page title) when several calls go together; one call goes under its own.
+ */
+internal suspend fun shareCalls(
+    context: Context,
+    calls: List<ShareableCall>,
+    ticks: Set<SharePart>,
+    subject: String,
+    words: ShareWords,
+    speakers: LibrarySpeakerLabels,
+    exportLabels: ExportLabels,
+) {
+    suspend fun transcriptOf(call: ShareableCall): String? =
+        if (SharePart.TRANSCRIPT in ticks && call.hasTranscript) {
+            LibraryText.transcriptText(context, call.displayName, speakerNamesFor(context, call.title, speakers))
+        } else null
+
+    suspend fun summaryOf(call: ShareableCall): String? =
+        if (SharePart.SUMMARY in ticks && call.hasSummary) LibraryText.summaryText(context, call.displayName, exportLabels)
+        else null
+
+    val title = calls.singleOrNull()?.title ?: subject
+
+    if (!CallSharePlan.asFiles(ticks)) {
+        val items = calls.mapNotNull { call ->
+            CallSharePlan.combinedText(summaryOf(call), transcriptOf(call), words.summaryHeading, words.transcriptHeading)
+                ?.let { BulkTextShare.Item(title = call.title, text = it) }
+        }
+        // One call goes without its name on top, as the pages always sent it; several are joined under their names.
+        val text = items.singleOrNull()?.text ?: BulkTextShare.join(items)
+        if (text.isBlank()) {
+            reportNothingToShare(context)
+            return
+        }
+        if (!BulkTextShare.mustBeAFile(text)) {
+            context.sharePlainText(title, text)
+            return
+        }
+        val file = TranscriptExportFile.write(context, "$title.${TranscriptFormat.TXT.extension}", text)
+        if (file == null) reportExportFailed(context) else context.shareTranscriptFile(file, TranscriptFormat.TXT.mimeType)
+        return
+    }
+
+    // Files: each call's audio, then its text files named after it, so they stay together in the chat or folder.
+    val texts = mutableListOf<Pair<String, String>>()
+    val order = mutableListOf<Any>() // a Uri for audio, an index into texts for a text file
+    for (call in calls) {
+        call.audioUri?.let { order += it.toUri() }
+        transcriptOf(call)?.let { order += texts.size; texts += CallSharePlan.textFileName(call.displayName, words.transcriptFile) to it }
+        summaryOf(call)?.let { order += texts.size; texts += CallSharePlan.textFileName(call.displayName, words.summaryFile) to it }
+    }
+    val files = if (texts.isEmpty()) emptyList() else TranscriptExportFile.writeAll(context, texts)
+    if (files == null) {
+        reportExportFailed(context)
+        return
+    }
+    val authority = "${context.packageName}.fileprovider"
+    val uris = order.map { if (it is Int) FileProvider.getUriForFile(context, authority, files[it]) else it as android.net.Uri }
+    if (uris.isEmpty()) {
+        reportNothingToShare(context)
+        return
+    }
+    context.shareCallFiles(uris, title)
+}
+
+/** The part a library page is about, which its Share starts with ticked. */
+internal val LibraryRowActions.Page.sharePart: SharePart
+    get() = when (this) {
+        LibraryRowActions.Page.Transcripts -> SharePart.TRANSCRIPT
+        LibraryRowActions.Page.Summaries -> SharePart.SUMMARY
+    }
+

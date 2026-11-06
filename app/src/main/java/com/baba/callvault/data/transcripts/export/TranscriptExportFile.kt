@@ -38,16 +38,25 @@ object TranscriptExportFile {
      * Null rather than an exception because the caller is a tap: there is a person waiting, and the
      * honest response to "the cache is full" is a message, not a crash.
      */
-    fun write(context: Context, fileName: String, content: String): File? = runCatching {
+    fun write(context: Context, fileName: String, content: String): File? =
+        writeAll(context, listOf(fileName to content))?.single()
+
+    /**
+     * Writes several files for ONE share, clearing the folder once first, or returns null if any could not be
+     * written. [write] clears it on every call, so writing a call's transcript and then its summary through it
+     * would delete the transcript before the share sheet ever read it.
+     */
+    fun writeAll(context: Context, files: List<Pair<String, String>>): List<File>? = runCatching {
         val dir = File(context.cacheDir, DIRECTORY)
         if (dir.exists()) dir.listFiles()?.forEach { it.delete() } else dir.mkdirs()
 
-        // The name reaches here from a recording's display name, which is derived from a contact
-        // name and can therefore contain anything a contact can. A separator would write outside the
-        // shared folder; the rest are simply not valid on every filesystem the file may end up on.
-        val safe = fileName.replace(Regex("[/\\\\:*?\"<>|]"), "_")
-
-        File(dir, safe).apply { writeText(content) }
+        files.map { (fileName, content) ->
+            // The name reaches here from a recording's display name, which is derived from a contact
+            // name and can therefore contain anything a contact can. A separator would write outside the
+            // shared folder; the rest are simply not valid on every filesystem the file may end up on.
+            val safe = fileName.replace(Regex("[/\\\\:*?\"<>|]"), "_")
+            File(dir, safe).apply { writeText(content) }
+        }
     }.getOrElse {
         AppLogger.w(TAG, "Could not write the export: ${it.message}")
         null

@@ -84,5 +84,8 @@ object RecordingSelection {
      * are the same audio. Sharing both would attach the same call twice.
      */
     fun urisToShare(selected: List<RecordingItem>): List<Uri> =
-        selected.map { it.localUri ?: it.driveUri ?: it.uri }.distinct()
+        selected.map { shareUriOf(it) }.distinct()
+
+    /** The copy a share sends: the device copy when there is one, else Drive's. */
+    fun shareUriOf(item: RecordingItem): Uri = item.localUri ?: item.driveUri ?: item.uri
 }

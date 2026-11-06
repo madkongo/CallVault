@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- The one Share sheet (recording, transcript, summary). -->
+<resources>
+    <string name="share_sheet_title_one">اشتراک‌گذاری «%1$s»</string>
+    <string name="share_sheet_title_many">اشتراک‌گذاری موارد انتخاب‌شده (%1$d)</string>
+    <string name="share_sheet_button">اشتراک‌گذاری</string>
+    <string name="share_part_recording">ضبط</string>
+    <string name="share_part_transcript">متن گفتگو</string>
+    <string name="share_part_summary">خلاصه</string>
+    <string name="share_part_recording_hint">فایل صوتی</string>
+    <string name="share_part_text_message_hint">به‌صورت پیام</string>
+    <string name="share_part_text_file_hint">فایل متنی، کنار ضبط</string>
+    <string name="share_part_missing_one">این تماس آن را ندارد</string>
+    <string name="share_part_missing_many">هیچ‌کدام از این تماس‌ها آن را ندارند</string>
+    <string name="share_file_word_transcript">متن گفتگو</string>
+    <string name="share_file_word_summary">خلاصه</string>
+</resources>

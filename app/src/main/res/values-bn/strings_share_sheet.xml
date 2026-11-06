@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- The one Share sheet (recording, transcript, summary). -->
+<resources>
+    <string name="share_sheet_title_one">“%1$s” শেয়ার করুন</string>
+    <string name="share_sheet_title_many">নির্বাচিতগুলো শেয়ার করুন (%1$d)</string>
+    <string name="share_sheet_button">শেয়ার</string>
+    <string name="share_part_recording">রেকর্ডিং</string>
+    <string name="share_part_transcript">ট্রান্সক্রিপ্ট</string>
+    <string name="share_part_summary">সারাংশ</string>
+    <string name="share_part_recording_hint">অডিও ফাইল</string>
+    <string name="share_part_text_message_hint">বার্তা হিসেবে</string>
+    <string name="share_part_text_file_hint">টেক্সট ফাইল, রেকর্ডিংয়ের পাশে</string>
+    <string name="share_part_missing_one">এই কলের এটি নেই</string>
+    <string name="share_part_missing_many">এই কলগুলোর কোনোটিরই এটি নেই</string>
+    <string name="share_file_word_transcript">ট্রান্সক্রিপ্ট</string>
+    <string name="share_file_word_summary">সারাংশ</string>
+</resources>
