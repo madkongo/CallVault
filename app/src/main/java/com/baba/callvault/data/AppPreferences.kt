@@ -47,6 +47,7 @@ class AppPreferences(context: Context) {
         internal val EXPORTABLE_KEYS: Set<String> = setOf(
             // Recording automation
             "carrier_recording_enabled", "auto_record_incoming", "auto_record_outgoing", "record_from_answer",
+            "after_call_mode", "after_call_ask_style", "after_call_unanswered",
             // Who to record / ignore
             "ignore_anonymous_incoming", "ignore_cross_country_incoming", "ignore_cross_country_outgoing",
             "ignore_contacts_mode_incoming", "ignore_contacts_mode_outgoing",
@@ -145,6 +146,13 @@ class AppPreferences(context: Context) {
         const val AUTO_RECORD_INCOMING = false
         const val AUTO_RECORD_OUTGOING = false
         const val RECORD_FROM_ANSWER = false
+
+        // --- Keep or delete after the call ---
+        // KEEP is how CallVault has always behaved; asking is opted into. The other two only matter once
+        // the user has chosen ASK, so their defaults are the gentlest ones: a notification, and keep.
+        val AFTER_CALL_MODE = AfterCallMode.KEEP
+        val AFTER_CALL_ASK_STYLE = AfterCallAskStyle.NOTIFICATION
+        val AFTER_CALL_UNANSWERED = AfterCallUnanswered.KEEP
         
         // --- Filters & Contacts ---
         const val IGNORE_ANONYMOUS_INCOMING = false
@@ -408,6 +416,9 @@ class AppPreferences(context: Context) {
         AUTO_RECORD_INCOMING("auto_record_incoming"),
         AUTO_RECORD_OUTGOING("auto_record_outgoing"),
         RECORD_FROM_ANSWER("record_from_answer"),
+        AFTER_CALL_MODE("after_call_mode"),
+        AFTER_CALL_ASK_STYLE("after_call_ask_style"),
+        AFTER_CALL_UNANSWERED("after_call_unanswered"),
         
         // --- Filters & Contacts ---
         IGNORE_ANONYMOUS_INCOMING("ignore_anonymous_incoming"),
@@ -511,6 +522,47 @@ class AppPreferences(context: Context) {
              * @return The matching [ThemeMode], or throws an error if unrecognized.
              */
             fun fromKey(key: String?): ThemeMode = entries.firstOrNull { it.key == key } ?: throw IllegalArgumentException("Unknown ThemeMode key: $key")
+        }
+    }
+
+    /**
+     * What happens to a recording when the call ends (keep-or-delete, 2026-11-06).
+     *
+     * Unlike the older enums, an unknown key falls back to [KEEP] instead of throwing: settings import
+     * writes strings without validating them, and the safe reading of a value we do not understand is
+     * the one that never loses a recording.
+     */
+    enum class AfterCallMode(val key: String) {
+        /** Keep every recording, as CallVault always has. */
+        KEEP("keep"),
+        /** Ask "keep or delete?" after each recorded call; hand-offs wait for the answer. */
+        ASK("ask");
+
+        companion object {
+            fun fromKey(key: String?): AfterCallMode = entries.firstOrNull { it.key == key } ?: KEEP
+        }
+    }
+
+    /**
+     * How the after-call question is asked when [AfterCallMode.ASK] is on. The notification is posted
+     * either way; [POPUP] adds a window over the screen when the overlay permission allows it.
+     */
+    enum class AfterCallAskStyle(val key: String) {
+        NOTIFICATION("notification"),
+        POPUP("popup");
+
+        companion object {
+            fun fromKey(key: String?): AfterCallAskStyle = entries.firstOrNull { it.key == key } ?: NOTIFICATION
+        }
+    }
+
+    /** What happens to a recording whose after-call question was never answered. */
+    enum class AfterCallUnanswered(val key: String) {
+        KEEP("keep"),
+        DELETE_AFTER_24H("delete_after_24h");
+
+        companion object {
+            fun fromKey(key: String?): AfterCallUnanswered = entries.firstOrNull { it.key == key } ?: KEEP
         }
     }
 
@@ -1357,6 +1409,23 @@ class AppPreferences(context: Context) {
     fun isRecordFromAnswerEnabled() = getBoolean(Key.RECORD_FROM_ANSWER, DefaultsValue.RECORD_FROM_ANSWER)
 
     fun setRecordFromAnswerEnabled(enabled: Boolean) = setBoolean(Key.RECORD_FROM_ANSWER, enabled)
+
+    // -------- Keep or delete after the call --------
+
+    /** Whether a finished recording is kept outright or held for a keep-or-delete answer. */
+    fun getAfterCallMode() = AfterCallMode.fromKey(getString(Key.AFTER_CALL_MODE, DefaultsValue.AFTER_CALL_MODE.key))
+
+    fun setAfterCallMode(mode: AfterCallMode) = setString(Key.AFTER_CALL_MODE, mode.key)
+
+    /** How the keep-or-delete question is asked. */
+    fun getAfterCallAskStyle() = AfterCallAskStyle.fromKey(getString(Key.AFTER_CALL_ASK_STYLE, DefaultsValue.AFTER_CALL_ASK_STYLE.key))
+
+    fun setAfterCallAskStyle(style: AfterCallAskStyle) = setString(Key.AFTER_CALL_ASK_STYLE, style.key)
+
+    /** What becomes of a recording whose question is never answered. */
+    fun getAfterCallUnanswered() = AfterCallUnanswered.fromKey(getString(Key.AFTER_CALL_UNANSWERED, DefaultsValue.AFTER_CALL_UNANSWERED.key))
+
+    fun setAfterCallUnanswered(choice: AfterCallUnanswered) = setString(Key.AFTER_CALL_UNANSWERED, choice.key)
 
     // -------- Filters & Contacts --------
 

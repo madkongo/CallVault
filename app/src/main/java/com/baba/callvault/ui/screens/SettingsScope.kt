@@ -144,7 +144,7 @@ object SettingsGroups {
         SettingsGroup.CALLS_TO_RECORD -> listOf(
             "carrier_recording_enabled", "voip_recording_enabled", "voip_recording", "voip_excluded_packages",
             "auto_record_incoming", "auto_record_outgoing", "record_from_answer", "voip_auto_start",
-            "vibration_enabled",
+            "vibration_enabled", "after_call_mode", "after_call_ask_style", "after_call_unanswered",
         )
         SettingsGroup.CALLS_TO_SKIP -> listOf(
             "ignore_contacts_mode_incoming", "ignore_contacts_mode_outgoing",
