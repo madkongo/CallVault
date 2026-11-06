@@ -8,6 +8,7 @@
 
 package com.baba.callvault.ui.screens
 
+import com.baba.callvault.ui.common.rememberResumeCount
 import android.provider.Settings
 import com.baba.callvault.integrations.adb.WirelessDebuggingMode
 import androidx.compose.animation.AnimatedVisibility
@@ -394,7 +395,9 @@ internal fun UsbDefaultConfigRow() {
     // Refresh the live value once when shown (readViaShell connects+retries internally); falls back to
     // the shown cached value on failure. Not even attempted when unsupported: readViaShell now refuses
     // it anyway, but a probe nobody can act on has no business spending a coroutine either.
-    LaunchedEffect(supported) {
+    // And again on coming back, since the setting is changed in Developer options, outside the app.
+    val resumes = rememberResumeCount()
+    LaunchedEffect(supported, resumes) {
         if (!supported) return@LaunchedEffect
         withContext(Dispatchers.IO) { UsbDefaultConfig.readViaShell(context) }?.let { mode = it }
     }

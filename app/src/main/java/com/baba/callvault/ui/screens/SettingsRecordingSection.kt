@@ -8,6 +8,7 @@
 
 package com.baba.callvault.ui.screens
 
+import com.baba.callvault.ui.common.rememberResumeCount
 import android.os.Build
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.expandVertically
@@ -278,7 +279,9 @@ internal fun VoipAppPicker(prefs: AppPreferences) {
     var excluded by remember { mutableStateOf(prefs.getVoipExcludedPackages()) }
     var expanded by remember { mutableStateOf(false) }
 
-    LaunchedEffect(Unit) {
+    // Re-read on coming back: a calling app installed while away should be in the list.
+    val resumes = rememberResumeCount()
+    LaunchedEffect(resumes) {
         apps = withContext(Dispatchers.IO) { VoipAppList.installedCallingApps(context) }
     }
 
