@@ -37,12 +37,14 @@ internal object AfterCallText {
         return head + SEPARATOR + duration
     }
 
-    /** The pop-up's line under "Keep this recording?": "Dana · 4:07 · just now". */
+    /**
+     * The pop-up's line under "Keep this recording?": "Dana · 4:07". No "just now": the card can be looked at
+     * long after the call, behind other calls' questions.
+     */
     fun popupSubtitle(context: Context, displayName: String, durationMs: Long): String {
         val (party, app) = whoOf(displayName)
         val who = party ?: app ?: context.getString(R.string.after_call_popup_call)
-        return listOfNotNull(who, AfterCallPolicy.formatDuration(durationMs), context.getString(R.string.after_call_just_now))
-            .joinToString(SEPARATOR)
+        return listOfNotNull(who, AfterCallPolicy.formatDuration(durationMs)).joinToString(SEPARATOR)
     }
 
     /** The recording's length from its container; 0 (unknown, omitted) when it cannot be read. Blocking. */

@@ -81,7 +81,14 @@ internal fun AutoRecordStep(
                 SettingsToggleRow(
                     label = stringResource(R.string.wizard_after_call_ask_label),
                     checked = askAfterCall,
-                    onCheckedChange = { on -> if (on) enabler.request() else onAskAfterCallChange(false) },
+                    onCheckedChange = { on ->
+                        if (on) {
+                            enabler.request()
+                        } else {
+                            enabler.cancel()
+                            onAskAfterCallChange(false)
+                        }
+                    },
                     description = stringResource(R.string.wizard_after_call_ask_desc)
                 )
                 if (enabler.isWaiting && !askAfterCall) SettingsHint(stringResource(R.string.settings_after_call_needs_notifications))

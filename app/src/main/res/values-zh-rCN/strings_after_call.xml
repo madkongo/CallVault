@@ -12,6 +12,5 @@
     <string name="after_call_deleted_text">几秒后将被移除。点按“撤消”可保留。</string>
     <string name="after_call_undo">撤消</string>
     <string name="after_call_popup_title">保留这段录音？</string>
-    <string name="after_call_just_now">刚刚</string>
     <string name="after_call_popup_call">通话</string>
 </resources>

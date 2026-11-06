@@ -12,6 +12,5 @@
     <string name="after_call_deleted_text">Bản ghi sẽ bị xoá sau vài giây. Nhấn Hoàn tác để giữ lại.</string>
     <string name="after_call_undo">Hoàn tác</string>
     <string name="after_call_popup_title">Giữ bản ghi này?</string>
-    <string name="after_call_just_now">vừa xong</string>
     <string name="after_call_popup_call">Cuộc gọi</string>
 </resources>

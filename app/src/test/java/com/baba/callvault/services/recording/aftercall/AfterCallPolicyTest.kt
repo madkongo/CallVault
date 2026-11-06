@@ -85,6 +85,13 @@ class AfterCallPolicyTest {
     }
 
     @Test
+    fun `the pop-up ignores taps right after a card appears`() {
+        assertFalse(AfterCallPolicy.acceptsTap(shownAtMs = 1_000L, nowMs = 1_000L))
+        assertFalse(AfterCallPolicy.acceptsTap(shownAtMs = 1_000L, nowMs = 1_000L + AfterCallPolicy.TAP_GUARD_MS - 1))
+        assertTrue(AfterCallPolicy.acceptsTap(shownAtMs = 1_000L, nowMs = 1_000L + AfterCallPolicy.TAP_GUARD_MS))
+    }
+
+    @Test
     fun `a recording is held only when asking is on and the question can be shown`() {
         assertTrue(AfterCallPolicy.shouldHold(AfterCallMode.ASK, canShowQuestion = true))
         assertFalse("an unseeable question means keep", AfterCallPolicy.shouldHold(AfterCallMode.ASK, canShowQuestion = false))

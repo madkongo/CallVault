@@ -12,6 +12,5 @@
     <string name="after_call_deleted_text">سيُحذف خلال ثوانٍ. اضغط تراجع للاحتفاظ به.</string>
     <string name="after_call_undo">تراجع</string>
     <string name="after_call_popup_title">هل تحتفظ بهذا التسجيل؟</string>
-    <string name="after_call_just_now">الآن</string>
     <string name="after_call_popup_call">مكالمة</string>
 </resources>

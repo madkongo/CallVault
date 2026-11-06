@@ -22,7 +22,6 @@ import androidx.work.WorkManager
 import androidx.work.testing.SynchronousExecutor
 import androidx.work.testing.WorkManagerTestInitHelper
 import com.baba.callvault.data.AppPreferences
-import com.baba.callvault.AfterCallQuestionActivity
 import com.baba.callvault.data.AppPreferences.AfterCallAskStyle
 import com.baba.callvault.data.AppPreferences.AfterCallMode
 import com.baba.callvault.data.recordings.RecordingCatalog
@@ -50,6 +49,8 @@ class AfterCallDecisionTest {
     private val name = "20261106_101500_in_0501234567.ogg"
     private val uri = "content://test/tree/doc/$name".toUri()
     private val prefs = AppPreferences(context)
+    private var popUps = 0
+    private var realOpener: (Context) -> Unit = {}
 
     @Before
     fun setUp() = runBlocking {
@@ -58,12 +59,18 @@ class AfterCallDecisionTest {
             Configuration.Builder().setMinimumLoggingLevel(Log.DEBUG).setExecutor(SynchronousExecutor()).build(),
         )
         shadowOf(context as Application).grantPermissions(Manifest.permission.POST_NOTIFICATIONS)
+        popUps = 0
+        realOpener = AfterCallDecision.popUpOpener
+        AfterCallDecision.popUpOpener = { popUps++ }
+        // Asking is on unless a test says otherwise: startup keeps every waiting recording when it is off.
+        prefs.setAfterCallMode(AfterCallMode.ASK)
         AfterCallDecisions.pendingNames(context).forEach { AfterCallDecisions.release(context, it) }
         RecordingCatalog.all(context).forEach { RecordingCatalog.removeName(context, it.displayName) }
     }
 
     @After
     fun tearDown() {
+        AfterCallDecision.popUpOpener = realOpener
         prefs.setAfterCallMode(AfterCallMode.KEEP)
         prefs.setAfterCallAskStyle(AfterCallAskStyle.NOTIFICATION)
         ShadowSettings.setCanDrawOverlays(false)
@@ -141,7 +148,7 @@ class AfterCallDecisionTest {
         assertTrue(kept)
         assertNull(AfterCallDecisions.peek(context, name))
         assertEquals(WorkInfo.State.CANCELLED, state("after_call_unanswered_$name"))
-        assertEquals(WorkInfo.State.SUCCEEDED, state("after_call_keep_$name"))
+        assertNotNull("the hand-offs are handed to a worker", state("after_call_keep_$name"))
     }
 
     @Test
@@ -217,8 +224,7 @@ class AfterCallDecisionTest {
 
         AfterCallDecision.ask(context, name)
 
-        val started = shadowOf(context as Application).nextStartedActivity
-        assertEquals(AfterCallQuestionActivity::class.java.name, started?.component?.className)
+        assertEquals(1, popUps)
     }
 
     @Test
@@ -229,7 +235,7 @@ class AfterCallDecisionTest {
 
         AfterCallDecision.ask(context, name)
 
-        assertNull(shadowOf(context as Application).nextStartedActivity)
+        assertEquals(0, popUps)
     }
 
     @Test
@@ -240,7 +246,7 @@ class AfterCallDecisionTest {
 
         AfterCallDecision.reconcile(context)
 
-        assertNull(shadowOf(context as Application).nextStartedActivity)
+        assertEquals(0, popUps)
     }
 
     @Test
@@ -255,6 +261,40 @@ class AfterCallDecisionTest {
         assertEquals(AfterCallMode.KEEP, prefs.getAfterCallMode())
         assertTrue(kept >= 0)
         assertTrue(AfterCallDecisions.pendingNames(context).isEmpty())
+    }
+
+    @Test
+    fun `keep all leaves a recording whose delete was tapped to its delete`() {
+        AfterCallDecisions.hold(context, "kept.ogg", uri, "audio/ogg", isVoip = false)
+        AfterCallDecisions.hold(context, name, uri, "audio/ogg", isVoip = false)
+        AfterCallDecisions.setDeleteRequested(context, name, true)
+
+        assertEquals(1, AfterCallDecision.keepAll(context))
+
+        assertEquals(setOf(name), AfterCallDecisions.pendingNames(context))
+    }
+
+    @Test
+    fun `startup with asking off keeps leftovers but lets a tapped delete finish`() {
+        prefs.setAfterCallMode(AfterCallMode.KEEP)
+        AfterCallDecisions.hold(context, "leftover.ogg", uri, "audio/ogg", isVoip = false)
+        AfterCallDecisions.hold(context, name, uri, "audio/ogg", isVoip = false)
+        AfterCallDecisions.setDeleteRequested(context, name, true)
+
+        AfterCallDecision.reconcile(context)
+
+        assertEquals(setOf(name), AfterCallDecisions.pendingNames(context))
+        assertEquals(WorkInfo.State.ENQUEUED, state("after_call_delete_$name"))
+    }
+
+    @Test
+    fun `startup with asking on keeps waiting entries waiting`() {
+        prefs.setAfterCallMode(AfterCallMode.ASK)
+        AfterCallDecisions.hold(context, name, uri, "audio/ogg", isVoip = false)
+
+        AfterCallDecision.reconcile(context)
+
+        assertNotNull(AfterCallDecisions.peek(context, name))
     }
 
     private fun state(uniqueName: String): WorkInfo.State? =

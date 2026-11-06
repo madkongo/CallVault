@@ -48,15 +48,17 @@ private const val TAG = "CV:AfterCallSettings"
  * [request] switches it on at once when notifications work and otherwise asks for them: the runtime
  * permission on Android 13+, else the app's (or, when only our channel is blocked, the channel's) notification
  * settings. The setting stays on Keep meanwhile; when the user comes back with notifications allowed, it
- * switches on by itself. [isWaiting] says a request is open, for the one-line note under the control.
+ * switches on by itself. [isWaiting] says a request is open, for the one-line note under the control; [cancel]
+ * drops it, so a user who chose Keep in the meantime is not switched to Ask behind their back on return.
  */
-internal class AfterCallAskEnabler(val request: () -> Unit, val isWaiting: Boolean)
+internal class AfterCallAskEnabler(val request: () -> Unit, val cancel: () -> Unit, val isWaiting: Boolean)
 
 @Composable
 internal fun rememberAfterCallAskEnabler(onAllowed: () -> Unit): AfterCallAskEnabler {
     val context = LocalContext.current
     var isWaiting by remember { mutableStateOf(false) }
     val permission = rememberLauncherForActivityResult(ActivityResultContracts.RequestPermission()) {
+        if (!isWaiting) return@rememberLauncherForActivityResult
         if (AfterCallNotifier.canAsk(context)) {
             isWaiting = false
             onAllowed()
@@ -86,6 +88,7 @@ internal fun rememberAfterCallAskEnabler(onAllowed: () -> Unit): AfterCallAskEna
                 openNotificationSettings(context)
             }
         },
+        cancel = { isWaiting = false },
         isWaiting = isWaiting,
     )
 }
@@ -137,7 +140,10 @@ internal fun AfterCallModeRow(onAskChange: (Boolean) -> Unit) {
                 onOptionSelected = { picked ->
                     when (AfterCallMode.fromKey(picked.key)) {
                         AfterCallMode.ASK -> enabler.request()
-                        AfterCallMode.KEEP -> choose(AfterCallMode.KEEP)
+                        AfterCallMode.KEEP -> {
+                            enabler.cancel()
+                            choose(AfterCallMode.KEEP)
+                        }
                     }
                 },
             )

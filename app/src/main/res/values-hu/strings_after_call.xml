@@ -12,6 +12,5 @@
     <string name="after_call_deleted_text">Néhány másodperc múlva törlődik. A megtartáshoz koppints a Visszavonásra.</string>
     <string name="after_call_undo">Visszavonás</string>
     <string name="after_call_popup_title">Megtartod ezt a felvételt?</string>
-    <string name="after_call_just_now">az imént</string>
     <string name="after_call_popup_call">Hívás</string>
 </resources>

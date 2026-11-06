@@ -12,6 +12,5 @@
     <string name="after_call_deleted_text">Она исчезнет через несколько секунд. Нажмите «Отменить», чтобы сохранить.</string>
     <string name="after_call_undo">Отменить</string>
     <string name="after_call_popup_title">Сохранить эту запись?</string>
-    <string name="after_call_just_now">только что</string>
     <string name="after_call_popup_call">Звонок</string>
 </resources>

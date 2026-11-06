@@ -12,6 +12,5 @@
     <string name="after_call_deleted_text">Verrà rimossa tra pochi secondi. Tocca Annulla per tenerla.</string>
     <string name="after_call_undo">Annulla</string>
     <string name="after_call_popup_title">Tenere questa registrazione?</string>
-    <string name="after_call_just_now">proprio ora</string>
     <string name="after_call_popup_call">Chiamata</string>
 </resources>

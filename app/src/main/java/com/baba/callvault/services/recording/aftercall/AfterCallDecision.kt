@@ -9,7 +9,6 @@
 package com.baba.callvault.services.recording.aftercall
 
 import android.app.KeyguardManager
-import com.baba.callvault.AfterCallQuestionActivity
 import android.content.Context
 import android.net.Uri
 import android.provider.Settings
@@ -18,6 +17,7 @@ import com.baba.callvault.data.recordings.RecordingsRepository
 import com.baba.callvault.system.interop.MetadataSidecar
 import com.baba.callvault.system.storage.StorageRouter
 import com.baba.callvault.transcription.TranscriptionScheduler
+import com.baba.callvault.ui.screens.AfterCallOverlay
 import com.baba.callvault.utils.AppLogger
 import kotlinx.coroutines.runBlocking
 
@@ -64,9 +64,13 @@ object AfterCallDecision {
             val held = AfterCallDecisions.peek(context, displayName) ?: return
             AfterCallNotifier.postQuestion(context, held)
         }.onFailure { AppLogger.w(TAG, "Could not ask keep-or-delete: ${it.message}") }
-        runCatching { if (shouldPopUp(context)) AfterCallQuestionActivity.open(context) }
+        runCatching { if (shouldPopUp(context)) popUpOpener(context) }
             .onFailure { AppLogger.w(TAG, "Could not open the keep-or-delete pop-up; the notification stands: ${it.message}") }
     }
+
+    /** Opens the pop-up window. A seam so tests can see the call without drawing an overlay. */
+    @androidx.annotation.VisibleForTesting
+    internal var popUpOpener: (Context) -> Unit = { AfterCallOverlay.show(it) }
 
     private fun shouldPopUp(context: Context): Boolean = AfterCallPolicy.shouldPopUp(
         style = AppPreferences(context).getAfterCallAskStyle(),
@@ -94,9 +98,11 @@ object AfterCallDecision {
 
     /**
      * Keeps every held recording. For when "When a call ends" goes back to Keep: questions the user is no
-     * longer being asked must not leave their recordings without a Drive copy or a transcript.
+     * longer being asked must not leave their recordings without a Drive copy or a transcript. Not one whose
+     * Delete was tapped: that was an answer, and its delete is left to finish.
      */
-    fun keepAll(context: Context): Int = AfterCallDecisions.pendingNames(context).count { keep(context, it) }
+    fun keepAll(context: Context): Int =
+        AfterCallDecisions.all(context).filterNot { it.deleteRequested }.count { keep(context, it.displayName) }
 
     /**
      * Delete: show "Recording deleted · Undo" and delete for real after the Undo window. The entry stays held
@@ -170,6 +176,12 @@ object AfterCallDecision {
      * every app start, off the main thread.
      */
     fun reconcile(context: Context) {
+        // Asking was switched off with recordings still waiting (or the switch's own keep-all was killed):
+        // nobody will be asked about them, so keep them now. Those with Delete tapped are restored below.
+        if (AppPreferences(context).getAfterCallMode() == AppPreferences.AfterCallMode.KEEP) {
+            val kept = keepAll(context)
+            if (kept > 0) AppLogger.i(TAG, "Asking is off; kept $kept waiting recording(s) at start")
+        }
         val now = System.currentTimeMillis()
         val held = AfterCallDecisions.all(context)
         held.forEach { entry ->

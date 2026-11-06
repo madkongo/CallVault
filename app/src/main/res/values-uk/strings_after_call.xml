@@ -12,6 +12,5 @@
     <string name="after_call_deleted_text">Його буде видалено за кілька секунд. Натисніть «Скасувати», щоб зберегти.</string>
     <string name="after_call_undo">Скасувати</string>
     <string name="after_call_popup_title">Зберегти цей запис?</string>
-    <string name="after_call_just_now">щойно</string>
     <string name="after_call_popup_call">Дзвінок</string>
 </resources>

@@ -22,11 +22,11 @@ object AfterCallSettings {
 
     private const val TAG = "CV:AfterCall"
 
-    /** Stores [mode]; on Keep, keeps the waiting recordings on a background thread. */
+    /** Stores [mode]; on Keep, keeps the waiting recordings on a background thread — only if there are any. */
     fun setMode(context: Context, mode: AfterCallMode) {
         val app = context.applicationContext
         AppPreferences(app).setAfterCallMode(mode)
-        if (mode != AfterCallMode.KEEP) return
+        if (mode != AfterCallMode.KEEP || AfterCallDecisions.pendingNames(app).isEmpty()) return
         Thread { keepWaiting(app) }.apply { isDaemon = true; name = "cv-after-call-keep-all" }.start()
     }
 

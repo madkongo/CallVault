@@ -12,6 +12,5 @@
     <string name="after_call_deleted_text">تا چند ثانیه دیگر پاک می‌شود. برای نگه داشتن، واگرد را بزنید.</string>
     <string name="after_call_undo">واگرد</string>
     <string name="after_call_popup_title">این ضبط را نگه می‌دارید؟</string>
-    <string name="after_call_just_now">همین حالا</string>
     <string name="after_call_popup_call">تماس</string>
 </resources>

@@ -87,6 +87,15 @@ object AfterCallPolicy {
     fun shouldPopUp(style: AfterCallAskStyle, canDrawOverlays: Boolean, keyguardLocked: Boolean): Boolean =
         style == AfterCallAskStyle.POPUP && canDrawOverlays && !keyguardLocked
 
+    /**
+     * How long the pop-up ignores Keep and Delete after a card appears (or changes to the next recording): a
+     * thumb still on the screen from ending the call must not answer a question it never saw.
+     */
+    const val TAP_GUARD_MS = 400L
+
+    /** Whether a tap at [nowMs] may answer a card shown at [shownAtMs] (both on the same monotonic clock). */
+    fun acceptsTap(shownAtMs: Long, nowMs: Long): Boolean = nowMs - shownAtMs >= TAP_GUARD_MS
+
     /** Hold only when the user asked to be asked AND the question can be shown. */
     fun shouldHold(mode: AfterCallMode, canShowQuestion: Boolean): Boolean = shouldAsk(mode) && canShowQuestion
 
