@@ -438,7 +438,19 @@ expired). Decoding reuses `AudioDecoder.decodeRange` (interleaved PCM at the ori
 Muxer: AAC → MP4; FLAC and WAV written by hand; MP3 raw frames + ID3 tags.
 Estimate 📐: M4A/WAV/FLAC ~1 day; MP3 +~1 day. Ties into Share a part ([[share-a-part]]).
 
-## 🔵 Delete a recording from a notification after the call ends — requested 2026-11-05, not started, design to be discussed
+## 🔨 BUILDING — Keep or delete a recording when the call ends (also #71) — design decided 2026-11-06, branch `feat/keep-or-delete`
+
+**Decided by the maintainer 2026-11-06** (artifact "Keep or Discard", https://claude.ai/artifact/WW6HLdm45TYSaydaYvC44N):
+- Settings ▸ Recording: **When a call ends**: Keep the recording (default, as today) / Ask me: keep or delete.
+- **How to ask** (shown only with "Ask me"): Notification (default) / Pop-up over the screen (needs "Display over
+  other apps"; asks for it when chosen). If the pop-up cannot show, the notification is the fallback.
+- **If I don't answer**: Keep it (default) / Delete it after 24 hours.
+- Buttons: **Keep / Delete only** (no Play). Delete has a ~10 s Undo before it really deletes.
+- **Phone calls and app calls** both get the question.
+- While undecided: Drive copy and automatic transcription wait; Delete removes file, .json/.md, transcript,
+  summary, tags and the catalog entry.
+
+### Earlier discussion notes (2026-11-05)
 
 Maintainer request: after a call ends, offer a way to delete that call's recording straight from a notification,
 without opening the app. **How it works is not decided yet; the maintainer will discuss it first. Do not build
