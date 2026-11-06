@@ -69,13 +69,13 @@ object TranscriptRepository {
 
         // Skip opening the database at all before the first transcription — most installs will never
         // have one, and a Home screen should not create a database just to draw a list.
-        if (!TranscriptDatabase.exists(context)) {
-            return flowOf(displayNames.associateWith { TranscriptStatus.NONE })
-        }
-
-        return dao(context).observeAll(displayNames).map { rows ->
-            val stored = rows.associate { it.displayName to TranscriptStatus.of(it.state) }
-            displayNames.associateWith { stored[it] ?: TranscriptStatus.NONE }
+        // Until then the statuses follow the database once it appears: the first transcription creates it, and
+        // its row has to show as queued without the app being reopened.
+        return onceTranscriptsExist(context, displayNames.associateWith { TranscriptStatus.NONE }) { db ->
+            db.transcriptDao().observeAll(displayNames).map { rows ->
+                val stored = rows.associate { it.displayName to TranscriptStatus.of(it.state) }
+                displayNames.associateWith { stored[it] ?: TranscriptStatus.NONE }
+            }
         }
     }
 
