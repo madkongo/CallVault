@@ -110,6 +110,15 @@ private fun CallsToRecordBody(preferences: AppPreferences, updateTrigger: Int, a
     // kind of call is recorded, not only phone calls as it did under "When to start".
     ShownWhen(isPhoneOn || isAppOn) { SearchFiltered("RecordFromAnswerRow") { RecordFromAnswerRow(preferences, updateTrigger, actions) } }
     SearchFiltered("VibrationRow") { VibrationRow(preferences, updateTrigger, actions) }
+    // Keep or delete after the call (2026-11-06): for phone and app calls alike, so under "All calls".
+    var isAskingAfterCall by remember { mutableStateOf(prefs.getAfterCallMode() == AppPreferences.AfterCallMode.ASK) }
+    SearchFiltered("AfterCallModeRow") { AfterCallModeRow(onAskChange = { isAskingAfterCall = it }) }
+    ShownWhen(isAskingAfterCall) {
+        Column {
+            SearchFiltered("AfterCallAskStyleRow") { AfterCallAskStyleRow() }
+            SearchFiltered("AfterCallUnansweredRow") { AfterCallUnansweredRow() }
+        }
+    }
 }
 
 /** Every rule that keeps a call from being recorded, phone and app calls alike, and the short-call cut-off. */

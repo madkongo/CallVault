@@ -7,6 +7,13 @@ All notable changes to CallVault are documented here. The format is based on
 
 ### Added
 
+- **Keep or delete a recording when the call ends.** Settings ▸ Recording ▸ All calls ▸ "When a call ends" ▸ "Ask
+  me": after each recorded call (phone or app) a notification — or, if you choose, a pop-up over the screen — asks
+  Keep or Delete. Delete can be undone for a few seconds. Until you answer, the recording is not copied to Drive or
+  transcribed automatically; "If I don't answer" keeps it or deletes it after 24 hours (a recording you starred,
+  marked, tagged, noted or transcribed is always kept). Also offered in setup. Asked in #71.
+  <!-- 🧪 VERIFYING: unit tests only (2026-11-06); device check pending on the OP9 — phone call and app call, Keep,
+  Delete + Undo, the 24-hour rule, pop-up with and without the overlay permission. -->
 - **Share a call's recording, transcript and summary together.** Share on any page — Recordings, a recording's
   page, Transcripts, Summaries, the transcript page, and the selection bars — opens the same sheet: tick the
   recording, the transcript and the summary, in any combination. With the recording, the texts go as text files

@@ -32,7 +32,7 @@ import com.baba.callvault.utils.AppLogger
 internal object AfterCallNotifier {
 
     private const val TAG = "CV:AfterCall"
-    private const val CHANNEL_ID = "after_call_question"
+    const val CHANNEL_ID = "after_call_question"
 
     /** A little longer than the Undo window, so the "deleted" notice outlives the work only if that fails. */
     private const val DELETED_NOTICE_TIMEOUT_MS = AfterCallPolicy.DELETE_UNDO_WINDOW_MS + 5_000L

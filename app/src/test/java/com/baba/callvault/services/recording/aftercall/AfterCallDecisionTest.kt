@@ -243,6 +243,20 @@ class AfterCallDecisionTest {
         assertNull(shadowOf(context as Application).nextStartedActivity)
     }
 
+    @Test
+    fun `switching back to keep keeps every waiting recording`() {
+        AfterCallDecisions.hold(context, "a.ogg", uri, "audio/ogg", isVoip = false)
+        AfterCallDecisions.hold(context, "b.ogg", uri, "audio/ogg", isVoip = false)
+        prefs.setAfterCallMode(AfterCallMode.ASK)
+
+        AfterCallSettings.setMode(context, AfterCallMode.KEEP)
+        val kept = AfterCallSettings.keepWaiting(context) // what setMode starts on its thread, run here to wait for it
+
+        assertEquals(AfterCallMode.KEEP, prefs.getAfterCallMode())
+        assertTrue(kept >= 0)
+        assertTrue(AfterCallDecisions.pendingNames(context).isEmpty())
+    }
+
     private fun state(uniqueName: String): WorkInfo.State? =
         WorkManager.getInstance(context).getWorkInfosForUniqueWork(uniqueName).get().lastOrNull()?.state
 }

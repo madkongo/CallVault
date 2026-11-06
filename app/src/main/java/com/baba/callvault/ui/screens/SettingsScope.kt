@@ -110,7 +110,7 @@ object SettingsGroups {
         SettingsGroup.CALLS_TO_RECORD -> listOf(
             "CarrierRecordingRow", "VoipRecordingSwitch", "VoipAppPicker",
             "AutoRecordIncomingRow", "AutoRecordOutgoingRow", "RecordFromAnswerRow", "VoipAutoStartRow",
-            "VibrationRow",
+            "VibrationRow", "AfterCallModeRow", "AfterCallAskStyleRow", "AfterCallUnansweredRow",
         )
         SettingsGroup.CALLS_TO_SKIP -> listOf(
             "IgnoreContactsIncomingRow", "IgnoreContactsOutgoingRow", "IgnoreAnonymousIncomingRow",
