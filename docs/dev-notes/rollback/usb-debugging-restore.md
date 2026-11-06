@@ -95,7 +95,15 @@ git revert -m 1 d8274549
   call fine. Honor launch settings were already all-manual/on; no Android battery-optimisation setting on his phone.
   Battery details: 36 s of background time in 24 h.
 
-## Test build 2.4.9-usbprobe3 — 🧪 VERIFYING, built 2026-11-05
+## Test build 2.4.9-usbprobe3 — ✅ VERIFIED 2026-11-06 (field: Igor, reported by the maintainer), built 2026-11-05
+
+**2026-11-06 result (Igor, BVL-N59, Android 17, report #29):** the maintainer reports Igor says the problem is gone.
+The log agrees: the phone paused CallVault 140 times (longest 1811 s), and all 8 calls in the log were captured by the
+recorder process ("Not using resilient recording: this phone has paused CallVault recently") and published; no
+short or failed recording, no errors. One call's start check landed 87 s late because the app was paused, and the
+recording carried on regardless — the case the fix exists for. The #53 shell-Application repair also fired once.
+Merged `fix/handoff-honor-start-repair` into integration/next (8c3cc58e) for 2.5.0.
+
 
 Branch `probe/usbprobe3` (from `fix/usb-debugging-turned-off`), sha256 4bb06f2f…, at
 `~/Downloads/CallVault-2.4.9-usbprobe3/`. Same commits on `fix/handoff-honor-start-repair` (from integration/next),
