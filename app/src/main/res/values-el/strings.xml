@@ -1045,4 +1045,14 @@
     <string name="wizard_updates_line">Πώς βρίσκει το CallVault νέες εκδόσεις.</string>
     <string name="wizard_updates_subtitle">Το CallVault δεν βρίσκεται σε κατάστημα εφαρμογών, οπότε ελέγχει μόνο του το GitHub για νέες εκδόσεις.</string>
     <string name="wizard_updates_title">Παραμένοντας ενημερωμένοι</string>
+    <!-- Transcribe again (#72) -->
+    <string name="transcribe_again_title">Νέα απομαγνητοφώνηση;</string>
+    <string name="transcribe_again_message_one">Η κλήση %1$s θα απομαγνητοφωνηθεί ξανά. Αν η νέα εκτέλεση αποτύχει ή διακοπεί, η τρέχουσα απομαγνητοφώνηση διατηρείται.</string>
+    <string name="transcribe_again_message_many">Απομαγνητοφωνήσεις για επανάληψη: %1$d. Αν μια εκτέλεση αποτύχει ή διακοπεί, εκείνη η απομαγνητοφώνηση μένει ως έχει.</string>
+    <string name="transcribe_again_run_on">Εκτέλεση σε</string>
+    <string name="transcribe_again_estimate">Περίπου %1$s.</string>
+    <string name="transcribe_again_delete_summary">Διαγραφή και της περίληψης. Γράφτηκε από το παλιό κείμενο.</string>
+    <string name="transcribe_again_running">Νέα απομαγνητοφώνηση… %1$d%%</string>
+    <string name="transcribe_again_running_plain">Νέα απομαγνητοφώνηση…</string>
+    <string name="transcribe_again_waiting">Αναμονή για νέα απομαγνητοφώνηση…</string>
 </resources>

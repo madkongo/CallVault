@@ -889,4 +889,14 @@
     <string name="wizard_updates_line">CallVault 如何查找新版本。</string>
     <string name="wizard_updates_subtitle">CallVault 不在任何应用商店上架，因此会自行到 GitHub 查看新版本。</string>
     <string name="wizard_updates_title">保持最新</string>
+    <!-- Transcribe again (#72) -->
+    <string name="transcribe_again_title">重新转写？</string>
+    <string name="transcribe_again_message_one">将重新转写 %1$s。如果新的转写失败或被停止，会保留当前的转写。</string>
+    <string name="transcribe_again_message_many">要重新转写的数量：%1$d。如果某次转写失败或被停止，该转写保持不变。</string>
+    <string name="transcribe_again_run_on">运行于</string>
+    <string name="transcribe_again_estimate">约 %1$s。</string>
+    <string name="transcribe_again_delete_summary">同时删除摘要。它是根据旧文本写的。</string>
+    <string name="transcribe_again_running">正在重新转写… %1$d%%</string>
+    <string name="transcribe_again_running_plain">正在重新转写…</string>
+    <string name="transcribe_again_waiting">等待重新转写…</string>
 </resources>

@@ -56,4 +56,5 @@
     <string name="transcript_notice_failed_many_title">Невдалі транскрипції: %1$d</string>
     <string name="transcript_notice_failed_many_text">Натисніть, щоб переглянути.</string>
     <string name="notif_readiness_wd_off_by_user_text">Ви вимкнули бездротове налагодження. Увімкніть його знову або ввімкніть налагодження USB, щоб відновити запис.</string>
+    <string name="transcript_notice_failed_kept_text">%1$s. Попередню розшифровку збережено.</string>
 </resources>

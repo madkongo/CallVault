@@ -891,4 +891,14 @@
     <string name="wizard_updates_line">Come CallVault trova le nuove versioni.</string>
     <string name="wizard_updates_subtitle">CallVault non è su nessuno store, quindi cerca da sé le nuove versioni su GitHub.</string>
     <string name="wizard_updates_title">Restare aggiornati</string>
+    <!-- Transcribe again (#72) -->
+    <string name="transcribe_again_title">Trascrivere di nuovo?</string>
+    <string name="transcribe_again_message_one">%1$s verrà trascritto di nuovo. Se la nuova esecuzione non riesce o viene interrotta, la trascrizione attuale viene mantenuta.</string>
+    <string name="transcribe_again_message_many">Trascrizioni da rifare: %1$d. Se un\'esecuzione non riesce o viene interrotta, quella trascrizione resta com\'è.</string>
+    <string name="transcribe_again_run_on">Esegui su</string>
+    <string name="transcribe_again_estimate">Circa %1$s.</string>
+    <string name="transcribe_again_delete_summary">Elimina anche il riassunto. È stato scritto dal testo precedente.</string>
+    <string name="transcribe_again_running">Nuova trascrizione… %1$d%%</string>
+    <string name="transcribe_again_running_plain">Nuova trascrizione…</string>
+    <string name="transcribe_again_waiting">In attesa della nuova trascrizione…</string>
 </resources>

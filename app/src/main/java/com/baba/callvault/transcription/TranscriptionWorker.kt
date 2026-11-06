@@ -17,6 +17,7 @@ import androidx.work.WorkerParameters
 import androidx.work.workDataOf
 import com.baba.callvault.R
 import com.baba.callvault.data.AppPreferences
+import com.baba.callvault.transcription.cloud.TranscriptionService
 import com.baba.callvault.data.recordings.RecordingCatalog
 import com.baba.callvault.transcription.model.TranscriptionModel
 import com.baba.callvault.utils.AppLogger
@@ -65,7 +66,11 @@ class TranscriptionWorker(
             ?: TranscriptionModel.DEFAULT
         val single = inputData.getString(KEY_DISPLAY_NAME)
 
-        val engine = when (val chosen = TranscriptionEngineChoice.choose(applicationContext, prefs, model, isNamedRun = single != null)) {
+        // A per-run engine from "transcribe again" (#72); only a named run carries one.
+        val serviceOverride = inputData.getString(KEY_SERVICE)?.let { TranscriptionService.fromKey(it) }
+        val engine = when (val chosen = TranscriptionEngineChoice.choose(
+            applicationContext, prefs, model, isNamedRun = single != null, serviceOverride = serviceOverride,
+        )) {
             is TranscriptionEngineChoice.Run -> chosen
             // Retry rather than fail: the model may still be downloading, and the work should pick up
             // once it lands instead of the user having to ask again.
@@ -95,7 +100,7 @@ class TranscriptionWorker(
         if (userRequested) {
             // A user request always names one recording. Its length is read from the container, which
             // costs milliseconds and happens before the model is loaded.
-            val estimatedMs = single?.let { estimatedMsFor(it, prefs) } ?: 0L
+            val estimatedMs = single?.let { estimatedMsFor(it, prefs, serviceOverride) } ?: 0L
             if (TranscriptionNoticePolicy.showsNotification(userRequested = true, estimatedMs = estimatedMs)) {
                 AppLogger.i(TAG, "Showing the notification: this run may outlast Android's job limit (~${estimatedMs / 1000}s)")
                 promote()
@@ -178,7 +183,7 @@ class TranscriptionWorker(
                 // A new recording is a new clock; announcing the same one again changes nothing.
                 progress.startRecording(
                     displayName = current,
-                    estimatedMs = estimatedMsFor(current, prefs),
+                    estimatedMs = estimatedMsFor(current, prefs, serviceOverride),
                     nowMs = SystemClock.elapsedRealtime(),
                 )
                 publishProgress(progress.percent(reportedPercent = 0, nowMs = SystemClock.elapsedRealtime()))
@@ -207,6 +212,9 @@ class TranscriptionWorker(
     private suspend fun estimatedMsFor(
         displayName: String,
         prefs: AppPreferences,
+        // The engine this run actually uses (#72 can pick one): pricing a phone run at cloud speed skipped
+        // the notification that keeps a 13-minute job alive (measured on the OP9, 2026-11-05).
+        service: TranscriptionService?,
     ): Long {
         val uri = RecordingCatalog.all(applicationContext)
             .firstOrNull { it.displayName == displayName }
@@ -214,7 +222,9 @@ class TranscriptionWorker(
             ?.toUri()
             ?: return 0L
         val audioMs = runCatching { AudioDecoder.durationMs(applicationContext, uri) }.getOrDefault(0L)
-        return if (audioMs <= 0L) 0L else TranscriptionEstimate.estimateMs(audioMs, TranscriptionRouting.runCost(prefs))
+        return if (audioMs <= 0L) 0L else TranscriptionEstimate.estimateMs(
+            audioMs, TranscriptionRouting.runCost(prefs, service ?: prefs.getTranscriptionService()),
+        )
     }
 
     companion object {
@@ -233,6 +243,7 @@ class TranscriptionWorker(
          * [TranscriptionLanguageChoice.encode]. Absent means "use the setting".
          */
         const val KEY_LANGUAGE = "language"
+        const val KEY_SERVICE = "service"
 
         /**
          * Progress keys read by Home's transcribing pill.

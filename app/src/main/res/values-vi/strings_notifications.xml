@@ -58,4 +58,5 @@
     <string name="transcript_notice_failed_text">%1$s. Chạm để thử lại.</string>
     <string name="transcript_notice_failed_many_title">Lượt chép lời chưa hoàn tất: %1$d</string>
     <string name="transcript_notice_failed_many_text">Chạm để xem.</string>
+    <string name="transcript_notice_failed_kept_text">%1$s. Bản chép lời trước đó được giữ lại.</string>
 </resources>

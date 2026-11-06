@@ -11,6 +11,7 @@ package com.baba.callvault.ui.screens
 import androidx.compose.foundation.layout.Row
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Delete
+import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material.icons.filled.Share
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -49,6 +50,8 @@ data class LibrarySelectionUi(
     val onSelectAll: () -> Unit = {},
     val allSelected: Boolean = false,
     val active: Boolean = false,
+    /** Transcribe the picked rows again (#72). Null on pages where that means nothing (Summaries). */
+    val onTranscribeAgain: (() -> Unit)? = null,
 ) {
     /** Some but not all visible rows picked — the tri-state "indeterminate" of the Select-all row. */
     val someSelected: Boolean get() = selected.isNotEmpty() && !allSelected
@@ -90,6 +93,15 @@ fun LibrarySelectionActions(selection: LibrarySelectionUi) {
                 contentDescription = stringResource(R.string.home_share),
                 tint = MaterialTheme.colorScheme.onSurfaceVariant,
             )
+        }
+        selection.onTranscribeAgain?.let { onTranscribeAgain ->
+            IconButton(onClick = onTranscribeAgain, enabled = hasPicked) {
+                Icon(
+                    imageVector = Icons.Filled.Refresh,
+                    contentDescription = stringResource(R.string.transcript_retranscribe),
+                    tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+            }
         }
         IconButton(onClick = selection.onDelete, enabled = hasPicked) {
             Icon(

@@ -14,6 +14,7 @@ import com.baba.callvault.transcription.cloud.CloudEndpoint
 import com.baba.callvault.transcription.cloud.CloudError
 import com.baba.callvault.transcription.cloud.CloudKeyStore
 import com.baba.callvault.transcription.cloud.CloudTranscriber
+import com.baba.callvault.transcription.cloud.TranscriptionService
 import com.baba.callvault.transcription.model.ModelRepository
 import com.baba.callvault.transcription.model.TranscriptionModel
 
@@ -47,8 +48,9 @@ sealed interface TranscriptionEngineChoice {
             prefs: AppPreferences,
             model: TranscriptionModel,
             isNamedRun: Boolean,
+            serviceOverride: TranscriptionService? = null,
         ): TranscriptionEngineChoice {
-            val service = prefs.getTranscriptionService()
+            val service = serviceOverride ?: prefs.getTranscriptionService()
             val modelPath = if (service.isCloud) null else ModelRepository.pathFor(context, model)?.absolutePath
             return when (TranscriptionRouting.route(service, modelInstalled = modelPath != null)) {
                 TranscriptionRouting.Route.WAIT_FOR_MODEL -> WaitForModel

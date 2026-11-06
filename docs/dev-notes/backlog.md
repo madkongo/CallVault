@@ -2587,7 +2587,30 @@ WRITE_SECURE_SETTINGS was re-granted after each install (`granted=true`); both r
 
 ---
 
-## 🔵 Transcribe again, single and bulk (#72, QBANIN) — requested 2026-11-05, design under discussion
+## 🧪 Transcribe again, single and bulk (#72, QBANIN) — VERIFYING, built 2026-11-05 on `feat/transcribe-again-72`
+
+> **Built (A + B + D, agreed 2026-11-05):** row ⋮ item and selection-bar button on Transcripts, one dialog (language,
+> ready engines, estimate, "also delete the summary"). Old text kept until the new run succeeds; failed/stopped runs
+> restore it. Review fixes in `c20061b0`. **Tried on the OP9 (2.5.0-next4), 2026-11-05:** single re-run on Groq ✓,
+> bulk of 2 on Groq ✓, Stop mid-run on the phone twice → old transcript back and readable ✓, summary checkbox shows
+> when one exists ✓ (cancelled, not run). Found + fixed on device: the worker priced the run by the setting, so a
+> phone run skipped its keep-alive notification; chip colour rendered coral.
+> **Mimicked bad transcript on the OP9, 2026-11-05:** a Hebrew call transcribed as English gave "B'dika, B'dika, the
+> one plus shte mesre"; Transcribe again in Hebrew (Groq) gave "בדיקה בדיקה בדיקה…" back ✓. Real failure (Custom
+> server unreachable): 4 cloud retries over ~8 min, the call sits under "Being transcribed" meanwhile (old text not
+> readable until then — accepted), then the old Hebrew text came back ✓. The failure notice said "Tap to try again"
+> → now "The previous transcript was kept" (`3e73680d`, unit-tested, NOT yet seen on a phone).
+> **2026-11-05, maintainer looked for it inside the transcript → option C added after all**, as a ⋮ menu in the
+> page's top bar with "Summarise this call" (moved out of the text-like line above the words) and "Transcribe again".
+> OP9: both work from the page; the page keeps the old text during a run, with no progress shown there (a long
+> on-phone run shows its progress only on the Transcripts list).
+> **2026-11-05 progress line added** ("Transcribing again… N%" + Stop on the page). Testing it found a **data-loss
+> race**: Stop's cleanup restored the row and forgot the backup, then the unwinding run deleted the transcript as a
+> first run would (the OP9's HebrewCall9min lost its text — test data). Fixed `12d90d27` with a red→green regression
+> test; the same page Stop on the OP9 kept the text twice.
+> **Not tried:** a run with the summary deleted; a crash mid-run; RTL/other locales on screen. **To settle:** maintainer re-transcribes a bad transcript on his phone.
+
+### Original request (2026-11-05)
 
 Brings back what `ef755692` removed (2026-10-12, #4). The removal reason (one settled model + pinned language) no
 longer holds: several models, BYOK cloud (#48), and #72 reports a repeated-word loop. Options page:

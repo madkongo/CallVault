@@ -159,6 +159,7 @@ fun TranscriptsScreen(
     onShare: (String) -> Unit,
     onSave: (String, TranscriptFormat) -> Unit,
     onDelete: (String) -> Unit,
+    onTranscribeAgain: (String) -> Unit = {},
     selection: LibrarySelectionUi,
     onImport: (transcribeOnly: Boolean) -> Unit,
     importing: Boolean,
@@ -322,6 +323,7 @@ fun TranscriptsScreen(
                     onShare = onShare,
                     onSave = onSave,
                     onDelete = onDelete,
+                    onTranscribeAgain = onTranscribeAgain,
                     selection = selection,
                 labels = labels,
                     percentFor = transcribing::percentFor,
@@ -349,6 +351,7 @@ fun TranscriptsScreen(
                     onShare = onShare,
                     onSave = onSave,
                     onDelete = onDelete,
+                    onTranscribeAgain = onTranscribeAgain,
                     selection = selection,
                 labels = labels,
                     percentFor = { 0 },
@@ -371,6 +374,7 @@ fun TranscriptsScreen(
                 onShare = onShare,
                 onSave = onSave,
                 onDelete = onDelete,
+                onTranscribeAgain = onTranscribeAgain,
                 selection = selection,
                 labels = labels,
                 percentFor = { 0 },
@@ -444,6 +448,7 @@ private fun LazyListScope.transcriptRows(
     onShare: (String) -> Unit,
     onSave: (String, TranscriptFormat) -> Unit,
     onDelete: (String) -> Unit,
+    onTranscribeAgain: (String) -> Unit = {},
     selection: LibrarySelectionUi,
     percentFor: (String) -> Int,
     excerpts: Map<String, PageSearch.Excerpt> = emptyMap(),
@@ -486,6 +491,7 @@ private fun LazyListScope.transcriptRows(
                         onShare = { onShare(entry.displayName) },
                         onSave = { format -> onSave(entry.displayName, format) },
                         onDelete = { onDelete(entry.displayName) },
+                        onTranscribeAgain = { onTranscribeAgain(entry.displayName) },
                     )
                 }
             } else {

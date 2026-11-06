@@ -58,4 +58,5 @@
     <string name="transcript_notice_failed_text">%1$s. Zum erneuten Versuch tippen.</string>
     <string name="transcript_notice_failed_many_title">Nicht fertig gewordene Transkriptionen: %1$d</string>
     <string name="transcript_notice_failed_many_text">Zum Ansehen tippen.</string>
+    <string name="transcript_notice_failed_kept_text">%1$s. Das bisherige Transkript wurde behalten.</string>
 </resources>

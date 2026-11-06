@@ -895,4 +895,14 @@
     <string name="wizard_updates_line">Как CallVault находит новые версии.</string>
     <string name="wizard_updates_subtitle">CallVault не публикуется в магазинах приложений, поэтому сам проверяет новые версии на GitHub.</string>
     <string name="wizard_updates_title">Быть в курсе обновлений</string>
+    <!-- Transcribe again (#72) -->
+    <string name="transcribe_again_title">Расшифровать заново?</string>
+    <string name="transcribe_again_message_one">%1$s будет расшифрован заново. Если новый запуск не удастся или будет остановлен, текущая расшифровка сохранится.</string>
+    <string name="transcribe_again_message_many">Расшифровок к повтору: %1$d. Если запуск не удастся или будет остановлен, эта расшифровка останется как есть.</string>
+    <string name="transcribe_again_run_on">Где выполнять</string>
+    <string name="transcribe_again_estimate">Около %1$s.</string>
+    <string name="transcribe_again_delete_summary">Удалить и сводку. Она написана по старому тексту.</string>
+    <string name="transcribe_again_running">Повторная расшифровка… %1$d%%</string>
+    <string name="transcribe_again_running_plain">Повторная расшифровка…</string>
+    <string name="transcribe_again_waiting">Ожидание повторной расшифровки…</string>
 </resources>

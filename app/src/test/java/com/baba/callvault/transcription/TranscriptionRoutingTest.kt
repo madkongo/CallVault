@@ -53,4 +53,20 @@ class TranscriptionRoutingTest {
         assertTrue(TranscriptionRouting.mayRetryCloud(TranscriptionRouting.MAX_CLOUD_ATTEMPTS - 2))
         assertFalse(TranscriptionRouting.mayRetryCloud(TranscriptionRouting.MAX_CLOUD_ATTEMPTS - 1))
     }
+
+    @Test
+    fun `transcribe again lists the setting first, the rest in their usual order`() {
+        val ready = listOf(TranscriptionService.ON_DEVICE, TranscriptionService.GROQ, TranscriptionService.CUSTOM)
+        assertEquals(
+            listOf(TranscriptionService.GROQ, TranscriptionService.ON_DEVICE, TranscriptionService.CUSTOM),
+            TranscriptionRouting.orderedSettingFirst(ready, TranscriptionService.GROQ),
+        )
+    }
+
+    @Test
+    fun `a setting that is not ready changes nothing`() {
+        val ready = listOf(TranscriptionService.ON_DEVICE)
+        assertEquals(ready, TranscriptionRouting.orderedSettingFirst(ready, TranscriptionService.GROQ))
+    }
+
 }

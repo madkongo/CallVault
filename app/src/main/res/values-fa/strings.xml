@@ -984,4 +984,14 @@
     <string name="wizard_updates_line">CallVault نسخه‌های جدید را چگونه پیدا می‌کند.</string>
     <string name="wizard_updates_subtitle">CallVault در فروشگاه برنامه نیست، بنابراین خودش GitHub را برای نسخه‌های جدید بررسی می‌کند.</string>
     <string name="wizard_updates_title">به‌روز ماندن</string>
+    <!-- Transcribe again (#72) -->
+    <string name="transcribe_again_title">دوباره رونویسی شود؟</string>
+    <string name="transcribe_again_message_one">%1$s دوباره رونویسی می‌شود. اگر اجرای جدید ناموفق باشد یا متوقف شود، رونوشت فعلی حفظ می‌شود.</string>
+    <string name="transcribe_again_message_many">رونوشت‌هایی که دوباره انجام می‌شوند: %1$d. اگر اجرایی ناموفق باشد یا متوقف شود، آن رونوشت همان‌طور که هست می‌ماند.</string>
+    <string name="transcribe_again_run_on">اجرا روی</string>
+    <string name="transcribe_again_estimate">حدود %1$s.</string>
+    <string name="transcribe_again_delete_summary">خلاصه را هم حذف کن. از متن قبلی نوشته شده بود.</string>
+    <string name="transcribe_again_running">در حال رونویسی دوباره… %1$d%%</string>
+    <string name="transcribe_again_running_plain">در حال رونویسی دوباره…</string>
+    <string name="transcribe_again_waiting">در انتظار رونویسی دوباره…</string>
 </resources>

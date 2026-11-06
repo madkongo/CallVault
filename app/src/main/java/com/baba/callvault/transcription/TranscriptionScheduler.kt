@@ -18,6 +18,7 @@ import androidx.work.PeriodicWorkRequestBuilder
 import androidx.work.WorkManager
 import androidx.work.workDataOf
 import com.baba.callvault.data.AppPreferences
+import com.baba.callvault.transcription.cloud.TranscriptionService
 import com.baba.callvault.data.TranscriptionMode
 import com.baba.callvault.utils.AppLogger
 import java.util.Calendar
@@ -110,6 +111,8 @@ object TranscriptionScheduler {
          * "phone may get warm" notification unless it is long — see [TranscriptionNoticePolicy].
          */
         userRequested: Boolean = false,
+        /** A per-run engine (#72 "transcribe again"); null uses the setting. Only reaches a named recording. */
+        service: TranscriptionService? = null,
     ) {
         val request = OneTimeWorkRequestBuilder<TranscriptionWorker>()
             .apply {
@@ -120,12 +123,13 @@ object TranscriptionScheduler {
                             // Absent unless the user picked one, which is what lets the worker tell
                             // "chose auto-detect" apart from "did not choose".
                             TranscriptionWorker.KEY_LANGUAGE to language,
-                            TranscriptionWorker.KEY_USER_REQUESTED to userRequested
+                            TranscriptionWorker.KEY_USER_REQUESTED to userRequested,
+                            TranscriptionWorker.KEY_SERVICE to service?.key,
                         )
                     )
                 }
                 // A cloud run waits for its network even when tapped: Wi-Fi only means Wi-Fi only.
-                val run = runConstraints(AppPreferences(context), requiresCharging)
+                val run = runConstraints(AppPreferences(context), requiresCharging, service)
                 setConstraints(
                     Constraints.Builder()
                         .setRequiresCharging(run.requiresCharging)
@@ -202,9 +206,13 @@ object TranscriptionScheduler {
     }
 
     /** The constraints for one run under the current where-to-transcribe settings. */
-    private fun runConstraints(prefs: AppPreferences, requiresCharging: Boolean): TranscriptionRouting.RunConstraints =
+    private fun runConstraints(
+        prefs: AppPreferences,
+        requiresCharging: Boolean,
+        service: TranscriptionService? = null,
+    ): TranscriptionRouting.RunConstraints =
         TranscriptionRouting.constraints(
-            isCloud = prefs.getTranscriptionService().isCloud,
+            isCloud = (service ?: prefs.getTranscriptionService()).isCloud,
             allowMobileData = prefs.getTranscriptionCloudMobileData(),
             requiresCharging = requiresCharging,
         )

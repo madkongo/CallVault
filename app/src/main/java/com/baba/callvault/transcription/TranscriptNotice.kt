@@ -48,6 +48,9 @@ object TranscriptNotice {
 
         /** The run ended in failure and the recording still has no transcript. */
         Failed,
+
+        /** A "transcribe again" (#72) failed; the transcript it was to replace is back, unchanged. */
+        FailedPreviousKept,
     }
 
     /**
