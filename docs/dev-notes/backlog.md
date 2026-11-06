@@ -22,7 +22,7 @@ with `&&`/`||` chains and silently reported the opposite answer while this was b
 
 ---
 
-## 🧪 BUILT, VERIFYING — One Share sheet: recording + transcript + summary together — requested + built 2026-11-06 (branch `feat/share-sheet`, not merged)
+## 🧪 BUILT, VERIFYING — One Share sheet: recording + transcript + summary together — requested + built 2026-11-06 (merged into integration/next 1acc113d; maintainer: "looks good")
 
 **Asked:** share a recording's transcript from Recordings (and the recording from Transcripts), and "share all" in
 one go, the same on every page. "Share a part" stays as it is (maintainer's call).
@@ -43,7 +43,7 @@ translations by Claude, unreviewed).
 
 **Not tried:** playback page, selection bars (several calls), a Drive-only recording, actually sending into a chat.
 
-## 🧪 BUILT, VERIFYING — Pull to refresh + lists that went stale until the app was reopened — requested + built 2026-11-06 (branch `feat/pull-to-refresh`, not merged)
+## 🧪 BUILT, VERIFYING — Pull to refresh + lists that went stale until the app was reopened — requested + built 2026-11-06 (merged into integration/next b124828d; maintainer: "looks good")
 
 **Asked:** a simple refresh on each page, so lists show the true state without reopening the app.
 
