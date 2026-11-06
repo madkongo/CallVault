@@ -8,6 +8,7 @@
 
 package com.baba.callvault.services.recording.aftercall
 
+import android.app.NotificationManager
 import com.baba.callvault.data.AppPreferences.AfterCallMode
 import com.baba.callvault.data.AppPreferences.AfterCallUnanswered
 import java.util.Locale
@@ -42,26 +43,80 @@ object AfterCallPolicy {
     enum class UnansweredAction {
         /** Already answered (or deleted): nothing left to do. */
         NOTHING,
+        /**
+         * The recording is gone from the catalog — a merge consumed or renamed it — so only the wait ends.
+         * Running hand-offs or a delete against a name that no longer exists would act on nothing, or worse,
+         * on whatever reuses the name.
+         */
+        RELEASE,
         /** Run the held hand-offs, as if Keep had been tapped. */
         KEEP,
         /** Delete it, with no Undo: nobody is looking at the phone to undo it. */
         DELETE,
     }
 
+    /** The facts the 24-hour check decides on, gathered by the worker when it runs. */
+    data class HeldFacts(
+        val stillPending: Boolean,
+        val inCatalog: Boolean,
+        val deleteRequested: Boolean,
+        /** Starred, flagged, tagged, noted or transcribed: the user did something with this call. */
+        val engaged: Boolean,
+    )
+
     /** Whether a finished recording is held for the question instead of handed off at once. */
     fun shouldAsk(mode: AfterCallMode): Boolean = mode == AfterCallMode.ASK
 
-    /** The stable notification id for [displayName]'s question (and its "deleted · Undo" replacement). */
-    fun notificationIdFor(displayName: String): Int =
-        NOTIFICATION_ID_BASE + Math.floorMod(displayName.hashCode(), NOTIFICATION_ID_SPAN)
+    /**
+     * Whether the question can actually reach the user. A hold whose question can never be seen is a recording
+     * that silently gets no Drive copy and no transcript for a day, or is deleted unasked — so when this is
+     * false the call is treated exactly as in Keep mode.
+     *
+     * @param channelImportance the question channel's importance, or null when it has not been created yet
+     *   (it is then created with ours, which is not NONE).
+     */
+    fun canShowQuestion(hasPermission: Boolean, notificationsEnabled: Boolean, channelImportance: Int?): Boolean =
+        hasPermission && notificationsEnabled && channelImportance != NotificationManager.IMPORTANCE_NONE
+
+    /** Hold only when the user asked to be asked AND the question can be shown. */
+    fun shouldHold(mode: AfterCallMode, canShowQuestion: Boolean): Boolean = shouldAsk(mode) && canShowQuestion
+
+    /**
+     * The next question's notification id after [last]: monotonic through the band, wrapping at its end.
+     * Allocated rather than hashed from the name, so two recordings can never share an id (and replace each
+     * other's question) until a thousand questions later. Anything outside the band starts it afresh.
+     */
+    fun nextNotificationId(last: Int?): Int {
+        if (last == null || last !in NOTIFICATION_ID_BASE until NOTIFICATION_ID_BASE + NOTIFICATION_ID_SPAN) {
+            return NOTIFICATION_ID_BASE
+        }
+        return NOTIFICATION_ID_BASE + (last - NOTIFICATION_ID_BASE + 1) % NOTIFICATION_ID_SPAN
+    }
+
+    /** How long is left of a question's 24 hours at [now]; zero when overdue, so the check runs at once. */
+    fun remainingUnansweredDelayMs(askedAt: Long, now: Long): Long =
+        (askedAt + UNANSWERED_DELAY_MS - now).coerceIn(0L, UNANSWERED_DELAY_MS)
+
+    /**
+     * Whether startup should post a held recording's question again (it may have been lost to a reboot or a
+     * killed process). Not after Delete — the "deleted" notice and its delete work stand — and not after the
+     * user swiped it away, which is their way of saying "not now", not a request to be asked on every start.
+     */
+    fun shouldRepostQuestion(deleteRequested: Boolean, dismissed: Boolean): Boolean = !deleteRequested && !dismissed
 
     /**
      * What the 24-hour check does. The setting is read when the check RUNS, not when it was scheduled: a user
      * who switches "If I don't answer" to Keep in the meantime must not lose a recording to the old choice.
+     *
+     * A tapped Delete is always honoured. An unanswered question under "Delete after 24 hours" is still kept
+     * when the user engaged with the recording: starring, marking, tagging, noting or transcribing a call is
+     * an answer of its own, and deleting it would destroy exactly what they had just added.
      */
-    fun unansweredAction(setting: AfterCallUnanswered, stillPending: Boolean): UnansweredAction = when {
-        !stillPending -> UnansweredAction.NOTHING
-        setting == AfterCallUnanswered.DELETE_AFTER_24H -> UnansweredAction.DELETE
+    fun unansweredAction(setting: AfterCallUnanswered, facts: HeldFacts): UnansweredAction = when {
+        !facts.stillPending -> UnansweredAction.NOTHING
+        !facts.inCatalog -> UnansweredAction.RELEASE
+        facts.deleteRequested -> UnansweredAction.DELETE
+        setting == AfterCallUnanswered.DELETE_AFTER_24H && !facts.engaged -> UnansweredAction.DELETE
         else -> UnansweredAction.KEEP
     }
 

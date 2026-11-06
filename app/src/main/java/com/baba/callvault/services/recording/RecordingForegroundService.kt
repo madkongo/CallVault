@@ -10,8 +10,6 @@
 package com.baba.callvault.services.recording
 
 import com.baba.callvault.services.recording.aftercall.AfterCallDecision
-import com.baba.callvault.services.recording.aftercall.AfterCallDecisions
-import com.baba.callvault.services.recording.aftercall.AfterCallPolicy
 import android.app.Notification
 import android.app.Service
 import android.content.Context
@@ -846,10 +844,9 @@ class RecordingForegroundService : Service() {
 
         // Keep or delete after the call: decided ONCE, here, and both halves below follow it — the catalog
         // coroutine (details-file copy, transcription) and the synchronous Drive route after it. Held
-        // before either starts, so no sweep can copy it in between. A hold that cannot be stored falls back
-        // to keeping: a recording stranded with no question and no hand-offs would be the worse failure.
-        val isHeld = AfterCallPolicy.shouldAsk(AppPreferences(this).getAfterCallMode()) &&
-            AfterCallDecisions.hold(applicationContext, name, uri, mimeType, isVoip = false)
+        // before either starts, so no sweep can copy it in between. Not held — kept as in Keep mode — when
+        // the question could not be shown or the hold could not be stored; see AfterCallDecision.tryHold.
+        val isHeld = AfterCallDecision.tryHold(applicationContext, name, uri, mimeType, isVoip = false)
 
         // Record this finished recording in CallVault's own catalog (the Home list's source of truth).
         // The file is on the device now, so this is the local copy; the copy/sweep workers later stamp
@@ -857,48 +854,52 @@ class RecordingForegroundService : Service() {
         // be torn down right after (the process is given a few seconds to live — same rationale as the
         // CallLog fallback above). Written for every storage target, regardless of where the file lands.
         CoroutineScope(Dispatchers.IO).launch {
-            RecordingCatalog.recordLocal(applicationContext, name, uri, sizeBytes, lastModified)
-            // Marks are keyed to the FINAL name, for the same reason the sidecar is: an anonymous
-            // number gets renamed from the call log after the call, and rows written mid-call would
-            // point at a recording that no longer exists.
-            FlagRepository.save(applicationContext, name, PendingFlags.drain())
-            // Collect the speaker turns BEFORE the details file and before transcription is queued,
-            // never after. A transcript labels its segments from these turns, so they have to be on
-            // disk by the time whisper starts; and the details file now carries them too (issue #50),
-            // so it has to run after this or it would write a file with no turns in it.
-            //
-            // The daemon gathered them during the call, from the two capture channels before the
-            // mono downmix averaged them away. They cannot be recovered from the finished file —
-            // it is mono — so this is the only moment they can be collected at all.
-            SpeakerTurnsRepository.collectAfterCall(
-                applicationContext, name, outgoing = direction == RecordingDirection.OUTGOING
-            )
-            // The BCR-compatible details file, when the user asked for one. Driven off the FINAL
-            // name, after any call-log rename: a sidecar written against the pre-rename name would
-            // sit beside nothing and be invisible to every tool that looks for it. After the turns
-            // above, so the `callvault` block can carry them.
-            writeMetadataSidecar(name, lastModified, "com.android.phone")
-            // While a keep-or-delete answer is pending, neither hand-off runs: AfterCallDecision.keep
-            // runs both (and the Drive route below) once the user says keep.
-            if (!isHeld) {
-                // Route the .json details to Drive too (issue #49). Must be here, after the write above,
-                // because the audio's StorageRouter.route runs synchronously below while this coroutine is
-                // still going — routing the sidecar from there could fire before the file exists. In
-                // IMMEDIATE mode only; DAILY/WEEKLY copy it in the folder sweep. No-op if the user did not
-                // ask for a details file (nothing to find).
-                StorageRouter.routeSidecar(
-                    applicationContext, name, MetadataSidecar.sidecarNameFor(name), "application/json"
+            try {
+                RecordingCatalog.recordLocal(applicationContext, name, uri, sizeBytes, lastModified)
+                // Marks are keyed to the FINAL name, for the same reason the sidecar is: an anonymous
+                // number gets renamed from the call log after the call, and rows written mid-call would
+                // point at a recording that no longer exists.
+                FlagRepository.save(applicationContext, name, PendingFlags.drain())
+                // Collect the speaker turns BEFORE the details file and before transcription is queued,
+                // never after. A transcript labels its segments from these turns, so they have to be on
+                // disk by the time whisper starts; and the details file now carries them too (issue #50),
+                // so it has to run after this or it would write a file with no turns in it.
+                //
+                // The daemon gathered them during the call, from the two capture channels before the
+                // mono downmix averaged them away. They cannot be recovered from the finished file —
+                // it is mono — so this is the only moment they can be collected at all.
+                SpeakerTurnsRepository.collectAfterCall(
+                    applicationContext, name, outgoing = direction == RecordingDirection.OUTGOING
                 )
-                // After the catalog entry exists, never before: the transcription runner resolves the
-                // audio through the catalog, so queueing first would race it to "no longer in the catalog".
-                TranscriptionScheduler.transcribeAfterCallIfEnabled(applicationContext, name)
+                // The BCR-compatible details file, when the user asked for one. Driven off the FINAL
+                // name, after any call-log rename: a sidecar written against the pre-rename name would
+                // sit beside nothing and be invisible to every tool that looks for it. After the turns
+                // above, so the `callvault` block can carry them.
+                writeMetadataSidecar(name, lastModified, "com.android.phone")
+                // While a keep-or-delete answer is pending, neither hand-off runs: AfterCallDecision.keep
+                // runs both (and the Drive route below) once the user says keep.
+                if (!isHeld) {
+                    // Route the .json details to Drive too (issue #49). Must be here, after the write above,
+                    // because the audio's StorageRouter.route runs synchronously below while this coroutine is
+                    // still going — routing the sidecar from there could fire before the file exists. In
+                    // IMMEDIATE mode only; DAILY/WEEKLY copy it in the folder sweep. No-op if the user did not
+                    // ask for a details file (nothing to find).
+                    StorageRouter.routeSidecar(
+                        applicationContext, name, MetadataSidecar.sidecarNameFor(name), "application/json"
+                    )
+                    // After the catalog entry exists, never before: the transcription runner resolves the
+                    // audio through the catalog, so queueing first would race it to "no longer in the catalog".
+                    TranscriptionScheduler.transcribeAfterCallIfEnabled(applicationContext, name)
+                }
+                // Draw it now rather than when the user opens it: this phone has just come
+                // off a call, and they have not asked to wait for anything yet.
+                WaveformDrawWorker.enqueue(applicationContext, name, uri)
+            } finally {
+                // Last, once the catalog row exists: Keep runs the transcription, which resolves the audio
+                // through the catalog and would otherwise race it. In a finally, so a step above that throws
+                // can never leave a held recording with no question (its 24-hour check is already scheduled).
+                if (isHeld) AfterCallDecision.ask(applicationContext, name)
             }
-            // Draw it now rather than when the user opens it: this phone has just come
-            // off a call, and they have not asked to wait for anything yet.
-            WaveformDrawWorker.enqueue(applicationContext, name, uri)
-            // Last, once the catalog row exists: Keep runs the transcription, which resolves the audio
-            // through the catalog and would otherwise race it.
-            if (isHeld) AfterCallDecision.ask(applicationContext, name)
         }
         recordHealth(sizeBytes, name)
         if (!isHeld) StorageRouter.route(applicationContext, uri, name, mimeType)

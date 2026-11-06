@@ -9,11 +9,14 @@
 package com.baba.callvault.services.recording.aftercall
 
 import android.content.Context
+import android.net.Uri
+import com.baba.callvault.data.AppPreferences
 import com.baba.callvault.data.recordings.RecordingsRepository
 import com.baba.callvault.system.interop.MetadataSidecar
 import com.baba.callvault.system.storage.StorageRouter
 import com.baba.callvault.transcription.TranscriptionScheduler
 import com.baba.callvault.utils.AppLogger
+import kotlinx.coroutines.runBlocking
 
 /**
  * What each keep-or-delete answer does. Plain functions on an object, so a receiver, a worker and (later) the
@@ -22,63 +25,90 @@ import com.baba.callvault.utils.AppLogger
  * While a recording is held it is catalogued and playable but has no Drive copy and no automatic transcript:
  * [keep] is what finally runs those hand-offs, exactly as the call-end path would have. Answers are made
  * idempotent by [AfterCallDecisions.release], which hands the held entry to one caller only — a second answer
- * (from the pop-up, or the 24-hour check) finds nothing and only tidies the notification.
+ * (from the pop-up, or the 24-hour check) finds nothing and only tidies up.
  */
 object AfterCallDecision {
 
     private const val TAG = "CV:AfterCall"
 
     /**
-     * Asks the question for a recording already [AfterCallDecisions.hold]-ed: posts the notification and
-     * schedules the 24-hour check. Called once the catalog row exists, so Keep can never race the catalog.
+     * Called by both finalize paths: holds the recording when the user asked to be asked AND the question can
+     * be shown, and schedules its 24-hour check at once, so a hold is never left without a way out even if
+     * everything after this throws. Returns false — keep it as in Keep mode — otherwise.
      */
+    fun tryHold(context: Context, displayName: String, uri: Uri, mimeType: String, isVoip: Boolean): Boolean {
+        if (!AfterCallPolicy.shouldAsk(AppPreferences(context).getAfterCallMode())) return false
+        if (!AfterCallNotifier.canAsk(context)) {
+            AppLogger.w(TAG, "Asked to ask after calls, but notifications are off or blocked; keeping the recording")
+            return false
+        }
+        val held = AfterCallDecisions.hold(context, displayName, uri, mimeType, isVoip) ?: return false
+        AfterCallWork.scheduleUnansweredCheck(context, displayName, AfterCallPolicy.UNANSWERED_DELAY_MS, replace = true)
+        AppLogger.i(TAG, "Held a ${if (held.isVoip) "VoIP" else "carrier"} recording for keep-or-delete")
+        return true
+    }
+
+    /** Posts the question for a held recording. Called once its catalog row exists, so Keep never races it. */
     fun ask(context: Context, displayName: String) {
-        val held = AfterCallDecisions.peek(context, displayName) ?: return
-        AfterCallNotifier.postQuestion(context, held)
-        AfterCallWork.scheduleUnansweredCheck(context, displayName)
-        AppLogger.i(TAG, "Asked keep-or-delete for a ${if (held.isVoip) "VoIP" else "carrier"} recording")
+        runCatching {
+            val held = AfterCallDecisions.peek(context, displayName) ?: return
+            AfterCallNotifier.postQuestion(context, held)
+        }.onFailure { AppLogger.w(TAG, "Could not ask keep-or-delete: ${it.message}") }
     }
 
     /** Keep: end the wait and run the held Drive copy, details-file copy and transcription. */
-    fun keep(context: Context, displayName: String) = keep(context, displayName, fromUnansweredCheck = false)
+    fun keep(context: Context, displayName: String): Boolean = keep(context, displayName, fromUnansweredCheck = false)
 
     internal fun keep(context: Context, displayName: String, fromUnansweredCheck: Boolean): Boolean {
         val held = AfterCallDecisions.release(context, displayName)
         AfterCallWork.cancelDelete(context, displayName)
         // Never from inside the check itself: cancelling the running worker would stop it mid-hand-off.
         if (!fromUnansweredCheck) AfterCallWork.cancelUnansweredCheck(context, displayName)
-        AfterCallNotifier.cancel(context, displayName)
         if (held == null) return false
-        runHeldHandOffs(context, held)
+        AfterCallNotifier.cancel(context, held.notificationId)
+        // In a worker, not here: the details-file copy searches the recordings folder through SAF, which on a
+        // large folder can outlast a broadcast's time budget. Inline only when already in a worker, or when
+        // the work cannot be enqueued — never dropped.
+        if (fromUnansweredCheck || !AfterCallWork.scheduleKeep(context, held)) runHeldHandOffs(context, held)
         AppLogger.i(TAG, "Kept a held recording${if (fromUnansweredCheck) " (no answer in 24 h)" else ""}")
         return true
     }
 
     /**
+     * Keeps every held recording. For when "When a call ends" goes back to Keep: questions the user is no
+     * longer being asked must not leave their recordings without a Drive copy or a transcript.
+     */
+    fun keepAll(context: Context): Int = AfterCallDecisions.pendingNames(context).count { keep(context, it) }
+
+    /**
      * Delete: show "Recording deleted · Undo" and delete for real after the Undo window. The entry stays held
-     * meanwhile, so no sweep copies or transcribes a recording that is on its way out.
+     * meanwhile, so no sweep copies or transcribes a recording that is on its way out; it is marked, so the
+     * 24-hour check deletes rather than keeps it if the delete work is ever lost. If the delete cannot be
+     * scheduled at all it happens now, with no Undo — never left held.
      */
     fun delete(context: Context, displayName: String) {
-        if (AfterCallDecisions.peek(context, displayName) == null) {
-            AfterCallNotifier.cancel(context, displayName)
+        val held = AfterCallDecisions.setDeleteRequested(context, displayName, requested = true) ?: return
+        AfterCallNotifier.postDeleted(context, held)
+        if (!AfterCallWork.scheduleDelete(context, displayName, AfterCallPolicy.DELETE_UNDO_WINDOW_MS, replace = true)) {
+            AppLogger.w(TAG, "Could not schedule the delete; deleting now")
+            runBlocking { deleteNow(context, displayName, fromUnansweredCheck = false) }
             return
         }
-        AfterCallNotifier.postDeleted(context, displayName)
-        AfterCallWork.scheduleDelete(context, displayName)
         AppLogger.i(TAG, "Delete requested; the recording goes after the Undo window")
     }
 
     /** Undo: cancel the pending delete and ask again. */
     fun undo(context: Context, displayName: String) {
         AfterCallWork.cancelDelete(context, displayName)
-        val held = AfterCallDecisions.peek(context, displayName)
-        if (held == null) {
-            // The delete already ran; there is nothing left to bring back.
-            AfterCallNotifier.cancel(context, displayName)
-            return
-        }
+        // Null: the delete already ran, and it cleared the notification on its way.
+        val held = AfterCallDecisions.setDeleteRequested(context, displayName, requested = false) ?: return
         AfterCallNotifier.postQuestion(context, held)
         AppLogger.i(TAG, "Delete undone; asking again")
+    }
+
+    /** The question was swiped away: still held, the 24-hour check still decides, but startup will not re-ask. */
+    fun dismissed(context: Context, displayName: String) {
+        AfterCallDecisions.setDismissed(context, displayName)
     }
 
     /**
@@ -88,8 +118,8 @@ object AfterCallDecision {
     internal suspend fun deleteNow(context: Context, displayName: String, fromUnansweredCheck: Boolean): Boolean {
         val held = AfterCallDecisions.release(context, displayName)
         if (!fromUnansweredCheck) AfterCallWork.cancelUnansweredCheck(context, displayName)
-        AfterCallNotifier.cancel(context, displayName)
         if (held == null) return false
+        AfterCallNotifier.cancel(context, held.notificationId)
         val item = RecordingsRepository.RecordingItem(
             uri = held.uri,
             displayName = held.displayName,
@@ -107,18 +137,54 @@ object AfterCallDecision {
         return deleted
     }
 
+    /** Ends the wait and does nothing else: the recording is no longer in the catalog (a merge took it). */
+    internal fun releaseOnly(context: Context, displayName: String) {
+        val held = AfterCallDecisions.release(context, displayName) ?: return
+        AfterCallWork.cancelDelete(context, displayName)
+        AfterCallNotifier.cancel(context, held.notificationId)
+        AppLogger.i(TAG, "A held recording left the catalog; its question was withdrawn")
+    }
+
+    /**
+     * Puts back what a killed process or a reboot can take away from a held recording: its 24-hour check
+     * (KEEP, so a scheduled one is never pushed back; with what is left of the 24 hours, so an overdue one
+     * runs now), its pending delete, and its question — unless the user swiped that away. Idempotent: run at
+     * every app start, off the main thread.
+     */
+    fun reconcile(context: Context) {
+        val now = System.currentTimeMillis()
+        val held = AfterCallDecisions.all(context)
+        held.forEach { entry ->
+            runCatching {
+                val name = entry.displayName
+                AfterCallWork.scheduleUnansweredCheck(
+                    context, name, AfterCallPolicy.remainingUnansweredDelayMs(entry.askedAt, now), replace = false,
+                )
+                if (entry.deleteRequested) {
+                    AfterCallWork.scheduleDelete(context, name, AfterCallPolicy.DELETE_UNDO_WINDOW_MS, replace = false)
+                }
+                if (AfterCallPolicy.shouldRepostQuestion(entry.deleteRequested, entry.dismissed)) {
+                    AfterCallNotifier.postQuestion(context, entry)
+                }
+            }.onFailure { AppLogger.w(TAG, "Could not restore a held recording's question: ${it.message}") }
+        }
+        if (held.isNotEmpty()) AppLogger.i(TAG, "Restored ${held.size} held recording(s) at start")
+    }
+
     /**
      * The three hand-offs the finalize paths skip while a recording is held, in the order the VoIP path runs
      * them. Each on its own so one failing (Drive folder gone, say) does not cost the others.
      */
-    private fun runHeldHandOffs(context: Context, held: AfterCallDecisions.Held) {
-        val name = held.displayName
-        runCatching { TranscriptionScheduler.transcribeAfterCallIfEnabled(context, name) }
+    internal fun runHeldHandOffs(context: Context, displayName: String, uri: Uri, mimeType: String) {
+        runCatching { TranscriptionScheduler.transcribeAfterCallIfEnabled(context, displayName) }
             .onFailure { AppLogger.w(TAG, "Could not queue transcription for a kept recording: ${it.message}") }
-        runCatching { StorageRouter.route(context, held.uri, name, held.mimeType) }
+        runCatching { StorageRouter.route(context, uri, displayName, mimeType) }
             .onFailure { AppLogger.w(TAG, "Could not route a kept recording: ${it.message}") }
         runCatching {
-            StorageRouter.routeSidecar(context, name, MetadataSidecar.sidecarNameFor(name), "application/json")
+            StorageRouter.routeSidecar(context, displayName, MetadataSidecar.sidecarNameFor(displayName), "application/json")
         }.onFailure { AppLogger.w(TAG, "Could not route a kept recording's details file: ${it.message}") }
     }
+
+    private fun runHeldHandOffs(context: Context, held: AfterCallDecisions.Held) =
+        runHeldHandOffs(context, held.displayName, held.uri, held.mimeType)
 }

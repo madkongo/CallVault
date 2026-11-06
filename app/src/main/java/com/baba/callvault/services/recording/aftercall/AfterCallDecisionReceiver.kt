@@ -29,13 +29,14 @@ class AfterCallDecisionReceiver : BroadcastReceiver() {
         val name = intent.data?.takeIf { it.scheme == DATA_SCHEME }?.schemeSpecificPart ?: return
         val app = context.applicationContext
         val pending = goAsync()
-        // Off the main thread: Keep reads the folder and enqueues the hand-offs, Undo reads the duration.
+        // Off the main thread: every answer commits to the store, and Undo reads the duration.
         Thread {
             try {
                 when (action) {
                     ACTION_KEEP -> AfterCallDecision.keep(app, name)
                     ACTION_DELETE -> AfterCallDecision.delete(app, name)
                     ACTION_UNDO -> AfterCallDecision.undo(app, name)
+                    ACTION_DISMISSED -> AfterCallDecision.dismissed(app, name)
                     else -> AppLogger.w(TAG, "Unknown after-call action ignored")
                 }
             } catch (e: Exception) {
@@ -53,14 +54,15 @@ class AfterCallDecisionReceiver : BroadcastReceiver() {
         const val ACTION_KEEP = "com.baba.callvault.action.AFTER_CALL_KEEP"
         const val ACTION_DELETE = "com.baba.callvault.action.AFTER_CALL_DELETE"
         const val ACTION_UNDO = "com.baba.callvault.action.AFTER_CALL_UNDO"
+        const val ACTION_DISMISSED = "com.baba.callvault.action.AFTER_CALL_DISMISSED"
 
         /** The recording's identity on an Intent: an opaque URI, so the name survives any character in it. */
         fun dataUriFor(displayName: String): Uri = Uri.fromParts(DATA_SCHEME, displayName, null)
 
-        fun pendingIntent(context: Context, action: String, displayName: String): PendingIntent =
+        fun pendingIntent(context: Context, action: String, displayName: String, requestCode: Int): PendingIntent =
             PendingIntent.getBroadcast(
                 context,
-                AfterCallPolicy.notificationIdFor(displayName),
+                requestCode,
                 Intent(context, AfterCallDecisionReceiver::class.java)
                     .setAction(action)
                     .setData(dataUriFor(displayName)),

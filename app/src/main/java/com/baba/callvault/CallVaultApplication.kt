@@ -9,6 +9,7 @@
 
 package com.baba.callvault
 
+import com.baba.callvault.services.recording.aftercall.AfterCallDecision
 import android.app.Application
 import com.baba.callvault.system.storage.CutOffRescueWorker
 import com.baba.callvault.data.AppPreferences
@@ -75,6 +76,14 @@ class CallVaultApplication : Application() {
                 if (freed > 0L) AppLogger.i(TAG, "Reclaimed $freed bytes of superseded model files")
             }.onFailure { AppLogger.w(TAG, "Could not prune orphaned model files: ${it.message}") }
         }.apply { isDaemon = true; start() }
+
+        // Keep or delete after the call: a reboot clears every notification and a killed process can lose
+        // the steps after a hold, so each held recording gets its 24-hour check and its question back here.
+        // This runs on every process start, boot included. Off the main thread: it reads a file per entry.
+        Thread {
+            runCatching { AfterCallDecision.reconcile(applicationContext) }
+                .onFailure { AppLogger.w(TAG, "Could not restore held after-call questions: ${it.message}") }
+        }.apply { isDaemon = true; name = "cv-after-call-restore" }.start()
 
         // Migration: pre-consolidation builds showed readiness from THREE sources (the transient launch
         // notifier id 4715 + the post-boot CallMonitorService id 4714), duplicating the single permanent

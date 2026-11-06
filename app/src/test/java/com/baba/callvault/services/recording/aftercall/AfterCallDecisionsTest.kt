@@ -12,6 +12,8 @@ import android.content.Context
 import androidx.core.net.toUri
 import androidx.test.core.app.ApplicationProvider
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
+import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Before
@@ -35,11 +37,12 @@ class AfterCallDecisionsTest {
 
     @Test
     fun `a held recording can be read back whole`() {
-        assertTrue(AfterCallDecisions.hold(context, name, uri, "audio/ogg", isVoip = true, askedAt = 1234L))
+        val stored = AfterCallDecisions.hold(context, name, uri, "audio/ogg", isVoip = true, askedAt = 1234L)
 
         val held = AfterCallDecisions.peek(context, name)
 
-        assertEquals(AfterCallDecisions.Held(name, uri, "audio/ogg", 1234L, true), held)
+        assertNotNull(stored)
+        assertEquals(AfterCallDecisions.Held(name, uri, "audio/ogg", 1234L, true, stored!!.notificationId), held)
         assertEquals(setOf(name), AfterCallDecisions.pendingNames(context))
     }
 
@@ -70,6 +73,39 @@ class AfterCallDecisionsTest {
         AfterCallDecisions.release(context, "a.ogg")
 
         assertEquals(setOf("b.m4a"), AfterCallDecisions.pendingNames(context))
+    }
+
+    @Test
+    fun `each hold gets the next notification id, never a shared one`() {
+        val a = AfterCallDecisions.hold(context, "a.ogg", uri, "audio/ogg", isVoip = false)!!
+        val b = AfterCallDecisions.hold(context, "b.ogg", uri, "audio/ogg", isVoip = false)!!
+
+        assertEquals(AfterCallPolicy.nextNotificationId(a.notificationId), b.notificationId)
+        assertTrue("the counter is not a held name", AfterCallDecisions.pendingNames(context) == setOf("a.ogg", "b.ogg"))
+    }
+
+    @Test
+    fun `delete requested is recorded and cleared`() {
+        AfterCallDecisions.hold(context, name, uri, "audio/ogg", isVoip = false)
+
+        assertTrue(AfterCallDecisions.setDeleteRequested(context, name, true)!!.deleteRequested)
+        assertTrue(AfterCallDecisions.peek(context, name)!!.deleteRequested)
+        assertFalse(AfterCallDecisions.setDeleteRequested(context, name, false)!!.deleteRequested)
+    }
+
+    @Test
+    fun `a swiped question is remembered`() {
+        AfterCallDecisions.hold(context, name, uri, "audio/ogg", isVoip = false)
+
+        AfterCallDecisions.setDismissed(context, name)
+
+        assertTrue(AfterCallDecisions.peek(context, name)!!.dismissed)
+    }
+
+    @Test
+    fun `updating a recording that is not held does nothing`() {
+        assertNull(AfterCallDecisions.setDeleteRequested(context, "never-held.ogg", true))
+        assertTrue(AfterCallDecisions.pendingNames(context).isEmpty())
     }
 
     @Test

@@ -8,6 +8,7 @@
 
 package com.baba.callvault.services.recording.aftercall
 
+import android.app.NotificationManager
 import com.baba.callvault.data.AppPreferences.AfterCallMode
 import com.baba.callvault.data.AppPreferences.AfterCallUnanswered
 import com.baba.callvault.services.recording.aftercall.AfterCallPolicy.UnansweredAction
@@ -28,52 +29,117 @@ class AfterCallPolicyTest {
         assertFalse(AfterCallPolicy.shouldAsk(AfterCallMode.KEEP))
     }
 
+    private val band = AfterCallPolicy.NOTIFICATION_ID_BASE until
+        AfterCallPolicy.NOTIFICATION_ID_BASE + AfterCallPolicy.NOTIFICATION_ID_SPAN
+
+    private fun facts(
+        stillPending: Boolean = true,
+        inCatalog: Boolean = true,
+        deleteRequested: Boolean = false,
+        engaged: Boolean = false,
+    ) = AfterCallPolicy.HeldFacts(stillPending, inCatalog, deleteRequested, engaged)
+
     @Test
-    fun `the notification id is stable for a name`() {
-        val name = "20261106_101500_in_0501234567.ogg"
-        assertEquals(AfterCallPolicy.notificationIdFor(name), AfterCallPolicy.notificationIdFor(name))
+    fun `the first notification id starts the band`() {
+        assertEquals(AfterCallPolicy.NOTIFICATION_ID_BASE, AfterCallPolicy.nextNotificationId(null))
     }
 
     @Test
-    fun `notification ids stay inside their own band and off every fixed id`() {
-        val names = (0 until 5_000).map { "2026110${it % 9}_${it}_voip_WhatsApp_name$it.m4a" } +
-            listOf("", "x", "דנה.ogg")
-        names.forEach { name ->
-            val id = AfterCallPolicy.notificationIdFor(name)
-            assertTrue("$id out of band", id in AfterCallPolicy.NOTIFICATION_ID_BASE until
-                AfterCallPolicy.NOTIFICATION_ID_BASE + AfterCallPolicy.NOTIFICATION_ID_SPAN)
-            assertFalse("$id collides with a fixed id", id in fixedIds)
+    fun `notification ids count up and wrap inside their own band, off every fixed id`() {
+        var id: Int? = null
+        val seen = mutableListOf<Int>()
+        repeat(AfterCallPolicy.NOTIFICATION_ID_SPAN + 5) {
+            id = AfterCallPolicy.nextNotificationId(id)
+            seen += id!!
+        }
+        assertEquals("a full band before any repeat", AfterCallPolicy.NOTIFICATION_ID_SPAN, seen.take(AfterCallPolicy.NOTIFICATION_ID_SPAN).toSet().size)
+        assertEquals(AfterCallPolicy.NOTIFICATION_ID_BASE, seen[AfterCallPolicy.NOTIFICATION_ID_SPAN])
+        seen.forEach {
+            assertTrue("$it out of band", it in band)
+            assertFalse("$it collides with a fixed id", it in fixedIds)
         }
     }
 
     @Test
-    fun `a negative hash still maps into the band`() {
-        // "polygenelubricants".hashCode() == Int.MIN_VALUE: the case plain % gets wrong.
-        val id = AfterCallPolicy.notificationIdFor("polygenelubricants")
-        assertTrue(id >= AfterCallPolicy.NOTIFICATION_ID_BASE)
+    fun `a stored id outside the band restarts it`() {
+        assertEquals(AfterCallPolicy.NOTIFICATION_ID_BASE, AfterCallPolicy.nextNotificationId(4720))
+        assertEquals(AfterCallPolicy.NOTIFICATION_ID_BASE, AfterCallPolicy.nextNotificationId(-1))
+    }
+
+    @Test
+    fun `the question can be shown only with permission, notifications on and the channel not blocked`() {
+        assertTrue(AfterCallPolicy.canShowQuestion(true, true, NotificationManager.IMPORTANCE_HIGH))
+        assertTrue("not created yet is ours to create", AfterCallPolicy.canShowQuestion(true, true, null))
+        assertFalse(AfterCallPolicy.canShowQuestion(false, true, NotificationManager.IMPORTANCE_HIGH))
+        assertFalse(AfterCallPolicy.canShowQuestion(true, false, NotificationManager.IMPORTANCE_HIGH))
+        assertFalse(AfterCallPolicy.canShowQuestion(true, true, NotificationManager.IMPORTANCE_NONE))
+    }
+
+    @Test
+    fun `a recording is held only when asking is on and the question can be shown`() {
+        assertTrue(AfterCallPolicy.shouldHold(AfterCallMode.ASK, canShowQuestion = true))
+        assertFalse("an unseeable question means keep", AfterCallPolicy.shouldHold(AfterCallMode.ASK, canShowQuestion = false))
+        assertFalse(AfterCallPolicy.shouldHold(AfterCallMode.KEEP, canShowQuestion = true))
+    }
+
+    @Test
+    fun `the restored 24 hour check waits only for what is left, and runs at once when overdue`() {
+        val day = AfterCallPolicy.UNANSWERED_DELAY_MS
+        assertEquals(day, AfterCallPolicy.remainingUnansweredDelayMs(askedAt = 1_000L, now = 1_000L))
+        assertEquals(day - 60_000L, AfterCallPolicy.remainingUnansweredDelayMs(askedAt = 0L, now = 60_000L))
+        assertEquals(0L, AfterCallPolicy.remainingUnansweredDelayMs(askedAt = 0L, now = day * 3))
+        assertEquals("a clock moved backwards never waits longer than a day", day,
+            AfterCallPolicy.remainingUnansweredDelayMs(askedAt = day * 5, now = 0L))
+    }
+
+    @Test
+    fun `startup re-asks unless delete was tapped or the question was swiped away`() {
+        assertTrue(AfterCallPolicy.shouldRepostQuestion(deleteRequested = false, dismissed = false))
+        assertFalse(AfterCallPolicy.shouldRepostQuestion(deleteRequested = true, dismissed = false))
+        assertFalse(AfterCallPolicy.shouldRepostQuestion(deleteRequested = false, dismissed = true))
     }
 
     @Test
     fun `the 24 hour check does nothing once the question was answered`() {
         AfterCallUnanswered.entries.forEach {
-            assertEquals(UnansweredAction.NOTHING, AfterCallPolicy.unansweredAction(it, stillPending = false))
+            assertEquals(UnansweredAction.NOTHING, AfterCallPolicy.unansweredAction(it, facts(stillPending = false)))
         }
     }
 
     @Test
     fun `the 24 hour check deletes when the setting still says delete`() {
-        assertEquals(
-            UnansweredAction.DELETE,
-            AfterCallPolicy.unansweredAction(AfterCallUnanswered.DELETE_AFTER_24H, stillPending = true),
-        )
+        assertEquals(UnansweredAction.DELETE, AfterCallPolicy.unansweredAction(AfterCallUnanswered.DELETE_AFTER_24H, facts()))
     }
 
     @Test
     fun `the 24 hour check keeps when the setting was switched to keep meanwhile`() {
+        assertEquals(UnansweredAction.KEEP, AfterCallPolicy.unansweredAction(AfterCallUnanswered.KEEP, facts()))
+    }
+
+    @Test
+    fun `a tapped delete is honoured even when the setting says keep`() {
+        assertEquals(
+            UnansweredAction.DELETE,
+            AfterCallPolicy.unansweredAction(AfterCallUnanswered.KEEP, facts(deleteRequested = true, engaged = true)),
+        )
+    }
+
+    @Test
+    fun `a recording the user engaged with is kept rather than deleted unanswered`() {
         assertEquals(
             UnansweredAction.KEEP,
-            AfterCallPolicy.unansweredAction(AfterCallUnanswered.KEEP, stillPending = true),
+            AfterCallPolicy.unansweredAction(AfterCallUnanswered.DELETE_AFTER_24H, facts(engaged = true)),
         )
+    }
+
+    @Test
+    fun `a recording that left the catalog is only released`() {
+        AfterCallUnanswered.entries.forEach {
+            assertEquals(
+                UnansweredAction.RELEASE,
+                AfterCallPolicy.unansweredAction(it, facts(inCatalog = false, deleteRequested = true)),
+            )
+        }
     }
 
     @Test

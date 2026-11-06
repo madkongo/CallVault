@@ -27,9 +27,9 @@ import com.baba.callvault.utils.AppLogger
  * The after-call question in the shade: "Call with Dana recorded · 4:07 — Keep it, or delete it now?", and
  * the "Recording deleted · Undo" that replaces it after Delete.
  *
- * One notification per recording, on [AfterCallPolicy.notificationIdFor], so two calls back to back each
- * keep their own question. Swiping it away is not an answer: the recording stays held and listed, and the
- * 24-hour check decides.
+ * One notification per recording, on the id allocated when it was held, so two calls back to back each
+ * keep their own question. Swiping it away is not an answer: the recording stays held and listed, the
+ * 24-hour check decides, and startup does not post it again.
  */
 internal object AfterCallNotifier {
 
@@ -39,34 +39,55 @@ internal object AfterCallNotifier {
     /** A little longer than the Undo window, so the "deleted" notice outlives the work only if that fails. */
     private const val DELETED_NOTICE_TIMEOUT_MS = AfterCallPolicy.DELETE_UNDO_WINDOW_MS + 5_000L
 
-    /** Posts (or re-posts, after Undo) the keep-or-delete question for [held]. Blocking: reads the duration. */
+    /**
+     * Whether a question posted now would reach the user: the permission, the app's notifications as a whole,
+     * and our own channel (which the user can block on its own). Creates the channel first, so a first-ever
+     * question is judged by the channel it will actually be posted on.
+     */
+    fun canAsk(context: Context): Boolean = runCatching {
+        ensureChannel(context)
+        val importance = context.getSystemService(NotificationManager::class.java)
+            ?.getNotificationChannel(CHANNEL_ID)?.importance
+        AfterCallPolicy.canShowQuestion(
+            hasPermission = PermissionChecks.hasNotificationPermission(context),
+            notificationsEnabled = NotificationManagerCompat.from(context).areNotificationsEnabled(),
+            channelImportance = importance,
+        )
+    }.getOrDefault(false)
+
+    /** Posts (or re-posts) the keep-or-delete question for [held]. Blocking: reads the duration. */
     fun postQuestion(context: Context, held: AfterCallDecisions.Held) {
         val name = held.displayName
         val title = titleFor(context, name, durationOf(context, held))
-        val builder = base(context, name)
+        val builder = base(context, held)
             .setContentTitle(title)
             .setContentText(context.getString(R.string.after_call_question_text))
-            .addAction(0, context.getString(R.string.after_call_keep), AfterCallDecisionReceiver.pendingIntent(context, AfterCallDecisionReceiver.ACTION_KEEP, name))
-            .addAction(0, context.getString(R.string.after_call_delete), AfterCallDecisionReceiver.pendingIntent(context, AfterCallDecisionReceiver.ACTION_DELETE, name))
-        notify(context, name, builder)
+            .addAction(0, context.getString(R.string.after_call_keep), receiverIntent(context, AfterCallDecisionReceiver.ACTION_KEEP, held))
+            .addAction(0, context.getString(R.string.after_call_delete), receiverIntent(context, AfterCallDecisionReceiver.ACTION_DELETE, held))
+            // A swipe is "not now": recorded so startup does not keep putting the question back.
+            .setDeleteIntent(receiverIntent(context, AfterCallDecisionReceiver.ACTION_DISMISSED, held))
+        notify(context, held.notificationId, builder)
     }
 
     /** Replaces the question with "Recording deleted" and its Undo, for the length of the Undo window. */
-    fun postDeleted(context: Context, displayName: String) {
-        val builder = base(context, displayName)
+    fun postDeleted(context: Context, held: AfterCallDecisions.Held) {
+        val builder = base(context, held)
             .setContentTitle(context.getString(R.string.after_call_deleted_title))
             .setContentText(context.getString(R.string.after_call_deleted_text))
             .setTimeoutAfter(DELETED_NOTICE_TIMEOUT_MS)
-            .addAction(0, context.getString(R.string.after_call_undo), AfterCallDecisionReceiver.pendingIntent(context, AfterCallDecisionReceiver.ACTION_UNDO, displayName))
-        notify(context, displayName, builder)
+            .addAction(0, context.getString(R.string.after_call_undo), receiverIntent(context, AfterCallDecisionReceiver.ACTION_UNDO, held))
+        notify(context, held.notificationId, builder)
     }
 
-    fun cancel(context: Context, displayName: String) {
-        runCatching { NotificationManagerCompat.from(context).cancel(AfterCallPolicy.notificationIdFor(displayName)) }
+    fun cancel(context: Context, notificationId: Int) {
+        runCatching { NotificationManagerCompat.from(context).cancel(notificationId) }
             .onFailure { AppLogger.w(TAG, "Could not clear the after-call notification: ${it.message}") }
     }
 
-    private fun base(context: Context, displayName: String): NotificationCompat.Builder {
+    private fun receiverIntent(context: Context, action: String, held: AfterCallDecisions.Held) =
+        AfterCallDecisionReceiver.pendingIntent(context, action, held.displayName, held.notificationId)
+
+    private fun base(context: Context, held: AfterCallDecisions.Held): NotificationCompat.Builder {
         ensureChannel(context)
         // A public version without the name: the lock screen may show that a call is waiting for an answer,
         // never whose call it was — the same privacy line the recording notifications draw.
@@ -76,7 +97,7 @@ internal object AfterCallNotifier {
             .build()
         return NotificationCompat.Builder(context, CHANNEL_ID)
             .setSmallIcon(R.drawable.ic_mic)
-            .setContentIntent(openApp(context, displayName))
+            .setContentIntent(openApp(context, held))
             .setAutoCancel(false)
             .setOnlyAlertOnce(true)
             .setPriority(NotificationCompat.PRIORITY_HIGH)
@@ -86,12 +107,12 @@ internal object AfterCallNotifier {
     }
 
     @SuppressLint("MissingPermission") // Checked just above: hasNotificationPermission.
-    private fun notify(context: Context, displayName: String, builder: NotificationCompat.Builder) {
+    private fun notify(context: Context, notificationId: Int, builder: NotificationCompat.Builder) {
         if (!PermissionChecks.hasNotificationPermission(context)) {
             AppLogger.i(TAG, "No notification permission; the after-call question was not shown")
             return
         }
-        runCatching { NotificationManagerCompat.from(context).notify(AfterCallPolicy.notificationIdFor(displayName), builder.build()) }
+        runCatching { NotificationManagerCompat.from(context).notify(notificationId, builder.build()) }
             .onFailure { AppLogger.w(TAG, "Could not post the after-call notification: ${it.message}") }
     }
 
@@ -121,12 +142,12 @@ internal object AfterCallNotifier {
      * otherwise identical to PendingIntent (filterEquals ignores extras), so a request code shared with
      * another notification would make them ONE PendingIntent and FLAG_UPDATE_CURRENT would rewrite the other.
      */
-    private fun openApp(context: Context, displayName: String): PendingIntent = PendingIntent.getActivity(
+    private fun openApp(context: Context, held: AfterCallDecisions.Held): PendingIntent = PendingIntent.getActivity(
         context,
-        AfterCallPolicy.notificationIdFor(displayName),
+        held.notificationId,
         Intent(context, MainActivity::class.java).apply {
             setPackage(context.packageName)
-            data = AfterCallDecisionReceiver.dataUriFor(displayName)
+            data = AfterCallDecisionReceiver.dataUriFor(held.displayName)
             flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP
         },
         PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE,
