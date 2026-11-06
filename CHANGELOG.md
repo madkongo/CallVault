@@ -7,6 +7,17 @@ All notable changes to CallVault are documented here. The format is based on
 
 ### Added
 
+- **Transcribe again** (#72). A transcript's ⋮ menu, the Transcripts page's selection bar (several at once) and the
+  new ⋮ on the transcript page itself can run a transcription again, with a different language or engine. The
+  current text stays readable until the new one succeeds; if the new run fails or is stopped, the old one is kept.
+  It can also delete a summary written from the old text. The transcript page shows the progress, with Stop.
+  Asked by @QBANIN.
+  <!-- 🧪 VERIFYING: OP9 2026-11-05 (Groq, custom server, on-phone; Stop; failure keeps the old text); maintainer to try. -->
+- **Pull to refresh.** Pull down on the Hub, Recordings, Transcripts or Summaries page to look again. On Recordings
+  this also checks the recordings folder: a file put there by hand appears, and one deleted outside the app leaves
+  the list.
+  <!-- 🧪 VERIFYING: OP9 2026-11-06 (file added + deleted by hand, all four pages); Drive storage untried. -->
+
 - **Bengali (বাংলা).** The app is translated into Bengali, and Bengali can be set as the transcription language.
   <!-- 🧪 VERIFYING: OP9 2026-11-04 (2.5.0-next3): app shown in Bengali; transcription of real Bengali speech untried. -->
 
@@ -37,6 +48,18 @@ All notable changes to CallVault are documented here. The format is based on
 
 ### Fixed
 
+- **Honor phones pausing CallVault during a call.** Some Honor phones (MagicOS, Android 17) pause the app while the
+  screen is dark in a call, which lost one call and cut another short. On a phone seen doing this, the recorder
+  process now records the call by itself. Resilient recording on Honor also starts again (#53).
+  <!-- ✅ VERIFIED 2026-11-06 in the field: the BVL-N59 reporter (test build 2.4.9-usbprobe3), 8 calls through 140 app pauses. -->
+- **Pages that showed old information until the app was reopened.** Transcripts, Summaries and the Hub counts no
+  longer stay empty when opened before the first transcription, and the Shizuku status, USB mode and calling-app
+  list in Settings update when you come back to the app.
+  <!-- 🧪 VERIFYING: unit tests; OP9 2026-11-06 for the pages. -->
+- **Debug reports say more about the phone.** They now always include when USB debugging was switched off and the
+  recorder's up/down history, plus a "Phone power" section (battery exemption, power saving, how often the phone
+  paused CallVault).
+  <!-- 🧪 VERIFYING: seen in the Honor reporters' reports 2026-11-05/06. -->
 - **Recordings deleted when the Drive folder was the recordings folder.** With "Google Drive only" and the same phone
   folder chosen for both, each recording was deleted right after it was saved. CallVault now refuses that folder
   choice, warns anyone already set up this way, and never deletes a recording whose "Drive copy" is itself.
