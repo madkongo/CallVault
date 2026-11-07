@@ -27,6 +27,8 @@ import kotlinx.parcelize.Parcelize
  * @param standardizedNumber **Enrichment**: An optional standardized E.164 phone number for better display and filename generation.
  * @param isCrossCountry **Enrichment**: An optional flag indicating if the call is cross-country.
  * @param isEnriched **Enrichment**: A flag indicating whether enrichment has been attempted on this metadata instance.
+ * @param isDialledNumberChecked Whether [rawPhoneNumber] was already checked against the dialled number from
+ *   NEW_OUTGOING_CALL (see [com.baba.callvault.utils.RedirectedCall]), so the call log need not be read after the call.
  */
 @Parcelize
 data class RecordingMetadata(
@@ -35,7 +37,8 @@ data class RecordingMetadata(
     // -- Enrichment fields --
     val standardizedNumber: String? = null,
     val isCrossCountry: Boolean = false,
-    val isEnriched: Boolean = false
+    val isEnriched: Boolean = false,
+    val isDialledNumberChecked: Boolean = false
 ) : Parcelable {
     /**
      * Returns the best available phone number for display and filename purposes.

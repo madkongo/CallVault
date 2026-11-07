@@ -12,7 +12,9 @@ package com.baba.callvault.services.call
 import android.content.Context
 import android.content.Intent
 import android.net.Uri
+import android.os.SystemClock
 import android.provider.ContactsContract
+import android.telephony.PhoneNumberUtils
 import android.telephony.TelephonyManager
 import com.baba.callvault.system.storage.CutOffRescueWorker
 import com.baba.callvault.data.AppPreferences
@@ -31,6 +33,7 @@ import com.baba.callvault.system.permissions.PermissionChecks
 import com.baba.callvault.utils.AppLogger
 import com.baba.callvault.utils.PhoneNumberManager
 import com.baba.callvault.utils.PhoneNumberManager.Companion.normalisePhoneNumber
+import com.baba.callvault.utils.RedirectedCall
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
@@ -157,6 +160,12 @@ class CallSessionManager private constructor(context: Context) {
     private val managerScope = CoroutineScope(SupervisorJob() + Dispatchers.Main)
 
     /**
+     * The number the user dialled, from the last [Intent.ACTION_NEW_OUTGOING_CALL], and when it arrived
+     * ([SystemClock.elapsedRealtime]). Used when the outgoing call goes off-hook; see [RedirectedCall].
+     */
+    private var dialled: Pair<String, Long>? = null
+
+    /**
      * Holds a reference to a pending decision [Job] that is scheduled to run after the 500ms verification window when we receive a blank/anonymous number.
      */
     private var sessionJob: Job? = null
@@ -173,6 +182,21 @@ class CallSessionManager private constructor(context: Context) {
     }
 
     // Public API
+
+    /**
+     * Keeps the number of an outgoing call as the user dialled it, before a call redirection app (e.g. Google Voice)
+     * can replace it with a proxy number. Only an OFFHOOK following within [RedirectedCall.MAX_DIAL_LEAD_MS] uses it.
+     *
+     * @param number [Intent.EXTRA_PHONE_NUMBER] of the [Intent.ACTION_NEW_OUTGOING_CALL] broadcast.
+     */
+    @Synchronized
+    fun handleNewOutgoingCall(number: String?) {
+        dialled = PhoneNumberManager.sanitizeOemNumber(number)?.let { it to SystemClock.elapsedRealtime() }
+    }
+
+    /** The dialled number, if it came recently enough to belong to the call going off-hook now. */
+    private fun freshDialledNumber(): String? =
+        dialled?.takeIf { SystemClock.elapsedRealtime() - it.second <= RedirectedCall.MAX_DIAL_LEAD_MS }?.first
 
     /**
      * Handles incoming telephony state changes to manage the recording session lifecycle.
@@ -205,6 +229,11 @@ class CallSessionManager private constructor(context: Context) {
         }
 
         AppLogger.i(TAG, "Received new phone state: $stateString (TelephonyManagerINT:$receivedCallState) | Number: ${phoneNumber}")
+
+        // A dialled number belongs to the outgoing call that follows it, never to a ringing call or the next call.
+        if (receivedCallState != TelephonyManager.CALL_STATE_OFFHOOK) {
+            dialled = null
+        }
 
         // 1. Handle IDLE (Stop, no longer in a call)
         if (receivedCallState == TelephonyManager.CALL_STATE_IDLE) {
@@ -258,7 +287,12 @@ class CallSessionManager private constructor(context: Context) {
      */
     private suspend fun processSessionUpdate(state: Int, phoneNumber: String?) {
         // 1. Parse the metadata we received by the OS broadcast.
-        val rawNumber: String? = PhoneNumberManager.sanitizeOemNumber(phoneNumber)
+        // A call redirection app (e.g. Google Voice) makes the system report a proxy number for an outgoing call; the
+        // number the user dialled came earlier with NEW_OUTGOING_CALL. See [RedirectedCall].
+        val handleNumber: String? = PhoneNumberManager.sanitizeOemNumber(phoneNumber)
+        val dialledNumber = if (state == TelephonyManager.CALL_STATE_OFFHOOK) freshDialledNumber() else null
+        val rawNumber: String? = RedirectedCall.numberAtOffhook(handleNumber, dialledNumber, PhoneNumberUtils::compare)
+        if (rawNumber != handleNumber) AppLogger.i(TAG, "Using the dialled number '$rawNumber' from NEW_OUTGOING_CALL; the system gave '$handleNumber'")
         val direction = RecordingDirection.fromCallStateOrNull(state)
 
         // 2. Previous metadata Restoration Logic (survive process death)
@@ -269,7 +303,7 @@ class CallSessionManager private constructor(context: Context) {
             val restoredDirection = temporaryCache.restore()
             if (restoredDirection != null) {
                 withContext(Dispatchers.Main) {
-                    session.currentMetadata = RecordingMetadata(rawNumber, restoredDirection)
+                    session.currentMetadata = RecordingMetadata(rawNumber, restoredDirection, isDialledNumberChecked = dialledNumber != null)
                 }
             }
         }
@@ -278,7 +312,7 @@ class CallSessionManager private constructor(context: Context) {
         if (direction != null) {
             withContext(Dispatchers.Main) {
                 // This is automatically locked after the first transition from IDLE. Only allow updating the phone number for the same direction.
-                session.currentMetadata = RecordingMetadata(rawNumber, direction)
+                session.currentMetadata = RecordingMetadata(rawNumber, direction, isDialledNumberChecked = dialledNumber != null)
             }
         }
 

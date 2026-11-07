@@ -69,6 +69,28 @@ class RedirectedCallTest {
     }
 
     @Test
+    fun `at off-hook the dialled number replaces a proxy handle`() {
+        assertEquals(dialled, RedirectedCall.numberAtOffhook(proxy, dialled, sameNumber))
+    }
+
+    @Test
+    fun `at off-hook a handle that matches the dialled number is kept as the system gave it`() {
+        assertEquals(proxy, RedirectedCall.numberAtOffhook(proxy, "2025550100", sameNumber))
+    }
+
+    @Test
+    fun `at off-hook the dialled number fills a handle-less first broadcast`() {
+        assertEquals(dialled, RedirectedCall.numberAtOffhook(null, dialled, sameNumber))
+        assertEquals(dialled, RedirectedCall.numberAtOffhook("", dialled, sameNumber))
+    }
+
+    @Test
+    fun `at off-hook without a dialled number nothing changes`() {
+        assertEquals(proxy, RedirectedCall.numberAtOffhook(proxy, null, sameNumber))
+        assertNull(RedirectedCall.numberAtOffhook(null, " ", sameNumber))
+    }
+
+    @Test
     fun `an entry without a number, or a call without a handle, changes nothing`() {
         assertNull(RedirectedCall.dialledNumber(entry(recordingStart - 2_000, number = ""), proxy, sameNumber))
         assertNull(RedirectedCall.dialledNumber(entry(recordingStart - 2_000), null, sameNumber))

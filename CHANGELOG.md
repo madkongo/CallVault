@@ -9,10 +9,15 @@ All notable changes to CallVault are documented here. The format is based on
 
 - **Outgoing calls placed through a call redirection app keep the number you dialled.** With Google Voice (or
   another call redirection app) set to route calls from the phone app, Android reports a proxy number for the call.
-  CallVault now renames the recording from the call log once the call ends, where Android keeps the dialled number.
-  <!-- 🧪 VERIFYING: unit tests only; untested on a phone with Google Voice. To settle: Google Voice set to
-       "Calls started from this device's phone app: use your Google Voice number", one outgoing call; the file
-       should carry the dialled number. Maintainer to confirm. -->
+  CallVault now takes the dialled number from the outgoing-call broadcast, so the recording rules, the notification
+  and the file name use it. If that is not available, the file is renamed from the call log once the call ends.
+  Uses the "process outgoing calls" permission, asked once and granted without a dialog when the call log is
+  already allowed.
+  <!-- 🧪 VERIFYING: Pixel 10 Pro Fold 2026-11-07, Google Voice "Calls started from this device's phone app: use
+       your Google Voice number", side-by-side debug build (cannot record): NEW_OUTGOING_CALL came 0.7 s before
+       OFFHOOK and the session took the dialled number (call log …9120) over the proxy (…8329, which 2.4.9 named the
+       file after). The after-call rename is unit-tested only.
+       Maintainer to confirm. -->
 
 ## [2.4.9] — 2026-11-03
 

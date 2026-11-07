@@ -625,10 +625,11 @@ class RecordingForegroundService : Service() {
                 )
             }
         } else if (uriToRename != null && originalMetadata != null && startedAt != null &&
-            originalMetadata.direction == RecordingDirection.OUTGOING && !isHonorPreset
+            originalMetadata.direction == RecordingDirection.OUTGOING && !originalMetadata.isDialledNumberChecked &&
+            !isHonorPreset
         ) {
             // A call redirection app (e.g. Google Voice) gave this call a proxy number; the call log has the dialled one.
-            // See [RedirectedCall].
+            // Only needed when NEW_OUTGOING_CALL did not already settle it. See [RedirectedCall].
             // The Honor preset keeps its own branch below and is not renamed here.
             CoroutineScope(Dispatchers.IO).launch {
                 val dialled = outgoingCallLogEntry(applicationContext, startedAt)

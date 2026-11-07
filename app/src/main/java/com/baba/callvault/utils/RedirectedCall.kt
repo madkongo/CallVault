@@ -18,13 +18,38 @@ package com.baba.callvault.utils
  * See AOSP Telecom: `CallsManager.placeOutgoingCall` (`call.setHandle(gatewayAddress)`),
  * `PhoneStateBroadcaster` (`call.getHandle()`) and `CallLogManager.getLogNumber` (`call.getOriginalHandle()`).
  *
- * The call-log entry is written only after the call ends, so the file is renamed afterwards. Pure, for testing.
+ * The dialled number is known at the start of the call from
+ * [Intent.ACTION_NEW_OUTGOING_CALL](https://developer.android.com/reference/android/content/Intent#ACTION_NEW_OUTGOING_CALL),
+ * which Telecom still sends, with the number as dialled, alongside the redirection (AOSP Telecom:
+ * `NewOutgoingCallIntentBroadcaster.processCall`). Without that broadcast (permission not granted, or it came
+ * too late), the call-log entry is read after the call ends and the file is renamed. Pure, for testing.
  * Same idea as BCR's support for call redirection: https://github.com/chenxiaolong/BCR/pull/444
  */
 object RedirectedCall {
 
+    /**
+     * The number to use for an outgoing call when it goes off-hook: the one the user dialled, from the
+     * NEW_OUTGOING_CALL broadcast, when the PHONE_STATE broadcast has none or another one (a proxy).
+     *
+     * @param handleNumber the number the PHONE_STATE broadcast gave, or null (its first broadcast never has one).
+     * @param dialledNumber the number from NEW_OUTGOING_CALL for this call, or null when none arrived.
+     * @param sameNumber the number comparison; on a phone, `PhoneNumberUtils.compare`.
+     */
+    fun numberAtOffhook(
+        handleNumber: String?,
+        dialledNumber: String?,
+        sameNumber: (String, String) -> Boolean,
+    ): String? {
+        if (dialledNumber.isNullOrBlank()) return handleNumber
+        if (!handleNumber.isNullOrBlank() && sameNumber(dialledNumber, handleNumber)) return handleNumber
+        return dialledNumber
+    }
+
     /** One outgoing call-log row, as much of it as matching needs. */
     data class LogEntry(val date: Long, val lastModified: Long, val number: String)
+
+    /** How long NEW_OUTGOING_CALL may come before the call goes off-hook: redirection can wait on the app or the user. */
+    const val MAX_DIAL_LEAD_MS = 60_000L
 
     /** How long before our recording started its call may have been placed: with record-from-answer, the ringing too. */
     const val MAX_CALL_LEAD_MS = 3 * 60_000L
