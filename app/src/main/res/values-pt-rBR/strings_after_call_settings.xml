@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Keep or delete after the call: Settings rows and the wizard switch. -->
+<resources>
+    <string name="settings_after_call_mode_label">Quando uma ligação termina</string>
+    <string name="settings_after_call_mode_keep">Manter a gravação</string>
+    <string name="settings_after_call_mode_ask">Perguntar: manter ou excluir</string>
+    <string name="settings_after_call_mode_keep_desc">Toda gravação é mantida, como sempre.</string>
+    <string name="settings_after_call_mode_ask_desc">Depois de cada ligação gravada, uma notificação pergunta se você quer mantê-la. Até você responder, ela não é copiada para o Drive nem transcrita automaticamente.</string>
+    <string name="settings_after_call_needs_notifications">Para perguntar, o CallVault precisa de notificações. Permita-as e Perguntar será ativado.</string>
+    <string name="settings_after_call_style_label">Como perguntar</string>
+    <string name="settings_after_call_style_notification">Notificação</string>
+    <string name="settings_after_call_style_popup">Janela sobre a tela</string>
+    <string name="settings_after_call_style_notification_desc">Uma notificação com Manter e Excluir.</string>
+    <string name="settings_after_call_style_popup_desc">Uma pequena janela sobre o que estiver na tela. Se ela não puder aparecer (telefone bloqueado) ou você fechá-la sem responder, uma notificação pergunta no lugar. Precisa de permissão para aparecer sobre outros apps.</string>
+    <string name="settings_after_call_needs_overlay">A janela precisa de permissão para aparecer sobre outros apps. Até ser concedida, a notificação pergunta.</string>
+    <string name="settings_after_call_unanswered_label">Se eu não responder</string>
+    <string name="settings_after_call_unanswered_keep">Manter</string>
+    <string name="settings_after_call_unanswered_delete">Excluir depois de 24 horas</string>
+    <string name="settings_after_call_unanswered_keep_desc">Depois de 24 horas a gravação é mantida, copiada e transcrita normalmente.</string>
+    <string name="settings_after_call_unanswered_delete_desc">24 horas depois da ligação, a gravação é excluída.</string>
+    <string name="settings_after_call_unanswered_engaged">Uma gravação que você marcou com estrela, marcador, tag ou nota, ou transcreveu, é sempre mantida.</string>
+    <string name="wizard_after_call_ask_label">Perguntar se devo manter cada gravação</string>
+    <string name="wizard_after_call_ask_desc">Quando uma ligação termina, mantenha ou exclua a gravação com um toque. Desativado: toda gravação é mantida.</string>
+</resources>

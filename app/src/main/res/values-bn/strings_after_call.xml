@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Keep or delete a recording when the call ends (docs/dev-notes/2026-11-06-keep-or-delete-plan.md). -->
+<resources>
+    <string name="after_call_channel">কলের পরে রাখুন বা মুছুন</string>
+    <string name="after_call_title_party">%1$s-এর সাথে কল রেকর্ড হয়েছে</string>
+    <string name="after_call_title_app">%1$s কল রেকর্ড হয়েছে</string>
+    <string name="after_call_title_plain">কল রেকর্ড হয়েছে</string>
+    <string name="after_call_question_text">রাখবেন, নাকি এখনই মুছবেন?</string>
+    <string name="after_call_keep">রাখুন</string>
+    <string name="after_call_delete">মুছুন</string>
+    <string name="after_call_deleted_title">রেকর্ডিং মুছে ফেলা হয়েছে</string>
+    <string name="after_call_deleted_text">কয়েক সেকেন্ডের মধ্যে মুছে যাবে। রাখতে পূর্বাবস্থায় ফেরান চাপুন।</string>
+    <string name="after_call_undo">পূর্বাবস্থায় ফেরান</string>
+    <string name="after_call_popup_title">এই রেকর্ডিং রাখবেন?</string>
+    <string name="after_call_popup_call">কল</string>
+</resources>

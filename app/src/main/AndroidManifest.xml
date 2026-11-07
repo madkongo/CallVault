@@ -21,6 +21,9 @@
     <uses-permission android:name="android.permission.WRITE_SECURE_SETTINGS"
         tools:ignore="ProtectedPermissions" />
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
+    <!-- Keep or delete after the call, "Pop-up over the screen": lets the question be drawn as an overlay
+         window. Optional: asked for only when the user picks that style; without it the notification asks alone. -->
+    <uses-permission android:name="android.permission.SYSTEM_ALERT_WINDOW" />
     <!-- In-app updater: query GitHub Releases + download the update APK. -->
     <uses-permission android:name="android.permission.INTERNET" />
     <!-- In-app updater: commit a PackageInstaller session for the tap-to-update flow. -->
@@ -241,6 +244,12 @@
 
         <receiver
             android:name=".system.storage.DriveCopyStopReceiver"
+            android:enabled="true"
+            android:exported="false" />
+
+        <!-- Keep / Delete / Undo on the after-call question. Internal only. -->
+        <receiver
+            android:name=".services.recording.aftercall.AfterCallDecisionReceiver"
             android:enabled="true"
             android:exported="false" />
 

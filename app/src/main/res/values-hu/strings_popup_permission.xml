@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Keep or delete after the call: the pop-up's "Display over other apps" permission (Settings, wizard, setup). -->
+<resources>
+    <string name="popup_permission_title">Felugró ablak engedélyezése</string>
+    <string name="popup_permission_text">A megtartás-vagy-törlés felugró ablakhoz az Android „Megjelenítés más alkalmazások fölött” engedélye kell. Koppintson az Engedélyezésre, majd kapcsolja be a CallVaultnak (egyes telefonokon előbb keresse meg a CallVaultot a listában). Addig egy értesítés kérdez.</string>
+    <string name="popup_permission_allow">Engedélyezés</string>
+    <string name="popup_permission_not_now">Most nem</string>
+    <string name="permission_overlay_label">Megjelenítés más alkalmazások fölött</string>
+    <string name="permission_overlay_description">Csak a hívás utáni megtartás-vagy-törlés felugró ablakhoz (Beállítások ▸ Felvétel ▸ Hogyan kérdezzen). Nélküle a CallVault értesítésben kérdez. Koppintson az engedélyezéshez.</string>
+    <string name="general_optional">Nem kötelező</string>
+</resources>

@@ -47,6 +47,10 @@ class SettingDecisionsTest {
         "auto_record_incoming" to Decision(Wizard(WizardStep.AUTO_RECORD)),
         "auto_record_outgoing" to Decision(Wizard(WizardStep.AUTO_RECORD)),
         "record_from_answer" to Decision(SettingsOnly("a refinement of outgoing recording; the default is right for most")),
+        // Keep or delete after the call (2026-11-06): a way of working a new user would never discover alone.
+        "after_call_mode" to Decision(Wizard(WizardStep.AUTO_RECORD)),
+        "after_call_ask_style" to Decision(Wizard(WizardStep.AUTO_RECORD)), // shown once Ask is on (maintainer, 2026-11-07)
+        "after_call_unanswered" to Decision(SettingsOnly("only matters once Ask is on; sensible default")),
         // Who to record / ignore
         "ignore_anonymous_incoming" to Decision(SettingsOnly("per-person rules need the user to know their callers first")),
         "ignore_cross_country_incoming" to Decision(SettingsOnly("per-person rules")),

@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Keep or delete after the call: Settings rows and the wizard switch. -->
+<resources>
+    <string name="settings_after_call_mode_label">Коли дзвінок закінчується</string>
+    <string name="settings_after_call_mode_keep">Зберігати запис</string>
+    <string name="settings_after_call_mode_ask">Питати: зберегти чи видалити</string>
+    <string name="settings_after_call_mode_keep_desc">Кожен запис зберігається, як і раніше.</string>
+    <string name="settings_after_call_mode_ask_desc">Після кожного записаного дзвінка сповіщення питає, чи зберегти запис. Доки ви не відповісте, він не копіюється на Drive і не розшифровується автоматично.</string>
+    <string name="settings_after_call_needs_notifications">Щоб питати, CallVault потрібні сповіщення. Дозвольте їх, і питання ввімкнеться.</string>
+    <string name="settings_after_call_style_label">Як питати</string>
+    <string name="settings_after_call_style_notification">Сповіщення</string>
+    <string name="settings_after_call_style_popup">Вікно поверх екрана</string>
+    <string name="settings_after_call_style_notification_desc">Сповіщення з кнопками «Зберегти» і «Видалити».</string>
+    <string name="settings_after_call_style_popup_desc">Невелике вікно поверх того, що на екрані. Якщо воно не може з’явитися (телефон заблоковано) або ви закриєте його без відповіді, натомість запитає сповіщення. Потрібен дозвіл на показ поверх інших застосунків.</string>
+    <string name="settings_after_call_needs_overlay">Вікну потрібен дозвіл на показ поверх інших застосунків. Доки його немає, питає сповіщення.</string>
+    <string name="settings_after_call_unanswered_label">Якщо я не відповім</string>
+    <string name="settings_after_call_unanswered_keep">Зберегти</string>
+    <string name="settings_after_call_unanswered_delete">Видалити через 24 години</string>
+    <string name="settings_after_call_unanswered_keep_desc">Через 24 години запис зберігається, копіюється й розшифровується як звичайно.</string>
+    <string name="settings_after_call_unanswered_delete_desc">Через 24 години після дзвінка запис видаляється.</string>
+    <string name="settings_after_call_unanswered_engaged">Запис, який ви позначили зіркою, міткою, тегом чи нотаткою або розшифрували, завжди зберігається.</string>
+    <string name="wizard_after_call_ask_label">Питати, чи зберігати кожен запис</string>
+    <string name="wizard_after_call_ask_desc">Коли дзвінок закінчується, збережіть або видаліть запис одним дотиком. Вимкнено: зберігаються всі записи.</string>
+</resources>

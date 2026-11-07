@@ -108,6 +108,12 @@ object RecordingCatalog {
             .onFailure { AppLogger.w(TAG, "setDuration('$displayName') failed: ${it.message}") }
     }
 
+    /** Whether [displayName] has a catalog row; null when the catalog cannot be read. Never throws. */
+    suspend fun contains(context: Context, displayName: String): Boolean? =
+        runCatching { dao(context).findByName(displayName) != null }.getOrElse {
+            AppLogger.w(TAG, "contains() failed: ${it.message}"); null
+        }
+
     /** All catalogued recordings, newest-first. Never throws (returns empty on failure). */
     suspend fun all(context: Context): List<RecordingEntry> =
         runCatching { dao(context).getAll() }.getOrElse {

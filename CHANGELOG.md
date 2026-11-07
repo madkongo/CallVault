@@ -7,6 +7,16 @@ All notable changes to CallVault are documented here. The format is based on
 
 ### Added
 
+- **Keep or delete a recording when the call ends.** Settings ▸ Recording ▸ All calls ▸ "When a call ends" ▸ "Ask
+  me": after each recorded call (phone or app) you're asked Keep or Delete, by a notification or, if you choose, a
+  pop-up over the screen. The pop-up needs "Display over other apps"; CallVault explains it and takes you to the
+  setting. The pop-up steps aside during a call and comes back after it. Delete can be undone for a few seconds.
+  Until you answer, the recording is not copied to Drive or transcribed automatically; "If I don't answer" keeps it
+  or deletes it after 24 hours (a recording you starred, marked, tagged, noted or transcribed is always kept). Also
+  offered in setup. Asked in #71.
+  <!-- 🧪 VERIFYING: tried by Claude 2026-11-07 on the OP9 (Android 14: phone + WhatsApp calls, Keep, Delete, Undo,
+  pop-up, locked phone, two calls, 24-hour rule, permission flows) and the Android 16 emulator (wizard, pop-up in
+  the background). Waiting on the maintainer's own use. -->
 - **Share a call's recording, transcript and summary together.** Share on any page — Recordings, a recording's
   page, Transcripts, Summaries, the transcript page, and the selection bars — opens the same sheet: tick the
   recording, the transcript and the summary, in any combination. With the recording, the texts go as text files

@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Keep or delete a recording when the call ends (docs/dev-notes/2026-11-06-keep-or-delete-plan.md). -->
+<resources>
+    <string name="after_call_channel">Zachowaj lub usuń po rozmowie</string>
+    <string name="after_call_title_party">Nagrano rozmowę z: %1$s</string>
+    <string name="after_call_title_app">Nagrano rozmowę w %1$s</string>
+    <string name="after_call_title_plain">Nagrano rozmowę</string>
+    <string name="after_call_question_text">Zachować ją czy usunąć teraz?</string>
+    <string name="after_call_keep">Zachowaj</string>
+    <string name="after_call_delete">Usuń</string>
+    <string name="after_call_deleted_title">Nagranie usunięte</string>
+    <string name="after_call_deleted_text">Zniknie za kilka sekund. Stuknij Cofnij, aby je zachować.</string>
+    <string name="after_call_undo">Cofnij</string>
+    <string name="after_call_popup_title">Zachować to nagranie?</string>
+    <string name="after_call_popup_call">Rozmowa</string>
+</resources>

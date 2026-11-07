@@ -9,6 +9,7 @@
 package com.baba.callvault.ui.screens
 
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
 import org.junit.Test
 
@@ -35,6 +36,16 @@ class SettingsSearchTest {
     @Test
     fun `a blank query matches nothing rather than everything`() {
         assertTrue(SettingsSearch.matchingRows(texts, "   ").isEmpty())
+    }
+
+    @Test
+    fun `a match on a folded row shows the switch that unfolds it`() {
+        val matches = setOf("AfterCallAskStyleRow")
+        val folded = setOf("AfterCallAskStyleRow", "AfterCallUnansweredRow")
+        assertTrue(SettingsSearch.isShown(matches, "AfterCallModeRow", unfolds = folded))
+        assertFalse(SettingsSearch.isShown(matches, "AfterCallModeRow", unfolds = emptySet()))
+        assertFalse(SettingsSearch.isShown(setOf("VibrationRow"), "AfterCallModeRow", unfolds = folded))
+        assertTrue(SettingsSearch.isShown(null, "AfterCallModeRow", unfolds = emptySet()))
     }
 
     @Test

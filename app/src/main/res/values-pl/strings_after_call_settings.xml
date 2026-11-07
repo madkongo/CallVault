@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Keep or delete after the call: Settings rows and the wizard switch. -->
+<resources>
+    <string name="settings_after_call_mode_label">Gdy rozmowa się kończy</string>
+    <string name="settings_after_call_mode_keep">Zachowaj nagranie</string>
+    <string name="settings_after_call_mode_ask">Pytaj mnie: zachować czy usunąć</string>
+    <string name="settings_after_call_mode_keep_desc">Każde nagranie jest zachowywane, jak zawsze.</string>
+    <string name="settings_after_call_mode_ask_desc">Po każdej nagranej rozmowie powiadomienie pyta, czy je zachować. Dopóki nie odpowiesz, nie jest kopiowane na Dysk ani transkrybowane automatycznie.</string>
+    <string name="settings_after_call_needs_notifications">Pytanie wymaga powiadomień CallVault. Zezwól na nie, a pytanie się włączy.</string>
+    <string name="settings_after_call_style_label">Jak pytać</string>
+    <string name="settings_after_call_style_notification">Powiadomienie</string>
+    <string name="settings_after_call_style_popup">Okienko na ekranie</string>
+    <string name="settings_after_call_style_notification_desc">Powiadomienie z przyciskami Zachowaj i Usuń.</string>
+    <string name="settings_after_call_style_popup_desc">Małe okno nad tym, co jest na ekranie. Jeśli nie może się pojawić (telefon zablokowany) albo zamkniesz je bez odpowiedzi, zamiast niego zapyta powiadomienie. Wymaga uprawnienia do wyświetlania nad innymi aplikacjami.</string>
+    <string name="settings_after_call_needs_overlay">Okienko wymaga uprawnienia do wyświetlania nad innymi aplikacjami. Dopóki go nie ma, pyta powiadomienie.</string>
+    <string name="settings_after_call_unanswered_label">Jeśli nie odpowiem</string>
+    <string name="settings_after_call_unanswered_keep">Zachowaj</string>
+    <string name="settings_after_call_unanswered_delete">Usuń po 24 godzinach</string>
+    <string name="settings_after_call_unanswered_keep_desc">Po 24 godzinach nagranie jest zachowywane, kopiowane i transkrybowane jak zwykle.</string>
+    <string name="settings_after_call_unanswered_delete_desc">24 godziny po rozmowie nagranie jest usuwane.</string>
+    <string name="settings_after_call_unanswered_engaged">Nagranie oznaczone gwiazdką, znacznikiem, tagiem lub notatką albo przetranskrybowane jest zawsze zachowywane.</string>
+    <string name="wizard_after_call_ask_label">Pytaj, czy zachować każde nagranie</string>
+    <string name="wizard_after_call_ask_desc">Po zakończeniu rozmowy zachowaj lub usuń nagranie jednym dotknięciem. Wyłączone: każde nagranie jest zachowywane.</string>
+</resources>

@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Keep or delete a recording when the call ends (docs/dev-notes/2026-11-06-keep-or-delete-plan.md). -->
+<resources>
+    <string name="after_call_channel">Keep or delete after a call</string>
+    <string name="after_call_title_party">Call with %1$s recorded</string>
+    <string name="after_call_title_app">%1$s call recorded</string>
+    <string name="after_call_title_plain">Call recorded</string>
+    <string name="after_call_question_text">Keep it, or delete it now?</string>
+    <string name="after_call_keep">Keep</string>
+    <string name="after_call_delete">Delete</string>
+    <string name="after_call_deleted_title">Recording deleted</string>
+    <string name="after_call_deleted_text">It goes in a few seconds. Tap Undo to keep it.</string>
+    <string name="after_call_undo">Undo</string>
+    <string name="after_call_popup_title">Keep this recording?</string>
+    <string name="after_call_popup_call">Call</string>
+</resources>

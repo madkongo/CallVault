@@ -29,7 +29,9 @@ internal fun AutoRecordStep(
     outgoing: Boolean,
     onCarrierChange: (Boolean) -> Unit,
     onIncomingChange: (Boolean) -> Unit,
-    onOutgoingChange: (Boolean) -> Unit
+    onOutgoingChange: (Boolean) -> Unit,
+    askAfterCall: Boolean,
+    onAskAfterCallChange: (Boolean) -> Unit,
 ) {
     val context = LocalContext.current
     // The VoIP switch owns its own persistence (and its consent dialog), so this mirrors it only to
@@ -69,6 +71,32 @@ internal fun AutoRecordStep(
         // splitting them across two steps is exactly how someone reached Finish with both off. The very
         // switch Settings renders, so the consent confirmation and the Shizuku greying come with it.
         CvCard { VoipRecordingToggle(onEnabledChange = { voip = it }) }
+
+        // Keep or delete after the call. Here and not only in Settings because it is a way of working a new
+        // user would never go looking for. Switched on only once its question can be shown (notifications),
+        // through the same enabler as the Settings row.
+        if (carrier || voip) {
+            val enabler = rememberAfterCallAskEnabler(onAllowed = { onAskAfterCallChange(true) })
+            CvCard {
+                SettingsToggleRow(
+                    label = stringResource(R.string.wizard_after_call_ask_label),
+                    checked = askAfterCall,
+                    onCheckedChange = { on ->
+                        if (on) {
+                            enabler.request()
+                        } else {
+                            enabler.cancel()
+                            onAskAfterCallChange(false)
+                        }
+                    },
+                    description = stringResource(R.string.wizard_after_call_ask_desc)
+                )
+                if (enabler.isWaiting && !askAfterCall) SettingsHint(stringResource(R.string.settings_after_call_needs_notifications))
+                // How to ask, once asking is on: the same row as in Settings, so choosing Pop-up explains and
+                // asks for its permission here too (maintainer, 2026-11-07: let new users decide).
+                if (askAfterCall) AfterCallAskStyleRow()
+            }
+        }
 
         // Said, not enforced. Finish stays enabled because in Shizuku mode the app-call switch cannot be
         // turned on at all, so gating here would strand that user on a step they cannot satisfy. With

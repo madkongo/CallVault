@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Keep or delete a recording when the call ends (docs/dev-notes/2026-11-06-keep-or-delete-plan.md). -->
+<resources>
+    <string name="after_call_channel">Giữ hoặc xoá sau cuộc gọi</string>
+    <string name="after_call_title_party">Đã ghi âm cuộc gọi với %1$s</string>
+    <string name="after_call_title_app">Đã ghi âm cuộc gọi %1$s</string>
+    <string name="after_call_title_plain">Đã ghi âm cuộc gọi</string>
+    <string name="after_call_question_text">Giữ lại hay xoá ngay?</string>
+    <string name="after_call_keep">Giữ</string>
+    <string name="after_call_delete">Xoá</string>
+    <string name="after_call_deleted_title">Đã xoá bản ghi</string>
+    <string name="after_call_deleted_text">Bản ghi sẽ bị xoá sau vài giây. Nhấn Hoàn tác để giữ lại.</string>
+    <string name="after_call_undo">Hoàn tác</string>
+    <string name="after_call_popup_title">Giữ bản ghi này?</string>
+    <string name="after_call_popup_call">Cuộc gọi</string>
+</resources>

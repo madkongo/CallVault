@@ -161,6 +161,8 @@ class ScopedSettingsScreenTest {
         "settings_usb_debugging_on_hint", "settings_usb_debugging_recommended",
         "settings_usb_default_busy", "transcription_language_auto_hint",
         "settings_wd_left_on_by_setting", "settings_wd_left_on_by_user",
+        // Keep or delete: why the choice did not take yet (a permission is still missing).
+        "settings_after_call_needs_notifications", "settings_after_call_needs_overlay",
     )
 
     /** Explanations: inline in the wizard, behind an ⓘ on the Settings screen. */
@@ -252,7 +254,11 @@ class ScopedSettingsScreenTest {
         fun blockOf(row: String): Int = at.count { it < body.indexOf("$row(") }
         listOf("CarrierRecordingRow", "AutoRecordIncomingRow", "AutoRecordOutgoingRow").forEach { assertEquals(it, 1, blockOf(it)) }
         listOf("VoipRecordingSwitch", "VoipAppPicker", "VoipAutoStartRow").forEach { assertEquals(it, 2, blockOf(it)) }
-        listOf("RecordFromAnswerRow", "VibrationRow").forEach { assertEquals(it, 3, blockOf(it)) }
+        listOf("RecordFromAnswerRow", "VibrationRow", "AfterCallModeRow", "AfterCallAskStyleRow", "AfterCallUnansweredRow")
+            .forEach { assertEquals(it, 3, blockOf(it)) }
+        // Keep or delete: after the existing all-calls rows, in the agreed order.
+        val afterCall = listOf("VibrationRow", "AfterCallModeRow", "AfterCallAskStyleRow", "AfterCallUnansweredRow")
+        assertEquals(afterCall, afterCall.sortedBy { body.indexOf("$it(") })
     }
 
     @Test

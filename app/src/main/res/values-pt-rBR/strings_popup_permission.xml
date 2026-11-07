@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Keep or delete after the call: the pop-up's "Display over other apps" permission (Settings, wizard, setup). -->
+<resources>
+    <string name="popup_permission_title">Permitir o pop-up</string>
+    <string name="popup_permission_text">O pop-up de manter ou apagar precisa da permissão do Android “Sobrepor a outros apps”. Toque em Permitir e ative-a para o CallVault (em alguns telefones, encontre o CallVault na lista primeiro). Até lá, uma notificação pergunta.</string>
+    <string name="popup_permission_allow">Permitir</string>
+    <string name="popup_permission_not_now">Agora não</string>
+    <string name="permission_overlay_label">Sobrepor a outros apps</string>
+    <string name="permission_overlay_description">Só para o pop-up de manter ou apagar depois de uma chamada (Configurações ▸ Gravação ▸ Como perguntar). Sem ela, o CallVault pergunta por notificação. Toque para permitir.</string>
+    <string name="general_optional">Opcional</string>
+</resources>

@@ -438,7 +438,70 @@ expired). Decoding reuses `AudioDecoder.decodeRange` (interleaved PCM at the ori
 Muxer: AAC → MP4; FLAC and WAV written by hand; MP3 raw frames + ID3 tags.
 Estimate 📐: M4A/WAV/FLAC ~1 day; MP3 +~1 day. Ties into Share a part ([[share-a-part]]).
 
-## 🔵 Delete a recording from a notification after the call ends — requested 2026-11-05, not started, design to be discussed
+## 🧪 VERIFYING — Keep or delete a recording when the call ends (also #71) — design decided 2026-11-06, branch `feat/keep-or-delete`
+
+**🧪 OP9 run 2026-11-07 (Android 14, Shizuku mode, by Claude; not yet confirmed by the maintainer):**
+- Settings: the three rows, Ask-only rows folding in, ⓘ text, search for "pop-up", "24 hours", "discard" all found.
+  Found and fixed (32a5551e): a search matching a folded row opened its group empty; the switch now shows. Same fix
+  covers the auto-record and app-picker rows.
+- Pop-up without permission: opens Android's "Display over other apps" page (on ColorOS the whole app list, not
+  CallVault's own page); back without granting leaves Notification with the note; granting switches to Pop-up
+  on return.
+- Three carrier calls to the OP12: question held each time; pop-up drawn over the home screen and the
+  notification posted; Delete (pop-up) deleted ~11 s later; Delete then Undo (notification) brought the question
+  back; Keep kept it and cleared the store; answering the notification closed the pop-up. Recordings count 33 → 34.
+- Fixed (32a5551e): a Hebrew name made the pop-up read "1:24 · name"; now isolated, seen right on the WhatsApp call.
+- WhatsApp call to the OP12: held ("Held a VoIP recording"), pop-up over WhatsApp, notification "Call with … recorded
+  · 1:20", Keep ran the held hand-offs (transcription scheduler consulted) and cleared both.
+- Maintainer 2026-11-07: the 10 s Undo after a pop-up Delete is fine as it is; no change.
+- **Second OP9 round 2026-11-07 (after a7719b70 + 0218ac1a):**
+  - Maintainer: with Pop-up chosen, only the pop-up should ask. Changed (a7719b70): the notification asks only
+    when the pop-up cannot be drawn or is closed unanswered. Seen: pop-up alone after a call; Back moved the
+    question to a notification; the pop-up survived the phone locking and was there after unlock.
+  - Locked at hang-up: no pop-up, notification only, no pop-up after unlock. With "hide sensitive content" on,
+    the lock screen reads "Call recorded" (no name).
+  - Found and fixed (0218ac1a): the pop-up covered the next call's screen (hang-up button, keypad). It now steps
+    aside while the audio mode says a call is ringing/active and comes back after. Seen on two back-to-back
+    calls; the queue asked the older call first, then the next.
+  - "Delete after 24 h" (check forced with `cmd jobscheduler run -f`): unanswered → deleted, notification
+    cleared; starred → kept.
+  - Ask with the keep-or-delete category muted: opens that category's page; back without allowing → stays Keep
+    with the note; allowing → Ask on return. (With the app's notification permission revoked, CallVault sends
+    the user to setup, so that case cannot reach this row.)
+  - Seen, not fixed: the question sits inside a collapsed CallVault group with "Ready to record" in the
+    ColorOS shade, so Keep/Delete need two expands; search shows "2 matches" with one row when the second
+    is folded.
+- **Third round 2026-11-07 (55882851, bffe406d), OP9:**
+  - The question has a notification group of its own: Keep / Delete show directly in the shade, apart from
+    "Ready to record". Search count now counts what shows ("discard": 2 with Ask, 1 with Keep).
+  - Maintainer's spec for the pop-up permission: choosing Pop-up without it shows "Allow the pop-up" (what it is
+    for, Allow / Not now); Allow opens Android's page; back with it granted → Pop-up on. Seen in Settings. The
+    setup screen lists "Display over other apps" as Optional; tapping it runs the same window; seen going
+    Optional → Granted. The wizard shows "How to ask" once Ask is on (not yet seen: needs a fresh setup).
+- **Emulator round 2026-11-07 (Android 16, mymemory-test, isolated `instrtest` install):**
+  - Wizard: "Ask me whether to keep each recording" on → "How to ask" appears; Pop-up → "Allow the pop-up" →
+    Android's list (Android 11+ ignores the per-app link, so the "find CallVault in the list" wording is needed)
+    → granted → back on the step with Pop-up chosen, prefs ask + popup.
+  - Pop-up on Android 16 with the app in the background: `AfterCallPopUpDeviceTest` (androidTest) passed. It drew
+    over the home screen, stepped aside within ~2 s of a simulated incoming call ringing (`emu gsm call`, Answer /
+    Decline unobstructed), came back after `gsm cancel`, Keep cleared it.
+  - Seen, not ours to fix here: at the emulator's maximum display size (density 640) the wizard's "Record app
+    calls" row squeezes its label to one letter per line (existing layout, not this feature).
+- **Nothing left untested by Claude; waiting on the maintainer's confirmation.**
+- ~~Older list:~~ the phone locked at hang-up; two calls before answering; "If I don't
+  answer → Delete after 24 h"; Ask with notifications blocked; the wizard switch; Android 15+ (overlay path).
+
+**Decided by the maintainer 2026-11-06** (artifact "Keep or Discard", https://claude.ai/artifact/WW6HLdm45TYSaydaYvC44N):
+- Settings ▸ Recording: **When a call ends**: Keep the recording (default, as today) / Ask me: keep or delete.
+- **How to ask** (shown only with "Ask me"): Notification (default) / Pop-up over the screen (needs "Display over
+  other apps"; asks for it when chosen). If the pop-up cannot show, the notification is the fallback.
+- **If I don't answer**: Keep it (default) / Delete it after 24 hours.
+- Buttons: **Keep / Delete only** (no Play). Delete has a ~10 s Undo before it really deletes.
+- **Phone calls and app calls** both get the question.
+- While undecided: Drive copy and automatic transcription wait; Delete removes file, .json/.md, transcript,
+  summary, tags and the catalog entry.
+
+### Earlier discussion notes (2026-11-05)
 
 Maintainer request: after a call ends, offer a way to delete that call's recording straight from a notification,
 without opening the app. **How it works is not decided yet; the maintainer will discuss it first. Do not build

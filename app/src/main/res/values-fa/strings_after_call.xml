@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Keep or delete a recording when the call ends (docs/dev-notes/2026-11-06-keep-or-delete-plan.md). -->
+<resources>
+    <string name="after_call_channel">نگه داشتن یا حذف پس از تماس</string>
+    <string name="after_call_title_party">تماس با %1$s ضبط شد</string>
+    <string name="after_call_title_app">تماس %1$s ضبط شد</string>
+    <string name="after_call_title_plain">تماس ضبط شد</string>
+    <string name="after_call_question_text">نگهش می‌دارید یا همین حالا حذفش می‌کنید؟</string>
+    <string name="after_call_keep">نگه داشتن</string>
+    <string name="after_call_delete">حذف</string>
+    <string name="after_call_deleted_title">ضبط حذف شد</string>
+    <string name="after_call_deleted_text">تا چند ثانیه دیگر پاک می‌شود. برای نگه داشتن، واگرد را بزنید.</string>
+    <string name="after_call_undo">واگرد</string>
+    <string name="after_call_popup_title">این ضبط را نگه می‌دارید؟</string>
+    <string name="after_call_popup_call">تماس</string>
+</resources>

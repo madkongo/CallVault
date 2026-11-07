@@ -86,9 +86,11 @@ private fun CallsToRecordBody(preferences: AppPreferences, updateTrigger: Int, a
     val isPhoneOn = remember(updateTrigger) { preferences.isCarrierRecordingEnabled() }
     // Held here so the app picker and the automatic switch follow the app-call switch at once.
     var isAppOn by remember { mutableStateOf(prefs.isVoipRecordingEnabled()) }
+    var isAskingAfterCall by remember { mutableStateOf(prefs.getAfterCallMode() == AppPreferences.AfterCallMode.ASK) }
+    val switches = SettingsFolds.Switches(isPhoneOn, isAppOn, isAskingAfterCall)
 
     SettingsSubHeader(stringResource(R.string.settings_subsection_phone_calls))
-    SearchFiltered("CarrierRecordingRow") { CarrierRecordingRow(preferences, updateTrigger, actions) }
+    SearchFiltered(SettingsFolds.PHONE_SWITCH, unfolds = SettingsFolds.foldedBy(SettingsFolds.PHONE_SWITCH, switches)) { CarrierRecordingRow(preferences, updateTrigger, actions) }
     ShownWhen(isPhoneOn) {
         Column {
             SearchFiltered("AutoRecordIncomingRow") { AutoRecordIncomingRow(preferences, updateTrigger, actions) }
@@ -97,7 +99,7 @@ private fun CallsToRecordBody(preferences: AppPreferences, updateTrigger: Int, a
     }
 
     SettingsSubHeader(stringResource(R.string.settings_subheader_app_calls))
-    SearchFiltered("VoipRecordingSwitch") { VoipRecordingSwitch(enabled = isAppOn, onEnabledChange = { isAppOn = it }) }
+    SearchFiltered(SettingsFolds.APP_SWITCH, unfolds = SettingsFolds.foldedBy(SettingsFolds.APP_SWITCH, switches)) { VoipRecordingSwitch(enabled = isAppOn, onEnabledChange = { isAppOn = it }) }
     ShownWhen(isAppOn) {
         Column {
             SearchFiltered("VoipAppPicker") { VoipAppPicker(prefs) }
@@ -110,6 +112,14 @@ private fun CallsToRecordBody(preferences: AppPreferences, updateTrigger: Int, a
     // kind of call is recorded, not only phone calls as it did under "When to start".
     ShownWhen(isPhoneOn || isAppOn) { SearchFiltered("RecordFromAnswerRow") { RecordFromAnswerRow(preferences, updateTrigger, actions) } }
     SearchFiltered("VibrationRow") { VibrationRow(preferences, updateTrigger, actions) }
+    // Keep or delete after the call (2026-11-06): for phone and app calls alike, so under "All calls".
+    SearchFiltered(SettingsFolds.ASK_SWITCH, unfolds = SettingsFolds.foldedBy(SettingsFolds.ASK_SWITCH, switches)) { AfterCallModeRow(onAskChange = { isAskingAfterCall = it }) }
+    ShownWhen(isAskingAfterCall) {
+        Column {
+            SearchFiltered("AfterCallAskStyleRow") { AfterCallAskStyleRow() }
+            SearchFiltered("AfterCallUnansweredRow") { AfterCallUnansweredRow() }
+        }
+    }
 }
 
 /** Every rule that keeps a call from being recorded, phone and app calls alike, and the short-call cut-off. */

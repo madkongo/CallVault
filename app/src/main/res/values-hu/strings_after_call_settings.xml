@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Keep or delete after the call: Settings rows and the wizard switch. -->
+<resources>
+    <string name="settings_after_call_mode_label">Amikor egy hívás véget ér</string>
+    <string name="settings_after_call_mode_keep">Felvétel megtartása</string>
+    <string name="settings_after_call_mode_ask">Kérdezzen: megtartás vagy törlés</string>
+    <string name="settings_after_call_mode_keep_desc">Minden felvétel megmarad, mint eddig.</string>
+    <string name="settings_after_call_mode_ask_desc">Minden rögzített hívás után egy értesítés megkérdezi, megtartod-e. Amíg nem válaszolsz, nem kerül a Drive-ra, és nem készül róla automatikus átirat.</string>
+    <string name="settings_after_call_needs_notifications">A kérdéshez a CallVault értesítéseire van szükség. Engedélyezd őket, és a kérdezés bekapcsol.</string>
+    <string name="settings_after_call_style_label">Hogyan kérdezzen</string>
+    <string name="settings_after_call_style_notification">Értesítés</string>
+    <string name="settings_after_call_style_popup">Felugró ablak a képernyőn</string>
+    <string name="settings_after_call_style_notification_desc">Értesítés Megtartás és Törlés gombbal.</string>
+    <string name="settings_after_call_style_popup_desc">Kis ablak a képernyőn lévő tartalom fölött. Ha nem jelenhet meg (a telefon zárolva van), vagy válasz nélkül bezárja, helyette egy értesítés kérdez. Más alkalmazások fölötti megjelenítési engedély kell hozzá.</string>
+    <string name="settings_after_call_needs_overlay">A felugró ablakhoz más alkalmazások fölötti megjelenítési engedély kell. Amíg nincs meg, az értesítés kérdez.</string>
+    <string name="settings_after_call_unanswered_label">Ha nem válaszolok</string>
+    <string name="settings_after_call_unanswered_keep">Megtartás</string>
+    <string name="settings_after_call_unanswered_delete">Törlés 24 óra után</string>
+    <string name="settings_after_call_unanswered_keep_desc">24 óra után a felvétel megmarad, és a szokásos módon másolódik és átirat készül róla.</string>
+    <string name="settings_after_call_unanswered_delete_desc">A hívás után 24 órával a felvétel törlődik.</string>
+    <string name="settings_after_call_unanswered_engaged">Az a felvétel, amelyet csillaggal, jelöléssel, címkével vagy jegyzettel láttál el, vagy átiratot készítettél róla, mindig megmarad.</string>
+    <string name="wizard_after_call_ask_label">Kérdezze meg, megtartsam-e a felvételeket</string>
+    <string name="wizard_after_call_ask_desc">Hívás végén egy koppintással megtarthatod vagy törölheted a felvételt. Kikapcsolva minden felvétel megmarad.</string>
+</resources>
