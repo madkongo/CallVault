@@ -43,6 +43,8 @@ import com.baba.callvault.utils.AppLogger
 import com.baba.callvault.utils.HONOR_DIALER_TEMPLATE
 import com.baba.callvault.utils.HonorCallStart
 import com.baba.callvault.utils.PhoneNumberManager
+import com.baba.callvault.utils.RedirectedCall
+import com.baba.callvault.system.permissions.PermissionChecks
 import com.baba.callvault.utils.RecordingFileNameFormatter
 import com.baba.callvault.transcription.AudioDecoder
 import com.baba.callvault.system.storage.MinDurationPolicy
@@ -74,6 +76,8 @@ class RecordingForegroundService : Service() {
         /** Reads of the call log while waiting for the just-ended call's entry (Honor preset, #56): 8 × 500 ms. */
         private const val HONOR_LOG_ATTEMPTS = 8
         private const val HONOR_LOG_RETRY_MS = 500L
+        /** Tries at [HONOR_LOG_RETRY_MS] for this call's entry: it is written as the call ends, normally within a second. */
+        private const val REDIRECT_LOG_ATTEMPTS = 6
         private const val TAG = "CV:RecordingForegroundService"
 
         // -- Intent action for controlling and initializing the service lifecycle. --
@@ -620,6 +624,32 @@ class RecordingForegroundService : Service() {
                     finalUri, mimeType, activeSession.lastCapturedByteCount, originalMetadata.direction
                 )
             }
+        } else if (uriToRename != null && originalMetadata != null && startedAt != null &&
+            originalMetadata.direction == RecordingDirection.OUTGOING && !isHonorPreset
+        ) {
+            // A call redirection app (e.g. Google Voice) gave this call a proxy number; the call log has the dialled one.
+            // See [RedirectedCall].
+            // The Honor preset keeps its own branch below and is not renamed here.
+            CoroutineScope(Dispatchers.IO).launch {
+                val dialled = outgoingCallLogEntry(applicationContext, startedAt)
+                    ?.let { RedirectedCall.dialledNumber(it, originalMetadata.rawPhoneNumber, PhoneNumberUtils::compare) }
+                    ?.let { PhoneNumberManager.sanitizeOemNumber(it) }
+                val finalUri = if (dialled != null) {
+                    AppLogger.i(TAG, "Call log has '$dialled' for this call, the system gave '${originalMetadata.rawPhoneNumber}' (call redirection)")
+                    val metadata = RecordingMetadata.enrichMetadata(applicationContext, RecordingMetadata(dialled, originalMetadata.direction))
+                    val newName = RecordingFileNameFormatter.formatFileName(
+                        applicationContext, metadata, activeSession.currentCodecEnum, startedAt = startedAt
+                    )
+                    val renamed = runCatching { DocumentsContract.renameDocument(applicationContext.contentResolver, uriToRename, newName) }
+                        .onFailure { AppLogger.e(TAG, "Could not rename the recording to its dialled number", it) }
+                        .getOrNull()
+                    if (renamed != null) AppLogger.d(TAG, "Renamed to the dialled number: '$newName'")
+                    renamed ?: uriToRename
+                } else {
+                    uriToRename
+                }
+                routeFinalRecording(finalUri, mimeType, activeSession.lastCapturedByteCount, originalMetadata.direction)
+            }
         } else if (uriToRename != null && originalMetadata != null && startedAt != null && isHonorPreset) {
             // Honor's phone app links the file only if its name carries the call-log time (#56); see [HonorCallStart].
             CoroutineScope(Dispatchers.IO).launch {
@@ -678,6 +708,37 @@ class RecordingForegroundService : Service() {
         AppLogger.d(TAG, "No call-log entry matched this recording; keeping its own start time")
         return null
     }
+
+    /**
+     * The call-log entry of the outgoing call just recorded, or null when it cannot be found. The entry is written
+     * only after the call ends, hence the retries. See [RedirectedCall] for the matching.
+     */
+    private suspend fun outgoingCallLogEntry(context: Context, startedAt: Date): RedirectedCall.LogEntry? {
+        if (!PermissionChecks.hasCallLogPermission(context)) return null
+        val since = startedAt.time - RedirectedCall.MAX_CALL_LEAD_MS
+        repeat(REDIRECT_LOG_ATTEMPTS) { attempt ->
+            val entries = runCatching { readOutgoingCallLogSince(context, since) }
+                .onFailure { AppLogger.w(TAG, "Could not read the call log for a redirected call", it) }
+                .getOrDefault(emptyList())
+            RedirectedCall.entryForCall(entries, startedAt.time)?.let { return it }
+            if (attempt < REDIRECT_LOG_ATTEMPTS - 1) delay(HONOR_LOG_RETRY_MS)
+        }
+        return null
+    }
+
+    private fun readOutgoingCallLogSince(context: Context, since: Long): List<RedirectedCall.LogEntry> =
+        context.contentResolver.query(
+            CallLog.Calls.CONTENT_URI,
+            arrayOf(CallLog.Calls.DATE, CallLog.Calls.LAST_MODIFIED, CallLog.Calls.NUMBER),
+            "${CallLog.Calls.DATE} >= ? AND ${CallLog.Calls.TYPE} = ${CallLog.Calls.OUTGOING_TYPE}", arrayOf(since.toString()),
+            "${CallLog.Calls.DATE} DESC"
+        )?.use { cursor ->
+            buildList {
+                while (cursor.moveToNext()) {
+                    add(RedirectedCall.LogEntry(cursor.getLong(0), cursor.getLong(1), cursor.getString(2).orEmpty()))
+                }
+            }
+        }.orEmpty()
 
     private fun readCallLogSince(context: Context, since: Long): List<HonorCallStart.LogEntry> =
         context.contentResolver.query(
