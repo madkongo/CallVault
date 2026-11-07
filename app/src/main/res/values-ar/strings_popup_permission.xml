@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Keep or delete after the call: the pop-up's "Display over other apps" permission (Settings, wizard, setup). -->
+<resources>
+    <string name="popup_permission_title">السماح بالنافذة المنبثقة</string>
+    <string name="popup_permission_text">تحتاج نافذة «الاحتفاظ أو الحذف» إلى إذن أندرويد «الظهور فوق التطبيقات الأخرى». اضغط «سماح» ثم فعّله لـ CallVault (في بعض الهواتف ابحث عن CallVault في القائمة أولًا). وحتى ذلك الحين يسألك إشعار.</string>
+    <string name="popup_permission_allow">سماح</string>
+    <string name="popup_permission_not_now">ليس الآن</string>
+    <string name="permission_overlay_label">الظهور فوق التطبيقات الأخرى</string>
+    <string name="permission_overlay_description">فقط لنافذة «الاحتفاظ أو الحذف» بعد المكالمة (الإعدادات ◂ التسجيل ◂ طريقة السؤال). بدونه يسألك CallVault بإشعار. اضغط للسماح.</string>
+    <string name="general_optional">اختياري</string>
+</resources>

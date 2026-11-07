@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Keep or delete after the call: the pop-up's "Display over other apps" permission (Settings, wizard, setup). -->
+<resources>
+    <string name="popup_permission_title">Permitir la ventana emergente</string>
+    <string name="popup_permission_text">La ventana de conservar o eliminar necesita el permiso de Android «Mostrar sobre otras apps». Toca Permitir y actívalo para CallVault (en algunos teléfonos, busca primero CallVault en la lista). Mientras tanto, pregunta una notificación.</string>
+    <string name="popup_permission_allow">Permitir</string>
+    <string name="popup_permission_not_now">Ahora no</string>
+    <string name="permission_overlay_label">Mostrar sobre otras apps</string>
+    <string name="permission_overlay_description">Solo para la ventana de conservar o eliminar tras una llamada (Ajustes ▸ Grabación ▸ Cómo preguntar). Sin él, CallVault pregunta con una notificación. Toca para permitir.</string>
+    <string name="general_optional">Opcional</string>
+</resources>

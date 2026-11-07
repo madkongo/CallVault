@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Keep or delete after the call: the pop-up's "Display over other apps" permission (Settings, wizard, setup). -->
+<resources>
+    <string name="popup_permission_title">Pop-up erlauben</string>
+    <string name="popup_permission_text">Das Behalten-oder-Löschen-Pop-up braucht Androids Berechtigung „Über anderen Apps einblenden“. Tippen Sie auf Erlauben und schalten Sie sie für CallVault ein (auf manchen Telefonen zuerst CallVault in der Liste suchen). Bis dahin fragt eine Benachrichtigung.</string>
+    <string name="popup_permission_allow">Erlauben</string>
+    <string name="popup_permission_not_now">Nicht jetzt</string>
+    <string name="permission_overlay_label">Über anderen Apps einblenden</string>
+    <string name="permission_overlay_description">Nur für das Behalten-oder-Löschen-Pop-up nach einem Anruf (Einstellungen ▸ Aufnahme ▸ Wie fragen). Ohne sie fragt CallVault per Benachrichtigung. Zum Erlauben tippen.</string>
+    <string name="general_optional">Optional</string>
+</resources>

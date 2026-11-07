@@ -19,7 +19,7 @@ and the artifact https://claude.ai/artifact/WW6HLdm45TYSaydaYvC44N.
   only when the pop-up cannot be drawn (locked, no permission, window refused) or is closed unanswered
   (outside tap / Back), so no call is left without its question. Undo and startup still use the notification.
 - All new rows must be findable in Settings search.
-- Wizard: "When a call ends" goes on the AUTO_RECORD step (it is a way of working a new user would never discover
+- Wizard: "When a call ends" goes on the AUTO_RECORD step, and since 2026-11-07 "How to ask" with it once Ask is on (it is a way of working a new user would never discover
   otherwise); "How to ask" and "If I don't answer" are Settings-only (sensible defaults, only matter once Ask is on).
 
 ## Code map (from the 2026-11-06 exploration)

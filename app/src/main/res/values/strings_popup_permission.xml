@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Keep or delete after the call: the pop-up's "Display over other apps" permission (Settings, wizard, setup). -->
+<resources>
+    <string name="popup_permission_title">Allow the pop-up</string>
+    <string name="popup_permission_text">The keep-or-delete pop-up needs Android’s “Display over other apps” permission. Tap Allow, then turn it on for CallVault (on some phones, find CallVault in the list first). Until then, a notification asks.</string>
+    <string name="popup_permission_allow">Allow</string>
+    <string name="popup_permission_not_now">Not now</string>
+    <string name="permission_overlay_label">Display over other apps</string>
+    <string name="permission_overlay_description">Only for the keep-or-delete pop-up after a call (Settings ▸ Recording ▸ How to ask). Without it, CallVault asks with a notification. Tap to allow.</string>
+    <string name="general_optional">Optional</string>
+</resources>

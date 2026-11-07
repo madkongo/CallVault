@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Keep or delete after the call: the pop-up's "Display over other apps" permission (Settings, wizard, setup). -->
+<resources>
+    <string name="popup_permission_title">Consenti il pop-up</string>
+    <string name="popup_permission_text">Il pop-up tieni o elimina richiede il permesso Android «Mostra sopra altre app». Tocca Consenti e attivalo per CallVault (su alcuni telefoni cerca prima CallVault nell’elenco). Nel frattempo chiede una notifica.</string>
+    <string name="popup_permission_allow">Consenti</string>
+    <string name="popup_permission_not_now">Non ora</string>
+    <string name="permission_overlay_label">Mostra sopra altre app</string>
+    <string name="permission_overlay_description">Solo per il pop-up tieni o elimina dopo una chiamata (Impostazioni ▸ Registrazione ▸ Come chiedere). Senza, CallVault chiede con una notifica. Tocca per consentire.</string>
+    <string name="general_optional">Facoltativo</string>
+</resources>

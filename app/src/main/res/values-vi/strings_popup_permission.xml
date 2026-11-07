@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Keep or delete after the call: the pop-up's "Display over other apps" permission (Settings, wizard, setup). -->
+<resources>
+    <string name="popup_permission_title">Cho phép cửa sổ bật lên</string>
+    <string name="popup_permission_text">Cửa sổ giữ hoặc xoá cần quyền Android “Hiển thị trên ứng dụng khác”. Nhấn Cho phép rồi bật cho CallVault (trên một số điện thoại, hãy tìm CallVault trong danh sách trước). Cho đến lúc đó, một thông báo sẽ hỏi.</string>
+    <string name="popup_permission_allow">Cho phép</string>
+    <string name="popup_permission_not_now">Để sau</string>
+    <string name="permission_overlay_label">Hiển thị trên ứng dụng khác</string>
+    <string name="permission_overlay_description">Chỉ dùng cho cửa sổ giữ hoặc xoá sau cuộc gọi (Cài đặt ▸ Ghi âm ▸ Cách hỏi). Không có quyền này, CallVault hỏi bằng thông báo. Nhấn để cho phép.</string>
+    <string name="general_optional">Tuỳ chọn</string>
+</resources>

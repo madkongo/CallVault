@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Keep or delete after the call: the pop-up's "Display over other apps" permission (Settings, wizard, setup). -->
+<resources>
+    <string name="popup_permission_title">Разрешить всплывающее окно</string>
+    <string name="popup_permission_text">Окну «оставить или удалить» нужно разрешение Android «Поверх других приложений». Нажмите «Разрешить» и включите его для CallVault (на некоторых телефонах сначала найдите CallVault в списке). До тех пор спрашивает уведомление.</string>
+    <string name="popup_permission_allow">Разрешить</string>
+    <string name="popup_permission_not_now">Не сейчас</string>
+    <string name="permission_overlay_label">Поверх других приложений</string>
+    <string name="permission_overlay_description">Только для окна «оставить или удалить» после звонка (Настройки ▸ Запись ▸ Как спрашивать). Без него CallVault спрашивает уведомлением. Нажмите, чтобы разрешить.</string>
+    <string name="general_optional">Необязательно</string>
+</resources>

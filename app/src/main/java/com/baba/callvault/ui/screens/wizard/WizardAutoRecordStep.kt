@@ -92,6 +92,9 @@ internal fun AutoRecordStep(
                     description = stringResource(R.string.wizard_after_call_ask_desc)
                 )
                 if (enabler.isWaiting && !askAfterCall) SettingsHint(stringResource(R.string.settings_after_call_needs_notifications))
+                // How to ask, once asking is on: the same row as in Settings, so choosing Pop-up explains and
+                // asks for its permission here too (maintainer, 2026-11-07: let new users decide).
+                if (askAfterCall) AfterCallAskStyleRow()
             }
         }
 

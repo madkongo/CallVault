@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Keep or delete after the call: the pop-up's "Display over other apps" permission (Settings, wizard, setup). -->
+<resources>
+    <string name="popup_permission_title">পপ-আপের অনুমতি দিন</string>
+    <string name="popup_permission_text">রাখা-বা-মোছার পপ-আপের জন্য অ্যান্ড্রয়েডের “অন্য অ্যাপের উপরে দেখানো” অনুমতি লাগে। অনুমতি দিন চাপুন, তারপর CallVault-এর জন্য চালু করুন (কিছু ফোনে আগে তালিকায় CallVault খুঁজুন)। ততক্ষণ একটি নোটিফিকেশন জিজ্ঞেস করবে।</string>
+    <string name="popup_permission_allow">অনুমতি দিন</string>
+    <string name="popup_permission_not_now">এখন নয়</string>
+    <string name="permission_overlay_label">অন্য অ্যাপের উপরে দেখানো</string>
+    <string name="permission_overlay_description">শুধু কলের পরে রাখা-বা-মোছার পপ-আপের জন্য (সেটিংস ▸ রেকর্ডিং ▸ কীভাবে জিজ্ঞেস করবে)। এটি ছাড়া CallVault নোটিফিকেশনে জিজ্ঞেস করে। অনুমতি দিতে ট্যাপ করুন।</string>
+    <string name="general_optional">ঐচ্ছিক</string>
+</resources>

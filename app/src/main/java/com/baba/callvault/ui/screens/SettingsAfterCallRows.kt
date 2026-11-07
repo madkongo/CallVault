@@ -12,7 +12,6 @@ import android.Manifest
 import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
-import android.net.Uri
 import android.os.Build
 import android.provider.Settings
 import androidx.activity.compose.rememberLauncherForActivityResult
@@ -154,25 +153,21 @@ internal fun AfterCallModeRow(onAskChange: (Boolean) -> Unit) {
 
 /**
  * "How to ask": Notification / Pop-up over the screen. Pop-up is shown as chosen only while the overlay
- * permission is granted; choosing it without the permission opens Android's page for it, and the row reads
- * the permission again on return. Until then it stays on Notification, with a line saying why.
+ * permission is granted. Choosing it without the permission first says what the permission is for and sends
+ * the user to Android's page ([rememberPopUpPermissionRequest]); it switches on by itself on return with the
+ * permission granted. Until then, and whenever the permission is taken away later, it reads Notification with
+ * a line saying why.
  */
 @Composable
 internal fun AfterCallAskStyleRow() {
     val context = LocalContext.current
     val prefs = remember { AppPreferences(context) }
     var stored by remember { mutableStateOf(prefs.getAfterCallAskStyle()) }
-    var isWaitingForOverlay by remember { mutableStateOf(false) }
-    val resumes = rememberResumeCount()
-    val canDrawOverlays = remember(resumes) { Settings.canDrawOverlays(context) }
-    LaunchedEffect(resumes) {
-        if (isWaitingForOverlay && canDrawOverlays) {
-            prefs.setAfterCallAskStyle(AfterCallAskStyle.POPUP)
-            stored = AfterCallAskStyle.POPUP
-            isWaitingForOverlay = false
-        }
-    }
-    val shown = if (stored == AfterCallAskStyle.POPUP && canDrawOverlays) AfterCallAskStyle.POPUP else AfterCallAskStyle.NOTIFICATION
+    val permission = rememberPopUpPermissionRequest(onAllowed = {
+        prefs.setAfterCallAskStyle(AfterCallAskStyle.POPUP)
+        stored = AfterCallAskStyle.POPUP
+    })
+    val shown = if (stored == AfterCallAskStyle.POPUP && permission.isGranted) AfterCallAskStyle.POPUP else AfterCallAskStyle.NOTIFICATION
     val options = listOf(
         OptionItem(AfterCallAskStyle.NOTIFICATION.key, stringResource(R.string.settings_after_call_style_notification)),
         OptionItem(AfterCallAskStyle.POPUP.key, stringResource(R.string.settings_after_call_style_popup)),
@@ -188,30 +183,20 @@ internal fun AfterCallAskStyleRow() {
                 selected = options.first { it.key == shown.key },
                 options = options,
                 onOptionSelected = { picked ->
-                    val style = AfterCallAskStyle.fromKey(picked.key)
-                    if (style == AfterCallAskStyle.POPUP && !Settings.canDrawOverlays(context)) {
-                        isWaitingForOverlay = true
-                        openOverlaySettings(context)
-                    } else {
-                        prefs.setAfterCallAskStyle(style)
-                        stored = style
-                        isWaitingForOverlay = false
+                    when (AfterCallAskStyle.fromKey(picked.key)) {
+                        AfterCallAskStyle.POPUP -> permission.request()
+                        AfterCallAskStyle.NOTIFICATION -> {
+                            permission.cancel()
+                            prefs.setAfterCallAskStyle(AfterCallAskStyle.NOTIFICATION)
+                            stored = AfterCallAskStyle.NOTIFICATION
+                        }
                     }
                 },
             )
         }
     }
-    val wantsPopUp = isWaitingForOverlay || stored == AfterCallAskStyle.POPUP
-    if (wantsPopUp && !canDrawOverlays) SettingsHint(stringResource(R.string.settings_after_call_needs_overlay))
-}
-
-private fun openOverlaySettings(context: Context) {
-    runCatching {
-        context.startActivity(
-            Intent(Settings.ACTION_MANAGE_OVERLAY_PERMISSION, Uri.parse("package:${context.packageName}"))
-                .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK),
-        )
-    }.onFailure { AppLogger.w(TAG, "Could not open the overlay permission page: ${it.message}") }
+    val wantsPopUp = permission.isWaiting || stored == AfterCallAskStyle.POPUP
+    if (wantsPopUp && !permission.isGranted) SettingsHint(stringResource(R.string.settings_after_call_needs_overlay))
 }
 
 /** "If I don't answer": Keep it / Delete it after 24 hours. Applied by the 24-hour check when it runs. */

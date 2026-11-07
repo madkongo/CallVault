@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Keep or delete after the call: the pop-up's "Display over other apps" permission (Settings, wizard, setup). -->
+<resources>
+    <string name="popup_permission_title">Zezwól na okienko</string>
+    <string name="popup_permission_text">Okienko „zachowaj lub usuń” wymaga uprawnienia Androida „Wyświetlanie nad innymi aplikacjami”. Dotknij Zezwól i włącz je dla CallVault (na niektórych telefonach najpierw znajdź CallVault na liście). Do tego czasu pyta powiadomienie.</string>
+    <string name="popup_permission_allow">Zezwól</string>
+    <string name="popup_permission_not_now">Nie teraz</string>
+    <string name="permission_overlay_label">Wyświetlanie nad innymi aplikacjami</string>
+    <string name="permission_overlay_description">Tylko dla okienka „zachowaj lub usuń” po rozmowie (Ustawienia ▸ Nagrywanie ▸ Jak pytać). Bez niego CallVault pyta powiadomieniem. Dotknij, aby zezwolić.</string>
+    <string name="general_optional">Opcjonalne</string>
+</resources>
