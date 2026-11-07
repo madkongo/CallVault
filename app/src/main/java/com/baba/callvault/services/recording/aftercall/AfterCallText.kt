@@ -55,6 +55,12 @@ internal object AfterCallText {
         val parsed = runCatching { RecordingsRepository.parseName(displayName) }.getOrNull()
         val party = parsed?.contactName?.takeIf { it.isNotBlank() } ?: parsed?.number?.takeIf { it.isNotBlank() }
         val app = parsed?.voipApp?.takeIf { it.isNotBlank() }
-        return party to app
+        return party?.let(::isolated) to app?.let(::isolated)
     }
+
+    /**
+     * Keeps a name's own direction from deciding the line's: a Hebrew name first made the pop-up read
+     * "4:07 · דנה" in an English app (seen on the OP9, 2026-11-07). Same marks as the Recordings list uses.
+     */
+    private fun isolated(text: String): String = "\u2068$text\u2069"
 }

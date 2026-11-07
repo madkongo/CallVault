@@ -42,6 +42,10 @@ internal object SettingsSearch {
         return texts.filterValues { haystack -> words.all { haystack.contains(it) } }.keys
     }
 
+    /** Whether a row shows under the search's [matches] (null: nobody is searching). See [SearchFiltered]. */
+    fun isShown(matches: Set<String>?, name: String, unfolds: Set<String>): Boolean =
+        matches == null || name in matches || unfolds.any { it in matches }
+
     /** Builds [matchingRows]' texts: each row's strings in the app's language and in English, plus its words. */
     fun textsFor(context: Context): Map<String, String> {
         val english = context.createConfigurationContext(
@@ -63,11 +67,17 @@ internal val LocalSettingsSearchRows = compositionLocalOf<Set<String>?> { null }
 @Composable
 internal fun isSettingsSearchActive(): Boolean = LocalSettingsSearchRows.current != null
 
-/** Draws [content] (the row called [name]) unless a search is on and this row is not one of its matches. */
+/**
+ * Draws [content] (the row called [name]) unless a search is on and neither this row nor any of [unfolds] is
+ * one of its matches.
+ *
+ * [unfolds] names the rows this one folds in (a switch and the rows shown only while it is on). A search that
+ * matches a folded row while the switch is off would otherwise open its group with nothing in it, so the
+ * switch shows instead, and turning it on brings the matched row in.
+ */
 @Composable
-internal fun SearchFiltered(name: String, content: @Composable () -> Unit) {
-    val visible = LocalSettingsSearchRows.current
-    if (visible == null || name in visible) content()
+internal fun SearchFiltered(name: String, unfolds: Set<String> = emptySet(), content: @Composable () -> Unit) {
+    if (SettingsSearch.isShown(LocalSettingsSearchRows.current, name, unfolds)) content()
 }
 
 /** The texts for the current language, rebuilt only when the language changes. */
