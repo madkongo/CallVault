@@ -478,7 +478,16 @@ Estimate 📐: M4A/WAV/FLAC ~1 day; MP3 +~1 day. Ties into Share a part ([[share
     for, Allow / Not now); Allow opens Android's page; back with it granted → Pop-up on. Seen in Settings. The
     setup screen lists "Display over other apps" as Optional; tapping it runs the same window; seen going
     Optional → Granted. The wizard shows "How to ask" once Ask is on (not yet seen: needs a fresh setup).
-- **Still untested:** the wizard (switch + How to ask); Android 15+ (overlay path).
+- **Emulator round 2026-11-07 (Android 16, mymemory-test, isolated `instrtest` install):**
+  - Wizard: "Ask me whether to keep each recording" on → "How to ask" appears; Pop-up → "Allow the pop-up" →
+    Android's list (Android 11+ ignores the per-app link, so the "find CallVault in the list" wording is needed)
+    → granted → back on the step with Pop-up chosen, prefs ask + popup.
+  - Pop-up on Android 16 with the app in the background: `AfterCallPopUpDeviceTest` (androidTest) passed. It drew
+    over the home screen, stepped aside within ~2 s of a simulated incoming call ringing (`emu gsm call`, Answer /
+    Decline unobstructed), came back after `gsm cancel`, Keep cleared it.
+  - Seen, not ours to fix here: at the emulator's maximum display size (density 640) the wizard's "Record app
+    calls" row squeezes its label to one letter per line (existing layout, not this feature).
+- **Nothing left untested by Claude; waiting on the maintainer's confirmation.**
 - ~~Older list:~~ the phone locked at hang-up; two calls before answering; "If I don't
   answer → Delete after 24 h"; Ask with notifications blocked; the wizard switch; Android 15+ (overlay path).
 
