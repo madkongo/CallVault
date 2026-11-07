@@ -438,7 +438,7 @@ expired). Decoding reuses `AudioDecoder.decodeRange` (interleaved PCM at the ori
 Muxer: AAC → MP4; FLAC and WAV written by hand; MP3 raw frames + ID3 tags.
 Estimate 📐: M4A/WAV/FLAC ~1 day; MP3 +~1 day. Ties into Share a part ([[share-a-part]]).
 
-## 🧪 VERIFYING — Keep or delete a recording when the call ends (also #71) — design decided 2026-11-06, branch `feat/keep-or-delete`
+## 🧪 VERIFYING — Keep or delete a recording when the call ends (also #71) — merged into `integration/next` 2026-11-07 (1882ae3f), for 2.5.0; waiting on the maintainer's own use
 
 **🧪 OP9 run 2026-11-07 (Android 14, Shizuku mode, by Claude; not yet confirmed by the maintainer):**
 - Settings: the three rows, Ask-only rows folding in, ⓘ text, search for "pop-up", "24 hours", "discard" all found.
