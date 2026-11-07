@@ -276,7 +276,9 @@ private fun androidx.compose.foundation.lazy.LazyListScope.settingsSearchResults
         }
     }
     items(hits, key = { "hit-" + it.key }) { group ->
-        val count = SettingsGroups.rowsOf(group).count { it in rows }
+        // What the group will show, not what matched: a folded match shows as its switch (SettingsFolds).
+        val switches = remember(updateTrigger, rows) { SettingsFolds.Switches.of(preferences) }
+        val count = SettingsFolds.shownRows(SettingsGroups.rowsOf(group).filter { it in rows }.toSet(), switches).size
         SettingsGroupCard(
             icon = iconOf(group),
             title = stringResource(titleOf(group)),

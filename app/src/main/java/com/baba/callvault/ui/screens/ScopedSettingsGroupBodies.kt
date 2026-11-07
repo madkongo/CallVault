@@ -86,9 +86,11 @@ private fun CallsToRecordBody(preferences: AppPreferences, updateTrigger: Int, a
     val isPhoneOn = remember(updateTrigger) { preferences.isCarrierRecordingEnabled() }
     // Held here so the app picker and the automatic switch follow the app-call switch at once.
     var isAppOn by remember { mutableStateOf(prefs.isVoipRecordingEnabled()) }
+    var isAskingAfterCall by remember { mutableStateOf(prefs.getAfterCallMode() == AppPreferences.AfterCallMode.ASK) }
+    val switches = SettingsFolds.Switches(isPhoneOn, isAppOn, isAskingAfterCall)
 
     SettingsSubHeader(stringResource(R.string.settings_subsection_phone_calls))
-    SearchFiltered("CarrierRecordingRow", unfolds = foldedBy(isPhoneOn, isAppOn, PHONE_ONLY_ROWS)) { CarrierRecordingRow(preferences, updateTrigger, actions) }
+    SearchFiltered(SettingsFolds.PHONE_SWITCH, unfolds = SettingsFolds.foldedBy(SettingsFolds.PHONE_SWITCH, switches)) { CarrierRecordingRow(preferences, updateTrigger, actions) }
     ShownWhen(isPhoneOn) {
         Column {
             SearchFiltered("AutoRecordIncomingRow") { AutoRecordIncomingRow(preferences, updateTrigger, actions) }
@@ -97,7 +99,7 @@ private fun CallsToRecordBody(preferences: AppPreferences, updateTrigger: Int, a
     }
 
     SettingsSubHeader(stringResource(R.string.settings_subheader_app_calls))
-    SearchFiltered("VoipRecordingSwitch", unfolds = foldedBy(isAppOn, isPhoneOn, APP_ONLY_ROWS)) { VoipRecordingSwitch(enabled = isAppOn, onEnabledChange = { isAppOn = it }) }
+    SearchFiltered(SettingsFolds.APP_SWITCH, unfolds = SettingsFolds.foldedBy(SettingsFolds.APP_SWITCH, switches)) { VoipRecordingSwitch(enabled = isAppOn, onEnabledChange = { isAppOn = it }) }
     ShownWhen(isAppOn) {
         Column {
             SearchFiltered("VoipAppPicker") { VoipAppPicker(prefs) }
@@ -111,8 +113,7 @@ private fun CallsToRecordBody(preferences: AppPreferences, updateTrigger: Int, a
     ShownWhen(isPhoneOn || isAppOn) { SearchFiltered("RecordFromAnswerRow") { RecordFromAnswerRow(preferences, updateTrigger, actions) } }
     SearchFiltered("VibrationRow") { VibrationRow(preferences, updateTrigger, actions) }
     // Keep or delete after the call (2026-11-06): for phone and app calls alike, so under "All calls".
-    var isAskingAfterCall by remember { mutableStateOf(prefs.getAfterCallMode() == AppPreferences.AfterCallMode.ASK) }
-    SearchFiltered("AfterCallModeRow", unfolds = if (isAskingAfterCall) emptySet() else ASK_ONLY_ROWS) { AfterCallModeRow(onAskChange = { isAskingAfterCall = it }) }
+    SearchFiltered(SettingsFolds.ASK_SWITCH, unfolds = SettingsFolds.foldedBy(SettingsFolds.ASK_SWITCH, switches)) { AfterCallModeRow(onAskChange = { isAskingAfterCall = it }) }
     ShownWhen(isAskingAfterCall) {
         Column {
             SearchFiltered("AfterCallAskStyleRow") { AfterCallAskStyleRow() }
@@ -274,19 +275,6 @@ private fun HelpAndAboutBody(
             onToggle = {},
         )
     }
-}
-
-// The rows each switch folds in, so a search that finds one while its switch is off shows the switch.
-// "Record from answer" shows with either call switch, so either one leads to it.
-private val PHONE_ONLY_ROWS = setOf("AutoRecordIncomingRow", "AutoRecordOutgoingRow")
-private val APP_ONLY_ROWS = setOf("VoipAppPicker", "VoipAutoStartRow")
-private val ASK_ONLY_ROWS = setOf("AfterCallAskStyleRow", "AfterCallUnansweredRow")
-
-/** What a call switch folds away right now: its own rows while off, and "Record from answer" while both are off. */
-private fun foldedBy(isOn: Boolean, isOtherOn: Boolean, own: Set<String>): Set<String> = when {
-    isOn -> emptySet()
-    isOtherOn -> own
-    else -> own + "RecordFromAnswerRow"
 }
 
 /** Rows that only apply while a switch is on fold in and out with it, as on the classic screen. */

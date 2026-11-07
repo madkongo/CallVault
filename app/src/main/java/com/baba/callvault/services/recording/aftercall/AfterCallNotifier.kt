@@ -37,6 +37,8 @@ internal object AfterCallNotifier {
     /** A little longer than the Undo window, so the "deleted" notice outlives the work only if that fails. */
     private const val DELETED_NOTICE_TIMEOUT_MS = AfterCallPolicy.DELETE_UNDO_WINDOW_MS + 5_000L
 
+    private const val GROUP_PREFIX = "cv_after_call_"
+
     /**
      * Whether a question posted now would reach the user: the permission, the app's notifications as a whole,
      * and our own channel (which the user can block on its own). Creates the channel first, so a first-ever
@@ -102,7 +104,13 @@ internal object AfterCallNotifier {
             .setCategory(NotificationCompat.CATEGORY_REMINDER)
             .setVisibility(NotificationCompat.VISIBILITY_PRIVATE)
             .setPublicVersion(public)
+            // A group of its own, so Android (and ColorOS) never bundles it with "Ready to record": inside that
+            // bundle it showed collapsed and Keep / Delete needed two expands to reach (OP9, 2026-11-07).
+            // One group per recording, so several questions stay side by side, each with its buttons.
+            .setGroup(groupOf(held))
     }
+
+    private fun groupOf(held: AfterCallDecisions.Held): String = "$GROUP_PREFIX${held.notificationId}"
 
     @SuppressLint("MissingPermission") // Checked just above: hasNotificationPermission.
     private fun notify(context: Context, notificationId: Int, builder: NotificationCompat.Builder) {
