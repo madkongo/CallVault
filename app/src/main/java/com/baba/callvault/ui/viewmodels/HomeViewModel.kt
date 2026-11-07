@@ -791,7 +791,7 @@ class HomeViewModel(application: Application) : AndroidViewModel(application) {
         // works). Whenever the grant is missing, silently try to restore it over any transport that's
         // already up (WD still on / loopback armed) — no user action, no adbd churn — so a later daemon
         // death stays recoverable. Recompute the status afterwards so any banner reflects the heal.
-        if (!AdbShell.hasWriteSecureSettings(appContext)) {
+        if (SetupPrerequisites.shouldHealGrant(AdbShell.hasWriteSecureSettings(appContext), preferences.getPrivilegedMode())) {
             viewModelScope.launch {
                 val healed = withContext(Dispatchers.IO) { AdbShell.tryHealWriteSecureSettings(appContext) }
                 if (healed) _uiState.update { it.copy(status = computeStatus()) }

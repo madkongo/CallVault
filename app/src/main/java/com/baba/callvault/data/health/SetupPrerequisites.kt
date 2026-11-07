@@ -53,6 +53,14 @@ enum class Prerequisite {
 object SetupPrerequisites {
 
     /**
+     * Whether Home should try to restore WRITE_SECURE_SETTINGS. Built-in mode only: the grant exists to switch
+     * Wireless debugging on, which Shizuku mode never does (see [missing]). In Shizuku mode the attempt could
+     * never land either, as there is no CallVault ADB connection to grant it over, yet it ran a 12 s network
+     * search on every Home refresh (Samsung S24 Ultra, Android 17, Shizuku as root; report 2026-11-06).
+     */
+    fun shouldHealGrant(hasGrant: Boolean, mode: PrivilegedMode): Boolean = !hasGrant && !mode.needsShizuku
+
+    /**
      * The first missing prerequisite, in the same precedence
      * [com.baba.callvault.ui.viewmodels.HomeViewModel.computeStatus] checks them, or null when all
      * are met. Synchronous, cheap reads only — no I/O, no daemon launch.

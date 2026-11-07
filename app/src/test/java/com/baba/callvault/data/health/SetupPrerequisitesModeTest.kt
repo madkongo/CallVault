@@ -13,6 +13,8 @@ import com.baba.callvault.server.ShizukuStatus
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNull
 import com.baba.callvault.integrations.adb.AdbdState
+import org.junit.Assert.assertTrue
+import org.junit.Assert.assertFalse
 import org.junit.Test
 
 /**
@@ -203,5 +205,13 @@ class SetupPrerequisitesModeTest {
         assertEquals(true, SetupPrerequisites.canRelaunchWithoutGrant(wirelessDebuggingOn = false, loopbackArmed = true, adbd = AdbdState.UNKNOWN))
         assertEquals(false, SetupPrerequisites.canRelaunchWithoutGrant(wirelessDebuggingOn = false, loopbackArmed = true, adbd = AdbdState.STOPPED))
         assertEquals(false, SetupPrerequisites.canRelaunchWithoutGrant(wirelessDebuggingOn = false, loopbackArmed = false, adbd = AdbdState.RUNNING))
+    }
+
+    @Test
+    fun `home tries to restore the grant only in built-in mode`() {
+        assertTrue(SetupPrerequisites.shouldHealGrant(hasGrant = false, mode = PrivilegedMode.STANDALONE))
+        assertFalse(SetupPrerequisites.shouldHealGrant(hasGrant = true, mode = PrivilegedMode.STANDALONE))
+        // Shizuku mode never needs it and has no CallVault ADB connection to grant it over.
+        assertFalse(SetupPrerequisites.shouldHealGrant(hasGrant = false, mode = PrivilegedMode.SHIZUKU))
     }
 }
