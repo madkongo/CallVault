@@ -123,6 +123,20 @@ All notable changes to CallVault are documented here. The format is based on
   in CallVault's list pointing at nothing; if the phone still has its copy, only the Drive copy is dropped.
   Recordings in Drive's Bin still count as there until the Bin is emptied.
   <!-- 🧪 VERIFYING: unit tests; OP9 check ran (Bin = still present). Needs a forever-deleted Drive file. -->
+- **Outgoing calls placed through a call redirection app keep the number you dialled.** With Google Voice (or
+  another call redirection app) set to route calls from the phone app, Android reports a proxy number for the call.
+  CallVault now takes the dialled number from the outgoing-call broadcast, so the recording rules, the notification
+  and the file name use it. If that is not available, the file is renamed from the call log once the call ends.
+  Uses the "process outgoing calls" permission, asked once and granted without a dialog when the call log is
+  already allowed. Thanks @borng (#76).
+  <!-- 🧪 VERIFYING: OP9 (Android 14) 2026-11-07 trial build: permission granted silently; normal outgoing call keeps
+       its name and saves 0.5 s after hang-up; permission revoked = no rename, no delay; Honor preset still renames
+       to the call-log second. Honor phone not tried with the shared call-log read (commit f1230bdf).
+       Contributor's test: Pixel 10 Pro Fold 2026-11-07, Google Voice "Calls started from this device's phone app: use
+       your Google Voice number", side-by-side debug build (cannot record): NEW_OUTGOING_CALL came 0.7 s before
+       OFFHOOK and the session took the dialled number (call log …9120) over the proxy (…8329, which 2.4.9 named the
+       file after). The after-call rename is unit-tested only.
+       Maintainer to confirm. -->
 
 ## [2.4.9] — 2026-11-03
 

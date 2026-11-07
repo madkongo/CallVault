@@ -396,6 +396,7 @@ class AppPreferences(context: Context) {
         PENDING_UPDATE_TAG("pending_update_tag"),
         LAST_NOTIFIED_UPDATE_TAG("last_notified_update_tag"),
         UPDATE_POPUP_SHOWN_TAG("update_popup_shown_tag"),
+        OUTGOING_CALLS_PERMISSION_ASKED("outgoing_calls_permission_asked"),
         LAST_UPDATE_CHECK_MILLIS("last_update_check_millis"),
         UPDATE_INSTALL_ARMED("update_install_armed"),
         LAST_SEEN_VERSION_CODE("last_seen_version_code"),
@@ -714,6 +715,10 @@ class AppPreferences(context: Context) {
     /** The version the update popup was last shown for — so it appears once per version, never nags. */
     fun getUpdatePopupShownTag() = getString(Key.UPDATE_POPUP_SHOWN_TAG)
     fun setUpdatePopupShownTag(tag: String?) = setString(Key.UPDATE_POPUP_SHOWN_TAG, tag)
+
+    /** Whether PROCESS_OUTGOING_CALLS was requested once already, so a refusal is never asked again. */
+    fun isOutgoingCallsPermissionAsked() = getBoolean(Key.OUTGOING_CALLS_PERMISSION_ASKED)
+    fun markOutgoingCallsPermissionAsked() = setBoolean(Key.OUTGOING_CALLS_PERMISSION_ASKED, true)
 
     /** Epoch millis of the last completed update check; throttles the check-on-open trigger. */
     fun getLastUpdateCheckMillis() = getLong(Key.LAST_UPDATE_CHECK_MILLIS)
