@@ -707,3 +707,9 @@ README.md was not edited.
   pop-up). Any README list of the permissions CallVault asks for at setup must add it as optional.
 - With Pop-up chosen, only the pop-up asks; the notification is the fallback (locked phone, no permission, closed
   unanswered). A README line saying both appear would be wrong.
+
+## 2026-11-07 — PR #76 (@borng): redirected outgoing calls (merged 7f1f0e89)
+- New permission **PROCESS_OUTGOING_CALLS** ("process outgoing calls"), asked once at app start and granted with no
+  dialog when the call log is already allowed. Any README list of permissions must add it, with its use: the number
+  you dialled, for calls routed through Google Voice or another call redirection app.
+- New claim available: outgoing calls placed through Google Voice are named after the dialled number, not the proxy.
