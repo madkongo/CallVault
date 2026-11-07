@@ -39,6 +39,8 @@
          They are both sends at around the same time, with something around 100-400ms between them, and the docs claim there is no specific order between them.
     -->
     <uses-permission android:name="android.permission.READ_CALL_LOG" tools:ignore="SmsAndCallLogPolicy" />
+    <!-- Optional: the number as dialled, before a call redirection app (e.g. Google Voice) swaps in a proxy number. -->
+    <uses-permission android:name="android.permission.PROCESS_OUTGOING_CALLS" tools:ignore="SmsAndCallLogPolicy" />
 
     <!-- Recording Foreground Job -->
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE" tools:ignore="ForegroundServicesPolicy" />
@@ -223,6 +225,16 @@
             android:exported="true">
             <intent-filter>
                 <action android:name="android.intent.action.PHONE_STATE" />
+            </intent-filter>
+        </receiver>
+
+        <!-- The dialled number of an outgoing call, see NewOutgoingCallReceiver. Only Telecom can send it: protected broadcast. -->
+        <receiver
+            android:name=".services.call.NewOutgoingCallReceiver"
+            android:enabled="true"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.intent.action.NEW_OUTGOING_CALL" />
             </intent-filter>
         </receiver>
 
