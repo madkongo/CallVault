@@ -450,11 +450,12 @@ Estimate 📐: M4A/WAV/FLAC ~1 day; MP3 +~1 day. Ties into Share a part ([[share
 - Three carrier calls to the OP12: question held each time; pop-up drawn over the home screen and the
   notification posted; Delete (pop-up) deleted ~11 s later; Delete then Undo (notification) brought the question
   back; Keep kept it and cleared the store; answering the notification closed the pop-up. Recordings count 33 → 34.
-- Fixed (32a5551e, not yet seen on screen): a Hebrew name made the pop-up read "1:24 · name"; now isolated.
-- **Still untested:** a WhatsApp call; the phone locked at hang-up; two calls before answering; "If I don't
+- Fixed (32a5551e): a Hebrew name made the pop-up read "1:24 · name"; now isolated, seen right on the WhatsApp call.
+- WhatsApp call to the OP12: held ("Held a VoIP recording"), pop-up over WhatsApp, notification "Call with … recorded
+  · 1:20", Keep ran the held hand-offs (transcription scheduler consulted) and cleared both.
+- Maintainer 2026-11-07: the 10 s Undo after a pop-up Delete is fine as it is; no change.
+- **Still untested:** the phone locked at hang-up; two calls before answering; "If I don't
   answer → Delete after 24 h"; Ask with notifications blocked; the wizard switch; Android 15+ (overlay path).
-- **Open question for the maintainer:** after Delete in the pop-up, Undo is only in the notification shade for
-  10 s, easy to miss.
 
 **Decided by the maintainer 2026-11-06** (artifact "Keep or Discard", https://claude.ai/artifact/WW6HLdm45TYSaydaYvC44N):
 - Settings ▸ Recording: **When a call ends**: Keep the recording (default, as today) / Ask me: keep or delete.
