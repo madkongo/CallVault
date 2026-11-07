@@ -64,6 +64,12 @@ All notable changes to CallVault are documented here. The format is based on
 
 ### Fixed
 
+- **Shizuku mode no longer repeats a pointless repair.** When a system permission that only the built-in mode needs
+  was missing, every return to the app started a 12-second attempt to restore it over a connection Shizuku mode
+  doesn't have. Seen on a Samsung S24 Ultra with Android 17.
+  <!-- 🧪 VERIFYING: reproduced and fixed on the OP9 (Shizuku mode, Wireless debugging on) 2026-11-07; whether it was
+  the reporter's "slowness" is unknown. -->
+
 - **Tapping beside a page title no longer opens a setting.** In Settings (and on any page with a title bar), a tap on
   the empty space next to the title reached the row scrolled underneath, opening its ⓘ or changing a setting.
   <!-- ✅ VERIFIED 2026-11-07: maintainer confirmed on the OP9 (Settings panel). -->
