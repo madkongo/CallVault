@@ -66,7 +66,7 @@ All notable changes to CallVault are documented here. The format is based on
 
 - **Tapping beside a page title no longer opens a setting.** In Settings (and on any page with a title bar), a tap on
   the empty space next to the title reached the row scrolled underneath, opening its ⓘ or changing a setting.
-  <!-- 🧪 VERIFYING: reproduced and fixed on the OP9 2026-11-07 (Settings panel); maintainer to confirm. -->
+  <!-- ✅ VERIFIED 2026-11-07: maintainer confirmed on the OP9 (Settings panel). -->
 
 - **Honor phones pausing CallVault during a call.** Some Honor phones (MagicOS, Android 17) pause the app while the
   screen is dark in a call, which lost one call and cut another short. On a phone seen doing this, the recorder
