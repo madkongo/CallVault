@@ -454,7 +454,25 @@ Estimate 📐: M4A/WAV/FLAC ~1 day; MP3 +~1 day. Ties into Share a part ([[share
 - WhatsApp call to the OP12: held ("Held a VoIP recording"), pop-up over WhatsApp, notification "Call with … recorded
   · 1:20", Keep ran the held hand-offs (transcription scheduler consulted) and cleared both.
 - Maintainer 2026-11-07: the 10 s Undo after a pop-up Delete is fine as it is; no change.
-- **Still untested:** the phone locked at hang-up; two calls before answering; "If I don't
+- **Second OP9 round 2026-11-07 (after a7719b70 + 0218ac1a):**
+  - Maintainer: with Pop-up chosen, only the pop-up should ask. Changed (a7719b70): the notification asks only
+    when the pop-up cannot be drawn or is closed unanswered. Seen: pop-up alone after a call; Back moved the
+    question to a notification; the pop-up survived the phone locking and was there after unlock.
+  - Locked at hang-up: no pop-up, notification only, no pop-up after unlock. With "hide sensitive content" on,
+    the lock screen reads "Call recorded" (no name).
+  - Found and fixed (0218ac1a): the pop-up covered the next call's screen (hang-up button, keypad). It now steps
+    aside while the audio mode says a call is ringing/active and comes back after. Seen on two back-to-back
+    calls; the queue asked the older call first, then the next.
+  - "Delete after 24 h" (check forced with `cmd jobscheduler run -f`): unanswered → deleted, notification
+    cleared; starred → kept.
+  - Ask with the keep-or-delete category muted: opens that category's page; back without allowing → stays Keep
+    with the note; allowing → Ask on return. (With the app's notification permission revoked, CallVault sends
+    the user to setup, so that case cannot reach this row.)
+  - Seen, not fixed: the question sits inside a collapsed CallVault group with "Ready to record" in the
+    ColorOS shade, so Keep/Delete need two expands; search shows "2 matches" with one row when the second
+    is folded.
+- **Still untested:** the wizard switch; Android 15+ (overlay path).
+- ~~Older list:~~ the phone locked at hang-up; two calls before answering; "If I don't
   answer → Delete after 24 h"; Ask with notifications blocked; the wizard switch; Android 15+ (overlay path).
 
 **Decided by the maintainer 2026-11-06** (artifact "Keep or Discard", https://claude.ai/artifact/WW6HLdm45TYSaydaYvC44N):
