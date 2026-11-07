@@ -438,7 +438,23 @@ expired). Decoding reuses `AudioDecoder.decodeRange` (interleaved PCM at the ori
 Muxer: AAC → MP4; FLAC and WAV written by hand; MP3 raw frames + ID3 tags.
 Estimate 📐: M4A/WAV/FLAC ~1 day; MP3 +~1 day. Ties into Share a part ([[share-a-part]]).
 
-## 🔨 BUILDING — Keep or delete a recording when the call ends (also #71) — design decided 2026-11-06, branch `feat/keep-or-delete`
+## 🧪 VERIFYING — Keep or delete a recording when the call ends (also #71) — design decided 2026-11-06, branch `feat/keep-or-delete`
+
+**🧪 OP9 run 2026-11-07 (Android 14, Shizuku mode, by Claude; not yet confirmed by the maintainer):**
+- Settings: the three rows, Ask-only rows folding in, ⓘ text, search for "pop-up", "24 hours", "discard" all found.
+  Found and fixed (32a5551e): a search matching a folded row opened its group empty; the switch now shows. Same fix
+  covers the auto-record and app-picker rows.
+- Pop-up without permission: opens Android's "Display over other apps" page (on ColorOS the whole app list, not
+  CallVault's own page); back without granting leaves Notification with the note; granting switches to Pop-up
+  on return.
+- Three carrier calls to the OP12: question held each time; pop-up drawn over the home screen and the
+  notification posted; Delete (pop-up) deleted ~11 s later; Delete then Undo (notification) brought the question
+  back; Keep kept it and cleared the store; answering the notification closed the pop-up. Recordings count 33 → 34.
+- Fixed (32a5551e, not yet seen on screen): a Hebrew name made the pop-up read "1:24 · name"; now isolated.
+- **Still untested:** a WhatsApp call; the phone locked at hang-up; two calls before answering; "If I don't
+  answer → Delete after 24 h"; Ask with notifications blocked; the wizard switch; Android 15+ (overlay path).
+- **Open question for the maintainer:** after Delete in the pop-up, Undo is only in the notification shade for
+  10 s, easy to miss.
 
 **Decided by the maintainer 2026-11-06** (artifact "Keep or Discard", https://claude.ai/artifact/WW6HLdm45TYSaydaYvC44N):
 - Settings ▸ Recording: **When a call ends**: Keep the recording (default, as today) / Ask me: keep or delete.
