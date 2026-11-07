@@ -185,4 +185,13 @@ class AfterCallPolicyTest {
         assertNull(AfterCallPolicy.formatDuration(0L))
         assertNull(AfterCallPolicy.formatDuration(-1L))
     }
+
+    @Test
+    fun `the pop-up steps aside while a call rings or is under way`() {
+        listOf(
+            android.media.AudioManager.MODE_RINGTONE, android.media.AudioManager.MODE_IN_CALL,
+            android.media.AudioManager.MODE_IN_COMMUNICATION, android.media.AudioManager.MODE_CALL_SCREENING,
+        ).forEach { assertTrue("mode $it", AfterCallPolicy.isCallAudioMode(it)) }
+        assertFalse(AfterCallPolicy.isCallAudioMode(android.media.AudioManager.MODE_NORMAL))
+    }
 }

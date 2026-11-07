@@ -12,6 +12,7 @@ import android.annotation.SuppressLint
 import android.content.Context
 import android.content.SharedPreferences
 import android.graphics.PixelFormat
+import android.media.AudioManager
 import android.os.Handler
 import android.os.Looper
 import android.os.SystemClock
@@ -49,6 +50,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.cancel
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
@@ -73,6 +75,9 @@ internal object AfterCallOverlay {
     private const val TAG = "CV:AfterCall"
 
     private val main = Handler(Looper.getMainLooper())
+
+    /** How often a shown pop-up checks whether a call has started or ended. */
+    private const val CALL_CHECK_MS = 500L
 
     private var window: Window? = null
 
@@ -136,6 +141,9 @@ internal object AfterCallOverlay {
             }
         }
 
+        /** Whether [root] is in the window manager right now; it steps out during a call. */
+        private var isOnScreen = false
+
         fun attach() {
             val compose = ComposeView(context).apply {
                 setViewCompositionStrategy(ViewCompositionStrategy.DisposeOnDetachedFromWindow)
@@ -146,15 +154,59 @@ internal object AfterCallOverlay {
             root.setViewTreeSavedStateRegistryOwner(owner)
             root.setViewTreeViewModelStoreOwner(owner)
             owner.start()
-            windowManager.addView(root, layoutParams())
             AfterCallDecisions.registerListener(context, storeListener)
+            if (!isInCall()) putOnScreen()
+            scope.launch { stepAsideDuringCalls() }
+        }
+
+        /**
+         * Keeps the card off the screen while a call rings or is under way, phone or app call alike: over the
+         * call screen it covered the hang-up button and the keypad (OP9, 2026-11-07), and it would cover an
+         * incoming call's answer screen the same way. Back when the call ends, with the tap guard restarted.
+         * Read from the audio mode, which every kind of call sets; polled, as it has no listener before API 31.
+         */
+        private suspend fun stepAsideDuringCalls() {
+            while (true) {
+                val inCall = isInCall()
+                if (inCall && isOnScreen) {
+                    takeOffScreen()
+                } else if (!inCall && !isOnScreen) {
+                    val isBack = runCatching { putOnScreen() }
+                        .onFailure { AppLogger.w(TAG, "Could not bring the keep-or-delete pop-up back; asking by notification: ${it.message}") }
+                        .isSuccess
+                    if (!isBack) {
+                        AfterCallOverlay.closeUnanswered(context)
+                        return
+                    }
+                }
+                delay(CALL_CHECK_MS)
+            }
+        }
+
+        private fun isInCall(): Boolean = AfterCallPolicy.isCallAudioMode(
+            context.getSystemService(AudioManager::class.java)?.mode ?: AudioManager.MODE_NORMAL,
+        )
+
+        private fun putOnScreen() {
+            windowManager.addView(root, layoutParams())
+            isOnScreen = true
+            shownAtMs = SystemClock.elapsedRealtime()
+        }
+
+        private fun takeOffScreen() {
+            runCatching { windowManager.removeView(root) }
+                .onFailure { AppLogger.w(TAG, "Could not step the keep-or-delete pop-up aside: ${it.message}") }
+            isOnScreen = false
         }
 
         fun detach() {
             AfterCallDecisions.unregisterListener(context, storeListener)
             scope.cancel()
-            runCatching { windowManager.removeView(root) }
-                .onFailure { AppLogger.w(TAG, "Could not remove the keep-or-delete pop-up: ${it.message}") }
+            if (isOnScreen) {
+                runCatching { windowManager.removeView(root) }
+                    .onFailure { AppLogger.w(TAG, "Could not remove the keep-or-delete pop-up: ${it.message}") }
+                isOnScreen = false
+            }
             owner.stop()
         }
 

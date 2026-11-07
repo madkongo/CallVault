@@ -88,6 +88,21 @@ object AfterCallPolicy {
         style == AfterCallAskStyle.POPUP && canDrawOverlays && !keyguardLocked
 
     /**
+     * Whether the audio mode says a call is ringing or under way (phone or app call), when the pop-up must stay
+     * off the screen. 4 is AudioManager.MODE_CALL_SCREENING (API 30), written as a number to keep this file pure.
+     */
+    fun isCallAudioMode(mode: Int): Boolean = mode == MODE_RINGTONE || mode == MODE_IN_CALL ||
+        mode == MODE_IN_COMMUNICATION || mode == MODE_CALL_SCREENING || mode == MODE_CALL_REDIRECT ||
+        mode == MODE_COMMUNICATION_REDIRECT
+
+    private const val MODE_RINGTONE = 1
+    private const val MODE_IN_CALL = 2
+    private const val MODE_IN_COMMUNICATION = 3
+    private const val MODE_CALL_SCREENING = 4
+    private const val MODE_CALL_REDIRECT = 5
+    private const val MODE_COMMUNICATION_REDIRECT = 6
+
+    /**
      * How long the pop-up ignores Keep and Delete after a card appears (or changes to the next recording): a
      * thumb still on the screen from ending the call must not answer a question it never saw.
      */
