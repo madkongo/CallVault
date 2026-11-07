@@ -184,8 +184,10 @@ object ShizukuBackend {
             // The recorder this binding delivered is gone (or never came). Remove the record outright so
             // Shizuku starts a fresh process; an "unbind and keep" would hand back the same dead service.
             AppLogger.w(TAG, "The Shizuku binding is stale (recorder ${if (alive == false) "died" else "never answered"}); binding again")
-            runCatching { Shizuku.unbindUserService(userServiceArgs, current, true) }
-                .onFailure { AppLogger.w(TAG, "unbindUserService (stale) failed: ${it.message}") }
+            onShizukuThread {
+                runCatching { Shizuku.unbindUserService(userServiceArgs, current, true) }
+                    .onFailure { AppLogger.w(TAG, "unbindUserService (stale) failed: ${it.message}") }
+            }
             connection = null
             delivered = null
             RecorderConnection.onBinderDied()
@@ -240,13 +242,18 @@ object ShizukuBackend {
         connection = conn
         delivered = null
         boundAtMs = android.os.SystemClock.elapsedRealtime()
-        return runCatching {
-            Shizuku.bindUserService(userServiceArgs, conn)
-            true
-        }.onFailure {
-            connection = null
-            AppLogger.e(TAG, "bindUserService failed: ${it.message}", it)
-        }.getOrDefault(false)
+        // On the main thread like every other change to Shizuku's connection list (see [onShizukuThread]). Its result
+        // is waited for briefly, so a bind that throws still answers false; a main thread busy in one of the callbacks
+        // above (which take bindLock, held here) makes the wait time out instead of deadlocking, and the bind runs
+        // right after. The binder itself arrives through the callbacks, which callers already wait for.
+        val bound = onShizukuThreadAwaiting(BIND_CALL_WAIT_MS) {
+            runCatching { Shizuku.bindUserService(userServiceArgs, conn) }.onFailure {
+                synchronized(bindLock) { if (connection === conn) connection = null }
+                AppLogger.e(TAG, "bindUserService failed: ${it.message}", it)
+            }.isSuccess
+        }
+        if (bound == false) connection = null
+        return bound != false
     }
 
     /**
@@ -281,12 +288,49 @@ object ShizukuBackend {
         // Shizuku matches user services by their args, not by the connection object, so a throwaway
         // connection is enough to remove one this process never bound.
         val conn = connection ?: NO_OP_CONNECTION
-        runCatching { Shizuku.unbindUserService(userServiceArgs, conn, remove) }
-            .onFailure { AppLogger.w(TAG, "unbindUserService failed: ${it.message}") }
+        onShizukuThread {
+            runCatching { Shizuku.unbindUserService(userServiceArgs, conn, remove) }
+                .onFailure { AppLogger.w(TAG, "unbindUserService failed: ${it.message}") }
+        }
         connection = null
         delivered = null
         RecorderConnection.onBinderDied()
     }
+}
+
+private val mainHandler = android.os.Handler(android.os.Looper.getMainLooper())
+
+/**
+ * Runs a call that changes Shizuku's list of connections on the main thread, queued and not waited for.
+ *
+ * Shizuku 13.1.5 keeps that list in a plain HashSet and walks it on the main thread when a recorder dies
+ * (`ShizukuServiceConnection.died`). Binding and unbinding add to and remove from the same set, and we did that from
+ * background threads: retiring the recorder (destroy, then unbind) crashed the app with a
+ * ConcurrentModificationException in `died` (OP9, 2026-11-07, the stuck-microphone heal; the post-update retire takes
+ * the same path). On the main thread every change and every walk of the set happen one after another, in the order
+ * they were asked for. Not waited for: our callers hold `bindLock`, and the main thread's callbacks take it, so
+ * waiting could deadlock.
+ */
+private fun onShizukuThread(block: () -> Unit) {
+    if (android.os.Looper.myLooper() == android.os.Looper.getMainLooper()) block() else mainHandler.post(block)
+}
+
+/** How long a bind waits for its main-thread call to report back. */
+private const val BIND_CALL_WAIT_MS = 2_000L
+
+/** Like [onShizukuThread], but waits up to [waitMs] for the answer; null when it did not come in time. */
+private fun onShizukuThreadAwaiting(waitMs: Long, block: () -> Boolean): Boolean? {
+    if (android.os.Looper.myLooper() == android.os.Looper.getMainLooper()) return block()
+    val result = java.util.concurrent.atomic.AtomicReference<Boolean?>(null)
+    val done = java.util.concurrent.CountDownLatch(1)
+    mainHandler.post {
+        try {
+            result.set(block())
+        } finally {
+            done.countDown()
+        }
+    }
+    return if (done.await(waitMs, java.util.concurrent.TimeUnit.MILLISECONDS)) result.get() else null
 }
 
 /**

@@ -64,6 +64,15 @@ All notable changes to CallVault are documented here. The format is based on
 
 ### Fixed
 
+- **The microphone no longer stays on after some calls in Shizuku mode.** When Android leaves the recorder holding the
+  microphone after a call, CallVault now restarts its recorder in Shizuku mode too, as it already did in the built-in
+  mode; until now you had to stop and start CallVault yourself.
+- **No more crash when CallVault restarts its Shizuku recorder.** Restarting it (after an update, or for the fix above)
+  could crash the app in Shizuku's own code.
+  <!-- 🧪 VERIFYING 2026-11-07 on the OP9 (Shizuku): the restart ran after a call with a simulated held microphone, no
+  crash, recorder back in ~2 s; the update path ran with no crash. A real stuck microphone (EdmitriX) not yet seen
+  clearing. -->
+
 - **Tapping beside a page title no longer opens a setting.** In Settings (and on any page with a title bar), a tap on
   the empty space next to the title reached the row scrolled underneath, opening its ⓘ or changing a setting.
   <!-- ✅ VERIFIED 2026-11-07: maintainer confirmed on the OP9 (Settings panel). -->

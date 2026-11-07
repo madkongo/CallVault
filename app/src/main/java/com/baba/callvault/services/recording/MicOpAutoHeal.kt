@@ -14,9 +14,10 @@ import android.net.ConnectivityManager
 import android.net.NetworkCapabilities
 import android.os.SystemClock
 import com.baba.callvault.data.AppPreferences
-import com.baba.callvault.data.PrivilegedMode
 import com.baba.callvault.integrations.adb.AdbShell
+import com.baba.callvault.server.RecorderBackend
 import com.baba.callvault.server.RecorderConnection
+import com.baba.callvault.server.ShizukuStatus
 import com.baba.callvault.services.recording.MicOpHealPolicy.Decision
 import com.baba.callvault.system.diagnostics.MicOpReport
 import com.baba.callvault.utils.AppLogger
@@ -77,9 +78,8 @@ object MicOpAutoHeal {
 
     private fun checkAndHeal(context: Context, what: String) {
         val prefs = AppPreferences(context)
-        val standalone = prefs.getPrivilegedMode() == PrivilegedMode.STANDALONE
-        // Read only where there is a daemon of ours to ask; Shizuku mode is ruled out by the policy anyway.
-        val held = if (standalone) shellMicOps() else emptyList()
+        val shizuku = prefs.getPrivilegedMode().needsShizuku
+        val held = recorderMicOps()
         if (held == null) {
             AppLogger.i(TAG, "after $what: could not read the microphone app-op; leaving it")
             return
@@ -88,14 +88,17 @@ object MicOpAutoHeal {
         val decision = MicOpHealPolicy.decide(
             shellMicOpsHeld = held.size,
             callOrRecordingActive = callOrRecordingActive(context),
-            standalone = standalone,
-            canRelaunch = canRelaunch(context, prefs),
+            canRelaunch = if (shizuku) {
+                MicOpHealPolicy.canRelaunchShizuku(RecorderBackend.shizukuStatus(context) == ShizukuStatus.READY)
+            } else {
+                canRelaunch(context, prefs)
+            },
             lastHealAtMs = lastHealAtMs,
             nowMs = SystemClock.elapsedRealtime(),
         )
         AppLogger.i(
             TAG,
-            "after $what: ${held.size} shell microphone op(s) running" +
+            "after $what${if (shizuku) " (Shizuku)" else ""}: ${held.size} recorder microphone op(s) running" +
                 (if (held.isEmpty()) "" else " (since ${held.joinToString { it.startedAt }})") + " → $decision",
         )
         if (decision != Decision.HEAL) return
@@ -105,7 +108,34 @@ object MicOpAutoHeal {
             AppLogger.i(TAG, "a call started before the heal; leaving the daemon alone")
             return
         }
-        heal(held)
+        if (shizuku) healShizuku(context, held) else heal(held)
+    }
+
+    /**
+     * Shizuku mode: retire CallVault's Shizuku-hosted recorder (it refuses while recording) and start a fresh one,
+     * the same two steps an update takes. Started here rather than left to the keep-alive's own rebind on the binder's
+     * death, so the result can be checked and logged; the Shizuku lock makes the two take turns, and whichever comes
+     * second reuses the fresh recorder.
+     */
+    private fun healShizuku(context: Context, held: List<MicOpReport.HeldOp>) {
+        val service = RecorderConnection.service ?: run {
+            AppLogger.w(TAG, "the Shizuku recorder went away before the heal; nothing to replace")
+            return
+        }
+        lastHealAtMs = SystemClock.elapsedRealtime()
+        AppLogger.w(
+            TAG,
+            "microphone indicator stuck with nothing recording (${held.joinToString { it.startedAt }}) — replacing the Shizuku recorder",
+        )
+        if (!RecorderBackend.retireShizukuService("the microphone stayed on after a call", host = service)) {
+            AppLogger.i(TAG, "the Shizuku recorder is recording; leaving it")
+            return
+        }
+        if (!RecorderBackend.ensureRunning(context)) {
+            AppLogger.e(TAG, "the Shizuku recorder did not come back; the next start will try again")
+            return
+        }
+        reportAfter("Shizuku recorder replaced")
     }
 
     private fun heal(held: List<MicOpReport.HeldOp>) {
@@ -131,26 +161,34 @@ object MicOpAutoHeal {
             return
         }
 
-        val after = shellMicOps()
+        reportAfter("daemon replaced")
+    }
+
+    private fun reportAfter(what: String) {
+        val after = recorderMicOps()
         AppLogger.i(
             TAG,
             when {
-                after == null -> "daemon replaced; could not re-read the microphone app-op"
-                after.isEmpty() -> "daemon replaced; the microphone indicator is clear"
-                else -> "daemon replaced but ${after.size} shell microphone op(s) still running " +
+                after == null -> "$what; could not re-read the microphone app-op"
+                after.isEmpty() -> "$what; the microphone indicator is clear"
+                else -> "$what but ${after.size} recorder microphone op(s) still running " +
                     "(since ${after.joinToString { it.startedAt }}) — held by something else; not retrying for " +
                     "${MicOpHealPolicy.COOLDOWN_MS / 60_000} min"
             },
         )
     }
 
-    /** The shell uid's running microphone ops, read through the daemon, or null when they could not be read. */
-    private fun shellMicOps(): List<MicOpReport.HeldOp>? {
+    /**
+     * The running microphone ops of the uid the recorder runs as, read through it, or null when they could not be
+     * read. Usually the shell (2000); root (0) when Shizuku runs as root, as on a Samsung S24 Ultra report.
+     */
+    private fun recorderMicOps(): List<MicOpReport.HeldOp>? {
         val service = RecorderConnection.service ?: return null
+        val uid = runCatching { service.hostUid().toString() }.getOrDefault(MicOpReport.SHELL_UID)
         val dump = runCatching { service.diagnosticDump("appops_mic", null) }.getOrNull()?.takeIf { it.isNotBlank() }
             ?: runCatching { service.diagnosticDump("appops_all", null) }.getOrNull()?.takeIf { it.isNotBlank() }
             ?: return null
-        return MicOpReport.heldMicOps(dump).filter { it.isShell }
+        return MicOpReport.heldMicOps(dump).filter { it.uid == uid }
     }
 
     private fun callOrRecordingActive(context: Context): Boolean {
