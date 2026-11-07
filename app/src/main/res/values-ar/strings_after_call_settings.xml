@@ -11,7 +11,7 @@
     <string name="settings_after_call_style_notification">إشعار</string>
     <string name="settings_after_call_style_popup">نافذة منبثقة فوق الشاشة</string>
     <string name="settings_after_call_style_notification_desc">إشعار فيه زرّا الاحتفاظ والحذف.</string>
-    <string name="settings_after_call_style_popup_desc">نافذة صغيرة فوق ما يظهر على الشاشة، إضافةً إلى الإشعار. تحتاج إلى إذن الظهور فوق التطبيقات الأخرى، ولا تظهر أبدًا على شاشة القفل.</string>
+    <string name="settings_after_call_style_popup_desc">نافذة صغيرة فوق ما يظهر على الشاشة. إذا تعذّر ظهورها (الهاتف مقفل) أو أغلقتها دون إجابة، يسألك إشعار بدلًا منها. تحتاج إلى إذن الظهور فوق التطبيقات الأخرى.</string>
     <string name="settings_after_call_needs_overlay">تحتاج النافذة المنبثقة إلى إذن الظهور فوق التطبيقات الأخرى. وإلى أن يُمنح، يسألك الإشعار.</string>
     <string name="settings_after_call_unanswered_label">إذا لم أُجب</string>
     <string name="settings_after_call_unanswered_keep">الاحتفاظ به</string>

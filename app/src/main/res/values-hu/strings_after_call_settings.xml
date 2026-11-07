@@ -11,7 +11,7 @@
     <string name="settings_after_call_style_notification">Értesítés</string>
     <string name="settings_after_call_style_popup">Felugró ablak a képernyőn</string>
     <string name="settings_after_call_style_notification_desc">Értesítés Megtartás és Törlés gombbal.</string>
-    <string name="settings_after_call_style_popup_desc">Kis ablak a képernyőn lévő tartalom fölött, az értesítés mellett. Más alkalmazások fölötti megjelenítési engedély kell hozzá; a lezárási képernyőn sosem jelenik meg.</string>
+    <string name="settings_after_call_style_popup_desc">Kis ablak a képernyőn lévő tartalom fölött. Ha nem jelenhet meg (a telefon zárolva van), vagy válasz nélkül bezárja, helyette egy értesítés kérdez. Más alkalmazások fölötti megjelenítési engedély kell hozzá.</string>
     <string name="settings_after_call_needs_overlay">A felugró ablakhoz más alkalmazások fölötti megjelenítési engedély kell. Amíg nincs meg, az értesítés kérdez.</string>
     <string name="settings_after_call_unanswered_label">Ha nem válaszolok</string>
     <string name="settings_after_call_unanswered_keep">Megtartás</string>

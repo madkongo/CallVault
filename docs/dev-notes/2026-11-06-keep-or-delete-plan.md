@@ -14,8 +14,10 @@ and the artifact https://claude.ai/artifact/WW6HLdm45TYSaydaYvC44N.
 - While undecided: no Drive copy, no automatic transcription (call-end hand-offs AND the nightly sweeps).
 - Delete removes everything: `RecordingsRepository.deleteRecording` (file + .md + .json in both folders, then
   `RecordingCatalog.removeName` → `TranscriptCascade`: transcript, summary, notes, tags, stars, flags).
-- Pop-up needs SYSTEM_ALERT_WINDOW. The notification is ALWAYS posted too, so a blocked pop-up never leaves a call
-  without its question; answering either one clears both.
+- Pop-up needs SYSTEM_ALERT_WINDOW. ~~The notification is ALWAYS posted too~~ — **changed 2026-11-07 (maintainer:
+  "it should be as in what the user setup")**: with Pop-up, the pop-up asks alone. The notification asks instead
+  only when the pop-up cannot be drawn (locked, no permission, window refused) or is closed unanswered
+  (outside tap / Back), so no call is left without its question. Undo and startup still use the notification.
 - All new rows must be findable in Settings search.
 - Wizard: "When a call ends" goes on the AUTO_RECORD step (it is a way of working a new user would never discover
   otherwise); "How to ask" and "If I don't answer" are Settings-only (sensible defaults, only matter once Ask is on).

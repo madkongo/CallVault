@@ -11,7 +11,7 @@
     <string name="settings_after_call_style_notification">Ειδοποίηση</string>
     <string name="settings_after_call_style_popup">Αναδυόμενο παράθυρο στην οθόνη</string>
     <string name="settings_after_call_style_notification_desc">Μια ειδοποίηση με Διατήρηση και Διαγραφή.</string>
-    <string name="settings_after_call_style_popup_desc">Ένα μικρό παράθυρο πάνω από ό,τι υπάρχει στην οθόνη, μαζί με την ειδοποίηση. Χρειάζεται άδεια εμφάνισης πάνω από άλλες εφαρμογές· δεν εμφανίζεται ποτέ στην οθόνη κλειδώματος.</string>
+    <string name="settings_after_call_style_popup_desc">Ένα μικρό παράθυρο πάνω από ό,τι υπάρχει στην οθόνη. Αν δεν μπορεί να εμφανιστεί (κλειδωμένο τηλέφωνο) ή το κλείσετε χωρίς απάντηση, ρωτά μια ειδοποίηση στη θέση του. Χρειάζεται άδεια εμφάνισης πάνω από άλλες εφαρμογές.</string>
     <string name="settings_after_call_needs_overlay">Το αναδυόμενο παράθυρο χρειάζεται άδεια εμφάνισης πάνω από άλλες εφαρμογές. Μέχρι να δοθεί, ρωτά η ειδοποίηση.</string>
     <string name="settings_after_call_unanswered_label">Αν δεν απαντήσω</string>
     <string name="settings_after_call_unanswered_keep">Διατήρηση</string>

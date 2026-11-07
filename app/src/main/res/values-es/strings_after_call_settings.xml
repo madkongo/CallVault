@@ -11,7 +11,7 @@
     <string name="settings_after_call_style_notification">Notificación</string>
     <string name="settings_after_call_style_popup">Ventana emergente sobre la pantalla</string>
     <string name="settings_after_call_style_notification_desc">Una notificación con Conservar y Eliminar.</string>
-    <string name="settings_after_call_style_popup_desc">Una pequeña ventana sobre lo que haya en pantalla, además de la notificación. Necesita permiso para mostrarse sobre otras apps; nunca aparece en la pantalla de bloqueo.</string>
+    <string name="settings_after_call_style_popup_desc">Una pequeña ventana sobre lo que haya en pantalla. Si no puede mostrarse (teléfono bloqueado) o la cierras sin responder, pregunta una notificación en su lugar. Necesita permiso para mostrarse sobre otras apps.</string>
     <string name="settings_after_call_needs_overlay">La ventana emergente necesita permiso para mostrarse sobre otras apps. Hasta que lo concedas, pregunta la notificación.</string>
     <string name="settings_after_call_unanswered_label">Si no respondo</string>
     <string name="settings_after_call_unanswered_keep">Conservarla</string>

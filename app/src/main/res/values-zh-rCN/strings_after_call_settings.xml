@@ -11,7 +11,7 @@
     <string name="settings_after_call_style_notification">通知</string>
     <string name="settings_after_call_style_popup">屏幕上方弹窗</string>
     <string name="settings_after_call_style_notification_desc">带有“保留”和“删除”按钮的通知。</string>
-    <string name="settings_after_call_style_popup_desc">在当前屏幕内容上方显示一个小窗口，同时也会发送通知。需要“显示在其他应用上层”权限；不会在锁屏上显示。</string>
+    <string name="settings_after_call_style_popup_desc">在当前屏幕内容上方显示一个小窗口。如果无法显示（手机已锁定）或你未作答就关闭了它，会改为通过通知询问。需要“显示在其他应用上层”权限。</string>
     <string name="settings_after_call_needs_overlay">弹窗需要“显示在其他应用上层”权限。在授权之前，由通知来询问。</string>
     <string name="settings_after_call_unanswered_label">如果我没有回答</string>
     <string name="settings_after_call_unanswered_keep">保留</string>

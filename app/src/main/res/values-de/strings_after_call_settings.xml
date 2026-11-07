@@ -11,7 +11,7 @@
     <string name="settings_after_call_style_notification">Benachrichtigung</string>
     <string name="settings_after_call_style_popup">Pop-up über dem Bildschirm</string>
     <string name="settings_after_call_style_notification_desc">Eine Benachrichtigung mit Behalten und Löschen.</string>
-    <string name="settings_after_call_style_popup_desc">Ein kleines Fenster über dem, was gerade angezeigt wird, zusätzlich zur Benachrichtigung. Braucht die Berechtigung, über anderen Apps einzublenden; nie auf dem Sperrbildschirm.</string>
+    <string name="settings_after_call_style_popup_desc">Ein kleines Fenster über dem, was gerade angezeigt wird. Kann es nicht erscheinen (Telefon gesperrt) oder schließen Sie es ohne Antwort, fragt stattdessen eine Benachrichtigung. Braucht die Berechtigung, über anderen Apps einzublenden.</string>
     <string name="settings_after_call_needs_overlay">Das Pop-up braucht die Berechtigung, über anderen Apps einzublenden. Bis sie erteilt ist, fragt die Benachrichtigung.</string>
     <string name="settings_after_call_unanswered_label">Wenn ich nicht antworte</string>
     <string name="settings_after_call_unanswered_keep">Behalten</string>

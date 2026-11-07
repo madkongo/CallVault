@@ -225,6 +225,32 @@ class AfterCallDecisionTest {
         AfterCallDecision.ask(context, name)
 
         assertEquals(1, popUps)
+        assertEquals("the pop-up asks alone", 0, postedQuestions())
+    }
+
+    @Test
+    fun `a pop-up that cannot open leaves the question to the notification`() {
+        AfterCallDecisions.hold(context, name, uri, "audio/ogg", isVoip = false)
+        prefs.setAfterCallAskStyle(AfterCallAskStyle.POPUP)
+        ShadowSettings.setCanDrawOverlays(true)
+        AfterCallDecision.popUpOpener = { error("window refused") }
+
+        AfterCallDecision.ask(context, name)
+
+        assertEquals(1, postedQuestions())
+    }
+
+    @Test
+    fun `closing the pop-up unanswered asks every waiting call by notification`() {
+        AfterCallDecisions.hold(context, name, uri, "audio/ogg", isVoip = false)
+        val other = "20261107_101500.000+0200_out_0501234567.ogg"
+        AfterCallDecisions.hold(context, other, uri, "audio/ogg", isVoip = false)
+        AfterCallDecision.delete(context, other)
+        val deletedNotice = postedQuestions()
+
+        AfterCallDecision.askByNotification(context)
+
+        assertEquals("only the call still waiting is asked", deletedNotice + 1, postedQuestions())
     }
 
     @Test
@@ -236,6 +262,7 @@ class AfterCallDecisionTest {
         AfterCallDecision.ask(context, name)
 
         assertEquals(0, popUps)
+        assertEquals(1, postedQuestions())
     }
 
     @Test
@@ -299,4 +326,7 @@ class AfterCallDecisionTest {
 
     private fun state(uniqueName: String): WorkInfo.State? =
         WorkManager.getInstance(context).getWorkInfosForUniqueWork(uniqueName).get().lastOrNull()?.state
+
+    private fun postedQuestions(): Int =
+        shadowOf(context.getSystemService(android.app.NotificationManager::class.java)).allNotifications.size
 }

@@ -11,7 +11,7 @@
     <string name="settings_after_call_style_notification">Thông báo</string>
     <string name="settings_after_call_style_popup">Cửa sổ nổi trên màn hình</string>
     <string name="settings_after_call_style_notification_desc">Một thông báo có nút Giữ và Xoá.</string>
-    <string name="settings_after_call_style_popup_desc">Một cửa sổ nhỏ hiện trên mọi thứ đang có trên màn hình, cùng với thông báo. Cần quyền hiển thị trên ứng dụng khác; không bao giờ hiện trên màn hình khoá.</string>
+    <string name="settings_after_call_style_popup_desc">Một cửa sổ nhỏ hiện trên mọi thứ đang có trên màn hình. Nếu không thể hiện (điện thoại đang khoá) hoặc bạn đóng mà không trả lời, một thông báo sẽ hỏi thay. Cần quyền hiển thị trên ứng dụng khác.</string>
     <string name="settings_after_call_needs_overlay">Cửa sổ nổi cần quyền hiển thị trên ứng dụng khác. Cho đến khi được cấp, thông báo sẽ hỏi.</string>
     <string name="settings_after_call_unanswered_label">Nếu tôi không trả lời</string>
     <string name="settings_after_call_unanswered_keep">Giữ lại</string>

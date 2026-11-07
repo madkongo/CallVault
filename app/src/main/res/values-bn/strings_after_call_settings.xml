@@ -11,7 +11,7 @@
     <string name="settings_after_call_style_notification">নোটিফিকেশন</string>
     <string name="settings_after_call_style_popup">স্ক্রিনের উপরে পপ-আপ</string>
     <string name="settings_after_call_style_notification_desc">রাখুন ও মুছুন বোতামসহ একটি নোটিফিকেশন।</string>
-    <string name="settings_after_call_style_popup_desc">স্ক্রিনে যা আছে তার উপরে একটি ছোট উইন্ডো, নোটিফিকেশনের পাশাপাশি। অন্য অ্যাপের উপরে দেখানোর অনুমতি লাগে; লক স্ক্রিনে কখনো দেখায় না।</string>
+    <string name="settings_after_call_style_popup_desc">স্ক্রিনে যা আছে তার উপরে একটি ছোট উইন্ডো। এটি দেখানো না গেলে (ফোন লক) বা উত্তর না দিয়ে বন্ধ করলে, তার বদলে একটি নোটিফিকেশন জিজ্ঞেস করে। অন্য অ্যাপের উপরে দেখানোর অনুমতি লাগে।</string>
     <string name="settings_after_call_needs_overlay">পপ-আপের জন্য অন্য অ্যাপের উপরে দেখানোর অনুমতি লাগে। অনুমতি না দেওয়া পর্যন্ত নোটিফিকেশন জিজ্ঞেস করবে।</string>
     <string name="settings_after_call_unanswered_label">আমি উত্তর না দিলে</string>
     <string name="settings_after_call_unanswered_keep">রেখে দিন</string>

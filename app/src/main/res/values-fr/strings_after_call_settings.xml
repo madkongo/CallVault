@@ -11,7 +11,7 @@
     <string name="settings_after_call_style_notification">Notification</string>
     <string name="settings_after_call_style_popup">Fenêtre par-dessus l’écran</string>
     <string name="settings_after_call_style_notification_desc">Une notification avec Garder et Supprimer.</string>
-    <string name="settings_after_call_style_popup_desc">Une petite fenêtre par-dessus ce qui est à l’écran, en plus de la notification. Nécessite l’autorisation de s’afficher par-dessus les autres applis ; jamais sur l’écran de verrouillage.</string>
+    <string name="settings_after_call_style_popup_desc">Une petite fenêtre par-dessus ce qui est à l’écran. Si elle ne peut pas s’afficher (téléphone verrouillé) ou si vous la fermez sans répondre, une notification pose la question à la place. Nécessite l’autorisation de s’afficher par-dessus les autres applis.</string>
     <string name="settings_after_call_needs_overlay">La fenêtre a besoin de l’autorisation de s’afficher par-dessus les autres applis. En attendant, la notification pose la question.</string>
     <string name="settings_after_call_unanswered_label">Si je ne réponds pas</string>
     <string name="settings_after_call_unanswered_keep">Le garder</string>

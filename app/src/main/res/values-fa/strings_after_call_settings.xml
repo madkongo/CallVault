@@ -11,7 +11,7 @@
     <string name="settings_after_call_style_notification">اعلان</string>
     <string name="settings_after_call_style_popup">پنجرهٔ بازشو روی صفحه</string>
     <string name="settings_after_call_style_notification_desc">اعلانی با دکمه‌های نگه داشتن و حذف.</string>
-    <string name="settings_after_call_style_popup_desc">پنجره‌ای کوچک روی هر چه روی صفحه است، علاوه بر اعلان. به اجازهٔ نمایش روی برنامه‌های دیگر نیاز دارد؛ هرگز روی صفحهٔ قفل نشان داده نمی‌شود.</string>
+    <string name="settings_after_call_style_popup_desc">پنجره‌ای کوچک روی هر چه روی صفحه است. اگر نتواند نشان داده شود (گوشی قفل است) یا آن را بدون پاسخ ببندید، به‌جای آن یک اعلان می‌پرسد. به اجازهٔ نمایش روی برنامه‌های دیگر نیاز دارد.</string>
     <string name="settings_after_call_needs_overlay">پنجرهٔ بازشو به اجازهٔ نمایش روی برنامه‌های دیگر نیاز دارد. تا وقتی اجازه داده نشود، اعلان می‌پرسد.</string>
     <string name="settings_after_call_unanswered_label">اگر پاسخ ندادم</string>
     <string name="settings_after_call_unanswered_keep">نگهش دار</string>

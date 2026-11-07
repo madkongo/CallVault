@@ -11,7 +11,7 @@
     <string name="settings_after_call_style_notification">Notification</string>
     <string name="settings_after_call_style_popup">Pop-up over the screen</string>
     <string name="settings_after_call_style_notification_desc">A notification with Keep and Delete.</string>
-    <string name="settings_after_call_style_popup_desc">A small window over whatever is on screen, as well as the notification. Needs permission to display over other apps; never shown on the lock screen.</string>
+    <string name="settings_after_call_style_popup_desc">A small window over whatever is on screen. If it can’t show (the phone is locked) or you close it without answering, a notification asks instead. Needs permission to display over other apps.</string>
     <string name="settings_after_call_needs_overlay">The pop-up needs permission to display over other apps. Until it is allowed, the notification asks.</string>
     <string name="settings_after_call_unanswered_label">If I don\'t answer</string>
     <string name="settings_after_call_unanswered_keep">Keep it</string>

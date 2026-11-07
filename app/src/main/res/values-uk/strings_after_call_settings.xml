@@ -11,7 +11,7 @@
     <string name="settings_after_call_style_notification">Сповіщення</string>
     <string name="settings_after_call_style_popup">Вікно поверх екрана</string>
     <string name="settings_after_call_style_notification_desc">Сповіщення з кнопками «Зберегти» і «Видалити».</string>
-    <string name="settings_after_call_style_popup_desc">Невелике вікно поверх того, що на екрані, на додачу до сповіщення. Потрібен дозвіл на показ поверх інших застосунків; на екрані блокування не показується.</string>
+    <string name="settings_after_call_style_popup_desc">Невелике вікно поверх того, що на екрані. Якщо воно не може з’явитися (телефон заблоковано) або ви закриєте його без відповіді, натомість запитає сповіщення. Потрібен дозвіл на показ поверх інших застосунків.</string>
     <string name="settings_after_call_needs_overlay">Вікну потрібен дозвіл на показ поверх інших застосунків. Доки його немає, питає сповіщення.</string>
     <string name="settings_after_call_unanswered_label">Якщо я не відповім</string>
     <string name="settings_after_call_unanswered_keep">Зберегти</string>

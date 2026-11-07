@@ -59,8 +59,9 @@ import kotlinx.coroutines.withContext
  * app start an activity (it must already show an overlay), and the start fails silently. Adding a
  * `TYPE_APPLICATION_OVERLAY` window is exactly what the permission grants.
  *
- * It never stands alone: the notification is posted first (see [AfterCallDecision.ask]), so closing this by
- * tapping outside or Back is "not now", never an answer. Answers go through the same [AfterCallDecision]
+ * It stands alone: the notification is not posted while it shows (see [AfterCallDecision.ask]). Closing it by
+ * tapping outside or Back is "not now", never an answer, so the waiting questions then move to the notification
+ * shade ([closeUnanswered]); so does a window that fails to open. Answers go through the same [AfterCallDecision]
  * functions as the notification. One window for any number of calls: it asks about the OLDEST waiting
  * recording, moves on after an answer, and follows the store, so an answer given in the shade closes it too.
  * It is removed from the window manager on every way out: nothing left to ask, closed, or answered elsewhere.
@@ -81,8 +82,8 @@ internal object AfterCallOverlay {
         main.post {
             runCatching { (window ?: Window(app).also { window = it; it.attach() }).refresh() }
                 .onFailure {
-                    AppLogger.w(TAG, "Could not show the keep-or-delete pop-up; the notification stands: ${it.message}")
-                    close()
+                    AppLogger.w(TAG, "Could not show the keep-or-delete pop-up; asking by notification: ${it.message}")
+                    closeUnanswered(app)
                 }
         }
     }
@@ -98,6 +99,12 @@ internal object AfterCallOverlay {
         }
         window?.detach()
         window = null
+    }
+
+    /** Closed without an answer (outside tap, Back, or a window that failed): the shade asks instead. */
+    fun closeUnanswered(context: Context) {
+        close()
+        AfterCallDecision.askByNotification(context.applicationContext)
     }
 
     private class Question(val displayName: String, val subtitle: String)
@@ -122,7 +129,7 @@ internal object AfterCallOverlay {
         private val root = object : FrameLayout(context) {
             override fun dispatchKeyEvent(event: KeyEvent): Boolean {
                 if (event.keyCode == KeyEvent.KEYCODE_BACK && event.action == KeyEvent.ACTION_UP) {
-                    AfterCallOverlay.close()
+                    AfterCallOverlay.closeUnanswered(context)
                     return true
                 }
                 return super.dispatchKeyEvent(event)
@@ -207,7 +214,7 @@ internal object AfterCallOverlay {
                     isAnswering = isAnswering,
                     onKeep = { answer(shown.displayName, keep = true) },
                     onDelete = { answer(shown.displayName, keep = false) },
-                    onDismiss = { AfterCallOverlay.close() },
+                    onDismiss = { AfterCallOverlay.closeUnanswered(context) },
                 )
             }
         }

@@ -11,7 +11,7 @@
     <string name="settings_after_call_style_notification">Notifica</string>
     <string name="settings_after_call_style_popup">Finestra sopra lo schermo</string>
     <string name="settings_after_call_style_notification_desc">Una notifica con Tieni ed Elimina.</string>
-    <string name="settings_after_call_style_popup_desc">Una piccola finestra sopra ciò che è sullo schermo, oltre alla notifica. Richiede il permesso di apparire sopra le altre app; mai sulla schermata di blocco.</string>
+    <string name="settings_after_call_style_popup_desc">Una piccola finestra sopra ciò che è sullo schermo. Se non può apparire (telefono bloccato) o la chiudi senza rispondere, chiede invece una notifica. Richiede il permesso di apparire sopra le altre app.</string>
     <string name="settings_after_call_needs_overlay">La finestra richiede il permesso di apparire sopra le altre app. Finché non è concesso, chiede la notifica.</string>
     <string name="settings_after_call_unanswered_label">Se non rispondo</string>
     <string name="settings_after_call_unanswered_keep">Tienila</string>

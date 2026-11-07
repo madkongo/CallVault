@@ -11,7 +11,7 @@
     <string name="settings_after_call_style_notification">Уведомление</string>
     <string name="settings_after_call_style_popup">Окно поверх экрана</string>
     <string name="settings_after_call_style_notification_desc">Уведомление с кнопками «Сохранить» и «Удалить».</string>
-    <string name="settings_after_call_style_popup_desc">Небольшое окно поверх того, что на экране, в дополнение к уведомлению. Нужно разрешение на показ поверх других приложений; на экране блокировки не показывается.</string>
+    <string name="settings_after_call_style_popup_desc">Небольшое окно поверх того, что на экране. Если оно не может появиться (телефон заблокирован) или вы закроете его без ответа, вместо него спросит уведомление. Нужно разрешение на показ поверх других приложений.</string>
     <string name="settings_after_call_needs_overlay">Окну нужно разрешение на показ поверх других приложений. Пока его нет, спрашивает уведомление.</string>
     <string name="settings_after_call_unanswered_label">Если я не отвечу</string>
     <string name="settings_after_call_unanswered_keep">Сохранить</string>

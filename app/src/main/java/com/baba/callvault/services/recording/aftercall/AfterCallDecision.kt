@@ -54,18 +54,39 @@ object AfterCallDecision {
     /**
      * Asks about a held recording at call end. Called once its catalog row exists, so Keep never races it.
      *
-     * The notification is ALWAYS posted; the pop-up comes on top of it when the user chose it and Android
-     * allows it. So a pop-up that is blocked, fails to start, or is closed unanswered never leaves a call
-     * without its question. Only this call-end path opens the pop-up: startup and Undo re-post the
-     * notification alone, since a window appearing out of nowhere long after the call would be a surprise.
+     * Asks the way the user chose. Pop-up (when chosen and Android allows it) shows the pop-up alone; the
+     * notification asks instead when the pop-up cannot be drawn (phone locked, no permission, window refused) or
+     * is closed unanswered (see [askByNotification]), so a call is never left without its question. Only this
+     * call-end path opens the pop-up: startup and Undo re-post the notification alone, since a window appearing
+     * out of nowhere long after the call would be a surprise.
+     *
+     * Changed 2026-11-07 at the maintainer's request: it used to post the notification as well, every time.
      */
     fun ask(context: Context, displayName: String) {
-        runCatching {
-            val held = AfterCallDecisions.peek(context, displayName) ?: return
-            AfterCallNotifier.postQuestion(context, held)
-        }.onFailure { AppLogger.w(TAG, "Could not ask keep-or-delete: ${it.message}") }
-        runCatching { if (shouldPopUp(context)) popUpOpener(context) }
-            .onFailure { AppLogger.w(TAG, "Could not open the keep-or-delete pop-up; the notification stands: ${it.message}") }
+        val held = runCatching { AfterCallDecisions.peek(context, displayName) }
+            .onFailure { AppLogger.w(TAG, "Could not read the held recording to ask about: ${it.message}") }
+            .getOrNull() ?: return
+        if (shouldPopUp(context)) {
+            val opened = runCatching { popUpOpener(context) }
+                .onFailure { AppLogger.w(TAG, "Could not open the keep-or-delete pop-up; asking by notification: ${it.message}") }
+                .isSuccess
+            if (opened) return
+        }
+        runCatching { AfterCallNotifier.postQuestion(context, held) }
+            .onFailure { AppLogger.w(TAG, "Could not ask keep-or-delete: ${it.message}") }
+    }
+
+    /**
+     * The pop-up could not be drawn or was closed without an answer: every question still waiting (not swiped
+     * away, no Delete tapped) is asked in the notification shade instead.
+     */
+    fun askByNotification(context: Context) {
+        AfterCallDecisions.all(context)
+            .filter { AfterCallPolicy.shouldRepostQuestion(it.deleteRequested, it.dismissed) }
+            .forEach { held ->
+                runCatching { AfterCallNotifier.postQuestion(context, held) }
+                    .onFailure { AppLogger.w(TAG, "Could not ask keep-or-delete by notification: ${it.message}") }
+            }
     }
 
     /** Opens the pop-up window. A seam so tests can see the call without drawing an overlay. */
