@@ -471,7 +471,14 @@ Estimate 📐: M4A/WAV/FLAC ~1 day; MP3 +~1 day. Ties into Share a part ([[share
   - Seen, not fixed: the question sits inside a collapsed CallVault group with "Ready to record" in the
     ColorOS shade, so Keep/Delete need two expands; search shows "2 matches" with one row when the second
     is folded.
-- **Still untested:** the wizard switch; Android 15+ (overlay path).
+- **Third round 2026-11-07 (55882851, bffe406d), OP9:**
+  - The question has a notification group of its own: Keep / Delete show directly in the shade, apart from
+    "Ready to record". Search count now counts what shows ("discard": 2 with Ask, 1 with Keep).
+  - Maintainer's spec for the pop-up permission: choosing Pop-up without it shows "Allow the pop-up" (what it is
+    for, Allow / Not now); Allow opens Android's page; back with it granted → Pop-up on. Seen in Settings. The
+    setup screen lists "Display over other apps" as Optional; tapping it runs the same window; seen going
+    Optional → Granted. The wizard shows "How to ask" once Ask is on (not yet seen: needs a fresh setup).
+- **Still untested:** the wizard (switch + How to ask); Android 15+ (overlay path).
 - ~~Older list:~~ the phone locked at hang-up; two calls before answering; "If I don't
   answer → Delete after 24 h"; Ask with notifications blocked; the wizard switch; Android 15+ (overlay path).
 

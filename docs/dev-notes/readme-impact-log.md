@@ -701,3 +701,9 @@ nothing changes. The rows no longer say "over Wi-Fi only".
 read "downloaded once — over Wi-Fi, or on mobile data if you say so".
 
 README.md was not edited.
+
+## 2026-11-07 — keep or delete: the overlay permission in setup (branch feat/keep-or-delete)
+- The setup screen now lists "Display over other apps" as an **Optional** permission (only for the keep-or-delete
+  pop-up). Any README list of the permissions CallVault asks for at setup must add it as optional.
+- With Pop-up chosen, only the pop-up asks; the notification is the fallback (locked phone, no permission, closed
+  unanswered). A README line saying both appear would be wrong.
