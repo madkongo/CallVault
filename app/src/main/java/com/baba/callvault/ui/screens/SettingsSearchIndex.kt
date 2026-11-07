@@ -9,6 +9,7 @@
 package com.baba.callvault.ui.screens
 
 import com.baba.callvault.R
+import com.baba.callvault.utils.FILE_NAME_TEMPLATE_PRESETS
 
 /**
  * What each Settings row shows, for the search line in the Settings panel (option B, 2026-11-03).
@@ -17,6 +18,7 @@ import com.baba.callvault.R
  * info text — and a few everyday words people search with ("whatsapp", "wifi", "google drive"). Built from the
  * Compose source with `tools/settings-search-index.py` (it lists the strings per row); generic texts ("Cancel", "Got it") are left out
  * because they would match every row. `SettingsSearchIndexTest` fails when a row has no entry.
+ * The script reads only ui/, so the file-name presets (utils/FileNameTemplates.kt) are added from their list here.
  */
 internal object SettingsSearchIndex {
 
@@ -43,7 +45,7 @@ internal object SettingsSearchIndex {
         "VoipIgnoreContactsRow" to Entry(listOf(R.string.settings_voip_ignore_contacts_desc, R.string.settings_voip_ignore_contacts_hint, R.string.settings_voip_ignore_contacts_label), listOf("voip", "whatsapp", "telegram", "signal", "skip", "ignore", "blocklist")),
         "MinDurationRow" to Entry(listOf(R.string.min_duration_caption, R.string.min_duration_label, R.string.min_duration_off, R.string.min_duration_one_minute, R.string.min_duration_seconds), listOf("short calls", "minimum", "length", "discard")),
         "AudioSection" to Entry(listOf(R.string.settings_audio_bitrate, R.string.settings_audio_bitrate_recommendation, R.string.settings_audio_codec, R.string.settings_audio_source, R.string.settings_section_audio), listOf("quality", "bitrate", "codec", "opus", "aac", "mp3", "source")),
-        "FileNameTemplateRow" to Entry(listOf(R.string.honor_dialer_hint, R.string.honor_dialer_missing, R.string.honor_dialer_ready, R.string.settings_audio_codec, R.string.settings_file_name_template, R.string.settings_file_name_template_example, R.string.settings_file_name_template_preset, R.string.settings_recording_folder_label, R.string.settings_section_audio, R.string.settings_section_storage, R.string.settings_storage_target_label), listOf("filename", "name format", "template")),
+        "FileNameTemplateRow" to Entry(listOf(R.string.honor_dialer_hint, R.string.honor_dialer_missing, R.string.honor_dialer_ready, R.string.settings_audio_codec, R.string.settings_file_name_template, R.string.settings_file_name_template_example, R.string.settings_file_name_template_preset, R.string.settings_recording_folder_label, R.string.settings_group_save_and_sync, R.string.settings_group_sound_and_names, R.string.settings_storage_target_label) + FILE_NAME_TEMPLATE_PRESETS.map { it.labelRes }, listOf("filename", "name format", "template", "honor", "huawei", "phone app", "call history")),
         "SimLabelRow" to Entry(listOf(R.string.settings_sim_label_desc, R.string.settings_sim_label_label), listOf("dual sim", "sim 2", "two sims")),
         "StorageTargetRow" to Entry(listOf(R.string.settings_storage_target_label, R.string.storage_target_both, R.string.storage_target_drive, R.string.storage_target_local), listOf("google drive", "cloud", "backup", "where to save")),
         "RecordingFolderRow" to Entry(listOf(R.string.folder_cloud_warning, R.string.settings_recording_folder_label, R.string.settings_tap_to_select_folder), listOf()),
