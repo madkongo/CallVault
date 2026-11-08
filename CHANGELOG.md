@@ -5,6 +5,8 @@ All notable changes to CallVault are documented here. The format is based on
 
 ## [Unreleased]
 
+## [2.5.0] — 2026-11-08
+
 ### Added
 
 - **Keep or delete a recording when the call ends.** Settings ▸ Recording ▸ All calls ▸ "When a call ends" ▸ "Ask
