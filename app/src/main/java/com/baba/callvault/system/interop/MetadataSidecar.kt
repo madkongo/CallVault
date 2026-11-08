@@ -9,11 +9,16 @@
 package com.baba.callvault.system.interop
 
 import android.content.Context
+import android.media.MediaExtractor
+import android.media.MediaFormat
 import android.net.Uri
 import androidx.documentfile.provider.DocumentFile
 import com.baba.callvault.data.AppPreferences
+import com.baba.callvault.data.merge.MergeFormat
+import com.baba.callvault.data.merge.MergeFormat.optInt
 import com.baba.callvault.data.transcripts.SpeakerTurnsRepository
 import com.baba.callvault.integrations.scrcpy.ScrcpyAudioCodec
+import com.baba.callvault.server.StereoBitRate
 import com.baba.callvault.utils.AppLogger
 
 /**
@@ -87,9 +92,15 @@ object MetadataSidecar {
         val speakerTurns = SpeakerTurnsRepository.turnsFor(context, audioName).ifBlank { null }
 
         runCatching {
+            val folder = DocumentFile.fromTreeUri(context, folderUri)
+                ?: error("folder $folderUri could not be opened")
             val codec = ScrcpyAudioCodec.entries
                 .firstOrNull { it.cliKey == prefs.getAudioCodec() } ?: ScrcpyAudioCodec.OPUS
             val (type, container, audio) = formatFor(codec)
+            // Read from the finished file, not assumed. This used to say 1 for every recording — wrong
+            // for the scrcpy fallback all along, and wrong for stereo output (#74), whose users are the
+            // very people reading these files with their own tools. Unknown is written as null.
+            val shape = probeShape(context, folder, audioName)
 
             val json = BcrMetadata.build(
                 BcrMetadata.Input(
@@ -102,9 +113,10 @@ object MetadataSidecar {
                     mimeTypeContainer = container,
                     mimeTypeAudio = audio,
                     parameterType = "bitrate",
-                    parameter = prefs.getAudioBitRate(),
-                    sampleRate = null,
-                    channelCount = 1,
+                    // The rate asked of the encoder for the channels actually recorded (stereo is floored).
+                    parameter = StereoBitRate.requestedRate(codec, prefs.getAudioBitRate(), shape.channels ?: StereoBitRate.MONO),
+                    sampleRate = shape.sampleRate,
+                    channelCount = shape.channels,
                     durationSecsEncoded = durationSecsEncoded,
                     speakerTurns = speakerTurns,
                     nearChannel = nearChannel,
@@ -112,8 +124,6 @@ object MetadataSidecar {
                 )
             )
 
-            val folder = DocumentFile.fromTreeUri(context, folderUri)
-                ?: error("folder $folderUri could not be opened")
             val name = sidecarNameFor(audioName)
             // Replace rather than accumulate "name (1).json": a re-run for the same recording should
             // correct the details file, not litter the user's folder with rivals to it.
@@ -126,4 +136,26 @@ object MetadataSidecar {
             AppLogger.w(TAG, "Could not write the details file for '$audioName': ${it.message}")
         }
     }
+
+    /** Channel count and sample rate as recorded; nulls when the file cannot be read. */
+    private data class AudioShape(val channels: Int?, val sampleRate: Int?)
+
+    private fun probeShape(context: Context, folder: DocumentFile, audioName: String): AudioShape =
+        runCatching {
+            val uri = folder.findFile(audioName)?.uri ?: return@runCatching AudioShape(null, null)
+            val extractor = MediaExtractor()
+            try {
+                extractor.setDataSource(context, uri, null)
+                val track = MergeFormat.audioTrackOf(extractor)
+                if (track < 0) return@runCatching AudioShape(null, null)
+                val f = extractor.getTrackFormat(track)
+                AudioShape(
+                    f.optInt(MediaFormat.KEY_CHANNEL_COUNT).takeIf { it > 0 },
+                    f.optInt(MediaFormat.KEY_SAMPLE_RATE).takeIf { it > 0 },
+                )
+            } finally {
+                extractor.release()
+            }
+        }.onFailure { AppLogger.w(TAG, "Could not read the recording's format for its details file: ${it.message}") }
+            .getOrDefault(AudioShape(null, null))
 }

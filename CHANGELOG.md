@@ -5,6 +5,29 @@ All notable changes to CallVault are documented here. The format is based on
 
 ## [Unreleased]
 
+### Added
+
+- **Keep each side of a call on its own channel** (#74). Settings ▸ Sound & names ▸ "Keep each side on its own
+  channel": you and the other person are saved on separate left and right channels instead of being mixed to
+  mono, for people who transcribe each side on their own (one voice per channel, so talking over each other loses
+  nothing). Off by default. Files are about twice as large, because each side keeps the quality a mono file gets
+  today (Opus at least 48 kbps, AAC at least 64), and on headphones each side plays in one ear. Phone calls, app
+  calls and resilient recording; standalone and Shizuku. Where the phone can only record one channel (for example
+  over Bluetooth), the call is recorded mono as before. Thanks @jlp9989-sudo for the request.
+  <!-- 🧪 VERIFYING: unit tests only (2026-11-08). Not yet heard on a phone. -->
+
+### Fixed
+
+- **A recording no longer turns to noise if the phone rebuilds the capture mid-call in a different format**
+  (resilient recording). It now ends cleanly, keeping everything recorded up to that point, and the microphone
+  is released.
+  <!-- 🧪 VERIFYING: unit test of the check only; the rebuild itself is rare and has not been forced on a phone. -->
+- **Merging two calls that were recorded differently now says why in plain words** (for example, one with each
+  side on its own channel and one without) instead of showing codec details.
+- **The details file (.json) now gives each recording's real channel count and sample rate**, read from the file.
+  It used to say 1 channel for every recording.
+- **Debug reports now include the audio codec, bit rate and the new channel setting.**
+
 ## [2.5.0] — 2026-11-08
 
 ### Added

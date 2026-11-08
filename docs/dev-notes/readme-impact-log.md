@@ -1,5 +1,21 @@
 # README impact log
 
+## 2026-11-08 — Keep each side on its own channel (#74, branch `feat/stereo-output-74`)
+
+🧪 VERIFYING (unit tests only; nothing heard on a phone). Opt-in, off by default: Settings ▸ Sound & names ▸ "Keep
+each side on its own channel" records you and the other person on separate left/right channels at a floored bit
+rate (Opus ≥ 48 kbps, AAC ≥ 64), in both modes and on all three capture paths. Falls back to mono where the route
+cannot separate the sides.
+
+**What this changes for the README:**
+- Nothing becomes wrong. Line ~71 ("Speaker labels come from the call's own two channels") stays true; stereo files
+  keep their labels.
+- A feature list could add: "Optionally keep each side on its own channel, for transcribing each side elsewhere".
+- If the README ever states that recordings are mono, it must now say "mono by default".
+
+**Not claimable yet:** that it improves transcription. Per-channel accuracy under double-talk has never been
+measured (2026-09-12 probe note), and CallVault's own transcription still mixes the channels.
+
 ## 2026-11-06 — Keep or delete a recording when the call ends (#71) + one Share sheet
 
 🧪 VERIFYING (unit tests; device check pending). Off by default: Settings ▸ Recording ▸ "When a call ends: Ask me"
