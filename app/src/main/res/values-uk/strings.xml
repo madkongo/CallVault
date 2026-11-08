@@ -473,8 +473,10 @@
     <string name="summary_requirements_toggle_label">Показувати вимоги</string>
     <string name="settings_sim_label_label">Показувати, яку SIM використано для дзвінка</string>
     <string name="settings_sim_label_desc">Для телефонів із двома SIM: показує назву, яку ви дали SIM-карті, або SIM 1 / SIM 2</string>
-    <string name="settings_stereo_output_label">Кожна сторона на своєму каналі</string>
-    <string name="settings_stereo_output_desc">Зберігає вас і співрозмовника на окремих лівому та правому каналах, щоб розшифровувати кожну сторону окремо. Файли приблизно вдвічі більші, а в навушниках кожну сторону чути лише в одному вусі.</string>
+    <string name="settings_audio_channels">Канали</string>
+    <string name="audio_channels_mono">Моно</string>
+    <string name="audio_channels_stereo">Стерео</string>
+    <string name="settings_audio_channels_info">Моно змішує обидві сторони в один канал. Стерео зберігає вас і співрозмовника на окремих лівому та правому каналах, щоб розшифровувати кожну сторону окремо. Стерео-файли приблизно вдвічі більші, а в навушниках кожну сторону чути лише в одному вусі.</string>
     <string name="sim_label_word">SIM</string>
     <string name="settings_metadata_file_label">Створювати файл метаданих</string>
     <string name="settings_needs_newer_android">Потрібен Android %1$s або новіший. На цьому телефоні Android %2$s.</string>

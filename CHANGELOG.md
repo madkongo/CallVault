@@ -7,14 +7,16 @@ All notable changes to CallVault are documented here. The format is based on
 
 ### Added
 
-- **Keep each side of a call on its own channel** (#74). Settings ▸ Sound & names ▸ "Keep each side on its own
-  channel": you and the other person are saved on separate left and right channels instead of being mixed to
-  mono, for people who transcribe each side on their own (one voice per channel, so talking over each other loses
-  nothing). Off by default. Files are about twice as large, because each side keeps the quality a mono file gets
+- **Stereo recording: each side of a call on its own channel** (#74). Settings ▸ Sound and file names ▸ Channels:
+  Mono or Stereo. With Stereo, you and the other person are saved on separate left and right channels instead of
+  being mixed together, for people who transcribe each side on their own (one voice per channel, so talking over
+  each other loses nothing). Mono stays the default. Files are about twice as large, because each side keeps the quality a mono file gets
   today (Opus at least 48 kbps, AAC at least 64), and on headphones each side plays in one ear. Phone calls, app
   calls and resilient recording; standalone and Shizuku. Where the phone can only record one channel (for example
   over Bluetooth), the call is recorded mono as before. Thanks @jlp9989-sudo for the request.
-  <!-- 🧪 VERIFYING: unit tests only (2026-11-08). Not yet heard on a phone. -->
+  <!-- ✅ VERIFIED 2026-11-08 (maintainer, OP9, Shizuku mode): one phone call + one WhatsApp call with Stereo on
+  "sounded just fine"; files measured 2-channel with the sides genuinely apart. 🧪 Still to check: switching back
+  to Mono gives a mono file. Headphone listening parked by the maintainer. -->
 
 ### Fixed
 

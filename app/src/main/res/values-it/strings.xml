@@ -461,8 +461,10 @@
     <string name="summary_requirements_toggle_label">Mostra i requisiti</string>
     <string name="settings_sim_label_label">Mostra quale SIM ha usato ogni chiamata</string>
     <string name="settings_sim_label_desc">Per i telefoni con due SIM: mostra il nome che hai dato alla SIM, oppure SIM 1 / SIM 2</string>
-    <string name="settings_stereo_output_label">Ogni lato sul proprio canale</string>
-    <string name="settings_stereo_output_desc">Salva te e l\'altra persona su canali sinistro e destro separati, per trascrivere ogni lato a parte. I file sono circa il doppio più grandi e, in cuffia, ogni lato si sente in un solo orecchio.</string>
+    <string name="settings_audio_channels">Canali</string>
+    <string name="audio_channels_mono">Mono</string>
+    <string name="audio_channels_stereo">Stereo</string>
+    <string name="settings_audio_channels_info">Il mono unisce i due lati in un solo canale. Lo stereo salva te e l\'altra persona su canali sinistro e destro separati, per trascrivere ogni lato a parte. I file stereo sono circa il doppio più grandi e, in cuffia, ogni lato si sente in un solo orecchio.</string>
     <string name="sim_label_word">SIM</string>
     <string name="settings_metadata_file_label">Scrivi un file di dettagli</string>
     <string name="settings_needs_newer_android">Richiede Android %1$s o successivo: questo telefono usa Android %2$s.</string>

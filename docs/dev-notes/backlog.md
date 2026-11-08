@@ -22,12 +22,13 @@ with `&&`/`||` chains and silently reported the opposite answer while this was b
 
 ---
 
-## 🧪 BUILT, VERIFYING — Keep each side on its own channel (#74, stereo output) — built 2026-11-08 on `feat/stereo-output-74` (off `main`, not merged)
+## 🧪 BUILT, VERIFYING — Stereo recording, Channels: Mono / Stereo (#74) — built 2026-11-08 on `feat/stereo-output-74` (off `main`, not merged)
 
-Opt-in setting, off by default; all three capture paths, both modes. Plan + decisions:
-`2026-11-08-stereo-output-74-plan.md`. Unit tests only — **to settle it the maintainer needs to:** turn it on, make
-one phone call and one WhatsApp call, and listen on headphones (you in one ear, them in the other) — then turn
-it off and confirm the next call is mono again.
+Dropdown beside codec and bit rate (maintainer 2026-11-08: "mono vs stereo in a dropdown with relevant settings",
+replacing the first build's on/off switch). Mono default; all three capture paths, both modes. Plan + decisions:
+`2026-11-08-stereo-output-74-plan.md`. ✅ Stereo on: maintainer's OP9 phone + WhatsApp calls "sounded just fine"
+(2026-11-08). **Still to settle:** set Channels back to Mono and make one call — the file must be mono.
+Headphone listening: parked by the maintainer.
 
 ## 🔵 Resilient recording: a mid-call rebuild in another shape garbles the rest of the call — found 2026-11-08 (#74 work), not started
 

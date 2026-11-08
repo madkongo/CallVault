@@ -1,9 +1,9 @@
 # README impact log
 
-## 2026-11-08 — Keep each side on its own channel (#74, branch `feat/stereo-output-74`)
+## 2026-11-08 — Stereo recording, Channels: Mono / Stereo (#74, branch `feat/stereo-output-74`)
 
-🧪 VERIFYING (unit tests only; nothing heard on a phone). Opt-in, off by default: Settings ▸ Sound & names ▸ "Keep
-each side on its own channel" records you and the other person on separate left/right channels at a floored bit
+Stereo on ✅ VERIFIED 2026-11-08 on the OP9 by the maintainer; switching back to Mono 🧪. Mono by default:
+Settings ▸ Sound and file names ▸ Channels ▸ Stereo records you and the other person on separate left/right channels at a floored bit
 rate (Opus ≥ 48 kbps, AAC ≥ 64), in both modes and on all three capture paths. Falls back to mono where the route
 cannot separate the sides.
 

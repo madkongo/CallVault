@@ -461,8 +461,10 @@
     <string name="summary_requirements_toggle_label">Mostrar requisitos</string>
     <string name="settings_sim_label_label">Mostrar qué SIM usó cada llamada</string>
     <string name="settings_sim_label_desc">Para teléfonos con dos SIM: muestra el nombre que le diste a la SIM, o SIM 1 / SIM 2</string>
-    <string name="settings_stereo_output_label">Guardar cada lado en su propio canal</string>
-    <string name="settings_stereo_output_desc">Guarda tu voz y la de la otra persona en canales izquierdo y derecho separados, para transcribir cada lado por separado. Los archivos ocupan aproximadamente el doble y, con auriculares, cada lado se oye por un solo oído.</string>
+    <string name="settings_audio_channels">Canales</string>
+    <string name="audio_channels_mono">Mono</string>
+    <string name="audio_channels_stereo">Estéreo</string>
+    <string name="settings_audio_channels_info">Mono mezcla los dos lados en un solo canal. Estéreo guarda tu voz y la de la otra persona en canales izquierdo y derecho separados, para transcribir cada lado por separado. Los archivos en estéreo ocupan aproximadamente el doble y, con auriculares, cada lado se oye por un solo oído.</string>
     <string name="sim_label_word">SIM</string>
     <string name="settings_metadata_file_label">Escribir un archivo de detalles</string>
     <string name="settings_needs_newer_android">Requiere Android %1$s o posterior; este teléfono usa Android %2$s.</string>

@@ -117,7 +117,7 @@ object SettingsGroups {
             "IgnoreCrossCountryIncomingRow", "IgnoreCrossCountryOutgoingRow", "VoipIgnoreContactsRow",
             "MinDurationRow",
         )
-        SettingsGroup.SOUND_AND_NAMES -> listOf("AudioSection", "StereoOutputRow", "FileNameTemplateRow", "SimLabelRow")
+        SettingsGroup.SOUND_AND_NAMES -> listOf("AudioSection", "FileNameTemplateRow", "SimLabelRow")
         SettingsGroup.SAVE_AND_SYNC -> listOf(
             "StorageTargetRow", "RecordingFolderRow", "DriveFolderRow", "UploadScheduleSubSection",
             "HideRecordingsRow", "MetadataFileRow", "TranscriptSidecarRow",

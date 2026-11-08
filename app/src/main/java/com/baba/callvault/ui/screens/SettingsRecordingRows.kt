@@ -192,21 +192,6 @@ internal fun FileNameTemplateRow(preferences: AppPreferences, updateTrigger: Int
 }
 
 /**
- * Opt-in (#74): keep the two sides of a call on separate channels instead of mixing them to mono, for
- * people who transcribe each side elsewhere. Off by default — the file doubles in size and plays one
- * side per ear on headphones, which is the wrong surprise for someone who never asked for it.
- */
-@Composable
-internal fun StereoOutputRow(preferences: AppPreferences, updateTrigger: Int, actions: SettingsActions) {
-    SettingsToggleRow(
-        label = stringResource(R.string.settings_stereo_output_label),
-        description = stringResource(R.string.settings_stereo_output_desc),
-        checked = remember(updateTrigger) { preferences.getRecordStereo() },
-        onCheckedChange = { actions.setRecordStereoEnabled(it) },
-    )
-}
-
-/**
  * Opt-in: each phone call shows which SIM it used — the SIM's own name, else "SIM 1" / "SIM 2".
  * Read from the call log when the list is drawn, so it also labels calls recorded before it was turned on.
  */

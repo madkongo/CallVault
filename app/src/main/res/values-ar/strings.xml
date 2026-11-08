@@ -502,8 +502,10 @@
     <string name="summary_requirements_toggle_label">إظهار المتطلبات</string>
     <string name="settings_sim_label_label">إظهار شريحة SIM التي استُخدمت في كل مكالمة</string>
     <string name="settings_sim_label_desc">للهواتف ذات شريحتين: يعرض الاسم الذي أعطيته للشريحة، أو SIM 1 / SIM 2</string>
-    <string name="settings_stereo_output_label">احتفظ بكل طرف في قناة منفصلة</string>
-    <string name="settings_stereo_output_desc">يحفظ صوتك وصوت الطرف الآخر في قناتين منفصلتين، يسار ويمين، لتفريغ كل طرف على حدة. يصبح حجم الملفات نحو الضعف، وفي سماعات الرأس يُسمع كل طرف في أذن واحدة.</string>
+    <string name="settings_audio_channels">القنوات</string>
+    <string name="audio_channels_mono">أحادي</string>
+    <string name="audio_channels_stereo">ستيريو</string>
+    <string name="settings_audio_channels_info">الأحادي يدمج الطرفين في قناة واحدة. الستيريو يحفظ صوتك وصوت الطرف الآخر في قناتين منفصلتين، يسار ويمين، لتفريغ كل طرف على حدة. ملفات الستيريو نحو ضعف الحجم، وفي سماعات الرأس يُسمع كل طرف في أذن واحدة.</string>
     <string name="sim_label_word">SIM</string>
     <string name="settings_metadata_file_label">كتابة ملف تفاصيل</string>
     <string name="settings_needs_newer_android">يتطلب Android %1$s أو أحدث؛ يعمل هذا الهاتف بنظام Android %2$s.</string>
