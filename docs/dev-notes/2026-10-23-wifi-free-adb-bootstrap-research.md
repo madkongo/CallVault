@@ -247,3 +247,69 @@ Logcat for the parallel run:
 2026-11-05). This is an unpatched Android bug, and its maintainers expect Google to close it. It is not a base to
 build a feature on. The verdict above still holds for OnePlus. A Samsung phone would be needed to measure it
 ourselves.
+
+## 2026-11-08 — fresh sweep of the Shizuku family + a candidate of our own
+
+**Why again:** the maintainer asked for a new pass over Shizuku repos (forks and sub-forks) and the wider field,
+to see if anyone has armed ADB without fully enabling Wi-Fi/USB debugging — or a bug like Shizuku-Next's that we
+could use ourselves. Sources read this pass: Shizuku-Next #79, #119; RikkaApps/Shizuku #864, discussion #462;
+kitsumed's teardown; thedjchi, rushiranpise and pixincreate fork wikis; AOSP/XDA guides.
+
+### Verdict: nobody has broken the chicken-and-egg. The field is exactly where the 2026-10-23 pass put it.
+Every method in every repo still needs **one** initial authorised adb handshake — a USB cable once, or a
+Wireless-debugging pairing once (SPAKE2 over the local network, which itself needs Wi-Fi association). After that
+first handshake they all converge on the same two tricks, both of which we already understand and the second of
+which we already ship:
+
+1. **Keep it alive within a boot via legacy `adb tcpip` + USB debugging left on.** thedjchi's own wiki states it
+   plainly: with its "TCP mode" on, "Wi-Fi is needed only once per reboot". That is our loopback path
+   ([[loopback-tcpip-offwifi]]): once adbd is listening on 127.0.0.1 it stays up for the whole boot with no Wi-Fi,
+   as long as USB debugging stays on (the listener lives inside adbd — [[debugging-switches-model]]). The one
+   unrecoverable gap is unchanged: a reboot taken off-Wi-Fi that never returns to Wi-Fi.
+2. **The `adb_wifi_enabled=1` spam race (Shizuku-Next "Start without Wi-Fi").** Bring up a local-only hotspot (so
+   mDNS has an interface), then write `adb_wifi_enabled=1` ~80× at 20 ms. The fork's own authors call it "a race
+   condition exploit". We measured it ❌ dead on the OP9 (OnePlus throttles setting notices and checks Wi-Fi
+   before starting the TLS server). Third parties report it ✅ on several Samsung models (S22U, S23, Z Fold 7),
+   ❌ on a nubia (Android 15). So it is a real but **OEM-specific timing bug**, and it is being narrowed
+   ([[wifi-free-adb-bootstrap-impossible]] strategic-threat note).
+
+Nothing new on the "clean" side either: no non-root write to `/data/misc/adb/adb_keys` (can't pre-seed a trusted
+key), `service.adb.tcp.port` still SELinux-neverallowed for apps, WD gate still BSSID-keyed to the primary STA
+(`getConnectionInfo` reads only `wlan0`, so a self-hosted hotspot never satisfies it cleanly — which is *why* the
+spam race is needed rather than a clean enable). No Android 16/17 change surfaced that opens a new channel; the
+direction of travel is restriction, not relaxation.
+
+Automation-app variants seen (all need `WRITE_SECURE_SETTINGS`, granted once via the first pairing): MacroDroid /
+Tasker / SystemUI Tuner / AutoJs6 watchdogs that write `adb_wifi_enabled=1` (and sometimes `adb_enabled=1`) on a
+timer and re-run a Termux `nmap`-scan + `adb connect localhost:<port>` + run `libshizuku.so` script. These are the
+same lever (write the setting) wrapped in different timers; none is a new primitive.
+
+### Our own candidate — OPT-IN "arm without Wi-Fi" for built-in mode, gated to devices where the race works
+This is the one lever worth productising, and it fits the maintainer's "using a bug is not a bad thing" stance.
+Our two liveliest Samsung testers — chaoscreater (Z Fold 7) and "the fbi" (S24 Ultra) — already rely on exactly
+this race through Shizuku-Next. The gap is that it only helps **Shizuku** users today; a user on CallVault's
+**built-in** mode gets nothing. We already hold `WRITE_SECURE_SETTINGS`, so we can run the same sequence ourselves.
+
+Proposal (📐 design only, not built):
+- An **experimental, off-by-default** toggle: "Try to re-arm recording without Wi-Fi (Samsung and some others)".
+- When armed-but-down off Wi-Fi, and the toggle is on: bring up a local-only hotspot if we can, write
+  `adb_wifi_enabled=1` on the measured cadence (~80× @ 20 ms), watch `/proc/net/tcp{,6}` for a new listener, then
+  connect on loopback and stop writing. Give up quietly after the window and leave the setting as we found it
+  ([[only-undo-switches-we-set]]).
+- **Device gating by measurement, not guesswork.** Ship it reporting success/failure so we build an allowlist
+  from the field rather than claiming it works where it doesn't. Honest label: "experimental; may not work on
+  your phone; Android may close this".
+- **Measurement first, before any of this.** We have only ever tested the race on OnePlus (dead). We need a real
+  Samsung run to confirm the window exists and find the cadence. Cheapest path: a short on-device script the fbi
+  or chaoscreater runs in **built-in** mode (not Shizuku), or a borrowed Samsung. Without that, this stays 📐.
+
+### What is NOT worth re-trying (settled, don't re-derive)
+VPN-tun / USB-Ethernet (WD gate ignores them), self-hosted hotspot as a *clean* WD network (gate reads only the
+STA), pre-seeding an adb key (root-only write), `service.adb.tcp.port` (SELinux), Device Owner / Dhizuku for call
+*audio* (runtime-perm only; `CAPTURE_AUDIO_OUTPUT` is signature|privileged). See the 2026-10-23 passes above.
+
+### Still the strongest zero-everything escape for the users it fits: INGEST MODE
+Unchanged and still unbuilt: read the OS's own call recordings via the Android 12+ `Recordings/` MediaStore
+collection — zero ADB, zero Wi-Fi, zero root — on ROMs that record calls themselves (GrapheneOS Dialer, some
+Samsung/Xiaomi). Not universal (dead on stock Pixel + OnePlus/Oppo), but it is the only path that needs no
+debugging switch at all. See [[wifi-free-adb-bootstrap-impossible]] §2.

@@ -2731,3 +2731,13 @@ Reported by the maintainer: banking apps refuse to work while debugging is on. C
 (and with it Developer options) to stay on in both built-in and Shizuku mode, so a user can't keep CallVault ready
 and use their bank at the same time. Not researched or designed yet: which apps check what (Developer options, USB
 debugging, Wireless debugging), and whether anything can be done on our side.
+
+## 📐 Opt-in "arm recording without Wi-Fi" using the Samsung adb_wifi_enabled race (2026-11-08)
+From the Shizuku-family research re-sweep (docs/dev-notes/2026-10-23-wifi-free-adb-bootstrap-research.md, 2026-11-08
+section). Nobody has broken the one-time-handshake requirement; the only usable bug is Shizuku-Next's
+`adb_wifi_enabled=1` spam race (local hotspot + ~80 writes @ 20 ms). ❌ dead on OnePlus (measured, OP9), ✅ reported
+on several Samsung models. Our Samsung testers (chaoscreater Z Fold 7, "the fbi" S24 Ultra) already rely on it via
+Shizuku-Next; built-in-mode users get nothing. We hold WRITE_SECURE_SETTINGS, so we could run the same sequence.
+Proposal: experimental off-by-default toggle, device allowlist built from field success/failure, honest "may not
+work / Android may close this" label, undo the setting if it fails. BLOCKED on a real Samsung measurement in
+built-in mode first (we've only ever tested the race on OnePlus). Not built.
