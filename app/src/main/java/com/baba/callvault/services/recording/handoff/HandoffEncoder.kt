@@ -146,7 +146,6 @@ class HandoffEncoder(
         }
     }
 
-    /** Reads into [buf] and returns a byte count that is a whole multiple of [align] (or -1 at EOF). */
     /**
      * Mono: one configure at [bitRate], exactly as before #74. Stereo: [StereoEncoder]'s clamp and floored
      * retry; it throws if both are refused, and [encodeBlocking] then records mono.
@@ -161,6 +160,7 @@ class HandoffEncoder(
         return StereoEncoder.open(mime, sampleRate, codec, bitRate, MAX_INPUT_SIZE) { AppLogger.w(TAG, it) }
     }
 
+    /** Reads into [buf] and returns a byte count that is a whole multiple of [align] (or -1 at EOF). */
     private fun readFull(buf: ByteArray, align: Int): Int {
         var n = pcmIn.read(buf, 0, buf.size)
         if (n < 0) return -1

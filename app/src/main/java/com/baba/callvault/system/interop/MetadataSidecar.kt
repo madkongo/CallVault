@@ -97,10 +97,16 @@ object MetadataSidecar {
             val codec = ScrcpyAudioCodec.entries
                 .firstOrNull { it.cliKey == prefs.getAudioCodec() } ?: ScrcpyAudioCodec.OPUS
             val (type, container, audio) = formatFor(codec)
-            // Read from the finished file, not assumed. This used to say 1 for every recording — wrong
-            // for the scrcpy fallback all along, and wrong for stereo output (#74), whose users are the
-            // very people reading these files with their own tools. Unknown is written as null.
-            val shape = probeShape(context, folder, audioName)
+            // With stereo output on (#74) the shape is read from the finished file: a call can come out
+            // mono (a Bluetooth route), and these users are the very people reading these files with
+            // their own tools. Unknown is written as null. With it off, the details are exactly what
+            // they always were — no folder listing or file read is added to every user's post-call work,
+            // which on a cloud-backed folder could stall transcription and the Drive hand-off.
+            val shape = if (prefs.getRecordStereo()) {
+                probeShape(context, folder, audioName)
+            } else {
+                AudioShape(channels = StereoBitRate.MONO, sampleRate = null)
+            }
 
             val json = BcrMetadata.build(
                 BcrMetadata.Input(
@@ -113,7 +119,7 @@ object MetadataSidecar {
                     mimeTypeContainer = container,
                     mimeTypeAudio = audio,
                     parameterType = "bitrate",
-                    // The rate asked of the encoder for the channels actually recorded (stereo is floored).
+                    // The rate asked of the encoder: floored only when stereo was asked for AND recorded.
                     parameter = StereoBitRate.requestedRate(codec, prefs.getAudioBitRate(), shape.channels ?: StereoBitRate.MONO),
                     sampleRate = shape.sampleRate,
                     channelCount = shape.channels,
