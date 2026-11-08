@@ -386,3 +386,52 @@ every durable, no-Wi-Fi way to open it is root/adbd-gated. The real remaining wi
 (1) make within-boot loopback bulletproof and LOUD when it drops; (2) ship the two per-ROM probes (persist-port
 where a ROM allows it; OEM-recorder flip-and-ingest) as additive bonuses; (3) VoIP/app calls need no adb at all —
 keep that path frictionless. See [[wifi-free-adb-bootstrap-impossible]].
+
+## 2026-11-08 — revisiting "spoof a USB connection so the phone enables adb" (measured on OP9 + OP12)
+
+The maintainer asked to re-open the idea of faking a USB connection so the phone thinks a host is attached and
+hands out adb. Grounded it with read-only USB-gadget recon on both phones (OnePlus 9 Pro + OnePlus 12, OxygenOS).
+
+### The invariant that kills it: "connected" is not "authorised", and a phone can't host itself
+adb-over-USB is a **two-party, authenticated** protocol. The phone is always the USB **gadget** (device) end; a
+**host** must enumerate the adb interface, send its public key, pass the "Allow USB debugging?" trust check, and
+then drive the bulk endpoints to carry the shell. So two things have to exist, and neither can be faked in
+software on the phone alone:
+1. **A host that speaks adb.** There is none, and the phone cannot be its own host over its own single USB-C port
+   (one data role per port; DRP switches roles, it is never both at once). Self-host needs **external hardware**
+   (OTG 2nd phone / dongle / ~$5 ESP32 adb-host — `KhunHtetzNaing/ADB-OTG`, `wolfxalpha4/esp32-adb-client`) — all
+   ruled out by the maintainer — **or root-level UDC loopback.**
+2. **Driving the gadget endpoints locally.** Root-only (see below).
+
+Merely making the phone *think* it is plugged in (`sys.usb.state=adb`) changes nothing: that only makes the phone
+**offer** the adb interface. With no host running the adb client and passing key auth, no shell is produced.
+
+### Measured facts (read-only)
+- Both phones already sit in adb gadget mode with USB debugging on: `sys.usb.state=adb`, `sys.usb.config=adb`,
+  controller `a600000.dwc3`. So the "USB is connected in adb mode" state is **already true** and still yields no
+  shell without a host — proving the state alone is not the lever.
+- The gadget plumbing is **not writable/usable by shell or an app**:
+  - `/config/usb_gadget/` → Permission denied (reconfiguring the gadget is root/system).
+  - `/dev/socket/adbd` → Permission denied (adbd's control socket is `system system`, and exposes no "run shell"
+    verb anyway).
+  - `/dev/usb-ffs/adb/` → OP9 denied; OP12 `dr-xr-x--- shell system` (read/execute only, no write), and adbd
+    already owns the endpoints — two processes can't both drive ffs `ep0`.
+- OP9 exposes a `dummy_udc.0` (a virtual UDC that can accept a gadget with no physical host); OP12 does not. Even
+  on the OP9 it is useless here: binding a gadget to it needs **root** configfs writes, and a dummy UDC still has
+  **no host client** to run the adb protocol, so no shell comes out.
+- No `/dev/vsock` on either phone — the emulator-only loopback adb transport does not exist on retail hardware.
+- Even `setprop service.adb.tcp.port` is refused for shell; the port value we see was set by **adbd itself** via
+  `adb tcpip`, not by us. The shell→property path is closed for every adb property.
+
+### Verdict: ❌ dead, same wall as the rest
+Spoofing the USB connection cannot produce an authenticated adb session without external host hardware or root.
+It does not break the chicken-and-egg; it runs into the identical "only adbd grants a shell, and only a real host
+or root can make adbd do it off Wi-Fi" invariant. Do not re-open without new facts.
+
+### The one adjacent thing that IS real (different problem: keep adbd ALIVE, not enable it)
+"USB connected" matters to us for a separate reason: while USB is in an adb config, the init rule keeps **adbd
+running** (USB config→`none` stops adbd — [[debugging-switches-model]]), and our loopback listener lives inside
+adbd. So a passive accessory that merely **holds the USB data role** (a cable/dongle that never drops to
+`sys.usb.config=none`, e.g. charge-only that keeps data) would help the *screen-off / unplug kills adbd* class
+([[screen-off-adbd-kill-and-mitigations]], [[usb-charging-only-drops-adb]]) — but that is external hardware, and
+it only keeps an **already-armed** adbd alive; it never *enables* adb from cold. Not a bypass, just a survival aid.
