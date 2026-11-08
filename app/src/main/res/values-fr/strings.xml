@@ -461,6 +461,8 @@
     <string name="summary_requirements_toggle_label">Afficher les prérequis</string>
     <string name="settings_sim_label_label">Afficher la SIM utilisée pour chaque appel</string>
     <string name="settings_sim_label_desc">Pour les téléphones à deux SIM : affiche le nom que vous avez donné à la SIM, ou SIM 1 / SIM 2</string>
+    <string name="settings_stereo_output_label">Chaque interlocuteur sur son propre canal</string>
+    <string name="settings_stereo_output_desc">Enregistre votre voix et celle de votre interlocuteur sur des canaux gauche et droit séparés, pour transcrire chaque côté à part. Les fichiers sont environ deux fois plus lourds et, au casque, chaque côté s\'entend dans une seule oreille.</string>
     <string name="sim_label_word">SIM</string>
     <string name="settings_metadata_file_label">Écrire un fichier de détails</string>
     <string name="settings_needs_newer_android">Nécessite Android %1$s ou plus récent — ce téléphone est sous Android %2$s.</string>

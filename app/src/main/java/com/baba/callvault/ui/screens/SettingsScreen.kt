@@ -410,6 +410,7 @@ private fun SettingsScreenPreview() {
             override fun setMinDurationSeconds(seconds: Int) {}
             override fun setWriteMetadataFileEnabled(enabled: Boolean) {}
             override fun setShowSimLabelEnabled(enabled: Boolean) {}
+            override fun setRecordStereoEnabled(enabled: Boolean) {}
             override fun setHideRecordingsEnabled(enabled: Boolean) {}
             override fun setWriteTranscriptSidecarEnabled(enabled: Boolean) {}
             override fun exportSettingsJson(): String = "{}"

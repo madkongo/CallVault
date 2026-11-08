@@ -465,6 +465,8 @@
     <string name="summary_requirements_toggle_label">Показывать требования</string>
     <string name="settings_sim_label_label">Показывать, какая SIM использовалась для звонка</string>
     <string name="settings_sim_label_desc">Для телефонов с двумя SIM: показывает имя, которое вы дали SIM-карте, или SIM 1 / SIM 2</string>
+    <string name="settings_stereo_output_label">Каждая сторона на своём канале</string>
+    <string name="settings_stereo_output_desc">Сохраняет вас и собеседника на отдельных левом и правом каналах, чтобы расшифровывать каждую сторону отдельно. Файлы примерно вдвое больше, а в наушниках каждая сторона слышна только в одном ухе.</string>
     <string name="sim_label_word">SIM</string>
     <string name="settings_metadata_file_label">Записывать файл сведений</string>
     <string name="settings_needs_newer_android">Нужен Android %1$s или новее — на этом телефоне Android %2$s.</string>

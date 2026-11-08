@@ -751,6 +751,8 @@
     <string name="summary_requirements_toggle_label">কী কী লাগে দেখান</string>
     <string name="settings_sim_label_label">প্রতিটি কলে কোন SIM ব্যবহার হয়েছে দেখান</string>
     <string name="settings_sim_label_desc">দুটি SIM-এর ফোনের জন্য: SIM-কে আপনার দেওয়া নাম, বা SIM 1 / SIM 2 দেখায়</string>
+    <string name="settings_stereo_output_label">প্রতিটি পক্ষকে আলাদা চ্যানেলে রাখুন</string>
+    <string name="settings_stereo_output_desc">আপনাকে ও অপর পক্ষকে আলাদা বাম ও ডান চ্যানেলে সংরক্ষণ করে, যাতে প্রতিটি পক্ষকে আলাদাভাবে ট্রান্সক্রাইব করা যায়। ফাইল প্রায় দ্বিগুণ বড় হয়, আর হেডফোনে প্রতিটি পক্ষ এক কানে শোনা যায়।</string>
     <string name="sim_label_word">SIM</string>
     <string name="settings_metadata_file_label">একটি বিবরণ ফাইল লিখুন</string>
     <string name="settings_metadata_file_desc">প্রতিটি রেকর্ডিংয়ের পাশে একটি ছোট .json সেভ করুন</string>

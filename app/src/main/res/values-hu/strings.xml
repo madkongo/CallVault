@@ -461,6 +461,8 @@
     <string name="summary_requirements_toggle_label">Követelmények megjelenítése</string>
     <string name="settings_sim_label_label">A hívásokhoz használt SIM megjelenítése</string>
     <string name="settings_sim_label_desc">Kétkártyás telefonokhoz: a SIM-nek adott nevet mutatja, vagy SIM 1 / SIM 2</string>
+    <string name="settings_stereo_output_label">Mindkét fél külön csatornán</string>
+    <string name="settings_stereo_output_desc">Önt és a másik felet külön bal és jobb csatornára menti, hogy mindkét oldalt külön lehessen átírni. A fájlok nagyjából kétszer akkorák, fejhallgatón pedig mindkét fél csak az egyik fülben szól.</string>
     <string name="sim_label_word">SIM</string>
     <string name="settings_metadata_file_label">Adatfájl írása</string>
     <string name="settings_needs_newer_android">Android %1$s vagy újabb szükséges – ezen a telefonon Android %2$s fut.</string>

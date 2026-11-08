@@ -934,6 +934,8 @@
     <string name="summary_requirements_toggle_label">Show requirements</string>
     <string name="settings_sim_label_label">Show which SIM each call used</string>
     <string name="settings_sim_label_desc">For phones with two SIMs: shows the name you gave the SIM, or SIM 1 / SIM 2</string>
+    <string name="settings_stereo_output_label">Keep each side on its own channel</string>
+    <string name="settings_stereo_output_desc">Saves you and the other person on separate left and right channels, for transcribing each side on its own. Files are about twice as large, and on headphones each side plays in one ear.</string>
     <string name="sim_label_word">SIM</string>
     <string name="settings_metadata_file_label">Write a details file</string>
     <string name="settings_metadata_file_desc">Save a small .json beside each recording</string>

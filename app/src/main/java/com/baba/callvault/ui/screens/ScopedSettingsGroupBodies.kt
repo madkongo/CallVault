@@ -149,6 +149,8 @@ private fun CallsToSkipBody(
 private fun SoundAndNamesBody(preferences: AppPreferences, updateTrigger: Int, actions: SettingsActions) {
     SearchFiltered("AudioSection") { AudioSection(preferences, updateTrigger, actions, expanded = true, onToggle = {}) }
     SettingsDivider()
+    SearchFiltered("StereoOutputRow") { StereoOutputRow(preferences, updateTrigger, actions) }
+    SettingsDivider()
     SearchFiltered("FileNameTemplateRow") { FileNameTemplateRow(preferences, updateTrigger, actions) }
     SettingsDivider()
     SearchFiltered("SimLabelRow") { SimLabelRow(preferences, updateTrigger, actions) }

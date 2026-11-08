@@ -459,6 +459,8 @@
     <string name="summary_requirements_toggle_label">显示要求</string>
     <string name="settings_sim_label_label">显示每通电话使用的 SIM 卡</string>
     <string name="settings_sim_label_desc">适用于双卡手机：显示你为 SIM 卡设置的名称，或“卡 1”/“卡 2”</string>
+    <string name="settings_stereo_output_label">双方各占一个声道</string>
+    <string name="settings_stereo_output_desc">将你和对方分别保存在左、右两个声道，便于分别转写每一方。文件大小约为原来的两倍，戴耳机时每一方只在一只耳朵里听到。</string>
     <string name="sim_label_word">卡</string>
     <string name="settings_metadata_file_label">写入详情文件</string>
     <string name="settings_needs_newer_android">需要 Android %1$s 或更高版本——此手机运行的是 Android %2$s。</string>
