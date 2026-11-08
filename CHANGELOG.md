@@ -74,6 +74,7 @@ All notable changes to CallVault are documented here. The format is based on
 - **The microphone no longer stays on after some calls in Shizuku mode.** When Android leaves the recorder holding the
   microphone after a call, CallVault now restarts its recorder in Shizuku mode too, as it already did in the built-in
   mode; until now you had to stop and start CallVault yourself.
+  <!-- 🧪 VERIFYING: see the next entry (same OP9 test); a real stuck microphone not yet seen clearing. -->
 - **No more crash when CallVault restarts its Shizuku recorder.** Restarting it (after an update, or for the fix above)
   could crash the app in Shizuku's own code.
   <!-- 🧪 VERIFYING 2026-11-07 on the OP9 (Shizuku): the restart ran after a call with a simulated held microphone, no
@@ -87,7 +88,10 @@ All notable changes to CallVault are documented here. The format is based on
 - **Honor phones pausing CallVault during a call.** Some Honor phones (MagicOS, Android 17) pause the app while the
   screen is dark in a call, which lost one call and cut another short. On a phone seen doing this, the recorder
   process now records the call by itself. Resilient recording on Honor also starts again (#53).
-  <!-- ✅ VERIFIED 2026-11-06 in the field: the BVL-N59 reporter (test build 2.4.9-usbprobe3), 8 calls through 140 app pauses. -->
+  <!-- ✅ VERIFIED 2026-11-06 in the field: the BVL-N59 reporter (test build 2.4.9-usbprobe3), 8 calls through 140 app pauses.
+       ❌ NOT WORKING 2026-11-07 (same reporter, still on usbprobe3): a call on 2026-11-06 20:12 saved as 0:00 / 1 KB — the
+       app was paused before the call, woken at the call, paused again 4 s in. Two more near-silent files 2026-11-07
+       (10:13, 13:33). Cause unknown; waiting for his report with debug logging on. The ✅ above no longer holds. -->
 - **Pages that showed old information until the app was reopened.** Transcripts, Summaries and the Hub counts no
   longer stay empty when opened before the first transcription, and the Shizuku status, USB mode and calling-app
   list in Settings update when you come back to the app.
