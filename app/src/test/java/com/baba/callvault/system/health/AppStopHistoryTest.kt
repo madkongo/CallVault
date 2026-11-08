@@ -47,4 +47,39 @@ class AppStopHistoryTest {
         assertEquals("BOOT_COMPLETE", AppStopHistory.startReasonName(ApplicationStartInfo.START_REASON_BOOT_COMPLETE))
         assertEquals("reason 999", AppStopHistory.exitReasonName(999))
     }
+
+    @Test
+    fun `starts from an earlier boot are dropped, not given a made-up time`() {
+        // Seen on the Android 16 emulator: start times are "since boot", so October starts read as later today.
+        val nowWall = 10_000_000L
+        val nowSinceBoot = 600_000L // booted 10 minutes ago
+        val raw = listOf(
+            AppStopHistory.RawStart(sinceBootMillis = 500_000, afterForceStop = true),
+            AppStopHistory.RawStart(sinceBootMillis = 480_000, afterForceStop = false),
+            AppStopHistory.RawStart(sinceBootMillis = 3_000_000, afterForceStop = true), // earlier boot: "in the future"
+            AppStopHistory.RawStart(sinceBootMillis = 100_000, afterForceStop = false),
+        )
+        val starts = AppStopHistory.currentBootStarts(raw, nowSinceBootMillis = nowSinceBoot, nowWallMillis = nowWall)
+        assertEquals(listOf(AppStart(9_900_000, true), AppStart(9_880_000, false)), starts)
+    }
+
+    @Test
+    fun `a jump forward in time ends the current boot even when it is not in the future`() {
+        val raw = listOf(
+            AppStopHistory.RawStart(sinceBootMillis = 500_000, afterForceStop = false),
+            AppStopHistory.RawStart(sinceBootMillis = 590_000 + 0, afterForceStop = true), // 90 s newer than the newest: another boot
+        )
+        assertEquals(1, AppStopHistory.currentBootStarts(raw, nowSinceBootMillis = 600_000, nowWallMillis = 10_000_000L).size)
+    }
+
+    @Test
+    fun `small reorderings inside one boot are kept`() {
+        // The emulator listed BROADCAST starts 40 s out of order within the same boot.
+        val raw = listOf(
+            AppStopHistory.RawStart(sinceBootMillis = 54_000, afterForceStop = false),
+            AppStopHistory.RawStart(sinceBootMillis = 94_000, afterForceStop = false),
+            AppStopHistory.RawStart(sinceBootMillis = 36_000, afterForceStop = false),
+        )
+        assertEquals(3, AppStopHistory.currentBootStarts(raw, nowSinceBootMillis = 600_000, nowWallMillis = 10_000_000L).size)
+    }
 }

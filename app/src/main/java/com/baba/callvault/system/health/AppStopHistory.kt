@@ -45,20 +45,41 @@ object AppStopHistory {
     fun wasForceStoppedDuring(context: Context, callAtMillis: Long): Boolean =
         runCatching { wasForceStoppedDuring(starts(context), callAtMillis) }.getOrDefault(false)
 
+    /** A start as Android stamps it: time since the boot it happened in — which boot, it does not say. */
+    data class RawStart(val sinceBootMillis: Long, val afterForceStop: Boolean)
+
+    /** How far a start may sit after a newer one and still belong to the same boot (seen: 40 s on the emulator). */
+    private const val SAME_BOOT_REORDER_MILLIS = 60_000L
+
+    /**
+     * The starts of the current boot, in wall-clock time. Android lists starts newest first and stamps them
+     * since boot, so an earlier boot's starts map onto made-up times today (the emulator showed October starts as
+     * "13:30 today"). They show up as a start in the future or a jump forward; the run stops at the first one.
+     */
+    fun currentBootStarts(raw: List<RawStart>, nowSinceBootMillis: Long, nowWallMillis: Long): List<AppStart> {
+        val kept = mutableListOf<RawStart>()
+        for (start in raw) {
+            if (start.sinceBootMillis > nowSinceBootMillis) break
+            val newestKept = kept.maxOfOrNull { it.sinceBootMillis }
+            if (newestKept != null && start.sinceBootMillis > newestKept + SAME_BOOT_REORDER_MILLIS) break
+            kept += start
+        }
+        return kept.map { AppStart(nowWallMillis - (nowSinceBootMillis - it.sinceBootMillis), it.afterForceStop) }
+    }
+
     private fun starts(context: Context): List<AppStart> {
         if (Build.VERSION.SDK_INT < Build.VERSION_CODES.VANILLA_ICE_CREAM) return emptyList()
         val am = context.getSystemService(ActivityManager::class.java) ?: return emptyList()
-        return am.getHistoricalProcessStartReasons(HISTORY)
+        val raw = am.getHistoricalProcessStartReasons(HISTORY)
             .filter { it.processName == context.packageName }
-            .mapNotNull { info -> startWallMillis(info)?.let { AppStart(it, info.wasForceStopped()) } }
+            .mapNotNull { info -> sinceBootMillis(info)?.let { RawStart(it, info.wasForceStopped()) } }
+        return currentBootStarts(raw, SystemClock.elapsedRealtime(), System.currentTimeMillis())
     }
 
-    /** The earliest startup timestamp, moved from nanoseconds since boot to wall-clock milliseconds. */
-    private fun startWallMillis(info: ApplicationStartInfo): Long? {
+    /** The earliest startup timestamp, in milliseconds since the boot it happened in. */
+    private fun sinceBootMillis(info: ApplicationStartInfo): Long? {
         if (Build.VERSION.SDK_INT < Build.VERSION_CODES.VANILLA_ICE_CREAM) return null
-        val sinceBootNanos = info.startupTimestamps.values.minOrNull() ?: return null
-        val agoMillis = (SystemClock.elapsedRealtimeNanos() - sinceBootNanos) / 1_000_000
-        return System.currentTimeMillis() - agoMillis
+        return info.startupTimestamps.values.minOrNull()?.let { it / 1_000_000 }
     }
 
     /** The report section: recent exits (Android 11+) and starts (Android 15+), newest first. */
@@ -71,8 +92,11 @@ object AppStopHistory {
                 " importance=${it.importance}$description"
         }
         val starts = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.VANILLA_ICE_CREAM) {
-            am.getHistoricalProcessStartReasons(HISTORY).map { info ->
-                val at = startWallMillis(info)?.let { time.format(Date(it)) } ?: "?"
+            val infos = am.getHistoricalProcessStartReasons(HISTORY)
+            val raw = infos.map { RawStart(sinceBootMillis(it) ?: Long.MAX_VALUE, it.wasForceStopped()) }
+            val current = currentBootStarts(raw, SystemClock.elapsedRealtime(), System.currentTimeMillis())
+            infos.mapIndexed { i, info ->
+                val at = current.getOrNull(i)?.let { time.format(Date(it.atWallMillis)) } ?: "earlier boot"
                 "start $at ${info.processName} ${startReasonName(info.reason)}" +
                     (if (info.wasForceStopped()) " AFTER FORCE-STOP" else "")
             }
