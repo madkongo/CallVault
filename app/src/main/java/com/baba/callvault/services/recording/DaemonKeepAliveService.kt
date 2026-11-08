@@ -833,7 +833,11 @@ class DaemonKeepAliveService : Service() {
         // daemon, so it is surfaced here — NOT gated on readiness. It used to be, and that made it
         // useless exactly when it mattered: the data mode kills the daemon, the dead daemon reads as
         // not-ready, and not-ready hid the warning. See [UsbDefaultConfig.noticeFor].
-        val usbNotice = UsbDefaultConfig.noticeFor(UsbDefaultConfig.cached(this), ready)
+        // Both ADB lines (this USB tip and "Wireless debugging has to stay on" below) are about our own ADB
+        // daemon. In Shizuku mode Shizuku owns the transport and we never touch the switches (#71: a Shizuku
+        // user was told CallVault would switch Wireless debugging off), so neither is shown there.
+        val adbAdvice = usesAdb()
+        val usbNotice = if (adbAdvice) UsbDefaultConfig.noticeFor(UsbDefaultConfig.cached(this), ready) else UsbNotice.NONE
         // Except when recording is down for a named reason: then that reason is the only thing worth the
         // collapsed line. Measured on the emulator — "USB debugging is off and there's no Wi-Fi" was hidden
         // behind the screen-lock tip, which is about a recording that cannot happen anyway.
@@ -872,7 +876,7 @@ class DaemonKeepAliveService : Service() {
         // Wireless debugging has to stay on when it is adbd's ONLY transport, because switching it off
         // would stop adbd and take the daemon with it. Say so rather than leaving the user to notice that
         // a debugging switch they did not turn on is staying on — and name the two settings that free it.
-        if (notice == ReadinessNotice.READY && WirelessDebuggingPolicy.mustKeepWirelessDebugging(AdbShell.wirelessDebuggingPlan(this))) {
+        if (adbAdvice && notice == ReadinessNotice.READY && WirelessDebuggingPolicy.mustKeepWirelessDebugging(AdbShell.wirelessDebuggingPlan(this))) {
             val notice = getString(R.string.notif_wd_required)
             builder.setContentText(notice)
                 .setStyle(NotificationCompat.BigTextStyle().bigText("$baseText\n$notice"))

@@ -6,6 +6,7 @@
     <string name="home_date_yesterday">Hier</string>
     <string name="home_health_call_not_recorded">Un appel n\'a pas été enregistré — %1$s, %2$s.</string>
     <string name="home_health_call_not_recorded_unnamed">Un appel n\'a pas été enregistré — %1$s.</string>
+    <string name="home_health_call_not_recorded_force_stopped">CallVault avait été arrêté de force, par le téléphone ou une autre app, et n’a donc pas pu détecter l’appel. Vérifiez que les réglages de batterie du téléphone ne mettent pas CallVault en veille.</string>
     <string name="home_health_failed_daemon">L\'enregistreur s\'est arrêté pendant votre dernier appel.</string>
     <string name="home_health_failed_empty">Votre dernier appel a produit un enregistrement vide (0 octet).</string>
     <string name="home_health_failed_no_audio">Votre dernier appel a été enregistré, mais ne contient aucun son.</string>

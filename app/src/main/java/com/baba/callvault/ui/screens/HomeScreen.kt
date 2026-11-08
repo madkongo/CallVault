@@ -210,6 +210,7 @@ import com.baba.callvault.ui.common.CallOriginBadge
 import androidx.compose.foundation.Image
 import androidx.compose.material.icons.filled.Groups
 import com.baba.callvault.R
+import com.baba.callvault.system.health.AppStopHistory
 import com.baba.callvault.utils.DeviceInfo
 import com.baba.callvault.system.shareTranscriptFile
 import com.baba.callvault.data.transcripts.FavouriteRepository
@@ -2758,9 +2759,15 @@ private fun healthMessage(health: SetupHealth): String {
             }
         is SetupHealth.Unverified -> stringResource(R.string.home_health_unverified)
         is SetupHealth.StaleAfterChange -> stringResource(R.string.home_health_setup_changed)
-        is SetupHealth.CallNotRecorded -> health.label?.let {
-            stringResource(R.string.home_health_call_not_recorded, relativeTime(health.atMillis), it)
-        } ?: stringResource(R.string.home_health_call_not_recorded_unnamed, relativeTime(health.atMillis))
+        is SetupHealth.CallNotRecorded -> {
+            val missed = health.label?.let {
+                stringResource(R.string.home_health_call_not_recorded, relativeTime(health.atMillis), it)
+            } ?: stringResource(R.string.home_health_call_not_recorded_unnamed, relativeTime(health.atMillis))
+            // #71: when Android says the app had been force-stopped, that is the cause, and the user can fix it.
+            val context = LocalContext.current
+            val forceStopped = remember(health.atMillis) { AppStopHistory.wasForceStoppedDuring(context, health.atMillis) }
+            if (forceStopped) missed + " " + stringResource(R.string.home_health_call_not_recorded_force_stopped) else missed
+        }
         is SetupHealth.CallMissedNotReady -> {
             // Named per prerequisite so the card states the actual, user-owned cause instead of
             // reading as the unexplained CallNotRecorded case above.

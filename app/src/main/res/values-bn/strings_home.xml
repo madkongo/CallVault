@@ -78,6 +78,7 @@
     <string name="home_health_setup_changed">আপনার শেষ কলের পর সেটআপ বদলেছে — পরের কলেই নিশ্চিত হবে এটি এখনো কাজ করছে।</string>
     <string name="home_health_call_not_recorded">একটি কল রেকর্ড হয়নি — %1$s, %2$s।</string>
     <string name="home_health_call_not_recorded_unnamed">একটি কল রেকর্ড হয়নি — %1$s।</string>
+    <string name="home_health_call_not_recorded_force_stopped">ফোন বা অন্য কোনো অ্যাপ CallVault জোর করে বন্ধ করে দিয়েছিল, তাই এটি কলটি শনাক্ত করতে পারেনি। দেখে নিন আপনার ফোনের ব্যাটারি সেটিংস যেন CallVault-কে ঘুম মোডে না পাঠায়।</string>
     <string name="home_health_missed_recording_folder">একটি কল রেকর্ড হয়নি — তখন কোনো রেকর্ডিং ফোল্ডার সেট করা ছিল না, %1$s।</string>
     <string name="home_health_missed_recording_folder_unnamed">একটি কল রেকর্ড হয়নি — তখন কোনো রেকর্ডিং ফোল্ডার সেট করা ছিল না।</string>
     <string name="home_health_missed_adb_pairing">একটি কল রেকর্ড হয়নি — তখন সেটআপ শেষ হয়নি, %1$s।</string>

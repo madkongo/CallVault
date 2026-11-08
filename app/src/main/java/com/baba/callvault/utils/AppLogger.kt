@@ -522,6 +522,9 @@ object AppLogger {
         writer.println("Power saving on: ${runCatching { (context.getSystemService(Context.POWER_SERVICE) as android.os.PowerManager).isPowerSaveMode }.getOrDefault("?")}")
         writer.println("Standby bucket: ${runCatching { (context.getSystemService(Context.USAGE_STATS_SERVICE) as android.app.usage.UsageStatsManager).appStandbyBucket }.getOrDefault("?")}")
         writer.println("App paused by the phone: ${runCatching { com.baba.callvault.services.recording.AppPauseWatch.summaryForReport(context) }.getOrDefault("?")}")
+        // A force-stopped app hears no calls until it is opened again, and our own log just restarts (#71).
+        writer.println("--- App stops and starts (Android's record, newest first) ---")
+        com.baba.callvault.system.health.AppStopHistory.reportLines(context).forEach { writer.println(it) }
         writer.println("--- Recorder ---")
         writer.println("Binder connected: ${runCatching { RecorderConnection.isConnected }.getOrDefault(false)}")
         writer.println("Host uid: ${runCatching { RecorderConnection.service?.hostUid()?.toString() }.getOrNull() ?: "?"}")
@@ -529,8 +532,10 @@ object AppLogger {
         if (mode?.needsShizuku == true) {
             writer.println("--- Shizuku ---")
             writer.println("Status: ${runCatching { RecorderBackend.shizukuStatus(context).name }.getOrDefault("?")}")
-            writer.println("Capture path: scrcpy (a Shizuku-hosted process cannot start an AudioRecord)")
-            writer.println("Not available in this mode: resilient recording, VoIP, offline recording, speaker attribution")
+            // From the same table the UI uses: the hand-written list here went stale when the Shizuku host learned
+            // to record directly (2026-10-19) and kept telling triage that VoIP was impossible in this mode.
+            writer.println("Not available in this mode: " + com.baba.callvault.data.ModeCapability.entries
+                .filterNot { it.isAvailableIn(mode) }.joinToString { it.name.lowercase() })
         } else {
             writer.println("--- Standalone transport ---")
             writer.println("Wireless debugging: ${runCatching { AdbShell.isWirelessDebuggingEnabled(context) }.getOrDefault("?")}")

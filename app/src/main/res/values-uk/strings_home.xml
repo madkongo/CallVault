@@ -155,6 +155,7 @@
     <string name="offline_recording_disabling">Вимкнення запису без Wi-Fi…</string>
     <string name="home_health_call_not_recorded">Дзвінок не записано — %1$s, %2$s.</string>
     <string name="home_health_call_not_recorded_unnamed">Дзвінок не записано — %1$s.</string>
+    <string name="home_health_call_not_recorded_force_stopped">CallVault було примусово зупинено — телефоном або іншим застосунком, — тому він не зміг помітити дзвінок. Перевірте, що налаштування батареї телефона не переводять CallVault у режим сну.</string>
     <string name="home_health_missed_recording_folder">Дзвінок не записано: папку не було вибрано, %1$s.</string>
     <string name="home_health_missed_recording_folder_unnamed">Дзвінок не записано: папку записів не було вибрано.</string>
     <string name="home_health_missed_adb_pairing">Дзвінок не записано: налаштування ще не було завершено, %1$s.</string>

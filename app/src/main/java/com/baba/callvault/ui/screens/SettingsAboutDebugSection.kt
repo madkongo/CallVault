@@ -63,7 +63,8 @@ import androidx.compose.material.icons.filled.Save
  * off, then share the captured log.
  *
  * - While logging is **on**, we show a red reminder to turn it back off; sharing is intentionally
- *   hidden so the user isn't sharing a log that is still being written to.
+ *   hidden here so the user isn't sharing a log that is still being written to. The log viewer offers
+ *   Share and Save in every state (#71): someone reading the log there wants to send it now.
  * - While logging is **off**, the Share button appears only if a valid (non-empty) log file from a
  *   previous session still exists — there is nothing to share otherwise.
  *
@@ -197,7 +198,7 @@ internal fun BugReportSection(
     }
 
     if (showLogViewer) {
-        DebugLogViewer(onDismiss = { showLogViewer = false })
+        DebugLogViewer(onDismiss = { showLogViewer = false }, onShare = onShareLogs, onSave = onSaveLogs)
     }
 
     if (confirmClearLog) {
@@ -239,7 +240,7 @@ private const val LOG_VIEW_LINES = 500
  * lines — the end is what someone opens a log to read.
  */
 @Composable
-private fun DebugLogViewer(onDismiss: () -> Unit) {
+private fun DebugLogViewer(onDismiss: () -> Unit, onShare: () -> Unit, onSave: () -> Unit) {
     var text by remember { mutableStateOf<String?>(null) }
     var loaded by remember { mutableStateOf(false) }
     var wrap by rememberSaveable { mutableStateOf(true) }
@@ -331,6 +332,27 @@ private fun DebugLogViewer(onDismiss: () -> Unit) {
                             )
                         }
                     }
+                }
+                // The viewer is where people go looking for "the log", so the way to send it lives here too —
+                // #71's reporter read it here, found no way out and sent screenshots. Same report as the
+                // buttons under Debug logging, and offered while logging is on (they're hidden then).
+                HorizontalDivider()
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 16.dp, vertical = 12.dp),
+                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                ) {
+                    CvPrimaryButton(
+                        text = stringResource(R.string.settings_bugreport_share),
+                        onClick = onShare,
+                        modifier = Modifier.weight(1f),
+                    )
+                    CvPrimaryButton(
+                        text = stringResource(R.string.settings_bugreport_save),
+                        onClick = onSave,
+                        modifier = Modifier.weight(1f),
+                    )
                 }
             }
         }

@@ -5,6 +5,7 @@
     <string name="home_date_yesterday">Hôm qua</string>
     <string name="home_health_call_not_recorded">Một cuộc gọi đã không được ghi âm — %1$s, %2$s.</string>
     <string name="home_health_call_not_recorded_unnamed">Một cuộc gọi đã không được ghi âm — %1$s.</string>
+    <string name="home_health_call_not_recorded_force_stopped">CallVault đã bị buộc dừng, bởi điện thoại hoặc một ứng dụng khác, nên không thể nhận biết cuộc gọi. Hãy kiểm tra để cài đặt pin của điện thoại không đưa CallVault vào trạng thái ngủ.</string>
     <string name="home_health_failed_daemon">Trình ghi âm đã dừng trong cuộc gọi gần nhất của bạn.</string>
     <string name="home_health_failed_empty">Cuộc gọi gần nhất của bạn tạo ra một bản ghi rỗng (0 byte).</string>
     <string name="home_health_failed_no_audio">Cuộc gọi gần nhất đã được lưu nhưng không có âm thanh.</string>
