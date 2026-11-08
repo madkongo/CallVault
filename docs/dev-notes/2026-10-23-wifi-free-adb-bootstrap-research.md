@@ -313,3 +313,56 @@ Unchanged and still unbuilt: read the OS's own call recordings via the Android 1
 collection — zero ADB, zero Wi-Fi, zero root — on ROMs that record calls themselves (GrapheneOS Dialer, some
 Samsung/Xiaomi). Not universal (dead on stock Pixel + OnePlus/Oppo), but it is the only path that needs no
 debugging switch at all. See [[wifi-free-adb-bootstrap-impossible]] §2.
+
+## 2026-11-08 (pm) — an original direction: a per-ROM "permanent foothold", not a per-boot re-arm
+
+The maintainer rightly rejected productising the Shizuku-Next race (a bug Google is expected to close). New angle,
+from the invariant rather than from a bug: everyone keeps trying to **re-arm adb every boot**. Flip it — use the
+single pairing the user already does to install a foothold that **survives reboot by itself, no Wi-Fi ever again**,
+the way rooted users do with `persist.adb.tcp.port` (`sryze/wirebug`). The untested question was whether a plain
+**shell** session (which one pairing gives us) can write the reboot-surviving adbd properties, or whether that is
+truly root-only.
+
+### Read-only recon on the OP9 (OnePlus 9 Pro, OxygenOS, Android 14; shell uid 2000, `u:r:shell:s0`)
+- `/data/misc/adb/` → **Permission denied to shell.** A shell session cannot plant a trusted key; the one-time
+  pairing remains the only route to trust. (Confirms the earlier verdict.)
+- Property contexts actually defined here: `persist.adb.wifi.*` → `adbd_prop`; `persist.adb.tls_server.enable` →
+  `system_adbd_prop`; `service.adb.tcp.port` → `adbd_config_prop exact int`. **`persist.adb.tcp.port` is not a
+  defined property on this ROM** — so the rooted "permanent adb over TCP" persist trick does not exist on OnePlus.
+  It is ROM-specific (present on some AOSP-ish / IoT / TV builds, absent here).
+- `service.adb.tcp.port` is already `5555` and is shell-settable — that is our within-boot loopback arming.
+
+### The idea, stated precisely
+At first setup, enumerate the adbd properties THIS ROM defines (`/property_contexts`), and if it defines a
+reboot-surviving one the **shell** domain is allowed to set (`persist.adb.tcp.port` on ROMs that have it;
+possibly `persist.adb.tls_server.enable`), set it once so adbd auto-listens on every future boot with **no Wi-Fi**.
+Bind loopback-only where `service.adb.listen_addrs` allows it, to avoid exposing a network port. Then our in-app
+adb client connects on loopback each boot against the key paired once. No race, no Wi-Fi after setup, and it is
+intended ROM config rather than a bug awaiting a patch — so it does not rot the way the race will.
+
+### Honest bounds (already known before building)
+- **ROM-gated, not universal.** OnePlus lacks `persist.adb.tcp.port`; it will work only where the ROM both defines
+  such a property and lets `shell` set it. We must probe per ROM and report success from the field, never assume.
+- **Still needs the one pairing** (trust), and **USB debugging staying on within a boot** for the listener to live
+  (`persist` makes adbd *start* a listener, but adbd itself still dies if USB debugging is turned off —
+  [[debugging-switches-model]]). So this shrinks the reboot-off-Wi-Fi gap on ROMs that fit, it does not remove all
+  switches.
+- **Security surface.** A persistent adbd listener is what rooted users already accept; bind loopback-only and keep
+  it opt-in and clearly labelled.
+
+### The active test, NOT yet run (needs maintainer go-ahead — touches adb security properties)
+On the OP9 only (test phone; never the OP12 daily driver), as **shell, non-root**:
+1. `setprop persist.adb.tls_server.enable 1` and `setprop service.adb.listen_addrs 127.0.0.1:5555`; read back —
+   does the shell domain accept the write at all?
+2. Reboot; with Wi-Fi OFF, check `/proc/net/tcp` for a loopback adbd listener and try an in-app loopback connect.
+3. Record which writes stuck and whether a listener came up with no Wi-Fi. Reconnect is automatic over USB.
+If step 1 is refused for every reboot-surviving property, this ROM cannot do it and the idea is OnePlus-dead
+(fall back to today's model). If it sticks and step 2 shows a listener, we have a real permanent-foothold path for
+that ROM class.
+
+### A second original direction (for ROMs with their own recorder): flip-and-ingest
+Where a ROM has its own call recording that is off by default and togglable by a durable system setting (some
+Xiaomi/vivo China builds; GrapheneOS/Samsung expose it in the dialer), the one shell session could **enable that
+setting durably** and we then **read the ROM's own recordings** ([[wifi-free-adb-bootstrap-impossible]] §2 ingest
+mode). That needs no adb after setup and no Wi-Fi ever, because we stop capturing audio ourselves entirely. Also
+ROM-gated, but a genuinely different architecture from re-arming adb.
