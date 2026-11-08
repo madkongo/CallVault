@@ -80,4 +80,15 @@ class UpdateVersionTest {
         assertFalse(UpdateVersion.isNewer("", "1.2.3"))
         assertFalse(UpdateVersion.isNewer("v1.2.4", "garbage"))
     }
+
+    @Test
+    fun a_dedicated_build_on_top_of_a_release_needs_a_fourth_number_not_just_a_suffix() {
+        // #45, 2026-11-08: a test build for one user that carries a fix the release does not.
+        // Named "2.5.0-wifi45" it would be offered plain v2.5.0 (the final ranks above its own test
+        // builds) and "updating" would silently remove the fix.
+        assertTrue(UpdateVersion.isNewer("v2.5.0", "2.5.0-wifi45"))
+        // Named "2.5.0.1-wifi45" it sits between the two: never offered 2.5.0, offered 2.5.1 at once.
+        assertFalse(UpdateVersion.isNewer("v2.5.0", "2.5.0.1-wifi45"))
+        assertTrue(UpdateVersion.isNewer("v2.5.1", "2.5.0.1-wifi45"))
+    }
 }
