@@ -143,6 +143,24 @@ All notable changes to CallVault are documented here. The format is based on
   from before 2.4.9; they now say Save and sync ▸ Recording folder and Sound and file names ▸ Audio codec.
   <!-- ✅ VERIFIED 2026-11-08 by the maintainer on the OP9 (preset directions + "honor" search). -->
 
+- **"A call was not recorded" says when CallVault had been force-stopped.** A force-stopped app hears no calls
+  until it is opened again. On Android 15 and newer the card now says so, and points at the phone's battery
+  settings. The debug report also lists Android's own record of when CallVault stopped and started, and why. (#71)
+  <!-- 🧪 VERIFYING: Android 16 emulator 2026-11-08: after `am force-stop` + reopening, the report lists the exit as
+       USER_REQUESTED "[FORCE STOP] …" and the restart as AFTER FORCE-STOP, and BootReceiver logged "Boot completed"
+       with no reboot (the #71 tell). Starts from an earlier boot print as "earlier boot" (first build gave them
+       made-up times; fixed). The card sentence itself was not seen: the emulator has no working setup for a
+       missed-call sweep. Needs a real Android 15+ phone that force-stops it. -->
+- **Shizuku mode: the "Ready to record calls" notification no longer talks about Wireless debugging.** It said
+  Wireless debugging had to stay on and that CallVault would switch it off, which is only true in standalone
+  mode. (#71)
+  <!-- 🧪 VERIFYING: code gate on the mode only; OP9 (Shizuku, USB debugging on) shows the plain text, which it
+       would have shown anyway. -->
+- **Share and Save from the log viewer.** The viewer had no way to send the log, so people sent screenshots. (#71)
+  <!-- 🧪 VERIFYING: Android 16 emulator 2026-11-08: Share and Save shown in the viewer; Save wrote the report. -->
+- **The debug report's Shizuku section lists what is really unavailable.** It still said VoIP, resilient
+  recording and speaker turns did not work in Shizuku mode; only offline recording doesn't.
+  <!-- 🧪 VERIFYING: built. -->
 ## [2.4.9] — 2026-11-03
 
 ### Added

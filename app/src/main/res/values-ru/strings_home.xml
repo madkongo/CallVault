@@ -5,6 +5,7 @@
     <string name="home_date_yesterday">Вчера</string>
     <string name="home_health_call_not_recorded">Вызов не был записан — %1$s, %2$s.</string>
     <string name="home_health_call_not_recorded_unnamed">Вызов не был записан — %1$s.</string>
+    <string name="home_health_call_not_recorded_force_stopped">CallVault был принудительно остановлен — телефоном или другим приложением, — поэтому не смог заметить звонок. Проверьте, что настройки батареи телефона не переводят CallVault в спящий режим.</string>
     <string name="home_health_failed_daemon">Запись остановилась во время вашего последнего вызова.</string>
     <string name="home_health_failed_empty">Ваш последний вызов дал пустую запись (0 байт).</string>
     <string name="home_health_failed_no_audio">Последний звонок сохранён, но не содержит звука.</string>

@@ -88,6 +88,7 @@
     <string name="home_health_setup_changed">Setup changed since your last call — your next call will confirm it still works.</string>
     <string name="home_health_call_not_recorded">A call was not recorded — %1$s, %2$s.</string>
     <string name="home_health_call_not_recorded_unnamed">A call was not recorded — %1$s.</string>
+    <string name="home_health_call_not_recorded_force_stopped">CallVault had been force-stopped, by the phone or another app, so it could not hear the call. Check that your phone\'s battery settings don\'t put CallVault to sleep.</string>
     <!-- A call missed while a specific, user-owned prerequisite was missing — named precisely rather
          than reading as the unexplained daemon-died case above. One pair (labelled/unnamed) per
          Prerequisite, mirroring home_health_call_not_recorded / _unnamed. -->

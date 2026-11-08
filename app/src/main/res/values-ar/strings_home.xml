@@ -85,6 +85,7 @@
     <string name="home_health_setup_changed">تغير الإعداد منذ مكالمتك الأخيرة؛ ستؤكد مكالمتك التالية أنها لا تزال تعمل.</string>
     <string name="home_health_call_not_recorded">لم يتم تسجيل مكالمة؛ %1$s، %2$s.</string>
     <string name="home_health_call_not_recorded_unnamed">لم يتم تسجيل مكالمة؛ %1$s.</string>
+    <string name="home_health_call_not_recorded_force_stopped">كان CallVault متوقفًا إجباريًا، بواسطة الهاتف أو تطبيق آخر، لذا لم يتمكن من رصد المكالمة. تأكد من أن إعدادات البطارية في هاتفك لا تضع CallVault في وضع السكون.</string>
     <string name="home_health_missed_recording_folder">لم يتم تسجيل مكالمة: لم يتم تعيين مجلد تسجيلات في ذلك الوقت، %1$s.</string>
     <string name="home_health_missed_recording_folder_unnamed">لم يتم تسجيل مكالمة: لم يتم تعيين مجلد تسجيلات في ذلك الوقت.</string>
     <string name="home_health_missed_adb_pairing">لم يتم تسجيل مكالمة: لم يكتمل الإعداد في ذلك الوقت، %1$s.</string>

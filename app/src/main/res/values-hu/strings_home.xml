@@ -5,6 +5,7 @@
     <string name="home_date_yesterday">Tegnap</string>
     <string name="home_health_call_not_recorded">Egy hívás nem lett rögzítve — %1$s, %2$s.</string>
     <string name="home_health_call_not_recorded_unnamed">Egy hívás nem lett rögzítve — %1$s.</string>
+    <string name="home_health_call_not_recorded_force_stopped">A CallVaultot kényszerítve leállította a telefon vagy egy másik alkalmazás, ezért nem észlelhette a hívást. Ellenőrizd, hogy a telefon akkumulátor-beállításai ne altassák el a CallVaultot.</string>
     <string name="home_health_failed_daemon">A rögzítés leállt az utolsó hívása közben.</string>
     <string name="home_health_failed_empty">Az utolsó hívása üres felvételt eredményezett (0 bájt).</string>
     <string name="home_health_failed_no_audio">A legutóbbi hívás mentve lett, de nem tartalmaz hangot.</string>

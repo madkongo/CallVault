@@ -5,6 +5,7 @@
     <string name="home_date_yesterday">Gestern</string>
     <string name="home_health_call_not_recorded">Ein Anruf wurde nicht aufgezeichnet — %1$s, %2$s.</string>
     <string name="home_health_call_not_recorded_unnamed">Ein Anruf wurde nicht aufgezeichnet — %1$s.</string>
+    <string name="home_health_call_not_recorded_force_stopped">CallVault war zwangsweise beendet worden – vom Telefon oder einer anderen App – und konnte den Anruf daher nicht bemerken. Prüfe, dass die Akku-Einstellungen deines Telefons CallVault nicht in den Ruhezustand versetzen.</string>
     <string name="home_health_failed_daemon">Die Aufnahme wurde während Ihres letzten Anrufs beendet.</string>
     <string name="home_health_failed_empty">Ihr letzter Anruf ergab eine leere Aufnahme (0 Bytes).</string>
     <string name="home_health_failed_no_audio">Ihr letzter Anruf wurde gespeichert, enthält aber keine Audiodaten.</string>

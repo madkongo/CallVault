@@ -5,6 +5,7 @@
     <string name="home_date_yesterday">Ontem</string>
     <string name="home_health_call_not_recorded">Uma chamada não foi gravada — %1$s, %2$s.</string>
     <string name="home_health_call_not_recorded_unnamed">Uma chamada não foi gravada — %1$s.</string>
+    <string name="home_health_call_not_recorded_force_stopped">O CallVault tinha sido forçado a parar, pelo celular ou por outro app, então não conseguiu perceber a chamada. Verifique se as configurações de bateria do celular não colocam o CallVault para dormir.</string>
     <string name="home_health_failed_daemon">O gravador parou durante a sua última chamada.</string>
     <string name="home_health_failed_empty">Sua última chamada gerou uma gravação vazia (0 bytes).</string>
     <string name="home_health_failed_no_audio">Sua última chamada foi salva, mas não contém áudio.</string>

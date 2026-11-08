@@ -88,6 +88,7 @@
     <string name="home_health_setup_changed">Η ρύθμιση άλλαξε από την τελευταία σας κλήση — η επόμενη κλήση σας θα επιβεβαιώσει ότι εξακολουθεί να λειτουργεί.</string>
     <string name="home_health_call_not_recorded">Μια κλήση δεν καταγράφηκε — %1$s, %2$s.</string>
     <string name="home_health_call_not_recorded_unnamed">Μια κλήση δεν καταγράφηκε — %1$s.</string>
+    <string name="home_health_call_not_recorded_force_stopped">Το CallVault είχε τερματιστεί αναγκαστικά, από το τηλέφωνο ή άλλη εφαρμογή, οπότε δεν μπόρεσε να αντιληφθεί την κλήση. Βεβαιωθείτε ότι οι ρυθμίσεις μπαταρίας του τηλεφώνου δεν θέτουν το CallVault σε αδράνεια.</string>
     <!-- A call missed while a specific, user-owned prerequisite was missing — named precisely rather
          than reading as the unexplained daemon-died case above. One pair (labelled/unnamed) per
          Prerequisite, mirroring home_health_call_not_recorded / _unnamed. -->

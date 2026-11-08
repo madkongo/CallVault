@@ -5,6 +5,7 @@
     <string name="home_date_yesterday">Wczoraj</string>
     <string name="home_health_call_not_recorded">Połączenie nie zostało nagrane — %1$s, %2$s.</string>
     <string name="home_health_call_not_recorded_unnamed">Połączenie nie zostało nagrane — %1$s.</string>
+    <string name="home_health_call_not_recorded_force_stopped">CallVault został wymuszenie zatrzymany przez telefon lub inną aplikację, więc nie mógł wykryć połączenia. Sprawdź, czy ustawienia baterii telefonu nie usypiają CallVault.</string>
     <string name="home_health_failed_daemon">Nagrywanie zatrzymało się podczas twojego ostatniego połączenia.</string>
     <string name="home_health_failed_empty">Twoje ostatnie połączenie dało puste nagranie (0 bajtów).</string>
     <string name="home_health_failed_no_audio">Ostatnia rozmowa została zapisana, ale nie zawiera dźwięku.</string>
