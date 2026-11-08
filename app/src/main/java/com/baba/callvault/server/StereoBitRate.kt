@@ -51,4 +51,22 @@ object StereoBitRate {
         }
         return maxOf(floor, monoRate * 2)
     }
+
+    /**
+     * How many channels to ENCODE: two only when the user asked for stereo, the capture actually came
+     * back stereo, and this device's encoder accepts two channels. Anything else is mono — today's file,
+     * exactly — so a mono route (Bluetooth, some speakerphone paths, non-separating HALs) or an encoder
+     * that cannot do it never produces a broken recording, only an ordinary one.
+     *
+     * [encoderTakesStereo] is only asked when it matters, because it walks the codec list.
+     */
+    fun encodeChannels(requested: Boolean, captureChannels: Int, encoderTakesStereo: () -> Boolean): Int =
+        if (requested && captureChannels == STEREO && runCatching(encoderTakesStereo).getOrDefault(false)) STEREO else MONO
+
+    /** The total bit rate to ask the encoder for at [channels]: floored for stereo, untouched for mono. */
+    fun requestedRate(codec: ScrcpyAudioCodec, monoRate: Int, channels: Int): Int =
+        if (channels == STEREO) floorFor(codec, monoRate) else monoRate
+
+    const val MONO = 1
+    const val STEREO = 2
 }

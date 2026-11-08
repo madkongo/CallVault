@@ -48,6 +48,11 @@ internal class DirectAudioRecorderSession(
     private val bitRate: Int,
     /** The daemon's received fd copy. The muxer writes through it; [stop] closes it after finalising. */
     private val outFd: ParcelFileDescriptor,
+    /**
+     * The user asked to keep each side on its own channel (#74). Honoured only when the capture comes
+     * back stereo and the encoder accepts it — see [StereoBitRate.encodeChannels]; otherwise mono.
+     */
+    private val keepStereo: Boolean = false,
 ) : RecordingSession {
 
     private val stopRequested = AtomicBoolean(false)
@@ -103,17 +108,27 @@ internal class DirectAudioRecorderSession(
         auditId = CaptureAudit.opened("direct capture (source=$androidSource, ch=$captureChannels)")
         audioRecord = record
 
-        // ...but always ENCODE MONO. A phone call is mono content, and encoding the captured stereo as
-        // stereo Opus splits the bitrate across the two channels — at the default 24 kbps that leaves
-        // ~12 kbps per side and audibly degrades the FAR party (their downlink channel gets starved).
-        // Downmixing to one channel gives the whole bitrate to the (mono) call, restoring quality at the
-        // same setting. See [captureLoop]'s downmix.
+        // ...but ENCODE MONO unless the user asked for stereo (#74). Encoding the captured stereo at the
+        // user's mono bit rate splits it across the two channels — at the default 24 kbps that leaves
+        // ~12 kbps per side and audibly degrades the FAR party (v1.4.4). So mono stays the default, and
+        // stereo, when asked for, is encoded at StereoBitRate's floor so neither side is starved.
+        var encodeChannels = StereoBitRate.encodeChannels(keepStereo, captureChannels) {
+            EncoderLimits.supportsFormat(mime, SAMPLE_RATE, StereoBitRate.STEREO)
+        }
+        if (keepStereo && encodeChannels == StereoBitRate.MONO) {
+            AppLogger.w(TAG, "Stereo output asked for but not possible here (captureCh=$captureChannels); recording mono")
+        }
         // Ask the encoder what it will accept before handing it a bit rate. An out-of-range value is
         // not reliably rejected — MediaCodec can clamp it, or emit frames that decode to nothing,
         // which is a full-length recording that plays silent. Also logs the encoder and its limits,
         // so a future bug report can answer in one line what issue #18 never could.
-        val effectiveBitRate = EncoderLimits.resolveBitRate(mime, bitRate, SAMPLE_RATE, ENCODE_CHANNELS)
-        val enc = openEncoder(mime, effectiveBitRate)
+        val enc = runCatching { openEncoder(mime, encodeChannels) }.getOrElse { refused ->
+            // A stereo configure the device declines must not cost the call: record it mono instead.
+            if (encodeChannels == StereoBitRate.MONO) throw refused
+            AppLogger.w(TAG, "Stereo encode refused (${refused.message}); recording mono instead")
+            encodeChannels = StereoBitRate.MONO
+            openEncoder(mime, encodeChannels)
+        }
         encoder = enc
 
         // Create the muxer LAST — the risky AudioRecord/encoder setup above has succeeded, so if we get
@@ -126,14 +141,15 @@ internal class DirectAudioRecorderSession(
         if (record.recordingState != AudioRecord.RECORDSTATE_RECORDING) {
             throw IllegalStateException("AudioRecord failed to enter RECORDING state")
         }
-        AppLogger.i(TAG, "Direct capture started: source=${source.cliKey} codec=${codec.cliKey} captureCh=$captureChannels encodeCh=$ENCODE_CHANNELS rate=$SAMPLE_RATE")
+        AppLogger.i(TAG, "Direct capture started: source=${source.cliKey} codec=${codec.cliKey} captureCh=$captureChannels encodeCh=$encodeChannels rate=$SAMPLE_RATE")
 
         // Two threads, not one — see [CaptureChunkQueue]. The reader's only job is to keep the ring
         // empty; everything that can stall (encode, mux, file write) happens behind the queue.
         val queue = CaptureChunkQueue(READ_CHUNK_BYTES, QUEUE_CAPACITY_CHUNKS)
         chunks = queue
 
-        encodeThread = Thread { runCatching { encodeLoop(queue, enc, mux, captureChannels) }
+        val finalEncodeChannels = encodeChannels
+        encodeThread = Thread { runCatching { encodeLoop(queue, enc, mux, captureChannels, finalEncodeChannels) }
             .onFailure { AppLogger.w(TAG, "Direct encode loop ended: ${it.message}") } }
             .apply { isDaemon = true; name = "direct-capture-encode" }
             .also { it.start() }
@@ -159,16 +175,21 @@ internal class DirectAudioRecorderSession(
      * The codec is created BY NAME, so the encoder that runs is the one whose limits were read — see
      * [EncoderLimits.encoderNameFor].
      */
-    private fun openEncoder(mime: String, requestedBitRate: Int): MediaCodec {
-        val encoderName = EncoderLimits.encoderNameFor(mime, SAMPLE_RATE, ENCODE_CHANNELS)
-        val rates = listOf(requestedBitRate, codec.defaultBitRate).distinct()
+    private fun openEncoder(mime: String, channels: Int): MediaCodec {
+        // Mono: the user's rate, clamped, then the codec's own default — exactly as before #74.
+        // Stereo: the same two, each lifted to the stereo floor so the retry is not a starved file either.
+        val requestedBitRate = EncoderLimits.resolveBitRate(
+            mime, StereoBitRate.requestedRate(codec, bitRate, channels), SAMPLE_RATE, channels,
+        )
+        val encoderName = EncoderLimits.encoderNameFor(mime, SAMPLE_RATE, channels)
+        val rates = listOf(requestedBitRate, StereoBitRate.requestedRate(codec, codec.defaultBitRate, channels)).distinct()
         var lastFailure: Throwable? = null
 
         for ((attempt, rate) in rates.withIndex()) {
             val created = runCatching {
                 val c = if (encoderName != null) MediaCodec.createByCodecName(encoderName)
                         else MediaCodec.createEncoderByType(mime)
-                runCatching { c.configure(formatFor(mime, rate), null, null, MediaCodec.CONFIGURE_FLAG_ENCODE) }
+                runCatching { c.configure(formatFor(mime, rate, channels), null, null, MediaCodec.CONFIGURE_FLAG_ENCODE) }
                     .onFailure { runCatching { c.release() } } // a refused configure leaves it unusable
                     .getOrThrow()
                 c
@@ -192,8 +213,8 @@ internal class DirectAudioRecorderSession(
         )
     }
 
-    private fun formatFor(mime: String, bitRate: Int): MediaFormat =
-        MediaFormat.createAudioFormat(mime, SAMPLE_RATE, ENCODE_CHANNELS).apply {
+    private fun formatFor(mime: String, bitRate: Int, channels: Int): MediaFormat =
+        MediaFormat.createAudioFormat(mime, SAMPLE_RATE, channels).apply {
             setInteger(MediaFormat.KEY_BIT_RATE, bitRate)
             if (mime == MediaFormat.MIMETYPE_AUDIO_AAC) {
                 setInteger(MediaFormat.KEY_AAC_PROFILE, MediaCodecInfo.CodecProfileLevel.AACObjectLC)
@@ -274,20 +295,30 @@ internal class DirectAudioRecorderSession(
      *
      * Everything here may stall without costing audio — that is the whole point of the queue in front.
      */
-    private fun encodeLoop(queue: CaptureChunkQueue, enc: MediaCodec, mux: MediaMuxer, captureChannels: Int) {
+    private fun encodeLoop(
+        queue: CaptureChunkQueue,
+        enc: MediaCodec,
+        mux: MediaMuxer,
+        captureChannels: Int,
+        encodeChannels: Int,
+    ) {
         val mono = ByteArray(READ_CHUNK_BYTES / 2)   // downmix target (half the samples of stereo input)
-        val downmix = captureChannels == 2
+        val stereoCapture = captureChannels == StereoBitRate.STEREO
+        // Downmix only a stereo capture that is being encoded mono. Stereo output (#74) feeds it as is.
+        val downmix = stereoCapture && encodeChannels == StereoBitRate.MONO
         // Speaker turns come free from the stereo buffer we already hold: the two directions are on
-        // separate channels here, and that information is destroyed by the downmix below. Only a
-        // stereo capture carries it — a mono route has nothing to compare.
-        val speakers = if (downmix) SpeakerTurnDetector(SAMPLE_RATE) else null
+        // separate channels here. Keyed on the CAPTURE, not on the downmix, so stereo output keeps its
+        // labels too. Only a stereo capture carries it — a mono route has nothing to compare.
+        val speakers = if (stereoCapture) SpeakerTurnDetector(SAMPLE_RATE) else null
         val info = MediaCodec.BufferInfo()
         var muxerStarted = false
         var totalFrames = 0L
         // Counted so a device that cannot keep up is visible in a bug report rather than silent.
         var recoveredChunks = 0L
         var droppedChunks = 0L
-        val bytesPerFrame = 2 * ENCODE_CHANNELS // PCM-16, mono → 2 bytes/frame (matches what we feed the encoder)
+        // PCM-16: 2 bytes per sample per channel, matching what we feed the encoder. Getting this wrong
+        // for stereo would run the timestamps at twice real time.
+        val bytesPerFrame = 2 * encodeChannels
 
         while (true) {
             val chunk = queue.take(TAKE_TIMEOUT_MS)
@@ -305,7 +336,8 @@ internal class DirectAudioRecorderSession(
                     .onFailure { AppLogger.w(TAG, "Speaker detection failed; continuing without turns: ${it.message}") }
             }
 
-            // Feed MONO to the encoder: downmix a stereo capture (average L+R), or pass a mono capture through.
+            // Mono output: downmix a stereo capture (average L+R). A mono capture, or stereo output,
+            // goes to the encoder as captured.
             val (buf, len) = if (downmix) mono to PcmDownmix.stereoToMono(pcm, read, mono) else pcm to read
 
             // Never drop a chunk just because the encoder was momentarily busy. Draining frees an
@@ -475,8 +507,6 @@ internal class DirectAudioRecorderSession(
         /** Match scrcpy's output so the muxed file is equivalent (48 kHz). */
         private const val SAMPLE_RATE = 48_000
 
-        /** Always encode mono — a call is mono content, so this gives the full bitrate to the voice. */
-        private const val ENCODE_CHANNELS = 1
         private const val READ_CHUNK_BYTES = 4096
 
         private const val MAX_INPUT_SIZE = 16_384
@@ -551,7 +581,9 @@ internal class DirectAudioRecorderSession(
                 // An encoder EXISTING is not the same as it accepting our format. Recording 48 kHz
                 // mono into an encoder that advertises neither is how a full-length silent file is
                 // produced; better to fall back to scrcpy, which brings its own pipeline.
-                hasEncoder(mime) && EncoderLimits.supportsFormat(mime, SAMPLE_RATE, ENCODE_CHANNELS)
+                // Gated on MONO: every recording can at least be mono, and stereo is an upgrade the
+                // session decides on later, falling back to mono rather than to scrcpy.
+                hasEncoder(mime) && EncoderLimits.supportsFormat(mime, SAMPLE_RATE, StereoBitRate.MONO)
             }.getOrDefault(false)
         }
 

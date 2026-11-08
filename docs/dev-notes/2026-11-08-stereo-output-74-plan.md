@@ -15,8 +15,12 @@ Implements the 2026-09-15 decision (Mono/Stereo as a user setting) and issue #74
 - **Off by default.** The downmix (today's behaviour) is unchanged for everyone who leaves it off.
 - **No onboarding wizard step.** Off-by-default power feature for people transcribing per-channel off-device.
   Settings-only keeps onboarding lean. (Verify this does not trip SettingDecisionsTest/ModeAwareUiTest.)
-- **Shizuku/scrcpy: grey the row** ("Shizuku always records stereo"). Do NOT fix the scrcpy
-  stereo-at-mono-bitrate starvation (§2.1) here — separate concern, backlog it.
+- ~~Shizuku/scrcpy: grey the row~~ **CORRECTED 2026-11-08 during Phase 3: no greying.** The Sept note's
+  "Shizuku = scrcpy, always stereo" is out of date: since ShellAttribution (2026-10-19) both hosts run the
+  same `RecorderServiceImpl` and record through `DirectAudioRecorderSession` (`ModeCapability`: "every
+  capture-side capability now works in both modes"). So the setting works in both modes through the one
+  AIDL method. scrcpy is only the fallback; when stereo is on, the fallback now gets the stereo floor too.
+  With stereo OFF the scrcpy fallback is unchanged (still stereo at the mono rate, §2.1) — backlog it.
 - **Playback: warn-only.** The setting's description says files play with you in one ear / them in the
   other on earpiece/headphones, and are ~2× larger. Media3 downmix migration deferred.
 - **No in-app per-channel transcription.** CallVault's decode keeps averaging to mono (works unchanged).

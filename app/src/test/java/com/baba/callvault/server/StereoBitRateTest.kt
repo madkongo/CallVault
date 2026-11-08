@@ -51,6 +51,29 @@ class StereoBitRateTest {
     }
 
     @Test
+    fun `stereo is encoded only when asked for, captured stereo, and accepted by the encoder`() {
+        assertEquals(2, StereoBitRate.encodeChannels(true, 2) { true })
+        assertEquals("not asked: today's mono file", 1, StereoBitRate.encodeChannels(false, 2) { true })
+        assertEquals("mono route: nothing to keep apart", 1, StereoBitRate.encodeChannels(true, 1) { true })
+        assertEquals("encoder refuses two channels", 1, StereoBitRate.encodeChannels(true, 2) { false })
+        assertEquals("a codec-list fault degrades to mono", 1, StereoBitRate.encodeChannels(true, 2) { error("boom") })
+    }
+
+    @Test
+    fun `the encoder is never asked about stereo when it is not wanted`() {
+        var asked = false
+        StereoBitRate.encodeChannels(false, 2) { asked = true; true }
+        StereoBitRate.encodeChannels(true, 1) { asked = true; true }
+        assertEquals(false, asked)
+    }
+
+    @Test
+    fun `the requested rate is floored for stereo and untouched for mono`() {
+        assertEquals(48_000, StereoBitRate.requestedRate(ScrcpyAudioCodec.OPUS, 24_000, 2))
+        assertEquals("a mono fallback keeps the user's own rate", 24_000, StereoBitRate.requestedRate(ScrcpyAudioCodec.OPUS, 24_000, 1))
+    }
+
+    @Test
     fun `aac above the floor keeps the user's intent doubled`() {
         assertEquals(256_000, StereoBitRate.floorFor(ScrcpyAudioCodec.AAC, 128_000))
         assertEquals(128_000, StereoBitRate.floorFor(ScrcpyAudioCodec.AAC, 64_000))

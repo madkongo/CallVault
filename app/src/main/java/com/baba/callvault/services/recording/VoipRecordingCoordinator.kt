@@ -25,6 +25,7 @@ import com.baba.callvault.data.health.SetupHealthStore
 import com.baba.callvault.data.transcripts.SpeakerTurnsRepository
 import com.baba.callvault.data.health.record
 import com.baba.callvault.integrations.scrcpy.ScrcpyAudioCodec
+import com.baba.callvault.server.DaemonStereo
 import com.baba.callvault.server.IRecorderService
 import com.baba.callvault.server.RecorderConnection
 import com.baba.callvault.server.RecorderServiceImpl
@@ -194,6 +195,7 @@ object VoipRecordingCoordinator {
         }
 
         val started = runCatching {
+            DaemonStereo.request(service, prefs.getRecordStereo()) { AppLogger.w(TAG, it) }
             service.startVoipRecording(codec.cliKey, bitRate, saf.descriptor)
         }.onFailure { AppLogger.e(TAG, "startVoipRecording threw: ${it.message}", it) }.getOrDefault(false)
 

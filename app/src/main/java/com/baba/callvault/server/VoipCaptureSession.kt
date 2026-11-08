@@ -41,7 +41,8 @@ import java.util.concurrent.atomic.AtomicBoolean
  *
  * The two are interleaved to stereo — LEFT near, RIGHT far — and then downmixed to mono for the
  * encoder, matching what [DirectAudioRecorderSession] does for a stereo carrier capture, so recordings
- * from both paths sound alike.
+ * from both paths sound alike. With stereo output on (#74) the interleaved buffer is encoded as is, at
+ * [StereoBitRate]'s floor: left is you, right is them.
  *
  * Because the streams are separate free-running `AudioRecord`s, the muxer pairs them by the real
  * time their audio was captured ([SlotPairer]): the file is a run of 20 ms slots, each side fills
@@ -56,7 +57,12 @@ internal class VoipCaptureSession(
     private val bitRate: Int,
     /** The daemon's received fd copy. The muxer writes through it; [stop] closes it after finalising. */
     private val outFd: ParcelFileDescriptor,
+    /** The user asked to keep each side on its own channel (#74); mono when the encoder cannot. */
+    private val keepStereo: Boolean = false,
 ) : RecordingSession {
+
+    /** Channels actually encoded. Settled in [startInternal] before the mux thread starts. */
+    @Volatile private var encodeChannels = StereoBitRate.MONO
 
     private val stopRequested = AtomicBoolean(false)
 
@@ -103,6 +109,50 @@ internal class VoipCaptureSession(
     @Volatile private var muxer: MediaMuxer? = null
     @Volatile private var muxThread: Thread? = null
 
+    /**
+     * Creates and configures the encoder for [channels].
+     *
+     * Mono is exactly what this path always did: one configure at the user's rate. Stereo (#74) is new
+     * ground for this encoder, so it gets what the carrier path learned the hard way (issues #18, #28c):
+     * the rate is brought inside what the encoder advertises, and a refused configure is retried once at
+     * the codec's own recommended rate — both lifted to the stereo floor. If that fails too, the caller
+     * records mono instead.
+     */
+    private fun openEncoder(mime: String, channels: Int): MediaCodec {
+        if (channels == StereoBitRate.MONO) {
+            return MediaCodec.createEncoderByType(mime).apply {
+                configure(formatFor(mime, bitRate, channels), null, null, MediaCodec.CONFIGURE_FLAG_ENCODE)
+            }
+        }
+        val first = EncoderLimits.resolveBitRate(
+            mime, StereoBitRate.requestedRate(codec, bitRate, channels), SAMPLE_RATE, channels,
+        )
+        val rates = listOf(first, StereoBitRate.requestedRate(codec, codec.defaultBitRate, channels)).distinct()
+        var lastFailure: Throwable? = null
+        for (rate in rates) {
+            val c = MediaCodec.createEncoderByType(mime)
+            val configured = runCatching {
+                c.configure(formatFor(mime, rate, channels), null, null, MediaCodec.CONFIGURE_FLAG_ENCODE)
+            }
+            if (configured.isSuccess) {
+                if (rate != first) AppLogger.w(TAG, "Stereo encoder refused $first bps; recording at $rate bps")
+                return c
+            }
+            runCatching { c.release() } // a refused configure leaves it unusable
+            lastFailure = configured.exceptionOrNull()
+        }
+        throw IllegalStateException("No stereo $mime encoder would configure at ${rates.joinToString(" or ")} bps", lastFailure)
+    }
+
+    private fun formatFor(mime: String, rate: Int, channels: Int): MediaFormat =
+        MediaFormat.createAudioFormat(mime, SAMPLE_RATE, channels).apply {
+            setInteger(MediaFormat.KEY_BIT_RATE, rate)
+            if (mime == MediaFormat.MIMETYPE_AUDIO_AAC) {
+                setInteger(MediaFormat.KEY_AAC_PROFILE, MediaCodecInfo.CodecProfileLevel.AACObjectLC)
+            }
+            setInteger(MediaFormat.KEY_MAX_INPUT_SIZE, MAX_INPUT_SIZE)
+        }
+
     override fun start() {
         try {
             startInternal()
@@ -131,16 +181,21 @@ internal class VoipCaptureSession(
             ScrcpyAudioCodec.OPUS -> MediaFormat.MIMETYPE_AUDIO_OPUS
             ScrcpyAudioCodec.AAC -> MediaFormat.MIMETYPE_AUDIO_AAC
         }
-        val format = MediaFormat.createAudioFormat(mime, SAMPLE_RATE, ENCODE_CHANNELS).apply {
-            setInteger(MediaFormat.KEY_BIT_RATE, bitRate)
-            if (mime == MediaFormat.MIMETYPE_AUDIO_AAC) {
-                setInteger(MediaFormat.KEY_AAC_PROFILE, MediaCodecInfo.CodecProfileLevel.AACObjectLC)
-            }
-            setInteger(MediaFormat.KEY_MAX_INPUT_SIZE, MAX_INPUT_SIZE)
+        // Both sides are always captured separately here, so stereo needs only the encoder's consent.
+        var channels = StereoBitRate.encodeChannels(keepStereo, StereoBitRate.STEREO) {
+            EncoderLimits.supportsFormat(mime, SAMPLE_RATE, StereoBitRate.STEREO)
         }
-        val enc = MediaCodec.createEncoderByType(mime).apply {
-            configure(format, null, null, MediaCodec.CONFIGURE_FLAG_ENCODE)
+        if (keepStereo && channels == StereoBitRate.MONO) {
+            AppLogger.w(TAG, "Stereo output asked for but this encoder cannot take two channels; recording mono")
         }
+        val enc = runCatching { openEncoder(mime, channels) }.getOrElse { refused ->
+            // A stereo configure the device declines must not cost the call: record it mono instead.
+            if (channels == StereoBitRate.MONO) throw refused
+            AppLogger.w(TAG, "Stereo encode refused (${refused.message}); recording mono instead")
+            channels = StereoBitRate.MONO
+            openEncoder(mime, channels)
+        }
+        encodeChannels = channels
         encoder = enc
 
         // Muxer last: everything riskier has succeeded, so the output fd is only consumed now.
@@ -151,7 +206,7 @@ internal class VoipCaptureSession(
         startedNanos = System.nanoTime()
         HostAudioRecord.start("VoIP far", far)
         HostAudioRecord.start("VoIP near", near)
-        AppLogger.i(TAG, "VoIP capture started: codec=${codec.cliKey} rate=$SAMPLE_RATE bitRate=$bitRate")
+        AppLogger.i(TAG, "VoIP capture started: codec=${codec.cliKey} rate=$SAMPLE_RATE bitRate=$bitRate encodeCh=$encodeChannels")
         AppLogger.i(
             TAG,
             "VoIP sync start: near buf=${near.bufferSizeInFrames} frames far buf=${far.bufferSizeInFrames} frames " +
@@ -344,7 +399,12 @@ internal class VoipCaptureSession(
                 runCatching { speakers.accept(stereo, stereo.size) }
                     .onFailure { AppLogger.w(TAG, "Speaker turn detection failed: ${it.message}") }
 
-                val len = PcmDownmix.stereoToMono(stereo, stereo.size, mono)
+                // Stereo output (#74) keeps L=near/R=far as built; otherwise mix to mono as always.
+                val (buf, len) = if (encodeChannels == StereoBitRate.STEREO) {
+                    stereo to stereo.size
+                } else {
+                    mono to PcmDownmix.stereoToMono(stereo, stereo.size, mono)
+                }
 
                 var inIdx = enc.dequeueInputBuffer(DEQUEUE_TIMEOUT_US)
                 while (inIdx < 0 && !stopRequested.get()) {
@@ -352,9 +412,10 @@ internal class VoipCaptureSession(
                     inIdx = enc.dequeueInputBuffer(DEQUEUE_TIMEOUT_US)
                 }
                 if (inIdx < 0) break
-                enc.getInputBuffer(inIdx)!!.apply { clear(); put(mono, 0, len) }
+                enc.getInputBuffer(inIdx)!!.apply { clear(); put(buf, 0, len) }
                 enc.queueInputBuffer(inIdx, 0, len, totalFrames * 1_000_000L / SAMPLE_RATE, 0)
-                totalFrames += len / (2 * ENCODE_CHANNELS)
+                // 2 bytes per sample per channel; stereo output must count frames, not samples.
+                totalFrames += len / (2 * encodeChannels)
                 muxerStarted = drainEncoder(enc, mux, info, muxerStarted)
                 if (totalFrames >= nextSnapshotFrames) {
                     nextSnapshotFrames += SNAPSHOT_FRAMES
@@ -651,7 +712,6 @@ internal class VoipCaptureSession(
 
         private const val TAG = "CV:VoipCapture"
         private const val SAMPLE_RATE = VoipAudioPolicy.SAMPLE_RATE
-        private const val ENCODE_CHANNELS = 1
         private const val BUFFER_FACTOR = 4
         private const val CHUNK_FRAMES = 960                 // 20 ms at 48 kHz
         private const val CHUNK_BYTES = CHUNK_FRAMES * 2     // mono PCM-16
