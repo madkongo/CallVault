@@ -29,6 +29,16 @@ Opt-in setting, off by default; all three capture paths, both modes. Plan + deci
 one phone call and one WhatsApp call, and listen on headphones (you in one ear, them in the other) — then turn
 it off and confirm the next call is mono again.
 
+## 🔵 Resilient recording: a mid-call rebuild in another shape garbles the rest of the call — found 2026-11-08 (#74 work), not started
+
+`HandoffReceiver.superviseDrain` rebuilds a torn-down capture and drains it into the SAME pipe and encoder, but never
+checks the replacement's channel count / sample rate. Stereo capture rebuilt as mono (e.g. after a Bluetooth switch)
+is read as the wrong frames: the rest of the call comes out double-speed and garbled (recoverable by slowing it down).
+True with stereo output off. **Maintainer decision 2026-11-08:** do NOT ship a "stop cleanly" guard (it was built on
+the #74 branch as `4fe485c9` and removed) — do the proper fix on its own branch: keep recording across the rebuild in
+the right shape so the whole call is kept (e.g. a new pipe/segment per capture with its own channel count, or a
+converter). Area of the stuck-mic and 710 s→1 s bugs: test on a phone with a forced route change.
+
 ## 🔵 scrcpy fallback with stereo OFF still writes stereo at the mono bit rate — found 2026-11-08 (#74 work), not started
 
 The scrcpy path always writes two channels. When stereo output is off it gets the user's mono rate, so each side

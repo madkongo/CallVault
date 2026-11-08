@@ -11,7 +11,7 @@ heard on a real call yet.
 **Needed from the maintainer before this can continue:**
 1. **Call test on the OP9** (setting is already on): one phone call + one WhatsApp call; on headphones you should
    hear yourself in one ear and them in the other. Then switch it off and confirm the next call is normal mono.
-2. **Decision — handoff re-arm guard** (commit `4fe485c9`). Mid-call, resilient recording sometimes rebuilds the
+2. ~~**Decision — handoff re-arm guard**~~ **DECIDED 2026-11-08: taken out of this branch** (stereo-off stays identical to `main`); the proper fix is its own backlog item. Original question (commit `4fe485c9`): Mid-call, resilient recording sometimes rebuilds the
    capture; if the rebuild comes back in another shape (e.g. mono after a Bluetooth switch), `main` keeps going
    but reads it wrongly (rest of the call double-speed/garbled, recoverable by slowing down). The guard instead
    ends the recording cleanly there (rest of call lost). Applies with stereo OFF too.

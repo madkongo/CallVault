@@ -410,19 +410,6 @@ object HandoffReceiver {
                 closePipe(writeFd)
                 return
             }
-            // The encoder keeps reading this pipe in the first capture's frame shape. A replacement in
-            // another shape would turn the rest of the call into garbage at the wrong speed, so end
-            // cleanly instead: what was recorded so far stays playable. True with or without stereo
-            // output — a downmixed stereo capture rebuilt as mono is read just as wrongly.
-            geometry.rearmMismatch(next.geometry)?.let { why ->
-                AppLogger.e(T, "re-armed capture does not match the recording ($why) — the recording ends here")
-                // Stopped, not just dropped: only stop() finishes the mic app-op (see the rebuild below).
-                next.binder?.let { runCatching { HeldRecordControl.stop(it) } }
-                runCatching { next.cblk.close() }
-                isLive = false
-                closePipe(writeFd)
-                return
-            }
             // Let go of the dead track only once its replacement is in hand, so a failed rebuild does
             // not also throw away the reference that keeps the app's claim on the old one.
             val oldHeld = held

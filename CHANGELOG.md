@@ -18,10 +18,6 @@ All notable changes to CallVault are documented here. The format is based on
 
 ### Fixed
 
-- **A recording no longer turns to noise if the phone rebuilds the capture mid-call in a different format**
-  (resilient recording). It now ends cleanly, keeping everything recorded up to that point, and the microphone
-  is released.
-  <!-- 🧪 VERIFYING: unit test of the check only; the rebuild itself is rare and has not been forced on a phone. -->
 - **Merging two calls that were recorded differently now says why in plain words** (for example, one with each
   side on its own channel and one without) instead of showing codec details.
 - **With each side on its own channel, the details file (.json) gives the recording's real channel count and
