@@ -284,6 +284,8 @@ open class RecorderServiceImpl(private val apkPath: String) : IRecorderService.S
             return false
         }
         AppLogger.i(TAG, "startVoipRecording codec=$codec bitRate=$bitRate")
+        // So voipFarPartyHeard can never answer for a previous call if this one fails to open.
+        lastVoipSession = null
         // Heavy setup off the binder thread, matching startRecording.
         workerHandler.post {
             val active = runCatching {
