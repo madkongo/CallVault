@@ -366,3 +366,23 @@ Xiaomi/vivo China builds; GrapheneOS/Samsung expose it in the dialer), the one s
 setting durably** and we then **read the ROM's own recordings** ([[wifi-free-adb-bootstrap-impossible]] §2 ingest
 mode). That needs no adb after setup and no Wi-Fi ever, because we stop capturing audio ourselves entirely. Also
 ROM-gated, but a genuinely different architecture from re-arming adb.
+
+### RESULT 2026-11-08 — ❌ shell cannot set the reboot-surviving props on OxygenOS (measured, OP9)
+Ran the write step as shell (non-root) on the OP9. Both writes refused by the property service (SELinux):
+- `setprop persist.adb.tls_server.enable 1` → "Failed to set property … See dmesg" (readback empty).
+- `setprop service.adb.listen_addrs 127.0.0.1:5555` → same (readback empty).
+- `service.adb.tcp.port` was already `5555` and is the only adb property the shell may set here — the within-boot
+  one, which does NOT survive reboot.
+
+No reboot was needed: the write refusal settles it for this ROM. **The permanent-foothold idea is OnePlus-dead.**
+`adbd_prop` / `system_adbd_prop` are set-able only by adbd/root, and OnePlus does not define `persist.adb.tcp.port`
+at all. It could still pay off ONLY on a ROM that both (a) defines a reboot-surviving adbd port property and (b)
+leaves `set_prop` on it open to the `shell` domain — rare AOSP/IoT/TV-derived builds. So it degrades to a per-ROM
+probe (enumerate + try + report), never a mainstream win, and never on OnePlus/Oppo.
+
+**Bottom line of the whole re-sweep:** the invariant is confirmed yet again from a new angle. Non-root, zero-Wi-Fi,
+universal carrier-call capture does not exist, because the only non-root door to a shell-uid process is adbd and
+every durable, no-Wi-Fi way to open it is root/adbd-gated. The real remaining wins are engineering, not a bypass:
+(1) make within-boot loopback bulletproof and LOUD when it drops; (2) ship the two per-ROM probes (persist-port
+where a ROM allows it; OEM-recorder flip-and-ingest) as additive bonuses; (3) VoIP/app calls need no adb at all —
+keep that path frictionless. See [[wifi-free-adb-bootstrap-impossible]].
