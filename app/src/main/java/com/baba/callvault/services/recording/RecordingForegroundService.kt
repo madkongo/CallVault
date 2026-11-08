@@ -206,6 +206,9 @@ class RecordingForegroundService : Service() {
     @Volatile
     private var lastRouteObservation: WifiCallRoute.Observation? = null
 
+    /** This call's mode was seen in IN_CALL — the first half of the Samsung Wi-Fi-call flip (#45). */
+    private var inCallSeenThisCall = false
+
     /** When the carrier capture started (elapsedRealtime); the switch window counts from here. */
     @Volatile
     private var captureStartedAt = 0L
@@ -522,6 +525,7 @@ class RecordingForegroundService : Service() {
         PendingFlags.beginCall()
         switchedToMix = false
         lastRouteObservation = null
+        inCallSeenThisCall = false
 
         try {
             // 2. Try to start the pipeline. Pass our stop flag so the (slow, daemon-cold-start) start
@@ -589,7 +593,11 @@ class RecordingForegroundService : Service() {
         val (raw, seen) = WifiCallRoute.snapshot(
             this, switchedToMix, forced, appPreferences.isVoipRecordingEnabled(), msSinceCaptureStart
         )
-        val inputs = raw.copy(daemonConnected = raw.daemonConnected && engineCanSwitch)
+        if (raw.mode == android.media.AudioManager.MODE_IN_CALL) inCallSeenThisCall = true
+        val inputs = raw.copy(
+            daemonConnected = raw.daemonConnected && engineCanSwitch,
+            inCallSeenFirst = inCallSeenThisCall,
+        )
         val decision = WifiCallRoute.decide(inputs)
         val observation = WifiCallRoute.Observation(decision, seen)
         if (WifiCallRoute.isWorthLogging(lastRouteObservation, observation)) {

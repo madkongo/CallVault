@@ -63,16 +63,31 @@ class WifiCallRouteTest {
         // system_server, which is not a player, so vcPlay=0 for the whole call; voiceNet even says LTE.
         // The only marker is the mode flipping to IN_COMMUNICATION ~0.4 s into a carrier call. The
         // app-call capture records both sides there (tester, with the forced route, 2026-11-04).
-        val d = decide(wifiCall.copy(voiceCallPlayers = 0))
+        val d = decide(wifiCall.copy(voiceCallPlayers = 0, inCallSeenFirst = true))
         assertEquals(Route.APP_CALL_MIX, d.route)
         assertEquals(Reason.WIFI_CALL, d.reason)
+    }
+
+    @Test
+    fun `with no voice player, an app call already up does not pass for a Wi-Fi call`() {
+        // An unrecorded WhatsApp call (ignored contact, unanswered Ask me) leaves the mode in
+        // IN_COMMUNICATION; answering a phone call on top of it must not switch, or the phone call loses
+        // its far side. The Fold2's Wi-Fi call goes IN_CALL first and flips ~0.6 s later; this never did.
+        val d = decide(wifiCall.copy(voiceCallPlayers = 0, inCallSeenFirst = false))
+        assertEquals(Route.CALL_SOURCE, d.route)
+        assertEquals(Reason.NO_IN_CALL_BEFORE, d.reason)
+    }
+
+    @Test
+    fun `with a voice player the 31 Oct rule is unchanged and needs no flip`() {
+        assertEquals(Route.APP_CALL_MIX, decide(wifiCall.copy(voiceCallPlayers = 1, inCallSeenFirst = false)).route)
     }
 
     @Test
     fun `without a voice player other makers still only log`() {
         // OnePlus/Qualcomm Wi-Fi calls run in IN_CALL and record fine on the call source; a forced
         // switch there loses the far side (measured on the OP9). The Samsung gate keeps them out.
-        assertEquals(Reason.NOT_SAMSUNG, decide(wifiCall.copy(voiceCallPlayers = 0, isSamsung = false)).reason)
+        assertEquals(Reason.NOT_SAMSUNG, decide(wifiCall.copy(voiceCallPlayers = 0, inCallSeenFirst = true, isSamsung = false)).reason)
     }
 
     @Test
@@ -135,18 +150,19 @@ class WifiCallRouteTest {
         val modes = listOf(AudioManager.MODE_NORMAL, AudioManager.MODE_IN_CALL, AudioManager.MODE_IN_COMMUNICATION)
         var switching = 0
         for (mode in modes) for (managed in bools) for (players in listOf(0, 2)) for (armed in bools)
-            for (daemon in bools) for (switched in bools) for (held in bools) {
+            for (daemon in bools) for (switched in bools) for (held in bools) for (seen in bools) {
                 val d = decide(
                     WifiCallRoute.Inputs(mode, managed, players, armed, daemon, switched, held, forced = false,
-                        msSinceCaptureStart = 400, isSamsung = true)
+                        msSinceCaptureStart = 400, isSamsung = true, inCallSeenFirst = seen)
                 )
                 if (d.route == Route.APP_CALL_MIX) {
                     switching++
                     assertEquals(AudioManager.MODE_IN_COMMUNICATION, mode)
-                    assert(managed && armed && daemon && !switched && !held)
+                    assert(managed && armed && daemon && !switched && !held && (players > 0 || seen))
                 }
             }
-        assertEquals("one row per player count: a voice player is no longer required", 2, switching)
+        // A player (31 Oct rule), with or without the flip; or no player but IN_CALL seen first (Fold2).
+        assertEquals(3, switching)
     }
 
     @Test

@@ -47,6 +47,8 @@ object WifiCallRoute {
         NOT_MANAGED,
         WINDOW_PASSED,
         MODE_NOT_IN_COMMUNICATION,
+        /** No voice player, and the mode never went through IN_CALL first: likely an app call already up. */
+        NO_IN_CALL_BEFORE,
         APP_CALL_HELD,
         APP_CALLS_OFF,
         DAEMON_DOWN,
@@ -74,6 +76,8 @@ object WifiCallRoute {
         /** Time since the carrier capture started; 0 at START. */
         val msSinceCaptureStart: Long,
         val isSamsung: Boolean,
+        /** This call's mode was IN_CALL at some earlier check, before it flipped to IN_COMMUNICATION. */
+        val inCallSeenFirst: Boolean = false,
     )
 
     fun decide(i: Inputs): Decision {
@@ -87,6 +91,11 @@ object WifiCallRoute {
         // yet the app-call capture records both sides there. The S24/S25 do list one; both now switch.
         // voiceCallPlayers stays an input for the log line only.
         if (!i.forced && i.mode != AudioManager.MODE_IN_COMMUNICATION) return stay(Reason.MODE_NOT_IN_COMMUNICATION)
+        // Without a player, the mode must have FLIPPED: IN_CALL first, then IN_COMMUNICATION, as the Fold2's
+        // Wi-Fi calls do (~0.6 s in). An app call that is up but not recorded (ignored caller, unanswered
+        // "Ask me") holds IN_COMMUNICATION from before the phone call; switching then would cost the phone
+        // call its far side. Review 2026-11-08, HIGH-2.
+        if (!i.forced && i.voiceCallPlayers < 1 && !i.inCallSeenFirst) return stay(Reason.NO_IN_CALL_BEFORE)
         if (i.appCallHeld) return stay(Reason.APP_CALL_HELD)
         if (!i.voipArmed) return stay(Reason.APP_CALLS_OFF)
         if (!i.daemonConnected) return stay(Reason.DAEMON_DOWN)
