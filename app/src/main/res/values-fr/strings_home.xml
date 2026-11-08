@@ -131,6 +131,21 @@
     <string name="merge_note_will_keep">Les autres appels sont également conservés sur le téléphone.</string>
     <string name="home_scroll_to_top">Haut</string>
     <string name="home_whatsnew_full_notes">Notes de version complètes</string>
+    <string name="whatsnew_250_title">Garder ou supprimer après l’appel, et partager ce qu’il vous faut</string>
+    <string-array name="whatsnew_250_items">
+        <item>Garder ou supprimer : CallVault peut demander après chaque appel s’il faut garder l’enregistrement (Paramètres ▸ Enregistrement)</item>
+        <item>Partagez ensemble l’enregistrement, la transcription et le résumé d’un appel — ou seulement une partie de l’enregistrement</item>
+        <item>Historique des appels : chaque appel du journal du téléphone, à côté de son enregistrement</item>
+        <item>Recherche dans les Paramètres</item>
+        <item>Retranscrire, et tirer vers le bas sur n’importe quelle page pour l’actualiser</item>
+        <item>Votre propre format de nom de fichier, et une mention facultative de la SIM utilisée pour chaque appel</item>
+        <item>Le bengali pour l’app et la transcription</item>
+        <item>Les appels passés via Google Voice gardent le numéro composé</item>
+        <item>Mode Shizuku : le micro ne reste plus allumé après un appel, et plus de plantage au redémarrage de l’enregistreur</item>
+        <item>Les téléphones Honor qui mettent CallVault en pause pendant un appel enregistrent de façon plus fiable</item>
+        <item>Drive : les enregistrements ne se perdent plus quand le dossier Drive est aussi le dossier des enregistrements</item>
+        <item>Quand un appel n’a pas été enregistré parce que CallVault avait été arrêté de force, la carte le dit</item>
+    </string-array>
     <string name="whatsnew_249_title">Appels d\'applis plus clairs, et prêt juste après les mises à jour</string>
     <string-array name="whatsnew_249_items">
         <item>Moins d\'écho sur les appels d\'applis avec les téléphones dont le micro capte l\'écouteur</item>

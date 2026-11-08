@@ -47,6 +47,11 @@ object ReleaseHighlights {
 
     private val ALL = listOf(
         ReleaseHighlight(
+            version = "2.5.0",
+            title = R.string.whatsnew_250_title,
+            items = R.array.whatsnew_250_items,
+        ),
+        ReleaseHighlight(
             version = "2.4.9",
             title = R.string.whatsnew_249_title,
             items = R.array.whatsnew_249_items,

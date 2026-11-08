@@ -130,6 +130,21 @@
     <string name="merge_note_will_keep">Le altre chiamate restano anche sul telefono.</string>
     <string name="home_scroll_to_top">Su</string>
     <string name="home_whatsnew_full_notes">Note di rilascio complete</string>
+    <string name="whatsnew_250_title">Tieni o elimina dopo la chiamata, e condividi ciò che ti serve</string>
+    <string-array name="whatsnew_250_items">
+        <item>Tieni o elimina: CallVault può chiedere dopo ogni chiamata se tenere la registrazione (Impostazioni ▸ Registrazione)</item>
+        <item>Condividi insieme registrazione, trascrizione e riepilogo di una chiamata — o solo una parte della registrazione</item>
+        <item>Cronologia chiamate: ogni chiamata del registro del telefono accanto alla sua registrazione</item>
+        <item>Ricerca nelle Impostazioni</item>
+        <item>Trascrivi di nuovo, e trascina verso il basso su qualsiasi pagina per aggiornarla</item>
+        <item>Il tuo formato per i nomi dei file, e un’etichetta facoltativa con la SIM usata da ogni chiamata</item>
+        <item>Bengalese per l’app e la trascrizione</item>
+        <item>Le chiamate fatte con Google Voice mantengono il numero che hai composto</item>
+        <item>Modalità Shizuku: il microfono non resta più acceso dopo una chiamata, e niente più arresti al riavvio del registratore</item>
+        <item>I telefoni Honor che mettono in pausa CallVault durante una chiamata registrano in modo più affidabile</item>
+        <item>Drive: le registrazioni non si perdono più quando la cartella di Drive è anche quella delle registrazioni</item>
+        <item>Se una chiamata non è stata registrata perché CallVault era stato arrestato forzatamente, la scheda lo dice</item>
+    </string-array>
     <string name="whatsnew_249_title">Chiamate delle app più chiare e pronto subito dopo gli aggiornamenti</string>
     <string-array name="whatsnew_249_items">
         <item>Meno eco nelle chiamate delle app sui telefoni il cui microfono capta la capsula auricolare</item>

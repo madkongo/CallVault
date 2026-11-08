@@ -130,6 +130,21 @@
     <string name="merge_note_will_keep">Pozostałe rozmowy zostaną też zachowane w telefonie.</string>
     <string name="home_scroll_to_top">Do góry</string>
     <string name="home_whatsnew_full_notes">Pełne informacje o wydaniu</string>
+    <string name="whatsnew_250_title">Zachowaj lub usuń po rozmowie i udostępniaj to, czego potrzebujesz</string>
+    <string-array name="whatsnew_250_items">
+        <item>Zachowaj lub usuń: CallVault może po każdej rozmowie zapytać, czy zachować nagranie (Ustawienia ▸ Nagrywanie)</item>
+        <item>Udostępnij razem nagranie, transkrypcję i podsumowanie rozmowy — albo tylko fragment nagrania</item>
+        <item>Historia połączeń: każde połączenie z rejestru telefonu obok swojego nagrania</item>
+        <item>Wyszukiwanie: Ustawienia</item>
+        <item>Ponowna transkrypcja i przeciągnięcie w dół na dowolnej stronie, by ją odświeżyć</item>
+        <item>Własny format nazw plików i opcjonalna informacja, której karty SIM użyto w rozmowie</item>
+        <item>Bengalski w aplikacji i w transkrypcji</item>
+        <item>Połączenia przez Google Voice zachowują wybrany przez Ciebie numer</item>
+        <item>Tryb Shizuku: mikrofon nie zostaje już włączony po rozmowie i nie ma awarii przy restarcie rejestratora</item>
+        <item>Telefony Honor, które wstrzymują CallVault w trakcie rozmowy, nagrywają niezawodniej</item>
+        <item>Drive: nagrania już nie giną, gdy folder Drive jest też folderem nagrań</item>
+        <item>Gdy rozmowa nie została nagrana, bo CallVault był wymuszenie zatrzymany, karta o tym mówi</item>
+    </string-array>
     <string name="whatsnew_249_title">Wyraźniejsze połączenia w aplikacjach i gotowość zaraz po aktualizacji</string>
     <string-array name="whatsnew_249_items">
         <item>Mniej echa w połączeniach w aplikacjach na telefonach, których mikrofon łapie dźwięk z głośnika rozmów</item>

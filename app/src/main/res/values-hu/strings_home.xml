@@ -130,6 +130,21 @@
     <string name="merge_note_will_keep">A többi hívás is a telefonon marad.</string>
     <string name="home_scroll_to_top">Az elejére</string>
     <string name="home_whatsnew_full_notes">Teljes kiadási jegyzék</string>
+    <string name="whatsnew_250_title">Hívás után megtartás vagy törlés, és megosztás, amire szükséged van</string>
+    <string-array name="whatsnew_250_items">
+        <item>Megtartás vagy törlés: a CallVault minden hívás után megkérdezheti, megtartsa-e a felvételt (Beállítások ▸ Felvétel)</item>
+        <item>Egy hívás felvételét, átiratát és összefoglalóját együtt is megoszthatod — vagy a felvételnek csak egy részét</item>
+        <item>Híváslista: a telefon hívásnaplójának minden hívása a felvétele mellett</item>
+        <item>Keresés: Beállítások</item>
+        <item>Újraátírás, és bármelyik oldal frissítése lefelé húzással</item>
+        <item>Saját fájlnévformátum, és opcionális jelzés arról, melyik SIM-mel ment a hívás</item>
+        <item>Bengáli nyelv az alkalmazáshoz és az átíráshoz</item>
+        <item>A Google Voice-on indított hívások megtartják a tárcsázott számot</item>
+        <item>Shizuku mód: a mikrofon már nem marad bekapcsolva hívás után, és nincs összeomlás a rögzítő újraindításakor</item>
+        <item>Azok a Honor telefonok, amelyek hívás közben szüneteltetik a CallVaultot, megbízhatóbban rögzítenek</item>
+        <item>Drive: a felvételek már nem vesznek el, ha a Drive-mappa egyben a felvételek mappája</item>
+        <item>Ha egy hívás azért nem lett rögzítve, mert a CallVaultot kényszerítve leállították, a kártya ezt jelzi</item>
+    </string-array>
     <string name="whatsnew_249_title">Tisztább alkalmazáshívások, és frissítés után azonnal kész</string>
     <string-array name="whatsnew_249_items">
         <item>Kevesebb visszhang alkalmazáshívásoknál azokon a telefonokon, amelyek mikrofonja felveszi a hallgató hangját</item>

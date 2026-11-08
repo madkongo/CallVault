@@ -130,6 +130,21 @@
     <string name="merge_note_will_keep">其余通话也会保留在手机上。</string>
     <string name="home_scroll_to_top">回到顶部</string>
     <string name="home_whatsnew_full_notes">完整发行说明</string>
+    <string name="whatsnew_250_title">通话结束后保留或删除，按需分享</string>
+    <string-array name="whatsnew_250_items">
+        <item>保留或删除：每次通话后 CallVault 可以询问是否保留录音（设置 ▸ 录音）</item>
+        <item>一起分享通话的录音、转写和摘要——或只分享录音的一段</item>
+        <item>通话记录：手机通话记录中的每一通电话，旁边是它的录音</item>
+        <item>设置内搜索</item>
+        <item>重新转写，在任意页面下拉即可刷新</item>
+        <item>自定义文件名格式，以及可选的每通电话所用 SIM 卡标记</item>
+        <item>孟加拉语界面与转写</item>
+        <item>通过 Google Voice 拨出的电话保留你拨打的号码</item>
+        <item>Shizuku 模式：通话后麦克风不再保持开启，录音器重启时也不再崩溃</item>
+        <item>会在通话中暂停 CallVault 的荣耀手机，录音更可靠</item>
+        <item>Drive：当 Drive 文件夹同时是录音文件夹时，录音不再丢失</item>
+        <item>如果因为 CallVault 被强行停止而没有录到某通电话，卡片会说明</item>
+    </string-array>
     <string name="whatsnew_249_title">应用通话更清晰，更新后立即就绪</string>
     <string-array name="whatsnew_249_items">
         <item>在麦克风会收进听筒声音的手机上，应用通话回声更少</item>

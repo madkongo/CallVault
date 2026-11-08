@@ -130,6 +130,21 @@
     <string name="merge_note_will_keep">Die anderen Anrufe bleiben ebenfalls auf dem Telefon.</string>
     <string name="home_scroll_to_top">Nach oben</string>
     <string name="home_whatsnew_full_notes">Vollständige Versionshinweise</string>
+    <string name="whatsnew_250_title">Nach dem Anruf behalten oder löschen – und teilen, was du brauchst</string>
+    <string-array name="whatsnew_250_items">
+        <item>Behalten oder löschen: CallVault kann nach jedem Anruf fragen, ob die Aufnahme bleiben soll (Einstellungen ▸ Aufnahme)</item>
+        <item>Aufnahme, Transkript und Zusammenfassung eines Anrufs zusammen teilen – oder nur einen Teil der Aufnahme</item>
+        <item>Anrufverlauf: jeder Anruf aus dem Anrufprotokoll neben seiner Aufnahme</item>
+        <item>Suche in den Einstellungen</item>
+        <item>Erneut transkribieren, und zum Aktualisieren auf jeder Seite nach unten ziehen</item>
+        <item>Eigenes Dateinamenformat und eine optionale Anzeige, welche SIM jeder Anruf genutzt hat</item>
+        <item>Bengalisch für die App und die Transkription</item>
+        <item>Anrufe über Google Voice behalten die Nummer, die du gewählt hast</item>
+        <item>Shizuku-Modus: Das Mikrofon bleibt nach einem Anruf nicht mehr an, und kein Absturz mehr beim Neustart des Rekorders</item>
+        <item>Honor-Telefone, die CallVault während eines Anrufs pausieren, nehmen zuverlässiger auf</item>
+        <item>Drive: Aufnahmen gehen nicht mehr verloren, wenn der Drive-Ordner auch der Aufnahmeordner ist</item>
+        <item>Wurde ein Anruf nicht aufgenommen, weil CallVault zwangsweise beendet war, sagt die Karte das jetzt</item>
+    </string-array>
     <string name="whatsnew_249_title">Klarere App-Anrufe und sofort bereit nach Updates</string>
     <string-array name="whatsnew_249_items">
         <item>Weniger Echo bei App-Anrufen auf Handys, deren Mikrofon die Hörmuschel mit aufnimmt</item>

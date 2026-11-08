@@ -130,6 +130,21 @@
     <string name="merge_note_will_keep">As outras chamadas também são mantidas no telefone.</string>
     <string name="home_scroll_to_top">Topo</string>
     <string name="home_whatsnew_full_notes">Notas de versão completas</string>
+    <string name="whatsnew_250_title">Manter ou apagar depois da chamada, e compartilhar o que você precisa</string>
+    <string-array name="whatsnew_250_items">
+        <item>Manter ou apagar: o CallVault pode perguntar após cada chamada se a gravação fica (Configurações ▸ Gravação)</item>
+        <item>Compartilhe juntos a gravação, a transcrição e o resumo de uma chamada — ou só um trecho da gravação</item>
+        <item>Histórico de chamadas: cada chamada do registro do celular ao lado da sua gravação</item>
+        <item>Busca em Configurações</item>
+        <item>Transcrever de novo, e puxe para baixo em qualquer página para atualizá-la</item>
+        <item>Seu próprio formato de nome de arquivo, e uma etiqueta opcional com o chip usado em cada chamada</item>
+        <item>Bengali para o app e para a transcrição</item>
+        <item>Chamadas feitas pelo Google Voice mantêm o número que você discou</item>
+        <item>Modo Shizuku: o microfone não fica mais ligado depois da chamada, e acabou o travamento ao reiniciar o gravador</item>
+        <item>Celulares Honor que pausam o CallVault durante a chamada gravam de forma mais confiável</item>
+        <item>Drive: as gravações não se perdem mais quando a pasta do Drive é também a pasta de gravações</item>
+        <item>Quando uma chamada não foi gravada porque o CallVault tinha sido forçado a parar, o cartão avisa</item>
+    </string-array>
     <string name="whatsnew_249_title">Chamadas de apps mais claras e pronto logo após atualizar</string>
     <string-array name="whatsnew_249_items">
         <item>Menos eco nas chamadas de apps em celulares cujo microfone capta o alto-falante de ouvido</item>

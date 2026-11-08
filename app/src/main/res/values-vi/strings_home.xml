@@ -130,6 +130,21 @@
     <string name="merge_note_will_keep">Các cuộc gọi kia cũng được giữ lại trên máy.</string>
     <string name="home_scroll_to_top">Lên đầu</string>
     <string name="home_whatsnew_full_notes">Ghi chú phát hành đầy đủ</string>
+    <string name="whatsnew_250_title">Giữ hoặc xóa sau cuộc gọi, và chia sẻ đúng thứ bạn cần</string>
+    <string-array name="whatsnew_250_items">
+        <item>Giữ hoặc xóa: sau mỗi cuộc gọi, CallVault có thể hỏi bạn có giữ bản ghi không (Cài đặt ▸ Ghi âm)</item>
+        <item>Chia sẻ cùng lúc bản ghi, bản chép lời và bản tóm tắt của cuộc gọi — hoặc chỉ một đoạn của bản ghi</item>
+        <item>Lịch sử cuộc gọi: mọi cuộc gọi trong nhật ký điện thoại, cạnh bản ghi của nó</item>
+        <item>Tìm kiếm trong Cài đặt</item>
+        <item>Chép lời lại, và kéo xuống trên bất kỳ trang nào để làm mới</item>
+        <item>Định dạng tên tệp của riêng bạn, và nhãn tùy chọn cho biết mỗi cuộc gọi dùng SIM nào</item>
+        <item>Tiếng Bengali cho ứng dụng và cho chép lời</item>
+        <item>Cuộc gọi qua Google Voice giữ đúng số bạn đã quay</item>
+        <item>Chế độ Shizuku: micrô không còn bật sau cuộc gọi, và hết lỗi treo khi khởi động lại trình ghi</item>
+        <item>Điện thoại Honor tạm dừng CallVault trong cuộc gọi giờ ghi âm ổn định hơn</item>
+        <item>Drive: bản ghi không còn bị mất khi thư mục Drive cũng là thư mục ghi âm</item>
+        <item>Khi một cuộc gọi không được ghi vì CallVault đã bị buộc dừng, thẻ sẽ cho biết</item>
+    </string-array>
     <string name="whatsnew_249_title">Cuộc gọi qua ứng dụng rõ hơn, sẵn sàng ngay sau khi cập nhật</string>
     <string-array name="whatsnew_249_items">
         <item>Ít tiếng vọng hơn trong cuộc gọi qua ứng dụng trên điện thoại có micrô thu cả tiếng loa thoại</item>

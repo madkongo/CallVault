@@ -130,6 +130,21 @@
     <string name="merge_note_will_keep">Las demás llamadas también se conservan en el teléfono.</string>
     <string name="home_scroll_to_top">Arriba</string>
     <string name="home_whatsnew_full_notes">Notas de versión completas</string>
+    <string name="whatsnew_250_title">Conservar o borrar al terminar la llamada, y compartir lo que necesites</string>
+    <string-array name="whatsnew_250_items">
+        <item>Conservar o borrar: CallVault puede preguntar tras cada llamada si guardas la grabación (Ajustes ▸ Grabación)</item>
+        <item>Comparte juntos la grabación, la transcripción y el resumen de una llamada, o solo una parte de la grabación</item>
+        <item>Historial de llamadas: cada llamada del registro del teléfono junto a su grabación</item>
+        <item>Búsqueda en Ajustes</item>
+        <item>Transcribir de nuevo, y desliza hacia abajo en cualquier página para actualizarla</item>
+        <item>Tu propio formato de nombre de archivo, y una etiqueta opcional con la SIM de cada llamada</item>
+        <item>Bengalí para la app y la transcripción</item>
+        <item>Las llamadas hechas con Google Voice conservan el número que marcaste</item>
+        <item>Modo Shizuku: el micrófono ya no se queda encendido tras una llamada, y no más cierres al reiniciar el grabador</item>
+        <item>Los teléfonos Honor que pausan CallVault durante una llamada graban de forma más fiable</item>
+        <item>Drive: las grabaciones ya no se pierden cuando la carpeta de Drive es también la de grabaciones</item>
+        <item>Si una llamada no se grabó porque CallVault se había forzado a detener, la tarjeta lo indica</item>
+    </string-array>
     <string name="whatsnew_249_title">Llamadas de apps más claras y listo justo después de actualizar</string>
     <string-array name="whatsnew_249_items">
         <item>Menos eco en las llamadas de apps en teléfonos cuyo micrófono capta el auricular</item>
