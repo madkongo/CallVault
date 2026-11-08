@@ -101,6 +101,20 @@ data class HandoffGeometry(
         else -> null
     }
 
+    /**
+     * Why a re-armed [replacement] cannot continue the recording this geometry started, or null if it can.
+     *
+     * The rebuilt capture is drained into the SAME pipe, read by the SAME encoder, which was configured
+     * for this geometry's frame shape. A replacement with another channel count is read as the wrong
+     * frames (mono read as stereo: the rest of the call garbled at the wrong speed), and another rate
+     * plays at the wrong speed. The ring size may change freely — it is not part of the stream.
+     */
+    fun rearmMismatch(replacement: HandoffGeometry): String? = when {
+        replacement.channels != channels -> "channels $channels -> ${replacement.channels}"
+        replacement.sampleRate != sampleRate -> "rate $sampleRate -> ${replacement.sampleRate}"
+        else -> null
+    }
+
     companion object {
         /**
          * Byte offset of the audio buffer for Android 13+ — kept for callers that need a constant.

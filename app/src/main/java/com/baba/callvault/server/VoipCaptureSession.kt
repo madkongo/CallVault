@@ -112,46 +112,18 @@ internal class VoipCaptureSession(
     /**
      * Creates and configures the encoder for [channels].
      *
-     * Mono is exactly what this path always did: one configure at the user's rate. Stereo (#74) is new
-     * ground for this encoder, so it gets what the carrier path learned the hard way (issues #18, #28c):
-     * the rate is brought inside what the encoder advertises, and a refused configure is retried once at
-     * the codec's own recommended rate — both lifted to the stereo floor. If that fails too, the caller
-     * records mono instead.
+     * Mono is exactly what this path always did: one configure at the user's rate. Stereo (#74) goes
+     * through [StereoEncoder], which clamps and retries at the stereo floor; if that fails too, the
+     * caller records mono instead.
      */
     private fun openEncoder(mime: String, channels: Int): MediaCodec {
         if (channels == StereoBitRate.MONO) {
             return MediaCodec.createEncoderByType(mime).apply {
-                configure(formatFor(mime, bitRate, channels), null, null, MediaCodec.CONFIGURE_FLAG_ENCODE)
+                configure(StereoEncoder.format(mime, SAMPLE_RATE, channels, bitRate, MAX_INPUT_SIZE), null, null, MediaCodec.CONFIGURE_FLAG_ENCODE)
             }
         }
-        val first = EncoderLimits.resolveBitRate(
-            mime, StereoBitRate.requestedRate(codec, bitRate, channels), SAMPLE_RATE, channels,
-        )
-        val rates = listOf(first, StereoBitRate.requestedRate(codec, codec.defaultBitRate, channels)).distinct()
-        var lastFailure: Throwable? = null
-        for (rate in rates) {
-            val c = MediaCodec.createEncoderByType(mime)
-            val configured = runCatching {
-                c.configure(formatFor(mime, rate, channels), null, null, MediaCodec.CONFIGURE_FLAG_ENCODE)
-            }
-            if (configured.isSuccess) {
-                if (rate != first) AppLogger.w(TAG, "Stereo encoder refused $first bps; recording at $rate bps")
-                return c
-            }
-            runCatching { c.release() } // a refused configure leaves it unusable
-            lastFailure = configured.exceptionOrNull()
-        }
-        throw IllegalStateException("No stereo $mime encoder would configure at ${rates.joinToString(" or ")} bps", lastFailure)
+        return StereoEncoder.open(mime, SAMPLE_RATE, codec, bitRate, MAX_INPUT_SIZE) { AppLogger.w(TAG, it) }
     }
-
-    private fun formatFor(mime: String, rate: Int, channels: Int): MediaFormat =
-        MediaFormat.createAudioFormat(mime, SAMPLE_RATE, channels).apply {
-            setInteger(MediaFormat.KEY_BIT_RATE, rate)
-            if (mime == MediaFormat.MIMETYPE_AUDIO_AAC) {
-                setInteger(MediaFormat.KEY_AAC_PROFILE, MediaCodecInfo.CodecProfileLevel.AACObjectLC)
-            }
-            setInteger(MediaFormat.KEY_MAX_INPUT_SIZE, MAX_INPUT_SIZE)
-        }
 
     override fun start() {
         try {

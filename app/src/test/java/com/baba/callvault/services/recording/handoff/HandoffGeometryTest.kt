@@ -210,4 +210,12 @@ class HandoffGeometryTest {
         }
         assertEquals(expected, realistic().dataOff)
     }
+
+    @Test
+    fun `a re-armed capture must match the stream the encoder is already reading`() {
+        val stereo = HandoffGeometry.of(frameCount = 1920, sampleRate = 48_000, channels = 2, cblkSize = 1 shl 16)
+        assertNull("a different ring size is fine", stereo.rearmMismatch(stereo.copy(frameCount = 3840)))
+        assertNotNull("stereo rebuilt as mono would be read as the wrong frames", stereo.rearmMismatch(stereo.copy(channels = 1)))
+        assertNotNull("a new rate would play at the wrong speed", stereo.rearmMismatch(stereo.copy(sampleRate = 16_000)))
+    }
 }

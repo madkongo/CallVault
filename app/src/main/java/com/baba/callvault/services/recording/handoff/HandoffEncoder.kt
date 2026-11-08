@@ -13,6 +13,10 @@ import android.media.MediaCodecInfo
 import android.media.MediaFormat
 import android.media.MediaMuxer
 import com.baba.callvault.data.transcripts.CapturedSpeakerTurns
+import com.baba.callvault.integrations.scrcpy.ScrcpyAudioCodec
+import com.baba.callvault.server.EncoderLimits
+import com.baba.callvault.server.StereoBitRate
+import com.baba.callvault.server.StereoEncoder
 import com.baba.callvault.server.speakers.SpeakerTurnCodec
 import com.baba.callvault.server.speakers.SpeakerTurnDetector
 import com.baba.callvault.utils.AppLogger
@@ -34,7 +38,10 @@ class HandoffEncoder(
     private val sampleRate: Int = 16_000,
     /** Channels in the incoming PCM stream (1 mono, 2 interleaved stereo). */
     private val captureChannels: Int = 1,
-    /** true → downmix stereo to mono (prod). false → encode all captured channels (diagnostic: keep L/R). */
+    /**
+     * true → downmix stereo to mono (the default file). false → keep L/R apart (#74 stereo output),
+     * when the encoder accepts two channels; otherwise it still records mono.
+     */
     private val downmixToMono: Boolean = true,
     private val mime: String = MediaFormat.MIMETYPE_AUDIO_AAC,
     private val muxerFormat: Int = MediaMuxer.OutputFormat.MUXER_OUTPUT_MPEG_4,
@@ -50,19 +57,22 @@ class HandoffEncoder(
         private set
 
     fun encodeBlocking() {
-        val downmix = downmixToMono && captureChannels == 2
-        val encodeChannels = if (downmix) 1 else captureChannels
+        var encodeChannels = StereoBitRate.encodeChannels(!downmixToMono, captureChannels) {
+            EncoderLimits.supportsFormat(mime, sampleRate, StereoBitRate.STEREO)
+        }
+        if (!downmixToMono && encodeChannels == StereoBitRate.MONO) {
+            AppLogger.w(TAG, "Stereo output asked for but not possible here (captureCh=$captureChannels); recording mono")
+        }
+        val enc = runCatching { openEncoder(encodeChannels) }.getOrElse { refused ->
+            // A stereo configure the device declines must not cost the call: record it mono instead.
+            if (encodeChannels == StereoBitRate.MONO) throw refused
+            AppLogger.w(TAG, "Stereo encode refused (${refused.message}); recording mono instead")
+            encodeChannels = StereoBitRate.MONO
+            openEncoder(encodeChannels)
+        }
+        val stereoCapture = captureChannels == StereoBitRate.STEREO
+        val downmix = stereoCapture && encodeChannels == StereoBitRate.MONO
         val outFrameBytes = encodeChannels * 2 // PCM-16 output frame size
-        val format = MediaFormat.createAudioFormat(mime, sampleRate, encodeChannels).apply {
-            setInteger(MediaFormat.KEY_BIT_RATE, bitRate)
-            if (mime == MediaFormat.MIMETYPE_AUDIO_AAC) {
-                setInteger(MediaFormat.KEY_AAC_PROFILE, MediaCodecInfo.CodecProfileLevel.AACObjectLC)
-            }
-            setInteger(MediaFormat.KEY_MAX_INPUT_SIZE, MAX_INPUT_SIZE)
-        }
-        val enc = MediaCodec.createEncoderByType(mime).apply {
-            configure(format, null, null, MediaCodec.CONFIGURE_FLAG_ENCODE)
-        }
         val mux = MediaMuxer(outFd, muxerFormat)
         enc.start()
         AppLogger.i(TAG, "HandoffEncoder started: mime=$mime rate=$sampleRate captureCh=$captureChannels encodeCh=$encodeChannels bitRate=$bitRate")
@@ -73,9 +83,10 @@ class HandoffEncoder(
         val pcm = ByteArray(READ_CHUNK_BYTES)
         val mono = ByteArray(READ_CHUNK_BYTES / 2) // downmix target (stereo → half the bytes)
         // Who was speaking when, taken from the same frames and at the same moment as the direct
-        // path takes it: after the capture, before the downmix destroys the separation. Only a
-        // stereo capture carries it — a mono one has nothing to compare.
-        val speakers = if (downmix) SpeakerTurnDetector(sampleRate) else null
+        // path takes it: after the capture, before any downmix destroys the separation. Keyed on the
+        // CAPTURE — keying it on the downmix is what cost the 2026-09-15 stereo probe its labels on
+        // carrier calls. Only a stereo capture carries it — a mono one has nothing to compare.
+        val speakers = if (stereoCapture) SpeakerTurnDetector(sampleRate) else null
         CapturedSpeakerTurns.clear()
 
         try {
@@ -136,6 +147,20 @@ class HandoffEncoder(
     }
 
     /** Reads into [buf] and returns a byte count that is a whole multiple of [align] (or -1 at EOF). */
+    /**
+     * Mono: one configure at [bitRate], exactly as before #74. Stereo: [StereoEncoder]'s clamp and floored
+     * retry; it throws if both are refused, and [encodeBlocking] then records mono.
+     */
+    private fun openEncoder(channels: Int): MediaCodec {
+        val codec = ScrcpyAudioCodec.entries.firstOrNull { it.mimeType == mime }
+        if (channels == StereoBitRate.MONO || codec == null) {
+            return MediaCodec.createEncoderByType(mime).apply {
+                configure(StereoEncoder.format(mime, sampleRate, channels, bitRate, MAX_INPUT_SIZE), null, null, MediaCodec.CONFIGURE_FLAG_ENCODE)
+            }
+        }
+        return StereoEncoder.open(mime, sampleRate, codec, bitRate, MAX_INPUT_SIZE) { AppLogger.w(TAG, it) }
+    }
+
     private fun readFull(buf: ByteArray, align: Int): Int {
         var n = pcmIn.read(buf, 0, buf.size)
         if (n < 0) return -1

@@ -364,7 +364,7 @@ class AudioRecordingEngine {
                 mode = preferences.getPrivilegedMode(),
                 appGetsPaused = appGetsPaused,
             ) &&
-            startHandoffPipeline(context, audioSourceEnum, codecEnum, bitRate, isCancelled)
+            startHandoffPipeline(context, audioSourceEnum, codecEnum, bitRate, recordStereo, isCancelled)
         ) {
             handoffMode = true
             currentCodecEnum = codecEnum
@@ -531,6 +531,7 @@ class AudioRecordingEngine {
         audioSourceEnum: ScrcpyAudioSource,
         codecEnum: ScrcpyAudioCodec,
         bitRate: Int,
+        recordStereo: Boolean,
         isCancelled: () -> Boolean
     ): Boolean {
         AppLogger.i(TAG, "Ensuring recorder daemon is running (handoff)")
@@ -555,8 +556,8 @@ class AudioRecordingEngine {
             ?: run { AppLogger.w(TAG, "Handoff: no output fd; falling back"); return false }
 
         // voice-call is captured STEREO (uplink L / downlink R) then downmixed to mono; mono sources stay
-        // mono. The app always outputs a single mono track (matches prod), so downmixToMono is always on
-        // (a no-op for already-mono capture).
+        // mono. The file is mono unless the user asked to keep the sides apart (#74) — then the encoder
+        // keeps L/R at the stereo floor, or still records mono when it cannot.
         val preferredChannels = if (audioSourceEnum == ScrcpyAudioSource.VOICE_CALL) 2 else 1
         HandoffReceiver.begin(
             HandoffReceiver.Target(
@@ -564,7 +565,7 @@ class AudioRecordingEngine {
                 mime = codecEnum.mimeType,
                 muxerFormat = codecEnum.outputFormat,
                 bitRate = bitRate,
-                downmixToMono = true,
+                downmixToMono = !recordStereo,
             ),
             // How the receiver rebuilds a capture the platform tore down mid-call. It asks for exactly
             // what was asked for originally, so the replacement matches the recording already in
