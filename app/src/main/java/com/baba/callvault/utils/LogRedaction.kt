@@ -45,8 +45,11 @@ object LogRedaction {
      */
     private const val TOKEN_HEX_DIGITS = 4
 
-    /** Longest run accepted as the contact field of a filename. Generous; caps regex backtracking. */
-    private const val MAX_NAME_RUN = 120
+    /**
+     * Longest run accepted as the contact field of a filename: the file-name limit, since a typed-in
+     * template adds its own text to the contact's. Caps regex backtracking.
+     */
+    private const val MAX_NAME_RUN = 255
 
     /**
      * The original, unchanged phone-number rule.
@@ -84,21 +87,33 @@ object LogRedaction {
     )
 
     /**
+     * Every extension a name in the recordings folder may end in: our own two and every import format
+     * (`ImportableAudio.ACCEPTED_EXTENSIONS`, which a test holds this list to). A missing one is a leak.
+     * Declared before the patterns built from it: an object's fields initialise top to bottom.
+     */
+    internal val NAME_EXTENSIONS = listOf("ogg", "m4a", "opus", "oga", "mp4", "aac", "mp3", "wav")
+
+    private val EXTENSION_PATTERN = "\\.(?i:${NAME_EXTENSIONS.joinToString("|")})"
+
+    /**
      * A recording filename, split into the parts that identify a call and the one part that
      * identifies a *person*.
      *
      * The grammar is the one both `RecordingFileNameFormatter` and `VoipRecordingCoordinator` emit
      * and `RecordingsRepository.parseName` reads back:
      *
-     *   `{date}[_in|_out|_voip[-App]][_{contact or number}].{ogg|m4a}`
+     *   `{date}[_in|_out|_voip[-App]|_import[_transcribeonly]][_{contact or number}].{ext}`
      *
-     * with `{date}` = `yyyyMMdd_HHmmss.SSSZ`. Group 1 (the timestamp), group 2 (direction, or the
-     * VoIP marker with the app it was made in) and group 4 (the extension) name nobody and are kept
-     * verbatim — they are the whole reason a redacted log is still readable. Only group 3 is replaced.
+     * with `{date}` = `yyyyMMdd_HHmmss.SSSZ` and `{ext}` any of [NAME_EXTENSIONS]: an import keeps its
+     * own format and part of its source name ("…_import_Mom.mp3"). Since 2.5.0 the user may type the
+     * template, so the joiner before the contact may also be spaces or hyphens ("{date} - {contact}").
+     * Group 1 (the timestamp), group 2 (direction, the VoIP marker with its app, or the import marker),
+     * group 3 (the joiner) and group 5 (the extension) name nobody and are kept verbatim — they are the
+     * whole reason a redacted log is still readable. Only group 4 is replaced.
      *
-     * The direction marker requires a `_` or `.` after it so a contact called "info desk" is not read
-     * as an incoming call, and the contact run excludes path separators and newlines so a match can
-     * never run off the end of a filename into the rest of the line.
+     * The marker requires a joiner or `.` after it so a contact called "info desk" is not read as an
+     * incoming call, and the contact run excludes path separators and newlines so a match can never
+     * run off the end of a filename into the rest of the line.
      *
      * **Percent-encoding is accepted for the timestamp's UTC offset**, because the single most common
      * way a filename reaches the log is not as a filename at all — it is inside a SAF document URI:
@@ -112,9 +127,10 @@ object LogRedaction {
      */
     private val RECORDING_NAME_REGEX = Regex(
         "(\\d{8}_\\d{6}\\.\\d{3}(?:[+-]|%2[BbDd])\\d{4})" +             // 1: {date}, raw or URI-encoded
-            "((?:_(?:in|out|voip(?:-[^_\\s.]+)?)(?=[_.]))?)" +          // 2: direction / voip[-App]
-            "(?:_([^/\\\\\\n]{1,$MAX_NAME_RUN}?))?" +                   // 3: contact name or number
-            "(\\.(?:ogg|m4a))"                                          // 4: container extension
+            "((?:_(?:in|out|import(?:_transcribeonly)?|voip(?:-[^_\\s.]+)?)" +
+            "(?=[_.\\s-]|%20))?)" +                                     // 2: direction / voip[-App] / import
+            "(?:((?:[_\\s-]|%20)+)([^/\\\\\\n]{1,$MAX_NAME_RUN}?))?" +      // 3: joiner, 4: contact or number
+            "($EXTENSION_PATTERN)"                                      // 5: file extension
     )
 
     /** A token this class has already produced. Matching it again must be a no-op — see [redact]. */
@@ -146,8 +162,24 @@ object LogRedaction {
      * one report and destroy the correlation this exists to provide.
      *
      * @param salt this install's random salt, from `AppPreferences.getLogPseudonymSalt`.
+     * @param namesAroundDate the user's file-name template puts text both before and after `{date}`
+     *   ([namesAroundDate] of the template). Then nothing in the line tells "Mom Cohen {date} in.ogg"
+     *   from "Transcribed {date}_in_….ogg", so any text in front of a date is hidden, prose included.
      */
-    fun redact(message: String, salt: String): String = redactPeople(redactApiKeys(message), salt)
+    fun redact(message: String, salt: String, namesAroundDate: Boolean = false): String =
+        redactPeople(redactApiKeys(message), salt, namesAroundDate)
+
+    /**
+     * True when [template] has text both before and after `{date}` ("{contact_name} {date} {direction}").
+     * A template with nothing after the date needs no help: a name that ends at its date is caught anyway.
+     */
+    fun namesAroundDate(template: String): Boolean {
+        val date = template.indexOf(DATE_TAG)
+        if (date < 0) return false
+        return template.substring(0, date).isNotBlank() && template.substring(date + DATE_TAG.length).isNotBlank()
+    }
+
+    private const val DATE_TAG = "{date}"
 
     /**
      * API keys for cloud transcription (issue #48), in case one ever reaches a line: Groq's `gsk_…`,
@@ -166,7 +198,7 @@ object LogRedaction {
         "(?i)(?:\\bbearer\\s+[A-Za-z0-9._~+/=-]{8,}|\\b(?:gsk_|sk-or-v1-|sk-proj-|sk-)[A-Za-z0-9_-]{12,})"
     )
 
-    private fun redactPeople(message: String, salt: String): String {
+    private fun redactPeople(message: String, salt: String, namesAroundDate: Boolean): String {
         if (!mayContainRecordingName(message)) return PHONE_REGEX.replace(message, PHONE_PLACEHOLDER)
 
         val out = StringBuilder(message.length + 16)
@@ -177,15 +209,18 @@ object LogRedaction {
             .sortedBy { (match, _) -> match.range.first }
         for ((match, isHonor) in matches) {
             if (match.range.first < cursor) continue
-            val prefixStart = if (isHonor) nameStart(message, match.range.first, cursor)
-                else personPrefixStart(message, match, cursor)
-            out.append(PHONE_REGEX.replace(message.substring(cursor, prefixStart), PHONE_PLACEHOLDER))
             if (isHonor) {
+                val prefixStart = nameStart(message, match.range.first, cursor)
+                out.append(PHONE_REGEX.replace(message.substring(cursor, prefixStart), PHONE_PLACEHOLDER))
                 out.append(safeHonorName(message.substring(prefixStart, match.range.first), match, salt))
             } else {
-                if (prefixStart < match.range.first) {
-                    // The '_' that joins the prefix to the date is kept; only the fields before it change.
-                    out.append(safePersonPrefix(message.substring(prefixStart, match.range.first - 1), salt)).append('_')
+                val prefix = personPrefix(message, match, cursor, namesAroundDate)
+                val prefixStart = prefix?.first ?: match.range.first
+                out.append(PHONE_REGEX.replace(message.substring(cursor, prefixStart), PHONE_PLACEHOLDER))
+                if (prefix != null) {
+                    // The joiner between the prefix and the date is kept; only the fields before it change.
+                    out.append(safePersonPrefix(message.substring(prefix.first, prefix.last), salt))
+                    out.append(message, prefix.last, match.range.first)
                 }
                 out.append(safeRecordingName(match, salt))
             }
@@ -213,12 +248,20 @@ object LogRedaction {
     }
 
     /**
-     * Where the person fields of a contact-first filename start, or the date's own index when there are none.
+     * The person fields of a contact-first filename, as (where they start, where the joiner before the date
+     * starts), or null when there are none.
      *
      * The presets added in 2.4.5 (`{contact_name}_{phone_number}_{date}`, `{number}_{contact}_{date}`,
      * `{contact}_{date}`, `{number}_{date}`) put the person BEFORE the date and nothing after it, so
-     * [RECORDING_NAME_REGEX] matches only the bare `{date}.ext` tail. That shape, joined by a `_` to
-     * what precedes it, is the signal; a date-first name always has a marker or a contact after its date.
+     * [RECORDING_NAME_REGEX] matches only the bare `{date}.ext` tail. A name typed in 2.5.0 may join them
+     * with spaces or hyphens instead ("{contact} - {date}") and may carry more after the date.
+     *
+     * Text before the date counts as person fields when any of these holds:
+     * - nothing follows the date but the extension (a date-first name always has a marker or a contact);
+     * - the joiner holds a `_` or `-`, which our prose never puts in front of a date;
+     * - the run is enclosed by a quote or a path separator, so it is part of the same filename;
+     * - the user's template puts text on both sides of the date ([namesAroundDate]).
+     * Otherwise a bare "Transcribed {date}_in_…" passes none of them and keeps its word.
      *
      * A name may hold spaces, so nothing inside the line says where it begins. We walk back to the
      * nearest character a log line puts around a name — a quote, a path or URI separator, `:` `=` `(`
@@ -227,24 +270,50 @@ object LogRedaction {
      * Tokens this class already wrote (`[C:…]`, `[PHONE_REDACTED]`) are stepped over whole, so a
      * second pass finds the same span and leaves it alone.
      */
-    private fun personPrefixStart(message: String, match: MatchResult, cursor: Int): Int {
+    private fun personPrefix(message: String, match: MatchResult, cursor: Int, namesAroundDate: Boolean): IntRange? {
         val dateStart = match.range.first
-        val (_, marker, who, _) = match.destructured
-        if (marker.isNotEmpty() || who.isNotEmpty()) return dateStart
-        if (dateStart - 1 <= cursor || message[dateStart - 1] != '_') return dateStart
+        val joinerStart = joinerStart(message, dateStart, cursor)
+        if (joinerStart == dateStart) return null
+        val start = nameStart(message, joinerStart, cursor)
+        if (start >= joinerStart) return null
 
-        val start = nameStart(message, dateStart - 1, cursor)
-        return if (start < dateStart - 1) start else dateStart
+        val (_, marker, _, who, _) = match.destructured
+        val dateLast = marker.isEmpty() && who.isEmpty()
+        val tiedToTheDate = message.substring(joinerStart, dateStart).any { it == '_' || it == '-' }
+        val enclosed = start > 0 && (message[start - 1] in FILENAME_OPENERS || endsWithEncodedSeparator(message, start))
+        return if (namesAroundDate || dateLast || tiedToTheDate || enclosed) start..joinerStart else null
     }
+
+    /** Where the run of joiners (`_`, `-`, spaces, `%20`) that ends at [dateStart] begins; [dateStart] when there is none. */
+    private fun joinerStart(message: String, dateStart: Int, cursor: Int): Int {
+        var i = dateStart
+        while (i > cursor) {
+            when {
+                message[i - 1] in JOINER_CHARS -> i--
+                i - 3 >= cursor && message.regionMatches(i - 3, "%20", 0, 3) -> i -= 3
+                else -> break
+            }
+        }
+        return i
+    }
+
+    private val JOINER_CHARS = setOf('_', '-', ' ')
+
+    /** Characters that open a filename in a log line: quotes and path separators. */
+    private val FILENAME_OPENERS = setOf('\'', '"', '`', '/', '\\')
 
     /**
      * Walks back from [joinIndex] (the `_` or `@` that ties a name to the rest of a filename) to where the name
      * begins: the nearest [NAME_BOUNDARY_CHARS], encoded URI separator, [cursor] or [MAX_NAME_RUN] characters
      * back. Returns [joinIndex] itself when there is no name. Redaction tokens are stepped over whole.
+     *
+     * Contact names hold brackets and apostrophes ("Mom (work)", "Mom's phone"), so a `(` closed later
+     * in the name and an apostrophe between two letters are part of it, not where it starts.
      */
     private fun nameStart(message: String, joinIndex: Int, cursor: Int): Int {
         val floor = maxOf(cursor, joinIndex - MAX_NAME_RUN)
         var i = joinIndex
+        var openBrackets = 0
         while (i > floor) {
             val c = message[i - 1]
             if (c == ']') {
@@ -254,11 +323,18 @@ object LogRedaction {
                     continue
                 }
             }
-            if (c in NAME_BOUNDARY_CHARS || endsWithEncodedSeparator(message, i)) break
+            if (c == ')') openBrackets++
+            val insideName = (c == '(' && openBrackets > 0) || (c == '\'' && isApostrophe(message, i - 1))
+            if (c == '(' && openBrackets > 0) openBrackets--
+            if (!insideName && (c in NAME_BOUNDARY_CHARS || endsWithEncodedSeparator(message, i))) break
             i--
         }
         return i
     }
+
+    /** True when the `'` at [index] sits between two letters, as in "Mom's", rather than quoting something. */
+    private fun isApostrophe(message: String, index: Int): Boolean =
+        index > 0 && index + 1 < message.length && message[index - 1].isLetter() && message[index + 1].isLetter()
 
     /** True when `%2F` or `%3A` (a SAF URI's `/` and `:`) ends just before [end]. */
     private fun endsWithEncodedSeparator(message: String, end: Int): Boolean =
@@ -283,8 +359,11 @@ object LogRedaction {
             }
         }
 
-    /** Characters a log line puts around a filename or URI; a contact-first name never runs past one. */
-    private val NAME_BOUNDARY_CHARS = setOf('\'', '"', '`', '/', '\\', '\n', '\r', '\t', ':', '=', '(', '<', '>', ',', ';')
+    /**
+     * Characters a log line puts around a filename or URI; a contact-first name never runs past one.
+     * No `,`: contact names hold one ("Cohen, Mom"), and a log word taken with the name only costs prose.
+     */
+    private val NAME_BOUNDARY_CHARS = setOf('\'', '"', '`', '/', '\\', '\n', '\r', '\t', ':', '=', '(', '<', '>', ';')
 
     /** A redaction token ending the text, so the backward walk can step over it in one move. */
     private val REDACTED_TOKEN_SUFFIX = Regex("(?:\\[C:[0-9a-f]+]|\\[PHONE_REDACTED])$")
@@ -298,7 +377,7 @@ object LogRedaction {
         "(@|%40)" +                                          // 1: the separator, raw or URI-encoded
             "((?:(?:\\+|%2[Bb])?\\d+)|\\[PHONE_REDACTED])?" +   // 2: the number, if any
             "_(\\d{14})" +                                     // 3: yyyyMMddHHmmss
-            "(\\.(?:ogg|m4a))"                                 // 4: container extension
+            "($EXTENSION_PATTERN)"                             // 4: file extension
     )
 
     /** One field of a contact-first prefix: an existing token, a `_`, or a run of anything else. */
@@ -306,7 +385,7 @@ object LogRedaction {
 
     /** Rebuilds one filename match with only its person-identifying field replaced. */
     private fun safeRecordingName(match: MatchResult, salt: String): String {
-        val (stamp, marker, who, extension) = match.destructured
+        val (stamp, marker, joiner, who, extension) = match.destructured
         val safeWho = when {
             who.isEmpty() -> ""
             // Already redacted — a second pass over the same line must not move the token.
@@ -315,7 +394,7 @@ object LogRedaction {
             PHONE_REGEX.matches(who.trim()) -> PHONE_PLACEHOLDER
             else -> contactToken(who, salt)
         }
-        return stamp + marker + (if (safeWho.isEmpty()) "" else "_$safeWho") + extension
+        return stamp + marker + (if (safeWho.isEmpty()) "" else joiner + safeWho) + extension
     }
 
     /**
