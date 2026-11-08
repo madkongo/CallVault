@@ -2719,3 +2719,9 @@ https://claude.ai/artifact/UsAePrr1f4d8d8YFrw9uAW. Recommended: Transcripts row 
 confirm dialog (language, engine, estimate, "also delete its summary"), NOT on the reading view. Must keep the old
 transcript until the new run succeeds (today `TranscriptRepository.retry` deletes first). Summaries live in their own
 table, so they survive a re-run unless the dialog deletes them. Unused string `transcript_retranscribe` still exists.
+
+## 📐 Debug report: optional CPU / running-apps section (2026-11-08)
+Decided by the maintainer: the CPU section built for "the fbi" (`probe/shizukuslow`, a303ff53: `dumpsys cpuinfo` +
+`top`) is NOT shipped by default — it names every app the phone is running, which is personal. Wanted later as an
+opt-in sub-setting under debug logging (off by default, e.g. "Include running apps and CPU use"), so a user asked
+for it can switch it on for one report. Not designed or built.

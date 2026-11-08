@@ -155,6 +155,10 @@ All notable changes to CallVault are documented here. The format is based on
        with no reboot (the #71 tell). Starts from an earlier boot print as "earlier boot" (first build gave them
        made-up times; fixed). The card sentence itself was not seen: the emulator has no working setup for a
        missed-call sweep. Needs a real Android 15+ phone that force-stops it. -->
+- **The "call in progress" notification no longer stays after the call on some Android 17 phones.** CallVault now
+  puts "Ready to record calls" back in a way those phones accept. (#73)
+  <!-- 🧪 VERIFYING: unit tests; OP9 (Android 14) calls still end clean, but the new path never ran there. Test build
+       v2.4.9-notice73 is with the reporter (Pixel 10 Pro XL, Android 17); no answer yet. -->
 - **Shizuku mode: the "Ready to record calls" notification no longer talks about Wireless debugging.** It said
   Wireless debugging had to stay on and that CallVault would switch it off, which is only true in standalone
   mode. (#71)
