@@ -55,6 +55,7 @@ import com.baba.callvault.summary.SummaryModel
 import com.baba.callvault.transcription.model.DownloadableModel
 import com.baba.callvault.transcription.model.TranscriptionModel
 import com.baba.callvault.data.StorageTarget
+import com.baba.callvault.system.storage.FolderOverlap
 import com.baba.callvault.system.storage.SafHelper
 import com.baba.callvault.system.takePersistableFolderPermission
 import androidx.lifecycle.viewmodel.compose.viewModel
@@ -190,6 +191,8 @@ fun SettingsScreen(
                 // Cloud folders (Google Drive, …) reject "rw" and report length asynchronously, which
                 // breaks live capture. Refuse it here; the Drive backup option handles cloud copies.
                 Toast.makeText(context, context.getString(R.string.folder_cloud_rejected), Toast.LENGTH_LONG).show()
+            } else if (FolderOverlap.overlaps(uri, viewModel.preferences.getDriveFolderUri())) {
+                Toast.makeText(context, context.getString(R.string.folder_drive_overlaps_recordings), Toast.LENGTH_LONG).show()
             } else {
                 context.takePersistableFolderPermission(uri)
                 viewModel.preferences.setRecordingFolderUri(uri)
@@ -203,7 +206,11 @@ fun SettingsScreen(
 
     // Drive folder picker — same contract; persists READ + WRITE access across reboots.
     val driveFolderPickerLauncher = rememberLauncherForActivityResult(PersistentFolderPickerContract()) { uri ->
-        if (uri != null) {
+        if (uri != null && FolderOverlap.overlaps(viewModel.preferences.getRecordingFolderUri(), uri)) {
+            // The recording folder (or one inside/around it) as "Drive": Drive-only would delete every
+            // recording right after saving it (2.4.9 Xiaomi report). See [FolderOverlap].
+            Toast.makeText(context, context.getString(R.string.folder_drive_overlaps_recordings), Toast.LENGTH_LONG).show()
+        } else if (uri != null) {
             context.takePersistableFolderPermission(uri)
             viewModel.setDriveFolderUri(uri)
         }
@@ -402,6 +409,7 @@ private fun SettingsScreenPreview() {
             override fun setRetentionLinked(linked: Boolean) {}
             override fun setMinDurationSeconds(seconds: Int) {}
             override fun setWriteMetadataFileEnabled(enabled: Boolean) {}
+            override fun setShowSimLabelEnabled(enabled: Boolean) {}
             override fun setHideRecordingsEnabled(enabled: Boolean) {}
             override fun setWriteTranscriptSidecarEnabled(enabled: Boolean) {}
             override fun exportSettingsJson(): String = "{}"

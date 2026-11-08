@@ -189,11 +189,11 @@ fun SummarySheetStrip(
                 }
             }
 
-            SummaryCardState.Offered, SummaryCardState.Failed -> ActionRow(
-                label = stringResource(R.string.summary_card_create),
-                supporting = stringResource(R.string.summary_card_create_subtitle),
-                onClick = onCreate
-            )
+            // Asking for one lives in the page's ⋮ menu now: here it read as a line of the transcript.
+            SummaryCardState.Offered -> Unit
+
+            // Still said, so a summary that came back empty is not a mystery; trying again is in the menu.
+            SummaryCardState.Failed -> Explanation(stringResource(R.string.summary_card_failed))
 
             is SummaryCardState.Running -> RunningRow(state.percent, onStop)
 

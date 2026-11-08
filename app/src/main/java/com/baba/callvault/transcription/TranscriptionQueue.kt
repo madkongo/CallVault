@@ -8,9 +8,11 @@
 
 package com.baba.callvault.transcription
 
+import com.baba.callvault.services.recording.aftercall.AfterCallDecisions
 import com.baba.callvault.utils.AppLogger
 import android.content.Context
 import com.baba.callvault.data.recordings.RecordingCatalog
+import com.baba.callvault.data.transcripts.TranscribeAgainBackup
 import com.baba.callvault.data.transcripts.db.TranscriptDatabase
 import com.baba.callvault.data.transcripts.db.TranscriptState
 
@@ -47,6 +49,8 @@ object TranscriptionQueue {
      *   scheduled run must not retry it nightly forever. Only an explicit tap retries.
      * - No local copy — a Drive-only recording has nothing to decode. Queuing it would fail and then
      *   mark it FAILED, which would also hide it from a later run made after it syncs back down.
+     * - Waiting for a keep-or-delete answer — transcribing a call the user may be about to delete
+     *   spends its battery for nothing; Keep queues it the moment they answer.
      *
      * Length is not a reason: long calls are transcribed like any other (the limit was removed once
      * decoding became chunked).
@@ -56,12 +60,13 @@ object TranscriptionQueue {
         limit: Int = DEFAULT_LIMIT,
     ): List<String> {
         val all = RecordingCatalog.all(context)
-        val transcribable = all.filter { it.localUri != null }
+        val held = AfterCallDecisions.pendingNames(context)
+        val transcribable = all.filter { it.localUri != null && it.displayName !in held }
         if (transcribable.isEmpty()) {
             // "Nothing was transcribed" has several innocent explanations and one real bug, and they
             // are indistinguishable without this line: no recordings at all, or recordings that exist
             // only in Drive and so have nothing local to decode.
-            AppLogger.i(TAG, "pending: nothing to do — ${all.size} recording(s), none with a local copy")
+            AppLogger.i(TAG, "pending: nothing to do — ${all.size} recording(s), none with a local copy that is not awaiting keep-or-delete (${held.size} awaiting)")
             return emptyList()
         }
 
@@ -131,7 +136,13 @@ object TranscriptionQueue {
         val dao = TranscriptDatabase.get(context).transcriptDao()
         val stale = dao.displayNamesWithState(TranscriptState.RUNNING) +
             dao.displayNamesWithState(TranscriptState.QUEUED)
-        stale.forEach { dao.deleteFor(it) }
+        // A stopped "transcribe again" (#72) gets its previous transcript back rather than losing it, and a row
+        // the run has already put back (finished again by now) is never deleted: the two cleanups race on Stop.
+        stale.forEach {
+            if (!TranscribeAgainBackup.restore(context, dao, it) &&
+                dao.findTranscript(it)?.state != TranscriptState.DONE
+            ) dao.deleteFor(it)
+        }
         return stale.size
     }
 }

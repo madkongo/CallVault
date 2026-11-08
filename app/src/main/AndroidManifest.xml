@@ -21,6 +21,9 @@
     <uses-permission android:name="android.permission.WRITE_SECURE_SETTINGS"
         tools:ignore="ProtectedPermissions" />
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
+    <!-- Keep or delete after the call, "Pop-up over the screen": lets the question be drawn as an overlay
+         window. Optional: asked for only when the user picks that style; without it the notification asks alone. -->
+    <uses-permission android:name="android.permission.SYSTEM_ALERT_WINDOW" />
     <!-- In-app updater: query GitHub Releases + download the update APK. -->
     <uses-permission android:name="android.permission.INTERNET" />
     <!-- In-app updater: commit a PackageInstaller session for the tap-to-update flow. -->
@@ -39,6 +42,8 @@
          They are both sends at around the same time, with something around 100-400ms between them, and the docs claim there is no specific order between them.
     -->
     <uses-permission android:name="android.permission.READ_CALL_LOG" tools:ignore="SmsAndCallLogPolicy" />
+    <!-- Optional: the number as dialled, before a call redirection app (e.g. Google Voice) swaps in a proxy number. -->
+    <uses-permission android:name="android.permission.PROCESS_OUTGOING_CALLS" tools:ignore="SmsAndCallLogPolicy" />
 
     <!-- Recording Foreground Job -->
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE" tools:ignore="ForegroundServicesPolicy" />
@@ -226,7 +231,23 @@
             </intent-filter>
         </receiver>
 
+        <!-- The dialled number of an outgoing call, see NewOutgoingCallReceiver. Only Telecom can send it: protected broadcast. -->
+        <receiver
+            android:name=".services.call.NewOutgoingCallReceiver"
+            android:enabled="true"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.intent.action.NEW_OUTGOING_CALL" />
+            </intent-filter>
+        </receiver>
+
         <!-- Re-anchors the daily retention sweep to local time on a time-zone/clock change (travel). -->
+        <!-- The readiness notification's "Turn USB debugging on" button. Internal only. -->
+        <receiver
+            android:name=".services.recording.UsbDebuggingActionReceiver"
+            android:enabled="true"
+            android:exported="false" />
+
         <!-- The paused-recording notification's "Turn Wireless debugging on" button. Internal only. -->
         <receiver
             android:name=".services.recording.WirelessDebuggingActionReceiver"
@@ -235,6 +256,12 @@
 
         <receiver
             android:name=".system.storage.DriveCopyStopReceiver"
+            android:enabled="true"
+            android:exported="false" />
+
+        <!-- Keep / Delete / Undo on the after-call question. Internal only. -->
+        <receiver
+            android:name=".services.recording.aftercall.AfterCallDecisionReceiver"
             android:enabled="true"
             android:exported="false" />
 

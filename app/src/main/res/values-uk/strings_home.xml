@@ -11,6 +11,19 @@
     <string name="home_usb_advisory_title">Запис може зупинитися після блокування екрана</string>
     <string name="home_usb_advisory_text">USB працює в режимі передавання даних. Натисніть, щоб перемкнути на «Лише заряджання».</string>
     <string name="home_usb_advisory_fix">Виправити</string>
+    <string name="home_view_recordings">Записи</string>
+    <string name="home_view_all_calls">Історія викликів</string>
+    <string name="home_calls_filter_all">Усі</string>
+    <string name="home_calls_filter_recorded">Записані</string>
+    <string name="home_calls_filter_not_recorded">Не записані</string>
+    <string name="home_calls_filter_missed">Пропущені</string>
+    <string name="home_call_origin_phone">Телефонний дзвінок</string>
+    <string name="home_call_not_recorded">Не записано</string>
+    <string name="home_call_missed">Пропущений</string>
+    <string name="home_call_declined">Відхилений</string>
+    <string name="home_call_unknown_number">Невідомий номер</string>
+    <string name="home_calls_empty">У журналі викликів телефона ще немає викликів.</string>
+    <string name="home_calls_no_permission">CallVault не може прочитати журнал викликів. Дозвольте \"Журнали викликів\" для CallVault у налаштуваннях застосунків Android, щоб бачити тут усі виклики.</string>
     <string name="home_recordings_count">Збережено: %1$d</string>
     <string name="home_recordings_empty_title">Записів поки немає</string>
     <string name="home_recordings_empty_hint">Після запису дзвінка він зʼявиться тут. Зробіть або прийміть дзвінок для перевірки.</string>
@@ -23,9 +36,9 @@
     <string name="home_updated_banner_text">CallVault оновлено до %1$s</string>
     <string name="home_whatsnew_title">Що нового</string>
     <string name="home_whatsnew_offline_cta">Увімкнути запис без Wi-Fi</string>
-    <string name="home_whatsnew_offline_enabled">Запис без Wi-Fi увімкнено.</string>
+    <string name="home_whatsnew_offline_enabled">«Записувати без Wi-Fi» увімкнено.</string>
     <string name="home_whatsnew_offline_enabling">Увімкнення запису без Wi-Fi…</string>
-    <string name="home_whatsnew_resilient_title">Нове: стійкий запис</string>
+    <string name="home_whatsnew_resilient_title">Нове: продовжувати запис, якщо фонова служба зупиниться</string>
     <string name="home_whatsnew_resilient_cta">Увімкнути</string>
     <string name="home_whatsnew_settings_cta">Відкрити налаштування</string>
     <string name="home_health_verified">Остання перевірка: %1$s.</string>
@@ -46,7 +59,7 @@
     <string name="merge_pick_hint">Позначте дзвінки для обʼєднання у потрібному порядку.</string>
     <string name="merge_primary_hint">Початок обʼєднаного дзвінка</string>
     <string name="merge_title">Обʼєднати дзвінки з %1$s</string>
-    <string name="settings_merge_keep_originals_title">Залишати початкові записи</string>
+    <string name="settings_merge_keep_originals_title">Залишати оригінали після обʼєднання</string>
     <string name="unmerge_confirm">Розділити</string>
     <string name="unmerge_title">Розділити цей дзвінок?</string>
     <string name="merge_note_will_delete">Інші дзвінки буде видалено. Пізніше їх можна відновити розділенням.</string>
@@ -117,8 +130,8 @@
     <string name="offline_failed_needs_wd">Не вдалося ввімкнути: бездротове налагодження вимкнено. Увімкніть його в параметрах розробника та повторіть.</string>
     <string name="offline_failed_no_service">Не вдалося підключитися до служби налагодження. Перевірте Wi-Fi та бездротове налагодження.</string>
     <string name="offline_failed_port">Не вдалося відновити локальний порт. Повторіть трохи пізніше.</string>
-    <string name="home_whatsnew_resilient_body">Підвищує стійкість запису до переривань.\n\nAndroid може зупинити фонову службу CallVault, але поточний запис продовжиться.\n\nФункція вимкнена за замовчуванням і доступна у налаштуваннях надійності.</string>
-    <string name="home_whatsnew_resilient_enabled">Стійкий запис увімкнено. Якщо Android зупинить фонову службу, поточний запис продовжиться.</string>
+    <string name="home_whatsnew_resilient_body">Підвищує стійкість запису до переривань.\n\nAndroid може зупинити фонову службу CallVault, але поточний запис продовжиться.\n\nФункція вимкнена за замовчуванням і доступна в розділі Налаштування ▸ Підключення.</string>
+    <string name="home_whatsnew_resilient_enabled">«Продовжувати запис, якщо фонова служба зупиниться» увімкнено. Якщо Android зупинить фонову службу, поточний запис продовжиться.</string>
     <string name="whatsnew_153_title">Перевірка налаштувань за реальними дзвінками</string>
     <string name="whatsnew_155_title">Зручніші налаштування та надійніший запис</string>
     <string name="whatsnew_155_body">Налаштування відкриваються панеллю, а не окремим екраном. Розділи стали коротшими та зрозумілішими, у записах видно час і тривалість.\n\nВиправлено проблеми з перериванням запису, тріском звуку та втратою однієї зі сторін VoIP-дзвінків.</string>
@@ -142,6 +155,7 @@
     <string name="offline_recording_disabling">Вимкнення запису без Wi-Fi…</string>
     <string name="home_health_call_not_recorded">Дзвінок не записано — %1$s, %2$s.</string>
     <string name="home_health_call_not_recorded_unnamed">Дзвінок не записано — %1$s.</string>
+    <string name="home_health_call_not_recorded_force_stopped">CallVault було примусово зупинено — телефоном або іншим застосунком, — тому він не зміг помітити дзвінок. Перевірте, що налаштування батареї телефона не переводять CallVault у режим сну.</string>
     <string name="home_health_missed_recording_folder">Дзвінок не записано: папку не було вибрано, %1$s.</string>
     <string name="home_health_missed_recording_folder_unnamed">Дзвінок не записано: папку записів не було вибрано.</string>
     <string name="home_health_missed_adb_pairing">Дзвінок не записано: налаштування ще не було завершено, %1$s.</string>
@@ -173,6 +187,21 @@
     <string name="whatsnew_156_where">Налаштування ▸ Запис ▸ Телефонні дзвінки</string>
     <string name="settings_merge_keep_originals_description">Після обʼєднання залишати початкові записи на телефоні. За замовчуванням вимкнено. Обʼєднану розмову можна розділити.</string>
     <string name="unmerge_message">Знову зʼявляться ці дзвінки з їхніми транскрипціями та мітками:</string>
+    <string name="whatsnew_250_title">Зберегти чи видалити після дзвінка, і ділитися тим, що потрібно</string>
+    <string-array name="whatsnew_250_items">
+        <item>Зберегти чи видалити: після кожного дзвінка CallVault може спитати, чи залишити запис (Налаштування ▸ Запис)</item>
+        <item>Діліться записом, розшифровкою і підсумком дзвінка разом — або лише частиною запису</item>
+        <item>Історія дзвінків: кожен дзвінок із журналу телефона поруч зі своїм записом</item>
+        <item>Пошук: Налаштування</item>
+        <item>Повторна розшифровка, і потягніть будь-яку сторінку вниз, щоб оновити її</item>
+        <item>Власний формат назви файлу і необов’язкова позначка, з якої SIM-картки був дзвінок</item>
+        <item>Бенгальська мова для застосунку і розшифровки</item>
+        <item>Дзвінки через Google Voice зберігають номер, який ви набрали</item>
+        <item>Режим Shizuku: мікрофон більше не лишається увімкненим після дзвінка, і немає збою при перезапуску записувача</item>
+        <item>Телефони Honor, які призупиняють CallVault під час дзвінка, записують надійніше</item>
+        <item>Drive: записи більше не губляться, коли тека Drive збігається з текою записів</item>
+        <item>Якщо дзвінок не записано, бо CallVault було примусово зупинено, картка про це скаже</item>
+    </string-array>
     <string name="whatsnew_249_title">Чистіші дзвінки в застосунках і готовність одразу після оновлення</string>
     <string-array name="whatsnew_249_items">
         <item>Менше луни в дзвінках у застосунках на телефонах, де мікрофон ловить звук розмовного динаміка</item>

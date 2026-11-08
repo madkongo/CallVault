@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- The one Share sheet (recording, transcript, summary). -->
+<resources>
+    <string name="share_sheet_title_one">„%1$s” megosztása</string>
+    <string name="share_sheet_title_many">Kijelöltek megosztása (%1$d)</string>
+    <string name="share_sheet_button">Megosztás</string>
+    <string name="share_part_recording">Felvétel</string>
+    <string name="share_part_transcript">Átirat</string>
+    <string name="share_part_summary">Összefoglaló</string>
+    <string name="share_part_recording_hint">Hangfájl</string>
+    <string name="share_part_text_message_hint">Üzenetként</string>
+    <string name="share_part_text_file_hint">Szövegfájl, a felvétel mellett</string>
+    <string name="share_part_missing_one">Ennél a hívásnál nincs</string>
+    <string name="share_part_missing_many">Egyik hívásnál sincs</string>
+    <string name="share_file_word_transcript">átirat</string>
+    <string name="share_file_word_summary">összefoglaló</string>
+</resources>

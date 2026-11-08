@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Keep or delete after the call: Settings rows and the wizard switch. -->
+<resources>
+    <string name="settings_after_call_mode_label">Όταν τελειώνει μια κλήση</string>
+    <string name="settings_after_call_mode_keep">Διατήρηση της ηχογράφησης</string>
+    <string name="settings_after_call_mode_ask">Ρώτα με: διατήρηση ή διαγραφή</string>
+    <string name="settings_after_call_mode_keep_desc">Κάθε ηχογράφηση διατηρείται, όπως πάντα.</string>
+    <string name="settings_after_call_mode_ask_desc">Μετά από κάθε ηχογραφημένη κλήση, μια ειδοποίηση ρωτά αν θα τη διατηρήσετε. Μέχρι να απαντήσετε, δεν αντιγράφεται στο Drive ούτε απομαγνητοφωνείται αυτόματα.</string>
+    <string name="settings_after_call_needs_notifications">Η ερώτηση χρειάζεται ειδοποιήσεις από το CallVault. Επιτρέψτε τες και η ερώτηση ενεργοποιείται.</string>
+    <string name="settings_after_call_style_label">Τρόπος ερώτησης</string>
+    <string name="settings_after_call_style_notification">Ειδοποίηση</string>
+    <string name="settings_after_call_style_popup">Αναδυόμενο παράθυρο στην οθόνη</string>
+    <string name="settings_after_call_style_notification_desc">Μια ειδοποίηση με Διατήρηση και Διαγραφή.</string>
+    <string name="settings_after_call_style_popup_desc">Ένα μικρό παράθυρο πάνω από ό,τι υπάρχει στην οθόνη. Αν δεν μπορεί να εμφανιστεί (κλειδωμένο τηλέφωνο) ή το κλείσετε χωρίς απάντηση, ρωτά μια ειδοποίηση στη θέση του. Χρειάζεται άδεια εμφάνισης πάνω από άλλες εφαρμογές.</string>
+    <string name="settings_after_call_needs_overlay">Το αναδυόμενο παράθυρο χρειάζεται άδεια εμφάνισης πάνω από άλλες εφαρμογές. Μέχρι να δοθεί, ρωτά η ειδοποίηση.</string>
+    <string name="settings_after_call_unanswered_label">Αν δεν απαντήσω</string>
+    <string name="settings_after_call_unanswered_keep">Διατήρηση</string>
+    <string name="settings_after_call_unanswered_delete">Διαγραφή μετά από 24 ώρες</string>
+    <string name="settings_after_call_unanswered_keep_desc">Μετά από 24 ώρες η ηχογράφηση διατηρείται, αντιγράφεται και απομαγνητοφωνείται κανονικά.</string>
+    <string name="settings_after_call_unanswered_delete_desc">24 ώρες μετά την κλήση, η ηχογράφηση διαγράφεται.</string>
+    <string name="settings_after_call_unanswered_engaged">Μια ηχογράφηση που σημειώσατε με αστέρι, σημάδι, ετικέτα, σημείωση ή απομαγνητοφωνήσατε διατηρείται πάντα.</string>
+    <string name="wizard_after_call_ask_label">Ρώτα με αν θα κρατήσω κάθε ηχογράφηση</string>
+    <string name="wizard_after_call_ask_desc">Όταν τελειώνει μια κλήση, κρατήστε ή διαγράψτε την ηχογράφηση με ένα πάτημα. Απενεργοποιημένο: διατηρείται κάθε ηχογράφηση.</string>
+</resources>

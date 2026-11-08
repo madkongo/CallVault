@@ -63,6 +63,7 @@ class RetentionSweepWorker(ctx: Context, params: WorkerParameters) : CoroutineWo
         // the catalog pass fails on it for ever while the untracked pass skips the file as already
         // known. Repair those first, so both halves below see a catalog that matches reality.
         DriveCatalogRepair.reconcile(applicationContext)
+        DriveCatalogRepair.forgetDeletedIfDue(applicationContext)
 
         var deletedLocal = 0
         var deletedDrive = 0
@@ -70,12 +71,18 @@ class RetentionSweepWorker(ctx: Context, params: WorkerParameters) : CoroutineWo
         // So whatever catalogues an import MUST stamp it with the time it was imported, never with the
         // date the audio was originally recorded: a two-year-old voice note brought in to transcribe
         // would arrive already expired and be deleted by this pass the same night.
+        // Starred recordings are never deleted by age either. A failed read must protect everything, as for the
+        // size cap below: the age pass sits this run out rather than delete what the user starred to keep.
+        val starred = runCatching { FavouriteRepository.snapshot(applicationContext).toSet() }.getOrElse {
+            AppLogger.w(TAG, "Could not read the starred recordings (${it.message}); skipping retention this run")
+            return Result.success()
+        }
         for (entry in RecordingCatalog.all(applicationContext)) {
             // And the right stamp is only half of it. Once the retention period elapses this pass
             // would delete an import like anything else — except that for a call the Drive copy
             // survives and the row keeps its transcript, while an import has no Drive copy by design.
             // The same delete would therefore destroy the only copy of something the user handed us.
-            if (!RetentionPolicy.agesOut(entry.displayName)) continue
+            if (!RetentionPolicy.mayAgeOut(entry.displayName, starred)) continue
             val ts = entry.lastModified
             val localUri = entry.localUri
             if (localUri != null && RetentionPolicy.isExpired(ts, localCutoff)) {
@@ -91,8 +98,8 @@ class RetentionSweepWorker(ctx: Context, params: WorkerParameters) : CoroutineWo
         // one it remembers, and the setting promises a daily check of the folder — so a bookkeeping gap
         // must not quietly become an exemption that lasts forever.
         val untracked = UntrackedRecordings.find(applicationContext)
-        val deletedDeviceNames = deleteExpired(untracked.device, localCutoff, "device")
-        val deletedDriveNames = deleteExpired(untracked.drive, driveCutoff, "Drive")
+        val deletedDeviceNames = deleteExpired(untracked.device.filter { it.displayName !in starred }, localCutoff, "device")
+        val deletedDriveNames = deleteExpired(untracked.drive.filter { it.displayName !in starred }, driveCutoff, "Drive")
         deletedLocal += deletedDeviceNames.size
         deletedDrive += deletedDriveNames.size
         cascadeForUntracked(untracked, deletedDeviceNames + deletedDriveNames)

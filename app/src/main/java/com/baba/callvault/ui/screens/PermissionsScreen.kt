@@ -39,6 +39,7 @@ import androidx.compose.material.icons.filled.DeveloperMode
 import androidx.compose.material.icons.filled.History
 import androidx.compose.material.icons.filled.Notifications
 import androidx.compose.material.icons.filled.Phone
+import androidx.compose.material.icons.filled.PictureInPicture
 import androidx.compose.material.icons.filled.RecentActors
 import androidx.compose.material.icons.filled.Usb
 import androidx.compose.material3.Icon
@@ -431,6 +432,21 @@ fun PermissionsContent(
                             pillTone = if (nag) CvTone.Neutral else null,
                         )
                     }
+                    // Optional, and only for the keep-or-delete pop-up (maintainer, 2026-11-07): offered here so a
+                    // new user meets every permission CallVault can ask for in one place, and can decide. Tapping
+                    // explains it first, then opens Android's page; the pill follows the real state on return.
+                    item {
+                        val popUp = rememberPopUpPermissionRequest()
+                        PermissionRow(
+                            icon = Icons.Default.PictureInPicture,
+                            label = stringResource(R.string.permission_overlay_label),
+                            explanation = stringResource(R.string.permission_overlay_description),
+                            granted = popUp.isGranted,
+                            pillText = if (popUp.isGranted) null else stringResource(R.string.general_optional),
+                            pillTone = if (popUp.isGranted) null else CvTone.Neutral,
+                            onClick = if (popUp.isGranted) null else popUp.request,
+                        )
+                    }
                     // The same choice as in Settings: may CallVault switch Wireless debugging back on after the
                     // user turned it off? Asked here too, because it decides how the app treats a switch the
                     // user is about to be told to flip.
@@ -686,13 +702,14 @@ private fun PermissionRow(
     explanation: String,
     granted: Boolean,
     pillText: String? = null,
-    pillTone: CvTone? = null
+    pillTone: CvTone? = null,
+    onClick: (() -> Unit)? = null,
 ) {
     val brand = LocalCvBrand.current
     // Disc accent: teal when granted, brand-warning while pending — reads as a clear at-a-glance state.
     val discAccent: Color = if (granted) MaterialTheme.colorScheme.primary else brand.warning
 
-    CvCard(contentPadding = ROW_PADDING) {
+    CvCard(contentPadding = ROW_PADDING, onClick = onClick) {
         Row(verticalAlignment = Alignment.CenterVertically) {
             IconDisc(icon, discAccent)
             Spacer(Modifier.width(14.dp))

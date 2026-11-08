@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- The one Share sheet (recording, transcript, summary). -->
+<resources>
+    <string name="share_sheet_title_one">مشاركة «%1$s»</string>
+    <string name="share_sheet_title_many">مشاركة المحدد (%1$d)</string>
+    <string name="share_sheet_button">مشاركة</string>
+    <string name="share_part_recording">التسجيل</string>
+    <string name="share_part_transcript">النص</string>
+    <string name="share_part_summary">الملخص</string>
+    <string name="share_part_recording_hint">ملف صوتي</string>
+    <string name="share_part_text_message_hint">كرسالة</string>
+    <string name="share_part_text_file_hint">ملف نصي بجانب التسجيل</string>
+    <string name="share_part_missing_one">لا يوجد لهذه المكالمة</string>
+    <string name="share_part_missing_many">لا يوجد لأي من هذه المكالمات</string>
+    <string name="share_file_word_transcript">نص</string>
+    <string name="share_file_word_summary">ملخص</string>
+</resources>

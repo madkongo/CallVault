@@ -69,13 +69,13 @@ object TranscriptRepository {
 
         // Skip opening the database at all before the first transcription — most installs will never
         // have one, and a Home screen should not create a database just to draw a list.
-        if (!TranscriptDatabase.exists(context)) {
-            return flowOf(displayNames.associateWith { TranscriptStatus.NONE })
-        }
-
-        return dao(context).observeAll(displayNames).map { rows ->
-            val stored = rows.associate { it.displayName to TranscriptStatus.of(it.state) }
-            displayNames.associateWith { stored[it] ?: TranscriptStatus.NONE }
+        // Until then the statuses follow the database once it appears: the first transcription creates it, and
+        // its row has to show as queued without the app being reopened.
+        return onceTranscriptsExist(context, displayNames.associateWith { TranscriptStatus.NONE }) { db ->
+            db.transcriptDao().observeAll(displayNames).map { rows ->
+                val stored = rows.associate { it.displayName to TranscriptStatus.of(it.state) }
+                displayNames.associateWith { stored[it] ?: TranscriptStatus.NONE }
+            }
         }
     }
 
@@ -128,7 +128,15 @@ object TranscriptRepository {
      * [language] is the language picked for this recording alone, null meaning "use the setting".
      */
     suspend fun retry(context: Context, displayName: String, language: String? = null) {
+        resetForRun(context, displayName)
+        transcribeNow(context, displayName, language)
+    }
+
+    /** The row half of [retry]: cleared and marked QUEUED, without scheduling anything. */
+    internal suspend fun resetForRun(context: Context, displayName: String) {
         val dao = dao(context)
+        // A plain run deletes the words, so a leftover "transcribe again" backup must not survive it (#72).
+        TranscribeAgainBackup.clear(context, displayName)
         dao.deleteFor(displayName)
         dao.upsertTranscript(
             TranscriptEntry(
@@ -137,11 +145,11 @@ object TranscriptRepository {
                 updatedAt = System.currentTimeMillis()
             )
         )
-        transcribeNow(context, displayName, language)
     }
 
     /** Removes a transcript, leaving the recording. Someone may want the audio but not the text. */
     suspend fun delete(context: Context, displayName: String) {
+        TranscribeAgainBackup.clear(context, displayName)
         dao(context).deleteFor(displayName)
     }
 

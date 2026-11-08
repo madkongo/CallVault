@@ -38,12 +38,14 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import com.baba.callvault.R
 import com.baba.callvault.data.AppPreferences
 import com.baba.callvault.ui.common.CvScaffold
+import com.baba.callvault.ui.common.SearchLine
 import com.baba.callvault.ui.common.OemGateNotice
 import com.baba.callvault.ui.viewmodels.ContactPickerState
 import com.baba.callvault.ui.viewmodels.SettingsActions
@@ -79,6 +81,14 @@ fun ScopedSettingsContent(
     modifier: Modifier = Modifier,
 ) {
     var showLicensesDialog by remember { mutableStateOf(false) }
+
+    // The search line (option B): while it holds text, every group with a matching row opens and shows only
+    // those rows, across all of Settings rather than only this page; the rest are dimmed.
+    var searchQuery by rememberSaveable { mutableStateOf("") }
+    val searchTexts = rememberSettingsSearchTexts()
+    val searchRows = remember(searchQuery, searchTexts) {
+        if (searchQuery.isBlank()) null else SettingsSearch.matchingRows(searchTexts, searchQuery)
+    }
 
     // The open group, remembered per scope (scope name -> group key), so Recordings does not reopen on
     // whatever was open under Transcripts. Its own keys, apart from the removed classic screen's section state.
@@ -149,6 +159,17 @@ fun ScopedSettingsContent(
             ),
             verticalArrangement = Arrangement.spacedBy(12.dp),
         ) {
+            item(key = "search") {
+                SearchLine(
+                    query = searchQuery,
+                    onQueryChange = { searchQuery = it },
+                    placeholder = stringResource(R.string.settings_search_hint),
+                )
+            }
+            if (searchRows != null) {
+                settingsSearchResults(searchRows, searchQuery, preferences, updateTrigger, actions, callbacks)
+                return@LazyColumn
+            }
             if (showsModeRow) {
                 item(key = "mode") {
                     // Kept on purpose (maintainer, 2026-10-21): it decides which recording engine runs, so it
@@ -228,4 +249,57 @@ private fun iconOf(group: SettingsGroup): ImageVector = when (group) {
     SettingsGroup.SUMMARIES -> Icons.Filled.Summarize
     SettingsGroup.APP -> Icons.Filled.Tune
     SettingsGroup.HELP_AND_ABOUT -> Icons.AutoMirrored.Filled.HelpOutline
+}
+
+/**
+ * The search view: every group of all Settings with a matching row, opened and narrowed to those rows; then the
+ * groups with none, dimmed. The mode row and the footer links step aside while a search is on.
+ */
+private fun androidx.compose.foundation.lazy.LazyListScope.settingsSearchResults(
+    rows: Set<String>,
+    query: String,
+    preferences: AppPreferences,
+    updateTrigger: Int,
+    actions: SettingsActions,
+    callbacks: GroupBodyCallbacks,
+) {
+    val all = SettingsGroups.forScope(SettingsScope.ALL)
+    val (hits, misses) = all.partition { g -> SettingsGroups.rowsOf(g).any { it in rows } }
+    if (hits.isEmpty()) {
+        item(key = "search-none") {
+            androidx.compose.material3.Text(
+                text = stringResource(R.string.settings_search_none, query.trim()),
+                style = androidx.compose.material3.MaterialTheme.typography.bodyMedium,
+                color = androidx.compose.material3.MaterialTheme.colorScheme.onSurfaceVariant,
+                modifier = Modifier.padding(horizontal = 8.dp, vertical = 12.dp),
+            )
+        }
+    }
+    items(hits, key = { "hit-" + it.key }) { group ->
+        // What the group will show, not what matched: a folded match shows as its switch (SettingsFolds).
+        val switches = remember(updateTrigger, rows) { SettingsFolds.Switches.of(preferences) }
+        val count = SettingsFolds.shownRows(SettingsGroups.rowsOf(group).filter { it in rows }.toSet(), switches).size
+        SettingsGroupCard(
+            icon = iconOf(group),
+            title = stringResource(titleOf(group)),
+            summary = androidx.compose.ui.res.pluralStringResource(R.plurals.settings_search_matches, count, count),
+            expanded = true,
+            onToggle = {},
+        ) {
+            WithSettingsSearchMatches(rows) {
+                GroupBody(group, preferences, updateTrigger, actions, callbacks)
+            }
+        }
+    }
+    items(misses, key = { "miss-" + it.key }) { group ->
+        androidx.compose.foundation.layout.Box(Modifier.alpha(0.45f)) {
+            SettingsGroupCard(
+                icon = iconOf(group),
+                title = stringResource(titleOf(group)),
+                summary = stringResource(R.string.settings_search_no_matches),
+                expanded = false,
+                onToggle = {},
+            ) {}
+        }
+    }
 }

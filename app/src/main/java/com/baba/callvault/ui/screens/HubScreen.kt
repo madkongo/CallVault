@@ -32,6 +32,7 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import com.baba.callvault.ui.common.CvPullToRefresh
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -76,6 +77,8 @@ fun HubScreen(
     communityTucked: Boolean,
     modifier: Modifier = Modifier,
     titleTrailing: (@Composable () -> Unit)? = null,
+    isRefreshing: Boolean = false,
+    onRefresh: () -> Unit = {},
     statusCards: @Composable () -> Unit,
 ) {
     val brand = LocalCvBrand.current
@@ -94,69 +97,75 @@ fun HubScreen(
             }
         }
     ) { innerPadding ->
-        LazyVerticalGrid(
-            columns = GridCells.Fixed(HUB_COLUMNS),
-            state = listState,
-            modifier = Modifier.fillMaxSize(),
-            contentPadding = PaddingValues(
-                start = 20.dp,
-                end = 20.dp,
-                top = innerPadding.calculateTopPadding() + 8.dp,
-                bottom = innerPadding.calculateBottomPadding() + 28.dp
-            ),
-            horizontalArrangement = Arrangement.spacedBy(10.dp),
-            verticalArrangement = Arrangement.spacedBy(10.dp),
+        CvPullToRefresh(
+            isRefreshing = isRefreshing,
+            onRefresh = onRefresh,
+            topPadding = innerPadding.calculateTopPadding(),
         ) {
-            item(span = { GridItemSpan(HUB_COLUMNS) }) { statusCards() }
+            LazyVerticalGrid(
+                columns = GridCells.Fixed(HUB_COLUMNS),
+                state = listState,
+                modifier = Modifier.fillMaxSize(),
+                contentPadding = PaddingValues(
+                    start = 20.dp,
+                    end = 20.dp,
+                    top = innerPadding.calculateTopPadding() + 8.dp,
+                    bottom = innerPadding.calculateBottomPadding() + 28.dp
+                ),
+                horizontalArrangement = Arrangement.spacedBy(10.dp),
+                verticalArrangement = Arrangement.spacedBy(10.dp),
+            ) {
+                item(span = { GridItemSpan(HUB_COLUMNS) }) { statusCards() }
 
-            item(span = { GridItemSpan(HUB_COLUMNS) }) {
-                CvSectionHeader(text = stringResource(R.string.home_hub_library_title))
-            }
+                item(span = { GridItemSpan(HUB_COLUMNS) }) {
+                    CvSectionHeader(text = stringResource(R.string.home_hub_library_title))
+                }
 
-            item {
-                HubCard(
-                    icon = Icons.Filled.GraphicEq,
-                    accent = MaterialTheme.colorScheme.primary,
-                    count = stringResource(R.string.home_recordings_count, recordingsCount),
-                    title = stringResource(R.string.home_recordings_title),
-                    body = stringResource(R.string.home_hub_recordings_body),
-                    onClick = { onOpenSection(HomeSection.Recordings) },
-                )
-            }
-            item {
-                HubCard(
-                    icon = Icons.AutoMirrored.Filled.Article,
-                    accent = brand.info,
-                    count = stringResource(R.string.home_transcripts_count, transcriptsCount),
-                    title = stringResource(R.string.home_transcripts_title),
-                    body = stringResource(R.string.home_hub_transcripts_body),
-                    onClick = { onOpenSection(HomeSection.Transcripts) },
-                )
-            }
-            item {
-                HubCard(
-                    icon = Icons.Filled.AutoAwesome,
-                    accent = brand.success,
-                    count = stringResource(R.string.home_summaries_count, summariesCount),
-                    title = stringResource(R.string.home_summaries_title),
-                    body = stringResource(R.string.home_hub_summaries_body),
-                    onClick = { onOpenSection(HomeSection.Summaries) },
-                )
-            }
-            // Last, and only while the user has not tucked it away: an invitation is worth one cell of a
-            // screen they open every day, and worth none at all once they have taken it up. Long-press
-            // moves it to the pill beside Support rather than hiding it, so it is still one tap away.
-            if (!communityTucked) {
                 item {
                     HubCard(
-                        icon = Icons.AutoMirrored.Filled.Send,
-                        accent = brand.accent,
-                        count = stringResource(R.string.home_hub_community_eyebrow),
-                        title = stringResource(R.string.home_hub_community_title),
-                        body = stringResource(R.string.home_hub_community_body),
-                        onClick = onOpenCommunity,
-                        onLongClick = onTuckCommunity,
+                        icon = Icons.Filled.GraphicEq,
+                        accent = MaterialTheme.colorScheme.primary,
+                        count = stringResource(R.string.home_recordings_count, recordingsCount),
+                        title = stringResource(R.string.home_recordings_title),
+                        body = stringResource(R.string.home_hub_recordings_body),
+                        onClick = { onOpenSection(HomeSection.Recordings) },
                     )
+                }
+                item {
+                    HubCard(
+                        icon = Icons.AutoMirrored.Filled.Article,
+                        accent = brand.info,
+                        count = stringResource(R.string.home_transcripts_count, transcriptsCount),
+                        title = stringResource(R.string.home_transcripts_title),
+                        body = stringResource(R.string.home_hub_transcripts_body),
+                        onClick = { onOpenSection(HomeSection.Transcripts) },
+                    )
+                }
+                item {
+                    HubCard(
+                        icon = Icons.Filled.AutoAwesome,
+                        accent = brand.success,
+                        count = stringResource(R.string.home_summaries_count, summariesCount),
+                        title = stringResource(R.string.home_summaries_title),
+                        body = stringResource(R.string.home_hub_summaries_body),
+                        onClick = { onOpenSection(HomeSection.Summaries) },
+                    )
+                }
+                // Last, and only while the user has not tucked it away: an invitation is worth one cell of a
+                // screen they open every day, and worth none at all once they have taken it up. Long-press
+                // moves it to the pill beside Support rather than hiding it, so it is still one tap away.
+                if (!communityTucked) {
+                    item {
+                        HubCard(
+                            icon = Icons.AutoMirrored.Filled.Send,
+                            accent = brand.accent,
+                            count = stringResource(R.string.home_hub_community_eyebrow),
+                            title = stringResource(R.string.home_hub_community_title),
+                            body = stringResource(R.string.home_hub_community_body),
+                            onClick = onOpenCommunity,
+                            onLongClick = onTuckCommunity,
+                        )
+                    }
                 }
             }
         }

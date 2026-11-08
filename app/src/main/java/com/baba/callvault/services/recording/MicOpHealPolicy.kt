@@ -31,9 +31,6 @@ object MicOpHealPolicy {
         /** Replace the daemon. */
         HEAL,
 
-        /** Shizuku mode: no daemon of ours to replace, and its host is not ours to end. */
-        NOT_STANDALONE,
-
         /** The indicator is not stuck. */
         NOTHING_HELD,
 
@@ -50,18 +47,24 @@ object MicOpHealPolicy {
     fun decide(
         shellMicOpsHeld: Int,
         callOrRecordingActive: Boolean,
-        standalone: Boolean,
         canRelaunch: Boolean,
         lastHealAtMs: Long?,
         nowMs: Long,
     ): Decision = when {
-        !standalone -> Decision.NOT_STANDALONE
         shellMicOpsHeld <= 0 -> Decision.NOTHING_HELD
         callOrRecordingActive -> Decision.CALL_ACTIVE
         lastHealAtMs != null && nowMs - lastHealAtMs < COOLDOWN_MS -> Decision.COOLING_DOWN
         !canRelaunch -> Decision.NO_WAY_BACK
         else -> Decision.HEAL
     }
+
+    /**
+     * Shizuku mode: the recorder is CallVault's own Shizuku user service, started and restarted by the app (as after
+     * every update), so it can be replaced whenever Shizuku itself is running. Until 2026-11-07 Shizuku mode was left
+     * out ("not ours to end"), and a OnePlus CPH2747 on Android 17 in Shizuku mode had to stop CallVault by hand to
+     * clear the microphone after some calls.
+     */
+    fun canRelaunchShizuku(shizukuReady: Boolean): Boolean = shizukuReady
 
     /**
      * Whether the keep-alive could bring the daemon back if it were ended now.

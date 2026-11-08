@@ -85,6 +85,7 @@ interface SettingsActions {
     fun setMinDurationSeconds(seconds: Int)
 
     fun setWriteMetadataFileEnabled(enabled: Boolean)
+    fun setShowSimLabelEnabled(enabled: Boolean)
     fun setHideRecordingsEnabled(enabled: Boolean)
     fun setWriteTranscriptSidecarEnabled(enabled: Boolean)
     fun exportSettingsJson(): String
@@ -360,6 +361,9 @@ class SettingsViewModel(application: Application) : AndroidViewModel(application
      */
     override fun setStorageTarget(target: StorageTarget) {
         preferences.setStorageTarget(target)
+        // The schedule depends on the target too: switching to Drive with a daily/weekly schedule set no
+        // sweep until the next app start or call, and switching to the phone only left one queued (OP9, 2026-11-03).
+        SyncScheduler.apply(appContext)
         refresh()
     }
 
@@ -369,6 +373,7 @@ class SettingsViewModel(application: Application) : AndroidViewModel(application
      */
     override fun setDriveFolderUri(uri: android.net.Uri?) {
         preferences.setDriveFolderUri(uri)
+        SyncScheduler.apply(appContext)
         refresh()
     }
 
@@ -389,6 +394,12 @@ class SettingsViewModel(application: Application) : AndroidViewModel(application
 
     override fun setWriteMetadataFileEnabled(enabled: Boolean) {
         preferences.setWriteMetadataFileEnabled(enabled)
+        refresh()
+    }
+
+    /** Saves whether each phone call shows which SIM it used. */
+    override fun setShowSimLabelEnabled(enabled: Boolean) {
+        preferences.setShowSimLabelEnabled(enabled)
         refresh()
     }
 
@@ -713,27 +724,24 @@ class SettingsViewModel(application: Application) : AndroidViewModel(application
 
     // -------- Debug settings
 
-    /** Turns diagnostic logging on or off.
-     *
-     * Turning it **on** clears any previous capture so each bug report is a fresh, focused log.
-     * Turning it **off** keeps the captured log on disk so the user can still share it afterwards.
-     * Either way the persistent "debug logging is on" reminder is posted/cleared to match.
-     *
-     * @param enabled `true` to start capturing application logs.
-     */
     override fun setSkipMdnsConnectForTest(enabled: Boolean) {
         preferences.setDebugSkipMdnsConnect(enabled)
         refresh()
     }
 
+    /**
+     * Turns diagnostic logging on or off. Neither direction deletes anything: only the Delete button does.
+     *
+     * Turning it on used to clear the previous capture, silently. A reporter whose phone got slow with
+     * logging already on flipped the switch again before exporting and lost the slow period (2026-11-08).
+     * A line marks where each new session starts instead, so an older capture is still told apart.
+     * Either way the persistent "debug logging is on" reminder is posted/cleared to match.
+     *
+     * @param enabled `true` to start capturing application logs.
+     */
     override fun setLoggingEnabled(enabled: Boolean) {
-        if (enabled) {
-            AppLogger.clearLogs()
-            // The host keeps its own copy in memory; deleting only the app's half would let
-            // lines the user thought they erased reappear in the next report.
-            RecorderBackend.clearHostDiagnostics()
-        }
         preferences.setLoggingEnabled(enabled)
+        if (enabled) AppLogger.i("CV:Settings", "=== Debug logging switched on; earlier entries kept ===")
         // The recorder host has no way to see this preference, so it has to be pushed. Without it,
         // turning logging on collects the app's side only and the export stays blind to the process
         // that owns the microphone.

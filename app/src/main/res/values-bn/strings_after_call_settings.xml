@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Keep or delete after the call: Settings rows and the wizard switch. -->
+<resources>
+    <string name="settings_after_call_mode_label">কল শেষ হলে</string>
+    <string name="settings_after_call_mode_keep">রেকর্ডিং রাখুন</string>
+    <string name="settings_after_call_mode_ask">আমাকে জিজ্ঞেস করুন: রাখব না মুছব</string>
+    <string name="settings_after_call_mode_keep_desc">প্রতিটি রেকর্ডিং রাখা হয়, আগের মতোই।</string>
+    <string name="settings_after_call_mode_ask_desc">প্রতিটি রেকর্ড করা কলের পরে একটি নোটিফিকেশন জিজ্ঞেস করে রাখবেন কিনা। আপনি উত্তর না দেওয়া পর্যন্ত এটি Drive-এ কপি হয় না বা নিজে থেকে ট্রান্সক্রাইব হয় না।</string>
+    <string name="settings_after_call_needs_notifications">জিজ্ঞেস করতে CallVault-এর নোটিফিকেশন দরকার। সেগুলো চালু করুন, তাহলে জিজ্ঞেস করা চালু হবে।</string>
+    <string name="settings_after_call_style_label">কীভাবে জিজ্ঞেস করবে</string>
+    <string name="settings_after_call_style_notification">নোটিফিকেশন</string>
+    <string name="settings_after_call_style_popup">স্ক্রিনের উপরে পপ-আপ</string>
+    <string name="settings_after_call_style_notification_desc">রাখুন ও মুছুন বোতামসহ একটি নোটিফিকেশন।</string>
+    <string name="settings_after_call_style_popup_desc">স্ক্রিনে যা আছে তার উপরে একটি ছোট উইন্ডো। এটি দেখানো না গেলে (ফোন লক) বা উত্তর না দিয়ে বন্ধ করলে, তার বদলে একটি নোটিফিকেশন জিজ্ঞেস করে। অন্য অ্যাপের উপরে দেখানোর অনুমতি লাগে।</string>
+    <string name="settings_after_call_needs_overlay">পপ-আপের জন্য অন্য অ্যাপের উপরে দেখানোর অনুমতি লাগে। অনুমতি না দেওয়া পর্যন্ত নোটিফিকেশন জিজ্ঞেস করবে।</string>
+    <string name="settings_after_call_unanswered_label">আমি উত্তর না দিলে</string>
+    <string name="settings_after_call_unanswered_keep">রেখে দিন</string>
+    <string name="settings_after_call_unanswered_delete">২৪ ঘণ্টা পরে মুছে দিন</string>
+    <string name="settings_after_call_unanswered_keep_desc">২৪ ঘণ্টা পরে রেকর্ডিং রাখা হয়, এবং যথারীতি কপি ও ট্রান্সক্রাইব হয়।</string>
+    <string name="settings_after_call_unanswered_delete_desc">কলের ২৪ ঘণ্টা পরে রেকর্ডিং মুছে ফেলা হয়।</string>
+    <string name="settings_after_call_unanswered_engaged">যে রেকর্ডিং আপনি তারকা দিয়েছেন, চিহ্নিত করেছেন, ট্যাগ করেছেন, নোট লিখেছেন বা ট্রান্সক্রাইব করেছেন তা সবসময় রাখা হয়।</string>
+    <string name="wizard_after_call_ask_label">প্রতিটি রেকর্ডিং রাখব কিনা আমাকে জিজ্ঞেস করুন</string>
+    <string name="wizard_after_call_ask_desc">কল শেষ হলে এক ট্যাপে রেকর্ডিং রাখুন বা মুছুন। বন্ধ থাকলে সব রেকর্ডিং রাখা হয়।</string>
+</resources>

@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Keep or delete a recording when the call ends (docs/dev-notes/2026-11-06-keep-or-delete-plan.md). -->
+<resources>
+    <string name="after_call_channel">Зберегти чи видалити після дзвінка</string>
+    <string name="after_call_title_party">Дзвінок із %1$s записано</string>
+    <string name="after_call_title_app">Дзвінок у %1$s записано</string>
+    <string name="after_call_title_plain">Дзвінок записано</string>
+    <string name="after_call_question_text">Зберегти чи видалити зараз?</string>
+    <string name="after_call_keep">Зберегти</string>
+    <string name="after_call_delete">Видалити</string>
+    <string name="after_call_deleted_title">Запис видалено</string>
+    <string name="after_call_deleted_text">Його буде видалено за кілька секунд. Натисніть «Скасувати», щоб зберегти.</string>
+    <string name="after_call_undo">Скасувати</string>
+    <string name="after_call_popup_title">Зберегти цей запис?</string>
+    <string name="after_call_popup_call">Дзвінок</string>
+</resources>

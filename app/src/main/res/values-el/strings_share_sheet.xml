@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- The one Share sheet (recording, transcript, summary). -->
+<resources>
+    <string name="share_sheet_title_one">Κοινοποίηση «%1$s»</string>
+    <string name="share_sheet_title_many">Κοινοποίηση επιλεγμένων (%1$d)</string>
+    <string name="share_sheet_button">Κοινοποίηση</string>
+    <string name="share_part_recording">Ηχογράφηση</string>
+    <string name="share_part_transcript">Απομαγνητοφώνηση</string>
+    <string name="share_part_summary">Σύνοψη</string>
+    <string name="share_part_recording_hint">Αρχείο ήχου</string>
+    <string name="share_part_text_message_hint">Ως μήνυμα</string>
+    <string name="share_part_text_file_hint">Αρχείο κειμένου, μαζί με την ηχογράφηση</string>
+    <string name="share_part_missing_one">Αυτή η κλήση δεν έχει</string>
+    <string name="share_part_missing_many">Καμία από αυτές τις κλήσεις δεν έχει</string>
+    <string name="share_file_word_transcript">απομαγνητοφώνηση</string>
+    <string name="share_file_word_summary">σύνοψη</string>
+</resources>

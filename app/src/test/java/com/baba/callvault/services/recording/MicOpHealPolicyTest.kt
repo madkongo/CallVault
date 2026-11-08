@@ -29,11 +29,10 @@ class MicOpHealPolicyTest {
     private fun decide(
         shellMicOpsHeld: Int = 1,
         callOrRecordingActive: Boolean = false,
-        standalone: Boolean = true,
         canRelaunch: Boolean = true,
         lastHealAtMs: Long? = null,
         nowMs: Long = 100 * minute,
-    ) = MicOpHealPolicy.decide(shellMicOpsHeld, callOrRecordingActive, standalone, canRelaunch, lastHealAtMs, nowMs)
+    ) = MicOpHealPolicy.decide(shellMicOpsHeld, callOrRecordingActive, canRelaunch, lastHealAtMs, nowMs)
 
     @Test
     fun a_stuck_op_after_the_call_is_healed() {
@@ -53,8 +52,11 @@ class MicOpHealPolicyTest {
 
     /** Shizuku mode runs no daemon of ours to replace, and its host is not ours to kill. */
     @Test
-    fun only_in_standalone_mode() {
-        assertEquals(Decision.NOT_STANDALONE, decide(standalone = false))
+    fun shizuku_mode_relaunches_whenever_shizuku_runs() {
+        // Shizuku mode is no longer left out: its recorder is CallVault's own service (2026-11-07).
+        assertEquals(true, MicOpHealPolicy.canRelaunchShizuku(shizukuReady = true))
+        assertEquals(false, MicOpHealPolicy.canRelaunchShizuku(shizukuReady = false))
+        assertEquals(Decision.NO_WAY_BACK, decide(canRelaunch = MicOpHealPolicy.canRelaunchShizuku(shizukuReady = false)))
     }
 
     /**

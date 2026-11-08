@@ -9,6 +9,7 @@
 
 package com.baba.callvault.services.recording
 
+import com.baba.callvault.services.recording.aftercall.AfterCallDecision
 import android.app.Notification
 import android.app.Service
 import android.content.Context
@@ -24,6 +25,9 @@ import android.telephony.PhoneNumberUtils
 import android.provider.DocumentsContract
 import androidx.documentfile.provider.DocumentFile
 import com.baba.callvault.data.AppPreferences
+import com.baba.callvault.data.calls.PhoneCallMatch
+import com.baba.callvault.data.calls.PhoneCallReader
+import com.baba.callvault.data.calls.SimLabels
 import com.baba.callvault.data.health.CallOutcomes
 import com.baba.callvault.data.health.SetupFingerprint
 import com.baba.callvault.data.health.SetupHealthStore
@@ -43,6 +47,8 @@ import com.baba.callvault.utils.AppLogger
 import com.baba.callvault.utils.HONOR_DIALER_TEMPLATE
 import com.baba.callvault.utils.HonorCallStart
 import com.baba.callvault.utils.PhoneNumberManager
+import com.baba.callvault.utils.RedirectedCall
+import com.baba.callvault.system.permissions.PermissionChecks
 import com.baba.callvault.utils.RecordingFileNameFormatter
 import com.baba.callvault.transcription.AudioDecoder
 import com.baba.callvault.system.storage.MinDurationPolicy
@@ -74,6 +80,8 @@ class RecordingForegroundService : Service() {
         /** Reads of the call log while waiting for the just-ended call's entry (Honor preset, #56): 8 × 500 ms. */
         private const val HONOR_LOG_ATTEMPTS = 8
         private const val HONOR_LOG_RETRY_MS = 500L
+        /** Tries at [HONOR_LOG_RETRY_MS] for this call's entry: it is written as the call ends, normally within a second. */
+        private const val REDIRECT_LOG_ATTEMPTS = 6
         private const val TAG = "CV:RecordingForegroundService"
 
         // -- Intent action for controlling and initializing the service lifecycle. --
@@ -620,18 +628,38 @@ class RecordingForegroundService : Service() {
                     finalUri, mimeType, activeSession.lastCapturedByteCount, originalMetadata.direction
                 )
             }
-        } else if (uriToRename != null && originalMetadata != null && startedAt != null && isHonorPreset) {
-            // Honor's phone app links the file only if its name carries the call-log time (#56); see [HonorCallStart].
+        } else if (uriToRename != null && originalMetadata != null && startedAt != null &&
+            (isHonorPreset || originalMetadata.direction == RecordingDirection.OUTGOING)
+        ) {
             CoroutineScope(Dispatchers.IO).launch {
-                val callStart = honorCallStartFromLog(applicationContext, originalMetadata.direction, originalMetadata.getBestNumber(), startedAt)
-                val finalUri = if (callStart != null && callStart.time / 1000 != startedAt.time / 1000) {
+                // A call redirection app (e.g. Google Voice) gave this call a proxy number; the call log has the
+                // dialled one. Only needed when NEW_OUTGOING_CALL did not already settle it, see [RedirectedCall].
+                // TODO: one post-call step that reads this call's log entry once for the blank-number, redirected-number
+                //  and Honor-time cases, instead of three branches.
+                val logEntry = if (originalMetadata.direction == RecordingDirection.OUTGOING && !originalMetadata.isDialledNumberChecked) {
+                    outgoingCallLogEntry(applicationContext, startedAt)
+                } else null
+                val dialled = logEntry?.let { RedirectedCall.dialledNumber(it, originalMetadata.rawPhoneNumber, PhoneNumberUtils::compare) }
+                    ?.let { PhoneNumberManager.sanitizeOemNumber(it) }
+                    ?.also { AppLogger.i(TAG, "Call log has '$it' for this call, the system gave '${originalMetadata.rawPhoneNumber}' (call redirection)") }
+                val metadata = if (dialled != null) {
+                    RecordingMetadata.enrichMetadata(applicationContext, RecordingMetadata(dialled, originalMetadata.direction))
+                } else originalMetadata
+                // Honor's phone app links the file only if its name carries the call-log time (#56); see [HonorCallStart].
+                // When this call's entry was already read above, its DATE is that time.
+                val callStart = if (isHonorPreset) {
+                    logEntry?.let { Date(it.date) }
+                        ?: honorCallStartFromLog(applicationContext, metadata.direction, metadata.getBestNumber(), startedAt)
+                } else null
+                val movesTime = callStart != null && callStart.time / 1000 != startedAt.time / 1000
+                val finalUri = if (dialled != null || movesTime) {
                     val newName = RecordingFileNameFormatter.formatFileName(
-                        applicationContext, originalMetadata, activeSession.currentCodecEnum, startedAt = callStart
+                        applicationContext, metadata, activeSession.currentCodecEnum, startedAt = callStart ?: startedAt
                     )
                     val renamed = runCatching { DocumentsContract.renameDocument(applicationContext.contentResolver, uriToRename, newName) }
-                        .onFailure { AppLogger.e(TAG, "Could not move the recording to the call-log time for the Honor phone app", it) }
+                        .onFailure { AppLogger.e(TAG, "Could not rename the recording to its dialled number or call-log time", it) }
                         .getOrNull()
-                    if (renamed != null) AppLogger.d(TAG, "Renamed to the call-log time for the Honor phone app: '$newName'")
+                    if (renamed != null) AppLogger.d(TAG, "Renamed to the dialled number or call-log time: '$newName'")
                     renamed ?: uriToRename
                 } else {
                     uriToRename
@@ -658,7 +686,7 @@ class RecordingForegroundService : Service() {
 
     /**
      * The call-log DATE of the call just recorded, for the Honor preset (#56), or null when it cannot be found.
-     * The entry is written only after the call ends, hence the retries. See [HonorCallStart] for the matching.
+     * See [HonorCallStart] for the matching.
      */
     private suspend fun honorCallStartFromLog(
         context: Context,
@@ -666,23 +694,50 @@ class RecordingForegroundService : Service() {
         number: String?,
         startedAt: Date
     ): Date? {
-        val since = startedAt.time - HonorCallStart.MAX_RING_MS
-        repeat(HONOR_LOG_ATTEMPTS) { attempt ->
-            val entries = runCatching { readCallLogSince(context, since) }
-                .onFailure { AppLogger.w(TAG, "Could not read the call log for the Honor phone-app time", it) }
-                .getOrDefault(emptyList())
-            HonorCallStart.pick(entries, startedAt.time, direction, number) { a, b -> PhoneNumberUtils.compare(a, b) }
-                ?.let { return Date(it) }
-            if (attempt < HONOR_LOG_ATTEMPTS - 1) delay(HONOR_LOG_RETRY_MS)
+        val callStart = pollCallLog(context, startedAt.time - HonorCallStart.MAX_RING_MS, HONOR_LOG_ATTEMPTS) { rows ->
+            HonorCallStart.pick(
+                rows.map { HonorCallStart.LogEntry(it.date, it.number, it.direction) },
+                startedAt.time, direction, number, PhoneNumberUtils::compare
+            )
         }
-        AppLogger.d(TAG, "No call-log entry matched this recording; keeping its own start time")
+        if (callStart == null) AppLogger.d(TAG, "No call-log entry matched this recording; keeping its own start time")
+        return callStart?.let { Date(it) }
+    }
+
+    /** The call-log entry of the outgoing call just recorded, or null when it cannot be found. See [RedirectedCall]. */
+    private suspend fun outgoingCallLogEntry(context: Context, startedAt: Date): RedirectedCall.LogEntry? {
+        if (!PermissionChecks.hasCallLogPermission(context)) return null
+        return pollCallLog(context, startedAt.time - RedirectedCall.MAX_CALL_LEAD_MS, REDIRECT_LOG_ATTEMPTS) { rows ->
+            RedirectedCall.entryForCall(
+                rows.filter { it.direction == RecordingDirection.OUTGOING }
+                    .map { RedirectedCall.LogEntry(it.date, it.lastModified, it.number) },
+                startedAt.time
+            )
+        }
+    }
+
+    /** One call-log row, as much of it as the post-call lookups need. */
+    private data class CallLogRow(val date: Long, val lastModified: Long, val number: String, val direction: RecordingDirection)
+
+    /**
+     * Reads the incoming and outgoing calls since [since] until [pick] finds what it needs, up to [attempts] times
+     * [HONOR_LOG_RETRY_MS] apart: the entry of the call that just ended is written only after it ends.
+     */
+    private suspend fun <T : Any> pollCallLog(context: Context, since: Long, attempts: Int, pick: (List<CallLogRow>) -> T?): T? {
+        repeat(attempts) { attempt ->
+            val rows = runCatching { readCallLogSince(context, since) }
+                .onFailure { AppLogger.w(TAG, "Could not read the call log", it) }
+                .getOrDefault(emptyList())
+            pick(rows)?.let { return it }
+            if (attempt < attempts - 1) delay(HONOR_LOG_RETRY_MS)
+        }
         return null
     }
 
-    private fun readCallLogSince(context: Context, since: Long): List<HonorCallStart.LogEntry> =
+    private fun readCallLogSince(context: Context, since: Long): List<CallLogRow> =
         context.contentResolver.query(
             CallLog.Calls.CONTENT_URI,
-            arrayOf(CallLog.Calls.DATE, CallLog.Calls.NUMBER, CallLog.Calls.TYPE),
+            arrayOf(CallLog.Calls.DATE, CallLog.Calls.NUMBER, CallLog.Calls.TYPE, CallLog.Calls.LAST_MODIFIED),
             "${CallLog.Calls.DATE} >= ?", arrayOf(since.toString()),
             "${CallLog.Calls.DATE} DESC"
         )?.use { cursor ->
@@ -693,7 +748,7 @@ class RecordingForegroundService : Service() {
                         CallLog.Calls.OUTGOING_TYPE -> RecordingDirection.OUTGOING
                         else -> continue
                     }
-                    add(HonorCallStart.LogEntry(cursor.getLong(0), cursor.getString(1).orEmpty(), direction))
+                    add(CallLogRow(cursor.getLong(0), cursor.getLong(3), cursor.getString(1).orEmpty(), direction))
                 }
             }
         }.orEmpty()
@@ -758,8 +813,18 @@ class RecordingForegroundService : Service() {
             durationSecsEncoded = null,
             // Carrier capture mixes the two directions onto channels whose order is an OEM detail, so
             // name the near side only when the learned mapping is trusted; null otherwise (issue #50).
-            nearChannel = SpeakerTurnsRepository.trustedMap(applicationContext).nearChannelKey()
+            nearChannel = SpeakerTurnsRepository.trustedMap(applicationContext).nearChannelKey(),
+            simSlot = simSlotFor(parsed.startedAtMillis ?: lastModified),
         )
+    }
+
+    /** The 1-based SIM slot of the call that started at [startedAt], when the opt-in SIM label is on; else null. */
+    private fun simSlotFor(startedAt: Long): Int? {
+        if (!AppPreferences(applicationContext).isShowSimLabelEnabled()) return null
+        val calls = PhoneCallReader.since(applicationContext, startedAt - PhoneCallMatch.TOLERANCE_MS)
+        val call = PhoneCallMatch.nearest(calls, startedAt) ?: return null
+        return SimLabels.Resolver(applicationContext, getString(R.string.sim_label_word))
+            .simFor(call.accountComponent, call.accountId)?.slot
     }
 
     /**
@@ -828,50 +893,67 @@ class RecordingForegroundService : Service() {
             }
         }
 
+        // Keep or delete after the call: decided ONCE, here, and both halves below follow it — the catalog
+        // coroutine (details-file copy, transcription) and the synchronous Drive route after it. Held
+        // before either starts, so no sweep can copy it in between. Not held — kept as in Keep mode — when
+        // the question could not be shown or the hold could not be stored; see AfterCallDecision.tryHold.
+        val isHeld = AfterCallDecision.tryHold(applicationContext, name, uri, mimeType, isVoip = false)
+
         // Record this finished recording in CallVault's own catalog (the Home list's source of truth).
         // The file is on the device now, so this is the local copy; the copy/sweep workers later stamp
         // the Drive copy onto this same row by name. Done on a detached IO scope because the service may
         // be torn down right after (the process is given a few seconds to live — same rationale as the
         // CallLog fallback above). Written for every storage target, regardless of where the file lands.
         CoroutineScope(Dispatchers.IO).launch {
-            RecordingCatalog.recordLocal(applicationContext, name, uri, sizeBytes, lastModified)
-            // Marks are keyed to the FINAL name, for the same reason the sidecar is: an anonymous
-            // number gets renamed from the call log after the call, and rows written mid-call would
-            // point at a recording that no longer exists.
-            FlagRepository.save(applicationContext, name, PendingFlags.drain())
-            // Collect the speaker turns BEFORE the details file and before transcription is queued,
-            // never after. A transcript labels its segments from these turns, so they have to be on
-            // disk by the time whisper starts; and the details file now carries them too (issue #50),
-            // so it has to run after this or it would write a file with no turns in it.
-            //
-            // The daemon gathered them during the call, from the two capture channels before the
-            // mono downmix averaged them away. They cannot be recovered from the finished file —
-            // it is mono — so this is the only moment they can be collected at all.
-            SpeakerTurnsRepository.collectAfterCall(
-                applicationContext, name, outgoing = direction == RecordingDirection.OUTGOING
-            )
-            // The BCR-compatible details file, when the user asked for one. Driven off the FINAL
-            // name, after any call-log rename: a sidecar written against the pre-rename name would
-            // sit beside nothing and be invisible to every tool that looks for it. After the turns
-            // above, so the `callvault` block can carry them.
-            writeMetadataSidecar(name, lastModified, "com.android.phone")
-            // Route the .json details to Drive too (issue #49). Must be here, after the write above,
-            // because the audio's StorageRouter.route runs synchronously below while this coroutine is
-            // still going — routing the sidecar from there could fire before the file exists. In
-            // IMMEDIATE mode only; DAILY/WEEKLY copy it in the folder sweep. No-op if the user did not
-            // ask for a details file (nothing to find).
-            StorageRouter.routeSidecar(
-                applicationContext, name, MetadataSidecar.sidecarNameFor(name), "application/json"
-            )
-            // After the catalog entry exists, never before: the transcription runner resolves the
-            // audio through the catalog, so queueing first would race it to "no longer in the catalog".
-            TranscriptionScheduler.transcribeAfterCallIfEnabled(applicationContext, name)
-            // Draw it now rather than when the user opens it: this phone has just come
-            // off a call, and they have not asked to wait for anything yet.
-            WaveformDrawWorker.enqueue(applicationContext, name, uri)
+            try {
+                RecordingCatalog.recordLocal(applicationContext, name, uri, sizeBytes, lastModified)
+                // Marks are keyed to the FINAL name, for the same reason the sidecar is: an anonymous
+                // number gets renamed from the call log after the call, and rows written mid-call would
+                // point at a recording that no longer exists.
+                FlagRepository.save(applicationContext, name, PendingFlags.drain())
+                // Collect the speaker turns BEFORE the details file and before transcription is queued,
+                // never after. A transcript labels its segments from these turns, so they have to be on
+                // disk by the time whisper starts; and the details file now carries them too (issue #50),
+                // so it has to run after this or it would write a file with no turns in it.
+                //
+                // The daemon gathered them during the call, from the two capture channels before the
+                // mono downmix averaged them away. They cannot be recovered from the finished file —
+                // it is mono — so this is the only moment they can be collected at all.
+                SpeakerTurnsRepository.collectAfterCall(
+                    applicationContext, name, outgoing = direction == RecordingDirection.OUTGOING
+                )
+                // The BCR-compatible details file, when the user asked for one. Driven off the FINAL
+                // name, after any call-log rename: a sidecar written against the pre-rename name would
+                // sit beside nothing and be invisible to every tool that looks for it. After the turns
+                // above, so the `callvault` block can carry them.
+                writeMetadataSidecar(name, lastModified, "com.android.phone")
+                // While a keep-or-delete answer is pending, neither hand-off runs: AfterCallDecision.keep
+                // runs both (and the Drive route below) once the user says keep.
+                if (!isHeld) {
+                    // Route the .json details to Drive too (issue #49). Must be here, after the write above,
+                    // because the audio's StorageRouter.route runs synchronously below while this coroutine is
+                    // still going — routing the sidecar from there could fire before the file exists. In
+                    // IMMEDIATE mode only; DAILY/WEEKLY copy it in the folder sweep. No-op if the user did not
+                    // ask for a details file (nothing to find).
+                    StorageRouter.routeSidecar(
+                        applicationContext, name, MetadataSidecar.sidecarNameFor(name), "application/json"
+                    )
+                    // After the catalog entry exists, never before: the transcription runner resolves the
+                    // audio through the catalog, so queueing first would race it to "no longer in the catalog".
+                    TranscriptionScheduler.transcribeAfterCallIfEnabled(applicationContext, name)
+                }
+                // Draw it now rather than when the user opens it: this phone has just come
+                // off a call, and they have not asked to wait for anything yet.
+                WaveformDrawWorker.enqueue(applicationContext, name, uri)
+            } finally {
+                // Last, once the catalog row exists: Keep runs the transcription, which resolves the audio
+                // through the catalog and would otherwise race it. In a finally, so a step above that throws
+                // can never leave a held recording with no question (its 24-hour check is already scheduled).
+                if (isHeld) AfterCallDecision.ask(applicationContext, name)
+            }
         }
         recordHealth(sizeBytes, name)
-        StorageRouter.route(applicationContext, uri, name, mimeType)
+        if (!isHeld) StorageRouter.route(applicationContext, uri, name, mimeType)
     }
 
     /**

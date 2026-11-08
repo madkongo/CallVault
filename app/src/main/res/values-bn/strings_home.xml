@@ -1,0 +1,357 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Bengali (বাংলা) translation -->
+<resources>
+    <string name="home_hero_status_label">অবস্থা</string>
+    <string name="home_hero_pill_ready">সক্রিয়</string>
+    <string name="home_hero_pill_not_paired">পদক্ষেপ দরকার</string>
+    <string name="home_hero_pill_no_folder">পদক্ষেপ দরকার</string>
+    <string name="home_hero_pill_dev_options_off">রেকর্ডিং বন্ধ</string>
+    <string name="home_hero_pill_update_regrant">পদক্ষেপ দরকার</string>
+    <string name="home_support_pill">সহায়তা</string>
+    <string name="home_usb_advisory_title">স্ক্রিন লক হলে রেকর্ডিং থেমে যেতে পারে</string>
+    <string name="home_usb_advisory_text">USB একটি ডেটা মোডে সেট করা আছে। “শুধু চার্জিং” করতে ট্যাপ করুন।</string>
+    <string name="home_usb_advisory_fix">ঠিক করুন</string>
+
+    <string name="home_view_recordings">রেকর্ডিং</string>
+    <string name="home_view_all_calls">কলের ইতিহাস</string>
+    <string name="home_calls_filter_all">সব</string>
+    <string name="home_calls_filter_recorded">রেকর্ড হয়েছে</string>
+    <string name="home_calls_filter_not_recorded">রেকর্ড হয়নি</string>
+    <string name="home_calls_filter_missed">মিসড</string>
+    <string name="home_call_origin_phone">ফোন কল</string>
+    <string name="home_call_not_recorded">রেকর্ড হয়নি</string>
+    <string name="home_call_missed">মিসড</string>
+    <string name="home_call_declined">প্রত্যাখ্যাত</string>
+    <string name="home_call_unknown_number">অজানা নম্বর</string>
+    <string name="home_calls_empty">ফোনের কল লগে এখনো কোনো কল নেই।</string>
+    <string name="home_calls_no_permission">CallVault কল লগ পড়তে পারছে না। এখানে সব কল দেখতে Android-এর অ্যাপ সেটিংসে CallVault-এর জন্য “কল লগ” (Call logs) অনুমতি দিন।</string>
+    <string name="home_recordings_count">%1$d টি সংরক্ষিত</string>
+    <string name="home_recordings_empty_title">এখনো কোনো রেকর্ডিং নেই</string>
+    <string name="home_recordings_empty_hint">CallVault কোনো কল রেকর্ড করলে তা এখানে দেখা যাবে। শুরু করতে একটি কল করুন বা ধরুন।</string>
+
+    <string name="home_play_recording">রেকর্ডিং চালান</string>
+    <string name="home_update_banner_title">আপডেট পাওয়া যাচ্ছে: %1$s</string>
+    <string name="home_update_banner_text">GitHub থেকে ডাউনলোডের জন্য একটি নতুন সংস্করণ প্রস্তুত।</string>
+    <string name="home_update_banner_button">আপডেট</string>
+    <string name="home_update_banner_downloading">ডাউনলোড হচ্ছে… %1$d%%</string>
+    <string name="home_update_banner_installing">ইনস্টল হচ্ছে…</string>
+    <string name="home_updated_banner_text">CallVault %1$s-এ আপডেট হয়েছে</string>
+    <string name="home_whatsnew_title">নতুন কী আছে</string>
+    <string name="home_whatsnew_body">• রেকর্ডিং কখনো আটকে গেলে এখন নিজে থেকেই ঠিক হয়ে যায়\n• রেকর্ডিং বন্ধ থাকলে হোম স্ক্রিন এখন চুপ না থেকে আপনাকে জানায়\n• ফোন কলকে আর অ্যাপ কল বলে ভুল করা হয় না</string>
+    <string name="home_whatsnew_offline_cta">Wi-Fi ছাড়া রেকর্ডিং চালু করুন</string>
+    <string name="home_whatsnew_offline_enabled">“Wi-Fi ছাড়াও রেকর্ডিং চালু রাখুন” চালু আছে।</string>
+    <string name="offline_failed_needs_wd">চালু করা যায়নি — ওয়্যারলেস ডিবাগিং (Wireless debugging) বন্ধ এবং CallVault এটি চালু করতে পারেনি। ডেভেলপার অপশন (Developer options)-এ এটি চালু করে আবার চেষ্টা করুন।</string>
+    <string name="offline_failed_no_service">চালু করা যায়নি — CallVault ফোনের ডিবাগিং সার্ভিসে পৌঁছাতে পারেনি। Wi-Fi-তে আছেন এবং ওয়্যারলেস ডিবাগিং (Wireless debugging) চালু আছে কিনা দেখে আবার চেষ্টা করুন।</string>
+    <string name="offline_failed_port">চালু করা যায়নি — লোকাল পোর্ট আবার চালু হয়নি। একটু পরে আবার চেষ্টা করুন।</string>
+    <string name="home_whatsnew_offline_enabling">Wi-Fi ছাড়া রেকর্ডিং চালু হচ্ছে…</string>
+    <string name="home_whatsnew_resilient_title">নতুন: হেল্পার থেমে গেলেও রেকর্ডিং চালু রাখুন</string>
+    <string name="home_whatsnew_resilient_body">কল রেকর্ডিংকে বাধার বিরুদ্ধে আরও মজবুত করে।\n\nAndroid যেকোনো সময় CallVault-এর ব্যাকগ্রাউন্ড হেল্পার থামিয়ে দিতে পারে। এটি চালু থাকলে, তখন চলমান রেকর্ডিংয়ের আর কোনো ক্ষতি হয় না।\n\nশুরুতে বন্ধ থাকে — পরে সেটিংস ▸ সংযোগ থেকেও চালু করতে পারবেন।</string>
+    <string name="home_whatsnew_resilient_cta">চালু করুন</string>
+    <string name="home_whatsnew_resilient_enabled">“হেল্পার থেমে গেলেও রেকর্ডিং চালু রাখুন” চালু আছে। Android CallVault-এর ব্যাকগ্রাউন্ড হেল্পার থামালেও চলমান রেকর্ডিংয়ের আর ক্ষতি হয় না।</string>
+
+    <string name="home_whatsnew_settings_cta">সেটিংস খুলুন</string>
+    <string name="whatsnew_153_title">আপনার সেটআপ, আপনার নিজের কল দিয়েই যাচাই করা</string>
+    <string name="whatsnew_155_title">প্যানেলে সেটিংস, আর আরও নির্ভরযোগ্যভাবে রেকর্ড হওয়া কল</string>
+    <string name="whatsnew_155_body">সেটিংস এখন অ্যাপের জায়গা না নিয়ে তার ওপর দিয়ে স্লাইড করে আসে, আর এমনভাবে সাজানো যে প্রতিটি স্ক্রিনে সব একসাথে নয়, একটি ছোট তালিকা থাকে। রেকর্ডিংয়ে দেখা যায় কলটি কখন হয়েছিল এবং কতক্ষণ চলেছিল।\n\nভেতরে: রেকর্ডিং হারানো বা নষ্ট হওয়ার বেশ কয়েকটি কারণ ঠিক করা হয়েছে, যেমন রেজিলিয়েন্ট রেকর্ডিংয়ে কড়কড়ে শব্দ, আর Samsung ফোনে VoIP কলের এক পাশ হারিয়ে যাওয়া।</string>
+    <string name="whatsnew_154_title">নিজে থেকেই ঠিক হয়ে যাওয়া রেকর্ডিং</string>
+    <string name="whatsnew_154_body">রেকর্ডারের সঙ্গে সংযোগে এক বিরল আটকে যাওয়ার কারণে অ্যাপ রিস্টার্ট না করা পর্যন্ত রেকর্ডিং চুপচাপ বন্ধ থাকতে পারত — স্ক্রিনে কিছুই না বলে। এখন এটি টাইমআউট হয়ে নিজে থেকেই ঠিক হয়ে যায়।\n\nরেকর্ডিং কখন Drive-এ আপলোড হবে তাও বেছে নিতে পারেন: সঙ্গে সঙ্গে, প্রতিদিন বা প্রতি সপ্তাহে। এটি পাবেন সেটিংস ▸ স্টোরেজ-এ, সংরক্ষণকালের সঙ্গে, যা এখন একই বিভাগে সরানো হয়েছে।</string>
+    <string name="whatsnew_153_body">স্ট্যাটাস কার্ড এখন জানায় রেকর্ডিং আসলে কাজ করেছে কিনা — শুধু অ্যাপ চালু হয়েছে বোঝানো সবুজ বাতি নয়, আপনার আসল কলের ভিত্তিতে। কোনো কল রেকর্ড না হলে তা জানায় এবং কেন — কখনো সেট না করা ফোল্ডার, বন্ধ করা ডেভেলপার অপশন, আপডেটে হারানো অনুমতি।\n\nএছাড়া: CallVault এখন ব্রাজিলীয় পর্তুগিজ ভাষায় কথা বলে, আর অন্য সব ভাষা হালনাগাদ করা হয়েছে।</string>
+    <string name="whatsnew_150_title">ওয়্যারলেস ডিবাগিং বন্ধ করুন</string>
+    <string name="whatsnew_150_body">USB ডিবাগিং (USB debugging) চালু করলে CallVault ওয়্যারলেস ডিবাগিং (Wireless debugging) বন্ধ করে বন্ধই রাখতে পারে। কোনো তার লাগে না, আর ওয়্যারলেস ডিবাগিংয়ের মতো এটি কোনো নেটওয়ার্ক পোর্ট খোলে না — তাই চালু রাখার জন্য দুটোর মধ্যে এটিই বেশি নিরাপদ। ঐচ্ছিক: দুইভাবেই রেকর্ডিং কাজ করে।\n\nএছাড়া ঠিক করা হয়েছে: USB ডিবাগিং বন্ধ করলে CallVault কিছু না বলেই রেকর্ড করতে অক্ষম হয়ে পড়তে পারত।</string>
+    <string name="whatsnew_150_where">সেটিংস ▸ পরীক্ষামূলক ▸ USB ডিবাগিং</string>
+    <string name="whatsnew_148_title">আরও নির্ভরযোগ্যভাবে চালু হওয়া</string>
+    <string name="whatsnew_148_body">কিছু ফোনে CallVault রেকর্ড করার জন্য প্রস্তুত না হয়েই বারবার ওয়্যারলেস ডিবাগিং চালু-বন্ধ করতে থাকত। সেটি ঠিক করা হয়েছে। যেখানে ওয়্যারলেস ডিবাগিংই একমাত্র পথ, সেখানে CallVault এখন এটি চালু রাখে এবং কোন সেটিং দিয়ে এটি আবার বন্ধ করা যাবে তা জানায়।\n\nএছাড়া ঠিক করা হয়েছে: ঠিকঠাক রেকর্ড হওয়া সত্ত্বেও কোনো অ্যাপ কল ব্যর্থতা দেখাতে পারত, আর ভুল অ্যাপের নামে চিহ্নিত হতে পারত।</string>
+    <string name="whatsnew_147_title">অ্যাপ কল রেকর্ড করুন (VoIP)</string>
+    <string name="whatsnew_147_body">CallVault এখন WhatsApp, Signal ও Telegram-এর মতো অ্যাপের ভেতরে করা কল রেকর্ড করতে পারে — শুধু আপনার কণ্ঠ নয়, কথোপকথনের দুই পাশই। রেকর্ডিংয়ে দেখা যায় কলটি কোন অ্যাপে হয়েছিল, আর অ্যাপ দিলে পরিচিতির নামও।\n\nপরীক্ষামূলক: কিছু অ্যাপে কাজ করে, কিছুতে করে না, আর কোনো অ্যাপ যেকোনো আপডেটে রেকর্ডিং আটকে দিতে পারে।</string>
+    <string name="whatsnew_147_where">সেটিংস ▸ পরীক্ষামূলক ▸ VoIP কল</string>
+    <string name="whatsnew_146_title">রেজিলিয়েন্ট রেকর্ডিং</string>
+    <string name="whatsnew_146_body">Android যেকোনো সময় CallVault-এর ব্যাকগ্রাউন্ড হেল্পার থামিয়ে দিতে পারে, যা আগে রেকর্ডিং মাঝপথে কেটে দিয়ে আপনাকে অর্ধেক কল দিত। এটি চালু থাকলে, চলমান রেকর্ডিং যা-ই হোক শেষ পর্যন্ত চলতে থাকে।</string>
+    <string name="whatsnew_146_where">সেটিংস ▸ পরীক্ষামূলক ▸ রেজিলিয়েন্স</string>
+    <string name="whatsnew_145_title">স্ক্রিন লক হলেও রেকর্ডিং চালু রাখুন</string>
+    <string name="whatsnew_145_body">অনেক ফোনে কলের সময় স্ক্রিন লক করলে রেকর্ডার মাঝপথে থেমে যেত। সেটি ঠিক করা হয়েছে, আর আপনার ফোনের USB সেটিং এর কারণ হলে CallVault এখন আপনাকে সতর্ক করে।</string>
+    <string name="offline_recording_on">Wi-Fi ছাড়া রেকর্ডিং চালু আছে।</string>
+    <string name="offline_recording_disabling">Wi-Fi ছাড়া রেকর্ডিং বন্ধ হচ্ছে…</string>
+
+    <string name="home_health_verified">শেষ যাচাই %1$s।</string>
+    <string name="home_health_verified_just_now">এইমাত্র যাচাই করা হয়েছে।</string>
+    <string name="home_health_unverified">আপনার পরের কলেই নিশ্চিত হবে রেকর্ডিং কাজ করছে।</string>
+    <string name="home_health_setup_changed">আপনার শেষ কলের পর সেটআপ বদলেছে — পরের কলেই নিশ্চিত হবে এটি এখনো কাজ করছে।</string>
+    <string name="home_health_call_not_recorded">একটি কল রেকর্ড হয়নি — %1$s, %2$s।</string>
+    <string name="home_health_call_not_recorded_unnamed">একটি কল রেকর্ড হয়নি — %1$s।</string>
+    <string name="home_health_call_not_recorded_force_stopped">ফোন বা অন্য কোনো অ্যাপ CallVault জোর করে বন্ধ করে দিয়েছিল, তাই এটি কলটি শনাক্ত করতে পারেনি। দেখে নিন আপনার ফোনের ব্যাটারি সেটিংস যেন CallVault-কে ঘুম মোডে না পাঠায়।</string>
+    <string name="home_health_missed_recording_folder">একটি কল রেকর্ড হয়নি — তখন কোনো রেকর্ডিং ফোল্ডার সেট করা ছিল না, %1$s।</string>
+    <string name="home_health_missed_recording_folder_unnamed">একটি কল রেকর্ড হয়নি — তখন কোনো রেকর্ডিং ফোল্ডার সেট করা ছিল না।</string>
+    <string name="home_health_missed_adb_pairing">একটি কল রেকর্ড হয়নি — তখন সেটআপ শেষ হয়নি, %1$s।</string>
+    <string name="home_health_missed_adb_pairing_unnamed">একটি কল রেকর্ড হয়নি — তখন সেটআপ শেষ হয়নি।</string>
+    <string name="home_health_missed_developer_options">একটি কল রেকর্ড হয়নি — তখন ডেভেলপার অপশন (Developer options) বন্ধ ছিল, %1$s।</string>
+    <string name="home_health_missed_developer_options_unnamed">একটি কল রেকর্ড হয়নি — তখন ডেভেলপার অপশন (Developer options) বন্ধ ছিল।</string>
+    <string name="home_health_missed_secure_settings">একটি কল রেকর্ড হয়নি — রেকর্ডার চালু করার অনুমতি CallVault হারিয়ে ফেলেছিল, %1$s।</string>
+    <string name="home_health_missed_secure_settings_unnamed">একটি কল রেকর্ড হয়নি — রেকর্ডার চালু করার অনুমতি CallVault হারিয়ে ফেলেছিল।</string>
+    <string name="home_health_failed_empty">আপনার শেষ কলের রেকর্ডিং খালি (0 বাইট)।</string>
+    <string name="home_health_failed_no_audio">আপনার শেষ কলটি সংরক্ষিত হয়েছে, কিন্তু এতে কোনো অডিও নেই।</string>
+    <string name="home_health_failed_daemon">আপনার শেষ কলের সময় রেকর্ডার থেমে গিয়েছিল।</string>
+    <string name="home_health_failed_one_sided">আপনার শেষ অ্যাপ কলে শুধু আপনার পাশ রেকর্ড হয়েছে।</string>
+    <string name="home_health_failed_one_sided_vivo">আপনার শেষ অ্যাপ কলে শুধু আপনার পাশ রেকর্ড হয়েছে। vivo-তে: Recorder অ্যাপ খুলুন → In-app call recording, এবং এটি চালু করুন (Auto-start recording সহ)।</string>
+    <string name="home_health_failed_one_sided_vivo_overseas">আপনার শেষ অ্যাপ কলে শুধু আপনার পাশ রেকর্ড হয়েছে। এই vivo ফোন অ্যাপ কলে অন্য ব্যক্তির কণ্ঠ রেকর্ড করতে অ্যাপকে বাধা দেয়, আর তা অনুমতি দেওয়ার কোনো অপশন নেই। সাধারণ ফোন কলে দুই পাশই রেকর্ড হয়।</string>
+    <string name="home_date_today">আজ</string>
+    <string name="home_date_yesterday">গতকাল</string>
+    <string name="whatsnew_221_title">দ্রুত খোলে, আর যে সমস্যা নেই তা নিয়ে আর সতর্কতা নয়</string>
+    <string name="whatsnew_221_body">CallVault আবার দ্রুত খোলে, আর আপনি যত কলই রাখুন দ্রুতই থাকে। 2.2.0 তালিকা আঁকার প্রতিবার প্রতিটি রেকর্ডিংয়ের দৈর্ঘ্য আবার পড়ত, তাই কয়েক ডজন কল জমলেই তালিকা এত ধীর হয়ে যেত যে কয়েক মিনিট আগে রেকর্ড হওয়া কলকেও মনে হতে পারত যেন কখনো রেকর্ডই হয়নি।\n\nরেকর্ডিং Google Drive-এ পৌঁছানো বন্ধ হয়ে গেছে — এই সতর্কতা এখন আর দেখা যায় না যখন তা বন্ধ হয়নি। দুজনকে বলা হয়েছিল তাদের ব্যাকআপ ব্যর্থ হয়েছে, অথচ প্রতিটি রেকর্ডিং ঠিকঠাক পৌঁছাচ্ছিল।\n\nএক্সপোর্ট করা ট্রান্সক্রিপ্টের শিরোনাম, বেছে নেওয়া অ্যাপের সংখ্যা আর ফিরে যাওয়ার বোতাম এখন ইংরেজিতে না থেকে আপনার বেছে নেওয়া ভাষা অনুসরণ করে। ডিবাগ রিপোর্ট এখন জানাতে পারে কোন অ্যাপ মাইক্রোফোন ধরে রেখেছে, এমন এক সমস্যার জন্য যা ধরা কঠিন হচ্ছে।</string>
+    <string name="whatsnew_220_title">কল আবার খুঁজে পান, আর চলার সময়েই তা নিয়ন্ত্রণ করুন</string>
+    <string name="whatsnew_220_body">কথা বলার সময়েই একটি মুহূর্ত চিহ্নিত করুন। কলের নোটিফিকেশনের একটি বোতাম চাপলে সেখানে একটি বুকমার্ক পড়ে, আর রেকর্ডিংয়ে সেগুলো চিপ হিসেবে দেখায় যা সেখান থেকে চালায় — ফোন কল ও অ্যাপ কল দুটোতেই। অ্যাপ কলেও এখন নিয়ন্ত্রণ আছে: থামানো, আবার শুরু, বন্ধ ও চিহ্নিত করা, যেখানে আগে শুধু শুরু আর শেষ করা যেত।\n\nকল আবার খুঁজে পাওয়া সহজ হয়েছে: রাখার মতো কলগুলোতে তারা দিন, নিজের শব্দে লেবেল দিন, আর শুধু বলা কথা নয়, সারাংশ ও আপনার নিজের নোটেও খুঁজুন। ট্রান্সক্রিপ্ট টেক্সট, Markdown, SRT, VTT বা JSON হিসেবে এক্সপোর্ট হয়।\n\nCallVault চুপচাপ কাজ বন্ধ করলে এখন তা জানায় — রিবুটের পর রেকর্ডিং শুরু না হলে, বা রেকর্ডিং Drive-এ পৌঁছানো বন্ধ হলে। দুটোই আগে নীরব ছিল। নতুন গোছগাছের অপশন রেকর্ডিং কতটা জায়গা নেবে তার সীমা বাঁধতে বা খুব ছোট রেকর্ডিং বাদ দিতে পারে। সব শুরুতে বন্ধ থাকে, আর তারা দেওয়া রেকর্ডিং কখনো স্বয়ংক্রিয়ভাবে মোছা হয় না।</string>
+    <string name="whatsnew_220_where">গোছগাছের অপশনের জন্য সেটিংস ▸ স্টোরেজ ▸ সংরক্ষণকাল</string>
+    <string name="whatsnew_211_title">আরও ভালো ট্রান্সক্রিপ্ট, আরও ভালো সারাংশ</string>
+    <string name="whatsnew_211_body">ট্রান্সক্রিপশন এখন মডেল কল পড়ার আগেই নীরবতা বাদ দেয়, আর মাথায় আসা প্রথম শব্দটি না নিয়ে কয়েকটি সম্ভাব্য ট্রান্সক্রিপশন বিবেচনা করে। বেশি কাজ করা সত্ত্বেও এটি আগের চেয়ে একটু দ্রুত হয়েছে, আর একটি পরীক্ষামূলক কলে আগের সংস্করণে বাদ পড়া পুরো একটি বাক্য ফিরে পেয়েছে।\n\nসারাংশে আর একই কথা বারবার আসে না, যা হতো কারণ পয়েন্টের তালিকার কোনো আসল সীমা ছিল না। এখন সেগুলো আরও বেশি বলতেও পারে: আইটেম পাঁচটিতে সীমাবদ্ধ ছিল আর প্রতিটিকে একটি ছোট লাইন হতে বলা হতো, এবং এই দুটো মানতে গিয়ে বিষয়বস্তু হারাচ্ছিল। যে ভাষায় বেশি শব্দ লাগে, সেই ভাষার দীর্ঘ সারাংশ জায়গা ফুরিয়ে যাওয়ায় আর ফেলে দেওয়া হয় না।\n\nরেকর্ডিং ভেতরে আসার পথেই চুপচাপ খারাপ হচ্ছিল — মডেলের প্রত্যাশিত হারে নামাতে গিয়ে তা ছেঁকে ফেলার বদলে কথার সঙ্গে নয়েজ যোগ করছিল। আউটগোয়িং কল সবচেয়ে বেশি ক্ষতিগ্রস্ত হতো, কারণ সেগুলোতে আপনার নিজের কণ্ঠ সবচেয়ে বেশি থাকে।</string>
+    <string name="whatsnew_210_title">ট্রান্সক্রিপ্টে দেখা যায় কে কথা বলছিলেন</string>
+    <string name="whatsnew_210_body">এখন থেকে রেকর্ড হওয়া কল প্রতিটি লাইনের পাশে বক্তার নামসহ ট্রান্সক্রাইব হয়।\n\nএটি রেকর্ড হওয়ার সময়েই কল থেকে পড়া হয় — আপনার ফোন দুই পাশকে মেশানোর আগে আলাদা রাখে — তাই এতে বাড়তি সময়, বাড়তি ডাউনলোড বা অনুমান কিছুই লাগে না। ফোনে আগে থেকে থাকা কলের জন্য এটি করা যায় না, কারণ সেই তথ্য শুধু কল রেকর্ড হওয়ার সময়েই থাকে।\n\nশুরুতে দুই পাশ বক্তা A ও বক্তা B হিসেবে থাকে। দুটি আউটগোয়িং কল কোন পাশ কোনটি তাতে একমত হলে সেগুলো হয়ে যায় আপনি আর যার সঙ্গে কথা বলছিলেন — ট্রান্সক্রিপ্টে, আপনি যা কপি বা শেয়ার করেন তাতে, আর সারাংশে।</string>
+    <string name="whatsnew_210_where">এখন থেকে রেকর্ড হওয়া যেকোনো কলের ট্রান্সক্রিপ্টে</string>
+    <string name="whatsnew_200_title">আপনার কল, লিখিত রূপে — আর সারাংশসহ</string>
+    <string name="whatsnew_200_body">দুটি বড় সংযোজন, দুটোই পুরোপুরি আপনার ফোনে চলে। কিছুই আপলোড হয় না, আর দুটোই কোনো নেটওয়ার্ক ছাড়াই কাজ করে।\n\nট্রান্সক্রিপশন রেকর্ডিংকে এমন লেখায় পরিণত করে যা আপনি পড়তে ও খুঁজতে পারেন, চোদ্দটি ভাষায়। কলের সেই মুহূর্তে যেতে একটি লাইনে ট্যাপ করুন।\n\nসারাংশ আরও এক ধাপ এগিয়ে: কলটি কী নিয়ে ছিল, কী সিদ্ধান্ত হলো, আর কে কী করবেন বলেছেন — যে পয়েন্টের সময় আছে তার পাশে সময়সহ, তাই ট্যাপ করলে সোজা সেখানে চলে যান।\n\nপ্রতিটির জন্য আগে Wi-Fi-তে একটি মডেল ডাউনলোড করতে হয়; শুরু করার আগে অ্যাপ জানিয়ে দেয় কোনটির জন্য কতটা লাগবে।</string>
+    <string name="whatsnew_200_where">সেটিংস ▸ ট্রান্সক্রিপশন এবং সেটিংস ▸ কলের সারাংশ</string>
+    <string name="whatsnew_157_title">স্বয়ংক্রিয় মোছা এখন যা মোছার সব মোছে</string>
+    <string name="whatsnew_157_body">রেকর্ডিং স্বয়ংক্রিয়ভাবে মোছার সেটিং করলে কিছু রেকর্ডিং চুপচাপ চিরকাল থেকে যেত — যাচাই শুধু সেই রেকর্ডিং দেখত যার হিসাব CallVault-এর কাছে ছিল, আর যেগুলোর হিসাব হারিয়ে গিয়েছিল সেগুলো যত পুরনোই হোক কখনো মোছা হতো না। এক সপ্তাহ রাখার সেটিং করা একটি ফোনে 131টি ফাইল সেই সময় পেরিয়ে গিয়েছিল।\n\nদৈনিক যাচাই এখন আপনার রেকর্ডিং ফোল্ডারও পড়ে, তাই শুধু বয়সই ঠিক করে। শুধু CallVault-এর নাম দেওয়া ফাইলেই হাত দেওয়া হয়, আর যার তারিখ বোঝা যায় না তা রেখে দেওয়া হয়।\n\nযাচাই চলার সময় বদলালে তা এখন একদিন অপেক্ষা না করে সঙ্গে সঙ্গে কার্যকর হয়।</string>
+    <string name="whatsnew_157_where">সেটিংস ▸ স্টোরেজ ▸ সংরক্ষণকাল</string>
+    <string name="whatsnew_156_title">কী রেকর্ড হবে ঠিক করুন, আর রেকর্ডিং গুছিয়ে রাখুন</string>
+    <string name="whatsnew_156_body">ফোন কল ও অ্যাপ কল প্রতিটি আলাদাভাবে স্বয়ংক্রিয়ভাবে রেকর্ড হতে পারে, আগে জিজ্ঞেস করতে পারে, বা পুরোপুরি উপেক্ষা করা যায় — তাই “শুধু অ্যাপ কল” এখন একটি আসল সেটিং, এমন কোনো সমন্বয় নয় যা আপনাকে বের করতে হতো।\n\nরেকর্ডিং শেয়ার করা যায়, আর শেয়ার বা মোছার জন্য চেপে ধরে একসাথে কয়েকটি বেছে নেওয়া যায়। ডিভাইস ও Drive দুই জায়গায় রাখা রেকর্ডিং মুছলে এখন জিজ্ঞেস করে কোন কপিগুলো মুছবে।</string>
+    <string name="whatsnew_156_where">সেটিংস ▸ রেকর্ডিং ▸ ফোন কল</string>
+    <string name="merge_confirm">একত্র করুন</string>
+    <string name="merge_menu_action">অন্য একটি কলের সঙ্গে একত্র করুন</string>
+    <string name="merge_menu_take_apart">আলাদা করুন</string>
+    <string name="merge_no_candidates">ফোনে এই নম্বরের আর কোনো কল নেই।</string>
+    <string name="merge_only_in_drive">শুধু Drive-এ</string>
+    <string name="merge_pick_hint">যেগুলো এর পরের অংশ সেগুলোতে টিক দিন। নম্বর আপনার টিক দেওয়ার ক্রম অনুসরণ করে।</string>
+    <string name="merge_primary_hint">একত্রিত কলের শুরু</string>
+    <string name="merge_title">%1$s-এর সঙ্গে কল একত্র করুন</string>
+    <string name="settings_merge_keep_originals_description">একত্র করার পর যে কলগুলো থেকে এটি তৈরি, সেগুলোও ফোনে রেখে দিন। শুরুতে বন্ধ, তাই একত্র করলে একটি রেকর্ডিং থাকে। একত্রিত কল আলাদা করা দুই ক্ষেত্রেই কাজ করে।</string>
+    <string name="settings_merge_keep_originals_title">একত্র করার পর মূল কলগুলো রাখুন</string>
+    <string name="unmerge_confirm">আলাদা করুন</string>
+    <string name="unmerge_message">এটি আবার এই কলগুলোতে ভাগ হবে, প্রতিটি তার আগের ট্রান্সক্রিপ্ট ও চিহ্নসহ:</string>
+    <string name="unmerge_title">এই কলটি আলাদা করবেন?</string>
+    <plurals name="merge_row_badge">
+        <item quantity="one">%1$d টি কল</item>
+        <item quantity="other">%1$d টি কল</item>
+    </plurals>
+    <plurals name="merge_summary">
+        <item quantity="one">%1$d টি কল · %2$s</item>
+        <item quantity="other">%1$d টি কল · %2$s</item>
+    </plurals>
+    <string name="merge_note_will_delete">অন্য কলগুলো সরিয়ে ফেলা হবে। পরে আলাদা করলে সেগুলো ফিরে আসবে।</string>
+    <string name="merge_note_will_keep">অন্য কলগুলোও ফোনে থেকে যাবে।</string>
+    <string name="home_scroll_to_top">ওপরে</string>
+    <string name="home_whatsnew_full_notes">পুরো রিলিজ নোট</string>
+    <string name="whatsnew_250_title">কল শেষে রাখুন বা মুছুন, আর যা দরকার তা শেয়ার করুন</string>
+    <string-array name="whatsnew_250_items">
+        <item>রাখুন বা মুছুন: প্রতিটি কলের পরে CallVault জিজ্ঞেস করতে পারে রেকর্ডিংটি রাখবেন কি না (সেটিংস ▸ রেকর্ডিং)</item>
+        <item>কলের রেকর্ডিং, ট্রান্সক্রিপ্ট ও সারাংশ একসাথে শেয়ার করুন — অথবা রেকর্ডিংয়ের শুধু একটি অংশ</item>
+        <item>কল ইতিহাস: ফোনের কল লগের প্রতিটি কল, তার রেকর্ডিংয়ের পাশে</item>
+        <item>সেটিংস-এ খোঁজ</item>
+        <item>আবার ট্রান্সক্রাইব করুন, আর যেকোনো পাতা রিফ্রেশ করতে নিচে টানুন</item>
+        <item>নিজের ফাইল-নামের ফরম্যাট, আর প্রতিটি কলে কোন সিম ব্যবহার হয়েছে তা দেখানোর ঐচ্ছিক লেবেল</item>
+        <item>অ্যাপ ও ট্রান্সক্রিপশনের জন্য বাংলা</item>
+        <item>Google Voice দিয়ে করা কলে আপনার ডায়াল করা নম্বরটিই থাকে</item>
+        <item>Shizuku মোড: কলের পরে মাইক্রোফোন আর চালু থাকে না, রেকর্ডার রিস্টার্টে আর ক্র্যাশ হয় না</item>
+        <item>যেসব Honor ফোন কলের সময় CallVault থামিয়ে দেয়, সেগুলোতে রেকর্ডিং আরও নির্ভরযোগ্য</item>
+        <item>Drive: Drive ফোল্ডার আর রেকর্ডিং ফোল্ডার একই হলে রেকর্ডিং আর হারায় না</item>
+        <item>CallVault জোর করে বন্ধ থাকায় কোনো কল রেকর্ড না হলে, কার্ডে তা বলা হয়</item>
+    </string-array>
+    <string name="whatsnew_249_title">আরও পরিষ্কার অ্যাপ কল, আর আপডেটের পরপরই প্রস্তুত</string>
+    <string-array name="whatsnew_249_items">
+        <item>যেসব ফোনের মাইক ইয়ারপিসের শব্দ ধরে, সেগুলোতে অ্যাপ কলে প্রতিধ্বনি কম</item>
+        <item>Telegram কল শেষ পর্যন্ত রেকর্ড হয়, Telegram-এর নাম ও আইকনসহ</item>
+        <item>রেকর্ডিং শুরুর আগে শেষ হয়ে যাওয়া অ্যাপ কল আর খালি ফাইল রেখে যায় না</item>
+        <item>আপডেটের কয়েক সেকেন্ড পরেই রেকর্ডিং প্রস্তুত</item>
+        <item>যেকোনো দৈর্ঘ্যের কল ট্রান্সক্রাইব করা যায়; দীর্ঘ কলে জানায় কতক্ষণ লাগবে</item>
+        <item>ভাষার তালিকায় টাইপ করে ভাষা খুঁজুন, আর ট্রান্সক্রিপশনের জন্য উর্দু</item>
+        <item>ওয়্যারলেস ডিবাগিং কখনো বন্ধ করবেন না — সেটিংস ▸ সংযোগ-এ একটি নতুন সুইচ</item>
+        <item>আপনার নিজের ট্রান্সক্রিপশন সার্ভার আপনার নিজের নেটওয়ার্কে http:// ব্যবহার করতে পারে</item>
+        <item>সেটিংস সবসময় পেজ-ভিত্তিক বিন্যাসে খোলে; ক্লাসিক ভিউ বাদ দেওয়া হয়েছে</item>
+    </string-array>
+    <string name="whatsnew_248_title">আপনার নিজের ট্রান্সক্রিপশন কী, আর সহজে পড়া</string>
+    <string-array name="whatsnew_248_items">
+        <item>নিজের কী দিয়ে ট্রান্সক্রাইব করুন — Groq, OpenRouter বা নিজের সার্ভার, মিনিটের বদলে সেকেন্ডে (সেটিংস ▸ কোথায় ট্রান্সক্রাইব হবে)</item>
+        <item>রেকর্ডিং তালিকা থেকেই সরাসরি চালান, যেকোনো জায়গায় যাওয়ার একটি বারসহ</item>
+        <item>ট্রান্সক্রিপ্ট পড়ার সময় আগের ও পরের, আর একটি “প্লেব্যাক অনুসরণ” সুইচ</item>
+        <item>ট্রান্সক্রিপ্ট পেজে ইমপোর্ট এখন একটি বোতাম: অডিও রাখুন, বা শুধু ট্রান্সক্রিপ্ট রাখুন</item>
+        <item>45 মিনিট বা তার বেশি দীর্ঘ কল আবার ট্রান্সক্রাইব, ইমপোর্ট এবং ওয়েভফর্ম আঁকা যায়</item>
+        <item>মোবাইল ডেটায় মডেল ডাউনলোড Wi-Fi-এর অপেক্ষা না করে আগে জিজ্ঞেস করে</item>
+        <item>ফারসির জন্য টিউন করা একটি স্পিচ মডেল, আর আরও ভালো TalkBack সাপোর্ট</item>
+        <item>যেসব ফোন ওয়্যারলেস ডিবাগিংয়ের ঠিকানা লুকায়, সেগুলোতেও সংযোগ হয়</item>
+    </string-array>
+    <string name="whatsnew_247_title">নতুন সেটিংস, Shizuku-র অগ্রগতি, আর ইউক্রেনীয় ভাষা</string>
+    <string-array name="whatsnew_247_items">
+        <item>নতুন সেটিংস বিন্যাস — প্রতিটি পেজে শুধু তার নিজের সেটিং, বিস্তারিত ⓘ-এর পেছনে; ক্লাসিক ভিউ এক ট্যাপ দূরে</item>
+        <item>সহজ সেটআপ — নতুন সেটিংসের মতো প্রতিটি ধাপে একটি লাইন</item>
+        <item>Shizuku মোডের অগ্রগতি — অ্যাপ কল, রেজিলিয়েন্ট রেকর্ডিং ও বক্তার নাম সেখানেও কাজ করে, আর ফোন কল দ্রুত রেকর্ড শুরু করে</item>
+        <item>ইউক্রেনীয় — একটি নতুন অ্যাপ ও ট্রান্সক্রিপশন ভাষা; ট্রান্সক্রিপশনের জন্য ফারসিও নির্দিষ্ট করা যায়</item>
+        <item>রেকর্ডিং লুকান — আপনার রেকর্ডিং মিউজিক প্লেয়ার ও গ্যালারি থেকে দূরে রাখুন</item>
+        <item>মডেল ইমপোর্ট ও ব্যাকআপ — আগে থেকে থাকা মডেল ফাইল ব্যবহার করুন, আর রিইনস্টলের আগে একটি কপি সংরক্ষণ করুন</item>
+        <item>নতুন Wi-Fi নেটওয়ার্ক স্বয়ংক্রিয়ভাবে অনুমোদন — ঐচ্ছিক: রেকর্ডিং আর আপনার “অনুমতি দিন” ট্যাপের অপেক্ষা করে না</item>
+        <item>অ্যাপ কলেও উপেক্ষা করা পরিচিতি বাদ দিন</item>
+        <item>Honor / Huawei ফাইলের নাম — Honor-এর ফোন অ্যাপ তার কলের ইতিহাস থেকে রেকর্ডিং চালাতে পারে</item>
+        <item>MagicOS 11 সহ Honor ফোনে অ্যাপ কল রেকর্ড হয়</item>
+        <item>সংশোধন — CallVault আর Shizuku-র ওয়াচডগের সঙ্গে লড়াই করে না, Android থামিয়ে দিলে Shizuku রেকর্ডার ফিরে আসে, পরিচিতি- ও নম্বর-আগে ফাইলের নাম আবার একত্র ও খোঁজা যায়, গ্রিক ও ফারসি সারাংশ সঠিক ভাষায় আসে, আর রেকর্ডারের একটি নিরাপত্তা সংশোধন</item>
+    </string-array>
+    <string name="whatsnew_246_title">একটি প্রধান চালু/বন্ধ সুইচ, গ্রিক ভাষা, আর সংশোধন</string>
+    <string-array name="whatsnew_246_items">
+        <item>প্রধান চালু/বন্ধ সুইচ — হোম কার্ড বা কুইক সেটিংস থেকে সব রেকর্ডিং, ক্যারিয়ার ও অ্যাপ কল, চালু বা বন্ধ করুন (রিবুটের পরেও থাকে)</item>
+        <item>গ্রিক ট্রান্সক্রিপশন</item>
+        <item>প্রতিটি লাইব্রেরি পেজে সব বেছে নিন / সব বাদ দিন</item>
+        <item>কলের তালিকা সাজান; নম্বর, তারিখ ও সময় এখন প্রতিটি ট্রান্সক্রিপ্টের ওপরে দেখায়</item>
+        <item>পরিচিতি সংরক্ষণ করলেই পরিচিতির নাম বসে যায় — আবার রেকর্ড করতে হয় না</item>
+        <item>“সঙ্গে সঙ্গে” সিঙ্কেও এখন ট্রান্সক্রিপ্ট ও বিবরণ ফাইল Drive-এ পৌঁছায়, আর শুধু Drive-এ থাকা কলও একত্র করা যায়</item>
+        <item>বিবরণ ফাইলে বক্তার পালা রাখা যায়, যেসব টুল তা পড়ে তাদের জন্য</item>
+        <item>সংশোধন — দীর্ঘ কলে আবার সামনে-পেছনে যাওয়া যায়, অ্যাপ কলের সময় অযথা “রেকর্ডিং শুরু করতে চাপুন” আসে না, আর “দুটো কপিই মুছুন” প্রতিটি কপি মোছে</item>
+    </string-array>
+    <string name="whatsnew_245_title">নতুন ভাষা, ব্যাকআপ এবং আরও অনেক কিছু</string>
+    <string-array name="whatsnew_245_items">
+        <item>ফারসি ও আরবি — দুটি নতুন অ্যাপ ভাষা, ডান থেকে বাঁয়ে</item>
+        <item>vivo অ্যাপ কল — অন্য পাশ রেকর্ড করতে vivo-র Recorder → In-app call recording চালু করুন</item>
+        <item>ট্রান্সক্রিপ্ট ব্যাকআপ — প্রতিটি রেকর্ডিংয়ের পাশে ট্রান্সক্রিপ্ট ও নোট টেক্সট হিসেবে সংরক্ষণ করুন</item>
+        <item>ফাইলের নামের টেমপ্লেট — নতুন পরিচিতি-আগে ও নম্বর-আগে ক্রম</item>
+        <item>এক্সপোর্ট ও ইমপোর্ট — আপনার সেটিংস একটি ফাইলে ব্যাকআপ নিন</item>
+        <item>ঠিক করা হয়েছে — আর ভুল করে “কল কেটে গেছে” দেখায় না</item>
+    </string-array>
+    <string name="whatsnew_244_title">আরও নির্ভরযোগ্য রেকর্ডিং, সহজে আবার পেয়ার করা, আর আপডেটের সতর্কতা</string>
+    <string name="whatsnew_244_where">সেটিংস ▸ নির্ভরযোগ্যতা ▸ আবার পেয়ার করুন</string>
+    <string-array name="whatsnew_244_items">
+        <item>নতুন — কলের মাঝে আপনার ফোন CallVault বন্ধ করে দিলে, তার আগে রেকর্ড হওয়া অংশ সংরক্ষিত হয় এবং আপনাকে জানানো হয়</item>
+        <item>নতুন — রেকর্ডারের সংযোগ হারালে রিইনস্টল ছাড়াই সেটিংস থেকে আবার পেয়ার করুন</item>
+        <item>নতুন — নতুন সংস্করণ পাওয়া গেলেই একটি পপআপ আর দ্রুত যাচাই আপনাকে জানায়</item>
+        <item>পরিবর্তিত — আপনার Android সংস্করণে যে সেটিং চলে না সেগুলো ধূসর দেখায়, কারণসহ</item>
+    </string-array>
+    <string name="whatsnew_243_title">অ্যাপ কল তাল মিলিয়ে চলে, নোট টাইপ করতে করতেই সংরক্ষিত হয়, আর শুধু যাদের বেছে নেন তাদের রেকর্ড করুন</string>
+    <string name="whatsnew_243_where">সেটিংস ▸ রেকর্ডিং ▸ ইনকামিং কল ▸ শুধু বাছাই করা পরিচিতি রেকর্ড করুন</string>
+    <string-array name="whatsnew_243_items">
+        <item>নতুন — ইনকামিং বা আউটগোয়িং কলে শুধু আপনার বেছে নেওয়া পরিচিতি রেকর্ড করুন</item>
+        <item>ঠিক করা হয়েছে — অ্যাপ কলে অন্য ব্যক্তি আর আপনার সঙ্গে তাল হারান না</item>
+        <item>ঠিক করা হয়েছে — নোট টাইপ করলে প্রতিটি অক্ষর থাকে, এবং “সংরক্ষিত” দেখায়</item>
+        <item>ঠিক করা হয়েছে — কলের পর আর কোনো কল নোটিফিকেশন পড়ে থাকে না</item>
+        <item>ঠিক করা হয়েছে — টেস্ট বিল্ড ইনস্টল করে থাকলে আপনাকে চূড়ান্ত আপডেট দেওয়া হয়</item>
+        <item>ঠিক করা হয়েছে — গোলমাল হওয়া মডেল ডাউনলোড ক্ষতিগ্রস্ত বলে ব্যর্থ না হয়ে পরিষ্কার করে আবার ডাউনলোড হয়</item>
+        <item>ঠিক করা হয়েছে — রেজিলিয়েন্ট রেকর্ডিং চালু থাকলে কিছু ফোনে প্রতি দ্বিতীয় কল হারিয়ে যেত</item>
+        <item>ঠিক করা হয়েছে — vivo ও iQOO ফোনে অ্যাপ কল রেকর্ড হয়</item>
+    </string-array>
+    <string name="whatsnew_241_title">প্রতিটি পেজে খোঁজা, আর উত্তর দিলে তবেই রেকর্ডিং শুরু</string>
+    <string-array name="whatsnew_241_items">
+        <item>নতুন — রেকর্ডিং, ট্রান্সক্রিপ্ট ও সারাংশে একটি খোঁজার লাইন: একটি পরিচিতি, বা বলা কোনো শব্দ</item>
+        <item>নতুন — আউটগোয়িং কল অন্য ব্যক্তি উত্তর দিলে তবেই রেকর্ডিং শুরু (শুরুতে বন্ধ)</item>
+        <item>নতুন — Shizuku রেকর্ডিংয়ে বক্তার লেবেল</item>
+        <item>ঠিক করা হয়েছে — Android 14 ও তার আগের সংস্করণে অ্যাপ কলে পরিচিতির নাম থাকে</item>
+        <item>ঠিক করা হয়েছে — Shizuku মোডে আপডেটে আর পরের কল হারায় না</item>
+        <item>ঠিক করা হয়েছে — দুই বক্তার একসাথে থাকা লাইন বক্তা বদলানোর জায়গায় ভাগ হয়</item>
+        <item>ঠিক করা হয়েছে — ভুল বর্ণমালায় আসা ট্রান্সক্রিপ্ট আবার ডিকোড হয়</item>
+        <item>ঠিক করা হয়েছে — যে লাইনে শুধু একজন কথা বলেছেন, তা আর নামহীন থাকে না</item>
+    </string-array>
+    <string name="whatsnew_241_where">সেটিংস ▸ রেকর্ডিং ▸ আউটগোয়িং কল ▸ উত্তর দিলে শুরু করুন</string>
+    <string name="whatsnew_240_title">রেকর্ডিং, ট্রান্সক্রিপ্ট আর সারাংশ — প্রত্যেকের নিজের জায়গা</string>
+    <string-array name="whatsnew_240_items">
+        <item>নতুন — রেকর্ডিং, ট্রান্সক্রিপ্ট ও সারাংশসহ একটি হোম স্ক্রিন, যেখানে ছেড়েছিলেন সেখান থেকেই খোলে</item>
+        <item>নতুন — একটি অডিও ফাইল ইমপোর্ট করুন, বা অন্য অ্যাপ থেকে CallVault-এ শেয়ার করুন</item>
+        <item>নতুন — শুধু কথার জন্য ইমপোর্ট: ট্রান্সক্রিপ্ট তৈরি হলে অডিও মুছে যায়</item>
+        <item>নতুন — ট্রান্সক্রিপ্ট আলাদা পেজে পড়ুন, আর তাতে একটি নোট যোগ করুন</item>
+        <item>নতুন — মোছা, শেয়ার বা সংরক্ষণের জন্য একসাথে কয়েকটি ট্রান্সক্রিপ্ট বা সারাংশ বেছে নিন</item>
+        <item>নতুন — ট্রান্সক্রিপশন শেষ হলে একটি নোটিফিকেশন</item>
+        <item>ঠিক করা হয়েছে — ফোন রিস্টার্ট করলে আর রেকর্ডিং বন্ধ থাকে না</item>
+        <item>ঠিক করা হয়েছে — CallVault-কে Shizuku থামাতে হলে তা আবার চালু করা হয়</item>
+        <item>ঠিক করা হয়েছে — Android 17-এ সেটআপ কাজ করে</item>
+    </string-array>
+    <string name="whatsnew_240_where">হোম ▸ ট্রান্সক্রিপ্ট ▸ অডিও ইমপোর্ট</string>
+    <string name="whatsnew_230_title">যে কলগুলো একটিই কথোপকথন ছিল, সেগুলো একটি রেকর্ডিং হতে পারে</string>
+    <string-array name="whatsnew_230_items">
+        <item>নতুন — একটিই কথোপকথন ছিল এমন কলগুলো একটি রেকর্ডিংয়ে একত্র করুন</item>
+        <item>নতুন — বাগ রিপোর্ট আপনার বেছে নেওয়া ফোল্ডারে সংরক্ষণ করুন</item>
+        <item>ঠিক করা হয়েছে — ফোন ঘোরালে আপনার জায়গা ঠিক থাকে</item>
+        <item>ঠিক করা হয়েছে — রেকর্ডিংয়ে আর কড়কড় শব্দ নেই</item>
+        <item>ঠিক করা হয়েছে — রেকর্ডিং শুরু না হলে এখন তা জানায়</item>
+        <item>ঠিক করা হয়েছে — AAC-তে বদলালে পরের কল হারায় না</item>
+        <item>ঠিক করা হয়েছে — ভয়েসমেইল আর ব্যর্থ কল হিসেবে লগ হয় না</item>
+        <item>ঠিক করা হয়েছে — দীর্ঘ বিরতির পর ট্রান্সক্রিপ্টের সময় সঠিক থাকে</item>
+        <item>ঠিক করা হয়েছে — আপডেটের পরেও পরের কল রেকর্ড হয়</item>
+        <item>ঠিক করা হয়েছে — Shizuku হাইড মোড সমর্থিত</item>
+        <item>ঠিক করা হয়েছে — আপনার চালু করা ওয়্যারলেস ডিবাগিং চালুই থাকে</item>
+        <item>ঠিক করা হয়েছে — Wi-Fi ছাড়া রেকর্ডিং জানায় আসলে কী ব্যর্থ হয়েছে</item>
+        <item>ঠিক করা হয়েছে — কলের পর মাইক্রোফোনের বিন্দু আর জ্বলে থাকে না</item>
+        <item>ঠিক করা হয়েছে — ফোন ঘোরালে ট্রান্সক্রিপশনের অগ্রগতি আর নতুন করে শুরু হয় না</item>
+        <item>ঠিক করা হয়েছে — কল মুছলে তার ট্রান্সক্রিপশনও থামে</item>
+        <item>ঠিক করা হয়েছে — নিজে শুরু করা ট্রান্সক্রিপশনের জন্য ফোন গরম হওয়ার নোটিফিকেশন আর আসে না</item>
+        <item>ঠিক করা হয়েছে — স্বয়ংক্রিয়ভাবে রেকর্ড হওয়া কলে আর রেকর্ড বোতাম ঝলকায় না</item>
+        <item>ঠিক করা হয়েছে — ট্রান্সক্রিপশনের অগ্রগতি আর তিন-চতুর্থাংশে আটকে থাকে না</item>
+        <item>ঠিক করা হয়েছে — একটি রেকর্ড হওয়া কলে দুটি নয়, একটি নোটিফিকেশন</item>
+        <item>ঠিক করা হয়েছে — লগ ভিউয়ার পুরো স্ক্রিন জুড়ে থাকে আর লম্বা লাইন ভেঙে দেখায়</item>
+    </string-array>
+    <string name="whatsnew_230_where">যেকোনো রেকর্ডিংয়ের ⋮ মেনু ▸ অন্য একটি কলের সঙ্গে একত্র করুন</string>
+    <string name="merge_progress_title">একত্র করা হচ্ছে</string>
+    <string name="unmerge_progress_title">আলাদা করা হচ্ছে</string>
+    <string name="merge_progress_step">%2$d টির মধ্যে %1$d নম্বর কল</string>
+    <string name="merge_progress_done">সফলভাবে একত্র করা হয়েছে</string>
+    <string name="unmerge_progress_done">সফলভাবে আলাদা করা হয়েছে</string>
+    <string name="progress_closing_in">%1$d সেকেন্ডে বন্ধ হবে</string>
+    <string name="merge_progress_working">কলগুলো জোড়া হচ্ছে</string>
+    <string name="unmerge_progress_working">কলগুলো আলাদা হচ্ছে</string>
+    <string name="merge_progress_downloading">Drive থেকে ডাউনলোড হচ্ছে</string>
+    <string name="merge_progress_cleaning_up">পরিষ্কার করা হচ্ছে</string>
+    <string name="offline_failed_no_wifi">চালু করা যায়নি — আপনি Wi-Fi-তে নেই। একবার যেকোনো Wi-Fi নেটওয়ার্কে সংযোগ করে আবার চেষ্টা করুন।</string>
+    <string name="offline_failed_wd_refused">চালু করা যায়নি — Android এই নেটওয়ার্কে ওয়্যারলেস ডিবাগিং (Wireless debugging) চালু করতে দেয়নি। ডেভেলপার অপশন (Developer options)-এ একবার এটি চালু করে প্রম্পটটি মেনে নিন, তারপর আবার চেষ্টা করুন।</string>
+    <string name="offline_failed_needs_usb">আগে CallVault-এর সেটিংসে USB ডিবাগিং (USB debugging) চালু করুন — এটি ছাড়া Wi-Fi ছাড়া রেকর্ডিং কাজ করতে পারে না।</string>
+
+    <string name="home_hub_library_title">লাইব্রেরি</string>
+    <string name="home_hub_recordings_body">CallVault-এর রেকর্ড করা প্রতিটি কল।</string>
+    <string name="home_hub_transcripts_body">আপনার কল লিখিত রূপে — আর আপনার আনা যেকোনো অডিও।</string>
+    <string name="home_hub_summaries_body">AI সারাংশ, আপনার ফোনেই লেখা।</string>
+    <string name="home_transcripts_title">ট্রান্সক্রিপ্ট</string>
+    <string name="home_summaries_title">সারাংশ</string>
+    <string name="home_transcripts_count">%1$d টি ট্রান্সক্রাইব হয়েছে</string>
+    <string name="home_summaries_count">%1$d টির সারাংশ হয়েছে</string>
+    <string name="home_transcripts_empty_title">এখনো কিছু ট্রান্সক্রাইব হয়নি</string>
+    <string name="home_transcripts_empty_hint">কোনো রেকর্ডিংয়ের মেনু থেকে ট্রান্সক্রিপ্ট চান, বা অডিও ফাইল আনতে “ইমপোর্ট” ট্যাপ করুন। লেখা হয়ে গেলে যেকোনোটি এখানে দেখা যাবে।</string>
+    <string name="home_summaries_empty_title">এখনো কোনো সারাংশ নেই</string>
+    <string name="home_summaries_empty_hint">ট্রান্সক্রিপ্ট আছে এমন একটি কল খুলে সারাংশ চান; লেখা হয়ে গেলে তা এখানে দেখা যাবে।</string>
+
+    <string name="transcripts_working_header">ট্রান্সক্রাইব হচ্ছে</string>
+    <string name="transcripts_failed_header">শেষ হয়নি</string>
+    <string name="transcripts_failed_hint">আবার চেষ্টা করতে একটিতে ট্যাপ করুন।</string>
+    <string name="transcripts_waiting_header">ট্রান্সক্রিপশনের অপেক্ষায়</string>
+    <string name="transcripts_waiting_hint">এগুলো আপনি পড়ার জন্য শেয়ার করেছেন, রাখার জন্য নয়। শুরু করতে একটিতে ট্যাপ করুন, বা শুনতে বা মুছতে খুলুন।</string>
+    <string name="summaries_working_header">সারাংশ তৈরি হচ্ছে</string>
+    <string name="summaries_failed_header">শেষ হয়নি</string>
+    <string name="summaries_failed_hint">আবার চাইতে একটি খুলুন।</string>
+    <string name="transcripts_import_title">অডিও ইমপোর্ট</string>
+    <string name="transcripts_import_working">ইমপোর্ট হচ্ছে…</string>
+    <string name="transcripts_import_fab">ইমপোর্ট</string>
+    <string name="import_sheet_keep">অডিও রাখুন</string>
+    <string name="import_sheet_keep_hint">আপনার রেকর্ডিংয়ের তালিকায় থাকবে</string>
+    <string name="import_sheet_transcript_only">শুধু ট্রান্সক্রিপ্ট</string>
+    <string name="import_sheet_transcript_only_hint">পরে অডিও মুছে ফেলা হবে</string>
+    <string name="import_failed_title">ফাইলটি ইমপোর্ট করা যায়নি</string>
+    <string name="import_failed_not_audio">CallVault এই ধরনের ফাইল পড়তে পারে না। একটি .opus, .ogg, .m4a, .mp3 বা .wav রেকর্ডিং চেষ্টা করুন।</string>
+    <string name="import_failed_empty">ফাইলটি খালি, তাই ট্রান্সক্রাইব করার কিছু নেই।</string>
+    <string name="import_failed_no_folder">এটি রাখার জন্য কোনো রেকর্ডিং ফোল্ডার নেই। সেটিংসে একটি বেছে নিয়ে আবার চেষ্টা করুন।</string>
+    <string name="import_failed_copy">ফাইলটি আপনার রেকর্ডিং ফোল্ডারে লেখা যায়নি। ফোনে জায়গা আছে কিনা এবং ফোল্ডারটি এখনো আছে কিনা দেখুন।</string>
+    <string name="import_failed_undecodable">এই ফোন ফাইলটির ভেতরের অডিও পড়তে পারে না, তাই এটি কখনো ট্রান্সক্রাইব করা যাবে না। ফাইলটি হয়তো ক্ষতিগ্রস্ত, বা এমন ফরম্যাটে যা Android ডিকোড করে না।</string>
+    <string name="home_row_imported">ইমপোর্ট করা</string>
+    <string name="home_row_text_only">শুধু লেখা</string>
+    <string name="share_import_label">অডিও ইমপোর্ট</string>
+    <string name="share_import_working_body">কপি করা হচ্ছে এবং এই ফোন এটি পড়তে পারে কিনা দেখা হচ্ছে।</string>
+    <string name="share_import_done_title">আপনার রেকর্ডিংয়ে যোগ হয়েছে</string>
+    <string name="share_import_done_body">এটি এখন CallVault-এ আছে। শুনতে বা ট্রান্সক্রিপ্ট চাইতে খুলুন।</string>
+    <string name="share_import_open">খুলুন</string>
+    <string name="share_import_open_app">CallVault খুলুন</string>
+    <string name="share_import_close">বন্ধ করুন</string>
+    <string name="share_import_nothing">এই শেয়ারের সঙ্গে কিছু আসেনি। মেসেজটির বদলে অডিও ফাইলটি নিজেই শেয়ার করে দেখুন।</string>
+    <string name="share_import_not_set_up_title">আগে CallVault সেটআপ শেষ করুন</string>
+    <string name="share_import_not_set_up_body">CallVault-এর একবারের সেটআপ এখনো শেষ হয়নি, তাই এই ফাইল রাখার জায়গা নেই। অ্যাপটি খুলে সেটআপ শেষ করুন, তারপর আবার শেয়ার করুন।</string>
+    <string name="share_import_choice_title">CallVault এটি দিয়ে কী করবে?</string>
+    <string name="share_import_choice_unnamed">শেয়ার করা অডিও</string>
+    <string name="import_choice_keep">ইমপোর্ট ও ট্রান্সক্রাইব</string>
+    <string name="import_choice_keep_hint">অডিও আপনার রেকর্ডিংয়ে রাখে এবং ট্রান্সক্রাইব করে।</string>
+    <string name="import_choice_transcribe_only">শুধু ট্রান্সক্রাইব</string>
+    <string name="import_choice_transcribe_only_hint">ট্রান্সক্রাইব করে, তারপর অডিও মুছে দেয়। এটি কখনো আপনার রেকর্ডিংয়ে দেখা যায় না — শুধু কথাগুলো, ট্রান্সক্রিপ্ট-এর অধীনে।</string>
+    <string name="share_import_queued_keep_title">যোগ হয়েছে, এবং সারিতে আছে</string>
+    <string name="share_import_queued_keep_body">এটি আপনার রেকর্ডিংয়ে আছে। শেষ হলে ট্রান্সক্রিপ্ট ট্রান্সক্রিপ্ট-এর অধীনে দেখা যাবে।</string>
+    <string name="share_import_queued_only_title">ট্রান্সক্রিপশনের সারিতে</string>
+    <string name="share_import_queued_only_body">কথাগুলো ট্রান্সক্রিপ্ট-এর অধীনে পাবেন। ট্রান্সক্রিপ্ট সংরক্ষিত হওয়ামাত্র অডিও মুছে ফেলা হবে।</string>
+    <string name="share_import_kept_title">সংরক্ষিত, কিন্তু ট্রান্সক্রাইব হয়নি</string>
+    <string name="share_import_kept_body">এটি আপনার রেকর্ডিংয়ে আছে। যখন খুশি সেখান থেকে ট্রান্সক্রিপ্ট শুরু করতে পারেন।</string>
+    <string name="share_import_kept_only_body">এটি ট্রান্সক্রিপ্ট-এর অধীনে অপেক্ষা করছে। যখন খুশি সেখান থেকে শুরু করুন, বা সেখান থেকেই মুছে দিন।</string>
+    <string name="share_import_no_model">এখনো কোনো ট্রান্সক্রিপশন মডেল ইনস্টল করা নেই, তাই CallVault এটি পড়তে পারছে না। অডিও সংরক্ষিত হয়েছে — সেটিংসে একটি মডেল ইনস্টল করুন, তারপর ট্রান্সক্রিপ্ট থেকে শুরু করুন।</string>
+</resources>

@@ -22,71 +22,59 @@ private const val TAG = "CV:Share"
 private const val FALLBACK_MIME = "audio/*"
 
 /**
- * Sends one recording to the system share-sheet.
+ * Shares a clip ("Share a part") with, optionally, what was said in it as the message text.
  *
- * **The recording's own URI is shared directly, not a copy.** Recordings live in a folder the user
- * picked through the Storage Access Framework, so their URIs belong to a *documents provider* rather
- * than to us. That is shareable anyway: such providers declare `grantUriPermissions`, and a caller
- * holding a persisted read grant may extend a temporary one to whichever app the user picks. The
- * alternative — copying into our cache and re-exposing it through `FileProvider`, as
- * [shareLogFile] must do for a file we generate — would duplicate a recording that can run to tens of
- * megabytes and leave it in the cache afterwards.
- *
- * Both [Intent.EXTRA_STREAM] and [ClipData] carry the URI: some receivers read one and some the other,
- * and the grant travels with the clip data on every Android version we support.
- *
- * @param uri         The copy to share. A recording present both on the device and in Drive has one
- *                    URI per copy; the caller decides which, and the audio is identical either way.
- * @param displayName Shown as the subject where a receiver uses one (mail, mostly).
+ * The clip is a temporary file in the cache's `clips/` folder, exposed through the FileProvider for the share only.
  */
-fun Context.shareRecording(uri: Uri, displayName: String) {
-    val mime = runCatching { contentResolver.getType(uri) }.getOrNull() ?: FALLBACK_MIME
+fun Context.shareClip(file: java.io.File, mime: String, text: String?) {
+    val uri = androidx.core.content.FileProvider.getUriForFile(this, "$packageName.fileprovider", file)
     val intent = Intent(Intent.ACTION_SEND).apply {
         type = mime
         putExtra(Intent.EXTRA_STREAM, uri)
-        putExtra(Intent.EXTRA_SUBJECT, displayName)
+        putExtra(Intent.EXTRA_SUBJECT, file.nameWithoutExtension)
+        if (text != null) putExtra(Intent.EXTRA_TEXT, text)
         addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
-        clipData = ClipData.newRawUri(displayName, uri)
+        // The flag alone covers only what the extras name, so the URI has to be in the clip data too.
+        clipData = ClipData.newRawUri(file.name, uri)
     }
-    val chooser = Intent.createChooser(intent, getString(R.string.home_share_chooser)).apply {
-        if (this@shareRecording !is Activity) addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+    val chooser = Intent.createChooser(intent, getString(R.string.share_clip_chooser)).apply {
+        if (this@shareClip !is Activity) addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
     }
-    // A chooser resolves on any normal device, but a launch failure must not take the app down with
-    // it: the user tapped Share on a list of their recordings, and losing the list would be worse
-    // than the share not happening.
+    // Length only, never the words: this log can end up in a report.
+    AppLogger.i(TAG, "Sharing a clip (${file.length()} bytes) with ${text?.length ?: 0} characters of transcript text")
     runCatching { startActivity(chooser) }
-        .onFailure { AppLogger.w(TAG, "Could not open the share sheet for '$displayName': ${it.message}") }
+        .onFailure { AppLogger.w(TAG, "Could not open the share sheet for the clip '${file.name}': ${it.message}") }
 }
 
 /**
- * Sends several recordings at once, from a multi-selection.
+ * Sends a call's files together — its recording and the transcript and summary written beside it — in one share.
  *
- * `ACTION_SEND_MULTIPLE` rather than a loop of single shares: one chooser, one destination, one
- * message with every recording attached. The MIME is the shared type where all the files agree and
- * the generic audio type ([FALLBACK_MIME]) otherwise, since a selection can mix Opus and AAC.
- *
- * The grant has to reach every URI, so each is added to the [ClipData] — the flag alone covers only
- * what the clip data and extras name. A selection of one still uses this path; the chooser handles
- * it identically.
+ * The recording's URI belongs to the documents provider and the text files to our FileProvider; both can extend a
+ * read grant, and every URI goes into the [ClipData] so the grant reaches all of them. The type is the files' own
+ * when they agree (several recordings), audio when they are all audio, and any type otherwise.
  */
-fun Context.shareRecordings(uris: List<Uri>) {
+fun Context.shareCallFiles(uris: List<Uri>, subject: String) {
     if (uris.isEmpty()) return
-
     val types = uris.mapNotNull { runCatching { contentResolver.getType(it) }.getOrNull() }.distinct()
-    val mime = types.singleOrNull() ?: FALLBACK_MIME
-
-    val clip = ClipData.newRawUri(null, uris.first()).apply {
-        uris.drop(1).forEach { addItem(ClipData.Item(it)) }
-    }
-    val intent = Intent(Intent.ACTION_SEND_MULTIPLE).apply {
+    val mime = types.singleOrNull()
+        ?: if (types.isNotEmpty() && types.all { it.startsWith("audio/") }) FALLBACK_MIME else "*/*"
+    val clip = ClipData.newRawUri(subject, uris.first()).apply { uris.drop(1).forEach { addItem(ClipData.Item(it)) } }
+    val intent = if (uris.size == 1) {
+        Intent(Intent.ACTION_SEND).apply { putExtra(Intent.EXTRA_STREAM, uris.single()) }
+    } else {
+        Intent(Intent.ACTION_SEND_MULTIPLE).apply { putParcelableArrayListExtra(Intent.EXTRA_STREAM, ArrayList(uris)) }
+    }.apply {
         type = mime
-        putParcelableArrayListExtra(Intent.EXTRA_STREAM, ArrayList(uris))
+        putExtra(Intent.EXTRA_SUBJECT, subject)
         addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
         clipData = clip
     }
     val chooser = Intent.createChooser(intent, getString(R.string.home_share_chooser)).apply {
-        if (this@shareRecordings !is Activity) addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+        if (this@shareCallFiles !is Activity) addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
     }
+    // Counts only: names can be contacts, and this log can end up in a report.
+    AppLogger.i(TAG, "Sharing ${uris.size} file(s) of type $mime")
     runCatching { startActivity(chooser) }
-        .onFailure { AppLogger.w(TAG, "Could not open the share sheet for ${uris.size} recordings: ${it.message}") }
+        .onFailure { AppLogger.w(TAG, "Could not open the share sheet for ${uris.size} file(s): ${it.message}") }
 }
+

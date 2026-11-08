@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Keep or delete a recording when the call ends (docs/dev-notes/2026-11-06-keep-or-delete-plan.md). -->
+<resources>
+    <string name="after_call_channel">Nach dem Anruf behalten oder löschen</string>
+    <string name="after_call_title_party">Anruf mit %1$s aufgenommen</string>
+    <string name="after_call_title_app">%1$s-Anruf aufgenommen</string>
+    <string name="after_call_title_plain">Anruf aufgenommen</string>
+    <string name="after_call_question_text">Behalten oder jetzt löschen?</string>
+    <string name="after_call_keep">Behalten</string>
+    <string name="after_call_delete">Löschen</string>
+    <string name="after_call_deleted_title">Aufnahme gelöscht</string>
+    <string name="after_call_deleted_text">Sie wird in wenigen Sekunden entfernt. Tippe auf Rückgängig, um sie zu behalten.</string>
+    <string name="after_call_undo">Rückgängig</string>
+    <string name="after_call_popup_title">Diese Aufnahme behalten?</string>
+    <string name="after_call_popup_call">Anruf</string>
+</resources>

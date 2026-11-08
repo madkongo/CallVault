@@ -17,6 +17,12 @@ import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import com.baba.callvault.R
 import com.baba.callvault.data.AppPreferences
+import com.baba.callvault.data.recordings.DeviceFolderRescan
+import com.baba.callvault.data.recordings.DriveCatalogRepair
+import com.baba.callvault.data.calls.CallHistory
+import com.baba.callvault.data.calls.PhoneCall
+import com.baba.callvault.data.calls.PhoneCallReader
+import com.baba.callvault.data.calls.SimLabels
 import com.baba.callvault.integrations.adb.PairingLoss
 import com.baba.callvault.data.transcripts.FavouriteRepository
 import com.baba.callvault.data.transcripts.LibraryLabels
@@ -70,7 +76,9 @@ import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.async
 import kotlinx.coroutines.withContext
+import kotlinx.coroutines.withTimeoutOrNull
 
 /**
  * The "Brain" of the [com.baba.callvault.ui.screens.HomeScreen].
@@ -208,6 +216,16 @@ class HomeViewModel(application: Application) : AndroidViewModel(application) {
         val favouritesOnly: Boolean = false,
         /** How the filtered list is ordered; see [RecordingSort]. */
         val sortOrder: RecordingSort = RecordingSort.NEWEST,
+        /** True while the Recordings page shows "All calls" (the call log lined up with recordings). */
+        val callsView: Boolean = false,
+        /** The "All calls" filter chip. */
+        val callFilter: CallHistory.Filter = CallHistory.Filter.ALL,
+        /** The system call log, newest first; loaded only while [callsView] is on. */
+        val phoneCalls: List<PhoneCall> = emptyList(),
+        /** The opt-in SIM label of each call in [phoneCalls], by its start time. */
+        val callSimLabels: Map<Long, String> = emptyMap(),
+        /** True once the call log has been read for [callsView]. */
+        val callsLoaded: Boolean = false,
         /**
          * The starred recordings, by display name.
          *
@@ -338,6 +356,30 @@ class HomeViewModel(application: Application) : AndroidViewModel(application) {
          * repo reload. NEWEST preserves the repository's own newest-first order rather than re-sorting
          * it, so the default path is unchanged.
          */
+        /**
+         * The "All calls" rows: the call log lined up with [recordings], narrowed by [callFilter] and the
+         * search line (name, number or cached name). Derived on read, like [filteredRecordings].
+         */
+        val callHistory: List<CallHistory.Entry>
+            get() {
+                val all = CallHistory.build(
+                    phoneCalls, recordings,
+                    startOf = { it.startedAtMillis },
+                    isPhoneCall = { RecordingsRepository.isCarrierCall(it.displayName) },
+                )
+                val q = contactQuery.trim().lowercase()
+                return CallHistory.filter(all, callFilter).filter { entry ->
+                    if (q.isEmpty()) return@filter true
+                    val words = when (entry) {
+                        is CallHistory.Entry.NotRecorded -> listOfNotNull(entry.call.cachedName, entry.call.number)
+                        is CallHistory.Entry.Recorded<*> -> (entry.recording as? RecordingItem).let {
+                            listOfNotNull(it?.contactName, it?.number, it?.voipApp, entry.call?.cachedName)
+                        }
+                    }
+                    words.any { it.lowercase().contains(q) }
+                }
+            }
+
         val filteredRecordings: List<RecordingItem>
             get() {
                 val filtered = recordings.filter { item ->
@@ -749,7 +791,7 @@ class HomeViewModel(application: Application) : AndroidViewModel(application) {
         // works). Whenever the grant is missing, silently try to restore it over any transport that's
         // already up (WD still on / loopback armed) — no user action, no adbd churn — so a later daemon
         // death stays recoverable. Recompute the status afterwards so any banner reflects the heal.
-        if (!AdbShell.hasWriteSecureSettings(appContext)) {
+        if (SetupPrerequisites.shouldHealGrant(AdbShell.hasWriteSecureSettings(appContext), preferences.getPrivilegedMode())) {
             viewModelScope.launch {
                 val healed = withContext(Dispatchers.IO) { AdbShell.tryHealWriteSecureSettings(appContext) }
                 if (healed) _uiState.update { it.copy(status = computeStatus()) }
@@ -765,10 +807,46 @@ class HomeViewModel(application: Application) : AndroidViewModel(application) {
         startListPass(status)
     }
 
+    private val _isPullRefreshing = MutableStateFlow(false)
+    private var driveCheckJob: kotlinx.coroutines.Deferred<*>? = null
+
+    /** True while a pull-to-refresh is running, for the indicator at the top of the page. */
+    val isPullRefreshing: StateFlow<Boolean> = _isPullRefreshing.asStateFlow()
+
+    /**
+     * Pull-to-refresh: everything [refresh] does, plus looking at the folders themselves.
+     *
+     * The list reads the catalog, so files added or deleted outside CallVault never showed (see
+     * [DeviceFolderRescan]); the Drive check that normally runs every few hours runs now. Bounded, because the
+     * Drive part goes over the network and the indicator must not spin for good on a slow connection.
+     */
+    fun pullToRefresh() {
+        if (_isPullRefreshing.value) return
+        _isPullRefreshing.value = true
+        viewModelScope.launch {
+            try {
+                // Its own job: its file calls block and a timeout cannot interrupt them. If it outlasts the wait it
+                // finishes in the background, and the catalog watch puts its result on screen.
+                // One at a time: a check still running from an earlier pull is waited on, not doubled.
+                val driveCheck = driveCheckJob?.takeIf { it.isActive }
+                    ?: async(Dispatchers.IO) { runCatching { DriveCatalogRepair.forgetDeleted(appContext) } }
+                        .also { driveCheckJob = it }
+                withContext(Dispatchers.IO) { DeviceFolderRescan.run(appContext) }
+                withTimeoutOrNull(PULL_DRIVE_CHECK_MAX_MS) { driveCheck.await() }
+                refresh()
+                listJob?.join()
+            } finally {
+                _isPullRefreshing.value = false
+            }
+        }
+    }
+
     private fun startListPass(status: HomeStatus) {
         listJob = viewModelScope.launch {
             val health = withContext(Dispatchers.IO) { sweepSetupHealth(status.isReady) }
             _uiState.update { it.copy(setupHealth = health) }
+            // A recording deleted in Drive itself stays listed until something notices; this does, every few hours.
+            withContext(Dispatchers.IO) { DriveCatalogRepair.forgetDeletedIfDue(appContext) }
             val listed = withContext(Dispatchers.IO) { RecordingsRepository.listRecordings(appContext) }
             // Split once, here, from the name alone. The name is the only place the kind lives, so a
             // catalog re-seed cannot lose it and no row anywhere has to carry a flag that could be
@@ -789,6 +867,7 @@ class HomeViewModel(application: Application) : AndroidViewModel(application) {
                     dateFilter = state.dateFilter?.takeIf { it in days }
                 )
             }
+            if (_uiState.value.callsView) loadCalls()
             precomputeWaveforms(recordings)
             // What each recording is called, for the library pages to title a row before this list
             // is loaded next time. Off the UI path: the list is already on screen.
@@ -894,6 +973,32 @@ class HomeViewModel(application: Application) : AndroidViewModel(application) {
     /** Sets how the list is ordered; the derived list re-sorts on the next read. */
     fun setSortOrder(order: RecordingSort) {
         _uiState.update { it.copy(sortOrder = order) }
+    }
+
+    /** Switches the Recordings page between its recordings and "All calls"; reads the call log when shown. */
+    fun setCallsView(on: Boolean) {
+        _uiState.update { it.copy(callsView = on) }
+        if (on) loadCalls()
+    }
+
+    /** Sets the "All calls" filter chip. */
+    fun setCallFilter(filter: CallHistory.Filter) {
+        _uiState.update { it.copy(callFilter = filter) }
+    }
+
+    /** Reads the call log (and, when the opt-in is on, each call's SIM) for "All calls". */
+    private fun loadCalls() {
+        viewModelScope.launch {
+            val (calls, sims) = withContext(Dispatchers.IO) {
+                val calls = PhoneCallReader.since(appContext, 0L, CALL_HISTORY_LIMIT)
+                val sims = if (!preferences.isShowSimLabelEnabled()) emptyMap() else {
+                    val resolver = SimLabels.Resolver(appContext, appContext.getString(R.string.sim_label_word))
+                    calls.mapNotNull { c -> resolver.simFor(c.accountComponent, c.accountId)?.let { c.startedAt to it.label } }.toMap()
+                }
+                calls to sims
+            }
+            _uiState.update { it.copy(phoneCalls = calls, callSimLabels = sims, callsLoaded = true) }
+        }
     }
 
     /** Sets what the search line holds; empty for "all contacts". */
@@ -1272,6 +1377,8 @@ class HomeViewModel(application: Application) : AndroidViewModel(application) {
     }
 
     companion object {
+        /** How many call-log entries "All calls" reads: plenty for scrolling back weeks, bounded for a big log. */
+        private const val CALL_HISTORY_LIMIT = 500
         /** How long the catalog must stop changing before the list is re-read. */
         private const val CATALOG_SETTLE_MS = 400L
 
@@ -1281,6 +1388,8 @@ class HomeViewModel(application: Application) : AndroidViewModel(application) {
         private const val STARTING_MAX_MS = 60_000L
         /** How often to re-check the recorder's connection while it warms up. */
         private const val STARTING_POLL_MS = 500L
+        /** The longest a pull-to-refresh waits on the Drive check before showing the list anyway. */
+        private const val PULL_DRIVE_CHECK_MAX_MS = 15_000L
 
         private const val TAG = "CV:HomeViewModel"
 

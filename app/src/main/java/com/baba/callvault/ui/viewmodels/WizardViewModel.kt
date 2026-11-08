@@ -15,6 +15,7 @@ import androidx.lifecycle.AndroidViewModel
 import com.baba.callvault.data.AppPreferences
 import com.baba.callvault.data.StorageTarget
 import com.baba.callvault.data.SyncScheduleMode
+import com.baba.callvault.services.recording.aftercall.AfterCallSettings
 import com.baba.callvault.system.storage.SyncScheduler
 import com.baba.callvault.transcription.model.DownloadNetwork
 import com.baba.callvault.transcription.model.DownloadableModel
@@ -112,6 +113,15 @@ class WizardViewModel(application: Application) : AndroidViewModel(application) 
     /** Persists whether outgoing calls are auto-recorded. */
     fun setAutoRecordOutgoing(enabled: Boolean) {
         preferences.setAutoRecordOutgoingEnabled(enabled)
+        bump()
+    }
+
+    /**
+     * Persists "When a call ends": ask whether to keep each recording (true) or keep them all (false). Through
+     * the same writer as Settings, so going back to Keep also keeps any recording already waiting.
+     */
+    fun setAfterCallAsk(ask: Boolean) {
+        AfterCallSettings.setMode(getApplication(), if (ask) AppPreferences.AfterCallMode.ASK else AppPreferences.AfterCallMode.KEEP)
         bump()
     }
 

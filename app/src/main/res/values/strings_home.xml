@@ -19,6 +19,19 @@
     <string name="home_usb_advisory_fix">Fix</string>
 
     <!-- Recordings section -->
+    <string name="home_view_recordings">Recordings</string>
+    <string name="home_view_all_calls">Call history</string>
+    <string name="home_calls_filter_all">All</string>
+    <string name="home_calls_filter_recorded">Recorded</string>
+    <string name="home_calls_filter_not_recorded">Not recorded</string>
+    <string name="home_calls_filter_missed">Missed</string>
+    <string name="home_call_origin_phone">Phone call</string>
+    <string name="home_call_not_recorded">Not recorded</string>
+    <string name="home_call_missed">Missed</string>
+    <string name="home_call_declined">Declined</string>
+    <string name="home_call_unknown_number">Unknown number</string>
+    <string name="home_calls_empty">No calls in the phone\'s call log yet.</string>
+    <string name="home_calls_no_permission">CallVault cannot read the call log. Allow \"Call logs\" for CallVault in Android\'s app settings to see all calls here.</string>
     <string name="home_recordings_count">%1$d saved</string>
     <string name="home_recordings_empty_title">No recordings yet</string>
     <string name="home_recordings_empty_hint">When CallVault records a call, it shows up here. Make or take a call to get started.</string>
@@ -34,15 +47,15 @@
     <string name="home_whatsnew_title">What\'s new</string>
     <string name="home_whatsnew_body">• Recording now recovers by itself if it ever gets stuck\n• Home tells you when recording is down, instead of staying quiet\n• A phone call is no longer mistaken for an app call</string>
     <string name="home_whatsnew_offline_cta">Turn on off-Wi-Fi recording</string>
-    <string name="home_whatsnew_offline_enabled">Offline recording enabled.</string>
+    <string name="home_whatsnew_offline_enabled">\"Keep recording off Wi-Fi\" is on.</string>
     <string name="offline_failed_needs_wd">Couldn\'t enable — Wireless debugging is off and CallVault couldn\'t switch it on. Turn it on in Developer options, then try again.</string>
     <string name="offline_failed_no_service">Couldn\'t enable — CallVault couldn\'t reach the phone\'s debugging service. Check you\'re on Wi-Fi with Wireless debugging on, then try again.</string>
     <string name="offline_failed_port">Couldn\'t enable — the local port didn\'t come back up. Try again in a moment.</string>
     <string name="home_whatsnew_offline_enabling">Enabling off-Wi-Fi recording…</string>
-    <string name="home_whatsnew_resilient_title">New: Resilient recording</string>
-    <string name="home_whatsnew_resilient_body">Makes call recording more resistant to interruptions.\n\nAndroid can stop CallVault\'s background helper at any time. With this on, a recording already in progress is no longer affected when that happens.\n\nOff by default — you can also turn it on later in Settings ▸ Reliability.</string>
+    <string name="home_whatsnew_resilient_title">New: Keep recording if the helper stops</string>
+    <string name="home_whatsnew_resilient_body">Makes call recording more resistant to interruptions.\n\nAndroid can stop CallVault\'s background helper at any time. With this on, a recording already in progress is no longer affected when that happens.\n\nOff by default — you can also turn it on later in Settings ▸ Connection.</string>
     <string name="home_whatsnew_resilient_cta">Turn it on</string>
-    <string name="home_whatsnew_resilient_enabled">Resilient recording is on. A recording already in progress is no longer affected if Android stops CallVault\'s background helper.</string>
+    <string name="home_whatsnew_resilient_enabled">\"Keep recording if the helper stops\" is on. A recording already in progress is no longer affected if Android stops CallVault\'s background helper.</string>
 
     <!-- Post-update note: one entry per release, newest first. Keep in sync with CHANGELOG.md. -->
     <string name="home_whatsnew_settings_cta">Open Settings</string>
@@ -75,6 +88,7 @@
     <string name="home_health_setup_changed">Setup changed since your last call — your next call will confirm it still works.</string>
     <string name="home_health_call_not_recorded">A call was not recorded — %1$s, %2$s.</string>
     <string name="home_health_call_not_recorded_unnamed">A call was not recorded — %1$s.</string>
+    <string name="home_health_call_not_recorded_force_stopped">CallVault had been force-stopped, by the phone or another app, so it could not hear the call. Check that your phone\'s battery settings don\'t put CallVault to sleep.</string>
     <!-- A call missed while a specific, user-owned prerequisite was missing — named precisely rather
          than reading as the unexplained daemon-died case above. One pair (labelled/unnamed) per
          Prerequisite, mirroring home_health_call_not_recorded / _unnamed. -->
@@ -122,7 +136,7 @@
     <string name="merge_primary_hint">Starts the merged call</string>
     <string name="merge_title">Merge calls with %1$s</string>
     <string name="settings_merge_keep_originals_description">After merging, leave the calls it was made from on the phone as well. Off by default, so a merge leaves one recording. Taking a merged call apart works either way.</string>
-    <string name="settings_merge_keep_originals_title">Keep the original calls</string>
+    <string name="settings_merge_keep_originals_title">Keep originals after merging</string>
     <string name="unmerge_confirm">Un-merge</string>
     <string name="unmerge_message">It becomes these calls again, each with the transcript and marks it had:</string>
     <string name="unmerge_title">Un-merge this call?</string>
@@ -138,6 +152,21 @@
     <string name="merge_note_will_keep">The other calls are kept on the phone as well.</string>
     <string name="home_scroll_to_top">Top</string>
     <string name="home_whatsnew_full_notes">Full release notes</string>
+    <string name="whatsnew_250_title">Keep or delete after a call, and share what you need</string>
+    <string-array name="whatsnew_250_items">
+        <item>Keep or delete: CallVault can ask after each call whether to keep the recording (Settings ▸ Recording)</item>
+        <item>Share a call\'s recording, transcript and summary together — or just a part of a recording</item>
+        <item>Call history: every call from your phone\'s log, next to its recording</item>
+        <item>Search in Settings</item>
+        <item>Transcribe again, and pull down on any page to refresh it</item>
+        <item>Your own file-name format, and an optional label for which SIM each call used</item>
+        <item>Bengali for the app and for transcription</item>
+        <item>Calls placed through Google Voice keep the number you dialled</item>
+        <item>Shizuku mode: the microphone no longer stays on after a call, and no crash when the recorder restarts</item>
+        <item>Honor phones that pause CallVault during a call record more reliably</item>
+        <item>Drive: recordings are no longer lost when the Drive folder is also the recordings folder</item>
+        <item>When a call wasn\'t recorded because CallVault had been force-stopped, the card says so</item>
+    </string-array>
     <string name="whatsnew_249_title">Clearer app calls, and ready right after updates</string>
     <string-array name="whatsnew_249_items">
         <item>Less echo on app calls on phones whose mic picks up the earpiece</item>

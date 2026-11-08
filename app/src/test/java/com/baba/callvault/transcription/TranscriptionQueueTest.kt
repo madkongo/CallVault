@@ -15,6 +15,7 @@ import com.baba.callvault.data.recordings.RecordingCatalog
 import com.baba.callvault.data.transcripts.db.TranscriptDatabase
 import com.baba.callvault.data.transcripts.db.TranscriptEntry
 import com.baba.callvault.data.transcripts.db.TranscriptState
+import com.baba.callvault.services.recording.aftercall.AfterCallDecisions
 import kotlinx.coroutines.runBlocking
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
@@ -147,6 +148,19 @@ class TranscriptionQueueTest {
         catalogued("short.ogg", lastModified = 200L)
 
         assertEquals(listOf("marathon.ogg", "short.ogg"), TranscriptionQueue.pending(context))
+    }
+
+    @Test
+    fun excludes_a_recording_waiting_for_a_keep_or_delete_answer() = runBlocking {
+        // Transcribing a call the user may be about to delete spends its battery for nothing; Keep queues it.
+        catalogued("held.ogg", lastModified = 100L)
+        catalogued("kept.ogg", lastModified = 200L)
+        AfterCallDecisions.hold(context, "held.ogg", "content://local/held.ogg".toUri(), "audio/ogg", isVoip = false)
+        try {
+            assertEquals(listOf("kept.ogg"), TranscriptionQueue.pending(context))
+        } finally {
+            AfterCallDecisions.release(context, "held.ogg")
+        }
     }
 
     private suspend fun catalogued(name: String, lastModified: Long) {

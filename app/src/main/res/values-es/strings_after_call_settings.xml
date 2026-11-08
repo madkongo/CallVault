@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Keep or delete after the call: Settings rows and the wizard switch. -->
+<resources>
+    <string name="settings_after_call_mode_label">Cuando termina una llamada</string>
+    <string name="settings_after_call_mode_keep">Conservar la grabación</string>
+    <string name="settings_after_call_mode_ask">Preguntarme: conservar o eliminar</string>
+    <string name="settings_after_call_mode_keep_desc">Se conservan todas las grabaciones, como siempre.</string>
+    <string name="settings_after_call_mode_ask_desc">Tras cada llamada grabada, una notificación te pregunta si quieres conservarla. Hasta que respondas, no se copia a Drive ni se transcribe automáticamente.</string>
+    <string name="settings_after_call_needs_notifications">Para preguntar, CallVault necesita notificaciones. Permítelas y se activará Preguntar.</string>
+    <string name="settings_after_call_style_label">Cómo preguntar</string>
+    <string name="settings_after_call_style_notification">Notificación</string>
+    <string name="settings_after_call_style_popup">Ventana emergente sobre la pantalla</string>
+    <string name="settings_after_call_style_notification_desc">Una notificación con Conservar y Eliminar.</string>
+    <string name="settings_after_call_style_popup_desc">Una pequeña ventana sobre lo que haya en pantalla. Si no puede mostrarse (teléfono bloqueado) o la cierras sin responder, pregunta una notificación en su lugar. Necesita permiso para mostrarse sobre otras apps.</string>
+    <string name="settings_after_call_needs_overlay">La ventana emergente necesita permiso para mostrarse sobre otras apps. Hasta que lo concedas, pregunta la notificación.</string>
+    <string name="settings_after_call_unanswered_label">Si no respondo</string>
+    <string name="settings_after_call_unanswered_keep">Conservarla</string>
+    <string name="settings_after_call_unanswered_delete">Eliminarla tras 24 horas</string>
+    <string name="settings_after_call_unanswered_keep_desc">Pasadas 24 horas, la grabación se conserva, se copia y se transcribe como siempre.</string>
+    <string name="settings_after_call_unanswered_delete_desc">24 horas después de la llamada, la grabación se elimina.</string>
+    <string name="settings_after_call_unanswered_engaged">Una grabación que marcaste con estrella, marca, etiqueta o nota, o que transcribiste, siempre se conserva.</string>
+    <string name="wizard_after_call_ask_label">Preguntarme si conservo cada grabación</string>
+    <string name="wizard_after_call_ask_desc">Al terminar una llamada, conserva o elimina su grabación con un toque. Desactivado: se conservan todas.</string>
+</resources>

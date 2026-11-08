@@ -1,5 +1,21 @@
 # README impact log
 
+## 2026-11-06 — Keep or delete a recording when the call ends (#71) + one Share sheet
+
+🧪 VERIFYING (unit tests; device check pending). Off by default: Settings ▸ Recording ▸ "When a call ends: Ask me"
+holds each recording (no Drive copy, no automatic transcription) until Keep / Delete is answered on a notification
+or, optionally, a pop-up over the screen. Share on every page now offers the recording, transcript and summary
+together.
+
+**What this changes for the README:**
+- **New permission declared: "Display over other apps" (SYSTEM_ALERT_WINDOW).** Never granted by default; only
+  requested when the user picks the pop-up style. The README lists no permissions today, so nothing becomes wrong,
+  but any future permissions list must include it.
+- A feature list could add: "Decide after the call whether to keep it" and "Share a call's recording, transcript
+  and summary in one go".
+
+**Not claimable yet:** the pop-up on Android 15+ (overlay-window approach, not yet seen on such a phone).
+
 ## 2026-10-31 — Classic Settings view removed (`chore/remove-classic-settings`)
 
 🧪 VERIFYING (unit tests and build only; nothing seen on a phone). Settings always opens the per-page layout;
@@ -685,3 +701,15 @@ nothing changes. The rows no longer say "over Wi-Fi only".
 read "downloaded once — over Wi-Fi, or on mobile data if you say so".
 
 README.md was not edited.
+
+## 2026-11-07 — keep or delete: the overlay permission in setup (branch feat/keep-or-delete)
+- The setup screen now lists "Display over other apps" as an **Optional** permission (only for the keep-or-delete
+  pop-up). Any README list of the permissions CallVault asks for at setup must add it as optional.
+- With Pop-up chosen, only the pop-up asks; the notification is the fallback (locked phone, no permission, closed
+  unanswered). A README line saying both appear would be wrong.
+
+## 2026-11-07 — PR #76 (@borng): redirected outgoing calls (merged 7f1f0e89)
+- New permission **PROCESS_OUTGOING_CALLS** ("process outgoing calls"), asked once at app start and granted with no
+  dialog when the call log is already allowed. Any README list of permissions must add it, with its use: the number
+  you dialled, for calls routed through Google Voice or another call redirection app.
+- New claim available: outgoing calls placed through Google Voice are named after the dialled number, not the proxy.

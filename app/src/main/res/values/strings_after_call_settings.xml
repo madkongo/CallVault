@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Keep or delete after the call: Settings rows and the wizard switch. -->
+<resources>
+    <string name="settings_after_call_mode_label">When a call ends</string>
+    <string name="settings_after_call_mode_keep">Keep the recording</string>
+    <string name="settings_after_call_mode_ask">Ask me: keep or delete</string>
+    <string name="settings_after_call_mode_keep_desc">Every recording is kept, as always.</string>
+    <string name="settings_after_call_mode_ask_desc">After each recorded call, a notification asks whether to keep it. Until you answer, it is not copied to Drive or transcribed automatically.</string>
+    <string name="settings_after_call_needs_notifications">Asking needs notifications from CallVault. Allow them and Ask switches on.</string>
+    <string name="settings_after_call_style_label">How to ask</string>
+    <string name="settings_after_call_style_notification">Notification</string>
+    <string name="settings_after_call_style_popup">Pop-up over the screen</string>
+    <string name="settings_after_call_style_notification_desc">A notification with Keep and Delete.</string>
+    <string name="settings_after_call_style_popup_desc">A small window over whatever is on screen. If it can’t show (the phone is locked) or you close it without answering, a notification asks instead. Needs permission to display over other apps.</string>
+    <string name="settings_after_call_needs_overlay">The pop-up needs permission to display over other apps. Until it is allowed, the notification asks.</string>
+    <string name="settings_after_call_unanswered_label">If I don\'t answer</string>
+    <string name="settings_after_call_unanswered_keep">Keep it</string>
+    <string name="settings_after_call_unanswered_delete">Delete it after 24 hours</string>
+    <string name="settings_after_call_unanswered_keep_desc">After 24 hours the recording is kept, copied and transcribed as usual.</string>
+    <string name="settings_after_call_unanswered_delete_desc">24 hours after the call, the recording is deleted.</string>
+    <string name="settings_after_call_unanswered_engaged">A recording you starred, marked, tagged, noted or transcribed is always kept.</string>
+    <string name="wizard_after_call_ask_label">Ask me whether to keep each recording</string>
+    <string name="wizard_after_call_ask_desc">When a call ends, keep or delete its recording with one tap. Off keeps every recording.</string>
+</resources>

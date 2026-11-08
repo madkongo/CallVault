@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Keep or delete after the call: Settings rows and the wizard switch. -->
+<resources>
+    <string name="settings_after_call_mode_label">عند انتهاء المكالمة</string>
+    <string name="settings_after_call_mode_keep">الاحتفاظ بالتسجيل</string>
+    <string name="settings_after_call_mode_ask">اسألني: احتفاظ أم حذف</string>
+    <string name="settings_after_call_mode_keep_desc">يُحتفظ بكل تسجيل، كما هو الحال دائمًا.</string>
+    <string name="settings_after_call_mode_ask_desc">بعد كل مكالمة مسجَّلة، يسألك إشعار هل تحتفظ بها. وإلى أن تجيب، لا تُنسخ إلى Drive ولا تُفرَّغ تلقائيًا.</string>
+    <string name="settings_after_call_needs_notifications">يحتاج السؤال إلى إشعارات CallVault. اسمح بها وسيُفعَّل خيار السؤال.</string>
+    <string name="settings_after_call_style_label">طريقة السؤال</string>
+    <string name="settings_after_call_style_notification">إشعار</string>
+    <string name="settings_after_call_style_popup">نافذة منبثقة فوق الشاشة</string>
+    <string name="settings_after_call_style_notification_desc">إشعار فيه زرّا الاحتفاظ والحذف.</string>
+    <string name="settings_after_call_style_popup_desc">نافذة صغيرة فوق ما يظهر على الشاشة. إذا تعذّر ظهورها (الهاتف مقفل) أو أغلقتها دون إجابة، يسألك إشعار بدلًا منها. تحتاج إلى إذن الظهور فوق التطبيقات الأخرى.</string>
+    <string name="settings_after_call_needs_overlay">تحتاج النافذة المنبثقة إلى إذن الظهور فوق التطبيقات الأخرى. وإلى أن يُمنح، يسألك الإشعار.</string>
+    <string name="settings_after_call_unanswered_label">إذا لم أُجب</string>
+    <string name="settings_after_call_unanswered_keep">الاحتفاظ به</string>
+    <string name="settings_after_call_unanswered_delete">حذفه بعد 24 ساعة</string>
+    <string name="settings_after_call_unanswered_keep_desc">بعد 24 ساعة يُحتفظ بالتسجيل ويُنسخ ويُفرَّغ كالمعتاد.</string>
+    <string name="settings_after_call_unanswered_delete_desc">بعد 24 ساعة من المكالمة يُحذف التسجيل.</string>
+    <string name="settings_after_call_unanswered_engaged">التسجيل الذي ميّزته بنجمة أو علامة أو وسم أو ملاحظة أو فرّغته يُحتفظ به دائمًا.</string>
+    <string name="wizard_after_call_ask_label">اسألني هل أحتفظ بكل تسجيل</string>
+    <string name="wizard_after_call_ask_desc">عند انتهاء المكالمة، احتفظ بتسجيلها أو احذفه بلمسة واحدة. عند الإيقاف يُحتفظ بكل تسجيل.</string>
+</resources>

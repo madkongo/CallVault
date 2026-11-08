@@ -5,6 +5,7 @@
     <string name="home_date_yesterday">Ontem</string>
     <string name="home_health_call_not_recorded">Uma chamada não foi gravada — %1$s, %2$s.</string>
     <string name="home_health_call_not_recorded_unnamed">Uma chamada não foi gravada — %1$s.</string>
+    <string name="home_health_call_not_recorded_force_stopped">O CallVault tinha sido forçado a parar, pelo celular ou por outro app, então não conseguiu perceber a chamada. Verifique se as configurações de bateria do celular não colocam o CallVault para dormir.</string>
     <string name="home_health_failed_daemon">O gravador parou durante a sua última chamada.</string>
     <string name="home_health_failed_empty">Sua última chamada gerou uma gravação vazia (0 bytes).</string>
     <string name="home_health_failed_no_audio">Sua última chamada foi salva, mas não contém áudio.</string>
@@ -30,6 +31,19 @@
     <string name="home_hero_pill_update_regrant">Ação necessária</string>
     <string name="home_hero_status_label">Status</string>
     <string name="home_play_recording">Reproduzir gravação</string>
+    <string name="home_view_recordings">Gravações</string>
+    <string name="home_view_all_calls">Histórico de chamadas</string>
+    <string name="home_calls_filter_all">Todas</string>
+    <string name="home_calls_filter_recorded">Gravadas</string>
+    <string name="home_calls_filter_not_recorded">Não gravadas</string>
+    <string name="home_calls_filter_missed">Perdidas</string>
+    <string name="home_call_origin_phone">Chamada telefônica</string>
+    <string name="home_call_not_recorded">Não gravada</string>
+    <string name="home_call_missed">Perdida</string>
+    <string name="home_call_declined">Recusada</string>
+    <string name="home_call_unknown_number">Número desconhecido</string>
+    <string name="home_calls_empty">Ainda não há chamadas no registro de chamadas do telefone.</string>
+    <string name="home_calls_no_permission">O CallVault não consegue ler o registro de chamadas. Permita \"Registro de chamadas\" para o CallVault nas configurações de apps do Android para ver todas as chamadas aqui.</string>
     <string name="home_recordings_count">%1$d salvas</string>
     <string name="home_recordings_empty_hint">Quando o CallVault gravar uma chamada, ela aparece aqui. Faça ou receba uma chamada para começar.</string>
     <string name="home_recordings_empty_title">Nenhuma gravação ainda</string>
@@ -45,15 +59,15 @@
     <string name="home_usb_advisory_title">A gravação pode parar ao bloquear a tela</string>
     <string name="home_whatsnew_body">• A gravação agora se recupera sozinha caso trave\n• A tela inicial avisa quando não está gravando, em vez de ficar calada\n• Uma chamada telefônica não é mais confundida com uma chamada de app</string>
     <string name="home_whatsnew_offline_cta">Ativar a gravação sem Wi-Fi</string>
-    <string name="home_whatsnew_offline_enabled">Gravação offline ativada.</string>
+    <string name="home_whatsnew_offline_enabled">“Continuar gravando sem Wi-Fi” está ativado.</string>
     <string name="home_whatsnew_offline_enabling">Ativando a gravação sem Wi-Fi…</string>
     <string name="offline_failed_needs_wd">Não foi possível ativar — a depuração sem fio está desligada e o CallVault não conseguiu ligá-la. Ligue-a nas opções do desenvolvedor e tente de novo.</string>
     <string name="offline_failed_no_service">Não foi possível ativar — o CallVault não conseguiu alcançar o serviço de depuração do telefone. Verifique o Wi-Fi e a depuração sem fio e tente de novo.</string>
     <string name="offline_failed_port">Não foi possível ativar — a porta local não voltou. Tente novamente em instantes.</string>
-    <string name="home_whatsnew_resilient_body">Deixa a gravação de chamadas mais resistente a interrupções.\n\nO Android pode encerrar o serviço auxiliar do CallVault a qualquer momento. Com isto ativado, uma gravação já em andamento deixa de ser afetada quando isso acontece.\n\nDesativado por padrão — você também pode ativar depois em Configurações ▸ Confiabilidade.</string>
+    <string name="home_whatsnew_resilient_body">Deixa a gravação de chamadas mais resistente a interrupções.\n\nO Android pode encerrar o serviço auxiliar do CallVault a qualquer momento. Com isto ativado, uma gravação já em andamento deixa de ser afetada quando isso acontece.\n\nDesativado por padrão — você também pode ativar depois em Configurações ▸ Conexão.</string>
     <string name="home_whatsnew_resilient_cta">Ativar</string>
-    <string name="home_whatsnew_resilient_enabled">A gravação resiliente está ativada. Uma gravação já em andamento deixa de ser afetada se o Android encerrar o serviço auxiliar do CallVault.</string>
-    <string name="home_whatsnew_resilient_title">Novo: gravação resiliente</string>
+    <string name="home_whatsnew_resilient_enabled">“Continuar gravando se o serviço auxiliar parar” está ativado. Uma gravação já em andamento deixa de ser afetada se o Android encerrar o serviço auxiliar do CallVault.</string>
+    <string name="home_whatsnew_resilient_title">Novo: continuar gravando se o serviço auxiliar parar</string>
     <string name="home_whatsnew_settings_cta">Abrir as Configurações</string>
     <string name="home_whatsnew_title">Novidades</string>
     <string name="offline_recording_disabling">Desativando a gravação sem Wi-Fi…</string>
@@ -108,7 +122,7 @@
     <string name="merge_primary_hint">Começa a chamada mesclada</string>
     <string name="merge_title">Mesclar chamadas com %1$s</string>
     <string name="settings_merge_keep_originals_description">Depois de mesclar, deixar também no telefone as chamadas que a formaram. Desativado por padrão, para que uma mesclagem deixe uma única gravação. Separar uma chamada mesclada funciona nos dois casos.</string>
-    <string name="settings_merge_keep_originals_title">Manter as chamadas originais</string>
+    <string name="settings_merge_keep_originals_title">Manter os originais após mesclar</string>
     <string name="unmerge_confirm">Separar</string>
     <string name="unmerge_message">Ela volta a ser estas chamadas, cada uma com a transcrição e as marcações que tinha:</string>
     <string name="unmerge_title">Separar esta chamada?</string>
@@ -116,6 +130,21 @@
     <string name="merge_note_will_keep">As outras chamadas também são mantidas no telefone.</string>
     <string name="home_scroll_to_top">Topo</string>
     <string name="home_whatsnew_full_notes">Notas de versão completas</string>
+    <string name="whatsnew_250_title">Manter ou apagar depois da chamada, e compartilhar o que você precisa</string>
+    <string-array name="whatsnew_250_items">
+        <item>Manter ou apagar: o CallVault pode perguntar após cada chamada se a gravação fica (Configurações ▸ Gravação)</item>
+        <item>Compartilhe juntos a gravação, a transcrição e o resumo de uma chamada — ou só um trecho da gravação</item>
+        <item>Histórico de chamadas: cada chamada do registro do celular ao lado da sua gravação</item>
+        <item>Busca em Configurações</item>
+        <item>Transcrever de novo, e puxe para baixo em qualquer página para atualizá-la</item>
+        <item>Seu próprio formato de nome de arquivo, e uma etiqueta opcional com o chip usado em cada chamada</item>
+        <item>Bengali para o app e para a transcrição</item>
+        <item>Chamadas feitas pelo Google Voice mantêm o número que você discou</item>
+        <item>Modo Shizuku: o microfone não fica mais ligado depois da chamada, e acabou o travamento ao reiniciar o gravador</item>
+        <item>Celulares Honor que pausam o CallVault durante a chamada gravam de forma mais confiável</item>
+        <item>Drive: as gravações não se perdem mais quando a pasta do Drive é também a pasta de gravações</item>
+        <item>Quando uma chamada não foi gravada porque o CallVault tinha sido forçado a parar, o cartão avisa</item>
+    </string-array>
     <string name="whatsnew_249_title">Chamadas de apps mais claras e pronto logo após atualizar</string>
     <string-array name="whatsnew_249_items">
         <item>Menos eco nas chamadas de apps em celulares cujo microfone capta o alto-falante de ouvido</item>

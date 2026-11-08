@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Keep or delete after the call: Settings rows and the wizard switch. -->
+<resources>
+    <string name="settings_after_call_mode_label">وقتی تماس تمام می‌شود</string>
+    <string name="settings_after_call_mode_keep">نگه داشتن ضبط</string>
+    <string name="settings_after_call_mode_ask">از من بپرس: نگه دارم یا حذف کنم</string>
+    <string name="settings_after_call_mode_keep_desc">هر ضبط نگه داشته می‌شود، مثل همیشه.</string>
+    <string name="settings_after_call_mode_ask_desc">پس از هر تماس ضبط‌شده، یک اعلان می‌پرسد آن را نگه می‌دارید یا نه. تا وقتی پاسخ ندهید، به Drive کپی نمی‌شود و خودکار رونویسی نمی‌شود.</string>
+    <string name="settings_after_call_needs_notifications">پرسیدن به اعلان‌های CallVault نیاز دارد. آن‌ها را مجاز کنید تا پرسیدن روشن شود.</string>
+    <string name="settings_after_call_style_label">نحوهٔ پرسیدن</string>
+    <string name="settings_after_call_style_notification">اعلان</string>
+    <string name="settings_after_call_style_popup">پنجرهٔ بازشو روی صفحه</string>
+    <string name="settings_after_call_style_notification_desc">اعلانی با دکمه‌های نگه داشتن و حذف.</string>
+    <string name="settings_after_call_style_popup_desc">پنجره‌ای کوچک روی هر چه روی صفحه است. اگر نتواند نشان داده شود (گوشی قفل است) یا آن را بدون پاسخ ببندید، به‌جای آن یک اعلان می‌پرسد. به اجازهٔ نمایش روی برنامه‌های دیگر نیاز دارد.</string>
+    <string name="settings_after_call_needs_overlay">پنجرهٔ بازشو به اجازهٔ نمایش روی برنامه‌های دیگر نیاز دارد. تا وقتی اجازه داده نشود، اعلان می‌پرسد.</string>
+    <string name="settings_after_call_unanswered_label">اگر پاسخ ندادم</string>
+    <string name="settings_after_call_unanswered_keep">نگهش دار</string>
+    <string name="settings_after_call_unanswered_delete">پس از ۲۴ ساعت حذفش کن</string>
+    <string name="settings_after_call_unanswered_keep_desc">پس از ۲۴ ساعت ضبط نگه داشته می‌شود و طبق معمول کپی و رونویسی می‌شود.</string>
+    <string name="settings_after_call_unanswered_delete_desc">۲۴ ساعت پس از تماس، ضبط حذف می‌شود.</string>
+    <string name="settings_after_call_unanswered_engaged">ضبطی که ستاره‌دار، علامت‌گذاری، برچسب‌گذاری یا یادداشت‌گذاری کرده یا رونویسی کرده‌اید همیشه نگه داشته می‌شود.</string>
+    <string name="wizard_after_call_ask_label">از من بپرس هر ضبط را نگه دارم یا نه</string>
+    <string name="wizard_after_call_ask_desc">وقتی تماس تمام می‌شود، ضبط آن را با یک ضربه نگه دارید یا حذف کنید. خاموش: همهٔ ضبط‌ها نگه داشته می‌شوند.</string>
+</resources>

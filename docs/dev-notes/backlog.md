@@ -22,6 +22,152 @@ with `&&`/`||` chains and silently reported the opposite answer while this was b
 
 ---
 
+## 🧪 BUILT, VERIFYING — One Share sheet: recording + transcript + summary together — requested + built 2026-11-06 (merged into integration/next 1acc113d; maintainer: "looks good")
+
+**Asked:** share a recording's transcript from Recordings (and the recording from Transcripts), and "share all" in
+one go, the same on every page. "Share a part" stays as it is (maintainer's call).
+
+**Chosen design: A** (artifact "Share Options"). Every Share opens one bottom sheet with Recording / Transcript /
+Summary ticks; the page's own part starts ticked; parts the call lacks are greyed ("This call doesn't have one").
+Not remembered between shares. With Recording ticked: audio + `<recording name> — transcript.txt` / `— summary.txt`
+in one ACTION_SEND(_MULTIPLE). Without: one message (summary first, under headings; one part alone has no heading,
+as before); too long → a .txt file. Rules in `CallSharePlan` (unit-tested).
+
+**Entry points switched:** Recordings row ⋮ and selection bar, playback page Share ("Share recording"), Transcripts
+and Summaries rows and selection bars, reading view "As text". Old `shareRecording(s)`, `shareLibraryRow(s)` removed.
+
+**OP9 (2026-11-06):** Recordings row → sheet, audio only offered, chooser with 1 audio file; Transcripts row → all
+three ticked → "3 files in total", WhatsApp/Telegram offered, files named after the recording; Summaries row →
+summary + transcript → one message starting "Summary". 2,530 unit tests, checkTranslations green (16 locales,
+translations by Claude, unreviewed).
+
+**Not tried:** playback page, selection bars (several calls), a Drive-only recording, actually sending into a chat.
+
+## 🧪 BUILT, VERIFYING — Pull to refresh + lists that went stale until the app was reopened — requested + built 2026-11-06 (merged into integration/next b124828d; maintainer: "looks good")
+
+**Asked:** a simple refresh on each page, so lists show the true state without reopening the app.
+
+**What was stale, and the fix (four commits, one concern each):**
+- **Recordings** read the app's own catalog, never the folder: files copied in by hand never appeared; files deleted with a file manager stayed listed. Pull now rescans the device folder (`DeviceFolderRescan`): adds files the catalog lacks (same rule as the first-run seed), forgets a device copy only with two proofs (missing from the listing AND its document reports missing), only copies in the *current* folder, not written in the last 2 min. Drive is not listed (phantoms); the existing Drive deleted-copy check runs on pull (≤15 s wait).
+- **Hub counts, Transcripts, Summaries, labels, row statuses** stayed empty if opened before `transcripts.db` existed. Now they wait for the database and follow it (`onceTranscriptsExist`), never creating it.
+- **Settings**: Shizuku status, USB mode row and calling-app list now re-read on return to the app.
+- Review fix: `RecordingCatalog.removeCopyByUri` cascaded the transcript of *every* copy-less row, not just the one it emptied.
+- Pull gesture (M3 `PullToRefreshBox`, colours stated) on Hub, Recordings, Transcripts, Summaries.
+
+**OP9 (2026-11-06):** pull shows the teal spinner under the top bar on all four pages; a file `cp`'d into `/sdcard/Recordings` appeared after a pull; after `rm` it disappeared after a pull (needed matching Android's "IllegalArgumentException … FileNotFoundException: Missing file" report). Also surfaced 5 old hand-pushed test files that were in the folder but never listed. 2,501 unit tests green.
+
+**Not tried:** Drive-mode or BOTH-mode pull on a real Drive folder; the Settings rows on return (would need stopping Shizuku on the OP9); first-transcript-while-page-open on a fresh install.
+
+**To settle:** maintainer pulls on Recordings after adding/deleting a file outside the app, on his phone.
+
+## 🧪 FIXED, VERIFYING — "Drive" folder = recording folder deletes every recording — found + fixed 2026-11-04 (merged into integration/next)
+
+Reported via the maintainer: a Xiaomi user (Redmi 23021RAAEG, Android 15, v2.4.9, standalone) says "the app doesn't
+work". Their debug report shows CallVault records fine and then **deletes each recording about a second later**.
+Data loss, so it blocks the 2.5.0 release.
+
+What the log shows (16:05, one call):
+1. The recording is saved to `primary:Alarms` (36 KB), storage target **Google Drive only**.
+2. `RecordingCopyWorker` logs "'…m4a' is already in Drive; not uploading it again" (`SafHelper.CopyResult.AlreadyPresent`).
+3. `finish(...)` then deletes the local file because the target is Drive-only.
+4. Playback fails (`FileNotFoundException`), the entry is pruned, the list shows 0 recordings.
+
+Cause (📐 read from the v2.4.9 code, not reproduced): the user picked the **same phone folder (Alarms)** as the "Drive"
+folder. The copy step finds the file itself, treats it as already uploaded and deletes the only copy.
+- The Drive folder pickers (`SettingsScreen.kt` ~204-210, `WizardScreen.kt` ~104-109) accept any folder: no
+  `SafHelper.isCloudFolder` check, no same-folder check. `isCloudFolder` is only used the other way round (to refuse a
+  cloud folder as the recording folder).
+- The `AlreadyPresent` branch deletes the local copy without checking that the "Drive" file is a different file.
+
+Fix (agreed scope, 📐 not built):
+- [ ] Pickers (Settings + wizard): refuse a Drive folder that is the recording folder, inside it, or not a cloud
+      provider (Drive / OneDrive / Dropbox), with a clear message.
+- [ ] `RecordingCopyWorker`: never delete the local copy when the destination is the source (same document / same
+      tree) or the destination folder is not a cloud provider. Protects users already set up this way.
+- [ ] Existing installs with this setup: detect it and show a warning (and stop deleting) instead of silently losing calls.
+- [ ] Tests for all three; check how long this path has existed (other users may be affected without knowing).
+- [ ] Reproduce on the OP9 first (pick the recording folder as "Drive", record a call, confirm the file survives).
+
+**Fix (2026-11-04, branch `fix/drive-folder-same-as-recordings`, commits `fd27df67` + `22869086`):** `FolderOverlap`
+(same/nested folder, same document). Copy worker never deletes when the "Drive" copy is the source; router and sweep
+skip an overlapping Drive folder; Settings + wizard refuse the pick both ways; existing setups get a warning on the
+Drive folder row. Non-cloud Drive folders are still allowed (a local folder synced by another app is a real use).
+- Reproduced on the OP9 with 2.5.0-clip6: merge with Drive folder = Recordings → merged file deleted ("already in Drive").
+- Fixed on 2.5.0-drive2: same merge → file kept, log "keeping … on the device"; Settings warning shown; picker refuses.
+- 🧪 To settle: the Xiaomi reporter on 2.5.0 (or a test build) records a call with their old setup and the file stays.
+
+Immediate advice for the reporter: Settings → "Where to save recordings" → **On this phone**, or pick a real Google
+Drive folder ("Drive" in the picker). Deleted recordings are almost certainly gone.
+
+## 🧪 BUILT, VERIFYING — Bengali (Bangla / বাংলা) language — requested + built 2026-11-04 (merged into integration/next)
+
+Built 2026-11-04: `values-bn` (all 8 files, translated by four parallel helpers, checkTranslations green) and `bn`
+through the five transcription tables (`a82e6a5f`). OP9 2.5.0-next3: the app displays in Bengali. Dates show Bengali
+digits (Android's own date format) while durations and sizes show Western digits. 🧪 To settle: a Bengali speaker
+reads the screens; a real Bengali call transcribed on-device.
+
+
+Requested by the maintainer for 2.5.0: Bengali (known natively as Bangla / বাংলা), an Indo-Aryan language spoken
+mainly in the Bengal region of South Asia (Bangladesh and the Indian state of West Bengal).
+
+Today (checked 2026-11-04): no `values-bn` folder (15 UI locales, no Bengali) and no Bengali in the transcription
+language code.
+
+Scope (both, unless the maintainer narrows it):
+- [ ] **App language:** new `values-bn` with every string file, kept complete by `checkTranslations`. Check that
+      Bengali script renders in the app font and that number/plural forms read right.
+- [ ] **Transcription language:** add Bengali (`bn`) as a pinnable language. Memory `adding-a-transcription-language`
+      lists the five tables to touch (Greek shipped touching only one) and the guard tests. Whisper supports Bengali,
+      but 📐 its accuracy on Bengali is weak on small models; try a real Bengali clip before claiming quality.
+- [ ] Onboarding/settings language pickers show it (see [[new-features-consider-onboarding]]).
+
+## 🧪 BUILT, VERIFYING — Custom file-name template (free editing, like ShizuCallRecorder) — requested + built 2026-11-04 (merged into integration/next)
+
+Built 2026-11-04 (`8afd7966`): ShizuCallRecorder had this editor; we replaced it with presets on 2026-06-11 (`494c1598`).
+Now "Custom" in the preset list: text field, tap-a-tag list, live example; `CustomFileNameTemplate` requires {date},
+refuses bad characters, unknown tags and over 120 characters. The setup wizard keeps presets only. OP9 2.5.0-next3:
+editor, error and save checked. 🧪 To settle: record a call with a custom name and check the list shows date and
+contact; a name not split by "_" shows the whole leftover text as the contact (e.g. "Call-John Doe").
+
+
+User request via the maintainer: "I wish to add in (File Name Template) Custom Edit Like Shizu👌". "Shizu" is
+ShizuCallRecorder, our upstream, which lets the user type their own template.
+
+Today (checked 2026-11-04): Settings and the setup wizard offer only 9 fixed presets (`FILE_NAME_TEMPLATE_PRESETS` in
+`utils/FileNameTemplates.kt`, chosen in `ui/common/FileNameFormatDialog.kt`); there is no free editing. The formatter
+already supports placeholders `{date}`, `{direction}`, `{phone_number}`, `{contact_name}`, `{cross_country}` (plus
+`{date_compact}`), and each already has a translated description string, so the building blocks exist.
+`presetForTemplateOrFirst` shows a stored custom value as the first preset, so a custom template is never shown
+correctly today (an imported settings file can already hold one).
+
+Proposed (📐, not decided in detail):
+- [ ] A "Custom…" entry at the end of the preset list → a text field with tappable placeholder chips and a live
+      example (`fileNameTemplateExample`).
+- [ ] Validate before saving: at least one of date/number/contact (or names collide), no characters illegal in file
+      names (`/ \ : * ? " < > |`), a length limit, no unknown `{tokens}`.
+- [ ] Show a saved custom template as "Custom" in Settings, not as the first preset.
+- [ ] Check what reads names back: display-time contact resolution, merge, Drive copy and the Honor dialer preset
+      all parse or match file names. A free template must not break them.
+- [ ] Same picker in the wizard (one shared component, see [[new-features-consider-onboarding]]); tests; 15 locales.
+
+## Current state — 2026-11-03 (after v2.4.9)
+
+**Released:** v2.4.9 (20490), published 2026-11-03 after a soak on the maintainer's OP12; asset == tested build
+(sha256 034043f8…). Next must exceed 20490. Everything in integration/next as of `ec6e526c` shipped, including #9 of
+the list below (classic Settings removed) and the decode time limit.
+
+**New since 2026-10-31:**
+- 🧪 Release blocker for 2.5.0 (found 2026-11-04), now fixed on integration/next: "Drive" folder = recording folder
+  deleted every recording — see the section above.
+- 🧪 For 2.5.0: Bengali (Bangla) — built 2026-11-04; see above.
+- 🧪 For 2.5.0: custom file-name template — built 2026-11-04; see above.
+- 🅿️ Parked by the maintainer: in-app downgrade (RollbackManager works one step back but restores old data; keep-data
+  uninstall loses folder access + battery exemption; memory `in-app-downgrade-research`); start-of-call echo.
+- 🔵 Small bug found 2026-11-03, not fixed: changing "Where to save recordings" alone does not re-apply the Drive
+  schedule (`SettingsViewModel` target change does not call `SyncScheduler.apply`; app start and the next call do).
+- 🧪 Waiting: Eugene (Honor BVL-N49) on the USB warning + Drive copy; Евгений on echo (✅ confirmed) ; #68 ofirmgr;
+  #69 frizzi0303-cyber; a real tap on "Stop for now".
+
 ## Current state — 2026-10-31 (AUDITED against code + release tags)
 
 **This block is the summary of record. The 2026-10-01 block below it and the older dated blocks are history.**
@@ -256,6 +402,188 @@ Nothing decided, nothing researched. Notes for whoever picks it up:
   would need a template check. Test candidates first on the desktop harness (memory
   `llama-desktop-harness`).
 - Both add visible options, so they need an onboarding decision (see [[new-features-consider-onboarding]]).
+
+## 🧪 Share a part of a recording — BUILT 2026-11-04, merged into integration/next, OP9-tested; maintainer to try
+
+Pick a start and end inside a recording, preview it, share it as a new file; the original is never changed.
+📐 Research and code plan: `docs/dev-notes/2026-11-04-share-part-of-recording.md`.
+
+- Code: reuse `data/merge/AudioSplit` (lossless frame copy, Opus → Ogg, AAC → MP4, keeps stereo); add a time range,
+  80 ms Opus pre-roll, and the Ogg end-of-stream page fix (BCR's `OggContainer.kt`). Clip lives in `cacheDir`, never
+  in the library or Drive. Imported MP3/WAV/FLAC: hide the option at first.
+- DECIDED 2026-11-04: option A (waveform handles), reached from the list row ⋮ menu and a new Share button on the
+  playback screen. Transcript offered as a switch, always only the clipped lines; untranscribed call → "Transcribe
+  just this part" or "the whole call". Clips are never saved as recordings (share-only).
+- ⚠️ Side finding, CONFIRMED 2026-11-04 on the OP9: ordinary recordings (phone call 2026-11-03 and a WhatsApp call)
+  end without the Ogg end-of-stream flag (last page flags 0x0). Android/VLC/ffprobe play them; strict players (Firefox)
+  may refuse. Fix = BCR's last-page flag + CRC patch after the muxer stops; applies to recordings, merge and clips.
+
+## 🔵 Format choice when sharing (MP3 and others) — requested 2026-11-04, not started
+
+User request via the maintainer (Telegram): "It would also be nice to be able to send in other formats, such as mp3",
+with a screenshot of another recorder's share dialog offering WAV / AMR / MP3 / FLAC / OPUS and "Keep metadata".
+Why it matters: an Opus `.ogg` does not play on some iPhones, on Windows without extra software, or in many office/
+legal systems.
+
+Proposed (📐, not decided in detail):
+- A "Format" choice on sharing — both "Share recording" and "Share a part": **Original** (default, Opus/M4A, smallest),
+  **MP3**, **M4A (AAC)**, **WAV**, maybe **FLAC**. Skip AMR (old, low quality).
+- Recordings stay stored as they are; conversion happens only when sending. Recording directly in MP3 is NOT proposed
+  (it would mean an encoder inside the recorder for no gain over converting at share time).
+- Optional "keep details" tags in the shared file (contact, date, direction), on by default.
+
+Feasibility (checked on the OP12 2026-11-04): Android has encoders for AAC, AMR-NB/WB, FLAC and Opus; **no MP3
+encoder** — MP3 needs LAME bundled (LGPL, compatible with GPLv3; ~0.3–0.4 MB per ABI; F-Droid-friendly; MP3 patents
+expired). Decoding reuses `AudioDecoder.decodeRange` (interleaved PCM at the original rate, before the downmix).
+Muxer: AAC → MP4; FLAC and WAV written by hand; MP3 raw frames + ID3 tags.
+Estimate 📐: M4A/WAV/FLAC ~1 day; MP3 +~1 day. Ties into Share a part ([[share-a-part]]).
+
+## 🧪 VERIFYING — Keep or delete a recording when the call ends (also #71) — merged into `integration/next` 2026-11-07 (1882ae3f), for 2.5.0; waiting on the maintainer's own use
+
+**🧪 OP9 run 2026-11-07 (Android 14, Shizuku mode, by Claude; not yet confirmed by the maintainer):**
+- Settings: the three rows, Ask-only rows folding in, ⓘ text, search for "pop-up", "24 hours", "discard" all found.
+  Found and fixed (32a5551e): a search matching a folded row opened its group empty; the switch now shows. Same fix
+  covers the auto-record and app-picker rows.
+- Pop-up without permission: opens Android's "Display over other apps" page (on ColorOS the whole app list, not
+  CallVault's own page); back without granting leaves Notification with the note; granting switches to Pop-up
+  on return.
+- Three carrier calls to the OP12: question held each time; pop-up drawn over the home screen and the
+  notification posted; Delete (pop-up) deleted ~11 s later; Delete then Undo (notification) brought the question
+  back; Keep kept it and cleared the store; answering the notification closed the pop-up. Recordings count 33 → 34.
+- Fixed (32a5551e): a Hebrew name made the pop-up read "1:24 · name"; now isolated, seen right on the WhatsApp call.
+- WhatsApp call to the OP12: held ("Held a VoIP recording"), pop-up over WhatsApp, notification "Call with … recorded
+  · 1:20", Keep ran the held hand-offs (transcription scheduler consulted) and cleared both.
+- Maintainer 2026-11-07: the 10 s Undo after a pop-up Delete is fine as it is; no change.
+- **Second OP9 round 2026-11-07 (after a7719b70 + 0218ac1a):**
+  - Maintainer: with Pop-up chosen, only the pop-up should ask. Changed (a7719b70): the notification asks only
+    when the pop-up cannot be drawn or is closed unanswered. Seen: pop-up alone after a call; Back moved the
+    question to a notification; the pop-up survived the phone locking and was there after unlock.
+  - Locked at hang-up: no pop-up, notification only, no pop-up after unlock. With "hide sensitive content" on,
+    the lock screen reads "Call recorded" (no name).
+  - Found and fixed (0218ac1a): the pop-up covered the next call's screen (hang-up button, keypad). It now steps
+    aside while the audio mode says a call is ringing/active and comes back after. Seen on two back-to-back
+    calls; the queue asked the older call first, then the next.
+  - "Delete after 24 h" (check forced with `cmd jobscheduler run -f`): unanswered → deleted, notification
+    cleared; starred → kept.
+  - Ask with the keep-or-delete category muted: opens that category's page; back without allowing → stays Keep
+    with the note; allowing → Ask on return. (With the app's notification permission revoked, CallVault sends
+    the user to setup, so that case cannot reach this row.)
+  - Seen, not fixed: the question sits inside a collapsed CallVault group with "Ready to record" in the
+    ColorOS shade, so Keep/Delete need two expands; search shows "2 matches" with one row when the second
+    is folded.
+- **Third round 2026-11-07 (55882851, bffe406d), OP9:**
+  - The question has a notification group of its own: Keep / Delete show directly in the shade, apart from
+    "Ready to record". Search count now counts what shows ("discard": 2 with Ask, 1 with Keep).
+  - Maintainer's spec for the pop-up permission: choosing Pop-up without it shows "Allow the pop-up" (what it is
+    for, Allow / Not now); Allow opens Android's page; back with it granted → Pop-up on. Seen in Settings. The
+    setup screen lists "Display over other apps" as Optional; tapping it runs the same window; seen going
+    Optional → Granted. The wizard shows "How to ask" once Ask is on (not yet seen: needs a fresh setup).
+- **Emulator round 2026-11-07 (Android 16, mymemory-test, isolated `instrtest` install):**
+  - Wizard: "Ask me whether to keep each recording" on → "How to ask" appears; Pop-up → "Allow the pop-up" →
+    Android's list (Android 11+ ignores the per-app link, so the "find CallVault in the list" wording is needed)
+    → granted → back on the step with Pop-up chosen, prefs ask + popup.
+  - Pop-up on Android 16 with the app in the background: `AfterCallPopUpDeviceTest` (androidTest) passed. It drew
+    over the home screen, stepped aside within ~2 s of a simulated incoming call ringing (`emu gsm call`, Answer /
+    Decline unobstructed), came back after `gsm cancel`, Keep cleared it.
+  - Seen, not ours to fix here: at the emulator's maximum display size (density 640) the wizard's "Record app
+    calls" row squeezes its label to one letter per line (existing layout, not this feature).
+- **Nothing left untested by Claude; waiting on the maintainer's confirmation.**
+- ~~Older list:~~ the phone locked at hang-up; two calls before answering; "If I don't
+  answer → Delete after 24 h"; Ask with notifications blocked; the wizard switch; Android 15+ (overlay path).
+
+**Decided by the maintainer 2026-11-06** (artifact "Keep or Discard", https://claude.ai/artifact/WW6HLdm45TYSaydaYvC44N):
+- Settings ▸ Recording: **When a call ends**: Keep the recording (default, as today) / Ask me: keep or delete.
+- **How to ask** (shown only with "Ask me"): Notification (default) / Pop-up over the screen (needs "Display over
+  other apps"; asks for it when chosen). If the pop-up cannot show, the notification is the fallback.
+- **If I don't answer**: Keep it (default) / Delete it after 24 hours.
+- Buttons: **Keep / Delete only** (no Play). Delete has a ~10 s Undo before it really deletes.
+- **Phone calls and app calls** both get the question.
+- While undecided: Drive copy and automatic transcription wait; Delete removes file, .json/.md, transcript,
+  summary, tags and the catalog entry.
+
+### Earlier discussion notes (2026-11-05)
+
+Maintainer request: after a call ends, offer a way to delete that call's recording straight from a notification,
+without opening the app. **How it works is not decided yet; the maintainer will discuss it first. Do not build
+before that.**
+
+Questions for that discussion (not answers):
+- Which notification carries the button. 📐 From a quick code read on 2026-11-05: a normal carrier call shows no
+  "recording saved" notification today. The recording notification goes away at hang-up; VoIP posts only error and
+  "ended" notices. So this probably means a new post-call notification, opt-in or default.
+- Delete at once, ask to confirm, or "Undo" for a few seconds.
+- How long the notification stays, and whether it also offers Keep / Open / Share.
+- Drive: what happens if the copy to Drive has already started or finished (Immediately sync, Drive-only).
+- Merged calls, the `.json`/`.md` files next to the recording, and the catalog entry must all go with it.
+- New settings should be considered for the setup wizard ([[new-features-consider-onboarding]]).
+- **Also asked for in issue #71 (2026-11-05, chaoscreater):** "keep or discard the recording at the end of the call",
+  as in skvalex's Call Recorder: record every call, then decide once you know whether it mattered. Same feature;
+  settle both in the one discussion.
+
+## 🔵 Upload to Google Drive directly (Drive API), not through the Drive app — requested 2026-11-05 (#71), not decided
+
+Issue #71 (chaoscreater): our "Google Drive" storage writes through Android's file picker into the **Google Drive
+app's** folder (SAF), so the Drive app has to be installed and allowed to run. They keep Drive and similar apps
+disabled to save battery, and want CallVault to upload itself, as skvalex's Call Recorder does.
+
+📐 Not researched in depth. What a direct upload would involve:
+- A Google sign-in (OAuth) and a Google Cloud project for CallVault. The `drive.file` scope (only files the app
+  created) is the non-sensitive one.
+- An open-source sign-in library (AppAuth) rather than Play Services, so as not to hurt F-Droid
+  ([[fdroid-readiness]]).
+- Network code and an account token inside an app whose pitch is "nothing leaves the phone unless you choose".
+  It is a product decision before it is an engineering one.
+- It would sit beside the current SAF path, not replace it. SAF also covers Nextcloud and other providers.
+
+## 🔵 Android developer verification (the maintainer's own developer identity, for all his apps; CallVault is one package to register) — before the 2027 global rollout — researched 2026-11-05, decided 2026-11-05: individual account
+
+**Scope (maintainer, 2026-11-05):** this is a general developer registration, not a CallVault task. One verified
+individual account covers every app he distributes; each app's package name and key is then registered under it.
+The CallVault-specific part is only the package step and the debug-key risk below.
+
+**Why:** once enforcement reaches a country, certified Android 7+ phones there refuse to **install or update** an app
+that isn't registered to a verified developer, unless the user has turned on the "advanced flow". That flow means
+Developer options, a restart, a 24-hour wait and a biometric check; ADB installs are exempt. It covers our GitHub
+APK **and the in-app updater**: "if the advanced flow is disabled updates to unregistered apps will fail".
+Timeline (Google FAQ, read 2026-11-05): enforced since 2026-09-30 only for "participating stores" in Brazil,
+Indonesia, Singapore and Thailand. Direct downloads are not affected yet. Global in 2027, date not given.
+
+**✅ Account side is done (checked 2026-11-05):** the maintainer's existing Play Console personal account (MadKongo)
+is identity-verified, and it registers outside-Play apps from its "Android developer verification" tab. No new
+account or fee is needed; the notes below about a new account are background only. Play **trader status**: declared
+**non-trader** on 2026-11-05 (hobbyist, keeps his address private). Switch to trader before earning money from a Play app. Not registered yet: CallVault's package (the maintainer will
+say when).
+
+**Background, for a developer without a Play account:** a **full distribution** account in the Android Developer Console (outside-Play developers):
+- **$25**, a Google account, a government photo ID **and** proof of address, and email and phone checked by code.
+  Google says about 10 minutes.
+- **As an organization instead:** a D-U-N-S number (free, up to 28 days), a website verified in Search Console and
+  company papers. The limited (hobbyist) account is useless for us: 20 devices.
+- **Decided 2026-11-05: individual account.** What the developer's name or address shows to users is not
+  stated on the pages read; check it during signup.
+
+**Registering the package (`com.baba.callvault`):**
+1. Register the package name.
+2. Add the signing key's SHA-256 (`c875ffd0…285ea`).
+3. Prove ownership: the console gives a snippet to put in `app/src/main/assets/adi-registration.properties`.
+   Build a release APK signed with the key and upload it.
+
+The key covering >50% of known installs has priority, which is ours (forks would need their own name). If F-Droid
+ever builds and signs it, add F-Droid's key as well (multiple keys per package are allowed). Status shows in the
+console, or in Android Studio Panda 4+ when building a signed APK.
+
+**🚨 Open risk — our key is a debug certificate.** Every release is signed with this Mac's own debug keystore
+([[release-build-signing]]): unique to us, but its name is `CN=Android Debug, O=Android, C=US`. Play refuses
+debug-signed uploads. Whether the Developer Console accepts one is **unknown** (no source found); adding the key
+in the console will show it.
+- **If refused:** rotate to a proper release key with APK Signature Scheme v3 key rotation. Our minSdk 30 is above
+  the API 28 that rotation needs, so existing installs keep updating. `ApkVerifier` pins `c875ffd0` and would have
+  to accept the new key too.
+- This is the app's update identity. Plan it separately, test it on the OP9 first, and keep the old keystore
+  forever.
+
+Sources: developer.android.com/developer-verification (+ /guides/faq, /guides/android-developer-console,
+/guides/full-distribution, /guides/open-source-app-registration); support.google.com/googleplay/android-developer/answer/16761053.
 
 ## 🔼 Higher-priority feature requests — agreed 2026-10-01, not started
 
@@ -2357,3 +2685,59 @@ Earlier in the session `main` also took the global On/Off master switch (`1c800e
 `build/install-combined-2026-10-12` branch was the pre-merge install artifact and is now redundant.
 WRITE_SECURE_SETTINGS was re-granted after each install (`granted=true`); both recorders verified back up
 (OP12 `app_process` daemon + `recorder_keepalive`; OP9 `:recorder` fork).
+
+---
+
+## 🧪 Transcribe again, single and bulk (#72, QBANIN) — VERIFYING, built 2026-11-05 on `feat/transcribe-again-72`
+
+> **Built (A + B + D, agreed 2026-11-05):** row ⋮ item and selection-bar button on Transcripts, one dialog (language,
+> ready engines, estimate, "also delete the summary"). Old text kept until the new run succeeds; failed/stopped runs
+> restore it. Review fixes in `c20061b0`. **Tried on the OP9 (2.5.0-next4), 2026-11-05:** single re-run on Groq ✓,
+> bulk of 2 on Groq ✓, Stop mid-run on the phone twice → old transcript back and readable ✓, summary checkbox shows
+> when one exists ✓ (cancelled, not run). Found + fixed on device: the worker priced the run by the setting, so a
+> phone run skipped its keep-alive notification; chip colour rendered coral.
+> **Mimicked bad transcript on the OP9, 2026-11-05:** a Hebrew call transcribed as English gave "B'dika, B'dika, the
+> one plus shte mesre"; Transcribe again in Hebrew (Groq) gave "בדיקה בדיקה בדיקה…" back ✓. Real failure (Custom
+> server unreachable): 4 cloud retries over ~8 min, the call sits under "Being transcribed" meanwhile (old text not
+> readable until then — accepted), then the old Hebrew text came back ✓. The failure notice said "Tap to try again"
+> → now "The previous transcript was kept" (`3e73680d`, unit-tested, NOT yet seen on a phone).
+> **2026-11-05, maintainer looked for it inside the transcript → option C added after all**, as a ⋮ menu in the
+> page's top bar with "Summarise this call" (moved out of the text-like line above the words) and "Transcribe again".
+> OP9: both work from the page; the page keeps the old text during a run, with no progress shown there (a long
+> on-phone run shows its progress only on the Transcripts list).
+> **2026-11-05 progress line added** ("Transcribing again… N%" + Stop on the page). Testing it found a **data-loss
+> race**: Stop's cleanup restored the row and forgot the backup, then the unwinding run deleted the transcript as a
+> first run would (the OP9's HebrewCall9min lost its text — test data). Fixed `12d90d27` with a red→green regression
+> test; the same page Stop on the OP9 kept the text twice.
+> **Not tried:** a run with the summary deleted; a crash mid-run; RTL/other locales on screen. **To settle:** maintainer re-transcribes a bad transcript on his phone.
+
+### Original request (2026-11-05)
+
+Brings back what `ef755692` removed (2026-10-12, #4). The removal reason (one settled model + pinned language) no
+longer holds: several models, BYOK cloud (#48), and #72 reports a repeated-word loop. Options page:
+https://claude.ai/artifact/UsAePrr1f4d8d8YFrw9uAW. Recommended: Transcripts row ⋮ item + selection-bar button + one
+confirm dialog (language, engine, estimate, "also delete its summary"), NOT on the reading view. Must keep the old
+transcript until the new run succeeds (today `TranscriptRepository.retry` deletes first). Summaries live in their own
+table, so they survive a re-run unless the dialog deletes them. Unused string `transcript_retranscribe` still exists.
+
+## 📐 Debug report: optional CPU / running-apps section (2026-11-08)
+Decided by the maintainer: the CPU section built for "the fbi" (`probe/shizukuslow`, a303ff53: `dumpsys cpuinfo` +
+`top`) is NOT shipped by default — it names every app the phone is running, which is personal. Wanted later as an
+opt-in sub-setting under debug logging (off by default, e.g. "Include running apps and CPU use"), so a user asked
+for it can switch it on for one report. Not designed or built.
+
+## 🔵 Banking apps don't work while debugging is on (2026-11-08)
+Reported by the maintainer: banking apps refuse to work while debugging is on. CallVault needs Wireless debugging
+(and with it Developer options) to stay on in both built-in and Shizuku mode, so a user can't keep CallVault ready
+and use their bank at the same time. Not researched or designed yet: which apps check what (Developer options, USB
+debugging, Wireless debugging), and whether anything can be done on our side.
+
+## 📐 Opt-in "arm recording without Wi-Fi" using the Samsung adb_wifi_enabled race (2026-11-08)
+From the Shizuku-family research re-sweep (docs/dev-notes/2026-10-23-wifi-free-adb-bootstrap-research.md, 2026-11-08
+section). Nobody has broken the one-time-handshake requirement; the only usable bug is Shizuku-Next's
+`adb_wifi_enabled=1` spam race (local hotspot + ~80 writes @ 20 ms). ❌ dead on OnePlus (measured, OP9), ✅ reported
+on several Samsung models. Our Samsung testers (chaoscreater Z Fold 7, "the fbi" S24 Ultra) already rely on it via
+Shizuku-Next; built-in-mode users get nothing. We hold WRITE_SECURE_SETTINGS, so we could run the same sequence.
+Proposal: experimental off-by-default toggle, device allowlist built from field success/failure, honest "may not
+work / Android may close this" label, undo the setting if it fails. BLOCKED on a real Samsung measurement in
+built-in mode first (we've only ever tested the race on OnePlus). Not built.

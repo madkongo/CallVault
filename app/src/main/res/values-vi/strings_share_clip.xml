@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  ~ CallVault: FOSS call recording, self-contained over embedded ADB
+  ~  Copyright (C) 2026-present The CallVault Authors
+  ~  Licensed under the GNU General Public License v3 or later (see LICENSE).
+  -->
+<!-- "Share a part": sharing a chosen part of a recording as a new file (2026-11-04). -->
+<resources>
+    <string name="share_clip_menu">Chia sẻ một đoạn</string>
+    <string name="share_clip_share_whole">Chia sẻ bản ghi</string>
+    <string name="playback_share">Chia sẻ</string>
+    <string name="share_clip_title">Chia sẻ một đoạn</string>
+    <string name="share_clip_start">Bắt đầu</string>
+    <string name="share_clip_length">Độ dài</string>
+    <string name="share_clip_end">Kết thúc</string>
+    <string name="share_clip_start_here">Bắt đầu tại đây</string>
+    <string name="share_clip_end_here">Kết thúc tại đây</string>
+    <string name="share_clip_preview">Phát đoạn này</string>
+    <string name="share_clip_pause">Tạm dừng</string>
+    <string name="share_clip_hint">Kéo một trong hai đầu, hoặc chạm vào chỗ cần đặt. Bắt đầu tại đây và Kết thúc tại đây dùng vị trí bạn đang nghe.</string>
+    <string name="share_clip_handle_start">Đầu đoạn, %1$s</string>
+    <string name="share_clip_handle_end">Cuối đoạn, %1$s</string>
+    <string name="share_clip_nudge_earlier">sớm hơn một giây</string>
+    <string name="share_clip_nudge_later">muộn hơn một giây</string>
+    <string name="share_clip_include_text">Kèm nội dung đã nói</string>
+    <string name="share_clip_text_ready">Các dòng chép lời trong đoạn này sẽ được gửi kèm.</string>
+    <string name="share_clip_text_none_in_part">Không ai nói gì trong đoạn này, nên không có văn bản đi kèm.</string>
+    <string name="share_clip_text_call_running">Cuộc gọi này đang được chép lời. Các dòng của nó trong đoạn này sẽ được chia sẻ khi xong.</string>
+    <string name="share_clip_transcribe_part">Chỉ chép lời đoạn này</string>
+    <string name="share_clip_transcribe_part_detail">Nhanh hơn. Chỉ dùng cho lần chia sẻ này; cuộc gọi vẫn chưa được chép lời.</string>
+    <string name="share_clip_transcribe_whole">Chép lời cả cuộc gọi</string>
+    <string name="share_clip_transcribe_whole_detail">Được lưu cùng cuộc gọi. Chỉ các dòng của đoạn này được chia sẻ.</string>
+    <string name="share_clip_share">Chia sẻ %1$s</string>
+    <string name="share_clip_working_cut">Đang chuẩn bị đoạn…</string>
+    <string name="share_clip_working_part">Đang chép lời đoạn… %1$d%%</string>
+    <string name="share_clip_working_call">Đang chờ bản chép lời của cuộc gọi…</string>
+    <string name="share_clip_share_without_text">Chia sẻ không kèm văn bản</string>
+    <string name="share_clip_back">Quay lại</string>
+    <string name="share_clip_failed">Không tạo được đoạn. Hãy thử lại, hoặc chia sẻ toàn bộ bản ghi.</string>
+    <string name="share_clip_busy">Chức năng chép lời đang bận với cuộc gọi khác. Hãy chia sẻ không kèm văn bản, hoặc thử lại khi xong.</string>
+    <string name="share_clip_not_set_up">Chưa thiết lập chép lời. Hãy tải một mô hình hoặc thêm dịch vụ của bạn trong Cài đặt.</string>
+    <string name="share_clip_transcribe_failed">Lần này chép lời không thành công. Chia sẻ không kèm văn bản?</string>
+    <string name="share_clip_unsupported">Chỉ có thể chia sẻ một đoạn từ bản ghi của chính CallVault, không phải từ tệp đã nhập này.</string>
+    <string name="share_clip_chooser">Chia sẻ một phần bản ghi</string>
+</resources>

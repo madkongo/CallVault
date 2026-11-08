@@ -159,6 +159,7 @@ object TranscriptionLabels {
         "fa" -> R.string.transcription_language_persian
         "uk" -> R.string.transcription_language_ukrainian
         "ur" -> R.string.transcription_language_urdu
+        "bn" -> R.string.transcription_language_bengali
         else -> R.string.transcription_language_auto
     }
 }

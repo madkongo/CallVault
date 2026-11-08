@@ -43,9 +43,9 @@ fun HonorDialerHint(refreshKey: Any? = null, modifier: Modifier = Modifier) {
         HonorDialerSetup.missing(treeId, preferences.getAudioCodec(), preferences.getStorageTarget())
     }
 
-    val folderSetting = settingPath(R.string.settings_section_storage, R.string.settings_recording_folder_label)
-    val codecSetting = settingPath(R.string.settings_section_audio, R.string.settings_audio_codec)
-    val targetSetting = settingPath(R.string.settings_section_storage, R.string.settings_storage_target_label)
+    val folderSetting = settingPath(R.string.settings_group_save_and_sync, R.string.settings_recording_folder_label)
+    val codecSetting = settingPath(R.string.settings_group_sound_and_names, R.string.settings_audio_codec)
+    val targetSetting = settingPath(R.string.settings_group_save_and_sync, R.string.settings_storage_target_label)
 
     Column(modifier, verticalArrangement = Arrangement.spacedBy(6.dp)) {
         Text(

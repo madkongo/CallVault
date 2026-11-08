@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Keep or delete a recording when the call ends (docs/dev-notes/2026-11-06-keep-or-delete-plan.md). -->
+<resources>
+    <string name="after_call_channel">الاحتفاظ أو الحذف بعد المكالمة</string>
+    <string name="after_call_title_party">تم تسجيل المكالمة مع %1$s</string>
+    <string name="after_call_title_app">تم تسجيل مكالمة %1$s</string>
+    <string name="after_call_title_plain">تم تسجيل المكالمة</string>
+    <string name="after_call_question_text">هل تحتفظ بها أم تحذفها الآن؟</string>
+    <string name="after_call_keep">احتفاظ</string>
+    <string name="after_call_delete">حذف</string>
+    <string name="after_call_deleted_title">تم حذف التسجيل</string>
+    <string name="after_call_deleted_text">سيُحذف خلال ثوانٍ. اضغط تراجع للاحتفاظ به.</string>
+    <string name="after_call_undo">تراجع</string>
+    <string name="after_call_popup_title">هل تحتفظ بهذا التسجيل؟</string>
+    <string name="after_call_popup_call">مكالمة</string>
+</resources>

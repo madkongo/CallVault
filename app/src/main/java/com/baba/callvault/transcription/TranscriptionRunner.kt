@@ -23,6 +23,7 @@ import com.baba.callvault.data.transcripts.SpeakerTurnsRepository
 import com.baba.callvault.data.transcripts.db.TranscriptDatabase
 import com.baba.callvault.data.transcripts.db.TranscriptEntry
 import com.baba.callvault.data.transcripts.db.TranscriptSegmentEntry
+import com.baba.callvault.data.transcripts.TranscribeAgainBackup
 import com.baba.callvault.data.transcripts.db.TranscriptState
 import com.baba.callvault.transcription.cloud.CloudEndpoint
 import com.baba.callvault.transcription.cloud.CloudError
@@ -167,7 +168,9 @@ class TranscriptionRunner(
         }
 
         val uri = localUriFor(displayName) ?: run {
-            // Deleted between being queued and being reached. Nothing to decode and nothing to say.
+            // Deleted between being queued and being reached. Nothing to decode and nothing to say. A
+            // "transcribe again" (#72) gets its finished row back rather than sitting queued.
+            TranscribeAgainBackup.restore(context, dao, displayName)
             AppLogger.i(TAG, "$displayName is no longer in the catalog; skipping")
             return false
         }
@@ -232,7 +235,14 @@ class TranscriptionRunner(
         if (wasAborted() || shouldStop() || error is CancellationException) {
             // NonCancellable: by now the coroutine is usually cancelled, and a plain suspend call
             // would abandon the very cleanup this exists to do.
-            withContext(NonCancellable) { dao.deleteFor(displayName) }
+            // A "transcribe again" (#72) gets its previous transcript back instead: its words never left. And a
+            // row that is already finished is never deleted here: Stop's own cleanup can restore it first and
+            // forget the backup, and deleting then threw the old words away (OP9, 2026-11-05).
+            withContext(NonCancellable) {
+                if (!TranscribeAgainBackup.restore(context, dao, displayName) &&
+                    dao.findTranscript(displayName)?.state != TranscriptState.DONE
+                ) dao.deleteFor(displayName)
+            }
             AppLogger.i(TAG, "Transcription of '$displayName' was stopped; left for a later run")
             if (error is CancellationException) throw error
             return false
@@ -255,6 +265,7 @@ class TranscriptionRunner(
                 }
                 dao.replaceSegments(displayName, segments.labelled(displayName))
                 mark(displayName, TranscriptState.DONE, modelId, language)
+                TranscribeAgainBackup.clear(context, displayName)
                 // Mirror the finished transcript (+ notes/summary) to a file beside the audio, when the
                 // user has turned on sidecar backups. Guarded inside; NonCancellable so a stopping worker
                 // still writes it.
@@ -316,11 +327,18 @@ class TranscriptionRunner(
                     retryRequested = true
                 } else {
                     AppLogger.w(TAG, "Failed to transcribe '$displayName': ${failure.message}")
-                    mark(displayName, TranscriptState.FAILED, modelId, language, failure.message)
+                    // A failed "transcribe again" (#72) keeps the transcript it was meant to replace.
+                    val previousKept = TranscribeAgainBackup.restore(context, dao, displayName)
+                    if (!previousKept) {
+                        mark(displayName, TranscriptState.FAILED, modelId, language, failure.message)
+                    }
                     // A failure was as silent as a success until now: the row gained a red icon on a
                     // page the user had been given no reason to open. Only a real failure reaches here
                     // — a stop, an abort and a refusal for length have all returned above.
-                    announce(displayName, TranscriptNotice.Outcome.Failed)
+                    announce(
+                        displayName,
+                        if (previousKept) TranscriptNotice.Outcome.FailedPreviousKept else TranscriptNotice.Outcome.Failed,
+                    )
                 }
                 false
             }

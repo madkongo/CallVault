@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  ~ CallVault: FOSS call recording, self-contained over embedded ADB
+  ~  Copyright (C) 2026-present The CallVault Authors
+  ~  Licensed under the GNU General Public License v3 or later (see LICENSE).
+  -->
+<!-- "Share a part": sharing a chosen part of a recording as a new file (2026-11-04). -->
+<resources>
+    <string name="share_clip_menu">Поделиться фрагментом</string>
+    <string name="share_clip_share_whole">Поделиться записью</string>
+    <string name="playback_share">Поделиться</string>
+    <string name="share_clip_title">Поделиться фрагментом</string>
+    <string name="share_clip_start">Начало</string>
+    <string name="share_clip_length">Длина</string>
+    <string name="share_clip_end">Конец</string>
+    <string name="share_clip_start_here">Начать здесь</string>
+    <string name="share_clip_end_here">Закончить здесь</string>
+    <string name="share_clip_preview">Прослушать фрагмент</string>
+    <string name="share_clip_pause">Пауза</string>
+    <string name="share_clip_hint">Перетащите любой край или нажмите туда, где он должен быть. «Начать здесь» и «Закончить здесь» берут место, которое вы сейчас слушаете.</string>
+    <string name="share_clip_handle_start">Начало фрагмента, %1$s</string>
+    <string name="share_clip_handle_end">Конец фрагмента, %1$s</string>
+    <string name="share_clip_nudge_earlier">на секунду раньше</string>
+    <string name="share_clip_nudge_later">на секунду позже</string>
+    <string name="share_clip_include_text">Добавить сказанное</string>
+    <string name="share_clip_text_ready">Строки расшифровки из этого фрагмента будут отправлены вместе с ним.</string>
+    <string name="share_clip_text_none_in_part">В этом фрагменте ничего не сказано, поэтому текст не прилагается.</string>
+    <string name="share_clip_text_call_running">Этот звонок сейчас расшифровывается. Его строки из этого фрагмента будут отправлены, когда расшифровка завершится.</string>
+    <string name="share_clip_transcribe_part">Расшифровать только этот фрагмент</string>
+    <string name="share_clip_transcribe_part_detail">Быстрее. Только для этой отправки; звонок останется без расшифровки.</string>
+    <string name="share_clip_transcribe_whole">Расшифровать весь звонок</string>
+    <string name="share_clip_transcribe_whole_detail">Сохраняется вместе со звонком. Отправляются только строки этого фрагмента.</string>
+    <string name="share_clip_share">Отправить %1$s</string>
+    <string name="share_clip_working_cut">Подготовка фрагмента…</string>
+    <string name="share_clip_working_part">Расшифровка фрагмента… %1$d%%</string>
+    <string name="share_clip_working_call">Ждём расшифровку звонка…</string>
+    <string name="share_clip_share_without_text">Отправить без текста</string>
+    <string name="share_clip_back">Назад</string>
+    <string name="share_clip_failed">Не удалось создать фрагмент. Попробуйте ещё раз или поделитесь всей записью.</string>
+    <string name="share_clip_busy">Расшифровка занята другим звонком. Отправьте без текста или попробуйте снова, когда она закончится.</string>
+    <string name="share_clip_not_set_up">Расшифровка ещё не настроена. Скачайте модель или добавьте свой сервис в настройках.</string>
+    <string name="share_clip_transcribe_failed">В этот раз расшифровка не удалась. Отправить без текста?</string>
+    <string name="share_clip_unsupported">Фрагментом можно поделиться только из собственных записей CallVault, а не из этого импортированного файла.</string>
+    <string name="share_clip_chooser">Поделиться частью записи</string>
+</resources>

@@ -1,0 +1,62 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Bengali (বাংলা) translation -->
+<resources>
+    <string name="notif_readiness_channel">কল রেকর্ডারের প্রস্তুতি</string>
+    <string name="notif_readiness_ready_title">কল রেকর্ড করতে প্রস্তুত</string>
+    <string name="notif_readiness_starting_title">কল রেকর্ডার চালু হচ্ছে…</string>
+    <string name="notif_readiness_ready_text">রেকর্ডার সংযুক্ত।</string>
+    <string name="notif_readiness_starting_text">রেকর্ডার সংযোগ হচ্ছে — এটি শেষ না হওয়া পর্যন্ত কল রেকর্ড হবে না।</string>
+    <string name="notif_usb_lock_warning">কলের সময় স্ক্রিন লক করলে রেকর্ডিং থেমে যেতে পারে। CallVault-এর সেটিংসে “স্ক্রিন আনলক হলে USB” অপশনটি “শুধু চার্জিং” করে দিন।</string>
+    <string name="notif_usb_check_unavailable">এটি শেষ না হলে CallVault-এর সেটিংসে “স্ক্রিন আনলক হলে USB” অপশনটি “শুধু চার্জিং” করে দিন — কিছু ফোনে ডেটা USB মোড রেকর্ডারকে সংযোগ করতে দেয় না।</string>
+
+    <string name="notif_pairing_channel">ADB পেয়ারিং</string>
+    <string name="notif_pairing_searching_title">পেয়ারিং সার্ভিস খোঁজা হচ্ছে…</string>
+    <string name="notif_pairing_searching_text">ফোনের “পেয়ারিং কোড দিয়ে ডিভাইস পেয়ার করুন” (Pair device with pairing code) ডায়ালগটি খুলুন।</string>
+    <string name="notif_pairing_waiting_wd_title">ওয়্যারলেস ডিবাগিংয়ের অপেক্ষায়…</string>
+    <string name="notif_pairing_waiting_wd_text">পেয়ারিং শুরু করতে ওয়্যারলেস ডিবাগিং (Wireless debugging) চালু করুন।</string>
+    <string name="notif_pairing_found_title">পেয়ারিং সার্ভিস পাওয়া গেছে</string>
+    <string name="notif_pairing_found_text">6 সংখ্যার পেয়ারিং কোডটি দিন।</string>
+    <string name="notif_pairing_working_title">পেয়ার হচ্ছে…</string>
+    <string name="notif_pairing_working_text">CallVault সেটআপ হচ্ছে। কয়েক সেকেন্ড লাগবে।</string>
+    <string name="notif_pairing_success_title">পেয়ার হয়েছে ✓</string>
+    <string name="notif_pairing_success_text">ওয়্যারলেস ডিবাগিং পেয়ার হয়েছে। CallVault সেটআপ শেষ করতে ট্যাপ করুন।</string>
+    <string name="notif_pairing_failed_title">পেয়ারিং ব্যর্থ হয়েছে</string>
+    <string name="notif_pairing_action_stop">থামান</string>
+    <string name="notif_pairing_action_enter_code">পেয়ারিং কোড দিন</string>
+    <string name="notif_pairing_remote_input_label">পেয়ারিং কোড</string>
+    <string name="notif_call_monitor_channel">কল মনিটর</string>
+    <string name="notif_readiness_reboot_ready_text">রিস্টার্টের পর কলের অপেক্ষায় আছে।</string>
+    <string name="notif_startup_channel">চালু হওয়া</string>
+    <string name="notif_startup_preparing">কল রেকর্ডার প্রস্তুত হচ্ছে…</string>
+    <string name="update_notif_channel">অ্যাপ আপডেট</string>
+    <string name="update_notif_available_title">CallVault %1$s পাওয়া যাচ্ছে</string>
+    <string name="update_notif_available_text">ইনস্টল করতে অ্যাপ খুলে “আপডেট” ট্যাপ করুন।</string>
+    <string name="update_notif_success_title">আপডেট ইনস্টল হয়েছে</string>
+    <string name="update_notif_success_text">CallVault এখন সংস্করণ %1$s।</string>
+    <string name="update_notif_failure_title">আপডেট ব্যর্থ হয়েছে</string>
+    <string name="update_notif_failure_download_text">আপডেট ডাউনলোড করা যায়নি। GitHub থেকে নিতে ট্যাপ করুন।</string>
+    <string name="update_notif_failure_verify_text">ডাউনলোড করা আপডেট নিরাপত্তা যাচাইয়ে উতরায়নি, তাই বাদ দেওয়া হয়েছে। GitHub থেকে নিতে ট্যাপ করুন।</string>
+    <string name="update_notif_failure_install_text">আপডেট ইনস্টল করা যায়নি। GitHub থেকে নিতে ট্যাপ করুন।</string>
+    <string name="update_notif_downloading_title">আপডেট ডাউনলোড হচ্ছে…</string>
+    <string name="update_notif_installing_title">আপডেট ইনস্টল হচ্ছে…</string>
+    <string name="notif_readiness_down_title">কল রেকর্ড হচ্ছে না</string>
+    <string name="notif_readiness_no_debugging_text">USB ডিবাগিং (USB debugging) ও ওয়্যারলেস ডিবাগিং (Wireless debugging) দুটোই বন্ধ। ডেভেলপার অপশন (Developer options)-এ যেকোনো একটি আবার চালু করুন।</string>
+    <string name="notif_readiness_needs_wifi_text">USB ডিবাগিং (USB debugging) বন্ধ এবং Wi-Fi নেই। Wi-Fi-তে সংযোগ করুন, বা USB ডিবাগিং চালু করুন।</string>
+    <string name="notif_readiness_stuck_text">রেকর্ডার বারবার চালু হতে ব্যর্থ হচ্ছে। কারণ দেখতে CallVault খুলুন।</string>
+    <string name="notif_readiness_needs_wifi_restart_text">রেকর্ডার থেমে গেছে, আবার চালু হতে Wi-Fi লাগবে। Wi-Fi-তে থাকা অবস্থায় “Wi-Fi ছাড়াও রেকর্ডিং চালু রাখুন” চালু করলে এটি এড়ানো যায়।</string>
+    <string name="notif_readiness_wd_off_by_user_text">আপনি ওয়্যারলেস ডিবাগিং (Wireless debugging) বন্ধ করেছেন, আর CallVault-এর রেকর্ডার আবার চালু করার অন্য কোনো উপায় নেই। এটি আবার চালু করুন, বা USB ডিবাগিং (USB debugging) চালু করুন।</string>
+    <string name="notif_readiness_offline_paused_text">Wi-Fi ছাড়া রেকর্ডিং থেমে আছে: এর জন্য USB ডিবাগিং (USB debugging) লাগে। Wi-Fi-তে থাকা কল এখনো রেকর্ড হয়।</string>
+    <string name="notif_action_turn_wd_on">ওয়্যারলেস ডিবাগিং চালু করুন</string>
+    <string name="notif_action_turn_usb_on">USB ডিবাগিং চালু করুন</string>
+
+    <string name="transcript_notice_channel">ট্রান্সক্রিপ্ট</string>
+    <string name="transcript_notice_ready_title">ট্রান্সক্রিপ্ট তৈরি</string>
+    <string name="transcript_notice_ready_deleted_text">%1$s — আপনার কথামতো অডিও মুছে ফেলা হয়েছে।</string>
+    <string name="transcript_notice_ready_many_title">ট্রান্সক্রিপ্ট তৈরি: %1$d</string>
+    <string name="transcript_notice_ready_many_text">পড়তে ট্যাপ করুন।</string>
+    <string name="transcript_notice_failed_title">ট্রান্সক্রিপশন শেষ হয়নি</string>
+    <string name="transcript_notice_failed_text">%1$s। আবার চেষ্টা করতে ট্যাপ করুন।</string>
+    <string name="transcript_notice_failed_many_title">যে ট্রান্সক্রিপশন শেষ হয়নি: %1$d</string>
+    <string name="transcript_notice_failed_many_text">দেখতে ট্যাপ করুন।</string>
+    <string name="transcript_notice_failed_kept_text">%1$s। আগের ট্রান্সক্রিপ্ট রাখা হয়েছে।</string>
+</resources>

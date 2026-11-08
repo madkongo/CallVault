@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  ~ CallVault: FOSS call recording, self-contained over embedded ADB
+  ~  Copyright (C) 2026-present The CallVault Authors
+  ~  Licensed under the GNU General Public License v3 or later (see LICENSE).
+  -->
+<!-- "Share a part": sharing a chosen part of a recording as a new file (2026-11-04). -->
+<resources>
+    <string name="share_clip_menu">Поділитися фрагментом</string>
+    <string name="share_clip_share_whole">Поділитися записом</string>
+    <string name="playback_share">Поділитися</string>
+    <string name="share_clip_title">Поділитися фрагментом</string>
+    <string name="share_clip_start">Початок</string>
+    <string name="share_clip_length">Тривалість</string>
+    <string name="share_clip_end">Кінець</string>
+    <string name="share_clip_start_here">Почати тут</string>
+    <string name="share_clip_end_here">Закінчити тут</string>
+    <string name="share_clip_preview">Прослухати фрагмент</string>
+    <string name="share_clip_pause">Пауза</string>
+    <string name="share_clip_hint">Перетягніть будь-який край або торкніться місця, де він має бути. «Почати тут» і «Закінчити тут» беруть місце, яке ви зараз слухаєте.</string>
+    <string name="share_clip_handle_start">Початок фрагмента, %1$s</string>
+    <string name="share_clip_handle_end">Кінець фрагмента, %1$s</string>
+    <string name="share_clip_nudge_earlier">на секунду раніше</string>
+    <string name="share_clip_nudge_later">на секунду пізніше</string>
+    <string name="share_clip_include_text">Додати сказане</string>
+    <string name="share_clip_text_ready">Рядки транскрипції з цього фрагмента буде надіслано разом із ним.</string>
+    <string name="share_clip_text_none_in_part">У цьому фрагменті нічого не сказано, тому текст не додається.</string>
+    <string name="share_clip_text_call_running">Ця розмова зараз розпізнається. Її рядки з цього фрагмента буде надіслано, коли розпізнавання завершиться.</string>
+    <string name="share_clip_transcribe_part">Розпізнати лише цей фрагмент</string>
+    <string name="share_clip_transcribe_part_detail">Швидше. Лише для цього надсилання; розмова залишиться без транскрипції.</string>
+    <string name="share_clip_transcribe_whole">Розпізнати всю розмову</string>
+    <string name="share_clip_transcribe_whole_detail">Зберігається з розмовою. Надсилаються лише рядки цього фрагмента.</string>
+    <string name="share_clip_share">Надіслати %1$s</string>
+    <string name="share_clip_working_cut">Підготовка фрагмента…</string>
+    <string name="share_clip_working_part">Розпізнавання фрагмента… %1$d%%</string>
+    <string name="share_clip_working_call">Очікування транскрипції розмови…</string>
+    <string name="share_clip_share_without_text">Надіслати без тексту</string>
+    <string name="share_clip_back">Назад</string>
+    <string name="share_clip_failed">Не вдалося створити фрагмент. Спробуйте ще раз або поділіться всім записом.</string>
+    <string name="share_clip_busy">Розпізнавання зайняте іншою розмовою. Надішліть без тексту або спробуйте знову, коли воно завершиться.</string>
+    <string name="share_clip_not_set_up">Розпізнавання ще не налаштоване. Завантажте модель або додайте свій сервіс у налаштуваннях.</string>
+    <string name="share_clip_transcribe_failed">Цього разу розпізнати не вдалося. Надіслати без тексту?</string>
+    <string name="share_clip_unsupported">Фрагментом можна поділитися лише із власних записів CallVault, а не з цього імпортованого файлу.</string>
+    <string name="share_clip_chooser">Поділитися частиною запису</string>
+</resources>

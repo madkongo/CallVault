@@ -9,7 +9,9 @@
 
 package com.baba.callvault
 
+import android.Manifest
 import android.content.Intent
+import android.content.pm.PackageManager
 import android.os.Bundle
 import android.view.WindowManager
 import androidx.activity.compose.setContent
@@ -19,10 +21,12 @@ import androidx.biometric.BiometricPrompt
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
+import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
 import com.baba.callvault.data.AppPreferences
 import com.baba.callvault.services.recording.DaemonKeepAliveService
 import com.baba.callvault.system.AppLock
+import com.baba.callvault.system.permissions.PermissionChecks
 import com.baba.callvault.ui.navigation.NotificationDestination
 import com.baba.callvault.ui.navigation.OpenRecordingRequest
 import com.baba.callvault.ui.navigation.OpenTranscriptRequest
@@ -204,6 +208,34 @@ class MainActivity : AppCompatActivity() {
         if (AppPreferences(applicationContext).isPrivilegedTransportSetUp()) {
             DaemonKeepAliveService.start(applicationContext)
         }
+        requestOutgoingCallsPermissionOnce()
+    }
+
+    /**
+     * Asks once for [Manifest.permission.PROCESS_OUTGOING_CALLS] (see NewOutgoingCallReceiver), only once the call log is
+     * granted: same permission group, so Android grants it without a dialog.
+     * https://developer.android.com/guide/topics/permissions/overview#perm-groups
+     *
+     * Not during setup, whose own permission requests it would collide with, nor over the app-lock prompt.
+     */
+    private fun requestOutgoingCallsPermissionOnce() {
+        val preferences = AppPreferences(applicationContext)
+        if (preferences.isOutgoingCallsPermissionAsked() || !preferences.isWizardCompleted()) return
+        if (!PermissionChecks.hasCallLogPermission(this) || (AppLock.isEnabled(this) && !isUnlocked)) return
+        if (ContextCompat.checkSelfPermission(this, Manifest.permission.PROCESS_OUTGOING_CALLS) == PackageManager.PERMISSION_GRANTED) {
+            preferences.markOutgoingCallsPermissionAsked()
+            return
+        }
+        ActivityCompat.requestPermissions(this, arrayOf(Manifest.permission.PROCESS_OUTGOING_CALLS), REQUEST_OUTGOING_CALLS)
+    }
+
+    @Deprecated("Only for the one-off request in requestOutgoingCallsPermissionOnce")
+    override fun onRequestPermissionsResult(requestCode: Int, permissions: Array<out String>, grantResults: IntArray) {
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults)
+        // An empty result is a cancelled request (another dialog took over): ask again on the next visit.
+        if (requestCode == REQUEST_OUTGOING_CALLS && grantResults.isNotEmpty()) {
+            AppPreferences(applicationContext).markOutgoingCallsPermissionAsked()
+        }
     }
 
     /**
@@ -297,5 +329,8 @@ class MainActivity : AppCompatActivity() {
     private companion object {
         /** Survives an Activity recreation only; never written when the process is going away. */
         const val KEY_IS_UNLOCKED = "is_unlocked"
+
+        /** Request code of [requestOutgoingCallsPermissionOnce]; its result needs no handling. */
+        const val REQUEST_OUTGOING_CALLS = 4401
     }
 }

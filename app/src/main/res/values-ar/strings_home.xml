@@ -10,6 +10,19 @@
     <string name="home_usb_advisory_title">قد يتوقف التسجيل عند قفل الشاشة</string>
     <string name="home_usb_advisory_text">تم تعيين USB على وضع البيانات. انقر لتعيينه على الشحن فقط.</string>
     <string name="home_usb_advisory_fix">إصلاح</string>
+    <string name="home_view_recordings">التسجيلات</string>
+    <string name="home_view_all_calls">سجل المكالمات</string>
+    <string name="home_calls_filter_all">الكل</string>
+    <string name="home_calls_filter_recorded">مسجّلة</string>
+    <string name="home_calls_filter_not_recorded">غير مسجّلة</string>
+    <string name="home_calls_filter_missed">فائتة</string>
+    <string name="home_call_origin_phone">مكالمة هاتفية</string>
+    <string name="home_call_not_recorded">غير مسجّلة</string>
+    <string name="home_call_missed">فائتة</string>
+    <string name="home_call_declined">مرفوضة</string>
+    <string name="home_call_unknown_number">رقم غير معروف</string>
+    <string name="home_calls_empty">لا توجد مكالمات في سجل مكالمات الهاتف بعد.</string>
+    <string name="home_calls_no_permission">لا يستطيع CallVault قراءة سجل المكالمات. اسمح بإذن \"سجلّ المكالمات\" لتطبيق CallVault في إعدادات التطبيقات في Android لرؤية كل المكالمات هنا.</string>
     <string name="home_recordings_count">%1$d تم حفظها</string>
     <string name="home_recordings_empty_title">لا توجد تسجيلات حتى الآن</string>
     <string name="home_recordings_empty_hint">عندما يسجل CallVault مكالمة، ستظهر هنا. قم بإجراء أو تلقي مكالمة للبدء.</string>
@@ -21,23 +34,17 @@
     <string name="home_update_banner_installing">جارٍ التثبيت…</string>
     <string name="home_updated_banner_text">تم تحديث CallVault إلى %1$s</string>
     <string name="home_whatsnew_title">ما الجديد</string>
-    <string name="home_whatsnew_body">• يتعافى التسجيل الآن بنفسه إذا توقف في أي وقت
-• تخبرك الصفحة الرئيسية عندما يكون التسجيل معطلاً، بدلاً من البقاء صامتًا
-• لم تعد المكالمة الهاتفية تعتبر مكالمة تطبيق</string>
+    <string name="home_whatsnew_body">• يتعافى التسجيل الآن بنفسه إذا توقف في أي وقت\n• تخبرك الصفحة الرئيسية عندما يكون التسجيل معطلاً، بدلاً من البقاء صامتًا\n• لم تعد المكالمة الهاتفية تعتبر مكالمة تطبيق</string>
     <string name="home_whatsnew_offline_cta">تشغيل التسجيل بدون Wi-Fi</string>
-    <string name="home_whatsnew_offline_enabled">تم تمكين التسجيل بدون اتصال.</string>
+    <string name="home_whatsnew_offline_enabled">«مواصلة التسجيل بدون Wi-Fi» قيد التشغيل.</string>
     <string name="offline_failed_needs_wd">تعذر التمكين؛ تصحيح الأخطاء اللاسلكي متوقف ولم يتمكن CallVault من تشغيله. قم بتشغيله في خيارات المطور، ثم حاول مرة أخرى.</string>
     <string name="offline_failed_no_service">تعذر التمكين: لم يتمكن CallVault من الوصول إلى خدمة تصحيح أخطاء الهاتف. تحقق من اتصالك بـ Wi-Fi مع تشغيل تصحيح الأخطاء اللاسلكي، ثم حاول مرة أخرى.</string>
     <string name="offline_failed_port">تعذر التمكين: لم يعد المنفذ المحلي للعمل. حاول مرة أخرى بعد قليل.</string>
     <string name="home_whatsnew_offline_enabling">جارٍ تمكين التسجيل بدون Wi-Fi…</string>
-    <string name="home_whatsnew_resilient_title">جديد: تسجيل مرن</string>
-    <string name="home_whatsnew_resilient_body">يجعل تسجيل المكالمات أكثر مقاومة للانقطاعات.
-
-يمكن لنظام Android إيقاف مساعد CallVault في الخلفية في أي وقت. مع تمكين هذا، لا يتأثر التسجيل الجاري حاليًا عند حدوث ذلك.
-
-معطل افتراضيًا؛ يمكنك أيضًا تشغيله لاحقًا في الإعدادات ▸ الموثوقية.</string>
+    <string name="home_whatsnew_resilient_title">جديد: مواصلة التسجيل إذا توقف المساعد</string>
+    <string name="home_whatsnew_resilient_body">يجعل تسجيل المكالمات أكثر مقاومة للانقطاعات.\n\nيمكن لنظام Android إيقاف مساعد CallVault في الخلفية في أي وقت. مع تمكين هذا، لا يتأثر التسجيل الجاري حاليًا عند حدوث ذلك.\n\nمعطل افتراضيًا؛ يمكنك أيضًا تشغيله لاحقًا في الإعدادات ▸ الاتصال.</string>
     <string name="home_whatsnew_resilient_cta">تشغيله</string>
-    <string name="home_whatsnew_resilient_enabled">التسجيل المرن قيد التشغيل. لم يعد التسجيل الجاري حاليًا يتأثر إذا أوقف Android مساعد CallVault في الخلفية.</string>
+    <string name="home_whatsnew_resilient_enabled">«مواصلة التسجيل إذا توقف المساعد» قيد التشغيل. لم يعد التسجيل الجاري حاليًا يتأثر إذا أوقف Android مساعد CallVault في الخلفية.</string>
     <string name="home_whatsnew_settings_cta">فتح الإعدادات</string>
     <string name="whatsnew_153_title">إعدادك، يتم التحقق منه بواسطة مكالماتك الخاصة</string>
     <string name="whatsnew_155_title">الإعدادات في لوحة، ومكالمات تسجل بشكل أكثر موثوقية</string>
@@ -78,6 +85,7 @@
     <string name="home_health_setup_changed">تغير الإعداد منذ مكالمتك الأخيرة؛ ستؤكد مكالمتك التالية أنها لا تزال تعمل.</string>
     <string name="home_health_call_not_recorded">لم يتم تسجيل مكالمة؛ %1$s، %2$s.</string>
     <string name="home_health_call_not_recorded_unnamed">لم يتم تسجيل مكالمة؛ %1$s.</string>
+    <string name="home_health_call_not_recorded_force_stopped">كان CallVault متوقفًا إجباريًا، بواسطة الهاتف أو تطبيق آخر، لذا لم يتمكن من رصد المكالمة. تأكد من أن إعدادات البطارية في هاتفك لا تضع CallVault في وضع السكون.</string>
     <string name="home_health_missed_recording_folder">لم يتم تسجيل مكالمة: لم يتم تعيين مجلد تسجيلات في ذلك الوقت، %1$s.</string>
     <string name="home_health_missed_recording_folder_unnamed">لم يتم تسجيل مكالمة: لم يتم تعيين مجلد تسجيلات في ذلك الوقت.</string>
     <string name="home_health_missed_adb_pairing">لم يتم تسجيل مكالمة: لم يكتمل الإعداد في ذلك الوقت، %1$s.</string>
@@ -150,7 +158,7 @@
     <string name="merge_primary_hint">تبدأ المكالمة المدمجة</string>
     <string name="merge_title">دمج المكالمات مع %1$s</string>
     <string name="settings_merge_keep_originals_description">بعد الدمج، اترك المكالمات التي تم إنشاؤها منها على الهاتف أيضًا. معطل افتراضيًا، لذا يترك الدمج تسجيلًا واحدًا. يعمل فصل المكالمة المدمجة بأي طريقة.</string>
-    <string name="settings_merge_keep_originals_title">احتفظ بالمكالمات الأصلية</string>
+    <string name="settings_merge_keep_originals_title">الاحتفاظ بالأصول بعد الدمج</string>
     <string name="unmerge_confirm">إلغاء الدمج</string>
     <string name="unmerge_message">سيتم تفكيك هذا التسجيل إلى المكالمات الأصلية، محتفظةً بكل تفريغ صوتي وعلامة تمييز كانت عليها:</string>
     <string name="unmerge_title">إلغاء دمج هذه المكالمة؟</string>
@@ -174,6 +182,21 @@
     <string name="merge_note_will_keep">يتم الاحتفاظ بالمكالمات الأخرى على الهاتف أيضًا.</string>
     <string name="home_scroll_to_top">الأعلى</string>
     <string name="home_whatsnew_full_notes">ملاحظات الإصدار الكاملة</string>
+    <string name="whatsnew_250_title">احتفظ أو احذف بعد المكالمة، وشارك ما تحتاجه</string>
+    <string-array name="whatsnew_250_items">
+        <item>احتفظ أو احذف: يمكن لـ CallVault أن يسألك بعد كل مكالمة هل تريد الاحتفاظ بالتسجيل (الإعدادات ▸ التسجيل)</item>
+        <item>شارك تسجيل المكالمة ونصها وملخصها معًا — أو جزءًا فقط من التسجيل</item>
+        <item>سجل المكالمات: كل مكالمة من سجل هاتفك بجانب تسجيلها</item>
+        <item>البحث في الإعدادات</item>
+        <item>أعد النسخ النصي، واسحب للأسفل في أي صفحة لتحديثها</item>
+        <item>تنسيق اسم ملف خاص بك، وعلامة اختيارية تبين الشريحة المستخدمة في كل مكالمة</item>
+        <item>اللغة البنغالية للتطبيق وللنسخ النصي</item>
+        <item>المكالمات التي تُجرى عبر Google Voice تحتفظ بالرقم الذي طلبته</item>
+        <item>وضع Shizuku: لم يعد الميكروفون يبقى قيد التشغيل بعد المكالمة، ولا تعطل عند إعادة تشغيل المسجل</item>
+        <item>هواتف Honor التي توقف CallVault مؤقتًا أثناء المكالمة تسجل بشكل أكثر موثوقية</item>
+        <item>Drive: لم تعد التسجيلات تضيع عندما يكون مجلد Drive هو نفسه مجلد التسجيلات</item>
+        <item>عندما لا تُسجَّل مكالمة لأن CallVault أُوقف إجباريًا، تقول البطاقة ذلك</item>
+    </string-array>
     <string name="whatsnew_249_title">مكالمات تطبيقات أوضح، وجاهز فور التحديث</string>
     <string-array name="whatsnew_249_items">
         <item>صدى أقل في مكالمات التطبيقات على الهواتف التي يلتقط ميكروفونها صوت سماعة الأذن</item>

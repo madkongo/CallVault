@@ -42,9 +42,10 @@
     <string name="notif_readiness_no_debugging_text">Налагодження USB та бездротове налагодження вимкнені. Увімкніть хоча б одне в параметрах розробника.</string>
     <string name="notif_readiness_needs_wifi_text">Налагодження USB вимкнено, а Wi-Fi недоступний. Підключіться до Wi-Fi або ввімкніть налагодження USB.</string>
     <string name="notif_readiness_stuck_text">Рекордер постійно не запускається. Відкрийте CallVault, щоб дізнатися причину.</string>
-    <string name="notif_readiness_needs_wifi_restart_text">Рекордер зупинився, і для повторного запуску потрібен Wi-Fi. Щоб цього уникнути, увімкніть «Запис без Wi-Fi», поки ви підключені до Wi-Fi.</string>
+    <string name="notif_readiness_needs_wifi_restart_text">Рекордер зупинився, і для повторного запуску потрібен Wi-Fi. Щоб цього уникнути, увімкніть «Записувати без Wi-Fi», поки ви підключені до Wi-Fi.</string>
     <string name="notif_readiness_offline_paused_text">Запис без Wi-Fi призупинено: потрібне налагодження USB. Через Wi-Fi запис працює.</string>
     <string name="notif_action_turn_wd_on">Увімкнути бездротове налагодження</string>
+    <string name="notif_action_turn_usb_on">Увімкнути налагодження через USB</string>
     <string name="transcript_notice_channel">Транскрипції</string>
     <string name="transcript_notice_ready_title">Транскрипція готова</string>
     <string name="transcript_notice_ready_deleted_text">%1$s — аудіо видалено за вашим вибором.</string>
@@ -55,4 +56,5 @@
     <string name="transcript_notice_failed_many_title">Невдалі транскрипції: %1$d</string>
     <string name="transcript_notice_failed_many_text">Натисніть, щоб переглянути.</string>
     <string name="notif_readiness_wd_off_by_user_text">Ви вимкнули бездротове налагодження. Увімкніть його знову або ввімкніть налагодження USB, щоб відновити запис.</string>
+    <string name="transcript_notice_failed_kept_text">%1$s. Попередню розшифровку збережено.</string>
 </resources>

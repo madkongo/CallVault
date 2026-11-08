@@ -42,6 +42,8 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
@@ -82,6 +84,11 @@ fun CvScaffold(
                     // rows slide through the title. Only visible once the list is long enough to
                     // scroll, which is why it went unnoticed until Settings moved into a panel.
                     .background(MaterialTheme.colorScheme.background)
+                    // And it takes the taps on its own blank space: drawing over the rows is not enough,
+                    // a tap beside the title still fell through to the row scrolled underneath and opened
+                    // its (i) or changed a setting (maintainer, 2026-11-07). The bar's own buttons get the
+                    // tap first, so they work as before.
+                    .pointerInput(Unit) { detectTapGestures { } }
                     .statusBarsPadding()
                     .padding(start = if (onBack != null) 4.dp else 20.dp, end = 8.dp, top = 16.dp, bottom = 10.dp),
                 verticalAlignment = Alignment.CenterVertically,

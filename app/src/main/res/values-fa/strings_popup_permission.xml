@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Keep or delete after the call: the pop-up's "Display over other apps" permission (Settings, wizard, setup). -->
+<resources>
+    <string name="popup_permission_title">اجازه به پنجرهٔ بازشو</string>
+    <string name="popup_permission_text">پنجرهٔ «نگه‌داشتن یا حذف» به اجازهٔ اندروید «نمایش روی برنامه‌های دیگر» نیاز دارد. «اجازه» را بزنید و آن را برای CallVault روشن کنید (در برخی گوشی‌ها ابتدا CallVault را در فهرست پیدا کنید). تا آن زمان یک اعلان می‌پرسد.</string>
+    <string name="popup_permission_allow">اجازه</string>
+    <string name="popup_permission_not_now">اکنون نه</string>
+    <string name="permission_overlay_label">نمایش روی برنامه‌های دیگر</string>
+    <string name="permission_overlay_description">فقط برای پنجرهٔ «نگه‌داشتن یا حذف» پس از تماس (تنظیمات ▸ ضبط ▸ نحوهٔ پرسیدن). بدون آن، CallVault با اعلان می‌پرسد. برای اجازه بزنید.</string>
+    <string name="general_optional">اختیاری</string>
+</resources>

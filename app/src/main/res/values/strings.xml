@@ -121,7 +121,7 @@
     <string name="retention_period_label">Auto-delete recordings</string>
     <string name="retention_local_label">Device recordings</string>
     <string name="retention_drive_label">Drive recordings</string>
-    <string name="retention_description">Recordings older than the selected period are permanently deleted. Checked once a day at the time below.</string>
+    <string name="retention_description">Recordings older than the selected period are permanently deleted, except starred ones. Checked once a day at the time below.</string>
     <string name="retention_time_label">Run at (your local time)</string>
     <string name="retention_confirm_title">Enable auto-delete?</string>
     <string name="retention_confirm_message">Recordings older than the selected period will be permanently deleted from your device and/or Google Drive. This can\'t be undone.</string>
@@ -169,14 +169,14 @@
     <string name="settings_shizuku_grant_description">Opens Shizuku so you can allow it. Nothing records until you do.</string>
     <string name="settings_section_audio">Audio configuration</string>
     <string name="settings_section_reliability">Reliability</string>
-    <string name="settings_voip_recording_label">Record VoIP calls</string>
+    <string name="settings_voip_recording_label">Record app calls</string>
     <string name="settings_voip_recording_description">Also record calls made in apps like WhatsApp, Signal and Telegram. Some apps block recording, and this cannot be known until a call is under way.</string>
     <string name="settings_voip_auto_start_label">Start automatically</string>
     <string name="settings_voip_auto_start_description">Off means CallVault asks first: a notification with a Record button appears when an app call starts.</string>
     <string name="voip_prompt_title">App call in progress</string>
     <string name="voip_prompt_text">Tap Record to record this call.</string>
     <string name="voip_prompt_text_named">%1$s call. Tap Record to record it.</string>
-    <string name="voip_recording_warning_title">Record VoIP calls?</string>
+    <string name="voip_recording_warning_title">Record app calls?</string>
     <string name="voip_recording_warning_message">Recording app calls is more tightly regulated than recording phone calls, and in many places every participant must agree first. Please make sure you are allowed to.\n\nIt works with some apps and not others, and an app can block recording at any time in an update.</string>
     <string name="voip_recording_warning_continue">I understand, turn it on</string>
     <string name="voip_recording_arming">Preparing VoIP recording…</string>
@@ -222,14 +222,16 @@
 
     <!-- Settings Screen: Recording Section -->
     <string name="settings_tap_to_select_folder">Tap to select folder...</string>
-    <string name="settings_recording_folder_label">Recording Folder</string>
+    <string name="settings_recording_folder_label">Recording folder</string>
     <string name="folder_cloud_rejected">Cloud folders (like Google Drive) can\'t be used for recording. Pick on-device storage — use the Google Drive backup option for cloud copies.</string>
+    <string name="folder_drive_overlaps_recordings">The Drive folder can\'t be your recordings folder. Pick a Google Drive folder.</string>
+    <string name="folder_drive_overlap_warning">This is your recordings folder (or overlaps it), so nothing is copied to Drive. Pick a Google Drive folder.</string>
     <string name="folder_cloud_warning">⚠ This recording folder is in the cloud, which is unreliable for capture. Choose an on-device folder.</string>
 
     <!-- Offline recording (loopback) opt-in + security warning -->
-    <string name="settings_offline_recording_label">Offline recording (no Wi-Fi)</string>
-    <string name="settings_offline_recording_desc">Record calls even when there is no Wi-Fi network. Needs USB debugging on.</string>
-    <string name="settings_handoff_persist_label">Resilient recording</string>
+    <string name="settings_offline_recording_label">Keep recording off Wi-Fi</string>
+    <string name="settings_offline_recording_desc">Set up over Wi-Fi once, and again after a restart; after that calls record on mobile data or with no network. Needs USB debugging on.</string>
+    <string name="settings_handoff_persist_label">Keep recording if the helper stops</string>
     <string name="settings_handoff_persist_description">Keep a recording going even if the background helper is killed mid-call (e.g. when you lock the screen).</string>
     <string name="settings_usb_default_label">USB when screen unlocks</string>
     <string name="settings_usb_default_hint">"Charging only" keeps recording alive if you lock the screen during a call. Other modes let USB transfer data but can interrupt a recording when you lock the phone.</string>
@@ -247,8 +249,15 @@
     <string name="offline_recording_warning_shizuku">Shizuku is running. Turning this on restarts Android\'s debugging service, which stops Shizuku — CallVault will start it again straight afterwards, and tell you if it cannot.</string>
     <string name="offline_recording_warning_continue">Continue anyway</string>
 
-    <string name="settings_file_name_template">File Name Template</string>
+    <string name="settings_file_name_template">File name template</string>
     <string name="settings_file_name_template_preset">Preset</string>
+    <string name="settings_file_name_custom_desc">Type your own format</string>
+    <string name="settings_file_name_custom_tap_tag">Tap a tag to add it:</string>
+    <string name="settings_file_name_error_empty">Type a file name format.</string>
+    <string name="settings_file_name_error_needs_date">Add {date}: CallVault needs the date to sort and merge calls.</string>
+    <string name="settings_file_name_error_bad_character">A file name can\'t contain / \\ : * ? \" &lt; &gt; |</string>
+    <string name="settings_file_name_error_unknown_tag">CallVault doesn\'t know the tag %1$s.</string>
+    <string name="settings_file_name_error_too_long">Keep it under %1$d characters.</string>
     <string name="settings_file_name_preset_date_direction_number">Date · Direction · Number</string>
     <string name="settings_file_name_preset_date_number">Date · Number</string>
     <string name="settings_file_name_preset_date_contact">Date · Contact</string>
@@ -274,18 +283,18 @@
     <string name="settings_subsection_phone_calls">Phone calls</string>
     <string name="settings_carrier_recording">Record phone calls</string>
     <string name="settings_carrier_recording_description">Off: phone calls are ignored completely — no recording, no notification. App calls are unaffected.</string>
-    <string name="settings_auto_record_incoming">Automatically record incoming calls</string>
-    <string name="settings_auto_record_outgoing">Automatically record outgoing calls</string>
+    <string name="settings_auto_record_incoming">Auto-record incoming phone calls</string>
+    <string name="settings_auto_record_outgoing">Auto-record outgoing phone calls</string>
     <string name="settings_record_from_answer">Start when they answer</string>
     <string name="settings_record_from_answer_description">Outgoing phone calls are recorded from the moment the other person picks up, not from the dial. App calls too, when the app shows a call timer on its notification (WhatsApp does).</string>
-    <string name="settings_ignore_anonymous_incoming">Ignore anonymous incoming calls</string>
-    <string name="settings_ignore_cross_country_incoming">Ignore cross-country incoming calls</string>
-    <string name="settings_ignore_cross_country_outgoing">Ignore cross-country outgoing calls</string>
-    <string name="settings_ignore_contacts_incoming">Which contacts to record (incoming)</string>
-    <string name="settings_ignore_contacts_outgoing">Which contacts to record (outgoing)</string>
-    <string name="settings_ignore_contacts_none">Record all contacts</string>
-    <string name="settings_ignore_contacts_all">Ignore all contacts</string>
-    <string name="settings_ignore_contacts_selected">Ignore selected contacts</string>
+    <string name="settings_ignore_anonymous_incoming">Skip hidden-number calls</string>
+    <string name="settings_ignore_cross_country_incoming">Skip incoming international calls</string>
+    <string name="settings_ignore_cross_country_outgoing">Skip outgoing international calls</string>
+    <string name="settings_ignore_contacts_incoming">Incoming phone calls: who to record</string>
+    <string name="settings_ignore_contacts_outgoing">Outgoing phone calls: who to record</string>
+    <string name="settings_ignore_contacts_none">Record everyone</string>
+    <string name="settings_ignore_contacts_all">Skip all saved contacts</string>
+    <string name="settings_ignore_contacts_selected">Skip selected contacts</string>
     <string name="settings_select_contacts">Select contacts (%1$d)</string>
     <string name="settings_select_contacts_incoming">Select incoming contacts</string>
     <string name="settings_select_contacts_outgoing">Select outgoing contacts</string>
@@ -298,9 +307,9 @@
     <string name="settings_language">Language</string>
     <string name="settings_language_system">System Default</string>
     <string name="settings_theme_mode">Theme mode</string>
-    <string name="settings_dynamic_color">Dynamic Theme Color</string>
-    <string name="settings_show_toasts">Show Toast Notifications</string>
-    <string name="settings_vibration_enabled">Vibrate on start/stop</string>
+    <string name="settings_dynamic_color">Use system colours</string>
+    <string name="settings_show_toasts">Show pop-up messages</string>
+    <string name="settings_vibration_enabled">Vibrate on actions</string>
 
     <string name="settings_theme_mode_system">System default</string>
     <string name="settings_theme_mode_light">Light</string>
@@ -350,7 +359,7 @@
     <string name="audio_source_voice_performance_description">High-speed microphone mode designed for live music and real-time audio apps.</string>
 
     <!-- Settings Screen: Debug section (always visible) -->
-    <string name="settings_debug_logging_enabled">Enable log recording</string>
+    <string name="settings_debug_logging_enabled">Enable logging</string>
     <string name="settings_debug_logging_enabled_description">To report a bug, enable this, reproduce the issue, then turn it off and share the logs.</string>
     <string name="settings_bugreport_active_warning">Debug logging is ON. Remember to turn it off when you\'re done to save space.</string>
     <string name="settings_bugreport_share_hint">Logs from your last debug session are ready to share.</string>
@@ -600,7 +609,7 @@
     <string name="transcription_mode_label">Transcribe</string>
     <string name="transcription_mode_manual">Manually</string>
     <string name="transcription_mode_after_each_call">After each call</string>
-    <string name="transcription_mode_automatic">Automatically</string>
+    <string name="transcription_mode_automatic">Scheduled</string>
     <string name="transcription_hour_label">Hour</string>
     <string name="transcription_minute_label">Minute</string>
     <string name="transcription_time_label">Run at</string>
@@ -759,6 +768,7 @@
     <string name="transcription_language_greek">Greek</string>
     <string name="transcription_language_persian">Persian</string>
     <string name="transcription_language_urdu">Urdu</string>
+    <string name="transcription_language_bengali">Bengali</string>
     <string name="transcription_language_ukrainian">Ukrainian</string>
     <string name="transcription_language_auto">Detect automatically</string>
     <string name="language_search_placeholder">Search languages</string>
@@ -814,7 +824,7 @@
     <string name="transcription_cloud_custom_url_hint">https://… (the part before /audio/transcriptions)</string>
     <string name="transcription_cloud_custom_url_invalid">Use an http(s):// address.</string>
     <string name="transcription_cloud_custom_model">Model</string>
-    <string name="transcription_cloud_mobile_data">Also use mobile data</string>
+    <string name="transcription_cloud_mobile_data">Allow mobile data usage</string>
     <string name="transcription_cloud_mobile_data_desc">When off, calls wait for Wi-Fi before they are sent.</string>
     <string name="transcription_cloud_privacy_note">Call audio is sent to %1$s to be written out. The words come back to this phone; %1$s\'s privacy terms apply. Wi-Fi only unless you allow mobile data.</string>
     <string name="transcription_cloud_consent_title">Send call audio to %1$s?</string>
@@ -914,13 +924,24 @@
     <string name="notif_health_recorder_text_shizuku">Calls will not be recorded until Shizuku is running again. A reboot stops it, so it has to be started once after the phone restarts.</string>
     <string name="settings_offline_recording_reboot_note">After a restart this stops working until the phone joins a Wi-Fi network once. Any network will do and it does not need internet — a few seconds is enough. CallVault will tell you when that is needed.</string>
     <string name="general_stop">Stop</string>
+    <string name="settings_search_hint">Search settings</string>
+    <string name="settings_search_no_matches">No matches</string>
+    <string name="settings_search_none">No setting matches “%1$s”</string>
+    <plurals name="settings_search_matches">
+        <item quantity="one">%d match</item>
+        <item quantity="other">%d matches</item>
+    </plurals>
+    <string name="summary_requirements_toggle_label">Show requirements</string>
+    <string name="settings_sim_label_label">Show which SIM each call used</string>
+    <string name="settings_sim_label_desc">For phones with two SIMs: shows the name you gave the SIM, or SIM 1 / SIM 2</string>
+    <string name="sim_label_word">SIM</string>
     <string name="settings_metadata_file_label">Write a details file</string>
     <string name="settings_metadata_file_desc">Save a small .json beside each recording</string>
     <string name="settings_metadata_file_hint">Uses the same format as BCR, so apps built for it — such as bcr-gui — can read your recordings\' details. Only worth turning on if you use one.</string>
     <string name="settings_transcript_sidecar_label">Save transcript and notes beside the recording</string>
     <string name="settings_transcript_sidecar_desc">Write a .md text file next to each recording</string>
     <string name="settings_transcript_sidecar_hint">Saves the transcript, notes and summary as a text file with the same name as the recording, so copying your folder to a PC keeps the text with the audio. Turning it on also saves the ones you already have.</string>
-    <string name="settings_hide_recordings_label">Hide Recordings</string>
+    <string name="settings_hide_recordings_label">Hide recordings</string>
     <string name="settings_hide_recordings_desc">Keep your recordings out of music players, galleries and other media apps</string>
     <string name="settings_hide_recordings_hint">Adds a hidden .nomedia file to your recordings folder, which most apps respect. Your recordings keep their names and still sync. File managers still show them — to hide them there too, give the folder a name that starts with a dot.</string>
     <string name="settings_backup_title">Back up settings</string>
@@ -941,8 +962,8 @@
     <string name="voip_recording_text">Mark a moment to find it later, or stop recording.</string>
     <string name="playback_marked_moments">Marked moments</string>
     <string name="settings_voip_apps_label">Choose which apps to record</string>
-    <string name="settings_voip_ignore_contacts_label">Also skip ignored contacts</string>
-    <string name="settings_voip_ignore_contacts_desc">Apply your ignored-contacts list to app calls too</string>
+    <string name="settings_voip_ignore_contacts_label">Skip ignored contacts on app calls</string>
+    <string name="settings_voip_ignore_contacts_desc">App calls with someone you skip above (incoming or outgoing) are not recorded automatically. \"Record only selected contacts\" does not apply to app calls.</string>
     <string name="settings_voip_ignore_contacts_hint">Matched by the name or number the app shows for the call, exactly — a name that only partly matches is still recorded. Telegram may show its own name for someone rather than your contact name, so it can miss there. Pressing Record yourself still records.</string>
     <string name="settings_voip_apps_loading">Looking for apps…</string>
     <string name="settings_voip_apps_all">Every app is recorded</string>
@@ -971,6 +992,13 @@
     <string name="settings_wd_enforce_description">If you switch Wireless debugging off while nothing else lets CallVault in, it turns it back on so calls keep recording. When this is off, your switch stays off and the notification says recording is paused.</string>
     <string name="settings_wd_auto_approve_label">Approve new Wi-Fi networks automatically</string>
     <string name="settings_wd_auto_approve_description">When the phone joins a Wi-Fi network, CallVault answers Android\'s \"Allow wireless debugging on this network?\" itself, so recording does not wait for your tap. Works while the recorder is running. Only devices already paired with this phone can connect.</string>
+    <string name="settings_wd_mode_label">Wireless debugging</string>
+    <string name="settings_wd_mode_when_needed">Only when needed</string>
+    <string name="settings_wd_mode_keep_on">Keep on</string>
+    <string name="settings_wd_mode_keep_on_always">Keep on, even if I switch it off</string>
+    <string name="settings_wd_mode_when_needed_desc">CallVault turns it on for recording and off again when it is not needed. If you switch it off, it stays off.</string>
+    <string name="settings_wd_mode_keep_on_desc">CallVault never switches it off, so the debugging port stays open on your Wi-Fi. If you switch it off, it stays off.</string>
+    <string name="settings_wd_mode_keep_on_always_desc">CallVault never switches it off and turns it back on if you switch it off, so calls keep recording. The debugging port stays open on your Wi-Fi.</string>
     <string name="settings_wd_never_off_label">Never turn Wireless debugging off</string>
     <string name="settings_wd_never_off_description">CallVault won\'t switch Wireless debugging off, so the debugging port stays open on your Wi-Fi network. CallVault may still switch it on when the recorder needs it. Built-in mode only.</string>
     <string name="settings_wd_left_on_by_setting">Wireless debugging is on. CallVault is leaving it on because of this setting.</string>
@@ -1020,7 +1048,7 @@
     <string name="home_status_pairing_lost_suggestion">Android forgot CallVault\'s Wireless debugging pairing, so the recorder can\'t restart. Tap here to pair again — your recordings and settings stay as they are.</string>
     <string name="settings_pair_again_label">Pair again</string>
     <string name="settings_pair_again_value">Pair CallVault with Wireless debugging</string>
-    <string name="settings_pair_again_hint">Use this if Android forgot CallVault\'s pairing. Your recordings and settings stay as they are. Turning on Offline recording keeps the pairing from expiring.</string>
+    <string name="settings_pair_again_hint">Use this if Android forgot CallVault\'s pairing. Your recordings and settings stay as they are. Turning on \"Keep recording off Wi-Fi\" keeps the pairing from expiring.</string>
     <string name="notif_readiness_pairing_lost_text">Android forgot CallVault\'s pairing, so calls can\'t be recorded. Open CallVault and tap the status card to pair again.</string>
     <string name="notif_cut_off_saved_title">A call was cut off</string>
     <string name="notif_cut_off_saved_text">Your phone closed CallVault during a call. What was recorded before that was saved as %1$s.</string>
@@ -1075,4 +1103,14 @@
     <string name="settings_subheader_all_calls">All calls</string>
     <string name="settings_voip_auto_start_record_label">Record app calls automatically</string>
 
+    <!-- Transcribe again (#72) -->
+    <string name="transcribe_again_title">Transcribe again?</string>
+    <string name="transcribe_again_message_one">%1$s will be transcribed again. If the new run fails or is stopped, the current transcript is kept.</string>
+    <string name="transcribe_again_message_many">Transcripts to redo: %1$d. If a run fails or is stopped, that transcript is kept as it is.</string>
+    <string name="transcribe_again_run_on">Run on</string>
+    <string name="transcribe_again_estimate">About %1$s.</string>
+    <string name="transcribe_again_delete_summary">Also delete the summary. It was written from the old text.</string>
+    <string name="transcribe_again_running">Transcribing again… %1$d%%</string>
+    <string name="transcribe_again_running_plain">Transcribing again…</string>
+    <string name="transcribe_again_waiting">Waiting to transcribe again…</string>
 </resources>

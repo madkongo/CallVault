@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Keep or delete after the call: Settings rows and the wizard switch. -->
+<resources>
+    <string name="settings_after_call_mode_label">Wenn ein Anruf endet</string>
+    <string name="settings_after_call_mode_keep">Aufnahme behalten</string>
+    <string name="settings_after_call_mode_ask">Fragen: behalten oder löschen</string>
+    <string name="settings_after_call_mode_keep_desc">Jede Aufnahme wird behalten, wie bisher.</string>
+    <string name="settings_after_call_mode_ask_desc">Nach jedem aufgenommenen Anruf fragt eine Benachrichtigung, ob du sie behalten willst. Bis du antwortest, wird sie weder in Drive kopiert noch automatisch transkribiert.</string>
+    <string name="settings_after_call_needs_notifications">Zum Fragen braucht CallVault Benachrichtigungen. Erlaube sie, dann wird Fragen eingeschaltet.</string>
+    <string name="settings_after_call_style_label">Wie fragen</string>
+    <string name="settings_after_call_style_notification">Benachrichtigung</string>
+    <string name="settings_after_call_style_popup">Pop-up über dem Bildschirm</string>
+    <string name="settings_after_call_style_notification_desc">Eine Benachrichtigung mit Behalten und Löschen.</string>
+    <string name="settings_after_call_style_popup_desc">Ein kleines Fenster über dem, was gerade angezeigt wird. Kann es nicht erscheinen (Telefon gesperrt) oder schließen Sie es ohne Antwort, fragt stattdessen eine Benachrichtigung. Braucht die Berechtigung, über anderen Apps einzublenden.</string>
+    <string name="settings_after_call_needs_overlay">Das Pop-up braucht die Berechtigung, über anderen Apps einzublenden. Bis sie erteilt ist, fragt die Benachrichtigung.</string>
+    <string name="settings_after_call_unanswered_label">Wenn ich nicht antworte</string>
+    <string name="settings_after_call_unanswered_keep">Behalten</string>
+    <string name="settings_after_call_unanswered_delete">Nach 24 Stunden löschen</string>
+    <string name="settings_after_call_unanswered_keep_desc">Nach 24 Stunden wird die Aufnahme behalten, kopiert und wie gewohnt transkribiert.</string>
+    <string name="settings_after_call_unanswered_delete_desc">24 Stunden nach dem Anruf wird die Aufnahme gelöscht.</string>
+    <string name="settings_after_call_unanswered_engaged">Eine Aufnahme, die du mit Stern, Markierung, Tag oder Notiz versehen oder transkribiert hast, wird immer behalten.</string>
+    <string name="wizard_after_call_ask_label">Fragen, ob ich jede Aufnahme behalten will</string>
+    <string name="wizard_after_call_ask_desc">Wenn ein Anruf endet, behältst oder löschst du die Aufnahme mit einem Tippen. Aus: Jede Aufnahme wird behalten.</string>
+</resources>

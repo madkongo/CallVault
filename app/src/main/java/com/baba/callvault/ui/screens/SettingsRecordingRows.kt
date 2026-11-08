@@ -25,6 +25,7 @@ import com.baba.callvault.data.AppPreferences
 import com.baba.callvault.ui.common.FileNameFormatDialog
 import com.baba.callvault.ui.viewmodels.SettingsActions
 import com.baba.callvault.utils.fileNameTemplateExample
+import com.baba.callvault.utils.CustomFileNameTemplate
 import com.baba.callvault.utils.presetForTemplateOrFirst
 
 // The Recording section's rows, one composable each, so the classic Recording section and the new screen's
@@ -168,7 +169,8 @@ internal fun FileNameTemplateRow(preferences: AppPreferences, updateTrigger: Int
     NavigationRow(
         icon = Icons.Filled.DriveFileRenameOutline,
         label = stringResource(R.string.settings_file_name_template),
-        value = stringResource(presetForTemplateOrFirst(fileNameFormat).labelRes),
+        value = if (CustomFileNameTemplate.isPreset(fileNameFormat)) stringResource(presetForTemplateOrFirst(fileNameFormat).labelRes)
+            else stringResource(R.string.settings_file_name_preset_custom),
         supporting = stringResource(
             R.string.settings_file_name_template_example,
             fileNameTemplateExample(fileNameFormat)
@@ -187,4 +189,18 @@ internal fun FileNameTemplateRow(preferences: AppPreferences, updateTrigger: Int
             onDismiss = { showFileNameFormatDialog = false }
         )
     }
+}
+
+/**
+ * Opt-in: each phone call shows which SIM it used — the SIM's own name, else "SIM 1" / "SIM 2".
+ * Read from the call log when the list is drawn, so it also labels calls recorded before it was turned on.
+ */
+@Composable
+internal fun SimLabelRow(preferences: AppPreferences, updateTrigger: Int, actions: SettingsActions) {
+    SettingsToggleRow(
+        label = stringResource(R.string.settings_sim_label_label),
+        description = stringResource(R.string.settings_sim_label_desc),
+        checked = remember(updateTrigger) { preferences.isShowSimLabelEnabled() },
+        onCheckedChange = { actions.setShowSimLabelEnabled(it) },
+    )
 }

@@ -8,7 +8,9 @@
 
 package com.baba.callvault.ui.screens
 
+import com.baba.callvault.ui.common.rememberResumeCount
 import android.provider.Settings
+import com.baba.callvault.integrations.adb.WirelessDebuggingMode
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.expandVertically
 import androidx.compose.animation.shrinkVertically
@@ -160,32 +162,53 @@ internal fun WifiNetworkAutoApproveToggle() {
 }
 
 /**
- * "Never turn Wireless debugging off" (#30 follow-up, asked by mirror176). Off by default: CallVault then turns
- * it off only if it turned it on. On: it never turns it off, though it may still turn it on for the recorder.
- * Built-in mode only. The check is in [com.baba.callvault.integrations.adb.AdbShell.releaseWirelessDebugging].
+ * "Wireless debugging": one choice instead of the two switches "Keep Wireless debugging on for recording" and
+ * "Never turn Wireless debugging off", whose names said nearly the same thing (maintainer, 2026-11-03). Stored in
+ * the same two keys; see [WirelessDebuggingMode]. Built-in mode only. The checks are in
+ * [com.baba.callvault.integrations.adb.AdbShell] (`releaseWirelessDebugging`, the enforce path).
  *
- * Under it, a live line says when CallVault is leaving Wireless debugging on (this setting, or the user's own
- * switch), which before was only a log line.
+ * Under it, the selected choice is explained, and a live line says when CallVault is leaving Wireless debugging on.
  */
 @Composable
-internal fun WirelessDebuggingNeverOffToggle() {
+internal fun WirelessDebuggingModeRow() {
     val context = LocalContext.current
     val prefs = remember { AppPreferences(context) }
-    var on by remember { mutableStateOf(prefs.isWirelessDebuggingNeverTurnOff()) }
+    var mode by remember {
+        mutableStateOf(WirelessDebuggingMode.of(prefs.isWirelessDebuggingEnforced(), prefs.isWirelessDebuggingNeverTurnOff()))
+    }
     val supported = capabilityAvailable(ModeCapability.WIRELESS_DEBUGGING_CONTROL)
-    SettingsToggleRow(
-        icon = Icons.Filled.Wifi,
-        label = stringResource(R.string.settings_wd_never_off_label),
-        description = unavailableReason(ModeCapability.WIRELESS_DEBUGGING_CONTROL)
-            ?: stringResource(R.string.settings_wd_never_off_description),
-        checked = on && supported,
-        enabled = supported,
-        onCheckedChange = { turnOn ->
-            prefs.setWirelessDebuggingNeverTurnOff(turnOn)
-            on = turnOn
-        },
-    )
-    if (supported) WirelessDebuggingLeftOnHint(settingOn = on)
+    val options = WirelessDebuggingMode.entries.map { m ->
+        OptionItem(m.name, stringResource(
+            when (m) {
+                WirelessDebuggingMode.WHEN_NEEDED -> R.string.settings_wd_mode_when_needed
+                WirelessDebuggingMode.KEEP_ON -> R.string.settings_wd_mode_keep_on
+                WirelessDebuggingMode.KEEP_ON_ALWAYS -> R.string.settings_wd_mode_keep_on_always
+            }
+        ))
+    }
+    // Each choice explained behind the ⓘ beside the dropdown, as for the other dropdowns.
+    val explanation = unavailableReason(ModeCapability.WIRELESS_DEBUGGING_CONTROL) ?: listOf(
+        R.string.settings_wd_mode_when_needed to R.string.settings_wd_mode_when_needed_desc,
+        R.string.settings_wd_mode_keep_on to R.string.settings_wd_mode_keep_on_desc,
+        R.string.settings_wd_mode_keep_on_always to R.string.settings_wd_mode_keep_on_always_desc,
+    ).map { (name, desc) -> stringResource(name) + ": " + stringResource(desc) }.joinToString("\n\n")
+    DropdownRow {
+        WithInfo(stringResource(R.string.settings_wd_mode_label), explanation) {
+            M3DropdownField(
+                label = stringResource(R.string.settings_wd_mode_label),
+                selected = options.first { it.key == mode.name },
+                options = options,
+                enabled = supported,
+                onOptionSelected = { picked ->
+                    val m = WirelessDebuggingMode.valueOf(picked.key)
+                    prefs.setWirelessDebuggingEnforced(m.enforced)
+                    prefs.setWirelessDebuggingNeverTurnOff(m.neverTurnOff)
+                    mode = m
+                },
+            )
+        }
+    }
+    if (supported) WirelessDebuggingLeftOnHint(settingOn = mode.neverTurnOff)
 }
 
 /** One line under the row while Wireless debugging is on and CallVault is choosing to leave it on. */
@@ -372,7 +395,9 @@ internal fun UsbDefaultConfigRow() {
     // Refresh the live value once when shown (readViaShell connects+retries internally); falls back to
     // the shown cached value on failure. Not even attempted when unsupported: readViaShell now refuses
     // it anyway, but a probe nobody can act on has no business spending a coroutine either.
-    LaunchedEffect(supported) {
+    // And again on coming back, since the setting is changed in Developer options, outside the app.
+    val resumes = rememberResumeCount()
+    LaunchedEffect(supported, resumes) {
         if (!supported) return@LaunchedEffect
         withContext(Dispatchers.IO) { UsbDefaultConfig.readViaShell(context) }?.let { mode = it }
     }

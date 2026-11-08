@@ -71,4 +71,14 @@ object RetentionPolicy {
      * an import was never a call.
      */
     fun agesOut(displayName: String): Boolean = !ImportedRecording.isImported(displayName)
+
+    /**
+     * Whether the age rule may delete [displayName] at all: not an import, and not starred.
+     *
+     * Starred recordings were spared by the size cap but not by age, while the cap's own caption says starred
+     * recordings are never deleted — so a user reading the two settings side by side was misled. Found by the
+     * settings-name audit; the maintainer chose "never auto-delete starred" (2026-11-03).
+     */
+    fun mayAgeOut(displayName: String, starred: Set<String>): Boolean =
+        agesOut(displayName) && displayName !in starred
 }

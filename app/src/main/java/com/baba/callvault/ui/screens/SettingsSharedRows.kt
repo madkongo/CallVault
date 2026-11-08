@@ -96,7 +96,7 @@ internal fun SummarySettingsRows(preferences: AppPreferences, updateTrigger: Int
         }
         SettingsToggleRow(
             icon = Icons.Filled.Info,
-            label = stringResource(R.string.summary_requirements_heading),
+            label = stringResource(R.string.summary_requirements_toggle_label),
             description = stringResource(R.string.summary_requirements_toggle_description),
             checked = askFirst,
             onCheckedChange = {

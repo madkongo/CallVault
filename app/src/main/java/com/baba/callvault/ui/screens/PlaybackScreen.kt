@@ -8,6 +8,10 @@
 
 package com.baba.callvault.ui.screens
 
+import androidx.compose.material3.DropdownMenuItem
+import androidx.compose.material3.DropdownMenu
+import androidx.compose.material.icons.filled.ContentCut
+import androidx.compose.material.icons.filled.Share
 import com.baba.callvault.ui.common.CallOriginBadge
 import android.text.format.DateUtils
 import androidx.compose.foundation.background
@@ -164,6 +168,10 @@ fun PlaybackScreen(
     onOpenTranscript: () -> Unit,
     onTranscribe: () -> Unit,
     onDelete: () -> Unit,
+    /** Shares the whole recording. */
+    onShare: () -> Unit = {},
+    /** Opens "Share a part" from where the user is listening. */
+    onSharePart: () -> Unit = {},
     modifier: Modifier = Modifier
 ) {
     val isActive = playback.activeUri == item.uri
@@ -196,7 +204,9 @@ fun PlaybackScreen(
                 onTranscribe = onTranscribe,
                 isFavourite = isFavourite,
                 onToggleFavourite = onToggleFavourite,
-                onDelete = onDelete
+                onDelete = onDelete,
+                onShare = onShare,
+                onSharePart = onSharePart,
             )
             PlayerCard(
                 peaks = peaks,
@@ -335,7 +345,9 @@ private fun CallHeaderCard(
     onTranscribe: () -> Unit,
     isFavourite: Boolean,
     onToggleFavourite: () -> Unit,
-    onDelete: () -> Unit
+    onDelete: () -> Unit,
+    onShare: () -> Unit,
+    onSharePart: () -> Unit,
 ) {
     val accent = MaterialTheme.colorScheme.primary
     val label = RecordingLabel.of(item) ?: item.displayName
@@ -409,7 +421,8 @@ private fun CallHeaderCard(
                         DirectionChip(it)
                         Spacer(Modifier.width(8.dp))
                     }
-                    playbackDate(item)?.let { date ->
+                    // The opt-in SIM label rides on the date line too: "3 Nov 2026 11:02 · Work".
+                    playbackDate(item)?.let { date -> listOfNotNull(date, item.simLabel).joinToString(" · ") }?.let { date ->
                         Text(
                             text = date,
                             style = MaterialTheme.typography.labelSmall,
@@ -456,6 +469,32 @@ private fun CallHeaderCard(
             // meant not being able to reach it at all. Error-tinted and icon-only: it is one glyph
             // among a name and a chip, and the word "Delete" beside them would read as a label for
             // the call rather than as an action.
+            // Share: the whole recording, or a part of it. The first Share on this screen — before, sharing
+            // was only on the list row's menu.
+            Box {
+                var shareMenu by remember { mutableStateOf(false) }
+                IconButton(onClick = { shareMenu = true }, modifier = Modifier.size(ACTION_TARGET)) {
+                    Icon(
+                        imageVector = Icons.Filled.Share,
+                        contentDescription = stringResource(R.string.playback_share),
+                        tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                        modifier = Modifier.size(22.dp)
+                    )
+                }
+                DropdownMenu(expanded = shareMenu, onDismissRequest = { shareMenu = false }) {
+                    DropdownMenuItem(
+                        text = { Text(stringResource(R.string.share_clip_share_whole)) },
+                        leadingIcon = { Icon(Icons.Filled.Share, contentDescription = null) },
+                        onClick = { shareMenu = false; onShare() },
+                    )
+                    DropdownMenuItem(
+                        text = { Text(stringResource(R.string.share_clip_menu)) },
+                        leadingIcon = { Icon(Icons.Filled.ContentCut, contentDescription = null) },
+                        onClick = { shareMenu = false; onSharePart() },
+                    )
+                }
+            }
+
             IconButton(onClick = onDelete, modifier = Modifier.size(ACTION_TARGET)) {
                 Icon(
                     imageVector = Icons.Filled.Delete,

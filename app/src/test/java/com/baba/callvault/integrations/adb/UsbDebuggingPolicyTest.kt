@@ -29,7 +29,36 @@ class UsbDebuggingPolicyTest {
         settingSaysOn: Boolean = false,
         adbd: AdbdState = AdbdState.UNKNOWN,
         wirelessDebuggingOn: Boolean = false,
-    ) = UsbDebuggingPolicy.of(settingSaysOn, adbd, wirelessDebuggingOn)
+        shellSaysOn: Boolean? = null,
+    ) = UsbDebuggingPolicy.of(settingSaysOn, adbd, wirelessDebuggingOn, shellSaysOn)
+
+    // ---- The recorder's (shell uid) read is never redacted, so a fresh one decides ----
+
+    @Test
+    fun `Honor 2026-11-04 - off with Wireless debugging holding adbd up is proven off by the shell read`() {
+        // Without the shell read this was UNKNOWN, and the notice never offered to switch it back on.
+        assertEquals(UsbDebuggingState.UNKNOWN, of(adbd = AdbdState.RUNNING, wirelessDebuggingOn = true))
+        assertEquals(
+            UsbDebuggingState.OFF,
+            of(adbd = AdbdState.RUNNING, wirelessDebuggingOn = true, shellSaysOn = false),
+        )
+    }
+
+    @Test
+    fun `a shell read of on beats a redacted zero`() =
+        assertEquals(UsbDebuggingState.ON, of(adbd = AdbdState.RUNNING, wirelessDebuggingOn = true, shellSaysOn = true))
+
+    @Test
+    fun `the app's own on still wins over a stale shell off`() =
+        assertEquals(UsbDebuggingState.ON, of(settingSaysOn = true, shellSaysOn = false))
+
+    @Test
+    fun `shell read parsing`() {
+        assertEquals(true, UsbDebuggingShellRead.parse("1"))
+        assertEquals(false, UsbDebuggingShellRead.parse("0"))
+        assertEquals(null, UsbDebuggingShellRead.parse("null"))
+        assertEquals(null, UsbDebuggingShellRead.parse(null))
+    }
 
     // ---- A setting that says ON is always believed: the redaction only ever fakes a zero ----
 

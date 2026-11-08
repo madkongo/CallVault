@@ -47,9 +47,11 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.baba.callvault.R
+import com.baba.callvault.data.AppPreferences
 import com.baba.callvault.data.StorageTarget
 import com.baba.callvault.integrations.adb.UsbDefaultConfig
 import com.baba.callvault.system.PersistentFolderPickerContract
+import com.baba.callvault.system.storage.FolderOverlap
 import com.baba.callvault.system.storage.SafHelper
 import com.baba.callvault.system.takePersistableFolderPermission
 import com.baba.callvault.ui.common.CvCard
@@ -93,6 +95,8 @@ fun WizardScreen(
         if (uri != null) {
             if (SafHelper.isCloudFolder(uri)) {
                 Toast.makeText(context, context.getString(R.string.folder_cloud_rejected), Toast.LENGTH_LONG).show()
+            } else if (FolderOverlap.overlaps(uri, viewModel.preferences.getDriveFolderUri())) {
+                Toast.makeText(context, context.getString(R.string.folder_drive_overlaps_recordings), Toast.LENGTH_LONG).show()
             } else {
                 context.takePersistableFolderPermission(uri)
                 viewModel.setRecordingFolderUri(uri)
@@ -102,7 +106,10 @@ fun WizardScreen(
 
     // Drive folder picker — same contract.
     val driveFolderPicker = rememberLauncherForActivityResult(PersistentFolderPickerContract()) { uri ->
-        if (uri != null) {
+        if (uri != null && FolderOverlap.overlaps(viewModel.preferences.getRecordingFolderUri(), uri)) {
+            // Same rule as Settings: the recording folder can never be the Drive folder. See [FolderOverlap].
+            Toast.makeText(context, context.getString(R.string.folder_drive_overlaps_recordings), Toast.LENGTH_LONG).show()
+        } else if (uri != null) {
             context.takePersistableFolderPermission(uri)
             viewModel.setDriveFolderUri(uri)
         }
@@ -121,6 +128,7 @@ fun WizardScreen(
     val carrierRecording = remember(updateTrigger) { viewModel.preferences.isCarrierRecordingEnabled() }
     val autoRecordIncoming = remember(updateTrigger) { viewModel.preferences.isAutoRecordIncomingEnabled() }
     val autoRecordOutgoing = remember(updateTrigger) { viewModel.preferences.isAutoRecordOutgoingEnabled() }
+    val askAfterCall = remember(updateTrigger) { viewModel.preferences.getAfterCallMode() == AppPreferences.AfterCallMode.ASK }
     val audioCodec = remember(updateTrigger) { viewModel.preferences.getAudioCodec() }
     val audioBitRate = remember(updateTrigger) { viewModel.preferences.getAudioBitRate() }
     val fileNameTemplate = remember(updateTrigger) { viewModel.preferences.getFileNameTemplate() }
@@ -218,7 +226,9 @@ fun WizardScreen(
                         outgoing = autoRecordOutgoing,
                         onCarrierChange = viewModel::setCarrierRecording,
                         onIncomingChange = viewModel::setAutoRecordIncoming,
-                        onOutgoingChange = viewModel::setAutoRecordOutgoing
+                        onOutgoingChange = viewModel::setAutoRecordOutgoing,
+                        askAfterCall = askAfterCall,
+                        onAskAfterCallChange = viewModel::setAfterCallAsk,
                     )
                     WizardStep.RELIABILITY -> ReliabilityStep()
                     WizardStep.EXPERIMENTAL -> ExperimentalStep()

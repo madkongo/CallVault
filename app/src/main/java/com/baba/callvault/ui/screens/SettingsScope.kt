@@ -110,14 +110,14 @@ object SettingsGroups {
         SettingsGroup.CALLS_TO_RECORD -> listOf(
             "CarrierRecordingRow", "VoipRecordingSwitch", "VoipAppPicker",
             "AutoRecordIncomingRow", "AutoRecordOutgoingRow", "RecordFromAnswerRow", "VoipAutoStartRow",
-            "VibrationRow",
+            "VibrationRow", "AfterCallModeRow", "AfterCallAskStyleRow", "AfterCallUnansweredRow",
         )
         SettingsGroup.CALLS_TO_SKIP -> listOf(
             "IgnoreContactsIncomingRow", "IgnoreContactsOutgoingRow", "IgnoreAnonymousIncomingRow",
             "IgnoreCrossCountryIncomingRow", "IgnoreCrossCountryOutgoingRow", "VoipIgnoreContactsRow",
             "MinDurationRow",
         )
-        SettingsGroup.SOUND_AND_NAMES -> listOf("AudioSection", "FileNameTemplateRow")
+        SettingsGroup.SOUND_AND_NAMES -> listOf("AudioSection", "FileNameTemplateRow", "SimLabelRow")
         SettingsGroup.SAVE_AND_SYNC -> listOf(
             "StorageTargetRow", "RecordingFolderRow", "DriveFolderRow", "UploadScheduleSubSection",
             "HideRecordingsRow", "MetadataFileRow", "TranscriptSidecarRow",
@@ -144,7 +144,7 @@ object SettingsGroups {
         SettingsGroup.CALLS_TO_RECORD -> listOf(
             "carrier_recording_enabled", "voip_recording_enabled", "voip_recording", "voip_excluded_packages",
             "auto_record_incoming", "auto_record_outgoing", "record_from_answer", "voip_auto_start",
-            "vibration_enabled",
+            "vibration_enabled", "after_call_mode", "after_call_ask_style", "after_call_unanswered",
         )
         SettingsGroup.CALLS_TO_SKIP -> listOf(
             "ignore_contacts_mode_incoming", "ignore_contacts_mode_outgoing",
@@ -153,7 +153,7 @@ object SettingsGroups {
             "ignore_anonymous_incoming", "ignore_cross_country_incoming", "ignore_cross_country_outgoing",
             "voip_apply_ignored_contacts", "min_duration_seconds",
         )
-        SettingsGroup.SOUND_AND_NAMES -> listOf("audio_source", "audio_codec", "audio_bitrate", "file_name_template")
+        SettingsGroup.SOUND_AND_NAMES -> listOf("audio_source", "audio_codec", "audio_bitrate", "file_name_template", "show_sim_label")
         SettingsGroup.SAVE_AND_SYNC -> listOf(
             "storage_target", "recording_folder_uri", "drive_folder_uri",
             "sync_schedule_mode", "sync_time_hour", "sync_time_minute", "sync_day_of_week",

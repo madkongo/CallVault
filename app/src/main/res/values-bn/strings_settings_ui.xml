@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Bengali (বাংলা) translation -->
+<resources>
+    <string name="settings_ui_about_app">CallVault</string>
+    <string name="settings_ui_recording_server_label">রেকর্ডার ইঞ্জিন</string>
+    <string name="settings_ui_open_repo_hint">মূল (আপস্ট্রিম) প্রজেক্ট খুলতে ট্যাপ করুন</string>
+</resources>

@@ -371,6 +371,14 @@ object AppLogger {
                     writer.println()
                 }
 
+                // Always on as well: every time USB debugging went off, and the phone's own log around it.
+                com.baba.callvault.integrations.adb.UsbDebuggingEvents.readForReport(context)?.let { events ->
+                    writer.println("--- USB debugging switched off (always on) ---")
+                    writer.println(events.trimEnd())
+                    writer.println("===========================================")
+                    writer.println()
+                }
+
                 // Snapshot the live log under the writer's lock so the copy is consistent.
                 val appEntries = fileMutex.withLock {
                     if (source?.exists() == true) entriesOf(source.readLines()) else emptyList()
@@ -508,6 +516,15 @@ object AppLogger {
             "${p.yesNo { isIgnoreCrossCountryIncomingEnabled() }}/${p.yesNo { isIgnoreCrossCountryOutgoingEnabled() }}")
         writer.println("Storage target: ${runCatching { p.getStorageTarget().name }.getOrDefault("?")}")
 
+        writer.println("--- Phone power ---")
+        // A phone that pauses the app mid-call loses calls on the handoff path (Honor, 2026-11-05).
+        writer.println("Battery optimisation exempt: ${runCatching { com.baba.callvault.system.permissions.PermissionChecks.hasBatteryExemption(context) }.getOrDefault("?")}")
+        writer.println("Power saving on: ${runCatching { (context.getSystemService(Context.POWER_SERVICE) as android.os.PowerManager).isPowerSaveMode }.getOrDefault("?")}")
+        writer.println("Standby bucket: ${runCatching { (context.getSystemService(Context.USAGE_STATS_SERVICE) as android.app.usage.UsageStatsManager).appStandbyBucket }.getOrDefault("?")}")
+        writer.println("App paused by the phone: ${runCatching { com.baba.callvault.services.recording.AppPauseWatch.summaryForReport(context) }.getOrDefault("?")}")
+        // A force-stopped app hears no calls until it is opened again, and our own log just restarts (#71).
+        writer.println("--- App stops and starts (Android's record, newest first) ---")
+        com.baba.callvault.system.health.AppStopHistory.reportLines(context).forEach { writer.println(it) }
         writer.println("--- Recorder ---")
         writer.println("Binder connected: ${runCatching { RecorderConnection.isConnected }.getOrDefault(false)}")
         writer.println("Host uid: ${runCatching { RecorderConnection.service?.hostUid()?.toString() }.getOrNull() ?: "?"}")
@@ -515,8 +532,10 @@ object AppLogger {
         if (mode?.needsShizuku == true) {
             writer.println("--- Shizuku ---")
             writer.println("Status: ${runCatching { RecorderBackend.shizukuStatus(context).name }.getOrDefault("?")}")
-            writer.println("Capture path: scrcpy (a Shizuku-hosted process cannot start an AudioRecord)")
-            writer.println("Not available in this mode: resilient recording, VoIP, offline recording, speaker attribution")
+            // From the same table the UI uses: the hand-written list here went stale when the Shizuku host learned
+            // to record directly (2026-10-19) and kept telling triage that VoIP was impossible in this mode.
+            writer.println("Not available in this mode: " + com.baba.callvault.data.ModeCapability.entries
+                .filterNot { it.isAvailableIn(mode) }.joinToString { it.name.lowercase() })
         } else {
             writer.println("--- Standalone transport ---")
             writer.println("Wireless debugging: ${runCatching { AdbShell.isWirelessDebuggingEnabled(context) }.getOrDefault("?")}")
@@ -540,6 +559,9 @@ object AppLogger {
             // WHAT IS POSSIBLE: on a blocked phone setup cannot complete, and nothing else in a report says
             // so. See docs/dev-notes/2026-09-16-oem-adb-restrictions-and-onboarding-check.md.
             writer.println("Shell grants (OEM gate): ${runCatching { AdbShell.shellGrantState(context).name }.getOrDefault("?")} (${runCatching { AdbShell.oemGate(context).name }.getOrDefault("?")})")
+            // Honor/Huawei only: with this off, the phone switches USB debugging off whenever USB is in charge-only mode.
+            writer.println("Allow ADB in charge-only mode: ${runCatching { com.baba.callvault.integrations.adb.UsbOffSnapshot.chargingAdb(context)?.toString() ?: "absent" }.getOrDefault("?")}")
+            writer.println("USB default: ${runCatching { com.baba.callvault.integrations.adb.UsbDefaultConfig.cached(context).name }.getOrDefault("?")}")
         }
         writer.println("===========================================")
         writer.println()
@@ -645,7 +667,15 @@ object AppLogger {
      * The rules themselves live in [LogRedaction] so they can be unit tested without Android; all this
      * has to do is find the salt, which is the one part that needs a process and a preference store.
      */
-    private fun redact(msg: String): String = LogRedaction.redact(msg, pseudonymSalt())
+    private fun redact(msg: String): String = LogRedaction.redact(msg, pseudonymSalt(), namesAroundDate())
+
+    /**
+     * Whether the user's file-name template puts text on both sides of the date, which makes [LogRedaction] hide
+     * any text in front of a date. Read per line, so a changed template applies at once; false before [init] and
+     * in the daemon process, whose lines are redacted again here when the report is built.
+     */
+    private fun namesAroundDate(): Boolean =
+        prefs?.let { runCatching { LogRedaction.namesAroundDate(it.getFileNameTemplate()) }.getOrNull() } ?: false
 
     /**
      * The stored per-install salt, cached after the first successful read.

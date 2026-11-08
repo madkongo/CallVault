@@ -59,6 +59,8 @@ internal fun SettingsHint(text: String) {
 /** Small label separating groups of related rows inside one collapsible section. */
 @Composable
 internal fun SettingsSubHeader(text: String, nested: Boolean = false, modifier: Modifier = Modifier) {
+    // A search shows matching rows only; a header over rows that are hidden would read as empty.
+    if (isSettingsSearchActive()) return
     // General ▸ Experimental ▸ Resilience is three levels deep. Rendering the inner grouping at the
     // same weight as its parent makes the two read as siblings, so a nested header is quieter and
     // indented instead of introducing a second component.
@@ -228,6 +230,7 @@ internal fun SettingsSection(
 /** A thin inset divider used to separate row clusters inside a [CvCard]. */
 @Composable
 internal fun SettingsDivider() {
+    if (isSettingsSearchActive()) return
     // outlineVariant is Material's subtlest rule, and against this app's very dark surface it all but
     // disappears — reported as "barely visible in dark theme". Deriving the colour from
     // onSurfaceVariant instead keeps it theme-aware (it inverts with the scheme) while guaranteeing

@@ -1,6 +1,7 @@
 <?xml version='1.0' encoding='utf-8'?>
 <resources>
     <string name="notif_action_turn_wd_on">تشغيل تصحيح الأخطاء اللاسلكي</string>
+    <string name="notif_action_turn_usb_on">تشغيل تصحيح أخطاء USB</string>
     <string name="notif_call_monitor_channel">مراقبة المكالمات</string>
     <string name="notif_pairing_action_enter_code">إدخال رمز الاقتران</string>
     <string name="notif_pairing_action_stop">إيقاف</string>
@@ -19,7 +20,7 @@
     <string name="notif_pairing_working_title">جارٍ الاقتران…</string>
     <string name="notif_readiness_channel">حالة جاهزية مسجل المكالمات</string>
     <string name="notif_readiness_down_title">المكالمات لا تُسجَّل حاليًا</string>
-    <string name="notif_readiness_needs_wifi_restart_text">توقف المسجل ويلزم الاتصال بشبكة Wi-Fi لإعادة تشغيله. تفعيل «التسجيل بدون إنترنت» أثناء الاتصال بـ Wi-Fi يمنع هذا التوقف.</string>
+    <string name="notif_readiness_needs_wifi_restart_text">توقف المسجل ويلزم الاتصال بشبكة Wi-Fi لإعادة تشغيله. تفعيل «مواصلة التسجيل بدون Wi-Fi» أثناء الاتصال بـ Wi-Fi يمنع هذا التوقف.</string>
     <string name="notif_readiness_needs_wifi_text">تصحيح أخطاء USB غير مفعّل ولا يوجد اتصال Wi-Fi. يرجى الاتصال بـ Wi-Fi أو تفعيل تصحيح أخطاء USB.</string>
     <string name="notif_readiness_no_debugging_text">تصحيح أخطاء USB وتصحيح الأخطاء اللاسلكي كلاهما متوقف. يرجى تفعيل أحدهما في خيارات المطور.</string>
     <string name="notif_readiness_offline_paused_text">تم إيقاف التسجيل بدون Wi-Fi مؤقتًا: يتطلب تفعيل تصحيح أخطاء USB. لا تزال المكالمات عبر Wi-Fi تُسجَّل طبيعيًا.</string>
@@ -51,4 +52,5 @@
     <string name="update_notif_failure_install_text">تعذر تثبيت التحديث. انقر لتنزيله يدويًا من GitHub.</string>
     <string name="update_notif_failure_title">فشل التحديث</string>
     <string name="update_notif_failure_verify_text">فشل التحديث الذي تم تنزيله في فحص الأمان وتم حذفه. انقر للحصول عليه من GitHub.</string>
-    <string name="update_notif_installing_title">جارٍ تثبيت التحديث…</string><string name="update_notif_success_title">تم تثبيت التحديث بنجاح</string><string name="update_notif_success_text">أصبح CallVault الآن بالإصدار %1$s.</string></resources>
+    <string name="update_notif_installing_title">جارٍ تثبيت التحديث…</string><string name="update_notif_success_title">تم تثبيت التحديث بنجاح</string><string name="update_notif_success_text">أصبح CallVault الآن بالإصدار %1$s.</string>    <string name="transcript_notice_failed_kept_text">%1$s. تم الاحتفاظ بالنص السابق.</string>
+</resources>

@@ -8,6 +8,7 @@
 
 package com.baba.callvault.services.recording
 
+import com.baba.callvault.services.recording.aftercall.AfterCallDecision
 import android.content.Context
 import android.media.AudioDeviceInfo
 import android.media.AudioManager
@@ -814,84 +815,97 @@ object VoipRecordingCoordinator {
                             return@runCatching
                         }
                     }
-                    RecordingCatalog.recordLocal(context, name, safUri, size, System.currentTimeMillis())
-                    // Marks collected during the call, keyed to the final name — the same rule the
-                    // carrier path follows and for the same reason.
-                    FlagRepository.save(context, name, PendingFlags.drain())
-                    // Collect the speaker turns the capture just measured, before transcription is
-                    // queued and before the details file below — the runner reads them from the
-                    // database when it labels segments, and the details file now carries them too
-                    // (issue #50), so both must run after this or they would see no turns.
-                    //
-                    // The capture interleaves L=near, R=far and had that separation all along; it was
-                    // simply thrown away at the downmix, so app calls came out with no speaker labels
-                    // while carrier calls had them. `outgoing = false`: an app call has no reliable
-                    // direction here, and guessing wrong would teach the You/Them mapping the wrong
-                    // side, which is worse than leaving the sides neutral.
-                    runCatching {
-                        SpeakerTurnsRepository.collectAfterCall(context, name, outgoing = false)
-                    }.onFailure { AppLogger.w(TAG, "Could not collect VoIP speaker turns: ${it.message}") }
-                    // Same details file as the carrier path, derived the same way from the same
-                    // final name. `direction` comes out null here and that is correct rather than
-                    // lazy: an app call has no reliable direction, and BCR's format already has a
-                    // null for a field that cannot be determined. Written after the turns above so
-                    // the `callvault` block can carry them (issue #50).
-                    run {
-                        val parsed = RecordingsRepository.parseName(name)
-                        MetadataSidecar.writeIfEnabled(
-                            context = context,
-                            folderUri = AppPreferences(context).getRecordingFolderUri(),
-                            audioName = name,
-                            timestampUnixMs = parsed.startedAtMillis ?: System.currentTimeMillis(),
-                            packageName = null,
-                            direction = null,
-                            phoneNumber = parsed.number,
-                            contactName = parsed.contactName,
-                            durationSecsEncoded = null,
-                            // The app call's own stereo puts the near party on the left (channel A) by
-                            // construction, so unlike a carrier call this never has to be learned.
-                            nearChannel = "A"
-                        )
-                    }
-                    // Same order as the carrier path: catalog first, then queue.
-                    TranscriptionScheduler.transcribeAfterCallIfEnabled(context, name)
-                    // Draw it now rather than when the user opens it: this phone has just come
-                    // off a call, and they have not asked to wait for anything yet.
-                    WaveformDrawWorker.enqueue(context, name, safUri)
-                    // SafHelper.fileSize() returns -1 specifically for "unknown" (a provider that can't
-                    // report a length right now), never for "empty" — that's 0. CallOutcomes.of() cannot
-                    // tell the two apart and would judge a negative size as EMPTY_FILE, so an unknowable
-                    // size must never reach it: recording nothing is the safe direction, not guessing.
-                    if (size < 0L) {
-                        AppLogger.i(TAG, "VoIP file size unknown for '$name' (SAF reported $size); skipping the setup-health write")
-                    } else {
+                    // Keep or delete after the call: decided once, here, before the catalog row, so no
+                    // sweep can copy or transcribe it in between. A hold that cannot be stored falls back
+                    // to keeping, as on the carrier path.
+                    val isHeld = AfterCallDecision.tryHold(context, name, safUri, codecMime, isVoip = true)
+                    try {
+                        RecordingCatalog.recordLocal(context, name, safUri, size, System.currentTimeMillis())
+                        // Marks collected during the call, keyed to the final name — the same rule the
+                        // carrier path follows and for the same reason.
+                        FlagRepository.save(context, name, PendingFlags.drain())
+                        // Collect the speaker turns the capture just measured, before transcription is
+                        // queued and before the details file below — the runner reads them from the
+                        // database when it labels segments, and the details file now carries them too
+                        // (issue #50), so both must run after this or they would see no turns.
+                        //
+                        // The capture interleaves L=near, R=far and had that separation all along; it was
+                        // simply thrown away at the downmix, so app calls came out with no speaker labels
+                        // while carrier calls had them. `outgoing = false`: an app call has no reliable
+                        // direction here, and guessing wrong would teach the You/Them mapping the wrong
+                        // side, which is worse than leaving the sides neutral.
                         runCatching {
-                            val outcome = CallOutcomes.of(size, daemonDied = false, farPartyHeard = farHeard)
-                            SetupHealthStore(context).record(
-                                outcome, System.currentTimeMillis(), name, SetupFingerprint.of(AppPreferences(context))
+                            SpeakerTurnsRepository.collectAfterCall(context, name, outgoing = false)
+                        }.onFailure { AppLogger.w(TAG, "Could not collect VoIP speaker turns: ${it.message}") }
+                        // Same details file as the carrier path, derived the same way from the same
+                        // final name. `direction` comes out null here and that is correct rather than
+                        // lazy: an app call has no reliable direction, and BCR's format already has a
+                        // null for a field that cannot be determined. Written after the turns above so
+                        // the `callvault` block can carry them (issue #50).
+                        run {
+                            val parsed = RecordingsRepository.parseName(name)
+                            MetadataSidecar.writeIfEnabled(
+                                context = context,
+                                folderUri = AppPreferences(context).getRecordingFolderUri(),
+                                audioName = name,
+                                timestampUnixMs = parsed.startedAtMillis ?: System.currentTimeMillis(),
+                                packageName = null,
+                                direction = null,
+                                phoneNumber = parsed.number,
+                                contactName = parsed.contactName,
+                                durationSecsEncoded = null,
+                                // The app call's own stereo puts the near party on the left (channel A) by
+                                // construction, so unlike a carrier call this never has to be learned.
+                                nearChannel = "A"
                             )
-                            // Tell the user the app call was recorded, the same way a carrier call
-                            // does. Until now this path said nothing at all: the toast and vibration
-                            // hang off RecordingServiceState, which only RecordingForegroundService
-                            // drives, and this path deliberately does not go through it. A silent
-                            // success is indistinguishable from a silent failure, and the only way to
-                            // tell them apart was to go looking for the file days later.
-                            //
-                            // Only on Verified. Confirming a recording that is empty or one-sided
-                            // would be worse than saying nothing — those already raise their own
-                            // error notification, and two contradictory signals is not a fix.
-                            if (outcome is CallOutcome.Verified) {
-                                RecordingNotificationHelper(context).showRecordingEnded()
-                            }
-                        }.onFailure { AppLogger.w(TAG, "Could not record setup health for '$name': ${it.message}") }
+                        }
+                        // Same order as the carrier path: catalog first, then queue. Not while a keep-or-delete
+                        // answer is pending: AfterCallDecision.keep queues it then.
+                        if (!isHeld) TranscriptionScheduler.transcribeAfterCallIfEnabled(context, name)
+                        // Draw it now rather than when the user opens it: this phone has just come
+                        // off a call, and they have not asked to wait for anything yet.
+                        WaveformDrawWorker.enqueue(context, name, safUri)
+                        // SafHelper.fileSize() returns -1 specifically for "unknown" (a provider that can't
+                        // report a length right now), never for "empty" — that's 0. CallOutcomes.of() cannot
+                        // tell the two apart and would judge a negative size as EMPTY_FILE, so an unknowable
+                        // size must never reach it: recording nothing is the safe direction, not guessing.
+                        if (size < 0L) {
+                            AppLogger.i(TAG, "VoIP file size unknown for '$name' (SAF reported $size); skipping the setup-health write")
+                        } else {
+                            runCatching {
+                                val outcome = CallOutcomes.of(size, daemonDied = false, farPartyHeard = farHeard)
+                                SetupHealthStore(context).record(
+                                    outcome, System.currentTimeMillis(), name, SetupFingerprint.of(AppPreferences(context))
+                                )
+                                // Tell the user the app call was recorded, the same way a carrier call
+                                // does. Until now this path said nothing at all: the toast and vibration
+                                // hang off RecordingServiceState, which only RecordingForegroundService
+                                // drives, and this path deliberately does not go through it. A silent
+                                // success is indistinguishable from a silent failure, and the only way to
+                                // tell them apart was to go looking for the file days later.
+                                //
+                                // Only on Verified. Confirming a recording that is empty or one-sided
+                                // would be worse than saying nothing — those already raise their own
+                                // error notification, and two contradictory signals is not a fix.
+                                if (outcome is CallOutcome.Verified) {
+                                    RecordingNotificationHelper(context).showRecordingEnded()
+                                }
+                            }.onFailure { AppLogger.w(TAG, "Could not record setup health for '$name': ${it.message}") }
+                        }
+                        AppLogger.i(TAG, "VoIP recording catalogued: $name ($size bytes)")
+                        // The Drive copy and the details-file copy wait for the answer too; Keep runs them.
+                        if (isHeld) return@runCatching
+                        StorageRouter.route(context, safUri, name, codecMime)
+                        // Route the .json details to Drive too (issue #49). The sidecar was written
+                        // earlier in this block, so it exists by now. IMMEDIATE only; the sweep handles
+                        // DAILY/WEEKLY; no-op if the user did not ask for a details file. The .md transcript
+                        // is routed later, from the transcription-complete hook, since it does not exist yet.
+                        StorageRouter.routeSidecar(context, name, MetadataSidecar.sidecarNameFor(name), "application/json")
+                    } finally {
+                            // Asked last, once the catalog row exists, and in a finally so a step above that
+                            // throws can never leave a held recording with no question.
+                            if (isHeld) AfterCallDecision.ask(context, name)
                     }
-                    AppLogger.i(TAG, "VoIP recording catalogued: $name ($size bytes)")
-                    StorageRouter.route(context, safUri, name, codecMime)
-                    // Route the .json details to Drive too (issue #49). The sidecar was written
-                    // earlier in this block, so it exists by now. IMMEDIATE only; the sweep handles
-                    // DAILY/WEEKLY; no-op if the user did not ask for a details file. The .md transcript
-                    // is routed later, from the transcription-complete hook, since it does not exist yet.
-                    StorageRouter.routeSidecar(context, name, MetadataSidecar.sidecarNameFor(name), "application/json")
                 }.onFailure { AppLogger.e(TAG, "Cataloguing the VoIP recording failed: ${it.message}", it) }
             }
         }

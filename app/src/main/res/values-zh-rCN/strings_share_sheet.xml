@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- The one Share sheet (recording, transcript, summary). -->
+<resources>
+    <string name="share_sheet_title_one">分享“%1$s”</string>
+    <string name="share_sheet_title_many">分享所选内容（%1$d）</string>
+    <string name="share_sheet_button">分享</string>
+    <string name="share_part_recording">录音</string>
+    <string name="share_part_transcript">转写文本</string>
+    <string name="share_part_summary">摘要</string>
+    <string name="share_part_recording_hint">音频文件</string>
+    <string name="share_part_text_message_hint">作为消息</string>
+    <string name="share_part_text_file_hint">文本文件，与录音一起</string>
+    <string name="share_part_missing_one">此通话没有</string>
+    <string name="share_part_missing_many">这些通话都没有</string>
+    <string name="share_file_word_transcript">转写文本</string>
+    <string name="share_file_word_summary">摘要</string>
+</resources>

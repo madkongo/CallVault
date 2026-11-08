@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Keep or delete after the call: the pop-up's "Display over other apps" permission (Settings, wizard, setup). -->
+<resources>
+    <string name="popup_permission_title">Дозволити спливне вікно</string>
+    <string name="popup_permission_text">Вікну «залишити чи видалити» потрібен дозвіл Android «Показ поверх інших застосунків». Натисніть «Дозволити» й увімкніть його для CallVault (на деяких телефонах спершу знайдіть CallVault у списку). Доти питає сповіщення.</string>
+    <string name="popup_permission_allow">Дозволити</string>
+    <string name="popup_permission_not_now">Не зараз</string>
+    <string name="permission_overlay_label">Показ поверх інших застосунків</string>
+    <string name="permission_overlay_description">Лише для вікна «залишити чи видалити» після дзвінка (Налаштування ▸ Запис ▸ Як питати). Без нього CallVault питає сповіщенням. Натисніть, щоб дозволити.</string>
+    <string name="general_optional">Необов’язково</string>
+</resources>

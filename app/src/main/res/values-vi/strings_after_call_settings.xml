@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Keep or delete after the call: Settings rows and the wizard switch. -->
+<resources>
+    <string name="settings_after_call_mode_label">Khi cuộc gọi kết thúc</string>
+    <string name="settings_after_call_mode_keep">Giữ bản ghi</string>
+    <string name="settings_after_call_mode_ask">Hỏi tôi: giữ hay xoá</string>
+    <string name="settings_after_call_mode_keep_desc">Mọi bản ghi đều được giữ, như trước nay.</string>
+    <string name="settings_after_call_mode_ask_desc">Sau mỗi cuộc gọi được ghi âm, một thông báo hỏi bạn có giữ không. Cho đến khi bạn trả lời, bản ghi không được sao chép lên Drive và không tự chép lời.</string>
+    <string name="settings_after_call_needs_notifications">Để hỏi, CallVault cần quyền thông báo. Hãy cho phép và tuỳ chọn Hỏi sẽ bật.</string>
+    <string name="settings_after_call_style_label">Cách hỏi</string>
+    <string name="settings_after_call_style_notification">Thông báo</string>
+    <string name="settings_after_call_style_popup">Cửa sổ nổi trên màn hình</string>
+    <string name="settings_after_call_style_notification_desc">Một thông báo có nút Giữ và Xoá.</string>
+    <string name="settings_after_call_style_popup_desc">Một cửa sổ nhỏ hiện trên mọi thứ đang có trên màn hình. Nếu không thể hiện (điện thoại đang khoá) hoặc bạn đóng mà không trả lời, một thông báo sẽ hỏi thay. Cần quyền hiển thị trên ứng dụng khác.</string>
+    <string name="settings_after_call_needs_overlay">Cửa sổ nổi cần quyền hiển thị trên ứng dụng khác. Cho đến khi được cấp, thông báo sẽ hỏi.</string>
+    <string name="settings_after_call_unanswered_label">Nếu tôi không trả lời</string>
+    <string name="settings_after_call_unanswered_keep">Giữ lại</string>
+    <string name="settings_after_call_unanswered_delete">Xoá sau 24 giờ</string>
+    <string name="settings_after_call_unanswered_keep_desc">Sau 24 giờ, bản ghi được giữ, sao chép và chép lời như thường lệ.</string>
+    <string name="settings_after_call_unanswered_delete_desc">24 giờ sau cuộc gọi, bản ghi bị xoá.</string>
+    <string name="settings_after_call_unanswered_engaged">Bản ghi bạn đã gắn sao, đánh dấu, gắn thẻ, ghi chú hoặc chép lời luôn được giữ.</string>
+    <string name="wizard_after_call_ask_label">Hỏi tôi có giữ từng bản ghi không</string>
+    <string name="wizard_after_call_ask_desc">Khi cuộc gọi kết thúc, giữ hoặc xoá bản ghi chỉ với một chạm. Tắt: mọi bản ghi đều được giữ.</string>
+</resources>

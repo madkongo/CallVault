@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Keep or delete after the call: the pop-up's "Display over other apps" permission (Settings, wizard, setup). -->
+<resources>
+    <string name="popup_permission_title">Επιτρέψτε το αναδυόμενο</string>
+    <string name="popup_permission_text">Το αναδυόμενο «διατήρηση ή διαγραφή» χρειάζεται την άδεια του Android «Εμφάνιση πάνω από άλλες εφαρμογές». Πατήστε Να επιτρέπεται και ενεργοποιήστε την για το CallVault (σε ορισμένα τηλέφωνα βρείτε πρώτα το CallVault στη λίστα). Μέχρι τότε ρωτά μια ειδοποίηση.</string>
+    <string name="popup_permission_allow">Να επιτρέπεται</string>
+    <string name="popup_permission_not_now">Όχι τώρα</string>
+    <string name="permission_overlay_label">Εμφάνιση πάνω από άλλες εφαρμογές</string>
+    <string name="permission_overlay_description">Μόνο για το αναδυόμενο «διατήρηση ή διαγραφή» μετά από κλήση (Ρυθμίσεις ▸ Εγγραφή ▸ Πώς να ρωτά). Χωρίς αυτήν, το CallVault ρωτά με ειδοποίηση. Πατήστε για να επιτραπεί.</string>
+    <string name="general_optional">Προαιρετικό</string>
+</resources>

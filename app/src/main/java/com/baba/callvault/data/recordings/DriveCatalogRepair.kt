@@ -9,6 +9,10 @@
 package com.baba.callvault.data.recordings
 
 import android.content.Context
+import android.net.Uri
+import android.provider.DocumentsContract
+import com.baba.callvault.system.storage.SafHelper
+import java.io.FileNotFoundException
 import androidx.core.net.toUri
 import com.baba.callvault.data.AppPreferences
 import com.baba.callvault.utils.AppLogger
@@ -115,4 +119,106 @@ object DriveCatalogRepair {
         if (start < 0) return null
         return uri.substring(start + 3).substringBefore('/').takeIf { it.isNotEmpty() }
     }
+
+    // ---- Copies deleted in Drive itself ---------------------------------------------------------------
+
+    /** What asking Drive about one document said. Only [GONE] ever lets a reference be forgotten. */
+    enum class Presence { PRESENT, GONE, UNKNOWN }
+
+    /** How often [forgetDeletedIfDue] looks: it lists the Drive folder, which is not free. */
+    private const val CHECK_EVERY_MS = 6L * 60 * 60 * 1000
+    private const val STATE_FILE = "cv_drive_presence"
+    private const val KEY_CHECKED_AT = "checked_at"
+
+    /**
+     * Forgets Drive copies that were deleted in Drive itself, at most every [CHECK_EVERY_MS].
+     *
+     * Before this nothing ever noticed: a recording deleted (or binned) in Drive stayed in the list for good,
+     * pointing at nothing (OP9, 2026-11-03, after the Drive test folder was binned). [reconcile] only fixes
+     * references minted under an old folder grant, and only on the retention sweep, which does not run at all
+     * when recordings are kept forever. Called when the list loads. Never throws; returns how many copies
+     * were forgotten.
+     */
+    suspend fun forgetDeletedIfDue(context: Context, now: Long = System.currentTimeMillis()): Int {
+        val state = context.getSharedPreferences(STATE_FILE, Context.MODE_PRIVATE)
+        if (now - state.getLong(KEY_CHECKED_AT, 0L) < CHECK_EVERY_MS) return 0
+        state.edit().putLong(KEY_CHECKED_AT, now).apply()
+        return forgetDeleted(context)
+    }
+
+    /** See [forgetDeletedIfDue]; runs the check now. */
+    suspend fun forgetDeleted(context: Context): Int = withContext(Dispatchers.IO) {
+        runCatching {
+            val folder = AppPreferences(context).getDriveFolderUri()
+            val rows = RecordingCatalog.all(context).mapNotNull { row -> row.driveUri?.let { row.displayName to it } }
+            if (rows.isEmpty()) return@withContext 0
+            val listed = if (SafHelper.isFolderValid(context, folder)) listedNames(context, folder) else null
+            val gone = goneCopies(rows, listed) { presenceOf(context, it.toUri()) }
+            gone.forEach { RecordingCatalog.removeCopyByUri(context, it.toUri()) }
+            AppLogger.i(
+                TAG,
+                "Drive presence check: ${rows.size} Drive copies, folder listing " +
+                    "${listed?.size ?: "unavailable"}, ${gone.size} deleted in Drive and forgotten",
+            )
+            gone.size
+        }.getOrElse {
+            AppLogger.w(TAG, "Drive presence check failed: ${it.message}")
+            0
+        }
+    }
+
+    /**
+     * Which Drive copies are really gone. Two proofs are needed: the name is missing from the folder listing
+     * (when one could be read; an empty or failed listing proves nothing, so then every row is a candidate),
+     * AND asking Drive about that document says it does not exist. Offline, a refused grant or any doubt is
+     * [Presence.UNKNOWN] and keeps the copy: forgetting a recording that is still there is the worse mistake.
+     *
+     * @param rows   (display name, Drive URI) of every catalogued Drive copy.
+     * @param listed the names in the Drive folder, or null when the folder could not be listed.
+     */
+    internal fun goneCopies(
+        rows: List<Pair<String, String>>,
+        listed: Set<String>?,
+        presence: (String) -> Presence,
+    ): List<String> {
+        val candidates = if (listed.isNullOrEmpty()) rows else rows.filter { it.first !in listed }
+        return candidates.map { it.second }.filter { presence(it) == Presence.GONE }
+    }
+
+    /**
+     * Names in the Drive folder, or null when it could not be listed.
+     *
+     * Queried directly rather than through `DocumentFile.listFiles()`, which turns a failure into an empty list:
+     * here a failure is null and only a successful query can say "empty".
+     */
+    private fun listedNames(context: Context, folder: Uri): Set<String>? = runCatching {
+        val children = DocumentsContract.buildChildDocumentsUriUsingTree(folder, DocumentsContract.getTreeDocumentId(folder))
+        context.contentResolver.query(
+            children, arrayOf(DocumentsContract.Document.COLUMN_DISPLAY_NAME), null, null, null,
+        )?.use { c -> buildSet { while (c.moveToNext()) c.getString(0)?.let { add(it) } } }
+    }.getOrNull()
+
+    /**
+     * Whether one Drive document still exists, by trying to open it.
+     *
+     * Querying its details is no proof: measured on the OP9 (2026-11-03), after a folder was deleted forever in
+     * Drive the provider still returned the deleted files' cached name and size. Opening them failed with
+     * FileNotFoundException ("StorageFileLoadException[io_error]"). An offline phone could fail the same way, so
+     * the failure counts as [Presence.GONE] only while the phone has a validated internet connection.
+     */
+    private fun presenceOf(context: Context, uri: Uri): Presence = try {
+        context.contentResolver.openFileDescriptor(uri, "r")?.use { Presence.PRESENT } ?: Presence.UNKNOWN
+    } catch (e: FileNotFoundException) {
+        if (isOnline(context)) Presence.GONE else Presence.UNKNOWN
+    } catch (e: Exception) {
+        AppLogger.d(TAG, "Drive presence unknown for one copy: ${e.javaClass.simpleName}: ${e.message}")
+        Presence.UNKNOWN
+    }
+
+    /** True with a validated internet connection, so a failed open means the file, not the network. */
+    private fun isOnline(context: Context): Boolean = runCatching {
+        val cm = context.getSystemService(android.net.ConnectivityManager::class.java)
+        val caps = cm?.getNetworkCapabilities(cm.activeNetwork)
+        caps?.hasCapability(android.net.NetworkCapabilities.NET_CAPABILITY_VALIDATED) == true
+    }.getOrDefault(false)
 }

@@ -6,6 +6,7 @@
     <string name="home_date_yesterday">Hier</string>
     <string name="home_health_call_not_recorded">Un appel n\'a pas été enregistré — %1$s, %2$s.</string>
     <string name="home_health_call_not_recorded_unnamed">Un appel n\'a pas été enregistré — %1$s.</string>
+    <string name="home_health_call_not_recorded_force_stopped">CallVault avait été arrêté de force, par le téléphone ou une autre app, et n’a donc pas pu détecter l’appel. Vérifiez que les réglages de batterie du téléphone ne mettent pas CallVault en veille.</string>
     <string name="home_health_failed_daemon">L\'enregistreur s\'est arrêté pendant votre dernier appel.</string>
     <string name="home_health_failed_empty">Votre dernier appel a produit un enregistrement vide (0 octet).</string>
     <string name="home_health_failed_no_audio">Votre dernier appel a été enregistré, mais ne contient aucun son.</string>
@@ -31,6 +32,19 @@
     <string name="home_hero_pill_update_regrant">Action requise</string>
     <string name="home_hero_status_label">État</string>
     <string name="home_play_recording">Lire l\'enregistrement</string>
+    <string name="home_view_recordings">Enregistrements</string>
+    <string name="home_view_all_calls">Historique des appels</string>
+    <string name="home_calls_filter_all">Tous</string>
+    <string name="home_calls_filter_recorded">Enregistrés</string>
+    <string name="home_calls_filter_not_recorded">Non enregistrés</string>
+    <string name="home_calls_filter_missed">Manqués</string>
+    <string name="home_call_origin_phone">Appel téléphonique</string>
+    <string name="home_call_not_recorded">Non enregistré</string>
+    <string name="home_call_missed">Manqué</string>
+    <string name="home_call_declined">Refusé</string>
+    <string name="home_call_unknown_number">Numéro inconnu</string>
+    <string name="home_calls_empty">Aucun appel dans le journal d\'appels du téléphone pour l\'instant.</string>
+    <string name="home_calls_no_permission">CallVault ne peut pas lire le journal d\'appels. Autorisez \"Journaux d\'appels\" pour CallVault dans les paramètres des applications Android pour voir tous les appels ici.</string>
     <string name="home_recordings_count">%1$d enregistré(s)</string>
     <string name="home_recordings_empty_hint">Lorsque CallVault enregistre un appel, il apparaît ici. Passez ou recevez un appel pour commencer.</string>
     <string name="home_recordings_empty_title">Aucun enregistrement pour l\'instant</string>
@@ -46,15 +60,15 @@
     <string name="home_usb_advisory_title">L\'enregistrement peut s\'arrêter au verrouillage</string>
     <string name="home_whatsnew_body">• L\'enregistrement se rétablit désormais tout seul s\'il se bloque\n• L\'accueil vous prévient quand rien n\'est enregistré, au lieu de rester muet\n• Un appel téléphonique n\'est plus pris pour un appel d\'application</string>
     <string name="home_whatsnew_offline_cta">Activer l\'enregistrement sans Wi-Fi</string>
-    <string name="home_whatsnew_offline_enabled">Enregistrement hors ligne activé.</string>
+    <string name="home_whatsnew_offline_enabled">« Continuer à enregistrer sans Wi-Fi » est activé.</string>
     <string name="home_whatsnew_offline_enabling">Activation de l\'enregistrement sans Wi-Fi…</string>
     <string name="offline_failed_needs_wd">Activation impossible — le débogage sans fil est désactivé et CallVault n\'a pas pu l\'activer. Activez-le dans les options pour développeurs, puis réessayez.</string>
     <string name="offline_failed_no_service">Activation impossible — CallVault n\'a pas pu joindre le service de débogage du téléphone. Vérifiez le Wi-Fi et le débogage sans fil, puis réessayez.</string>
     <string name="offline_failed_port">Activation impossible — le port local n\'est pas revenu. Réessayez dans un instant.</string>
-    <string name="home_whatsnew_resilient_body">Rend l\'enregistrement des appels plus résistant aux interruptions.\n\nAndroid peut arrêter le service d\'arrière-plan de CallVault à tout moment. Avec cette option activée, un enregistrement déjà en cours n\'en est plus affecté.\n\nDésactivé par défaut — vous pouvez aussi l\'activer plus tard dans Paramètres ▸ Fiabilité.</string>
+    <string name="home_whatsnew_resilient_body">Rend l\'enregistrement des appels plus résistant aux interruptions.\n\nAndroid peut arrêter le service d\'arrière-plan de CallVault à tout moment. Avec cette option activée, un enregistrement déjà en cours n\'en est plus affecté.\n\nDésactivé par défaut — vous pouvez aussi l\'activer plus tard dans Paramètres ▸ Connexion.</string>
     <string name="home_whatsnew_resilient_cta">Activer</string>
-    <string name="home_whatsnew_resilient_enabled">L\'enregistrement résilient est activé. Un enregistrement déjà en cours n\'est plus affecté si Android arrête le service d\'arrière-plan de CallVault.</string>
-    <string name="home_whatsnew_resilient_title">Nouveau : enregistrement résilient</string>
+    <string name="home_whatsnew_resilient_enabled">« Continuer si le service d\'arrière-plan s\'arrête » est activé. Un enregistrement déjà en cours n\'est plus affecté si Android arrête le service d\'arrière-plan de CallVault.</string>
+    <string name="home_whatsnew_resilient_title">Nouveau : continuer si le service d\'arrière-plan s\'arrête</string>
     <string name="home_whatsnew_settings_cta">Ouvrir les Paramètres</string>
     <string name="home_whatsnew_title">Nouveautés</string>
     <string name="offline_recording_disabling">Désactivation de l\'enregistrement sans Wi-Fi…</string>
@@ -109,7 +123,7 @@
     <string name="merge_primary_hint">Commence l’appel fusionné</string>
     <string name="merge_title">Fusionner les appels avec %1$s</string>
     <string name="settings_merge_keep_originals_description">Après une fusion, laisser également sur le téléphone les appels dont elle est issue. Désactivé par défaut, afin qu’une fusion ne laisse qu’un seul enregistrement. Séparer un appel fusionné fonctionne dans les deux cas.</string>
-    <string name="settings_merge_keep_originals_title">Conserver les appels d’origine</string>
+    <string name="settings_merge_keep_originals_title">Conserver les originaux après la fusion</string>
     <string name="unmerge_confirm">Séparer</string>
     <string name="unmerge_message">Il redevient ces appels, chacun avec la transcription et les repères qu’il avait :</string>
     <string name="unmerge_title">Séparer cet appel ?</string>
@@ -117,6 +131,21 @@
     <string name="merge_note_will_keep">Les autres appels sont également conservés sur le téléphone.</string>
     <string name="home_scroll_to_top">Haut</string>
     <string name="home_whatsnew_full_notes">Notes de version complètes</string>
+    <string name="whatsnew_250_title">Garder ou supprimer après l’appel, et partager ce qu’il vous faut</string>
+    <string-array name="whatsnew_250_items">
+        <item>Garder ou supprimer : CallVault peut demander après chaque appel s’il faut garder l’enregistrement (Paramètres ▸ Enregistrement)</item>
+        <item>Partagez ensemble l’enregistrement, la transcription et le résumé d’un appel — ou seulement une partie de l’enregistrement</item>
+        <item>Historique des appels : chaque appel du journal du téléphone, à côté de son enregistrement</item>
+        <item>Recherche dans les Paramètres</item>
+        <item>Retranscrire, et tirer vers le bas sur n’importe quelle page pour l’actualiser</item>
+        <item>Votre propre format de nom de fichier, et une mention facultative de la SIM utilisée pour chaque appel</item>
+        <item>Le bengali pour l’app et la transcription</item>
+        <item>Les appels passés via Google Voice gardent le numéro composé</item>
+        <item>Mode Shizuku : le micro ne reste plus allumé après un appel, et plus de plantage au redémarrage de l’enregistreur</item>
+        <item>Les téléphones Honor qui mettent CallVault en pause pendant un appel enregistrent de façon plus fiable</item>
+        <item>Drive : les enregistrements ne se perdent plus quand le dossier Drive est aussi le dossier des enregistrements</item>
+        <item>Quand un appel n’a pas été enregistré parce que CallVault avait été arrêté de force, la carte le dit</item>
+    </string-array>
     <string name="whatsnew_249_title">Appels d\'applis plus clairs, et prêt juste après les mises à jour</string>
     <string-array name="whatsnew_249_items">
         <item>Moins d\'écho sur les appels d\'applis avec les téléphones dont le micro capte l\'écouteur</item>

@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Keep or delete after the call: Settings rows and the wizard switch. -->
+<resources>
+    <string name="settings_after_call_mode_label">Quando una chiamata finisce</string>
+    <string name="settings_after_call_mode_keep">Tieni la registrazione</string>
+    <string name="settings_after_call_mode_ask">Chiedimi: tenere o eliminare</string>
+    <string name="settings_after_call_mode_keep_desc">Ogni registrazione viene tenuta, come sempre.</string>
+    <string name="settings_after_call_mode_ask_desc">Dopo ogni chiamata registrata, una notifica chiede se tenerla. Finché non rispondi, non viene copiata su Drive né trascritta automaticamente.</string>
+    <string name="settings_after_call_needs_notifications">Per chiedere, CallVault ha bisogno delle notifiche. Consentile e Chiedi si attiva.</string>
+    <string name="settings_after_call_style_label">Come chiedere</string>
+    <string name="settings_after_call_style_notification">Notifica</string>
+    <string name="settings_after_call_style_popup">Finestra sopra lo schermo</string>
+    <string name="settings_after_call_style_notification_desc">Una notifica con Tieni ed Elimina.</string>
+    <string name="settings_after_call_style_popup_desc">Una piccola finestra sopra ciò che è sullo schermo. Se non può apparire (telefono bloccato) o la chiudi senza rispondere, chiede invece una notifica. Richiede il permesso di apparire sopra le altre app.</string>
+    <string name="settings_after_call_needs_overlay">La finestra richiede il permesso di apparire sopra le altre app. Finché non è concesso, chiede la notifica.</string>
+    <string name="settings_after_call_unanswered_label">Se non rispondo</string>
+    <string name="settings_after_call_unanswered_keep">Tienila</string>
+    <string name="settings_after_call_unanswered_delete">Eliminala dopo 24 ore</string>
+    <string name="settings_after_call_unanswered_keep_desc">Dopo 24 ore la registrazione viene tenuta, copiata e trascritta come al solito.</string>
+    <string name="settings_after_call_unanswered_delete_desc">24 ore dopo la chiamata la registrazione viene eliminata.</string>
+    <string name="settings_after_call_unanswered_engaged">Una registrazione che hai contrassegnato con stella, segno, tag o nota, o che hai trascritto, viene sempre tenuta.</string>
+    <string name="wizard_after_call_ask_label">Chiedimi se tenere ogni registrazione</string>
+    <string name="wizard_after_call_ask_desc">Quando una chiamata finisce, tieni o elimina la registrazione con un tocco. Disattivato: ogni registrazione viene tenuta.</string>
+</resources>

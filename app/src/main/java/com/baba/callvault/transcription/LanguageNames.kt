@@ -34,6 +34,7 @@ object LanguageNames {
      */
     private val ENDONYMS: Map<String, String> = mapOf(
         "ar" to "العربية",
+        "bn" to "বাংলা",
         "de" to "Deutsch",
         "el" to "Ελληνικά",
         "en" to "English",

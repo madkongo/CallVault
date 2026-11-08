@@ -8,6 +8,7 @@
 
 package com.baba.callvault.ui.screens
 
+import com.baba.callvault.ui.common.CvPullToRefresh
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.shape.CircleShape
@@ -159,11 +160,14 @@ fun TranscriptsScreen(
     onShare: (String) -> Unit,
     onSave: (String, TranscriptFormat) -> Unit,
     onDelete: (String) -> Unit,
+    onTranscribeAgain: (String) -> Unit = {},
     selection: LibrarySelectionUi,
     onImport: (transcribeOnly: Boolean) -> Unit,
     importing: Boolean,
     modifier: Modifier = Modifier,
     titleTrailing: (@Composable () -> Unit)? = null,
+    isRefreshing: Boolean = false,
+    onRefresh: () -> Unit = {},
 ) {
     // Resolved once for the whole page rather than per row: a row that looked itself up would put a
     // walk of the recordings list behind every visible line of the screen.
@@ -221,161 +225,170 @@ fun TranscriptsScreen(
             }
         },
     ) { innerPadding ->
-        LazyColumn(
-            state = listState,
-            modifier = Modifier.fillMaxSize(),
-            contentPadding = PaddingValues(
-                start = 20.dp,
-                end = 20.dp,
-                top = innerPadding.calculateTopPadding() + 8.dp,
-                // Room under the last row for the floating Import button, so it never covers it at rest.
-                bottom = innerPadding.calculateBottomPadding() + 96.dp
-            ),
-            verticalArrangement = Arrangement.spacedBy(10.dp)
+        CvPullToRefresh(
+            isRefreshing = isRefreshing,
+            onRefresh = onRefresh,
+            topPadding = innerPadding.calculateTopPadding(),
         ) {
-            // The "Select all" row, pinned at the top while selecting and hidden otherwise. Above the
-            // search and import cards (both of which hide during selection anyway), so it sits
-            // directly over the rows whose ticks it drives.
-            if (selection.active) {
-                item {
-                    LibrarySelectAllRow(
-                        allSelected = selection.allSelected,
-                        someSelected = selection.someSelected,
-                        selectedCount = selection.selected.size,
-                        onClick = selection.onSelectAll,
-                    )
-                }
-            }
-            // Before the empty-state branch below, which returns early. An empty Transcripts page is
-            // exactly where importing needs to be offered — it is one of the two answers to "there
-            // is nothing here yet", and the other one is on a different screen.
-            // Not while selecting: bringing a new file in is not something anybody does in the
-            // middle of picking rows, and the card carries two live buttons where every other tap on
-            // the page has become a toggle.
-            // The search line above the import card: a word search over what is here, the rows it
-            // finds each carrying the words around the match. Only once there is something to
-            // search — on an empty page it would be a field that can only ever find nothing.
-            val searching = query.isNotBlank()
-            if (!selection.active && (searching || !groups.isEmpty)) {
-                item {
-                    SearchLine(
-                        query = query,
-                        onQueryChange = onQueryChange,
-                        placeholder = stringResource(R.string.transcripts_search_hint),
-                    )
-                }
-            }
-
-            if (groups.isEmpty) {
-                item {
-                    if (searching) {
-                        LibrarySectionEmpty(
-                            title = stringResource(R.string.search_no_matches_title),
-                            hint = stringResource(R.string.search_no_matches_hint, query.trim()),
-                        )
-                    } else {
-                        LibrarySectionEmpty(
-                            title = stringResource(R.string.home_transcripts_empty_title),
-                            hint = stringResource(R.string.home_transcripts_empty_hint),
+            LazyColumn(
+                state = listState,
+                modifier = Modifier.fillMaxSize(),
+                contentPadding = PaddingValues(
+                    start = 20.dp,
+                    end = 20.dp,
+                    top = innerPadding.calculateTopPadding() + 8.dp,
+                    // Room under the last row for the floating Import button, so it never covers it at rest.
+                    bottom = innerPadding.calculateBottomPadding() + 96.dp
+                ),
+                verticalArrangement = Arrangement.spacedBy(10.dp)
+            ) {
+                // The "Select all" row, pinned at the top while selecting and hidden otherwise. Above the
+                // search and import cards (both of which hide during selection anyway), so it sits
+                // directly over the rows whose ticks it drives.
+                if (selection.active) {
+                    item {
+                        LibrarySelectAllRow(
+                            allSelected = selection.allSelected,
+                            someSelected = selection.someSelected,
+                            selectedCount = selection.selected.size,
+                            onClick = selection.onSelectAll,
                         )
                     }
                 }
-                return@LazyColumn
-            }
+                // Before the empty-state branch below, which returns early. An empty Transcripts page is
+                // exactly where importing needs to be offered — it is one of the two answers to "there
+                // is nothing here yet", and the other one is on a different screen.
+                // Not while selecting: bringing a new file in is not something anybody does in the
+                // middle of picking rows, and the card carries two live buttons where every other tap on
+                // the page has become a toggle.
+                // The search line above the import card: a word search over what is here, the rows it
+                // finds each carrying the words around the match. Only once there is something to
+                // search — on an empty page it would be a field that can only ever find nothing.
+                val searching = query.isNotBlank()
+                if (!selection.active && (searching || !groups.isEmpty)) {
+                    item {
+                        SearchLine(
+                            query = query,
+                            onQueryChange = onQueryChange,
+                            placeholder = stringResource(R.string.transcripts_search_hint),
+                        )
+                    }
+                }
 
-            // Above everything, including what is running: this is audio sitting on the phone that
-            // the user asked to have read and that nothing is currently reading. It is the one group
-            // on this page that needs an action rather than attention.
-            if (groups.waiting.isNotEmpty()) {
-                item { CvSectionHeader(text = stringResource(R.string.transcripts_waiting_header)) }
-                item {
-                    Text(
-                        text = stringResource(R.string.transcripts_waiting_hint),
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        modifier = Modifier.padding(start = 4.dp, bottom = 2.dp),
+                if (groups.isEmpty) {
+                    item {
+                        if (searching) {
+                            LibrarySectionEmpty(
+                                title = stringResource(R.string.search_no_matches_title),
+                                hint = stringResource(R.string.search_no_matches_hint, query.trim()),
+                            )
+                        } else {
+                            LibrarySectionEmpty(
+                                title = stringResource(R.string.home_transcripts_empty_title),
+                                hint = stringResource(R.string.home_transcripts_empty_hint),
+                            )
+                        }
+                    }
+                    return@LazyColumn
+                }
+
+                // Above everything, including what is running: this is audio sitting on the phone that
+                // the user asked to have read and that nothing is currently reading. It is the one group
+                // on this page that needs an action rather than attention.
+                if (groups.waiting.isNotEmpty()) {
+                    item { CvSectionHeader(text = stringResource(R.string.transcripts_waiting_header)) }
+                    item {
+                        Text(
+                            text = stringResource(R.string.transcripts_waiting_hint),
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            modifier = Modifier.padding(start = 4.dp, bottom = 2.dp),
+                        )
+                    }
+                    waitingRows(
+                        names = groups.waiting,
+                        byName = byName,
+                        onTranscribe = onRetry,
+                        onOpen = onOpenAudio,
+                        selectionMode = selection.active,
                     )
                 }
-                waitingRows(
-                    names = groups.waiting,
-                    byName = byName,
-                    onTranscribe = onRetry,
-                    onOpen = onOpenAudio,
-                    selectionMode = selection.active,
-                )
-            }
 
-            if (groups.working.isNotEmpty()) {
+                if (groups.working.isNotEmpty()) {
+                    item {
+                        QueueHeader(
+                            isRunning = transcribing != TranscribingPillState.Hidden,
+                            onOpenQueue = onOpenQueue,
+                        )
+                    }
+                    transcriptRows(
+                        entries = groups.working,
+                        byName = byName,
+                        // Nothing to open: the words do not exist yet. A card that took a tap and did
+                        // nothing would read as the app having missed it.
+                        onOpen = null,
+                        onRetry = onRetry,
+                        onShare = onShare,
+                        onSave = onSave,
+                        onDelete = onDelete,
+                        onTranscribeAgain = onTranscribeAgain,
+                        selection = selection,
+                    labels = labels,
+                        percentFor = transcribing::percentFor,
+                    )
+                }
+
+                if (groups.failed.isNotEmpty()) {
+                    item { CvSectionHeader(text = stringResource(R.string.transcripts_failed_header)) }
+                    item {
+                        Text(
+                            text = stringResource(R.string.transcripts_failed_hint),
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            modifier = Modifier.padding(start = 4.dp, bottom = 2.dp),
+                        )
+                    }
+                    transcriptRows(
+                        entries = groups.failed,
+                        byName = byName,
+                        // The whole card retries, as well as the icon on it: a row that says it failed
+                        // and offers one 40dp target to act on is a small target for the one thing the
+                        // user opened this heading to do.
+                        onOpen = onRetry,
+                        onRetry = onRetry,
+                        onShare = onShare,
+                        onSave = onSave,
+                        onDelete = onDelete,
+                        onTranscribeAgain = onTranscribeAgain,
+                        selection = selection,
+                    labels = labels,
+                        percentFor = { 0 },
+                    )
+                }
+
                 item {
-                    QueueHeader(
-                        isRunning = transcribing != TranscribingPillState.Hidden,
-                        onOpenQueue = onOpenQueue,
+                    Text(
+                        text = stringResource(R.string.home_transcripts_count, groups.ready.size),
+                        style = MaterialTheme.typography.labelMedium,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        modifier = Modifier.padding(start = 4.dp, top = 4.dp, bottom = 2.dp),
                     )
                 }
                 transcriptRows(
-                    entries = groups.working,
+                    entries = groups.ready,
                     byName = byName,
-                    // Nothing to open: the words do not exist yet. A card that took a tap and did
-                    // nothing would read as the app having missed it.
-                    onOpen = null,
+                    onOpen = onOpen,
                     onRetry = onRetry,
                     onShare = onShare,
                     onSave = onSave,
                     onDelete = onDelete,
+                    onTranscribeAgain = onTranscribeAgain,
                     selection = selection,
-                labels = labels,
-                    percentFor = transcribing::percentFor,
-                )
-            }
-
-            if (groups.failed.isNotEmpty()) {
-                item { CvSectionHeader(text = stringResource(R.string.transcripts_failed_header)) }
-                item {
-                    Text(
-                        text = stringResource(R.string.transcripts_failed_hint),
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        modifier = Modifier.padding(start = 4.dp, bottom = 2.dp),
-                    )
-                }
-                transcriptRows(
-                    entries = groups.failed,
-                    byName = byName,
-                    // The whole card retries, as well as the icon on it: a row that says it failed
-                    // and offers one 40dp target to act on is a small target for the one thing the
-                    // user opened this heading to do.
-                    onOpen = onRetry,
-                    onRetry = onRetry,
-                    onShare = onShare,
-                    onSave = onSave,
-                    onDelete = onDelete,
-                    selection = selection,
-                labels = labels,
+                    labels = labels,
                     percentFor = { 0 },
+                    excerpts = excerpts,
                 )
             }
-
-            item {
-                Text(
-                    text = stringResource(R.string.home_transcripts_count, groups.ready.size),
-                    style = MaterialTheme.typography.labelMedium,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    modifier = Modifier.padding(start = 4.dp, top = 4.dp, bottom = 2.dp),
-                )
-            }
-            transcriptRows(
-                entries = groups.ready,
-                byName = byName,
-                onOpen = onOpen,
-                onRetry = onRetry,
-                onShare = onShare,
-                onSave = onSave,
-                onDelete = onDelete,
-                selection = selection,
-                labels = labels,
-                percentFor = { 0 },
-                excerpts = excerpts,
-            )
         }
     }
 }
@@ -444,6 +457,7 @@ private fun LazyListScope.transcriptRows(
     onShare: (String) -> Unit,
     onSave: (String, TranscriptFormat) -> Unit,
     onDelete: (String) -> Unit,
+    onTranscribeAgain: (String) -> Unit = {},
     selection: LibrarySelectionUi,
     percentFor: (String) -> Int,
     excerpts: Map<String, PageSearch.Excerpt> = emptyMap(),
@@ -486,6 +500,7 @@ private fun LazyListScope.transcriptRows(
                         onShare = { onShare(entry.displayName) },
                         onSave = { format -> onSave(entry.displayName, format) },
                         onDelete = { onDelete(entry.displayName) },
+                        onTranscribeAgain = { onTranscribeAgain(entry.displayName) },
                     )
                 }
             } else {

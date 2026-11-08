@@ -42,10 +42,11 @@
     <string name="notif_readiness_no_debugging_text">اشکال‌زدایی USB و اشکال‌زدایی بی‌سیم هر دو خاموش هستند. یکی را در گزینه‌های توسعه‌دهنده دوباره روشن کنید.</string>
     <string name="notif_readiness_needs_wifi_text">اشکال‌زدایی USB خاموش است و Wi-Fi هم وجود ندارد. به Wi-Fi وصل شوید یا اشکال‌زدایی USB را روشن کنید.</string>
     <string name="notif_readiness_stuck_text">ضبط‌کننده مدام در راه‌اندازی ناموفق است. برای دیدن علت، CallVault را باز کنید.</string>
-    <string name="notif_readiness_needs_wifi_restart_text">ضبط‌کننده متوقف شد و برای راه‌اندازی دوباره به Wi-Fi نیاز دارد. روشن کردن ضبط آفلاین در زمان اتصال به Wi-Fi از این مشکل جلوگیری می‌کند.</string>
+    <string name="notif_readiness_needs_wifi_restart_text">ضبط‌کننده متوقف شد و برای راه‌اندازی دوباره به Wi-Fi نیاز دارد. روشن کردن «ادامه ضبط بدون Wi-Fi» در زمان اتصال به Wi-Fi از این مشکل جلوگیری می‌کند.</string>
     <string name="notif_readiness_wd_off_by_user_text">شما اشکال‌زدایی بی‌سیم را خاموش کرده‌اید و راه دیگری برای راه‌اندازی مجدد ضبط‌کننده توسط CallVault وجود ندارد. آن را دوباره روشن کنید یا اشکال‌زدایی USB را روشن کنید.</string>
     <string name="notif_readiness_offline_paused_text">ضبط بدون Wi-Fi متوقف شده است: به اشکال‌زدایی USB نیاز دارد. تماس‌ها در حالت اتصال به Wi-Fi همچنان ضبط می‌شوند.</string>
     <string name="notif_action_turn_wd_on">روشن کردن اشکال‌زدایی بی‌سیم</string>
+    <string name="notif_action_turn_usb_on">روشن کردن اشکال‌زدایی USB</string>
 
     <string name="transcript_notice_channel">رونویسی‌ها</string>
     <string name="transcript_notice_ready_title">رونویسی آماده است</string>
@@ -56,4 +57,5 @@
     <string name="transcript_notice_failed_text">%1$s. برای تلاش دوباره ضربه بزنید.</string>
     <string name="transcript_notice_failed_many_title">رونویسی‌های ناتمام: %1$d</string>
     <string name="transcript_notice_failed_many_text">برای دیدن آن‌ها ضربه بزنید.</string>
+    <string name="transcript_notice_failed_kept_text">%1$s. رونوشت قبلی حفظ شد.</string>
 </resources>
