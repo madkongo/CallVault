@@ -52,7 +52,7 @@ All notable changes to CallVault are documented here. The format is based on
   group with a matching setting opens, showing only those settings; the rest are dimmed.
   <!-- 🧪 VERIFYING: OP9 2026-11-03 (2.4.9-search1); maintainer to try.
        2026-11-07: the file-name presets were not searchable ("honor" found nothing); now indexed. OP9: "honor" →
-       Sound and file names, 1 match. -->
+       Sound and file names, 1 match. ✅ VERIFIED 2026-11-08 by the maintainer (preset search only). -->
 
 - **Which SIM each call used** (opt-in). Settings ▸ Sound and file names ▸ "Show which SIM each call used": phone
   calls show the name you gave the SIM, or SIM 1 / SIM 2, in the list, on the playback screen and in the details file.
@@ -141,7 +141,7 @@ All notable changes to CallVault are documented here. The format is based on
        Maintainer to confirm. -->
 - **The Honor / Huawei file-name preset points to the right settings.** Its directions still used the section names
   from before 2.4.9; they now say Save and sync ▸ Recording folder and Sound and file names ▸ Audio codec.
-  <!-- 🧪 VERIFYING: OP9 2026-11-07, hint text read on screen with the preset picked (then cancelled). -->
+  <!-- ✅ VERIFIED 2026-11-08 by the maintainer on the OP9 (preset directions + "honor" search). -->
 
 ## [2.4.9] — 2026-11-03
 
