@@ -163,3 +163,36 @@ The cause was the bit rate, not stereo itself.
 7. AIDashboard's compress sweep: skip separated stereo files?
 8. Before any UI says "higher-quality transcription": run the A/B on a real call with double-talk (a probe
    recording already on the OP12 would do) — a stereo recording transcribed per channel vs its mono mix.
+
+---
+
+## 2026-11-08 — issue #74 maps onto this decision (🧪 triage, no code)
+
+jlp89 (`jlp9989-sudo`) filed #74 asking for exactly this feature: an opt-in "Keep both sides as
+separate channels (stereo)" setting, off by default, that skips the downmix on the three
+CallVault-owned paths. Honor Magic 9 / MagicOS 11 / built-in mode; transcribes per-channel on a home
+server (faster-whisper large-v3). He offered a PR. Maintainer added it to the backlog.
+
+His scope is the clean subset of §6: the 3 owned paths + a bit-rate floor + off-by-default. He leaves
+out in-app per-channel transcription, the Media3 playback fix, and AIDashboard — all correct to defer.
+His code references (DirectAudioRecorderSession ENCODE_CHANNELS=1, AudioRecordingEngine downmixToMono,
+VoipCaptureSession PcmDownmix) all verified still accurate on main.
+
+**Blockers 10 (§2.5 chunked decode, §2.6 waveform) are now RESOLVED** by the #63 long-call OOM work
+(2026-10-28): `PcmShortSink.capacityFor` caps per-chunk; waveform decodes in bounded windows. So the
+"fix first" gate from this note is cleared.
+
+**Conditions for the PR (must-have, not optional):**
+1. Clamp to a perceptual stereo floor (Opus ≥48 / AAC ≥64), not merely "double the rate" — his design
+   doubles, which is fine from the 24 kbps default but under-floors a low user setting.
+   `EncoderLimits.resolveBitRate` only clamps to the encoder's hardware range, not the perceptual floor.
+2. Add `EncoderLimits` clamp/retry to the handoff + VoIP encoders (today only direct has it) — stereo
+   AAC at low rates is the #28 silent-empty-file shape.
+3. Handoff re-arm must guard channel count (§2.3) — a mono re-arm into a stereo encoder corrupts the file.
+4. AIDL gains a channel param with a daemon-version guard (stale Shizuku services run old code).
+5. Playback caveat: MediaPlayer can't downmix → left/right ear split on earpiece; the setting
+   description must warn (Media3 fix deferred).
+Plus: `MetadataSidecar` channelCount=1 fix; onboarding wizard decision (off-by-default lowers the bar).
+
+Open decision for the maintainer that drives his bit-rate code: fixed floor (Opus 48 / AAC 64) vs.
+"any rate ≥ 32". GitHub reply is the maintainer's to write.
