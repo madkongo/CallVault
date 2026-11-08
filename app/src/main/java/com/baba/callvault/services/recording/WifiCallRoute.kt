@@ -47,7 +47,6 @@ object WifiCallRoute {
         NOT_MANAGED,
         WINDOW_PASSED,
         MODE_NOT_IN_COMMUNICATION,
-        NO_VOICE_COMM_PLAYER,
         APP_CALL_HELD,
         APP_CALLS_OFF,
         DAEMON_DOWN,
@@ -61,7 +60,7 @@ object WifiCallRoute {
         val mode: Int,
         /** Telecom has a managed (carrier) call up. */
         val managedCall: Boolean,
-        /** Active players with usage VOICE_COMMUNICATION. */
+        /** Active players with usage VOICE_COMMUNICATION. Logged; not a condition since 2026-11-08 (#45). */
         val voiceCallPlayers: Int,
         /** App-call recording is on, so its capture policy is armed. */
         val voipArmed: Boolean,
@@ -70,7 +69,7 @@ object WifiCallRoute {
         val alreadySwitched: Boolean,
         /** An app call is held open behind this phone call; the daemon is busy with it. */
         val appCallHeld: Boolean,
-        /** Debug switch: skip the mode, player and maker checks. */
+        /** Debug switch: skip the mode and maker checks. */
         val forced: Boolean,
         /** Time since the carrier capture started; 0 at START. */
         val msSinceCaptureStart: Long,
@@ -82,10 +81,12 @@ object WifiCallRoute {
         if (i.alreadySwitched) return stay(Reason.ALREADY_SWITCHED)
         if (!i.managedCall) return stay(Reason.NOT_MANAGED)
         if (i.msSinceCaptureStart > SWITCH_WINDOW_MS) return stay(Reason.WINDOW_PASSED)
-        if (!i.forced) {
-            if (i.mode != AudioManager.MODE_IN_COMMUNICATION) return stay(Reason.MODE_NOT_IN_COMMUNICATION)
-            if (i.voiceCallPlayers < 1) return stay(Reason.NO_VOICE_COMM_PLAYER)
-        }
+        // The mode alone marks a Samsung Wi-Fi call: a carrier call that flips to IN_COMMUNICATION. A
+        // voice-comm player is NOT required (#45, 2026-11-08): on the Galaxy Z Fold2 the far side plays
+        // from a native track inside system_server that is never listed as a player (vcPlay=0 all call),
+        // yet the app-call capture records both sides there. The S24/S25 do list one; both now switch.
+        // voiceCallPlayers stays an input for the log line only.
+        if (!i.forced && i.mode != AudioManager.MODE_IN_COMMUNICATION) return stay(Reason.MODE_NOT_IN_COMMUNICATION)
         if (i.appCallHeld) return stay(Reason.APP_CALL_HELD)
         if (!i.voipArmed) return stay(Reason.APP_CALLS_OFF)
         if (!i.daemonConnected) return stay(Reason.DAEMON_DOWN)

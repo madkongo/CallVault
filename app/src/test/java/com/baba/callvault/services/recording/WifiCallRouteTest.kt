@@ -58,10 +58,21 @@ class WifiCallRouteTest {
     }
 
     @Test
-    fun `IN_COMMUNICATION without a voice player stays on the call source`() {
+    fun `a Samsung Wi-Fi call with no voice player still switches (Fold2, #45)`() {
+        // Galaxy Z Fold2 (SM-F976B, Android 17): the far side plays from a native VOIP_RX track inside
+        // system_server, which is not a player, so vcPlay=0 for the whole call; voiceNet even says LTE.
+        // The only marker is the mode flipping to IN_COMMUNICATION ~0.4 s into a carrier call. The
+        // app-call capture records both sides there (tester, with the forced route, 2026-11-04).
         val d = decide(wifiCall.copy(voiceCallPlayers = 0))
-        assertEquals(Route.CALL_SOURCE, d.route)
-        assertEquals(Reason.NO_VOICE_COMM_PLAYER, d.reason)
+        assertEquals(Route.APP_CALL_MIX, d.route)
+        assertEquals(Reason.WIFI_CALL, d.reason)
+    }
+
+    @Test
+    fun `without a voice player other makers still only log`() {
+        // OnePlus/Qualcomm Wi-Fi calls run in IN_CALL and record fine on the call source; a forced
+        // switch there loses the far side (measured on the OP9). The Samsung gate keeps them out.
+        assertEquals(Reason.NOT_SAMSUNG, decide(wifiCall.copy(voiceCallPlayers = 0, isSamsung = false)).reason)
     }
 
     @Test
@@ -119,7 +130,7 @@ class WifiCallRouteTest {
     }
 
     @Test
-    fun `full truth table switches in exactly one row`() {
+    fun `full truth table switches only on a ready Samsung carrier call in IN_COMMUNICATION`() {
         val bools = listOf(false, true)
         val modes = listOf(AudioManager.MODE_NORMAL, AudioManager.MODE_IN_CALL, AudioManager.MODE_IN_COMMUNICATION)
         var switching = 0
@@ -132,10 +143,10 @@ class WifiCallRouteTest {
                 if (d.route == Route.APP_CALL_MIX) {
                     switching++
                     assertEquals(AudioManager.MODE_IN_COMMUNICATION, mode)
-                    assert(managed && players > 0 && armed && daemon && !switched && !held)
+                    assert(managed && armed && daemon && !switched && !held)
                 }
             }
-        assertEquals(1, switching)
+        assertEquals("one row per player count: a voice player is no longer required", 2, switching)
     }
 
     @Test
