@@ -8,6 +8,19 @@ unpushed). 2647/2647 unit tests, checkTranslations green. Independent review: no
 with the setting **ON**. On-device so far (by Claude): row placement, ⓘ text, persistence across relaunch. 🧪 Nothing
 heard on a real call yet.
 
+**2026-11-08 19:16–19:17, maintainer's OP9 test (2.5.1-stereo2, Shizuku mode), measured by Claude from the files:**
+
+| Call | Channels | ch0 | ch1 | L−R | L+R | Avg rate |
+|---|---|---|---|---|---|---|
+| phone (out) | 2 | −33.8 dB | −30.6 dB | −34.9 | −34.9 | 39 kbps |
+| phone (out) | 2 | −34.0 dB | −33.8 dB | −36.9 | −36.9 | 36 kbps |
+| WhatsApp | 2 | −27.6 dB | −20.9 dB | −26.1 | −26.1 | 49 kbps |
+
+L−R equal to L+R = the channels are genuinely different (separate voices); identical channels would give a near-silent
+L−R. Rates are above the old 24 kbps mono (Opus VBR averages under the 48 kbps target on pauses). 🧪 Stereo-ON is
+confirmed by measurement; the maintainer's own listening verdict is not recorded yet. **Not done: the OFF check** — the
+switch was still ON afterwards, so no mono call has been made with it off.
+
 **Needed from the maintainer before this can continue:**
 1. **Call test on the OP9** (setting is already on): one phone call + one WhatsApp call; on headphones you should
    hear yourself in one ear and them in the other. Then switch it off and confirm the next call is normal mono.
