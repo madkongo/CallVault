@@ -66,6 +66,13 @@ All notable changes to CallVault are documented here. The format is based on
 
 ### Fixed
 
+- **Switching debug logging on no longer deletes the log you already have.** Turning the switch off and on again
+  before sharing silently threw away everything captured so far, including the problem you were trying to report.
+  Only "Delete logs" deletes now, and the log marks where each new session starts.
+  <!-- 🧪 VERIFYING 2026-11-08: unit tests only. Seen in a report from "the fbi" (S24 Ultra) that started 3 minutes
+  before export although logging had been on earlier. To settle: with logging on, use the app, switch logging off
+  and on, and check the log viewer still shows the earlier lines. -->
+
 - **Debug logs no longer show names from imported files or typed-in file names.** An imported mp3, wav, opus or aac
   file kept the person's name from its file name in the debug log, and so did a typed-in file name with spaces or
   hyphens around the date. A contact name with a bracket, comma or apostrophe ("Mom (work)") was only half hidden.

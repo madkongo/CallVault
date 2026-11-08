@@ -68,8 +68,8 @@ import androidx.compose.material.icons.filled.Save
  * - While logging is **off**, the Share button appears only if a valid (non-empty) log file from a
  *   previous session still exists — there is nothing to share otherwise.
  *
- * Logs stay redacted (phone numbers masked). Each time logging is turned on the previous capture is
- * cleared (see [SettingsViewModel.setLoggingEnabled]) so every report is a fresh, focused log.
+ * Logs stay redacted (phone numbers masked). Turning logging on keeps the previous capture (see
+ * [SettingsViewModel.setLoggingEnabled]); only Delete starts a fresh log.
  *
  * @param preferences   The [AppPreferences] instance to read data from.
  * @param updateTrigger Trigger value to force recomposition when settings change.
