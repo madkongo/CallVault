@@ -2725,3 +2725,9 @@ Decided by the maintainer: the CPU section built for "the fbi" (`probe/shizukusl
 `top`) is NOT shipped by default — it names every app the phone is running, which is personal. Wanted later as an
 opt-in sub-setting under debug logging (off by default, e.g. "Include running apps and CPU use"), so a user asked
 for it can switch it on for one report. Not designed or built.
+
+## 🔵 Banking apps don't work while debugging is on (2026-11-08)
+Reported by the maintainer: banking apps refuse to work while debugging is on. CallVault needs Wireless debugging
+(and with it Developer options) to stay on in both built-in and Shizuku mode, so a user can't keep CallVault ready
+and use their bank at the same time. Not researched or designed yet: which apps check what (Developer options, USB
+debugging, Wireless debugging), and whether anything can be done on our side.
