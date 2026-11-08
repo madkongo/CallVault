@@ -54,7 +54,7 @@ class AppPreferences(context: Context) {
             "ignored_contacts_incoming", "ignored_contacts_outgoing", "voip_apply_ignored_contacts",
             "record_only_contacts_incoming", "record_only_contacts_outgoing",
             // Audio + file naming
-            "audio_source", "audio_codec", "audio_bitrate", "file_name_template", "show_sim_label",
+            "audio_source", "audio_codec", "audio_bitrate", "record_stereo", "file_name_template", "show_sim_label",
             // UI
             "theme_mode", "dynamic_color", "show_toasts", "vibration_enabled",
             // Retention / storage policy (not the folder URIs, which are per-device)
@@ -296,6 +296,11 @@ class AppPreferences(context: Context) {
 
         val AUDIO_BITRATE = ScrcpyAudioCodec.OPUS.defaultBitRate
 
+        // Keep each side of a call on its own channel (#74). Off by default: the delivered file stays
+        // mono as it has since v1.4.4. When on, the capture's stereo is encoded at the stereo floor
+        // (see StereoBitRate) so neither side is starved.
+        const val RECORD_STEREO = false
+
         // --- File Naming ---
         const val FILE_NAME_TEMPLATE = "{date}_{direction}_{contact_name}"
 
@@ -450,7 +455,8 @@ class AppPreferences(context: Context) {
         AUDIO_SOURCE("audio_source"),
         AUDIO_CODEC("audio_codec"),
         AUDIO_BITRATE("audio_bitrate"),
-        
+        RECORD_STEREO("record_stereo"),
+
         // --- File Naming ---
         FILE_NAME_TEMPLATE("file_name_template"),
 
@@ -1627,6 +1633,16 @@ class AppPreferences(context: Context) {
 
     /** Sets the configured audio bitrate. */
     fun setAudioBitRate(bitRate: Int) = setInt(Key.AUDIO_BITRATE, bitRate)
+
+    /**
+     * Whether to keep each side of a call on its own channel (#74). Off by default; when on, the
+     * owned capture paths skip the mono downmix and encode stereo at [StereoBitRate]'s floor. Shizuku
+     * mode always records stereo regardless, so the setting is shown greyed there.
+     */
+    fun getRecordStereo() = getBoolean(Key.RECORD_STEREO, DefaultsValue.RECORD_STEREO)
+
+    /** Sets whether to keep each side of a call on its own channel. */
+    fun setRecordStereo(enabled: Boolean) = setBoolean(Key.RECORD_STEREO, enabled)
 
     /**
      * Chooses the audio codec and brings a workable bit rate with it — issue #28c.
