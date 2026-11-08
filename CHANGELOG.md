@@ -5,6 +5,17 @@ All notable changes to CallVault are documented here. The format is based on
 
 ## [Unreleased]
 
+### Fixed
+
+- **The APK installs through more installers.** The release was signed only with the newer APK signature, which some
+  installers (SAI / Split APKs Installer, and some file managers) reject: they re-package the file as they install
+  it, which breaks the whole-file signature, and with nothing to fall back on the install fails with "no
+  certificates". It now also carries the older (v1 / JAR) signature, which signs each file inside the APK and
+  survives that re-packaging. Same signing key, so it still updates over any earlier version.
+  <!-- 🧪 VERIFYING 2026-11-08: SAI refused the v2-only build ("Signature Scheme v2: digest of contents did not
+  verify") because SAI rewrites the APK to 0.apk. First fix queued for 2.5.1. To settle: install this build through
+  SAI, which refused the v2-only one. -->
+
 ## [2.5.0] — 2026-11-08
 
 ### Added
