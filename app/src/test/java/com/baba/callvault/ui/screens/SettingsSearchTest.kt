@@ -8,6 +8,7 @@
 
 package com.baba.callvault.ui.screens
 
+import com.baba.callvault.utils.FILE_NAME_TEMPLATE_PRESETS
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
@@ -55,5 +56,14 @@ class SettingsSearchTest {
         assertEquals(emptySet<String>(), rows - SettingsSearchIndex.rows.keys)
         val empty = SettingsSearchIndex.rows.filter { (name, e) -> name in rows && e.strings.isEmpty() && e.words.isEmpty() }.keys
         assertEquals("rows with nothing to find them by", setOf("TranscriptionModeNote"), empty)
+    }
+
+    @Test
+    fun `every file-name preset can be found by its name`() {
+        // The presets live in utils/, outside what tools/settings-search-index.py reads, so "honor" found nothing.
+        val strings = SettingsSearchIndex.rows.getValue("FileNameTemplateRow").strings
+        val missing = FILE_NAME_TEMPLATE_PRESETS.map { it.labelRes }.filterNot { it in strings }
+        assertEquals(emptyList<Int>(), missing)
+        assertTrue("honor" in SettingsSearchIndex.rows.getValue("FileNameTemplateRow").words)
     }
 }
