@@ -66,6 +66,13 @@ All notable changes to CallVault are documented here. The format is based on
 
 ### Fixed
 
+- **Debug logs no longer show names from imported files or typed-in file names.** An imported mp3, wav, opus or aac
+  file kept the person's name from its file name in the debug log, and so did a typed-in file name with spaces or
+  hyphens around the date. A contact name with a bracket, comma or apostrophe ("Mom (work)") was only half hidden.
+  <!-- 🧪 VERIFYING 2026-11-08: unit tests only (found while triaging CodeQL #20-#22). To settle: import an mp3 named
+  after a person and set a typed-in name like "{contact_name} - {date}", record a call, then check the exported
+  report shows [C:…] instead of the names. -->
+
 - **Shizuku mode no longer repeats a pointless repair.** When a system permission that only the built-in mode needs
   was missing, every return to the app started a 12-second attempt to restore it over a connection Shizuku mode
   doesn't have. Seen on a Samsung S24 Ultra with Android 17.

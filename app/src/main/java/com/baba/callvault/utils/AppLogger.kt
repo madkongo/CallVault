@@ -667,7 +667,15 @@ object AppLogger {
      * The rules themselves live in [LogRedaction] so they can be unit tested without Android; all this
      * has to do is find the salt, which is the one part that needs a process and a preference store.
      */
-    private fun redact(msg: String): String = LogRedaction.redact(msg, pseudonymSalt())
+    private fun redact(msg: String): String = LogRedaction.redact(msg, pseudonymSalt(), namesAroundDate())
+
+    /**
+     * Whether the user's file-name template puts text on both sides of the date, which makes [LogRedaction] hide
+     * any text in front of a date. Read per line, so a changed template applies at once; false before [init] and
+     * in the daemon process, whose lines are redacted again here when the report is built.
+     */
+    private fun namesAroundDate(): Boolean =
+        prefs?.let { runCatching { LogRedaction.namesAroundDate(it.getFileNameTemplate()) }.getOrNull() } ?: false
 
     /**
      * The stored per-install salt, cached after the first successful read.

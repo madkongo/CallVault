@@ -8,6 +8,7 @@
 
 package com.baba.callvault.utils
 
+import com.baba.callvault.data.recordings.ImportableAudio
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNotEquals
@@ -457,4 +458,115 @@ class LogRedactionTest {
             assertEquals(line, once, redact(once))
         }
     }
+
+    // -------- Imported audio and 2.5.0's typed-in names (found 2026-11-08 while triaging CodeQL #20-#22)
+    //
+    // Imports keep their own format (mp3, wav, …) and part of the source name, and a typed-in template
+    // may put spaces or hyphens around the date. The rule knew only ".ogg"/".m4a" and "_", so those
+    // names went into the report as written.
+
+    @Test
+    fun `an imported file keeps its import marker and loses its label, whatever its format`() {
+        ImportableAudio.ACCEPTED_EXTENSIONS.forEach { ext ->
+            assertEquals(
+                "Imported '${stamp}_import_${token("Mom Cohen")}.$ext' (1234 bytes, 30s)",
+                redact("Imported '${stamp}_import_Mom Cohen.$ext' (1234 bytes, 30s)")
+            )
+        }
+    }
+
+    @Test
+    fun `a transcribe-only import keeps both markers`() {
+        assertEquals(
+            "Imported '${stamp}_import_transcribeonly_${token("Mom Cohen")}.mp3' (1 bytes, 3s)",
+            redact("Imported '${stamp}_import_transcribeonly_Mom Cohen.mp3' (1 bytes, 3s)")
+        )
+    }
+
+    @Test
+    fun `every import format is a format the rule knows`() {
+        ImportableAudio.ACCEPTED_EXTENSIONS.forEach { ext ->
+            assertTrue(ext, ext in LogRedaction.NAME_EXTENSIONS)
+        }
+    }
+
+    @Test
+    fun `typed-in names with spaces or hyphens around the date never leak the person`() {
+        listOf(
+            "'Mom Cohen - $stamp.ogg'",
+            "'Call with Mom Cohen $stamp.ogg'",
+            "'Mom Cohen-$stamp.ogg'",
+            "'$stamp Mom Cohen.ogg'",
+            "'$stamp - Mom Cohen.m4a'",
+            "'Mom Cohen $stamp in.ogg'",
+            "'Mom Cohen ($phone) $stamp.ogg'",
+            "Transcribed Mom Cohen $stamp.ogg (3 segment(s))",
+            "uri primary%3ARecordings%2FMom%20Cohen%20-%20${stamp.replace("+", "%2B")}.ogg: boom",
+        ).forEach { line ->
+            val redacted = redact(line)
+            assertFalse(redacted, redacted.contains("Mom"))
+            assertFalse(redacted, redacted.contains("Cohen"))
+            assertFalse(redacted, redacted.contains("972"))
+            assertEquals(line, redacted, redact(redacted))
+        }
+    }
+
+    @Test
+    fun `a hyphen-joined name keeps its date and its joiner`() {
+        assertEquals("'${token("Mom Cohen")} - $stamp.ogg'", redact("'Mom Cohen - $stamp.ogg'"))
+    }
+
+    @Test
+    fun `brackets, commas and apostrophes inside a contact name do not split it`() {
+        listOf(
+            "'Mom (work)_$stamp.ogg'" to "'${token("Mom (work)")}_$stamp.ogg'",
+            "'Cohen, Mom_$stamp.ogg'" to "'${token("Cohen, Mom")}_$stamp.ogg'",
+            "'Mom's phone_$stamp.ogg'" to "'${token("Mom's phone")}_$stamp.ogg'",
+        ).forEach { (line, expected) -> assertEquals(line, expected, redact(line)) }
+    }
+
+    @Test
+    fun `prose before an ordinary date-first name is still left readable`() {
+        assertEquals(
+            "Transcribed ${stamp}_in_${token("Mom Cohen")}.ogg",
+            redact("Transcribed ${stamp}_in_Mom Cohen.ogg")
+        )
+    }
+
+    @Test
+    fun `with a template that wraps the date, a bare name before it never leaks`() {
+        // Review finding: "{contact_name} {date} {direction}" logged without quotes passed every other check.
+        listOf(
+            "Saved Mom Cohen $stamp in.ogg",
+            "Playing Mom Cohen $stamp voip-WhatsApp.ogg",
+            "x Mom Cohen ${stamp}_in_Jane.ogg",
+            "Saved Mom's phone $stamp in.ogg",
+        ).forEach { line ->
+            val redacted = LogRedaction.redact(line, salt, namesAroundDate = true)
+            assertFalse(redacted, redacted.contains("Mom"))
+            assertFalse(redacted, redacted.contains("Jane"))
+            assertTrue(redacted, redacted.contains(stamp))
+            assertEquals(line, redacted, LogRedaction.redact(redacted, salt, namesAroundDate = true))
+        }
+    }
+
+    @Test
+    fun `only a template with text on both sides of the date needs the wider rule`() {
+        assertTrue(LogRedaction.namesAroundDate("{contact_name} {date} {direction}"))
+        assertTrue(LogRedaction.namesAroundDate("{contact_name}_{date}_{phone_number}"))
+        assertFalse(LogRedaction.namesAroundDate("{date}_{direction}_{phone_number}"))
+        assertFalse(LogRedaction.namesAroundDate("{contact_name}_{phone_number}_{date}"))
+        assertFalse(LogRedaction.namesAroundDate("{contact_name}@{phone_number}_{date_compact}"))
+        FILE_NAME_TEMPLATE_PRESETS.forEach { assertFalse(it.template, LogRedaction.namesAroundDate(it.template)) }
+    }
+
+    @Test
+    fun `a long typed-in name is still redacted`() {
+        val long = "Mom Cohen " + "x".repeat(180)
+        val redacted = redact("x ${stamp}_in_$long.ogg")
+        assertFalse(redacted, redacted.contains("Mom"))
+        assertTrue(redacted, redacted.contains("${stamp}_in_[C:"))
+    }
+
+    private val phone = "+972541234567"
 }
