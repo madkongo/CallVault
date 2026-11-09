@@ -340,6 +340,9 @@
     <string name="retention_linked_label">Gleicher Zeitraum für Gerät &amp; Drive</string>
     <string name="retention_local_label">Geräteaufnahmen</string>
     <string name="retention_monthly">Monatlich (30 Tage)</string>
+    <string name="retention_60_days">60 Tage</string>
+    <string name="retention_90_days">90 Tage</string>
+    <string name="retention_120_days">120 Tage</string>
     <string name="retention_period_label">Aufnahmen automatisch löschen</string>
     <string name="retention_time_label">Ausführen um (Ihre Ortszeit)</string>
     <string name="retention_weekly">Wöchentlich (7 Tage)</string>

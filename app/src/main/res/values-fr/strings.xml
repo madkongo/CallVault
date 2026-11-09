@@ -340,6 +340,9 @@
     <string name="retention_linked_label">Même période pour l\'appareil et Drive</string>
     <string name="retention_local_label">Enregistrements sur l\'appareil</string>
     <string name="retention_monthly">Mensuel (30 jours)</string>
+    <string name="retention_60_days">60 jours</string>
+    <string name="retention_90_days">90 jours</string>
+    <string name="retention_120_days">120 jours</string>
     <string name="retention_period_label">Suppression automatique des enregistrements</string>
     <string name="retention_time_label">Exécuter à (votre heure locale)</string>
     <string name="retention_weekly">Hebdomadaire (7 jours)</string>

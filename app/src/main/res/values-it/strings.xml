@@ -340,6 +340,9 @@
     <string name="retention_linked_label">Stesso periodo per dispositivo e Drive</string>
     <string name="retention_local_label">Registrazioni sul dispositivo</string>
     <string name="retention_monthly">Mensile (30 giorni)</string>
+    <string name="retention_60_days">60 giorni</string>
+    <string name="retention_90_days">90 giorni</string>
+    <string name="retention_120_days">120 giorni</string>
     <string name="retention_period_label">Elimina automaticamente le registrazioni</string>
     <string name="retention_time_label">Esegui alle (ora locale)</string>
     <string name="retention_weekly">Settimanale (7 giorni)</string>

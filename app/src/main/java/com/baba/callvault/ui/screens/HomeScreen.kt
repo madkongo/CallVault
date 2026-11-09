@@ -1428,6 +1428,11 @@ fun HomeScreen(
                 // same silent way a first attempt does.
                 onRetryTranscript = { startTranscription(item.displayName) },
                 onMerge = { mergeFor = item },
+                isFavourite = item.displayName in uiState.favourites,
+                onToggleFavourite = {
+                    val starred = item.displayName in uiState.favourites
+                    transcriptScope.launch { FavouriteRepository.toggle(context, item.displayName, starred) }
+                },
                 onSharePart = {
                     clipFromMs = -1L
                     clipFor = item.displayName
@@ -3169,7 +3174,41 @@ private fun EmptyRecordings() {
  *  - [DriveCopy]  — only the Drive copy of a BOTH recording.
  */
 /**
- * The per-row overflow menu: Share, then Delete.
+ * The star at the end of a row's details line, under the ⋮ button.
+ *
+ * It must not make the card taller (the maintainer's call on the mockup, 2026-11-09): the details line
+ * is one line of small text, and a 40dp button in it pushed the two halves of the card apart. So it
+ * keeps the full 40dp touch target but reports only the icon's height, overhanging into the gap above
+ * and the card's padding below, the same trick the list seek bar uses.
+ *
+ * Tinted explicitly in both states: an un-tinted M3 icon resolves to CoralDeep in this scheme.
+ */
+@Composable
+private fun RowStarButton(isFavourite: Boolean, onToggle: () -> Unit) {
+    IconButton(
+        onClick = onToggle,
+        modifier = Modifier
+            .size(ROW_ACTION_SIZE)
+            .layout { measurable, constraints ->
+                val button = measurable.measure(constraints)
+                val taken = ROW_STAR_SPACE.roundToPx()
+                layout(button.width, taken) { button.place(0, (taken - button.height) / 2) }
+            }
+    ) {
+        Icon(
+            imageVector = if (isFavourite) Icons.Filled.Star else Icons.Filled.StarBorder,
+            contentDescription = stringResource(
+                if (isFavourite) R.string.playback_unstar else R.string.playback_star
+            ),
+            tint = if (isFavourite) MaterialTheme.colorScheme.primary
+                   else MaterialTheme.colorScheme.onSurfaceVariant,
+            modifier = Modifier.size(20.dp)
+        )
+    }
+}
+
+/**
+ * The per-row overflow menu: Star, Share, then Delete.
  *
  * Delete costs one more tap than it did as a bare icon. That is the right trade for the only
  * destructive action in the list — and it leaves somewhere to put the next row action without
@@ -3183,6 +3222,9 @@ private fun RecordingRowMenu(
     onMerge: (() -> Unit)? = null,
     onUnMerge: (() -> Unit)? = null,
     onSharePart: () -> Unit = {},
+    isFavourite: Boolean = false,
+    /** Null leaves Star out of the menu. */
+    onToggleFavourite: (() -> Unit)? = null,
 ) {
     val context = LocalContext.current
     var open by remember { mutableStateOf(false) }
@@ -3197,6 +3239,21 @@ private fun RecordingRowMenu(
             )
         }
         DropdownMenu(expanded = open, onDismissRequest = { open = false }) {
+            // First, as on the card: the same action the star under this menu performs.
+            if (onToggleFavourite != null) {
+                DropdownMenuItem(
+                    text = {
+                        Text(stringResource(if (isFavourite) R.string.playback_unstar else R.string.playback_star))
+                    },
+                    leadingIcon = {
+                        Icon(if (isFavourite) Icons.Filled.Star else Icons.Filled.StarBorder, contentDescription = null)
+                    },
+                    onClick = {
+                        open = false
+                        onToggleFavourite()
+                    }
+                )
+            }
             DropdownMenuItem(
                 text = { Text(stringResource(R.string.home_share)) },
                 leadingIcon = { Icon(Icons.Filled.Share, contentDescription = null) },
@@ -3445,6 +3502,10 @@ private fun RecordingRow(
     transcriptPercent: Int = 0,
     /** "Phone call" or the app's name, shown first in the subtitle on the "All calls" list; null elsewhere. */
     originLabel: String? = null,
+    /** Whether this recording is starred; see [com.baba.callvault.data.transcripts.FavouriteRepository]. */
+    isFavourite: Boolean = false,
+    /** Stars or unstars it from the list (paponopap's request, 2026-11-09); null hides the star. */
+    onToggleFavourite: (() -> Unit)? = null,
 ) {
     // The pending delete target drives the confirm dialog: null = closed.
     //
@@ -3635,6 +3696,8 @@ private fun RecordingRow(
                     onMerge = onMerge.takeIf { MergeCandidates.canMerge(item) },
                     onUnMerge = onUnMerge,
                     onSharePart = onSharePart,
+                    isFavourite = isFavourite,
+                    onToggleFavourite = onToggleFavourite,
                 )
             }
         }
@@ -3667,8 +3730,12 @@ private fun RecordingRow(
                 style = MaterialTheme.typography.bodySmall,
                 color = metaColor,
                 maxLines = 1,
-                overflow = TextOverflow.Ellipsis
+                overflow = TextOverflow.Ellipsis,
+                modifier = Modifier.weight(1f)
             )
+            if (onToggleFavourite != null && !selectionMode && !deleting) {
+                RowStarButton(isFavourite = isFavourite, onToggle = onToggleFavourite)
+            }
         }
 
         if (showsSeekBar) {
@@ -4019,6 +4086,9 @@ private fun InlinePlayer(
 private const val INLINE_PLAYER_ENABLED = false
 
 private val ROW_ACTION_SIZE = 40.dp
+
+/** The height the row's star claims in the details line: the icon's, not its touch target's. */
+private val ROW_STAR_SPACE = 20.dp
 
 /**
  * The play disc's diameter, shared with the source badge that sits under it.

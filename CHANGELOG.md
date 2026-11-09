@@ -5,6 +5,23 @@ All notable changes to CallVault are documented here. The format is based on
 
 ## [Unreleased]
 
+### Added
+
+- **Keep recordings for 60, 90 or 120 days.** Settings ▸ Recordings ▸ Cleaning up ▸ Auto-delete now offers these between 30 days and
+  Keep forever, for the phone and for Drive. Asked in #78.
+  <!-- 🧪 VERIFYING 2026-11-09: unit-tested only. To settle: pick 60 days in Cleaning up, check the summary line reads
+  "60 days", and that the choice is still there after reopening Settings. -->
+- **A "Recording started" message for app calls.** Phone calls already showed it; app calls (WhatsApp, Telegram and
+  the rest) only said when the recording was saved. It follows the "Show toasts" and vibration settings.
+  <!-- 🧪 VERIFYING 2026-11-09: built, not tried on a phone. To settle: make one WhatsApp call and see the toast
+  when it starts. -->
+
+- **Star a recording from the list.** Each row has a star under its ⋮ button, and the ⋮ menu has Star / Remove
+  star too. Until now a recording could only be starred from its own page. The card keeps its height.
+  <!-- 🧪 VERIFYING 2026-11-09: built from mockup A (maintainer approved), compiles, not seen on a phone. To settle:
+  star and unstar a row from the star and from the menu; check the card is no taller and the Starred filter
+  follows. -->
+
 ### Fixed
 
 - **The APK installs through more installers.** The release was signed only with the newer APK signature, which some

@@ -340,6 +340,9 @@
     <string name="retention_linked_label">Azonos időszak az eszközre és a Drive-ra</string>
     <string name="retention_local_label">Eszközön lévő felvételek</string>
     <string name="retention_monthly">Havonta (30 nap)</string>
+    <string name="retention_60_days">60 nap</string>
+    <string name="retention_90_days">90 nap</string>
+    <string name="retention_120_days">120 nap</string>
     <string name="retention_period_label">Felvételek automatikus törlése</string>
     <string name="retention_time_label">Futtatás ekkor (az Ön helyi ideje)</string>
     <string name="retention_weekly">Hetente (7 nap)</string>

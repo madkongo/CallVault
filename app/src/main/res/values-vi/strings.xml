@@ -339,6 +339,9 @@
     <string name="retention_linked_label">Cùng thời hạn cho thiết bị và Drive</string>
     <string name="retention_local_label">Bản ghi âm trên thiết bị</string>
     <string name="retention_monthly">Hằng tháng (30 ngày)</string>
+    <string name="retention_60_days">60 ngày</string>
+    <string name="retention_90_days">90 ngày</string>
+    <string name="retention_120_days">120 ngày</string>
     <string name="retention_period_label">Tự động xóa bản ghi âm</string>
     <string name="retention_time_label">Chạy lúc (giờ địa phương của bạn)</string>
     <string name="retention_weekly">Hằng tuần (7 ngày)</string>

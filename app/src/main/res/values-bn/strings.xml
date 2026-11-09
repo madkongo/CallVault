@@ -62,6 +62,9 @@
     <string name="retention_weekly">সাপ্তাহিক (7 দিন)</string>
     <string name="retention_biweekly">দুই সপ্তাহ (14 দিন)</string>
     <string name="retention_monthly">মাসিক (30 দিন)</string>
+    <string name="retention_60_days">60 দিন</string>
+    <string name="retention_90_days">90 দিন</string>
+    <string name="retention_120_days">120 দিন</string>
     <string name="retention_linked_label">ডিভাইস ও Drive-এর জন্য একই সময়কাল</string>
     <string name="retention_period_label">রেকর্ডিং স্বয়ংক্রিয়ভাবে মুছুন</string>
     <string name="retention_local_label">ডিভাইসের রেকর্ডিং</string>

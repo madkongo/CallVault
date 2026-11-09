@@ -377,6 +377,9 @@
     <string name="retention_linked_label">نفس الفترة للجهاز و Drive</string>
     <string name="retention_local_label">تسجيلات الجهاز</string>
     <string name="retention_monthly">شهريًا (30 يومًا)</string>
+    <string name="retention_60_days">60 يومًا</string>
+    <string name="retention_90_days">90 يومًا</string>
+    <string name="retention_120_days">120 يومًا</string>
     <string name="retention_period_label">حذف التسجيلات تلقائيًا</string>
     <string name="retention_time_label">التشغيل في (وقتك المحلي)</string>
     <string name="retention_weekly">أسبوعيًا (7 أيام)</string>
