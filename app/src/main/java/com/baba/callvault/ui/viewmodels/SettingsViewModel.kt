@@ -86,6 +86,7 @@ interface SettingsActions {
 
     fun setWriteMetadataFileEnabled(enabled: Boolean)
     fun setShowSimLabelEnabled(enabled: Boolean)
+    fun setRecordStereoEnabled(enabled: Boolean)
     fun setHideRecordingsEnabled(enabled: Boolean)
     fun setWriteTranscriptSidecarEnabled(enabled: Boolean)
     fun exportSettingsJson(): String
@@ -400,6 +401,12 @@ class SettingsViewModel(application: Application) : AndroidViewModel(application
     /** Saves whether each phone call shows which SIM it used. */
     override fun setShowSimLabelEnabled(enabled: Boolean) {
         preferences.setShowSimLabelEnabled(enabled)
+        refresh()
+    }
+
+    /** Saves whether calls keep each side on its own channel (#74). Takes effect from the next call. */
+    override fun setRecordStereoEnabled(enabled: Boolean) {
+        preferences.setRecordStereo(enabled)
         refresh()
     }
 

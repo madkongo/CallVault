@@ -511,6 +511,14 @@ object AppLogger {
         writer.println("VoIP auto-start: ${p.yesNo { isVoipAutoStartEnabled() }}")
         writer.println("Offline recording (loopback): ${p.yesNo { isOfflineRecordingEnabled() }}")
         writer.println("Audio source: ${runCatching { p.getAudioSource() }.getOrDefault("?")}")
+        // Codec and rate were missing here entirely; #74's stereo choice changes both the file shape and
+        // the rate actually asked of the encoder, so a report has to say which was in force.
+        writer.println(
+            "Audio codec / bit rate / sides on own channels: " +
+                "${runCatching { p.getAudioCodec() }.getOrDefault("?")} / " +
+                "${runCatching { p.getAudioBitRate() }.getOrDefault(0)} bps / " +
+                p.yesNo { getRecordStereo() }
+        )
         writer.println("Ignore anonymous incoming: ${p.yesNo { isIgnoreAnonymousIncomingEnabled() }}")
         writer.println("Ignore cross-country in/out: " +
             "${p.yesNo { isIgnoreCrossCountryIncomingEnabled() }}/${p.yesNo { isIgnoreCrossCountryOutgoingEnabled() }}")

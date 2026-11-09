@@ -21,6 +21,16 @@ All notable changes to CallVault are documented here. The format is based on
   <!-- 🧪 VERIFYING 2026-11-09: built from mockup A (maintainer approved), compiles, not seen on a phone. To settle:
   star and unstar a row from the star and from the menu; check the card is no taller and the Starred filter
   follows. -->
+- **Stereo recording: each side of a call on its own channel** (#74). Settings ▸ Sound and file names ▸ Channels:
+  Mono or Stereo. With Stereo, you and the other person are saved on separate left and right channels instead of
+  being mixed together, for people who transcribe each side on their own (one voice per channel, so talking over
+  each other loses nothing). Mono stays the default. Files are about twice as large, because each side keeps the quality a mono file gets
+  today (Opus at least 48 kbps, AAC at least 64), and on headphones each side plays in one ear. Phone calls, app
+  calls and resilient recording; standalone and Shizuku. Where the phone can only record one channel (for example
+  over Bluetooth), the call is recorded mono as before. Thanks @jlp9989-sudo for the request.
+  <!-- ✅ VERIFIED 2026-11-08 (maintainer, OP9, Shizuku mode): one phone call + one WhatsApp call with Stereo on
+  "sounded just fine"; files measured 2-channel with the sides genuinely apart. 🧪 Still to check: switching back
+  to Mono gives a mono file. Headphone listening parked by the maintainer. -->
 
 ### Fixed
 
@@ -32,6 +42,11 @@ All notable changes to CallVault are documented here. The format is based on
   <!-- 🧪 VERIFYING 2026-11-08: SAI refused the v2-only build ("Signature Scheme v2: digest of contents did not
   verify") because SAI rewrites the APK to 0.apk. First fix queued for 2.5.1. To settle: install this build through
   SAI, which refused the v2-only one. -->
+- **Merging two calls that were recorded differently now says why in plain words** (for example, one with each
+  side on its own channel and one without) instead of showing codec details.
+- **With each side on its own channel, the details file (.json) gives the recording's real channel count and
+  sample rate**, read from the finished file (a call over Bluetooth can still come out mono). Unchanged otherwise.
+- **Debug reports now include the audio codec, bit rate and the new channel setting.**
 
 ## [2.5.0] — 2026-11-08
 

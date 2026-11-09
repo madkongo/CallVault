@@ -46,6 +46,12 @@ open class RecorderServiceImpl(private val apkPath: String) : IRecorderService.S
     /** Guards single-session recording (binder threads + worker may race). */
     private val recordingActive = AtomicBoolean(false)
 
+    /**
+     * Set by [setEncodeStereo] just before a start and taken by that start (#74). One-shot so a call the
+     * app did not ask about records mono — the default it has always had.
+     */
+    private val encodeStereoNext = AtomicBoolean(false)
+
     /** The active session, owned by the worker thread; null between recordings. */
     @Volatile private var session: RecordingSession? = null
 
@@ -100,6 +106,8 @@ open class RecorderServiceImpl(private val apkPath: String) : IRecorderService.S
         bitRate: Int,
         outFd: ParcelFileDescriptor?
     ) {
+        // Taken first, so even a start that is refused below leaves no stereo request behind.
+        val stereo = consumeEncodeStereo()
         if (outFd == null || source == null || codec == null) {
             AppLogger.e(TAG, "startRecording: null arg (source=$source codec=$codec fd=${outFd != null})")
             return
@@ -119,11 +127,11 @@ open class RecorderServiceImpl(private val apkPath: String) : IRecorderService.S
             return
         }
 
-        AppLogger.i(TAG, "startRecording source=$source codec=$codec bitRate=$bitRate")
+        AppLogger.i(TAG, "startRecording source=$source codec=$codec bitRate=$bitRate stereo=$stereo")
 
         // Heavy work (AudioRecord/encoder init or scrcpy launch) OFF the binder thread.
         workerHandler.post {
-            val active = runCatching { startWithFallback(sourceEnum, codecEnum, bitRate, outFd) }
+            val active = runCatching { startWithFallback(sourceEnum, codecEnum, bitRate, outFd, stereo) }
                 .onFailure { AppLogger.e(TAG, "startRecording failed (all paths): ${it.message}", it) }
                 .getOrNull()
             if (active != null) {
@@ -261,6 +269,7 @@ open class RecorderServiceImpl(private val apkPath: String) : IRecorderService.S
     }
 
     override fun startVoipRecording(codec: String?, bitRate: Int, outFd: ParcelFileDescriptor?): Boolean {
+        val stereo = consumeEncodeStereo() // first, for the same reason as startRecording
         if (outFd == null || codec == null) {
             AppLogger.e(TAG, "startVoipRecording: null arg (codec=$codec fd=${outFd != null})")
             return false
@@ -283,11 +292,11 @@ open class RecorderServiceImpl(private val apkPath: String) : IRecorderService.S
             runCatching { outFd.close() }
             return false
         }
-        AppLogger.i(TAG, "startVoipRecording codec=$codec bitRate=$bitRate")
+        AppLogger.i(TAG, "startVoipRecording codec=$codec bitRate=$bitRate stereo=$stereo")
         // Heavy setup off the binder thread, matching startRecording.
         workerHandler.post {
             val active = runCatching {
-                VoipCaptureSession(codecEnum, bitRate, outFd).also { it.start(); lastVoipSession = it }
+                VoipCaptureSession(codecEnum, bitRate, outFd, keepStereo = stereo).also { it.start(); lastVoipSession = it }
             }.onFailure { AppLogger.e(TAG, "startVoipRecording failed: ${it.message}", it) }.getOrNull()
             if (active != null) {
                 session = active
@@ -341,6 +350,13 @@ open class RecorderServiceImpl(private val apkPath: String) : IRecorderService.S
 
     override fun approveWirelessDebuggingNetwork(alwaysAllow: Boolean): String =
         WirelessDebuggingApproval.approveCurrentNetwork(alwaysAllow).name
+
+    override fun setEncodeStereo(stereo: Boolean) {
+        encodeStereoNext.set(stereo)
+    }
+
+    /** Takes the stereo request for the start that is about to run, leaving mono for any later one. */
+    private fun consumeEncodeStereo(): Boolean = encodeStereoNext.getAndSet(false)
 
     override fun hostUid(): Int = android.os.Process.myUid()
 
@@ -461,9 +477,10 @@ open class RecorderServiceImpl(private val apkPath: String) : IRecorderService.S
         codec: ScrcpyAudioCodec,
         bitRate: Int,
         outFd: ParcelFileDescriptor,
+        stereo: Boolean,
     ): RecordingSession {
         if (DirectAudioRecorderSession.supports(source, codec)) {
-            val direct = DirectAudioRecorderSession(source, codec, bitRate, outFd)
+            val direct = DirectAudioRecorderSession(source, codec, bitRate, outFd, keepStereo = stereo)
             if (runCatching { direct.start() }
                     .onFailure { AppLogger.w(TAG, "Direct capture unavailable, falling back to scrcpy: ${it.message}") }
                     .isSuccess
@@ -484,7 +501,10 @@ open class RecorderServiceImpl(private val apkPath: String) : IRecorderService.S
             )
         }
         val freshJar = ScrcpyJarExtractor.ensureScrcpyJar(apkPath) // scrcpy needs its extracted jar
-        val scrcpy = RecorderSession(source, codec, bitRate, outFd, freshJar)
+        // scrcpy always writes stereo. When the user asked for stereo, give it the stereo floor so the
+        // fallback is not the starved file #74 exists to avoid; otherwise leave it exactly as it was.
+        val scrcpyRate = StereoBitRate.requestedRate(codec, bitRate, if (stereo) StereoBitRate.STEREO else StereoBitRate.MONO)
+        val scrcpy = RecorderSession(source, codec, scrcpyRate, outFd, freshJar)
         scrcpy.start()
         AppLogger.i(TAG, "Recording via scrcpy — source=${source.cliKey} codec=${codec.cliKey}")
         return scrcpy

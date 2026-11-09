@@ -25,6 +25,7 @@ import com.baba.callvault.integrations.scrcpy.ScrcpyAudioMuxer
 import com.baba.callvault.integrations.scrcpy.ScrcpyAudioSource
 import com.baba.callvault.integrations.scrcpy.ScrcpyClient
 import com.baba.callvault.integrations.scrcpy.ScrcpyLauncher
+import com.baba.callvault.server.DaemonStereo
 import com.baba.callvault.server.DirectAudioRecorderSession
 import com.baba.callvault.server.RecorderConnection
 import com.baba.callvault.server.RecorderBackend
@@ -317,8 +318,11 @@ class AudioRecordingEngine {
         val codecEnum = ScrcpyAudioCodec.fromKey(preferences.getAudioCodec())
         val bitRate = preferences.getAudioBitRate().takeIf { it > 0 } ?: codecEnum.defaultBitRate
         val audioSourceEnum = ScrcpyAudioSource.fromKey(preferences.getAudioSource())
+        // #74: keep each side on its own channel. The user's mono rate travels as is; whoever encodes
+        // lifts it to the stereo floor only if it really encodes two channels.
+        val recordStereo = preferences.getRecordStereo()
 
-        AppLogger.i(TAG, "Starting recording pipeline: source=${audioSourceEnum.cliKey} codec=${codecEnum.cliKey} bitrate=$bitRate")
+        AppLogger.i(TAG, "Starting recording pipeline: source=${audioSourceEnum.cliKey} codec=${codecEnum.cliKey} bitrate=$bitRate stereo=$recordStereo")
 
         val startedAt = Date()
         currentStartedAt = startedAt
@@ -360,7 +364,7 @@ class AudioRecordingEngine {
                 mode = preferences.getPrivilegedMode(),
                 appGetsPaused = appGetsPaused,
             ) &&
-            startHandoffPipeline(context, audioSourceEnum, codecEnum, bitRate, isCancelled)
+            startHandoffPipeline(context, audioSourceEnum, codecEnum, bitRate, recordStereo, isCancelled)
         ) {
             handoffMode = true
             currentCodecEnum = codecEnum
@@ -371,7 +375,7 @@ class AudioRecordingEngine {
         // mechanism, not an option. Hand the SAF output fd to the daemon and let IT own scrcpy + muxing
         // over binder (no ADB at record time). Only if the daemon truly can't be brought up do we fall
         // through to the local ADB path below, so a call is never lost.
-        if (startDaemonPipeline(context, audioSourceEnum, codecEnum, bitRate, isCancelled)) {
+        if (startDaemonPipeline(context, audioSourceEnum, codecEnum, bitRate, recordStereo, isCancelled)) {
             daemonMode = true
             currentCodecEnum = codecEnum
             return
@@ -456,6 +460,7 @@ class AudioRecordingEngine {
         audioSourceEnum: ScrcpyAudioSource,
         codecEnum: ScrcpyAudioCodec,
         bitRate: Int,
+        recordStereo: Boolean,
         isCancelled: () -> Boolean
     ): Boolean {
         AppLogger.i(TAG, "Ensuring recorder daemon is running")
@@ -477,6 +482,7 @@ class AudioRecordingEngine {
             return false
         }
         return try {
+            DaemonStereo.request(service, recordStereo) { AppLogger.w(TAG, it) }
             service.startRecording(audioSourceEnum.cliKey, codecEnum.cliKey, bitRate, outputPfd)
             daemonRecording = true
             // Name the capture path the daemon is expected to take. This line used to assert "scrcpy"
@@ -525,6 +531,7 @@ class AudioRecordingEngine {
         audioSourceEnum: ScrcpyAudioSource,
         codecEnum: ScrcpyAudioCodec,
         bitRate: Int,
+        recordStereo: Boolean,
         isCancelled: () -> Boolean
     ): Boolean {
         AppLogger.i(TAG, "Ensuring recorder daemon is running (handoff)")
@@ -549,8 +556,8 @@ class AudioRecordingEngine {
             ?: run { AppLogger.w(TAG, "Handoff: no output fd; falling back"); return false }
 
         // voice-call is captured STEREO (uplink L / downlink R) then downmixed to mono; mono sources stay
-        // mono. The app always outputs a single mono track (matches prod), so downmixToMono is always on
-        // (a no-op for already-mono capture).
+        // mono. The file is mono unless the user asked to keep the sides apart (#74) — then the encoder
+        // keeps L/R at the stereo floor, or still records mono when it cannot.
         val preferredChannels = if (audioSourceEnum == ScrcpyAudioSource.VOICE_CALL) 2 else 1
         HandoffReceiver.begin(
             HandoffReceiver.Target(
@@ -558,7 +565,7 @@ class AudioRecordingEngine {
                 mime = codecEnum.mimeType,
                 muxerFormat = codecEnum.outputFormat,
                 bitRate = bitRate,
-                downmixToMono = true,
+                downmixToMono = !recordStereo,
             ),
             // How the receiver rebuilds a capture the platform tore down mid-call. It asks for exactly
             // what was asked for originally, so the replacement matches the recording already in

@@ -22,6 +22,33 @@ with `&&`/`||` chains and silently reported the opposite answer while this was b
 
 ---
 
+## 🧪 BUILT, VERIFYING — Stereo recording, Channels: Mono / Stereo (#74) — built 2026-11-08 on `feat/stereo-output-74` (off `main`, not merged)
+
+Dropdown beside codec and bit rate (maintainer 2026-11-08: "mono vs stereo in a dropdown with relevant settings",
+replacing the first build's on/off switch). Mono default; all three capture paths, both modes. Plan + decisions:
+`2026-11-08-stereo-output-74-plan.md`. ✅ Stereo on: maintainer's OP9 phone + WhatsApp calls "sounded just fine"
+(2026-11-08). **Still to settle:** set Channels back to Mono and make one call — the file must be mono.
+Headphone listening: parked by the maintainer.
+
+## 🔵 Resilient recording: a mid-call rebuild in another shape garbles the rest of the call — found 2026-11-08 (#74 work), not started
+
+`HandoffReceiver.superviseDrain` rebuilds a torn-down capture and drains it into the SAME pipe and encoder, but never
+checks the replacement's channel count / sample rate. Stereo capture rebuilt as mono (e.g. after a Bluetooth switch)
+is read as the wrong frames: the rest of the call comes out double-speed and garbled (recoverable by slowing it down).
+True with stereo output off. **Maintainer decision 2026-11-08:** do NOT ship a "stop cleanly" guard (it was built on
+the #74 branch as `4fe485c9` and removed) — do the proper fix on its own branch: keep recording across the rebuild in
+the right shape so the whole call is kept (e.g. a new pipe/segment per capture with its own channel count, or a
+converter). Area of the stuck-mic and 710 s→1 s bugs: test on a phone with a forced route change.
+
+## 🔵 scrcpy fallback with stereo OFF still writes stereo at the mono bit rate — found 2026-11-08 (#74 work), not started
+
+The scrcpy path always writes two channels. When stereo output is off it gets the user's mono rate, so each side
+gets half — the v1.4.4 starved-far-party shape. Only reached when the direct capture cannot start (rare since
+direct capture covers both modes). Fix options: hand scrcpy `audio_channels=1` if the bundled scrcpy-server
+supports it, or give it the stereo floor regardless. With stereo ON it already gets the floor (#74).
+
+---
+
 ## 🧪 BUILT, VERIFYING — One Share sheet: recording + transcript + summary together — requested + built 2026-11-06 (merged into integration/next 1acc113d; maintainer: "looks good")
 
 **Asked:** share a recording's transcript from Recordings (and the recording from Transcripts), and "share all" in

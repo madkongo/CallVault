@@ -557,6 +557,10 @@
     <string name="summary_requirements_toggle_label">نمایش پیش‌نیازها</string>
     <string name="settings_sim_label_label">نمایش سیم‌کارتی که هر تماس از آن استفاده کرد</string>
     <string name="settings_sim_label_desc">برای گوشی‌های دو سیم‌کارته: نامی را که به سیم‌کارت داده‌اید نشان می‌دهد، یا سیم 1 / سیم 2</string>
+    <string name="settings_audio_channels">کانال‌ها</string>
+    <string name="audio_channels_mono">مونو</string>
+    <string name="audio_channels_stereo">استریو</string>
+    <string name="settings_audio_channels_info">مونو هر دو طرف را در یک کانال ترکیب می‌کند. استریو صدای شما و طرف مقابل را در کانال‌های جداگانهٔ چپ و راست ذخیره می‌کند تا هر طرف جداگانه رونویسی شود. فایل‌های استریو حدوداً دو برابر حجم دارند و با هدفون هر طرف فقط در یک گوش شنیده می‌شود.</string>
     <string name="sim_label_word">سیم</string>
     <string name="settings_metadata_file_label">نوشتن یک فایل جزئیات</string>
     <string name="settings_needs_newer_android">به Android %1$s یا جدیدتر نیاز دارد — این گوشی Android %2$s را اجرا می‌کند.</string>

@@ -462,6 +462,10 @@
     <string name="summary_requirements_toggle_label">Hiện yêu cầu</string>
     <string name="settings_sim_label_label">Hiện SIM được dùng cho mỗi cuộc gọi</string>
     <string name="settings_sim_label_desc">Cho điện thoại hai SIM: hiện tên bạn đã đặt cho SIM, hoặc SIM 1 / SIM 2</string>
+    <string name="settings_audio_channels">Kênh</string>
+    <string name="audio_channels_mono">Mono</string>
+    <string name="audio_channels_stereo">Stereo</string>
+    <string name="settings_audio_channels_info">Mono trộn hai bên vào một kênh. Stereo lưu bạn và người kia trên hai kênh trái và phải riêng biệt, để chép lời từng bên riêng. Tệp stereo lớn gấp khoảng đôi, và khi dùng tai nghe mỗi bên chỉ nghe ở một tai.</string>
     <string name="sim_label_word">SIM</string>
     <string name="settings_metadata_file_label">Ghi tệp chi tiết</string>
     <string name="settings_needs_newer_android">Cần Android %1$s trở lên — điện thoại này chạy Android %2$s.</string>

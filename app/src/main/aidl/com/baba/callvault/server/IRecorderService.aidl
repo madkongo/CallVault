@@ -317,4 +317,15 @@ interface IRecorderService {
      * Allow button does. Returns a [NetworkApproval] name. Appended: ids are positional.
      */
     String approveWirelessDebuggingNetwork(boolean alwaysAllow);
+
+    /**
+     * Whether the NEXT startRecording / startVoipRecording keeps the two sides of the call on separate
+     * channels instead of mixing them to mono (#74). Consumed by that start: the app sets it before
+     * every start, and a start it was not set for records mono, so a stale value can never leak into a
+     * later call. The daemon still encodes mono when the capture or the encoder cannot do stereo.
+     *
+     * Appended last: transaction codes are positional. A daemon from an older APK does not have this
+     * method; the app tolerates that, and the recording is simply mono, as it always was.
+     */
+    void setEncodeStereo(boolean stereo);
 }

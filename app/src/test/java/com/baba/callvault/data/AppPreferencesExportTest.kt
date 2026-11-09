@@ -97,4 +97,13 @@ class AppPreferencesExportTest {
     fun `importing malformed json returns -1`() {
         assertEquals(-1, AppPreferences(context).importFromJson("this is not json"))
     }
+
+    @Test
+    fun `stereo output is off by default, round-trips, and is in the backup (#74)`() {
+        val prefs = AppPreferences(context)
+        assertFalse("stereo output is off by default", prefs.getRecordStereo())
+        prefs.setRecordStereo(true)
+        assertTrue("survives a fresh read", AppPreferences(context).getRecordStereo())
+        assertTrue("a user setting belongs in the export", prefs.exportToJson().contains("record_stereo"))
+    }
 }

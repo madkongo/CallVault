@@ -618,6 +618,10 @@
     <string name="summary_requirements_toggle_label">Εμφάνιση απαιτήσεων</string>
     <string name="settings_sim_label_label">Εμφάνιση της SIM που χρησιμοποίησε κάθε κλήση</string>
     <string name="settings_sim_label_desc">Για τηλέφωνα με δύο SIM: δείχνει το όνομα που δώσατε στη SIM ή SIM 1 / SIM 2</string>
+    <string name="settings_audio_channels">Κανάλια</string>
+    <string name="audio_channels_mono">Μονοφωνικό</string>
+    <string name="audio_channels_stereo">Στερεοφωνικό</string>
+    <string name="settings_audio_channels_info">Το μονοφωνικό αναμειγνύει τις δύο πλευρές σε ένα κανάλι. Το στερεοφωνικό αποθηκεύει εσάς και τον συνομιλητή σας σε ξεχωριστό αριστερό και δεξί κανάλι, για μεταγραφή κάθε πλευράς χωριστά. Τα στερεοφωνικά αρχεία είναι περίπου διπλάσια, και στα ακουστικά κάθε πλευρά ακούγεται σε ένα αυτί.</string>
     <string name="sim_label_word">SIM</string>
     <string name="settings_metadata_file_label">Εγγραφή αρχείου λεπτομερειών</string>
     <string name="settings_needs_newer_android">Χρειάζεται Android %1$s ή νεότερο — αυτό το τηλέφωνο εκτελεί Android %2$s.</string>

@@ -9,11 +9,16 @@
 package com.baba.callvault.system.interop
 
 import android.content.Context
+import android.media.MediaExtractor
+import android.media.MediaFormat
 import android.net.Uri
 import androidx.documentfile.provider.DocumentFile
 import com.baba.callvault.data.AppPreferences
+import com.baba.callvault.data.merge.MergeFormat
+import com.baba.callvault.data.merge.MergeFormat.optInt
 import com.baba.callvault.data.transcripts.SpeakerTurnsRepository
 import com.baba.callvault.integrations.scrcpy.ScrcpyAudioCodec
+import com.baba.callvault.server.StereoBitRate
 import com.baba.callvault.utils.AppLogger
 
 /**
@@ -87,9 +92,21 @@ object MetadataSidecar {
         val speakerTurns = SpeakerTurnsRepository.turnsFor(context, audioName).ifBlank { null }
 
         runCatching {
+            val folder = DocumentFile.fromTreeUri(context, folderUri)
+                ?: error("folder $folderUri could not be opened")
             val codec = ScrcpyAudioCodec.entries
                 .firstOrNull { it.cliKey == prefs.getAudioCodec() } ?: ScrcpyAudioCodec.OPUS
             val (type, container, audio) = formatFor(codec)
+            // With stereo output on (#74) the shape is read from the finished file: a call can come out
+            // mono (a Bluetooth route), and these users are the very people reading these files with
+            // their own tools. Unknown is written as null. With it off, the details are exactly what
+            // they always were — no folder listing or file read is added to every user's post-call work,
+            // which on a cloud-backed folder could stall transcription and the Drive hand-off.
+            val shape = if (prefs.getRecordStereo()) {
+                probeShape(context, folder, audioName)
+            } else {
+                AudioShape(channels = StereoBitRate.MONO, sampleRate = null)
+            }
 
             val json = BcrMetadata.build(
                 BcrMetadata.Input(
@@ -102,9 +119,10 @@ object MetadataSidecar {
                     mimeTypeContainer = container,
                     mimeTypeAudio = audio,
                     parameterType = "bitrate",
-                    parameter = prefs.getAudioBitRate(),
-                    sampleRate = null,
-                    channelCount = 1,
+                    // The rate asked of the encoder: floored only when stereo was asked for AND recorded.
+                    parameter = StereoBitRate.requestedRate(codec, prefs.getAudioBitRate(), shape.channels ?: StereoBitRate.MONO),
+                    sampleRate = shape.sampleRate,
+                    channelCount = shape.channels,
                     durationSecsEncoded = durationSecsEncoded,
                     speakerTurns = speakerTurns,
                     nearChannel = nearChannel,
@@ -112,8 +130,6 @@ object MetadataSidecar {
                 )
             )
 
-            val folder = DocumentFile.fromTreeUri(context, folderUri)
-                ?: error("folder $folderUri could not be opened")
             val name = sidecarNameFor(audioName)
             // Replace rather than accumulate "name (1).json": a re-run for the same recording should
             // correct the details file, not litter the user's folder with rivals to it.
@@ -126,4 +142,26 @@ object MetadataSidecar {
             AppLogger.w(TAG, "Could not write the details file for '$audioName': ${it.message}")
         }
     }
+
+    /** Channel count and sample rate as recorded; nulls when the file cannot be read. */
+    private data class AudioShape(val channels: Int?, val sampleRate: Int?)
+
+    private fun probeShape(context: Context, folder: DocumentFile, audioName: String): AudioShape =
+        runCatching {
+            val uri = folder.findFile(audioName)?.uri ?: return@runCatching AudioShape(null, null)
+            val extractor = MediaExtractor()
+            try {
+                extractor.setDataSource(context, uri, null)
+                val track = MergeFormat.audioTrackOf(extractor)
+                if (track < 0) return@runCatching AudioShape(null, null)
+                val f = extractor.getTrackFormat(track)
+                AudioShape(
+                    f.optInt(MediaFormat.KEY_CHANNEL_COUNT).takeIf { it > 0 },
+                    f.optInt(MediaFormat.KEY_SAMPLE_RATE).takeIf { it > 0 },
+                )
+            } finally {
+                extractor.release()
+            }
+        }.onFailure { AppLogger.w(TAG, "Could not read the recording's format for its details file: ${it.message}") }
+            .getOrDefault(AudioShape(null, null))
 }
