@@ -33,6 +33,16 @@ All notable changes to CallVault are documented here. The format is based on
 
 ### Fixed
 
+- **Samsung Wi-Fi Calling calls are recorded with both sides** (#45). On some Samsung phones (seen on a Galaxy Z
+  Fold2 with Android 17 / One UI 9), a call over Wi-Fi Calling recorded silence or only your side. CallVault now
+  notices such a call in its first seconds and switches to the capture it uses for app calls, which records both
+  sides. Ordinary mobile-network calls are recorded as before. If the switch cannot start or the other side is not
+  heard, a notification says so. Thanks @Benjamin-67 for the reports and the testing.
+  <!-- 🧪 VERIFYING: tester's Fold2 (SM-F976B, A17), build 2.5.0.1-wifi45: 2026-11-08 a Wi-Fi call auto-switched
+  0.7 s in, other side heard; WhatsApp unaffected. 2026-11-09 a call with Wi-Fi Calling OFF (bearer=LTE, force
+  switch off) stayed IN_CALL throughout and kept the normal capture (17 s recorded). The tester checks both sides
+  by ear; no Samsung phone of ours. Debug switch "Force Wi-Fi-call capture route" exists only with logging on. -->
+
 - **The APK installs through more installers.** The release was signed only with the newer APK signature, which some
   installers (SAI / Split APKs Installer, and some file managers) reject: they re-package the file as they install
   it, which breaks the whole-file signature, and with nothing to fall back on the install fails with "no
