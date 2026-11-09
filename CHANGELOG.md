@@ -9,18 +9,17 @@ All notable changes to CallVault are documented here. The format is based on
 
 - **Keep recordings for 60, 90 or 120 days.** Settings ▸ Cleaning up ▸ Auto-delete now offers these between 30 days and
   Keep forever, for the phone and for Drive. Asked in #78.
-  <!-- 🧪 VERIFYING 2026-11-09: unit-tested only. To settle: pick 60 days in Cleaning up, check the summary line reads
-  "60 days", and that the choice is still there after reopening Settings. -->
+  <!-- ✅ VERIFIED 2026-11-09 (maintainer, 2.5.1-rc1 on the OP9): 60 days offered, picked and kept after reopening
+  Settings. -->
 - **A "Recording started" message for app calls.** Phone calls already showed it; app calls (WhatsApp, Telegram and
   the rest) only said when the recording was saved. It follows the "Show toasts" and vibration settings.
-  <!-- 🧪 VERIFYING 2026-11-09: built, not tried on a phone. To settle: make one WhatsApp call and see the toast
-  when it starts. -->
+  <!-- ✅ VERIFIED 2026-11-09 (maintainer, 2.5.1-rc1 on the OP9): the toast showed when a WhatsApp call started. -->
 
 - **Star a recording from the list.** Each row has a star under its ⋮ button, and the ⋮ menu has Star / Remove
   star too. Until now a recording could only be starred from its own page. The card keeps its height.
-  <!-- 🧪 VERIFYING 2026-11-09: built from mockup A (maintainer approved), compiles, not seen on a phone. To settle:
-  star and unstar a row from the star and from the menu; check the card is no taller and the Starred filter
-  follows. -->
+  <!-- 🧪 VERIFYING 2026-11-09: rc1 on the OP9 (maintainer): star and menu work, but the card had grown a little at
+  the bottom (a size() modifier undid the no-height layout). Fixed in rc2; card padding looks even in a
+  screenshot. To settle: confirm on rc2 that the card is back to its old height. -->
 - **Stereo recording: each side of a call on its own channel** (#74). Settings ▸ Sound and file names ▸ Channels:
   Mono or Stereo. With Stereo, you and the other person are saved on separate left and right channels instead of
   being mixed together, for people who transcribe each side on their own (one voice per channel, so talking over

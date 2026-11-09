@@ -3178,8 +3178,8 @@ private fun EmptyRecordings() {
  *
  * It must not make the card taller (the maintainer's call on the mockup, 2026-11-09): the details line
  * is one line of small text, and a 40dp button in it pushed the two halves of the card apart. So it
- * keeps the full 40dp touch target but reports only the icon's height, overhanging into the gap above
- * and the card's padding below, the same trick the list seek bar uses.
+ * keeps the full 40dp touch target but reports no height at all, centred on the details line and
+ * overhanging into the gap above and the card's padding below, the same trick the list seek bar uses.
  *
  * Tinted explicitly in both states: an un-tinted M3 icon resolves to CoralDeep in this scheme.
  */
@@ -3187,13 +3187,14 @@ private fun EmptyRecordings() {
 private fun RowStarButton(isFavourite: Boolean, onToggle: () -> Unit) {
     IconButton(
         onClick = onToggle,
+        // The layout comes FIRST. After size() it changed nothing: size() then forced the reported
+        // height back up to 40dp, and the card grew by the difference (maintainer, rc1 on the OP9).
         modifier = Modifier
-            .size(ROW_ACTION_SIZE)
             .layout { measurable, constraints ->
-                val button = measurable.measure(constraints)
-                val taken = ROW_STAR_SPACE.roundToPx()
-                layout(button.width, taken) { button.place(0, (taken - button.height) / 2) }
+                val button = measurable.measure(constraints.copy(minHeight = 0))
+                layout(button.width, 0) { button.place(0, -button.height / 2) }
             }
+            .size(ROW_ACTION_SIZE)
     ) {
         Icon(
             imageVector = if (isFavourite) Icons.Filled.Star else Icons.Filled.StarBorder,
@@ -4086,9 +4087,6 @@ private fun InlinePlayer(
 private const val INLINE_PLAYER_ENABLED = false
 
 private val ROW_ACTION_SIZE = 40.dp
-
-/** The height the row's star claims in the details line: the icon's, not its touch target's. */
-private val ROW_STAR_SPACE = 20.dp
 
 /**
  * The play disc's diameter, shared with the source badge that sits under it.
