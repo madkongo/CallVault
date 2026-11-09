@@ -29,8 +29,9 @@ All notable changes to CallVault are documented here. The format is based on
   calls and resilient recording; standalone and Shizuku. Where the phone can only record one channel (for example
   over Bluetooth), the call is recorded mono as before. Thanks @jlp9989-sudo for the request.
   <!-- ✅ VERIFIED 2026-11-08 (maintainer, OP9, Shizuku mode): one phone call + one WhatsApp call with Stereo on
-  "sounded just fine"; files measured 2-channel with the sides genuinely apart. 🧪 Still to check: switching back
-  to Mono gives a mono file. Headphone listening parked by the maintainer. -->
+  "sounded just fine"; files measured 2-channel with the sides genuinely apart. Back to Mono measured 2026-11-09 on
+  2.5.1-rc1 (OP9): two WhatsApp calls, both 1 channel at ~24-29 kbps, log stereo=false encodeCh=1. Headphone
+  listening parked by the maintainer. -->
 
 ### Fixed
 
