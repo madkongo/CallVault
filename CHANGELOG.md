@@ -7,9 +7,9 @@ All notable changes to CallVault are documented here. The format is based on
 
 ### Added
 
-- **Keep recordings for 60, 90 or 120 days.** Settings ▸ Storage ▸ Auto-delete now offers these between 30 days and
+- **Keep recordings for 60, 90 or 120 days.** Settings ▸ Recordings ▸ Cleaning up ▸ Auto-delete now offers these between 30 days and
   Keep forever, for the phone and for Drive. Asked in #78.
-  <!-- 🧪 VERIFYING 2026-11-09: unit-tested only. To settle: pick 60 days in Storage, check the summary line reads
+  <!-- 🧪 VERIFYING 2026-11-09: unit-tested only. To settle: pick 60 days in Cleaning up, check the summary line reads
   "60 days", and that the choice is still there after reopening Settings. -->
 - **A "Recording started" message for app calls.** Phone calls already showed it; app calls (WhatsApp, Telegram and
   the rest) only said when the recording was saved. It follows the "Show toasts" and vibration settings.
