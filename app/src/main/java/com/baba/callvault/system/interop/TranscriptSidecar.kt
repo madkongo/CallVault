@@ -20,6 +20,8 @@ import com.baba.callvault.data.transcripts.export.TranscriptFormat
 import com.baba.callvault.data.waveform.RecordingExtrasRepository
 import com.baba.callvault.utils.AppLogger
 import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.yield
+import kotlin.coroutines.cancellation.CancellationException
 
 /**
  * Writes a recording's transcript + notes (+ summary) as a `.md` file beside the audio, in the user's
@@ -47,7 +49,9 @@ object TranscriptSidecar {
      * Writes the sidecar for [displayName], or removes it when there is nothing (no transcript, summary
      * or note) to write. No-op when the setting is off. Never throws.
      */
-    suspend fun writeOrClear(context: Context, displayName: String) {
+    suspend fun writeOrClear(context: Context, displayName: String, clearWhenEmpty: Boolean = true) {
+        // A sidecar's own name maps to itself, so replacing it would delete the file we mean to keep.
+        if (isSidecarName(displayName)) return
         val prefs = AppPreferences(context)
         if (!prefs.isWriteTranscriptSidecarEnabled()) return
         val folderUri = prefs.getRecordingFolderUri()
@@ -57,6 +61,9 @@ object TranscriptSidecar {
         }
         runCatching {
             val content = buildContent(context, displayName)
+            // The backfill passes clearWhenEmpty=false: with nothing to write there is nothing to replace,
+            // and the folder lookup below is a provider round trip per recording.
+            if (content.isNullOrBlank() && !clearWhenEmpty) return@runCatching
             val folder = DocumentFile.fromTreeUri(context, folderUri)
                 ?: error("folder $folderUri could not be opened")
             val name = sidecarNameFor(displayName)
@@ -72,9 +79,14 @@ object TranscriptSidecar {
                 ?: error("could not open $name for writing")
             AppLogger.i(TAG, "Wrote transcript sidecar '$name'.")
         }.onFailure {
+            // A cancelled job must stop, not log a warning per remaining recording.
+            if (it is CancellationException) throw it
             AppLogger.w(TAG, "Could not write the transcript sidecar for '$displayName': ${it.message}")
         }
     }
+
+    /** True for a name that is itself a sidecar, so the backfill never treats it as a recording. */
+    fun isSidecarName(name: String): Boolean = name.endsWith("." + FORMAT.extension, ignoreCase = true)
 
     /**
      * Best-effort pass to write a sidecar for every recording that has a transcript or a note — used when
@@ -83,9 +95,17 @@ object TranscriptSidecar {
     suspend fun backfillAll(context: Context) {
         if (!AppPreferences(context).isWriteTranscriptSidecarEnabled()) return
         runCatching {
-            RecordingCatalog.all(context).forEach { entry -> writeOrClear(context, entry.displayName) }
+            RecordingCatalog.all(context).forEach { entry ->
+                if (isSidecarName(entry.displayName)) return@forEach
+                writeOrClear(context, entry.displayName, clearWhenEmpty = false)
+                yield()
+            }
             AppLogger.i(TAG, "Transcript sidecar backfill finished.")
-        }.onFailure { AppLogger.w(TAG, "Transcript sidecar backfill failed: ${it.message}") }
+        }.onFailure {
+            // Let a cancelled pass reach the worker, so it is retried rather than reported as finished.
+            if (it is CancellationException) throw it
+            AppLogger.w(TAG, "Transcript sidecar backfill failed: ${it.message}")
+        }
     }
 
     /** The rendered transcript + notes (+ summary), or null when the recording has none of them. */
