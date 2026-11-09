@@ -267,9 +267,7 @@ class RecordingNotificationHelper(private val context: Context) {
                     showToast(context.getString(R.string.recording_toast_resumed))
                     vibrate(STATE_CHANGE_VIBRATION)
                 } else if (!newState.isPaused && !wasActive) {
-                    // Recording was started
-                    showToast(context.getString(R.string.recording_started))
-                    vibrate(STATE_CHANGE_VIBRATION)
+                    showRecordingStarted()
                 }
             }
             else -> {}
@@ -280,9 +278,10 @@ class RecordingNotificationHelper(private val context: Context) {
      * Shows a short Toast message on the UI thread.
      */
     /**
-     * Tells the user a recording just finished: the toast they know, and the same vibration.
+     * Tells the user a recording began or finished: the toast they know, and the same vibration.
      *
-     * Extracted so the **VoIP path can say it too**. It could not before — this feedback hung off
+     * Extracted so the **VoIP path can say it too** (the start half added 2026-11-09 at a user's
+     * request; before that an app call announced only its end). It could not before — this feedback hung off
      * [RecordingServiceState] transitions, which only [RecordingForegroundService] drives, and
      * `VoipRecordingCoordinator` deliberately does not go through that service. So an app call
      * recorded successfully and told the user nothing at all.
@@ -294,6 +293,11 @@ class RecordingNotificationHelper(private val context: Context) {
      * Both halves stay opt-out: [showToast] honours the toast preference and [vibrate] the vibration
      * one, so this adds no new way to be noisy.
      */
+    fun showRecordingStarted() {
+        showToast(context.getString(R.string.recording_started))
+        vibrate(STATE_CHANGE_VIBRATION)
+    }
+
     fun showRecordingEnded() {
         showToast(context.getString(R.string.recording_toast_ended))
         vibrate(STATE_CHANGE_VIBRATION)

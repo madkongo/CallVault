@@ -220,6 +220,8 @@ object VoipRecordingCoordinator {
         paused = false
         isSuspendedForCarrierCall = false
         VoipRecordingNotification.show(context, appLabel)
+        // The same "Recording started" toast and vibration a phone call gets; both follow their settings.
+        RecordingNotificationHelper(context).showRecordingStarted()
         AppLogger.i(TAG, "VoIP recording started -> $fileName")
         lateCaller = null
         lateCallerJob?.cancel()
