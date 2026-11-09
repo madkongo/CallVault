@@ -585,6 +585,34 @@ in the console will show it.
 Sources: developer.android.com/developer-verification (+ /guides/faq, /guides/android-developer-console,
 /guides/full-distribution, /guides/open-source-app-registration); support.google.com/googleplay/android-developer/answer/16761053.
 
+## 🔵 Signing key rotation: replace the "Android Debug" key without breaking updates — requested 2026-11-09, not started (target 2.6)
+
+**Why:** 4pda's admins (via EdmitriX, 2026-11-09) flagged the APK as debug-signed and asked for it to be stated in the
+topic header if it can't be changed. Every release is signed with this Mac's debug keystore
+(`CN=Android Debug`, SHA-256 `c875ffd0…285ea`, [[release-build-signing]]). The APK itself is a non-debuggable
+release build; only the certificate name says "debug". The same key also puts developer verification at risk
+(entry above). Short term the header note covers 4pda; this entry is the proper fix.
+
+**Approach (📐 from docs, nothing tried):** APK Signature Scheme v3 key rotation. Make a new release key, create a
+lineage where the old key vouches for the new one (`apksigner rotate`), and sign releases with both plus the lineage.
+Installed copies accept the update because the old key is in the lineage. minSdk 30 is above the API 28 rotation
+needs, so every phone that runs CallVault supports it.
+
+**What has to change:**
+- `system/updates/ApkVerifier.kt` pins `c875ffd0`. It must accept the new key (or the lineage) **in the release
+  before** the first rotated release, or the in-app updater refuses the rotated APK.
+- Release build signing in `app/build.gradle.kts` + the release checklist ([[release-version-bump]]).
+- Release notes / README: the published SHA-256 changes.
+
+**Open questions to settle first:**
+- Which certificate 4pda's checker (and other tools) show for a rotated APK: the v2 block may still carry the old key.
+- Do it together with developer verification so the key changes once; register the new key there.
+
+**Test plan:** on the OP9, install the current release, then install-over the rotated build by ADB **and** through
+the in-app updater; recordings, settings and the ADB pairing must survive. Then on the OP12 before publishing.
+
+🚨 Keep the old keystore forever; back up the new one off-machine before the first rotated release.
+
 ## 🔼 Higher-priority feature requests — agreed 2026-10-01, not started
 
 Maintainer-prioritised above the older backlog. Each needs a design pass before code (and, where it adds a
