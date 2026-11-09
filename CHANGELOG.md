@@ -17,9 +17,8 @@ All notable changes to CallVault are documented here. The format is based on
 
 - **Star a recording from the list.** Each row has a star under its ⋮ button, and the ⋮ menu has Star / Remove
   star too. Until now a recording could only be starred from its own page. The card keeps its height.
-  <!-- 🧪 VERIFYING 2026-11-09: rc1 on the OP9 (maintainer): star and menu work, but the card had grown a little at
-  the bottom (a size() modifier undid the no-height layout). Fixed in rc2; card padding looks even in a
-  screenshot. To settle: confirm on rc2 that the card is back to its old height. -->
+  <!-- ✅ VERIFIED 2026-11-09 (maintainer, 2.5.1-rc2 on the OP9): star and menu work; card height "looks perfect"
+  after the rc1 extra bottom space was fixed. -->
 - **Stereo recording: each side of a call on its own channel** (#74). Settings ▸ Sound and file names ▸ Channels:
   Mono or Stereo. With Stereo, you and the other person are saved on separate left and right channels instead of
   being mixed together, for people who transcribe each side on their own (one voice per channel, so talking over
