@@ -16,6 +16,12 @@ All notable changes to CallVault are documented here. The format is based on
   <!-- 🧪 VERIFYING 2026-11-09: built, not tried on a phone. To settle: make one WhatsApp call and see the toast
   when it starts. -->
 
+- **Star a recording from the list.** Each row has a star under its ⋮ button, and the ⋮ menu has Star / Remove
+  star too. Until now a recording could only be starred from its own page. The card keeps its height.
+  <!-- 🧪 VERIFYING 2026-11-09: built from mockup A (maintainer approved), compiles, not seen on a phone. To settle:
+  star and unstar a row from the star and from the menu; check the card is no taller and the Starred filter
+  follows. -->
+
 ### Fixed
 
 - **The APK installs through more installers.** The release was signed only with the newer APK signature, which some
