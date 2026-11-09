@@ -433,6 +433,9 @@
     <string name="retention_linked_label">دوره یکسان برای دستگاه و Drive</string>
     <string name="retention_local_label">فایل‌های ضبط‌شده دستگاه</string>
     <string name="retention_monthly">ماهانه (۳۰ روز)</string>
+    <string name="retention_60_days">۶۰ روز</string>
+    <string name="retention_90_days">۹۰ روز</string>
+    <string name="retention_120_days">۱۲۰ روز</string>
     <string name="retention_period_label">حذف خودکار فایل‌های ضبط‌شده</string>
     <string name="retention_time_label">اجرا در (زمان محلی شما)</string>
     <string name="retention_weekly">هفتگی (۷ روز)</string>

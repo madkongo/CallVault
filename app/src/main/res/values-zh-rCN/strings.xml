@@ -339,6 +339,9 @@
     <string name="retention_linked_label">设备与 Drive 使用相同周期</string>
     <string name="retention_local_label">设备录音</string>
     <string name="retention_monthly">每月（30 天）</string>
+    <string name="retention_60_days">60 天</string>
+    <string name="retention_90_days">90 天</string>
+    <string name="retention_120_days">120 天</string>
     <string name="retention_period_label">自动删除录音</string>
     <string name="retention_time_label">运行时间（你的本地时间）</string>
     <string name="retention_weekly">每周（7 天）</string>

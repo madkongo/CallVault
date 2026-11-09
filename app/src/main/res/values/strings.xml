@@ -117,6 +117,9 @@
     <string name="retention_weekly">Weekly (7 days)</string>
     <string name="retention_biweekly">Bi-weekly (14 days)</string>
     <string name="retention_monthly">Monthly (30 days)</string>
+    <string name="retention_60_days">60 days</string>
+    <string name="retention_90_days">90 days</string>
+    <string name="retention_120_days">120 days</string>
     <string name="retention_linked_label">Same period for device &amp; Drive</string>
     <string name="retention_period_label">Auto-delete recordings</string>
     <string name="retention_local_label">Device recordings</string>

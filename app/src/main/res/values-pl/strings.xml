@@ -342,6 +342,9 @@
     <string name="retention_linked_label">Ten sam okres dla urządzenia i Drive</string>
     <string name="retention_local_label">Nagrania na urządzeniu</string>
     <string name="retention_monthly">Co miesiąc (30 dni)</string>
+    <string name="retention_60_days">60 dni</string>
+    <string name="retention_90_days">90 dni</string>
+    <string name="retention_120_days">120 dni</string>
     <string name="retention_period_label">Automatyczne usuwanie nagrań</string>
     <string name="retention_time_label">Uruchom o (Twój czas lokalny)</string>
     <string name="retention_weekly">Co tydzień (7 dni)</string>

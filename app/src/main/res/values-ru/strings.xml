@@ -342,6 +342,9 @@
     <string name="retention_linked_label">Одинаковый срок для устройства и Drive</string>
     <string name="retention_local_label">Записи на устройстве</string>
     <string name="retention_monthly">Ежемесячно (30 дней)</string>
+    <string name="retention_60_days">60 дней</string>
+    <string name="retention_90_days">90 дней</string>
+    <string name="retention_120_days">120 дней</string>
     <string name="retention_period_label">Автоудаление записей</string>
     <string name="retention_time_label">Запускать в (ваше местное время)</string>
     <string name="retention_weekly">Еженедельно (7 дней)</string>

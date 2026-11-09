@@ -350,6 +350,9 @@
     <string name="retention_linked_label">Однаковий термін на пристрої та Drive</string>
     <string name="retention_local_label">Записи на пристрої</string>
     <string name="retention_monthly">30 днів</string>
+    <string name="retention_60_days">60 днів</string>
+    <string name="retention_90_days">90 днів</string>
+    <string name="retention_120_days">120 днів</string>
     <string name="retention_period_label">Автоматично видаляти записи</string>
     <string name="retention_time_label">Час запуску (місцевий)</string>
     <string name="retention_weekly">7 днів</string>

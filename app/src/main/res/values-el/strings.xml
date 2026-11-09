@@ -494,6 +494,9 @@
     <string name="retention_linked_label">Ίδια περίοδος για συσκευή &amp; Drive</string>
     <string name="retention_local_label">Εγγραφές στη συσκευή</string>
     <string name="retention_monthly">Μηνιαία (30 ημέρες)</string>
+    <string name="retention_60_days">60 ημέρες</string>
+    <string name="retention_90_days">90 ημέρες</string>
+    <string name="retention_120_days">120 ημέρες</string>
     <string name="retention_period_label">Αυτόματη διαγραφή εγγραφών</string>
     <string name="retention_time_label">Εκτέλεση στις (τοπική σας ώρα)</string>
     <string name="retention_weekly">Εβδομαδιαία (7 ημέρες)</string>
