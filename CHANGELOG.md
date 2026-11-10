@@ -135,7 +135,7 @@ All notable changes to CallVault are documented here. The format is based on
 - **Switching debug logging on no longer deletes the log you already have.** Turning the switch off and on again
   before sharing silently threw away everything captured so far, including the problem you were trying to report.
   Only "Delete logs" deletes now, and the log marks where each new session starts.
-  <!-- 🧪 VERIFYING 2026-11-08: unit tests only. Seen in a report from "the fbi" (S24 Ultra) that started 3 minutes
+  <!-- 🧪 VERIFYING 2026-11-08: unit tests only. Seen in a report from a tester (S24 Ultra) that started 3 minutes
   before export although logging had been on earlier. To settle: with logging on, use the app, switch logging off
   and on, and check the log viewer still shows the earlier lines. -->
 
@@ -158,7 +158,7 @@ All notable changes to CallVault are documented here. The format is based on
 - **No more crash when CallVault restarts its Shizuku recorder.** Restarting it (after an update, or for the fix above)
   could crash the app in Shizuku's own code.
   <!-- 🧪 VERIFYING 2026-11-07 on the OP9 (Shizuku): the restart ran after a call with a simulated held microphone, no
-  crash, recorder back in ~2 s; the update path ran with no crash. A real stuck microphone (EdmitriX) not yet seen
+  crash, recorder back in ~2 s; the update path ran with no crash. A real stuck microphone (a tester) not yet seen
   clearing. -->
 
 - **Tapping beside a page title no longer opens a setting.** In Settings (and on any page with a title bar), a tap on
@@ -363,7 +363,7 @@ All notable changes to CallVault are documented here. The format is based on
   recordings to Drive · N of M copied" while it runs, uploads the newest calls first, and "Stop for now" stops it
   between files; the next scheduled run copies the rest along with new calls. A file reaching Drive is always
   recorded as copied, even if the copy is stopped right then.
-  <!-- 🧪 VERIFYING: OP9 2026-11-03, real Google Drive (2.4.9-drive1): 19 copied newest first with the counter; 80-file run stopped after 32 of 80 between files (Stop signal sent as root: the button exists but sat below the fold of a crowded shade); next run copied exactly the remaining 48 + 1 new; Drive then held all 100, no .cvpart. To settle: Eugene (Honor BVL-N49) a cycle without the warning. -->
+  <!-- 🧪 VERIFYING: OP9 2026-11-03, real Google Drive (2.4.9-drive1): 19 copied newest first with the counter; 80-file run stopped after 32 of 80 between files (Stop signal sent as root: the button exists but sat below the fold of a crowded shade); next run copied exactly the remaining 48 + 1 new; Drive then held all 100, no .cvpart. To settle: a tester (Honor BVL-N49) a cycle without the warning. -->
 
 ## [2.4.8] — 2026-10-31
 
@@ -566,7 +566,7 @@ All notable changes to CallVault are documented here. The format is based on
   recording could stay down until Shizuku was removed. CallVault now uses the connection Shizuku set up
   instead of restarting it, leaves it open when you turn off-Wi-Fi recording off, and no longer takes
   Shizuku switching Wireless debugging off for your choice. Reported by a user.
-  <!-- 🧪 VERIFYING: unit tests only. Reporter voss, POCO X7 Pro HyperOS 3, reports (15)/(16) 2026-10-22.
+  <!-- 🧪 VERIFYING: unit tests only. Reporter: a tester, POCO X7 Pro HyperOS 3, reports (15)/(16) 2026-10-22.
        Shizuku's side (TCP mode port, who wrote WD off) is inferred, not in our logs. Needs: Shizuku fork with
        Watchdog + TCP mode, CallVault standalone + Offline on, reboot; expect "armed by another app, used as
        it is" and no AdbdChurn line. -->
@@ -661,7 +661,7 @@ the maintainer's real-use confirmation; ✅ = maintainer-confirmed.
 - **Contact names resolve at display time**, even when the file name has no number in it. A call saved as a
   number (contact-only file-name template, no contact at record time) now shows the contact's name once the
   contact is saved — and updates existing recordings — without re-recording. The file on disk keeps its
-  name. Reported by alex_812 (b).
+  name. Reported by a tester (b).
   <!-- 🧪 built + unit-tested + device-verified on OP9 2026-10-13; awaiting real-use confirmation. -->
 - **Transcript/details sidecars reach Drive in "Immediately" sync too.** Daily/Weekly already copied them
   via the folder sweep; Immediately uploaded the audio only, orphaning the `.json`/`.md`. Now the sidecars
