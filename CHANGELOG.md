@@ -56,7 +56,7 @@ All notable changes to CallVault are documented here. The format is based on
 - **With each side on its own channel, the details file (.json) gives the recording's real channel count and
   sample rate**, read from the finished file (a call over Bluetooth can still come out mono). Unchanged otherwise.
 - **Debug reports now include the audio codec, bit rate and the new channel setting.**
-- **"Save transcript and notes next to the recording" no longer overloads the phone with a large library** (#1). With
+- **"Save transcript and notes next to the recording" no longer overloads the phone with a large library**. With
   thousands of recordings, the first pass looked through the whole folder for every recording, listed its own
   `.md` files as if they were recordings, and after being stopped wrote a "Job was cancelled" line for every file,
   which filled the debug report. It now skips its own files and stops quietly when cancelled. Seen on an HONOR
