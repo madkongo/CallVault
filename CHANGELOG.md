@@ -66,7 +66,7 @@ All notable changes to CallVault are documented here. The format is based on
   link to the missed calls is a likely cause, not proven: the phone's battery manager stopped the app and nothing
   restarted the recorder until it was opened. Test build 2.5.1-sidecar1 sent to the reporter; waiting for feedback.
   Remaining: sidecar files still become catalog rows via Drive sync, and each write still scans the folder: BabApps
-  item 6. Eugene's 3,012-recording transcription backlog on battery is a second CPU load (ask about Only while
+  item 6. The reporter's 3,012-recording transcription backlog on battery is a second CPU load (ask about Only while
   charging). -->
 
 ## [2.5.0] — 2026-11-08
