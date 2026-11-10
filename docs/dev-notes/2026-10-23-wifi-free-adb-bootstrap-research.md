@@ -286,7 +286,7 @@ same lever (write the setting) wrapped in different timers; none is a new primit
 
 ### Our own candidate — OPT-IN "arm without Wi-Fi" for built-in mode, gated to devices where the race works
 This is the one lever worth productising, and it fits the maintainer's "using a bug is not a bad thing" stance.
-Our two liveliest Samsung testers — chaoscreater (Z Fold 7) and "the fbi" (S24 Ultra) — already rely on exactly
+Our two liveliest Samsung testers — chaoscreater (Z Fold 7) and a tester (S24 Ultra) — already rely on exactly
 this race through Shizuku-Next. The gap is that it only helps **Shizuku** users today; a user on CallVault's
 **built-in** mode gets nothing. We already hold `WRITE_SECURE_SETTINGS`, so we can run the same sequence ourselves.
 
@@ -300,7 +300,7 @@ Proposal (📐 design only, not built):
   from the field rather than claiming it works where it doesn't. Honest label: "experimental; may not work on
   your phone; Android may close this".
 - **Measurement first, before any of this.** We have only ever tested the race on OnePlus (dead). We need a real
-  Samsung run to confirm the window exists and find the cadence. Cheapest path: a short on-device script the fbi
+  Samsung run to confirm the window exists and find the cadence. Cheapest path: a short on-device script a tester
   or chaoscreater runs in **built-in** mode (not Shizuku), or a borrowed Samsung. Without that, this stays 📐.
 
 ### What is NOT worth re-trying (settled, don't re-derive)

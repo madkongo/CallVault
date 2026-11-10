@@ -1,6 +1,6 @@
 # Play from the Recordings list — ✅ VERIFIED 2026-10-26 (OP9: maintainer "ok it works", plain card "ok looks good")
 
-Requested by "shine n rise": listen through a run of calls without opening each one. Design: option C
+Requested by a tester: listen through a run of calls without opening each one. Design: option C
 ("play in place, drag to seek"), chosen by the maintainer on 2026-10-26 from the canvas
 https://claude.ai/artifact/NUiGzMV8e8Q5CseKYuMg1z
 

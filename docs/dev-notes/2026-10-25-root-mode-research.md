@@ -68,9 +68,9 @@ only gets VOICE_COMMUNICATION when flagged by that check.
   mix rule for us, or a Samsung-only gate applies. Under AOSP rules the shell (CAPTURE_AUDIO_OUTPUT) can
   already read such a mix, **so this may not be a root question at all.** Not found in decompiled Samsung
   framework/services; it is likely native, in the audio HAL or policy.
-- **Practical blocker:** US Snapdragon Samsungs (mac's S24) cannot unlock the bootloader, so cannot root.
+- **Practical blocker:** US Snapdragon Samsungs (a tester's S24) cannot unlock the bootloader, so cannot root.
 - **Workaround that needs no root:** Samsung's own recorder handles VoWiFi since One UI 6.1, and US models got
-  a recorder in One UI 7 (announced to both parties, per call). Ask mac to try it on a Wi-Fi call: it is both a
+  a recorder in One UI 7 (announced to both parties, per call). Ask the tester to try it on a Wi-Fi call: it is both a
   workaround and a diagnostic.
 - Diagnostic for a Samsung owner during a Wi-Fi call (shell, no root): `dumpsys media.audio_policy` (mixes,
   `crwfcmix` rules), `dumpsys audio` (who registered it), `dumpsys media.audio_flinger` (which tracks play to
@@ -84,4 +84,4 @@ only gets VOICE_COMMUNICATION when flagged by that check.
 2. **Step 2:** app calls on Android 11–13 with the helper as uid 0. Needs an A11–13 rooted test device; the
    OP9 is on 14. An AVD (API 33, `adb root`) can prove the policy registers and the capture runs.
 3. **Do not pursue:** audioserver hooking, WhatsApp hooking, root as a Samsung Wi-Fi Calling fix. Instead
-   ask mac for the dumpsys trio and a try of Samsung's own recorder.
+   ask the tester for the dumpsys trio and a try of Samsung's own recorder.
