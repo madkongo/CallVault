@@ -56,14 +56,18 @@ All notable changes to CallVault are documented here. The format is based on
 - **With each side on its own channel, the details file (.json) gives the recording's real channel count and
   sample rate**, read from the finished file (a call over Bluetooth can still come out mono). Unchanged otherwise.
 - **Debug reports now include the audio codec, bit rate and the new channel setting.**
-- **"Save transcript and notes next to the recording" no longer overloads the phone with a large library**. With
-  thousands of recordings, the first pass looked through the whole folder for every recording, listed its own
-  `.md` files as if they were recordings, and after being stopped wrote a "Job was cancelled" line for every file,
-  which filled the debug report. It now skips its own files and stops quietly when cancelled. Seen on an HONOR
-  BVL-N49 (Android 16) with about 3,200 recordings, where calls were missed after updating to 2.5.0.
+- **"Save transcript and notes next to the recording" is much lighter on a large library.** With thousands of
+  recordings, the first pass listed its own `.md` files as if they were recordings, searched the folder even for
+  recordings that had nothing to write, and after being stopped wrote a "Job was cancelled" line for every file,
+  which filled the debug report. It now skips its own `.md` files, does not search the folder for recordings with
+  nothing to write, and stops quietly when cancelled. Seen on an HONOR phone (Android 16) with about 3,200
+  recordings, where calls were missed after updating to 2.5.0.
   <!-- 🧪 VERIFYING: OnePlus 9 Pro and emulator: .md files written, no "Job was cancelled" flood, app stayed alive. The
   link to the missed calls is a likely cause, not proven: the phone's battery manager stopped the app and nothing
-  restarted the recorder until it was opened. Test build 2.5.1-sidecar1 sent to the reporter; waiting for feedback. -->
+  restarted the recorder until it was opened. Test build 2.5.1-sidecar1 sent to the reporter; waiting for feedback.
+  Remaining: sidecar files still become catalog rows via Drive sync, and each write still scans the folder: BabApps
+  item 6. Eugene's 3,012-recording transcription backlog on battery is a second CPU load (ask about Only while
+  charging). -->
 
 ## [2.5.0] — 2026-11-08
 
