@@ -322,7 +322,7 @@
     <string name="recording_notification_title">Đang ghi âm</string>
     <string name="recording_notification_waiting">Đang chuẩn bị ghi âm…</string>
     <string name="recording_standby_notification_title">Cuộc gọi đang diễn ra</string>
-    <string name="recording_started">Quá trình ghi lại tiếp tục.</string>
+    <string name="recording_started">Đã bắt đầu ghi âm.</string>
     <string name="recording_toast_ended">Cuộc gọi kết thúc. Quá trình ghi âm đã dừng.</string>
     <string name="recording_toast_paused">Đã tạm dừng ghi.</string>
     <string name="recording_toast_resumed">Quá trình ghi lại tiếp tục.</string>
