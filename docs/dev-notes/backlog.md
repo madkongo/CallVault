@@ -321,7 +321,7 @@ fix, vivo far-side toggle (hint + SUPPORT doc), Samsung Wi-Fi-calling doc (#45).
 ## 🔵 Samsung Wi-Fi Calling: detect it and warn, plus the stray app-call file at hang-up — agreed 2026-10-25, not started
 
 Raised by a tester's S24 report (SM-S921U, A17, 2.4.7): phone calls over Wi-Fi Calling record only his side. That is
-Samsung's #45 limit, not fixable. Detail: `2026-10-25-report-mac-samsung-s24-wifi-calling.md`.
+Samsung's #45 limit, not fixable. Detail: `2026-10-25-report-samsung-s24-wifi-calling.md`.
 
 1. **Detect Wi-Fi Calling and warn (Samsung behaviour, not brand).** 📐 The recorder runs as the shell, which
    holds READ_PRIVILEGED_PHONE_STATE and READ_PRECISE_PHONE_STATE (checked on the OP9 2026-10-25). So it can
