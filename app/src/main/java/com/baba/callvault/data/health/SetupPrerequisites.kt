@@ -127,7 +127,7 @@ object SetupPrerequisites {
         //
         // And only when it is the ONLY way back: the grant exists to switch Wireless debugging on. With
         // Wireless debugging already on, or an armed off-Wi-Fi listener, the recorder restarts without it —
-        // voarch's OnePlus refuses the grant outright and recorded all day on the listener, while Home told
+        // A tester's OnePlus refuses the grant outright and recorded all day on the listener, while Home told
         // him after every app kill to turn Wireless debugging on, which cannot restore a refused grant.
         if (!hasSecureSettings && !daemonConnected && !canRelaunchWithoutGrant) return Prerequisite.SECURE_SETTINGS_GRANT
         return null

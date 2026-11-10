@@ -16,7 +16,7 @@ import org.junit.Test
 /**
  * Saving the part of a call that was recorded before the phone killed CallVault.
  *
- * voarch (OnePlus, 2026-09-28): the app was killed 13 minutes into a call, the recording died with it, and
+ * A tester (OnePlus, 2026-09-28): the app was killed 13 minutes into a call, the recording died with it, and
  * the staged file sat in private storage where nobody could reach it. The rescue must never touch a
  * recording that is still being made, and must never delete anything that holds audio.
  */
@@ -43,7 +43,7 @@ class CutOffRescueTest {
 
     @Test
     fun nothing_is_touched_while_a_call_is_up() {
-        // The recorder host can still be writing the file after the app died — that is how voarch's app
+        // The recorder host can still be writing the file after the app died — that is how a tester's app
         // restarted at 12:39 while his call ran on to 12:45.
         assertEquals(RescueDecision.WAIT, decide(callActive = true))
     }
@@ -76,7 +76,7 @@ class CutOffRescueTest {
 
 
     // Which call the rescued recording belongs to, so the "call was not recorded" warning for it can be
-    // replaced by the truth. voarch: call-log start 12:26:04, recording started 12:26:07, cut at 12:39.
+    // replaced by the truth. A tester: call-log start 12:26:04, recording started 12:26:07, cut at 12:39.
 
     private val minute = 60_000L
     private val callStart = 1_000_000_000L

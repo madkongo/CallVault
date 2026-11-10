@@ -18,7 +18,7 @@ import org.junit.Test
  * It exists so a contact-only file-name template can still resolve names at display time: when no
  * contact was saved at record time, the formatter writes the NUMBER into the contact slot, and the
  * list has no parsed number to look up from. Reading that slot as a number — but only when it clearly
- * is one — lets a contact saved later show its name without re-recording (alex_812 (b)).
+ * is one — lets a contact saved later show its name without re-recording (a tester's report (b)).
  *
  * The cost of a false positive is sending a real name to PhoneLookup, so the test leans on names
  * never being mistaken for numbers.

@@ -17,7 +17,7 @@ import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Test
 
-/** The stray 1 s `_voip` file at the end of a Samsung Wi-Fi call (#45, mac's report). */
+/** The stray 1 s `_voip` file at the end of a Samsung Wi-Fi call (#45, a tester's report). */
 class VoipStrayStartPolicyTest {
 
     private val comm = AudioManager.MODE_IN_COMMUNICATION

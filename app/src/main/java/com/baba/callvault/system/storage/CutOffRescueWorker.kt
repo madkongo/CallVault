@@ -29,7 +29,7 @@ import java.util.concurrent.TimeUnit
  * Saves the part of a call that was recorded before the phone killed CallVault (backlog #4 + #5).
  *
  * A recording is staged in private storage and published only when the call ends. If the app process dies
- * mid-call, the publish never happens: voarch's OnePlus killed CallVault 13 minutes into a call on
+ * mid-call, the publish never happens: a tester's OnePlus killed CallVault 13 minutes into a call on
  * 2026-09-28 and the audio sat where he could not reach it, with no word that anything was lost.
  *
  * Runs [DELAY_MS] after the app starts and after every call ends — the app can be restarted *during* the

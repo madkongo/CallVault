@@ -17,7 +17,7 @@ import org.junit.Test
 /**
  * Which loopback port to use when adbd is already listening in tcp mode.
  *
- * voss, POCO X7 Pro, 2026-10-22: Shizuku's watchdog with TCP mode moved adbd to its own port. CallVault only
+ * A tester, POCO X7 Pro, 2026-10-22: Shizuku's watchdog with TCP mode moved adbd to its own port. CallVault only
  * accepted its own port, so it re-armed, which restarted adbd and stopped Shizuku, whose watchdog moved adbd
  * back. Recording stayed down until Shizuku was uninstalled.
  */

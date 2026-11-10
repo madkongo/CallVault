@@ -1109,7 +1109,7 @@ fun HomeScreen(
             statusCards = {
                 Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
                     // When the phone itself refuses the grant (OnePlus/OPPO/realme, Xiaomi), turning Wireless
-                    // debugging on cannot restore it — voarch did it twice. Name the phone's own switch instead,
+                    // debugging on cannot restore it — a tester did it twice. Name the phone's own switch instead,
                     // and open Developer options where it lives (backlog #6).
                     val grantBlockedBy by produceState<ShellGrantGate.OemGate?>(null, uiState.status) {
                         value = if (uiState.status != HomeViewModel.HomeStatus.UPDATE_REGRANT_NEEDED) null else withContext(Dispatchers.IO) {

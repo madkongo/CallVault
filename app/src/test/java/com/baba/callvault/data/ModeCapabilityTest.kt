@@ -82,14 +82,14 @@ class ModeCapabilityTest {
 
     @Test
     fun app_calls_need_android_14() {
-        // Before 14 the shell has no CAPTURE_VOICE_COMMUNICATION_OUTPUT: coonrw's A12 and #42's A13 failed.
+        // Before 14 the shell has no CAPTURE_VOICE_COMMUNICATION_OUTPUT: a tester's A12 and #42's A13 failed.
         assertFalse(ModeCapability.VOIP_RECORDING.isAvailableOn(33))
         assertTrue(ModeCapability.VOIP_RECORDING.isAvailableOn(34))
     }
 
     @Test
     fun resilient_recording_needs_android_13() {
-        // Captured 0 bytes on coonrw's Android 12; worked on Android 13 and newer.
+        // Captured 0 bytes on a tester's Android 12; worked on Android 13 and newer.
         assertFalse(ModeCapability.RESILIENT_RECORDING.isAvailableOn(32))
         assertTrue(ModeCapability.RESILIENT_RECORDING.isAvailableOn(33))
     }

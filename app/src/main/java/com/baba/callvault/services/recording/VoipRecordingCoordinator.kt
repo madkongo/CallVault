@@ -503,7 +503,7 @@ object VoipRecordingCoordinator {
      *   since one excuses the miss and the other is precisely the failure worth chasing.
      */
     private fun reportMissed(context: Context, messageRes: Int, prerequisite: Prerequisite?) {
-        // The user turned recording off on purpose (foxcam's master switch): a call they chose not to
+        // The user turned recording off on purpose (a tester's master switch): a call they chose not to
         // record is not a miss to warn about — neither the notification nor the status-card gap. Matches
         // the carrier sweep's master-switch gate in HomeViewModel.sweepSetupHealth.
         if (!AppPreferences(context).getRecordingState().isRecordingAllowed) {
