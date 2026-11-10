@@ -131,6 +131,16 @@
     <string name="merge_note_will_keep">Les autres appels sont également conservés sur le téléphone.</string>
     <string name="home_scroll_to_top">Haut</string>
     <string name="home_whatsnew_full_notes">Notes de version complètes</string>
+    <string name="whatsnew_251_title">Conservation plus longue, enregistrement stéréo et appels Wi-Fi Samsung</string>
+    <string-array name="whatsnew_251_items">
+        <item>La suppression automatique peut désormais garder les enregistrements 60, 90 ou 120 jours</item>
+        <item>Les appels d’applications (WhatsApp, Telegram et les autres) affichent maintenant « L’enregistrement a commencé », comme les appels téléphoniques</item>
+        <item>Mettez un enregistrement en favori d’une étoile directement depuis la liste</item>
+        <item>Enregistrement stéréo : chaque côté sur son propre canal (Réglages ▸ Son et noms de fichiers ▸ Canaux). Mono reste le choix par défaut</item>
+        <item>Téléphones Samsung : les appels en Wi-Fi Calling sont enregistrés des deux côtés</item>
+        <item>« Enregistrer la transcription et les notes à côté de l’enregistrement » est bien plus léger sur une grande bibliothèque</item>
+        <item>L’application s’installe maintenant avec davantage d’installateurs</item>
+    </string-array>
     <string name="whatsnew_250_title">Garder ou supprimer après l’appel, et partager ce qu’il vous faut</string>
     <string-array name="whatsnew_250_items">
         <item>Garder ou supprimer : CallVault peut demander après chaque appel s’il faut garder l’enregistrement (Paramètres ▸ Enregistrement)</item>

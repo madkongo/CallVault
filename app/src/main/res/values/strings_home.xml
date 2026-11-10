@@ -152,6 +152,16 @@
     <string name="merge_note_will_keep">The other calls are kept on the phone as well.</string>
     <string name="home_scroll_to_top">Top</string>
     <string name="home_whatsnew_full_notes">Full release notes</string>
+    <string name="whatsnew_251_title">Longer keep times, stereo recording and Samsung Wi-Fi Calling</string>
+    <string-array name="whatsnew_251_items">
+        <item>Auto-delete can now keep recordings for 60, 90 or 120 days</item>
+        <item>App calls (WhatsApp, Telegram and the rest) now show \"Recording started\", like phone calls</item>
+        <item>Star a recording right from the list</item>
+        <item>Stereo recording: each side on its own channel (Settings ▸ Sound and file names ▸ Channels). Mono stays the default</item>
+        <item>Samsung phones: calls over Wi-Fi Calling are recorded with both sides</item>
+        <item>\"Save transcript and notes next to the recording\" is much lighter on a large library</item>
+        <item>The app now installs through more installers</item>
+    </string-array>
     <string name="whatsnew_250_title">Keep or delete after a call, and share what you need</string>
     <string-array name="whatsnew_250_items">
         <item>Keep or delete: CallVault can ask after each call whether to keep the recording (Settings ▸ Recording)</item>

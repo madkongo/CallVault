@@ -130,6 +130,16 @@
     <string name="merge_note_will_keep">其余通话也会保留在手机上。</string>
     <string name="home_scroll_to_top">回到顶部</string>
     <string name="home_whatsnew_full_notes">完整发行说明</string>
+    <string name="whatsnew_251_title">保留更久、立体声录音，以及三星 Wi-Fi 通话</string>
+    <string-array name="whatsnew_251_items">
+        <item>自动删除现在可以将录音保留 60、90 或 120 天</item>
+        <item>应用通话（WhatsApp、Telegram 等）现在也会像电话一样显示“已开始录音”</item>
+        <item>直接在列表中给录音加星标</item>
+        <item>立体声录音：双方各占一个声道（设置 ▸ 声音和文件名 ▸ 声道）。默认仍为单声道</item>
+        <item>三星手机：通过 Wi-Fi 通话的电话会录下双方的声音</item>
+        <item>“在录音旁保存转写和笔记”在大型资料库上轻快得多</item>
+        <item>应用现在可以通过更多安装器安装</item>
+    </string-array>
     <string name="whatsnew_250_title">通话结束后保留或删除，按需分享</string>
     <string-array name="whatsnew_250_items">
         <item>保留或删除：每次通话后 CallVault 可以询问是否保留录音（设置 ▸ 录音）</item>
