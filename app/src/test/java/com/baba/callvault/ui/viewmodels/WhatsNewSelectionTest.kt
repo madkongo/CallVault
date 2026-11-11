@@ -8,6 +8,7 @@
 
 package com.baba.callvault.ui.viewmodels
 
+import com.baba.callvault.BuildConfig
 import com.baba.callvault.ui.common.ReleaseHighlights
 import com.baba.callvault.ui.viewmodels.HomeViewModel.Companion.isWhatsNewDue
 import org.junit.Assert.assertEquals
@@ -91,6 +92,16 @@ class ReleaseHighlightsTest {
     @Test
     fun `labels every entry with a version`() {
         assertTrue(ReleaseHighlights.recent().all { it.version.isNotBlank() })
+    }
+
+    /**
+     * The 2.2.0 hole: the version was bumped without a card, so users saw the previous release's note as
+     * news. Compared on the base version, so a test build such as 2.5.1-rc4 still has to match 2.5.1.
+     */
+    @Test
+    fun `newest card is for the version being built`() {
+        val base = BuildConfig.VERSION_NAME.substringBefore('-')
+        assertEquals(base, ReleaseHighlights.recent().first().version)
     }
 
     @Test

@@ -51,6 +51,10 @@ All notable changes to CallVault are documented here. The format is based on
   <!-- 🧪 VERIFYING 2026-11-08: SAI refused the v2-only build ("Signature Scheme v2: digest of contents did not
   verify") because SAI rewrites the APK to 0.apk. First fix queued for 2.5.1. To settle: install this build through
   SAI, which refused the v2-only one. -->
+- **After updating to 2.5.1, the "What's new" note describes this release** (in all 16 languages) instead of showing
+  the 2.5.0 note again.
+  <!-- 🧪 VERIFYING: seen on the OnePlus 9 Pro (2.5.1 card, first 6 items readable). To settle: open the app after
+  updating and read the note; a native speaker checks their language. -->
 - **Merging two calls that were recorded differently now says why in plain words** (for example, one with each
   side on its own channel and one without) instead of showing codec details.
 - **With each side on its own channel, the details file (.json) gives the recording's real channel count and

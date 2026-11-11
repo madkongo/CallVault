@@ -130,6 +130,16 @@
     <string name="merge_note_will_keep">A többi hívás is a telefonon marad.</string>
     <string name="home_scroll_to_top">Az elejére</string>
     <string name="home_whatsnew_full_notes">Teljes kiadási jegyzék</string>
+    <string name="whatsnew_251_title">Hosszabb megőrzés, sztereó felvétel és Samsung Wi-Fi-hívás</string>
+    <string-array name="whatsnew_251_items">
+        <item>Az automatikus törlés mostantól 60, 90 vagy 120 napig is megőrizheti a felvételeket</item>
+        <item>Az alkalmazáshívások (WhatsApp, Telegram és mások) mostantól a telefonhívásokhoz hasonlóan kiírják: „A felvétel elindult”</item>
+        <item>Csillagozz egy felvételt közvetlenül a listából</item>
+        <item>Sztereó felvétel: mindkét oldal külön csatornán (Beállítások ▸ Hang és fájlnevek ▸ Csatornák). A mono marad az alapértelmezett</item>
+        <item>Samsung telefonok: a Wi-Fi-hívások mindkét oldallal rögzítődnek</item>
+        <item>A „Szöveg és jegyzetek mentése a felvétel mellé” nagy könyvtárnál sokkal könnyebb</item>
+        <item>Az alkalmazás mostantól több telepítőn keresztül is telepíthető</item>
+    </string-array>
     <string name="whatsnew_250_title">Hívás után megtartás vagy törlés, és megosztás, amire szükséged van</string>
     <string-array name="whatsnew_250_items">
         <item>Megtartás vagy törlés: a CallVault minden hívás után megkérdezheti, megtartsa-e a felvételt (Beállítások ▸ Felvétel)</item>

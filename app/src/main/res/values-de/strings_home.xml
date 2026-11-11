@@ -130,6 +130,16 @@
     <string name="merge_note_will_keep">Die anderen Anrufe bleiben ebenfalls auf dem Telefon.</string>
     <string name="home_scroll_to_top">Nach oben</string>
     <string name="home_whatsnew_full_notes">Vollständige Versionshinweise</string>
+    <string name="whatsnew_251_title">Längere Aufbewahrung, Stereo-Aufnahme und Samsung WLAN-Anrufe</string>
+    <string-array name="whatsnew_251_items">
+        <item>Automatisches Löschen kann Aufnahmen jetzt 60, 90 oder 120 Tage behalten</item>
+        <item>App-Anrufe (WhatsApp, Telegram und andere) zeigen jetzt wie Telefonanrufe „Aufnahme gestartet“</item>
+        <item>Aufnahmen direkt in der Liste mit einem Stern markieren</item>
+        <item>Stereo-Aufnahme: jede Seite auf einem eigenen Kanal (Einstellungen ▸ Ton und Dateinamen ▸ Kanäle). Mono bleibt Standard</item>
+        <item>Samsung-Handys: Anrufe über WLAN-Telefonie werden mit beiden Seiten aufgenommen</item>
+        <item>„Transkript und Notizen neben der Aufnahme speichern“ ist bei großen Bibliotheken deutlich leichter</item>
+        <item>Die App lässt sich jetzt über mehr Installer installieren</item>
+    </string-array>
     <string name="whatsnew_250_title">Nach dem Anruf behalten oder löschen – und teilen, was du brauchst</string>
     <string-array name="whatsnew_250_items">
         <item>Behalten oder löschen: CallVault kann nach jedem Anruf fragen, ob die Aufnahme bleiben soll (Einstellungen ▸ Aufnahme)</item>
