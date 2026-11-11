@@ -413,7 +413,7 @@ internal fun AboutSection(
 
         SettingsDivider()
 
-        // Optional "support development" link. Opens the Support dialog (Ko-fi, PayPal, and Boosty in East Europe); all open in the browser.
+        // Optional "support development" link. Opens the Support dialog (Ko-fi and PayPal); both open in the browser.
         NavigationRow(
             icon = Icons.Filled.Favorite,
             label = stringResource(R.string.settings_support_label),

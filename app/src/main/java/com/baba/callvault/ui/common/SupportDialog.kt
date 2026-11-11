@@ -8,7 +8,6 @@
 
 package com.baba.callvault.ui.common
 
-import androidx.appcompat.app.AppCompatDelegate
 import androidx.compose.foundation.layout.Box
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.DropdownMenu
@@ -23,18 +22,15 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import com.baba.callvault.R
-import com.baba.callvault.system.openBoosty
 import com.baba.callvault.system.openKofi
 import com.baba.callvault.system.openPayPal
-import android.content.res.Resources
 
 /**
  * Where to donate, asked once rather than assumed.
  *
  * Support used to open Ko-fi the moment it was tapped. The links are not interchangeable: Ko-fi's
  * card processing is unavailable or awkward in some countries, many people already hold a PayPal
- * balance, and in East Europe Boosty is the usual way to pay (see [supportOptions]). All of them open
- * in the browser — no payment SDK is in the app, and nothing about the user leaves the device.
+ * balance. Both open in the browser — no payment SDK is in the app, and nothing about the user leaves the device.
  *
  * One Donate button opens a short menu, so a fourth option never needs a wider row.
  *
@@ -48,13 +44,6 @@ import android.content.res.Resources
 fun SupportDialog(onDismiss: () -> Unit) {
     val context = LocalContext.current
     var menuOpen by remember { mutableStateOf(false) }
-    val options = remember {
-        val appLocales = AppCompatDelegate.getApplicationLocales()
-        supportOptions(
-            appLocale = if (appLocales.isEmpty) null else appLocales[0],
-            phoneLocale = Resources.getSystem().configuration.locales.get(0),
-        )
-    }
 
     AlertDialog(
         onDismissRequest = onDismiss,
@@ -66,12 +55,11 @@ fun SupportDialog(onDismiss: () -> Unit) {
                     Text(stringResource(R.string.support_donate))
                 }
                 DropdownMenu(expanded = menuOpen, onDismissRequest = { menuOpen = false }) {
-                    options.forEach { option ->
+                    SUPPORT_OPTIONS.forEach { option ->
                         val label = stringResource(
                             when (option) {
                                 SupportOption.KOFI -> R.string.support_kofi
                                 SupportOption.PAYPAL -> R.string.support_paypal
-                                SupportOption.BOOSTY -> R.string.support_boosty
                             }
                         )
                         DropdownMenuItem(
@@ -82,7 +70,6 @@ fun SupportDialog(onDismiss: () -> Unit) {
                                 when (option) {
                                     SupportOption.KOFI -> context.openKofi()
                                     SupportOption.PAYPAL -> context.openPayPal()
-                                    SupportOption.BOOSTY -> context.openBoosty()
                                 }
                             },
                         )
