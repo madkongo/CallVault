@@ -138,7 +138,7 @@
         <item>Nagrywanie stereo: każda strona na osobnym kanale (Ustawienia ▸ Dźwięk i nazwy plików ▸ Kanały). Domyślnie nadal mono</item>
         <item>Telefony Samsung: rozmowy przez połączenia Wi-Fi są nagrywane z obu stron</item>
         <item>„Zapisuj transkrypcję i notatki obok nagrania” jest znacznie lżejsze przy dużej bibliotece</item>
-        <item>Aplikację można teraz zainstalować przez więcej instalatorów</item>
+        <item>Naprawiono: błąd „no certificates” podczas instalacji przez niektóre instalatory (np. SAI)</item>
     </string-array>
     <string name="whatsnew_250_title">Zachowaj lub usuń po rozmowie i udostępniaj to, czego potrzebujesz</string>
     <string-array name="whatsnew_250_items">

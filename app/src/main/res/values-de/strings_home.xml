@@ -138,7 +138,7 @@
         <item>Stereo-Aufnahme: jede Seite auf einem eigenen Kanal (Einstellungen ▸ Ton und Dateinamen ▸ Kanäle). Mono bleibt Standard</item>
         <item>Samsung-Handys: Anrufe über WLAN-Telefonie werden mit beiden Seiten aufgenommen</item>
         <item>„Transkript und Notizen neben der Aufnahme speichern“ ist bei großen Bibliotheken deutlich leichter</item>
-        <item>Die App lässt sich jetzt über mehr Installer installieren</item>
+        <item>Behoben: Fehler „no certificates“ beim Installieren mit manchen Installern (z. B. SAI)</item>
     </string-array>
     <string name="whatsnew_250_title">Nach dem Anruf behalten oder löschen – und teilen, was du brauchst</string>
     <string-array name="whatsnew_250_items">

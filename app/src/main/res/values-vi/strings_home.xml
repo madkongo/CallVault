@@ -138,7 +138,7 @@
         <item>Ghi âm nổi (stereo): mỗi bên trên một kênh riêng (Cài đặt ▸ Âm thanh và tên tệp ▸ Kênh). Mặc định vẫn là mono</item>
         <item>Điện thoại Samsung: cuộc gọi qua Wi-Fi Calling được ghi cả hai bên</item>
         <item>\"Lưu bản chép lời và ghi chú cạnh bản ghi\" nhẹ hơn nhiều với thư viện lớn</item>
-        <item>Ứng dụng giờ cài được qua nhiều trình cài đặt hơn</item>
+        <item>Đã sửa: lỗi \"no certificates\" khi cài đặt bằng một số trình cài đặt (ví dụ: SAI)</item>
     </string-array>
     <string name="whatsnew_250_title">Giữ hoặc xóa sau cuộc gọi, và chia sẻ đúng thứ bạn cần</string>
     <string-array name="whatsnew_250_items">

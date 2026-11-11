@@ -138,7 +138,7 @@
         <item>Sztereó felvétel: mindkét oldal külön csatornán (Beállítások ▸ Hang és fájlnevek ▸ Csatornák). A mono marad az alapértelmezett</item>
         <item>Samsung telefonok: a Wi-Fi-hívások mindkét oldallal rögzítődnek</item>
         <item>A „Szöveg és jegyzetek mentése a felvétel mellé” nagy könyvtárnál sokkal könnyebb</item>
-        <item>Az alkalmazás mostantól több telepítőn keresztül is telepíthető</item>
+        <item>Javítva: „no certificates” hiba egyes telepítőkkel történő telepítéskor (pl. SAI)</item>
     </string-array>
     <string name="whatsnew_250_title">Hívás után megtartás vagy törlés, és megosztás, amire szükséged van</string>
     <string-array name="whatsnew_250_items">

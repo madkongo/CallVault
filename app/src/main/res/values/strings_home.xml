@@ -160,7 +160,7 @@
         <item>Stereo recording: each side on its own channel (Settings ▸ Sound and file names ▸ Channels). Mono stays the default</item>
         <item>Samsung phones: calls over Wi-Fi Calling are recorded with both sides</item>
         <item>\"Save transcript and notes next to the recording\" is much lighter on a large library</item>
-        <item>The app now installs through more installers</item>
+        <item>Fixed — \"no certificates\" error when installing with some installers (e.g. SAI)</item>
     </string-array>
     <string name="whatsnew_250_title">Keep or delete after a call, and share what you need</string>
     <string-array name="whatsnew_250_items">
