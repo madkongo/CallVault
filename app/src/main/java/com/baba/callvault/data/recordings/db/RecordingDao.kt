@@ -45,6 +45,10 @@ interface RecordingDao {
     @Query("SELECT * FROM recordings ORDER BY lastModified DESC, displayName DESC")
     suspend fun getAll(): List<RecordingEntry>
 
+    /** Names ending in a sidecar extension (BabApps item 6). LIKE is case-insensitive for ASCII. */
+    @Query("SELECT displayName FROM recordings WHERE displayName LIKE '%.md' OR displayName LIKE '%.json'")
+    suspend fun sidecarNames(): List<String>
+
     @Query("SELECT COUNT(*) FROM recordings")
     suspend fun count(): Int
 

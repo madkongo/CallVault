@@ -72,11 +72,34 @@ class SidecarRowsTest {
 
     @Test
     fun `only sidecar names are stale`() {
-        assertTrue(RecordingCatalog.isStaleSidecarRow("x.MD"))
-        assertTrue(RecordingCatalog.isStaleSidecarRow("x.json"))
-        assertFalse(RecordingCatalog.isStaleSidecarRow("x.ogg"))
-        assertFalse(RecordingCatalog.isStaleSidecarRow("x.m4a"))
+        assertTrue(RecordingCatalog.isSidecarFile("x.MD"))
+        assertTrue(RecordingCatalog.isSidecarFile("x.json"))
+        assertFalse(RecordingCatalog.isSidecarFile("x.ogg"))
+        assertFalse(RecordingCatalog.isSidecarFile("x.m4a"))
         // An unknown extension may be audio the folder scan took by MIME type: left alone.
-        assertFalse(RecordingCatalog.isStaleSidecarRow("x.bin"))
+        assertFalse(RecordingCatalog.isSidecarFile("x.bin"))
+    }
+
+    @Test
+    fun `a recording with an extension not on the audio list still gets its Drive stamp`() = runBlocking {
+        val odd = "20261110_101010.000+0200_in_[C:abcd].xyz"
+        try {
+            RecordingCatalog.recordLocal(context, odd, "content://local/odd".toUri(), 10L, 5L)
+            RecordingCatalog.markDrive(context, odd, "content://drive/odd".toUri(), 10L, deleteLocalAfter = false)
+            assertEquals("content://drive/odd", dao.findByName(odd)?.driveUri)
+            // and the cleanup leaves it alone
+            assertEquals(0, RecordingCatalog.removeStaleSidecarRows(context))
+            assertNotNull(dao.findByName(odd))
+        } finally {
+            dao.deleteByName(odd)
+        }
+    }
+
+    @Test
+    fun `cleanup also finds upper-case sidecar extensions`() = runBlocking {
+        val upper = "20261110_101010.000+0200_in_[C:abcd].MD"
+        dao.upsert(RecordingEntry(upper, driveUri = "content://drive/up"))
+        assertEquals(1, RecordingCatalog.removeStaleSidecarRows(context))
+        assertNull(dao.findByName(upper))
     }
 }
