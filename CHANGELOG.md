@@ -46,6 +46,13 @@ All notable changes to CallVault are documented here. The format is based on
   running as the shell user.
   <!-- 🧪 VERIFYING: with no Wi-Fi, make a call and check the microphone dot stays; then turn Wi-Fi on or wake the screen:
   the dot should go out within a few seconds. The cause of the dot after a normal call on this phone is still open. -->
+- **The recorder is brought up once at a time, and no longer kills its own launcher.** When several parts of the app
+  asked for the recorder at the same moment (a call, the keep-alive, app start), each ran its own "clear other
+  recorders" step, and that step could end the adb shell that had just launched the recorder. They now share one
+  bring-up. The debug report also carries always-on lines about who launched the recorder and what the microphone
+  and the shell processes looked like at the start of a call and if the capture is cut off (BabApps #95).
+  <!-- 🧪 VERIFYING: needs the Pixel 8 report from a cold start (force-stop, then a call): one "daemon launch" line,
+  no second "Clearing 1 other recorder process(es)", and whether "In use by Shell" still appears. -->
 - **Samsung Wi-Fi Calling calls are recorded with both sides** (#45). On some Samsung phones (seen on a Galaxy Z
   Fold2 with Android 17 / One UI 9), a call over Wi-Fi Calling recorded silence or only your side. CallVault now
   notices such a call in its first seconds and switches to the capture it uses for app calls, which records both

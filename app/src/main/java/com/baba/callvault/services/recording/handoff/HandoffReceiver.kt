@@ -57,6 +57,11 @@ object HandoffReceiver {
     /** Where the always-on line about an early end goes (the transport timeline); Context-less like the rest of this object. */
     @Volatile private var onEvent: ((String) -> Unit)? = null
 
+    /** Takes an always-on microphone snapshot with this label (BabApps #95); the engine supplies it. Runs off-thread. */
+    @Volatile private var onSnapshot: ((String) -> Unit)? = null
+
+    private fun snapshot(label: String) { runCatching { onSnapshot?.invoke(label) } }
+
     /** When the current capture began, for the completeness check in [stop]. */
     @Volatile private var captureStartedAtMs: Long = 0L
 
@@ -100,10 +105,16 @@ object HandoffReceiver {
         private set
 
     /** Engine sets the output target BEFORE calling `IRecorderService.startHandoff`, so the push finds it. */
-    fun begin(target: Target, requestRearm: (() -> Boolean)? = null, onEvent: ((String) -> Unit)? = null) {
+    fun begin(
+        target: Target,
+        requestRearm: (() -> Boolean)? = null,
+        onEvent: ((String) -> Unit)? = null,
+        onSnapshot: ((String) -> Unit)? = null,
+    ) {
         pending = target
         this.requestRearm = requestRearm
         this.onEvent = onEvent
+        this.onSnapshot = onSnapshot
         isLive = false
     }
 
@@ -199,6 +210,7 @@ object HandoffReceiver {
         held = binder
         cblk = cblkFd
         startCapture(target, cblkFdNum, geometry)
+        snapshot("capture open")
     }
 
     /** Ends the capture: flips the stop flag, waits for the encoder to finalise the container, releases refs. */
@@ -383,6 +395,7 @@ object HandoffReceiver {
             // Abnormal. Say so in the app's own log — the native side's identical message goes only to
             // logcat, whose ring rotates long before a user exports a report.
             AppLogger.e(T, "handoff drain ended EARLY after ${geometry.sampleRate}Hz capture: ${exit.label}")
+            if (exit == AudioHandoffNative.DrainExit.INVALIDATED) snapshot("track invalidated")
 
             val outcome = HandoffEarlyEnd.decide(code == null, rearms, MAX_REARMS, flag.getInt(0) != 0)
             if (outcome == HandoffEarlyEnd.Outcome.BUDGET_SPENT) {
@@ -437,6 +450,12 @@ object HandoffReceiver {
             if (oldHeld != null) {
                 val accepted = HeldRecordControl.stop(oldHeld)
                 AppLogger.i(T, "invalidated track stop() before rebuild: accepted=$accepted (finishes the mic app-op)")
+                // The op's state right after the stop and again 2 s later: does the stop finish it, or does it linger?
+                snapshot("invalidated track stopped (accepted=$accepted)")
+                Thread {
+                    runCatching { Thread.sleep(2_000) }
+                    snapshot("2 s after the invalidated track's stop")
+                }.apply { isDaemon = true; name = "cv-mic-diag-later"; priority = Thread.MIN_PRIORITY }.start()
             }
             runCatching { oldCblk?.close() }
             // The old BinderProxy still holds the native ref until it is collected — same reason

@@ -433,20 +433,44 @@ open class RecorderServiceImpl(private val apkPath: String) : IRecorderService.S
         // Measured on the OP9 across this work: an ADB daemon running in Shizuku mode, two sibling
         // user services, and a stale pair that survived an update, a switch and a restart.
         val me = android.os.Process.myPid()
-        val victims = PROCESS_PATTERNS
+        val matched = PROCESS_PATTERNS
             .flatMap { pattern -> pidsMatching(pattern) }
             .distinct()
             .filterNot { it == me }
+        // pgrep -f matches whole command lines, so it also finds the adb shell that LAUNCHED this host (BabApps #95).
+        // That shell is not a recorder: leave it alone and say so.
+        val (victims, launchers) = matched.partition { RecorderProcessFilter.isRecorderHost(readCmdline(it)) }
+        if (launchers.isNotEmpty()) {
+            AppLogger.i(TAG, "Not clearing ${launchers.size} launcher process(es) that only mention the recorder: ${launchers.map { describe(it) }} (I am $me)")
+        }
 
         if (victims.isEmpty()) {
             AppLogger.d(TAG, "No other recorder processes to clear")
             return
         }
-        AppLogger.i(TAG, "Clearing ${victims.size} other recorder process(es): $victims (I am $me)")
+        // Who launched the other one: its parent, its start time and its command line (BabApps #95).
+        AppLogger.i(TAG, "Clearing ${victims.size} other recorder process(es): ${victims.map { describe(it) }} (I am $me, parent ${parentOf(me)})")
         victims.forEach { pid ->
             runCatching { android.os.Process.killProcess(pid) }
                 .onFailure { AppLogger.w(TAG, "Could not kill $pid: ${it.message}") }
         }
+    }
+
+    private fun readCmdline(pid: Int): String? =
+        runCatching { java.io.File("/proc/$pid/cmdline").readText() }.getOrNull()
+
+    /** `/proc/<pid>/stat` fields after the ")" of the name: [0]=state, [1]=ppid, ... [19]=starttime (clock ticks). */
+    private fun statFields(pid: Int): List<String>? = runCatching {
+        java.io.File("/proc/$pid/stat").readText().substringAfterLast(')').trim().split(' ')
+    }.getOrNull()
+
+    private fun parentOf(pid: Int): Int? = statFields(pid)?.getOrNull(1)?.toIntOrNull()
+
+    /** `pid=123 ppid=45 start=<ticks since boot> argv=app_process / …` for the log. */
+    private fun describe(pid: Int): String {
+        val f = statFields(pid)
+        val argv = readCmdline(pid)?.replace('\u0000', ' ')?.trim()?.take(120) ?: "?"
+        return "pid=$pid ppid=${f?.getOrNull(1) ?: "?"} start=${f?.getOrNull(19) ?: "?"} argv=$argv"
     }
 
     /** Pids whose command line matches [pattern], excluding the pgrep we run to find them. */
