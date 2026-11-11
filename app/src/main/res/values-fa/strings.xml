@@ -621,8 +621,8 @@
     <string name="settings_summary_skip_rules_on">قوانین فعال رد کردن: %1$d</string>
     <string name="settings_summary_unavailable">اینجا در دسترس نیست</string>
     <string name="settings_support_label">حمایت از توسعه</string>
-    <string name="settings_support_supporting">Ko-fi را در مرورگر شما باز می‌کند</string>
-    <string name="settings_support_value">در Ko-fi برایم یک قهوه بخر</string>
+    <string name="settings_support_supporting">محل حمایت را انتخاب کنید؛ در مرورگر شما باز می‌شود</string>
+    <string name="settings_support_value">برایم یک قهوه بخر</string>
     <string name="settings_tap_to_select_folder">برای انتخاب پوشه بزنید...</string>
     <string name="settings_theme_mode">حالت پوسته</string>
     <string name="settings_theme_mode_dark">تیره</string>

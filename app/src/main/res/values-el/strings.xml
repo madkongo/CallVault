@@ -682,8 +682,8 @@
     <string name="settings_summary_skip_rules_on">Ενεργοί κανόνες παράλειψης: %1$d</string>
     <string name="settings_summary_unavailable">Δεν είναι διαθέσιμο εδώ</string>
     <string name="settings_support_label">Υποστήριξη ανάπτυξης</string>
-    <string name="settings_support_supporting">Ανοίγει το Ko-fi στο πρόγραμμα περιήγησής σας</string>
-    <string name="settings_support_value">Κεράστε μου έναν καφέ στο Ko-fi</string>
+    <string name="settings_support_supporting">Διαλέξτε πού να κάνετε δωρεά· ανοίγει στο πρόγραμμα περιήγησής σας</string>
+    <string name="settings_support_value">Κεράστε μου έναν καφέ</string>
     <string name="settings_tap_to_select_folder">Πατήστε για επιλογή φακέλου...</string>
     <string name="settings_theme_mode">Λειτουργία θέματος</string>
     <string name="settings_theme_mode_dark">Σκοτεινό</string>

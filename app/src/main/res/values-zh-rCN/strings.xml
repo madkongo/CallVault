@@ -526,8 +526,8 @@
     <string name="settings_summary_skip_rules_on">已启用的跳过规则：%1$d</string>
     <string name="settings_summary_unavailable">此处不可用</string>
     <string name="settings_support_label">支持开发</string>
-    <string name="settings_support_supporting">在浏览器中打开 Ko-fi</string>
-    <string name="settings_support_value">在 Ko-fi 上请我喝杯咖啡</string>
+    <string name="settings_support_supporting">选择捐赠方式，将在浏览器中打开</string>
+    <string name="settings_support_value">请我喝杯咖啡</string>
     <string name="settings_tap_to_select_folder">点我选择录音保存目录…</string>
     <string name="settings_theme_mode">主题样式</string>
     <string name="settings_theme_mode_dark">暗色主题</string>

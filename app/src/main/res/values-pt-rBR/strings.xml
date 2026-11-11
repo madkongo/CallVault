@@ -531,8 +531,8 @@
     <string name="settings_summary_skip_rules_on">Regras ativas: %1$d</string>
     <string name="settings_summary_unavailable">Indisponível aqui</string>
     <string name="settings_support_label">Apoiar o desenvolvimento</string>
-    <string name="settings_support_supporting">Abre o Ko-fi no seu navegador</string>
-    <string name="settings_support_value">Pague um café no Ko-fi</string>
+    <string name="settings_support_supporting">Escolha onde doar; abre no seu navegador</string>
+    <string name="settings_support_value">Pague um café</string>
     <string name="settings_tap_to_select_folder">Toque para escolher a pasta...</string>
     <string name="settings_theme_mode">Modo do tema</string>
     <string name="settings_theme_mode_dark">Escuro</string>

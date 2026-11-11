@@ -528,8 +528,8 @@
     <string name="settings_summary_skip_rules_on">Aktive Regeln: %1$d</string>
     <string name="settings_summary_unavailable">Hier nicht verfügbar</string>
     <string name="settings_support_label">Entwicklung unterstützen</string>
-    <string name="settings_support_supporting">Öffnet Ko-fi im Browser</string>
-    <string name="settings_support_value">Spendier mir einen Kaffee auf Ko-fi</string>
+    <string name="settings_support_supporting">Wähle, wohin du spendest; öffnet sich im Browser</string>
+    <string name="settings_support_value">Spendier mir einen Kaffee</string>
     <string name="settings_tap_to_select_folder">Tippen, um Ordner zu wählen...</string>
     <string name="settings_theme_mode">Design-Modus</string>
     <string name="settings_theme_mode_dark">Dunkel</string>

@@ -528,8 +528,8 @@
     <string name="settings_summary_skip_rules_on">Reglas de omisión activas: %1$d</string>
     <string name="settings_summary_unavailable">No disponible aquí</string>
     <string name="settings_support_label">Apoyar el desarrollo</string>
-    <string name="settings_support_supporting">Abre Ko-fi en tu navegador</string>
-    <string name="settings_support_value">Invítame a un café en Ko-fi</string>
+    <string name="settings_support_supporting">Elige dónde donar; se abre en tu navegador</string>
+    <string name="settings_support_value">Invítame a un café</string>
     <string name="settings_tap_to_select_folder">Toca para seleccionar la carpeta...</string>
     <string name="settings_theme_mode">Modo del tema</string>
     <string name="settings_theme_mode_dark">Oscuro</string>

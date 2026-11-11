@@ -532,8 +532,8 @@
     <string name="settings_summary_skip_rules_on">Aktywne reguły pomijania: %1$d</string>
     <string name="settings_summary_unavailable">Niedostępne tutaj</string>
     <string name="settings_support_label">Wesprzyj rozwój</string>
-    <string name="settings_support_supporting">Otwiera Ko-fi w przeglądarce</string>
-    <string name="settings_support_value">Postaw mi kawę na Ko-fi</string>
+    <string name="settings_support_supporting">Wybierz, gdzie wesprzeć; otwiera się w przeglądarce</string>
+    <string name="settings_support_value">Postaw mi kawę</string>
     <string name="settings_tap_to_select_folder">Dotknij, aby wybrać folder...</string>
     <string name="settings_theme_mode">Ustawienia motywu</string>
     <string name="settings_theme_mode_dark">Ciemny</string>

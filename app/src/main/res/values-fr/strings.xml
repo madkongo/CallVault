@@ -528,8 +528,8 @@
     <string name="settings_summary_skip_rules_on">Règles actives : %1$d</string>
     <string name="settings_summary_unavailable">Indisponible ici</string>
     <string name="settings_support_label">Soutenir le développement</string>
-    <string name="settings_support_supporting">Ouvre Ko-fi dans votre navigateur</string>
-    <string name="settings_support_value">Offrez-moi un café sur Ko-fi</string>
+    <string name="settings_support_supporting">Choisissez où donner ; s\'ouvre dans votre navigateur</string>
+    <string name="settings_support_value">Offrez-moi un café</string>
     <string name="settings_tap_to_select_folder">Appuyez pour sélectionner un dossier...</string>
     <string name="settings_theme_mode">Couleur du Thème</string>
     <string name="settings_theme_mode_dark">Sombre</string>

@@ -532,8 +532,8 @@
     <string name="settings_summary_skip_rules_on">Активных правил: %1$d</string>
     <string name="settings_summary_unavailable">Здесь недоступно</string>
     <string name="settings_support_label">Поддержать разработку</string>
-    <string name="settings_support_supporting">Откроет Ko-fi в браузере</string>
-    <string name="settings_support_value">Купить мне кофе на Ko-fi</string>
+    <string name="settings_support_supporting">Выберите, куда пожертвовать; откроется в браузере</string>
+    <string name="settings_support_value">Купить мне кофе</string>
     <string name="settings_tap_to_select_folder">Нажмите, чтобы выбрать папку...</string>
     <string name="settings_theme_mode">Тема</string>
     <string name="settings_theme_mode_dark">Тёмная</string>

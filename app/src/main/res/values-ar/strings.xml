@@ -569,8 +569,8 @@
     <string name="settings_summary_skip_rules_on">قواعد التخطي المفعّلة: %1$d</string>
     <string name="settings_summary_unavailable">غير متاح هنا</string>
     <string name="settings_support_label">دعم التطوير</string>
-    <string name="settings_support_supporting">يفتح Ko-fi في متصفحك</string>
-    <string name="settings_support_value">اشترِ لي قهوة على Ko-fi</string>
+    <string name="settings_support_supporting">اختر جهة التبرع؛ يفتح في متصفحك</string>
+    <string name="settings_support_value">اشترِ لي قهوة</string>
     <string name="settings_tap_to_select_folder">انقر لتحديد المجلد...</string>
     <string name="settings_theme_mode">وضع الثيم</string>
     <string name="settings_theme_mode_dark">داكن</string>

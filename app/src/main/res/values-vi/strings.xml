@@ -526,8 +526,8 @@
     <string name="settings_summary_skip_rules_on">Quy tắc bỏ qua đang bật: %1$d</string>
     <string name="settings_summary_unavailable">Không khả dụng ở đây</string>
     <string name="settings_support_label">Ủng hộ phát triển</string>
-    <string name="settings_support_supporting">Mở Ko-fi trong trình duyệt</string>
-    <string name="settings_support_value">Mời tôi một ly cà phê trên Ko-fi</string>
+    <string name="settings_support_supporting">Chọn nơi ủng hộ; mở trong trình duyệt</string>
+    <string name="settings_support_value">Mời tôi một ly cà phê</string>
     <string name="settings_tap_to_select_folder">Chạm để chọn thư mục...</string>
     <string name="settings_theme_mode">Chế độ chủ đề</string>
     <string name="settings_theme_mode_dark">Tối</string>
