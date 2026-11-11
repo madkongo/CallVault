@@ -77,6 +77,13 @@ object RecordingCatalog {
         // Not cancellable: by the time this runs the file IS in Drive. A worker stopped at this moment
         // ("markDrive failed: Job was cancelled", Honor BVL-N49, 2026-11-03) left the row looking unsynced,
         // which is the symptom the "not reaching Drive" warning counts. It is one small database write.
+        // The Drive sweep uploads sidecars too (.md transcripts, .json details; GitHub #49), but they are
+        // not recordings: a row for one shows up in retention, the health check and the library
+        // (BabApps item 6). The upload itself is untouched; only the catalog entry is skipped.
+        // Narrow on purpose: only a sidecar extension is skipped. A recording whose extension is not on the
+        // audio list (the folder scan also accepts audio by MIME type) must still get its Drive stamp, or
+        // the health check warns that recordings are not reaching Drive when they are.
+        if (isSidecarFile(displayName)) return@withContext
         runCatching {
             val dao = dao(context)
             val size = driveSizeBytes?.takeIf { it > 0L }
@@ -174,6 +181,35 @@ object RecordingCatalog {
         }.onFailure { AppLogger.w(TAG, "removeCopyByUri($uri) failed: ${it.message}") }
 
         TranscriptCascade.deleteFor(context, orphaned)
+    }
+
+    /** Extensions of the files CallVault writes beside a recording; never recordings themselves. */
+    private val SIDECAR_EXTENSIONS = setOf("md", "json")
+
+    /**
+     * Whether [displayName] is a sidecar file CallVault writes beside a recording (BabApps item 6).
+     * Deliberately narrow, a sidecar extension and nothing else: a recording with an unusual extension
+     * that the folder scan took for audio by its MIME type is never mistaken for one. Used both to keep
+     * [markDrive] from cataloguing sidecars and to clean up the rows older versions created.
+     */
+    internal fun isSidecarFile(displayName: String): Boolean =
+        displayName.substringAfterLast('.', "").lowercase() in SIDECAR_EXTENSIONS
+
+    /**
+     * One-time cleanup of the sidecar rows earlier versions created: removes them from the catalog only.
+     * No transcript cascade ([forgetName] semantics) and no file is touched; the sidecar stays in the
+     * folder and in Drive. Runs on every list load, so it asks the database only for names ending in a
+     * sidecar extension (a LIKE query) instead of reading the whole catalog a second time. Returns how
+     * many rows it removed.
+     */
+    suspend fun removeStaleSidecarRows(context: Context): Int = runCatching {
+        val dao = dao(context)
+        val stale = dao.sidecarNames().filter { isSidecarFile(it) }
+        stale.forEach { dao.deleteByName(it) }
+        if (stale.isNotEmpty()) AppLogger.i(TAG, "Removed ${stale.size} sidecar file(s) from the recordings catalog.")
+        stale.size
+    }.getOrElse {
+        AppLogger.w(TAG, "removeStaleSidecarRows failed: ${it.message}"); 0
     }
 
     /**

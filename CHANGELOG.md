@@ -81,6 +81,16 @@ All notable changes to CallVault are documented here. The format is based on
   Remaining: sidecar files still become catalog rows via Drive sync, and each write still scans the folder: BabApps
   item 6. The reporter's 3,012-recording transcription backlog on battery is a second CPU load (ask about Only while
   charging). -->
+- **Transcript and notes files no longer show up as recordings, and writing them is far faster on a big library.**
+  Drive sync was adding every `.md` (and `.json` details) file to the recordings list behind the scenes, where
+  auto-delete and the Drive check could see them; it no longer does, and the ones already added are removed from the
+  list (the files themselves stay in your folder and in Drive). The first pass of "Save transcript and notes next to
+  the recording" now looks through the folder once instead of once per recording (about 18 s each on a phone with
+  3,000 recordings). Seen on an HONOR phone (Android 16).
+  <!-- 🧪 VERIFYING: emulator/unit tests plus a real call on the OnePlus 9 Pro: recordings still sync to Drive and
+  appear in the library. To settle it: the reporter's 3,000-recording library on 2.5.1, no .md rows in the list and
+  the sidecar pass finishing. BabApps item 6. -->
+
 
 ## [2.5.0] — 2026-11-08
 
