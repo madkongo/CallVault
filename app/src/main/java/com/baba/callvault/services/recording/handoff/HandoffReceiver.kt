@@ -54,6 +54,9 @@ object HandoffReceiver {
      */
     @Volatile private var requestRearm: (() -> Boolean)? = null
 
+    /** Where the always-on line about an early end goes (the transport timeline); Context-less like the rest of this object. */
+    @Volatile private var onEvent: ((String) -> Unit)? = null
+
     /** When the current capture began, for the completeness check in [stop]. */
     @Volatile private var captureStartedAtMs: Long = 0L
 
@@ -97,9 +100,10 @@ object HandoffReceiver {
         private set
 
     /** Engine sets the output target BEFORE calling `IRecorderService.startHandoff`, so the push finds it. */
-    fun begin(target: Target, requestRearm: (() -> Boolean)? = null) {
+    fun begin(target: Target, requestRearm: (() -> Boolean)? = null, onEvent: ((String) -> Unit)? = null) {
         pending = target
         this.requestRearm = requestRearm
+        this.onEvent = onEvent
         isLive = false
     }
 
@@ -380,7 +384,8 @@ object HandoffReceiver {
             // logcat, whose ring rotates long before a user exports a report.
             AppLogger.e(T, "handoff drain ended EARLY after ${geometry.sampleRate}Hz capture: ${exit.label}")
 
-            if (code == null || rearms >= MAX_REARMS) {
+            val outcome = HandoffEarlyEnd.decide(code == null, rearms, MAX_REARMS, flag.getInt(0) != 0)
+            if (outcome == HandoffEarlyEnd.Outcome.BUDGET_SPENT) {
                 AppLogger.e(
                     T,
                     "not rebuilding the capture (attempts=$rearms/$MAX_REARMS): the recording ends " +
@@ -391,11 +396,12 @@ object HandoffReceiver {
                 // engine — for the rest of the call. That is how a 710-second call came back as 1.06
                 // seconds with nothing amiss on screen.
                 isLive = false
+                endHeldTrackNow(exit.label, outcome, rearms)
                 closePipe(writeFd)
                 return
             }
             // A stop that landed while we were between drains: not a failure, just the end.
-            if (flag.getInt(0) != 0) {
+            if (outcome == HandoffEarlyEnd.Outcome.STOP_REQUESTED) {
                 AppLogger.i(T, "stop requested during rebuild — ending normally")
                 closePipe(writeFd)
                 return
@@ -407,6 +413,7 @@ object HandoffReceiver {
             if (next == null) {
                 AppLogger.e(T, "capture rebuild failed — the recording ends here")
                 isLive = false
+                endHeldTrackNow(exit.label, HandoffEarlyEnd.Outcome.REBUILD_FAILED, rearms)
                 closePipe(writeFd)
                 return
             }
@@ -439,6 +446,27 @@ object HandoffReceiver {
             geometry = next.geometry
             AppLogger.i(T, "capture rebuilt (cblkFd=$cblkFdNum ch=${geometry.channels} rate=${geometry.sampleRate}) — recording continues")
         }
+    }
+
+    /**
+     * The recording has ended while the call is still up: stop the held track NOW, not at the end of the call.
+     *
+     * Left started, the track keeps the shell's RECORD_AUDIO app-op running — the green dot — for as long as the call
+     * lasts, and past it when the daemon is gone (Pixel 8, Android 17: capture ended after 3 s, op still running
+     * afterwards). Stopping an already-invalidated track may be refused; `accepted=` records which. The references are
+     * left for [releaseRefs] at the end of the call, which stops again harmlessly. Also writes the always-on line.
+     */
+    private fun endHeldTrackNow(exitLabel: String, outcome: HandoffEarlyEnd.Outcome, rearms: Int) {
+        val binder = held
+        val accepted = binder?.let { HeldRecordControl.stop(it) }
+        if (binder != null) {
+            AppLogger.i(T, "recording ended early: held track stop() accepted=$accepted (finishes the mic app-op)")
+        }
+        val startedAt = captureStartedAtMs
+        val elapsedMs = if (startedAt > 0L) System.currentTimeMillis() - startedAt else 0L
+        val line = HandoffEarlyEnd.timelineLine(exitLabel, outcome, rearms, MAX_REARMS, elapsedMs, accepted)
+        AppLogger.e(T, line)
+        runCatching { onEvent?.invoke(line) }
     }
 
     /** Asks the daemon for a replacement capture and waits for it to be pushed back. */

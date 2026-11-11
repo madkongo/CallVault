@@ -692,6 +692,7 @@ class AudioRecordingEngine {
                 }.onFailure { AppLogger.w(TAG, "re-arm request failed: ${it.message}") }
                     .getOrDefault(false)
             },
+            onEvent = { line -> appContext?.let { com.baba.callvault.integrations.adb.TransportTimeline.event(it, line) } },
         )
         AppLogger.i(TAG, "Handoff: calling daemon startHandoff(${audioSourceEnum.cliKey}, $HANDOFF_SAMPLE_RATE, $preferredChannels)")
         val t1 = System.currentTimeMillis()

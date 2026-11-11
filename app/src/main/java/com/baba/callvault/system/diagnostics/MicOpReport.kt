@@ -54,8 +54,30 @@ object MicOpReport {
 
         override fun toString(): String =
             "uid=$uid pack=$pack op=$op running since $startedAt" +
-                if (isShell) "   <-- CallVault's privileged capture" else ""
+                if (isShell) "   <-- $SHELL_HOLDER" else ""
     }
+
+    /**
+     * The dump gives a running op no pid, so an op of uid 2000 cannot be tied to CallVault's recorder: it may be ours
+     * or any other process running as the shell user. Said as exactly that, never as "CallVault's" for certain.
+     */
+    const val SHELL_HOLDER =
+        "held by the shell user: CallVault's recorder or another shell/adb process (e.g. Termux, scrcpy)"
+
+    /** The processes running as the shell user, from `ps -A -o USER,PID,ARGS`, so a reader can see what else could hold the op. */
+    fun shellProcesses(psOutput: String?): String {
+        val head = "--- Processes running as the shell user (who else could hold a shell-uid mic op) ---"
+        if (psOutput.isNullOrBlank()) return "$head\nCould not read the process list."
+        val shell = psOutput.lineSequence().map { it.trim() }
+            .filter { it.startsWith("shell ") || it.startsWith("shell\t") }.toList()
+        return buildString {
+            appendLine(head)
+            if (shell.isEmpty()) appendLine("None.") else shell.take(MAX_SHELL_PROCS).forEach { appendLine("    $it") }
+            if (shell.size > MAX_SHELL_PROCS) appendLine("    … ${shell.size - MAX_SHELL_PROCS} more")
+        }.trimEnd()
+    }
+
+    private const val MAX_SHELL_PROCS = 40
 
     private val UID = Regex("""^\s*Uid (\d+):""")
     private val PACKAGE = Regex("""^\s*Package (\S+):""")
@@ -107,13 +129,14 @@ object MicOpReport {
                 shell.isNotEmpty() ->
                     appendLine(
                         "MICROPHONE HELD: ${held.size} running mic app-op(s), ${shell.size} of them " +
-                            "as uid $SHELL_UID (shell) — that is CallVault's privileged capture, and " +
-                            "it is what puts the green microphone dot on screen."
+                            "as uid $SHELL_UID (shell) — $SHELL_HOLDER. A running op carries no pid, so " +
+                            "this cannot say which; see the shell-user process list below. A mic app-op is " +
+                            "what puts the green microphone dot on screen."
                     )
                 else ->
                     appendLine(
                         "MICROPHONE HELD: ${held.size} running mic app-op(s), none belonging to " +
-                            "CallVault (uid $SHELL_UID). Another app is holding the microphone."
+                            "the shell user (uid $SHELL_UID). Another app is holding the microphone."
                     )
             }
             held.forEach { appendLine("    $it") }

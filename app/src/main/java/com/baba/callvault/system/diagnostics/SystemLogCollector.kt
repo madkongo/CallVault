@@ -140,7 +140,10 @@ object SystemLogCollector {
         // How many privileged recorders are alive. Paired with the section above on purpose: an open
         // capture plus more than one recorder process names an orphan that outlived its replacement,
         // which is the one arrangement neither the app's log nor the live daemon's ledger can show.
-        val recorders = RecorderProcessReport.render(dump(context, "processes", "ps -A -o USER,PID,ARGS"))
+        val psOutput = dump(context, "processes", "ps -A -o USER,PID,ARGS")
+        val recorders = RecorderProcessReport.render(psOutput)
+        // Next to the mic op: a running op carries no pid, so this list is how a reader sees what else runs as shell.
+        val shellProcs = MicOpReport.shellProcesses(psOutput)
 
         val dir = File(context.cacheDir, "logs").apply { mkdirs() }
         val out = File(dir, REPORT_NAME)
@@ -150,6 +153,7 @@ object SystemLogCollector {
                 appendLine(micActivity)
                 appendLine(micOps)
                 appendLine(recorders)
+                appendLine(shellProcs)
                 appendLine(health)
                 appendLine("--- Debugging and USB lines in the whole log (newest ${LogcatHealth.MAX_DEBUG_LINES}) ---")
                 if (usbLines.isEmpty()) appendLine("None.") else usbLines.forEach { appendLine(AppLogger.redactForReport(it)) }

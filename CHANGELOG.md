@@ -37,6 +37,14 @@ All notable changes to CallVault are documented here. The format is based on
 
 ### Fixed
 
+- **A stuck microphone dot after a recording that ended early is cleared sooner.** When the capture ended a few
+  seconds into a call and could not be rebuilt, the microphone stayed marked as in use after the call (seen on a Pixel
+  8 with Android 17). CallVault now stops the capture at once, and if it cannot restart its recorder right after the
+  call (no Wi-Fi), it tries again when Wi-Fi joins, Wireless debugging goes on or the screen comes on. The
+  debug report also no longer says every shell-user microphone use is CallVault's, and lists the processes running as
+  the shell user.
+  <!-- 🧪 VERIFYING: needs a real call where the capture ends early; then the debug report's transport timeline should
+  show "handoff capture ended early" and the microphone dot should go out. -->
 - **Samsung Wi-Fi Calling calls are recorded with both sides** (#45). On some Samsung phones (seen on a Galaxy Z
   Fold2 with Android 17 / One UI 9), a call over Wi-Fi Calling recorded silence or only your side. CallVault now
   notices such a call in its first seconds and switches to the capture it uses for app calls, which records both
