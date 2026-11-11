@@ -197,7 +197,7 @@ android {
                 // produces a v2-only APK: any re-processing in transit (a messenger, a file manager)
                 // strips the whole-file v2 block with no fallback, and some third-party installers look
                 // only for the v1 certificate in META-INF and refuse the file as "no certificates"
-                // (EdmitriX, 2026-11-08). v1+v2 is the install-everywhere pair; the cert is unchanged,
+                // (a tester, 2026-11-08). v1+v2 is the install-everywhere pair; the cert is unchanged,
                 // so updates over every prior (v2-only) release still work.
                 enableV1Signing = true
                 enableV2Signing = true

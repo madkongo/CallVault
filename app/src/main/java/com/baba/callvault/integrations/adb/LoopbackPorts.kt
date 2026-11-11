@@ -14,7 +14,7 @@ package com.baba.callvault.integrations.adb
  * adbd listens on one tcp port at a time, and other apps can set it too. Shizuku forks have a "TCP mode" that
  * runs the same `tcpip:` as our off-Wi-Fi recording, on their own port (5555 by default). Before this,
  * CallVault accepted only its own port, so it re-armed. That restarted adbd and stopped Shizuku. Shizuku's
- * watchdog then started it again and moved adbd back to its port. The two never settled (voss, POCO X7 Pro,
+ * watchdog then started it again and moved adbd back to its port. The two never settled (a tester, POCO X7 Pro,
  * HyperOS 3, 2026-10-22: recording down until Shizuku was uninstalled).
  *
  * Any port adbd listens on works for us: it is the same adbd and the same key. So we use it as it is, and only

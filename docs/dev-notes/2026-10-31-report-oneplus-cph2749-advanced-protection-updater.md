@@ -1,6 +1,6 @@
-# Report: "Restricted by Advanced Protection" popup — Jose, OnePlus CPH2749, Android 17 (2026-10-31)
+# Report: "Restricted by Advanced Protection" popup — OnePlus CPH2749, Android 17 (2026-10-31)
 
-✅ Report closed 2026-10-31: the maintainer replied to Jose (cause = in-app updater vs Advanced Protection). The updater fix below is not built or scheduled.
+✅ Report closed 2026-10-31: the maintainer replied to the reporter (cause = in-app updater vs Advanced Protection). The updater fix below is not built or scheduled.
 
 **Phone:** OnePlus CPH2749, Android 17 (CPH2749_17.0.0.102), Shizuku mode, **2.4.7** (still — the update never landed).
 Log: ~/Downloads/DOC-20261031-WA0049.txt (WhatsApp attachment).
@@ -22,7 +22,7 @@ strings suggest so; not shipped) — that would stop standalone and Shizuku mode
 - 2026-10-30 20:33:44 `Shizuku stopped; calls will not be recorded until it is started again`; keep-alive got
   `NOT_RUNNING` every few minutes until 2026-10-31 18:01:37 (`Shizuku is running`).
 - App calls missed: 12:27, 14:02, 14:07. Only 14:07 was reported: 12:27 and 14:02 hit the issue-#29 gate
-  (`nothing on this phone is capturing for one`) — the same gate gap seen on Евгений's OnePlus Android 17
+  (`nothing on this phone is capturing for one`) — the same gate gap seen on a tester's OnePlus Android 17
   (docs/dev-notes/2026-10-31-report-voip-echo-oneplus-a17.md). Two OnePlus A17 phones now; the gate's
   getActiveRecordingConfigurations evidence looks unreliable on this ROM.
 - Why Shizuku stopped is not in our log.

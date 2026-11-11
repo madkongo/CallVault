@@ -28,7 +28,7 @@ enum class WirelessDebuggingOffCause {
     ANDROID_NETWORK_CHANGED,
 
     /**
-     * CallVault restarted adbd moments ago, and another app reacted by switching it off. voss, POCO X7 Pro,
+     * CallVault restarted adbd moments ago, and another app reacted by switching it off. A tester, POCO X7 Pro,
      * 2026-10-22: 1.2-1.5 s after each of our `tcpip:` arms, every time; Shizuku's watchdog is the likely writer.
      */
     AFTER_OUR_ADBD_RESTART,

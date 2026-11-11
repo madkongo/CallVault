@@ -234,7 +234,7 @@ object RecordingsRepository {
                 // at record time the formatter baked the NUMBER into the contact slot — so fall back to
                 // that slot when it still looks like a number. This is what lets a contact saved (or
                 // the template changed) after the call show the name without re-recording: the list is
-                // re-resolved live each pass, while the file on disk keeps its name. See alex_812 (b).
+                // re-resolved live each pass, while the file on disk keeps its name. See a tester's report (b).
                 val lookupKey = withDuration.number?.takeUnless { it.isBlank() }
                     ?: withDuration.contactName?.takeIf { looksLikePhoneNumber(it) }
                 if (lookupKey == null) withDuration

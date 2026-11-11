@@ -20,7 +20,7 @@ rule is narrower, and one of the proposed cures does not work:
   XDA "Android 14 Wireless Debugging Paired Devices keep disappearing".
 - **Who is safe:** phones with "Disable adb authorization timeout" on (`adb_allowed_connection_time=0`, like our
   OP9), and anyone with CallVault's **Offline recording on** — every loopback connect is key-authenticated and
-  resets the clock (voarch's log shows one on every app start). Offline recording is **off by default**, so a user
+  resets the clock (a OnePlus tester's log shows one on every app start). Offline recording is **off by default**, so a user
   who skipped it in setup is exposed. 📐 Expected to be why the OP12 never lost it — confirm its Offline recording
   setting.
 - **Correction to the proposal:** cure 3(a) "a short Wireless-debugging connection every ~3 days" would **not**

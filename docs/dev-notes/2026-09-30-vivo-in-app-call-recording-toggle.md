@@ -1,6 +1,6 @@
 # vivo far-side app-call capture IS possible — enable OriginOS's own "In-app call recording" toggle
 
-**Status: 🧪 REPORTED BY A USER 2026-09-30 (scrunscotty, vivo V2507A/iQOO, OriginOS 6 / Android 16), with
+**Status: 🧪 REPORTED BY A USER 2026-09-30 (a tester, vivo V2507A/iQOO, OriginOS 6 / Android 16), with
 screenshots. NOT yet confirmed on a device by the maintainer (we have no vivo).** This REVERSES the
 2026-09-29 "not possible without root" verdict — with an important qualifier: that verdict was correct
 **with vivo's setting OFF**, which is the default and exactly what the reporter had during all the earlier

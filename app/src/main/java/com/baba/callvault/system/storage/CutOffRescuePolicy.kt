@@ -30,7 +30,7 @@ enum class RescueDecision {
 }
 
 /**
- * The rules for saving a recording cut off by CallVault being killed (backlog #4, voarch 2026-09-28).
+ * The rules for saving a recording cut off by CallVault being killed (backlog #4, a tester 2026-09-28).
  *
  * Three promises: a recording still being made is never touched; nothing holding audio is ever deleted;
  * and a call is only reported "cut off" when we can actually attribute the file to an interrupted

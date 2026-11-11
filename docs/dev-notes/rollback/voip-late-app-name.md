@@ -1,9 +1,9 @@
 # Rollback: app-call app identified late still names the file
 
-✅ VERIFIED 2026-11-02 on Евгений's OnePlus CPH2747 (Android 17, Shizuku), build 2.4.8-echofix2, reported via the maintainer: Telegram recordings now carry the name and icon. Other phones untested.
+✅ VERIFIED 2026-11-02 on a tester's OnePlus CPH2747 (Android 17, Shizuku), build 2.4.8-echofix2, reported via the maintainer: Telegram recordings now carry the name and icon. Other phones untested.
 
 Was: 🧪 VERIFYING — merged 2026-11-01 as 9d025b7b. 2362 unit tests pass. Not yet tried on a phone.
-To settle: a Telegram call of 30 s or more on Евгений's OnePlus CPH2747. The file should be named `..._voip-Telegram...`
+To settle: a Telegram call of 30 s or more on a tester's OnePlus CPH2747. The file should be named `..._voip-Telegram...`
 and show the Telegram badge in Recordings. The log should say "Call app found 3 s into the call".
 
 ## What happened

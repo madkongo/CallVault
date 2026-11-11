@@ -75,15 +75,15 @@ git revert -m 1 d8274549
 
 ## Testers (maintainer, 2026-11-04)
 
-- **Eugene** (Honor BVL-N49): usbprobe1 only. Says everything is fine. 🧪 no debug report read yet.
-- **Igor Pavlovich** (Honor BVL-N59; Reports 1 and 2 are his): usbprobe1, then usbprobe2. He installed **Android 17
+- **A tester** (Honor BVL-N49): usbprobe1 only. Says everything is fine. 🧪 no debug report read yet.
+- **Another tester** (Honor BVL-N59; Reports 1 and 2 are his): usbprobe1, then usbprobe2. He installed **Android 17
   at about the same time as usbprobe2** and said "no problems, we'll see tomorrow" right after. Not evidence yet: two
   changes at once, and only hours. To separate them, read his debug report after 1–2 days:
   - off events followed by restores → the phone still does it; usbprobe2 handles it;
   - no off events, `allow_charging_adb=1` → maybe our write stopped it (or Android 17);
   - no off events, `allow_charging_adb=0` → Android 17 most likely;
   - off events without a restore → our bug; the timeline says where.
-- The "2.4.7/2.4.8 + Android 16 had no issue" claim: a mix-up with another user, per the maintainer. Igor confirmed the
+- The "2.4.7/2.4.8 + Android 16 had no issue" claim: a mix-up with another user, per the maintainer. That tester confirmed the
   problem existed before. Dropped.
 
 ## Report 3 — 2026-11-05 16:23 (BVL-N59, 2.4.9-usbprobe2, Android 17)
@@ -95,9 +95,9 @@ git revert -m 1 d8274549
   call fine. Honor launch settings were already all-manual/on; no Android battery-optimisation setting on his phone.
   Battery details: 36 s of background time in 24 h.
 
-## Test build 2.4.9-usbprobe3 — ✅ VERIFIED 2026-11-06 (field: Igor, reported by the maintainer), built 2026-11-05
+## Test build 2.4.9-usbprobe3 — ✅ VERIFIED 2026-11-06 (field: a tester, reported by the maintainer), built 2026-11-05
 
-**2026-11-06 result (Igor, BVL-N59, Android 17, report #29):** the maintainer reports Igor says the problem is gone.
+**2026-11-06 result (a tester, BVL-N59, Android 17, report #29):** the maintainer reports the tester says the problem is gone.
 The log agrees: the phone paused CallVault 140 times (longest 1811 s), and all 8 calls in the log were captured by the
 recorder process ("Not using resilient recording: this phone has paused CallVault recently") and published; no
 short or failed recording, no errors. One call's start check landed 87 s late because the app was paused, and the
@@ -115,5 +115,5 @@ not merged.
 4. Debug report: "Phone power" section (battery exemption, power saving, standby bucket, app pauses).
 
 Rollback: revert the five commits; nothing is stored beyond the `cv_app_pause` prefs file.
-To settle: Igor runs it 1–2 days with calls taken at the ear, then sends a report. Expect "App paused by the phone"
+To settle: the tester runs it 1–2 days with calls taken at the ear, then sends a report. Expect "App paused by the phone"
 > 0, "Not using resilient recording" before calls, full-length files, and no "Call ended before the daemon was ready".

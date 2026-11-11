@@ -17,7 +17,7 @@ import com.baba.callvault.data.RecordingState
 
 /**
  * Quick Settings tile that toggles the master recording switch — ACTIVE ⇄ STOPPED — from the
- * notification shade, without opening the app (foxcam's one-tap request). The side effects of turning it
+ * notification shade, without opening the app (a tester's one-tap request). The side effects of turning it
  * off (tear the daemon down) or on (bring it back) run on [RecordingSwitch], off the main thread.
  */
 class RecordingTileService : TileService() {

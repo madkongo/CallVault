@@ -50,7 +50,7 @@ class WirelessDebuggingOffCauseTest {
 
     @Test
     fun `off just after we restarted adbd is another app reacting, not the user`() {
-        // voss, POCO X7 Pro, 2026-10-22: 1.2-1.5 s after each of our tcpip arms the switch went off, every time.
+        // A tester, POCO X7 Pro, 2026-10-22: 1.2-1.5 s after each of our tcpip arms the switch went off, every time.
         // Shizuku's watchdog restarting Shizuku is the likely writer. Taken for the user, CallVault stood down.
         assertEquals(
             WirelessDebuggingOffCause.AFTER_OUR_ADBD_RESTART,

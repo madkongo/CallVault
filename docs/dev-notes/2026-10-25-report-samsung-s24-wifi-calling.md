@@ -1,4 +1,4 @@
-# Report from mac: Samsung S24, phone calls record only his side
+# Report from a tester: Samsung S24, phone calls record only his side
 
 📐 CALCULATED 2026-10-25, read from his two log pairs (debug reports 18/19, system reports 7/8); nothing built.
 
@@ -26,7 +26,7 @@ a different phone app being used. The second attempt just repeated the first.
 
 At hang-up, about 1.5 s before Android broadcasts IDLE, both calls also produced a separate app-call recording
 (`…_voip.m4a`, 1.0 s), with the warning **"captured only your side — the other app blocks capture"**. That
-warning is the message mac quoted. It comes from this stray file, not from the phone app he used.
+warning is the message the tester quoted. It comes from this stray file, not from the phone app he used.
 
 Why: on Samsung a Wi-Fi call keeps the audio mode at `MODE_IN_COMMUNICATION`, the same mode an app call uses.
 `VoipTelephonyGate` blocks app-call starts only while Telecom has a managed call. At hang-up Telecom drops the

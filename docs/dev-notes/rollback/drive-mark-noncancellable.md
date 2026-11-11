@@ -3,7 +3,7 @@
 🧪 VERIFYING — merged 2026-11-03. MarkDriveNonCancellableTest fails on the old code and passes on the new.
 
 ## Why
-Eugene's log (Honor BVL-N49, 2026-11-03): `markDrive('…m4a') failed: Job was cancelled`. The file had reached Drive,
+A tester's log (Honor BVL-N49, 2026-11-03): `markDrive('…m4a') failed: Job was cancelled`. The file had reached Drive,
 but the worker was being stopped, so the catalog row stayed "not in Drive", which the health warning counts.
 
 ## What changed

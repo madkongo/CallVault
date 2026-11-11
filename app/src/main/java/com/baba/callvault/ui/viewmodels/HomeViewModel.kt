@@ -1110,7 +1110,7 @@ class HomeViewModel(application: Application) : AndroidViewModel(application) {
         val facts = store.read()
         val windowStart = store.observationWindowStart(isReady, System.currentTimeMillis())
         // The master recording switch: a paused/stopped user expects nothing recorded, so no phone
-        // call that happened then is a gap to raise on the card (foxcam's 3-state switch).
+        // call that happened then is a gap to raise on the card (a tester's 3-state switch).
         val expectsRecording = preferences.getRecordingState().isRecordingAllowed
         val result = CallGapDetector.sweep(
             entries = CallLogReader.entriesSince(appContext, facts.sweepWatermark),
