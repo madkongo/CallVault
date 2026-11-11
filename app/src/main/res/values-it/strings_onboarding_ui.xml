@@ -24,4 +24,6 @@
     <string name="permissions_ui_hero_line">Alcune autorizzazioni per registrare.</string>
     <string name="permissions_ui_hero_title">Iniziamo la configurazione</string>
     <string name="permissions_ui_section_label">Autorizzazioni</string>
+    <string name="setup_report_link">Problemi? Invia una segnalazione</string>
+    <string name="setup_report_preparing">Preparazione della segnalazione…</string>
 </resources>

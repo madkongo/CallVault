@@ -7,6 +7,15 @@ All notable changes to CallVault are documented here. The format is based on
 
 ### Added
 
+- **"Having trouble? Send a report" on every setup screen.** The welcome notice, the permissions step and each wizard
+  step now carry a link at the bottom, always in view, that sends the same debug and system report as Settings ▸ Debug.
+  Until now a setup that never finished could not be reported at all (#40). Pairing now writes each step, with timings
+  and what the phone says about Wireless debugging, to the setup journal that is kept from the first launch. It also
+  keeps listening for the pairing service while waiting, so a phone that hides the Wireless debugging switch from apps
+  (Android 17 betas) can carry on instead of waiting for nothing.
+  <!-- 🧪 VERIFYING: on a fresh install, open the app and check the link under the welcome notice, the permissions
+  step and the wizard; tap it and the share sheet should offer the report. On the Pixel 7 (Android 17 QPR3 Beta 3),
+  start pairing and share the report: it should show the pairing steps. -->
 - **One Donate button in the Support dialog.** It opens a short list with Ko-fi and PayPal, instead of two
   side-by-side buttons. The Settings ▸ About Support row no longer says it only opens Ko-fi.
   <!-- 🧪 VERIFYING: open Support (Home pill or Settings ▸ About), tap Donate; Ko-fi and PayPal should be listed and

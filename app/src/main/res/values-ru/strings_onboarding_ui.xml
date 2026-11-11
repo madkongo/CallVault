@@ -24,4 +24,6 @@
     <string name="permissions_ui_hero_line">Несколько разрешений для записи звонков.</string>
     <string name="permissions_ui_hero_title">Давайте всё настроим</string>
     <string name="permissions_ui_section_label">Разрешения</string>
+    <string name="setup_report_link">Возникли проблемы? Отправить отчёт</string>
+    <string name="setup_report_preparing">Подготовка отчёта…</string>
 </resources>

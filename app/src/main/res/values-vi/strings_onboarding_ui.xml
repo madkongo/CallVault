@@ -24,4 +24,6 @@
     <string name="permissions_ui_hero_line">Vài quyền để có thể ghi âm cuộc gọi.</string>
     <string name="permissions_ui_hero_title">Cùng thiết lập nào</string>
     <string name="permissions_ui_section_label">Quyền</string>
+    <string name="setup_report_link">Gặp sự cố? Gửi báo cáo</string>
+    <string name="setup_report_preparing">Đang chuẩn bị báo cáo…</string>
 </resources>

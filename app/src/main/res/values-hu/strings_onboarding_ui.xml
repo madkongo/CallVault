@@ -24,4 +24,6 @@
     <string name="permissions_ui_hero_line">Néhány engedély a hívások rögzítéséhez.</string>
     <string name="permissions_ui_hero_title">Kezdjük a beállítást</string>
     <string name="permissions_ui_section_label">Engedélyek</string>
+    <string name="setup_report_link">Gondod van? Jelentés küldése</string>
+    <string name="setup_report_preparing">A jelentés előkészítése…</string>
 </resources>
