@@ -77,6 +77,10 @@ object RecordingCatalog {
         // Not cancellable: by the time this runs the file IS in Drive. A worker stopped at this moment
         // ("markDrive failed: Job was cancelled", Honor BVL-N49, 2026-11-03) left the row looking unsynced,
         // which is the symptom the "not reaching Drive" warning counts. It is one small database write.
+        // The Drive sweep uploads sidecars too (.md transcripts, .json details; GitHub #49), but they are
+        // not recordings: a row for one shows up in retention, the health check and the library
+        // (BabApps item 6). The upload itself is untouched; only the catalog entry is skipped.
+        if (!RecordingsRepository.isAudioName(displayName)) return@withContext
         runCatching {
             val dao = dao(context)
             val size = driveSizeBytes?.takeIf { it > 0L }
@@ -174,6 +178,34 @@ object RecordingCatalog {
         }.onFailure { AppLogger.w(TAG, "removeCopyByUri($uri) failed: ${it.message}") }
 
         TranscriptCascade.deleteFor(context, orphaned)
+    }
+
+    /** Extensions of the files CallVault writes beside a recording; never recordings themselves. */
+    private val SIDECAR_EXTENSIONS = setOf("md", "json")
+
+    /**
+     * Whether a catalog row is really a sidecar file that an earlier version let Drive sync catalogue
+     * (BabApps item 6). Deliberately narrow: a non-audio name AND a sidecar extension, so a recording
+     * with an unusual name that the folder scan took for audio by its MIME type is never touched.
+     */
+    internal fun isStaleSidecarRow(displayName: String): Boolean =
+        !RecordingsRepository.isAudioName(displayName) &&
+            displayName.substringAfterLast('.', "").lowercase() in SIDECAR_EXTENSIONS
+
+    /**
+     * One-time cleanup of the sidecar rows earlier versions created: removes them from the catalog only.
+     * No transcript cascade ([forgetName] semantics) and no file is touched; the sidecar stays in the
+     * folder and in Drive. Cheap enough to run on every list load, and finds nothing once done.
+     * Returns how many rows it removed.
+     */
+    suspend fun removeStaleSidecarRows(context: Context): Int = runCatching {
+        val dao = dao(context)
+        val stale = dao.getAll().filter { isStaleSidecarRow(it.displayName) }
+        stale.forEach { dao.deleteByName(it.displayName) }
+        if (stale.isNotEmpty()) AppLogger.i(TAG, "Removed ${stale.size} sidecar file(s) from the recordings catalog.")
+        stale.size
+    }.getOrElse {
+        AppLogger.w(TAG, "removeStaleSidecarRows failed: ${it.message}"); 0
     }
 
     /**

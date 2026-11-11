@@ -163,6 +163,8 @@ object RecordingsRepository {
         runCatching {
             // One-time seed for pre-catalog recordings; no-op once any row exists.
             RecordingCatalog.importIfEmpty(context) { scanFolders(context) }
+            // Sidecar rows that Drive sync created in earlier versions (BabApps item 6).
+            RecordingCatalog.removeStaleSidecarRows(context)
 
             val items = RecordingCatalog.all(context).mapNotNull { toItem(it) }
 
