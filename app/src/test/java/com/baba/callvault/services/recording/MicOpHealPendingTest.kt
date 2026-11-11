@@ -48,6 +48,33 @@ class MicOpHealPendingTest {
     }
 
     @Test
+    fun an_already_open_adbd_tcp_port_is_a_way_back_with_no_wifi_and_no_wireless_debugging() {
+        // The Pixel 8 report: USB debugging on, Wireless debugging off, no Wi-Fi, offline recording off — and the connect
+        // path still reached adbd over its own tcp port, so the heal could have run at once.
+        val args = booleanArrayOf(false, true, false, true, false, false)
+        assertFalse(MicOpHealPolicy.canRelaunch(args[0], args[1], args[2], args[3], args[4], args[5]))
+        assertTrue(MicOpHealPolicy.canRelaunch(args[0], args[1], args[2], args[3], args[4], args[5], tcpPortOpen = true))
+        assertEquals(
+            Decision.HEAL,
+            MicOpHealPolicy.decide(1, false, canRelaunch = true, lastHealAtMs = null, nowMs = 0L),
+        )
+    }
+
+    @Test
+    fun nothing_reachable_stays_no_way_back_and_pending() {
+        val can = MicOpHealPolicy.canRelaunch(false, true, false, true, false, false, tcpPortOpen = false)
+        val d = MicOpHealPolicy.decide(1, false, canRelaunch = can, lastHealAtMs = null, nowMs = 0L)
+        assertEquals(Decision.NO_WAY_BACK, d)
+        assertTrue(MicOpHealPolicy.staysPending(d))
+    }
+
+    @Test
+    fun an_open_port_does_not_help_when_adbd_is_not_running() {
+        // tcpPortOpen is read from a live answer, but the existing rules are unchanged for every other input.
+        assertFalse(MicOpHealPolicy.canRelaunch(false, false, false, false, false, false))
+    }
+
+    @Test
     fun the_way_back_appears_once_wifi_joins() {
         // The Pixel 8 case: no Wi-Fi, WRITE_SECURE_SETTINGS granted, offline recording off.
         assertFalse(MicOpHealPolicy.canRelaunch(false, false, false, true, false, wifiConnected = false))

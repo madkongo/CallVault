@@ -107,10 +107,14 @@ object MicOpHealPolicy {
         hasWriteSecureSettings: Boolean,
         offlineEnabled: Boolean,
         wifiConnected: Boolean,
+        tcpPortOpen: Boolean = false,
     ): Boolean {
         val adbdRunning = wdEnabled || usbDebuggingEnabled
-        val endpoint = wdEnabled || (loopbackArmed && adbdRunning) || (hasWriteSecureSettings && wifiConnected)
-        val network = offlineEnabled || wifiConnected
+        // tcpPortOpen: adbd already answers on a loopback tcp port (the ROM's own listener). The connect path takes it
+        // with no Wi-Fi and no Wireless debugging (seen on a Pixel 8: "Connected over adbd's already-open tcp port").
+        val endpoint = wdEnabled || (loopbackArmed && adbdRunning) || (hasWriteSecureSettings && wifiConnected) || tcpPortOpen
+        // An already-open loopback port needs no network at all, so it also satisfies the network rule.
+        val network = offlineEnabled || wifiConnected || tcpPortOpen
         return endpoint && network
     }
 }

@@ -39,7 +39,8 @@ All notable changes to CallVault are documented here. The format is based on
 
 - **A stuck microphone dot after a call is cleared once Wi-Fi is back.** On a Pixel 8 with Android 17 the microphone
   stayed marked as "in use by Shell" after calls, and CallVault could not clear it because it had no Wi-Fi to restart
-  its recorder with. It now keeps the check pending and tries again when Wi-Fi joins, Wireless debugging goes on or
+  its recorder with. It now restarts the recorder at once when the phone's own adb tcp port is reachable (no Wi-Fi
+  needed), and otherwise keeps the check pending and tries again when Wi-Fi joins, Wireless debugging goes on or
   the screen comes on. If a recording's capture ends early, it is also stopped at once instead of at the end of the
   call. The debug report no longer says every shell-user microphone use is CallVault's, and lists the processes
   running as the shell user.

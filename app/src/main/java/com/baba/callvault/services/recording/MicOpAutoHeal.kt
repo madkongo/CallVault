@@ -115,7 +115,7 @@ object MicOpAutoHeal {
             } else {
                 val i = relaunchInputs(context, prefs)
                 inputs = i.toString()
-                MicOpHealPolicy.canRelaunch(i.wd, i.usb, i.loopback, i.writeSecure, i.offline, i.wifi)
+                MicOpHealPolicy.canRelaunch(i.wd, i.usb, i.loopback, i.writeSecure, i.offline, i.wifi, i.tcpPortOpen)
             },
             lastHealAtMs = lastHealAtMs,
             nowMs = SystemClock.elapsedRealtime(),
@@ -241,8 +241,10 @@ object MicOpAutoHeal {
         val writeSecure: Boolean,
         val offline: Boolean,
         val wifi: Boolean,
+        val tcpPortOpen: Boolean,
     ) {
-        override fun toString() = "wd=$wd usb=$usb loopbackArmed=$loopback writeSecureSettings=$writeSecure offlineRecording=$offline wifi=$wifi"
+        override fun toString() =
+            "wd=$wd usb=$usb loopbackArmed=$loopback writeSecureSettings=$writeSecure offlineRecording=$offline wifi=$wifi tcpPortOpen=$tcpPortOpen"
     }
 
     private fun relaunchInputs(context: Context, prefs: AppPreferences) = RelaunchInputs(
@@ -252,6 +254,8 @@ object MicOpAutoHeal {
         writeSecure = AdbShell.hasWriteSecureSettings(context),
         offline = prefs.isOfflineRecordingEnabled(),
         wifi = isWifiConnected(context),
+        // Read when the heal decides, on loopback: works with no network.
+        tcpPortOpen = runCatching { AdbShell.isAdbdTcpPortReachable(context) }.getOrDefault(false),
     )
 
     private fun isWifiConnected(context: Context): Boolean = runCatching {
