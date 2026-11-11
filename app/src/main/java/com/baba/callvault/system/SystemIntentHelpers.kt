@@ -62,6 +62,9 @@ const val TELEGRAM_GROUP_URL = "https://t.me/+GmXjAcXxXh42Y2I8"
  */
 const val PAYPAL_SUPPORT_URL = "https://paypal.me/MadKongo"
 
+/** The maintainer's Boosty page, offered only to East Europe, where Ko-fi and PayPal are hard to use. */
+const val BOOSTY_SUPPORT_URL = "https://boosty.to/madkongo/donate"
+
 /**
  * A folder-picker that asks for long-term read and write access to the chosen folder.
  *
@@ -186,6 +189,11 @@ fun Context.openKofi() {
 /** Opens the maintainer's PayPal page in the browser. The alternative to [openKofi], not a successor. */
 fun Context.openPayPal() {
     launchSmartIntent(Intent(Intent.ACTION_VIEW).apply { data = PAYPAL_SUPPORT_URL.toUri() })
+}
+
+/** Opens the maintainer's Boosty page in the browser. */
+fun Context.openBoosty() {
+    launchSmartIntent(Intent(Intent.ACTION_VIEW).apply { data = BOOSTY_SUPPORT_URL.toUri() })
 }
 
 /**

@@ -434,6 +434,7 @@
     <string name="settings_update_check_description">দিনে একবার GitHub-এ নতুন সংস্করণ খোঁজে।</string>
     <string name="support_appeal_title">CallVault-এর জন্য একটু বখশিশ ☕</string>
     <string name="support_appeal_body">আমি অবসর সময়ে CallVault দেখাশোনা করি। এটি kitsumed-এর ShizuCallRecorder-এর একটি fork হিসেবে শুরু হয়েছিল, তারপর অনেক বড় হয়েছে। বিনামূল্যে, ওপেন সোর্স, কোনো বিজ্ঞাপন বা ট্র্যাকিং নেই। এটি কাজে লাগলে একটি ছোট বখশিশ আমাকে চালিয়ে যেতে সাহায্য করে। ধন্যবাদ! 🙏</string>
+    <string name="support_donate">দান করুন</string>
     <string name="support_not_now">এখন নয়</string>
     <string name="home_bulk_delete_message">এটি আর ফেরানো যাবে না।</string>
     <string name="home_bulk_delete_scope_message">কয়েকটি এই ডিভাইস ও Drive দুই জায়গাতেই সংরক্ষিত আছে।</string>

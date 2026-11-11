@@ -652,6 +652,7 @@
     <string name="summary_requirements_toggle_description">Показывать, чего требует модуль сводок, перед скачиванием</string>
     <string name="support_appeal_body">Я поддерживаю CallVault в свободное время. Приложение начиналось как форк ShizuCallRecorder от kitsumed и с тех пор сильно выросло. Бесплатно, с открытым кодом, без рекламы и слежки. Если оно вам полезно, небольшая поддержка помогает продолжать. Спасибо! 🙏</string>
     <string name="support_appeal_title">Чаевые для CallVault ☕</string>
+    <string name="support_donate">Пожертвовать</string>
     <string name="support_not_now">Не сейчас</string>
     <string name="tile_recording_on">Запись включена</string>
     <string name="tile_recording_stopped">Остановлено</string>
