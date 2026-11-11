@@ -531,8 +531,8 @@
     <string name="settings_summary_skip_rules_on">Regras ativas: %1$d</string>
     <string name="settings_summary_unavailable">Indisponível aqui</string>
     <string name="settings_support_label">Apoiar o desenvolvimento</string>
-    <string name="settings_support_supporting">Abre o Ko-fi no seu navegador</string>
-    <string name="settings_support_value">Pague um café no Ko-fi</string>
+    <string name="settings_support_supporting">Escolha onde doar; abre no seu navegador</string>
+    <string name="settings_support_value">Pague um café</string>
     <string name="settings_tap_to_select_folder">Toque para escolher a pasta...</string>
     <string name="settings_theme_mode">Modo do tema</string>
     <string name="settings_theme_mode_dark">Escuro</string>
@@ -651,6 +651,7 @@
     <string name="summary_requirements_toggle_description">Mostrar o que o resumidor custa antes de baixá-lo</string>
     <string name="support_appeal_body">Eu mantenho o CallVault no meu tempo livre. Ele começou como um fork do ShizuCallRecorder, de kitsumed, e cresceu muito desde então. Grátis, código aberto, sem anúncios nem rastreamento. Se ele te é útil, uma pequena contribuição me ajuda a continuar. Obrigado! 🙏</string>
     <string name="support_appeal_title">Uma gorjeta para o CallVault ☕</string>
+    <string name="support_donate">Doar</string>
     <string name="support_not_now">Agora não</string>
     <string name="tile_recording_on">Gravação ativada</string>
     <string name="tile_recording_stopped">Interrompido</string>

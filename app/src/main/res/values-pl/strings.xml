@@ -532,8 +532,8 @@
     <string name="settings_summary_skip_rules_on">Aktywne reguły pomijania: %1$d</string>
     <string name="settings_summary_unavailable">Niedostępne tutaj</string>
     <string name="settings_support_label">Wesprzyj rozwój</string>
-    <string name="settings_support_supporting">Otwiera Ko-fi w przeglądarce</string>
-    <string name="settings_support_value">Postaw mi kawę na Ko-fi</string>
+    <string name="settings_support_supporting">Wybierz, gdzie wesprzeć; otwiera się w przeglądarce</string>
+    <string name="settings_support_value">Postaw mi kawę</string>
     <string name="settings_tap_to_select_folder">Dotknij, aby wybrać folder...</string>
     <string name="settings_theme_mode">Ustawienia motywu</string>
     <string name="settings_theme_mode_dark">Ciemny</string>
@@ -652,6 +652,7 @@
     <string name="summary_requirements_toggle_description">Pokaż, czego wymaga moduł podsumowań, przed pobraniem</string>
     <string name="support_appeal_body">Rozwijam CallVault po godzinach. Aplikacja powstała jako fork ShizuCallRecorder autorstwa kitsumed i od tego czasu bardzo się rozrosła. Za darmo, otwartoźródłowo, bez reklam i śledzenia. Jeśli Ci się przydaje, drobne wsparcie pomaga mi działać dalej. Dzięki! 🙏</string>
     <string name="support_appeal_title">Napiwek dla CallVault ☕</string>
+    <string name="support_donate">Wesprzyj</string>
     <string name="support_not_now">Nie teraz</string>
     <string name="tile_recording_on">Nagrywanie włączone</string>
     <string name="tile_recording_stopped">Zatrzymane</string>

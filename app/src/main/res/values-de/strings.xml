@@ -528,8 +528,8 @@
     <string name="settings_summary_skip_rules_on">Aktive Regeln: %1$d</string>
     <string name="settings_summary_unavailable">Hier nicht verfügbar</string>
     <string name="settings_support_label">Entwicklung unterstützen</string>
-    <string name="settings_support_supporting">Öffnet Ko-fi im Browser</string>
-    <string name="settings_support_value">Spendier mir einen Kaffee auf Ko-fi</string>
+    <string name="settings_support_supporting">Wähle, wohin du spendest; öffnet sich im Browser</string>
+    <string name="settings_support_value">Spendier mir einen Kaffee</string>
     <string name="settings_tap_to_select_folder">Tippen, um Ordner zu wählen...</string>
     <string name="settings_theme_mode">Design-Modus</string>
     <string name="settings_theme_mode_dark">Dunkel</string>
@@ -648,6 +648,7 @@
     <string name="summary_requirements_toggle_description">Vor dem Herunterladen zeigen, was der Zusammenfasser kostet</string>
     <string name="support_appeal_body">Ich pflege CallVault in meiner Freizeit. Es begann als Fork von ShizuCallRecorder von kitsumed und ist seitdem stark gewachsen. Kostenlos, quelloffen, ohne Werbung, ohne Tracking. Wenn es dir nützt, hält mich eine kleine Spende am Ball. Danke! 🙏</string>
     <string name="support_appeal_title">Ein Trinkgeld für CallVault ☕</string>
+    <string name="support_donate">Spenden</string>
     <string name="support_not_now">Jetzt nicht</string>
     <string name="tile_recording_on">Aufnahme aktiv</string>
     <string name="tile_recording_stopped">Gestoppt</string>

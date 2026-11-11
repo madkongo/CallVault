@@ -532,8 +532,8 @@
     <string name="settings_summary_skip_rules_on">Активных правил: %1$d</string>
     <string name="settings_summary_unavailable">Здесь недоступно</string>
     <string name="settings_support_label">Поддержать разработку</string>
-    <string name="settings_support_supporting">Откроет Ko-fi в браузере</string>
-    <string name="settings_support_value">Купить мне кофе на Ko-fi</string>
+    <string name="settings_support_supporting">Выберите, куда пожертвовать; откроется в браузере</string>
+    <string name="settings_support_value">Купить мне кофе</string>
     <string name="settings_tap_to_select_folder">Нажмите, чтобы выбрать папку...</string>
     <string name="settings_theme_mode">Тема</string>
     <string name="settings_theme_mode_dark">Тёмная</string>
@@ -652,6 +652,7 @@
     <string name="summary_requirements_toggle_description">Показывать, чего требует модуль сводок, перед скачиванием</string>
     <string name="support_appeal_body">Я поддерживаю CallVault в свободное время. Приложение начиналось как форк ShizuCallRecorder от kitsumed и с тех пор сильно выросло. Бесплатно, с открытым кодом, без рекламы и слежки. Если оно вам полезно, небольшая поддержка помогает продолжать. Спасибо! 🙏</string>
     <string name="support_appeal_title">Чаевые для CallVault ☕</string>
+    <string name="support_donate">Пожертвовать</string>
     <string name="support_not_now">Не сейчас</string>
     <string name="tile_recording_on">Запись включена</string>
     <string name="tile_recording_stopped">Остановлено</string>

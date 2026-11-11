@@ -528,8 +528,8 @@
     <string name="settings_summary_skip_rules_on">Aktív kihagyási szabályok: %1$d</string>
     <string name="settings_summary_unavailable">Itt nem érhető el</string>
     <string name="settings_support_label">Fejlesztés támogatása</string>
-    <string name="settings_support_supporting">Megnyitja a Ko-fit a böngészőben</string>
-    <string name="settings_support_value">Hívj meg egy kávéra a Ko-fin</string>
+    <string name="settings_support_supporting">Válaszd ki, hol adományozol; a böngészőben nyílik meg</string>
+    <string name="settings_support_value">Hívj meg egy kávéra</string>
     <string name="settings_tap_to_select_folder">Mappa kiálasztása...</string>
     <string name="settings_theme_mode">Téma mód</string>
     <string name="settings_theme_mode_dark">Sötét</string>
@@ -648,6 +648,7 @@
     <string name="summary_requirements_toggle_description">Mutassa a letöltés előtt, mit igényel az összefoglaló</string>
     <string name="support_appeal_body">A CallVaultot a szabadidőmben tartom karban. kitsumed ShizuCallRecorder projektjének forkjaként indult, és azóta sokat fejlődött. Ingyenes, nyílt forráskódú, nincs hirdetés és nyomkövetés. Ha hasznos neked, egy kis támogatás segít folytatni. Köszönöm! 🙏</string>
     <string name="support_appeal_title">Egy kis borravaló a CallVaultnak ☕</string>
+    <string name="support_donate">Adományozás</string>
     <string name="support_not_now">Most nem</string>
     <string name="tile_recording_on">Rögzítés bekapcsolva</string>
     <string name="tile_recording_stopped">Leállítva</string>

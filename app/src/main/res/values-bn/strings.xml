@@ -299,8 +299,8 @@
     <string name="settings_copy_version">সংস্করণ কপি করুন</string>
     <string name="settings_view_licenses">লাইসেন্স দেখুন</string>
     <string name="settings_support_label">উন্নয়নে সহায়তা করুন</string>
-    <string name="settings_support_value">Ko-fi-তে আমাকে এক কাপ কফি কিনে দিন</string>
-    <string name="settings_support_supporting">আপনার ব্রাউজারে Ko-fi খোলে</string>
+    <string name="settings_support_value">আমাকে এক কাপ কফি কিনে দিন</string>
+    <string name="settings_support_supporting">কোথায় দান করবেন বেছে নিন; আপনার ব্রাউজারে খোলে</string>
     <string name="contact_search_hint">নাম বা নম্বর দিয়ে খুঁজুন...</string>
     <string name="contact_select_all">সব বাছুন</string>
     <string name="contact_unselect_all">সব বাদ দিন</string>
@@ -434,6 +434,7 @@
     <string name="settings_update_check_description">দিনে একবার GitHub-এ নতুন সংস্করণ খোঁজে।</string>
     <string name="support_appeal_title">CallVault-এর জন্য একটু বখশিশ ☕</string>
     <string name="support_appeal_body">আমি অবসর সময়ে CallVault দেখাশোনা করি। এটি kitsumed-এর ShizuCallRecorder-এর একটি fork হিসেবে শুরু হয়েছিল, তারপর অনেক বড় হয়েছে। বিনামূল্যে, ওপেন সোর্স, কোনো বিজ্ঞাপন বা ট্র্যাকিং নেই। এটি কাজে লাগলে একটি ছোট বখশিশ আমাকে চালিয়ে যেতে সাহায্য করে। ধন্যবাদ! 🙏</string>
+    <string name="support_donate">দান করুন</string>
     <string name="support_not_now">এখন নয়</string>
     <string name="home_bulk_delete_message">এটি আর ফেরানো যাবে না।</string>
     <string name="home_bulk_delete_scope_message">কয়েকটি এই ডিভাইস ও Drive দুই জায়গাতেই সংরক্ষিত আছে।</string>

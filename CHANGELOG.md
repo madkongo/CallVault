@@ -7,6 +7,11 @@ All notable changes to CallVault are documented here. The format is based on
 
 ### Added
 
+- **One Donate button in the Support dialog.** It opens a short list: Ko-fi and PayPal, plus Boosty (RU) for people in
+  East Europe (by the app's language, or the phone's language and region if the app has none). Everyone else sees only
+  Ko-fi and PayPal.
+  <!-- 🧪 VERIFYING: open Support (Home pill or Settings ▸ About) with the app in Russian, then in English; Boosty (RU)
+  should appear only in Russian. -->
 - **Keep recordings for 60, 90 or 120 days.** Settings ▸ Cleaning up ▸ Auto-delete now offers these between 30 days and
   Keep forever, for the phone and for Drive. Asked in #78.
   <!-- ✅ VERIFIED 2026-11-09 (maintainer, 2.5.1-rc1 on the OP9): 60 days offered, picked and kept after reopening

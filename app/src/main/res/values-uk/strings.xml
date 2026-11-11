@@ -541,7 +541,7 @@
     <string name="settings_summary_unavailable">Тут недоступно</string>
     <string name="settings_support_label">Підтримати розробку</string>
     <string name="settings_support_supporting">Відкрити в браузері</string>
-    <string name="settings_support_value">Пригостити кавою через Ko-fi</string>
+    <string name="settings_support_value">Пригостити кавою</string>
     <string name="settings_tap_to_select_folder">Натисніть, щоб вибрати папку…</string>
     <string name="settings_theme_mode">Тема</string>
     <string name="settings_theme_mode_dark">Темна</string>
@@ -660,6 +660,7 @@
     <string name="summary_requirements_toggle_description">Показувати вимоги до моделі перед завантаженням.</string>
     <string name="support_appeal_body">Я підтримую CallVault у вільний час. Програма починалася як форк ShizuCallRecorder від kitsumed і відтоді дуже виросла. Безплатно, з відкритим кодом, без реклами та відстеження. Якщо вона корисна, невелика підтримка допомагає продовжувати. Дякую! 🙏</string>
     <string name="support_appeal_title">Підтримати CallVault ☕</string>
+    <string name="support_donate">Пожертвувати</string>
     <string name="support_not_now">Не зараз</string>
     <string name="tile_recording_on">Запис увімкнений</string>
     <string name="tile_recording_stopped">Зупинено</string>

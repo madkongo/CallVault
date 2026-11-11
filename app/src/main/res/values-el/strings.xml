@@ -682,8 +682,8 @@
     <string name="settings_summary_skip_rules_on">Ενεργοί κανόνες παράλειψης: %1$d</string>
     <string name="settings_summary_unavailable">Δεν είναι διαθέσιμο εδώ</string>
     <string name="settings_support_label">Υποστήριξη ανάπτυξης</string>
-    <string name="settings_support_supporting">Ανοίγει το Ko-fi στο πρόγραμμα περιήγησής σας</string>
-    <string name="settings_support_value">Κεράστε μου έναν καφέ στο Ko-fi</string>
+    <string name="settings_support_supporting">Διαλέξτε πού να κάνετε δωρεά· ανοίγει στο πρόγραμμα περιήγησής σας</string>
+    <string name="settings_support_value">Κεράστε μου έναν καφέ</string>
     <string name="settings_tap_to_select_folder">Πατήστε για επιλογή φακέλου...</string>
     <string name="settings_theme_mode">Λειτουργία θέματος</string>
     <string name="settings_theme_mode_dark">Σκοτεινό</string>
@@ -802,6 +802,7 @@
     <string name="summary_requirements_toggle_description">Εμφάνιση του κόστους του συντάκτη περιλήψεων πριν τη λήψη του</string>
     <string name="support_appeal_body">Συντηρώ το CallVault στον ελεύθερο χρόνο μου. Ξεκίνησε ως fork του ShizuCallRecorder του kitsumed και έχει μεγαλώσει πολύ από τότε. Δωρεάν, ανοιχτού κώδικα, χωρίς διαφημίσεις, χωρίς παρακολούθηση. Αν σας είναι χρήσιμο, μια μικρή φιλοδώρηση με βοηθά να συνεχίζω. Ευχαριστώ! 🙏</string>
     <string name="support_appeal_title">Ένα φιλοδώρημα για το CallVault ☕</string>
+    <string name="support_donate">Δωρεά</string>
     <string name="support_not_now">Όχι τώρα</string>
     <string name="tile_recording_on">Εγγραφή ενεργή</string>
     <string name="tile_recording_stopped">Διακόπηκε</string>

@@ -2545,8 +2545,8 @@ private fun UpdateBannerCard(
 }
 
 /**
- * A compact, tappable "♥ Support" pill shown next to the app title. Opens the maintainer's Ko-fi
- * page in the browser — an optional, low-key donation entry point that keeps the status card and the
+ * A compact, tappable "♥ Support" pill shown next to the app title. Opens the Support dialog
+ * (Donate dropdown) — an optional, low-key donation entry point that keeps the status card and the
  * recordings list uncluttered. The matching, more explicit ask lives in Settings → About.
  */
 /**
