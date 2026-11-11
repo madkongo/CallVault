@@ -56,6 +56,10 @@ All notable changes to CallVault are documented here. The format is based on
   <!-- 🧪 VERIFYING 2026-11-08: SAI refused the v2-only build ("Signature Scheme v2: digest of contents did not
   verify") because SAI rewrites the APK to 0.apk. First fix queued for 2.5.1. To settle: install this build through
   SAI, which refused the v2-only one. -->
+- **Vietnamese: the "Recording started" message no longer says the recording continues.** It used the wording of
+  "Recording resumed"; it now says "Đã bắt đầu ghi âm" (recording started).
+  <!-- 🧪 VERIFYING: text fix in values-vi/strings.xml. To settle: a Vietnamese speaker starts a recorded call and
+  reads the message. -->
 - **After updating to 2.5.1, the "What's new" note describes this release** (in all 16 languages) instead of showing
   the 2.5.0 note again.
   <!-- 🧪 VERIFYING: seen on the OnePlus 9 Pro (2.5.1 card, first 6 items readable). To settle: open the app after

@@ -139,7 +139,7 @@
         <item>Enregistrement stéréo : chaque côté sur son propre canal (Réglages ▸ Son et noms de fichiers ▸ Canaux). Mono reste le choix par défaut</item>
         <item>Téléphones Samsung : les appels en Wi-Fi Calling sont enregistrés des deux côtés</item>
         <item>« Enregistrer la transcription et les notes à côté de l’enregistrement » est bien plus léger sur une grande bibliothèque</item>
-        <item>L’application s’installe maintenant avec davantage d’installateurs</item>
+        <item>Corrigé : erreur « no certificates » à l’installation avec certains installateurs (p. ex. SAI)</item>
     </string-array>
     <string name="whatsnew_250_title">Garder ou supprimer après l’appel, et partager ce qu’il vous faut</string>
     <string-array name="whatsnew_250_items">

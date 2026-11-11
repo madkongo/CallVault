@@ -138,7 +138,7 @@
         <item>Grabación estéreo: cada lado en su propio canal (Ajustes ▸ Sonido y nombres de archivo ▸ Canales). Mono sigue siendo lo predeterminado</item>
         <item>Móviles Samsung: las llamadas por Llamadas Wi-Fi se graban con ambos lados</item>
         <item>«Guardar transcripción y notas junto a la grabación» es mucho más ligero con una biblioteca grande</item>
-        <item>La app ahora se instala con más instaladores</item>
+        <item>Corregido: error «no certificates» al instalar con algunos instaladores (p. ej., SAI)</item>
     </string-array>
     <string name="whatsnew_250_title">Conservar o borrar al terminar la llamada, y compartir lo que necesites</string>
     <string-array name="whatsnew_250_items">

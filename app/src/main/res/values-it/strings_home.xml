@@ -138,7 +138,7 @@
         <item>Registrazione stereo: ogni lato sul proprio canale (Impostazioni ▸ Audio e nomi dei file ▸ Canali). Mono resta l\'impostazione predefinita</item>
         <item>Telefoni Samsung: le chiamate Wi-Fi Calling vengono registrate con entrambi i lati</item>
         <item>\"Salva trascrizione e note accanto alla registrazione\" è molto più leggero con una libreria grande</item>
-        <item>L\'app ora si installa con più installer</item>
+        <item>Corretto: errore \"no certificates\" durante l\'installazione con alcuni installer (es. SAI)</item>
     </string-array>
     <string name="whatsnew_250_title">Tieni o elimina dopo la chiamata, e condividi ciò che ti serve</string>
     <string-array name="whatsnew_250_items">
