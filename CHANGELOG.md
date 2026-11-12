@@ -37,6 +37,11 @@ All notable changes to CallVault are documented here. The format is based on
 
 ### Fixed
 
+- **An app-call recording is no longer named after the battery ("Charging (59 m until full)").** On some phones the
+  system's own screen (System UI) was taken for the app on the call, and its charging notification became the
+  contact's name. CallVault now ignores system components that are not calling apps and looks for the real one.
+  <!-- 🧪 VERIFYING: needs an app call (WhatsApp/Telegram) on a phone that showed the "Charging…" name; the file should
+  carry the contact name or none, never the battery text. Unit-tested only. (BabApps item 103) -->
 - **Other apps no longer record silence after a recorded call.** On some phones (seen on a Samsung Galaxy A56 with
   Android 17), voice messages in Telegram, Instagram and other apps came out silent after any phone call until
   CallVault was switched off or the phone restarted. CallVault now lets go of the call's microphone connection

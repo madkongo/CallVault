@@ -328,4 +328,15 @@ interface IRecorderService {
      * method; the app tolerates that, and the recording is simply mono, as it always was.
      */
     void setEncodeStereo(boolean stereo);
+
+    /**
+     * Like {@link #voipCallAppUid}, but never answers with a uid in [skipUids]: the app passes the uids
+     * it already found not to be a calling app (System UI, a battery app...), so every source in the
+     * daemon (playback configuration, mode owner, dump) can answer with the next candidate instead of
+     * repeating the same wrong one (BabApps item 103).
+     *
+     * Appended last: transaction codes are positional. A daemon from an older APK lacks it; the app then
+     * falls back to voipCallAppUid and rejects the uid itself.
+     */
+    int voipCallAppUidSkipping(in int[] skipUids);
 }
