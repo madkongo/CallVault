@@ -24,4 +24,6 @@
     <string name="permission_adb_open_device_info">Дані пристрою</string>
     <string name="permission_adb_open_wd">Бездротове налагодження</string>
     <string name="permission_adb_pair">Сполучити</string>
+    <string name="setup_report_link">Виникли проблеми? Надіслати звіт</string>
+    <string name="setup_report_preparing">Підготовка звіту…</string>
 </resources>

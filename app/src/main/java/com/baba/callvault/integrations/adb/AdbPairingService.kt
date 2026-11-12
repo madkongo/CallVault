@@ -30,6 +30,7 @@ import android.os.Build
 import android.os.Handler
 import android.os.IBinder
 import android.os.Looper
+import android.os.SystemClock
 import android.provider.Settings
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -108,8 +109,10 @@ class AdbPairingService : Service() {
      * [beginWaitingForWd] — and only start discovery once the user toggles WD on.
      */
     private fun onStart(): Notification {
+        AppLogger.i(TAG, "ACTION_START (started=$started) at +${sinceCreateMs()}ms; ${wdReadForLog()}")
         if (started) return searchingNotification()
         return if (AdbShell.isWirelessDebuggingEnabled(applicationContext)) {
+            AppLogger.i(TAG, "Wireless debugging reads ON — starting pairing discovery now")
             beginDiscovery()
             searchingNotification()
         } else {
@@ -118,12 +121,35 @@ class AdbPairingService : Service() {
         }
     }
 
+    /** When this service instance was created, so every pairing line can say how long into the attempt it is. */
+    private val createdAtMs = SystemClock.elapsedRealtime()
+    private fun sinceCreateMs(): Long = SystemClock.elapsedRealtime() - createdAtMs
+
+    /**
+     * What this phone says about Wireless debugging, raw, for the log.
+     *
+     * Android 17 QPR3 betas hide `adb_wifi_enabled` from apps (it reads as missing or 0 whatever the truth), and
+     * the bare boolean [AdbShell.isWirelessDebuggingEnabled] cannot tell "off" from "hidden". So the raw read
+     * (-1 = the key is absent), the two corroborating facts and the platform are all printed. Never throws.
+     */
+    private fun wdReadForLog(): String {
+        val raw = runCatching {
+            Settings.Global.getInt(applicationContext.contentResolver, "adb_wifi_enabled", -1).toString()
+        }.getOrElse { "threw ${it.javaClass.simpleName}" }
+        val adbd = runCatching { AdbShell.adbdState().name }.getOrDefault("?")
+        val grant = runCatching { AdbShell.hasWriteSecureSettings(applicationContext) }.getOrDefault("?")
+        return "adb_wifi_enabled=$raw (-1 = key absent), init.svc.adbd=$adbd, WRITE_SECURE_SETTINGS=$grant, " +
+            "Android ${Build.VERSION.RELEASE} (API ${Build.VERSION.SDK_INT}), ${Build.MODEL}"
+    }
+
     /** Begins mDNS discovery for the pairing service. Idempotent via [started]. */
     private fun beginDiscovery() {
         if (started) return
         started = true
+        val begun = SystemClock.elapsedRealtime()
+        AppLogger.i(TAG, "Pairing discovery started at +${sinceCreateMs()}ms")
         adbMdns = AdbMdns(this, AdbMdns.TLS_PAIRING) { port ->
-            AppLogger.i(TAG, "pairing service port: $port")
+            AppLogger.i(TAG, "pairing service port: $port, ${SystemClock.elapsedRealtime() - begun}ms after discovery began")
             if (port > 0) {
                 getSystemService(NotificationManager::class.java)
                     .notify(NOTIFICATION_ID, foundNotification(port))
@@ -139,9 +165,10 @@ class AdbPairingService : Service() {
      */
     private fun beginWaitingForWd() {
         if (wdObserver != null) return
-        AppLogger.i(TAG, "WD off — arming pairing; waiting for Wireless debugging to be turned on")
+        AppLogger.i(TAG, "WD reads off (or hidden) — arming pairing; waiting for Wireless debugging to be turned on")
         val observer = object : ContentObserver(mainHandler) {
             override fun onChange(selfChange: Boolean) {
+                AppLogger.i(TAG, "adb_wifi_enabled changed at +${sinceCreateMs()}ms; ${wdReadForLog()}")
                 if (AdbShell.isWirelessDebuggingEnabled(applicationContext)) {
                     AppLogger.i(TAG, "Wireless debugging turned on — starting pairing discovery")
                     stopWaitingForWd()
@@ -162,11 +189,42 @@ class AdbPairingService : Service() {
             wdObserver = null
         }
         mainHandler.postDelayed(wdTimeoutRunnable, WD_WAIT_TIMEOUT_MS)
+        // Probe: on a phone that hides adb_wifi_enabled (Android 17 QPR3 betas) the read above stays "off" while
+        // Wireless debugging is really on, and the wait would run out with nothing found. A pairing service
+        // that is actually advertised proves it is on, so listen for one while waiting; if one shows up, carry
+        // on into normal discovery. The probe changes no setting and posts nothing by itself.
+        val probeStart = SystemClock.elapsedRealtime()
+        probe = AdbMdns(this, AdbMdns.TLS_PAIRING) { port ->
+            if (port > 0) mainHandler.post {
+                if (wdObserver == null || started) return@post
+                AppLogger.w(
+                    TAG,
+                    "A pairing service is advertised on port $port ${SystemClock.elapsedRealtime() - probeStart}ms " +
+                        "into the wait although Wireless debugging reads off — the setting is hidden from apps. " +
+                        "Going on with pairing. ${wdReadForLog()}"
+                )
+                stopWaitingForWd()
+                beginDiscovery()
+                runCatching {
+                    getSystemService(NotificationManager::class.java).notify(NOTIFICATION_ID, searchingNotification())
+                }
+            }
+        }.also { it.start() }
+        // Heartbeats: what the setting reads while the user is in the system pairing dialog, with timings.
+        for (delayMs in WAIT_HEARTBEATS_MS) mainHandler.postDelayed({
+            if (wdObserver != null) AppLogger.i(TAG, "Still waiting at +${sinceCreateMs()}ms; ${wdReadForLog()}")
+        }, delayMs)
     }
+
+    /** The log-only-until-proven mDNS listener used while waiting. See [beginWaitingForWd]. */
+    private var probe: AdbMdns? = null
 
     /** Tears down the WD-waiting observer + timeout. Safe to call when not waiting. */
     private fun stopWaitingForWd() {
-        mainHandler.removeCallbacks(wdTimeoutRunnable)
+        // Everything posted to this service's own handler is waiting-state work (timeout, heartbeats, probe hand-off).
+        mainHandler.removeCallbacksAndMessages(null)
+        probe?.stop()
+        probe = null
         wdObserver?.let { obs ->
             runCatching { contentResolver.unregisterContentObserver(obs) }
                 .onFailure { AppLogger.d(TAG, "unregisterContentObserver ignored: ${it.message}") }
@@ -176,7 +234,7 @@ class AdbPairingService : Service() {
 
     /** Safety net: WD never turned on within the timeout — tear down and stop the service. */
     private fun onWaitTimedOut() {
-        AppLogger.i(TAG, "Wireless debugging not enabled within timeout — stopping pairing service")
+        AppLogger.w(TAG, "Wireless debugging not enabled within timeout (+${sinceCreateMs()}ms) — stopping pairing service; ${wdReadForLog()}")
         stopWaitingForWd()
         stopForeground(STOP_FOREGROUND_REMOVE)
         stopSelf()
@@ -187,9 +245,17 @@ class AdbPairingService : Service() {
         if (pairingHandled) return workingNotification()
         pairingHandled = true
         CoroutineScope(Dispatchers.IO).launch {
+            // The code itself is never logged, only its length.
+            AppLogger.i(TAG, "Pairing code submitted (${code.length} chars) to 127.0.0.1:$port at +${sinceCreateMs()}ms")
+            val pairStart = SystemClock.elapsedRealtime()
             val paired = runCatching {
                 AdbConnectionManager.getInstance(applicationContext).pair("127.0.0.1", port, code)
             }
+            AppLogger.i(
+                TAG,
+                "pair() returned ${paired.getOrNull() ?: "an exception (${paired.exceptionOrNull()?.javaClass?.simpleName})"} " +
+                    "after ${SystemClock.elapsedRealtime() - pairStart}ms"
+            )
             stopWaitingForWd()
             stopSearch()
             val nm = getSystemService(NotificationManager::class.java)
@@ -216,7 +282,7 @@ class AdbPairingService : Service() {
                     .onFailure { AppLogger.e(TAG, "ensureServerRunning after pairing failed", it) }
             } else {
                 val msg = paired.exceptionOrNull()?.message ?: "pair() returned false (wrong code?)"
-                AppLogger.e(TAG, "ADB pairing failed on port $port: $msg")
+                AppLogger.e(TAG, "ADB pairing failed on port $port: $msg", paired.exceptionOrNull())
                 nm.notify(NOTIFICATION_ID, resultNotification(getString(R.string.notif_pairing_failed_title), msg))
             }
             stopForeground(STOP_FOREGROUND_DETACH)
@@ -323,7 +389,12 @@ class AdbPairingService : Service() {
     }
 
     companion object {
-        private const val TAG = "AdbPairingService"
+        // "CV:" like every other tag, and so named in SetupJournalPolicy. The old bare tag was not on that list, so
+        // no pairing line ever reached the always-on setup journal (BabApps item 92).
+        const val TAG = "CV:AdbPairing"
+
+        /** Re-reads of the Wireless debugging setting while waiting, so a stuck wait shows what the phone said. */
+        private val WAIT_HEARTBEATS_MS = longArrayOf(10_000L, 30_000L, 60_000L, 120_000L, 240_000L)
         private const val CHANNEL_ID = "adb_pairing"
         private const val NOTIFICATION_ID = 4712
         private const val REQ_STOP = 2
