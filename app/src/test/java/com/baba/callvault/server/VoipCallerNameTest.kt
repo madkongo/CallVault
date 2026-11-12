@@ -158,6 +158,13 @@ class VoipCallerNameTest {
     }
 
     @Test
+    fun `System UI's ongoing battery notification is never a caller`() {
+        // BabApps item 103: a recording was named "Charging (59 m until full)".
+        val dump = record("com.android.systemui", "Charging (59 m until full)", text = "Battery")
+        assertNull(VoipCallerName.extractFromDump(dump, "com.android.systemui"))
+    }
+
+    @Test
     fun `returns null when the package is unknown`() {
         assertNull(VoipCallerName.extractFromDump(record("com.whatsapp", "Feroza"), ""))
     }

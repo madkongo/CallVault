@@ -113,6 +113,9 @@ internal object VoipCallerName {
      */
     internal fun extractFromDump(dump: String, packageName: String): String? {
         if (packageName.isBlank()) return null
+        // The platform's own ongoing notifications (battery, USB, screen recording...) are never a
+        // caller. Defence in depth: the app already refuses such a uid (BabApps item 103).
+        if (packageName == "com.android.systemui" || packageName == "android") return null
 
         for (record in dump.split("NotificationRecord(")) {
             if (!record.contains("pkg=$packageName ")) continue

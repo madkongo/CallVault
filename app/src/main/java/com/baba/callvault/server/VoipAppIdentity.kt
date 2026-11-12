@@ -77,14 +77,14 @@ internal object VoipAppIdentity {
      * communication mode, set at the same instant as the mode change we react to, so it is the one
      * source that cannot lose the race.
      */
-    fun currentVoiceCommUid(): Int {
+    fun currentVoiceCommUid(skip: Set<Int> = emptySet()): Int {
         val deadline = System.currentTimeMillis() + RESOLVE_BUDGET_MS
         var attempt = 0
         while (true) {
             attempt++
-            val uid = resolveOnce()
+            val uid = resolveOnce(skip)
             if (uid != UID_UNKNOWN) {
-                AppLogger.i(TAG, "VoIP app resolved to uid $uid on attempt $attempt")
+                AppLogger.i(TAG, "VoIP app resolved to uid $uid on attempt $attempt" + if (skip.isEmpty()) "" else " (skipping $skip)")
                 return uid
             }
             if (System.currentTimeMillis() >= deadline) {
@@ -103,8 +103,8 @@ internal object VoipAppIdentity {
      * did. The mode owner is checked whenever the structured lookup comes up empty precisely because it
      * is the one source that is always already there.
      */
-    private fun resolveOnce(): Int {
-        val viaBinder = runCatching { uidFromPlaybackConfigurations() }
+    private fun resolveOnce(skip: Set<Int>): Int {
+        val viaBinder = runCatching { uidFromPlaybackConfigurations(skip) }
             .onFailure { AppLogger.d(TAG, "Playback-configuration lookup unavailable: ${it.message}") }
             .getOrDefault(UID_UNKNOWN)
         if (viaBinder != UID_UNKNOWN) return viaBinder
@@ -112,8 +112,13 @@ internal object VoipAppIdentity {
         val dump = runCatching { readAudioDump() }.getOrNull().orEmpty()
         if (dump.isEmpty()) return UID_UNKNOWN
 
-        val owner = parseModeOwnerUid(dump)
-        return if (owner != UID_UNKNOWN) owner else parseVoiceCommUid(dump)
+        // A skipped mode owner must not hide the playback track behind it.
+        val owner = parseModeOwnerUid(dump, skip)
+        if (owner != UID_UNKNOWN) {
+            AppLogger.i(TAG, "VoIP app uid $owner (mode owner in dump)")
+            return owner
+        }
+        return parseVoiceCommUid(dump, skip)
     }
 
     /**
@@ -122,7 +127,7 @@ internal object VoipAppIdentity {
      * All reflection: the configurations are a hidden API, as is the uid on them. Any missing piece
      * throws and the caller falls back to the dump.
      */
-    private fun uidFromPlaybackConfigurations(): Int {
+    private fun uidFromPlaybackConfigurations(skip: Set<Int>): Int {
         val serviceManager = Class.forName("android.os.ServiceManager")
         val binder = serviceManager.getMethod("getService", String::class.java).invoke(null, "audio")
             ?: return UID_UNKNOWN
@@ -141,6 +146,10 @@ internal object VoipAppIdentity {
             val uid = config.javaClass.getMethod("getClientUid").invoke(config) as? Int ?: continue
             if (!isAppUid(uid)) {
                 AppLogger.d(TAG, "Ignoring platform uid $uid from playback configuration")
+                continue
+            }
+            if (uid in skip) {
+                AppLogger.d(TAG, "Skipping uid $uid from playback configuration: not a calling app")
                 continue
             }
             AppLogger.i(TAG, "VoIP app uid $uid (playback configuration)")
@@ -169,13 +178,13 @@ internal object VoipAppIdentity {
      * Only lines with all three are considered, so an idle or media player can never be mistaken for a
      * call. Split out from the I/O so it can be tested without a device.
      */
-    internal fun parseVoiceCommUid(dump: String): Int {
+    internal fun parseVoiceCommUid(dump: String, skip: Set<Int> = emptySet()): Int {
         for (line in dump.lineSequence()) {
             if (!line.contains("AudioPlaybackConfiguration")) continue
             if (!line.contains("usage=USAGE_VOICE_COMMUNICATION")) continue
             if (!line.contains("state:started")) continue
             val uid = UID_REGEX.find(line)?.groupValues?.get(1)?.toIntOrNull() ?: continue
-            if (!isAppUid(uid)) continue
+            if (!isAppUid(uid) || uid in skip) continue
             AppLogger.i(TAG, "VoIP app uid $uid (playback track in dump)")
             return uid
         }
@@ -193,14 +202,14 @@ internal object VoipAppIdentity {
      * there. Only `MODE_IN_COMMUNICATION` is accepted: `MODE_IN_CALL` is a carrier call, which this
      * feature does not handle, and a stale owner in `MODE_NORMAL` means no call at all.
      */
-    internal fun parseModeOwnerUid(dump: String): Int {
+    internal fun parseModeOwnerUid(dump: String, skip: Set<Int> = emptySet()): Int {
         for (line in dump.lineSequence()) {
             if (!line.contains("mAudioModeOwner")) continue
             if (!line.contains("mMode=MODE_IN_COMMUNICATION")) continue
             val uid = MODE_OWNER_UID_REGEX.find(line)?.groupValues?.get(1)?.toIntOrNull() ?: continue
             // mUid=0 is the "nobody owns the mode" placeholder; a platform uid means the framework owns
             // the mode rather than the calling app, which is the normal case on One UI.
-            if (!isAppUid(uid)) continue
+            if (!isAppUid(uid) || uid in skip) continue
             return uid
         }
         return UID_UNKNOWN
