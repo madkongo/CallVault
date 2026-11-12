@@ -37,6 +37,14 @@ All notable changes to CallVault are documented here. The format is based on
 
 ### Fixed
 
+- **Other apps no longer record silence after a recorded call.** On some phones (seen on a Samsung Galaxy A56 with
+  Android 17), voice messages in Telegram, Instagram and other apps came out silent after any phone call until
+  CallVault was switched off or the phone restarted. CallVault now lets go of the call's microphone connection
+  properly when the call ends, and its debug report no longer blames "another app" for the phone's own voice-assistant
+  listener.
+  <!-- 🧪 VERIFYING: the tester's A56 (test build 2.5.1-mic1): after a recorded call, send a Telegram voice message;
+  it should have sound. OP9 check: after a call, `dumpsys media.audio_flinger` shows no leftover input. No Samsung
+  A56 of ours. -->
 - **Samsung Wi-Fi Calling calls are recorded with both sides** (#45). On some Samsung phones (seen on a Galaxy Z
   Fold2 with Android 17 / One UI 9), a call over Wi-Fi Calling recorded silence or only your side. CallVault now
   notices such a call in its first seconds and switches to the capture it uses for app calls, which records both

@@ -93,6 +93,14 @@ object DiagnosticDumps {
             "$DUMPSYS appops | grep -E '^[[:space:]]*(Uid [0-9]+:|Package |[A-Z_]+ \\(|Running start at:)'",
         )
         "processes" -> arrayOf(PS, "-A", "-o", "USER,PID,ARGS")
+        // Every line of the audio service's dump that speaks of a recording client, a silenced flag, a
+        // capture or the audio mode: the part of `dumpsys audio` that says whether some client is still
+        // registered after a call (BabApps item 94: other apps record silence after a call). Filtered
+        // on the device because the whole dump is large. Fixed command; any argument is ignored.
+        "audio_record_state" -> arrayOf(
+            SH, "-c",
+            "$DUMPSYS audio | grep -iE 'record|silenc|capture|audio mode|mode:|mic' | head -n 200",
+        )
         // The two settings Android 17 redacts, read from HERE rather than from the app.
         //
         // Both of the platform's redaction sites exempt uid < FIRST_APPLICATION_UID, and the daemon is

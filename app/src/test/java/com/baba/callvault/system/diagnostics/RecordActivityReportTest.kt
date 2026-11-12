@@ -45,6 +45,19 @@ class RecordActivityReportTest {
     }
 
     @Test
+    fun `a hotword listener update with no stop is not another app holding the mic`() {
+        // BabApps item 94: the phone's own HOTWORD listener only ever logs updates, never a stop.
+        val dump = "11-11 10:00:00:000 rec update riid:7 uid:10200 session:7 src:HOTWORD not silenced pack:com.google.android.googlequicksearchbox"
+
+        assertEquals("it must not be listed as a leak", emptyList<RecordActivityReport.OpenCapture>(), RecordActivityReport.openCaptures(dump))
+        assertEquals("it is listed as unpairable instead", 1, RecordActivityReport.unpairableEntries(dump).size)
+        listOf("HOTWORD", "RADIO_TUNER", "ULTRASOUND", "ECHO_REFERENCE").forEach {
+            assertTrue(it, !RecordActivityReport.drivesMicIndicator(it))
+        }
+        assertTrue(RecordActivityReport.drivesMicIndicator("MIC"))
+    }
+
+    @Test
     fun `a capture with no stop is reported, and named as ours when it is shell`() {
         // Arrange — one shell capture never stopped, one app capture opened and closed.
         val dump = """
