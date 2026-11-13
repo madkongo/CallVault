@@ -49,6 +49,14 @@ object HandoffSource {
     @Volatile private var heldAuditId: Int = 0
 
     /**
+     * The host-side proxy of the extracted native `IAudioRecord`. `AudioRecord.release()` does not drop
+     * the extra strong binder ref that `nativeExtractBinder` took, so the input stays registered with the
+     * audio policy until this proxy is collected (BabApps item 94, items 81: other apps record silence
+     * after a call). Kept here so [releaseHeld] can drop it and check that it is really gone.
+     */
+    @Volatile private var heldBinder: android.os.IBinder? = null
+
+    /**
      * Creates the privileged capture for [sourceCliKey] and delivers the `IAudioRecord` binder + cblk fd
      * to the app's provider at [authority]. Returns true once the app has been handed the capture.
      *
@@ -137,6 +145,8 @@ object HandoffSource {
         val binder = AudioHandoffNative.nativeExtractBinder(arPtr)
             ?: run { AppLogger.w(T, "deliver: extractBinder null"); return@runCatching false }
 
+        heldBinder = binder
+
         // Authoritative ring frame count straight from the AudioRecord: the app-side drain wraps on it,
         // and it also IDENTIFIES the cblk ashmem region (whose byte size varies with the sample rate).
         val frameCount = runCatching { record.bufferSizeInFrames }.getOrDefault(0)
@@ -182,6 +192,19 @@ object HandoffSource {
         val outcome = runCatching { rec.release() }
         CaptureAudit.released(id, outcome.exceptionOrNull())
         CaptureAudit.assertNoneLive("after releasing the handoff capture")
+
+        // release() leaves the extracted IAudioRecord proxy alive, and with it the native record track
+        // and its input. Drop it and collect off the caller's thread (this runs at call end, and a
+        // gc + finalization pass must never delay it), then log whether the proxy really went.
+        val weak = heldBinder?.let { java.lang.ref.WeakReference(it) }
+        heldBinder = null
+        if (weak != null) {
+            Thread {
+                val freed = ProxyCollector.collect(weak)
+                if (freed) AppLogger.i(T, "releaseHeld: host proxy freed")
+                else AppLogger.w(T, "releaseHeld: host proxy still reachable after gc — the input may stay open")
+            }.apply { isDaemon = true; name = "cv-handoff-host-release" }.start()
+        }
     }
 
     /** Whether [cliKey] can be captured via a direct handoff AudioRecord (else use the daemon path). */

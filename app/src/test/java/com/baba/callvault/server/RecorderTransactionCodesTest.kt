@@ -62,6 +62,8 @@ class RecorderTransactionCodesTest {
         assertEquals(first + 27, IRecorderService.Stub.TRANSACTION_approveWirelessDebuggingNetwork)
         // Appended for stereo output (#74).
         assertEquals(first + 28, IRecorderService.Stub.TRANSACTION_setEncodeStereo)
+        // Appended for BabApps item 103 (skip uids that are not calling apps).
+        assertEquals(first + 29, IRecorderService.Stub.TRANSACTION_voipCallAppUidSkipping)
     }
 
     @Test

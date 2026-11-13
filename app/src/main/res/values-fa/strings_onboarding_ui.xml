@@ -36,4 +36,6 @@
     <string name="permission_adb_open_wd">باز کردن اشکال‌زدایی بی‌سیم</string>
 
     <string name="permission_adb_pair">مرتبط‌سازی</string>
+    <string name="setup_report_link">مشکل دارید؟ گزارش بفرستید</string>
+    <string name="setup_report_preparing">در حال آماده‌سازی گزارش…</string>
 </resources>

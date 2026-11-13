@@ -228,6 +228,11 @@ open class RecorderServiceImpl(private val apkPath: String) : IRecorderService.S
             .onFailure { AppLogger.d(TAG, "voipCallAppUid failed: ${it.message}") }
             .getOrDefault(VoipAppIdentity.UID_UNKNOWN)
 
+    override fun voipCallAppUidSkipping(skipUids: IntArray?): Int =
+        runCatching { VoipAppIdentity.currentVoiceCommUid(skipUids?.toSet().orEmpty()) }
+            .onFailure { AppLogger.d(TAG, "voipCallAppUidSkipping failed: ${it.message}") }
+            .getOrDefault(VoipAppIdentity.UID_UNKNOWN)
+
     override fun voipCallerName(packageName: String?): String? =
         runCatching { packageName?.let { VoipCallerName.resolve(it) } }
             .onFailure { AppLogger.d(TAG, "voipCallerName failed: ${it.message}") }

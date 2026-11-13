@@ -260,7 +260,8 @@ object HandoffReceiver {
         cblk = null
         stopFlag = null
         encodeThread = null
-        if (binder != null) forceReleaseCaptureInput()
+        // Only a weak ref goes to the background thread: a strong one there would keep the proxy alive.
+        if (binder != null) forceReleaseCaptureInput(java.lang.ref.WeakReference(binder))
     }
 
     /**
@@ -276,14 +277,14 @@ object HandoffReceiver {
      * daemon has DIED — the case this whole feature exists for — nothing else can release it. So force a
      * collection here, off the caller's thread (this runs once per recording, at call end).
      */
-    private fun forceReleaseCaptureInput() {
+    private fun forceReleaseCaptureInput(proxy: java.lang.ref.WeakReference<IBinder>) {
         Thread {
-            runCatching {
-                System.gc()
-                System.runFinalization()
-                System.gc() // second pass: finalizer-enqueued proxies are reclaimed on the following cycle
+            // Log the outcome, not the attempt: "released" only when the proxy is really gone.
+            if (ProxyCollector.collect(proxy)) {
+                AppLogger.i(T, "handoff capture input released (IAudioRecord proxy collected)")
+            } else {
+                AppLogger.w(T, "handoff capture input NOT released: the IAudioRecord proxy is still reachable after gc")
             }
-            AppLogger.i(T, "handoff capture input released (forced collection of the IAudioRecord ref)")
         }.apply { isDaemon = true; name = "cv-handoff-release" }.start()
     }
 
@@ -460,7 +461,7 @@ object HandoffReceiver {
             runCatching { oldCblk?.close() }
             // The old BinderProxy still holds the native ref until it is collected — same reason
             // [forceReleaseCaptureInput] exists at end of call.
-            if (oldHeld != null) forceReleaseCaptureInput()
+            if (oldHeld != null) forceReleaseCaptureInput(java.lang.ref.WeakReference(oldHeld))
             cblkFdNum = next.cblk.fd
             geometry = next.geometry
             AppLogger.i(T, "capture rebuilt (cblkFd=$cblkFdNum ch=${geometry.channels} rate=${geometry.sampleRate}) — recording continues")

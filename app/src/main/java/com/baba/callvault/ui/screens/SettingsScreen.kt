@@ -61,6 +61,7 @@ import com.baba.callvault.system.takePersistableFolderPermission
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.baba.callvault.ui.common.ContactSelectionDialog
 import com.baba.callvault.ui.common.CvCard
+import com.baba.callvault.ui.common.DebugReportBuilder
 import com.baba.callvault.ui.common.OemGateNotice
 import com.baba.callvault.ui.common.CvScaffold
 import com.baba.callvault.ui.common.CvSectionHeader
@@ -108,42 +109,11 @@ fun SettingsScreen(
 
 
     /**
-     * Builds the app's debug report and, within [SYSTEM_REPORT_BUDGET_MS], the system report. Shared by Share and
+     * Builds the app's debug report and, within [DebugReportBuilder.SYSTEM_REPORT_BUDGET_MS], the system report. Shared by Share and
      * Save, so both hand over exactly the same thing. The first file is null only when there is nothing to report; the
      * second when the system half could not be collected in time.
      */
-    suspend fun buildReports(): Pair<File?, File?> {
-        val report = withContext(Dispatchers.IO) { AppLogger.buildShareableReport(context) }
-        // The system slice carries the daemon's lines and the platform's — the half no bug
-        // report has ever contained. Null when logcat gave nothing usable, in which case the
-        // app's own report still goes on its own.
-        //
-        // BOUNDED, and that is the whole point. It makes up to seven ADB round-trips, each
-        // retrying with a forced reconnect, so on a phone whose transport is unhealthy it
-        // can outlast any patience. Unbounded, a hang here threw away the app report too —
-        // which was already built and sitting in the variable above — and the user got
-        // nothing at all. Now the optional half can fail and the report still goes out.
-        //
-        // Run on a scope of its own and time out the AWAIT, not the work. buildReport is
-        // one long blocking block inside withContext(Dispatchers.IO) with no suspension
-        // points, and coroutine cancellation is cooperative — a timeout wrapped straight
-        // around it cannot interrupt a blocked socket read, so it would look like a bound
-        // and be none. await() IS a suspension point, so this returns on time and abandons
-        // the stuck thread instead of waiting for it. A detached scope keeps that
-        // abandoned job from holding up this coroutine's completion as a child would.
-        val collector = CoroutineScope(Dispatchers.IO)
-        val pending = collector.async { SystemLogCollector.buildReport(context) }
-        val systemReport = withTimeoutOrNull(SYSTEM_REPORT_BUDGET_MS) { pending.await() }
-        if (systemReport == null) {
-            collector.cancel()
-            AppLogger.w(
-                "CV:Settings",
-                "System report not attached (empty or over ${SYSTEM_REPORT_BUDGET_MS}ms); " +
-                    "going on with the app report alone"
-            )
-        }
-        return report to systemReport
-    }
+    suspend fun buildReports(): Pair<File?, File?> = DebugReportBuilder.build(context)
 
     // Save as. The reports live in the app's private cache, where no file manager can see them and `adb pull` cannot
     // reach them on a release build, so Share was the only way out — and a user who will not send logs through email
@@ -366,9 +336,6 @@ fun SettingsScreen(
         )
     }
 }
-
-/** Hard ceiling on the optional system-log half of a debug report. See the share handler. */
-private const val SYSTEM_REPORT_BUDGET_MS = 45_000L
 
 // ── Settings sections ──────────────────────────────────────────────────────────────────────
 

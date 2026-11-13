@@ -7,6 +7,22 @@ All notable changes to CallVault are documented here. The format is based on
 
 ### Added
 
+- **The debug report now shows what happened to a recording at the end of a call, even with logging off.** It lists
+  how the call was captured, when the library entry was written (and the error if it failed), how long the length
+  check took, and any list row whose length took over 2 seconds to read. No names or numbers. Nothing about recording
+  changes; this is to find out why a 51-minute call was saved but never showed in the library (#63).
+  <!-- 🧪 VERIFYING: after a call, Settings ▸ Debug ▸ send the report: the "USB debugging switched off (always on)"
+  section should hold "call:" lines for the capture path and the catalog write. Whether they explain a missing
+  long call needs the next report from that kind of call. -->
+- **"Having trouble? Send a report" on every setup screen.** The welcome notice, the permissions step and each wizard
+  step now carry a link at the bottom, always in view, that sends the same debug and system report as Settings ▸ Debug.
+  Until now a setup that never finished could not be reported at all (#40). Pairing now writes each step, with timings
+  and what the phone says about Wireless debugging, to the setup journal that is kept from the first launch. It also
+  keeps listening for the pairing service while waiting, so a phone that hides the Wireless debugging switch from apps
+  (Android 17 betas) can carry on instead of waiting for nothing.
+  <!-- 🧪 VERIFYING: on a fresh install, open the app and check the link under the welcome notice, the permissions
+  step and the wizard; tap it and the share sheet should offer the report. On the Pixel 7 (Android 17 QPR3 Beta 3),
+  start pairing and share the report: it should show the pairing steps. -->
 - **One Donate button in the Support dialog.** It opens a short list with Ko-fi and PayPal, instead of two
   side-by-side buttons. The Settings ▸ About Support row no longer says it only opens Ko-fi.
   <!-- 🧪 VERIFYING: open Support (Home pill or Settings ▸ About), tap Donate; Ko-fi and PayPal should be listed and
@@ -53,6 +69,33 @@ All notable changes to CallVault are documented here. The format is based on
   and the shell processes looked like at the start of a call and if the capture is cut off (BabApps #95).
   <!-- 🧪 VERIFYING: needs the Pixel 8 report from a cold start (force-stop, then a call): one "daemon launch" line,
   no second "Clearing 1 other recorder process(es)", and whether "In use by Shell" still appears. -->
+- **An outgoing Telegram or AyuGram call is no longer split into a ~5-second file and a second file.** While the
+  other phone is ringing these apps leave call mode for a few seconds, and CallVault took that for the end of the
+  call. A young call in which no call audio was ever heard now waits up to 30 seconds for call mode to return and
+  carries on in the same file (the ring is just silence). If it never returns, the recording is dropped quietly: a
+  call that never connected. Calls that did connect end as before.
+  <!-- 🧪 VERIFYING: needs an outgoing AyuGram or Telegram call on a phone, answered after ringing 6+ seconds: expect ONE
+  file; then a call nobody answers: expect no file. Unit-tested only (the timing policy); not run against a real app.
+  (BabApps item 107) -->
+- **Telegram-app calls (AyuGram, Nekogram) are no longer named "Telegram call".** These apps call their own call
+  notification "Telegram call", and CallVault took that as the contact's name. It now skips it and uses the
+  person's name from the notification. Other apps are unchanged: a WhatsApp contact called "Telegram support" keeps
+  its name. The short files before a real call are a separate matter and not changed here.
+  <!-- 🧪 VERIFYING: needs a call in AyuGram (a tester's S25 Ultra, Android 17): the file should carry the contact's name
+  instead of "Telegram call". Unit-tested only; the Nekogram package name is not checked on a device. (BabApps item 107) -->
+- **An app-call recording is no longer named after the battery ("Charging (59 m until full)").** On some phones the
+  system's own screen (System UI) was taken for the app on the call, and its charging notification became the
+  contact's name. CallVault now ignores system components that are not calling apps and looks for the real one.
+  <!-- 🧪 VERIFYING: needs an app call (WhatsApp/Telegram) on a phone that showed the "Charging…" name; the file should
+  carry the contact name or none, never the battery text. Unit-tested only. (BabApps item 103) -->
+- **Other apps no longer record silence after a recorded call.** On some phones (seen on a Samsung Galaxy A56 with
+  Android 17), voice messages in Telegram, Instagram and other apps came out silent after any phone call until
+  CallVault was switched off or the phone restarted. CallVault now lets go of the call's microphone connection
+  properly when the call ends, and its debug report no longer blames "another app" for the phone's own voice-assistant
+  listener.
+  <!-- 🧪 VERIFYING: the tester's A56 (test build 2.5.1-mic1): after a recorded call, send a Telegram voice message;
+  it should have sound. OP9 check: after a call, `dumpsys media.audio_flinger` shows no leftover input. No Samsung
+  A56 of ours. -->
 - **Samsung Wi-Fi Calling calls are recorded with both sides** (#45). On some Samsung phones (seen on a Galaxy Z
   Fold2 with Android 17 / One UI 9), a call over Wi-Fi Calling recorded silence or only your side. CallVault now
   notices such a call in its first seconds and switches to the capture it uses for app calls, which records both

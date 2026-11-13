@@ -45,6 +45,8 @@ object SetupJournalPolicy {
         "CV:AdbConnectionMgr",
         "CV:AdbConnectionService",
         "CV:AdbPairing",
+        "CV:ConnectPort",
+        "CV:SetupReport",
         "CV:RecorderLauncher",
         "CV:RecorderBackend",
         "CV:RecorderConn",

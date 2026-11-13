@@ -24,4 +24,6 @@
     <string name="permissions_ui_hero_line">Kilka uprawnień, by nagrywać rozmowy.</string>
     <string name="permissions_ui_hero_title">Skonfigurujmy aplikację</string>
     <string name="permissions_ui_section_label">Uprawnienia</string>
+    <string name="setup_report_link">Masz problem? Wyślij raport</string>
+    <string name="setup_report_preparing">Przygotowywanie raportu…</string>
 </resources>

@@ -24,4 +24,6 @@
     <string name="permissions_ui_hero_line">Unos permisos para poder grabar llamadas.</string>
     <string name="permissions_ui_hero_title">Vamos a configurarlo</string>
     <string name="permissions_ui_section_label">Permisos</string>
+    <string name="setup_report_link">¿Tienes problemas? Envía un informe</string>
+    <string name="setup_report_preparing">Preparando el informe…</string>
 </resources>

@@ -51,6 +51,7 @@ import com.baba.callvault.utils.RedirectedCall
 import com.baba.callvault.system.permissions.PermissionChecks
 import com.baba.callvault.utils.RecordingFileNameFormatter
 import com.baba.callvault.transcription.AudioDecoder
+import com.baba.callvault.system.diagnostics.CallEndLog
 import com.baba.callvault.system.storage.MinDurationPolicy
 import com.baba.callvault.system.interop.MetadataSidecar
 import com.baba.callvault.data.recordings.RecordingsRepository
@@ -547,6 +548,15 @@ class RecordingForegroundService : Service() {
             captureStartedAt = android.os.SystemClock.elapsedRealtime()
             currentState = RecordingServiceState.Active(activeSession, false, metadata)
             AppLogger.i(TAG, "Recording pipeline started successfully")
+            CallEndLog.record(
+                applicationContext,
+                CallEndLog.capturePath(
+                    activeSession.capturePathName(),
+                    runCatching { AppPreferences(applicationContext).getPrivilegedMode().name }.getOrDefault("?"),
+                    runCatching { AppPreferences(applicationContext).getAudioSource() }.getOrDefault("?"),
+                    runCatching { AppPreferences(applicationContext).getAudioCodec() }.getOrDefault("?"),
+                )
+            )
             serviceScope.launch { startRouteWatch() }
             // Belt-and-suspenders: if a STOP landed in the tiny window after the daemon accepted the
             // recording but before we reached here, tear it down immediately so capture (and the mic)
@@ -1129,7 +1139,9 @@ class RecordingForegroundService : Service() {
         // both capture paths.
         val minSeconds = AppPreferences(this).getMinDurationSeconds()
         if (minSeconds > 0) {
-            val durationMs = AudioDecoder.durationMs(applicationContext, uri)
+            val durationMs = CallEndLog.timedProbe(applicationContext, "carrier", name) {
+                AudioDecoder.durationMs(applicationContext, uri)
+            }
             if (MinDurationPolicy.shouldDiscard(durationMs, minSeconds)) {
                 AppLogger.i(
                     TAG,
@@ -1166,7 +1178,13 @@ class RecordingForegroundService : Service() {
         // CallLog fallback above). Written for every storage target, regardless of where the file lands.
         CoroutineScope(Dispatchers.IO).launch {
             try {
-                RecordingCatalog.recordLocal(applicationContext, name, uri, sizeBytes, lastModified)
+                CallEndLog.record(applicationContext, CallEndLog.catalogStart(name, sizeBytes))
+                val catalogStartedAt = android.os.SystemClock.elapsedRealtime()
+                val catalogFailure = RecordingCatalog.recordLocalReporting(applicationContext, name, uri, sizeBytes, lastModified)
+                CallEndLog.record(
+                    applicationContext,
+                    CallEndLog.catalogEnd(name, sizeBytes, android.os.SystemClock.elapsedRealtime() - catalogStartedAt, catalogFailure)
+                )
                 // Marks are keyed to the FINAL name, for the same reason the sidecar is: an anonymous
                 // number gets renamed from the call log after the call, and rows written mid-call would
                 // point at a recording that no longer exists.

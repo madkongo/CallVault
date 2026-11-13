@@ -31,6 +31,7 @@ import com.baba.callvault.server.RecorderConnection
 import com.baba.callvault.server.RecorderBackend
 import com.baba.callvault.services.recording.handoff.HandoffReceiver
 import com.baba.callvault.services.recording.handoff.HandoffSource
+import com.baba.callvault.system.diagnostics.CallEndLog
 import com.baba.callvault.system.storage.SafHelper
 import com.baba.callvault.system.storage.StagingNote
 import com.baba.callvault.integrations.scrcpy.ServerExtractor
@@ -226,6 +227,13 @@ class AudioRecordingEngine {
      */
     var farPartyHeard: Boolean? = null
         private set
+
+    /** What the app expects the daemon to capture with, set when it dispatches the recording. Only for the always-on log. */
+    private var daemonExpectsDirect: Boolean = false
+
+    /** The capture path this session took, for the always-on call-end log ([CallEndLog.capturePathName]). */
+    fun capturePathName(): String =
+        CallEndLog.capturePathName(isAppCallMix, handoffMode, daemonMode, daemonExpectsDirect)
 
     /** True when neither the daemon nor the handoff carries this recording (local scrcpy over ADB). */
     val isLocalFallback: Boolean
@@ -604,7 +612,8 @@ class AudioRecordingEngine {
             // report to the wrong component — a VOICE_CALL/AAC recording goes direct, not through scrcpy.
             // The daemon logs which path it actually took, but that never reaches this file: it runs in
             // its own process, where AppLogger was never given a context to write one.
-            val expectedPath = if (DirectAudioRecorderSession.supports(audioSourceEnum, codecEnum)) {
+            daemonExpectsDirect = DirectAudioRecorderSession.supports(audioSourceEnum, codecEnum)
+            val expectedPath = if (daemonExpectsDirect) {
                 "direct AudioRecord"
             } else {
                 "scrcpy"

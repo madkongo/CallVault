@@ -38,6 +38,7 @@ import com.baba.callvault.ui.navigation.AppScreen
 import com.baba.callvault.ui.navigation.HomeSection
 import com.baba.callvault.ui.navigation.NotificationDestination
 import com.baba.callvault.utils.AppLogger
+import com.baba.callvault.ui.common.SetupScreenWithReportLink
 import com.baba.callvault.ui.screens.DisclaimerScreen
 import com.baba.callvault.ui.screens.HomeScreen
 import com.baba.callvault.ui.screens.PermissionsScreen
@@ -218,23 +219,31 @@ fun AppNavigationScreen(
     CallVaultTheme(darkTheme = darkTheme, dynamicColor = dynamicColor) {
         when (screenState) {
 
-            AppScreen.Disclaimer -> DisclaimerScreen(
-                onContinue = {
-                    preferences.setDisclaimerAccepted(true)
-                    appNavViewModel.refresh()
-                }
-            )
+            // Every setup screen carries the pinned "Send a report" link, so a setup that never finishes
+            // can still be reported (BabApps item 92: a tester stuck at pairing could not reach Settings).
+            AppScreen.Disclaimer -> SetupScreenWithReportLink {
+                DisclaimerScreen(
+                    onContinue = {
+                        preferences.setDisclaimerAccepted(true)
+                        appNavViewModel.refresh()
+                    }
+                )
+            }
 
-            AppScreen.Permissions -> PermissionsScreen(
-                status              = onboardingStatus,
-                onPermissionGranted = { appNavViewModel.refresh() }
-            )
+            AppScreen.Permissions -> SetupScreenWithReportLink {
+                PermissionsScreen(
+                    status              = onboardingStatus,
+                    onPermissionGranted = { appNavViewModel.refresh() }
+                )
+            }
 
-            AppScreen.Wizard -> WizardScreen(
-                // The wizard persists everything + flips the wizardCompleted flag on Finish; refreshing
-                // the onboarding status here advances the router from Wizard to Home.
-                onFinished = { appNavViewModel.refresh() }
-            )
+            AppScreen.Wizard -> SetupScreenWithReportLink {
+                WizardScreen(
+                    // The wizard persists everything + flips the wizardCompleted flag on Finish; refreshing
+                    // the onboarding status here advances the router from Wizard to Home.
+                    onFinished = { appNavViewModel.refresh() }
+                )
+            }
 
             // Settings is a PANEL over Home, not a destination: Home stays composed underneath, so
             // closing is instant and nothing behind is rebuilt. SettingsSidebar owns back, the scrim

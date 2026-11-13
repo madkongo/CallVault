@@ -43,4 +43,8 @@
     <string name="permission_adb_open_wd">Open Wireless debugging</string>
 
     <string name="permission_adb_pair">Pair</string>
+
+    <!-- Pinned under every setup screen. BabApps item 92. -->
+    <string name="setup_report_link">Having trouble? Send a report</string>
+    <string name="setup_report_preparing">Preparing the report…</string>
 </resources>

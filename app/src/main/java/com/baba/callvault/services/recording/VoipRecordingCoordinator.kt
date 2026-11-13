@@ -42,6 +42,7 @@ import kotlinx.coroutines.launch
 import com.baba.callvault.utils.AppLogger
 import com.baba.callvault.utils.DeviceInfo
 import com.baba.callvault.transcription.AudioDecoder
+import com.baba.callvault.system.diagnostics.CallEndLog
 import com.baba.callvault.system.storage.MinDurationPolicy
 import com.baba.callvault.system.interop.MetadataSidecar
 import com.baba.callvault.data.recordings.RecordingsRepository
@@ -152,7 +153,7 @@ object VoipRecordingCoordinator {
         // Best-effort; a missing app or name just drops out of the filename.
         // The app comes from the audio stream we are about to record, so it cannot be the wrong app;
         // the caller is then looked up scoped to THAT package, never across all notifications.
-        val callPackage = resolveCallPackage(context, service)
+        val callPackage = resolveCallPackage(context, service, "start")
         val appLabel = callPackage?.let { appLabelFor(context, it) }
         val caller = callPackage?.let {
             runCatching { service.voipCallerName(it) }
@@ -225,6 +226,14 @@ object VoipRecordingCoordinator {
         // The same "Recording started" toast and vibration a phone call gets; both follow their settings.
         RecordingNotificationHelper(context).showRecordingStarted()
         AppLogger.i(TAG, "VoIP recording started -> $fileName")
+        CallEndLog.record(
+            context,
+            CallEndLog.capturePath(
+                "VoIP (daemon startVoipRecording)",
+                runCatching { prefs.getPrivilegedMode().name }.getOrDefault("?"),
+                "voip", codec.cliKey,
+            )
+        )
         lateCaller = null
         lateCallerJob?.cancel()
         lateAppLabel = null
@@ -369,7 +378,7 @@ object VoipRecordingCoordinator {
             elapsed = at
             if (!recording) return@launch
             val service = RecorderConnection.service ?: return@launch
-            val pkg = runCatching { resolveCallPackage(context, service) }.getOrNull() ?: continue
+            val pkg = runCatching { resolveCallPackage(context, service, "late") }.getOrNull() ?: continue
             if (!recording) return@launch
             val excluded = AppPreferences(context).getVoipExcludedPackages()
             // A switched-off app costs the whole call, so it is looked up a second time first.
@@ -377,7 +386,7 @@ object VoipRecordingCoordinator {
                 delay(VoipLateCaller.CONFIRM_DELAY_MS)
                 elapsed += VoipLateCaller.CONFIRM_DELAY_MS
                 if (!recording) return@launch
-                runCatching { resolveCallPackage(context, service) }.getOrNull()
+                runCatching { resolveCallPackage(context, service, "late") }.getOrNull()
             }
             when (VoipLateCaller.verdict(pkg, second, excluded)) {
                 VoipLateCaller.LateAppVerdict.UNSURE -> {
@@ -654,8 +663,12 @@ object VoipRecordingCoordinator {
     }
 
     /** Stops the in-flight VoIP recording, if any. Idempotent. */
+    /**
+     * @param neverConnected the call ended after a ring-time wait with no call-voice player ever seen
+     *   and call mode never back (BabApps item 107): a ring, not a conversation. Discarded quietly.
+     */
     @Synchronized
-    fun onCallEnded(context: Context) {
+    fun onCallEnded(context: Context, neverConnected: Boolean = false) {
         if (!recording) return
         recording = false
         val saf = pending
@@ -701,6 +714,15 @@ object VoipRecordingCoordinator {
             runCatching { saf?.stagingFile?.delete() }
             saf?.uri?.let { uri ->
                 runCatching { SafHelper.deleteDocument(DocumentFile.fromSingleUri(context, uri), "the ignored caller's app call") }
+            }
+            return
+        }
+        if (neverConnected) {
+            AppLogger.i(TAG, "The app call never connected (call mode did not return, no call-voice player seen; ${recordedMs} ms); discarding the ring, no warning")
+            runCatching { saf?.descriptor?.close() }
+            runCatching { saf?.stagingFile?.delete() }
+            saf?.uri?.let { uri ->
+                runCatching { SafHelper.deleteDocument(DocumentFile.fromSingleUri(context, uri), "the app call that never connected") }
             }
             return
         }
@@ -806,7 +828,9 @@ object VoipRecordingCoordinator {
                     // for anyone who had turned the setting on.
                     val minSeconds = AppPreferences(context).getMinDurationSeconds()
                     if (minSeconds > 0) {
-                        val durationMs = AudioDecoder.durationMs(context, safUri)
+                        val durationMs = CallEndLog.timedProbe(context, "VoIP", name) {
+                            AudioDecoder.durationMs(context, safUri)
+                        }
                         if (MinDurationPolicy.shouldDiscard(durationMs, minSeconds)) {
                             AppLogger.i(
                                 TAG,
@@ -824,7 +848,14 @@ object VoipRecordingCoordinator {
                     // to keeping, as on the carrier path.
                     val isHeld = AfterCallDecision.tryHold(context, name, safUri, codecMime, isVoip = true)
                     try {
-                        RecordingCatalog.recordLocal(context, name, safUri, size, System.currentTimeMillis())
+                        CallEndLog.record(context, CallEndLog.catalogStart(name, size))
+                        val catalogStartedAt = android.os.SystemClock.elapsedRealtime()
+                        val catalogFailure =
+                            RecordingCatalog.recordLocalReporting(context, name, safUri, size, System.currentTimeMillis())
+                        CallEndLog.record(
+                            context,
+                            CallEndLog.catalogEnd(name, size, android.os.SystemClock.elapsedRealtime() - catalogStartedAt, catalogFailure)
+                        )
                         // Marks collected during the call, keyed to the final name — the same rule the
                         // carrier path follows and for the same reason.
                         FlagRepository.save(context, name, PendingFlags.drain())
@@ -965,22 +996,52 @@ object VoipRecordingCoordinator {
         return appLabelFor(context, pkg)
     }
 
-    private fun resolveCallPackage(context: Context, service: IRecorderService): String? {
-        val uid = runCatching { service.voipCallAppUid() }
-            .onFailure { AppLogger.d(TAG, "call-uid lookup failed: ${it.message}") }
-            .getOrDefault(UID_UNKNOWN)
-        if (uid == UID_UNKNOWN) {
-            AppLogger.d(TAG, "No VoIP call audio owner found; naming by time alone")
-            return null
-        }
-
+    /**
+     * [stage] is only for the log line: "start", "late" (askAgainForApp) or "prompt".
+     *
+     * A uid that is not a calling app (System UI and the like) is rejected here and the daemon asked
+     * again with it excluded, so the same wrong uid is never retried and never reaches the caller
+     * scrape, the per-app exclude list or the "Ask me" label (BabApps item 103).
+     */
+    private fun resolveCallPackage(context: Context, service: IRecorderService, stage: String = "prompt"): String? {
         val pm = context.packageManager
-        val packages = runCatching { pm.getPackagesForUid(uid) }.getOrNull()?.toList().orEmpty()
-        if (packages.isEmpty()) {
-            AppLogger.d(TAG, "uid $uid resolved to no visible package")
+        val resolved = VoipCallAppFilter.resolve(
+            stage = stage,
+            unknownUid = UID_UNKNOWN,
+            askUid = { rejected -> askDaemonForCallUid(service, rejected) },
+            packagesFor = { uid ->
+                runCatching { pm.getPackagesForUid(uid) }.getOrNull().orEmpty().map { name ->
+                    val system = runCatching {
+                        (pm.getApplicationInfo(name, 0).flags and
+                            (android.content.pm.ApplicationInfo.FLAG_SYSTEM or
+                                android.content.pm.ApplicationInfo.FLAG_UPDATED_SYSTEM_APP)) != 0
+                    }.getOrDefault(false)
+                    VoipCallAppFilter.PackageFacts(name, system, pm.getLaunchIntentForPackage(name) != null)
+                }
+            },
+            log = { AppLogger.i(TAG, it) },
+        )
+        if (resolved == null) {
+            AppLogger.d(TAG, "No VoIP call app found ($stage); naming by time alone")
             return null
         }
-        return packages.firstOrNull { pm.getLaunchIntentForPackage(it) != null } ?: packages.first()
+        val packages = resolved.packages
+        return (packages.firstOrNull { it.hasLauncher } ?: packages.first()).name
+    }
+
+    /** The daemon's uid, excluding [rejected]; an older daemon without the method gets the plain call. */
+    private fun askDaemonForCallUid(service: IRecorderService, rejected: Set<Int>): Int {
+        if (rejected.isEmpty()) {
+            // Nothing to exclude yet: the plain call works on every daemon.
+            return runCatching { service.voipCallAppUid() }
+                .onFailure { AppLogger.d(TAG, "call-uid lookup failed: ${it.message}") }
+                .getOrDefault(UID_UNKNOWN)
+        }
+        val uid = runCatching { service.voipCallAppUidSkipping(rejected.toIntArray()) }
+            .onFailure { AppLogger.d(TAG, "call-uid lookup (skipping) failed: ${it.message}") }
+            .getOrDefault(UID_UNKNOWN)
+        // A daemon from an older APK may answer a no-op with 0; that is "no answer", not an app.
+        return if (uid >= 10_000) uid else UID_UNKNOWN
     }
 
     /** The app's user-visible name, e.g. "com.whatsapp" -> "WhatsApp"; falls back to the package. */
