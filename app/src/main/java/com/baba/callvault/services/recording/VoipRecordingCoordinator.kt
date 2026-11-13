@@ -42,6 +42,7 @@ import kotlinx.coroutines.launch
 import com.baba.callvault.utils.AppLogger
 import com.baba.callvault.utils.DeviceInfo
 import com.baba.callvault.transcription.AudioDecoder
+import com.baba.callvault.system.diagnostics.CallEndLog
 import com.baba.callvault.system.storage.MinDurationPolicy
 import com.baba.callvault.system.interop.MetadataSidecar
 import com.baba.callvault.data.recordings.RecordingsRepository
@@ -225,6 +226,14 @@ object VoipRecordingCoordinator {
         // The same "Recording started" toast and vibration a phone call gets; both follow their settings.
         RecordingNotificationHelper(context).showRecordingStarted()
         AppLogger.i(TAG, "VoIP recording started -> $fileName")
+        CallEndLog.record(
+            context,
+            CallEndLog.capturePath(
+                "VoIP (daemon startVoipRecording)",
+                runCatching { prefs.getPrivilegedMode().name }.getOrDefault("?"),
+                "voip", codec.cliKey,
+            )
+        )
         lateCaller = null
         lateCallerJob?.cancel()
         lateAppLabel = null
@@ -806,7 +815,9 @@ object VoipRecordingCoordinator {
                     // for anyone who had turned the setting on.
                     val minSeconds = AppPreferences(context).getMinDurationSeconds()
                     if (minSeconds > 0) {
-                        val durationMs = AudioDecoder.durationMs(context, safUri)
+                        val durationMs = CallEndLog.timedProbe(context, "VoIP", name) {
+                            AudioDecoder.durationMs(context, safUri)
+                        }
                         if (MinDurationPolicy.shouldDiscard(durationMs, minSeconds)) {
                             AppLogger.i(
                                 TAG,
@@ -824,7 +835,14 @@ object VoipRecordingCoordinator {
                     // to keeping, as on the carrier path.
                     val isHeld = AfterCallDecision.tryHold(context, name, safUri, codecMime, isVoip = true)
                     try {
-                        RecordingCatalog.recordLocal(context, name, safUri, size, System.currentTimeMillis())
+                        CallEndLog.record(context, CallEndLog.catalogStart(name, size))
+                        val catalogStartedAt = android.os.SystemClock.elapsedRealtime()
+                        val catalogFailure =
+                            RecordingCatalog.recordLocalReporting(context, name, safUri, size, System.currentTimeMillis())
+                        CallEndLog.record(
+                            context,
+                            CallEndLog.catalogEnd(name, size, android.os.SystemClock.elapsedRealtime() - catalogStartedAt, catalogFailure)
+                        )
                         // Marks collected during the call, keyed to the final name — the same rule the
                         // carrier path follows and for the same reason.
                         FlagRepository.save(context, name, PendingFlags.drain())
