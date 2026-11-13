@@ -21,6 +21,7 @@ import com.baba.callvault.data.calls.SimLabels
 import com.baba.callvault.data.StorageTarget
 import com.baba.callvault.data.recordings.db.RecordingDatabase
 import com.baba.callvault.data.recordings.db.RecordingEntry
+import com.baba.callvault.system.diagnostics.CallEndLog
 import com.baba.callvault.system.interop.MetadataSidecar
 import com.baba.callvault.system.interop.TranscriptSidecar
 import com.baba.callvault.system.permissions.PermissionChecks
@@ -216,8 +217,13 @@ object RecordingsRepository {
                     item.durationSeconds != null -> item.durationSeconds
                     else -> item.localUri?.let { uri ->
                         probes++
-                        val read = AudioDecoder.durationMs(context, uri)
-                            .takeIf { it > 0 }?.let { (it + 500) / 1000 }
+                        val probeStartedAt = android.os.SystemClock.elapsedRealtime()
+                        val probedMs = AudioDecoder.durationMs(context, uri)
+                        // Logging only: a probe over two seconds is what stalls the one-piece list emit.
+                        CallEndLog.slowRowProbe(
+                            item.displayName, item.sizeBytes, android.os.SystemClock.elapsedRealtime() - probeStartedAt, probedMs
+                        )?.let { CallEndLog.record(context, it) }
+                        val read = probedMs.takeIf { it > 0 }?.let { (it + 500) / 1000 }
                         // A failed read stays uncached, so a transient failure cannot become a
                         // permanent wrong answer.
                         if (read != null) RecordingCatalog.setDuration(context, item.displayName, read)

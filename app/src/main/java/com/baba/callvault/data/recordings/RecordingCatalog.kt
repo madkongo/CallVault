@@ -43,7 +43,17 @@ object RecordingCatalog {
      * already stamped on the same-named row. Called at record-finish for every storage target.
      */
     suspend fun recordLocal(context: Context, displayName: String, localUri: Uri, sizeBytes: Long, lastModified: Long) {
-        runCatching {
+        recordLocalReporting(context, displayName, localUri, sizeBytes, lastModified)
+    }
+
+    /**
+     * [recordLocal], returning what went wrong: null when the row was written, else the exception that
+     * [recordLocal] swallows. For the end-of-call log, which has to say whether the write really happened.
+     */
+    suspend fun recordLocalReporting(
+        context: Context, displayName: String, localUri: Uri, sizeBytes: Long, lastModified: Long
+    ): Throwable? {
+        return runCatching {
             val dao = dao(context)
             val existing = dao.findByName(displayName)
             val merged = (existing ?: RecordingEntry(displayName)).copy(
@@ -52,7 +62,7 @@ object RecordingCatalog {
                 lastModified = lastModified.takeIf { it > 0L } ?: existing?.lastModified ?: 0L
             )
             dao.upsert(merged)
-        }.onFailure { AppLogger.w(TAG, "recordLocal('$displayName') failed: ${it.message}") }
+        }.onFailure { AppLogger.w(TAG, "recordLocal('$displayName') failed: ${it.message}") }.exceptionOrNull()
     }
 
     /**

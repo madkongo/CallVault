@@ -7,6 +7,13 @@ All notable changes to CallVault are documented here. The format is based on
 
 ### Added
 
+- **The debug report now shows what happened to a recording at the end of a call, even with logging off.** It lists
+  how the call was captured, when the library entry was written (and the error if it failed), how long the length
+  check took, and any list row whose length took over 2 seconds to read. No names or numbers. Nothing about recording
+  changes; this is to find out why a 51-minute call was saved but never showed in the library (#63).
+  <!-- 🧪 VERIFYING: after a call, Settings ▸ Debug ▸ send the report: the "USB debugging switched off (always on)"
+  section should hold "call:" lines for the capture path and the catalog write. Whether they explain a missing
+  long call needs the next report from that kind of call. -->
 - **"Having trouble? Send a report" on every setup screen.** The welcome notice, the permissions step and each wizard
   step now carry a link at the bottom, always in view, that sends the same debug and system report as Settings ▸ Debug.
   Until now a setup that never finished could not be reported at all (#40). Pairing now writes each step, with timings
