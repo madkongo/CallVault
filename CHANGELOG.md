@@ -46,6 +46,12 @@ All notable changes to CallVault are documented here. The format is based on
 
 ### Fixed
 
+- **Telegram-app calls (AyuGram, Nekogram) are no longer named "Telegram call".** These apps call their own call
+  notification "Telegram call", and CallVault took that as the contact's name. It now skips it and uses the
+  person's name from the notification. Other apps are unchanged: a WhatsApp contact called "Telegram support" keeps
+  its name. The short files before a real call are a separate matter and not changed here.
+  <!-- 🧪 VERIFYING: needs a call in AyuGram (a tester's S25 Ultra, Android 17): the file should carry the contact's name
+  instead of "Telegram call". Unit-tested only; the Nekogram package name is not checked on a device. (BabApps item 107) -->
 - **An app-call recording is no longer named after the battery ("Charging (59 m until full)").** On some phones the
   system's own screen (System UI) was taken for the app on the call, and its charging notification became the
   contact's name. CallVault now ignores system components that are not calling apps and looks for the real one.
