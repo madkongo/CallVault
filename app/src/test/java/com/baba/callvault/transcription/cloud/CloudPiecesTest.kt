@@ -163,6 +163,13 @@ class CloudPiecesTest {
         assertEquals(CloudError.Kind.RETRY_LATER, CloudError.forHttpStatus(503, "Groq").kind)
         assertEquals(CloudError.Kind.REJECTED, CloudError.forHttpStatus(400, "Groq").kind)
         assertFalse(CloudError.forHttpStatus(401, "Groq").isRetryable)
+        // A read timeout means the service was reached; a connect failure or timeout means it was not.
+        val slow = CloudError.network("Custom", java.net.SocketTimeoutException("Read timed out"))
+        assertTrue(slow.message!!.startsWith("Custom took too long to answer"))
+        assertTrue(slow.isRetryable)
+        val noConnect = CloudError.network("Custom", java.net.SocketTimeoutException("failed to connect to /10.0.0.2 (port 443) after 20000ms"))
+        assertTrue(noConnect.message!!.startsWith("Could not reach Custom"))
+        assertTrue(CloudError.network("Custom", java.net.ConnectException("refused")).message!!.startsWith("Could not reach Custom"))
         assertTrue(CloudError.forHttpStatus(500, "Groq").isRetryable)
     }
 }

@@ -72,9 +72,17 @@ class CloudError(
 
         fun network(service: String, cause: Throwable): CloudError = CloudError(
             Kind.RETRY_LATER,
+            // A timeout after connecting means the service was reached and is still working on it. A
+            // connect timeout also arrives as SocketTimeoutException, but its message names the connect.
+            if (isReadTimeout(cause)) "$service took too long to answer (${cause.javaClass.simpleName}); will try again."
+            else
             // The exception's class only: its message can carry the URL, never the key, but stays out.
             "Could not reach $service (${cause.javaClass.simpleName}); will try again.",
         )
+
+        private fun isReadTimeout(cause: Throwable): Boolean =
+            cause is java.net.SocketTimeoutException &&
+                cause.message?.contains("connect", ignoreCase = true) != true
 
         fun noSegments(service: String): CloudError = CloudError(
             Kind.NO_SEGMENTS,

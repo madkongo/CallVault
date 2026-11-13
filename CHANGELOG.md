@@ -53,6 +53,12 @@ All notable changes to CallVault are documented here. The format is based on
 
 ### Fixed
 
+- **Cloud transcription of long calls (over 10 minutes) no longer times out.** A 48-minute call sent to a self-hosted
+  Whisper server went up in one request, the server needed longer than the 2-minute wait, and the call was sent again
+  from the start. Calls longer than 10 minutes now go up in 5-minute parts, as large files already did. A slow answer
+  is now reported as "took too long to answer" instead of "Could not reach" (#79).
+  <!-- 🧪 VERIFYING: transcribe a call over 10 minutes with Custom, Groq or OpenRouter; the log should say "in N
+  pass(es)" and the transcript should arrive. A call under 10 minutes still goes whole. -->
 - **A stuck microphone dot after a call is cleared once Wi-Fi is back.** On a Pixel 8 with Android 17 the microphone
   stayed marked as "in use by Shell" after calls, and CallVault could not clear it because it had no Wi-Fi to restart
   its recorder with. It now restarts the recorder at once when the phone's own adb tcp port is reachable (no Wi-Fi

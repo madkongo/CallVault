@@ -28,8 +28,8 @@ import kotlinx.coroutines.withContext
  * Transcribes a recording with a cloud service (issue #48).
  *
  * The recording goes up as it is — its own Ogg/Opus or M4A bytes, in ONE request when it is under
- * [UploadFormat.SINGLE_UPLOAD_MAX_BYTES], which is a call of up to about 1 h 50 min at the
- * default bit rate. Only larger files, or containers the services do not take, are cut into passes (remuxed,
+ * [UploadFormat.SINGLE_UPLOAD_MAX_BYTES] and no longer than [UploadFormat.SINGLE_UPLOAD_MAX_DURATION_MS]
+ * (a longer call outlasts the 120 s wait for the answer). Longer or larger files, or containers the services do not take, are cut into passes (remuxed,
  * not re-encoded, where possible; WAV otherwise) and joined by [CloudSeam]. Decoding for upload used to
  * cost ~20 s per five-minute pass on the OP9, ten times the network round trip.
  *
@@ -93,7 +93,7 @@ class CloudTranscriber(
         durationMs: Long,
         probe: CloudAudioSource.Probe,
     ): List<TranscriptSegment> {
-        if (UploadFormat.sendsWhole(probe.fileName, probe.sizeBytes)) {
+        if (UploadFormat.sendsWhole(probe.fileName, probe.sizeBytes, durationMs)) {
             val format = requireNotNull(UploadFormat.forFileName(probe.fileName))
             // Sizes only — never words, never the key.
             AppLogger.i(TAG, "Sending the recording whole: ${probe.sizeBytes / BYTES_PER_KB} KB as ${format.contentType}")
