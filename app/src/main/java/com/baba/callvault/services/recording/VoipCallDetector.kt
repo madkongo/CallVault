@@ -59,6 +59,16 @@ class VoipCallDetector(private val context: Context) {
      */
     private var suspendedForCarrier = false
 
+    // ---- BabApps item 107: the ring-time mode dip of an outgoing Telegram / AyuGram call ----
+    /** When the current app call was detected (elapsedRealtime), for [VoipRingDipPolicy]. */
+    private var callDetectedAt = 0L
+
+    /** True once a call-voice player (vcPlay>0) was seen in the current call. */
+    private var voicePlayerSeen = false
+
+    /** True while the pending end was scheduled as a ring-time dip (long wait). */
+    private var endDeferredAsRingDip = false
+
     /**
      * Set while the mode is in the IN_COMMUNICATION stretch of a carrier call (a Samsung Wi-Fi call).
      * See [VoipStrayStartPolicy]: without it the hang-up left a stray 1 s `_voip` file (#45).
@@ -92,6 +102,7 @@ class VoipCallDetector(private val context: Context) {
         val am = audioManager ?: return
         if (!callActive && !carrierEpisode.active && android.os.SystemClock.elapsedRealtime() > probeTailUntil) return
         val now = runCatching { VoipEndProbe.capture(am) }.getOrNull() ?: return
+        if (callActive && now.voiceCallPlayers > 0) voicePlayerSeen = true
         if (always || VoipEndProbe.isWorthLogging(lastProbe, now)) {
             AppLogger.i(TAG, "endprobe[$reason] callActive=$callActive ${VoipEndProbe.describe(now)}")
         }
@@ -134,7 +145,9 @@ class VoipCallDetector(private val context: Context) {
             // Take the prompt down with the call. Leaving it would offer to record a call that is
             // over, and tapping it would start a recording of nothing.
             VoipRecordPrompt.cancel(context)
-            runCatching { VoipRecordingCoordinator.onCallEnded(context) }
+            val neverConnected = VoipRingDipPolicy.neverConnected(endDeferredAsRingDip, voicePlayerSeen)
+            endDeferredAsRingDip = false
+            runCatching { VoipRecordingCoordinator.onCallEnded(context, neverConnected) }
                 .onFailure { AppLogger.w(TAG, "VoIP stop failed: ${it.message}") }
             CutOffRescueWorker.schedule(context)
             isRecording = false
@@ -202,6 +215,7 @@ class VoipCallDetector(private val context: Context) {
     fun abortForCarrierCall() {
         if (!callActive) return
         handler.removeCallbacks(debouncedEndRunnable)
+        endDeferredAsRingDip = false
 
         // Hold it open rather than ending it, so returning to the app call continues the SAME file.
         // Splitting one conversation across two recordings is what this replaces.
@@ -264,12 +278,23 @@ class VoipCallDetector(private val context: Context) {
 
             VoipSwitchPolicy.Action.END -> {
                 handler.removeCallbacks(debouncedEndRunnable)
-                handler.postDelayed(debouncedEndRunnable, END_DEBOUNCE_MS)
+                // Read the players now: the probe that follows this event runs after it.
+                runCatching { audioManager?.let { VoipEndProbe.capture(it) } }.getOrNull()
+                    ?.takeIf { it.voiceCallPlayers > 0 }?.let { voicePlayerSeen = true }
+                val age = android.os.SystemClock.elapsedRealtime() - callDetectedAt
+                val delayMs = VoipRingDipPolicy.endDelayMs(age, voicePlayerSeen)
+                endDeferredAsRingDip = VoipRingDipPolicy.isRingDip(age, voicePlayerSeen)
+                if (endDeferredAsRingDip) {
+                    AppLogger.i(TAG, "Audio mode left call mode ${age}ms into the call with no call-voice player seen — " +
+                        "keeping the session up to ${delayMs / 1000}s in case it is the ring and the call mode returns")
+                }
+                handler.postDelayed(debouncedEndRunnable, delayMs)
                 return
             }
 
             // The mode dipped and came back inside the debounce: the call never ended.
             VoipSwitchPolicy.Action.STAY -> {
+                endDeferredAsRingDip = false
                 if (handler.hasCallbacks(debouncedEndRunnable)) {
                     handler.removeCallbacks(debouncedEndRunnable)
                     AppLogger.i(TAG, "Audio mode dipped and came back — the app call continues")
@@ -307,6 +332,9 @@ class VoipCallDetector(private val context: Context) {
             }
             handler.removeCallbacks(debouncedEndRunnable)
             callActive = true
+            callDetectedAt = android.os.SystemClock.elapsedRealtime()
+            voicePlayerSeen = false
+            endDeferredAsRingDip = false
             AppLogger.i(TAG, "VoIP call detected (mode=IN_COMMUNICATION)")
 
             // The master On/Off switch is off: the user turned recording off entirely, so a STOPPED
@@ -387,7 +415,6 @@ class VoipCallDetector(private val context: Context) {
 
     private companion object {
         const val TAG = "CV:VoipDetect"
-        const val END_DEBOUNCE_MS = 1_500L
 
         /** Looked at just after the carrier-episode tail, never on its edge. */
         const val TAIL_RECHECK_SLACK_MS = 50L

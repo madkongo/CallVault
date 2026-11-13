@@ -663,8 +663,12 @@ object VoipRecordingCoordinator {
     }
 
     /** Stops the in-flight VoIP recording, if any. Idempotent. */
+    /**
+     * @param neverConnected the call ended after a ring-time wait with no call-voice player ever seen
+     *   and call mode never back (BabApps item 107): a ring, not a conversation. Discarded quietly.
+     */
     @Synchronized
-    fun onCallEnded(context: Context) {
+    fun onCallEnded(context: Context, neverConnected: Boolean = false) {
         if (!recording) return
         recording = false
         val saf = pending
@@ -710,6 +714,15 @@ object VoipRecordingCoordinator {
             runCatching { saf?.stagingFile?.delete() }
             saf?.uri?.let { uri ->
                 runCatching { SafHelper.deleteDocument(DocumentFile.fromSingleUri(context, uri), "the ignored caller's app call") }
+            }
+            return
+        }
+        if (neverConnected) {
+            AppLogger.i(TAG, "The app call never connected (call mode did not return, no call-voice player seen; ${recordedMs} ms); discarding the ring, no warning")
+            runCatching { saf?.descriptor?.close() }
+            runCatching { saf?.stagingFile?.delete() }
+            saf?.uri?.let { uri ->
+                runCatching { SafHelper.deleteDocument(DocumentFile.fromSingleUri(context, uri), "the app call that never connected") }
             }
             return
         }

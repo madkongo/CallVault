@@ -53,6 +53,14 @@ All notable changes to CallVault are documented here. The format is based on
 
 ### Fixed
 
+- **An outgoing Telegram or AyuGram call is no longer split into a ~5-second file and a second file.** While the
+  other phone is ringing these apps leave call mode for a few seconds, and CallVault took that for the end of the
+  call. A young call in which no call audio was ever heard now waits up to 30 seconds for call mode to return and
+  carries on in the same file (the ring is just silence). If it never returns, the recording is dropped quietly: a
+  call that never connected. Calls that did connect end as before.
+  <!-- 🧪 VERIFYING: needs an outgoing AyuGram or Telegram call on a phone, answered after ringing 6+ seconds: expect ONE
+  file; then a call nobody answers: expect no file. Unit-tested only (the timing policy); not run against a real app.
+  (BabApps item 107) -->
 - **Telegram-app calls (AyuGram, Nekogram) are no longer named "Telegram call".** These apps call their own call
   notification "Telegram call", and CallVault took that as the contact's name. It now skips it and uses the
   person's name from the notification. Other apps are unchanged: a WhatsApp contact called "Telegram support" keeps
