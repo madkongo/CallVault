@@ -325,6 +325,9 @@ class DaemonKeepAliveService : Service() {
             if (!usesAdb()) return
             TransportTimeline.event(applicationContext, intent.action?.substringAfterLast('.') ?: "screen")
             timelineSnapshot(isDaemonAlive(), "screen")
+            if (intent.action == android.content.Intent.ACTION_SCREEN_ON) {
+                MicOpAutoHeal.onWayBackMayHaveAppeared(applicationContext, MicOpHealPolicy.Trigger.SCREEN_ON)
+            }
         }
     }
 
@@ -358,6 +361,7 @@ class DaemonKeepAliveService : Service() {
             if (on) {
                 // On again, by anyone: nothing left to respect.
                 prefs.setWirelessDebuggingTurnedOffByUser(false)
+                MicOpAutoHeal.onWayBackMayHaveAppeared(applicationContext, MicOpHealPolicy.Trigger.WIRELESS_DEBUGGING_ON)
                 val alive = isDaemonAlive()
                 updateNotification(alive)
                 // CallVault writes the switch on only from inside a launch or a revival that goes on to launch, so
@@ -445,6 +449,7 @@ class DaemonKeepAliveService : Service() {
             // Let Android finish its own "Wi-Fi changed" handling of the switch first.
             watchdogHandler.removeCallbacks(approveJoinedWifi)
             watchdogHandler.postDelayed(approveJoinedWifi, WIFI_JOIN_SETTLE_MS)
+            MicOpAutoHeal.onWayBackMayHaveAppeared(applicationContext, MicOpHealPolicy.Trigger.WIFI_JOINED)
         }
     }
 

@@ -319,6 +319,28 @@ object AdbShell {
         return LoopbackPorts.isUsable(prefs.getLoopbackAdbPort(), adbdTcpPort(), prefs.isOfflineRecordingEnabled())
     }
 
+    /**
+     * Whether adbd has a tcp listener the ROM itself opened that answers as classic adbd on loopback right now — the
+     * same ports and the same probe [connectAlreadyOpenPort] uses, so "reachable" here means the connect path can
+     * take it. Needs no network (127.0.0.1). Read-only: it only asks each candidate port one plain `CNXN`, bounded
+     * by [OPEN_PORT_CONNECT_TIMEOUT_MS] + [OPEN_PORT_READ_TIMEOUT_MS] per port, and never connects. False until
+     * CallVault has connected once with its key ([AppPreferences.isAdbPaired]), as in [connectAlreadyOpenPort].
+     */
+    internal fun isAdbdTcpPortReachable(context: Context): Boolean {
+        val prefs = AppPreferences(context)
+        if (!prefs.isAdbPaired()) return false
+        val ports = LoopbackPorts.alreadyOpenCandidates(
+            serviceTcpPort = adbdTcpPort(),
+            persistTcpPort = LoopbackPorts.parse(getSystemProperty("persist.adb.tcp.port")),
+            listenAddrPorts = LoopbackPorts.parseListenAddrs(getSystemProperty("service.adb.listen_addrs")),
+            alreadyTried = emptySet(),
+            ourPort = prefs.getLoopbackAdbPort(),
+        )
+        return ports.any {
+            LoopbackPorts.isAlreadyOpenAdb(AdbWireProbe.probe(LOOPBACK_HOST, it, OPEN_PORT_CONNECT_TIMEOUT_MS, OPEN_PORT_READ_TIMEOUT_MS))
+        }
+    }
+
     /** True only when the listener is the one CallVault armed, so it is ours to close. */
     private fun isOwnLoopbackArmed(context: Context): Boolean =
         LoopbackPorts.isOurs(AppPreferences(context).getLoopbackAdbPort(), adbdTcpPort())

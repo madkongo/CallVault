@@ -15,6 +15,8 @@ import java.util.concurrent.locks.ReentrantLock
 import com.baba.callvault.data.AppPreferences
 import com.baba.callvault.data.PrivilegedMode
 import com.baba.callvault.data.RecordingState
+import com.baba.callvault.integrations.adb.TransportTimeline
+import com.baba.callvault.system.diagnostics.MicOpDiagnostics
 import com.baba.callvault.services.recording.DaemonKeepAliveService
 import com.baba.callvault.services.recording.VoipCaptureController
 import com.baba.callvault.utils.AppLogger
@@ -80,6 +82,25 @@ object RecorderBackend {
         }
     }
 
+    /** The one standalone bring-up in progress, shared by every caller. See [SingleFlight]. */
+    private val adbBringUp = SingleFlight<Boolean>()
+
+    /**
+     * Asks the host to clear other recorder processes. Before it does, the always-on timeline gets the shell-user process
+     * list with parents and start times, so a report shows what was there and who started it (BabApps #95). The dump is
+     * one `ps` through the host, taken only here, once per bring-up.
+     */
+    private fun clearStaleRecorders(context: Context, caller: String, withProcessList: Boolean) {
+        val service = RecorderConnection.service ?: return
+        // Only after a real launch: an ensureRunning that found the recorder up must not add a `ps` to a call's start.
+        if (withProcessList) runCatching {
+            val ps = runCatching { service.diagnosticDump("processes_times", null) }.getOrNull()
+            TransportTimeline.event(context, "recorder bring-up by $caller: before clearing leftovers, ${MicOpDiagnostics.recorderProcessLines(ps)}")
+        }
+        runCatching { service.killStaleRecorders() }
+            .onFailure { AppLogger.w(TAG, "Could not clear stale Shizuku recorders: ${it.message}") }
+    }
+
     /**
      * Makes sure a recorder is running and its binder is in [RecorderConnection].
      *
@@ -99,13 +120,22 @@ object RecorderBackend {
         }
         val mode = prefs.getPrivilegedMode()
         return when (BackendChoice.of(mode)) {
-            BackendChoice.ADB -> RecorderServerLauncher.ensureServerRunning(context, timeoutMs).also { up ->
-                // Symmetric with the Shizuku branch: our daemon clears any Shizuku-hosted recorder left
-                // over from a previous mode. Shizuku's own removal cannot reach a service started by an
-                // older app version (its args no longer match), so this is the only thing that can.
-                if (up) {
-                    runCatching { RecorderConnection.service?.killStaleRecorders() }
-                        .onFailure { AppLogger.w(TAG, "Could not clear stale Shizuku recorders: ${it.message}") }
+            BackendChoice.ADB -> {
+                val caller = RecorderCaller.of(Throwable().stackTrace)
+                // ONE bring-up at a time for every caller (BabApps #95): the launch and the clearing of leftovers that
+                // follows it. A caller that arrives meanwhile waits for that run and shares its result, instead of
+                // running its own "clear other recorder processes" against the host the first one just started.
+                adbBringUp.run(
+                    onJoin = { TransportTimeline.event(context, "recorder bring-up: $caller joined the one already running") },
+                ) {
+                    RecorderServerLauncher.launchCaller = caller
+                    RecorderServerLauncher.launchedThisRun = false
+                    RecorderServerLauncher.ensureServerRunning(context, timeoutMs).also { up ->
+                        // Symmetric with the Shizuku branch: our daemon clears any Shizuku-hosted recorder left
+                        // over from a previous mode. Shizuku's own removal cannot reach a service started by an
+                        // older app version (its args no longer match), so this is the only thing that can.
+                        if (up) clearStaleRecorders(context, caller, withProcessList = RecorderServerLauncher.launchedThisRun)
+                    }
                 }
             }
             BackendChoice.SHIZUKU -> ensureShizukuRunning(context)

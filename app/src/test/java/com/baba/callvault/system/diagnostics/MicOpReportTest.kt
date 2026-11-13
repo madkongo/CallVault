@@ -59,6 +59,43 @@ class MicOpReportTest {
     }
 
     @Test
+    fun `two shell-uid ops are not both called CallVault's`() {
+        val dump = """
+              Uid 2000:
+                Package com.android.shell:
+                  RECORD_AUDIO (allow):
+                      Running start at: +53ms
+                Package com.termux:
+                  RECORD_AUDIO (allow):
+                      Running start at: +9s
+        """.trimIndent()
+        val rendered = MicOpReport.render(dump)
+        assertTrue(rendered.contains("2 of them as uid 2000"))
+        assertTrue(rendered.contains("another shell/adb process"))
+        assertFalse(rendered.contains("that is CallVault's privileged capture"))
+        // Each line is labelled as held by the shell user, never as certainly ours.
+        assertEquals(2, rendered.lines().count { it.trimStart().startsWith("uid=2000") && it.contains("another shell/adb process") })
+        assertFalse(rendered.contains("<-- CallVault's privileged capture"))
+    }
+
+    @Test
+    fun `the shell-user process list shows only shell processes`() {
+        val ps = """
+            USER           PID ARGS
+            root             1 /init
+            shell         4321 app_process / com.baba.callvault.server.RecorderServer
+            u0_a186       5000 com.baba.callvault
+            shell         6000 scrcpy-server
+        """.trimIndent()
+        val out = MicOpReport.shellProcesses(ps)
+        assertTrue(out.contains("4321"))
+        assertTrue(out.contains("scrcpy-server"))
+        assertFalse(out.contains("/init"))
+        assertFalse(out.contains("u0_a186"))
+        assertTrue(MicOpReport.shellProcesses(null).contains("Could not read"))
+    }
+
+    @Test
     fun `the verdict is explicit when nothing holds the microphone`() {
         val rendered = MicOpReport.render(fixture("dumpsys_appops_mic_idle.txt"))
         assertFalse(rendered.contains("HELD"))

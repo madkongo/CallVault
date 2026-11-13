@@ -53,6 +53,22 @@ All notable changes to CallVault are documented here. The format is based on
 
 ### Fixed
 
+- **A stuck microphone dot after a call is cleared once Wi-Fi is back.** On a Pixel 8 with Android 17 the microphone
+  stayed marked as "in use by Shell" after calls, and CallVault could not clear it because it had no Wi-Fi to restart
+  its recorder with. It now restarts the recorder at once when the phone's own adb tcp port is reachable (no Wi-Fi
+  needed), and otherwise keeps the check pending and tries again when Wi-Fi joins, Wireless debugging goes on or
+  the screen comes on. If a recording's capture ends early, it is also stopped at once instead of at the end of the
+  call. The debug report no longer says every shell-user microphone use is CallVault's, and lists the processes
+  running as the shell user.
+  <!-- 🧪 VERIFYING: with no Wi-Fi, make a call and check the microphone dot stays; then turn Wi-Fi on or wake the screen:
+  the dot should go out within a few seconds. The cause of the dot after a normal call on this phone is still open. -->
+- **The recorder is brought up once at a time, and no longer kills its own launcher.** When several parts of the app
+  asked for the recorder at the same moment (a call, the keep-alive, app start), each ran its own "clear other
+  recorders" step, and that step could end the adb shell that had just launched the recorder. They now share one
+  bring-up. The debug report also carries always-on lines about who launched the recorder and what the microphone
+  and the shell processes looked like at the start of a call and if the capture is cut off (BabApps #95).
+  <!-- 🧪 VERIFYING: needs the Pixel 8 report from a cold start (force-stop, then a call): one "daemon launch" line,
+  no second "Clearing 1 other recorder process(es)", and whether "In use by Shell" still appears. -->
 - **An outgoing Telegram or AyuGram call is no longer split into a ~5-second file and a second file.** While the
   other phone is ringing these apps leave call mode for a few seconds, and CallVault took that for the end of the
   call. A young call in which no call audio was ever heard now waits up to 30 seconds for call mode to return and

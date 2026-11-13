@@ -12,6 +12,7 @@ import android.content.Context
 import android.os.SystemClock
 import com.baba.callvault.data.AppPreferences
 import com.baba.callvault.integrations.adb.AdbShell
+import com.baba.callvault.integrations.adb.TransportTimeline
 import com.baba.callvault.integrations.adb.UsbDefaultConfig
 import com.baba.callvault.services.recording.AppPauseWatch
 import com.baba.callvault.utils.AppLogger
@@ -33,6 +34,14 @@ import com.baba.callvault.utils.AppLogger
 object RecorderServerLauncher {
 
     private const val TAG = "CV:RecorderLauncher"
+
+    /** Who asked for the launch in progress ([RecorderCaller]); set by [RecorderBackend], read for the always-on log (BabApps #95). */
+    @Volatile
+    internal var launchCaller: String = "unknown"
+
+    /** Set when a run really tried to launch the daemon (not when it found it up); read by [RecorderBackend]. */
+    @Volatile
+    internal var launchedThisRun: Boolean = false
 
     /** Fully-qualified class name app_process invokes (its `static void main(String[])`). */
     private const val DAEMON_FQCN = "com.baba.callvault.server.RecorderServer"
@@ -158,6 +167,22 @@ object RecorderServerLauncher {
 
         val apk = context.applicationInfo.sourceDir
         val perAttemptMs = (timeoutMs / MAX_LAUNCH_ATTEMPTS).coerceAtLeast(2000L)
+
+        // Always on (BabApps #95): who asked for this launch, and how long it took. A launch is rare (a cold start or a
+        // recovery), so this is one line at the start and one at the end, in the file every debug report carries.
+        launchedThisRun = true
+        val askedAt = SystemClock.elapsedRealtime()
+        val caller = launchCaller
+        TransportTimeline.event(context, "daemon launch requested by $caller")
+        val ok = launchWithAttempts(context, apk, perAttemptMs)
+        TransportTimeline.event(
+            context,
+            "daemon launch for $caller finished: connected=$ok after ${SystemClock.elapsedRealtime() - askedAt}ms",
+        )
+        return ok
+    }
+
+    private fun launchWithAttempts(context: Context, apk: String, perAttemptMs: Long): Boolean {
 
         repeat(MAX_LAUNCH_ATTEMPTS) { attempt ->
             val n = attempt + 1
