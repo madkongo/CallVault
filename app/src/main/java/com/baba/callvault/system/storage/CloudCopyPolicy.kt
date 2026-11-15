@@ -33,6 +33,24 @@ object CloudCopyPolicy {
     /** Retries spent on one recording before the copy is reported as failed rather than retried again. */
     const val MAX_ATTEMPTS = 10
 
+    /** The least a single file may take before the sweep gives up on it and moves on. */
+    const val MIN_FILE_TIMEOUT_MS = 3 * 60_000L
+
+    /** Extra time granted per megabyte, so a long call is not abandoned for being long. */
+    const val PER_MEGABYTE_MS = 3_000L
+
+    /** Files in a row that stalled or lost the copier before the sweep ends the run instead of trying more. */
+    const val MAX_CONSECUTIVE_STALLS = 3
+
+    /**
+     * How long one file's copy may run before it is left for the next run.
+     *
+     * A file stuck for 20 minutes (a Honor phone, 2026-11-15) held the whole sweep, including "Stop for now",
+     * hostage. Generous for size: three seconds a megabyte is far slower than any link that works at all.
+     */
+    fun fileTimeoutMs(sizeBytes: Long): Long =
+        MIN_FILE_TIMEOUT_MS + (sizeBytes.coerceAtLeast(0L) / (1024 * 1024)) * PER_MEGABYTE_MS
+
     /** Marker for the staging document a copy writes into before it is renamed to the final name. */
     private const val STAGING_MARKER = ".cvpart"
 

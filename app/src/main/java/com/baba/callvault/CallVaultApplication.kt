@@ -49,6 +49,11 @@ class CallVaultApplication : Application() {
 
     override fun onCreate() {
         super.onCreate()
+        // The Drive copier runs in its own process so that Android, when Google Drive's process dies, kills
+        // only that one and not the app (see DriveCopyService). Everything below belongs to the main process
+        // — schedulers, the daemon link, and "a fresh process means nothing is still transcribing", which
+        // would wrongly reset live work if the copier process ran it.
+        if (com.baba.callvault.system.storage.DriveCopyProtocol.isCopierProcess(Application.getProcessName())) return
         AppLogger.init(applicationContext)
 
         // Hide Recordings is a property of the folder, and the folder can change under us: a settings

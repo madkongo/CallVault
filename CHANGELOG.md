@@ -3,6 +3,22 @@
 All notable changes to CallVault are documented here. The format is based on
 [Keep a Changelog](https://keepachangelog.com/), and this project uses semantic-ish versioning.
 
+## [Unreleased]
+
+### Fixed
+
+- **A big backlog now copies to Google Drive at a sensible pace, and Drive having a bad moment no longer takes
+  CallVault down with it.** On a phone with thousands of recordings waiting, "Copying recordings to Drive" managed about
+  ten files an hour, "Stop for now" could take 20 minutes, and Android closed CallVault fifteen times in six days each
+  time Google Drive's own process died. The copy now runs in a process of its own, so only that part is closed when
+  Drive dies; it no longer re-reads the whole Drive folder for every file; a file that gets no answer from Drive for a few
+  minutes is left for the next run and the copy moves on; and "Stop for now" stops within a few seconds. Every copy
+  now writes a line (size, time per step, result, files per minute) to the debug report, even with logging off.
+  <!-- 🧪 VERIFYING: with a few hundred recordings waiting for Drive, start a copy and read Settings ▸ Debug ▸ report,
+  "Drive copies (always on)": files per minute should be far above ten. Press "Stop for now" mid-copy: it should stop in
+  seconds. Kill Google Drive (Settings ▸ Apps ▸ Drive ▸ Force stop) during a copy: CallVault stays open and the copy goes
+  on with the next file. Not yet seen on the Honor phone that reported it. -->
+
 ## [2.5.1] — 2026-11-15
 
 ### Added

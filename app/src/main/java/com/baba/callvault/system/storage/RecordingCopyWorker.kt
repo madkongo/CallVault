@@ -10,6 +10,7 @@ package com.baba.callvault.system.storage
 
 import android.content.Context
 import android.net.Uri
+import android.os.SystemClock
 import androidx.core.net.toUri
 import androidx.documentfile.provider.DocumentFile
 import androidx.work.CoroutineWorker
@@ -41,10 +42,6 @@ class RecordingCopyWorker(ctx: Context, params: WorkerParameters) : CoroutineWor
         val deleteLocal = inputData.getBoolean(KEY_DELETE_LOCAL, false)
         val isSidecar = inputData.getBoolean(KEY_IS_SIDECAR, false)
 
-        if (!SafHelper.isFolderValid(applicationContext, destFolder)) {
-            return giveUpOrRetry(name, "the Drive folder is not reachable or writable", isSidecar)
-        }
-
         val srcSize = SafHelper.fileSize(applicationContext, src)
         if (srcSize <= 0L) {
             // Either capture produced nothing or the source is gone. Uploading it would put an unplayable
@@ -58,7 +55,36 @@ class RecordingCopyWorker(ctx: Context, params: WorkerParameters) : CoroutineWor
             return Result.failure()
         }
 
-        return when (val result = SafHelper.copyFileToFolder(applicationContext, src, destFolder, name, mime, srcSize)) {
+        // In the Drive copier process, like the sweep (see [DriveCopyService]): Drive's process dying must not
+        // take the app with it. Not "Stop for now": that button belongs to the sweep's notification.
+        val copier = DriveCopyClient(applicationContext, honorStop = false)
+        val started = SystemClock.elapsedRealtime()
+        val outcome = try {
+            copier.call(
+                DriveCopyProtocol.MSG_COPY,
+                DriveCopyProtocol.copyRequest(
+                    DriveCopyProtocol.Request(src, destFolder, name, mime, srcSize, null, -1L, null, lookup = true),
+                ),
+                CloudCopyPolicy.fileTimeoutMs(srcSize),
+            )
+        } finally {
+            copier.close()
+        }
+        val copyResult = when (outcome) {
+            is DriveCopyClient.Outcome.Reply -> DriveCopyProtocol.readCopyReply(outcome.data).let { (r, steps) ->
+                DriveCopyJournal.record(
+                    applicationContext,
+                    "copy '$name' ${srcSize}B total=${SystemClock.elapsedRealtime() - started}ms $steps -> ${r.javaClass.simpleName} (after the call)",
+                )
+                r
+            }
+            else -> SafHelper.CopyResult.Failed(
+                if (outcome is DriveCopyClient.Outcome.TimedOut) "Drive gave no answer in time" else "the Drive copier process died",
+            ).also {
+                DriveCopyJournal.record(applicationContext, "copy '$name' ${srcSize}B FAILED after ${SystemClock.elapsedRealtime() - started}ms: ${it.reason} (after the call)")
+            }
+        }
+        return when (val result = copyResult) {
             is SafHelper.CopyResult.AlreadyPresent -> {
                 if (FolderOverlap.isSameDocument(src, result.uri)) {
                     // The "Drive" folder is the recording folder: the copy we found is the recording itself.
