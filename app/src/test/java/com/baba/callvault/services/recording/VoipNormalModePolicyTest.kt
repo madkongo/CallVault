@@ -100,8 +100,12 @@ class VoipNormalModePolicyTest {
         AudioPlaybackConfiguration piid:38247 deviceIds:[] type:android.media.MediaPlayer u/pid:10470/6498 state:started attr:AudioAttributes: usage=USAGE_VOICE_COMMUNICATION content=CONTENT_TYPE_SPEECH flags=0x800 tags= bundle=null sessionId:29993 mutedState:none
         AudioPlaybackConfiguration piid:1975 deviceIds:[3] type:android.media.MediaPlayer u/pid:10273/5369 state:stopped attr:AudioAttributes: usage=USAGE_NOTIFICATION content=CONTENT_TYPE_UNKNOWN flags=0x800 tags= bundle=null sessionId:2049 mutedState:none
         AudioPlaybackConfiguration piid:37959 deviceIds:[3] type:android.media.AudioTrack u/pid:10454/20694 state:paused attr:AudioAttributes: usage=USAGE_VOICE_COMMUNICATION content=CONTENT_TYPE_SPEECH flags=0xA00 tags= bundle=null sessionId:29713 mutedState:none
-        session:30001 -- source client=VOICE_COMMUNICATION, dev=AudioFormat -- uid:10470 -- patch:5 -- pack:jp.naver.line.android -- format client=x -- silenced:false -- effects client=
-        session:30009 -- source client=MIC, dev=AudioFormat -- uid:2000 -- patch:6 -- pack:com.android.shell -- format client=x -- silenced:false -- effects client=
+        riid 7701; active? true
+          session:30001 -- source client=VOICE_COMMUNICATION, dev=AudioFormat -- uid:10470 -- patch:5 -- pack:jp.naver.line.android -- format client=x -- silenced:false -- effects client=
+        riid 7702; active? true
+          session:30009 -- source client=MIC, dev=AudioFormat -- uid:2000 -- patch:6 -- pack:com.android.shell -- format client=x -- silenced:false -- effects client=
+        riid 7703; active? false
+          session:30011 -- source client=VOICE_COMMUNICATION, dev=AudioFormat -- uid:10999 -- patch:7 -- pack:com.example.idle -- format client=x -- silenced:false -- effects client=
     """.trimIndent()
 
     @Test
@@ -122,6 +126,19 @@ class VoipNormalModePolicyTest {
         assertEquals(setOf(line), players)
         assertEquals(setOf(line), recorders) // the shell's MIC capture (ours) is not a call-voice recording
         assertEquals(Verdict.START, decide(players = players, recorders = recorders))
+    }
+
+    @Test
+    fun `an unreadable recording section falls back to the player's app, a readable one never does`() {
+        val playerOnly = VoipNormalModePolicy.parseOwners(
+            "AudioPlaybackConfiguration piid:1 deviceIds:[] type:android.media.MediaPlayer u/pid:10470/6498 state:started attr:AudioAttributes: usage=USAGE_VOICE_COMMUNICATION content=CONTENT_TYPE_SPEECH"
+        )
+        val players = setOf(line)
+        assertEquals(setOf(line), VoipNormalModePolicy.recorderPackagesOrPlayers(playerOnly, { emptyList() }, true, players))
+        assertTrue(VoipNormalModePolicy.recorderPackagesOrPlayers(playerOnly, { emptyList() }, false, players).isEmpty())
+        // The dump listed a recording (someone else's): it is read as it is, no fallback.
+        val other = VoipNormalModePolicy.parseOwners(dump.lines().filter { !it.contains("30001") }.joinToString("\n"))
+        assertTrue(VoipNormalModePolicy.recorderPackagesOrPlayers(other, { emptyList() }, true, players).isEmpty())
     }
 
     @Test

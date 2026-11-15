@@ -100,7 +100,14 @@ object VoipNormalModePolicy {
     fun parseOwners(dump: String): Owners {
         val players = ArrayList<Player>()
         val recorders = ArrayList<Recorder>()
+        // The audio service prints "riid N; active? true|false" and then the recording's own line, and it
+        // lists recordings that were opened but never started too. null = no such line seen.
+        var recordingActive: Boolean? = null
         for (line in dump.lineSequence()) {
+            if (line.contains("; active? ")) {
+                recordingActive = line.contains("active? true")
+                continue
+            }
             if (line.contains("AudioPlaybackConfiguration")) {
                 if (!line.contains("state:started")) continue
                 val uid = PLAYER_UID.find(line)?.groupValues?.get(1)?.toIntOrNull() ?: continue
@@ -108,6 +115,9 @@ object VoipNormalModePolicy {
                 val content = CONTENT.find(line)?.groupValues?.get(1) ?: "?"
                 players += Player(uid, usage, content)
             } else if (line.contains("source client=")) {
+                val active = recordingActive
+                recordingActive = null
+                if (active == false) continue
                 val uid = REC_UID.find(line)?.groupValues?.get(1)?.toIntOrNull() ?: continue
                 val source = REC_SOURCE.find(line)?.groupValues?.get(1) ?: "?"
                 val pack = REC_PACK.find(line)?.groupValues?.get(1)?.takeIf { it != "null" }
@@ -125,6 +135,21 @@ object VoipNormalModePolicy {
     fun voiceRecorderPackages(owners: Owners, packagesFor: (Int) -> List<String>): Set<String> =
         owners.recorders.filter { it.source == SOURCE_VC }
             .flatMap { r -> listOfNotNull(r.packageName) + packagesFor(r.uid) }.toSet()
+
+    /**
+     * [voiceRecorderPackages], or — when the dump listed no recording line at all although the app itself
+     * sees a call-voice recording (a ROM that words the line differently) — the player's own packages.
+     * Never used when the dump did list recordings: those are read as they are.
+     */
+    fun recorderPackagesOrPlayers(
+        owners: Owners,
+        packagesFor: (Int) -> List<String>,
+        appSeesVoiceRecording: Boolean,
+        playerPackages: Set<String>,
+    ): Set<String> {
+        val read = voiceRecorderPackages(owners, packagesFor)
+        return if (read.isEmpty() && owners.recorders.isEmpty() && appSeesVoiceRecording) playerPackages else read
+    }
 
     /** One line for the log: who owns what, and whether the allow-list matched. */
     fun describe(

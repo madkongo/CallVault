@@ -521,7 +521,9 @@ class VoipCallDetector(private val context: Context) {
             val packagesFor = { uid: Int -> runCatching { pm.getPackagesForUid(uid) }.getOrNull().orEmpty().toList() }
             val owners = dump?.let { VoipNormalModePolicy.parseOwners(it) }
             val players = owners?.let { VoipNormalModePolicy.voicePlayerPackages(it, packagesFor) }.orEmpty()
-            val recorders = owners?.let { VoipNormalModePolicy.voiceRecorderPackages(it, packagesFor) }.orEmpty()
+            val recorders = owners?.let {
+                VoipNormalModePolicy.recorderPackagesOrPlayers(it, packagesFor, snap.voiceCommRecorders > 0, players)
+            }.orEmpty()
             handler.post {
                 ownersLookupBusy.set(false)
                 val line = if (owners == null) "owners unknown (the recorder host gave no answer)"

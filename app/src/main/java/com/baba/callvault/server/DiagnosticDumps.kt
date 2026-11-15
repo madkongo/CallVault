@@ -157,7 +157,7 @@ object DiagnosticDumps {
         // which has to know the PACKAGE of a player and a recording the app is shown anonymised.
         "voip_owners" -> arrayOf(
             SH, "-c",
-            "$DUMPSYS audio | grep -E 'AudioPlaybackConfiguration|source client=' | grep -v 'state:idle' | head -n 80",
+            "$DUMPSYS audio | grep -E 'AudioPlaybackConfiguration|riid [0-9]+; active|source client=' | grep -v 'state:idle' | head -n 120",
         )
         // Each mixer output, its device, and its track table (the Usg column is the usage) — is the call's
         // track on the remote-submix output our sink reads, or on a voice/VoIP output the mix never sees?
