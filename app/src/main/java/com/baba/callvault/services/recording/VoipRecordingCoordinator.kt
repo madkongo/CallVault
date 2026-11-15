@@ -92,6 +92,9 @@ object VoipRecordingCoordinator {
 
     @Volatile private var recording = false
 
+    /** The running recording was started from the call-voice audio, not the mode (BabApps item 108). */
+    @Volatile private var startedViaNormalMode = false
+
     /** True while a VoIP recording is running, so the UI can say so. */
     val isRecording: Boolean get() = recording
     @Volatile private var pending: SafHelper.SafResult? = null
@@ -117,7 +120,7 @@ object VoipRecordingCoordinator {
      *   list, as it does for phone calls.
      */
     @Synchronized
-    fun onCallStarted(context: Context, manual: Boolean = false) {
+    fun onCallStarted(context: Context, manual: Boolean = false, viaNormalMode: Boolean = false) {
         if (recording) return
         val prefs = AppPreferences(context)
         // The master switch sits above the per-type VoIP setting: paused/stopped records nothing.
@@ -213,6 +216,7 @@ object VoipRecordingCoordinator {
         }
 
         recording = true
+        startedViaNormalMode = viaNormalMode
         pending = saf
         codecMime = codec.mimeType
         // A timeline and a mark buffer for this call, then the controls. Before this an app call
@@ -251,7 +255,9 @@ object VoipRecordingCoordinator {
         answerHoldJob?.cancel()
         heldForAnswer = false
         // The capture had to open now; what waits for the pickup is the encode. See VoipAnswerHold.
-        if (callPackage != null && prefs.isRecordFromAnswerEnabled()) answerHoldJob = holdUntilAnswered(context, callPackage)
+        // Not for a normal-mode call (BabApps item 108): it is recognised by a live call-voice recording, so the
+        // call is already connected, and the app's notification is not known to carry an answer signal.
+        if (!viaNormalMode && callPackage != null && prefs.isRecordFromAnswerEnabled()) answerHoldJob = holdUntilAnswered(context, callPackage)
     }
 
     /** The route/latency report of the call in flight — see [reportAudioRoute]. */
@@ -732,7 +738,13 @@ object VoipRecordingCoordinator {
         runCatching { RecorderConnection.service?.captureDiagnostics() }
             .getOrNull()
             ?.takeIf { it.isNotBlank() }
-            ?.let { AppLogger.i(TAG, "App-call capture health: $it") }
+            ?.let {
+                AppLogger.i(TAG, "App-call capture health: $it")
+                // A normal-mode call is new and unproven: its capture health, with the first-second peaks of
+                // both sides, also goes to the always-on file.
+                if (startedViaNormalMode) CallEndLog.record(context, "normal-mode app call capture health: $it")
+            }
+        startedViaNormalMode = false
 
         // A recording where the far party was never audible is one-sided. Say so now rather than let it
         // be discovered weeks later — the app may have opted out of capture, or this OEM build may not
