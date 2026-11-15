@@ -317,4 +317,26 @@ interface IRecorderService {
      * Allow button does. Returns a [NetworkApproval] name. Appended: ids are positional.
      */
     String approveWirelessDebuggingNetwork(boolean alwaysAllow);
+
+    /**
+     * Whether the NEXT startRecording / startVoipRecording keeps the two sides of the call on separate
+     * channels instead of mixing them to mono (#74). Consumed by that start: the app sets it before
+     * every start, and a start it was not set for records mono, so a stale value can never leak into a
+     * later call. The daemon still encodes mono when the capture or the encoder cannot do stereo.
+     *
+     * Appended last: transaction codes are positional. A daemon from an older APK does not have this
+     * method; the app tolerates that, and the recording is simply mono, as it always was.
+     */
+    void setEncodeStereo(boolean stereo);
+
+    /**
+     * Like {@link #voipCallAppUid}, but never answers with a uid in [skipUids]: the app passes the uids
+     * it already found not to be a calling app (System UI, a battery app...), so every source in the
+     * daemon (playback configuration, mode owner, dump) can answer with the next candidate instead of
+     * repeating the same wrong one (BabApps item 103).
+     *
+     * Appended last: transaction codes are positional. A daemon from an older APK lacks it; the app then
+     * falls back to voipCallAppUid and rejects the uid itself.
+     */
+    int voipCallAppUidSkipping(in int[] skipUids);
 }

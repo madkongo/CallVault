@@ -77,6 +77,8 @@ interface SettingsActions {
     fun setLoggingEnabled(enabled: Boolean)
     /** Debug test switch for #65: the next Wireless-debugging connect skips mDNS and searches loopback ports. */
     fun setSkipMdnsConnectForTest(enabled: Boolean)
+    /** Debug test switch for #45: carrier calls switch to the app-call capture mid-call. */
+    fun setForceWifiRouteForTest(enabled: Boolean)
     fun getAppVersion(): String
     fun setFileNameTemplate(template: String)
     fun setStorageTarget(target: StorageTarget)
@@ -86,6 +88,7 @@ interface SettingsActions {
 
     fun setWriteMetadataFileEnabled(enabled: Boolean)
     fun setShowSimLabelEnabled(enabled: Boolean)
+    fun setRecordStereoEnabled(enabled: Boolean)
     fun setHideRecordingsEnabled(enabled: Boolean)
     fun setWriteTranscriptSidecarEnabled(enabled: Boolean)
     fun exportSettingsJson(): String
@@ -400,6 +403,12 @@ class SettingsViewModel(application: Application) : AndroidViewModel(application
     /** Saves whether each phone call shows which SIM it used. */
     override fun setShowSimLabelEnabled(enabled: Boolean) {
         preferences.setShowSimLabelEnabled(enabled)
+        refresh()
+    }
+
+    /** Saves whether calls keep each side on its own channel (#74). Takes effect from the next call. */
+    override fun setRecordStereoEnabled(enabled: Boolean) {
+        preferences.setRecordStereo(enabled)
         refresh()
     }
 
@@ -726,6 +735,11 @@ class SettingsViewModel(application: Application) : AndroidViewModel(application
 
     override fun setSkipMdnsConnectForTest(enabled: Boolean) {
         preferences.setDebugSkipMdnsConnect(enabled)
+        refresh()
+    }
+
+    override fun setForceWifiRouteForTest(enabled: Boolean) {
+        preferences.setDebugForceWifiRoute(enabled)
         refresh()
     }
 

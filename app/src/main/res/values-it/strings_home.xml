@@ -130,6 +130,18 @@
     <string name="merge_note_will_keep">Le altre chiamate restano anche sul telefono.</string>
     <string name="home_scroll_to_top">Su</string>
     <string name="home_whatsnew_full_notes">Note di rilascio complete</string>
+    <string name="whatsnew_251_title">Conservazione più lunga, registrazione stereo e chiamate Wi-Fi Samsung</string>
+    <string-array name="whatsnew_251_items">
+        <item>L\'eliminazione automatica ora può conservare le registrazioni per 60, 90 o 120 giorni</item>
+        <item>Le chiamate delle app (WhatsApp, Telegram e le altre) ora mostrano \"Registrazione avviata\", come le chiamate del telefono</item>
+        <item>Metti una stella a una registrazione direttamente dall\'elenco</item>
+        <item>Registrazione stereo: ogni lato sul proprio canale (Impostazioni ▸ Audio e nomi dei file ▸ Canali). Mono resta l\'impostazione predefinita</item>
+        <item>Telefoni Samsung: le chiamate Wi-Fi Calling vengono registrate con entrambi i lati</item>
+        <item>\"Salva trascrizione e note accanto alla registrazione\" è molto più leggero con una libreria grande</item>
+        <item>Corretto: errore \"no certificates\" durante l\'installazione con alcuni installer (es. SAI)</item>
+        <item>Corretto: le chiamate Telegram e AyuGram non vengono più divise in due file e mostrano il nome giusto</item>
+        <item>Corretto: le chiamate lunghe non vanno più in timeout con la trascrizione cloud</item>
+    </string-array>
     <string name="whatsnew_250_title">Tieni o elimina dopo la chiamata, e condividi ciò che ti serve</string>
     <string-array name="whatsnew_250_items">
         <item>Tieni o elimina: CallVault può chiedere dopo ogni chiamata se tenere la registrazione (Impostazioni ▸ Registrazione)</item>

@@ -131,6 +131,31 @@ class VoipCallerNameTest {
     }
 
     @Test
+    fun `AyuGram's Telegram call title is skipped and the person in the text is used`() {
+        // BabApps item 107: the package has no "telegram" in it, so the app token (radolyn) missed the title.
+        val dump = record("com.radolyn.ayugram", "Telegram call", text = "Name")
+        assertEquals("Name", VoipCallerName.extractFromDump(dump, "com.radolyn.ayugram"))
+    }
+
+    @Test
+    fun `Nekogram's Telegram call title is skipped too`() {
+        val dump = record("tw.nekomimi.nekogram", "Telegram call", text = "Name")
+        assertEquals("Name", VoipCallerName.extractFromDump(dump, "tw.nekomimi.nekogram"))
+    }
+
+    @Test
+    fun `official Telegram's status line is still rejected`() {
+        val dump = record("org.telegram.messenger", "Ongoing Telegram call", text = "Telegram call")
+        assertNull(VoipCallerName.extractFromDump(dump, "org.telegram.messenger"))
+    }
+
+    @Test
+    fun `another app keeps Telegram in a contact's name`() {
+        val dump = record("com.whatsapp", "Telegram support")
+        assertEquals("Telegram support", VoipCallerName.extractFromDump(dump, "com.whatsapp"))
+    }
+
+    @Test
     fun `strips characters that would break a filename`() {
         assertEquals("AaBb", VoipCallerName.extractFromDump(record("com.whatsapp", "A/a:B*b"), "com.whatsapp"))
     }
@@ -155,6 +180,13 @@ class VoipCallerNameTest {
     fun `returns null for empty or junk input rather than throwing`() {
         assertNull(VoipCallerName.extractFromDump("", "com.whatsapp"))
         assertNull(VoipCallerName.extractFromDump("not a dump at all", "com.whatsapp"))
+    }
+
+    @Test
+    fun `System UI's ongoing battery notification is never a caller`() {
+        // BabApps item 103: a recording was named "Charging (59 m until full)".
+        val dump = record("com.android.systemui", "Charging (59 m until full)", text = "Battery")
+        assertNull(VoipCallerName.extractFromDump(dump, "com.android.systemui"))
     }
 
     @Test

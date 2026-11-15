@@ -44,6 +44,32 @@ object MicOpHealPolicy {
         NO_WAY_BACK,
     }
 
+    /**
+     * A heal that was refused only for lack of a way back stays pending: the way back can appear later (Wi-Fi joins,
+     * Wireless debugging goes on, the screen comes on) and the dot is still there. Any other decision settles the check.
+     * Before this the check ran once, 8 s after the call, and a phone with no Wi-Fi then kept the stuck dot for good
+     * (Pixel 8, Android 17).
+     */
+    fun staysPending(decision: Decision): Boolean = decision == Decision.NO_WAY_BACK
+
+    /** Which events re-run a pending check. */
+    enum class Trigger { WIFI_JOINED, WIRELESS_DEBUGGING_ON, SCREEN_ON }
+
+    /** The pending check, and nothing else: set when a heal was refused for [Decision.NO_WAY_BACK], taken by the next trigger. */
+    class Pending {
+        @Volatile private var what: String? = null
+
+        fun set(what: String) { this.what = what }
+
+        fun clear() { what = null }
+
+        val isPending: Boolean get() = what != null
+
+        /** Takes the pending check for a re-run, or null when none is waiting. Taking it clears it; the re-run sets it again if still refused. */
+        @Synchronized
+        fun take(): String? = what.also { what = null }
+    }
+
     fun decide(
         shellMicOpsHeld: Int,
         callOrRecordingActive: Boolean,
@@ -81,10 +107,14 @@ object MicOpHealPolicy {
         hasWriteSecureSettings: Boolean,
         offlineEnabled: Boolean,
         wifiConnected: Boolean,
+        tcpPortOpen: Boolean = false,
     ): Boolean {
         val adbdRunning = wdEnabled || usbDebuggingEnabled
-        val endpoint = wdEnabled || (loopbackArmed && adbdRunning) || (hasWriteSecureSettings && wifiConnected)
-        val network = offlineEnabled || wifiConnected
+        // tcpPortOpen: adbd already answers on a loopback tcp port (the ROM's own listener). The connect path takes it
+        // with no Wi-Fi and no Wireless debugging (seen on a Pixel 8: "Connected over adbd's already-open tcp port").
+        val endpoint = wdEnabled || (loopbackArmed && adbdRunning) || (hasWriteSecureSettings && wifiConnected) || tcpPortOpen
+        // An already-open loopback port needs no network at all, so it also satisfies the network rule.
+        val network = offlineEnabled || wifiConnected || tcpPortOpen
         return endpoint && network
     }
 }

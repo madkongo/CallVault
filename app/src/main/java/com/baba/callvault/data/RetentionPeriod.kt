@@ -24,7 +24,12 @@ enum class RetentionPeriod(val days: Int, @StringRes val labelRes: Int) {
     DAILY(1, R.string.retention_daily),
     WEEKLY(7, R.string.retention_weekly),
     BIWEEKLY(14, R.string.retention_biweekly),
-    MONTHLY(30, R.string.retention_monthly);
+    MONTHLY(30, R.string.retention_monthly),
+    // Longer periods asked for in #78. An older build's dropdown shows these as "Keep forever" (see
+    // fromDays), but its cleanup job still uses the stored day count, so the chosen period is kept.
+    DAYS_60(60, R.string.retention_60_days),
+    DAYS_90(90, R.string.retention_90_days),
+    DAYS_120(120, R.string.retention_120_days);
 
     companion object {
         /** The preset matching [days], or [FOREVER] when [days] is 0 or not a known preset. */

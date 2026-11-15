@@ -23,4 +23,6 @@
     <string name="permissions_ui_hero_subtitle">بضعة أذونات تمكّن CallVault من التقاط مكالماتك وتسميتها بدقة. يُرجى الموافقة على كل عنصر أدناه.</string>
     <string name="permissions_ui_hero_title">لنبدأ عملية الإعداد</string>
     <string name="permissions_ui_section_label">الأذونات</string>
+    <string name="setup_report_link">هل تواجه مشكلة؟ أرسل تقريرًا</string>
+    <string name="setup_report_preparing">جارٍ إعداد التقرير…</string>
 </resources>

@@ -48,11 +48,14 @@ internal fun groupSummaryText(
     SettingsGroup.SOUND_AND_NAMES -> {
         val codecKey = remember(updateTrigger) { preferences.getAudioCodec() }
         val bitRate = remember(updateTrigger) { preferences.getAudioBitRate() }
+        val stereo = remember(updateTrigger) { preferences.getRecordStereo() }
         val codec = ScrcpyAudioCodec.entries.firstOrNull { it.cliKey == codecKey }
         joinSummary(
             listOf(
                 codec?.let { stringResource(it.titleResId) },
                 stringResource(R.string.audio_bitrate_kbps, bitRate / BITS_PER_KILOBIT),
+                // Only when it is not the default, so the usual summary stays as it was (#74).
+                stringResource(R.string.audio_channels_stereo).takeIf { stereo },
             )
         )
     }

@@ -339,6 +339,9 @@
     <string name="retention_linked_label">设备与 Drive 使用相同周期</string>
     <string name="retention_local_label">设备录音</string>
     <string name="retention_monthly">每月（30 天）</string>
+    <string name="retention_60_days">60 天</string>
+    <string name="retention_90_days">90 天</string>
+    <string name="retention_120_days">120 天</string>
     <string name="retention_period_label">自动删除录音</string>
     <string name="retention_time_label">运行时间（你的本地时间）</string>
     <string name="retention_weekly">每周（7 天）</string>
@@ -459,6 +462,10 @@
     <string name="summary_requirements_toggle_label">显示要求</string>
     <string name="settings_sim_label_label">显示每通电话使用的 SIM 卡</string>
     <string name="settings_sim_label_desc">适用于双卡手机：显示你为 SIM 卡设置的名称，或“卡 1”/“卡 2”</string>
+    <string name="settings_audio_channels">声道</string>
+    <string name="audio_channels_mono">单声道</string>
+    <string name="audio_channels_stereo">立体声</string>
+    <string name="settings_audio_channels_info">单声道将双方混合到一个声道。立体声将你和对方分别保存在左、右两个声道，便于分别转写每一方。立体声文件大小约为原来的两倍，戴耳机时每一方只在一只耳朵里听到。</string>
     <string name="sim_label_word">卡</string>
     <string name="settings_metadata_file_label">写入详情文件</string>
     <string name="settings_needs_newer_android">需要 Android %1$s 或更高版本——此手机运行的是 Android %2$s。</string>
@@ -519,8 +526,8 @@
     <string name="settings_summary_skip_rules_on">已启用的跳过规则：%1$d</string>
     <string name="settings_summary_unavailable">此处不可用</string>
     <string name="settings_support_label">支持开发</string>
-    <string name="settings_support_supporting">在浏览器中打开 Ko-fi</string>
-    <string name="settings_support_value">在 Ko-fi 上请我喝杯咖啡</string>
+    <string name="settings_support_supporting">选择捐赠方式，将在浏览器中打开</string>
+    <string name="settings_support_value">请我喝杯咖啡</string>
     <string name="settings_tap_to_select_folder">点我选择录音保存目录…</string>
     <string name="settings_theme_mode">主题样式</string>
     <string name="settings_theme_mode_dark">暗色主题</string>
@@ -639,6 +646,7 @@
     <string name="summary_requirements_toggle_description">下载前显示摘要模型的资源需求</string>
     <string name="support_appeal_body">我利用业余时间维护 CallVault。它最初是 kitsumed 的 ShizuCallRecorder 的一个分支（fork），此后成长了许多。免费、开源、无广告、无追踪。如果它对你有用，一点小小的支持能让我继续做下去。谢谢！🙏</string>
     <string name="support_appeal_title">给 CallVault 一点小费 ☕</string>
+    <string name="support_donate">捐赠</string>
     <string name="support_not_now">以后再说</string>
     <string name="tile_recording_on">录音已开启</string>
     <string name="tile_recording_stopped">已停止</string>
@@ -899,4 +907,10 @@
     <string name="transcribe_again_running">正在重新转写… %1$d%%</string>
     <string name="transcribe_again_running_plain">正在重新转写…</string>
     <string name="transcribe_again_waiting">等待重新转写…</string>
+    <string name="wifi_call_switch_failed">这似乎是一通 WLAN 通话，但无法启动双方录音。正在按常规方式录音，可能录不到对方的声音。</string>
+    <string name="wifi_call_one_sided">这通 WLAN 通话只录到了您这一方。如果反复出现，请在电话应用的设置中将 WLAN 通话设为“首选移动网络”。</string>
+    <string name="settings_debug_force_wifi_route">强制使用 WLAN 通话录音方式</string>
+    <string name="settings_debug_force_wifi_route_description">用于测试。每通电话会在通话中切换到应用通话录音方式，就像 WLAN 通话那样。在不支持 WLAN 通话的手机上会缺少对方的声音，并应显示错误。需要开启应用通话录音。仅在开启日志记录时生效。</string>
+    <string name="wifi_call_switch_aborted">这通 WLAN 通话的录音提前停止了：无法安全地切换录音方式。已录下的部分会保留。</string>
+    <string name="wifi_call_far_unknown">这通 WLAN 通话已录音，但 CallVault 无法确认其中录到了对方的声音。请收听录音确认。</string>
 </resources>

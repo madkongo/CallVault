@@ -130,6 +130,18 @@
     <string name="merge_note_will_keep">Pozostałe rozmowy zostaną też zachowane w telefonie.</string>
     <string name="home_scroll_to_top">Do góry</string>
     <string name="home_whatsnew_full_notes">Pełne informacje o wydaniu</string>
+    <string name="whatsnew_251_title">Dłuższe przechowywanie, nagrywanie stereo i połączenia Wi-Fi na Samsungu</string>
+    <string-array name="whatsnew_251_items">
+        <item>Automatyczne usuwanie może teraz zachować nagrania przez 60, 90 lub 120 dni</item>
+        <item>Rozmowy z aplikacji (WhatsApp, Telegram i inne) pokazują teraz „Rozpoczęto nagrywanie”, tak jak zwykłe rozmowy</item>
+        <item>Oznacz nagranie gwiazdką prosto z listy</item>
+        <item>Nagrywanie stereo: każda strona na osobnym kanale (Ustawienia ▸ Dźwięk i nazwy plików ▸ Kanały). Domyślnie nadal mono</item>
+        <item>Telefony Samsung: rozmowy przez połączenia Wi-Fi są nagrywane z obu stron</item>
+        <item>„Zapisuj transkrypcję i notatki obok nagrania” jest znacznie lżejsze przy dużej bibliotece</item>
+        <item>Naprawiono: błąd „no certificates” podczas instalacji przez niektóre instalatory (np. SAI)</item>
+        <item>Naprawiono: połączenia Telegram i AyuGram nie są już dzielone na dwa pliki i mają właściwą nazwę</item>
+        <item>Naprawiono: długie rozmowy nie przekraczają już limitu czasu przy transkrypcji w chmurze</item>
+    </string-array>
     <string name="whatsnew_250_title">Zachowaj lub usuń po rozmowie i udostępniaj to, czego potrzebujesz</string>
     <string-array name="whatsnew_250_items">
         <item>Zachowaj lub usuń: CallVault może po każdej rozmowie zapytać, czy zachować nagranie (Ustawienia ▸ Nagrywanie)</item>

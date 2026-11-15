@@ -322,7 +322,7 @@
     <string name="recording_notification_title">Đang ghi âm</string>
     <string name="recording_notification_waiting">Đang chuẩn bị ghi âm…</string>
     <string name="recording_standby_notification_title">Cuộc gọi đang diễn ra</string>
-    <string name="recording_started">Quá trình ghi lại tiếp tục.</string>
+    <string name="recording_started">Đã bắt đầu ghi âm.</string>
     <string name="recording_toast_ended">Cuộc gọi kết thúc. Quá trình ghi âm đã dừng.</string>
     <string name="recording_toast_paused">Đã tạm dừng ghi.</string>
     <string name="recording_toast_resumed">Quá trình ghi lại tiếp tục.</string>
@@ -339,6 +339,9 @@
     <string name="retention_linked_label">Cùng thời hạn cho thiết bị và Drive</string>
     <string name="retention_local_label">Bản ghi âm trên thiết bị</string>
     <string name="retention_monthly">Hằng tháng (30 ngày)</string>
+    <string name="retention_60_days">60 ngày</string>
+    <string name="retention_90_days">90 ngày</string>
+    <string name="retention_120_days">120 ngày</string>
     <string name="retention_period_label">Tự động xóa bản ghi âm</string>
     <string name="retention_time_label">Chạy lúc (giờ địa phương của bạn)</string>
     <string name="retention_weekly">Hằng tuần (7 ngày)</string>
@@ -459,6 +462,10 @@
     <string name="summary_requirements_toggle_label">Hiện yêu cầu</string>
     <string name="settings_sim_label_label">Hiện SIM được dùng cho mỗi cuộc gọi</string>
     <string name="settings_sim_label_desc">Cho điện thoại hai SIM: hiện tên bạn đã đặt cho SIM, hoặc SIM 1 / SIM 2</string>
+    <string name="settings_audio_channels">Kênh</string>
+    <string name="audio_channels_mono">Mono</string>
+    <string name="audio_channels_stereo">Stereo</string>
+    <string name="settings_audio_channels_info">Mono trộn hai bên vào một kênh. Stereo lưu bạn và người kia trên hai kênh trái và phải riêng biệt, để chép lời từng bên riêng. Tệp stereo lớn gấp khoảng đôi, và khi dùng tai nghe mỗi bên chỉ nghe ở một tai.</string>
     <string name="sim_label_word">SIM</string>
     <string name="settings_metadata_file_label">Ghi tệp chi tiết</string>
     <string name="settings_needs_newer_android">Cần Android %1$s trở lên — điện thoại này chạy Android %2$s.</string>
@@ -519,8 +526,8 @@
     <string name="settings_summary_skip_rules_on">Quy tắc bỏ qua đang bật: %1$d</string>
     <string name="settings_summary_unavailable">Không khả dụng ở đây</string>
     <string name="settings_support_label">Ủng hộ phát triển</string>
-    <string name="settings_support_supporting">Mở Ko-fi trong trình duyệt</string>
-    <string name="settings_support_value">Mời tôi một ly cà phê trên Ko-fi</string>
+    <string name="settings_support_supporting">Chọn nơi ủng hộ; mở trong trình duyệt</string>
+    <string name="settings_support_value">Mời tôi một ly cà phê</string>
     <string name="settings_tap_to_select_folder">Chạm để chọn thư mục...</string>
     <string name="settings_theme_mode">Chế độ chủ đề</string>
     <string name="settings_theme_mode_dark">Tối</string>
@@ -639,6 +646,7 @@
     <string name="summary_requirements_toggle_description">Hiện yêu cầu của trình tóm tắt trước khi tải</string>
     <string name="support_appeal_body">Tôi duy trì CallVault trong thời gian rảnh. Ứng dụng bắt đầu là một bản fork của ShizuCallRecorder do kitsumed phát triển và đã lớn lên nhiều kể từ đó. Miễn phí, mã nguồn mở, không quảng cáo, không theo dõi. Nếu thấy hữu ích, một khoản nhỏ giúp tôi tiếp tục. Cảm ơn bạn! 🙏</string>
     <string name="support_appeal_title">Ủng hộ CallVault ☕</string>
+    <string name="support_donate">Ủng hộ</string>
     <string name="support_not_now">Để sau</string>
     <string name="tile_recording_on">Đang ghi âm</string>
     <string name="tile_recording_stopped">Đã dừng</string>
@@ -899,4 +907,10 @@
     <string name="transcribe_again_running">Đang chép lời lại… %1$d%%</string>
     <string name="transcribe_again_running_plain">Đang chép lời lại…</string>
     <string name="transcribe_again_waiting">Đang chờ chép lời lại…</string>
+    <string name="wifi_call_switch_failed">Đây có vẻ là cuộc gọi qua Wi-Fi, nhưng không thể bắt đầu ghi âm cả hai bên. Cuộc gọi đang được ghi theo cách thông thường, có thể thiếu tiếng người bên kia.</string>
+    <string name="wifi_call_one_sided">Chỉ phía bạn trong cuộc gọi Wi-Fi này được ghi lại. Nếu vẫn xảy ra, hãy đặt Gọi qua Wi-Fi ưu tiên mạng di động trong cài đặt ứng dụng Điện thoại.</string>
+    <string name="settings_debug_force_wifi_route">Buộc dùng cách ghi cuộc gọi Wi-Fi</string>
+    <string name="settings_debug_force_wifi_route_description">Để thử nghiệm. Mỗi cuộc gọi điện thoại sẽ chuyển giữa chừng sang cách ghi cuộc gọi ứng dụng, như một cuộc gọi Wi-Fi. Trên điện thoại không có gọi qua Wi-Fi sẽ thiếu phía bên kia và sẽ có thông báo lỗi. Cần bật ghi cuộc gọi ứng dụng. Chỉ hoạt động khi đang ghi nhật ký.</string>
+    <string name="wifi_call_switch_aborted">Việc ghi cuộc gọi Wi-Fi này đã dừng sớm: không thể chuyển cách ghi một cách an toàn. Phần đã ghi được vẫn được giữ lại.</string>
+    <string name="wifi_call_far_unknown">Cuộc gọi Wi-Fi này đã được ghi, nhưng CallVault không thể kiểm tra xem có tiếng phía bên kia hay không. Hãy nghe lại bản ghi.</string>
 </resources>

@@ -340,6 +340,9 @@
     <string name="retention_linked_label">Gleicher Zeitraum für Gerät &amp; Drive</string>
     <string name="retention_local_label">Geräteaufnahmen</string>
     <string name="retention_monthly">Monatlich (30 Tage)</string>
+    <string name="retention_60_days">60 Tage</string>
+    <string name="retention_90_days">90 Tage</string>
+    <string name="retention_120_days">120 Tage</string>
     <string name="retention_period_label">Aufnahmen automatisch löschen</string>
     <string name="retention_time_label">Ausführen um (Ihre Ortszeit)</string>
     <string name="retention_weekly">Wöchentlich (7 Tage)</string>
@@ -461,6 +464,10 @@
     <string name="summary_requirements_toggle_label">Voraussetzungen anzeigen</string>
     <string name="settings_sim_label_label">Anzeigen, welche SIM jeder Anruf genutzt hat</string>
     <string name="settings_sim_label_desc">Für Telefone mit zwei SIMs: zeigt den Namen, den Sie der SIM gegeben haben, oder SIM 1 / SIM 2</string>
+    <string name="settings_audio_channels">Kanäle</string>
+    <string name="audio_channels_mono">Mono</string>
+    <string name="audio_channels_stereo">Stereo</string>
+    <string name="settings_audio_channels_info">Mono mischt beide Seiten in einen Kanal. Stereo speichert Sie und Ihr Gegenüber getrennt auf linkem und rechtem Kanal, um jede Seite einzeln zu transkribieren. Stereo-Dateien sind etwa doppelt so groß, und mit Kopfhörern ist jede Seite nur auf einem Ohr zu hören.</string>
     <string name="sim_label_word">SIM</string>
     <string name="settings_metadata_file_label">Detaildatei schreiben</string>
     <string name="settings_needs_newer_android">Erfordert Android %1$s oder neuer – dieses Handy läuft mit Android %2$s.</string>
@@ -521,8 +528,8 @@
     <string name="settings_summary_skip_rules_on">Aktive Regeln: %1$d</string>
     <string name="settings_summary_unavailable">Hier nicht verfügbar</string>
     <string name="settings_support_label">Entwicklung unterstützen</string>
-    <string name="settings_support_supporting">Öffnet Ko-fi im Browser</string>
-    <string name="settings_support_value">Spendier mir einen Kaffee auf Ko-fi</string>
+    <string name="settings_support_supporting">Wähle, wohin du spendest; öffnet sich im Browser</string>
+    <string name="settings_support_value">Spendier mir einen Kaffee</string>
     <string name="settings_tap_to_select_folder">Tippen, um Ordner zu wählen...</string>
     <string name="settings_theme_mode">Design-Modus</string>
     <string name="settings_theme_mode_dark">Dunkel</string>
@@ -641,6 +648,7 @@
     <string name="summary_requirements_toggle_description">Vor dem Herunterladen zeigen, was der Zusammenfasser kostet</string>
     <string name="support_appeal_body">Ich pflege CallVault in meiner Freizeit. Es begann als Fork von ShizuCallRecorder von kitsumed und ist seitdem stark gewachsen. Kostenlos, quelloffen, ohne Werbung, ohne Tracking. Wenn es dir nützt, hält mich eine kleine Spende am Ball. Danke! 🙏</string>
     <string name="support_appeal_title">Ein Trinkgeld für CallVault ☕</string>
+    <string name="support_donate">Spenden</string>
     <string name="support_not_now">Jetzt nicht</string>
     <string name="tile_recording_on">Aufnahme aktiv</string>
     <string name="tile_recording_stopped">Gestoppt</string>
@@ -901,4 +909,10 @@
     <string name="transcribe_again_running">Wird erneut transkribiert … %1$d %%</string>
     <string name="transcribe_again_running_plain">Wird erneut transkribiert …</string>
     <string name="transcribe_again_waiting">Wartet auf erneute Transkription …</string>
+    <string name="wifi_call_switch_failed">Das scheint ein WLAN-Anruf zu sein, aber die Aufnahme, die beide Seiten erfasst, konnte nicht starten. Er wird wie gewohnt aufgenommen, dabei fehlt womöglich die andere Person.</string>
+    <string name="wifi_call_one_sided">Von diesem WLAN-Anruf wurde nur Ihre Seite aufgenommen. Wenn das öfter passiert, stellen Sie WLAN-Anrufe in den Einstellungen der Telefon-App auf „Mobilfunknetz bevorzugt“.</string>
+    <string name="settings_debug_force_wifi_route">WLAN-Anruf-Aufnahmeweg erzwingen</string>
+    <string name="settings_debug_force_wifi_route_description">Zum Testen. Jeder Telefonanruf wechselt während des Gesprächs zur App-Anruf-Aufnahme, wie es ein WLAN-Anruf täte. Auf einem Telefon ohne WLAN-Anrufe fehlt die andere Seite, und es sollte ein Fehler erscheinen. Erfordert eingeschaltete App-Anruf-Aufnahme. Wirkt nur, solange die Protokollaufzeichnung an ist.</string>
+    <string name="wifi_call_switch_aborted">Die Aufnahme dieses WLAN-Anrufs wurde vorzeitig beendet: Die Aufnahme ließ sich nicht sicher umschalten. Der bisher aufgenommene Teil bleibt erhalten.</string>
+    <string name="wifi_call_far_unknown">Dieser WLAN-Anruf wurde aufgenommen, aber CallVault konnte nicht prüfen, ob die andere Seite darauf ist. Bitte hören Sie sich die Aufnahme an.</string>
 </resources>

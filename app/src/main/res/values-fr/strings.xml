@@ -340,6 +340,9 @@
     <string name="retention_linked_label">Même période pour l\'appareil et Drive</string>
     <string name="retention_local_label">Enregistrements sur l\'appareil</string>
     <string name="retention_monthly">Mensuel (30 jours)</string>
+    <string name="retention_60_days">60 jours</string>
+    <string name="retention_90_days">90 jours</string>
+    <string name="retention_120_days">120 jours</string>
     <string name="retention_period_label">Suppression automatique des enregistrements</string>
     <string name="retention_time_label">Exécuter à (votre heure locale)</string>
     <string name="retention_weekly">Hebdomadaire (7 jours)</string>
@@ -461,6 +464,10 @@
     <string name="summary_requirements_toggle_label">Afficher les prérequis</string>
     <string name="settings_sim_label_label">Afficher la SIM utilisée pour chaque appel</string>
     <string name="settings_sim_label_desc">Pour les téléphones à deux SIM : affiche le nom que vous avez donné à la SIM, ou SIM 1 / SIM 2</string>
+    <string name="settings_audio_channels">Canaux</string>
+    <string name="audio_channels_mono">Mono</string>
+    <string name="audio_channels_stereo">Stéréo</string>
+    <string name="settings_audio_channels_info">Le mono mélange les deux côtés sur un seul canal. La stéréo enregistre votre voix et celle de votre interlocuteur sur des canaux gauche et droit séparés, pour transcrire chaque côté à part. Les fichiers stéréo sont environ deux fois plus lourds et, au casque, chaque côté s\'entend dans une seule oreille.</string>
     <string name="sim_label_word">SIM</string>
     <string name="settings_metadata_file_label">Écrire un fichier de détails</string>
     <string name="settings_needs_newer_android">Nécessite Android %1$s ou plus récent — ce téléphone est sous Android %2$s.</string>
@@ -521,8 +528,8 @@
     <string name="settings_summary_skip_rules_on">Règles actives : %1$d</string>
     <string name="settings_summary_unavailable">Indisponible ici</string>
     <string name="settings_support_label">Soutenir le développement</string>
-    <string name="settings_support_supporting">Ouvre Ko-fi dans votre navigateur</string>
-    <string name="settings_support_value">Offrez-moi un café sur Ko-fi</string>
+    <string name="settings_support_supporting">Choisissez où donner ; s\'ouvre dans votre navigateur</string>
+    <string name="settings_support_value">Offrez-moi un café</string>
     <string name="settings_tap_to_select_folder">Appuyez pour sélectionner un dossier...</string>
     <string name="settings_theme_mode">Couleur du Thème</string>
     <string name="settings_theme_mode_dark">Sombre</string>
@@ -641,6 +648,7 @@
     <string name="summary_requirements_toggle_description">Afficher ce que coûte le résumeur avant de le télécharger</string>
     <string name="support_appeal_body">Je maintiens CallVault sur mon temps libre. L\'appli a commencé comme un fork de ShizuCallRecorder, de kitsumed, et a beaucoup évolué depuis. Gratuite, open source, sans publicité ni pistage. Si elle vous est utile, un petit pourboire m\'aide à continuer. Merci ! 🙏</string>
     <string name="support_appeal_title">Un pourboire pour CallVault ☕</string>
+    <string name="support_donate">Faire un don</string>
     <string name="support_not_now">Pas maintenant</string>
     <string name="tile_recording_on">Enregistrement activé</string>
     <string name="tile_recording_stopped">Arrêté</string>
@@ -901,4 +909,10 @@
     <string name="transcribe_again_running">Nouvelle transcription… %1$d %%</string>
     <string name="transcribe_again_running_plain">Nouvelle transcription…</string>
     <string name="transcribe_again_waiting">En attente d\'une nouvelle transcription…</string>
+    <string name="wifi_call_switch_failed">Cet appel semble passer par le Wi-Fi, mais la capture qui enregistre les deux côtés n\'a pas pu démarrer. Il est enregistré de la manière habituelle, qui peut manquer votre interlocuteur.</string>
+    <string name="wifi_call_one_sided">Seul votre côté de cet appel Wi-Fi a été enregistré. Si cela se reproduit, réglez les appels Wi-Fi sur « Réseau mobile de préférence » dans les paramètres de l\'application Téléphone.</string>
+    <string name="settings_debug_force_wifi_route">Forcer la capture des appels Wi-Fi</string>
+    <string name="settings_debug_force_wifi_route_description">Pour les tests. Chaque appel téléphonique bascule en cours d\'appel vers la capture des appels d\'applications, comme le ferait un appel Wi-Fi. Sur un téléphone sans appels Wi-Fi, l\'autre côté manquera et une erreur devrait s\'afficher. Nécessite l\'enregistrement des appels d\'applications. Ne fonctionne que si l\'enregistrement du journal est activé.</string>
+    <string name="wifi_call_switch_aborted">L\'enregistrement de cet appel Wi-Fi s\'est arrêté plus tôt : la capture n\'a pas pu être changée sans risque. La partie déjà enregistrée est conservée.</string>
+    <string name="wifi_call_far_unknown">Cet appel Wi-Fi a été enregistré, mais CallVault n\'a pas pu vérifier que votre interlocuteur y figure. Écoutez l\'enregistrement.</string>
 </resources>

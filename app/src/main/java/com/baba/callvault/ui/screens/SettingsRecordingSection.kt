@@ -77,6 +77,7 @@ internal fun AudioSection(preferences: AppPreferences, updateTrigger: Int, actio
     val audioSource = remember(updateTrigger) { preferences.getAudioSource() }
     val audioCodec = remember(updateTrigger) { preferences.getAudioCodec() }
     val savedBitRate = remember(updateTrigger) { preferences.getAudioBitRate() }
+    val recordStereo = remember(updateTrigger) { preferences.getRecordStereo() }
 
     SettingsSection(title = stringResource(R.string.settings_section_audio), expanded = expanded, onToggle = onToggle) {
         val currentSdk = Build.VERSION.SDK_INT
@@ -151,6 +152,24 @@ internal fun AudioSection(preferences: AppPreferences, updateTrigger: Int, actio
         }
 
         val recommendedLabel = stringResource(R.string.general_recommended)
+
+        // #74: mono (the file since v1.4.4) or stereo — each side on its own channel, at the stereo floor.
+        // Here, beside codec and bit rate, because it changes both the file's shape and its size.
+        val channelOptions = listOf(
+            OptionItem(CHANNELS_MONO, "${stringResource(R.string.audio_channels_mono)} ($recommendedLabel)"),
+            OptionItem(CHANNELS_STEREO, stringResource(R.string.audio_channels_stereo)),
+        )
+        WithInfo(stringResource(R.string.settings_audio_channels), stringResource(R.string.settings_audio_channels_info)) {
+        DropdownRow {
+            M3DropdownField(
+                label    = stringResource(R.string.settings_audio_channels),
+                selected = channelOptions.first { it.key == if (recordStereo) CHANNELS_STEREO else CHANNELS_MONO },
+                options  = channelOptions,
+                onOptionSelected = { actions.setRecordStereoEnabled(it.key == CHANNELS_STEREO) },
+            )
+        }
+        }
+
         val bitrateOptions = AUDIO_BIT_RATE_OPTIONS
             .map { bps ->
                 val kbpsLabel = stringResource(R.string.audio_bitrate_kbps, bps / 1000)
@@ -326,3 +345,6 @@ internal fun VoipAppPicker(prefs: AppPreferences) {
         }
     }
 }
+
+private const val CHANNELS_MONO = "mono"
+private const val CHANNELS_STEREO = "stereo"

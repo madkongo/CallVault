@@ -377,6 +377,9 @@
     <string name="retention_linked_label">نفس الفترة للجهاز و Drive</string>
     <string name="retention_local_label">تسجيلات الجهاز</string>
     <string name="retention_monthly">شهريًا (30 يومًا)</string>
+    <string name="retention_60_days">60 يومًا</string>
+    <string name="retention_90_days">90 يومًا</string>
+    <string name="retention_120_days">120 يومًا</string>
     <string name="retention_period_label">حذف التسجيلات تلقائيًا</string>
     <string name="retention_time_label">التشغيل في (وقتك المحلي)</string>
     <string name="retention_weekly">أسبوعيًا (7 أيام)</string>
@@ -502,6 +505,10 @@
     <string name="summary_requirements_toggle_label">إظهار المتطلبات</string>
     <string name="settings_sim_label_label">إظهار شريحة SIM التي استُخدمت في كل مكالمة</string>
     <string name="settings_sim_label_desc">للهواتف ذات شريحتين: يعرض الاسم الذي أعطيته للشريحة، أو SIM 1 / SIM 2</string>
+    <string name="settings_audio_channels">القنوات</string>
+    <string name="audio_channels_mono">أحادي</string>
+    <string name="audio_channels_stereo">ستيريو</string>
+    <string name="settings_audio_channels_info">الأحادي يدمج الطرفين في قناة واحدة. الستيريو يحفظ صوتك وصوت الطرف الآخر في قناتين منفصلتين، يسار ويمين، لتفريغ كل طرف على حدة. ملفات الستيريو نحو ضعف الحجم، وفي سماعات الرأس يُسمع كل طرف في أذن واحدة.</string>
     <string name="sim_label_word">SIM</string>
     <string name="settings_metadata_file_label">كتابة ملف تفاصيل</string>
     <string name="settings_needs_newer_android">يتطلب Android %1$s أو أحدث؛ يعمل هذا الهاتف بنظام Android %2$s.</string>
@@ -562,8 +569,8 @@
     <string name="settings_summary_skip_rules_on">قواعد التخطي المفعّلة: %1$d</string>
     <string name="settings_summary_unavailable">غير متاح هنا</string>
     <string name="settings_support_label">دعم التطوير</string>
-    <string name="settings_support_supporting">يفتح Ko-fi في متصفحك</string>
-    <string name="settings_support_value">اشترِ لي قهوة على Ko-fi</string>
+    <string name="settings_support_supporting">اختر جهة التبرع؛ يفتح في متصفحك</string>
+    <string name="settings_support_value">اشترِ لي قهوة</string>
     <string name="settings_tap_to_select_folder">انقر لتحديد المجلد...</string>
     <string name="settings_theme_mode">وضع الثيم</string>
     <string name="settings_theme_mode_dark">داكن</string>
@@ -682,6 +689,7 @@
     <string name="summary_requirements_toggle_description">إظهار تكلفة نموذج التلخيص قبل تنزيلها</string>
     <string name="support_appeal_body">أعتني بـ CallVault في وقت فراغي. بدأ كنسخة متفرعة (fork) من ShizuCallRecorder من تطوير kitsumed، وقد نما كثيرًا منذ ذلك الحين. مجاني ومفتوح المصدر وبدون إعلانات وبدون تتبع. إذا كان مفيدًا لك، فإن إكرامية صغيرة تساعدني على الاستمرار. شكرًا! 🙏</string>
     <string name="support_appeal_title">إكرامية لـ CallVault ☕</string>
+    <string name="support_donate">تبرّع</string>
     <string name="support_not_now">ليس الآن</string>
     <string name="tile_recording_on">التسجيل مُفعّل</string>
     <string name="tile_recording_stopped">متوقّف</string>
@@ -939,4 +947,10 @@
     <string name="transcribe_again_running">جارٍ إعادة التفريغ… %1$d%%</string>
     <string name="transcribe_again_running_plain">جارٍ إعادة التفريغ…</string>
     <string name="transcribe_again_waiting">في انتظار إعادة التفريغ…</string>
+    <string name="wifi_call_switch_failed">يبدو أن هذه مكالمة عبر Wi-Fi، لكن تعذّر بدء التسجيل الذي يلتقط الطرفين. يجري تسجيلها بالطريقة المعتادة، وقد لا يُسمع فيها الطرف الآخر.</string>
+    <string name="wifi_call_one_sided">سُجّل جانبك فقط من مكالمة Wi-Fi هذه. إذا تكرر ذلك، اضبط الاتصال عبر Wi-Fi على تفضيل شبكة الجوال في إعدادات تطبيق الهاتف.</string>
+    <string name="settings_debug_force_wifi_route">فرض مسار تسجيل مكالمات Wi-Fi</string>
+    <string name="settings_debug_force_wifi_route_description">للاختبار. تنتقل كل مكالمة هاتفية أثناءها إلى تسجيل مكالمات التطبيقات، كما تفعل مكالمة Wi-Fi. على هاتف بلا اتصال عبر Wi-Fi سيغيب الطرف الآخر ويجب أن يظهر خطأ. يتطلب تفعيل تسجيل مكالمات التطبيقات. يعمل فقط أثناء تسجيل السجل.</string>
+    <string name="wifi_call_switch_aborted">توقف تسجيل مكالمة Wi-Fi هذه مبكرًا: تعذّر تبديل طريقة التسجيل بأمان. حُفظ الجزء الذي سُجّل حتى الآن.</string>
+    <string name="wifi_call_far_unknown">سُجّلت مكالمة Wi-Fi هذه، لكن تعذّر على CallVault التحقق من وجود صوت الطرف الآخر فيها. يُرجى الاستماع إلى التسجيل.</string>
 </resources>

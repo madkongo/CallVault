@@ -340,6 +340,9 @@
     <string name="retention_linked_label">Mismo período para el dispositivo y Drive</string>
     <string name="retention_local_label">Grabaciones del dispositivo</string>
     <string name="retention_monthly">Mensual (30 días)</string>
+    <string name="retention_60_days">60 días</string>
+    <string name="retention_90_days">90 días</string>
+    <string name="retention_120_days">120 días</string>
     <string name="retention_period_label">Eliminar grabaciones automáticamente</string>
     <string name="retention_time_label">Ejecutar a las (su hora local)</string>
     <string name="retention_weekly">Semanal (7 días)</string>
@@ -461,6 +464,10 @@
     <string name="summary_requirements_toggle_label">Mostrar requisitos</string>
     <string name="settings_sim_label_label">Mostrar qué SIM usó cada llamada</string>
     <string name="settings_sim_label_desc">Para teléfonos con dos SIM: muestra el nombre que le diste a la SIM, o SIM 1 / SIM 2</string>
+    <string name="settings_audio_channels">Canales</string>
+    <string name="audio_channels_mono">Mono</string>
+    <string name="audio_channels_stereo">Estéreo</string>
+    <string name="settings_audio_channels_info">Mono mezcla los dos lados en un solo canal. Estéreo guarda tu voz y la de la otra persona en canales izquierdo y derecho separados, para transcribir cada lado por separado. Los archivos en estéreo ocupan aproximadamente el doble y, con auriculares, cada lado se oye por un solo oído.</string>
     <string name="sim_label_word">SIM</string>
     <string name="settings_metadata_file_label">Escribir un archivo de detalles</string>
     <string name="settings_needs_newer_android">Requiere Android %1$s o posterior; este teléfono usa Android %2$s.</string>
@@ -521,8 +528,8 @@
     <string name="settings_summary_skip_rules_on">Reglas de omisión activas: %1$d</string>
     <string name="settings_summary_unavailable">No disponible aquí</string>
     <string name="settings_support_label">Apoyar el desarrollo</string>
-    <string name="settings_support_supporting">Abre Ko-fi en tu navegador</string>
-    <string name="settings_support_value">Invítame a un café en Ko-fi</string>
+    <string name="settings_support_supporting">Elige dónde donar; se abre en tu navegador</string>
+    <string name="settings_support_value">Invítame a un café</string>
     <string name="settings_tap_to_select_folder">Toca para seleccionar la carpeta...</string>
     <string name="settings_theme_mode">Modo del tema</string>
     <string name="settings_theme_mode_dark">Oscuro</string>
@@ -641,6 +648,7 @@
     <string name="summary_requirements_toggle_description">Mostrar lo que cuesta el resumidor antes de descargarlo</string>
     <string name="support_appeal_body">Mantengo CallVault en mi tiempo libre. Empezó como un fork de ShizuCallRecorder, de kitsumed, y ha crecido mucho desde entonces. Gratis, de código abierto, sin anuncios ni rastreo. Si te resulta útil, una pequeña aportación me ayuda a seguir. ¡Gracias! 🙏</string>
     <string name="support_appeal_title">Una propina para CallVault ☕</string>
+    <string name="support_donate">Donar</string>
     <string name="support_not_now">Ahora no</string>
     <string name="tile_recording_on">Grabación activada</string>
     <string name="tile_recording_stopped">Detenido</string>
@@ -901,4 +909,10 @@
     <string name="transcribe_again_running">Transcribiendo de nuevo… %1$d %%</string>
     <string name="transcribe_again_running_plain">Transcribiendo de nuevo…</string>
     <string name="transcribe_again_waiting">Esperando para transcribir de nuevo…</string>
+    <string name="wifi_call_switch_failed">Parece una llamada por Wi-Fi, pero no se pudo iniciar la captura que graba a ambas partes. Se está grabando de la forma habitual, que puede no incluir a la otra persona.</string>
+    <string name="wifi_call_one_sided">Solo se grabó tu lado de esta llamada por Wi-Fi. Si sigue pasando, configura las llamadas por Wi-Fi para preferir la red móvil en los ajustes de la app Teléfono.</string>
+    <string name="settings_debug_force_wifi_route">Forzar la captura de llamadas por Wi-Fi</string>
+    <string name="settings_debug_force_wifi_route_description">Para pruebas. Cada llamada telefónica cambia durante la llamada a la captura de llamadas de apps, como haría una llamada por Wi-Fi. En un teléfono sin llamadas por Wi-Fi faltará la otra parte y debería aparecer un error. Requiere activar la grabación de llamadas de apps. Solo funciona con el registro activado.</string>
+    <string name="wifi_call_switch_aborted">La grabación de esta llamada por Wi-Fi se detuvo antes de tiempo: no se pudo cambiar la captura de forma segura. Se conserva lo grabado hasta ahora.</string>
+    <string name="wifi_call_far_unknown">Esta llamada por Wi-Fi se grabó, pero CallVault no pudo comprobar que la otra parte esté en ella. Escucha la grabación.</string>
 </resources>

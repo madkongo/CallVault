@@ -8,15 +8,19 @@
 
 package com.baba.callvault.ui.common
 
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Box
 import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.DropdownMenu
+import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.unit.dp
 import com.baba.callvault.R
 import com.baba.callvault.system.openKofi
 import com.baba.callvault.system.openPayPal
@@ -24,10 +28,11 @@ import com.baba.callvault.system.openPayPal
 /**
  * Where to donate, asked once rather than assumed.
  *
- * Support used to open Ko-fi the moment it was tapped. Two links need a choice, and the two are not
- * interchangeable: Ko-fi's card processing is unavailable or awkward in some countries, and many
- * people simply already hold a PayPal balance. Both open in the browser — no payment SDK is in the
- * app, and nothing about the user leaves the device.
+ * Support used to open Ko-fi the moment it was tapped. The links are not interchangeable: Ko-fi's
+ * card processing is unavailable or awkward in some countries, many people already hold a PayPal
+ * balance. Both open in the browser — no payment SDK is in the app, and nothing about the user leaves the device.
+ *
+ * One Donate button opens a short menu, so a fourth option never needs a wider row.
  *
  * **One dialog, wherever it is opened from.** An earlier version showed a shorter, businesslike
  * variant when the user tapped Support and the fuller note only after a release, on the reasoning
@@ -38,18 +43,37 @@ import com.baba.callvault.system.openPayPal
 @Composable
 fun SupportDialog(onDismiss: () -> Unit) {
     val context = LocalContext.current
+    var menuOpen by remember { mutableStateOf(false) }
 
     AlertDialog(
         onDismissRequest = onDismiss,
         title = { Text(stringResource(R.string.support_appeal_title)) },
         text = { Text(stringResource(R.string.support_appeal_body)) },
         confirmButton = {
-            Row(horizontalArrangement = Arrangement.spacedBy(4.dp)) {
-                TextButton(onClick = { onDismiss(); context.openKofi() }) {
-                    Text(stringResource(R.string.support_kofi))
+            Box {
+                TextButton(onClick = { menuOpen = true }) {
+                    Text(stringResource(R.string.support_donate))
                 }
-                TextButton(onClick = { onDismiss(); context.openPayPal() }) {
-                    Text(stringResource(R.string.support_paypal))
+                DropdownMenu(expanded = menuOpen, onDismissRequest = { menuOpen = false }) {
+                    SUPPORT_OPTIONS.forEach { option ->
+                        val label = stringResource(
+                            when (option) {
+                                SupportOption.KOFI -> R.string.support_kofi
+                                SupportOption.PAYPAL -> R.string.support_paypal
+                            }
+                        )
+                        DropdownMenuItem(
+                            text = { Text(label) },
+                            onClick = {
+                                menuOpen = false
+                                onDismiss()
+                                when (option) {
+                                    SupportOption.KOFI -> context.openKofi()
+                                    SupportOption.PAYPAL -> context.openPayPal()
+                                }
+                            },
+                        )
+                    }
                 }
             }
         },

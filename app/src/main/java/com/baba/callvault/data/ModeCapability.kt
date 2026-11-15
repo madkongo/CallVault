@@ -88,8 +88,8 @@ enum class ModeCapability {
      * The oldest Android API level this works on (backlog #1). Evidence and gaps:
      * docs/dev-notes/2026-09-29-feature-android-version-map.md.
      *  - App calls need 34: before Android 14 the shell has no `CAPTURE_VOICE_COMMUNICATION_OUTPUT`
-     *    (coonrw's Android 12 failed at `setTargetMixRole`, #42's Android 13 at policy registration).
-     *  - Resilient recording needs 33: it captured nothing on Android 12 (coonrw) and was never tested on 11.
+     *    (a tester's Android 12 failed at `setTargetMixRole`, #42's Android 13 at policy registration).
+     *  - Resilient recording needs 33: it captured nothing on Android 12 (a tester) and was never tested on 11.
      * Everything else works from the app's minimum (Android 11).
      */
     val minSdk: Int get() = when (this) {

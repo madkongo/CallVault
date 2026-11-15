@@ -20,6 +20,8 @@ import com.baba.callvault.data.transcripts.export.TranscriptFormat
 import com.baba.callvault.data.waveform.RecordingExtrasRepository
 import com.baba.callvault.utils.AppLogger
 import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.yield
+import kotlin.coroutines.cancellation.CancellationException
 
 /**
  * Writes a recording's transcript + notes (+ summary) as a `.md` file beside the audio, in the user's
@@ -47,7 +49,14 @@ object TranscriptSidecar {
      * Writes the sidecar for [displayName], or removes it when there is nothing (no transcript, summary
      * or note) to write. No-op when the setting is off. Never throws.
      */
-    suspend fun writeOrClear(context: Context, displayName: String) {
+    suspend fun writeOrClear(
+        context: Context,
+        displayName: String,
+        clearWhenEmpty: Boolean = true,
+        index: FolderIndex? = null,
+    ) {
+        // A sidecar's own name maps to itself, so replacing it would delete the file we mean to keep.
+        if (isSidecarName(displayName)) return
         val prefs = AppPreferences(context)
         if (!prefs.isWriteTranscriptSidecarEnabled()) return
         val folderUri = prefs.getRecordingFolderUri()
@@ -57,24 +66,35 @@ object TranscriptSidecar {
         }
         runCatching {
             val content = buildContent(context, displayName)
-            val folder = DocumentFile.fromTreeUri(context, folderUri)
+            // The backfill passes clearWhenEmpty=false: with nothing to write there is nothing to replace,
+            // and the folder lookup below is a provider round trip per recording.
+            if (content.isNullOrBlank() && !clearWhenEmpty) return@runCatching
+            val folder = index?.folder ?: DocumentFile.fromTreeUri(context, folderUri)
                 ?: error("folder $folderUri could not be opened")
             val name = sidecarNameFor(displayName)
             // Replace rather than accumulate "name (1).md"; this also removes a stale sidecar when the
             // transcript/note has been emptied (content is then null and we stop here).
-            folder.findFile(name)?.delete()
+            // findFile lists the whole folder on every call (about 18 s on a 3,000-file folder on an
+            // HONOR phone), so a pass over many recordings brings an index listed once.
+            (if (index != null) index.remove(name) else folder.findFile(name))?.delete()
             if (content.isNullOrBlank()) {
                 AppLogger.d(TAG, "Nothing to write for '$displayName'; sidecar left absent.")
                 return@runCatching
             }
             val doc = folder.createFile(FORMAT.mimeType, name) ?: error("could not create $name")
+            index?.put(name, doc)
             context.contentResolver.openOutputStream(doc.uri)?.use { it.write(content.toByteArray()) }
                 ?: error("could not open $name for writing")
             AppLogger.i(TAG, "Wrote transcript sidecar '$name'.")
         }.onFailure {
+            // A cancelled job must stop, not log a warning per remaining recording.
+            if (it is CancellationException) throw it
             AppLogger.w(TAG, "Could not write the transcript sidecar for '$displayName': ${it.message}")
         }
     }
+
+    /** True for a name that is itself a sidecar, so the backfill never treats it as a recording. */
+    fun isSidecarName(name: String): Boolean = name.endsWith("." + FORMAT.extension, ignoreCase = true)
 
     /**
      * Best-effort pass to write a sidecar for every recording that has a transcript or a note — used when
@@ -83,9 +103,36 @@ object TranscriptSidecar {
     suspend fun backfillAll(context: Context) {
         if (!AppPreferences(context).isWriteTranscriptSidecarEnabled()) return
         runCatching {
-            RecordingCatalog.all(context).forEach { entry -> writeOrClear(context, entry.displayName) }
+            // One listing of the folder for the whole pass, instead of one per recording. Null when the
+            // folder cannot be listed: each write then falls back to its own lookup.
+            val index = AppPreferences(context).getRecordingFolderUri()?.let { uri ->
+                runCatching {
+                    DocumentFile.fromTreeUri(context, uri)?.let { FolderIndex(it, it.listFiles().toList()) }
+                }.getOrNull()
+            }
+            RecordingCatalog.all(context).forEach { entry ->
+                if (isSidecarName(entry.displayName)) return@forEach
+                writeOrClear(context, entry.displayName, clearWhenEmpty = false, index = index)
+                yield()
+            }
             AppLogger.i(TAG, "Transcript sidecar backfill finished.")
-        }.onFailure { AppLogger.w(TAG, "Transcript sidecar backfill failed: ${it.message}") }
+        }.onFailure {
+            // Let a cancelled pass reach the worker, so it is retried rather than reported as finished.
+            if (it is CancellationException) throw it
+            AppLogger.w(TAG, "Transcript sidecar backfill failed: ${it.message}")
+        }
+    }
+
+    /**
+     * The folder's files by name, listed once. [DocumentFile.findFile] lists the whole folder on every
+     * call, which a pass over thousands of recordings cannot afford (BabApps item 6).
+     */
+    class FolderIndex(val folder: DocumentFile, files: List<DocumentFile>) {
+        private val byName = HashMap<String, DocumentFile>()
+        init { files.forEach { f -> f.name?.let { byName[it] = f } } }
+        fun remove(name: String): DocumentFile? = byName.remove(name)
+        fun put(name: String, doc: DocumentFile) { byName[name] = doc }
+        fun contains(name: String): Boolean = name in byName
     }
 
     /** The rendered transcript + notes (+ summary), or null when the recording has none of them. */

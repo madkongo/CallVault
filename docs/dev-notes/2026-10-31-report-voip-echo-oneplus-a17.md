@@ -3,7 +3,7 @@
 🧪 2026-11-01: the alignment fix (2.4.8-echofix) removes the echo once it locks on, 7–13 s into the call; the
 reporter still hears the echo at the start. See `rollback/voip-echo-align.md`. (The original line "Investigation in progress. Nothing fixed, nothing built" is out of date.)
 
-**Reporter:** Евгений (Telegram). OnePlus CPH2747, Android 17 (CPH2747_17.0.0.102), Shizuku mode, 2.4.8.
+**Reporter:** a tester (Telegram). OnePlus CPH2747, Android 17 (CPH2747_17.0.0.102), Shizuku mode, 2.4.8.
 Phone held to the ear (earpiece). Every messenger: Max, WhatsApp, Telegram.
 
 ## What the logs show (debug report 21:04–21:07)
@@ -28,7 +28,7 @@ Phone held to the ear (earpiece). Every messenger: Max, WhatsApp, Telegram.
 - Mono files cannot separate the sides. A two-channel debug capture (near L / far R) would settle it.
 
 ## Maintainer listened (2026-10-31)
-OP9 app calls do NOT sound like this. Евгений's files: the far party sounds **reverberant** whenever they speak,
+OP9 app calls do NOT sound like this. The tester's files: the far party sounds **reverberant** whenever they speak,
 throughout the call. Fits a short (<20 ms) second copy of the far voice via the hot mic; unproven from mono.
 
 ## Probe build sent to the reporter (not tested on our phones, by the maintainer's choice)
@@ -56,7 +56,7 @@ Files arrived intact (2 ch, sizes equal to the app's own log). L = mic, R = far.
 Acoustic echo cancelling on the near channel with the far channel as the reference, before the downmix, in
 `VoipCaptureSession`. Delay ≈60–100 ms here → tail ≥150 ms. Candidates: speexdsp MDF (BSD, small C) or WebRTC
 AEC3 (`webrtc-audio-processing`, BSD, stronger double-talk + residual suppression). Must not touch carrier
-calls. Prove offline on these two files first (A/B for the maintainer), then a probe build for Евгений.
+calls. Prove offline on these two files first (A/B for the maintainer), then a probe build for the tester.
 
 ## Offline A/B (2026-10-31) — files in ~/Downloads/echo-AB/, tools in scratchpad echo-tools/
 Mic channel scored on both calls (far-talk windows: mic level drop = echo removed, includes any double-talk loss;
@@ -86,4 +86,4 @@ pushed 2026-10-19) is the one newer candidate; not run (building third-party cod
 - Fix idea, 📐 not built: per call, measure the lag between the far channel and its copy in the mic. If the copy is strong, delay the far channel by that lag before the downmix. With a headset (no leak) nothing changes.
 - Waiting on the maintainer's ear for mix 2 against mix 1.
 - 2026-11-01, maintainer by ear: mix 2 (aligned) removes the echo. Mix 3 (mic only) sounds "slightly better than 2 but its a really small difference". Next step: design the in-app fix together (see the options in the chat of that date).
-- 2026-11-01: maintainer chose "line up only": never turn the far side down, never use the mic alone. Built and merged as f1288975; see `docs/dev-notes/rollback/voip-echo-align.md`. The test APK `2.4.8-echofix` is waiting for Евгений. Listening file of the app's actual output: `~/Downloads/echo-AB/mixes/*_4_app_fix_as_recorded.wav`.
+- 2026-11-01: maintainer chose "line up only": never turn the far side down, never use the mic alone. Built and merged as f1288975; see `docs/dev-notes/rollback/voip-echo-align.md`. The test APK `2.4.8-echofix` is waiting for the tester. Listening file of the app's actual output: `~/Downloads/echo-AB/mixes/*_4_app_fix_as_recorded.wav`.

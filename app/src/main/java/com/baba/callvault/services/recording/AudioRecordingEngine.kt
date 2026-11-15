@@ -25,12 +25,15 @@ import com.baba.callvault.integrations.scrcpy.ScrcpyAudioMuxer
 import com.baba.callvault.integrations.scrcpy.ScrcpyAudioSource
 import com.baba.callvault.integrations.scrcpy.ScrcpyClient
 import com.baba.callvault.integrations.scrcpy.ScrcpyLauncher
+import com.baba.callvault.server.DaemonStereo
 import com.baba.callvault.server.DirectAudioRecorderSession
 import com.baba.callvault.server.RecorderConnection
 import com.baba.callvault.server.RecorderBackend
 import com.baba.callvault.services.recording.handoff.HandoffReceiver
 import com.baba.callvault.services.recording.handoff.HandoffSource
+import com.baba.callvault.system.diagnostics.CallEndLog
 import com.baba.callvault.system.storage.SafHelper
+import com.baba.callvault.system.storage.StagingNote
 import com.baba.callvault.integrations.scrcpy.ServerExtractor
 import com.baba.callvault.utils.AppLogger
 import com.baba.callvault.utils.RecordingFileNameFormatter
@@ -72,6 +75,10 @@ class AudioRecordingEngine {
 
         /** Capture rate for the resilient-recording (handoff) path — matches DirectAudioRecorderSession. */
         private const val HANDOFF_SAMPLE_RATE = 48000
+
+        /** How long a just-dispatched app-call capture is watched for a failed open. */
+        private const val VOIP_START_CONFIRM_MS = 1_000L
+        private const val VOIP_START_POLL_MS = 100L
     }
 
     /**
@@ -208,6 +215,31 @@ class AudioRecordingEngine {
     private var handoffMode: Boolean = false
 
     /**
+     * True when this session records a Wi-Fi call through the app-call capture (loopback mix + mic)
+     * instead of VOICE_CALL (#45). The daemon owns it like any daemon-mode recording.
+     */
+    var isAppCallMix: Boolean = false
+        private set
+
+    /**
+     * For an app-call-mix session: whether the far side was heard, read from the daemon at [release].
+     * Null when it could not be asked (no daemon) or the session is not a mix.
+     */
+    var farPartyHeard: Boolean? = null
+        private set
+
+    /** What the app expects the daemon to capture with, set when it dispatches the recording. Only for the always-on log. */
+    private var daemonExpectsDirect: Boolean = false
+
+    /** The capture path this session took, for the always-on call-end log ([CallEndLog.capturePathName]). */
+    fun capturePathName(): String =
+        CallEndLog.capturePathName(isAppCallMix, handoffMode, daemonMode, daemonExpectsDirect)
+
+    /** True when neither the daemon nor the handoff carries this recording (local scrcpy over ADB). */
+    val isLocalFallback: Boolean
+        get() = !daemonMode && !handoffMode
+
+    /**
      * Fired at most once per session when the liveness watch finds the daemon's binder dead while a
      * daemon-mode recording is supposed to be live (observed when Developer options is off: the
      * daemon dies within ~200ms of Wireless debugging being turned off, so `startRecording` is
@@ -294,9 +326,19 @@ class AudioRecordingEngine {
 
     /**
      * Orchestrates the initialization and connection of the entire recording pipeline.
+     * @param route     [WifiCallRoute.Route.APP_CALL_MIX] tries the app-call capture first and falls back to
+     *                  the usual carrier capture if the daemon refuses it.
+     * @param startedAt the time to name the file by; a mid-call switch keeps the first capture's.
+     * @return the route actually started.
      * @throws PipelineInitializationException if any step of the initialization fails, with details for user-friendly and technical error reporting.
      */
-    fun startPipeline(context: Service, metadata: RecordingMetadata, isCancelled: () -> Boolean = { false }) {
+    fun startPipeline(
+        context: Service,
+        metadata: RecordingMetadata,
+        isCancelled: () -> Boolean = { false },
+        route: WifiCallRoute.Route = WifiCallRoute.Route.CALL_SOURCE,
+        startedAt: Date? = null,
+    ): WifiCallRoute.Route {
         initializationMetadata = metadata
         // The daemon bring-up below can block for tens of seconds while it cold-starts (re-enable WD →
         // mDNS reconnect → relaunch). On this OEM the call frequently ENDS during that window. If we
@@ -317,12 +359,15 @@ class AudioRecordingEngine {
         val codecEnum = ScrcpyAudioCodec.fromKey(preferences.getAudioCodec())
         val bitRate = preferences.getAudioBitRate().takeIf { it > 0 } ?: codecEnum.defaultBitRate
         val audioSourceEnum = ScrcpyAudioSource.fromKey(preferences.getAudioSource())
+        // #74: keep each side on its own channel. The user's mono rate travels as is; whoever encodes
+        // lifts it to the stereo floor only if it really encodes two channels.
+        val recordStereo = preferences.getRecordStereo()
 
-        AppLogger.i(TAG, "Starting recording pipeline: source=${audioSourceEnum.cliKey} codec=${codecEnum.cliKey} bitrate=$bitRate")
+        AppLogger.i(TAG, "Starting recording pipeline: source=${audioSourceEnum.cliKey} codec=${codecEnum.cliKey} bitrate=$bitRate stereo=$recordStereo")
 
-        val startedAt = Date()
-        currentStartedAt = startedAt
-        val fileName = RecordingFileNameFormatter.formatFileName(context, metadata, codecEnum, startedAt = startedAt)
+        val nameStamp = startedAt ?: Date()
+        currentStartedAt = nameStamp
+        val fileName = RecordingFileNameFormatter.formatFileName(context, metadata, codecEnum, startedAt = nameStamp)
 
         val safResult = SafHelper.createAudioFile(context, folderUri, fileName, codecEnum.mimeType)
             ?: throw PipelineInitializationException(
@@ -339,6 +384,18 @@ class AudioRecordingEngine {
         pendingFolderUri = safResult.folderUri
         pendingFileName = safResult.fileName
         pendingMimeType = safResult.mimeType
+
+        // Wi-Fi call (#45): the far side is a voice-comm player, so record it the way an app call is
+        // recorded. If the daemon refuses, fall through to the normal carrier capture below.
+        if (route == WifiCallRoute.Route.APP_CALL_MIX) {
+            if (startVoipMixPipeline(context, codecEnum, bitRate, isCancelled)) {
+                daemonMode = true
+                isAppCallMix = true
+                currentCodecEnum = codecEnum
+                return WifiCallRoute.Route.APP_CALL_MIX
+            }
+            AppLogger.w(WifiCallRoute.TAG, "App-call capture refused; recording this call from the call source instead")
+        }
 
         // Resilient recording (Option B) opt-in: when ENABLED and the source can be captured via a Java
         // AudioRecord (voice-call/mic/voice-communication/…), use the handoff pipeline — the daemon hands
@@ -360,21 +417,21 @@ class AudioRecordingEngine {
                 mode = preferences.getPrivilegedMode(),
                 appGetsPaused = appGetsPaused,
             ) &&
-            startHandoffPipeline(context, audioSourceEnum, codecEnum, bitRate, isCancelled)
+            startHandoffPipeline(context, audioSourceEnum, codecEnum, bitRate, recordStereo, isCancelled)
         ) {
             handoffMode = true
             currentCodecEnum = codecEnum
-            return
+            return WifiCallRoute.Route.CALL_SOURCE
         }
 
         // CallVault ALWAYS records via the persistent privileged daemon — it is the app's core
         // mechanism, not an option. Hand the SAF output fd to the daemon and let IT own scrcpy + muxing
         // over binder (no ADB at record time). Only if the daemon truly can't be brought up do we fall
         // through to the local ADB path below, so a call is never lost.
-        if (startDaemonPipeline(context, audioSourceEnum, codecEnum, bitRate, isCancelled)) {
+        if (startDaemonPipeline(context, audioSourceEnum, codecEnum, bitRate, recordStereo, isCancelled)) {
             daemonMode = true
             currentCodecEnum = codecEnum
-            return
+            return WifiCallRoute.Route.CALL_SOURCE
         }
         AppLogger.w(TAG, "Persistent daemon unavailable; falling back to local ADB recording path")
         if (!AdbShell.ensureConnected(context)) {
@@ -440,6 +497,75 @@ class AudioRecordingEngine {
                 AppLogger.w(TAG, "Audio reader ended: ${e.message}")
             }
         }
+        return WifiCallRoute.Route.CALL_SOURCE
+    }
+
+    /**
+     * startVoipRecording answers before its worker opens the capture; a failed open clears the
+     * recorder's "recording" flag. Watched for a moment so a failure can still fall back. A binder
+     * error reads as false here, and the caller then stops the capture first.
+     */
+    private fun voipCaptureConfirmed(service: com.baba.callvault.server.IRecorderService): Boolean {
+        val deadline = android.os.SystemClock.elapsedRealtime() + VOIP_START_CONFIRM_MS
+        while (android.os.SystemClock.elapsedRealtime() < deadline) {
+            val recording = runCatching { service.isRecording() }.getOrDefault(false)
+            if (!recording) return false
+            Thread.sleep(VOIP_START_POLL_MS)
+        }
+        return runCatching { service.isRecording() }.getOrDefault(false)
+    }
+
+    /** Empties the staging file before the carrier capture reuses the fd after a failed mix start. */
+    private fun rewindOutput() {
+        val fd = outputPfd?.fileDescriptor ?: return
+        runCatching {
+            android.system.Os.ftruncate(fd, 0)
+            android.system.Os.lseek(fd, 0, android.system.OsConstants.SEEK_SET)
+        }.onFailure { AppLogger.w(TAG, "Could not rewind the output after a failed app-call start: ${it.message}") }
+    }
+
+    /**
+     * The app-call capture for a Wi-Fi call: the daemon records the voice-comm loopback mix + mic into
+     * [outputPfd], exactly as for an app call. Needs the app-call policy armed before the call began.
+     *
+     * @return false when the daemon is down or refuses; the caller then uses the carrier capture.
+     */
+    private fun startVoipMixPipeline(
+        context: Service,
+        codecEnum: ScrcpyAudioCodec,
+        bitRate: Int,
+        isCancelled: () -> Boolean
+    ): Boolean {
+        val connected = RecorderBackend.ensureRunning(context)
+        if (isCancelled()) {
+            AppLogger.w(TAG, "Call ended before the daemon was ready; aborting app-call capture start")
+            runCatching { outputPfd?.close() }
+            discardStaging()
+            throw CancellationException("Recording aborted before start (call ended during daemon cold-start)")
+        }
+        val service = RecorderConnection.service
+        if (!connected || service == null) {
+            AppLogger.w(WifiCallRoute.TAG, "App-call capture: daemon unavailable (connected=$connected)")
+            return false
+        }
+        val call = runCatching { service.startVoipRecording(codecEnum.cliKey, bitRate, outputPfd) }
+            .onFailure { AppLogger.w(WifiCallRoute.TAG, "startVoipRecording threw: ${it.message}") }
+        val started = call.getOrDefault(false)
+        AppLogger.i(WifiCallRoute.TAG, "startVoipRecording -> $started")
+        // A plain refusal opened nothing. A binder error is unknown, so it is stopped like a failed open.
+        if (!started && call.isSuccess) return false
+        if (!started || !voipCaptureConfirmed(service)) {
+            AppLogger.w(WifiCallRoute.TAG, "App-call capture did not confirm it started; stopping it before the fallback")
+            // Idempotent. Closes anything a half-open start left, so it never runs beside the fallback.
+            runCatching { service.stopRecording() }
+                .onFailure { AppLogger.w(WifiCallRoute.TAG, "stopRecording before the fallback failed: ${it.message}") }
+            rewindOutput()
+            return false
+        }
+        daemonRecording = true
+        livenessHandler.postDelayed(livenessWatch, DAEMON_LIVENESS_POLL_MS)
+        livenessHandler.postDelayed(captureStartWatch, CAPTURE_START_CHECK_MS)
+        return true
     }
 
     /**
@@ -456,6 +582,7 @@ class AudioRecordingEngine {
         audioSourceEnum: ScrcpyAudioSource,
         codecEnum: ScrcpyAudioCodec,
         bitRate: Int,
+        recordStereo: Boolean,
         isCancelled: () -> Boolean
     ): Boolean {
         AppLogger.i(TAG, "Ensuring recorder daemon is running")
@@ -477,6 +604,7 @@ class AudioRecordingEngine {
             return false
         }
         return try {
+            DaemonStereo.request(service, recordStereo) { AppLogger.w(TAG, it) }
             service.startRecording(audioSourceEnum.cliKey, codecEnum.cliKey, bitRate, outputPfd)
             daemonRecording = true
             // Name the capture path the daemon is expected to take. This line used to assert "scrcpy"
@@ -484,7 +612,8 @@ class AudioRecordingEngine {
             // report to the wrong component — a VOICE_CALL/AAC recording goes direct, not through scrcpy.
             // The daemon logs which path it actually took, but that never reaches this file: it runs in
             // its own process, where AppLogger was never given a context to write one.
-            val expectedPath = if (DirectAudioRecorderSession.supports(audioSourceEnum, codecEnum)) {
+            daemonExpectsDirect = DirectAudioRecorderSession.supports(audioSourceEnum, codecEnum)
+            val expectedPath = if (daemonExpectsDirect) {
                 "direct AudioRecord"
             } else {
                 "scrcpy"
@@ -525,6 +654,7 @@ class AudioRecordingEngine {
         audioSourceEnum: ScrcpyAudioSource,
         codecEnum: ScrcpyAudioCodec,
         bitRate: Int,
+        recordStereo: Boolean,
         isCancelled: () -> Boolean
     ): Boolean {
         AppLogger.i(TAG, "Ensuring recorder daemon is running (handoff)")
@@ -549,8 +679,8 @@ class AudioRecordingEngine {
             ?: run { AppLogger.w(TAG, "Handoff: no output fd; falling back"); return false }
 
         // voice-call is captured STEREO (uplink L / downlink R) then downmixed to mono; mono sources stay
-        // mono. The app always outputs a single mono track (matches prod), so downmixToMono is always on
-        // (a no-op for already-mono capture).
+        // mono. The file is mono unless the user asked to keep the sides apart (#74) — then the encoder
+        // keeps L/R at the stereo floor, or still records mono when it cannot.
         val preferredChannels = if (audioSourceEnum == ScrcpyAudioSource.VOICE_CALL) 2 else 1
         HandoffReceiver.begin(
             HandoffReceiver.Target(
@@ -558,7 +688,7 @@ class AudioRecordingEngine {
                 mime = codecEnum.mimeType,
                 muxerFormat = codecEnum.outputFormat,
                 bitRate = bitRate,
-                downmixToMono = true,
+                downmixToMono = !recordStereo,
             ),
             // How the receiver rebuilds a capture the platform tore down mid-call. It asks for exactly
             // what was asked for originally, so the replacement matches the recording already in
@@ -571,6 +701,8 @@ class AudioRecordingEngine {
                 }.onFailure { AppLogger.w(TAG, "re-arm request failed: ${it.message}") }
                     .getOrDefault(false)
             },
+            onEvent = { line -> appContext?.let { com.baba.callvault.integrations.adb.TransportTimeline.event(it, line) } },
+            onSnapshot = { label -> appContext?.let { com.baba.callvault.system.diagnostics.MicOpDiagnostics.snapshotAsync(it, label) } },
         )
         AppLogger.i(TAG, "Handoff: calling daemon startHandoff(${audioSourceEnum.cliKey}, $HANDOFF_SAMPLE_RATE, $preferredChannels)")
         val t1 = System.currentTimeMillis()
@@ -614,8 +746,17 @@ class AudioRecordingEngine {
      * 2. Waits for the local reading coroutine to reach EOF and finish parsing the late bytes.
      * 3. Cancels the active reading coroutine and scrcpy client as a fallback.
      * 4. Closes the muxer and output file descriptor to finalize the container header.
+     *
+     * @param discard close the capture but publish nothing: the staged file is deleted. Used when a
+     *                Wi-Fi call switches capture mid-call (#45). Not [cancel], which publishes first.
+     *                If the capture did not stop cleanly, nothing is closed, published or deleted and
+     *                the engine stays usable: the caller keeps it as the session, and the call-end
+     *                release asks again and finalises one complete file.
+     * @return whether the capture is known to have stopped. After a full release, later calls do nothing.
      */
-    fun release() {
+    fun release(discard: Boolean = false): Boolean {
+        if (released) return true
+        released = true
         AppLogger.i(TAG, "Releasing session resources and recording pipeline...")
         livenessHandler.removeCallbacks(livenessWatch)
         livenessHandler.removeCallbacks(captureStartWatch)
@@ -625,8 +766,10 @@ class AudioRecordingEngine {
             // encoder finalises the container trailer into outputPfd; only then close our fd handle. Then
             // best-effort ask the daemon to release its held track (ignored if the daemon already died —
             // which is exactly the case this path exists to survive).
-            runCatching { HandoffReceiver.stop() }
+            val appStopped = runCatching { HandoffReceiver.stop() }
                 .onFailure { AppLogger.w(TAG, "Handoff stop error during release: ${it.message}") }
+                .isSuccess && !HandoffReceiver.isLive
+            var daemonStopped = true
             // Say which of the two happened. `service?.stopHandoff()` on a null binder is a silent
             // no-op that runCatching then reports as success, so "the daemon released its microphone"
             // and "there was nobody to ask" produced identical logs — and the daemon is precisely the
@@ -637,25 +780,30 @@ class AudioRecordingEngine {
             if (daemon == null) {
                 AppLogger.w(TAG, "No daemon binder at release: its handoff AudioRecord was never asked to stop")
             } else {
-                runCatching { daemon.stopHandoff() }
+                daemonStopped = runCatching { daemon.stopHandoff() }
                     .onSuccess { AppLogger.i(TAG, "Asked the daemon to release its handoff capture") }
                     .onFailure { AppLogger.w(TAG, "Daemon stopHandoff failed during release: ${it.message}") }
+                    .isSuccess
             }
+            if (discard && !(appStopped && daemonStopped)) return keepForCallEnd()
             runCatching { outputPfd?.close() }
             handoffRecording = false
-            finalizeStagingIfNeeded()
-            return
+            return finishRelease(discard)
         }
 
         if (daemonMode) {
             // Ask the daemon to stop + finalise the container, then close our local fd handle. The local
             // muxer/launcher/client/scope do not exist in this mode, so there is nothing else to tear down.
             val daemon = RecorderConnection.service
+            var stopped = false
             if (daemon == null) {
                 AppLogger.w(TAG, "No daemon binder at release: its recording was never asked to stop")
             } else {
-                runCatching { daemon.stopRecording() }
+                stopped = runCatching { daemon.stopRecording() }
                     .onFailure { AppLogger.w(TAG, "Daemon stopRecording failed during release: ${it.message}") }
+                    .isSuccess
+                // stopRecording waits only so long for the teardown; ask whether it is really over.
+                stopped = stopped && runCatching { !daemon.isRecording() }.getOrDefault(false)
                 // Ask what the capture noticed about itself, and write it to the APP's log — the
                 // daemon's own log reaches a report only via logcat, which exists only if debug
                 // logging was already on when the call happened (issue #28b). An older daemon has no
@@ -664,14 +812,19 @@ class AudioRecordingEngine {
                     .getOrNull()
                     ?.takeIf { it.isNotBlank() }
                     ?.let { AppLogger.w(TAG, "Capture health for the recording just ended: $it") }
+                // Asked after stopRecording, as the app-call path does: the session measured it.
+                if (isAppCallMix) {
+                    farPartyHeard = runCatching { daemon.voipFarPartyHeard() }.getOrNull()
+                }
             }
+            if (discard && !stopped) return keepForCallEnd()
             runCatching { outputPfd?.close() }
             daemonRecording = false
-            finalizeStagingIfNeeded()
-            return
+            return finishRelease(discard)
         }
 
-        runCatching { scrcpyLauncher?.stop() }
+        val launcherStopped = runCatching { scrcpyLauncher?.stop() }.isSuccess
+        if (discard && !launcherStopped) return keepForCallEnd()
         scrcpyLauncher = null
 
         runCatching {
@@ -686,7 +839,38 @@ class AudioRecordingEngine {
         runCatching { audioPipeReadScope?.cancel() }
         runCatching { scrcpyAudioMuxer?.close() }
         runCatching { outputPfd?.close() }
-        finalizeStagingIfNeeded()
+        return finishRelease(discard)
+    }
+
+    private var released = false
+
+    private fun finishRelease(discard: Boolean): Boolean {
+        if (discard) discardStaging() else finalizeStagingIfNeeded()
+        return true
+    }
+
+    /**
+     * A discard whose stop was not confirmed: the capture may still be writing. Nothing is closed or
+     * published, and the engine is not marked released, so the call-end release asks the recorder
+     * to stop again and finalises the whole call into one file.
+     */
+    private fun keepForCallEnd(): Boolean {
+        released = false
+        AppLogger.w(TAG, "Capture did not confirm it stopped; leaving it in place for the call-end release")
+        return false
+    }
+
+    /** Deletes the staged capture without publishing it. Nothing ever reaches the user's folder. */
+    private fun discardStaging() {
+        val temp = stagingFile ?: return
+        stagingFile = null
+        pendingFolderUri = null
+        pendingFileName = null
+        pendingMimeType = null
+        val bytes = temp.length()
+        runCatching { StagingNote.fileFor(temp).delete() }
+        val deleted = runCatching { temp.delete() }.getOrDefault(false)
+        AppLogger.i(TAG, "Discarded the staged capture ($bytes bytes, deleted=$deleted); nothing published")
     }
 
     /**

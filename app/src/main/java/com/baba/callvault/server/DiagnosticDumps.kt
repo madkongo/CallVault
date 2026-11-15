@@ -93,6 +93,20 @@ object DiagnosticDumps {
             "$DUMPSYS appops | grep -E '^[[:space:]]*(Uid [0-9]+:|Package |[A-Z_]+ \\(|Running start at:)'",
         )
         "processes" -> arrayOf(PS, "-A", "-o", "USER,PID,ARGS")
+        // The same list with the parent and the start time, for BabApps #95: who launched a process, and when, next to
+        // the microphone app-op's own "running since". A separate key so the three-column parser of "processes" stays as is.
+        "processes_times" -> arrayOf(PS, "-A", "-o", "USER,PID,PPID,STIME,ARGS")
+        // Bigger main log buffer for the host to set once when it starts (BabApps #95): the default 256 KiB rotates
+        // within minutes, long before a report is exported. Fixed command, no argument.
+        "logcat_grow_host" -> arrayOf(LOGCAT, "-b", "main", "-G", "16M")
+        // Every line of the audio service's dump that speaks of a recording client, a silenced flag, a
+        // capture or the audio mode: the part of `dumpsys audio` that says whether some client is still
+        // registered after a call (BabApps item 94: other apps record silence after a call). Filtered
+        // on the device because the whole dump is large. Fixed command; any argument is ignored.
+        "audio_record_state" -> arrayOf(
+            SH, "-c",
+            "$DUMPSYS audio | grep -iE 'record|silenc|capture|audio mode|mode:|mic' | head -n 200",
+        )
         // The two settings Android 17 redacts, read from HERE rather than from the app.
         //
         // Both of the platform's redaction sites exempt uid < FIRST_APPLICATION_UID, and the daemon is

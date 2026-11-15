@@ -30,6 +30,18 @@ class SetupJournalPolicyTest {
     }
 
     @Test
+    fun the_pairing_service_logs_under_a_tag_the_journal_keeps() {
+        // BabApps item 92: the service logged as "AdbPairingService", which was not on the list, so a setup
+        // stuck at pairing left no pairing line in the journal. Tying the test to the service's own constant
+        // means a rename cannot silently drop it again.
+        assertTrue(
+            SetupJournalPolicy.shouldRecord(
+                com.baba.callvault.integrations.adb.AdbPairingService.TAG, isClosed = false, bytesWritten = 0
+            )
+        )
+    }
+
+    @Test
     fun everything_about_calls_and_their_content_is_refused() {
         // The journal is written without anyone asking for it, so what it may hold is decided here and
         // not at the call sites. Anything that touches a call, its audio or its text stays out.

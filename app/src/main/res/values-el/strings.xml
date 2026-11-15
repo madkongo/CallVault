@@ -494,6 +494,9 @@
     <string name="retention_linked_label">Ίδια περίοδος για συσκευή &amp; Drive</string>
     <string name="retention_local_label">Εγγραφές στη συσκευή</string>
     <string name="retention_monthly">Μηνιαία (30 ημέρες)</string>
+    <string name="retention_60_days">60 ημέρες</string>
+    <string name="retention_90_days">90 ημέρες</string>
+    <string name="retention_120_days">120 ημέρες</string>
     <string name="retention_period_label">Αυτόματη διαγραφή εγγραφών</string>
     <string name="retention_time_label">Εκτέλεση στις (τοπική σας ώρα)</string>
     <string name="retention_weekly">Εβδομαδιαία (7 ημέρες)</string>
@@ -615,6 +618,10 @@
     <string name="summary_requirements_toggle_label">Εμφάνιση απαιτήσεων</string>
     <string name="settings_sim_label_label">Εμφάνιση της SIM που χρησιμοποίησε κάθε κλήση</string>
     <string name="settings_sim_label_desc">Για τηλέφωνα με δύο SIM: δείχνει το όνομα που δώσατε στη SIM ή SIM 1 / SIM 2</string>
+    <string name="settings_audio_channels">Κανάλια</string>
+    <string name="audio_channels_mono">Μονοφωνικό</string>
+    <string name="audio_channels_stereo">Στερεοφωνικό</string>
+    <string name="settings_audio_channels_info">Το μονοφωνικό αναμειγνύει τις δύο πλευρές σε ένα κανάλι. Το στερεοφωνικό αποθηκεύει εσάς και τον συνομιλητή σας σε ξεχωριστό αριστερό και δεξί κανάλι, για μεταγραφή κάθε πλευράς χωριστά. Τα στερεοφωνικά αρχεία είναι περίπου διπλάσια, και στα ακουστικά κάθε πλευρά ακούγεται σε ένα αυτί.</string>
     <string name="sim_label_word">SIM</string>
     <string name="settings_metadata_file_label">Εγγραφή αρχείου λεπτομερειών</string>
     <string name="settings_needs_newer_android">Χρειάζεται Android %1$s ή νεότερο — αυτό το τηλέφωνο εκτελεί Android %2$s.</string>
@@ -675,8 +682,8 @@
     <string name="settings_summary_skip_rules_on">Ενεργοί κανόνες παράλειψης: %1$d</string>
     <string name="settings_summary_unavailable">Δεν είναι διαθέσιμο εδώ</string>
     <string name="settings_support_label">Υποστήριξη ανάπτυξης</string>
-    <string name="settings_support_supporting">Ανοίγει το Ko-fi στο πρόγραμμα περιήγησής σας</string>
-    <string name="settings_support_value">Κεράστε μου έναν καφέ στο Ko-fi</string>
+    <string name="settings_support_supporting">Διαλέξτε πού να κάνετε δωρεά· ανοίγει στο πρόγραμμα περιήγησής σας</string>
+    <string name="settings_support_value">Κεράστε μου έναν καφέ</string>
     <string name="settings_tap_to_select_folder">Πατήστε για επιλογή φακέλου...</string>
     <string name="settings_theme_mode">Λειτουργία θέματος</string>
     <string name="settings_theme_mode_dark">Σκοτεινό</string>
@@ -795,6 +802,7 @@
     <string name="summary_requirements_toggle_description">Εμφάνιση του κόστους του συντάκτη περιλήψεων πριν τη λήψη του</string>
     <string name="support_appeal_body">Συντηρώ το CallVault στον ελεύθερο χρόνο μου. Ξεκίνησε ως fork του ShizuCallRecorder του kitsumed και έχει μεγαλώσει πολύ από τότε. Δωρεάν, ανοιχτού κώδικα, χωρίς διαφημίσεις, χωρίς παρακολούθηση. Αν σας είναι χρήσιμο, μια μικρή φιλοδώρηση με βοηθά να συνεχίζω. Ευχαριστώ! 🙏</string>
     <string name="support_appeal_title">Ένα φιλοδώρημα για το CallVault ☕</string>
+    <string name="support_donate">Δωρεά</string>
     <string name="support_not_now">Όχι τώρα</string>
     <string name="tile_recording_on">Εγγραφή ενεργή</string>
     <string name="tile_recording_stopped">Διακόπηκε</string>
@@ -1055,4 +1063,10 @@
     <string name="transcribe_again_running">Νέα απομαγνητοφώνηση… %1$d%%</string>
     <string name="transcribe_again_running_plain">Νέα απομαγνητοφώνηση…</string>
     <string name="transcribe_again_waiting">Αναμονή για νέα απομαγνητοφώνηση…</string>
+    <string name="wifi_call_switch_failed">Αυτή μοιάζει με κλήση μέσω Wi-Fi, αλλά η εγγραφή που καταγράφει και τις δύο πλευρές δεν ξεκίνησε. Καταγράφεται με τον συνηθισμένο τρόπο, που ίσως χάσει τον άλλο συνομιλητή.</string>
+    <string name="wifi_call_one_sided">Καταγράφηκε μόνο η δική σας πλευρά αυτής της κλήσης Wi-Fi. Αν συμβαίνει συχνά, ορίστε τις κλήσεις Wi-Fi να προτιμούν το δίκτυο κινητής στις ρυθμίσεις της εφαρμογής Τηλέφωνο.</string>
+    <string name="settings_debug_force_wifi_route">Επιβολή διαδρομής εγγραφής κλήσεων Wi-Fi</string>
+    <string name="settings_debug_force_wifi_route_description">Για δοκιμή. Κάθε τηλεφωνική κλήση αλλάζει στη διάρκειά της στην εγγραφή κλήσεων εφαρμογών, όπως θα έκανε μια κλήση Wi-Fi. Σε τηλέφωνο χωρίς κλήσεις Wi-Fi η άλλη πλευρά θα λείπει και πρέπει να εμφανιστεί σφάλμα. Απαιτεί ενεργή εγγραφή κλήσεων εφαρμογών. Λειτουργεί μόνο όσο είναι ενεργή η καταγραφή αρχείου.</string>
+    <string name="wifi_call_switch_aborted">Η εγγραφή αυτής της κλήσης Wi-Fi σταμάτησε νωρίς: η εγγραφή δεν μπόρεσε να αλλάξει με ασφάλεια. Το τμήμα που καταγράφηκε ως τώρα διατηρείται.</string>
+    <string name="wifi_call_far_unknown">Αυτή η κλήση Wi-Fi καταγράφηκε, αλλά το CallVault δεν μπόρεσε να ελέγξει αν υπάρχει η άλλη πλευρά. Ακούστε την εγγραφή.</string>
 </resources>

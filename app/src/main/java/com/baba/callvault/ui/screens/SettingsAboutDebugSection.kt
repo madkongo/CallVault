@@ -17,6 +17,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.BugReport
 import androidx.compose.material.icons.filled.Search
+import androidx.compose.material.icons.filled.Wifi
 import androidx.compose.material.icons.automirrored.filled.ListAlt
 import androidx.compose.material.icons.filled.ContentCopy
 import androidx.compose.material3.*
@@ -128,6 +129,15 @@ internal fun BugReportSection(
                 checked         = skipMdns,
                 onCheckedChange = { actions.setSkipMdnsConnectForTest(it) },
                 description     = stringResource(R.string.settings_debug_skip_mdns_description)
+            )
+            // Test switch for #45: exercises the Wi-Fi-call capture switch on a phone without Wi-Fi calling.
+            val forceWifiRoute = remember(updateTrigger) { preferences.isDebugForceWifiRoute() }
+            SettingsToggleRow(
+                icon            = Icons.Filled.Wifi,
+                label           = stringResource(R.string.settings_debug_force_wifi_route),
+                checked         = forceWifiRoute,
+                onCheckedChange = { actions.setForceWifiRouteForTest(it) },
+                description     = stringResource(R.string.settings_debug_force_wifi_route_description)
             )
         } else {
             // Offered whenever logging is off, with no precondition on there being a log: the report
@@ -403,7 +413,7 @@ internal fun AboutSection(
 
         SettingsDivider()
 
-        // Optional "support development" link. Offers Ko-fi and PayPal; both open in the browser.
+        // Optional "support development" link. Opens the Support dialog (Ko-fi and PayPal); both open in the browser.
         NavigationRow(
             icon = Icons.Filled.Favorite,
             label = stringResource(R.string.settings_support_label),

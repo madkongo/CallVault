@@ -11,6 +11,7 @@ package com.baba.callvault.data.merge
 import android.media.MediaExtractor
 import android.media.MediaFormat
 import android.media.MediaMuxer
+import com.baba.callvault.utils.AppLogger
 import java.io.FileDescriptor
 
 /**
@@ -20,9 +21,9 @@ import java.io.FileDescriptor
  * and also what makes it fussy: two recordings can only be joined frame-for-frame if their frames
  * mean the same thing. Same codec, same sample rate, same channel count, or the join is refused.
  *
- * In practice recordings from one phone agree, because every capture path encodes mono and the
- * direct and VoIP paths both run at 48 kHz. The realistic way to get a mismatch is to change the
- * codec setting between two calls, which is deliberate and rare.
+ * In practice recordings from one phone usually agree: the direct and VoIP paths both run at 48 kHz and
+ * encode mono by default. Mismatches come from changing the codec between two calls, or — with stereo
+ * output on (#74) — from one call on a route that can only record mono (Bluetooth) next to a stereo one.
  */
 internal object MergeFormat {
 
@@ -58,9 +59,31 @@ internal object MergeFormat {
 
     /** Throws unless [other] can be appended to [first] as raw frames. */
     fun requireCompatible(first: MediaFormat, other: MediaFormat) {
-        val a = describe(first)
-        val b = describe(other)
-        if (a != b) throw Incompatible("Recorded differently: $a vs $b")
+        val reason = incompatibility(
+            Shape(first.getString(MediaFormat.KEY_MIME), first.optInt(MediaFormat.KEY_SAMPLE_RATE), first.optInt(MediaFormat.KEY_CHANNEL_COUNT)),
+            Shape(other.getString(MediaFormat.KEY_MIME), other.optInt(MediaFormat.KEY_SAMPLE_RATE), other.optInt(MediaFormat.KEY_CHANNEL_COUNT)),
+        ) ?: return
+        // The exact formats go to the log for a bug report; the person who pressed Merge gets words.
+        AppLogger.w("CV:MergeFormat", "Refusing to join: ${describe(first)} vs ${describe(other)}")
+        throw Incompatible(reason)
+    }
+
+    /** The three properties that must agree, as plain values. */
+    data class Shape(val mime: String?, val sampleRate: Int, val channels: Int)
+
+    /**
+     * Why two recordings cannot be joined, in words the person who pressed Merge can act on, or null.
+     *
+     * The message reaches the user as is, so it names the setting they changed rather than the codec
+     * internals. Channels first: since stereo output (#74) it is the likeliest difference — the same
+     * setting records mono on a route that cannot keep the sides apart, such as Bluetooth.
+     */
+    fun incompatibility(a: Shape, b: Shape): String? = when {
+        a.channels != b.channels ->
+            "One call kept each side on its own channel and the other did not, so they cannot be joined"
+        a.mime != b.mime -> "These calls were saved in different formats (Opus and AAC), so they cannot be joined"
+        a.sampleRate != b.sampleRate -> "These calls were recorded at different sample rates, so they cannot be joined"
+        else -> null
     }
 
     /** MPEG-4 for AAC, Ogg for Opus — matching what the capture paths write. */

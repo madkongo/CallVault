@@ -3,7 +3,7 @@
 **Status:** 📐 analysed from the two debug reports and the code — nothing built, nothing reproduced.
 Both reporters run **v2.4.2-rc2**, standalone mode, with **Resilient recording on**.
 
-## 1. meti.sh — Xiaomi Redmi Note 10 Pro (M2101K9AG, courbet), MIUI 14 / Android 13
+## 1. Xiaomi Redmi Note 10 Pro (M2101K9AG, courbet), MIUI 14 / Android 13
 
 "Hit-or-miss; a call at 18:44 was not recorded at all. Shizuku mode is fine."
 
@@ -45,7 +45,7 @@ capture, which the handoff bug does not touch.
 already marked invalid / pick the newest; and fall back to the direct capture when the handoff yields
 nothing in its first second.
 
-## 2. scrunscotty — iQOO / vivo V2507A, OriginOS 6, Android 16
+## 2. iQOO / vivo V2507A, OriginOS 6, Android 16
 
 "Cannot record calls properly; fails to save. Fine on my Xiaomi (Android 13)."
 
@@ -94,7 +94,7 @@ hitting report 1's bug too. Needs a log with debug logging on and two or three p
   (blocking read, file open). Long-running workers need `setForeground` + a `dataSync` foreground-service type
   on Android 14+ — not adopted; the stop is now handled safely instead.
 
-## 2026-09-28 15:30 — scrunscotty on 2.4.3: app calls still fail, one step later; phone calls now save
+## 2026-09-28 15:30 — the vivo tester on 2.4.3: app calls still fail, one step later; phone calls now save
 
 Log `callvault_report_2026-09-28_15-30.txt` (vivo V2507A, Android 16, 2.4.3, Resilient on, VoIP on).
 
@@ -120,7 +120,7 @@ the cause; used at all four sites. App calls then work on vivo, and phone calls 
 Resilient recording) instead of scrcpy. Also: log the constructor failure instead of swallowing it, and stop
 the "other app blocks capture" message when the capture never started.
 
-## 2026-09-28 16:41 — scrunscotty on v2.4.4-rc1: both sides open, the other side is silent
+## 2026-09-28 16:41 — the vivo tester on v2.4.4-rc1: both sides open, the other side is silent
 
 Log `callvault_report_2026-09-28_16-41.txt` (V2507A, Android 16, 2.4.4-rc1), three Telegram calls.
 
@@ -143,7 +143,7 @@ Log `callvault_report_2026-09-28_16-41.txt` (V2507A, Android 16, 2.4.4-rc1), thr
 Next step proposed (not built): a diagnostic rc that, during an app call, dumps the audio policy's mixes and
 where Telegram's track is routed, so the next log shows whether the mix is registered, matched, or bypassed.
 
-## 2026-09-28 18:18 — scrunscotty on 2.4.4-rc3: identity change did not help; our side is proven correct
+## 2026-09-28 18:18 — the vivo tester on 2.4.4-rc3: identity change did not help; our side is proven correct
 
 Log `callvault_report_2026-09-28_18-18.txt` (V2507A, 2.4.4-rc3).
 

@@ -171,7 +171,7 @@ class SetupPrerequisitesModeTest {
     }
 
     // ---- the grant matters only when nothing else can restart the recorder (backlog #6) ----------
-    // voarch (OnePlus, 2026-09-28): the phone refuses the grant, Offline recording restarts the recorder
+    // A tester (OnePlus, 2026-09-28): the phone refuses the grant, Offline recording restarts the recorder
     // without it, yet every app kill put "turn Wireless debugging on" on Home — advice that could not work.
 
     @Test

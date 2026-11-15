@@ -29,4 +29,6 @@
     <string name="permission_adb_open_wd">ওয়্যারলেস ডিবাগিং খুলুন</string>
 
     <string name="permission_adb_pair">পেয়ার করুন</string>
+    <string name="setup_report_link">সমস্যা হচ্ছে? একটি রিপোর্ট পাঠান</string>
+    <string name="setup_report_preparing">রিপোর্ট তৈরি হচ্ছে…</string>
 </resources>

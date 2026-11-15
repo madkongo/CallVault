@@ -24,4 +24,6 @@
     <string name="permissions_ui_hero_line">Ein paar Berechtigungen für die Aufnahme.</string>
     <string name="permissions_ui_hero_title">Los geht\'s mit der Einrichtung</string>
     <string name="permissions_ui_section_label">Berechtigungen</string>
+    <string name="setup_report_link">Probleme? Bericht senden</string>
+    <string name="setup_report_preparing">Bericht wird vorbereitet …</string>
 </resources>

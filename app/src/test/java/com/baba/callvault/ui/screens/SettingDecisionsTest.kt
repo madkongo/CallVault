@@ -66,6 +66,10 @@ class SettingDecisionsTest {
         "audio_source" to Decision(SettingsOnly("advanced; the default source is the measured best")),
         "audio_codec" to Decision(Wizard(WizardStep.AUDIO)),
         "audio_bitrate" to Decision(Wizard(WizardStep.AUDIO)),
+        // #74 (2026-11-08): for people who transcribe each side elsewhere. It doubles the file and puts
+        // one side in each ear on headphones — a wrong default for a new user. No mode gate: both hosts
+        // record directly since ShellAttribution, so it works in standalone and Shizuku alike.
+        "record_stereo" to Decision(SettingsOnly("#74: power-user choice; doubles file size, one side per ear on headphones")),
         "file_name_template" to Decision(Wizard(WizardStep.FILE_NAME)),
         // UI
         "theme_mode" to Decision(SettingsOnly("appearance; visible and changeable any time")),

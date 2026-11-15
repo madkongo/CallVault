@@ -43,4 +43,6 @@
     <string name="permission_adb_open_wd">Άνοιγμα Ασύρματου εντοπισμού σφαλμάτων</string>
 
     <string name="permission_adb_pair">Σύζευξη</string>
+    <string name="setup_report_link">Έχετε πρόβλημα; Στείλτε αναφορά</string>
+    <string name="setup_report_preparing">Προετοιμασία αναφοράς…</string>
 </resources>

@@ -24,4 +24,6 @@
     <string name="permissions_ui_hero_line">授予几项权限即可录制通话。</string>
     <string name="permissions_ui_hero_title">开始设置</string>
     <string name="permissions_ui_section_label">权限</string>
+    <string name="setup_report_link">遇到问题？发送报告</string>
+    <string name="setup_report_preparing">正在准备报告…</string>
 </resources>

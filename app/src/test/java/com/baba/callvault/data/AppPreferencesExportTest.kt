@@ -31,7 +31,7 @@ class AppPreferencesExportTest {
             "adb_paired", "loopback_adb_port", "privileged_mode", "recording_folder_uri",
             "drive_folder_uri", "log_pseudonym_salt", "wizard_completed", "disclaimer_accepted",
             "available_update_tag", "wd_enabled_by_us", "shell_grant_state", "classic_settings_screen",
-            "adb_last_connect_port", "debug_skip_mdns_connect",
+            "adb_last_connect_port", "debug_skip_mdns_connect", "debug_force_wifi_route",
         ).forEach { key ->
             assertFalse("$key must not be exportable", AppPreferences.EXPORTABLE_KEYS.contains(key))
         }
@@ -55,6 +55,15 @@ class AppPreferencesExportTest {
         prefs.setDebugSkipMdnsConnect(true)
         assertTrue(AppPreferences(context).isDebugSkipMdnsConnect())
         assertFalse(prefs.exportToJson().contains("debug_skip_mdns_connect"))
+    }
+
+    @Test
+    fun `the force-Wi-Fi-route test switch is off by default and not exported`() {
+        val prefs = AppPreferences(context)
+        assertFalse(prefs.isDebugForceWifiRoute())
+        prefs.setDebugForceWifiRoute(true)
+        assertTrue(AppPreferences(context).isDebugForceWifiRoute())
+        assertFalse(prefs.exportToJson().contains("debug_force_wifi_route"))
     }
 
     @Test
@@ -96,5 +105,14 @@ class AppPreferencesExportTest {
     @Test
     fun `importing malformed json returns -1`() {
         assertEquals(-1, AppPreferences(context).importFromJson("this is not json"))
+    }
+
+    @Test
+    fun `stereo output is off by default, round-trips, and is in the backup (#74)`() {
+        val prefs = AppPreferences(context)
+        assertFalse("stereo output is off by default", prefs.getRecordStereo())
+        prefs.setRecordStereo(true)
+        assertTrue("survives a fresh read", AppPreferences(context).getRecordStereo())
+        assertTrue("a user setting belongs in the export", prefs.exportToJson().contains("record_stereo"))
     }
 }

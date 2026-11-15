@@ -342,6 +342,9 @@
     <string name="retention_linked_label">Одинаковый срок для устройства и Drive</string>
     <string name="retention_local_label">Записи на устройстве</string>
     <string name="retention_monthly">Ежемесячно (30 дней)</string>
+    <string name="retention_60_days">60 дней</string>
+    <string name="retention_90_days">90 дней</string>
+    <string name="retention_120_days">120 дней</string>
     <string name="retention_period_label">Автоудаление записей</string>
     <string name="retention_time_label">Запускать в (ваше местное время)</string>
     <string name="retention_weekly">Еженедельно (7 дней)</string>
@@ -465,6 +468,10 @@
     <string name="summary_requirements_toggle_label">Показывать требования</string>
     <string name="settings_sim_label_label">Показывать, какая SIM использовалась для звонка</string>
     <string name="settings_sim_label_desc">Для телефонов с двумя SIM: показывает имя, которое вы дали SIM-карте, или SIM 1 / SIM 2</string>
+    <string name="settings_audio_channels">Каналы</string>
+    <string name="audio_channels_mono">Моно</string>
+    <string name="audio_channels_stereo">Стерео</string>
+    <string name="settings_audio_channels_info">Моно смешивает обе стороны в один канал. Стерео сохраняет вас и собеседника на отдельных левом и правом каналах, чтобы расшифровывать каждую сторону отдельно. Стерео-файлы примерно вдвое больше, а в наушниках каждая сторона слышна только в одном ухе.</string>
     <string name="sim_label_word">SIM</string>
     <string name="settings_metadata_file_label">Записывать файл сведений</string>
     <string name="settings_needs_newer_android">Нужен Android %1$s или новее — на этом телефоне Android %2$s.</string>
@@ -525,8 +532,8 @@
     <string name="settings_summary_skip_rules_on">Активных правил: %1$d</string>
     <string name="settings_summary_unavailable">Здесь недоступно</string>
     <string name="settings_support_label">Поддержать разработку</string>
-    <string name="settings_support_supporting">Откроет Ko-fi в браузере</string>
-    <string name="settings_support_value">Купить мне кофе на Ko-fi</string>
+    <string name="settings_support_supporting">Выберите, куда пожертвовать; откроется в браузере</string>
+    <string name="settings_support_value">Купить мне кофе</string>
     <string name="settings_tap_to_select_folder">Нажмите, чтобы выбрать папку...</string>
     <string name="settings_theme_mode">Тема</string>
     <string name="settings_theme_mode_dark">Тёмная</string>
@@ -645,6 +652,7 @@
     <string name="summary_requirements_toggle_description">Показывать, чего требует модуль сводок, перед скачиванием</string>
     <string name="support_appeal_body">Я поддерживаю CallVault в свободное время. Приложение начиналось как форк ShizuCallRecorder от kitsumed и с тех пор сильно выросло. Бесплатно, с открытым кодом, без рекламы и слежки. Если оно вам полезно, небольшая поддержка помогает продолжать. Спасибо! 🙏</string>
     <string name="support_appeal_title">Чаевые для CallVault ☕</string>
+    <string name="support_donate">Пожертвовать</string>
     <string name="support_not_now">Не сейчас</string>
     <string name="tile_recording_on">Запись включена</string>
     <string name="tile_recording_stopped">Остановлено</string>
@@ -905,4 +913,10 @@
     <string name="transcribe_again_running">Повторная расшифровка… %1$d%%</string>
     <string name="transcribe_again_running_plain">Повторная расшифровка…</string>
     <string name="transcribe_again_waiting">Ожидание повторной расшифровки…</string>
+    <string name="wifi_call_switch_failed">Похоже, это звонок по Wi-Fi, но запись, которая захватывает обе стороны, не запустилась. Он записывается обычным способом, и собеседника может быть не слышно.</string>
+    <string name="wifi_call_one_sided">Из этого звонка по Wi-Fi записана только ваша сторона. Если это повторяется, в настройках приложения «Телефон» включите для звонков по Wi-Fi приоритет мобильной сети.</string>
+    <string name="settings_debug_force_wifi_route">Принудительно записывать как звонок по Wi-Fi</string>
+    <string name="settings_debug_force_wifi_route_description">Для тестирования. Каждый телефонный звонок во время разговора переключается на запись звонков приложений, как это сделал бы звонок по Wi-Fi. На телефоне без звонков по Wi-Fi собеседника не будет слышно, и должна появиться ошибка. Нужна включённая запись звонков приложений. Работает, только пока включена запись журнала.</string>
+    <string name="wifi_call_switch_aborted">Запись этого звонка по Wi-Fi остановилась раньше времени: не удалось безопасно переключить запись. Записанная часть сохранена.</string>
+    <string name="wifi_call_far_unknown">Этот звонок по Wi-Fi записан, но CallVault не смог проверить, слышен ли на записи собеседник. Прослушайте запись.</string>
 </resources>

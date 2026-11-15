@@ -340,6 +340,9 @@
     <string name="retention_linked_label">Azonos időszak az eszközre és a Drive-ra</string>
     <string name="retention_local_label">Eszközön lévő felvételek</string>
     <string name="retention_monthly">Havonta (30 nap)</string>
+    <string name="retention_60_days">60 nap</string>
+    <string name="retention_90_days">90 nap</string>
+    <string name="retention_120_days">120 nap</string>
     <string name="retention_period_label">Felvételek automatikus törlése</string>
     <string name="retention_time_label">Futtatás ekkor (az Ön helyi ideje)</string>
     <string name="retention_weekly">Hetente (7 nap)</string>
@@ -461,6 +464,10 @@
     <string name="summary_requirements_toggle_label">Követelmények megjelenítése</string>
     <string name="settings_sim_label_label">A hívásokhoz használt SIM megjelenítése</string>
     <string name="settings_sim_label_desc">Kétkártyás telefonokhoz: a SIM-nek adott nevet mutatja, vagy SIM 1 / SIM 2</string>
+    <string name="settings_audio_channels">Csatornák</string>
+    <string name="audio_channels_mono">Monó</string>
+    <string name="audio_channels_stereo">Sztereó</string>
+    <string name="settings_audio_channels_info">A monó a két felet egy csatornára keveri. A sztereó Önt és a másik felet külön bal és jobb csatornára menti, hogy mindkét oldalt külön lehessen átírni. A sztereó fájlok nagyjából kétszer akkorák, fejhallgatón pedig mindkét fél csak az egyik fülben szól.</string>
     <string name="sim_label_word">SIM</string>
     <string name="settings_metadata_file_label">Adatfájl írása</string>
     <string name="settings_needs_newer_android">Android %1$s vagy újabb szükséges – ezen a telefonon Android %2$s fut.</string>
@@ -521,8 +528,8 @@
     <string name="settings_summary_skip_rules_on">Aktív kihagyási szabályok: %1$d</string>
     <string name="settings_summary_unavailable">Itt nem érhető el</string>
     <string name="settings_support_label">Fejlesztés támogatása</string>
-    <string name="settings_support_supporting">Megnyitja a Ko-fit a böngészőben</string>
-    <string name="settings_support_value">Hívj meg egy kávéra a Ko-fin</string>
+    <string name="settings_support_supporting">Válaszd ki, hol adományozol; a böngészőben nyílik meg</string>
+    <string name="settings_support_value">Hívj meg egy kávéra</string>
     <string name="settings_tap_to_select_folder">Mappa kiálasztása...</string>
     <string name="settings_theme_mode">Téma mód</string>
     <string name="settings_theme_mode_dark">Sötét</string>
@@ -641,6 +648,7 @@
     <string name="summary_requirements_toggle_description">Mutassa a letöltés előtt, mit igényel az összefoglaló</string>
     <string name="support_appeal_body">A CallVaultot a szabadidőmben tartom karban. kitsumed ShizuCallRecorder projektjének forkjaként indult, és azóta sokat fejlődött. Ingyenes, nyílt forráskódú, nincs hirdetés és nyomkövetés. Ha hasznos neked, egy kis támogatás segít folytatni. Köszönöm! 🙏</string>
     <string name="support_appeal_title">Egy kis borravaló a CallVaultnak ☕</string>
+    <string name="support_donate">Adományozás</string>
     <string name="support_not_now">Most nem</string>
     <string name="tile_recording_on">Rögzítés bekapcsolva</string>
     <string name="tile_recording_stopped">Leállítva</string>
@@ -901,4 +909,10 @@
     <string name="transcribe_again_running">Újra átírás… %1$d%%</string>
     <string name="transcribe_again_running_plain">Újra átírás…</string>
     <string name="transcribe_again_waiting">Várakozás az újra átírásra…</string>
+    <string name="wifi_call_switch_failed">Ez Wi-Fi-hívásnak tűnik, de a mindkét felet rögzítő felvétel nem indult el. A szokásos módon készül a felvétel, amelyből a másik fél hiányozhat.</string>
+    <string name="wifi_call_one_sided">Ebből a Wi-Fi-hívásból csak az Ön oldala lett rögzítve. Ha ez ismétlődik, a Telefon alkalmazás beállításaiban állítsa a Wi-Fi-hívást a mobilhálózat előnyben részesítésére.</string>
+    <string name="settings_debug_force_wifi_route">Wi-Fi-hívás rögzítési útvonal kényszerítése</string>
+    <string name="settings_debug_force_wifi_route_description">Teszteléshez. Minden telefonhívás hívás közben átvált az alkalmazáshívás-rögzítésre, ahogy egy Wi-Fi-hívás tenné. Wi-Fi-hívás nélküli telefonon a másik fél hiányozni fog, és hibának kell megjelennie. Bekapcsolt alkalmazáshívás-rögzítés kell hozzá. Csak bekapcsolt naplózás mellett működik.</string>
+    <string name="wifi_call_switch_aborted">Ennek a Wi-Fi-hívásnak a rögzítése idő előtt leállt: a felvételt nem lehetett biztonságosan átváltani. Az eddig rögzített rész megmarad.</string>
+    <string name="wifi_call_far_unknown">Ez a Wi-Fi-hívás rögzítve lett, de a CallVault nem tudta ellenőrizni, hogy a másik fél hallható-e rajta. Kérjük, hallgassa meg a felvételt.</string>
 </resources>

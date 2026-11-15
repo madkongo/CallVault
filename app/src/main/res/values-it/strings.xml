@@ -340,6 +340,9 @@
     <string name="retention_linked_label">Stesso periodo per dispositivo e Drive</string>
     <string name="retention_local_label">Registrazioni sul dispositivo</string>
     <string name="retention_monthly">Mensile (30 giorni)</string>
+    <string name="retention_60_days">60 giorni</string>
+    <string name="retention_90_days">90 giorni</string>
+    <string name="retention_120_days">120 giorni</string>
     <string name="retention_period_label">Elimina automaticamente le registrazioni</string>
     <string name="retention_time_label">Esegui alle (ora locale)</string>
     <string name="retention_weekly">Settimanale (7 giorni)</string>
@@ -461,6 +464,10 @@
     <string name="summary_requirements_toggle_label">Mostra i requisiti</string>
     <string name="settings_sim_label_label">Mostra quale SIM ha usato ogni chiamata</string>
     <string name="settings_sim_label_desc">Per i telefoni con due SIM: mostra il nome che hai dato alla SIM, oppure SIM 1 / SIM 2</string>
+    <string name="settings_audio_channels">Canali</string>
+    <string name="audio_channels_mono">Mono</string>
+    <string name="audio_channels_stereo">Stereo</string>
+    <string name="settings_audio_channels_info">Il mono unisce i due lati in un solo canale. Lo stereo salva te e l\'altra persona su canali sinistro e destro separati, per trascrivere ogni lato a parte. I file stereo sono circa il doppio più grandi e, in cuffia, ogni lato si sente in un solo orecchio.</string>
     <string name="sim_label_word">SIM</string>
     <string name="settings_metadata_file_label">Scrivi un file di dettagli</string>
     <string name="settings_needs_newer_android">Richiede Android %1$s o successivo: questo telefono usa Android %2$s.</string>
@@ -521,8 +528,8 @@
     <string name="settings_summary_skip_rules_on">Regole attive: %1$d</string>
     <string name="settings_summary_unavailable">Non disponibile qui</string>
     <string name="settings_support_label">Sostieni lo sviluppo</string>
-    <string name="settings_support_supporting">Apre Ko-fi nel browser</string>
-    <string name="settings_support_value">Offrimi un caffè su Ko-fi</string>
+    <string name="settings_support_supporting">Scegli dove donare; si apre nel browser</string>
+    <string name="settings_support_value">Offrimi un caffè</string>
     <string name="settings_tap_to_select_folder">Tocchi per selezionare la cartella...</string>
     <string name="settings_theme_mode">Modalità tema</string>
     <string name="settings_theme_mode_dark">Scuro</string>
@@ -641,6 +648,7 @@
     <string name="summary_requirements_toggle_description">Mostra quanto costa il riassuntore prima di scaricarlo</string>
     <string name="support_appeal_body">Curo CallVault nel tempo libero. È nata come fork di ShizuCallRecorder di kitsumed ed è cresciuta molto da allora. Gratuita, open source, senza pubblicità né tracciamento. Se ti è utile, una piccola offerta mi aiuta ad andare avanti. Grazie! 🙏</string>
     <string name="support_appeal_title">Una mancia per CallVault ☕</string>
+    <string name="support_donate">Dona</string>
     <string name="support_not_now">Non ora</string>
     <string name="tile_recording_on">Registrazione attiva</string>
     <string name="tile_recording_stopped">Interrotto</string>
@@ -901,4 +909,10 @@
     <string name="transcribe_again_running">Nuova trascrizione… %1$d%%</string>
     <string name="transcribe_again_running_plain">Nuova trascrizione…</string>
     <string name="transcribe_again_waiting">In attesa della nuova trascrizione…</string>
+    <string name="wifi_call_switch_failed">Sembra una chiamata Wi-Fi, ma non è stato possibile avviare la registrazione che cattura entrambe le parti. Viene registrata nel modo consueto, che potrebbe non includere l\'altra persona.</string>
+    <string name="wifi_call_one_sided">Di questa chiamata Wi-Fi è stata registrata solo la tua parte. Se succede ancora, imposta le chiamate Wi-Fi su «Preferisci rete mobile» nelle impostazioni dell\'app Telefono.</string>
+    <string name="settings_debug_force_wifi_route">Forza la cattura delle chiamate Wi-Fi</string>
+    <string name="settings_debug_force_wifi_route_description">Per i test. Ogni chiamata telefonica passa durante la chiamata alla cattura delle chiamate delle app, come farebbe una chiamata Wi-Fi. Su un telefono senza chiamate Wi-Fi l\'altra parte mancherà e dovrebbe comparire un errore. Richiede la registrazione delle chiamate delle app attiva. Funziona solo con la registrazione del log attiva.</string>
+    <string name="wifi_call_switch_aborted">La registrazione di questa chiamata Wi-Fi si è interrotta prima: non è stato possibile cambiare la cattura in modo sicuro. La parte registrata finora viene conservata.</string>
+    <string name="wifi_call_far_unknown">Questa chiamata Wi-Fi è stata registrata, ma CallVault non ha potuto verificare che l\'altra parte sia presente. Ascolta la registrazione.</string>
 </resources>

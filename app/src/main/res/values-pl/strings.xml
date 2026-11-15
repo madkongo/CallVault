@@ -342,6 +342,9 @@
     <string name="retention_linked_label">Ten sam okres dla urządzenia i Drive</string>
     <string name="retention_local_label">Nagrania na urządzeniu</string>
     <string name="retention_monthly">Co miesiąc (30 dni)</string>
+    <string name="retention_60_days">60 dni</string>
+    <string name="retention_90_days">90 dni</string>
+    <string name="retention_120_days">120 dni</string>
     <string name="retention_period_label">Automatyczne usuwanie nagrań</string>
     <string name="retention_time_label">Uruchom o (Twój czas lokalny)</string>
     <string name="retention_weekly">Co tydzień (7 dni)</string>
@@ -465,6 +468,10 @@
     <string name="summary_requirements_toggle_label">Pokazuj wymagania</string>
     <string name="settings_sim_label_label">Pokazuj, której karty SIM użyto w każdym połączeniu</string>
     <string name="settings_sim_label_desc">Dla telefonów z dwiema kartami SIM: pokazuje nazwę nadaną karcie SIM lub SIM 1 / SIM 2</string>
+    <string name="settings_audio_channels">Kanały</string>
+    <string name="audio_channels_mono">Mono</string>
+    <string name="audio_channels_stereo">Stereo</string>
+    <string name="settings_audio_channels_info">Mono łączy obie strony w jeden kanał. Stereo zapisuje Ciebie i rozmówcę na osobnych kanałach, lewym i prawym, aby można było transkrybować każdą stronę osobno. Pliki stereo są mniej więcej dwa razy większe, a w słuchawkach każdą stronę słychać w jednym uchu.</string>
     <string name="sim_label_word">SIM</string>
     <string name="settings_metadata_file_label">Zapisuj plik ze szczegółami</string>
     <string name="settings_needs_newer_android">Wymaga Androida %1$s lub nowszego — ten telefon ma Androida %2$s.</string>
@@ -525,8 +532,8 @@
     <string name="settings_summary_skip_rules_on">Aktywne reguły pomijania: %1$d</string>
     <string name="settings_summary_unavailable">Niedostępne tutaj</string>
     <string name="settings_support_label">Wesprzyj rozwój</string>
-    <string name="settings_support_supporting">Otwiera Ko-fi w przeglądarce</string>
-    <string name="settings_support_value">Postaw mi kawę na Ko-fi</string>
+    <string name="settings_support_supporting">Wybierz, gdzie wesprzeć; otwiera się w przeglądarce</string>
+    <string name="settings_support_value">Postaw mi kawę</string>
     <string name="settings_tap_to_select_folder">Dotknij, aby wybrać folder...</string>
     <string name="settings_theme_mode">Ustawienia motywu</string>
     <string name="settings_theme_mode_dark">Ciemny</string>
@@ -645,6 +652,7 @@
     <string name="summary_requirements_toggle_description">Pokaż, czego wymaga moduł podsumowań, przed pobraniem</string>
     <string name="support_appeal_body">Rozwijam CallVault po godzinach. Aplikacja powstała jako fork ShizuCallRecorder autorstwa kitsumed i od tego czasu bardzo się rozrosła. Za darmo, otwartoźródłowo, bez reklam i śledzenia. Jeśli Ci się przydaje, drobne wsparcie pomaga mi działać dalej. Dzięki! 🙏</string>
     <string name="support_appeal_title">Napiwek dla CallVault ☕</string>
+    <string name="support_donate">Wesprzyj</string>
     <string name="support_not_now">Nie teraz</string>
     <string name="tile_recording_on">Nagrywanie włączone</string>
     <string name="tile_recording_stopped">Zatrzymane</string>
@@ -905,4 +913,10 @@
     <string name="transcribe_again_running">Ponowna transkrypcja… %1$d%%</string>
     <string name="transcribe_again_running_plain">Ponowna transkrypcja…</string>
     <string name="transcribe_again_waiting">Oczekiwanie na ponowną transkrypcję…</string>
+    <string name="wifi_call_switch_failed">To wygląda na połączenie przez Wi-Fi, ale nie udało się uruchomić nagrywania obu stron. Jest nagrywane w zwykły sposób, który może pominąć rozmówcę.</string>
+    <string name="wifi_call_one_sided">Z tego połączenia przez Wi-Fi nagrano tylko Twoją stronę. Jeśli to się powtarza, w ustawieniach aplikacji Telefon ustaw połączenia przez Wi-Fi tak, by preferowały sieć komórkową.</string>
+    <string name="settings_debug_force_wifi_route">Wymuś ścieżkę nagrywania połączeń Wi-Fi</string>
+    <string name="settings_debug_force_wifi_route_description">Do testów. Każde połączenie telefoniczne w trakcie przełącza się na nagrywanie połączeń z aplikacji, tak jak zrobiłoby to połączenie przez Wi-Fi. Na telefonie bez połączeń przez Wi-Fi zabraknie drugiej strony i powinien pojawić się błąd. Wymaga włączonego nagrywania połączeń z aplikacji. Działa tylko przy włączonym zapisie dziennika.</string>
+    <string name="wifi_call_switch_aborted">Nagrywanie tego połączenia przez Wi-Fi zatrzymało się wcześniej: nie udało się bezpiecznie przełączyć nagrywania. Nagrana dotąd część zostaje zachowana.</string>
+    <string name="wifi_call_far_unknown">To połączenie przez Wi-Fi zostało nagrane, ale CallVault nie mógł sprawdzić, czy jest na nim druga strona. Odsłuchaj nagranie.</string>
 </resources>

@@ -41,6 +41,19 @@ class UploadFormatTest {
     }
 
     @Test
+    fun `a call longer than the cap goes in passes even when its file is small`() {
+        val max = UploadFormat.SINGLE_UPLOAD_MAX_DURATION_MS
+        // The reporter's 48 min call: 11.8 MB, under the size cap, but too long to answer in one wait.
+        assertFalse(UploadFormat.sendsWhole("call.ogg", 11_788_396L, 48 * 60_000L))
+        assertFalse(UploadFormat.sendsWhole("call.ogg", 1_000_000L, max + 1))
+        // 8 min goes whole, and so does exactly the cap.
+        assertTrue(UploadFormat.sendsWhole("call.ogg", 1_500_000L, 8 * 60_000L))
+        assertTrue(UploadFormat.sendsWhole("call.ogg", 1_500_000L, max))
+        // Unknown length: the size decides, as before.
+        assertTrue(UploadFormat.sendsWhole("call.ogg", 1_500_000L, 0L))
+    }
+
+    @Test
     fun `passes are remuxed only from codecs the muxer writes`() {
         assertEquals("audio/ogg", UploadFormat.forRemuxedCodec("audio/opus")!!.contentType)
         assertEquals("audio/mp4", UploadFormat.forRemuxedCodec("audio/mp4a-latm")!!.contentType)

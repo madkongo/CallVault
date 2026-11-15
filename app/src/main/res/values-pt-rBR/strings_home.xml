@@ -130,6 +130,18 @@
     <string name="merge_note_will_keep">As outras chamadas também são mantidas no telefone.</string>
     <string name="home_scroll_to_top">Topo</string>
     <string name="home_whatsnew_full_notes">Notas de versão completas</string>
+    <string name="whatsnew_251_title">Guarda por mais tempo, gravação estéreo e chamadas Wi-Fi da Samsung</string>
+    <string-array name="whatsnew_251_items">
+        <item>A exclusão automática agora pode manter as gravações por 60, 90 ou 120 dias</item>
+        <item>Chamadas de apps (WhatsApp, Telegram e outros) agora mostram \"Gravação iniciada\", como as chamadas do telefone</item>
+        <item>Marque uma gravação com estrela direto na lista</item>
+        <item>Gravação estéreo: cada lado no seu próprio canal (Configurações ▸ Som e nomes de arquivo ▸ Canais). Mono continua sendo o padrão</item>
+        <item>Celulares Samsung: chamadas por Chamada Wi-Fi são gravadas com os dois lados</item>
+        <item>\"Salvar transcrição e notas ao lado da gravação\" fica bem mais leve com uma biblioteca grande</item>
+        <item>Corrigido: erro \"no certificates\" ao instalar com alguns instaladores (ex.: SAI)</item>
+        <item>Corrigido: chamadas do Telegram e do AyuGram não são mais divididas em dois arquivos e mostram o nome certo</item>
+        <item>Corrigido: chamadas longas não excedem mais o tempo limite na transcrição em nuvem</item>
+    </string-array>
     <string name="whatsnew_250_title">Manter ou apagar depois da chamada, e compartilhar o que você precisa</string>
     <string-array name="whatsnew_250_items">
         <item>Manter ou apagar: o CallVault pode perguntar após cada chamada se a gravação fica (Configurações ▸ Gravação)</item>

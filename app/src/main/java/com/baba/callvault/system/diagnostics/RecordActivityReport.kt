@@ -62,7 +62,12 @@ object RecordActivityReport {
      * sources `ServiceUtilities::isRecordOpRequired()` returns false for) and CallVault never opens any
      * of them, so excluding them can only ever affect another app's rows, never our own captures.
      */
-    val UNPAIRABLE_SOURCES = setOf("REMOTE_SUBMIX", "ECHO_REFERENCE", "VOICE_DOWNLINK", "FM_TUNER")
+    // HOTWORD (the always-on "Hey Google"/Bixby listener), RADIO_TUNER and ULTRASOUND are system-only sources
+    // too. On a Samsung A56 (BabApps item 94) a HOTWORD `update` with no `stop` made the report claim that
+    // "another app holds the mic" when it was the phone's own listener, which never logs a stop.
+    val UNPAIRABLE_SOURCES = setOf(
+        "REMOTE_SUBMIX", "ECHO_REFERENCE", "VOICE_DOWNLINK", "FM_TUNER", "HOTWORD", "RADIO_TUNER", "ULTRASOUND",
+    )
 
     /**
      * True for sources that note `OP_RECORD_AUDIO` and can therefore light the privacy indicator.

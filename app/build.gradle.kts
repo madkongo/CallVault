@@ -125,8 +125,8 @@ val extractLibphonenumberMetadata = tasks.register<ExtractMetadataTask>("extract
 // Android refuses to install a lower versionCode over a higher one, and uninstalling to get around
 // that would destroy the device's ADB pairing — so a versionCode that goes backwards is not a
 // cosmetic mistake, it strands that device on the old build.
-val ciVersionCode = providers.gradleProperty("versionCode").map { it.toIntOrNull() }.orElse(20500)
-val ciVersionName = providers.gradleProperty("versionName").orElse("2.5.0")
+val ciVersionCode = providers.gradleProperty("versionCode").map { it.toIntOrNull() }.orElse(20610)
+val ciVersionName = providers.gradleProperty("versionName").orElse("2.5.1")
 val ciBuildNumber = providers.gradleProperty("ciBuildNumber").orElse("Local")
 
 // -PisolateTestApp builds the debug variant under its own applicationId so instrumented tests can be
@@ -193,7 +193,14 @@ android {
                 storePassword = System.getenv("KEYSTORE_PASSWORD") ?: throw GradleException("Keystore password not provided for release signing. env variable: KEYSTORE_PASSWORD")
                 keyAlias = System.getenv("KEY_ALIAS") ?: throw GradleException("Key alias not provided for release signing. env variable: KEY_ALIAS")
                 keyPassword = System.getenv("KEY_PASSWORD") ?:throw GradleException("Key password not provided for release signing. env variable: KEY_PASSWORD")
-
+                // Sign with v1 (JAR) as well as v2. minSdk 30 lets AGP drop v1 by default, which
+                // produces a v2-only APK: any re-processing in transit (a messenger, a file manager)
+                // strips the whole-file v2 block with no fallback, and some third-party installers look
+                // only for the v1 certificate in META-INF and refuse the file as "no certificates"
+                // (a tester, 2026-11-08). v1+v2 is the install-everywhere pair; the cert is unchanged,
+                // so updates over every prior (v2-only) release still work.
+                enableV1Signing = true
+                enableV2Signing = true
             }
         }
         // Local release signing (maintainer machine). Same key/creds as the app's historical debug
@@ -204,6 +211,10 @@ android {
                 storePassword = "android"
                 keyAlias = "androiddebugkey"
                 keyPassword = "android"
+                // v1 (JAR) + v2, so the APK installs on file managers/installers that look for the
+                // old-style certificate and survives re-processing in transit. See the CI config above.
+                enableV1Signing = true
+                enableV2Signing = true
             }
         }
     }

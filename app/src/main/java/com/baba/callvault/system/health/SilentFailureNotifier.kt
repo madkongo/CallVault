@@ -105,7 +105,7 @@ object SilentFailureNotifier {
     /**
      * A call was cut off because the phone closed CallVault, and what had been recorded was saved (backlog #5).
      *
-     * Before this, such a call simply had no recording and nothing said why — voarch found out only by
+     * Before this, such a call simply had no recording and nothing said why — a tester found out only by
      * looking for it. Says what happened, that the part up to the cut was kept, and which file it is.
      */
     fun noteCutOffRecordingSaved(context: Context, fileName: String) = post(

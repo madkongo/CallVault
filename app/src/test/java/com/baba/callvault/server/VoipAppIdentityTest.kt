@@ -133,6 +133,25 @@ class VoipAppIdentityTest {
     }
 
     @Test
+    fun `a skipped uid from the playback track lets the next track answer`() {
+        // BabApps item 103: System UI (uid 10314) held a voice-communication track; the app rejected it.
+        val systemUiTrack = telegramCall.replace("u/pid:10304/12153", "u/pid:10314/900")
+        val dump = listOf(systemUiTrack, telegramCall).joinToString("\n")
+        assertEquals(10314, VoipAppIdentity.parseVoiceCommUid(dump))
+        assertEquals(10304, VoipAppIdentity.parseVoiceCommUid(dump, skip = setOf(10314)))
+    }
+
+    @Test
+    fun `a skipped mode owner falls through to the playback track`() {
+        val dump = listOf(
+            "  mAudioModeOwner: AudioModeInfo: mMode=MODE_IN_COMMUNICATION, mPid=900, mUid=10314",
+            telegramCall,
+        ).joinToString("\n")
+        assertEquals(VoipAppIdentity.UID_UNKNOWN, VoipAppIdentity.parseModeOwnerUid(dump, skip = setOf(10314)))
+        assertEquals(10304, VoipAppIdentity.parseVoiceCommUid(dump, skip = setOf(10314)))
+    }
+
+    @Test
     fun `returns unknown for empty or unrecognised output`() {
         assertEquals(VoipAppIdentity.UID_UNKNOWN, VoipAppIdentity.parseVoiceCommUid(""))
         assertEquals(VoipAppIdentity.UID_UNKNOWN, VoipAppIdentity.parseVoiceCommUid("dumpsys: not found"))

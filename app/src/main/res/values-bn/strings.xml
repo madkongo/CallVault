@@ -62,6 +62,9 @@
     <string name="retention_weekly">সাপ্তাহিক (7 দিন)</string>
     <string name="retention_biweekly">দুই সপ্তাহ (14 দিন)</string>
     <string name="retention_monthly">মাসিক (30 দিন)</string>
+    <string name="retention_60_days">60 দিন</string>
+    <string name="retention_90_days">90 দিন</string>
+    <string name="retention_120_days">120 দিন</string>
     <string name="retention_linked_label">ডিভাইস ও Drive-এর জন্য একই সময়কাল</string>
     <string name="retention_period_label">রেকর্ডিং স্বয়ংক্রিয়ভাবে মুছুন</string>
     <string name="retention_local_label">ডিভাইসের রেকর্ডিং</string>
@@ -296,8 +299,8 @@
     <string name="settings_copy_version">সংস্করণ কপি করুন</string>
     <string name="settings_view_licenses">লাইসেন্স দেখুন</string>
     <string name="settings_support_label">উন্নয়নে সহায়তা করুন</string>
-    <string name="settings_support_value">Ko-fi-তে আমাকে এক কাপ কফি কিনে দিন</string>
-    <string name="settings_support_supporting">আপনার ব্রাউজারে Ko-fi খোলে</string>
+    <string name="settings_support_value">আমাকে এক কাপ কফি কিনে দিন</string>
+    <string name="settings_support_supporting">কোথায় দান করবেন বেছে নিন; আপনার ব্রাউজারে খোলে</string>
     <string name="contact_search_hint">নাম বা নম্বর দিয়ে খুঁজুন...</string>
     <string name="contact_select_all">সব বাছুন</string>
     <string name="contact_unselect_all">সব বাদ দিন</string>
@@ -431,6 +434,7 @@
     <string name="settings_update_check_description">দিনে একবার GitHub-এ নতুন সংস্করণ খোঁজে।</string>
     <string name="support_appeal_title">CallVault-এর জন্য একটু বখশিশ ☕</string>
     <string name="support_appeal_body">আমি অবসর সময়ে CallVault দেখাশোনা করি। এটি kitsumed-এর ShizuCallRecorder-এর একটি fork হিসেবে শুরু হয়েছিল, তারপর অনেক বড় হয়েছে। বিনামূল্যে, ওপেন সোর্স, কোনো বিজ্ঞাপন বা ট্র্যাকিং নেই। এটি কাজে লাগলে একটি ছোট বখশিশ আমাকে চালিয়ে যেতে সাহায্য করে। ধন্যবাদ! 🙏</string>
+    <string name="support_donate">দান করুন</string>
     <string name="support_not_now">এখন নয়</string>
     <string name="home_bulk_delete_message">এটি আর ফেরানো যাবে না।</string>
     <string name="home_bulk_delete_scope_message">কয়েকটি এই ডিভাইস ও Drive দুই জায়গাতেই সংরক্ষিত আছে।</string>
@@ -751,6 +755,10 @@
     <string name="summary_requirements_toggle_label">কী কী লাগে দেখান</string>
     <string name="settings_sim_label_label">প্রতিটি কলে কোন SIM ব্যবহার হয়েছে দেখান</string>
     <string name="settings_sim_label_desc">দুটি SIM-এর ফোনের জন্য: SIM-কে আপনার দেওয়া নাম, বা SIM 1 / SIM 2 দেখায়</string>
+    <string name="settings_audio_channels">চ্যানেল</string>
+    <string name="audio_channels_mono">মনো</string>
+    <string name="audio_channels_stereo">স্টেরিও</string>
+    <string name="settings_audio_channels_info">মনো দুই পক্ষকে একটি চ্যানেলে মিশিয়ে দেয়। স্টেরিও আপনাকে ও অপর পক্ষকে আলাদা বাম ও ডান চ্যানেলে সংরক্ষণ করে, যাতে প্রতিটি পক্ষকে আলাদাভাবে ট্রান্সক্রাইব করা যায়। স্টেরিও ফাইল প্রায় দ্বিগুণ বড়, আর হেডফোনে প্রতিটি পক্ষ এক কানে শোনা যায়।</string>
     <string name="sim_label_word">SIM</string>
     <string name="settings_metadata_file_label">একটি বিবরণ ফাইল লিখুন</string>
     <string name="settings_metadata_file_desc">প্রতিটি রেকর্ডিংয়ের পাশে একটি ছোট .json সেভ করুন</string>
@@ -920,4 +928,10 @@
     <string name="transcribe_again_running">আবার ট্রান্সক্রাইব হচ্ছে… %1$d%%</string>
     <string name="transcribe_again_running_plain">আবার ট্রান্সক্রাইব হচ্ছে…</string>
     <string name="transcribe_again_waiting">আবার ট্রান্সক্রাইবের অপেক্ষায়…</string>
+    <string name="wifi_call_switch_failed">এটি একটি Wi-Fi কল বলে মনে হচ্ছে, কিন্তু দুই পক্ষকেই রেকর্ড করার ক্যাপচার শুরু করা যায়নি। এটি সাধারণ উপায়ে রেকর্ড হচ্ছে, যাতে অপর পক্ষ বাদ পড়তে পারে।</string>
+    <string name="wifi_call_one_sided">এই Wi-Fi কলের শুধু আপনার দিকটি রেকর্ড হয়েছে। এমন বারবার হলে, আপনার ফোন অ্যাপের সেটিংসে Wi-Fi Calling-কে মোবাইল নেটওয়ার্ক অগ্রাধিকার দিতে সেট করুন।</string>
+    <string name="settings_debug_force_wifi_route">Wi-Fi কল ক্যাপচারের পথ জোর করে চালু করুন</string>
+    <string name="settings_debug_force_wifi_route_description">পরীক্ষার জন্য। প্রতিটি ফোন কল চলাকালীন অ্যাপ-কল ক্যাপচারে চলে যায়, যেমন একটি Wi-Fi কলে হয়। Wi-Fi কলিং ছাড়া ফোনে অপর পক্ষ থাকবে না এবং একটি ত্রুটি দেখা উচিত। অ্যাপ কল রেকর্ডিং চালু থাকতে হবে। শুধু লগ রেকর্ডিং চালু থাকলে কাজ করে।</string>
+    <string name="wifi_call_switch_aborted">এই Wi-Fi কলের রেকর্ডিং আগেই থেমে গেছে: ক্যাপচারটি নিরাপদে বদলানো যায়নি। এ পর্যন্ত যা রেকর্ড হয়েছে তা রাখা হয়েছে।</string>
+    <string name="wifi_call_far_unknown">এই Wi-Fi কলটি রেকর্ড হয়েছে, কিন্তু CallVault যাচাই করতে পারেনি যে অপর পক্ষ এতে আছে কি না। অনুগ্রহ করে রেকর্ডিংটি শুনে দেখুন।</string>
 </resources>

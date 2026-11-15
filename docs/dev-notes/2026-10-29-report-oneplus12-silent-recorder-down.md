@@ -1,4 +1,4 @@
-# Report alex_812: recorder stops mid-day, nobody is told
+# Report (OnePlus 12): recorder stops mid-day, nobody is told
 
 📐 CALCULATED 2026-10-29: read from the report and the code. Nothing reproduced, nothing built.
 Status: ⏸️ PARKED by the maintainer 2026-10-29 ("no need at the moment"). Kept as is.

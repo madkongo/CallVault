@@ -1,9 +1,9 @@
 # Rollback: app-call recording survives a short audio-mode dip
 
-✅ VERIFIED 2026-11-02 on Евгений's OnePlus CPH2747 (Android 17, Shizuku), build 2.4.8-echofix2, reported via the maintainer: Telegram no longer cuts out mid-call. Other phones untested.
+✅ VERIFIED 2026-11-02 on a tester's OnePlus CPH2747 (Android 17, Shizuku), build 2.4.8-echofix2, reported via the maintainer: Telegram no longer cuts out mid-call. Other phones untested.
 
 Was: 🧪 VERIFYING — merged 2026-11-01 as adfc0d9b. 2357 unit tests pass. Not yet tried on a phone.
-To settle: on Евгений's OnePlus CPH2747 (Android 17), make three Telegram calls of 30 s or more in a row.
+To settle: on a tester's OnePlus CPH2747 (Android 17), make three Telegram calls of 30 s or more in a row.
 Each should give one full recording, with no 1–2 s "only your side" file at hang-up.
 
 ## What happened

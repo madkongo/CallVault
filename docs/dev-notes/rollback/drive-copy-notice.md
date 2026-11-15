@@ -12,7 +12,7 @@
 
 ## Why
 As a plain background job the daily/weekly sweep is stopped by Android after ~10 minutes, so a big backlog never
-finished (Eugene, Honor BVL-N49, 2026-11-03).
+finished (a tester, Honor BVL-N49, 2026-11-03).
 
 ## What changed
 - `HeavyWorkNotification.forDriveCopy`: "Copying recordings to Drive · N of M copied", bar, "Stop for now"; same

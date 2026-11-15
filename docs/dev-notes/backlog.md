@@ -22,6 +22,33 @@ with `&&`/`||` chains and silently reported the opposite answer while this was b
 
 ---
 
+## 🧪 BUILT, VERIFYING — Stereo recording, Channels: Mono / Stereo (#74) — built 2026-11-08 on `feat/stereo-output-74` (off `main`, not merged)
+
+Dropdown beside codec and bit rate (maintainer 2026-11-08: "mono vs stereo in a dropdown with relevant settings",
+replacing the first build's on/off switch). Mono default; all three capture paths, both modes. Plan + decisions:
+`2026-11-08-stereo-output-74-plan.md`. ✅ Stereo on: maintainer's OP9 phone + WhatsApp calls "sounded just fine"
+(2026-11-08). **Still to settle:** set Channels back to Mono and make one call — the file must be mono.
+Headphone listening: parked by the maintainer.
+
+## 🔵 Resilient recording: a mid-call rebuild in another shape garbles the rest of the call — found 2026-11-08 (#74 work), not started
+
+`HandoffReceiver.superviseDrain` rebuilds a torn-down capture and drains it into the SAME pipe and encoder, but never
+checks the replacement's channel count / sample rate. Stereo capture rebuilt as mono (e.g. after a Bluetooth switch)
+is read as the wrong frames: the rest of the call comes out double-speed and garbled (recoverable by slowing it down).
+True with stereo output off. **Maintainer decision 2026-11-08:** do NOT ship a "stop cleanly" guard (it was built on
+the #74 branch as `4fe485c9` and removed) — do the proper fix on its own branch: keep recording across the rebuild in
+the right shape so the whole call is kept (e.g. a new pipe/segment per capture with its own channel count, or a
+converter). Area of the stuck-mic and 710 s→1 s bugs: test on a phone with a forced route change.
+
+## 🔵 scrcpy fallback with stereo OFF still writes stereo at the mono bit rate — found 2026-11-08 (#74 work), not started
+
+The scrcpy path always writes two channels. When stereo output is off it gets the user's mono rate, so each side
+gets half — the v1.4.4 starved-far-party shape. Only reached when the direct capture cannot start (rare since
+direct capture covers both modes). Fix options: hand scrcpy `audio_channels=1` if the bundled scrcpy-server
+supports it, or give it the stereo floor regardless. With stereo ON it already gets the floor (#74).
+
+---
+
 ## 🧪 BUILT, VERIFYING — One Share sheet: recording + transcript + summary together — requested + built 2026-11-06 (merged into integration/next 1acc113d; maintainer: "looks good")
 
 **Asked:** share a recording's transcript from Recordings (and the recording from Transcripts), and "share all" in
@@ -165,7 +192,7 @@ the list below (classic Settings removed) and the decode time limit.
   uninstall loses folder access + battery exemption; memory `in-app-downgrade-research`); start-of-call echo.
 - 🔵 Small bug found 2026-11-03, not fixed: changing "Where to save recordings" alone does not re-apply the Drive
   schedule (`SettingsViewModel` target change does not call `SyncScheduler.apply`; app start and the next call do).
-- 🧪 Waiting: Eugene (Honor BVL-N49) on the USB warning + Drive copy; Евгений on echo (✅ confirmed) ; #68 ofirmgr;
+- 🧪 Waiting: a tester (Honor BVL-N49) on the USB warning + Drive copy; a OnePlus CPH2747 tester on echo (✅ confirmed) ; #68 ofirmgr;
   #69 frizzi0303-cyber; a real tap on "Stop for now".
 
 ## Current state — 2026-10-31 (AUDITED against code + release tags)
@@ -184,8 +211,8 @@ message (#64), Arabic polish (#59), #65 connect-port search (✅ reporter), long
 1. Floating record button + in-call note bubble.
 2. Call history inside the app.
 3. Samsung Wi-Fi Calling (#45) — 🧪 BUILT 2026-10-31, pre-release v2.4.7-wifi45 only (branch fix/samsung-wifi-calling-45,
-   not in integration/next). Waiting on a Samsung tester (Benjamin/mac).
-4. KK: SenseVoice + Qwen/other GGUF summaries (not triaged).
+   not in integration/next). Waiting on a Samsung tester (Benjamin).
+4. A user: SenseVoice + Qwen/other GGUF summaries (not triaged).
 5. ~~#27 leftovers~~ — 🧪 BUILT 2026-10-31 (named Previous/Next cards + one "Follow playback" switch), merged into integration/next.
 6. Per-app capture status (works / blocks capture) on the VoIP app list.
 7. Forks leftovers: decode time limit, SIM label per call, dialer mode as an option.
@@ -202,15 +229,15 @@ F-Droid: doNotStrip + 16 KB zipalign; Android 17 items (WD read-back, vivo bypas
 Conscrypt 2.7.0, targetSdk 37 + ACCESS_LOCAL_NETWORK when we move); pairing timeout off with consent (#3);
 the ensureConnected leftovers.
 
-**Open — bugs / waiting on users:** #53 Honor app-call end (settings result); alex_812 recorder dies with no
+**Open — bugs / waiting on users:** #53 Honor app-call end (settings result); a OnePlus 12 tester's recorder dies with no
 alert (parked).
 
 **Closed 2026-10-31 by the maintainer (solved or dropped, no user feedback):** #9 VoIP mic re-take step 2;
-#32 whisper invents lines from noise; wrong contact label on some recordings; Note10+ and zeref (no logs came).
+#32 whisper invents lines from noise; wrong contact label on some recordings; Note10+ and another tester (no logs came).
 Reopen only on a new report.
 
 **Parked:** health-gated status probe (built, on a tag); trash/recycle bin; in-app bug report; capture ladder;
-non-UI InCallService; VoIP direction; call-waiting split (alex_812 a); Android 12 bypass; pl/ru plurals; ivrit.
+non-UI InCallService; VoIP direction; call-waiting split (OnePlus 12 report a); Android 12 bypass; pl/ru plurals; ivrit.
 **Not our bug:** Shizuku on HyperOS 3; Samsung turning USB debugging off. **Dead:** #42 Android 13 mic fallback.
 
 ## Current state — 2026-10-01
@@ -293,8 +320,8 @@ fix, vivo far-side toggle (hint + SUPPORT doc), Samsung Wi-Fi-calling doc (#45).
 
 ## 🔵 Samsung Wi-Fi Calling: detect it and warn, plus the stray app-call file at hang-up — agreed 2026-10-25, not started
 
-Raised by mac's S24 report (SM-S921U, A17, 2.4.7): phone calls over Wi-Fi Calling record only his side. That is
-Samsung's #45 limit, not fixable. Detail: `2026-10-25-report-mac-samsung-s24-wifi-calling.md`.
+Raised by a tester's S24 report (SM-S921U, A17, 2.4.7): phone calls over Wi-Fi Calling record only his side. That is
+Samsung's #45 limit, not fixable. Detail: `2026-10-25-report-samsung-s24-wifi-calling.md`.
 
 1. **Detect Wi-Fi Calling and warn (Samsung behaviour, not brand).** 📐 The recorder runs as the shell, which
    holds READ_PRIVILEGED_PHONE_STATE and READ_PRECISE_PHONE_STATE (checked on the OP9 2026-10-25). So it can
@@ -306,7 +333,7 @@ Samsung's #45 limit, not fixable. Detail: `2026-10-25-report-mac-samsung-s24-wif
    Use: a card saying "Wi-Fi calls record only your side; switch to Mobile network preferred", and a mark on
    a recording made over Wi-Fi instead of a silently one-sided file. Only where Wi-Fi calls lose the far
    side: the OP9 records Wi-Fi calls fine. Needs an onboarding decision. Test the three readings on the OP9
-   (Wi-Fi Calling on, off, each preference). mac would be the first Samsung confirmation.
+   (Wi-Fi Calling on, off, each preference). That tester would be the first Samsung confirmation.
 2. **Our bug: a stray 1 s `_voip` file + "the other app blocks capture" at every Wi-Fi-call hang-up.** Samsung
    keeps the mode at IN_COMMUNICATION during a Wi-Fi call. Telecom drops the call about 1.5 s before IDLE, so
    `VoipTelephonyGate` lets an app-call start through. With a minimum length of 0 the file is kept. Fix: no
@@ -385,9 +412,9 @@ Their code is GPLv3 like ours, so taking it is allowed.
 
 ---
 
-## 🔵 KK — SenseVoice for transcription + Qwen/other small GGUF for summaries — requested 2026-10-31, not triaged
+## 🔵 A user — SenseVoice for transcription + Qwen/other small GGUF for summaries — requested 2026-10-31, not triaged
 
-User **KK** asked: "Any plans to add SenseVoice as a built-in/catalog ASR option? And for summaries, could the
+A user asked: "Any plans to add SenseVoice as a built-in/catalog ASR option? And for summaries, could the
 backend be opened up to Qwen or other smaller GGUF models instead of being locked to Gemma? SenseVoice + Qwen
 would be nice."
 
@@ -669,7 +696,7 @@ section. The still-open requests are renumbered below.)*
 
 ---
 
-## ✅ SHIPPED v2.4.6 (🧪 no affected user confirmed) — Merge can't see Drive-only calls — FIXED (Merge-Drive-only) — reported 2026-10-02 (user "gene rator")
+## ✅ SHIPPED v2.4.6 (🧪 no affected user confirmed) — Merge can't see Drive-only calls — FIXED (Merge-Drive-only) — reported 2026-10-02 (a user)
 
 > **🧪 FIXED and merged into `main` 2026-10-12 (`06bf6f62`; code `1d8eb92f`).** `MergeCandidates.of` no longer
 > requires a local file; `MergeService` downloads Drive-only parts to a cache dir, merges, and cleans up.
@@ -749,11 +776,11 @@ decision + onboarding note (a new visible option — see [[new-features-consider
 
 ---
 
-## ⏸️ NOT OUR BUG (HyperOS kills Shizuku's fork; use standalone) — watchdog fight fixed in v2.4.7, 🧪 voss unconfirmed; in-app "try standalone" hint not built — Shizuku mode fails on HyperOS 3 (POCO X7 Pro) — reported 2026-10-03 (users "doctor divago" + "voss")
+## ⏸️ NOT OUR BUG (HyperOS kills Shizuku's fork; use standalone) — watchdog fight fixed in v2.4.7, 🧪 reporter unconfirmed; in-app "try standalone" hint not built — Shizuku mode fails on HyperOS 3 (POCO X7 Pro) — reported 2026-10-03 (two users)
 
 **Two users, same device + ROM:** POCO X7 Pro (`2412DPC0AG` / `rodin`), **HyperOS OS3.0.302.0, Android 16**
-(`BP2A.250605.031.A3`), on 2.4.5. Both report Shizuku mode doesn't record; divago: "can't use Shizuku,
-when I start a call I get an error — but using CallVault directly (standalone) works fine." voss's
+(`BP2A.250605.031.A3`), on 2.4.5. Both report Shizuku mode doesn't record; one: "can't use Shizuku,
+when I start a call I get an error — but using CallVault directly (standalone) works fine." The other's
 screenshot shows the system notice *"Shizuku se estrelló recientemente"* (Shizuku crashed recently).
 
 **Cause (confirmed in code + logs):** Shizuku is running and CallVault is permitted — report shows
@@ -766,16 +793,16 @@ is accepted but the user-service binder never arrives (`RecorderBackend.ensureSh
 ADB-started Shizuku server can't manage user services for this app. Note `Status: READY` is only
 `isRunning && hasPermission` (`ShizukuStatus.of`) — the *runtime* permission doesn't cover user-service
 management, so READY can be true while the bind still can't complete. **Not a CallVault capture bug** — it
-never gets a recorder. **ShizuCallRecorder is not the cause** — voss uninstalled it and it still failed.
+never gets a recorder. **ShizuCallRecorder is not the cause** — that user uninstalled it and it still failed.
 
 **Workaround (correct outcome for both):** use CallVault's own **Standalone** (built-in ADB) mode — it runs
 the daemon over the embedded transport, no Shizuku user-service fork. It's also the fuller mode (Shizuku is
 scrcpy-only: no VoIP / offline / resilient / speaker attribution). So nothing is lost by staying standalone.
 Possible in-app improvement: when the Shizuku bind times out, say so and point to HyperOS battery/"MIUI
-optimization" restrictions or to Standalone, instead of a generic error. 🧪 Told divago to disable battery
+optimization" restrictions or to Standalone, instead of a generic error. 🧪 Told one of them to disable battery
 restrictions on Shizuku — **awaiting his feedback** (2026-10-03).
 
-**voss also hit a Standalone off-Wi-Fi (loopback) issue — same device.** With Offline recording (loopback)
+**One of them also hit a Standalone off-Wi-Fi (loopback) issue — same device.** With Offline recording (loopback)
 ON, the launcher armed the loopback listener, failed twice (`NOTHING_LISTENING_ON_LOOPBACK`, ~6 s each),
 then **succeeded on attempt 3** (`Connected over loopback tcpip :47964 (works off-WiFi)` → daemon → "a
 recorder connected"), ~40 s total. His "wireless debugging keeps stopping" is by design: offline mode
@@ -932,9 +959,9 @@ the OOM is gone; the clearer log covers diagnosis.
 
 ---
 
-## 📋 Field reports 2026-10-10 — abdo kamel, foxcam, alex_812
+## 📋 Field reports 2026-10-10 — three users
 
-### 🧪 PROBABLY FIXED in v2.4.7 (Shizuku records directly, no scrcpy start-up; abdo unconfirmed) — abdo kamel — short calls save empty recordings (Shizuku on a low-end Redmi) — self-reported as "low RAM"
+### 🧪 PROBABLY FIXED in v2.4.7 (Shizuku records directly, no scrcpy start-up; reporter unconfirmed) — short calls save empty recordings (Shizuku on a low-end Redmi) — self-reported as "low RAM"
 Redmi `gale` (23106RN0DA), Android 13, MIUI V14, Egypt, 2.4.5, **SHIZUKU** mode, storage BOTH. Log report (12).
 NOT a RAM kill (no lmkd/OOM; recorder pid stable). Real cause: **Shizuku can't do direct AudioRecord**, so the
 daemon tries direct (`source=4`), it "failed to enter RECORDING state", and falls back to **scrcpy — a ~2 s cold
@@ -945,9 +972,9 @@ calls to short-code `800` entered standby but never started (record-from-answer;
 calls are captured. Shizuku's scrcpy latency is inherent; on a slow device + short calls it loses the opening.
 (Possible in-app: in Shizuku mode skip the doomed direct attempt and/or keep scrcpy warm in standby — not started.)
 
-### ✅ foxcam — one-click GLOBAL ON/OFF (carrier **and** VoIP) — VERIFIED 2026-10-11 (standalone + Shizuku); merged into `main` (`1c800e60`, local-only, unpushed)
+### ✅ A user request — one-click GLOBAL ON/OFF (carrier **and** VoIP) — VERIFIED 2026-10-11 (standalone + Shizuku); merged into `main` (`1c800e60`, local-only, unpushed)
 The existing master switch (`carrier_recording_enabled`, Settings "Record phone calls") is **carrier-only** — it
-does NOT cover VoIP. foxcam wanted a single toggle that stops/starts **everything** (carrier + VoIP) in one tap.
+does NOT cover VoIP. The user wanted a single toggle that stops/starts **everything** (carrier + VoIP) in one tap.
 
 **Shipped shape — a single On/Off master switch** (`recording_state` pref = ACTIVE/STOPPED), layered on top of the
 per-type switches so turning it back on restores the user's carrier/VoIP settings, never clobbers them:
@@ -1002,7 +1029,7 @@ and locales are done. One optional open item remains: whether to fold in the hon
 [[hyperos-shizuku-recorder-death-research]] (parked on tag `parked/health-gated-recorder-status`) for the residual
 sub-3s Start race — the 3s grace already covers the visible case.
 
-### 🅿️ alex_812 (a) — second line / call-waiting records into the first call's file
+### 🅿️ OnePlus 12 report (a) — second line / call-waiting records into the first call's file
 "When using the second line, everything is recorded for the first call." Call-waiting = both cellular calls share
 ONE OFFHOOK session; `CallSessionManager` keys the recording on the first number, and the voice-call stream carries
 whichever call is active → A + B land in A's single file; B gets no separate recording. **Distinct from the
@@ -1013,7 +1040,7 @@ as a known limitation. 🧪 unconfirmed on our devices.
 second-line split — what signal they use (default-dialer InCallService? CallScreeningService? per-call
 `Call.Details`?), and whether it's reachable for us without becoming the default dialer. See [[reuse-proven-implementations]].
 
-### ✅ alex_812 (b) — recordings show numbers, not contact names — REPORTER SELF-RESOLVED 2026-10-13: it was the file-name template, not the phone
+### ✅ OnePlus 12 report (b) — recordings show numbers, not contact names — REPORTER SELF-RESOLVED 2026-10-13: it was the file-name template, not the phone
 **Reporter's own conclusion (2026-10-13):** *"I found the reason. These are the application settings… the person
 selected the display number / contact / date, changed it, made a call and now it is visually convenient… the
 display is based on the created name of the call recording. It's a pity that it doesn't define and change the
@@ -1054,7 +1081,7 @@ deleted — live resolution with a safe fallback. Stays 🧪 (not maintainer-con
 
 ## 🔼 PARTIAL — round-trip probe + honest card BUILT but PARKED on tag `parked/health-gated-recorder-status` (not merged); Shizuku rebind-on-stale shipped v2.4.7 — Truthful, health-gated recorder status + rebind-at-call — RESEARCHED 2026-10-07 (fixes "Active but missed the call")
 
-**Why:** multiple HyperOS/Shizuku reports (UserW Redmi `emerald`, UserZ, and the divago/voss family) where the
+**Why:** multiple HyperOS/Shizuku reports (UserW Redmi `emerald`, UserZ, and the two POCO X7 Pro users) where the
 Home card shows **"Active / Ready"** but a real call is **silently not recorded**. Full cited research +
 sources in memory **[[hyperos-shizuku-recorder-death-research]]**. ShizuCallRecorder **#110** is our bug almost
 verbatim; **LyoSU/cally** (2026) and **Nightzuku/NightDog** ship the fix pattern.
@@ -1133,9 +1160,9 @@ The batch shipped in 2.4.4 (pulled) → 2.4.5; the shipped pieces are in **Compl
 
 - **#9 VoIP mic re-take, step 2** — skip the re-take when `isClientSilenced` is false; step 1 built + measured (OP9: 31 re-takes, all `silenced=false`, 3.5 s lost in 49 s), waits on a Samsung log. (`2026-09-23-voip-near-side-zeros.md`)
 - **#3 pairing-timeout "switch off with consent"** — the Offline-recording recommendation shipped (in the Pair-again hint); switching the Android 7-day timeout off with consent did not.
-- **#7 Resilient falls back to normal recording — ⏸️ DROPPED 2026-09-29**: #1 (Android-version gating) covers coonrw's A12; meti.sh's A13 is covered by the 2.4.3 stale-cblk fix. Revisit only if meti.sh still loses calls on 2.4.3+.
+- **#7 Resilient falls back to normal recording — ⏸️ DROPPED 2026-09-29**: #1 (Android-version gating) covers one tester's A12; the Xiaomi A13 tester is covered by the 2.4.3 stale-cblk fix. Revisit only if that tester still loses calls on 2.4.3+.
 - **#8 No phantom 1-second app-call file at hang-up — ⏸️ PARKED 2026-09-29**: the minimum-recording-length setting already discards short files on both paths (`RecordingForegroundService.kt:719`, `VoipRecordingCoordinator.kt:622`).
-- Waiting on users, not on us: benjamin (Wi-Fi-calling vs Android 17 test calls), scrunscotty (rc4 log). Still open from before: #42 Android 13 mic fallback (decision pending).
+- Waiting on users, not on us: benjamin (Wi-Fi-calling vs Android 17 test calls), the vivo tester (rc4 log). Still open from before: #42 Android 13 mic fallback (decision pending).
 
 ---
 
@@ -2749,7 +2776,7 @@ transcript until the new run succeeds (today `TranscriptRepository.retry` delete
 table, so they survive a re-run unless the dialog deletes them. Unused string `transcript_retranscribe` still exists.
 
 ## 📐 Debug report: optional CPU / running-apps section (2026-11-08)
-Decided by the maintainer: the CPU section built for "the fbi" (`probe/shizukuslow`, a303ff53: `dumpsys cpuinfo` +
+Decided by the maintainer: the CPU section built for a tester (`probe/shizukuslow`, a303ff53: `dumpsys cpuinfo` +
 `top`) is NOT shipped by default — it names every app the phone is running, which is personal. Wanted later as an
 opt-in sub-setting under debug logging (off by default, e.g. "Include running apps and CPU use"), so a user asked
 for it can switch it on for one report. Not designed or built.
@@ -2764,7 +2791,7 @@ debugging, Wireless debugging), and whether anything can be done on our side.
 From the Shizuku-family research re-sweep (docs/dev-notes/2026-10-23-wifi-free-adb-bootstrap-research.md, 2026-11-08
 section). Nobody has broken the one-time-handshake requirement; the only usable bug is Shizuku-Next's
 `adb_wifi_enabled=1` spam race (local hotspot + ~80 writes @ 20 ms). ❌ dead on OnePlus (measured, OP9), ✅ reported
-on several Samsung models. Our Samsung testers (chaoscreater Z Fold 7, "the fbi" S24 Ultra) already rely on it via
+on several Samsung models. Our Samsung testers (chaoscreater Z Fold 7, a tester's S24 Ultra) already rely on it via
 Shizuku-Next; built-in-mode users get nothing. We hold WRITE_SECURE_SETTINGS, so we could run the same sequence.
 Proposal: experimental off-by-default toggle, device allowlist built from field success/failure, honest "may not
 work / Android may close this" label, undo the setting if it fails. BLOCKED on a real Samsung measurement in

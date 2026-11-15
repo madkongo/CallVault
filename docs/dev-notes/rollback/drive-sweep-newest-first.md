@@ -1,10 +1,10 @@
 # Rollback: the scheduled Drive copy uploads newest first
 
 🧪 VERIFYING — merged 2026-11-03. Unit tests pass (DriveSweepOrderTest). To settle: the OP9 run with a Drive folder,
-then Eugene (Honor BVL-N49) going a schedule cycle without the "not reaching Drive" warning.
+then a tester (Honor BVL-N49) going a schedule cycle without the "not reaching Drive" warning.
 
 ## Why
-Eugene's Honor (2026-11-03) warned "Записи не попадают в Drive". The daily/weekly `SyncSweepWorker` uploaded in
+A tester's Honor BVL-N49 (2026-11-03) warned "Записи не попадают в Drive". The daily/weekly `SyncSweepWorker` uploaded in
 folder-listing (name) order; his file names start with the contact, so old calls went first, a run cut off part-way
 never reached the recent ones, and those are what the warning counts.
 

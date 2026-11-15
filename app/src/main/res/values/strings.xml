@@ -117,6 +117,9 @@
     <string name="retention_weekly">Weekly (7 days)</string>
     <string name="retention_biweekly">Bi-weekly (14 days)</string>
     <string name="retention_monthly">Monthly (30 days)</string>
+    <string name="retention_60_days">60 days</string>
+    <string name="retention_90_days">90 days</string>
+    <string name="retention_120_days">120 days</string>
     <string name="retention_linked_label">Same period for device &amp; Drive</string>
     <string name="retention_period_label">Auto-delete recordings</string>
     <string name="retention_local_label">Device recordings</string>
@@ -380,8 +383,8 @@
     <string name="settings_fork_attribution" translatable="false">CallVault is a fork of ShizuCallRecorder</string>
     <string name="settings_fork_attribution_supporting" translatable="false">github.com/kitsumed/ShizuCallRecorder</string>
     <string name="settings_support_label">Support development</string>
-    <string name="settings_support_value">Buy me a coffee on Ko-fi</string>
-    <string name="settings_support_supporting">Opens Ko-fi in your browser</string>
+    <string name="settings_support_value">Buy me a coffee</string>
+    <string name="settings_support_supporting">Pick where to donate; opens in your browser</string>
 
     <!-- ContactSelection Dialog -->
     <string name="contact_search_hint">Search by name or number...</string>
@@ -575,6 +578,7 @@
     <string name="support_appeal_body">I maintain CallVault in my free time. It started as a fork of ShizuCallRecorder by kitsumed and has grown a lot since. Free, open source, no ads, no tracking. If it\'s useful to you, a small tip keeps me going. Thanks! 🙏</string>
     <string name="support_kofi" translatable="false">Ko-fi</string>
     <string name="support_paypal" translatable="false">PayPal</string>
+    <string name="support_donate">Donate</string>
     <string name="support_not_now">Not now</string>
     <string name="home_bulk_delete_message">This cannot be undone.</string>
     <string name="home_bulk_delete_scope_message">Some are saved both on this device and in Drive.</string>
@@ -934,6 +938,10 @@
     <string name="summary_requirements_toggle_label">Show requirements</string>
     <string name="settings_sim_label_label">Show which SIM each call used</string>
     <string name="settings_sim_label_desc">For phones with two SIMs: shows the name you gave the SIM, or SIM 1 / SIM 2</string>
+    <string name="settings_audio_channels">Channels</string>
+    <string name="audio_channels_mono">Mono</string>
+    <string name="audio_channels_stereo">Stereo</string>
+    <string name="settings_audio_channels_info">Mono mixes both sides into one channel. Stereo saves you and the other person on separate left and right channels, for transcribing each side on its own. Stereo files are about twice as large, and on headphones each side plays in one ear.</string>
     <string name="sim_label_word">SIM</string>
     <string name="settings_metadata_file_label">Write a details file</string>
     <string name="settings_metadata_file_desc">Save a small .json beside each recording</string>
@@ -1113,4 +1121,10 @@
     <string name="transcribe_again_running">Transcribing again… %1$d%%</string>
     <string name="transcribe_again_running_plain">Transcribing again…</string>
     <string name="transcribe_again_waiting">Waiting to transcribe again…</string>
+    <string name="wifi_call_switch_failed">This looks like a Wi-Fi call, but the capture that records both sides could not start. It is being recorded the usual way, which may miss the other person.</string>
+    <string name="wifi_call_one_sided">Only your side of this Wi-Fi call was recorded. If it keeps happening, set Wi-Fi Calling to prefer the mobile network in your phone app\'s settings.</string>
+    <string name="settings_debug_force_wifi_route">Force Wi-Fi-call capture route</string>
+    <string name="settings_debug_force_wifi_route_description">For testing. Each phone call switches mid-call to the app-call capture, as a Wi-Fi call would. On a phone without Wi-Fi calling the other side will be missing and an error should appear. Needs app-call recording on. Only works while log recording is on.</string>
+    <string name="wifi_call_switch_aborted">Recording of this Wi-Fi call stopped early: the capture could not be switched safely. The part recorded so far is kept.</string>
+    <string name="wifi_call_far_unknown">This Wi-Fi call was recorded, but CallVault could not check that the other side is on it. Please listen to the recording.</string>
 </resources>

@@ -221,7 +221,7 @@ class SetupHealthStoreTest {
 
     @Test
     fun `a cut-off call replaces its own not-recorded warning with the cut-off one`() {
-        // voarch: the sweep saw a call with no recording (the app had been killed mid-call); the rescue
+        // A tester: the sweep saw a call with no recording (the app had been killed mid-call); the rescue
         // then saved the part recorded before the cut. The card must say what really happened.
         store.recordGap(5_000L, "Anne")
         store.recordCutOff(atMillis = 9_000L, callStartedAt = 5_000L, callEndedAt = 8_000L, label = "Anne")

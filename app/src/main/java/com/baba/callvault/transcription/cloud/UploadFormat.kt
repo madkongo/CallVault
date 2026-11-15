@@ -51,9 +51,21 @@ object UploadFormat {
         return BY_EXTENSION[extension]
     }
 
-    /** Whether a file of [sizeBytes] named [fileName] can go up whole, in one request. */
-    fun sendsWhole(fileName: String?, sizeBytes: Long): Boolean =
-        sizeBytes in 1..SINGLE_UPLOAD_MAX_BYTES && forFileName(fileName) != null
+    /**
+     * The longest call sent in one request. A request is answered only when the whole call is done, and
+     * [CloudTranscriptionClient.READ_TIMEOUT_MS] waits 120 s for that: a 48-minute call on a self-hosted
+     * GPU server took longer, timed out, and was sent again whole (BabApps item 106). Longer calls go in
+     * five-minute passes, each answered well inside the wait.
+     */
+    const val SINGLE_UPLOAD_MAX_DURATION_MS = 10L * 60 * 1000
+
+    /**
+     * Whether a file of [sizeBytes] named [fileName] and [durationMs] long can go up whole, in one
+     * request. A [durationMs] of 0 means the length is unknown, and then only the size decides.
+     */
+    fun sendsWhole(fileName: String?, sizeBytes: Long, durationMs: Long = 0L): Boolean =
+        sizeBytes in 1..SINGLE_UPLOAD_MAX_BYTES && forFileName(fileName) != null &&
+            durationMs <= SINGLE_UPLOAD_MAX_DURATION_MS
 
     /**
      * The container a cut pass is remuxed into (no re-encode), by the track's codec, or null when only a

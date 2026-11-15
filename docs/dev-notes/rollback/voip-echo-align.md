@@ -1,12 +1,12 @@
 # Rollback: line the far side up with its echo (VoIP)
 
-✅ VERIFIED 2026-11-02 on Евгений's OnePlus CPH2747 (Android 17, Shizuku), build 2.4.8-echofix2, reported via the maintainer: the echo goes after the first few seconds; he can live with what is left at the start. Other phones untested; the start-of-call echo stays open (parked).
+✅ VERIFIED 2026-11-02 on a tester's OnePlus CPH2747 (Android 17, Shizuku), build 2.4.8-echofix2, reported via the maintainer: the echo goes after the first few seconds; he can live with what is left at the start. Other phones untested; the start-of-call echo stays open (parked).
 
-**Field result 2026-11-01 (Евгений, via the maintainer, build 2.4.8-echofix):** "There is a bit of an echo at the
+**Field result 2026-11-01 (a tester, via the maintainer, build 2.4.8-echofix):** "There is a bit of an echo at the
 beginning of the conversation, then it gets good, without an echo." The log shows a lock-on in both calls: Telegram
 73.6 ms at about 7.5 s, WhatsApp 81.2 ms at about 13 s. In all three of his files the echo is measurable from second
 3 to second 7, then gone. Still 🧪: the echo at the start is open. The maintainer turned down "start from the last
-call's delay". Later the same day Евгений put it at "1-3 seconds of echo, then the echo goes away". The maintainer:
+call's delay". Later the same day the tester put it at "1-3 seconds of echo, then the echo goes away". The maintainer:
 "echofix2 might be good enough". Start-echo work is **parked**, not built.
 
 **Parked research (2026-11-01, so it is not redone):**
@@ -23,7 +23,7 @@ call's delay". Later the same day Евгений put it at "1-3 seconds of echo,
   VoipCaptureSession).
 
 🧪 VERIFYING — merged 2026-11-01. 2353 unit tests pass, and the logic was checked on the two report calls. No phone
-has run it yet. To settle: Евгений (OnePlus CPH2747, A17, Shizuku, earpiece) installs `2.4.8-echofix` and makes
+has run it yet. To settle: a tester (OnePlus CPH2747, A17, Shizuku, earpiece) installs `2.4.8-echofix` and makes
 one WhatsApp call of at least 30 s.
 - After the first ~10 s the echo should be gone.
 - The debug log shows `VoIP echo: far voice found in the mic … ms late`.

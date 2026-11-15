@@ -57,16 +57,35 @@ object MicOpAutoHeal {
     /** One check at a time: a carrier and a VoIP recording ending together need one look, not two. */
     private val scheduled = AtomicBoolean(false)
 
+    /** The check that was refused for lack of a way back, waiting for one to appear. See [MicOpHealPolicy.staysPending]. */
+    private val pending = MicOpHealPolicy.Pending()
+
+    /** After Wi-Fi joins or Wireless debugging goes on, give the network and adbd a moment before looking again. */
+    private const val RECHECK_SETTLE_MS = 4_000L
+
+    /**
+     * Re-runs a check that was refused with NO_WAY_BACK, when something that could give it a way back happened: Wi-Fi
+     * joined, Wireless debugging went on, or the screen came on. Does nothing when no check is pending, so callers
+     * may call it on every such event.
+     */
+    fun onWayBackMayHaveAppeared(context: Context, trigger: MicOpHealPolicy.Trigger) {
+        if (!pending.isPending) return
+        val what = pending.take() ?: return
+        AppLogger.i(TAG, "re-checking the microphone after $what: $trigger")
+        schedule(context.applicationContext, what, if (trigger == MicOpHealPolicy.Trigger.SCREEN_ON) 1_000L else RECHECK_SETTLE_MS)
+    }
+
     /** Looks for a stuck indicator shortly after [what] ended, on a background thread. */
-    fun scheduleAfterCall(context: Context, what: String) {
-        val app = context.applicationContext
+    fun scheduleAfterCall(context: Context, what: String) = schedule(context.applicationContext, what, SETTLE_MS)
+
+    private fun schedule(app: Context, what: String, delayMs: Long) {
         if (!scheduled.compareAndSet(false, true)) {
             AppLogger.d(TAG, "a check is already scheduled; not adding one for $what")
             return
         }
         Thread {
             try {
-                Thread.sleep(SETTLE_MS)
+                Thread.sleep(delayMs)
                 checkAndHeal(app, what)
             } catch (t: Throwable) {
                 AppLogger.w(TAG, "check after $what failed: ${t.message}")
@@ -85,13 +104,18 @@ object MicOpAutoHeal {
             return
         }
 
+        var inputs = ""
         val decision = MicOpHealPolicy.decide(
             shellMicOpsHeld = held.size,
             callOrRecordingActive = callOrRecordingActive(context),
             canRelaunch = if (shizuku) {
-                MicOpHealPolicy.canRelaunchShizuku(RecorderBackend.shizukuStatus(context) == ShizukuStatus.READY)
+                val ready = RecorderBackend.shizukuStatus(context) == ShizukuStatus.READY
+                inputs = "shizukuReady=$ready"
+                MicOpHealPolicy.canRelaunchShizuku(ready)
             } else {
-                canRelaunch(context, prefs)
+                val i = relaunchInputs(context, prefs)
+                inputs = i.toString()
+                MicOpHealPolicy.canRelaunch(i.wd, i.usb, i.loopback, i.writeSecure, i.offline, i.wifi, i.tcpPortOpen)
             },
             lastHealAtMs = lastHealAtMs,
             nowMs = SystemClock.elapsedRealtime(),
@@ -99,8 +123,16 @@ object MicOpAutoHeal {
         AppLogger.i(
             TAG,
             "after $what${if (shizuku) " (Shizuku)" else ""}: ${held.size} recorder microphone op(s) running" +
-                (if (held.isEmpty()) "" else " (since ${held.joinToString { it.startedAt }})") + " → $decision",
+                (if (held.isEmpty()) "" else " (since ${held.joinToString { it.startedAt }})") + " → $decision" +
+                // The inputs are logged when the way back is what refused, so the report says which of the six was missing.
+                (if (decision == Decision.NO_WAY_BACK) " [$inputs]" else ""),
         )
+        if (MicOpHealPolicy.staysPending(decision)) {
+            pending.set(what)
+            AppLogger.i(TAG, "keeping the check pending: it runs again when Wi-Fi joins, Wireless debugging goes on, or the screen comes on")
+        } else {
+            pending.clear()
+        }
         if (decision != Decision.HEAL) return
 
         // Asked again at the last moment: a call can begin during the settle, and ending the daemon then would end it.
@@ -201,13 +233,29 @@ object MicOpAutoHeal {
         return VoipTelephonyGate.managedCallInProgress(context)
     }
 
-    private fun canRelaunch(context: Context, prefs: AppPreferences): Boolean = MicOpHealPolicy.canRelaunch(
-        wdEnabled = AdbShell.isWirelessDebuggingEnabled(context),
-        usbDebuggingEnabled = AdbShell.isUsbDebuggingEnabled(context),
-        loopbackArmed = AdbShell.isLoopbackArmed(context),
-        hasWriteSecureSettings = AdbShell.hasWriteSecureSettings(context),
-        offlineEnabled = prefs.isOfflineRecordingEnabled(),
-        wifiConnected = isWifiConnected(context),
+    /** The six inputs of [MicOpHealPolicy.canRelaunch], kept together so they can be logged. */
+    private data class RelaunchInputs(
+        val wd: Boolean,
+        val usb: Boolean,
+        val loopback: Boolean,
+        val writeSecure: Boolean,
+        val offline: Boolean,
+        val wifi: Boolean,
+        val tcpPortOpen: Boolean,
+    ) {
+        override fun toString() =
+            "wd=$wd usb=$usb loopbackArmed=$loopback writeSecureSettings=$writeSecure offlineRecording=$offline wifi=$wifi tcpPortOpen=$tcpPortOpen"
+    }
+
+    private fun relaunchInputs(context: Context, prefs: AppPreferences) = RelaunchInputs(
+        wd = AdbShell.isWirelessDebuggingEnabled(context),
+        usb = AdbShell.isUsbDebuggingEnabled(context),
+        loopback = AdbShell.isLoopbackArmed(context),
+        writeSecure = AdbShell.hasWriteSecureSettings(context),
+        offline = prefs.isOfflineRecordingEnabled(),
+        wifi = isWifiConnected(context),
+        // Read when the heal decides, on loopback: works with no network.
+        tcpPortOpen = runCatching { AdbShell.isAdbdTcpPortReachable(context) }.getOrDefault(false),
     )
 
     private fun isWifiConnected(context: Context): Boolean = runCatching {

@@ -113,6 +113,9 @@ internal object VoipCallerName {
      */
     internal fun extractFromDump(dump: String, packageName: String): String? {
         if (packageName.isBlank()) return null
+        // The platform's own ongoing notifications (battery, USB, screen recording...) are never a
+        // caller. Defence in depth: the app already refuses such a uid (BabApps item 103).
+        if (packageName == "com.android.systemui" || packageName == "android") return null
 
         for (record in dump.split("NotificationRecord(")) {
             if (!record.contains("pkg=$packageName ")) continue
@@ -166,8 +169,21 @@ internal object VoipCallerName {
             AppLogger.d(TAG, "Ignoring notification text that just names the app")
             return null
         }
+        // A Telegram fork's package has no "telegram" in it (com.radolyn.ayugram), so the token above
+        // misses its status line "Telegram call". Only for Telegram clients: a WhatsApp contact called
+        // "Telegram support" is a person and stays (BabApps item 107).
+        if (isTelegramClient(packageName) && cleaned.contains("telegram", ignoreCase = true)) {
+            AppLogger.d(TAG, "Ignoring notification text that just names the app")
+            return null
+        }
         return if (cleaned.length > MAX_NAME_LENGTH) cleaned.take(MAX_NAME_LENGTH).trim() else cleaned
     }
+
+    /** Telegram clients that title their call "Telegram call": the official app, org.telegram.* builds and known forks. */
+    internal fun isTelegramClient(packageName: String): Boolean =
+        packageName.startsWith("org.telegram.") || packageName in TELEGRAM_FORK_PACKAGES
+
+    private val TELEGRAM_FORK_PACKAGES = setOf("com.radolyn.ayugram", "tw.nekomimi.nekogram")
 
     private val GENERIC_PACKAGE_PARTS = setOf("com", "org", "net", "android", "messenger", "app", "mobile")
 

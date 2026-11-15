@@ -433,6 +433,9 @@
     <string name="retention_linked_label">دوره یکسان برای دستگاه و Drive</string>
     <string name="retention_local_label">فایل‌های ضبط‌شده دستگاه</string>
     <string name="retention_monthly">ماهانه (۳۰ روز)</string>
+    <string name="retention_60_days">۶۰ روز</string>
+    <string name="retention_90_days">۹۰ روز</string>
+    <string name="retention_120_days">۱۲۰ روز</string>
     <string name="retention_period_label">حذف خودکار فایل‌های ضبط‌شده</string>
     <string name="retention_time_label">اجرا در (زمان محلی شما)</string>
     <string name="retention_weekly">هفتگی (۷ روز)</string>
@@ -554,6 +557,10 @@
     <string name="summary_requirements_toggle_label">نمایش پیش‌نیازها</string>
     <string name="settings_sim_label_label">نمایش سیم‌کارتی که هر تماس از آن استفاده کرد</string>
     <string name="settings_sim_label_desc">برای گوشی‌های دو سیم‌کارته: نامی را که به سیم‌کارت داده‌اید نشان می‌دهد، یا سیم 1 / سیم 2</string>
+    <string name="settings_audio_channels">کانال‌ها</string>
+    <string name="audio_channels_mono">مونو</string>
+    <string name="audio_channels_stereo">استریو</string>
+    <string name="settings_audio_channels_info">مونو هر دو طرف را در یک کانال ترکیب می‌کند. استریو صدای شما و طرف مقابل را در کانال‌های جداگانهٔ چپ و راست ذخیره می‌کند تا هر طرف جداگانه رونویسی شود. فایل‌های استریو حدوداً دو برابر حجم دارند و با هدفون هر طرف فقط در یک گوش شنیده می‌شود.</string>
     <string name="sim_label_word">سیم</string>
     <string name="settings_metadata_file_label">نوشتن یک فایل جزئیات</string>
     <string name="settings_needs_newer_android">به Android %1$s یا جدیدتر نیاز دارد — این گوشی Android %2$s را اجرا می‌کند.</string>
@@ -614,8 +621,8 @@
     <string name="settings_summary_skip_rules_on">قوانین فعال رد کردن: %1$d</string>
     <string name="settings_summary_unavailable">اینجا در دسترس نیست</string>
     <string name="settings_support_label">حمایت از توسعه</string>
-    <string name="settings_support_supporting">Ko-fi را در مرورگر شما باز می‌کند</string>
-    <string name="settings_support_value">در Ko-fi برایم یک قهوه بخر</string>
+    <string name="settings_support_supporting">محل حمایت را انتخاب کنید؛ در مرورگر شما باز می‌شود</string>
+    <string name="settings_support_value">برایم یک قهوه بخر</string>
     <string name="settings_tap_to_select_folder">برای انتخاب پوشه بزنید...</string>
     <string name="settings_theme_mode">حالت پوسته</string>
     <string name="settings_theme_mode_dark">تیره</string>
@@ -734,6 +741,7 @@
     <string name="summary_requirements_toggle_description">پیش از دانلود خلاصه‌ساز، هزینه‌های آن را نشان بده</string>
     <string name="support_appeal_body">CallVault را در وقت آزادم نگهداری می‌کنم. این برنامه به‌صورت فورکی از ShizuCallRecorder ساخته kitsumed شروع شد و از آن زمان خیلی رشد کرده است. رایگان، متن‌باز، بدون تبلیغ، بدون ردیابی. اگر برایتان مفید است، یک انعام کوچک مرا سرِ پا نگه می‌دارد. ممنون! 🙏</string>
     <string name="support_appeal_title">انعامی برای CallVault ☕</string>
+    <string name="support_donate">حمایت مالی</string>
     <string name="support_not_now">حالا نه</string>
     <string name="tile_recording_on">ضبط فعال</string>
     <string name="tile_recording_stopped">متوقف</string>
@@ -994,4 +1002,10 @@
     <string name="transcribe_again_running">در حال رونویسی دوباره… %1$d%%</string>
     <string name="transcribe_again_running_plain">در حال رونویسی دوباره…</string>
     <string name="transcribe_again_waiting">در انتظار رونویسی دوباره…</string>
+    <string name="wifi_call_switch_failed">به نظر می‌رسد این تماس از طریق Wi-Fi است، اما ضبطی که هر دو طرف را می‌گیرد شروع نشد. به روش معمول ضبط می‌شود و ممکن است صدای طرف مقابل در آن نباشد.</string>
+    <string name="wifi_call_one_sided">از این تماس Wi-Fi فقط صدای شما ضبط شد. اگر تکرار شد، در تنظیمات برنامهٔ تلفن، تماس Wi-Fi را روی ترجیح شبکهٔ تلفن همراه بگذارید.</string>
+    <string name="settings_debug_force_wifi_route">اجبار مسیر ضبط تماس Wi-Fi</string>
+    <string name="settings_debug_force_wifi_route_description">برای آزمایش. هر تماس تلفنی در میانهٔ تماس به ضبط تماس برنامه‌ها می‌رود، همان‌طور که تماس Wi-Fi می‌رود. در گوشی بدون تماس Wi-Fi صدای طرف مقابل نخواهد بود و باید خطا نمایش داده شود. ضبط تماس برنامه‌ها باید روشن باشد. فقط وقتی ثبت گزارش روشن است کار می‌کند.</string>
+    <string name="wifi_call_switch_aborted">ضبط این تماس Wi-Fi زودتر متوقف شد: روش ضبط با اطمینان عوض نشد. بخشی که تا اینجا ضبط شده نگه داشته می‌شود.</string>
+    <string name="wifi_call_far_unknown">این تماس Wi-Fi ضبط شد، اما CallVault نتوانست بررسی کند که صدای طرف مقابل در آن هست. لطفاً به ضبط گوش دهید.</string>
 </resources>

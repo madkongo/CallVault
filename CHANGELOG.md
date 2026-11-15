@@ -3,7 +3,158 @@
 All notable changes to CallVault are documented here. The format is based on
 [Keep a Changelog](https://keepachangelog.com/), and this project uses semantic-ish versioning.
 
-## [Unreleased]
+## [2.5.1] — 2026-11-15
+
+### Added
+
+- **The debug report now shows what happened to a recording at the end of a call, even with logging off.** It lists
+  how the call was captured, when the library entry was written (and the error if it failed), how long the length
+  check took, and any list row whose length took over 2 seconds to read. No names or numbers. Nothing about recording
+  changes; this is to find out why a 51-minute call was saved but never showed in the library (#63).
+  <!-- 🧪 VERIFYING: after a call, Settings ▸ Debug ▸ send the report: the "USB debugging switched off (always on)"
+  section should hold "call:" lines for the capture path and the catalog write. Whether they explain a missing
+  long call needs the next report from that kind of call. -->
+- **"Having trouble? Send a report" on every setup screen.** The welcome notice, the permissions step and each wizard
+  step now carry a link at the bottom, always in view, that sends the same debug and system report as Settings ▸ Debug.
+  Until now a setup that never finished could not be reported at all (#40). Pairing now writes each step, with timings
+  and what the phone says about Wireless debugging, to the setup journal that is kept from the first launch. It also
+  keeps listening for the pairing service while waiting, so a phone that hides the Wireless debugging switch from apps
+  (Android 17 betas) can carry on instead of waiting for nothing.
+  <!-- 🧪 VERIFYING: on a fresh install, open the app and check the link under the welcome notice, the permissions
+  step and the wizard; tap it and the share sheet should offer the report. On the Pixel 7 (Android 17 QPR3 Beta 3),
+  start pairing and share the report: it should show the pairing steps. -->
+- **One Donate button in the Support dialog.** It opens a short list with Ko-fi and PayPal, instead of two
+  side-by-side buttons. The Settings ▸ About Support row no longer says it only opens Ko-fi.
+  <!-- 🧪 VERIFYING: open Support (Home pill or Settings ▸ About), tap Donate; Ko-fi and PayPal should be listed and
+  each should open in the browser. -->
+- **Keep recordings for 60, 90 or 120 days.** Settings ▸ Cleaning up ▸ Auto-delete now offers these between 30 days and
+  Keep forever, for the phone and for Drive. Asked in #78.
+  <!-- ✅ VERIFIED 2026-11-09 (maintainer, 2.5.1-rc1 on the OP9): 60 days offered, picked and kept after reopening
+  Settings. -->
+- **A "Recording started" message for app calls.** Phone calls already showed it; app calls (WhatsApp, Telegram and
+  the rest) only said when the recording was saved. It follows the "Show toasts" and vibration settings.
+  <!-- ✅ VERIFIED 2026-11-09 (maintainer, 2.5.1-rc1 on the OP9): the toast showed when a WhatsApp call started. -->
+
+- **Star a recording from the list.** Each row has a star under its ⋮ button, and the ⋮ menu has Star / Remove
+  star too. Until now a recording could only be starred from its own page. The card keeps its height.
+  <!-- ✅ VERIFIED 2026-11-09 (maintainer, 2.5.1-rc2 on the OP9): star and menu work; card height "looks perfect"
+  after the rc1 extra bottom space was fixed. -->
+- **Stereo recording: each side of a call on its own channel** (#74). Settings ▸ Sound and file names ▸ Channels:
+  Mono or Stereo. With Stereo, you and the other person are saved on separate left and right channels instead of
+  being mixed together, for people who transcribe each side on their own (one voice per channel, so talking over
+  each other loses nothing). Mono stays the default. Files are about twice as large, because each side keeps the quality a mono file gets
+  today (Opus at least 48 kbps, AAC at least 64), and on headphones each side plays in one ear. Phone calls, app
+  calls and resilient recording; standalone and Shizuku. Where the phone can only record one channel (for example
+  over Bluetooth), the call is recorded mono as before. Thanks @jlp9989-sudo for the request.
+  <!-- ✅ VERIFIED 2026-11-08 (maintainer, OP9, Shizuku mode): one phone call + one WhatsApp call with Stereo on
+  "sounded just fine"; files measured 2-channel with the sides genuinely apart. Back to Mono measured 2026-11-09 on
+  2.5.1-rc1 (OP9): two WhatsApp calls, both 1 channel at ~24-29 kbps, log stereo=false encodeCh=1. Headphone
+  listening parked by the maintainer. -->
+
+### Fixed
+
+- **Cloud transcription of long calls (over 10 minutes) no longer times out.** A 48-minute call sent to a self-hosted
+  Whisper server went up in one request, the server needed longer than the 2-minute wait, and the call was sent again
+  from the start. Calls longer than 10 minutes now go up in 5-minute parts, as large files already did. A slow answer
+  is now reported as "took too long to answer" instead of "Could not reach" (#79).
+  <!-- 🧪 VERIFYING: transcribe a call over 10 minutes with Custom, Groq or OpenRouter; the log should say "in N
+  pass(es)" and the transcript should arrive. A call under 10 minutes still goes whole. -->
+- **A stuck microphone dot after a call is cleared once Wi-Fi is back.** On a Pixel 8 with Android 17 the microphone
+  stayed marked as "in use by Shell" after calls, and CallVault could not clear it because it had no Wi-Fi to restart
+  its recorder with. It now restarts the recorder at once when the phone's own adb tcp port is reachable (no Wi-Fi
+  needed), and otherwise keeps the check pending and tries again when Wi-Fi joins, Wireless debugging goes on or
+  the screen comes on. If a recording's capture ends early, it is also stopped at once instead of at the end of the
+  call. The debug report no longer says every shell-user microphone use is CallVault's, and lists the processes
+  running as the shell user.
+  <!-- 🧪 VERIFYING: with no Wi-Fi, make a call and check the microphone dot stays; then turn Wi-Fi on or wake the screen:
+  the dot should go out within a few seconds. The cause of the dot after a normal call on this phone is still open. -->
+- **The recorder is brought up once at a time, and no longer kills its own launcher.** When several parts of the app
+  asked for the recorder at the same moment (a call, the keep-alive, app start), each ran its own "clear other
+  recorders" step, and that step could end the adb shell that had just launched the recorder. They now share one
+  bring-up. The debug report also carries always-on lines about who launched the recorder and what the microphone
+  and the shell processes looked like at the start of a call and if the capture is cut off (BabApps #95).
+  <!-- 🧪 VERIFYING: needs the Pixel 8 report from a cold start (force-stop, then a call): one "daemon launch" line,
+  no second "Clearing 1 other recorder process(es)", and whether "In use by Shell" still appears. -->
+- **An outgoing Telegram or AyuGram call is no longer split into a ~5-second file and a second file.** While the
+  other phone is ringing these apps leave call mode for a few seconds, and CallVault took that for the end of the
+  call. A young call in which no call audio was ever heard now waits up to 30 seconds for call mode to return and
+  carries on in the same file (the ring is just silence). If it never returns, the recording is dropped quietly: a
+  call that never connected. Calls that did connect end as before.
+  <!-- 🧪 VERIFYING: needs an outgoing AyuGram or Telegram call on a phone, answered after ringing 6+ seconds: expect ONE
+  file; then a call nobody answers: expect no file. Unit-tested only (the timing policy); not run against a real app.
+  (BabApps item 107) -->
+- **Telegram-app calls (AyuGram, Nekogram) are no longer named "Telegram call".** These apps call their own call
+  notification "Telegram call", and CallVault took that as the contact's name. It now skips it and uses the
+  person's name from the notification. Other apps are unchanged: a WhatsApp contact called "Telegram support" keeps
+  its name. The short files before a real call are a separate matter and not changed here.
+  <!-- 🧪 VERIFYING: needs a call in AyuGram (a tester's S25 Ultra, Android 17): the file should carry the contact's name
+  instead of "Telegram call". Unit-tested only; the Nekogram package name is not checked on a device. (BabApps item 107) -->
+- **An app-call recording is no longer named after the battery ("Charging (59 m until full)").** On some phones the
+  system's own screen (System UI) was taken for the app on the call, and its charging notification became the
+  contact's name. CallVault now ignores system components that are not calling apps and looks for the real one.
+  <!-- 🧪 VERIFYING: needs an app call (WhatsApp/Telegram) on a phone that showed the "Charging…" name; the file should
+  carry the contact name or none, never the battery text. Unit-tested only. (BabApps item 103) -->
+- **Other apps no longer record silence after a recorded call.** On some phones (seen on a Samsung Galaxy A56 with
+  Android 17), voice messages in Telegram, Instagram and other apps came out silent after any phone call until
+  CallVault was switched off or the phone restarted. CallVault now lets go of the call's microphone connection
+  properly when the call ends, and its debug report no longer blames "another app" for the phone's own voice-assistant
+  listener.
+  <!-- 🧪 VERIFYING: the tester's A56 (test build 2.5.1-mic1): after a recorded call, send a Telegram voice message;
+  it should have sound. OP9 check: after a call, `dumpsys media.audio_flinger` shows no leftover input. No Samsung
+  A56 of ours. -->
+- **Samsung Wi-Fi Calling calls are recorded with both sides** (#45). On some Samsung phones (seen on a Galaxy Z
+  Fold2 with Android 17 / One UI 9), a call over Wi-Fi Calling recorded silence or only your side. CallVault now
+  notices such a call in its first seconds and switches to the capture it uses for app calls, which records both
+  sides. Ordinary mobile-network calls are recorded as before. If the switch cannot start or the other side is not
+  heard, a notification says so. Thanks @Benjamin-67 for the reports and the testing.
+  <!-- 🧪 VERIFYING: tester's Fold2 (SM-F976B, A17), build 2.5.0.1-wifi45: 2026-11-08 a Wi-Fi call auto-switched
+  0.7 s in, other side heard; WhatsApp unaffected. 2026-11-09 a call with Wi-Fi Calling OFF (bearer=LTE, force
+  switch off) stayed IN_CALL throughout and kept the normal capture (17 s recorded). The tester checks both sides
+  by ear; no Samsung phone of ours. Debug switch "Force Wi-Fi-call capture route" exists only with logging on. -->
+
+- **The APK installs through more installers.** The release was signed only with the newer APK signature, which some
+  installers (SAI / Split APKs Installer, and some file managers) reject: they re-package the file as they install
+  it, which breaks the whole-file signature, and with nothing to fall back on the install fails with "no
+  certificates". It now also carries the older (v1 / JAR) signature, which signs each file inside the APK and
+  survives that re-packaging. Same signing key, so it still updates over any earlier version.
+  <!-- 🧪 VERIFYING 2026-11-08: SAI refused the v2-only build ("Signature Scheme v2: digest of contents did not
+  verify") because SAI rewrites the APK to 0.apk. First fix queued for 2.5.1. To settle: install this build through
+  SAI, which refused the v2-only one. -->
+- **Vietnamese: the "Recording started" message no longer says the recording continues.** It used the wording of
+  "Recording resumed"; it now says "Đã bắt đầu ghi âm" (recording started).
+  <!-- 🧪 VERIFYING: text fix in values-vi/strings.xml. To settle: a Vietnamese speaker starts a recorded call and
+  reads the message. -->
+- **After updating to 2.5.1, the "What's new" note describes this release** (in all 16 languages) instead of showing
+  the 2.5.0 note again.
+  <!-- 🧪 VERIFYING: seen on the OnePlus 9 Pro (2.5.1 card, first 6 items readable). To settle: open the app after
+  updating and read the note; a native speaker checks their language. -->
+- **Merging two calls that were recorded differently now says why in plain words** (for example, one with each
+  side on its own channel and one without) instead of showing codec details.
+- **With each side on its own channel, the details file (.json) gives the recording's real channel count and
+  sample rate**, read from the finished file (a call over Bluetooth can still come out mono). Unchanged otherwise.
+- **Debug reports now include the audio codec, bit rate and the new channel setting.**
+- **"Save transcript and notes next to the recording" is much lighter on a large library.** With thousands of
+  recordings, the first pass listed its own `.md` files as if they were recordings, searched the folder even for
+  recordings that had nothing to write, and after being stopped wrote a "Job was cancelled" line for every file,
+  which filled the debug report. It now skips its own `.md` files, does not search the folder for recordings with
+  nothing to write, and stops quietly when cancelled. Seen on an HONOR phone (Android 16) with about 3,200
+  recordings, where calls were missed after updating to 2.5.0.
+  <!-- 🧪 VERIFYING: OnePlus 9 Pro and emulator: .md files written, no "Job was cancelled" flood, app stayed alive. The
+  link to the missed calls is a likely cause, not proven: the phone's battery manager stopped the app and nothing
+  restarted the recorder until it was opened. Test build 2.5.1-sidecar1 sent to the reporter; waiting for feedback.
+  Remaining: sidecar files still become catalog rows via Drive sync, and each write still scans the folder: BabApps
+  item 6. The reporter's 3,012-recording transcription backlog on battery is a second CPU load (ask about Only while
+  charging). -->
+- **Transcript and notes files no longer show up as recordings, and writing them is far faster on a big library.**
+  Drive sync was adding every `.md` (and `.json` details) file to the recordings list behind the scenes, where
+  auto-delete and the Drive check could see them; it no longer does, and the ones already added are removed from the
+  list (the files themselves stay in your folder and in Drive). The first pass of "Save transcript and notes next to
+  the recording" now looks through the folder once instead of once per recording (about 18 s each on a phone with
+  3,000 recordings). Seen on an HONOR phone (Android 16).
+  <!-- 🧪 VERIFYING: emulator/unit tests plus a real call on the OnePlus 9 Pro: recordings still sync to Drive and
+  appear in the library. To settle it: the reporter's 3,000-recording library on 2.5.1, no .md rows in the list and
+  the sidecar pass finishing. BabApps item 6. -->
+
 
 ## [2.5.0] — 2026-11-08
 
@@ -71,7 +222,7 @@ All notable changes to CallVault are documented here. The format is based on
 - **Switching debug logging on no longer deletes the log you already have.** Turning the switch off and on again
   before sharing silently threw away everything captured so far, including the problem you were trying to report.
   Only "Delete logs" deletes now, and the log marks where each new session starts.
-  <!-- 🧪 VERIFYING 2026-11-08: unit tests only. Seen in a report from "the fbi" (S24 Ultra) that started 3 minutes
+  <!-- 🧪 VERIFYING 2026-11-08: unit tests only. Seen in a report from a tester (S24 Ultra) that started 3 minutes
   before export although logging had been on earlier. To settle: with logging on, use the app, switch logging off
   and on, and check the log viewer still shows the earlier lines. -->
 
@@ -94,7 +245,7 @@ All notable changes to CallVault are documented here. The format is based on
 - **No more crash when CallVault restarts its Shizuku recorder.** Restarting it (after an update, or for the fix above)
   could crash the app in Shizuku's own code.
   <!-- 🧪 VERIFYING 2026-11-07 on the OP9 (Shizuku): the restart ran after a call with a simulated held microphone, no
-  crash, recorder back in ~2 s; the update path ran with no crash. A real stuck microphone (EdmitriX) not yet seen
+  crash, recorder back in ~2 s; the update path ran with no crash. A real stuck microphone (a tester) not yet seen
   clearing. -->
 
 - **Tapping beside a page title no longer opens a setting.** In Settings (and on any page with a title bar), a tap on
@@ -299,7 +450,7 @@ All notable changes to CallVault are documented here. The format is based on
   recordings to Drive · N of M copied" while it runs, uploads the newest calls first, and "Stop for now" stops it
   between files; the next scheduled run copies the rest along with new calls. A file reaching Drive is always
   recorded as copied, even if the copy is stopped right then.
-  <!-- 🧪 VERIFYING: OP9 2026-11-03, real Google Drive (2.4.9-drive1): 19 copied newest first with the counter; 80-file run stopped after 32 of 80 between files (Stop signal sent as root: the button exists but sat below the fold of a crowded shade); next run copied exactly the remaining 48 + 1 new; Drive then held all 100, no .cvpart. To settle: Eugene (Honor BVL-N49) a cycle without the warning. -->
+  <!-- 🧪 VERIFYING: OP9 2026-11-03, real Google Drive (2.4.9-drive1): 19 copied newest first with the counter; 80-file run stopped after 32 of 80 between files (Stop signal sent as root: the button exists but sat below the fold of a crowded shade); next run copied exactly the remaining 48 + 1 new; Drive then held all 100, no .cvpart. To settle: a tester (Honor BVL-N49) a cycle without the warning. -->
 
 ## [2.4.8] — 2026-10-31
 
@@ -502,7 +653,7 @@ All notable changes to CallVault are documented here. The format is based on
   recording could stay down until Shizuku was removed. CallVault now uses the connection Shizuku set up
   instead of restarting it, leaves it open when you turn off-Wi-Fi recording off, and no longer takes
   Shizuku switching Wireless debugging off for your choice. Reported by a user.
-  <!-- 🧪 VERIFYING: unit tests only. Reporter voss, POCO X7 Pro HyperOS 3, reports (15)/(16) 2026-10-22.
+  <!-- 🧪 VERIFYING: unit tests only. Reporter: a tester, POCO X7 Pro HyperOS 3, reports (15)/(16) 2026-10-22.
        Shizuku's side (TCP mode port, who wrote WD off) is inferred, not in our logs. Needs: Shizuku fork with
        Watchdog + TCP mode, CallVault standalone + Offline on, reboot; expect "armed by another app, used as
        it is" and no AdbdChurn line. -->
@@ -597,7 +748,7 @@ the maintainer's real-use confirmation; ✅ = maintainer-confirmed.
 - **Contact names resolve at display time**, even when the file name has no number in it. A call saved as a
   number (contact-only file-name template, no contact at record time) now shows the contact's name once the
   contact is saved — and updates existing recordings — without re-recording. The file on disk keeps its
-  name. Reported by alex_812 (b).
+  name. Reported by a tester (b).
   <!-- 🧪 built + unit-tested + device-verified on OP9 2026-10-13; awaiting real-use confirmation. -->
 - **Transcript/details sidecars reach Drive in "Immediately" sync too.** Daily/Weekly already copied them
   via the folder sweep; Immediately uploaded the audio only, orphaning the `.json`/`.md`. Now the sidecars

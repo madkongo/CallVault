@@ -84,6 +84,11 @@ object RecorderServer {
 
             // Keep the process + binder alive so the app can call us back over IPC, possibly while WD
             // is OFF. Ends on SIGTERM or destroy().
+            // Enlarge the main log buffer once (BabApps #95), off the delivery path and only if the shell may.
+            Thread {
+                val out = runCatching { DiagnosticDumps.run("logcat_grow_host", null) }.getOrNull()
+                AppLogger.i(TAG, "logcat main buffer enlarged to 16M: " + (if (out == null) "refused or failed" else out.trim().ifEmpty { "ok" }))
+            }.apply { isDaemon = true; name = "cv-logcat-grow" }.start()
             Looper.loop()
         } catch (t: Throwable) {
             AppLogger.e(TAG, "RecorderServer fatal: ${t.message}", t)
