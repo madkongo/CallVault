@@ -78,6 +78,33 @@ object SetupJournal {
         append("=== a recorder connected; setup finished $END_MARKER ===")
     }
 
+    /**
+     * Opens a journal that already ended, because the setup screens are showing again.
+     *
+     * **Why.** The journal seals itself the first time any recorder connects. A Pixel 7 reporter (BabApps item 92,
+     * 2026-11-15) had connected one through Shizuku weeks earlier, so the journal was sealed; he then moved to
+     * standalone mode, lost the pairing and was stuck at "Let's get set up" with a journal that recorded nothing
+     * of it. A setup screen being on show IS the evidence that setup is not finished, so it re-arms the journal.
+     *
+     * Keeps only the newest [REOPEN_KEEP_BYTES] of what was there (so the byte cap leaves room for this attempt)
+     * and a marker line says where the new attempt starts. Does nothing while the journal is open, so showing
+     * the screens again never trims a live attempt. Ended again by [markSetupSucceeded].
+     */
+    fun reopenForNewSetup(reason: String) {
+        if (!closed) return
+        runCatching {
+            val f = file ?: return
+            if (f.exists()) {
+                val text = f.readText()
+                val trimmed = trimForReopen(text, REOPEN_KEEP_BYTES)
+                if (trimmed != text) f.writeText(trimmed)
+            }
+            bytesWritten = if (f.exists()) f.length() else 0L
+            closed = false
+            append("=== setup needed again ($reason); journal reopened ===")
+        }.onFailure { android.util.Log.w(TAG, "Could not reopen the setup journal: ${it.message}") }
+    }
+
     /** The journal's size on disk, for the Debug screen. Zero when there is none. */
     fun sizeBytes(): Long = runCatching { file?.takeIf { it.exists() }?.length() ?: 0L }.getOrDefault(0L)
 
@@ -114,4 +141,18 @@ object SetupJournal {
 
     /** Written into the closing line, so a reopened journal can tell it has already finished. */
     private const val END_MARKER = "[journal-end]"
+
+    /** How much of an older journal survives [reopenForNewSetup]. */
+    const val REOPEN_KEEP_BYTES = 16 * 1024
+
+    /**
+     * The newest [keepBytes] of [text], starting on a whole line. The first line (the file's header) is not kept
+     * separately: the reopen marker says what happened, and the old header would only be noise in the middle.
+     */
+    internal fun trimForReopen(text: String, keepBytes: Int): String {
+        if (text.length <= keepBytes) return text
+        val tail = text.takeLast(keepBytes)
+        val firstNewline = tail.indexOf('\n')
+        return if (firstNewline < 0) "" else tail.substring(firstNewline + 1)
+    }
 }

@@ -40,6 +40,8 @@ import com.baba.callvault.R
 import com.baba.callvault.system.diagnostics.SystemLogCollector
 import com.baba.callvault.system.shareLogFiles
 import com.baba.callvault.utils.AppLogger
+import com.baba.callvault.utils.SetupJournal
+import androidx.compose.runtime.LaunchedEffect
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
@@ -92,7 +94,13 @@ object DebugReportBuilder {
  * here and consumed, so the wrapped screen's own system-bar padding does not add a second gap.
  */
 @Composable
-fun SetupScreenWithReportLink(content: @Composable () -> Unit) {
+fun SetupScreenWithReportLink(reopenJournal: Boolean = false, content: @Composable () -> Unit) {
+    // The permissions screen on show means no recorder is connected, so the always-on journal must be writing
+    // again even if an earlier recorder connection sealed it. Only there: the wizard comes AFTER a recorder
+    // connected, and reopening for it would leave a journal that nothing ever closes again.
+    if (reopenJournal) LaunchedEffect(Unit) {
+        withContext(Dispatchers.IO) { SetupJournal.reopenForNewSetup("the permissions screen is showing") }
+    }
     Column(modifier = Modifier.navigationBarsPadding().imePadding()) {
         Box(modifier = Modifier.weight(1f)) { content() }
         SetupReportLink()

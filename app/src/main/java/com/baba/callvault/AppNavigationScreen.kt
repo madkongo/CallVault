@@ -230,7 +230,7 @@ fun AppNavigationScreen(
                 )
             }
 
-            AppScreen.Permissions -> SetupScreenWithReportLink {
+            AppScreen.Permissions -> SetupScreenWithReportLink(reopenJournal = true) {
                 PermissionsScreen(
                     status              = onboardingStatus,
                     onPermissionGranted = { appNavViewModel.refresh() }
