@@ -50,7 +50,8 @@ All notable changes to CallVault are documented here. The format is based on
 - **"Having trouble? Send a report" on every setup screen.** The welcome notice, the permissions step and each wizard
   step now carry a link at the bottom, always in view, that sends the same debug and system report as Settings ▸ Debug.
   Until now a setup that never finished could not be reported at all (#40). Pairing now writes each step, with timings
-  and what the phone says about Wireless debugging, to the setup journal that is kept from the first launch. It also
+  and what the phone says about Wireless debugging, to the setup journal that is kept from the first launch (and that
+  starts writing again whenever the permissions step shows, even if an earlier setup had ended it). It also
   keeps listening for the pairing service while waiting, so a phone that hides the Wireless debugging switch from apps
   (Android 17 betas) can carry on instead of waiting for nothing.
   <!-- 🧪 VERIFYING: on a fresh install, open the app and check the link under the welcome notice, the permissions
