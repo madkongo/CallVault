@@ -139,6 +139,8 @@
         <item>Celulares Samsung: chamadas por Chamada Wi-Fi são gravadas com os dois lados</item>
         <item>\"Salvar transcrição e notas ao lado da gravação\" fica bem mais leve com uma biblioteca grande</item>
         <item>Corrigido: erro \"no certificates\" ao instalar com alguns instaladores (ex.: SAI)</item>
+        <item>Corrigido: chamadas do Telegram e do AyuGram não são mais divididas em dois arquivos e mostram o nome certo</item>
+        <item>Corrigido: chamadas longas não excedem mais o tempo limite na transcrição em nuvem</item>
     </string-array>
     <string name="whatsnew_250_title">Manter ou apagar depois da chamada, e compartilhar o que você precisa</string>
     <string-array name="whatsnew_250_items">

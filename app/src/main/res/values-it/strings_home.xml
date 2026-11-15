@@ -139,6 +139,8 @@
         <item>Telefoni Samsung: le chiamate Wi-Fi Calling vengono registrate con entrambi i lati</item>
         <item>\"Salva trascrizione e note accanto alla registrazione\" è molto più leggero con una libreria grande</item>
         <item>Corretto: errore \"no certificates\" durante l\'installazione con alcuni installer (es. SAI)</item>
+        <item>Corretto: le chiamate Telegram e AyuGram non vengono più divise in due file e mostrano il nome giusto</item>
+        <item>Corretto: le chiamate lunghe non vanno più in timeout con la trascrizione cloud</item>
     </string-array>
     <string name="whatsnew_250_title">Tieni o elimina dopo la chiamata, e condividi ciò che ti serve</string>
     <string-array name="whatsnew_250_items">

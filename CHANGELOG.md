@@ -3,7 +3,7 @@
 All notable changes to CallVault are documented here. The format is based on
 [Keep a Changelog](https://keepachangelog.com/), and this project uses semantic-ish versioning.
 
-## [Unreleased]
+## [2.5.1] — 2026-11-15
 
 ### Added
 

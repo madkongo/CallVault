@@ -139,6 +139,8 @@
         <item>Telefony Samsung: rozmowy przez połączenia Wi-Fi są nagrywane z obu stron</item>
         <item>„Zapisuj transkrypcję i notatki obok nagrania” jest znacznie lżejsze przy dużej bibliotece</item>
         <item>Naprawiono: błąd „no certificates” podczas instalacji przez niektóre instalatory (np. SAI)</item>
+        <item>Naprawiono: połączenia Telegram i AyuGram nie są już dzielone na dwa pliki i mają właściwą nazwę</item>
+        <item>Naprawiono: długie rozmowy nie przekraczają już limitu czasu przy transkrypcji w chmurze</item>
     </string-array>
     <string name="whatsnew_250_title">Zachowaj lub usuń po rozmowie i udostępniaj to, czego potrzebujesz</string>
     <string-array name="whatsnew_250_items">

@@ -139,6 +139,8 @@
         <item>Samsung telefonok: a Wi-Fi-hívások mindkét oldallal rögzítődnek</item>
         <item>A „Szöveg és jegyzetek mentése a felvétel mellé” nagy könyvtárnál sokkal könnyebb</item>
         <item>Javítva: „no certificates” hiba egyes telepítőkkel történő telepítéskor (pl. SAI)</item>
+        <item>Javítva: a Telegram- és AyuGram-hívások már nem válnak ketté két fájlra, és a helyes nevet mutatják</item>
+        <item>Javítva: a hosszú hívások már nem futnak időtúllépésbe a felhős átírásnál</item>
     </string-array>
     <string name="whatsnew_250_title">Hívás után megtartás vagy törlés, és megosztás, amire szükséged van</string>
     <string-array name="whatsnew_250_items">

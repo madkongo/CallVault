@@ -161,6 +161,8 @@
         <item>Samsung phones: calls over Wi-Fi Calling are recorded with both sides</item>
         <item>\"Save transcript and notes next to the recording\" is much lighter on a large library</item>
         <item>Fixed — \"no certificates\" error when installing with some installers (e.g. SAI)</item>
+        <item>Fixed — Telegram and AyuGram calls are no longer split into two files, and show the right name</item>
+        <item>Fixed — long calls no longer time out with cloud transcription</item>
     </string-array>
     <string name="whatsnew_250_title">Keep or delete after a call, and share what you need</string>
     <string-array name="whatsnew_250_items">

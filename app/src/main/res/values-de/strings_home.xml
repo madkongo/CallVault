@@ -139,6 +139,8 @@
         <item>Samsung-Handys: Anrufe über WLAN-Telefonie werden mit beiden Seiten aufgenommen</item>
         <item>„Transkript und Notizen neben der Aufnahme speichern“ ist bei großen Bibliotheken deutlich leichter</item>
         <item>Behoben: Fehler „no certificates“ beim Installieren mit manchen Installern (z. B. SAI)</item>
+        <item>Behoben: Telegram- und AyuGram-Anrufe werden nicht mehr in zwei Dateien geteilt und tragen den richtigen Namen</item>
+        <item>Behoben: Lange Anrufe laufen bei der Cloud-Transkription nicht mehr in eine Zeitüberschreitung</item>
     </string-array>
     <string name="whatsnew_250_title">Nach dem Anruf behalten oder löschen – und teilen, was du brauchst</string>
     <string-array name="whatsnew_250_items">

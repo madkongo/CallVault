@@ -140,6 +140,8 @@
         <item>Téléphones Samsung : les appels en Wi-Fi Calling sont enregistrés des deux côtés</item>
         <item>« Enregistrer la transcription et les notes à côté de l’enregistrement » est bien plus léger sur une grande bibliothèque</item>
         <item>Corrigé : erreur « no certificates » à l’installation avec certains installateurs (p. ex. SAI)</item>
+        <item>Corrigé : les appels Telegram et AyuGram ne sont plus coupés en deux fichiers et portent le bon nom</item>
+        <item>Corrigé : les longs appels n’expirent plus lors de la transcription dans le cloud</item>
     </string-array>
     <string name="whatsnew_250_title">Garder ou supprimer après l’appel, et partager ce qu’il vous faut</string>
     <string-array name="whatsnew_250_items">

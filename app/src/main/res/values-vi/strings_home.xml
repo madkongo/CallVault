@@ -139,6 +139,8 @@
         <item>Điện thoại Samsung: cuộc gọi qua Wi-Fi Calling được ghi cả hai bên</item>
         <item>\"Lưu bản chép lời và ghi chú cạnh bản ghi\" nhẹ hơn nhiều với thư viện lớn</item>
         <item>Đã sửa: lỗi \"no certificates\" khi cài đặt bằng một số trình cài đặt (ví dụ: SAI)</item>
+        <item>Đã sửa: cuộc gọi Telegram và AyuGram không còn bị tách thành hai tệp và hiện đúng tên</item>
+        <item>Đã sửa: cuộc gọi dài không còn bị hết thời gian chờ khi chép lời trên đám mây</item>
     </string-array>
     <string name="whatsnew_250_title">Giữ hoặc xóa sau cuộc gọi, và chia sẻ đúng thứ bạn cần</string>
     <string-array name="whatsnew_250_items">

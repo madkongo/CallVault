@@ -139,6 +139,8 @@
         <item>三星手机：通过 Wi-Fi 通话的电话会录下双方的声音</item>
         <item>“在录音旁保存转写和笔记”在大型资料库上轻快得多</item>
         <item>已修复：使用某些安装器安装时出现“no certificates”错误（例如 SAI）</item>
+        <item>已修复：Telegram 和 AyuGram 通话不再被拆成两个文件，并显示正确的名称</item>
+        <item>已修复：长通话使用云端转写时不再超时</item>
     </string-array>
     <string name="whatsnew_250_title">通话结束后保留或删除，按需分享</string>
     <string-array name="whatsnew_250_items">
