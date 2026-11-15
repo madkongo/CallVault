@@ -3,6 +3,20 @@
 All notable changes to CallVault are documented here. The format is based on
 [Keep a Changelog](https://keepachangelog.com/), and this project uses semantic-ish versioning.
 
+## [Unreleased]
+
+### Fixed
+
+- **LINE calls are now recorded on phones where LINE never switches the phone into call mode.** On a POCO F8 Ultra
+  (HyperOS 3) a LINE call left no recording and no notification, because CallVault only starts an app call when the
+  phone enters call mode and LINE does not. CallVault now also starts when LINE has a call-voice player and a
+  call-voice recording running together for 2 seconds, and stops when both are gone. Only LINE is allowed to start
+  this way; every other app starts exactly as before (#80).
+  <!-- 🧪 VERIFYING (test build 2.5.1.1-line1, not shipped): make a LINE call on the POCO F8 Ultra; a recording should
+  appear with both voices. Capturing in call mode NORMAL is unproven on that phone. If it still fails, the debug
+  report now holds "normal-mode voice audio" lines (the "USB debugging switched off (always on)" section) that say who
+  owned the audio and whether LINE matched, and "normal-mode app call capture health" with the first-second peaks. -->
+
 ## [2.5.1] — 2026-11-15
 
 ### Added

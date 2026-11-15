@@ -11,9 +11,11 @@ package com.baba.callvault.services.recording
 import android.content.Context
 import android.media.AudioManager
 import android.media.AudioPlaybackConfiguration
+import android.media.AudioRecordingConfiguration
 import android.os.Build
 import android.os.Handler
 import android.os.Looper
+import com.baba.callvault.system.diagnostics.CallEndLog
 import com.baba.callvault.system.storage.CutOffRescueWorker
 import com.baba.callvault.data.AppPreferences
 import com.baba.callvault.utils.AppLogger
@@ -69,6 +71,23 @@ class VoipCallDetector(private val context: Context) {
     /** True while the pending end was scheduled as a ring-time dip (long wait). */
     private var endDeferredAsRingDip = false
 
+    // ---- BabApps item 108: an app call that never leaves MODE_NORMAL (LINE), see [VoipNormalModePolicy] ----
+    /** True while the current call was started from its audio, not from the mode. */
+    private var normalModeCall = false
+
+    /** When the current normal-mode call was started (elapsedRealtime), for the stop line. */
+    private var normalModeStartedAt = 0L
+
+    /** Since when a call-voice player AND a call-voice recording have both been live in NORMAL mode; 0 = not. */
+    private var normalCandidateSince = 0L
+
+    /** The pair was looked at for this candidate already, so it is not looked at again until it ends. */
+    private var normalCandidateJudged = false
+
+    /** The last "voice audio in normal mode" signature that was logged, so a line is written once per change. */
+    private var lastNormalVoiceKey: String? = null
+    private val ownersLookupBusy = java.util.concurrent.atomic.AtomicBoolean(false)
+
     /**
      * Set while the mode is in the IN_COMMUNICATION stretch of a carrier call (a Samsung Wi-Fi call).
      * See [VoipStrayStartPolicy]: without it the hang-up left a stray 1 s `_voip` file (#45).
@@ -119,6 +138,8 @@ class VoipCallDetector(private val context: Context) {
         probe("tick", always = true)
         // A carrier call that ends with no audio event would otherwise leave the latch up.
         if (carrierEpisode.active) evaluate(audioManager?.mode ?: AudioManager.MODE_NORMAL)
+        // A normal-mode call has no mode event to end it: the heartbeat is its backstop (item 108).
+        if (normalModeCall) watchNormalMode()
     }
 
     /**
@@ -130,6 +151,14 @@ class VoipCallDetector(private val context: Context) {
         override fun onPlaybackConfigChanged(configs: MutableList<AudioPlaybackConfiguration>) {
             evaluate(audioManager?.mode ?: AudioManager.MODE_NORMAL)
             probe("playback")
+            watchNormalMode()
+        }
+    }
+
+    /** The recording side of the same watch: a call-voice recording opening or closing (item 108). */
+    private val recordingTrigger = object : AudioManager.AudioRecordingCallback() {
+        override fun onRecordingConfigChanged(configs: MutableList<AudioRecordingConfiguration>) {
+            watchNormalMode()
         }
     }
 
@@ -140,6 +169,9 @@ class VoipCallDetector(private val context: Context) {
             suspendedForCarrier = false
             handler.removeCallbacks(suspendTimeout)
             AppLogger.i(TAG, "VoIP call ended")
+            if (normalModeCall) logNormalModeStopped()
+            normalModeCall = false
+            handler.removeCallbacks(normalEndRunnable)
             probeTailUntil = android.os.SystemClock.elapsedRealtime() + PROBE_TAIL_MS
             probe("ended", always = true)
             // Take the prompt down with the call. Leaving it would offer to record a call that is
@@ -219,7 +251,8 @@ class VoipCallDetector(private val context: Context) {
 
         // Hold it open rather than ending it, so returning to the app call continues the SAME file.
         // Splitting one conversation across two recordings is what this replaces.
-        val held = runCatching { VoipRecordingCoordinator.setSuspendedForCarrierCall(context, true) }
+        // A normal-mode call (item 108) has no mode that brings it back, so it is never held: it ends.
+        val held = !normalModeCall && runCatching { VoipRecordingCoordinator.setSuspendedForCarrierCall(context, true) }
             .getOrDefault(false)
         if (held) {
             suspendedForCarrier = true
@@ -236,6 +269,9 @@ class VoipCallDetector(private val context: Context) {
         // this always did. Two files is worse than one, and far better than a file nothing is
         // writing to and nobody will ever finalise.
         AppLogger.i(TAG, "A carrier call was answered — dropping the app-call recording (no suspend available)")
+        if (normalModeCall) logNormalModeStopped()
+        normalModeCall = false
+        handler.removeCallbacks(normalEndRunnable)
         callActive = false
         suspendedForCarrier = false
         VoipRecordPrompt.cancel(context)
@@ -259,6 +295,16 @@ class VoipCallDetector(private val context: Context) {
             probeTailUntil = android.os.SystemClock.elapsedRealtime() + PROBE_TAIL_MS
         }
         carrierEpisode = latched
+        if (normalModeCall) {
+            if (mode == AudioManager.MODE_IN_COMMUNICATION) {
+                // The app moved into call mode after all: from here the mode-driven rules own this call.
+                normalModeCall = false
+                handler.removeCallbacks(normalEndRunnable)
+                AppLogger.i(TAG, "The normal-mode app call entered call mode — the mode now drives it")
+            } else if (callActive) {
+                return   // watchNormalMode() drives the end of this call
+            }
+        }
         when (VoipSwitchPolicy.decide(mode, callActive, suspendedForCarrier)) {
             VoipSwitchPolicy.Action.NOTHING -> return
 
@@ -310,6 +356,16 @@ class VoipCallDetector(private val context: Context) {
                 }
             }
         }
+        startAppCall(viaNormalMode = false)
+    }
+
+    /**
+     * Carries out a start: the carrier-call checks, then the recording (or the "Ask me" prompt).
+     *
+     * The body of what used to be inline in [evaluate]; [viaNormalMode] is the only difference (item 108):
+     * the call was recognised from its audio, the mode is NORMAL, and the log says so.
+     */
+    private fun startAppCall(viaNormalMode: Boolean) {
         run {
             // The mode alone does not prove this is an app call. A carrier call carried over IMS
             // (Wi-Fi calling, some VoLTE stacks) can present as MODE_IN_COMMUNICATION too, and acting
@@ -326,16 +382,23 @@ class VoipCallDetector(private val context: Context) {
                     handler.removeCallbacks(tailRecheck)
                     handler.postDelayed(tailRecheck, wait + TAIL_RECHECK_SLACK_MS)
                 }
-                AppLogger.i(TAG, "mode=IN_COMMUNICATION but not an app call: $verdict (carrierEpisode=$carrierEpisode)")
+                AppLogger.i(TAG, "${if (viaNormalMode) "normal-mode voice audio" else "mode=IN_COMMUNICATION"} but not an app call: $verdict (carrierEpisode=$carrierEpisode)")
                 probe("refused")
                 return
             }
             handler.removeCallbacks(debouncedEndRunnable)
             callActive = true
             callDetectedAt = android.os.SystemClock.elapsedRealtime()
-            voicePlayerSeen = false
+            // A normal-mode call is recognised BY its call-voice player, so one has been seen.
+            voicePlayerSeen = viaNormalMode
             endDeferredAsRingDip = false
-            AppLogger.i(TAG, "VoIP call detected (mode=IN_COMMUNICATION)")
+            normalModeCall = viaNormalMode
+            normalModeStartedAt = callDetectedAt
+            if (viaNormalMode) {
+                CallEndLog.record(context, "normal-mode app call detected (mode=NORMAL, call-voice player + recording from an allow-listed app): starting")
+            } else {
+                AppLogger.i(TAG, "VoIP call detected (mode=IN_COMMUNICATION)")
+            }
 
             // The master On/Off switch is off: the user turned recording off entirely, so a STOPPED
             // CallVault must be silent on app calls too — don't record and don't even offer to. (The
@@ -365,11 +428,166 @@ class VoipCallDetector(private val context: Context) {
                 onRecordingStateChanged?.invoke()
                 return
             }
-            runCatching { VoipRecordingCoordinator.onCallStarted(context) }
+            runCatching { VoipRecordingCoordinator.onCallStarted(context, viaNormalMode = viaNormalMode) }
                 .onFailure { AppLogger.w(TAG, "VoIP start failed: ${it.message}") }
             isRecording = VoipRecordingCoordinator.isRecording
             onRecordingStateChanged?.invoke()
         }
+    }
+
+    // ---------------------------------------------------------------------------------------------
+    // BabApps item 108: app calls that never leave MODE_NORMAL
+    // ---------------------------------------------------------------------------------------------
+
+    /**
+     * Called on every playback or recording change (and on the heartbeat of a normal-mode call).
+     *
+     * Cheap and on the main thread: it only reads the counts the app is allowed to see. The owner of the
+     * audio (its package) needs the recorder host, so that lookup runs off the main thread — see
+     * [lookUpOwners].
+     */
+    private fun watchNormalMode() {
+        val am = audioManager ?: return
+        val snap = runCatching { VoipEndProbe.capture(am) }.getOrNull() ?: return
+        if (normalModeCall) {
+            watchNormalModeCall(snap)
+            return
+        }
+        val voiceAudio = snap.voiceCallPlayers > 0 || snap.voiceCommRecorders > 0
+        if (snap.mode != AudioManager.MODE_NORMAL || !voiceAudio) {
+            lastNormalVoiceKey = null
+            clearNormalCandidate()
+            return
+        }
+        // Log once per change (callActive or not): who owns it, what it is, whether the allow-list matched.
+        val key = "${snap.voiceCallPlayers}/${snap.voiceCommRecorders}/${snap.playerKinds}"
+        if (key != lastNormalVoiceKey) {
+            lastNormalVoiceKey = key
+            lookUpOwners(snap, judge = false)
+        }
+        val both = snap.voiceCallPlayers > 0 && snap.voiceCommRecorders > 0
+        if (callActive || !both) {
+            clearNormalCandidate()
+            return
+        }
+        if (normalCandidateSince == 0L) {
+            normalCandidateSince = android.os.SystemClock.elapsedRealtime()
+            normalCandidateJudged = false
+            handler.removeCallbacks(normalConfirmRunnable)
+            handler.postDelayed(normalConfirmRunnable, VoipNormalModePolicy.HOLD_MS)
+        }
+    }
+
+    private fun clearNormalCandidate() {
+        normalCandidateSince = 0L
+        normalCandidateJudged = false
+        handler.removeCallbacks(normalConfirmRunnable)
+    }
+
+    /** The pair has been live for [VoipNormalModePolicy.HOLD_MS]: look at who owns it, once. */
+    private val normalConfirmRunnable: Runnable = Runnable {
+        val am = audioManager ?: return@Runnable
+        val snap = runCatching { VoipEndProbe.capture(am) }.getOrNull() ?: return@Runnable
+        val both = snap.mode == AudioManager.MODE_NORMAL && snap.voiceCallPlayers > 0 && snap.voiceCommRecorders > 0
+        if (normalCandidateSince == 0L || normalCandidateJudged || callActive || !both) {
+            if (!both) clearNormalCandidate()
+            return@Runnable
+        }
+        normalCandidateJudged = true
+        lookUpOwners(snap, judge = true)
+    }
+
+    /**
+     * Asks the recorder host who owns the call-voice audio, off the main thread, and logs the answer
+     * (always-on, see [CallEndLog]). With [judge] it then decides, back on the main thread, whether this
+     * is a normal-mode app call to record.
+     *
+     * Nothing here waits on the main thread: `dumpsys audio` takes a few hundred ms in the host.
+     */
+    private fun lookUpOwners(snap: VoipEndProbe.Snapshot, judge: Boolean) {
+        val service = com.baba.callvault.server.RecorderConnection.service
+        if (service == null) {
+            CallEndLog.record(context, "normal-mode voice audio: ${VoipEndProbe.describe(snap)} callActive=$callActive — recorder host not connected, owners unknown")
+            return
+        }
+        if (!ownersLookupBusy.compareAndSet(false, true)) {
+            // One lookup at a time. A judge that finds one running is retried by the next change or tick.
+            if (judge) normalCandidateJudged = false
+            return
+        }
+        Thread {
+            val dump = runCatching { service.diagnosticDump("voip_owners", null) }.getOrNull()
+            val pm = context.packageManager
+            val packagesFor = { uid: Int -> runCatching { pm.getPackagesForUid(uid) }.getOrNull().orEmpty().toList() }
+            val owners = dump?.let { VoipNormalModePolicy.parseOwners(it) }
+            val players = owners?.let { VoipNormalModePolicy.voicePlayerPackages(it, packagesFor) }.orEmpty()
+            val recorders = owners?.let { VoipNormalModePolicy.voiceRecorderPackages(it, packagesFor) }.orEmpty()
+            handler.post {
+                ownersLookupBusy.set(false)
+                val line = if (owners == null) "owners unknown (the recorder host gave no answer)"
+                else VoipNormalModePolicy.describe(owners, players, recorders)
+                CallEndLog.record(
+                    context,
+                    "normal-mode voice audio: ${VoipEndProbe.describe(snap)} callActive=$callActive $line",
+                )
+                if (judge) judgeNormalCandidate(players, recorders)
+            }
+        }.apply { isDaemon = true; name = "cv-voip-owners" }.start()
+    }
+
+    /** Main thread: the policy's verdict, on the audio as it is now. */
+    private fun judgeNormalCandidate(players: Set<String>, recorders: Set<String>) {
+        val am = audioManager ?: return
+        val snap = runCatching { VoipEndProbe.capture(am) }.getOrNull() ?: return
+        val now = android.os.SystemClock.elapsedRealtime()
+        val stillBoth = snap.voiceCallPlayers > 0 && snap.voiceCommRecorders > 0
+        val heldMs = if (normalCandidateSince == 0L || !stillBoth) 0L else now - normalCandidateSince
+        val verdict = VoipNormalModePolicy.decide(
+            mode = snap.mode,
+            carrierCallUp = !VoipTelephonyGate.mayStartNow(context),
+            callActive = callActive,
+            vcPlayerPackages = players,
+            vcRecorderPackages = recorders,
+            heldMs = heldMs,
+        )
+        AppLogger.i(TAG, "normal-mode voice audio verdict: $verdict (held ${heldMs}ms)")
+        if (verdict == VoipNormalModePolicy.Verdict.START) {
+            clearNormalCandidate()
+            startAppCall(viaNormalMode = true)
+            return
+        }
+        // NOT_YET (the pair flickered while the lookup ran): look again when the next change comes.
+        if (verdict == VoipNormalModePolicy.Verdict.NOT_YET) normalCandidateJudged = false
+    }
+
+    /** A normal-mode call is up: end it once the call-voice audio has been gone for the debounce. */
+    private fun watchNormalModeCall(snap: VoipEndProbe.Snapshot) {
+        val ended = VoipNormalModePolicy.shouldEnd(snap.mode, snap.voiceCallPlayers, snap.voiceCommRecorders)
+        if (!ended) {
+            if (handler.hasCallbacks(normalEndRunnable)) {
+                handler.removeCallbacks(normalEndRunnable)
+                AppLogger.i(TAG, "Call-voice audio came back inside the debounce — the normal-mode call continues")
+            }
+            return
+        }
+        if (!handler.hasCallbacks(normalEndRunnable)) {
+            handler.postDelayed(normalEndRunnable, VoipNormalModePolicy.END_DEBOUNCE_MS)
+        }
+    }
+
+    private val normalEndRunnable: Runnable = Runnable {
+        val am = audioManager ?: return@Runnable
+        val snap = runCatching { VoipEndProbe.capture(am) }.getOrNull() ?: return@Runnable
+        if (normalModeCall && VoipNormalModePolicy.shouldEnd(snap.mode, snap.voiceCallPlayers, snap.voiceCommRecorders)) {
+            AppLogger.i(TAG, "Call-voice player and recording are both gone — ending the normal-mode call")
+            endCallRunnable.run()
+        }
+    }
+
+    /** The stop line of a normal-mode call. The capture's own peak levels follow in "App-call capture health". */
+    private fun logNormalModeStopped() {
+        val seconds = (android.os.SystemClock.elapsedRealtime() - normalModeStartedAt) / 1000
+        CallEndLog.record(context, "normal-mode app call stopped after ${seconds}s; capture health and first-second peaks follow in the VoIP log")
     }
 
     /** Starts watching, if the feature is on. Idempotent. */
@@ -383,6 +601,7 @@ class VoipCallDetector(private val context: Context) {
             // Registered on every version: on API 30 it is the only trigger, and above it is a cheap
             // backstop in case a mode change is ever missed.
             audioManager.registerAudioPlaybackCallback(playbackTrigger, handler)
+            audioManager.registerAudioRecordingCallback(recordingTrigger, handler)
             registered = true
             AppLogger.i(TAG, "VoIP call detection active")
             evaluate(audioManager.mode)   // a call may already be in progress
@@ -393,6 +612,8 @@ class VoipCallDetector(private val context: Context) {
     fun stop() {
         handler.removeCallbacks(debouncedEndRunnable)
         handler.removeCallbacks(tailRecheck)
+        clearNormalCandidate()
+        handler.removeCallbacks(normalEndRunnable)
         carrierEpisode = VoipStrayStartPolicy.Latch()
         if (callActive) endCallRunnable.run()
         handler.removeCallbacks(probeHeartbeat)
@@ -403,6 +624,7 @@ class VoipCallDetector(private val context: Context) {
                 audioManager.removeOnModeChangedListener(modeListener)
             }
             audioManager.unregisterAudioPlaybackCallback(playbackTrigger)
+            audioManager.unregisterAudioRecordingCallback(recordingTrigger)
         }
         registered = false
         AppLogger.i(TAG, "VoIP call detection stopped")

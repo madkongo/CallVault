@@ -33,7 +33,7 @@ class DiagnosticDumpsTest {
             "processes_times", "logcat_grow_host",
             "setting_adb_enabled", "setting_dev_options", "call_state", "audio_latency",
             "voip_policy", "voip_players", "voip_tracks", "voip_audio_log", "vivo_audio_props",
-            "audio_record_state",
+            "audio_record_state", "voip_owners",
         )
             .forEach { key ->
                 assertTrue("$key must be runnable", DiagnosticDumps.commandFor(key, null) != null)
@@ -149,7 +149,7 @@ class DiagnosticDumpsTest {
         // vivo, 2026-09-28: the far party of an app call was silent with the sink open. These three answer
         // where the call's audio went. Fixed commands, no caller input; each is cut short on the device so a
         // multi-megabyte dump never crosses the binder.
-        listOf("voip_policy", "voip_players", "voip_tracks", "voip_audio_log", "vivo_audio_props").forEach { key ->
+        listOf("voip_policy", "voip_players", "voip_tracks", "voip_audio_log", "vivo_audio_props", "voip_owners").forEach { key ->
             val cmd = DiagnosticDumps.commandFor(key, "ignored; rm -rf /")!!.joinToString(" ")
             assertTrue("$key must be capped: $cmd", cmd.contains("head -n") || cmd.contains("tail -n"))
             assertTrue("$key must not carry the argument: $cmd", !cmd.contains("rm -rf"))

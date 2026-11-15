@@ -152,6 +152,13 @@ object DiagnosticDumps {
             SH, "-c",
             "$DUMPSYS audio | sed -n '/^  players:/,/ducked players/p' | grep -v 'state:idle' | head -n 40",
         )
+        // Who owns the live call-voice audio: every player line (uid, usage, state) and every recording line
+        // (source, uid, package) of the audio service's dump. For the normal-mode app-call start (BabApps item 108),
+        // which has to know the PACKAGE of a player and a recording the app is shown anonymised.
+        "voip_owners" -> arrayOf(
+            SH, "-c",
+            "$DUMPSYS audio | grep -E 'AudioPlaybackConfiguration|source client=' | grep -v 'state:idle' | head -n 80",
+        )
         // Each mixer output, its device, and its track table (the Usg column is the usage) — is the call's
         // track on the remote-submix output our sink reads, or on a voice/VoIP output the mix never sees?
         "voip_tracks" -> arrayOf(
