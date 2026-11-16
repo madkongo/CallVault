@@ -61,7 +61,56 @@ object SetupJournalPolicy {
         "CV:CallVaultApplication",
     )
 
+    /**
+     * How long an identical line is kept out after it was last written.
+     *
+     * From the BabApps item 92 reporter's log: the recorder relaunch failed once a minute for 143 minutes
+     * (12:49 to 15:12) and was still failing. Written line by line, those repeats would fill the 64 KB cap in a
+     * few hours and the pairing attempt after them would not fit. 30 minutes turns 143 repeats into about five.
+     */
+    const val REPEAT_WINDOW_MS = 30 * 60_000L
+
+    /** Tags driven by what the user does, never thinned: a second pairing attempt must show up as its own lines. */
+    private val NEVER_THINNED = setOf("CV:AdbPairing", "CV:AdbMdns", "CV:SetupReport", "CV:ConnectPort")
+
     /** Whether this line belongs in the journal. Cheap: it is asked of every log line in the app. */
     fun shouldRecord(tag: String, isClosed: Boolean, bytesWritten: Long): Boolean =
         !isClosed && bytesWritten < MAX_BYTES && tag in TAGS
+
+    fun isNeverThinned(tag: String): Boolean = tag in NEVER_THINNED
+}
+
+/**
+ * Keeps a line that repeats itself from filling the journal: the same tag and message inside
+ * [SetupJournalPolicy.REPEAT_WINDOW_MS] of its last written copy is left out and counted, and the count is
+ * reported with the next copy that is written. Tags in [SetupJournalPolicy.isNeverThinned] always pass.
+ *
+ * Not thread-safe on its own; [SetupJournal] calls it under its lock.
+ */
+class RepeatGate(private val windowMs: Long = SetupJournalPolicy.REPEAT_WINDOW_MS, private val maxKeys: Int = 256) {
+
+    private class Seen(var lastWrittenMs: Long, var leftOut: Int)
+
+    private val seen = object : LinkedHashMap<String, Seen>(64, 0.75f, true) {
+        override fun removeEldestEntry(eldest: MutableMap.MutableEntry<String, Seen>?) = size > maxKeys
+    }
+
+    /** -1: leave this line out. 0 or more: write it, after noting that many identical lines were left out. */
+    fun admit(tag: String, message: String, nowMs: Long): Int {
+        if (SetupJournalPolicy.isNeverThinned(tag)) return 0
+        val key = "$tag $message"
+        val entry = seen[key]
+        if (entry == null) {
+            seen[key] = Seen(nowMs, 0)
+            return 0
+        }
+        if (nowMs - entry.lastWrittenMs < windowMs) {
+            entry.leftOut++
+            return -1
+        }
+        val skipped = entry.leftOut
+        entry.leftOut = 0
+        entry.lastWrittenMs = nowMs
+        return skipped
+    }
 }
