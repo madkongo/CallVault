@@ -284,6 +284,11 @@
     <string name="placeholder_contact_name_desc">El nombre del contacto, si está disponible</string>
     <string name="placeholder_cross_country_desc">Indica si la llamada es nacional de larga distancia (verdadero/falso)</string>
     <string name="placeholder_date_desc">La fecha y hora actuales</string>
+    <string name="placeholder_day_desc">El día, como 20261112</string>
+    <string name="placeholder_day_dashed_desc">El día con guiones, como 2026-11-12</string>
+    <string name="placeholder_time_desc">La hora, como 143520</string>
+    <string name="placeholder_time_dashed_desc">La hora con guiones, como 14-35-20</string>
+    <string name="settings_file_name_error_day_time">Usa {day} y {time} juntos, primero el día, con _, -, un espacio o T entre ellos (por ejemplo {day}_{time}), o usa {date}.</string>
     <string name="placeholder_direction_desc">La dirección de la llamada (entrante/saliente)</string>
     <string name="placeholder_phone_number_desc">El número de teléfono</string>
     <string name="playback_marked_moments">Momentos marcados</string>

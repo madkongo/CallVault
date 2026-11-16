@@ -377,6 +377,11 @@
     <string name="placeholder_contact_name_desc">نام مخاطب، در صورت وجود</string>
     <string name="placeholder_cross_country_desc">نشان می‌دهد تماس بین‌کشوری است یا نه (درست/نادرست)</string>
     <string name="placeholder_date_desc">تاریخ و زمان کنونی</string>
+    <string name="placeholder_day_desc">روز، مانند 20261112</string>
+    <string name="placeholder_day_dashed_desc">روز با خط تیره، مانند 2026-11-12</string>
+    <string name="placeholder_time_desc">ساعت، مانند 143520</string>
+    <string name="placeholder_time_dashed_desc">ساعت با خط تیره، مانند 14-35-20</string>
+    <string name="settings_file_name_error_day_time">{day} و {time} را با هم استفاده کنید، ابتدا روز، و میان آن‌ها _ یا - یا فاصله یا T (مثلاً {day}_{time})، یا از {date} استفاده کنید.</string>
     <string name="placeholder_direction_desc">جهت تماس (ورودی/خروجی)</string>
     <string name="placeholder_phone_number_desc">شماره تلفن</string>
     <string name="playback_marked_moments">لحظه‌های نشان‌گذاری‌شده</string>

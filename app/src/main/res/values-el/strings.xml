@@ -438,6 +438,11 @@
     <string name="placeholder_contact_name_desc">Το όνομα της επαφής, αν είναι διαθέσιμο</string>
     <string name="placeholder_cross_country_desc">Υποδεικνύει αν η κλήση είναι διεθνής (true/false)</string>
     <string name="placeholder_date_desc">Η τρέχουσα ημερομηνία και ώρα</string>
+    <string name="placeholder_day_desc">Η ημέρα, π.χ. 20261112</string>
+    <string name="placeholder_day_dashed_desc">Η ημέρα με παύλες, π.χ. 2026-11-12</string>
+    <string name="placeholder_time_desc">Η ώρα, π.χ. 143520</string>
+    <string name="placeholder_time_dashed_desc">Η ώρα με παύλες, π.χ. 14-35-20</string>
+    <string name="settings_file_name_error_day_time">Χρησιμοποιήστε μαζί τα {day} και {time}, πρώτα την ημέρα, με _, -, κενό ή T ανάμεσά τους (π.χ. {day}_{time}), ή χρησιμοποιήστε το {date}.</string>
     <string name="placeholder_direction_desc">Η κατεύθυνση της κλήσης (εισερχόμενη/εξερχόμενη)</string>
     <string name="placeholder_phone_number_desc">Ο αριθμός τηλεφώνου</string>
     <string name="playback_marked_moments">Σημειωμένες στιγμές</string>

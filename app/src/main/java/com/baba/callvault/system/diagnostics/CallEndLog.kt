@@ -30,7 +30,7 @@ object CallEndLog {
     /** A list-row duration probe is only worth a line when it takes longer than this. */
     const val SLOW_ROW_PROBE_MS = 2_000L
 
-    private val STAMP = Regex("""\d{8}_\d{6}\.\d{3}(?:[+-]|%2[Bb])\d{4}""")
+    private val STAMP = Regex("""\d{8}_\d{6}\.\d{3}(?:[+-]|%2[Bb])\d{4}|(?<!\d)${com.baba.callvault.utils.FileNameStamp.PAIR_PATTERN}(?!\d)""")
     private val MARKER = Regex("""^_(?:in|out|import(?:_transcribeonly)?|voip(?:-[^_\s.]+)?)(?=[_.\s-]|%20)""")
     private val EXTENSION = Regex("""\.([A-Za-z0-9]{1,5})$""")
 

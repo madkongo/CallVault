@@ -126,7 +126,8 @@ object LogRedaction {
      * the contact run need no special handling — they are just characters in the run.
      */
     private val RECORDING_NAME_REGEX = Regex(
-        "(\\d{8}_\\d{6}\\.\\d{3}(?:[+-]|%2[BbDd])\\d{4})" +             // 1: {date}, raw or URI-encoded
+        "(\\d{8}_\\d{6}\\.\\d{3}(?:[+-]|%2[BbDd])\\d{4}" +                // 1: {date}, raw or URI-encoded,
+            "|(?<!\\d)${FileNameStamp.DAY_PATTERN}(?:[_ T-]|%20)${FileNameStamp.TIME_PATTERN}(?!\\d))" + // or {day}+{time} (#82)
             "((?:_(?:in|out|import(?:_transcribeonly)?|voip(?:-[^_\\s.]+)?)" +
             "(?=[_.\\s-]|%20))?)" +                                     // 2: direction / voip[-App] / import
             "(?:((?:[_\\s-]|%20)+)([^/\\\\\\n]{1,$MAX_NAME_RUN}?))?" +      // 3: joiner, 4: contact or number
@@ -144,7 +145,7 @@ object LogRedaction {
      * possibly contain one. That is a single linear character scan with no regex machinery, and it
      * skips the majority of lines (prose, `->` state changes, exception messages).
      */
-    private fun mayContainRecordingName(message: String) = message.indexOf('_') >= 0
+    private fun mayContainRecordingName(message: String) = message.indexOf('_') >= 0 || message.indexOf('.') >= 0 // a {day}-{time} name may hold no '_' (#82), but always its extension's '.'
 
     /**
      * Redacts a single log line: phone numbers out, contact names pseudonymised.
@@ -174,12 +175,10 @@ object LogRedaction {
      * A template with nothing after the date needs no help: a name that ends at its date is caught anyway.
      */
     fun namesAroundDate(template: String): Boolean {
-        val date = template.indexOf(DATE_TAG)
-        if (date < 0) return false
-        return template.substring(0, date).isNotBlank() && template.substring(date + DATE_TAG.length).isNotBlank()
+        // The date is `{date}`, or the `{day}` + `{time}` pair that stands for it (#82).
+        val span = Regex("""\{date\}|\{day-?\}[_ T-]\{time-?\}""").find(template)?.range ?: return false
+        return template.substring(0, span.first).isNotBlank() && template.substring(span.last + 1).isNotBlank()
     }
-
-    private const val DATE_TAG = "{date}"
 
     /**
      * API keys for cloud transcription (issue #48), in case one ever reaches a line: Groq's `gsk_…`,

@@ -8,6 +8,7 @@
 
 package com.baba.callvault.data.merge
 
+import com.baba.callvault.utils.FileNameStamp
 import java.text.SimpleDateFormat
 import java.util.Locale
 
@@ -31,6 +32,8 @@ internal object MergeNaming {
             val millis = "%03d".format((m.groupValues[2].toInt() + by) % 1000)
             return stem.replaceRange(m.groups[2]!!.range, millis)
         }
+        // A {day}/{time} stamp (#82) has no millisecond either, so its second moves.
+        FileNameStamp.bumped(stem, by)?.let { return it }
         HONOR_DATE.find(stem)?.let { m ->
             val format = SimpleDateFormat("yyyyMMddHHmmss", Locale.US).apply { isLenient = false }
             val time = runCatching { format.parse(m.groupValues[2]) }.getOrNull() ?: return stem + "_" + by

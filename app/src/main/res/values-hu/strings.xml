@@ -284,6 +284,11 @@
     <string name="placeholder_contact_name_desc">Névjegy (amennyiben elérhető)</string>
     <string name="placeholder_cross_country_desc">Országon kívüli vagy belüli hívás (igen/nem)</string>
     <string name="placeholder_date_desc">A jelenlegi dátum és idő</string>
+    <string name="placeholder_day_desc">A nap, pl. 20261112</string>
+    <string name="placeholder_day_dashed_desc">A nap kötőjelekkel, pl. 2026-11-12</string>
+    <string name="placeholder_time_desc">Az idő, pl. 143520</string>
+    <string name="placeholder_time_dashed_desc">Az idő kötőjelekkel, pl. 14-35-20</string>
+    <string name="settings_file_name_error_day_time">Használja a {day} és a {time} címkét együtt, elöl a nappal, köztük _, -, szóköz vagy T (pl. {day}_{time}), vagy használja a {date} címkét.</string>
     <string name="placeholder_direction_desc">Hívás iránya (bejövő/kimenő)</string>
     <string name="placeholder_phone_number_desc">Telefonszám</string>
     <string name="playback_marked_moments">Megjelölt pillanatok</string>

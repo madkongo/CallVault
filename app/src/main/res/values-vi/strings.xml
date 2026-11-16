@@ -283,6 +283,11 @@
     <string name="placeholder_contact_name_desc">Tên người liên hệ (nếu có)</string>
     <string name="placeholder_cross_country_desc">Cho biết cuộc gọi có phải là cuộc gọi xuyên quốc gia hay không (đúng/sai)</string>
     <string name="placeholder_date_desc">Ngày và giờ hiện tại</string>
+    <string name="placeholder_day_desc">Ngày, ví dụ 20261112</string>
+    <string name="placeholder_day_dashed_desc">Ngày có gạch nối, ví dụ 2026-11-12</string>
+    <string name="placeholder_time_desc">Giờ, ví dụ 143520</string>
+    <string name="placeholder_time_dashed_desc">Giờ có gạch nối, ví dụ 14-35-20</string>
+    <string name="settings_file_name_error_day_time">Dùng {day} và {time} cùng nhau, ngày trước, ngăn cách bằng _, -, dấu cách hoặc T (ví dụ {day}_{time}), hoặc dùng {date}.</string>
     <string name="placeholder_direction_desc">Hướng cuộc gọi (đến/đi)</string>
     <string name="placeholder_phone_number_desc">Số điện thoại</string>
     <string name="playback_marked_moments">Thời điểm đã đánh dấu</string>

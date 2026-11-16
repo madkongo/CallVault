@@ -294,6 +294,11 @@
     <string name="placeholder_contact_name_desc">Імʼя контакту, якщо є</string>
     <string name="placeholder_cross_country_desc">Позначка міжнародного дзвінка (так/ні)</string>
     <string name="placeholder_date_desc">Поточна дата й час</string>
+    <string name="placeholder_day_desc">День, наприклад 20261112</string>
+    <string name="placeholder_day_dashed_desc">День із дефісами, наприклад 2026-11-12</string>
+    <string name="placeholder_time_desc">Час, наприклад 143520</string>
+    <string name="placeholder_time_dashed_desc">Час із дефісами, наприклад 14-35-20</string>
+    <string name="settings_file_name_error_day_time">Використовуйте {day} і {time} разом, спочатку день, а між ними _, -, пробіл або T (наприклад {day}_{time}), або використовуйте {date}.</string>
     <string name="placeholder_direction_desc">Напрям дзвінка (вхідний/вихідний)</string>
     <string name="placeholder_phone_number_desc">Номер телефону</string>
     <string name="playback_marked_moments">Позначені моменти</string>
