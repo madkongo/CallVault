@@ -33,6 +33,22 @@ class SetupSnapshotTest {
     }
 
     @Test
+    fun the_rom_build_survives_the_log_redactor_that_would_read_it_as_a_phone_number() {
+        // Seen on the emulator: the unprotected build id came out as [PHONE_REDACTED].
+        val rawId = "DP11.261030.003"
+        assertTrue(LogRedaction.redact("rom=$rawId", "salt").contains("PHONE_REDACTED"))
+        val safe = SetupSnapshot.safeBuild(rawId)
+        val line = SetupSnapshot.format(
+            SetupSnapshot.Facts(
+                "Permissions", "STANDALONE", "-1", "CONNECTED", safe, safe, "Android 17 (API 37)",
+                "true", "false", "false", "false",
+            )
+        )
+        val redacted = LogRedaction.redact(line, "salt")
+        assertTrue(redacted, redacted.contains("rom=DP11_261030_003 (DP11_261030_003)"))
+    }
+
+    @Test
     fun each_setup_screen_is_named() {
         listOf("Disclaimer", "Permissions", "Wizard").forEach {
             assertTrue(SetupSnapshot.format(facts(it)).startsWith("Setup screen shown: $it |"))
