@@ -12,7 +12,8 @@ import android.content.Context
 import java.io.File
 
 /**
- * The first setup, written down whether or not anyone asked for a log.
+ * The setup, written down whether or not anyone asked for a log: the first run, and again every time the setup
+ * screens show while no recorder is connected (see [reopenForNewSetup]).
  *
  * **Why it exists.** The debug log is off by default, and a phone that cannot record from the very
  * first launch is exactly the phone whose owner has not been told to switch anything on. By the time
@@ -45,9 +46,10 @@ object SetupJournal {
             val f = File(context.filesDir, "setup-journal.log")
             file = f
             bytesWritten = if (f.exists()) f.length() else 0L
-            // A journal that already ended stays ended across restarts: the marker is the last line,
-            // so a phone that has recorded successfully once never starts writing again.
-            closed = bytesWritten > 0 && f.useLines { lines -> lines.lastOrNull()?.contains(END_MARKER) == true }
+            // A journal that already ended stays ended across restarts, until a setup screen reopens it.
+            // Judged by the LAST of the two markers, not by the last line: a mode change is written after
+            // the end marker (see SetupJournalPolicy), so the end marker is no longer always the last line.
+            closed = bytesWritten > 0 && isSealed(f.readText())
             if (bytesWritten == 0L) append("=== CallVault setup journal — first run, always on ===")
         }.onFailure { android.util.Log.w(TAG, "Could not open the setup journal: ${it.message}") }
     }
@@ -91,10 +93,14 @@ object SetupJournal {
      * standalone mode, lost the pairing and was stuck at "Let's get set up" with a journal that recorded nothing
      * of it. A setup screen being on show IS the evidence that setup is not finished, so it re-arms the journal.
      *
-     * Keeps only the newest [REOPEN_KEEP_BYTES] of what was there (so the byte cap leaves room for this attempt)
+     * Keeps only the newest [REOPEN_KEEP_BYTES] of what was there (so the byte cap leaves room for this attempt;
+     * an older success record falls out of the journal and survives only in a report sent earlier)
      * and a marker line says where the new attempt starts. Does nothing while the journal is open, so showing
      * the screens again never trims a live attempt. Ended again by [markSetupSucceeded].
      */
+    /** Whether a setup screen showing should reopen a sealed journal: only while no recorder is connected. */
+    fun mayReopen(recorderConnected: Boolean): Boolean = !recorderConnected
+
     fun reopenForNewSetup(reason: String) {
         if (!closed) return
         runCatching {
@@ -106,7 +112,7 @@ object SetupJournal {
             }
             bytesWritten = if (f.exists()) f.length() else 0L
             closed = false
-            append("=== setup needed again ($reason); journal reopened ===")
+            append("=== setup needed again ($reason); $REOPEN_MARKER ===")
         }.onFailure { android.util.Log.w(TAG, "Could not reopen the setup journal: ${it.message}") }
     }
 
@@ -146,6 +152,12 @@ object SetupJournal {
 
     /** Written into the closing line, so a reopened journal can tell it has already finished. */
     private const val END_MARKER = "[journal-end]"
+
+    /** Written into the reopening line; whichever of the two markers comes last says whether the journal is open. */
+    private const val REOPEN_MARKER = "journal reopened"
+
+    /** Whether a journal's text ends in the sealed state. Pure, so it can be tested without a file. */
+    internal fun isSealed(text: String): Boolean = text.lastIndexOf(END_MARKER) > text.lastIndexOf(REOPEN_MARKER)
 
     /** How much of an older journal survives [reopenForNewSetup]. */
     const val REOPEN_KEEP_BYTES = 16 * 1024

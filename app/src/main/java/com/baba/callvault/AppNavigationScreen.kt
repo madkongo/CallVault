@@ -221,7 +221,7 @@ fun AppNavigationScreen(
 
             // Every setup screen carries the pinned "Send a report" link, so a setup that never finishes
             // can still be reported (BabApps item 92: a tester stuck at pairing could not reach Settings).
-            AppScreen.Disclaimer -> SetupScreenWithReportLink {
+            AppScreen.Disclaimer -> SetupScreenWithReportLink("Disclaimer") {
                 DisclaimerScreen(
                     onContinue = {
                         preferences.setDisclaimerAccepted(true)
@@ -230,14 +230,14 @@ fun AppNavigationScreen(
                 )
             }
 
-            AppScreen.Permissions -> SetupScreenWithReportLink(reopenJournal = true) {
+            AppScreen.Permissions -> SetupScreenWithReportLink("Permissions") {
                 PermissionsScreen(
                     status              = onboardingStatus,
                     onPermissionGranted = { appNavViewModel.refresh() }
                 )
             }
 
-            AppScreen.Wizard -> SetupScreenWithReportLink {
+            AppScreen.Wizard -> SetupScreenWithReportLink("Wizard") {
                 WizardScreen(
                     // The wizard persists everything + flips the wizardCompleted flag on Finish; refreshing
                     // the onboarding status here advances the router from Wizard to Home.

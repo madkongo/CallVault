@@ -104,7 +104,9 @@ All notable changes to CallVault are documented here. The format is based on
   step now carry a link at the bottom, always in view, that sends the same debug and system report as Settings ▸ Debug.
   Until now a setup that never finished could not be reported at all (#40). Pairing now writes each step, with timings
   and what the phone says about Wireless debugging, to the setup journal that is kept from the first launch (and that
-  starts writing again whenever the permissions step shows, even if an earlier setup had ended it). It also
+  starts writing again whenever the welcome notice, the permissions step or the wizard shows with no recorder
+  connected, even if an earlier setup had ended it; it also notes the mode, the Wireless debugging reading, Wi-Fi,
+  the ROM build and Shizuku's state on each of those screens, and every mode change and what triggered it). It also
   keeps listening for the pairing service while waiting, so a phone that hides the Wireless debugging switch from apps
   (Android 17 betas) can carry on instead of waiting for nothing.
   <!-- 🧪 VERIFYING: on a fresh install, open the app and check the link under the welcome notice, the permissions

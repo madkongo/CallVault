@@ -400,6 +400,14 @@ object RecorderBackend {
         }
 
         prefs.setPrivilegedMode(to)
+        // Who changed the mode and when, in the always-on setup journal (BabApps item 92: the reporter's log
+        // showed Shizuku mode on 10-22 and standalone by 11-15, with nothing saying how it got there).
+        AppLogger.i(
+            com.baba.callvault.utils.SetupSnapshot.MODE_TAG,
+            com.baba.callvault.utils.SetupSnapshot.modeChange(
+                from.name, to.name, com.baba.callvault.utils.SetupSnapshot.triggerOf(Throwable().stackTrace)
+            )
+        )
 
         // Entering Shizuku mode starts from a clean slate: drop any existing user-service record so the
         // next bind spawns a FRESH process running current code. A daemon(true) service survives app

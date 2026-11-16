@@ -61,7 +61,8 @@ object AppLogger {
      * from the same number of lines. Three days is the target for ordinary use, not a guarantee.
      */
     /** Names the always-on part in the in-app viewer, so the two are never confused for each other. */
-    private const val JOURNAL_VIEW_HEADING = "--- Setup journal (always on) ---"
+    private const val JOURNAL_VIEW_HEADING =
+        "--- Setup journal (always on: first run, later setup screens, mode changes) ---"
 
     private const val MAX_LOG_LINES = 10_000
 
@@ -365,7 +366,11 @@ object AppLogger {
                 // that exists on a phone where logging was never switched on — which is every phone
                 // that failed during setup, the case the rest of the report cannot cover.
                 SetupJournal.readForReport()?.let { journal ->
-                    writer.println("--- Setup journal (always on; the first run, kept as it happened) ---")
+                    writer.println(
+                        "--- Setup journal (always on: the first run, then each time a setup screen showed while no " +
+                            "recorder was connected, plus every mode change; an older journal is cut to its newest " +
+                            "16 KB when it restarts) ---"
+                    )
                     writer.println(journal.trimEnd())
                     writer.println("===========================================")
                     writer.println()
