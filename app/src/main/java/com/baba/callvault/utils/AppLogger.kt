@@ -371,6 +371,14 @@ object AppLogger {
                     writer.println()
                 }
 
+                // Always on as well: the opt-in "Call redirecting app" test (BabApps item 111), one line per call.
+                com.baba.callvault.services.call.CallRedirectDiagLog.readForReport(context)?.let { lines ->
+                    writer.println("--- Call redirecting app test (always on) ---")
+                    writer.println(lines.trimEnd())
+                    writer.println("===========================================")
+                    writer.println()
+                }
+
                 // Always on as well: every time USB debugging went off, and the phone's own log around it.
                 com.baba.callvault.integrations.adb.UsbDebuggingEvents.readForReport(context)?.let { events ->
                     writer.println("--- USB debugging switched off (always on) ---")

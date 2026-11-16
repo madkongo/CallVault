@@ -909,6 +909,8 @@
     <string name="transcribe_again_waiting">等待重新轉寫…</string>
     <string name="wifi_call_switch_failed">這似乎是一通 WLAN 通話，但無法啟動雙方錄音。正在按常規方式錄音，可能錄不到對方的聲音。</string>
     <string name="wifi_call_one_sided">這通 WLAN 通話只錄到了您這一方。如果反覆出現，請在電話應用的設定中將 WLAN 通話設為“首選行動網路”。</string>
+    <string name="settings_test_call_redirect">Test: hold the Call redirecting role</string>
+    <string name="settings_test_call_redirect_description">A short test for the developer. Android starts CallVault on every outgoing call and CallVault lets the call through unchanged, noting how fast it answered. Recording is not affected. Switch off here, then choose your previous app under Default apps › Call redirecting app.</string>
     <string name="settings_debug_force_wifi_route">強制使用 WLAN 通話錄音方式</string>
     <string name="settings_debug_force_wifi_route_description">用於測試。每通電話會在通話中切換到應用通話錄音方式，就像 WLAN 通話那樣。在不支援 WLAN 通話的手機上會缺少對方的聲音，並應顯示錯誤。需要開啟應用通話錄音。僅在開啟日誌記錄時生效。</string>
     <string name="wifi_call_switch_aborted">這通 WLAN 通話的錄音提前停止了：無法安全地切換錄音方式。已錄下的部分會保留。</string>

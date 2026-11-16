@@ -7,6 +7,15 @@ All notable changes to CallVault are documented here. The format is based on
 
 ### Added
 
+- **An opt-in test switch for the "Call redirecting app" role.** Settings ▸ Help and about ▸ "Test: hold the Call
+  redirecting role" (shown only where the phone has that role, off by default). While it is on, Android starts CallVault
+  on every outgoing call and CallVault lets the call through unchanged, noting in the debug report how fast it
+  answered. Recording itself is not touched. Turning it off opens Default apps, where the previous app is chosen again
+  (BabApps item 111).
+  <!-- 🧪 VERIFYING (BabApps item 111, test build only, not shipped): switch on, approve the role, use the phone
+  normally for a few days, then send a debug report: it must hold "Call redirecting app test" lines with the bind and
+  answer times, and outgoing calls must have gone through as usual. -->
+
 - **The day and the time can be used on their own in a custom file name.** Four new tags: `{day}` (20261112),
   `{day-}` (2026-11-12), `{time}` (143520) and `{time-}` (14-35-20), for example `{day-}_{time-}_{contact_name}` gives
   `2026-11-12_14-35-20_Dana.ogg`. `{date}` is unchanged, so no existing name changes. A custom name needs `{date}`, or a

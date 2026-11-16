@@ -241,6 +241,18 @@
             </intent-filter>
         </receiver>
 
+        <!-- OPT-IN TEST (Settings > Help and about): makes CallVault eligible for the "Call redirecting app" role, so a
+             tester can measure whether Telecom wakes us in time. It only ever calls placeCallUnmodified(); see
+             CallRedirectDiagService. Does nothing unless the user grants the role. -->
+        <service
+            android:name=".services.call.CallRedirectDiagService"
+            android:exported="true"
+            android:permission="android.permission.BIND_CALL_REDIRECTION_SERVICE">
+            <intent-filter>
+                <action android:name="android.telecom.CallRedirectionService" />
+            </intent-filter>
+        </service>
+
         <!-- Re-anchors the daily retention sweep to local time on a time-zone/clock change (travel). -->
         <!-- The readiness notification's "Turn USB debugging on" button. Internal only. -->
         <receiver

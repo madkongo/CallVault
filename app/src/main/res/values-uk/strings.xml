@@ -929,6 +929,8 @@
     <string name="transcribe_again_waiting">Очікування повторного розшифрування…</string>
     <string name="wifi_call_switch_failed">Схоже, це дзвінок через Wi-Fi, але запис, що захоплює обидві сторони, не запустився. Він записується звичайним способом, і співрозмовника може бути не чути.</string>
     <string name="wifi_call_one_sided">З цього дзвінка через Wi-Fi записано лише вашу сторону. Якщо це повторюється, у налаштуваннях застосунку «Телефон» увімкніть для дзвінків через Wi-Fi пріоритет мобільної мережі.</string>
+    <string name="settings_test_call_redirect">Test: hold the Call redirecting role</string>
+    <string name="settings_test_call_redirect_description">A short test for the developer. Android starts CallVault on every outgoing call and CallVault lets the call through unchanged, noting how fast it answered. Recording is not affected. Switch off here, then choose your previous app under Default apps › Call redirecting app.</string>
     <string name="settings_debug_force_wifi_route">Примусово записувати як дзвінок через Wi-Fi</string>
     <string name="settings_debug_force_wifi_route_description">Для тестування. Кожен телефонний дзвінок під час розмови перемикається на запис дзвінків застосунків, як це зробив би дзвінок через Wi-Fi. На телефоні без дзвінків через Wi-Fi співрозмовника не буде чути, і має з\'явитися помилка. Потрібен увімкнений запис дзвінків застосунків. Працює, лише поки ввімкнено запис журналу.</string>
     <string name="wifi_call_switch_aborted">Запис цього дзвінка через Wi-Fi зупинився передчасно: не вдалося безпечно перемкнути запис. Записану частину збережено.</string>

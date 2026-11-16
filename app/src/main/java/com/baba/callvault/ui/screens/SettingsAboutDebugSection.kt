@@ -111,6 +111,9 @@ internal fun BugReportSection(
             description     = stringResource(R.string.settings_debug_logging_enabled_description)
         )
 
+        // Opt-in test of the "Call redirecting app" role (BabApps item 111); hidden where the phone has no such role.
+        CallRedirectTestRow()
+
         if (isLoggingEnabled) {
             Column(modifier = Modifier.padding(horizontal = 16.dp)) {
                 Text(
