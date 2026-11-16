@@ -67,8 +67,8 @@ object SetupSnapshot {
                 Settings.Global.getInt(context.contentResolver, "adb_wifi_enabled", -1)
             },
             wifi = read { WifiState.of(context).name },
-            romDisplay = read { Build.DISPLAY },
-            romId = read { Build.ID },
+            romDisplay = read { safeBuild(Build.DISPLAY) },
+            romId = read { safeBuild(Build.ID) },
             android = "Android ${Build.VERSION.RELEASE} (API ${Build.VERSION.SDK_INT})",
             shizukuInstalled = read { ShizukuBackend.isInstalled(context) },
             shizukuRunning = read { ShizukuBackend.isRunning() },
@@ -76,6 +76,13 @@ object SetupSnapshot {
             recorderConnected = read { RecorderConnection.isConnected },
         )
     }
+
+    /**
+     * A build id with its dots turned into underscores. Found on the emulator: the log redactor reads
+     * `DP11.261030.003` as a phone number (nine digits split by dots) and printed `[PHONE_REDACTED]` in its place,
+     * which would have blanked the very field asked for. Underscores are not number separators to it.
+     */
+    fun safeBuild(build: String): String = build.replace('.', '_')
 
     /** Collects and logs. Call from a worker thread: the reads touch settings and Shizuku. */
     fun record(context: Context, screen: String) {
