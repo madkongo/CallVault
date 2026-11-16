@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Auto-completed translations. Do not hand-edit placeholders (%1$s etc.). -->
+<resources xmlns:tools="http://schemas.android.com/tools">
+    <string name="disclaimer_ui_body_header">免責聲明</string>
+    <string name="disclaimer_ui_hero_subtitle">FOSS 通話錄音，由你做主。請在繼續前閲讀免責聲明。</string>
+    <string name="disclaimer_ui_scroll_hint">滾動到底部以啓用複選框。</string>
+    <string name="permission_adb_desc_short">設定錄音器時需要。需要 Wi-Fi。</string>
+    <string name="permission_adb_hint">點按“配對”，然後輸入通知中的配對碼。</string>
+    <string name="permission_adb_hint_wd_on">點按“配對”，然後輸入無線調試界面上的配對碼。</string>
+    <string name="permission_adb_open_device_info">打開設備資訊</string>
+    <string name="permission_adb_open_wd">打開無線調試</string>
+    <string name="permission_adb_pair">配對</string>
+    <string name="permission_devmode_enable_hint">啓用方法：設定 → 關於手機 → 連續點按版本號 7 次。</string>
+    <string name="permission_status_devmode_off_tap_build">開發者選項已關閉 — 連續點按版本號 7 次</string>
+    <string name="permission_devmode_open_device_info">打開設備資訊</string>
+    <string name="permission_devmode_open_wd">打開無線調試</string>
+    <string name="permission_wd_enable_hint">開啓方法：開發者選項 → 無線調試。</string>
+    <string name="permission_wd_off">無線調試已關閉</string>
+    <string name="permission_status_wd_on_enter_code">點按“配對”，然後輸入配對碼</string>
+    <string name="permissions_status_adb_connected">已連接</string>
+    <string name="permissions_status_adb_not_connected">未連接</string>
+    <string name="permissions_ui_eyebrow">設定</string>
+    <string name="permissions_ui_hero_subtitle">授予幾項權限，CallVault 才能錄製並標記你的通話。請逐項批准下方內容。</string>
+    <string name="permissions_ui_hero_line">授予幾項權限即可錄製通話。</string>
+    <string name="permissions_ui_hero_title">開始設定</string>
+    <string name="permissions_ui_section_label">權限</string>
+    <string name="setup_report_link">遇到問題？發送報告</string>
+    <string name="setup_report_preparing">正在準備報告…</string>
+</resources>

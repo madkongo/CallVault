@@ -1,0 +1,67 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Auto-completed notification translations. -->
+<resources>
+    <string name="notif_call_monitor_channel">通話監聽</string>
+    <string name="notif_pairing_action_enter_code">輸入配對碼</string>
+    <string name="notif_pairing_action_stop">停止</string>
+    <string name="notif_pairing_channel">ADB 配對</string>
+    <string name="notif_pairing_failed_title">配對失敗</string>
+    <string name="notif_pairing_found_text">請輸入 6 位配對碼。</string>
+    <string name="notif_pairing_found_title">已找到配對服務</string>
+    <string name="notif_pairing_remote_input_label">配對碼</string>
+    <string name="notif_pairing_searching_text">請打開手機的“使用配對碼配對設備”對話框。</string>
+    <string name="notif_pairing_searching_title">正在查找配對服務…</string>
+    <string name="notif_pairing_success_text">無線調試已配對。點按以完成 CallVault 的設定。</string>
+    <string name="notif_pairing_success_title">配對成功 ✓</string>
+    <string name="notif_pairing_waiting_wd_text">請開啓無線調試以開始配對。</string>
+    <string name="notif_pairing_waiting_wd_title">正在等待無線調試…</string>
+    <string name="notif_pairing_working_text">正在設定 CallVault，需要幾秒鐘。</string>
+    <string name="notif_pairing_working_title">正在配對…</string>
+    <string name="notif_readiness_channel">通話錄音就緒狀態</string>
+    <string name="notif_readiness_ready_text">錄音器已連接。</string>
+    <string name="notif_readiness_ready_title">已就緒，可錄製通話</string>
+    <string name="notif_readiness_reboot_ready_text">重啓後正在監聽來電。</string>
+    <string name="notif_readiness_starting_text">正在連接錄音器——完成前通話不會被錄製。</string>
+    <string name="notif_readiness_starting_title">通話錄音正在啓動…</string>
+    <string name="notif_startup_channel">啓動</string>
+    <string name="notif_startup_preparing">正在準備通話錄音…</string>
+    <string name="notif_usb_check_unavailable">如果此操作未完成，請在 CallVault 的設定中將“解鎖時的 USB 模式”設為“僅充電”——在部分手機上，USB 數據模式會阻止錄音器連接。</string>
+    <string name="notif_usb_lock_warning">通話期間鎖屏可能會中斷錄音。請在 CallVault 的設定中，將“解鎖時的 USB 模式”設為“僅充電”。</string>
+    <string name="update_notif_available_text">打開應用並點按“更新”進行安裝。</string>
+    <string name="update_notif_available_title">CallVault %1$s 已發佈</string>
+    <string name="update_notif_channel">應用更新</string>
+    <string name="update_notif_downloading_title">正在下載更新…</string>
+    <string name="update_notif_failure_download_text">無法下載更新。點按可從 GitHub 獲取。</string>
+    <string name="update_notif_failure_install_text">無法安裝更新。點按可從 GitHub 獲取。</string>
+    <string name="update_notif_failure_title">更新失敗</string>
+    <string name="update_notif_failure_verify_text">下載的更新未通過安全檢查，已被丟棄。點按可從 GitHub 獲取。</string>
+    <string name="update_notif_installing_title">正在安裝更新…</string>
+    <string name="update_notif_success_text">CallVault 已更新到 %1$s 版。</string>
+    <string name="update_notif_success_title">更新已安裝</string>
+    <string name="notif_readiness_down_title">通話未在錄音</string>
+    <string name="notif_readiness_no_debugging_text">USB 調試和無線調試都已關閉。請在開發者選項中重新開啓其中一項。</string>
+    <string name="notif_readiness_needs_wifi_text">USB 調試已關閉，且沒有連接 Wi-Fi。請連接 Wi-Fi 或開啓 USB 調試。</string>
+    <string name="notif_readiness_stuck_text">錄音器一直無法啓動。打開 CallVault 查看原因。</string>
+    <string name="notif_readiness_needs_wifi_restart_text">錄音器已停止，需要 Wi-Fi 才能重新啓動。在連接 Wi-Fi 時開啓“無 Wi-Fi 時繼續錄音”即可避免這種情況。</string>
+    <string name="notif_readiness_wd_off_by_user_text">你關閉了無線調試，CallVault 沒有其他方式重新啓動錄音器。請重新開啓它，或開啓 USB 調試。</string>
+    <string name="notif_readiness_offline_paused_text">無 Wi-Fi 錄音已暫停：它需要 USB 調試。連接 Wi-Fi 時的通話仍會錄音。</string>
+    <string name="notif_action_turn_wd_on">開啓無線調試</string>
+    <string name="notif_action_turn_usb_on">開啓 USB 調試</string>
+
+    <!-- Transcription finished / didn't finish -->
+    <string name="transcript_notice_channel">轉寫文本</string>
+    <string name="transcript_notice_ready_title">轉寫已完成</string>
+    <string name="transcript_notice_ready_deleted_text">%1$s — 音頻已按你的選擇刪除。</string>
+    <string name="transcript_notice_ready_many_title">已完成的轉寫：%1$d</string>
+    <string name="transcript_notice_ready_many_text">點按即可閲讀。</string>
+    <string name="transcript_notice_failed_title">轉寫未完成</string>
+    <string name="transcript_notice_failed_text">%1$s。點按可重試。</string>
+    <string name="transcript_notice_failed_many_title">未完成的轉寫：%1$d</string>
+    <string name="transcript_notice_failed_many_text">點按即可查看。</string>
+    <string name="transcript_notice_failed_kept_text">%1$s。已保留之前的轉寫。</string>
+    <string name="home_status_needs_wifi_title">需要 Wi-Fi 才能錄音</string>
+    <string name="home_status_needs_wifi_suggestion">錄音器已停止，沒有 Wi-Fi 無法啓動，因此通話不會被錄音。請連接 Wi-Fi，或在設定中開啓“無 Wi-Fi 時繼續錄音”。</string>
+    <string name="notif_stopped_by_user_title">你已停止 CallVault</string>
+    <string name="notif_stopped_by_user_text">應用停止期間的通話沒有被錄音。CallVault 現已重新打開，會錄製新的通話。</string>
+    <string name="home_stopped_by_user_text">你已停止 CallVault——應用停止期間的通話沒有被錄音。</string>
+</resources>

@@ -5,6 +5,15 @@ All notable changes to CallVault are documented here. The format is based on
 
 ## [Unreleased]
 
+### Added
+
+- **CallVault's screens in Traditional Chinese, Hong Kong and Taiwan wording.** Phones set to Traditional Chinese
+  (Hong Kong, Macau or Taiwan) now get Traditional characters instead of Simplified Chinese or English, and both appear
+  in Settings ▸ Language. Standard written Chinese, not written Cantonese. Converted from the Simplified texts and
+  hand-corrected for local terms (HK 設定 / 檔案 / 短訊; TW 設定 / 檔案 / 背景行程); transcription pins Chinese for these phones.
+  <!-- 🧪 VERIFYING (BabApps item 120, not shipped): a native Hong Kong and a native Taiwan reader should skim the
+  screens for wrong or unnatural wording before release. -->
+
 ### Fixed
 
 - **Home no longer says "Ready to record" when the recorder is stopped and there is no Wi-Fi.** On a Pixel 8 with
