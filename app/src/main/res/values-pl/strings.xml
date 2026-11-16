@@ -286,6 +286,11 @@
     <string name="placeholder_contact_name_desc">Nazwa kontaktu, jeśli jest dostępna</string>
     <string name="placeholder_cross_country_desc">Wskazuje, czy połączenie jest międzynarodowe (prawda/fałsz)</string>
     <string name="placeholder_date_desc">Aktualna data i godzina</string>
+    <string name="placeholder_day_desc">Dzień, np. 20261112</string>
+    <string name="placeholder_day_dashed_desc">Dzień z myślnikami, np. 2026-11-12</string>
+    <string name="placeholder_time_desc">Godzina, np. 143520</string>
+    <string name="placeholder_time_dashed_desc">Godzina z myślnikami, np. 14-35-20</string>
+    <string name="settings_file_name_error_day_time">Użyj {day} i {time} razem, najpierw dzień, a między nimi _, -, spacja lub T (np. {day}_{time}), albo użyj {date}.</string>
     <string name="placeholder_direction_desc">Kierunek połączenia (przychodzące/wychodzące)</string>
     <string name="placeholder_phone_number_desc">Numer telefonu</string>
     <string name="playback_marked_moments">Oznaczone momenty</string>

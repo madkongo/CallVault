@@ -278,6 +278,11 @@
     <string name="settings_file_name_template_placeholders_preview">Preview: %1$s</string>
     <string name="settings_file_name_template_example">Example: %1$s</string>
     <string name="placeholder_date_desc">The current date and time</string>
+    <string name="placeholder_day_desc">The day, like 20261112</string>
+    <string name="placeholder_day_dashed_desc">The day with dashes, like 2026-11-12</string>
+    <string name="placeholder_time_desc">The time, like 143520</string>
+    <string name="placeholder_time_dashed_desc">The time with dashes, like 14-35-20</string>
+    <string name="settings_file_name_error_day_time">Use {day} and {time} together, day first, with _ - a space or T between them (for example {day}_{time}), or use {date}.</string>
     <string name="placeholder_direction_desc">The call direction (in/out)</string>
     <string name="placeholder_phone_number_desc">The phone number</string>
     <string name="placeholder_contact_name_desc">The contact name, if available</string>

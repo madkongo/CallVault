@@ -217,6 +217,11 @@
     <string name="settings_file_name_template_placeholders_preview">প্রিভিউ: %1$s</string>
     <string name="settings_file_name_template_example">উদাহরণ: %1$s</string>
     <string name="placeholder_date_desc">বর্তমান তারিখ ও সময়</string>
+    <string name="placeholder_day_desc">দিন, যেমন 20261112</string>
+    <string name="placeholder_day_dashed_desc">হাইফেনসহ দিন, যেমন 2026-11-12</string>
+    <string name="placeholder_time_desc">সময়, যেমন 143520</string>
+    <string name="placeholder_time_dashed_desc">হাইফেনসহ সময়, যেমন 14-35-20</string>
+    <string name="settings_file_name_error_day_time">{day} ও {time} একসঙ্গে ব্যবহার করুন, আগে দিন, মাঝখানে _, -, স্পেস বা T (যেমন {day}_{time}), অথবা {date} ব্যবহার করুন।</string>
     <string name="placeholder_direction_desc">কলের দিক (in/out)</string>
     <string name="placeholder_phone_number_desc">ফোন নম্বর</string>
     <string name="placeholder_contact_name_desc">পরিচিতির নাম, যদি থাকে</string>

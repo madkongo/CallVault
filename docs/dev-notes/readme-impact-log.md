@@ -729,3 +729,7 @@ README.md was not edited.
   dialog when the call log is already allowed. Any README list of permissions must add it, with its use: the number
   you dialled, for calls routed through Google Voice or another call redirection app.
 - New claim available: outgoing calls placed through Google Voice are named after the dialled number, not the proxy.
+
+## 2026-11-16 — #82: {day}, {day-}, {time}, {time-} file-name tags (BabApps item 114)
+- The README says nothing about file-name templates (grepped), so no claim is affected. If it ever lists the Custom tags, it must add these four and the rule: `{date}`, or a `{day}` then a `{time}` with one joiner, day first.
+- Not a README claim yet: 🧪, not tried on a phone with a real call.

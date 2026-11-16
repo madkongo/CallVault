@@ -283,6 +283,11 @@
     <string name="placeholder_contact_name_desc">联系人名称（如是联系人）</string>
     <string name="placeholder_cross_country_desc">是否为国际电话（是/否）</string>
     <string name="placeholder_date_desc">当前日期和时间</string>
+    <string name="placeholder_day_desc">日期，例如 20261112</string>
+    <string name="placeholder_day_dashed_desc">带连字符的日期，例如 2026-11-12</string>
+    <string name="placeholder_time_desc">时间，例如 143520</string>
+    <string name="placeholder_time_dashed_desc">带连字符的时间，例如 14-35-20</string>
+    <string name="settings_file_name_error_day_time">请同时使用 {day} 和 {time}，日期在前，中间用 _、-、空格或 T 连接（例如 {day}_{time}），或者使用 {date}。</string>
     <string name="placeholder_direction_desc">主叫/被叫</string>
     <string name="placeholder_phone_number_desc">对方号码</string>
     <string name="playback_marked_moments">标记的时刻</string>

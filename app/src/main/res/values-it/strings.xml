@@ -284,6 +284,11 @@
     <string name="placeholder_contact_name_desc">Il nome del contatto, se disponibile</string>
     <string name="placeholder_cross_country_desc">Indica se la chiamata è internazionale (true/false)</string>
     <string name="placeholder_date_desc">La data e l\'ora correnti</string>
+    <string name="placeholder_day_desc">Il giorno, come 20261112</string>
+    <string name="placeholder_day_dashed_desc">Il giorno con trattini, come 2026-11-12</string>
+    <string name="placeholder_time_desc">L\'ora, come 143520</string>
+    <string name="placeholder_time_dashed_desc">L\'ora con trattini, come 14-35-20</string>
+    <string name="settings_file_name_error_day_time">Usa {day} e {time} insieme, prima il giorno, con _, -, uno spazio o T in mezzo (ad esempio {day}_{time}), oppure usa {date}.</string>
     <string name="placeholder_direction_desc">La direzione della chiamata (entrata/uscita)</string>
     <string name="placeholder_phone_number_desc">Il numero di telefono</string>
     <string name="playback_marked_moments">Momenti segnati</string>

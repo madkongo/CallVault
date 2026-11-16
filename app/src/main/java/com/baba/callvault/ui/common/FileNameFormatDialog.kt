@@ -190,6 +190,7 @@ private fun appendTag(text: String, tag: String): String {
 private fun problemText(problem: CustomFileNameTemplate.Problem, text: String): String = when (problem) {
     CustomFileNameTemplate.Problem.EMPTY -> stringResource(R.string.settings_file_name_error_empty)
     CustomFileNameTemplate.Problem.NEEDS_DATE -> stringResource(R.string.settings_file_name_error_needs_date)
+    CustomFileNameTemplate.Problem.DAY_AND_TIME -> stringResource(R.string.settings_file_name_error_day_time)
     CustomFileNameTemplate.Problem.BAD_CHARACTER -> stringResource(R.string.settings_file_name_error_bad_character)
     CustomFileNameTemplate.Problem.UNKNOWN_TAG -> stringResource(
         R.string.settings_file_name_error_unknown_tag,

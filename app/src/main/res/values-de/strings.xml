@@ -284,6 +284,11 @@
     <string name="placeholder_contact_name_desc">Der Kontaktname, falls verfügbar</string>
     <string name="placeholder_cross_country_desc">Gibt an, ob der Anruf grenzüberschreitend ist (true/false)</string>
     <string name="placeholder_date_desc">Das aktuelle Datum und die Uhrzeit</string>
+    <string name="placeholder_day_desc">Der Tag, z. B. 20261112</string>
+    <string name="placeholder_day_dashed_desc">Der Tag mit Bindestrichen, z. B. 2026-11-12</string>
+    <string name="placeholder_time_desc">Die Uhrzeit, z. B. 143520</string>
+    <string name="placeholder_time_dashed_desc">Die Uhrzeit mit Bindestrichen, z. B. 14-35-20</string>
+    <string name="settings_file_name_error_day_time">Verwenden Sie {day} und {time} zusammen, zuerst den Tag, getrennt durch _, -, ein Leerzeichen oder T (z. B. {day}_{time}), oder verwenden Sie {date}.</string>
     <string name="placeholder_direction_desc">Die Anrufrichtung (ein/aus)</string>
     <string name="placeholder_phone_number_desc">Die Telefonnummer</string>
     <string name="playback_marked_moments">Markierte Momente</string>

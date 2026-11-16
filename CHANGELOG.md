@@ -5,6 +5,21 @@ All notable changes to CallVault are documented here. The format is based on
 
 ## [Unreleased]
 
+### Added
+
+- **The day and the time can be used on their own in a custom file name.** Four new tags: `{day}` (20261112),
+  `{day-}` (2026-11-12), `{time}` (143520) and `{time-}` (14-35-20), for example `{day-}_{time-}_{contact_name}` gives
+  `2026-11-12_14-35-20_Dana.ogg`. `{date}` is unchanged, so no existing name changes. A custom name needs `{date}`, or a
+  `{day}` followed by a `{time}` with one `_`, `-`, space or `T` between them, day first; a day or a time alone is
+  refused with a message, because the list, merging and logs could not find the call's time again. The time always
+  carries seconds, so two calls only share a name when they start in the same second. App calls keep their own name
+  (#82).
+  <!-- 🧪 VERIFYING (BabApps item 114, not shipped): Settings ▸ file name ▸ Custom, type `{day-}_{time-}_{contact_name}`;
+  the example shows 2026-06-11_14-30-52_John Doe. Record a call: the file should carry that date and time, the list
+  should show the right date and, for a saved call, the contact. Tried once on the OnePlus 9 Pro (Shizuku, one incoming
+  call, 2026-11-16): file name, list row, rescan and old `{date}` rows all read right. Not yet tried on an outgoing
+  call, an app call, a merge, or by anyone else. -->
+
 ### Fixed
 
 - **Home no longer says "Ready to record" when the recorder is stopped and there is no Wi-Fi.** On a Pixel 8 with

@@ -286,6 +286,11 @@
     <string name="placeholder_contact_name_desc">Имя контакта, если доступно</string>
     <string name="placeholder_cross_country_desc">Указывает, является ли звонок международным (true/false)</string>
     <string name="placeholder_date_desc">Текущая дата и время</string>
+    <string name="placeholder_day_desc">День, например 20261112</string>
+    <string name="placeholder_day_dashed_desc">День с дефисами, например 2026-11-12</string>
+    <string name="placeholder_time_desc">Время, например 143520</string>
+    <string name="placeholder_time_dashed_desc">Время с дефисами, например 14-35-20</string>
+    <string name="settings_file_name_error_day_time">Используйте {day} и {time} вместе, сначала день, а между ними _, -, пробел или T (например {day}_{time}), либо используйте {date}.</string>
     <string name="placeholder_direction_desc">Направление звонка (вх./исх.)</string>
     <string name="placeholder_phone_number_desc">Номер телефона</string>
     <string name="playback_marked_moments">Отмеченные моменты</string>

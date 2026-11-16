@@ -321,6 +321,11 @@
     <string name="placeholder_contact_name_desc">اسم جهة الاتصال، إذا كان متاحًا</string>
     <string name="placeholder_cross_country_desc">يشير إلى ما إذا كانت المكالمة عابرة للبلدان (صحيح/خطأ)</string>
     <string name="placeholder_date_desc">التاريخ والوقت الحاليين</string>
+    <string name="placeholder_day_desc">اليوم، مثل 20261112</string>
+    <string name="placeholder_day_dashed_desc">اليوم مع الشرطات، مثل 2026-11-12</string>
+    <string name="placeholder_time_desc">الوقت، مثل 143520</string>
+    <string name="placeholder_time_dashed_desc">الوقت مع الشرطات، مثل 14-35-20</string>
+    <string name="settings_file_name_error_day_time">استخدم {day} و{time} معًا، اليوم أولًا، وبينهما _ أو - أو مسافة أو T (مثل {day}_{time})، أو استخدم {date}.</string>
     <string name="placeholder_direction_desc">اتجاه المكالمة (واردة/صادرة)</string>
     <string name="placeholder_phone_number_desc">رقم الهاتف</string>
     <string name="playback_marked_moments">لحظات مميزة</string>

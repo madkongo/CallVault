@@ -26,6 +26,7 @@ import com.baba.callvault.system.interop.MetadataSidecar
 import com.baba.callvault.system.interop.TranscriptSidecar
 import com.baba.callvault.system.permissions.PermissionChecks
 import com.baba.callvault.utils.AppLogger
+import com.baba.callvault.utils.FileNameStamp
 import com.baba.callvault.utils.VoicemailLabel
 import com.baba.callvault.transcription.AudioDecoder
 import kotlinx.coroutines.Dispatchers
@@ -722,7 +723,10 @@ object RecordingsRepository {
             "out" -> RecordingDirection.OUTGOING
             else -> null
         }
-        val rawDate = parts.subList(0, dirIndex).joinToString("_")
+        // Text typed before the date in a custom template ("{contact_name}_{day}_{time}_{direction}") must not
+        // be read as part of the date: take the stamp out of what precedes the marker.
+        val beforeMarker = parts.subList(0, dirIndex).joinToString("_")
+        val rawDate = DATE_TOKEN.find(beforeMarker)?.value ?: beforeMarker
         val number = parts.subList(dirIndex + 1, parts.size).joinToString("_").ifBlank { null }
         return ParsedName(direction, formatDate(rawDate), parseStartedAt(rawDate), number)
     }
@@ -800,7 +804,9 @@ object RecordingsRepository {
     private val HONOR_NAME = Regex("""(.*)@(\+?\d*)_(\d{14})""")
 
     /** "yyyyMMdd_HHmmss[.SSS][±hhmm]", as RecordingFileNameFormatter writes it — never starting or ending inside a longer run of digits, so a phone number beside it cannot donate its tail. */
-    private val DATE_TOKEN = Regex("""(?<!\d)\d{8}_\d{6}(?:\.\d{3})?(?:[+-]\d{4})?(?!\d)""")
+    private val DATE_TOKEN = Regex(
+        """(?<!\d)(?:\d{8}_\d{6}(?:\.\d{3})?(?:[+-]\d{4})?|${FileNameStamp.PAIR_PATTERN})(?!\d)"""
+    )
 
     /**
      * Reformats the raw "yyyyMMdd_HHmmss.SSSZ" date token into a friendlier "yyyy-MM-dd HH:mm".
@@ -815,7 +821,7 @@ object RecordingsRepository {
      * and match it to the wrong call-log entry — or to none.
      */
     private fun parseStartedAt(rawDate: String): Long? {
-        val token = rawDate.trim().ifBlank { return null }
+        val token = rawDate.trim().ifBlank { return null }.let { FileNameStamp.normalize(it) ?: it }
         for (pattern in arrayOf("yyyyMMdd_HHmmss.SSSZ", "yyyyMMdd_HHmmss.SSS", "yyyyMMdd_HHmmss", "yyyyMMddHHmmss")) {
             val parsed = runCatching {
                 SimpleDateFormat(pattern, Locale.US).apply { isLenient = false }.parse(token)
@@ -825,7 +831,9 @@ object RecordingsRepository {
         return null
     }
 
-    private fun formatDate(rawDate: String): String? {
+    private fun formatDate(raw: String): String? {
+        // A {day}/{time} stamp ("2026-11-12_14-35-20") reads as the same two segments once its dashes are gone.
+        val rawDate = FileNameStamp.normalize(raw) ?: raw
         // Expected shape: yyyyMMdd_HHmmss(.SSSZ)?  take the yyyyMMdd and HHmmss segments.
         // The Honor preset's yyyyMMddHHmmss is the same two segments without the '_'.
         val segments = if (COMPACT_DATE.matches(rawDate)) listOf(rawDate.take(8), rawDate.drop(8)) else rawDate.split('_')
