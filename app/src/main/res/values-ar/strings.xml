@@ -426,8 +426,6 @@
     <string name="settings_debug_log_file">ملف السجل</string>
     <string name="settings_debug_log_view_hint">انقر لقراءة أحدث الإدخالات.</string>
     <string name="settings_debug_log_wrap">طي الأسطر</string>
-    <string name="settings_debug_skip_mdns">تخطي mDNS عند الاتصال (اختبار البحث عن المنفذ)</string>
-    <string name="settings_debug_skip_mdns_description">للاختبار. يتجاهل اتصال تصحيح الأخطاء اللاسلكي التالي mDNS وآخر منفذ معروف، ويعثر على المنفذ بالبحث في المنافذ المحلية لهذا الهاتف. يعمل فقط أثناء تشغيل تسجيل السجل.</string>
     <string name="settings_debug_logging_enabled">تفعيل السجلات</string>
     <string name="settings_debug_logging_enabled_description">للإبلاغ عن خطأ، قم بتمكين هذا، أعد إنتاج المشكلة، ثم قم بإيقاف تشغيله وشارك السجلات.</string>
     <string name="settings_drive_folder_desc">اختر مجلدًا (في تطبيق Google Drive) لنسخ التسجيلات إليه.</string>
@@ -955,8 +953,6 @@
     <string name="transcribe_again_waiting">في انتظار إعادة التفريغ…</string>
     <string name="wifi_call_switch_failed">يبدو أن هذه مكالمة عبر Wi-Fi، لكن تعذّر بدء التسجيل الذي يلتقط الطرفين. يجري تسجيلها بالطريقة المعتادة، وقد لا يُسمع فيها الطرف الآخر.</string>
     <string name="wifi_call_one_sided">سُجّل جانبك فقط من مكالمة Wi-Fi هذه. إذا تكرر ذلك، اضبط الاتصال عبر Wi-Fi على تفضيل شبكة الجوال في إعدادات تطبيق الهاتف.</string>
-    <string name="settings_debug_force_wifi_route">فرض مسار تسجيل مكالمات Wi-Fi</string>
-    <string name="settings_debug_force_wifi_route_description">للاختبار. تنتقل كل مكالمة هاتفية أثناءها إلى تسجيل مكالمات التطبيقات، كما تفعل مكالمة Wi-Fi. على هاتف بلا اتصال عبر Wi-Fi سيغيب الطرف الآخر ويجب أن يظهر خطأ. يتطلب تفعيل تسجيل مكالمات التطبيقات. يعمل فقط أثناء تسجيل السجل.</string>
     <string name="wifi_call_switch_aborted">توقف تسجيل مكالمة Wi-Fi هذه مبكرًا: تعذّر تبديل طريقة التسجيل بأمان. حُفظ الجزء الذي سُجّل حتى الآن.</string>
     <string name="wifi_call_far_unknown">سُجّلت مكالمة Wi-Fi هذه، لكن تعذّر على CallVault التحقق من وجود صوت الطرف الآخر فيها. يُرجى الاستماع إلى التسجيل.</string>
 </resources>

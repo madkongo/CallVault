@@ -388,8 +388,6 @@
     <string name="settings_debug_log_file">Tệp nhật ký</string>
     <string name="settings_debug_log_view_hint">Nhấn để đọc các mục gần đây nhất.</string>
     <string name="settings_debug_log_wrap">Xuống dòng</string>
-    <string name="settings_debug_skip_mdns">Bỏ qua mDNS khi kết nối (thử tìm cổng)</string>
-    <string name="settings_debug_skip_mdns_description">Để thử nghiệm. Lần kết nối gỡ lỗi không dây tiếp theo bỏ qua mDNS và cổng đã biết gần nhất, rồi tìm cổng bằng cách dò các cổng cục bộ của điện thoại. Chỉ hoạt động khi đang bật ghi nhật ký.</string>
     <string name="settings_debug_logging_enabled">Bật ghi nhật ký</string>
     <string name="settings_debug_logging_enabled_description">Để báo cáo lỗi, hãy bật chức năng này, khởi động lại ứng dụng và tái hiện lỗi.</string>
     <string name="settings_drive_folder_desc">Chọn một thư mục (trong ứng dụng Google Drive) để sao chép bản ghi âm vào.</string>
@@ -915,8 +913,6 @@
     <string name="transcribe_again_waiting">Đang chờ chép lời lại…</string>
     <string name="wifi_call_switch_failed">Đây có vẻ là cuộc gọi qua Wi-Fi, nhưng không thể bắt đầu ghi âm cả hai bên. Cuộc gọi đang được ghi theo cách thông thường, có thể thiếu tiếng người bên kia.</string>
     <string name="wifi_call_one_sided">Chỉ phía bạn trong cuộc gọi Wi-Fi này được ghi lại. Nếu vẫn xảy ra, hãy đặt Gọi qua Wi-Fi ưu tiên mạng di động trong cài đặt ứng dụng Điện thoại.</string>
-    <string name="settings_debug_force_wifi_route">Buộc dùng cách ghi cuộc gọi Wi-Fi</string>
-    <string name="settings_debug_force_wifi_route_description">Để thử nghiệm. Mỗi cuộc gọi điện thoại sẽ chuyển giữa chừng sang cách ghi cuộc gọi ứng dụng, như một cuộc gọi Wi-Fi. Trên điện thoại không có gọi qua Wi-Fi sẽ thiếu phía bên kia và sẽ có thông báo lỗi. Cần bật ghi cuộc gọi ứng dụng. Chỉ hoạt động khi đang ghi nhật ký.</string>
     <string name="wifi_call_switch_aborted">Việc ghi cuộc gọi Wi-Fi này đã dừng sớm: không thể chuyển cách ghi một cách an toàn. Phần đã ghi được vẫn được giữ lại.</string>
     <string name="wifi_call_far_unknown">Cuộc gọi Wi-Fi này đã được ghi, nhưng CallVault không thể kiểm tra xem có tiếng phía bên kia hay không. Hãy nghe lại bản ghi.</string>
 </resources>

@@ -69,7 +69,7 @@ the adb protocol, not copied.
 - The mDNS "No … service accepted within 12000ms" line (and its "Discovering" lead-in) now appears at most once
   per 5 minutes while it keeps failing, with a count of the quiet repeats.
 
-## Test switch
+## Test switch (REMOVED in 2.5.2, BabApps item 126 — the text below is history; steps 1 and 2 under "What to test" needed it)
 
 Settings → Debug → **"Skip mDNS when connecting (test the port search)"**, shown only while "Enable log
 recording" is on, and honoured only then. Off by default, not exported (`debug_skip_mdns_connect`). When on,

@@ -389,8 +389,6 @@
     <string name="settings_debug_log_file">Archivo de registro</string>
     <string name="settings_debug_log_view_hint">Toca para leer las entradas más recientes.</string>
     <string name="settings_debug_log_wrap">Ajustar líneas</string>
-    <string name="settings_debug_skip_mdns">Omitir mDNS al conectar (probar la búsqueda de puerto)</string>
-    <string name="settings_debug_skip_mdns_description">Para pruebas. La próxima conexión de depuración inalámbrica ignora mDNS y el último puerto conocido, y encuentra el puerto buscando entre los puertos locales de este teléfono. Solo funciona mientras el registro está activado.</string>
     <string name="settings_debug_logging_enabled">Activar registros</string>
     <string name="settings_debug_logging_enabled_description">Para informar de un error, activa esta opción, reinicia la aplicación y reproduce el problema.</string>
     <string name="settings_drive_folder_desc">Elija una carpeta (en la app de Google Drive) a la que copiar las grabaciones.</string>
@@ -917,8 +915,6 @@
     <string name="transcribe_again_waiting">Esperando para transcribir de nuevo…</string>
     <string name="wifi_call_switch_failed">Parece una llamada por Wi-Fi, pero no se pudo iniciar la captura que graba a ambas partes. Se está grabando de la forma habitual, que puede no incluir a la otra persona.</string>
     <string name="wifi_call_one_sided">Solo se grabó tu lado de esta llamada por Wi-Fi. Si sigue pasando, configura las llamadas por Wi-Fi para preferir la red móvil en los ajustes de la app Teléfono.</string>
-    <string name="settings_debug_force_wifi_route">Forzar la captura de llamadas por Wi-Fi</string>
-    <string name="settings_debug_force_wifi_route_description">Para pruebas. Cada llamada telefónica cambia durante la llamada a la captura de llamadas de apps, como haría una llamada por Wi-Fi. En un teléfono sin llamadas por Wi-Fi faltará la otra parte y debería aparecer un error. Requiere activar la grabación de llamadas de apps. Solo funciona con el registro activado.</string>
     <string name="wifi_call_switch_aborted">La grabación de esta llamada por Wi-Fi se detuvo antes de tiempo: no se pudo cambiar la captura de forma segura. Se conserva lo grabado hasta ahora.</string>
     <string name="wifi_call_far_unknown">Esta llamada por Wi-Fi se grabó, pero CallVault no pudo comprobar que la otra parte esté en ella. Escucha la grabación.</string>
 </resources>

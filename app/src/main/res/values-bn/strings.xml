@@ -811,8 +811,6 @@
     <string name="settings_bugreport_saved">রিপোর্ট সেভ হয়েছে</string>
     <string name="settings_bugreport_save_failed">রিপোর্ট সেভ করা যায়নি</string>
     <string name="settings_debug_log_wrap">লাইন মুড়িয়ে দেখান</string>
-    <string name="settings_debug_skip_mdns">সংযোগের সময় mDNS বাদ দিন (পোর্ট খোঁজা পরীক্ষা)</string>
-    <string name="settings_debug_skip_mdns_description">পরীক্ষার জন্য। পরের ওয়্যারলেস ডিবাগিং (Wireless debugging) সংযোগে mDNS ও শেষ জানা পোর্ট উপেক্ষা করা হয়, আর এই ফোনের লোকাল পোর্ট খুঁজে পোর্ট বের করা হয়। শুধু লগ রেকর্ডিং চালু থাকলে কাজ করে।</string>
     <string name="usb_debugging_off_warn_title">USB ডিবাগিং (USB debugging) বন্ধ করবেন?</string>
     <string name="usb_debugging_off_warn_no_way_in">আপনি Wi-Fi-তে নেই, তাই CallVault রেকর্ডারে পৌঁছানোর কোনো উপায় পাবে না। Wi-Fi-তে যুক্ত না হওয়া বা এটি আবার চালু না করা পর্যন্ত কল রেকর্ড হবে না।</string>
     <string name="usb_debugging_off_warn_offline">Wi-Fi ছাড়া রেকর্ডিংয়ের জন্য USB ডিবাগিং (USB debugging) দরকার। এটি বন্ধ থাকলে Wi-Fi-এর বাইরে করা কল রেকর্ড হবে না।</string>
@@ -936,8 +934,6 @@
     <string name="transcribe_again_waiting">আবার ট্রান্সক্রাইবের অপেক্ষায়…</string>
     <string name="wifi_call_switch_failed">এটি একটি Wi-Fi কল বলে মনে হচ্ছে, কিন্তু দুই পক্ষকেই রেকর্ড করার ক্যাপচার শুরু করা যায়নি। এটি সাধারণ উপায়ে রেকর্ড হচ্ছে, যাতে অপর পক্ষ বাদ পড়তে পারে।</string>
     <string name="wifi_call_one_sided">এই Wi-Fi কলের শুধু আপনার দিকটি রেকর্ড হয়েছে। এমন বারবার হলে, আপনার ফোন অ্যাপের সেটিংসে Wi-Fi Calling-কে মোবাইল নেটওয়ার্ক অগ্রাধিকার দিতে সেট করুন।</string>
-    <string name="settings_debug_force_wifi_route">Wi-Fi কল ক্যাপচারের পথ জোর করে চালু করুন</string>
-    <string name="settings_debug_force_wifi_route_description">পরীক্ষার জন্য। প্রতিটি ফোন কল চলাকালীন অ্যাপ-কল ক্যাপচারে চলে যায়, যেমন একটি Wi-Fi কলে হয়। Wi-Fi কলিং ছাড়া ফোনে অপর পক্ষ থাকবে না এবং একটি ত্রুটি দেখা উচিত। অ্যাপ কল রেকর্ডিং চালু থাকতে হবে। শুধু লগ রেকর্ডিং চালু থাকলে কাজ করে।</string>
     <string name="wifi_call_switch_aborted">এই Wi-Fi কলের রেকর্ডিং আগেই থেমে গেছে: ক্যাপচারটি নিরাপদে বদলানো যায়নি। এ পর্যন্ত যা রেকর্ড হয়েছে তা রাখা হয়েছে।</string>
     <string name="wifi_call_far_unknown">এই Wi-Fi কলটি রেকর্ড হয়েছে, কিন্তু CallVault যাচাই করতে পারেনি যে অপর পক্ষ এতে আছে কি না। অনুগ্রহ করে রেকর্ডিংটি শুনে দেখুন।</string>
 </resources>

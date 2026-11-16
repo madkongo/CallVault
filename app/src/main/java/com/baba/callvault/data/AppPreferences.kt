@@ -448,6 +448,8 @@ class AppPreferences(context: Context) {
         LOGCAT_RING_PREVIOUS_KIB("logcat_ring_previous_kib"),
         DEBUG_ENABLED("debug_enabled"),
         DEBUG_CALLER_NUMBER("debug_caller_number"),
+        // Retired test switches (BabApps item 126): no UI, nothing reads them; only clearRetiredTestSwitches()
+        // names them. Kept so a revert of the removal finds the same keys (docs/dev-notes/rollback/item-126-test-switches.md).
         DEBUG_SKIP_MDNS_CONNECT("debug_skip_mdns_connect"),
         DEBUG_FORCE_WIFI_ROUTE("debug_force_wifi_route"),
         DEVELOPER_MODE_UNLOCKED("developer_mode_unlocked"),
@@ -1608,23 +1610,17 @@ class AppPreferences(context: Context) {
     fun setDebugEnabled(enabled: Boolean) = setBoolean(Key.DEBUG_ENABLED, enabled)
 
     /**
-     * Debug-only test switch (Settings → Debug, shown while log recording is on): skip mDNS and the last good
-     * port, so the next Wireless-debugging connect has to find its port with the loopback search (#65). Lets
-     * the search be checked on a phone whose mDNS works. Not exported; off by default.
+     * Drops the stored values of two maintainer test switches that no longer exist (BabApps item 126):
+     * "skip mDNS when connecting" (#65) and "force Wi-Fi-call capture route" (#45). Nothing reads them any
+     * more; clearing them keeps a phone that had one on from carrying a dead value, and a revert of the
+     * removal starts from off. The key names stay in [Key] for that revert. Safe to call on every start.
      */
-    fun isDebugSkipMdnsConnect() = getBoolean(Key.DEBUG_SKIP_MDNS_CONNECT, false)
-
-    fun setDebugSkipMdnsConnect(enabled: Boolean) = setBoolean(Key.DEBUG_SKIP_MDNS_CONNECT, enabled)
-
-    /**
-     * Debug-only test switch (Settings → Debug, shown while log recording is on): every carrier call
-     * switches to the app-call capture mid-call, as a Wi-Fi call would (#45), so the switch can be
-     * exercised on a phone without Wi-Fi calling. Honoured only while logging is on. Not exported; off
-     * by default.
-     */
-    fun isDebugForceWifiRoute() = getBoolean(Key.DEBUG_FORCE_WIFI_ROUTE, false)
-
-    fun setDebugForceWifiRoute(enabled: Boolean) = setBoolean(Key.DEBUG_FORCE_WIFI_ROUTE, enabled)
+    fun clearRetiredTestSwitches() {
+        prefs.edit {
+            remove(Key.DEBUG_SKIP_MDNS_CONNECT.id)
+            remove(Key.DEBUG_FORCE_WIFI_ROUTE.id)
+        }
+    }
 
     /** Gets the caller number override used for debugging. */
     fun getDebugCallerNumber() = getString(Key.DEBUG_CALLER_NUMBER, DefaultsValue.DEBUG_CALLER_NUMBER) ?: DefaultsValue.DEBUG_CALLER_NUMBER

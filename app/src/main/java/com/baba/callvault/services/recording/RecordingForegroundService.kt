@@ -639,11 +639,9 @@ class RecordingForegroundService : Service() {
     private fun onRouteEvent() {
         val active = currentState as? RecordingServiceState.Active ?: return
         if (stopRequested || isShuttingDown) return
-        // Debug switch: honoured only while logging is on, the only time its result can be read.
-        val forced = appPreferences.isDebugForceWifiRoute() && appPreferences.isLoggingEnabled()
         val sinceStart = android.os.SystemClock.elapsedRealtime() - captureStartedAt
         val decision = routeDecision(
-            "change", engineCanSwitch = !active.engine.isLocalFallback, forced = forced, msSinceCaptureStart = sinceStart
+            "change", engineCanSwitch = !active.engine.isLocalFallback, forced = false, msSinceCaptureStart = sinceStart
         )
         if (decision.reason == WifiCallRoute.Reason.WINDOW_PASSED) {
             // Never switches after the window, so stop watching.

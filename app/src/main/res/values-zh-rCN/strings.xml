@@ -388,8 +388,6 @@
     <string name="settings_debug_log_file">日志文件</string>
     <string name="settings_debug_log_view_hint">点按可查看最近的条目。</string>
     <string name="settings_debug_log_wrap">自动换行</string>
-    <string name="settings_debug_skip_mdns">连接时跳过 mDNS（测试端口搜索）</string>
-    <string name="settings_debug_skip_mdns_description">用于测试。下一次无线调试连接将忽略 mDNS 和上次可用的端口，通过搜索本机的本地端口来找到端口。仅在日志记录开启时有效。</string>
     <string name="settings_debug_logging_enabled">启用日志</string>
     <string name="settings_debug_logging_enabled_description">若要反馈Bug，请先开启此开关，然后在重启App之后再重复您刚才的操作。</string>
     <string name="settings_drive_folder_desc">选择一个文件夹（在 Google Drive 应用中）用于复制录音。</string>
@@ -915,8 +913,6 @@
     <string name="transcribe_again_waiting">等待重新转写…</string>
     <string name="wifi_call_switch_failed">这似乎是一通 WLAN 通话，但无法启动双方录音。正在按常规方式录音，可能录不到对方的声音。</string>
     <string name="wifi_call_one_sided">这通 WLAN 通话只录到了您这一方。如果反复出现，请在电话应用的设置中将 WLAN 通话设为“首选移动网络”。</string>
-    <string name="settings_debug_force_wifi_route">强制使用 WLAN 通话录音方式</string>
-    <string name="settings_debug_force_wifi_route_description">用于测试。每通电话会在通话中切换到应用通话录音方式，就像 WLAN 通话那样。在不支持 WLAN 通话的手机上会缺少对方的声音，并应显示错误。需要开启应用通话录音。仅在开启日志记录时生效。</string>
     <string name="wifi_call_switch_aborted">这通 WLAN 通话的录音提前停止了：无法安全地切换录音方式。已录下的部分会保留。</string>
     <string name="wifi_call_far_unknown">这通 WLAN 通话已录音，但 CallVault 无法确认其中录到了对方的声音。请收听录音确认。</string>
 </resources>
