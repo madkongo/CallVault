@@ -97,6 +97,22 @@ internal fun PrivacySubSection(preferences: AppPreferences, updateTrigger: Int) 
  * The app's look: its language, theme, dynamic colour and toasts. Shared with the new Settings screen's
  * "App" group; vibration, the last row of Visual on the classic screen, is [VibrationRow].
  */
+/**
+ * What the app-language picker shows for [tag]. Android's own name for zh-HK / zh-TW is "中文 (香港)",
+ * which does not say Traditional; those two are named explicitly (BabApps item 120). Every other
+ * locale, zh-CN included, keeps the platform's name.
+ */
+internal fun appLanguageDisplayName(tag: String): String = when (tag) {
+    "zh-HK" -> "繁體中文（香港）"
+    "zh-TW" -> "繁體中文（台灣）"
+    else -> {
+        val locale = Locale.forLanguageTag(tag)
+        locale.getDisplayName(locale).replaceFirstChar {
+            if (it.isLowerCase()) it.titlecase(locale) else it.toString()
+        }
+    }
+}
+
 @Composable
 internal fun AppearanceRows(preferences: AppPreferences, updateTrigger: Int, actions: SettingsActions) {
     val currentThemeMode = remember(updateTrigger) { preferences.getThemeMode() }
@@ -127,11 +143,7 @@ internal fun AppearanceRows(preferences: AppPreferences, updateTrigger: Int, act
                 if (eventType == XmlPullParser.START_TAG && parser.name == "locale") {
                     val localeName = parser.getAttributeValue("http://schemas.android.com/apk/res/android", "name")
                     if (localeName != null) {
-                        val locale = Locale.forLanguageTag(localeName)
-                        val displayName = locale.getDisplayName(locale).replaceFirstChar {
-                            if (it.isLowerCase()) it.titlecase(locale) else it.toString()
-                        }
-                        options.add(OptionItem(localeName, displayName))
+                        options.add(OptionItem(localeName, appLanguageDisplayName(localeName)))
                     }
                 }
                 eventType = parser.next()
