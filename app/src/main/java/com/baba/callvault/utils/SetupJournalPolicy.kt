@@ -47,6 +47,8 @@ object SetupJournalPolicy {
         "CV:AdbPairing",
         "CV:ConnectPort",
         "CV:SetupReport",
+        "CV:SetupScreen",
+        "CV:SetupMode",
         "CV:RecorderLauncher",
         "CV:RecorderBackend",
         "CV:RecorderConn",
@@ -62,6 +64,12 @@ object SetupJournalPolicy {
     )
 
     /**
+     * Written even after the journal has ended: a mode change is rare and tiny, and the reporter's log showed why it
+     * matters (Shizuku mode on 22 Oct, standalone by 15 Nov, nothing in between saying how). The size cap still holds.
+     */
+    private val WRITTEN_WHEN_SEALED = setOf("CV:SetupMode")
+
+    /**
      * How long an identical line is kept out after it was last written.
      *
      * From the BabApps item 92 reporter's log: the recorder relaunch failed once a minute for 143 minutes
@@ -71,11 +79,13 @@ object SetupJournalPolicy {
     const val REPEAT_WINDOW_MS = 30 * 60_000L
 
     /** Tags driven by what the user does, never thinned: a second pairing attempt must show up as its own lines. */
-    private val NEVER_THINNED = setOf("CV:AdbPairing", "CV:AdbMdns", "CV:SetupReport", "CV:ConnectPort")
+    private val NEVER_THINNED = setOf(
+        "CV:AdbPairing", "CV:AdbMdns", "CV:SetupReport", "CV:ConnectPort", "CV:SetupScreen", "CV:SetupMode"
+    )
 
     /** Whether this line belongs in the journal. Cheap: it is asked of every log line in the app. */
     fun shouldRecord(tag: String, isClosed: Boolean, bytesWritten: Long): Boolean =
-        !isClosed && bytesWritten < MAX_BYTES && tag in TAGS
+        (!isClosed || tag in WRITTEN_WHEN_SEALED) && bytesWritten < MAX_BYTES && tag in TAGS
 
     fun isNeverThinned(tag: String): Boolean = tag in NEVER_THINNED
 }
