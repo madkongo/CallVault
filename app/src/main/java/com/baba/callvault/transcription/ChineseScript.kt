@@ -9,6 +9,7 @@
 package com.baba.callvault.transcription
 
 import androidx.appcompat.app.AppCompatDelegate
+import com.baba.callvault.utils.AppLogger
 import java.util.Locale
 
 /**
@@ -89,7 +90,13 @@ object ChineseScript {
 
     fun convert(text: String, conversion: Conversion?): String {
         if (conversion == null) return text
-        val data = Tables
+        // A table that cannot load must never fail a transcription: the text then comes back as it was.
+        // The failure is logged once, by the table's own loader.
+        val data = try {
+            Tables
+        } catch (t: Throwable) {
+            return text
+        }
         var changed = false
         val out = StringBuilder(text.length)
         var i = 0
@@ -135,6 +142,24 @@ object ChineseScript {
         private var longest = 2
 
         init {
+            try {
+                load()
+                note("zh_hant table loaded: ${hkChars.size} chars, ${hkPhrases.size} phrases (HK/TW)")
+            } catch (e: Throwable) {
+                // Logged because the conversion would otherwise fail only when the first Chinese call is transcribed.
+                note("zh_hant table FAILED to load: $e", failed = true)
+                throw e
+            }
+        }
+
+        val summary: String get() = "${hkChars.size} chars, ${hkPhrases.size} phrases (HK/TW)"
+
+        /** Always on (not gated by the debug-log switch): this is what proves the file is in the APK and readable. */
+        private fun note(message: String, failed: Boolean = false) {
+            runCatching { if (failed) AppLogger.e(TAG, message) else AppLogger.i(TAG, message) }
+        }
+
+        private fun load() {
             val stream = ChineseScript::class.java.classLoader!!.getResourceAsStream(RESOURCE)
                 ?: error("Missing resource $RESOURCE")
             stream.bufferedReader(Charsets.UTF_8).useLines { lines ->
@@ -171,5 +196,9 @@ object ChineseScript {
         }
     }
 
+    /** What the conversion table holds, loading it if needed; for the debug report. Never throws. */
+    fun tableSummary(): String = runCatching { Tables.summary }.getOrElse { "failed to load: $it" }
+
+    private const val TAG = "CV:ChineseScript"
     private const val RESOURCE = "zh_hant/zh_hant.tsv"
 }

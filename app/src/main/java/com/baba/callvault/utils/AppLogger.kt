@@ -469,6 +469,8 @@ object AppLogger {
         writer.println("ROM Incremental: ${Build.VERSION.INCREMENTAL}")
         writer.println("ROM Fingerprint: ${Build.FINGERPRINT}")
         writer.println("Device Country Iso Estimation: ${PhoneNumberManager.getInstance(context).getDeviceCountryIso()}")
+        // Loads the Traditional Chinese conversion table (BabApps item 125), so the report shows it is readable here.
+        writer.println("Chinese conversion table: ${com.baba.callvault.transcription.ChineseScript.tableSummary()}")
         writeConfiguration(writer, context)
     }
 
