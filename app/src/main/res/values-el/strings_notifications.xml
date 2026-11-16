@@ -61,4 +61,9 @@
     <string name="transcript_notice_failed_many_title">Απομαγνητοφωνήσεις που δεν ολοκληρώθηκαν: %1$d</string>
     <string name="transcript_notice_failed_many_text">Πατήστε για να τις δείτε.</string>
     <string name="transcript_notice_failed_kept_text">%1$s. Η προηγούμενη απομαγνητοφώνηση διατηρήθηκε.</string>
+    <string name="home_status_needs_wifi_title">Απαιτείται Wi-Fi για εγγραφή</string>
+    <string name="home_status_needs_wifi_suggestion">Ο καταγραφέας έχει σταματήσει και δεν μπορεί να ξεκινήσει χωρίς Wi-Fi, επομένως οι κλήσεις δεν εγγράφονται. Συνδεθείτε σε Wi-Fi ή ενεργοποιήστε στις Ρυθμίσεις το «Συνέχιση εγγραφής χωρίς Wi-Fi».</string>
+    <string name="notif_stopped_by_user_title">Τερματίσατε το CallVault</string>
+    <string name="notif_stopped_by_user_text">Οι κλήσεις δεν ηχογραφήθηκαν όσο ήταν τερματισμένο. Το CallVault είναι ξανά ανοιχτό και ηχογραφεί τις νέες κλήσεις.</string>
+    <string name="home_stopped_by_user_text">Τερματίσατε το CallVault — οι κλήσεις δεν ηχογραφήθηκαν όσο ήταν τερματισμένο.</string>
 </resources>

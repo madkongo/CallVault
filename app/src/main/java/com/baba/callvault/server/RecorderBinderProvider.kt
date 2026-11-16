@@ -119,6 +119,10 @@ class RecorderBinderProvider : ContentProvider() {
             return
         }
 
+        // A daemon that was already running handed its binder over because our process started (BabApps item 115).
+        // Take it only when it is the right recorder for this phone; otherwise leave it, and the launcher replaces it.
+        if (extras.getBoolean(EXTRA_REDELIVERY, false) && !acceptRedelivery(binder, extras.getString(EXTRA_HOST_APK))) return
+
         val service = IRecorderService.Stub.asInterface(binder)
         RecorderConnection.onBinderReceived(service)
         AppLogger.i(
@@ -130,6 +134,25 @@ class RecorderBinderProvider : ContentProvider() {
         runCatching {
             binder.linkToDeath(RecorderConnection.deathRecipient, 0)
         }.onFailure { AppLogger.w(TAG, "linkToDeath failed (binder may already be dead): ${it.message}") }
+    }
+
+    /** Decides a hand-over from a live daemon; every refusal is logged, so a report shows why it was not reused. */
+    private fun acceptRedelivery(binder: IBinder, hostApk: String?): Boolean {
+        val ctx = context ?: return false
+        val prefs = com.baba.callvault.data.AppPreferences(ctx)
+        val verdict = DaemonReuse.judgeRedelivery(
+            standaloneMode = BackendChoice.of(prefs.getPrivilegedMode()) == BackendChoice.ADB,
+            recordingStopped = prefs.getRecordingState() == com.baba.callvault.data.RecordingState.STOPPED,
+            alreadyHeld = RecorderConnection.service?.asBinder() == binder,
+            hostApkPath = hostApk,
+            installedApkPath = ctx.applicationInfo.sourceDir,
+        )
+        if (verdict == DaemonReuse.Verdict.ACCEPT) {
+            AppLogger.i(TAG, "A running recorder (apk=$hostApk) handed over its binder at app start; reusing it, no ADB launch")
+        } else {
+            AppLogger.i(TAG, "A running recorder handed over its binder at app start; not taking it: $verdict (its apk=$hostApk)")
+        }
+        return verdict == DaemonReuse.Verdict.ACCEPT
     }
 
     // ----- Unused ContentProvider surface: minimal stubs (we are a pure binder-delivery channel). -----
@@ -174,6 +197,12 @@ class RecorderBinderProvider : ContentProvider() {
 
         /** Bundle key for the [BinderContainer]; analogous to ShizukuProvider.EXTRA_BINDER. */
         const val EXTRA_BINDER = "com.baba.callvault.recorder.extra.BINDER"
+
+        /** True when the daemon sends its binder again because the app's process started, not because we launched it. */
+        const val EXTRA_REDELIVERY = "com.baba.callvault.recorder.extra.REDELIVERY"
+
+        /** The APK the sending daemon runs from, so the app can tell a current daemon from one left by an old build. */
+        const val EXTRA_HOST_APK = "com.baba.callvault.recorder.extra.HOST_APK"
 
         /** Bundle key for the cblk ParcelFileDescriptor. */
         const val EXTRA_CBLK_FD = "com.baba.callvault.recorder.extra.CBLK_FD"

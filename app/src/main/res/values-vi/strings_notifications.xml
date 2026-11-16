@@ -59,4 +59,9 @@
     <string name="transcript_notice_failed_many_title">Lượt chép lời chưa hoàn tất: %1$d</string>
     <string name="transcript_notice_failed_many_text">Chạm để xem.</string>
     <string name="transcript_notice_failed_kept_text">%1$s. Bản chép lời trước đó được giữ lại.</string>
+    <string name="home_status_needs_wifi_title">Cần Wi-Fi để ghi âm</string>
+    <string name="home_status_needs_wifi_suggestion">Trình ghi âm đã dừng và không thể khởi động nếu không có Wi-Fi, nên các cuộc gọi không được ghi. Hãy kết nối Wi-Fi hoặc bật “Vẫn ghi âm khi không có Wi-Fi” trong Cài đặt.</string>
+    <string name="notif_stopped_by_user_title">Bạn đã dừng CallVault</string>
+    <string name="notif_stopped_by_user_text">Các cuộc gọi không được ghi âm khi ứng dụng bị dừng. CallVault đã mở lại và sẽ ghi âm các cuộc gọi mới.</string>
+    <string name="home_stopped_by_user_text">Bạn đã dừng CallVault — các cuộc gọi không được ghi âm khi ứng dụng bị dừng.</string>
 </resources>

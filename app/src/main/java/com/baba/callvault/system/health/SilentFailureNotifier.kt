@@ -58,6 +58,7 @@ object SilentFailureNotifier {
     private const val ID_PAIRING_LOST = 4719
     private const val ID_CUT_OFF_SAVED = 4723
     private const val ID_TURNED_OFF_FOR_ANDROID = 4724
+    private const val ID_STOPPED_BY_USER = 4725
 
     /**
      * The recorder could not be started. Posted from the boot path, where a failure is invisible.
@@ -130,6 +131,17 @@ object SilentFailureNotifier {
             settingLabels.joinToString(", "),
             android.os.Build.VERSION.RELEASE.orEmpty(),
         ),
+    )
+
+    /**
+     * The user stopped CallVault (Active apps -> Stop, or Force stop), and it hears no calls until opened again.
+     * Posted at the next start, once per stop (BabApps item 115).
+     */
+    fun noteStoppedByUser(context: Context) = post(
+        context,
+        id = ID_STOPPED_BY_USER,
+        title = context.getString(R.string.notif_stopped_by_user_title),
+        text = context.getString(R.string.notif_stopped_by_user_text),
     )
 
     /** The pairing works again. */

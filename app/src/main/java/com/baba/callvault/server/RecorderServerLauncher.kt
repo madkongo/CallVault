@@ -165,6 +165,13 @@ object RecorderServerLauncher {
             return true
         }
 
+        // A daemon that outlived the app (Active apps -> Stop) hands its binder over when our process starts. Give it a
+        // moment before going to ADB, which kills that daemon and cannot launch another away from Wi-Fi (BabApps item 115).
+        if (awaitLiveDaemon()) {
+            applyWdPolicy(context, refreshUsbDefault = !AppPauseWatch.preferRecorderCapture(context))
+            return true
+        }
+
         val apk = context.applicationInfo.sourceDir
         val perAttemptMs = (timeoutMs / MAX_LAUNCH_ATTEMPTS).coerceAtLeast(2000L)
 
@@ -179,6 +186,17 @@ object RecorderServerLauncher {
             context,
             "daemon launch for $caller finished: connected=$ok after ${SystemClock.elapsedRealtime() - askedAt}ms",
         )
+        return ok
+    }
+
+    /** Waits briefly, in a young app process, for a running daemon's hand-over. True when its binder arrived. */
+    private fun awaitLiveDaemon(): Boolean {
+        val processAgeMs = SystemClock.elapsedRealtime() - android.os.Process.getStartElapsedRealtime()
+        val waitMs = DaemonReuse.waitForRedeliveryMs(processAgeMs, SystemClock.elapsedRealtime())
+        if (waitMs <= 0L) return false
+        val ok = pollConnected(waitMs)
+        AppLogger.i(TAG, "Waited up to ${waitMs}ms for a running recorder to hand over its binder (process age ${processAgeMs}ms): " +
+            if (ok) "it did; no launch needed" else "none came; launching")
         return ok
     }
 

@@ -59,4 +59,9 @@
     <string name="transcript_notice_failed_many_title">Transcrições não concluídas: %1$d</string>
     <string name="transcript_notice_failed_many_text">Toque para vê-las.</string>
     <string name="transcript_notice_failed_kept_text">%1$s. A transcrição anterior foi mantida.</string>
+    <string name="home_status_needs_wifi_title">Precisa de Wi-Fi para gravar</string>
+    <string name="home_status_needs_wifi_suggestion">O gravador está parado e não consegue iniciar sem Wi-Fi, então as chamadas não estão sendo gravadas. Conecte-se a uma rede Wi-Fi ou ative “Continuar gravando sem Wi-Fi” nas Configurações.</string>
+    <string name="notif_stopped_by_user_title">Você parou o CallVault</string>
+    <string name="notif_stopped_by_user_text">As chamadas não foram gravadas enquanto ele estava parado. O CallVault está aberto de novo e grava as novas chamadas.</string>
+    <string name="home_stopped_by_user_text">Você parou o CallVault — as chamadas não foram gravadas enquanto ele estava parado.</string>
 </resources>

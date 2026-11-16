@@ -7,6 +7,25 @@ All notable changes to CallVault are documented here. The format is based on
 
 ### Fixed
 
+- **Home no longer says "Ready to record" when the recorder is stopped and there is no Wi-Fi.** On a Pixel 8 with
+  mobile data only and "Keep recording off Wi-Fi" off, the recorder could not restart after the app was stopped, a
+  call was missed, and Home still read "Ready". Home now shows "Needs Wi-Fi to record" and says to connect to Wi-Fi or
+  turn on "Keep recording off Wi-Fi"; tapping the card opens Settings. Nothing changes while the recorder is running or
+  Wi-Fi is up.
+  <!-- 🧪 VERIFYING (BabApps item 115, not shipped): with the recorder stopped (force-stop the app), Wi-Fi off and
+  "Keep recording off Wi-Fi" off, Home should show "Needs Wi-Fi to record"; turning Wi-Fi back on should return it
+  to Ready. -->
+
+- **A call after you stop CallVault (Active apps → Stop) is no longer lost when there is no Wi-Fi, and you are told
+  about the stop.** The recorder keeps running after a Stop, but the next call woke the app, which killed that
+  recorder and tried to start a new one over ADB, which cannot work away from Wi-Fi. The running recorder now hands
+  itself to the app when it starts, so it is reused. When you next open the app after a Stop or Force stop, a
+  notification and a Home card say "You stopped CallVault — calls weren't recorded while it was stopped", once per
+  stop. The "call was not recorded" line now names your own Stop too, instead of only "the phone or another app".
+  <!-- 🧪 VERIFYING (BabApps item 115, not shipped): shown on the emulator only (same recorder reused after Stop and
+  after Force stop, no ADB launch, notification posted). To settle it on a phone: stop CallVault from Active apps with
+  Wi-Fi off and "Keep recording off Wi-Fi" off, then make a call; it should record. -->
+
 - **LINE calls are now recorded on phones where LINE never switches the phone into call mode.** On a POCO F8 Ultra
   (HyperOS 3) a LINE call left no recording and no notification, because CallVault only starts an app call when the
   phone enters call mode and LINE does not. CallVault now also starts when LINE has a call-voice player and a

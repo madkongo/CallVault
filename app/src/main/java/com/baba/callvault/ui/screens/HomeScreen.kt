@@ -1137,6 +1137,8 @@ fun HomeScreen(
                                     context.openWirelessDebugging()
                                 }
                             }
+                            // "Keep recording off Wi-Fi" lives in Settings; open the panel (BabApps item 115).
+                            HomeViewModel.HomeStatus.NEEDS_WIFI -> onOpenSettings
                             else -> null
                         },
                         onSetRecordingState = { viewModel.setRecordingState(it) },
@@ -1147,6 +1149,9 @@ fun HomeScreen(
                             blockedByRecording = uiState.usbFixBlockedByRecording,
                             onFix = { viewModel.setUsbChargingOnly() },
                         )
+                    }
+                    if (uiState.stoppedByUserAtMillis != null) {
+                        StoppedByUserCard(onDismiss = { viewModel.dismissStoppedByUserCard() })
                     }
                     uiState.updatedToVersion?.let { version ->
                         UpdatedBannerCard(
@@ -2422,6 +2427,40 @@ private fun UpdatedBannerCard(version: String, onDismiss: () -> Unit) {
 }
 
 /**
+ * Shown once per user stop (Active apps -> Stop, or Force stop): a stopped app hears no calls, and the user who
+ * pressed Stop was told nothing (BabApps item 115). Warning tint, closable; a later stop shows it again.
+ */
+@Composable
+private fun StoppedByUserCard(onDismiss: () -> Unit) {
+    val accent = LocalCvBrand.current.warning
+    val tinted = accent.copy(alpha = 0.10f).compositeOver(MaterialTheme.colorScheme.surface)
+    CvCard(color = tinted, contentPadding = PaddingValues(horizontal = 16.dp, vertical = 10.dp)) {
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            Icon(
+                imageVector = Icons.Filled.StopCircle,
+                contentDescription = null,
+                tint = accent,
+                modifier = Modifier.size(22.dp)
+            )
+            Spacer(Modifier.width(12.dp))
+            Text(
+                text = stringResource(R.string.home_stopped_by_user_text),
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onSurface,
+                modifier = Modifier.weight(1f)
+            )
+            IconButton(onClick = onDismiss) {
+                Icon(
+                    imageVector = Icons.Filled.Close,
+                    contentDescription = stringResource(R.string.general_close),
+                    tint = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+            }
+        }
+    }
+}
+
+/**
  * Gentle advisory shown under the hero card when the Default USB Configuration is a DATA mode — locking
  * the screen mid-call can then stop recording. NOT a red "broken" state (recording works otherwise), so
  * it uses a soft warning tint. Tapping it applies the one-tap fix (set USB to "Charging only"); a spinner
@@ -2654,6 +2693,8 @@ private fun HeroStatusCard(
         HomeViewModel.HomeStatus.PAIRING_LOST -> CvTone.Error
         // Error, not Warning: the recorder is down and the next call will be missed.
         HomeViewModel.HomeStatus.RECOVERY_STUCK -> CvTone.Error
+        // Error: the recorder is down and cannot start without Wi-Fi, so the next call would be missed.
+        HomeViewModel.HomeStatus.NEEDS_WIFI -> CvTone.Error
         // Error for the same reason: with Shizuku stopped nothing can record, and it stops on every
         // reboot — this is the state a Shizuku user will meet most often and must not read as cosmetic.
         HomeViewModel.HomeStatus.SHIZUKU_NOT_READY -> CvTone.Error
@@ -2670,6 +2711,7 @@ private fun HeroStatusCard(
         HomeViewModel.HomeStatus.UPDATE_REGRANT_NEEDED -> stringResource(R.string.home_hero_pill_update_regrant)
         HomeViewModel.HomeStatus.PAIRING_LOST -> stringResource(R.string.home_hero_pill_recovery_stuck)
         HomeViewModel.HomeStatus.RECOVERY_STUCK -> stringResource(R.string.home_hero_pill_recovery_stuck)
+        HomeViewModel.HomeStatus.NEEDS_WIFI -> stringResource(R.string.home_hero_pill_recovery_stuck)
         HomeViewModel.HomeStatus.SHIZUKU_NOT_READY -> stringResource(R.string.home_hero_pill_shizuku)
         HomeViewModel.HomeStatus.STOPPED -> stringResource(R.string.home_hero_pill_stopped)
         HomeViewModel.HomeStatus.STARTING -> stringResource(R.string.home_hero_pill_starting)

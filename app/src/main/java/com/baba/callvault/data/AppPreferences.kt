@@ -476,7 +476,12 @@ class AppPreferences(context: Context) {
 
         // The transcript reader's "Follow playback" switch (#27). A remembered view choice, like a sort
         // order: device-only and not a Settings row.
-        TRANSCRIPT_FOLLOW_PLAYBACK("transcript_follow_playback");
+        TRANSCRIPT_FOLLOW_PLAYBACK("transcript_follow_playback"),
+
+        // BabApps item 115: the time of the newest user stop (Active apps -> Stop) already told to the user, by
+        // notification and by Home card. State, not settings: device-only, not exported, no Settings row.
+        STOP_NOTICE_NOTIFIED_AT("stop_notice_notified_at"),
+        STOP_NOTICE_CARD_DISMISSED_AT("stop_notice_card_dismissed_at");
     }
 
     // -------- Nested enums
@@ -743,6 +748,14 @@ class AppPreferences(context: Context) {
     /** The versionCode seen on the previous launch, used to detect that an update just landed. */
     fun getLastSeenVersionCode() = getInt(Key.LAST_SEEN_VERSION_CODE)
     fun setLastSeenVersionCode(code: Int) = setInt(Key.LAST_SEEN_VERSION_CODE, code)
+
+    /** Time of the newest user stop the notification was already posted for (0 = none). */
+    fun getStopNoticeNotifiedAt() = getLong(Key.STOP_NOTICE_NOTIFIED_AT)
+    fun setStopNoticeNotifiedAt(atMillis: Long) = setLong(Key.STOP_NOTICE_NOTIFIED_AT, atMillis)
+
+    /** Time of the newest user stop whose Home card the user closed (0 = none). */
+    fun getStopNoticeCardDismissedAt() = getLong(Key.STOP_NOTICE_CARD_DISMISSED_AT)
+    fun setStopNoticeCardDismissedAt(atMillis: Long) = setLong(Key.STOP_NOTICE_CARD_DISMISSED_AT, atMillis)
 
     /** Version name to show a dismissable "updated successfully" banner for, or null when none. */
     fun getUpdateSuccessBannerVersion() = getString(Key.UPDATE_SUCCESS_BANNER_VERSION)
