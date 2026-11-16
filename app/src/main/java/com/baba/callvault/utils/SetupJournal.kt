@@ -37,6 +37,7 @@ object SetupJournal {
     @Volatile private var file: File? = null
     @Volatile private var bytesWritten = 0L
     @Volatile private var closed = false
+    private val gate = RepeatGate()
 
     /** Opens (or reopens) the journal for this process. Called once, from [AppLogger.init]. */
     fun init(context: Context) {
@@ -59,6 +60,10 @@ object SetupJournal {
      */
     fun record(tag: String, line: String) {
         if (!SetupJournalPolicy.shouldRecord(tag, closed, bytesWritten)) return
+        // Everything after "yyyy-MM-dd HH:mm:ss.SSS " is the message, which is what repeats.
+        val skipped = synchronized(gate) { gate.admit(tag, line.drop(24), System.currentTimeMillis()) }
+        if (skipped < 0) return
+        if (skipped > 0) append("(… $skipped identical $tag lines since the one before were left out)")
         append(line)
         if (bytesWritten >= SetupJournalPolicy.MAX_BYTES) {
             append("=== journal full; setup was still not finished at this point $END_MARKER ===")
