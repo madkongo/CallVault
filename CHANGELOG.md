@@ -16,7 +16,9 @@ All notable changes to CallVault are documented here. The format is based on
   (#82, thanks @akpapathanasiou).
   <!-- 🧪 VERIFYING (BabApps item 114, not shipped): Settings ▸ file name ▸ Custom, type `{day-}_{time-}_{contact_name}`;
   the example shows 2026-06-11_14-30-52_John Doe. Record a call: the file should carry that date and time, the list
-  should show the right date and, for a saved call, the contact. Not yet tried on a phone with a real call. -->
+  should show the right date and, for a saved call, the contact. Tried once on the OnePlus 9 Pro (Shizuku, one incoming
+  call, 2026-11-16): file name, list row, rescan and old `{date}` rows all read right. Not yet tried on an outgoing
+  call, an app call, a merge, or by anyone else. -->
 
 ### Fixed
 
