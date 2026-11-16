@@ -18,8 +18,8 @@
     <string name="home_health_missed_developer_options_unnamed">有一通通話未被錄音 — 當時開發者選項處於關閉狀態。</string>
     <string name="home_health_missed_recording_folder">有一通通話未被錄音 — 當時未設定錄音資料夾，%1$s。</string>
     <string name="home_health_missed_recording_folder_unnamed">有一通通話未被錄音 — 當時未設定錄音資料夾。</string>
-    <string name="home_health_missed_secure_settings">有一通通話未被錄音 — CallVault 已失去啟動錄音的許可權，%1$s。</string>
-    <string name="home_health_missed_secure_settings_unnamed">有一通通話未被錄音 — CallVault 已失去啟動錄音的許可權。</string>
+    <string name="home_health_missed_secure_settings">有一通通話未被錄音 — CallVault 已失去啟動錄音的權限，%1$s。</string>
+    <string name="home_health_missed_secure_settings_unnamed">有一通通話未被錄音 — CallVault 已失去啟動錄音的權限。</string>
     <string name="home_health_setup_changed">自上一通通話以來設定已更改 — 下一通通話將確認它是否仍然有效。</string>
     <string name="home_health_unverified">你的下一通通話將確認錄音功能正常。</string>
     <string name="home_health_verified">上次驗證於 %1$s。</string>
@@ -43,7 +43,7 @@
     <string name="home_call_declined">已拒接</string>
     <string name="home_call_unknown_number">未知號碼</string>
     <string name="home_calls_empty">手機通話記錄中還沒有通話。</string>
-    <string name="home_calls_no_permission">CallVault 無法讀取通話記錄。請在 Android 的應用設定中為 CallVault 允許“通話記錄”許可權，即可在此檢視所有通話。</string>
+    <string name="home_calls_no_permission">CallVault 無法讀取通話記錄。請在 Android 的應用設定中為 CallVault 允許“通話記錄”權限，即可在此檢視所有通話。</string>
     <string name="home_recordings_count">已儲存 %1$d 個</string>
     <string name="home_recordings_empty_hint">當 CallVault 錄製通話後，會顯示在這裡。撥打或接聽一通電話即可開始。</string>
     <string name="home_recordings_empty_title">暫無錄音</string>
@@ -85,7 +85,7 @@
     <string name="whatsnew_150_body">開啟 USB 除錯後，CallVault 就能關閉無線除錯並讓它保持關閉。無需資料線，而且與無線除錯不同，它不會開啟網路埠 — 因此在兩者之中，它是更適合保持開啟的那個。可選：無論哪種方式，錄音都能正常工作。\n\n同時修復：關閉 USB 除錯可能導致 CallVault 無法錄音，卻不作任何提示。</string>
     <string name="whatsnew_150_title">關閉無線除錯</string>
     <string name="whatsnew_150_where">設定 ▸ 實驗性功能 ▸ USB 除錯</string>
-    <string name="whatsnew_153_body">狀態卡片現在會告訴你錄音是否真的成功了 — 依據是你的真實通話，而不是一個只表示應用已啟動的綠燈。如果某通通話沒有被錄音，它會說明這一點並給出原因：從未設定資料夾、開發者選項被關閉、更新導致許可權丟失。\n\n此外：CallVault 現在支援巴西葡萄牙語，其他所有語言也都已更新。</string>
+    <string name="whatsnew_153_body">狀態卡片現在會告訴你錄音是否真的成功了 — 依據是你的真實通話，而不是一個只表示應用已啟動的綠燈。如果某通通話沒有被錄音，它會說明這一點並給出原因：從未設定資料夾、開發者選項被關閉、更新導致權限丟失。\n\n此外：CallVault 現在支援巴西葡萄牙語，其他所有語言也都已更新。</string>
     <string name="whatsnew_153_title">你的設定，由你自己的通話來驗證</string>
     <string name="whatsnew_154_body">與錄音器的連線偶爾會出現罕見的卡頓，可能在無任何提示的情況下悄悄停止錄音，直到重啟應用。現在它會超時並自行恢復。\n\n你還可以選擇錄音上傳到雲端硬碟的時間：立即、每天或每週。請前往「設定 ▸ 儲存」，「保留時長」也已移至同一板塊。</string>
     <string name="whatsnew_154_title">能自行恢復的錄音</string>

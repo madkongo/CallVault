@@ -11,10 +11,10 @@
     <string name="notif_pairing_remote_input_label">配對碼</string>
     <string name="notif_pairing_searching_text">請打開手機的“使用配對碼配對設備”對話框。</string>
     <string name="notif_pairing_searching_title">正在查找配對服務…</string>
-    <string name="notif_pairing_success_text">無線調試已配對。點按以完成 CallVault 的設定。</string>
+    <string name="notif_pairing_success_text">無線偵錯已配對。點按以完成 CallVault 的設定。</string>
     <string name="notif_pairing_success_title">配對成功 ✓</string>
-    <string name="notif_pairing_waiting_wd_text">請開啓無線調試以開始配對。</string>
-    <string name="notif_pairing_waiting_wd_title">正在等待無線調試…</string>
+    <string name="notif_pairing_waiting_wd_text">請開啓無線偵錯以開始配對。</string>
+    <string name="notif_pairing_waiting_wd_title">正在等待無線偵錯…</string>
     <string name="notif_pairing_working_text">正在設定 CallVault，需要幾秒鐘。</string>
     <string name="notif_pairing_working_title">正在配對…</string>
     <string name="notif_readiness_channel">通話錄音就緒狀態</string>
@@ -39,14 +39,14 @@
     <string name="update_notif_success_text">CallVault 已更新到 %1$s 版。</string>
     <string name="update_notif_success_title">更新已安裝</string>
     <string name="notif_readiness_down_title">通話未在錄音</string>
-    <string name="notif_readiness_no_debugging_text">USB 調試和無線調試都已關閉。請在開發者選項中重新開啓其中一項。</string>
-    <string name="notif_readiness_needs_wifi_text">USB 調試已關閉，且沒有連接 Wi-Fi。請連接 Wi-Fi 或開啓 USB 調試。</string>
+    <string name="notif_readiness_no_debugging_text">USB 偵錯和無線偵錯都已關閉。請在開發者選項中重新開啓其中一項。</string>
+    <string name="notif_readiness_needs_wifi_text">USB 偵錯已關閉，且沒有連接 Wi-Fi。請連接 Wi-Fi 或開啓 USB 偵錯。</string>
     <string name="notif_readiness_stuck_text">錄音器一直無法啓動。打開 CallVault 查看原因。</string>
     <string name="notif_readiness_needs_wifi_restart_text">錄音器已停止，需要 Wi-Fi 才能重新啓動。在連接 Wi-Fi 時開啓“無 Wi-Fi 時繼續錄音”即可避免這種情況。</string>
-    <string name="notif_readiness_wd_off_by_user_text">你關閉了無線調試，CallVault 沒有其他方式重新啓動錄音器。請重新開啓它，或開啓 USB 調試。</string>
-    <string name="notif_readiness_offline_paused_text">無 Wi-Fi 錄音已暫停：它需要 USB 調試。連接 Wi-Fi 時的通話仍會錄音。</string>
-    <string name="notif_action_turn_wd_on">開啓無線調試</string>
-    <string name="notif_action_turn_usb_on">開啓 USB 調試</string>
+    <string name="notif_readiness_wd_off_by_user_text">你關閉了無線偵錯，CallVault 沒有其他方式重新啓動錄音器。請重新開啓它，或開啓 USB 偵錯。</string>
+    <string name="notif_readiness_offline_paused_text">無 Wi-Fi 錄音已暫停：它需要 USB 偵錯。連接 Wi-Fi 時的通話仍會錄音。</string>
+    <string name="notif_action_turn_wd_on">開啓無線偵錯</string>
+    <string name="notif_action_turn_usb_on">開啓 USB 偵錯</string>
 
     <!-- Transcription finished / didn't finish -->
     <string name="transcript_notice_channel">轉寫文本</string>

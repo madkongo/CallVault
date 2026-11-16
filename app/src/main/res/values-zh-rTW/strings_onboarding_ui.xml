@@ -20,10 +20,10 @@
     <string name="permissions_status_adb_connected">已連線</string>
     <string name="permissions_status_adb_not_connected">未連線</string>
     <string name="permissions_ui_eyebrow">設定</string>
-    <string name="permissions_ui_hero_subtitle">授予幾項許可權，CallVault 才能錄製並標記你的通話。請逐項批准下方內容。</string>
-    <string name="permissions_ui_hero_line">授予幾項許可權即可錄製通話。</string>
+    <string name="permissions_ui_hero_subtitle">授予幾項權限，CallVault 才能錄製並標記你的通話。請逐項批准下方內容。</string>
+    <string name="permissions_ui_hero_line">授予幾項權限即可錄製通話。</string>
     <string name="permissions_ui_hero_title">開始設定</string>
-    <string name="permissions_ui_section_label">許可權</string>
+    <string name="permissions_ui_section_label">權限</string>
     <string name="setup_report_link">遇到問題？傳送報告</string>
     <string name="setup_report_preparing">正在準備報告…</string>
 </resources>
