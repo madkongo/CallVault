@@ -46,6 +46,16 @@ class WrongScriptRetryTest {
     }
 
     @Test
+    fun `cantonese mixed with english is not a failed decode`() {
+        // BabApps item 117: Han text with English words in it is what a Cantonese call looks like.
+        val mixed = said("我哋聽日開meeting，傾下個project嘅進度", "OK，我send個file俾你睇下")
+        assertFalse(WrongScriptRetry.isWrongScript(mixed, "yue"))
+        assertFalse(WrongScriptRetry.hasStrayScript(mixed, "yue"))
+        // Latin only under a Cantonese pin is the failure, same as for Chinese.
+        assertTrue(WrongScriptRetry.isWrongScript(said("Hello there, how are you doing today?"), "yue"))
+    }
+
+    @Test
     fun `a latin language and auto-detect are never judged`() {
         // English pinned and Hebrew out would be the mirror image, but it has never been seen, and every
         // Latin-script language shares one alphabet — there is nothing here a script can tell apart.

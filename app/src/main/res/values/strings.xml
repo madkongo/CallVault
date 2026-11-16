@@ -778,6 +778,7 @@
     <string name="transcription_language_persian">Persian</string>
     <string name="transcription_language_urdu">Urdu</string>
     <string name="transcription_language_bengali">Bengali</string>
+    <string name="transcription_language_cantonese">Cantonese (粵語)</string>
     <string name="transcription_language_ukrainian">Ukrainian</string>
     <string name="transcription_language_auto">Detect automatically</string>
     <string name="language_search_placeholder">Search languages</string>

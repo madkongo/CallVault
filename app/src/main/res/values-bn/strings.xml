@@ -923,6 +923,7 @@
     <string name="settings_subheader_all_calls">সব কল</string>
     <string name="settings_voip_auto_start_record_label">অ্যাপ কল স্বয়ংক্রিয়ভাবে রেকর্ড করুন</string>
     <string name="transcription_language_bengali">বাংলা</string>
+    <string name="transcription_language_cantonese">ক্যান্টনিজ (粵語)</string>
     <!-- Transcribe again (#72) -->
     <string name="transcribe_again_title">আবার ট্রান্সক্রাইব করবেন?</string>
     <string name="transcribe_again_message_one">%1$s আবার ট্রান্সক্রাইব করা হবে। নতুন চালনা ব্যর্থ হলে বা থামানো হলে বর্তমান ট্রান্সক্রিপ্ট রাখা হবে।</string>

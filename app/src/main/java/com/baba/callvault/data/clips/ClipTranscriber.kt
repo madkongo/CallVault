@@ -11,6 +11,7 @@ package com.baba.callvault.data.clips
 import android.content.Context
 import android.net.Uri
 import com.baba.callvault.data.AppPreferences
+import com.baba.callvault.transcription.CantoneseScript
 import com.baba.callvault.transcription.DecodeSettings
 import com.baba.callvault.transcription.TranscriptionEngine
 import com.baba.callvault.transcription.TranscriptionEngineChoice
@@ -59,7 +60,10 @@ object ClipTranscriber {
             val segments = engine.transcriber
                 ?.transcribe(context, uri, engine.modelPath, language, null, null, DecodeSettings.DEFAULT)
                 ?: TranscriptionEngine.transcribe(context, uri, engine.modelPath, language)
-            val lines = segments.map { ClipLine(it.startMs, it.endMs, it.text) }
+            // Pinned Cantonese is stored in Hong Kong Traditional, like a whole call (BabApps item 117).
+            val lines = segments.map {
+                ClipLine(it.startMs, it.endMs, if (language == "yue") CantoneseScript.toTraditionalHk(it.text) else it.text)
+            }
             AppLogger.i(TAG, "Clip transcribed: ${lines.size} lines")
             Outcome.Done(ClipTranscript.fromClipFile(lines, range, clip.leadInMs))
         } catch (e: CancellationException) {

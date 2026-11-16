@@ -125,8 +125,13 @@ class CloudTranscriptionClient(private val http: HttpPoster = UrlConnectionPoste
         /** Whether [key] can travel in a header at all: printable ASCII, no spaces. */
         fun isPlausibleKey(key: String): Boolean = key.isNotEmpty() && key.all { it in PRINTABLE_ASCII }
 
+        /** The one longer code sent as is: OpenAI's guide lists `yue` among accepted ISO 639-3 codes. */
+        private const val CANTONESE = "yue"
+
         fun isoLanguage(language: String?): String? =
-            language?.trim()?.lowercase()?.takeIf { it.length == ISO_639_1_LENGTH && it.all(Char::isLetter) }
+            language?.trim()?.lowercase()?.takeIf {
+                it == CANTONESE || (it.length == ISO_639_1_LENGTH && it.all(Char::isLetter))
+            }
     }
 }
 

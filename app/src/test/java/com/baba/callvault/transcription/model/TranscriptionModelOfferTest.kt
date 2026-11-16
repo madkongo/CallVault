@@ -58,6 +58,37 @@ class TranscriptionModelOfferTest {
         assertTrue(TranscriptionModel.DEFAULT in offered)
     }
 
+    // BabApps item 117: Cantonese ("yue") exists only in the large-v3 vocabulary, not in small's.
+
+    @Test
+    fun small_cannot_decode_cantonese_but_the_turbo_tiers_can() {
+        assertFalse(TranscriptionModelOffer.canDecode(TranscriptionModel.SMALL_Q5_1, "yue"))
+        assertTrue(TranscriptionModelOffer.canDecode(TranscriptionModel.LARGE_V3_TURBO_Q8_0, "yue"))
+        assertTrue(TranscriptionModelOffer.canDecode(TranscriptionModel.LARGE_V3_TURBO_Q5_0, "yue"))
+        assertTrue(TranscriptionModelOffer.canDecode(TranscriptionModel.SMALL_Q5_1, "he"))
+        assertTrue(TranscriptionModelOffer.canDecode(TranscriptionModel.SMALL_Q5_1, null))
+    }
+
+    @Test
+    fun small_is_hidden_while_cantonese_is_pinned_unless_it_is_selected() {
+        val hidden = TranscriptionModelOffer.offered("yue", TranscriptionModel.DEFAULT.id, emptySet())
+        assertFalse(TranscriptionModel.SMALL_Q5_1 in hidden)
+        assertTrue(TranscriptionModel.DEFAULT in hidden)
+
+        val kept = TranscriptionModelOffer.offered("yue", TranscriptionModel.SMALL_Q5_1.id, emptySet())
+        assertTrue(TranscriptionModel.SMALL_Q5_1 in kept)
+    }
+
+    @Test
+    fun cantonese_is_not_listed_while_small_is_selected_unless_it_is_the_current_choice() {
+        val all = listOf("he", "yue", null)
+        assertEquals(listOf("he", null), TranscriptionModelOffer.languagesOffered(all, "small-q5_1", "he"))
+        assertEquals(listOf("he", "yue", null), TranscriptionModelOffer.languagesOffered(all, "small-q5_1", "yue"))
+        assertEquals(all, TranscriptionModelOffer.languagesOffered(all, TranscriptionModel.DEFAULT.id, "he"))
+        // An unknown stored id runs as the default tier, so it keeps Cantonese.
+        assertEquals(all, TranscriptionModelOffer.languagesOffered(all, "no-such-model", "he"))
+    }
+
     @Test
     fun the_default_is_a_general_tier() {
         // The dropdown falls back to DEFAULT for an unknown id, so DEFAULT must always be listed.

@@ -19,6 +19,16 @@ All notable changes to CallVault are documented here. The format is based on
   should show the right date and, for a saved call, the contact. Tried once on the OnePlus 9 Pro (Shizuku, one incoming
   call, 2026-11-16): file name, list row, rescan and old `{date}` rows all read right. Not yet tried on an outgoing
   call, an app call, a merge, or by anyone else. -->
+- **Cantonese (粵語) can now be chosen as the transcription language, for calls that mix Cantonese and English.** It
+  works with the two large-v3-turbo models and with cloud transcription. It is hidden while the small model is
+  selected, because small has no Cantonese; a call already set to Cantonese on small fails with a message that says
+  to pick a turbo model. The transcript is stored in Traditional (Hong Kong) characters: the engine often answers in
+  Simplified, so the text is converted afterwards, for Cantonese only. Summaries are written in Traditional Chinese
+  characters. Cantonese is added in all 15 languages of the app.
+  <!-- 🧪 VERIFYING (BabApps item 117, not shipped): the wiring is unit-tested only. Accuracy on real Cantonese with
+  English words is unmeasured (OpenAI documents turbo as weaker on Cantonese); it needs a native Cantonese speaker
+  to transcribe a real mixed call with a turbo model and judge it. Whether Groq and OpenRouter accept "yue" is not
+  tried live. -->
 
 ### Fixed
 

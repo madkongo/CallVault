@@ -8,6 +8,8 @@
 
 package com.baba.callvault.transcription.model
 
+import com.baba.callvault.transcription.TranscriptionLanguageChoice
+
 /**
  * Which speech models the picker lists (GitHub #55).
  *
@@ -39,9 +41,35 @@ object TranscriptionModelOffer {
         selectedId: String?,
         installedIds: Set<String>,
     ): List<TranscriptionModel> = TranscriptionModel.entries.filter { model ->
-        model.language == null ||
-            model.language == pinnedLanguage ||
-            model.id == selectedId ||
-            model.id in installedIds
+        // The reverse case (BabApps item 117): a tier that cannot decode the pinned language is hidden,
+        // unless it is already the selected one (same reason as above: never rename the model behind
+        // the user's back). The run itself refuses that pair with a clear message.
+        (model.id == selectedId || canDecode(model, pinnedLanguage)) &&
+            (
+                model.language == null ||
+                    model.language == pinnedLanguage ||
+                    model.id == selectedId ||
+                    model.id in installedIds
+                )
     }
+
+    /**
+     * Whether [model] can decode [language]. Only the small tier has a gap: its vocabulary has 99
+     * languages and Cantonese (`yue`) is the 100th, added with large-v3.
+     */
+    fun canDecode(model: TranscriptionModel, language: String?): Boolean =
+        !(model == TranscriptionModel.SMALL_Q5_1 && language != null &&
+            language in TranscriptionLanguageChoice.NOT_ON_SMALL)
+
+    /** [canDecode] for a stored model id; an unknown id counts as the default tier, as everywhere else. */
+    fun canDecodeId(modelId: String?, language: String?): Boolean =
+        canDecode(modelId?.let { TranscriptionModel.fromId(it) } ?: TranscriptionModel.DEFAULT, language)
+
+    /**
+     * The language codes to list while [modelId] is the selected model. A code the model cannot decode
+     * is dropped, unless it is [selectedLanguage] (it stays visible so the field never names another
+     * language than the one in force).
+     */
+    fun languagesOffered(all: List<String?>, modelId: String?, selectedLanguage: String?): List<String?> =
+        all.filter { it == selectedLanguage || canDecodeId(modelId, it) }
 }
