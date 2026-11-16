@@ -68,6 +68,14 @@ class TranscriptionLanguageChoiceTest {
     }
 
     @Test
+    fun cantonese_is_supported_as_an_explicit_choice() {
+        // BabApps item 117: whisper's own code, not "zh-HK".
+        assertEquals("yue", TranscriptionLanguageChoice.resolve(chosen = "yue", setting = "en"))
+        assertTrue("yue" in TranscriptionLanguageChoice.NOT_ON_SMALL)
+        assertTrue(TranscriptionLanguageChoice.NOT_ON_SMALL.all { it in TranscriptionLanguageChoice.SUPPORTED })
+    }
+
+    @Test
     fun ukrainian_is_supported_as_a_device_default_and_explicit_choice() {
         assertEquals("uk", TranscriptionLanguageChoice.defaultLanguage(Locale.forLanguageTag("uk-UA")))
         assertEquals("uk", TranscriptionLanguageChoice.resolve(chosen = "uk", setting = "en"))

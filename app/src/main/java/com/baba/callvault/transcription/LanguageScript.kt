@@ -24,6 +24,8 @@ object LanguageScript {
         "ru" to Character.UnicodeScript.CYRILLIC,
         "uk" to Character.UnicodeScript.CYRILLIC,
         "zh" to Character.UnicodeScript.HAN,
+        // Cantonese is written in Han characters, like Chinese; English words inside it stay Latin.
+        "yue" to Character.UnicodeScript.HAN,
         "el" to Character.UnicodeScript.GREEK,
         // Persian is written in the Arabic script, so a Latin transcript under a Persian pin is caught
         // the same way. Telling Persian from Arabic is not this table's job — see SummaryLanguage.

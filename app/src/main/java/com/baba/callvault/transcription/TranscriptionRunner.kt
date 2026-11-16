@@ -28,6 +28,7 @@ import com.baba.callvault.data.transcripts.db.TranscriptState
 import com.baba.callvault.transcription.cloud.CloudEndpoint
 import com.baba.callvault.transcription.cloud.CloudError
 import com.baba.callvault.transcription.model.TranscriptionModel
+import com.baba.callvault.transcription.model.TranscriptionModelOffer
 import com.baba.callvault.server.speakers.OfflineSpeakerLabeller
 import com.baba.callvault.utils.AppLogger
 import kotlinx.coroutines.CancellationException
@@ -203,6 +204,10 @@ class TranscriptionRunner(
         val speakers = OfflineSpeakerLabeller()
         val attempt = try {
             runCatching {
+                // small has no Cantonese token; whisper would reject the pin (BabApps item 117).
+                check(isCloud || TranscriptionModelOffer.canDecodeId(modelId, language)) {
+                    "The small model cannot transcribe $language; pick a large-v3-turbo model"
+                }
                 val first = transcriber.transcribe(
                     context, uri, modelPath, language, prompt, speakers, DecodeSettings.DEFAULT,
                 )

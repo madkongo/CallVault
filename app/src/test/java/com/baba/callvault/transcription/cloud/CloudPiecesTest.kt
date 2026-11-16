@@ -146,9 +146,12 @@ class CloudPiecesTest {
     }
 
     @Test
-    fun `only iso 639-1 codes are sent as the language`() {
+    fun `iso 639-1 codes and Cantonese are sent as the language`() {
         assertEquals("he", CloudTranscriptionClient.isoLanguage("he"))
-        assertNull(CloudTranscriptionClient.isoLanguage("yue"))
+        assertEquals("yue", CloudTranscriptionClient.isoLanguage("yue"))
+        assertEquals("yue", CloudTranscriptionClient.isoLanguage(" YUE "))
+        // Hawaiian stays out: no offered language needs it, and a stray 3-letter code is left to detection.
+        assertNull(CloudTranscriptionClient.isoLanguage("haw"))
         assertNull(CloudTranscriptionClient.isoLanguage(null))
     }
 

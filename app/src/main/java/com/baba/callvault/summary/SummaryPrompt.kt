@@ -52,7 +52,8 @@ object SummaryPrompt {
         "uk" to "Ukrainian",
         "ur" to "Urdu",
         "vi" to "Vietnamese",
-        "zh" to "Chinese"
+        "zh" to "Chinese",
+        "yue" to "Cantonese (written in Traditional Chinese characters)"
     )
 
     /** The English name for [code], or null when it is not one the app offers. */
