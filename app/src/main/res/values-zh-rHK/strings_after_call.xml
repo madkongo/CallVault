@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Keep or delete a recording when the call ends (docs/dev-notes/2026-11-06-keep-or-delete-plan.md). -->
+<resources>
+    <string name="after_call_channel">通話結束後保留或刪除</string>
+    <string name="after_call_title_party">已錄製與 %1$s 的通話</string>
+    <string name="after_call_title_app">已錄製 %1$s 通話</string>
+    <string name="after_call_title_plain">已錄製通話</string>
+    <string name="after_call_question_text">保留，還是現在刪除？</string>
+    <string name="after_call_keep">保留</string>
+    <string name="after_call_delete">刪除</string>
+    <string name="after_call_deleted_title">錄音已刪除</string>
+    <string name="after_call_deleted_text">幾秒後將被移除。點按“撤消”可保留。</string>
+    <string name="after_call_undo">撤消</string>
+    <string name="after_call_popup_title">保留這段錄音？</string>
+    <string name="after_call_popup_call">通話</string>
+</resources>

@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Keep or delete after the call: Settings rows and the wizard switch. -->
+<resources>
+    <string name="settings_after_call_mode_label">通話結束時</string>
+    <string name="settings_after_call_mode_keep">保留錄音</string>
+    <string name="settings_after_call_mode_ask">詢問我：保留還是刪除</string>
+    <string name="settings_after_call_mode_keep_desc">每段錄音都會保留，與以往相同。</string>
+    <string name="settings_after_call_mode_ask_desc">每次錄製的通話結束後，會有通知詢問是否保留。在你回答之前，錄音不會複製到 Drive，也不會自動轉寫。</string>
+    <string name="settings_after_call_needs_notifications">詢問需要 CallVault 的通知權限。允許後即開啟詢問。</string>
+    <string name="settings_after_call_style_label">詢問方式</string>
+    <string name="settings_after_call_style_notification">通知</string>
+    <string name="settings_after_call_style_popup">螢幕上方彈窗</string>
+    <string name="settings_after_call_style_notification_desc">帶有“保留”和“刪除”按鈕的通知。</string>
+    <string name="settings_after_call_style_popup_desc">在當前螢幕內容上方顯示一個小視窗。如果無法顯示（手機已鎖定）或你未作答就關閉了它，會改為透過通知詢問。需要“顯示在其他應用上層”權限。</string>
+    <string name="settings_after_call_needs_overlay">彈窗需要“顯示在其他應用上層”權限。在授權之前，由通知來詢問。</string>
+    <string name="settings_after_call_unanswered_label">如果我沒有回答</string>
+    <string name="settings_after_call_unanswered_keep">保留</string>
+    <string name="settings_after_call_unanswered_delete">24 小時後刪除</string>
+    <string name="settings_after_call_unanswered_keep_desc">24 小時後錄音會被保留，並照常複製和轉寫。</string>
+    <string name="settings_after_call_unanswered_delete_desc">通話結束 24 小時後，錄音會被刪除。</string>
+    <string name="settings_after_call_unanswered_engaged">你加過星標、標記、標籤、筆記或已轉寫的錄音，始終會被保留。</string>
+    <string name="wizard_after_call_ask_label">詢問我是否保留每段錄音</string>
+    <string name="wizard_after_call_ask_desc">通話結束時，一鍵保留或刪除錄音。關閉時保留所有錄音。</string>
+</resources>
