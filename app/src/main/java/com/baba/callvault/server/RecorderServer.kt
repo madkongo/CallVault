@@ -81,6 +81,8 @@ object RecorderServer {
             val stub = RecorderServiceImpl(apkPath)
             val delivered = BinderDelivery.deliverBinderToApp(stub.asBinder(), authority)
             AppLogger.i(TAG, "Binder delivery finished ok=$delivered; entering Looper.loop()")
+            // So an app process that starts later (after the app was stopped) can reuse this daemon (BabApps item 115).
+            AppStartBinderSender.register(stub.asBinder(), authority, apkPath)
 
             // Keep the process + binder alive so the app can call us back over IPC, possibly while WD
             // is OFF. Ends on SIGTERM or destroy().

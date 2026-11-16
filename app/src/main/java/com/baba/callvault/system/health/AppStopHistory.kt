@@ -41,9 +41,58 @@ object AppStopHistory {
     fun wasForceStoppedDuring(starts: List<AppStart>, callAtMillis: Long): Boolean =
         starts.filter { it.atWallMillis > callAtMillis }.minByOrNull { it.atWallMillis }?.afterForceStop == true
 
-    /** [wasForceStoppedDuring] from the system's history. Always false before Android 15, which does not say. */
-    fun wasForceStoppedDuring(context: Context, callAtMillis: Long): Boolean =
-        runCatching { wasForceStoppedDuring(starts(context), callAtMillis) }.getOrDefault(false)
+    /**
+     * [wasForceStoppedDuring] from the system's history, plus the user's own Stop. The start flag alone missed it:
+     * Active apps -> Stop leaves no force-stop flag on the next start (measured on the emulator), only an exit of
+     * reason USER_REQUESTED. Exits exist from Android 11, so this works below Android 15 too.
+     */
+    fun wasForceStoppedDuring(context: Context, callAtMillis: Long): Boolean = runCatching {
+        wasForceStoppedDuring(starts(context), callAtMillis) ||
+            wasStoppedByUserDuring(exits(context), starts(context), callAtMillis)
+    }.getOrDefault(false)
+
+    /** One recorded end of the app's process. */
+    data class ExitRecord(val atMillis: Long, val reason: Int, val description: String?)
+
+    /**
+     * Whether an exit is the user stopping the app: Active apps -> Stop, or Settings -> Force stop. Both are
+     * USER_REQUESTED with "stop" in the description. Swiping the app out of Recents is also USER_REQUESTED but
+     * never says "stop", and does not end the recorder's host, so it is not counted.
+     */
+    fun isUserStop(exit: ExitRecord): Boolean =
+        exit.reason == ApplicationExitInfo.REASON_USER_REQUESTED &&
+            exit.description?.contains("stop", ignoreCase = true) == true
+
+    /** The newest user stop, or null. */
+    fun latestUserStop(exits: List<ExitRecord>): ExitRecord? = exits.filter(::isUserStop).maxByOrNull { it.atMillis }
+
+    /** How far back a stop still counts as "a call may have been lost in it" when starts are not known. */
+    private const val STOP_REACH_MILLIS = 24L * 60 * 60 * 1000
+
+    /** The wake for a call starts the app's process shortly before the call is logged; a start this close is that wake. */
+    private const val WAKE_SLACK_MILLIS = 10L * 60 * 1000
+
+    /**
+     * Whether a call at [callAtMillis] fell in a stretch the user had stopped the app: the newest user stop before
+     * it, with nothing in between that brought the app back. Where Android lists starts (15+), a start after the
+     * stop that is not the call's own wake means the app was running again, so the stop did not cause the miss.
+     * Without starts, any other exit after the stop, or a stop more than a day old, rules it out.
+     */
+    fun wasStoppedByUserDuring(exits: List<ExitRecord>, starts: List<AppStart>, callAtMillis: Long): Boolean {
+        val stop = latestUserStop(exits.filter { it.atMillis <= callAtMillis }) ?: return false
+        if (exits.any { it.atMillis > stop.atMillis && it.atMillis <= callAtMillis }) return false
+        if (starts.isNotEmpty()) {
+            return starts.none { it.atWallMillis > stop.atMillis && it.atWallMillis < callAtMillis - WAKE_SLACK_MILLIS }
+        }
+        return callAtMillis - stop.atMillis <= STOP_REACH_MILLIS
+    }
+
+    /** The recorded exits of this app, newest first. Android 11+; empty before it. */
+    fun exits(context: Context): List<ExitRecord> {
+        val am = context.getSystemService(ActivityManager::class.java) ?: return emptyList()
+        return am.getHistoricalProcessExitReasons(context.packageName, 0, HISTORY)
+            .map { ExitRecord(it.timestamp, it.reason, it.description) }
+    }
 
     /** A start as Android stamps it: time since the boot it happened in — which boot, it does not say. */
     data class RawStart(val sinceBootMillis: Long, val afterForceStop: Boolean)

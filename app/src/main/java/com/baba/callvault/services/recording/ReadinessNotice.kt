@@ -59,6 +59,16 @@ enum class ReadinessNotice {
     STUCK;
 
     companion object {
+        /**
+         * Whether the recorder is down for the one reason the user can name and fix at once: no Wi-Fi, and
+         * "Keep recording off Wi-Fi" is off, so nothing can start it. The Home card uses this so it does not
+         * say "Ready" for a call it cannot record (BabApps item 115). Same rule as the notification, not a
+         * second one: only the two Wi-Fi notices count, and only with off-Wi-Fi recording off (with it on,
+         * the answer is not "switch it on").
+         */
+        fun blocksRecordingOffWifi(notice: ReadinessNotice, offlineRecordingOn: Boolean): Boolean =
+            !offlineRecordingOn && (notice == NEEDS_WIFI || notice == NEEDS_WIFI_TO_RESTART)
+
         fun of(
             ready: Boolean,
             recoveryStuck: Boolean,

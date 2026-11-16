@@ -59,4 +59,9 @@
     <string name="transcript_notice_failed_many_title">Незавершённых расшифровок: %1$d</string>
     <string name="transcript_notice_failed_many_text">Нажмите, чтобы посмотреть их.</string>
     <string name="transcript_notice_failed_kept_text">%1$s. Предыдущая расшифровка сохранена.</string>
+    <string name="home_status_needs_wifi_title">Для записи нужен Wi-Fi</string>
+    <string name="home_status_needs_wifi_suggestion">Рекордер остановлен и не может запуститься без Wi-Fi, поэтому звонки не записываются. Подключитесь к Wi-Fi или включите в настройках «Записывать без Wi-Fi».</string>
+    <string name="notif_stopped_by_user_title">Вы остановили CallVault</string>
+    <string name="notif_stopped_by_user_text">Пока приложение было остановлено, звонки не записывались. CallVault снова открыт и записывает новые звонки.</string>
+    <string name="home_stopped_by_user_text">Вы остановили CallVault — пока приложение было остановлено, звонки не записывались.</string>
 </resources>

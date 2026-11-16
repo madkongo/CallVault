@@ -28,6 +28,7 @@ import com.baba.callvault.server.RecorderConnection
 import com.baba.callvault.services.recording.VoipCaptureController
 import com.baba.callvault.utils.AppLogger
 import com.baba.callvault.system.health.SilentFailureNotifier
+import com.baba.callvault.system.health.UserStopNotice
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.CoroutineScope
@@ -156,6 +157,9 @@ class CallVaultApplication : Application() {
                 .onSuccess { if (it > 0) AppLogger.i(TAG, "Released $it stale transcription row(s)") }
                 .onFailure { AppLogger.w(TAG, "Releasing stale transcription rows failed: ${it.message}") }
         }.start()
+
+        // Tell the user once if the previous process ended because they stopped the app (BabApps item 115).
+        Thread { UserStopNotice.onAppStart(applicationContext) }.apply { isDaemon = true }.start()
 
         // If ADB was already paired, proactively bring up the persistent recorder daemon in the
         // background: this (transiently) enables Wireless debugging if needed, launches the daemon,

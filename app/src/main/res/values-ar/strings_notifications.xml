@@ -53,4 +53,9 @@
     <string name="update_notif_failure_title">فشل التحديث</string>
     <string name="update_notif_failure_verify_text">فشل التحديث الذي تم تنزيله في فحص الأمان وتم حذفه. انقر للحصول عليه من GitHub.</string>
     <string name="update_notif_installing_title">جارٍ تثبيت التحديث…</string><string name="update_notif_success_title">تم تثبيت التحديث بنجاح</string><string name="update_notif_success_text">أصبح CallVault الآن بالإصدار %1$s.</string>    <string name="transcript_notice_failed_kept_text">%1$s. تم الاحتفاظ بالنص السابق.</string>
+    <string name="home_status_needs_wifi_title">يلزم Wi-Fi للتسجيل</string>
+    <string name="home_status_needs_wifi_suggestion">توقف المسجل ولا يمكن تشغيله بدون Wi-Fi، لذلك لا تُسجَّل المكالمات. اتصل بشبكة Wi-Fi أو فعّل «مواصلة التسجيل بدون Wi-Fi» في الإعدادات.</string>
+    <string name="notif_stopped_by_user_title">لقد أوقفت CallVault</string>
+    <string name="notif_stopped_by_user_text">لم تُسجَّل المكالمات أثناء إيقافه. CallVault مفتوح الآن ويسجّل المكالمات الجديدة.</string>
+    <string name="home_stopped_by_user_text">لقد أوقفت CallVault — لم تُسجَّل المكالمات أثناء إيقافه.</string>
 </resources>

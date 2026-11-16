@@ -59,4 +59,9 @@
     <string name="transcript_notice_failed_many_title">Transcriptions non abouties : %1$d</string>
     <string name="transcript_notice_failed_many_text">Appuyez pour les voir.</string>
     <string name="transcript_notice_failed_kept_text">%1$s. La transcription précédente a été conservée.</string>
+    <string name="home_status_needs_wifi_title">Le Wi-Fi est nécessaire pour enregistrer</string>
+    <string name="home_status_needs_wifi_suggestion">L’enregistreur est arrêté et ne peut pas démarrer sans Wi-Fi, donc les appels ne sont pas enregistrés. Connectez-vous au Wi-Fi ou activez « Continuer à enregistrer sans Wi-Fi » dans les réglages.</string>
+    <string name="notif_stopped_by_user_title">Vous avez arrêté CallVault</string>
+    <string name="notif_stopped_by_user_text">Les appels n’ont pas été enregistrés pendant l’arrêt. CallVault est de nouveau ouvert et enregistre les nouveaux appels.</string>
+    <string name="home_stopped_by_user_text">Vous avez arrêté CallVault : les appels n’ont pas été enregistrés pendant l’arrêt.</string>
 </resources>

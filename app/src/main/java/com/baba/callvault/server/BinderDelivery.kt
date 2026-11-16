@@ -57,6 +57,17 @@ internal object BinderDelivery {
             putParcelable(RecorderBinderProvider.EXTRA_BINDER, BinderContainer(binder))
         })
 
+    /**
+     * Sends the binder again because the app's process started. Marked, so the app takes it only when it is the right
+     * recorder (see [DaemonReuse.judgeRedelivery]); the APK path says which build this daemon runs.
+     */
+    fun redeliverBinderToApp(binder: IBinder, authority: String, hostApk: String): Boolean =
+        deliver(authority, METHOD_SEND_BINDER, Bundle().apply {
+            putParcelable(RecorderBinderProvider.EXTRA_BINDER, BinderContainer(binder))
+            putBoolean(RecorderBinderProvider.EXTRA_REDELIVERY, true)
+            putString(RecorderBinderProvider.EXTRA_HOST_APK, hostApk)
+        })
+
     /** Delivers the extracted IAudioRecord [binder] + [cblkFd] + ring [frameCount] + capture format. */
     fun deliverHandoffToApp(
         binder: IBinder, authority: String, cblkFd: android.os.ParcelFileDescriptor?,

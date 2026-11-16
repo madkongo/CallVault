@@ -59,4 +59,9 @@
     <string name="transcript_notice_failed_many_title">未完成的转写：%1$d</string>
     <string name="transcript_notice_failed_many_text">点按即可查看。</string>
     <string name="transcript_notice_failed_kept_text">%1$s。已保留之前的转写。</string>
+    <string name="home_status_needs_wifi_title">需要 Wi-Fi 才能录音</string>
+    <string name="home_status_needs_wifi_suggestion">录音器已停止，没有 Wi-Fi 无法启动，因此通话不会被录音。请连接 Wi-Fi，或在设置中开启“无 Wi-Fi 时继续录音”。</string>
+    <string name="notif_stopped_by_user_title">你已停止 CallVault</string>
+    <string name="notif_stopped_by_user_text">应用停止期间的通话没有被录音。CallVault 现已重新打开，会录制新的通话。</string>
+    <string name="home_stopped_by_user_text">你已停止 CallVault——应用停止期间的通话没有被录音。</string>
 </resources>

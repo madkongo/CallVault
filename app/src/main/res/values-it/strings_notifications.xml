@@ -59,4 +59,9 @@
     <string name="transcript_notice_failed_many_title">Trascrizioni non completate: %1$d</string>
     <string name="transcript_notice_failed_many_text">Tocca per vederle.</string>
     <string name="transcript_notice_failed_kept_text">%1$s. La trascrizione precedente è stata mantenuta.</string>
+    <string name="home_status_needs_wifi_title">Serve il Wi-Fi per registrare</string>
+    <string name="home_status_needs_wifi_suggestion">Il registratore è fermo e non può ripartire senza Wi-Fi, quindi le chiamate non vengono registrate. Connettiti a una rete Wi-Fi o attiva «Continua a registrare senza Wi-Fi» nelle Impostazioni.</string>
+    <string name="notif_stopped_by_user_title">Hai arrestato CallVault</string>
+    <string name="notif_stopped_by_user_text">Le chiamate non sono state registrate mentre era arrestato. CallVault è di nuovo aperto e registra le nuove chiamate.</string>
+    <string name="home_stopped_by_user_text">Hai arrestato CallVault: le chiamate non sono state registrate mentre era arrestato.</string>
 </resources>

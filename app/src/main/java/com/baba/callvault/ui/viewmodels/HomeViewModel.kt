@@ -36,6 +36,8 @@ import com.baba.callvault.data.health.SetupHealthDeriver
 import com.baba.callvault.data.health.SetupHealthStore
 import com.baba.callvault.data.RecordingState
 import com.baba.callvault.services.recording.DaemonKeepAliveService
+import com.baba.callvault.services.recording.ReadinessNotice
+import com.baba.callvault.services.recording.ReadinessNoticeText
 import com.baba.callvault.services.recording.RecordingSwitch
 import com.baba.callvault.services.recording.RecordingPolicy
 import com.baba.callvault.data.health.Prerequisite
@@ -121,6 +123,11 @@ class HomeViewModel(application: Application) : AndroidViewModel(application) {
         PAIRING_LOST(R.string.home_status_pairing_lost_title, R.string.home_status_pairing_lost_suggestion),
         UPDATE_REGRANT_NEEDED(R.string.home_status_update_regrant_title, R.string.home_status_update_regrant_suggestion),
         SHIZUKU_NOT_READY(R.string.home_status_shizuku_title, R.string.home_status_shizuku_suggestion),
+        /**
+         * The recorder is down, there is no Wi-Fi and "Keep recording off Wi-Fi" is off, so nothing can start
+         * it (BabApps item 115). Named causes outrank the generic [RECOVERY_STUCK]. Tapping opens Settings.
+         */
+        NEEDS_WIFI(R.string.home_status_needs_wifi_title, R.string.home_status_needs_wifi_suggestion),
         RECOVERY_STUCK(R.string.home_status_recovery_stuck_title, R.string.home_status_recovery_stuck_suggestion),
         /** The user turned recording off (master switch). Daemon is torn down until they turn it back on. */
         STOPPED(R.string.home_status_stopped_title, R.string.home_status_stopped_suggestion),
@@ -261,6 +268,8 @@ class HomeViewModel(application: Application) : AndroidViewModel(application) {
         val updateProgressPercent: Int = -1,
         /** Version name to show a dismissable "updated successfully" banner for, or null. */
         val updatedToVersion: String? = null,
+        /** Time of a user stop (Active apps -> Stop) the Home card is still telling about, or null (BabApps item 115). */
+        val stoppedByUserAtMillis: Long? = null,
         /** True when the post-update release note is due (shown once per version). */
         val showWhatsNew: Boolean = false,
         /** True when the USB default is a data mode → locking the screen mid-call can stop recording. */
@@ -624,6 +633,12 @@ class HomeViewModel(application: Application) : AndroidViewModel(application) {
         }
     }
 
+    /** Closes the "you stopped CallVault" card for this stop; a later stop shows it again. */
+    fun dismissStoppedByUserCard() {
+        _uiState.value.stoppedByUserAtMillis?.let { preferences.setStopNoticeCardDismissedAt(it) }
+        _uiState.update { it.copy(stoppedByUserAtMillis = null) }
+    }
+
     /** Dismisses the "updated successfully" banner (clears its persisted state). */
     fun dismissUpdatedBanner() {
         preferences.setUpdateSuccessBannerVersion(null)
@@ -781,6 +796,7 @@ class HomeViewModel(application: Application) : AndroidViewModel(application) {
                 updatePopupTag = updatePopupTag(),
                 privilegedMode = preferences.getPrivilegedMode(),
                 updatedToVersion = updatedTo,
+                stoppedByUserAtMillis = com.baba.callvault.system.health.UserStopNotice.cardStopAt(appContext),
                 // Shown only after an update, and only once for a given version.
                 showWhatsNew = pendingWhatsNew(updatedTo),
                 // Advisory when the USB default is a data mode (cheap cached read; never blocks/forces ADB).
@@ -1084,8 +1100,23 @@ class HomeViewModel(application: Application) : AndroidViewModel(application) {
         // Everything is configured, so the only remaining question is whether the recorder can actually
         // be brought up. Gated on the recovery streak rather than on the daemon simply being down —
         // an idle daemon is the normal, healthy state and must never turn the card red.
-        null -> if (DaemonKeepAliveService.isRecoveryStuck) HomeStatus.RECOVERY_STUCK else HomeStatus.READY
+        null -> when {
+            needsWifiToRecord() -> HomeStatus.NEEDS_WIFI
+            DaemonKeepAliveService.isRecoveryStuck -> HomeStatus.RECOVERY_STUCK
+            else -> HomeStatus.READY
+        }
     }
+
+    /**
+     * Recorder down AND no Wi-Fi AND "Keep recording off Wi-Fi" off, using the notification's own rule
+     * ([ReadinessNoticeText.current]). Standalone mode only: [ReadinessNoticeText] answers Shizuku mode
+     * without the Wi-Fi notices. A live recorder is never flagged.
+     */
+    private fun needsWifiToRecord(): Boolean = runCatching {
+        if (RecorderConnection.isConnected) return@runCatching false
+        val notice = ReadinessNoticeText.current(appContext, ready = false)
+        ReadinessNotice.blocksRecordingOffWifi(notice, AppPreferences(appContext).isOfflineRecordingEnabled())
+    }.getOrDefault(false)
 
     /**
      * Reconciles the call log against the calls CallVault observed, then derives what the card says.
