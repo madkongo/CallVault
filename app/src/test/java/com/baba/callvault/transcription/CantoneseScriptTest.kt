@@ -19,7 +19,8 @@ class CantoneseScriptTest {
     fun `the line whisper returned in Simplified comes out Traditional`() {
         // What whisper-cli -l yue gave on large-v3-turbo-q8_0 for a Cantonese test sentence.
         assertEquals(
-            "今日天氣好好,我們一起去飲茶啦,哥密靖改左去明日下周三點",
+            // 下週, not 下周: the phrase list knows 周 is 週 in "next week" (BabApps item 125).
+            "今日天氣好好,我們一起去飲茶啦,哥密靖改左去明日下週三點",
             CantoneseScript.toTraditionalHk("今日天气好好,我们一起去饮茶啦,哥密靖改左去明日下周三点"),
         )
     }

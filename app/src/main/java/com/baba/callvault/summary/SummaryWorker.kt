@@ -16,6 +16,7 @@ import androidx.work.workDataOf
 import com.baba.callvault.R
 import com.baba.callvault.data.AppPreferences
 import com.baba.callvault.data.transcripts.db.TranscriptDatabase
+import com.baba.callvault.transcription.ChineseScript
 import com.baba.callvault.transcription.HeavyWorkNotification
 import com.baba.callvault.transcription.TranscriptionEngine
 import com.baba.callvault.transcription.TranscriptionProgress
@@ -93,12 +94,16 @@ class SummaryWorker(
             .transcriptDao()
             .observe(displayName)
             .first()
-        val language = SummaryLanguage.resolve(
-            chosen = prefs.getSummaryLanguage(),
-            transcriptionSetting = prefs.getTranscriptionLanguage(),
-            transcriptLanguage = transcript?.transcript?.language,
-            transcriptText = transcript?.segments.orEmpty().joinToString(" ") { it.text },
-            deviceLanguage = Locale.getDefault().language
+        // Chinese becomes zh-HK / zh-TW on a Hong Kong / Taiwan phone or app, so the prompt asks for Traditional.
+        val language = ChineseScript.summaryLanguage(
+            SummaryLanguage.resolve(
+                chosen = prefs.getSummaryLanguage(),
+                transcriptionSetting = prefs.getTranscriptionLanguage(),
+                transcriptLanguage = transcript?.transcript?.language,
+                transcriptText = transcript?.segments.orEmpty().joinToString(" ") { it.text },
+                deviceLanguage = Locale.getDefault().language
+            ),
+            ChineseScript.effectiveLocale()
         )
         AppLogger.i(TAG, "Summarising in $language")
 

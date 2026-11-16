@@ -36,6 +36,16 @@ data class CallSummary(
     val keyFacts: List<String>
 ) {
 
+    /** The same summary with [transform] applied to every piece of text (Chinese script conversion, item 125). */
+    fun mapText(transform: (String) -> String): CallSummary = CallSummary(
+        intent = transform(intent),
+        summary = transform(summary),
+        keyPoints = keyPoints.map(transform),
+        decisions = decisions.map(transform),
+        actionItems = actionItems.map(transform),
+        keyFacts = keyFacts.map(transform),
+    )
+
     /**
      * The summary as a JSON document, in the shape [parse] accepts.
      *

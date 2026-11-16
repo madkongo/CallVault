@@ -35,6 +35,19 @@ All notable changes to CallVault are documented here. The format is based on
   hand-corrected for local terms (HK 設定 / 檔案 / 短訊; TW 設定 / 檔案 / 背景行程); transcription pins Chinese for these phones.
   <!-- 🧪 VERIFYING (BabApps item 120, not shipped): a native Hong Kong and a native Taiwan reader should skim the
   screens for wrong or unnatural wording before release. -->
+- **Chinese transcripts and summaries are written in Traditional characters on Hong Kong and Taiwan phones, and the
+  conversion is now complete.** When transcription is pinned to Chinese and the app or the phone is set to
+  Traditional Chinese (Hong Kong, Macau, Taiwan or plain Traditional), the transcript and the summary are converted to
+  Traditional with the Hong Kong or Taiwan character forms; a phone set to Simplified Chinese is never converted.
+  Cantonese used a hand-made table of about 250 lines that left rarer characters Simplified; it now uses OpenCC's full
+  character and word lists (about 2,800 characters and 9,700 words, 280 KB in the app before compression), so a
+  character with two Traditional forms follows the word (头发 → 頭髮, 发生 → 發生). Taiwan gets the character forms
+  only, not OpenCC's Taiwan word swaps. The six file-name and Cantonese strings that were missing in the Hong Kong and
+  Taiwan screens are added, so the translation check passes again.
+  <!-- 🧪 VERIFYING (BabApps item 125, not shipped): unit-tested only. To settle it: set the app to 繁體中文（香港）,
+  pin transcription to Chinese, transcribe a Mandarin call: the text should come out Traditional and the summary too.
+  A native Hong Kong or Taiwan reader should judge the wording; the conversion data (OpenCC, Apache-2.0) is credited
+  in NOTICE.md. -->
 
 ### Fixed
 
