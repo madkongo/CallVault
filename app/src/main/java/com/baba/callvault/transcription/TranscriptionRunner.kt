@@ -254,7 +254,10 @@ class TranscriptionRunner(
         }
 
         return attempt.fold(
-            onSuccess = { segments ->
+            onSuccess = { decoded ->
+                // Pinned Cantonese is written in Hong Kong Traditional whatever whisper (or a cloud
+                // service) answered in; every other language is stored as it came (BabApps item 117).
+                val segments = if (language == "yue") decoded.map { CantoneseScript.toTraditionalHk(it) } else decoded
                 // BEFORE `labelled()`, which reads the turns straight back out to put a speaker on
                 // each segment. Storing them after -- where this first went -- left the turns in the
                 // database and every segment unlabelled: the data was right and arrived too late to
