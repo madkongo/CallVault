@@ -13,7 +13,7 @@ All notable changes to CallVault are documented here. The format is based on
   `{day}` followed by a `{time}` with one `_`, `-`, space or `T` between them, day first; a day or a time alone is
   refused with a message, because the list, merging and logs could not find the call's time again. The time always
   carries seconds, so two calls only share a name when they start in the same second. App calls keep their own name
-  (#82, thanks @akpapathanasiou).
+  (#82).
   <!-- 🧪 VERIFYING (BabApps item 114, not shipped): Settings ▸ file name ▸ Custom, type `{day-}_{time-}_{contact_name}`;
   the example shows 2026-06-11_14-30-52_John Doe. Record a call: the file should carry that date and time, the list
   should show the right date and, for a saved call, the contact. Tried once on the OnePlus 9 Pro (Shizuku, one incoming
