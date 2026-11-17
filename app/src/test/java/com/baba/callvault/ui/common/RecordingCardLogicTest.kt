@@ -74,6 +74,28 @@ class RecordingCardLogicTest {
         assertEquals(PhotoTap.NOTHING, RecordingCardLogic.photoTap(false, " ", true))
     }
 
+    @Test fun dayKindAndShortWording() {
+        val zone = java.util.TimeZone.getTimeZone("UTC")
+        fun at(y: Int, m: Int, d: Int, h: Int, min: Int) = java.util.Calendar.getInstance(zone).apply {
+            clear(); set(y, m, d, h, min)
+        }.timeInMillis
+        val now = at(2026, java.util.Calendar.NOVEMBER, 17, 0, 10)
+        val today = RecordingCardLogic.dayKind(at(2026, java.util.Calendar.NOVEMBER, 17, 0, 5), now, zone)
+        // 23:50 the evening before is still yesterday at 00:10.
+        val yesterday = RecordingCardLogic.dayKind(at(2026, java.util.Calendar.NOVEMBER, 16, 23, 50), now, zone)
+        val older = RecordingCardLogic.dayKind(at(2026, java.util.Calendar.NOVEMBER, 14, 9, 0), now, zone)
+        val lastYear = RecordingCardLogic.dayKind(at(2025, java.util.Calendar.NOVEMBER, 14, 9, 0), now, zone)
+        assertEquals(RecordingCardLogic.DayKind.TODAY, today)
+        assertEquals(RecordingCardLogic.DayKind.YESTERDAY, yesterday)
+        assertEquals(RecordingCardLogic.DayKind.THIS_YEAR, older)
+        assertEquals(RecordingCardLogic.DayKind.EARLIER_YEAR, lastYear)
+
+        assertEquals("13:41", RecordingCardLogic.compactWhen(today, "13:41", "Yesterday", "14 Nov"))
+        assertEquals("Yesterday 13:41", RecordingCardLogic.compactWhen(yesterday, "13:41", "Yesterday", "14 Nov"))
+        assertEquals("14 Nov", RecordingCardLogic.compactWhen(older, "13:41", "Yesterday", "14 Nov"))
+        assertEquals("14 Nov 2025", RecordingCardLogic.compactWhen(lastYear, "13:41", "Yesterday", "14 Nov 2025"))
+    }
+
     @Test fun initialSkipsNonLetters() {
         assertEquals("D", RecordingCardLogic.initialOf("dana"))
         assertEquals("G", RecordingCardLogic.initialOf("2 Gabi"))

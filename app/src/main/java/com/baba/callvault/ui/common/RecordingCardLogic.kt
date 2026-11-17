@@ -94,6 +94,38 @@ object RecordingCardLogic {
         else -> PhotoTap.ADD_CONTACT
     }
 
+    /** How far back a call is, for the card's short time wording. */
+    enum class DayKind { TODAY, YESTERDAY, THIS_YEAR, EARLIER_YEAR }
+
+    /** Calendar-day comparison (a call at 23:50 is still "yesterday" at 00:10), in [zone]. */
+    fun dayKind(millis: Long, now: Long, zone: java.util.TimeZone = java.util.TimeZone.getDefault()): DayKind {
+        val day = java.util.Calendar.getInstance(zone).apply { timeInMillis = millis }
+        val today = java.util.Calendar.getInstance(zone).apply { timeInMillis = now }
+        val yesterday = java.util.Calendar.getInstance(zone).apply {
+            timeInMillis = now
+            add(java.util.Calendar.DAY_OF_YEAR, -1)
+        }
+        fun same(a: java.util.Calendar, b: java.util.Calendar) =
+            a.get(java.util.Calendar.YEAR) == b.get(java.util.Calendar.YEAR) &&
+                a.get(java.util.Calendar.DAY_OF_YEAR) == b.get(java.util.Calendar.DAY_OF_YEAR)
+        return when {
+            same(day, today) -> DayKind.TODAY
+            same(day, yesterday) -> DayKind.YESTERDAY
+            day.get(java.util.Calendar.YEAR) == today.get(java.util.Calendar.YEAR) -> DayKind.THIS_YEAR
+            else -> DayKind.EARLIER_YEAR
+        }
+    }
+
+    /**
+     * The short wording on the card: "13:41" for today, "Yesterday 13:41", else only the date
+     * ([dateText] is the caller's locale-aware "14 Nov", with the year when it is not this year).
+     */
+    fun compactWhen(kind: DayKind, time: String, yesterday: String, dateText: String): String = when (kind) {
+        DayKind.TODAY -> time
+        DayKind.YESTERDAY -> "$yesterday $time"
+        DayKind.THIS_YEAR, DayKind.EARLIER_YEAR -> dateText
+    }
+
     /** The letter shown on the tinted circle when there is no photo; null when the name has none. */
     fun initialOf(contactName: String?): String? =
         contactName?.firstOrNull { it.isLetter() }?.uppercase()

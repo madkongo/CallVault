@@ -213,6 +213,7 @@ import com.baba.callvault.ui.common.CallOriginBadge
 import androidx.compose.foundation.Image
 import androidx.compose.material.icons.filled.Groups
 import com.baba.callvault.R
+import androidx.compose.foundation.layout.FlowRow
 import android.content.ActivityNotFoundException
 import android.content.Intent
 import android.provider.ContactsContract
@@ -3339,7 +3340,7 @@ private fun PlayPill(
 @Composable
 private fun buildCardMeta(item: RecordingItem, mergedPartCount: Int): String {
     val parts = buildList {
-        formatWhen(item)?.let { add(it) }
+        formatWhenCompact(item)?.let { add(it) }
         item.simLabel?.let { add(it) }
         if (mergedPartCount > 1) {
             add(pluralStringResource(R.plurals.merge_row_badge, mergedPartCount, mergedPartCount))
@@ -3691,6 +3692,7 @@ private fun deleteByScope(
  * @param onDeleteAll Deletes every same-named copy of this recording (delete-both).
  * @param onDeleteUri Deletes a single physical copy at the given Uri.
  */
+@OptIn(androidx.compose.foundation.layout.ExperimentalLayoutApi::class)
 @Composable
 private fun RecordingRow(
     onShare: () -> Unit,
@@ -3904,23 +3906,27 @@ private fun RecordingRow(
                     }
                 }
                 Spacer(Modifier.height(2.dp))
-                Row(verticalAlignment = Alignment.CenterVertically) {
+                FlowRow(
+                    horizontalArrangement = Arrangement.spacedBy(6.dp),
+                    verticalArrangement = Arrangement.spacedBy(2.dp),
+                    itemVerticalAlignment = Alignment.CenterVertically
+                ) {
                     // Tinted pills (design L): the colour's light tint behind coloured text.
                     if (appLabel != null) {
                         val appTint = palette.appColor(RecordingCardLogic.appTone(appLabel))
+                        // Never ellipsized: it is short, and cutting the app's name defeats the label.
                         Text(
                             text = appLabel,
                             style = MaterialTheme.typography.labelMedium,
+                            fontSize = 12.sp,
                             fontWeight = FontWeight.SemiBold,
                             color = appTint,
                             maxLines = 1,
-                            overflow = TextOverflow.Ellipsis,
+                            softWrap = false,
                             modifier = Modifier
-                                .weight(1f, fill = false)
                                 .background(appTint.copy(alpha = 0.14f), CircleShape)
-                                .padding(horizontal = 8.dp, vertical = 2.dp)
+                                .padding(horizontal = 6.dp, vertical = 2.dp)
                         )
-                        Spacer(Modifier.width(6.dp))
                     }
                     if (directionMark != null) {
                         val isIn = directionMark == RecordingCardLogic.DirectionMark.IN
@@ -3928,7 +3934,7 @@ private fun RecordingRow(
                         Row(
                             modifier = Modifier
                                 .background(tint.copy(alpha = 0.14f), CircleShape)
-                                .padding(horizontal = 8.dp, vertical = 2.dp),
+                                .padding(horizontal = 6.dp, vertical = 2.dp),
                             verticalAlignment = Alignment.CenterVertically
                         ) {
                             Icon(
@@ -3936,29 +3942,28 @@ private fun RecordingRow(
                                               else Icons.AutoMirrored.Filled.CallMade,
                                 contentDescription = null,
                                 tint = tint,
-                                modifier = Modifier.size(14.dp)
+                                modifier = Modifier.size(12.dp)
                             )
                             Spacer(Modifier.width(2.dp))
                             Text(
                                 text = stringResource(if (isIn) R.string.row_direction_in else R.string.row_direction_out),
                                 style = MaterialTheme.typography.labelMedium,
+                                fontSize = 12.sp,
                                 fontWeight = FontWeight.SemiBold,
                                 color = tint,
-                                maxLines = 1
+                                maxLines = 1,
+                                softWrap = false
                             )
                         }
-                        Spacer(Modifier.width(6.dp))
                     }
                     // A file that will not play replaces the time, since there is no seek bar then to
-                    // show anything happened.
+                    // show anything happened. Never truncated: if the row is too narrow (huge font
+                    // scale) the FlowRow moves the time to a second line instead.
                     Text(
                         text = errorText ?: whenText,
                         style = MaterialTheme.typography.bodySmall,
                         color = if (errorText != null) MaterialTheme.colorScheme.error
                                 else MaterialTheme.colorScheme.onSurfaceVariant,
-                        maxLines = 1,
-                        overflow = TextOverflow.Ellipsis,
-                        modifier = Modifier.weight(1f, fill = false)
                     )
                 }
             }
@@ -4407,6 +4412,24 @@ private fun formatWhen(item: RecordingItem): String? {
         ?: item.lastModified.takeIf { item.displayDate == null && it > 0L }
         ?: return item.displayDate
     return callTimeLabel(millis)
+}
+
+/** The card's short wording: "13:41", "Yesterday 13:41", "14 Nov" (see [RecordingCardLogic.compactWhen]). */
+@Composable
+private fun formatWhenCompact(item: RecordingItem): String? {
+    val millis = item.startedAtMillis
+        ?: item.lastModified.takeIf { item.displayDate == null && it > 0L }
+        ?: return item.displayDate
+    val kind = RecordingCardLogic.dayKind(millis, System.currentTimeMillis())
+    val time = android.text.format.DateFormat.getTimeFormat(LocalContext.current).format(java.util.Date(millis))
+    val flags = DateUtils.FORMAT_SHOW_DATE or DateUtils.FORMAT_ABBREV_MONTH or
+        (if (kind == RecordingCardLogic.DayKind.EARLIER_YEAR) DateUtils.FORMAT_SHOW_YEAR else DateUtils.FORMAT_NO_YEAR)
+    return RecordingCardLogic.compactWhen(
+        kind = kind,
+        time = time,
+        yesterday = stringResource(R.string.home_date_yesterday),
+        dateText = DateUtils.formatDateTime(LocalContext.current, millis, flags)
+    )
 }
 
 /** "12:41" for a call under an hour, "1:05:30" beyond it. */
