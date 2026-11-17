@@ -306,7 +306,9 @@ class AppPreferences(context: Context) {
 
         // --- UI & Appearance ---
         val THEME_MODE = ThemeMode.SYSTEM
-        const val DYNAMIC_COLOR = false // Signal brand colors are the identity; Material You is opt-in
+        // On by default since 2.5.2 (BabApps item 131). Only affects a phone that has no stored choice:
+        // a user who switched it on or off keeps that value. Android 11 and older ignore it (Theme.kt).
+        const val DYNAMIC_COLOR = true
         const val SHOW_TOASTS = true
     }
 

@@ -73,7 +73,8 @@ class SettingDecisionsTest {
         "file_name_template" to Decision(Wizard(WizardStep.FILE_NAME)),
         // UI
         "theme_mode" to Decision(SettingsOnly("appearance; visible and changeable any time")),
-        "dynamic_color" to Decision(SettingsOnly("appearance")),
+        // BabApps item 131: ON by default (Material You on Android 12+); a stored choice is kept.
+        "dynamic_color" to Decision(SettingsOnly("appearance; on by default, changeable any time")),
         "show_toasts" to Decision(SettingsOnly("appearance")),
         "vibration_enabled" to Decision(SettingsOnly("appearance")),
         // Retention / storage policy
@@ -104,7 +105,7 @@ class SettingDecisionsTest {
         "transcription_model_id" to Decision(Wizard(WizardStep.TRANSCRIPTION)),
         "transcription_language" to Decision(Wizard(WizardStep.TRANSCRIPTION)),
         "transcription_ask_language" to Decision(SettingsOnly("for multilingual phones, after the pin is chosen")),
-        "summary_confirm_requirements" to Decision(SettingsOnly("asked at the first summary instead")),
+        "summary_confirm_requirements" to Decision(SettingsOnly("asked at the first summary; BabApps item 131: no switch now, the Summaries card's ⓘ popup holds the checkbox")),
         "summary_language" to Decision(SettingsOnly("follows the transcription language")),
         // App (VoIP) calls
         "voip_recording_enabled" to Decision(Wizard(WizardStep.AUTO_RECORD), ModeCapability.VOIP_RECORDING),

@@ -62,9 +62,12 @@ import com.baba.callvault.summary.SummaryModel
 fun SummaryRequirementsDialog(
     model: SummaryModel,
     onDismiss: () -> Unit,
-    onContinue: (dontAskAgain: Boolean) -> Unit
+    onContinue: (dontAskAgain: Boolean) -> Unit,
+    // Opened from the ⓘ in Settings rather than before a download: the button reads "Got it" and there is no Cancel.
+    infoOnly: Boolean = false,
+    dontAskAgainInitially: Boolean = false,
 ) {
-    var dontAskAgain by remember { mutableStateOf(false) }
+    var dontAskAgain by remember { mutableStateOf(dontAskAgainInitially) }
 
     AlertDialog(
         onDismissRequest = onDismiss,
@@ -127,14 +130,14 @@ fun SummaryRequirementsDialog(
         },
         confirmButton = {
             TextButton(onClick = { onContinue(dontAskAgain) }) {
-                Text(stringResource(R.string.summary_requirements_continue))
+                Text(stringResource(if (infoOnly) R.string.settings_info_got_it else R.string.summary_requirements_continue))
             }
         },
-        dismissButton = {
+        dismissButton = if (infoOnly) null else ({
             TextButton(onClick = onDismiss) {
                 Text(stringResource(R.string.summary_requirements_cancel))
             }
-        }
+        })
     )
 }
 

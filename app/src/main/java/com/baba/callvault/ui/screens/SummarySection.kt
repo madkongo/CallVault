@@ -180,7 +180,7 @@ internal fun SummaryRows(
     }
 
     Column {
-        // In ⓘ mode both notes are behind the Summaries card's ⓘ (see summaryModelExplanation).
+        // In ⓘ mode both notes are in the requirements popup behind the Summaries card's ⓘ.
         ExplanationParagraph(summaryRequirementsText(model))
 
         when (val current = state) {
@@ -270,11 +270,6 @@ internal fun summaryRequirementsText(model: SummaryModel = SummaryModel.DEFAULT)
     model.sizeBytes.toGigabytes(),
     model.peakMemoryBytes.toGigabytes()
 )
-
-/** The costs, a blank line, then the licence: the Summaries card's ⓘ on the new Settings screen. */
-@Composable
-internal fun summaryModelExplanation(): String =
-    joinExplanations(summaryRequirementsText(), stringResource(R.string.summary_model_licence)).orEmpty()
 
 /** Bytes as gigabytes, for copy that talks in the units a person would. */
 private fun Long.toGigabytes(): Float = this / 1_000_000_000f
