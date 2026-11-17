@@ -539,6 +539,8 @@
     <string name="settings_support_value">Hívj meg egy kávéra</string>
     <string name="settings_tap_to_select_folder">Mappa kiálasztása...</string>
     <string name="settings_theme_mode">Téma mód</string>
+    <string name="settings_start_page">Az alkalmazás ezzel indul</string>
+    <string name="settings_start_page_hub">Központ (kezdőlap)</string>
     <string name="settings_theme_mode_dark">Sötét</string>
     <string name="settings_theme_mode_light">Világos</string>
     <string name="settings_theme_mode_system">Rendszer alapértelmezett</string>

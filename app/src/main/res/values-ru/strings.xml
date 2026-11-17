@@ -543,6 +543,8 @@
     <string name="settings_support_value">Купить мне кофе</string>
     <string name="settings_tap_to_select_folder">Нажмите, чтобы выбрать папку...</string>
     <string name="settings_theme_mode">Тема</string>
+    <string name="settings_start_page">Открывать приложение на</string>
+    <string name="settings_start_page_hub">Главная (хаб)</string>
     <string name="settings_theme_mode_dark">Тёмная</string>
     <string name="settings_theme_mode_light">Светлая</string>
     <string name="settings_theme_mode_system">Системная</string>

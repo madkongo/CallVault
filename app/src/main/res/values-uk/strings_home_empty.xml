@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="home_search_empty_title">Нічого не знайдено за запитом «%1$s»</string>
+    <string name="home_search_empty_hint">Спробуйте ім\'я, тег або слово з розмови.</string>
+    <string name="home_search_clear">Очистити пошук</string>
+    <string name="home_filters_empty_title">Немає записів, що відповідають цим фільтрам</string>
+    <string name="home_filters_clear">Скинути фільтри</string>
+</resources>

@@ -539,6 +539,8 @@
     <string name="settings_support_value">Spendier mir einen Kaffee</string>
     <string name="settings_tap_to_select_folder">Tippen, um Ordner zu wählen...</string>
     <string name="settings_theme_mode">Design-Modus</string>
+    <string name="settings_start_page">App öffnen mit</string>
+    <string name="settings_start_page_hub">Hub (Startseite)</string>
     <string name="settings_theme_mode_dark">Dunkel</string>
     <string name="settings_theme_mode_light">Hell</string>
     <string name="settings_theme_mode_system">Systemstandard</string>

@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="home_search_empty_title">Không có kết quả cho “%1$s”</string>
+    <string name="home_search_empty_hint">Hãy thử một tên, một thẻ hoặc một từ trong cuộc gọi.</string>
+    <string name="home_search_clear">Xóa tìm kiếm</string>
+    <string name="home_filters_empty_title">Không có bản ghi âm nào khớp với các bộ lọc này</string>
+    <string name="home_filters_clear">Xóa bộ lọc</string>
+</resources>

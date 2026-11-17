@@ -539,6 +539,8 @@
     <string name="settings_support_value">Offrimi un caffè</string>
     <string name="settings_tap_to_select_folder">Tocchi per selezionare la cartella...</string>
     <string name="settings_theme_mode">Modalità tema</string>
+    <string name="settings_start_page">Pagina iniziale</string>
+    <string name="settings_start_page_hub">Hub (home)</string>
     <string name="settings_theme_mode_dark">Scuro</string>
     <string name="settings_theme_mode_light">Chiaro</string>
     <string name="settings_theme_mode_system">Predefinita di sistema</string>

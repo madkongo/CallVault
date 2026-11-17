@@ -542,6 +542,8 @@
     <string name="settings_support_value">Pague um café</string>
     <string name="settings_tap_to_select_folder">Toque para escolher a pasta...</string>
     <string name="settings_theme_mode">Modo do tema</string>
+    <string name="settings_start_page">Abrir o app em</string>
+    <string name="settings_start_page_hub">Hub (início)</string>
     <string name="settings_theme_mode_dark">Escuro</string>
     <string name="settings_theme_mode_light">Claro</string>
     <string name="settings_theme_mode_system">Padrão do sistema</string>

@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="home_search_empty_title">Sin resultados para «%1$s»</string>
+    <string name="home_search_empty_hint">Prueba con un nombre, una etiqueta o una palabra de la llamada.</string>
+    <string name="home_search_clear">Borrar búsqueda</string>
+    <string name="home_filters_empty_title">Ninguna grabación coincide con estos filtros</string>
+    <string name="home_filters_clear">Borrar filtros</string>
+</resources>

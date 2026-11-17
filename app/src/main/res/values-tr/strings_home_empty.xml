@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="home_search_empty_title">“%1$s” için eşleşme yok</string>
+    <string name="home_search_empty_hint">Bir isim, etiket veya görüşmeden bir sözcük deneyin.</string>
+    <string name="home_search_clear">Aramayı temizle</string>
+    <string name="home_filters_empty_title">Bu filtrelerle eşleşen kayıt yok</string>
+    <string name="home_filters_clear">Filtreleri temizle</string>
+</resources>

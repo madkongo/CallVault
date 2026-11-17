@@ -56,7 +56,7 @@ class AppPreferences(context: Context) {
             // Audio + file naming
             "audio_source", "audio_codec", "audio_bitrate", "record_stereo", "file_name_template", "show_sim_label",
             // UI
-            "theme_mode", "dynamic_color", "show_toasts", "vibration_enabled",
+            "theme_mode", "dynamic_color", "show_toasts", "vibration_enabled", "start_page",
             // Retention / storage policy (not the folder URIs, which are per-device)
             "retention_linked", "retention_local_days", "retention_drive_days",
             "retention_time_hour", "retention_time_minute", "storage_cap_bytes", "min_duration_seconds",
@@ -473,6 +473,9 @@ class AppPreferences(context: Context) {
         // The section of Home the user was last in. Absent until they have been somewhere, which is
         // a state with its own meaning — see HomeSection.opening — so there is no DefaultsValue entry.
         LAST_HOME_SECTION("last_home_section"),
+
+        // BabApps item 133: the section the app opens on (a HomeSection key). Absent means the hub.
+        START_PAGE("start_page"),
 
         // Unused since the classic Settings screen was removed (docs/dev-notes/rollback/classic-settings-removal.md):
         // kept so a revert of the classic-screen removal restores users' choice. Device-only (not in EXPORTABLE_KEYS).
@@ -1728,6 +1731,16 @@ class AppPreferences(context: Context) {
 
     /** Remembers the section of Home the user is in, so the next visit can reopen it. */
     fun setLastHomeSection(section: HomeSection) = setString(Key.LAST_HOME_SECTION, section.key)
+
+    /**
+     * The section the user chose as the page the app opens on (BabApps item 133), as a raw key.
+     * Unset means the hub. Raw for the same reason as [getLastHomeSectionKey]: an imported or older
+     * value may name nothing real, and [HomeSection.opening] turns that into the hub.
+     */
+    fun getStartPageKey(): String = getString(Key.START_PAGE) ?: HomeSection.Hub.key
+
+    /** Sets the page the app opens on. */
+    fun setStartPage(section: HomeSection) = setString(Key.START_PAGE, section.key)
 
     /** Checks if toast notifications are enabled. */
     fun isShowToastsEnabled() = getBoolean(Key.SHOW_TOASTS, DefaultsValue.SHOW_TOASTS)

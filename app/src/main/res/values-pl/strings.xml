@@ -543,6 +543,8 @@
     <string name="settings_support_value">Postaw mi kawę</string>
     <string name="settings_tap_to_select_folder">Dotknij, aby wybrać folder...</string>
     <string name="settings_theme_mode">Ustawienia motywu</string>
+    <string name="settings_start_page">Aplikacja otwiera się na</string>
+    <string name="settings_start_page_hub">Hub (ekran główny)</string>
     <string name="settings_theme_mode_dark">Ciemny</string>
     <string name="settings_theme_mode_light">Jasny</string>
     <string name="settings_theme_mode_system">Domyślne systemu</string>

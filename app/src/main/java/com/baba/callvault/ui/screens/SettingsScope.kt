@@ -190,7 +190,7 @@ object SettingsGroups {
             "transcription_requires_charging", "transcription_batch_limit", "transcription_confirm_before_run",
             "summary_confirm_requirements", "summary_language",
         )
-        SettingsGroup.APP -> listOf("theme_mode", "dynamic_color", "show_toasts", "update_check_enabled")
+        SettingsGroup.APP -> listOf("theme_mode", "dynamic_color", "show_toasts", "start_page", "update_check_enabled")
         SettingsGroup.HELP_AND_ABOUT -> listOf("logging_enabled")
     }
 }

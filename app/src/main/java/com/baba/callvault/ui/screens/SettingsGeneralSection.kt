@@ -30,6 +30,7 @@ import com.baba.callvault.ui.common.CvCard
 import com.baba.callvault.ui.common.CvSectionHeader
 import com.baba.callvault.ui.common.M3DropdownField
 import com.baba.callvault.ui.common.OptionItem
+import com.baba.callvault.ui.navigation.HomeSection
 import com.baba.callvault.ui.viewmodels.SettingsActions
 import androidx.appcompat.app.AppCompatDelegate
 import androidx.compose.material.icons.filled.NotificationsActive
@@ -182,6 +183,29 @@ internal fun AppearanceRows(preferences: AppPreferences, updateTrigger: Int, act
                     ?: themeOptions.first(),
                 options  = themeOptions,
                 onOptionSelected = { actions.setThemeMode(AppPreferences.ThemeMode.fromKey(it.key)) }
+            )
+        }
+
+        // BabApps item 133: the page the app opens on. Unknown stored values show as the hub, which is
+        // also what HomeSection.opening opens on for them.
+        val startOptions = HomeSection.entries.map { section ->
+            val labelRes = when (section) {
+                HomeSection.Hub -> R.string.settings_start_page_hub
+                HomeSection.Recordings -> R.string.home_recordings_title
+                HomeSection.Transcripts -> R.string.home_transcripts_title
+                HomeSection.Summaries -> R.string.home_summaries_title
+            }
+            OptionItem(section.key, stringResource(labelRes))
+        }
+        val currentStartKey = remember(updateTrigger) { preferences.getStartPageKey() }
+        DropdownRow {
+            M3DropdownField(
+                label    = stringResource(R.string.settings_start_page),
+                selected = startOptions.find { it.key == currentStartKey } ?: startOptions.first(),
+                options  = startOptions,
+                onOptionSelected = { option ->
+                    HomeSection.entries.firstOrNull { it.key == option.key }?.let { actions.setStartPage(it) }
+                }
             )
         }
 

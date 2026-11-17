@@ -20,6 +20,9 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.filled.RadioButtonUnchecked
+import androidx.compose.material.icons.filled.Sell
+import androidx.compose.material.icons.filled.Subject
+import androidx.compose.material.icons.filled.Summarize
 import androidx.compose.material3.CheckboxDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
@@ -42,6 +45,7 @@ import androidx.compose.ui.unit.dp
 import com.baba.callvault.R
 import com.baba.callvault.data.recordings.RecordingsRepository.RecordingItem
 import com.baba.callvault.data.transcripts.PageSearch
+import com.baba.callvault.data.transcripts.RecordingSearch
 import com.baba.callvault.data.transcripts.db.RecordingLabelEntry
 import com.baba.callvault.ui.common.BidiText
 import com.baba.callvault.ui.common.CvCard
@@ -189,6 +193,49 @@ internal fun LibraryNameRow(
                     slot()
                 }
             }
+        }
+    }
+}
+
+/**
+ * The line under a Recordings row that says why the search line found it: a small icon for the kind
+ * of place (tag, summary, transcript) and the words around the match, the match in bold. A name or
+ * number match draws nothing: the title already shows it.
+ *
+ * An icon rather than a word so the line needs no new text in sixteen languages; the excerpt
+ * itself is the words that were found.
+ */
+@Composable
+internal fun SearchReasonLine(why: RecordingSearch.Why, modifier: Modifier = Modifier) {
+    val found = why.excerpt ?: return
+    val icon = when (why.kind) {
+        RecordingSearch.Kind.TAG -> Icons.Filled.Sell
+        RecordingSearch.Kind.SUMMARY -> Icons.Filled.Summarize
+        else -> Icons.Filled.Subject
+    }
+    Row(modifier = modifier.fillMaxWidth(), verticalAlignment = Alignment.Top) {
+        Icon(
+            imageVector = icon,
+            contentDescription = null,
+            tint = MaterialTheme.colorScheme.onSurfaceVariant,
+            modifier = Modifier.size(14.dp),
+        )
+        Spacer(Modifier.width(6.dp))
+        val direction = if (BidiText.isRtl(found.text)) LayoutDirection.Rtl else LayoutDirection.Ltr
+        CompositionLocalProvider(LocalLayoutDirection provides direction) {
+            Text(
+                text = buildAnnotatedString {
+                    append(found.text)
+                    if (found.matchEnd > found.matchStart) {
+                        addStyle(SpanStyle(fontWeight = FontWeight.Bold), found.matchStart, found.matchEnd)
+                    }
+                },
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurface,
+                maxLines = 2,
+                overflow = TextOverflow.Ellipsis,
+                modifier = Modifier.weight(1f),
+            )
         }
     }
 }
