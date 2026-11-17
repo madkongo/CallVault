@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="row_direction_in">来电</string>
+    <string name="row_direction_out">去电</string>
+    <string name="row_open_contact">打开联系人 %1$s</string>
+    <string name="row_add_contact">添加联系人</string>
+    <string name="row_stored_local">保存在本手机</string>
+    <string name="row_stored_drive">保存在 Drive</string>
+    <string name="row_stored_both">保存在本手机和 Drive</string>
+</resources>

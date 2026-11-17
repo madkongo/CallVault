@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="row_direction_in">ইনকামিং</string>
+    <string name="row_direction_out">আউটগোয়িং</string>
+    <string name="row_open_contact">কন্টাক্ট খুলুন %1$s</string>
+    <string name="row_add_contact">কন্টাক্ট যোগ করুন</string>
+    <string name="row_stored_local">এই ফোনে সংরক্ষিত</string>
+    <string name="row_stored_drive">Drive-এ সংরক্ষিত</string>
+    <string name="row_stored_both">এই ফোনে ও Drive-এ সংরক্ষিত</string>
+</resources>

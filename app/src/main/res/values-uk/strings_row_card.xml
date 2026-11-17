@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="row_direction_in">Вхідний</string>
+    <string name="row_direction_out">Вихідний</string>
+    <string name="row_open_contact">Відкрити контакт %1$s</string>
+    <string name="row_add_contact">Додати контакт</string>
+    <string name="row_stored_local">Зберігається на цьому телефоні</string>
+    <string name="row_stored_drive">Зберігається в Drive</string>
+    <string name="row_stored_both">Зберігається на цьому телефоні та в Drive</string>
+</resources>

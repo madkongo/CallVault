@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="row_direction_in">Eingehend</string>
+    <string name="row_direction_out">Ausgehend</string>
+    <string name="row_open_contact">Kontakt öffnen: %1$s</string>
+    <string name="row_add_contact">Kontakt hinzufügen</string>
+    <string name="row_stored_local">Auf diesem Telefon gespeichert</string>
+    <string name="row_stored_drive">In Drive gespeichert</string>
+    <string name="row_stored_both">Auf diesem Telefon und in Drive gespeichert</string>
+</resources>

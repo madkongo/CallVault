@@ -7,6 +7,12 @@ All notable changes to CallVault are documented here. The format is based on
 
 ### Added
 
+- **Choose the page the app opens on.** Settings ▸ App ▸ "Open the app on": Hub (the default), Recordings, Transcripts
+  or Summaries. The app always opens there; Back from that page still goes to the Hub, where the status card is one tap
+  away. Note: the app no longer reopens the section you were last in; with the default (Hub) it always opens on the Hub.
+  Tapping a notification, or "Open" after importing audio, still goes where it says.
+  <!-- 🧪 VERIFYING (BabApps item 133, not shipped): pick Transcripts in Settings ▸ App, close the app from Recents and
+  open it again: it opens on Transcripts; Back goes to the Hub. Repeat for Recordings and Summaries; pick Hub and it opens on the Hub. -->
 - **Settings: Transcription and summaries in one section, an editable summary language, and Settings as a full page.**
   "Model and language", "When to transcribe" and "Summaries" are now one card, "Transcription and summaries", with the
   three as sub-headings. The summary language is a setting of its own: "Same as the call (default)" or one fixed
@@ -15,12 +21,16 @@ All notable changes to CallVault are documented here. The format is based on
   <!-- 🧪 VERIFYING (BabApps item 135, not shipped): open Settings from the gear: it fills the screen, back closes it.
   On the Transcripts and Summaries pages there is one card with three sub-headings. Pick Summary language ▸ English on a
   Hebrew call and summarise: the summary is in English; "Same as the call" gives Hebrew. -->
-- **Choose the page the app opens on.** Settings ▸ App ▸ "Open the app on": Hub (the default), Recordings, Transcripts
-  or Summaries. The app always opens there; Back from that page still goes to the Hub, where the status card is one tap
-  away. Note: the app no longer reopens the section you were last in; with the default (Hub) it always opens on the Hub.
-  Tapping a notification, or "Open" after importing audio, still goes where it says.
-  <!-- 🧪 VERIFYING (BabApps item 133, not shipped): pick Transcripts in Settings ▸ App, close the app from Recents and
-  open it again: it opens on Transcripts; Back goes to the Hub. Repeat for Recordings and Summaries; pick Hub and it opens on the Hub. -->
+- **A new recording card, with the contact's photo.** Each call shows the contact's photo (or their initial on a
+  coloured circle), with the app's logo on its corner for WhatsApp/Telegram calls. Tapping the photo opens the contact
+  in your contacts app, or offers "Add contact" for a number you have not saved. The name is followed by small icons
+  for where the call is kept (green phone + cloud = both, grey phone = this phone, blue cloud = Drive). Under it:
+  the app, a blue "In" / orange "Out" label, and the time. The play button is now a wide pill with the call length;
+  the star is at the top right and the ⋮ menu is under it, next to the transcript button. The same card is used on
+  "All calls". The file size is no longer shown on the card (design L has no room for it).
+  <!-- 🧪 VERIFYING (BabApps item 137, not shipped): open the Recordings list and All calls: a saved contact shows their
+  photo and tapping it opens that contact; an unsaved number offers Add contact; long-press still selects and the
+  photo then toggles the selection; play/pause in the pill, transcript button, star and ⋮ all work. -->
 
 - **The recordings list: search on top, filters on one row, swipe between tabs.** The search field now sits above
   "Recordings | All calls", stays in place while the list scrolls, and is there on both views (before, it was hidden until

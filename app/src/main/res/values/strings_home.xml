@@ -26,6 +26,13 @@
     <string name="home_calls_filter_not_recorded">Not recorded</string>
     <string name="home_calls_filter_missed">Missed</string>
     <string name="home_call_origin_phone">Phone call</string>
+    <string name="row_direction_in">In</string>
+    <string name="row_direction_out">Out</string>
+    <string name="row_open_contact">Open contact %1$s</string>
+    <string name="row_add_contact">Add contact</string>
+    <string name="row_stored_local">Kept on this phone</string>
+    <string name="row_stored_drive">Kept in Drive</string>
+    <string name="row_stored_both">Kept on this phone and in Drive</string>
     <string name="home_call_not_recorded">Not recorded</string>
     <string name="home_call_missed">Missed</string>
     <string name="home_call_declined">Declined</string>

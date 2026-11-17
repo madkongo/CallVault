@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="row_direction_in">ورودی</string>
+    <string name="row_direction_out">خروجی</string>
+    <string name="row_open_contact">باز کردن مخاطب %1$s</string>
+    <string name="row_add_contact">افزودن مخاطب</string>
+    <string name="row_stored_local">ذخیره‌شده در این گوشی</string>
+    <string name="row_stored_drive">ذخیره‌شده در Drive</string>
+    <string name="row_stored_both">ذخیره‌شده در این گوشی و Drive</string>
+</resources>

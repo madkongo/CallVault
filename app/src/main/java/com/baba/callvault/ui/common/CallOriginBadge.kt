@@ -61,6 +61,13 @@ fun BoxScope.CallOriginBadge(direction: RecordingDirection?, voipApp: String?) {
 }
 
 /**
+ * Only the app's logo, bottom-right. The recording card (BabApps item 137) moved the direction off the
+ * photo into a label under the name, so the photo carries nothing but the app.
+ */
+@Composable
+fun BoxScope.AppLogoBadge(voipApp: String) = VoipAppBadge(voipApp)
+
+/**
  * The shared shell every origin badge sits in.
  *
  * The outline is not decoration. The badge is pinned to the corner of a circle and overhangs it by

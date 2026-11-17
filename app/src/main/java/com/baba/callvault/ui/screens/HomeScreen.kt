@@ -213,6 +213,19 @@ import com.baba.callvault.ui.common.CallOriginBadge
 import androidx.compose.foundation.Image
 import androidx.compose.material.icons.filled.Groups
 import com.baba.callvault.R
+import androidx.compose.foundation.layout.FlowRow
+import android.content.ActivityNotFoundException
+import android.content.Intent
+import android.provider.ContactsContract
+import androidx.compose.foundation.isSystemInDarkTheme
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.ui.graphics.asImageBitmap
+import androidx.compose.ui.graphics.luminance
+import androidx.compose.ui.unit.sp
+import androidx.compose.material.icons.filled.Call
+import com.baba.callvault.ui.common.AppLogoBadge
+import com.baba.callvault.ui.common.ContactPhotos
+import com.baba.callvault.ui.common.RecordingCardLogic
 import com.baba.callvault.system.health.AppStopHistory
 import com.baba.callvault.utils.DeviceInfo
 import com.baba.callvault.system.shareTranscriptFile
@@ -230,6 +243,7 @@ import com.baba.callvault.data.health.SetupHealth
 import com.baba.callvault.data.health.isProblem
 import com.baba.callvault.data.recordings.ImportedRecording
 import com.baba.callvault.data.recordings.RecordingDirection
+import com.baba.callvault.data.recordings.RecordingsRepository
 import com.baba.callvault.data.recordings.RecordingsRepository.RecordingItem
 import com.baba.callvault.data.recordings.RecordingsRepository.RecordingSource
 import com.baba.callvault.ui.common.CvCard
@@ -3167,48 +3181,98 @@ private fun ToggleFilterChip(
  * cloud glyph for DRIVE, and both glyphs for BOTH. Uses a muted/teal tone to stay clean within the row.
  */
 @Composable
-private fun SourceBadge(source: RecordingSource) {
-    val label = when (source) {
-        RecordingSource.LOCAL -> stringResource(R.string.home_source_badge_local)
-        RecordingSource.DRIVE -> stringResource(R.string.home_source_badge_drive)
-        RecordingSource.BOTH -> stringResource(R.string.home_source_badge_both)
-    }
-    val color = when (source) {
-        RecordingSource.LOCAL -> MaterialTheme.colorScheme.onSurfaceVariant
-        else -> MaterialTheme.colorScheme.primary
-    }
-    // Glyphs only, for every source. BOTH already worked this way because its text truncated to
-    // "Dev…"; now that the badge lives in the gutter under the play disc it has 62dp, which a text
-    // label does not fit — and three states drawn the same way are easier to learn than two
-    // conventions. The label survives as the accessible name, so nothing is lost to a screen reader.
+private fun StorageGlyphs(
+    icons: RecordingCardLogic.StorageIcons,
+    label: String,
+    palette: CardPalette,
+) {
+    // Glyphs only, after the name: green phone + cloud = both places, grey phone = this phone only,
+    // blue cloud = Drive only. The label is the accessible name, which says where it is kept.
     Row(
-        modifier = Modifier
-            .clip(CircleShape)
-            .background(color.copy(alpha = 0.12f))
-            // Sized to sit *inside* the play disc's 46dp. At its old padding the pill came to ~59dp,
-            // so centring it under the disc overflowed both edges and read as misaligned rather than
-            // as centred. Two glyphs plus this padding come to ~37dp, which leaves a clear, even
-            // margin either side.
-            .padding(horizontal = 5.dp, vertical = 4.dp)
-            .semantics { contentDescription = label },
+        modifier = Modifier.semantics { contentDescription = label },
         verticalAlignment = Alignment.CenterVertically
     ) {
-        if (source == RecordingSource.LOCAL || source == RecordingSource.BOTH) {
+        icons.phone?.let {
             Icon(
                 imageVector = Icons.Filled.Smartphone,
                 contentDescription = null,
-                tint = color,
+                tint = palette.storageColor(it),
                 modifier = Modifier.size(BADGE_GLYPH_SIZE)
             )
         }
-        if (source == RecordingSource.BOTH) Spacer(Modifier.width(3.dp))
-        if (source == RecordingSource.DRIVE || source == RecordingSource.BOTH) {
+        if (icons.phone != null && icons.cloud != null) Spacer(Modifier.width(3.dp))
+        icons.cloud?.let {
             Icon(
                 imageVector = Icons.Filled.Cloud,
                 contentDescription = null,
-                tint = color,
+                tint = palette.storageColor(it),
                 modifier = Modifier.size(BADGE_GLYPH_SIZE)
             )
+        }
+    }
+}
+
+/** The card's own colours, picked for contrast on a light or a dark surface. */
+private class CardPalette(private val dark: Boolean, private val neutral: Color) {
+    val green = if (dark) Color(0xFF4ADE80) else Color(0xFF1E8E4A)
+    val blue = if (dark) Color(0xFF6CB8F5) else Color(0xFF1B7AC2)
+    val directionIn = if (dark) Color(0xFF7AB4FF) else Color(0xFF1E64C8)
+    val directionOut = if (dark) Color(0xFFFFB066) else Color(0xFFC25E00)
+    val gold = if (dark) Color(0xFFFFC83D) else Color(0xFFE0A100)
+
+    fun appColor(tone: RecordingCardLogic.AppTone): Color = when (tone) {
+        RecordingCardLogic.AppTone.WHATSAPP -> green
+        RecordingCardLogic.AppTone.TELEGRAM -> blue
+        RecordingCardLogic.AppTone.NEUTRAL -> neutral
+    }
+
+    fun storageColor(tone: RecordingCardLogic.StorageTone): Color = when (tone) {
+        RecordingCardLogic.StorageTone.GREEN -> green
+        RecordingCardLogic.StorageTone.BLUE -> blue
+        RecordingCardLogic.StorageTone.GREY -> neutral
+    }
+}
+
+@Composable
+private fun rememberCardPalette(): CardPalette {
+    val dark = MaterialTheme.colorScheme.surface.luminance() < 0.5f
+    val neutral = MaterialTheme.colorScheme.onSurfaceVariant
+    return remember(dark, neutral) { CardPalette(dark, neutral) }
+}
+
+/** The contact's photo in a circle, or the initial (or a call glyph) on a tinted circle. */
+@Composable
+private fun ContactAvatar(
+    photo: android.graphics.Bitmap?,
+    initial: String?,
+    accent: Color,
+    modifier: Modifier = Modifier,
+) {
+    if (photo != null) {
+        Image(
+            bitmap = remember(photo) { photo.asImageBitmap() },
+            contentDescription = null,
+            contentScale = androidx.compose.ui.layout.ContentScale.Crop,
+            modifier = modifier
+        )
+    } else {
+        Box(modifier = modifier.background(accent.copy(alpha = 0.15f), CircleShape), contentAlignment = Alignment.Center) {
+            if (initial != null) {
+                Text(
+                    text = initial,
+                    style = MaterialTheme.typography.titleLarge,
+                    fontWeight = FontWeight.Bold,
+                    color = accent
+                )
+            } else {
+                // An unknown caller has no initial; a glyph is honest about not knowing who this was.
+                Icon(
+                    imageVector = Icons.Filled.Call,
+                    contentDescription = null,
+                    tint = accent,
+                    modifier = Modifier.size(22.dp)
+                )
+            }
         }
     }
 }
@@ -3252,6 +3316,96 @@ private fun NoMatchesCard(title: String, hint: String?, actionLabel: String, onA
             ) { Text(actionLabel) }
         }
     }
+}
+
+/**
+ * Opens the contact in the phone's contacts app; for a number nobody has, opens the system "create or
+ * add to a contact" screen with the number filled in. Never throws: a phone with no contacts app does
+ * nothing.
+ */
+private fun openContactOrAdd(context: android.content.Context, contactUri: Uri?, number: String?) {
+    val intent = when {
+        contactUri != null -> Intent(Intent.ACTION_VIEW, contactUri)
+        !number.isNullOrBlank() -> Intent(Intent.ACTION_INSERT_OR_EDIT).apply {
+            type = ContactsContract.Contacts.CONTENT_ITEM_TYPE
+            putExtra(ContactsContract.Intents.Insert.PHONE, number)
+        }
+        else -> return
+    }.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+    try {
+        context.startActivity(intent)
+    } catch (_: ActivityNotFoundException) {
+        // No contacts app installed: nothing to open.
+    } catch (e: SecurityException) {
+        AppLogger.w("RecordingRow", "Contacts app refused the intent: ${e.message}")
+    }
+}
+
+/** The play pill: "▶ 0:42" filling the card's width; spinner while loading, pause while playing. */
+@Composable
+private fun PlayPill(
+    isActive: Boolean,
+    playback: RecordingPlaybackController.PlaybackState,
+    durationText: String?,
+    enabled: Boolean,
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    val primary = MaterialTheme.colorScheme.primary
+    val isLoading = isActive && playback.phase == RecordingPlaybackController.Phase.LOADING
+    val isPlaying = isActive && playback.phase == RecordingPlaybackController.Phase.PLAYING
+    val description = stringResource(
+        when {
+            isPlaying -> R.string.home_player_pause
+            isActive && playback.phase == RecordingPlaybackController.Phase.PAUSED -> R.string.home_player_play
+            else -> R.string.home_play_recording
+        }
+    )
+    Row(
+        modifier = modifier
+            .height(ROW_ACTION_SIZE)
+            .clip(RoundedCornerShape(ROW_ACTION_SIZE / 2))
+            // Same tint playing or not: only the glyph changes.
+            .background(primary.copy(alpha = 0.14f))
+            .clickable(enabled = enabled, onClickLabel = description, onClick = onClick)
+            .semantics(mergeDescendants = true) { contentDescription = description },
+        horizontalArrangement = Arrangement.Center,
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        if (isLoading) {
+            CircularProgressIndicator(modifier = Modifier.size(20.dp), strokeWidth = 2.dp, color = primary)
+        } else {
+            Icon(
+                imageVector = if (isPlaying) Icons.Filled.Pause else Icons.Filled.PlayArrow,
+                contentDescription = null,
+                tint = primary,
+                modifier = Modifier.size(24.dp)
+            )
+        }
+        if (durationText != null) {
+            Spacer(Modifier.width(6.dp))
+            Text(
+                text = durationText,
+                style = MaterialTheme.typography.labelLarge,
+                fontWeight = FontWeight.SemiBold,
+                color = primary,
+                maxLines = 1
+            )
+        }
+    }
+}
+
+/** "Today 13:41", then the SIM label and the merged-from count when there are any. */
+@Composable
+private fun buildCardMeta(item: RecordingItem, mergedPartCount: Int): String {
+    val parts = buildList {
+        formatWhenCompact(item)?.let { add(it) }
+        item.simLabel?.let { add(it) }
+        if (mergedPartCount > 1) {
+            add(pluralStringResource(R.plurals.merge_row_badge, mergedPartCount, mergedPartCount))
+        }
+    }
+    return parts.joinToString(" · ")
 }
 
 /** Friendly centered empty state shown when there are no recordings yet. */
@@ -3301,39 +3455,36 @@ private fun EmptyRecordings() {
  *  - [DriveCopy]  — only the Drive copy of a BOTH recording.
  */
 /**
- * The star at the end of a row's details line, under the ⋮ button.
- *
- * It must not make the card taller (the maintainer's call on the mockup, 2026-11-09): the details line
- * is one line of small text, and a 40dp button in it pushed the two halves of the card apart. So it
- * keeps the full 40dp touch target but reports no height at all, centred on the details line and
- * overhanging into the gap above and the card's padding below, the same trick the list seek bar uses.
+ * The star at the far right of the card's top row, above the ⋮ button.
  *
  * Tinted explicitly in both states: an un-tinted M3 icon resolves to CoralDeep in this scheme.
  */
 @Composable
-private fun RowStarButton(isFavourite: Boolean, onToggle: () -> Unit) {
-    IconButton(
-        onClick = onToggle,
-        // The layout comes FIRST. After size() it changed nothing: size() then forced the reported
-        // height back up to 40dp, and the card grew by the difference (maintainer, rc1 on the OP9).
-        modifier = Modifier
-            .layout { measurable, constraints ->
-                val button = measurable.measure(constraints.copy(minHeight = 0))
-                layout(button.width, 0) { button.place(0, -button.height / 2) }
-            }
-            .size(ROW_ACTION_SIZE)
-    ) {
+private fun RowStarButton(isFavourite: Boolean, gold: Color, onToggle: () -> Unit) {
+    // Design L: the star is the top-right control of the card, a full-height 44dp button now that
+    // the details line no longer has to stay one line tall. Gold when starred.
+    IconButton(onClick = onToggle, modifier = Modifier.roundOutlined()) {
         Icon(
             imageVector = if (isFavourite) Icons.Filled.Star else Icons.Filled.StarBorder,
             contentDescription = stringResource(
                 if (isFavourite) R.string.playback_unstar else R.string.playback_star
             ),
-            tint = if (isFavourite) MaterialTheme.colorScheme.primary
-                   else MaterialTheme.colorScheme.onSurfaceVariant,
-            modifier = Modifier.size(20.dp)
+            tint = if (isFavourite) gold else MaterialTheme.colorScheme.onSurfaceVariant,
+            modifier = Modifier.size(24.dp)
         )
     }
 }
+
+/**
+ * A 44dp round button with a 1dp outline in the theme's outline colour (design L): star, transcript
+ * and ⋮ share it. [fill] tints the inside, used for a transcript that is ready.
+ */
+@Composable
+private fun Modifier.roundOutlined(fill: Color = Color.Transparent): Modifier = this
+    .size(ROW_ACTION_SIZE)
+    .background(fill, CircleShape)
+    .border(1.dp, MaterialTheme.colorScheme.outlineVariant, CircleShape)
+    .clip(CircleShape)
 
 /**
  * The per-row overflow menu: Star, Share, then Delete.
@@ -3358,7 +3509,7 @@ private fun RecordingRowMenu(
     var open by remember { mutableStateOf(false) }
 
     Box {
-        IconButton(onClick = { open = true }, modifier = Modifier.size(ROW_ACTION_SIZE)) {
+        IconButton(onClick = { open = true }, modifier = Modifier.roundOutlined()) {
             Icon(
                 imageVector = Icons.Filled.MoreVert,
                 contentDescription = stringResource(R.string.home_row_menu),
@@ -3600,6 +3751,7 @@ private fun deleteByScope(
  * @param onDeleteAll Deletes every same-named copy of this recording (delete-both).
  * @param onDeleteUri Deletes a single physical copy at the given Uri.
  */
+@OptIn(androidx.compose.foundation.layout.ExperimentalLayoutApi::class)
 @Composable
 private fun RecordingRow(
     onShare: () -> Unit,
@@ -3713,6 +3865,50 @@ private fun RecordingRow(
         if (selectionMode) onToggleSelected() else onOpenPlayback()
     }
 
+    // Design L (BabApps item 137). Top row: contact photo, name + storage glyphs, labels, star.
+    // Bottom row: the play pill, transcript, ⋮. ⋮ sits under the star.
+    val context = LocalContext.current
+    val palette = rememberCardPalette()
+    val number = item.number
+    // Cached and off the main thread: ContactPhotos asks the contacts provider at most twice at a
+    // time and remembers every answer, and this effect is cancelled when the row scrolls away.
+    val contact by produceState<ContactPhotos.Info?>(
+        initialValue = number?.let { ContactPhotos.peek(it) }, number
+    ) {
+        value = number?.let { ContactPhotos.load(context, it) }
+    }
+    val photoTap = RecordingCardLogic.photoTap(
+        selectionMode = selectionMode,
+        number = number,
+        contactKnown = contact?.contactUri != null || item.contactName != null
+    )
+    val photoDescription = when (photoTap) {
+        RecordingCardLogic.PhotoTap.OPEN_CONTACT -> stringResource(R.string.row_open_contact, primaryLabel)
+        RecordingCardLogic.PhotoTap.ADD_CONTACT -> stringResource(R.string.row_add_contact)
+        else -> null
+    }
+    val phoneLabel = stringResource(R.string.home_call_origin_phone)
+    val appLabel = RecordingCardLogic.appLabel(
+        voipApp = item.voipApp,
+        isCarrierCall = item.voipApp == null && RecordingsRepository.isCarrierCall(item.displayName),
+        phoneLabel = phoneLabel,
+        fallback = originLabel
+    )
+    val directionMark = RecordingCardLogic.directionMark(item.direction)
+    val storage = RecordingCardLogic.storageIcons(item.source)
+    val storageLabel = stringResource(
+        when (item.source) {
+            RecordingSource.LOCAL -> R.string.row_stored_local
+            RecordingSource.DRIVE -> R.string.row_stored_drive
+            RecordingSource.BOTH -> R.string.row_stored_both
+        }
+    )
+    val errorText = if (isRowActive && playback.phase == RecordingPlaybackController.Phase.ERROR)
+        stringResource(R.string.home_player_error) else null
+    val whenText = buildCardMeta(item, mergedPartCount)
+    val discAction = ListPlayback.discAction(isRowActive, playback.phase)
+    val durationText = item.durationSeconds?.let { formatDuration(it) }
+
     CvCard(
         onClick = onCardClick,
         onLongClick = onToggleSelected,
@@ -3720,61 +3916,116 @@ private fun RecordingRow(
         contentPadding = PaddingValues(14.dp)
     ) {
         Row(verticalAlignment = Alignment.CenterVertically) {
-            // BOTH rows aren't directly playable from the disc; show a non-active disc as an affordance
-            // hint but keep playback state attached to the active sub-copy if one is playing.
-            // The disc opens the recording on every row. On a two-copy row the card tap expands, so
-            // without this there would be no way to reach playback from the row at all.
-            // The badge is drawn OUTSIDE the circular clip, not inside it.
-            //
-            // That clip is here to shape the ripple, and it clips *content* too — so the origin badge,
-            // which is pinned to the disc's corner and deliberately overhangs it, was being sliced along
-            // the circle's edge. It looked like the badge was cut off; the cause was an ancestor two
-            // levels up. Giving the badge an outline made the cut MORE obvious rather than fixing it.
-            Box(contentAlignment = Alignment.Center) {
-                // Plays in the row (a second tap pauses). The rest of the card still opens the page.
-                val discAction = ListPlayback.discAction(isRowActive, playback.phase)
-                Box(
+            // The photo is its own tap target (opens the contact); the rest of the card opens the
+            // recording. The app logo sits on its corner; the direction no longer does.
+            Box(modifier = Modifier.size(CARD_PHOTO_SIZE), contentAlignment = Alignment.Center) {
+                ContactAvatar(
+                    photo = contact?.photo,
+                    initial = RecordingCardLogic.initialOf(item.contactName),
+                    accent = MaterialTheme.colorScheme.primary,
                     modifier = Modifier
+                        .size(CARD_PHOTO_SIZE)
                         .clip(CircleShape)
-                        .clickable(enabled = !selectionMode) {
-                            when (discAction) {
-                                ListPlayback.DiscAction.PLAY -> onPlayUri(item.uri)
-                                ListPlayback.DiscAction.PAUSE -> onPause()
-                                ListPlayback.DiscAction.RESUME -> onResume()
-                                ListPlayback.DiscAction.NONE -> Unit
-                            }
-                        }
-                ) {
-                    PlayDisc(
-                        isActive = isRowActive,
-                        playback = playback
-                    )
+                        .then(
+                            if (photoTap == RecordingCardLogic.PhotoTap.OPEN_CONTACT ||
+                                photoTap == RecordingCardLogic.PhotoTap.ADD_CONTACT
+                            ) {
+                                Modifier
+                                    .clickable { openContactOrAdd(context, contact?.contactUri, number) }
+                                    .semantics { contentDescription = photoDescription.orEmpty() }
+                            } else Modifier
+                        )
+                )
+                if (RecordingCardLogic.showsLogoBadge(item.voipApp)) {
+                    AppLogoBadge(item.voipApp.orEmpty())
                 }
-                CallOriginBadge(item.direction, item.voipApp)
             }
-            Spacer(Modifier.width(14.dp))
+            Spacer(Modifier.width(12.dp))
             Column(Modifier.weight(1f)) {
-                // The whole line, to itself. The badge now sits under the play disc, in the gutter the
-                // details line already indents past — space that was simply empty.
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     Text(
                         text = primaryLabel,
                         style = MaterialTheme.typography.titleMedium,
+                        fontSize = 17.sp,
                         fontWeight = FontWeight.Bold,
                         color = MaterialTheme.colorScheme.onSurface,
                         maxLines = 1,
                         overflow = TextOverflow.Ellipsis,
-                        // fill = false so the title is what ellipsises and the badge keeps its
-                        // width. An import arrives in a list of calls with no number, no direction
-                        // and no contact, so without this word it reads as a call whose details all
-                        // failed to parse — and it also behaves differently: no Drive copy, no
-                        // retention, no eviction, so this phone holds the only copy there is.
+                        // fill = false so the title is what ellipsises and the badges keep their
+                        // width. An import has no number, direction or contact, so without its badge
+                        // it reads as a call whose details all failed to parse — and it differs: no
+                        // Drive copy, no retention, no eviction; this phone holds the only copy.
                         modifier = Modifier.weight(1f, fill = false)
                     )
                     if (item.isImported) {
                         Spacer(Modifier.width(8.dp))
                         ImportedBadge()
                     }
+                    if (storage.any) {
+                        Spacer(Modifier.width(6.dp))
+                        StorageGlyphs(storage, storageLabel, palette)
+                    }
+                }
+                Spacer(Modifier.height(2.dp))
+                FlowRow(
+                    horizontalArrangement = Arrangement.spacedBy(6.dp),
+                    verticalArrangement = Arrangement.spacedBy(2.dp),
+                    itemVerticalAlignment = Alignment.CenterVertically
+                ) {
+                    // Tinted pills (design L): the colour's light tint behind coloured text.
+                    if (appLabel != null) {
+                        val appTint = palette.appColor(RecordingCardLogic.appTone(appLabel))
+                        // Never ellipsized: it is short, and cutting the app's name defeats the label.
+                        Text(
+                            text = appLabel,
+                            style = MaterialTheme.typography.labelMedium,
+                            fontSize = 12.sp,
+                            fontWeight = FontWeight.SemiBold,
+                            color = appTint,
+                            maxLines = 1,
+                            softWrap = false,
+                            modifier = Modifier
+                                .background(appTint.copy(alpha = 0.14f), CircleShape)
+                                .padding(horizontal = 6.dp, vertical = 2.dp)
+                        )
+                    }
+                    if (directionMark != null) {
+                        val isIn = directionMark == RecordingCardLogic.DirectionMark.IN
+                        val tint = if (isIn) palette.directionIn else palette.directionOut
+                        Row(
+                            modifier = Modifier
+                                .background(tint.copy(alpha = 0.14f), CircleShape)
+                                .padding(horizontal = 6.dp, vertical = 2.dp),
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Icon(
+                                imageVector = if (isIn) Icons.AutoMirrored.Filled.CallReceived
+                                              else Icons.AutoMirrored.Filled.CallMade,
+                                contentDescription = null,
+                                tint = tint,
+                                modifier = Modifier.size(12.dp)
+                            )
+                            Spacer(Modifier.width(2.dp))
+                            Text(
+                                text = stringResource(if (isIn) R.string.row_direction_in else R.string.row_direction_out),
+                                style = MaterialTheme.typography.labelMedium,
+                                fontSize = 12.sp,
+                                fontWeight = FontWeight.SemiBold,
+                                color = tint,
+                                maxLines = 1,
+                                softWrap = false
+                            )
+                        }
+                    }
+                    // A file that will not play replaces the time, since there is no seek bar then to
+                    // show anything happened. Never truncated: if the row is too narrow (huge font
+                    // scale) the FlowRow moves the time to a second line instead.
+                    Text(
+                        text = errorText ?: whenText,
+                        style = MaterialTheme.typography.bodySmall,
+                        color = if (errorText != null) MaterialTheme.colorScheme.error
+                                else MaterialTheme.colorScheme.onSurfaceVariant,
+                    )
                 }
                 if (searchReason != null) {
                     Spacer(Modifier.height(4.dp))
@@ -3782,41 +4033,59 @@ private fun RecordingRow(
                 }
             }
             Spacer(Modifier.width(4.dp))
-            // No expand chevron: tapping the card already expands a BOTH row, so it was a second
-            // control for an action the whole card performs — and it was spending 48dp of the width
-            // the contact name needed. The copies still appear on tap; the source badge below says
-            // there are two.
-            // Main-row overflow: Share, then Delete. A single icon rather than one per action —
-            // the row is width-bound (the meta line had to move below it for the same reason), and a
-            // BOTH row already spends a slot on its chevron.
-            //
-            // While a delete (and any cloud-copy removal) is in flight, a live spinner takes the
-            // menu button's place — the row then vanishes on the list refresh. No modal.
-            if (selectionMode) {
-                Box(modifier = Modifier.size(48.dp), contentAlignment = Alignment.Center) {
-                    Icon(
+            // The star's slot also carries the selection tick and the delete spinner, so the column
+            // never shifts when a mode changes.
+            Box(modifier = Modifier.size(ROW_ACTION_SIZE), contentAlignment = Alignment.Center) {
+                when {
+                    selectionMode -> Icon(
                         imageVector = if (selected) Icons.Filled.CheckCircle else Icons.Filled.RadioButtonUnchecked,
                         contentDescription = null,
                         tint = if (selected) MaterialTheme.colorScheme.primary
                                else MaterialTheme.colorScheme.onSurfaceVariant,
                         modifier = Modifier.size(22.dp)
                     )
+                    deleting -> CircularProgressIndicator(modifier = Modifier.size(20.dp), strokeWidth = 2.dp)
+                    onToggleFavourite != null ->
+                        RowStarButton(isFavourite = isFavourite, gold = palette.gold, onToggle = onToggleFavourite)
                 }
-            } else if (deleting) {
-                Box(modifier = Modifier.size(48.dp), contentAlignment = Alignment.Center) {
-                    CircularProgressIndicator(modifier = Modifier.size(20.dp), strokeWidth = 2.dp)
-                }
-            } else {
-                // One slot, four meanings: transcribe, in progress, read, retry. Placed before the
-                // overflow menu so the common action is the easier reach.
+            }
+        }
+
+        Spacer(Modifier.height(8.dp))
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            // Plays in the row (a second tap pauses). The rest of the card still opens the page.
+            PlayPill(
+                isActive = isRowActive,
+                playback = playback,
+                durationText = durationText,
+                enabled = !selectionMode,
+                onClick = {
+                    when (discAction) {
+                        ListPlayback.DiscAction.PLAY -> onPlayUri(item.uri)
+                        ListPlayback.DiscAction.PAUSE -> onPause()
+                        ListPlayback.DiscAction.RESUME -> onResume()
+                        ListPlayback.DiscAction.NONE -> Unit
+                    }
+                },
+                modifier = Modifier.weight(1f)
+            )
+            if (!selectionMode && !deleting) {
+                // One slot, four meanings: transcribe, in progress, read, retry.
+                Spacer(Modifier.width(8.dp))
                 TranscriptActionButton(
                     status = transcriptStatus,
                     onTranscribe = onTranscribe,
                     onOpen = onOpenTranscript,
                     onRetry = onRetryTranscript,
-                    modifier = Modifier.size(ROW_ACTION_SIZE),
+                    // Ready transcript: the tinted fill.
+                    modifier = Modifier.roundOutlined(
+                        if (transcriptStatus == TranscriptStatus.DONE)
+                            MaterialTheme.colorScheme.primary.copy(alpha = 0.14f)
+                        else Color.Transparent
+                    ),
                     percent = transcriptPercent
                 )
+                Spacer(Modifier.width(8.dp))
                 RecordingRowMenu(
                     // Share the device copy when there is one: it needs no network to read, and for a
                     // BOTH row the two copies are the same audio.
@@ -3832,42 +4101,8 @@ private fun RecordingRow(
                     isFavourite = isFavourite,
                     onToggleFavourite = onToggleFavourite,
                 )
-            }
-        }
-
-        // The meta line sits BELOW the row, not inside its middle column. In the column it had only the
-        // sliver left between the play disc and two icon buttons — about twenty characters — so it
-        // truncated mid-duration ("Yesterday 17:33 · 23…") no matter which fields were dropped. Here it
-        // has the card's full width, indented to line up under the name.
-        // The details line already began at META_INDENT, leaving the space under the play disc empty.
-        // The badge goes there: it costs no height, takes nothing from the name, and sits beside the
-        // disc it describes.
-        Row(
-            modifier = Modifier.fillMaxWidth().padding(top = 2.dp),
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            Box(modifier = Modifier.width(PLAY_DISC_SIZE), contentAlignment = Alignment.Center) {
-                SourceBadge(source = item.source)
-            }
-            Spacer(Modifier.width(META_INDENT - PLAY_DISC_SIZE))
-            // The details line stays as it is while playing; only a file that will not play replaces
-            // it, since there is no seek bar then to show anything happened.
-            val (metaText, metaColor) = when {
-                isRowActive && playback.phase == RecordingPlaybackController.Phase.ERROR ->
-                    stringResource(R.string.home_player_error) to MaterialTheme.colorScheme.error
-                else -> listOfNotNull(originLabel, buildSubtitle(item, mergedPartCount)).joinToString(" · ") to
-                    MaterialTheme.colorScheme.onSurfaceVariant
-            }
-            Text(
-                text = metaText,
-                style = MaterialTheme.typography.bodySmall,
-                color = metaColor,
-                maxLines = 1,
-                overflow = TextOverflow.Ellipsis,
-                modifier = Modifier.weight(1f)
-            )
-            if (onToggleFavourite != null && !selectionMode && !deleting) {
-                RowStarButton(isFavourite = isFavourite, onToggle = onToggleFavourite)
+            } else {
+                Spacer(Modifier.width(ROW_ACTION_SIZE * 2 + 16.dp))
             }
         }
 
@@ -4077,55 +4312,6 @@ private fun CopySubEntry(
     }
 }
 
-/**
- * Circular teal disc that anchors each row. Shows a small loading spinner while preparing, a pause
- * glyph while the row is the active playing track, and otherwise a play arrow. A tiny direction
- * badge (incoming / outgoing) overlays the bottom-right corner.
- */
-@Composable
-private fun PlayDisc(
-    isActive: Boolean,
-    playback: RecordingPlaybackController.PlaybackState
-) {
-    val primary = MaterialTheme.colorScheme.primary
-    val isLoading = isActive && playback.phase == RecordingPlaybackController.Phase.LOADING
-    val isPlaying = isActive && playback.phase == RecordingPlaybackController.Phase.PLAYING
-
-    Box(contentAlignment = Alignment.Center) {
-        Box(
-            modifier = Modifier
-                .size(PLAY_DISC_SIZE)
-                .clip(CircleShape)
-                // Same tint playing or not: only the glyph changes, so the card looks as it always did.
-                .background(primary.copy(alpha = 0.14f)),
-            contentAlignment = Alignment.Center
-        ) {
-            when {
-                isLoading -> CircularProgressIndicator(
-                    modifier = Modifier.size(20.dp),
-                    strokeWidth = 2.dp,
-                    color = primary
-                )
-                else -> Icon(
-                    imageVector = if (isPlaying) Icons.Filled.Pause else Icons.Filled.PlayArrow,
-                    contentDescription = stringResource(
-                        when {
-                            isPlaying -> R.string.home_player_pause
-                            isActive && playback.phase == RecordingPlaybackController.Phase.PAUSED ->
-                                R.string.home_player_play
-                            else -> R.string.home_play_recording
-                        }
-                    ),
-                    tint = primary,
-                    modifier = Modifier.size(24.dp)
-                )
-            }
-        }
-        // A VoIP recording has no direction (there is no call-log entry behind it), so the same corner
-        // slot carries the app it came from instead — the two can never collide.
-    }
-}
-
 /** The inline player controls (loading / error / play-pause + teal seek slider + elapsed/total). */
 @Composable
 private fun InlinePlayer(
@@ -4218,24 +4404,18 @@ private fun InlinePlayer(
  */
 private const val INLINE_PLAYER_ENABLED = false
 
-private val ROW_ACTION_SIZE = 40.dp
+private val ROW_ACTION_SIZE = 44.dp
 
-/**
- * The play disc's diameter, shared with the source badge that sits under it.
- *
- * Centring the badge in the details indent instead put it ~8dp right of the disc's centre — close
- * enough to look like a mistake rather than a choice. Both now measure from the same number.
- */
-private val PLAY_DISC_SIZE = 46.dp
+/** The contact photo on the card (design L). */
+private val CARD_PHOTO_SIZE = 48.dp
 
-/** Badge glyphs, sized so two of them plus padding fit within [PLAY_DISC_SIZE]. */
-private val BADGE_GLYPH_SIZE = 13.dp
+/** The storage glyphs after the name. */
+private val BADGE_GLYPH_SIZE = 15.dp
 
 /** The height the playing row's seek bar adds to its card; its touch strip overhangs this. */
 private val SEEK_BAR_SPACE = 18.dp
 
 
-private val META_INDENT = 62.dp
 
 /**
  * The muted line under the name: when the call happened, how long it ran, how big the file is.
@@ -4297,6 +4477,24 @@ private fun formatWhen(item: RecordingItem): String? {
         ?: item.lastModified.takeIf { item.displayDate == null && it > 0L }
         ?: return item.displayDate
     return callTimeLabel(millis)
+}
+
+/** The card's short wording: "13:41", "Yesterday 13:41", "14 Nov" (see [RecordingCardLogic.compactWhen]). */
+@Composable
+private fun formatWhenCompact(item: RecordingItem): String? {
+    val millis = item.startedAtMillis
+        ?: item.lastModified.takeIf { item.displayDate == null && it > 0L }
+        ?: return item.displayDate
+    val kind = RecordingCardLogic.dayKind(millis, System.currentTimeMillis())
+    val time = android.text.format.DateFormat.getTimeFormat(LocalContext.current).format(java.util.Date(millis))
+    val flags = DateUtils.FORMAT_SHOW_DATE or DateUtils.FORMAT_ABBREV_MONTH or
+        (if (kind == RecordingCardLogic.DayKind.EARLIER_YEAR) DateUtils.FORMAT_SHOW_YEAR else DateUtils.FORMAT_NO_YEAR)
+    return RecordingCardLogic.compactWhen(
+        kind = kind,
+        time = time,
+        yesterday = stringResource(R.string.home_date_yesterday),
+        dateText = DateUtils.formatDateTime(LocalContext.current, millis, flags)
+    )
 }
 
 /** "12:41" for a call under an hour, "1:05:30" beyond it. */
