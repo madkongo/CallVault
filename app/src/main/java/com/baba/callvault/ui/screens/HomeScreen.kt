@@ -3403,7 +3403,7 @@ private fun EmptyRecordings() {
 private fun RowStarButton(isFavourite: Boolean, gold: Color, onToggle: () -> Unit) {
     // Design L: the star is the top-right control of the card, a full-height 44dp button now that
     // the details line no longer has to stay one line tall. Gold when starred.
-    IconButton(onClick = onToggle, modifier = Modifier.size(ROW_ACTION_SIZE)) {
+    IconButton(onClick = onToggle, modifier = Modifier.roundOutlined()) {
         Icon(
             imageVector = if (isFavourite) Icons.Filled.Star else Icons.Filled.StarBorder,
             contentDescription = stringResource(
@@ -3414,6 +3414,17 @@ private fun RowStarButton(isFavourite: Boolean, gold: Color, onToggle: () -> Uni
         )
     }
 }
+
+/**
+ * A 44dp round button with a 1dp outline in the theme's outline colour (design L): star, transcript
+ * and ⋮ share it. [fill] tints the inside, used for a transcript that is ready.
+ */
+@Composable
+private fun Modifier.roundOutlined(fill: Color = Color.Transparent): Modifier = this
+    .size(ROW_ACTION_SIZE)
+    .background(fill, CircleShape)
+    .border(1.dp, MaterialTheme.colorScheme.outlineVariant, CircleShape)
+    .clip(CircleShape)
 
 /**
  * The per-row overflow menu: Star, Share, then Delete.
@@ -3438,7 +3449,7 @@ private fun RecordingRowMenu(
     var open by remember { mutableStateOf(false) }
 
     Box {
-        IconButton(onClick = { open = true }, modifier = Modifier.size(ROW_ACTION_SIZE)) {
+        IconButton(onClick = { open = true }, modifier = Modifier.roundOutlined()) {
             Icon(
                 imageVector = Icons.Filled.MoreVert,
                 contentDescription = stringResource(R.string.home_row_menu),
@@ -3894,36 +3905,49 @@ private fun RecordingRow(
                 }
                 Spacer(Modifier.height(2.dp))
                 Row(verticalAlignment = Alignment.CenterVertically) {
+                    // Tinted pills (design L): the colour's light tint behind coloured text.
                     if (appLabel != null) {
+                        val appTint = palette.appColor(RecordingCardLogic.appTone(appLabel))
                         Text(
                             text = appLabel,
                             style = MaterialTheme.typography.labelMedium,
                             fontWeight = FontWeight.SemiBold,
-                            color = palette.appColor(RecordingCardLogic.appTone(appLabel)),
+                            color = appTint,
                             maxLines = 1,
                             overflow = TextOverflow.Ellipsis,
-                            modifier = Modifier.weight(1f, fill = false)
+                            modifier = Modifier
+                                .weight(1f, fill = false)
+                                .background(appTint.copy(alpha = 0.14f), CircleShape)
+                                .padding(horizontal = 8.dp, vertical = 2.dp)
                         )
-                        Spacer(Modifier.width(8.dp))
+                        Spacer(Modifier.width(6.dp))
                     }
                     if (directionMark != null) {
                         val isIn = directionMark == RecordingCardLogic.DirectionMark.IN
                         val tint = if (isIn) palette.directionIn else palette.directionOut
-                        Icon(
-                            imageVector = if (isIn) Icons.AutoMirrored.Filled.CallReceived
-                                          else Icons.AutoMirrored.Filled.CallMade,
-                            contentDescription = null,
-                            tint = tint,
-                            modifier = Modifier.size(14.dp)
-                        )
-                        Text(
-                            text = stringResource(if (isIn) R.string.row_direction_in else R.string.row_direction_out),
-                            style = MaterialTheme.typography.labelMedium,
-                            fontWeight = FontWeight.SemiBold,
-                            color = tint,
-                            maxLines = 1
-                        )
-                        Spacer(Modifier.width(8.dp))
+                        Row(
+                            modifier = Modifier
+                                .background(tint.copy(alpha = 0.14f), CircleShape)
+                                .padding(horizontal = 8.dp, vertical = 2.dp),
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Icon(
+                                imageVector = if (isIn) Icons.AutoMirrored.Filled.CallReceived
+                                              else Icons.AutoMirrored.Filled.CallMade,
+                                contentDescription = null,
+                                tint = tint,
+                                modifier = Modifier.size(14.dp)
+                            )
+                            Spacer(Modifier.width(2.dp))
+                            Text(
+                                text = stringResource(if (isIn) R.string.row_direction_in else R.string.row_direction_out),
+                                style = MaterialTheme.typography.labelMedium,
+                                fontWeight = FontWeight.SemiBold,
+                                color = tint,
+                                maxLines = 1
+                            )
+                        }
+                        Spacer(Modifier.width(6.dp))
                     }
                     // A file that will not play replaces the time, since there is no seek bar then to
                     // show anything happened.
@@ -3977,14 +4001,21 @@ private fun RecordingRow(
             )
             if (!selectionMode && !deleting) {
                 // One slot, four meanings: transcribe, in progress, read, retry.
+                Spacer(Modifier.width(8.dp))
                 TranscriptActionButton(
                     status = transcriptStatus,
                     onTranscribe = onTranscribe,
                     onOpen = onOpenTranscript,
                     onRetry = onRetryTranscript,
-                    modifier = Modifier.size(ROW_ACTION_SIZE),
+                    // Ready transcript: the tinted fill.
+                    modifier = Modifier.roundOutlined(
+                        if (transcriptStatus == TranscriptStatus.DONE)
+                            MaterialTheme.colorScheme.primary.copy(alpha = 0.14f)
+                        else Color.Transparent
+                    ),
                     percent = transcriptPercent
                 )
+                Spacer(Modifier.width(8.dp))
                 RecordingRowMenu(
                     // Share the device copy when there is one: it needs no network to read, and for a
                     // BOTH row the two copies are the same audio.
@@ -4001,7 +4032,7 @@ private fun RecordingRow(
                     onToggleFavourite = onToggleFavourite,
                 )
             } else {
-                Spacer(Modifier.width(ROW_ACTION_SIZE * 2))
+                Spacer(Modifier.width(ROW_ACTION_SIZE * 2 + 16.dp))
             }
         }
 
