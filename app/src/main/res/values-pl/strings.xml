@@ -923,4 +923,8 @@
     <string name="wifi_call_one_sided">Z tego połączenia przez Wi-Fi nagrano tylko Twoją stronę. Jeśli to się powtarza, w ustawieniach aplikacji Telefon ustaw połączenia przez Wi-Fi tak, by preferowały sieć komórkową.</string>
     <string name="wifi_call_switch_aborted">Nagrywanie tego połączenia przez Wi-Fi zatrzymało się wcześniej: nie udało się bezpiecznie przełączyć nagrywania. Nagrana dotąd część zostaje zachowana.</string>
     <string name="wifi_call_far_unknown">To połączenie przez Wi-Fi zostało nagrane, ale CallVault nie mógł sprawdzić, czy jest na nim druga strona. Odsłuchaj nagranie.</string>
+    <string name="general_show_more">Więcej</string>
+    <string name="general_show_less">Mniej</string>
+    <string name="summary_card_state_expanded">Rozwinięte</string>
+    <string name="summary_card_state_collapsed">Zwinięte</string>
 </resources>

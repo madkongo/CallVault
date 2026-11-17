@@ -919,4 +919,8 @@
     <string name="wifi_call_one_sided">Von diesem WLAN-Anruf wurde nur Ihre Seite aufgenommen. Wenn das öfter passiert, stellen Sie WLAN-Anrufe in den Einstellungen der Telefon-App auf „Mobilfunknetz bevorzugt“.</string>
     <string name="wifi_call_switch_aborted">Die Aufnahme dieses WLAN-Anrufs wurde vorzeitig beendet: Die Aufnahme ließ sich nicht sicher umschalten. Der bisher aufgenommene Teil bleibt erhalten.</string>
     <string name="wifi_call_far_unknown">Dieser WLAN-Anruf wurde aufgenommen, aber CallVault konnte nicht prüfen, ob die andere Seite darauf ist. Bitte hören Sie sich die Aufnahme an.</string>
+    <string name="general_show_more">Mehr</string>
+    <string name="general_show_less">Weniger</string>
+    <string name="summary_card_state_expanded">Ausgeklappt</string>
+    <string name="summary_card_state_collapsed">Eingeklappt</string>
 </resources>

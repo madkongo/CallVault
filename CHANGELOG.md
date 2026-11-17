@@ -16,6 +16,15 @@ All notable changes to CallVault are documented here. The format is based on
   <!-- 🧪 VERIFYING (BabApps item 129, not shipped): open the Recordings page, type a name and scroll the list: the
   search stays on top. Swipe left/right: the tab follows. Scroll the chip row sideways: it must not change the tab. -->
 
+- **A recording's screen: Transcribe and Summarise are icons in the player box, and long notes and summaries start
+  folded.** The two icons sit at either end of the skip-back / skip-forward row (they keep their states: working,
+  open, try again); the transcript icon is no longer in the header card with the star, share and delete. A finished
+  summary shows its title and first three lines with "More" (the summary icon opens it too), and a long note shows
+  three lines with "More"; a tap opens the editor, and a note you are typing in never folds under you.
+  <!-- 🧪 VERIFYING (BabApps item 130, not shipped): built, not yet seen on a phone. Open a recording with a
+  transcript and a summary, and one with a long note: both icons should be in the player box, the summary and the
+  long note folded. Tap More / the summary icon to open them; start a transcription and a summary and check the
+  progress rings; check a Hebrew/Arabic note and summary. -->
 - **The day and the time can be used on their own in a custom file name.** Four new tags: `{day}` (20261112),
   `{day-}` (2026-11-12), `{time}` (143520) and `{time-}` (14-35-20), for example `{day-}_{time-}_{contact_name}` gives
   `2026-11-12_14-35-20_Dana.ogg`. `{date}` is unchanged, so no existing name changes. A custom name needs `{date}`, or a

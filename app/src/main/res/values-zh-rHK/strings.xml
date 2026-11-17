@@ -917,4 +917,8 @@
     <string name="wifi_call_one_sided">這通 WLAN 通話只錄到了您這一方。如果反覆出現，請在電話應用的設定中將 WLAN 通話設為“首選移動網絡”。</string>
     <string name="wifi_call_switch_aborted">這通 WLAN 通話的錄音提前停止了：無法安全地切換錄音方式。已錄下的部分會保留。</string>
     <string name="wifi_call_far_unknown">這通 WLAN 通話已錄音，但 CallVault 無法確認其中錄到了對方的聲音。請收聽錄音確認。</string>
+    <string name="general_show_more">更多</string>
+    <string name="general_show_less">收起</string>
+    <string name="summary_card_state_expanded">已展開</string>
+    <string name="summary_card_state_collapsed">已收合</string>
 </resources>
