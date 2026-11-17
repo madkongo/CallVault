@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- The Recordings list when a typed search or the chip filters leave nothing (BabApps item 134). -->
+    <string name="home_search_empty_title">No matches for “%1$s”</string>
+    <string name="home_search_empty_hint">Try a name, a tag or a word from the call.</string>
+    <string name="home_search_clear">Clear search</string>
+    <string name="home_filters_empty_title">No recordings match these filters</string>
+    <string name="home_filters_clear">Clear filters</string>
+</resources>

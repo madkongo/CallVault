@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="home_search_empty_title">لا توجد نتائج لـ «%1$s»</string>
+    <string name="home_search_empty_hint">جرّب اسمًا أو وسمًا أو كلمة من المكالمة.</string>
+    <string name="home_search_clear">مسح البحث</string>
+    <string name="home_filters_empty_title">لا توجد تسجيلات تطابق هذه المرشحات</string>
+    <string name="home_filters_clear">مسح المرشحات</string>
+</resources>

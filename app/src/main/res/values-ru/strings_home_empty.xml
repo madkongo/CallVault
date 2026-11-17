@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="home_search_empty_title">Ничего не найдено по запросу «%1$s»</string>
+    <string name="home_search_empty_hint">Попробуйте имя, тег или слово из разговора.</string>
+    <string name="home_search_clear">Очистить поиск</string>
+    <string name="home_filters_empty_title">Нет записей, подходящих под эти фильтры</string>
+    <string name="home_filters_clear">Сбросить фильтры</string>
+</resources>

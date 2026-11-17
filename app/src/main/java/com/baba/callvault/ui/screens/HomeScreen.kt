@@ -248,6 +248,7 @@ import com.baba.callvault.ui.viewmodels.HomeViewModel.DirectionFilter
 import com.baba.callvault.ui.viewmodels.HomeViewModel.RecordingSort
 import com.baba.callvault.ui.viewmodels.HomeViewModel.SourceFilter
 import com.baba.callvault.ui.viewmodels.RecordingPlaybackController
+import com.baba.callvault.ui.viewmodels.RecordingsEmptyState
 import kotlinx.coroutines.delay
 import java.text.SimpleDateFormat
 import java.util.Calendar
@@ -1591,7 +1592,23 @@ fun HomeScreen(
                     // Only once the list has actually been read. Before that the list is *unknown*, and
                     // announcing "no recordings yet" to someone with sixty of them — for the half second
                     // it takes to read the folder — is simply wrong.
-                    if (uiState.hasLoaded) item { EmptyRecordings() }
+                    if (uiState.hasLoaded) item {
+                        when (uiState.emptyState) {
+                            RecordingsEmptyState.NO_SEARCH_MATCH -> NoMatchesCard(
+                                title = stringResource(R.string.home_search_empty_title, uiState.contactQuery.trim()),
+                                hint = stringResource(R.string.home_search_empty_hint),
+                                actionLabel = stringResource(R.string.home_search_clear),
+                                onAction = { viewModel.setContactQuery("") },
+                            )
+                            RecordingsEmptyState.NO_FILTER_MATCH -> NoMatchesCard(
+                                title = stringResource(R.string.home_filters_empty_title),
+                                hint = null,
+                                actionLabel = stringResource(R.string.home_filters_clear),
+                                onAction = { viewModel.clearFilters() },
+                            )
+                            else -> EmptyRecordings()
+                        }
+                    }
                 } else {
                     // The "Select all" row, pinned above the rows while selecting (hidden otherwise), so
                     // it sits over the ticks it drives and below the filter bar — "all" means the
@@ -3192,6 +3209,47 @@ private fun SourceBadge(source: RecordingSource) {
                 tint = color,
                 modifier = Modifier.size(BADGE_GLYPH_SIZE)
             )
+        }
+    }
+}
+
+/** The card for a search or filters that leave nothing, with the one button that undoes them. */
+@Composable
+private fun NoMatchesCard(title: String, hint: String?, actionLabel: String, onAction: () -> Unit) {
+    CvCard(contentPadding = PaddingValues(vertical = 28.dp, horizontal = 24.dp)) {
+        Column(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalAlignment = Alignment.CenterHorizontally
+        ) {
+            Icon(
+                imageVector = Icons.Filled.Search,
+                contentDescription = null,
+                tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                modifier = Modifier.size(32.dp)
+            )
+            Spacer(Modifier.height(12.dp))
+            Text(
+                text = title,
+                style = MaterialTheme.typography.titleMedium,
+                fontWeight = FontWeight.SemiBold,
+                color = MaterialTheme.colorScheme.onSurface,
+                textAlign = TextAlign.Center,
+            )
+            if (hint != null) {
+                Spacer(Modifier.height(6.dp))
+                Text(
+                    text = hint,
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    textAlign = TextAlign.Center,
+                )
+            }
+            Spacer(Modifier.height(12.dp))
+            // Colours stated: a default text button is not guaranteed to be on-brand in this theme.
+            TextButton(
+                onClick = onAction,
+                colors = ButtonDefaults.textButtonColors(contentColor = MaterialTheme.colorScheme.primary),
+            ) { Text(actionLabel) }
         }
     }
 }

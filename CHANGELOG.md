@@ -30,7 +30,9 @@ All notable changes to CallVault are documented here. The format is based on
   list shows the calls that match by contact, number or file name first, then by tag, then by summary, then by
   transcript; each call appears once. A call found by a tag, summary or transcript shows a small line under its name
   with the tag or the words around the match (the match in bold). The last word you type matches as a start of a
-  word. The Transcripts and Summaries pages keep their own searches.
+  word. The Transcripts and Summaries pages keep their own searches. When a search finds nothing, the list now says
+  No matches for "…" with a hint and a Clear search button, instead of "No recordings yet"; filters that leave nothing say
+  "No recordings match these filters" with Clear filters.
   <!-- 🧪 VERIFYING (BabApps item 134, not shipped): built, not yet seen on a phone. On a phone with tagged,
   summarised and transcribed calls, search a contact name (no extra line), a tag (tag line), a word only in a summary
   and a word only in a transcript; check the order and that a call is not listed twice. -->

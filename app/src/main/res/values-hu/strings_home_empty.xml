@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="home_search_empty_title">Nincs találat erre: „%1$s”</string>
+    <string name="home_search_empty_hint">Próbálj egy nevet, egy címkét vagy egy szót a hívásból.</string>
+    <string name="home_search_clear">Keresés törlése</string>
+    <string name="home_filters_empty_title">Egy felvétel sem felel meg ezeknek a szűrőknek</string>
+    <string name="home_filters_clear">Szűrők törlése</string>
+</resources>

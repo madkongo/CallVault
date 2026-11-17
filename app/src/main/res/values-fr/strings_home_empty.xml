@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="home_search_empty_title">Aucun résultat pour « %1$s »</string>
+    <string name="home_search_empty_hint">Essayez un nom, une étiquette ou un mot de l\'appel.</string>
+    <string name="home_search_clear">Effacer la recherche</string>
+    <string name="home_filters_empty_title">Aucun enregistrement ne correspond à ces filtres</string>
+    <string name="home_filters_clear">Effacer les filtres</string>
+</resources>

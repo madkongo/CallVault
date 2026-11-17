@@ -400,6 +400,20 @@ class HomeViewModel(application: Application) : AndroidViewModel(application) {
         val filteredRecordings: List<RecordingItem>
             get() = searchResults.map { it.first }
 
+        /** Whether any chip filter (not the search line) is narrowing the list. */
+        val hasActiveFilters: Boolean
+            get() = sourceFilter != SourceFilter.ALL || directionFilter != DirectionFilter.ALL ||
+                dateFilter != null || tagFilter != null || favouritesOnly
+
+        /** Which card to show when the list has no rows; see [RecordingsEmptyState]. */
+        val emptyState: RecordingsEmptyState
+            get() = RecordingsEmptyState.of(
+                totalRecordings = recordings.size,
+                listedRecordings = filteredRecordings.size,
+                searchTyped = contactQuery.isNotBlank(),
+                filtersActive = hasActiveFilters,
+            )
+
         /**
          * Why each listed recording matches the search line (name, tag, summary or transcript), by
          * display name; empty while nothing is typed. The row draws it under its title.
@@ -1066,6 +1080,19 @@ class HomeViewModel(application: Application) : AndroidViewModel(application) {
     }
 
     private var contentSearchJob: Job? = null
+
+    /** Turns every chip filter off (source, direction, date, tag, starred); the search line is left alone. */
+    fun clearFilters() {
+        _uiState.update {
+            it.copy(
+                sourceFilter = SourceFilter.ALL,
+                directionFilter = DirectionFilter.ALL,
+                dateFilter = null,
+                tagFilter = null,
+                favouritesOnly = false,
+            )
+        }
+    }
 
     /** Selects a specific day key to filter to, or null for "all dates". */
     fun setDateFilter(dayKey: String?) {
