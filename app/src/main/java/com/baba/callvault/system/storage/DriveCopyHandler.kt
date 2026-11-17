@@ -29,6 +29,9 @@ object DriveCopyHandler {
      */
     const val TEST_FORCE_LIST_FAILURE = false
 
+    private const val VERIFY_RETRIES = 4
+    private const val VERIFY_WAIT_MS = 500L
+
     fun handle(context: Context, what: Int, data: Bundle, inCopier: Boolean): Bundle {
         val where = if (inCopier) "copier" else "main-process copier"
         fun log(line: String) = DriveCopyJournal.record(context, line, fromCopier = inCopier)
@@ -81,9 +84,21 @@ object DriveCopyHandler {
         )
         // The length the provider reports for the document the copy ended in: what a delete of the device
         // copy is later checked against. One query by URI, timed with the rest.
+        // A cloud provider can report 0 or nothing for a moment after the write (seen on the first file of a
+        // run, 2026-11-17), so an unsettled length is asked again a few times before it counts as "unverified".
+        var verifyTries = 0
+        fun verified(uri: android.net.Uri): Long = timings.time("verify") {
+            var size = SafHelper.documentSize(context, uri)
+            while (size != r.sourceSize && size <= 0L && verifyTries < VERIFY_RETRIES) {
+                verifyTries++
+                Thread.sleep(VERIFY_WAIT_MS)
+                size = SafHelper.documentSize(context, uri)
+            }
+            size
+        }
         val driveSize = when (result) {
-            is SafHelper.CopyResult.Copied -> timings.time("verify") { SafHelper.documentSize(context, result.uri) }
-            is SafHelper.CopyResult.AlreadyPresent -> timings.time("verify") { SafHelper.documentSize(context, result.uri) }
+            is SafHelper.CopyResult.Copied -> verified(result.uri)
+            is SafHelper.CopyResult.AlreadyPresent -> verified(result.uri)
             is SafHelper.CopyResult.Failed -> -1L
         }
         val kind = when (result) {
@@ -91,7 +106,7 @@ object DriveCopyHandler {
             is SafHelper.CopyResult.AlreadyPresent -> "already there"
             is SafHelper.CopyResult.Failed -> "FAILED (${result.reason})"
         }
-        log("$where: COPY done '${r.name}' $kind in ${SystemClock.elapsedRealtime() - start}ms, Drive reports $driveSize bytes")
+        log("$where: COPY done '${r.name}' $kind in ${SystemClock.elapsedRealtime() - start}ms, Drive reports $driveSize bytes" + if (verifyTries > 0) " (asked $verifyTries extra times)" else "")
         return DriveCopyProtocol.copyReply(result, timings, driveSize)
     }
 }
