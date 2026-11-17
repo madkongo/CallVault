@@ -19,6 +19,21 @@ All notable changes to CallVault are documented here. The format is based on
   should show the right date and, for a saved call, the contact. Tried once on the OnePlus 9 Pro (Shizuku, one incoming
   call, 2026-11-16): file name, list row, rescan and old `{date}` rows all read right. Not yet tried on an outgoing
   call, an app call, a merge, or by anyone else. -->
+- **WhatsApp and Telegram calls now show an in or out arrow.** The list and the playback screen show it beside the
+  app's icon, the file name gets `_in_` or `_out_` before `_voip`, and the details file says `in` or `out`. Incoming is
+  known because CallVault now hears the app's "incoming call" notification while it rings (it reads only that a call
+  is ringing, never a name or number; it is switched on by itself while app-call recording is on). Outgoing is
+  claimed only when that was heard to be silent and the app's own call notification says it was dialling. Any other
+  app, or a call where nothing is certain, stays unmarked as before.
+  <!-- 🧪 VERIFYING (BabApps item 113, not shipped): tried on the OnePlus 9 Pro (Shizuku), 2026-11-17, quick
+  answers (ring 1-3 s): WhatsApp out and in, Telegram out and in each got the right arrow in the list and the right
+  file name; nothing was wrongly marked in any round. Seen only once or twice per case. Not tried: Signal,
+  Messenger, LINE, Viber, a declined or missed call followed by an outgoing one, standalone mode, the .json on a
+  phone (the setting was off), other phones and ROMs. What would settle it: a week of real calls on the OnePlus 12
+  with no wrong arrow. Adds an always-on listener entry under the phone's notification access.
+  2026-11-17: the maintainer used build 20633 on his OnePlus 12 (standalone mode) with real calls: "the arrows look
+  good". Notification access approved by him. -->
+
 - **Cantonese (粵語) can now be chosen as the transcription language, for calls that mix Cantonese and English.** It
   works with the two large-v3-turbo models and with cloud transcription. It is hidden while the small model is
   selected, because small has no Cantonese; a call already set to Cantonese on small fails with a message that says

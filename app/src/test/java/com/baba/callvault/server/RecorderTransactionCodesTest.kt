@@ -64,6 +64,9 @@ class RecorderTransactionCodesTest {
         assertEquals(first + 28, IRecorderService.Stub.TRANSACTION_setEncodeStereo)
         // Appended for BabApps item 103 (skip uids that are not calling apps).
         assertEquals(first + 29, IRecorderService.Stub.TRANSACTION_voipCallAppUidSkipping)
+        // Appended for the app-call in/out badge (BabApps item 113).
+        assertEquals(first + 30, IRecorderService.Stub.TRANSACTION_voipCallFacts)
+        assertEquals(first + 31, IRecorderService.Stub.TRANSACTION_notificationListenerAccess)
     }
 
     @Test
