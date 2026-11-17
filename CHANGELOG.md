@@ -30,7 +30,9 @@ All notable changes to CallVault are documented here. The format is based on
   file name; nothing was wrongly marked in any round. Seen only once or twice per case. Not tried: Signal,
   Messenger, LINE, Viber, a declined or missed call followed by an outgoing one, standalone mode, the .json on a
   phone (the setting was off), other phones and ROMs. What would settle it: a week of real calls on the OnePlus 12
-  with no wrong arrow. Adds an always-on listener entry under the phone's notification access. -->
+  with no wrong arrow. Adds an always-on listener entry under the phone's notification access.
+  2026-11-17: the maintainer used build 20633 on his OnePlus 12 (standalone mode) with real calls: "the arrows look
+  good". Notification access approved by him. -->
 
 - **Cantonese (粵語) can now be chosen as the transcription language, for calls that mix Cantonese and English.** It
   works with the two large-v3-turbo models and with cloud transcription. It is hidden while the small model is
