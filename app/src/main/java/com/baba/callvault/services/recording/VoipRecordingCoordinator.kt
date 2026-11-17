@@ -98,6 +98,9 @@ object VoipRecordingCoordinator {
     /** How long the read for the first answered read keeps going; it only feeds a log line. */
     private const val DIRECTION_LOG_MAX_MS = 60_000L
 
+    /** How long a ring that is not yet answered is given to turn into the answer that started this call. */
+    private const val RING_ANSWER_WAIT_MS = 3_000L
+
     /** The running recording was started from the call-voice audio, not the mode (BabApps item 108). */
     @Volatile private var startedViaNormalMode = false
 
@@ -344,6 +347,35 @@ object VoipRecordingCoordinator {
     private fun readDirection(callPackage: String): Job = CoroutineScope(Dispatchers.IO).launch {
         val startedAt = System.currentTimeMillis()
         var first: VoipCallFacts? = null
+        // What the ring listener heard BEFORE the pickup, asked once and at once: an incoming call's
+        // ringing notification is gone by the time the audio mode flips.
+        var ring = VoipRingMemory.verdict(callPackage, android.os.SystemClock.elapsedRealtime())
+        val ringAtStart = ring
+        val listening = VoipRingMemory.listenerConnected
+        // The audio mode can flip a few milliseconds BEFORE the app's notification is rewritten as
+        // ongoing (measured: 32 ms, WhatsApp incoming, 2026-11-17), so a ring that is still unanswered
+        // gets a moment to turn into an answer. Never longer than 3 s, and never "outgoing" meanwhile.
+        var waited = 0L
+        while (ring == VoipRingMemory.Verdict.UNRESOLVED_RING && waited < RING_ANSWER_WAIT_MS && isActive && recording) {
+            delay(100)
+            waited += 100
+            ring = VoipRingMemory.verdict(callPackage, android.os.SystemClock.elapsedRealtime())
+        }
+        if (ring == VoipRingMemory.Verdict.ANSWERED_RING) {
+            VoipRingMemory.consume(callPackage)
+        }
+        // An app measured to post its incoming notice for every incoming call (Telegram) needs no
+        // notification facts: "listener connected, no ring heard" is its outgoing signal.
+        val alwaysNotified = com.baba.callvault.server.VoipCallerName.isTelegramClient(callPackage)
+        VoipDirection.decide(null, ring, listening, alwaysNotified)?.let {
+            if (isActive && recording) direction.compareAndSet(null, it)
+        }
+        AppLogger.i(
+            TAG,
+            "App-call direction ring memory ($callPackage): ring=${ringAtStart.name.lowercase()}" +
+                (if (ring != ringAtStart) " then ${ring.name.lowercase()} after ${waited}ms" else "") +
+                " listenerConnected=$listening -> ${direction.get()?.token ?: "not decided yet"}"
+        )
         while (isActive && recording) {
             val service = RecorderConnection.service ?: return@launch
             val line = try {
@@ -357,12 +389,12 @@ object VoipRecordingCoordinator {
             if (first == null) {
                 if (facts == null) {
                     if (elapsed >= VoipAnswerHold.NOTIFICATION_GRACE_MS) {
-                        AppLogger.i(TAG, "App-call direction: $callPackage has no call-like notification (no call category, CallStyle type or timer flag) after ${elapsed}ms; direction unknown")
+                        AppLogger.i(TAG, "App-call direction: $callPackage has no call-like notification (no call category, CallStyle type or timer flag) after ${elapsed}ms; direction ${direction.get()?.token ?: "unknown"}")
                         return@launch
                     }
                 } else {
                     first = facts
-                    val decided = VoipDirection.decide(facts)
+                    val decided = VoipDirection.decide(facts, ring, listening, alwaysNotified)
                     if (isActive && recording) direction.compareAndSet(null, decided)
                     AppLogger.i(
                         TAG,

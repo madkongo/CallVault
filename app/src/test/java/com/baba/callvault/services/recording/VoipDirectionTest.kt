@@ -45,8 +45,61 @@ class VoipDirectionTest {
           }
     """.trimIndent()
 
-    private fun direction(dump: String, pkg: String) =
-        VoipDirection.decide(VoipCallerName.extractFacts(dump, pkg))
+    private fun direction(
+        dump: String,
+        pkg: String,
+        ring: VoipRingMemory.Verdict = VoipRingMemory.Verdict.NONE,
+        listening: Boolean = true,
+    ) = VoipDirection.decide(VoipCallerName.extractFacts(dump, pkg), ring, listening)
+
+    // --- the real shapes the OP9 posted on 2026-11-17 (flags and channels as dumped) -------------------
+
+    @Test
+    fun `the WhatsApp ringing notification of an incoming call is incoming, though ongoing and timer stopped`() {
+        // channel voip_notification_5, flags 0x22e2 (ongoing), category=call, 2 actions, callType 1.
+        val dump = record("com.whatsapp", category = "call", actions = 2, callType = 1, chronometer = false)
+        assertEquals(RecordingDirection.INCOMING, direction(dump, "com.whatsapp", listening = false))
+    }
+
+    @Test
+    fun `the Telegram ringing notification of an incoming call is incoming`() {
+        // id 203, channel incoming_calls40, flags 0x80 (not ongoing), category=call, Decline + Answer, callType 1.
+        val dump = record("org.telegram.messenger", ongoing = false, category = "call", actions = 2, callType = 1)
+        assertEquals(RecordingDirection.INCOMING, direction(dump, "org.telegram.messenger"))
+    }
+
+    @Test
+    fun `a slow pickup cannot turn an incoming call outgoing`() {
+        // The notification already rewritten as ongoing with the timer not yet started: the shape of an
+        // outgoing call. The ring listener heard the incoming notification, so it is incoming; and if the
+        // ring was heard but not tied to this call, it is unknown, never outgoing.
+        val shape = record("com.whatsapp", category = "call", actions = 1, callType = 2, chronometer = false)
+        assertEquals(RecordingDirection.INCOMING, direction(shape, "com.whatsapp", VoipRingMemory.Verdict.ANSWERED_RING))
+        assertNull(direction(shape, "com.whatsapp", VoipRingMemory.Verdict.UNRESOLVED_RING))
+    }
+
+    @Test
+    fun `outgoing is not claimed while the ring listener is not connected`() {
+        val shape = record("com.whatsapp", category = "call", actions = 1, callType = 2, chronometer = false)
+        assertNull(direction(shape, "com.whatsapp", listening = false))
+    }
+
+    @Test
+    fun `a Telegram call is outgoing only when the listener is connected and no ring was heard`() {
+        val none = VoipRingMemory.Verdict.NONE
+        // The ongoing notification says nothing either way; the absence of the incoming notice does.
+        val ongoing = record("org.telegram.messenger", actions = 1, title = "Ongoing Telegram call")
+        val facts = VoipCallerName.extractFacts(ongoing, "org.telegram.messenger")
+        assertEquals(RecordingDirection.OUTGOING, VoipDirection.decide(facts, none, true, true))
+        assertEquals(RecordingDirection.OUTGOING, VoipDirection.decide(null, none, true, true))
+        // No listener: nothing is known. A ring heard but not answered: nothing is known.
+        assertNull(VoipDirection.decide(null, none, false, true))
+        assertNull(VoipDirection.decide(null, VoipRingMemory.Verdict.UNRESOLVED_RING, true, true))
+        // The answered ring beats everything.
+        assertEquals(RecordingDirection.INCOMING, VoipDirection.decide(null, VoipRingMemory.Verdict.ANSWERED_RING, true, true))
+        // An app not measured to announce every incoming call never gets outgoing from absence alone.
+        assertNull(VoipDirection.decide(null, none, true, false))
+    }
 
     // --- OUTGOING: ringing at the far end -------------------------------------------------------
 

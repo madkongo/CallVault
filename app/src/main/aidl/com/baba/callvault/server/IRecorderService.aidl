@@ -350,4 +350,11 @@ interface IRecorderService {
      * then reads no direction, which is how it always was.
      */
     String voipCallFacts(String packageName);
+
+    /**
+     * Approves ({@code allow}) or removes a notification listener component for the given user, as
+     * {@code cmd notification allow_listener} does, and returns what it answered. Used to switch the
+     * ring listener on (BabApps item 113). Appended last: transaction codes are positional.
+     */
+    String notificationListenerAccess(String component, boolean allow, int userId);
 }

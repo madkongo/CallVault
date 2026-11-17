@@ -400,6 +400,20 @@
                 android:value="On-device transcription and summarisation of the user's own call recordings, and copying a speech or summary model file the user picked into or out of the app." />
         </service>
 
+        <!-- Hears an app's incoming-call notification while it rings, so an app call can be marked
+             incoming (BabApps item 113). Reads only the call structure of the notification, keeps
+             nothing but "this app was ringing" in memory, and is switched on through
+             WRITE_SECURE_SETTINGS (see VoipRingListenerAccess), not by a screen the user must visit. -->
+        <service
+            android:name=".services.recording.VoipRingListenerService"
+            android:exported="true"
+            android:label="@string/app_name"
+            android:permission="android.permission.BIND_NOTIFICATION_LISTENER_SERVICE">
+            <intent-filter>
+                <action android:name="android.service.notification.NotificationListenerService" />
+            </intent-filter>
+        </service>
+
     </application>
 
 </manifest>

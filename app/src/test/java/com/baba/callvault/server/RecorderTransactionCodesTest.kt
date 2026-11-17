@@ -66,6 +66,7 @@ class RecorderTransactionCodesTest {
         assertEquals(first + 29, IRecorderService.Stub.TRANSACTION_voipCallAppUidSkipping)
         // Appended for the app-call in/out badge (BabApps item 113).
         assertEquals(first + 30, IRecorderService.Stub.TRANSACTION_voipCallFacts)
+        assertEquals(first + 31, IRecorderService.Stub.TRANSACTION_notificationListenerAccess)
     }
 
     @Test

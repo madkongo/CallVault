@@ -39,14 +39,37 @@ object VoipDirection {
      *   mode flips, but so can a quickly answered outgoing one), an app that sets no timer, or no
      *   notification found.
      */
-    fun decide(first: VoipCallFacts?): RecordingDirection? {
-        if (first == null) return null
-        if (first.callType == CALL_TYPE_INCOMING || first.incomingFlag == true) return RecordingDirection.INCOMING
-        if (first.showChronometer == true) return null
-        if (first.category == "call" && first.actionCount >= 2 && !first.ongoing) return RecordingDirection.INCOMING
-        if (first.ongoing && first.showChronometer == false) return RecordingDirection.OUTGOING
+    fun decide(
+        first: VoipCallFacts?,
+        ring: VoipRingMemory.Verdict = VoipRingMemory.Verdict.NONE,
+        listenerConnected: Boolean = false,
+        incomingAlwaysNotified: Boolean = false,
+    ): RecordingDirection? {
+        // The app rang before the pickup and was answered just now: the only way to prove an incoming
+        // call that the app's notification no longer shows (WhatsApp and Telegram both rewrite it).
+        if (ring == VoipRingMemory.Verdict.ANSWERED_RING) return RecordingDirection.INCOMING
+        if (first != null && isIncomingMarker(first)) return RecordingDirection.INCOMING
+        // A ring was seen for this app and not tied to this call: never "outgoing" on top of that.
+        if (ring == VoipRingMemory.Verdict.UNRESOLVED_RING) return null
+        // An app measured to post its incoming-call notification for EVERY incoming call (Telegram:
+        // incoming_calls channel, callType 1, 2 actions; the OP9 probe, 2026-11-17): with the listener
+        // connected and no ring heard, the call is one we placed. Its own ongoing notification carries
+        // no direction, so this absence is the whole signal.
+        if (incomingAlwaysNotified && listenerConnected && ring == VoipRingMemory.Verdict.NONE &&
+            first?.showChronometer != true
+        ) return RecordingDirection.OUTGOING
+        if (first == null || first.showChronometer == true) return null
+        // "Ringing, timer not started" is also what an incoming call looks like for the instant between the
+        // pickup and the notification's update. Only the ring listener can rule that out: it would have
+        // heard the incoming notification. With no listener connected, outgoing is not claimed.
+        if (listenerConnected && first.ongoing && first.showChronometer == false) return RecordingDirection.OUTGOING
         return null
     }
+
+    /** The structure of a ringing, incoming call notification: a clear marker, never text. */
+    fun isIncomingMarker(f: VoipCallFacts): Boolean =
+        f.callType == CALL_TYPE_INCOMING || f.incomingFlag == true ||
+            (f.category == "call" && f.actionCount >= 2 && !f.ongoing && f.showChronometer != true)
 
     /** A direction is only ever set once, and never replaced by a later (weaker) read. */
     fun keepFirst(current: RecordingDirection?, candidate: RecordingDirection?): RecordingDirection? =

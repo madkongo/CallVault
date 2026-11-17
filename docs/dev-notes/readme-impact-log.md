@@ -750,3 +750,4 @@ README.md was not edited.
 ## 2026-11-17 — App-call in/out arrow (BabApps item 113)
 - The README does not mention call direction (grepped incoming/outgoing/direction), so no claim is affected. If it ever says app calls show no direction, or lists the badges, say: an outgoing arrow appears on an app call only when the app's notification proved it (WhatsApp measured); an incoming arrow is not seen on any app yet.
 - Not a README claim yet: 🧪, one call per case on the OP9.
+- Update same day: incoming too, for WhatsApp and Telegram, through a notification listener the app approves itself (`cmd notification allow_listener` via the recorder host). A README privacy or permissions list must then say: CallVault holds notification access, reads only the call structure of notifications (no title, text, name or number), and keeps nothing.
