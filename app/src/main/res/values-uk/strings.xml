@@ -439,6 +439,10 @@
     <string name="settings_group_save_and_sync">Збереження й синхронізація</string>
     <string name="settings_group_sound_and_names">Звук і назви файлів</string>
     <string name="settings_group_when_to_transcribe">Коли транскрибувати</string>
+    <string name="settings_group_transcription_and_summaries">Транскрибування та підсумки</string>
+    <string name="summary_language_label">Мова підсумків</string>
+    <string name="summary_language_same_as_call">Як у дзвінку</string>
+    <string name="summary_language_hint">Підсумки пишуться мовою дзвінка, якщо ви не оберете іншу тут.</string>
     <string name="settings_handoff_persist_description">Продовжувати запис, якщо Android зупинить фонову службу під час дзвінка.</string>
     <string name="settings_handoff_persist_label">Продовжувати запис, якщо фонова служба зупиниться</string>
     <string name="settings_hide_recordings_desc">Не показувати ваші записи в музичних плеєрах, галереях та інших медіазастосунках</string>
@@ -547,6 +551,8 @@
     <string name="settings_support_value">Пригостити кавою</string>
     <string name="settings_tap_to_select_folder">Натисніть, щоб вибрати папку…</string>
     <string name="settings_theme_mode">Тема</string>
+    <string name="settings_start_page">Відкривати застосунок на</string>
+    <string name="settings_start_page_hub">Головна (хаб)</string>
     <string name="settings_theme_mode_dark">Темна</string>
     <string name="settings_theme_mode_light">Світла</string>
     <string name="settings_theme_mode_system">Як у системі</string>

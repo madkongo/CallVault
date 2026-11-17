@@ -253,6 +253,8 @@
     <string name="settings_language">ভাষা</string>
     <string name="settings_language_system">সিস্টেম ডিফল্ট</string>
     <string name="settings_theme_mode">থিম মোড</string>
+    <string name="settings_start_page">অ্যাপ যে পাতায় খুলবে</string>
+    <string name="settings_start_page_hub">হাব (হোম)</string>
     <string name="settings_dynamic_color">সিস্টেমের রং ব্যবহার করুন</string>
     <string name="settings_show_toasts">পপ-আপ বার্তা দেখান</string>
     <string name="settings_vibration_enabled">কাজের সময় ভাইব্রেট করুন</string>
@@ -912,6 +914,10 @@
     <string name="settings_group_connection">সংযোগ</string>
     <string name="settings_group_model_and_language">মডেল ও ভাষা</string>
     <string name="settings_group_when_to_transcribe">কখন ট্রান্সক্রাইব হবে</string>
+    <string name="settings_group_transcription_and_summaries">ট্রান্সক্রিপশন ও সারাংশ</string>
+    <string name="summary_language_label">সারাংশের ভাষা</string>
+    <string name="summary_language_same_as_call">কলের ভাষার মতোই</string>
+    <string name="summary_language_hint">আপনি এখানে অন্য ভাষা বেছে না নিলে সারাংশ কলের ভাষাতেই লেখা হয়।</string>
     <string name="settings_group_app">অ্যাপ</string>
     <string name="settings_group_help_and_about">সাহায্য ও পরিচিতি</string>
     <string name="settings_summary_calls_phone_and_app">ফোন ও অ্যাপ কল</string>

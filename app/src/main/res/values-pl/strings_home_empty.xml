@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="home_search_empty_title">Brak wyników dla „%1$s”</string>
+    <string name="home_search_empty_hint">Spróbuj nazwy, tagu lub słowa z rozmowy.</string>
+    <string name="home_search_clear">Wyczyść wyszukiwanie</string>
+    <string name="home_filters_empty_title">Żadne nagranie nie pasuje do tych filtrów</string>
+    <string name="home_filters_clear">Wyczyść filtry</string>
+</resources>

@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="home_search_empty_title">Κανένα αποτέλεσμα για «%1$s»</string>
+    <string name="home_search_empty_hint">Δοκιμάστε ένα όνομα, μια ετικέτα ή μια λέξη από την κλήση.</string>
+    <string name="home_search_clear">Εκκαθάριση αναζήτησης</string>
+    <string name="home_filters_empty_title">Καμία εγγραφή δεν ταιριάζει με αυτά τα φίλτρα</string>
+    <string name="home_filters_clear">Εκκαθάριση φίλτρων</string>
+</resources>

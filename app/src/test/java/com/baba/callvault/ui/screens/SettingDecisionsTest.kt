@@ -75,6 +75,9 @@ class SettingDecisionsTest {
         "theme_mode" to Decision(SettingsOnly("appearance; visible and changeable any time")),
         // BabApps item 131: ON by default (Material You on Android 12+); a stored choice is kept.
         "dynamic_color" to Decision(SettingsOnly("appearance; on by default, changeable any time")),
+        // BabApps item 133: which page the app opens on (Hub by default). A viewing preference that a new
+        // user has no opinion on before they have used the app, and the wizard cannot be re-run.
+        "start_page" to Decision(SettingsOnly("viewing preference; the hub default is right until the user has a favourite page; Settings ▸ App")),
         "show_toasts" to Decision(SettingsOnly("appearance")),
         "vibration_enabled" to Decision(SettingsOnly("appearance")),
         // Retention / storage policy
@@ -106,7 +109,7 @@ class SettingDecisionsTest {
         "transcription_language" to Decision(Wizard(WizardStep.TRANSCRIPTION)),
         "transcription_ask_language" to Decision(SettingsOnly("for multilingual phones, after the pin is chosen")),
         "summary_confirm_requirements" to Decision(SettingsOnly("asked at the first summary; BabApps item 131: no switch now, the Summaries card's ⓘ popup holds the checkbox")),
-        "summary_language" to Decision(SettingsOnly("follows the transcription language")),
+        "summary_language" to Decision(SettingsOnly("BabApps item 135: editable in Settings; default 'Same as the call' needs no choice, and the wizard has no summaries step")),
         // App (VoIP) calls
         "voip_recording_enabled" to Decision(Wizard(WizardStep.AUTO_RECORD), ModeCapability.VOIP_RECORDING),
         "voip_auto_start" to Decision(Wizard(WizardStep.AUTO_RECORD), ModeCapability.VOIP_RECORDING),

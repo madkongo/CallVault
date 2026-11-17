@@ -315,6 +315,8 @@
     <string name="settings_language">Language</string>
     <string name="settings_language_system">System Default</string>
     <string name="settings_theme_mode">Theme mode</string>
+    <string name="settings_start_page">Open the app on</string>
+    <string name="settings_start_page_hub">Hub (home)</string>
     <string name="settings_dynamic_color">Use system colours</string>
     <string name="settings_show_toasts">Show pop-up messages</string>
     <string name="settings_vibration_enabled">Vibrate on actions</string>
@@ -1104,6 +1106,10 @@
     <string name="settings_group_connection">Connection</string>
     <string name="settings_group_model_and_language">Model and language</string>
     <string name="settings_group_when_to_transcribe">When to transcribe</string>
+    <string name="settings_group_transcription_and_summaries">Transcription and summaries</string>
+    <string name="summary_language_label">Summary language</string>
+    <string name="summary_language_same_as_call">Same as the call</string>
+    <string name="summary_language_hint">By default, summaries are written in the language of the call. Choose a language here to always use that one.</string>
     <string name="settings_group_app">App</string>
     <string name="settings_group_help_and_about">Help and about</string>
     <string name="settings_summary_calls_phone_and_app">Phone and app calls</string>

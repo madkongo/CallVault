@@ -35,6 +35,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.rememberCoroutineScope
 import com.baba.callvault.R
+import com.baba.callvault.ui.navigation.HomeSection
 import com.baba.callvault.system.PersistentFolderPickerContract
 import com.baba.callvault.system.diagnostics.SystemLogCollector
 import com.baba.callvault.system.shareLogFiles
@@ -369,6 +370,7 @@ private fun SettingsScreenPreview() {
             override fun setAudioBitRate(bitRate: Int) {}
             override fun setThemeMode(mode: AppPreferences.ThemeMode) {}
             override fun setDynamicColorEnabled(enabled: Boolean) {}
+            override fun setStartPage(section: HomeSection) {}
             override fun setShowToastsEnabled(enabled: Boolean) {}
             override fun setAppLanguage(languageCode: String) {}
             override fun setLoggingEnabled(enabled: Boolean) {}

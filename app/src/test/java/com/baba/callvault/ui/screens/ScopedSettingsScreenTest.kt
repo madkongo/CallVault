@@ -70,14 +70,18 @@ class ScopedSettingsScreenTest {
     }
 
     @Test
-    fun `the new screen offers no second language picker`() {
-        // Transcripts and summaries share one language on purpose; two pickers once produced transcripts
-        // in the wrong language. The new screen shows it read-only under Summaries and links to it.
+    fun `the transcription language has one picker and the summary language its own`() {
+        // Two transcription-language pickers once produced transcripts in the wrong language, so there is
+        // exactly one. Since BabApps item 135 the summary language is a separate, editable setting with its own
+        // row (same as the call, or a fixed language), and changing the transcription language leaves it alone.
         assertFalse(newScreen.contains("TranscriptionLanguageField"))
         assertEquals(1, Regex("""TranscriptionLanguageRows\(""").findAll(newScreen).count())
         val bodies = source("ScopedSettingsGroupBodies.kt")
-        assertTrue(calls("TranscriptionLanguageRows", bodyOf("ModelAndLanguageBody", bodies)))
-        assertFalse(calls("TranscriptionLanguageRows", bodyOf("SummariesBody", bodies)))
+        val body = bodyOf("TranscriptionAndSummariesBody", bodies)
+        assertTrue(calls("TranscriptionLanguageRows", body))
+        assertTrue(calls("SummaryLanguageRow", body))
+        assertFalse(source("SettingsTranscriptionSection.kt").contains("setSummaryLanguage"))
+        assertTrue(source("SettingsSharedRows.kt").contains("setSummaryLanguage(SummaryLanguage.languageOfChoiceKey(key))"))
     }
 
     @Test
@@ -237,7 +241,9 @@ class ScopedSettingsScreenTest {
     @Test
     fun `group-wide explanations sit behind the group card's info button`() {
         val text = bodyOf("groupExplanationText", source("SettingsGroupSummaryText.kt"))
-        listOf("retention_description", "transcriptionModeNoteRes", "settings_bugreport_share_hint")
+        // The mode note is no longer here (BabApps item 135): the merged card's one ⓘ opens the summary
+        // requirements, so TranscriptionModeNote draws the note itself.
+        listOf("retention_description", "settings_bugreport_share_hint")
             .forEach { assertTrue("groupExplanationText lacks $it", text.contains(it)) }
         assertTrue(source("ScopedSettingsContent.kt").contains("explanation = groupExplanationText("))
     }
@@ -247,7 +253,7 @@ class ScopedSettingsScreenTest {
     fun `summaries card info opens the requirements popup and the switch is gone`() {
         assertFalse(source("SettingsSharedRows.kt").contains("summary_requirements_toggle_label"))
         val content = source("ScopedSettingsContent.kt")
-        assertTrue(content.contains("onInfoClick = if (group == SettingsGroup.SUMMARIES)"))
+        assertTrue(content.contains("onInfoClick = if (group == SettingsGroup.TRANSCRIPTION_AND_SUMMARIES)"))
         assertTrue(content.contains("SummaryRequirementsInfoDialog("))
         // The popup keeps its checkbox, and the preference it writes is still read before a download.
         assertTrue(File(screensDir, "../common/SummaryRequirementsDialog.kt").readText().contains("summary_requirements_dont_ask"))

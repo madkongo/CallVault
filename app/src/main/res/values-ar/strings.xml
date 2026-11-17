@@ -467,6 +467,10 @@
     <string name="settings_group_save_and_sync">الحفظ والمزامنة</string>
     <string name="settings_group_sound_and_names">الصوت وأسماء الملفات</string>
     <string name="settings_group_when_to_transcribe">توقيت بدء التفريغ الصوتي</string>
+    <string name="settings_group_transcription_and_summaries">التفريغ الصوتي والملخصات</string>
+    <string name="summary_language_label">لغة الملخصات</string>
+    <string name="summary_language_same_as_call">مثل لغة المكالمة</string>
+    <string name="summary_language_hint">تُكتب الملخصات بلغة المكالمة، ما لم تختر لغة أخرى هنا.</string>
     <string name="settings_handoff_persist_description">استمر في التسجيل حتى لو تم قتل المساعد في الخلفية أثناء المكالمة (على سبيل المثال، عند قفل الشاشة).</string>
     <string name="settings_handoff_persist_label">مواصلة التسجيل إذا توقف المساعد</string>
     <string name="settings_hide_recordings_desc">إبقاء تسجيلاتك خارج مشغلات الموسيقى والمعارض وتطبيقات الوسائط الأخرى</string>
@@ -577,6 +581,8 @@
     <string name="settings_support_value">اشترِ لي قهوة</string>
     <string name="settings_tap_to_select_folder">انقر لتحديد المجلد...</string>
     <string name="settings_theme_mode">وضع الثيم</string>
+    <string name="settings_start_page">فتح التطبيق على</string>
+    <string name="settings_start_page_hub">المركز (الرئيسية)</string>
     <string name="settings_theme_mode_dark">داكن</string>
     <string name="settings_theme_mode_light">فاتح</string>
     <string name="settings_theme_mode_system">افتراضي النظام</string>

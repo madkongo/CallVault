@@ -232,6 +232,37 @@ object TranscriptRepository {
     }
 
     /**
+     * What the summary and transcript indexes find for the Recordings page's one search line: for
+     * each recording, an excerpt from its summary and/or its transcript.
+     *
+     * Two indexed `MATCH` queries and nothing else — no row of either table is read unless the index
+     * matched it, so a library of thousands costs what its matches cost, not what its size does.
+     * Same guards as [searchPage]: the quoting (the last word a prefix, for someone still typing),
+     * the missing-database answer, and one `runCatching` per index so a failing one still leaves the other.
+     */
+    suspend fun searchContent(context: Context, query: String): Map<String, RecordingSearch.ContentHit> {
+        if (PageSearch.matchExpression(query, prefixLast = true).isEmpty()) return emptyMap()
+        if (!TranscriptDatabase.exists(context)) return emptyMap()
+        backfillSummarySearchText(context)
+        return searchContent(TranscriptDatabase.get(context), query)
+    }
+
+    /** [searchContent] over an open database; separate so a test can run it on an in-memory one. */
+    internal suspend fun searchContent(db: TranscriptDatabase, query: String): Map<String, RecordingSearch.ContentHit> {
+        val prepared = PageSearch.matchExpression(query, prefixLast = true)
+        if (prepared.isEmpty()) return emptyMap()
+        val summaries = attempt("summaries") { db.summaryDao().search(prepared) }
+            .mapNotNull { hit -> PageSearch.excerpt(hit.snippet, query)?.let { hit.displayName to it } }
+            .toMap()
+        val transcripts = attempt("transcripts") { db.transcriptDao().search(prepared) }
+            .mapNotNull { hit -> PageSearch.excerpt(hit.snippet, query)?.let { hit.displayName to it } }
+            .toMap()
+        return (summaries.keys + transcripts.keys).associateWith {
+            RecordingSearch.ContentHit(summary = summaries[it], transcript = transcripts[it])
+        }
+    }
+
+    /**
      * The three result sets as one, preferring the hit that can be acted on.
      *
      * Pure and internal so the preference is testable without a database — the interesting failure is

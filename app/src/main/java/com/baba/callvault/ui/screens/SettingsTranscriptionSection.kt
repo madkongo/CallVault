@@ -12,6 +12,7 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.material.icons.Icons
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
+import androidx.compose.foundation.layout.padding
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
@@ -133,14 +134,9 @@ internal fun TranscriptionLanguageRows(preferences: AppPreferences, updateTrigge
 
     TranscriptionLanguageField(
         language = language,
-        onLanguageChange = { chosen ->
-            // Clears the summary's own override as well as setting the transcription language.
-            // The override used to be a second, separate setting; anyone who set it before this
-            // merge would otherwise keep summarising in that old language for ever, with nothing
-            // on screen to say so.
-            preferences.setSummaryLanguage(null)
-            actions.setTranscriptionLanguage(chosen)
-        }
+        // No longer clears the summary language (BabApps item 135): that is its own setting now, so changing
+        // the language to listen for must not undo a fixed summary language the user chose.
+        onLanguageChange = { chosen -> actions.setTranscriptionLanguage(chosen) }
     )
 
     SettingsToggleRow(
@@ -195,8 +191,14 @@ internal fun TranscriptionModelDownloadRows(preferences: AppPreferences, updateT
 @Composable
 internal fun TranscriptionModeNote(preferences: AppPreferences, updateTrigger: Int) {
     val mode = remember(updateTrigger) { preferences.getTranscriptionMode() }
-    // In ⓘ mode this is behind the "When to transcribe" card's ⓘ (see groupExplanationText).
-    ExplanationParagraph(stringResource(transcriptionModeNoteRes(mode)))
+    // Always drawn (BabApps item 135): the merged "Transcription and summaries" card's one ⓘ opens the summary
+    // requirements, so the mode note can no longer sit behind it as it did on the old "When to transcribe" card.
+    androidx.compose.material3.Text(
+        text = stringResource(transcriptionModeNoteRes(mode)),
+        style = androidx.compose.material3.MaterialTheme.typography.bodySmall,
+        color = androidx.compose.material3.MaterialTheme.colorScheme.onSurfaceVariant,
+        modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp),
+    )
 }
 
 /** What the chosen transcription mode means in practice. */

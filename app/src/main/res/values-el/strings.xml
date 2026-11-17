@@ -583,6 +583,10 @@
     <string name="settings_group_save_and_sync">Αποθήκευση και συγχρονισμός</string>
     <string name="settings_group_sound_and_names">Ήχος και ονόματα αρχείων</string>
     <string name="settings_group_when_to_transcribe">Πότε γίνεται απομαγνητοφώνηση</string>
+    <string name="settings_group_transcription_and_summaries">Απομαγνητοφώνηση και περιλήψεις</string>
+    <string name="summary_language_label">Γλώσσα περιλήψεων</string>
+    <string name="summary_language_same_as_call">Ίδια με την κλήση</string>
+    <string name="summary_language_hint">Οι περιλήψεις γράφονται στη γλώσσα της κλήσης, εκτός αν επιλέξετε άλλη εδώ.</string>
     <string name="settings_handoff_persist_description">Διατήρηση μιας εγγραφής σε εξέλιξη ακόμα κι αν ο βοηθός παρασκηνίου τερματιστεί στη μέση της κλήσης (π.χ. όταν κλειδώνετε την οθόνη).</string>
     <string name="settings_handoff_persist_label">Συνέχιση εγγραφής αν σταματήσει ο βοηθός</string>
     <string name="settings_hide_recordings_desc">Κρατήστε τις ηχογραφήσεις εκτός προγραμμάτων αναπαραγωγής μουσικής, συλλογών και άλλων εφαρμογών πολυμέσων</string>
@@ -689,6 +693,8 @@
     <string name="settings_support_value">Κεράστε μου έναν καφέ</string>
     <string name="settings_tap_to_select_folder">Πατήστε για επιλογή φακέλου...</string>
     <string name="settings_theme_mode">Λειτουργία θέματος</string>
+    <string name="settings_start_page">Η εφαρμογή ανοίγει στο</string>
+    <string name="settings_start_page_hub">Κέντρο (αρχική)</string>
     <string name="settings_theme_mode_dark">Σκοτεινό</string>
     <string name="settings_theme_mode_light">Φωτεινό</string>
     <string name="settings_theme_mode_system">Προεπιλογή συστήματος</string>

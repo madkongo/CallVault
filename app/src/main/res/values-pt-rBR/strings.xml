@@ -432,6 +432,10 @@
     <string name="settings_group_save_and_sync">Salvar e sincronizar</string>
     <string name="settings_group_sound_and_names">Som e nomes de arquivo</string>
     <string name="settings_group_when_to_transcribe">Quando transcrever</string>
+    <string name="settings_group_transcription_and_summaries">Transcrição e resumos</string>
+    <string name="summary_language_label">Idioma dos resumos</string>
+    <string name="summary_language_same_as_call">Igual à chamada</string>
+    <string name="summary_language_hint">Os resumos são escritos no idioma da chamada, a menos que você escolha outro aqui.</string>
     <string name="settings_handoff_persist_description">Mantém uma gravação em andamento mesmo se o serviço auxiliar for encerrado no meio da chamada (por exemplo, ao bloquear a tela).</string>
     <string name="settings_handoff_persist_label">Continuar gravando se o serviço auxiliar parar</string>
     <string name="settings_hide_recordings_desc">Mantenha suas gravações fora de players de música, galerias e outros apps de mídia</string>
@@ -538,6 +542,8 @@
     <string name="settings_support_value">Pague um café</string>
     <string name="settings_tap_to_select_folder">Toque para escolher a pasta...</string>
     <string name="settings_theme_mode">Modo do tema</string>
+    <string name="settings_start_page">Abrir o app em</string>
+    <string name="settings_start_page_hub">Hub (início)</string>
     <string name="settings_theme_mode_dark">Escuro</string>
     <string name="settings_theme_mode_light">Claro</string>
     <string name="settings_theme_mode_system">Padrão do sistema</string>

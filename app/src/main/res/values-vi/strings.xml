@@ -428,6 +428,10 @@
     <string name="settings_group_save_and_sync">Lưu và đồng bộ</string>
     <string name="settings_group_sound_and_names">Âm thanh và tên tệp</string>
     <string name="settings_group_when_to_transcribe">Khi nào chép lời</string>
+    <string name="settings_group_transcription_and_summaries">Chép lời và tóm tắt</string>
+    <string name="summary_language_label">Ngôn ngữ tóm tắt</string>
+    <string name="summary_language_same_as_call">Giống cuộc gọi</string>
+    <string name="summary_language_hint">Bản tóm tắt được viết bằng ngôn ngữ của cuộc gọi, trừ khi bạn chọn ngôn ngữ khác tại đây.</string>
     <string name="settings_handoff_persist_description">Tiếp tục ghi âm ngay cả khi tiến trình trợ giúp nền bị tắt giữa cuộc gọi (ví dụ khi bạn khóa màn hình).</string>
     <string name="settings_handoff_persist_label">Vẫn ghi âm nếu tiến trình nền dừng</string>
     <string name="settings_hide_recordings_desc">Không để bản ghi âm xuất hiện trong trình phát nhạc, thư viện ảnh và các ứng dụng đa phương tiện khác</string>
@@ -533,6 +537,8 @@
     <string name="settings_support_value">Mời tôi một ly cà phê</string>
     <string name="settings_tap_to_select_folder">Chạm để chọn thư mục...</string>
     <string name="settings_theme_mode">Chế độ chủ đề</string>
+    <string name="settings_start_page">Mở ứng dụng ở</string>
+    <string name="settings_start_page_hub">Trung tâm (trang chủ)</string>
     <string name="settings_theme_mode_dark">Tối</string>
     <string name="settings_theme_mode_light">Sáng</string>
     <string name="settings_theme_mode_system">Mặc định hệ thống</string>

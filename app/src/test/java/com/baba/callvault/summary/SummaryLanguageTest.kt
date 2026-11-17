@@ -215,4 +215,51 @@ class SummaryLanguageTest {
     fun `digits and punctuation do not count as a script`() {
         assertNull(SummaryLanguage.scriptOf("12:30 — 1,240 (!!) ... 99%"))
     }
+
+    // ---- BabApps item 135: the Settings picker, "Same as the call" or a fixed language ----
+
+    /** What the prompt is asked to write in, for the stored summary language and an English-pinned Hebrew call. */
+    private fun promptLanguageFor(stored: String?): String? {
+        val code = SummaryLanguage.resolve(
+            chosen = stored,
+            transcriptionSetting = "he",
+            transcriptLanguage = "he",
+            transcriptText = "שלום מה שלומך",
+            deviceLanguage = "en"
+        )
+        return SummaryPrompt.languageName(code)
+    }
+
+    @Test
+    fun `same as the call writes in the language of the call`() {
+        // Nothing stored: the Hebrew transcript decides, so the prompt asks for Hebrew.
+        assertEquals("Hebrew", promptLanguageFor(SummaryLanguage.languageOfChoiceKey(SummaryLanguage.SAME_AS_CALL_KEY)))
+    }
+
+    @Test
+    fun `a fixed language is what the prompt is asked for, even on a call in another language`() {
+        // A Hebrew call, but the user fixed English: the summary is asked for in English.
+        assertEquals("English", promptLanguageFor(SummaryLanguage.languageOfChoiceKey("en")))
+        assertEquals("French", promptLanguageFor(SummaryLanguage.languageOfChoiceKey("fr")))
+    }
+
+    @Test
+    fun `the picker keys round-trip and unknown or empty values mean same as the call`() {
+        assertEquals(SummaryLanguage.SAME_AS_CALL_KEY, SummaryLanguage.choiceKeyOf(null))
+        assertNull(SummaryLanguage.languageOfChoiceKey(SummaryLanguage.SAME_AS_CALL_KEY))
+        com.baba.callvault.transcription.TranscriptionLanguageChoice.SUPPORTED.forEach { code ->
+            assertEquals(code, SummaryLanguage.choiceKeyOf(code))
+            assertEquals(code, SummaryLanguage.languageOfChoiceKey(code))
+        }
+        // A code the picker does not offer (an old or imported value) shows as the default, and is never stored.
+        assertEquals(SummaryLanguage.SAME_AS_CALL_KEY, SummaryLanguage.choiceKeyOf("xx"))
+        assertNull(SummaryLanguage.languageOfChoiceKey("xx"))
+    }
+
+    @Test
+    fun `every language the picker offers has a name the prompt can use`() {
+        com.baba.callvault.transcription.TranscriptionLanguageChoice.SUPPORTED.forEach { code ->
+            assertEquals(true, SummaryPrompt.languageName(SummaryLanguage.languageOfChoiceKey(code)) != null)
+        }
+    }
 }
