@@ -1104,6 +1104,10 @@
     <string name="settings_group_connection">Connection</string>
     <string name="settings_group_model_and_language">Model and language</string>
     <string name="settings_group_when_to_transcribe">When to transcribe</string>
+    <string name="settings_group_transcription_and_summaries">Transcription and summaries</string>
+    <string name="summary_language_label">Summary language</string>
+    <string name="summary_language_same_as_call">Same as the call (default)</string>
+    <string name="summary_language_hint">Summaries are written in the language of the call, unless you choose one here.</string>
     <string name="settings_group_app">App</string>
     <string name="settings_group_help_and_about">Help and about</string>
     <string name="settings_summary_calls_phone_and_app">Phone and app calls</string>

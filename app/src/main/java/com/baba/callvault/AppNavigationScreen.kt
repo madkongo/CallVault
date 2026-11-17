@@ -10,16 +10,12 @@
 package com.baba.callvault
 
 import androidx.activity.compose.BackHandler
-import androidx.compose.material3.DrawerValue
-import androidx.compose.material3.rememberDrawerState
-import androidx.compose.runtime.rememberCoroutineScope
 import com.baba.callvault.ui.common.SettingsSidebar
 import androidx.compose.runtime.CompositionLocalProvider
 import com.baba.callvault.ui.screens.LocalOpenSettingsGroup
 import com.baba.callvault.ui.screens.SettingsGroup
 import com.baba.callvault.ui.screens.SettingsGroups
 import com.baba.callvault.ui.screens.SettingsScope
-import kotlinx.coroutines.launch
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
@@ -252,8 +248,8 @@ fun AppNavigationScreen(
             // closing is instant and nothing behind is rebuilt. SettingsSidebar owns back, the scrim
             // tap and the swipe; the gear only has to open it.
             AppScreen.Home -> {
-                val scope = rememberCoroutineScope()
-                val drawerState = rememberDrawerState(DrawerValue.Closed)
+                // Whether the Settings page is showing. It is a full page over Home (BabApps item 135).
+                var settingsOpen by rememberSaveable { mutableStateOf(false) }
 
                 // Held here rather than defaulted inside HomeScreen so the resume observer below and
                 // the list are demonstrably the same instance. `viewModel()` resolves against the
@@ -301,17 +297,17 @@ fun AppNavigationScreen(
                 val openSettingsGroup: (SettingsGroup) -> Unit = { group ->
                     settingsScope = SettingsGroups.pageOf(group)
                     settingsGroupRequest = group.key
-                    scope.launch { drawerState.open() }
+                    settingsOpen = true
                 }
 
                 CompositionLocalProvider(LocalOpenSettingsGroup provides openSettingsGroup) {
                 SettingsSidebar(
-                    drawerState = drawerState,
-                    onClose = { scope.launch { drawerState.close() } },
+                    open = settingsOpen,
+                    onClose = { settingsOpen = false },
                     settings = {
                         SettingsScreen(
                             viewModel = settingsViewModel,
-                            onBack = { scope.launch { drawerState.close() } },
+                            onBack = { settingsOpen = false },
                             settingsScope = settingsScope,
                             onScopeChange = { settingsScope = it },
                             openGroupRequest = SettingsGroup.fromKey(settingsGroupRequest),
@@ -324,7 +320,7 @@ fun AppNavigationScreen(
                         onSelectSection = goToSection,
                         onOpenSettings = {
                             settingsScope = SettingsGroups.scopeFor(section)
-                            scope.launch { drawerState.open() }
+                            settingsOpen = true
                         },
                         openRecording = openRecording,
                         onOpenRecordingHandled = onOpenRecordingHandled,

@@ -988,6 +988,10 @@
     <string name="settings_group_connection">Bağlantı</string>
     <string name="settings_group_model_and_language">Model ve dil</string>
     <string name="settings_group_when_to_transcribe">Ne zaman yazıya dökülsün</string>
+    <string name="settings_group_transcription_and_summaries">Yazıya dökme ve özetler</string>
+    <string name="summary_language_label">Özet dili</string>
+    <string name="summary_language_same_as_call">Görüşmeyle aynı (varsayılan)</string>
+    <string name="summary_language_hint">Özetler, burada başka bir dil seçmediğiniz sürece görüşmenin dilinde yazılır.</string>
     <string name="settings_group_app">Uygulama</string>
     <string name="settings_group_help_and_about">Yardım ve hakkında</string>
     <string name="settings_summary_calls_phone_and_app">Telefon ve uygulama aramaları</string>

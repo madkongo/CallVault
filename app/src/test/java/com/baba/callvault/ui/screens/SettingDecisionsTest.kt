@@ -106,7 +106,7 @@ class SettingDecisionsTest {
         "transcription_language" to Decision(Wizard(WizardStep.TRANSCRIPTION)),
         "transcription_ask_language" to Decision(SettingsOnly("for multilingual phones, after the pin is chosen")),
         "summary_confirm_requirements" to Decision(SettingsOnly("asked at the first summary; BabApps item 131: no switch now, the Summaries card's ⓘ popup holds the checkbox")),
-        "summary_language" to Decision(SettingsOnly("follows the transcription language")),
+        "summary_language" to Decision(SettingsOnly("BabApps item 135: editable in Settings; default 'Same as the call' needs no choice, and the wizard has no summaries step")),
         // App (VoIP) calls
         "voip_recording_enabled" to Decision(Wizard(WizardStep.AUTO_RECORD), ModeCapability.VOIP_RECORDING),
         "voip_auto_start" to Decision(Wizard(WizardStep.AUTO_RECORD), ModeCapability.VOIP_RECORDING),

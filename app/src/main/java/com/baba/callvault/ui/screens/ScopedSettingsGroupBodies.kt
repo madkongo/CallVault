@@ -43,7 +43,6 @@ internal class GroupBodyCallbacks(
     val onExportSettings: () -> Unit,
     val onImportSettings: () -> Unit,
     val onShowLicenses: () -> Unit,
-    val onChangeLanguage: () -> Unit,
 )
 
 /**
@@ -66,9 +65,7 @@ internal fun GroupBody(
         SettingsGroup.SAVE_AND_SYNC -> SaveAndSyncBody(preferences, updateTrigger, actions, callbacks)
         SettingsGroup.CLEANING_UP -> CleaningUpBody(preferences, updateTrigger, actions)
         SettingsGroup.CONNECTION -> ConnectionBody()
-        SettingsGroup.MODEL_AND_LANGUAGE -> ModelAndLanguageBody(preferences, updateTrigger, actions)
-        SettingsGroup.WHEN_TO_TRANSCRIBE -> WhenToTranscribeBody(preferences, updateTrigger, actions)
-        SettingsGroup.SUMMARIES -> SummariesBody(preferences, updateTrigger, actions, callbacks)
+        SettingsGroup.TRANSCRIPTION_AND_SUMMARIES -> TranscriptionAndSummariesBody(preferences, updateTrigger, actions)
         SettingsGroup.APP -> AppBody(preferences, updateTrigger, actions, callbacks)
         SettingsGroup.HELP_AND_ABOUT -> HelpAndAboutBody(preferences, updateTrigger, actions, callbacks)
     }
@@ -193,8 +190,14 @@ private fun ConnectionBody() {
     SearchFiltered("ConnectionRows") { ConnectionRows() }
 }
 
+/**
+ * "Transcription and summaries" (BabApps item 135): the three cards it replaced, one under another, each under
+ * its own sub-header, in the order of the work: model and language, when to run, then the summaries.
+ */
 @Composable
-private fun ModelAndLanguageBody(preferences: AppPreferences, updateTrigger: Int, actions: SettingsActions) {
+private fun TranscriptionAndSummariesBody(preferences: AppPreferences, updateTrigger: Int, actions: SettingsActions) {
+    // Model and language
+    SettingsSubHeader(stringResource(R.string.settings_group_model_and_language))
     SearchFiltered("TranscriptionServiceRows") { TranscriptionServiceRows(preferences, updateTrigger, actions) }
     // The speech model only matters on this phone; a cloud service (#48) brings its own.
     val onDevice = remember(updateTrigger) { !preferences.getTranscriptionService().isCloud }
@@ -205,31 +208,16 @@ private fun ModelAndLanguageBody(preferences: AppPreferences, updateTrigger: Int
     }
     SettingsDivider()
     SearchFiltered("TranscriptionLanguageRows") { TranscriptionLanguageRows(preferences, updateTrigger, actions) }
-}
 
-@Composable
-private fun WhenToTranscribeBody(preferences: AppPreferences, updateTrigger: Int, actions: SettingsActions) {
+    // When to transcribe
+    SettingsSubHeader(stringResource(R.string.settings_group_when_to_transcribe))
     SearchFiltered("TranscriptionScheduleRows") { TranscriptionScheduleRows(preferences, updateTrigger, actions) }
     SearchFiltered("TranscriptionConfirmRow") { TranscriptionConfirmRow(preferences, updateTrigger, actions) }
     SearchFiltered("TranscriptionModeNote") { TranscriptionModeNote(preferences, updateTrigger) }
-}
 
-/** Transcripts and summaries share ONE language on purpose; here it is read-only, with a link to it. */
-@Composable
-private fun SummariesBody(
-    preferences: AppPreferences,
-    updateTrigger: Int,
-    actions: SettingsActions,
-    callbacks: GroupBodyCallbacks,
-) {
-    NavigationRow(
-        icon = Icons.Filled.Translate,
-        label = stringResource(R.string.transcription_language_label),
-        value = sharedLanguageLabel(preferences, updateTrigger),
-        supporting = stringResource(R.string.settings_language_change_in_transcripts),
-        onClick = callbacks.onChangeLanguage,
-        keepSupportingInline = true,
-    )
+    // Summaries. The summary language is its own setting now: "same as the call" (the default) or one fixed language.
+    SettingsSubHeader(stringResource(R.string.home_summaries_title))
+    SearchFiltered("SummaryLanguageRow") { SummaryLanguageRow(preferences, updateTrigger, actions) }
     SettingsDivider()
     SearchFiltered("SummarySettingsRows") { SummarySettingsRows(preferences, updateTrigger, actions) }
 }

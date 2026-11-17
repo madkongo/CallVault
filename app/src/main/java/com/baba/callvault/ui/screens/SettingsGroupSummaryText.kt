@@ -71,10 +71,15 @@ internal fun groupSummaryText(
         )
     }
     SettingsGroup.CONNECTION -> connectionSummaryText(preferences, updateTrigger, expanded)
-    SettingsGroup.MODEL_AND_LANGUAGE -> {
+    SettingsGroup.TRANSCRIPTION_AND_SUMMARIES -> {
+        val context = LocalContext.current
         val modelId = remember(updateTrigger) { preferences.getTranscriptionModelId() }
         val model = TranscriptionModel.fromId(modelId) ?: TranscriptionModel.DEFAULT
         val service = remember(updateTrigger) { preferences.getTranscriptionService() }
+        val mode = remember(updateTrigger) { preferences.getTranscriptionMode() }
+        val installed = remember(updateTrigger, expanded) {
+            ModelRepository.isInstalled(context, SummaryModel.DEFAULT)
+        }
         joinSummary(
             listOf(
                 // A cloud service (#48) names itself; on this phone, the model does.
@@ -84,22 +89,8 @@ internal fun groupSummaryText(
                     else -> service.preset?.displayName.orEmpty()
                 },
                 sharedLanguageLabel(preferences, updateTrigger),
-            )
-        )
-    }
-    SettingsGroup.WHEN_TO_TRANSCRIBE -> {
-        val mode = remember(updateTrigger) { preferences.getTranscriptionMode() }
-        stringResource(TranscriptionLabels.titleOf(mode))
-    }
-    SettingsGroup.SUMMARIES -> {
-        val context = LocalContext.current
-        val installed = remember(updateTrigger, expanded) {
-            ModelRepository.isInstalled(context, SummaryModel.DEFAULT)
-        }
-        joinSummary(
-            listOf(
+                stringResource(TranscriptionLabels.titleOf(mode)),
                 stringResource(if (installed) R.string.summary_model_installed else R.string.settings_summary_not_downloaded),
-                sharedLanguageLabel(preferences, updateTrigger),
             )
         )
     }
@@ -244,10 +235,6 @@ private fun connectionSummaryText(preferences: AppPreferences, updateTrigger: In
 internal fun groupExplanationText(group: SettingsGroup, preferences: AppPreferences, updateTrigger: Int): String? =
     when (group) {
         SettingsGroup.CLEANING_UP -> stringResource(R.string.retention_description)
-        SettingsGroup.WHEN_TO_TRANSCRIBE -> {
-            val mode = remember(updateTrigger) { preferences.getTranscriptionMode() }
-            stringResource(transcriptionModeNoteRes(mode))
-        }
         SettingsGroup.HELP_AND_ABOUT -> stringResource(R.string.settings_bugreport_share_hint)
         else -> null
     }

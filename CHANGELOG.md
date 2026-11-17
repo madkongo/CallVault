@@ -7,6 +7,15 @@ All notable changes to CallVault are documented here. The format is based on
 
 ### Added
 
+- **Settings: Transcription and summaries in one section, an editable summary language, and Settings as a full page.**
+  "Model and language", "When to transcribe" and "Summaries" are now one card, "Transcription and summaries", with the
+  three as sub-headings. The summary language is a setting of its own: "Same as the call (default)" or one fixed
+  language, and changing the transcription language no longer touches it. Settings opens as a whole page that slides
+  in, instead of the narrower side panel.
+  <!-- 🧪 VERIFYING (BabApps item 135, not shipped): open Settings from the gear: it fills the screen, back closes it.
+  On the Transcripts and Summaries pages there is one card with three sub-headings. Pick Summary language ▸ English on a
+  Hebrew call and summarise: the summary is in English; "Same as the call" gives Hebrew. -->
+
 - **The recordings list: search on top, filters on one row, swipe between tabs.** The search field now sits above
   "Recordings | All calls", stays in place while the list scrolls, and is there on both views (before, it was hidden until
   there was a recording). The filter chips (sort, source, direction, tag, date, and Recorded/Missed on All calls) stay on

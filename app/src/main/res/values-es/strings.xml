@@ -429,6 +429,10 @@
     <string name="settings_group_save_and_sync">Guardar y sincronizar</string>
     <string name="settings_group_sound_and_names">Sonido y nombres de archivo</string>
     <string name="settings_group_when_to_transcribe">Cuándo transcribir</string>
+    <string name="settings_group_transcription_and_summaries">Transcripción y resúmenes</string>
+    <string name="summary_language_label">Idioma de los resúmenes</string>
+    <string name="summary_language_same_as_call">El mismo de la llamada (predeterminado)</string>
+    <string name="summary_language_hint">Los resúmenes se escriben en el idioma de la llamada, a menos que elijas otro aquí.</string>
     <string name="settings_handoff_persist_description">Mantiene la grabación en curso aunque el proceso auxiliar en segundo plano se cierre durante la llamada (p. ej. al bloquear la pantalla).</string>
     <string name="settings_handoff_persist_label">Seguir grabando si el proceso en segundo plano se detiene</string>
     <string name="settings_hide_recordings_desc">Mantén tus grabaciones fuera de los reproductores de música, galerías y otras apps multimedia</string>

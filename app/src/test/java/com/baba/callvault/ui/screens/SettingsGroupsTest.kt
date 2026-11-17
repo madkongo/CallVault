@@ -38,8 +38,7 @@ class SettingsGroupsTest {
             val page = SettingsGroups.pageOf(group)
             assertTrue("$group is not shown on $page", group in SettingsGroups.forScope(page))
         }
-        assertEquals(SettingsScope.TRANSCRIPTS, SettingsGroups.pageOf(SettingsGroup.MODEL_AND_LANGUAGE))
-        assertEquals(SettingsScope.SUMMARIES, SettingsGroups.pageOf(SettingsGroup.SUMMARIES))
+        assertEquals(SettingsScope.TRANSCRIPTS, SettingsGroups.pageOf(SettingsGroup.TRANSCRIPTION_AND_SUMMARIES))
     }
 
     @Test
@@ -58,18 +57,25 @@ class SettingsGroupsTest {
     }
 
     @Test
-    fun `transcripts shows model and language, then when to transcribe`() {
+    fun `transcripts and summaries are one group (BabApps item 135)`() {
         assertEquals(
-            listOf(SettingsGroup.MODEL_AND_LANGUAGE, SettingsGroup.WHEN_TO_TRANSCRIBE),
+            listOf(SettingsGroup.TRANSCRIPTION_AND_SUMMARIES),
             SettingsGroups.forScope(SettingsScope.TRANSCRIPTS),
         )
+        // Both pages open the same one section.
+        assertEquals(SettingsGroups.forScope(SettingsScope.TRANSCRIPTS), SettingsGroups.forScope(SettingsScope.SUMMARIES))
     }
 
     @Test
-    fun `summaries shows summaries only, so no second language picker can appear there`() {
-        assertEquals(listOf(SettingsGroup.SUMMARIES), SettingsGroups.forScope(SettingsScope.SUMMARIES))
-        assertFalse("TranscriptionLanguageRows" in SettingsGroups.rowsOf(SettingsGroup.SUMMARIES))
-        assertFalse("transcription_language" in SettingsGroups.settingKeysOf(SettingsGroup.SUMMARIES))
+    fun `the merged group holds the transcription rows, the summary rows and the summary language`() {
+        val rows = SettingsGroups.rowsOf(SettingsGroup.TRANSCRIPTION_AND_SUMMARIES)
+        listOf(
+            "TranscriptionLanguageRows", "TranscriptionScheduleRows", "TranscriptionConfirmRow",
+            "SummaryLanguageRow", "SummarySettingsRows",
+        ).forEach { assertTrue("$it is not in the merged group", it in rows) }
+        val keys = SettingsGroups.settingKeysOf(SettingsGroup.TRANSCRIPTION_AND_SUMMARIES)
+        listOf("transcription_language", "transcription_mode", "summary_language", "summary_confirm_requirements")
+            .forEach { assertTrue("$it is not in the merged group", it in keys) }
     }
 
     @Test
@@ -77,7 +83,6 @@ class SettingsGroupsTest {
         assertEquals(
             SettingsGroups.forScope(SettingsScope.RECORDINGS) +
                 SettingsGroups.forScope(SettingsScope.TRANSCRIPTS) +
-                SettingsGroups.forScope(SettingsScope.SUMMARIES) +
                 listOf(SettingsGroup.APP, SettingsGroup.HELP_AND_ABOUT),
             all,
         )
@@ -110,9 +115,9 @@ class SettingsGroupsTest {
 
     @Test
     fun `every exportable setting and every gated switch has a home in all settings`() {
-        // Not rows on either screen: the summary language follows the transcription language, and the two
-        // legacy gated switches have had no Settings row since before the split.
-        val noRowOnEitherScreen = setOf("summary_language", "persistent_server", "wd_disable_when_idle")
+        // Not rows on either screen: the two legacy gated switches have had no Settings row since before the
+        // split. (The summary language has its own row since BabApps item 135.)
+        val noRowOnEitherScreen = setOf("persistent_server", "wd_disable_when_idle")
         val prefs = AppPreferences(ApplicationProvider.getApplicationContext())
         val required = AppPreferences.EXPORTABLE_KEYS + prefs.gatedSwitchCapabilities().keys - noRowOnEitherScreen
         val placed = all.flatMap { SettingsGroups.settingKeysOf(it) }.toSet()

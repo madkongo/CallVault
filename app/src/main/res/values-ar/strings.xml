@@ -467,6 +467,10 @@
     <string name="settings_group_save_and_sync">الحفظ والمزامنة</string>
     <string name="settings_group_sound_and_names">الصوت وأسماء الملفات</string>
     <string name="settings_group_when_to_transcribe">توقيت بدء التفريغ الصوتي</string>
+    <string name="settings_group_transcription_and_summaries">التفريغ الصوتي والملخصات</string>
+    <string name="summary_language_label">لغة الملخصات</string>
+    <string name="summary_language_same_as_call">مثل لغة المكالمة (الافتراضي)</string>
+    <string name="summary_language_hint">تُكتب الملخصات بلغة المكالمة، ما لم تختر لغة أخرى هنا.</string>
     <string name="settings_handoff_persist_description">استمر في التسجيل حتى لو تم قتل المساعد في الخلفية أثناء المكالمة (على سبيل المثال، عند قفل الشاشة).</string>
     <string name="settings_handoff_persist_label">مواصلة التسجيل إذا توقف المساعد</string>
     <string name="settings_hide_recordings_desc">إبقاء تسجيلاتك خارج مشغلات الموسيقى والمعارض وتطبيقات الوسائط الأخرى</string>

@@ -431,6 +431,10 @@
     <string name="settings_group_save_and_sync">Zapis i synchronizacja</string>
     <string name="settings_group_sound_and_names">Dźwięk i nazwy plików</string>
     <string name="settings_group_when_to_transcribe">Kiedy transkrybować</string>
+    <string name="settings_group_transcription_and_summaries">Transkrypcja i podsumowania</string>
+    <string name="summary_language_label">Język podsumowań</string>
+    <string name="summary_language_same_as_call">Taki jak w rozmowie (domyślnie)</string>
+    <string name="summary_language_hint">Podsumowania powstają w języku rozmowy, chyba że wybierzesz tutaj inny.</string>
     <string name="settings_handoff_persist_description">Kontynuuje nagrywanie nawet wtedy, gdy pomocniczy proces w tle zostanie zamknięty w trakcie połączenia (np. po zablokowaniu ekranu).</string>
     <string name="settings_handoff_persist_label">Nagrywaj dalej, gdy proces w tle się zatrzyma</string>
     <string name="settings_hide_recordings_desc">Nie pokazuj nagrań w odtwarzaczach muzyki, galeriach i innych aplikacjach multimedialnych</string>

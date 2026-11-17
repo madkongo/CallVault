@@ -9,76 +9,58 @@
 package com.baba.callvault.ui.common
 
 import androidx.activity.compose.BackHandler
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.material3.DrawerState
-import androidx.compose.material3.ModalDrawerSheet
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.slideInHorizontally
+import androidx.compose.animation.slideOutHorizontally
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.ModalNavigationDrawer
+import androidx.compose.material3.Surface
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.platform.LocalLayoutDirection
-import androidx.compose.ui.unit.LayoutDirection
 
 /**
- * Hosts Settings as a panel that slides in over the current screen, instead of replacing it.
+ * Hosts Settings as a full page that slides in over the current screen (BabApps item 135).
  *
- * Settings used to be a destination: `AppNavigationViewModel.manualScreen` swapped Home out for it
- * entirely. As a panel, Home stays composed underneath, so closing is instant and nothing behind has
- * to be rebuilt — and the panel arrives from the same edge as the gear that opens it.
+ * Settings used to be a destination (`AppNavigationViewModel.manualScreen` swapped Home out for it), then a
+ * panel covering 92% of the width in a navigation drawer. It is now a whole page: the screen is Settings and
+ * nothing else, with its own header and back arrow. Home stays composed underneath, so closing is instant and
+ * nothing behind has to be rebuilt, and the page still arrives from the same edge as the gear that opens it.
  *
- * **Why the layout-direction flip.** `ModalNavigationDrawer` always opens from the *start* edge and
- * offers no side parameter. Providing [LayoutDirection.Rtl] to the drawer makes its start edge the
- * physical right; the ambient direction is then restored inside both the sheet and the content, so
- * nothing within either is mirrored. The original value is captured before the flip rather than
- * hard-coded to Ltr, so this still lands on the right in a right-to-left locale.
+ * The page consumes touches, so nothing underneath can be tapped through it. Back closes it, and only while
+ * it is open: an always-registered handler would swallow the gesture that leaves Home.
  *
- * @param drawerState Open/closed state, hoisted so the caller can open it from its own UI.
- * @param onClose     Invoked when the user dismisses the panel (back, scrim tap, or swipe).
- * @param settings    The Settings UI to render inside the panel.
- * @param content     The screen that stays mounted underneath.
+ * @param open     Whether the page is showing, hoisted so the caller can open it from its own UI.
+ * @param onClose  Invoked when the user dismisses the page (back).
+ * @param settings The Settings UI to render in the page.
+ * @param content  The screen that stays mounted underneath.
  */
 @Composable
 fun SettingsSidebar(
-    drawerState: DrawerState,
+    open: Boolean,
     onClose: () -> Unit,
     settings: @Composable () -> Unit,
     content: @Composable () -> Unit,
 ) {
-    val ambientDirection = LocalLayoutDirection.current
+    BackHandler(enabled = open) { onClose() }
 
-    // The drawer owns the scrim tap and the swipe; back is ours to handle, and only while open —
-    // an always-registered handler would swallow the gesture that leaves Home.
-    BackHandler(enabled = drawerState.isOpen) { onClose() }
-
-    CompositionLocalProvider(LocalLayoutDirection provides LayoutDirection.Rtl) {
-        ModalNavigationDrawer(
-            drawerState = drawerState,
-            // Only when open: with gestures always live, an edge swipe on Home would drag the panel in
-            // by accident, and on Home that edge belongs to the system back gesture.
-            gesturesEnabled = drawerState.isOpen,
-            drawerContent = {
-                CompositionLocalProvider(LocalLayoutDirection provides ambientDirection) {
-                    // Settings is dense — dropdowns, toggle rows and their supporting text — so it needs
-                    // most of the width. The sliver left over keeps the panel legible as a panel: it is
-                    // clear that Home is still there behind it, waiting.
-                    ModalDrawerSheet(
-                        // Match the app background rather than the drawer's default surface tint, so the
-                        // panel reads as the app and CvScaffold's own header sits on the colour it expects.
-                        drawerContainerColor = MaterialTheme.colorScheme.background,
-                        modifier = Modifier.fillMaxWidth(SHEET_WIDTH_FRACTION),
-                    ) {
-                        settings()
-                    }
-                }
-            },
+    Box(Modifier.fillMaxSize()) {
+        content()
+        AnimatedVisibility(
+            visible = open,
+            // Slides in from the end edge, where the gear is, in either layout direction.
+            enter = slideInHorizontally { it } + fadeIn(),
+            exit = slideOutHorizontally { it } + fadeOut(),
         ) {
-            CompositionLocalProvider(LocalLayoutDirection provides ambientDirection) {
-                content()
+            Surface(
+                modifier = Modifier.fillMaxSize(),
+                // Match the app background so CvScaffold's own header sits on the colour it expects.
+                color = MaterialTheme.colorScheme.background,
+            ) {
+                settings()
             }
         }
     }
 }
-
-/** How much of the screen the panel covers. Enough for Settings' dropdowns, short of hiding Home. */
-private const val SHEET_WIDTH_FRACTION = 0.92f

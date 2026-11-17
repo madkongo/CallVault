@@ -134,6 +134,46 @@ fun TranscriptionLanguagePicker(
 }
 
 /**
+ * The summary-language picker (BabApps item 135): "Same as the call (default)" first, then the same languages as
+ * the transcription picker, A-Z by shown name, with the same type-to-find box.
+ *
+ * @param selectedKey [com.baba.callvault.summary.SummaryLanguage.choiceKeyOf] of the stored language.
+ * @param onSelected given the key picked; [com.baba.callvault.summary.SummaryLanguage.languageOfChoiceKey] turns it into the value to store.
+ */
+@Composable
+fun SummaryLanguagePicker(
+    label: String,
+    selectedKey: String,
+    onSelected: (String) -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    val sameLabel = stringResource(R.string.summary_language_same_as_call)
+    val languages = TranscriptionLabels.sortLanguageOptions(
+        TranscriptionLanguageChoice.SUPPORTED.map { code -> code to stringResource(TranscriptionLabels.languageOf(code)) }
+    )
+    val items = LanguageSearch.itemsFor(
+        listOf(com.baba.callvault.summary.SummaryLanguage.SAME_AS_CALL_KEY to sameLabel) + languages
+    )
+    val selected = items.firstOrNull { it.key == selectedKey } ?: items.first()
+    var open by rememberSaveable { mutableStateOf(false) }
+
+    LanguageField(label = label, value = selected.label, onClick = { open = true }, modifier = modifier)
+
+    if (open) {
+        LanguagePickerDialog(
+            title = label,
+            items = items,
+            selectedKey = selected.key,
+            onPick = { key ->
+                open = false
+                onSelected(key)
+            },
+            onDismiss = { open = false },
+        )
+    }
+}
+
+/**
  * The closed state: a read-only field that looks like the old dropdown. The whole field is one
  * target, and TalkBack hears it as a drop-down list named [label] showing [value].
  */

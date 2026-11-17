@@ -51,6 +51,24 @@ object SummaryLanguage {
             ?: scriptOf(transcriptText)
             ?: normalised(deviceLanguage).ifBlank { FINAL_FALLBACK }
 
+    /**
+     * What the Settings picker stores and shows (BabApps item 135): "Same as the call" or one fixed language.
+     *
+     * "Same as the call" is stored as null, which [resolve] works out per recording (transcript language,
+     * then the transcription setting, then the script, then the phone), so it still names a concrete
+     * language in the prompt. A fixed language is stored as its code and wins over all of that.
+     */
+    const val SAME_AS_CALL_KEY = "same_as_call"
+
+    /** The picker key for a stored [language]: null is "same as the call". */
+    fun choiceKeyOf(language: String?): String =
+        if (language != null && language in com.baba.callvault.transcription.TranscriptionLanguageChoice.SUPPORTED) language
+        else SAME_AS_CALL_KEY
+
+    /** The value to store for a picker [key]: null for "same as the call", otherwise the language code. */
+    fun languageOfChoiceKey(key: String): String? =
+        key.takeIf { it != SAME_AS_CALL_KEY && it in com.baba.callvault.transcription.TranscriptionLanguageChoice.SUPPORTED }
+
     /** Java still reports a Hebrew phone as "iw" (and Indonesian as "in"); the prompt needs the modern code. */
     private fun normalised(code: String): String = LEGACY_LANGUAGE_CODES[code] ?: code
 
