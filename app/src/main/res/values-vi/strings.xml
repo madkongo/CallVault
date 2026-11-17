@@ -430,7 +430,7 @@
     <string name="settings_group_when_to_transcribe">Khi nào chép lời</string>
     <string name="settings_group_transcription_and_summaries">Chép lời và tóm tắt</string>
     <string name="summary_language_label">Ngôn ngữ tóm tắt</string>
-    <string name="summary_language_same_as_call">Giống cuộc gọi (mặc định)</string>
+    <string name="summary_language_same_as_call">Giống cuộc gọi</string>
     <string name="summary_language_hint">Bản tóm tắt được viết bằng ngôn ngữ của cuộc gọi, trừ khi bạn chọn ngôn ngữ khác tại đây.</string>
     <string name="settings_handoff_persist_description">Tiếp tục ghi âm ngay cả khi tiến trình trợ giúp nền bị tắt giữa cuộc gọi (ví dụ khi bạn khóa màn hình).</string>
     <string name="settings_handoff_persist_label">Vẫn ghi âm nếu tiến trình nền dừng</string>

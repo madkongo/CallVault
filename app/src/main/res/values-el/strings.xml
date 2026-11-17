@@ -585,7 +585,7 @@
     <string name="settings_group_when_to_transcribe">Πότε γίνεται απομαγνητοφώνηση</string>
     <string name="settings_group_transcription_and_summaries">Απομαγνητοφώνηση και περιλήψεις</string>
     <string name="summary_language_label">Γλώσσα περιλήψεων</string>
-    <string name="summary_language_same_as_call">Ίδια με την κλήση (προεπιλογή)</string>
+    <string name="summary_language_same_as_call">Ίδια με την κλήση</string>
     <string name="summary_language_hint">Οι περιλήψεις γράφονται στη γλώσσα της κλήσης, εκτός αν επιλέξετε άλλη εδώ.</string>
     <string name="settings_handoff_persist_description">Διατήρηση μιας εγγραφής σε εξέλιξη ακόμα κι αν ο βοηθός παρασκηνίου τερματιστεί στη μέση της κλήσης (π.χ. όταν κλειδώνετε την οθόνη).</string>
     <string name="settings_handoff_persist_label">Συνέχιση εγγραφής αν σταματήσει ο βοηθός</string>

@@ -441,7 +441,7 @@
     <string name="settings_group_when_to_transcribe">Коли транскрибувати</string>
     <string name="settings_group_transcription_and_summaries">Транскрибування та підсумки</string>
     <string name="summary_language_label">Мова підсумків</string>
-    <string name="summary_language_same_as_call">Як у дзвінку (за замовчуванням)</string>
+    <string name="summary_language_same_as_call">Як у дзвінку</string>
     <string name="summary_language_hint">Підсумки пишуться мовою дзвінка, якщо ви не оберете іншу тут.</string>
     <string name="settings_handoff_persist_description">Продовжувати запис, якщо Android зупинить фонову службу під час дзвінка.</string>
     <string name="settings_handoff_persist_label">Продовжувати запис, якщо фонова служба зупиниться</string>

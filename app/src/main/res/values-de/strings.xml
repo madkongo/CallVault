@@ -431,7 +431,7 @@
     <string name="settings_group_when_to_transcribe">Wann transkribieren</string>
     <string name="settings_group_transcription_and_summaries">Transkription und Zusammenfassungen</string>
     <string name="summary_language_label">Sprache der Zusammenfassungen</string>
-    <string name="summary_language_same_as_call">Wie das Gespräch (Standard)</string>
+    <string name="summary_language_same_as_call">Wie das Gespräch</string>
     <string name="summary_language_hint">Zusammenfassungen werden in der Sprache des Gesprächs geschrieben, außer Sie wählen hier eine andere.</string>
     <string name="settings_handoff_persist_description">Aufnahme fortsetzen, selbst wenn der Hintergrunddienst während des Anrufs beendet wird (z. B. beim Sperren des Bildschirms).</string>
     <string name="settings_handoff_persist_label">Weiter aufnehmen, wenn der Hintergrunddienst stoppt</string>

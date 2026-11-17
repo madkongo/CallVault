@@ -431,7 +431,7 @@
     <string name="settings_group_when_to_transcribe">Quand transcrire</string>
     <string name="settings_group_transcription_and_summaries">Transcription et résumés</string>
     <string name="summary_language_label">Langue des résumés</string>
-    <string name="summary_language_same_as_call">Comme l’appel (par défaut)</string>
+    <string name="summary_language_same_as_call">Comme l’appel</string>
     <string name="summary_language_hint">Les résumés sont écrits dans la langue de l’appel, sauf si vous en choisissez une ici.</string>
     <string name="settings_handoff_persist_description">Poursuit l\'enregistrement même si le service d\'arrière-plan est arrêté pendant l\'appel (par ex. lorsque vous verrouillez l\'écran).</string>
     <string name="settings_handoff_persist_label">Continuer si le service d\'arrière-plan s\'arrête</string>

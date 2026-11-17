@@ -524,7 +524,7 @@
     <string name="settings_group_when_to_transcribe">زمان رونویسی</string>
     <string name="settings_group_transcription_and_summaries">رونویسی و خلاصه‌ها</string>
     <string name="summary_language_label">زبان خلاصه</string>
-    <string name="summary_language_same_as_call">مثل تماس (پیش‌فرض)</string>
+    <string name="summary_language_same_as_call">مثل تماس</string>
     <string name="summary_language_hint">خلاصه‌ها به زبان تماس نوشته می‌شوند، مگر اینکه اینجا زبان دیگری انتخاب کنید.</string>
     <string name="settings_handoff_persist_description">ضبط را حتی اگر دستیار پس‌زمینه در میانه تماس از کار بیفتد (مثلاً وقتی صفحه را قفل می‌کنید) ادامه می‌دهد.</string>
     <string name="settings_handoff_persist_label">ادامه ضبط اگر دستیار متوقف شود</string>
