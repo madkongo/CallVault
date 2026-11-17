@@ -43,6 +43,8 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextDirection
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.text.font.FontWeight
+import com.baba.callvault.ui.screens.LocalOpenSettingsGroup
+import com.baba.callvault.ui.screens.SettingsGroup
 import androidx.compose.ui.unit.dp
 import com.baba.callvault.R
 import com.baba.callvault.summary.CallSummary
@@ -102,7 +104,17 @@ fun SummaryCard(
                 onClick = onCreate
             )
             is SummaryCardState.Running -> RunningRow(state.percent, onStop)
-            is SummaryCardState.Blocked -> Explanation(stringResource(reasonTextOf(state.reason)))
+            is SummaryCardState.Blocked -> {
+                Explanation(stringResource(reasonTextOf(state.reason)))
+                // No summariser yet: the one blocker the person can clear from here, so offer the way
+                // there, straight to the summary group where it is downloaded.
+                val openGroup = LocalOpenSettingsGroup.current
+                if (state.reason == SummaryBlocker.MODEL_MISSING && openGroup != null) {
+                    TextButton(onClick = { openGroup(SettingsGroup.SUMMARIES) }) {
+                        Text(stringResource(R.string.summary_card_blocked_model_action))
+                    }
+                }
+            }
             SummaryCardState.Failed -> {
                 Explanation(stringResource(R.string.summary_card_failed))
                 Spacer(Modifier.height(4.dp))
