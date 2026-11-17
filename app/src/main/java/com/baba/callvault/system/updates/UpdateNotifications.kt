@@ -18,6 +18,7 @@ import androidx.core.app.NotificationCompat
 import com.baba.callvault.MainActivity
 import com.baba.callvault.ui.navigation.NotificationDestination
 import com.baba.callvault.R
+import com.baba.callvault.system.LocalizedContext
 import com.baba.callvault.system.permissions.PermissionChecks
 
 /**
@@ -48,8 +49,8 @@ object UpdateNotifications {
         )
         post(
             context, AVAILABLE_NOTIFICATION_ID,
-            title = context.getString(R.string.update_notif_available_title, tag.removePrefix("v")),
-            text = context.getString(R.string.update_notif_available_text),
+            title = LocalizedContext.of(context).getString(R.string.update_notif_available_title, tag.removePrefix("v")),
+            text = LocalizedContext.of(context).getString(R.string.update_notif_available_text),
             contentIntent = openApp
         )
     }
@@ -63,7 +64,7 @@ object UpdateNotifications {
         createChannel(context)
         val notification = NotificationCompat.Builder(context, CHANNEL_ID)
             .setSmallIcon(R.drawable.ic_mic)
-            .setContentTitle(context.getString(R.string.update_notif_downloading_title))
+            .setContentTitle(LocalizedContext.of(context).getString(R.string.update_notif_downloading_title))
             .setContentText("$percent%")
             .setProgress(100, percent.coerceIn(0, 100), false)
             .setOngoing(true)
@@ -81,7 +82,7 @@ object UpdateNotifications {
         createChannel(context)
         val notification = NotificationCompat.Builder(context, CHANNEL_ID)
             .setSmallIcon(R.drawable.ic_mic)
-            .setContentTitle(context.getString(R.string.update_notif_installing_title))
+            .setContentTitle(LocalizedContext.of(context).getString(R.string.update_notif_installing_title))
             .setProgress(0, 0, true)
             .setOngoing(true)
             .setOnlyAlertOnce(true)
@@ -104,8 +105,8 @@ object UpdateNotifications {
         cancelProgress(context)
         post(
             context, RESULT_NOTIFICATION_ID,
-            title = context.getString(R.string.update_notif_success_title),
-            text = context.getString(R.string.update_notif_success_text, versionName)
+            title = LocalizedContext.of(context).getString(R.string.update_notif_success_title),
+            text = LocalizedContext.of(context).getString(R.string.update_notif_success_text, versionName)
         )
     }
 
@@ -120,7 +121,7 @@ object UpdateNotifications {
         )
         post(
             context, RESULT_NOTIFICATION_ID,
-            title = context.getString(R.string.update_notif_failure_title),
+            title = LocalizedContext.of(context).getString(R.string.update_notif_failure_title),
             text = reason,
             contentIntent = openReleases
         )
@@ -157,7 +158,7 @@ object UpdateNotifications {
     private fun createChannel(context: Context) {
         val channel = NotificationChannel(
             CHANNEL_ID,
-            context.getString(R.string.update_notif_channel),
+            LocalizedContext.of(context).getString(R.string.update_notif_channel),
             NotificationManager.IMPORTANCE_DEFAULT
         ).apply {
             setShowBadge(false)

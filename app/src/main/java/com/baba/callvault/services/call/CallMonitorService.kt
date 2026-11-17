@@ -25,6 +25,7 @@ import android.telephony.TelephonyCallback
 import android.telephony.TelephonyManager
 import androidx.annotation.RequiresApi
 import com.baba.callvault.R
+import com.baba.callvault.system.LocalizedContext
 import com.baba.callvault.services.recording.ReadinessNoticeText
 import com.baba.callvault.server.RecorderConnection
 import com.baba.callvault.utils.AppLogger
@@ -141,6 +142,9 @@ class CallMonitorService : Service() {
             getSystemService(NotificationManager::class.java).notify(NOTIF_ID, buildNotification(ready))
         }.onFailure { AppLogger.w(TAG, "Failed to update monitor notification: ${it.message}") }
     }
+
+    /** Its notification text follows the app's language, not only the phone's (BabApps item 123). */
+    override fun attachBaseContext(newBase: Context) = super.attachBaseContext(LocalizedContext.of(newBase))
 
     override fun onBind(intent: Intent?): IBinder? = null
 

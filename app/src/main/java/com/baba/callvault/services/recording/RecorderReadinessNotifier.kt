@@ -17,6 +17,7 @@ import android.os.Looper
 import androidx.core.app.NotificationCompat
 import androidx.core.app.NotificationManagerCompat
 import com.baba.callvault.R
+import com.baba.callvault.system.LocalizedContext
 import com.baba.callvault.services.call.CallMonitorService
 import com.baba.callvault.system.permissions.PermissionChecks
 import com.baba.callvault.utils.AppLogger
@@ -71,7 +72,8 @@ object RecorderReadinessNotifier {
     // Permission is verified at runtime via PermissionChecks.hasNotificationPermission() before
     // notify() is called; lint can't trace into the helper, so the check is suppressed here.
     @SuppressLint("MissingPermission")
-    private fun post(context: Context, ready: Boolean) {
+    private fun post(base: Context, ready: Boolean) {
+        val context = LocalizedContext.of(base)
         createChannel(context)
         val notice = ReadinessNoticeText.current(context, ready)
         val notification = NotificationCompat.Builder(context, CHANNEL_ID)

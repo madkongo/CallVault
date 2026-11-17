@@ -19,6 +19,7 @@ import androidx.core.app.NotificationCompat
 import androidx.core.app.NotificationManagerCompat
 import com.baba.callvault.MainActivity
 import com.baba.callvault.R
+import com.baba.callvault.system.LocalizedContext
 import com.baba.callvault.data.recordings.RecordingsRepository
 import com.baba.callvault.system.permissions.PermissionChecks
 import com.baba.callvault.ui.common.RecordingLabel
@@ -126,14 +127,14 @@ object TranscriptNotifier {
             openTranscript = one,
             shade = shade,
             title = if (one == null) {
-                context.getString(R.string.transcript_notice_ready_many_title, shade.count)
+                LocalizedContext.of(context).getString(R.string.transcript_notice_ready_many_title, shade.count)
             } else {
-                context.getString(R.string.transcript_notice_ready_title)
+                LocalizedContext.of(context).getString(R.string.transcript_notice_ready_title)
             },
             text = when {
-                one == null -> context.getString(R.string.transcript_notice_ready_many_text)
+                one == null -> LocalizedContext.of(context).getString(R.string.transcript_notice_ready_many_text)
                 shade.audioDeleted ->
-                    context.getString(R.string.transcript_notice_ready_deleted_text, label)
+                    LocalizedContext.of(context).getString(R.string.transcript_notice_ready_deleted_text, label)
                 else -> label
             },
         )
@@ -153,17 +154,17 @@ object TranscriptNotifier {
             openTranscript = null,
             shade = shade,
             title = if (one == null) {
-                context.getString(R.string.transcript_notice_failed_many_title, shade.count)
+                LocalizedContext.of(context).getString(R.string.transcript_notice_failed_many_title, shade.count)
             } else {
-                context.getString(R.string.transcript_notice_failed_title)
+                LocalizedContext.of(context).getString(R.string.transcript_notice_failed_title)
             },
             text = if (one == null) {
-                context.getString(R.string.transcript_notice_failed_many_text)
+                LocalizedContext.of(context).getString(R.string.transcript_notice_failed_many_text)
             } else if (previousKept) {
                 // "Tap to try again" would be wrong: nothing is waiting to be retried, the old text is back.
-                context.getString(R.string.transcript_notice_failed_kept_text, label)
+                LocalizedContext.of(context).getString(R.string.transcript_notice_failed_kept_text, label)
             } else {
-                context.getString(R.string.transcript_notice_failed_text, label)
+                LocalizedContext.of(context).getString(R.string.transcript_notice_failed_text, label)
             },
         )
     }
@@ -258,7 +259,7 @@ object TranscriptNotifier {
     private fun ensureChannel(context: Context) {
         val channel = NotificationChannel(
             CHANNEL_ID,
-            context.getString(R.string.transcript_notice_channel),
+            LocalizedContext.of(context).getString(R.string.transcript_notice_channel),
             NotificationManager.IMPORTANCE_LOW,
         ).apply {
             setShowBadge(false)

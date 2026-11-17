@@ -16,6 +16,7 @@ import android.content.pm.ServiceInfo
 import androidx.core.app.NotificationCompat
 import androidx.work.ForegroundInfo
 import com.baba.callvault.R
+import com.baba.callvault.system.LocalizedContext
 
 /**
  * Keeps a long on-device job alive by making it visible.
@@ -46,7 +47,8 @@ object HeavyWorkNotification {
      *   busy" invites the reader to guess, and the honest answer — their own recording is being turned
      *   into text — is also the reassuring one.
      */
-    fun forWork(context: Context, titleRes: Int): ForegroundInfo {
+    fun forWork(base: Context, titleRes: Int): ForegroundInfo {
+        val context = LocalizedContext.of(base)
         ensureChannel(context)
 
         val notification = NotificationCompat.Builder(context, CHANNEL_ID)
@@ -78,7 +80,8 @@ object HeavyWorkNotification {
      * Same silent channel as transcription. Being foreground is what lets a big backlog run past Android's
      * ~10-minute limit for background jobs (Honor BVL-N49, 2026-11-03).
      */
-    fun forDriveCopy(context: Context, copied: Int, total: Int, stop: PendingIntent): ForegroundInfo {
+    fun forDriveCopy(base: Context, copied: Int, total: Int, stop: PendingIntent): ForegroundInfo {
+        val context = LocalizedContext.of(base)
         ensureChannel(context)
         val notification = NotificationCompat.Builder(context, CHANNEL_ID)
             .setSmallIcon(android.R.drawable.stat_sys_upload)
