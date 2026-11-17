@@ -533,6 +533,8 @@
     <string name="settings_support_value">請我喝杯咖啡</string>
     <string name="settings_tap_to_select_folder">點我選擇錄音保存目錄…</string>
     <string name="settings_theme_mode">主題樣式</string>
+    <string name="settings_start_page">啟動頁面</string>
+    <string name="settings_start_page_hub">主頁（中心）</string>
     <string name="settings_theme_mode_dark">暗色主題</string>
     <string name="settings_theme_mode_light">亮色主題</string>
     <string name="settings_theme_mode_system">系統預設</string>

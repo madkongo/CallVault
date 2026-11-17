@@ -315,6 +315,8 @@
     <string name="settings_language">Language</string>
     <string name="settings_language_system">System Default</string>
     <string name="settings_theme_mode">Theme mode</string>
+    <string name="settings_start_page">Open the app on</string>
+    <string name="settings_start_page_hub">Hub (home)</string>
     <string name="settings_dynamic_color">Use system colours</string>
     <string name="settings_show_toasts">Show pop-up messages</string>
     <string name="settings_vibration_enabled">Vibrate on actions</string>

@@ -75,6 +75,9 @@ class SettingDecisionsTest {
         "theme_mode" to Decision(SettingsOnly("appearance; visible and changeable any time")),
         // BabApps item 131: ON by default (Material You on Android 12+); a stored choice is kept.
         "dynamic_color" to Decision(SettingsOnly("appearance; on by default, changeable any time")),
+        // BabApps item 133: which page the app opens on (Hub by default). A viewing preference that a new
+        // user has no opinion on before they have used the app, and the wizard cannot be re-run.
+        "start_page" to Decision(SettingsOnly("viewing preference; the hub default is right until the user has a favourite page; Settings ▸ App")),
         "show_toasts" to Decision(SettingsOnly("appearance")),
         "vibration_enabled" to Decision(SettingsOnly("appearance")),
         // Retention / storage policy

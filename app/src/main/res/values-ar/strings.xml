@@ -577,6 +577,8 @@
     <string name="settings_support_value">اشترِ لي قهوة</string>
     <string name="settings_tap_to_select_folder">انقر لتحديد المجلد...</string>
     <string name="settings_theme_mode">وضع الثيم</string>
+    <string name="settings_start_page">فتح التطبيق على</string>
+    <string name="settings_start_page_hub">المركز (الرئيسية)</string>
     <string name="settings_theme_mode_dark">داكن</string>
     <string name="settings_theme_mode_light">فاتح</string>
     <string name="settings_theme_mode_system">افتراضي النظام</string>

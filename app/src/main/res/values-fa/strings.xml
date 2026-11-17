@@ -628,6 +628,8 @@
     <string name="settings_support_value">برایم یک قهوه بخر</string>
     <string name="settings_tap_to_select_folder">برای انتخاب پوشه بزنید...</string>
     <string name="settings_theme_mode">حالت پوسته</string>
+    <string name="settings_start_page">باز شدن برنامه روی</string>
+    <string name="settings_start_page_hub">مرکز (خانه)</string>
     <string name="settings_theme_mode_dark">تیره</string>
     <string name="settings_theme_mode_light">روشن</string>
     <string name="settings_theme_mode_system">پیش‌فرض سیستم</string>

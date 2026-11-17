@@ -7,6 +7,13 @@ All notable changes to CallVault are documented here. The format is based on
 
 ### Added
 
+- **Choose the page the app opens on.** Settings ▸ App ▸ "Open the app on": Hub (the default), Recordings, Transcripts
+  or Summaries. The app always opens there; Back from that page still goes to the Hub, where the status card is one tap
+  away. Note: the app no longer reopens the section you were last in; with the default (Hub) it always opens on the Hub.
+  Tapping a notification, or "Open" after importing audio, still goes where it says.
+  <!-- 🧪 VERIFYING (BabApps item 133, not shipped): pick Transcripts in Settings ▸ App, close the app from Recents and
+  open it again: it opens on Transcripts; Back goes to the Hub. Repeat for Recordings and Summaries; pick Hub and it opens on the Hub. -->
+
 - **The recordings list: search on top, filters on one row, swipe between tabs.** The search field now sits above
   "Recordings | All calls", stays in place while the list scrolls, and is there on both views (before, it was hidden until
   there was a recording). The filter chips (sort, source, direction, tag, date, and Recorded/Missed on All calls) stay on
