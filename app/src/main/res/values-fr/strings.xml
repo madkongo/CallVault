@@ -535,6 +535,8 @@
     <string name="settings_support_value">Offrez-moi un café</string>
     <string name="settings_tap_to_select_folder">Appuyez pour sélectionner un dossier...</string>
     <string name="settings_theme_mode">Couleur du Thème</string>
+    <string name="settings_start_page">Page de démarrage</string>
+    <string name="settings_start_page_hub">Hub (accueil)</string>
     <string name="settings_theme_mode_dark">Sombre</string>
     <string name="settings_theme_mode_light">Lumière</string>
     <string name="settings_theme_mode_system">Valeur par défaut du système</string>

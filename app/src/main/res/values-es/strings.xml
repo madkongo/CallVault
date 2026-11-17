@@ -535,6 +535,8 @@
     <string name="settings_support_value">Invítame a un café</string>
     <string name="settings_tap_to_select_folder">Toca para seleccionar la carpeta...</string>
     <string name="settings_theme_mode">Modo del tema</string>
+    <string name="settings_start_page">Abrir la app en</string>
+    <string name="settings_start_page_hub">Centro (inicio)</string>
     <string name="settings_theme_mode_dark">Oscuro</string>
     <string name="settings_theme_mode_light">Claro</string>
     <string name="settings_theme_mode_system">Predeterminado del sistema</string>

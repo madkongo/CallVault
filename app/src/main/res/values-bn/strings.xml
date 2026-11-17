@@ -253,6 +253,8 @@
     <string name="settings_language">ভাষা</string>
     <string name="settings_language_system">সিস্টেম ডিফল্ট</string>
     <string name="settings_theme_mode">থিম মোড</string>
+    <string name="settings_start_page">অ্যাপ যে পাতায় খুলবে</string>
+    <string name="settings_start_page_hub">হাব (হোম)</string>
     <string name="settings_dynamic_color">সিস্টেমের রং ব্যবহার করুন</string>
     <string name="settings_show_toasts">পপ-আপ বার্তা দেখান</string>
     <string name="settings_vibration_enabled">কাজের সময় ভাইব্রেট করুন</string>

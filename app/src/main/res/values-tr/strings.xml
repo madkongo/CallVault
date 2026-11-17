@@ -280,6 +280,8 @@
     <string name="settings_language">Dil</string>
     <string name="settings_language_system">Sistem varsayılanı</string>
     <string name="settings_theme_mode">Tema modu</string>
+    <string name="settings_start_page">Uygulama şurada açılsın</string>
+    <string name="settings_start_page_hub">Merkez (ana sayfa)</string>
     <string name="settings_dynamic_color">Sistem renklerini kullan</string>
     <string name="settings_show_toasts">Açılır mesajları göster</string>
     <string name="settings_vibration_enabled">İşlemlerde titreş</string>

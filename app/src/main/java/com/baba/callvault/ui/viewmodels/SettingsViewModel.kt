@@ -19,6 +19,7 @@ import androidx.lifecycle.AndroidViewModel
 import com.baba.callvault.BuildConfig
 import com.baba.callvault.services.debug.DebugNotificationHelper
 import com.baba.callvault.data.AppPreferences
+import com.baba.callvault.ui.navigation.HomeSection
 import com.baba.callvault.server.RecorderBackend
 import com.baba.callvault.data.StorageTarget
 import com.baba.callvault.integrations.scrcpy.ScrcpyAudioCodec
@@ -72,6 +73,7 @@ interface SettingsActions {
     fun setAudioBitRate(bitRate: Int)
     fun setThemeMode(mode: AppPreferences.ThemeMode)
     fun setDynamicColorEnabled(enabled: Boolean)
+    fun setStartPage(section: HomeSection)
     fun setShowToastsEnabled(enabled: Boolean)
     fun setAppLanguage(languageCode: String)
     fun setLoggingEnabled(enabled: Boolean)
@@ -685,6 +687,12 @@ class SettingsViewModel(application: Application) : AndroidViewModel(application
     }
 
     // -------- Visual settings
+
+    /** Saves the page the app opens on (BabApps item 133). */
+    override fun setStartPage(section: HomeSection) {
+        preferences.setStartPage(section)
+        refresh()
+    }
 
     /** Saves the app theme.
      *

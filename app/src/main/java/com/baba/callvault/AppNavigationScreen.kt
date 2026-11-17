@@ -153,7 +153,10 @@ fun AppNavigationScreen(
     // Read once per visit rather than on every recomposition: this is a SharedPreferences read, and
     // the answer cannot change underneath us — only [goToSection] writes it, and it updates the state
     // below in the same breath.
-    val storedSectionKey = remember { preferences.getLastHomeSectionKey() }
+    //
+    // What opens is the start page the user chose in Settings (BabApps item 133), the hub unless
+    // they picked another. The last section used is still written, but no longer decides this.
+    val storedSectionKey = remember { preferences.getStartPageKey() }
 
     // Null until the user (or a notification) has actually navigated. Until then the section is
     // derived from what was stored, every composition, which is what makes "reopen where you were"
