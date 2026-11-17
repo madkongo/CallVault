@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="home_search_empty_title">نتیجه‌ای برای «%1$s» پیدا نشد</string>
+    <string name="home_search_empty_hint">یک نام، یک برچسب یا کلمه‌ای از تماس را امتحان کنید.</string>
+    <string name="home_search_clear">پاک کردن جستجو</string>
+    <string name="home_filters_empty_title">هیچ ضبطی با این فیلترها مطابقت ندارد</string>
+    <string name="home_filters_clear">پاک کردن فیلترها</string>
+</resources>

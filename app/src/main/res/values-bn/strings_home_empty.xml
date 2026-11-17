@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="home_search_empty_title">“%1$s”-এর জন্য কিছু পাওয়া যায়নি</string>
+    <string name="home_search_empty_hint">একটি নাম, ট্যাগ বা কলের কোনো শব্দ লিখে দেখুন।</string>
+    <string name="home_search_clear">অনুসন্ধান মুছুন</string>
+    <string name="home_filters_empty_title">এই ফিল্টারগুলোর সাথে মেলে এমন কোনো রেকর্ডিং নেই</string>
+    <string name="home_filters_clear">ফিল্টার মুছুন</string>
+</resources>
