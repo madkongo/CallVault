@@ -157,9 +157,11 @@ object TranscriptionLabels {
         "vi" -> R.string.transcription_language_vietnamese
         "el" -> R.string.transcription_language_greek
         "fa" -> R.string.transcription_language_persian
+        "tr" -> R.string.transcription_language_turkish
         "uk" -> R.string.transcription_language_ukrainian
         "ur" -> R.string.transcription_language_urdu
         "bn" -> R.string.transcription_language_bengali
+        "yue" -> R.string.transcription_language_cantonese
         else -> R.string.transcription_language_auto
     }
 }

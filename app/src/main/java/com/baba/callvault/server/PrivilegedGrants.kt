@@ -75,6 +75,21 @@ object PrivilegedGrants {
         return holds
     }
 
+    /** A component name as `cmd notification` takes it; refuses anything with a space, quote or `;`. */
+    private val COMPONENT = Regex("""[A-Za-z0-9_.$]+/[A-Za-z0-9_.$]+""")
+
+    /**
+     * Approves or removes [component] as a notification listener, as `cmd notification allow_listener`
+     * does. The secure setting `enabled_notification_listeners` is NOT enough on Android 14: the system
+     * only reads it when it migrates its own list, so writing it from the app changed the setting and
+     * bound nothing (measured on the OP9, 2026-11-17). Returns what the command answered, for the log.
+     */
+    fun setNotificationListener(component: String, allow: Boolean, userId: Int): String {
+        if (!COMPONENT.matches(component)) return "refused: not a component name"
+        val r = run(CMD, "notification", if (allow) "allow_listener" else "disallow_listener", component, userId.toString())
+        return "exit=${r.exitCode} ${r.output.trim().take(120)}"
+    }
+
     private data class Result(val exitCode: Int, val output: String)
 
     /**

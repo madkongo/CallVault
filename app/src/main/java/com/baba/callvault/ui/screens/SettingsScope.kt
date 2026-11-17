@@ -65,6 +65,13 @@ enum class SettingsGroup(val key: String) {
     }
 }
 
+/**
+ * Opens the Settings panel with one group already open and scrolled to, or null where there is no panel
+ * (previews, tests). Provided by the router; a composition local so the dialogs and cards that need it do
+ * not each have to be handed a callback through every screen between them and the router.
+ */
+val LocalOpenSettingsGroup = androidx.compose.runtime.staticCompositionLocalOf<((SettingsGroup) -> Unit)?> { null }
+
 /** The one table that says which groups each scope shows, in what order, and what each group holds. */
 object SettingsGroups {
 
@@ -92,6 +99,17 @@ object SettingsGroups {
         SettingsScope.TRANSCRIPTS -> TRANSCRIPTS
         SettingsScope.SUMMARIES -> SUMMARIES
         SettingsScope.ALL -> ALL
+    }
+
+    /**
+     * The page whose Settings holds [group], for a shortcut that opens Settings straight at one group (the
+     * "No speech model yet" dialog, the summary card). Never [SettingsScope.ALL]: that one is the hub's.
+     */
+    fun pageOf(group: SettingsGroup): SettingsScope = when (group) {
+        in RECORDINGS -> SettingsScope.RECORDINGS
+        in TRANSCRIPTS -> SettingsScope.TRANSCRIPTS
+        in SUMMARIES -> SettingsScope.SUMMARIES
+        else -> SettingsScope.ALL
     }
 
     /** The scope Settings opens in from each page's settings icon. The main screen shows everything. */

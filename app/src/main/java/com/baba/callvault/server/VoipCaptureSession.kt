@@ -297,6 +297,10 @@ internal class VoipCaptureSession(
         val readers = listOf(feeder(qNear, ledger.near), feeder(qFar, ledger.far))
         readers.forEach { it.start() }
         var nearPeak = 0
+        // The loudest sample of each side in the first second of audio (BabApps item 108): said once, in the
+        // capture health line, so a report shows whether both sides were there from the start.
+        var firstSecNear = 0
+        var firstSecFar = 0
         var nextSnapshotFrames = SNAPSHOT_FRAMES
 
         val silence = ByteArray(CHUNK_BYTES)
@@ -349,6 +353,7 @@ internal class VoipCaptureSession(
                 val fMix = farAligner.align(n, f)
                 var o = 0
                 var farPeak = 0
+                var chunkNear = 0
                 for (i in 0 until CHUNK_BYTES step 2) {
                     stereo[o] = n[i]; stereo[o + 1] = n[i + 1]          // L = near
                     stereo[o + 2] = fMix[i]; stereo[o + 3] = fMix[i + 1] // R = far, lined up
@@ -358,7 +363,12 @@ internal class VoipCaptureSession(
                     val ns = ((n[i].toInt() and 0xFF) or (n[i + 1].toInt() shl 8)).toShort().toInt()
                     val na = if (ns < 0) -ns else ns
                     if (na > nearPeak) nearPeak = na
+                    if (na > chunkNear) chunkNear = na
                     o += 4
+                }
+                if (totalFrames < SAMPLE_RATE) {
+                    if (chunkNear > firstSecNear) firstSecNear = chunkNear
+                    if (farPeak > firstSecFar) firstSecFar = farPeak
                 }
                 // A silenced mix is EXACTLY zero, so any real signal clears the threshold easily; the
                 // margin only guards against dither.
@@ -415,7 +425,8 @@ internal class VoipCaptureSession(
             if (inIdx >= 0) enc.queueInputBuffer(inIdx, 0, 0, 0, MediaCodec.BUFFER_FLAG_END_OF_STREAM)
             drainEncoder(enc, mux, info, muxerStarted, drainToEos = true)
             AppLogger.i(TAG, "VoIP capture finished: ${totalFrames / SAMPLE_RATE}s, $substituted silence-filled chunks, farPartyHeard=$farPartyHeard")
-            syncSummary = ledger.summary(totalFrames, System.nanoTime() - startedNanos)
+            syncSummary = ledger.summary(totalFrames, System.nanoTime() - startedNanos) +
+                " firstSecondPeak near=$firstSecNear far=$firstSecFar"
             AppLogger.i(TAG, syncSummary)
             if (!farPartyHeard) {
                 AppLogger.w(TAG, "Far party was never audible — this app blocks capture, or the OEM did not attach the call to our mix")

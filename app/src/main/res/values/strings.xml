@@ -278,6 +278,11 @@
     <string name="settings_file_name_template_placeholders_preview">Preview: %1$s</string>
     <string name="settings_file_name_template_example">Example: %1$s</string>
     <string name="placeholder_date_desc">The current date and time</string>
+    <string name="placeholder_day_desc">The day, like 20261112</string>
+    <string name="placeholder_day_dashed_desc">The day with dashes, like 2026-11-12</string>
+    <string name="placeholder_time_desc">The time, like 143520</string>
+    <string name="placeholder_time_dashed_desc">The time with dashes, like 14-35-20</string>
+    <string name="settings_file_name_error_day_time">Use {day} and {time} together, day first, with _ - a space or T between them (for example {day}_{time}), or use {date}.</string>
     <string name="placeholder_direction_desc">The call direction (in/out)</string>
     <string name="placeholder_phone_number_desc">The phone number</string>
     <string name="placeholder_contact_name_desc">The contact name, if available</string>
@@ -773,6 +778,8 @@
     <string name="transcription_language_persian">Persian</string>
     <string name="transcription_language_urdu">Urdu</string>
     <string name="transcription_language_bengali">Bengali</string>
+    <string name="transcription_language_cantonese">Cantonese (粵語)</string>
+    <string name="transcription_language_turkish">Turkish</string>
     <string name="transcription_language_ukrainian">Ukrainian</string>
     <string name="transcription_language_auto">Detect automatically</string>
     <string name="language_search_placeholder">Search languages</string>
@@ -799,7 +806,8 @@
     <string name="transcribe_confirm_title">This will take about %1$s</string>
     <string name="transcribe_confirm_title_unknown">Transcribe this call?</string>
     <string name="transcribe_confirm_title_first_run">The first one may take a while</string>
-    <string name="transcribe_confirm_message">Transcribing %1$s keeps your phone busy and uses noticeable battery. You can stop it at any time.\n\nThis question can be turned back on under Transcription in Settings.</string>
+    <string name="summary_card_blocked_model_action">Download the summariser</string>
+    <string name="transcribe_confirm_message">Transcribing this call keeps your phone busy and uses noticeable battery. You can stop it at any time.\n\nThis question can be turned back on under Transcription in Settings.</string>
     <string name="transcribe_confirm_dont_ask">Don\'t ask again</string>
     <string name="transcribe_long_call_line">This call is %1$s. On this phone, transcribing takes about %2$s× as long — about %3$s.</string>
     <string name="transcribe_language_title">Which language?</string>
@@ -989,8 +997,6 @@
     <string name="settings_bugreport_saved">Report saved</string>
     <string name="settings_bugreport_save_failed">Could not save the report</string>
     <string name="settings_debug_log_wrap">Wrap lines</string>
-    <string name="settings_debug_skip_mdns">Skip mDNS when connecting (test the port search)</string>
-    <string name="settings_debug_skip_mdns_description">For testing. The next Wireless debugging connection ignores mDNS and the last known port, and finds the port by searching this phone\'s local ports. Only works while log recording is on.</string>
     <string name="usb_debugging_off_warn_title">Turn off USB debugging?</string>
     <string name="usb_debugging_off_warn_no_way_in">You\'re not on Wi-Fi, so CallVault will have no way to reach the recorder. Calls won\'t be recorded until you connect to Wi-Fi or turn this back on.</string>
     <string name="usb_debugging_off_warn_offline">Off-Wi-Fi recording needs USB debugging. With it off, calls made away from Wi-Fi won\'t be recorded.</string>
@@ -1123,8 +1129,10 @@
     <string name="transcribe_again_waiting">Waiting to transcribe again…</string>
     <string name="wifi_call_switch_failed">This looks like a Wi-Fi call, but the capture that records both sides could not start. It is being recorded the usual way, which may miss the other person.</string>
     <string name="wifi_call_one_sided">Only your side of this Wi-Fi call was recorded. If it keeps happening, set Wi-Fi Calling to prefer the mobile network in your phone app\'s settings.</string>
-    <string name="settings_debug_force_wifi_route">Force Wi-Fi-call capture route</string>
-    <string name="settings_debug_force_wifi_route_description">For testing. Each phone call switches mid-call to the app-call capture, as a Wi-Fi call would. On a phone without Wi-Fi calling the other side will be missing and an error should appear. Needs app-call recording on. Only works while log recording is on.</string>
     <string name="wifi_call_switch_aborted">Recording of this Wi-Fi call stopped early: the capture could not be switched safely. The part recorded so far is kept.</string>
     <string name="wifi_call_far_unknown">This Wi-Fi call was recorded, but CallVault could not check that the other side is on it. Please listen to the recording.</string>
+    <string name="general_show_more">More</string>
+    <string name="general_show_less">Less</string>
+    <string name="summary_card_state_expanded">Expanded</string>
+    <string name="summary_card_state_collapsed">Collapsed</string>
 </resources>

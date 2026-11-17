@@ -63,7 +63,17 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.withFrameNanos
+import androidx.compose.foundation.relocation.BringIntoViewRequester
+import androidx.compose.foundation.relocation.bringIntoViewRequester
+import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.focus.focusRequester
+import androidx.compose.ui.platform.LocalSoftwareKeyboardController
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
@@ -105,6 +115,8 @@ import com.baba.callvault.ui.common.CvScaffold
 import com.baba.callvault.ui.common.RecordingLabel
 import com.baba.callvault.ui.common.SummaryCard
 import com.baba.callvault.ui.common.SummaryCardState
+import com.baba.callvault.ui.common.SummaryActionButton
+import com.baba.callvault.ui.common.CollapsePolicy
 import com.baba.callvault.ui.common.TranscriptActionButton
 import com.baba.callvault.ui.common.WaveformBar
 import com.baba.callvault.ui.common.TranscriptTimestamp
@@ -123,6 +135,7 @@ import java.util.Locale
  * The transcript is a doorway rather than a panel here. It already has a sheet that does timestamps,
  * right-to-left text and seek-on-tap; duplicating any of that would mean two things to keep correct.
  */
+@OptIn(ExperimentalFoundationApi::class)
 @Composable
 fun PlaybackScreen(
     item: RecordingItem,
@@ -177,6 +190,23 @@ fun PlaybackScreen(
     val isActive = playback.activeUri == item.uri
     val isPlaying = isActive && playback.phase == RecordingPlaybackController.Phase.PLAYING
     val isLoading = isActive && playback.phase == RecordingPlaybackController.Phase.LOADING
+    // Folded each time this recording is opened; the player's summary icon and the card share it.
+    var summaryExpanded by rememberSaveable(item.displayName) { mutableStateOf(false) }
+    // The summary icon sits in the player box, the card below it: a tap should land you on the card.
+    val summaryInView = remember { BringIntoViewRequester() }
+    var summaryScrollRequests by remember { mutableIntStateOf(0) }
+    LaunchedEffect(summaryScrollRequests) {
+        if (summaryScrollRequests == 0) return@LaunchedEffect
+        // Two frames: the card may only just have come into the tree (asking for a summary adds it)
+        // or grown (opening it), and bringing a stale rectangle into view would stop short.
+        withFrameNanos { }
+        withFrameNanos { }
+        try {
+            summaryInView.bringIntoView()
+        } catch (_: IllegalStateException) {
+            // No card to show (a summary not asked for yet): nothing to scroll to.
+        }
+    }
 
     CvScaffold(
         modifier = modifier.fillMaxSize(),
@@ -198,10 +228,6 @@ fun PlaybackScreen(
         ) {
             CallHeaderCard(
                 item = item,
-                transcriptStatus = transcriptStatus,
-                transcriptPercent = transcriptPercent,
-                onOpenTranscript = onOpenTranscript,
-                onTranscribe = onTranscribe,
                 isFavourite = isFavourite,
                 onToggleFavourite = onToggleFavourite,
                 onDelete = onDelete,
@@ -220,7 +246,24 @@ fun PlaybackScreen(
                 onResume = onResume,
                 onSeek = onSeek,
                 onSkip = onSkip,
-                onCycleSpeed = onCycleSpeed
+                onCycleSpeed = onCycleSpeed,
+                transcriptStatus = transcriptStatus,
+                transcriptPercent = transcriptPercent,
+                onOpenTranscript = onOpenTranscript,
+                onTranscribe = onTranscribe,
+                summaryState = summaryState,
+                onSummarise = {
+                    onSummarise()
+                    summaryScrollRequests++
+                },
+                // Ready: open or fold the card. Running or blocked: just show it (Stop, or the reason).
+                onToggleSummary = {
+                    if (summaryState is SummaryCardState.Ready && summaryState.isFoldable) {
+                        summaryExpanded = !summaryExpanded
+                    }
+                    summaryScrollRequests++
+                },
+                summaryExpanded = summaryExpanded,
             )
             // Directly under the player, because every one of these is an instruction to the player:
             // tap and it seeks there. Further down they would be a list of numbers to read rather
@@ -239,6 +282,9 @@ fun PlaybackScreen(
                 onCreate = onSummarise,
                 onRedo = onSummarise,
                 onStop = onStopSummary,
+                expanded = summaryExpanded,
+                onExpandedChange = { summaryExpanded = it },
+                modifier = Modifier.bringIntoViewRequester(summaryInView),
                 // Seek, then play. A jump point that silently moved the cursor without starting
                 // would look like nothing happened.
                 onSeek = { millis ->
@@ -339,10 +385,6 @@ private fun formatMarkTime(atMs: Long): String {
 @Composable
 private fun CallHeaderCard(
     item: RecordingItem,
-    transcriptStatus: TranscriptStatus,
-    transcriptPercent: Int,
-    onOpenTranscript: () -> Unit,
-    onTranscribe: () -> Unit,
     isFavourite: Boolean,
     onToggleFavourite: () -> Unit,
     onDelete: () -> Unit,
@@ -448,22 +490,6 @@ private fun CallHeaderCard(
                 )
             }
 
-            // The same one-slot control the list rows use — transcribe / in progress / read / retry
-            // — rather than a second thing that means the same. Retry is transcribe: on this screen
-            // there is one recording and one thing a failed run can do next.
-            TranscriptActionButton(
-                status = transcriptStatus,
-                onTranscribe = onTranscribe,
-                onOpen = onOpenTranscript,
-                onRetry = onTranscribe,
-                modifier = Modifier.size(ACTION_TARGET),
-                // Was left at its default of 0, so this one spun without ever filling while the
-                // identical control in the list showed a figure. A ring that turns for minutes and
-                // never moves is indistinguishable from a hang — which is the whole reason the
-                // percentage was added to that control in the first place.
-                percent = transcriptPercent
-            )
-
             // On the card rather than at the foot of the screen. It lived in a row below the note,
             // which meant scrolling to reach a control most people look for first — and briefly
             // meant not being able to reach it at all. Error-tinted and icon-only: it is one glyph
@@ -556,7 +582,15 @@ private fun PlayerCard(
     onResume: () -> Unit,
     onSeek: (Int) -> Unit,
     onSkip: (Int) -> Unit,
-    onCycleSpeed: () -> Unit
+    onCycleSpeed: () -> Unit,
+    transcriptStatus: TranscriptStatus,
+    transcriptPercent: Int,
+    onOpenTranscript: () -> Unit,
+    onTranscribe: () -> Unit,
+    summaryState: SummaryCardState,
+    onSummarise: () -> Unit,
+    onToggleSummary: () -> Unit,
+    summaryExpanded: Boolean,
 ) {
     val accent = MaterialTheme.colorScheme.primary
     // Falls back to the length from the call log rather than showing 0:00 for a recording that is
@@ -659,6 +693,24 @@ private fun PlayerCard(
                 horizontalArrangement = Arrangement.Center,
                 verticalAlignment = Alignment.CenterVertically
             ) {
+                // Transcribe and summarise sit in the player box, one at each end of the skip row —
+                // both are things done to the recording being listened to. The same one-slot
+                // controls the list rows use: transcribe / in progress / read / retry, and
+                // summarise / in progress / open / retry. Retry is transcribe: on this screen there
+                // is one recording and one thing a failed run can do next.
+                // 48dp touch slot, the icon or ring inside it keeps the 40dp look.
+                Box(modifier = Modifier.size(PLAYER_CONTROL_SIZE), contentAlignment = Alignment.Center) {
+                    TranscriptActionButton(
+                        status = transcriptStatus,
+                        onTranscribe = onTranscribe,
+                        onOpen = onOpenTranscript,
+                        onRetry = onTranscribe,
+                        modifier = Modifier.size(ACTION_TARGET),
+                        // A ring that turns for minutes and never moves is indistinguishable from a hang.
+                        percent = transcriptPercent
+                    )
+                }
+                Spacer(Modifier.weight(1f))
                 FilledTonalIconButton(
                     onClick = { onSkip(-PlaybackControls.SKIP_MS) },
                     enabled = isActive,
@@ -695,6 +747,14 @@ private fun PlayerCard(
                         modifier = Modifier.size(26.dp)
                     )
                 }
+                Spacer(Modifier.weight(1f))
+                SummaryActionButton(
+                    state = summaryState,
+                    onCreate = onSummarise,
+                    onOpen = onToggleSummary,
+                    expanded = summaryExpanded,
+                    modifier = Modifier.size(PLAYER_CONTROL_SIZE)
+                )
             }
         }
     }
@@ -1061,14 +1121,65 @@ private fun NoteCard(note: String, recordingKey: String, onNoteChange: (String) 
             }
         }
         Spacer(Modifier.height(8.dp))
-        OutlinedTextField(
-            value = draft.text,
-            onValueChange = draft::edit,
-            placeholder = { Text(stringResource(R.string.playback_note_hint)) },
-            modifier = Modifier.fillMaxWidth().heightIn(min = 96.dp),
-            // Content direction: these notes are written in the same language the call was in.
-            textStyle = MaterialTheme.typography.bodyMedium.copy(textDirection = TextDirection.Content)
-        )
+        // A long note opens folded to a few lines and a "more"; a tap opens the editor. Judged on the
+        // text, and dropped for good once the field takes focus, so a note that grows past the limit
+        // under the cursor never folds mid-typing.
+        var expanded by rememberSaveable(recordingKey) { mutableStateOf(false) }
+        // Opened by a tap on the folded text: the editor then takes focus and the keyboard in that
+        // same tap, instead of needing a second one.
+        val focusRequester = remember { FocusRequester() }
+        val keyboard = LocalSoftwareKeyboardController.current
+        var focusOnOpen by remember { mutableStateOf(false) }
+        LaunchedEffect(expanded, focusOnOpen) {
+            if (expanded && focusOnOpen) {
+                focusOnOpen = false
+                try {
+                    focusRequester.requestFocus()
+                    keyboard?.show()
+                } catch (_: IllegalStateException) {
+                    // The field was not in the tree yet; a tap on it works as it always did.
+                }
+            }
+        }
+        if (!expanded && CollapsePolicy.isLong(draft.text)) {
+            Column(
+                modifier = Modifier.fillMaxWidth().clickable {
+                    focusOnOpen = true
+                    expanded = true
+                }
+            ) {
+                Text(
+                    text = draft.text,
+                    style = MaterialTheme.typography.bodyMedium.copy(textDirection = TextDirection.Content),
+                    maxLines = CollapsePolicy.COLLAPSED_LINES,
+                    overflow = TextOverflow.Ellipsis
+                )
+                TextButton(onClick = {
+                    focusOnOpen = true
+                    expanded = true
+                }) {
+                    Text(stringResource(R.string.general_show_more))
+                }
+            }
+        } else {
+            OutlinedTextField(
+                value = draft.text,
+                onValueChange = draft::edit,
+                placeholder = { Text(stringResource(R.string.playback_note_hint)) },
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .heightIn(min = 96.dp)
+                    .focusRequester(focusRequester)
+                    .onFocusChanged { if (it.isFocused) expanded = true },
+                // Content direction: these notes are written in the same language the call was in.
+                textStyle = MaterialTheme.typography.bodyMedium.copy(textDirection = TextDirection.Content)
+            )
+            if (expanded && CollapsePolicy.isLong(draft.text)) {
+                TextButton(onClick = { expanded = false }) {
+                    Text(stringResource(R.string.general_show_less))
+                }
+            }
+        }
     }
 }
 

@@ -35,6 +35,7 @@ import com.baba.callvault.data.health.record
 import com.baba.callvault.integrations.adb.AdbShell
 import com.baba.callvault.server.RecorderBackend
 import com.baba.callvault.R
+import com.baba.callvault.system.LocalizedContext
 import com.baba.callvault.data.recordings.RecordingCatalog
 import com.baba.callvault.data.waveform.WaveformDrawWorker
 import com.baba.callvault.transcription.TranscriptionScheduler
@@ -268,6 +269,9 @@ class RecordingForegroundService : Service() {
     }
 
     // No binding. This is a fully command-based service. All interactions are via startService with intent actions.
+    /** Its error texts follow the app's language, not only the phone's (BabApps item 123). */
+    override fun attachBaseContext(newBase: Context) = super.attachBaseContext(LocalizedContext.of(newBase))
+
     override fun onBind(intent: Intent?): IBinder? = null
 
     /**
@@ -639,11 +643,9 @@ class RecordingForegroundService : Service() {
     private fun onRouteEvent() {
         val active = currentState as? RecordingServiceState.Active ?: return
         if (stopRequested || isShuttingDown) return
-        // Debug switch: honoured only while logging is on, the only time its result can be read.
-        val forced = appPreferences.isDebugForceWifiRoute() && appPreferences.isLoggingEnabled()
         val sinceStart = android.os.SystemClock.elapsedRealtime() - captureStartedAt
         val decision = routeDecision(
-            "change", engineCanSwitch = !active.engine.isLocalFallback, forced = forced, msSinceCaptureStart = sinceStart
+            "change", engineCanSwitch = !active.engine.isLocalFallback, forced = false, msSinceCaptureStart = sinceStart
         )
         if (decision.reason == WifiCallRoute.Reason.WINDOW_PASSED) {
             // Never switches after the window, so stop watching.

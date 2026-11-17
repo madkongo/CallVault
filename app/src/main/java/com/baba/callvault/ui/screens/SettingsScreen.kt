@@ -96,6 +96,8 @@ fun SettingsScreen(
     modifier: Modifier = Modifier,
     settingsScope: SettingsScope = SettingsScope.ALL,
     onScopeChange: (SettingsScope) -> Unit = {},
+    openGroupRequest: SettingsGroup? = null,
+    onOpenGroupHandled: () -> Unit = {},
 ) {
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
@@ -290,6 +292,8 @@ fun SettingsScreen(
             onImportSettings = onImportSettings,
             scope = settingsScope,
             onScopeChange = onScopeChange,
+            openGroupRequest = openGroupRequest,
+            onOpenGroupHandled = onOpenGroupHandled,
             modifier = modifier
         )
     }
@@ -368,8 +372,6 @@ private fun SettingsScreenPreview() {
             override fun setShowToastsEnabled(enabled: Boolean) {}
             override fun setAppLanguage(languageCode: String) {}
             override fun setLoggingEnabled(enabled: Boolean) {}
-            override fun setSkipMdnsConnectForTest(enabled: Boolean) {}
-            override fun setForceWifiRouteForTest(enabled: Boolean) {}
             override fun getAppVersion(): String = "Version 1.0.0 (Mock)"
             override fun setFileNameTemplate(template: String) {}
             override fun setStorageTarget(target: StorageTarget) {}

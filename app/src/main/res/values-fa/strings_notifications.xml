@@ -58,4 +58,9 @@
     <string name="transcript_notice_failed_many_title">رونویسی‌های ناتمام: %1$d</string>
     <string name="transcript_notice_failed_many_text">برای دیدن آن‌ها ضربه بزنید.</string>
     <string name="transcript_notice_failed_kept_text">%1$s. رونوشت قبلی حفظ شد.</string>
+    <string name="home_status_needs_wifi_title">برای ضبط به Wi-Fi نیاز است</string>
+    <string name="home_status_needs_wifi_suggestion">ضبط‌کننده متوقف شده و بدون Wi-Fi نمی‌تواند راه‌اندازی شود، بنابراین تماس‌ها ضبط نمی‌شوند. به Wi-Fi وصل شوید یا در تنظیمات «ادامه ضبط بدون Wi-Fi» را روشن کنید.</string>
+    <string name="notif_stopped_by_user_title">شما CallVault را متوقف کردید</string>
+    <string name="notif_stopped_by_user_text">تماس‌ها در مدتی که برنامه متوقف بود ضبط نشدند. CallVault دوباره باز است و تماس‌های جدید را ضبط می‌کند.</string>
+    <string name="home_stopped_by_user_text">شما CallVault را متوقف کردید — تماس‌ها در مدتی که برنامه متوقف بود ضبط نشدند.</string>
 </resources>

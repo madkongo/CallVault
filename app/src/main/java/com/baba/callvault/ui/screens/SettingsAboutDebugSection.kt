@@ -14,6 +14,7 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.selection.toggleable
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Groups
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.BugReport
 import androidx.compose.material.icons.filled.Search
@@ -39,6 +40,7 @@ import androidx.compose.runtime.setValue
 import com.baba.callvault.R
 import com.baba.callvault.system.copyToClipboard
 import com.baba.callvault.system.openOriginalProjectRepo
+import com.baba.callvault.system.openTelegramGroup
 import com.baba.callvault.ui.common.formatByteSize
 import com.baba.callvault.ui.common.SupportDialog
 import com.baba.callvault.server.RecorderBackend
@@ -120,25 +122,6 @@ internal fun BugReportSection(
                 )
                 Spacer(modifier = Modifier.height(4.dp))
             }
-            // A test switch for the maintainer's device check of #65, shown only while logging is on — the
-            // only time its result can be read — and only honoured then (see isDebugSkipMdnsConnect).
-            val skipMdns = remember(updateTrigger) { preferences.isDebugSkipMdnsConnect() }
-            SettingsToggleRow(
-                icon            = Icons.Filled.Search,
-                label           = stringResource(R.string.settings_debug_skip_mdns),
-                checked         = skipMdns,
-                onCheckedChange = { actions.setSkipMdnsConnectForTest(it) },
-                description     = stringResource(R.string.settings_debug_skip_mdns_description)
-            )
-            // Test switch for #45: exercises the Wi-Fi-call capture switch on a phone without Wi-Fi calling.
-            val forceWifiRoute = remember(updateTrigger) { preferences.isDebugForceWifiRoute() }
-            SettingsToggleRow(
-                icon            = Icons.Filled.Wifi,
-                label           = stringResource(R.string.settings_debug_force_wifi_route),
-                checked         = forceWifiRoute,
-                onCheckedChange = { actions.setForceWifiRouteForTest(it) },
-                description     = stringResource(R.string.settings_debug_force_wifi_route_description)
-            )
         } else {
             // Offered whenever logging is off, with no precondition on there being a log: the report
             // always carries the configuration header, and the setup journal when there is one. The
@@ -420,6 +403,16 @@ internal fun AboutSection(
             value = stringResource(R.string.settings_support_value),
             supporting = stringResource(R.string.settings_support_supporting),
             onClick = { showSupportDialog = true }
+        )
+
+        SettingsDivider()
+
+        // The project's Telegram group, next to Support (BabApps item 131). Same link as the Home card and pill.
+        NavigationRow(
+            icon = Icons.Filled.Groups,
+            label = stringResource(R.string.home_hub_community_title),
+            value = stringResource(R.string.home_hub_community_body),
+            onClick = { context.openTelegramGroup() }
         )
 
         Row(

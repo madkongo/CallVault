@@ -256,6 +256,12 @@ open class RecorderServiceImpl(private val apkPath: String) : IRecorderService.S
             VoipCallerName.AnswerState.NO_NOTIFICATION -> VOIP_NO_NOTIFICATION
         }
 
+    override fun voipCallFacts(packageName: String?): String =
+        packageName?.let { VoipCallerName.callFacts(it) }?.encode().orEmpty()
+
+    override fun notificationListenerAccess(component: String?, allow: Boolean, userId: Int): String =
+        component?.let { PrivilegedGrants.setNotificationListener(it, allow, userId) } ?: "refused: no component"
+
     override fun voipFarPartyHeard(): Boolean = lastVoipSession?.farPartyHeard ?: false
 
     /**

@@ -1,0 +1,1022 @@
+<!--
+  ~ CallVault: FOSS call recording, self-contained over embedded ADB
+  ~  Copyright (C) 2026-present kitsumed (Med)
+  ~  Copyright (C) 2026-present The CallVault Authors
+  ~  This software is licensed under the GNU General Public License v3 or later, with additional terms as permitted under Section 7.
+  ~  The full license text is available in the LICENSE file at the root of this project.
+  ~  This software is distributed WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+  -->
+
+<resources>
+    <!-- ========================================== -->
+    <!-- GENERAL MESSAGES & APP LEVEL               -->
+    <!-- ========================================== -->
+    <string name="general_close">Kapat</string>
+    <!-- Spoken by TalkBack for a section header that folds open and shut. -->
+    <string name="voicemail_contact_label">Sesli mesaj</string>
+    <string name="general_recommended">Önerilen</string>
+    <string name="general_continue">Devam</string>
+    <string name="general_ok">Tamam</string>
+    <string name="general_cancel">İptal</string>
+    <string name="general_settings">Ayarlar</string>
+    <string name="general_licenses">Lisanslar</string>
+    <string name="general_copied_to_clipboard">Panoya kopyalandı</string>
+    <string name="general_record">Kaydet</string>
+    <string name="general_pause">Duraklat</string>
+    <string name="general_resume">Sürdür</string>
+    <string name="general_incoming">gelen</string>
+    <string name="general_outgoing">giden</string>
+    <string name="general_reset">Sıfırla</string>
+    <string name="general_system_limitation">Sistem sınırlaması</string>
+    <string name="general_system_limitation_message">Kabuk uygulamanızın gerekli izinleri olmadığı için CallVault bu cihazda çalışmayacak:\n\n%1$s\n\nBu konuda yapabileceğiniz bir şey yok, uygulama çalışamaz ve şimdi kapanacak.</string>
+
+    <!-- ========================================== -->
+    <!-- UI SECTIONS                                -->
+    <!-- ========================================== -->
+
+    <!-- Disclaimer Screen -->
+    <string name="disclaimer_title">CallVault’a hoş geldiniz</string>
+    <string name="disclaimer_introduction">Devam etmeden önce lütfen aşağıdaki sorumluluk reddini dikkatle okuyun.</string>
+    <string name="disclaimer_checkbox_label">Sorumluluk reddini okudum ve bu yazılımın yasal gereklilikleri, sorumlulukları ve teknik sınırlamalarını anlıyorum.</string>
+    <string name="disclaimer_must_read">Sorumluluk reddini okumalısınız.</string>
+
+    <!-- Permissions Screen -->
+    <string name="permissions_title">İzin kurulumu</string>
+    <string name="permissions_intro">Kayda başlamak için birkaç izne ihtiyacımız var. “Erişim ver”e dokunun ve her öğeyi onaylayın.</string>
+    <string name="permissions_grant_access">Erişim ver</string>
+    <string name="permissions_status_granted">Verildi</string>
+    <string name="permissions_status_required">Gerekli</string>
+
+    <string name="permission_notifications_label">Bildirimler</string>
+    <string name="permission_notifications_description">Kayıt durumu ve hata uyarıları için kullanılır.</string>
+
+    <string name="permission_contacts_label">Kişiler</string>
+    <string name="permission_contacts_description">Yok sayma kuralları için bilinen kişileri süzmekte kullanılır.</string>
+
+    <string name="permission_phone_state_label">Telefon durumu</string>
+    <string name="permission_phone_state_description">Bir aramanın ne zaman başlayıp bittiğini algılamak için gerekli.</string>
+
+    <string name="permission_call_log_label">Arama kaydı</string>
+    <string name="permission_call_log_description">Telefon durumu olaylarında gizlenmemiş telefon numarasını almamız için gerekli.</string>
+
+    <string name="permission_usb_debugging_label">USB hata ayıklama</string>
+    <string name="permission_usb_debugging_description">Önerilir. Wi-Fi’den uzakta da kaydın çalışmasını sağlar ve CallVault’un kurulumdan sonra Kablosuz hata ayıklamayı kapatmasına izin verir. Kablo gerekmez.</string>
+    <string name="permission_battery_label">Pil optimizasyonu</string>
+    <string name="permission_battery_description">Uygulamayı gerektiğinde canlı tutar ve olası arka plan başlatma kısıtlamalarını aşmasına izin verir. Bazı telefonlarda (ör. OnePlus/OxygenOS) bu uygulamanın pil modunu ayrıca “Arka plan etkinliğine izin ver” olarak ayarlayın.</string>
+    <string name="permission_battery_oem_hint">Pil muafiyeti ayarlandı. Şimdi bu Uygulama bilgisi sayfasında “Pil”e dokunun, ardından “Arka plan etkinliğine izin ver”i (Kısıtlamasız) seçin — OnePlus/OxygenOS’ta kaydın arka planda hayatta kalması için gereklidir.</string>
+
+    <!-- Same label as settings_recording_folder_label -->
+    <string name="permission_storage_description">Kayıtların nereye kaydedileceğini seçin.</string>
+
+    <string name="permission_adb_description">Kaydediciyi kurmak ve başlatmak için gerekli ve yalnızca Wi-Fi’de çalışır. Bildirim üzerinden bir kez eşleştirin, sonra otomatik bağlanır.</string>
+    <string name="permission_adb_not_connected">Bağlı değil — kurmak için dokunun</string>
+    <string name="permission_adb_setup">Yetkilendir</string>
+
+    <!-- Settings Screen: Section Titles -->
+    <string name="settings_section_about">Hakkında</string>
+    <string name="settings_section_storage">Depolama</string>
+
+    <!-- Retention (auto-delete old recordings) -->
+    <string name="retention_keep_forever">Sonsuza kadar sakla</string>
+    <string name="retention_daily">Günlük (1 gün)</string>
+    <string name="retention_weekly">Haftalık (7 gün)</string>
+    <string name="retention_biweekly">İki haftada bir (14 gün)</string>
+    <string name="retention_monthly">Aylık (30 gün)</string>
+    <string name="retention_60_days">60 gün</string>
+    <string name="retention_90_days">90 gün</string>
+    <string name="retention_120_days">120 gün</string>
+    <string name="retention_linked_label">Cihaz ve Drive için aynı süre</string>
+    <string name="retention_period_label">Kayıtları otomatik sil</string>
+    <string name="retention_local_label">Cihazdaki kayıtlar</string>
+    <string name="retention_drive_label">Drive’daki kayıtlar</string>
+    <string name="retention_description">Seçilen süreden eski kayıtlar, yıldızlılar hariç kalıcı olarak silinir. Aşağıdaki saatte günde bir kez denetlenir.</string>
+    <string name="retention_time_label">Çalışma saati (yerel saatiniz)</string>
+    <string name="retention_confirm_title">Otomatik silme açılsın mı?</string>
+    <string name="retention_confirm_message">Seçilen süreden eski kayıtlar cihazınızdan ve/veya Google Drive’dan kalıcı olarak silinecek. Bu geri alınamaz.</string>
+    <string name="retention_confirm_enable">Aç</string>
+    <string name="settings_section_recording_storage">Kayıt ve depolama</string>
+    <string name="permissions_shizuku_offer_title">Shizuku bu telefonda çalışıyor</string>
+    <string name="permissions_shizuku_offer_body">CallVault bunun yerine onu kullanabilir ve eşleştirmeyi tamamen atlayabilir. Ya da CallVault’u kendi başına kurun, böylece başka hiçbir şeyin çalışmasına gerek kalmaz.</string>
+    <string name="permissions_shizuku_needs_permission">Bitirmek için Shizuku’da CallVault’a izin verin. Siz izin verene kadar hiçbir şey kaydedilmez.</string>
+    <string name="permissions_shizuku_active">Shizuku kullanılıyor. Eşleştirilecek bir şey yok — kurulum tamam.</string>
+    <string name="permissions_shizuku_use">Shizuku’yu kullan</string>
+    <string name="permissions_shizuku_use_callvault">CallVault’u kullan</string>
+    <string name="permissions_shizuku_offer_title_stopped">Shizuku çalışmıyor</string>
+    <string name="permissions_shizuku_offer_stopped">Shizuku uygulamasından başlatıp geri gelin, CallVault eşleştirme yerine onu kullanabilir. Ya da CallVault’u kendi başına kurun — başka hiçbir şeyin çalışmasına gerek yok.</string>
+    <string name="home_hero_pill_shizuku">Shizuku durdu</string>
+    <string name="home_status_shizuku_title">Shizuku hazır değil</string>
+    <string name="home_status_shizuku_suggestion">Shizuku’yu açıp başlatın. Telefon yeniden başlayınca durur ve o çalışana kadar CallVault kayıt yapamaz.</string>
+    <string name="home_health_missed_shizuku">%1$s kaydedilmedi — Shizuku çalışmıyordu</string>
+    <string name="home_health_missed_shizuku_unnamed">Bir arama kaydedilmedi — Shizuku çalışmıyordu</string>
+    <string name="settings_unavailable_in_shizuku">Shizuku modunda kullanılamaz — bunun için CallVault’un kendi kaydedicisi gerekir.</string>
+    <string name="mode_switch_to_shizuku">Shizuku’ya geçiliyor…</string>
+    <string name="mode_switch_to_standalone">CallVault’a geçiliyor…</string>
+    <string name="mode_switch_working">Eski kaydedici durduruluyor ve yenisi başlatılıyor. Bu birkaç saniye sürer.</string>
+    <string name="mode_switch_done_title">Kayda hazır</string>
+    <string name="mode_switch_problem_title">Henüz hazır değil</string>
+    <string name="mode_switch_done_shizuku">Hazır — Shizuku kullanılıyor</string>
+    <string name="mode_switch_done_standalone">Hazır — CallVault kullanılıyor</string>
+    <string name="mode_switch_ready_shizuku">CallVault Shizuku üzerinden kaydediyor. Wi-Fi dışında kayıt hariç her şey kullanılabilir; bunun için CallVault’un kendi kaydedicisi gerekir.</string>
+    <string name="mode_switch_ready_standalone">CallVault kendi kaydedicisiyle kaydediyor. VoIP aramaları ve konuşmacı adları dahil her şey kullanılabilir.</string>
+    <string name="mode_switch_ready">Kaydedici çalışıyor. Aramalar kaydedilecek.</string>
+    <string name="mode_switch_shizuku_not_installed">Shizuku yüklü değil, bu yüzden geçilecek bir şey yok.</string>
+    <string name="mode_switch_shizuku_not_running">Shizuku çalışmıyor. Shizuku’yu açıp başlatın, sonra yeniden deneyin — telefon yeniden başlayınca durur.</string>
+    <string name="mode_switch_shizuku_not_permitted">Shizuku, CallVault’un onu kullanmasına henüz izin vermedi. Shizuku’yu açıp izin verin, sonra yeniden deneyin.</string>
+    <string name="mode_switch_voip_not_armed">Geçildi, ancak uygulama araması kaydı hazırlanamadı. Telefon aramaları kaydedilir; uygulama aramaları, CallVault’u yeniden açana kadar kaydedilmeyebilir.</string>
+    <string name="mode_switch_recorder_failed">Kaydedici başlamadı. Başlayana kadar hiçbir şey kaydedilmeyecek.</string>
+    <string name="home_hero_pill_with_mode">%1$s · %2$s</string>
+    <string name="home_mode_badge_standalone">CallVault</string>
+    <string name="home_mode_badge_shizuku">Shizuku</string>
+    <string name="settings_subsection_privileges">CallVault izni nasıl alır</string>
+    <string name="settings_shizuku_mode">Shizuku modu</string>
+    <string name="settings_shizuku_not_installed">Shizuku yüklü değil. CallVault’un ona ihtiyacı yok — bu yalnızca zaten kullananlar için.</string>
+    <string name="settings_shizuku_not_running">Shizuku yüklü ama çalışmıyor. Telefon her yeniden başladığında yeniden başlatılmalıdır.</string>
+    <string name="settings_shizuku_no_permission">Shizuku çalışıyor, ancak CallVault’un onu kullanmasına henüz izin vermedi.</string>
+    <string name="settings_shizuku_ready">Shizuku çalışıyor ve hazır. Bu açıkken CallVault’un kendi eşleştirmesine ihtiyacı yok.</string>
+    <string name="settings_shizuku_grant">Shizuku’da CallVault’a izin ver</string>
+    <string name="settings_shizuku_grant_description">İzin vermeniz için Shizuku’yu açar. Siz izin verene kadar hiçbir şey kaydedilmez.</string>
+    <string name="settings_section_audio">Ses yapılandırması</string>
+    <string name="settings_section_reliability">Güvenilirlik</string>
+    <string name="settings_voip_recording_label">Uygulama aramalarını kaydet</string>
+    <string name="settings_voip_recording_description">WhatsApp, Signal ve Telegram gibi uygulamalarda yapılan aramaları da kaydedin. Bazı uygulamalar kaydı engeller ve bu, arama başlayana kadar bilinemez.</string>
+    <string name="settings_voip_auto_start_label">Otomatik başlat</string>
+    <string name="settings_voip_auto_start_description">Kapalı olması, CallVault’un önce sorması demektir: bir uygulama araması başladığında Kaydet düğmeli bir bildirim görünür.</string>
+    <string name="voip_prompt_title">Uygulama araması sürüyor</string>
+    <string name="voip_prompt_text">Bu aramayı kaydetmek için Kaydet’e dokunun.</string>
+    <string name="voip_prompt_text_named">%1$s araması. Kaydetmek için Kaydet’e dokunun.</string>
+    <string name="voip_recording_warning_title">Uygulama aramaları kaydedilsin mi?</string>
+    <string name="voip_recording_warning_message">Uygulama aramalarını kaydetmek, telefon aramalarını kaydetmekten daha sıkı düzenlenmiştir ve birçok yerde önce her katılımcının onay vermesi gerekir. Lütfen buna izniniz olduğundan emin olun.\n\nBazı uygulamalarda çalışır, bazılarında çalışmaz ve bir uygulama bir güncellemeyle kaydı her an engelleyebilir.</string>
+    <string name="voip_recording_warning_continue">Anladım, aç</string>
+    <string name="voip_recording_arming">VoIP kaydı hazırlanıyor…</string>
+    <string name="notif_voip_recording_title">VoIP araması kaydediliyor</string>
+    <string name="notif_voip_recording_text">CallVault bir uygulama aramasını kaydediyor.</string>
+    <string name="voip_missed_not_ready">Bir uygulama araması kaydedilmedi — CallVault zamanında hazır değildi. Bu, bir telefon araması bittikten sonra kısa bir süre olabilir. Bir sonraki arama normal kaydedilmelidir.</string>
+    <string name="voip_missed_no_folder">Bir uygulama araması kaydedilmedi — kayıt klasörü eksik veya yazılamıyor. Ayarlar’da yeniden seçin.</string>
+    <string name="voip_missed_label">Uygulama araması</string>
+    <string name="voip_one_sided_warning">O uygulama aramasının yalnızca sizin tarafınız kaydedildi — diğer uygulama arama sesinin yakalanmasına izin vermiyor.</string>
+    <string name="voip_one_sided_warning_vivo">O uygulama aramasının yalnızca sizin tarafınız kaydedildi. vivo’da, karşı kişiyi de kaydetmek için Recorder uygulamasını açın → Uygulama içi arama kaydı’nı açın (Kaydı otomatik başlat ile birlikte).</string>
+    <string name="voip_one_sided_warning_vivo_overseas">O uygulama aramasının yalnızca sizin tarafınız kaydedildi. Bu vivo telefon, uygulamaların uygulama aramalarında karşı kişiyi kaydetmesini engelliyor ve Recorder uygulamasında buna izin verme seçeneği yok. Normal telefon aramaları yine her iki tarafı da kaydeder.</string>
+    <string name="voip_recording_unavailable">Bu cihazda açılamadı — VoIP kaydı burada kullanılamıyor.</string>
+    <string name="voip_recording_names_hint">Kişi adları, arayan uygulamanın kendi arama bildiriminden gelir. O uygulama için bildirimler kapalıysa, kayıtları adsız kaydedilir.</string>
+    <string name="settings_usb_debugging_label">USB hata ayıklama</string>
+    <string name="settings_usb_debugging_description">Önerilir. Wi-Fi’den ayrıldığınızda da kaydın çalışmasını sağlar ve CallVault’un Kablosuz hata ayıklamayı kapatmasına izin verir. Kablo gerekmez.</string>
+    <string name="settings_usb_debugging_recommended">Bu olmadan kayıt yalnızca Wi-Fi’de çalışır ve Kablosuz hata ayıklama açık kalmak zorundadır.</string>
+    <string name="settings_usb_debugging_on_hint">CallVault, Kablosuz hata ayıklamayı kapalı tutabilir. Bunu kapatırsanız, CallVault kaydediciyi Wi-Fi üzerinden yeniden başlatırken kayıt birkaç saniye durur — ve Wi-Fi dışında yeniden başlatamaz.</string>
+    <string name="settings_usb_debugging_shizuku_hint">Shizuku kullanırken USB hata ayıklamayı açık bırakın. Shizuku’nun hizmeti Android’in hata ayıklama hizmeti üzerinden başlatılır ve o durunca durur — CallVault’un Shizuku modunda bu anahtara ihtiyacı yok.</string>
+    <string name="settings_usb_debugging_failed">Değiştirilemedi — CallVault’un kurulum sırasında aldığı izne ihtiyacı var.</string>
+    <string name="notif_info_channel">CallVault duyuruları</string>
+    <string name="notif_wd_required">USB hata ayıklama kapalı olduğu için Kablosuz hata ayıklama açık kalmak zorunda. CallVault ayarlarında USB hata ayıklamayı açın, CallVault Kablosuz hata ayıklamayı yeniden kapatır.</string>
+    <string name="settings_section_debug">Hata ayıklama</string>
+    <string name="settings_section_security">Güvenlik</string>
+    <string name="settings_section_recorder_server">Kaydedici hizmeti</string>
+
+    <!-- Settings Screen: Recorder Service Section -->
+    <string name="settings_persistent_server">Kalıcı kaydedici sunucusu</string>
+    <string name="settings_persistent_server_description">Aramaları ayrıcalıklı bir arka plan hizmeti üzerinden kaydedin, böylece Kablosuz hata ayıklama aramalar arasında kapalı kalabilir.</string>
+    <string name="settings_wd_disable_when_idle">Boştayken Kablosuz hata ayıklamayı kapat</string>
+    <string name="settings_wd_disable_when_idle_description">Kaydedici hizmeti bağlandığında Kablosuz hata ayıklamayı kapatın; yalnızca gerektiğinde kısaca yeniden açılır.</string>
+
+    <!-- Settings Screen: Storage Section -->
+    <string name="settings_storage_section">Depolama</string>
+    <string name="settings_storage_target_label">Kayıtlar nereye kaydedilsin</string>
+    <string name="storage_target_local">Yalnızca bu cihazda</string>
+    <string name="storage_target_drive">Yalnızca Google Drive</string>
+    <string name="storage_target_both">Cihaz + Google Drive</string>
+    <string name="settings_drive_folder_label">Google Drive klasörü</string>
+    <string name="settings_drive_folder_desc">Kayıtların kopyalanacağı bir klasör seçin (Google Drive uygulamasında).</string>
+    <string name="general_not_set">Ayarlanmadı</string>
+
+    <!-- Settings Screen: Security Section -->
+
+    <!-- Settings Screen: Recording Section -->
+    <string name="settings_tap_to_select_folder">Klasör seçmek için dokunun…</string>
+    <string name="settings_recording_folder_label">Kayıt klasörü</string>
+    <string name="folder_cloud_rejected">Bulut klasörleri (Google Drive gibi) kayıt için kullanılamaz. Cihaz içi depolama seçin — bulut kopyaları için Google Drive yedekleme seçeneğini kullanın.</string>
+    <string name="folder_drive_overlaps_recordings">Drive klasörü kayıt klasörünüz olamaz. Bir Google Drive klasörü seçin.</string>
+    <string name="folder_drive_overlap_warning">Bu sizin kayıt klasörünüz (veya onunla çakışıyor), bu yüzden Drive’a hiçbir şey kopyalanmaz. Bir Google Drive klasörü seçin.</string>
+    <string name="folder_cloud_warning">⚠ Bu kayıt klasörü bulutta ve yakalama için güvenilir değil. Cihaz içi bir klasör seçin.</string>
+
+    <!-- Offline recording (loopback) opt-in + security warning -->
+    <string name="settings_offline_recording_label">Wi-Fi dışında kaydetmeyi sürdür</string>
+    <string name="settings_offline_recording_desc">Bir kez Wi-Fi üzerinden kurun ve yeniden başlatmadan sonra yine; ondan sonra aramalar mobil veride veya ağsız kaydedilir. USB hata ayıklamanın açık olması gerekir.</string>
+    <string name="settings_handoff_persist_label">Yardımcı durursa kaydı sürdür</string>
+    <string name="settings_handoff_persist_description">Arka plan yardımcısı arama ortasında kapatılsa bile (ör. ekranı kilitlediğinizde) kaydı sürdürün.</string>
+    <string name="settings_usb_default_label">Ekran kilidi açılınca USB</string>
+    <string name="settings_usb_default_hint">“Yalnızca şarj”, arama sırasında ekranı kilitlerseniz kaydı canlı tutar. Diğer modlar USB’nin veri aktarmasına izin verir ama telefonu kilitlediğinizde kaydı kesebilir.</string>
+    <string name="settings_usb_default_applying">Uygulanıyor…</string>
+    <string name="settings_usb_default_shizuku_hint">Shizuku kullanırken buna dokunmayın. Değiştirmek Android’in hata ayıklama hizmetini yeniden başlatır ve Shizuku onunla birlikte durur — bir sonraki aramanın kaydedilebilmesi için Shizuku’yu yeniden başlatmanız gerekir.</string>
+    <string name="settings_usb_default_busy">Değiştirilmedi: bir kayıt sürüyor. Bunu değiştirmek Android’in hata ayıklama hizmetini yeniden başlatır, bu da kaydı bitirirdi.</string>
+    <string name="usb_mode_charging">Yalnızca şarj (veri yok)</string>
+    <string name="usb_mode_debugging_only">Yalnızca hata ayıklama</string>
+    <string name="usb_mode_file_transfer">Dosya aktarımı</string>
+    <string name="usb_mode_ptp">PTP</string>
+    <string name="usb_mode_tethering">USB internet paylaşımı</string>
+    <string name="usb_mode_midi">MIDI</string>
+    <string name="offline_recording_warning_title">Çevrimdışı kayıt açılsın mı?</string>
+    <string name="offline_recording_warning_message">Bu, Wi-Fi olmadan aramaların kaydedilebilmesi için telefonunuzda yerel bir hata ayıklama bağlantı noktası açar. Cihazınızın anahtarıyla korunur, ancak küçük bir güvenlik ödünüdür. Yalnızca Wi-Fi olmadan arama kaydetmeniz gerekiyorsa açın.</string>
+    <string name="offline_recording_warning_shizuku">Shizuku çalışıyor. Bunu açmak Android’in hata ayıklama hizmetini yeniden başlatır, bu da Shizuku’yu durdurur — CallVault hemen ardından onu yeniden başlatır ve başaramazsa size söyler.</string>
+    <string name="offline_recording_warning_continue">Yine de devam et</string>
+
+    <string name="settings_file_name_template">Dosya adı şablonu</string>
+    <string name="settings_file_name_template_preset">Hazır ayar</string>
+    <string name="settings_file_name_custom_desc">Kendi biçiminizi yazın</string>
+    <string name="settings_file_name_custom_tap_tag">Eklemek için bir etikete dokunun:</string>
+    <string name="settings_file_name_error_empty">Bir dosya adı biçimi yazın.</string>
+    <string name="settings_file_name_error_needs_date">{date} ekleyin: CallVault aramaları sıralamak ve birleştirmek için tarihe ihtiyaç duyar.</string>
+    <string name="settings_file_name_error_bad_character">Dosya adı / \\ : * ? \" &lt; &gt; | içeremez</string>
+    <string name="settings_file_name_error_unknown_tag">CallVault %1$s etiketini tanımıyor.</string>
+    <string name="settings_file_name_error_too_long">%1$d karakterin altında tutun.</string>
+    <string name="settings_file_name_preset_date_direction_number">Tarih · Yön · Numara</string>
+    <string name="settings_file_name_preset_date_number">Tarih · Numara</string>
+    <string name="settings_file_name_preset_date_contact">Tarih · Kişi</string>
+    <string name="settings_file_name_preset_date_direction_contact">Tarih · Yön · Kişi</string>
+    <string name="settings_file_name_preset_contact_number_date">Kişi · Numara · Tarih</string>
+    <string name="settings_file_name_preset_number_contact_date">Numara · Kişi · Tarih</string>
+    <string name="settings_file_name_preset_contact_date">Kişi · Tarih</string>
+    <string name="settings_file_name_preset_number_date">Numara · Tarih</string>
+    <string name="settings_file_name_preset_honor_dialer">Honor / Huawei telefon uygulaması</string>
+    <string name="honor_dialer_hint">Telefon uygulamanız, arama geçmişinden bir kaydı yalnızca %1$s içinde .m4a olarak kaydedilmişse oynatabilir. CallVault’ta %2$s ayarını o klasöre, %3$s ayarını AAC’ye getirin.</string>
+    <string name="honor_dialer_ready">✓ Hazır: klasör ve biçim ayarlandı.</string>
+    <string name="honor_dialer_missing">Değiştirilecek: %1$s</string>
+    <string name="settings_file_name_preset_custom">Özel</string>
+    <string name="settings_file_name_template_placeholders">Yer tutucular:</string>
+    <string name="settings_file_name_template_placeholders_preview">Önizleme: %1$s</string>
+    <string name="settings_file_name_template_example">Örnek: %1$s</string>
+    <string name="placeholder_date_desc">Geçerli tarih ve saat</string>
+    <string name="placeholder_day_desc">Gün, 20261112 gibi</string>
+    <string name="placeholder_day_dashed_desc">Tireli gün, 2026-11-12 gibi</string>
+    <string name="placeholder_time_desc">Saat, 143520 gibi</string>
+    <string name="placeholder_time_dashed_desc">Tireli saat, 14-35-20 gibi</string>
+    <string name="settings_file_name_error_day_time">{day} ve {time} birlikte kullanın, önce gün, aralarında _ - bir boşluk veya T olacak şekilde (örneğin {day}_{time}) ya da {date} kullanın.</string>
+    <string name="placeholder_direction_desc">Arama yönü (in/out)</string>
+    <string name="placeholder_phone_number_desc">Telefon numarası</string>
+    <string name="placeholder_contact_name_desc">Varsa kişi adı</string>
+    <string name="placeholder_cross_country_desc">Aramanın ülkeler arası olup olmadığını belirtir (true/false)</string>
+
+    <string name="settings_subsection_phone_calls">Telefon aramaları</string>
+    <string name="settings_carrier_recording">Telefon aramalarını kaydet</string>
+    <string name="settings_carrier_recording_description">Kapalı: telefon aramaları tamamen yok sayılır — kayıt yok, bildirim yok. Uygulama aramaları etkilenmez.</string>
+    <string name="settings_auto_record_incoming">Gelen telefon aramalarını otomatik kaydet</string>
+    <string name="settings_auto_record_outgoing">Giden telefon aramalarını otomatik kaydet</string>
+    <string name="settings_record_from_answer">Cevap verince başlat</string>
+    <string name="settings_record_from_answer_description">Giden telefon aramaları, çevirmeden değil karşı kişi açtığı andan itibaren kaydedilir. Uygulama bildiriminde arama sayacı gösteriyorsa uygulama aramaları da (WhatsApp gösterir).</string>
+    <string name="settings_ignore_anonymous_incoming">Gizli numaralı aramaları atla</string>
+    <string name="settings_ignore_cross_country_incoming">Gelen uluslararası aramaları atla</string>
+    <string name="settings_ignore_cross_country_outgoing">Giden uluslararası aramaları atla</string>
+    <string name="settings_ignore_contacts_incoming">Gelen telefon aramaları: kimler kaydedilsin</string>
+    <string name="settings_ignore_contacts_outgoing">Giden telefon aramaları: kimler kaydedilsin</string>
+    <string name="settings_ignore_contacts_none">Herkesi kaydet</string>
+    <string name="settings_ignore_contacts_all">Kayıtlı tüm kişileri atla</string>
+    <string name="settings_ignore_contacts_selected">Seçili kişileri atla</string>
+    <string name="settings_select_contacts">Kişi seç (%1$d)</string>
+    <string name="settings_select_contacts_incoming">Gelen kişileri seç</string>
+    <string name="settings_select_contacts_outgoing">Giden kişileri seç</string>
+    <string name="settings_record_only_selected_contacts">Yalnızca seçili kişileri kaydet</string>
+    <string name="settings_record_only_selected_hint">Yalnızca seçtiğiniz kişiler otomatik kaydedilir. Gizli numaralar dahil diğer aramalarda bunun yerine Kaydet düğmesi görünür.</string>
+    <string name="settings_select_record_only_incoming">Kaydedilecek kişiler (gelen)</string>
+    <string name="settings_select_record_only_outgoing">Kaydedilecek kişiler (giden)</string>
+
+    <!-- Settings Screen: Visual Section -->
+    <string name="settings_language">Dil</string>
+    <string name="settings_language_system">Sistem varsayılanı</string>
+    <string name="settings_theme_mode">Tema modu</string>
+    <string name="settings_dynamic_color">Sistem renklerini kullan</string>
+    <string name="settings_show_toasts">Açılır mesajları göster</string>
+    <string name="settings_vibration_enabled">İşlemlerde titreş</string>
+
+    <string name="settings_theme_mode_system">Sistem varsayılanı</string>
+    <string name="settings_theme_mode_light">Açık</string>
+    <string name="settings_theme_mode_dark">Koyu</string>
+
+    <!-- Settings Screen: Audio Section -->
+    <string name="settings_audio_codec">Ses kodeği</string>
+    <string name="settings_audio_bitrate_recommendation">Sorun yaşarsanız AAC’yi deneyin, üreticiler tarafından yaygın şekilde desteklenir.</string>
+
+    <string name="settings_audio_bitrate">Ses bit hızı</string>
+
+    <string name="settings_audio_source">Ses kaynağı</string>
+    <string name="audio_source_voice_comm_description">Sesli iletişim için ayarlanmış mikrofon ses kaynağı. Yerleşik yankı önleme.</string>
+
+    <string name="audio_source_mic_description">Sesi doğrudan cihazın ana mikrofonundan yakalar. Hafif gürültü azaltma.</string>
+
+    <string name="audio_source_voice_call_description">Bir telefon aramasının her iki tarafını kaydeder. Ham ses, telefon tonlarıyla birlikte.</string>
+
+    <string name="audio_source_playback_description">Kaydı kısıtlayanlar hariç (uygulama vazgeçme işaretlerine uyar) diğer uygulamalardan ses yakalar.</string>
+
+    <string name="audio_source_output_description">Hoparlörlerinize gönderilen son, birleşik sesi olduğu gibi yakalar.</string>
+
+    <string name="audio_source_mic_unprocessed_description">Hiçbir otomatik süzme veya iyileştirme olmadan ham, doğal mikrofon sesini yakalar.</string>
+
+    <string name="audio_source_mic_camcorder_description">Video kaydı için ayarlanmış, kameranın yönündeki sese odaklanır.</string>
+
+    <string name="audio_source_mic_voice_recognition_description">İşlemesi konuşma tanıma için ayarlanmış mikrofon (azaltılmış gürültü).</string>
+
+    <string name="audio_source_voice_call_uplink_description">Bir telefon aramasının yalnızca sizin tarafınızı kaydeder (yukarı bağlantı).</string>
+
+    <string name="audio_source_voice_call_downlink_description">Bir telefon aramasının yalnızca karşı kişinin tarafını kaydeder (aşağı bağlantı).</string>
+
+    <string name="audio_source_voice_performance_description">Canlı müzik ve gerçek zamanlı ses uygulamaları için tasarlanmış yüksek hızlı mikrofon modu.</string>
+
+    <!-- Settings Screen: Debug section (always visible) -->
+    <string name="settings_debug_logging_enabled">Günlüğü etkinleştir</string>
+    <string name="settings_debug_logging_enabled_description">Bir hata bildirmek için bunu etkinleştirin, sorunu yeniden oluşturun, sonra kapatın ve günlükleri paylaşın.</string>
+    <string name="settings_bugreport_active_warning">Hata ayıklama günlüğü AÇIK. Yer kazanmak için işiniz bitince kapatmayı unutmayın.</string>
+    <string name="settings_bugreport_share_hint">Son hata ayıklama oturumunuzun günlükleri paylaşıma hazır.</string>
+    <string name="settings_bugreport_share">Paylaş</string>
+    <string name="settings_bugreport_preparing">Hata ayıklama raporu hazırlanıyor…</string>
+    <string name="settings_bugreport_share_empty">Henüz günlük yok. Hata ayıklama günlüğünü etkinleştirin, sorunu yeniden oluşturun, sonra paylaş’a dokunun.</string>
+    <string name="settings_bugreport_share_chooser">Hata ayıklama günlüklerini paylaş</string>
+
+    <!-- Persistent reminder that debug logging is enabled -->
+    <string name="debug_notification_channel_name">Hata ayıklama günlüğü</string>
+    <string name="debug_notification_title">Hata ayıklama günlüğü açık</string>
+    <string name="debug_notification_text">CallVault’u açmak ve işiniz bitince kapatmak için dokunun.</string>
+
+    <!-- Settings Screen: About/Server Section -->
+    <string name="settings_copy_version">Sürümü kopyala</string>
+    <string name="settings_view_licenses">Lisansları görüntüle</string>
+    <string name="settings_support_label">Geliştirmeyi destekle</string>
+    <string name="settings_support_value">Bana bir kahve ısmarla</string>
+    <string name="settings_support_supporting">Nereye bağış yapacağınızı seçin; tarayıcınızda açılır</string>
+
+    <!-- ContactSelection Dialog -->
+    <string name="contact_search_hint">Ada veya numaraya göre ara…</string>
+    <string name="contact_select_all">Tümünü seç</string>
+    <string name="contact_unselect_all">Seçimi kaldır</string>
+    <!-- ========================================== -->
+    <!-- SERVICES & BACKGROUND                      -->
+    <!-- ========================================== -->
+
+    <!-- Recording Service: Notifications -->
+    <string name="recording_standby_notification_title">Arama sürüyor</string>
+    <string name="recording_notification_cross_country_tip">🌐Ülkeler arası</string>
+    <string name="recording_notification_current_country_tip">🏠Yurt içi</string>
+    <string name="recording_notification_title">Kayıt sürüyor</string>
+    <string name="recording_notification_press_to_start">Kaydı başlatmak için basın</string>
+    <string name="recording_notification_waiting">Kayda hazırlanıyor…</string>
+    <string name="recording_notification_press_to_pause">Kaydı duraklatmak için basın</string>
+    <string name="recording_notification_press_to_resume">Kaydı sürdürmek için basın</string>
+    <string name="recording_toast_standby">%1$s araması için beklemeye geçiliyor.</string>
+    <string name="recording_toast_ended">Arama bitti. Kayıt durdu.</string>
+    <string name="recording_toast_paused">Kayıt duraklatıldı.</string>
+    <string name="recording_toast_resumed">Kayıt sürdürüldü.</string>
+    <string name="recording_started">Kayıt başladı.</string>
+    <!-- Recording Service: Errors -->
+    <string name="recording_error_title">Kayıt hatası</string>
+    <string name="recording_error_folder_missing">Seçilen çıktı klasörü eksik, geçersiz veya ona yazma iznimiz yok. Uygulama ayarlarından birini seçin.</string>
+    <string name="recording_error_server_missing">Scrcpy-server ikili dosyası eksik veya SHA256 güvenlik denetimi başarısız oldu. Bu olmamalı, lütfen bildirin.</string>
+    <string name="recording_error_file_creation">Kayıt dosyası oluşturulamadı. Lütfen depolama izinlerini denetleyin ve/veya uygulama ayarlarından yeni bir kayıt klasörü seçin.</string>
+    <string name="recording_error_start_failed">Kayıt başlatılamadı. ShellService binder yöntemi çağrılırken bir hata oluştu.</string>
+    <string name="recording_error_empty_file_shizuku">Kayıt boş — hiç ses yakalanmadı. Shizuku’yu açıp hâlâ çalıştığını denetleyin; telefon yeniden başlayınca durur.</string>
+    <string name="recording_error_empty_file">Kayıt boş — kaydedici arka plan hizmeti çalışmadığı için hiç ses yakalanmadı. Geliştirici seçeneklerinin ve Kablosuz hata ayıklamanın açık olduğunu denetleyin.</string>
+    <string name="recording_error_daemon_died">Kaydedici arka plan hizmeti durdu — bu arama KAYDEDİLMİYOR. Geliştirici seçeneklerinin ve Kablosuz hata ayıklamanın açık olduğunu denetleyin.</string>
+    <string name="recording_error_capture_never_started">Kayıt başlamadı — Ayarlar’da farklı bir ses biçimi deneyin</string>
+    <string name="recording_error_drive_copy_failed">Bir kayıt bulut klasörünüze kopyalanamadı. Yine de bu cihazda kayıtlı — Ayarlar’da klasörü denetleyin.</string>
+    <string name="recording_unexpected_error">Kayıt sırasında beklenmeyen bir hata oluştu. Lütfen bunu, yeniden oluşturma adımları ve uygulama günlükleriyle birlikte bildirin.</string>
+
+    <!-- Setup Wizard -->
+    <string name="wizard_title">CallVault’u kur</string>
+    <string name="wizard_step_of">Adım %1$d / %2$d</string>
+    <string name="wizard_back">Geri</string>
+    <string name="wizard_next">İleri</string>
+    <string name="wizard_finish">Bitir</string>
+    <string name="wizard_choose_folder">Klasör seç</string>
+    <!-- Wizard: Storage step -->
+    <string name="wizard_storage_title">Kayıtlar nereye kaydedilsin</string>
+    <string name="wizard_storage_subtitle">Kayıtlarınızın nerede saklanacağını seçin. Bunu daha sonra Ayarlar’dan değiştirebilirsiniz.</string>
+    <string name="wizard_storage_line">Kayıtlarınız için bir klasör seçin.</string>
+    <string name="wizard_storage_drive_note">Google Drive ile bu cihazdaki kopya geçicidir ve yüklendikten sonra silinir.</string>
+    <!-- Wizard: Schedule step -->
+    <string name="wizard_schedule_title">Drive’a ne zaman yüklensin</string>
+    <string name="wizard_schedule_subtitle">Kayıtların Google Drive klasörünüze ne sıklıkla yükleneceğini seçin.</string>
+    <string name="wizard_schedule_line">Kayıtların ne zaman yükleneceğini seçin.</string>
+    <string name="wizard_schedule_mode_label">Yükleme zamanlaması</string>
+    <string name="wizard_schedule_immediate">Hemen</string>
+    <string name="wizard_schedule_daily">Günlük</string>
+    <string name="wizard_schedule_weekly">Haftalık</string>
+    <string name="wizard_schedule_immediate_note">Her arama biter bitmez otomatik olarak yüklenir.</string>
+    <string name="wizard_schedule_day_label">Haftanın günü</string>
+    <string name="wizard_schedule_hour_label">Saat</string>
+    <string name="wizard_schedule_minute_label">Dakika</string>
+    <string name="wizard_day_sunday">Pazar</string>
+    <string name="wizard_day_monday">Pazartesi</string>
+    <string name="wizard_day_tuesday">Salı</string>
+    <string name="wizard_day_wednesday">Çarşamba</string>
+    <string name="wizard_day_thursday">Perşembe</string>
+    <string name="wizard_day_friday">Cuma</string>
+    <string name="wizard_day_saturday">Cumartesi</string>
+    <!-- Wizard: Auto-record step -->
+    <string name="wizard_auto_record_title">Otomatik kayıt</string>
+    <string name="wizard_auto_record_subtitle">Hangi aramaların otomatik kaydedileceğini seçin. Bunu daha sonra Ayarlar’dan ince ayarlayabilirsiniz.</string>
+    <string name="wizard_auto_record_line">Hangi aramaların kendiliğinden kaydedileceğini seçin.</string>
+    <string name="wizard_auto_record_nothing_warning">Hem telefon aramaları hem uygulama aramaları kapalıyken CallVault hiçbir şey kaydetmez. İstediğiniz bu değilse en az birini açın.</string>
+    <!-- Wizard: Audio step -->
+    <string name="wizard_experimental_title">İsteğe bağlı ekstralar</string>
+    <string name="wizard_experimental_subtitle">Varsayılan olarak kapalıdır — daha sonra Ayarlar’dan açabilirsiniz.</string>
+    <string name="wizard_experimental_line">Varsayılan olarak kapalı.</string>
+    <string name="wizard_updates_title">Güncel kalmak</string>
+    <string name="wizard_updates_subtitle">CallVault bir uygulama mağazasında değil, bu yüzden yeni sürümleri GitHub’dan kendisi denetler.</string>
+    <string name="wizard_updates_line">CallVault yeni sürümleri nasıl bulur.</string>
+    <string name="wizard_reliability_title">Güvenilir kayıt</string>
+    <string name="wizard_reliability_subtitle">Zor koşullarda kaydın çalışmasını sağlayan iki isteğe bağlı ayar. Bunları atlayıp daha sonra Ayarlar’dan değiştirebilirsiniz.</string>
+    <string name="wizard_reliability_line">İki isteğe bağlı güvenlik ağı.</string>
+    <string name="wizard_reliability_usb_title">Ekran kilitlenince de kaydetmeyi sürdür</string>
+    <string name="wizard_reliability_usb_desc">Bazı telefonlarda arama sırasında ekranı kilitlemek kaydı durdurabilir. USB’yi “Yalnızca şarj”a ayarlamak bunu önler. (Telefon bir bilgisayara takılınca varsayılan olarak şarj olur — ihtiyacınız olduğunda Dosya aktarımını elle seçin.)</string>
+    <string name="wizard_reliability_usb_button">USB’yi Yalnızca şarj yap</string>
+    <string name="wizard_reliability_usb_done">USB Yalnızca şarj olarak ayarlandı</string>
+    <string name="wizard_transcription_title">Aramaları metne dönüştürme</string>
+    <string name="wizard_transcription_subtitle">CallVault bir kaydı telefonun kendisinde metne dönüştürebilir ve ondan kısa bir özet yazabilir — hiçbir şey hiçbir yere gönderilmez. Bunun ne zaman olacağını, aramalarınızın hangi dilde olduğunu seçin ve gerekenleri indirin.</string>
+    <string name="wizard_transcription_line">Aramaları bu telefonda metne dönüştürün.</string>
+    <string name="wizard_transcription_language_note">Bu telefonun ayarlı olduğu dile ayarlandı. Dili belirtmek, uygulamanın tahmin etmesine izin vermekten çok daha güvenilirdir ve daha sonra arama başına farklı bir dil seçebilirsiniz.</string>
+    <string name="wizard_transcription_model_note">Yazıya dökmek için önce telefonda bir konuşma modeli gerekir: %1$s %2$d MB, %3$s %4$d MB. Bir aramayı yazıya dökmek sonra yaklaşık aramanın süresi kadar sürer ve işlemciyi yorar.</string>
+    <string name="wizard_transcription_model_sizes_note">Yazıya dökmek için önce telefonda bir konuşma modeli gerekir: %1$s. Bir aramayı yazıya dökmek sonra yaklaşık aramanın süresi kadar sürer ve işlemciyi yorar.</string>
+    <string name="wizard_transcription_model_size">%1$s %2$d MB</string>
+    <!-- Joins the list above. A resource because the comma is not the right separator everywhere. -->
+    <string name="list_separator">", "</string>
+    <string name="wizard_transcription_summary_heading">Özetler</string>
+    <string name="wizard_transcription_summary_body">Bir aramanın yazıya dökümü olduğunda CallVault ondan kısa bir özet de yazabilir — buradaki her şey gibi telefonda.</string>
+    <string name="wizard_transcription_background_note">Her iki indirme de arka planda sürer. Devam edip kurulumu şimdi bitirebilirsiniz — CallVault’un ayarları sonrasında aynı ilerlemeyi gösterir.</string>
+
+    <string name="wizard_audio_title">Ses kalitesi</string>
+    <string name="wizard_audio_subtitle">Kayıt biçimini ve bit hızını seçin. Küçük dosya boyutlarında net ses için 16 kbps’de Opus önerilir.</string>
+    <string name="wizard_audio_line">Biçimi ve kaliteyi seçin.</string>
+    <string name="wizard_filename_title">Dosya adı biçimi</string>
+    <string name="wizard_filename_subtitle">Kaydedilen kayıtların nasıl adlandırılacağını seçin.</string>
+    <string name="wizard_filename_line">Dosyaların nasıl adlandırılacağını seçin.</string>
+
+    <!-- Home -->
+    <string name="home_all_set_message">Hazırsınız. CallVault aramalarınızı kaydetmeye hazır.</string>
+    <string name="home_open_settings">Ayarlar</string>
+
+    <!-- Home: status card -->
+    <string name="home_status_no_folder_title">Kayıt klasörü ayarlanmadı</string>
+    <string name="home_status_no_folder_suggestion">Kayıtların nereye kaydedileceğini seçmek için Ayarlar’ı açın.</string>
+    <string name="home_status_not_paired_title">Kurulum tamamlanmadı</string>
+    <string name="home_status_not_paired_suggestion">Kurulumda Kablosuz hata ayıklama eşleştirmesini bitirin.</string>
+    <string name="home_status_dev_options_off_title">Geliştirici seçenekleri kapalı</string>
+    <string name="home_status_dev_options_off_suggestion">CallVault, Geliştirici seçeneklerine ihtiyaç duyan Kablosuz hata ayıklama üzerinden kaydeder. Sistem ayarlarında Geliştirici seçeneklerini (ve Kablosuz hata ayıklamayı) yeniden açana kadar kayıt çalışamaz.</string>
+    <string name="home_status_update_regrant_title">Kaydı sürdürmek için yeniden bağlanın</string>
+    <string name="home_status_update_regrant_suggestion">Bir güncelleme, CallVault’un kaydı yeniden başlatması için gereken bir izni kaldırdı. Şimdilik hâlâ çalışabilir — buraya dokunun, sonra geri yüklemek için Kablosuz hata ayıklamayı bir kez açın. Yeniden yüklemeye gerek yok.</string>
+    <string name="home_status_ready_title">Kayda hazır</string>
+    <string name="home_status_ready_suggestion">CallVault, ayarlarınıza göre aramaları otomatik kaydeder.</string>
+    <string name="home_status_stopped_title">Kayıt durdu</string>
+    <string name="home_status_stopped_suggestion">CallVault kapalı, aramalar kaydedilmeyecek.</string>
+    <string name="home_hero_pill_stopped">Durdu</string>
+    <string name="home_hero_pill_starting">Başlıyor…</string>
+    <string name="home_recording_stop">Durdur</string>
+    <string name="home_recording_start">Başlat</string>
+    <string name="tile_recording_on">Kayıt açık</string>
+    <string name="tile_recording_stopped">Durdu</string>
+
+    <!-- Home: recordings list -->
+    <string name="home_recordings_title">Kayıtlar</string>
+    <string name="home_recordings_empty">Henüz kayıt yok.</string>
+
+    <!-- Home: inline player -->
+    <string name="home_player_play">Oynat</string>
+    <string name="home_player_pause">Duraklat</string>
+    <string name="home_player_stop">Durdur</string>
+    <string name="home_player_loading">Yükleniyor…</string>
+    <string name="home_player_error">Bu dosya oynatılamadı.</string>
+    <!-- Recordings list, the row that is playing: "1:12 of 4:23" (position, then length). -->
+    <string name="home_player_position_of">%1$s / %2$s</string>
+    <!-- Screen-reader name of the seek bar on the playing row. -->
+    <string name="home_player_seek">Oynatma konumu</string>
+
+    <!-- Home: delete recording -->
+    <string name="home_share">Paylaş</string>
+    <string name="home_share_chooser">Kaydı paylaş</string>
+    <string name="home_row_menu">Daha fazla seçenek</string>
+    <string name="home_delete">Sil</string>
+    <string name="selection_select_all">Tümünü seç</string>
+    <string name="selection_clear_all">Seçimi temizle</string>
+    <string name="home_delete_confirm_title">Kayıt silinsin mi?</string>
+    <string name="home_delete_confirm_message">Bu, %1$s kaydını kalıcı olarak siler.</string>
+    <string name="home_delete_scope_message">Bu kayıt bu cihazda ve Drive’da kayıtlı.</string>
+    <string name="home_delete_scope_option_size">%1$s (%2$s)</string>
+    <string name="settings_section_updates">Güncellemeler</string>
+    <string name="settings_update_check_label">Güncellemeleri denetle</string>
+    <string name="settings_update_check_description">Günde bir kez GitHub’da yeni bir sürüm arar.</string>
+    <string name="support_appeal_title">CallVault için bir bahşiş ☕</string>
+    <string name="support_appeal_body">CallVault’u boş zamanımda sürdürüyorum. kitsumed’in ShizuCallRecorder’ının bir çatalı olarak başladı ve o zamandan beri çok büyüdü. Ücretsiz, açık kaynak, reklamsız, izlemesiz. Size yararlıysa küçük bir bahşiş beni ayakta tutar. Teşekkürler! 🙏</string>
+    <string name="support_donate">Bağış yap</string>
+    <string name="support_not_now">Şimdi değil</string>
+    <string name="home_bulk_delete_message">Bu geri alınamaz.</string>
+    <string name="home_bulk_delete_scope_message">Bazıları hem bu cihazda hem Drive’da kayıtlı.</string>
+    <string name="home_bulk_delete_device_only">Yalnızca cihaz</string>
+    <string name="home_bulk_delete_drive_only">Yalnızca Drive</string>
+    <string name="home_bulk_delete_both">Her iki kopya</string>
+    <plurals name="home_selected_count">
+        <item quantity="one">%1$d seçildi</item>
+        <item quantity="other">%1$d seçildi</item>
+    </plurals>
+    <plurals name="home_bulk_delete_title">
+        <item quantity="one">%1$d kayıt silinsin mi?</item>
+        <item quantity="other">%1$d kayıt silinsin mi?</item>
+    </plurals>
+    <string name="home_bulk_delete_scope_label">Silinecek kopyalar</string>
+    <string name="home_bulk_delete_option_count">%1$s (%3$d içinden %2$d)</string>
+    <string name="home_bulk_delete_kept_drive">%1$s saklanacak — yalnızca Drive’da.</string>
+    <string name="home_bulk_delete_kept_device">%1$s saklanacak — yalnızca bu cihazda.</string>
+    <plurals name="home_bulk_delete_kept_count">
+        <item quantity="one">%1$d kayıt</item>
+        <item quantity="other">%1$d kayıt</item>
+    </plurals>
+    <string name="settings_debug_log_file">Günlük dosyası</string>
+    <string name="settings_debug_journal_hint">İlk çalıştırmadan beri hep tutulan kurulum günlüğünü içerir. Okumak için dokunun.</string>
+    <string name="settings_debug_log_view_hint">En son girdileri okumak için dokunun.</string>
+    <string name="settings_debug_log_delete">Günlüğü sil</string>
+    <string name="settings_debug_log_delete_title">Günlük silinsin mi?</string>
+    <string name="settings_debug_log_delete_message">Şimdiye kadar toplanan girdiler kaldırılır. Günlük tutma hâlâ açıksa yeni bir günlük hemen başlar.</string>
+    <string name="settings_debug_log_empty">Günlük boş.</string>
+    <!-- Transcription (on-device speech to text) -->
+    <string name="settings_section_transcription">Yazıya döküm</string>
+    <string name="transcription_mode_label">Yazıya dök</string>
+    <string name="transcription_mode_manual">Elle</string>
+    <string name="transcription_mode_after_each_call">Her aramadan sonra</string>
+    <string name="transcription_mode_automatic">Zamanlanmış</string>
+    <string name="transcription_hour_label">Saat</string>
+    <string name="transcription_minute_label">Dakika</string>
+    <string name="transcription_time_label">Çalışma zamanı</string>
+    <string name="transcription_warning_title">Yazıya döküm yavaş ve ağırdır</string>
+    <string name="transcription_warning_message">Bir aramayı yazıya dökmek kabaca kendi süresi kadar sürer ve bu sırada telefonunuzun tüm çekirdeklerini kullanır. Isınmasını ve belirgin pil kullanmasını bekleyin.\n\nBir çalıştırmayı istediğiniz zaman başlığın yanındaki rozetten durdurabilirsiniz.</string>
+    <string name="transcription_warning_confirm">Aç</string>
+    <string name="transcription_charging_title">Yalnızca şarj olurken</string>
+    <string name="transcription_charging_subtitle">Yazıya döküm işlemciyi yoğun kullanır ve pili tüketir.</string>
+    <string name="heavy_work_channel_name">Arka plan işleme</string>
+    <string name="heavy_work_notification_text">Bu çalışırken telefonunuz ısınabilir.</string>
+    <string name="heavy_work_transcribing">Bir kayıt yazıya dökülüyor</string>
+    <string name="heavy_work_summarising">Bir kayıt özetleniyor</string>
+    <string name="heavy_work_importing_model">Bir model içe aktarılıyor</string>
+    <string name="heavy_work_backing_up_model">Bir model yedekleniyor</string>
+    <string name="drive_copy_title">Kayıtlar Drive’a kopyalanıyor</string>
+    <string name="drive_copy_progress">%2$d içinden %1$d kopyalandı</string>
+    <string name="drive_copy_stop">Şimdilik durdur</string>
+    <string name="transcription_model_label">Model</string>
+    <string name="transcription_model_small">Hızlı</string>
+    <string name="transcription_model_best">En iyi kalite</string>
+    <string name="transcription_model_best_small_download">En iyi kalite, daha küçük indirme</string>
+    <string name="transcription_model_persian">Farsçaya ayarlı</string>
+    <string name="transcription_model_persian_licence">En iyi kalite, Farsça konuşmayla eğitilmiş. givia’nın Whisper large-v3-turbo Persian modeli, CC BY 4.0 lisansı, whisper.cpp için nicemlenmiş. CallVault’a dahil edilmek yerine ayrıca indirilir.</string>
+    <string name="transcription_model_download">Modeli indir</string>
+    <string name="transcription_model_download_subtitle">%1$d MB</string>
+    <string name="transcription_model_delete">Modeli sil</string>
+    <string name="transcription_model_installed">İndirildi ve hazır</string>
+    <string name="transcription_model_downloading">İndiriliyor… %1$d%%</string>
+    <string name="transcription_model_waiting">Wi-Fi bekleniyor</string>
+    <string name="model_importing">İçe aktarılıyor… %1$d%%</string>
+    <string name="model_import_waiting">İçe aktarmaya hazırlanılıyor…</string>
+    <string name="model_import">Bir dosyadan içe aktar</string>
+    <string name="model_import_subtitle">Zaten elinizde olan bir kopyayı kullanın</string>
+    <string name="model_import_info">Resmî model dosyasını seçin (%1$s, %2$d MB). CallVault kullanmadan önce tam olarak o dosya olduğunu denetler ve kopyanızı olduğu yerde bırakır.</string>
+    <string name="model_import_failed_wrong_file">Bu doğru dosya değil. %1$s dosyasını seçin.</string>
+    <string name="model_import_failed_other_model">Bu başka bir modelin dosyası (%1$s). Önce o modeli seçin, sonra içe aktarın.</string>
+    <string name="model_import_failed_unreadable">Bu dosya okunamadı. Yeniden seçin.</string>
+    <string name="model_import_failed_space">İçe aktarmak için yeterli boş alan yok.</string>
+    <string name="model_backup">Yedekle</string>
+    <string name="model_backup_subtitle">Yeniden yüklemeden sonra kalması için bir kopya kaydedin</string>
+    <string name="model_backup_info">Model dosyasını seçtiğiniz bir klasöre kaydeder. Yeniden yüklemeden sonra veya yeni bir telefonda, yeniden indirmek yerine bu dosyayla İçe aktar’ı kullanın.</string>
+    <string name="model_backing_up">Yedekleniyor… %1$d%%</string>
+    <string name="model_backup_waiting">Yedeklemeye hazırlanılıyor…</string>
+    <string name="model_backup_done">Kaydedildi</string>
+    <string name="model_backup_failed">Yedekleme bitmedi. Yeniden deneyin.</string>
+    <string name="transcription_model_resume">İndirmeyi sürdür</string>
+    <string name="transcription_model_resume_subtitle">%2$d MB’ın %1$d MB’ı zaten indirildi</string>
+    <string name="transcription_model_failed_space">Yeterli boş alan yok. Biraz yer açıp yeniden deneyin.</string>
+    <string name="transcription_model_failed_verify">İndirme hasarlıydı ve atıldı. Yeniden deneyin.</string>
+    <string name="transcription_model_failed">İndirme bitmedi. Yeniden deneyin.</string>
+
+    <string name="summary_model_download">Özetleyiciyi indir</string>
+    <string name="summary_model_download_subtitle">%1$.1f GB</string>
+    <string name="summary_model_delete">Özetleyiciyi sil</string>
+    <string name="summary_model_installed">İndirildi ve hazır</string>
+    <string name="summary_model_downloading">İndiriliyor… %1$d%%</string>
+    <string name="summary_model_waiting">Wi-Fi bekleniyor</string>
+    <!-- Asked when Download is tapped on mobile data. %1$s is the size as the download row shows it ("190 MB", "3.5 GB"). -->
+    <string name="mobile_data_download_title">Wi-Fi’de değilsiniz</string>
+    <string name="mobile_data_download_body">Bu model %1$s. Şimdi mobil veriyle indirilsin mi, yoksa Wi-Fi’deyken kendiliğinden başlaması için beklensin mi?</string>
+    <string name="mobile_data_download_wait">Wi-Fi’yi bekle</string>
+    <string name="mobile_data_download_now">Şimdi mobil veriyle indir</string>
+    <string name="summary_model_cancel">İndirmeyi iptal et</string>
+    <string name="summary_model_resume">İndirmeyi sürdür</string>
+    <string name="summary_model_resume_subtitle">%2$.1f GB’ın %1$.1f GB’ı zaten indirildi</string>
+    <string name="summary_model_discard">İndirileni at</string>
+    <string name="summary_model_discard_subtitle">%1$.1f GB yer açar</string>
+    <string name="summary_model_failed_space">Yeterli boş alan yok. Biraz yer açıp yeniden deneyin.</string>
+    <string name="summary_model_failed_verify">İndirme hasarlıydı ve atıldı. Yeniden deneyin.</string>
+    <string name="summary_model_failed">İndirme bitmedi. Yeniden deneyin.</string>
+    <string name="summary_requirements_title">Bunun için gerekenler</string>
+    <string name="summary_requirements_body">Özetler telefonunuzda yazılır — hiçbir şey hiçbir yere gönderilmez. Bunun bedeli %1$.1f GB’lık bir indirme ve çalışırken yaklaşık %2$.1f GB bellektir, bu yüzden yeri bol yeni bir telefon gerekir. Kısa bir arama bir iki dakika sürer.</string>
+    <string name="summary_model_licence">Özetleyici, Google’ın Gemma 4 modelidir ve Apache 2.0 lisansı altında kullanılır. CallVault’a dahil edilmek yerine ayrıca indirilir.</string>
+
+    <string name="summary_card_title">Özet</string>
+    <string name="summary_card_decisions">Kararlar</string>
+    <string name="summary_card_actions">Yapılacaklar</string>
+    <string name="summary_card_key_points">Önemli noktalar</string>
+    <string name="summary_card_facts">Saklamaya değer</string>
+    <string name="summary_card_provenance">Yazıya dökümden oluşturuldu</string>
+    <string name="summary_card_redo">Yeniden yaz</string>
+    <string name="summary_card_create">Bu aramayı özetle</string>
+    <string name="summary_card_create_subtitle">Telefonunuzda yazılır, bir iki dakika sürer</string>
+    <string name="summary_card_running">Özetleniyor… %1$d%%</string>
+    <string name="summary_card_stop">Durdur</string>
+    <string name="summary_card_blocked_no_transcript">Önce bu aramayı yazıya dökün — özet yazıya dökümden yazılır.</string>
+    <string name="summary_card_blocked_unfinished">Yazıya dökümün bitmesi bekleniyor.</string>
+    <string name="summary_card_blocked_empty">Bu yazıya dökümde hiç sözcük yok, bu yüzden özetlenecek bir şey yok.</string>
+    <string name="summary_card_blocked_model">Önce Ayarlar’da özetleyiciyi indirin.</string>
+    <string name="summary_card_blocked_transcribing">Yazıya dökümün bitmesi bekleniyor — telefonu paylaşamazlar.</string>
+    <string name="summary_card_blocked_summarising">Başka bir arama özetleniyor.</string>
+    <string name="summary_card_failed">Bu, kullanılabilir bir özet üretmedi. Yeniden deneyebilirsiniz.</string>
+
+    <string name="summary_requirements_heading">İndirmeden önce</string>
+    <string name="summary_requirements_download">İndirmek için %1$.1f GB</string>
+    <string name="summary_requirements_memory">Çalışırken yaklaşık %1$.1f GB bellek</string>
+    <string name="summary_requirements_time">Kısa bir arama için kabaca bir iki dakika, uzun bir arama için daha uzun</string>
+    <string name="summary_requirements_private">Her şey telefonunuzda olur. Hiçbir şey hiçbir yere gönderilmez.</string>
+    <string name="summary_requirements_phone">Yeri bol yeni bir telefon gerekir. Eski bir telefonda yavaş olabilir veya başarısız olabilir.</string>
+    <string name="summary_requirements_continue">İndir</string>
+    <string name="summary_requirements_cancel">Şimdi değil</string>
+    <string name="summary_requirements_dont_ask">Bunu bir daha gösterme</string>
+    <string name="summary_requirements_toggle_description">İndirmeden önce özetleyicinin neye mal olduğunu göster</string>
+    <string name="summary_delete_confirm_title">Özetleyici silinsin mi?</string>
+    <string name="summary_delete_confirm_body">Bu, %1$.1f GB yer açar. Daha önce yazdığınız özetler saklanır, ancak daha fazlasını yazmak için yeniden indirmeniz gerekir.</string>
+    <string name="summary_delete_confirm_confirm">Sil</string>
+    <string name="summary_discard_confirm_title">İndirme atılsın mı?</string>
+    <string name="summary_discard_confirm_body">Bu, zaten indirilen %1$.1f GB’ı atar. Yeniden başlamak hepsini baştan indirirdi.</string>
+    <string name="summary_discard_confirm_confirm">At</string>
+    <string name="transcription_language_label">Dil</string>
+    <string name="transcription_language_hebrew">İbranice</string>
+    <string name="transcription_language_english">İngilizce</string>
+    <string name="transcription_language_arabic">Arapça</string>
+    <string name="transcription_language_russian">Rusça</string>
+    <string name="transcription_language_french">Fransızca</string>
+    <string name="transcription_language_spanish">İspanyolca</string>
+    <string name="transcription_language_chinese">Çince</string>
+    <string name="transcription_language_german">Almanca</string>
+    <string name="transcription_language_hungarian">Macarca</string>
+    <string name="transcription_language_italian">İtalyanca</string>
+    <string name="transcription_language_polish">Lehçe</string>
+    <string name="transcription_language_portuguese">Portekizce</string>
+    <string name="transcription_language_vietnamese">Vietnamca</string>
+    <string name="transcription_language_greek">Yunanca</string>
+    <string name="transcription_language_persian">Farsça</string>
+    <string name="transcription_language_urdu">Urduca</string>
+    <string name="transcription_language_bengali">Bengalce</string>
+    <string name="transcription_language_cantonese">Kantonca (粵語)</string>
+    <string name="transcription_language_turkish">Türkçe</string>
+    <string name="transcription_language_ukrainian">Ukraynaca</string>
+    <string name="transcription_language_auto">Otomatik algıla</string>
+    <string name="language_search_placeholder">Dil ara</string>
+    <string name="language_search_clear">Aramayı temizle</string>
+    <string name="language_search_no_match">Eşleşen dil yok</string>
+    <string name="transcription_language_auto_hint">Algılama, Latin harfleriyle yazılmayan diller için güvenilir değildir — İbranice, Arapça, Rusça ve Çince çoğu zaman İngilizce harflerle heceleyerek veya tek uzun bir metin bloğu olarak döner. Mümkünse dili belirtin.</string>
+    <string name="transcription_note_manual">Yazıya dökümler yalnızca siz bir kayıttaki düğmeden istediğinizde yapılır.</string>
+    <string name="transcription_note_after_each_call">Her arama biter bitmez yazıya dökülür. Eski aramalara dokunulmaz — onları bir kayıttaki düğmeden yazıya dökün.</string>
+    <string name="transcription_note_automatic">Henüz yazıya dökümü olmayan aramalar seçilen zamanda yazıya dökülür. 30 dakikalık bir arama yaklaşık 30 dakika sürer.</string>
+    <string name="transcription_batch_label">Çalıştırma başına arama</string>
+    <string name="transcription_batch_no_limit">Sınır yok</string>
+    <string name="playback_title">Kayıt</string>
+    <string name="playback_skip_back">10 saniye geri</string>
+    <string name="playback_skip_forward">10 saniye ileri</string>
+    <string name="playback_speed">%1$s×</string>
+    <string name="playback_open_transcript">Yazıya dökümü oku</string>
+    <string name="playback_note_title">Not</string>
+    <string name="playback_note_hint">Bu arama neyle ilgiliydi…</string>
+    <string name="transcript_action_transcribe">Bu aramayı yazıya dök</string>
+    <string name="transcript_action_transcribe_short">Yazıya dök</string>
+    <string name="transcribe_estimate_under_minute">bir dakika</string>
+    <string name="transcribe_estimate_minutes">%1$d dk</string>
+    <string name="transcribe_estimate_hours">%1$d sa %2$d dk</string>
+    <string name="transcribe_confirm_title">Bu yaklaşık %1$s sürecek</string>
+    <string name="transcribe_confirm_title_unknown">Bu arama yazıya dökülsün mü?</string>
+    <string name="transcribe_confirm_title_first_run">İlki biraz zaman alabilir</string>
+    <string name="summary_card_blocked_model_action">Özetleyiciyi indir</string>
+    <string name="transcribe_confirm_message">Bu aramayı yazıya dökmek telefonunuzu meşgul eder ve belirgin pil kullanır. İstediğiniz zaman durdurabilirsiniz.\n\nBu soru Ayarlar’da Yazıya döküm altından yeniden açılabilir.</string>
+    <string name="transcribe_confirm_dont_ask">Bir daha sorma</string>
+    <string name="transcribe_long_call_line">Bu arama %1$s. Bu telefonda yazıya dökmek yaklaşık %2$s× kadar sürer — yaklaşık %3$s.</string>
+    <string name="transcribe_language_title">Hangi dil?</string>
+    <string name="transcribe_language_message">%1$s şu dilde yazıya dökülsün:</string>
+    <string name="transcribe_language_confirm">Yazıya dök</string>
+    <string name="transcription_ask_language_title">Her seferinde hangi dil olduğunu sor</string>
+    <string name="transcription_ask_language_subtitle">Yukarıdakini hep kullanmak yerine dili kayıt başına seçin. Yalnızca o kayıt için geçerlidir.</string>
+    <!-- Where to transcribe: on this phone or with the user's own cloud key (issue #48). No prices anywhere. -->
+    <string name="transcription_where_title">Nerede yazıya dökülsün</string>
+    <string name="transcription_where_on_device">Bu telefonda</string>
+    <string name="transcription_where_on_device_desc">Gizli. Daha yavaş: arama dakikası başına yaklaşık 1,5 dk.</string>
+    <string name="transcription_where_groq_desc">Hızlı: genellikle arama başına saniyeler.</string>
+    <string name="transcription_where_openrouter_desc">Birçok hizmet için tek anahtar. Microsoft MAI-Transcribe.</string>
+    <string name="transcription_where_custom">Özel (gelişmiş)</string>
+    <string name="transcription_where_custom_desc">OpenAI uyumlu herhangi bir sunucu.</string>
+    <string name="transcription_where_custom_service">sunucunuz</string>
+    <string name="transcription_where_recommended">Önerilen</string>
+    <string name="transcription_cloud_key_label">%1$s anahtarınız</string>
+    <string name="transcription_cloud_key_label_custom">Sunucunuzun anahtarı</string>
+    <string name="transcription_cloud_key_show">Anahtarı göster</string>
+    <string name="transcription_cloud_key_hide">Anahtarı gizle</string>
+    <string name="transcription_cloud_test">Dene</string>
+    <string name="transcription_cloud_testing">Deneniyor…</string>
+    <string name="transcription_cloud_get_key">%1$s anahtarı al</string>
+    <string name="transcription_cloud_custom_url">Sunucu adresi</string>
+    <string name="transcription_cloud_custom_url_hint">https://… (/audio/transcriptions öncesindeki kısım)</string>
+    <string name="transcription_cloud_custom_url_invalid">Bir http(s):// adresi kullanın.</string>
+    <string name="transcription_cloud_custom_model">Model</string>
+    <string name="transcription_cloud_mobile_data">Mobil veri kullanımına izin ver</string>
+    <string name="transcription_cloud_mobile_data_desc">Kapalıyken aramalar gönderilmeden önce Wi-Fi’yi bekler.</string>
+    <string name="transcription_cloud_privacy_note">Arama sesi yazıya dökülmek üzere %1$s hizmetine gönderilir. Sözcükler bu telefona geri döner; %1$s hizmetinin gizlilik koşulları geçerlidir. Mobil veriye izin vermedikçe yalnızca Wi-Fi.</string>
+    <string name="transcription_cloud_consent_title">Arama sesi %1$s hizmetine gönderilsin mi?</string>
+    <string name="transcription_cloud_consent_body">Bir arama yazıya dökülürken sesi anahtarınızla %1$s hizmetine gönderilir ve sözcükler bu telefona geri döner. %1$s hizmetinin gizlilik koşulları geçerlidir. Özetler bu telefonda kalır.</string>
+    <string name="transcription_cloud_consent_confirm">%1$s kullan</string>
+    <string name="transcription_cloud_test_ok">Anahtar çalışıyor.</string>
+    <string name="transcription_cloud_test_bad_key">Anahtar reddedildi. Denetleyip yeniden deneyin.</string>
+    <string name="transcription_cloud_test_no_timings">Hizmet zamanlama bilgisi olmadan yanıt verdi, bu yüzden kullanılamaz. Başka bir model deneyin.</string>
+    <string name="transcription_cloud_test_unreachable">Hizmete ulaşılamadı. Bağlantıyı denetleyip yeniden deneyin.</string>
+    <string name="transcription_cloud_test_refused">Hizmet isteği reddetti. Adresi ve modeli denetleyin.</string>
+    <string name="transcription_cloud_test_no_key">Önce bir anahtar yapıştırın.</string>
+    <string name="transcription_cloud_test_incomplete">Önce sunucu adresini ve modeli doldurun.</string>
+    <string name="transcription_confirm_title">Yazıya dökmeden önce sor</string>
+    <string name="transcription_confirm_subtitle">Ne kadar süreceğini gösterir ve iptal etmenizi sağlar.</string>
+    <string name="transcript_action_busy">Yazıya dökülüyor…</string>
+    <string name="transcript_action_open">Yazıya dökümü oku</string>
+    <string name="transcript_action_retry">Yazıya döküm başarısız — yeniden deneyin</string>
+    <string name="transcript_loading">Yazıya döküm yükleniyor…</string>
+    <string name="transcript_none">Bu arama için yazıya döküm yok. Hiç yazıya dökülmemiş veya metin silinmiş.</string>
+    <string name="transcript_no_speech">Bu kayıtta hiç konuşma tanınmadı.</string>
+    <string name="transcript_speakers_which_is_you">Hangisi sizsiniz?</string>
+    <string name="transcript_speakers_guessed">Adlar otomatik olarak çıkarıldı</string>
+    <string name="transcript_speakers_swap_names">Adları değiştir</string>
+    <string name="transcript_speakers_swap">Değiştir</string>
+    <string name="transcript_speakers_correct">Doğru</string>
+    <string name="transcript_speaker_you">Siz</string>
+    <string name="transcript_speaker_a">Konuşmacı A</string>
+    <string name="transcript_speaker_b">Konuşmacı B</string>
+    <string name="transcript_share">Paylaş</string>
+    <string name="transcript_previous_call">Önceki</string>
+    <string name="transcript_next_call">Sonraki</string>
+    <string name="transcript_follow_playback">Oynatmayı izle</string>
+    <string name="transcript_export_chooser">Yazıya dökümü paylaş</string>
+    <string name="transcript_export_failed">Yazıya döküm dışa aktarılamadı</string>
+    <string name="transcript_retranscribe">Yeniden yazıya dök</string>
+    <string name="transcript_note_add">Not ekle</string>
+    <string name="transcript_note_hint">Ne hakkındaydı veya ne yapılmalı…</string>
+    <string name="transcript_no_model_title">Henüz konuşma modeli yok</string>
+    <string name="transcript_no_model_message">Yazıya döküm bu telefonda yapılır, bu yüzden önce bir konuşma modelinin indirilmesi gerekir. Ayarlar’dan birini seçip indirebilirsiniz.</string>
+    <string name="transcript_no_model_open_settings">Ayarları aç</string>
+    <string name="transcribing_pill_working">Yazıya dökülüyor</string>
+    <string name="transcribing_pill_progress">%1$d/%2$d</string>
+    <string name="transcribing_pill_percent">%1$d%%</string>
+    <string name="transcribing_pill_progress_percent">%1$d/%2$d · %3$d%%</string>
+    <string name="transcribing_sheet_title">Yazıya dökülüyor</string>
+    <string name="transcribing_sheet_starting">Başlıyor…</string>
+    <string name="transcribing_sheet_remaining">Kalan: %1$d</string>
+    <string name="transcribing_sheet_stop">Durdur</string>
+    <string name="transcript_delete">Metni sil</string>
+    <string name="transcript_delete_confirm_title">Bu yazıya döküm silinsin mi?</string>
+    <string name="transcript_delete_confirm_message">%1$s kaydının yazıya dökümü silinecek. Kayıt saklanır ve daha sonra yeniden yazıya dökebilirsiniz.</string>
+    <string name="home_status_recovery_stuck_title">Kayıt çalışmıyor</string>
+    <string name="home_status_recovery_stuck_suggestion">CallVault kaydediciyi yeniden başlatmakta başarısız oluyor, bu yüzden aramalar kaydedilmiyor. Uygulamayı yeniden açmak genellikle düzeltir.</string>
+    <string name="home_hero_pill_recovery_stuck">Kaydetmiyor</string>
+    <string name="app_lock_prompt_title">CallVault kilidini aç</string>
+    <string name="app_lock_locked">Kilitli</string>
+    <string name="app_lock_unlock">Kilidi aç</string>
+    <string name="settings_section_privacy">Gizlilik</string>
+    <string name="settings_app_lock_title">Kilit açmayı iste</string>
+    <string name="settings_app_lock_description">Kayıtları ve yazıya dökümleri göstermeden önce ekran kilidinizi sorar. Ayrıca bunları ekran görüntülerinden ve uygulama değiştiriciden uzak tutar.</string>
+    <string name="settings_app_lock_unavailable">Bunu kullanmak için telefonunuzda bir ekran kilidi ayarlayın.</string>
+    <string name="settings_allow_screenshots_title">Ekran görüntülerine izin ver</string>
+    <string name="settings_allow_screenshots_description">CallVault’un ekran görüntüsünü almanıza izin verir. Bu, içeriğini uygulama değiştiricide de gösterir. Kapalıyken her şey gizli kalır.</string>
+    <string name="playback_tags_title">Etiketler</string>
+    <string name="playback_tags_add">Etiket ekle</string>
+    <string name="playback_tags_remove">Etiketi kaldır</string>
+    <string name="playback_tags_hint">ör. ev, sigorta</string>
+    <string name="playback_tags_manage_title">Etiket</string>
+    <string name="playback_tags_manage_explain">Yeniden adlandırmak, bu etiketi taşıyan her kayıtta değiştirir. Zaten var olan bir etiketin adına yeniden adlandırmak ikisini birleştirir.</string>
+    <string name="playback_tags_rename">Yeniden adlandır</string>
+    <string name="playback_tags_delete_everywhere">Her yerden sil</string>
+    <string name="transcript_share_text">Metin</string>
+    <string name="playback_star">Bu kaydı yıldızla</string>
+    <string name="playback_unstar">Yıldızı kaldır</string>
+    <string name="home_filter_favourites_chip">Yıldızlı</string>
+    <string name="min_duration_label">Kısa kayıtları at</string>
+    <string name="min_duration_off">Hepsini sakla</string>
+    <string name="min_duration_seconds">%1$d saniyeden kısa</string>
+    <string name="min_duration_one_minute">Bir dakikadan kısa</string>
+    <string name="min_duration_caption">Yanlış çevrilen veya çalıp açılmayan bir arama, yazıya dökülmeden veya yüklenmeden biter bitmez silinir. Önceden kaydedilenler etkilenmez.</string>
+    <string name="storage_cap_label">Kullanılan alanı sınırla</string>
+    <string name="storage_cap_off">Sınır yok</string>
+    <string name="storage_cap_gigabytes">Bu telefonda %1$d GB</string>
+    <string name="storage_cap_caption">Kayıtlarınız bunu aştığında, günlük temizlik sığana kadar en eskileri bu telefondan siler. Yıldızlı kayıtlar, aşılsa bile asla silinmez. Drive’da da tutulan bir kayıt yalnızca buradaki kopyasını kaybeder. İçe aktardığınız ses de sınır tarafından asla silinmez: Drive’da kopyası yoktur, bu yüzden tek kopya bu telefondadır.</string>
+    <string name="storage_cap_confirm_message">Kayıtlar sınırı aştıkça bu telefondan, en eskiden başlayarak silinecek. Yıldızlı kayıtlar asla alınmaz. Bu geri alınamaz.</string>
+    <string name="notif_health_channel">Sizi gerektiren sorunlar</string>
+    <string name="notif_health_recorder_title">CallVault şu anda kaydedemiyor</string>
+    <string name="notif_health_shizuku_stopped_title">Shizuku durduruldu</string>
+    <string name="notif_health_shizuku_stopped_text">CallVault’un Android’in hata ayıklama hizmetini yeniden başlatması gerekti ve bu Shizuku’yu durdurur. Onu başka uygulamalarla kullanıyorsanız Shizuku’yu açıp yeniden başlatın.</string>
+    <string name="notif_health_shizuku_restarted_title">Shizuku yeniden başlatıldı</string>
+    <string name="notif_health_shizuku_restarted_text">CallVault’un Shizuku’yu durduran Android hata ayıklama hizmetini yeniden başlatması gerekti, bu yüzden Shizuku’yu sizin için yeniden başlattı. Yapılacak bir şey yok.</string>
+    <string name="notif_health_shizuku_restart_failed_title">Shizuku durduruldu</string>
+    <string name="notif_health_shizuku_restart_failed_text">CallVault’un Android’in hata ayıklama hizmetini yeniden başlatması gerekti ve bu Shizuku’yu durdurur. Shizuku’yu yeniden başlatmayı denedi ve başaramadı — Shizuku’yu açıp kendiniz başlatın.</string>
+    <string name="notif_health_recorder_text">Bu telefon bir Wi-Fi ağına bir kez katılana kadar aramalar kaydedilmeyecek. Herhangi bir ağ olur ve internet gerekmez — birkaç saniye yeterli, sonrasında Wi-Fi dışında bile çalışmaya devam eder.</string>
+    <string name="notif_health_sync_title">Kayıtlar Drive’a ulaşmıyor</string>
+    <string name="notif_health_sync_text">Google Drive’a kopyalama bir süre önce durdu. Hiçbir şey kaybolmadı — kayıtlar hâlâ bu telefonda — ama yedeklenmiyorlar. Depolama ayarlarınızı denetlemek için CallVault’u açın.</string>
+    <string name="notif_health_recorder_text_shizuku">Shizuku yeniden çalışana kadar aramalar kaydedilmeyecek. Yeniden başlatma onu durdurur, bu yüzden telefon yeniden başladıktan sonra bir kez başlatılması gerekir.</string>
+    <string name="settings_offline_recording_reboot_note">Yeniden başlatmadan sonra, telefon bir Wi-Fi ağına bir kez katılana kadar bu çalışmaz. Herhangi bir ağ olur ve internet gerekmez — birkaç saniye yeterli. Bunun ne zaman gerektiğini CallVault size söyler.</string>
+    <string name="general_stop">Durdur</string>
+    <string name="settings_search_hint">Ayarlarda ara</string>
+    <string name="settings_search_no_matches">Eşleşme yok</string>
+    <string name="settings_search_none">“%1$s” ile eşleşen ayar yok</string>
+    <plurals name="settings_search_matches">
+        <item quantity="one">%d eşleşme</item>
+        <item quantity="other">%d eşleşme</item>
+    </plurals>
+    <string name="summary_requirements_toggle_label">Gereksinimleri göster</string>
+    <string name="settings_sim_label_label">Her aramanın hangi SIM’i kullandığını göster</string>
+    <string name="settings_sim_label_desc">İki SIM’li telefonlar için: SIM’e verdiğiniz adı veya SIM 1 / SIM 2’yi gösterir</string>
+    <string name="settings_audio_channels">Kanallar</string>
+    <string name="audio_channels_mono">Mono</string>
+    <string name="audio_channels_stereo">Stereo</string>
+    <string name="settings_audio_channels_info">Mono, iki tarafı tek kanalda karıştırır. Stereo, sizi ve karşıdaki kişiyi ayrı sol ve sağ kanallara kaydeder; her tarafı ayrı ayrı yazıya dökmek için. Stereo dosyalar yaklaşık iki kat büyüktür ve kulaklıkta her taraf bir kulakta çalar.</string>
+    <string name="sim_label_word">SIM</string>
+    <string name="settings_metadata_file_label">Ayrıntı dosyası yaz</string>
+    <string name="settings_metadata_file_desc">Her kaydın yanına küçük bir .json kaydet</string>
+    <string name="settings_metadata_file_hint">BCR ile aynı biçimi kullanır, bu yüzden onun için yapılmış uygulamalar — bcr-gui gibi — kayıtlarınızın ayrıntılarını okuyabilir. Yalnızca birini kullanıyorsanız açmaya değer.</string>
+    <string name="settings_transcript_sidecar_label">Yazıya dökümü ve notları kaydın yanına kaydet</string>
+    <string name="settings_transcript_sidecar_desc">Her kaydın yanına bir .md metin dosyası yaz</string>
+    <string name="settings_transcript_sidecar_hint">Yazıya dökümü, notları ve özeti kayıtla aynı adlı bir metin dosyası olarak kaydeder; böylece klasörünüzü bilgisayara kopyalamak metni sesle birlikte tutar. Açmak, zaten sahip olduklarınızı da kaydeder.</string>
+    <string name="settings_hide_recordings_label">Kayıtları gizle</string>
+    <string name="settings_hide_recordings_desc">Kayıtlarınızı müzik çalarlardan, galerilerden ve diğer medya uygulamalarından uzak tutun</string>
+    <string name="settings_hide_recordings_hint">Kayıt klasörünüze gizli bir .nomedia dosyası ekler; çoğu uygulama buna uyar. Kayıtlarınız adlarını korur ve yine eşitlenir. Dosya yöneticileri onları yine gösterir — orada da gizlemek için klasöre nokta ile başlayan bir ad verin.</string>
+    <string name="settings_backup_title">Ayarları yedekle</string>
+    <string name="settings_backup_desc">Ayarlarınızı bir dosyaya kaydedin veya bir dosyadan geri yükleyin.</string>
+    <string name="settings_export">Dışa aktar</string>
+    <string name="settings_import">İçe aktar</string>
+    <string name="settings_export_done">Ayarlar kaydedildi.</string>
+    <string name="settings_export_failed">Ayarlarınız kaydedilemedi.</string>
+    <string name="settings_import_failed">Bu ayar dosyası okunamadı.</string>
+    <string name="settings_import_done">%1$d ayar içe aktarıldı.</string>
+    <string name="settings_import_confirm_title">Ayarlar içe aktarılsın mı?</string>
+    <string name="settings_import_confirm_text">Bu, mevcut ayarlarınızı dosyadakilerle değiştirir. Eşleştirme, klasörler ve bu telefonun kendi kurulumu değişmeden kalır.</string>
+    <string name="settings_import_confirm_apply">İçe aktar</string>
+    <string name="general_flag">İşaretle</string>
+    <string name="recording_flag_added">An işaretlendi (%1$d)</string>
+    <string name="voip_recording_title">Bir uygulama araması kaydediliyor</string>
+    <string name="voip_recording_title_named">Bir %1$s araması kaydediliyor</string>
+    <string name="voip_recording_text">Daha sonra bulmak için bir anı işaretleyin veya kaydı durdurun.</string>
+    <string name="playback_marked_moments">İşaretlenen anlar</string>
+    <string name="settings_voip_apps_label">Hangi uygulamaların kaydedileceğini seçin</string>
+    <string name="settings_voip_ignore_contacts_label">Uygulama aramalarında yok sayılan kişileri atla</string>
+    <string name="settings_voip_ignore_contacts_desc">Yukarıda atladığınız biriyle (gelen veya giden) yapılan uygulama aramaları otomatik kaydedilmez. “Yalnızca seçili kişileri kaydet” uygulama aramaları için geçerli değildir.</string>
+    <string name="settings_voip_ignore_contacts_hint">Uygulamanın arama için gösterdiği ad veya numarayla tam olarak eşleştirilir — yalnızca kısmen eşleşen bir ad yine kaydedilir. Telegram, birini kişi adınız yerine kendi adıyla gösterebilir, bu yüzden orada kaçırabilir. Kaydet’e kendiniz basmak yine kaydeder.</string>
+    <string name="settings_voip_apps_loading">Uygulamalar aranıyor…</string>
+    <string name="settings_voip_apps_all">Her uygulama kaydedilir</string>
+    <plurals name="settings_voip_apps_some">
+        <item quantity="one">%1$d uygulama kaydedilmeyecek</item>
+        <item quantity="other">%1$d uygulama kaydedilmeyecek</item>
+    </plurals>
+    <string name="settings_voip_apps_hint">Bir uygulamayı kapatın, aramaları asla kaydedilmez. Siz değiştirene kadar her şey açıktır. Ses kaydedemeyen uygulamalar listelenmez, çünkü bunun yakaladığı türden arama yapamazlar.</string>
+    <string name="general_flag_count">İşaretle (%1$d)</string>
+    <string name="voip_recording_paused">Duraklatıldı. Şu anda hiçbir şey kaydedilmiyor.</string>
+    <string name="voip_recording_held">Bir telefon araması için beklemede. Bu kayıt döndüğünüzde devam edecek.</string>
+    <string name="general_back">Geri</string>
+    <string name="export_heading_transcript">Yazıya döküm</string>
+    <string name="settings_bugreport_save">Kaydet</string>
+    <string name="settings_bugreport_saved">Rapor kaydedildi</string>
+    <string name="settings_bugreport_save_failed">Rapor kaydedilemedi</string>
+    <string name="settings_debug_log_wrap">Satırları kaydır</string>
+    <string name="usb_debugging_off_warn_title">USB hata ayıklama kapatılsın mı?</string>
+    <string name="usb_debugging_off_warn_no_way_in">Wi-Fi’de değilsiniz, bu yüzden CallVault’un kaydediciye ulaşmanın bir yolu olmayacak. Wi-Fi’ye bağlanana veya bunu yeniden açana kadar aramalar kaydedilmeyecek.</string>
+    <string name="usb_debugging_off_warn_offline">Wi-Fi dışında kayıt için USB hata ayıklama gerekir. Kapalıyken, Wi-Fi’den uzakta yapılan aramalar kaydedilmeyecek.</string>
+    <string name="usb_debugging_off_confirm">Yine de kapat</string>
+    <string name="usb_debugging_off_keep">Açık tut</string>
+    <string name="settings_wd_enforce_label">Kayıt için Kablosuz hata ayıklamayı açık tut</string>
+    <string name="settings_wd_enforce_description">CallVault’un içeri girmesine başka bir yol yokken Kablosuz hata ayıklamayı kapatırsanız, aramaların kaydedilmesi için onu yeniden açar. Bu kapalıyken anahtarınız kapalı kalır ve bildirim kaydın duraklatıldığını söyler.</string>
+    <string name="settings_wd_auto_approve_label">Yeni Wi-Fi ağlarını otomatik onayla</string>
+    <string name="settings_wd_auto_approve_description">Telefon bir Wi-Fi ağına katıldığında CallVault, Android’in “Bu ağda kablosuz hata ayıklamaya izin verilsin mi?” sorusunu kendisi yanıtlar, böylece kayıt dokunmanızı beklemez. Kaydedici çalışırken işler. Yalnızca bu telefonla zaten eşleştirilmiş cihazlar bağlanabilir.</string>
+    <string name="settings_wd_mode_label">Kablosuz hata ayıklama</string>
+    <string name="settings_wd_mode_when_needed">Yalnızca gerektiğinde</string>
+    <string name="settings_wd_mode_keep_on">Açık tut</string>
+    <string name="settings_wd_mode_keep_on_always">Ben kapatsam bile açık tut</string>
+    <string name="settings_wd_mode_when_needed_desc">CallVault kayıt için açar ve gerekmediğinde yeniden kapatır. Siz kapatırsanız kapalı kalır.</string>
+    <string name="settings_wd_mode_keep_on_desc">CallVault onu asla kapatmaz, bu yüzden hata ayıklama bağlantı noktası Wi-Fi’nizde açık kalır. Siz kapatırsanız kapalı kalır.</string>
+    <string name="settings_wd_mode_keep_on_always_desc">CallVault onu asla kapatmaz ve siz kapatırsanız aramaların kaydedilmesi için yeniden açar. Hata ayıklama bağlantı noktası Wi-Fi’nizde açık kalır.</string>
+    <string name="settings_wd_never_off_label">Kablosuz hata ayıklamayı asla kapatma</string>
+    <string name="settings_wd_never_off_description">CallVault Kablosuz hata ayıklamayı kapatmaz, bu yüzden hata ayıklama bağlantı noktası Wi-Fi ağınızda açık kalır. Kaydedici gerektirdiğinde CallVault yine de açabilir. Yalnızca yerleşik mod.</string>
+    <string name="settings_wd_left_on_by_setting">Kablosuz hata ayıklama açık. CallVault bu ayar nedeniyle onu açık bırakıyor.</string>
+    <string name="settings_wd_left_on_by_user">Kablosuz hata ayıklama açık. Siz açtınız, bu yüzden CallVault onu açık bırakıyor.</string>
+    <string name="oem_gate_title">Telefonunuz bu adımı engelliyor</string>
+    <string name="oem_gate_body_oppo">OnePlus, OPPO ve realme telefonlar, Geliştirici seçeneklerinde — en altta, Uygulamalar altında — “Sistem optimizasyonunu devre dışı bırak”ı açana kadar uygulamalara bu izni vermeyi reddeder. Eski sürümler buna “İzin izlemeyi devre dışı bırak” der. Açın ve yeniden deneyin. Bulamazsanız telefonu İngilizceye çevirin, açın, sonra geri çevirin.</string>
+    <string name="oem_gate_body_xiaomi">Xiaomi, Redmi ve POCO telefonlar, Geliştirici seçeneklerinde “USB hata ayıklama (Güvenlik ayarları)”nı açana kadar uygulamalara bu izni vermeyi reddeder. Bu, USB hata ayıklamadan ayrıdır ve bir Mi hesabında oturum açmış olmanızı gerektirir. Açın ve yeniden deneyin.</string>
+    <string name="oem_gate_body_other">Bu telefon CallVault’a ihtiyaç duyduğu izni vermeyi reddediyor. Geliştirici seçeneklerinde izin izleme veya sistem optimizasyonuyla ilgili bir anahtar arayın, açın ve yeniden deneyin.</string>
+    <string name="oem_gate_open_dev_options">Geliştirici seçeneklerini aç</string>
+    <string name="oem_gate_continue_hint">Şimdilik devam edebilirsiniz, ancak bu yapılana kadar aramalar kaydedilmeyecek.</string>
+    <string name="home_hub_community_eyebrow">KATIL</string>
+    <string name="home_hub_community_title">Telegram grubu</string>
+    <string name="home_hub_community_body">Bir soru sorun, neyin çalışmadığını söyleyin, yeni sürümlerden haberdar olun.</string>
+    <string name="home_community_pill">Telegram</string>
+    <string name="home_community_tucked_hint">Destek’in yanına taşındı. Kartı geri getirmek için orada uzun basın.</string>
+    <string name="home_community_restored_hint">Ana ekrana geri döndü.</string>
+    <string name="library_row_save">Dosya olarak kaydet</string>
+    <string name="library_nothing_to_share">Artık paylaşılacak bir şey yok.</string>
+    <string name="transcript_delete_confirm_message_text_only">Bu sözcüklerin arkasında bir kayıt yok: %1$s yazıya dökümünü silmek her şeyi siler ve geri getirilemez.</string>
+    <string name="library_summary_delete_confirm_title">Bu özet silinsin mi?</string>
+    <string name="library_summary_delete_confirm_message">%1$s özeti silinecek. Yazıya döküm ve kayıt saklanır ve yeniden yazdırabilirsiniz.</string>
+    <string name="library_bulk_delete_transcripts_message">Sözcükler silinecek. Kayıtlar saklanır ve daha sonra yeniden yazıya dökebilirsiniz.</string>
+    <string name="library_bulk_delete_summaries_message">Özetler silinecek. Yazıya dökümler ve kayıtlar saklanır.</string>
+    <plurals name="library_bulk_delete_transcripts_title">
+        <item quantity="one">%1$d yazıya döküm silinsin mi?</item>
+        <item quantity="other">%1$d yazıya döküm silinsin mi?</item>
+    </plurals>
+    <plurals name="library_bulk_delete_summaries_title">
+        <item quantity="one">%1$d özet silinsin mi?</item>
+        <item quantity="other">%1$d özet silinsin mi?</item>
+    </plurals>
+    <plurals name="library_bulk_delete_text_only_warning">
+        <item quantity="one">Bunlardan %1$d tanesinin arkasında kayıt yok, bu yüzden geriye yalnızca sözcükleri kaldı. Bu kısım geri alınamaz.</item>
+        <item quantity="other">Bunlardan %1$d tanesinin arkasında kayıt yok, bu yüzden geriye yalnızca sözcükleri kaldı. Bu kısım geri alınamaz.</item>
+    </plurals>
+
+    <!-- The search line at the head of the Recordings, Transcripts and Summaries pages. %1$s = what was typed. -->
+    <string name="home_search_contacts_hint">Kişiye göre ara</string>
+    <string name="transcripts_search_hint">Söylenenleri ara</string>
+    <string name="summaries_search_hint">Özetlerde ara</string>
+    <string name="search_clear">Temizle</string>
+    <string name="search_no_matches_title">Hiçbir şey eşleşmiyor</string>
+    <string name="search_no_matches_hint">Burada “%1$s” içeren bir şey yok. Sözcükler başından eşleşir, bu yüzden daha kısa bir biçim daha fazlasını bulabilir.</string>
+    <string name="note_saved">Kaydedildi</string>
+    <string name="note_saving">Kaydediliyor…</string>
+    <string name="home_status_pairing_lost_title">Eşleştirme süresi doldu</string>
+    <string name="home_status_pairing_lost_suggestion">Android, CallVault’un Kablosuz hata ayıklama eşleştirmesini unuttu, bu yüzden kaydedici yeniden başlayamıyor. Yeniden eşleştirmek için buraya dokunun — kayıtlarınız ve ayarlarınız olduğu gibi kalır.</string>
+    <string name="settings_pair_again_label">Yeniden eşleştir</string>
+    <string name="settings_pair_again_value">CallVault’u Kablosuz hata ayıklamayla eşleştir</string>
+    <string name="settings_pair_again_hint">Android, CallVault’un eşleştirmesini unuttuysa bunu kullanın. Kayıtlarınız ve ayarlarınız olduğu gibi kalır. “Wi-Fi dışında kaydetmeyi sürdür”ü açmak eşleştirmenin süresinin dolmasını önler.</string>
+    <string name="notif_readiness_pairing_lost_text">Android CallVault’un eşleştirmesini unuttu, bu yüzden aramalar kaydedilemiyor. CallVault’u açın ve yeniden eşleştirmek için durum kartına dokunun.</string>
+    <string name="notif_cut_off_saved_title">Bir arama kesildi</string>
+    <string name="notif_cut_off_saved_text">Telefonunuz bir arama sırasında CallVault’u kapattı. Bundan önce kaydedilenler %1$s olarak kaydedildi.</string>
+    <string name="home_health_failed_cut_off">Telefon CallVault’u kapattığında son aramanız kesildi — bundan önce kaydedilen kısım saklandı.</string>
+    <string name="settings_needs_newer_android">Android %1$s veya daha yenisi gerekir — bu telefon Android %2$s çalıştırıyor.</string>
+    <string name="notif_turned_off_for_android_title">Bazı ayarlar kapatıldı</string>
+    <string name="notif_turned_off_for_android_text">%1$s: bunun için bu telefondakinden (Android %2$s) daha yeni bir Android sürümü gerekir, bu yüzden kapatıldı. Telefon aramaları yine kaydedilir.</string>
+    <string name="update_popup_title">CallVault %1$s mevcut</string>
+    <string name="update_popup_text">Yeni bir sürüm yüklemeye hazır. Güncellemek kaydı güvenilir tutar ve en son düzeltmeleri getirir.</string>
+    <string name="update_popup_update_now">Şimdi güncelle</string>
+    <string name="update_popup_later">Sonra</string>
+
+    <!-- New Settings screen (settings per page, step 2). -->
+    <string name="settings_title_recordings">Kayıt ayarları</string>
+    <string name="settings_title_transcripts">Yazıya döküm ayarları</string>
+    <string name="settings_title_summaries">Özet ayarları</string>
+    <string name="settings_link_share_debug_report">Hata ayıklama raporu paylaş</string>
+    <string name="settings_link_all_settings">Tüm ayarlar</string>
+    <string name="settings_language_change_in_transcripts">Yazıya döküm ayarlarından değiştirin</string>
+    <string name="settings_summary_off">Kapalı</string>
+    <string name="settings_summary_unavailable">Burada kullanılamıyor</string>
+    <string name="settings_summary_count_on">%2$d içinden %1$d açık</string>
+    <string name="settings_summary_recording_both">her iki yön</string>
+    <string name="settings_summary_recording_incoming">yalnızca gelen</string>
+    <string name="settings_summary_recording_outgoing">yalnızca giden</string>
+    <string name="settings_summary_recording_manual">yalnızca elle</string>
+    <string name="settings_summary_not_downloaded">İndirilmedi</string>
+
+    <!-- New Settings screen: the ⓘ button that explains a row. -->
+    <string name="settings_info_about">%1$s hakkında</string>
+    <string name="settings_info_got_it">Anladım</string>
+
+    <!-- New Settings screen, round 2: groups by what you want to do. -->
+    <string name="settings_group_calls_to_record">Kayıt</string>
+    <string name="settings_group_calls_to_skip">Atlanacak aramalar</string>
+    <string name="settings_group_sound_and_names">Ses ve dosya adları</string>
+    <string name="settings_group_save_and_sync">Kaydet ve eşitle</string>
+    <string name="settings_group_cleaning_up">Temizlik</string>
+    <string name="settings_group_connection">Bağlantı</string>
+    <string name="settings_group_model_and_language">Model ve dil</string>
+    <string name="settings_group_when_to_transcribe">Ne zaman yazıya dökülsün</string>
+    <string name="settings_group_app">Uygulama</string>
+    <string name="settings_group_help_and_about">Yardım ve hakkında</string>
+    <string name="settings_summary_calls_phone_and_app">Telefon ve uygulama aramaları</string>
+    <string name="settings_summary_calls_phone_only">Yalnızca telefon aramaları</string>
+    <string name="settings_summary_calls_app_only">Yalnızca uygulama aramaları</string>
+    <string name="settings_summary_nothing_skipped">Hiçbir şey atlanmıyor</string>
+    <string name="settings_summary_skip_rules_on">Atlama kuralları açık: %1$d</string>
+
+    <!-- New Settings screen, round 4: the Recording group's sub-headers. -->
+    <string name="settings_subheader_app_calls">Uygulama aramaları</string>
+    <string name="settings_subheader_all_calls">Tüm aramalar</string>
+    <string name="settings_voip_auto_start_record_label">Uygulama aramalarını otomatik kaydet</string>
+
+    <!-- Transcribe again (#72) -->
+    <string name="transcribe_again_title">Yeniden yazıya dökülsün mü?</string>
+    <string name="transcribe_again_message_one">%1$s yeniden yazıya dökülecek. Yeni çalıştırma başarısız olursa veya durdurulursa mevcut yazıya döküm saklanır.</string>
+    <string name="transcribe_again_message_many">Yeniden yapılacak yazıya dökümler: %1$d. Bir çalıştırma başarısız olursa veya durdurulursa o yazıya döküm olduğu gibi saklanır.</string>
+    <string name="transcribe_again_run_on">Şurada çalıştır</string>
+    <string name="transcribe_again_estimate">Yaklaşık %1$s.</string>
+    <string name="transcribe_again_delete_summary">Özeti de sil. Eski metinden yazılmıştı.</string>
+    <string name="transcribe_again_running">Yeniden yazıya dökülüyor… %1$d%%</string>
+    <string name="transcribe_again_running_plain">Yeniden yazıya dökülüyor…</string>
+    <string name="transcribe_again_waiting">Yeniden yazıya dökmek için bekleniyor…</string>
+    <string name="wifi_call_switch_failed">Bu bir Wi-Fi araması gibi görünüyor, ancak her iki tarafı da kaydeden yakalama başlatılamadı. Her zamanki şekilde kaydediliyor, bu da karşı kişiyi kaçırabilir.</string>
+    <string name="wifi_call_one_sided">Bu Wi-Fi aramasının yalnızca sizin tarafınız kaydedildi. Tekrarlanırsa, telefon uygulamanızın ayarlarında Wi-Fi Çağrısı’nı mobil ağı tercih edecek şekilde ayarlayın.</string>
+    <string name="wifi_call_switch_aborted">Bu Wi-Fi aramasının kaydı erken durdu: yakalama güvenli şekilde değiştirilemedi. Şimdiye kadar kaydedilen kısım saklandı.</string>
+    <string name="wifi_call_far_unknown">Bu Wi-Fi araması kaydedildi, ancak CallVault karşı tarafın onda olduğunu doğrulayamadı. Lütfen kaydı dinleyin.</string>
+    <string name="general_show_more">Daha fazla</string>
+    <string name="general_show_less">Daha az</string>
+    <string name="summary_card_state_expanded">Genişletildi</string>
+    <string name="summary_card_state_collapsed">Daraltıldı</string>
+</resources>

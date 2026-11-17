@@ -59,4 +59,9 @@
     <string name="transcript_notice_failed_many_title">Be nem fejeződött átírások: %1$d</string>
     <string name="transcript_notice_failed_many_text">Koppints a megtekintésükhöz.</string>
     <string name="transcript_notice_failed_kept_text">%1$s. Az előző átirat megmaradt.</string>
+    <string name="home_status_needs_wifi_title">A rögzítéshez Wi-Fi kell</string>
+    <string name="home_status_needs_wifi_suggestion">A rögzítő leállt, és Wi-Fi nélkül nem tud elindulni, ezért a hívások nem kerülnek rögzítésre. Csatlakozz Wi-Fi-hez, vagy kapcsold be a Beállításokban a „Rögzítés Wi-Fi nélkül is” opciót.</string>
+    <string name="notif_stopped_by_user_title">Leállítottad a CallVaultot</string>
+    <string name="notif_stopped_by_user_text">A leállítás alatt a hívások nem lettek rögzítve. A CallVault újra meg van nyitva, és rögzíti az új hívásokat.</string>
+    <string name="home_stopped_by_user_text">Leállítottad a CallVaultot – a leállítás alatt a hívások nem lettek rögzítve.</string>
 </resources>

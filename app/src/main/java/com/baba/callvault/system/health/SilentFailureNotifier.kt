@@ -19,6 +19,7 @@ import androidx.core.app.NotificationManagerCompat
 import com.baba.callvault.MainActivity
 import com.baba.callvault.ui.navigation.NotificationDestination
 import com.baba.callvault.R
+import com.baba.callvault.system.LocalizedContext
 import com.baba.callvault.data.AppPreferences
 import com.baba.callvault.data.StorageTarget
 import com.baba.callvault.data.recordings.RecordingCatalog
@@ -58,6 +59,7 @@ object SilentFailureNotifier {
     private const val ID_PAIRING_LOST = 4719
     private const val ID_CUT_OFF_SAVED = 4723
     private const val ID_TURNED_OFF_FOR_ANDROID = 4724
+    private const val ID_STOPPED_BY_USER = 4725
 
     /**
      * The recorder could not be started. Posted from the boot path, where a failure is invisible.
@@ -82,8 +84,8 @@ object SilentFailureNotifier {
         post(
             context,
             id = ID_RECORDER_UNAVAILABLE,
-            title = context.getString(R.string.notif_health_recorder_title),
-            text = context.getString(text)
+            title = LocalizedContext.of(context).getString(R.string.notif_health_recorder_title),
+            text = LocalizedContext.of(context).getString(text)
         )
     }
 
@@ -97,9 +99,9 @@ object SilentFailureNotifier {
     fun warnPairingLost(context: Context) = post(
         context,
         id = ID_PAIRING_LOST,
-        title = context.getString(R.string.home_status_pairing_lost_title),
+        title = LocalizedContext.of(context).getString(R.string.home_status_pairing_lost_title),
         // Not Home's card text: that one says "tap here", and here a tap opens Home, not the pairing flow.
-        text = context.getString(R.string.notif_readiness_pairing_lost_text),
+        text = LocalizedContext.of(context).getString(R.string.notif_readiness_pairing_lost_text),
     )
 
     /**
@@ -111,8 +113,8 @@ object SilentFailureNotifier {
     fun noteCutOffRecordingSaved(context: Context, fileName: String) = post(
         context,
         id = ID_CUT_OFF_SAVED,
-        title = context.getString(R.string.notif_cut_off_saved_title),
-        text = context.getString(R.string.notif_cut_off_saved_text, fileName),
+        title = LocalizedContext.of(context).getString(R.string.notif_cut_off_saved_title),
+        text = LocalizedContext.of(context).getString(R.string.notif_cut_off_saved_text, fileName),
     )
 
     /**
@@ -124,12 +126,23 @@ object SilentFailureNotifier {
     fun noteTurnedOffForAndroidVersion(context: Context, settingLabels: List<String>) = post(
         context,
         id = ID_TURNED_OFF_FOR_ANDROID,
-        title = context.getString(R.string.notif_turned_off_for_android_title),
-        text = context.getString(
+        title = LocalizedContext.of(context).getString(R.string.notif_turned_off_for_android_title),
+        text = LocalizedContext.of(context).getString(
             R.string.notif_turned_off_for_android_text,
             settingLabels.joinToString(", "),
             android.os.Build.VERSION.RELEASE.orEmpty(),
         ),
+    )
+
+    /**
+     * The user stopped CallVault (Active apps -> Stop, or Force stop), and it hears no calls until opened again.
+     * Posted at the next start, once per stop (BabApps item 115).
+     */
+    fun noteStoppedByUser(context: Context) = post(
+        context,
+        id = ID_STOPPED_BY_USER,
+        title = LocalizedContext.of(context).getString(R.string.notif_stopped_by_user_title),
+        text = LocalizedContext.of(context).getString(R.string.notif_stopped_by_user_text),
     )
 
     /** The pairing works again. */
@@ -150,8 +163,8 @@ object SilentFailureNotifier {
     fun warnShizukuStopped(context: Context) = post(
         context,
         id = ID_SHIZUKU_STOPPED,
-        title = context.getString(R.string.notif_health_shizuku_stopped_title),
-        text = context.getString(R.string.notif_health_shizuku_stopped_text),
+        title = LocalizedContext.of(context).getString(R.string.notif_health_shizuku_stopped_title),
+        text = LocalizedContext.of(context).getString(R.string.notif_health_shizuku_stopped_text),
     )
 
     /**
@@ -166,8 +179,8 @@ object SilentFailureNotifier {
     fun noteShizukuRestarted(context: Context) = post(
         context,
         id = ID_SHIZUKU_STOPPED,
-        title = context.getString(R.string.notif_health_shizuku_restarted_title),
-        text = context.getString(R.string.notif_health_shizuku_restarted_text),
+        title = LocalizedContext.of(context).getString(R.string.notif_health_shizuku_restarted_title),
+        text = LocalizedContext.of(context).getString(R.string.notif_health_shizuku_restarted_text),
     )
 
     /**
@@ -180,8 +193,8 @@ object SilentFailureNotifier {
     fun warnShizukuRestartFailed(context: Context) = post(
         context,
         id = ID_SHIZUKU_STOPPED,
-        title = context.getString(R.string.notif_health_shizuku_restart_failed_title),
-        text = context.getString(R.string.notif_health_shizuku_restart_failed_text),
+        title = LocalizedContext.of(context).getString(R.string.notif_health_shizuku_restart_failed_title),
+        text = LocalizedContext.of(context).getString(R.string.notif_health_shizuku_restart_failed_text),
     )
 
     /**
@@ -234,11 +247,11 @@ object SilentFailureNotifier {
             post(
                 context,
                 id = ID_SYNC_STALLED,
-                title = context.getString(R.string.notif_health_sync_title),
+                title = LocalizedContext.of(context).getString(R.string.notif_health_sync_title),
                 // No count in the text, deliberately. It would need per-locale plural rules to
                 // read properly, and it invites the wrong question — "is three bad?" — when the only
                 // thing that matters is that copying has stopped. The number is in the app.
-                text = context.getString(R.string.notif_health_sync_text)
+                text = LocalizedContext.of(context).getString(R.string.notif_health_sync_text)
             )
         }.onFailure { AppLogger.w(TAG, "Sync health check failed: ${it.message}") }
     }
@@ -291,7 +304,7 @@ object SilentFailureNotifier {
     private fun createChannel(context: Context) {
         val channel = NotificationChannel(
             CHANNEL_ID,
-            context.getString(R.string.notif_health_channel),
+            LocalizedContext.of(context).getString(R.string.notif_health_channel),
             NotificationManager.IMPORTANCE_DEFAULT
         ).apply { setShowBadge(true) }
         context.getSystemService(NotificationManager::class.java).createNotificationChannel(channel)

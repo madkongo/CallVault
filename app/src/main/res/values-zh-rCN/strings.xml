@@ -283,6 +283,11 @@
     <string name="placeholder_contact_name_desc">联系人名称（如是联系人）</string>
     <string name="placeholder_cross_country_desc">是否为国际电话（是/否）</string>
     <string name="placeholder_date_desc">当前日期和时间</string>
+    <string name="placeholder_day_desc">日期，例如 20261112</string>
+    <string name="placeholder_day_dashed_desc">带连字符的日期，例如 2026-11-12</string>
+    <string name="placeholder_time_desc">时间，例如 143520</string>
+    <string name="placeholder_time_dashed_desc">带连字符的时间，例如 14-35-20</string>
+    <string name="settings_file_name_error_day_time">请同时使用 {day} 和 {time}，日期在前，中间用 _、-、空格或 T 连接（例如 {day}_{time}），或者使用 {date}。</string>
     <string name="placeholder_direction_desc">主叫/被叫</string>
     <string name="placeholder_phone_number_desc">对方号码</string>
     <string name="playback_marked_moments">标记的时刻</string>
@@ -383,8 +388,6 @@
     <string name="settings_debug_log_file">日志文件</string>
     <string name="settings_debug_log_view_hint">点按可查看最近的条目。</string>
     <string name="settings_debug_log_wrap">自动换行</string>
-    <string name="settings_debug_skip_mdns">连接时跳过 mDNS（测试端口搜索）</string>
-    <string name="settings_debug_skip_mdns_description">用于测试。下一次无线调试连接将忽略 mDNS 和上次可用的端口，通过搜索本机的本地端口来找到端口。仅在日志记录开启时有效。</string>
     <string name="settings_debug_logging_enabled">启用日志</string>
     <string name="settings_debug_logging_enabled_description">若要反馈Bug，请先开启此开关，然后在重启App之后再重复您刚才的操作。</string>
     <string name="settings_drive_folder_desc">选择一个文件夹（在 Google Drive 应用中）用于复制录音。</string>
@@ -652,7 +655,8 @@
     <string name="tile_recording_stopped">已停止</string>
     <string name="transcribe_confirm_dont_ask">不再询问</string>
     <string name="transcribe_long_call_line">这通电话时长 %1$s。在此手机上，转写大约需要通话时长的 %2$s 倍——约 %3$s。</string>
-    <string name="transcribe_confirm_message">转写 %1$s 会占用手机并明显耗电。你可以随时停止。\n\n可在设置的“转写”中重新开启此提示。</string>
+    <string name="summary_card_blocked_model_action">下载摘要模型</string>
+    <string name="transcribe_confirm_message">转写此通话会占用手机并明显耗电。你可以随时停止。\n\n可在设置的“转写”中重新开启此提示。</string>
     <string name="transcribe_confirm_title">大约需要 %1$s</string>
     <string name="transcribe_confirm_title_first_run">第一次可能需要一些时间</string>
     <string name="transcribe_confirm_title_unknown">要转写这通电话吗？</string>
@@ -764,10 +768,12 @@
     <string name="transcription_language_persian">波斯语</string>
     <string name="transcription_language_urdu">乌尔都语</string>
     <string name="transcription_language_bengali">孟加拉语</string>
+    <string name="transcription_language_cantonese">粤语（粵語）</string>
     <string name="transcription_language_polish">波兰语</string>
     <string name="transcription_language_portuguese">葡萄牙语</string>
     <string name="transcription_language_russian">俄语</string>
     <string name="transcription_language_spanish">西班牙语</string>
+    <string name="transcription_language_turkish">土耳其语</string>
     <string name="transcription_language_ukrainian">乌克兰语</string>
     <string name="transcription_language_vietnamese">越南语</string>
     <string name="transcription_minute_label">分钟</string>
@@ -909,8 +915,10 @@
     <string name="transcribe_again_waiting">等待重新转写…</string>
     <string name="wifi_call_switch_failed">这似乎是一通 WLAN 通话，但无法启动双方录音。正在按常规方式录音，可能录不到对方的声音。</string>
     <string name="wifi_call_one_sided">这通 WLAN 通话只录到了您这一方。如果反复出现，请在电话应用的设置中将 WLAN 通话设为“首选移动网络”。</string>
-    <string name="settings_debug_force_wifi_route">强制使用 WLAN 通话录音方式</string>
-    <string name="settings_debug_force_wifi_route_description">用于测试。每通电话会在通话中切换到应用通话录音方式，就像 WLAN 通话那样。在不支持 WLAN 通话的手机上会缺少对方的声音，并应显示错误。需要开启应用通话录音。仅在开启日志记录时生效。</string>
     <string name="wifi_call_switch_aborted">这通 WLAN 通话的录音提前停止了：无法安全地切换录音方式。已录下的部分会保留。</string>
     <string name="wifi_call_far_unknown">这通 WLAN 通话已录音，但 CallVault 无法确认其中录到了对方的声音。请收听录音确认。</string>
+    <string name="general_show_more">更多</string>
+    <string name="general_show_less">收起</string>
+    <string name="summary_card_state_expanded">已展开</string>
+    <string name="summary_card_state_collapsed">已收起</string>
 </resources>

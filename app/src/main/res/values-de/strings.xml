@@ -284,6 +284,11 @@
     <string name="placeholder_contact_name_desc">Der Kontaktname, falls verfügbar</string>
     <string name="placeholder_cross_country_desc">Gibt an, ob der Anruf grenzüberschreitend ist (true/false)</string>
     <string name="placeholder_date_desc">Das aktuelle Datum und die Uhrzeit</string>
+    <string name="placeholder_day_desc">Der Tag, z. B. 20261112</string>
+    <string name="placeholder_day_dashed_desc">Der Tag mit Bindestrichen, z. B. 2026-11-12</string>
+    <string name="placeholder_time_desc">Die Uhrzeit, z. B. 143520</string>
+    <string name="placeholder_time_dashed_desc">Die Uhrzeit mit Bindestrichen, z. B. 14-35-20</string>
+    <string name="settings_file_name_error_day_time">Verwenden Sie {day} und {time} zusammen, zuerst den Tag, getrennt durch _, -, ein Leerzeichen oder T (z. B. {day}_{time}), oder verwenden Sie {date}.</string>
     <string name="placeholder_direction_desc">Die Anrufrichtung (ein/aus)</string>
     <string name="placeholder_phone_number_desc">Die Telefonnummer</string>
     <string name="playback_marked_moments">Markierte Momente</string>
@@ -384,8 +389,6 @@
     <string name="settings_debug_log_file">Protokolldatei</string>
     <string name="settings_debug_log_view_hint">Tippen, um die neuesten Einträge zu lesen.</string>
     <string name="settings_debug_log_wrap">Zeilen umbrechen</string>
-    <string name="settings_debug_skip_mdns">mDNS beim Verbinden überspringen (Portsuche testen)</string>
-    <string name="settings_debug_skip_mdns_description">Zum Testen. Die nächste Verbindung über WLAN-Debugging ignoriert mDNS und den zuletzt bekannten Port und findet den Port durch Suchen in den lokalen Ports dieses Telefons. Wirkt nur, solange die Protokollaufzeichnung an ist.</string>
     <string name="settings_debug_logging_enabled">Logging aktivieren</string>
     <string name="settings_debug_logging_enabled_description">Um einen Fehler zu melden, aktivieren Sie diese Einstellung, starten Sie die App neu und reproduzieren die das Problem.</string>
     <string name="settings_drive_folder_desc">Wählen Sie einen Ordner (in der Google Drive-App), in den Aufnahmen kopiert werden.</string>
@@ -654,7 +657,8 @@
     <string name="tile_recording_stopped">Gestoppt</string>
     <string name="transcribe_confirm_dont_ask">Nicht mehr fragen</string>
     <string name="transcribe_long_call_line">Dieser Anruf dauert %1$s. Auf diesem Telefon dauert das Transkribieren etwa %2$s-mal so lange — also etwa %3$s.</string>
-    <string name="transcribe_confirm_message">Das Transkribieren von %1$s hält Ihr Telefon beschäftigt und verbraucht spürbar Akku. Sie können es jederzeit anhalten.\n\nDiese Frage lässt sich unter Transkription in den Einstellungen wieder aktivieren.</string>
+    <string name="summary_card_blocked_model_action">Zusammenfasser herunterladen</string>
+    <string name="transcribe_confirm_message">Das Transkribieren dieses Anrufs hält Ihr Telefon beschäftigt und verbraucht spürbar Akku. Sie können es jederzeit anhalten.\n\nDiese Frage lässt sich unter Transkription in den Einstellungen wieder aktivieren.</string>
     <string name="transcribe_confirm_title">Das dauert etwa %1$s</string>
     <string name="transcribe_confirm_title_first_run">Der erste Durchlauf kann etwas dauern</string>
     <string name="transcribe_confirm_title_unknown">Diesen Anruf transkribieren?</string>
@@ -766,10 +770,12 @@
     <string name="transcription_language_persian">Persisch</string>
     <string name="transcription_language_urdu">Urdu</string>
     <string name="transcription_language_bengali">Bengalisch</string>
+    <string name="transcription_language_cantonese">Kantonesisch (粵語)</string>
     <string name="transcription_language_polish">Polnisch</string>
     <string name="transcription_language_portuguese">Portugiesisch</string>
     <string name="transcription_language_russian">Russisch</string>
     <string name="transcription_language_spanish">Spanisch</string>
+    <string name="transcription_language_turkish">Türkisch</string>
     <string name="transcription_language_ukrainian">Ukrainisch</string>
     <string name="transcription_language_vietnamese">Vietnamesisch</string>
     <string name="transcription_minute_label">Minute</string>
@@ -911,8 +917,10 @@
     <string name="transcribe_again_waiting">Wartet auf erneute Transkription …</string>
     <string name="wifi_call_switch_failed">Das scheint ein WLAN-Anruf zu sein, aber die Aufnahme, die beide Seiten erfasst, konnte nicht starten. Er wird wie gewohnt aufgenommen, dabei fehlt womöglich die andere Person.</string>
     <string name="wifi_call_one_sided">Von diesem WLAN-Anruf wurde nur Ihre Seite aufgenommen. Wenn das öfter passiert, stellen Sie WLAN-Anrufe in den Einstellungen der Telefon-App auf „Mobilfunknetz bevorzugt“.</string>
-    <string name="settings_debug_force_wifi_route">WLAN-Anruf-Aufnahmeweg erzwingen</string>
-    <string name="settings_debug_force_wifi_route_description">Zum Testen. Jeder Telefonanruf wechselt während des Gesprächs zur App-Anruf-Aufnahme, wie es ein WLAN-Anruf täte. Auf einem Telefon ohne WLAN-Anrufe fehlt die andere Seite, und es sollte ein Fehler erscheinen. Erfordert eingeschaltete App-Anruf-Aufnahme. Wirkt nur, solange die Protokollaufzeichnung an ist.</string>
     <string name="wifi_call_switch_aborted">Die Aufnahme dieses WLAN-Anrufs wurde vorzeitig beendet: Die Aufnahme ließ sich nicht sicher umschalten. Der bisher aufgenommene Teil bleibt erhalten.</string>
     <string name="wifi_call_far_unknown">Dieser WLAN-Anruf wurde aufgenommen, aber CallVault konnte nicht prüfen, ob die andere Seite darauf ist. Bitte hören Sie sich die Aufnahme an.</string>
+    <string name="general_show_more">Mehr</string>
+    <string name="general_show_less">Weniger</string>
+    <string name="summary_card_state_expanded">Ausgeklappt</string>
+    <string name="summary_card_state_collapsed">Eingeklappt</string>
 </resources>

@@ -32,6 +32,7 @@ class LanguageScriptTest {
         "ru" to UnicodeScript.CYRILLIC,
         "uk" to UnicodeScript.CYRILLIC,
         "zh" to UnicodeScript.HAN,
+        "yue" to UnicodeScript.HAN,
         "el" to UnicodeScript.GREEK,
         "bn" to UnicodeScript.BENGALI,
     )

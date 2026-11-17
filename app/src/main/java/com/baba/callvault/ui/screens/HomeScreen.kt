@@ -68,8 +68,11 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import com.baba.callvault.ui.common.ReleaseHighlight
 import com.baba.callvault.ui.common.ReleaseHighlights
-import androidx.compose.foundation.layout.ExperimentalLayoutApi
-import androidx.compose.foundation.layout.FlowRow
+import androidx.compose.foundation.horizontalScroll
+import androidx.compose.foundation.gestures.detectHorizontalDragGestures
+import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.platform.LocalLayoutDirection
+import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -1137,6 +1140,8 @@ fun HomeScreen(
                                     context.openWirelessDebugging()
                                 }
                             }
+                            // "Keep recording off Wi-Fi" lives in Settings; open the panel (BabApps item 115).
+                            HomeViewModel.HomeStatus.NEEDS_WIFI -> onOpenSettings
                             else -> null
                         },
                         onSetRecordingState = { viewModel.setRecordingState(it) },
@@ -1147,6 +1152,9 @@ fun HomeScreen(
                             blockedByRecording = uiState.usbFixBlockedByRecording,
                             onFix = { viewModel.setUsbChargingOnly() },
                         )
+                    }
+                    if (uiState.stoppedByUserAtMillis != null) {
+                        StoppedByUserCard(onDismiss = { viewModel.dismissStoppedByUserCard() })
                     }
                     uiState.updatedToVersion?.let { version ->
                         UpdatedBannerCard(
@@ -1451,10 +1459,52 @@ fun HomeScreen(
             )
         }
 
+        // Swipe sideways anywhere on the page to change between "Recordings" and "All calls", in step
+        // with the switch. A child that scrolls sideways (the chip row) consumes its own drags first,
+        // and the rows have no swipe actions of their own, so nothing else competes for the gesture.
+        val swipeLayoutRtl = LocalLayoutDirection.current == LayoutDirection.Rtl
+        val swipeThresholdPx = with(androidx.compose.ui.platform.LocalDensity.current) { 72.dp.toPx() }
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .pointerInput(uiState.callsView, selectionMode, swipeLayoutRtl) {
+                    if (selectionMode) return@pointerInput
+                    var total = 0f
+                    detectHorizontalDragGestures(
+                        onDragStart = { total = 0f },
+                        onDragEnd = {
+                            CallsViewSwipe.target(uiState.callsView, total, swipeThresholdPx, swipeLayoutRtl)
+                                ?.let { viewModel.setCallsView(it) }
+                        },
+                        onDragCancel = { total = 0f },
+                    ) { _, dragAmount -> total += dragAmount }
+                }
+        ) {
+        // Pinned above the list, so typing a name never scrolls out of reach: the search line, then
+        // the "Recordings | All calls" switch (option D, 2026-11-03). The same page shows either the
+        // recordings or every call in the phone's call log, lined up with the recordings made of them.
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(
+                    start = 20.dp, end = 20.dp,
+                    top = innerPadding.calculateTopPadding() + 8.dp, bottom = 8.dp
+                ),
+            verticalArrangement = Arrangement.spacedBy(10.dp)
+        ) {
+            SearchLine(
+                query = uiState.contactQuery,
+                onQueryChange = { viewModel.setContactQuery(it) },
+                placeholder = stringResource(R.string.home_search_contacts_hint),
+                suggestions = uiState.contactSuggestions,
+            )
+            CallsViewSwitch(callsView = uiState.callsView, onChange = { viewModel.setCallsView(it) })
+        }
         CvPullToRefresh(
             isRefreshing = isPullRefreshing,
             onRefresh = { viewModel.pullToRefresh() },
-            topPadding = innerPadding.calculateTopPadding(),
+            topPadding = 0.dp,
+            modifier = Modifier.weight(1f),
         ) {
             LazyColumn(
                 state = listState,
@@ -1462,7 +1512,7 @@ fun HomeScreen(
                 contentPadding = PaddingValues(
                     start = 20.dp,
                     end = 20.dp,
-                    top = innerPadding.calculateTopPadding() + 8.dp,
+                    top = 0.dp,
                     bottom = innerPadding.calculateBottomPadding() + 28.dp
                 ),
                 verticalArrangement = Arrangement.spacedBy(10.dp)
@@ -1473,19 +1523,7 @@ fun HomeScreen(
 
                 val recordings = uiState.filteredRecordings
 
-                // "Recordings | All calls" (option D, 2026-11-03): the same page shows either the recordings or
-                // every call in the phone's call log, lined up with the recordings that were made of them.
-                item { CallsViewSwitch(callsView = uiState.callsView, onChange = { viewModel.setCallsView(it) }) }
-
                 if (uiState.callsView) {
-                    item {
-                        SearchLine(
-                            query = uiState.contactQuery,
-                            onQueryChange = { viewModel.setContactQuery(it) },
-                            placeholder = stringResource(R.string.home_search_contacts_hint),
-                            suggestions = uiState.contactSuggestions,
-                        )
-                    }
                     item { CallFilterChips(selected = uiState.callFilter, onSelect = { viewModel.setCallFilter(it) }) }
                     val entries = uiState.callHistory
                     if (entries.isEmpty()) {
@@ -1508,19 +1546,8 @@ fun HomeScreen(
                     }
                 } else {
 
-                // The search line, first: it is the one control on this page that takes typing, and
-                // what it completes with comes from the list itself, so it is only offered once there
-                // is a list. Typing narrows by contact; the chips below narrow by everything else.
-                if (uiState.recordings.isNotEmpty()) {
-                    item {
-                        SearchLine(
-                            query = uiState.contactQuery,
-                            onQueryChange = { viewModel.setContactQuery(it) },
-                            placeholder = stringResource(R.string.home_search_contacts_hint),
-                            suggestions = uiState.contactSuggestions,
-                        )
-                    }
-                }
+                // The search line is pinned above the list (see the header). Typing narrows by contact;
+                // the chips below narrow by everything else.
 
                 // The count alone. The section header that used to sit beside it said "RECORDINGS"
                 // under a bar that now says the same thing, because this is a section with its own
@@ -1536,7 +1563,7 @@ fun HomeScreen(
                     }
                 }
 
-                // Faceted, non-wrapping filter chips shown once there is anything to filter.
+                // Faceted filter chips on ONE row that scrolls sideways, shown once there is anything to filter.
                 if (uiState.recordings.isNotEmpty()) {
                     item {
                         RecordingFilterBar(
@@ -1584,7 +1611,6 @@ fun HomeScreen(
                 }
                 } // end of the recordings view
             }
-        }
 
         // Back to the top from anywhere, without flinging. Appears only once scrolling has actually
         // buried the top of the list, so a short library never carries a control it does not need.
@@ -1594,7 +1620,7 @@ fun HomeScreen(
             exit = fadeOut(),
             modifier = Modifier
                 .align(Alignment.TopCenter)
-                .padding(top = innerPadding.calculateTopPadding() + 12.dp)
+                .padding(top = 12.dp)
         ) {
             FilledTonalButton(
                 onClick = { listScope.launch { listState.animateScrollToItem(0) } },
@@ -1616,6 +1642,8 @@ fun HomeScreen(
                 Text(stringResource(R.string.home_scroll_to_top))
             }
         }
+        } // end of the pull-to-refresh box
+        } // end of the swipeable page column
         }
     }
 
@@ -2132,6 +2160,9 @@ fun HomeScreen(
     }
 
     if (showModelMissing) {
+        // Straight to the speech-model group, where the model is chosen and downloaded, rather than the top
+        // of the drawer; the plain panel is only the fallback where there is no router (previews).
+        val openGroup = LocalOpenSettingsGroup.current
         AlertDialog(
             onDismissRequest = { showModelMissing = false },
             title = { Text(stringResource(R.string.transcript_no_model_title)) },
@@ -2139,7 +2170,7 @@ fun HomeScreen(
             confirmButton = {
                 TextButton(onClick = {
                     showModelMissing = false
-                    onOpenSettings()
+                    if (openGroup != null) openGroup(SettingsGroup.MODEL_AND_LANGUAGE) else onOpenSettings()
                 }) {
                     Text(stringResource(R.string.transcript_no_model_open_settings))
                 }
@@ -2422,6 +2453,40 @@ private fun UpdatedBannerCard(version: String, onDismiss: () -> Unit) {
 }
 
 /**
+ * Shown once per user stop (Active apps -> Stop, or Force stop): a stopped app hears no calls, and the user who
+ * pressed Stop was told nothing (BabApps item 115). Warning tint, closable; a later stop shows it again.
+ */
+@Composable
+private fun StoppedByUserCard(onDismiss: () -> Unit) {
+    val accent = LocalCvBrand.current.warning
+    val tinted = accent.copy(alpha = 0.10f).compositeOver(MaterialTheme.colorScheme.surface)
+    CvCard(color = tinted, contentPadding = PaddingValues(horizontal = 16.dp, vertical = 10.dp)) {
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            Icon(
+                imageVector = Icons.Filled.StopCircle,
+                contentDescription = null,
+                tint = accent,
+                modifier = Modifier.size(22.dp)
+            )
+            Spacer(Modifier.width(12.dp))
+            Text(
+                text = stringResource(R.string.home_stopped_by_user_text),
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onSurface,
+                modifier = Modifier.weight(1f)
+            )
+            IconButton(onClick = onDismiss) {
+                Icon(
+                    imageVector = Icons.Filled.Close,
+                    contentDescription = stringResource(R.string.general_close),
+                    tint = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+            }
+        }
+    }
+}
+
+/**
  * Gentle advisory shown under the hero card when the Default USB Configuration is a DATA mode — locking
  * the screen mid-call can then stop recording. NOT a red "broken" state (recording works otherwise), so
  * it uses a soft warning tint. Tapping it applies the one-tap fix (set USB to "Charging only"); a spinner
@@ -2654,6 +2719,8 @@ private fun HeroStatusCard(
         HomeViewModel.HomeStatus.PAIRING_LOST -> CvTone.Error
         // Error, not Warning: the recorder is down and the next call will be missed.
         HomeViewModel.HomeStatus.RECOVERY_STUCK -> CvTone.Error
+        // Error: the recorder is down and cannot start without Wi-Fi, so the next call would be missed.
+        HomeViewModel.HomeStatus.NEEDS_WIFI -> CvTone.Error
         // Error for the same reason: with Shizuku stopped nothing can record, and it stops on every
         // reboot — this is the state a Shizuku user will meet most often and must not read as cosmetic.
         HomeViewModel.HomeStatus.SHIZUKU_NOT_READY -> CvTone.Error
@@ -2670,6 +2737,7 @@ private fun HeroStatusCard(
         HomeViewModel.HomeStatus.UPDATE_REGRANT_NEEDED -> stringResource(R.string.home_hero_pill_update_regrant)
         HomeViewModel.HomeStatus.PAIRING_LOST -> stringResource(R.string.home_hero_pill_recovery_stuck)
         HomeViewModel.HomeStatus.RECOVERY_STUCK -> stringResource(R.string.home_hero_pill_recovery_stuck)
+        HomeViewModel.HomeStatus.NEEDS_WIFI -> stringResource(R.string.home_hero_pill_recovery_stuck)
         HomeViewModel.HomeStatus.SHIZUKU_NOT_READY -> stringResource(R.string.home_hero_pill_shizuku)
         HomeViewModel.HomeStatus.STOPPED -> stringResource(R.string.home_hero_pill_stopped)
         HomeViewModel.HomeStatus.STARTING -> stringResource(R.string.home_hero_pill_starting)
@@ -2834,13 +2902,13 @@ private fun relativeTime(atMillis: Long): String = DateUtils.getRelativeDateTime
 private data class FilterOption<T>(val value: T, val label: String)
 
 /**
- * A wrapping [FlowRow] of compact, content-sized filter chips — one per facet
- * (Source / Direction / Contact / Date). Chips wrap to additional lines so all four are visible
- * without horizontal swiping. Each chip never wraps internally (single line, sized to content) and
+ * One sideways-scrolling row of compact, content-sized filter chips — one per facet
+ * (Sort / Source / Direction / Tag / Date). The row never wraps to a second line, so the list
+ * starts at the same height whatever the language; chips beyond the edge are reached by
+ * scrolling it. Each chip never wraps internally (single line, sized to content) and
  * opens a [DropdownMenu] of that facet's options. The Contact and Date facets are populated
  * dynamically from the currently loaded recordings.
  */
-@OptIn(ExperimentalLayoutApi::class)
 @Composable
 private fun RecordingFilterBar(
     sourceFilter: SourceFilter,
@@ -2903,10 +2971,10 @@ private fun RecordingFilterBar(
     }
     val tagValueLabel = tagFilter ?: allTagsShort
 
-    FlowRow(
-        modifier = Modifier.fillMaxWidth(),
+    Row(
+        modifier = Modifier.fillMaxWidth().horizontalScroll(rememberScrollState()),
         horizontalArrangement = Arrangement.spacedBy(8.dp),
-        verticalArrangement = Arrangement.spacedBy(8.dp)
+        verticalAlignment = Alignment.CenterVertically
     ) {
         // Only once something is starred. Before that the chip would be a control whose every use
         // produces an empty list, sitting at the head of a row people read on every visit.

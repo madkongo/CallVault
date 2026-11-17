@@ -5,7 +5,7 @@
     <string name="home_date_yesterday">Tegnap</string>
     <string name="home_health_call_not_recorded">Egy hívás nem lett rögzítve — %1$s, %2$s.</string>
     <string name="home_health_call_not_recorded_unnamed">Egy hívás nem lett rögzítve — %1$s.</string>
-    <string name="home_health_call_not_recorded_force_stopped">A CallVaultot kényszerítve leállította a telefon vagy egy másik alkalmazás, ezért nem észlelhette a hívást. Ellenőrizd, hogy a telefon akkumulátor-beállításai ne altassák el a CallVaultot.</string>
+    <string name="home_health_call_not_recorded_force_stopped">A CallVaultot leállította valaki – te (Aktív alkalmazások vagy Kényszerített leállítás), a telefon vagy egy másik alkalmazás –, ezért nem észlelhette a hívást. Ellenőrizd, hogy a telefon akkumulátor-beállításai ne altassák el a CallVaultot.</string>
     <string name="home_health_failed_daemon">A rögzítés leállt az utolsó hívása közben.</string>
     <string name="home_health_failed_empty">Az utolsó hívása üres felvételt eredményezett (0 bájt).</string>
     <string name="home_health_failed_no_audio">A legutóbbi hívás mentve lett, de nem tartalmaz hangot.</string>
@@ -130,6 +130,10 @@
     <string name="merge_note_will_keep">A többi hívás is a telefonon marad.</string>
     <string name="home_scroll_to_top">Az elejére</string>
     <string name="home_whatsnew_full_notes">Teljes kiadási jegyzék</string>
+    <string name="whatsnew_252_title">Most már törökül is</string>
+    <string-array name="whatsnew_252_items">
+        <item>Török nyelv hozzáadva: a CallVault törökül is elérhető, a hívások pedig törökül is átírhatók</item>
+    </string-array>
     <string name="whatsnew_251_title">Hosszabb megőrzés, sztereó felvétel és Samsung Wi-Fi-hívás</string>
     <string-array name="whatsnew_251_items">
         <item>Az automatikus törlés mostantól 60, 90 vagy 120 napig is megőrizheti a felvételeket</item>

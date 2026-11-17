@@ -78,7 +78,7 @@
     <string name="home_health_setup_changed">আপনার শেষ কলের পর সেটআপ বদলেছে — পরের কলেই নিশ্চিত হবে এটি এখনো কাজ করছে।</string>
     <string name="home_health_call_not_recorded">একটি কল রেকর্ড হয়নি — %1$s, %2$s।</string>
     <string name="home_health_call_not_recorded_unnamed">একটি কল রেকর্ড হয়নি — %1$s।</string>
-    <string name="home_health_call_not_recorded_force_stopped">ফোন বা অন্য কোনো অ্যাপ CallVault জোর করে বন্ধ করে দিয়েছিল, তাই এটি কলটি শনাক্ত করতে পারেনি। দেখে নিন আপনার ফোনের ব্যাটারি সেটিংস যেন CallVault-কে ঘুম মোডে না পাঠায়।</string>
+    <string name="home_health_call_not_recorded_force_stopped">আপনি (সক্রিয় অ্যাপ বা জোর করে বন্ধ করে), ফোন বা অন্য কোনো অ্যাপ CallVault বন্ধ করে দিয়েছিল, তাই এটি কলটি শনাক্ত করতে পারেনি। দেখে নিন আপনার ফোনের ব্যাটারি সেটিংস যেন CallVault-কে ঘুম মোডে না পাঠায়।</string>
     <string name="home_health_missed_recording_folder">একটি কল রেকর্ড হয়নি — তখন কোনো রেকর্ডিং ফোল্ডার সেট করা ছিল না, %1$s।</string>
     <string name="home_health_missed_recording_folder_unnamed">একটি কল রেকর্ড হয়নি — তখন কোনো রেকর্ডিং ফোল্ডার সেট করা ছিল না।</string>
     <string name="home_health_missed_adb_pairing">একটি কল রেকর্ড হয়নি — তখন সেটআপ শেষ হয়নি, %1$s।</string>
@@ -139,6 +139,10 @@
     <string name="merge_note_will_keep">অন্য কলগুলোও ফোনে থেকে যাবে।</string>
     <string name="home_scroll_to_top">ওপরে</string>
     <string name="home_whatsnew_full_notes">পুরো রিলিজ নোট</string>
+    <string name="whatsnew_252_title">এখন তুর্কি ভাষাতেও</string>
+    <string-array name="whatsnew_252_items">
+        <item>তুর্কি যোগ হয়েছে: CallVault এখন তুর্কি ভাষায় পাওয়া যায়, আর কল তুর্কি ভাষায় ট্রান্সক্রাইব করা যায়</item>
+    </string-array>
     <string name="whatsnew_251_title">আরও দীর্ঘ সংরক্ষণ, স্টেরিও রেকর্ডিং আর Samsung Wi-Fi Calling</string>
     <string-array name="whatsnew_251_items">
         <item>অটো-ডিলিট এখন রেকর্ডিং ৬০, ৯০ বা ১২০ দিন রাখতে পারে</item>

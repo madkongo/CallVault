@@ -27,11 +27,15 @@ import android.widget.Toast
 import androidx.core.app.NotificationCompat
 import com.baba.callvault.R
 import com.baba.callvault.data.AppPreferences
+import com.baba.callvault.system.LocalizedContext
 
 /** One button on the ongoing recording notification. */
 private data class NotificationAction(val icon: Int, val text: String, val intentAction: String)
 
-class RecordingNotificationHelper(private val context: Context) {
+class RecordingNotificationHelper(base: Context) {
+
+    /** Text, toasts and notifications follow the app's language, not only the phone's (BabApps item 123). */
+    private val context: Context = LocalizedContext.of(base)
 
     companion object {
         const val CHANNEL_ID_SERVICE = "recording_channel_service"

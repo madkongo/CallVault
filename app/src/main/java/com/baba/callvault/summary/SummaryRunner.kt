@@ -17,6 +17,7 @@ import com.baba.callvault.data.transcripts.db.CallSummaryEntry
 import com.baba.callvault.data.transcripts.db.TranscriptDatabase
 import com.baba.callvault.data.transcripts.db.TranscriptSegmentEntry
 import com.baba.callvault.server.speakers.SpeakerChannel
+import com.baba.callvault.transcription.ChineseScript
 import com.baba.callvault.utils.AppLogger
 import kotlinx.coroutines.flow.first
 
@@ -169,7 +170,12 @@ class SummaryRunner(
                 // Last, and after the citations, so an item stripped down to bare text is still
                 // compared against its neighbours. Observed on the first real Hebrew summary: four
                 // decisions, three of them the same sentence.
-                SummaryDedupe.apply(checked.summary)
+                // Chinese on a Hong Kong / Taiwan phone, and Cantonese, are written in Traditional characters
+                // whatever the model answered in (BabApps item 125). Before the dedupe, so the compare sees final text.
+                val conversion = ChineseScript.forSummary(language)
+                val written = if (conversion == null) checked.summary
+                else checked.summary.mapText { ChineseScript.convert(it, conversion) }
+                SummaryDedupe.apply(written)
             }
         }
 

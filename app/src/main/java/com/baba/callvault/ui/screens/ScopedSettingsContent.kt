@@ -78,6 +78,8 @@ fun ScopedSettingsContent(
     onImportSettings: () -> Unit,
     scope: SettingsScope,
     onScopeChange: (SettingsScope) -> Unit,
+    openGroupRequest: SettingsGroup? = null,
+    onOpenGroupHandled: () -> Unit = {},
     modifier: Modifier = Modifier,
 ) {
     var showLicensesDialog by remember { mutableStateOf(false) }
@@ -110,6 +112,17 @@ fun ScopedSettingsContent(
         if (group != null) setOpenGroup(target, group)
         if (target != scope) onScopeChange(target)
         scrollRequest++
+    }
+
+    // A shortcut from outside Settings ("No speech model yet", the summary card) asks for one group: open it,
+    // scroll to it, and say it is done so the request does not fire again on the next opening. The router
+    // has already set the scope to the page that holds the group.
+    LaunchedEffect(openGroupRequest) {
+        if (openGroupRequest != null) {
+            setOpenGroup(scope, openGroupRequest)
+            scrollRequest++
+            onOpenGroupHandled()
+        }
     }
 
     val showsModeRow = scope == SettingsScope.RECORDINGS || scope == SettingsScope.ALL
@@ -182,11 +195,17 @@ fun ScopedSettingsContent(
             }
             items(groups, key = { it.key }) { group ->
                 val expanded = openGroup == group
+                // The Summaries card's ⓘ opens the requirements popup (BabApps item 131).
+                var showRequirements by remember { mutableStateOf(false) }
+                if (showRequirements) {
+                    SummaryRequirementsInfoDialog(preferences, actions) { showRequirements = false }
+                }
                 SettingsGroupCard(
                     icon = iconOf(group),
                     title = stringResource(titleOf(group)),
                     summary = groupSummaryText(group, preferences, updateTrigger, expanded, actions),
                     explanation = groupExplanationText(group, preferences, updateTrigger),
+                    onInfoClick = if (group == SettingsGroup.SUMMARIES) ({ showRequirements = true }) else null,
                     expanded = expanded,
                     onToggle = { setOpenGroup(scope, if (expanded) null else group) },
                 ) {

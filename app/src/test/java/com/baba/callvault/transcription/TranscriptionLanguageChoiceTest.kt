@@ -60,17 +60,39 @@ class TranscriptionLanguageChoiceTest {
     }
 
     @Test
+    fun traditional_chinese_phones_pin_chinese() {
+        // BabApps item 120: the app now has zh-HK and zh-TW screens; their phones must pin "zh", not auto-detect.
+        listOf("zh-HK", "zh-TW", "zh-Hant-MO", "zh-CN").forEach {
+            assertEquals(it, "zh", TranscriptionLanguageChoice.defaultLanguage(Locale.forLanguageTag(it)))
+        }
+    }
+
+    @Test
     fun every_language_the_app_is_translated_into_can_be_pinned() {
         // The second request of this kind (#46 Greek, #55 Persian) came from a user whose app was
         // already in their language. If CallVault speaks it, transcription must be able to pin it.
-        val uiLanguages = listOf("ar", "de", "el", "en", "es", "fa", "fr", "he", "hu", "it", "pl", "pt", "ru", "uk", "vi", "zh")
+        val uiLanguages = listOf("ar", "de", "el", "en", "es", "fa", "fr", "he", "hu", "it", "pl", "pt", "ru", "tr", "uk", "vi", "zh")
         uiLanguages.forEach { assertTrue("$it cannot be pinned", it in TranscriptionLanguageChoice.SUPPORTED) }
+    }
+
+    @Test
+    fun cantonese_is_supported_as_an_explicit_choice() {
+        // BabApps item 117: whisper's own code, not "zh-HK".
+        assertEquals("yue", TranscriptionLanguageChoice.resolve(chosen = "yue", setting = "en"))
+        assertTrue("yue" in TranscriptionLanguageChoice.NOT_ON_SMALL)
+        assertTrue(TranscriptionLanguageChoice.NOT_ON_SMALL.all { it in TranscriptionLanguageChoice.SUPPORTED })
     }
 
     @Test
     fun ukrainian_is_supported_as_a_device_default_and_explicit_choice() {
         assertEquals("uk", TranscriptionLanguageChoice.defaultLanguage(Locale.forLanguageTag("uk-UA")))
         assertEquals("uk", TranscriptionLanguageChoice.resolve(chosen = "uk", setting = "en"))
+    }
+
+    @Test
+    fun turkish_is_supported_as_a_device_default_and_explicit_choice() {
+        assertEquals("tr", TranscriptionLanguageChoice.defaultLanguage(Locale.forLanguageTag("tr-TR")))
+        assertEquals("tr", TranscriptionLanguageChoice.resolve(chosen = "tr", setting = "en"))
     }
 
     @Test

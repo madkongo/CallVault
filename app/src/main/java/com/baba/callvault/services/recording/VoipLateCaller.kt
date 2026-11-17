@@ -77,6 +77,20 @@ object VoipLateCaller {
     }
 
     /**
+     * [fileName] with `_in` / `_out` just before its `_voip` marker — `{stamp}_out_voip-{App}[_{caller}].ext`
+     * (BabApps item 113). The slot is structural (right before the marker), so a caller called "in" is
+     * never read as a direction. A null [token], a name that already has one, or a name that is not a
+     * VoIP recording's is returned unchanged.
+     */
+    fun withDirection(fileName: String, token: String?): String {
+        if (token == null) return fileName
+        val match = VOIP_MARKER.find(fileName) ?: return fileName
+        val before = fileName.substring(0, match.range.first)
+        if (before.endsWith("_in") || before.endsWith("_out")) return fileName
+        return before + "_$token" + fileName.substring(match.range.first)
+    }
+
+    /**
      * [fileName] with [caller] in its caller slot — `{stamp}_voip[-App]_{caller}.ext` — when the slot
      * is empty. A name that already has a caller, a blank caller, or a name that is not a VoIP
      * recording's is returned unchanged.

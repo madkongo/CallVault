@@ -57,4 +57,9 @@
     <string name="transcript_notice_failed_many_text">Натисніть, щоб переглянути.</string>
     <string name="notif_readiness_wd_off_by_user_text">Ви вимкнули бездротове налагодження. Увімкніть його знову або ввімкніть налагодження USB, щоб відновити запис.</string>
     <string name="transcript_notice_failed_kept_text">%1$s. Попередню розшифровку збережено.</string>
+    <string name="home_status_needs_wifi_title">Для запису потрібен Wi-Fi</string>
+    <string name="home_status_needs_wifi_suggestion">Рекордер зупинено, і без Wi-Fi він не може запуститися, тому дзвінки не записуються. Підключіться до Wi-Fi або ввімкніть у налаштуваннях «Записувати без Wi-Fi».</string>
+    <string name="notif_stopped_by_user_title">Ви зупинили CallVault</string>
+    <string name="notif_stopped_by_user_text">Поки застосунок був зупинений, дзвінки не записувалися. CallVault знову відкритий і записує нові дзвінки.</string>
+    <string name="home_stopped_by_user_text">Ви зупинили CallVault — поки застосунок був зупинений, дзвінки не записувалися.</string>
 </resources>

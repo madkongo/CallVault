@@ -66,7 +66,10 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
 import com.baba.callvault.R
+import androidx.compose.ui.platform.LocalContext
+import com.baba.callvault.data.AppPreferences
 import com.baba.callvault.transcription.TranscriptionLanguageChoice
+import com.baba.callvault.transcription.model.TranscriptionModelOffer
 
 /** How many rows to leave above the selected one when the list opens scrolled to it. */
 private const val ROWS_ABOVE_SELECTED = 2
@@ -96,9 +99,16 @@ fun TranscriptionLanguagePicker(
     onSelected: (String) -> Unit,
     modifier: Modifier = Modifier,
 ) {
+    // Cantonese is hidden while the small model is selected: small cannot decode it (BabApps item 117).
+    val context = LocalContext.current
+    val modelId = remember { AppPreferences(context).getTranscriptionModelId() }
     val items = LanguageSearch.itemsFor(
         TranscriptionLabels.sortLanguageOptions(
-            TranscriptionLabels.LANGUAGE_OPTIONS.map { code ->
+            TranscriptionModelOffer.languagesOffered(
+                TranscriptionLabels.LANGUAGE_OPTIONS,
+                modelId,
+                selectedKey.takeIf { it != TranscriptionLanguageChoice.AUTO },
+            ).map { code ->
                 TranscriptionLanguageChoice.encode(code) to stringResource(TranscriptionLabels.languageOf(code))
             }
         )

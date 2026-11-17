@@ -284,6 +284,11 @@
     <string name="placeholder_contact_name_desc">Le nom du contact, si trouvez</string>
     <string name="placeholder_cross_country_desc">Indique si l\'appel est international (true/false)</string>
     <string name="placeholder_date_desc">La date et l\'heure actuelles</string>
+    <string name="placeholder_day_desc">Le jour, comme 20261112</string>
+    <string name="placeholder_day_dashed_desc">Le jour avec des tirets, comme 2026-11-12</string>
+    <string name="placeholder_time_desc">L\'heure, comme 143520</string>
+    <string name="placeholder_time_dashed_desc">L\'heure avec des tirets, comme 14-35-20</string>
+    <string name="settings_file_name_error_day_time">Utilisez {day} et {time} ensemble, le jour d\'abord, avec _, -, une espace ou T entre les deux (par exemple {day}_{time}), ou utilisez {date}.</string>
     <string name="placeholder_direction_desc">Sens de l\'appel (in/out)</string>
     <string name="placeholder_phone_number_desc">Le numéro de téléphone</string>
     <string name="playback_marked_moments">Moments repérés</string>
@@ -384,8 +389,6 @@
     <string name="settings_debug_log_file">Fichier journal</string>
     <string name="settings_debug_log_view_hint">Appuyez pour lire les entrées les plus récentes.</string>
     <string name="settings_debug_log_wrap">Retour à la ligne</string>
-    <string name="settings_debug_skip_mdns">Ignorer mDNS à la connexion (tester la recherche de port)</string>
-    <string name="settings_debug_skip_mdns_description">Pour les tests. La prochaine connexion de débogage sans fil ignore mDNS et le dernier port connu, et trouve le port en parcourant les ports locaux de ce téléphone. Ne fonctionne que lorsque l\'enregistrement du journal est activé.</string>
     <string name="settings_debug_logging_enabled">Activer la journalisation</string>
     <string name="settings_debug_logging_enabled_description">Pour signaler un bug, activez cette option, redémarrez l\'application et reproduisez le problème.</string>
     <string name="settings_drive_folder_desc">Choisissez un dossier (dans l\'application Google Drive) où copier les enregistrements.</string>
@@ -654,7 +657,8 @@
     <string name="tile_recording_stopped">Arrêté</string>
     <string name="transcribe_confirm_dont_ask">Ne plus demander</string>
     <string name="transcribe_long_call_line">Cet appel dure %1$s. Sur ce téléphone, la transcription prend environ %2$s fois sa durée — soit environ %3$s.</string>
-    <string name="transcribe_confirm_message">Transcrire %1$s occupe le téléphone et consomme nettement de la batterie. Vous pouvez arrêter à tout moment.\n\nCette question peut être réactivée sous Transcription, dans les paramètres.</string>
+    <string name="summary_card_blocked_model_action">Télécharger le résumeur</string>
+    <string name="transcribe_confirm_message">Transcrire cet appel occupe le téléphone et consomme nettement de la batterie. Vous pouvez arrêter à tout moment.\n\nCette question peut être réactivée sous Transcription, dans les paramètres.</string>
     <string name="transcribe_confirm_title">Cela prendra environ %1$s</string>
     <string name="transcribe_confirm_title_first_run">La première fois peut prendre un moment</string>
     <string name="transcribe_confirm_title_unknown">Transcrire cet appel ?</string>
@@ -766,10 +770,12 @@
     <string name="transcription_language_persian">Persan</string>
     <string name="transcription_language_urdu">Ourdou</string>
     <string name="transcription_language_bengali">Bengali</string>
+    <string name="transcription_language_cantonese">Cantonais (粵語)</string>
     <string name="transcription_language_polish">Polonais</string>
     <string name="transcription_language_portuguese">Portugais</string>
     <string name="transcription_language_russian">Russe</string>
     <string name="transcription_language_spanish">Espagnol</string>
+    <string name="transcription_language_turkish">Turc</string>
     <string name="transcription_language_ukrainian">Ukrainien</string>
     <string name="transcription_language_vietnamese">Vietnamien</string>
     <string name="transcription_minute_label">Minute</string>
@@ -911,8 +917,10 @@
     <string name="transcribe_again_waiting">En attente d\'une nouvelle transcription…</string>
     <string name="wifi_call_switch_failed">Cet appel semble passer par le Wi-Fi, mais la capture qui enregistre les deux côtés n\'a pas pu démarrer. Il est enregistré de la manière habituelle, qui peut manquer votre interlocuteur.</string>
     <string name="wifi_call_one_sided">Seul votre côté de cet appel Wi-Fi a été enregistré. Si cela se reproduit, réglez les appels Wi-Fi sur « Réseau mobile de préférence » dans les paramètres de l\'application Téléphone.</string>
-    <string name="settings_debug_force_wifi_route">Forcer la capture des appels Wi-Fi</string>
-    <string name="settings_debug_force_wifi_route_description">Pour les tests. Chaque appel téléphonique bascule en cours d\'appel vers la capture des appels d\'applications, comme le ferait un appel Wi-Fi. Sur un téléphone sans appels Wi-Fi, l\'autre côté manquera et une erreur devrait s\'afficher. Nécessite l\'enregistrement des appels d\'applications. Ne fonctionne que si l\'enregistrement du journal est activé.</string>
     <string name="wifi_call_switch_aborted">L\'enregistrement de cet appel Wi-Fi s\'est arrêté plus tôt : la capture n\'a pas pu être changée sans risque. La partie déjà enregistrée est conservée.</string>
     <string name="wifi_call_far_unknown">Cet appel Wi-Fi a été enregistré, mais CallVault n\'a pas pu vérifier que votre interlocuteur y figure. Écoutez l\'enregistrement.</string>
+    <string name="general_show_more">Plus</string>
+    <string name="general_show_less">Moins</string>
+    <string name="summary_card_state_expanded">Développé</string>
+    <string name="summary_card_state_collapsed">Réduit</string>
 </resources>

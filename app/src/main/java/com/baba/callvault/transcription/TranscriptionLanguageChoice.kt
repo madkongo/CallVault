@@ -38,7 +38,13 @@ object TranscriptionLanguageChoice {
      * name. Whisper knows far more; these are the ones with a translated label to show for them.
      */
     val SUPPORTED: List<String> =
-        listOf("he", "en", "ar", "zh", "fr", "de", "hu", "it", "pl", "pt", "ru", "es", "vi", "el", "fa", "uk", "ur", "bn")
+        listOf("he", "en", "ar", "zh", "fr", "de", "hu", "it", "pl", "pt", "ru", "es", "vi", "el", "fa", "uk", "ur", "bn", "yue", "tr")
+
+    /**
+     * Languages the small tier cannot decode: whisper's `yue` token only exists in the 100-language
+     * vocabulary of large-v3 and its turbo, not in small's 99-language one (BabApps item 117).
+     */
+    val NOT_ON_SMALL: Set<String> = setOf("yue")
 
     /**
      * The obsolete ISO 639 codes [Locale] still reports, mapped to the modern ones whisper uses.

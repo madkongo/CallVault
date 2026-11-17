@@ -75,10 +75,6 @@ interface SettingsActions {
     fun setShowToastsEnabled(enabled: Boolean)
     fun setAppLanguage(languageCode: String)
     fun setLoggingEnabled(enabled: Boolean)
-    /** Debug test switch for #65: the next Wireless-debugging connect skips mDNS and searches loopback ports. */
-    fun setSkipMdnsConnectForTest(enabled: Boolean)
-    /** Debug test switch for #45: carrier calls switch to the app-call capture mid-call. */
-    fun setForceWifiRouteForTest(enabled: Boolean)
     fun getAppVersion(): String
     fun setFileNameTemplate(template: String)
     fun setStorageTarget(target: StorageTarget)
@@ -732,16 +728,6 @@ class SettingsViewModel(application: Application) : AndroidViewModel(application
     }
 
     // -------- Debug settings
-
-    override fun setSkipMdnsConnectForTest(enabled: Boolean) {
-        preferences.setDebugSkipMdnsConnect(enabled)
-        refresh()
-    }
-
-    override fun setForceWifiRouteForTest(enabled: Boolean) {
-        preferences.setDebugForceWifiRoute(enabled)
-        refresh()
-    }
 
     /**
      * Turns diagnostic logging on or off. Neither direction deletes anything: only the Delete button does.

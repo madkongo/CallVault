@@ -21,6 +21,7 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import com.baba.callvault.R
+import com.baba.callvault.system.LocalizedContext
 import com.baba.callvault.server.RecorderBackend
 import com.baba.callvault.utils.AppLogger
 import com.baba.callvault.system.health.SilentFailureNotifier
@@ -90,6 +91,9 @@ class AdbConnectionService : Service() {
 
         return START_NOT_STICKY
     }
+
+    /** Its notification text follows the app's language, not only the phone's (BabApps item 123). */
+    override fun attachBaseContext(newBase: Context) = super.attachBaseContext(LocalizedContext.of(newBase))
 
     override fun onBind(intent: Intent?): IBinder? = null
 

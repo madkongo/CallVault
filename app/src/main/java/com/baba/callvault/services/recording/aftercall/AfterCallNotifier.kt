@@ -18,6 +18,7 @@ import androidx.core.app.NotificationCompat
 import androidx.core.app.NotificationManagerCompat
 import com.baba.callvault.MainActivity
 import com.baba.callvault.R
+import com.baba.callvault.system.LocalizedContext
 import com.baba.callvault.system.permissions.PermissionChecks
 import com.baba.callvault.utils.AppLogger
 
@@ -56,7 +57,8 @@ internal object AfterCallNotifier {
     }.getOrDefault(false)
 
     /** Posts (or re-posts) the keep-or-delete question for [held]. Blocking: reads the duration. */
-    fun postQuestion(context: Context, held: AfterCallDecisions.Held) {
+    fun postQuestion(base: Context, held: AfterCallDecisions.Held) {
+        val context = LocalizedContext.of(base)
         val name = held.displayName
         val title = AfterCallText.notificationTitle(context, name, AfterCallText.durationOf(context, held))
         val builder = base(context, held)
@@ -70,7 +72,8 @@ internal object AfterCallNotifier {
     }
 
     /** Replaces the question with "Recording deleted" and its Undo, for the length of the Undo window. */
-    fun postDeleted(context: Context, held: AfterCallDecisions.Held) {
+    fun postDeleted(base: Context, held: AfterCallDecisions.Held) {
+        val context = LocalizedContext.of(base)
         val builder = base(context, held)
             .setContentTitle(context.getString(R.string.after_call_deleted_title))
             .setContentText(context.getString(R.string.after_call_deleted_text))

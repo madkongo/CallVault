@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Keep or delete after the call: the pop-up's "Display over other apps" permission (Settings, wizard, setup). -->
+<resources>
+    <string name="popup_permission_title">允許彈窗</string>
+    <string name="popup_permission_text">“保留或刪除”彈窗需要 Android 的“顯示在其他應用上層”權限。點按“允許”，然後為 CallVault 開啟（部分手機需先在列表中找到 CallVault）。在此之前，會透過通知詢問。</string>
+    <string name="popup_permission_allow">允許</string>
+    <string name="popup_permission_not_now">以後再說</string>
+    <string name="permission_overlay_label">顯示在其他應用上層</string>
+    <string name="permission_overlay_description">僅用於通話後的“保留或刪除”彈窗（設定 ▸ 錄音 ▸ 詢問方式）。沒有它，CallVault 會透過通知詢問。點按即可允許。</string>
+    <string name="general_optional">可選</string>
+</resources>

@@ -306,7 +306,9 @@ class AppPreferences(context: Context) {
 
         // --- UI & Appearance ---
         val THEME_MODE = ThemeMode.SYSTEM
-        const val DYNAMIC_COLOR = false // Signal brand colors are the identity; Material You is opt-in
+        // On by default since 2.5.2 (BabApps item 131). Only affects a phone that has no stored choice:
+        // a user who switched it on or off keeps that value. Android 11 and older ignore it (Theme.kt).
+        const val DYNAMIC_COLOR = true
         const val SHOW_TOASTS = true
     }
 
@@ -448,6 +450,8 @@ class AppPreferences(context: Context) {
         LOGCAT_RING_PREVIOUS_KIB("logcat_ring_previous_kib"),
         DEBUG_ENABLED("debug_enabled"),
         DEBUG_CALLER_NUMBER("debug_caller_number"),
+        // Retired test switches (BabApps item 126): no UI, nothing reads them; only clearRetiredTestSwitches()
+        // names them. Kept so a revert of the removal finds the same keys (docs/dev-notes/rollback/item-126-test-switches.md).
         DEBUG_SKIP_MDNS_CONNECT("debug_skip_mdns_connect"),
         DEBUG_FORCE_WIFI_ROUTE("debug_force_wifi_route"),
         DEVELOPER_MODE_UNLOCKED("developer_mode_unlocked"),
@@ -476,7 +480,12 @@ class AppPreferences(context: Context) {
 
         // The transcript reader's "Follow playback" switch (#27). A remembered view choice, like a sort
         // order: device-only and not a Settings row.
-        TRANSCRIPT_FOLLOW_PLAYBACK("transcript_follow_playback");
+        TRANSCRIPT_FOLLOW_PLAYBACK("transcript_follow_playback"),
+
+        // BabApps item 115: the time of the newest user stop (Active apps -> Stop) already told to the user, by
+        // notification and by Home card. State, not settings: device-only, not exported, no Settings row.
+        STOP_NOTICE_NOTIFIED_AT("stop_notice_notified_at"),
+        STOP_NOTICE_CARD_DISMISSED_AT("stop_notice_card_dismissed_at");
     }
 
     // -------- Nested enums
@@ -743,6 +752,14 @@ class AppPreferences(context: Context) {
     /** The versionCode seen on the previous launch, used to detect that an update just landed. */
     fun getLastSeenVersionCode() = getInt(Key.LAST_SEEN_VERSION_CODE)
     fun setLastSeenVersionCode(code: Int) = setInt(Key.LAST_SEEN_VERSION_CODE, code)
+
+    /** Time of the newest user stop the notification was already posted for (0 = none). */
+    fun getStopNoticeNotifiedAt() = getLong(Key.STOP_NOTICE_NOTIFIED_AT)
+    fun setStopNoticeNotifiedAt(atMillis: Long) = setLong(Key.STOP_NOTICE_NOTIFIED_AT, atMillis)
+
+    /** Time of the newest user stop whose Home card the user closed (0 = none). */
+    fun getStopNoticeCardDismissedAt() = getLong(Key.STOP_NOTICE_CARD_DISMISSED_AT)
+    fun setStopNoticeCardDismissedAt(atMillis: Long) = setLong(Key.STOP_NOTICE_CARD_DISMISSED_AT, atMillis)
 
     /** Version name to show a dismissable "updated successfully" banner for, or null when none. */
     fun getUpdateSuccessBannerVersion() = getString(Key.UPDATE_SUCCESS_BANNER_VERSION)
@@ -1595,23 +1612,17 @@ class AppPreferences(context: Context) {
     fun setDebugEnabled(enabled: Boolean) = setBoolean(Key.DEBUG_ENABLED, enabled)
 
     /**
-     * Debug-only test switch (Settings → Debug, shown while log recording is on): skip mDNS and the last good
-     * port, so the next Wireless-debugging connect has to find its port with the loopback search (#65). Lets
-     * the search be checked on a phone whose mDNS works. Not exported; off by default.
+     * Drops the stored values of two maintainer test switches that no longer exist (BabApps item 126):
+     * "skip mDNS when connecting" (#65) and "force Wi-Fi-call capture route" (#45). Nothing reads them any
+     * more; clearing them keeps a phone that had one on from carrying a dead value, and a revert of the
+     * removal starts from off. The key names stay in [Key] for that revert. Safe to call on every start.
      */
-    fun isDebugSkipMdnsConnect() = getBoolean(Key.DEBUG_SKIP_MDNS_CONNECT, false)
-
-    fun setDebugSkipMdnsConnect(enabled: Boolean) = setBoolean(Key.DEBUG_SKIP_MDNS_CONNECT, enabled)
-
-    /**
-     * Debug-only test switch (Settings → Debug, shown while log recording is on): every carrier call
-     * switches to the app-call capture mid-call, as a Wi-Fi call would (#45), so the switch can be
-     * exercised on a phone without Wi-Fi calling. Honoured only while logging is on. Not exported; off
-     * by default.
-     */
-    fun isDebugForceWifiRoute() = getBoolean(Key.DEBUG_FORCE_WIFI_ROUTE, false)
-
-    fun setDebugForceWifiRoute(enabled: Boolean) = setBoolean(Key.DEBUG_FORCE_WIFI_ROUTE, enabled)
+    fun clearRetiredTestSwitches() {
+        prefs.edit {
+            remove(Key.DEBUG_SKIP_MDNS_CONNECT.id)
+            remove(Key.DEBUG_FORCE_WIFI_ROUTE.id)
+        }
+    }
 
     /** Gets the caller number override used for debugging. */
     fun getDebugCallerNumber() = getString(Key.DEBUG_CALLER_NUMBER, DefaultsValue.DEBUG_CALLER_NUMBER) ?: DefaultsValue.DEBUG_CALLER_NUMBER

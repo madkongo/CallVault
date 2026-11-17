@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+
+    <!-- Setup Wizard: redesign-only UI strings (the "Signal" guided onboarding shell). -->
+    <string name="wizard_ui_eyebrow">Kurulum</string>
+
+    <!-- Storage target option cards (title + one-line description). -->
+    <string name="wizard_ui_storage_local_desc">Kayıtlar bu telefonda kalır. Cihazdan hiçbir şey çıkmaz.</string>
+    <string name="wizard_ui_storage_drive_desc">Kayıtlar Google Drive klasörünüze yüklenir, ardından bu telefondan temizlenir.</string>
+    <string name="wizard_ui_storage_both_desc">Bu telefonda bir kopya tutun ve Google Drive’a yedekleyin.</string>
+
+    <!-- Folder picker rows. -->
+    <string name="wizard_ui_folder_choose">Klasör seç</string>
+
+    <!-- Schedule mode option cards (title + one-line description). -->
+    <string name="wizard_ui_schedule_immediate_desc">Her aramayı biter bitmez yükle.</string>
+    <string name="wizard_ui_schedule_daily_desc">Günün aramalarını toplayıp günde bir kez yükle.</string>
+    <string name="wizard_ui_schedule_weekly_desc">Haftanın aramalarını toplayıp haftada bir kez yükle.</string>
+
+    <!-- Auto-record toggle row descriptions. -->
+    <string name="wizard_ui_auto_incoming_desc">Arama geldiğinde kaydı otomatik başlat.</string>
+    <string name="wizard_ui_auto_outgoing_desc">Arama yaptığınızda kaydı otomatik başlat.</string>
+
+</resources>

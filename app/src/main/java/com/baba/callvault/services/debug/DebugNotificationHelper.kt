@@ -19,6 +19,7 @@ import androidx.core.app.NotificationManagerCompat
 import com.baba.callvault.MainActivity
 import com.baba.callvault.ui.navigation.NotificationDestination
 import com.baba.callvault.R
+import com.baba.callvault.system.LocalizedContext
 import com.baba.callvault.data.AppPreferences
 import com.baba.callvault.system.permissions.PermissionChecks
 
@@ -44,7 +45,8 @@ object DebugNotificationHelper {
     // Permission is verified at runtime via PermissionChecks.hasNotificationPermission() before
     // notify() is called; lint can't trace into the helper, so the check is suppressed here.
     @SuppressLint("MissingPermission")
-    fun show(context: Context) {
+    fun show(base: Context) {
+        val context = LocalizedContext.of(base)
         createChannel(context)
 
         val contentIntent = PendingIntent.getActivity(

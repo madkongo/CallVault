@@ -68,6 +68,10 @@ fun presetForTemplateOrFirst(template: String): FileNameTemplatePreset =
 fun fileNameTemplateExample(template: String): String = template
     .replace(RecordingFileNameFormatter.DATE_COMPACT_TAG, "20260611143052")
     .replace(RecordingFileNameFormatter.FileNamePlaceholder.DATE.tag, "20260611_143052")
+    .replace(RecordingFileNameFormatter.FileNamePlaceholder.DAY.tag, "20260611")
+    .replace(RecordingFileNameFormatter.FileNamePlaceholder.DAY_DASHED.tag, "2026-06-11")
+    .replace(RecordingFileNameFormatter.FileNamePlaceholder.TIME.tag, "143052")
+    .replace(RecordingFileNameFormatter.FileNamePlaceholder.TIME_DASHED.tag, "14-30-52")
     .replace(RecordingFileNameFormatter.FileNamePlaceholder.DIRECTION.tag, "in")
     .replace(RecordingFileNameFormatter.FileNamePlaceholder.PHONE_NUMBER.tag, "+15551234")
     .replace(RecordingFileNameFormatter.FileNamePlaceholder.CONTACT_NAME.tag, "John Doe")
@@ -76,11 +80,11 @@ fun fileNameTemplateExample(template: String): String = template
 /**
  * A file-name template the user typed, as ShizuCallRecorder allowed (removed here in June 2026 for the presets,
  * brought back for 2.5.0 on request). Checked before it is saved, because other parts of the app read names back:
- * the list and merging find the date in the name, so `{date}` is required.
+ * the list and merging find the date in the name, so `{date}` is required, or a day and a time together (#82).
  */
 object CustomFileNameTemplate {
 
-    enum class Problem { EMPTY, NEEDS_DATE, BAD_CHARACTER, UNKNOWN_TAG, TOO_LONG }
+    enum class Problem { EMPTY, NEEDS_DATE, DAY_AND_TIME, BAD_CHARACTER, UNKNOWN_TAG, TOO_LONG }
 
     /** Long enough for any sensible pattern; the filled-in name (contact names) must stay under 255 bytes. */
     const val MAX_LENGTH = 120
@@ -101,10 +105,24 @@ object CustomFileNameTemplate {
             trimmed.length > MAX_LENGTH -> Problem.TOO_LONG
             BAD_CHARACTERS.containsMatchIn(trimmed) -> Problem.BAD_CHARACTER
             hasUnknownTag(trimmed) -> Problem.UNKNOWN_TAG
-            !trimmed.contains(RecordingFileNameFormatter.FileNamePlaceholder.DATE.tag) -> Problem.NEEDS_DATE
-            else -> null
+            hasDate(trimmed) -> null
+            usesDayOrTime(trimmed) -> Problem.DAY_AND_TIME
+            else -> Problem.NEEDS_DATE
         }
     }
+
+    /**
+     * The name carries a date the app can read back (#82): `{date}`, or a `{day}`/`{day-}` straight followed by one
+     * joiner (`_`, `-`, a space or `T`) and a `{time}`/`{time-}`. The pair is what the list, the merge naming and the
+     * log redaction find again, and day-then-time keeps the names sorted; a day alone, or a time alone, reads back
+     * as nothing, so it is refused ([Problem.DAY_AND_TIME]) instead of saved.
+     */
+    private fun hasDate(template: String): Boolean =
+        template.contains(RecordingFileNameFormatter.FileNamePlaceholder.DATE.tag) || FileNameStamp.pairInTemplate(template) != null
+
+    private fun usesDayOrTime(template: String): Boolean = listOf(
+        FileNameStamp.DAY_TAG, FileNameStamp.DAY_DASHED_TAG, FileNameStamp.TIME_TAG, FileNameStamp.TIME_DASHED_TAG
+    ).any { template.contains(it) }
 
     /** The first `{…}` the app does not know, for the error message; null when there is none. */
     fun firstUnknownTag(template: String): String? = TAG.findAll(template).map { it.value }.firstOrNull { it !in KNOWN_TAGS }

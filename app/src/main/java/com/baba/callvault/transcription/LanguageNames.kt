@@ -47,10 +47,12 @@ object LanguageNames {
         "pl" to "Polski",
         "pt" to "Português",
         "ru" to "Русский",
+        "tr" to "Türkçe",
         "uk" to "Українська",
         "ur" to "اردو",
         "vi" to "Tiếng Việt",
         "zh" to "中文",
+        "yue" to "粵語",
     )
 
     /** [code]'s name in itself, or null when the table has none (a test guards SUPPORTED against that). */

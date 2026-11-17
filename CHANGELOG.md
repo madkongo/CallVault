@@ -19,6 +19,161 @@ All notable changes to CallVault are documented here. The format is based on
   seconds. Kill Google Drive (Settings ▸ Apps ▸ Drive ▸ Force stop) during a copy: CallVault stays open and the copy goes
   on with the next file. Not yet seen on the Honor phone that reported it. -->
 
+### Added
+
+- **The recordings list: search on top, filters on one row, swipe between tabs.** The search field now sits above
+  "Recordings | All calls", stays in place while the list scrolls, and is there on both views (before, it was hidden until
+  there was a recording). The filter chips (sort, source, direction, tag, date, and Recorded/Missed on All calls) stay on
+  one line and scroll sideways instead of wrapping onto several. Swiping left or right anywhere on the page switches
+  between Recordings and All calls, in step with the switch (reversed on right-to-left languages; off while picking
+  recordings).
+  <!-- 🧪 VERIFYING (BabApps item 129, not shipped): open the Recordings page, type a name and scroll the list: the
+  search stays on top. Swipe left/right: the tab follows. Scroll the chip row sideways: it must not change the tab. -->
+
+- **A recording's screen: Transcribe and Summarise are icons in the player box, and long notes and summaries start
+  folded.** The two icons sit at either end of the skip-back / skip-forward row (they keep their states: working,
+  open, try again); the transcript icon is no longer in the header card with the star, share and delete. A finished
+  summary shows its title and first three lines with "More" (the summary icon opens it too), and a long note shows
+  three lines with "More"; a tap opens the editor, and a note you are typing in never folds under you.
+  <!-- 🧪 VERIFYING (BabApps item 130, not shipped): built, not yet seen on a phone. Open a recording with a
+  transcript and a summary, and one with a long note: both icons should be in the player box, the summary and the
+  long note folded. Tap More / the summary icon to open them; start a transcription and a summary and check the
+  progress rings; check a Hebrew/Arabic note and summary. -->
+- **The day and the time can be used on their own in a custom file name.** Four new tags: `{day}` (20261112),
+  `{day-}` (2026-11-12), `{time}` (143520) and `{time-}` (14-35-20), for example `{day-}_{time-}_{contact_name}` gives
+  `2026-11-12_14-35-20_Dana.ogg`. `{date}` is unchanged, so no existing name changes. A custom name needs `{date}`, or a
+  `{day}` followed by a `{time}` with one `_`, `-`, space or `T` between them, day first; a day or a time alone is
+  refused with a message, because the list, merging and logs could not find the call's time again. The time always
+  carries seconds, so two calls only share a name when they start in the same second. App calls keep their own name
+  (#82).
+  <!-- 🧪 VERIFYING (BabApps item 114, not shipped): Settings ▸ file name ▸ Custom, type `{day-}_{time-}_{contact_name}`;
+  the example shows 2026-06-11_14-30-52_John Doe. Record a call: the file should carry that date and time, the list
+  should show the right date and, for a saved call, the contact. Tried once on the OnePlus 9 Pro (Shizuku, one incoming
+  call, 2026-11-16): file name, list row, rescan and old `{date}` rows all read right. Not yet tried on an outgoing
+  call, an app call, a merge, or by anyone else. -->
+- **WhatsApp and Telegram calls now show an in or out arrow.** The list and the playback screen show it beside the
+  app's icon, the file name gets `_in_` or `_out_` before `_voip`, and the details file says `in` or `out`. Incoming is
+  known because CallVault now hears the app's "incoming call" notification while it rings (it reads only that a call
+  is ringing, never a name or number; it is switched on by itself while app-call recording is on). Outgoing is
+  claimed only when that was heard to be silent and the app's own call notification says it was dialling. Any other
+  app, or a call where nothing is certain, stays unmarked as before.
+  <!-- 🧪 VERIFYING (BabApps item 113, not shipped): tried on the OnePlus 9 Pro (Shizuku), 2026-11-17, quick
+  answers (ring 1-3 s): WhatsApp out and in, Telegram out and in each got the right arrow in the list and the right
+  file name; nothing was wrongly marked in any round. Seen only once or twice per case. Not tried: Signal,
+  Messenger, LINE, Viber, a declined or missed call followed by an outgoing one, standalone mode, the .json on a
+  phone (the setting was off), other phones and ROMs. What would settle it: a week of real calls on the OnePlus 12
+  with no wrong arrow. Adds an always-on listener entry under the phone's notification access.
+  2026-11-17: the maintainer used build 20633 on his OnePlus 12 (standalone mode) with real calls: "the arrows look
+  good". Notification access approved by him. -->
+
+- **Cantonese (粵語) can now be chosen as the transcription language, for calls that mix Cantonese and English.** It
+  works with the two large-v3-turbo models and with cloud transcription. It is hidden while the small model is
+  selected, because small has no Cantonese; a call already set to Cantonese on small fails with a message that says
+  to pick a turbo model. The transcript is stored in Traditional (Hong Kong) characters: the engine often answers in
+  Simplified, so the text is converted afterwards, for Cantonese only. Summaries are written in Traditional Chinese
+  characters. Cantonese is added in all 15 languages of the app.
+  <!-- 🧪 VERIFYING (BabApps item 117, not shipped): the wiring is unit-tested only. Accuracy on real Cantonese with
+  English words is unmeasured (OpenAI documents turbo as weaker on Cantonese); it needs a native Cantonese speaker
+  to transcribe a real mixed call with a turbo model and judge it. Whether Groq and OpenRouter accept "yue" is not
+  tried live. -->
+- **CallVault's screens in Traditional Chinese, Hong Kong and Taiwan wording.** Phones set to Traditional Chinese
+  (Hong Kong, Macau or Taiwan) now get Traditional characters instead of Simplified Chinese or English, and both appear
+  in Settings ▸ Language. Standard written Chinese, not written Cantonese. Converted from the Simplified texts and
+  hand-corrected for local terms (HK 設定 / 檔案 / 短訊; TW 設定 / 檔案 / 背景行程); transcription pins Chinese for these phones.
+  <!-- 🧪 VERIFYING (BabApps item 120, not shipped): a native Hong Kong and a native Taiwan reader should skim the
+  screens for wrong or unnatural wording before release. -->
+- **Chinese transcripts and summaries are written in Traditional characters on Hong Kong and Taiwan phones, and the
+  conversion is now complete.** When transcription is pinned to Chinese and the app or the phone is set to
+  Traditional Chinese (Hong Kong, Macau, Taiwan or plain Traditional), the transcript and the summary are converted to
+  Traditional with the Hong Kong or Taiwan character forms; a phone set to Simplified Chinese is never converted.
+  Cantonese used a hand-made table of about 250 lines that left rarer characters Simplified; it now uses OpenCC's full
+  character and word lists (about 2,800 characters and 9,700 words, 280 KB in the app before compression), so a
+  character with two Traditional forms follows the word (头发 → 頭髮, 发生 → 發生). Taiwan gets the character forms
+  only, not OpenCC's Taiwan word swaps. The six file-name and Cantonese strings that were missing in the Hong Kong and
+  Taiwan screens are added, so the translation check passes again.
+  <!-- 🧪 VERIFYING (BabApps item 125, not shipped): unit-tested only. To settle it: set the app to 繁體中文（香港）,
+  pin transcription to Chinese, transcribe a Mandarin call: the text should come out Traditional and the summary too.
+  A native Hong Kong or Taiwan reader should judge the wording; the conversion data (OpenCC, Apache-2.0) is credited
+  in NOTICE.md. -->
+- **Turkish.** CallVault's screens are translated into Turkish (Türkçe), and Turkish can be chosen as the transcription
+  language; summaries are asked for in Turkish. It shows in Settings ▸ Language and in Android's per-app language
+  list. A phone set to Turkish now starts with Turkish pinned for transcription instead of auto-detect, like the other
+  supported languages. (#84)
+  <!-- 🧪 VERIFYING (BabApps item 127, not shipped): unit-tested only; the emulator could not be started, so the
+  Turkish screens and the Settings ▸ Language picker have not been seen yet (set the phone or the app to Türkçe and
+  look). The translation is machine-written and needs a native Turkish reader to skim it. Turkish transcription and
+  summary quality is unmeasured (the app has not been run on a real Turkish call); a Turkish speaker should
+  transcribe and summarise one before this counts as working. -->
+
+- **Settings: Telegram group beside Support, system colours on by default, and "Show requirements" is now an ⓘ.**
+  Settings ▸ Help and about ▸ About has a "Telegram group" row under "Support development". "Use system colours" is on
+  for anyone who never set it (Android 12 and newer); a choice already made is kept. The "Show requirements" switch in
+  the Summaries settings is gone: the ⓘ on the Summaries card opens the same requirements popup, whose "Don't show
+  this again" box still controls whether it appears before the download (untick it there to bring the popup back).
+  <!-- 🧪 VERIFYING (BabApps item 131, not shipped): unit-tested and compiled only; the phone check is part of the
+  combined build with items 128-130. To settle it: About shows the Telegram row and it opens the group; a fresh
+  install (or a phone that never touched the colour switch) follows the wallpaper colours; Summaries card ⓘ opens the
+  popup with "Got it" and the checkbox; tick it, start a summary download and see no popup; untick it via ⓘ and see
+  the popup again. -->
+
+### Fixed
+
+- **"Transcribe this call?" no longer repeats the contact's name, and the missing-model prompts take you to the
+  right place.** The question now reads "Transcribing this call keeps your phone busy…" in every language. When no
+  speech model is downloaded, "Open settings" opens Settings already on the speech-model card instead of at the
+  top; and a summary blocked for lack of the summariser now has a "Download the summariser" button that opens the
+  summary card in Settings.
+  <!-- 🧪 VERIFYING (BabApps item 128, not shipped): on a phone with no speech model, tap Transcribe, then "Open
+  settings": the model card should be open and in view. On a recording with a transcript but no summariser, the
+  summary card should show the button and it should land on the summariser download. Not yet checked in the
+  right-to-left languages by a reader. -->
+- **An app call (WhatsApp, Telegram, LINE…) now shows one CallVault notification, and notifications follow the app's
+  language.** During an app call two notices sat side by side, "Recording a LINE call" with Pause / Mark / Stop and
+  "Recording VoIP call", and on a phone whose app language differed from the system language some were English next to
+  Chinese ones. Now there is one notice with Pause / Mark / Stop, as on a normal call, and "Ready to record calls"
+  returns afterwards. Every notification CallVault posts takes its text from the language chosen in Settings.
+  <!-- 🧪 VERIFYING (BabApps item 123, not shipped): unit-tested, and tried on the OnePlus 9 Pro with the app set to
+  Chinese. To settle it: make a WhatsApp call with recording on; the shade should show one CallVault notice, in the
+  app's language. -->
+
+- **Home no longer says "Ready to record" when the recorder is stopped and there is no Wi-Fi.** On a Pixel 8 with
+  mobile data only and "Keep recording off Wi-Fi" off, the recorder could not restart after the app was stopped, a
+  call was missed, and Home still read "Ready". Home now shows "Needs Wi-Fi to record" and says to connect to Wi-Fi or
+  turn on "Keep recording off Wi-Fi"; tapping the card opens Settings. Nothing changes while the recorder is running or
+  Wi-Fi is up.
+  <!-- 🧪 VERIFYING (BabApps item 115, not shipped): with the recorder stopped (force-stop the app), Wi-Fi off and
+  "Keep recording off Wi-Fi" off, Home should show "Needs Wi-Fi to record"; turning Wi-Fi back on should return it
+  to Ready. -->
+
+- **A call after you stop CallVault (Active apps → Stop) is no longer lost when there is no Wi-Fi, and you are told
+  about the stop.** The recorder keeps running after a Stop, but the next call woke the app, which killed that
+  recorder and tried to start a new one over ADB, which cannot work away from Wi-Fi. The running recorder now hands
+  itself to the app when it starts, so it is reused. When you next open the app after a Stop or Force stop, a
+  notification and a Home card say "You stopped CallVault — calls weren't recorded while it was stopped", once per
+  stop. The "call was not recorded" line now names your own Stop too, instead of only "the phone or another app".
+  <!-- 🧪 VERIFYING (BabApps item 115, not shipped): shown on the emulator only (same recorder reused after Stop and
+  after Force stop, no ADB launch, notification posted). To settle it on a phone: stop CallVault from Active apps with
+  Wi-Fi off and "Keep recording off Wi-Fi" off, then make a call; it should record. -->
+
+- **LINE calls are now recorded on phones where LINE never switches the phone into call mode.** On a POCO F8 Ultra
+  (HyperOS 3) a LINE call left no recording and no notification, because CallVault only starts an app call when the
+  phone enters call mode and LINE does not. CallVault now also starts when LINE has a call-voice player and a
+  call-voice recording running together for 2 seconds, and stops when both are gone. Only LINE is allowed to start
+  this way; every other app starts exactly as before (#80).
+  <!-- 🧪 VERIFYING (test build 2.5.1.1-line1, not shipped): make a LINE call on the POCO F8 Ultra; a recording should
+  appear with both voices. Capturing in call mode NORMAL is unproven on that phone. If it still fails, the debug
+  report now holds "normal-mode voice audio" lines (the "USB debugging switched off (always on)" section) that say who
+  owned the audio and whether LINE matched, and "normal-mode app call capture health" with the first-second peaks. -->
+
+- **Two leftover test switches are gone from Settings ▸ Help and about.** With debug logging on, that page showed
+  "Skip mDNS when connecting" and "Force Wi-Fi-call capture route". They were maintainer tests, and the second one
+  could make ordinary phone calls switch to the app-call capture and lose the other side. Both rows are removed, and
+  a phone that had one switched on is reset to normal the first time the new version starts. Nothing else changes:
+  connecting and Wi-Fi-call recording behave exactly as they did with both switches off (#45, #65).
+  <!-- 🧪 VERIFYING (BabApps item 126, not shipped): Settings ▸ Help and about with debug logging on should show only
+  the logging switch and the bug-report buttons. Settings search for "mDNS" should find nothing. Unit tests and the
+  translation check pass; not yet looked at on a phone. -->
+
 ## [2.5.1] — 2026-11-15
 
 ### Added

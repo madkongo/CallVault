@@ -286,6 +286,11 @@
     <string name="placeholder_contact_name_desc">Nazwa kontaktu, jeśli jest dostępna</string>
     <string name="placeholder_cross_country_desc">Wskazuje, czy połączenie jest międzynarodowe (prawda/fałsz)</string>
     <string name="placeholder_date_desc">Aktualna data i godzina</string>
+    <string name="placeholder_day_desc">Dzień, np. 20261112</string>
+    <string name="placeholder_day_dashed_desc">Dzień z myślnikami, np. 2026-11-12</string>
+    <string name="placeholder_time_desc">Godzina, np. 143520</string>
+    <string name="placeholder_time_dashed_desc">Godzina z myślnikami, np. 14-35-20</string>
+    <string name="settings_file_name_error_day_time">Użyj {day} i {time} razem, najpierw dzień, a między nimi _, -, spacja lub T (np. {day}_{time}), albo użyj {date}.</string>
     <string name="placeholder_direction_desc">Kierunek połączenia (przychodzące/wychodzące)</string>
     <string name="placeholder_phone_number_desc">Numer telefonu</string>
     <string name="playback_marked_moments">Oznaczone momenty</string>
@@ -386,8 +391,6 @@
     <string name="settings_debug_log_file">Plik dziennika</string>
     <string name="settings_debug_log_view_hint">Dotknij, aby przeczytać najnowsze wpisy.</string>
     <string name="settings_debug_log_wrap">Zawijaj wiersze</string>
-    <string name="settings_debug_skip_mdns">Pomiń mDNS przy łączeniu (test wyszukiwania portu)</string>
-    <string name="settings_debug_skip_mdns_description">Do testów. Następne połączenie debugowania bezprzewodowego pomija mDNS i ostatni znany port, a port znajduje, przeszukując lokalne porty tego telefonu. Działa tylko, gdy zapisywanie logów jest włączone.</string>
     <string name="settings_debug_logging_enabled">Włącz logowanie</string>
     <string name="settings_debug_logging_enabled_description">Aby zgłosić błąd, włącz tę opcję, uruchom ponownie aplikację i spróbuj odtworzyć problem.</string>
     <string name="settings_drive_folder_desc">Wybierz folder (w aplikacji Google Drive), do którego będą kopiowane nagrania.</string>
@@ -658,7 +661,8 @@
     <string name="tile_recording_stopped">Zatrzymane</string>
     <string name="transcribe_confirm_dont_ask">Nie pytaj ponownie</string>
     <string name="transcribe_long_call_line">To połączenie trwa %1$s. Na tym telefonie transkrypcja trwa około %2$s× tyle co rozmowa — czyli około %3$s.</string>
-    <string name="transcribe_confirm_message">Transkrypcja %1$s zajmuje telefon i zauważalnie zużywa baterię. Możesz przerwać w dowolnej chwili.\n\nTo pytanie można włączyć ponownie w sekcji Transkrypcja w Ustawieniach.</string>
+    <string name="summary_card_blocked_model_action">Pobierz model streszczeń</string>
+    <string name="transcribe_confirm_message">Transkrypcja tej rozmowy zajmuje telefon i zauważalnie zużywa baterię. Możesz przerwać w dowolnej chwili.\n\nTo pytanie można włączyć ponownie w sekcji Transkrypcja w Ustawieniach.</string>
     <string name="transcribe_confirm_title">Zajmie to około %1$s</string>
     <string name="transcribe_confirm_title_first_run">Pierwsze przetwarzanie może chwilę potrwać</string>
     <string name="transcribe_confirm_title_unknown">Przepisać tę rozmowę?</string>
@@ -770,10 +774,12 @@
     <string name="transcription_language_persian">Perski</string>
     <string name="transcription_language_urdu">Urdu</string>
     <string name="transcription_language_bengali">Bengalski</string>
+    <string name="transcription_language_cantonese">Kantoński (粵語)</string>
     <string name="transcription_language_polish">Polski</string>
     <string name="transcription_language_portuguese">Portugalski</string>
     <string name="transcription_language_russian">Rosyjski</string>
     <string name="transcription_language_spanish">Hiszpański</string>
+    <string name="transcription_language_turkish">Turecki</string>
     <string name="transcription_language_ukrainian">Ukraiński</string>
     <string name="transcription_language_vietnamese">Wietnamski</string>
     <string name="transcription_minute_label">Minuta</string>
@@ -915,8 +921,10 @@
     <string name="transcribe_again_waiting">Oczekiwanie na ponowną transkrypcję…</string>
     <string name="wifi_call_switch_failed">To wygląda na połączenie przez Wi-Fi, ale nie udało się uruchomić nagrywania obu stron. Jest nagrywane w zwykły sposób, który może pominąć rozmówcę.</string>
     <string name="wifi_call_one_sided">Z tego połączenia przez Wi-Fi nagrano tylko Twoją stronę. Jeśli to się powtarza, w ustawieniach aplikacji Telefon ustaw połączenia przez Wi-Fi tak, by preferowały sieć komórkową.</string>
-    <string name="settings_debug_force_wifi_route">Wymuś ścieżkę nagrywania połączeń Wi-Fi</string>
-    <string name="settings_debug_force_wifi_route_description">Do testów. Każde połączenie telefoniczne w trakcie przełącza się na nagrywanie połączeń z aplikacji, tak jak zrobiłoby to połączenie przez Wi-Fi. Na telefonie bez połączeń przez Wi-Fi zabraknie drugiej strony i powinien pojawić się błąd. Wymaga włączonego nagrywania połączeń z aplikacji. Działa tylko przy włączonym zapisie dziennika.</string>
     <string name="wifi_call_switch_aborted">Nagrywanie tego połączenia przez Wi-Fi zatrzymało się wcześniej: nie udało się bezpiecznie przełączyć nagrywania. Nagrana dotąd część zostaje zachowana.</string>
     <string name="wifi_call_far_unknown">To połączenie przez Wi-Fi zostało nagrane, ale CallVault nie mógł sprawdzić, czy jest na nim druga strona. Odsłuchaj nagranie.</string>
+    <string name="general_show_more">Więcej</string>
+    <string name="general_show_less">Mniej</string>
+    <string name="summary_card_state_expanded">Rozwinięte</string>
+    <string name="summary_card_state_collapsed">Zwinięte</string>
 </resources>

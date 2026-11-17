@@ -284,6 +284,11 @@
     <string name="placeholder_contact_name_desc">Névjegy (amennyiben elérhető)</string>
     <string name="placeholder_cross_country_desc">Országon kívüli vagy belüli hívás (igen/nem)</string>
     <string name="placeholder_date_desc">A jelenlegi dátum és idő</string>
+    <string name="placeholder_day_desc">A nap, pl. 20261112</string>
+    <string name="placeholder_day_dashed_desc">A nap kötőjelekkel, pl. 2026-11-12</string>
+    <string name="placeholder_time_desc">Az idő, pl. 143520</string>
+    <string name="placeholder_time_dashed_desc">Az idő kötőjelekkel, pl. 14-35-20</string>
+    <string name="settings_file_name_error_day_time">Használja a {day} és a {time} címkét együtt, elöl a nappal, köztük _, -, szóköz vagy T (pl. {day}_{time}), vagy használja a {date} címkét.</string>
     <string name="placeholder_direction_desc">Hívás iránya (bejövő/kimenő)</string>
     <string name="placeholder_phone_number_desc">Telefonszám</string>
     <string name="playback_marked_moments">Megjelölt pillanatok</string>
@@ -384,8 +389,6 @@
     <string name="settings_debug_log_file">Naplófájl</string>
     <string name="settings_debug_log_view_hint">Koppintson a legutóbbi bejegyzések elolvasásához.</string>
     <string name="settings_debug_log_wrap">Sortörés</string>
-    <string name="settings_debug_skip_mdns">mDNS kihagyása csatlakozáskor (portkeresés tesztelése)</string>
-    <string name="settings_debug_skip_mdns_description">Teszteléshez. A következő vezeték nélküli hibakeresési kapcsolat figyelmen kívül hagyja az mDNS-t és az utolsó ismert portot, és a telefon helyi portjainak átkeresésével találja meg a portot. Csak bekapcsolt naplózás mellett működik.</string>
     <string name="settings_debug_logging_enabled">Naplózás bekapcsolása</string>
     <string name="settings_debug_logging_enabled_description">Hibajelentéshez engedélyezd ezt a beállítást, indítsd újra az alkalmazást majd próbáld reprodukálni a problémát.</string>
     <string name="settings_drive_folder_desc">Válasszon egy mappát (a Google Drive alkalmazásban), ahová a felvételek másolódnak.</string>
@@ -654,7 +657,8 @@
     <string name="tile_recording_stopped">Leállítva</string>
     <string name="transcribe_confirm_dont_ask">Ne kérdezze többet</string>
     <string name="transcribe_long_call_line">Ez a hívás %1$s hosszú. Ezen a telefonon az átírás nagyjából %2$s× ennyi ideig tart — körülbelül %3$s.</string>
-    <string name="transcribe_confirm_message">A(z) %1$s átírása leköti a telefont, és érezhetően fogyasztja az akkumulátort. Bármikor leállíthatja.\n\nEz a kérdés a Beállítások Átírás részében kapcsolható vissza.</string>
+    <string name="summary_card_blocked_model_action">Összegző letöltése</string>
+    <string name="transcribe_confirm_message">A hívás átírása leköti a telefont, és érezhetően fogyasztja az akkumulátort. Bármikor leállíthatja.\n\nEz a kérdés a Beállítások Átírás részében kapcsolható vissza.</string>
     <string name="transcribe_confirm_title">Ez körülbelül %1$s lesz</string>
     <string name="transcribe_confirm_title_first_run">Az első eltarthat egy ideig</string>
     <string name="transcribe_confirm_title_unknown">Átírja ezt a hívást?</string>
@@ -766,10 +770,12 @@
     <string name="transcription_language_persian">Perzsa</string>
     <string name="transcription_language_urdu">Urdu</string>
     <string name="transcription_language_bengali">Bengáli</string>
+    <string name="transcription_language_cantonese">Kantoni (粵語)</string>
     <string name="transcription_language_polish">Lengyel</string>
     <string name="transcription_language_portuguese">Portugál</string>
     <string name="transcription_language_russian">Orosz</string>
     <string name="transcription_language_spanish">Spanyol</string>
+    <string name="transcription_language_turkish">Török</string>
     <string name="transcription_language_ukrainian">Ukrán</string>
     <string name="transcription_language_vietnamese">Vietnami</string>
     <string name="transcription_minute_label">Perc</string>
@@ -911,8 +917,10 @@
     <string name="transcribe_again_waiting">Várakozás az újra átírásra…</string>
     <string name="wifi_call_switch_failed">Ez Wi-Fi-hívásnak tűnik, de a mindkét felet rögzítő felvétel nem indult el. A szokásos módon készül a felvétel, amelyből a másik fél hiányozhat.</string>
     <string name="wifi_call_one_sided">Ebből a Wi-Fi-hívásból csak az Ön oldala lett rögzítve. Ha ez ismétlődik, a Telefon alkalmazás beállításaiban állítsa a Wi-Fi-hívást a mobilhálózat előnyben részesítésére.</string>
-    <string name="settings_debug_force_wifi_route">Wi-Fi-hívás rögzítési útvonal kényszerítése</string>
-    <string name="settings_debug_force_wifi_route_description">Teszteléshez. Minden telefonhívás hívás közben átvált az alkalmazáshívás-rögzítésre, ahogy egy Wi-Fi-hívás tenné. Wi-Fi-hívás nélküli telefonon a másik fél hiányozni fog, és hibának kell megjelennie. Bekapcsolt alkalmazáshívás-rögzítés kell hozzá. Csak bekapcsolt naplózás mellett működik.</string>
     <string name="wifi_call_switch_aborted">Ennek a Wi-Fi-hívásnak a rögzítése idő előtt leállt: a felvételt nem lehetett biztonságosan átváltani. Az eddig rögzített rész megmarad.</string>
     <string name="wifi_call_far_unknown">Ez a Wi-Fi-hívás rögzítve lett, de a CallVault nem tudta ellenőrizni, hogy a másik fél hallható-e rajta. Kérjük, hallgassa meg a felvételt.</string>
+    <string name="general_show_more">Több</string>
+    <string name="general_show_less">Kevesebb</string>
+    <string name="summary_card_state_expanded">Kibontva</string>
+    <string name="summary_card_state_collapsed">Összecsukva</string>
 </resources>

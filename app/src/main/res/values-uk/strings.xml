@@ -294,6 +294,11 @@
     <string name="placeholder_contact_name_desc">Імʼя контакту, якщо є</string>
     <string name="placeholder_cross_country_desc">Позначка міжнародного дзвінка (так/ні)</string>
     <string name="placeholder_date_desc">Поточна дата й час</string>
+    <string name="placeholder_day_desc">День, наприклад 20261112</string>
+    <string name="placeholder_day_dashed_desc">День із дефісами, наприклад 2026-11-12</string>
+    <string name="placeholder_time_desc">Час, наприклад 143520</string>
+    <string name="placeholder_time_dashed_desc">Час із дефісами, наприклад 14-35-20</string>
+    <string name="settings_file_name_error_day_time">Використовуйте {day} і {time} разом, спочатку день, а між ними _, -, пробіл або T (наприклад {day}_{time}), або використовуйте {date}.</string>
     <string name="placeholder_direction_desc">Напрям дзвінка (вхідний/вихідний)</string>
     <string name="placeholder_phone_number_desc">Номер телефону</string>
     <string name="playback_marked_moments">Позначені моменти</string>
@@ -394,8 +399,6 @@
     <string name="settings_debug_log_file">Файл журналу</string>
     <string name="settings_debug_log_view_hint">Натисніть, щоб переглянути останні записи.</string>
     <string name="settings_debug_log_wrap">Переносити рядки</string>
-    <string name="settings_debug_skip_mdns">Пропускати mDNS під час підключення (перевірка пошуку порту)</string>
-    <string name="settings_debug_skip_mdns_description">Для тестування. Наступне підключення бездротового налагодження не використовує mDNS і останній відомий порт, а знаходить порт перебором локальних портів телефона. Працює, лише поки ввімкнено запис журналу.</string>
     <string name="settings_debug_logging_enabled">Увімкнути журналювання</string>
     <string name="settings_debug_logging_enabled_description">Щоб повідомити про помилку, увімкніть журнал, відтворіть проблему та поділіться звітом.</string>
     <string name="settings_drive_folder_desc">Виберіть папку в застосунку Google Drive для копій записів.</string>
@@ -666,7 +669,8 @@
     <string name="tile_recording_stopped">Зупинено</string>
     <string name="transcribe_confirm_dont_ask">Більше не запитувати</string>
     <string name="transcribe_long_call_line">Цей дзвінок триває %1$s. На цьому телефоні розпізнавання займає приблизно в %2$s раза більше часу — близько %3$s.</string>
-    <string name="transcribe_confirm_message">Розпізнавання %1$s навантажує телефон і витрачає заряд батареї. Процес можна зупинити.\n\nЗапит підтвердження можна налаштувати пізніше.</string>
+    <string name="summary_card_blocked_model_action">Завантажити модель підсумків</string>
+    <string name="transcribe_confirm_message">Розпізнавання цієї розмови навантажує телефон і витрачає заряд батареї. Процес можна зупинити.\n\nЗапит підтвердження можна налаштувати пізніше.</string>
     <string name="transcribe_confirm_title">Це займе приблизно %1$s</string>
     <string name="transcribe_confirm_title_first_run">Перший запуск може тривати довше</string>
     <string name="transcribe_confirm_title_unknown">Розпізнати дзвінок?</string>
@@ -778,10 +782,12 @@
     <string name="transcription_language_persian">Перська</string>
     <string name="transcription_language_urdu">Урду</string>
     <string name="transcription_language_bengali">Бенгальська</string>
+    <string name="transcription_language_cantonese">Кантонська (粵語)</string>
     <string name="transcription_language_polish">Польська</string>
     <string name="transcription_language_portuguese">Португальська</string>
     <string name="transcription_language_russian">Російська</string>
     <string name="transcription_language_spanish">Іспанська</string>
+    <string name="transcription_language_turkish">Турецька</string>
     <string name="transcription_language_ukrainian">Українська</string>
     <string name="transcription_language_vietnamese">Вʼєтнамська</string>
     <string name="transcription_minute_label">Хвилина</string>
@@ -923,8 +929,10 @@
     <string name="transcribe_again_waiting">Очікування повторного розшифрування…</string>
     <string name="wifi_call_switch_failed">Схоже, це дзвінок через Wi-Fi, але запис, що захоплює обидві сторони, не запустився. Він записується звичайним способом, і співрозмовника може бути не чути.</string>
     <string name="wifi_call_one_sided">З цього дзвінка через Wi-Fi записано лише вашу сторону. Якщо це повторюється, у налаштуваннях застосунку «Телефон» увімкніть для дзвінків через Wi-Fi пріоритет мобільної мережі.</string>
-    <string name="settings_debug_force_wifi_route">Примусово записувати як дзвінок через Wi-Fi</string>
-    <string name="settings_debug_force_wifi_route_description">Для тестування. Кожен телефонний дзвінок під час розмови перемикається на запис дзвінків застосунків, як це зробив би дзвінок через Wi-Fi. На телефоні без дзвінків через Wi-Fi співрозмовника не буде чути, і має з\'явитися помилка. Потрібен увімкнений запис дзвінків застосунків. Працює, лише поки ввімкнено запис журналу.</string>
     <string name="wifi_call_switch_aborted">Запис цього дзвінка через Wi-Fi зупинився передчасно: не вдалося безпечно перемкнути запис. Записану частину збережено.</string>
     <string name="wifi_call_far_unknown">Цей дзвінок через Wi-Fi записано, але CallVault не зміг перевірити, чи чути на записі співрозмовника. Прослухайте запис.</string>
+    <string name="general_show_more">Ще</string>
+    <string name="general_show_less">Згорнути</string>
+    <string name="summary_card_state_expanded">Розгорнуто</string>
+    <string name="summary_card_state_collapsed">Згорнуто</string>
 </resources>

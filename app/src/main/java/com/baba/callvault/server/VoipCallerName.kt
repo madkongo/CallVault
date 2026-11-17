@@ -99,6 +99,48 @@ internal object VoipCallerName {
         return if (ongoingSeen) AnswerState.NO_TIMER else AnswerState.NO_NOTIFICATION
     }
 
+    private val CATEGORY_REGEX = Regex("""\bcategory=(\w+)""")
+    private val ACTIONS_REGEX = Regex("""\bactions=(\d+)""")
+    private val CALL_TYPE_REGEX = Regex("""android\.callType=(?:Integer \()?(\d+)""")
+    private val INCOMING_FLAG_REGEX = Regex("""IS_INCOMING_CALL=(?:Boolean \()?(true|false)""")
+
+    /**
+     * The structure of [packageName]'s call notification (no text), for the in/out badge (BabApps
+     * item 113); null when it has none. Blocking, like [resolve].
+     */
+    fun callFacts(packageName: String): VoipCallFacts? = runCatching {
+        val dump = readPackageRecords(packageName) ?: readNotificationDump() ?: return null
+        extractFacts(dump, packageName)
+    }.onFailure { AppLogger.d(TAG, "Call facts lookup failed: ${it.message}") }.getOrNull()
+
+    /**
+     * Facts of [packageName]'s first call-like record: one that carries a CallStyle type, the call
+     * category, an incoming flag, or is ongoing with a call timer flag. A chat notification of the
+     * same app is none of those. Telegram's ongoing call sets none of them and so reads null.
+     */
+    internal fun extractFacts(dump: String, packageName: String): VoipCallFacts? {
+        if (packageName.isBlank()) return null
+        for (record in dump.split("NotificationRecord(")) {
+            if (!record.contains("pkg=$packageName ")) continue
+            val category = CATEGORY_REGEX.find(record)?.groupValues?.get(1)
+            val callType = CALL_TYPE_REGEX.find(record)?.groupValues?.get(1)?.toIntOrNull()
+            val incomingFlag = INCOMING_FLAG_REGEX.find(record)?.groupValues?.get(1)?.toBooleanStrictOrNull()
+            val chrono = CHRONOMETER_REGEX.find(record)?.groupValues?.get(1)?.toBooleanStrictOrNull()
+            val ongoing = isOngoing(record)
+            val callLike = category == "call" || callType != null || incomingFlag != null || (ongoing && chrono != null)
+            if (!callLike) continue
+            return VoipCallFacts(
+                category = category,
+                actionCount = ACTIONS_REGEX.find(record)?.groupValues?.get(1)?.toIntOrNull() ?: 0,
+                callType = callType,
+                showChronometer = chrono,
+                ongoing = ongoing,
+                incomingFlag = incomingFlag,
+            )
+        }
+        return null
+    }
+
     /**
      * Finds [packageName]'s ongoing notification and reads the contact from it.
      *

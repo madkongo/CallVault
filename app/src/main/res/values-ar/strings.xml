@@ -39,7 +39,8 @@
     <string name="transcription_warning_message">تستغرق معالجة المكالمة وقتًا مقاربًا لمدتها الفعلية وتستخدم أنوية المعالج بكثافة، مما قد يرفع حرارة الهاتف ويزيد استهلاك البطارية.
 
 يمكنك إيقاف المعالجة في أي وقت عبر النقر على الشارة المجاورة للعنوان.</string>
-    <string name="transcribe_confirm_message">يؤدي تحويل %1$s إلى نص إلى إشغال هاتفك واستهلاك ملحوظ للبطارية. يمكنك إيقافه في أي وقت.
+    <string name="summary_card_blocked_model_action">تنزيل أداة التلخيص</string>
+    <string name="transcribe_confirm_message">يؤدي تحويل هذه المكالمة إلى نص إلى إشغال هاتفك واستهلاك ملحوظ للبطارية. يمكنك إيقافه في أي وقت.
 
 يمكن إعادة تشغيل هذا السؤال ضمن "التفريغ الصوتي" في الإعدادات.</string>
     <plurals name="settings_voip_apps_some">
@@ -321,6 +322,11 @@
     <string name="placeholder_contact_name_desc">اسم جهة الاتصال، إذا كان متاحًا</string>
     <string name="placeholder_cross_country_desc">يشير إلى ما إذا كانت المكالمة عابرة للبلدان (صحيح/خطأ)</string>
     <string name="placeholder_date_desc">التاريخ والوقت الحاليين</string>
+    <string name="placeholder_day_desc">اليوم، مثل 20261112</string>
+    <string name="placeholder_day_dashed_desc">اليوم مع الشرطات، مثل 2026-11-12</string>
+    <string name="placeholder_time_desc">الوقت، مثل 143520</string>
+    <string name="placeholder_time_dashed_desc">الوقت مع الشرطات، مثل 14-35-20</string>
+    <string name="settings_file_name_error_day_time">استخدم {day} و{time} معًا، اليوم أولًا، وبينهما _ أو - أو مسافة أو T (مثل {day}_{time})، أو استخدم {date}.</string>
     <string name="placeholder_direction_desc">اتجاه المكالمة (واردة/صادرة)</string>
     <string name="placeholder_phone_number_desc">رقم الهاتف</string>
     <string name="playback_marked_moments">لحظات مميزة</string>
@@ -421,8 +427,6 @@
     <string name="settings_debug_log_file">ملف السجل</string>
     <string name="settings_debug_log_view_hint">انقر لقراءة أحدث الإدخالات.</string>
     <string name="settings_debug_log_wrap">طي الأسطر</string>
-    <string name="settings_debug_skip_mdns">تخطي mDNS عند الاتصال (اختبار البحث عن المنفذ)</string>
-    <string name="settings_debug_skip_mdns_description">للاختبار. يتجاهل اتصال تصحيح الأخطاء اللاسلكي التالي mDNS وآخر منفذ معروف، ويعثر على المنفذ بالبحث في المنافذ المحلية لهذا الهاتف. يعمل فقط أثناء تشغيل تسجيل السجل.</string>
     <string name="settings_debug_logging_enabled">تفعيل السجلات</string>
     <string name="settings_debug_logging_enabled_description">للإبلاغ عن خطأ، قم بتمكين هذا، أعد إنتاج المشكلة، ثم قم بإيقاف تشغيله وشارك السجلات.</string>
     <string name="settings_drive_folder_desc">اختر مجلدًا (في تطبيق Google Drive) لنسخ التسجيلات إليه.</string>
@@ -806,10 +810,12 @@
     <string name="transcription_language_persian">الفارسية</string>
     <string name="transcription_language_urdu">الأردية</string>
     <string name="transcription_language_bengali">البنغالية</string>
+    <string name="transcription_language_cantonese">الكانتونية (粵語)</string>
     <string name="transcription_language_polish">البولندية</string>
     <string name="transcription_language_portuguese">البرتغالية</string>
     <string name="transcription_language_russian">الروسية</string>
     <string name="transcription_language_spanish">الإسبانية</string>
+    <string name="transcription_language_turkish">التركية</string>
     <string name="transcription_language_ukrainian">الأوكرانية</string>
     <string name="transcription_language_vietnamese">الفيتنامية</string>
     <string name="transcription_minute_label">دقيقة</string>
@@ -949,8 +955,10 @@
     <string name="transcribe_again_waiting">في انتظار إعادة التفريغ…</string>
     <string name="wifi_call_switch_failed">يبدو أن هذه مكالمة عبر Wi-Fi، لكن تعذّر بدء التسجيل الذي يلتقط الطرفين. يجري تسجيلها بالطريقة المعتادة، وقد لا يُسمع فيها الطرف الآخر.</string>
     <string name="wifi_call_one_sided">سُجّل جانبك فقط من مكالمة Wi-Fi هذه. إذا تكرر ذلك، اضبط الاتصال عبر Wi-Fi على تفضيل شبكة الجوال في إعدادات تطبيق الهاتف.</string>
-    <string name="settings_debug_force_wifi_route">فرض مسار تسجيل مكالمات Wi-Fi</string>
-    <string name="settings_debug_force_wifi_route_description">للاختبار. تنتقل كل مكالمة هاتفية أثناءها إلى تسجيل مكالمات التطبيقات، كما تفعل مكالمة Wi-Fi. على هاتف بلا اتصال عبر Wi-Fi سيغيب الطرف الآخر ويجب أن يظهر خطأ. يتطلب تفعيل تسجيل مكالمات التطبيقات. يعمل فقط أثناء تسجيل السجل.</string>
     <string name="wifi_call_switch_aborted">توقف تسجيل مكالمة Wi-Fi هذه مبكرًا: تعذّر تبديل طريقة التسجيل بأمان. حُفظ الجزء الذي سُجّل حتى الآن.</string>
     <string name="wifi_call_far_unknown">سُجّلت مكالمة Wi-Fi هذه، لكن تعذّر على CallVault التحقق من وجود صوت الطرف الآخر فيها. يُرجى الاستماع إلى التسجيل.</string>
+    <string name="general_show_more">المزيد</string>
+    <string name="general_show_less">أقل</string>
+    <string name="summary_card_state_expanded">موسّع</string>
+    <string name="summary_card_state_collapsed">مطوي</string>
 </resources>

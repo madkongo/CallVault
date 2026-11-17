@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Keep or delete after the call: the pop-up's "Display over other apps" permission (Settings, wizard, setup). -->
+<resources>
+    <string name="popup_permission_title">Açılır pencereye izin ver</string>
+    <string name="popup_permission_text">Sakla-veya-sil açılır penceresi için Android’in “Diğer uygulamaların üzerinde görüntüle” izni gerekir. İzin Ver’e dokunun, ardından CallVault için açın (bazı telefonlarda önce listede CallVault’u bulun). O zamana kadar bir bildirim sorar.</string>
+    <string name="popup_permission_allow">İzin ver</string>
+    <string name="popup_permission_not_now">Şimdi değil</string>
+    <string name="permission_overlay_label">Diğer uygulamaların üzerinde görüntüle</string>
+    <string name="permission_overlay_description">Yalnızca aramadan sonraki sakla-veya-sil açılır penceresi için (Ayarlar ▸ Kayıt ▸ Nasıl sorulsun). İzin yoksa CallVault bir bildirimle sorar. İzin vermek için dokunun.</string>
+    <string name="general_optional">İsteğe bağlı</string>
+</resources>

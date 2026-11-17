@@ -59,4 +59,9 @@
     <string name="transcript_notice_failed_many_title">Nicht fertig gewordene Transkriptionen: %1$d</string>
     <string name="transcript_notice_failed_many_text">Zum Ansehen tippen.</string>
     <string name="transcript_notice_failed_kept_text">%1$s. Das bisherige Transkript wurde behalten.</string>
+    <string name="home_status_needs_wifi_title">Zum Aufnehmen wird WLAN benötigt</string>
+    <string name="home_status_needs_wifi_suggestion">Der Rekorder ist angehalten und kann ohne WLAN nicht starten, daher werden Anrufe nicht aufgenommen. Verbinde dich mit einem WLAN oder schalte in den Einstellungen „Ohne WLAN weiter aufnehmen“ ein.</string>
+    <string name="notif_stopped_by_user_title">Du hast CallVault gestoppt</string>
+    <string name="notif_stopped_by_user_text">Solange die App gestoppt war, wurden Anrufe nicht aufgenommen. CallVault ist wieder geöffnet und nimmt neue Anrufe auf.</string>
+    <string name="home_stopped_by_user_text">Du hast CallVault gestoppt – solange die App gestoppt war, wurden Anrufe nicht aufgenommen.</string>
 </resources>

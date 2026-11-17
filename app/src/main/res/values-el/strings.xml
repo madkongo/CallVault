@@ -438,6 +438,11 @@
     <string name="placeholder_contact_name_desc">Το όνομα της επαφής, αν είναι διαθέσιμο</string>
     <string name="placeholder_cross_country_desc">Υποδεικνύει αν η κλήση είναι διεθνής (true/false)</string>
     <string name="placeholder_date_desc">Η τρέχουσα ημερομηνία και ώρα</string>
+    <string name="placeholder_day_desc">Η ημέρα, π.χ. 20261112</string>
+    <string name="placeholder_day_dashed_desc">Η ημέρα με παύλες, π.χ. 2026-11-12</string>
+    <string name="placeholder_time_desc">Η ώρα, π.χ. 143520</string>
+    <string name="placeholder_time_dashed_desc">Η ώρα με παύλες, π.χ. 14-35-20</string>
+    <string name="settings_file_name_error_day_time">Χρησιμοποιήστε μαζί τα {day} και {time}, πρώτα την ημέρα, με _, -, κενό ή T ανάμεσά τους (π.χ. {day}_{time}), ή χρησιμοποιήστε το {date}.</string>
     <string name="placeholder_direction_desc">Η κατεύθυνση της κλήσης (εισερχόμενη/εξερχόμενη)</string>
     <string name="placeholder_phone_number_desc">Ο αριθμός τηλεφώνου</string>
     <string name="playback_marked_moments">Σημειωμένες στιγμές</string>
@@ -538,8 +543,6 @@
     <string name="settings_debug_log_file">Αρχείο καταγραφής</string>
     <string name="settings_debug_log_view_hint">Πατήστε για να διαβάσετε τις πιο πρόσφατες καταχωρήσεις.</string>
     <string name="settings_debug_log_wrap">Αναδίπλωση γραμμών</string>
-    <string name="settings_debug_skip_mdns">Παράλειψη mDNS κατά τη σύνδεση (δοκιμή αναζήτησης θύρας)</string>
-    <string name="settings_debug_skip_mdns_description">Για δοκιμή. Η επόμενη σύνδεση ασύρματου εντοπισμού σφαλμάτων αγνοεί το mDNS και την τελευταία γνωστή θύρα και βρίσκει τη θύρα ψάχνοντας στις τοπικές θύρες του τηλεφώνου. Λειτουργεί μόνο όσο η καταγραφή αρχείου είναι ενεργή.</string>
     <string name="settings_debug_logging_enabled">Ενεργοποίηση καταγραφής συμβάντων</string>
     <string name="settings_debug_logging_enabled_description">Για να αναφέρετε ένα σφάλμα, ενεργοποιήστε το, αναπαραγάγετε το πρόβλημα, μετά απενεργοποιήστε το και μοιραστείτε τα αρχεία καταγραφής.</string>
     <string name="settings_drive_folder_desc">Επιλέξτε έναν φάκελο (στην εφαρμογή Google Drive) για την αντιγραφή των εγγραφών.</string>
@@ -808,7 +811,8 @@
     <string name="tile_recording_stopped">Διακόπηκε</string>
     <string name="transcribe_confirm_dont_ask">Να μην ερωτηθώ ξανά</string>
     <string name="transcribe_long_call_line">Αυτή η κλήση διαρκεί %1$s. Σε αυτό το τηλέφωνο, η απομαγνητοφώνηση διαρκεί περίπου %2$s φορές τη διάρκειά της — δηλαδή περίπου %3$s.</string>
-    <string name="transcribe_confirm_message">Η απομαγνητοφώνηση του %1$s κρατά το τηλέφωνό σας απασχολημένο και χρησιμοποιεί αισθητή μπαταρία. Μπορείτε να τη σταματήσετε ανά πάσα στιγμή.\n\nΑυτή η ερώτηση μπορεί να ενεργοποιηθεί ξανά στην ενότητα Απομαγνητοφώνηση στις Ρυθμίσεις.</string>
+    <string name="summary_card_blocked_model_action">Λήψη του εργαλείου σύνοψης</string>
+    <string name="transcribe_confirm_message">Η απομαγνητοφώνηση αυτής της κλήσης κρατά το τηλέφωνό σας απασχολημένο και χρησιμοποιεί αισθητή μπαταρία. Μπορείτε να τη σταματήσετε ανά πάσα στιγμή.\n\nΑυτή η ερώτηση μπορεί να ενεργοποιηθεί ξανά στην ενότητα Απομαγνητοφώνηση στις Ρυθμίσεις.</string>
     <string name="transcribe_confirm_title">Αυτό θα διαρκέσει περίπου %1$s</string>
     <string name="transcribe_confirm_title_first_run">Η πρώτη μπορεί να διαρκέσει λίγο</string>
     <string name="transcribe_confirm_title_unknown">Απομαγνητοφώνηση αυτής της κλήσης;</string>
@@ -920,10 +924,12 @@
     <string name="transcription_language_persian">Περσικά</string>
     <string name="transcription_language_urdu">Ούρντου</string>
     <string name="transcription_language_bengali">Βεγγαλικά</string>
+    <string name="transcription_language_cantonese">Καντονέζικα (粵語)</string>
     <string name="transcription_language_polish">Πολωνικά</string>
     <string name="transcription_language_portuguese">Πορτογαλικά</string>
     <string name="transcription_language_russian">Ρωσικά</string>
     <string name="transcription_language_spanish">Ισπανικά</string>
+    <string name="transcription_language_turkish">Τουρκικά</string>
     <string name="transcription_language_ukrainian">Ουκρανικά</string>
     <string name="transcription_language_vietnamese">Βιετναμέζικα</string>
     <string name="transcription_minute_label">Λεπτό</string>
@@ -1065,8 +1071,10 @@
     <string name="transcribe_again_waiting">Αναμονή για νέα απομαγνητοφώνηση…</string>
     <string name="wifi_call_switch_failed">Αυτή μοιάζει με κλήση μέσω Wi-Fi, αλλά η εγγραφή που καταγράφει και τις δύο πλευρές δεν ξεκίνησε. Καταγράφεται με τον συνηθισμένο τρόπο, που ίσως χάσει τον άλλο συνομιλητή.</string>
     <string name="wifi_call_one_sided">Καταγράφηκε μόνο η δική σας πλευρά αυτής της κλήσης Wi-Fi. Αν συμβαίνει συχνά, ορίστε τις κλήσεις Wi-Fi να προτιμούν το δίκτυο κινητής στις ρυθμίσεις της εφαρμογής Τηλέφωνο.</string>
-    <string name="settings_debug_force_wifi_route">Επιβολή διαδρομής εγγραφής κλήσεων Wi-Fi</string>
-    <string name="settings_debug_force_wifi_route_description">Για δοκιμή. Κάθε τηλεφωνική κλήση αλλάζει στη διάρκειά της στην εγγραφή κλήσεων εφαρμογών, όπως θα έκανε μια κλήση Wi-Fi. Σε τηλέφωνο χωρίς κλήσεις Wi-Fi η άλλη πλευρά θα λείπει και πρέπει να εμφανιστεί σφάλμα. Απαιτεί ενεργή εγγραφή κλήσεων εφαρμογών. Λειτουργεί μόνο όσο είναι ενεργή η καταγραφή αρχείου.</string>
     <string name="wifi_call_switch_aborted">Η εγγραφή αυτής της κλήσης Wi-Fi σταμάτησε νωρίς: η εγγραφή δεν μπόρεσε να αλλάξει με ασφάλεια. Το τμήμα που καταγράφηκε ως τώρα διατηρείται.</string>
     <string name="wifi_call_far_unknown">Αυτή η κλήση Wi-Fi καταγράφηκε, αλλά το CallVault δεν μπόρεσε να ελέγξει αν υπάρχει η άλλη πλευρά. Ακούστε την εγγραφή.</string>
+    <string name="general_show_more">Περισσότερα</string>
+    <string name="general_show_less">Λιγότερα</string>
+    <string name="summary_card_state_expanded">Ανεπτυγμένο</string>
+    <string name="summary_card_state_collapsed">Συμπτυγμένο</string>
 </resources>

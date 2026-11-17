@@ -155,7 +155,7 @@
     <string name="offline_recording_disabling">Вимкнення запису без Wi-Fi…</string>
     <string name="home_health_call_not_recorded">Дзвінок не записано — %1$s, %2$s.</string>
     <string name="home_health_call_not_recorded_unnamed">Дзвінок не записано — %1$s.</string>
-    <string name="home_health_call_not_recorded_force_stopped">CallVault було примусово зупинено — телефоном або іншим застосунком, — тому він не зміг помітити дзвінок. Перевірте, що налаштування батареї телефона не переводять CallVault у режим сну.</string>
+    <string name="home_health_call_not_recorded_force_stopped">CallVault було зупинено — вами (у списку активних застосунків або кнопкою «Зупинити»), телефоном або іншим застосунком, — тому він не зміг помітити дзвінок. Перевірте, що налаштування батареї телефона не переводять CallVault у режим сну.</string>
     <string name="home_health_missed_recording_folder">Дзвінок не записано: папку не було вибрано, %1$s.</string>
     <string name="home_health_missed_recording_folder_unnamed">Дзвінок не записано: папку записів не було вибрано.</string>
     <string name="home_health_missed_adb_pairing">Дзвінок не записано: налаштування ще не було завершено, %1$s.</string>
@@ -187,6 +187,10 @@
     <string name="whatsnew_156_where">Налаштування ▸ Запис ▸ Телефонні дзвінки</string>
     <string name="settings_merge_keep_originals_description">Після обʼєднання залишати початкові записи на телефоні. За замовчуванням вимкнено. Обʼєднану розмову можна розділити.</string>
     <string name="unmerge_message">Знову зʼявляться ці дзвінки з їхніми транскрипціями та мітками:</string>
+    <string name="whatsnew_252_title">Тепер і турецька</string>
+    <string-array name="whatsnew_252_items">
+        <item>Додано турецьку: CallVault доступний турецькою, а розмови можна транскрибувати турецькою</item>
+    </string-array>
     <string name="whatsnew_251_title">Довше зберігання, стереозапис і дзвінки через Wi-Fi на Samsung</string>
     <string-array name="whatsnew_251_items">
         <item>Автовидалення тепер може зберігати записи 60, 90 або 120 днів</item>

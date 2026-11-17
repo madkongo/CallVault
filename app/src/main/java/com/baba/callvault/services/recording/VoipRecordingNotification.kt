@@ -15,6 +15,7 @@ import android.content.Intent
 import androidx.core.app.NotificationCompat
 import androidx.core.app.NotificationManagerCompat
 import com.baba.callvault.R
+import com.baba.callvault.system.LocalizedContext
 import com.baba.callvault.system.permissions.PermissionChecks
 import com.baba.callvault.utils.AppLogger
 
@@ -37,7 +38,7 @@ object VoipRecordingNotification {
     private const val TAG = "CV:VoipRecNotification"
 
     /** Distinct from the recording service (1), error (2) and record-prompt (3) notifications. */
-    private const val NOTIFICATION_ID = 5
+    private const val LEGACY_NOTIFICATION_ID = 5
 
     @SuppressLint("MissingPermission")
     fun show(
@@ -47,6 +48,29 @@ object VoipRecordingNotification {
         paused: Boolean = false,
         heldForCall: Boolean = false,
     ) {
+        val notification = build(context, appLabel, marks, paused, heldForCall)
+        if (!PermissionChecks.hasNotificationPermission(context)) return
+        // Posted under the keep-alive's id and claimed, exactly like a carrier call (issue #31): one
+        // notification during the call, with Pause, Mark and Stop, instead of this one beside "Ready"
+        // reworded as "Recording VoIP call" (BabApps item 123). The keep-alive stays a foreground service
+        // holding that id; it is never stopped or hidden. dismiss() gives the id back and "Ready" returns.
+        runCatching {
+            NotificationManagerCompat.from(context).notify(SharedStatusNotice.ID, notification)
+            SharedStatusNotice.claim(notification)
+            // Left over from a build that still posted under id 5.
+            NotificationManagerCompat.from(context).cancel(LEGACY_NOTIFICATION_ID)
+        }.onFailure { AppLogger.w(TAG, "Could not post the VoIP recording notification: ${it.message}") }
+    }
+
+    /** The notification itself, with its text from the app's language ([LocalizedContext]). */
+    internal fun build(
+        base: Context,
+        appLabel: String?,
+        marks: Int,
+        paused: Boolean,
+        heldForCall: Boolean,
+    ): android.app.Notification {
+        val context = LocalizedContext.of(base)
         val title =
             if (appLabel.isNullOrBlank()) context.getString(R.string.voip_recording_title)
             else context.getString(R.string.voip_recording_title_named, appLabel)
@@ -98,13 +122,13 @@ object VoipRecordingNotification {
             serviceIntent(context, DaemonKeepAliveService.ACTION_VOIP_STOP)
         )
 
-        if (!PermissionChecks.hasNotificationPermission(context)) return
-        runCatching { NotificationManagerCompat.from(context).notify(NOTIFICATION_ID, builder.build()) }
-            .onFailure { AppLogger.w(TAG, "Could not post the VoIP recording notification: ${it.message}") }
+        return builder.build()
     }
 
     fun dismiss(context: Context) {
-        runCatching { NotificationManagerCompat.from(context).cancel(NOTIFICATION_ID) }
+        runCatching { NotificationManagerCompat.from(context).cancel(LEGACY_NOTIFICATION_ID) }
+        // Hands the shared id back: the keep-alive puts "Ready to record calls" in its place.
+        SharedStatusNotice.release()
     }
 
     /**

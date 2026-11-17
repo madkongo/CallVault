@@ -59,4 +59,9 @@
     <string name="transcript_notice_failed_many_title">Nieukończone transkrypcje: %1$d</string>
     <string name="transcript_notice_failed_many_text">Dotknij, aby je zobaczyć.</string>
     <string name="transcript_notice_failed_kept_text">%1$s. Poprzednia transkrypcja została zachowana.</string>
+    <string name="home_status_needs_wifi_title">Do nagrywania potrzebne jest Wi-Fi</string>
+    <string name="home_status_needs_wifi_suggestion">Rejestrator jest zatrzymany i bez Wi-Fi nie może się uruchomić, więc rozmowy nie są nagrywane. Połącz się z Wi-Fi lub włącz w Ustawieniach „Nagrywaj także bez Wi-Fi”.</string>
+    <string name="notif_stopped_by_user_title">Zatrzymano CallVault</string>
+    <string name="notif_stopped_by_user_text">Gdy aplikacja była zatrzymana, rozmowy nie były nagrywane. CallVault jest znów otwarty i nagrywa nowe rozmowy.</string>
+    <string name="home_stopped_by_user_text">Zatrzymano CallVault — gdy aplikacja była zatrzymana, rozmowy nie były nagrywane.</string>
 </resources>

@@ -39,6 +39,11 @@ object RecordingFileNameFormatter {
      */
     enum class FileNamePlaceholder(val tag: String, @param:StringRes val descriptionResId: Int) {
         DATE("{date}", R.string.placeholder_date_desc),
+        // The day and the time on their own (#82). Only a day followed by a time counts as the date of the name.
+        DAY(FileNameStamp.DAY_TAG, R.string.placeholder_day_desc),
+        DAY_DASHED(FileNameStamp.DAY_DASHED_TAG, R.string.placeholder_day_dashed_desc),
+        TIME(FileNameStamp.TIME_TAG, R.string.placeholder_time_desc),
+        TIME_DASHED(FileNameStamp.TIME_DASHED_TAG, R.string.placeholder_time_dashed_desc),
         DIRECTION("{direction}", R.string.placeholder_direction_desc),
         PHONE_NUMBER("{phone_number}", R.string.placeholder_phone_number_desc),
         CONTACT_NAME("{contact_name}", R.string.placeholder_contact_name_desc),
@@ -75,6 +80,11 @@ object RecordingFileNameFormatter {
 
         val dateStr = SimpleDateFormat("yyyyMMdd_HHmmss.SSSZ", Locale.CANADA).format(startedAt)
         val compactDateStr = SimpleDateFormat("yyyyMMddHHmmss", Locale.US).format(startedAt)
+        // Local time, Western digits whatever the phone's language, like the other date forms.
+        val dayStr = SimpleDateFormat("yyyyMMdd", Locale.US).format(startedAt)
+        val dayDashedStr = SimpleDateFormat("yyyy-MM-dd", Locale.US).format(startedAt)
+        val timeStr = SimpleDateFormat("HHmmss", Locale.US).format(startedAt)
+        val timeDashedStr = SimpleDateFormat("HH-mm-ss", Locale.US).format(startedAt)
 
         val directionStr = when (metadata.direction) {
             RecordingDirection.INCOMING -> "in"
@@ -111,6 +121,10 @@ object RecordingFileNameFormatter {
         val baseName = template
             .replace(DATE_COMPACT_TAG, compactDateStr)
             .replace(FileNamePlaceholder.DATE.tag, dateStr)
+            .replace(FileNamePlaceholder.DAY.tag, dayStr)
+            .replace(FileNamePlaceholder.DAY_DASHED.tag, dayDashedStr)
+            .replace(FileNamePlaceholder.TIME.tag, timeStr)
+            .replace(FileNamePlaceholder.TIME_DASHED.tag, timeDashedStr)
             .replace(FileNamePlaceholder.DIRECTION.tag, directionStr)
             .replace(FileNamePlaceholder.PHONE_NUMBER.tag, phoneStr)
             .replace(FileNamePlaceholder.CONTACT_NAME.tag, contactStr)

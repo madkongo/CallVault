@@ -59,4 +59,9 @@
     <string name="transcript_notice_failed_many_title">যে ট্রান্সক্রিপশন শেষ হয়নি: %1$d</string>
     <string name="transcript_notice_failed_many_text">দেখতে ট্যাপ করুন।</string>
     <string name="transcript_notice_failed_kept_text">%1$s। আগের ট্রান্সক্রিপ্ট রাখা হয়েছে।</string>
+    <string name="home_status_needs_wifi_title">রেকর্ড করতে Wi-Fi লাগবে</string>
+    <string name="home_status_needs_wifi_suggestion">রেকর্ডার থেমে আছে এবং Wi-Fi ছাড়া চালু হতে পারছে না, তাই কল রেকর্ড হচ্ছে না। Wi-Fi-তে সংযোগ করুন, অথবা সেটিংসে “Wi-Fi ছাড়াও রেকর্ডিং চালু রাখুন” চালু করুন।</string>
+    <string name="notif_stopped_by_user_title">আপনি CallVault বন্ধ করেছেন</string>
+    <string name="notif_stopped_by_user_text">বন্ধ থাকা অবস্থায় কল রেকর্ড হয়নি। CallVault এখন আবার চালু আছে এবং নতুন কল রেকর্ড করবে।</string>
+    <string name="home_stopped_by_user_text">আপনি CallVault বন্ধ করেছেন — বন্ধ থাকা অবস্থায় কল রেকর্ড হয়নি।</string>
 </resources>

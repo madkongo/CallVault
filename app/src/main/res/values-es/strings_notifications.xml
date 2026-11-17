@@ -59,4 +59,9 @@
     <string name="transcript_notice_failed_many_title">Transcripciones sin terminar: %1$d</string>
     <string name="transcript_notice_failed_many_text">Toca para verlas.</string>
     <string name="transcript_notice_failed_kept_text">%1$s. Se conservó la transcripción anterior.</string>
+    <string name="home_status_needs_wifi_title">Se necesita Wi-Fi para grabar</string>
+    <string name="home_status_needs_wifi_suggestion">La grabadora está detenida y no puede iniciarse sin Wi-Fi, por lo que las llamadas no se graban. Conéctate a una red Wi-Fi o activa «Seguir grabando sin Wi-Fi» en Ajustes.</string>
+    <string name="notif_stopped_by_user_title">Detuviste CallVault</string>
+    <string name="notif_stopped_by_user_text">Las llamadas no se grabaron mientras estuvo detenido. CallVault vuelve a estar abierto y graba las llamadas nuevas.</string>
+    <string name="home_stopped_by_user_text">Detuviste CallVault: las llamadas no se grabaron mientras estuvo detenido.</string>
 </resources>

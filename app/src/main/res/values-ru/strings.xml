@@ -286,6 +286,11 @@
     <string name="placeholder_contact_name_desc">Имя контакта, если доступно</string>
     <string name="placeholder_cross_country_desc">Указывает, является ли звонок международным (true/false)</string>
     <string name="placeholder_date_desc">Текущая дата и время</string>
+    <string name="placeholder_day_desc">День, например 20261112</string>
+    <string name="placeholder_day_dashed_desc">День с дефисами, например 2026-11-12</string>
+    <string name="placeholder_time_desc">Время, например 143520</string>
+    <string name="placeholder_time_dashed_desc">Время с дефисами, например 14-35-20</string>
+    <string name="settings_file_name_error_day_time">Используйте {day} и {time} вместе, сначала день, а между ними _, -, пробел или T (например {day}_{time}), либо используйте {date}.</string>
     <string name="placeholder_direction_desc">Направление звонка (вх./исх.)</string>
     <string name="placeholder_phone_number_desc">Номер телефона</string>
     <string name="playback_marked_moments">Отмеченные моменты</string>
@@ -386,8 +391,6 @@
     <string name="settings_debug_log_file">Файл журнала</string>
     <string name="settings_debug_log_view_hint">Нажмите, чтобы прочитать последние записи.</string>
     <string name="settings_debug_log_wrap">Перенос строк</string>
-    <string name="settings_debug_skip_mdns">Пропускать mDNS при подключении (проверка поиска порта)</string>
-    <string name="settings_debug_skip_mdns_description">Для тестирования. Следующее подключение отладки по Wi-Fi не использует mDNS и последний известный порт, а находит порт перебором локальных портов телефона. Работает, только пока включена запись журнала.</string>
     <string name="settings_debug_logging_enabled">Включить логирование</string>
     <string name="settings_debug_logging_enabled_description">Чтобы сообщить об ошибке, включите это, перезапустите приложение, и повторите проблему.</string>
     <string name="settings_drive_folder_desc">Выберите папку (в приложении Google Drive), куда копировать записи.</string>
@@ -658,7 +661,8 @@
     <string name="tile_recording_stopped">Остановлено</string>
     <string name="transcribe_confirm_dont_ask">Больше не спрашивать</string>
     <string name="transcribe_long_call_line">Этот звонок длится %1$s. На этом телефоне расшифровка занимает примерно в %2$s раза больше времени — около %3$s.</string>
-    <string name="transcribe_confirm_message">Расшифровка %1$s займёт телефон и заметно потратит заряд. Остановить можно в любой момент.\n\nЭтот вопрос можно вернуть в разделе «Расшифровка» в настройках.</string>
+    <string name="summary_card_blocked_model_action">Скачать модель резюме</string>
+    <string name="transcribe_confirm_message">Расшифровка этого звонка займёт телефон и заметно потратит заряд. Остановить можно в любой момент.\n\nЭтот вопрос можно вернуть в разделе «Расшифровка» в настройках.</string>
     <string name="transcribe_confirm_title">Это займёт около %1$s</string>
     <string name="transcribe_confirm_title_first_run">Первая расшифровка может занять некоторое время</string>
     <string name="transcribe_confirm_title_unknown">Расшифровать этот звонок?</string>
@@ -770,10 +774,12 @@
     <string name="transcription_language_persian">Персидский</string>
     <string name="transcription_language_urdu">Урду</string>
     <string name="transcription_language_bengali">Бенгальский</string>
+    <string name="transcription_language_cantonese">Кантонский (粵語)</string>
     <string name="transcription_language_polish">Польский</string>
     <string name="transcription_language_portuguese">Португальский</string>
     <string name="transcription_language_russian">Русский</string>
     <string name="transcription_language_spanish">Испанский</string>
+    <string name="transcription_language_turkish">Турецкий</string>
     <string name="transcription_language_ukrainian">Украинский</string>
     <string name="transcription_language_vietnamese">Вьетнамский</string>
     <string name="transcription_minute_label">Минута</string>
@@ -915,8 +921,10 @@
     <string name="transcribe_again_waiting">Ожидание повторной расшифровки…</string>
     <string name="wifi_call_switch_failed">Похоже, это звонок по Wi-Fi, но запись, которая захватывает обе стороны, не запустилась. Он записывается обычным способом, и собеседника может быть не слышно.</string>
     <string name="wifi_call_one_sided">Из этого звонка по Wi-Fi записана только ваша сторона. Если это повторяется, в настройках приложения «Телефон» включите для звонков по Wi-Fi приоритет мобильной сети.</string>
-    <string name="settings_debug_force_wifi_route">Принудительно записывать как звонок по Wi-Fi</string>
-    <string name="settings_debug_force_wifi_route_description">Для тестирования. Каждый телефонный звонок во время разговора переключается на запись звонков приложений, как это сделал бы звонок по Wi-Fi. На телефоне без звонков по Wi-Fi собеседника не будет слышно, и должна появиться ошибка. Нужна включённая запись звонков приложений. Работает, только пока включена запись журнала.</string>
     <string name="wifi_call_switch_aborted">Запись этого звонка по Wi-Fi остановилась раньше времени: не удалось безопасно переключить запись. Записанная часть сохранена.</string>
     <string name="wifi_call_far_unknown">Этот звонок по Wi-Fi записан, но CallVault не смог проверить, слышен ли на записи собеседник. Прослушайте запись.</string>
+    <string name="general_show_more">Ещё</string>
+    <string name="general_show_less">Свернуть</string>
+    <string name="summary_card_state_expanded">Развёрнуто</string>
+    <string name="summary_card_state_collapsed">Свёрнуто</string>
 </resources>

@@ -1,5 +1,18 @@
 # README impact log
 
+## 2026-11-17 — Turkish (BabApps item 127, GitHub #84, branch `fix/item-127-feature-add-turkish-language-support`)
+
+🧪 VERIFYING. New app language and pinnable transcription language: Turkish.
+
+**What this changes for the README:**
+- Line 33 says "Transcripts — 13 languages". It was already behind the code before this (the transcription list has
+  19 entries; Turkish makes 20). Do not hard-code a number: reword to "Transcripts — in many languages, written on
+  the phone" or recount from `TranscriptionLanguageChoice.SUPPORTED` at release time.
+- The README names no app-language list, so nothing else becomes wrong.
+
+**Not claimable yet:** that Turkish transcription or summaries are good. The wiring is unit-tested; no Turkish call
+has been transcribed, and the Turkish screens await a native reader.
+
 ## 2026-11-08 — Stereo recording, Channels: Mono / Stereo (#74, branch `feat/stereo-output-74`)
 
 Stereo on ✅ VERIFIED 2026-11-08 on the OP9 by the maintainer; switching back to Mono 🧪. Mono by default:
@@ -729,3 +742,12 @@ README.md was not edited.
   dialog when the call log is already allowed. Any README list of permissions must add it, with its use: the number
   you dialled, for calls routed through Google Voice or another call redirection app.
 - New claim available: outgoing calls placed through Google Voice are named after the dialled number, not the proxy.
+
+## 2026-11-16 — #82: {day}, {day-}, {time}, {time-} file-name tags (BabApps item 114)
+- The README says nothing about file-name templates (grepped), so no claim is affected. If it ever lists the Custom tags, it must add these four and the rule: `{date}`, or a `{day}` then a `{time}` with one joiner, day first.
+- Not a README claim yet: 🧪, not tried on a phone with a real call.
+
+## 2026-11-17 — App-call in/out arrow (BabApps item 113)
+- The README does not mention call direction (grepped incoming/outgoing/direction), so no claim is affected. If it ever says app calls show no direction, or lists the badges, say: an outgoing arrow appears on an app call only when the app's notification proved it (WhatsApp measured); an incoming arrow is not seen on any app yet.
+- Not a README claim yet: 🧪, one call per case on the OP9.
+- Update same day: incoming too, for WhatsApp and Telegram, through a notification listener the app approves itself (`cmd notification allow_listener` via the recorder host). A README privacy or permissions list must then say: CallVault holds notification access, reads only the call structure of notifications (no title, text, name or number), and keeps nothing.

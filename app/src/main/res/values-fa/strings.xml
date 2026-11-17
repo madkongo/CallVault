@@ -377,6 +377,11 @@
     <string name="placeholder_contact_name_desc">نام مخاطب، در صورت وجود</string>
     <string name="placeholder_cross_country_desc">نشان می‌دهد تماس بین‌کشوری است یا نه (درست/نادرست)</string>
     <string name="placeholder_date_desc">تاریخ و زمان کنونی</string>
+    <string name="placeholder_day_desc">روز، مانند 20261112</string>
+    <string name="placeholder_day_dashed_desc">روز با خط تیره، مانند 2026-11-12</string>
+    <string name="placeholder_time_desc">ساعت، مانند 143520</string>
+    <string name="placeholder_time_dashed_desc">ساعت با خط تیره، مانند 14-35-20</string>
+    <string name="settings_file_name_error_day_time">{day} و {time} را با هم استفاده کنید، ابتدا روز، و میان آن‌ها _ یا - یا فاصله یا T (مثلاً {day}_{time})، یا از {date} استفاده کنید.</string>
     <string name="placeholder_direction_desc">جهت تماس (ورودی/خروجی)</string>
     <string name="placeholder_phone_number_desc">شماره تلفن</string>
     <string name="playback_marked_moments">لحظه‌های نشان‌گذاری‌شده</string>
@@ -477,8 +482,6 @@
     <string name="settings_debug_log_file">فایل گزارش</string>
     <string name="settings_debug_log_view_hint">برای خواندن جدیدترین ورودی‌ها بزنید.</string>
     <string name="settings_debug_log_wrap">شکستن خطوط</string>
-    <string name="settings_debug_skip_mdns">رد کردن mDNS هنگام اتصال (آزمایش جستجوی درگاه)</string>
-    <string name="settings_debug_skip_mdns_description">برای آزمایش. اتصال بعدی اشکال‌زدایی بی‌سیم mDNS و آخرین درگاه شناخته‌شده را نادیده می‌گیرد و درگاه را با جستجو در درگاه‌های محلی این گوشی پیدا می‌کند. فقط وقتی ثبت گزارش روشن است کار می‌کند.</string>
     <string name="settings_debug_logging_enabled">فعال کردن گزارش‌گیری</string>
     <string name="settings_debug_logging_enabled_description">برای گزارش یک اشکال، این را فعال کنید، مشکل را بازتولید کنید، سپس خاموشش کنید و گزارش‌ها را به اشتراک بگذارید.</string>
     <string name="settings_drive_folder_desc">پوشه‌ای (در برنامه Google Drive) برای کپی فایل‌های ضبط‌شده انتخاب کنید.</string>
@@ -747,7 +750,8 @@
     <string name="tile_recording_stopped">متوقف</string>
     <string name="transcribe_confirm_dont_ask">دیگر نپرس</string>
     <string name="transcribe_long_call_line">این تماس %1$s است. در این گوشی، رونویسی حدود %2$s برابر مدت تماس طول می‌کشد — یعنی حدود %3$s.</string>
-    <string name="transcribe_confirm_message">رونویسی %1$s گوشی شما را مشغول نگه می‌دارد و باتری قابل‌توجهی مصرف می‌کند. می‌توانید هر زمان آن را متوقف کنید.\n\nاین پرسش را می‌توان دوباره در بخش رونویسی در تنظیمات روشن کرد.</string>
+    <string name="summary_card_blocked_model_action">دانلود خلاصه‌ساز</string>
+    <string name="transcribe_confirm_message">رونویسی این تماس گوشی شما را مشغول نگه می‌دارد و باتری قابل‌توجهی مصرف می‌کند. می‌توانید هر زمان آن را متوقف کنید.\n\nاین پرسش را می‌توان دوباره در بخش رونویسی در تنظیمات روشن کرد.</string>
     <string name="transcribe_confirm_title">این حدود %1$s طول می‌کشد</string>
     <string name="transcribe_confirm_title_first_run">اولی ممکن است کمی طول بکشد</string>
     <string name="transcribe_confirm_title_unknown">این تماس رونویسی شود؟</string>
@@ -859,10 +863,12 @@
     <string name="transcription_language_persian">فارسی</string>
     <string name="transcription_language_urdu">اردو</string>
     <string name="transcription_language_bengali">بنگالی</string>
+    <string name="transcription_language_cantonese">کانتونی (粵語)</string>
     <string name="transcription_language_polish">لهستانی</string>
     <string name="transcription_language_portuguese">پرتغالی</string>
     <string name="transcription_language_russian">روسی</string>
     <string name="transcription_language_spanish">اسپانیایی</string>
+    <string name="transcription_language_turkish">ترکی</string>
     <string name="transcription_language_ukrainian">اوکراینی</string>
     <string name="transcription_language_vietnamese">ویتنامی</string>
     <string name="transcription_minute_label">دقیقه</string>
@@ -1004,8 +1010,10 @@
     <string name="transcribe_again_waiting">در انتظار رونویسی دوباره…</string>
     <string name="wifi_call_switch_failed">به نظر می‌رسد این تماس از طریق Wi-Fi است، اما ضبطی که هر دو طرف را می‌گیرد شروع نشد. به روش معمول ضبط می‌شود و ممکن است صدای طرف مقابل در آن نباشد.</string>
     <string name="wifi_call_one_sided">از این تماس Wi-Fi فقط صدای شما ضبط شد. اگر تکرار شد، در تنظیمات برنامهٔ تلفن، تماس Wi-Fi را روی ترجیح شبکهٔ تلفن همراه بگذارید.</string>
-    <string name="settings_debug_force_wifi_route">اجبار مسیر ضبط تماس Wi-Fi</string>
-    <string name="settings_debug_force_wifi_route_description">برای آزمایش. هر تماس تلفنی در میانهٔ تماس به ضبط تماس برنامه‌ها می‌رود، همان‌طور که تماس Wi-Fi می‌رود. در گوشی بدون تماس Wi-Fi صدای طرف مقابل نخواهد بود و باید خطا نمایش داده شود. ضبط تماس برنامه‌ها باید روشن باشد. فقط وقتی ثبت گزارش روشن است کار می‌کند.</string>
     <string name="wifi_call_switch_aborted">ضبط این تماس Wi-Fi زودتر متوقف شد: روش ضبط با اطمینان عوض نشد. بخشی که تا اینجا ضبط شده نگه داشته می‌شود.</string>
     <string name="wifi_call_far_unknown">این تماس Wi-Fi ضبط شد، اما CallVault نتوانست بررسی کند که صدای طرف مقابل در آن هست. لطفاً به ضبط گوش دهید.</string>
+    <string name="general_show_more">بیشتر</string>
+    <string name="general_show_less">کمتر</string>
+    <string name="summary_card_state_expanded">باز شده</string>
+    <string name="summary_card_state_collapsed">بسته</string>
 </resources>

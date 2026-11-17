@@ -28,6 +28,7 @@ import com.baba.callvault.server.RecorderConnection
 import com.baba.callvault.services.recording.VoipCaptureController
 import com.baba.callvault.utils.AppLogger
 import com.baba.callvault.system.health.SilentFailureNotifier
+import com.baba.callvault.system.health.UserStopNotice
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.CoroutineScope
@@ -89,6 +90,17 @@ class CallVaultApplication : Application() {
             runCatching { AfterCallDecision.reconcile(applicationContext) }
                 .onFailure { AppLogger.w(TAG, "Could not restore held after-call questions: ${it.message}") }
         }.apply { isDaemon = true; name = "cv-after-call-restore" }.start()
+
+        // The ring listener that lets an incoming app call be told from an outgoing one (BabApps item 113).
+        Thread {
+            com.baba.callvault.services.recording.VoipRingListenerAccess.sync(applicationContext)
+        }.apply { isDaemon = true; name = "cv-ring-listener-access" }.start()
+
+        // Two maintainer test switches were removed (BabApps item 126): clear what a phone stored for them.
+        Thread {
+            runCatching { AppPreferences(applicationContext).clearRetiredTestSwitches() }
+                .onFailure { AppLogger.w(TAG, "Could not clear the retired test switches: ${it.message}") }
+        }.apply { isDaemon = true; name = "cv-retired-switches" }.start()
 
         // Migration: pre-consolidation builds showed readiness from THREE sources (the transient launch
         // notifier id 4715 + the post-boot CallMonitorService id 4714), duplicating the single permanent
@@ -161,6 +173,9 @@ class CallVaultApplication : Application() {
                 .onSuccess { if (it > 0) AppLogger.i(TAG, "Released $it stale transcription row(s)") }
                 .onFailure { AppLogger.w(TAG, "Releasing stale transcription rows failed: ${it.message}") }
         }.start()
+
+        // Tell the user once if the previous process ended because they stopped the app (BabApps item 115).
+        Thread { UserStopNotice.onAppStart(applicationContext) }.apply { isDaemon = true }.start()
 
         // If ADB was already paired, proactively bring up the persistent recorder daemon in the
         // background: this (transiently) enables Wireless debugging if needed, launches the daemon,

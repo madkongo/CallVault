@@ -283,6 +283,11 @@
     <string name="placeholder_contact_name_desc">Tên người liên hệ (nếu có)</string>
     <string name="placeholder_cross_country_desc">Cho biết cuộc gọi có phải là cuộc gọi xuyên quốc gia hay không (đúng/sai)</string>
     <string name="placeholder_date_desc">Ngày và giờ hiện tại</string>
+    <string name="placeholder_day_desc">Ngày, ví dụ 20261112</string>
+    <string name="placeholder_day_dashed_desc">Ngày có gạch nối, ví dụ 2026-11-12</string>
+    <string name="placeholder_time_desc">Giờ, ví dụ 143520</string>
+    <string name="placeholder_time_dashed_desc">Giờ có gạch nối, ví dụ 14-35-20</string>
+    <string name="settings_file_name_error_day_time">Dùng {day} và {time} cùng nhau, ngày trước, ngăn cách bằng _, -, dấu cách hoặc T (ví dụ {day}_{time}), hoặc dùng {date}.</string>
     <string name="placeholder_direction_desc">Hướng cuộc gọi (đến/đi)</string>
     <string name="placeholder_phone_number_desc">Số điện thoại</string>
     <string name="playback_marked_moments">Thời điểm đã đánh dấu</string>
@@ -383,8 +388,6 @@
     <string name="settings_debug_log_file">Tệp nhật ký</string>
     <string name="settings_debug_log_view_hint">Nhấn để đọc các mục gần đây nhất.</string>
     <string name="settings_debug_log_wrap">Xuống dòng</string>
-    <string name="settings_debug_skip_mdns">Bỏ qua mDNS khi kết nối (thử tìm cổng)</string>
-    <string name="settings_debug_skip_mdns_description">Để thử nghiệm. Lần kết nối gỡ lỗi không dây tiếp theo bỏ qua mDNS và cổng đã biết gần nhất, rồi tìm cổng bằng cách dò các cổng cục bộ của điện thoại. Chỉ hoạt động khi đang bật ghi nhật ký.</string>
     <string name="settings_debug_logging_enabled">Bật ghi nhật ký</string>
     <string name="settings_debug_logging_enabled_description">Để báo cáo lỗi, hãy bật chức năng này, khởi động lại ứng dụng và tái hiện lỗi.</string>
     <string name="settings_drive_folder_desc">Chọn một thư mục (trong ứng dụng Google Drive) để sao chép bản ghi âm vào.</string>
@@ -652,7 +655,8 @@
     <string name="tile_recording_stopped">Đã dừng</string>
     <string name="transcribe_confirm_dont_ask">Đừng hỏi lại</string>
     <string name="transcribe_long_call_line">Cuộc gọi này dài %1$s. Trên điện thoại này, chép lời mất khoảng %2$s lần thời lượng cuộc gọi — khoảng %3$s.</string>
-    <string name="transcribe_confirm_message">Chép lời %1$s sẽ khiến máy bận và hao pin rõ rệt. Bạn có thể dừng bất cứ lúc nào.\n\nCâu hỏi này có thể bật lại trong mục Chép lời ở Cài đặt.</string>
+    <string name="summary_card_blocked_model_action">Tải bộ tóm tắt</string>
+    <string name="transcribe_confirm_message">Chép lời cuộc gọi này sẽ khiến máy bận và hao pin rõ rệt. Bạn có thể dừng bất cứ lúc nào.\n\nCâu hỏi này có thể bật lại trong mục Chép lời ở Cài đặt.</string>
     <string name="transcribe_confirm_title">Việc này mất khoảng %1$s</string>
     <string name="transcribe_confirm_title_first_run">Lần đầu tiên có thể mất một lúc</string>
     <string name="transcribe_confirm_title_unknown">Chép lời cuộc gọi này?</string>
@@ -764,10 +768,12 @@
     <string name="transcription_language_persian">Tiếng Ba Tư</string>
     <string name="transcription_language_urdu">Tiếng Urdu</string>
     <string name="transcription_language_bengali">Tiếng Bengal</string>
+    <string name="transcription_language_cantonese">Tiếng Quảng Đông (粵語)</string>
     <string name="transcription_language_polish">Tiếng Ba Lan</string>
     <string name="transcription_language_portuguese">Tiếng Bồ Đào Nha</string>
     <string name="transcription_language_russian">Tiếng Nga</string>
     <string name="transcription_language_spanish">Tiếng Tây Ban Nha</string>
+    <string name="transcription_language_turkish">Tiếng Thổ Nhĩ Kỳ</string>
     <string name="transcription_language_ukrainian">Tiếng Ukraina</string>
     <string name="transcription_language_vietnamese">Tiếng Việt</string>
     <string name="transcription_minute_label">Phút</string>
@@ -909,8 +915,10 @@
     <string name="transcribe_again_waiting">Đang chờ chép lời lại…</string>
     <string name="wifi_call_switch_failed">Đây có vẻ là cuộc gọi qua Wi-Fi, nhưng không thể bắt đầu ghi âm cả hai bên. Cuộc gọi đang được ghi theo cách thông thường, có thể thiếu tiếng người bên kia.</string>
     <string name="wifi_call_one_sided">Chỉ phía bạn trong cuộc gọi Wi-Fi này được ghi lại. Nếu vẫn xảy ra, hãy đặt Gọi qua Wi-Fi ưu tiên mạng di động trong cài đặt ứng dụng Điện thoại.</string>
-    <string name="settings_debug_force_wifi_route">Buộc dùng cách ghi cuộc gọi Wi-Fi</string>
-    <string name="settings_debug_force_wifi_route_description">Để thử nghiệm. Mỗi cuộc gọi điện thoại sẽ chuyển giữa chừng sang cách ghi cuộc gọi ứng dụng, như một cuộc gọi Wi-Fi. Trên điện thoại không có gọi qua Wi-Fi sẽ thiếu phía bên kia và sẽ có thông báo lỗi. Cần bật ghi cuộc gọi ứng dụng. Chỉ hoạt động khi đang ghi nhật ký.</string>
     <string name="wifi_call_switch_aborted">Việc ghi cuộc gọi Wi-Fi này đã dừng sớm: không thể chuyển cách ghi một cách an toàn. Phần đã ghi được vẫn được giữ lại.</string>
     <string name="wifi_call_far_unknown">Cuộc gọi Wi-Fi này đã được ghi, nhưng CallVault không thể kiểm tra xem có tiếng phía bên kia hay không. Hãy nghe lại bản ghi.</string>
+    <string name="general_show_more">Xem thêm</string>
+    <string name="general_show_less">Thu gọn</string>
+    <string name="summary_card_state_expanded">Đã mở rộng</string>
+    <string name="summary_card_state_collapsed">Đã thu gọn</string>
 </resources>

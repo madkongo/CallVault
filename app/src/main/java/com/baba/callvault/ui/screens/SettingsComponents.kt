@@ -94,11 +94,10 @@ internal val LocalSettingsDescriptionsAsInfo = staticCompositionLocalOf { false 
 /** Size of the ⓘ touch target: big enough to hit beside a switch. */
 private val INFO_BUTTON_SIZE = 44.dp
 
-/** The ⓘ button that replaces a row's description in the new Settings screen; tapping it explains the row. */
+/** Just the ⓘ icon, for a caller that opens something other than the plain explanation dialog. */
 @Composable
-internal fun SettingsInfoButton(label: String, explanation: String) {
-    var showing by remember { mutableStateOf(false) }
-    IconButton(onClick = { showing = true }, modifier = Modifier.size(INFO_BUTTON_SIZE)) {
+internal fun SettingsInfoIconButton(label: String, onClick: () -> Unit) {
+    IconButton(onClick = onClick, modifier = Modifier.size(INFO_BUTTON_SIZE)) {
         Icon(
             imageVector = Icons.Outlined.Info,
             contentDescription = stringResource(R.string.settings_info_about, label),
@@ -106,6 +105,13 @@ internal fun SettingsInfoButton(label: String, explanation: String) {
             modifier = Modifier.size(20.dp),
         )
     }
+}
+
+/** The ⓘ button that replaces a row's description in the new Settings screen; tapping it explains the row. */
+@Composable
+internal fun SettingsInfoButton(label: String, explanation: String) {
+    var showing by remember { mutableStateOf(false) }
+    SettingsInfoIconButton(label = label, onClick = { showing = true })
     if (showing) {
         AlertDialog(
             onDismissRequest = { showing = false },
