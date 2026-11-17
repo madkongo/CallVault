@@ -918,4 +918,6 @@
     <string name="wifi_call_one_sided">Di questa chiamata Wi-Fi è stata registrata solo la tua parte. Se succede ancora, imposta le chiamate Wi-Fi su «Preferisci rete mobile» nelle impostazioni dell\'app Telefono.</string>
     <string name="wifi_call_switch_aborted">La registrazione di questa chiamata Wi-Fi si è interrotta prima: non è stato possibile cambiare la cattura in modo sicuro. La parte registrata finora viene conservata.</string>
     <string name="wifi_call_far_unknown">Questa chiamata Wi-Fi è stata registrata, ma CallVault non ha potuto verificare che l\'altra parte sia presente. Ascolta la registrazione.</string>
+    <string name="general_show_more">Altro</string>
+    <string name="general_show_less">Meno</string>
 </resources>

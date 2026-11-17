@@ -921,4 +921,6 @@
     <string name="wifi_call_one_sided">Só o seu lado desta chamada por Wi-Fi foi gravado. Se continuar acontecendo, configure as chamadas por Wi-Fi para preferir a rede móvel nas configurações do app Telefone.</string>
     <string name="wifi_call_switch_aborted">A gravação desta chamada por Wi-Fi parou antes da hora: não foi possível trocar a captura com segurança. A parte gravada até agora foi mantida.</string>
     <string name="wifi_call_far_unknown">Esta chamada por Wi-Fi foi gravada, mas o CallVault não conseguiu verificar se o outro lado está nela. Ouça a gravação.</string>
+    <string name="general_show_more">Mais</string>
+    <string name="general_show_less">Menos</string>
 </resources>

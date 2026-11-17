@@ -918,4 +918,6 @@
     <string name="wifi_call_one_sided">Solo se grabó tu lado de esta llamada por Wi-Fi. Si sigue pasando, configura las llamadas por Wi-Fi para preferir la red móvil en los ajustes de la app Teléfono.</string>
     <string name="wifi_call_switch_aborted">La grabación de esta llamada por Wi-Fi se detuvo antes de tiempo: no se pudo cambiar la captura de forma segura. Se conserva lo grabado hasta ahora.</string>
     <string name="wifi_call_far_unknown">Esta llamada por Wi-Fi se grabó, pero CallVault no pudo comprobar que la otra parte esté en ella. Escucha la grabación.</string>
+    <string name="general_show_more">Más</string>
+    <string name="general_show_less">Menos</string>
 </resources>

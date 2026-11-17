@@ -1011,4 +1011,6 @@
     <string name="wifi_call_one_sided">از این تماس Wi-Fi فقط صدای شما ضبط شد. اگر تکرار شد، در تنظیمات برنامهٔ تلفن، تماس Wi-Fi را روی ترجیح شبکهٔ تلفن همراه بگذارید.</string>
     <string name="wifi_call_switch_aborted">ضبط این تماس Wi-Fi زودتر متوقف شد: روش ضبط با اطمینان عوض نشد. بخشی که تا اینجا ضبط شده نگه داشته می‌شود.</string>
     <string name="wifi_call_far_unknown">این تماس Wi-Fi ضبط شد، اما CallVault نتوانست بررسی کند که صدای طرف مقابل در آن هست. لطفاً به ضبط گوش دهید.</string>
+    <string name="general_show_more">بیشتر</string>
+    <string name="general_show_less">کمتر</string>
 </resources>

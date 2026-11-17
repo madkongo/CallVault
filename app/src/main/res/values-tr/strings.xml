@@ -1014,4 +1014,6 @@
     <string name="wifi_call_one_sided">Bu Wi-Fi aramasının yalnızca sizin tarafınız kaydedildi. Tekrarlanırsa, telefon uygulamanızın ayarlarında Wi-Fi Çağrısı’nı mobil ağı tercih edecek şekilde ayarlayın.</string>
     <string name="wifi_call_switch_aborted">Bu Wi-Fi aramasının kaydı erken durdu: yakalama güvenli şekilde değiştirilemedi. Şimdiye kadar kaydedilen kısım saklandı.</string>
     <string name="wifi_call_far_unknown">Bu Wi-Fi araması kaydedildi, ancak CallVault karşı tarafın onda olduğunu doğrulayamadı. Lütfen kaydı dinleyin.</string>
+    <string name="general_show_more">Daha fazla</string>
+    <string name="general_show_less">Daha az</string>
 </resources>

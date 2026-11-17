@@ -916,4 +916,6 @@
     <string name="wifi_call_one_sided">这通 WLAN 通话只录到了您这一方。如果反复出现，请在电话应用的设置中将 WLAN 通话设为“首选移动网络”。</string>
     <string name="wifi_call_switch_aborted">这通 WLAN 通话的录音提前停止了：无法安全地切换录音方式。已录下的部分会保留。</string>
     <string name="wifi_call_far_unknown">这通 WLAN 通话已录音，但 CallVault 无法确认其中录到了对方的声音。请收听录音确认。</string>
+    <string name="general_show_more">更多</string>
+    <string name="general_show_less">收起</string>
 </resources>

@@ -930,4 +930,6 @@
     <string name="wifi_call_one_sided">З цього дзвінка через Wi-Fi записано лише вашу сторону. Якщо це повторюється, у налаштуваннях застосунку «Телефон» увімкніть для дзвінків через Wi-Fi пріоритет мобільної мережі.</string>
     <string name="wifi_call_switch_aborted">Запис цього дзвінка через Wi-Fi зупинився передчасно: не вдалося безпечно перемкнути запис. Записану частину збережено.</string>
     <string name="wifi_call_far_unknown">Цей дзвінок через Wi-Fi записано, але CallVault не зміг перевірити, чи чути на записі співрозмовника. Прослухайте запис.</string>
+    <string name="general_show_more">Ще</string>
+    <string name="general_show_less">Згорнути</string>
 </resources>

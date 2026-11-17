@@ -23,6 +23,8 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.AutoAwesome
 import androidx.compose.material.icons.filled.Close
+import androidx.compose.material.icons.filled.ErrorOutline
+import androidx.compose.material3.IconButton
 import androidx.compose.material.icons.filled.ExpandLess
 import androidx.compose.material.icons.filled.ExpandMore
 import androidx.compose.material.icons.filled.Refresh
@@ -88,19 +90,30 @@ fun SummaryCard(
     onRedo: () -> Unit,
     onStop: () -> Unit,
     onSeek: (Long) -> Unit,
+    /** A finished summary starts folded to a few lines; the caller owns this so the player's icon can open it. */
+    expanded: Boolean,
+    onExpandedChange: (Boolean) -> Unit,
     modifier: Modifier = Modifier
 ) {
+    // Asking for a summary is the icon in the player box now, so with nothing to show there is no card.
+    if (state == SummaryCardState.Offered) return
+
     CvCard(modifier = modifier, contentPadding = PaddingValues(16.dp)) {
         Header()
         Spacer(Modifier.height(12.dp))
 
         when (state) {
-            is SummaryCardState.Ready -> ReadySummary(state.summary, onRedo, onSeek)
-            SummaryCardState.Offered -> ActionRow(
-                label = stringResource(R.string.summary_card_create),
-                supporting = stringResource(R.string.summary_card_create_subtitle),
-                onClick = onCreate
-            )
+            is SummaryCardState.Ready -> {
+                if (expanded) {
+                    ReadySummary(state.summary, onRedo, onSeek)
+                } else {
+                    CollapsedSummary(state.summary)
+                }
+                TextButton(onClick = { onExpandedChange(!expanded) }) {
+                    Text(stringResource(if (expanded) R.string.general_show_less else R.string.general_show_more))
+                }
+            }
+            SummaryCardState.Offered -> Unit // returned above
             is SummaryCardState.Running -> RunningRow(state.percent, onStop)
             is SummaryCardState.Blocked -> Explanation(stringResource(reasonTextOf(state.reason)))
             SummaryCardState.Failed -> {
@@ -202,6 +215,74 @@ fun SummarySheetStrip(
             // a screen that is showing the transcript.
             is SummaryCardState.Blocked -> Unit
         }
+    }
+}
+
+/** The folded summary: the intent and the first lines of the text, tap to open. */
+@Composable
+private fun CollapsedSummary(summary: CallSummary) {
+    if (summary.intent.isNotEmpty()) {
+        Text(
+            text = summary.intent,
+            style = MaterialTheme.typography.titleMedium.copy(textDirection = TextDirection.Content),
+            fontWeight = FontWeight.SemiBold,
+            maxLines = 2,
+            overflow = TextOverflow.Ellipsis
+        )
+        Spacer(Modifier.height(6.dp))
+    }
+    Text(
+        text = summary.summary,
+        style = MaterialTheme.typography.bodyMedium.copy(textDirection = TextDirection.Content),
+        color = MaterialTheme.colorScheme.onSurfaceVariant,
+        maxLines = CollapsePolicy.COLLAPSED_LINES,
+        overflow = TextOverflow.Ellipsis
+    )
+}
+
+/**
+ * The summary's one-slot icon for the player box, like [TranscriptActionButton] beside it:
+ * summarise, in progress, open the finished one, try again.
+ *
+ * [onOpen] opens (or folds) the card below the player. While it is running the ring is shown and
+ * Stop stays in the card, so a second tap cannot queue the same work again.
+ */
+@Composable
+fun SummaryActionButton(
+    state: SummaryCardState,
+    onCreate: () -> Unit,
+    onOpen: () -> Unit,
+    modifier: Modifier = Modifier
+) {
+    if (state is SummaryCardState.Running) {
+        WorkProgressRing(percent = state.percent, modifier = modifier)
+        return
+    }
+    val ready = state is SummaryCardState.Ready
+    val failed = state == SummaryCardState.Failed
+    val blocked = state is SummaryCardState.Blocked
+    IconButton(
+        onClick = when {
+            ready -> onOpen
+            else -> onCreate
+        },
+        // A blocked summary cannot be asked for; the card under the player says why.
+        enabled = !blocked,
+        modifier = modifier
+    ) {
+        Icon(
+            imageVector = if (failed) Icons.Filled.ErrorOutline else Icons.Filled.AutoAwesome,
+            contentDescription = stringResource(
+                if (ready || blocked) R.string.summary_card_title else R.string.summary_card_create
+            ),
+            // Colours stated: an un-tinted M3 icon resolves to coral in this theme.
+            tint = when {
+                failed -> MaterialTheme.colorScheme.error
+                ready -> MaterialTheme.colorScheme.primary
+                blocked -> MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.38f)
+                else -> MaterialTheme.colorScheme.onSurfaceVariant
+            }
+        )
     }
 }
 

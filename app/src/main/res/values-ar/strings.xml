@@ -956,4 +956,6 @@
     <string name="wifi_call_one_sided">سُجّل جانبك فقط من مكالمة Wi-Fi هذه. إذا تكرر ذلك، اضبط الاتصال عبر Wi-Fi على تفضيل شبكة الجوال في إعدادات تطبيق الهاتف.</string>
     <string name="wifi_call_switch_aborted">توقف تسجيل مكالمة Wi-Fi هذه مبكرًا: تعذّر تبديل طريقة التسجيل بأمان. حُفظ الجزء الذي سُجّل حتى الآن.</string>
     <string name="wifi_call_far_unknown">سُجّلت مكالمة Wi-Fi هذه، لكن تعذّر على CallVault التحقق من وجود صوت الطرف الآخر فيها. يُرجى الاستماع إلى التسجيل.</string>
+    <string name="general_show_more">المزيد</string>
+    <string name="general_show_less">أقل</string>
 </resources>

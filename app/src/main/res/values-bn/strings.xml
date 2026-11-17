@@ -937,4 +937,6 @@
     <string name="wifi_call_one_sided">এই Wi-Fi কলের শুধু আপনার দিকটি রেকর্ড হয়েছে। এমন বারবার হলে, আপনার ফোন অ্যাপের সেটিংসে Wi-Fi Calling-কে মোবাইল নেটওয়ার্ক অগ্রাধিকার দিতে সেট করুন।</string>
     <string name="wifi_call_switch_aborted">এই Wi-Fi কলের রেকর্ডিং আগেই থেমে গেছে: ক্যাপচারটি নিরাপদে বদলানো যায়নি। এ পর্যন্ত যা রেকর্ড হয়েছে তা রাখা হয়েছে।</string>
     <string name="wifi_call_far_unknown">এই Wi-Fi কলটি রেকর্ড হয়েছে, কিন্তু CallVault যাচাই করতে পারেনি যে অপর পক্ষ এতে আছে কি না। অনুগ্রহ করে রেকর্ডিংটি শুনে দেখুন।</string>
+    <string name="general_show_more">আরও</string>
+    <string name="general_show_less">কম</string>
 </resources>

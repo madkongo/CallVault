@@ -1130,4 +1130,6 @@
     <string name="wifi_call_one_sided">Only your side of this Wi-Fi call was recorded. If it keeps happening, set Wi-Fi Calling to prefer the mobile network in your phone app\'s settings.</string>
     <string name="wifi_call_switch_aborted">Recording of this Wi-Fi call stopped early: the capture could not be switched safely. The part recorded so far is kept.</string>
     <string name="wifi_call_far_unknown">This Wi-Fi call was recorded, but CallVault could not check that the other side is on it. Please listen to the recording.</string>
+    <string name="general_show_more">More</string>
+    <string name="general_show_less">Less</string>
 </resources>

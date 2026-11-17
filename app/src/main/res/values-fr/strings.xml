@@ -918,4 +918,6 @@
     <string name="wifi_call_one_sided">Seul votre côté de cet appel Wi-Fi a été enregistré. Si cela se reproduit, réglez les appels Wi-Fi sur « Réseau mobile de préférence » dans les paramètres de l\'application Téléphone.</string>
     <string name="wifi_call_switch_aborted">L\'enregistrement de cet appel Wi-Fi s\'est arrêté plus tôt : la capture n\'a pas pu être changée sans risque. La partie déjà enregistrée est conservée.</string>
     <string name="wifi_call_far_unknown">Cet appel Wi-Fi a été enregistré, mais CallVault n\'a pas pu vérifier que votre interlocuteur y figure. Écoutez l\'enregistrement.</string>
+    <string name="general_show_more">Plus</string>
+    <string name="general_show_less">Moins</string>
 </resources>
