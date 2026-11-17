@@ -13,7 +13,11 @@ All notable changes to CallVault are documented here. The format is based on
   time Google Drive's own process died. The copy now runs in a process of its own, so only that part is closed when
   Drive dies; it no longer re-reads the whole Drive folder for every file; a file that gets no answer from Drive for a few
   minutes is left for the next run and the copy moves on; and "Stop for now" stops within a few seconds. Every copy
-  now writes a line (size, time per step, result, files per minute) to the debug report, even with logging off.
+  now writes a line (size, time per step, result, files per minute) to the debug report, even with logging off. If the
+  copier process cannot read the Drive folder, the run now copies in the app itself instead of giving up; a failed
+  start is retried within minutes (never hours); changing the upload time or schedule starts it fresh; a recording
+  is deleted from the phone (Drive-only mode) only after Drive reports a file of the same size; and every failure,
+  with its reason, is written to the debug report.
   <!-- 🧪 VERIFYING: with a few hundred recordings waiting for Drive, start a copy and read Settings ▸ Debug ▸ report,
   "Drive copies (always on)": files per minute should be far above ten. Press "Stop for now" mid-copy: it should stop in
   seconds. Kill Google Drive (Settings ▸ Apps ▸ Drive ▸ Force stop) during a copy: CallVault stays open and the copy goes

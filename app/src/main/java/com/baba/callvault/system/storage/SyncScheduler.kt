@@ -9,6 +9,7 @@
 package com.baba.callvault.system.storage
 
 import android.content.Context
+import androidx.work.BackoffPolicy
 import androidx.work.Constraints
 import androidx.work.ExistingPeriodicWorkPolicy
 import androidx.work.NetworkType
@@ -36,6 +37,8 @@ object SyncScheduler {
     const val WORK_NAME = "cv_sync_sweep"
 
     private const val TAG = "CV:SyncScheduler"
+    private const val STATE_FILE = "cv_sync_scheduler"
+    private const val KEY_SIGNATURE = "signature"
     private const val DAILY_PERIOD_HOURS = 24L
     private const val WEEKLY_PERIOD_DAYS = 7L
     private const val DAYS_PER_WEEK = 7
@@ -50,9 +53,14 @@ object SyncScheduler {
         val mode = prefs.getSyncScheduleMode()
         val workManager = WorkManager.getInstance(context)
 
+        val scheduler = context.applicationContext.getSharedPreferences(STATE_FILE, Context.MODE_PRIVATE)
+        val oldSignature = scheduler.getString(KEY_SIGNATURE, null)
+
         if (target == StorageTarget.LOCAL || mode == SyncScheduleMode.IMMEDIATE) {
             workManager.cancelUniqueWork(WORK_NAME)
+            scheduler.edit().remove(KEY_SIGNATURE).apply()
             AppLogger.i(TAG, "Periodic sweep cancelled (target=$target mode=$mode).")
+            DriveCopyJournal.record(context, "scheduler: periodic sweep CANCELLED (target=$target mode=$mode; was '${oldSignature ?: "none"}')")
             return
         }
 
@@ -72,13 +80,56 @@ object SyncScheduler {
             SyncScheduleMode.IMMEDIATE -> return // unreachable (handled above), keeps the when exhaustive
         }
 
+        // A short, linear retry delay instead of WorkManager's default (exponential up to 5 hours): see
+        // [CloudCopyPolicy.SWEEP_BACKOFF_MINUTES].
         val request = PeriodicWorkRequestBuilder<SyncSweepWorker>(repeatInterval, repeatUnit)
             .setConstraints(constraints)
             .setInitialDelay(initialDelayMillis, TimeUnit.MILLISECONDS)
+            .setBackoffCriteria(BackoffPolicy.LINEAR, CloudCopyPolicy.SWEEP_BACKOFF_MINUTES, TimeUnit.MINUTES)
             .build()
 
-        workManager.enqueueUniquePeriodicWork(WORK_NAME, ExistingPeriodicWorkPolicy.UPDATE, request)
+        // UPDATE keeps the old request's run count, and so its retry delay: after a few failed runs the next
+        // start is worked out from the backoff and the new time is ignored (drive1: a user moved the time to
+        // 15:15 and nothing ran). So when the schedule itself changed — time, day, mode or target — the old
+        // request is cancelled and a fresh one enqueued, which resets the count. A plain re-application (app
+        // start, call end) leaves the signature unchanged and keeps UPDATE.
+        val signature = signature(target, mode, hour, minute, prefs.getSyncDayOfWeek())
+        val changed = signature != oldSignature
+        val policy = if (changed) ExistingPeriodicWorkPolicy.CANCEL_AND_REENQUEUE else ExistingPeriodicWorkPolicy.UPDATE
+        val operation = workManager.enqueueUniquePeriodicWork(WORK_NAME, policy, request)
+        scheduler.edit().putString(KEY_SIGNATURE, signature).apply()
         AppLogger.i(TAG, "Periodic sweep scheduled (mode=$mode at $hour:$minute, initialDelayMs=$initialDelayMillis).")
+        DriveCopyJournal.record(
+            context,
+            "scheduler: policy=${policy.name}, ${if (changed) "schedule CHANGED from '${oldSignature ?: "none"}' to '$signature' (old request cancelled, run count reset)" else "unchanged '$signature'"}, " +
+                "first run in ${initialDelayMillis / 60_000} min, retry backoff linear ${CloudCopyPolicy.SWEEP_BACKOFF_MINUTES} min",
+        )
+        logNextRun(context, workManager, operation)
+    }
+
+    /** The schedule as one comparable string; only what changes WHEN or WHETHER the sweep runs. */
+    internal fun signature(target: StorageTarget, mode: SyncScheduleMode, hour: Int, minute: Int, dayOfWeek: Int): String =
+        "$mode/$target/%02d:%02d".format(hour, minute) + if (mode == SyncScheduleMode.WEEKLY) "/day$dayOfWeek" else ""
+
+    /**
+     * Writes what WorkManager itself reports about the request once it is stored: state, attempt count and the
+     * next run time. Off the caller's thread, because reading it waits on WorkManager's database; a failure to
+     * read is a journal line as well.
+     */
+    private fun logNextRun(context: Context, workManager: WorkManager, operation: androidx.work.Operation) {
+        Thread({
+            val line = runCatching {
+                operation.result.get()
+                val infos = workManager.getWorkInfosForUniqueWork(WORK_NAME).get()
+                if (infos.isEmpty()) "scheduler: WorkManager reports no request after enqueue"
+                else infos.joinToString("; ") {
+                    val next = it.nextScheduleTimeMillis
+                    "scheduler: WorkManager reports state=${it.state} runAttemptCount=${it.runAttemptCount} next run in " +
+                        (if (next == Long.MAX_VALUE) "n/a" else "${(next - System.currentTimeMillis()) / 60_000} min")
+                }
+            }.getOrElse { "scheduler: could not read the request back from WorkManager (${it.javaClass.simpleName}: ${it.message})" }
+            DriveCopyJournal.record(context, line)
+        }, "cv-sync-sched-log").start()
     }
 
     /** Millis from now until the next occurrence of [hour]:[minute] (today if still ahead, else tomorrow). */

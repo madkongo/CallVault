@@ -119,8 +119,20 @@ object DriveCopyProtocol {
         lookup = b.getBoolean(K_LOOKUP),
     )
 
-    fun copyReply(result: SafHelper.CopyResult, timings: CopyTimings) = Bundle().apply {
+    /** The reason a reply gave for failing, or null when it did not fail (or gave none). */
+    fun readError(reply: Bundle): String? = if (reply.getBoolean(K_OK)) null else reply.getString(K_ERROR)
+
+    /** What the provider reports for the document a copy ended in, or -1: see [copyReply]. */
+    const val K_DRIVE_SIZE = "driveSize"
+
+    /**
+     * [driveSize] is the Drive document's length as the provider reports it AFTER the copy (-1 when it will
+     * not say). It is what the app checks before deleting the device copy: a delete never rests on "the copy
+     * call returned".
+     */
+    fun copyReply(result: SafHelper.CopyResult, timings: CopyTimings, driveSize: Long = -1L) = Bundle().apply {
         putBoolean(K_OK, true)
+        putLong(K_DRIVE_SIZE, driveSize)
         when (result) {
             is SafHelper.CopyResult.Copied -> {
                 putInt(K_KIND, KIND_COPIED); putParcelable(K_RESULT_URI, result.uri); putLong(K_BYTES, result.bytes)
@@ -138,13 +150,17 @@ object DriveCopyProtocol {
     }
 
     /** The reply turned back into a result, plus the copier's own step timings (`step=12ms ...`). */
+    /** A copy reply read back: the result, the copier's step timings, and the Drive document's reported length. */
+    data class CopyReply(val result: SafHelper.CopyResult, val steps: String, val driveSize: Long)
+
     @Suppress("DEPRECATION")
-    fun readCopyReply(reply: Bundle): Pair<SafHelper.CopyResult, String> {
+    fun readCopyReply(reply: Bundle): CopyReply {
         val names = reply.getStringArray(K_TIMING_NAMES) ?: emptyArray()
         val ms = reply.getLongArray(K_TIMING_MS) ?: LongArray(0)
         val timing = names.indices.joinToString(" ") { "${names[it]}=${ms.getOrElse(it) { 0 }}ms" }
+        val driveSize = reply.getLong(K_DRIVE_SIZE, -1L)
         if (!reply.getBoolean(K_OK)) {
-            return SafHelper.CopyResult.Failed(reply.getString(K_ERROR) ?: "the copier gave no reason") to timing
+            return CopyReply(SafHelper.CopyResult.Failed(reply.getString(K_ERROR) ?: "the copier gave no reason"), timing, -1L)
         }
         val uri = reply.getParcelable<Uri>(K_RESULT_URI)
         val result = when (reply.getInt(K_KIND)) {
@@ -154,6 +170,6 @@ object DriveCopyProtocol {
             else SafHelper.CopyResult.Failed("the copier returned no document")
             else -> SafHelper.CopyResult.Failed(reply.getString(K_ERROR) ?: "copy failed")
         }
-        return result to timing
+        return CopyReply(result, timing, driveSize)
     }
 }

@@ -51,6 +51,30 @@ object CloudCopyPolicy {
     fun fileTimeoutMs(sizeBytes: Long): Long =
         MIN_FILE_TIMEOUT_MS + (sizeBytes.coerceAtLeast(0L) / (1024 * 1024)) * PER_MEGABYTE_MS
 
+    /**
+     * Minutes of the sweep's retry delay per failed attempt (linear: 2, 4, 6 ...). WorkManager's default is
+     * exponential from 30 s up to 5 hours, which is how the drive1 build ended up waiting 5 hours after a few
+     * failed listings and ignoring a schedule the user had just changed.
+     */
+    const val SWEEP_BACKOFF_MINUTES = 2L
+
+    /**
+     * Attempts a sweep that cannot list the Drive folder gets before it waits for its next scheduled time.
+     * With [SWEEP_BACKOFF_MINUTES] that is waits of 2..16 minutes, about 72 minutes in all, never longer.
+     */
+    const val LIST_FAILURE_MAX_ATTEMPTS = 8
+
+    /** True when a sweep that could not list the folder (attempt [runAttemptCount], 0-based) asks for another try. */
+    fun shouldRetryListFailure(runAttemptCount: Int): Boolean = runAttemptCount < LIST_FAILURE_MAX_ATTEMPTS - 1
+
+    /**
+     * Whether the device copy may be deleted now: only when Drive itself reports a document of exactly the
+     * source's length. A copy call returning is not proof; neither is an unreported (-1) or zero length,
+     * which cloud providers show for a file still settling. Anything else keeps the device copy.
+     */
+    fun mayDeleteLocal(driveReportedSize: Long, sourceSize: Long): Boolean =
+        sourceSize > 0L && driveReportedSize == sourceSize
+
     /** Marker for the staging document a copy writes into before it is renamed to the final name. */
     private const val STAGING_MARKER = ".cvpart"
 

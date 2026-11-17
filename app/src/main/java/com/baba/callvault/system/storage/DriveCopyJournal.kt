@@ -22,28 +22,36 @@ import java.util.Locale
  * never switched debug logging on. On 2.5.1 a Honor user's backlog copied about ten files an hour and the
  * log could not say which step took the time. Small and capped: one line per file.
  *
- * Written only from the app's main process (the copier process reports its timings back, it does not write).
+ * Written by the app's main process, and by the copier process for its own life-cycle lines (start, each
+ * message, memory trims, errors): only that process can say what happened inside it.
  */
 object DriveCopyJournal {
 
     private const val FILE_NAME = "drive_copy_journal.txt"
-    private const val MAX_BYTES = 192 * 1024
+    private const val MAX_BYTES = 384 * 1024
 
     private val stamp = SimpleDateFormat("yyyy-MM-dd HH:mm:ss.SSS", Locale.US)
     private val lock = Any()
 
-    fun record(context: Context, rawLine: String) = synchronized(lock) {
+    /**
+     * Adds one line. [fromCopier] marks a line written by the `:drive` process itself: it is tagged `[:drive]`,
+     * appended to the same file (one short append per line), and never trims it — the trim rewrites the file
+     * and only one process may do that.
+     *
+     * A failure to write is itself reported to logcat: the journal is the one place a failure must not vanish.
+     */
+    fun record(context: Context, rawLine: String, fromCopier: Boolean = false) = synchronized(lock) {
         // Redacted like every other line that can leave the phone: a recording's name carries a contact or a number.
-        val line = AppLogger.redactForReport(rawLine)
+        val line = (if (fromCopier) "[:drive] " else "") + AppLogger.redactForReport(rawLine)
         android.util.Log.i("CV:DriveCopy", line)
         runCatching {
             val file = File(context.filesDir, FILE_NAME)
             file.appendText("${stamp.format(Date())} $line\n")
-            if (file.length() > MAX_BYTES) {
+            if (!fromCopier && file.length() > MAX_BYTES) {
                 val text = file.readText()
                 file.writeText(text.substring(text.length / 2).substringAfter('\n'))
             }
-        }
+        }.onFailure { android.util.Log.w("CV:DriveCopy", "journal write failed: ${it.javaClass.simpleName}: ${it.message}") }
         Unit
     }
 

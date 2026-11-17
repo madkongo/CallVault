@@ -56,4 +56,39 @@ class DriveCopyLimitsTest {
         assertEquals("10.0", DriveCopyJournal.pace(10, 60_000L))
         assertEquals("n/a", DriveCopyJournal.pace(10, 0L))
     }
+
+    @Test
+    fun `a sweep that cannot list retries a bounded number of times and never waits hours`() {
+        // The last retry is the one before the limit; the attempt at the limit waits for the schedule.
+        assertTrue(CloudCopyPolicy.shouldRetryListFailure(0))
+        assertTrue(CloudCopyPolicy.shouldRetryListFailure(CloudCopyPolicy.LIST_FAILURE_MAX_ATTEMPTS - 2))
+        assertFalse(CloudCopyPolicy.shouldRetryListFailure(CloudCopyPolicy.LIST_FAILURE_MAX_ATTEMPTS - 1))
+        assertFalse(CloudCopyPolicy.shouldRetryListFailure(CloudCopyPolicy.LIST_FAILURE_MAX_ATTEMPTS + 5))
+        // Linear backoff: the longest single wait is the delay times the last attempt count. drive1's was 5 hours.
+        val longestWaitMinutes = CloudCopyPolicy.SWEEP_BACKOFF_MINUTES * CloudCopyPolicy.LIST_FAILURE_MAX_ATTEMPTS
+        assertTrue(longestWaitMinutes < 60)
+    }
+
+    @Test
+    fun `the device copy is deleted only when Drive reports exactly the same length`() {
+        assertTrue(CloudCopyPolicy.mayDeleteLocal(driveReportedSize = 4096L, sourceSize = 4096L))
+        assertFalse(CloudCopyPolicy.mayDeleteLocal(driveReportedSize = 4095L, sourceSize = 4096L)) // truncated
+        assertFalse(CloudCopyPolicy.mayDeleteLocal(driveReportedSize = -1L, sourceSize = 4096L)) // provider will not say
+        assertFalse(CloudCopyPolicy.mayDeleteLocal(driveReportedSize = 0L, sourceSize = 4096L)) // still settling
+        assertFalse(CloudCopyPolicy.mayDeleteLocal(driveReportedSize = 0L, sourceSize = 0L)) // nothing to prove
+    }
+
+    @Test
+    fun `a changed time or mode is a changed schedule, a plain re-apply is not`() {
+        val a = SyncScheduler.signature(com.baba.callvault.data.StorageTarget.BOTH, com.baba.callvault.data.SyncScheduleMode.DAILY, 15, 13, 1)
+        assertEquals(a, SyncScheduler.signature(com.baba.callvault.data.StorageTarget.BOTH, com.baba.callvault.data.SyncScheduleMode.DAILY, 15, 13, 5))
+        assertTrue(a != SyncScheduler.signature(com.baba.callvault.data.StorageTarget.BOTH, com.baba.callvault.data.SyncScheduleMode.DAILY, 15, 15, 1))
+        assertTrue(a != SyncScheduler.signature(com.baba.callvault.data.StorageTarget.DRIVE, com.baba.callvault.data.SyncScheduleMode.DAILY, 15, 13, 1))
+        assertTrue(a != SyncScheduler.signature(com.baba.callvault.data.StorageTarget.BOTH, com.baba.callvault.data.SyncScheduleMode.WEEKLY, 15, 13, 1))
+    }
+
+    @Test
+    fun `the forced list failure test hook is never committed switched on`() {
+        assertFalse(DriveCopyHandler.TEST_FORCE_LIST_FAILURE)
+    }
 }

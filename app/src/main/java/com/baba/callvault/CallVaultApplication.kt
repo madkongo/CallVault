@@ -54,7 +54,25 @@ class CallVaultApplication : Application() {
         // only that one and not the app (see DriveCopyService). Everything below belongs to the main process
         // — schedulers, the daemon link, and "a fresh process means nothing is still transcribing", which
         // would wrongly reset live work if the copier process ran it.
-        if (com.baba.callvault.system.storage.DriveCopyProtocol.isCopierProcess(Application.getProcessName())) return
+        if (com.baba.callvault.system.storage.DriveCopyProtocol.isCopierProcess(Application.getProcessName())) {
+            // The copier process starting is itself a journal line, and an uncaught exception in it is another:
+            // a process that dies at start-up (before any message) is otherwise invisible to the app.
+            val previous = Thread.getDefaultUncaughtExceptionHandler()
+            Thread.setDefaultUncaughtExceptionHandler { thread, error ->
+                com.baba.callvault.system.storage.DriveCopyJournal.record(
+                    applicationContext,
+                    "copier process crashed on thread ${thread.name}: ${error.javaClass.simpleName}: ${error.message}",
+                    fromCopier = true,
+                )
+                previous?.uncaughtException(thread, error)
+            }
+            com.baba.callvault.system.storage.DriveCopyJournal.record(
+                applicationContext,
+                "copier process started (pid ${android.os.Process.myPid()}, ${Application.getProcessName()})",
+                fromCopier = true,
+            )
+            return
+        }
         AppLogger.init(applicationContext)
 
         // Hide Recordings is a property of the folder, and the folder can change under us: a settings

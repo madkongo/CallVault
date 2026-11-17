@@ -437,34 +437,72 @@ object SafHelper {
      * per property — thousands of round trips on a big Drive folder, each one a chance for the provider to
      * stall. Returns null when the folder cannot be read at all (an empty folder is an empty listing).
      */
-    fun listChildren(context: Context, folderUri: Uri): DriveCopyProtocol.Listing? = runCatching {
-        val treeId = DocumentsContract.getTreeDocumentId(folderUri)
-        val docId = runCatching { DocumentsContract.getDocumentId(folderUri) }.getOrDefault(treeId)
-        val children = DocumentsContract.buildChildDocumentsUriUsingTree(folderUri, docId)
-        val names = ArrayList<String>()
-        val uris = ArrayList<Uri>()
-        val sizes = ArrayList<Long>()
-        context.contentResolver.query(
-            children,
-            arrayOf(
-                DocumentsContract.Document.COLUMN_DOCUMENT_ID,
-                DocumentsContract.Document.COLUMN_DISPLAY_NAME,
-                DocumentsContract.Document.COLUMN_SIZE,
-            ),
-            null, null, null,
-        )?.use { c ->
-            while (c.moveToNext()) {
-                val name = c.getString(1) ?: continue
-                names += name
-                uris += DocumentsContract.buildDocumentUriUsingTree(folderUri, c.getString(0))
-                sizes += if (c.isNull(2)) -1L else c.getLong(2)
+    fun listChildren(context: Context, folderUri: Uri): DriveCopyProtocol.Listing? =
+        listChildrenWithReason(context, folderUri).first
+
+    /**
+     * [listChildren] that also says WHY it returned nothing: the exception's type and message, or "the
+     * provider returned no cursor". A listing that fails without a reason is what hid the drive1 failure.
+     */
+    fun listChildrenWithReason(context: Context, folderUri: Uri): Pair<DriveCopyProtocol.Listing?, String?> {
+        var reason: String? = null
+        val listing = runCatching {
+            val treeId = DocumentsContract.getTreeDocumentId(folderUri)
+            val docId = runCatching { DocumentsContract.getDocumentId(folderUri) }.getOrDefault(treeId)
+            val children = DocumentsContract.buildChildDocumentsUriUsingTree(folderUri, docId)
+            val names = ArrayList<String>()
+            val uris = ArrayList<Uri>()
+            val sizes = ArrayList<Long>()
+            context.contentResolver.query(
+                children,
+                arrayOf(
+                    DocumentsContract.Document.COLUMN_DOCUMENT_ID,
+                    DocumentsContract.Document.COLUMN_DISPLAY_NAME,
+                    DocumentsContract.Document.COLUMN_SIZE,
+                ),
+                null, null, null,
+            )?.use { c ->
+                while (c.moveToNext()) {
+                    val name = c.getString(1) ?: continue
+                    names += name
+                    uris += DocumentsContract.buildDocumentUriUsingTree(folderUri, c.getString(0))
+                    sizes += if (c.isNull(2)) -1L else c.getLong(2)
+                }
+            } ?: run {
+                reason = "the provider returned no cursor for the folder's children"
+                return@runCatching null
             }
-        } ?: return@runCatching null
-        DriveCopyProtocol.Listing(names, uris, sizes)
-    }.getOrElse { e ->
-        AppLogger.w(TAG, "Could not list $folderUri: ${e.message}")
-        null
+            DriveCopyProtocol.Listing(names, uris, sizes)
+        }.getOrElse { e ->
+            reason = "${e.javaClass.simpleName}: ${e.message}"
+            AppLogger.w(TAG, "Could not list $folderUri: ${e.message}")
+            null
+        }
+        return listing to reason
     }
+
+    /**
+     * Why [folderUri] is not a usable destination, or null when it is. The same test as [isFolderValid],
+     * split so the log says WHICH part failed (no document, does not exist, not writable) and any exception.
+     */
+    fun folderProblem(context: Context, folderUri: Uri?): String? = runCatching {
+        if (folderUri == null) return@runCatching "no folder given"
+        val directory = DocumentFile.fromTreeUri(context, folderUri)
+            ?: return@runCatching "DocumentFile.fromTreeUri returned null"
+        if (!directory.exists()) return@runCatching "the folder does not exist (or the provider did not answer)"
+        if (!directory.canWrite()) return@runCatching "the folder is not writable"
+        null
+    }.getOrElse { "${it.javaClass.simpleName}: ${it.message}" }
+
+    /**
+     * The byte length the provider reports for the document at [uri], or -1 when it will not say. Used to
+     * verify a Drive copy before the device copy is deleted: one query, no folder search.
+     */
+    fun documentSize(context: Context, uri: Uri): Long = runCatching {
+        context.contentResolver.query(
+            uri, arrayOf(DocumentsContract.Document.COLUMN_SIZE), null, null, null,
+        )?.use { c -> if (c.moveToFirst() && !c.isNull(0)) c.getLong(0) else -1L } ?: -1L
+    }.getOrDefault(-1L)
 
     /** True when the document at [uri] can be renamed — the mechanism the atomic publish relies on. */
     private fun supportsRename(context: Context, uri: Uri): Boolean = runCatching {

@@ -41,44 +41,53 @@ class DriveCopyService : Service() {
 
     override fun onCreate() {
         super.onCreate()
+        journal("copier service created (pid ${Process.myPid()}), ${DriveDiagnostics.memory(applicationContext)}")
         thread = HandlerThread("cv-drive-copy").also { it.start() }
         messenger = Messenger(object : Handler(thread.looper) {
             override fun handleMessage(msg: Message) {
                 val reply = Message.obtain(null, msg.what)
-                reply.data = runCatching { handle(msg) }.getOrElse {
+                // [DriveCopyHandler.handle] never throws and journals every failure with its reason; this
+                // catch is only for something outside it, and says so.
+                reply.data = runCatching {
+                    // Inside the copier process, where the persisted grant for the folder is read from.
+                    DriveCopyHandler.handle(applicationContext, msg.what, msg.data, inCopier = true)
+                }.getOrElse {
+                    journal("message ${msg.what} failed outside the handler: ${it.javaClass.simpleName}: ${it.message}")
                     DriveCopyProtocol.failureReply("${it.javaClass.simpleName}: ${it.message}")
                 }
                 runCatching { msg.replyTo?.send(reply) }
+                    .onFailure { journal("reply to message ${msg.what} could not be sent: ${it.javaClass.simpleName}: ${it.message}") }
             }
         })
     }
 
-    private fun handle(msg: Message) = when (msg.what) {
-        DriveCopyProtocol.MSG_LIST -> {
-            val folder = msg.data.getParcelable<android.net.Uri>(DriveCopyProtocol.K_FOLDER)
-            // The same check the sweep used to make itself: a folder that is gone or read-only is a retry,
-            // not a sweep of files that can never land.
-            val usable = folder != null && SafHelper.isFolderValid(applicationContext, folder)
-            val listing = if (usable) SafHelper.listChildren(applicationContext, folder!!) else null
-            if (listing == null) DriveCopyProtocol.failureReply("the Drive folder could not be listed")
-            else DriveCopyProtocol.listReply(listing)
-        }
-        DriveCopyProtocol.MSG_COPY -> {
-            val r = DriveCopyProtocol.readCopyRequest(msg.data)
-                ?: return@handle DriveCopyProtocol.failureReply("bad copy request")
-            val timings = CopyTimings()
-            val result = SafHelper.copyFileToFolder(
-                applicationContext, r.src, r.folder, r.name, r.mime, r.sourceSize, timings,
-                if (r.lookup) null else SafHelper.KnownDest(r.existing, r.existingSize, r.staging),
-            )
-            DriveCopyProtocol.copyReply(result, timings)
-        }
-        else -> DriveCopyProtocol.failureReply("unknown message ${msg.what}")
+    override fun onBind(intent: Intent?): IBinder {
+        journal("copier bound")
+        return messenger.binder
     }
 
-    override fun onBind(intent: Intent?): IBinder = messenger.binder
+    override fun onUnbind(intent: Intent?): Boolean {
+        journal("copier unbound by the app")
+        return super.onUnbind(intent)
+    }
+
+    override fun onTrimMemory(level: Int) {
+        super.onTrimMemory(level)
+        journal("onTrimMemory level=$level, ${DriveDiagnostics.memory(applicationContext)}")
+    }
+
+    @Deprecated("Deprecated in Java")
+    override fun onLowMemory() {
+        super.onLowMemory()
+        journal("onLowMemory, ${DriveDiagnostics.memory(applicationContext)}")
+    }
+
+    private fun journal(line: String) = DriveCopyJournal.record(applicationContext, line, fromCopier = true)
 
     override fun onDestroy() {
+        // The only exit this process chooses for itself; a kill by the system leaves no line here and shows in
+        // the app's "copier exit records" line instead (see [DriveDiagnostics.copierExits]).
+        journal("copier service destroyed; ending the process (pid ${Process.myPid()})")
         // The app let go of us. A copy still blocked inside the provider would keep this process (and its
         // connection to Drive) alive for as long as the provider takes; ending the process is the only way
         // to stop it now.
