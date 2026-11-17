@@ -25,6 +25,13 @@ All notable changes to CallVault are documented here. The format is based on
 
 ### Added
 
+- **Choose the page the app opens on.** Settings ▸ App ▸ "Open the app on": Hub (the default), Recordings, Transcripts
+  or Summaries. The app always opens there; Back from that page still goes to the Hub, where the status card is one tap
+  away. Note: the app no longer reopens the section you were last in; with the default (Hub) it always opens on the Hub.
+  Tapping a notification, or "Open" after importing audio, still goes where it says.
+  <!-- 🧪 VERIFYING (BabApps item 133, not shipped): pick Transcripts in Settings ▸ App, close the app from Recents and
+  open it again: it opens on Transcripts; Back goes to the Hub. Repeat for Recordings and Summaries; pick Hub and it opens on the Hub. -->
+
 - **The recordings list: search on top, filters on one row, swipe between tabs.** The search field now sits above
   "Recordings | All calls", stays in place while the list scrolls, and is there on both views (before, it was hidden until
   there was a recording). The filter chips (sort, source, direction, tag, date, and Recorded/Missed on All calls) stay on
@@ -43,6 +50,17 @@ All notable changes to CallVault are documented here. The format is based on
   transcript and a summary, and one with a long note: both icons should be in the player box, the summary and the
   long note folded. Tap More / the summary icon to open them; start a transcription and a summary and check the
   progress rings; check a Hebrew/Arabic note and summary. -->
+
+- **One search on the Recordings page now finds a call by its name, tags, summary or what was said.** Type a word and the
+  list shows the calls that match by contact, number or file name first, then by tag, then by summary, then by
+  transcript; each call appears once. A call found by a tag, summary or transcript shows a small line under its name
+  with the tag or the words around the match (the match in bold). The last word you type matches as a start of a
+  word. The Transcripts and Summaries pages keep their own searches. When a search finds nothing, the list now says
+  No matches for "…" with a hint and a Clear search button, instead of "No recordings yet"; filters that leave nothing say
+  "No recordings match these filters" with Clear filters.
+  <!-- 🧪 VERIFYING (BabApps item 134, not shipped): built, not yet seen on a phone. On a phone with tagged,
+  summarised and transcribed calls, search a contact name (no extra line), a tag (tag line), a word only in a summary
+  and a word only in a transcript; check the order and that a call is not listed twice. -->
 - **The day and the time can be used on their own in a custom file name.** Four new tags: `{day}` (20261112),
   `{day-}` (2026-11-12), `{time}` (143520) and `{time-}` (14-35-20), for example `{day-}_{time-}_{contact_name}` gives
   `2026-11-12_14-35-20_Dana.ogg`. `{date}` is unchanged, so no existing name changes. A custom name needs `{date}`, or a

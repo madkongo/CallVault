@@ -533,6 +533,8 @@
     <string name="settings_support_value">Mời tôi một ly cà phê</string>
     <string name="settings_tap_to_select_folder">Chạm để chọn thư mục...</string>
     <string name="settings_theme_mode">Chế độ chủ đề</string>
+    <string name="settings_start_page">Mở ứng dụng ở</string>
+    <string name="settings_start_page_hub">Trung tâm (trang chủ)</string>
     <string name="settings_theme_mode_dark">Tối</string>
     <string name="settings_theme_mode_light">Sáng</string>
     <string name="settings_theme_mode_system">Mặc định hệ thống</string>

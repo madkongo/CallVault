@@ -27,6 +27,7 @@ import androidx.core.content.ContextCompat
 import com.baba.callvault.data.AppPreferences
 import com.baba.callvault.system.AppLock
 import com.baba.callvault.ui.navigation.HomeSection
+import com.baba.callvault.ui.navigation.NotificationDestination
 import com.baba.callvault.ui.navigation.OpenRecordingRequest
 import com.baba.callvault.ui.screens.AppLockScreen
 import com.baba.callvault.ui.screens.AppLockUi
@@ -123,14 +124,14 @@ class ShareImportActivity : AppCompatActivity() {
                         // whole point of it — so Open goes to Transcripts, where its words will
                         // appear and where it is already listed while it waits.
                         //
-                        // Done by writing the last section rather than by inventing a second Intent
-                        // extra: the app's documented behaviour is that it reopens the section you
-                        // were last in, and Open IS the user going to Transcripts. A new route would
-                        // be a second way to ask for the same thing, and a second one to get wrong.
+                        // Asked for with the same destination extra a notification tap uses: the app
+                        // no longer reopens the section you were last in (BabApps item 133: it opens
+                        // on the start page the user chose), so writing the last section would be
+                        // overridden by that choice. The extra also records the last section.
                         onOpenTranscripts = {
                             AppPreferences(this@ShareImportActivity)
                                 .setLastHomeSection(HomeSection.Transcripts)
-                            openApp(recording = null)
+                            openApp(recording = null, destination = NotificationDestination.Transcript)
                             finish()
                         },
                         onOpenApp = { openApp(recording = null); finish() },
@@ -173,11 +174,14 @@ class ShareImportActivity : AppCompatActivity() {
      * launch mode is `standard`, so this rebuilds the Activity with the new Intent rather than
      * handing it to an instance that has already read one.
      */
-    private fun openApp(recording: String?) {
+    private fun openApp(recording: String?, destination: NotificationDestination? = null) {
         startActivity(
             Intent(this, MainActivity::class.java)
                 .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP)
-                .apply { recording?.let { putExtra(OpenRecordingRequest.EXTRA, it) } }
+                .apply {
+                    recording?.let { putExtra(OpenRecordingRequest.EXTRA, it) }
+                    destination?.let { putExtra(NotificationDestination.EXTRA, it.key) }
+                }
         )
     }
 
