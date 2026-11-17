@@ -660,7 +660,8 @@
     <string name="tile_recording_stopped">Interrompido</string>
     <string name="transcribe_confirm_dont_ask">Não perguntar de novo</string>
     <string name="transcribe_long_call_line">Esta chamada tem %1$s. Neste telefone, a transcrição leva cerca de %2$s vezes a duração da chamada — cerca de %3$s.</string>
-    <string name="transcribe_confirm_message">Transcrever %1$s mantém o telefone ocupado e consome bateria de forma perceptível. Você pode parar quando quiser.\n\nEsta pergunta pode ser reativada em Transcrição, nas Configurações.</string>
+    <string name="summary_card_blocked_model_action">Baixar o resumidor</string>
+    <string name="transcribe_confirm_message">Transcrever esta chamada mantém o telefone ocupado e consome bateria de forma perceptível. Você pode parar quando quiser.\n\nEsta pergunta pode ser reativada em Transcrição, nas Configurações.</string>
     <string name="transcribe_confirm_title">Isso vai levar cerca de %1$s</string>
     <string name="transcribe_confirm_title_first_run">A primeira vez pode demorar um pouco</string>
     <string name="transcribe_confirm_title_unknown">Transcrever esta chamada?</string>

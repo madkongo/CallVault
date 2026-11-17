@@ -14,6 +14,9 @@ import androidx.compose.material3.DrawerValue
 import androidx.compose.material3.rememberDrawerState
 import androidx.compose.runtime.rememberCoroutineScope
 import com.baba.callvault.ui.common.SettingsSidebar
+import androidx.compose.runtime.CompositionLocalProvider
+import com.baba.callvault.ui.screens.LocalOpenSettingsGroup
+import com.baba.callvault.ui.screens.SettingsGroup
 import com.baba.callvault.ui.screens.SettingsGroups
 import com.baba.callvault.ui.screens.SettingsScope
 import kotlinx.coroutines.launch
@@ -292,6 +295,16 @@ fun AppNavigationScreen(
                 // without the pages themselves knowing about it. Only the new Settings screen uses it.
                 var settingsScope by rememberSaveable { mutableStateOf(SettingsScope.ALL) }
 
+                // A shortcut asked for one group ("No speech model yet", the summary card): the key of the
+                // group to open and scroll to, cleared once Settings has done it.
+                var settingsGroupRequest by rememberSaveable { mutableStateOf<String?>(null) }
+                val openSettingsGroup: (SettingsGroup) -> Unit = { group ->
+                    settingsScope = SettingsGroups.pageOf(group)
+                    settingsGroupRequest = group.key
+                    scope.launch { drawerState.open() }
+                }
+
+                CompositionLocalProvider(LocalOpenSettingsGroup provides openSettingsGroup) {
                 SettingsSidebar(
                     drawerState = drawerState,
                     onClose = { scope.launch { drawerState.close() } },
@@ -301,6 +314,8 @@ fun AppNavigationScreen(
                             onBack = { scope.launch { drawerState.close() } },
                             settingsScope = settingsScope,
                             onScopeChange = { settingsScope = it },
+                            openGroupRequest = SettingsGroup.fromKey(settingsGroupRequest),
+                            onOpenGroupHandled = { settingsGroupRequest = null },
                         )
                     },
                 ) {
@@ -317,6 +332,7 @@ fun AppNavigationScreen(
                         onOpenTranscriptHandled = onOpenTranscriptHandled,
                         viewModel = homeViewModel
                     )
+                }
                 }
             }
 

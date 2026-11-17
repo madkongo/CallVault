@@ -75,6 +75,15 @@ All notable changes to CallVault are documented here. The format is based on
 
 ### Fixed
 
+- **"Transcribe this call?" no longer repeats the contact's name, and the missing-model prompts take you to the
+  right place.** The question now reads "Transcribing this call keeps your phone busy…" in every language. When no
+  speech model is downloaded, "Open settings" opens Settings already on the speech-model card instead of at the
+  top; and a summary blocked for lack of the summariser now has a "Download the summariser" button that opens the
+  summary card in Settings.
+  <!-- 🧪 VERIFYING (BabApps item 128, not shipped): on a phone with no speech model, tap Transcribe, then "Open
+  settings": the model card should be open and in view. On a recording with a transcript but no summariser, the
+  summary card should show the button and it should land on the summariser download. Not yet checked in the
+  right-to-left languages by a reader. -->
 - **An app call (WhatsApp, Telegram, LINE…) now shows one CallVault notification, and notifications follow the app's
   language.** During an app call two notices sat side by side, "Recording a LINE call" with Pause / Mark / Stop and
   "Recording VoIP call", and on a phone whose app language differed from the system language some were English next to

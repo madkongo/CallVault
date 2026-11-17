@@ -158,7 +158,7 @@ fun TranscribeConfirmDialog(
                 longCallLine?.let { line ->
                     Text(line, modifier = Modifier.padding(bottom = if (showsBatteryNotice) 12.dp else 0.dp))
                 }
-                if (showsBatteryNotice) BatteryNotice(title, dontAskAgain) { dontAskAgain = it }
+                if (showsBatteryNotice) BatteryNotice(dontAskAgain) { dontAskAgain = it }
             }
         },
         confirmButton = {
@@ -174,9 +174,11 @@ fun TranscribeConfirmDialog(
 
 /** The usual "keeps your phone busy" text with its "Don't ask again" box. */
 @Composable
-private fun BatteryNotice(title: String, dontAskAgain: Boolean, onDontAskAgain: (Boolean) -> Unit) {
+private fun BatteryNotice(dontAskAgain: Boolean, onDontAskAgain: (Boolean) -> Unit) {
     Column {
-        Text(stringResource(R.string.transcribe_confirm_message, title))
+        // "this call", not the contact's name: the dialog is about the one tapped, and a name read as if
+        // it were the thing being transcribed twice over (BabApps item 128).
+        Text(stringResource(R.string.transcribe_confirm_message))
 
         Row(
             modifier = Modifier

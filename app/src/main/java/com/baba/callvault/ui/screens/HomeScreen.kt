@@ -2137,6 +2137,9 @@ fun HomeScreen(
     }
 
     if (showModelMissing) {
+        // Straight to the speech-model group, where the model is chosen and downloaded, rather than the top
+        // of the drawer; the plain panel is only the fallback where there is no router (previews).
+        val openGroup = LocalOpenSettingsGroup.current
         AlertDialog(
             onDismissRequest = { showModelMissing = false },
             title = { Text(stringResource(R.string.transcript_no_model_title)) },
@@ -2144,7 +2147,7 @@ fun HomeScreen(
             confirmButton = {
                 TextButton(onClick = {
                     showModelMissing = false
-                    onOpenSettings()
+                    if (openGroup != null) openGroup(SettingsGroup.MODEL_AND_LANGUAGE) else onOpenSettings()
                 }) {
                     Text(stringResource(R.string.transcript_no_model_open_settings))
                 }

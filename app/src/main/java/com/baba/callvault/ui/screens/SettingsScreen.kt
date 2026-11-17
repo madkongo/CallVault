@@ -96,6 +96,8 @@ fun SettingsScreen(
     modifier: Modifier = Modifier,
     settingsScope: SettingsScope = SettingsScope.ALL,
     onScopeChange: (SettingsScope) -> Unit = {},
+    openGroupRequest: SettingsGroup? = null,
+    onOpenGroupHandled: () -> Unit = {},
 ) {
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
@@ -290,6 +292,8 @@ fun SettingsScreen(
             onImportSettings = onImportSettings,
             scope = settingsScope,
             onScopeChange = onScopeChange,
+            openGroupRequest = openGroupRequest,
+            onOpenGroupHandled = onOpenGroupHandled,
             modifier = modifier
         )
     }

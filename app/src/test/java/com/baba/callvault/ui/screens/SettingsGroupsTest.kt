@@ -31,6 +31,18 @@ class SettingsGroupsTest {
     private val all = SettingsGroups.forScope(SettingsScope.ALL)
 
     @Test
+    fun `a shortcut to a group opens the page that holds it, and that page shows the group`() {
+        // The speech-model and summariser shortcuts (BabApps item 128) rely on this: the panel is switched to
+        // pageOf(group), so the group must be one of that page's cards or it opens onto nothing.
+        SettingsGroup.entries.forEach { group ->
+            val page = SettingsGroups.pageOf(group)
+            assertTrue("$group is not shown on $page", group in SettingsGroups.forScope(page))
+        }
+        assertEquals(SettingsScope.TRANSCRIPTS, SettingsGroups.pageOf(SettingsGroup.MODEL_AND_LANGUAGE))
+        assertEquals(SettingsScope.SUMMARIES, SettingsGroups.pageOf(SettingsGroup.SUMMARIES))
+    }
+
+    @Test
     fun `recordings shows the six recording groups in order`() {
         assertEquals(
             listOf(
