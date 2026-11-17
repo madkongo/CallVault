@@ -25,6 +25,15 @@ All notable changes to CallVault are documented here. The format is based on
   transcript and a summary, and one with a long note: both icons should be in the player box, the summary and the
   long note folded. Tap More / the summary icon to open them; start a transcription and a summary and check the
   progress rings; check a Hebrew/Arabic note and summary. -->
+
+- **One search on the Recordings page now finds a call by its name, tags, summary or what was said.** Type a word and the
+  list shows the calls that match by contact, number or file name first, then by tag, then by summary, then by
+  transcript; each call appears once. A call found by a tag, summary or transcript shows a small line under its name
+  with the tag or the words around the match (the match in bold). The last word you type matches as a start of a
+  word. The Transcripts and Summaries pages keep their own searches.
+  <!-- 🧪 VERIFYING (BabApps item 134, not shipped): built, not yet seen on a phone. On a phone with tagged,
+  summarised and transcribed calls, search a contact name (no extra line), a tag (tag line), a word only in a summary
+  and a word only in a transcript; check the order and that a call is not listed twice. -->
 - **The day and the time can be used on their own in a custom file name.** Four new tags: `{day}` (20261112),
   `{day-}` (2026-11-12), `{time}` (143520) and `{time-}` (14-35-20), for example `{day-}_{time-}_{contact_name}` gives
   `2026-11-12_14-35-20_Dana.ogg`. `{date}` is unchanged, so no existing name changes. A custom name needs `{date}`, or a

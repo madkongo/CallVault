@@ -26,7 +26,9 @@ import com.baba.callvault.data.calls.SimLabels
 import com.baba.callvault.integrations.adb.PairingLoss
 import com.baba.callvault.data.transcripts.FavouriteRepository
 import com.baba.callvault.data.transcripts.LibraryLabels
+import com.baba.callvault.data.transcripts.RecordingSearch
 import com.baba.callvault.data.transcripts.TagRepository
+import com.baba.callvault.data.transcripts.TranscriptRepository
 import com.baba.callvault.data.PrivilegedMode
 import com.baba.callvault.data.health.CallGapDetector
 import com.baba.callvault.data.health.CallLogReader
@@ -247,6 +249,12 @@ class HomeViewModel(application: Application) : AndroidViewModel(application) {
          * state, exactly like the contact and date facets beside it.
          */
         val tagsByRecording: Map<String, Set<String>> = emptyMap(),
+        /**
+         * What the summary and transcript indexes found for [contactQuery], by display name; empty
+         * for a blank query. Filled a moment after typing (see [setContactQuery]), so the list
+         * first narrows by name and tag and then gains the content hits.
+         */
+        val contentHits: Map<String, RecordingSearch.ContentHit> = emptyMap(),
         /** Release tag of a known-newer version (drives the update banner), or null. */
         val availableUpdateTag: String? = null,
         /**
@@ -390,16 +398,33 @@ class HomeViewModel(application: Application) : AndroidViewModel(application) {
             }
 
         val filteredRecordings: List<RecordingItem>
+            get() = searchResults.map { it.first }
+
+        /**
+         * Why each listed recording matches the search line (name, tag, summary or transcript), by
+         * display name; empty while nothing is typed. The row draws it under its title.
+         */
+        val searchReasons: Map<String, RecordingSearch.Why>
+            get() = if (contactQuery.isBlank()) emptyMap()
+            else searchResults.associate { (item, why) -> item.displayName to why!! }
+
+        /**
+         * The listed recordings with the reason each matched the search line. With nothing typed
+         * the reason is null and this is just the facet-filtered, sorted list. With a query, the
+         * recordings are the ones matching by name or number, by tag, or by the summary/transcript
+         * indexes ([contentHits]), ranked in that order; the chosen [sortOrder] still orders the
+         * recordings inside each rank. Every recording is in it once, under its best reason.
+         */
+        private val searchResults: List<Pair<RecordingItem, RecordingSearch.Why?>>
             get() {
                 val filtered = recordings.filter { item ->
                     matchesSource(item) &&
                         matchesDirection(item) &&
-                        matchesContact(item) &&
                         (dateFilter == null || RecordingsRepository.dayKey(item) == dateFilter) &&
                         (tagFilter == null || tagsByRecording[item.displayName]?.contains(tagFilter) == true) &&
                         (!favouritesOnly || item.displayName in favourites)
                 }
-                return when (sortOrder) {
+                val sorted = when (sortOrder) {
                     RecordingSort.NEWEST -> filtered
                     RecordingSort.OLDEST -> filtered.sortedBy { it.startedAtMillis ?: it.lastModified }
                     RecordingSort.NAME ->
@@ -407,6 +432,15 @@ class HomeViewModel(application: Application) : AndroidViewModel(application) {
                     // Unknown length (null) sorts last, not as zero.
                     RecordingSort.LONGEST ->
                         filtered.sortedByDescending { it.durationSeconds ?: -1L }
+                }
+                if (contactQuery.isBlank()) return sorted.map { it to null }
+                return RecordingSearch.ranked(sorted) { item ->
+                    RecordingSearch.classify(
+                        query = contactQuery,
+                        nameMatches = matchesContact(item),
+                        tags = tagsByRecording[item.displayName],
+                        content = contentHits[item.displayName],
+                    )
                 }
             }
 
@@ -1019,8 +1053,19 @@ class HomeViewModel(application: Application) : AndroidViewModel(application) {
 
     /** Sets what the search line holds; empty for "all contacts". */
     fun setContactQuery(query: String) {
-        _uiState.update { it.copy(contactQuery = query) }
+        _uiState.update { it.copy(contactQuery = query, contentHits = if (query.isBlank()) emptyMap() else it.contentHits) }
+        contentSearchJob?.cancel()
+        if (query.isBlank()) return
+        // The summary and transcript indexes, one pause after the last keystroke rather than one
+        // query per key. Name and tag matches show at once; these join when the indexes answer.
+        contentSearchJob = viewModelScope.launch {
+            delay(CONTENT_SEARCH_DEBOUNCE_MS)
+            val hits = withContext(Dispatchers.IO) { TranscriptRepository.searchContent(appContext, query) }
+            _uiState.update { if (it.contactQuery == query) it.copy(contentHits = hits) else it }
+        }
     }
+
+    private var contentSearchJob: Job? = null
 
     /** Selects a specific day key to filter to, or null for "all dates". */
     fun setDateFilter(dayKey: String?) {
@@ -1423,6 +1468,9 @@ class HomeViewModel(application: Application) : AndroidViewModel(application) {
         private const val PULL_DRIVE_CHECK_MAX_MS = 15_000L
 
         private const val TAG = "CV:HomeViewModel"
+
+        /** Typing is bursty: one content search per pause, the figure the other pages use. */
+        private const val CONTENT_SEARCH_DEBOUNCE_MS = 250L
 
         /**
          * How many recordings the background draw pass covers per reload.

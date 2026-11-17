@@ -1386,6 +1386,7 @@ fun HomeScreen(
         val recordingRow: @Composable (RecordingItem, String?) -> Unit = { item, originLabel ->
             RecordingRow(
                 originLabel = originLabel,
+                searchReason = uiState.searchReasons[item.displayName],
                 item = item,
                 playback = playback,
                 deleting = item.uri in uiState.deletingUris,
@@ -3571,6 +3572,8 @@ private fun RecordingRow(
     transcriptPercent: Int = 0,
     /** "Phone call" or the app's name, shown first in the subtitle on the "All calls" list; null elsewhere. */
     originLabel: String? = null,
+    /** Why the search line found this row (tag, summary or transcript hit); null when nothing is typed. */
+    searchReason: com.baba.callvault.data.transcripts.RecordingSearch.Why? = null,
     /** Whether this recording is starred; see [com.baba.callvault.data.transcripts.FavouriteRepository]. */
     isFavourite: Boolean = false,
     /** Stars or unstars it from the list (paponopap's request, 2026-11-09); null hides the star. */
@@ -3715,7 +3718,10 @@ private fun RecordingRow(
                         ImportedBadge()
                     }
                 }
-
+                if (searchReason != null) {
+                    Spacer(Modifier.height(4.dp))
+                    SearchReasonLine(searchReason)
+                }
             }
             Spacer(Modifier.width(4.dp))
             // No expand chevron: tapping the card already expands a BOTH row, so it was a second
