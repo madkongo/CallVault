@@ -86,6 +86,12 @@ class CallVaultApplication : Application() {
                 .onFailure { AppLogger.w(TAG, "Could not restore held after-call questions: ${it.message}") }
         }.apply { isDaemon = true; name = "cv-after-call-restore" }.start()
 
+        // Two maintainer test switches were removed (BabApps item 126): clear what a phone stored for them.
+        Thread {
+            runCatching { AppPreferences(applicationContext).clearRetiredTestSwitches() }
+                .onFailure { AppLogger.w(TAG, "Could not clear the retired test switches: ${it.message}") }
+        }.apply { isDaemon = true; name = "cv-retired-switches" }.start()
+
         // Migration: pre-consolidation builds showed readiness from THREE sources (the transient launch
         // notifier id 4715 + the post-boot CallMonitorService id 4714), duplicating the single permanent
         // keep-alive notification (id 4720). Cancel those stale ids once on startup so an updated install

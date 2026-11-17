@@ -67,6 +67,15 @@ All notable changes to CallVault are documented here. The format is based on
   report now holds "normal-mode voice audio" lines (the "USB debugging switched off (always on)" section) that say who
   owned the audio and whether LINE matched, and "normal-mode app call capture health" with the first-second peaks. -->
 
+- **Two leftover test switches are gone from Settings ▸ Help and about.** With debug logging on, that page showed
+  "Skip mDNS when connecting" and "Force Wi-Fi-call capture route". They were maintainer tests, and the second one
+  could make ordinary phone calls switch to the app-call capture and lose the other side. Both rows are removed, and
+  a phone that had one switched on is reset to normal the first time the new version starts. Nothing else changes:
+  connecting and Wi-Fi-call recording behave exactly as they did with both switches off (#45, #65).
+  <!-- 🧪 VERIFYING (BabApps item 126, not shipped): Settings ▸ Help and about with debug logging on should show only
+  the logging switch and the bug-report buttons. Settings search for "mDNS" should find nothing. Unit tests and the
+  translation check pass; not yet looked at on a phone. -->
+
 ## [2.5.1] — 2026-11-15
 
 ### Added

@@ -120,25 +120,6 @@ internal fun BugReportSection(
                 )
                 Spacer(modifier = Modifier.height(4.dp))
             }
-            // A test switch for the maintainer's device check of #65, shown only while logging is on — the
-            // only time its result can be read — and only honoured then (see isDebugSkipMdnsConnect).
-            val skipMdns = remember(updateTrigger) { preferences.isDebugSkipMdnsConnect() }
-            SettingsToggleRow(
-                icon            = Icons.Filled.Search,
-                label           = stringResource(R.string.settings_debug_skip_mdns),
-                checked         = skipMdns,
-                onCheckedChange = { actions.setSkipMdnsConnectForTest(it) },
-                description     = stringResource(R.string.settings_debug_skip_mdns_description)
-            )
-            // Test switch for #45: exercises the Wi-Fi-call capture switch on a phone without Wi-Fi calling.
-            val forceWifiRoute = remember(updateTrigger) { preferences.isDebugForceWifiRoute() }
-            SettingsToggleRow(
-                icon            = Icons.Filled.Wifi,
-                label           = stringResource(R.string.settings_debug_force_wifi_route),
-                checked         = forceWifiRoute,
-                onCheckedChange = { actions.setForceWifiRouteForTest(it) },
-                description     = stringResource(R.string.settings_debug_force_wifi_route_description)
-            )
         } else {
             // Offered whenever logging is off, with no precondition on there being a log: the report
             // always carries the configuration header, and the setup journal when there is one. The

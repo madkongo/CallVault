@@ -383,8 +383,6 @@
     <string name="settings_debug_log_file">日誌檔案</string>
     <string name="settings_debug_log_view_hint">點按可查看最近的條目。</string>
     <string name="settings_debug_log_wrap">自動換行</string>
-    <string name="settings_debug_skip_mdns">連接時跳過 mDNS（測試端口搜索）</string>
-    <string name="settings_debug_skip_mdns_description">用於測試。下一次無線偵錯連接將忽略 mDNS 和上次可用的端口，通過搜索本機的本地端口來找到端口。僅在日誌記錄開啓時有效。</string>
     <string name="settings_debug_logging_enabled">啓用日誌</string>
     <string name="settings_debug_logging_enabled_description">若要反饋Bug，請先開啓此開關，然後在重啓App之後再重複您剛才的操作。</string>
     <string name="settings_drive_folder_desc">選擇一個資料夾（在 Google Drive 應用中）用於複製錄音。</string>
@@ -909,8 +907,6 @@
     <string name="transcribe_again_waiting">等待重新轉寫…</string>
     <string name="wifi_call_switch_failed">這似乎是一通 WLAN 通話，但無法啓動雙方錄音。正在按常規方式錄音，可能錄不到對方的聲音。</string>
     <string name="wifi_call_one_sided">這通 WLAN 通話只錄到了您這一方。如果反覆出現，請在電話應用的設定中將 WLAN 通話設為“首選移動網絡”。</string>
-    <string name="settings_debug_force_wifi_route">強制使用 WLAN 通話錄音方式</string>
-    <string name="settings_debug_force_wifi_route_description">用於測試。每通電話會在通話中切換到應用通話錄音方式，就像 WLAN 通話那樣。在不支持 WLAN 通話的手機上會缺少對方的聲音，並應顯示錯誤。需要開啓應用通話錄音。僅在開啓日誌記錄時生效。</string>
     <string name="wifi_call_switch_aborted">這通 WLAN 通話的錄音提前停止了：無法安全地切換錄音方式。已錄下的部分會保留。</string>
     <string name="wifi_call_far_unknown">這通 WLAN 通話已錄音，但 CallVault 無法確認其中錄到了對方的聲音。請收聽錄音確認。</string>
 </resources>

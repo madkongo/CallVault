@@ -389,8 +389,6 @@
     <string name="settings_debug_log_file">Naplófájl</string>
     <string name="settings_debug_log_view_hint">Koppintson a legutóbbi bejegyzések elolvasásához.</string>
     <string name="settings_debug_log_wrap">Sortörés</string>
-    <string name="settings_debug_skip_mdns">mDNS kihagyása csatlakozáskor (portkeresés tesztelése)</string>
-    <string name="settings_debug_skip_mdns_description">Teszteléshez. A következő vezeték nélküli hibakeresési kapcsolat figyelmen kívül hagyja az mDNS-t és az utolsó ismert portot, és a telefon helyi portjainak átkeresésével találja meg a portot. Csak bekapcsolt naplózás mellett működik.</string>
     <string name="settings_debug_logging_enabled">Naplózás bekapcsolása</string>
     <string name="settings_debug_logging_enabled_description">Hibajelentéshez engedélyezd ezt a beállítást, indítsd újra az alkalmazást majd próbáld reprodukálni a problémát.</string>
     <string name="settings_drive_folder_desc">Válasszon egy mappát (a Google Drive alkalmazásban), ahová a felvételek másolódnak.</string>
@@ -917,8 +915,6 @@
     <string name="transcribe_again_waiting">Várakozás az újra átírásra…</string>
     <string name="wifi_call_switch_failed">Ez Wi-Fi-hívásnak tűnik, de a mindkét felet rögzítő felvétel nem indult el. A szokásos módon készül a felvétel, amelyből a másik fél hiányozhat.</string>
     <string name="wifi_call_one_sided">Ebből a Wi-Fi-hívásból csak az Ön oldala lett rögzítve. Ha ez ismétlődik, a Telefon alkalmazás beállításaiban állítsa a Wi-Fi-hívást a mobilhálózat előnyben részesítésére.</string>
-    <string name="settings_debug_force_wifi_route">Wi-Fi-hívás rögzítési útvonal kényszerítése</string>
-    <string name="settings_debug_force_wifi_route_description">Teszteléshez. Minden telefonhívás hívás közben átvált az alkalmazáshívás-rögzítésre, ahogy egy Wi-Fi-hívás tenné. Wi-Fi-hívás nélküli telefonon a másik fél hiányozni fog, és hibának kell megjelennie. Bekapcsolt alkalmazáshívás-rögzítés kell hozzá. Csak bekapcsolt naplózás mellett működik.</string>
     <string name="wifi_call_switch_aborted">Ennek a Wi-Fi-hívásnak a rögzítése idő előtt leállt: a felvételt nem lehetett biztonságosan átváltani. Az eddig rögzített rész megmarad.</string>
     <string name="wifi_call_far_unknown">Ez a Wi-Fi-hívás rögzítve lett, de a CallVault nem tudta ellenőrizni, hogy a másik fél hallható-e rajta. Kérjük, hallgassa meg a felvételt.</string>
 </resources>

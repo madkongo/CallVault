@@ -70,19 +70,14 @@ internal object ConnectPortFinder {
      */
     fun find(context: Context, mdnsTimeoutMs: Long, excludePorts: Set<Int>, adbd: AdbdState): Found? {
         val prefs = AppPreferences(context)
-        val testSearch = prefs.isDebugSkipMdnsConnect() && prefs.isLoggingEnabled()
         val lastGood = prefs.getLastAdbConnectPort()?.takeIf { it !in excludePorts }
-        if (testSearch) {
-            AppLogger.i(TAG, "Debug switch on: skipping the last good port and mDNS, searching loopback ports")
-        } else {
-            if (lastGood != null && probe(lastGood, LAST_GOOD_CONNECT_TIMEOUT_MS, LAST_GOOD_READ_TIMEOUT_MS) == PortProbe.ADB_TLS) {
-                return found(lastGood, Source.LAST_GOOD, "")
-            }
-            // mDNS's port needs no second check: AdbMdns already accepts only a port something listens on at
-            // 127.0.0.1 (MdnsServiceVerdict, the bind-must-fail probe), and the last good port was probed above.
-            AdbMdns.discoverPort(context, AdbMdns.TLS_CONNECT, mdnsTimeoutMs)?.let {
-                return found(it, Source.MDNS, "")
-            }
+        if (lastGood != null && probe(lastGood, LAST_GOOD_CONNECT_TIMEOUT_MS, LAST_GOOD_READ_TIMEOUT_MS) == PortProbe.ADB_TLS) {
+            return found(lastGood, Source.LAST_GOOD, "")
+        }
+        // mDNS's port needs no second check: AdbMdns already accepts only a port something listens on at
+        // 127.0.0.1 (MdnsServiceVerdict, the bind-must-fail probe), and the last good port was probed above.
+        AdbMdns.discoverPort(context, AdbMdns.TLS_CONNECT, mdnsTimeoutMs)?.let {
+            return found(it, Source.MDNS, "")
         }
         // Which failure this is: mdnsd running means it advertises but something drops it; stopped or "(unset)"
         // (no such service on this ROM) means adbd had nobody to advertise through — #65's suspected cause.
@@ -95,12 +90,12 @@ internal object ConnectPortFinder {
         }
         val session = sessionKey(context)
         val now = SystemClock.elapsedRealtime()
-        if (!testSearch && !gate.mayScan(session, now)) {
+        if (!gate.mayScan(session, now)) {
             lastOutcome = "mDNS found nothing (init.svc.mdnsd: $mdnsd); loopback search skipped (it already failed in this Wireless-debugging session)"
             if (gate.shouldLogSkip()) AppLogger.i(TAG, "mDNS found no connect port (init.svc.mdnsd: $mdnsd); not searching loopback again: it found nothing earlier in this Wireless-debugging session")
             return null
         }
-        return search(if (testSearch) null else lastGood, excludePorts, session, now, mdnsd, testSearch)
+        return search(lastGood, excludePorts, session, now, mdnsd)
     }
 
     /** A TLS connect on [port] worked: remember it, and let the next miss search again. */
@@ -118,11 +113,9 @@ internal object ConnectPortFinder {
         session: String,
         startedAt: Long,
         mdnsd: String,
-        testSearchActive: Boolean,
     ): Found? {
         val ports = ConnectPortScan.order(lastGood, exclude = excludePorts)
-        val why = if (testSearchActive) "Debug switch" else "mDNS found no connect port"
-        AppLogger.i(TAG, "$why (init.svc.mdnsd: $mdnsd); searching ${ports.size} loopback ports" +
+        AppLogger.i(TAG, "mDNS found no connect port (init.svc.mdnsd: $mdnsd); searching ${ports.size} loopback ports" +
             (lastGood?.let { ", starting at the last good port :$it" } ?: ""))
         val result = ConnectPortScan.scan(ports, SCAN_THREADS, SCAN_BUDGET_MS) {
             probe(it, SCAN_CONNECT_TIMEOUT_MS, SCAN_READ_TIMEOUT_MS)

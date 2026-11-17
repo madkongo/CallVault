@@ -49,21 +49,13 @@ class AppPreferencesExportTest {
     }
 
     @Test
-    fun `the skip-mDNS test switch is off by default and not exported`() {
-        val prefs = AppPreferences(context)
-        assertFalse(prefs.isDebugSkipMdnsConnect())
-        prefs.setDebugSkipMdnsConnect(true)
-        assertTrue(AppPreferences(context).isDebugSkipMdnsConnect())
-        assertFalse(prefs.exportToJson().contains("debug_skip_mdns_connect"))
-    }
-
-    @Test
-    fun `the force-Wi-Fi-route test switch is off by default and not exported`() {
-        val prefs = AppPreferences(context)
-        assertFalse(prefs.isDebugForceWifiRoute())
-        prefs.setDebugForceWifiRoute(true)
-        assertTrue(AppPreferences(context).isDebugForceWifiRoute())
-        assertFalse(prefs.exportToJson().contains("debug_force_wifi_route"))
+    fun `the two retired test switches are cleared from a phone that had them on (BabApps item 126)`() {
+        val raw = context.getSharedPreferences("callvault_prefs", Context.MODE_PRIVATE)
+        raw.edit().putBoolean("debug_skip_mdns_connect", true).putBoolean("debug_force_wifi_route", true).commit()
+        AppPreferences(context).clearRetiredTestSwitches()
+        assertFalse(raw.contains("debug_skip_mdns_connect"))
+        assertFalse(raw.contains("debug_force_wifi_route"))
+        AppPreferences(context).clearRetiredTestSwitches() // idempotent: runs on every start
     }
 
     @Test
