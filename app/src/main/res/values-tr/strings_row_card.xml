@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="row_direction_in">Gelen</string>
+    <string name="row_direction_out">Giden</string>
+    <string name="row_open_contact">Kişiyi aç: %1$s</string>
+    <string name="row_add_contact">Kişi ekle</string>
+    <string name="row_stored_local">Bu telefonda saklanıyor</string>
+    <string name="row_stored_drive">Drive\'da saklanıyor</string>
+    <string name="row_stored_both">Bu telefonda ve Drive\'da saklanıyor</string>
+</resources>

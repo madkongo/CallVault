@@ -7,6 +7,17 @@ All notable changes to CallVault are documented here. The format is based on
 
 ### Added
 
+- **A new recording card, with the contact's photo.** Each call shows the contact's photo (or their initial on a
+  coloured circle), with the app's logo on its corner for WhatsApp/Telegram calls. Tapping the photo opens the contact
+  in your contacts app, or offers "Add contact" for a number you have not saved. The name is followed by small icons
+  for where the call is kept (green phone + cloud = both, grey phone = this phone, blue cloud = Drive). Under it:
+  the app, a blue "In" / orange "Out" label, and the time. The play button is now a wide pill with the call length;
+  the star is at the top right and the ⋮ menu is under it, next to the transcript button. The same card is used on
+  "All calls". The file size is no longer shown on the card (design L has no room for it).
+  <!-- 🧪 VERIFYING (BabApps item 137, not shipped): open the Recordings list and All calls: a saved contact shows their
+  photo and tapping it opens that contact; an unsaved number offers Add contact; long-press still selects and the
+  photo then toggles the selection; play/pause in the pill, transcript button, star and ⋮ all work. -->
+
 - **The recordings list: search on top, filters on one row, swipe between tabs.** The search field now sits above
   "Recordings | All calls", stays in place while the list scrolls, and is there on both views (before, it was hidden until
   there was a recording). The filter chips (sort, source, direction, tag, date, and Recorded/Missed on All calls) stay on

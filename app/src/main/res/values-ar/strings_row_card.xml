@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="row_direction_in">وارد</string>
+    <string name="row_direction_out">صادر</string>
+    <string name="row_open_contact">فتح جهة الاتصال %1$s</string>
+    <string name="row_add_contact">إضافة جهة اتصال</string>
+    <string name="row_stored_local">محفوظ على هذا الهاتف</string>
+    <string name="row_stored_drive">محفوظ في Drive</string>
+    <string name="row_stored_both">محفوظ على هذا الهاتف وفي Drive</string>
+</resources>

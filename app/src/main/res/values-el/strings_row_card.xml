@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="row_direction_in">Εισερχόμενη</string>
+    <string name="row_direction_out">Εξερχόμενη</string>
+    <string name="row_open_contact">Άνοιγμα επαφής %1$s</string>
+    <string name="row_add_contact">Προσθήκη επαφής</string>
+    <string name="row_stored_local">Αποθηκευμένο σε αυτό το τηλέφωνο</string>
+    <string name="row_stored_drive">Αποθηκευμένο στο Drive</string>
+    <string name="row_stored_both">Αποθηκευμένο σε αυτό το τηλέφωνο και στο Drive</string>
+</resources>

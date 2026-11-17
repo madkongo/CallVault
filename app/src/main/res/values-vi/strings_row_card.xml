@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="row_direction_in">Cuộc gọi đến</string>
+    <string name="row_direction_out">Cuộc gọi đi</string>
+    <string name="row_open_contact">Mở liên hệ %1$s</string>
+    <string name="row_add_contact">Thêm liên hệ</string>
+    <string name="row_stored_local">Lưu trên điện thoại này</string>
+    <string name="row_stored_drive">Lưu trong Drive</string>
+    <string name="row_stored_both">Lưu trên điện thoại này và trong Drive</string>
+</resources>

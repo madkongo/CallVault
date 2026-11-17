@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="row_direction_in">Bejövő</string>
+    <string name="row_direction_out">Kimenő</string>
+    <string name="row_open_contact">Névjegy megnyitása: %1$s</string>
+    <string name="row_add_contact">Névjegy hozzáadása</string>
+    <string name="row_stored_local">Ezen a telefonon tárolva</string>
+    <string name="row_stored_drive">Drive-ban tárolva</string>
+    <string name="row_stored_both">Ezen a telefonon és Drive-ban tárolva</string>
+</resources>
