@@ -73,6 +73,17 @@ All notable changes to CallVault are documented here. The format is based on
   summary quality is unmeasured (the app has not been run on a real Turkish call); a Turkish speaker should
   transcribe and summarise one before this counts as working. -->
 
+- **Settings: Telegram group beside Support, system colours on by default, and "Show requirements" is now an ⓘ.**
+  Settings ▸ Help and about ▸ About has a "Telegram group" row under "Support development". "Use system colours" is on
+  for anyone who never set it (Android 12 and newer); a choice already made is kept. The "Show requirements" switch in
+  the Summaries settings is gone: the ⓘ on the Summaries card opens the same requirements popup, whose "Don't show
+  this again" box still controls whether it appears before the download (untick it there to bring the popup back).
+  <!-- 🧪 VERIFYING (BabApps item 131, not shipped): unit-tested and compiled only; the phone check is part of the
+  combined build with items 128-130. To settle it: About shows the Telegram row and it opens the group; a fresh
+  install (or a phone that never touched the colour switch) follows the wallpaper colours; Summaries card ⓘ opens the
+  popup with "Got it" and the checkbox; tick it, start a summary download and see no popup; untick it via ⓘ and see
+  the popup again. -->
+
 ### Fixed
 
 - **An app call (WhatsApp, Telegram, LINE…) now shows one CallVault notification, and notifications follow the app's
