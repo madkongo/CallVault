@@ -90,5 +90,74 @@ class DriveCopyLimitsTest {
     @Test
     fun `the forced list failure test hook is never committed switched on`() {
         assertFalse(DriveCopyHandler.TEST_FORCE_LIST_FAILURE)
+        assertEquals(0, DriveCopyHandler.TEST_PAD_LIST_TO)
+        assertFalse(DriveCopyHandler.TEST_SEND_LIST_INLINE)
+    }
+
+    // --- drive3: a listing too big for a Messenger reply (BabApps item 112, log 61) ---
+
+    private fun bigListing(entries: Int): Triple<List<String>, List<String>, List<Long>> = Triple(
+        List(entries) { "call_2026-11-${it % 28}_+97250${it.toString().padStart(7, '0')}_out.ogg" },
+        List(entries) { "content://com.google.android.apps.docs.storage/document/acc%3D1%3Bdoc%3Dencoded%3D$it" },
+        List(entries) { 50_000L + it },
+    )
+
+    @Test
+    fun `a 3500 entry listing is far over what a binder reply carries, and still round-trips through the file form`() {
+        val (names, uris, sizes) = bigListing(3500)
+        val out = java.io.ByteArrayOutputStream()
+        ListingCodec.write(names, uris, sizes, out)
+        // A Bundle parcel holds strings as UTF-16 (2 bytes a character) plus a header per string. The reply that
+        // failed on a real phone was 654348 bytes for 1484 entries; the binder carries about half of 1 MB.
+        val asBundleBytes = names.sumOf { 2L * it.length + 8 } + uris.sumOf { 2L * it.length + 8 } + 8L * sizes.size
+        assertTrue("as a Bundle this would be ~$asBundleBytes bytes", asBundleBytes > 512 * 1024)
+        val (n2, u2, s2) = ListingCodec.read(java.io.ByteArrayInputStream(out.toByteArray()))
+        assertEquals(names, n2)
+        assertEquals(uris, u2)
+        assertEquals(sizes, s2)
+    }
+
+    @Test
+    fun `an empty listing and a truncated file are handled, not mistaken for a full list`() {
+        val out = java.io.ByteArrayOutputStream()
+        ListingCodec.write(emptyList(), emptyList(), emptyList(), out)
+        assertEquals(0, ListingCodec.read(java.io.ByteArrayInputStream(out.toByteArray())).first.size)
+
+        val (names, uris, sizes) = bigListing(50)
+        val full = java.io.ByteArrayOutputStream().also { ListingCodec.write(names, uris, sizes, it) }.toByteArray()
+        val cut = full.copyOf(full.size / 2)
+        val failed = runCatching { ListingCodec.read(java.io.ByteArrayInputStream(cut)) }
+        assertTrue("a half-written list must fail to read", failed.isFailure)
+    }
+
+    @Test
+    fun `a reply the binder refuses becomes a small failure that names the size`() {
+        val reason = DriveCopyProtocol.tooLargeReason(1484, 654_348, "TransactionTooLargeException: data parcel size 654348 bytes")
+        assertTrue(reason.startsWith("reply too large: 1484 entries, 654348 bytes"))
+        assertTrue(reason.length < 1000) // the failure reply itself must always fit
+    }
+
+    @Test
+    fun `the app waits seconds for a listing, not minutes`() {
+        assertTrue(CloudCopyPolicy.LIST_TIMEOUT_MS <= 30_000L)
+        assertTrue(CloudCopyPolicy.LIST_TIMEOUT_MS < CloudCopyPolicy.MIN_FILE_TIMEOUT_MS)
+    }
+
+    @Test
+    fun `a copier that failed to list today is not asked again today, but is tomorrow`() {
+        assertTrue(CloudCopyPolicy.copierListFailedToday("2026-11-17", "2026-11-17"))
+        assertFalse(CloudCopyPolicy.copierListFailedToday("2026-11-17", "2026-11-18"))
+        assertFalse(CloudCopyPolicy.copierListFailedToday(null, "2026-11-17"))
+    }
+
+    @Test
+    fun `a Drive copy reported as 0 or unknown length is not verified and is checked again, never deleted on`() {
+        assertTrue(CloudCopyPolicy.isVerifiedPresent(4096L, 4096L))
+        assertFalse(CloudCopyPolicy.isVerifiedPresent(0L, 4096L)) // settled-at-zero: ask the copier again next sweep
+        assertFalse(CloudCopyPolicy.isVerifiedPresent(-1L, 4096L))
+        assertFalse(CloudCopyPolicy.isVerifiedPresent(1000L, 4096L)) // truncated
+        assertFalse(CloudCopyPolicy.isVerifiedPresent(0L, 0L))
+        // and the delete rule agrees with it: the same evidence never allows a delete
+        for (size in listOf(0L, -1L, 1000L)) assertFalse(CloudCopyPolicy.mayDeleteLocal(size, 4096L))
     }
 }

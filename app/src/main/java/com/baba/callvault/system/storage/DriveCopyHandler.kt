@@ -11,6 +11,7 @@ package com.baba.callvault.system.storage
 import android.content.Context
 import android.os.Bundle
 import android.os.SystemClock
+import java.io.File
 
 /**
  * What the Drive copier does with one message. Shared by [DriveCopyService] (the `:drive` process) and
@@ -28,6 +29,14 @@ object DriveCopyHandler {
      * build; a unit test fails if it is ever committed as true.
      */
     const val TEST_FORCE_LIST_FAILURE = false
+
+    /**
+     * Test hooks for the drive3 build, both off (0 / false) in every shipped build and checked by a unit test:
+     * [TEST_PAD_LIST_TO] makes the copier's listing look that many entries long; [TEST_SEND_LIST_INLINE]
+     * sends it the old way, inside the reply, to show the too-large reply failing fast.
+     */
+    const val TEST_PAD_LIST_TO = 0
+    const val TEST_SEND_LIST_INLINE = false
 
     private const val VERIFY_RETRIES = 4
     private const val VERIFY_WAIT_MS = 500L
@@ -66,8 +75,31 @@ object DriveCopyHandler {
         SafHelper.folderProblem(context, folder)?.let { return fail("folder not usable: $it") }
         val (listing, why) = SafHelper.listChildrenWithReason(context, folder)
         if (listing == null) return fail("listing failed: ${why ?: "no reason given"}")
-        log("$where: LIST ok, ${listing.names.size} entries in ${SystemClock.elapsedRealtime() - start}ms")
-        return DriveCopyProtocol.listReply(listing)
+        var answer: DriveCopyProtocol.Listing = listing
+        if (TEST_PAD_LIST_TO > listing.names.size && inCopier) {
+            // Test hook: make the folder look big enough to overflow a binder reply.
+            val extra = TEST_PAD_LIST_TO - listing.names.size
+            val padUri = folder
+            answer = DriveCopyProtocol.Listing(
+                listing.names + List(extra) { "test-pad-entry-${it.toString().padStart(5, '0')}-with-a-realistic-length-recording-name.ogg" },
+                listing.uris + List(extra) { padUri },
+                listing.sizes + List(extra) { 1L },
+            )
+            log("$where: TEST HOOK padded the listing from ${listing.names.size} to ${answer.names.size} entries")
+        }
+        log("$where: LIST ok, ${answer.names.size} entries in ${SystemClock.elapsedRealtime() - start}ms")
+        // In the copier process the reply crosses the binder, which cannot carry a big listing: it goes
+        // through a file (see [DriveCopyProtocol.listReplyViaFile]). In the app's own process nothing crosses.
+        if (!inCopier || TEST_SEND_LIST_INLINE) return DriveCopyProtocol.listReply(answer)
+        return try {
+            val dir = File(context.cacheDir, "drive-list")
+            DriveCopyProtocol.sweepStaleListFiles(dir)
+            val reply = DriveCopyProtocol.listReplyViaFile(answer, dir)
+            log("$where: list written to a file: ${answer.names.size} entries, ${reply.getLong(DriveCopyProtocol.K_LIST_BYTES)} bytes, in ${SystemClock.elapsedRealtime() - start}ms")
+            reply
+        } catch (t: Throwable) {
+            fail("the list file could not be written: ${t.javaClass.simpleName}: ${t.message}")
+        }
     }
 
     private fun copy(context: Context, data: Bundle, where: String, start: Long, log: (String) -> Unit): Bundle {

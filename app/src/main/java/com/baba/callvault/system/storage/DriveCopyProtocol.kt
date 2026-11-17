@@ -10,6 +10,11 @@ package com.baba.callvault.system.storage
 
 import android.net.Uri
 import android.os.Bundle
+import java.io.DataInputStream
+import java.io.DataOutputStream
+import java.io.File
+import java.io.InputStream
+import java.io.OutputStream
 
 /**
  * The messages between the app and the Drive copier process ([DriveCopyService]).
@@ -59,6 +64,7 @@ object DriveCopyProtocol {
 
     fun listRequest(folder: Uri) = Bundle().apply { putParcelable(K_FOLDER, folder) }
 
+    /** The listing inside the reply itself: only for the in-process copier, where no binder carries it. */
     fun listReply(listing: Listing) = Bundle().apply {
         putBoolean(K_OK, true)
         putStringArray(K_NAMES, listing.names.toTypedArray())
@@ -66,18 +72,81 @@ object DriveCopyProtocol {
         putLongArray(K_SIZES, listing.sizes.toLongArray())
     }
 
+    /**
+     * The listing as a file in the app's cache folder, and a reply that carries only its path and counts.
+     *
+     * A Messenger reply travels through the binder, whose transaction buffer is about 1 MB shared by
+     * everything in flight, and a one-way reply gets half of that. A Honor user's Drive folder of 1484 entries
+     * made a 654 KB reply that never arrived (`TransactionTooLargeException`), and the app waited three
+     * minutes for it. The copier process and the app share one uid and one cache folder, so a file is the
+     * simplest carrier whose size does not matter. Chunked replies would need sequence numbers and a
+     * partial-failure story; a file is written whole or the call fails with a reason.
+     */
+    fun listReplyViaFile(listing: Listing, dir: File): Bundle {
+        dir.mkdirs()
+        val file = File.createTempFile(LIST_FILE_PREFIX, ".bin", dir)
+        try {
+            file.outputStream().buffered().use { ListingCodec.write(listing.names, listing.uris.map { it.toString() }, listing.sizes, it) }
+        } catch (t: Throwable) {
+            file.delete()
+            throw t
+        }
+        return Bundle().apply {
+            putBoolean(K_OK, true)
+            putString(K_LIST_FILE, file.absolutePath)
+            putInt(K_COUNT, listing.names.size)
+            putLong(K_LIST_BYTES, file.length())
+        }
+    }
+
     fun failureReply(reason: String) = Bundle().apply {
         putBoolean(K_OK, false)
         putString(K_ERROR, reason)
     }
 
+    /** The reason sent instead of a reply the binder would not carry; says how big it was. */
+    fun tooLargeReason(entries: Int, bytes: Int, cause: String): String =
+        "reply too large: $entries entries, $bytes bytes ($cause)"
+
+    const val K_LIST_FILE = "listFile"
+    const val K_COUNT = "count"
+    const val K_LIST_BYTES = "listBytes"
+    const val LIST_FILE_PREFIX = "drive-list-"
+
+    /** The listing a reply carries (inline or in a file), or null with the reason it could not be read. */
     @Suppress("DEPRECATION")
-    fun readListing(reply: Bundle): Listing? {
-        if (!reply.getBoolean(K_OK)) return null
-        val names = reply.getStringArray(K_NAMES) ?: return null
-        val uris = reply.getParcelableArrayList<Uri>(K_URIS) ?: return null
-        val sizes = reply.getLongArray(K_SIZES) ?: return null
-        return Listing(names.toList(), uris, sizes.toList())
+    fun readListingWithReason(reply: Bundle): Pair<Listing?, String?> {
+        if (!reply.getBoolean(K_OK)) return null to readError(reply)
+        val path = reply.getString(K_LIST_FILE)
+        if (path != null) {
+            val file = File(path)
+            return try {
+                val (names, uris, sizes) = file.inputStream().buffered().use { ListingCodec.read(it) }
+                val expected = reply.getInt(K_COUNT, -1)
+                if (expected >= 0 && expected != names.size) {
+                    null to "the list file held ${names.size} entries, the reply said $expected"
+                } else {
+                    Listing(names, uris.map { Uri.parse(it) }, sizes) to null
+                }
+            } catch (t: Throwable) {
+                null to "the list file could not be read: ${t.javaClass.simpleName}: ${t.message}"
+            } finally {
+                file.delete()
+            }
+        }
+        val names = reply.getStringArray(K_NAMES) ?: return null to "the reply carried no names"
+        val uris = reply.getParcelableArrayList<Uri>(K_URIS) ?: return null to "the reply carried no URIs"
+        val sizes = reply.getLongArray(K_SIZES) ?: return null to "the reply carried no sizes"
+        return Listing(names.toList(), uris, sizes.toList()) to null
+    }
+
+    fun readListing(reply: Bundle): Listing? = readListingWithReason(reply).first
+
+    /** Leftover list files (a reader that died before deleting one) older than an hour are removed. */
+    fun sweepStaleListFiles(dir: File, now: Long = System.currentTimeMillis()) {
+        dir.listFiles()?.forEach {
+            if (it.name.startsWith(LIST_FILE_PREFIX) && now - it.lastModified() > 60 * 60_000L) it.delete()
+        }
     }
 
     /** What the app already knows about the destination, so the copier never lists the folder again. */
@@ -171,5 +240,38 @@ object DriveCopyProtocol {
             else -> SafHelper.CopyResult.Failed(reply.getString(K_ERROR) ?: "copy failed")
         }
         return CopyReply(result, timing, driveSize)
+    }
+}
+
+/**
+ * The on-disk form of a folder listing ([DriveCopyProtocol.listReplyViaFile]): a count, then per entry the
+ * name, the document URI and the length. Plain strings and numbers, so it needs nothing from Android.
+ */
+object ListingCodec {
+    fun write(names: List<String>, uris: List<String>, sizes: List<Long>, out: OutputStream) {
+        require(names.size == uris.size && names.size == sizes.size) { "listing columns differ in length" }
+        val data = DataOutputStream(out)
+        data.writeInt(names.size)
+        for (i in names.indices) {
+            data.writeUTF(names[i])
+            data.writeUTF(uris[i])
+            data.writeLong(sizes[i])
+        }
+        data.flush()
+    }
+
+    fun read(input: InputStream): Triple<List<String>, List<String>, List<Long>> {
+        val data = DataInputStream(input)
+        val count = data.readInt()
+        require(count >= 0) { "negative entry count $count" }
+        val names = ArrayList<String>(count)
+        val uris = ArrayList<String>(count)
+        val sizes = ArrayList<Long>(count)
+        repeat(count) {
+            names += data.readUTF()
+            uris += data.readUTF()
+            sizes += data.readLong()
+        }
+        return Triple(names, uris, sizes)
     }
 }

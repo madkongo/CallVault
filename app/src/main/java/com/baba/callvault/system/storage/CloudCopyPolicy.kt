@@ -68,6 +68,29 @@ object CloudCopyPolicy {
     fun shouldRetryListFailure(runAttemptCount: Int): Boolean = runAttemptCount < LIST_FAILURE_MAX_ATTEMPTS - 1
 
     /**
+     * How long the app waits for the copier process to list the Drive folder. Listing is one query that took
+     * 1.3-4.3 s on a 1484-entry folder; 30 s outlasts a slow provider without making a copier that cannot
+     * answer cost the three minutes it did on the drive2 build.
+     */
+    const val LIST_TIMEOUT_MS = 30_000L
+
+    /**
+     * True when the copier process failed to list the Drive folder earlier on [today] ([rememberedDay] is the
+     * day it was written down, null when never): the sweep then goes straight to listing in the app's own
+     * process instead of waiting out the copier again. Expires by itself at midnight.
+     */
+    fun copierListFailedToday(rememberedDay: String?, today: String): Boolean =
+        rememberedDay != null && rememberedDay == today
+
+    /**
+     * A Drive document that counts as already holding the recording: its reported length equals the source's.
+     * A length of 0 or -1 is what a cloud provider reports for a file still settling; that is not proof, so
+     * the recording goes through the copier again, which re-asks and says "unverified" if it stays unsettled.
+     */
+    fun isVerifiedPresent(existingSize: Long, sourceSize: Long): Boolean =
+        sourceSize > 0L && existingSize == sourceSize
+
+    /**
      * Whether the device copy may be deleted now: only when Drive itself reports a document of exactly the
      * source's length. A copy call returning is not proof; neither is an unreported (-1) or zero length,
      * which cloud providers show for a file still settling. Anything else keeps the device copy.

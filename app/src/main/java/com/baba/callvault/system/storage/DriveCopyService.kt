@@ -10,8 +10,10 @@ package com.baba.callvault.system.storage
 
 import android.app.Service
 import android.content.Intent
+import android.os.Bundle
 import android.os.Handler
 import android.os.HandlerThread
+import android.os.Parcel
 import android.os.IBinder
 import android.os.Message
 import android.os.Messenger
@@ -55,10 +57,41 @@ class DriveCopyService : Service() {
                     journal("message ${msg.what} failed outside the handler: ${it.javaClass.simpleName}: ${it.message}")
                     DriveCopyProtocol.failureReply("${it.javaClass.simpleName}: ${it.message}")
                 }
-                runCatching { msg.replyTo?.send(reply) }
-                    .onFailure { journal("reply to message ${msg.what} could not be sent: ${it.javaClass.simpleName}: ${it.message}") }
+                send(msg, reply)
             }
         })
+    }
+
+    /**
+     * Sends [reply] to the app. The serialised size of every list reply is journalled (always on). A reply the
+     * binder refuses (too large) used to vanish silently and leave the app waiting out its time limit; now a
+     * small failure reply, naming the size, goes instead so the app can fall back within seconds.
+     */
+    private fun send(msg: Message, reply: Message) {
+        val isList = msg.what == DriveCopyProtocol.MSG_LIST
+        val bytes = parcelSize(reply.data)
+        val entries = reply.data.getInt(DriveCopyProtocol.K_COUNT, reply.data.getStringArray(DriveCopyProtocol.K_NAMES)?.size ?: -1)
+        if (isList) {
+            val file = reply.data.getString(DriveCopyProtocol.K_LIST_FILE)
+            journal(
+                "list reply serialised: $bytes bytes as a message, $entries entries" +
+                    if (file != null) ", listing carried in a file of ${reply.data.getLong(DriveCopyProtocol.K_LIST_BYTES)} bytes" else ", listing carried inline",
+            )
+        }
+        val sent = runCatching { msg.replyTo?.send(reply) }
+        val failure = sent.exceptionOrNull() ?: return
+        val cause = "${failure.javaClass.simpleName}: ${failure.message}"
+        journal("reply to message ${msg.what} could not be sent ($bytes bytes, $entries entries): $cause; sending a failure reply instead")
+        reply.data.getString(DriveCopyProtocol.K_LIST_FILE)?.let { runCatching { java.io.File(it).delete() } }
+        val small = Message.obtain(null, msg.what)
+        small.data = DriveCopyProtocol.failureReply(DriveCopyProtocol.tooLargeReason(entries, bytes, cause))
+        runCatching { msg.replyTo?.send(small) }
+            .onFailure { journal("the failure reply for message ${msg.what} could not be sent either: ${it.javaClass.simpleName}: ${it.message}") }
+    }
+
+    private fun parcelSize(b: Bundle): Int {
+        val p = Parcel.obtain()
+        return try { p.writeBundle(b); p.dataSize() } catch (t: Throwable) { -1 } finally { p.recycle() }
     }
 
     override fun onBind(intent: Intent?): IBinder {

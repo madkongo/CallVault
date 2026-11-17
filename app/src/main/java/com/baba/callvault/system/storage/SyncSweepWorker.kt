@@ -116,13 +116,16 @@ class SyncSweepWorker(ctx: Context, params: WorkerParameters) : CoroutineWorker(
     /** Asks [copier] to list the Drive folder; returns the listing or the reason it could not. */
     private suspend fun tryList(copier: DriveCopier, driveFolderUri: android.net.Uri): Pair<DriveCopyProtocol.Listing?, String> {
         val started = SystemClock.elapsedRealtime()
-        val outcome = copier.call(DriveCopyProtocol.MSG_LIST, DriveCopyProtocol.listRequest(driveFolderUri), LIST_TIMEOUT_MS)
+        val outcome = copier.call(DriveCopyProtocol.MSG_LIST, DriveCopyProtocol.listRequest(driveFolderUri), CloudCopyPolicy.LIST_TIMEOUT_MS)
         val ms = SystemClock.elapsedRealtime() - started
         return when (outcome) {
             is DriveCopyClient.Outcome.Reply -> {
-                val listing = DriveCopyProtocol.readListing(outcome.data)
-                if (listing != null) listing to ""
-                else null to "${copier.where} answered but gave no listing: ${DriveCopyProtocol.readError(outcome.data) ?: "no reason in the reply"} (after ${ms}ms)"
+                val (listing, why) = DriveCopyProtocol.readListingWithReason(outcome.data)
+                if (listing != null) {
+                    val viaFile = outcome.data.getString(DriveCopyProtocol.K_LIST_FILE) != null
+                    journal("list reply read: ${listing.names.size} entries from ${copier.where}${if (viaFile) " (through a file)" else ""} after ${ms}ms")
+                    listing to ""
+                } else null to "${copier.where} answered but gave no listing: ${why ?: "no reason in the reply"} (after ${ms}ms)"
             }
             DriveCopyClient.Outcome.Died -> null to "${copier.where} did not answer: ${(copier as? DriveCopyClient)?.lastFailure ?: "it died or failed"} (after ${ms}ms)"
             DriveCopyClient.Outcome.TimedOut -> null to "${copier.where} gave no answer within ${ms}ms"
@@ -144,17 +147,29 @@ class SyncSweepWorker(ctx: Context, params: WorkerParameters) : CoroutineWorker(
         // The URI is kept, not just the length: proving a file is already in Drive is exactly the
         // evidence the catalog needs, and throwing it away is what let a correctly backed-up
         // recording go on looking unsynced forever. See where `alreadyThere` is used.
-        var (listed, listFailure) = tryList(copierNow(), driveFolderUri)
+        // A copier that could not list earlier today is not asked again today: that cost its whole time limit
+        // on every retry (see [DriveListMemory]).
+        val remembered = DriveListMemory.failureToday(applicationContext)
+        var (listed, listFailure) = if (remembered != null) {
+            journal("copier list SKIPPED: it failed earlier today ($remembered); listing and copying in the app's own process for this run")
+            null to "skipped, failed earlier today ($remembered)"
+        } else {
+            tryList(copierNow(), driveFolderUri)
+        }
         var usingFallback = false
         if (listed == null) {
-            if (DriveCopyStop.isRequested()) {
-                journal("sweep stopped by the user while listing: $listFailure")
-                return Result.success()
+            if (remembered == null) {
+                if (DriveCopyStop.isRequested()) {
+                    journal("sweep stopped by the user while listing: $listFailure")
+                    return Result.success()
+                }
+                journal(
+                    "list through the copier FAILED: $listFailure; copier process alive=${DriveDiagnostics.copierAlive(applicationContext)}, " +
+                        "${DriveDiagnostics.memory(applicationContext)}; falling back ONCE to listing and copying in the app's own process for this run; " +
+                        "the copier is not asked again today",
+                )
+                DriveListMemory.remember(applicationContext, listFailure)
             }
-            journal(
-                "list through the copier FAILED: $listFailure; copier process alive=${DriveDiagnostics.copierAlive(applicationContext)}, " +
-                    "${DriveDiagnostics.memory(applicationContext)}; falling back ONCE to listing and copying in the app's own process for this run",
-            )
             copierNow().close()
             useCopier(LocalDriveCopier(applicationContext))
             usingFallback = true
@@ -185,6 +200,7 @@ class SyncSweepWorker(ctx: Context, params: WorkerParameters) : CoroutineWorker(
         var skipped = 0
         var deleted = 0
         var kept = 0
+        var unverified = 0
         // First pass: what Drive already has is stamped; the rest is collected and uploaded below, newest first.
         val pending = ArrayList<DriveSweepOrder.Pending<SweepFile>>()
         // Recordings still waiting for a keep-or-delete answer, read once per run. Neither they nor their
@@ -212,9 +228,9 @@ class SyncSweepWorker(ctx: Context, params: WorkerParameters) : CoroutineWorker(
                 continue // an empty file means capture never ran; copying it would fake a backup
             }
             val alreadyThere = existingInDrive[name.lowercase()]
-            if (alreadyThere != null &&
-                CloudCopyPolicy.verdict(alreadyThere.sizeBytes, sourceSize) == ExistingCopyVerdict.COMPLETE
-            ) {
+            // Only a length Drive reports as equal counts as "already there". A document listed with length 0
+            // (a copy Drive had not settled at the end of the last run) is checked again by the copier below.
+            if (alreadyThere != null && CloudCopyPolicy.isVerifiedPresent(alreadyThere.sizeBytes, sourceSize)) {
                 // Stamp it rather than only skipping the upload. We have just read the Drive folder
                 // and established that this recording IS backed up; if the catalog row says
                 // otherwise, this is the only place that can ever put it right — every later sweep
@@ -324,6 +340,10 @@ class SyncSweepWorker(ctx: Context, params: WorkerParameters) : CoroutineWorker(
             // The device copy goes only when Drive itself reports a document of the same length, and never
             // when the Drive copy IS the device file (see [FolderOverlap]). Every branch says what it did.
             var deletedLocally = false
+            if (!CloudCopyPolicy.mayDeleteLocal(driveSize, sourceSize)) {
+                unverified++
+                journal("copy of '$name' UNVERIFIED: Drive reports $driveSize bytes, the device file is $sourceSize; the device copy is not deleted on this evidence and the next sweep checks it again")
+            }
             if (deleteLocal) {
                 if (FolderOverlap.isSameDocument(file.uri, driveUri)) {
                     kept++
@@ -352,7 +372,7 @@ class SyncSweepWorker(ctx: Context, params: WorkerParameters) : CoroutineWorker(
             journal("sweep interrupted: WorkManager asked it to stop after $done of $total (stopReason=$stopReason)")
         }
         AppLogger.i(TAG, "Sweep complete (target=$target copied=$copied failures=$failures skipped=$skipped deleteLocal=$deleteLocal).")
-        journal("sweep complete: copied=$copied failures=$failures skipped=$skipped deleteLocal=$deleteLocal deleted=$deleted kept=$kept")
+        journal("sweep complete: copied=$copied failures=$failures skipped=$skipped deleteLocal=$deleteLocal deleted=$deleted kept=$kept unverified=$unverified")
         // A sweep that keeps failing backs off rather than hammering the provider: the next scheduled run
         // picks the stragglers up anyway, so there is nothing to gain from an unbounded retry chain.
         return if (failures > 0 && !CloudCopyPolicy.isLastAttempt(runAttemptCount)) Result.retry() else Result.success()
@@ -399,8 +419,5 @@ class SyncSweepWorker(ctx: Context, params: WorkerParameters) : CoroutineWorker(
         private const val TAG = "CV:SyncSweep"
         private const val DEFAULT_MIME = "audio/ogg"
         private const val PACE_EVERY = 10
-
-        /** Listing the Drive folder is one query; this only has to outlast a slow provider, not a stuck one. */
-        private const val LIST_TIMEOUT_MS = 3 * 60_000L
     }
 }
