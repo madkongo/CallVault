@@ -431,6 +431,10 @@
     <string name="settings_group_save_and_sync">Сохранение и синхронизация</string>
     <string name="settings_group_sound_and_names">Звук и имена файлов</string>
     <string name="settings_group_when_to_transcribe">Когда расшифровывать</string>
+    <string name="settings_group_transcription_and_summaries">Расшифровка и сводки</string>
+    <string name="summary_language_label">Язык сводки</string>
+    <string name="summary_language_same_as_call">Как в звонке</string>
+    <string name="summary_language_hint">Сводки пишутся на языке звонка, если вы не выберете другой язык здесь.</string>
     <string name="settings_handoff_persist_description">Продолжает запись, даже если фоновый помощник завершается во время звонка (например, при блокировке экрана).</string>
     <string name="settings_handoff_persist_label">Продолжать запись при остановке фонового процесса</string>
     <string name="settings_hide_recordings_desc">Не показывать записи в музыкальных плеерах, галереях и других медиаприложениях</string>

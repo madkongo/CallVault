@@ -45,14 +45,14 @@ enum class SettingsGroup(val key: String) {
     /** The removed classic Experimental ▸ Resilience rows, in the order of [ConnectionRows]. */
     CONNECTION("group_connection"),
 
-    /** Where to transcribe (#48), speech model (with its download), the shared language, ask each time. */
-    MODEL_AND_LANGUAGE("group_model_and_language"),
-
-    /** Transcription mode, run time, calls per run, only while charging, ask before transcribing. */
-    WHEN_TO_TRANSCRIBE("group_when_to_transcribe"),
-
-    /** The summary rows, plus the shared language shown read-only (never a second picker). */
-    SUMMARIES("group_summaries"),
+    /**
+     * Transcription and summaries in one card (BabApps item 135), with three sub-headers: the speech model and
+     * language (where to transcribe (#48), the model and its download, the language, ask each time), when to
+     * transcribe (mode, run time, calls per run, only while charging, ask before transcribing), and the
+     * summaries (the summary model and the editable summary language). It replaces the three cards
+     * `group_model_and_language`, `group_when_to_transcribe` and `group_summaries`; no preference key changed.
+     */
+    TRANSCRIPTION_AND_SUMMARIES("group_transcription_and_summaries"),
 
     /** The app itself: language, look, toasts, app lock, screenshots, updates, settings backup. */
     APP("group_app"),
@@ -84,12 +84,13 @@ object SettingsGroups {
         SettingsGroup.CONNECTION,
     )
 
-    private val TRANSCRIPTS = listOf(SettingsGroup.MODEL_AND_LANGUAGE, SettingsGroup.WHEN_TO_TRANSCRIBE)
+    private val TRANSCRIPTS = listOf(SettingsGroup.TRANSCRIPTION_AND_SUMMARIES)
 
-    private val SUMMARIES = listOf(SettingsGroup.SUMMARIES)
+    /** The Summaries page shows the same one card as Transcripts: they are one section now (item 135). */
+    private val SUMMARIES = TRANSCRIPTS
 
     /** Every setting, nothing lost: each page's groups, then the app-wide ones. */
-    private val ALL = RECORDINGS + TRANSCRIPTS + SUMMARIES + listOf(
+    private val ALL = RECORDINGS + TRANSCRIPTS + listOf(
         SettingsGroup.APP,
         SettingsGroup.HELP_AND_ABOUT,
     )
@@ -108,7 +109,6 @@ object SettingsGroups {
     fun pageOf(group: SettingsGroup): SettingsScope = when (group) {
         in RECORDINGS -> SettingsScope.RECORDINGS
         in TRANSCRIPTS -> SettingsScope.TRANSCRIPTS
-        in SUMMARIES -> SettingsScope.SUMMARIES
         else -> SettingsScope.ALL
     }
 
@@ -142,14 +142,12 @@ object SettingsGroups {
         )
         SettingsGroup.CLEANING_UP -> listOf("RetentionPolicyRows", "MergeSubSection")
         SettingsGroup.CONNECTION -> listOf("ConnectionRows")
-        SettingsGroup.MODEL_AND_LANGUAGE -> listOf(
+        SettingsGroup.TRANSCRIPTION_AND_SUMMARIES -> listOf(
             "TranscriptionServiceRows", "TranscriptionModelChoiceRow", "TranscriptionModelDownloadRows",
             "TranscriptionLanguageRows",
-        )
-        SettingsGroup.WHEN_TO_TRANSCRIBE -> listOf(
             "TranscriptionScheduleRows", "TranscriptionConfirmRow", "TranscriptionModeNote",
+            "SummaryLanguageRow", "SummarySettingsRows",
         )
-        SettingsGroup.SUMMARIES -> listOf("SummarySettingsRows")
         SettingsGroup.APP -> listOf("AppearanceRows", "PrivacySubSection", "UpdatesSubSection", "ExportImportRow")
         SettingsGroup.HELP_AND_ABOUT -> listOf("BugReportSection", "AboutSection")
     }
@@ -184,16 +182,14 @@ object SettingsGroups {
         SettingsGroup.CONNECTION -> listOf(
             "handoff_persist", "offline_recording", "wd_enforced", "wd_auto_approve_network", "wd_never_turn_off",
         )
-        SettingsGroup.MODEL_AND_LANGUAGE -> listOf(
+        SettingsGroup.TRANSCRIPTION_AND_SUMMARIES -> listOf(
             "transcription_service", "transcription_cloud_mobile_data", "transcription_custom_base_url",
             "transcription_custom_model", "transcription_model_id", "transcription_language",
             "transcription_ask_language",
-        )
-        SettingsGroup.WHEN_TO_TRANSCRIBE -> listOf(
             "transcription_mode", "transcription_hour", "transcription_minute",
             "transcription_requires_charging", "transcription_batch_limit", "transcription_confirm_before_run",
+            "summary_confirm_requirements", "summary_language",
         )
-        SettingsGroup.SUMMARIES -> listOf("summary_confirm_requirements")
         SettingsGroup.APP -> listOf("theme_mode", "dynamic_color", "show_toasts", "start_page", "update_check_enabled")
         SettingsGroup.HELP_AND_ABOUT -> listOf("logging_enabled")
     }

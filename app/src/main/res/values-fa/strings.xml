@@ -522,6 +522,10 @@
     <string name="settings_group_save_and_sync">ذخیره و همگام‌سازی</string>
     <string name="settings_group_sound_and_names">صدا و نام فایل‌ها</string>
     <string name="settings_group_when_to_transcribe">زمان رونویسی</string>
+    <string name="settings_group_transcription_and_summaries">رونویسی و خلاصه‌ها</string>
+    <string name="summary_language_label">زبان خلاصه</string>
+    <string name="summary_language_same_as_call">مثل تماس</string>
+    <string name="summary_language_hint">خلاصه‌ها به زبان تماس نوشته می‌شوند، مگر اینکه اینجا زبان دیگری انتخاب کنید.</string>
     <string name="settings_handoff_persist_description">ضبط را حتی اگر دستیار پس‌زمینه در میانه تماس از کار بیفتد (مثلاً وقتی صفحه را قفل می‌کنید) ادامه می‌دهد.</string>
     <string name="settings_handoff_persist_label">ادامه ضبط اگر دستیار متوقف شود</string>
     <string name="settings_hide_recordings_desc">ضبط‌هایتان را از پخش‌کننده‌های موسیقی، گالری‌ها و دیگر برنامه‌های رسانه دور نگه دارید</string>

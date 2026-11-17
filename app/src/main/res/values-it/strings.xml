@@ -429,6 +429,10 @@
     <string name="settings_group_save_and_sync">Salvataggio e sincronizzazione</string>
     <string name="settings_group_sound_and_names">Audio e nomi dei file</string>
     <string name="settings_group_when_to_transcribe">Quando trascrivere</string>
+    <string name="settings_group_transcription_and_summaries">Trascrizione e riepiloghi</string>
+    <string name="summary_language_label">Lingua dei riepiloghi</string>
+    <string name="summary_language_same_as_call">Come la chiamata</string>
+    <string name="summary_language_hint">I riepiloghi sono scritti nella lingua della chiamata, a meno che tu ne scelga una qui.</string>
     <string name="settings_handoff_persist_description">Mantiene attiva la registrazione anche se il processo in background viene chiuso durante la chiamata (ad es. quando blocchi lo schermo).</string>
     <string name="settings_handoff_persist_label">Continua a registrare se il processo in background si ferma</string>
     <string name="settings_hide_recordings_desc">Tieni le registrazioni fuori da lettori musicali, gallerie e altre app multimediali</string>

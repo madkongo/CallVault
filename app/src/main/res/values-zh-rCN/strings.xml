@@ -428,6 +428,10 @@
     <string name="settings_group_save_and_sync">保存和同步</string>
     <string name="settings_group_sound_and_names">声音和文件名</string>
     <string name="settings_group_when_to_transcribe">何时转写</string>
+    <string name="settings_group_transcription_and_summaries">转写与摘要</string>
+    <string name="summary_language_label">摘要语言</string>
+    <string name="summary_language_same_as_call">与通话相同</string>
+    <string name="summary_language_hint">摘要使用通话的语言撰写，除非您在此选择其他语言。</string>
     <string name="settings_handoff_persist_description">即使后台助手在通话中被终止（例如锁定屏幕时），也能继续录音。</string>
     <string name="settings_handoff_persist_label">后台进程停止时继续录音</string>
     <string name="settings_hide_recordings_desc">不让录音出现在音乐播放器、相册和其他媒体应用中</string>

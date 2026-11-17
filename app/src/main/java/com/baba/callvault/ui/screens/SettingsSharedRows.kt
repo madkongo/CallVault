@@ -21,6 +21,7 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
@@ -29,7 +30,9 @@ import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
 import com.baba.callvault.R
 import com.baba.callvault.data.AppPreferences
+import com.baba.callvault.summary.SummaryLanguage
 import com.baba.callvault.summary.SummaryModel
+import com.baba.callvault.ui.common.SummaryLanguagePicker
 import com.baba.callvault.ui.common.ContactSelectionDialog
 import com.baba.callvault.ui.common.SummaryRequirementsDialog
 import com.baba.callvault.ui.viewmodels.ContactPickerState
@@ -83,6 +86,29 @@ internal fun SummarySettingsRows(preferences: AppPreferences, updateTrigger: Int
         onBackup = { model, uri -> actions.backUpModel(model, uri) },
         onCancelBackup = { actions.cancelModelBackup(it) }
     )
+}
+
+/**
+ * The language summaries are written in (BabApps item 135): "Same as the call (default)" or one fixed language.
+ * It writes the `summary_language` preference that SummaryWorker already passes to SummaryLanguage.resolve as
+ * the first, strongest answer; null is "same as the call", worked out per recording.
+ */
+@Composable
+internal fun SummaryLanguageRow(preferences: AppPreferences, updateTrigger: Int, actions: SettingsActions) {
+    val stored = remember(updateTrigger) { preferences.getSummaryLanguage() }
+    // The explanation sits behind the row's ⓘ like every other row's (WithInfo), not as inline text.
+    WithInfo(stringResource(R.string.summary_language_label), stringResource(R.string.summary_language_hint)) {
+        DropdownRow {
+            SummaryLanguagePicker(
+                label = stringResource(R.string.summary_language_label),
+                selectedKey = SummaryLanguage.choiceKeyOf(stored),
+                onSelected = { key ->
+                    preferences.setSummaryLanguage(SummaryLanguage.languageOfChoiceKey(key))
+                    actions.refreshSettings()
+                },
+            )
+        }
+    }
 }
 
 /**

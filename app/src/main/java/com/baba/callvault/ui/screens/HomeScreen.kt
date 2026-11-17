@@ -2188,7 +2188,7 @@ fun HomeScreen(
             confirmButton = {
                 TextButton(onClick = {
                     showModelMissing = false
-                    if (openGroup != null) openGroup(SettingsGroup.MODEL_AND_LANGUAGE) else onOpenSettings()
+                    if (openGroup != null) openGroup(SettingsGroup.TRANSCRIPTION_AND_SUMMARIES) else onOpenSettings()
                 }) {
                     Text(stringResource(R.string.transcript_no_model_open_settings))
                 }

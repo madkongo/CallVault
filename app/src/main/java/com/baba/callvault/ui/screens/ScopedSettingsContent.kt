@@ -25,8 +25,6 @@ import androidx.compose.material.icons.filled.CleaningServices
 import androidx.compose.material.icons.filled.Folder
 import androidx.compose.material.icons.filled.GraphicEq
 import androidx.compose.material.icons.filled.PhoneDisabled
-import androidx.compose.material.icons.filled.Schedule
-import androidx.compose.material.icons.filled.Summarize
 import androidx.compose.material.icons.filled.Translate
 import androidx.compose.material.icons.filled.Tune
 import androidx.compose.runtime.Composable
@@ -147,11 +145,6 @@ fun ScopedSettingsContent(
         onExportSettings = onExportSettings,
         onImportSettings = onImportSettings,
         onShowLicenses = { showLicensesDialog = true },
-        // Transcripts and summaries share ONE language on purpose; Summaries only links to it.
-        onChangeLanguage = {
-            val target = if (scope == SettingsScope.ALL) SettingsScope.ALL else SettingsScope.TRANSCRIPTS
-            jumpTo(target, SettingsGroup.MODEL_AND_LANGUAGE)
-        },
     )
 
     CvScaffold(
@@ -195,7 +188,7 @@ fun ScopedSettingsContent(
             }
             items(groups, key = { it.key }) { group ->
                 val expanded = openGroup == group
-                // The Summaries card's ⓘ opens the requirements popup (BabApps item 131).
+                // The card's ⓘ (it holds the summaries now) opens the requirements popup (BabApps item 131).
                 var showRequirements by remember { mutableStateOf(false) }
                 if (showRequirements) {
                     SummaryRequirementsInfoDialog(preferences, actions) { showRequirements = false }
@@ -205,7 +198,7 @@ fun ScopedSettingsContent(
                     title = stringResource(titleOf(group)),
                     summary = groupSummaryText(group, preferences, updateTrigger, expanded, actions),
                     explanation = groupExplanationText(group, preferences, updateTrigger),
-                    onInfoClick = if (group == SettingsGroup.SUMMARIES) ({ showRequirements = true }) else null,
+                    onInfoClick = if (group == SettingsGroup.TRANSCRIPTION_AND_SUMMARIES) ({ showRequirements = true }) else null,
                     expanded = expanded,
                     onToggle = { setOpenGroup(scope, if (expanded) null else group) },
                 ) {
@@ -249,9 +242,7 @@ private fun titleOf(group: SettingsGroup): Int = when (group) {
     SettingsGroup.SAVE_AND_SYNC -> R.string.settings_group_save_and_sync
     SettingsGroup.CLEANING_UP -> R.string.settings_group_cleaning_up
     SettingsGroup.CONNECTION -> R.string.settings_group_connection
-    SettingsGroup.MODEL_AND_LANGUAGE -> R.string.settings_group_model_and_language
-    SettingsGroup.WHEN_TO_TRANSCRIBE -> R.string.settings_group_when_to_transcribe
-    SettingsGroup.SUMMARIES -> R.string.home_summaries_title
+    SettingsGroup.TRANSCRIPTION_AND_SUMMARIES -> R.string.settings_group_transcription_and_summaries
     SettingsGroup.APP -> R.string.settings_group_app
     SettingsGroup.HELP_AND_ABOUT -> R.string.settings_group_help_and_about
 }
@@ -263,9 +254,7 @@ private fun iconOf(group: SettingsGroup): ImageVector = when (group) {
     SettingsGroup.SAVE_AND_SYNC -> Icons.Filled.Folder
     SettingsGroup.CLEANING_UP -> Icons.Filled.CleaningServices
     SettingsGroup.CONNECTION -> Icons.Filled.Cable
-    SettingsGroup.MODEL_AND_LANGUAGE -> Icons.Filled.Translate
-    SettingsGroup.WHEN_TO_TRANSCRIBE -> Icons.Filled.Schedule
-    SettingsGroup.SUMMARIES -> Icons.Filled.Summarize
+    SettingsGroup.TRANSCRIPTION_AND_SUMMARIES -> Icons.Filled.Translate
     SettingsGroup.APP -> Icons.Filled.Tune
     SettingsGroup.HELP_AND_ABOUT -> Icons.AutoMirrored.Filled.HelpOutline
 }

@@ -429,6 +429,10 @@
     <string name="settings_group_save_and_sync">Mentés és szinkronizálás</string>
     <string name="settings_group_sound_and_names">Hang és fájlnevek</string>
     <string name="settings_group_when_to_transcribe">Mikor készüljön átirat</string>
+    <string name="settings_group_transcription_and_summaries">Átirat és összefoglalók</string>
+    <string name="summary_language_label">Az összefoglalók nyelve</string>
+    <string name="summary_language_same_as_call">Mint a hívás</string>
+    <string name="summary_language_hint">Az összefoglalók a hívás nyelvén készülnek, hacsak itt nem választ másikat.</string>
     <string name="settings_handoff_persist_description">A rögzítés akkor is folytatódik, ha a háttérsegéd hívás közben leáll (pl. amikor lezárja a képernyőt).</string>
     <string name="settings_handoff_persist_label">Rögzítés folytatása, ha a háttérfolyamat leáll</string>
     <string name="settings_hide_recordings_desc">Tartsa távol a felvételeket a zenelejátszóktól, galériáktól és más médiaalkalmazásoktól</string>

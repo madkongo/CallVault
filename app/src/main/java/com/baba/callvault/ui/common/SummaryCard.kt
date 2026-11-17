@@ -140,7 +140,7 @@ fun SummaryCard(
                 // there, straight to the summary group where it is downloaded.
                 val openGroup = LocalOpenSettingsGroup.current
                 if (state.reason == SummaryBlocker.MODEL_MISSING && openGroup != null) {
-                    TextButton(onClick = { openGroup(SettingsGroup.SUMMARIES) }) {
+                    TextButton(onClick = { openGroup(SettingsGroup.TRANSCRIPTION_AND_SUMMARIES) }) {
                         Text(stringResource(R.string.summary_card_blocked_model_action))
                     }
                 }
