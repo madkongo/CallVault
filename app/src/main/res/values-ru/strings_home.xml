@@ -130,6 +130,10 @@
     <string name="merge_note_will_keep">Остальные звонки также останутся на телефоне.</string>
     <string name="home_scroll_to_top">Наверх</string>
     <string name="home_whatsnew_full_notes">Полный список изменений</string>
+    <string name="whatsnew_252_title">Теперь и турецкий</string>
+    <string-array name="whatsnew_252_items">
+        <item>Добавлен турецкий: CallVault доступен на турецком, а звонки можно расшифровывать на турецком</item>
+    </string-array>
     <string name="whatsnew_251_title">Дольше хранить записи, стереозапись и звонки по Wi-Fi на Samsung</string>
     <string-array name="whatsnew_251_items">
         <item>Автоудаление теперь может хранить записи 60, 90 или 120 дней</item>

@@ -1,5 +1,18 @@
 # README impact log
 
+## 2026-11-17 — Turkish (BabApps item 127, GitHub #84, branch `fix/item-127-feature-add-turkish-language-support`)
+
+🧪 VERIFYING. New app language and pinnable transcription language: Turkish.
+
+**What this changes for the README:**
+- Line 33 says "Transcripts — 13 languages". It was already behind the code before this (the transcription list has
+  19 entries; Turkish makes 20). Do not hard-code a number: reword to "Transcripts — in many languages, written on
+  the phone" or recount from `TranscriptionLanguageChoice.SUPPORTED` at release time.
+- The README names no app-language list, so nothing else becomes wrong.
+
+**Not claimable yet:** that Turkish transcription or summaries are good. The wiring is unit-tested; no Turkish call
+has been transcribed, and the Turkish screens await a native reader.
+
 ## 2026-11-08 — Stereo recording, Channels: Mono / Stereo (#74, branch `feat/stereo-output-74`)
 
 Stereo on ✅ VERIFIED 2026-11-08 on the OP9 by the maintainer; switching back to Mono 🧪. Mono by default:

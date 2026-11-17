@@ -130,6 +130,10 @@
     <string name="merge_note_will_keep">As outras chamadas também são mantidas no telefone.</string>
     <string name="home_scroll_to_top">Topo</string>
     <string name="home_whatsnew_full_notes">Notas de versão completas</string>
+    <string name="whatsnew_252_title">Agora também em turco</string>
+    <string-array name="whatsnew_252_items">
+        <item>Turco adicionado: o CallVault está disponível em turco e as chamadas podem ser transcritas em turco</item>
+    </string-array>
     <string name="whatsnew_251_title">Guarda por mais tempo, gravação estéreo e chamadas Wi-Fi da Samsung</string>
     <string-array name="whatsnew_251_items">
         <item>A exclusão automática agora pode manter as gravações por 60, 90 ou 120 dias</item>

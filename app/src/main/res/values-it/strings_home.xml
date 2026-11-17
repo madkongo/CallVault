@@ -130,6 +130,10 @@
     <string name="merge_note_will_keep">Le altre chiamate restano anche sul telefono.</string>
     <string name="home_scroll_to_top">Su</string>
     <string name="home_whatsnew_full_notes">Note di rilascio complete</string>
+    <string name="whatsnew_252_title">Ora anche in turco</string>
+    <string-array name="whatsnew_252_items">
+        <item>Aggiunto il turco: CallVault è disponibile in turco e le chiamate si possono trascrivere in turco</item>
+    </string-array>
     <string name="whatsnew_251_title">Conservazione più lunga, registrazione stereo e chiamate Wi-Fi Samsung</string>
     <string-array name="whatsnew_251_items">
         <item>L\'eliminazione automatica ora può conservare le registrazioni per 60, 90 o 120 giorni</item>

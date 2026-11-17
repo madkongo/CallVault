@@ -130,6 +130,10 @@
     <string name="merge_note_will_keep">A többi hívás is a telefonon marad.</string>
     <string name="home_scroll_to_top">Az elejére</string>
     <string name="home_whatsnew_full_notes">Teljes kiadási jegyzék</string>
+    <string name="whatsnew_252_title">Most már törökül is</string>
+    <string-array name="whatsnew_252_items">
+        <item>Török nyelv hozzáadva: a CallVault törökül is elérhető, a hívások pedig törökül is átírhatók</item>
+    </string-array>
     <string name="whatsnew_251_title">Hosszabb megőrzés, sztereó felvétel és Samsung Wi-Fi-hívás</string>
     <string-array name="whatsnew_251_items">
         <item>Az automatikus törlés mostantól 60, 90 vagy 120 napig is megőrizheti a felvételeket</item>

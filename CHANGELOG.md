@@ -48,6 +48,15 @@ All notable changes to CallVault are documented here. The format is based on
   pin transcription to Chinese, transcribe a Mandarin call: the text should come out Traditional and the summary too.
   A native Hong Kong or Taiwan reader should judge the wording; the conversion data (OpenCC, Apache-2.0) is credited
   in NOTICE.md. -->
+- **Turkish.** CallVault's screens are translated into Turkish (Türkçe), and Turkish can be chosen as the transcription
+  language; summaries are asked for in Turkish. It shows in Settings ▸ Language and in Android's per-app language
+  list. A phone set to Turkish now starts with Turkish pinned for transcription instead of auto-detect, like the other
+  supported languages. (#84)
+  <!-- 🧪 VERIFYING (BabApps item 127, not shipped): unit-tested only; the emulator could not be started, so the
+  Turkish screens and the Settings ▸ Language picker have not been seen yet (set the phone or the app to Türkçe and
+  look). The translation is machine-written and needs a native Turkish reader to skim it. Turkish transcription and
+  summary quality is unmeasured (the app has not been run on a real Turkish call); a Turkish speaker should
+  transcribe and summarise one before this counts as working. -->
 
 ### Fixed
 

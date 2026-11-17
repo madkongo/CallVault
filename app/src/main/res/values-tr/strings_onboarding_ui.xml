@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+
+    <!-- Onboarding: redesign-only UI strings for the "Signal" Disclaimer + Permissions screens. -->
+
+    <!-- Disclaimer screen. -->
+    <string name="disclaimer_ui_hero_subtitle">Sizin şartlarınızda, özgür yazılımla arama kaydı. Devam etmeden önce lütfen sorumluluk reddini inceleyin.</string>
+    <string name="disclaimer_ui_body_header">Sorumluluk reddi</string>
+    <string name="disclaimer_ui_scroll_hint">Onay kutusunu etkinleştirmek için sonuna kadar kaydırın.</string>
+
+    <!-- Permissions screen. -->
+    <string name="permissions_ui_eyebrow">Kurulum</string>
+    <string name="permissions_ui_hero_title">Hadi kuralım</string>
+    <string name="permissions_ui_hero_subtitle">CallVault’un aramalarınızı yakalayıp adlandırabilmesi için birkaç izin. Aşağıdaki her öğeyi onaylayın.</string>
+    <string name="permissions_ui_hero_line">Aramalarınızı kaydetmek için birkaç izin.</string>
+    <string name="permissions_ui_section_label">İzinler</string>
+    <string name="permission_adb_hint">Eşleştir’e dokunun, ardından bildirimdeki eşleştirme kodunu girin.</string>
+    <string name="permission_adb_desc_short">Kaydediciyi kurmak için gerekli. Wi-Fi gerekir.</string>
+    <string name="permissions_status_adb_not_connected">Bağlı değil</string>
+    <string name="permissions_status_adb_connected">Bağlı</string>
+
+    <!-- ADB card: Developer Options status + deep-link shortcuts. -->
+    <string name="permission_status_devmode_off_tap_build">Geliştirici seçenekleri kapalı — Derleme numarasına 7 kez dokunun</string>
+    <string name="permission_devmode_open_wd">Kablosuz hata ayıklamayı aç</string>
+    <string name="permission_devmode_enable_hint">Açmak için: Ayarlar → Telefon hakkında → Derleme numarasına 7 kez dokunun.</string>
+    <string name="permission_devmode_open_device_info">Cihaz bilgisini aç</string>
+
+    <!-- ADB card: Wireless debugging state (shown when Developer Options is on). -->
+    <string name="permission_status_wd_on_enter_code">Eşleştir’e dokunun, ardından eşleştirme kodunu girin</string>
+    <string name="permission_wd_off">Kablosuz hata ayıklama kapalı</string>
+    <string name="permission_wd_enable_hint">Açmak için: Geliştirici seçenekleri → Kablosuz hata ayıklama.</string>
+    <string name="permission_adb_hint_wd_on">Eşleştir’e dokunun, ardından Kablosuz hata ayıklama ekranındaki eşleştirme kodunu girin.</string>
+
+    <!-- ADB step: bottom CTA labels that adapt to Wireless-debugging / Developer-Options state. -->
+    <string name="permission_adb_open_device_info">Cihaz bilgisini aç</string>
+    <string name="permission_adb_open_wd">Kablosuz hata ayıklamayı aç</string>
+
+    <string name="permission_adb_pair">Eşleştir</string>
+
+    <!-- Pinned under every setup screen. BabApps item 92. -->
+    <string name="setup_report_link">Sorun mu yaşıyorsunuz? Rapor gönderin</string>
+    <string name="setup_report_preparing">Rapor hazırlanıyor…</string>
+</resources>

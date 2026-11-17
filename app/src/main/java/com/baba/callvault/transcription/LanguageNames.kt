@@ -47,6 +47,7 @@ object LanguageNames {
         "pl" to "Polski",
         "pt" to "Português",
         "ru" to "Русский",
+        "tr" to "Türkçe",
         "uk" to "Українська",
         "ur" to "اردو",
         "vi" to "Tiếng Việt",

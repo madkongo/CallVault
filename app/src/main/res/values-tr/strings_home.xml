@@ -1,0 +1,391 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  CallVault: FOSS call recording, self-contained over embedded ADB
+  Copyright (C) 2026-present The CallVault Authors
+  Strings added for the Signal redesign of the Home screen. Kept in a separate
+  resources file to avoid conflicts with parallel work on strings.xml.
+-->
+<resources>
+    <!-- Hero status card -->
+    <string name="home_hero_status_label">Durum</string>
+    <string name="home_hero_pill_ready">Etkin</string>
+    <string name="home_hero_pill_not_paired">İşlem gerekli</string>
+    <string name="home_hero_pill_no_folder">İşlem gerekli</string>
+    <string name="home_hero_pill_dev_options_off">Kayıt bozuk</string>
+    <string name="home_hero_pill_update_regrant">İşlem gerekli</string>
+    <string name="home_support_pill">Destek</string>
+    <string name="home_usb_advisory_title">Ekran kilitlenince kayıt durabilir</string>
+    <string name="home_usb_advisory_text">USB bir veri moduna ayarlı. Yalnızca şarj olarak ayarlamak için dokunun.</string>
+    <string name="home_usb_advisory_fix">Düzelt</string>
+
+    <!-- Recordings section -->
+    <string name="home_view_recordings">Kayıtlar</string>
+    <string name="home_view_all_calls">Arama geçmişi</string>
+    <string name="home_calls_filter_all">Tümü</string>
+    <string name="home_calls_filter_recorded">Kaydedilen</string>
+    <string name="home_calls_filter_not_recorded">Kaydedilmeyen</string>
+    <string name="home_calls_filter_missed">Cevapsız</string>
+    <string name="home_call_origin_phone">Telefon araması</string>
+    <string name="home_call_not_recorded">Kaydedilmedi</string>
+    <string name="home_call_missed">Cevapsız</string>
+    <string name="home_call_declined">Reddedildi</string>
+    <string name="home_call_unknown_number">Bilinmeyen numara</string>
+    <string name="home_calls_empty">Telefonun arama kaydında henüz arama yok.</string>
+    <string name="home_calls_no_permission">CallVault arama kaydını okuyamıyor. Tüm aramaları burada görmek için Android’in uygulama ayarlarında CallVault için “Arama kayıtları” iznini verin.</string>
+    <string name="home_recordings_count">%1$d kayıtlı</string>
+    <string name="home_recordings_empty_title">Henüz kayıt yok</string>
+    <string name="home_recordings_empty_hint">CallVault bir aramayı kaydettiğinde burada görünür. Başlamak için bir arama yapın veya alın.</string>
+
+    <!-- Row content descriptions -->
+    <string name="home_play_recording">Kaydı oynat</string>
+    <string name="home_update_banner_title">Güncelleme mevcut: %1$s</string>
+    <string name="home_update_banner_text">GitHub’dan indirmeye hazır yeni bir sürüm var.</string>
+    <string name="home_update_banner_button">Güncelle</string>
+    <string name="home_update_banner_downloading">İndiriliyor… %1$d%%</string>
+    <string name="home_update_banner_installing">Yükleniyor…</string>
+    <string name="home_updated_banner_text">CallVault %1$s sürümüne güncellendi</string>
+    <string name="home_whatsnew_title">Yenilikler</string>
+    <string name="home_whatsnew_body">• Kayıt, takılırsa artık kendiliğinden toparlanıyor\n• Ana ekran, kayıt durduğunda sessiz kalmak yerine size söylüyor\n• Telefon araması artık uygulama aramasıyla karıştırılmıyor</string>
+    <string name="home_whatsnew_offline_cta">Wi-Fi dışında kaydı aç</string>
+    <string name="home_whatsnew_offline_enabled">“Wi-Fi dışında kaydetmeyi sürdür” açık.</string>
+    <string name="offline_failed_needs_wd">Açılamadı — Kablosuz hata ayıklama kapalı ve CallVault onu açamadı. Geliştirici seçeneklerinden açın, sonra yeniden deneyin.</string>
+    <string name="offline_failed_no_service">Açılamadı — CallVault telefonun hata ayıklama hizmetine ulaşamadı. Wi-Fi’de olduğunuzdan ve Kablosuz hata ayıklamanın açık olduğundan emin olun, sonra yeniden deneyin.</string>
+    <string name="offline_failed_port">Açılamadı — yerel bağlantı noktası yeniden açılmadı. Biraz sonra yeniden deneyin.</string>
+    <string name="home_whatsnew_offline_enabling">Wi-Fi dışında kayıt açılıyor…</string>
+    <string name="home_whatsnew_resilient_title">Yeni: Yardımcı durursa kaydı sürdür</string>
+    <string name="home_whatsnew_resilient_body">Arama kaydını kesintilere karşı daha dayanıklı yapar.\n\nAndroid, CallVault’un arka plan yardımcısını istediği zaman durdurabilir. Bu açıkken, zaten devam eden bir kayıt böyle bir durumdan etkilenmez.\n\nVarsayılan olarak kapalıdır — daha sonra Ayarlar ▸ Bağlantı bölümünden de açabilirsiniz.</string>
+    <string name="home_whatsnew_resilient_cta">Aç</string>
+    <string name="home_whatsnew_resilient_enabled">“Yardımcı durursa kaydı sürdür” açık. Android CallVault’un arka plan yardımcısını durdurursa, devam eden bir kayıt artık etkilenmez.</string>
+
+    <!-- Post-update note: one entry per release, newest first. Keep in sync with CHANGELOG.md. -->
+    <string name="home_whatsnew_settings_cta">Ayarları aç</string>
+    <string name="whatsnew_153_title">Kurulumunuz, kendi aramalarınızla denetlendi</string>
+    <string name="whatsnew_155_title">Panelde ayarlar ve daha güvenilir kaydedilen aramalar</string>
+    <string name="whatsnew_155_body">Ayarlar artık uygulamanın yerini almak yerine üzerinde kayarak açılıyor ve her ekran her şeyi bir arada göstermek yerine kısa bir liste olacak şekilde gruplanıyor. Kayıtlar, aramanın ne zaman yapıldığını ve ne kadar sürdüğünü gösteriyor.\n\nArka planda: bir kaydın kaybolmasına veya bozulmasına yol açabilen birkaç durum düzeltildi; buna Dayanıklı kayıtla çıkan çatırtılı ses ve Samsung telefonlarda VoIP aramalarında bir tarafın kaybolması da dahil.</string>
+    <string name="whatsnew_154_title">Kendiliğinden toparlanan kayıt</string>
+    <string name="whatsnew_154_body">Kaydediciye bağlantıda nadir görülen bir takılma, uygulama yeniden başlatılana kadar kaydın ekranda hiçbir şey söylemeden kapalı kalmasına yol açabiliyordu. Artık zaman aşımına uğruyor ve kendiliğinden toparlanıyor.\n\nKayıtların Drive’a ne zaman yükleneceğini de seçebilirsiniz: hemen, günlük veya haftalık. Bunu Ayarlar ▸ Depolama altında, aynı bölüme taşınan Saklama ile birlikte bulabilirsiniz.</string>
+    <string name="whatsnew_153_body">Durum kartı artık kaydın gerçekten çalışıp çalışmadığını, uygulamanın yalnızca başladığını gösteren yeşil bir ışık yerine gerçek aramalarınıza göre söylüyor. Bir arama kaydedilmediyse bunu ve nedenini belirtiyor — hiç ayarlanmamış bir klasör, kapatılmış Geliştirici seçenekleri, bir güncellemede kaybolan bir izin.\n\nAyrıca: CallVault artık Brezilya Portekizcesi konuşuyor ve diğer tüm diller güncellendi.</string>
+    <string name="whatsnew_150_title">Kablosuz hata ayıklamayı kapatın</string>
+    <string name="whatsnew_150_body">USB hata ayıklamayı açmak, CallVault’un Kablosuz hata ayıklamayı kapatmasına ve kapalı tutmasına izin verir. Kablo gerekmez ve Kablosuz hata ayıklamanın aksine ağ bağlantı noktası açmaz — bu yüzden açık bırakmak için ikisinden daha güvenli olanıdır. İsteğe bağlı: kayıt her iki şekilde de çalışır.\n\nAyrıca düzeltildi: USB hata ayıklamayı kapatmak, CallVault’un söylemeden kayıt yapamaz hale gelmesine yol açabiliyordu.</string>
+    <string name="whatsnew_150_where">Ayarlar ▸ Deneysel ▸ USB hata ayıklama</string>
+    <string name="whatsnew_148_title">Daha güvenilir başlangıç</string>
+    <string name="whatsnew_148_body">Bazı telefonlarda CallVault, kayda hazır hale gelmeden Kablosuz hata ayıklamayı sürekli açıp kapatabiliyordu. Bu düzeltildi. Kablosuz hata ayıklamanın tek giriş yolu olduğu yerlerde CallVault artık onu açık bırakıyor ve tekrar kapatılabilmesi için hangi ayarın gerektiğini söylüyor.\n\nAyrıca düzeltildi: bir uygulama araması sorunsuz kaydedilmesine rağmen hata bildirebiliyor ve yanlış uygulamayla etiketlenebiliyordu.</string>
+    <string name="whatsnew_147_title">Uygulama aramalarını kaydedin (VoIP)</string>
+    <string name="whatsnew_147_body">CallVault artık WhatsApp, Signal ve Telegram gibi uygulamaların içinden yapılan aramaları kaydedebiliyor — yalnızca kendi sesinizi değil, konuşmanın her iki tarafını da. Kayıtlar aramanın hangi uygulamada yapıldığını ve uygulama sağlıyorsa kişinin adını gösterir.\n\nDeneysel: bazı uygulamalarda çalışır, bazılarında çalışmaz ve bir uygulama bir güncellemeyle kaydı her an engelleyebilir.</string>
+    <string name="whatsnew_147_where">Ayarlar ▸ Deneysel ▸ VoIP aramaları</string>
+    <string name="whatsnew_146_title">Dayanıklı kayıt</string>
+    <string name="whatsnew_146_body">Android, CallVault’un arka plan yardımcısını istediği zaman durdurabilir; bu da eskiden bir kaydı yarıda keserek size yarım bir arama bırakırdı. Bu açıkken, zaten başlamış bir kayıt ne olursa olsun sonuna kadar devam eder.</string>
+    <string name="whatsnew_146_where">Ayarlar ▸ Deneysel ▸ Dayanıklılık</string>
+    <string name="whatsnew_145_title">Ekran kilitlenince de kaydetmeyi sürdürün</string>
+    <string name="whatsnew_145_body">Birçok telefonda arama sırasında ekranı kilitlemek kaydediciyi arama ortasında durduruyordu. Bu düzeltildi ve CallVault artık buna telefonunuzun USB ayarı yol açıyorsa sizi uyarıyor.</string>
+    <string name="offline_recording_on">Wi-Fi dışında kayıt açık.</string>
+    <string name="offline_recording_disabling">Wi-Fi dışında kayıt kapatılıyor…</string>
+
+    <!-- Setup health: what real calls proved, shown as the status card's second line when ready -->
+    <string name="home_health_verified">Son doğrulama: %1$s.</string>
+    <string name="home_health_verified_just_now">Az önce doğrulandı.</string>
+    <string name="home_health_unverified">Bir sonraki aramanız kaydın çalıştığını doğrulayacak.</string>
+    <string name="home_health_setup_changed">Son aramanızdan beri kurulum değişti — bir sonraki aramanız hâlâ çalıştığını doğrulayacak.</string>
+    <string name="home_health_call_not_recorded">Bir arama kaydedilmedi — %1$s, %2$s.</string>
+    <string name="home_health_call_not_recorded_unnamed">Bir arama kaydedilmedi — %1$s.</string>
+    <string name="home_health_call_not_recorded_force_stopped">CallVault sizin tarafınızdan (Etkin uygulamalar veya Zorla durdur), telefon tarafından ya da başka bir uygulama tarafından durdurulmuştu, bu yüzden aramayı duyamadı. Telefonunuzun pil ayarlarının CallVault’u uyutmadığından emin olun.</string>
+    <!-- A call missed while a specific, user-owned prerequisite was missing — named precisely rather
+         than reading as the unexplained daemon-died case above. One pair (labelled/unnamed) per
+         Prerequisite, mirroring home_health_call_not_recorded / _unnamed. -->
+    <string name="home_health_missed_recording_folder">Bir arama kaydedilmedi — o sırada bir kayıt klasörü ayarlanmamıştı, %1$s.</string>
+    <string name="home_health_missed_recording_folder_unnamed">Bir arama kaydedilmedi — o sırada bir kayıt klasörü ayarlanmamıştı.</string>
+    <string name="home_health_missed_adb_pairing">Bir arama kaydedilmedi — kurulum o sırada bitmemişti, %1$s.</string>
+    <string name="home_health_missed_adb_pairing_unnamed">Bir arama kaydedilmedi — kurulum o sırada bitmemişti.</string>
+    <string name="home_health_missed_developer_options">Bir arama kaydedilmedi — Geliştirici seçenekleri o sırada kapalıydı, %1$s.</string>
+    <string name="home_health_missed_developer_options_unnamed">Bir arama kaydedilmedi — Geliştirici seçenekleri o sırada kapalıydı.</string>
+    <string name="home_health_missed_secure_settings">Bir arama kaydedilmedi — CallVault kaydediciyi başlatma iznini kaybetmişti, %1$s.</string>
+    <string name="home_health_missed_secure_settings_unnamed">Bir arama kaydedilmedi — CallVault kaydediciyi başlatma iznini kaybetmişti.</string>
+    <string name="home_health_failed_empty">Son aramanız boş bir kayıt (0 bayt) üretti.</string>
+    <string name="home_health_failed_no_audio">Son aramanız kaydedildi ama hiç ses içermiyor.</string>
+    <string name="home_health_failed_daemon">Kaydedici son aramanız sırasında durdu.</string>
+    <string name="home_health_failed_one_sided">Son uygulama aramanızda yalnızca sizin tarafınız kaydedildi.</string>
+    <string name="home_health_failed_one_sided_vivo">Son uygulama aramanızda yalnızca sizin tarafınız kaydedildi. vivo’da: Recorder uygulamasını açın → Uygulama içi arama kaydı’nı açın (Kaydı otomatik başlat ile birlikte).</string>
+    <string name="home_health_failed_one_sided_vivo_overseas">Son uygulama aramanızda yalnızca sizin tarafınız kaydedildi. Bu vivo telefon, uygulamaların uygulama aramalarında karşı tarafı kaydetmesini engelliyor ve buna izin verme seçeneği yok. Normal telefon aramaları her iki tarafı da kaydeder.</string>
+    <string name="home_date_today">Bugün</string>
+    <string name="home_date_yesterday">Dün</string>
+    <string name="whatsnew_221_title">Daha hızlı açılır ve olmayan sorunlar hakkında daha sessizdir</string>
+    <string name="whatsnew_221_body">CallVault’u açmak yine hızlı ve kaç arama tutarsanız tutun hızlı kalıyor. 2.2.0, liste her çizildiğinde her kaydın uzunluğunu yeniden okuyordu; bu yüzden birkaç düzine aramanız olduğunda liste yavaşlıyor ve dakikalar önce kaydedilmiş bir arama hiç kaydedilmemiş gibi görünebiliyordu.\n\nKayıtların Google Drive’a ulaşmayı bıraktığı uyarısı artık gerçekten bırakmadıklarında görünmüyor. İki kişiye, her kayıt sorunsuz ulaşırken yedeklemelerinin başarısız olduğu söylenmişti.\n\nDışa aktarılan bir yazıya dökümün içindeki başlıklar, seçili uygulamaların sayısı ve geri düğmesi artık İngilizce kalmak yerine seçtiğiniz dili izliyor. Hata ayıklama raporu ayrıca, yakalanması zor bir sorun için mikrofonu hangi uygulamanın tuttuğunu da söyleyebiliyor.</string>
+    <string name="whatsnew_220_title">Bir aramayı yeniden bulun ve gerçekleşirken yönlendirin</string>
+    <string name="whatsnew_220_body">Henüz konuşurken bir anı işaretleyin. Arama bildirimindeki bir düğme, bastığınız yere bir yer imi bırakır ve kayıt bunları oradan oynatan çipler olarak gösterir — hem telefon aramalarında hem uygulama aramalarında. Uygulama aramalarında artık denetimler de var: duraklat, sürdür, durdur ve işaretle; daha önce yalnızca başlatılıp bitirilebiliyordu.\n\nBir aramayı yeniden bulmak daha kolay: saklamaya değer olanları yıldızlayın, kendi sözcüklerinizle etiketleyin ve yalnızca konuşulan sözcüklerde değil özetlerde ve kendi notlarınızda da arayın. Yazıya dökümler metin, Markdown, SRT, VTT veya JSON olarak dışa aktarılır.\n\nCallVault ayrıca sessizce çalışmayı bıraktığında da sesini çıkarıyor — yeniden başlatmadan sonra kayıt başlayamazsa veya kayıtlar Drive’a ulaşmayı bırakırsa. İkisi de eskiden sessizdi. Yeni düzenleme seçenekleri kayıtların kapladığı alanı sınırlayabilir veya çok kısa olanları silebilir. Hepsi varsayılan olarak kapalıdır ve yıldızlı bir kayıt asla otomatik olarak silinmez.</string>
+    <string name="whatsnew_220_where">Düzenleme seçenekleri için Ayarlar ▸ Depolama ▸ Saklama</string>
+    <string name="whatsnew_211_title">Daha iyi yazıya dökümler, daha iyi özetler</string>
+    <string name="whatsnew_211_body">Yazıya döküm artık model bir aramayı okumadan önce sessizliği atlıyor ve akla gelen ilk sözcüğü almak yerine birkaç olası yazıya dökümü tartıyor. Daha fazla iş yapmasına rağmen eskisinden biraz daha hızlı çıktı ve bir test aramasında önceki sürümün atladığı bir cümlenin tamamını geri kazandı.\n\nÖzetler artık kendini tekrar etmiyor; bu, madde listesinin gerçek bir sınırı olmamasından kaynaklanıyordu. Ayrıca daha fazlasını söyleyebiliyorlar: maddeler beşle sınırlıydı ve her biri tek kısa satır olmalıydı, ikisi de içerik pahasına uygulanıyordu. Daha fazla sözcük gerektiren bir dildeki uzun bir özet artık yer kalmadığı için atılmıyor.\n\nKayıtlar ayrıca girişte sessizce bozuluyordu — onları modelin beklediği hıza indirmek, konuşmayı filtrelemek yerine ona gürültü ekliyordu. Giden aramalar en çok etkilenenlerdi, çünkü kendi sesinizin çoğunu onlar taşır.</string>
+    <string name="whatsnew_210_title">Yazıya dökümler kimin konuştuğunu gösterir</string>
+    <string name="whatsnew_210_body">Bundan sonra kaydedilen aramalar, her satırın yanında konuşmacıyla birlikte yazıya dökülür.\n\nBu bilgi arama kaydedilirken aramadan okunur — telefonunuz iki tarafı karıştırmadan önce ayrı tutar — bu yüzden ek süre, ek indirme ve tahmin gerektirmez. Telefonda zaten bulunan aramalar için yapılamaz, çünkü bu bilgi yalnızca arama kaydedilirken vardır.\n\nİki taraf başlangıçta Konuşmacı A ve Konuşmacı B olarak başlar. İki giden arama hangi tarafın hangisi olduğu konusunda uyuştuğunda, bunlar siz ve konuştuğunuz kişi olur — yazıya dökümde, kopyaladığınız veya paylaştığınız şeyde ve özette.</string>
+    <string name="whatsnew_210_where">Bundan sonra kaydedilen her arama, yazıya dökümünde</string>
+    <string name="whatsnew_200_title">Aramalarınız yazıya döküldü — ve özetlendi</string>
+    <string name="whatsnew_200_body">İkisi de tamamen telefonunuzda çalışan iki büyük ekleme. Hiçbir şey yüklenmez ve ikisi de hiç ağ olmadan çalışır.\n\nYazıya döküm, bir kaydı okuyabileceğiniz ve arayabileceğiniz metne çevirir, on dört dilde. Aramadaki o ana atlamak için bir satıra dokunun.\n\nÖzetler bir adım daha ileri gider: aramanın ne hakkında olduğu, neye karar verildiği ve kimin ne yapacağını söylediği — varsa noktaların yanında zamanlarla, böylece dokunmak sizi doğrudan oraya götürür.\n\nHer biri için önce Wi-Fi üzerinden bir model indirmek gerekir; uygulama başlamadan önce her birinin neye mal olduğunu söyler.</string>
+    <string name="whatsnew_200_where">Ayarlar ▸ Yazıya döküm ve Ayarlar ▸ Arama özetleri</string>
+    <string name="whatsnew_157_title">Otomatik silme artık silmesi gereken her şeyi siliyor</string>
+    <string name="whatsnew_157_body">Kayıtları otomatik silinecek şekilde ayarladıysanız, bazıları sessizce sonsuza kadar saklanıyordu — denetim yalnızca CallVault’un hâlâ kaydını tuttuğu kayıtlara bakıyordu ve takibini kaybettikleri hiçbiri ne kadar eskirse eskisin silinmiyordu. Bir haftalık saklamaya ayarlı bir telefonda 131 dosya bu süreyi aşmıştı.\n\nGünlük denetim artık kayıt klasörlerinizi de okuyor, böylece yalnızca yaş belirliyor. Yalnızca CallVault’un adlandırdığı dosyalara dokunulur ve tarihlendiremediği her şey olduğu gibi bırakılır.\n\nDenetimin çalıştığı saati değiştirmek de bir gün beklemek yerine hemen geçerli oluyor.</string>
+    <string name="whatsnew_157_where">Ayarlar ▸ Depolama ▸ Saklama</string>
+    <string name="whatsnew_156_title">Nelerin kaydedileceğine karar verin ve kayıtları düzenleyin</string>
+    <string name="whatsnew_156_body">Telefon aramaları ve uygulama aramaları ayrı ayrı otomatik kaydedilebilir, önce sorabilir veya tamamen yok sayılabilir — böylece “yalnızca uygulama aramaları” artık kendiniz çözmeniz gereken bir birleşim değil, gerçek bir ayar.\n\nKayıtlar paylaşılabilir ve birkaçını birden paylaşmak veya silmek için basılı tutularak seçilebilir. Hem cihazda hem Drive’da tutulan bir kaydı silmek artık hangi kopyaların kaldırılacağını soruyor.</string>
+    <string name="whatsnew_156_where">Ayarlar ▸ Kayıt ▸ Telefon aramaları</string>
+    <string name="merge_confirm">Birleştir</string>
+    <string name="merge_menu_action">Başka bir aramayla birleştir</string>
+    <string name="merge_menu_take_apart">Birleştirmeyi geri al</string>
+    <string name="merge_no_candidates">Telefonda bu numarayla başka arama yok.</string>
+    <string name="merge_only_in_drive">Yalnızca Drive’da</string>
+    <string name="merge_pick_hint">Devamını işaretleyin. Numaralar işaretleme sırasını izler.</string>
+    <string name="merge_primary_hint">Birleştirilen aramayı başlatır</string>
+    <string name="merge_title">%1$s ile aramaları birleştir</string>
+    <string name="settings_merge_keep_originals_description">Birleştirmeden sonra, oluşturulduğu aramaları telefonda da bırakın. Varsayılan olarak kapalıdır, böylece birleştirme tek bir kayıt bırakır. Birleştirilmiş bir aramayı ayırmak her iki durumda da çalışır.</string>
+    <string name="settings_merge_keep_originals_title">Birleştirmeden sonra orijinalleri sakla</string>
+    <string name="unmerge_confirm">Birleştirmeyi geri al</string>
+    <string name="unmerge_message">Bu aramalar yeniden oluşur, her biri sahip olduğu yazıya döküm ve işaretlerle:</string>
+    <string name="unmerge_title">Bu aramanın birleştirmesi geri alınsın mı?</string>
+    <plurals name="merge_row_badge">
+        <item quantity="one">%1$d arama</item>
+        <item quantity="other">%1$d arama</item>
+    </plurals>
+    <plurals name="merge_summary">
+        <item quantity="one">%1$d arama · %2$s</item>
+        <item quantity="other">%1$d arama · %2$s</item>
+    </plurals>
+    <string name="merge_note_will_delete">Diğer aramalar kaldırılır. Birleştirmeyi daha sonra geri almak onları geri getirir.</string>
+    <string name="merge_note_will_keep">Diğer aramalar telefonda da saklanır.</string>
+    <string name="home_scroll_to_top">Başa dön</string>
+    <string name="home_whatsnew_full_notes">Tüm sürüm notları</string>
+    <string name="whatsnew_252_title">Artık Türkçe de var</string>
+    <string-array name="whatsnew_252_items">
+        <item>Türkçe eklendi: CallVault artık Türkçe kullanılabiliyor ve aramalar Türkçe olarak yazıya dökülebiliyor</item>
+    </string-array>
+    <string name="whatsnew_251_title">Daha uzun saklama süreleri, stereo kayıt ve Samsung Wi-Fi Çağrısı</string>
+    <string-array name="whatsnew_251_items">
+        <item>Otomatik silme artık kayıtları 60, 90 veya 120 gün saklayabiliyor</item>
+        <item>Uygulama aramaları (WhatsApp, Telegram ve diğerleri) artık telefon aramaları gibi “Kayıt başladı” gösteriyor</item>
+        <item>Bir kaydı doğrudan listeden yıldızlayın</item>
+        <item>Stereo kayıt: her taraf kendi kanalında (Ayarlar ▸ Ses ve dosya adları ▸ Kanallar). Varsayılan mono olarak kalır</item>
+        <item>Samsung telefonlar: Wi-Fi Çağrısı üzerinden yapılan aramalar her iki tarafla kaydedilir</item>
+        <item>“Yazıya dökümü ve notları kaydın yanına kaydet” büyük bir kitaplıkta çok daha hafif</item>
+        <item>Düzeltildi — bazı yükleyicilerle (ör. SAI) yüklerken çıkan “sertifika yok” hatası</item>
+        <item>Düzeltildi — Telegram ve AyuGram aramaları artık iki dosyaya bölünmüyor ve doğru adı gösteriyor</item>
+        <item>Düzeltildi — uzun aramalar artık bulut yazıya dökümüyle zaman aşımına uğramıyor</item>
+    </string-array>
+    <string name="whatsnew_250_title">Aramadan sonra sakla veya sil ve ihtiyacınız olanı paylaşın</string>
+    <string-array name="whatsnew_250_items">
+        <item>Sakla veya sil: CallVault her aramadan sonra kaydın saklanıp saklanmayacağını sorabilir (Ayarlar ▸ Kayıt)</item>
+        <item>Bir aramanın kaydını, yazıya dökümünü ve özetini birlikte paylaşın — veya bir kaydın yalnızca bir bölümünü</item>
+        <item>Arama geçmişi: telefonunuzun kaydındaki her arama, kaydının yanında</item>
+        <item>Ayarlar’da arama</item>
+        <item>Yeniden yazıya dök ve yenilemek için herhangi bir sayfayı aşağı çekin</item>
+        <item>Kendi dosya adı biçiminiz ve her aramanın hangi SIM’i kullandığına dair isteğe bağlı bir etiket</item>
+        <item>Uygulama ve yazıya döküm için Bengalce</item>
+        <item>Google Voice üzerinden yapılan aramalar çevirdiğiniz numarayı koruyor</item>
+        <item>Shizuku modu: mikrofon artık aramadan sonra açık kalmıyor ve kaydedici yeniden başladığında çökme olmuyor</item>
+        <item>Arama sırasında CallVault’u duraklatan Honor telefonlar daha güvenilir kaydediyor</item>
+        <item>Drive: Drive klasörü aynı zamanda kayıt klasörü olduğunda kayıtlar artık kaybolmuyor</item>
+        <item>Bir arama, CallVault zorla durdurulduğu için kaydedilmediğinde kart bunu söylüyor</item>
+    </string-array>
+    <string name="whatsnew_249_title">Daha net uygulama aramaları ve güncellemelerden hemen sonra hazır</string>
+    <string-array name="whatsnew_249_items">
+        <item>Mikrofonu ahize sesini yakalayan telefonlarda uygulama aramalarında daha az yankı</item>
+        <item>Telegram aramaları sonuna kadar, Telegram’ın adı ve simgesiyle kaydediliyor</item>
+        <item>Kayıt başlamadan biten uygulama aramaları artık boş dosya bırakmıyor</item>
+        <item>Kayıt, bir güncellemeden saniyeler sonra hazır</item>
+        <item>Her uzunluktaki aramalar yazıya dökülebilir; uzun olanlar ne kadar süreceğini söyler</item>
+        <item>Dil listesinde bir dil bulmak için yazın ve yazıya döküm için Urduca</item>
+        <item>Kablosuz hata ayıklamayı asla kapatma — Ayarlar ▸ Bağlantı’da yeni bir anahtar</item>
+        <item>Kendi yazıya döküm sunucunuz kendi ağınızda http:// kullanabilir</item>
+        <item>Ayarlar her zaman sayfa başına düzeni açıyor; klasik görünüm kalktı</item>
+    </string-array>
+    <string name="whatsnew_248_title">Kendi yazıya döküm anahtarınız ve daha kolay okuma</string>
+    <string-array name="whatsnew_248_items">
+        <item>Kendi anahtarınızla yazıya dökün — Groq, OpenRouter veya kendi sunucunuz, dakikalar yerine saniyeler içinde (Ayarlar ▸ Nerede yazıya dökülsün)</item>
+        <item>Doğrudan Kayıtlar listesinden oynatın, herhangi bir noktaya atlamak için bir çubukla</item>
+        <item>Yazıya dökümü okurken Önceki ve Sonraki ve bir Oynatmayı izle anahtarı</item>
+        <item>Yazıya Dökümler sayfasındaki içe aktarma artık tek düğme: sesi saklayın veya yalnızca yazıya dökümü saklayın</item>
+        <item>45 dakika veya daha uzun aramalar yeniden yazıya dökülüyor, içe aktarılıyor ve dalga biçimini çiziyor</item>
+        <item>Mobil veride model indirmeleri Wi-Fi’yi beklemek yerine önce soruyor</item>
+        <item>Farsçaya ayarlanmış bir konuşma modeli ve daha iyi TalkBack desteği</item>
+        <item>Kablosuz hata ayıklamanın adresini gizleyen telefonlarda bağlanıyor</item>
+    </string-array>
+    <string name="whatsnew_247_title">Yeni Ayarlar, Shizuku yetişiyor ve Ukraynaca</string>
+    <string-array name="whatsnew_247_items">
+        <item>Yeni Ayarlar düzeni — her sayfa yalnızca kendi ayarlarını gösterir, ayrıntılar ⓘ’nin ardında; klasik görünüm tek dokunuş uzakta</item>
+        <item>Daha basit kurulum — yeni Ayarlar gibi adım başına bir satır</item>
+        <item>Shizuku modu yetişiyor — uygulama aramaları, dayanıklı kayıt ve konuşmacı adları orada da çalışıyor ve telefon aramaları daha hızlı kaydedilmeye başlıyor</item>
+        <item>Ukraynaca — yeni bir uygulama ve yazıya döküm dili; Farsça da yazıya döküm için sabitlenebilir</item>
+        <item>Kayıtları gizle — kayıtlarınızı müzik çalarlardan ve galerilerden uzak tutun</item>
+        <item>Modelleri içe aktarın ve yedekleyin — elinizdeki bir model dosyasını kullanın ve yeniden yüklemeden önce bir kopya kaydedin</item>
+        <item>Yeni Wi-Fi ağlarını otomatik onaylayın — isteğe bağlı: kayıt artık “İzin ver”e dokunmanızı beklemiyor</item>
+        <item>Uygulama aramalarında da yok sayılan kişileri atla</item>
+        <item>Honor / Huawei dosya adları — Honor’un telefon uygulaması, arama geçmişinden kayıtları oynatabiliyor</item>
+        <item>MagicOS 11 olan Honor telefonlarda uygulama aramaları kaydediliyor</item>
+        <item>Düzeltmeler — CallVault artık Shizuku’nun bekçi köpeğiyle savaşmıyor, Shizuku kaydedicisi Android onu durdurduktan sonra geri geliyor, kişi- ve numara-öncelikli dosya adları yeniden birleşiyor ve aranıyor, Yunanca ve Farsça özetler doğru dilde çıkıyor ve kaydedici için bir güvenlik düzeltmesi</item>
+    </string-array>
+    <string name="whatsnew_246_title">Ana açma/kapama anahtarı, Yunanca ve düzeltmeler</string>
+    <string-array name="whatsnew_246_items">
+        <item>Ana Açma/Kapama anahtarı — operatör ve uygulama aramaları dahil tüm kaydı ana karttan veya Hızlı Ayarlar’dan açıp kapatın (yeniden başlatmadan etkilenmez)</item>
+        <item>Yunanca yazıya döküm</item>
+        <item>Her kitaplık sayfasında tümünü seç / tümünü temizle</item>
+        <item>Arama listesini sıralayın; numara, tarih ve saat artık her yazıya dökümün üstünde görünüyor</item>
+        <item>Kişi adları kişiyi kaydettiğinizde doluyor — yeniden kayıt gerekmez</item>
+        <item>Yazıya dökümler ve ayrıntı dosyaları artık “Hemen” eşitlemede de Drive’a ulaşıyor ve yalnızca Drive’daki aramaları birleştirebilirsiniz</item>
+        <item>Ayrıntı dosyası, onu okuyan araçlar için konuşmacı sıralarını taşıyabilir</item>
+        <item>Düzeltmeler — uzun aramalar yeniden kaydırılabiliyor, uygulama aramaları sırasında başıboş “Kaydı başlatmak için basın” yok ve “Her iki kopyayı sil” her kopyayı temizliyor</item>
+    </string-array>
+    <string name="whatsnew_245_title">Yeni diller, yedekler ve daha fazlası</string>
+    <string-array name="whatsnew_245_items">
+        <item>Farsça ve Arapça — sağdan sola yazılan iki yeni uygulama dili</item>
+        <item>vivo uygulama aramaları — karşı tarafı kaydetmek için vivo’nun Recorder → Uygulama içi arama kaydı’nı açın</item>
+        <item>Yazıya döküm yedekleri — yazıya dökümleri ve notları her kaydın yanına metin olarak kaydedin</item>
+        <item>Dosya adı şablonları — yeni kişi- ve numara-öncelikli sıralar</item>
+        <item>Dışa ve içe aktarma — ayarlarınızı bir dosyaya yedekleyin</item>
+        <item>Düzeltildi — artık yanlış “arama kesildi” yok</item>
+    </string-array>
+    <string name="whatsnew_244_title">Daha güvenilir kayıt, kolay yeniden eşleştirme ve güncelleme uyarıları</string>
+    <string name="whatsnew_244_where">Ayarlar ▸ Güvenilirlik ▸ Yeniden eşleştir</string>
+    <string-array name="whatsnew_244_items">
+        <item>Yeni — Telefonunuz arama ortasında CallVault’u kapatırsa, bundan önce kaydedilen kısım saklanır ve size söylenir</item>
+        <item>Yeni — Kaydedici bağlantısı kaybolursa Ayarlar’dan yeniden eşleştirin, yeniden yüklemeye gerek yok</item>
+        <item>Yeni — Bir açılır pencere ve daha hızlı denetimler yeni bir sürüm çıkar çıkmaz size haber verir</item>
+        <item>Değişti — Android sürümünüzün kullanamadığı ayarlar, nedeni belirtilerek gri gösterilir</item>
+    </string-array>
+    <string name="whatsnew_243_title">Uygulama aramaları senkronda kalır, notlar yazarken kaydedilir ve yalnızca seçtiklerinizi kaydedin</string>
+    <string name="whatsnew_243_where">Ayarlar ▸ Kayıt ▸ Gelen aramalar ▸ Yalnızca seçili kişileri kaydet</string>
+    <string-array name="whatsnew_243_items">
+        <item>Yeni — Gelen veya giden aramalar için yalnızca seçtiğiniz kişileri kaydedin</item>
+        <item>Düzeltildi — Uygulama aramalarında karşıdaki kişi artık sizinle senkrondan çıkmıyor</item>
+        <item>Düzeltildi — Not yazmak her harfi koruyor ve Kaydedildi diyor</item>
+        <item>Düzeltildi — Aramadan sonra arkada arama bildirimi kalmıyor</item>
+        <item>Düzeltildi — Bir test sürümü yüklediyseniz size son güncelleme sunuluyor</item>
+        <item>Düzeltildi — Yanlış giden bir model indirmesi hasarlı diye başarısız olmak yerine temizlenir ve yeniden indirilir</item>
+        <item>Düzeltildi — Dayanıklı kayıt açıkken bazı telefonlar her ikinci aramayı kaybediyordu</item>
+        <item>Düzeltildi — vivo ve iQOO telefonlarda uygulama aramaları kaydediliyor</item>
+    </string-array>
+    <string name="whatsnew_241_title">Her sayfada arama ve onlar cevap verdiğinde kaydı başlatma</string>
+    <string-array name="whatsnew_241_items">
+        <item>Yeni — Kayıtlar, Yazıya Dökümler ve Özetler’de bir arama satırı: bir kişi veya söylenen bir sözcük</item>
+        <item>Yeni — Giden bir aramayı yalnızca karşı taraf cevap verdiğinde kaydetmeye başlayın (varsayılan olarak kapalı)</item>
+        <item>Yeni — Shizuku kayıtları konuşmacı etiketleri alıyor</item>
+        <item>Düzeltildi — Android 14 ve öncesinde uygulama aramaları kişinin adını taşıyor</item>
+        <item>Düzeltildi — Shizuku modunda bir güncelleme artık bir sonraki aramaya mal olmuyor</item>
+        <item>Düzeltildi — Her iki konuşmacının paylaştığı bir satır konuşmacının değiştiği yerden bölünüyor</item>
+        <item>Düzeltildi — Yanlış alfabedeki bir yazıya döküm yeniden çözülüyor</item>
+        <item>Düzeltildi — Yalnızca bir kişinin konuştuğu bir satır artık adsız bırakılmıyor</item>
+    </string-array>
+    <string name="whatsnew_241_where">Ayarlar ▸ Kayıt ▸ Giden aramalar ▸ Cevap verince başlat</string>
+    <string name="whatsnew_240_title">Kayıtların, yazıya dökümlerin ve özetlerin her birinin bir yeri var</string>
+    <string-array name="whatsnew_240_items">
+        <item>Yeni — Kayıtlar, Yazıya Dökümler ve Özetler içeren, kaldığınız yerden açılan bir ana ekran</item>
+        <item>Yeni — Bir ses dosyasını içe aktarın veya başka bir uygulamadan CallVault’a paylaşın</item>
+        <item>Yeni — Yalnızca sözcükler için içe aktarın: yazıya döküm hazır olduğunda ses silinir</item>
+        <item>Yeni — Bir yazıya dökümü kendi sayfasında okuyun ve ona not ekleyin</item>
+        <item>Yeni — Silmek, paylaşmak veya kaydetmek için birkaç yazıya dökümü veya özeti aynı anda seçin</item>
+        <item>Yeni — Bir yazıya döküm bittiğinde bildirim</item>
+        <item>Düzeltildi — Telefonu yeniden başlatmak artık kaydetmeyen bir durumda bırakmıyor</item>
+        <item>Düzeltildi — CallVault Shizuku’yu durdurmak zorunda kaldığında Shizuku yeniden başlatılıyor</item>
+        <item>Düzeltildi — Kurulum Android 17’de çalışıyor</item>
+    </string-array>
+    <string name="whatsnew_240_where">Ana ekran ▸ Yazıya Dökümler ▸ Ses içe aktar</string>
+    <string name="whatsnew_230_title">Tek bir konuşma olan aramalar tek bir kayıt olabilir</string>
+    <string-array name="whatsnew_230_items">
+        <item>Yeni — Tek bir konuşma olan aramaları tek bir kayıtta birleştirin</item>
+        <item>Yeni — Hata raporunu seçtiğiniz bir klasöre kaydedin</item>
+        <item>Düzeltildi — Telefonu döndürmek yerinizi koruyor</item>
+        <item>Düzeltildi — Kayıtlarda artık çatırtı yok</item>
+        <item>Düzeltildi — Başlayamayan bir kayıt artık bunu söylüyor</item>
+        <item>Düzeltildi — AAC’ye geçmek bir sonraki aramayı koruyor</item>
+        <item>Düzeltildi — Sesli mesaj artık başarısız arama olarak günlüğe işlenmiyor</item>
+        <item>Düzeltildi — Uzun bir duraktan sonraki yazıya döküm zaman damgaları doğru</item>
+        <item>Düzeltildi — Güncelleme bir sonraki aramanın kaydını koruyor</item>
+        <item>Düzeltildi — Shizuku gizleme modu destekleniyor</item>
+        <item>Düzeltildi — Açtığınız Kablosuz hata ayıklama açık kalıyor</item>
+        <item>Düzeltildi — Wi-Fi dışında kayıt gerçekte neyin başarısız olduğunu söylüyor</item>
+        <item>Düzeltildi — Mikrofon noktası artık aramadan sonra açık kalmıyor</item>
+        <item>Düzeltildi — Yazıya döküm ilerlemesi artık döndürdüğünüzde yeniden başlamıyor</item>
+        <item>Düzeltildi — Bir aramayı silmek yazıya dökümünü durduruyor</item>
+        <item>Düzeltildi — Başlattığınız bir yazıya döküm için sıcak telefon bildirimi yok</item>
+        <item>Düzeltildi — Otomatik kaydedilen aramalar artık bir Kaydet düğmesi yakıp söndürmüyor</item>
+        <item>Düzeltildi — Yazıya döküm ilerlemesi artık dörtte üçte takılmıyor</item>
+        <item>Düzeltildi — Kaydedilen bir arama iki değil bir bildirim gösteriyor</item>
+        <item>Düzeltildi — Günlük görüntüleyici ekranı dolduruyor ve uzun satırları kaydırıyor</item>
+    </string-array>
+    <string name="whatsnew_230_where">Herhangi bir kayıttaki ⋮ menüsü ▸ Başka bir aramayla birleştir</string>
+    <string name="merge_progress_title">Birleştiriliyor</string>
+    <string name="unmerge_progress_title">Birleştirme geri alınıyor</string>
+    <string name="merge_progress_step">%2$d aramadan %1$d</string>
+    <string name="merge_progress_done">Başarıyla birleştirildi</string>
+    <string name="unmerge_progress_done">Birleştirme başarıyla geri alındı</string>
+    <string name="progress_closing_in">%1$d sn içinde kapanıyor</string>
+    <string name="merge_progress_working">Aramalar birleştiriliyor</string>
+    <string name="unmerge_progress_working">Aramalar ayrılıyor</string>
+    <string name="merge_progress_downloading">Drive’dan indiriliyor</string>
+    <string name="merge_progress_cleaning_up">Temizleniyor</string>
+    <string name="offline_failed_no_wifi">Açılamadı — Wi-Fi’de değilsiniz. Bir kez herhangi bir Wi-Fi ağına bağlanın, sonra yeniden deneyin.</string>
+    <string name="offline_failed_wd_refused">Açılamadı — Android bu ağda Kablosuz hata ayıklamaya izin vermedi. Bir kez Geliştirici seçeneklerinden açın, istemi kabul edin, sonra yeniden deneyin.</string>
+    <string name="offline_failed_needs_usb">Önce CallVault ayarlarında USB hata ayıklamayı açın — Wi-Fi dışında kayıt onsuz çalışamaz.</string>
+
+    <!-- Home: the hub of cards, and the two sections its cards open -->
+    <string name="home_hub_library_title">Kitaplık</string>
+    <string name="home_hub_recordings_body">CallVault’un kaydettiği her arama.</string>
+    <string name="home_hub_transcripts_body">Aramalarınız sözcüklere dökülmüş halde — ve getirdiğiniz her ses.</string>
+    <string name="home_hub_summaries_body">Telefonunuzda yazılan yapay zekâ özetleri.</string>
+    <string name="home_transcripts_title">Yazıya dökümler</string>
+    <string name="home_summaries_title">Özetler</string>
+    <string name="home_transcripts_count">%1$d yazıya döküldü</string>
+    <string name="home_summaries_count">%1$d özetlendi</string>
+    <string name="home_transcripts_empty_title">Henüz yazıya dökülen yok</string>
+    <string name="home_transcripts_empty_hint">Bir kaydın menüsünden yazıya döküm isteyin veya bir ses dosyası getirmek için İçe aktar’a dokunun. İkisi de yazıldığında burada görünür.</string>
+    <string name="home_summaries_empty_title">Henüz özetlenen yok</string>
+    <string name="home_summaries_empty_hint">Yazıya dökümü olan bir aramayı açın ve özet isteyin; yazıldığında burada görünür.</string>
+
+    <!-- Transcripts: the two headings above the finished transcripts -->
+    <string name="transcripts_working_header">Yazıya dökülüyor</string>
+    <string name="transcripts_failed_header">Tamamlanmadı</string>
+    <string name="transcripts_failed_hint">Yeniden denemek için birine dokunun.</string>
+    <string name="transcripts_waiting_header">Yazıya dökülmeyi bekliyor</string>
+    <string name="transcripts_waiting_hint">Bunları saklamak için değil, okunmak için paylaştınız. Başlatmak için birine dokunun veya dinlemek ya da silmek için açın.</string>
+    <!-- Summaries: the two headings above the finished summaries -->
+    <string name="summaries_working_header">Özetleniyor</string>
+    <string name="summaries_failed_header">Tamamlanmadı</string>
+    <string name="summaries_failed_hint">Yeniden istemek için birini açın.</string>
+    <!-- Transcripts: bringing in audio CallVault did not record -->
+    <string name="transcripts_import_title">Ses içe aktar</string>
+    <string name="transcripts_import_working">İçe aktarılıyor…</string>
+    <string name="transcripts_import_fab">İçe aktar</string>
+    <string name="import_sheet_keep">Sesi sakla</string>
+    <string name="import_sheet_keep_hint">Kayıtlarınızla birlikte listelenir</string>
+    <string name="import_sheet_transcript_only">Yalnızca yazıya döküm</string>
+    <string name="import_sheet_transcript_only_hint">Ses sonradan silinir</string>
+    <string name="import_failed_title">Bu dosya içe aktarılamadı</string>
+    <string name="import_failed_not_audio">CallVault bu tür bir dosyayı okuyamıyor. Bir .opus, .ogg, .m4a, .mp3 veya .wav kaydı deneyin.</string>
+    <string name="import_failed_empty">Bu dosya boş, bu yüzden yazıya dökülecek bir şey olmazdı.</string>
+    <string name="import_failed_no_folder">Saklamak için bir kayıt klasörü yok. Ayarlar’da birini seçin, sonra yeniden deneyin.</string>
+    <string name="import_failed_copy">Dosya kayıt klasörünüze yazılamadı. Telefonda yer olduğunu ve klasörün hâlâ kullanılabilir olduğunu kontrol edin.</string>
+    <string name="import_failed_undecodable">Bu telefon o dosyanın içindeki sesi okuyamıyor, bu yüzden hiçbir zaman yazıya dökülemezdi. Dosya hasarlı olabilir veya Android’in çözmediği bir biçimde olabilir.</string>
+    <string name="home_row_imported">İçe aktarıldı</string>
+    <string name="home_row_text_only">Yalnızca metin</string>
+    <!-- Share sheet: audio sent to CallVault from another app -->
+    <string name="share_import_label">Ses içe aktar</string>
+    <string name="share_import_working_body">İçeri kopyalanıyor ve bu telefonun okuyabildiği denetleniyor.</string>
+    <string name="share_import_done_title">Kayıtlarınıza eklendi</string>
+    <string name="share_import_done_body">Artık CallVault’ta. Dinlemek veya yazıya döküm istemek için açın.</string>
+    <string name="share_import_open">Aç</string>
+    <string name="share_import_open_app">CallVault’u aç</string>
+    <string name="share_import_close">Kapat</string>
+    <string name="share_import_nothing">Bu paylaşımla hiçbir şey gelmedi. Çevresindeki mesajı değil, ses dosyasının kendisini paylaşmayı deneyin.</string>
+    <string name="share_import_not_set_up_title">Önce CallVault kurulumunu bitirin</string>
+    <string name="share_import_not_set_up_body">CallVault tek seferlik kurulumunu bitirmedi, bu yüzden bu dosyayı saklayacak bir yer henüz yok. Onu açın, kurulumu bitirin, sonra bunu yeniden paylaşın.</string>
+    <string name="share_import_choice_title">CallVault bununla ne yapsın?</string>
+    <string name="share_import_choice_unnamed">Paylaşılan ses</string>
+    <string name="import_choice_keep">İçe aktar ve yazıya dök</string>
+    <string name="import_choice_keep_hint">Sesi kayıtlarınızda saklar ve yazıya döker.</string>
+    <string name="import_choice_transcribe_only">Yalnızca yazıya dök</string>
+    <string name="import_choice_transcribe_only_hint">Yazıya döker, sonra sesi siler. Kayıtlarınızda hiç görünmez — yalnızca sözcükler, Yazıya Dökümler altında.</string>
+    <string name="share_import_queued_keep_title">Eklendi ve sıraya alındı</string>
+    <string name="share_import_queued_keep_body">Kayıtlarınızda. Yazıya döküm bittiğinde Yazıya Dökümler altında görünür.</string>
+    <string name="share_import_queued_only_title">Yazıya döküm için sıraya alındı</string>
+    <string name="share_import_queued_only_body">Sözcükleri Yazıya Dökümler altında bulacaksınız. Yazıya döküm saklanır saklanmaz ses silinir.</string>
+    <string name="share_import_kept_title">Kaydedildi ama yazıya dökülmedi</string>
+    <string name="share_import_kept_body">Kayıtlarınızda. Yazıya dökümü istediğiniz zaman oradan başlatabilirsiniz.</string>
+    <string name="share_import_kept_only_body">Yazıya Dökümler altında bekliyor. İstediğiniz zaman oradan başlatın veya aynı yerden silin.</string>
+    <string name="share_import_no_model">Henüz yüklü bir yazıya döküm modeli yok, bu yüzden CallVault bunu okuyamıyor. Ses kaydedildi — Ayarlar’dan bir model yükleyin, sonra Yazıya Dökümler’den başlatın.</string>
+</resources>
