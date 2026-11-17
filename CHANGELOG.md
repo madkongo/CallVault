@@ -7,6 +7,15 @@ All notable changes to CallVault are documented here. The format is based on
 
 ### Added
 
+- **The recordings list: search on top, filters on one row, swipe between tabs.** The search field now sits above
+  "Recordings | All calls", stays in place while the list scrolls, and is there on both views (before, it was hidden until
+  there was a recording). The filter chips (sort, source, direction, tag, date, and Recorded/Missed on All calls) stay on
+  one line and scroll sideways instead of wrapping onto several. Swiping left or right anywhere on the page switches
+  between Recordings and All calls, in step with the switch (reversed on right-to-left languages; off while picking
+  recordings).
+  <!-- 🧪 VERIFYING (BabApps item 129, not shipped): open the Recordings page, type a name and scroll the list: the
+  search stays on top. Swipe left/right: the tab follows. Scroll the chip row sideways: it must not change the tab. -->
+
 - **The day and the time can be used on their own in a custom file name.** Four new tags: `{day}` (20261112),
   `{day-}` (2026-11-12), `{time}` (143520) and `{time-}` (14-35-20), for example `{day-}_{time-}_{contact_name}` gives
   `2026-11-12_14-35-20_Dana.ogg`. `{date}` is unchanged, so no existing name changes. A custom name needs `{date}`, or a

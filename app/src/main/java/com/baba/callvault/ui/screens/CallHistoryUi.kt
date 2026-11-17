@@ -13,8 +13,8 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.ExperimentalLayoutApi
-import androidx.compose.foundation.layout.FlowRow
+import androidx.compose.foundation.horizontalScroll
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -82,8 +82,24 @@ internal fun CallsViewSwitch(callsView: Boolean, onChange: (Boolean) -> Unit) {
     }
 }
 
+/** Which view a sideways swipe on the Recordings page moves to, in step with [CallsViewSwitch]. */
+internal object CallsViewSwipe {
+    /**
+     * @param callsView true while "All calls" is showing.
+     * @param dragX total horizontal travel of the finger in px (negative = towards the left).
+     * @param thresholdPx how far counts as a swipe rather than a slip.
+     * @param rtl the layout reads right to left, which puts "Recordings" on the right, so the
+     *   directions swap.
+     * @return the view to show, or null to stay where it is (too short, or already at that end).
+     */
+    fun target(callsView: Boolean, dragX: Float, thresholdPx: Float, rtl: Boolean): Boolean? {
+        if (kotlin.math.abs(dragX) < thresholdPx) return null
+        val towardsEnd = if (rtl) dragX > 0 else dragX < 0   // finger moves towards the second tab
+        return if (towardsEnd && !callsView) true else if (!towardsEnd && callsView) false else null
+    }
+}
+
 /** All / Recorded / Not recorded / Missed: one tap each, like the starred toggle on the recordings list. */
-@OptIn(ExperimentalLayoutApi::class)
 @Composable
 internal fun CallFilterChips(selected: CallHistory.Filter, onSelect: (CallHistory.Filter) -> Unit) {
     val options = listOf(
@@ -92,11 +108,11 @@ internal fun CallFilterChips(selected: CallHistory.Filter, onSelect: (CallHistor
         CallHistory.Filter.NOT_RECORDED to R.string.home_calls_filter_not_recorded,
         CallHistory.Filter.MISSED to R.string.home_calls_filter_missed,
     )
-    // Wraps rather than clips: "Nicht aufgezeichnet" does not fit beside three other chips.
-    FlowRow(
+    // One row that scrolls sideways, like the recordings chips: a long label ("Nicht aufgezeichnet")
+    // pushes the last chip past the edge instead of opening a second line.
+    Row(
         horizontalArrangement = Arrangement.spacedBy(8.dp),
-        verticalArrangement = Arrangement.spacedBy(8.dp),
-        modifier = Modifier.fillMaxWidth(),
+        modifier = Modifier.fillMaxWidth().horizontalScroll(rememberScrollState()),
     ) {
         options.forEach { (filter, label) ->
             val on = filter == selected
