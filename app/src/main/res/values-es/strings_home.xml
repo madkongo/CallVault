@@ -130,6 +130,10 @@
     <string name="merge_note_will_keep">Las demás llamadas también se conservan en el teléfono.</string>
     <string name="home_scroll_to_top">Arriba</string>
     <string name="home_whatsnew_full_notes">Notas de versión completas</string>
+    <string name="whatsnew_252_title">Ahora también en turco</string>
+    <string-array name="whatsnew_252_items">
+        <item>Turco añadido: CallVault está disponible en turco y las llamadas se pueden transcribir en turco</item>
+    </string-array>
     <string name="whatsnew_251_title">Más tiempo de conservación, grabación estéreo y llamadas Wi-Fi en Samsung</string>
     <string-array name="whatsnew_251_items">
         <item>El borrado automático ahora puede conservar las grabaciones 60, 90 o 120 días</item>

@@ -130,6 +130,10 @@
     <string name="merge_note_will_keep">其余通话也会保留在手机上。</string>
     <string name="home_scroll_to_top">回到顶部</string>
     <string name="home_whatsnew_full_notes">完整发行说明</string>
+    <string name="whatsnew_252_title">新增土耳其语</string>
+    <string-array name="whatsnew_252_items">
+        <item>新增土耳其语：CallVault 支持土耳其语界面，通话也可以用土耳其语转录成文字</item>
+    </string-array>
     <string name="whatsnew_251_title">保留更久、立体声录音，以及三星 Wi-Fi 通话</string>
     <string-array name="whatsnew_251_items">
         <item>自动删除现在可以将录音保留 60、90 或 120 天</item>

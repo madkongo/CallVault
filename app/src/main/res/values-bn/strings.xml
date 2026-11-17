@@ -596,6 +596,7 @@
     <string name="transcription_language_greek">গ্রিক</string>
     <string name="transcription_language_persian">ফারসি</string>
     <string name="transcription_language_urdu">উর্দু</string>
+    <string name="transcription_language_turkish">তুর্কি</string>
     <string name="transcription_language_ukrainian">ইউক্রেনীয়</string>
     <string name="transcription_language_auto">স্বয়ংক্রিয়ভাবে শনাক্ত করুন</string>
     <string name="language_search_placeholder">ভাষা খুঁজুন</string>

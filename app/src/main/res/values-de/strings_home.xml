@@ -130,6 +130,10 @@
     <string name="merge_note_will_keep">Die anderen Anrufe bleiben ebenfalls auf dem Telefon.</string>
     <string name="home_scroll_to_top">Nach oben</string>
     <string name="home_whatsnew_full_notes">Vollständige Versionshinweise</string>
+    <string name="whatsnew_252_title">Jetzt auch auf Türkisch</string>
+    <string-array name="whatsnew_252_items">
+        <item>Türkisch hinzugefügt: CallVault gibt es auf Türkisch, und Anrufe lassen sich auf Türkisch transkribieren</item>
+    </string-array>
     <string name="whatsnew_251_title">Längere Aufbewahrung, Stereo-Aufnahme und Samsung WLAN-Anrufe</string>
     <string-array name="whatsnew_251_items">
         <item>Automatisches Löschen kann Aufnahmen jetzt 60, 90 oder 120 Tage behalten</item>

@@ -130,6 +130,10 @@
     <string name="merge_note_will_keep">Các cuộc gọi kia cũng được giữ lại trên máy.</string>
     <string name="home_scroll_to_top">Lên đầu</string>
     <string name="home_whatsnew_full_notes">Ghi chú phát hành đầy đủ</string>
+    <string name="whatsnew_252_title">Đã có tiếng Thổ Nhĩ Kỳ</string>
+    <string-array name="whatsnew_252_items">
+        <item>Thêm tiếng Thổ Nhĩ Kỳ: CallVault có giao diện tiếng Thổ Nhĩ Kỳ và có thể chép lời cuộc gọi bằng tiếng Thổ Nhĩ Kỳ</item>
+    </string-array>
     <string name="whatsnew_251_title">Lưu lâu hơn, ghi âm âm thanh nổi và cuộc gọi Wi-Fi trên Samsung</string>
     <string-array name="whatsnew_251_items">
         <item>Tự động xóa giờ có thể giữ bản ghi 60, 90 hoặc 120 ngày</item>

@@ -130,6 +130,10 @@
     <string name="merge_note_will_keep">Pozostałe rozmowy zostaną też zachowane w telefonie.</string>
     <string name="home_scroll_to_top">Do góry</string>
     <string name="home_whatsnew_full_notes">Pełne informacje o wydaniu</string>
+    <string name="whatsnew_252_title">Teraz także po turecku</string>
+    <string-array name="whatsnew_252_items">
+        <item>Dodano turecki: CallVault jest dostępny po turecku, a rozmowy można transkrybować po turecku</item>
+    </string-array>
     <string name="whatsnew_251_title">Dłuższe przechowywanie, nagrywanie stereo i połączenia Wi-Fi na Samsungu</string>
     <string-array name="whatsnew_251_items">
         <item>Automatyczne usuwanie może teraz zachować nagrania przez 60, 90 lub 120 dni</item>

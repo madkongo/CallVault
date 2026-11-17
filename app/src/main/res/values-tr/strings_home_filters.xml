@@ -1,0 +1,53 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+
+    <!-- Sort order (chip label + options). %1$s = current value shown on the chip. -->
+    <string name="home_sort_chip">Sırala: %1$s</string>
+    <string name="home_sort_newest">En yeni</string>
+    <string name="home_sort_oldest">En eski</string>
+    <string name="home_sort_name">Ad A–Z</string>
+    <string name="home_sort_longest">En uzun</string>
+
+    <!-- Source facet (chip label + options). %1$s = current value shown on the chip. -->
+    <string name="home_filter_source_label">Kaynak</string>
+    <string name="home_filter_source_chip">Kaynak: %1$s</string>
+    <string name="home_filter_source_all">Tümü</string>
+    <string name="home_filter_source_local">Yalnızca yerel</string>
+    <string name="home_filter_source_drive">Yalnızca Drive</string>
+
+    <!-- Direction facet (chip label + options). %1$s = current value shown on the chip. -->
+    <string name="home_filter_direction_label">Yön</string>
+    <string name="home_filter_direction_chip">Yön: %1$s</string>
+    <string name="home_filter_direction_all">Tümü</string>
+    <string name="home_filter_direction_incoming">Gelen</string>
+    <string name="home_filter_direction_outgoing">Giden</string>
+
+    <!-- Date facet (chip label + "all" option). %1$s = current value shown on the chip. -->
+    <string name="home_filter_date_label">Tarih</string>
+    <string name="home_filter_date_chip">Tarih: %1$s</string>
+    <string name="home_filter_date_all">Tüm tarihler</string>
+    <!-- Compact value shown on the Date chip itself, so it fits one line. -->
+    <string name="home_filter_date_all_short">Tümü</string>
+
+    <!-- Per-row storage-source badge labels -->
+    <string name="home_source_badge_local">Cihaz</string>
+    <string name="home_source_badge_drive">Drive</string>
+    <string name="home_source_badge_both">Cihaz + Drive</string>
+
+    <!-- Device + Drive row: expandable per-copy section -->
+    <string name="home_copy_device">Cihaz</string>
+    <string name="home_copy_drive">Drive</string>
+
+    <!-- Per-copy delete (Device + Drive row). %1$s = recording name. -->
+    <string name="home_delete_confirm_device_message">%1$s kaydının Cihaz kopyası silinsin mi? Drive kopyası saklanır.</string>
+    <string name="home_delete_confirm_drive_message">%1$s kaydının Drive kopyası silinsin mi? Cihaz kopyası saklanır.</string>
+    <string name="home_delete_copy_device_content_desc">Cihaz kopyasını sil</string>
+    <string name="home_delete_copy_drive_content_desc">Drive kopyasını sil</string>
+
+    <!-- Tag facet (chip label + "all" option). %1$s = current value shown on the chip. -->
+    <string name="home_filter_tag_label">Etiket</string>
+    <string name="home_filter_tag_chip">Etiket: %1$s</string>
+    <string name="home_filter_tag_all">Tüm etiketler</string>
+    <string name="home_filter_tag_all_short">Tümü</string>
+
+</resources>

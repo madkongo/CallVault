@@ -152,6 +152,10 @@
     <string name="merge_note_will_keep">Οι άλλες κλήσεις κρατιούνται και στο τηλέφωνο.</string>
     <string name="home_scroll_to_top">Κορυφή</string>
     <string name="home_whatsnew_full_notes">Πλήρεις σημειώσεις έκδοσης</string>
+    <string name="whatsnew_252_title">Πλέον και στα τουρκικά</string>
+    <string-array name="whatsnew_252_items">
+        <item>Προστέθηκαν τα τουρκικά: το CallVault είναι διαθέσιμο στα τουρκικά και οι κλήσεις μπορούν να απομαγνητοφωνηθούν στα τουρκικά</item>
+    </string-array>
     <string name="whatsnew_251_title">Μεγαλύτερη διατήρηση, στερεοφωνική εγγραφή και Wi-Fi Calling της Samsung</string>
     <string-array name="whatsnew_251_items">
         <item>Η αυτόματη διαγραφή μπορεί πλέον να κρατά τις εγγραφές 60, 90 ή 120 ημέρες</item>

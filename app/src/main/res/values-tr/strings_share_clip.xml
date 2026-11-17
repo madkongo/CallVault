@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- "Share a part": sharing a chosen part of a recording as a new file (2026-11-04). -->
+<resources>
+    <string name="share_clip_menu">Bir bölümü paylaş</string>
+    <string name="share_clip_share_whole">Kaydı paylaş</string>
+    <string name="playback_share">Paylaş</string>
+    <string name="share_clip_title">Bir bölümü paylaş</string>
+    <string name="share_clip_start">Başlangıç</string>
+    <string name="share_clip_length">Uzunluk</string>
+    <string name="share_clip_end">Bitiş</string>
+    <string name="share_clip_start_here">Buradan başla</string>
+    <string name="share_clip_end_here">Burada bitir</string>
+    <string name="share_clip_preview">Bölümü oynat</string>
+    <string name="share_clip_pause">Duraklat</string>
+    <string name="share_clip_hint">Uçlardan birini sürükleyin veya olması gereken yere dokunun. Buradan başla ve Burada bitir, dinlediğiniz yeri kullanır.</string>
+    <string name="share_clip_handle_start">Bölümün başlangıcı, %1$s</string>
+    <string name="share_clip_handle_end">Bölümün sonu, %1$s</string>
+    <string name="share_clip_nudge_earlier">bir saniye önce</string>
+    <string name="share_clip_nudge_later">bir saniye sonra</string>
+    <string name="share_clip_include_text">Konuşulanları ekle</string>
+    <string name="share_clip_text_ready">Bu bölümdeki yazıya döküm satırları da birlikte gider.</string>
+    <string name="share_clip_text_none_in_part">Bu bölümde hiçbir şey konuşulmadı, bu yüzden metin eklenmez.</string>
+    <string name="share_clip_text_call_running">Bu arama yazıya dökülüyor. Bu bölümdeki satırlar bittiğinde paylaşılır.</string>
+    <string name="share_clip_transcribe_part">Yalnızca bu bölümü yazıya dök</string>
+    <string name="share_clip_transcribe_part_detail">Daha hızlı. Yalnızca bu paylaşım için kullanılır; arama yazıya dökülmemiş kalır.</string>
+    <string name="share_clip_transcribe_whole">Tüm aramayı yazıya dök</string>
+    <string name="share_clip_transcribe_whole_detail">Aramayla birlikte kaydedilir. Yalnızca bu bölümün satırları paylaşılır.</string>
+    <string name="share_clip_share">%1$s paylaş</string>
+    <string name="share_clip_working_cut">Bölüm hazırlanıyor…</string>
+    <string name="share_clip_working_part">Bölüm yazıya dökülüyor… %1$d%%</string>
+    <string name="share_clip_working_call">Aramanın yazıya dökümü bekleniyor…</string>
+    <string name="share_clip_share_without_text">Metinsiz paylaş</string>
+    <string name="share_clip_back">Geri</string>
+    <string name="share_clip_failed">Bölüm oluşturulamadı. Yeniden deneyin veya kaydın tamamını paylaşın.</string>
+    <string name="share_clip_busy">Yazıya döküm başka bir aramayla meşgul. Metinsiz paylaşın veya bitince yeniden deneyin.</string>
+    <string name="share_clip_not_set_up">Yazıya döküm henüz kurulmadı. Ayarlar’dan bir model indirin veya hizmetinizi ekleyin.</string>
+    <string name="share_clip_transcribe_failed">Yazıya döküm bu sefer çalışmadı. Metinsiz paylaşılsın mı?</string>
+    <string name="share_clip_unsupported">Bir bölüm yalnızca CallVault’un kendi kayıtlarından paylaşılabilir, içe aktarılan bu dosyadan paylaşılamaz.</string>
+    <string name="share_clip_chooser">Kaydın bir bölümünü paylaş</string>
+</resources>

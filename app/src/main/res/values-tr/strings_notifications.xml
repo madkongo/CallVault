@@ -1,0 +1,69 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Recorder readiness notification (cold-start status) -->
+    <string name="notif_readiness_channel">Arama kaydedici hazırlığı</string>
+    <string name="notif_readiness_ready_title">Aramaları kaydetmeye hazır</string>
+    <string name="notif_readiness_starting_title">Arama kaydedici başlatılıyor…</string>
+    <string name="notif_readiness_ready_text">Kaydedici bağlı.</string>
+    <string name="notif_readiness_starting_text">Kaydedici bağlanıyor — bu bitene kadar aramalar kaydedilmez.</string>
+    <string name="notif_usb_lock_warning">Arama sırasında ekranı kilitlemek kaydı durdurabilir. CallVault ayarlarında “Ekran kilidi açılınca USB” seçeneğini Yalnızca şarj olarak ayarlayın.</string>
+    <string name="notif_usb_check_unavailable">Bu işlem bitmezse CallVault ayarlarında “Ekran kilidi açılınca USB” seçeneğini Yalnızca şarj olarak ayarlayın — bazı telefonlarda veri USB modu kaydedicinin bağlanmasını engeller.</string>
+
+    <!-- ADB wireless-debugging pairing notifications -->
+    <string name="notif_pairing_channel">ADB eşleştirme</string>
+    <string name="notif_pairing_searching_title">Eşleştirme hizmeti aranıyor…</string>
+    <string name="notif_pairing_searching_text">Telefonun “Cihazı eşleştirme koduyla eşleştir” penceresini açın.</string>
+    <string name="notif_pairing_waiting_wd_title">Kablosuz hata ayıklama bekleniyor…</string>
+    <string name="notif_pairing_waiting_wd_text">Eşleştirmeyi başlatmak için Kablosuz hata ayıklamayı açın.</string>
+    <string name="notif_pairing_found_title">Eşleştirme hizmeti bulundu</string>
+    <string name="notif_pairing_found_text">6 haneli eşleştirme kodunu girin.</string>
+    <string name="notif_pairing_working_title">Eşleştiriliyor…</string>
+    <string name="notif_pairing_working_text">CallVault kuruluyor. Bu birkaç saniye sürer.</string>
+    <string name="notif_pairing_success_title">Eşleştirildi ✓</string>
+    <string name="notif_pairing_success_text">Kablosuz hata ayıklama eşleştirildi. CallVault kurulumunu bitirmek için dokunun.</string>
+    <string name="notif_pairing_failed_title">Eşleştirme başarısız</string>
+    <string name="notif_pairing_action_stop">Durdur</string>
+    <string name="notif_pairing_action_enter_code">Eşleştirme kodunu gir</string>
+    <string name="notif_pairing_remote_input_label">Eşleştirme kodu</string>
+    <string name="notif_call_monitor_channel">Arama izleyici</string>
+    <string name="notif_readiness_reboot_ready_text">Yeniden başlatmadan sonra aramalar dinleniyor.</string>
+    <string name="notif_startup_channel">Başlangıç</string>
+    <string name="notif_startup_preparing">Arama kaydedici hazırlanıyor…</string>
+    <string name="update_notif_channel">Uygulama güncellemeleri</string>
+    <string name="update_notif_available_title">CallVault %1$s mevcut</string>
+    <string name="update_notif_available_text">Yüklemek için uygulamayı açın ve Güncelle’ye dokunun.</string>
+    <string name="update_notif_success_title">Güncelleme yüklendi</string>
+    <string name="update_notif_success_text">CallVault artık %1$s sürümünde.</string>
+    <string name="update_notif_failure_title">Güncelleme başarısız</string>
+    <string name="update_notif_failure_download_text">Güncelleme indirilemedi. GitHub’dan almak için dokunun.</string>
+    <string name="update_notif_failure_verify_text">İndirilen güncelleme güvenlik denetiminden geçemedi ve atıldı. GitHub’dan almak için dokunun.</string>
+    <string name="update_notif_failure_install_text">Güncelleme yüklenemedi. GitHub’dan almak için dokunun.</string>
+    <string name="update_notif_downloading_title">Güncelleme indiriliyor…</string>
+    <string name="update_notif_installing_title">Güncelleme yükleniyor…</string>
+    <string name="notif_readiness_down_title">Aramalar kaydedilmiyor</string>
+    <string name="notif_readiness_no_debugging_text">USB hata ayıklama ve Kablosuz hata ayıklama ikisi de kapalı. Geliştirici seçeneklerinden birini yeniden açın.</string>
+    <string name="notif_readiness_needs_wifi_text">USB hata ayıklama kapalı ve Wi-Fi yok. Wi-Fi’ye bağlanın veya USB hata ayıklamayı açın.</string>
+    <string name="notif_readiness_stuck_text">Kaydedici sürekli başlatılamıyor. Nedenini görmek için CallVault’u açın.</string>
+    <string name="notif_readiness_needs_wifi_restart_text">Kaydedici durdu ve yeniden başlamak için Wi-Fi’ye ihtiyaç duyuyor. Wi-Fi’dayken “Wi-Fi dışında kaydetmeyi sürdür” seçeneğini açmak bunu önler.</string>
+    <string name="notif_readiness_wd_off_by_user_text">Kablosuz hata ayıklamayı kapattınız ve CallVault’un kaydediciyi yeniden başlatmasına başka bir yol yok. Yeniden açın veya USB hata ayıklamayı açın.</string>
+    <string name="notif_readiness_offline_paused_text">Wi-Fi dışında kayıt duraklatıldı: USB hata ayıklama gerekiyor. Wi-Fi’deki aramalar yine kaydedilir.</string>
+    <string name="notif_action_turn_wd_on">Kablosuz hata ayıklamayı aç</string>
+    <string name="notif_action_turn_usb_on">USB hata ayıklamayı aç</string>
+
+    <!-- Transcription finished / didn't finish -->
+    <string name="transcript_notice_channel">Yazıya dökümler</string>
+    <string name="transcript_notice_ready_title">Yazıya döküm hazır</string>
+    <string name="transcript_notice_ready_deleted_text">%1$s — istediğiniz gibi ses silindi.</string>
+    <string name="transcript_notice_ready_many_title">Hazır yazıya dökümler: %1$d</string>
+    <string name="transcript_notice_ready_many_text">Okumak için dokunun.</string>
+    <string name="transcript_notice_failed_title">Yazıya döküm tamamlanamadı</string>
+    <string name="transcript_notice_failed_text">%1$s. Yeniden denemek için dokunun.</string>
+    <string name="transcript_notice_failed_many_title">Tamamlanamayan yazıya dökümler: %1$d</string>
+    <string name="transcript_notice_failed_many_text">Görmek için dokunun.</string>
+    <string name="transcript_notice_failed_kept_text">%1$s. Önceki yazıya döküm saklandı.</string>
+    <string name="home_status_needs_wifi_title">Kaydetmek için Wi-Fi gerekli</string>
+    <string name="home_status_needs_wifi_suggestion">Kaydedici durdu ve Wi-Fi olmadan başlayamaz, bu yüzden aramalar kaydedilmiyor. Wi-Fi’ye bağlanın veya Ayarlar’da “Wi-Fi dışında kaydetmeyi sürdür” seçeneğini açın.</string>
+    <string name="notif_stopped_by_user_title">CallVault’u durdurdunuz</string>
+    <string name="notif_stopped_by_user_text">Durdurulduğu sürece aramalar kaydedilmedi. CallVault yeniden açık ve yeni aramaları kaydediyor.</string>
+    <string name="home_stopped_by_user_text">CallVault’u durdurdunuz — durdurulduğu sürece aramalar kaydedilmedi.</string>
+</resources>

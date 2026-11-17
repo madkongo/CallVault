@@ -187,6 +187,10 @@
     <string name="whatsnew_156_where">Налаштування ▸ Запис ▸ Телефонні дзвінки</string>
     <string name="settings_merge_keep_originals_description">Після обʼєднання залишати початкові записи на телефоні. За замовчуванням вимкнено. Обʼєднану розмову можна розділити.</string>
     <string name="unmerge_message">Знову зʼявляться ці дзвінки з їхніми транскрипціями та мітками:</string>
+    <string name="whatsnew_252_title">Тепер і турецька</string>
+    <string-array name="whatsnew_252_items">
+        <item>Додано турецьку: CallVault доступний турецькою, а розмови можна транскрибувати турецькою</item>
+    </string-array>
     <string name="whatsnew_251_title">Довше зберігання, стереозапис і дзвінки через Wi-Fi на Samsung</string>
     <string-array name="whatsnew_251_items">
         <item>Автовидалення тепер може зберігати записи 60, 90 або 120 днів</item>

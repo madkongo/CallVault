@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Keep or delete after the call: Settings rows and the wizard switch. -->
+<resources>
+    <string name="settings_after_call_mode_label">Arama bittiğinde</string>
+    <string name="settings_after_call_mode_keep">Kaydı sakla</string>
+    <string name="settings_after_call_mode_ask">Bana sor: sakla veya sil</string>
+    <string name="settings_after_call_mode_keep_desc">Her kayıt, her zamanki gibi saklanır.</string>
+    <string name="settings_after_call_mode_ask_desc">Kaydedilen her aramadan sonra bir bildirim, kaydın saklanıp saklanmayacağını sorar. Siz yanıtlayana kadar kayıt Drive’a kopyalanmaz ve otomatik olarak yazıya dökülmez.</string>
+    <string name="settings_after_call_needs_notifications">Sormak için CallVault’un bildirimlere ihtiyacı var. İzin verin, “Sor” seçeneği açılır.</string>
+    <string name="settings_after_call_style_label">Nasıl sorulsun</string>
+    <string name="settings_after_call_style_notification">Bildirim</string>
+    <string name="settings_after_call_style_popup">Ekranın üstünde açılır pencere</string>
+    <string name="settings_after_call_style_notification_desc">Sakla ve Sil düğmeli bir bildirim.</string>
+    <string name="settings_after_call_style_popup_desc">Ekranda ne varsa onun üstünde küçük bir pencere. Gösterilemezse (telefon kilitliyse) veya yanıtlamadan kapatırsanız bunun yerine bir bildirim sorar. Diğer uygulamaların üzerinde görüntüleme izni gerekir.</string>
+    <string name="settings_after_call_needs_overlay">Açılır pencere için diğer uygulamaların üzerinde görüntüleme izni gerekir. İzin verilene kadar bildirim sorar.</string>
+    <string name="settings_after_call_unanswered_label">Yanıtlamazsam</string>
+    <string name="settings_after_call_unanswered_keep">Sakla</string>
+    <string name="settings_after_call_unanswered_delete">24 saat sonra sil</string>
+    <string name="settings_after_call_unanswered_keep_desc">24 saat sonra kayıt saklanır, kopyalanır ve her zamanki gibi yazıya dökülür.</string>
+    <string name="settings_after_call_unanswered_delete_desc">Aramadan 24 saat sonra kayıt silinir.</string>
+    <string name="settings_after_call_unanswered_engaged">Yıldızladığınız, işaretlediğiniz, etiketlediğiniz, not eklediğiniz veya yazıya döktüğünüz bir kayıt her zaman saklanır.</string>
+    <string name="wizard_after_call_ask_label">Her kaydın saklanıp saklanmayacağını bana sor</string>
+    <string name="wizard_after_call_ask_desc">Arama bittiğinde kaydı tek dokunuşla saklayın veya silin. Kapalıyken her kayıt saklanır.</string>
+</resources>

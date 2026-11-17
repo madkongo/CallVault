@@ -152,6 +152,10 @@
     <string name="merge_note_will_keep">تماس‌های دیگر نیز روی گوشی نگه داشته می‌شوند.</string>
     <string name="home_scroll_to_top">بالا</string>
     <string name="home_whatsnew_full_notes">یادداشت‌های کامل نسخه</string>
+    <string name="whatsnew_252_title">اکنون ترکی هم هست</string>
+    <string-array name="whatsnew_252_items">
+        <item>ترکی اضافه شد: CallVault به زبان ترکی در دسترس است و تماس‌ها را می‌توان به ترکی به متن تبدیل کرد</item>
+    </string-array>
     <string name="whatsnew_251_title">نگهداری طولانی‌تر، ضبط استریو و تماس Wi-Fi سامسونگ</string>
     <string-array name="whatsnew_251_items">
         <item>حذف خودکار اکنون می‌تواند ضبط‌ها را ۶۰، ۹۰ یا ۱۲۰ روز نگه دارد</item>
