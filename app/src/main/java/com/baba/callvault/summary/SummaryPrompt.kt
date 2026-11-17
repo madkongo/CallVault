@@ -53,6 +53,9 @@ object SummaryPrompt {
         "ur" to "Urdu",
         "vi" to "Vietnamese",
         "zh" to "Chinese",
+        // Not transcription codes: SummaryWorker turns "zh" into these on a Hong Kong / Taiwan phone or app.
+        "zh-hk" to "Chinese (written in Traditional Chinese characters, as used in Hong Kong)",
+        "zh-tw" to "Chinese (written in Traditional Chinese characters, as used in Taiwan)",
         "yue" to "Cantonese (written in Traditional Chinese characters)"
     )
 

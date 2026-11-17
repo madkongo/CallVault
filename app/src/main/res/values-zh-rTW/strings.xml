@@ -283,6 +283,11 @@
     <string name="placeholder_contact_name_desc">聯絡人名稱（如是聯絡人）</string>
     <string name="placeholder_cross_country_desc">是否為國際電話（是/否）</string>
     <string name="placeholder_date_desc">當前日期和時間</string>
+    <string name="placeholder_day_desc">日期，例如 20261112</string>
+    <string name="placeholder_day_dashed_desc">帶連字號的日期，例如 2026-11-12</string>
+    <string name="placeholder_time_desc">時間，例如 143520</string>
+    <string name="placeholder_time_dashed_desc">帶連字號的時間，例如 14-35-20</string>
+    <string name="settings_file_name_error_day_time">請同時使用 {day} 和 {time}，日期在前，中間用 _、-、空格或 T 連接（例如 {day}_{time}），或者使用 {date}。</string>
     <string name="placeholder_direction_desc">主叫/被叫</string>
     <string name="placeholder_phone_number_desc">對方號碼</string>
     <string name="playback_marked_moments">標記的時刻</string>
@@ -751,6 +756,7 @@
     <string name="language_search_no_match">沒有匹配的語言</string>
     <string name="transcription_language_auto_hint">對於不用拉丁字母書寫的語言，自動檢測並不可靠——希伯來語、阿拉伯語、俄語和中文常常會以英文字母拼寫的形式返回，或者變成一整段沒有斷句的文字。如果可以，請直接指定語言。</string>
     <string name="transcription_language_chinese">中文</string>
+    <string name="transcription_language_cantonese">粵語（廣東話）</string>
     <string name="transcription_language_english">英語</string>
     <string name="transcription_language_french">法語</string>
     <string name="transcription_language_german">德語</string>
