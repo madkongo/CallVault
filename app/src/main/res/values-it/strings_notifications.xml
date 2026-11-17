@@ -14,6 +14,7 @@
     <string name="notif_pairing_success_text">Debug wireless associato. Tocchi per completare la configurazione di CallVault.</string>
     <string name="notif_pairing_success_title">Associato ✓</string>
     <string name="notif_pairing_waiting_wd_text">Attivi il Debug wireless per avviare l\'associazione.</string>
+    <string name="notif_pairing_waiting_wd_text_path">Apra Debug wireless → Associa dispositivo con codice di associazione</string>
     <string name="notif_pairing_waiting_wd_title">In attesa del Debug wireless…</string>
     <string name="notif_pairing_working_text">Configurazione di CallVault in corso. Richiede qualche secondo.</string>
     <string name="notif_pairing_working_title">Associazione in corso…</string>

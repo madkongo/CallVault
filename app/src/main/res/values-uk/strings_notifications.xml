@@ -13,6 +13,7 @@
     <string name="notif_pairing_searching_text">Відкрийте «Звʼязати пристрій за кодом» у налаштуваннях телефону.</string>
     <string name="notif_pairing_waiting_wd_title">Очікування бездротового налагодження…</string>
     <string name="notif_pairing_waiting_wd_text">Увімкніть бездротове налагодження для сполучення.</string>
+    <string name="notif_pairing_waiting_wd_text_path">Відкрийте Бездротове налагодження → Сполучення пристрою за кодом сполучення</string>
     <string name="notif_pairing_found_title">Службу сполучення знайдено</string>
     <string name="notif_pairing_found_text">Введіть шестизначний код сполучення.</string>
     <string name="notif_pairing_working_title">Сполучення…</string>

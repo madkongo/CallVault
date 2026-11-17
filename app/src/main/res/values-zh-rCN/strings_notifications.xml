@@ -14,6 +14,7 @@
     <string name="notif_pairing_success_text">无线调试已配对。点按以完成 CallVault 的设置。</string>
     <string name="notif_pairing_success_title">配对成功 ✓</string>
     <string name="notif_pairing_waiting_wd_text">请开启无线调试以开始配对。</string>
+    <string name="notif_pairing_waiting_wd_text_path">打开无线调试 → 使用配对码配对设备</string>
     <string name="notif_pairing_waiting_wd_title">正在等待无线调试…</string>
     <string name="notif_pairing_working_text">正在设置 CallVault，需要几秒钟。</string>
     <string name="notif_pairing_working_title">正在配对…</string>

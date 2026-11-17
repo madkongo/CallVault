@@ -163,8 +163,17 @@ fun Context.openWirelessDebugging() {
         Intent(Settings.ACTION_APPLICATION_DEVELOPMENT_SETTINGS),
         Intent(Settings.ACTION_SETTINGS),
     )
-    for (intent in candidates) {
-        if (runCatching { launchSmartIntent(intent) }.isSuccess) return
+    for ((index, intent) in candidates.withIndex()) {
+        val result = runCatching { launchSmartIntent(intent) }
+        // Always-on journal line (tag is on the setup journal list): which system screen the user was sent to.
+        // BabApps item 92: on an Android 17 beta the direct screen may not exist, and the log never said.
+        com.baba.callvault.utils.AppLogger.i(
+            "CV:SetupScreen",
+            "Open Wireless debugging: candidate ${index + 1} of ${candidates.size} " +
+                "(${intent.component?.shortClassName ?: intent.action}) " +
+                if (result.isSuccess) "launched" else "failed (${result.exceptionOrNull()?.javaClass?.simpleName})"
+        )
+        if (result.isSuccess) return
     }
 }
 

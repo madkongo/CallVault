@@ -13,6 +13,7 @@
     <string name="notif_pairing_searching_text">پنجرهٔ «Pair device with pairing code» را در گوشی باز کنید.</string>
     <string name="notif_pairing_waiting_wd_title">در انتظار اشکال‌زدایی بی‌سیم…</string>
     <string name="notif_pairing_waiting_wd_text">برای شروع مرتبط‌سازی، اشکال‌زدایی بی‌سیم را روشن کنید.</string>
+    <string name="notif_pairing_waiting_wd_text_path">اشکال‌زدایی بی‌سیم را باز کنید ← «Pair device with pairing code»</string>
     <string name="notif_pairing_found_title">سرویس مرتبط‌سازی پیدا شد</string>
     <string name="notif_pairing_found_text">کد ۶ رقمی مرتبط‌سازی را وارد کنید.</string>
     <string name="notif_pairing_working_title">در حال مرتبط‌سازی…</string>

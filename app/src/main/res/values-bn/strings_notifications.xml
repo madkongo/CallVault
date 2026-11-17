@@ -14,6 +14,7 @@
     <string name="notif_pairing_searching_text">ফোনের “পেয়ারিং কোড দিয়ে ডিভাইস পেয়ার করুন” (Pair device with pairing code) ডায়ালগটি খুলুন।</string>
     <string name="notif_pairing_waiting_wd_title">ওয়্যারলেস ডিবাগিংয়ের অপেক্ষায়…</string>
     <string name="notif_pairing_waiting_wd_text">পেয়ারিং শুরু করতে ওয়্যারলেস ডিবাগিং (Wireless debugging) চালু করুন।</string>
+    <string name="notif_pairing_waiting_wd_text_path">ওয়্যারলেস ডিবাগিং খুলুন → পেয়ারিং কোড দিয়ে ডিভাইস পেয়ার করুন</string>
     <string name="notif_pairing_found_title">পেয়ারিং সার্ভিস পাওয়া গেছে</string>
     <string name="notif_pairing_found_text">6 সংখ্যার পেয়ারিং কোডটি দিন।</string>
     <string name="notif_pairing_working_title">পেয়ার হচ্ছে…</string>

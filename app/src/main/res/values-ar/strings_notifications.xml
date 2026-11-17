@@ -15,6 +15,7 @@
     <string name="notif_pairing_success_text">تم إقران تصحيح الأخطاء اللاسلكي بنجاح. انقر لإكمال إعداد CallVault.</string>
     <string name="notif_pairing_success_title">تم الاقتران بنجاح ✓</string>
     <string name="notif_pairing_waiting_wd_text">يرجى تشغيل تصحيح الأخطاء اللاسلكي لبدء الاقتران.</string>
+    <string name="notif_pairing_waiting_wd_text_path">افتح تصحيح الأخطاء اللاسلكي ← الاقتران بالجهاز باستخدام رمز الاقتران</string>
     <string name="notif_pairing_waiting_wd_title">بانتظار تصحيح الأخطاء اللاسلكي…</string>
     <string name="notif_pairing_working_text">جارٍ إعداد CallVault، سيستغرق ذلك بضع ثوانٍ.</string>
     <string name="notif_pairing_working_title">جارٍ الاقتران…</string>

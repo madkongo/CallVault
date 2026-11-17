@@ -39,6 +39,12 @@ class AdbMdns(
     private val serviceType: String,
     /** True while a run of failed searches is being kept quiet: the "Discovering" line is skipped too. */
     private val quiet: Boolean = false,
+    /**
+     * When set ("probe", "discovery"), every NsdManager callback is written to the log under this name, at a
+     * level the always-on setup journal keeps. BabApps item 92: a phone where no pairing service was ever seen
+     * needs to show whether discovery failed to start, found nothing, or found and lost something.
+     */
+    private val label: String? = null,
     private val onPort: (Int) -> Unit,
 ) {
     private var registered = false
@@ -51,8 +57,20 @@ class AdbMdns(
         if (running) return
         running = true
         if (!registered) {
-            if (!quiet) AppLogger.d(TAG, "Discovering $serviceType")
+            if (label != null) AppLogger.i(TAG, "[$label] discoverServices($serviceType) called")
+            else if (!quiet) AppLogger.d(TAG, "Discovering $serviceType")
             nsdManager.discoverServices(serviceType, NsdManager.PROTOCOL_DNS_SD, listener)
+        }
+    }
+
+    private fun prefix(): String = label?.let { "[$it] " }.orEmpty()
+
+    /** One NsdManager callback, for the journal; nothing when this instance has no [label]. */
+    private fun note(level: Char, message: String) {
+        val name = label ?: return
+        when (level) {
+            'w' -> AppLogger.w(TAG, "[$name] $message")
+            else -> AppLogger.i(TAG, "[$name] $message")
         }
     }
 
@@ -66,18 +84,22 @@ class AdbMdns(
 
     private fun onDiscoveryStart() {
         registered = true
+        note('i', "discovery started for $serviceType")
     }
 
     private fun onDiscoveryStop() {
         registered = false
+        note('i', "discovery stopped for $serviceType")
     }
 
     private fun onServiceFound(info: NsdServiceInfo) {
-        AppLogger.d(TAG, "Found ${info.serviceName} ($serviceType); resolving")
+        if (label != null) note('i', "onServiceFound ${info.serviceName} (${info.serviceType}); resolving")
+        else AppLogger.d(TAG, "Found ${info.serviceName} ($serviceType); resolving")
         nsdManager.resolveService(info, ResolveListener(this))
     }
 
     private fun onServiceLost(info: NsdServiceInfo) {
+        note('i', "onServiceLost ${info.serviceName}${if (info.serviceName == serviceName) " (the one we had accepted)" else ""}")
         if (info.serviceName == serviceName) onPort(-1)
     }
 
@@ -137,11 +159,11 @@ class AdbMdns(
     private class DiscoveryListener(private val adbMdns: AdbMdns) : NsdManager.DiscoveryListener {
         override fun onDiscoveryStarted(serviceType: String) = adbMdns.onDiscoveryStart()
         override fun onStartDiscoveryFailed(serviceType: String, errorCode: Int) {
-            AppLogger.w(TAG, "Discovery could not start for $serviceType (error $errorCode)")
+            AppLogger.w(TAG, "${adbMdns.prefix()}Discovery could not start for $serviceType (error $errorCode)")
         }
         override fun onDiscoveryStopped(serviceType: String) = adbMdns.onDiscoveryStop()
         override fun onStopDiscoveryFailed(serviceType: String, errorCode: Int) {
-            AppLogger.w(TAG, "Discovery could not stop for $serviceType (error $errorCode)")
+            AppLogger.w(TAG, "${adbMdns.prefix()}Discovery could not stop for $serviceType (error $errorCode)")
         }
         override fun onServiceFound(serviceInfo: NsdServiceInfo) = adbMdns.onServiceFound(serviceInfo)
         override fun onServiceLost(serviceInfo: NsdServiceInfo) = adbMdns.onServiceLost(serviceInfo)

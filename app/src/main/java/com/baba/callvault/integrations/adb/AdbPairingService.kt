@@ -142,13 +142,21 @@ class AdbPairingService : Service() {
             "Android ${Build.VERSION.RELEASE} (API ${Build.VERSION.SDK_INT}), ${Build.MODEL}"
     }
 
+    /** Whether this phone's Wireless debugging read is untrustworthy, so every mDNS callback goes to the journal. */
+    private fun reportsNsd(): Boolean {
+        val raw = runCatching {
+            Settings.Global.getInt(applicationContext.contentResolver, "adb_wifi_enabled", -1)
+        }.getOrDefault(-1)
+        return PairingWaitPolicy.settingMayBeHidden(Build.VERSION.SDK_INT, raw)
+    }
+
     /** Begins mDNS discovery for the pairing service. Idempotent via [started]. */
     private fun beginDiscovery() {
         if (started) return
         started = true
         val begun = SystemClock.elapsedRealtime()
         AppLogger.i(TAG, "Pairing discovery started at +${sinceCreateMs()}ms")
-        adbMdns = AdbMdns(this, AdbMdns.TLS_PAIRING) { port ->
+        adbMdns = AdbMdns(this, AdbMdns.TLS_PAIRING, label = if (reportsNsd()) "discovery" else null) { port ->
             AppLogger.i(TAG, "pairing service port: $port, ${SystemClock.elapsedRealtime() - begun}ms after discovery began")
             if (port > 0) {
                 getSystemService(NotificationManager::class.java)
@@ -165,7 +173,8 @@ class AdbPairingService : Service() {
      */
     private fun beginWaitingForWd() {
         if (wdObserver != null) return
-        AppLogger.i(TAG, "WD reads off (or hidden) — arming pairing; waiting for Wireless debugging to be turned on")
+        AppLogger.i(TAG, "WD reads off (or hidden) — arming pairing; waiting for Wireless debugging to be turned on " +
+            "(setting may be hidden: ${reportsNsd()}, notification names the path: ${PairingWaitPolicy.usesPathWording(Build.VERSION.SDK_INT)})")
         val observer = object : ContentObserver(mainHandler) {
             override fun onChange(selfChange: Boolean) {
                 AppLogger.i(TAG, "adb_wifi_enabled changed at +${sinceCreateMs()}ms; ${wdReadForLog()}")
@@ -194,7 +203,7 @@ class AdbPairingService : Service() {
         // that is actually advertised proves it is on, so listen for one while waiting; if one shows up, carry
         // on into normal discovery. The probe changes no setting and posts nothing by itself.
         val probeStart = SystemClock.elapsedRealtime()
-        probe = AdbMdns(this, AdbMdns.TLS_PAIRING) { port ->
+        probe = AdbMdns(this, AdbMdns.TLS_PAIRING, label = if (reportsNsd()) "probe" else null) { port ->
             if (port > 0) mainHandler.post {
                 if (wdObserver == null || started) return@post
                 AppLogger.w(
@@ -335,7 +344,12 @@ class AdbPairingService : Service() {
     private fun waitingForWdNotification(): Notification =
         builder()
             .setContentTitle(getString(R.string.notif_pairing_waiting_wd_title))
-            .setContentText(getString(R.string.notif_pairing_waiting_wd_text))
+            .setContentText(
+                getString(
+                    if (PairingWaitPolicy.usesPathWording(Build.VERSION.SDK_INT)) R.string.notif_pairing_waiting_wd_text_path
+                    else R.string.notif_pairing_waiting_wd_text
+                )
+            )
             .setOngoing(true)
             .addAction(stopAction())
             .build()
