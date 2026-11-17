@@ -8,6 +8,7 @@
 
 package com.baba.callvault.transcription
 
+import android.content.res.Resources
 import androidx.appcompat.app.AppCompatDelegate
 import com.baba.callvault.utils.AppLogger
 import java.util.Locale
@@ -83,10 +84,21 @@ object ChineseScript {
             null -> language
         } else language
 
-    /** The language the user sees the app in: the app's own choice when set, otherwise the phone's. */
-    fun effectiveLocale(): Locale =
-        runCatching { AppCompatDelegate.getApplicationLocales().takeIf { !it.isEmpty }?.get(0) }.getOrNull()
+    /**
+     * The locale that decides the script: the app's own language when it is set to a Chinese one,
+     * otherwise the phone's. So an app set to English on a Taiwan phone still gets Traditional
+     * (owner decision, BabApps item 125), and an app set to Simplified Chinese stays Simplified.
+     */
+    fun effectiveLocale(): Locale {
+        val app = runCatching { AppCompatDelegate.getApplicationLocales().takeIf { !it.isEmpty }?.get(0) }.getOrNull()
+        val phone = runCatching { Resources.getSystem().configuration.locales.get(0) }.getOrNull()
             ?: Locale.getDefault()
+        return chooseLocale(app, phone)
+    }
+
+    /** [app] wins only when it is a Chinese language; otherwise [phone]. */
+    fun chooseLocale(app: Locale?, phone: Locale): Locale =
+        if (app != null && app.language == "zh") app else phone
 
     fun convert(text: String, conversion: Conversion?): String {
         if (conversion == null) return text

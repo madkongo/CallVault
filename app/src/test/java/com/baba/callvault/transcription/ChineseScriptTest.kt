@@ -173,4 +173,20 @@ class ChineseScriptTest {
         assertEquals(listOf("聯繫他"), out.actionItems)
         assertEquals(listOf("三點"), out.keyFacts)
     }
+
+    @Test
+    fun `the app language decides only when it is Chinese, otherwise the phone does`() {
+        val tw = Locale.forLanguageTag("zh-TW")
+        // App set to English on a Taiwan phone: the phone decides, so Traditional.
+        assertEquals(tw, ChineseScript.chooseLocale(Locale.ENGLISH, tw))
+        // App on system default: the phone.
+        assertEquals(tw, ChineseScript.chooseLocale(null, tw))
+        // App set to Simplified Chinese on a Taiwan phone: the app wins, no conversion.
+        val cn = Locale.forLanguageTag("zh-CN")
+        assertEquals(cn, ChineseScript.chooseLocale(cn, tw))
+        assertEquals(null, ChineseScript.forTranscript("zh", ChineseScript.chooseLocale(cn, tw)))
+        // App set to Hong Kong Chinese on an English phone: the app wins.
+        val hk = Locale.forLanguageTag("zh-HK")
+        assertEquals(hk, ChineseScript.chooseLocale(hk, Locale.US))
+    }
 }
