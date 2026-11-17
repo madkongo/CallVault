@@ -690,7 +690,8 @@
     <string name="transcribe_confirm_title">Bu yaklaşık %1$s sürecek</string>
     <string name="transcribe_confirm_title_unknown">Bu arama yazıya dökülsün mü?</string>
     <string name="transcribe_confirm_title_first_run">İlki biraz zaman alabilir</string>
-    <string name="transcribe_confirm_message">%1$s kaydını yazıya dökmek telefonunuzu meşgul eder ve belirgin pil kullanır. İstediğiniz zaman durdurabilirsiniz.\n\nBu soru Ayarlar’da Yazıya döküm altından yeniden açılabilir.</string>
+    <string name="summary_card_blocked_model_action">Özetleyiciyi indir</string>
+    <string name="transcribe_confirm_message">Bu aramayı yazıya dökmek telefonunuzu meşgul eder ve belirgin pil kullanır. İstediğiniz zaman durdurabilirsiniz.\n\nBu soru Ayarlar’da Yazıya döküm altından yeniden açılabilir.</string>
     <string name="transcribe_confirm_dont_ask">Bir daha sorma</string>
     <string name="transcribe_long_call_line">Bu arama %1$s. Bu telefonda yazıya dökmek yaklaşık %2$s× kadar sürer — yaklaşık %3$s.</string>
     <string name="transcribe_language_title">Hangi dil?</string>

@@ -248,7 +248,6 @@ internal fun groupExplanationText(group: SettingsGroup, preferences: AppPreferen
             val mode = remember(updateTrigger) { preferences.getTranscriptionMode() }
             stringResource(transcriptionModeNoteRes(mode))
         }
-        SettingsGroup.SUMMARIES -> summaryModelExplanation()
         SettingsGroup.HELP_AND_ABOUT -> stringResource(R.string.settings_bugreport_share_hint)
         else -> null
     }

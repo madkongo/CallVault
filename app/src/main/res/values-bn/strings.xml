@@ -623,7 +623,8 @@
     <string name="transcribe_confirm_title">এতে প্রায় %1$s লাগবে</string>
     <string name="transcribe_confirm_title_unknown">এই কলটি ট্রান্সক্রাইব করবেন?</string>
     <string name="transcribe_confirm_title_first_run">প্রথমটিতে কিছুটা সময় লাগতে পারে</string>
-    <string name="transcribe_confirm_message">%1$s ট্রান্সক্রাইব করার সময় ফোন ব্যস্ত থাকে এবং চোখে পড়ার মতো ব্যাটারি খরচ হয়। যেকোনো সময় থামাতে পারবেন।\n\nএই প্রশ্নটি সেটিংসের ট্রান্সক্রিপশন অংশ থেকে আবার চালু করা যায়।</string>
+    <string name="summary_card_blocked_model_action">সারসংক্ষেপ মডেল ডাউনলোড করুন</string>
+    <string name="transcribe_confirm_message">এই কলটি ট্রান্সক্রাইব করার সময় ফোন ব্যস্ত থাকে এবং চোখে পড়ার মতো ব্যাটারি খরচ হয়। যেকোনো সময় থামাতে পারবেন।\n\nএই প্রশ্নটি সেটিংসের ট্রান্সক্রিপশন অংশ থেকে আবার চালু করা যায়।</string>
     <string name="transcribe_confirm_dont_ask">আর জিজ্ঞেস করবেন না</string>
     <string name="transcribe_long_call_line">এই কলটি %1$s। এই ফোনে ট্রান্সক্রাইব করতে প্রায় %2$s× সময় লাগে — প্রায় %3$s।</string>
     <string name="transcribe_language_title">কোন ভাষা?</string>

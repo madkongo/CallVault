@@ -237,9 +237,28 @@ class ScopedSettingsScreenTest {
     @Test
     fun `group-wide explanations sit behind the group card's info button`() {
         val text = bodyOf("groupExplanationText", source("SettingsGroupSummaryText.kt"))
-        listOf("retention_description", "transcriptionModeNoteRes", "summaryModelExplanation", "settings_bugreport_share_hint")
+        listOf("retention_description", "transcriptionModeNoteRes", "settings_bugreport_share_hint")
             .forEach { assertTrue("groupExplanationText lacks $it", text.contains(it)) }
         assertTrue(source("ScopedSettingsContent.kt").contains("explanation = groupExplanationText("))
+    }
+
+    /** BabApps item 131: the "Show requirements" switch became the Summaries card's ⓘ, which opens the popup. */
+    @Test
+    fun `summaries card info opens the requirements popup and the switch is gone`() {
+        assertFalse(source("SettingsSharedRows.kt").contains("summary_requirements_toggle_label"))
+        val content = source("ScopedSettingsContent.kt")
+        assertTrue(content.contains("onInfoClick = if (group == SettingsGroup.SUMMARIES)"))
+        assertTrue(content.contains("SummaryRequirementsInfoDialog("))
+        // The popup keeps its checkbox, and the preference it writes is still read before a download.
+        assertTrue(File(screensDir, "../common/SummaryRequirementsDialog.kt").readText().contains("summary_requirements_dont_ask"))
+        assertTrue(source("SettingsSharedRows.kt").contains("setSummaryConfirmRequirements(!dontAskAgain)"))
+    }
+
+    @Test
+    fun `about section offers the telegram group next to support`() {
+        val about = source("SettingsAboutDebugSection.kt")
+        assertTrue(about.contains("context.openTelegramGroup()"))
+        assertTrue(about.indexOf("settings_support_label") < about.indexOf("home_hub_community_title"))
     }
 
     // ── Round 4: Recording split into phone, app and all-call blocks ──────────────────────────────

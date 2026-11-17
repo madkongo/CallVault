@@ -69,6 +69,8 @@ internal fun SettingsGroupCard(
     // Text about the whole group (retention, the transcription mode, the summariser's costs), behind an ⓘ
     // on the header. Null for none.
     explanation: String? = null,
+    // An ⓘ that runs this instead of showing [explanation] (the Summaries card opens the requirements popup).
+    onInfoClick: (() -> Unit)? = null,
     content: @Composable ColumnScope.() -> Unit,
 ) {
     val chevronRotation by animateFloatAsState(
@@ -107,7 +109,9 @@ internal fun SettingsGroupCard(
                         )
                     }
                 }
-                if (explanation != null) {
+                if (onInfoClick != null) {
+                    SettingsInfoIconButton(label = title, onClick = onInfoClick)
+                } else if (explanation != null) {
                     SettingsInfoButton(label = title, explanation = explanation)
                 }
                 Icon(

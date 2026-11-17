@@ -7,6 +7,15 @@ All notable changes to CallVault are documented here. The format is based on
 
 ### Added
 
+- **The recordings list: search on top, filters on one row, swipe between tabs.** The search field now sits above
+  "Recordings | All calls", stays in place while the list scrolls, and is there on both views (before, it was hidden until
+  there was a recording). The filter chips (sort, source, direction, tag, date, and Recorded/Missed on All calls) stay on
+  one line and scroll sideways instead of wrapping onto several. Swiping left or right anywhere on the page switches
+  between Recordings and All calls, in step with the switch (reversed on right-to-left languages; off while picking
+  recordings).
+  <!-- 🧪 VERIFYING (BabApps item 129, not shipped): open the Recordings page, type a name and scroll the list: the
+  search stays on top. Swipe left/right: the tab follows. Scroll the chip row sideways: it must not change the tab. -->
+
 - **A recording's screen: Transcribe and Summarise are icons in the player box, and long notes and summaries start
   folded.** The two icons sit at either end of the skip-back / skip-forward row (they keep their states: working,
   open, try again); the transcript icon is no longer in the header card with the star, share and delete. A finished
@@ -82,8 +91,28 @@ All notable changes to CallVault are documented here. The format is based on
   summary quality is unmeasured (the app has not been run on a real Turkish call); a Turkish speaker should
   transcribe and summarise one before this counts as working. -->
 
+- **Settings: Telegram group beside Support, system colours on by default, and "Show requirements" is now an ⓘ.**
+  Settings ▸ Help and about ▸ About has a "Telegram group" row under "Support development". "Use system colours" is on
+  for anyone who never set it (Android 12 and newer); a choice already made is kept. The "Show requirements" switch in
+  the Summaries settings is gone: the ⓘ on the Summaries card opens the same requirements popup, whose "Don't show
+  this again" box still controls whether it appears before the download (untick it there to bring the popup back).
+  <!-- 🧪 VERIFYING (BabApps item 131, not shipped): unit-tested and compiled only; the phone check is part of the
+  combined build with items 128-130. To settle it: About shows the Telegram row and it opens the group; a fresh
+  install (or a phone that never touched the colour switch) follows the wallpaper colours; Summaries card ⓘ opens the
+  popup with "Got it" and the checkbox; tick it, start a summary download and see no popup; untick it via ⓘ and see
+  the popup again. -->
+
 ### Fixed
 
+- **"Transcribe this call?" no longer repeats the contact's name, and the missing-model prompts take you to the
+  right place.** The question now reads "Transcribing this call keeps your phone busy…" in every language. When no
+  speech model is downloaded, "Open settings" opens Settings already on the speech-model card instead of at the
+  top; and a summary blocked for lack of the summariser now has a "Download the summariser" button that opens the
+  summary card in Settings.
+  <!-- 🧪 VERIFYING (BabApps item 128, not shipped): on a phone with no speech model, tap Transcribe, then "Open
+  settings": the model card should be open and in view. On a recording with a transcript but no summariser, the
+  summary card should show the button and it should land on the summariser download. Not yet checked in the
+  right-to-left languages by a reader. -->
 - **An app call (WhatsApp, Telegram, LINE…) now shows one CallVault notification, and notifications follow the app's
   language.** During an app call two notices sat side by side, "Recording a LINE call" with Pause / Mark / Stop and
   "Recording VoIP call", and on a phone whose app language differed from the system language some were English next to

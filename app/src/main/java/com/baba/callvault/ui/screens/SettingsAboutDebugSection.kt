@@ -14,6 +14,7 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.selection.toggleable
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Groups
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.BugReport
 import androidx.compose.material.icons.filled.Search
@@ -39,6 +40,7 @@ import androidx.compose.runtime.setValue
 import com.baba.callvault.R
 import com.baba.callvault.system.copyToClipboard
 import com.baba.callvault.system.openOriginalProjectRepo
+import com.baba.callvault.system.openTelegramGroup
 import com.baba.callvault.ui.common.formatByteSize
 import com.baba.callvault.ui.common.SupportDialog
 import com.baba.callvault.server.RecorderBackend
@@ -401,6 +403,16 @@ internal fun AboutSection(
             value = stringResource(R.string.settings_support_value),
             supporting = stringResource(R.string.settings_support_supporting),
             onClick = { showSupportDialog = true }
+        )
+
+        SettingsDivider()
+
+        // The project's Telegram group, next to Support (BabApps item 131). Same link as the Home card and pill.
+        NavigationRow(
+            icon = Icons.Filled.Groups,
+            label = stringResource(R.string.home_hub_community_title),
+            value = stringResource(R.string.home_hub_community_body),
+            onClick = { context.openTelegramGroup() }
         )
 
         Row(
