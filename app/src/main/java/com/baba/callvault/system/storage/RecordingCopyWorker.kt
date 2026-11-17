@@ -10,6 +10,7 @@ package com.baba.callvault.system.storage
 
 import android.content.Context
 import android.net.Uri
+import android.os.SystemClock
 import androidx.core.net.toUri
 import androidx.documentfile.provider.DocumentFile
 import androidx.work.CoroutineWorker
@@ -41,10 +42,6 @@ class RecordingCopyWorker(ctx: Context, params: WorkerParameters) : CoroutineWor
         val deleteLocal = inputData.getBoolean(KEY_DELETE_LOCAL, false)
         val isSidecar = inputData.getBoolean(KEY_IS_SIDECAR, false)
 
-        if (!SafHelper.isFolderValid(applicationContext, destFolder)) {
-            return giveUpOrRetry(name, "the Drive folder is not reachable or writable", isSidecar)
-        }
-
         val srcSize = SafHelper.fileSize(applicationContext, src)
         if (srcSize <= 0L) {
             // Either capture produced nothing or the source is gone. Uploading it would put an unplayable
@@ -55,24 +52,58 @@ class RecordingCopyWorker(ctx: Context, params: WorkerParameters) : CoroutineWor
                 .getOrDefault(false)
             val what = if (gone) "the source file is gone" else "the source is empty (size=$srcSize)"
             AppLogger.e(TAG, "Not copying '$name' to Drive: $what")
+            DriveCopyJournal.record(applicationContext, "'$name' not copied after the call: $what")
             return Result.failure()
         }
 
-        return when (val result = SafHelper.copyFileToFolder(applicationContext, src, destFolder, name, mime, srcSize)) {
+        // In the Drive copier process, like the sweep (see [DriveCopyService]): Drive's process dying must not
+        // take the app with it. Not "Stop for now": that button belongs to the sweep's notification.
+        val copier = DriveCopyClient(applicationContext, honorStop = false)
+        val started = SystemClock.elapsedRealtime()
+        val outcome = try {
+            copier.call(
+                DriveCopyProtocol.MSG_COPY,
+                DriveCopyProtocol.copyRequest(
+                    DriveCopyProtocol.Request(src, destFolder, name, mime, srcSize, null, -1L, null, lookup = true),
+                ),
+                CloudCopyPolicy.fileTimeoutMs(srcSize),
+            )
+        } finally {
+            copier.close()
+        }
+        var driveSize = -1L
+        val copyResult = when (outcome) {
+            is DriveCopyClient.Outcome.Reply -> DriveCopyProtocol.readCopyReply(outcome.data).let { (r, steps, size) ->
+                driveSize = size
+                DriveCopyJournal.record(
+                    applicationContext,
+                    "copy '$name' ${srcSize}B total=${SystemClock.elapsedRealtime() - started}ms $steps -> ${r.javaClass.simpleName}" +
+                        (if (r is SafHelper.CopyResult.Failed) " (${r.reason})" else "") + " (after the call, attempt ${runAttemptCount + 1}, deleteLocal=$deleteLocal)",
+                )
+                r
+            }
+            else -> SafHelper.CopyResult.Failed(
+                if (outcome is DriveCopyClient.Outcome.TimedOut) "Drive gave no answer in time" else "the Drive copier process died",
+            ).also {
+                DriveCopyJournal.record(applicationContext, "copy '$name' ${srcSize}B FAILED after ${SystemClock.elapsedRealtime() - started}ms: ${it.reason} (after the call, attempt ${runAttemptCount + 1})")
+            }
+        }
+        return when (val result = copyResult) {
             is SafHelper.CopyResult.AlreadyPresent -> {
                 if (FolderOverlap.isSameDocument(src, result.uri)) {
                     // The "Drive" folder is the recording folder: the copy we found is the recording itself.
                     // Deleting it now would delete the only copy (Xiaomi report, 2026-11-04). Keep it.
                     AppLogger.e(TAG, "'$name': the Drive folder is the recording folder; keeping the device copy, nothing uploaded")
+                    DriveCopyJournal.record(applicationContext, "'$name': the Drive folder is the recording folder; device copy kept, nothing uploaded")
                     return Result.success()
                 }
                 AppLogger.i(TAG, "'$name' is already in Drive; not uploading it again")
-                finish(name, result.uri, srcSize, deleteLocal, src, isSidecar)
+                finish(name, result.uri, srcSize, deleteLocal, src, isSidecar, driveSize)
             }
 
             is SafHelper.CopyResult.Copied -> {
                 AppLogger.i(TAG, "Recording copied to Drive ('$name', ${result.bytes} bytes, deleteLocal=$deleteLocal)")
-                finish(name, result.uri, result.bytes, deleteLocal, src, isSidecar)
+                finish(name, result.uri, result.bytes, deleteLocal, src, isSidecar, driveSize)
             }
 
             is SafHelper.CopyResult.Failed -> giveUpOrRetry(name, result.reason, isSidecar)
@@ -86,16 +117,31 @@ class RecordingCopyWorker(ctx: Context, params: WorkerParameters) : CoroutineWor
         sizeBytes: Long,
         deleteLocal: Boolean,
         src: Uri,
-        isSidecar: Boolean
+        isSidecar: Boolean,
+        driveSize: Long,
     ): Result {
         // SAF providers can refuse deletion. Do not remove the local catalog
         // reference unless deletion actually completed; otherwise the UI loses
         // track of a recording that still exists on the phone.
-        val localDocument = if (deleteLocal) {
+        //
+        // And the device copy goes only when Drive itself reported a document of the same length: a copy call
+        // that returned is not proof (see [CloudCopyPolicy.mayDeleteLocal]). The sidecar's size is the source's.
+        val verified = CloudCopyPolicy.mayDeleteLocal(driveSize, SafHelper.fileSize(applicationContext, src))
+        val localDocument = if (deleteLocal && verified) {
             DocumentFile.fromSingleUri(applicationContext, src)
         } else null
         val deletedLocally = deleteLocal && localDocument != null &&
             SafHelper.deleteDocument(localDocument, "the device copy of '$name'")
+        if (deleteLocal) {
+            DriveCopyJournal.record(
+                applicationContext,
+                "device copy of '$name' " + when {
+                    deletedLocally -> "DELETED after Drive reported $driveSize bytes (after the call)"
+                    !verified -> "KEPT: Drive reports $driveSize bytes, which does not match the device file (not verified; after the call)"
+                    else -> "KEPT: the provider refused the delete (after the call)"
+                },
+            )
+        }
         // A sidecar (.json/.md) has no catalog row of its own — it belongs to its recording, which was
         // stamped when the audio uploaded — so there is nothing to mark. Only the audio copy updates the
         // catalog, so the Home list reflects where the file now lives without re-scanning the Drive folder.
@@ -113,9 +159,11 @@ class RecordingCopyWorker(ctx: Context, params: WorkerParameters) : CoroutineWor
     private fun giveUpOrRetry(name: String, reason: String, isSidecar: Boolean): Result {
         if (!CloudCopyPolicy.isLastAttempt(runAttemptCount)) {
             AppLogger.w(TAG, "Copy of '$name' to Drive failed ($reason); retrying (attempt ${runAttemptCount + 1})")
+            DriveCopyJournal.record(applicationContext, "'$name' after the call: failed ($reason); will retry (attempt ${runAttemptCount + 1} of ${CloudCopyPolicy.MAX_ATTEMPTS})")
             return Result.retry()
         }
         AppLogger.e(TAG, "Giving up on copying '$name' to Drive after ${runAttemptCount + 1} attempts ($reason). The device copy is kept.")
+        DriveCopyJournal.record(applicationContext, "'$name' after the call: GAVE UP after ${runAttemptCount + 1} attempts ($reason); the device copy is kept")
         // Only the audio copy is worth interrupting the user over. A sidecar that misses Drive is a
         // details/transcript file whose recording is already backed up; log it and stay quiet.
         if (!isSidecar) {

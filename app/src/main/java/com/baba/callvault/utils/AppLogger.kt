@@ -379,6 +379,14 @@ object AppLogger {
                     writer.println()
                 }
 
+                // Always on as well: every Drive copy with its timings, and the sweep's pace.
+                com.baba.callvault.system.storage.DriveCopyJournal.readForReport(context)?.let { copies ->
+                    writer.println("--- Drive copies (always on) ---")
+                    writer.println(copies.trimEnd())
+                    writer.println("===========================================")
+                    writer.println()
+                }
+
                 // Snapshot the live log under the writer's lock so the copy is consistent.
                 val appEntries = fileMutex.withLock {
                     if (source?.exists() == true) entriesOf(source.readLines()) else emptyList()

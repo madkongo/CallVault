@@ -77,6 +77,7 @@ import kotlinx.coroutines.flow.debounce
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.drop
 import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.sample
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
@@ -750,6 +751,10 @@ class HomeViewModel(application: Application) : AndroidViewModel(application) {
                 .distinctUntilChanged()
                 .drop(1) // the first emission is the state the current pass already rendered
                 .debounce(CATALOG_SETTLE_MS)
+                // A Drive sweep stamps a row per copied file, each a second or more apart, so the quiet gap
+                // above never opens and the whole library (3000+ rows, 0.2-1.2 s each) was re-listed after
+                // almost every file. At most one re-list per interval; the last change still lands.
+                .sample(CATALOG_RELOAD_MIN_INTERVAL_MS)
                 .collect { reloadListQuietly() }
         }
     }
@@ -1484,6 +1489,7 @@ class HomeViewModel(application: Application) : AndroidViewModel(application) {
         private const val CALL_HISTORY_LIMIT = 500
         /** How long the catalog must stop changing before the list is re-read. */
         private const val CATALOG_SETTLE_MS = 400L
+        private const val CATALOG_RELOAD_MIN_INTERVAL_MS = 5_000L
 
         /** After turning recording on, how long the recorder may warm up before the card admits "Starting up…". */
         private const val STARTING_GRACE_MS = 3_000L

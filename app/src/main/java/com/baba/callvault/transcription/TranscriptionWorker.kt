@@ -46,7 +46,28 @@ class TranscriptionWorker(
     override suspend fun getForegroundInfo(): ForegroundInfo =
         HeavyWorkNotification.forWork(applicationContext, R.string.heavy_work_transcribing)
 
-    override suspend fun doWork(): Result = withContext(Dispatchers.IO) {
+    /**
+     * Writes the run's start and end to the always-on Drive journal, so one report shows what the phone was
+     * transcribing around every Drive sweep (a Honor phone's sweeps stalled while 6 whisper threads ran).
+     */
+    override suspend fun doWork(): Result {
+        val started = SystemClock.elapsedRealtime()
+        val journal = { line: String -> com.baba.callvault.system.storage.DriveCopyJournal.record(applicationContext, line) }
+        journal("transcription run START (attempt ${runAttemptCount + 1}, userRequested=${inputData.getBoolean(KEY_USER_REQUESTED, false)}, named=${inputData.getString(KEY_DISPLAY_NAME) != null})")
+        return try {
+            val result = runBatch()
+            journal("transcription run END ${result.javaClass.simpleName} after ${(SystemClock.elapsedRealtime() - started) / 1000}s")
+            result
+        } catch (e: kotlin.coroutines.cancellation.CancellationException) {
+            journal("transcription run CANCELLED after ${(SystemClock.elapsedRealtime() - started) / 1000}s (stopReason=$stopReason)")
+            throw e
+        } catch (t: Throwable) {
+            journal("transcription run CRASHED after ${(SystemClock.elapsedRealtime() - started) / 1000}s: ${t.javaClass.simpleName}: ${t.message}")
+            throw t
+        }
+    }
+
+    private suspend fun runBatch(): Result = withContext(Dispatchers.IO) {
         // Promote out of cached-process priority before allocating anything. Best-effort: a phone that
         // refuses the foreground service should still transcribe, just more vulnerable to being killed
         // — failing the whole job here would be a worse outcome than the risk it guards against.

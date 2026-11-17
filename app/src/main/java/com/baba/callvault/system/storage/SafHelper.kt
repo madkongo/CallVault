@@ -303,15 +303,28 @@ object SafHelper {
         destFolderUri: Uri,
         displayName: String,
         mimeType: String,
-        sourceSize: Long
+        sourceSize: Long,
+        timings: CopyTimings = CopyTimings(),
+        known: KnownDest? = null,
     ): CopyResult {
-        val dir = DocumentFile.fromTreeUri(context, destFolderUri)
+        val dir = timings.time("resolve") { DocumentFile.fromTreeUri(context, destFolderUri) }
             ?: return CopyResult.Failed("destination folder could not be resolved")
-        if (!dir.canWrite()) return CopyResult.Failed("destination folder is not writable")
+        // A caller that has just listed the folder (the sweep) has already proved it writable.
+        if (known == null && !timings.time("canWrite") { dir.canWrite() }) {
+            return CopyResult.Failed("destination folder is not writable")
+        }
 
-        val existing = runCatching { dir.findFile(displayName) }.getOrNull()
+        // `findFile` lists the whole folder and then asks the provider for every child's name, one query
+        // each: on a Drive folder of a thousand files that is a thousand round trips, twice per copy, and
+        // it grows with every file copied. A caller that already holds the listing says so instead.
+        val existing = if (known != null) {
+            known.existingUri?.let { DocumentFile.fromSingleUri(context, it) }
+        } else {
+            timings.time("findFile") { runCatching { dir.findFile(displayName) }.getOrNull() }
+        }
         if (existing != null) {
-            val existingSize = runCatching { existing.length() }.getOrDefault(-1L)
+            val existingSize = if (known != null) known.existingSize
+            else runCatching { existing.length() }.getOrDefault(-1L)
             when (CloudCopyPolicy.verdict(existingSize, sourceSize)) {
                 ExistingCopyVerdict.COMPLETE -> return CopyResult.AlreadyPresent(existing.uri)
                 ExistingCopyVerdict.PARTIAL -> {
@@ -324,24 +337,35 @@ object SafHelper {
         }
 
         // A leftover from an attempt that was killed mid-stream; it holds no value, only bytes.
-        runCatching { dir.findFile(CloudCopyPolicy.stagingNameFor(displayName))?.delete() }
+        if (known != null) {
+            known.stagingUri?.let { stale ->
+                timings.time("deleteStaging") { runCatching { DocumentFile.fromSingleUri(context, stale)?.delete() } }
+            }
+        } else {
+            timings.time("findStaging") {
+                runCatching { dir.findFile(CloudCopyPolicy.stagingNameFor(displayName))?.delete() }
+            }
+        }
 
-        val staged = dir.createFile(mimeType, CloudCopyPolicy.stagingNameFor(displayName))
+        val staged = timings.time("create") { dir.createFile(mimeType, CloudCopyPolicy.stagingNameFor(displayName)) }
             ?: return CopyResult.Failed("staging document for '$displayName' could not be created")
         // Renaming is how the copy is published. A provider that cannot rename (rare) gets the plain
         // write instead — the size check above still heals a truncated result on the following attempt.
-        if (!supportsRename(context, staged.uri)) {
+        // Asked once per provider: the answer is the same for every document it serves.
+        if (!timings.time("renameCheck") { supportsRenameCached(context, staged.uri) }) {
             runCatching { staged.delete() }
             AppLogger.i(TAG, "Destination provider cannot rename; writing '$displayName' directly")
-            return streamInto(context, srcUri, dir, displayName, mimeType)
+            return streamInto(context, srcUri, dir, displayName, mimeType, timings)
         }
 
-        val bytes = streamBytes(context, srcUri, staged.uri)
+        val bytes = streamBytes(context, srcUri, staged.uri, timings)
             ?: return CopyResult.Failed("streaming '$displayName' into the staging document failed")
                 .also { runCatching { staged.delete() } }
 
-        val published = runCatching {
-            DocumentsContract.renameDocument(context.contentResolver, staged.uri, displayName)
+        val published = timings.time("rename") {
+            runCatching {
+                DocumentsContract.renameDocument(context.contentResolver, staged.uri, displayName)
+            }
         }.getOrElse { e ->
             runCatching { staged.delete() }
             return CopyResult.Failed("publishing '$displayName' failed: ${e.message}")
@@ -356,27 +380,129 @@ object SafHelper {
         srcUri: Uri,
         dir: DocumentFile,
         displayName: String,
-        mimeType: String
+        mimeType: String,
+        timings: CopyTimings,
     ): CopyResult {
-        val dest = dir.createFile(mimeType, displayName)
+        val dest = timings.time("create") { dir.createFile(mimeType, displayName) }
             ?: return CopyResult.Failed("'$displayName' could not be created")
-        val bytes = streamBytes(context, srcUri, dest.uri)
+        val bytes = streamBytes(context, srcUri, dest.uri, timings)
             ?: return CopyResult.Failed("streaming '$displayName' failed")
                 .also { runCatching { dest.delete() } }
         return CopyResult.Copied(dest.uri, bytes)
     }
 
     /** Streams [srcUri] into [destUri] write-only. Returns the byte count, or null if anything failed. */
-    private fun streamBytes(context: Context, srcUri: Uri, destUri: Uri): Long? = runCatching {
-        context.contentResolver.openInputStream(srcUri)?.use { input ->
-            context.contentResolver.openOutputStream(destUri, "w")?.use { output ->
-                input.copyTo(output)
+    private fun streamBytes(context: Context, srcUri: Uri, destUri: Uri, timings: CopyTimings): Long? = runCatching {
+        // Each step timed on its own: `close` is where a cloud provider takes the file for real, so the
+        // minutes a Drive copy can cost may hide there rather than in the byte copy.
+        val input = timings.time("openSource") { context.contentResolver.openInputStream(srcUri) }
+        input?.use {
+            val output = timings.time("openDest") { context.contentResolver.openOutputStream(destUri, "w") }
+            output?.let { out ->
+                val n = try {
+                    timings.time("copy") { input.copyTo(out) }
+                } catch (e: Throwable) {
+                    runCatching { out.close() }
+                    throw e
+                }
+                timings.time("close") { out.close() }
+                n
             }
         }
     }.getOrElse { e ->
         AppLogger.w(TAG, "Copy stream failed: ${e.message}")
         null
     }
+
+    /** Providers (by authority) already seen to support renaming; only a yes is remembered. */
+    private val renameSupported = java.util.concurrent.ConcurrentHashMap.newKeySet<String>()
+
+    private fun supportsRenameCached(context: Context, uri: Uri): Boolean {
+        val authority = uri.authority ?: return supportsRename(context, uri)
+        if (authority in renameSupported) return true
+        return supportsRename(context, uri).also { if (it) renameSupported += authority }
+    }
+
+    /**
+     * What a caller that has already listed the destination folder knows about this one file: the
+     * document that carries its final name (and its length), and a leftover staging document. Lets
+     * [copyFileToFolder] skip its own folder searches.
+     */
+    class KnownDest(val existingUri: Uri?, val existingSize: Long, val stagingUri: Uri?)
+
+    /**
+     * Lists [folderUri] in ONE provider query: name, document id and length of every child.
+     *
+     * `DocumentFile.listFiles()` followed by `name` and `length()` on each child is one query per child
+     * per property — thousands of round trips on a big Drive folder, each one a chance for the provider to
+     * stall. Returns null when the folder cannot be read at all (an empty folder is an empty listing).
+     */
+    fun listChildren(context: Context, folderUri: Uri): DriveCopyProtocol.Listing? =
+        listChildrenWithReason(context, folderUri).first
+
+    /**
+     * [listChildren] that also says WHY it returned nothing: the exception's type and message, or "the
+     * provider returned no cursor". A listing that fails without a reason is what hid the drive1 failure.
+     */
+    fun listChildrenWithReason(context: Context, folderUri: Uri): Pair<DriveCopyProtocol.Listing?, String?> {
+        var reason: String? = null
+        val listing = runCatching {
+            val treeId = DocumentsContract.getTreeDocumentId(folderUri)
+            val docId = runCatching { DocumentsContract.getDocumentId(folderUri) }.getOrDefault(treeId)
+            val children = DocumentsContract.buildChildDocumentsUriUsingTree(folderUri, docId)
+            val names = ArrayList<String>()
+            val uris = ArrayList<Uri>()
+            val sizes = ArrayList<Long>()
+            context.contentResolver.query(
+                children,
+                arrayOf(
+                    DocumentsContract.Document.COLUMN_DOCUMENT_ID,
+                    DocumentsContract.Document.COLUMN_DISPLAY_NAME,
+                    DocumentsContract.Document.COLUMN_SIZE,
+                ),
+                null, null, null,
+            )?.use { c ->
+                while (c.moveToNext()) {
+                    val name = c.getString(1) ?: continue
+                    names += name
+                    uris += DocumentsContract.buildDocumentUriUsingTree(folderUri, c.getString(0))
+                    sizes += if (c.isNull(2)) -1L else c.getLong(2)
+                }
+            } ?: run {
+                reason = "the provider returned no cursor for the folder's children"
+                return@runCatching null
+            }
+            DriveCopyProtocol.Listing(names, uris, sizes)
+        }.getOrElse { e ->
+            reason = "${e.javaClass.simpleName}: ${e.message}"
+            AppLogger.w(TAG, "Could not list $folderUri: ${e.message}")
+            null
+        }
+        return listing to reason
+    }
+
+    /**
+     * Why [folderUri] is not a usable destination, or null when it is. The same test as [isFolderValid],
+     * split so the log says WHICH part failed (no document, does not exist, not writable) and any exception.
+     */
+    fun folderProblem(context: Context, folderUri: Uri?): String? = runCatching {
+        if (folderUri == null) return@runCatching "no folder given"
+        val directory = DocumentFile.fromTreeUri(context, folderUri)
+            ?: return@runCatching "DocumentFile.fromTreeUri returned null"
+        if (!directory.exists()) return@runCatching "the folder does not exist (or the provider did not answer)"
+        if (!directory.canWrite()) return@runCatching "the folder is not writable"
+        null
+    }.getOrElse { "${it.javaClass.simpleName}: ${it.message}" }
+
+    /**
+     * The byte length the provider reports for the document at [uri], or -1 when it will not say. Used to
+     * verify a Drive copy before the device copy is deleted: one query, no folder search.
+     */
+    fun documentSize(context: Context, uri: Uri): Long = runCatching {
+        context.contentResolver.query(
+            uri, arrayOf(DocumentsContract.Document.COLUMN_SIZE), null, null, null,
+        )?.use { c -> if (c.moveToFirst() && !c.isNull(0)) c.getLong(0) else -1L } ?: -1L
+    }.getOrDefault(-1L)
 
     /** True when the document at [uri] can be renamed — the mechanism the atomic publish relies on. */
     private fun supportsRename(context: Context, uri: Uri): Boolean = runCatching {

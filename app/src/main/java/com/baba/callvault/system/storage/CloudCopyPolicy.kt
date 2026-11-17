@@ -33,6 +33,71 @@ object CloudCopyPolicy {
     /** Retries spent on one recording before the copy is reported as failed rather than retried again. */
     const val MAX_ATTEMPTS = 10
 
+    /** The least a single file may take before the sweep gives up on it and moves on. */
+    const val MIN_FILE_TIMEOUT_MS = 3 * 60_000L
+
+    /** Extra time granted per megabyte, so a long call is not abandoned for being long. */
+    const val PER_MEGABYTE_MS = 3_000L
+
+    /** Files in a row that stalled or lost the copier before the sweep ends the run instead of trying more. */
+    const val MAX_CONSECUTIVE_STALLS = 3
+
+    /**
+     * How long one file's copy may run before it is left for the next run.
+     *
+     * A file stuck for 20 minutes (a Honor phone, 2026-11-15) held the whole sweep, including "Stop for now",
+     * hostage. Generous for size: three seconds a megabyte is far slower than any link that works at all.
+     */
+    fun fileTimeoutMs(sizeBytes: Long): Long =
+        MIN_FILE_TIMEOUT_MS + (sizeBytes.coerceAtLeast(0L) / (1024 * 1024)) * PER_MEGABYTE_MS
+
+    /**
+     * Minutes of the sweep's retry delay per failed attempt (linear: 2, 4, 6 ...). WorkManager's default is
+     * exponential from 30 s up to 5 hours, which is how the drive1 build ended up waiting 5 hours after a few
+     * failed listings and ignoring a schedule the user had just changed.
+     */
+    const val SWEEP_BACKOFF_MINUTES = 2L
+
+    /**
+     * Attempts a sweep that cannot list the Drive folder gets before it waits for its next scheduled time.
+     * With [SWEEP_BACKOFF_MINUTES] that is waits of 2..16 minutes, about 72 minutes in all, never longer.
+     */
+    const val LIST_FAILURE_MAX_ATTEMPTS = 8
+
+    /** True when a sweep that could not list the folder (attempt [runAttemptCount], 0-based) asks for another try. */
+    fun shouldRetryListFailure(runAttemptCount: Int): Boolean = runAttemptCount < LIST_FAILURE_MAX_ATTEMPTS - 1
+
+    /**
+     * How long the app waits for the copier process to list the Drive folder. Listing is one query that took
+     * 1.3-4.3 s on a 1484-entry folder; 30 s outlasts a slow provider without making a copier that cannot
+     * answer cost the three minutes it did on the drive2 build.
+     */
+    const val LIST_TIMEOUT_MS = 30_000L
+
+    /**
+     * True when the copier process failed to list the Drive folder earlier on [today] ([rememberedDay] is the
+     * day it was written down, null when never): the sweep then goes straight to listing in the app's own
+     * process instead of waiting out the copier again. Expires by itself at midnight.
+     */
+    fun copierListFailedToday(rememberedDay: String?, today: String): Boolean =
+        rememberedDay != null && rememberedDay == today
+
+    /**
+     * A Drive document that counts as already holding the recording: its reported length equals the source's.
+     * A length of 0 or -1 is what a cloud provider reports for a file still settling; that is not proof, so
+     * the recording goes through the copier again, which re-asks and says "unverified" if it stays unsettled.
+     */
+    fun isVerifiedPresent(existingSize: Long, sourceSize: Long): Boolean =
+        sourceSize > 0L && existingSize == sourceSize
+
+    /**
+     * Whether the device copy may be deleted now: only when Drive itself reports a document of exactly the
+     * source's length. A copy call returning is not proof; neither is an unreported (-1) or zero length,
+     * which cloud providers show for a file still settling. Anything else keeps the device copy.
+     */
+    fun mayDeleteLocal(driveReportedSize: Long, sourceSize: Long): Boolean =
+        sourceSize > 0L && driveReportedSize == sourceSize
+
     /** Marker for the staging document a copy writes into before it is renamed to the final name. */
     private const val STAGING_MARKER = ".cvpart"
 
