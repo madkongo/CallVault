@@ -924,4 +924,6 @@
     <string name="wifi_call_far_unknown">Этот звонок по Wi-Fi записан, но CallVault не смог проверить, слышен ли на записи собеседник. Прослушайте запись.</string>
     <string name="general_show_more">Ещё</string>
     <string name="general_show_less">Свернуть</string>
+    <string name="summary_card_state_expanded">Развёрнуто</string>
+    <string name="summary_card_state_collapsed">Свёрнуто</string>
 </resources>

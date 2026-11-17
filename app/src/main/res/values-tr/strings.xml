@@ -1016,4 +1016,6 @@
     <string name="wifi_call_far_unknown">Bu Wi-Fi araması kaydedildi, ancak CallVault karşı tarafın onda olduğunu doğrulayamadı. Lütfen kaydı dinleyin.</string>
     <string name="general_show_more">Daha fazla</string>
     <string name="general_show_less">Daha az</string>
+    <string name="summary_card_state_expanded">Genişletildi</string>
+    <string name="summary_card_state_collapsed">Daraltıldı</string>
 </resources>

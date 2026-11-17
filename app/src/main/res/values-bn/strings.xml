@@ -939,4 +939,6 @@
     <string name="wifi_call_far_unknown">এই Wi-Fi কলটি রেকর্ড হয়েছে, কিন্তু CallVault যাচাই করতে পারেনি যে অপর পক্ষ এতে আছে কি না। অনুগ্রহ করে রেকর্ডিংটি শুনে দেখুন।</string>
     <string name="general_show_more">আরও</string>
     <string name="general_show_less">কম</string>
+    <string name="summary_card_state_expanded">প্রসারিত</string>
+    <string name="summary_card_state_collapsed">সংকুচিত</string>
 </resources>

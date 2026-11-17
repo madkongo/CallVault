@@ -920,4 +920,6 @@
     <string name="wifi_call_far_unknown">Esta llamada por Wi-Fi se grabó, pero CallVault no pudo comprobar que la otra parte esté en ella. Escucha la grabación.</string>
     <string name="general_show_more">Más</string>
     <string name="general_show_less">Menos</string>
+    <string name="summary_card_state_expanded">Expandido</string>
+    <string name="summary_card_state_collapsed">Contraído</string>
 </resources>

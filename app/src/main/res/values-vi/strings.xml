@@ -918,4 +918,6 @@
     <string name="wifi_call_far_unknown">Cuộc gọi Wi-Fi này đã được ghi, nhưng CallVault không thể kiểm tra xem có tiếng phía bên kia hay không. Hãy nghe lại bản ghi.</string>
     <string name="general_show_more">Xem thêm</string>
     <string name="general_show_less">Thu gọn</string>
+    <string name="summary_card_state_expanded">Đã mở rộng</string>
+    <string name="summary_card_state_collapsed">Đã thu gọn</string>
 </resources>

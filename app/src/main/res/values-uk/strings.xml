@@ -932,4 +932,6 @@
     <string name="wifi_call_far_unknown">Цей дзвінок через Wi-Fi записано, але CallVault не зміг перевірити, чи чути на записі співрозмовника. Прослухайте запис.</string>
     <string name="general_show_more">Ще</string>
     <string name="general_show_less">Згорнути</string>
+    <string name="summary_card_state_expanded">Розгорнуто</string>
+    <string name="summary_card_state_collapsed">Згорнуто</string>
 </resources>

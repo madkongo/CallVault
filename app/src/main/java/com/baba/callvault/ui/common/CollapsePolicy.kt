@@ -8,6 +8,8 @@
 
 package com.baba.callvault.ui.common
 
+import com.baba.callvault.summary.CallSummary
+
 /**
  * When the recording's screen folds a block of text to a few lines and a "more".
  *
@@ -27,5 +29,18 @@ object CollapsePolicy {
     fun isLong(text: String): Boolean {
         val trimmed = text.trim()
         return trimmed.length > LONG_CHARS || trimmed.lines().size > COLLAPSED_LINES
+    }
+
+    /** A summary with more bullet points than this (decisions, to-dos, key points, facts) is long. */
+    const val SHORT_SUMMARY_ITEMS = 3
+
+    /**
+     * True when [summary] should start folded. A short one — brief prose and only a few points — is
+     * shown whole: a "More" that reveals two more lines is a button for nothing.
+     */
+    fun isLongSummary(summary: CallSummary): Boolean {
+        val items = summary.decisions.size + summary.actionItems.size +
+            summary.keyPoints.size + summary.keyFacts.size
+        return isLong(summary.intent + "\n" + summary.summary) || items > SHORT_SUMMARY_ITEMS
     }
 }

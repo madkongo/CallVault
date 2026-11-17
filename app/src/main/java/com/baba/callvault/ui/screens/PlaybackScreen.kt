@@ -63,6 +63,14 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.withFrameNanos
+import androidx.compose.foundation.relocation.BringIntoViewRequester
+import androidx.compose.foundation.relocation.bringIntoViewRequester
+import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.focus.focusRequester
+import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.focus.onFocusChanged
@@ -127,6 +135,7 @@ import java.util.Locale
  * The transcript is a doorway rather than a panel here. It already has a sheet that does timestamps,
  * right-to-left text and seek-on-tap; duplicating any of that would mean two things to keep correct.
  */
+@OptIn(ExperimentalFoundationApi::class)
 @Composable
 fun PlaybackScreen(
     item: RecordingItem,
@@ -183,6 +192,21 @@ fun PlaybackScreen(
     val isLoading = isActive && playback.phase == RecordingPlaybackController.Phase.LOADING
     // Folded each time this recording is opened; the player's summary icon and the card share it.
     var summaryExpanded by rememberSaveable(item.displayName) { mutableStateOf(false) }
+    // The summary icon sits in the player box, the card below it: a tap should land you on the card.
+    val summaryInView = remember { BringIntoViewRequester() }
+    var summaryScrollRequests by remember { mutableIntStateOf(0) }
+    LaunchedEffect(summaryScrollRequests) {
+        if (summaryScrollRequests == 0) return@LaunchedEffect
+        // Two frames: the card may only just have come into the tree (asking for a summary adds it)
+        // or grown (opening it), and bringing a stale rectangle into view would stop short.
+        withFrameNanos { }
+        withFrameNanos { }
+        try {
+            summaryInView.bringIntoView()
+        } catch (_: IllegalStateException) {
+            // No card to show (a summary not asked for yet): nothing to scroll to.
+        }
+    }
 
     CvScaffold(
         modifier = modifier.fillMaxSize(),
@@ -228,9 +252,18 @@ fun PlaybackScreen(
                 onOpenTranscript = onOpenTranscript,
                 onTranscribe = onTranscribe,
                 summaryState = summaryState,
-                onSummarise = onSummarise,
-                // A finished summary: the icon opens or folds the card below.
-                onToggleSummary = { summaryExpanded = !summaryExpanded },
+                onSummarise = {
+                    onSummarise()
+                    summaryScrollRequests++
+                },
+                // Ready: open or fold the card. Running or blocked: just show it (Stop, or the reason).
+                onToggleSummary = {
+                    if (summaryState is SummaryCardState.Ready && summaryState.isFoldable) {
+                        summaryExpanded = !summaryExpanded
+                    }
+                    summaryScrollRequests++
+                },
+                summaryExpanded = summaryExpanded,
             )
             // Directly under the player, because every one of these is an instruction to the player:
             // tap and it seeks there. Further down they would be a list of numbers to read rather
@@ -251,6 +284,7 @@ fun PlaybackScreen(
                 onStop = onStopSummary,
                 expanded = summaryExpanded,
                 onExpandedChange = { summaryExpanded = it },
+                modifier = Modifier.bringIntoViewRequester(summaryInView),
                 // Seek, then play. A jump point that silently moved the cursor without starting
                 // would look like nothing happened.
                 onSeek = { millis ->
@@ -556,6 +590,7 @@ private fun PlayerCard(
     summaryState: SummaryCardState,
     onSummarise: () -> Unit,
     onToggleSummary: () -> Unit,
+    summaryExpanded: Boolean,
 ) {
     val accent = MaterialTheme.colorScheme.primary
     // Falls back to the length from the call log rather than showing 0:00 for a recording that is
@@ -663,15 +698,18 @@ private fun PlayerCard(
                 // controls the list rows use: transcribe / in progress / read / retry, and
                 // summarise / in progress / open / retry. Retry is transcribe: on this screen there
                 // is one recording and one thing a failed run can do next.
-                TranscriptActionButton(
-                    status = transcriptStatus,
-                    onTranscribe = onTranscribe,
-                    onOpen = onOpenTranscript,
-                    onRetry = onTranscribe,
-                    modifier = Modifier.size(ACTION_TARGET),
-                    // A ring that turns for minutes and never moves is indistinguishable from a hang.
-                    percent = transcriptPercent
-                )
+                // 48dp touch slot, the icon or ring inside it keeps the 40dp look.
+                Box(modifier = Modifier.size(PLAYER_CONTROL_SIZE), contentAlignment = Alignment.Center) {
+                    TranscriptActionButton(
+                        status = transcriptStatus,
+                        onTranscribe = onTranscribe,
+                        onOpen = onOpenTranscript,
+                        onRetry = onTranscribe,
+                        modifier = Modifier.size(ACTION_TARGET),
+                        // A ring that turns for minutes and never moves is indistinguishable from a hang.
+                        percent = transcriptPercent
+                    )
+                }
                 Spacer(Modifier.weight(1f))
                 FilledTonalIconButton(
                     onClick = { onSkip(-PlaybackControls.SKIP_MS) },
@@ -714,7 +752,8 @@ private fun PlayerCard(
                     state = summaryState,
                     onCreate = onSummarise,
                     onOpen = onToggleSummary,
-                    modifier = Modifier.size(ACTION_TARGET)
+                    expanded = summaryExpanded,
+                    modifier = Modifier.size(PLAYER_CONTROL_SIZE)
                 )
             }
         }
@@ -1086,15 +1125,39 @@ private fun NoteCard(note: String, recordingKey: String, onNoteChange: (String) 
         // text, and dropped for good once the field takes focus, so a note that grows past the limit
         // under the cursor never folds mid-typing.
         var expanded by rememberSaveable(recordingKey) { mutableStateOf(false) }
+        // Opened by a tap on the folded text: the editor then takes focus and the keyboard in that
+        // same tap, instead of needing a second one.
+        val focusRequester = remember { FocusRequester() }
+        val keyboard = LocalSoftwareKeyboardController.current
+        var focusOnOpen by remember { mutableStateOf(false) }
+        LaunchedEffect(expanded, focusOnOpen) {
+            if (expanded && focusOnOpen) {
+                focusOnOpen = false
+                try {
+                    focusRequester.requestFocus()
+                    keyboard?.show()
+                } catch (_: IllegalStateException) {
+                    // The field was not in the tree yet; a tap on it works as it always did.
+                }
+            }
+        }
         if (!expanded && CollapsePolicy.isLong(draft.text)) {
-            Column(modifier = Modifier.fillMaxWidth().clickable { expanded = true }) {
+            Column(
+                modifier = Modifier.fillMaxWidth().clickable {
+                    focusOnOpen = true
+                    expanded = true
+                }
+            ) {
                 Text(
                     text = draft.text,
                     style = MaterialTheme.typography.bodyMedium.copy(textDirection = TextDirection.Content),
                     maxLines = CollapsePolicy.COLLAPSED_LINES,
                     overflow = TextOverflow.Ellipsis
                 )
-                TextButton(onClick = { expanded = true }) {
+                TextButton(onClick = {
+                    focusOnOpen = true
+                    expanded = true
+                }) {
                     Text(stringResource(R.string.general_show_more))
                 }
             }
@@ -1106,6 +1169,7 @@ private fun NoteCard(note: String, recordingKey: String, onNoteChange: (String) 
                 modifier = Modifier
                     .fillMaxWidth()
                     .heightIn(min = 96.dp)
+                    .focusRequester(focusRequester)
                     .onFocusChanged { if (it.isFocused) expanded = true },
                 // Content direction: these notes are written in the same language the call was in.
                 textStyle = MaterialTheme.typography.bodyMedium.copy(textDirection = TextDirection.Content)

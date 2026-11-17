@@ -10,6 +10,11 @@ package com.baba.callvault.ui.common
 
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.semantics.stateDescription
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
@@ -54,7 +59,10 @@ import com.baba.callvault.summary.SummaryBlocker
 sealed interface SummaryCardState {
 
     /** A summary exists. */
-    data class Ready(val summary: CallSummary) : SummaryCardState
+    data class Ready(val summary: CallSummary) : SummaryCardState {
+        /** Long enough to start folded; a short one is shown whole. */
+        val isFoldable: Boolean get() = CollapsePolicy.isLongSummary(summary)
+    }
 
     /** No summary, and one can be asked for. */
     data object Offered : SummaryCardState
@@ -104,24 +112,35 @@ fun SummaryCard(
 
         when (state) {
             is SummaryCardState.Ready -> {
-                if (expanded) {
+                // A short summary is shown whole, with no "More": folding three lines to three lines
+                // would only add a button that does nothing.
+                if (!state.isFoldable || expanded) {
                     ReadySummary(state.summary, onRedo, onSeek)
                 } else {
                     CollapsedSummary(state.summary)
                 }
-                TextButton(onClick = { onExpandedChange(!expanded) }) {
-                    Text(stringResource(if (expanded) R.string.general_show_less else R.string.general_show_more))
+                if (state.isFoldable) {
+                    TextButton(onClick = { onExpandedChange(!expanded) }) {
+                        Text(stringResource(if (expanded) R.string.general_show_less else R.string.general_show_more))
+                    }
                 }
             }
             SummaryCardState.Offered -> Unit // returned above
-            is SummaryCardState.Running -> RunningRow(state.percent, onStop)
+            is SummaryCardState.Running -> {
+                RunningRow(state.percent, onStop)
+                // The cost, where someone waiting on it is looking.
+                Spacer(Modifier.height(6.dp))
+                Explanation(stringResource(R.string.summary_card_create_subtitle))
+            }
+            // Layout kept as it is: the "download the summariser" action for MODEL_MISSING is added
+            // under this explanation by its own change.
             is SummaryCardState.Blocked -> Explanation(stringResource(reasonTextOf(state.reason)))
             SummaryCardState.Failed -> {
                 Explanation(stringResource(R.string.summary_card_failed))
                 Spacer(Modifier.height(4.dp))
                 ActionRow(
                     label = stringResource(R.string.summary_card_create),
-                    supporting = null,
+                    supporting = stringResource(R.string.summary_card_create_subtitle),
                     onClick = onCreate
                 )
             }
@@ -251,30 +270,57 @@ private fun CollapsedSummary(summary: CallSummary) {
 fun SummaryActionButton(
     state: SummaryCardState,
     onCreate: () -> Unit,
+    /**
+     * Brings the card below the player into view (and opens or folds a foldable summary). Also the
+     * tap for Running and Blocked, where the card holds Stop and the explanation.
+     */
     onOpen: () -> Unit,
+    /** Whether the finished summary is currently open, for the screen reader. */
+    expanded: Boolean,
     modifier: Modifier = Modifier
 ) {
-    if (state is SummaryCardState.Running) {
-        WorkProgressRing(percent = state.percent, modifier = modifier)
-        return
-    }
-    val ready = state is SummaryCardState.Ready
-    val failed = state == SummaryCardState.Failed
-    val blocked = state is SummaryCardState.Blocked
-    IconButton(
-        onClick = when {
-            ready -> onOpen
-            else -> onCreate
-        },
-        // A blocked summary cannot be asked for; the card under the player says why.
-        enabled = !blocked,
-        modifier = modifier
-    ) {
-        Icon(
-            imageVector = if (failed) Icons.Filled.ErrorOutline else Icons.Filled.AutoAwesome,
-            contentDescription = stringResource(
-                if (ready || blocked) R.string.summary_card_title else R.string.summary_card_create
-            ),
+    // The slot is the touch target (48dp, set by the caller); the ring and the icon inside keep
+    // their own, smaller, look.
+    Box(modifier = modifier, contentAlignment = Alignment.Center) {
+        if (state is SummaryCardState.Running) {
+            val running = stringResource(R.string.summary_card_running, state.percent)
+            WorkProgressRing(
+                percent = state.percent,
+                modifier = Modifier
+                    .size(RING_SIZE)
+                    .clickable(role = Role.Button, onClick = onOpen)
+                    .semantics { contentDescription = running }
+            )
+            return@Box
+        }
+        val ready = state is SummaryCardState.Ready
+        val failed = state == SummaryCardState.Failed
+        val blocked = state is SummaryCardState.Blocked
+        // What state the control is in, said once, instead of leaving TalkBack with one label for
+        // five different situations.
+        val stateText: String? = when (state) {
+            is SummaryCardState.Ready -> if (state.isFoldable) {
+                stringResource(
+                    if (expanded) R.string.summary_card_state_expanded else R.string.summary_card_state_collapsed
+                )
+            } else null
+            is SummaryCardState.Blocked -> stringResource(reasonTextOf(state.reason))
+            SummaryCardState.Failed -> stringResource(R.string.summary_card_failed)
+            else -> stringResource(R.string.summary_card_create_subtitle)
+        }
+        IconButton(
+            // Blocked stays tappable: it takes you to the card, which says why and what to do.
+            onClick = if (ready || blocked) onOpen else onCreate,
+            modifier = Modifier
+                .size(ACTION_SLOT)
+                .semantics { stateText?.let { stateDescription = it } }
+        ) {
+            Icon(
+                imageVector = if (failed) Icons.Filled.ErrorOutline else Icons.Filled.AutoAwesome,
+                contentDescription = stringResource(
+                    if (ready || blocked) R.string.summary_card_title else R.string.summary_card_create
+                ),
+                modifier = Modifier.size(ICON_SIZE),
             // Colours stated: an un-tinted M3 icon resolves to coral in this theme.
             tint = when {
                 failed -> MaterialTheme.colorScheme.error
@@ -282,9 +328,14 @@ fun SummaryActionButton(
                 blocked -> MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.38f)
                 else -> MaterialTheme.colorScheme.onSurfaceVariant
             }
-        )
+            )
+        }
     }
 }
+
+private val ACTION_SLOT = 48.dp
+private val RING_SIZE = 40.dp
+private val ICON_SIZE = 24.dp
 
 @Composable
 private fun Header() {

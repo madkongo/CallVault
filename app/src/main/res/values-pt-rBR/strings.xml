@@ -923,4 +923,6 @@
     <string name="wifi_call_far_unknown">Esta chamada por Wi-Fi foi gravada, mas o CallVault não conseguiu verificar se o outro lado está nela. Ouça a gravação.</string>
     <string name="general_show_more">Mais</string>
     <string name="general_show_less">Menos</string>
+    <string name="summary_card_state_expanded">Expandido</string>
+    <string name="summary_card_state_collapsed">Recolhido</string>
 </resources>

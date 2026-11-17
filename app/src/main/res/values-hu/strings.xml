@@ -920,4 +920,6 @@
     <string name="wifi_call_far_unknown">Ez a Wi-Fi-hívás rögzítve lett, de a CallVault nem tudta ellenőrizni, hogy a másik fél hallható-e rajta. Kérjük, hallgassa meg a felvételt.</string>
     <string name="general_show_more">Több</string>
     <string name="general_show_less">Kevesebb</string>
+    <string name="summary_card_state_expanded">Kibontva</string>
+    <string name="summary_card_state_collapsed">Összecsukva</string>
 </resources>

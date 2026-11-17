@@ -1132,4 +1132,6 @@
     <string name="wifi_call_far_unknown">This Wi-Fi call was recorded, but CallVault could not check that the other side is on it. Please listen to the recording.</string>
     <string name="general_show_more">More</string>
     <string name="general_show_less">Less</string>
+    <string name="summary_card_state_expanded">Expanded</string>
+    <string name="summary_card_state_collapsed">Collapsed</string>
 </resources>

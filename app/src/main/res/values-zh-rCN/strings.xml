@@ -918,4 +918,6 @@
     <string name="wifi_call_far_unknown">这通 WLAN 通话已录音，但 CallVault 无法确认其中录到了对方的声音。请收听录音确认。</string>
     <string name="general_show_more">更多</string>
     <string name="general_show_less">收起</string>
+    <string name="summary_card_state_expanded">已展开</string>
+    <string name="summary_card_state_collapsed">已收起</string>
 </resources>

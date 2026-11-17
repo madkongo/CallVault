@@ -1074,4 +1074,6 @@
     <string name="wifi_call_far_unknown">Αυτή η κλήση Wi-Fi καταγράφηκε, αλλά το CallVault δεν μπόρεσε να ελέγξει αν υπάρχει η άλλη πλευρά. Ακούστε την εγγραφή.</string>
     <string name="general_show_more">Περισσότερα</string>
     <string name="general_show_less">Λιγότερα</string>
+    <string name="summary_card_state_expanded">Ανεπτυγμένο</string>
+    <string name="summary_card_state_collapsed">Συμπτυγμένο</string>
 </resources>

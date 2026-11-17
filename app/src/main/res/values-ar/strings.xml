@@ -958,4 +958,6 @@
     <string name="wifi_call_far_unknown">سُجّلت مكالمة Wi-Fi هذه، لكن تعذّر على CallVault التحقق من وجود صوت الطرف الآخر فيها. يُرجى الاستماع إلى التسجيل.</string>
     <string name="general_show_more">المزيد</string>
     <string name="general_show_less">أقل</string>
+    <string name="summary_card_state_expanded">موسّع</string>
+    <string name="summary_card_state_collapsed">مطوي</string>
 </resources>

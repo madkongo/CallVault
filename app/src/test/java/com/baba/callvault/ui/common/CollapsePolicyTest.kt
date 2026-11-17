@@ -1,5 +1,6 @@
 package com.baba.callvault.ui.common
 
+import com.baba.callvault.summary.CallSummary
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
 import org.junit.Test
@@ -25,6 +26,31 @@ class CollapsePolicyTest {
     @Test
     fun surroundingWhitespaceDoesNotCount() {
         assertFalse(CollapsePolicy.isLong("   " + "a".repeat(CollapsePolicy.LONG_CHARS) + "\n\n"))
+    }
+
+    private fun summary(text: String, points: Int = 0, intent: String = "Booking") = CallSummary(
+        intent = intent,
+        summary = text,
+        keyPoints = List(points) { "p$it" },
+        decisions = emptyList(),
+        actionItems = emptyList(),
+        keyFacts = emptyList()
+    )
+
+    @Test
+    fun shortSummaryIsNotLong() {
+        assertFalse(CollapsePolicy.isLongSummary(summary("Agreed to meet on Monday.")))
+        assertFalse(
+            CollapsePolicy.isLongSummary(summary("Agreed to meet.", points = CollapsePolicy.SHORT_SUMMARY_ITEMS))
+        )
+    }
+
+    @Test
+    fun longProseOrManyPointsMakeASummaryLong() {
+        assertTrue(CollapsePolicy.isLongSummary(summary("a".repeat(CollapsePolicy.LONG_CHARS + 1))))
+        assertTrue(
+            CollapsePolicy.isLongSummary(summary("Short.", points = CollapsePolicy.SHORT_SUMMARY_ITEMS + 1))
+        )
     }
 
     @Test
