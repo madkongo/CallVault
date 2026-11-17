@@ -75,6 +75,15 @@ All notable changes to CallVault are documented here. The format is based on
 
 ### Fixed
 
+- **An app call (WhatsApp, Telegram, LINE…) now shows one CallVault notification, and notifications follow the app's
+  language.** During an app call two notices sat side by side, "Recording a LINE call" with Pause / Mark / Stop and
+  "Recording VoIP call", and on a phone whose app language differed from the system language some were English next to
+  Chinese ones. Now there is one notice with Pause / Mark / Stop, as on a normal call, and "Ready to record calls"
+  returns afterwards. Every notification CallVault posts takes its text from the language chosen in Settings.
+  <!-- 🧪 VERIFYING (BabApps item 123, not shipped): unit-tested, and tried on the OnePlus 9 Pro with the app set to
+  Chinese. To settle it: make a WhatsApp call with recording on; the shade should show one CallVault notice, in the
+  app's language. -->
+
 - **Home no longer says "Ready to record" when the recorder is stopped and there is no Wi-Fi.** On a Pixel 8 with
   mobile data only and "Keep recording off Wi-Fi" off, the recorder could not restart after the app was stopped, a
   call was missed, and Home still read "Ready". Home now shows "Needs Wi-Fi to record" and says to connect to Wi-Fi or

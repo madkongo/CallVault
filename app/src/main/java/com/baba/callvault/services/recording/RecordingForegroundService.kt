@@ -35,6 +35,7 @@ import com.baba.callvault.data.health.record
 import com.baba.callvault.integrations.adb.AdbShell
 import com.baba.callvault.server.RecorderBackend
 import com.baba.callvault.R
+import com.baba.callvault.system.LocalizedContext
 import com.baba.callvault.data.recordings.RecordingCatalog
 import com.baba.callvault.data.waveform.WaveformDrawWorker
 import com.baba.callvault.transcription.TranscriptionScheduler
@@ -268,6 +269,9 @@ class RecordingForegroundService : Service() {
     }
 
     // No binding. This is a fully command-based service. All interactions are via startService with intent actions.
+    /** Its error texts follow the app's language, not only the phone's (BabApps item 123). */
+    override fun attachBaseContext(newBase: Context) = super.attachBaseContext(LocalizedContext.of(newBase))
+
     override fun onBind(intent: Intent?): IBinder? = null
 
     /**

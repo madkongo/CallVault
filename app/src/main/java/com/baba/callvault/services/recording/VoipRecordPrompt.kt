@@ -14,6 +14,7 @@ import android.content.Context
 import android.content.Intent
 import androidx.core.app.NotificationCompat
 import com.baba.callvault.R
+import com.baba.callvault.system.LocalizedContext
 import com.baba.callvault.utils.AppLogger
 
 /**
@@ -46,7 +47,8 @@ object VoipRecordPrompt {
      *                 wording when the app could not be identified, which happens when the calling app
      *                 is not allowed to post notifications.
      */
-    fun show(context: Context, appLabel: String?) {
+    fun show(base: Context, appLabel: String?) {
+        val context = LocalizedContext.of(base)
         val intent = Intent(context, DaemonKeepAliveService::class.java).apply {
             action = DaemonKeepAliveService.ACTION_VOIP_RECORD_NOW
         }

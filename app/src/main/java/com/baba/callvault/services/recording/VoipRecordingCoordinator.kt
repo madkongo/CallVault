@@ -16,6 +16,7 @@ import android.net.Uri
 import android.os.Build
 import androidx.documentfile.provider.DocumentFile
 import com.baba.callvault.R
+import com.baba.callvault.system.LocalizedContext
 import com.baba.callvault.data.AppPreferences
 import com.baba.callvault.data.health.CallOutcome
 import com.baba.callvault.data.health.CallOutcomes
@@ -638,7 +639,7 @@ object VoipRecordingCoordinator {
         }
 
         runCatching {
-            RecordingNotificationHelper(context).showErrorNotification(context.getString(messageRes))
+            RecordingNotificationHelper(context).showErrorNotification(LocalizedContext.of(context).getString(messageRes))
         }.onFailure { AppLogger.w(TAG, "Could not warn about the missed VoIP call: ${it.message}") }
 
         // Separately guarded from the notification: one is seen now, the other is still there
@@ -884,7 +885,7 @@ object VoipRecordingCoordinator {
             }
             runCatching {
                 RecordingNotificationHelper(context)
-                    .showErrorNotification(context.getString(warning))
+                    .showErrorNotification(LocalizedContext.of(context).getString(warning))
             }.onFailure { AppLogger.w(TAG, "Could not warn about the one-sided recording: ${it.message}") }
         }
 

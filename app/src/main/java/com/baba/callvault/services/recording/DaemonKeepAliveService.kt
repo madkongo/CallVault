@@ -28,6 +28,7 @@ import android.os.SystemClock
 import androidx.core.app.NotificationCompat
 import androidx.core.content.ContextCompat
 import com.baba.callvault.R
+import com.baba.callvault.system.LocalizedContext
 import com.baba.callvault.data.AppPreferences
 import com.baba.callvault.data.RecordingState
 import com.baba.callvault.data.health.SetupHealthStore
@@ -834,17 +835,19 @@ class DaemonKeepAliveService : Service() {
 
     private fun buildNotification(ready: Boolean): Notification {
         val voipRecording = runCatching { voipDetector.isRecording }.getOrDefault(false)
+        // Text from the app's language, not only the phone's (BabApps item 123); this service lives for days.
+        val loc = LocalizedContext.of(this)
         val notice = ReadinessNoticeText.current(this, ready)
         val baseText = when {
-            voipRecording -> getString(R.string.notif_voip_recording_text)
-            else -> getString(ReadinessNoticeText.text(notice))
+            voipRecording -> loc.getString(R.string.notif_voip_recording_text)
+            else -> loc.getString(ReadinessNoticeText.text(notice))
         }
         val builder = NotificationCompat.Builder(this, CHANNEL_ID)
             .setSmallIcon(android.R.drawable.stat_notify_sync)
             .setContentTitle(
                 when {
-                    voipRecording -> getString(R.string.notif_voip_recording_title)
-                    else -> getString(ReadinessNoticeText.title(notice))
+                    voipRecording -> loc.getString(R.string.notif_voip_recording_title)
+                    else -> loc.getString(ReadinessNoticeText.title(notice))
                 },
             )
             .setContentText(baseText)
@@ -874,19 +877,19 @@ class DaemonKeepAliveService : Service() {
         if (UsbDebuggingActionReceiver.offers(this, notice)) {
             builder.addAction(
                 0,
-                getString(R.string.notif_action_turn_usb_on),
+                loc.getString(R.string.notif_action_turn_usb_on),
                 UsbDebuggingActionReceiver.pendingIntent(this),
             )
         }
         if (notice == ReadinessNotice.WD_OFF_BY_USER) {
             builder.addAction(
                 0,
-                getString(R.string.notif_action_turn_wd_on),
+                loc.getString(R.string.notif_action_turn_wd_on),
                 WirelessDebuggingActionReceiver.pendingIntent(this),
             )
         }
         if (usbNotice != UsbNotice.NONE && !noticeOwnsLine) {
-            val warning = getString(
+            val warning = loc.getString(
                 when (usbNotice) {
                     UsbNotice.DATA_MODE_RISK -> R.string.notif_usb_lock_warning
                     else -> R.string.notif_usb_check_unavailable
@@ -901,7 +904,7 @@ class DaemonKeepAliveService : Service() {
         // would stop adbd and take the daemon with it. Say so rather than leaving the user to notice that
         // a debugging switch they did not turn on is staying on — and name the two settings that free it.
         if (adbAdvice && notice == ReadinessNotice.READY && WirelessDebuggingPolicy.mustKeepWirelessDebugging(AdbShell.wirelessDebuggingPlan(this))) {
-            val notice = getString(R.string.notif_wd_required)
+            val notice = loc.getString(R.string.notif_wd_required)
             builder.setContentText(notice)
                 .setStyle(NotificationCompat.BigTextStyle().bigText("$baseText\n$notice"))
         }
