@@ -29,6 +29,9 @@ import com.baba.callvault.server.DaemonStereo
 import com.baba.callvault.server.IRecorderService
 import com.baba.callvault.server.RecorderConnection
 import com.baba.callvault.server.RecorderServiceImpl
+import com.baba.callvault.server.VoipCallFacts
+import com.baba.callvault.data.recordings.RecordingDirection
+import kotlinx.coroutines.isActive
 import com.baba.callvault.system.storage.SafHelper
 import com.baba.callvault.data.recordings.RecordingCatalog
 import com.baba.callvault.data.waveform.WaveformDrawWorker
@@ -91,6 +94,9 @@ object VoipRecordingCoordinator {
     private const val ROUTING_LINES_PER_LOG_LINE = 25
 
     @Volatile private var recording = false
+
+    /** How long the read for the first answered read keeps going; it only feeds a log line. */
+    private const val DIRECTION_LOG_MAX_MS = 60_000L
 
     /** The running recording was started from the call-voice audio, not the mode (BabApps item 108). */
     @Volatile private var startedViaNormalMode = false
@@ -254,6 +260,9 @@ object VoipRecordingCoordinator {
         routeJob = reportAudioRoute(context, callPackage)
         answerHoldJob?.cancel()
         heldForAnswer = false
+        directionJob?.cancel()
+        direction.set(null)
+        directionJob = if (callPackage != null) readDirection(callPackage) else null
         // The capture had to open now; what waits for the pickup is the encode. See VoipAnswerHold.
         // Not for a normal-mode call (BabApps item 108): it is recognised by a live call-voice recording, so the
         // call is already connected, and the app's notification is not known to carry an answer signal.
@@ -320,6 +329,62 @@ object VoipRecordingCoordinator {
         AudioDeviceInfo.TYPE_BLE_HEADSET, AudioDeviceInfo.TYPE_BLE_SPEAKER -> "bt-le"
         AudioDeviceInfo.TYPE_USB_HEADSET, AudioDeviceInfo.TYPE_USB_DEVICE -> "usb"
         else -> "type$type"
+    }
+
+    /** The call's direction once the calling app's notification proved it (BabApps item 113); null = unknown. */
+    private val direction = java.util.concurrent.atomic.AtomicReference<RecordingDirection?>(null)
+    private var directionJob: Job? = null
+
+    /**
+     * Reads the calling app's notification ONCE at the start of the call and keeps the first result;
+     * see [VoipDirection]. Never depends on "record from answer": the direction is wanted either way.
+     * Logs, always on and with no names or numbers, what the app's notification looked like at the
+     * first read and again at the first answered read, so real calls show what each app does.
+     */
+    private fun readDirection(callPackage: String): Job = CoroutineScope(Dispatchers.IO).launch {
+        val startedAt = System.currentTimeMillis()
+        var first: VoipCallFacts? = null
+        while (isActive && recording) {
+            val service = RecorderConnection.service ?: return@launch
+            val line = try {
+                service.voipCallFacts(callPackage)
+            } catch (e: Throwable) {
+                AppLogger.i(TAG, "App-call direction: the host cannot read call notifications (older daemon?): ${e.javaClass.simpleName}")
+                return@launch
+            }
+            val facts = VoipCallFacts.parse(line)
+            val elapsed = System.currentTimeMillis() - startedAt
+            if (first == null) {
+                if (facts == null) {
+                    if (elapsed >= VoipAnswerHold.NOTIFICATION_GRACE_MS) {
+                        AppLogger.i(TAG, "App-call direction: $callPackage has no call-like notification (no call category, CallStyle type or timer flag) after ${elapsed}ms; direction unknown")
+                        return@launch
+                    }
+                } else {
+                    first = facts
+                    val decided = VoipDirection.decide(facts)
+                    if (isActive && recording) direction.compareAndSet(null, decided)
+                    AppLogger.i(
+                        TAG,
+                        "App-call direction at the first read ($callPackage, ${elapsed}ms in): ${facts.describe()} " +
+                            "-> ${direction.get()?.token ?: "unknown"}"
+                    )
+                    // An app that sets no call timer never reports an answer; nothing more to learn.
+                    if (facts.showChronometer == null) return@launch
+                }
+            }
+            if (first != null && facts?.showChronometer == true) {
+                // Once: the first answered read. The direction is not touched here, only logged.
+                AppLogger.i(
+                    TAG,
+                    "App-call direction at the first answered read ($callPackage, ${elapsed}ms in): ${facts.describe()} " +
+                        "-> kept ${direction.get()?.token ?: "unknown"}"
+                )
+                return@launch
+            }
+            if (elapsed >= DIRECTION_LOG_MAX_MS) return@launch
+            delay(VoipAnswerHold.POLL_MS)
+        }
     }
 
     private fun holdUntilAnswered(context: Context, callPackage: String): Job = CoroutineScope(Dispatchers.IO).launch {
@@ -427,6 +492,7 @@ object VoipRecordingCoordinator {
         val label = appLabelFor(context, pkg)?.let { sanitiseForFileName(it) }?.takeIf { it.isNotEmpty() }
         lateAppLabel = label
         currentAppLabel = label
+        if (directionJob == null) directionJob = readDirection(pkg)
         VoipRecordingNotification.show(context, label, PendingFlags.count(), paused || heldForAnswer)
         if (lateCaller != null) return
         val found = runCatching { service.voipCallerName(pkg) }.getOrNull()
@@ -697,9 +763,14 @@ object VoipRecordingCoordinator {
         val lateApp = lateAppLabel
         lateAppLabel = null
         // The name the recording is published and catalogued under: what was learned late filled in.
+        directionJob?.cancel()
+        directionJob = null
+        val callDirection = direction.getAndSet(null)
         val finalName: (String) -> String = { n ->
             val withApp = lateApp?.let { VoipLateCaller.withApp(n, it) } ?: n
-            caller?.let { VoipLateCaller.withCaller(withApp, it) } ?: withApp
+            val withCaller = caller?.let { VoipLateCaller.withCaller(withApp, it) } ?: withApp
+            // The badge reads it from here; null leaves the name exactly as it always was.
+            VoipLateCaller.withDirection(withCaller, VoipDirection.nameToken(callDirection))
         }
         // Straight away, not after the file work below: the controls describe a recording that has
         // already stopped, and a Stop button that lingers invites a second press at a moment when
@@ -880,7 +951,10 @@ object VoipRecordingCoordinator {
                         // simply thrown away at the downmix, so app calls came out with no speaker labels
                         // while carrier calls had them. `outgoing = false`: an app call has no reliable
                         // direction here, and guessing wrong would teach the You/Them mapping the wrong
-                        // side, which is worse than leaving the sides neutral.
+                        // side, which is worse than leaving the sides neutral. Still false when the
+                        // direction is known (BabApps item 113): a stored outgoing=true row is read by
+                        // trustedMap's recentOutgoing, which would feed an app call's channels into the
+                        // map learned from carrier calls. Needs the owner's decision before it changes.
                         runCatching {
                             SpeakerTurnsRepository.collectAfterCall(context, name, outgoing = false)
                         }.onFailure { AppLogger.w(TAG, "Could not collect VoIP speaker turns: ${it.message}") }
@@ -897,7 +971,7 @@ object VoipRecordingCoordinator {
                                 audioName = name,
                                 timestampUnixMs = parsed.startedAtMillis ?: System.currentTimeMillis(),
                                 packageName = null,
-                                direction = null,
+                                direction = VoipDirection.nameToken(callDirection),
                                 phoneNumber = parsed.number,
                                 contactName = parsed.contactName,
                                 durationSecsEncoded = null,

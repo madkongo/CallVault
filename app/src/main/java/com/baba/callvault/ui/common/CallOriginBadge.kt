@@ -38,9 +38,9 @@ import com.baba.callvault.data.recordings.RecordingDirection
  * The corner badge that says where a recording came from: which direction a phone call went, or which
  * app a VoIP call was made in.
  *
- * **One badge, two answers, because a recording only ever has one of them.** A phone call has a
- * direction and no app; a VoIP call has an app and no direction — there is no call-log entry behind it
- * to take a direction from. So the same corner carries whichever applies, and they can never collide.
+ * A phone call has a direction and no app; a VoIP call has an app and, only when the app's own
+ * notification proved it (BabApps item 113), a direction as well. The app sits in the bottom corner as
+ * it always did; a proven direction takes the top corner beside it.
  *
  * Shared between the recordings list (pinned to the play disc) and the playback screen (pinned to the
  * contact avatar), so the same recording is marked the same way wherever it appears. It previously
@@ -50,6 +50,12 @@ import com.baba.callvault.data.recordings.RecordingDirection
 fun BoxScope.CallOriginBadge(direction: RecordingDirection?, voipApp: String?) {
     when {
         direction == null && voipApp != null -> VoipAppBadge(voipApp)
+        // An app call whose direction the app's notification proved (BabApps item 113): both badges,
+        // the app where it always was and the direction in the opposite corner.
+        direction != null && voipApp != null -> {
+            VoipAppBadge(voipApp)
+            DirectionBadge(direction, Alignment.TopEnd)
+        }
         direction != null -> DirectionBadge(direction)
     }
 }
@@ -64,7 +70,7 @@ fun BoxScope.CallOriginBadge(direction: RecordingDirection?, voipApp: String?) {
  * bite taken out of the disc rather than as a badge.
  */
 @Composable
-private fun BoxScope.BadgeShell(content: @Composable () -> Unit) {
+private fun BoxScope.BadgeShell(corner: Alignment = Alignment.BottomEnd, content: @Composable () -> Unit) {
     Box(
         modifier = Modifier
             .size(18.dp)
@@ -72,7 +78,7 @@ private fun BoxScope.BadgeShell(content: @Composable () -> Unit) {
             .background(MaterialTheme.colorScheme.surface)
             .border(1.dp, MaterialTheme.colorScheme.outlineVariant, CircleShape)
             .padding(2.dp)
-            .align(Alignment.BottomEnd),
+            .align(corner),
         contentAlignment = Alignment.Center,
     ) { content() }
 }
@@ -106,7 +112,7 @@ private fun BoxScope.VoipAppBadge(appLabel: String) {
 
 /** Which way a phone call went. */
 @Composable
-private fun BoxScope.DirectionBadge(direction: RecordingDirection) {
+private fun BoxScope.DirectionBadge(direction: RecordingDirection, corner: Alignment = Alignment.BottomEnd) {
     val icon = when (direction) {
         RecordingDirection.INCOMING -> Icons.AutoMirrored.Filled.CallReceived
         RecordingDirection.OUTGOING -> Icons.AutoMirrored.Filled.CallMade
@@ -115,7 +121,7 @@ private fun BoxScope.DirectionBadge(direction: RecordingDirection) {
         RecordingDirection.INCOMING -> stringResource(R.string.general_incoming)
         RecordingDirection.OUTGOING -> stringResource(R.string.general_outgoing)
     }
-    BadgeShell {
+    BadgeShell(corner) {
         Icon(
             imageVector = icon,
             contentDescription = description,

@@ -746,3 +746,7 @@ README.md was not edited.
 ## 2026-11-16 — #82: {day}, {day-}, {time}, {time-} file-name tags (BabApps item 114)
 - The README says nothing about file-name templates (grepped), so no claim is affected. If it ever lists the Custom tags, it must add these four and the rule: `{date}`, or a `{day}` then a `{time}` with one joiner, day first.
 - Not a README claim yet: 🧪, not tried on a phone with a real call.
+
+## 2026-11-17 — App-call in/out arrow (BabApps item 113)
+- The README does not mention call direction (grepped incoming/outgoing/direction), so no claim is affected. If it ever says app calls show no direction, or lists the badges, say: an outgoing arrow appears on an app call only when the app's notification proved it (WhatsApp measured); an incoming arrow is not seen on any app yet.
+- Not a README claim yet: 🧪, one call per case on the OP9.

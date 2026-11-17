@@ -339,4 +339,15 @@ interface IRecorderService {
      * falls back to voipCallAppUid and rejects the uid itself.
      */
     int voipCallAppUidSkipping(in int[] skipUids);
+
+    /**
+     * The structural facts of the given package's call notification (category, action count,
+     * android.callType, call timer, ongoing, an incoming flag), as one `key=value;` line, or "" when
+     * it has no call-like notification. Read once at the start of an app call to tell in from out
+     * (BabApps item 113); no text of the notification crosses, so no name or number.
+     *
+     * Appended last: transaction codes are positional. A daemon from an older APK lacks it; the app
+     * then reads no direction, which is how it always was.
+     */
+    String voipCallFacts(String packageName);
 }

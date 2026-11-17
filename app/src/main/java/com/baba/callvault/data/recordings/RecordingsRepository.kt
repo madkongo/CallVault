@@ -681,7 +681,16 @@ object RecordingsRepository {
         // read in the list.
         val voipIndex = parts.indexOfFirst { it == VOIP_TOKEN || it.startsWith(VOIP_APP_PREFIX) }
         if (voipIndex > 0) {
-            val rawDate = parts.subList(0, voipIndex).joinToString("_")
+            // An in/out token right before the marker is the app call's direction (BabApps item 113),
+            // written only when the calling app's notification proved it. Read by position, so it can
+            // never be mistaken for the caller, and absent for every older name.
+            val before = parts.subList(0, voipIndex)
+            val voipDirection = when (before.lastOrNull()) {
+                "in" -> RecordingDirection.INCOMING
+                "out" -> RecordingDirection.OUTGOING
+                else -> null
+            }.takeIf { before.size > 1 }
+            val rawDate = (if (voipDirection != null) before.dropLast(1) else before).joinToString("_")
             val extras = parts.subList(voipIndex + 1, parts.size)
             val marker = parts[voipIndex]
 
@@ -706,7 +715,7 @@ object RecordingsRepository {
                 }?.ifBlank { null }
             }
             return ParsedName(
-                direction = null,
+                direction = voipDirection,
                 displayDate = formatDate(rawDate),
                 startedAtMillis = parseStartedAt(rawDate),
                 number = null,
