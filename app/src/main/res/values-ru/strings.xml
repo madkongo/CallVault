@@ -364,6 +364,8 @@
     <string name="settings_audio_source">Источник аудио</string>
     <string name="settings_auto_record_incoming">Автозапись входящих телефонных звонков</string>
     <string name="settings_auto_record_outgoing">Автозапись исходящих телефонных звонков</string>
+    <string name="record_sim_info">Записывать все звонки или только одну SIM. Остальные показывают Запись. Если SIM не удалось определить в начале, звонок записывается.</string>
+    <string name="record_sim_label">Автозапись</string>
     <string name="settings_backup_desc">Сохраните свои настройки в файл или восстановите их из файла.</string>
     <string name="settings_backup_title">Резервная копия настроек</string>
     <string name="settings_bugreport_active_warning">Отладочное логирование ВКЛЮЧЕНО. Не забудьте выключить его по завершении, чтобы сэкономить место.</string>
@@ -779,6 +781,11 @@
     <string name="transcription_minute_label">Минута</string>
     <string name="transcription_mode_after_each_call">После каждого звонка</string>
     <string name="transcription_mode_automatic">По расписанию</string>
+    <string name="transcription_sim_all">Все SIM</string>
+    <string name="transcription_sim_info">После каждого звонка расшифровывать все SIM или одну SIM. Остальное можно расшифровать из списка. Записи не удаляются.</string>
+    <string name="transcription_sim_label">Авторасшифровка</string>
+    <string name="transcription_sim_other_delete">Удалить запись</string>
+    <string name="transcription_sim_other_label">Для звонков с другой SIM</string>
     <string name="transcription_mode_label">Расшифровывать</string>
     <string name="transcription_mode_manual">Вручную</string>
     <string name="transcription_model_best">Лучшее качество</string>
@@ -919,4 +926,7 @@
     <string name="settings_debug_force_wifi_route_description">Для тестирования. Каждый телефонный звонок во время разговора переключается на запись звонков приложений, как это сделал бы звонок по Wi-Fi. На телефоне без звонков по Wi-Fi собеседника не будет слышно, и должна появиться ошибка. Нужна включённая запись звонков приложений. Работает, только пока включена запись журнала.</string>
     <string name="wifi_call_switch_aborted">Запись этого звонка по Wi-Fi остановилась раньше времени: не удалось безопасно переключить запись. Записанная часть сохранена.</string>
     <string name="wifi_call_far_unknown">Этот звонок по Wi-Fi записан, но CallVault не смог проверить, слышен ли на записи собеседник. Прослушайте запись.</string>
+    <string name="recording_notification_not_recording">Без записи</string>
+    <string name="recording_notification_title_sim">Запись звонка — %1$s</string>
+    <string name="sim_choice_unavailable">Сохранённая SIM (нет в этом телефоне)</string>
 </resources>

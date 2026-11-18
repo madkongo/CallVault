@@ -31,7 +31,7 @@ class DiagnosticDumpsTest {
         listOf(
             "logcat_size", "logcat_grow", "logcat_dump", "dumpsys_audio", "appops_mic", "appops_all", "processes",
             "processes_times", "logcat_grow_host",
-            "setting_adb_enabled", "setting_dev_options", "call_state", "audio_latency",
+            "setting_adb_enabled", "setting_dev_options", "call_state", "call_sim", "audio_latency",
             "voip_policy", "voip_players", "voip_tracks", "voip_audio_log", "vivo_audio_props",
             "audio_record_state",
         )
@@ -142,6 +142,16 @@ class DiagnosticDumpsTest {
         assertTrue("must read the telephony registry", line.contains("dumpsys telephony.registry"))
         assertTrue("must select the foreground call state", line.contains("mForegroundCallState"))
         assertTrue("must ignore any argument", DiagnosticDumps.commandFor("call_state", "; id")!!.contentEquals(command))
+    }
+
+    @Test
+    fun `the sim read is the per-phone registry state and takes no caller input`() {
+        val command = DiagnosticDumps.commandFor("call_sim", "; id")!!
+        val line = command.joinToString(" ")
+        assertTrue(line.contains("dumpsys telephony.registry"))
+        assertTrue(line.contains("Phone Id="))
+        assertTrue(line.contains("head -n"))
+        assertTrue(!line.contains("; id"))
     }
 
     @Test

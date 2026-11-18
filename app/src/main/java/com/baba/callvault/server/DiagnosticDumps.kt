@@ -126,6 +126,13 @@ object DiagnosticDumps {
         // One line per phone: on a dual-SIM device the SIM not in the call says IDLE, so every line
         // is returned and the reader picks the one that is in a call (see AnswerWait).
         "call_state" -> arrayOf(SH, "-c", "$DUMPSYS telephony.registry | grep mForegroundCallState")
+        // Per-phone call state, for which SIM is in the call. mCallState in this dump is one entry
+        // per phone; TelephonyManager.getCallState() is not, it is every call on the device.
+        // Capped: the full registry dump is large and this is read once when a call starts.
+        "call_sim" -> arrayOf(
+            SH, "-c",
+            "$DUMPSYS telephony.registry | grep -E 'Phone Id=|mForegroundCallState=|mCallState=' | head -n 40",
+        )
         // The mixer's output threads: which device each plays to and its latency. The far party of
         // an app call is tapped BEFORE this latency and the user hears it after, so a large one (a
         // Bluetooth route above all) puts the far party ahead of the user's replies in the file by

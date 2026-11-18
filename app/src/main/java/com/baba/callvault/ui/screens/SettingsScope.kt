@@ -109,7 +109,7 @@ object SettingsGroups {
     fun rowsOf(group: SettingsGroup): List<String> = when (group) {
         SettingsGroup.CALLS_TO_RECORD -> listOf(
             "CarrierRecordingRow", "VoipRecordingSwitch", "VoipAppPicker",
-            "AutoRecordIncomingRow", "AutoRecordOutgoingRow", "RecordFromAnswerRow", "VoipAutoStartRow",
+            "AutoRecordIncomingRow", "AutoRecordOutgoingRow", "RecordSimRow", "RecordFromAnswerRow", "VoipAutoStartRow",
             "VibrationRow", "AfterCallModeRow", "AfterCallAskStyleRow", "AfterCallUnansweredRow",
         )
         SettingsGroup.CALLS_TO_SKIP -> listOf(
@@ -143,7 +143,7 @@ object SettingsGroups {
     fun settingKeysOf(group: SettingsGroup): List<String> = when (group) {
         SettingsGroup.CALLS_TO_RECORD -> listOf(
             "carrier_recording_enabled", "voip_recording_enabled", "voip_recording", "voip_excluded_packages",
-            "auto_record_incoming", "auto_record_outgoing", "record_from_answer", "voip_auto_start",
+            "auto_record_incoming", "auto_record_outgoing", "record_auto_sim", "record_from_answer", "voip_auto_start",
             "vibration_enabled", "after_call_mode", "after_call_ask_style", "after_call_unanswered",
         )
         SettingsGroup.CALLS_TO_SKIP -> listOf(
@@ -174,6 +174,7 @@ object SettingsGroups {
         SettingsGroup.WHEN_TO_TRANSCRIBE -> listOf(
             "transcription_mode", "transcription_hour", "transcription_minute",
             "transcription_requires_charging", "transcription_batch_limit", "transcription_confirm_before_run",
+            "transcription_after_call_sim", "transcription_other_sim",
         )
         SettingsGroup.SUMMARIES -> listOf("summary_confirm_requirements")
         SettingsGroup.APP -> listOf("theme_mode", "dynamic_color", "show_toasts", "update_check_enabled")

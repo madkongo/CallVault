@@ -372,6 +372,8 @@
     <string name="settings_audio_source">Джерело аудіо</string>
     <string name="settings_auto_record_incoming">Автозапис вхідних телефонних дзвінків</string>
     <string name="settings_auto_record_outgoing">Автозапис вихідних телефонних дзвінків</string>
+    <string name="record_sim_info">Записувати всі дзвінки або лише одну SIM. Інші показують Запис. Якщо SIM не вдалося визначити на початку, дзвінок записується.</string>
+    <string name="record_sim_label">Автозапис</string>
     <string name="settings_backup_desc">Збереження або відновлення налаштувань із файлу.</string>
     <string name="settings_backup_title">Резервна копія налаштувань</string>
     <string name="settings_bugreport_active_warning">Діагностика увімкнена. Після тестування вимкніть її, щоб не витрачати памʼять.</string>
@@ -787,6 +789,11 @@
     <string name="transcription_minute_label">Хвилина</string>
     <string name="transcription_mode_after_each_call">Після кожного дзвінка</string>
     <string name="transcription_mode_automatic">За розкладом</string>
+    <string name="transcription_sim_all">Усі SIM</string>
+    <string name="transcription_sim_info">Після кожного дзвінка розшифровувати всі SIM або одну SIM. Решту можна розшифрувати зі списку. Записи не видаляються.</string>
+    <string name="transcription_sim_label">Авторозшифровка</string>
+    <string name="transcription_sim_other_delete">Видалити запис</string>
+    <string name="transcription_sim_other_label">Для дзвінків з іншої SIM</string>
     <string name="transcription_mode_label">Розпізнавання мовлення</string>
     <string name="transcription_mode_manual">Вручну</string>
     <string name="transcription_model_best">Найкраща якість</string>
@@ -927,4 +934,7 @@
     <string name="settings_debug_force_wifi_route_description">Для тестування. Кожен телефонний дзвінок під час розмови перемикається на запис дзвінків застосунків, як це зробив би дзвінок через Wi-Fi. На телефоні без дзвінків через Wi-Fi співрозмовника не буде чути, і має з\'явитися помилка. Потрібен увімкнений запис дзвінків застосунків. Працює, лише поки ввімкнено запис журналу.</string>
     <string name="wifi_call_switch_aborted">Запис цього дзвінка через Wi-Fi зупинився передчасно: не вдалося безпечно перемкнути запис. Записану частину збережено.</string>
     <string name="wifi_call_far_unknown">Цей дзвінок через Wi-Fi записано, але CallVault не зміг перевірити, чи чути на записі співрозмовника. Прослухайте запис.</string>
+    <string name="recording_notification_not_recording">Без запису</string>
+    <string name="recording_notification_title_sim">Запис дзвінка — %1$s</string>
+    <string name="sim_choice_unavailable">Збережена SIM (немає в цьому телефоні)</string>
 </resources>

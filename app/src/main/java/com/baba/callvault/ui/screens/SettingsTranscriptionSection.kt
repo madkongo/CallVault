@@ -27,6 +27,9 @@ import com.baba.callvault.transcription.model.ModelRepository
 import com.baba.callvault.transcription.model.TranscriptionModel
 import com.baba.callvault.transcription.model.TranscriptionModelOffer
 import androidx.compose.ui.platform.LocalContext
+import com.baba.callvault.data.calls.SimCards
+import com.baba.callvault.data.calls.SimChoice
+import com.baba.callvault.data.calls.SimMatch
 import com.baba.callvault.transcription.TranscriptionLanguageChoice
 import com.baba.callvault.ui.common.TranscriptionLabels
 import com.baba.callvault.ui.common.TranscriptionLanguagePicker
@@ -53,6 +56,12 @@ internal fun TranscriptionScheduleRows(preferences: AppPreferences, updateTrigge
     var showTimePicker by remember { mutableStateOf(false) }
 
     TranscriptionModeField(mode = mode, onModeChange = { actions.setTranscriptionMode(it) })
+
+    // Dual-SIM only, and only for "after each call": a one-SIM phone has nothing to choose, and
+    // the nightly sweep is not a per-call rule (issue #81). Hidden entirely until both are true.
+    if (mode == TranscriptionMode.AFTER_EACH_CALL) {
+        TranscriptionSimChoices(preferences, updateTrigger)
+    }
 
     // Only the scheduled sweep has a run time and a backlog size to choose. Per-call has neither:
     // it runs when a call ends, and only ever on that one call.
@@ -189,6 +198,55 @@ internal fun TranscriptionModelDownloadRows(preferences: AppPreferences, updateT
         onBackup = { model, uri -> actions.backUpModel(model, uri) },
         onCancelBackup = { actions.cancelModelBackup(it) }
     )
+}
+
+/**
+ * "Transcribe after each call only for" one SIM, on a phone with two or more active.
+ * The SIM's own name is the option when it has one, else "SIM 1" / "SIM 2".
+ */
+@Composable
+private fun TranscriptionSimChoices(preferences: AppPreferences, updateTrigger: Int) {
+    val context = LocalContext.current
+    val simWord = stringResource(R.string.sim_label_word)
+    val cards = remember(updateTrigger) { SimCards.list(context, simWord) }
+    val stored = remember(updateTrigger) {
+        val raw = preferences.getTranscriptionAutoSim()
+        SimMatch.stabilize(raw, cards).also { if (it != raw) preferences.setTranscriptionAutoSim(it) }
+    }
+    if (cards.size >= 2 || stored !is SimChoice.All) {
+        TranscriptionSimChoiceFields(preferences, updateTrigger, cards, stored)
+    }
+}
+
+@Composable
+private fun TranscriptionSimChoiceFields(
+    preferences: AppPreferences,
+    updateTrigger: Int,
+    cards: List<com.baba.callvault.data.calls.SimCard>,
+    stored: SimChoice,
+) {
+    var choice by remember(updateTrigger) { mutableStateOf(stored) }
+    val options = simOptions(
+        cards, choice,
+        stringResource(R.string.transcription_sim_all),
+        stringResource(R.string.sim_choice_unavailable),
+    )
+    val selectedKey = selectedSimKey(cards, choice)
+    val label = stringResource(R.string.transcription_sim_label)
+    DropdownRow {
+        WithInfo(label, stringResource(R.string.transcription_sim_info)) {
+            M3DropdownField(
+                label = label,
+                selected = options.find { it.key == selectedKey } ?: options.first(),
+                options = options,
+                onOptionSelected = { picked ->
+                    val chosen = SimChoice.fromKey(picked.key)
+                    preferences.setTranscriptionAutoSim(chosen)
+                    choice = chosen
+                },
+            )
+        }
+    }
 }
 
 /** The paragraph saying what the chosen mode means in practice. */

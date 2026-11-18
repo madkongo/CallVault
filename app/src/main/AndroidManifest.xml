@@ -228,6 +228,8 @@
             android:exported="true">
             <intent-filter>
                 <action android:name="android.intent.action.PHONE_STATE" />
+                <!-- Per-SIM state. Carries slot and subscription, which PHONE_STATE does not. -->
+                <action android:name="android.intent.action.SUBSCRIPTION_PHONE_STATE" />
             </intent-filter>
         </receiver>
 

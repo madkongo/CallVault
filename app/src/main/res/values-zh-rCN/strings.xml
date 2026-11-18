@@ -361,6 +361,8 @@
     <string name="settings_audio_source">音源</string>
     <string name="settings_auto_record_incoming">自动录制呼入电话</string>
     <string name="settings_auto_record_outgoing">自动录制呼出电话</string>
+    <string name="record_sim_info">录下所有通话，或仅一张 SIM。其他通话显示录音按钮。如果开始时无法识别 SIM，通话会被录下。</string>
+    <string name="record_sim_label">自动录音</string>
     <string name="settings_backup_desc">将你的设置保存到文件，或从文件中恢复。</string>
     <string name="settings_backup_title">备份设置</string>
     <string name="settings_bugreport_active_warning">调试日志已开启。完成后请记得关闭以节省空间。</string>
@@ -773,6 +775,11 @@
     <string name="transcription_minute_label">分钟</string>
     <string name="transcription_mode_after_each_call">每次通话后</string>
     <string name="transcription_mode_automatic">定时</string>
+    <string name="transcription_sim_all">全部 SIM</string>
+    <string name="transcription_sim_info">每次通话后转写全部 SIM 或一张 SIM。其余可在列表中转写。不会删除录音。</string>
+    <string name="transcription_sim_label">自动转写</string>
+    <string name="transcription_sim_other_delete">删除录音</string>
+    <string name="transcription_sim_other_label">另一张 SIM 上的通话</string>
     <string name="transcription_mode_label">转写方式</string>
     <string name="transcription_mode_manual">手动</string>
     <string name="transcription_model_best">最佳质量</string>
@@ -913,4 +920,7 @@
     <string name="settings_debug_force_wifi_route_description">用于测试。每通电话会在通话中切换到应用通话录音方式，就像 WLAN 通话那样。在不支持 WLAN 通话的手机上会缺少对方的声音，并应显示错误。需要开启应用通话录音。仅在开启日志记录时生效。</string>
     <string name="wifi_call_switch_aborted">这通 WLAN 通话的录音提前停止了：无法安全地切换录音方式。已录下的部分会保留。</string>
     <string name="wifi_call_far_unknown">这通 WLAN 通话已录音，但 CallVault 无法确认其中录到了对方的声音。请收听录音确认。</string>
+    <string name="recording_notification_not_recording">未在录音</string>
+    <string name="recording_notification_title_sim">正在录音 — %1$s</string>
+    <string name="sim_choice_unavailable">已保存的 SIM（不在这台手机里）</string>
 </resources>

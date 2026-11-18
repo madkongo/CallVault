@@ -12,7 +12,6 @@ import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
 import com.baba.callvault.utils.AppLogger
-import com.baba.callvault.utils.RedirectedCall
 
 /**
  * Hands the number of an outgoing call, as the user dialled it, to [CallSessionManager]: with a call redirection app
@@ -24,14 +23,12 @@ import com.baba.callvault.utils.RedirectedCall
  */
 class NewOutgoingCallReceiver : BroadcastReceiver() {
 
-    companion object {
-        private const val TAG = "CV:NewOutgoingCallReceiver"
-    }
-
     override fun onReceive(context: Context, intent: Intent) {
         if (intent.action != Intent.ACTION_NEW_OUTGOING_CALL) return
         val number = intent.getStringExtra(Intent.EXTRA_PHONE_NUMBER)
-        AppLogger.v(TAG, "Outgoing call dialled: number=$number")
-        CallSessionManager.getInstance(context).handleNewOutgoingCall(number)
+        ActiveCallSim.logExtras(intent.action, intent)
+        val slot = ActiveCallSim.outgoingSlot(context, intent)
+        AppLogger.i("CV:RecordSim", "outgoing dial slot=${slot ?: "none"}")
+        CallSessionManager.getInstance(context).handleNewOutgoingCall(number, slot)
     }
 }

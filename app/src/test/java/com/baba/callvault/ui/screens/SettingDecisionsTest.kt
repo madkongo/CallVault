@@ -47,6 +47,7 @@ class SettingDecisionsTest {
         "auto_record_incoming" to Decision(Wizard(WizardStep.AUTO_RECORD)),
         "auto_record_outgoing" to Decision(Wizard(WizardStep.AUTO_RECORD)),
         "record_from_answer" to Decision(SettingsOnly("a refinement of outgoing recording; the default is right for most")),
+        "record_auto_sim" to Decision(SettingsOnly("all SIMs or one SIM; all by default so existing installs record every call")),
         // Keep or delete after the call (2026-11-06): a way of working a new user would never discover alone.
         "after_call_mode" to Decision(Wizard(WizardStep.AUTO_RECORD)),
         "after_call_ask_style" to Decision(Wizard(WizardStep.AUTO_RECORD)), // shown once Ask is on (maintainer, 2026-11-07)
@@ -104,6 +105,9 @@ class SettingDecisionsTest {
         "transcription_model_id" to Decision(Wizard(WizardStep.TRANSCRIPTION)),
         "transcription_language" to Decision(Wizard(WizardStep.TRANSCRIPTION)),
         "transcription_ask_language" to Decision(SettingsOnly("for multilingual phones, after the pin is chosen")),
+        // After each call: all SIMs or one SIM. The old other-SIM keep/delete value is ignored.
+        "transcription_after_call_sim" to Decision(SettingsOnly("all SIMs or one SIM; all by default, and only for after-each-call")),
+        "transcription_other_sim" to Decision(SettingsOnly("retired: a stored keep/delete choice is ignored; transcription never deletes a recording")),
         "summary_confirm_requirements" to Decision(SettingsOnly("asked at the first summary instead")),
         "summary_language" to Decision(SettingsOnly("follows the transcription language")),
         // App (VoIP) calls

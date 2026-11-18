@@ -196,6 +196,9 @@ object TranscriptionScheduler {
             return
         }
 
+        // A single SIM (issue #81). Unknown SIM, or "all SIMs", falls through and queues as before.
+        if (AfterCallSimGate.skipTranscription(context, displayName)) return
+
         val requiresCharging = prefs.getTranscriptionRequiresCharging()
         AppLogger.i(
             TAG,

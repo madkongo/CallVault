@@ -455,6 +455,8 @@
     <string name="settings_audio_source">منبع صدا</string>
     <string name="settings_auto_record_incoming">ضبط خودکار تماس‌های تلفنی ورودی</string>
     <string name="settings_auto_record_outgoing">ضبط خودکار تماس‌های تلفنی خروجی</string>
+    <string name="record_sim_info">همه تماس‌ها یا فقط یک سیم‌کارت ضبط شود. بقیه دکمه ضبط دارند. اگر سیم‌کارت در آغاز شناخته نشود، تماس ضبط می‌شود.</string>
+    <string name="record_sim_label">ضبط خودکار</string>
     <string name="settings_backup_desc">تنظیمات خود را در یک فایل ذخیره کنید یا آن‌ها را از یک فایل بازیابی کنید.</string>
     <string name="settings_backup_title">پشتیبان‌گیری از تنظیمات</string>
     <string name="settings_bugreport_active_warning">ضبط گزارش اشکال‌زدایی روشن است. یادتان باشد وقتی کارتان تمام شد برای صرفه‌جویی در فضا آن را خاموش کنید.</string>
@@ -868,6 +870,11 @@
     <string name="transcription_minute_label">دقیقه</string>
     <string name="transcription_mode_after_each_call">پس از هر تماس</string>
     <string name="transcription_mode_automatic">زمان‌بندی‌شده</string>
+    <string name="transcription_sim_all">همه سیم‌کارت‌ها</string>
+    <string name="transcription_sim_info">پس از هر تماس، همه سیم‌کارت‌ها یا یک سیم‌کارت رونویسی شود. بقیه را از فهرست می‌توان رونویسی کرد. هیچ ضبطی حذف نمی‌شود.</string>
+    <string name="transcription_sim_label">رونویسی خودکار</string>
+    <string name="transcription_sim_other_delete">حذف ضبط</string>
+    <string name="transcription_sim_other_label">برای تماس‌های سیم‌کارت دیگر</string>
     <string name="transcription_mode_label">رونویسی</string>
     <string name="transcription_mode_manual">دستی</string>
     <string name="transcription_model_best">بهترین کیفیت</string>
@@ -1008,4 +1015,7 @@
     <string name="settings_debug_force_wifi_route_description">برای آزمایش. هر تماس تلفنی در میانهٔ تماس به ضبط تماس برنامه‌ها می‌رود، همان‌طور که تماس Wi-Fi می‌رود. در گوشی بدون تماس Wi-Fi صدای طرف مقابل نخواهد بود و باید خطا نمایش داده شود. ضبط تماس برنامه‌ها باید روشن باشد. فقط وقتی ثبت گزارش روشن است کار می‌کند.</string>
     <string name="wifi_call_switch_aborted">ضبط این تماس Wi-Fi زودتر متوقف شد: روش ضبط با اطمینان عوض نشد. بخشی که تا اینجا ضبط شده نگه داشته می‌شود.</string>
     <string name="wifi_call_far_unknown">این تماس Wi-Fi ضبط شد، اما CallVault نتوانست بررسی کند که صدای طرف مقابل در آن هست. لطفاً به ضبط گوش دهید.</string>
+    <string name="recording_notification_not_recording">بدون ضبط</string>
+    <string name="recording_notification_title_sim">ضبط تماس — %1$s</string>
+    <string name="sim_choice_unavailable">سیم‌کارت ذخیره‌شده (در این گوشی نیست)</string>
 </resources>

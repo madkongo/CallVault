@@ -105,4 +105,66 @@ object SimLabels {
                 ?.also { AppLogger.d(TAG, "SIM for a call: slot=${slot?.plus(1)} nameSource=$source -> '${it.label}'") }
         }.onFailure { AppLogger.d(TAG, "SIM lookup failed: ${it.message}") }.getOrNull()
     }
+
+    /**
+     * The 1-based slot of the carrier call that started at [startedAt], or null when it cannot be told.
+     *
+     * Does not consult the "show which SIM" preference. That preference only controls a label; a
+     * decision such as which SIM to transcribe has to work while the label is off (issue #81).
+     * Fewer than two active SIMs, a missing permission, or no call-log match are all null.
+     *
+     * The account id is [CallLog.Calls.PHONE_ACCOUNT_ID](https://developer.android.com/reference/android/provider/CallLog.Calls#PHONE_ACCOUNT_ID),
+     * resolved with [TelephonyManager.getSubscriptionId(PhoneAccountHandle)](https://developer.android.com/reference/android/telephony/TelephonyManager#getSubscriptionId(android.telecom.PhoneAccountHandle)).
+     */
+    fun slotForCall(context: Context, startedAt: Long, simWord: String): Int? {
+        val calls = PhoneCallReader.since(context, startedAt - PhoneCallMatch.TOLERANCE_MS)
+        val call = PhoneCallMatch.nearest(calls, startedAt) ?: return null
+        return Resolver(context, simWord).simFor(call.accountComponent, call.accountId)?.slot
+    }
+
+    /**
+     * The slot of the call that just ended, or null.
+     *
+     * Uses [PhoneCallMatch.justEnded], so a previous call a minute earlier is not this call.
+     * Null means the SIM is unknown, never that it was the previous call's SIM.
+     */
+    fun slotForJustEnded(context: Context, startedAt: Long, simWord: String): Int? =
+        forJustEnded(context, startedAt, simWord)?.slot
+
+    /**
+     * The call that just ended: its phone-account id (stable; not the SIM's display name) and slot.
+     * Null when this call has no row yet. A previous call is not used.
+     */
+    fun forJustEnded(context: Context, startedAt: Long, simWord: String): CallSim? {
+        val calls = PhoneCallReader.since(context, startedAt - PhoneCallMatch.JUST_ENDED_START_SLOP_MS)
+        val call = PhoneCallMatch.justEnded(calls, startedAt) ?: return null
+        val slot = Resolver(context, simWord).simFor(call.accountComponent, call.accountId)?.slot
+        return CallSim(call.accountId, slot)
+    }
+
+    /**
+     * The SIMs currently in use, named the same way a call's label is. Empty when fewer than two
+     * are active, so a one-SIM phone has nothing to choose.
+     *
+     * [SubscriptionManager.getActiveSubscriptionInfoList](https://developer.android.com/reference/android/telephony/SubscriptionManager#getActiveSubscriptionInfoList()).
+     */
+    @SuppressLint("MissingPermission") // checked just below
+    fun activeSims(context: Context, simWord: String): List<Sim> {
+        if (!PermissionChecks.hasPhoneStatePermission(context)) return emptyList()
+        val infos = runCatching {
+            context.getSystemService(SubscriptionManager::class.java)?.activeSubscriptionInfoList
+        }.getOrNull().orEmpty()
+        if (infos.size < 2) return emptyList()
+        return infos.mapNotNull { info ->
+            val slot = info.simSlotIndex.takeIf { it >= 0 } ?: return@mapNotNull null
+            val text = label(
+                info.displayName?.toString(),
+                info.carrierName?.toString(),
+                slot,
+                simWord,
+                nameSourceOf(info.toString()),
+            ) ?: return@mapNotNull null
+            Sim(text, slot + 1)
+        }.distinctBy { it.slot }.sortedBy { it.slot }
+    }
 }

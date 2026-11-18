@@ -362,6 +362,8 @@
     <string name="settings_audio_source">Sorgente audio</string>
     <string name="settings_auto_record_incoming">Registra automaticamente le chiamate telefoniche in entrata</string>
     <string name="settings_auto_record_outgoing">Registra automaticamente le chiamate telefoniche in uscita</string>
+    <string name="record_sim_info">Registra ogni chiamata, o solo una SIM. Le altre mostrano Registra. Se la SIM non si riconosce all\'inizio, la chiamata viene registrata.</string>
+    <string name="record_sim_label">Registrazione automatica</string>
     <string name="settings_backup_desc">Salva le tue impostazioni in un file o ripristinale da uno.</string>
     <string name="settings_backup_title">Backup delle impostazioni</string>
     <string name="settings_bugreport_active_warning">La registrazione di debug è ATTIVA. Ricordi di disattivarla al termine per risparmiare spazio.</string>
@@ -775,6 +777,11 @@
     <string name="transcription_minute_label">Minuto</string>
     <string name="transcription_mode_after_each_call">Dopo ogni chiamata</string>
     <string name="transcription_mode_automatic">Programmato</string>
+    <string name="transcription_sim_all">Tutte le SIM</string>
+    <string name="transcription_sim_info">Dopo ogni chiamata, trascrivi tutte le SIM o una SIM. Il resto si trascrive dall\'elenco. Non elimina mai una registrazione.</string>
+    <string name="transcription_sim_label">Trascrizione automatica</string>
+    <string name="transcription_sim_other_delete">Elimina la registrazione</string>
+    <string name="transcription_sim_other_label">Per le chiamate sull\'altra SIM</string>
     <string name="transcription_mode_label">Trascrivi</string>
     <string name="transcription_mode_manual">Manualmente</string>
     <string name="transcription_model_best">Qualità migliore</string>
@@ -915,4 +922,7 @@
     <string name="settings_debug_force_wifi_route_description">Per i test. Ogni chiamata telefonica passa durante la chiamata alla cattura delle chiamate delle app, come farebbe una chiamata Wi-Fi. Su un telefono senza chiamate Wi-Fi l\'altra parte mancherà e dovrebbe comparire un errore. Richiede la registrazione delle chiamate delle app attiva. Funziona solo con la registrazione del log attiva.</string>
     <string name="wifi_call_switch_aborted">La registrazione di questa chiamata Wi-Fi si è interrotta prima: non è stato possibile cambiare la cattura in modo sicuro. La parte registrata finora viene conservata.</string>
     <string name="wifi_call_far_unknown">Questa chiamata Wi-Fi è stata registrata, ma CallVault non ha potuto verificare che l\'altra parte sia presente. Ascolta la registrazione.</string>
+    <string name="recording_notification_not_recording">Non in registrazione</string>
+    <string name="recording_notification_title_sim">Registrazione chiamata — %1$s</string>
+    <string name="sim_choice_unavailable">SIM salvata (non in questo telefono)</string>
 </resources>

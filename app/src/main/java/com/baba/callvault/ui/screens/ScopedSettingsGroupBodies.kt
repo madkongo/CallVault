@@ -95,6 +95,7 @@ private fun CallsToRecordBody(preferences: AppPreferences, updateTrigger: Int, a
         Column {
             SearchFiltered("AutoRecordIncomingRow") { AutoRecordIncomingRow(preferences, updateTrigger, actions) }
             SearchFiltered("AutoRecordOutgoingRow") { AutoRecordOutgoingRow(preferences, updateTrigger, actions) }
+            SearchFiltered("RecordSimRow") { RecordSimRow(preferences, updateTrigger) }
         }
     }
 
