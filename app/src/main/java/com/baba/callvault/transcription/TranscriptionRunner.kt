@@ -34,6 +34,7 @@ import com.baba.callvault.utils.AppLogger
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.NonCancellable
 import kotlinx.coroutines.withContext
+import java.util.Locale
 
 /**
  * Turns audio into stored segments. Substituted in tests, because the real one loads a native
@@ -74,6 +75,11 @@ class TranscriptionRunner(
     private val wasAborted: () -> Boolean = { TranscriptionEngine.wasAborted() },
     /** One recording's length. Injected for tests, which have no real audio to measure. */
     private val audioDurationMs: (Uri) -> Long = { uri -> AudioDecoder.durationMs(context, uri) },
+    /**
+     * The loudest sample (0.0 to 1.0) in the first minute of a recording, or null when it cannot be read.
+     * Only asked when [TranscriptJunk] has fired, to log silence apart from a wrong language. Injected for tests.
+     */
+    private val peakLevel: (Uri) -> Double? = { uri -> peakOfFirstMinute(context, uri) },
     /**
      * Told how each recording ended, so something can say so out loud. Injected for tests, which have
      * no NotificationManager and must not need one to assert what a run stored.
@@ -215,12 +221,36 @@ class TranscriptionRunner(
                 // English on two phones with nothing in the pipeline broken. See WrongScriptRetry.
                 // Retries get no speaker detector — the first decode already heard the whole file, and
                 // feeding it again would count every turn twice.
-                if (isCloud || !WrongScriptRetry.shouldRetry(first, language, audioMs)) first
+                val settled = if (isCloud || !WrongScriptRetry.shouldRetry(first, language, audioMs)) first
                 else {
                     AppLogger.w(TAG, "Transcript is not in the pinned language's script ($language); decoding again")
                     WrongScriptRetry.recover(first, language) { settings ->
                         transcriber.transcribe(context, uri, modelPath, language, prompt, null, settings)
                     }
+                }
+                // One token said over and over, or only non-speech tags, is whisper not understanding the
+                // audio, not a transcript (BabApps item 139). The same fallbacks are tried first; if none
+                // gives words, the run FAILS instead of storing the junk as a finished transcript.
+                val junk = TranscriptJunk.find(settled) ?: return@runCatching settled
+                val rescued = if (isCloud || audioMs !in 1..WrongScriptRetry.MAX_RETRY_AUDIO_MS) null
+                else TranscriptJunk.recover(language) { settings ->
+                    transcriber.transcribe(context, uri, modelPath, language, prompt, null, settings)
+                }
+                if (rescued != null) {
+                    AppLogger.w(TAG, "'$displayName' came back as junk (${junk.kind} '${junk.token}', language ${language ?: "auto"}); a retry gave real words")
+                    rescued
+                } else {
+                    // Everything the next report needs to tell silence from a wrong language: the pin, the
+                    // model, how long the audio is and how loud it gets, and the token that repeated.
+                    val peak = runCatching { peakLevel(uri) }.getOrNull()
+                    AppLogger.w(
+                        TAG,
+                        "Junk transcript for '$displayName' not saved: ${junk.kind} token '${junk.token}', " +
+                            "language ${language ?: "auto"}, model $modelId, audio $audioMs ms, " +
+                            "peak ${peak?.let { "%.4f".format(Locale.ROOT, it) } ?: "unknown"}, " +
+                            "retried ${if (isCloud || audioMs !in 1..WrongScriptRetry.MAX_RETRY_AUDIO_MS) "no" else "yes"}"
+                    )
+                    throw TranscriptJunk.JunkTranscriptException(junk)
                 }
             }
         } finally {
@@ -347,7 +377,11 @@ class TranscriptionRunner(
                     // — a stop, an abort and a refusal for length have all returned above.
                     announce(
                         displayName,
-                        if (previousKept) TranscriptNotice.Outcome.FailedPreviousKept else TranscriptNotice.Outcome.Failed,
+                        when {
+                            previousKept -> TranscriptNotice.Outcome.FailedPreviousKept
+                            failure is TranscriptJunk.JunkTranscriptException -> TranscriptNotice.Outcome.FailedNoSpeech
+                            else -> TranscriptNotice.Outcome.Failed
+                        },
                     )
                 }
                 false
@@ -506,5 +540,14 @@ class TranscriptionRunner(
 
     private companion object {
         const val TAG = "CV:TranscriptionRunner"
+
+        /** How much of the recording's start is read to find its loudest sample: bounded, so a long call costs the same. */
+        const val PEAK_PROBE_MS = 60_000L
+
+        /** Loudest sample, 0.0 to 1.0, of the first [PEAK_PROBE_MS] of [uri]; null when it cannot be decoded. */
+        fun peakOfFirstMinute(context: Context, uri: Uri): Double? = runCatching {
+            val audio = AudioDecoder.decodeRange(context, uri, 0L, PEAK_PROBE_MS).audio
+            if (audio.isEmpty()) 0.0 else audio.maxOf { kotlin.math.abs(it) }.toDouble()
+        }.getOrNull()
     }
 }

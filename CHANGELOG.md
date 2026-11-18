@@ -12,10 +12,25 @@ All notable changes to CallVault are documented here. The format is based on
   full, a Copy address button and a warning that only the TON network works; Back returns to the list.
   <!-- 🧪 VERIFYING: tap Support: four rows; "USDT (TON)" shows the address and Copy address puts exactly
   UQBmQTlgwFi09QZAnwgyDFv_6OL9qqXVt-JZDxcD2adqIiJ- on the clipboard; Back returns to the list. -->
+- **Hindi can now be picked as the transcription language.** It is in Settings, in the per-call language question and
+  in the summary language list, and a phone set to Hindi pins it by default. Before, a Hindi call could only be
+  transcribed under another language.
+  <!-- 🧪 VERIFYING (BabApps item 139, not shipped): checked on one phone with a text-to-speech sample (real Devanagari
+  text, pinned Hindi, cloud and on-phone). Quality on real Hindi calls still needs a native Hindi speaker. -->
 
 
 ### Fixed
 
+- **A call whose transcript is only "foreign foreign…" is no longer saved as a finished transcript, and the transcript
+  page no longer shows 0:00 / 0:00 before you press play.** When whisper cannot read the audio (wrong language, or
+  silence) it can fill the call with one repeated word. CallVault now tries the other decoding settings first; if the
+  result is still one repeated word or only tags such as [Music], nothing is saved, the call shows as not transcribed and
+  a notification says the language setting may be wrong or the audio is empty. The line in the debug log names the
+  language, model, length, loudest level and the repeated word. The transcript page now shows the call's length before
+  play, and a recording whose file declares no length gets one read from its contents.
+  <!-- 🧪 VERIFYING (BabApps item 139, not shipped): the guard is covered by unit tests only; it did not fire on the test
+  phone because clean speech decodes fine under any pin. Open a transcript before pressing play: the right-hand time
+  should be the call's length. A real junk transcript (wrong language on a noisy call) would settle the guard. -->
 - **A big backlog now copies to Google Drive at a sensible pace, and Drive having a bad moment no longer takes
   CallVault down with it.** On a phone with thousands of recordings waiting, "Copying recordings to Drive" managed about
   ten files an hour, "Stop for now" could take 20 minutes, and Android closed CallVault fifteen times in six days each

@@ -42,6 +42,7 @@ object LanguageNames {
         "fa" to "فارسی",
         "fr" to "Français",
         "he" to "עברית",
+        "hi" to "हिन्दी",
         "hu" to "Magyar",
         "it" to "Italiano",
         "pl" to "Polski",

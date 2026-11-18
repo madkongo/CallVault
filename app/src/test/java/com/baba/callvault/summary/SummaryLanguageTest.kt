@@ -153,6 +153,13 @@ class SummaryLanguageTest {
     }
 
     @Test
+    fun `devanagari text is hindi`() {
+        assertEquals("hi", SummaryLanguage.scriptOf("नमस्ते, आप कैसे हैं? मैं ठीक हूँ, कल मिलते हैं"))
+        // Latin text still answers nothing: Hindi support must not make English look like a guess.
+        assertNull(SummaryLanguage.scriptOf("Hello, how are you today?"))
+    }
+
+    @Test
     fun `urdu is told apart from persian and arabic by the letters only urdu uses`() {
         // Urdu shares پ چ گ ی ک with Persian, so those cannot tell the two apart. Only Urdu writes
         // ٹ ڈ ڑ ں ے and its own ہ ھ; Persian and Arabic write ه instead.

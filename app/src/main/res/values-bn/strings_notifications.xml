@@ -56,6 +56,7 @@
     <string name="transcript_notice_ready_many_text">পড়তে ট্যাপ করুন।</string>
     <string name="transcript_notice_failed_title">ট্রান্সক্রিপশন শেষ হয়নি</string>
     <string name="transcript_notice_failed_text">%1$s। আবার চেষ্টা করতে ট্যাপ করুন।</string>
+    <string name="transcript_notice_failed_nospeech_text">%1$s। ট্রান্সক্রাইব করা যায়নি: ভাষার সেটিং ভুল হতে পারে, অথবা অডিও ফাঁকা।</string>
     <string name="transcript_notice_failed_many_title">যে ট্রান্সক্রিপশন শেষ হয়নি: %1$d</string>
     <string name="transcript_notice_failed_many_text">দেখতে ট্যাপ করুন।</string>
     <string name="transcript_notice_failed_kept_text">%1$s। আগের ট্রান্সক্রিপ্ট রাখা হয়েছে।</string>

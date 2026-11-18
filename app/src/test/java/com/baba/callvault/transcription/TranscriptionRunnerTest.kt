@@ -411,6 +411,66 @@ class TranscriptionRunnerTest {
     }
 
     @Test
+    fun a_transcript_that_is_one_word_repeated_is_retried_and_a_real_retry_is_stored() = runBlocking {
+        // BabApps item 139: a Hindi call under an English pin came back as "foreign" in every segment.
+        catalogued("looped.ogg")
+        val asked = mutableListOf<DecodeSettings>()
+        val runner = TranscriptionRunner(
+            context,
+            audioDurationMs = { 60_000L },
+            transcriber = { _, _, _, _, _, _, settings ->
+                asked += settings
+                if (settings == DecodeSettings.DEFAULT) listOf(TranscriptSegment(0, 1000, "foreign foreign foreign foreign foreign foreign foreign foreign"))
+                else listOf(TranscriptSegment(0, 1000, "Hello, this is a real sentence."))
+            }
+        )
+
+        runner.runBatch(MODEL_ID, MODEL_PATH, "en", listOf("looped.ogg"))
+
+        assertEquals(TranscriptState.DONE, transcript("looped.ogg")!!.transcript.state)
+        assertEquals(listOf("Hello, this is a real sentence."), transcript("looped.ogg")!!.segments.map { it.text })
+        assertEquals(listOf(DecodeSettings.DEFAULT, WrongScriptRetry.FALLBACKS.first()), asked)
+    }
+
+    @Test
+    fun a_transcript_that_stays_junk_is_not_saved_and_the_run_says_why() = runBlocking {
+        catalogued("foreign.ogg")
+        val told = mutableListOf<TranscriptNotice.Outcome>()
+        var peakAsked = 0
+        val runner = TranscriptionRunner(
+            context,
+            audioDurationMs = { 60_000L },
+            peakLevel = { peakAsked++; 0.0123 },
+            onFinished = { _, outcome -> told += outcome },
+            transcriber = { _, _, _, _, _, _, _ ->
+                listOf(
+                    TranscriptSegment(0, 1000, "foreign foreign foreign foreign foreign foreign foreign"),
+                    TranscriptSegment(29_000, 30_000, "foreign foreign foreign foreign foreign foreign foreign"),
+                )
+            }
+        )
+
+        val finished = runner.runOne(MODEL_ID, MODEL_PATH, "en", "foreign.ogg")
+
+        assertEquals(false, finished)
+        val stored = transcript("foreign.ogg")!!
+        assertEquals(TranscriptState.FAILED, stored.transcript.state)
+        assertTrue("no junk segments may be stored", stored.segments.isEmpty())
+        assertEquals(listOf(TranscriptNotice.Outcome.FailedNoSpeech), told)
+        assertEquals("the peak is read once, for the log line", 1, peakAsked)
+    }
+
+    @Test
+    fun a_short_real_reply_is_never_taken_for_junk() = runBlocking {
+        catalogued("short.ogg")
+        val runner = runnerReturning(listOf(TranscriptSegment(0, 1000, "Yes yes, bye")))
+
+        runner.runBatch(MODEL_ID, MODEL_PATH, "en", listOf("short.ogg"))
+
+        assertEquals(TranscriptState.DONE, transcript("short.ogg")!!.transcript.state)
+    }
+
+    @Test
     fun a_recording_of_unknown_length_in_the_wrong_alphabet_is_not_decoded_again() = runBlocking {
         // The retry is bounded by length; with no length there is no bound, so there is no retry.
         catalogued("undated-english.ogg")

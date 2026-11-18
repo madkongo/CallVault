@@ -44,6 +44,7 @@ object SummaryPrompt {
         "fa" to "Persian",
         "fr" to "French",
         "he" to "Hebrew",
+        "hi" to "Hindi",
         "hu" to "Hungarian",
         "it" to "Italian",
         "pl" to "Polish",

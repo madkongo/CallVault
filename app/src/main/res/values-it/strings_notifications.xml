@@ -56,6 +56,7 @@
     <string name="transcript_notice_ready_many_text">Tocca per leggerle.</string>
     <string name="transcript_notice_failed_title">La trascrizione non è stata completata</string>
     <string name="transcript_notice_failed_text">%1$s. Tocca per riprovare.</string>
+    <string name="transcript_notice_failed_nospeech_text">%1$s. Impossibile trascrivere: l\'impostazione della lingua potrebbe essere sbagliata, oppure l\'audio è vuoto.</string>
     <string name="transcript_notice_failed_many_title">Trascrizioni non completate: %1$d</string>
     <string name="transcript_notice_failed_many_text">Tocca per vederle.</string>
     <string name="transcript_notice_failed_kept_text">%1$s. La trascrizione precedente è stata mantenuta.</string>

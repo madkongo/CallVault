@@ -56,6 +56,7 @@
     <string name="transcript_notice_ready_many_text">Toca para leerlas.</string>
     <string name="transcript_notice_failed_title">La transcripción no terminó</string>
     <string name="transcript_notice_failed_text">%1$s. Toca para intentarlo de nuevo.</string>
+    <string name="transcript_notice_failed_nospeech_text">%1$s. No se pudo transcribir: puede que el idioma esté mal configurado o que el audio esté vacío.</string>
     <string name="transcript_notice_failed_many_title">Transcripciones sin terminar: %1$d</string>
     <string name="transcript_notice_failed_many_text">Toca para verlas.</string>
     <string name="transcript_notice_failed_kept_text">%1$s. Se conservó la transcripción anterior.</string>

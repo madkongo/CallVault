@@ -56,6 +56,7 @@
     <string name="transcript_notice_ready_many_text">Dotknij, aby je przeczytać.</string>
     <string name="transcript_notice_failed_title">Transkrypcja nie została ukończona</string>
     <string name="transcript_notice_failed_text">%1$s. Dotknij, aby spróbować ponownie.</string>
+    <string name="transcript_notice_failed_nospeech_text">%1$s. Nie udało się przepisać: ustawienie języka może być błędne albo nagranie jest puste.</string>
     <string name="transcript_notice_failed_many_title">Nieukończone transkrypcje: %1$d</string>
     <string name="transcript_notice_failed_many_text">Dotknij, aby je zobaczyć.</string>
     <string name="transcript_notice_failed_kept_text">%1$s. Poprzednia transkrypcja została zachowana.</string>

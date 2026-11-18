@@ -348,13 +348,64 @@ object AudioDecoder {
                 extractor.getTrackFormat(i).getString(MediaFormat.KEY_MIME)?.startsWith("audio/") == true
             } ?: return 0L
             val format = extractor.getTrackFormat(track)
-            if (format.containsKey(MediaFormat.KEY_DURATION)) format.getLong(MediaFormat.KEY_DURATION) / 1000L else 0L
+            val declaredMs = if (format.containsKey(MediaFormat.KEY_DURATION)) format.getLong(MediaFormat.KEY_DURATION) / 1000L else 0L
+            if (declaredMs > 0L) return declaredMs
+            // The container declares no length (or 0), yet it decodes: BabApps item 139 showed a call whose
+            // transcript has a segment at 0:29 under a player reading 0:00 / 0:00. Ask two cheaper-than-decode
+            // sources before giving up, and log which one answered.
+            durationWithoutHeader(context, uri, extractor, track, format)
         } catch (e: Exception) {
             AppLogger.w(TAG, "Could not read the duration of $uri: ${e.message}")
             0L
         } finally {
             extractor.release()
         }
+    }
+
+    /** URIs whose missing-duration line has been logged this process, so a list reload does not repeat it. */
+    private val loggedNoHeader = java.util.Collections.synchronizedSet(HashSet<String>())
+
+    /**
+     * Length of a recording whose container declares none: first what [android.media.MediaMetadataRetriever]
+     * reads, then the time of the last sample found by walking the track (no decoding, just container reads).
+     * Always logs one line per file naming the mime type, the size and what each source returned.
+     */
+    private fun durationWithoutHeader(context: Context, uri: Uri, extractor: MediaExtractor, track: Int, format: MediaFormat): Long {
+        val retrieverMs = runCatching {
+            val retriever = android.media.MediaMetadataRetriever()
+            try {
+                context.contentResolver.openFileDescriptor(uri, "r").use { pfd ->
+                    requireNotNull(pfd) { "Cannot open $uri" }
+                    retriever.setDataSource(pfd.fileDescriptor)
+                }
+                retriever.extractMetadata(android.media.MediaMetadataRetriever.METADATA_KEY_DURATION)?.toLongOrNull() ?: 0L
+            } finally {
+                retriever.release()
+            }
+        }.getOrDefault(0L)
+
+        val scannedMs = if (retrieverMs > 0L) 0L else runCatching {
+            extractor.selectTrack(track)
+            var lastUs = 0L
+            while (extractor.sampleTime >= 0L) {
+                lastUs = extractor.sampleTime
+                if (!extractor.advance()) break
+            }
+            lastUs / 1000L
+        }.getOrDefault(0L)
+
+        val chosen = if (retrieverMs > 0L) retrieverMs else scannedMs
+        if (loggedNoHeader.add(uri.toString())) {
+            val size = runCatching {
+                context.contentResolver.openFileDescriptor(uri, "r")?.use { it.statSize }
+            }.getOrNull() ?: -1L
+            AppLogger.w(
+                TAG,
+                "Container declares no duration: mime ${format.getString(MediaFormat.KEY_MIME)}, $size byte(s); " +
+                    "MediaMetadataRetriever ${retrieverMs} ms, track scan ${scannedMs} ms; using ${chosen} ms"
+            )
+        }
+        return chosen
     }
 
     /**

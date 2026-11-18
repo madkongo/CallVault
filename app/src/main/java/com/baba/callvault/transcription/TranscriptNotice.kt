@@ -49,6 +49,13 @@ object TranscriptNotice {
         /** The run ended in failure and the recording still has no transcript. */
         Failed,
 
+        /**
+         * The run ended with a transcript that was not words (one word repeated, or only non-speech tags),
+         * so nothing was stored (BabApps item 139). Says why: the language setting may be wrong, or the
+         * audio is empty.
+         */
+        FailedNoSpeech,
+
         /** A "transcribe again" (#72) failed; the transcript it was to replace is back, unchanged. */
         FailedPreviousKept,
     }

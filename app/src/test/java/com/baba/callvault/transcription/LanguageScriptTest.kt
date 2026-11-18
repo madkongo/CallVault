@@ -35,6 +35,7 @@ class LanguageScriptTest {
         "yue" to UnicodeScript.HAN,
         "el" to UnicodeScript.GREEK,
         "bn" to UnicodeScript.BENGALI,
+        "hi" to UnicodeScript.DEVANAGARI,
     )
 
     @Test

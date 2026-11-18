@@ -109,6 +109,12 @@ class TranscriptionLanguageChoiceTest {
     }
 
     @Test
+    fun hindi_is_supported_as_a_device_default_and_explicit_choice() {
+        assertEquals("hi", TranscriptionLanguageChoice.defaultLanguage(Locale.forLanguageTag("hi-IN")))
+        assertEquals("hi", TranscriptionLanguageChoice.resolve(chosen = "hi", setting = "en"))
+    }
+
+    @Test
     fun an_unsupported_device_language_falls_back_to_auto_detect() {
         // Danish has no label to show for it, so there is nothing honest to pin. Auto-detect is the
         // fallback here rather than the default everywhere.

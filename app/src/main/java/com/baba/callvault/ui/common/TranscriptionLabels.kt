@@ -161,6 +161,7 @@ object TranscriptionLabels {
         "uk" -> R.string.transcription_language_ukrainian
         "ur" -> R.string.transcription_language_urdu
         "bn" -> R.string.transcription_language_bengali
+        "hi" -> R.string.transcription_language_hindi
         "yue" -> R.string.transcription_language_cantonese
         else -> R.string.transcription_language_auto
     }
