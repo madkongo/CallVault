@@ -362,6 +362,8 @@
     <string name="settings_audio_source">Audioquelle</string>
     <string name="settings_auto_record_incoming">Eingehende Telefonanrufe automatisch aufnehmen</string>
     <string name="settings_auto_record_outgoing">Ausgehende Telefonanrufe automatisch aufnehmen</string>
+    <string name="record_sim_info">Jeden Anruf oder nur eine SIM. Andere Anrufe zeigen Aufnahme. Lässt sich die SIM beim Start nicht erkennen, wird aufgenommen.</string>
+    <string name="record_sim_label">Automatisch aufnehmen</string>
     <string name="settings_backup_desc">Speichere deine Einstellungen in einer Datei oder stelle sie daraus wieder her.</string>
     <string name="settings_backup_title">Einstellungen sichern</string>
     <string name="settings_bugreport_active_warning">Debug-Protokollierung ist EIN. Denken Sie daran, sie auszuschalten, wenn Sie fertig sind, um Speicherplatz zu sparen.</string>
@@ -775,6 +777,11 @@
     <string name="transcription_minute_label">Minute</string>
     <string name="transcription_mode_after_each_call">Nach jedem Anruf</string>
     <string name="transcription_mode_automatic">Geplant</string>
+    <string name="transcription_sim_all">Alle SIMs</string>
+    <string name="transcription_sim_info">Nach jedem Anruf alle SIMs oder eine SIM transkribieren. Alles andere lässt sich aus der Liste transkribieren. Es wird nichts gelöscht.</string>
+    <string name="transcription_sim_label">Automatisch transkribieren</string>
+    <string name="transcription_sim_other_delete">Aufnahme löschen</string>
+    <string name="transcription_sim_other_label">Für Anrufe auf der anderen SIM</string>
     <string name="transcription_mode_label">Transkribieren</string>
     <string name="transcription_mode_manual">Manuell</string>
     <string name="transcription_model_best">Beste Qualität</string>
@@ -915,4 +922,7 @@
     <string name="settings_debug_force_wifi_route_description">Zum Testen. Jeder Telefonanruf wechselt während des Gesprächs zur App-Anruf-Aufnahme, wie es ein WLAN-Anruf täte. Auf einem Telefon ohne WLAN-Anrufe fehlt die andere Seite, und es sollte ein Fehler erscheinen. Erfordert eingeschaltete App-Anruf-Aufnahme. Wirkt nur, solange die Protokollaufzeichnung an ist.</string>
     <string name="wifi_call_switch_aborted">Die Aufnahme dieses WLAN-Anrufs wurde vorzeitig beendet: Die Aufnahme ließ sich nicht sicher umschalten. Der bisher aufgenommene Teil bleibt erhalten.</string>
     <string name="wifi_call_far_unknown">Dieser WLAN-Anruf wurde aufgenommen, aber CallVault konnte nicht prüfen, ob die andere Seite darauf ist. Bitte hören Sie sich die Aufnahme an.</string>
+    <string name="recording_notification_not_recording">Keine Aufnahme</string>
+    <string name="recording_notification_title_sim">Anruf wird aufgenommen — %1$s</string>
+    <string name="sim_choice_unavailable">Gespeicherte SIM (nicht in diesem Telefon)</string>
 </resources>

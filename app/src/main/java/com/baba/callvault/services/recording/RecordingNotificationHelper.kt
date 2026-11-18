@@ -90,7 +90,7 @@ class RecordingNotificationHelper(private val context: Context) {
         manager.createNotificationChannel(errorChannel)
     }
 
-    fun getNotification(state: RecordingServiceState): Notification {
+    fun getNotification(state: RecordingServiceState, simLabel: String? = null): Notification {
         val titleRes: Int
         val contentRes: Int
         // A list, not one slot. The notification is the only control surface during a call — the
@@ -104,8 +104,8 @@ class RecordingNotificationHelper(private val context: Context) {
 
         when (state) {
             is RecordingServiceState.Starting -> {
-                titleRes = R.string.recording_standby_notification_title
-                contentRes = R.string.recording_notification_waiting
+                titleRes = R.string.recording_notification_title
+                contentRes = R.string.recording_started
             }
             is RecordingServiceState.Active -> {
                 if (state.isPaused) {
@@ -149,7 +149,7 @@ class RecordingNotificationHelper(private val context: Context) {
             }
             else -> {
                 titleRes = R.string.recording_standby_notification_title
-                contentRes = R.string.recording_notification_press_to_start
+                contentRes = R.string.recording_notification_not_recording
                 actions += NotificationAction(
                     R.drawable.ic_mic,
                     context.getString(R.string.general_record),
@@ -170,7 +170,16 @@ class RecordingNotificationHelper(private val context: Context) {
         val builder = NotificationCompat.Builder(context, CHANNEL_ID_SERVICE)
             .setSmallIcon(R.drawable.ic_mic)
             .setLargeIcon(BitmapFactory.decodeResource(context.resources, R.mipmap.ic_launcher))
-            .setContentTitle(context.getString(titleRes))
+            .setContentTitle(
+                if (!simLabel.isNullOrBlank() &&
+                    (state is RecordingServiceState.Starting ||
+                        (state is RecordingServiceState.Active && !state.isPaused))
+                ) {
+                    context.getString(R.string.recording_notification_title_sim, simLabel)
+                } else {
+                    context.getString(titleRes)
+                }
+            )
             .setContentText(context.getString(contentRes))
             .setSubText(context.getString(subRes))
             .setOngoing(true) // Almost useless starting Android 14+ :)

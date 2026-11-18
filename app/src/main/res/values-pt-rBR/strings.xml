@@ -365,6 +365,8 @@
     <string name="settings_audio_source">Fonte de áudio</string>
     <string name="settings_auto_record_incoming">Gravar automaticamente chamadas telefônicas recebidas</string>
     <string name="settings_auto_record_outgoing">Gravar automaticamente chamadas telefônicas efetuadas</string>
+    <string name="record_sim_info">Gravar toda chamada, ou só um SIM. As outras mostram Gravar. Se o SIM não puder ser identificado no início, a chamada é gravada.</string>
+    <string name="record_sim_label">Gravar automaticamente</string>
     <string name="settings_backup_desc">Salve suas configurações em um arquivo ou restaure-as de um.</string>
     <string name="settings_backup_title">Fazer backup das configurações</string>
     <string name="settings_bugreport_active_warning">O registro de depuração está ATIVADO. Lembre-se de desativá-lo quando terminar, para economizar espaço.</string>
@@ -778,6 +780,11 @@
     <string name="transcription_minute_label">Minuto</string>
     <string name="transcription_mode_after_each_call">Após cada chamada</string>
     <string name="transcription_mode_automatic">Agendado</string>
+    <string name="transcription_sim_all">Todos os SIMs</string>
+    <string name="transcription_sim_info">Após cada chamada, transcrever todos os SIMs ou um SIM. O resto pode ser transcrito na lista. Isso nunca apaga uma gravação.</string>
+    <string name="transcription_sim_label">Transcrever automaticamente</string>
+    <string name="transcription_sim_other_delete">Excluir a gravação</string>
+    <string name="transcription_sim_other_label">Para chamadas no outro SIM</string>
     <string name="transcription_mode_label">Transcrever</string>
     <string name="transcription_mode_manual">Manualmente</string>
     <string name="transcription_model_best">Melhor qualidade</string>
@@ -918,4 +925,7 @@
     <string name="settings_debug_force_wifi_route_description">Para testes. Cada chamada telefônica muda durante a chamada para a captura de chamadas de apps, como faria uma chamada por Wi-Fi. Em um telefone sem chamadas por Wi-Fi o outro lado vai faltar e deve aparecer um erro. Requer a gravação de chamadas de apps ativada. Só funciona com o registro de log ativado.</string>
     <string name="wifi_call_switch_aborted">A gravação desta chamada por Wi-Fi parou antes da hora: não foi possível trocar a captura com segurança. A parte gravada até agora foi mantida.</string>
     <string name="wifi_call_far_unknown">Esta chamada por Wi-Fi foi gravada, mas o CallVault não conseguiu verificar se o outro lado está nela. Ouça a gravação.</string>
+    <string name="recording_notification_not_recording">Sem gravar</string>
+    <string name="recording_notification_title_sim">Gravando chamada — %1$s</string>
+    <string name="sim_choice_unavailable">SIM salvo (não está neste telefone)</string>
 </resources>

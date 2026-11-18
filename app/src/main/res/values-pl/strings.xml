@@ -364,6 +364,8 @@
     <string name="settings_audio_source">Źródło dźwięku</string>
     <string name="settings_auto_record_incoming">Automatycznie nagrywaj przychodzące połączenia telefoniczne</string>
     <string name="settings_auto_record_outgoing">Automatycznie nagrywaj wychodzące połączenia telefoniczne</string>
+    <string name="record_sim_info">Nagrywaj każdą rozmowę albo tylko jedną SIM. Pozostałe pokazują Nagraj. Jeśli SIM nie da się rozpoznać na początku, rozmowa jest nagrywana.</string>
+    <string name="record_sim_label">Nagrywaj automatycznie</string>
     <string name="settings_backup_desc">Zapisz swoje ustawienia do pliku lub przywróć je z pliku.</string>
     <string name="settings_backup_title">Kopia zapasowa ustawień</string>
     <string name="settings_bugreport_active_warning">Rejestrowanie diagnostyczne jest WŁĄCZONE. Pamiętaj, aby je wyłączyć po zakończeniu, aby zaoszczędzić miejsce.</string>
@@ -779,6 +781,11 @@
     <string name="transcription_minute_label">Minuta</string>
     <string name="transcription_mode_after_each_call">Po każdej rozmowie</string>
     <string name="transcription_mode_automatic">Według harmonogramu</string>
+    <string name="transcription_sim_all">Wszystkie SIM</string>
+    <string name="transcription_sim_info">Po każdej rozmowie transkrybuj wszystkie SIM albo jedną SIM. Resztę można transkrybować z listy. Nagrania nie są usuwane.</string>
+    <string name="transcription_sim_label">Transkrybuj automatycznie</string>
+    <string name="transcription_sim_other_delete">Usuń nagranie</string>
+    <string name="transcription_sim_other_label">Dla połączeń z drugiej SIM</string>
     <string name="transcription_mode_label">Transkrybuj</string>
     <string name="transcription_mode_manual">Ręcznie</string>
     <string name="transcription_model_best">Najlepsza jakość</string>
@@ -919,4 +926,7 @@
     <string name="settings_debug_force_wifi_route_description">Do testów. Każde połączenie telefoniczne w trakcie przełącza się na nagrywanie połączeń z aplikacji, tak jak zrobiłoby to połączenie przez Wi-Fi. Na telefonie bez połączeń przez Wi-Fi zabraknie drugiej strony i powinien pojawić się błąd. Wymaga włączonego nagrywania połączeń z aplikacji. Działa tylko przy włączonym zapisie dziennika.</string>
     <string name="wifi_call_switch_aborted">Nagrywanie tego połączenia przez Wi-Fi zatrzymało się wcześniej: nie udało się bezpiecznie przełączyć nagrywania. Nagrana dotąd część zostaje zachowana.</string>
     <string name="wifi_call_far_unknown">To połączenie przez Wi-Fi zostało nagrane, ale CallVault nie mógł sprawdzić, czy jest na nim druga strona. Odsłuchaj nagranie.</string>
+    <string name="recording_notification_not_recording">Bez nagrywania</string>
+    <string name="recording_notification_title_sim">Nagrywanie rozmowy — %1$s</string>
+    <string name="sim_choice_unavailable">Zapisana SIM (nie ma jej w tym telefonie)</string>
 </resources>

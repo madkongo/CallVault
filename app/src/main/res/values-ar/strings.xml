@@ -399,6 +399,8 @@
     <string name="settings_audio_source">مصدر الصوت</string>
     <string name="settings_auto_record_incoming">التسجيل التلقائي للمكالمات الهاتفية الواردة</string>
     <string name="settings_auto_record_outgoing">التسجيل التلقائي للمكالمات الهاتفية الصادرة</string>
+    <string name="record_sim_info">سجّل كل المكالمات، أو شريحة واحدة. المكالمات الأخرى تعرض زر تسجيل. إذا تعذر تحديد الشريحة عند البدء، تُسجَّل المكالمة.</string>
+    <string name="record_sim_label">تسجيل تلقائي</string>
     <string name="settings_backup_desc">احفظ إعداداتك في ملف، أو استعِدها من ملف.</string>
     <string name="settings_backup_title">نسخ احتياطي للإعدادات</string>
     <string name="settings_bugreport_active_warning">تسجيل تصحيح الأخطاء قيد التشغيل. تذكر إيقاف تشغيله عند الانتهاء لتوفير المساحة.</string>
@@ -815,6 +817,11 @@
     <string name="transcription_minute_label">دقيقة</string>
     <string name="transcription_mode_after_each_call">بعد كل مكالمة</string>
     <string name="transcription_mode_automatic">مجدول</string>
+    <string name="transcription_sim_all">كل شرائح SIM</string>
+    <string name="transcription_sim_info">بعد كل مكالمة، انسخ كل الشرائح أو شريحة واحدة. يمكن نسخ الباقي من القائمة. لا يُحذف أي تسجيل.</string>
+    <string name="transcription_sim_label">نسخ تلقائي</string>
+    <string name="transcription_sim_other_delete">حذف التسجيل</string>
+    <string name="transcription_sim_other_label">لمكالمات الشريحة الأخرى</string>
     <string name="transcription_mode_label">تفريغ صوتي</string>
     <string name="transcription_mode_manual">يدويًا</string>
     <string name="transcription_model_best">أعلى جودة (موصى به)</string>
@@ -953,4 +960,7 @@
     <string name="settings_debug_force_wifi_route_description">للاختبار. تنتقل كل مكالمة هاتفية أثناءها إلى تسجيل مكالمات التطبيقات، كما تفعل مكالمة Wi-Fi. على هاتف بلا اتصال عبر Wi-Fi سيغيب الطرف الآخر ويجب أن يظهر خطأ. يتطلب تفعيل تسجيل مكالمات التطبيقات. يعمل فقط أثناء تسجيل السجل.</string>
     <string name="wifi_call_switch_aborted">توقف تسجيل مكالمة Wi-Fi هذه مبكرًا: تعذّر تبديل طريقة التسجيل بأمان. حُفظ الجزء الذي سُجّل حتى الآن.</string>
     <string name="wifi_call_far_unknown">سُجّلت مكالمة Wi-Fi هذه، لكن تعذّر على CallVault التحقق من وجود صوت الطرف الآخر فيها. يُرجى الاستماع إلى التسجيل.</string>
+    <string name="recording_notification_not_recording">بدون تسجيل</string>
+    <string name="recording_notification_title_sim">تسجيل المكالمة — %1$s</string>
+    <string name="sim_choice_unavailable">الشريحة المحفوظة (ليست في هذا الهاتف)</string>
 </resources>

@@ -632,7 +632,9 @@ object AppLogger {
         // The ring is the daemon's, where there is no preference to read — `prefs` is null there, so
         // without this every daemon line would be dropped right here and the export would stay blind
         // to the process that actually owns the microphone.
-        val toFile = prefs?.isLoggingEnabled() == true
+        // CV:RecordSim is kept even when debug logging is off, so a dual-SIM test can be shared
+        // from Help and about without a toggle that had to be on before the call.
+        val toFile = prefs?.isLoggingEnabled() == true || tag == "CV:RecordSim"
         val time = SimpleDateFormat("yyyy-MM-dd HH:mm:ss.SSS", Locale.US).format(Date())
 
         // The setup journal is written whether or not logging is on, so it is fed before the gate

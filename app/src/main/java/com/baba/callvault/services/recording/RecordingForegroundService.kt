@@ -25,8 +25,6 @@ import android.telephony.PhoneNumberUtils
 import android.provider.DocumentsContract
 import androidx.documentfile.provider.DocumentFile
 import com.baba.callvault.data.AppPreferences
-import com.baba.callvault.data.calls.PhoneCallMatch
-import com.baba.callvault.data.calls.PhoneCallReader
 import com.baba.callvault.data.calls.SimLabels
 import com.baba.callvault.data.health.CallOutcomes
 import com.baba.callvault.data.health.SetupFingerprint
@@ -119,6 +117,9 @@ class RecordingForegroundService : Service() {
          */
         const val ACTION_MANUAL_START = "com.baba.callvault.MANUAL_START_RECORDING"
 
+        /** SIM name for the "Recording call — …" notification, when the call's SIM was known. */
+        const val EXTRA_SIM_LABEL = "com.baba.callvault.EXTRA_SIM_LABEL"
+
         /** Intent action sent to this service when the user dismisses the notification (Android 14+). */
         const val ACTION_NOTIFICATION_DISMISSED = "com.baba.callvault.SERVICE_NOTIFICATION_DISMISSED"
 
@@ -158,6 +159,9 @@ class RecordingForegroundService : Service() {
      * keep-alive's own VoIP recording notice, and replacing it with a carrier prompt would hide it.
      */
     private var sharesStatusNotice = true
+
+    /** SIM name shown as "Recording call — …" while this recording is automatic and the SIM was known. */
+    private var simLabel: String? = null
 
     /** The current state of the service. */
     @Volatile
@@ -283,7 +287,9 @@ class RecordingForegroundService : Service() {
      */
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
         val action = intent?.action
-
+        if (action == ACTION_START_RECORDING || action == ACTION_STANDBY) {
+            simLabel = intent.getStringExtra(EXTRA_SIM_LABEL)?.takeIf { it.isNotBlank() }
+        }
         var currentMeta = currentState.metadata
 
         // Parse metadata if present in the intent (START/STANDBY)
@@ -489,7 +495,7 @@ class RecordingForegroundService : Service() {
                 ?.takeIf { opening == RecordingNoticePolicy.Opening.PREPARING }
                 ?.let { RecordingServiceState.Starting(it) }
                 ?: currentState
-            notificationHelper.getNotification(openingState)
+            notificationHelper.getNotification(openingState, simLabel)
         }
         startForegroundWithType(notification)
         return voipCall
@@ -1080,10 +1086,7 @@ class RecordingForegroundService : Service() {
     /** The 1-based SIM slot of the call that started at [startedAt], when the opt-in SIM label is on; else null. */
     private fun simSlotFor(startedAt: Long): Int? {
         if (!AppPreferences(applicationContext).isShowSimLabelEnabled()) return null
-        val calls = PhoneCallReader.since(applicationContext, startedAt - PhoneCallMatch.TOLERANCE_MS)
-        val call = PhoneCallMatch.nearest(calls, startedAt) ?: return null
-        return SimLabels.Resolver(applicationContext, getString(R.string.sim_label_word))
-            .simFor(call.accountComponent, call.accountId)?.slot
+        return SimLabels.slotForCall(applicationContext, startedAt, getString(R.string.sim_label_word))
     }
 
     /**
@@ -1155,6 +1158,10 @@ class RecordingForegroundService : Service() {
             }
         }
 
+        // Per-SIM after-call transcription (issue #81). Before the catalog, the keep-or-delete
+        // question and the cloud copy: a recording removed here must not be uploaded or asked about.
+        // Off unless the user picked one SIM and "delete the other", so this returns immediately
+        // for everyone else.
         // Keep or delete after the call: decided ONCE, here, and both halves below follow it — the catalog
         // coroutine (details-file copy, transcription) and the synchronous Drive route after it. Held
         // before either starts, so no sweep can copy it in between. Not held — kept as in Keep mode — when
@@ -1256,7 +1263,7 @@ class RecordingForegroundService : Service() {
         // Stopping: the notification is on its way out, and posting it again would flash a state the
         // user has no use for — or re-promote a service that has already stopped itself.
         if (isShuttingDown) return
-        val notification = notificationHelper.getNotification(currentState)
+        val notification = notificationHelper.getNotification(currentState, simLabel)
         startForegroundWithType(notification)
     }
 

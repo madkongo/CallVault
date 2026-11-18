@@ -362,6 +362,8 @@
     <string name="settings_audio_source">Source audio</string>
     <string name="settings_auto_record_incoming">Enregistrer automatiquement les appels téléphoniques entrants</string>
     <string name="settings_auto_record_outgoing">Enregistrer automatiquement les appels téléphoniques sortants</string>
+    <string name="record_sim_info">Enregistrer chaque appel, ou une seule SIM. Les autres affichent Enregistrer. Si la SIM ne peut pas être reconnue au début, l\'appel est enregistré.</string>
+    <string name="record_sim_label">Enregistrement automatique</string>
     <string name="settings_backup_desc">Enregistrez vos paramètres dans un fichier, ou restaurez-les depuis un fichier.</string>
     <string name="settings_backup_title">Sauvegarder les paramètres</string>
     <string name="settings_bugreport_active_warning">La journalisation de débogage est ACTIVÉE. Pensez à la désactiver une fois terminé pour économiser de l\'espace.</string>
@@ -775,6 +777,11 @@
     <string name="transcription_minute_label">Minute</string>
     <string name="transcription_mode_after_each_call">Après chaque appel</string>
     <string name="transcription_mode_automatic">Planifié</string>
+    <string name="transcription_sim_all">Toutes les SIM</string>
+    <string name="transcription_sim_info">Après chaque appel, transcrire toutes les SIM ou une SIM. Le reste se transcrit depuis la liste. Aucun enregistrement n\'est supprimé.</string>
+    <string name="transcription_sim_label">Transcription automatique</string>
+    <string name="transcription_sim_other_delete">Supprimer l\'enregistrement</string>
+    <string name="transcription_sim_other_label">Pour les appels de l\'autre SIM</string>
     <string name="transcription_mode_label">Transcrire</string>
     <string name="transcription_mode_manual">Manuellement</string>
     <string name="transcription_model_best">Meilleure qualité</string>
@@ -915,4 +922,7 @@
     <string name="settings_debug_force_wifi_route_description">Pour les tests. Chaque appel téléphonique bascule en cours d\'appel vers la capture des appels d\'applications, comme le ferait un appel Wi-Fi. Sur un téléphone sans appels Wi-Fi, l\'autre côté manquera et une erreur devrait s\'afficher. Nécessite l\'enregistrement des appels d\'applications. Ne fonctionne que si l\'enregistrement du journal est activé.</string>
     <string name="wifi_call_switch_aborted">L\'enregistrement de cet appel Wi-Fi s\'est arrêté plus tôt : la capture n\'a pas pu être changée sans risque. La partie déjà enregistrée est conservée.</string>
     <string name="wifi_call_far_unknown">Cet appel Wi-Fi a été enregistré, mais CallVault n\'a pas pu vérifier que votre interlocuteur y figure. Écoutez l\'enregistrement.</string>
+    <string name="recording_notification_not_recording">Pas d\'enregistrement</string>
+    <string name="recording_notification_title_sim">Appel en enregistrement — %1$s</string>
+    <string name="sim_choice_unavailable">SIM enregistrée (absente de ce téléphone)</string>
 </resources>

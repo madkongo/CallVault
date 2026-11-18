@@ -33,7 +33,7 @@ internal object SettingsFolds {
     const val ASK_SWITCH = "AfterCallModeRow"
     private const val RECORD_FROM_ANSWER = "RecordFromAnswerRow"
 
-    private val PHONE_ONLY = setOf("AutoRecordIncomingRow", "AutoRecordOutgoingRow")
+    private val PHONE_ONLY = setOf("AutoRecordIncomingRow", "AutoRecordOutgoingRow", "RecordSimRow")
     private val APP_ONLY = setOf("VoipAppPicker", "VoipAutoStartRow")
     private val ASK_ONLY = setOf("AfterCallAskStyleRow", "AfterCallUnansweredRow")
 

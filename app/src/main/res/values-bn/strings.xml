@@ -227,6 +227,8 @@
     <string name="settings_carrier_recording_description">বন্ধ: ফোন কল পুরোপুরি উপেক্ষা করা হয় — কোনো রেকর্ডিং বা নোটিফিকেশন নেই। অ্যাপ কলে কোনো প্রভাব নেই।</string>
     <string name="settings_auto_record_incoming">ইনকামিং ফোন কল স্বয়ংক্রিয়ভাবে রেকর্ড করুন</string>
     <string name="settings_auto_record_outgoing">আউটগোয়িং ফোন কল স্বয়ংক্রিয়ভাবে রেকর্ড করুন</string>
+    <string name="record_sim_info">সব কল, বা শুধু একটি সিম। অন্যগুলোতে রেকর্ড বোতাম থাকে। শুরুতে সিম চেনা না গেলে কল রেকর্ড হয়।</string>
+    <string name="record_sim_label">স্বয়ংক্রিয় রেকর্ড</string>
     <string name="settings_record_from_answer">ধরলে তবেই শুরু করুন</string>
     <string name="settings_record_from_answer_description">আউটগোয়িং ফোন কল ডায়াল করার সময় থেকে নয়, অন্য ব্যক্তি ফোন ধরার মুহূর্ত থেকে রেকর্ড হয়। অ্যাপ কলেও, যদি অ্যাপটি নোটিফিকেশনে কলের টাইমার দেখায় (WhatsApp দেখায়)।</string>
     <string name="settings_ignore_anonymous_incoming">লুকানো নম্বরের কল বাদ দিন</string>
@@ -469,6 +471,11 @@
     <string name="transcription_mode_manual">নিজে চালু করলে</string>
     <string name="transcription_mode_after_each_call">প্রতিটি কলের পরে</string>
     <string name="transcription_mode_automatic">নির্ধারিত সময়ে</string>
+    <string name="transcription_sim_all">সব সিম</string>
+    <string name="transcription_sim_info">প্রতিটি কলের পরে সব সিম বা একটি সিম। বাকিগুলো তালিকা থেকে প্রতিলিপি করা যায়। কোনো রেকর্ডিং মুছে যায় না।</string>
+    <string name="transcription_sim_label">স্বয়ংক্রিয় প্রতিলিপি</string>
+    <string name="transcription_sim_other_delete">রেকর্ডিং মুছুন</string>
+    <string name="transcription_sim_other_label">অন্য সিমের কলের জন্য</string>
     <string name="transcription_hour_label">ঘণ্টা</string>
     <string name="transcription_minute_label">মিনিট</string>
     <string name="transcription_time_label">চালানোর সময়</string>
@@ -934,4 +941,7 @@
     <string name="settings_debug_force_wifi_route_description">পরীক্ষার জন্য। প্রতিটি ফোন কল চলাকালীন অ্যাপ-কল ক্যাপচারে চলে যায়, যেমন একটি Wi-Fi কলে হয়। Wi-Fi কলিং ছাড়া ফোনে অপর পক্ষ থাকবে না এবং একটি ত্রুটি দেখা উচিত। অ্যাপ কল রেকর্ডিং চালু থাকতে হবে। শুধু লগ রেকর্ডিং চালু থাকলে কাজ করে।</string>
     <string name="wifi_call_switch_aborted">এই Wi-Fi কলের রেকর্ডিং আগেই থেমে গেছে: ক্যাপচারটি নিরাপদে বদলানো যায়নি। এ পর্যন্ত যা রেকর্ড হয়েছে তা রাখা হয়েছে।</string>
     <string name="wifi_call_far_unknown">এই Wi-Fi কলটি রেকর্ড হয়েছে, কিন্তু CallVault যাচাই করতে পারেনি যে অপর পক্ষ এতে আছে কি না। অনুগ্রহ করে রেকর্ডিংটি শুনে দেখুন।</string>
+    <string name="recording_notification_not_recording">রেকর্ড হচ্ছে না</string>
+    <string name="recording_notification_title_sim">কল রেকর্ড হচ্ছে — %1$s</string>
+    <string name="sim_choice_unavailable">সংরক্ষিত সিম (এই ফোনে নেই)</string>
 </resources>

@@ -50,6 +50,9 @@ class CallVaultApplication : Application() {
     override fun onCreate() {
         super.onCreate()
         AppLogger.init(applicationContext)
+        // Per-SIM call callbacks. The process is kept alive by the recorder, so these are already
+        // listening when a call starts. Registered before anything else handles a phone-state broadcast.
+        com.baba.callvault.services.call.SimCallCallbacks.ensure(applicationContext)
 
         // Hide Recordings is a property of the folder, and the folder can change under us: a settings
         // import, a wizard re-pick, a user deleting the marker by hand. Re-checking is one folder lookup.

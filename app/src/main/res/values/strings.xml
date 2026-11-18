@@ -288,6 +288,9 @@
     <string name="settings_carrier_recording_description">Off: phone calls are ignored completely — no recording, no notification. App calls are unaffected.</string>
     <string name="settings_auto_record_incoming">Auto-record incoming phone calls</string>
     <string name="settings_auto_record_outgoing">Auto-record outgoing phone calls</string>
+    <string name="record_sim_info">Record every call, or only one SIM. Other calls show a Record button. If the SIM cannot be told when the call starts, the call is recorded.</string>
+    <string name="record_sim_label">Auto-record</string>
+    <string name="sim_choice_unavailable">Saved SIM (not in this phone)</string>
     <string name="settings_record_from_answer">Start when they answer</string>
     <string name="settings_record_from_answer_description">Outgoing phone calls are recorded from the moment the other person picks up, not from the dial. App calls too, when the app shows a call timer on its notification (WhatsApp does).</string>
     <string name="settings_ignore_anonymous_incoming">Skip hidden-number calls</string>
@@ -400,7 +403,9 @@
     <string name="recording_notification_cross_country_tip">🌐Cross-Country</string>
     <string name="recording_notification_current_country_tip">🏠Home-Country</string>
     <string name="recording_notification_title">Recording in progress</string>
+    <string name="recording_notification_not_recording">Not recording</string>
     <string name="recording_notification_press_to_start">Press to start recording</string>
+    <string name="recording_notification_title_sim">Recording call — %1$s</string>
     <string name="recording_notification_waiting">Preparing to record…</string>
     <string name="recording_notification_press_to_pause">Press to pause recording</string>
     <string name="recording_notification_press_to_resume">Press to resume recording</string>
@@ -614,6 +619,11 @@
     <string name="transcription_mode_manual">Manually</string>
     <string name="transcription_mode_after_each_call">After each call</string>
     <string name="transcription_mode_automatic">Scheduled</string>
+    <string name="transcription_sim_all">All SIMs</string>
+    <string name="transcription_sim_info">After each call, transcribe all SIMs or one SIM. Anything not transcribed automatically can be transcribed from the list. This never deletes a recording.</string>
+    <string name="transcription_sim_label">Auto-transcribe</string>
+    <string name="transcription_sim_other_delete">Delete the recording</string>
+    <string name="transcription_sim_other_label">For calls on the other SIM</string>
     <string name="transcription_hour_label">Hour</string>
     <string name="transcription_minute_label">Minute</string>
     <string name="transcription_time_label">Run at</string>

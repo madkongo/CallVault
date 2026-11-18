@@ -516,6 +516,8 @@
     <string name="settings_audio_source">Πηγή ήχου</string>
     <string name="settings_auto_record_incoming">Αυτόματη εγγραφή εισερχόμενων τηλεφωνικών κλήσεων</string>
     <string name="settings_auto_record_outgoing">Αυτόματη εγγραφή εξερχόμενων τηλεφωνικών κλήσεων</string>
+    <string name="record_sim_info">Εγγραφή κάθε κλήσης, ή μόνο μίας SIM. Οι άλλες δείχνουν Εγγραφή. Αν η SIM δεν αναγνωρίζεται στην αρχή, η κλήση εγγράφεται.</string>
+    <string name="record_sim_label">Αυτόματη εγγραφή</string>
     <string name="settings_backup_desc">Αποθηκεύστε τις ρυθμίσεις σας σε ένα αρχείο, ή επαναφέρετέ τις από ένα.</string>
     <string name="settings_backup_title">Αντίγραφο ασφαλείας ρυθμίσεων</string>
     <string name="settings_bugreport_active_warning">Η καταγραφή εντοπισμού σφαλμάτων είναι ΕΝΕΡΓΗ. Θυμηθείτε να την απενεργοποιήσετε όταν τελειώσετε για να εξοικονομήσετε χώρο.</string>
@@ -929,6 +931,11 @@
     <string name="transcription_minute_label">Λεπτό</string>
     <string name="transcription_mode_after_each_call">Μετά από κάθε κλήση</string>
     <string name="transcription_mode_automatic">Προγραμματισμένα</string>
+    <string name="transcription_sim_all">Όλες οι SIM</string>
+    <string name="transcription_sim_info">Μετά από κάθε κλήση, μεταγραφή όλων των SIM ή μίας SIM. Τα υπόλοιπα μεταγράφονται από τη λίστα. Δεν διαγράφει εγγραφές.</string>
+    <string name="transcription_sim_label">Αυτόματη μεταγραφή</string>
+    <string name="transcription_sim_other_delete">Διαγραφή της εγγραφής</string>
+    <string name="transcription_sim_other_label">Για κλήσεις στην άλλη SIM</string>
     <string name="transcription_mode_label">Απομαγνητοφώνηση</string>
     <string name="transcription_mode_manual">Χειροκίνητα</string>
     <string name="transcription_model_best">Βέλτιστη ποιότητα</string>
@@ -1069,4 +1076,7 @@
     <string name="settings_debug_force_wifi_route_description">Για δοκιμή. Κάθε τηλεφωνική κλήση αλλάζει στη διάρκειά της στην εγγραφή κλήσεων εφαρμογών, όπως θα έκανε μια κλήση Wi-Fi. Σε τηλέφωνο χωρίς κλήσεις Wi-Fi η άλλη πλευρά θα λείπει και πρέπει να εμφανιστεί σφάλμα. Απαιτεί ενεργή εγγραφή κλήσεων εφαρμογών. Λειτουργεί μόνο όσο είναι ενεργή η καταγραφή αρχείου.</string>
     <string name="wifi_call_switch_aborted">Η εγγραφή αυτής της κλήσης Wi-Fi σταμάτησε νωρίς: η εγγραφή δεν μπόρεσε να αλλάξει με ασφάλεια. Το τμήμα που καταγράφηκε ως τώρα διατηρείται.</string>
     <string name="wifi_call_far_unknown">Αυτή η κλήση Wi-Fi καταγράφηκε, αλλά το CallVault δεν μπόρεσε να ελέγξει αν υπάρχει η άλλη πλευρά. Ακούστε την εγγραφή.</string>
+    <string name="recording_notification_not_recording">Χωρίς εγγραφή</string>
+    <string name="recording_notification_title_sim">Εγγραφή κλήσης — %1$s</string>
+    <string name="sim_choice_unavailable">Αποθηκευμένη SIM (δεν είναι σε αυτό το τηλέφωνο)</string>
 </resources>

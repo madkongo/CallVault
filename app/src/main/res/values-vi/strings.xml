@@ -361,6 +361,8 @@
     <string name="settings_audio_source">Nguồn âm thanh</string>
     <string name="settings_auto_record_incoming">Tự động ghi âm cuộc gọi điện thoại đến</string>
     <string name="settings_auto_record_outgoing">Tự động ghi âm cuộc gọi điện thoại đi</string>
+    <string name="record_sim_info">Ghi mọi cuộc gọi, hoặc chỉ một SIM. Các cuộc khác hiện nút Ghi. Nếu không nhận ra SIM lúc bắt đầu, cuộc gọi vẫn được ghi.</string>
+    <string name="record_sim_label">Ghi âm tự động</string>
     <string name="settings_backup_desc">Lưu cài đặt của bạn vào một tệp hoặc khôi phục từ một tệp.</string>
     <string name="settings_backup_title">Sao lưu cài đặt</string>
     <string name="settings_bugreport_active_warning">Ghi nhật ký gỡ lỗi đang BẬT. Hãy nhớ tắt khi xong để tiết kiệm dung lượng.</string>
@@ -773,6 +775,11 @@
     <string name="transcription_minute_label">Phút</string>
     <string name="transcription_mode_after_each_call">Sau mỗi cuộc gọi</string>
     <string name="transcription_mode_automatic">Theo lịch</string>
+    <string name="transcription_sim_all">Mọi SIM</string>
+    <string name="transcription_sim_info">Sau mỗi cuộc gọi, chép lời mọi SIM hoặc một SIM. Phần còn lại chép từ danh sách. Không xóa bản ghi.</string>
+    <string name="transcription_sim_label">Chép lời tự động</string>
+    <string name="transcription_sim_other_delete">Xóa bản ghi</string>
+    <string name="transcription_sim_other_label">Với cuộc gọi trên SIM còn lại</string>
     <string name="transcription_mode_label">Chuyển lời nói thành văn bản</string>
     <string name="transcription_mode_manual">Thủ công</string>
     <string name="transcription_model_best">Chất lượng tốt nhất</string>
@@ -913,4 +920,7 @@
     <string name="settings_debug_force_wifi_route_description">Để thử nghiệm. Mỗi cuộc gọi điện thoại sẽ chuyển giữa chừng sang cách ghi cuộc gọi ứng dụng, như một cuộc gọi Wi-Fi. Trên điện thoại không có gọi qua Wi-Fi sẽ thiếu phía bên kia và sẽ có thông báo lỗi. Cần bật ghi cuộc gọi ứng dụng. Chỉ hoạt động khi đang ghi nhật ký.</string>
     <string name="wifi_call_switch_aborted">Việc ghi cuộc gọi Wi-Fi này đã dừng sớm: không thể chuyển cách ghi một cách an toàn. Phần đã ghi được vẫn được giữ lại.</string>
     <string name="wifi_call_far_unknown">Cuộc gọi Wi-Fi này đã được ghi, nhưng CallVault không thể kiểm tra xem có tiếng phía bên kia hay không. Hãy nghe lại bản ghi.</string>
+    <string name="recording_notification_not_recording">Không ghi âm</string>
+    <string name="recording_notification_title_sim">Đang ghi cuộc gọi — %1$s</string>
+    <string name="sim_choice_unavailable">SIM đã lưu (không có trong máy này)</string>
 </resources>

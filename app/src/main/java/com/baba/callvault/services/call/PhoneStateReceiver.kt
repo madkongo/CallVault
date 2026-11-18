@@ -49,16 +49,23 @@ class PhoneStateReceiver : BroadcastReceiver() {
      *                [TelephonyManager.ACTION_PHONE_STATE_CHANGED].
      */
     override fun onReceive(context: Context, intent: Intent) {
-        if (intent.action != TelephonyManager.ACTION_PHONE_STATE_CHANGED) return
+        val action = intent.action
+        if (action != TelephonyManager.ACTION_PHONE_STATE_CHANGED &&
+            action != ActiveCallSim.ACTION_SUBSCRIPTION_PHONE_STATE
+        ) return
+        // The plain PHONE_STATE broadcast is device-wide and carries no SIM. The per-SIM one
+        // (SUBSCRIPTION_PHONE_STATE) carries slot and subscription. Both are logged in full.
+        ActiveCallSim.logExtras(action, intent)
         // EXTRA_STATE is one of "IDLE", "RINGING", or "OFFHOOK".
-        val state = intent.getStringExtra(TelephonyManager.EXTRA_STATE) ?: throw IllegalArgumentException("Missing EXTRA_STATE in phone state change intent. How is this possible??")
+        val state = intent.getStringExtra(TelephonyManager.EXTRA_STATE) ?: return
 
         // EXTRA_INCOMING_NUMBER is set for both incoming and outgoing calls (I know the naming is confusing), but there is a nuance.
         // See this class KDoc comment "Double Broadcast" for more information on this. The first broadcast is always null.
         // NOTE: According to the Android source code, in case of "Double Broadcast", if the incoming number is anonymous, it should be an empty string.
         val number = intent.getStringExtra(TelephonyManager.EXTRA_INCOMING_NUMBER)
 
-        AppLogger.v(TAG, "Raw broadcast received: state=$state number=$number")
+        val simHint = ActiveCallSim.hintFrom(context, intent)
+        AppLogger.v(TAG, "Raw broadcast received: state=$state number=$number simHint=$simHint")
 
         // During the post-boot window, CallMonitorService holds a LIVE telephony listener and is the
         // authoritative call-state source. The PHONE_STATE broadcast can be delivered seconds late on a
@@ -71,6 +78,6 @@ class PhoneStateReceiver : BroadcastReceiver() {
 
         // Forward the phone state and number to the session manager.
         // We now forward everything (including null) to let the CallSessionManager handle the Verification Window.
-        CallSessionManager.getInstance(context).handlePhoneState(state, number)
+        CallSessionManager.getInstance(context).handlePhoneState(state, number, simHint)
     }
 }
