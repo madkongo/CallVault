@@ -58,6 +58,7 @@
     <string name="transcript_notice_ready_many_text">Πατήστε για να τις διαβάσετε.</string>
     <string name="transcript_notice_failed_title">Η απομαγνητοφώνηση δεν ολοκληρώθηκε</string>
     <string name="transcript_notice_failed_text">%1$s. Πατήστε για να δοκιμάσετε ξανά.</string>
+    <string name="transcript_notice_failed_nospeech_text">%1$s. Η απομαγνητοφώνηση δεν ήταν δυνατή: η ρύθμιση γλώσσας μπορεί να είναι λάθος ή ο ήχος να είναι κενός.</string>
     <string name="transcript_notice_failed_many_title">Απομαγνητοφωνήσεις που δεν ολοκληρώθηκαν: %1$d</string>
     <string name="transcript_notice_failed_many_text">Πατήστε για να τις δείτε.</string>
     <string name="transcript_notice_failed_kept_text">%1$s. Η προηγούμενη απομαγνητοφώνηση διατηρήθηκε.</string>

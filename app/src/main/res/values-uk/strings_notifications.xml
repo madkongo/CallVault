@@ -53,6 +53,7 @@
     <string name="transcript_notice_ready_many_text">Натисніть, щоб прочитати.</string>
     <string name="transcript_notice_failed_title">Не вдалося завершити транскрипцію</string>
     <string name="transcript_notice_failed_text">%1$s. Натисніть, щоб повторити.</string>
+    <string name="transcript_notice_failed_nospeech_text">%1$s. Не вдалося розшифрувати: можливо, мову вибрано неправильно, або аудіо порожнє.</string>
     <string name="transcript_notice_failed_many_title">Невдалі транскрипції: %1$d</string>
     <string name="transcript_notice_failed_many_text">Натисніть, щоб переглянути.</string>
     <string name="notif_readiness_wd_off_by_user_text">Ви вимкнули бездротове налагодження. Увімкніть його знову або ввімкніть налагодження USB, щоб відновити запис.</string>

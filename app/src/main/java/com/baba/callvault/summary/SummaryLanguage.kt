@@ -100,6 +100,8 @@ object SummaryLanguage {
                 code in 0x4E00..0x9FFF -> "zh"
                 // Bengali script. Assamese shares it, but this app offers no Assamese.
                 code in 0x0980..0x09FF -> "bn"
+                // Devanagari. Marathi and Nepali share it, but this app offers neither.
+                code in 0x0900..0x097F -> "hi"
                 else -> null
             }
             if (language != null) counts[language] = (counts[language] ?: 0) + 1

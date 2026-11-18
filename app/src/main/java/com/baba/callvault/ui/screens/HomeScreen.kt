@@ -1949,7 +1949,13 @@ fun HomeScreen(
             },
             tags = sheetTags,
             positionMs = if (isThisTrack) playback.positionMs.toLong() else -1L,
-            durationMs = if (isThisTrack) playback.durationMs.toLong() else 0L,
+            // Before play the sheet showed 0:00 / 0:00 for EVERY recording, a healthy 12 s import included
+            // (BabApps item 139): the player's own length only exists once the track is loaded. Until
+            // then the library's stored length, then where the last transcribed line ends, stand in.
+            durationMs = if (isThisTrack && playback.durationMs > 0) playback.durationMs.toLong()
+                else row?.durationSeconds?.let { it * 1000L }?.takeIf { it > 0L }
+                    ?: transcript?.segments?.maxOfOrNull { it.endMs }
+                    ?: 0L,
             isPlaying = isThisTrack && playback.phase == RecordingPlaybackController.Phase.PLAYING,
             isLoading = isThisTrack && playback.phase == RecordingPlaybackController.Phase.LOADING,
             // The catalog row IS the answer, and it is already looked up above for the Uri. A

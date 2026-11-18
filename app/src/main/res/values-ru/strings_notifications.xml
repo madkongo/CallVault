@@ -56,6 +56,7 @@
     <string name="transcript_notice_ready_many_text">Нажмите, чтобы прочитать их.</string>
     <string name="transcript_notice_failed_title">Расшифровка не завершилась</string>
     <string name="transcript_notice_failed_text">%1$s. Нажмите, чтобы повторить.</string>
+    <string name="transcript_notice_failed_nospeech_text">%1$s. Не удалось расшифровать: возможно, неверно выбран язык, или аудио пустое.</string>
     <string name="transcript_notice_failed_many_title">Незавершённых расшифровок: %1$d</string>
     <string name="transcript_notice_failed_many_text">Нажмите, чтобы посмотреть их.</string>
     <string name="transcript_notice_failed_kept_text">%1$s. Предыдущая расшифровка сохранена.</string>

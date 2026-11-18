@@ -56,6 +56,7 @@
     <string name="transcript_notice_ready_many_text">Koppints az elolvasásukhoz.</string>
     <string name="transcript_notice_failed_title">Az átírás nem fejeződött be</string>
     <string name="transcript_notice_failed_text">%1$s. Koppints az újrapróbálkozáshoz.</string>
+    <string name="transcript_notice_failed_nospeech_text">%1$s. Az átírás nem sikerült: lehet, hogy rossz a nyelvbeállítás, vagy üres a hang.</string>
     <string name="transcript_notice_failed_many_title">Be nem fejeződött átírások: %1$d</string>
     <string name="transcript_notice_failed_many_text">Koppints a megtekintésükhöz.</string>
     <string name="transcript_notice_failed_kept_text">%1$s. Az előző átirat megmaradt.</string>

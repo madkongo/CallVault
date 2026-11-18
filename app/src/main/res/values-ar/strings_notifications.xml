@@ -39,6 +39,7 @@
     <string name="transcript_notice_failed_many_text">انقر للاطلاع عليها.</string>
     <string name="transcript_notice_failed_many_title">عمليات تفريغ لم تكتمل: %1$d</string>
     <string name="transcript_notice_failed_text">%1$s. انقر للمحاولة مجددًا.</string>
+    <string name="transcript_notice_failed_nospeech_text">%1$s. تعذّر التفريغ: قد يكون إعداد اللغة خاطئًا أو التسجيل فارغًا.</string>
     <string name="transcript_notice_failed_title">لم يكتمل التفريغ الصوتي</string>
     <string name="transcript_notice_ready_deleted_text">%1$s؛ تم حذف التسجيل الصوتي بناءً على طلبك.</string>
     <string name="transcript_notice_ready_many_text">انقر لقراءتها.</string>

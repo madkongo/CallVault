@@ -38,7 +38,7 @@ object TranscriptionLanguageChoice {
      * name. Whisper knows far more; these are the ones with a translated label to show for them.
      */
     val SUPPORTED: List<String> =
-        listOf("he", "en", "ar", "zh", "fr", "de", "hu", "it", "pl", "pt", "ru", "es", "vi", "el", "fa", "uk", "ur", "bn", "yue", "tr")
+        listOf("he", "en", "ar", "zh", "fr", "de", "hu", "it", "pl", "pt", "ru", "es", "vi", "el", "fa", "uk", "ur", "bn", "yue", "tr", "hi")
 
     /**
      * Languages the small tier cannot decode: whisper's `yue` token only exists in the 100-language

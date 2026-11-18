@@ -55,6 +55,7 @@
     <string name="transcript_notice_ready_many_text">برای خواندن آن‌ها ضربه بزنید.</string>
     <string name="transcript_notice_failed_title">رونویسی کامل نشد</string>
     <string name="transcript_notice_failed_text">%1$s. برای تلاش دوباره ضربه بزنید.</string>
+    <string name="transcript_notice_failed_nospeech_text">%1$s. رونویسی ممکن نشد: شاید تنظیم زبان نادرست باشد یا صدا خالی باشد.</string>
     <string name="transcript_notice_failed_many_title">رونویسی‌های ناتمام: %1$d</string>
     <string name="transcript_notice_failed_many_text">برای دیدن آن‌ها ضربه بزنید.</string>
     <string name="transcript_notice_failed_kept_text">%1$s. رونوشت قبلی حفظ شد.</string>
