@@ -308,6 +308,8 @@
     <string name="playback_tags_manage_explain">Renomear altera esta etiqueta em todas as gravações que a têm. Renomeá-la para uma etiqueta existente mescla as duas.</string>
     <string name="playback_tags_manage_title">Etiqueta</string>
     <string name="playback_tags_remove">Remover etiqueta</string>
+    <string name="playback_tags_suggested">Etiquetas sugeridas</string>
+    <string name="playback_tags_suggested_dismiss">Dispensar sugestão</string>
     <string name="playback_tags_rename">Renomear</string>
     <string name="playback_tags_title">Etiquetas</string>
     <string name="playback_title">Gravação</string>

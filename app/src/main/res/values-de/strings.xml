@@ -305,6 +305,8 @@
     <string name="playback_tags_manage_explain">Beim Umbenennen ändert sich dieser Tag bei jeder Aufnahme, die ihn hat. Ein Umbenennen auf einen vorhandenen Tag führt beide zusammen.</string>
     <string name="playback_tags_manage_title">Tag</string>
     <string name="playback_tags_remove">Tag entfernen</string>
+    <string name="playback_tags_suggested">Vorgeschlagene Tags</string>
+    <string name="playback_tags_suggested_dismiss">Vorschlag verwerfen</string>
     <string name="playback_tags_rename">Umbenennen</string>
     <string name="playback_tags_title">Tags</string>
     <string name="playback_title">Aufnahme</string>

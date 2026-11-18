@@ -105,14 +105,20 @@ class SummaryRunner(
         val summary = host.run(modelPath) { session ->
             val parts = mutableListOf<String>()
 
+            // Tags are asked for only by the generation that becomes the answer: the single chunk of a
+            // short call, or the merge of a long one (BabApps item 136). Chunks of a long call keep the
+            // old prompt and grammar, so they cost nothing extra.
+            val chunkIsFinal = chunks.size == 1
+
             chunks.forEachIndexed { index, chunk ->
                 if (shouldStop()) return@run null
                 parts += session.generate(
                     SummaryPrompt.forChunkJson(
-                        chunk, language, withTimestamps = true, speakersAreNamed = speakersAreNamed
+                        chunk, language, withTimestamps = true, speakersAreNamed = speakersAreNamed,
+                        withTags = chunkIsFinal
                     ),
                     CHUNK_TOKEN_BUDGET,
-                    SummaryGrammar.JSON
+                    if (chunkIsFinal) SummaryGrammar.JSON_WITH_TAGS else SummaryGrammar.JSON
                 )
                 onProgress(index + 1, chunks.size)
             }
@@ -137,7 +143,7 @@ class SummaryRunner(
                 val document = session.generate(
                     SummaryPrompt.forMergeJson(parts, language),
                     MERGE_TOKEN_BUDGET,
-                    SummaryGrammar.JSON
+                    SummaryGrammar.JSON_WITH_TAGS
                 )
                 // The merge is a second generation and so a second chance to fail. Losing every
                 // part to it would mean minutes of work the user watched, ending in nothing —
@@ -187,11 +193,18 @@ class SummaryRunner(
             return null
         }
 
+        // A re-summarise replaces the document, so what the user dismissed last time is carried over
+        // here; otherwise a rejected suggestion would come back on every redo (BabApps item 136).
+        val dismissed = runCatching {
+            db.summaryDao().summary(displayName)?.let { CallSummary.parse(it.document) }?.dismissedTags
+        }.getOrNull().orEmpty()
+        val toStore = summary.inheritingDismissed(dismissed)
+
         db.summaryDao().upsert(
             CallSummaryEntry(
                 displayName = displayName,
-                document = summary.toJson(),
-                searchText = summary.searchableText(),
+                document = toStore.toJson(),
+                searchText = toStore.searchableText(),
                 model = modelId,
                 createdAt = now
             )

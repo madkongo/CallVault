@@ -12,6 +12,7 @@ import android.content.Context
 import com.baba.callvault.data.transcripts.db.RecordingTagEntry
 import com.baba.callvault.data.transcripts.db.TagCount
 import com.baba.callvault.data.transcripts.db.TranscriptDatabase
+import com.baba.callvault.summary.CallSummary
 import com.baba.callvault.utils.AppLogger
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flowOf
@@ -114,6 +115,20 @@ object TagRepository {
             AppLogger.w(TAG, "Could not rename a tag: ${it.message}")
             null
         }
+    }
+
+    /**
+     * Marks the suggested [tag] on [displayName]'s summary as dismissed, so it is not offered again,
+     * including after the summary is written anew (BabApps item 136). Nothing is added to
+     * `recording_tags`, and the summary's search text is untouched.
+     */
+    suspend fun dismissSuggestion(context: Context, displayName: String, tag: String) {
+        runCatching {
+            val summaries = TranscriptDatabase.get(context).summaryDao()
+            val entry = summaries.summary(displayName) ?: return
+            val parsed = CallSummary.parse(entry.document) ?: return
+            summaries.upsert(entry.copy(document = parsed.withDismissed(tag).toJson()))
+        }.onFailure { AppLogger.w(TAG, "Could not dismiss a suggested tag: ${it.message}") }
     }
 
     /** Removes [tag] from every recording carrying it. */

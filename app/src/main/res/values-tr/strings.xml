@@ -795,6 +795,8 @@
     <string name="playback_tags_title">Etiketler</string>
     <string name="playback_tags_add">Etiket ekle</string>
     <string name="playback_tags_remove">Etiketi kaldır</string>
+    <string name="playback_tags_suggested">Önerilen etiketler</string>
+    <string name="playback_tags_suggested_dismiss">Öneriyi yoksay</string>
     <string name="playback_tags_hint">ör. ev, sigorta</string>
     <string name="playback_tags_manage_title">Etiket</string>
     <string name="playback_tags_manage_explain">Yeniden adlandırmak, bu etiketi taşıyan her kayıtta değiştirir. Zaten var olan bir etiketin adına yeniden adlandırmak ikisini birleştirir.</string>

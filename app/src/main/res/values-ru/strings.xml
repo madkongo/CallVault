@@ -307,6 +307,8 @@
     <string name="playback_tags_manage_explain">Переименование меняет метку во всех записях, где она есть. Переименование в существующую метку объединяет их.</string>
     <string name="playback_tags_manage_title">Метка</string>
     <string name="playback_tags_remove">Удалить метку</string>
+    <string name="playback_tags_suggested">Предлагаемые метки</string>
+    <string name="playback_tags_suggested_dismiss">Отклонить предложение</string>
     <string name="playback_tags_rename">Переименовать</string>
     <string name="playback_tags_title">Метки</string>
     <string name="playback_title">Запись</string>

@@ -914,6 +914,8 @@
     <string name="playback_tags_title">Tags</string>
     <string name="playback_tags_add">Add tag</string>
     <string name="playback_tags_remove">Remove tag</string>
+    <string name="playback_tags_suggested">Suggested tags</string>
+    <string name="playback_tags_suggested_dismiss">Dismiss suggestion</string>
     <string name="playback_tags_hint">e.g. the flat, insurance</string>
     <string name="playback_tags_manage_title">Tag</string>
     <string name="playback_tags_manage_explain">Renaming changes this tag on every recording that has it. Renaming it to a tag that already exists merges the two.</string>

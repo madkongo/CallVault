@@ -315,6 +315,8 @@
     <string name="playback_tags_manage_explain">Перейменування змінить цю мітку в усіх записах. Якщо така мітка вже є, вони обʼєднаються.</string>
     <string name="playback_tags_manage_title">Мітка</string>
     <string name="playback_tags_remove">Прибрати мітку</string>
+    <string name="playback_tags_suggested">Запропоновані мітки</string>
+    <string name="playback_tags_suggested_dismiss">Відхилити пропозицію</string>
     <string name="playback_tags_rename">Перейменувати</string>
     <string name="playback_tags_title">Мітки</string>
     <string name="playback_title">Запис</string>

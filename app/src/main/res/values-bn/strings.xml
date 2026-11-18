@@ -726,6 +726,8 @@
     <string name="playback_tags_title">ট্যাগ</string>
     <string name="playback_tags_add">ট্যাগ যোগ করুন</string>
     <string name="playback_tags_remove">ট্যাগ সরান</string>
+    <string name="playback_tags_suggested">প্রস্তাবিত ট্যাগ</string>
+    <string name="playback_tags_suggested_dismiss">পরামর্শ বাতিল করুন</string>
     <string name="playback_tags_hint">যেমন বাসা, বিমা</string>
     <string name="playback_tags_manage_title">ট্যাগ</string>
     <string name="playback_tags_manage_explain">নাম বদলালে যেসব রেকর্ডিংয়ে এই ট্যাগ আছে সবগুলোতে বদলে যায়। আগে থেকে থাকা কোনো ট্যাগের নাম দিলে দুটি এক হয়ে যায়।</string>

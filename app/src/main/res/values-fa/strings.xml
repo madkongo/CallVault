@@ -398,6 +398,8 @@
     <string name="playback_tags_manage_explain">تغییر نام، این برچسب را روی هر فایل ضبط‌شده‌ای که آن را دارد تغییر می‌دهد. تغییر نام آن به برچسبی که از قبل وجود دارد، آن دو را ادغام می‌کند.</string>
     <string name="playback_tags_manage_title">برچسب</string>
     <string name="playback_tags_remove">حذف برچسب</string>
+    <string name="playback_tags_suggested">برچسب‌های پیشنهادی</string>
+    <string name="playback_tags_suggested_dismiss">رد پیشنهاد</string>
     <string name="playback_tags_rename">تغییر نام</string>
     <string name="playback_tags_title">برچسب‌ها</string>
     <string name="playback_title">فایل ضبط‌شده</string>

@@ -307,6 +307,8 @@
     <string name="playback_tags_manage_explain">Zmiana nazwy zmienia ten tag we wszystkich nagraniach, które go mają. Zmiana na istniejący tag scala oba.</string>
     <string name="playback_tags_manage_title">Tag</string>
     <string name="playback_tags_remove">Usuń tag</string>
+    <string name="playback_tags_suggested">Sugerowane tagi</string>
+    <string name="playback_tags_suggested_dismiss">Odrzuć sugestię</string>
     <string name="playback_tags_rename">Zmień nazwę</string>
     <string name="playback_tags_title">Tagi</string>
     <string name="playback_title">Nagranie</string>

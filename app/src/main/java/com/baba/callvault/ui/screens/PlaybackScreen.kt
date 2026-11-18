@@ -169,6 +169,8 @@ fun PlaybackScreen(
     /** Renames a tag on every recording carrying it — the only way to fix a typo already applied. */
     onRenameTag: (String, String) -> Unit = { _, _ -> },
     onDeleteTagEverywhere: (String) -> Unit = {},
+    /** Dismisses a tag the summary suggested, for good (BabApps item 136). */
+    onDismissSuggestedTag: (String) -> Unit = {},
     onSummarise: () -> Unit,
     onStopSummary: () -> Unit,
     onBack: () -> Unit,
@@ -301,7 +303,9 @@ fun PlaybackScreen(
                 onAddTag = onAddTag,
                 onRemoveTag = onRemoveTag,
                 onRenameTag = onRenameTag,
-                onDeleteTagEverywhere = onDeleteTagEverywhere
+                onDeleteTagEverywhere = onDeleteTagEverywhere,
+                suggested = (summaryState as? SummaryCardState.Ready)?.summary?.suggestedTags(tags).orEmpty(),
+                onDismissSuggested = onDismissSuggestedTag
             )
             NoteCard(note = note, recordingKey = item.displayName, onNoteChange = onNoteChange)
         }
@@ -851,7 +855,10 @@ private fun TagCard(
     onAddTag: (String) -> Unit,
     onRemoveTag: (String) -> Unit,
     onRenameTag: (String, String) -> Unit,
-    onDeleteTagEverywhere: (String) -> Unit
+    onDeleteTagEverywhere: (String) -> Unit,
+    /** Tags the summary model suggested; shown as chips, never applied until tapped (item 136). */
+    suggested: List<String> = emptyList(),
+    onDismissSuggested: (String) -> Unit = {}
 ) {
     var adding by remember { mutableStateOf(false) }
     var managing by remember { mutableStateOf<String?>(null) }
@@ -905,6 +912,46 @@ private fun TagCard(
                     leadingIconContentColor = MaterialTheme.colorScheme.primary
                 )
             )
+        }
+
+        if (suggested.isNotEmpty()) {
+            Spacer(Modifier.height(12.dp))
+            Text(
+                text = stringResource(R.string.playback_tags_suggested),
+                style = MaterialTheme.typography.labelMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
+            Spacer(Modifier.height(4.dp))
+            FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                suggested.forEach { tag ->
+                    // A tap accepts (the same add path as a typed tag, so TagName.canonical merges it
+                    // with the user's spelling); the × dismisses it for good.
+                    InputChip(
+                        selected = false,
+                        onClick = { onAddTag(tag) },
+                        label = { Text(tag) },
+                        leadingIcon = {
+                            Icon(
+                                imageVector = Icons.Filled.Add,
+                                contentDescription = null,
+                                modifier = Modifier.size(16.dp)
+                            )
+                        },
+                        trailingIcon = {
+                            TagRemoveButton(
+                                onClick = { onDismissSuggested(tag) },
+                                description = stringResource(R.string.playback_tags_suggested_dismiss)
+                            )
+                        },
+                        colors = InputChipDefaults.inputChipColors(
+                            containerColor = androidx.compose.ui.graphics.Color.Transparent,
+                            labelColor = MaterialTheme.colorScheme.primary,
+                            leadingIconColor = MaterialTheme.colorScheme.primary,
+                            trailingIconColor = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    )
+                }
+            }
         }
     }
 
@@ -1063,7 +1110,10 @@ private const val MAX_TAG_SUGGESTIONS = 8
  * target would need a taller chip, and the chip's clip would cut anything bigger.
  */
 @Composable
-private fun TagRemoveButton(onClick: () -> Unit) {
+private fun TagRemoveButton(
+    onClick: () -> Unit,
+    description: String = stringResource(R.string.playback_tags_remove)
+) {
     Box(
         contentAlignment = Alignment.Center,
         modifier = Modifier
@@ -1080,7 +1130,7 @@ private fun TagRemoveButton(onClick: () -> Unit) {
     ) {
         Icon(
             imageVector = Icons.Filled.Close,
-            contentDescription = stringResource(R.string.playback_tags_remove),
+            contentDescription = description,
             modifier = Modifier.size(TAG_REMOVE_ICON)
         )
     }

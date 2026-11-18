@@ -984,6 +984,9 @@ fun HomeScreen(
                 onDeleteTagEverywhere = { tag ->
                     transcriptScope.launch { TagRepository.deleteEverywhere(context, tag) }
                 },
+                onDismissSuggestedTag = { tag ->
+                    transcriptScope.launch { TagRepository.dismissSuggestion(context, displayName, tag) }
+                },
                 onSummarise = { SummaryScheduler.runNow(context, displayName) },
                 onStopSummary = { SummaryScheduler.stopNow(context) },
                 onBack = closePlayback,

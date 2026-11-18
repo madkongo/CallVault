@@ -157,6 +157,21 @@ object SummaryPrompt {
     private const val IGNORE_MISHEARD =
         "Ignore words that are clearly mis-transcribed rather than reporting them."
 
+    /**
+     * The one line that asks for suggested tags (BabApps item 136), written to go LAST in a prompt.
+     *
+     * Short and last on purpose: a longer tags block placed among the key list made greedy decoding
+     * loop on a near-empty call (the same sentence repeated as key point after key point) in the
+     * research run, and the tags themselves were not the cause. The language is the resolved
+     * summary language, so tags follow the same setting as the text. It is not a mention of the
+     * key list: `tags` is the grammar's last key ([SummaryGrammar.JSON_WITH_TAGS]).
+     */
+    internal fun tagsLine(language: String?): String {
+        val name = languageName(language) ?: language?.uppercase() ?: "the language of the summary"
+        return "Last key \"tags\": at most ${CallSummary.MAX_TAGS} topic labels of 1-2 words each, " +
+            "from words actually said, in $name. Use [] if unclear."
+    }
+
     /** True when the capture labelled who was speaking. The one condition both renderings turn on. */
     private fun hasSpeakers(segments: List<TranscriptSegmentEntry>): Boolean =
         segments.any { it.speaker != null }
@@ -292,7 +307,9 @@ object SummaryPrompt {
         segments: List<TranscriptSegmentEntry>,
         language: String?,
         withTimestamps: Boolean,
-        speakersAreNamed: Boolean = false
+        speakersAreNamed: Boolean = false,
+        /** True only when this generation is the final answer (a one-chunk call); see [tagsLine]. */
+        withTags: Boolean = false
     ): String {
         val body = renderTranscript(segments, withTimestamps)
 
@@ -343,6 +360,7 @@ object SummaryPrompt {
                 appendLine("TIMESTAMPS: this transcript has NO timestamps. Never write a [m:ss] " +
                     "marker anywhere in the output.")
             }
+            if (withTags) appendLine(tagsLine(language))
             appendLine()
             appendLine("Transcript:")
             appendLine("\"\"\"")
@@ -408,6 +426,8 @@ object SummaryPrompt {
             appendLine("TIMESTAMPS: where a part's item already begins with a [m:ss] marker, keep " +
                 "that marker exactly as it is. Never invent, adjust or renumber one.")
             appendLine(NO_INVENTION)
+            // The merge is the final pass of a long call, so it is the only place tags are asked for there.
+            appendLine(tagsLine(language))
             appendLine()
             summaries.forEachIndexed { index, summary ->
                 appendLine("Part ${index + 1}: $summary")

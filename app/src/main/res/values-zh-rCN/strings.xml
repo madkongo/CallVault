@@ -304,6 +304,8 @@
     <string name="playback_tags_manage_explain">重命名会更改所有带有该标签的录音。重命名为已存在的标签会将两者合并。</string>
     <string name="playback_tags_manage_title">标签</string>
     <string name="playback_tags_remove">移除标签</string>
+    <string name="playback_tags_suggested">建议的标签</string>
+    <string name="playback_tags_suggested_dismiss">忽略建议</string>
     <string name="playback_tags_rename">重命名</string>
     <string name="playback_tags_title">标签</string>
     <string name="playback_title">录音</string>
