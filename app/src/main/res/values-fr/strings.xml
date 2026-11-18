@@ -305,6 +305,8 @@
     <string name="playback_tags_manage_explain">Le renommage modifie cette étiquette sur tous les enregistrements qui la portent. La renommer en une étiquette existante fusionne les deux.</string>
     <string name="playback_tags_manage_title">Étiquette</string>
     <string name="playback_tags_remove">Supprimer l\'étiquette</string>
+    <string name="playback_tags_suggested">Étiquettes suggérées</string>
+    <string name="playback_tags_suggested_dismiss">Ignorer la suggestion</string>
     <string name="playback_tags_rename">Renommer</string>
     <string name="playback_tags_title">Étiquettes</string>
     <string name="playback_title">Enregistrement</string>

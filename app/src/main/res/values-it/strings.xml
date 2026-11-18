@@ -305,6 +305,8 @@
     <string name="playback_tags_manage_explain">Rinominare cambia questa etichetta su tutte le registrazioni che la contengono. Rinominarla con un\'etichetta esistente unisce le due.</string>
     <string name="playback_tags_manage_title">Etichetta</string>
     <string name="playback_tags_remove">Rimuovi etichetta</string>
+    <string name="playback_tags_suggested">Etichette suggerite</string>
+    <string name="playback_tags_suggested_dismiss">Ignora suggerimento</string>
     <string name="playback_tags_rename">Rinomina</string>
     <string name="playback_tags_title">Etichette</string>
     <string name="playback_title">Registrazione</string>

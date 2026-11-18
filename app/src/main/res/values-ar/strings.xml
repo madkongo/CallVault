@@ -343,6 +343,8 @@
     <string name="playback_tags_manage_explain">تغيير الاسم يغير هذه العلامة في كل تسجيل يحتوي عليها. تغيير اسمها إلى علامة موجودة بالفعل يدمج الاثنتين.</string>
     <string name="playback_tags_manage_title">علامة</string>
     <string name="playback_tags_remove">إزالة العلامة</string>
+    <string name="playback_tags_suggested">العلامات المقترحة</string>
+    <string name="playback_tags_suggested_dismiss">تجاهل الاقتراح</string>
     <string name="playback_tags_rename">إعادة تسمية</string>
     <string name="playback_tags_title">العلامات</string>
     <string name="playback_title">التسجيل</string>

@@ -459,6 +459,8 @@
     <string name="playback_tags_manage_explain">Η μετονομασία αλλάζει αυτή την ετικέτα σε κάθε εγγραφή που την έχει. Η μετονομασία της σε μια ετικέτα που υπάρχει ήδη συγχωνεύει τις δύο.</string>
     <string name="playback_tags_manage_title">Ετικέτα</string>
     <string name="playback_tags_remove">Αφαίρεση ετικέτας</string>
+    <string name="playback_tags_suggested">Προτεινόμενες ετικέτες</string>
+    <string name="playback_tags_suggested_dismiss">Απόρριψη πρότασης</string>
     <string name="playback_tags_rename">Μετονομασία</string>
     <string name="playback_tags_title">Ετικέτες</string>
     <string name="playback_title">Εγγραφή</string>

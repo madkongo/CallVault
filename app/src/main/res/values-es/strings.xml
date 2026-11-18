@@ -305,6 +305,8 @@
     <string name="playback_tags_manage_explain">Al renombrar, la etiqueta cambia en todas las grabaciones que la tienen. Renombrarla a una etiqueta existente fusiona ambas.</string>
     <string name="playback_tags_manage_title">Etiqueta</string>
     <string name="playback_tags_remove">Quitar etiqueta</string>
+    <string name="playback_tags_suggested">Etiquetas sugeridas</string>
+    <string name="playback_tags_suggested_dismiss">Descartar sugerencia</string>
     <string name="playback_tags_rename">Renombrar</string>
     <string name="playback_tags_title">Etiquetas</string>
     <string name="playback_title">Grabación</string>

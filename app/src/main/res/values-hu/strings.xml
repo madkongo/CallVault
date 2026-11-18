@@ -305,6 +305,8 @@
     <string name="playback_tags_manage_explain">Az átnevezés minden olyan felvételen megváltoztatja ezt a címkét, amelyen szerepel. Ha meglévő címke nevére nevezed át, a kettő összeolvad.</string>
     <string name="playback_tags_manage_title">Címke</string>
     <string name="playback_tags_remove">Címke eltávolítása</string>
+    <string name="playback_tags_suggested">Javasolt címkék</string>
+    <string name="playback_tags_suggested_dismiss">Javaslat elvetése</string>
     <string name="playback_tags_rename">Átnevezés</string>
     <string name="playback_tags_title">Címkék</string>
     <string name="playback_title">Felvétel</string>

@@ -105,4 +105,25 @@ object SummaryGrammar {
         hex ::= [0-9a-fA-F]
         ws ::= [ \t\n]{0,$MAX_WS}
     """.trimIndent()
+
+    /**
+     * [JSON] plus a last `tags` key (BabApps item 136): 0 to [CallSummary.MAX_TAGS] suggestions of 1
+     * to [CallSummary.MAX_TAG_CHARS] characters each, with no quote, backslash, bracket or control
+     * character (so no newline) possible inside one.
+     *
+     * Only the **final** pass uses it: a one-chunk call's only generation, or the merge of a long
+     * call. The chunks of a long call keep [JSON] unchanged, so they cost no extra tokens and cannot
+     * be pushed off course by them. `tags` is the last key, so nothing generated before it can be
+     * influenced by it; `[]` stays possible because forcing one tag on a near-empty call only
+     * invents a word.
+     */
+    val JSON_WITH_TAGS: String = JSON
+        .replace(
+            """"keyFacts\":" ws array ws "}"""",
+            """"keyFacts\":" ws array "," ws "\"tags\":" ws tags ws "}""""
+        ) + "\n" + """
+        tags ::= "[" ws (tag (ws "," ws tag){0,${CallSummary.MAX_TAGS - 1}})? ws "]"
+        tag ::= "\"" tchar{1,${CallSummary.MAX_TAG_CHARS}} "\""
+        tchar ::= [^"\\\x00-\x1F\[\]]
+    """.trimIndent()
 }

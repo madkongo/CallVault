@@ -7,6 +7,15 @@ All notable changes to CallVault are documented here. The format is based on
 
 ### Added
 
+- **Suggested tags on a call's summary.** When a call is summarised, the summary card now offers up to three tags as
+  chips under the Tags box, in the summary language. Tap one to add it as a normal tag (searchable, and merged with a
+  tag you already wrote the same way); tap its × to dismiss it, and it stays dismissed when the summary is written
+  again. Nothing is ever added by itself, and calls summarised before this have no suggestions until they are
+  summarised again. Long calls ask for tags only in the final merge step.
+  <!-- 🧪 VERIFYING (BabApps item 136): summarise a short call and a longer one on a phone, check that the chips look
+  sensible, accept one (it appears in Tags and in search), dismiss one, re-summarise, and check it does not return.
+  Tag quality is only checked on ten test calls on a computer (23 of 28 tags useful); it needs the owner's check and
+  then a native speaker of a target language, and stays 🧪. The regression set on the final prompt has not been run. -->
 - **Two more ways to support CallVault, and a clearer Support dialog.** The Support dialog now lists Ko-fi, PayPal,
   Buy Me a Coffee and USDT (TON) as four rows (no Donate menu any more). USDT opens a page with the wallet address in
   full, a Copy address button and a warning that only the TON network works; Back returns to the list.

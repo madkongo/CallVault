@@ -17,6 +17,7 @@ import com.baba.callvault.data.transcripts.db.TranscriptState
 import kotlinx.coroutines.runBlocking
 import org.junit.After
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Before
@@ -167,7 +168,56 @@ class SummaryRunnerTest {
         runner(model).run(CALL, MODEL_ID, PATH, "en", now = 1L)
 
         assertTrue(model.grammars.isNotEmpty())
-        assertTrue("a pass ran unconstrained", model.grammars.all { it == SummaryGrammar.JSON })
+        assertTrue(
+            "a pass ran unconstrained",
+            model.grammars.all { it == SummaryGrammar.JSON || it == SummaryGrammar.JSON_WITH_TAGS }
+        )
+    }
+
+    // ---- suggested tags (BabApps item 136) ----
+
+    @Test
+    fun `a short call asks for tags in its one pass`() = runBlocking {
+        giveTranscript(words = listOf("hello there"))
+        val model = FakeModel(json("x"))
+
+        runner(model).run(CALL, MODEL_ID, PATH, "en", now = 1L)
+
+        assertEquals(listOf(SummaryGrammar.JSON_WITH_TAGS), model.grammars)
+        assertTrue(model.prompts.single().contains("\"tags\""))
+    }
+
+    @Test
+    fun `a long call asks for tags only in the merge, not in the chunks`() = runBlocking {
+        giveTranscript(words = List(4) { "x".repeat(SummaryChunking.DEFAULT_MAX_CHARS / 2) })
+        val model = FakeModel { if (isMerge(it)) json("whole") else json("part") }
+
+        runner(model).run(CALL, MODEL_ID, PATH, "en", now = 1L)
+
+        val chunkIndexes = model.prompts.indices.filter { !isMerge(model.prompts[it]) }
+        assertTrue(chunkIndexes.size >= 2)
+        chunkIndexes.forEach {
+            assertFalse("a chunk prompt asked for tags", model.prompts[it].contains("\"tags\""))
+            assertEquals(SummaryGrammar.JSON, model.grammars[it])
+        }
+        assertTrue(model.prompts.last().contains("\"tags\""))
+        assertEquals(SummaryGrammar.JSON_WITH_TAGS, model.grammars.last())
+    }
+
+    @Test
+    fun `the model's tags are stored with the summary, and a dismissed one does not come back after a redo`() = runBlocking {
+        giveTranscript(words = listOf("hello"))
+        val withTags = """{"intent":"a","summary":"s","keyPoints":[],"decisions":[],"actionItems":[],"keyFacts":[],"tags":["Plumbing","Boiler"]}"""
+        runner(FakeModel(withTags)).run(CALL, MODEL_ID, PATH, "en", now = 1L)
+        val first = CallSummary.parse(TranscriptDatabase.get(context).summaryDao().summary(CALL)!!.document)!!
+        assertEquals(listOf("Plumbing", "Boiler"), first.tags)
+
+        // The user dismisses "boiler" (different case on purpose), then writes the summary again.
+        com.baba.callvault.data.transcripts.TagRepository.dismissSuggestion(context, CALL, "boiler")
+        runner(FakeModel(withTags)).run(CALL, MODEL_ID, PATH, "en", now = 2L)
+
+        val second = CallSummary.parse(TranscriptDatabase.get(context).summaryDao().summary(CALL)!!.document)!!
+        assertEquals(listOf("Plumbing"), second.suggestedTags(emptyList()))
     }
 
     @Test

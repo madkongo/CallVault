@@ -8,6 +8,7 @@
 
 package com.baba.callvault.summary
 
+import com.baba.callvault.data.transcripts.TagName
 import org.json.JSONArray
 import org.json.JSONObject
 
@@ -33,7 +34,18 @@ data class CallSummary(
     val keyPoints: List<String>,
     val decisions: List<String>,
     val actionItems: List<String>,
-    val keyFacts: List<String>
+    val keyFacts: List<String>,
+    /**
+     * Tags the model *suggests* for the call (BabApps item 136). Never applied by themselves: the
+     * card shows them as chips and a tap writes one to `recording_tags`. Empty for every summary
+     * written before this key existed, and for the chunks of a long call (only the final pass asks).
+     */
+    val tags: List<String> = emptyList(),
+    /**
+     * Suggestions the user dismissed, kept in the summary document so they survive a re-summarise
+     * without a second table. [com.baba.callvault.summary.SummaryRunner] carries them to the new document.
+     */
+    val dismissedTags: List<String> = emptyList()
 ) {
 
     /** The same summary with [transform] applied to every piece of text (Chinese script conversion, item 125). */
@@ -44,7 +56,29 @@ data class CallSummary(
         decisions = decisions.map(transform),
         actionItems = actionItems.map(transform),
         keyFacts = keyFacts.map(transform),
+        tags = tags.map(transform),
+        dismissedTags = dismissedTags,
     )
+
+    /**
+     * The suggestions worth showing: not dismissed, and not already on the recording.
+     *
+     * Compared the way [TagName] compares (trimmed, case-insensitive), so "Plumbing" is not offered
+     * to a call already tagged "plumbing", and a dismissed word stays dismissed whatever its case.
+     */
+    fun suggestedTags(existing: Collection<String>): List<String> =
+        tags.filter { tag ->
+            existing.none { TagName.matches(tag, it) } && dismissedTags.none { TagName.matches(tag, it) }
+        }
+
+    /** This summary, with what [previous] (an older summary of the same call) had dismissed kept dismissed. */
+    fun inheritingDismissed(previous: List<String>): CallSummary =
+        previous.fold(copy(dismissedTags = emptyList())) { acc, tag -> acc.withDismissed(tag) }
+
+    /** This summary with [tag] added to the dismissed list (once). */
+    fun withDismissed(tag: String): CallSummary =
+        if (dismissedTags.any { TagName.matches(tag, it) }) this
+        else copy(dismissedTags = dismissedTags + (TagName.canonical(tag) ?: tag))
 
     /**
      * The summary as a JSON document, in the shape [parse] accepts.
@@ -59,6 +93,8 @@ data class CallSummary(
         .put(KEY_DECISIONS, JSONArray(decisions))
         .put(KEY_ACTIONS, JSONArray(actionItems))
         .put(KEY_FACTS, JSONArray(keyFacts))
+        .put(KEY_TAGS, JSONArray(tags))
+        .put(KEY_DISMISSED_TAGS, JSONArray(dismissedTags))
         .toString()
 
     /**
@@ -86,6 +122,14 @@ data class CallSummary(
         private const val KEY_DECISIONS = "decisions"
         private const val KEY_ACTIONS = "actionItems"
         private const val KEY_FACTS = "keyFacts"
+        private const val KEY_TAGS = "tags"
+        private const val KEY_DISMISSED_TAGS = "dismissedTags"
+
+        /** The most suggestions kept, whatever the model wrote. The grammar already allows no more. */
+        const val MAX_TAGS = 3
+
+        /** Longest suggestion kept, in characters; the grammar's own tag rule uses the same figure. */
+        const val MAX_TAG_CHARS = 24
 
         private val REQUIRED = listOf(KEY_INTENT, KEY_SUMMARY, KEY_POINTS, KEY_DECISIONS, KEY_ACTIONS, KEY_FACTS)
 
@@ -122,7 +166,8 @@ data class CallSummary(
                 keyPoints = parts.flatMap { it.keyPoints }.distinct(),
                 decisions = parts.flatMap { it.decisions }.distinct(),
                 actionItems = parts.flatMap { it.actionItems }.distinct(),
-                keyFacts = parts.flatMap { it.keyFacts }.distinct()
+                keyFacts = parts.flatMap { it.keyFacts }.distinct(),
+                tags = parts.flatMap { it.tags }.distinct().take(MAX_TAGS)
             )
         }
 
@@ -167,9 +212,22 @@ data class CallSummary(
                 keyPoints = stringsIn(json, KEY_POINTS),
                 decisions = stringsIn(json, KEY_DECISIONS),
                 actionItems = stringsIn(json, KEY_ACTIONS),
-                keyFacts = stringsIn(json, KEY_FACTS)
+                keyFacts = stringsIn(json, KEY_FACTS),
+                tags = cleanTags(stringsIn(json, KEY_TAGS)),
+                dismissedTags = stringsIn(json, KEY_DISMISSED_TAGS)
             )
         }
+
+        /**
+         * Suggestions as they will be shown and stored: through [TagName.canonical] (one spelling
+         * rule for typed and suggested tags), no case-duplicates, at most [MAX_TAGS] of
+         * [MAX_TAG_CHARS] characters. Not required by [parse]: a summary without the key is simply
+         * one with nothing to suggest.
+         */
+        private fun cleanTags(raw: List<String>): List<String> =
+            raw.mapNotNull { TagName.canonical(it.take(MAX_TAG_CHARS)) }
+                .distinctBy { it.lowercase(java.util.Locale.ROOT) }
+                .take(MAX_TAGS)
 
         /**
          * The outermost JSON object in [text], or `null`.
