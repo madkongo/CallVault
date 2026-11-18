@@ -17,6 +17,13 @@ All notable changes to CallVault are documented here. The format is based on
   transcribed under another language.
   <!-- 🧪 VERIFYING (BabApps item 139, not shipped): checked on one phone with a text-to-speech sample (real Devanagari
   text, pinned Hindi, cloud and on-phone). Quality on real Hindi calls still needs a native Hindi speaker. -->
+- **Developer builds: opt-in flags that shrink the native build output.** `-PagentNativeNoDebugInfo=true` builds the
+  native code without debug info (about 90% less build output); `-PagentAbi=<abi>[,<abi>]` picks the ABIs (default and
+  releases stay arm64-v8a only). Both are refused with a release build unless `-PagentAbiAllowRelease=true`, and mark
+  the version name `-nodbg` / `-abi`. Nothing changes in the app or in release builds.
+  <!-- 🧪 VERIFYING (BabApps item 141, not shipped): the default ABI list is guarded by a unit test, and a release-signed
+  flagged build ran one transcription and one summary on the OP9. Settled by the next release build still having
+  arm64-v8a only and no suffix in its version name. -->
 
 
 ### Fixed
