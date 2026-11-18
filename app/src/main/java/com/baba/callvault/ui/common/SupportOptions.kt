@@ -9,7 +9,8 @@
 package com.baba.callvault.ui.common
 
 /** The places the Support dialog can send a donation to. */
-enum class SupportOption { KOFI, PAYPAL }
+enum class SupportOption { KOFI, PAYPAL, BUYMEACOFFEE, USDT_TON }
 
 /** What the Donate dropdown lists, in order. The same for everyone. */
-val SUPPORT_OPTIONS: List<SupportOption> = listOf(SupportOption.KOFI, SupportOption.PAYPAL)
+val SUPPORT_OPTIONS: List<SupportOption> =
+    listOf(SupportOption.KOFI, SupportOption.PAYPAL, SupportOption.BUYMEACOFFEE, SupportOption.USDT_TON)

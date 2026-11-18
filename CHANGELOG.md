@@ -5,6 +5,14 @@ All notable changes to CallVault are documented here. The format is based on
 
 ## [Unreleased]
 
+### Added
+
+- **Two more ways to support CallVault.** The Donate menu now also offers Buy Me a Coffee (opens in the browser) and
+  USDT on the TON network: a short page shows the wallet address in full with a Copy address button and a one-line
+  warning that only the TON network works.
+  <!-- 🧪 VERIFYING: Settings ▸ About ▸ Support ▸ Donate lists four options; "USDT (TON)" shows the address and Copy
+  address puts exactly UQBmQTlgwFi09QZAnwgyDFv_6OL9qqXVt-JZDxcD2adqIiJ- on the clipboard. -->
+
 ### Fixed
 
 - **A big backlog now copies to Google Drive at a sensible pace, and Drive having a bad moment no longer takes

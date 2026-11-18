@@ -655,6 +655,9 @@
     <string name="summary_requirements_toggle_description">下載前顯示摘要模型的資源需求</string>
     <string name="support_appeal_body">我利用業餘時間維護 CallVault。它最初是 kitsumed 的 ShizuCallRecorder 的一個分支（fork），此後成長了許多。免費、開源、無廣告、無追蹤。如果它對你有用，一點小小的支援能讓我繼續做下去。謝謝！🙏</string>
     <string name="support_appeal_title">給 CallVault 一點小費 ☕</string>
+    <string name="support_crypto_warning">請僅透過 TON 網路傳送 USDT。使用其他網路（TRC20、ERC20 等）會導致資金遺失。</string>
+    <string name="support_crypto_copy">複製位址</string>
+    <string name="support_crypto_copied">位址已複製</string>
     <string name="support_donate">捐贈</string>
     <string name="support_not_now">以後再說</string>
     <string name="tile_recording_on">錄音已開啟</string>

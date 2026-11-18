@@ -8,8 +8,24 @@
 
 package com.baba.callvault.ui.common
 
+import android.content.ClipData
+import android.content.ClipboardManager
+import android.widget.Toast
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.text.selection.SelectionContainer
 import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.text.font.FontFamily
+import androidx.compose.ui.text.style.TextDirection
+import androidx.compose.ui.unit.dp
+import com.baba.callvault.system.USDT_TON_ADDRESS
+import com.baba.callvault.system.openBuyMeACoffee
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.Text
@@ -44,6 +60,12 @@ import com.baba.callvault.system.openPayPal
 fun SupportDialog(onDismiss: () -> Unit) {
     val context = LocalContext.current
     var menuOpen by remember { mutableStateOf(false) }
+    var cryptoOpen by remember { mutableStateOf(false) }
+
+    if (cryptoOpen) {
+        UsdtTonDialog(onDismiss = onDismiss)
+        return
+    }
 
     AlertDialog(
         onDismissRequest = onDismiss,
@@ -60,16 +82,25 @@ fun SupportDialog(onDismiss: () -> Unit) {
                             when (option) {
                                 SupportOption.KOFI -> R.string.support_kofi
                                 SupportOption.PAYPAL -> R.string.support_paypal
+                                SupportOption.BUYMEACOFFEE -> R.string.support_buymeacoffee
+                                SupportOption.USDT_TON -> R.string.support_usdt_ton
                             }
                         )
                         DropdownMenuItem(
                             text = { Text(label) },
                             onClick = {
                                 menuOpen = false
-                                onDismiss()
                                 when (option) {
-                                    SupportOption.KOFI -> context.openKofi()
-                                    SupportOption.PAYPAL -> context.openPayPal()
+                                    SupportOption.USDT_TON -> cryptoOpen = true
+                                    else -> {
+                                        onDismiss()
+                                        when (option) {
+                                            SupportOption.KOFI -> context.openKofi()
+                                            SupportOption.PAYPAL -> context.openPayPal()
+                                            SupportOption.BUYMEACOFFEE -> context.openBuyMeACoffee()
+                                            SupportOption.USDT_TON -> Unit
+                                        }
+                                    }
                                 }
                             },
                         )
@@ -79,6 +110,47 @@ fun SupportDialog(onDismiss: () -> Unit) {
         },
         dismissButton = {
             TextButton(onClick = onDismiss) { Text(stringResource(R.string.support_not_now)) }
+        },
+    )
+}
+
+/**
+ * The wallet for USDT on the TON network. Money sent on another network (TRC20, ERC20) is lost, so
+ * the network is the first thing said, then the address in full (selectable, monospace) and a Copy
+ * button. Nothing here touches the network. No QR code: it would need a new library.
+ */
+@Composable
+private fun UsdtTonDialog(onDismiss: () -> Unit) {
+    val context = LocalContext.current
+    val copiedMessage = stringResource(R.string.support_crypto_copied)
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = { Text(stringResource(R.string.support_crypto_title)) },
+        text = {
+            Column {
+                Text(stringResource(R.string.support_crypto_warning))
+                Spacer(Modifier.height(12.dp))
+                SelectionContainer {
+                    Text(
+                        text = USDT_TON_ADDRESS,
+                        fontFamily = FontFamily.Monospace,
+                        // An address is never right-to-left text: in an RTL locale the trailing "-" would
+                        // jump to the line start and the address would read wrongly.
+                        style = MaterialTheme.typography.bodyLarge.copy(textDirection = TextDirection.Ltr),
+                        modifier = Modifier.fillMaxWidth().testTag("usdt_ton_address"),
+                    )
+                }
+            }
+        },
+        confirmButton = {
+            TextButton(onClick = {
+                val clipboard = context.getSystemService(ClipboardManager::class.java)
+                clipboard.setPrimaryClip(ClipData.newPlainText("USDT TON", USDT_TON_ADDRESS))
+                Toast.makeText(context, copiedMessage, Toast.LENGTH_SHORT).show()
+            }) { Text(stringResource(R.string.support_crypto_copy)) }
+        },
+        dismissButton = {
+            TextButton(onClick = onDismiss) { Text(stringResource(R.string.general_close)) }
         },
     )
 }

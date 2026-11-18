@@ -657,6 +657,9 @@
     <string name="summary_requirements_toggle_description">Mutassa a letöltés előtt, mit igényel az összefoglaló</string>
     <string name="support_appeal_body">A CallVaultot a szabadidőmben tartom karban. kitsumed ShizuCallRecorder projektjének forkjaként indult, és azóta sokat fejlődött. Ingyenes, nyílt forráskódú, nincs hirdetés és nyomkövetés. Ha hasznos neked, egy kis támogatás segít folytatni. Köszönöm! 🙏</string>
     <string name="support_appeal_title">Egy kis borravaló a CallVaultnak ☕</string>
+    <string name="support_crypto_warning">USDT-t csak a TON hálózaton küldj. Bármely más hálózat (TRC20, ERC20…) elveszíti a pénzt.</string>
+    <string name="support_crypto_copy">Cím másolása</string>
+    <string name="support_crypto_copied">Cím átmásolva</string>
     <string name="support_donate">Adományozás</string>
     <string name="support_not_now">Most nem</string>
     <string name="tile_recording_on">Rögzítés bekapcsolva</string>

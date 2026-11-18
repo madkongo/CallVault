@@ -585,6 +585,12 @@
     <string name="support_appeal_body">I maintain CallVault in my free time. It started as a fork of ShizuCallRecorder by kitsumed and has grown a lot since. Free, open source, no ads, no tracking. If it\'s useful to you, a small tip keeps me going. Thanks! 🙏</string>
     <string name="support_kofi" translatable="false">Ko-fi</string>
     <string name="support_paypal" translatable="false">PayPal</string>
+    <string name="support_buymeacoffee" translatable="false">Buy Me a Coffee</string>
+    <string name="support_usdt_ton" translatable="false">USDT (TON)</string>
+    <string name="support_crypto_title" translatable="false">USDT · TON</string>
+    <string name="support_crypto_warning">Send USDT on the TON network only. Any other network (TRC20, ERC20…) loses the money.</string>
+    <string name="support_crypto_copy">Copy address</string>
+    <string name="support_crypto_copied">Address copied</string>
     <string name="support_donate">Donate</string>
     <string name="support_not_now">Not now</string>
     <string name="home_bulk_delete_message">This cannot be undone.</string>

@@ -657,6 +657,9 @@
     <string name="summary_requirements_toggle_description">Mostra quanto costa il riassuntore prima di scaricarlo</string>
     <string name="support_appeal_body">Curo CallVault nel tempo libero. È nata come fork di ShizuCallRecorder di kitsumed ed è cresciuta molto da allora. Gratuita, open source, senza pubblicità né tracciamento. Se ti è utile, una piccola offerta mi aiuta ad andare avanti. Grazie! 🙏</string>
     <string name="support_appeal_title">Una mancia per CallVault ☕</string>
+    <string name="support_crypto_warning">Invia USDT solo sulla rete TON. Qualsiasi altra rete (TRC20, ERC20…) fa perdere i soldi.</string>
+    <string name="support_crypto_copy">Copia indirizzo</string>
+    <string name="support_crypto_copied">Indirizzo copiato</string>
     <string name="support_donate">Dona</string>
     <string name="support_not_now">Non ora</string>
     <string name="tile_recording_on">Registrazione attiva</string>

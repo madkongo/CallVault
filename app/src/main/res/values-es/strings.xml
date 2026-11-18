@@ -657,6 +657,9 @@
     <string name="summary_requirements_toggle_description">Mostrar lo que cuesta el resumidor antes de descargarlo</string>
     <string name="support_appeal_body">Mantengo CallVault en mi tiempo libre. Empezó como un fork de ShizuCallRecorder, de kitsumed, y ha crecido mucho desde entonces. Gratis, de código abierto, sin anuncios ni rastreo. Si te resulta útil, una pequeña aportación me ayuda a seguir. ¡Gracias! 🙏</string>
     <string name="support_appeal_title">Una propina para CallVault ☕</string>
+    <string name="support_crypto_warning">Envía USDT solo por la red TON. Cualquier otra red (TRC20, ERC20…) pierde el dinero.</string>
+    <string name="support_crypto_copy">Copiar dirección</string>
+    <string name="support_crypto_copied">Dirección copiada</string>
     <string name="support_donate">Donar</string>
     <string name="support_not_now">Ahora no</string>
     <string name="tile_recording_on">Grabación activada</string>
