@@ -37,6 +37,11 @@ All notable changes to CallVault are documented here. The format is based on
 
 ### Fixed
 
+- **Summaries no longer show stray fragments such as "decisions]: [" as a bullet.** A small model could write a piece
+  of the summary's own structure into a list (seen in Persian). Such items are now dropped when the summary is read;
+  ordinary sentences that mention "decisions" stay.
+  <!-- 🧪 VERIFYING (BabApps item 144): covered by unit tests and one re-summarised call on a phone (unchanged); settle
+  it by summarising a few Persian/Hebrew calls and checking no bracket-only or key-name bullets appear. -->
 - **A call whose transcript is only "foreign foreign…" is no longer saved as a finished transcript, and the transcript
   page no longer shows 0:00 / 0:00 before you press play.** When whisper cannot read the audio (wrong language, or
   silence) it can fill the call with one repeated word. CallVault now tries the other decoding settings first; if the
