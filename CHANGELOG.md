@@ -28,6 +28,16 @@ All notable changes to CallVault are documented here. The format is based on
   on with the next file. With a Drive folder of 1400+ entries the log should show "list reply read: N entries … (through
   a file)" and no three-minute wait. Not yet seen on the Honor phone that reported it. -->
 
+- **The Drive upload now runs at the time you chose, however often the app restarts.** Every app start, finished call
+  or Settings change used to re-set the daily/weekly upload and could move it: on a test phone it ran three minutes
+  early, and a later re-set showed a day away. Now, when the schedule itself has not changed, the waiting upload is left
+  exactly as it is; it is set up again only when you change the time, day, schedule or where recordings go (or if it was
+  lost). Every decision is written to the debug report ("scheduler: signature unchanged → KEEP, next run in N min" or
+  "signature changed … → re-enqueued"), even with logging off.
+  <!-- 🧪 VERIFYING (BabApps item 138, not shipped): set a daily upload about 10 minutes ahead, restart the app and open
+  Settings a few times: Settings ▸ Debug ▸ report, "Drive copies (always on)" keeps saying "KEEP, next run in N min" with
+  N falling by one a minute, and the upload starts at the chosen minute, not before. Change the time: one "re-enqueued" line. -->
+
 ### Added
 
 - **Choose the page the app opens on.** Settings ▸ App ▸ "Open the app on": Hub (the default), Recordings, Transcripts
