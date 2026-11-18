@@ -14,6 +14,7 @@ import androidx.work.Constraints
 import androidx.work.ExistingPeriodicWorkPolicy
 import androidx.work.NetworkType
 import androidx.work.PeriodicWorkRequestBuilder
+import androidx.work.WorkInfo
 import androidx.work.WorkManager
 import com.baba.callvault.data.AppPreferences
 import com.baba.callvault.data.StorageTarget
@@ -24,8 +25,8 @@ import java.util.concurrent.TimeUnit
 
 /**
  * Schedules (or cancels) the periodic [SyncSweepWorker] that copies recordings to the Drive folder on a
- * cadence. Idempotent: [apply] reconciles the current prefs with WorkManager using [ExistingPeriodicWorkPolicy.UPDATE],
- * so it is safe to call repeatedly (e.g. from the wizard, settings, or after boot).
+ * cadence. Idempotent: [apply] reconciles the current prefs with WorkManager without disturbing a live request
+ * whose schedule did not change (KEEP; never UPDATE), so it is safe to call repeatedly (e.g. from the wizard, settings, or after boot).
  *
  * - LOCAL target or IMMEDIATE schedule -> no periodic work (per-recording copy handled by [StorageRouter]).
  * - DAILY  -> 24h period, first run at the next HH:mm.
@@ -88,28 +89,64 @@ object SyncScheduler {
             .setBackoffCriteria(BackoffPolicy.LINEAR, CloudCopyPolicy.SWEEP_BACKOFF_MINUTES, TimeUnit.MINUTES)
             .build()
 
-        // UPDATE keeps the old request's run count, and so its retry delay: after a few failed runs the next
-        // start is worked out from the backoff and the new time is ignored (drive1: a user moved the time to
-        // 15:15 and nothing ran). So when the schedule itself changed — time, day, mode or target — the old
-        // request is cancelled and a fresh one enqueued, which resets the count. A plain re-application (app
-        // start, call end) leaves the signature unchanged and keeps UPDATE.
+        // UPDATE is never used: it keeps the old request's enqueue time and run count, so a plain re-application
+        // (app start, call end, settings screen) added a fresh delay to the OLD enqueue time and the sweep ran
+        // minutes early or a day late (BabApps item 138), and after failed runs the backoff overrode a new time
+        // (drive1). When the schedule is unchanged and the request is alive it is left alone (KEEP); when the
+        // schedule changed, or no live request exists, a fresh one is enqueued with a delay from now.
         val signature = signature(target, mode, hour, minute, prefs.getSyncDayOfWeek())
-        val changed = signature != oldSignature
-        val policy = if (changed) ExistingPeriodicWorkPolicy.CANCEL_AND_REENQUEUE else ExistingPeriodicWorkPolicy.UPDATE
-        val operation = workManager.enqueueUniquePeriodicWork(WORK_NAME, policy, request)
+        val existing = readExisting(workManager)
+        val decision = decide(oldSignature, signature, existing?.map { it.state })
+        val operation = workManager.enqueueUniquePeriodicWork(WORK_NAME, decision.policy, request)
         scheduler.edit().putString(KEY_SIGNATURE, signature).apply()
-        AppLogger.i(TAG, "Periodic sweep scheduled (mode=$mode at $hour:$minute, initialDelayMs=$initialDelayMillis).")
+        AppLogger.i(TAG, "Periodic sweep ${decision.policy.name} (mode=$mode at $hour:$minute, initialDelayMs=$initialDelayMillis).")
+        val nextMin = existing?.firstOrNull { it.nextScheduleTimeMillis != Long.MAX_VALUE }
+            ?.let { (it.nextScheduleTimeMillis - System.currentTimeMillis()) / 60_000 }
         DriveCopyJournal.record(
             context,
-            "scheduler: policy=${policy.name}, ${if (changed) "schedule CHANGED from '${oldSignature ?: "none"}' to '$signature' (old request cancelled, run count reset)" else "unchanged '$signature'"}, " +
-                "first run in ${initialDelayMillis / 60_000} min, retry backoff linear ${CloudCopyPolicy.SWEEP_BACKOFF_MINUTES} min",
+            "scheduler: " + describe(decision, oldSignature, signature, initialDelayMillis / 60_000, nextMin) +
+                ", retry backoff linear ${CloudCopyPolicy.SWEEP_BACKOFF_MINUTES} min",
         )
         logNextRun(context, workManager, operation)
     }
 
+    /** What [apply] does with the stored request: the WorkManager policy and why (the journal wording comes from it). */
+    internal data class Decision(val policy: ExistingPeriodicWorkPolicy, val reason: Reason)
+
+    internal enum class Reason { UNCHANGED_ALIVE, CHANGED, NO_LIVE_WORK, WORK_STATE_UNREADABLE }
+
+    private val ALIVE_STATES = setOf(WorkInfo.State.ENQUEUED, WorkInfo.State.RUNNING)
+
+    /**
+     * [states] are the states of the stored request (empty = none, null = could not be read). Unchanged signature
+     * and a live request -> KEEP. Changed signature, or no live request (none, CANCELLED, FAILED...) ->
+     * CANCEL_AND_REENQUEUE. If the state cannot be read, KEEP is still the safe choice: it leaves an existing
+     * request alone and enqueues one when there is none.
+     */
+    internal fun decide(oldSignature: String?, newSignature: String, states: List<WorkInfo.State>?): Decision = when {
+        oldSignature != newSignature -> Decision(ExistingPeriodicWorkPolicy.CANCEL_AND_REENQUEUE, Reason.CHANGED)
+        states == null -> Decision(ExistingPeriodicWorkPolicy.KEEP, Reason.WORK_STATE_UNREADABLE)
+        states.any { it in ALIVE_STATES } -> Decision(ExistingPeriodicWorkPolicy.KEEP, Reason.UNCHANGED_ALIVE)
+        else -> Decision(ExistingPeriodicWorkPolicy.CANCEL_AND_REENQUEUE, Reason.NO_LIVE_WORK)
+    }
+
+    /** The always-on journal wording for a [Decision]; [nextMin] is WorkManager's own next run, when known. */
+    internal fun describe(decision: Decision, old: String?, new: String, firstRunMin: Long, nextMin: Long?): String = when (decision.reason) {
+        Reason.UNCHANGED_ALIVE -> "signature unchanged → KEEP, next run in ${nextMin ?: "unknown"} min ('$new')"
+        Reason.CHANGED -> "signature changed (from '${old ?: "none"}' to '$new') → re-enqueued, first run in $firstRunMin min (old request cancelled, run count reset)"
+        Reason.NO_LIVE_WORK -> "signature unchanged ('$new') but no live request (none, cancelled or failed) → re-enqueued, first run in $firstRunMin min"
+        Reason.WORK_STATE_UNREADABLE -> "signature unchanged ('$new') but the stored request could not be read → KEEP (leaves an existing one alone, enqueues if none), planned first run in $firstRunMin min, next run in ${nextMin ?: "unknown"} min"
+    }
+
+    /** The stored request's infos, or null if WorkManager did not answer in time (journalled by [decide]'s reason). */
+    private fun readExisting(workManager: WorkManager): List<WorkInfo>? =
+        runCatching { workManager.getWorkInfosForUniqueWork(WORK_NAME).get(READ_TIMEOUT_SECONDS, TimeUnit.SECONDS) }.getOrNull()
+
+    private const val READ_TIMEOUT_SECONDS = 3L
+
     /** The schedule as one comparable string; only what changes WHEN or WHETHER the sweep runs. */
     internal fun signature(target: StorageTarget, mode: SyncScheduleMode, hour: Int, minute: Int, dayOfWeek: Int): String =
-        "$mode/$target/%02d:%02d".format(hour, minute) + if (mode == SyncScheduleMode.WEEKLY) "/day$dayOfWeek" else ""
+        "$mode/$target/%02d:%02d".format(hour, minute) + (if (mode == SyncScheduleMode.WEEKLY) "/day$dayOfWeek" else "") + "/net-connected"
 
     /**
      * Writes what WorkManager itself reports about the request once it is stored: state, attempt count and the
