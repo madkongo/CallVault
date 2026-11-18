@@ -40,6 +40,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -80,7 +81,7 @@ private val WarningOrange = Color(0xFFE07B00)
 @Composable
 fun SupportDialog(onDismiss: () -> Unit) {
     val context = LocalContext.current
-    var showWallet by remember { mutableStateOf(false) }
+    var showWallet by rememberSaveable { mutableStateOf(false) }
 
     // A Dialog reports system Back (and a tap outside) through onDismissRequest, so on the wallet
     // page that goes back to the rows instead of closing.
