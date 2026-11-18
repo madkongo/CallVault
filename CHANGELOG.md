@@ -5,6 +5,15 @@ All notable changes to CallVault are documented here. The format is based on
 
 ## [Unreleased]
 
+### Added
+
+- **Two more ways to support CallVault, and a clearer Support dialog.** The Support dialog now lists Ko-fi, PayPal,
+  Buy Me a Coffee and USDT (TON) as four rows (no Donate menu any more). USDT opens a page with the wallet address in
+  full, a Copy address button and a warning that only the TON network works; Back returns to the list.
+  <!-- 🧪 VERIFYING: tap Support: four rows; "USDT (TON)" shows the address and Copy address puts exactly
+  UQBmQTlgwFi09QZAnwgyDFv_6OL9qqXVt-JZDxcD2adqIiJ- on the clipboard; Back returns to the list. -->
+
+
 ### Fixed
 
 - **A big backlog now copies to Google Drive at a sensible pace, and Drive having a bad moment no longer takes

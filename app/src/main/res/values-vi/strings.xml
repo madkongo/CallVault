@@ -655,6 +655,11 @@
     <string name="summary_requirements_toggle_description">Hiện yêu cầu của trình tóm tắt trước khi tải</string>
     <string name="support_appeal_body">Tôi duy trì CallVault trong thời gian rảnh. Ứng dụng bắt đầu là một bản fork của ShizuCallRecorder do kitsumed phát triển và đã lớn lên nhiều kể từ đó. Miễn phí, mã nguồn mở, không quảng cáo, không theo dõi. Nếu thấy hữu ích, một khoản nhỏ giúp tôi tiếp tục. Cảm ơn bạn! 🙏</string>
     <string name="support_appeal_title">Ủng hộ CallVault ☕</string>
+    <string name="support_crypto_warning">Chỉ gửi USDT qua mạng TON. Mạng khác (TRC20, ERC20…) sẽ làm mất tiền.</string>
+    <string name="support_opens_in_browser">Mở trong trình duyệt</string>
+    <string name="support_copy_wallet_address">Sao chép địa chỉ ví</string>
+    <string name="support_crypto_copy">Sao chép địa chỉ</string>
+    <string name="support_crypto_copied">Đã sao chép địa chỉ</string>
     <string name="support_donate">Ủng hộ</string>
     <string name="support_not_now">Để sau</string>
     <string name="tile_recording_on">Đang ghi âm</string>

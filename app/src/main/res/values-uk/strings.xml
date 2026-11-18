@@ -669,6 +669,11 @@
     <string name="summary_requirements_toggle_description">Показувати вимоги до моделі перед завантаженням.</string>
     <string name="support_appeal_body">Я підтримую CallVault у вільний час. Програма починалася як форк ShizuCallRecorder від kitsumed і відтоді дуже виросла. Безплатно, з відкритим кодом, без реклами та відстеження. Якщо вона корисна, невелика підтримка допомагає продовжувати. Дякую! 🙏</string>
     <string name="support_appeal_title">Підтримати CallVault ☕</string>
+    <string name="support_crypto_warning">Надсилайте USDT лише мережею TON. Будь-яка інша мережа (TRC20, ERC20…) призведе до втрати коштів.</string>
+    <string name="support_opens_in_browser">Відкриється в браузері</string>
+    <string name="support_copy_wallet_address">Скопіювати адресу гаманця</string>
+    <string name="support_crypto_copy">Скопіювати адресу</string>
+    <string name="support_crypto_copied">Адресу скопійовано</string>
     <string name="support_donate">Пожертвувати</string>
     <string name="support_not_now">Не зараз</string>
     <string name="tile_recording_on">Запис увімкнений</string>

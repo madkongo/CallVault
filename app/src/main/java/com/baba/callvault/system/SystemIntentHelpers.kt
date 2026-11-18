@@ -62,6 +62,16 @@ const val TELEGRAM_GROUP_URL = "https://t.me/+GmXjAcXxXh42Y2I8"
  */
 const val PAYPAL_SUPPORT_URL = "https://paypal.me/MadKongo"
 
+/** The maintainer's Buy Me a Coffee page. Opens in the browser like [KOFI_SUPPORT_URL] and [PAYPAL_SUPPORT_URL]. */
+const val BUYMEACOFFEE_SUPPORT_URL = "https://buymeacoffee.com/madkongo"
+
+/**
+ * The maintainer's wallet for USDT on the TON network. Copy character for character: it contains a
+ * capital I ("adqIiJ") and a zero ("Fi09"). A wrong character sends money to nobody, so
+ * SupportOptionsTest pins it.
+ */
+const val USDT_TON_ADDRESS = "UQBmQTlgwFi09QZAnwgyDFv_6OL9qqXVt-JZDxcD2adqIiJ-"
+
 /**
  * A folder-picker that asks for long-term read and write access to the chosen folder.
  *
@@ -186,6 +196,11 @@ fun Context.openKofi() {
 /** Opens the maintainer's PayPal page in the browser. The alternative to [openKofi], not a successor. */
 fun Context.openPayPal() {
     launchSmartIntent(Intent(Intent.ACTION_VIEW).apply { data = PAYPAL_SUPPORT_URL.toUri() })
+}
+
+/** Opens the maintainer's Buy Me a Coffee page in the browser. */
+fun Context.openBuyMeACoffee() {
+    launchSmartIntent(Intent(Intent.ACTION_VIEW).apply { data = BUYMEACOFFEE_SUPPORT_URL.toUri() })
 }
 
 /**
