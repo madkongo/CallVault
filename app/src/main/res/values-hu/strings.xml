@@ -658,6 +658,8 @@
     <string name="support_appeal_body">A CallVaultot a szabadidőmben tartom karban. kitsumed ShizuCallRecorder projektjének forkjaként indult, és azóta sokat fejlődött. Ingyenes, nyílt forráskódú, nincs hirdetés és nyomkövetés. Ha hasznos neked, egy kis támogatás segít folytatni. Köszönöm! 🙏</string>
     <string name="support_appeal_title">Egy kis borravaló a CallVaultnak ☕</string>
     <string name="support_crypto_warning">USDT-t csak a TON hálózaton küldj. Bármely más hálózat (TRC20, ERC20…) elveszíti a pénzt.</string>
+    <string name="support_opens_in_browser">A böngészőben nyílik meg</string>
+    <string name="support_copy_wallet_address">A tárca címének másolása</string>
     <string name="support_crypto_copy">Cím másolása</string>
     <string name="support_crypto_copied">Cím átmásolva</string>
     <string name="support_donate">Adományozás</string>

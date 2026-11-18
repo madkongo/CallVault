@@ -662,6 +662,8 @@
     <string name="support_appeal_body">Я поддерживаю CallVault в свободное время. Приложение начиналось как форк ShizuCallRecorder от kitsumed и с тех пор сильно выросло. Бесплатно, с открытым кодом, без рекламы и слежки. Если оно вам полезно, небольшая поддержка помогает продолжать. Спасибо! 🙏</string>
     <string name="support_appeal_title">Чаевые для CallVault ☕</string>
     <string name="support_crypto_warning">Отправляйте USDT только по сети TON. Любая другая сеть (TRC20, ERC20…) приведёт к потере денег.</string>
+    <string name="support_opens_in_browser">Откроется в браузере</string>
+    <string name="support_copy_wallet_address">Скопировать адрес кошелька</string>
     <string name="support_crypto_copy">Скопировать адрес</string>
     <string name="support_crypto_copied">Адрес скопирован</string>
     <string name="support_donate">Пожертвовать</string>

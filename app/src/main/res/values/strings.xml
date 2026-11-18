@@ -588,7 +588,9 @@
     <string name="support_buymeacoffee" translatable="false">Buy Me a Coffee</string>
     <string name="support_usdt_ton" translatable="false">USDT (TON)</string>
     <string name="support_crypto_title" translatable="false">USDT · TON</string>
-    <string name="support_crypto_warning">Send USDT on the TON network only. Any other network (TRC20, ERC20…) loses the money.</string>
+    <string name="support_crypto_warning">Send on the TON network only. Any other network (TRC20, ERC20…) loses the money.</string>
+    <string name="support_opens_in_browser">Opens in your browser</string>
+    <string name="support_copy_wallet_address">Copy the wallet address</string>
     <string name="support_crypto_copy">Copy address</string>
     <string name="support_crypto_copied">Address copied</string>
     <string name="support_donate">Donate</string>

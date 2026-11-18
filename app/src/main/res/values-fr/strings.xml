@@ -658,6 +658,8 @@
     <string name="support_appeal_body">Je maintiens CallVault sur mon temps libre. L\'appli a commencé comme un fork de ShizuCallRecorder, de kitsumed, et a beaucoup évolué depuis. Gratuite, open source, sans publicité ni pistage. Si elle vous est utile, un petit pourboire m\'aide à continuer. Merci ! 🙏</string>
     <string name="support_appeal_title">Un pourboire pour CallVault ☕</string>
     <string name="support_crypto_warning">Envoyez l’USDT uniquement sur le réseau TON. Tout autre réseau (TRC20, ERC20…) fait perdre l’argent.</string>
+    <string name="support_opens_in_browser">S’ouvre dans votre navigateur</string>
+    <string name="support_copy_wallet_address">Copier l’adresse du portefeuille</string>
     <string name="support_crypto_copy">Copier l’adresse</string>
     <string name="support_crypto_copied">Adresse copiée</string>
     <string name="support_donate">Faire un don</string>

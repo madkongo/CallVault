@@ -812,6 +812,8 @@
     <string name="support_appeal_body">Συντηρώ το CallVault στον ελεύθερο χρόνο μου. Ξεκίνησε ως fork του ShizuCallRecorder του kitsumed και έχει μεγαλώσει πολύ από τότε. Δωρεάν, ανοιχτού κώδικα, χωρίς διαφημίσεις, χωρίς παρακολούθηση. Αν σας είναι χρήσιμο, μια μικρή φιλοδώρηση με βοηθά να συνεχίζω. Ευχαριστώ! 🙏</string>
     <string name="support_appeal_title">Ένα φιλοδώρημα για το CallVault ☕</string>
     <string name="support_crypto_warning">Στείλτε USDT μόνο μέσω του δικτύου TON. Οποιοδήποτε άλλο δίκτυο (TRC20, ERC20…) χάνει τα χρήματα.</string>
+    <string name="support_opens_in_browser">Ανοίγει στο πρόγραμμα περιήγησης</string>
+    <string name="support_copy_wallet_address">Αντιγραφή διεύθυνσης πορτοφολιού</string>
     <string name="support_crypto_copy">Αντιγραφή διεύθυνσης</string>
     <string name="support_crypto_copied">Η διεύθυνση αντιγράφηκε</string>
     <string name="support_donate">Δωρεά</string>

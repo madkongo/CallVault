@@ -700,6 +700,8 @@
     <string name="support_appeal_body">أعتني بـ CallVault في وقت فراغي. بدأ كنسخة متفرعة (fork) من ShizuCallRecorder من تطوير kitsumed، وقد نما كثيرًا منذ ذلك الحين. مجاني ومفتوح المصدر وبدون إعلانات وبدون تتبع. إذا كان مفيدًا لك، فإن إكرامية صغيرة تساعدني على الاستمرار. شكرًا! 🙏</string>
     <string name="support_appeal_title">إكرامية لـ CallVault ☕</string>
     <string name="support_crypto_warning">أرسل USDT عبر شبكة TON فقط. أي شبكة أخرى (TRC20 أو ERC20…) تُفقدك المبلغ.</string>
+    <string name="support_opens_in_browser">يُفتح في المتصفح</string>
+    <string name="support_copy_wallet_address">انسخ عنوان المحفظة</string>
     <string name="support_crypto_copy">نسخ العنوان</string>
     <string name="support_crypto_copied">تم نسخ العنوان</string>
     <string name="support_donate">تبرّع</string>

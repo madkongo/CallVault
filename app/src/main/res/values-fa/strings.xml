@@ -751,6 +751,8 @@
     <string name="support_appeal_body">CallVault را در وقت آزادم نگهداری می‌کنم. این برنامه به‌صورت فورکی از ShizuCallRecorder ساخته kitsumed شروع شد و از آن زمان خیلی رشد کرده است. رایگان، متن‌باز، بدون تبلیغ، بدون ردیابی. اگر برایتان مفید است، یک انعام کوچک مرا سرِ پا نگه می‌دارد. ممنون! 🙏</string>
     <string name="support_appeal_title">انعامی برای CallVault ☕</string>
     <string name="support_crypto_warning">USDT را فقط از طریق شبکهٔ TON ارسال کنید. هر شبکهٔ دیگری (TRC20، ERC20…) باعث از دست رفتن پول می‌شود.</string>
+    <string name="support_opens_in_browser">در مرورگر باز می‌شود</string>
+    <string name="support_copy_wallet_address">کپی آدرس کیف پول</string>
     <string name="support_crypto_copy">کپی آدرس</string>
     <string name="support_crypto_copied">آدرس کپی شد</string>
     <string name="support_donate">حمایت مالی</string>

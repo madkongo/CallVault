@@ -442,6 +442,8 @@
     <string name="support_appeal_title">CallVault-এর জন্য একটু বখশিশ ☕</string>
     <string name="support_appeal_body">আমি অবসর সময়ে CallVault দেখাশোনা করি। এটি kitsumed-এর ShizuCallRecorder-এর একটি fork হিসেবে শুরু হয়েছিল, তারপর অনেক বড় হয়েছে। বিনামূল্যে, ওপেন সোর্স, কোনো বিজ্ঞাপন বা ট্র্যাকিং নেই। এটি কাজে লাগলে একটি ছোট বখশিশ আমাকে চালিয়ে যেতে সাহায্য করে। ধন্যবাদ! 🙏</string>
     <string name="support_crypto_warning">USDT শুধুমাত্র TON নেটওয়ার্কে পাঠান। অন্য যেকোনো নেটওয়ার্কে (TRC20, ERC20…) পাঠালে টাকা হারিয়ে যাবে।</string>
+    <string name="support_opens_in_browser">আপনার ব্রাউজারে খুলবে</string>
+    <string name="support_copy_wallet_address">ওয়ালেটের ঠিকানা কপি করুন</string>
     <string name="support_crypto_copy">ঠিকানা কপি করুন</string>
     <string name="support_crypto_copied">ঠিকানা কপি হয়েছে</string>
     <string name="support_donate">দান করুন</string>

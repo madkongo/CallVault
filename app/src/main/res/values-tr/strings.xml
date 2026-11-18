@@ -502,6 +502,8 @@
     <string name="support_appeal_title">CallVault için bir bahşiş ☕</string>
     <string name="support_appeal_body">CallVault’u boş zamanımda sürdürüyorum. kitsumed’in ShizuCallRecorder’ının bir çatalı olarak başladı ve o zamandan beri çok büyüdü. Ücretsiz, açık kaynak, reklamsız, izlemesiz. Size yararlıysa küçük bir bahşiş beni ayakta tutar. Teşekkürler! 🙏</string>
     <string name="support_crypto_warning">USDT’yi yalnızca TON ağı üzerinden gönderin. Başka bir ağ (TRC20, ERC20…) parayı kaybettirir.</string>
+    <string name="support_opens_in_browser">Tarayıcınızda açılır</string>
+    <string name="support_copy_wallet_address">Cüzdan adresini kopyala</string>
     <string name="support_crypto_copy">Adresi kopyala</string>
     <string name="support_crypto_copied">Adres kopyalandı</string>
     <string name="support_donate">Bağış yap</string>
