@@ -252,6 +252,27 @@ data class CallSummary(
             val array = json.optJSONArray(key) ?: return emptyList()
             return (0 until array.length())
                 .mapNotNull { array.optString(it).trim().ifEmpty { null } }
+                .filterNot(::isJsonFragment)
+        }
+
+        private val KEY_NAMES = "summary|keyPoints|decisions|actionItems|keyFacts|tags|intent"
+
+        /** A key name touching a quote, bracket or brace: `decisions]: [`, `"tags"`, `[keyFacts`. */
+        private val KEY_AT_STRUCTURE = Regex(
+            "(?i)([\"'\\[\\]{}]\\s*($KEY_NAMES)\\b)|(\\b($KEY_NAMES)\\s*[\"'\\[\\]{}])"
+        )
+
+        /** A key name followed by a colon and nothing else of substance: `decisions:`. */
+        private val KEY_THEN_NOTHING = Regex("(?i)\\b($KEY_NAMES)\\s*:[\\p{P}\\p{S}\\s]*$")
+
+        /**
+         * An item that is a piece of the JSON's own structure rather than content: only punctuation
+         * and brackets (`],`), or a key name written into the string (`decisions]: [`). A sentence
+         * that merely mentions "decisions" ("We made two decisions: A and B") is real and stays.
+         */
+        internal fun isJsonFragment(item: String): Boolean {
+            if (item.none { it.isLetterOrDigit() }) return true
+            return KEY_AT_STRUCTURE.containsMatchIn(item) || KEY_THEN_NOTHING.containsMatchIn(item)
         }
     }
 }
