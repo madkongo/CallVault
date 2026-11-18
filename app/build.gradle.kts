@@ -129,6 +129,50 @@ val ciVersionCode = providers.gradleProperty("versionCode").map { it.toIntOrNull
 val ciVersionName = providers.gradleProperty("versionName").orElse("2.5.1")
 val ciBuildNumber = providers.gradleProperty("ciBuildNumber").orElse("Local")
 
+// The ABI set every shipped build carries. AgentAbiDefaultTest pins this through BuildConfig.NATIVE_ABIS.
+val defaultNativeAbis = listOf("arm64-v8a")
+
+// -PagentAbi=<abi>[,<abi>] is for AGENT TEST BUILDS ONLY: it limits the ndk abiFilters (and with them
+// the whisper.cpp / llama.cpp CMake builds) to the listed ABIs, e.g. arm64-v8a for a phone, plus x86_64
+// when the emulator is used. With no property the build is exactly the default above. A release, or
+// any build that goes to a reporter, must never use it: a release-producing task refuses it unless
+// -PagentAbiAllowRelease=true is also given (needed for release-signed OP9 test builds), and the
+// versionName gets an "-abi" suffix whenever it is on.
+val agentAbiRequested: List<String>? = providers.gradleProperty("agentAbi").orNull
+    ?.split(",")?.map { it.trim() }?.filter { it.isNotEmpty() }
+val supportedAgentAbis = setOf("arm64-v8a", "x86_64")
+if (agentAbiRequested != null) {
+    if (agentAbiRequested.isEmpty() || !supportedAgentAbis.containsAll(agentAbiRequested)) {
+        throw GradleException("-PagentAbi must list one or more of $supportedAgentAbis, got $agentAbiRequested")
+    }
+    if (isReleaseBuildRequested && providers.gradleProperty("agentAbiAllowRelease").orNull != "true") {
+        throw GradleException(
+            "-PagentAbi is for agent test builds only and is refused with a release (release-signed) build. " +
+                "Add -PagentAbiAllowRelease=true only for a release-signed phone test build that will not be published."
+        )
+    }
+}
+val nativeAbis: List<String> = agentAbiRequested?.distinct() ?: defaultNativeAbis
+
+// -PagentNativeNoDebugInfo=true compiles the native code with -g0. Measured on a debug build, debug info
+// was ~90% of the native build output (app/.cxx 635 MB -> 45 MB). Same rules as -PagentAbi: refused with
+// a release build unless -PagentAbiAllowRelease=true, and named in the versionName ("-nodbg").
+// (A single ggml CPU variant was measured too: the seven variants are only ~90 MB of .cxx, so it is not
+// worth changing which kernels run in a test build.)
+val agentNoDebugInfo = providers.gradleProperty("agentNativeNoDebugInfo").orNull == "true"
+if (agentNoDebugInfo && isReleaseBuildRequested &&
+    providers.gradleProperty("agentAbiAllowRelease").orNull != "true"
+) {
+    throw GradleException(
+        "-PagentNativeNoDebugInfo is for agent test builds only and is refused with a release " +
+            "(release-signed) build. Add -PagentAbiAllowRelease=true only for a release-signed phone " +
+            "test build that will not be published."
+    )
+}
+val agentSuffix = (if (agentAbiRequested != null) "-abi" else "") +
+    (if (agentNoDebugInfo) "-nodbg" else "")
+val agentFlagsActive = agentSuffix.isNotEmpty()
+
 // -PisolateTestApp builds the debug variant under its own applicationId so instrumented tests can be
 // run on a device that is already carrying a working release build. Off by default: it must not
 // change the ordinary `installDebug` loop, which deliberately reinstalls over the top.
@@ -146,11 +190,14 @@ android {
         minSdk = 30
         targetSdk = 36
         versionCode = ciVersionCode.get()
-        versionName = ciVersionName.get()
+        versionName = ciVersionName.get() + agentSuffix
 
         // arm64 only. Every device this app can run on (minSdk 30, and the ADB-over-binder daemon it
-        // depends on) is arm64, and shipping one ABI keeps the APK small.
-        ndk { abiFilters += "arm64-v8a" }
+        // depends on) is arm64, and shipping one ABI keeps the APK small. Only -PagentAbi changes it
+        // (see defaultNativeAbis above).
+        ndk { abiFilters += nativeAbis }
+        buildConfigField("String", "NATIVE_ABIS", "\"${nativeAbis.joinToString(",")}\"")
+        buildConfigField("boolean", "AGENT_ABI_ACTIVE", agentFlagsActive.toString())
 
         // Instrumented tests. Added with on-device transcription: the JNI bridge to whisper.cpp
         // cannot be verified by a JVM unit test, and a wrong language parameter or a mismatched
@@ -168,7 +215,11 @@ android {
         // This flag makes the NDK toolchain add -Wl,-z,max-page-size=16384 to every library we build
         // (whisper, llama, ggml and its CPU variants, audiohandoff). NDK 28+ does this by default.
         externalNativeBuild {
-            cmake { arguments += "-DANDROID_SUPPORT_FLEXIBLE_PAGE_SIZES=ON" }
+            cmake {
+                arguments += "-DANDROID_SUPPORT_FLEXIBLE_PAGE_SIZES=ON"
+                // Agent-only (see agentNoDebugInfo above); absent in every default build.
+                if (agentNoDebugInfo) arguments += "-DCALLVAULT_AGENT_NO_DEBUG_INFO=ON"
+            }
         }
 
         buildConfigField("String", "CI_BUILD_NUMBER", "\"${ciBuildNumber.get()}\"")

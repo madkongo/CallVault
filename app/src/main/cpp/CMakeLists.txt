@@ -87,6 +87,13 @@ set(GGML_OPENMP            OFF CACHE BOOL "" FORCE)
 set(GGML_BACKEND_DL        ON  CACHE BOOL "" FORCE)
 set(GGML_CPU_ALL_VARIANTS  ON  CACHE BOOL "" FORCE)
 
+# AGENT TEST BUILDS ONLY (-PagentNativeNoDebugInfo in app/build.gradle.kts). The variable is never
+# defined in a default or release build, so everything above is unchanged there. Debug info was ~90% of
+# the native build output (llama.cpp objects, an unstripped 74 MB libllama.so in debug builds).
+if(CALLVAULT_AGENT_NO_DEBUG_INFO)
+    add_compile_options(-g0)
+endif()
+
 add_subdirectory(${WHISPER_ROOT} ${CMAKE_CURRENT_BINARY_DIR}/whisper.cpp)
 
 add_library(whispercv SHARED whispercv.cpp)
