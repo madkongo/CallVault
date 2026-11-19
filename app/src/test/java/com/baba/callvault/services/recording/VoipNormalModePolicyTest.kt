@@ -218,6 +218,23 @@ class VoipNormalModePolicyTest {
         assertTrue(VoipNormalModePolicy.logSlowCheck(max + VoipNormalModePolicy.SLOW_CHECKS_PER_LOG_LINE))
     }
 
+    @Test
+    fun `a thousand identical checks write a handful of always-on lines, not one each`() {
+        // Merge-gate item 1: with the host down for a long LINE call (Q25) every 10 s check wrote a line into the
+        // 128 KB always-on journal, pushing out the outcome lines that file exists to keep.
+        val gate = VoipNormalModePolicy.JudgeLogGate()
+        val written = (1..1_000).mapNotNull { gate.admit("owners unknown (the recorder host gave no answer)") }
+        assertTrue("${written.size} lines", written.size <= 12)
+        assertTrue(written.first().contains("owners unknown"))
+        assertTrue(written.drop(1).all { it.startsWith("still checking") })
+        // A changed answer is written at once.
+        assertEquals("players=[VOICE] allowList=MATCH", gate.admit("players=[VOICE] allowList=MATCH")!!.substringBefore(" (after"))
+        // And the slow-check summary line is just as bounded.
+        val slow = (VoipNormalModePolicy.MAX_FAST_JUDGE_TRIES..VoipNormalModePolicy.MAX_FAST_JUDGE_TRIES + 1_000)
+            .count { VoipNormalModePolicy.logSlowCheck(it) }
+        assertTrue("$slow slow lines", slow <= 12)
+    }
+
     // ---- review C14: a LINE call that visits call mode and comes back is not ended by the mode ----
 
     @Test

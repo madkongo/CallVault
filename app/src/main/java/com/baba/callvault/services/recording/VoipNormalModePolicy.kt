@@ -113,12 +113,47 @@ object VoipNormalModePolicy {
     /** The wait between judges once the fast tries are spent. */
     const val JUDGE_SLOW_RETRY_MS = 10_000L
 
-    /** Slow checks between two always-on lines (about one a minute), so a long wait does not flood the file. */
+    /** Unchanged checks before the first repeat line (a minute at the slow pace); the gap then doubles each time. */
     const val SLOW_CHECKS_PER_LOG_LINE = 6
 
-    /** Whether the slow check after [triesUsed] judges gets an always-on line: the first one, then every few. */
-    fun logSlowCheck(triesUsed: Int): Boolean =
-        triesUsed >= MAX_FAST_JUDGE_TRIES && (triesUsed - MAX_FAST_JUDGE_TRIES) % SLOW_CHECKS_PER_LOG_LINE == 0
+    /**
+     * Whether the slow check after [triesUsed] judges gets an always-on line: the first one, then after
+     * [SLOW_CHECKS_PER_LOG_LINE] more, then at ever doubling gaps. The always-on journal is 128 KB and must keep the
+     * call outcome lines, so a host that stays away for hours costs a handful of lines, not one a minute.
+     */
+    fun logSlowCheck(triesUsed: Int): Boolean {
+        if (triesUsed < MAX_FAST_JUDGE_TRIES) return false
+        return isLogPoint(triesUsed - MAX_FAST_JUDGE_TRIES)
+    }
+
+    /** 0, then [SLOW_CHECKS_PER_LOG_LINE] times a power of two. */
+    private fun isLogPoint(n: Int): Boolean {
+        if (n == 0) return true
+        if (n % SLOW_CHECKS_PER_LOG_LINE != 0) return false
+        val k = n / SLOW_CHECKS_PER_LOG_LINE
+        return k and (k - 1) == 0
+    }
+
+    /**
+     * Lets a judge's owners line into the always-on journal only when it differs from the last one written, plus a
+     * "still checking" line at ever doubling gaps while it stays the same (merge-gate item 1). One per candidate.
+     */
+    class JudgeLogGate {
+        private var last: String? = null
+        private var unchanged = 0
+
+        /** The line to write for [line], or null to write nothing. */
+        fun admit(line: String): String? {
+            if (line != last) {
+                val skipped = unchanged
+                last = line
+                unchanged = 0
+                return if (skipped > 0) "$line (after $skipped unchanged checks)" else line
+            }
+            unchanged++
+            return if (isLogPoint(unchanged)) "still checking: $line (unchanged for $unchanged checks)" else null
+        }
+    }
 
     /**
      * What follows a judge of a normal-mode candidate (review C9). The judge used to be one-shot: a lookup already

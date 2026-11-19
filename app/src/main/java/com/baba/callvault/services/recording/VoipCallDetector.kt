@@ -99,6 +99,9 @@ class VoipCallDetector(private val context: Context) {
     /** A judge found another lookup running: it is run again the moment that lookup finishes (C9). */
     private var normalJudgePending = false
 
+    /** Keeps the judge's owners lines for one candidate to changes and a few "still checking" lines (merge gate). */
+    private var judgeLogGate = VoipNormalModePolicy.JudgeLogGate()
+
     /** The last "voice audio in normal mode" signature that was logged, so a line is written once per change. */
     private var lastNormalVoiceKey: String? = null
     private val ownersLookupBusy = java.util.concurrent.atomic.AtomicBoolean(false)
@@ -528,6 +531,7 @@ class VoipCallDetector(private val context: Context) {
             normalCandidateJudged = false
             normalJudgeTries = 0
             normalJudgePending = false
+            judgeLogGate = VoipNormalModePolicy.JudgeLogGate()
             handler.removeCallbacks(normalConfirmRunnable)
             handler.postDelayed(normalConfirmRunnable, VoipNormalModePolicy.HOLD_MS)
         }
@@ -565,7 +569,7 @@ class VoipCallDetector(private val context: Context) {
     private fun lookUpOwners(snap: VoipEndProbe.Snapshot, judge: Boolean) {
         val service = com.baba.callvault.server.RecorderConnection.service
         if (service == null) {
-            CallEndLog.record(context, "normal-mode voice audio: ${VoipEndProbe.describe(snap)} callActive=$callActive — recorder host not connected, owners unknown")
+            recordOwnersLine(judge, "normal-mode voice audio: ${VoipEndProbe.describe(snap)} callActive=$callActive — recorder host not connected, owners unknown")
             if (judge) afterJudge(VoipNormalModePolicy.JudgeFailure.HOST_NOT_CONNECTED, null, pairLiveNow())
             return
         }
@@ -587,10 +591,7 @@ class VoipCallDetector(private val context: Context) {
                 ownersLookupBusy.set(false)
                 val line = if (owners == null) "owners unknown (the recorder host gave no answer)"
                 else VoipNormalModePolicy.describe(owners, players, recorders)
-                CallEndLog.record(
-                    context,
-                    "normal-mode voice audio: ${VoipEndProbe.describe(snap)} callActive=$callActive $line",
-                )
+                recordOwnersLine(judge, "normal-mode voice audio: ${VoipEndProbe.describe(snap)} callActive=$callActive $line")
                 when {
                     judge && owners == null -> afterJudge(VoipNormalModePolicy.JudgeFailure.NO_ANSWER, null, pairLiveNow())
                     judge -> judgeNormalCandidate(players, recorders)
@@ -606,6 +607,12 @@ class VoipCallDetector(private val context: Context) {
                 }
             }
         }.apply { isDaemon = true; name = "cv-voip-owners" }.start()
+    }
+
+    /** A judge's owners line goes through the candidate's [judgeLogGate]; a descriptive one (once per change) does not. */
+    private fun recordOwnersLine(judge: Boolean, line: String) {
+        val admitted = if (judge) judgeLogGate.admit(line) else line
+        if (admitted != null) CallEndLog.record(context, admitted) else AppLogger.d(TAG, line)
     }
 
     /** Main thread: the policy's verdict, on the audio as it is now. */
