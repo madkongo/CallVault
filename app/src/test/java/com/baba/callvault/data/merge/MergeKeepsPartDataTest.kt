@@ -256,4 +256,31 @@ class MergeKeepsPartDataTest {
         sidecars.forEach { verify(exactly = 1) { it.delete() } }
         unrelated.forEach { verify(exactly = 0) { it.delete() } }
     }
+
+    // ---- chained merges: a hidden part belongs to every manifest that lists it
+
+    @Test
+    fun `deleting a chained merge keeps the parts an earlier surviving merge still needs`() = runBlocking {
+        // M1 = A+B with keep-originals OFF, so A and B are hidden parts of M1.
+        val m1 = merge()
+        // M2 = M1+C with keep-originals ON, so M1 survives and M2's flattened manifest lists A, B and C.
+        val partC = "20260901_150000.000+0300_in_5551234.m4a"
+        val fileC = File(context.filesDir, partC).apply { writeBytes(ByteArray(50)) }
+        RecordingCatalog.recordLocal(context, partC, Uri.fromFile(fileC), 50L, 1_000L)
+        AppPreferences(context).setKeepOriginalsAfterMerge(true)
+        every { MergeFormat.frameCount(any()) } returnsMany listOf(20, 10, 10)
+        val m2 = (MergeService.merge(context, m1, listOf(partC)) as MergeService.Outcome.Merged).mergedName
+        assertNotNull("M1 survives a keep-originals merge", dao.findByName(m1))
+
+        RecordingCatalog.removeName(context, m2)
+
+        hasEverything(partA)
+        hasEverything(partB)
+        assertEquals(2, RecordingDatabase.get(context).mergePartDao().partsOf(m1).size)
+        // And M1 still takes apart with everything.
+        AppPreferences(context).setKeepOriginalsAfterMerge(false)
+        assertEquals(MergeService.Outcome.UnMerged(2), MergeService.unMerge(context, m1))
+        hasEverything(partA)
+        RecordingCatalog.removeName(context, partC)
+    }
 }

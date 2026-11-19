@@ -56,10 +56,16 @@ interface MergePartDao {
     @Query("SELECT DISTINCT partName FROM merge_parts WHERE partName NOT IN (SELECT displayName FROM recordings)")
     fun observeHiddenPartNames(): kotlinx.coroutines.flow.Flow<List<String>>
 
-    /** The parts of [mergedName] that have no catalog row of their own: what deleting it must take with it. */
+    /**
+     * The parts of [mergedName] that deleting it must take with it: no catalog row of their own, and listed by no
+     * OTHER surviving merged recording's manifest. In a chain (M1 = A+B, then M2 = M1+C keeping originals) M2's
+     * manifest lists A and B too, but M1 still needs them (review N2).
+     */
     @Query(
         "SELECT DISTINCT partName FROM merge_parts WHERE mergedName = :mergedName " +
-            "AND partName NOT IN (SELECT displayName FROM recordings)"
+            "AND partName NOT IN (SELECT displayName FROM recordings) " +
+            "AND partName NOT IN (SELECT p.partName FROM merge_parts AS p WHERE p.mergedName != :mergedName " +
+            "AND p.mergedName IN (SELECT displayName FROM recordings))"
     )
     suspend fun hiddenPartsOf(mergedName: String): List<String>
 
