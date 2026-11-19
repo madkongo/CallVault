@@ -48,8 +48,12 @@ class RetentionSweepWorker(ctx: Context, params: WorkerParameters) : CoroutineWo
 
     override suspend fun doWork(): Result {
         val prefs = AppPreferences(applicationContext)
-        // Before any pass trusts a Drive size: sizes stamped before review C7 were the device's own.
-        RecordingCatalog.forgetUnconfirmedDriveSizesOnce(applicationContext)
+        // Before any pass trusts a Drive size: sizes stamped before review C7 were the device's own. Until that clear
+        // has succeeded, no device copy is deleted at all (age or cap): the old sizes would vouch for them.
+        val sizesTrusted = RecordingCatalog.forgetUnconfirmedDriveSizesOnce(applicationContext)
+        if (!sizesTrusted) {
+            AppLogger.w(TAG, "Old Drive sizes could not be cleared yet; deleting no device copy this run")
+        }
         val localDays = prefs.getRetentionLocalDays()
         val driveDays = prefs.getRetentionDriveDays()
         val capBytes = prefs.getStorageCapBytes()
@@ -106,7 +110,7 @@ class RetentionSweepWorker(ctx: Context, params: WorkerParameters) : CoroutineWo
             }
             val ts = entry.lastModified
             val localUri = entry.localUri
-            if (localUri != null && RetentionPolicy.isExpired(ts, localCutoff)) {
+            if (localUri != null && sizesTrusted && RetentionPolicy.isExpired(ts, localCutoff)) {
                 // In Both/Drive mode the device copy is the only one until Drive holds it at the same size (C7).
                 if (!RetentionPolicy.deviceCopyMayGo(target, entry)) {
                     keptUnproven++
@@ -153,11 +157,16 @@ class RetentionSweepWorker(ctx: Context, params: WorkerParameters) : CoroutineWo
         // After the age pass, never before: an expired recording should go because it expired, and
         // counting it against the cap first could evict a newer one that the age rule was going to
         // spare. Running second also means the cap only ever sees what age retention chose to keep.
-        val deletedByCap = if (capBytes > 0L) sweepStorageCap(capBytes, keptForDrive) else 0
-        if (deletedByCap == null || !untracked.complete) {
+        val deletedByCap = if (capBytes > 0L && sizesTrusted) sweepStorageCap(capBytes, keptForDrive)
+        else if (capBytes > 0L) null else 0
+        if (!sizesTrusted || deletedByCap == null || !untracked.complete) {
             // A pass did not look, so the count is partial: clearing or lowering the notice now would be a false
             // all-clear. It is left as it was until a run that finishes (N3).
-            val which = if (deletedByCap == null) "size cap" else "untracked-file pass"
+            val which = when {
+                !sizesTrusted -> "device-copy age pass"
+                deletedByCap == null -> "size cap"
+                else -> "untracked-file pass"
+            }
             AppLogger.w(TAG, "The $which did not finish this run; the 'kept for Drive' notice is left as it was")
         } else {
             SilentFailureNotifier.updateRetentionWaitingForDrive(applicationContext, keptForDrive.size)

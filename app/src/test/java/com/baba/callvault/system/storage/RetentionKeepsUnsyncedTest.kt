@@ -176,4 +176,20 @@ class RetentionKeepsUnsyncedTest {
 
         verify(exactly = 1) { doc.delete() }
     }
+
+    // ---- the one-time clear of pre-C7 Drive sizes has not succeeded yet
+
+    @Test
+    fun `until the old Drive sizes are cleared no device copy is deleted, by age or by the cap`() {
+        mockkObject(com.baba.callvault.data.recordings.RecordingCatalog)
+        coEvery { com.baba.callvault.data.recordings.RecordingCatalog.forgetUnconfirmedDriveSizesOnce(any()) } returns false
+        prefs.setRetentionLocalDays(7)
+        prefs.setStorageCapBytes(100L)
+
+        sweep()
+
+        assertFalse("not even a copy whose stored size matches", deleted(synced))
+        assertFalse(deleted(unsynced))
+        assertFalse(deleted(halfSynced))
+    }
 }

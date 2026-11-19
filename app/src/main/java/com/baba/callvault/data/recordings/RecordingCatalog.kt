@@ -136,18 +136,31 @@ object RecordingCatalog {
      * from real ones, so all are dropped; the Drive sweep, the folder scan and the Drive repair, which record only
      * sizes Drive listed, re-confirm them. The flag is set only after the update succeeds, so a failure retries.
      */
-    suspend fun forgetUnconfirmedDriveSizesOnce(context: Context): Int {
+    suspend fun forgetUnconfirmedDriveSizesOnce(context: Context): Boolean =
+        forgetUnconfirmedDriveSizesOnceWith(context) { dao(context).clearAllDriveSizes() }
+
+    /**
+     * [forgetUnconfirmedDriveSizesOnce] with the clear passed in, so a test can make it fail. True once the clear
+     * has succeeded (now or on an earlier run); false when it failed, which the retention sweep must treat as
+     * "old sizes may still be trusted wrongly" and delete no device copy. Cancellation is rethrown.
+     */
+    internal suspend fun forgetUnconfirmedDriveSizesOnceWith(context: Context, clear: suspend () -> Int): Boolean {
         val state = context.getSharedPreferences(MIGRATIONS_FILE, Context.MODE_PRIVATE)
-        if (state.getBoolean(KEY_DRIVE_SIZES_FORGOTTEN, false)) return 0
-        return runCatching { dao(context).clearAllDriveSizes() }
-            .onSuccess {
-                state.edit().putBoolean(KEY_DRIVE_SIZES_FORGOTTEN, true).apply()
-                AppLogger.i(TAG, "Forgot $it unconfirmed Drive size(s) from before Drive sizes were checked; a Drive listing re-confirms them")
-            }
-            .getOrElse {
-                AppLogger.w(TAG, "Could not forget the unconfirmed Drive sizes; retrying next time: ${it.message}")
-                0
-            }
+        if (state.getBoolean(KEY_DRIVE_SIZES_FORGOTTEN, false)) return true
+        val cleared = try {
+            clear()
+        } catch (e: kotlinx.coroutines.CancellationException) {
+            throw e
+        } catch (e: Exception) {
+            AppLogger.w(TAG, "Could not forget the unconfirmed Drive sizes; retrying next time: ${e.message}")
+            return false
+        }
+        // commit(), not apply(): the flag must be on disk before anything trusts the sizes again.
+        if (!state.edit().putBoolean(KEY_DRIVE_SIZES_FORGOTTEN, true).commit()) {
+            AppLogger.w(TAG, "Forgot $cleared Drive size(s) but could not record it; doing it again next time")
+        }
+        AppLogger.i(TAG, "Forgot $cleared unconfirmed Drive size(s) from before Drive sizes were checked; a Drive listing re-confirms them")
+        return true
     }
 
     /** Whether [displayName] has a catalog row; null when the catalog cannot be read. Never throws. */

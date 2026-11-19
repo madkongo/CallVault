@@ -19,6 +19,9 @@ import org.junit.After
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNull
+import org.junit.Assert.assertTrue
+import kotlinx.coroutines.CancellationException
+import org.junit.Assert.assertThrows
 import org.junit.Before
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -49,7 +52,7 @@ class UnconfirmedDriveSizesTest {
 
     @Test
     fun `the first run forgets every stored Drive size, so an old stamp proves nothing`() = runBlocking {
-        assertEquals(2, RecordingCatalog.forgetUnconfirmedDriveSizesOnce(context))
+        assertTrue(RecordingCatalog.forgetUnconfirmedDriveSizesOnce(context))
 
         assertNull(dao.findByName(a)?.driveSizeBytes)
         assertNull(dao.findByName(b)?.driveSizeBytes)
@@ -61,7 +64,24 @@ class UnconfirmedDriveSizesTest {
         RecordingCatalog.forgetUnconfirmedDriveSizesOnce(context)
         dao.setDrive(a, "content://drive/a", 500L) // re-confirmed by a Drive listing
 
-        assertEquals(0, RecordingCatalog.forgetUnconfirmedDriveSizesOnce(context))
+        assertTrue("already done counts as done", RecordingCatalog.forgetUnconfirmedDriveSizesOnce(context))
         assertEquals(500L, dao.findByName(a)?.driveSizeBytes)
+    }
+
+    @Test
+    fun `a clear that fails reports failure and is tried again next time`() = runBlocking {
+        val failed = RecordingCatalog.forgetUnconfirmedDriveSizesOnceWith(context) { error("database is locked") }
+
+        assertFalse(failed)
+        assertEquals(500L, dao.findByName(a)?.driveSizeBytes)
+        assertTrue("a later run still clears", RecordingCatalog.forgetUnconfirmedDriveSizesOnce(context))
+        assertNull(dao.findByName(a)?.driveSizeBytes)
+    }
+
+    @Test
+    fun `a cancelled clear is not swallowed`() {
+        assertThrows(CancellationException::class.java) {
+            runBlocking { RecordingCatalog.forgetUnconfirmedDriveSizesOnceWith(context) { throw CancellationException("stopped") } }
+        }
     }
 }
