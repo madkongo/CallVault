@@ -39,6 +39,8 @@ object UntrackedRecordings {
     data class Found(
         val device: List<RecordingItem>,
         val drive: List<RecordingItem>,
+        /** False when the folders could not be read, so the lists are not the whole truth. */
+        val complete: Boolean = true,
     ) {
         val total: Int get() = device.size + drive.size
     }
@@ -63,7 +65,7 @@ object UntrackedRecordings {
             Found(device = device, drive = drive)
         }.getOrElse {
             AppLogger.w(TAG, "Could not enumerate untracked recordings: ${it.message}")
-            Found(emptyList(), emptyList())
+            Found(emptyList(), emptyList(), complete = false)
         }
     }
 

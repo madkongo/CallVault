@@ -17,6 +17,7 @@ import com.baba.callvault.data.recordings.RecordingsRepository
 import com.baba.callvault.data.recordings.db.RecordingDatabase
 import com.baba.callvault.data.recordings.db.RecordingEntry
 import com.baba.callvault.system.health.SilentFailureNotifier
+import com.baba.callvault.data.transcripts.FavouriteRepository
 import io.mockk.coEvery
 import io.mockk.justRun
 import io.mockk.mockkObject
@@ -109,5 +110,19 @@ class RetentionDriveNoticeTest {
         sweep()
 
         verify { SilentFailureNotifier.updateRetentionWaitingForDrive(any(), 0) }
+    }
+
+    @Test
+    fun `a pass that could not finish leaves the notice as it was`() = runBlocking {
+        prefs.setStorageTarget(StorageTarget.BOTH)
+        prefs.setStorageCapBytes(100L)
+        dao.upsert(RecordingEntry(unsynced, localUri = "content://dev/$unsynced", localSizeBytes = 500L, lastModified = 1_000L))
+        // The age pass reads the stars; the size cap then cannot, and sits this run out.
+        mockkObject(FavouriteRepository)
+        coEvery { FavouriteRepository.snapshot(any()) } returns emptyList<String>() andThenThrows IllegalStateException("db locked")
+
+        sweep()
+
+        verify(exactly = 0) { SilentFailureNotifier.updateRetentionWaitingForDrive(any(), any()) }
     }
 }

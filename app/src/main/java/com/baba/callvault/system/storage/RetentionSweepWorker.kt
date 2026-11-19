@@ -154,7 +154,14 @@ class RetentionSweepWorker(ctx: Context, params: WorkerParameters) : CoroutineWo
         // counting it against the cap first could evict a newer one that the age rule was going to
         // spare. Running second also means the cap only ever sees what age retention chose to keep.
         val deletedByCap = if (capBytes > 0L) sweepStorageCap(capBytes, keptForDrive) else 0
-        SilentFailureNotifier.updateRetentionWaitingForDrive(applicationContext, keptForDrive.size)
+        if (deletedByCap == null || !untracked.complete) {
+            // A pass did not look, so the count is partial: clearing or lowering the notice now would be a false
+            // all-clear. It is left as it was until a run that finishes (N3).
+            val which = if (deletedByCap == null) "size cap" else "untracked-file pass"
+            AppLogger.w(TAG, "The $which did not finish this run; the 'kept for Drive' notice is left as it was")
+        } else {
+            SilentFailureNotifier.updateRetentionWaitingForDrive(applicationContext, keptForDrive.size)
+        }
 
         AppLogger.i(
             TAG,
@@ -173,7 +180,8 @@ class RetentionSweepWorker(ctx: Context, params: WorkerParameters) : CoroutineWo
      *
      * @return how many device copies were deleted.
      */
-    private suspend fun sweepStorageCap(capBytes: Long, keptForDrive: MutableSet<String>): Int {
+    /** @return how many device copies were deleted, or null when the cap sat this run out (see the log). */
+    private suspend fun sweepStorageCap(capBytes: Long, keptForDrive: MutableSet<String>): Int? {
         // A failed read here must mean "protect everything", not "protect nothing". Sweeping with an
         // empty exemption set would delete precisely the recordings the user starred to keep, so the
         // cap sits this run out instead and tries again tomorrow.
@@ -184,7 +192,7 @@ class RetentionSweepWorker(ctx: Context, params: WorkerParameters) : CoroutineWo
                     "Could not read the starred recordings (${it.message}); skipping the size cap this run " +
                         "rather than sweeping without the exemption."
                 )
-                return 0
+                return null
             }
 
         val prefs = AppPreferences(applicationContext)
@@ -192,7 +200,7 @@ class RetentionSweepWorker(ctx: Context, params: WorkerParameters) : CoroutineWo
         val template = prefs.getFileNameTemplate()
         val mergedNames = mergedNames() ?: run {
             AppLogger.w(TAG, "Could not read which recordings are merges; skipping the size cap this run")
-            return 0
+            return null
         }
         val entries = RecordingCatalog.all(applicationContext)
         val uriByName = entries.mapNotNull { e -> e.localUri?.let { e.displayName to it } }.toMap()
