@@ -48,12 +48,12 @@ object CaptureStartCheck {
         UNKNOWN(false),
 
         /**
-         * The recorder says it is recording, and nothing has reached this call's file after the second look
+         * The recorder says it is recording, and nothing has reached this call's file after [NOTHING_WRITTEN_AFTER_MS]
          * (review C2, belt-and-braces). Whatever it is recording, it is not this call: a failed start, said so.
          */
         NOTHING_WRITTEN(true),
 
-        /** Recording, and the file is still empty at the first look: look once more before saying anything. */
+        /** Recording, and the file is still empty: look again. A slow start (Bluetooth SCO, a cold scrcpy) is not a failure. */
         LOOK_AGAIN(false),
     }
 
@@ -63,19 +63,31 @@ object CaptureStartCheck {
      * @param stopRequested whether the call has already ended — checked FIRST, because a short call
      *   legitimately finishes before this runs and must never be reported as a broken codec.
      */
+    /**
+     * How long a recorder that says it is recording may leave this call's file empty before that is called a failed
+     * start (gate review item 4). A Bluetooth SCO route or a cold Shizuku/scrcpy start can take several seconds to
+     * write the first bytes; 15 s is well past any start seen working, and still early in a call.
+     */
+    const val NOTHING_WRITTEN_AFTER_MS = 15_000L
+
+    /**
+     * @param bytesWritten this call's staged file's size now; null when it cannot be read.
+     * @param sinceStartMs how long ago the start was dispatched.
+     */
     fun verdict(
         daemonReachable: Boolean,
         isRecording: Boolean,
         stopRequested: Boolean,
         bytesWritten: Long? = null,
-        finalLook: Boolean = false,
+        sinceStartMs: Long = 0L,
     ): Verdict = when {
         stopRequested -> Verdict.STOPPED
         !daemonReachable -> Verdict.UNKNOWN
         !isRecording -> Verdict.NEVER_STARTED
-        // Null: the size cannot be read (no staged file); the recorder's own answer is all there is.
+        // Null: the size cannot be read (no staged file); the recorder's own answer is all there is. Any byte at any
+        // look counts: growth between looks is a working start.
         bytesWritten == null || bytesWritten > 0L -> Verdict.STARTED
-        finalLook -> Verdict.NOTHING_WRITTEN
+        sinceStartMs >= NOTHING_WRITTEN_AFTER_MS -> Verdict.NOTHING_WRITTEN
         else -> Verdict.LOOK_AGAIN
     }
 }

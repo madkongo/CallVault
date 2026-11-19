@@ -74,8 +74,8 @@ class AudioRecordingEngine {
          */
         private const val CAPTURE_START_CHECK_MS = 3000L
 
-        /** The second look at an empty file, before an empty file is called a failed start. */
-        private const val CAPTURE_WRITE_RECHECK_MS = 5000L
+        /** How often an empty file is looked at again, until it is written to or the start check's bound passes. */
+        private const val CAPTURE_WRITE_RECHECK_MS = 4000L
 
         /** How long a phone call's start waits for an app call's recording to stop (C1). Past it: a failed start, said so. */
         private const val OWNER_RELEASE_WAIT_MS = 8_000L
@@ -273,36 +273,44 @@ class AudioRecordingEngine {
      * daemon is invisible at the call site. This asks the one question that settles it. Deliberately
      * quiet unless the answer is unambiguous — see [CaptureStartCheck].
      */
-    private val captureStartWatch = Runnable { checkCaptureStarted(finalLook = false) }
-    private val captureWriteRecheck = Runnable { checkCaptureStarted(finalLook = true) }
+    private val captureStartWatch = Runnable { checkCaptureStarted() }
+    private val captureWriteRecheck = Runnable { checkCaptureStarted() }
+
+    /** When the start was dispatched (elapsedRealtime), for the start check's timings. */
+    private var captureDispatchedAt = 0L
 
     /**
      * Also asks whether anything reached THIS call's staged file (review C2, belt-and-braces): "recording" alone
      * cannot tell this call's capture from one the recorder was already running, which is how a refused start once
-     * read as STARTED. An empty file at the first look gets a second look [CAPTURE_WRITE_RECHECK_MS] later.
+     * read as STARTED. An empty file is looked at again every [CAPTURE_WRITE_RECHECK_MS] until something is written,
+     * and is only a failure after [CaptureStartCheck.NOTHING_WRITTEN_AFTER_MS] (gate review item 4).
      */
-    private fun checkCaptureStarted(finalLook: Boolean) {
+    private fun checkCaptureStarted() {
         if (!daemonRecording) return
         val reachable = runCatching {
             RecorderConnection.service?.asBinder()?.pingBinder() == true
         }.getOrDefault(false)
         val recording = runCatching { RecorderConnection.service?.isRecording() == true }.getOrDefault(false)
         val bytes = stagingFile?.let { f -> runCatching { f.length() }.getOrNull() }
+        val sinceStart = android.os.SystemClock.elapsedRealtime() - captureDispatchedAt
         val verdict = CaptureStartCheck.verdict(
             daemonReachable = reachable,
             isRecording = recording,
             stopRequested = !daemonRecording,
             bytesWritten = bytes,
-            finalLook = finalLook,
+            sinceStartMs = sinceStart,
         )
-        AppLogger.i(TAG, "Capture start check: $verdict (daemon reachable=$reachable, recording=$recording, bytes=${bytes ?: "?"})")
+        AppLogger.i(TAG, "Capture start check at ${sinceStart}ms: $verdict (daemon reachable=$reachable, recording=$recording, bytes=${bytes ?: "?"})")
         if (verdict == CaptureStartCheck.Verdict.LOOK_AGAIN) {
             livenessHandler.postDelayed(captureWriteRecheck, CAPTURE_WRITE_RECHECK_MS)
             return
         }
+        if (verdict == CaptureStartCheck.Verdict.STARTED && sinceStart > CAPTURE_START_CHECK_MS + CAPTURE_WRITE_RECHECK_MS / 2) {
+            appContext?.let { CallEndLog.record(it, "capture start: first bytes in this call's file only after about ${sinceStart}ms (slow start, not a failure)") }
+        }
         if (verdict == CaptureStartCheck.Verdict.NOTHING_WRITTEN) {
             AppLogger.e(TAG, "The recorder says it is recording, but nothing reached this call's file; this call is not being recorded")
-            appContext?.let { CallEndLog.record(it, "capture start FAILED: recorder recording but this call's file is still empty after ${CAPTURE_START_CHECK_MS + CAPTURE_WRITE_RECHECK_MS}ms") }
+            appContext?.let { CallEndLog.record(it, "capture start FAILED: recorder recording but this call's file is still empty after ${sinceStart}ms") }
             onCaptureNeverStarted?.invoke()
             return
         }
@@ -313,7 +321,7 @@ class AudioRecordingEngine {
                     "selected codec or bit rate refusing to configure on this device — nothing will " +
                     "be recorded for this call.",
             )
-            appContext?.let { CallEndLog.record(it, "capture start FAILED: recorder alive but not recording") }
+            appContext?.let { CallEndLog.record(it, "capture start FAILED: recorder alive but not recording (at ${sinceStart}ms, bytes=${bytes ?: "?"})") }
             onCaptureNeverStarted?.invoke()
         }
     }
@@ -603,6 +611,7 @@ class AudioRecordingEngine {
         }
         daemonRecording = true
         livenessHandler.postDelayed(livenessWatch, DAEMON_LIVENESS_POLL_MS)
+        captureDispatchedAt = android.os.SystemClock.elapsedRealtime()
         livenessHandler.postDelayed(captureStartWatch, CAPTURE_START_CHECK_MS)
         return true
     }
@@ -675,6 +684,7 @@ class AudioRecordingEngine {
             // And separately: did a capture actually BEGIN? The liveness watch above only asks
             // whether the daemon is alive, and a daemon whose encoder refused to configure is very
             // much alive while recording nothing at all.
+            captureDispatchedAt = android.os.SystemClock.elapsedRealtime()
             livenessHandler.postDelayed(captureStartWatch, CAPTURE_START_CHECK_MS)
             true
         } catch (e: Exception) {

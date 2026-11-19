@@ -87,10 +87,30 @@ class CaptureStartCheckTest {
     }
 
     @Test
-    fun `still empty at the second look is a failed start, reported`() {
-        val v = CaptureStartCheck.verdict(daemonReachable = true, isRecording = true, stopRequested = false, bytesWritten = 0L, finalLook = true)
+    fun `still empty at 8 s while the recorder records is a slow start, not a failure`() {
+        // Gate review item 4: Bluetooth SCO, a cold Shizuku/scrcpy start. The old second look at 8 s called it failed.
+        assertEquals(
+            CaptureStartCheck.Verdict.LOOK_AGAIN,
+            CaptureStartCheck.verdict(true, isRecording = true, stopRequested = false, bytesWritten = 0L, sinceStartMs = 8_000L),
+        )
+    }
+
+    @Test
+    fun `growth by a later look counts as started`() {
+        assertEquals(CaptureStartCheck.Verdict.LOOK_AGAIN, CaptureStartCheck.verdict(true, true, false, bytesWritten = 0L, sinceStartMs = 3_000L))
+        assertEquals(CaptureStartCheck.Verdict.STARTED, CaptureStartCheck.verdict(true, true, false, bytesWritten = 512L, sinceStartMs = 11_000L))
+    }
+
+    @Test
+    fun `empty past the bound while recording is a failed start, reported`() {
+        val v = CaptureStartCheck.verdict(true, true, false, bytesWritten = 0L, sinceStartMs = CaptureStartCheck.NOTHING_WRITTEN_AFTER_MS)
         assertEquals(CaptureStartCheck.Verdict.NOTHING_WRITTEN, v)
         assertEquals(true, v.isReportable)
+    }
+
+    @Test
+    fun `empty and not recording is a failed start at any look`() {
+        assertEquals(CaptureStartCheck.Verdict.NEVER_STARTED, CaptureStartCheck.verdict(true, false, false, bytesWritten = 0L, sinceStartMs = 3_000L))
     }
 
     @Test
@@ -101,6 +121,6 @@ class CaptureStartCheckTest {
 
     @Test
     fun `a short call that ended first is still never reported`() {
-        assertEquals(CaptureStartCheck.Verdict.STOPPED, CaptureStartCheck.verdict(true, true, true, bytesWritten = 0L, finalLook = true))
+        assertEquals(CaptureStartCheck.Verdict.STOPPED, CaptureStartCheck.verdict(true, true, true, bytesWritten = 0L, sinceStartMs = 20_000L))
     }
 }
