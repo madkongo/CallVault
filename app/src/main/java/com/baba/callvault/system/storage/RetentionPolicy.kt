@@ -9,6 +9,7 @@
 package com.baba.callvault.system.storage
 
 import com.baba.callvault.data.StorageTarget
+import com.baba.callvault.data.recordings.AuthoredName
 import com.baba.callvault.data.recordings.ImportedRecording
 import com.baba.callvault.data.recordings.db.RecordingEntry
 
@@ -54,9 +55,13 @@ object RetentionPolicy {
      * sweep delete it — a voice note someone brought in to transcribe, destroyed overnight by a retention
      * period they set for their calls. Retention is a promise about how long a *call* is kept; an import
      * was never a call, and the user still has nowhere else to have put it.
+     *
+     * A parsed date alone is not proof of authorship (review C10): since 2.5.2 the list reads a day+time stamp
+     * anywhere in a name, which other apps' audio carries too. So the whole name must also match a grammar
+     * CallVault writes, given the [activeTemplate]; see [AuthoredName].
      */
-    fun isEligible(displayName: String, startedAtMillis: Long?): Boolean =
-        startedAtMillis != null && agesOut(displayName)
+    fun isEligible(displayName: String, startedAtMillis: Long?, activeTemplate: String): Boolean =
+        startedAtMillis != null && AuthoredName.isCallVaultName(displayName, activeTemplate) && agesOut(displayName)
 
     /**
      * Whether age retention applies to [displayName] at all, wherever the file was found.

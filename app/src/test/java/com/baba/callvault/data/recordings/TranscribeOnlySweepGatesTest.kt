@@ -41,6 +41,8 @@ import org.robolectric.annotation.Config
 @Config(sdk = [35])
 class TranscribeOnlySweepGatesTest {
 
+    private val DEFAULT_TEMPLATE = com.baba.callvault.data.AppPreferences.DefaultsValue.FILE_NAME_TEMPLATE
+
     private val transcribeOnly = ImportedRecording.nameFor(
         importedAtMillis = 1_789_567_810_000L,
         label = "voice note",
@@ -64,8 +66,8 @@ class TranscribeOnlySweepGatesTest {
     @Test
     fun `it is never deleted for being old`() {
         assertFalse(RetentionPolicy.agesOut(transcribeOnly))
-        assertFalse(RetentionPolicy.isEligible(transcribeOnly, startedAtMillis = 1L))
-        assertTrue(RetentionPolicy.isEligible(call, startedAtMillis = 1L))
+        assertFalse(RetentionPolicy.isEligible(transcribeOnly, startedAtMillis = 1L, activeTemplate = DEFAULT_TEMPLATE))
+        assertTrue(RetentionPolicy.isEligible(call, startedAtMillis = 1L, activeTemplate = DEFAULT_TEMPLATE))
     }
 
     @Test
