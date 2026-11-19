@@ -61,12 +61,19 @@ class WifiJoinMonitorTest {
         KeptSwitchResult(KeptSwitchOutcome.APPROVED_RESTORED_OFF, "k-new", "**:**:**:**:88:01", 270L)
     }
 
+    /** What the app answers before each approval; null = it could not be reached. */
+    private var appSays: ApprovalConfig? = ApprovalConfig(wanted = true, knownKeys = emptySet(), salt = "salt")
+    private var confirms = 0
+    private var elapsedNow = 0L
+
     private fun monitor(w: FakeWatch = watch, r: FakeRunner = runner) = WifiJoinMonitor(
         watch = w,
         runner = r,
         approve = { keys, _ -> asked += keys; answer() },
         emit = { events += it },
+        confirm = { confirms++; appSays },
         clock = { 1_000L },
+        elapsed = { elapsedNow },
     )
 
     private fun texts() = events.map { it.text }
@@ -99,6 +106,7 @@ class WifiJoinMonitorTest {
 
         watch.deliver("100")
         runner.runPending()
+        elapsedNow += 60_000L
         watch.deliver("101")
         runner.runPending()
 
@@ -127,6 +135,7 @@ class WifiJoinMonitorTest {
 
         watch.deliver("100")
         runner.runPending()
+        elapsedNow += 60_000L
         watch.deliver("101")
         runner.runPending()
 
@@ -227,5 +236,72 @@ class WifiJoinMonitorTest {
         assertEquals(WifiJoinEvent(5L, false, "x", ""), WifiJoinEvent.decode(WifiJoinEvent(5L, false, "x").encode()))
         assertNull(WifiJoinEvent.decode("garbage"))
         assertNull(WifiJoinEvent.decode(null))
+    }
+
+    @Test
+    fun `nothing is approved when the app cannot confirm the setting is still on`() {
+        val m = monitor()
+        m.arm(true, emptySet(), "salt")
+        appSays = null
+
+        watch.deliver("100")
+        runner.runPending()
+
+        assertTrue(asked.isEmpty())
+        assertEquals(1, confirms)
+        val last = events.last()
+        assertTrue(last.warn)
+        assertTrue(last.text, last.text.startsWith("skipped: could not confirm with the app"))
+    }
+
+    @Test
+    fun `a setting switched off while the recorder was not told - nothing approved, and the watch stops itself`() {
+        val m = monitor()
+        m.arm(true, emptySet(), "salt")
+        appSays = ApprovalConfig(wanted = false, knownKeys = emptySet(), salt = "")
+
+        watch.deliver("100")
+        runner.runPending()
+        watch.deliver("101")
+
+        assertTrue(asked.isEmpty())
+        assertEquals(1, watch.stops)
+        assertTrue(texts().last().startsWith("skipped: the app says approving is no longer wanted"))
+        assertEquals(null, runner.pending)
+    }
+
+    @Test
+    fun `the app's keys at the check are added to those it armed with`() {
+        val m = monitor()
+        m.arm(true, setOf("k0"), "salt")
+        m.arm(true, setOf("k1"), "salt")
+        appSays = ApprovalConfig(wanted = true, knownKeys = setOf("k2"), salt = "salt")
+
+        watch.deliver("100")
+        runner.runPending()
+
+        assertEquals(listOf(setOf("k0", "k1", "k2")), asked)
+    }
+
+    @Test
+    fun `a flapping access point is checked at most every 30 s and logs one line per 30 s`() {
+        val m = monitor()
+        m.arm(true, emptySet(), "salt")
+        events.clear()
+
+        watch.deliver("100")
+        runner.runPending() // first check at 0 s
+        repeat(9) { elapsedNow += 1_000L; watch.deliver("${101 + it}") }
+
+        assertEquals(1, asked.size)
+        assertEquals(1, texts().count { it.startsWith("Wi-Fi network available") })
+        assertEquals(30_000L - 9_000L, runner.delays.last()) // the next check waits for the 30 s spacing
+        runner.runPending()
+        assertEquals(2, asked.size)
+
+        elapsedNow = 40_000L
+        watch.deliver("200")
+        val line = texts().last { it.startsWith("Wi-Fi network available") }
+        assertTrue(line, line.endsWith("(9 more Wi-Fi joins since the last line)"))
     }
 }

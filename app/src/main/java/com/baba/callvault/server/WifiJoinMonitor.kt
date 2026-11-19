@@ -37,33 +37,44 @@ interface DelayedRunner {
  *
  * Every outcome is passed to [emit]: armed, stopped, a failed registration, each join, and each check's answer.
  */
+/**
+ * What the app says, asked right before each approval: whether approving is still wanted (Shizuku mode and the
+ * setting on), the access point keys it remembers, and its salt.
+ */
+data class ApprovalConfig(val wanted: Boolean, val knownKeys: Set<String>, val salt: String)
+
 class WifiJoinMonitor(
     private val watch: WifiNetworkWatch,
     private val runner: DelayedRunner,
     private val approve: (knownKeys: Set<String>, salt: String) -> KeptSwitchResult,
     private val emit: (WifiJoinEvent) -> Unit,
+    /**
+     * Asks the app, right before an approval, whether it is still wanted. Null when the app cannot be reached or does
+     * not answer: then nothing is approved. A setting switched off while the recorder was not connected is honoured.
+     */
+    private val confirm: () -> ApprovalConfig?,
     private val clock: () -> Long = System::currentTimeMillis,
+    /** Monotonic time, for the spacing of checks and lines. */
+    private val elapsed: () -> Long = android.os.SystemClock::elapsedRealtime,
 ) {
 
     private var watching = false
     private var knownKeys: Set<String> = emptySet()
     private var salt: String = ""
+    private var lastCheckAt: Long? = null
+    private var lastNoteAt: Long? = null
+    private var joinsSinceNote = 0
 
     /**
-     * Starts ([on]) or stops watching. [knownKeys] and [salt] are the app's, used when Android's trusted list cannot
-     * be read. @return whether the recorder is watching afterwards.
+     * Starts ([on]) or stops watching. [knownKeys] (added to those already known) and [salt] are the app's, used when
+     * Android's trusted list cannot be read. @return whether the recorder is watching afterwards.
      */
     @Synchronized
     fun arm(on: Boolean, knownKeys: Set<String>, salt: String): Boolean {
-        this.knownKeys = knownKeys
-        this.salt = salt
+        this.knownKeys = this.knownKeys + knownKeys
+        if (salt.isNotEmpty()) this.salt = salt
         if (!on) {
-            if (watching) {
-                watching = false
-                runner.cancelPending()
-                runCatching { watch.stop() }
-                note(warn = false, "stopped watching Wi-Fi joins in the recorder")
-            }
+            if (watching) stopWatching("stopped watching Wi-Fi joins in the recorder")
             return false
         }
         if (watching) {
@@ -79,17 +90,48 @@ class WifiJoinMonitor(
             .isSuccess
     }
 
-    /** Android's "available" for a Wi-Fi network. */
+    /**
+     * Android's "available" for a Wi-Fi network. Checked [JOIN_SETTLE_MS] later, and never sooner than
+     * [MIN_CHECK_INTERVAL_MS] after the last check (later joins fold into one check). At most one "available" line per
+     * [MIN_CHECK_INTERVAL_MS]; the next says how many joins it stands for. Interval, not per network: Android gives a
+     * new network id on every connection, so a flapping access point is a new "network" each time.
+     */
     @Synchronized
     fun onWifiAvailable(network: String) {
         if (!watching) return
-        note(warn = false, "Wi-Fi network available (net $network); checking its access point in ${JOIN_SETTLE_MS / 1000} s")
-        runner.runAfter(JOIN_SETTLE_MS, ::check)
+        val now = elapsed()
+        val delay = lastCheckAt?.let { maxOf(JOIN_SETTLE_MS, it + MIN_CHECK_INTERVAL_MS - now) } ?: JOIN_SETTLE_MS
+        val lastNote = lastNoteAt
+        if (lastNote == null || now - lastNote >= MIN_CHECK_INTERVAL_MS) {
+            val folded = if (joinsSinceNote > 0) " ($joinsSinceNote more Wi-Fi joins since the last line)" else ""
+            note(warn = false, "Wi-Fi network available (net $network); checking its access point in ${delay / 1000} s$folded")
+            lastNoteAt = now
+            joinsSinceNote = 0
+        } else {
+            joinsSinceNote++
+        }
+        runner.runAfter(delay, ::check)
     }
 
     private fun check() {
-        val (keys, salt) = synchronized(this) {
+        synchronized(this) {
             if (!watching) return
+            lastCheckAt = elapsed()
+        }
+        val config = runCatching { confirm() }.getOrNull()
+        if (config == null) {
+            note(warn = true, "skipped: could not confirm with the app that approving is still wanted (app not reachable, or no answer); nothing approved")
+            return
+        }
+        if (!config.wanted) {
+            synchronized(this) {
+                if (watching) stopWatching("skipped: the app says approving is no longer wanted (setting off, or not Shizuku mode); nothing approved, and the recorder stopped watching")
+            }
+            return
+        }
+        val (keys, salt) = synchronized(this) {
+            knownKeys = knownKeys + config.knownKeys
+            if (config.salt.isNotEmpty()) salt = config.salt
             knownKeys to salt
         }
         val answer = runCatching { approve(keys, salt) }.getOrElse {
@@ -102,10 +144,22 @@ class WifiJoinMonitor(
         emit(WifiJoinEvent(clock(), warn, text, trustedKey))
     }
 
+    /** Caller holds the lock. */
+    private fun stopWatching(line: String) {
+        watching = false
+        runner.cancelPending()
+        runCatching { watch.stop() }
+            .onFailure { note(warn = true, "could not unregister the Wi-Fi watch: ${it.javaClass.simpleName}: ${it.message}") }
+        note(warn = false, line)
+    }
+
     private fun note(warn: Boolean, text: String) = emit(WifiJoinEvent(clock(), warn, text))
 
     companion object {
         /** After a join, before checking: Android writes its own "Wi-Fi changed" switch-off first. */
         const val JOIN_SETTLE_MS = 4_000L
+
+        /** Checks (each forks `cmd wifi`, `dumpsys adb`, `settings`) and "available" lines are at least this far apart. */
+        const val MIN_CHECK_INTERVAL_MS = 30_000L
     }
 }

@@ -76,3 +76,26 @@ object KeptSwitchReport {
         }
     }
 }
+
+/** [ApprovalConfig] across the app's provider (review N15). */
+object ApprovalConfigBundle {
+    private const val WANTED = "com.baba.callvault.recorder.extra.WIFI_APPROVAL_WANTED"
+    private const val KEYS = "com.baba.callvault.recorder.extra.WIFI_APPROVAL_KEYS"
+    private const val SALT = "com.baba.callvault.recorder.extra.WIFI_APPROVAL_SALT"
+
+    fun write(config: ApprovalConfig): android.os.Bundle = android.os.Bundle().apply {
+        putBoolean(WANTED, config.wanted)
+        putStringArray(KEYS, config.knownKeys.toTypedArray())
+        putString(SALT, config.salt)
+    }
+
+    /** Null when there is no answer, or an answer without the "wanted" field (an app that does not know the question). */
+    fun read(bundle: android.os.Bundle?): ApprovalConfig? {
+        if (bundle == null || !bundle.containsKey(WANTED)) return null
+        return ApprovalConfig(
+            wanted = bundle.getBoolean(WANTED),
+            knownKeys = bundle.getStringArray(KEYS).orEmpty().toSet(),
+            salt = bundle.getString(SALT).orEmpty(),
+        )
+    }
+}

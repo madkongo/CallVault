@@ -12,6 +12,7 @@ import android.content.Context
 import com.baba.callvault.data.AppPreferences
 import com.baba.callvault.data.PrivilegedMode
 import com.baba.callvault.integrations.adb.TransportTimeline
+import com.baba.callvault.server.ApprovalConfig
 import com.baba.callvault.server.IRecorderService
 import com.baba.callvault.server.RecorderConnection
 import com.baba.callvault.utils.AppLogger
@@ -41,6 +42,17 @@ object WifiJoinWatch {
 
     fun shouldWatch(mode: PrivilegedMode, settingOn: Boolean): Boolean = mode.needsShizuku && settingOn
 
+    /**
+     * What the recorder needs, read from the settings now: whether approving is wanted, and (only then) the
+     * remembered keys and the salt. Asked by the recorder before every approval, and used to arm it.
+     */
+    fun approvalConfig(context: Context, nowMs: Long = System.currentTimeMillis()): ApprovalConfig {
+        val prefs = AppPreferences(context)
+        val wanted = shouldWatch(prefs.getPrivilegedMode(), prefs.isWifiNetworkAutoApproveEnabled())
+        if (!wanted) return ApprovalConfig(wanted = false, knownKeys = emptySet(), salt = "")
+        return ApprovalConfig(wanted = true, knownKeys = prefs.getApprovedAccessPointKeys(nowMs), salt = prefs.getAccessPointKeySalt())
+    }
+
     /** Arms or disarms the recorder's watch to match the mode and setting. Returns at once; safe on any thread. */
     fun sync(context: Context) {
         val app = context.applicationContext
@@ -57,15 +69,13 @@ object WifiJoinWatch {
         fallback: (Context) -> Unit = WifiJoinApprovalWorker::enqueue,
         nowMs: Long = System.currentTimeMillis(),
     ): SyncResult {
-        val prefs = AppPreferences(context)
-        val wanted = shouldWatch(prefs.getPrivilegedMode(), prefs.isWifiNetworkAutoApproveEnabled())
+        val config = approvalConfig(context, nowMs)
+        val wanted = config.wanted
         if (recorder == null) {
             if (wanted) AppLogger.i(TAG, "No recorder connected yet; its Wi-Fi join watch is armed when it connects")
             return SyncResult.NO_RECORDER
         }
-        val keys = if (wanted) prefs.getApprovedAccessPointKeys(nowMs).toTypedArray() else emptyArray()
-        val salt = if (wanted) prefs.getAccessPointKeySalt() else ""
-        val armed = runCatching { recorder.armWifiJoinWatch(wanted, keys, salt) }
+        val armed = runCatching { recorder.armWifiJoinWatch(wanted, config.knownKeys.toTypedArray(), config.salt) }
         // Lines first (the recorder's own "armed" or "could not watch, because…"), then the app's conclusion.
         runCatching { recorder.drainWifiJoinEvents() }
             .onSuccess { WifiJoinEvents.record(context, it, nowMs) }

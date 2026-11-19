@@ -32,15 +32,18 @@ internal class WifiJoinHost(private val authority: String) {
 
     private fun create(): WifiJoinMonitor {
         val handler = Handler(HandlerThread(THREAD).apply { start() }.looper)
+        // Pushes on their own thread: a slow app start never delays a join check, and a check never delays a push.
+        val pushHandler = Handler(HandlerThread(PUSH_THREAD).apply { start() }.looper)
         val events = WifiJoinEventQueue(
             push = { BinderDelivery.deliverWifiJoinEventsToApp(authority, it) },
-            post = { task -> handler.post { task() } },
+            schedule = { delayMs, task -> pushHandler.postDelayed({ task() }, delayMs) },
         )
         val created = WifiJoinMonitor(
             watch = ShellWifiNetworkWatch(handler),
             runner = HandlerDelayedRunner(handler),
             approve = { keys, salt -> WirelessDebuggingApproval.keptSwitchApprover().run(keys, salt) },
             emit = events::add,
+            confirm = { ApprovalConfigBundle.read(BinderDelivery.askWifiJoinApprovalConfig(authority)) },
         )
         queue = events
         monitor = created
@@ -61,5 +64,6 @@ internal class WifiJoinHost(private val authority: String) {
 
     private companion object {
         const val THREAD = "recorder-wifi-join"
+        const val PUSH_THREAD = "recorder-wifi-join-push"
     }
 }

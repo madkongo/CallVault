@@ -13,36 +13,40 @@ import com.baba.callvault.utils.AppLogger
 /**
  * Carries the recorder's Wi-Fi watch lines ([WifiJoinEvent]) to the app's always-on log, each once (review N15).
  *
- * Each line is pushed to the app on [post]'s thread ([push]: the app's provider, which also starts the app's process
- * when it is not running). Lines the app could not take are kept, oldest dropped past [capacity], and go with the
+ * Lines are pushed to the app ([push]: the app's provider, which also starts the app's process when it is not
+ * running) on [schedule]'s thread, which is not the join-check thread. Pushes are coalesced: a line schedules one push
+ * [PUSH_DELAY_MS] later unless one is already scheduled, so a burst of lines is one push and one is in flight at most. Lines the app could not take are kept, oldest dropped past [capacity], and go with the
  * next push that gets through or the app's next `drainWifiJoinEvents`. A batch is taken out before it is sent, so a
  * push and a drain never hand over the same line.
  */
 class WifiJoinEventQueue(
     private val push: (Array<String>) -> Boolean,
-    private val post: (() -> Unit) -> Unit,
+    private val schedule: (delayMs: Long, task: () -> Unit) -> Unit,
     private val capacity: Int = CAPACITY,
 ) {
 
     private val kept = ArrayDeque<WifiJoinEvent>()
     private var dropped = 0
+    private var pushScheduled = false
 
     fun add(event: WifiJoinEvent) {
         if (event.warn) AppLogger.w(TAG, event.text) else AppLogger.i(TAG, event.text)
-        synchronized(this) {
+        val schedulePush = synchronized(this) {
             kept.addLast(event)
             while (kept.size > capacity) {
                 kept.removeFirst()
                 dropped++
             }
+            !pushScheduled.also { pushScheduled = true }
         }
-        post(::pushKept)
+        if (schedulePush) schedule(PUSH_DELAY_MS, ::pushKept)
     }
 
     /** Everything not yet handed over, oldest first; forgotten once returned. */
     fun drain(): Array<String> = take().encode()
 
     private fun pushKept() {
+        synchronized(this) { pushScheduled = false }
         val batch = take()
         if (batch.events.isEmpty()) return
         val delivered = runCatching { push(batch.encode()) }
@@ -81,6 +85,7 @@ class WifiJoinEventQueue(
     private companion object {
         const val TAG = "CV:WifiJoinWatch"
         const val CAPACITY = 64
+        const val PUSH_DELAY_MS = 3_000L
         const val DROPPED_NOTE = "earlier lines were dropped while the app could not be reached"
     }
 }

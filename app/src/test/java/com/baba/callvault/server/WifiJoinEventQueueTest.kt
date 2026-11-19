@@ -20,9 +20,12 @@ class WifiJoinEventQueueTest {
 
     private val pushed = mutableListOf<List<String>>()
     private var appReachable = true
+    /** When true, a scheduled push runs at once; when false it waits in [scheduled]. */
+    private var runAtOnce = true
+    private val scheduled = mutableListOf<Pair<Long, () -> Unit>>()
     private val queue = WifiJoinEventQueue(
         push = { lines -> if (appReachable) pushed += lines.toList(); appReachable },
-        post = { it() },
+        schedule = { delay, task -> if (runAtOnce) task() else scheduled += delay to task },
         capacity = 3,
     )
 
@@ -54,6 +57,20 @@ class WifiJoinEventQueueTest {
         queue.add(event(2))
 
         assertEquals(listOf(listOf(event(1).encode(), event(2).encode())), pushed)
+    }
+
+    @Test
+    fun `a burst of lines is one push, scheduled once a few seconds later`() {
+        runAtOnce = false
+        (1..3).forEach { queue.add(event(it)) }
+
+        assertEquals(1, scheduled.size)
+        assertTrue(scheduled.single().first in 2_000L..5_000L)
+        scheduled.single().second()
+        assertEquals(listOf((1..3).map { event(it).encode() }), pushed)
+
+        queue.add(event(4)) // after the push, a new line schedules a new one
+        assertEquals(2, scheduled.size)
     }
 
     @Test
