@@ -140,4 +140,35 @@ class RetentionDriveNoticeTest {
 
         verify(exactly = 0) { SilentFailureNotifier.updateRetentionWaitingForDrive(any(), any()) }
     }
+
+    // ---- "could not read" is not "empty" (review N3 completeness)
+
+    private fun reconfirmedBothMode() = runBlocking {
+        RecordingCatalog.forgetUnconfirmedDriveSizesOnce(context)
+        RecordingCatalog.markDriveSizesReconfirmed(context)
+        prefs.setStorageTarget(StorageTarget.BOTH)
+    }
+
+    @Test
+    fun `a Drive folder that cannot be listed leaves the notice as it was`() = runBlocking {
+        reconfirmedBothMode()
+        // No provider answers this authority, so the folder cannot be listed at all.
+        prefs.setDriveFolderUri(android.net.Uri.parse("content://com.example.unreachable.documents/tree/x"))
+
+        sweep()
+
+        verify(exactly = 0) { SilentFailureNotifier.updateRetentionWaitingForDrive(any(), any()) }
+        prefs.setDriveFolderUri(null)
+    }
+
+    @Test
+    fun `a catalog that cannot be read leaves the notice as it was`() = runBlocking {
+        reconfirmedBothMode()
+        mockkObject(RecordingCatalog)
+        coEvery { RecordingCatalog.allOrNull(any()) } returns null
+
+        sweep()
+
+        verify(exactly = 0) { SilentFailureNotifier.updateRetentionWaitingForDrive(any(), any()) }
+    }
 }

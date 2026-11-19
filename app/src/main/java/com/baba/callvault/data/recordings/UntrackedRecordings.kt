@@ -52,17 +52,24 @@ object UntrackedRecordings {
     suspend fun find(context: Context): Found = withContext(Dispatchers.IO) {
         runCatching {
             val prefs = AppPreferences(context)
-            val catalogued = RecordingCatalog.all(context)
+            val catalogued = RecordingCatalog.allOrNull(context) ?: run {
+                AppLogger.w(TAG, "Catalog unreadable; no untracked file can be told apart this run")
+                return@withContext Found(emptyList(), emptyList(), complete = false)
+            }
             val knownDevice = catalogued.mapNotNull { row -> row.displayName.takeIf { row.localUri != null } }.toSet()
             val knownDrive = catalogued.mapNotNull { row -> row.displayName.takeIf { row.driveUri != null } }.toSet()
 
             val template = prefs.getFileNameTemplate()
-            val device = untrackedIn(context, prefs.getRecordingFolderUri(), knownDevice, template)
-            val drive = untrackedIn(context, prefs.getDriveFolderUri(), knownDrive, template)
+            val deviceOrNull = untrackedIn(context, prefs.getRecordingFolderUri(), knownDevice, template)
+            val driveOrNull = untrackedIn(context, prefs.getDriveFolderUri(), knownDrive, template)
+            val complete = deviceOrNull != null && driveOrNull != null
+            val device = deviceOrNull.orEmpty()
+            val drive = driveOrNull.orEmpty()
             if (device.isNotEmpty() || drive.isNotEmpty()) {
                 AppLogger.i(TAG, "Untracked: ${device.size} on the device, ${drive.size} on Drive")
             }
-            Found(device = device, drive = drive)
+            if (!complete) AppLogger.w(TAG, "A storage folder could not be listed; the untracked count is partial")
+            Found(device = device, drive = drive, complete = complete)
         }.getOrElse {
             AppLogger.w(TAG, "Could not enumerate untracked recordings: ${it.message}")
             Found(emptyList(), emptyList(), complete = false)
@@ -84,9 +91,10 @@ object UntrackedRecordings {
      */
     private fun untrackedIn(
         context: Context, folder: android.net.Uri?, known: Set<String>, template: String,
-    ): List<RecordingItem> {
+    ): List<RecordingItem>? {
         if (folder == null) return emptyList()
-        val untracked = RecordingsRepository.enumerateFolder(context, folder).filter { it.displayName !in known }
+        val listed = RecordingsRepository.enumerateFolderOrNull(context, folder) ?: return null
+        val untracked = listed.filter { it.displayName !in known }
         val eligible = untracked.filter { RetentionPolicy.isEligible(it.displayName, it.startedAtMillis, template) }
         val notOurs = untracked.size - eligible.size
         // Names only as a count: a stranger's file names are none of the log's business either.

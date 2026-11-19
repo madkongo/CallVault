@@ -97,7 +97,13 @@ class RetentionSweepWorker(ctx: Context, params: WorkerParameters) : CoroutineWo
         val keptForDrive = HashSet<String>()
         var keptUnproven = 0
         var keptForeign = 0
-        for (entry in RecordingCatalog.all(applicationContext)) {
+        val catalogue = RecordingCatalog.allOrNull(applicationContext) ?: run {
+            // Not "no recordings": an unreadable catalog proves nothing, so this run deletes nothing and leaves the
+            // "kept for Drive" notice as it was (review N3).
+            AppLogger.w(TAG, "The catalog could not be read; skipping retention this run")
+            return Result.success()
+        }
+        for (entry in catalogue) {
             // And the right stamp is only half of it. Once the retention period elapses this pass
             // would delete an import like anything else — except that for a call the Drive copy
             // survives and the row keeps its transcript, while an import has no Drive copy by design.
@@ -217,7 +223,10 @@ class RetentionSweepWorker(ctx: Context, params: WorkerParameters) : CoroutineWo
             AppLogger.w(TAG, "Could not read which recordings are merges; skipping the size cap this run")
             return null
         }
-        val entries = RecordingCatalog.all(applicationContext)
+        val entries = RecordingCatalog.allOrNull(applicationContext) ?: run {
+            AppLogger.w(TAG, "The catalog could not be read; skipping the size cap this run")
+            return null
+        }
         val uriByName = entries.mapNotNull { e -> e.localUri?.let { e.displayName to it } }.toMap()
         val candidates = entries.mapNotNull { entry ->
             // No device copy, or a size we never measured: not something this cap can act on. A

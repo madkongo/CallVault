@@ -188,6 +188,15 @@ object RecordingCatalog {
             AppLogger.w(TAG, "contains() failed: ${it.message}"); null
         }
 
+    /**
+     * All catalogued recordings, or null when the catalog could not be read: for callers that must tell "failed"
+     * from "empty", such as the retention sweep's "kept for Drive" count (review N3). Never throws.
+     */
+    suspend fun allOrNull(context: Context): List<RecordingEntry>? =
+        runCatching { dao(context).getAll() }.getOrElse {
+            AppLogger.w(TAG, "allOrNull() failed: ${it.message}"); null
+        }
+
     /** All catalogued recordings, newest-first. Never throws (returns empty on failure). */
     suspend fun all(context: Context): List<RecordingEntry> =
         runCatching { dao(context).getAll() }.getOrElse {
