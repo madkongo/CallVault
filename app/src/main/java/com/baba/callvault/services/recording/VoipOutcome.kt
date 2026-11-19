@@ -23,6 +23,7 @@ object VoipOutcome {
 
     enum class Reason(val kind: Kind, val why: String) {
         SAVED(Kind.SAVED, "published to the recordings folder"),
+        SAVED_UNCHECKED(Kind.SAVED, "published to the recordings folder, but the after-call steps failed before the library entry"),
 
         // Not started: nothing was recorded.
         MASTER_SWITCH_OFF(Kind.NOT_STARTED, "the master recording switch is off"),

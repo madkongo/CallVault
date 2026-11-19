@@ -1100,8 +1100,8 @@ object VoipRecordingCoordinator {
             val bytes = staging.length()
             val uri = SafHelper.publishStagedRecording(context, folder, outName, mime, staging)
             if (uri != null) {
+                // Its outcome line follows the minimum-duration check below: one final line per call (N8 rework).
                 AppLogger.i(TAG, "Published VoIP recording ($bytes bytes) -> $uri")
-                logOutcome(context, VoipOutcome.Reason.SAVED, recordedMs, bytes)
                 runCatching { staging.delete() }
             } else {
                 // Kept, not deleted: an unpublished recording on internal storage is recoverable and a
@@ -1118,6 +1118,7 @@ object VoipRecordingCoordinator {
         if (saf != null && published != null) {
             val safUri = published
             val name = finalName(saf.displayName.substringAfterLast('/'))
+            val outcomeLogged = java.util.concurrent.atomic.AtomicBoolean(false)
             CoroutineScope(Dispatchers.IO).launch {
                 runCatching {
                     val size = SafHelper.fileSize(context, safUri)
@@ -1135,6 +1136,7 @@ object VoipRecordingCoordinator {
                                 TAG,
                                 "Discarding VoIP '$name': ${durationMs}ms is under the ${minSeconds}s minimum."
                             )
+                            outcomeLogged.set(true)
                             logOutcome(context, VoipOutcome.Reason.TOO_SHORT, durationMs, size)
                             SafHelper.deleteDocument(
                                 DocumentFile.fromSingleUri(context, safUri),
@@ -1143,6 +1145,8 @@ object VoipRecordingCoordinator {
                             return@runCatching
                         }
                     }
+                    outcomeLogged.set(true)
+                    logOutcome(context, VoipOutcome.Reason.SAVED, recordedMs, size.takeIf { it >= 0L })
                     // Keep or delete after the call: decided once, here, before the catalog row, so no
                     // sweep can copy or transcribe it in between. A hold that cannot be stored falls back
                     // to keeping, as on the carrier path.
@@ -1244,7 +1248,10 @@ object VoipRecordingCoordinator {
                             // throws can never leave a held recording with no question.
                             if (isHeld) AfterCallDecision.ask(context, name)
                     }
-                }.onFailure { AppLogger.e(TAG, "Cataloguing the VoIP recording failed: ${it.message}", it) }
+                }.onFailure {
+                    AppLogger.e(TAG, "Cataloguing the VoIP recording failed: ${it.message}", it)
+                    if (!outcomeLogged.getAndSet(true)) logOutcome(context, VoipOutcome.Reason.SAVED_UNCHECKED, recordedMs, null)
+                }
             }
         }
         AppLogger.i(TAG, "VoIP recording stopped (${saf?.uri})")

@@ -61,4 +61,15 @@ class VoipOutcomeTest {
         assertEquals("staged-file deletes outside discardStarted()", 1, deletes)
         assertFalse(source.contains("discardAsIgnored = true"))
     }
+
+    @Test
+    fun `a published call gets one final line, written after the minimum-duration check`() {
+        // Review N8 rework: SAVED was written at publish, then the minimum-duration check could delete the file and
+        // write TOO_SHORT: two outcomes for one call.
+        val root = listOf(File("src/main/java"), File("app/src/main/java")).first { it.isDirectory }
+        val source = File(root, "com/baba/callvault/services/recording/VoipRecordingCoordinator.kt").readText()
+        val saved = Regex("""VoipOutcome\.Reason\.SAVED\b""").findAll(source).map { it.range.first }.toList()
+        assertEquals("SAVED outcome lines", 1, saved.size)
+        assertTrue(saved.single() > source.indexOf("MinDurationPolicy.shouldDiscard"))
+    }
 }
