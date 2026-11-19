@@ -137,6 +137,9 @@ class CallVaultApplication : Application() {
             // A fresh host collects nothing until it is told to. Do this first and cheaply, so a daemon
             // that relaunched mid-session is logging again before anything else happens to it.
             RecorderBackend.syncDiagnostics(applicationContext)
+            // Shizuku mode's Wi-Fi join watch lives in the recorder and dies with it: arm it on every fresh binder
+            // (review N15). Async, and a no-op unless Shizuku mode and the setting are on.
+            com.baba.callvault.services.recording.WifiJoinWatch.sync(applicationContext)
             if (AppPreferences(applicationContext).isVoipRecordingEnabled()) {
                 Thread {
                     runCatching { VoipCaptureController.sync(applicationContext) }
@@ -246,7 +249,8 @@ class CallVaultApplication : Application() {
             }
         }.onFailure { AppLogger.d(TAG, "Nothing left over to clear: ${it.message}") }
 
-        // Shizuku mode's Wi-Fi join watch does not survive a reboot or a mode switch; set it to match (review N15).
+        // Shizuku mode's Wi-Fi join watch (in the recorder): set it to match, if a recorder is already connected; a
+        // recorder that connects later is armed by onDaemonReady (review N15).
         runCatching { com.baba.callvault.services.recording.WifiJoinWatch.sync(applicationContext) }
             .onFailure { AppLogger.w(TAG, "Could not sync the Wi-Fi join watch: ${it.message}") }
 

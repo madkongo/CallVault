@@ -142,7 +142,7 @@ internal fun WirelessDebuggingEnforceToggle() {
  * Off by default (2026-10-21): the prompt is Android's guard against opening the debugging port on a network the
  * owner did not choose. Both modes since review N15: in Shizuku mode it adds each access point the phone joins to
  * Android's trusted list, so Shizuku can start there after a reboot, and puts Wireless debugging back as it was.
- * Joins are noticed by [WifiJoinWatch], with no service or notification. See
+ * Joins are noticed by the recorder, armed by [WifiJoinWatch], with no app service or notification. See
  * [com.baba.callvault.integrations.adb.NetworkApprovalPolicy].
  */
 @Composable
@@ -165,7 +165,7 @@ internal fun WifiNetworkAutoApproveToggle() {
         onCheckedChange = { turnOn ->
             prefs.setWifiNetworkAutoApproveEnabled(turnOn)
             on = turnOn
-            // Shizuku mode notices Wi-Fi joins through a registered request, not a running service: no new notification.
+            // Shizuku mode: the recorder watches Wi-Fi joins itself; no app service and no new notification.
             runCatching { WifiJoinWatch.sync(context.applicationContext) }
                 .onFailure { AppLogger.w("CV:Settings", "Could not update the Wi-Fi join watch: ${it.message}") }
         },

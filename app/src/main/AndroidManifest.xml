@@ -255,12 +255,6 @@
             android:enabled="true"
             android:exported="false" />
 
-        <!-- Shizuku mode: a Wi-Fi join, delivered by a ConnectivityManager PendingIntent request (review N15). Internal only. -->
-        <receiver
-            android:name=".services.recording.WifiJoinApprovalReceiver"
-            android:enabled="true"
-            android:exported="false" />
-
         <!-- The paused-recording notification's "Turn Wireless debugging on" button. Internal only. -->
         <receiver
             android:name=".services.recording.WirelessDebuggingActionReceiver"

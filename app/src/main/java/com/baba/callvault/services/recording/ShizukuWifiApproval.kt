@@ -20,8 +20,9 @@ import com.baba.callvault.utils.AppLogger
 import java.util.concurrent.atomic.AtomicBoolean
 
 /**
- * Shizuku mode's "Approve new Wi-Fi networks automatically" (review N15), run on each Wi-Fi join
- * ([WifiJoinApprovalReceiver]).
+ * Shizuku mode's "Approve new Wi-Fi networks automatically" (review N15), run from the app. Normally the recorder
+ * approves on each Wi-Fi join itself ([com.baba.callvault.server.WifiJoinMonitor]); this is the backup, run once when
+ * the recorder cannot watch ([WifiJoinWatch], [WifiJoinApprovalWorker]).
  *
  * Asks the Shizuku-hosted recorder (shell uid) to approve the access point the phone is on, always-allow, so
  * Shizuku can start over Wireless debugging there after a reboot without Android asking first. The recorder skips

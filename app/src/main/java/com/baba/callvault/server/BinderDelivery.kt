@@ -81,6 +81,15 @@ internal object BinderDelivery {
             putInt(RecorderBinderProvider.EXTRA_CHANNELS, channelCount)
         })
 
+    /**
+     * Hands the Wi-Fi watch's lines ([WifiJoinEvent], encoded) to the app's always-on log (review N15). Starts the
+     * app's process when it is not running, as every delivery here does. True when the app took them.
+     */
+    fun deliverWifiJoinEventsToApp(authority: String, events: Array<String>): Boolean =
+        deliver(authority, RecorderBinderProvider.METHOD_WIFI_JOIN_EVENTS, Bundle().apply {
+            putStringArray(RecorderBinderProvider.EXTRA_WIFI_JOIN_EVENTS, events)
+        })
+
     private fun deliver(authority: String, method: String, bundle: Bundle): Boolean {
         AppLogger.i(TAG, "Delivering ($method): trying getContentProviderExternal path (authority=$authority)")
         if (runCatching { deliverViaActivityManager(authority, bundle, method) }

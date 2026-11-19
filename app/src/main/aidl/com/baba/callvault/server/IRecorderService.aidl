@@ -365,4 +365,19 @@ interface IRecorderService {
      * positional. A daemon from an older APK lacks it; the app reads no answer and approves nothing.
      */
     String approveWifiNetworkKeepingSwitch(in String[] knownKeys, String salt);
+
+    /**
+     * Shizuku mode (review N15): starts ({@code on}) or stops the recorder's own Wi-Fi join watch, which approves each
+     * access point the phone joins as approveWifiNetworkKeepingSwitch does. One registration per recorder process,
+     * however often this is called; the app calls it on every recorder connection. [knownKeys] and [salt] as above.
+     * Returns whether the recorder is watching afterwards. Appended last: transaction codes are positional. A
+     * daemon from an older APK lacks it and answers false; the app then checks the current network itself.
+     */
+    boolean armWifiJoinWatch(boolean on, in String[] knownKeys, String salt);
+
+    /**
+     * The watch's always-on log lines not yet handed to the app, each an encoded WifiJoinEvent, oldest first; the
+     * recorder forgets them once returned. Appended last: transaction codes are positional.
+     */
+    String[] drainWifiJoinEvents();
 }

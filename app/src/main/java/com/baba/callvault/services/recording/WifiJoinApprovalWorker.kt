@@ -20,9 +20,10 @@ import com.baba.callvault.utils.AppLogger
 import java.util.concurrent.TimeUnit
 
 /**
- * One Wi-Fi join's approval in Shizuku mode (review N15), off the broadcast that announced it.
+ * Shizuku mode's backup check of the current access point (review N15), queued by [WifiJoinWatch] when the recorder
+ * cannot watch Wi-Fi joins itself (its watch normally does this, in the recorder).
  *
- * Starts [JOIN_SETTLE_MS] after the join, so Android has finished its own "Wi-Fi changed" handling; waits up to
+ * Starts [JOIN_SETTLE_MS] after it is queued, so Android has finished its own "Wi-Fi changed" handling; waits up to
  * [RECORDER_WAIT_MS] for a cold-started app to reconnect to the recorder Shizuku keeps running (the app start binds
  * it), then runs [ShizukuWifiApproval]. Not expedited: on Android 11 an expedited request needs a foreground
  * notification, which this feature must not add.
