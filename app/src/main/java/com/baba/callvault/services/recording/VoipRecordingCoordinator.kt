@@ -35,6 +35,7 @@ import com.baba.callvault.server.VoipCallFacts
 import com.baba.callvault.data.recordings.RecordingDirection
 import kotlinx.coroutines.isActive
 import com.baba.callvault.system.storage.SafHelper
+import com.baba.callvault.system.storage.LiveStagingFiles
 import com.baba.callvault.data.recordings.RecordingCatalog
 import com.baba.callvault.data.waveform.WaveformDrawWorker
 import com.baba.callvault.transcription.TranscriptionScheduler
@@ -342,6 +343,9 @@ object VoipRecordingCoordinator {
         recording = true
         startedViaNormalMode = viaNormalMode
         pending = saf
+        // The rescue must never take this file for an abandoned one while the call goes on (C12): a pause stops
+        // its writes, and a LINE call (item 108) shows no call mode. Released when the call's end is done with it.
+        LiveStagingFiles.register(saf.stagingFile)
         codecMime = codec.mimeType
         // A timeline and a mark buffer for this call, then the controls. Before this an app call
         // could be recorded from start to finish with nothing to stop it and nothing to mark.
@@ -906,6 +910,17 @@ object VoipRecordingCoordinator {
     fun onCallEnded(context: Context, neverConnected: Boolean = false) {
         callEnds++
         if (!recording) return
+        val liveStaging = pending?.stagingFile
+        try {
+            endRecording(context, neverConnected)
+        } finally {
+            // Only once the file is published, discarded, or knowingly left to the rescue (C12).
+            LiveStagingFiles.release(liveStaging)
+        }
+    }
+
+    /** The body of [onCallEnded], under its lock: stop, then publish or discard. */
+    private fun endRecording(context: Context, neverConnected: Boolean) {
         recording = false
         val saf = pending
         pending = null

@@ -49,6 +49,30 @@ class CutOffRescueTest {
     }
 
     @Test
+    fun a_paused_live_recording_is_left_alone_however_long_it_has_been_quiet() {
+        // Review C12: a LINE call (item 108) stays in MODE_NORMAL, so "a call is up" reads false; paused for 90 s
+        // its staged file looked abandoned, was published mid-call and deleted, and the rest of the call was lost.
+        assertEquals(RescueDecision.WAIT, decide(ageMs = 10 * CutOffRescuePolicy.QUIET_MS, ownedByLiveRecording = true))
+    }
+
+    @Test
+    fun a_staged_file_this_process_does_not_own_is_still_saved() {
+        // After a kill the new process owns nothing, so a real cut-off is still rescued.
+        assertEquals(RescueDecision.SAVE_NAMED, decide(ownedByLiveRecording = false))
+    }
+
+    @Test
+    fun the_live_set_holds_a_file_from_its_start_until_its_end() {
+        val file = java.io.File("/data/user/0/app/files/staging/rec_1.tmp")
+        LiveStagingFiles.clearForTest()
+        LiveStagingFiles.register(file)
+        assertEquals(true, LiveStagingFiles.isLive(java.io.File(file.path)))
+        LiveStagingFiles.release(file)
+        assertEquals(false, LiveStagingFiles.isLive(file))
+        LiveStagingFiles.release(null)
+    }
+
+    @Test
     fun a_file_written_moments_ago_is_left_alone() {
         assertEquals(RescueDecision.WAIT, decide(ageMs = CutOffRescuePolicy.QUIET_MS - 1))
     }
@@ -111,5 +135,9 @@ class CutOffRescueTest {
         sizeBytes: Long = 900_000,
         ageMs: Long = CutOffRescuePolicy.QUIET_MS,
         callActive: Boolean = false,
-    ) = CutOffRescuePolicy.decide(hasNote = hasNote, sizeBytes = sizeBytes, ageMs = ageMs, callActive = callActive)
+        ownedByLiveRecording: Boolean = false,
+    ) = CutOffRescuePolicy.decide(
+        hasNote = hasNote, sizeBytes = sizeBytes, ageMs = ageMs, callActive = callActive,
+        ownedByLiveRecording = ownedByLiveRecording,
+    )
 }
