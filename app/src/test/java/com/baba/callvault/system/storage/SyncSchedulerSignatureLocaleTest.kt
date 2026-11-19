@@ -9,7 +9,6 @@
 package com.baba.callvault.system.storage
 
 import androidx.work.ExistingPeriodicWorkPolicy
-import androidx.work.WorkInfo
 import com.baba.callvault.data.StorageTarget
 import com.baba.callvault.data.SyncScheduleMode
 import org.junit.After
@@ -49,9 +48,9 @@ class SyncSchedulerSignatureLocaleTest {
         val persian = ascii.replace("15:45", "۱۵:۴۵")
         val bengali = ascii.replace("15:45", "১৫:৪৫")
         for (old in listOf(persian, bengali)) {
-            val d = SyncScheduler.decide(old, ascii, listOf(WorkInfo.State.ENQUEUED))
+            val d = SyncScheduler.decide(old, ascii)
             assertEquals(ExistingPeriodicWorkPolicy.KEEP, d.policy)
-            assertEquals(SyncScheduler.Reason.UNCHANGED_ALIVE, d.reason)
+            assertEquals(SyncScheduler.Reason.UNCHANGED, d.reason)
         }
     }
 
@@ -59,6 +58,6 @@ class SyncSchedulerSignatureLocaleTest {
     fun `a real change is still a change after the digits are normalised`() {
         Locale.setDefault(Locale.ROOT)
         val old = sig().replace("15:45", "۱۵:۴۶")
-        assertEquals(SyncScheduler.Reason.CHANGED, SyncScheduler.decide(old, sig(), listOf(WorkInfo.State.ENQUEUED)).reason)
+        assertEquals(SyncScheduler.Reason.CHANGED, SyncScheduler.decide(old, sig()).reason)
     }
 }
