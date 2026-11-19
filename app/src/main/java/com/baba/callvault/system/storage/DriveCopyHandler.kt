@@ -154,19 +154,30 @@ object DriveCopyHandler {
             log("$where: COPY '${r.name}': the folder could not be listed (${why ?: "no reason given"}); looking the name up with findFile instead")
             return null
         }
-        return knownDestFrom(listing, r.name)
+        return knownDestFrom(listing, r.name) { log("$where: $it") }
     }
 
     /**
-     * What [listing] says about [name]: the document carrying it and its listed length, and a staging leftover,
-     * both matched ignoring case, as the sweep does. A listed length of 0 or -1 is passed on as it is; the copy
-     * treats it as complete, never as truncated (device quirk Q47).
+     * What [listing] says about [name]: the document carrying exactly that name and its listed length, and an
+     * exactly-named staging leftover. Exact case only: Drive can hold "Call.m4a" and "call.m4a" side by side,
+     * and a case-insensitive match could pick the other recording's document, judge it a truncated copy of
+     * this one and delete it. A document that matches only when case is ignored is therefore treated as
+     * unknown (no existing document: the copy uploads under the exact name) and reported to [log].
+     * A listed length of 0 or -1 is passed on as it is; the copy treats it as complete, never as truncated
+     * (device quirk Q47).
      */
-    fun knownDestFrom(listing: DriveCopyProtocol.Listing, name: String): SafHelper.KnownDest {
-        val wanted = name.lowercase()
-        val staging = CloudCopyPolicy.stagingNameFor(name).lowercase()
-        val existing = listing.names.indexOfFirst { it.lowercase() == wanted }
-        val leftover = listing.names.indexOfFirst { it.lowercase() == staging }
+    fun knownDestFrom(
+        listing: DriveCopyProtocol.Listing,
+        name: String,
+        log: (String) -> Unit = {},
+    ): SafHelper.KnownDest {
+        val existing = listing.names.indexOf(name)
+        val leftover = listing.names.indexOf(CloudCopyPolicy.stagingNameFor(name))
+        if (existing < 0) {
+            listing.names.firstOrNull { it.equals(name, ignoreCase = true) }?.let { other ->
+                log("COPY '$name': Drive holds '$other', which differs only in case; not treated as this recording's copy")
+            }
+        }
         return SafHelper.KnownDest(
             existingUri = listing.uris.getOrNull(existing),
             existingSize = if (existing >= 0) listing.sizes[existing] else -1L,
