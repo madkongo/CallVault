@@ -12,11 +12,14 @@ import android.app.Application
 import androidx.test.core.app.ApplicationProvider
 import com.baba.callvault.data.AppPreferences
 import com.baba.callvault.data.PrivilegedMode
+import com.baba.callvault.server.ApprovalConfig
+import com.baba.callvault.server.ApprovalConfigBundle
 import com.baba.callvault.server.IRecorderService
 import com.baba.callvault.server.RecorderConnection
 import com.baba.callvault.server.WifiJoinEvent
 import org.junit.After
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
@@ -114,13 +117,13 @@ class WifiJoinWatchTest {
         val recorder = FakeRecorder().apply {
             pending = arrayOf(
                 WifiJoinEvent(now, false, "watching Wi-Fi joins in the recorder (pid 7)").encode(),
-                WifiJoinEvent(now, false, "approved access point **:**:**:**:88:01 (always allow)", trustedKey = "k-new").encode(),
+                WifiJoinEvent(now, false, "approved access point **:**:**:**:88:01 (always allow)", trustedKey = "knew").encode(),
             )
         }
 
         sync(recorder)
 
-        assertTrue("k-new" in prefs.getApprovedAccessPointKeys(now))
+        assertTrue("knew" in prefs.getApprovedAccessPointKeys(now))
     }
 
     @Test
@@ -142,5 +145,42 @@ class WifiJoinWatchTest {
 
         assertTrue("not armed on connection", restarted.armed.await(5, TimeUnit.SECONDS))
         assertEquals(true, restarted.arms.first().first)
+    }
+
+    @Test
+    fun `the recorder's question before an approval is answered from the settings now`() {
+        prefs.addApprovedAccessPointKey("k0", now)
+        val on = ApprovalConfigBundle.read(ApprovalConfigBundle.write(WifiJoinWatch.approvalConfig(context, now)))
+        assertEquals(ApprovalConfig(true, setOf("k0"), prefs.getAccessPointKeySalt()), on)
+
+        prefs.setWifiNetworkAutoApproveEnabled(false)
+        assertEquals(false, ApprovalConfigBundle.read(ApprovalConfigBundle.write(WifiJoinWatch.approvalConfig(context, now)))?.wanted)
+
+        prefs.setWifiNetworkAutoApproveEnabled(true)
+        prefs.setPrivilegedMode(PrivilegedMode.STANDALONE)
+        assertEquals(false, WifiJoinWatch.approvalConfig(context, now).wanted)
+    }
+
+    @Test
+    fun `no answer, or an answer without the field, is not a confirmation`() {
+        assertNull(ApprovalConfigBundle.read(null))
+        assertNull(ApprovalConfigBundle.read(android.os.Bundle()))
+    }
+
+    @Test
+    fun `lines from the recorder are capped and kept on one line each`() {
+        val long = WifiJoinEvent(now, false, "a\nb\r\nc" + "x".repeat(2_000))
+        val line = WifiJoinEvents.lineFor(long, now)
+        assertTrue(line.startsWith("Wi-Fi approval (Shizuku): a b c"))
+        assertTrue(line.length <= WifiJoinEvents.PREFIX.length + WifiJoinEvents.MAX_CHARS)
+        assertTrue('\n' !in line)
+
+        // Only the first 64 lines of a hand-over are taken: a key on line 100 is never read.
+        val flood = Array(500) { WifiJoinEvent(now, false, "line $it", trustedKey = if (it == 100) "k100" else "").encode() }
+        WifiJoinEvents.record(context, flood, now)
+        assertTrue("k100" !in prefs.getApprovedAccessPointKeys(now))
+
+        WifiJoinEvents.record(context, arrayOf(WifiJoinEvent(now, false, "x", trustedKey = "bad key\n").encode()), now)
+        assertTrue("bad key\n" !in prefs.getApprovedAccessPointKeys(now))
     }
 }

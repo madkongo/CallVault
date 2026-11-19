@@ -49,13 +49,20 @@ class ShellWifiNetworkWatch(
         callback = cb
     }
 
+    /**
+     * Unregisters, and forgets the callback only once Android no longer holds it: if the unregister fails for another
+     * reason it is kept, so a later [start] does not register a second one beside it. Throws that failure.
+     */
     @Synchronized
     override fun stop() {
         val cb = callback ?: return
+        try {
+            manager?.unregisterNetworkCallback(cb)
+        } catch (notRegistered: IllegalArgumentException) {
+            // Android says it does not hold it: nothing left to keep.
+        }
         callback = null
-        val cm = manager
         manager = null
-        cm?.unregisterNetworkCallback(cb)
     }
 }
 

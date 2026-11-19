@@ -15,7 +15,12 @@ import android.os.Handler
 import android.os.Looper
 import androidx.test.core.app.ApplicationProvider
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertNull
+import org.junit.Assert.assertThrows
 import org.junit.Assert.assertTrue
+import io.mockk.every
+import io.mockk.mockk
+import io.mockk.verify
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
@@ -74,5 +79,41 @@ class ShellWifiNetworkWatchTest {
         watch.start { seen += it }
         assertEquals(before + 1, shadow.networkCallbacks.size)
         assertTrue(seen.isEmpty())
+    }
+
+    @Test
+    fun `an unregister that fails keeps the callback, so a later start does not add a second one`() {
+        val failing = mockk<ConnectivityManager>(relaxed = true)
+        every { failing.unregisterNetworkCallback(any<ConnectivityManager.NetworkCallback>()) } throws RuntimeException("binder died")
+        val w = ShellWifiNetworkWatch(Handler(Looper.getMainLooper())) { failing }
+        w.start { }
+
+        assertThrows(RuntimeException::class.java) { w.stop() }
+        w.start { }
+
+        verify(exactly = 1) { failing.registerNetworkCallback(any(), any<ConnectivityManager.NetworkCallback>(), any()) }
+    }
+
+    @Test
+    fun `an unregister Android answers with 'not registered' forgets the callback`() {
+        val cm2 = mockk<ConnectivityManager>(relaxed = true)
+        every { cm2.unregisterNetworkCallback(any<ConnectivityManager.NetworkCallback>()) } throws IllegalArgumentException("not registered")
+        val w = ShellWifiNetworkWatch(Handler(Looper.getMainLooper())) { cm2 }
+        w.start { }
+
+        w.stop()
+        w.start { }
+
+        verify(exactly = 2) { cm2.registerNetworkCallback(any(), any<ConnectivityManager.NetworkCallback>(), any()) }
+    }
+
+    @Test
+    fun `the recorder's ConnectivityManager is built on the connectivity binder and presents the shell package`() {
+        val built = ShellConnectivity.create()
+
+        val context = ConnectivityManager::class.java.getDeclaredField("mContext").apply { isAccessible = true }.get(built) as android.content.Context
+        assertEquals("com.android.shell", context.opPackageName)
+        assertEquals("com.android.shell", context.packageName)
+        assertNull(context.attributionTag)
     }
 }
