@@ -114,7 +114,10 @@ class SyncSweepWorker(ctx: Context, params: WorkerParameters) : CoroutineWorker(
         // to it, and that must never be this one, which also records calls (review C11).
         var copier: DriveCopier? = null
         try {
-            return sweep({ DriveCopyClient(applicationContext).also { copier = it } }, target, sourceDir, driveFolderUri, sweepStart)
+            return sweep(
+                { (copierFactory?.invoke(applicationContext) ?: DriveCopyClient(applicationContext)).also { copier = it } },
+                target, sourceDir, driveFolderUri, sweepStart,
+            )
         } finally {
             copier?.close()
         }
@@ -172,7 +175,7 @@ class SyncSweepWorker(ctx: Context, params: WorkerParameters) : CoroutineWorker(
         driveFolderUri: android.net.Uri,
         sweepStart: Long,
     ): Result {
-        // What Drive already holds (name -> its URI and byte length, case-insensitive), so a
+        // What Drive already holds (exact name -> its URI and byte length), so a
         // recording that is already up there is never uploaded a second time. One query, in the copier.
         //
         // The URI is kept, not just the length: proving a file is already in Drive is exactly the
@@ -204,9 +207,12 @@ class SyncSweepWorker(ctx: Context, params: WorkerParameters) : CoroutineWorker(
             return if (again) Result.retry() else Result.success()
         }
         DriveBackupNotice.onDriveReached(applicationContext, "the sweep listed the Drive folder")
+        // Keyed by the EXACT name, as the after-call copy matches ([DriveCopyHandler.knownDestFrom]): Drive can hold
+        // "Call.m4a" and "call.m4a" side by side, and a case-insensitive key handed one recording's document to the
+        // other's copy, which deleted it as "truncated" or stamped the wrong recording as backed up.
         val existingInDrive = HashMap<String, DriveCopy>(listed.names.size * 2)
         for (i in listed.names.indices) {
-            existingInDrive[listed.names[i].lowercase()] = DriveCopy(listed.uris[i], listed.sizes[i])
+            existingInDrive[listed.names[i]] = DriveCopy(listed.uris[i], listed.sizes[i])
         }
         journal("drive folder listed: ${listed.names.size} entries in ${SystemClock.elapsedRealtime() - sweepStart}ms (incl. start-up), via ${copier.where}")
 
@@ -243,7 +249,10 @@ class SyncSweepWorker(ctx: Context, params: WorkerParameters) : CoroutineWorker(
                 skipped++
                 continue // an empty file means capture never ran; copying it would fake a backup
             }
-            val alreadyThere = existingInDrive[name.lowercase()]
+            val alreadyThere = existingInDrive[name]
+            if (alreadyThere == null) {
+                DriveCopyHandler.caseOnlyMatch(existingInDrive.keys, name)?.let { journal(DriveCopyHandler.caseOnlyNote(name, it)) }
+            }
             // Only a length Drive reports as equal counts as "already there". A document listed with length 0
             // (a copy Drive had not settled at the end of the last run) is checked again by the copier below.
             if (alreadyThere != null && CloudCopyPolicy.isVerifiedPresent(alreadyThere.sizeBytes, sourceSize)) {
@@ -289,8 +298,8 @@ class SyncSweepWorker(ctx: Context, params: WorkerParameters) : CoroutineWorker(
             val file = entry.item.file
             val sourceSize = entry.item.sizeBytes
             val mime = file.type ?: DEFAULT_MIME
-            val known = existingInDrive[name.lowercase()]
-            val staging = existingInDrive[CloudCopyPolicy.stagingNameFor(name).lowercase()]
+            val known = existingInDrive[name]
+            val staging = existingInDrive[CloudCopyPolicy.stagingNameFor(name)]
             val request = DriveCopyProtocol.Request(
                 src = file.uri, folder = driveFolderUri, name = name, mime = mime, sourceSize = sourceSize,
                 existing = known?.uri, existingSize = known?.sizeBytes ?: -1L, staging = staging?.uri,
@@ -349,7 +358,7 @@ class SyncSweepWorker(ctx: Context, params: WorkerParameters) : CoroutineWorker(
                 continue
             }
 
-            existingInDrive[name.lowercase()] = DriveCopy(driveUri, sourceSize)
+            existingInDrive[name] = DriveCopy(driveUri, sourceSize)
             // The device copy goes only when Drive itself reports a document of the same length, and never
             // when the Drive copy IS the device file (see [FolderOverlap]). Every branch says what it did.
             var deletedLocally = false
@@ -429,6 +438,10 @@ class SyncSweepWorker(ctx: Context, params: WorkerParameters) : CoroutineWorker(
     private data class DriveCopy(val uri: android.net.Uri, val sizeBytes: Long)
 
     companion object {
+        /** Tests only: stands in for the `:drive` copier. Null (the real [DriveCopyClient]) in the app. */
+        @androidx.annotation.VisibleForTesting
+        @Volatile internal var copierFactory: ((Context) -> DriveCopier)? = null
+
         private const val TAG = "CV:SyncSweep"
         private const val DEFAULT_MIME = "audio/ogg"
         private const val PACE_EVERY = 10

@@ -166,6 +166,17 @@ object DriveCopyHandler {
      * A listed length of 0 or -1 is passed on as it is; the copy treats it as complete, never as truncated
      * (device quirk Q47).
      */
+    /**
+     * A Drive name equal to [name] only when case is ignored, or null. Drive documents are matched by EXACT name
+     * everywhere (the after-call copy and the sweep); this exists only to say so in the journal.
+     */
+    fun caseOnlyMatch(names: Iterable<String>, name: String): String? =
+        names.firstOrNull { it != name && it.equals(name, ignoreCase = true) }
+
+    /** The journal line for a [caseOnlyMatch]. */
+    fun caseOnlyNote(name: String, other: String): String =
+        "'$name': Drive holds '$other', which differs only in case; not treated as this recording's copy"
+
     fun knownDestFrom(
         listing: DriveCopyProtocol.Listing,
         name: String,
@@ -173,11 +184,7 @@ object DriveCopyHandler {
     ): SafHelper.KnownDest {
         val existing = listing.names.indexOf(name)
         val leftover = listing.names.indexOf(CloudCopyPolicy.stagingNameFor(name))
-        if (existing < 0) {
-            listing.names.firstOrNull { it.equals(name, ignoreCase = true) }?.let { other ->
-                log("COPY '$name': Drive holds '$other', which differs only in case; not treated as this recording's copy")
-            }
-        }
+        if (existing < 0) caseOnlyMatch(listing.names, name)?.let { log(caseOnlyNote(name, it)) }
         return SafHelper.KnownDest(
             existingUri = listing.uris.getOrNull(existing),
             existingSize = if (existing >= 0) listing.sizes[existing] else -1L,
