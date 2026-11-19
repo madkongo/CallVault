@@ -98,6 +98,13 @@ object CloudCopyPolicy {
     fun mayDeleteLocal(driveReportedSize: Long, sourceSize: Long): Boolean =
         sourceSize > 0L && driveReportedSize == sourceSize
 
+    /**
+     * The Drive size to record on the catalog row: the length Drive itself reported, or null when it reported none
+     * (review C7). Never the device file's size: retention takes an equal Drive size as proof the call reached
+     * Drive, and copying the device size across would let an upload Drive never confirmed prove itself.
+     */
+    fun driveSizeToRecord(driveReportedSize: Long): Long? = driveReportedSize.takeIf { it > 0L }
+
     /** Marker for the staging document a copy writes into before it is renamed to the final name. */
     private const val STAGING_MARKER = ".cvpart"
 

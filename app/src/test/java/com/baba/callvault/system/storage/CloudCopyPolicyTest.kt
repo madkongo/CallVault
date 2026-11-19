@@ -116,4 +116,11 @@ class CloudCopyPolicyTest {
         // A looser test for the word would stop backing this call up, silently and for ever.
         assertTrue(CloudCopyPolicy.mayGoToCloud("20260728_085310.464+0300_in_Important.ogg"))
     }
+
+    @Test
+    fun `only a size Drive itself reported is recorded`() {
+        org.junit.Assert.assertEquals(500L, CloudCopyPolicy.driveSizeToRecord(500L))
+        org.junit.Assert.assertNull(CloudCopyPolicy.driveSizeToRecord(0L))
+        org.junit.Assert.assertNull(CloudCopyPolicy.driveSizeToRecord(-1L))
+    }
 }

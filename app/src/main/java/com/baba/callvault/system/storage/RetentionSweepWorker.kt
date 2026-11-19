@@ -14,6 +14,7 @@ import androidx.documentfile.provider.DocumentFile
 import androidx.work.CoroutineWorker
 import androidx.work.WorkerParameters
 import com.baba.callvault.data.AppPreferences
+import com.baba.callvault.data.StorageTarget
 import com.baba.callvault.data.recordings.DriveCatalogRepair
 import com.baba.callvault.data.recordings.ImportedRecording
 import com.baba.callvault.data.recordings.RecordingCatalog
@@ -106,7 +107,18 @@ class RetentionSweepWorker(ctx: Context, params: WorkerParameters) : CoroutineWo
         // one it remembers, and the setting promises a daily check of the folder — so a bookkeeping gap
         // must not quietly become an exemption that lasts forever.
         val untracked = UntrackedRecordings.find(applicationContext)
-        val deletedDeviceNames = deleteExpired(untracked.device.filter { it.displayName !in starred }, localCutoff, "device")
+        // An untracked device file has no catalogued Drive copy, so in Both/Drive mode nothing proves it reached
+        // Drive: it may be the only copy, and it stays (review C7). Device-only mode is unchanged.
+        val untrackedDevice = untracked.device.filter { it.displayName !in starred }
+        val deletedDeviceNames = if (target == StorageTarget.LOCAL) {
+            deleteExpired(untrackedDevice, localCutoff, "device")
+        } else {
+            val kept = untrackedDevice.count { RetentionPolicy.isExpired(it.lastModified, localCutoff) }
+            if (kept > 0) {
+                AppLogger.i(TAG, "Kept $kept expired untracked device file(s): no proven Drive copy in $target mode")
+            }
+            emptyList()
+        }
         val deletedDriveNames = deleteExpired(untracked.drive.filter { it.displayName !in starred }, driveCutoff, "Drive")
         deletedLocal += deletedDeviceNames.size
         deletedDrive += deletedDriveNames.size

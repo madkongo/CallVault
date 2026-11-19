@@ -18,7 +18,14 @@ import com.baba.callvault.data.StorageTarget
 import com.baba.callvault.data.recordings.RecordingsRepository
 import com.baba.callvault.data.recordings.db.RecordingDatabase
 import com.baba.callvault.data.recordings.db.RecordingEntry
+import androidx.documentfile.provider.DocumentFile
+import com.baba.callvault.data.recordings.RecordingsRepository.RecordingItem
+import com.baba.callvault.data.recordings.UntrackedRecordings
 import io.mockk.coEvery
+import io.mockk.every
+import io.mockk.mockk
+import io.mockk.mockkStatic
+import io.mockk.verify
 import io.mockk.coVerify
 import io.mockk.mockkObject
 import io.mockk.unmockkAll
@@ -127,5 +134,44 @@ class RetentionKeepsUnsyncedTest {
         sweep()
 
         assertTrue(deleted(unsynced))
+    }
+
+    // ---- the untracked pass (review C7, second pass)
+
+    private val untrackedName = "20240101_131010.000+0200_in_0504444444.ogg"
+    private val untrackedUri = Uri.parse(local(untrackedName))
+
+    private fun withUntrackedDeviceFile(): DocumentFile {
+        val item = RecordingItem(untrackedUri, untrackedName, 500L, old, null, null, old, number = null)
+        mockkObject(UntrackedRecordings)
+        coEvery { UntrackedRecordings.find(any()) } returns UntrackedRecordings.Found(device = listOf(item), drive = emptyList())
+        val doc = mockk<DocumentFile>()
+        every { doc.delete() } returns true
+        mockkStatic(DocumentFile::class)
+        every { DocumentFile.fromSingleUri(any(), untrackedUri) } returns doc
+        return doc
+    }
+
+    @Test
+    fun `in Both mode an expired untracked device file is kept, having no proven Drive copy`() {
+        prefs.setRetentionLocalDays(7)
+        prefs.setStorageCapBytes(0L)
+        val doc = withUntrackedDeviceFile()
+
+        sweep()
+
+        verify(exactly = 0) { doc.delete() }
+    }
+
+    @Test
+    fun `in device-only mode an expired untracked device file still ages out`() {
+        prefs.setStorageTarget(StorageTarget.LOCAL)
+        prefs.setRetentionLocalDays(7)
+        prefs.setStorageCapBytes(0L)
+        val doc = withUntrackedDeviceFile()
+
+        sweep()
+
+        verify(exactly = 1) { doc.delete() }
     }
 }
