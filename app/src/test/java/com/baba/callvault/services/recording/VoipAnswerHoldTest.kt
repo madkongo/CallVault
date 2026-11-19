@@ -73,17 +73,39 @@ class VoipAnswerHoldTest {
     }
 
     @Test
-    fun `start when they answer applies to a LINE call recognised in normal mode too`() {
-        // Review C31: a normal-mode call (item 108) skipped the hold, so an unanswered outgoing LINE call whose
-        // ringback plays through a call-voice player was published as a recording of the ring.
-        assertEquals(true, VoipAnswerHold.applies(recordFromAnswer = true, callPackage = "jp.naver.line.android"))
-        assertEquals(true, VoipAnswerHold.applies(recordFromAnswer = true, callPackage = "com.whatsapp"))
+    fun `a LINE call recognised in normal mode is never held, its answer signal is unproven`() {
+        // Review C31 rework: LINE's call notice shape is unknown (Q33). An ongoing notice with
+        // showChronometer=false (NotificationCompat writes it on every notification) reads RINGING, and the
+        // hold would drop the call's audio and delete it at the end as unanswered.
+        assertEquals(false, VoipAnswerHold.applies(recordFromAnswer = true, callPackage = "jp.naver.line.android", viaNormalMode = true))
+        assertEquals(true, VoipAnswerHold.applies(recordFromAnswer = true, callPackage = "com.whatsapp", viaNormalMode = false))
     }
 
     @Test
     fun `no hold when the setting is off or the app is unknown`() {
-        assertEquals(false, VoipAnswerHold.applies(recordFromAnswer = false, callPackage = "com.whatsapp"))
-        assertEquals(false, VoipAnswerHold.applies(recordFromAnswer = true, callPackage = null))
+        assertEquals(false, VoipAnswerHold.applies(recordFromAnswer = false, callPackage = "com.whatsapp", viaNormalMode = false))
+        assertEquals(false, VoipAnswerHold.applies(recordFromAnswer = true, callPackage = null, viaNormalMode = false))
+    }
+
+    @Test
+    fun `a LINE call whose notice reads ringing and that ends while held is kept, not deleted`() {
+        // The exact failure: an ongoing LINE-like notice marked as a call with the timer flag false.
+        val lineNotice = """
+            NotificationRecord(0x01: pkg=jp.naver.line.android user=UserHandle{0} id=7 tag=null
+              Notification(channel=call flags=ONGOING_EVENT|NO_CLEAR category=call actions=2)
+              extras={
+                    android.title=String (LINE)
+                    android.showChronometer=Boolean (false)
+              }
+        """.trimIndent()
+        val read = com.baba.callvault.server.VoipCallerName.extractAnswerState(lineNotice, "jp.naver.line.android")
+        assertEquals(com.baba.callvault.server.VoipCallerName.AnswerState.RINGING, read)
+        assertEquals(Decision.HOLD, VoipAnswerHold.decide(VOIP_RINGING, elapsedMs = 20_000, seenRinging = true))
+        // Whatever held it, a normal-mode call that ends held is kept.
+        assertEquals(false, VoipAnswerHold.discardAsUnanswered(heldForAnswer = true, viaNormalMode = true))
+        // A mode-path call (WhatsApp, measured Q36) still leaves no file when nobody picked up.
+        assertEquals(true, VoipAnswerHold.discardAsUnanswered(heldForAnswer = true, viaNormalMode = false))
+        assertEquals(false, VoipAnswerHold.discardAsUnanswered(heldForAnswer = false, viaNormalMode = false))
     }
 
     @Test

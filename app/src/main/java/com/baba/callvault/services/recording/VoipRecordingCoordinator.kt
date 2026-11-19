@@ -396,9 +396,12 @@ object VoipRecordingCoordinator {
         currentCallPackage = callPackage
         directionJob = if (callPackage != null) readDirection(callPackage) else null
         // The capture had to open now; what waits for the pickup is the encode. See VoipAnswerHold.
-        // A normal-mode call (BabApps item 108) too (review C31): its live call-voice pair does not prove an answer.
-        if (VoipAnswerHold.applies(prefs.isRecordFromAnswerEnabled(), callPackage)) {
+        // Not a normal-mode call (BabApps item 108, review C31 rework): its notice gives no proven answer signal,
+        // and a hold on an unproven signal can lose an answered call. Said in the always-on log when it applies.
+        if (VoipAnswerHold.applies(prefs.isRecordFromAnswerEnabled(), callPackage, viaNormalMode)) {
             answerHoldJob = holdUntilAnswered(context, callPackage!!)
+        } else if (viaNormalMode && prefs.isRecordFromAnswerEnabled()) {
+            CallEndLog.record(context, "app call answer hold: not held: normal-mode call, no proven answer signal for this app; recording from the start")
         }
     }
 
@@ -960,7 +963,12 @@ object VoipRecordingCoordinator {
         // Ending while still held means nobody picked up: whatever the file holds is the moment
         // before the hold engaged, not a conversation. Discarded rather than published, so an
         // unanswered app call leaves nothing behind — the same as an unanswered phone call.
-        val unanswered = heldForAnswer
+        // Never a normal-mode call (C31 rework): kept, whatever held it.
+        val heldAtEnd = heldForAnswer
+        val unanswered = VoipAnswerHold.discardAsUnanswered(heldAtEnd, startedViaNormalMode)
+        if (heldAtEnd && !unanswered) {
+            CallEndLog.record(context, "app call answer hold: the normal-mode call ended while held; keeping the recording (no proven answer signal)")
+        }
         heldForAnswer = false
         val caller = lateCaller
         lateCaller = null

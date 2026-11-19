@@ -38,15 +38,24 @@ object VoipAnswerHold {
     enum class Decision { HOLD, RELEASE }
 
     /**
-     * Whether "Start when they answer" holds this call's encode: the setting is on and the calling app is known
-     * (its notification is what is read).
+     * Whether "Start when they answer" holds this call's encode: the setting is on, the calling app is known (its
+     * notification is what is read), and the call was recognised by its audio mode.
      *
-     * Every app call, a normal-mode one (LINE, BabApps item 108) included (review C31). A live call-voice player
-     * plus recording does not prove the call is connected: an outgoing call can play its ringback through one.
-     * [decide] releases at once for an app whose notification has no call timer, and after
-     * [NOTIFICATION_GRACE_MS] when there is no notification, so an app that never says is not swallowed.
+     * Never a normal-mode call (LINE in MODE_NORMAL, BabApps item 108; review C31 rework). LINE's call notice is
+     * unproven (Q33): an ongoing notice with `showChronometer=false`, which NotificationCompat writes on every
+     * notification, reads RINGING, so the hold would drop the call's audio until an answer that never shows and
+     * then delete the call as unanswered. No ring is heard for such a call either, so nothing else could release
+     * it. Recording an unanswered LINE call's ringback is the price; losing an answered call is not acceptable.
      */
-    fun applies(recordFromAnswer: Boolean, callPackage: String?): Boolean = recordFromAnswer && callPackage != null
+    fun applies(recordFromAnswer: Boolean, callPackage: String?, viaNormalMode: Boolean): Boolean =
+        recordFromAnswer && callPackage != null && !viaNormalMode
+
+    /**
+     * Whether a call that ends while its encode is still held is thrown away as unanswered. Only a mode-path call:
+     * that is the measured WhatsApp case (Q36). A normal-mode call is kept whatever held it, because nothing about
+     * its answer is proven.
+     */
+    fun discardAsUnanswered(heldForAnswer: Boolean, viaNormalMode: Boolean): Boolean = heldForAnswer && !viaNormalMode
 
     /**
      * What to do on a poll that got [answered] from the host (null = the host has no such method),
