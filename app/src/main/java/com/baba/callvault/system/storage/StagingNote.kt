@@ -38,6 +38,19 @@ data class StagingNote(
 
         fun fileFor(staged: File): File = File(staged.parentFile, staged.name + SUFFIX)
 
+        /**
+         * Deletes a staged recording that was published or discarded, and its note with it (review N19: the note
+         * was left behind until the next rescue sweep). Returns whether the recording is gone; the caller logs a false.
+         * The recording goes first and the note only once it is gone: a recording that could not be deleted keeps its
+         * note, so the rescue can still save it under its own name and folder.
+         */
+        fun deleteWithNote(staged: File): Boolean {
+            staged.delete()
+            if (staged.exists()) return false
+            fileFor(staged).delete()
+            return true
+        }
+
         fun decode(text: String): StagingNote? {
             val fields = text.lineSequence()
                 .mapNotNull { line -> line.indexOf('=').takeIf { it > 0 }?.let { line.substring(0, it) to line.substring(it + 1) } }

@@ -58,6 +58,18 @@ object VoipAnswerHold {
     fun discardAsUnanswered(heldForAnswer: Boolean, viaNormalMode: Boolean): Boolean = heldForAnswer && !viaNormalMode
 
     /**
+     * Why a started app call is discarded at its end, or null to keep it. Unanswered is asked FIRST (review N17): a
+     * held call's clock stops at the hold, so a 22 s unanswered ring has well under 3 s of audio and no far side,
+     * which also reads as [VoipStubPolicy.endedBeforeCapture]. Said that way, the log blamed the capture for
+     * a call nobody picked up.
+     */
+    fun endDiscardReason(unanswered: Boolean, wroteAnything: Boolean, recordedMs: Long?, farHeard: Boolean): VoipOutcome.Reason? = when {
+        unanswered -> VoipOutcome.Reason.UNANSWERED
+        wroteAnything && VoipStubPolicy.endedBeforeCapture(recordedMs, farHeard) -> VoipOutcome.Reason.ENDED_BEFORE_CAPTURE
+        else -> null
+    }
+
+    /**
      * What to do on a poll that got [answered] from the host (null = the host has no such method),
      * [elapsedMs] into the hold, given whether an earlier poll already [seenRinging] and whether the ring
      * listener saw the call answered ([ringAnswered]).

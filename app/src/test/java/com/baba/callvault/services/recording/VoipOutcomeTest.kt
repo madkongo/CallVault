@@ -57,7 +57,7 @@ class VoipOutcomeTest {
         // Guard: a staged recording deleted anywhere else in the coordinator is a discard with no outcome line.
         val root = listOf(File("src/main/java"), File("app/src/main/java")).first { it.isDirectory }
         val source = File(root, "com/baba/callvault/services/recording/VoipRecordingCoordinator.kt").readText()
-        val deletes = Regex("""stagingFile\?\.delete\(\)""").findAll(source).count()
+        val deletes = Regex("""stagingFile\?\.let \{ deleteStaged\(""").findAll(source).count()
         assertEquals("staged-file deletes outside discardStarted()", 1, deletes)
         assertFalse(source.contains("discardAsIgnored = true"))
     }

@@ -9,6 +9,9 @@
 package com.baba.callvault.services.recording
 
 import com.baba.callvault.data.health.Prerequisite
+import com.baba.callvault.system.storage.SafHelper
+import com.baba.callvault.system.storage.StagingNote
+import java.io.File
 
 /** What to say about an app call that went unrecorded. */
 enum class MissReport {
@@ -50,4 +53,62 @@ object VoipMissPolicy {
 
         else -> MissReport.UNEXPLAINED
     }
+
+    /** What a start that found no recorder comes to, once its call has ended (review N18). */
+    enum class NotReadyVerdict {
+        /** Nothing recorded the call: say so. */
+        REPORT,
+
+        /** A recording of the call exists: the recorder's session for a killed CallVault, staged or in the library. */
+        RECORDED_ELSEWHERE,
+
+        /** The library could not be read, so a rescued recording of the call cannot be ruled out: not reported. */
+        UNVERIFIABLE,
+
+        /** Nothing on the phone looked like a call when it started (issue #29): not a miss. */
+        NOT_A_CALL,
+    }
+
+    /**
+     * Whether an app call whose start found the recorder not connected went unrecorded (review N18).
+     *
+     * Not decided at the start: a CallVault restarted into a call (the phone killed it mid-call, Q25) starts that call
+     * before its recorder connection is back, while the recorder is still recording the call for the killed process.
+     * Saying "not recorded" then was false, and the rescue published the whole call. At the end it is known.
+     *
+     * @param lookedLikeCallAtStart [CallEvidence] at the start; at the end the call is over and it says nothing.
+     * @param recorderRecordingUnowned the recorder is recording a session this process does not own; null when the
+     *   recorder could not be asked (still not connected).
+     * @param foundElsewhere a recording of the call was found staged or in the library; null when the library could
+     *   not be read and nothing else was found.
+     */
+    fun notReadyAtCallEnd(lookedLikeCallAtStart: Boolean, recorderRecordingUnowned: Boolean?, foundElsewhere: Boolean?): NotReadyVerdict = when {
+        recorderRecordingUnowned == true || foundElsewhere == true -> NotReadyVerdict.RECORDED_ELSEWHERE
+        !lookedLikeCallAtStart -> NotReadyVerdict.NOT_A_CALL
+        foundElsewhere == null -> NotReadyVerdict.UNVERIFIABLE
+        else -> NotReadyVerdict.REPORT
+    }
+
+    /**
+     * The staged recording of a call that ran from [sinceMillis] to [untilMillis], if [files] (the staging folder)
+     * hold one: non-empty, written at or after [sinceMillis], started (by its note) no later than [untilMillis], and
+     * not claimed by [ownedLive] for a recording still running here. A recording started after the call ended is the
+     * next call's (a phone call answered over it), never this one's.
+     */
+    fun stagedRecordingOfCall(files: List<File>, sinceMillis: Long, untilMillis: Long, ownedLive: (File) -> Boolean): File? =
+        files.firstOrNull { f ->
+            SafHelper.isStagedRecording(f) && f.length() > 0L && f.lastModified() >= sinceMillis && !ownedLive(f) &&
+                (startedAt(f) ?: f.lastModified()) <= untilMillis
+        }
+
+    private fun startedAt(staged: File): Long? = runCatching {
+        StagingNote.fileFor(staged).takeIf { it.exists() }?.let { StagingNote.decode(it.readText())?.startedAtMillis }
+    }.getOrNull()
+
+    /**
+     * The catalogued recording (name, start) whose start lies within [fromMillis]..[untilMillis], if any: the killed
+     * CallVault's recording, published by the cut-off rescue before the call ended.
+     */
+    fun cataloguedOfCall(entries: List<Pair<String, Long?>>, fromMillis: Long, untilMillis: Long): String? =
+        entries.firstOrNull { (_, start) -> start != null && start in fromMillis..untilMillis }?.first
 }
