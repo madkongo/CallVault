@@ -945,4 +945,10 @@
     <string name="general_show_less">Menos</string>
     <string name="summary_card_state_expanded">Expandido</string>
     <string name="summary_card_state_collapsed">Recolhido</string>
+    <plurals name="notif_retention_waiting_for_drive_title">
+        <item quantity="one">Gravação antiga mantida no celular: o Drive ainda não fez backup dela (%1$d)</item>
+        <item quantity="many">Gravações antigas mantidas no celular: o Drive ainda não fez backup delas (%1$d)</item>
+        <item quantity="other">Gravações antigas mantidas no celular: o Drive ainda não fez backup delas (%1$d)</item>
+    </plurals>
+    <string name="notif_retention_waiting_for_drive_text">Sua limpeza automática as apagaria deste celular, mas o Google Drive ainda não tem uma cópia confirmada, então elas ficam aqui. Abra o CallVault para verificar as configurações do Drive.</string>
 </resources>

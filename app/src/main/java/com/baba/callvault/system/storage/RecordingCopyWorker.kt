@@ -101,12 +101,12 @@ class RecordingCopyWorker(ctx: Context, params: WorkerParameters) : CoroutineWor
                     return Result.success()
                 }
                 AppLogger.i(TAG, "'$name' is already in Drive; not uploading it again")
-                finish(name, result.uri, srcSize, deleteLocal, src, isSidecar, driveSize)
+                finish(name, result.uri, deleteLocal, src, isSidecar, driveSize)
             }
 
             is SafHelper.CopyResult.Copied -> {
                 AppLogger.i(TAG, "Recording copied to Drive ('$name', ${result.bytes} bytes, deleteLocal=$deleteLocal)")
-                finish(name, result.uri, result.bytes, deleteLocal, src, isSidecar, driveSize)
+                finish(name, result.uri, deleteLocal, src, isSidecar, driveSize)
             }
 
             is SafHelper.CopyResult.Failed -> giveUpOrRetry(name, result.reason, isSidecar)
@@ -117,7 +117,6 @@ class RecordingCopyWorker(ctx: Context, params: WorkerParameters) : CoroutineWor
     private suspend fun finish(
         name: String,
         driveUri: Uri,
-        sizeBytes: Long,
         deleteLocal: Boolean,
         src: Uri,
         isSidecar: Boolean,
@@ -149,7 +148,13 @@ class RecordingCopyWorker(ctx: Context, params: WorkerParameters) : CoroutineWor
         // stamped when the audio uploaded — so there is nothing to mark. Only the audio copy updates the
         // catalog, so the Home list reflects where the file now lives without re-scanning the Drive folder.
         if (!isSidecar) {
-            RecordingCatalog.markDrive(applicationContext, name, driveUri, sizeBytes.takeIf { it > 0L },
+            // Drive's own length, or none: the device size here would let retention treat an unconfirmed upload
+            // as proof the call is in Drive (review C7).
+            val recorded = CloudCopyPolicy.driveSizeToRecord(driveSize)
+            if (recorded == null) {
+                AppLogger.w(TAG, "'$name': Drive reported no size for its copy; recorded without one, so the device copy is not yet treated as backed up")
+            }
+            RecordingCatalog.markDrive(applicationContext, name, driveUri, recorded,
                 deleteLocalAfter = CloudCopyPolicy.shouldClearLocalReference(deleteLocal, deletedLocally))
         }
         return Result.success()

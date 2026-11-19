@@ -940,4 +940,9 @@
     <string name="general_show_less">Thu gọn</string>
     <string name="summary_card_state_expanded">Đã mở rộng</string>
     <string name="summary_card_state_collapsed">Đã thu gọn</string>
+    <plurals name="notif_retention_waiting_for_drive_title">
+        <item quantity="one">Đã giữ bản ghi cũ trên điện thoại: Drive chưa sao lưu chúng (%1$d)</item>
+        <item quantity="other">Đã giữ bản ghi cũ trên điện thoại: Drive chưa sao lưu chúng (%1$d)</item>
+    </plurals>
+    <string name="notif_retention_waiting_for_drive_text">Cài đặt dọn dẹp sẽ xóa chúng khỏi điện thoại này, nhưng Google Drive chưa có bản sao được xác nhận nên chúng vẫn ở đây. Mở CallVault để kiểm tra cài đặt Drive.</string>
 </resources>

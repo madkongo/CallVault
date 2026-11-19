@@ -13,6 +13,7 @@ import android.net.Uri
 import androidx.documentfile.provider.DocumentFile
 import com.baba.callvault.data.AppPreferences
 import com.baba.callvault.data.recordings.RecordingCatalog
+import com.baba.callvault.data.recordings.RecordingSidecars
 import com.baba.callvault.data.recordings.db.MergePartEntry
 import com.baba.callvault.data.recordings.db.RecordingDatabase
 import com.baba.callvault.data.recordings.db.RecordingEntry
@@ -153,33 +154,48 @@ object MergeService {
             //    itself, so un-merge is always one level and partName always names an original call.
             val manifest = flatten(context, entries, boundaries)
 
-            // 4. Only now is it safe to remove what the user had. removeEverywhere drops both the local
-            //    and the Drive copy of each consumed part — a Drive-only part's Drive original is
-            //    replaced by the merged file, same as a local merge replaces the local originals.
-            val keepOriginals = AppPreferences(context).isKeepOriginalsAfterMerge()
-            if (!keepOriginals) entries.forEach { removeEverywhere(context, it) }
-
-            // 5. Publish. With the originals gone the primary's name is free again, which is what makes
-            //    the merged recording read as that conversation continued rather than as a new one.
+            // 4. Publish into the user's folder and PROVE it is there before anything of theirs goes: the
+            //    published document must read back at exactly the staged size. Until then the originals
+            //    are untouched, so a failed or short publish costs nothing but this merge (review C4).
             val mergedName = freeName(context, primaryName)
+            val stagedSize = stagingFile.length()
             val published = SafHelper.publishStagedRecording(context, folderUri, mergedName, mime, stagingFile)
-                ?: return Outcome.Failed("The merged recording could not be saved to your folder")
+            if (published == null) {
+                AppLogger.e(TAG, "Publishing $mergedName failed; the originals are kept and the staged merge discarded")
+                stagingFile.delete()
+                return Outcome.Failed("The merged recording could not be saved to your folder")
+            }
+            val size = SafHelper.fileSize(context, published)
+            if (stagedSize <= 0L || size != stagedSize) {
+                AppLogger.e(TAG, "Published $mergedName reads back as $size bytes, staged $stagedSize; originals kept, published copy removed")
+                SafHelper.deleteDocument(DocumentFile.fromSingleUri(context, published), mergedName)
+                stagingFile.delete()
+                return Outcome.Failed("The merged recording could not be saved to your folder")
+            }
             stagingFile.delete()
 
-            val size = SafHelper.fileSize(context, published)
+            // 5. Catalog the merged recording with its manifest and metadata, still before any delete:
+            //    the metadata is copied from the parts, so it has to be read while they exist.
             RecordingCatalog.recordLocal(
                 context, mergedName, published, size,
                 entries.first().lastModified.takeIf { it > 0 } ?: System.currentTimeMillis()
             )
             RecordingCatalog.setDuration(context, mergedName, boundaries.sumOf { it.durationUs } / 1_000_000L)
-            // Same reason as on the way back: the merged recording is a new file, and the parts' Drive
-            // copies were just deleted, so without this a library kept in Drive loses the conversation.
-            StorageRouter.route(context, published, mergedName, mime)
             val stamped = manifest.map { it.copy(mergedName = mergedName) }
             db.mergePartDao().insertAll(stamped)
             MergeMetadata.onMerge(context, mergedName, stamped)
 
-            // 6. The merge is done; clean up the downloads as a visible step before reporting success.
+            // 6. Only now is it safe to remove what the user had. removeEverywhere drops both the local
+            //    and the Drive copy of each consumed part — a Drive-only part's Drive original is
+            //    replaced by the merged file, same as a local merge replaces the local originals.
+            val keepOriginals = AppPreferences(context).isKeepOriginalsAfterMerge()
+            if (!keepOriginals) entries.forEach { retireMergedInput(context, it) }
+
+            // Same reason as on the way back: the merged recording is a new file, and the parts' Drive
+            // copies were just deleted, so without this a library kept in Drive loses the conversation.
+            StorageRouter.route(context, published, mergedName, mime)
+
+            // 7. The merge is done; clean up the downloads as a visible step before reporting success.
             if (tempFiles.isNotEmpty()) {
                 onPhase(MergePhase.DELETING_TEMP)
                 tempFiles.forEach { runCatching { it.delete() } }
@@ -241,8 +257,9 @@ object MergeService {
         val folderUri = AppPreferences(context).getRecordingFolderUri()
             ?: return Outcome.Failed("No recordings folder is set")
 
-        // 1. Cut into staging, so a failure leaves the merged recording untouched.
-        val staging = File(context.cacheDir, "unmerge").apply { deleteRecursively(); mkdirs() }
+        // 1. Cut into staging, so a failure leaves the merged recording untouched. filesDir, not cacheDir:
+        //    Android may clear a cache under storage pressure, mid-publish.
+        val staging = File(context.filesDir, "unmerge").apply { deleteRecursively(); mkdirs() }
         val targets = parts.map { File(staging, it.partName) }
         val cuts = parts.map { AudioSplit.Cut(it.frameStart, it.frameCount, it.encoderDelayUs, it.encoderPaddingUs) }
         val ok = runCatching {
@@ -270,34 +287,136 @@ object MergeService {
             }
         }
 
-        // 3. Safe to remove the merged recording and publish the parts under their own names.
-        removeEverywhere(context, entry)
+        // 3. Publish every part and read each back at its staged size, while the merged recording is
+        //    still there. Any part that does not make it undoes the ones that did, and the merged call,
+        //    its manifest and its metadata stay exactly as they were (review C6).
         val mime = mimeFor(mergedName.substringAfterLast('.', "m4a"))
-        var restored = 0
+        val published = mutableListOf<Uri>()
         parts.forEachIndexed { i, part ->
-            val uri = SafHelper.publishStagedRecording(context, folderUri, part.partName, mime, targets[i])
+            val uri = publishVerified(context, folderUri, part.partName, mime, targets[i])
             if (uri == null) {
-                AppLogger.e(TAG, "Could not restore ${part.partName}")
-                return@forEachIndexed
+                AppLogger.e(TAG, "Could not restore ${part.partName}; undoing ${published.size} restored part(s), $mergedName kept")
+                val undone = removePublished(context, published, parts)
+                staging.deleteRecursively()
+                return Outcome.Failed(unMergeFailure("A call could not be restored to your folder", undone))
             }
-            restored++
-            RecordingCatalog.recordLocal(
-                context, part.partName, uri, SafHelper.fileSize(context, uri), part.originalLastModified
-            )
+            published += uri
+            onPartProgress(i, true)
+        }
+
+        // 4. Catalogue every part before the merged recording may go: until a part has its row it is a hidden part,
+        //    and deleting the merged call would take its kept data with it (N2). A row write that fails undoes the
+        //    rows and files of this un-merge and keeps the merged call, as a failed publish does.
+        val rowFailure = catalogueParts(context, parts, published)
+        if (rowFailure != null) {
+            AppLogger.e(TAG, "Could not catalogue ${rowFailure.part}; undoing this un-merge, $mergedName kept: ${rowFailure.reason}")
+            val undone = removePublished(context, published, parts) && rowFailure.rowsUndone
+            staging.deleteRecursively()
+            return Outcome.Failed(unMergeFailure("A call could not be restored to your library", undone))
+        }
+        parts.forEachIndexed { i, part ->
+            val uri = published[i]
             RecordingCatalog.setDuration(context, part.partName, part.durationUs / 1_000_000L)
             // A restored call is a new file, so it needs sending wherever recordings go — otherwise
             // a part that lived in Drive before the merge comes back device-only, and the copy the
             // user actually relies on is silently missing. Routed rather than copied directly, so it
             // follows the current target and schedule instead of replaying an old state.
             StorageRouter.route(context, uri, part.partName, mime)
-            onPartProgress(i, true)
         }
+        removeEverywhere(context, entry)
         db.mergePartDao().deleteParts(mergedName)
         MergeMetadata.onUnMerge(context, mergedName)
         staging.deleteRecursively()
 
-        AppLogger.i(TAG, "Un-merged $mergedName back into $restored calls")
-        return Outcome.UnMerged(restored)
+        AppLogger.i(TAG, "Un-merged $mergedName back into ${parts.size} calls")
+        return Outcome.UnMerged(parts.size)
+    }
+
+    /** Why [catalogueParts] stopped, and whether it managed to put every row it had changed back. */
+    private data class RowFailure(val part: String, val reason: String, val rowsUndone: Boolean)
+
+    /**
+     * The message for a failed un-merge. "Nothing was changed" only when the undo really succeeded; otherwise it
+     * says the merged call is kept but a restored copy may be left over, so the user is not told something false.
+     */
+    private fun unMergeFailure(what: String, undone: Boolean): String =
+        if (undone) "$what, so nothing was changed"
+        else "$what. The merged call is kept, but a partly restored call may be left in your folder"
+
+    /** Removes the parts published so far; true when every one is gone (each refusal is logged). */
+    private fun removePublished(context: Context, published: List<Uri>, parts: List<MergePartEntry>): Boolean {
+        var all = true
+        published.forEachIndexed { j, done ->
+            if (!SafHelper.deleteDocument(DocumentFile.fromSingleUri(context, done), parts[j].partName)) {
+                AppLogger.e(TAG, "Undoing the un-merge: ${parts[j].partName} could not be removed again")
+                all = false
+            }
+        }
+        return all
+    }
+
+    /**
+     * Writes each part's catalog row for its [published] copy. On the first failure, puts back every row it had
+     * changed (a part catalogued before keeps its earlier row; a hidden part loses only its new row, never its kept
+     * data) and returns why; null when every row was written.
+     */
+    private suspend fun catalogueParts(
+        context: Context,
+        parts: List<MergePartEntry>,
+        published: List<Uri>,
+    ): RowFailure? {
+        val dao = RecordingDatabase.get(context).recordingDao()
+        val before = mutableListOf<Pair<String, RecordingEntry?>>()
+        for ((i, part) in parts.withIndex()) {
+            val previous = runCatching { dao.findByName(part.partName) }.getOrElse { e ->
+                return RowFailure(part.partName, e.message ?: e.javaClass.simpleName, undoRows(context, before))
+            }
+            before += part.partName to previous
+            val uri = published[i]
+            val failure = RecordingCatalog.recordLocalReporting(
+                context, part.partName, uri, SafHelper.fileSize(context, uri), part.originalLastModified
+            )
+            if (failure != null) {
+                return RowFailure(part.partName, failure.message ?: failure.javaClass.simpleName, undoRows(context, before))
+            }
+        }
+        return null
+    }
+
+    /**
+     * Puts the rows [catalogueParts] changed back as they were, without touching any part's kept data. True when
+     * every one was put back.
+     */
+    private suspend fun undoRows(context: Context, before: List<Pair<String, RecordingEntry?>>): Boolean {
+        val dao = RecordingDatabase.get(context).recordingDao()
+        var all = true
+        before.forEach { (name, previous) ->
+            runCatching {
+                if (previous != null) dao.upsert(previous)
+                else dao.deleteByName(name) // forgetName's own write, but one that reports a failure
+            }.onFailure {
+                all = false
+                AppLogger.e(TAG, "Could not undo the row for $name after a failed un-merge: ${it.message}")
+            }
+        }
+        return all
+    }
+
+    /**
+     * Publishes [staged] as [name] and returns its URI only when the published document reads back at the
+     * staged size; otherwise removes whatever was published, logs why, and returns null.
+     */
+    private fun publishVerified(context: Context, folderUri: Uri, name: String, mime: String, staged: File): Uri? {
+        val stagedSize = staged.length()
+        val uri = SafHelper.publishStagedRecording(context, folderUri, name, mime, staged) ?: run {
+            AppLogger.e(TAG, "Publishing $name failed")
+            return null
+        }
+        val size = SafHelper.fileSize(context, uri)
+        if (stagedSize > 0L && size == stagedSize) return uri
+        AppLogger.e(TAG, "Published $name reads back as $size bytes, staged $stagedSize; removing it")
+        SafHelper.deleteDocument(DocumentFile.fromSingleUri(context, uri), name)
+        return null
     }
 
     /** Runs [block] with every source open, closing them all whatever happens. */
@@ -331,12 +450,40 @@ object MergeService {
         return MergeManifest.flatten(inputs, boundaries)
     }
 
-    /** Deletes every copy of a recording and drops its catalog row. */
-    private suspend fun removeEverywhere(context: Context, entry: RecordingEntry) {
+    /**
+     * Takes a merged input out of the library once the merged recording holds it (owner decision N2, option A).
+     *
+     * Its audio goes, and its catalog row, but NOT its sidecars, transcript, notes, tags, star, marks, speaker turns or
+     * summary: those stay, hidden by [HiddenMergeParts], so un-merge gives them back. An input that was itself a
+     * merge is different: un-merge returns its originals (whose data the new manifest now holds), never it, so its
+     * old manifest is dropped first and then its own copied data goes with it.
+     */
+    private suspend fun retireMergedInput(context: Context, entry: RecordingEntry) {
+        // Only the audio: its .md and .json stay beside it, like the rest of its kept data, because the .json is
+        // written only when a call is recorded and could never be made again for un-merge. They go when the last
+        // merged call holding this part is deleted for good (see HiddenMergeParts).
+        deleteFiles(context, entry)
+        val dao = RecordingDatabase.get(context).mergePartDao()
+        if (dao.partsOf(entry.displayName).isNotEmpty()) {
+            dao.deleteParts(entry.displayName)
+            RecordingCatalog.removeName(context, entry.displayName)
+            // Nothing will ever restore this merged input itself, so its own sidecars go with its data.
+            RecordingSidecars.deleteFor(context, listOf(entry.displayName))
+        } else {
+            RecordingCatalog.forgetName(context, entry.displayName)
+        }
+    }
+
+    private fun deleteFiles(context: Context, entry: RecordingEntry) {
         listOfNotNull(entry.localUri, entry.driveUri).forEach { raw ->
             val uri = Uri.parse(raw)
             SafHelper.deleteDocument(DocumentFile.fromSingleUri(context, uri), entry.displayName)
         }
+    }
+
+    /** Deletes every copy of a recording and drops its catalog row. */
+    private suspend fun removeEverywhere(context: Context, entry: RecordingEntry) {
+        deleteFiles(context, entry)
         RecordingCatalog.removeName(context, entry.displayName)
     }
 

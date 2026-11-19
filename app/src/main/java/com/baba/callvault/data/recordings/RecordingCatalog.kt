@@ -125,10 +125,76 @@ object RecordingCatalog {
             .onFailure { AppLogger.w(TAG, "setDuration('$displayName') failed: ${it.message}") }
     }
 
+    private const val MIGRATIONS_FILE = "cv_catalog_migrations"
+    private const val KEY_DRIVE_SIZES_FORGOTTEN = "drive_sizes_unconfirmed_forgotten"
+
+    /**
+     * Once per install: forgets the stored Drive size of rows with a device copy (review C7 follow-up).
+     *
+     * Before C7 every path that stamped a Drive copy recorded the DEVICE size as the Drive size, confirmed by Drive
+     * or not, and retention takes an equal Drive size as proof the call reached Drive. Those stamps cannot be told
+     * from real ones, so they are dropped on every row with a device copy, the rows retention trusts; the Drive
+     * sweep, the folder scan and the Drive repair, which record only sizes Drive listed, re-confirm them. Drive-only
+     * rows keep their size: retention never relies on it, nothing would re-confirm it, and the list shows it. The flag is set only after the update succeeds, so a failure retries.
+     */
+    suspend fun forgetUnconfirmedDriveSizesOnce(context: Context): Boolean =
+        forgetUnconfirmedDriveSizesOnceWith(context) { dao(context).clearDeviceRowDriveSizes() }
+
+    /**
+     * [forgetUnconfirmedDriveSizesOnce] with the clear passed in, so a test can make it fail. True once the clear
+     * has succeeded (now or on an earlier run); false when it failed, which the retention sweep must treat as
+     * "old sizes may still be trusted wrongly" and delete no device copy. Cancellation is rethrown.
+     */
+    internal suspend fun forgetUnconfirmedDriveSizesOnceWith(context: Context, clear: suspend () -> Int): Boolean {
+        val state = context.getSharedPreferences(MIGRATIONS_FILE, Context.MODE_PRIVATE)
+        if (state.getBoolean(KEY_DRIVE_SIZES_FORGOTTEN, false)) return true
+        val cleared = try {
+            clear()
+        } catch (e: kotlinx.coroutines.CancellationException) {
+            throw e
+        } catch (e: Exception) {
+            AppLogger.w(TAG, "Could not forget the unconfirmed Drive sizes; retrying next time: ${e.message}")
+            return false
+        }
+        // commit(), not apply(): the flag must be on disk before anything trusts the sizes again.
+        if (!state.edit().putBoolean(KEY_DRIVE_SIZES_FORGOTTEN, true).commit()) {
+            AppLogger.w(TAG, "Forgot $cleared Drive size(s) but could not record it; doing it again next time")
+        }
+        AppLogger.i(TAG, "Forgot $cleared unconfirmed Drive size(s) from before Drive sizes were checked; a Drive listing re-confirms them")
+        return true
+    }
+
+    private const val KEY_DRIVE_SIZES_RECONFIRMED = "drive_sizes_reconfirmed_since_forgotten"
+
+    /**
+     * Records that a Drive sweep finished after the one-time clear, so the Drive sizes it lists have been stamped
+     * again. Until then, retention's "kept for Drive" count would include every expired call whose size was just
+     * cleared, and the notice would cry wolf (review C7/N3). A no-op before the clear has happened.
+     */
+    fun markDriveSizesReconfirmed(context: Context) {
+        val state = context.getSharedPreferences(MIGRATIONS_FILE, Context.MODE_PRIVATE)
+        if (!state.getBoolean(KEY_DRIVE_SIZES_FORGOTTEN, false) || state.getBoolean(KEY_DRIVE_SIZES_RECONFIRMED, false)) return
+        state.edit().putBoolean(KEY_DRIVE_SIZES_RECONFIRMED, true).apply()
+        AppLogger.i(TAG, "A Drive sweep finished after the old Drive sizes were cleared; they are re-confirmed")
+    }
+
+    /** Whether a Drive sweep has finished since the one-time clear; see [markDriveSizesReconfirmed]. */
+    fun areDriveSizesReconfirmed(context: Context): Boolean =
+        context.getSharedPreferences(MIGRATIONS_FILE, Context.MODE_PRIVATE).getBoolean(KEY_DRIVE_SIZES_RECONFIRMED, false)
+
     /** Whether [displayName] has a catalog row; null when the catalog cannot be read. Never throws. */
     suspend fun contains(context: Context, displayName: String): Boolean? =
         runCatching { dao(context).findByName(displayName) != null }.getOrElse {
             AppLogger.w(TAG, "contains() failed: ${it.message}"); null
+        }
+
+    /**
+     * All catalogued recordings, or null when the catalog could not be read: for callers that must tell "failed"
+     * from "empty", such as the retention sweep's "kept for Drive" count (review N3). Never throws.
+     */
+    suspend fun allOrNull(context: Context): List<RecordingEntry>? =
+        runCatching { dao(context).getAll() }.getOrElse {
+            AppLogger.w(TAG, "allOrNull() failed: ${it.message}"); null
         }
 
     /** All catalogued recordings, newest-first. Never throws (returns empty on failure). */

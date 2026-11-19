@@ -110,6 +110,42 @@ object DeviceFolderRescan {
         }
     }
 
+    /**
+     * Whether the recording at [uri], which just failed to play, is proven gone and may be forgotten (review C5).
+     *
+     * The same two proofs as the rescan: [uri] must be a catalogued DEVICE copy whose own folder is still readable,
+     * and the document itself must answer "file not found". A revoked grant or a removed SD card fails the folder
+     * proof, and a Drive copy is never judged here: [DriveCatalogRepair.forgetDeleted] does that with its own two
+     * proofs. Forgetting the row also deletes its transcript, notes, tags and star, so any doubt keeps it.
+     * Off the main thread; never throws.
+     */
+    suspend fun isProvenMissingDeviceCopy(context: Context, uri: Uri): Boolean = withContext(Dispatchers.IO) {
+        runCatching {
+            val s = uri.toString()
+            if (RecordingCatalog.all(context).none { it.localUri == s }) {
+                AppLogger.i(TAG, "Playback failed on a copy that is not a catalogued device copy; kept")
+                return@withContext false
+            }
+            val folder = treeOf(uri)
+            if (!SafHelper.isFolderValid(context, folder)) {
+                AppLogger.i(TAG, "Playback failed and the copy's folder is not readable (grant lost or card removed); kept")
+                return@withContext false
+            }
+            isGone(context, uri).also { gone ->
+                if (!gone) AppLogger.i(TAG, "Playback failed but the file is still there; kept")
+            }
+        }.getOrElse {
+            AppLogger.w(TAG, "Could not check a recording that failed to play; kept: ${it.message}")
+            false
+        }
+    }
+
+    /** The tree a document URI was granted under, or null when it is not a tree document. Never throws. */
+    private fun treeOf(uri: Uri): Uri? = runCatching {
+        if (!DocumentsContract.isTreeUri(uri)) null
+        else DocumentsContract.buildTreeDocumentUri(uri.authority, DocumentsContract.getTreeDocumentId(uri))
+    }.getOrNull()
+
     /** Whether [uri] is a document of the tree [treeId] on [authority]. Never throws. */
     private fun isUnderTree(uri: String, authority: String?, treeId: String): Boolean = runCatching {
         val u = uri.toUri()

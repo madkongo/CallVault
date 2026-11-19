@@ -942,4 +942,10 @@
     <string name="general_show_less">Meno</string>
     <string name="summary_card_state_expanded">Espanso</string>
     <string name="summary_card_state_collapsed">Compresso</string>
+    <plurals name="notif_retention_waiting_for_drive_title">
+        <item quantity="one">Vecchia registrazione tenuta sul telefono: Drive non l\'ha ancora salvata (%1$d)</item>
+        <item quantity="many">Vecchie registrazioni tenute sul telefono: Drive non le ha ancora salvate (%1$d)</item>
+        <item quantity="other">Vecchie registrazioni tenute sul telefono: Drive non le ha ancora salvate (%1$d)</item>
+    </plurals>
+    <string name="notif_retention_waiting_for_drive_text">Le impostazioni di pulizia le eliminerebbero da questo telefono, ma Google Drive non ne ha ancora una copia confermata, quindi restano qui. Apri CallVault per controllare le impostazioni di Drive.</string>
 </resources>

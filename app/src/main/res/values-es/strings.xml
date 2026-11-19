@@ -942,4 +942,10 @@
     <string name="general_show_less">Menos</string>
     <string name="summary_card_state_expanded">Expandido</string>
     <string name="summary_card_state_collapsed">Contraído</string>
+    <plurals name="notif_retention_waiting_for_drive_title">
+        <item quantity="one">Grabación antigua guardada en el teléfono: Drive aún no tiene copia (%1$d)</item>
+        <item quantity="many">Grabaciones antiguas guardadas en el teléfono: Drive aún no tiene copia (%1$d)</item>
+        <item quantity="other">Grabaciones antiguas guardadas en el teléfono: Drive aún no tiene copia (%1$d)</item>
+    </plurals>
+    <string name="notif_retention_waiting_for_drive_text">Tu limpieza automática las borraría de este teléfono, pero Google Drive aún no tiene una copia confirmada, así que se quedan aquí. Abre CallVault para revisar los ajustes de Drive.</string>
 </resources>

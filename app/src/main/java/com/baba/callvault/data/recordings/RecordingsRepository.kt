@@ -523,6 +523,37 @@ object RecordingsRepository {
      * Drive app raise its own "synchronization issue" toast. The cheap metadata check below still drops
      * obviously-dead/zero-byte entries.
      */
+    /**
+     * [enumerateFolder], but null when the folder could not be listed, where [enumerateFolder] answers an empty list
+     * (and DocumentFile.listFiles turns a failed query into "no files"). For callers that must tell "failed" from
+     * "empty", such as the retention sweep's "kept for Drive" count (review N3). The other callers keep the old
+     * answer. Logs the reason; never throws.
+     */
+    internal fun enumerateFolderOrNull(context: Context, folderUri: Uri): List<RecordingItem>? {
+        val listable = runCatching {
+            val children = android.provider.DocumentsContract.buildChildDocumentsUriUsingTree(
+                folderUri, android.provider.DocumentsContract.getTreeDocumentId(folderUri),
+            )
+            context.contentResolver.query(
+                children, arrayOf(android.provider.DocumentsContract.Document.COLUMN_DOCUMENT_ID), null, null, null,
+            )?.use { true } ?: false
+        }.getOrElse { e ->
+            AppLogger.w(TAG, "Folder $folderUri could not be queried: ${e.message}")
+            false
+        }
+        if (!listable) {
+            AppLogger.w(TAG, "Folder $folderUri could not be listed; reporting it as unknown, not empty")
+            return null
+        }
+        return runCatching {
+            val tree = DocumentFile.fromTreeUri(context, folderUri) ?: error("no document for the tree")
+            tree.listFiles().filter { it.isFile && isAudio(it) && isUsable(it) }.map { toItem(it) }
+        }.getOrElse { e ->
+            AppLogger.w(TAG, "Failed to enumerate folder $folderUri: ${e.message}")
+            null
+        }
+    }
+
     internal fun enumerateFolder(context: Context, folderUri: Uri): List<RecordingItem> {
         val result = mutableListOf<RecordingItem>()
         runCatching {

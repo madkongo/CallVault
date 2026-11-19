@@ -9,6 +9,9 @@
 package com.baba.callvault.data.transcripts
 
 import android.content.Context
+import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.combine
+import com.baba.callvault.data.merge.HiddenMergeParts
 import com.baba.callvault.data.transcripts.db.TranscriptEntry
 import com.baba.callvault.data.transcripts.db.TranscriptState
 import kotlinx.coroutines.flow.Flow
@@ -30,14 +33,13 @@ object LibraryCounts {
 
     /** How many recordings have a finished transcript. QUEUED, RUNNING and FAILED do not count:
      *  the card offers something to read, and only a DONE transcript is readable. */
-    fun transcribed(context: Context): Flow<Int> {
-        return onceTranscriptsExist(context, 0) { it.transcriptDao().countWithState(TranscriptState.DONE) }
-    }
+    fun transcribed(context: Context): Flow<Int> =
+        // Not countWithState: a merged-away part keeps its DONE row, hidden, for un-merge (N2), and the card's
+        // number must be the page's list.
+        transcripts(context).map { rows -> rows.count { it.state == TranscriptState.DONE } }
 
     /** How many recordings have a summary. */
-    fun summarised(context: Context): Flow<Int> {
-        return onceTranscriptsExist(context, 0) { it.summaryDao().countAll() }
-    }
+    fun summarised(context: Context): Flow<Int> = summarisedNames(context).map { it.size }
 
     /**
      * Every transcript there is — finished, waiting, running or failed — newest change first.
@@ -47,12 +49,12 @@ object LibraryCounts {
      * thing the page most needs to be able to say, and it is nowhere else in the app except as a
      * small icon on a recordings row nobody scrolls to.
      */
-    fun transcripts(context: Context): Flow<List<TranscriptEntry>> {
-        return onceTranscriptsExist(context, emptyList()) { it.transcriptDao().observeAllOrdered() }
-    }
+    fun transcripts(context: Context): Flow<List<TranscriptEntry>> =
+        onceTranscriptsExist(context, emptyList()) { it.transcriptDao().observeAllOrdered() }
+            .combine(HiddenMergeParts.observe(context)) { rows, hidden -> rows.filterNot { it.displayName in hidden } }
 
     /** The recordings with a summary, newest summary first. */
-    fun summarisedNames(context: Context): Flow<List<String>> {
-        return onceTranscriptsExist(context, emptyList()) { it.summaryDao().observeAllDisplayNames() }
-    }
+    fun summarisedNames(context: Context): Flow<List<String>> =
+        onceTranscriptsExist(context, emptyList()) { it.summaryDao().observeAllDisplayNames() }
+            .combine(HiddenMergeParts.observe(context)) { names, hidden -> names.filterNot { it in hidden } }
 }

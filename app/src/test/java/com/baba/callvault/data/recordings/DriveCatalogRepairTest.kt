@@ -8,6 +8,7 @@
 
 package com.baba.callvault.data.recordings
 
+import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
 import org.junit.Test
@@ -62,5 +63,30 @@ class DriveCatalogRepairTest {
     fun `nonsense input is left unjudged rather than treated as stale`() {
         assertFalse(DriveCatalogRepair.isStaleReference("", liveFolder))
         assertFalse(DriveCatalogRepair.isStaleReference(staleDocument, ""))
+    }
+
+    // ---- repairFor (review C8)
+
+    private val row = com.baba.callvault.data.recordings.db.RecordingEntry("a.ogg", driveUri = staleDocument)
+
+    @Test
+    fun `a stale reference found by name is re-pointed`() {
+        assertEquals(DriveCatalogRepair.Repair.REPOINT, DriveCatalogRepair.repairFor(row, setOf("a.ogg")))
+    }
+
+    @Test
+    fun `a Drive-only row absent from the current folder is kept`() {
+        assertEquals(DriveCatalogRepair.Repair.KEEP, DriveCatalogRepair.repairFor(row, setOf("b.ogg")))
+    }
+
+    @Test
+    fun `a row with its device copy loses only the stale reference`() {
+        val withLocal = row.copy(localUri = "content://dev/a.ogg")
+        assertEquals(DriveCatalogRepair.Repair.DROP_REFERENCE, DriveCatalogRepair.repairFor(withLocal, setOf("b.ogg")))
+    }
+
+    @Test
+    fun `an empty listing drops nothing`() {
+        assertEquals(DriveCatalogRepair.Repair.KEEP, DriveCatalogRepair.repairFor(row.copy(localUri = "content://dev/a.ogg"), emptySet()))
     }
 }

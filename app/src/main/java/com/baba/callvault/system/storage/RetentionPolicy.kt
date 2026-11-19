@@ -8,7 +8,10 @@
 
 package com.baba.callvault.system.storage
 
+import com.baba.callvault.data.StorageTarget
+import com.baba.callvault.data.recordings.AuthoredName
 import com.baba.callvault.data.recordings.ImportedRecording
+import com.baba.callvault.data.recordings.db.RecordingEntry
 
 /**
  * The two questions the retention sweep asks before deleting anything, kept pure so they can be tested
@@ -52,9 +55,13 @@ object RetentionPolicy {
      * sweep delete it — a voice note someone brought in to transcribe, destroyed overnight by a retention
      * period they set for their calls. Retention is a promise about how long a *call* is kept; an import
      * was never a call, and the user still has nowhere else to have put it.
+     *
+     * A parsed date alone is not proof of authorship (review C10): since 2.5.2 the list reads a day+time stamp
+     * anywhere in a name, which other apps' audio carries too. So the whole name must also match a grammar
+     * CallVault writes, given the [activeTemplate]; see [AuthoredName].
      */
-    fun isEligible(displayName: String, startedAtMillis: Long?): Boolean =
-        startedAtMillis != null && agesOut(displayName)
+    fun isEligible(displayName: String, startedAtMillis: Long?, activeTemplate: String): Boolean =
+        startedAtMillis != null && AuthoredName.isCallVaultName(displayName, activeTemplate) && agesOut(displayName)
 
     /**
      * Whether age retention applies to [displayName] at all, wherever the file was found.
@@ -81,4 +88,29 @@ object RetentionPolicy {
      */
     fun mayAgeOut(displayName: String, starred: Set<String>): Boolean =
         agesOut(displayName) && displayName !in starred
+
+    /**
+     * Whether retention or the size cap may delete [entry]'s DEVICE copy under [target] (review C7).
+     *
+     * Device-only mode keeps its old meaning: the user chose one copy and a period for it. In Both or Drive mode
+     * the device copy is the only one until the upload lands, so it may go only once the catalog holds a Drive
+     * copy of exactly the same, known size. An upload that failed, has not run yet, or stopped short leaves the
+     * device copy in place, to be swept on a later run after the Drive copy is proven.
+     */
+    fun deviceCopyMayGo(target: StorageTarget, entry: RecordingEntry): Boolean {
+        if (target == StorageTarget.LOCAL) return true
+        val local = entry.localSizeBytes ?: return false
+        return entry.driveUri != null && local > 0L && entry.driveSizeBytes == local
+    }
+
+    /**
+     * Whether a CATALOGUED row may be deleted by age or the size cap at all (review C10, second pass).
+     *
+     * The rescan and the first-run seed catalogue every audio file in the folder, other apps' included, so that
+     * they show in the list. Being catalogued is therefore no proof CallVault wrote a file. Only a name that
+     * passes [AuthoredName] against [activeTemplate], or a merge output (in [mergedNames]; the merge wrote it
+     * whatever its name), may be deleted automatically. Imports are excluded separately ([agesOut]).
+     */
+    fun isOursToSweep(displayName: String, activeTemplate: String, mergedNames: Set<String>): Boolean =
+        displayName in mergedNames || AuthoredName.isCallVaultName(displayName, activeTemplate)
 }

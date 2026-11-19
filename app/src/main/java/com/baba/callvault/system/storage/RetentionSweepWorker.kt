@@ -14,13 +14,16 @@ import androidx.documentfile.provider.DocumentFile
 import androidx.work.CoroutineWorker
 import androidx.work.WorkerParameters
 import com.baba.callvault.data.AppPreferences
+import com.baba.callvault.data.StorageTarget
 import com.baba.callvault.data.recordings.DriveCatalogRepair
 import com.baba.callvault.data.recordings.ImportedRecording
 import com.baba.callvault.data.recordings.RecordingCatalog
 import com.baba.callvault.data.recordings.RecordingsRepository
 import com.baba.callvault.data.recordings.RecordingsRepository.RecordingItem
 import com.baba.callvault.data.recordings.UntrackedRecordings
+import com.baba.callvault.data.recordings.db.RecordingDatabase
 import com.baba.callvault.data.transcripts.TranscriptCascade
+import com.baba.callvault.system.health.SilentFailureNotifier
 import com.baba.callvault.utils.AppLogger
 import com.baba.callvault.data.transcripts.FavouriteRepository
 
@@ -45,6 +48,12 @@ class RetentionSweepWorker(ctx: Context, params: WorkerParameters) : CoroutineWo
 
     override suspend fun doWork(): Result {
         val prefs = AppPreferences(applicationContext)
+        // Before any pass trusts a Drive size: sizes stamped before review C7 were the device's own. Until that clear
+        // has succeeded, no device copy is deleted at all (age or cap): the old sizes would vouch for them.
+        val sizesTrusted = RecordingCatalog.forgetUnconfirmedDriveSizesOnce(applicationContext)
+        if (!sizesTrusted) {
+            AppLogger.w(TAG, "Old Drive sizes could not be cleared yet; deleting no device copy this run")
+        }
         val localDays = prefs.getRetentionLocalDays()
         val driveDays = prefs.getRetentionDriveDays()
         val capBytes = prefs.getStorageCapBytes()
@@ -52,6 +61,7 @@ class RetentionSweepWorker(ctx: Context, params: WorkerParameters) : CoroutineWo
         // what would have made a cap-only setup do nothing at all, for ever, while showing as on.
         if (localDays <= 0 && driveDays <= 0 && capBytes <= 0L) {
             AppLogger.i(TAG, "Retention off and no size cap; nothing to sweep.")
+            SilentFailureNotifier.updateRetentionWaitingForDrive(applicationContext, 0)
             return Result.success()
         }
 
@@ -77,16 +87,42 @@ class RetentionSweepWorker(ctx: Context, params: WorkerParameters) : CoroutineWo
             AppLogger.w(TAG, "Could not read the starred recordings (${it.message}); skipping retention this run")
             return Result.success()
         }
-        for (entry in RecordingCatalog.all(applicationContext)) {
+        val target = prefs.getStorageTarget()
+        val template = prefs.getFileNameTemplate()
+        val mergedNames = mergedNames() ?: run {
+            AppLogger.w(TAG, "Could not read which recordings are merges; skipping retention this run")
+            return Result.success()
+        }
+        // Names kept only because Drive holds no proven copy, for the notice (N3); a set, as age and cap overlap.
+        val keptForDrive = HashSet<String>()
+        var keptUnproven = 0
+        var keptForeign = 0
+        val catalogue = RecordingCatalog.allOrNull(applicationContext) ?: run {
+            // Not "no recordings": an unreadable catalog proves nothing, so this run deletes nothing and leaves the
+            // "kept for Drive" notice as it was (review N3).
+            AppLogger.w(TAG, "The catalog could not be read; skipping retention this run")
+            return Result.success()
+        }
+        for (entry in catalogue) {
             // And the right stamp is only half of it. Once the retention period elapses this pass
             // would delete an import like anything else — except that for a call the Drive copy
             // survives and the row keeps its transcript, while an import has no Drive copy by design.
             // The same delete would therefore destroy the only copy of something the user handed us.
             if (!RetentionPolicy.mayAgeOut(entry.displayName, starred)) continue
+            // Catalogued is not authored: the rescan lists other apps' audio too (review C10).
+            if (!RetentionPolicy.isOursToSweep(entry.displayName, template, mergedNames)) {
+                keptForeign++
+                continue
+            }
             val ts = entry.lastModified
             val localUri = entry.localUri
-            if (localUri != null && RetentionPolicy.isExpired(ts, localCutoff)) {
-                if (RecordingsRepository.deleteFile(applicationContext, localUri.toUri())) deletedLocal++
+            if (localUri != null && sizesTrusted && RetentionPolicy.isExpired(ts, localCutoff)) {
+                // In Both/Drive mode the device copy is the only one until Drive holds it at the same size (C7).
+                if (!RetentionPolicy.deviceCopyMayGo(target, entry)) {
+                    keptUnproven++
+                    keptForDrive += entry.displayName
+                }
+                else if (RecordingsRepository.deleteFile(applicationContext, localUri.toUri())) deletedLocal++
             }
             val driveUri = entry.driveUri
             if (driveUri != null && RetentionPolicy.isExpired(ts, driveCutoff)) {
@@ -94,11 +130,31 @@ class RetentionSweepWorker(ctx: Context, params: WorkerParameters) : CoroutineWo
             }
         }
 
+        if (keptForeign > 0) {
+            AppLogger.i(TAG, "Kept $keptForeign catalogued file(s) whose name is not one CallVault writes")
+        }
+        if (keptUnproven > 0) {
+            AppLogger.i(TAG, "Kept $keptUnproven expired device copies whose Drive copy is not proven yet; retried next run")
+        }
+
         // The folders, not just our record of them. A recording the catalog has lost is exactly as old as
         // one it remembers, and the setting promises a daily check of the folder — so a bookkeeping gap
         // must not quietly become an exemption that lasts forever.
         val untracked = UntrackedRecordings.find(applicationContext)
-        val deletedDeviceNames = deleteExpired(untracked.device.filter { it.displayName !in starred }, localCutoff, "device")
+        // An untracked device file has no catalogued Drive copy, so in Both/Drive mode nothing proves it reached
+        // Drive: it may be the only copy, and it stays (review C7). Device-only mode is unchanged.
+        val untrackedDevice = untracked.device.filter { it.displayName !in starred }
+        val deletedDeviceNames = if (target == StorageTarget.LOCAL) {
+            deleteExpired(untrackedDevice, localCutoff, "device")
+        } else {
+            val keptFiles = untrackedDevice.filter { RetentionPolicy.isExpired(it.lastModified, localCutoff) }
+            keptForDrive += keptFiles.map { it.displayName }
+            val kept = keptFiles.size
+            if (kept > 0) {
+                AppLogger.i(TAG, "Kept $kept expired untracked device file(s): no proven Drive copy in $target mode")
+            }
+            emptyList()
+        }
         val deletedDriveNames = deleteExpired(untracked.drive.filter { it.displayName !in starred }, driveCutoff, "Drive")
         deletedLocal += deletedDeviceNames.size
         deletedDrive += deletedDriveNames.size
@@ -107,7 +163,26 @@ class RetentionSweepWorker(ctx: Context, params: WorkerParameters) : CoroutineWo
         // After the age pass, never before: an expired recording should go because it expired, and
         // counting it against the cap first could evict a newer one that the age rule was going to
         // spare. Running second also means the cap only ever sees what age retention chose to keep.
-        val deletedByCap = if (capBytes > 0L) sweepStorageCap(capBytes) else 0
+        val deletedByCap = if (capBytes > 0L && sizesTrusted) sweepStorageCap(capBytes, keptForDrive)
+        else if (capBytes > 0L) null else 0
+        val awaitingReconfirm = target != StorageTarget.LOCAL &&
+            !RecordingCatalog.areDriveSizesReconfirmed(applicationContext)
+        if (awaitingReconfirm) {
+            // Sizes were cleared and no Drive sweep has stamped them again yet: everything expired would count as
+            // "kept for Drive". Left alone until one has (review C7/N3).
+            AppLogger.i(TAG, "No Drive sweep has re-confirmed sizes since they were cleared; the 'kept for Drive' notice waits")
+        } else if (!sizesTrusted || deletedByCap == null || !untracked.complete) {
+            // A pass did not look, so the count is partial: clearing or lowering the notice now would be a false
+            // all-clear. It is left as it was until a run that finishes (N3).
+            val which = when {
+                !sizesTrusted -> "device-copy age pass"
+                deletedByCap == null -> "size cap"
+                else -> "untracked-file pass"
+            }
+            AppLogger.w(TAG, "The $which did not finish this run; the 'kept for Drive' notice is left as it was")
+        } else {
+            SilentFailureNotifier.updateRetentionWaitingForDrive(applicationContext, keptForDrive.size)
+        }
 
         AppLogger.i(
             TAG,
@@ -124,9 +199,9 @@ class RetentionSweepWorker(ctx: Context, params: WorkerParameters) : CoroutineWo
      * recording. The transcript cascade therefore runs only for the ones whose last copy this takes,
      * which `RecordingCatalog.removeCopyByUri` already handles.
      *
-     * @return how many device copies were deleted.
+     * @return how many device copies were deleted, or null when the cap sat this run out (see the log).
      */
-    private suspend fun sweepStorageCap(capBytes: Long): Int {
+    private suspend fun sweepStorageCap(capBytes: Long, keptForDrive: MutableSet<String>): Int? {
         // A failed read here must mean "protect everything", not "protect nothing". Sweeping with an
         // empty exemption set would delete precisely the recordings the user starred to keep, so the
         // cap sits this run out instead and tries again tomorrow.
@@ -137,10 +212,20 @@ class RetentionSweepWorker(ctx: Context, params: WorkerParameters) : CoroutineWo
                     "Could not read the starred recordings (${it.message}); skipping the size cap this run " +
                         "rather than sweeping without the exemption."
                 )
-                return 0
+                return null
             }
 
-        val entries = RecordingCatalog.all(applicationContext)
+        val prefs = AppPreferences(applicationContext)
+        val target = prefs.getStorageTarget()
+        val template = prefs.getFileNameTemplate()
+        val mergedNames = mergedNames() ?: run {
+            AppLogger.w(TAG, "Could not read which recordings are merges; skipping the size cap this run")
+            return null
+        }
+        val entries = RecordingCatalog.allOrNull(applicationContext) ?: run {
+            AppLogger.w(TAG, "The catalog could not be read; skipping the size cap this run")
+            return null
+        }
         val uriByName = entries.mapNotNull { e -> e.localUri?.let { e.displayName to it } }.toMap()
         val candidates = entries.mapNotNull { entry ->
             // No device copy, or a size we never measured: not something this cap can act on. A
@@ -155,10 +240,15 @@ class RetentionSweepWorker(ctx: Context, params: WorkerParameters) : CoroutineWo
                 // For a call the cap deletes the device copy and the Drive copy survives. An import
                 // has no Drive copy by design, so the same delete would destroy the only copy of
                 // something the user handed us, plus its transcript.
-                isImported = ImportedRecording.isImported(entry.displayName)
+                isImported = ImportedRecording.isImported(entry.displayName),
+                // Counted toward the total, never evicted: until Drive holds it, this is the only copy (C7).
+                isOnlyCopy = !RetentionPolicy.deviceCopyMayGo(target, entry),
+                // Counted, never evicted: catalogued is not authored (review C10).
+                isForeign = !RetentionPolicy.isOursToSweep(entry.displayName, template, mergedNames),
             )
         }
 
+        keptForDrive += RetentionDriveNotice.keptByCap(candidates, capBytes)
         val doomed = StorageCapPolicy.selectForEviction(candidates, capBytes)
         if (doomed.isEmpty()) return 0
 
@@ -170,12 +260,14 @@ class RetentionSweepWorker(ctx: Context, params: WorkerParameters) : CoroutineWo
 
         // Said plainly, because it is the one case where the setting visibly does not do what it
         // says: the library stays over the cap and that is the intended answer, not a failure.
-        val protectedBytes = candidates.filter { it.isFavourite || it.isImported }.sumOf { it.sizeBytes }
+        val protectedBytes = candidates.filter { it.isFavourite || it.isImported || it.isOnlyCopy || it.isForeign }.sumOf { it.sizeBytes }
         if (protectedBytes > capBytes) {
+            val unproven = candidates.count { it.isOnlyCopy }
+            val foreign = candidates.count { it.isForeign }
             AppLogger.i(
                 TAG,
-                "Starred and imported recordings alone ($protectedBytes bytes) exceed the " +
-                    "${capBytes}-byte cap; staying over it rather than deleting them."
+                "Starred, imported, not-yet-in-Drive ($unproven) and not-CallVault ($foreign) files alone " +
+                    "($protectedBytes bytes) exceed the ${capBytes}-byte cap; staying over it rather than deleting them."
             )
         }
         AppLogger.i(TAG, "Storage cap: deleted $deleted of ${doomed.size} selected device copies.")
@@ -233,6 +325,14 @@ class RetentionSweepWorker(ctx: Context, params: WorkerParameters) : CoroutineWo
         if (orphaned.isEmpty()) return
         AppLogger.i(TAG, "Removing what ${orphaned.size} deleted untracked recording(s) left behind")
         TranscriptCascade.deleteFor(applicationContext, orphaned)
+    }
+
+    /** Names of merge outputs, or null when they cannot be read (the caller then deletes nothing). */
+    private suspend fun mergedNames(): Set<String>? = runCatching {
+        RecordingDatabase.get(applicationContext).mergePartDao().allMergedNames().toSet()
+    }.getOrElse {
+        AppLogger.w(TAG, "Reading the merge outputs failed: ${it.message}")
+        null
     }
 
     companion object {

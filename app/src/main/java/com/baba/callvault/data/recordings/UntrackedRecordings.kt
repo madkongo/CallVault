@@ -39,6 +39,8 @@ object UntrackedRecordings {
     data class Found(
         val device: List<RecordingItem>,
         val drive: List<RecordingItem>,
+        /** False when the folders could not be read, so the lists are not the whole truth. */
+        val complete: Boolean = true,
     ) {
         val total: Int get() = device.size + drive.size
     }
@@ -50,19 +52,27 @@ object UntrackedRecordings {
     suspend fun find(context: Context): Found = withContext(Dispatchers.IO) {
         runCatching {
             val prefs = AppPreferences(context)
-            val catalogued = RecordingCatalog.all(context)
+            val catalogued = RecordingCatalog.allOrNull(context) ?: run {
+                AppLogger.w(TAG, "Catalog unreadable; no untracked file can be told apart this run")
+                return@withContext Found(emptyList(), emptyList(), complete = false)
+            }
             val knownDevice = catalogued.mapNotNull { row -> row.displayName.takeIf { row.localUri != null } }.toSet()
             val knownDrive = catalogued.mapNotNull { row -> row.displayName.takeIf { row.driveUri != null } }.toSet()
 
-            val device = untrackedIn(context, prefs.getRecordingFolderUri(), knownDevice)
-            val drive = untrackedIn(context, prefs.getDriveFolderUri(), knownDrive)
+            val template = prefs.getFileNameTemplate()
+            val deviceOrNull = untrackedIn(context, prefs.getRecordingFolderUri(), knownDevice, template)
+            val driveOrNull = untrackedIn(context, prefs.getDriveFolderUri(), knownDrive, template)
+            val complete = deviceOrNull != null && driveOrNull != null
+            val device = deviceOrNull.orEmpty()
+            val drive = driveOrNull.orEmpty()
             if (device.isNotEmpty() || drive.isNotEmpty()) {
                 AppLogger.i(TAG, "Untracked: ${device.size} on the device, ${drive.size} on Drive")
             }
-            Found(device = device, drive = drive)
+            if (!complete) AppLogger.w(TAG, "A storage folder could not be listed; the untracked count is partial")
+            Found(device = device, drive = drive, complete = complete)
         }.getOrElse {
             AppLogger.w(TAG, "Could not enumerate untracked recordings: ${it.message}")
-            Found(emptyList(), emptyList())
+            Found(emptyList(), emptyList(), complete = false)
         }
     }
 
@@ -72,19 +82,23 @@ object UntrackedRecordings {
      * A storage folder can be any folder the user picked, up to and including one they keep other audio
      * in. Deleting a stranger's file because it is old would be a far worse bug than the one this fixes,
      * so the filename template is the gate: [RecordingItem.startedAtMillis] is parsed out of the
-     * timestamp CallVault puts at the front of every name, and anything that does not carry one is left
-     * alone. Catalogued recordings are exempt from this check — those we already know are ours.
+     * timestamp CallVault puts in every name, and anything that does not carry one, or whose name as a whole
+     * is not a CallVault grammar ([AuthoredName]), is left alone. Catalogued recordings are exempt from this check — those we already know are ours.
      *
      * A file the user imported passes that test — we wrote its name — and [RetentionPolicy.isEligible]
      * turns it down for the other reason: it is the user's own audio, not a call, and no retention period
      * they set for their calls was ever an instruction to destroy it.
      */
-    private fun untrackedIn(context: Context, folder: android.net.Uri?, known: Set<String>): List<RecordingItem> {
+    private fun untrackedIn(
+        context: Context, folder: android.net.Uri?, known: Set<String>, template: String,
+    ): List<RecordingItem>? {
         if (folder == null) return emptyList()
-        return RecordingsRepository.enumerateFolder(context, folder)
-            .filter {
-                it.displayName !in known &&
-                    RetentionPolicy.isEligible(it.displayName, it.startedAtMillis)
-            }
+        val listed = RecordingsRepository.enumerateFolderOrNull(context, folder) ?: return null
+        val untracked = listed.filter { it.displayName !in known }
+        val eligible = untracked.filter { RetentionPolicy.isEligible(it.displayName, it.startedAtMillis, template) }
+        val notOurs = untracked.size - eligible.size
+        // Names only as a count: a stranger's file names are none of the log's business either.
+        if (notOurs > 0) AppLogger.i(TAG, "Left $notOurs untracked file(s) alone: not a name CallVault writes")
+        return eligible
     }
 }

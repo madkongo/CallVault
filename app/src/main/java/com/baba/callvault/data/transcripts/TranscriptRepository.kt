@@ -9,6 +9,7 @@
 package com.baba.callvault.data.transcripts
 
 import android.content.Context
+import com.baba.callvault.data.merge.HiddenMergeParts
 import com.baba.callvault.data.transcripts.db.TranscriptDatabase
 import com.baba.callvault.data.transcripts.db.TranscriptEntry
 import com.baba.callvault.data.transcripts.db.TranscriptSearchHit
@@ -197,7 +198,8 @@ object TranscriptRepository {
         val segments = attempt("transcripts") { db.transcriptDao().search(prepared) }
         val summaries = attempt("summaries") { db.summaryDao().search(prepared) }
         val notes = attempt("notes") { db.noteDao().searchNotes(prepared) }
-        return mergeHits(segments, summaries, notes)
+        val hidden = HiddenMergeParts.now(context)
+        return mergeHits(segments, summaries, notes).filterNot { it.displayName in hidden }
     }
 
     /** Which page's index a [searchPage] call reads. */
@@ -224,8 +226,9 @@ object TranscriptRepository {
                 attempt("summaries") { db.summaryDao().search(prepared) }
             }
         }
+        val hidden = HiddenMergeParts.now(context)
         return buildMap {
-            hits.forEach { hit ->
+            hits.filterNot { it.displayName in hidden }.forEach { hit ->
                 PageSearch.excerpt(hit.snippet, query)?.let { putIfAbsent(hit.displayName, it) }
             }
         }
@@ -244,7 +247,8 @@ object TranscriptRepository {
         if (PageSearch.matchExpression(query, prefixLast = true).isEmpty()) return emptyMap()
         if (!TranscriptDatabase.exists(context)) return emptyMap()
         backfillSummarySearchText(context)
-        return searchContent(TranscriptDatabase.get(context), query)
+        val hidden = HiddenMergeParts.now(context)
+        return searchContent(TranscriptDatabase.get(context), query).filterKeys { it !in hidden }
     }
 
     /** [searchContent] over an open database; separate so a test can run it on an in-memory one. */

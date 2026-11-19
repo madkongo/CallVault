@@ -954,4 +954,11 @@
     <string name="general_show_less">Згорнути</string>
     <string name="summary_card_state_expanded">Розгорнуто</string>
     <string name="summary_card_state_collapsed">Згорнуто</string>
+    <plurals name="notif_retention_waiting_for_drive_title">
+        <item quantity="one">Старий запис залишено на телефоні: Drive ще не зберіг його копію (%1$d)</item>
+        <item quantity="few">Старі записи залишено на телефоні: Drive ще не зберіг їхні копії (%1$d)</item>
+        <item quantity="many">Старі записи залишено на телефоні: Drive ще не зберіг їхні копії (%1$d)</item>
+        <item quantity="other">Старі записи залишено на телефоні: Drive ще не зберіг їхні копії (%1$d)</item>
+    </plurals>
+    <string name="notif_retention_waiting_for_drive_text">Налаштування очищення видалили б їх із телефона, але в Google Drive ще немає їхньої підтвердженої копії, тому вони залишаються тут. Відкрийте CallVault, щоб перевірити налаштування Drive.</string>
 </resources>

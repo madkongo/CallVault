@@ -276,8 +276,10 @@ class SyncSweepWorker(ctx: Context, params: WorkerParameters) : CoroutineWorker(
                 // has never deleted anything — too much to do while chasing a wrong notification.
                 // Stamping alone is enough: the health check asks for a row with a device copy and
                 // NO Drive copy, and this row now has one.
+                // The size Drive listed (just checked equal to the device file), never the device's own.
                 RecordingCatalog.markDrive(
-                    applicationContext, name, alreadyThere.uri, sourceSize, deleteLocalAfter = false
+                    applicationContext, name, alreadyThere.uri,
+                    CloudCopyPolicy.driveSizeToRecord(alreadyThere.sizeBytes), deleteLocalAfter = false,
                 )
                 continue
             }
@@ -364,7 +366,8 @@ class SyncSweepWorker(ctx: Context, params: WorkerParameters) : CoroutineWorker(
                 continue
             }
 
-            existingInDrive[name] = DriveCopy(driveUri, sourceSize)
+            // Exact-case key (B2, C28) and only the size Drive itself reported (B1, C7).
+            existingInDrive[name] = DriveCopy(driveUri, driveSize)
             // The device copy goes only when Drive itself reports a document of the same length, and never
             // when the Drive copy IS the device file (see [FolderOverlap]). Every branch says what it did.
             var deletedLocally = false
@@ -387,7 +390,9 @@ class SyncSweepWorker(ctx: Context, params: WorkerParameters) : CoroutineWorker(
                     journal("device copy of '$name' ${if (deletedLocally) "DELETED after Drive reported $driveSize bytes" else "KEPT: the provider refused the delete"}")
                 }
             }
-            RecordingCatalog.markDrive(applicationContext, name, driveUri, sourceSize,
+            // Drive's reported length, or none when it reported none (the UNVERIFIED line above says so): the device
+            // size here would let retention take an unconfirmed upload as proof (review C7).
+            RecordingCatalog.markDrive(applicationContext, name, driveUri, CloudCopyPolicy.driveSizeToRecord(driveSize),
                 CloudCopyPolicy.shouldClearLocalReference(deleteLocal, deletedLocally))
         }
 
@@ -399,6 +404,9 @@ class SyncSweepWorker(ctx: Context, params: WorkerParameters) : CoroutineWorker(
         if (isStopped) {
             journal("sweep interrupted: WorkManager asked it to stop after $done of $total (stopReason=$stopReason)")
         }
+        // Every file went through: the Drive sizes this run listed or got back are stamped, so retention may count
+        // what is still unproven as really waiting for Drive (review C7/N3).
+        if (!isStopped && done == total) RecordingCatalog.markDriveSizesReconfirmed(applicationContext)
         AppLogger.i(TAG, "Sweep complete (target=$target copied=$copied failures=$failures skipped=$skipped deleteLocal=$deleteLocal).")
         journal("sweep complete: copied=$copied failures=$failures skipped=$skipped deleteLocal=$deleteLocal deleted=$deleted kept=$kept unverified=$unverified")
         // A sweep that keeps failing backs off rather than hammering the provider: the next scheduled run

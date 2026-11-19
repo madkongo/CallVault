@@ -47,7 +47,6 @@ import com.baba.callvault.data.health.SetupPrerequisites
 import com.baba.callvault.data.recordings.AudioImport
 import com.baba.callvault.data.recordings.ImportedRecording
 import com.baba.callvault.data.recordings.RecordingDirection
-import androidx.documentfile.provider.DocumentFile
 import com.baba.callvault.data.recordings.RecordingCatalog
 import com.baba.callvault.utils.AppLogger
 import com.baba.callvault.data.merge.MergeCandidates
@@ -631,9 +630,9 @@ class HomeViewModel(application: Application) : AndroidViewModel(application) {
 
     private fun pruneIfMissing(uri: Uri) {
         viewModelScope.launch {
-            val missing = withContext(Dispatchers.IO) {
-                runCatching { DocumentFile.fromSingleUri(appContext, uri)?.exists() == false }.getOrDefault(false)
-            }
+            // Two proofs, never "exists() said false": that is also its answer for a lost folder grant, a removed
+            // SD card or an offline Drive copy, and forgetting the row deletes its transcript, notes and star (C5).
+            val missing = DeviceFolderRescan.isProvenMissingDeviceCopy(appContext, uri)
             if (missing) {
                 AppLogger.i("CV:HomeViewModel", "Recording gone (deleted outside the app); pruning stale entry: $uri")
                 withContext(Dispatchers.IO) { RecordingCatalog.removeCopyByUri(appContext, uri) }

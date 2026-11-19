@@ -1157,4 +1157,9 @@
     <string name="general_show_less">Less</string>
     <string name="summary_card_state_expanded">Expanded</string>
     <string name="summary_card_state_collapsed">Collapsed</string>
+    <plurals name="notif_retention_waiting_for_drive_title">
+        <item quantity="one">Old recording kept on the phone: Drive hasn\'t backed it up yet (%1$d)</item>
+        <item quantity="other">Old recordings kept on the phone: Drive hasn\'t backed them up yet (%1$d)</item>
+    </plurals>
+    <string name="notif_retention_waiting_for_drive_text">Your clean-up settings would remove these from this phone, but Google Drive has no confirmed copy of them yet, so they stay here. Open CallVault to check your Drive settings.</string>
 </resources>

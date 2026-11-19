@@ -942,4 +942,9 @@
     <string name="general_show_less">Weniger</string>
     <string name="summary_card_state_expanded">Ausgeklappt</string>
     <string name="summary_card_state_collapsed">Eingeklappt</string>
+    <plurals name="notif_retention_waiting_for_drive_title">
+        <item quantity="one">Alte Aufnahme bleibt auf dem Handy: Drive hat sie noch nicht gesichert (%1$d)</item>
+        <item quantity="other">Alte Aufnahmen bleiben auf dem Handy: Drive hat sie noch nicht gesichert (%1$d)</item>
+    </plurals>
+    <string name="notif_retention_waiting_for_drive_text">Deine Aufräum-Einstellungen würden sie von diesem Handy löschen, aber Google Drive hat noch keine bestätigte Kopie, deshalb bleiben sie hier. Öffne CallVault, um deine Drive-Einstellungen zu prüfen.</string>
 </resources>
