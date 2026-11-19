@@ -256,8 +256,9 @@ object MergeService {
         val folderUri = AppPreferences(context).getRecordingFolderUri()
             ?: return Outcome.Failed("No recordings folder is set")
 
-        // 1. Cut into staging, so a failure leaves the merged recording untouched.
-        val staging = File(context.cacheDir, "unmerge").apply { deleteRecursively(); mkdirs() }
+        // 1. Cut into staging, so a failure leaves the merged recording untouched. filesDir, not cacheDir:
+        //    Android may clear a cache under storage pressure, mid-publish.
+        val staging = File(context.filesDir, "unmerge").apply { deleteRecursively(); mkdirs() }
         val targets = parts.map { File(staging, it.partName) }
         val cuts = parts.map { AudioSplit.Cut(it.frameStart, it.frameCount, it.encoderDelayUs, it.encoderPaddingUs) }
         val ok = runCatching {
@@ -285,17 +286,29 @@ object MergeService {
             }
         }
 
-        // 3. Safe to remove the merged recording and publish the parts under their own names.
-        removeEverywhere(context, entry)
+        // 3. Publish every part and read each back at its staged size, while the merged recording is
+        //    still there. Any part that does not make it undoes the ones that did, and the merged call,
+        //    its manifest and its metadata stay exactly as they were (review C6).
         val mime = mimeFor(mergedName.substringAfterLast('.', "m4a"))
-        var restored = 0
+        val published = mutableListOf<Uri>()
         parts.forEachIndexed { i, part ->
-            val uri = SafHelper.publishStagedRecording(context, folderUri, part.partName, mime, targets[i])
+            val uri = publishVerified(context, folderUri, part.partName, mime, targets[i])
             if (uri == null) {
-                AppLogger.e(TAG, "Could not restore ${part.partName}")
-                return@forEachIndexed
+                AppLogger.e(TAG, "Could not restore ${part.partName}; undoing ${published.size} restored part(s), $mergedName kept")
+                published.forEachIndexed { j, done ->
+                    SafHelper.deleteDocument(DocumentFile.fromSingleUri(context, done), parts[j].partName)
+                }
+                staging.deleteRecursively()
+                return Outcome.Failed("A call could not be restored to your folder, so nothing was changed")
             }
-            restored++
+            published += uri
+            onPartProgress(i, true)
+        }
+
+        // 4. Every part is back and proven, so the merged recording may go.
+        removeEverywhere(context, entry)
+        parts.forEachIndexed { i, part ->
+            val uri = published[i]
             RecordingCatalog.recordLocal(
                 context, part.partName, uri, SafHelper.fileSize(context, uri), part.originalLastModified
             )
@@ -305,14 +318,30 @@ object MergeService {
             // user actually relies on is silently missing. Routed rather than copied directly, so it
             // follows the current target and schedule instead of replaying an old state.
             StorageRouter.route(context, uri, part.partName, mime)
-            onPartProgress(i, true)
         }
         db.mergePartDao().deleteParts(mergedName)
         MergeMetadata.onUnMerge(context, mergedName)
         staging.deleteRecursively()
 
-        AppLogger.i(TAG, "Un-merged $mergedName back into $restored calls")
-        return Outcome.UnMerged(restored)
+        AppLogger.i(TAG, "Un-merged $mergedName back into ${parts.size} calls")
+        return Outcome.UnMerged(parts.size)
+    }
+
+    /**
+     * Publishes [staged] as [name] and returns its URI only when the published document reads back at the
+     * staged size; otherwise removes whatever was published, logs why, and returns null.
+     */
+    private fun publishVerified(context: Context, folderUri: Uri, name: String, mime: String, staged: File): Uri? {
+        val stagedSize = staged.length()
+        val uri = SafHelper.publishStagedRecording(context, folderUri, name, mime, staged) ?: run {
+            AppLogger.e(TAG, "Publishing $name failed")
+            return null
+        }
+        val size = SafHelper.fileSize(context, uri)
+        if (stagedSize > 0L && size == stagedSize) return uri
+        AppLogger.e(TAG, "Published $name reads back as $size bytes, staged $stagedSize; removing it")
+        SafHelper.deleteDocument(DocumentFile.fromSingleUri(context, uri), name)
+        return null
     }
 
     /** Runs [block] with every source open, closing them all whatever happens. */
