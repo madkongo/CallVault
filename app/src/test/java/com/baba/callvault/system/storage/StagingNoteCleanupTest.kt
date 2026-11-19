@@ -41,6 +41,16 @@ class StagingNoteCleanupTest {
     }
 
     @Test
+    fun `a staged recording that cannot be deleted keeps its note, so the rescue still knows its name`() {
+        // A non-empty directory under the staged name: File.delete() fails on it, as a real failed delete would.
+        val staged = File(tmp.root, "rec_stage_5.tmp").apply { mkdir(); File(this, "held").writeText("x") }
+        val note = StagingNote.fileFor(staged).apply { writeText("v=1") }
+        assertFalse(StagingNote.deleteWithNote(staged))
+        assertTrue(staged.exists())
+        assertTrue(note.exists())
+    }
+
+    @Test
     fun `the app-call coordinator deletes staged recordings only with their note`() {
         val root = listOf(File("src/main/java"), File("app/src/main/java")).first { it.isDirectory }
         val source = File(root, "com/baba/callvault/services/recording/VoipRecordingCoordinator.kt").readText()

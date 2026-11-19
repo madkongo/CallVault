@@ -41,10 +41,14 @@ data class StagingNote(
         /**
          * Deletes a staged recording that was published or discarded, and its note with it (review N19: the note
          * was left behind until the next rescue sweep). Returns whether the recording is gone; the caller logs a false.
+         * The recording goes first and the note only once it is gone: a recording that could not be deleted keeps its
+         * note, so the rescue can still save it under its own name and folder.
          */
         fun deleteWithNote(staged: File): Boolean {
+            staged.delete()
+            if (staged.exists()) return false
             fileFor(staged).delete()
-            return staged.delete() || !staged.exists()
+            return true
         }
 
         fun decode(text: String): StagingNote? {
