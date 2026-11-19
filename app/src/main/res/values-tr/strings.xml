@@ -1033,4 +1033,9 @@
     <string name="general_show_less">Daha az</string>
     <string name="summary_card_state_expanded">Genişletildi</string>
     <string name="summary_card_state_collapsed">Daraltıldı</string>
+    <plurals name="notif_retention_waiting_for_drive_title">
+        <item quantity="one">Eski kayıtlar telefonda tutuldu: Drive henüz yedeklemedi (%1$d)</item>
+        <item quantity="other">Eski kayıtlar telefonda tutuldu: Drive henüz yedeklemedi (%1$d)</item>
+    </plurals>
+    <string name="notif_retention_waiting_for_drive_text">Temizlik ayarlarınız bunları bu telefondan silerdi, ancak Google Drive\'da henüz onaylanmış bir kopyaları yok, bu yüzden burada kalıyorlar. Drive ayarlarınızı kontrol etmek için CallVault\'u açın.</string>
 </resources>

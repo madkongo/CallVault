@@ -935,4 +935,9 @@
     <string name="general_show_less">收起</string>
     <string name="summary_card_state_expanded">已展開</string>
     <string name="summary_card_state_collapsed">已收合</string>
+    <plurals name="notif_retention_waiting_for_drive_title">
+        <item quantity="one">舊錄音保留在手機上：Drive 尚未備份（%1$d）</item>
+        <item quantity="other">舊錄音保留在手機上：Drive 尚未備份（%1$d）</item>
+    </plurals>
+    <string name="notif_retention_waiting_for_drive_text">你的清理設定原本會將它們從這支手機刪除，但 Google Drive 中還沒有經過確認的副本，因此它們會保留在這裡。開啟 CallVault 檢查 Drive 設定。</string>
 </resources>

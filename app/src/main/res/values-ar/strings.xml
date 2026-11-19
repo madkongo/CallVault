@@ -975,4 +975,13 @@
     <string name="general_show_less">أقل</string>
     <string name="summary_card_state_expanded">موسّع</string>
     <string name="summary_card_state_collapsed">مطوي</string>
+    <plurals name="notif_retention_waiting_for_drive_title">
+        <item quantity="zero">تسجيلات قديمة محفوظة على الهاتف: لم يحفظ Drive نسخة منها بعد (%1$d)</item>
+        <item quantity="one">تسجيلات قديمة محفوظة على الهاتف: لم يحفظ Drive نسخة منها بعد (%1$d)</item>
+        <item quantity="two">تسجيلات قديمة محفوظة على الهاتف: لم يحفظ Drive نسخة منها بعد (%1$d)</item>
+        <item quantity="few">تسجيلات قديمة محفوظة على الهاتف: لم يحفظ Drive نسخة منها بعد (%1$d)</item>
+        <item quantity="many">تسجيلات قديمة محفوظة على الهاتف: لم يحفظ Drive نسخة منها بعد (%1$d)</item>
+        <item quantity="other">تسجيلات قديمة محفوظة على الهاتف: لم يحفظ Drive نسخة منها بعد (%1$d)</item>
+    </plurals>
+    <string name="notif_retention_waiting_for_drive_text">كانت إعدادات التنظيف ستحذف هذه التسجيلات من الهاتف، لكن Google Drive لا يملك نسخة مؤكدة منها بعد، لذا تبقى هنا. افتح CallVault لتتحقق من إعدادات Drive.</string>
 </resources>

@@ -23,6 +23,7 @@ import com.baba.callvault.data.recordings.RecordingsRepository.RecordingItem
 import com.baba.callvault.data.recordings.UntrackedRecordings
 import com.baba.callvault.data.recordings.db.RecordingDatabase
 import com.baba.callvault.data.transcripts.TranscriptCascade
+import com.baba.callvault.system.health.SilentFailureNotifier
 import com.baba.callvault.utils.AppLogger
 import com.baba.callvault.data.transcripts.FavouriteRepository
 
@@ -54,6 +55,7 @@ class RetentionSweepWorker(ctx: Context, params: WorkerParameters) : CoroutineWo
         // what would have made a cap-only setup do nothing at all, for ever, while showing as on.
         if (localDays <= 0 && driveDays <= 0 && capBytes <= 0L) {
             AppLogger.i(TAG, "Retention off and no size cap; nothing to sweep.")
+            SilentFailureNotifier.updateRetentionWaitingForDrive(applicationContext, 0)
             return Result.success()
         }
 
@@ -85,6 +87,8 @@ class RetentionSweepWorker(ctx: Context, params: WorkerParameters) : CoroutineWo
             AppLogger.w(TAG, "Could not read which recordings are merges; skipping retention this run")
             return Result.success()
         }
+        // Names kept only because Drive holds no proven copy, for the notice (N3); a set, as age and cap overlap.
+        val keptForDrive = HashSet<String>()
         var keptUnproven = 0
         var keptForeign = 0
         for (entry in RecordingCatalog.all(applicationContext)) {
@@ -102,7 +106,10 @@ class RetentionSweepWorker(ctx: Context, params: WorkerParameters) : CoroutineWo
             val localUri = entry.localUri
             if (localUri != null && RetentionPolicy.isExpired(ts, localCutoff)) {
                 // In Both/Drive mode the device copy is the only one until Drive holds it at the same size (C7).
-                if (!RetentionPolicy.deviceCopyMayGo(target, entry)) keptUnproven++
+                if (!RetentionPolicy.deviceCopyMayGo(target, entry)) {
+                    keptUnproven++
+                    keptForDrive += entry.displayName
+                }
                 else if (RecordingsRepository.deleteFile(applicationContext, localUri.toUri())) deletedLocal++
             }
             val driveUri = entry.driveUri
@@ -128,7 +135,9 @@ class RetentionSweepWorker(ctx: Context, params: WorkerParameters) : CoroutineWo
         val deletedDeviceNames = if (target == StorageTarget.LOCAL) {
             deleteExpired(untrackedDevice, localCutoff, "device")
         } else {
-            val kept = untrackedDevice.count { RetentionPolicy.isExpired(it.lastModified, localCutoff) }
+            val keptFiles = untrackedDevice.filter { RetentionPolicy.isExpired(it.lastModified, localCutoff) }
+            keptForDrive += keptFiles.map { it.displayName }
+            val kept = keptFiles.size
             if (kept > 0) {
                 AppLogger.i(TAG, "Kept $kept expired untracked device file(s): no proven Drive copy in $target mode")
             }
@@ -142,7 +151,8 @@ class RetentionSweepWorker(ctx: Context, params: WorkerParameters) : CoroutineWo
         // After the age pass, never before: an expired recording should go because it expired, and
         // counting it against the cap first could evict a newer one that the age rule was going to
         // spare. Running second also means the cap only ever sees what age retention chose to keep.
-        val deletedByCap = if (capBytes > 0L) sweepStorageCap(capBytes) else 0
+        val deletedByCap = if (capBytes > 0L) sweepStorageCap(capBytes, keptForDrive) else 0
+        SilentFailureNotifier.updateRetentionWaitingForDrive(applicationContext, keptForDrive.size)
 
         AppLogger.i(
             TAG,
@@ -161,7 +171,7 @@ class RetentionSweepWorker(ctx: Context, params: WorkerParameters) : CoroutineWo
      *
      * @return how many device copies were deleted.
      */
-    private suspend fun sweepStorageCap(capBytes: Long): Int {
+    private suspend fun sweepStorageCap(capBytes: Long, keptForDrive: MutableSet<String>): Int {
         // A failed read here must mean "protect everything", not "protect nothing". Sweeping with an
         // empty exemption set would delete precisely the recordings the user starred to keep, so the
         // cap sits this run out instead and tries again tomorrow.
@@ -205,6 +215,7 @@ class RetentionSweepWorker(ctx: Context, params: WorkerParameters) : CoroutineWo
             )
         }
 
+        keptForDrive += RetentionDriveNotice.keptByCap(candidates, capBytes)
         val doomed = StorageCapPolicy.selectForEviction(candidates, capBytes)
         if (doomed.isEmpty()) return 0
 

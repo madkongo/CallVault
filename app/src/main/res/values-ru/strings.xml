@@ -941,4 +941,11 @@
     <string name="general_show_less">Свернуть</string>
     <string name="summary_card_state_expanded">Развёрнуто</string>
     <string name="summary_card_state_collapsed">Свёрнуто</string>
+    <plurals name="notif_retention_waiting_for_drive_title">
+        <item quantity="one">Старая запись оставлена на телефоне: Drive ещё не сохранил её копию (%1$d)</item>
+        <item quantity="few">Старые записи оставлены на телефоне: Drive ещё не сохранил их копии (%1$d)</item>
+        <item quantity="many">Старые записи оставлены на телефоне: Drive ещё не сохранил их копии (%1$d)</item>
+        <item quantity="other">Старые записи оставлены на телефоне: Drive ещё не сохранил их копии (%1$d)</item>
+    </plurals>
+    <string name="notif_retention_waiting_for_drive_text">Настройки очистки удалили бы их с телефона, но в Google Drive ещё нет их подтверждённой копии, поэтому они остаются здесь. Откройте CallVault, чтобы проверить настройки Drive.</string>
 </resources>

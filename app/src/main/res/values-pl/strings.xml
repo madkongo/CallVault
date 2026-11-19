@@ -941,4 +941,11 @@
     <string name="general_show_less">Mniej</string>
     <string name="summary_card_state_expanded">Rozwinięte</string>
     <string name="summary_card_state_collapsed">Zwinięte</string>
+    <plurals name="notif_retention_waiting_for_drive_title">
+        <item quantity="one">Stare nagranie zostaje na telefonie: Drive jeszcze go nie zapisał (%1$d)</item>
+        <item quantity="few">Stare nagrania zostają na telefonie: Drive jeszcze ich nie zapisał (%1$d)</item>
+        <item quantity="many">Stare nagrania zostają na telefonie: Drive jeszcze ich nie zapisał (%1$d)</item>
+        <item quantity="other">Stare nagrania zostają na telefonie: Drive jeszcze ich nie zapisał (%1$d)</item>
+    </plurals>
+    <string name="notif_retention_waiting_for_drive_text">Ustawienia czyszczenia usunęłyby je z tego telefonu, ale Google Drive nie ma jeszcze ich potwierdzonej kopii, więc zostają tutaj. Otwórz CallVault, aby sprawdzić ustawienia Drive.</string>
 </resources>

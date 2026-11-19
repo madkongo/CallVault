@@ -60,6 +60,7 @@ object SilentFailureNotifier {
     private const val ID_CUT_OFF_SAVED = 4723
     private const val ID_TURNED_OFF_FOR_ANDROID = 4724
     private const val ID_STOPPED_BY_USER = 4725
+    private const val ID_RETENTION_WAITING_FOR_DRIVE = 4726
 
     /**
      * The recorder could not be started. Posted from the boot path, where a failure is invisible.
@@ -254,6 +255,31 @@ object SilentFailureNotifier {
                 text = LocalizedContext.of(context).getString(R.string.notif_health_sync_text)
             )
         }.onFailure { AppLogger.w(TAG, "Sync health check failed: ${it.message}") }
+    }
+
+    /**
+     * Shows, or clears, that retention is keeping [keptForDrive] recordings on the phone because Drive holds no
+     * proven copy of them (owner decision N3). Called after every retention sweep; logged either way.
+     */
+    fun updateRetentionWaitingForDrive(context: Context, keptForDrive: Int) {
+        when (val action = com.baba.callvault.system.storage.RetentionDriveNotice.decide(keptForDrive)) {
+            is com.baba.callvault.system.storage.RetentionDriveNotice.Action.Post -> {
+                AppLogger.w(TAG, "Retention kept ${action.count} recording(s) on the phone: no proven Drive copy; notifying")
+                val localized = LocalizedContext.of(context)
+                post(
+                    context,
+                    id = ID_RETENTION_WAITING_FOR_DRIVE,
+                    title = localized.resources.getQuantityString(
+                        R.plurals.notif_retention_waiting_for_drive_title, action.count, action.count,
+                    ),
+                    text = localized.getString(R.string.notif_retention_waiting_for_drive_text),
+                )
+            }
+            com.baba.callvault.system.storage.RetentionDriveNotice.Action.Clear -> {
+                AppLogger.i(TAG, "Retention kept nothing for want of a Drive copy; clearing that notice")
+                clear(context, ID_RETENTION_WAITING_FOR_DRIVE)
+            }
+        }
     }
 
     // POST_NOTIFICATIONS is checked explicitly rather than relying on notify()'s silent no-op, which

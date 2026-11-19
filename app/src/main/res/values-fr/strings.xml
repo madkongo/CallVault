@@ -937,4 +937,9 @@
     <string name="general_show_less">Moins</string>
     <string name="summary_card_state_expanded">Développé</string>
     <string name="summary_card_state_collapsed">Réduit</string>
+    <plurals name="notif_retention_waiting_for_drive_title">
+        <item quantity="one">Ancien enregistrement gardé sur le téléphone : Drive ne l\'a pas encore sauvegardé (%1$d)</item>
+        <item quantity="other">Anciens enregistrements gardés sur le téléphone : Drive ne les a pas encore sauvegardés (%1$d)</item>
+    </plurals>
+    <string name="notif_retention_waiting_for_drive_text">Vos réglages de nettoyage les supprimeraient de ce téléphone, mais Google Drive n\'en a pas encore de copie confirmée, ils restent donc ici. Ouvrez CallVault pour vérifier vos réglages Drive.</string>
 </resources>
