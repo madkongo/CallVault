@@ -46,6 +46,15 @@ object CaptureStartCheck {
          * here as well would show the user two different errors for one event.
          */
         UNKNOWN(false),
+
+        /**
+         * The recorder says it is recording, and nothing has reached this call's file after the second look
+         * (review C2, belt-and-braces). Whatever it is recording, it is not this call: a failed start, said so.
+         */
+        NOTHING_WRITTEN(true),
+
+        /** Recording, and the file is still empty at the first look: look once more before saying anything. */
+        LOOK_AGAIN(false),
     }
 
     /**
@@ -54,10 +63,19 @@ object CaptureStartCheck {
      * @param stopRequested whether the call has already ended — checked FIRST, because a short call
      *   legitimately finishes before this runs and must never be reported as a broken codec.
      */
-    fun verdict(daemonReachable: Boolean, isRecording: Boolean, stopRequested: Boolean): Verdict = when {
+    fun verdict(
+        daemonReachable: Boolean,
+        isRecording: Boolean,
+        stopRequested: Boolean,
+        bytesWritten: Long? = null,
+        finalLook: Boolean = false,
+    ): Verdict = when {
         stopRequested -> Verdict.STOPPED
         !daemonReachable -> Verdict.UNKNOWN
-        isRecording -> Verdict.STARTED
-        else -> Verdict.NEVER_STARTED
+        !isRecording -> Verdict.NEVER_STARTED
+        // Null: the size cannot be read (no staged file); the recorder's own answer is all there is.
+        bytesWritten == null || bytesWritten > 0L -> Verdict.STARTED
+        finalLook -> Verdict.NOTHING_WRITTEN
+        else -> Verdict.LOOK_AGAIN
     }
 }

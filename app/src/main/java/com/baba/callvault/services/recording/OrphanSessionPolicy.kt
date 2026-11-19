@@ -8,8 +8,6 @@
 
 package com.baba.callvault.services.recording
 
-import com.baba.callvault.data.health.CallLogEntry
-
 /**
  * What to do with a recorder session no process owns any more (review C2, N4).
  *
@@ -56,25 +54,50 @@ object OrphanSessionPolicy {
         else -> Action.KEEP_LIVE_CALL
     }
 
-    /** How long before the recording started its call may have started (ringing, dialling). */
-    const val MAX_RING_BEFORE_RECORDING_MS = 5 * 60_000L
+    /**
+     * How much earlier than the live call's beginning an orphan's recording must have started before it is taken
+     * for an earlier call's (review C2 second pass). A recording of the live call starts at its off-hook, which is
+     * at or after the ring or dial that began it, and both times are written by the same process; the margin only
+     * absorbs a wall-clock adjustment between the two. The cost of a too-small margin is an earlier call shorter
+     * than it, ended right before this one rang, being kept and adopted; of a too-large one, nothing (a same-call
+     * recording never starts before its call began).
+     */
+    const val SAME_CALL_MARGIN_MS = 2_000L
 
-    /** How long after the recording started its call-log entry may say it started (clocks, late start). */
-    const val CALL_START_SLACK_MS = 60_000L
+    /** True when the orphan's recording began clearly before the live call did, so it cannot be that call's. */
+    fun orphanPredatesLiveCall(orphanStartedAt: Long?, liveCallBeganAt: Long?): Boolean =
+        orphanStartedAt != null && liveCallBeganAt != null && orphanStartedAt < liveCallBeganAt - SAME_CALL_MARGIN_MS
 
     /**
-     * Whether the call the orphaned recording started on is known to be over.
+     * Whether the call the orphaned recording started on is known to be over, while some call is in progress.
      *
      * @param orphanStartedAt when the orphan's recording started (its staging note); null when unknown.
-     * @param lastNoCallAt the last moment CallVault saw no call at all (a phone IDLE, an app call's end), 0 if never.
-     * @param callLog finished phone calls. The system writes an entry only when a call ends, so an entry for
-     *   the orphan's call proves that call is over. An app call has none; then only [lastNoCallAt] can tell.
+     * @param lastNoCallAt the last moment CallVault saw no call at all (no phone call and no call audio mode), 0 if never.
+     * @param liveCallBeganAt when the call in progress began ringing or was dialled, as seen by CallVault (kept across
+     *   a process kill); null when CallVault did not see it begin. A restart in the middle of a call (Q25) keeps the
+     *   value the killed process wrote, so the live call's own recording is never older than it.
+     *
+     * The call log is deliberately not used: it matches by time alone and took an earlier finished call for the live
+     * one, which cut a live recording at a OnePlus restart mid-call.
      */
-    fun orphanCallEnded(orphanStartedAt: Long?, lastNoCallAt: Long, callLog: List<CallLogEntry>): Boolean {
+    fun orphanCallEnded(orphanStartedAt: Long?, lastNoCallAt: Long, liveCallBeganAt: Long?): Boolean {
         if (orphanStartedAt == null) return false
         if (lastNoCallAt > orphanStartedAt) return true
-        return callLog.any { it.startedAt in (orphanStartedAt - MAX_RING_BEFORE_RECORDING_MS)..(orphanStartedAt + CALL_START_SLACK_MS) }
+        return orphanPredatesLiveCall(orphanStartedAt, liveCallBeganAt)
     }
+
+    /**
+     * When the orphan's recording started (review C2 second pass).
+     *
+     * @param sessionFileStart the note of the staged file the app handed to the recorder for its session, recorded at
+     *   the start and kept across a process kill: the file the recorder is actually writing. Preferred, always.
+     * @param candidateStarts the notes of the other staged files, used only when that record is missing (a session
+     *   started by a build before this one).
+     * @param lastNoSessionAt the last time the app knew the recorder was not recording. A note from before it cannot
+     *   be the running session's, so a leftover staged file that the rescue has not published yet is never taken.
+     */
+    fun orphanStartFrom(sessionFileStart: Long?, candidateStarts: List<Long>, lastNoSessionAt: Long): Long? =
+        sessionFileStart ?: candidateStarts.filter { it > lastNoSessionAt }.maxOrNull()
 
     /** What a call start should do once the orphan question is settled. */
     enum class StartVerdict {
@@ -86,14 +109,31 @@ object OrphanSessionPolicy {
 
         /** The orphan is this call's recording (Q25): do not start a second one, and do not call it a failure. */
         ADOPT,
+
+        /** Another owner in this process is stopping its session (an app call ended for a phone call, C1): wait for it. */
+        WAIT_FOR_OWNER,
+
+        /** The busy session is this same start's own capture, still running for this call: keep it, never error out. */
+        KEEP_OWN,
     }
 
     /**
      * @param stillRecording what the recorder said after a stop was asked, null when no stop was asked.
+     * @param ownedBySelf the session belongs to the very start asking (its own earlier attempt for this call).
+     * @param otherOwnerReleasing every other owner in this process has begun stopping its session.
      */
-    fun forStart(action: Action, stillRecording: Boolean?): StartVerdict = when (action) {
+    fun forStart(
+        action: Action,
+        stillRecording: Boolean?,
+        ownedBySelf: Boolean = false,
+        otherOwnerReleasing: Boolean = false,
+    ): StartVerdict = when (action) {
         Action.NONE -> StartVerdict.START
-        Action.OWNED -> StartVerdict.FAIL_BUSY
+        Action.OWNED -> when {
+            ownedBySelf -> StartVerdict.KEEP_OWN
+            otherOwnerReleasing -> StartVerdict.WAIT_FOR_OWNER
+            else -> StartVerdict.FAIL_BUSY
+        }
         Action.KEEP_LIVE_CALL -> StartVerdict.ADOPT
         Action.STOP_ORPHAN -> if (stillRecording == false) StartVerdict.START else StartVerdict.FAIL_BUSY
     }

@@ -75,4 +75,32 @@ class CaptureStartCheckTest {
             CaptureStartCheck.Verdict.UNKNOWN,
         ).forEach { assertEquals("$it must stay quiet", false, it.isReportable) }
     }
+
+    // ---- Review C2 second pass: "recording" alone is not proof that THIS call is recorded ----
+
+    @Test
+    fun `recording with an empty file is not called started - first a second look`() {
+        assertEquals(
+            CaptureStartCheck.Verdict.LOOK_AGAIN,
+            CaptureStartCheck.verdict(daemonReachable = true, isRecording = true, stopRequested = false, bytesWritten = 0L),
+        )
+    }
+
+    @Test
+    fun `still empty at the second look is a failed start, reported`() {
+        val v = CaptureStartCheck.verdict(daemonReachable = true, isRecording = true, stopRequested = false, bytesWritten = 0L, finalLook = true)
+        assertEquals(CaptureStartCheck.Verdict.NOTHING_WRITTEN, v)
+        assertEquals(true, v.isReportable)
+    }
+
+    @Test
+    fun `bytes written is started, and an unreadable size falls back to the recorder's word`() {
+        assertEquals(CaptureStartCheck.Verdict.STARTED, CaptureStartCheck.verdict(true, true, false, bytesWritten = 4096L))
+        assertEquals(CaptureStartCheck.Verdict.STARTED, CaptureStartCheck.verdict(true, true, false, bytesWritten = null))
+    }
+
+    @Test
+    fun `a short call that ended first is still never reported`() {
+        assertEquals(CaptureStartCheck.Verdict.STOPPED, CaptureStartCheck.verdict(true, true, true, bytesWritten = 0L, finalLook = true))
+    }
 }

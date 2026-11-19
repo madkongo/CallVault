@@ -74,6 +74,12 @@ class AudioRecordingEngine {
          */
         private const val CAPTURE_START_CHECK_MS = 3000L
 
+        /** The second look at an empty file, before an empty file is called a failed start. */
+        private const val CAPTURE_WRITE_RECHECK_MS = 5000L
+
+        /** How long a phone call's start waits for an app call's recording to stop (C1). Past it: a failed start, said so. */
+        private const val OWNER_RELEASE_WAIT_MS = 8_000L
+
         /** Capture rate for the resilient-recording (handoff) path — matches DirectAudioRecorderSession. */
         private const val HANDOFF_SAMPLE_RATE = 48000
 
@@ -267,18 +273,39 @@ class AudioRecordingEngine {
      * daemon is invisible at the call site. This asks the one question that settles it. Deliberately
      * quiet unless the answer is unambiguous — see [CaptureStartCheck].
      */
-    private val captureStartWatch = Runnable {
-        if (!daemonRecording) return@Runnable
+    private val captureStartWatch = Runnable { checkCaptureStarted(finalLook = false) }
+    private val captureWriteRecheck = Runnable { checkCaptureStarted(finalLook = true) }
+
+    /**
+     * Also asks whether anything reached THIS call's staged file (review C2, belt-and-braces): "recording" alone
+     * cannot tell this call's capture from one the recorder was already running, which is how a refused start once
+     * read as STARTED. An empty file at the first look gets a second look [CAPTURE_WRITE_RECHECK_MS] later.
+     */
+    private fun checkCaptureStarted(finalLook: Boolean) {
+        if (!daemonRecording) return
         val reachable = runCatching {
             RecorderConnection.service?.asBinder()?.pingBinder() == true
         }.getOrDefault(false)
         val recording = runCatching { RecorderConnection.service?.isRecording() == true }.getOrDefault(false)
+        val bytes = stagingFile?.let { f -> runCatching { f.length() }.getOrNull() }
         val verdict = CaptureStartCheck.verdict(
             daemonReachable = reachable,
             isRecording = recording,
             stopRequested = !daemonRecording,
+            bytesWritten = bytes,
+            finalLook = finalLook,
         )
-        AppLogger.i(TAG, "Capture start check: $verdict (daemon reachable=$reachable, recording=$recording)")
+        AppLogger.i(TAG, "Capture start check: $verdict (daemon reachable=$reachable, recording=$recording, bytes=${bytes ?: "?"})")
+        if (verdict == CaptureStartCheck.Verdict.LOOK_AGAIN) {
+            livenessHandler.postDelayed(captureWriteRecheck, CAPTURE_WRITE_RECHECK_MS)
+            return
+        }
+        if (verdict == CaptureStartCheck.Verdict.NOTHING_WRITTEN) {
+            AppLogger.e(TAG, "The recorder says it is recording, but nothing reached this call's file; this call is not being recorded")
+            appContext?.let { CallEndLog.record(it, "capture start FAILED: recorder recording but this call's file is still empty after ${CAPTURE_START_CHECK_MS + CAPTURE_WRITE_RECHECK_MS}ms") }
+            onCaptureNeverStarted?.invoke()
+            return
+        }
         if (verdict.isReportable) {
             AppLogger.e(
                 TAG,
@@ -286,6 +313,7 @@ class AudioRecordingEngine {
                     "selected codec or bit rate refusing to configure on this device — nothing will " +
                     "be recorded for this call.",
             )
+            appContext?.let { CallEndLog.record(it, "capture start FAILED: recorder alive but not recording") }
             onCaptureNeverStarted?.invoke()
         }
     }
@@ -549,15 +577,18 @@ class AudioRecordingEngine {
             AppLogger.w(WifiCallRoute.TAG, "App-call capture: daemon unavailable (connected=$connected)")
             return false
         }
-        admitStart(context, "app-call mix")
-        DaemonSessionOwnership.claim(this)
+        if (admitStart(context, "app-call mix")) {
+            daemonRecording = true
+            return true
+        }
+        claimSession(context)
         val call = runCatching { service.startVoipRecording(codecEnum.cliKey, bitRate, outputPfd) }
             .onFailure { AppLogger.w(WifiCallRoute.TAG, "startVoipRecording threw: ${it.message}") }
         val started = call.getOrDefault(false)
         AppLogger.i(WifiCallRoute.TAG, "startVoipRecording -> $started")
         // A plain refusal opened nothing. A binder error is unknown, so it is stopped like a failed open.
         if (!started && call.isSuccess) {
-            DaemonSessionOwnership.release(this)
+            releaseSession()
             return false
         }
         if (!started || !voipCaptureConfirmed(service)) {
@@ -567,7 +598,7 @@ class AudioRecordingEngine {
                 .onFailure { AppLogger.w(WifiCallRoute.TAG, "stopRecording before the fallback failed: ${it.message}") }
             rewindOutput()
             // Only once the recorder says it stopped: a capture still running stays ours until the call-end release.
-            if (runCatching { !service.isRecording() }.getOrDefault(false)) DaemonSessionOwnership.release(this)
+            if (runCatching { !service.isRecording() }.getOrDefault(false)) releaseSession()
             return false
         }
         daemonRecording = true
@@ -611,8 +642,13 @@ class AudioRecordingEngine {
             AppLogger.w(TAG, "Recorder daemon unavailable (connected=$connected, service=${service != null})")
             return false
         }
-        admitStart(context, "daemon")
-        DaemonSessionOwnership.claim(this)
+        if (admitStart(context, "daemon")) {
+            // Our own capture for this call is still running (item 6): it is the recording.
+            daemonRecording = true
+            livenessHandler.postDelayed(livenessWatch, DAEMON_LIVENESS_POLL_MS)
+            return true
+        }
+        claimSession(context)
         return try {
             DaemonStereo.request(service, recordStereo) { AppLogger.w(TAG, it) }
             service.startRecording(audioSourceEnum.cliKey, codecEnum.cliKey, bitRate, outputPfd)
@@ -643,7 +679,7 @@ class AudioRecordingEngine {
             true
         } catch (e: Exception) {
             AppLogger.w(TAG, "Daemon startRecording failed; will fall back to local path: ${e.message}", e)
-            DaemonSessionOwnership.release(this)
+            releaseSession()
             false
         }
     }
@@ -687,7 +723,12 @@ class AudioRecordingEngine {
             return false
         }
         // A leftover session's VOICE_CALL capture beside a new one drops the user's own side (Q39): settle it first.
-        admitStart(context, "handoff")
+        if (admitStart(context, "handoff")) {
+            // Item 6, a conscious choice: our own capture for this call is running. A handoff capture beside it would
+            // be a second voice capture (Q39), so no handoff; the daemon path below keeps the running one.
+            AppLogger.i(TAG, "Handoff: this call's own capture is still running in the recorder; not opening a second one")
+            return false
+        }
         val outFd = outputPfd?.fileDescriptor
             ?: run { AppLogger.w(TAG, "Handoff: no output fd; falling back"); return false }
 
@@ -773,6 +814,7 @@ class AudioRecordingEngine {
         AppLogger.i(TAG, "Releasing session resources and recording pipeline...")
         livenessHandler.removeCallbacks(livenessWatch)
         livenessHandler.removeCallbacks(captureStartWatch)
+        livenessHandler.removeCallbacks(captureWriteRecheck)
 
         if (handoffMode) {
             // Resilient-recording teardown: stop() flips the drain flag and BLOCKS until the app-side
@@ -859,7 +901,7 @@ class AudioRecordingEngine {
 
     private fun finishRelease(discard: Boolean): Boolean {
         // The recorder's session is stopped (or never was ours): it no longer belongs to this process.
-        DaemonSessionOwnership.release(this)
+        releaseSession()
         if (discard) discardStaging() else finalizeStagingIfNeeded()
         return true
     }
@@ -871,16 +913,36 @@ class AudioRecordingEngine {
      * stopped (and rescued under its own name) and this start goes ahead; one that may be this live call's
      * own recording (Q25) is kept and nothing new starts; a recorder still busy is a failed start, said so.
      */
-    private fun admitStart(context: Context, path: String) {
-        val outcome = OrphanRecorderSession.resolve(context, "call start, $path", exclude = stagingFile, forCallStart = true)
-        when (outcome.startVerdict) {
-            OrphanSessionPolicy.StartVerdict.START -> if (outcome.action == OrphanSessionPolicy.Action.STOP_ORPHAN) {
-                CallEndLog.record(context, "orphan session: stopped before this call's start; starting this call's own recording")
+    private fun admitStart(context: Context, path: String): Boolean {
+        val t0 = android.os.SystemClock.elapsedRealtime()
+        var outcome = OrphanRecorderSession.resolve(context, "call start, $path", exclude = stagingFile)
+        var verdict = startVerdict(outcome)
+        if (verdict == OrphanSessionPolicy.StartVerdict.WAIT_FOR_OWNER) {
+            // C1: the app call this phone call interrupted is being stopped on another thread. The phone call must
+            // not be lost to that: wait (bounded) for the stop, then decide again.
+            val freed = DaemonSessionOwnership.awaitOthersReleased(this, OWNER_RELEASE_WAIT_MS)
+            CallEndLog.record(context, "call start ($path): waited ${android.os.SystemClock.elapsedRealtime() - t0}ms " +
+                "for the app call's recording to stop (freed=$freed)")
+            outcome = OrphanRecorderSession.resolve(context, "call start, $path, after waiting", exclude = stagingFile)
+            verdict = startVerdict(outcome).takeUnless { it == OrphanSessionPolicy.StartVerdict.WAIT_FOR_OWNER }
+                ?: OrphanSessionPolicy.StartVerdict.FAIL_BUSY
+        }
+        val tookMs = android.os.SystemClock.elapsedRealtime() - t0
+        if (outcome.action != OrphanSessionPolicy.Action.NONE) {
+            CallEndLog.record(context, "call start ($path): recorder session check ${outcome.action} -> $verdict in ${tookMs}ms")
+        }
+        when (verdict) {
+            OrphanSessionPolicy.StartVerdict.START -> return false
+            OrphanSessionPolicy.StartVerdict.KEEP_OWN -> {
+                // Item 6: the busy session is this engine's own capture for this very call (an app-call mix start that
+                // did not confirm, and did not confirm it stopped either). It is the call's recording: kept, never an error.
+                CallEndLog.record(context, "call start ($path): the recorder is still running this call's own earlier capture; keeping it")
+                return true
             }
-            OrphanSessionPolicy.StartVerdict.FAIL_BUSY -> {
-                val why = "The recorder is still recording an earlier session (action=${outcome.action}, " +
+            OrphanSessionPolicy.StartVerdict.FAIL_BUSY, OrphanSessionPolicy.StartVerdict.WAIT_FOR_OWNER -> {
+                val why = "The recorder is still recording another session (action=${outcome.action}, " +
                     "still recording=${outcome.stillRecording ?: "?"}); it would ignore this call's start"
-                CallEndLog.record(context, "call start FAILED ($path): recorder busy with an earlier session, action=${outcome.action}")
+                CallEndLog.record(context, "call start FAILED ($path): recorder busy with another session, action=${outcome.action}")
                 throw PipelineInitializationException(
                     userFriendlyMessage = context.getString(R.string.recording_error_start_failed),
                     technicalLogMessage = why,
@@ -891,6 +953,35 @@ class AudioRecordingEngine {
                 throw OrphanSessionKeptException("Recorder already recording a live call for a killed CallVault process; not starting a second recording")
             }
         }
+    }
+
+    private fun startVerdict(outcome: OrphanRecorderSession.Outcome) = OrphanSessionPolicy.forStart(
+        outcome.action, outcome.stillRecording,
+        ownedBySelf = DaemonSessionOwnership.isOwnedBy(this),
+        otherOwnerReleasing = DaemonSessionOwnership.othersAllReleasing(this),
+    )
+
+    /** Claims the recorder's session for this engine and records which staged file it writes, across a kill (C2). */
+    private fun claimSession(context: Context) {
+        DaemonSessionOwnership.claim(this)
+        OrphanRecorderSession.noteSessionStarted(context, stagingFile)
+    }
+
+    /** Gives the claim back; [ended] when the recorder's session is known to be over. */
+    private fun releaseSession(ended: Boolean = true) {
+        val wasOwned = DaemonSessionOwnership.isOwnedBy(this)
+        DaemonSessionOwnership.release(this)
+        if (wasOwned && ended) appContext?.let { OrphanRecorderSession.noteSessionEnded(it) }
+    }
+
+    /**
+     * Item 8: this engine is being dropped by its owner without a normal [release] (a start that threw something
+     * unexpected). Its claim must not outlive it, or every later orphan check reads the recorder as ours.
+     */
+    fun abandonClaim() {
+        if (!DaemonSessionOwnership.isOwnedBy(this)) return
+        AppLogger.w(TAG, "Engine dropped without a release; giving its recorder claim back")
+        releaseSession(ended = false)
     }
 
     /**

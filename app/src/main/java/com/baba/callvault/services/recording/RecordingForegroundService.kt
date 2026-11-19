@@ -582,6 +582,11 @@ class RecordingForegroundService : Service() {
             activeSession.cancel(this)
             currentState = RecordingServiceState.Standby(metadata)
             stopRecordingSessionAndService()
+        } catch (e: Throwable) {
+            // Anything else (a cancelled start, a bug) drops this engine without its release: its recorder claim must
+            // not outlive it, or the recorder reads as ours for good and a real orphan is never stopped (C2 item 8).
+            activeSession.abandonClaim()
+            throw e
         }
     }
 

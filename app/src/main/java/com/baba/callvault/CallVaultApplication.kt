@@ -266,7 +266,7 @@ class CallVaultApplication : Application() {
                 // A recorder still recording for a process that is gone (the phone killed CallVault mid-call):
                 // stopped when no call is up so its file is rescued, kept when it may be the live call's (C2, Q25).
                 if (started) {
-                    runCatching { com.baba.callvault.services.recording.OrphanRecorderSession.resolve(applicationContext, "app start") }
+                    runCatching { com.baba.callvault.services.recording.OrphanRecorderSession.settle(applicationContext, "app start") }
                         .onFailure { AppLogger.e(TAG, "Orphan recorder check at start failed: ${it.message}", it) }
                 }
                 CoroutineScope(Dispatchers.IO).launch {

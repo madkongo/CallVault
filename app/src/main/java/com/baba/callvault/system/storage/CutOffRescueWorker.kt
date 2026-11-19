@@ -42,7 +42,7 @@ class CutOffRescueWorker(ctx: Context, params: WorkerParameters) : CoroutineWork
     override suspend fun doWork(): Result {
         // First: a recorder still recording for a process that is gone keeps its file "in use" for ever, so
         // nothing here could ever save it (C2). Stopped when its call is over; kept when it may be live (Q25).
-        runCatching { com.baba.callvault.services.recording.OrphanRecorderSession.resolve(applicationContext, "rescue check") }
+        runCatching { com.baba.callvault.services.recording.OrphanRecorderSession.settle(applicationContext, "rescue check") }
             .onFailure { AppLogger.e(TAG, "Orphan recorder check failed: ${it.message}", it) }
         val dir = SafHelper.stagingDirOrNull(applicationContext) ?: return Result.success()
         val files = dir.listFiles().orEmpty()

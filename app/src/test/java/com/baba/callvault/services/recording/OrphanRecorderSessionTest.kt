@@ -8,9 +8,10 @@
 
 package com.baba.callvault.services.recording
 
-import com.baba.callvault.data.health.CallLogEntry
+import com.baba.callvault.server.DaemonSessionOwnership
 import com.baba.callvault.services.recording.OrphanSessionPolicy.Action
 import com.baba.callvault.services.recording.OrphanSessionPolicy.StartVerdict
+import org.junit.After
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNull
@@ -53,23 +54,29 @@ class OrphanRecorderSessionTest {
 
     private class FakeEnv(
         var owned: Boolean = false,
-        var inCall: Boolean = false,
+        var inCall: Boolean? = false,
         var orphanStart: Long? = null,
         var lastNoCall: Long = 0L,
-        var log: List<CallLogEntry> = emptyList(),
+        var liveCallBegan: Long? = null,
     ) : OrphanRecorderSession.Environment {
         var rescues = 0
+        var noSessionMarks = 0
         val lines = mutableListOf<String>()
         override fun ownedHere() = owned
         override fun callInProgress() = inCall
         override fun orphanStartedAt(exclude: File?) = orphanStart
         override fun lastNoCallAt() = lastNoCall
-        override fun callLogAround(startedAt: Long) = log
+        override fun liveCallBeganAt() = liveCallBegan
+        override fun markNoCall() { lastNoCall = System.currentTimeMillis(); liveCallBegan = null }
+        override fun markNoSession() { noSessionMarks++ }
         override fun scheduleRescue() { rescues++ }
         override fun record(line: String) { lines.add(line) }
     }
 
     private val call1Start = 1_000_000_000L
+
+    @After
+    fun tearDown() = DaemonSessionOwnership.clearForTest()
 
     @Test
     fun `N4 - after an app kill the second call is recorded into its own file, not the first call's`() {
@@ -78,29 +85,36 @@ class OrphanRecorderSessionTest {
         recorder.start("call1")
         recorder.capture("call 1 audio")
         recorder.capture("silence after call 1 hung up")
-        // A new CallVault process owns nothing. Call 2 starts; call 1 is in the call log (it ended).
-        val env = FakeEnv(
-            owned = false,
-            inCall = true,
-            orphanStart = call1Start,
-            log = listOf(CallLogEntry(call1Start - 10_000L, 60, isIncoming = true, label = null)),
-        )
+        // Call B rings 5 minutes later and cold-starts the app: a call is up, nothing proves call 1 ended except
+        // that call B began long after call 1's recording did.
+        val env = FakeEnv(inCall = true, orphanStart = call1Start, liveCallBegan = call1Start + 300_000L)
 
-        val outcome = OrphanRecorderSession.resolve(recorder, env, "call start", forCallStart = true)
-        assertEquals(StartVerdict.START, outcome.startVerdict)
-        recorder.start("call2")
-        recorder.capture("call 2 audio")
+        val outcome = OrphanRecorderSession.resolve(recorder, env, "call start")
+        assertEquals(StartVerdict.START, OrphanSessionPolicy.forStart(outcome.action, outcome.stillRecording))
+        recorder.start("callB")
+        recorder.capture("call B audio")
 
         assertEquals(listOf("call1"), recorder.finalised)
         assertEquals(listOf("call 1 audio", "silence after call 1 hung up"), recorder.audio["call1"])
-        assertEquals(listOf("call 2 audio"), recorder.audio["call2"])
-        assertEquals("call2", recorder.target)
+        assertEquals(listOf("call B audio"), recorder.audio["callB"])
         assertEquals(1, env.rescues)
     }
 
     @Test
+    fun `N4 - an app-call orphan with no call log and no call-free moment is still stopped for the next call`() {
+        // Second review, HIGH 1: the case the call log could never prove (an app call, or no READ_CALL_LOG).
+        val recorder = FakeRecorder().apply { start("whatsapp1") }
+        val env = FakeEnv(inCall = true, orphanStart = call1Start, lastNoCall = 0L, liveCallBegan = call1Start + 90_000L)
+
+        val outcome = OrphanRecorderSession.resolve(recorder, env, "app call start")
+
+        assertEquals(Action.STOP_ORPHAN, outcome.action)
+        assertEquals(listOf("whatsapp1"), recorder.finalised)
+    }
+
+    @Test
     fun `N4 - without the check the second call lands in the first call's file`() {
-        // The bug as it was, against the same fake, so the test above is known to model it.
+        // The bug as it was, against the same fake, so the tests above are known to model it.
         val recorder = FakeRecorder()
         recorder.start("call1")
         recorder.start("call2")
@@ -122,17 +136,36 @@ class OrphanRecorderSessionTest {
     }
 
     @Test
-    fun `Q25 - a restart in the middle of a call keeps the live call's recording`() {
-        // OnePlus killed and restarted CallVault mid-call: the session is that call's own recording.
+    fun `Q25 - a restart mid-call keeps the live call's recording, even with an earlier finished call`() {
+        // Second review, HIGH 2: the OnePlus restart mid-call, where the restarted app treats the call as a fresh one.
+        // The call began (as the killed process noted) before its recording started; an earlier finished call no
+        // longer matters, because the call log no longer decides anything while a call is up.
         val recorder = FakeRecorder().apply { start("call1") }
-        val env = FakeEnv(inCall = true, orphanStart = call1Start, lastNoCall = call1Start - 60_000L)
+        val env = FakeEnv(inCall = true, orphanStart = call1Start, lastNoCall = call1Start - 120_000L, liveCallBegan = call1Start - 8_000L)
 
-        val outcome = OrphanRecorderSession.resolve(recorder, env, "app start")
+        val outcome = OrphanRecorderSession.resolve(recorder, env, "call start")
 
         assertEquals(Action.KEEP_LIVE_CALL, outcome.action)
-        assertEquals(StartVerdict.ADOPT, outcome.startVerdict)
+        assertEquals(StartVerdict.ADOPT, OrphanSessionPolicy.forStart(outcome.action, outcome.stillRecording))
         assertEquals(0, recorder.stops)
-        assertTrue(recorder.isRecording())
+    }
+
+    @Test
+    fun `Q25 - with no record of when the live call began, the session is kept`() {
+        val recorder = FakeRecorder().apply { start("call1") }
+        val env = FakeEnv(inCall = true, orphanStart = call1Start, liveCallBegan = null)
+        assertEquals(Action.KEEP_LIVE_CALL, OrphanRecorderSession.resolve(recorder, env, "app start").action)
+        assertEquals(0, recorder.stops)
+    }
+
+    @Test
+    fun `the same-call margin - an orphan started just before the call began is kept, one clearly before is stopped`() {
+        val began = call1Start + 100_000L
+        assertFalse(OrphanSessionPolicy.orphanPredatesLiveCall(began - OrphanSessionPolicy.SAME_CALL_MARGIN_MS, began))
+        assertFalse(OrphanSessionPolicy.orphanPredatesLiveCall(began + 5_000L, began))
+        assertTrue(OrphanSessionPolicy.orphanPredatesLiveCall(began - OrphanSessionPolicy.SAME_CALL_MARGIN_MS - 1, began))
+        assertFalse(OrphanSessionPolicy.orphanPredatesLiveCall(null, began))
+        assertFalse(OrphanSessionPolicy.orphanPredatesLiveCall(began, null))
     }
 
     @Test
@@ -141,7 +174,6 @@ class OrphanRecorderSessionTest {
         val env = FakeEnv(inCall = true, orphanStart = call1Start)
         OrphanRecorderSession.resolve(recorder, env, "app start")
         env.inCall = false
-        env.lastNoCall = call1Start + 300_000L
 
         val outcome = OrphanRecorderSession.resolve(recorder, env, "phone call ended")
 
@@ -150,16 +182,11 @@ class OrphanRecorderSessionTest {
     }
 
     @Test
-    fun `Q25 - at a restart mid-call the call log alone never cuts the live recording`() {
-        // An earlier call in the log can look like the orphan's; with no new call starting, cutting would lose the rest.
+    fun `an unreadable call state keeps the session and says so`() {
         val recorder = FakeRecorder().apply { start("call1") }
-        val env = FakeEnv(inCall = true, orphanStart = call1Start,
-            log = listOf(CallLogEntry(call1Start - 60_000L, 20, isIncoming = true, label = null)))
-
-        val outcome = OrphanRecorderSession.resolve(recorder, env, "app start")
-
-        assertEquals(Action.KEEP_LIVE_CALL, outcome.action)
-        assertEquals(0, recorder.stops)
+        val env = FakeEnv(inCall = null, orphanStart = call1Start)
+        assertEquals(Action.KEEP_LIVE_CALL, OrphanRecorderSession.resolve(recorder, env, "app start").action)
+        assertTrue(env.lines.any { "could not read the call state" in it })
     }
 
     @Test
@@ -178,47 +205,116 @@ class OrphanRecorderSessionTest {
     @Test
     fun `a stop the recorder does not carry out is a failed start, never a reported success`() {
         val recorder = FakeRecorder().apply { start("call1"); stopWorks = false }
-        val env = FakeEnv(inCall = true, orphanStart = call1Start,
-            log = listOf(CallLogEntry(call1Start, 30, isIncoming = false, label = null)))
+        val env = FakeEnv(inCall = false, orphanStart = call1Start)
 
-        val outcome = OrphanRecorderSession.resolve(recorder, env, "call start", forCallStart = true)
+        val outcome = OrphanRecorderSession.resolve(recorder, env, "call start")
 
-        assertEquals(StartVerdict.FAIL_BUSY, outcome.startVerdict)
+        assertEquals(StartVerdict.FAIL_BUSY, OrphanSessionPolicy.forStart(outcome.action, outcome.stillRecording))
         assertTrue(env.lines.any { "stop FAILED" in it })
     }
 
     @Test
-    fun `an unanswerable recorder is left alone`() {
+    fun `an unanswerable recorder is left alone, and the always-on log says so`() {
         val recorder = object : OrphanRecorderSession.Recorder {
             override fun isRecording(): Boolean? = null
             override fun stopRecording() = error("must not be asked")
         }
-        assertEquals(Action.NONE, OrphanRecorderSession.resolve(recorder, FakeEnv(), "app start").action)
+        val env = FakeEnv()
+        assertEquals(Action.NONE, OrphanRecorderSession.resolve(recorder, env, "app start").action)
+        assertTrue(env.lines.any { "could not ask the recorder" in it })
     }
 
-    // ---- the evidence that the orphan's call is over ----
+    // ---- a call-free moment (second review, MEDIUM-HIGH 3) ----
+
+    @Test
+    fun `a phone IDLE during a live WhatsApp call is not a call-free moment`() {
+        // Q28: a ring-then-reject during WhatsApp; the audio mode is still IN_COMMUNICATION, so callInProgress reads true.
+        val env = FakeEnv(inCall = true, liveCallBegan = call1Start)
+        assertFalse(OrphanRecorderSession.noteNoCallIfFree(env))
+        assertEquals(0L, env.lastNoCall)
+        assertEquals(call1Start, env.liveCallBegan)
+    }
+
+    @Test
+    fun `an app call ending under a live phone call is not a call-free moment`() {
+        val env = FakeEnv(inCall = true)
+        assertFalse(OrphanRecorderSession.noteNoCallIfFree(env))
+        assertEquals(0L, env.lastNoCall)
+    }
+
+    @Test
+    fun `no call at all is one, and an unreadable state is not`() {
+        val free = FakeEnv(inCall = false, liveCallBegan = call1Start)
+        assertTrue(OrphanRecorderSession.noteNoCallIfFree(free))
+        assertTrue(free.lastNoCall > 0L)
+        assertNull(free.liveCallBegan)
+        assertFalse(OrphanRecorderSession.noteNoCallIfFree(FakeEnv(inCall = null)))
+    }
 
     @Test
     fun `a call-free moment after the orphan started proves its call ended`() {
-        assertTrue(OrphanSessionPolicy.orphanCallEnded(call1Start, call1Start + 1, emptyList()))
-        assertFalse(OrphanSessionPolicy.orphanCallEnded(call1Start, call1Start - 1, emptyList()))
+        assertTrue(OrphanSessionPolicy.orphanCallEnded(call1Start, call1Start + 1, null))
+        assertFalse(OrphanSessionPolicy.orphanCallEnded(call1Start, call1Start - 1, null))
+        assertFalse(OrphanSessionPolicy.orphanCallEnded(null, Long.MAX_VALUE, call1Start))
+    }
+
+    // ---- which file is the orphan's (second review, HIGH 2) ----
+
+    @Test
+    fun `the orphan's start is the file the app handed to the recorder, never just the newest note`() {
+        assertEquals(call1Start, OrphanSessionPolicy.orphanStartFrom(call1Start, listOf(call1Start + 50_000L), 0L))
     }
 
     @Test
-    fun `a finished call-log entry for the orphan's call proves it ended`() {
-        val ringing = CallLogEntry(call1Start - 20_000L, 5, isIncoming = true, label = null)
-        assertTrue(OrphanSessionPolicy.orphanCallEnded(call1Start, 0L, listOf(ringing)))
+    fun `without that record, a leftover note from before the recorder was last idle is never taken`() {
+        val idleAt = call1Start + 10_000L
+        assertNull(OrphanSessionPolicy.orphanStartFrom(null, listOf(call1Start), idleAt))
+        assertEquals(idleAt + 1, OrphanSessionPolicy.orphanStartFrom(null, listOf(call1Start, idleAt + 1), idleAt))
+    }
+
+    // ---- what a start does ----
+
+    @Test
+    fun `start verdicts`() {
+        assertEquals(StartVerdict.START, OrphanSessionPolicy.forStart(Action.NONE, null))
+        assertEquals(StartVerdict.START, OrphanSessionPolicy.forStart(Action.STOP_ORPHAN, false))
+        assertEquals(StartVerdict.FAIL_BUSY, OrphanSessionPolicy.forStart(Action.STOP_ORPHAN, true))
+        assertEquals(StartVerdict.ADOPT, OrphanSessionPolicy.forStart(Action.KEEP_LIVE_CALL, null))
+        assertEquals(StartVerdict.FAIL_BUSY, OrphanSessionPolicy.forStart(Action.OWNED, null))
     }
 
     @Test
-    fun `an unrelated older call is not taken for the orphan's`() {
-        val longBefore = CallLogEntry(call1Start - OrphanSessionPolicy.MAX_RING_BEFORE_RECORDING_MS - 1, 30, isIncoming = true, label = null)
-        assertFalse(OrphanSessionPolicy.orphanCallEnded(call1Start, 0L, listOf(longBefore)))
+    fun `item 6 - the Wi-Fi switch's own still-running capture is kept, not an error`() {
+        // An app-call mix start for a Wi-Fi call that did not confirm, nor confirm it stopped: the engine still owns
+        // it, so the handoff and daemon paths keep it instead of failing the call.
+        assertEquals(StartVerdict.KEEP_OWN, OrphanSessionPolicy.forStart(Action.OWNED, null, ownedBySelf = true))
     }
 
     @Test
-    fun `with no note nothing is claimed about the orphan's call`() {
-        assertFalse(OrphanSessionPolicy.orphanCallEnded(null, Long.MAX_VALUE, emptyList()))
+    fun `C1 - a phone call's start waits for the app call being stopped for it`() {
+        assertEquals(StartVerdict.WAIT_FOR_OWNER, OrphanSessionPolicy.forStart(Action.OWNED, null, otherOwnerReleasing = true))
+    }
+
+    @Test
+    fun `C1 - the wait ends as soon as the app call's claim is given back`() {
+        val voip = Any()
+        val carrier = Any()
+        DaemonSessionOwnership.claim(voip)
+        assertFalse(DaemonSessionOwnership.othersAllReleasing(carrier))
+        DaemonSessionOwnership.beginRelease(voip)
+        assertTrue(DaemonSessionOwnership.othersAllReleasing(carrier))
+        Thread { Thread.sleep(200); DaemonSessionOwnership.release(voip) }.start()
+        val t0 = System.currentTimeMillis()
+        assertTrue(DaemonSessionOwnership.awaitOthersReleased(carrier, 5_000L))
+        assertTrue(System.currentTimeMillis() - t0 < 4_000L)
+    }
+
+    @Test
+    fun `C1 - the wait is bounded`() {
+        val voip = Any()
+        DaemonSessionOwnership.claim(voip)
+        DaemonSessionOwnership.beginRelease(voip)
+        assertFalse(DaemonSessionOwnership.awaitOthersReleased(Any(), 100L))
     }
 
     @Test

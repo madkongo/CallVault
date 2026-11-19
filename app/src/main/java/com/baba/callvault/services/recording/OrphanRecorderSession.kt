@@ -13,8 +13,6 @@ import android.content.Context
 import android.media.AudioManager
 import android.telecom.TelecomManager
 import android.telephony.TelephonyManager
-import com.baba.callvault.data.health.CallLogEntry
-import com.baba.callvault.data.health.CallLogReader
 import com.baba.callvault.server.DaemonSessionOwnership
 import com.baba.callvault.server.RecorderConnection
 import com.baba.callvault.services.recording.OrphanSessionPolicy.Action
@@ -29,19 +27,29 @@ import java.io.File
 /**
  * Finds and settles a recorder session that no running CallVault process owns (review C2, N4).
  *
- * Asked at three moments: when a recorder hands its binder to a (re)started app, after every call ends
- * (phone IDLE, app-call end, the cut-off rescue check), and just before a call's own recording starts.
- * [OrphanSessionPolicy] decides; this reads the facts, carries the decision out and logs every step, to the
- * always-on [CallEndLog] too, because the reports that need it usually come with debug logging off.
+ * Asked when a (re)started app has its recorder, after every call ends (phone IDLE, app-call end, the cut-off
+ * rescue check), and just before a call's own recording starts. [OrphanSessionPolicy] decides; this reads the
+ * facts, carries the decision out and logs every step, to the always-on [CallEndLog] too, because the reports
+ * that need it usually come with debug logging off.
  *
- * Stopping finalises the orphan's staged file; [CutOffRescueWorker] then publishes it under its own call's
- * name from its [StagingNote]. That is the existing rescue path, unchanged.
+ * Stopping finalises the orphan's staged file; [CutOffRescueWorker] then publishes it under its own call's name
+ * from its [StagingNote]. That is the existing rescue path, unchanged.
+ *
+ * Three facts outlive a process kill here, in one small preferences file:
+ * - which staged file the app handed to the recorder for its current session ([noteSessionStarted]), so the
+ *   orphan's start time is read from the file the recorder is actually writing, not from whichever note is newest;
+ * - when the call in progress began ringing or was dialled ([noteCallBegan]); a restart mid-call keeps the value
+ *   the killed process wrote, which is what tells the live call's own recording (Q25) from an earlier call's;
+ * - the last moment no call at all was in progress ([noteNoCallIfFree]).
  */
 object OrphanRecorderSession {
 
     private const val TAG = "CV:OrphanSession"
     private const val PREFS = "orphan_session"
     private const val KEY_LAST_NO_CALL_AT = "last_no_call_at"
+    private const val KEY_LIVE_CALL_BEGAN_AT = "live_call_began_at"
+    private const val KEY_SESSION_STAGING = "session_staging"
+    private const val KEY_LAST_NO_SESSION_AT = "last_no_session_at"
 
     /** The recorder calls this needs; a fake in tests. */
     interface Recorder {
@@ -53,52 +61,46 @@ object OrphanRecorderSession {
     /** Everything else the decision reads or does; a fake in tests. */
     interface Environment {
         fun ownedHere(): Boolean
-        fun callInProgress(): Boolean
-        /** When the newest note-bearing staged recording other than [exclude] started, or null. */
+        /** Any phone or app call ringing or up, by telephony, Telecom or the audio mode. Null when unreadable. */
+        fun callInProgress(): Boolean?
+        /** When the orphan's recording started; see [OrphanSessionPolicy.orphanStartFrom]. */
         fun orphanStartedAt(exclude: File?): Long?
         fun lastNoCallAt(): Long
-        fun callLogAround(startedAt: Long): List<CallLogEntry>
+        fun liveCallBeganAt(): Long?
+        /** No call is in progress now: remember it, and forget the last call's beginning. */
+        fun markNoCall()
+        /** The recorder is not recording now: no session can be orphaned from before this moment. */
+        fun markNoSession()
         fun scheduleRescue()
         fun record(line: String)
     }
 
     /** What happened, for the caller. [stillRecording] is the recorder's answer after a stop, null when none was asked. */
-    data class Outcome(val action: Action, val stillRecording: Boolean?) {
-        val startVerdict: OrphanSessionPolicy.StartVerdict get() = OrphanSessionPolicy.forStart(action, stillRecording)
-    }
+    data class Outcome(val action: Action, val stillRecording: Boolean?)
 
     private val lock = Any()
 
-    /**
-     * The core, free of Android. Serialised: two triggers must never both stop, or decide on a half-stopped session.
-     *
-     * @param forCallStart a new call's recording is about to start. Only then does the call log count as proof that
-     *   the orphan's call ended. Its match is by time and can take an earlier call that ended just before the
-     *   orphan's for it; at a call start that costs a split (the new recording starts at once), while at a restart
-     *   mid-call it would cut the live call with nothing to take over (Q25). A call-free moment is exact and counts always.
-     */
-    fun resolve(
-        recorder: Recorder?,
-        env: Environment,
-        trigger: String,
-        exclude: File? = null,
-        forCallStart: Boolean = false,
-    ): Outcome = synchronized(lock) {
+    /** The core, free of Android. Serialised: two triggers must never both stop, or decide on a half-stopped session. */
+    fun resolve(recorder: Recorder?, env: Environment, trigger: String, exclude: File? = null): Outcome = synchronized(lock) {
         if (recorder == null) return Outcome(Action.NONE, null)
         val recording = recorder.isRecording()
         if (recording == null) {
-            AppLogger.w(TAG, "[$trigger] could not ask the recorder whether it is recording; leaving it")
+            env.record("orphan session [$trigger]: could not ask the recorder whether it is recording; leaving it")
             return Outcome(Action.NONE, null)
         }
-        if (!recording) return Outcome(Action.NONE, null)
-        val owned = env.ownedHere()
-        val inCall = if (owned) true else env.callInProgress()
-        val startedAt = if (owned) null else env.orphanStartedAt(exclude)
-        val ended = !owned && OrphanSessionPolicy.orphanCallEnded(
-            startedAt, env.lastNoCallAt(), if (forCallStart) startedAt?.let { env.callLogAround(it) }.orEmpty() else emptyList(),
-        )
-        val action = OrphanSessionPolicy.decide(true, owned, inCall, ended)
-        val facts = "callInProgress=$inCall orphanStartedAt=${startedAt ?: "unknown"} orphanCallEnded=$ended"
+        if (!recording) {
+            env.markNoSession()
+            return Outcome(Action.NONE, null)
+        }
+        if (env.ownedHere()) return Outcome(Action.OWNED, null)
+        val readCall = env.callInProgress()
+        if (readCall == null) env.record("orphan session [$trigger]: could not read the call state; treating it as a call in progress")
+        val inCall = readCall ?: true // unknown: keeping a session costs a late stop, cutting a live one costs the call
+        val startedAt = env.orphanStartedAt(exclude)
+        val began = env.liveCallBeganAt()
+        val ended = OrphanSessionPolicy.orphanCallEnded(startedAt, env.lastNoCallAt(), began)
+        val action = OrphanSessionPolicy.decide(true, false, inCall, ended)
+        val facts = "callInProgress=$inCall orphanStartedAt=${startedAt ?: "unknown"} liveCallBeganAt=${began ?: "unknown"} orphanCallEnded=$ended"
         return when (action) {
             Action.NONE, Action.OWNED -> Outcome(action, null)
             Action.KEEP_LIVE_CALL -> {
@@ -114,6 +116,7 @@ object OrphanRecorderSession {
                     env.record("orphan session [$trigger]: stop FAILED (still recording=${still ?: "unknown"}" +
                         (stopFailure?.let { " " + CallEndLog.describe(it) } ?: "") + ")")
                 } else {
+                    env.markNoSession()
                     env.record("orphan session [$trigger]: stopped; its file goes to the cut-off rescue under its own call's name")
                 }
                 // Scheduled either way: a stopped file is published once quiet, a failed stop is looked at again.
@@ -123,28 +126,66 @@ object OrphanRecorderSession {
         }
     }
 
-    /** Android entry point. Blocking (a stop waits for the recorder to finalise the file): never on the main thread. */
-    fun resolve(context: Context, trigger: String, exclude: File? = null, forCallStart: Boolean = false): Outcome =
-        resolve(
-            RecorderConnection.service?.let { BinderRecorder(it) }, AndroidEnvironment(context.applicationContext),
-            trigger, exclude, forCallStart,
-        )
+    /**
+     * Records a call-free moment, only when no call of either kind is ringing or up right now (review C2 second
+     * pass). A phone IDLE during a live WhatsApp call, or an app call ending under a phone call, is not one.
+     * @return whether it was recorded.
+     */
+    fun noteNoCallIfFree(env: Environment): Boolean {
+        val inCall = env.callInProgress()
+        if (inCall != false) return false
+        env.markNoCall()
+        return true
+    }
 
-    /** [resolve] on a background thread, for triggers on the main thread or inside a binder call. */
-    fun resolveAsync(context: Context, trigger: String) {
+    /** Android entry point. Blocking (a stop waits for the recorder to finalise the file): never on the main thread. */
+    fun resolve(context: Context, trigger: String, exclude: File? = null): Outcome =
+        resolve(RecorderConnection.service?.let { BinderRecorder(it) }, AndroidEnvironment(context.applicationContext), trigger, exclude)
+
+    /** [noteNoCallIfFree] then [resolve]; blocking, for a background thread after a call ended. */
+    fun settle(context: Context, trigger: String): Outcome {
+        val env = AndroidEnvironment(context.applicationContext)
+        noteNoCallIfFree(env)
+        return resolve(RecorderConnection.service?.let { BinderRecorder(it) }, env, trigger)
+    }
+
+    /** [settle] on a background thread, for triggers on the main thread. */
+    fun settleAsync(context: Context, trigger: String) {
         val app = context.applicationContext
         Thread {
-            runCatching { resolve(app, trigger) }
+            runCatching { settle(app, trigger) }
                 .onFailure { AppLogger.e(TAG, "[$trigger] orphan check failed: ${it.message}", it) }
         }.apply { isDaemon = true; name = "cv-orphan-check" }.start()
     }
 
-    /** Remembers that no call is in progress now (a phone IDLE, an app call's end). Read by [OrphanSessionPolicy.orphanCallEnded]. */
-    fun noteNoCall(context: Context, atMillis: Long = System.currentTimeMillis()) {
+    /**
+     * Cheap, lock-free and safe on the main thread: whether a start would find the recorder busy with a session
+     * nobody here owns, i.e. whether [resolve] has anything to settle. One binder call, no stop.
+     */
+    fun needsSettling(): Boolean {
+        if (DaemonSessionOwnership.isOwnedHere) return false
+        return runCatching { RecorderConnection.service?.isRecording() == true }.getOrDefault(false)
+    }
+
+    /** The call in progress began now (it rang, or was dialled), seen by this process. */
+    fun noteCallBegan(context: Context, atMillis: Long = System.currentTimeMillis()) {
+        edit(context) { putLong(KEY_LIVE_CALL_BEGAN_AT, atMillis) }
+    }
+
+    /** The app handed [staging] to the recorder for a session it now owns. */
+    fun noteSessionStarted(context: Context, staging: File?) {
+        edit(context) { if (staging != null) putString(KEY_SESSION_STAGING, staging.absolutePath) else remove(KEY_SESSION_STAGING) }
+    }
+
+    /** The app's own session is over (stopped or never started). */
+    fun noteSessionEnded(context: Context) {
+        edit(context) { remove(KEY_SESSION_STAGING); putLong(KEY_LAST_NO_SESSION_AT, System.currentTimeMillis()) }
+    }
+
+    private fun edit(context: Context, block: android.content.SharedPreferences.Editor.() -> Unit) {
         runCatching {
-            context.applicationContext.getSharedPreferences(PREFS, Context.MODE_PRIVATE)
-                .edit().putLong(KEY_LAST_NO_CALL_AT, atMillis).apply()
-        }.onFailure { AppLogger.w(TAG, "Could not note the call-free moment: ${it.message}") }
+            context.applicationContext.getSharedPreferences(PREFS, Context.MODE_PRIVATE).edit().apply(block).apply()
+        }.onFailure { AppLogger.w(TAG, "Could not update the orphan-session facts: ${it.message}") }
     }
 
     private class BinderRecorder(private val service: com.baba.callvault.server.IRecorderService) : Recorder {
@@ -155,11 +196,13 @@ object OrphanRecorderSession {
     }
 
     private class AndroidEnvironment(private val context: Context) : Environment {
+        private val prefs get() = context.getSharedPreferences(PREFS, Context.MODE_PRIVATE)
+
         override fun ownedHere(): Boolean = DaemonSessionOwnership.isOwnedHere
 
-        // READ_PHONE_STATE is a core permission of the app; a missing grant throws and reads as "in a call" below.
+        // READ_PHONE_STATE is a core permission of the app; a missing grant throws and reads as unknown.
         @SuppressLint("MissingPermission")
-        override fun callInProgress(): Boolean = runCatching {
+        override fun callInProgress(): Boolean? = runCatching {
             @Suppress("DEPRECATION")
             val carrier = context.getSystemService(TelephonyManager::class.java)?.callState
             val mode = context.getSystemService(AudioManager::class.java)?.mode
@@ -167,24 +210,33 @@ object OrphanRecorderSession {
             (carrier != null && carrier != TelephonyManager.CALL_STATE_IDLE) ||
                 (mode != null && AfterCallPolicy.isCallAudioMode(mode)) ||
                 telecom == true
-        }.onFailure { AppLogger.w(TAG, "Could not read the call state; treating it as a call in progress: ${it.message}") }
-            .getOrDefault(true) // unknown reads as "in a call": keeping a session costs a late stop, cutting a live one costs the call
+        }.onFailure { AppLogger.w(TAG, "Could not read the call state: ${it.message}") }.getOrNull()
 
         override fun orphanStartedAt(exclude: File?): Long? {
-            val dir = SafHelper.stagingDirOrNull(context) ?: return null
-            val newest = dir.listFiles().orEmpty()
+            val sessionStart = prefs.getString(KEY_SESSION_STAGING, null)
+                ?.let(::File)?.takeIf { it.absolutePath != exclude?.absolutePath }
+                ?.let(::noteStart)
+            val dir = SafHelper.stagingDirOrNull(context)
+            val candidates = if (sessionStart != null || dir == null) emptyList() else dir.listFiles().orEmpty()
                 .filter { SafHelper.isStagedRecording(it) && it.absolutePath != exclude?.absolutePath }
-                .filter { StagingNote.fileFor(it).exists() }
-                .maxByOrNull { it.lastModified() } ?: return null
-            return runCatching { StagingNote.decode(StagingNote.fileFor(newest).readText())?.startedAtMillis }.getOrNull()
+                .mapNotNull(::noteStart)
+            return OrphanSessionPolicy.orphanStartFrom(sessionStart, candidates, prefs.getLong(KEY_LAST_NO_SESSION_AT, 0L))
         }
 
-        override fun lastNoCallAt(): Long = runCatching {
-            context.getSharedPreferences(PREFS, Context.MODE_PRIVATE).getLong(KEY_LAST_NO_CALL_AT, 0L)
-        }.getOrDefault(0L)
+        private fun noteStart(staged: File): Long? = StagingNote.fileFor(staged).takeIf { it.exists() }
+            ?.let { runCatching { StagingNote.decode(it.readText())?.startedAtMillis }.getOrNull() }
 
-        override fun callLogAround(startedAt: Long): List<CallLogEntry> =
-            CallLogReader.entriesSince(context, startedAt - OrphanSessionPolicy.MAX_RING_BEFORE_RECORDING_MS - 1)
+        override fun lastNoCallAt(): Long = runCatching { prefs.getLong(KEY_LAST_NO_CALL_AT, 0L) }.getOrDefault(0L)
+
+        override fun liveCallBeganAt(): Long? =
+            runCatching { prefs.getLong(KEY_LIVE_CALL_BEGAN_AT, 0L) }.getOrDefault(0L).takeIf { it > 0L }
+
+        override fun markNoCall() = edit(context) {
+            putLong(KEY_LAST_NO_CALL_AT, System.currentTimeMillis())
+            remove(KEY_LIVE_CALL_BEGAN_AT)
+        }
+
+        override fun markNoSession() = edit(context) { putLong(KEY_LAST_NO_SESSION_AT, System.currentTimeMillis()) }
 
         override fun scheduleRescue() = CutOffRescueWorker.schedule(context)
 

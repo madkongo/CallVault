@@ -8,9 +8,6 @@
 
 package com.baba.callvault.server
 
-import java.util.Collections
-import java.util.concurrent.ConcurrentHashMap
-
 /**
  * Which recorder sessions THIS app process started and still owns (review C2).
  *
@@ -25,22 +22,53 @@ import java.util.concurrent.ConcurrentHashMap
  */
 object DaemonSessionOwnership {
 
-    private val owners: MutableSet<Any> = Collections.newSetFromMap(ConcurrentHashMap())
+    /** Owner -> true once it has begun stopping its session (see [beginRelease]). Guarded by itself. */
+    private val owners = LinkedHashMap<Any, Boolean>()
 
     /** Claims the recorder's session for [owner]. Called BEFORE the start is dispatched, so no check can catch it unowned. */
     fun claim(owner: Any) {
-        owners.add(owner)
+        synchronized(owners) { owners[owner] = false }
+    }
+
+    /**
+     * [owner] has begun stopping its session on another thread (an app call ended for a phone call, review C1). Still
+     * owned until [release]; a start that finds only releasing owners may wait for them instead of failing.
+     */
+    fun beginRelease(owner: Any) {
+        synchronized(owners) { if (owners.containsKey(owner)) owners[owner] = true }
     }
 
     /** Gives [owner]'s claim back once its session is stopped, or its start failed. Idempotent. */
     fun release(owner: Any) {
-        owners.remove(owner)
+        synchronized(owners) {
+            if (owners.remove(owner) != null) (owners as Object).notifyAll()
+        }
     }
 
     /** True while anything in this process owns a recorder session. */
     val isOwnedHere: Boolean
-        get() = owners.isNotEmpty()
+        get() = synchronized(owners) { owners.isNotEmpty() }
+
+    /** True while [owner] holds a claim. */
+    fun isOwnedBy(owner: Any): Boolean = synchronized(owners) { owners.containsKey(owner) }
+
+    /** True when there are claims other than [self], and every one of them is being released. */
+    fun othersAllReleasing(self: Any): Boolean = synchronized(owners) {
+        val others = owners.filterKeys { it !== self }
+        others.isNotEmpty() && others.values.all { it }
+    }
+
+    /** Waits up to [timeoutMs] until no owner other than [self] is left. True when they are all gone. */
+    fun awaitOthersReleased(self: Any, timeoutMs: Long): Boolean = synchronized(owners) {
+        val deadline = System.currentTimeMillis() + timeoutMs
+        while (owners.keys.any { it !== self }) {
+            val left = deadline - System.currentTimeMillis()
+            if (left <= 0) return@synchronized false
+            (owners as Object).wait(left)
+        }
+        true
+    }
 
     /** For tests only. */
-    internal fun clearForTest() = owners.clear()
+    internal fun clearForTest() = synchronized(owners) { owners.clear() }
 }

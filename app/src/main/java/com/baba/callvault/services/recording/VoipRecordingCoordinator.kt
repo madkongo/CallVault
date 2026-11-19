@@ -126,13 +126,71 @@ object VoipRecordingCoordinator {
     /** Set when the caller turned out to be on the ignore list after the recording began (#51). */
     @Volatile private var discardAsIgnored = false
 
+    /** True while an orphan check for a start runs off the main thread; a repeat start signal waits for it. */
+    @Volatile private var orphanCheckInFlight = false
+
+    /** Counts call ends, so a start continued after an orphan check knows whether its call already ended. */
+    @Volatile private var callEnds = 0
+
+    /** Told when a start that went through an orphan check has finished, so the detector can update its state. */
+    @Volatile var onDeferredStartFinished: (() -> Unit)? = null
+
+    private val mainHandler by lazy { android.os.Handler(android.os.Looper.getMainLooper()) }
+
+    /**
+     * Settles a recorder session nobody here owns on a background thread, then continues this start on the main
+     * thread (review C2 second pass: never block the main thread on a stop). Every step and its duration goes to
+     * the always-on log.
+     */
+    private fun settleOrphanThenStart(context: Context, manual: Boolean, viaNormalMode: Boolean) {
+        orphanCheckInFlight = true
+        val endsAtStart = callEnds
+        val app = context.applicationContext
+        val t0 = android.os.SystemClock.elapsedRealtime()
+        Thread {
+            val outcome = runCatching { OrphanRecorderSession.resolve(app, "app call start") }
+                .onFailure { AppLogger.e(TAG, "Orphan check at an app-call start failed: ${it.message}", it) }
+                .getOrNull()
+            val verdict = outcome?.let { OrphanSessionPolicy.forStart(it.action, it.stillRecording) }
+                ?: OrphanSessionPolicy.StartVerdict.FAIL_BUSY
+            val tookMs = android.os.SystemClock.elapsedRealtime() - t0
+            CallEndLog.record(app, "app call start: recorder session check ${outcome?.action} -> $verdict in ${tookMs}ms")
+            mainHandler.post {
+                orphanCheckInFlight = false
+                when {
+                    callEnds != endsAtStart ->
+                        AppLogger.i(TAG, "The app call ended while its start waited for the orphan check; not starting")
+                    verdict == OrphanSessionPolicy.StartVerdict.ADOPT -> {
+                        CallEndLog.record(app, "app call start: the recorder is already recording this call for the process the phone killed; keeping that recording")
+                        AppLogger.i(TAG, "Not starting a second recording: the recorder is already recording this app call for the killed CallVault")
+                    }
+                    else -> {
+                        if (verdict != OrphanSessionPolicy.StartVerdict.START) {
+                            CallEndLog.record(app, "app call start: recorder still busy ($verdict); the start will be refused and reported")
+                        }
+                        // FAIL_BUSY continues too: the recorder refuses it and the existing missed-app-call notice says so.
+                        runCatching { onCallStarted(app, manual, viaNormalMode, orphanSettled = true) }
+                            .onFailure { AppLogger.w(TAG, "VoIP start after the orphan check failed: ${it.message}") }
+                    }
+                }
+                runCatching { onDeferredStartFinished?.invoke() }
+            }
+        }.apply { isDaemon = true; name = "cv-voip-orphan-check" }.start()
+    }
+
     /**
      * @param manual the user pressed Record (the "Ask me" prompt). An explicit ask outranks the ignore
      *   list, as it does for phone calls.
      */
     @Synchronized
-    fun onCallStarted(context: Context, manual: Boolean = false, viaNormalMode: Boolean = false) {
+    fun onCallStarted(
+        context: Context,
+        manual: Boolean = false,
+        viaNormalMode: Boolean = false,
+        orphanSettled: Boolean = false,
+    ) {
         if (recording) return
+        if (orphanCheckInFlight) return
         val prefs = AppPreferences(context)
         // The master switch sits above the per-type VoIP setting: paused/stopped records nothing.
         val recordingState = prefs.getRecordingState()
@@ -203,14 +261,16 @@ object VoipRecordingCoordinator {
         // Review C2: a session the recorder still runs for a CallVault the phone killed. One whose call is over is
         // stopped (and rescued under its own name) so this call can start; one that may be this very call, picked
         // up again after the restart (Q25), is that call's recording: nothing new starts and nothing is "missed".
-        val orphan = OrphanRecorderSession.resolve(context, "app call start", forCallStart = true)
-        if (orphan.startVerdict == OrphanSessionPolicy.StartVerdict.ADOPT) {
-            CallEndLog.record(context, "app call start: the recorder is already recording this call for the process the phone killed; keeping that recording")
-            AppLogger.i(TAG, "Not starting a second recording: the recorder is already recording this app call for the killed CallVault")
+        // Settled OFF the main thread (a stop can take seconds), then this start continues from the main thread.
+        // The cheap check below is one binder call; the usual call (nothing to settle) never leaves this thread.
+        if (!orphanSettled && OrphanRecorderSession.needsSettling()) {
+            settleOrphanThenStart(context, manual, viaNormalMode)
             return
         }
-        if (orphan.startVerdict == OrphanSessionPolicy.StartVerdict.FAIL_BUSY) {
-            AppLogger.w(TAG, "The recorder is busy with another session (${orphan.action}); this start will be refused")
+        if (!orphanSettled && DaemonSessionOwnership.isOwnedHere &&
+            runCatching { service.isRecording() }.getOrDefault(false)
+        ) {
+            CallEndLog.record(context, "app call start: the recorder is busy with this app's own other recording; the start will be refused")
         }
 
         val fileName = buildFileName(codec, appLabel, caller)
@@ -222,8 +282,10 @@ object VoipRecordingCoordinator {
             return
         }
 
-        // Ours from before the start is sent, so no orphan check can take it for a leftover (C2).
+        // Ours from before the start is sent, so no orphan check can take it for a leftover (C2); and the file it
+        // writes is remembered across a kill, so a later check knows this session's start exactly.
         DaemonSessionOwnership.claim(this)
+        OrphanRecorderSession.noteSessionStarted(context, saf.stagingFile)
         val started = runCatching {
             DaemonStereo.request(service, prefs.getRecordStereo()) { AppLogger.w(TAG, it) }
             service.startVoipRecording(codec.cliKey, bitRate, saf.descriptor)
@@ -231,6 +293,7 @@ object VoipRecordingCoordinator {
 
         if (!started) {
             DaemonSessionOwnership.release(this)
+            OrphanRecorderSession.noteSessionEnded(context)
             // Most likely the policy was not armed before the call — nothing can be captured now, so
             // remove the empty file rather than leaving a 0-byte recording in the user's folder.
             reportMissedIfReal(context, R.string.voip_missed_not_ready, null)
@@ -791,6 +854,7 @@ object VoipRecordingCoordinator {
      */
     @Synchronized
     fun onCallEnded(context: Context, neverConnected: Boolean = false) {
+        callEnds++
         if (!recording) return
         recording = false
         val saf = pending
@@ -834,6 +898,7 @@ object VoipRecordingCoordinator {
         runCatching { RecorderConnection.service?.stopRecording() }
             .onFailure { AppLogger.w(TAG, "stopRecording failed: ${it.message}") }
         DaemonSessionOwnership.release(this)
+        OrphanRecorderSession.noteSessionEnded(context)
         if (discardAsIgnored) {
             // Before any warning or diagnostic: a call the user asked us to skip is not a one-sided or
             // failed recording, and nothing about it should be reported or kept.

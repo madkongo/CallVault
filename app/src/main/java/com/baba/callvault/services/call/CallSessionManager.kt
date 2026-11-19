@@ -246,14 +246,13 @@ class CallSessionManager private constructor(context: Context) {
             // Any call's end — even one this process never saw start, because the phone killed and restarted
             // CallVault mid-call — is when a recording that call left behind can be saved (backlog #4).
             CutOffRescueWorker.schedule(appContext)
-            // No phone call is up now. Remembered, and the recorder checked for a session nobody owns: a call
-            // this process never saw start (killed and restarted mid-call) left its recording running (C2).
-            // Checked a moment later, so our own session's stop (sent below) has claimed it and the audio
-            // mode has left the call.
-            OrphanRecorderSession.noteNoCall(appContext)
+            // The recorder is checked for a session nobody owns: a call this process never saw start (killed and
+            // restarted mid-call) left its recording running (C2). A moment later, so our own session's stop (sent
+            // below) has claimed it and the audio mode has left the call; and only then is a call-free moment
+            // noted, if no call of either kind is still up (a WhatsApp call under this IDLE is not one, Q28).
             managerScope.launch(Dispatchers.IO) {
                 delay(ORPHAN_CHECK_AFTER_IDLE_MS)
-                runCatching { OrphanRecorderSession.resolve(appContext, "phone call ended") }
+                runCatching { OrphanRecorderSession.settle(appContext, "phone call ended") }
                     .onFailure { AppLogger.e(TAG, "Orphan recorder check after the call failed: ${it.message}", it) }
             }
             // Only trigger stop logic if we were previously in an active session. Prevents redundant stop commands on possible repeated IDLE broadcasts.
@@ -289,6 +288,13 @@ class CallSessionManager private constructor(context: Context) {
                     }
                 )
             }.onFailure { AppLogger.w(TAG, "Could not signal the app-call stop: ${it.message}") }
+        }
+
+        // When this call began, for telling its own recording from an earlier call's after a process kill (C2). Only
+        // a beginning this process saw: a ring, or an off-hook right after a dial. An off-hook with neither is the
+        // call already up when the phone restarted CallVault (Q25), and the value the killed process wrote stays.
+        if (!session.isSessionActive && (receivedCallState == TelephonyManager.CALL_STATE_RINGING || freshDialledNumber() != null)) {
+            OrphanRecorderSession.noteCallBegan(appContext)
         }
 
         // 3. Launch the Coroutine for RINGING or OFFHOOK
