@@ -10,6 +10,7 @@ package com.baba.callvault.system.storage
 
 import android.net.Uri
 import android.os.Bundle
+import android.os.Message
 import java.io.DataInputStream
 import java.io.DataOutputStream
 import java.io.File
@@ -61,6 +62,12 @@ object DriveCopyProtocol {
 
     /** What one folder listing returned, in the order the provider gave it. */
     class Listing(val names: List<String>, val uris: List<Uri>, val sizes: List<Long>)
+
+    /**
+     * An empty reply to [request]: the same message kind, and the request's sequence number (`arg1`) echoed so
+     * the app can tell which call it answers (review C15).
+     */
+    fun replyTo(request: Message): Message = Message.obtain(null, request.what).also { it.arg1 = request.arg1 }
 
     fun listRequest(folder: Uri) = Bundle().apply { putParcelable(K_FOLDER, folder) }
 
@@ -197,11 +204,12 @@ object DriveCopyProtocol {
     /**
      * [driveSize] is the Drive document's length as the provider reports it AFTER the copy (-1 when it will
      * not say). It is what the app checks before deleting the device copy: a delete never rests on "the copy
-     * call returned".
+     * call returned". [name] is the recording the request named, so the app can refuse a reply for another one.
      */
-    fun copyReply(result: SafHelper.CopyResult, timings: CopyTimings, driveSize: Long = -1L) = Bundle().apply {
+    fun copyReply(result: SafHelper.CopyResult, timings: CopyTimings, driveSize: Long, name: String) = Bundle().apply {
         putBoolean(K_OK, true)
         putLong(K_DRIVE_SIZE, driveSize)
+        putString(K_NAME, name)
         when (result) {
             is SafHelper.CopyResult.Copied -> {
                 putInt(K_KIND, KIND_COPIED); putParcelable(K_RESULT_URI, result.uri); putLong(K_BYTES, result.bytes)
@@ -218,18 +226,27 @@ object DriveCopyProtocol {
         putLongArray(K_TIMING_MS, map.values.toLongArray())
     }
 
-    /** The reply turned back into a result, plus the copier's own step timings (`step=12ms ...`). */
     /** A copy reply read back: the result, the copier's step timings, and the Drive document's reported length. */
     data class CopyReply(val result: SafHelper.CopyResult, val steps: String, val driveSize: Long)
 
+    /**
+     * The reply turned back into a result. A successful reply that names another recording than [expectedName]
+     * reads as a failure with no Drive length, so nothing is deleted or stamped on it (review C15).
+     */
     @Suppress("DEPRECATION")
-    fun readCopyReply(reply: Bundle): CopyReply {
+    fun readCopyReply(reply: Bundle, expectedName: String): CopyReply {
         val names = reply.getStringArray(K_TIMING_NAMES) ?: emptyArray()
         val ms = reply.getLongArray(K_TIMING_MS) ?: LongArray(0)
         val timing = names.indices.joinToString(" ") { "${names[it]}=${ms.getOrElse(it) { 0 }}ms" }
         val driveSize = reply.getLong(K_DRIVE_SIZE, -1L)
         if (!reply.getBoolean(K_OK)) {
             return CopyReply(SafHelper.CopyResult.Failed(reply.getString(K_ERROR) ?: "the copier gave no reason"), timing, -1L)
+        }
+        val repliedFor = reply.getString(K_NAME)
+        if (repliedFor != expectedName) {
+            return CopyReply(
+                SafHelper.CopyResult.Failed("the copier's reply was for '$repliedFor', not '$expectedName'; ignored"), timing, -1L,
+            )
         }
         val uri = reply.getParcelable<Uri>(K_RESULT_URI)
         val result = when (reply.getInt(K_KIND)) {

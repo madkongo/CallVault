@@ -39,8 +39,11 @@ interface DriveCopier {
  * The app's end of the Drive copier process ([DriveCopyService]): one request at a time, each with a time
  * limit, and each abandoned within about half a second when "Stop for now" is pressed.
  *
- * An abandoned, stuck or dead call all end the same way: [close] lets go of the service, which ends the
- * copier process, and the next call starts a fresh one. That is the whole recovery.
+ * An abandoned, stuck or dead call all end the same way: [close] lets go of the service, and the next call
+ * binds again. That ends the copier process only when no other client (the sweep and the after-call copy each
+ * have one) is still bound, so a reply to an abandoned call can still arrive later. Every call therefore
+ * carries its own sequence number in `arg1` and its own reply Messenger ([ReplyHandler]): a late reply can
+ * only reach the abandoned call it belongs to, and is dropped and journalled (review C15).
  *
  * Every way a call can end without an answer writes an always-on journal line with its reason, how long it
  * took and whether the copier process was still alive ([DriveDiagnostics]).
@@ -81,11 +84,23 @@ class DriveCopyClient(context: Context, private val honorStop: Boolean = true) :
         return outcome
     }
 
-    private val replies = Messenger(object : Handler(Looper.getMainLooper()) {
+    /** The sequence number of the last call sent; each call gets the next one. */
+    private var lastSeq = 0
+
+    /**
+     * Receives the reply to ONE call: completes [target] only when the reply's `arg1` is [expectedSeq], and hands
+     * anything else to [onStray] (journalled, then dropped).
+     */
+    class ReplyHandler(
+        looper: Looper,
+        private val expectedSeq: Int,
+        private val target: CompletableDeferred<Bundle?>,
+        private val onStray: (Int) -> Unit,
+    ) : Handler(looper) {
         override fun handleMessage(msg: Message) {
-            pending?.complete(msg.data)
+            if (msg.arg1 == expectedSeq) target.complete(msg.data) else onStray(msg.arg1)
         }
-    })
+    }
 
     private fun bind(): Boolean {
         close()
@@ -143,8 +158,12 @@ class DriveCopyClient(context: Context, private val honorStop: Boolean = true) :
         }
         val done = CompletableDeferred<Bundle?>()
         pending = done
+        val seq = ++lastSeq
+        val replyTo = Messenger(ReplyHandler(Looper.getMainLooper(), seq, done) { got ->
+            journal("copier reply DROPPED: $label call #$seq got a reply numbered #$got, which belongs to another call")
+        })
         val sent = runCatching {
-            service?.send(Message.obtain(null, what).also { it.data = data; it.replyTo = replies })
+            service?.send(Message.obtain(null, what).also { it.data = data; it.arg1 = seq; it.replyTo = replyTo })
         }.onFailure { journal("copier send: $label threw ${it.javaClass.simpleName}: ${it.message}") }
             .isSuccess && service != null
         if (!sent) {

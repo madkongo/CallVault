@@ -73,7 +73,7 @@ class RecordingCopyWorker(ctx: Context, params: WorkerParameters) : CoroutineWor
         }
         var driveSize = -1L
         val copyResult = when (outcome) {
-            is DriveCopyClient.Outcome.Reply -> DriveCopyProtocol.readCopyReply(outcome.data).let { (r, steps, size) ->
+            is DriveCopyClient.Outcome.Reply -> DriveCopyProtocol.readCopyReply(outcome.data, name).let { (r, steps, size) ->
                 driveSize = size
                 DriveCopyJournal.record(
                     applicationContext,

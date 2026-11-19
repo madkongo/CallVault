@@ -298,7 +298,7 @@ class SyncSweepWorker(ctx: Context, params: WorkerParameters) : CoroutineWorker(
             var driveSize = -1L
             when (outcome) {
                 is DriveCopyClient.Outcome.Reply -> {
-                    val reply = DriveCopyProtocol.readCopyReply(outcome.data)
+                    val reply = DriveCopyProtocol.readCopyReply(outcome.data, name)
                     copyResult = reply.result; stepTimes = reply.steps; driveSize = reply.driveSize; stalls = 0
                 }
                 else -> {

@@ -139,6 +139,6 @@ object DriveCopyHandler {
             is SafHelper.CopyResult.Failed -> "FAILED (${result.reason})"
         }
         log("$where: COPY done '${r.name}' $kind in ${SystemClock.elapsedRealtime() - start}ms, Drive reports $driveSize bytes" + if (verifyTries > 0) " (asked $verifyTries extra times)" else "")
-        return DriveCopyProtocol.copyReply(result, timings, driveSize)
+        return DriveCopyProtocol.copyReply(result, timings, driveSize, r.name)
     }
 }
