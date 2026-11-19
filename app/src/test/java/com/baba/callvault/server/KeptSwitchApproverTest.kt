@@ -239,11 +239,12 @@ class KeptSwitchApproverTest {
     }
 
     @Test
-    fun `not confirmed, then on later - the next check of that access point switches its own leftover off`() {
+    fun `not confirmed, then on within the leftover window - the next check switches its own leftover off`() {
         androidTurnsOnAfterReads = Int.MAX_VALUE
         assertEquals(KeptSwitchOutcome.APPROVED_RESTORE_NOT_CONFIRMED, approver().run(emptySet(), salt).outcome)
 
-        // Later Android does switch it on, and has the access point on its list.
+        // Soon after (within the window), Android does switch it on, and has the access point on its list.
+        now += 10_000L
         wd = 1
         trustedByAndroid = setOf("aa:bb:cc:dd:ee:ff")
         val next = approver().run(emptySet(), salt)
@@ -257,6 +258,46 @@ class KeptSwitchApproverTest {
         wd = 1
         assertEquals(KeptSwitchOutcome.TRUSTED_WIRELESS_DEBUGGING_ON, approver().run(emptySet(), salt).outcome)
         assertEquals(1, offWrites)
+    }
+
+    @Test
+    fun `an expired leftover is never switched off - the user may have switched it on - and a warning says so`() {
+        androidTurnsOnAfterReads = Int.MAX_VALUE
+        val approvedAt = now
+        assertEquals(KeptSwitchOutcome.APPROVED_RESTORE_NOT_CONFIRMED, approver().run(emptySet(), salt).outcome)
+
+        // Days later the user switches Wireless debugging on (to pair), and the phone rejoins that access point.
+        now = approvedAt + 3L * 24 * 60 * 60 * 1000
+        wd = 1
+        trustedByAndroid = setOf("aa:bb:cc:dd:ee:ff")
+        val later = approver().run(emptySet(), salt)
+
+        assertEquals(KeptSwitchOutcome.LEFTOVER_EXPIRED_LEFT_ON, later.outcome)
+        assertEquals(0, offWrites)
+        assertEquals(1, wd)
+        assertEquals(now - approvedAt, later.restoreMs)
+        val (warn, text) = KeptSwitchReport.describe(later)
+        assertTrue(warn)
+        assertTrue(text, text.contains("may be left over from our approval"))
+        assertTrue(text, text.contains("left alone because it may be the user's"))
+
+        // Dropped once read: the next look is a plain "on that is not ours".
+        assertEquals(KeptSwitchOutcome.TRUSTED_WIRELESS_DEBUGGING_ON, approver().run(emptySet(), salt).outcome)
+        assertEquals(0, offWrites)
+    }
+
+    @Test
+    fun `a leftover just past the window is already expired`() {
+        androidTurnsOnAfterReads = Int.MAX_VALUE
+        val approvedAt = now
+        approver().run(emptySet(), salt)
+
+        now = approvedAt + KeptSwitchApprover.LEFTOVER_WINDOW_MS + 1L
+        wd = 1
+        trustedByAndroid = setOf("aa:bb:cc:dd:ee:ff")
+
+        assertEquals(KeptSwitchOutcome.LEFTOVER_EXPIRED_LEFT_ON, approver().run(emptySet(), salt).outcome)
+        assertEquals(0, offWrites)
     }
 
     @Test

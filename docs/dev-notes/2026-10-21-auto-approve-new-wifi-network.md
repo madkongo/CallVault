@@ -234,13 +234,18 @@ keystore format on this phone (the `already on Android's trusted list` line for 
 
 **Review fixes (2026-11-19, same branch).**
 - Wireless debugging is never left on by an approval: after the 3 s wait the recorder re-reads every 500 ms for 5 s
-  more and switches a late "on" back off; if it is still not seen on, the access point is kept as this recorder's
-  leftover, and a later check that finds it trusted with Wireless debugging on switches that leftover off
-  (`… left on by an earlier approval of ours, and is switched back off`). An "on" that is not a leftover is left alone
-  with a warning (`… not switched on by CallVault as far as this recorder knows; left on`). Any error after approving
-  runs one guarded switch-back and logs the state found (`then an error stopped the switch-back; …`). A recorder
-  started again forgets its leftovers. The late re-reads widen the window in which a user's own switch-on right after
-  an approval would be switched off, from 3 s to 8 s.
+  more and switches a late "on" back off. If it is still not seen on, the access point is kept as this recorder's
+  leftover, with the time of the approval, for 30 s (the waits plus a margin). A check within those 30 s that finds
+  it trusted with Wireless debugging on switches the leftover off (`… left on by an earlier approval of ours, and is
+  switched back off`). After 30 s it is never written: the "on" may be the user's own (to pair, say), so it is left
+  alone with a warning (`… it may be left over from our approval of … N s ago, but was left alone because it may be
+  the user's`). An "on" with no leftover is left alone with a warning too (`… not switched on by CallVault as far as
+  this recorder knows; left on`). Any error after approving runs one guarded switch-back and logs the state found
+  (`then an error stopped the switch-back; …`). A recorder started again forgets its leftovers.
+- Trade-off: a user's own switch-on can still be undone if it lands in the moments right after an approval: within
+  the 8 s of waiting (it cannot be told from Android's), or within the 30 s leftover window when that access point is
+  checked again. Past 30 s, never. The merge-gate review (2026-11-19) found the first version kept leftovers with no
+  expiry, which could switch off a user's "on" days later; fixed before merge.
 - The recorder asks the app (its provider) before every approval whether approving is still wanted. No answer:
   nothing approved, `skipped: could not confirm with the app …`. Not wanted: nothing approved and the recorder stops
   its own watch.

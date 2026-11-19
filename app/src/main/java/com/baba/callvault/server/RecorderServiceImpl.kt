@@ -73,11 +73,11 @@ open class RecorderServiceImpl(private val apkPath: String) : IRecorderService.S
      * Serialises scrcpy launch/teardown OFF the binder thread (binder transactions must NOT block on
      * a multi-second scrcpy launch / 2s stop grace). Mirrors the engine's dedicated IO scope.
      */
-    /** Shizuku mode's Wi-Fi join watch (review N15); idle, with no thread, until the app arms it. */
-    private val wifiJoin = WifiJoinHost(RecorderBinderProvider.AUTHORITY)
-
     private val worker = HandlerThread("recorder-worker").apply { start() }
     private val workerHandler = android.os.Handler(worker.looper)
+
+    /** Shizuku mode's Wi-Fi join watch (review N15); idle, with no thread, until the app arms it. */
+    private val wifiJoin = WifiJoinHost(RecorderBinderProvider.AUTHORITY)
 
     init {
         // Which package this process presents to the audio stack, which is NOT obvious and differs

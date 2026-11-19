@@ -73,6 +73,13 @@ enum class KeptSwitchOutcome {
     /** Trusted, and Wireless debugging is on, not left on by CallVault (as far as this recorder knows): left alone. */
     TRUSTED_WIRELESS_DEBUGGING_ON,
 
+    /**
+     * Trusted, Wireless debugging on, and an approval of ours there never saw it on, but longer ago than the leftover
+     * window: it may be ours or the user's, so it is left alone, with a warning. [KeptSwitchResult.restoreMs] holds how
+     * long ago that approval was.
+     */
+    LEFTOVER_EXPIRED_LEFT_ON,
+
     /** Approved, then an error stopped the switch-back; Wireless debugging read on and was switched off. */
     INTERRUPTED_RESTORED_OFF,
 
@@ -98,21 +105,36 @@ private val TRUSTED = setOf(
     KeptSwitchOutcome.LEFTOVER_RESTORED_OFF,
     KeptSwitchOutcome.LEFTOVER_RESTORE_FAILED,
     KeptSwitchOutcome.TRUSTED_WIRELESS_DEBUGGING_ON,
+    KeptSwitchOutcome.LEFTOVER_EXPIRED_LEFT_ON,
     KeptSwitchOutcome.INTERRUPTED_RESTORED_OFF,
     KeptSwitchOutcome.INTERRUPTED_LEFT_ON,
 )
 
 /**
  * Access points this recorder approved from "off" without having switched Wireless debugging back off yet (review
- * N15): Android may still switch it on for them later. Their keys only; in memory, so a recorder started again forgets
- * them, and an "on" it then finds is treated as not its own. Thread-safe.
+ * N15), with when: Android may still switch it on for them in the moments after. Keys and times only; in memory, so a
+ * recorder started again forgets them, and an "on" it then finds is treated as not its own. Thread-safe.
+ *
+ * A leftover counts only for [KeptSwitchApprover.LEFTOVER_WINDOW_MS] after its approval: later, an "on" may be the
+ * user's own (to pair, say), and the owner rule is never to undo a switch CallVault did not set.
  */
 class ApprovalLeftovers {
-    private val keys = mutableSetOf<String>()
 
-    @Synchronized fun add(key: String) { keys += key }
-    @Synchronized fun remove(key: String) { keys -= key }
-    @Synchronized operator fun contains(key: String): Boolean = key in keys
+    /** What a look found: [ours] within the window, otherwise expired (and now forgotten); [approvedAt] either way. */
+    data class Found(val ours: Boolean, val approvedAt: Long)
+
+    private val approvedAt = mutableMapOf<String, Long>()
+
+    @Synchronized fun add(key: String, atMs: Long) { approvedAt[key] = atMs }
+    @Synchronized fun remove(key: String) { approvedAt -= key }
+
+    /** The leftover for [key] at [nowMs], or null. An expired one is dropped as it is read; older entries go too. */
+    @Synchronized
+    fun find(key: String, nowMs: Long, windowMs: Long): Found? {
+        val at = approvedAt[key]
+        approvedAt.entries.removeAll { nowMs - it.value !in 0..windowMs }
+        return at?.let { Found(ours = nowMs - it in 0..windowMs, approvedAt = it) }
+    }
 }
 
 /**
@@ -220,7 +242,7 @@ class KeptSwitchApprover(
         if (approve(wifi, ALWAYS_ALLOW) != NetworkApproval.APPROVED) return result(KeptSwitchOutcome.APPROVAL_FAILED)
 
         // Approved from off: until it is seen back off, any "on" here is this approval's.
-        leftovers.add(key)
+        leftovers.add(key, clock())
         val approvedAt = clock()
         return try {
             switchBackOff(key, approvedAt, toResult)
@@ -233,9 +255,16 @@ class KeptSwitchApprover(
     /** Android already trusts the access point. Puts back only an "on" that an approval of ours left behind. */
     private fun alreadyTrusted(key: String, result: (KeptSwitchOutcome, Long) -> KeptSwitchResult): KeptSwitchResult {
         val wd = readWirelessDebugging()
-        if (key !in leftovers) {
+        val now = clock()
+        val leftover = leftovers.find(key, now, LEFTOVER_WINDOW_MS)
+        if (leftover == null) {
             val outcome = if (wd == 1) KeptSwitchOutcome.TRUSTED_WIRELESS_DEBUGGING_ON else KeptSwitchOutcome.ALREADY_TRUSTED_BY_ANDROID
             return result(outcome, -1L)
+        }
+        if (!leftover.ours) {
+            // Too long after our approval to tell from the user's own switch-on: never written.
+            val outcome = if (wd == 1) KeptSwitchOutcome.LEFTOVER_EXPIRED_LEFT_ON else KeptSwitchOutcome.ALREADY_TRUSTED_BY_ANDROID
+            return result(outcome, if (wd == 1) now - leftover.approvedAt else -1L)
         }
         return when (wd) {
             0 -> {
@@ -298,6 +327,12 @@ class KeptSwitchApprover(
         /** Late re-reads after the first wait: a slow Android switch-on is still put back, within a bound. */
         const val LATE_WINDOW_MS = 5_000L
         const val LATE_POLL_MS = 500L
+
+        /**
+         * How long after our approval an "on" there still counts as its leftover: the first wait and the late re-reads,
+         * plus a margin. Past it, an "on" may be the user's and is never switched off by CallVault.
+         */
+        const val LEFTOVER_WINDOW_MS = 30_000L
 
         private const val TAG = "CV:WdApproval"
     }
