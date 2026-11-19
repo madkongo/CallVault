@@ -235,6 +235,17 @@ class VoipNormalModePolicyTest {
         assertTrue("$slow slow lines", slow <= 12)
     }
 
+    @Test
+    fun `a failed audio read during a live candidate re-arms the check and is logged once`() {
+        // Merge-gate item 2: a throwing snapshot read returned without re-arming, ending the checks for good.
+        val first = VoipNormalModePolicy.onConfirmReadFailed(candidateLive = true, alreadyLogged = false)
+        assertTrue(first.rearm); assertTrue(first.log)
+        val again = VoipNormalModePolicy.onConfirmReadFailed(candidateLive = true, alreadyLogged = true)
+        assertTrue(again.rearm); assertFalse(again.log)
+        val gone = VoipNormalModePolicy.onConfirmReadFailed(candidateLive = false, alreadyLogged = false)
+        assertFalse(gone.rearm)
+    }
+
     // ---- review C14: a LINE call that visits call mode and comes back is not ended by the mode ----
 
     @Test

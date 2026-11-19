@@ -102,6 +102,9 @@ class VoipCallDetector(private val context: Context) {
     /** Keeps the judge's owners lines for one candidate to changes and a few "still checking" lines (merge gate). */
     private var judgeLogGate = VoipNormalModePolicy.JudgeLogGate()
 
+    /** The candidate's check already logged a failed audio read (merge gate: logged once, re-armed every time). */
+    private var confirmReadFailureLogged = false
+
     /** The last "voice audio in normal mode" signature that was logged, so a line is written once per change. */
     private var lastNormalVoiceKey: String? = null
     private val ownersLookupBusy = java.util.concurrent.atomic.AtomicBoolean(false)
@@ -532,6 +535,7 @@ class VoipCallDetector(private val context: Context) {
             normalJudgeTries = 0
             normalJudgePending = false
             judgeLogGate = VoipNormalModePolicy.JudgeLogGate()
+            confirmReadFailureLogged = false
             handler.removeCallbacks(normalConfirmRunnable)
             handler.postDelayed(normalConfirmRunnable, VoipNormalModePolicy.HOLD_MS)
         }
@@ -548,7 +552,24 @@ class VoipCallDetector(private val context: Context) {
     /** The pair has been live for [VoipNormalModePolicy.HOLD_MS]: look at who owns it, once. */
     private val normalConfirmRunnable: Runnable = Runnable {
         val am = audioManager ?: return@Runnable
-        val snap = runCatching { VoipEndProbe.capture(am) }.getOrNull() ?: return@Runnable
+        val read = runCatching { VoipEndProbe.capture(am) }
+        val snap = read.getOrNull()
+        if (snap == null) {
+            // A transient read failure must not end the checks while the candidate lives (merge gate).
+            val next = VoipNormalModePolicy.onConfirmReadFailed(
+                candidateLive = normalCandidateSince != 0L && !callActive && !normalCandidateJudged,
+                alreadyLogged = confirmReadFailureLogged,
+            )
+            if (next.log) {
+                confirmReadFailureLogged = true
+                CallEndLog.record(context, "normal-mode app call check could not read the audio state (${read.exceptionOrNull()?.javaClass?.simpleName}); trying again")
+            }
+            if (next.rearm) {
+                handler.removeCallbacks(normalConfirmRunnable)
+                handler.postDelayed(normalConfirmRunnable, VoipNormalModePolicy.JUDGE_RETRY_MS)
+            }
+            return@Runnable
+        }
         val both = snap.mode == AudioManager.MODE_NORMAL && snap.voiceCallPlayers > 0 && snap.voiceCommRecorders > 0
         if (normalCandidateSince == 0L || normalCandidateJudged || callActive || !both) {
             if (!both) clearNormalCandidate()

@@ -134,6 +134,16 @@ object VoipNormalModePolicy {
         return k and (k - 1) == 0
     }
 
+    /** What to do when the check could not read the audio state (merge-gate item 2). */
+    data class ReadFailure(val rearm: Boolean, val log: Boolean)
+
+    /**
+     * A check that could not read the audio state (AudioManager threw) is re-armed while its candidate lives, so a
+     * transient failure cannot end the checks for good; it is logged once per candidate.
+     */
+    fun onConfirmReadFailed(candidateLive: Boolean, alreadyLogged: Boolean): ReadFailure =
+        ReadFailure(rearm = candidateLive, log = candidateLive && !alreadyLogged)
+
     /**
      * Lets a judge's owners line into the always-on journal only when it differs from the last one written, plus a
      * "still checking" line at ever doubling gaps while it stays the same (merge-gate item 1). One per candidate.
