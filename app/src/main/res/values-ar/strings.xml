@@ -275,6 +275,7 @@
     <string name="notif_drive_backup_text">النسخ الاحتياطي إلى Drive لا يعمل: %1$s. تسجيلاتك آمنة على هذا الهاتف. سيحاول CallVault مرة أخرى في الموعد المجدول التالي.</string>
     <string name="notif_drive_backup_reason_no_answer">Google Drive لا يستجيب</string>
     <string name="notif_drive_backup_reason_folder">لا يمكن قراءة مجلد Drive</string>
+    <string name="notif_drive_backup_reason_error">أوقفه خطأ (%1$s)</string>
     <string name="notif_health_sync_title">التسجيلات لا تصل إلى Drive</string>
     <string name="notif_info_channel">إشعارات CallVault</string>
     <string name="notif_readiness_pairing_lost_text">نسي Android اقتران CallVault، لذا لا يمكن تسجيل المكالمات. افتح CallVault وانقر على بطاقة الحالة لإعادة الاقتران.</string>

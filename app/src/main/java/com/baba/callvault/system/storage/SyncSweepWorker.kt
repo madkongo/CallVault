@@ -74,6 +74,12 @@ class SyncSweepWorker(ctx: Context, params: WorkerParameters) : CoroutineWorker(
             val again = CloudCopyPolicy.shouldRetryListFailure(runAttemptCount)
             journal("sweep crashed after ${SystemClock.elapsedRealtime() - sweepStart}ms: ${t.javaClass.simpleName}: ${t.message}; ${if (again) "will retry" else "giving up until the next scheduled run"}")
             AppLogger.e(TAG, "Sweep crashed", t)
+            if (DriveBackupNotice.isGivingUp(runAttemptCount)) {
+                DriveBackupNotice.onGaveUp(
+                    applicationContext, DriveBackupNotice.Reason.ERROR, "sweep crashed: ${t.javaClass.simpleName}: ${t.message}",
+                    detail = t.javaClass.simpleName,
+                )
+            }
             if (again) Result.retry() else Result.success()
         }
     }

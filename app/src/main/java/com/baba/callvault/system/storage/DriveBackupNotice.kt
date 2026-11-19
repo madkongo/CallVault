@@ -37,6 +37,9 @@ object DriveBackupNotice {
 
         /** The copier answered, but could not read the folder (permission, folder gone, still loading...). */
         FOLDER_UNREADABLE(R.string.notif_drive_backup_reason_folder),
+
+        /** The sweep itself threw; the text names the error (the `detail` of [onGaveUp]). */
+        ERROR(R.string.notif_drive_backup_reason_error),
     }
 
     enum class Event { GAVE_UP, REACHED }
@@ -51,12 +54,16 @@ object DriveBackupNotice {
     /** True when attempt [runAttemptCount] (0-based) is the one after which the sweep stops retrying. */
     fun isGivingUp(runAttemptCount: Int): Boolean = !CloudCopyPolicy.shouldRetryListFailure(runAttemptCount)
 
-    /** The sweep spent its last attempt without listing the Drive folder; [why] is the journal's reason. */
-    fun onGaveUp(context: Context, reason: Reason, why: String) {
+    /**
+     * The sweep spent its last attempt without listing the Drive folder, or crashed on it; [why] is the journal's
+     * reason, [detail] fills [Reason.ERROR]'s text (the error's name).
+     */
+    fun onGaveUp(context: Context, reason: Reason, why: String, detail: String? = null) {
         val prefs = prefs(context)
         when (decide(prefs.getBoolean(KEY_POSTED, false), Event.GAVE_UP)) {
             Action.POST -> {
-                val text = LocalizedContext.of(context).getString(reason.text)
+                val localized = LocalizedContext.of(context)
+                val text = if (detail != null) localized.getString(reason.text, detail) else localized.getString(reason.text)
                 if (!SilentFailureNotifier.warnDriveBackupBroken(context, text)) {
                     // Not remembered as posted: the next give-up tries again.
                     AppLogger.w(TAG, "Drive backup notice could NOT be shown ($reason): $why")

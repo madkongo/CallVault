@@ -236,6 +236,7 @@
     <string name="notif_drive_backup_text">Sao lưu lên Drive không hoạt động: %1$s. Bản ghi của bạn vẫn an toàn trên điện thoại này. CallVault sẽ thử lại vào thời điểm đã lên lịch tiếp theo.</string>
     <string name="notif_drive_backup_reason_no_answer">Google Drive không phản hồi</string>
     <string name="notif_drive_backup_reason_folder">không đọc được thư mục Drive</string>
+    <string name="notif_drive_backup_reason_error">một lỗi đã làm nó dừng lại (%1$s)</string>
     <string name="notif_health_sync_title">Bản ghi không lên được Drive</string>
     <string name="notif_info_channel">Thông báo của CallVault</string>
     <string name="notif_readiness_pairing_lost_text">Android đã quên ghép nối của CallVault nên không thể ghi âm cuộc gọi. Mở CallVault và nhấn vào thẻ trạng thái để ghép nối lại.</string>

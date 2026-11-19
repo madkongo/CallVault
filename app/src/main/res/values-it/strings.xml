@@ -237,6 +237,7 @@
     <string name="notif_drive_backup_text">Il backup su Drive non funziona: %1$s. Le tue registrazioni sono al sicuro su questo telefono. CallVault riproverà al prossimo orario programmato.</string>
     <string name="notif_drive_backup_reason_no_answer">Google Drive non risponde</string>
     <string name="notif_drive_backup_reason_folder">la cartella di Drive non può essere letta</string>
+    <string name="notif_drive_backup_reason_error">un errore l’ha interrotto (%1$s)</string>
     <string name="notif_health_sync_title">Le registrazioni non arrivano su Drive</string>
     <string name="notif_info_channel">Avvisi di CallVault</string>
     <string name="notif_readiness_pairing_lost_text">Android ha dimenticato l\'associazione di CallVault, quindi le chiamate non possono essere registrate. Apri CallVault e tocca la scheda di stato per associare di nuovo.</string>

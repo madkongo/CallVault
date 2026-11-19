@@ -237,6 +237,7 @@
     <string name="notif_drive_backup_text">La copia en Drive no funciona: %1$s. Tus grabaciones están a salvo en este teléfono. CallVault lo volverá a intentar a la próxima hora programada.</string>
     <string name="notif_drive_backup_reason_no_answer">Google Drive no responde</string>
     <string name="notif_drive_backup_reason_folder">no se puede leer la carpeta de Drive</string>
+    <string name="notif_drive_backup_reason_error">un error la detuvo (%1$s)</string>
     <string name="notif_health_sync_title">Las grabaciones no llegan a Drive</string>
     <string name="notif_info_channel">Avisos de CallVault</string>
     <string name="notif_readiness_pairing_lost_text">Android olvidó el emparejamiento de CallVault, así que no se pueden grabar llamadas. Abre CallVault y toca la tarjeta de estado para emparejar de nuevo.</string>

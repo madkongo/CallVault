@@ -330,6 +330,7 @@
     <string name="notif_drive_backup_text">پشتیبان‌گیری در Drive کار نمی‌کند: %1$s. فایل‌های ضبط‌شده شما روی این گوشی امن هستند. CallVault در زمان برنامه‌ریزی‌شده بعدی دوباره تلاش می‌کند.</string>
     <string name="notif_drive_backup_reason_no_answer">Google Drive پاسخ نمی‌دهد</string>
     <string name="notif_drive_backup_reason_folder">پوشه Drive خوانده نمی‌شود</string>
+    <string name="notif_drive_backup_reason_error">خطایی آن را متوقف کرد (%1$s)</string>
     <string name="notif_health_sync_title">فایل‌های ضبط‌شده به Drive نمی‌رسند</string>
     <string name="notif_info_channel">اطلاعیه‌های CallVault</string>
     <string name="notif_readiness_pairing_lost_text">Android مرتبط‌سازی CallVault را فراموش کرد، بنابراین تماس‌ها ضبط نمی‌شوند. CallVault را باز کنید و روی کارت وضعیت بزنید تا دوباره مرتبط‌سازی کنید.</string>
