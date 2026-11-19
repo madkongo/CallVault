@@ -238,7 +238,7 @@ class VoipCallDetector(private val context: Context) {
     }
 
     /**
-     * Drops an app-call recording because a carrier call has been answered.
+     * Ends an app-call recording because a carrier call has been answered, so the carrier call is recorded.
      *
      * The mode listener cannot be relied on for this: on a ROM where an IMS carrier call reads as
      * MODE_IN_COMMUNICATION, the mode never changes when the phone call starts, so nothing would fire
@@ -249,26 +249,12 @@ class VoipCallDetector(private val context: Context) {
         handler.removeCallbacks(debouncedEndRunnable)
         endDeferredAsRingDip = false
 
-        // Hold it open rather than ending it, so returning to the app call continues the SAME file.
-        // Splitting one conversation across two recordings is what this replaces.
-        // A normal-mode call (item 108) has no mode that brings it back, so it is never held: it ends.
-        val held = !normalModeCall && runCatching { VoipRecordingCoordinator.setSuspendedForCarrierCall(context, true) }
-            .getOrDefault(false)
-        if (held) {
-            suspendedForCarrier = true
-            handler.removeCallbacks(suspendTimeout)
-            handler.postDelayed(suspendTimeout, SUSPEND_MAX_MS)
-            AppLogger.i(TAG, "A carrier call was answered — holding the app-call recording open")
-            // callActive stays true and the prompt stays cancelled: the app call is still up, it is
-            // simply not the one the phone is playing.
-            VoipRecordPrompt.cancel(context)
-            return
-        }
-
-        // The daemon could not hold it — an older one has no setVoipSuspended — so fall back to what
-        // this always did. Two files is worse than one, and far better than a file nothing is
-        // writing to and nobody will ever finalise.
-        AppLogger.i(TAG, "A carrier call was answered — dropping the app-call recording (no suspend available)")
+        // End it, never hold it (review C1, interim). Holding kept the app-call recording "active" through the
+        // phone call, so the carrier recorder stood down and the recorder refused a second session: the phone
+        // call was never recorded. Until the recorder can run a carrier session beside a parked app call, the
+        // app call ends here and is published; returning to it after the phone call starts a new file. Two
+        // files for one app conversation is the known cost; a phone call nobody records is the loss this stops.
+        AppLogger.i(TAG, "A carrier call was answered — ending the app-call recording so the phone call can be recorded")
         if (normalModeCall) logNormalModeStopped()
         normalModeCall = false
         handler.removeCallbacks(normalEndRunnable)

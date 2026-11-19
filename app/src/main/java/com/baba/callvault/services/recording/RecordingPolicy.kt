@@ -113,11 +113,12 @@ internal object RecordingPolicy {
         modeIsInCommunication: Boolean
     ): Boolean = when {
         !voipEnabled -> false
-        // Checked before the carrier question, deliberately: when a phone call arrives during an app
-        // call the app-call capture is stopped by its own path, and this keeps today's handover
-        // rather than starting a second capture on top of one being torn down.
-        voipRecording -> true
+        // A real carrier call is recorded even while an app call is being recorded (review C1). The app-call
+        // recording is ended by its own path when the phone call is answered (VoipCallDetector.abortForCarrierCall,
+        // which runs on the main thread before this service's start is handled); standing down here as well
+        // left the phone call recorded by nobody.
         carrierCallUp -> false
+        voipRecording -> true
         else -> modeIsInCommunication
     }
 }
