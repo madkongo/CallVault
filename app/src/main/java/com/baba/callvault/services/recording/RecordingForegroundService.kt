@@ -319,7 +319,7 @@ class RecordingForegroundService : Service() {
         when (RecordingCommandPolicy.handling(action, hasCall)) {
             RecordingCommandPolicy.Handling.END_ORPHAN -> {
                 AppLogger.i(TAG, "'$action' arrived with no call in progress; ending this service instead of re-posting")
-                val claimed = SharedStatusNotice.isHeldByRecording
+                val claimed = SharedStatusNotice.isHeldBy(SharedStatusNotice.Owner.CARRIER)
                 stopRecordingSessionAndService()
                 // Nothing was claimed by this instance, so the release above told nobody — but a leftover
                 // recording notification may be what the user just touched. Put "Ready" back regardless.
@@ -808,7 +808,7 @@ class RecordingForegroundService : Service() {
             AppLogger.d(TAG, "No active session, exiting standby state, removing foreground notification and stopping service.")
             stopForeground(STOP_FOREGROUND_REMOVE)
             // Hands the shared notification back, so "Ready to record calls" replaces the finished call.
-            SharedStatusNotice.release()
+            SharedStatusNotice.release(SharedStatusNotice.Owner.CARRIER)
             stopSelf() // Stop the service since the session is over
             return
         }
@@ -946,7 +946,7 @@ class RecordingForegroundService : Service() {
         AppLogger.i(TAG, "The recording session has been stopped and resources have been released. Stopping foreground service. Goodbye >3")
         stopForeground(STOP_FOREGROUND_REMOVE)
             // Hands the shared notification back, so "Ready to record calls" replaces the finished call.
-            SharedStatusNotice.release()
+            SharedStatusNotice.release(SharedStatusNotice.Owner.CARRIER)
         stopSelf() // Stop the service since the session is over
     }
 
@@ -1280,10 +1280,10 @@ class RecordingForegroundService : Service() {
         // Claimed before posting, so the keep-alive — on the same thread — never sees the id as free and
         // re-posts "Ready" over it. A notice that does not share gives the id back instead.
         val notificationId = if (sharesStatusNotice) {
-            SharedStatusNotice.claim(notification)
+            SharedStatusNotice.claim(SharedStatusNotice.Owner.CARRIER, notification)
             SharedStatusNotice.ID
         } else {
-            SharedStatusNotice.release()
+            SharedStatusNotice.release(SharedStatusNotice.Owner.CARRIER)
             RecordingNotificationHelper.SERVICE_NOTIFICATION_ID
         }
         if (Build.VERSION.SDK_INT >= 34) {

@@ -169,6 +169,21 @@ class DaemonKeepAliveService : Service() {
     }
 
     /**
+     * Re-posts the notice of a recorded call that still holds the shared id, after another one released it.
+     * Through this service's startForeground for the same reason as [repostAsForeground] (Q49: on Android 17 a
+     * notify() on a foreground service's id does not replace what is shown).
+     */
+    private fun repostHeldAsForeground(held: Notification) {
+        runCatching {
+            startForeground(NOTIF_ID, held, ServiceInfo.FOREGROUND_SERVICE_TYPE_SPECIAL_USE)
+        }.onFailure {
+            AppLogger.w(TAG, "Could not re-post the remaining recording notice as the foreground notice (${it.message}); trying notify")
+            runCatching { getSystemService(NotificationManager::class.java).notify(NOTIF_ID, held) }
+                .onFailure { e -> AppLogger.w(TAG, "Could not re-post the remaining recording notice: ${e.message}") }
+        }
+    }
+
+    /**
      * True only if the daemon process actually answers a binder ping — more reliable than
      * [RecorderConnection.isConnected] (`service != null`), which can stay stale-true if linkToDeath
      * missed, or read false on a transient. Matches the recording liveness watch's probe.
@@ -552,7 +567,12 @@ class DaemonKeepAliveService : Service() {
         // put "Ready" back. The second, delayed look catches a recording post that system_server delivers
         // after this one (LAVA LXX508) — see [healSharedNotice].
         SharedStatusNotice.onReleased = {
-            watchdogHandler.post { updateNotification(isDaemonAlive()) }
+            watchdogHandler.post {
+                // Another recorded call still holds the id (review C23): put ITS notice back, through startForeground
+                // (Q49), not "Ready", or its Pause, Mark and Stop are gone for the rest of the call.
+                val held = SharedStatusNotice.heldNotification
+                if (held != null) repostHeldAsForeground(held) else updateNotification(isDaemonAlive())
+            }
             watchdogHandler.removeCallbacks(healSharedNoticeRunnable)
             watchdogHandler.postDelayed(healSharedNoticeRunnable, SHARED_NOTICE_HEAL_DELAY_MS)
         }

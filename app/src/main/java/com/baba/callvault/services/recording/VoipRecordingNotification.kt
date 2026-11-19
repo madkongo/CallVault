@@ -56,7 +56,7 @@ object VoipRecordingNotification {
         // holding that id; it is never stopped or hidden. dismiss() gives the id back and "Ready" returns.
         runCatching {
             NotificationManagerCompat.from(context).notify(SharedStatusNotice.ID, notification)
-            SharedStatusNotice.claim(notification)
+            SharedStatusNotice.claim(SharedStatusNotice.Owner.VOIP, notification)
             // Left over from a build that still posted under id 5.
             NotificationManagerCompat.from(context).cancel(LEGACY_NOTIFICATION_ID)
         }.onFailure { AppLogger.w(TAG, "Could not post the VoIP recording notification: ${it.message}") }
@@ -128,7 +128,7 @@ object VoipRecordingNotification {
     fun dismiss(context: Context) {
         runCatching { NotificationManagerCompat.from(context).cancel(LEGACY_NOTIFICATION_ID) }
         // Hands the shared id back: the keep-alive puts "Ready to record calls" in its place.
-        SharedStatusNotice.release()
+        SharedStatusNotice.release(SharedStatusNotice.Owner.VOIP)
     }
 
     /**
