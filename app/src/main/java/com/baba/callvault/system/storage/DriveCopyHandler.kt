@@ -109,10 +109,8 @@ object DriveCopyHandler {
         }
         log("$where: COPY received '${r.name}' ${r.sourceSize}B lookup=${r.lookup}")
         val timings = CopyTimings()
-        val result = SafHelper.copyFileToFolder(
-            context, r.src, r.folder, r.name, r.mime, r.sourceSize, timings,
-            if (r.lookup) null else SafHelper.KnownDest(r.existing, r.existingSize, r.staging),
-        )
+        val known = if (r.lookup) lookUp(context, r, timings, where, log) else SafHelper.KnownDest(r.existing, r.existingSize, r.staging)
+        val result = SafHelper.copyFileToFolder(context, r.src, r.folder, r.name, r.mime, r.sourceSize, timings, known)
         // The length the provider reports for the document the copy ended in: what a delete of the device
         // copy is later checked against. One query by URI, timed with the rest.
         // A cloud provider can report 0 or nothing for a moment after the write (seen on the first file of a
@@ -139,5 +137,40 @@ object DriveCopyHandler {
         }
         log("$where: COPY done '${r.name}' $kind in ${SystemClock.elapsedRealtime() - start}ms, Drive reports $driveSize bytes" + if (verifyTries > 0) " (asked $verifyTries extra times)" else "")
         return DriveCopyProtocol.copyReply(result, timings, driveSize, r.name)
+    }
+
+    /**
+     * The destination of an after-call copy (the caller has not listed the folder), from ONE listing of it:
+     * `findFile` asks the provider for every child's name one query at a time, twice per copy, which on a big
+     * Drive folder could outlast the copy's time limit on every attempt (review C28). Null (so
+     * [SafHelper.copyFileToFolder] searches with `findFile` as before) only when that listing fails, with its
+     * reason in the journal.
+     */
+    private fun lookUp(
+        context: Context, r: DriveCopyProtocol.Request, timings: CopyTimings, where: String, log: (String) -> Unit,
+    ): SafHelper.KnownDest? {
+        val (listing, why) = timings.time("list") { SafHelper.listChildrenWithReason(context, r.folder) }
+        if (listing == null) {
+            log("$where: COPY '${r.name}': the folder could not be listed (${why ?: "no reason given"}); looking the name up with findFile instead")
+            return null
+        }
+        return knownDestFrom(listing, r.name)
+    }
+
+    /**
+     * What [listing] says about [name]: the document carrying it and its listed length, and a staging leftover,
+     * both matched ignoring case, as the sweep does. A listed length of 0 or -1 is passed on as it is; the copy
+     * treats it as complete, never as truncated (device quirk Q47).
+     */
+    fun knownDestFrom(listing: DriveCopyProtocol.Listing, name: String): SafHelper.KnownDest {
+        val wanted = name.lowercase()
+        val staging = CloudCopyPolicy.stagingNameFor(name).lowercase()
+        val existing = listing.names.indexOfFirst { it.lowercase() == wanted }
+        val leftover = listing.names.indexOfFirst { it.lowercase() == staging }
+        return SafHelper.KnownDest(
+            existingUri = listing.uris.getOrNull(existing),
+            existingSize = if (existing >= 0) listing.sizes[existing] else -1L,
+            stagingUri = listing.uris.getOrNull(leftover),
+        )
     }
 }
