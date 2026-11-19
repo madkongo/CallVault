@@ -69,6 +69,123 @@ object VoipNormalModePolicy {
         else -> Verdict.START
     }
 
+    // ---- review C9: the judge is retried, never dropped ----
+
+    /** Why a judge produced no verdict. */
+    enum class JudgeFailure {
+        /** Another owner lookup was still running (one at a time). */
+        LOOKUP_BUSY,
+
+        /** The recorder host was not connected. */
+        HOST_NOT_CONNECTED,
+
+        /** The host gave no answer (it died, or the dump failed or timed out). */
+        NO_ANSWER,
+    }
+
+    enum class JudgeNext {
+        /** The call starts. */
+        STARTED,
+
+        /** A successful look said no: not judged again for this candidate. */
+        FINAL,
+
+        /** Judge again as soon as the running lookup finishes. */
+        RETRY_AFTER_LOOKUP,
+
+        /** Judge again after [JUDGE_RETRY_MS]. */
+        RETRY_LATER,
+
+        /**
+         * The fast tries are spent: judge again after [JUDGE_SLOW_RETRY_MS], for as long as the candidate lives
+         * (review C9 rework). Never a permanent give-up: a recorder host can reconnect many seconds into the call
+         * (the app restarted mid-call, Q25), and the call is still worth recording from then on.
+         */
+        RETRY_SLOW,
+    }
+
+    /** The wait before a judge is retried after no answer or a racy answer, for the first tries. */
+    const val JUDGE_RETRY_MS = 1_500L
+
+    /** Fast judges per candidate, the first included; slower after that, each being a `dumpsys audio` run. */
+    const val MAX_FAST_JUDGE_TRIES = 5
+
+    /** The wait between judges once the fast tries are spent. */
+    const val JUDGE_SLOW_RETRY_MS = 10_000L
+
+    /** Unchanged checks before the first repeat line (a minute at the slow pace); the gap then doubles each time. */
+    const val SLOW_CHECKS_PER_LOG_LINE = 6
+
+    /**
+     * Whether the slow check after [triesUsed] judges gets an always-on line: the first one, then after
+     * [SLOW_CHECKS_PER_LOG_LINE] more, then at ever doubling gaps. The always-on journal is 128 KB and must keep the
+     * call outcome lines, so a host that stays away for hours costs a handful of lines, not one a minute.
+     */
+    fun logSlowCheck(triesUsed: Int): Boolean {
+        if (triesUsed < MAX_FAST_JUDGE_TRIES) return false
+        return isLogPoint(triesUsed - MAX_FAST_JUDGE_TRIES)
+    }
+
+    /** 0, then [SLOW_CHECKS_PER_LOG_LINE] times a power of two. */
+    private fun isLogPoint(n: Int): Boolean {
+        if (n == 0) return true
+        if (n % SLOW_CHECKS_PER_LOG_LINE != 0) return false
+        val k = n / SLOW_CHECKS_PER_LOG_LINE
+        return k and (k - 1) == 0
+    }
+
+    /** What to do when the check could not read the audio state (merge-gate item 2). */
+    data class ReadFailure(val rearm: Boolean, val log: Boolean)
+
+    /**
+     * A check that could not read the audio state (AudioManager threw) is re-armed while its candidate lives, so a
+     * transient failure cannot end the checks for good; it is logged once per candidate.
+     */
+    fun onConfirmReadFailed(candidateLive: Boolean, alreadyLogged: Boolean): ReadFailure =
+        ReadFailure(rearm = candidateLive, log = candidateLive && !alreadyLogged)
+
+    /**
+     * Lets a judge's owners line into the always-on journal only when it differs from the last one written, plus a
+     * "still checking" line at ever doubling gaps while it stays the same (merge-gate item 1). One per candidate.
+     */
+    class JudgeLogGate {
+        private var last: String? = null
+        private var unchanged = 0
+
+        /** The line to write for [line], or null to write nothing. */
+        fun admit(line: String): String? {
+            if (line != last) {
+                val skipped = unchanged
+                last = line
+                unchanged = 0
+                return if (skipped > 0) "$line (after $skipped unchanged checks)" else line
+            }
+            unchanged++
+            return if (isLogPoint(unchanged)) "still checking: $line (unchanged for $unchanged checks)" else null
+        }
+    }
+
+    /**
+     * What follows a judge of a normal-mode candidate (review C9). The judge used to be one-shot: a lookup already
+     * running, a missing recorder host or a failed dump left the candidate judged for the rest of the call, so a
+     * LINE call that stayed live was neither recorded nor reported. Only a verdict from a successful dump that
+     * rules the call out is final; a dump that misses audio the app itself still sees ([appSeesPair]) is racy and
+     * retried. [triesUsed] counts the judges of this candidate so far, this one included.
+     */
+    fun afterJudge(failure: JudgeFailure?, verdict: Verdict?, appSeesPair: Boolean, triesUsed: Int): JudgeNext {
+        if (failure == null) {
+            when (verdict) {
+                Verdict.START -> return JudgeNext.STARTED
+                Verdict.NOT_ON_ALLOW_LIST, Verdict.CARRIER_CALL, Verdict.CALL_ALREADY_ACTIVE, Verdict.MODE_IS_NOT_NORMAL ->
+                    return JudgeNext.FINAL
+                Verdict.NO_VOICE_PLAYER, Verdict.NO_VOICE_RECORDING, Verdict.NOT_YET, null ->
+                    if (!appSeesPair) return JudgeNext.FINAL
+            }
+        }
+        if (triesUsed >= MAX_FAST_JUDGE_TRIES) return JudgeNext.RETRY_SLOW
+        return if (failure == JudgeFailure.LOOKUP_BUSY) JudgeNext.RETRY_AFTER_LOOKUP else JudgeNext.RETRY_LATER
+    }
+
     /**
      * Whether a call started by this path is over: the mode is still NORMAL and neither a call-voice
      * player nor a call-voice recording is live. (A mode other than NORMAL hands the call to the
@@ -76,6 +193,16 @@ object VoipNormalModePolicy {
      */
     fun shouldEnd(mode: Int, vcPlayers: Int, vcRecorders: Int): Boolean =
         mode == AudioManager.MODE_NORMAL && vcPlayers == 0 && vcRecorders == 0
+
+    /**
+     * A call this path started that moved into call mode and is now back in NORMAL with its call-voice player and
+     * recording still live goes back to the pair watch ([shouldEnd]) instead of being ended by the mode (review
+     * C14). Ending it by the mode published the recording 1.5 s later while LINE's call went on, and the pair watch
+     * then opened a second file a few seconds after. A call the mode started is never handed back: its own rules
+     * (the dip debounce, Q32) stay as they are.
+     */
+    fun handBackToPairWatch(startedNormal: Boolean, mode: Int, vcPlayers: Int, vcRecorders: Int): Boolean =
+        startedNormal && mode == AudioManager.MODE_NORMAL && vcPlayers > 0 && vcRecorders > 0
 
     // ---- reading `dumpsys audio` (run by the recorder host: the app is shown anonymised configurations) ----
 

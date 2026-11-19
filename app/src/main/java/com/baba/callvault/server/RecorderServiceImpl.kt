@@ -62,8 +62,12 @@ open class RecorderServiceImpl(private val apkPath: String) : IRecorderService.S
     @Volatile private var lastSpeakerTurns: String = ""
     @Volatile private var lastCaptureDiagnostics: String = ""
 
-    /** Last VoIP session, kept only so the app can ask afterwards whether the far party was audible. */
-    @Volatile private var lastVoipSession: VoipCaptureSession? = null
+    /**
+     * The VoIP session: paused through it, and kept afterwards so the app can ask whether the far party was audible.
+     * A pause that arrives while the session is still being built is queued, not dropped (review C49).
+     */
+    private val voipSlot = VoipSessionSlot<VoipCaptureSession> { s, paused -> s.setPaused(paused) }
+    private val lastVoipSession: VoipCaptureSession? get() = voipSlot.current
 
     /**
      * Serialises scrcpy launch/teardown OFF the binder thread (binder transactions must NOT block on
@@ -304,16 +308,20 @@ open class RecorderServiceImpl(private val apkPath: String) : IRecorderService.S
             return false
         }
         AppLogger.i(TAG, "startVoipRecording codec=$codec bitRate=$bitRate stereo=$stereo")
-        // So voipFarPartyHeard can never answer for a previous call if this one fails to open.
-        lastVoipSession = null
+        // So voipFarPartyHeard can never answer for a previous call if this one fails to open, and so a pause the
+        // app sends before the worker has built the session is queued for it (C49).
+        voipSlot.beginStart()
         // Heavy setup off the binder thread, matching startRecording.
         workerHandler.post {
             val active = runCatching {
-                VoipCaptureSession(codecEnum, bitRate, outFd, keepStereo = stereo).also { it.start(); lastVoipSession = it }
+                // Published with any queued pause applied before it starts (review C49).
+                voipSlot.publishThenStart(VoipCaptureSession(codecEnum, bitRate, outFd, keepStereo = stereo)) { it.start() }
             }.onFailure { AppLogger.e(TAG, "startVoipRecording failed: ${it.message}", it) }.getOrNull()
             if (active != null) {
                 session = active
             } else {
+                // Also when the session could not even be built: no pause stays queued for it.
+                voipSlot.withdraw()
                 runCatching { outFd.close() }
                 session = null
                 recordingActive.set(false)
@@ -399,12 +407,11 @@ open class RecorderServiceImpl(private val apkPath: String) : IRecorderService.S
      * A no-op when nothing is recording, which is what a stale notification action looks like.
      */
     override fun setVoipPaused(paused: Boolean) {
-        val active = lastVoipSession
-        if (active == null) {
-            AppLogger.w(TAG, "setVoipPaused($paused) ignored: no VoIP session")
-            return
+        when (voipSlot.setPaused(paused)) {
+            VoipSessionSlot.PauseResult.APPLIED -> Unit
+            VoipSessionSlot.PauseResult.QUEUED -> AppLogger.i(TAG, "setVoipPaused($paused) queued: the VoIP session is still starting")
+            VoipSessionSlot.PauseResult.IGNORED -> AppLogger.w(TAG, "setVoipPaused($paused) ignored: no VoIP session")
         }
-        active.setPaused(paused)
     }
 
     /** Holds the app-call recording open across a carrier call. See the AIDL for why it is not a pause. */

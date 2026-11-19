@@ -43,7 +43,7 @@ object VoipDirection {
         first: VoipCallFacts?,
         ring: VoipRingMemory.Verdict = VoipRingMemory.Verdict.NONE,
         listenerConnected: Boolean = false,
-        incomingAlwaysNotified: Boolean = false,
+        absenceMeansOutgoing: Boolean = false,
     ): RecordingDirection? {
         // The app rang before the pickup and was answered just now: the only way to prove an incoming
         // call that the app's notification no longer shows (WhatsApp and Telegram both rewrite it).
@@ -54,8 +54,9 @@ object VoipDirection {
         // An app measured to post its incoming-call notification for EVERY incoming call (Telegram:
         // incoming_calls channel, callType 1, 2 actions; the OP9 probe, 2026-11-17): with the listener
         // connected and no ring heard, the call is one we placed. Its own ongoing notification carries
-        // no direction, so this absence is the whole signal.
-        if (incomingAlwaysNotified && listenerConnected && ring == VoipRingMemory.Verdict.NONE &&
+        // no direction, so this absence is the whole signal; [absenceMeansOutgoing] says whether it counts for
+        // this recording (C20).
+        if (absenceMeansOutgoing && listenerConnected && ring == VoipRingMemory.Verdict.NONE &&
             first?.showChronometer != true
         ) return RecordingDirection.OUTGOING
         if (first == null || first.showChronometer == true) return null
@@ -65,6 +66,49 @@ object VoipDirection {
         if (listenerConnected && first.ongoing && first.showChronometer == false) return RecordingDirection.OUTGOING
         return null
     }
+
+    /**
+     * How long after the call's detection an answer still belongs to it: the audio mode can flip a few ms before
+     * the app rewrites its notification as ongoing (measured 32 ms, WhatsApp incoming, 2026-11-17).
+     */
+    const val RING_ANSWER_WAIT_MS = 3_000L
+
+    /** The longest a call is taken to ring: a listener connected for less than this before the call heard nothing. */
+    const val MAX_RING_MS = 90_000L
+
+    /** A recording of the same app that ended this shortly before the call was detected makes it a split (C20). */
+    const val SPLIT_WINDOW_MS = 2 * 60_000L
+
+    /**
+     * When the ring memory is read for a recording that starts late into its call (an "Ask me" tap): as of the
+     * call's detection plus the answer wait, the same read an automatic start makes (review C20). Read at the tap,
+     * the memory has forgotten the answer (fresh for 10 s) and the ring (90 s) of an incoming call.
+     */
+    fun ringEvidenceAt(callDetectedAt: Long): Long = callDetectedAt + RING_ANSWER_WAIT_MS
+
+    /**
+     * Whether "no ring heard" may say OUTGOING for this recording (review C20): the app announces every incoming call
+     * ([alwaysNotified], Telegram), the listener has been connected since before this call could have rung, and no
+     * recording of the same app ended just before (a split call's second file: the first consumed the answer).
+     * Anything else leaves the direction unmarked, the documented safe default.
+     */
+    fun absenceMeansOutgoing(
+        alwaysNotified: Boolean,
+        listenerConnectedSince: Long,
+        callDetectedAt: Long,
+        lastRecordingEndedAt: Long,
+    ): Boolean = alwaysNotified &&
+        listenerConnectedSince > 0L && callDetectedAt - listenerConnectedSince >= MAX_RING_MS &&
+        (lastRecordingEndedAt <= 0L || callDetectedAt - lastRecordingEndedAt > SPLIT_WINDOW_MS)
+
+    /**
+     * What the ring listener takes for a ringing call (review C30): [isIncomingMarker], but the weak shape (call
+     * category with two actions, not ongoing) only with a full-screen intent. A missed-call notice (Call back,
+     * Message) has that shape and no full-screen intent; taken for a ring, it made the next outgoing call from the
+     * app read as an answered incoming one. A CallStyle of type incoming or the incoming flag need nothing more.
+     */
+    fun isRingMarker(f: VoipCallFacts, hasFullScreenIntent: Boolean): Boolean =
+        f.callType == CALL_TYPE_INCOMING || f.incomingFlag == true || (isIncomingMarker(f) && hasFullScreenIntent)
 
     /** The structure of a ringing, incoming call notification: a clear marker, never text. */
     fun isIncomingMarker(f: VoipCallFacts): Boolean =

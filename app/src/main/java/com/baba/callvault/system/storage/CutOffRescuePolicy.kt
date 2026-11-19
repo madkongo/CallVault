@@ -47,7 +47,18 @@ object CutOffRescuePolicy {
      */
     const val QUIET_MS = 90_000L
 
-    fun decide(hasNote: Boolean, sizeBytes: Long, ageMs: Long, callActive: Boolean): RescueDecision = when {
+    /**
+     * @param ownedByLiveRecording a recording in this process still owns the file ([LiveStagingFiles]): a paused
+     *   recording is quiet for as long as the pause lasts, and a LINE call shows no call mode (review C12).
+     */
+    fun decide(
+        hasNote: Boolean,
+        sizeBytes: Long,
+        ageMs: Long,
+        callActive: Boolean,
+        ownedByLiveRecording: Boolean = false,
+    ): RescueDecision = when {
+        ownedByLiveRecording -> RescueDecision.WAIT
         callActive -> RescueDecision.WAIT
         ageMs < QUIET_MS -> RescueDecision.WAIT
         // A note is what proves this file is an interrupted recording (the publish path deletes the temp

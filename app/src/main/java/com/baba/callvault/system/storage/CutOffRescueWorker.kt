@@ -62,14 +62,20 @@ class CutOffRescueWorker(ctx: Context, params: WorkerParameters) : CoroutineWork
     private suspend fun rescue(file: File, callActive: Boolean): RescueDecision {
         val noteFile = StagingNote.fileFor(file)
         val note = noteFile.takeIf { it.exists() }?.let { runCatching { StagingNote.decode(it.readText()) }.getOrNull() }
+        val owned = LiveStagingFiles.isLive(file)
         val decision = CutOffRescuePolicy.decide(
             hasNote = note != null,
             sizeBytes = file.length(),
             ageMs = System.currentTimeMillis() - file.lastModified(),
             callActive = callActive,
+            ownedByLiveRecording = owned,
         )
         when (decision) {
-            RescueDecision.WAIT -> AppLogger.d(TAG, "${file.name} may still be in use; looking again later")
+            RescueDecision.WAIT -> AppLogger.d(
+                TAG,
+                if (owned) "${file.name} belongs to a recording still running here (paused, or a call with no call mode); leaving it"
+                else "${file.name} may still be in use; looking again later",
+            )
             RescueDecision.DISCARD_EMPTY -> {
                 AppLogger.i(TAG, "${file.name} is empty; removing it")
                 runCatching { file.delete(); noteFile.delete() }

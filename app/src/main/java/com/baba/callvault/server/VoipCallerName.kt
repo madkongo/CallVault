@@ -82,9 +82,14 @@ internal object VoipCallerName {
     }.onFailure { AppLogger.d(TAG, "Answer lookup failed: ${it.message}") }.getOrDefault(AnswerState.NO_NOTIFICATION)
 
     /**
-     * [AnswerState] from [packageName]'s first ongoing record that carries the timer flag;
-     * [AnswerState.NO_TIMER] when its ongoing records have none, [AnswerState.NO_NOTIFICATION] when
-     * it has no ongoing record at all.
+     * [AnswerState] from [packageName]'s ongoing record that is marked as a call (category=call, a CallStyle type
+     * or an incoming flag) and carries the timer flag; [AnswerState.NO_TIMER] when it has ongoing records but none
+     * of them is such a record, [AnswerState.NO_NOTIFICATION] when it has no ongoing record at all.
+     *
+     * Only the call's own record is read (review C49 and its rework): NotificationCompat writes
+     * `showChronometer=false` on every notification it builds, so an ongoing backup or upload notice of the same
+     * app read as RINGING, and the hold then deleted an answered short call as unanswered. An app whose call notice
+     * carries no call marker (Telegram) reads NO_TIMER: the hold releases at once, never inferred from another notice.
      */
     internal fun extractAnswerState(dump: String, packageName: String): AnswerState {
         if (packageName.isBlank()) return AnswerState.NO_NOTIFICATION
@@ -93,11 +98,20 @@ internal object VoipCallerName {
             if (!record.contains("pkg=$packageName ")) continue
             if (!isOngoing(record)) continue
             ongoingSeen = true
+            if (!isMarkedAsCall(record)) continue
             val running = CHRONOMETER_REGEX.find(record)?.groupValues?.get(1) ?: continue
-            return if (running == "true") AnswerState.ANSWERED else AnswerState.RINGING
+            return answerFrom(running)
         }
         return if (ongoingSeen) AnswerState.NO_TIMER else AnswerState.NO_NOTIFICATION
     }
+
+    private fun answerFrom(running: String): AnswerState =
+        if (running == "true") AnswerState.ANSWERED else AnswerState.RINGING
+
+    /** The record says it is a call: the call category, a CallStyle type, or the app's own incoming flag. */
+    private fun isMarkedAsCall(record: String): Boolean =
+        CATEGORY_REGEX.find(record)?.groupValues?.get(1) == "call" ||
+            CALL_TYPE_REGEX.containsMatchIn(record) || INCOMING_FLAG_REGEX.containsMatchIn(record)
 
     private val CATEGORY_REGEX = Regex("""\bcategory=(\w+)""")
     private val ACTIONS_REGEX = Regex("""\bactions=(\d+)""")
@@ -114,12 +128,20 @@ internal object VoipCallerName {
     }.onFailure { AppLogger.d(TAG, "Call facts lookup failed: ${it.message}") }.getOrNull()
 
     /**
-     * Facts of [packageName]'s first call-like record: one that carries a CallStyle type, the call
-     * category, an incoming flag, or is ongoing with a call timer flag. A chat notification of the
-     * same app is none of those. Telegram's ongoing call sets none of them and so reads null.
+     * Facts of [packageName]'s call-like record: one that carries a CallStyle type, the call category, an
+     * incoming flag, or is ongoing with a call timer flag. An ongoing one first (review C30): an older missed-call
+     * notice of the app (not ongoing, call category, two actions) read as the incoming marker of the call placed
+     * now. A chat notification of the same app is none of those. Telegram's ongoing call sets none of them and so
+     * reads null.
      */
     internal fun extractFacts(dump: String, packageName: String): VoipCallFacts? {
         if (packageName.isBlank()) return null
+        val all = callLikeFacts(dump, packageName)
+        return all.firstOrNull { it.ongoing } ?: all.firstOrNull()
+    }
+
+    private fun callLikeFacts(dump: String, packageName: String): List<VoipCallFacts> {
+        val found = ArrayList<VoipCallFacts>()
         for (record in dump.split("NotificationRecord(")) {
             if (!record.contains("pkg=$packageName ")) continue
             val category = CATEGORY_REGEX.find(record)?.groupValues?.get(1)
@@ -129,7 +151,7 @@ internal object VoipCallerName {
             val ongoing = isOngoing(record)
             val callLike = category == "call" || callType != null || incomingFlag != null || (ongoing && chrono != null)
             if (!callLike) continue
-            return VoipCallFacts(
+            found += VoipCallFacts(
                 category = category,
                 actionCount = ACTIONS_REGEX.find(record)?.groupValues?.get(1)?.toIntOrNull() ?: 0,
                 callType = callType,
@@ -138,7 +160,7 @@ internal object VoipCallerName {
                 incomingFlag = incomingFlag,
             )
         }
-        return null
+        return found
     }
 
     /**
