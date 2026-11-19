@@ -82,27 +82,27 @@ internal object VoipCallerName {
     }.onFailure { AppLogger.d(TAG, "Answer lookup failed: ${it.message}") }.getOrDefault(AnswerState.NO_NOTIFICATION)
 
     /**
-     * [AnswerState] from [packageName]'s ongoing record that carries the timer flag: one marked as a call
-     * (category=call, a CallStyle type or an incoming flag) first, else the first one; [AnswerState.NO_TIMER]
-     * when its ongoing records have none, [AnswerState.NO_NOTIFICATION] when it has no ongoing record at all.
+     * [AnswerState] from [packageName]'s ongoing record that is marked as a call (category=call, a CallStyle type
+     * or an incoming flag) and carries the timer flag; [AnswerState.NO_TIMER] when it has ongoing records but none
+     * of them is such a record, [AnswerState.NO_NOTIFICATION] when it has no ongoing record at all.
      *
-     * The call's own record first (review C49): NotificationCompat writes `showChronometer=false` on every
-     * notification it builds, so an ongoing backup or upload notice of the same app read as RINGING when it
-     * sorted first, and the hold then deleted an answered short call as unanswered.
+     * Only the call's own record is read (review C49 and its rework): NotificationCompat writes
+     * `showChronometer=false` on every notification it builds, so an ongoing backup or upload notice of the same
+     * app read as RINGING, and the hold then deleted an answered short call as unanswered. An app whose call notice
+     * carries no call marker (Telegram) reads NO_TIMER: the hold releases at once, never inferred from another notice.
      */
     internal fun extractAnswerState(dump: String, packageName: String): AnswerState {
         if (packageName.isBlank()) return AnswerState.NO_NOTIFICATION
         var ongoingSeen = false
-        var firstTimer: String? = null
         for (record in dump.split("NotificationRecord(")) {
             if (!record.contains("pkg=$packageName ")) continue
             if (!isOngoing(record)) continue
             ongoingSeen = true
+            if (!isMarkedAsCall(record)) continue
             val running = CHRONOMETER_REGEX.find(record)?.groupValues?.get(1) ?: continue
-            if (isMarkedAsCall(record)) return answerFrom(running)
-            if (firstTimer == null) firstTimer = running
+            return answerFrom(running)
         }
-        return firstTimer?.let { answerFrom(it) } ?: if (ongoingSeen) AnswerState.NO_TIMER else AnswerState.NO_NOTIFICATION
+        return if (ongoingSeen) AnswerState.NO_TIMER else AnswerState.NO_NOTIFICATION
     }
 
     private fun answerFrom(running: String): AnswerState =

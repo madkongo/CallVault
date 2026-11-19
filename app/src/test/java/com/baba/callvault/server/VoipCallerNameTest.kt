@@ -54,13 +54,14 @@ class VoipCallerNameTest {
 
     @Test
     fun `a call notification whose timer is not running is still ringing`() {
-        val dump = record("com.whatsapp", "Feroza", text = "Ringing…", chronometer = false)
+        // category=call as WhatsApp's call notice carries it (measured on the OP9, 2026-11-17).
+        val dump = record("com.whatsapp", "Feroza", text = "Ringing…", category = "call", chronometer = false)
         assertEquals(VoipCallerName.AnswerState.RINGING, VoipCallerName.extractAnswerState(dump, "com.whatsapp"))
     }
 
     @Test
     fun `a call notification with a running timer is answered`() {
-        val dump = record("com.whatsapp", "Feroza", text = "Ongoing voice call", chronometer = true)
+        val dump = record("com.whatsapp", "Feroza", text = "Ongoing voice call", category = "call", chronometer = true)
         assertEquals(VoipCallerName.AnswerState.ANSWERED, VoipCallerName.extractAnswerState(dump, "com.whatsapp"))
     }
 
@@ -97,9 +98,14 @@ class VoipCallerNameTest {
     }
 
     @Test
-    fun `with no record marked as a call the first ongoing timer flag is still read`() {
-        val dump = record("org.thoughtcrime.securesms", "Someone", text = "Ringing", chronometer = false)
-        assertEquals(VoipCallerName.AnswerState.RINGING, VoipCallerName.extractAnswerState(dump, "org.thoughtcrime.securesms"))
+    fun `with no record marked as a call no ongoing notice is read as ringing`() {
+        // Review C49 rework: Telegram's call notice carries no call marker, so an unrelated ongoing notice of the
+        // same app (a backup, an upload) with timer=false read RINGING and held the call. Unknown releases the hold.
+        val telegramCall = record("org.telegram.messenger", "Ongoing Telegram call", text = "Feroza")
+        val upload = record("org.telegram.messenger", "Uploading", text = "3 files", chronometer = false)
+        assertEquals(VoipCallerName.AnswerState.NO_TIMER, VoipCallerName.extractAnswerState(upload + "\n" + telegramCall, "org.telegram.messenger"))
+        val unmarked = record("org.thoughtcrime.securesms", "Someone", text = "Ringing", chronometer = false)
+        assertEquals(VoipCallerName.AnswerState.NO_TIMER, VoipCallerName.extractAnswerState(unmarked, "org.thoughtcrime.securesms"))
     }
 
     @Test
