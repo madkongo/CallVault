@@ -48,6 +48,8 @@ class RetentionSweepWorker(ctx: Context, params: WorkerParameters) : CoroutineWo
 
     override suspend fun doWork(): Result {
         val prefs = AppPreferences(applicationContext)
+        // Before any pass trusts a Drive size: sizes stamped before review C7 were the device's own.
+        RecordingCatalog.forgetUnconfirmedDriveSizesOnce(applicationContext)
         val localDays = prefs.getRetentionLocalDays()
         val driveDays = prefs.getRetentionDriveDays()
         val capBytes = prefs.getStorageCapBytes()

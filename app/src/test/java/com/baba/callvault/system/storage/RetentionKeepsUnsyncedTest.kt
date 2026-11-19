@@ -61,6 +61,8 @@ class RetentionKeepsUnsyncedTest {
     @Before
     fun setUp(): Unit = runBlocking {
         dao.getAll().forEach { dao.deleteByName(it.displayName) }
+        // The one-time forget of pre-C7 Drive sizes is done; the rows below stand for sizes Drive confirmed.
+        com.baba.callvault.data.recordings.RecordingCatalog.forgetUnconfirmedDriveSizesOnce(context)
         prefs.setRecordingFolderUri(null)
         prefs.setDriveFolderUri(null)
         prefs.setStorageTarget(StorageTarget.BOTH)

@@ -75,6 +75,10 @@ interface RecordingDao {
     suspend fun clearDrive(displayName: String)
 
     /** Remembers the length read off the file, so it is never read twice. */
+    /** Forgets every stored Drive size; returns how many rows had one. See RecordingCatalog.forgetUnconfirmedDriveSizesOnce. */
+    @Query("UPDATE recordings SET driveSizeBytes = NULL WHERE driveSizeBytes IS NOT NULL")
+    suspend fun clearAllDriveSizes(): Int
+
     @Query("UPDATE recordings SET durationSeconds = :durationSeconds WHERE displayName = :displayName")
     suspend fun setDuration(displayName: String, durationSeconds: Long)
 

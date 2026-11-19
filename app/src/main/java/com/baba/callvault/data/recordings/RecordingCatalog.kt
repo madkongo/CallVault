@@ -125,6 +125,31 @@ object RecordingCatalog {
             .onFailure { AppLogger.w(TAG, "setDuration('$displayName') failed: ${it.message}") }
     }
 
+    private const val MIGRATIONS_FILE = "cv_catalog_migrations"
+    private const val KEY_DRIVE_SIZES_FORGOTTEN = "drive_sizes_unconfirmed_forgotten"
+
+    /**
+     * Once per install: forgets every stored Drive size, returning how many rows had one (review C7 follow-up).
+     *
+     * Before C7 every path that stamped a Drive copy recorded the DEVICE size as the Drive size, confirmed by Drive
+     * or not, and retention takes an equal Drive size as proof the call reached Drive. Those stamps cannot be told
+     * from real ones, so all are dropped; the Drive sweep, the folder scan and the Drive repair, which record only
+     * sizes Drive listed, re-confirm them. The flag is set only after the update succeeds, so a failure retries.
+     */
+    suspend fun forgetUnconfirmedDriveSizesOnce(context: Context): Int {
+        val state = context.getSharedPreferences(MIGRATIONS_FILE, Context.MODE_PRIVATE)
+        if (state.getBoolean(KEY_DRIVE_SIZES_FORGOTTEN, false)) return 0
+        return runCatching { dao(context).clearAllDriveSizes() }
+            .onSuccess {
+                state.edit().putBoolean(KEY_DRIVE_SIZES_FORGOTTEN, true).apply()
+                AppLogger.i(TAG, "Forgot $it unconfirmed Drive size(s) from before Drive sizes were checked; a Drive listing re-confirms them")
+            }
+            .getOrElse {
+                AppLogger.w(TAG, "Could not forget the unconfirmed Drive sizes; retrying next time: ${it.message}")
+                0
+            }
+    }
+
     /** Whether [displayName] has a catalog row; null when the catalog cannot be read. Never throws. */
     suspend fun contains(context: Context, displayName: String): Boolean? =
         runCatching { dao(context).findByName(displayName) != null }.getOrElse {
