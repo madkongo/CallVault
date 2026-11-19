@@ -87,6 +87,22 @@ class VoipCallerNameTest {
     }
 
     @Test
+    fun `an upload notice of the same app does not hide the call's own answered timer`() {
+        // Review C49: NotificationCompat writes showChronometer=false on every notification it builds, so an
+        // ongoing backup or upload notice of the app that sorts first read as RINGING, and an answered call
+        // shorter than the hold was deleted as unanswered. The call's own record (category=call) is read first.
+        val backup = record("com.whatsapp", "Backing up messages", text = "42%", chronometer = false)
+        val call = record("com.whatsapp", "Feroza", text = "Ongoing voice call", category = "call", chronometer = true)
+        assertEquals(VoipCallerName.AnswerState.ANSWERED, VoipCallerName.extractAnswerState(backup + "\n" + call, "com.whatsapp"))
+    }
+
+    @Test
+    fun `with no record marked as a call the first ongoing timer flag is still read`() {
+        val dump = record("org.thoughtcrime.securesms", "Someone", text = "Ringing", chronometer = false)
+        assertEquals(VoipCallerName.AnswerState.RINGING, VoipCallerName.extractAnswerState(dump, "org.thoughtcrime.securesms"))
+    }
+
+    @Test
     fun `reads the caller from the title when the app puts it there`() {
         // WhatsApp's shape: the person is the title.
         val name = VoipCallerName.extractFromDump(record("com.whatsapp", "Feroza"), "com.whatsapp")

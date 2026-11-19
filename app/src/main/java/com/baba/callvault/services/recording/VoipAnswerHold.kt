@@ -50,16 +50,20 @@ object VoipAnswerHold {
 
     /**
      * What to do on a poll that got [answered] from the host (null = the host has no such method),
-     * [elapsedMs] into the hold, given whether an earlier poll already [seenRinging].
+     * [elapsedMs] into the hold, given whether an earlier poll already [seenRinging] and whether the ring
+     * listener saw the call answered ([ringAnswered]).
      *
      * Once the ringing has been seen, only an answer releases: at hang-up WhatsApp removes its
      * notification before the audio mode drops (measured 2026-09-22), and releasing on that
      * published the last 1.5 s of an unanswered call as a recording. The call's end discards a
      * hold that is still on, so waiting costs nothing.
      */
-    fun decide(answered: Int?, elapsedMs: Long, seenRinging: Boolean): Decision = when {
+    fun decide(answered: Int?, elapsedMs: Long, seenRinging: Boolean, ringAnswered: Boolean = false): Decision = when {
         elapsedMs >= MAX_HOLD_MS -> Decision.RELEASE
         answered == RecorderServiceImpl.VOIP_ANSWERED -> Decision.RELEASE
+        // The ring listener saw this app's ringing call picked up (VoipRingMemory ANSWERED_RING): an answer read
+        // independently of the notification the host reads, which can be the wrong one of the app (review C49).
+        ringAnswered -> Decision.RELEASE
         seenRinging -> Decision.HOLD
         answered == RecorderServiceImpl.VOIP_RINGING -> Decision.HOLD
         answered == RecorderServiceImpl.VOIP_NO_NOTIFICATION && elapsedMs < NOTIFICATION_GRACE_MS -> Decision.HOLD

@@ -82,22 +82,36 @@ internal object VoipCallerName {
     }.onFailure { AppLogger.d(TAG, "Answer lookup failed: ${it.message}") }.getOrDefault(AnswerState.NO_NOTIFICATION)
 
     /**
-     * [AnswerState] from [packageName]'s first ongoing record that carries the timer flag;
-     * [AnswerState.NO_TIMER] when its ongoing records have none, [AnswerState.NO_NOTIFICATION] when
-     * it has no ongoing record at all.
+     * [AnswerState] from [packageName]'s ongoing record that carries the timer flag: one marked as a call
+     * (category=call, a CallStyle type or an incoming flag) first, else the first one; [AnswerState.NO_TIMER]
+     * when its ongoing records have none, [AnswerState.NO_NOTIFICATION] when it has no ongoing record at all.
+     *
+     * The call's own record first (review C49): NotificationCompat writes `showChronometer=false` on every
+     * notification it builds, so an ongoing backup or upload notice of the same app read as RINGING when it
+     * sorted first, and the hold then deleted an answered short call as unanswered.
      */
     internal fun extractAnswerState(dump: String, packageName: String): AnswerState {
         if (packageName.isBlank()) return AnswerState.NO_NOTIFICATION
         var ongoingSeen = false
+        var firstTimer: String? = null
         for (record in dump.split("NotificationRecord(")) {
             if (!record.contains("pkg=$packageName ")) continue
             if (!isOngoing(record)) continue
             ongoingSeen = true
             val running = CHRONOMETER_REGEX.find(record)?.groupValues?.get(1) ?: continue
-            return if (running == "true") AnswerState.ANSWERED else AnswerState.RINGING
+            if (isMarkedAsCall(record)) return answerFrom(running)
+            if (firstTimer == null) firstTimer = running
         }
-        return if (ongoingSeen) AnswerState.NO_TIMER else AnswerState.NO_NOTIFICATION
+        return firstTimer?.let { answerFrom(it) } ?: if (ongoingSeen) AnswerState.NO_TIMER else AnswerState.NO_NOTIFICATION
     }
+
+    private fun answerFrom(running: String): AnswerState =
+        if (running == "true") AnswerState.ANSWERED else AnswerState.RINGING
+
+    /** The record says it is a call: the call category, a CallStyle type, or the app's own incoming flag. */
+    private fun isMarkedAsCall(record: String): Boolean =
+        CATEGORY_REGEX.find(record)?.groupValues?.get(1) == "call" ||
+            CALL_TYPE_REGEX.containsMatchIn(record) || INCOMING_FLAG_REGEX.containsMatchIn(record)
 
     private val CATEGORY_REGEX = Regex("""\bcategory=(\w+)""")
     private val ACTIONS_REGEX = Regex("""\bactions=(\d+)""")

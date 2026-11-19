@@ -309,7 +309,12 @@ open class RecorderServiceImpl(private val apkPath: String) : IRecorderService.S
         // Heavy setup off the binder thread, matching startRecording.
         workerHandler.post {
             val active = runCatching {
-                VoipCaptureSession(codecEnum, bitRate, outFd, keepStereo = stereo).also { it.start(); lastVoipSession = it }
+                // Reachable before it starts (review C49): the app's first answer-hold pause can arrive meanwhile.
+                VoipSessionHandover.publishThenStart(
+                    VoipCaptureSession(codecEnum, bitRate, outFd, keepStereo = stereo),
+                    publish = { lastVoipSession = it },
+                    start = { it.start() },
+                )
             }.onFailure { AppLogger.e(TAG, "startVoipRecording failed: ${it.message}", it) }.getOrNull()
             if (active != null) {
                 session = active

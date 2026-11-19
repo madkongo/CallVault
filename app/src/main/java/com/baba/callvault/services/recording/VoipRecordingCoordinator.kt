@@ -121,6 +121,12 @@ object VoipRecordingCoordinator {
     private var answerHoldJob: Job? = null
     /** True while the encode is held for the answer; the user's own pause is [paused]. */
     @Volatile private var heldForAnswer = false
+
+    /**
+     * The ring listener saw this call's ringing picked up (read by [readDirection] before it consumes the
+     * answer), an answer for [holdUntilAnswered] that does not depend on the notification the host reads (C49).
+     */
+    private val answeredByRing = java.util.concurrent.atomic.AtomicBoolean(false)
     @Volatile private var codecMime: String = "audio/ogg"
 
     /** Starts a VoIP recording. No-op when the feature is off, already recording, or unavailable. */
@@ -365,6 +371,7 @@ object VoipRecordingCoordinator {
         heldForAnswer = false
         directionJob?.cancel()
         direction.set(null)
+        answeredByRing.set(false)
         directionJob = if (callPackage != null) readDirection(callPackage) else null
         // The capture had to open now; what waits for the pickup is the encode. See VoipAnswerHold.
         // A normal-mode call (BabApps item 108) too (review C31): its live call-voice pair does not prove an answer.
@@ -463,6 +470,7 @@ object VoipRecordingCoordinator {
             ring = VoipRingMemory.verdict(callPackage, android.os.SystemClock.elapsedRealtime())
         }
         if (ring == VoipRingMemory.Verdict.ANSWERED_RING) {
+            if (isActive && recording) answeredByRing.set(true)
             VoipRingMemory.consume(callPackage)
         }
         // An app measured to post its incoming notice for every incoming call (Telegram) needs no
@@ -529,9 +537,12 @@ object VoipRecordingCoordinator {
             val elapsed = System.currentTimeMillis() - startedAt
             polls++
             if (answered == RecorderServiceImpl.VOIP_RINGING) seenRinging = true
-            if (VoipAnswerHold.decide(answered, elapsed, seenRinging) == VoipAnswerHold.Decision.RELEASE) {
+            val ringAnswered = answeredByRing.get() ||
+                VoipRingMemory.verdict(callPackage, android.os.SystemClock.elapsedRealtime()) == VoipRingMemory.Verdict.ANSWERED_RING
+            if (VoipAnswerHold.decide(answered, elapsed, seenRinging, ringAnswered) == VoipAnswerHold.Decision.RELEASE) {
                 val why = when {
                     answered == RecorderServiceImpl.VOIP_ANSWERED -> "call answered"
+                    ringAnswered -> "the ring listener saw the call answered"
                     elapsed >= VoipAnswerHold.MAX_HOLD_MS -> "held ${elapsed / 1000}s without an answer"
                     answered == null -> "the host has no answer to give (older daemon?)"
                     answered == RecorderServiceImpl.VOIP_NO_TIMER -> "this app's notification shows no call timer"

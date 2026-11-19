@@ -85,4 +85,14 @@ class VoipAnswerHoldTest {
         assertEquals(false, VoipAnswerHold.applies(recordFromAnswer = false, callPackage = "com.whatsapp"))
         assertEquals(false, VoipAnswerHold.applies(recordFromAnswer = true, callPackage = null))
     }
+
+    @Test
+    fun `an answer the ring listener saw releases a hold the notification read keeps on`() {
+        // Review C49: once RINGING was read (possibly from the wrong notification of the app), only ANSWERED or
+        // two minutes released, and an answered call that ended inside the hold was deleted as unanswered. The
+        // ring listener's own pickup (VoipRingMemory ANSWERED_RING) is an independent answer.
+        assertEquals(Decision.RELEASE, VoipAnswerHold.decide(VOIP_RINGING, elapsedMs = 5_000, seenRinging = true, ringAnswered = true))
+        assertEquals(Decision.RELEASE, VoipAnswerHold.decide(VOIP_NO_NOTIFICATION, elapsedMs = 0, seenRinging = false, ringAnswered = true))
+        assertEquals(Decision.HOLD, VoipAnswerHold.decide(VOIP_RINGING, elapsedMs = 5_000, seenRinging = true, ringAnswered = false))
+    }
 }
