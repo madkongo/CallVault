@@ -129,15 +129,16 @@ object RecordingCatalog {
     private const val KEY_DRIVE_SIZES_FORGOTTEN = "drive_sizes_unconfirmed_forgotten"
 
     /**
-     * Once per install: forgets every stored Drive size, returning how many rows had one (review C7 follow-up).
+     * Once per install: forgets the stored Drive size of rows with a device copy (review C7 follow-up).
      *
      * Before C7 every path that stamped a Drive copy recorded the DEVICE size as the Drive size, confirmed by Drive
      * or not, and retention takes an equal Drive size as proof the call reached Drive. Those stamps cannot be told
-     * from real ones, so all are dropped; the Drive sweep, the folder scan and the Drive repair, which record only
-     * sizes Drive listed, re-confirm them. The flag is set only after the update succeeds, so a failure retries.
+     * from real ones, so they are dropped on every row with a device copy, the rows retention trusts; the Drive
+     * sweep, the folder scan and the Drive repair, which record only sizes Drive listed, re-confirm them. Drive-only
+     * rows keep their size: retention never relies on it, nothing would re-confirm it, and the list shows it. The flag is set only after the update succeeds, so a failure retries.
      */
     suspend fun forgetUnconfirmedDriveSizesOnce(context: Context): Boolean =
-        forgetUnconfirmedDriveSizesOnceWith(context) { dao(context).clearAllDriveSizes() }
+        forgetUnconfirmedDriveSizesOnceWith(context) { dao(context).clearDeviceRowDriveSizes() }
 
     /**
      * [forgetUnconfirmedDriveSizesOnce] with the clear passed in, so a test can make it fail. True once the clear

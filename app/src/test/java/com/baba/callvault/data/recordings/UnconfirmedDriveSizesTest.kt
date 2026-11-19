@@ -51,11 +51,11 @@ class UnconfirmedDriveSizesTest {
     fun tearDown(): Unit = runBlocking { listOf(a, b).forEach { dao.deleteByName(it) } }
 
     @Test
-    fun `the first run forgets every stored Drive size, so an old stamp proves nothing`() = runBlocking {
+    fun `the first run forgets the Drive size of every row with a device copy, so an old stamp proves nothing`() = runBlocking {
         assertTrue(RecordingCatalog.forgetUnconfirmedDriveSizesOnce(context))
 
         assertNull(dao.findByName(a)?.driveSizeBytes)
-        assertNull(dao.findByName(b)?.driveSizeBytes)
+        assertEquals("a Drive-only row keeps its size: retention never trusts it, and nothing would re-confirm it", 700L, dao.findByName(b)?.driveSizeBytes)
         assertFalse(RetentionPolicy.deviceCopyMayGo(StorageTarget.BOTH, dao.findByName(a)!!))
     }
 
