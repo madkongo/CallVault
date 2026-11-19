@@ -30,7 +30,6 @@ import com.baba.callvault.server.DaemonSessionOwnership
 import com.baba.callvault.server.DaemonStereo
 import com.baba.callvault.server.IRecorderService
 import com.baba.callvault.server.RecorderConnection
-import com.baba.callvault.server.RecorderServiceImpl
 import com.baba.callvault.server.VoipCallFacts
 import com.baba.callvault.data.recordings.RecordingDirection
 import kotlinx.coroutines.isActive
@@ -362,8 +361,13 @@ object VoipRecordingCoordinator {
         paused = false
         isSuspendedForCarrierCall = false
         VoipRecordingNotification.show(context, appLabel)
-        // The same "Recording started" toast and vibration a phone call gets; both follow their settings.
-        RecordingNotificationHelper(context).showRecordingStarted()
+        // The capture had to open now; what waits for the pickup is the encode. See VoipAnswerHold.
+        // Not a normal-mode call (BabApps item 108, review C31 rework): its notice gives no proven answer signal,
+        // and a hold on an unproven signal can lose an answered call. Said in the always-on log when it applies.
+        val holdApplies = VoipAnswerHold.applies(prefs.isRecordFromAnswerEnabled(), callPackage, viaNormalMode)
+        // The same "Recording started" toast and vibration a phone call gets; both follow their settings. Not while
+        // held for the answer (N17): the hold says it when it releases, and an unanswered call never says it.
+        if (!holdApplies) RecordingNotificationHelper(context).showRecordingStarted()
         AppLogger.i(TAG, "VoIP recording started -> $fileName")
         CallEndLog.record(
             context,
@@ -395,10 +399,7 @@ object VoipRecordingCoordinator {
         this.callDetectedAt = callDetectedAt ?: android.os.SystemClock.elapsedRealtime()
         currentCallPackage = callPackage
         directionJob = if (callPackage != null) readDirection(callPackage) else null
-        // The capture had to open now; what waits for the pickup is the encode. See VoipAnswerHold.
-        // Not a normal-mode call (BabApps item 108, review C31 rework): its notice gives no proven answer signal,
-        // and a hold on an unproven signal can lose an answered call. Said in the always-on log when it applies.
-        if (VoipAnswerHold.applies(prefs.isRecordFromAnswerEnabled(), callPackage, viaNormalMode)) {
+        if (holdApplies) {
             answerHoldJob = holdUntilAnswered(context, callPackage!!)
         } else if (viaNormalMode && prefs.isRecordFromAnswerEnabled()) {
             CallEndLog.record(context, "app call answer hold: not held: normal-mode call, no proven answer signal for this app; recording from the start")
@@ -565,66 +566,55 @@ object VoipRecordingCoordinator {
         }
     }
 
+    /** The answer-hold loop of this call; see [VoipAnswerHoldLoop] for why every step asks [isHoldLive] (N17). */
     private fun holdUntilAnswered(context: Context, callPackage: String): Job = CoroutineScope(Dispatchers.IO).launch {
-        val startedAt = System.currentTimeMillis()
-        var polls = 0
-        var seenRinging = false
-        while (recording) {
-            val answered = runCatching { RecorderConnection.service?.voipCallAnswered(callPackage) }.getOrNull()
-            val elapsed = System.currentTimeMillis() - startedAt
-            polls++
-            if (answered == RecorderServiceImpl.VOIP_RINGING) seenRinging = true
-            val ringAnswered = answeredByRing.get() ||
+        val owner = coroutineContext[Job]
+        val normalMode = startedViaNormalMode
+        val host = object : VoipAnswerHoldLoop.Host {
+            override fun isLive(): Boolean = isHoldLive(owner)
+            override fun poll(): Int? = runCatching { RecorderConnection.service?.voipCallAnswered(callPackage) }
+                .onFailure { AppLogger.w(TAG, "voipCallAnswered failed (treated as no answer to give): ${it.message}") }
+                .getOrNull()
+            override fun ringAnswered(): Boolean = answeredByRing.get() ||
                 VoipRingMemory.verdict(callPackage, android.os.SystemClock.elapsedRealtime()) == VoipRingMemory.Verdict.ANSWERED_RING
-            if (VoipAnswerHold.decide(answered, elapsed, seenRinging, ringAnswered) == VoipAnswerHold.Decision.RELEASE) {
-                val why = when {
-                    answered == RecorderServiceImpl.VOIP_ANSWERED -> "call answered"
-                    ringAnswered -> "the ring listener saw the call answered"
-                    elapsed >= VoipAnswerHold.MAX_HOLD_MS -> "held ${elapsed / 1000}s without an answer"
-                    answered == null -> "the host has no answer to give (older daemon?)"
-                    answered == RecorderServiceImpl.VOIP_NO_TIMER -> "this app's notification shows no call timer"
-                    else -> "no call notification appeared within ${elapsed / 1000}s"
-                }
-                // Always on (C31): the first LINE calls with the hold are read from these lines.
-                if (heldForAnswer) {
-                    holdEncode(context, false)
-                    CallEndLog.record(context, "app call answer hold: released after $polls polls: $why (${elapsed}ms, normal-mode=$startedViaNormalMode)")
-                } else {
-                    CallEndLog.record(context, "app call answer hold: not held: $why (normal-mode=$startedViaNormalMode)")
-                }
-                return@launch
-            }
-            if (!heldForAnswer) {
-                holdEncode(context, true)
-                CallEndLog.record(context, "app call answer hold: held until the call is answered (host said ${answerName(answered)}, normal-mode=$startedViaNormalMode)")
-            }
-            delay(VoipAnswerHold.POLL_MS)
+            override fun setHeld(hold: Boolean): Boolean = holdEncode(context, hold, owner)
+            override fun recordingFromNow(): Boolean = announceRecordingFromNow(context, owner)
+            override fun record(line: String) = CallEndLog.record(context, line)
+            override fun debug(line: String) = AppLogger.i(TAG, line)
         }
+        VoipAnswerHoldLoop(host, normalMode).run()
     }
 
-    private fun answerName(answered: Int?): String = when (answered) {
-        RecorderServiceImpl.VOIP_ANSWERED -> "answered"
-        RecorderServiceImpl.VOIP_RINGING -> "ringing"
-        RecorderServiceImpl.VOIP_NO_TIMER -> "no timer"
-        RecorderServiceImpl.VOIP_NO_NOTIFICATION -> "no notification"
-        null -> "nothing (older host)"
-        else -> "code $answered"
+    /**
+     * Whether [owner] is still the answer hold of the call being recorded. Under the lock, so the loop's first look
+     * waits for [onCallStarted] to have stored its job, and a look after [onCallEnded] sees the call is over.
+     */
+    @Synchronized
+    private fun isHoldLive(owner: Job?): Boolean = recording && owner != null && answerHoldJob === owner
+
+    /** "Recording started" once the hold lets the call be recorded (N17). Not over the user's own pause. */
+    @Synchronized
+    private fun announceRecordingFromNow(context: Context, owner: Job?): Boolean {
+        if (!isHoldLive(owner)) return false
+        if (!paused) RecordingNotificationHelper(context).showRecordingStarted()
+        return true
     }
 
     /**
      * Holds or releases the encode for the answer wait, through the same binder pause the user's
      * Pause button uses. The user's own pause outranks a release: a recording they paused while it
-     * was held stays paused when the call is answered.
+     * was held stays paused when the call is answered. Returns false, changing nothing, when [owner]'s call is over.
      */
     @Synchronized
-    private fun holdEncode(context: Context, hold: Boolean) {
-        if (!recording) return
+    private fun holdEncode(context: Context, hold: Boolean, owner: Job?): Boolean {
+        if (!isHoldLive(owner)) return false
         heldForAnswer = hold
-        if (!hold && paused) return
+        if (!hold && paused) return true
         runCatching { RecorderConnection.service?.setVoipPaused(hold) }
             .onFailure { AppLogger.w(TAG, "setVoipPaused for the answer hold failed: ${it.message}") }
         if (hold) clock.pause() else clock.resume()
         VoipRecordingNotification.show(context, currentAppLabel, PendingFlags.count(), paused || hold)
+        return true
     }
 
     /**
@@ -1046,12 +1036,22 @@ object VoipRecordingCoordinator {
         // true — which used to blame the other app ("it blocks capture") for our own failure to open the
         // microphone (vivo, 2026-09-28). Nothing recorded is reported as that, below; not as one-sided.
         val wroteAnything = saf?.stagingFile?.let { it.exists() && it.length() > 0L } ?: true
-        if (wroteAnything && VoipStubPolicy.endedBeforeCapture(recordedMs, farHeard)) {
+        when (VoipAnswerHold.endDiscardReason(unanswered, wroteAnything, recordedMs, farHeard)) {
+            // Ending while still held means nobody picked up (N17: asked before the short-stub check, which a held
+            // call's stopped clock always matches, and before any one-sided warning about a call nobody answered).
+            VoipOutcome.Reason.UNANSWERED -> {
+                AppLogger.i(TAG, "App call ended before it was answered; discarding the held recording")
+                discardStarted(context, saf, VoipOutcome.Reason.UNANSWERED, recordedMs, "the unanswered app call")
+                return
+            }
             // #68: WhatsApp was back to MODE_NORMAL before the recording opened, and the 0.7 s of mic
             // that followed was reported as the other app blocking capture.
-            AppLogger.i(TAG, "The app call ended before the recording got going (${recordedMs} ms, far side never heard); discarding it, no warning")
-            discardStarted(context, saf, VoipOutcome.Reason.ENDED_BEFORE_CAPTURE, recordedMs, "the app call that ended before recording")
-            return
+            VoipOutcome.Reason.ENDED_BEFORE_CAPTURE -> {
+                AppLogger.i(TAG, "The app call ended before the recording got going (${recordedMs} ms, far side never heard); discarding it, no warning")
+                discardStarted(context, saf, VoipOutcome.Reason.ENDED_BEFORE_CAPTURE, recordedMs, "the app call that ended before recording")
+                return
+            }
+            else -> Unit
         }
         if (!wroteAnything) {
             AppLogger.w(TAG, "VoIP capture never started — nothing was recorded (the recorder's reason is logged above)")
@@ -1070,12 +1070,6 @@ object VoipRecordingCoordinator {
                 RecordingNotificationHelper(context)
                     .showErrorNotification(LocalizedContext.of(context).getString(warning))
             }.onFailure { AppLogger.w(TAG, "Could not warn about the one-sided recording: ${it.message}") }
-        }
-
-        if (unanswered) {
-            AppLogger.i(TAG, "App call ended before it was answered; discarding the held recording")
-            discardStarted(context, saf, VoipOutcome.Reason.UNANSWERED, recordedMs, "the unanswered app call")
-            return
         }
 
         // Publish now, and only now. The recording was written to app-private storage for the whole
