@@ -77,6 +77,8 @@ class RetentionSweepWorker(ctx: Context, params: WorkerParameters) : CoroutineWo
             AppLogger.w(TAG, "Could not read the starred recordings (${it.message}); skipping retention this run")
             return Result.success()
         }
+        val target = prefs.getStorageTarget()
+        var keptUnproven = 0
         for (entry in RecordingCatalog.all(applicationContext)) {
             // And the right stamp is only half of it. Once the retention period elapses this pass
             // would delete an import like anything else — except that for a call the Drive copy
@@ -86,12 +88,18 @@ class RetentionSweepWorker(ctx: Context, params: WorkerParameters) : CoroutineWo
             val ts = entry.lastModified
             val localUri = entry.localUri
             if (localUri != null && RetentionPolicy.isExpired(ts, localCutoff)) {
-                if (RecordingsRepository.deleteFile(applicationContext, localUri.toUri())) deletedLocal++
+                // In Both/Drive mode the device copy is the only one until Drive holds it at the same size (C7).
+                if (!RetentionPolicy.deviceCopyMayGo(target, entry)) keptUnproven++
+                else if (RecordingsRepository.deleteFile(applicationContext, localUri.toUri())) deletedLocal++
             }
             val driveUri = entry.driveUri
             if (driveUri != null && RetentionPolicy.isExpired(ts, driveCutoff)) {
                 if (RecordingsRepository.deleteFile(applicationContext, driveUri.toUri())) deletedDrive++
             }
+        }
+
+        if (keptUnproven > 0) {
+            AppLogger.i(TAG, "Kept $keptUnproven expired device copies whose Drive copy is not proven yet; retried next run")
         }
 
         // The folders, not just our record of them. A recording the catalog has lost is exactly as old as
@@ -140,6 +148,7 @@ class RetentionSweepWorker(ctx: Context, params: WorkerParameters) : CoroutineWo
                 return 0
             }
 
+        val target = AppPreferences(applicationContext).getStorageTarget()
         val entries = RecordingCatalog.all(applicationContext)
         val uriByName = entries.mapNotNull { e -> e.localUri?.let { e.displayName to it } }.toMap()
         val candidates = entries.mapNotNull { entry ->
@@ -155,7 +164,9 @@ class RetentionSweepWorker(ctx: Context, params: WorkerParameters) : CoroutineWo
                 // For a call the cap deletes the device copy and the Drive copy survives. An import
                 // has no Drive copy by design, so the same delete would destroy the only copy of
                 // something the user handed us, plus its transcript.
-                isImported = ImportedRecording.isImported(entry.displayName)
+                isImported = ImportedRecording.isImported(entry.displayName),
+                // Counted toward the total, never evicted: until Drive holds it, this is the only copy (C7).
+                isOnlyCopy = !RetentionPolicy.deviceCopyMayGo(target, entry),
             )
         }
 
@@ -170,12 +181,13 @@ class RetentionSweepWorker(ctx: Context, params: WorkerParameters) : CoroutineWo
 
         // Said plainly, because it is the one case where the setting visibly does not do what it
         // says: the library stays over the cap and that is the intended answer, not a failure.
-        val protectedBytes = candidates.filter { it.isFavourite || it.isImported }.sumOf { it.sizeBytes }
+        val protectedBytes = candidates.filter { it.isFavourite || it.isImported || it.isOnlyCopy }.sumOf { it.sizeBytes }
         if (protectedBytes > capBytes) {
+            val unproven = candidates.count { it.isOnlyCopy }
             AppLogger.i(
                 TAG,
-                "Starred and imported recordings alone ($protectedBytes bytes) exceed the " +
-                    "${capBytes}-byte cap; staying over it rather than deleting them."
+                "Starred, imported and not-yet-in-Drive ($unproven) recordings alone ($protectedBytes bytes) exceed " +
+                    "the ${capBytes}-byte cap; staying over it rather than deleting them."
             )
         }
         AppLogger.i(TAG, "Storage cap: deleted $deleted of ${doomed.size} selected device copies.")

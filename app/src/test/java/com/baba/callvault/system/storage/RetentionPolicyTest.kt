@@ -115,4 +115,27 @@ class RetentionPolicyTest {
         assertTrue(RetentionPolicy.mayAgeOut(name, emptySet()))
         assertFalse(RetentionPolicy.mayAgeOut(name, setOf(name)))
     }
+
+    // ---- deviceCopyMayGo (review C7)
+
+    private fun row(drive: String?, local: Long?, driveSize: Long?) = com.baba.callvault.data.recordings.db.RecordingEntry(
+        "20260804_101010.123+0300_in_5551234.ogg", localUri = "content://dev/x", driveUri = drive,
+        localSizeBytes = local, driveSizeBytes = driveSize,
+    )
+
+    @Test
+    fun `in Both or Drive mode a device copy goes only once Drive holds it at the same size`() {
+        val both = com.baba.callvault.data.StorageTarget.BOTH
+        assertTrue(RetentionPolicy.deviceCopyMayGo(both, row("content://drive/x", 500L, 500L)))
+        assertFalse(RetentionPolicy.deviceCopyMayGo(both, row(null, 500L, null)))
+        assertFalse(RetentionPolicy.deviceCopyMayGo(both, row("content://drive/x", 500L, 120L)))
+        assertFalse("an unknown Drive size proves nothing", RetentionPolicy.deviceCopyMayGo(both, row("content://drive/x", 500L, null)))
+        assertFalse("an unknown device size proves nothing", RetentionPolicy.deviceCopyMayGo(both, row("content://drive/x", null, null)))
+        assertFalse(RetentionPolicy.deviceCopyMayGo(com.baba.callvault.data.StorageTarget.DRIVE, row(null, 500L, null)))
+    }
+
+    @Test
+    fun `in device-only mode the device copy is governed by its period alone`() {
+        assertTrue(RetentionPolicy.deviceCopyMayGo(com.baba.callvault.data.StorageTarget.LOCAL, row(null, 500L, null)))
+    }
 }

@@ -8,7 +8,9 @@
 
 package com.baba.callvault.system.storage
 
+import com.baba.callvault.data.StorageTarget
 import com.baba.callvault.data.recordings.ImportedRecording
+import com.baba.callvault.data.recordings.db.RecordingEntry
 
 /**
  * The two questions the retention sweep asks before deleting anything, kept pure so they can be tested
@@ -81,4 +83,18 @@ object RetentionPolicy {
      */
     fun mayAgeOut(displayName: String, starred: Set<String>): Boolean =
         agesOut(displayName) && displayName !in starred
+
+    /**
+     * Whether retention or the size cap may delete [entry]'s DEVICE copy under [target] (review C7).
+     *
+     * Device-only mode keeps its old meaning: the user chose one copy and a period for it. In Both or Drive mode
+     * the device copy is the only one until the upload lands, so it may go only once the catalog holds a Drive
+     * copy of exactly the same, known size. An upload that failed, has not run yet, or stopped short leaves the
+     * device copy in place, to be swept on a later run after the Drive copy is proven.
+     */
+    fun deviceCopyMayGo(target: StorageTarget, entry: RecordingEntry): Boolean {
+        if (target == StorageTarget.LOCAL) return true
+        val local = entry.localSizeBytes ?: return false
+        return entry.driveUri != null && local > 0L && entry.driveSizeBytes == local
+    }
 }
