@@ -61,7 +61,7 @@ object HiddenMergeParts {
                 if (hidden.isNotEmpty()) AppLogger.i(TAG, "Deleting ${hidden.size} hidden part(s) with a merged recording")
                 expanded += hidden
                 dao.deleteParts(name)
-                // Their audio went with the merge; their sidecars may still be there (merges before N2 kept them).
+                // Their audio went with the merge; their sidecars were kept for un-merge, and go now with the rest.
                 RecordingSidecars.deleteFor(context, hidden)
             }
         }

@@ -426,20 +426,22 @@ object MergeService {
     /**
      * Takes a merged input out of the library once the merged recording holds it (owner decision N2, option A).
      *
-     * Its files go, and its catalog row, but NOT its transcript, notes, tags, star, marks, speaker turns or
+     * Its audio goes, and its catalog row, but NOT its sidecars, transcript, notes, tags, star, marks, speaker turns or
      * summary: those stay, hidden by [HiddenMergeParts], so un-merge gives them back. An input that was itself a
      * merge is different: un-merge returns its originals (whose data the new manifest now holds), never it, so its
      * old manifest is dropped first and then its own copied data goes with it.
      */
     private suspend fun retireMergedInput(context: Context, entry: RecordingEntry) {
+        // Only the audio: its .md and .json stay beside it, like the rest of its kept data, because the .json is
+        // written only when a call is recorded and could never be made again for un-merge. They go when the last
+        // merged call holding this part is deleted for good (see HiddenMergeParts).
         deleteFiles(context, entry)
-        // Its .md and .json beside it go too, in both folders, as with any delete; the text they carry is kept
-        // in the database for un-merge.
-        RecordingSidecars.deleteFor(context, listOf(entry.displayName))
         val dao = RecordingDatabase.get(context).mergePartDao()
         if (dao.partsOf(entry.displayName).isNotEmpty()) {
             dao.deleteParts(entry.displayName)
             RecordingCatalog.removeName(context, entry.displayName)
+            // Nothing will ever restore this merged input itself, so its own sidecars go with its data.
+            RecordingSidecars.deleteFor(context, listOf(entry.displayName))
         } else {
             RecordingCatalog.forgetName(context, entry.displayName)
         }

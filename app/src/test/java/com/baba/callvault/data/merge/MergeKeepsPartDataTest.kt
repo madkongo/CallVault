@@ -33,7 +33,6 @@ import com.baba.callvault.system.storage.StorageRouter
 import androidx.documentfile.provider.DocumentFile
 import com.baba.callvault.system.interop.MetadataSidecar
 import com.baba.callvault.system.interop.TranscriptSidecar
-import io.mockk.clearMocks
 import io.mockk.every
 import io.mockk.mockk
 import io.mockk.mockkStatic
@@ -236,20 +235,21 @@ class MergeKeepsPartDataTest {
     }
 
     @Test
-    fun `merging deletes the parts' sidecars in both folders`() = runBlocking {
+    fun `merge then un-merge keeps both sidecars of every part in both folders`() = runBlocking {
+        // The .json is written only when a call is recorded, so one deleted at merge time could never come back.
         val (sidecars, unrelated) = sidecarsInBothFolders()
 
-        merge()
+        val merged = merge()
+        MergeService.unMerge(context, merged)
 
-        sidecars.forEach { verify(exactly = 1) { it.delete() } }
-        unrelated.forEach { verify(exactly = 0) { it.delete() } }
+        (sidecars + unrelated).forEach { verify(exactly = 0) { it.delete() } }
     }
 
     @Test
     fun `deleting the merged call deletes its hidden parts' sidecars in both folders`() = runBlocking {
         val (sidecars, unrelated) = sidecarsInBothFolders()
         val merged = merge()
-        clearMocks(sidecars.first(), *sidecars.drop(1).toTypedArray(), answers = false)
+        sidecars.forEach { verify(exactly = 0) { it.delete() } }
 
         RecordingCatalog.removeName(context, merged)
 
