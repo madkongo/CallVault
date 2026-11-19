@@ -129,9 +129,11 @@ object VoipRecordingCoordinator {
     private val answeredByRing = java.util.concurrent.atomic.AtomicBoolean(false)
     @Volatile private var codecMime: String = "audio/ogg"
 
-    /** Starts a VoIP recording. No-op when the feature is off, already recording, or unavailable. */
-    /** Set when the caller turned out to be on the ignore list after the recording began (#51). */
-    @Volatile private var discardAsIgnored = false
+    /**
+     * Set when the recording turned out, during the call, not to be wanted: the caller is on the ignore list
+     * (#51) or the app is switched off. Its outcome line says which (N8).
+     */
+    @Volatile private var discardLate: VoipOutcome.Reason? = null
 
     /** True while an orphan check for a start runs off the main thread; a repeat start signal waits for it. */
     @Volatile private var orphanCheckInFlight = false
@@ -165,8 +167,10 @@ object VoipRecordingCoordinator {
             mainHandler.post {
                 orphanCheckInFlight = false
                 when {
-                    callEnds != endsAtStart ->
+                    callEnds != endsAtStart -> {
                         AppLogger.i(TAG, "The app call ended while its start waited for the orphan check; not starting")
+                        logOutcome(app, VoipOutcome.Reason.ENDED_DURING_START_CHECK)
+                    }
                     verdict == OrphanSessionPolicy.StartVerdict.ADOPT -> {
                         CallEndLog.record(app, "app call start: the recorder is already recording this call for the process the phone killed; keeping that recording")
                         AppLogger.i(TAG, "Not starting a second recording: the recorder is already recording this app call for the killed CallVault")
@@ -221,6 +225,7 @@ object VoipRecordingCoordinator {
         val recordingState = prefs.getRecordingState()
         if (!recordingState.isRecordingAllowed) {
             AppLogger.i(TAG, "Master recording switch is $recordingState — not recording this VoIP call.")
+            logOutcome(context, VoipOutcome.Reason.MASTER_SWITCH_OFF)
             return
         }
         if (!prefs.isVoipRecordingEnabled()) return
@@ -231,6 +236,7 @@ object VoipRecordingCoordinator {
             // missing here — see [reportMissed]. All that is left is to say so.
             reportMissedIfReal(context, R.string.voip_missed_not_ready, null)
             AppLogger.w(TAG, "VoIP call detected but the daemon is not connected — not recording")
+            logOutcome(context, VoipOutcome.Reason.RECORDER_NOT_CONNECTED)
             return
         }
 
@@ -267,11 +273,13 @@ object VoipRecordingCoordinator {
             // Not reportMissed(): this is not a miss. The user asked for this app to be left alone,
             // and telling them off for getting what they configured is how a warning becomes noise.
             AppLogger.i(TAG, "Not recording this call: $callPackage is switched off for recording.")
+            logOutcome(context, VoipOutcome.Reason.APP_SWITCHED_OFF)
             return
         }
         // Issue #51, at the same point and for the same reason as the per-app choice: before any file.
         if (!manual && VoipIgnoredCallers.isIgnored(context, caller)) {
             AppLogger.i(TAG, "Not recording this call: the caller is on the ignore list.")
+            logOutcome(context, VoipOutcome.Reason.CALLER_IGNORED)
             return
         }
 
@@ -280,6 +288,7 @@ object VoipRecordingCoordinator {
             // User-owned and permanent until they fix it: every call goes the same way until then.
             reportMissedIfReal(context, R.string.voip_missed_no_folder, Prerequisite.RECORDING_FOLDER)
             AppLogger.e(TAG, "VoIP call detected but the recording folder is missing/unwritable")
+            logOutcome(context, VoipOutcome.Reason.NO_FOLDER)
             return
         }
 
@@ -304,6 +313,7 @@ object VoipRecordingCoordinator {
         if (saf == null) {
             reportMissedIfReal(context, R.string.voip_missed_no_folder, Prerequisite.RECORDING_FOLDER)
             AppLogger.e(TAG, "Could not create the VoIP output file")
+            logOutcome(context, VoipOutcome.Reason.FILE_NOT_CREATED)
             return
         }
 
@@ -323,10 +333,9 @@ object VoipRecordingCoordinator {
             // remove the empty file rather than leaving a 0-byte recording in the user's folder.
             reportMissedIfReal(context, R.string.voip_missed_not_ready, null)
             AppLogger.e(TAG, "VoIP recording refused by the daemon; discarding the empty file")
-            runCatching { saf.descriptor.close() }
-            // Nothing to delete in the user's folder: the destination is not created until a recording
-            // has actually been made. Only the staging file exists, and it holds nothing.
-            runCatching { saf.stagingFile?.delete() }
+            // Nothing in the user's folder yet: the destination is not created until a recording has actually
+            // been made. Only the staging file exists, and it holds nothing.
+            discardStarted(context, saf, VoipOutcome.Reason.RECORDER_REFUSED, null, "the refused app call")
             return
         }
 
@@ -360,7 +369,7 @@ object VoipRecordingCoordinator {
         // The notification is the only place the name exists, and it may not be posted yet at the
         // instant the audio mode flipped. Ask again a few times into the call; the file is only
         // published at the end, so a late answer still names it.
-        discardAsIgnored = false
+        discardLate = null
         if (caller == null && callPackage != null) lateCallerJob = askAgainForCaller(context, callPackage, manual)
         // Telegram's call audio appears about 2.5 s after the mode flips, past the lookup above, so
         // its recordings went out with no app and no icon. Ask again into the call, as for the caller.
@@ -635,7 +644,7 @@ object VoipRecordingCoordinator {
     private fun onSwitchedOffAppFoundLate(context: Context, pkg: String, atMs: Long) {
         if (!recording) return
         AppLogger.i(TAG, "Call app found ${atMs / 1000} s into the call and confirmed: $pkg is switched off; stopping and discarding this recording")
-        discardAsIgnored = true
+        discardLate = VoipOutcome.Reason.APP_SWITCHED_OFF_LATE
         onCallEnded(context)
     }
 
@@ -658,7 +667,7 @@ object VoipRecordingCoordinator {
         lateCaller = found
         if (!manual && VoipIgnoredCallers.isIgnored(context, found)) {
             AppLogger.i(TAG, "The caller is on the ignore list; stopping and discarding this recording")
-            discardAsIgnored = true
+            discardLate = VoipOutcome.Reason.IGNORED_LATE
             onCallEnded(context)
         }
     }
@@ -679,7 +688,7 @@ object VoipRecordingCoordinator {
                 // trace in the folder, on Drive or in a sync tool.
                 if (!manual && VoipIgnoredCallers.isIgnored(context, found)) {
                     AppLogger.i(TAG, "The caller is on the ignore list; stopping and discarding this recording")
-                    discardAsIgnored = true
+                    discardLate = VoipOutcome.Reason.IGNORED_LATE
                     onCallEnded(context)
                 }
                 return@launch
@@ -947,31 +956,23 @@ object VoipRecordingCoordinator {
             // Not stopped. Its file stays a KNOWN session (the key is kept): a phone call starting now finds an orphan
             // older than its own beginning, stops it and records, instead of adopting it. Nothing is published from a
             // file still being written; the cut-off rescue saves it under its own name once it is stopped.
-            CallEndLog.record(context, "app call end: the recorder did not confirm it stopped; leaving its file to the orphan check and the rescue")
+            CallEndLog.record(context, VoipOutcome.line(VoipOutcome.Reason.NOT_STOPPED, recordedMs, saf?.stagingFile?.length()))
             AppLogger.w(TAG, "App-call recording did not confirm it stopped; not publishing a file still being written")
             runCatching { saf?.descriptor?.close() }
             CutOffRescueWorker.schedule(context)
             return
         }
         OrphanRecorderSession.noteSessionEnded(context, saf?.stagingFile)
-        if (discardAsIgnored) {
+        discardLate?.let { reason ->
             // Before any warning or diagnostic: a call the user asked us to skip is not a one-sided or
             // failed recording, and nothing about it should be reported or kept.
-            discardAsIgnored = false
-            runCatching { saf?.descriptor?.close() }
-            runCatching { saf?.stagingFile?.delete() }
-            saf?.uri?.let { uri ->
-                runCatching { SafHelper.deleteDocument(DocumentFile.fromSingleUri(context, uri), "the ignored caller's app call") }
-            }
+            discardLate = null
+            discardStarted(context, saf, reason, recordedMs, "the ignored caller's app call")
             return
         }
         if (neverConnected) {
             AppLogger.i(TAG, "The app call never connected (call mode did not return, no call-voice player seen; ${recordedMs} ms); discarding the ring, no warning")
-            runCatching { saf?.descriptor?.close() }
-            runCatching { saf?.stagingFile?.delete() }
-            saf?.uri?.let { uri ->
-                runCatching { SafHelper.deleteDocument(DocumentFile.fromSingleUri(context, uri), "the app call that never connected") }
-            }
+            discardStarted(context, saf, VoipOutcome.Reason.NEVER_CONNECTED, recordedMs, "the app call that never connected")
             return
         }
         // The capture's own account of how its two sides lined up, written to the APP's log — the
@@ -1001,11 +1002,7 @@ object VoipRecordingCoordinator {
             // #68: WhatsApp was back to MODE_NORMAL before the recording opened, and the 0.7 s of mic
             // that followed was reported as the other app blocking capture.
             AppLogger.i(TAG, "The app call ended before the recording got going (${recordedMs} ms, far side never heard); discarding it, no warning")
-            runCatching { saf?.descriptor?.close() }
-            runCatching { saf?.stagingFile?.delete() }
-            saf?.uri?.let { uri ->
-                runCatching { SafHelper.deleteDocument(DocumentFile.fromSingleUri(context, uri), "the app call that ended before recording") }
-            }
+            discardStarted(context, saf, VoipOutcome.Reason.ENDED_BEFORE_CAPTURE, recordedMs, "the app call that ended before recording")
             return
         }
         if (!wroteAnything) {
@@ -1029,12 +1026,7 @@ object VoipRecordingCoordinator {
 
         if (unanswered) {
             AppLogger.i(TAG, "App call ended before it was answered; discarding the held recording")
-            runCatching { saf?.descriptor?.close() }
-            runCatching { saf?.stagingFile?.delete() }
-            // Written straight to the folder on a build without staging: the document exists and must go.
-            saf?.uri?.let { uri ->
-                runCatching { SafHelper.deleteDocument(DocumentFile.fromSingleUri(context, uri), "the unanswered app call") }
-            }
+            discardStarted(context, saf, VoipOutcome.Reason.UNANSWERED, recordedMs, "the unanswered app call")
             return
         }
 
@@ -1048,21 +1040,26 @@ object VoipRecordingCoordinator {
             val mime = result.mimeType
             if (staging == null || folder == null || outName == null || mime == null) {
                 AppLogger.e(TAG, "VoIP recording cannot be published: staging details are missing")
+                logOutcome(context, VoipOutcome.Reason.STAGING_MISSING, recordedMs, staging?.takeIf { it.exists() }?.length())
                 return@let null
             }
             if (!staging.exists() || staging.length() == 0L) {
                 AppLogger.w(TAG, "VoIP capture produced no audio; nothing to publish")
+                logOutcome(context, VoipOutcome.Reason.NO_AUDIO, recordedMs, staging.takeIf { it.exists() }?.length())
                 runCatching { staging.delete() }
                 return@let null
             }
+            val bytes = staging.length()
             val uri = SafHelper.publishStagedRecording(context, folder, outName, mime, staging)
             if (uri != null) {
-                AppLogger.i(TAG, "Published VoIP recording (${staging.length()} bytes) -> $uri")
+                AppLogger.i(TAG, "Published VoIP recording ($bytes bytes) -> $uri")
+                logOutcome(context, VoipOutcome.Reason.SAVED, recordedMs, bytes)
                 runCatching { staging.delete() }
             } else {
                 // Kept, not deleted: an unpublished recording on internal storage is recoverable and a
                 // deleted one is not.
                 AppLogger.e(TAG, "Could not publish the VoIP recording; it stays at ${staging.path}")
+                logOutcome(context, VoipOutcome.Reason.NOT_PUBLISHED, recordedMs, bytes)
             }
             uri
         }
@@ -1090,6 +1087,7 @@ object VoipRecordingCoordinator {
                                 TAG,
                                 "Discarding VoIP '$name': ${durationMs}ms is under the ${minSeconds}s minimum."
                             )
+                            logOutcome(context, VoipOutcome.Reason.TOO_SHORT, durationMs, size)
                             SafHelper.deleteDocument(
                                 DocumentFile.fromSingleUri(context, safUri),
                                 "the too-short VoIP recording '$name'"
@@ -1204,6 +1202,25 @@ object VoipRecordingCoordinator {
         AppLogger.i(TAG, "VoIP recording stopped (${saf?.uri})")
         // Same check as after a carrier recording: a stuck indicator with nothing recording. See [MicOpAutoHeal].
         MicOpAutoHeal.scheduleAfterCall(context, "the VoIP recording")
+    }
+
+    /** The always-on outcome line of this app call (review N8). Never throws. */
+    private fun logOutcome(context: Context, reason: VoipOutcome.Reason, recordedMs: Long? = null, sizeBytes: Long? = null) {
+        CallEndLog.record(context, VoipOutcome.line(reason, recordedMs, sizeBytes))
+    }
+
+    /**
+     * Throws away a started app-call recording, with its outcome line (review N8). The only place a staged
+     * recording is deleted without being published, so no discard goes unrecorded (VoipOutcomeTest guards it).
+     */
+    private fun discardStarted(context: Context, saf: SafHelper.SafResult?, reason: VoipOutcome.Reason, recordedMs: Long?, what: String) {
+        logOutcome(context, reason, recordedMs, saf?.stagingFile?.takeIf { it.exists() }?.length())
+        runCatching { saf?.descriptor?.close() }
+        runCatching { saf?.stagingFile?.delete() }
+        // Written straight to the folder on a build without staging: the document exists and must go.
+        saf?.uri?.let { uri ->
+            runCatching { SafHelper.deleteDocument(DocumentFile.fromSingleUri(context, uri), what) }
+        }
     }
 
     /**
