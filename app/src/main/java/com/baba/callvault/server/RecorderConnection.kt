@@ -103,8 +103,18 @@ object RecorderConnection {
             return
         }
         this.service = null
+        sawRecorderDie = true
         runCatching { onDeath?.invoke() }.onFailure { AppLogger.w(TAG, "onDeath hook failed: ${it.message}") }
     }
+
+    /**
+     * True once the recorder this process held has died. The daemon's start-up hand-over (BabApps item 115) comes
+     * once, when our process starts, from the daemon running then; after that one died there is nobody left to
+     * send it, so the launcher skips its hand-over wait (review C17).
+     */
+    @Volatile
+    var sawRecorderDie: Boolean = false
+        private set
 
     /**
      * Drops the held binder even though it is still alive, for the one case where staying attached is

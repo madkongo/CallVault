@@ -192,7 +192,11 @@ object RecorderServerLauncher {
     /** Waits briefly, in a young app process, for a running daemon's hand-over. True when its binder arrived. */
     private fun awaitLiveDaemon(): Boolean {
         val processAgeMs = SystemClock.elapsedRealtime() - android.os.Process.getStartElapsedRealtime()
-        val waitMs = DaemonReuse.waitForRedeliveryMs(processAgeMs, SystemClock.elapsedRealtime())
+        val sawDie = RecorderConnection.sawRecorderDie
+        val waitMs = DaemonReuse.waitForRedeliveryMs(processAgeMs, SystemClock.elapsedRealtime(), sawDie)
+        if (sawDie && processAgeMs < DaemonReuse.FRESH_PROCESS_MS) {
+            AppLogger.i(TAG, "Not waiting for a hand-over: this process saw its recorder die, and no other one can send it")
+        }
         if (waitMs <= 0L) return false
         val ok = pollConnected(waitMs)
         AppLogger.i(TAG, "Waited up to ${waitMs}ms for a running recorder to hand over its binder (process age ${processAgeMs}ms): " +

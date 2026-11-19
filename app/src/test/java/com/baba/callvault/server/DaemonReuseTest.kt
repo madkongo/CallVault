@@ -68,4 +68,15 @@ class DaemonReuseTest {
     fun `just after boot there is no daemon to wait for`() {
         assertEquals(0L, DaemonReuse.waitForRedeliveryMs(processAgeMs = 400, uptimeMs = DaemonReuse.RECENT_BOOT_MS - 1))
     }
+
+    @Test
+    fun `no hand-over wait once this process saw its recorder die`() {
+        // Review C17: only the daemon running when our process started sends a hand-over, and it is the one that
+        // died. The wait only delayed the relaunch a ringing call was blocked on.
+        assertEquals(0L, DaemonReuse.waitForRedeliveryMs(processAgeMs = 400, uptimeMs = 3_600_000, sawRecorderDie = true))
+        assertEquals(
+            DaemonReuse.REDELIVERY_GRACE_MS,
+            DaemonReuse.waitForRedeliveryMs(processAgeMs = 400, uptimeMs = 3_600_000, sawRecorderDie = false),
+        )
+    }
 }
