@@ -35,6 +35,8 @@ import com.baba.callvault.data.recordings.RecordingDirection
 import kotlinx.coroutines.isActive
 import com.baba.callvault.system.storage.SafHelper
 import com.baba.callvault.system.storage.LiveStagingFiles
+import com.baba.callvault.system.storage.StagingNote
+import java.io.File
 import com.baba.callvault.data.recordings.RecordingCatalog
 import com.baba.callvault.data.waveform.WaveformDrawWorker
 import com.baba.callvault.transcription.TranscriptionScheduler
@@ -1138,7 +1140,7 @@ object VoipRecordingCoordinator {
             if (!staging.exists() || staging.length() == 0L) {
                 AppLogger.w(TAG, "VoIP capture produced no audio; nothing to publish")
                 logOutcome(context, VoipOutcome.Reason.NO_AUDIO, recordedMs, staging.takeIf { it.exists() }?.length())
-                runCatching { staging.delete() }
+                deleteStaged(staging, "the empty app-call capture")
                 return@let null
             }
             val bytes = staging.length()
@@ -1146,7 +1148,7 @@ object VoipRecordingCoordinator {
             if (uri != null) {
                 // Its outcome line follows the minimum-duration check below: one final line per call (N8 rework).
                 AppLogger.i(TAG, "Published VoIP recording ($bytes bytes) -> $uri")
-                runCatching { staging.delete() }
+                deleteStaged(staging, "the published app-call recording")
             } else {
                 // Kept, not deleted: an unpublished recording on internal storage is recoverable and a
                 // deleted one is not.
@@ -1315,11 +1317,18 @@ object VoipRecordingCoordinator {
     private fun discardStarted(context: Context, saf: SafHelper.SafResult?, reason: VoipOutcome.Reason, recordedMs: Long?, what: String) {
         logOutcome(context, reason, recordedMs, saf?.stagingFile?.takeIf { it.exists() }?.length())
         runCatching { saf?.descriptor?.close() }
-        runCatching { saf?.stagingFile?.delete() }
+        saf?.stagingFile?.let { deleteStaged(it, what) }
         // Written straight to the folder on a build without staging: the document exists and must go.
         saf?.uri?.let { uri ->
             runCatching { SafHelper.deleteDocument(DocumentFile.fromSingleUri(context, uri), what) }
         }
+    }
+
+    /** A published or discarded staged recording, with its note (N19). Never throws; a failure is logged. */
+    private fun deleteStaged(staged: File, what: String) {
+        runCatching { StagingNote.deleteWithNote(staged) }
+            .onFailure { AppLogger.w(TAG, "Could not delete the staged file of $what (${staged.name}): ${it.message}") }
+            .onSuccess { gone -> if (!gone) AppLogger.w(TAG, "The staged file of $what (${staged.name}) could not be deleted; the rescue sweep will look at it") }
     }
 
     /**
