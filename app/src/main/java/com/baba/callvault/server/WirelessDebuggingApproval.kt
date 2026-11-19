@@ -40,6 +40,9 @@ object WirelessDebuggingApproval {
 
     private const val TAG = "CV:WdApproval"
     private const val CMD = "/system/bin/cmd"
+    private const val SETTINGS = "/system/bin/settings"
+    private const val GETPROP = "/system/bin/getprop"
+    private const val WD_SETTING = "adb_wifi_enabled"
     private const val TIMEOUT_SEC = 10L
 
     /** What Android reports when it will not say which network this is. */
@@ -54,14 +57,79 @@ object WirelessDebuggingApproval {
      *   False approves this visit only.
      */
     fun approveCurrentNetwork(alwaysAllow: Boolean): NetworkApproval {
-        val identity = parseWifiStatus(runCmdWifiStatus())
+        val identity = currentIdentity()
         if (identity == null) {
             AppLogger.i(TAG, "No Wi-Fi network to approve")
             return NetworkApproval.NO_WIFI_IDENTITY
         }
-        return runCatching { callAllow(identity, alwaysAllow) }
+        val result = approveIdentity(identity, alwaysAllow)
+        // The network is named in the daemon's own log only, never sent anywhere.
+        if (result == NetworkApproval.APPROVED) {
+            AppLogger.i(TAG, "Approved Wi-Fi ${identity.ssid} for Wireless debugging (alwaysAllow=$alwaysAllow)")
+        }
+        return result
+    }
+
+    /**
+     * Shizuku mode (review N15): approves the current network always-allow, then puts Wireless debugging back the
+     * way it was. See [KeptSwitchApprover]. Returns a [KeptSwitchResult], encoded.
+     *
+     * @param knownKeys [BssidPrivacy.key]s of access points the app has already had approved.
+     * @param salt the app's per-install salt for those keys.
+     */
+    fun approveKeepingSwitch(knownKeys: Set<String>, salt: String): String = KeptSwitchApprover(
+        identity = ::currentIdentity,
+        readWirelessDebugging = ::readWirelessDebugging,
+        adbdListensOnTcp = ::adbdListensOnTcp,
+        approve = ::approveIdentity,
+        writeWirelessDebuggingOff = ::writeWirelessDebuggingOff,
+    ).run(knownKeys, salt).encode()
+
+    /**
+     * Whether adbd listens on a tcp port: `service.adb.tcp.port` (set when adbd binds, e.g. after `adb tcpip`, which
+     * is Shizuku's tcp mode) or `persist.adb.tcp.port` (adbd binds it at start). Either positive is enough.
+     */
+    fun adbdListensOnTcp(): Boolean =
+        isTcpPort(runCommand(GETPROP, "service.adb.tcp.port"), runCommand(GETPROP, "persist.adb.tcp.port"))
+
+    /** `getprop` outputs of the two port properties to "a tcp port is set". */
+    fun isTcpPort(servicePort: String?, persistPort: String?): Boolean =
+        listOf(servicePort, persistPort).any { (it?.trim()?.toIntOrNull() ?: 0) > 0 }
+
+    /** The network the phone is connected to, as the shell sees it, or null. */
+    fun currentIdentity(): WifiIdentity? = parseWifiStatus(runCmdWifiStatus())
+
+    /** Calls `allowWirelessDebugging` for [identity]; any exception is [NetworkApproval.FAILED], logged. */
+    fun approveIdentity(identity: WifiIdentity, alwaysAllow: Boolean): NetworkApproval =
+        runCatching { callAllow(identity, alwaysAllow) }
             .onFailure { AppLogger.w(TAG, "allowWirelessDebugging failed: ${it.javaClass.simpleName}: ${it.message}") }
             .getOrDefault(NetworkApproval.FAILED)
+
+    /**
+     * `adb_wifi_enabled` as the shell reads it: 1, 0, or null when it cannot be read. Never set reads as 0, which is
+     * how Android itself reads it (`Settings.Global.getInt(…, 0)` in AdbService).
+     */
+    fun readWirelessDebugging(): Int? = parseSettingValue(runCommand(SETTINGS, "get", "global", WD_SETTING))
+
+    /** `settings get` output to 1, 0 or null (unreadable). */
+    fun parseSettingValue(output: String?): Int? = when (output?.trim()) {
+        "1" -> 1
+        "0", "null" -> 0
+        else -> null
+    }
+
+    /** Writes Wireless debugging off, as shell. True when the command ran cleanly. */
+    fun writeWirelessDebuggingOff(): Boolean = runCatching {
+        val process = ProcessBuilder(SETTINGS, "put", "global", WD_SETTING, "0").redirectErrorStream(true).start()
+        val output = process.inputStream.bufferedReader().use { it.readText() }
+        val finished = process.waitFor(TIMEOUT_SEC, TimeUnit.SECONDS)
+        if (!finished) process.destroyForcibly()
+        val ok = finished && process.exitValue() == 0 && output.isBlank()
+        if (!ok) AppLogger.w(TAG, "'settings put global $WD_SETTING 0' did not succeed: ${output.trim()}")
+        ok
+    }.getOrElse {
+        AppLogger.w(TAG, "'settings put' could not run: ${it.message}")
+        false
     }
 
     /** The network `cmd wifi status` reports as connected, or null when there is none it will name. */
@@ -104,18 +172,21 @@ object WirelessDebuggingApproval {
             return NetworkApproval.UNSUPPORTED
         }
         method.invoke(adbManager, *argumentsFor(method.parameterCount, identity, alwaysAllow)!!)
-        // The network is named in the daemon's own log only, never sent anywhere.
-        AppLogger.i(TAG, "Approved Wi-Fi ${identity.ssid} for Wireless debugging (alwaysAllow=$alwaysAllow)")
         return NetworkApproval.APPROVED
     }
 
-    private fun runCmdWifiStatus(): String = runCatching {
-        val process = ProcessBuilder(CMD, "wifi", "status").redirectErrorStream(true).start()
+    private fun runCmdWifiStatus(): String = runCommand(CMD, "wifi", "status").orEmpty()
+
+    /** Output of a shell command, or null when it could not run or did not finish in time. */
+    private fun runCommand(vararg command: String): String? = runCatching {
+        val process = ProcessBuilder(*command).redirectErrorStream(true).start()
         val output = process.inputStream.bufferedReader().use { it.readText() }
-        if (!process.waitFor(TIMEOUT_SEC, TimeUnit.SECONDS)) process.destroyForcibly()
-        output
+        if (!process.waitFor(TIMEOUT_SEC, TimeUnit.SECONDS)) {
+            process.destroyForcibly()
+            null
+        } else output
     }.getOrElse {
-        AppLogger.w(TAG, "'cmd wifi status' could not run: ${it.message}")
-        ""
+        AppLogger.w(TAG, "'${command.joinToString(" ")}' could not run: ${it.message}")
+        null
     }
 }

@@ -210,14 +210,17 @@ private fun connectionSummaryText(preferences: AppPreferences, updateTrigger: In
     val handoffSupported = capabilityAvailable(ModeCapability.RESILIENT_RECORDING)
     val offlineSupported = capabilityAvailable(ModeCapability.OFFLINE_RECORDING)
     val wdControlSupported = capabilityAvailable(ModeCapability.WIRELESS_DEBUGGING_CONTROL)
-    val count = remember(updateTrigger, expanded, usesEmbeddedAdb, handoffSupported, offlineSupported, wdControlSupported) {
+    val wifiApprovalSupported = capabilityAvailable(ModeCapability.WIFI_NETWORK_APPROVAL)
+    val count = remember(
+        updateTrigger, expanded, usesEmbeddedAdb, handoffSupported, offlineSupported, wdControlSupported, wifiApprovalSupported,
+    ) {
         countSummary(
             listOf(
                 SwitchSummaryInput(preferences.isHandoffPersistEnabled(), handoffSupported),
                 SwitchSummaryInput(preferences.isOfflineRecordingEnabled(), offlineSupported),
                 SwitchSummaryInput(AdbShell.isUsbDebuggingEnabled(context), usesEmbeddedAdb),
                 SwitchSummaryInput(preferences.isWirelessDebuggingEnforced(), usesEmbeddedAdb),
-                SwitchSummaryInput(preferences.isWifiNetworkAutoApproveEnabled(), wdControlSupported),
+                SwitchSummaryInput(preferences.isWifiNetworkAutoApproveEnabled(), wifiApprovalSupported),
                 SwitchSummaryInput(preferences.isWirelessDebuggingNeverTurnOff(), wdControlSupported),
             )
         )

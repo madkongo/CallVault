@@ -67,6 +67,8 @@ class RecorderTransactionCodesTest {
         // Appended for the app-call in/out badge (BabApps item 113).
         assertEquals(first + 30, IRecorderService.Stub.TRANSACTION_voipCallFacts)
         assertEquals(first + 31, IRecorderService.Stub.TRANSACTION_notificationListenerAccess)
+        // Appended for review N15 (Shizuku mode approves joined access points).
+        assertEquals(first + 32, IRecorderService.Stub.TRANSACTION_approveWifiNetworkKeepingSwitch)
     }
 
     @Test

@@ -598,6 +598,7 @@
     <string name="settings_voip_recording_description">Запис дзвінків із WhatsApp, Signal і Telegram. Деякі програми або прошивки блокують захоплення звуку.</string>
     <string name="settings_voip_recording_label">Записувати дзвінки в застосунках</string>
     <string name="settings_wd_auto_approve_description">Коли телефон підключається до мережі Wi-Fi, CallVault сам відповідає на запитання Android «Дозволити бездротове налагодження в цій мережі?», щоб запис не чекав вашого натискання. Працює, поки запущено рекордер. Підключитися можуть лише пристрої, уже з’єднані з цим телефоном.</string>
+    <string name="settings_wd_auto_approve_description_shizuku">Коли телефон підключається до мережі Wi-Fi, поки запущено рекордер, CallVault додає її до довірених мереж Android для бездротового налагодження, щоб після перезапуску Shizuku міг запуститися в ній без запитання Android «Дозволити бездротове налагодження в цій мережі?». Якщо бездротове налагодження було вимкнене, потім його знову вимикають. Підключитися можуть лише пристрої, уже з’єднані з цим телефоном.</string>
     <string name="settings_wd_mode_label">Бездротове налагодження</string>
     <string name="settings_wd_mode_when_needed">Лише коли потрібно</string>
     <string name="settings_wd_mode_keep_on">Тримати ввімкненим</string>

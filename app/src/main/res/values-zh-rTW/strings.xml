@@ -584,6 +584,7 @@
     <string name="settings_voip_recording_description">同時錄製在 WhatsApp、Signal、Telegram 等應用中進行的通話。部分應用會阻止錄音，而這只有在通話進行時才能得知。</string>
     <string name="settings_voip_recording_label">錄製應用通話</string>
     <string name="settings_wd_auto_approve_description">手機連線到 WLAN 網路時，CallVault 會自行回答 Android 的“要在此網路上允許無線除錯嗎？”，錄音無需等你點按。錄音程式執行時有效。只有已與此手機配對的裝置才能連線。</string>
+    <string name="settings_wd_auto_approve_description_shizuku">錄音程式執行時手機連線到 WLAN 網路，CallVault 會把該網路加入 Android 的無線除錯信任網路，這樣重新啟動後 Shizuku 可以在該網路上啟動，Android 不會再問“要在此網路上允許無線除錯嗎？”。如果無線除錯原本是關閉的，之後會再次關閉。只有已與此手機配對的裝置才能連線。</string>
     <string name="settings_wd_mode_label">無線除錯</string>
     <string name="settings_wd_mode_when_needed">僅在需要時</string>
     <string name="settings_wd_mode_keep_on">保持開啟</string>

@@ -335,6 +335,10 @@ object RecorderBackend {
                 .onFailure { AppLogger.w(TAG, "Could not restart the keep-alive after the switch: ${it.message}") }
         }
 
+        // Shizuku mode's Wi-Fi join watch belongs to that mode only (review N15).
+        runCatching { com.baba.callvault.services.recording.WifiJoinWatch.sync(context) }
+            .onFailure { AppLogger.w(TAG, "Could not sync the Wi-Fi join watch after the switch: ${it.message}") }
+
         val voipArmed = when {
             !connected -> false
             !AppPreferences(context).isVoipRecordingEnabled() -> true

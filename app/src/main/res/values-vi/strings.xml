@@ -584,6 +584,7 @@
     <string name="settings_voip_recording_description">Ghi âm cả những cuộc gọi thực hiện trong các ứng dụng như WhatsApp, Signal và Telegram. Một số ứng dụng chặn việc ghi âm, và chỉ khi cuộc gọi đang diễn ra mới biết được.</string>
     <string name="settings_voip_recording_label">Ghi âm cuộc gọi qua ứng dụng</string>
     <string name="settings_wd_auto_approve_description">Khi điện thoại kết nối với một mạng Wi-Fi, CallVault tự trả lời câu hỏi của Android \"Cho phép gỡ lỗi không dây trên mạng này?\", để việc ghi âm không phải chờ bạn chạm. Hoạt động khi trình ghi đang chạy. Chỉ những thiết bị đã ghép nối với điện thoại này mới có thể kết nối.</string>
+    <string name="settings_wd_auto_approve_description_shizuku">Khi điện thoại kết nối với một mạng Wi-Fi trong lúc trình ghi đang chạy, CallVault thêm mạng đó vào danh sách mạng tin cậy của Android cho gỡ lỗi không dây, để sau khi khởi động lại Shizuku có thể chạy trên mạng đó mà Android không hỏi \"Cho phép gỡ lỗi không dây trên mạng này?\". Nếu gỡ lỗi không dây đang tắt, sau đó nó sẽ được tắt lại. Chỉ những thiết bị đã ghép nối với điện thoại này mới có thể kết nối.</string>
     <string name="settings_wd_mode_label">Gỡ lỗi không dây</string>
     <string name="settings_wd_mode_when_needed">Chỉ khi cần</string>
     <string name="settings_wd_mode_keep_on">Giữ bật</string>

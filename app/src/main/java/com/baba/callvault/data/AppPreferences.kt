@@ -36,6 +36,17 @@ class AppPreferences(context: Context) {
     companion object {
         private const val PREFS_NAME = "callvault_prefs"
 
+        /** How many approved access points are remembered; a home mesh has a handful. */
+        private const val MAX_APPROVED_ACCESS_POINTS = 64
+
+        /**
+         * How long an approval is trusted before the access point is approved again. CallVault cannot see Android's
+         * trusted list, so a network removed from it would otherwise never be approved again.
+         */
+        const val APPROVED_ACCESS_POINT_TTL_MS = 30L * 24 * 60 * 60 * 1000
+
+        private const val APPROVED_AT_SEPARATOR = '@'
+
         /**
          * The settings that may be exported and imported — an explicit ALLOW-list, device-independent
          * user preferences only. It is a positive list on purpose: anything not named here (ADB pairing
@@ -445,6 +456,8 @@ class AppPreferences(context: Context) {
         WD_TURNED_OFF_BY_USER("wd_turned_off_by_user"),
         WD_ENFORCED("wd_enforced"),
         WD_AUTO_APPROVE_NETWORK("wd_auto_approve_network"),
+        WD_APPROVED_AP_KEYS("wd_approved_ap_keys"),
+        WD_AP_KEY_SALT("wd_ap_key_salt"),
         WD_NEVER_TURN_OFF("wd_never_turn_off"),
         LOG_PSEUDONYM_SALT("log_pseudonym_salt"),
         LOGCAT_RING_PREVIOUS_KIB("logcat_ring_previous_kib"),
@@ -1202,7 +1215,7 @@ class AppPreferences(context: Context) {
             ::isWdDisableWhenIdle, ::setWdDisableWhenIdle,
         ),
         GatedSwitch(
-            "wd_auto_approve_network", ModeCapability.WIRELESS_DEBUGGING_CONTROL,
+            "wd_auto_approve_network", ModeCapability.WIFI_NETWORK_APPROVAL,
             ::isWifiNetworkAutoApproveEnabled, ::setWifiNetworkAutoApproveEnabled,
         ),
         GatedSwitch(
@@ -1572,6 +1585,37 @@ class AppPreferences(context: Context) {
     fun isWifiNetworkAutoApproveEnabled() = getBoolean(Key.WD_AUTO_APPROVE_NETWORK, false)
 
     fun setWifiNetworkAutoApproveEnabled(enabled: Boolean) = setBoolean(Key.WD_AUTO_APPROVE_NETWORK, enabled)
+
+    /**
+     * Access points the Shizuku-mode approval has added to Android's trusted list (review N15) within the last
+     * [APPROVED_ACCESS_POINT_TTL_MS], as salted one-way keys (`server.BssidPrivacy.key`), never addresses. Internal
+     * state, not a setting; never exported. [nowMs] is wall-clock time.
+     */
+    fun getApprovedAccessPointKeys(nowMs: Long): Set<String> =
+        approvedAccessPoints().filterValues { nowMs - it in 0 until APPROVED_ACCESS_POINT_TTL_MS }.keys
+
+    /** Records [key] as approved at [nowMs]; drops expired ones, and the oldest past [MAX_APPROVED_ACCESS_POINTS]. */
+    fun addApprovedAccessPointKey(key: String, nowMs: Long) {
+        if (key.isBlank()) return
+        val live = approvedAccessPoints().filterValues { nowMs - it in 0 until APPROVED_ACCESS_POINT_TTL_MS } + (key to nowMs)
+        val kept = live.entries.sortedByDescending { it.value }.take(MAX_APPROVED_ACCESS_POINTS)
+        setStringSet(Key.WD_APPROVED_AP_KEYS, kept.map { "${it.key}$APPROVED_AT_SEPARATOR${it.value}" }.toSet())
+    }
+
+    private fun approvedAccessPoints(): Map<String, Long> = getStringSet(Key.WD_APPROVED_AP_KEYS).mapNotNull { entry ->
+        val key = entry.substringBefore(APPROVED_AT_SEPARATOR)
+        val at = entry.substringAfter(APPROVED_AT_SEPARATOR, "").toLongOrNull() ?: return@mapNotNull null
+        key to at
+    }.toMap()
+
+    /** Per-install salt for the access-point keys above. Created on first use; never leaves the phone but to the recorder. */
+    fun getAccessPointKeySalt(): String {
+        getString(Key.WD_AP_KEY_SALT)?.takeIf { it.isNotBlank() }?.let { return it }
+        val bytes = ByteArray(16).also { java.security.SecureRandom().nextBytes(it) }
+        val salt = bytes.joinToString("") { "%02x".format(it) }
+        setString(Key.WD_AP_KEY_SALT, salt)
+        return salt
+    }
 
     /**
      * The opt-in "Never turn Wireless debugging off" setting (#30 follow-up). Off by default: CallVault then

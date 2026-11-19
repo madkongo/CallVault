@@ -586,6 +586,7 @@
     <string name="settings_voip_recording_description">Graba también las llamadas hechas en apps como WhatsApp, Signal y Telegram. Algunas apps bloquean la grabación, y no se sabe hasta que la llamada está en curso.</string>
     <string name="settings_voip_recording_label">Grabar llamadas de apps</string>
     <string name="settings_wd_auto_approve_description">Cuando el teléfono se conecta a una red Wi-Fi, CallVault responde por sí mismo a la pregunta de Android «¿Permitir la depuración inalámbrica en esta red?», para que la grabación no espere a que toques. Funciona mientras el grabador está en marcha. Solo pueden conectarse los dispositivos ya vinculados con este teléfono.</string>
+    <string name="settings_wd_auto_approve_description_shizuku">Cuando el teléfono se conecta a una red Wi-Fi mientras el grabador está en marcha, CallVault la añade a las redes de confianza de Android para la depuración inalámbrica, para que tras un reinicio Shizuku pueda arrancar en ella sin que Android pregunte «¿Permitir la depuración inalámbrica en esta red?». Si la depuración inalámbrica estaba desactivada, se vuelve a desactivar. Solo pueden conectarse los dispositivos ya vinculados con este teléfono.</string>
     <string name="settings_wd_mode_label">Depuración inalámbrica</string>
     <string name="settings_wd_mode_when_needed">Solo cuando sea necesario</string>
     <string name="settings_wd_mode_keep_on">Mantener activada</string>

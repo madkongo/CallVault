@@ -55,6 +55,14 @@ enum class ModeCapability {
     /** Turning Wireless debugging on and off around the daemon, and the USB default-mode nudge. */
     WIRELESS_DEBUGGING_CONTROL,
 
+    /**
+     * Approving the Wi-Fi network the phone joins for Wireless debugging, through the shell-uid recorder
+     * (`allowWirelessDebugging`, guarded by MANAGE_DEBUGGING, which shell holds). Both hosts are shell, so
+     * both modes can; Shizuku mode needs it most, as Shizuku starts over Wireless debugging after a reboot
+     * (review N15).
+     */
+    WIFI_NETWORK_APPROVAL,
+
     /** The keep-alive foreground service that relaunches our daemon. Shizuku restarts its own. */
     DAEMON_KEEP_ALIVE,
 
@@ -82,6 +90,8 @@ enum class ModeCapability {
             !mode.needsShizuku
         // Mode-independent.
         CARRIER_RECORDING, TRANSCRIPTION, CLOUD_SYNC -> true
+        // The same recorder call in either host; each mode decides when it may make it (NetworkApprovalPolicy).
+        WIFI_NETWORK_APPROVAL -> true
     }
 
     /**

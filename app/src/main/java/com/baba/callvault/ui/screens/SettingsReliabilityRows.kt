@@ -30,6 +30,7 @@ import com.baba.callvault.system.openWirelessDebugging
 import com.baba.callvault.integrations.adb.AdbPairingService
 import java.io.File
 import com.baba.callvault.services.recording.DaemonKeepAliveService
+import com.baba.callvault.services.recording.WifiJoinWatch
 import com.baba.callvault.services.recording.VoipCaptureController
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.mutableStateOf
@@ -44,6 +45,7 @@ import kotlinx.coroutines.flow.first
 import androidx.annotation.StringRes
 import com.baba.callvault.data.AppPreferences
 import com.baba.callvault.data.ModeCapability
+import com.baba.callvault.utils.AppLogger
 import com.baba.callvault.integrations.adb.AdbShell
 import com.baba.callvault.integrations.adb.UsbDebuggingOff
 import com.baba.callvault.integrations.adb.UsbDebuggingOffGuard
@@ -138,7 +140,9 @@ internal fun WirelessDebuggingEnforceToggle() {
  * Whether CallVault answers Android's "Allow wireless debugging on this network?" itself, through its recorder.
  *
  * Off by default (2026-10-21): the prompt is Android's guard against opening the debugging port on a network the
- * owner did not choose. Built-in mode only; Shizuku mode does not manage the debugging switches. See
+ * owner did not choose. Both modes since review N15: in Shizuku mode it adds each access point the phone joins to
+ * Android's trusted list, so Shizuku can start there after a reboot, and puts Wireless debugging back as it was.
+ * Joins are noticed by [WifiJoinWatch], with no service or notification. See
  * [com.baba.callvault.integrations.adb.NetworkApprovalPolicy].
  */
 @Composable
@@ -146,17 +150,24 @@ internal fun WifiNetworkAutoApproveToggle() {
     val context = LocalContext.current
     val prefs = remember { AppPreferences(context) }
     var on by remember { mutableStateOf(prefs.isWifiNetworkAutoApproveEnabled()) }
-    val supported = capabilityAvailable(ModeCapability.WIRELESS_DEBUGGING_CONTROL)
+    val supported = capabilityAvailable(ModeCapability.WIFI_NETWORK_APPROVAL)
+    val shizukuMode = currentPrivilegedMode().needsShizuku
     SettingsToggleRow(
         icon = Icons.Filled.Wifi,
         label = stringResource(R.string.settings_wd_auto_approve_label),
-        description = unavailableReason(ModeCapability.WIRELESS_DEBUGGING_CONTROL)
-            ?: stringResource(R.string.settings_wd_auto_approve_description),
+        description = unavailableReason(ModeCapability.WIFI_NETWORK_APPROVAL)
+            ?: stringResource(
+                if (shizukuMode) R.string.settings_wd_auto_approve_description_shizuku
+                else R.string.settings_wd_auto_approve_description,
+            ),
         checked = on && supported,
         enabled = supported,
         onCheckedChange = { turnOn ->
             prefs.setWifiNetworkAutoApproveEnabled(turnOn)
             on = turnOn
+            // Shizuku mode notices Wi-Fi joins through a registered request, not a running service: no new notification.
+            runCatching { WifiJoinWatch.sync(context.applicationContext) }
+                .onFailure { AppLogger.w("CV:Settings", "Could not update the Wi-Fi join watch: ${it.message}") }
         },
     )
 }
