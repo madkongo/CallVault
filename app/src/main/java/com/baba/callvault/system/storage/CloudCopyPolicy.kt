@@ -75,6 +75,12 @@ object CloudCopyPolicy {
     const val LIST_TIMEOUT_MS = 30_000L
 
     /**
+     * How long the copier waits for a cloud provider that answers "still loading" ([android.provider.DocumentsContract.EXTRA_LOADING])
+     * to finish the folder: inside [LIST_TIMEOUT_MS], leaving time for the folder check and the reads themselves.
+     */
+    const val LIST_LOADING_WAIT_MS = 20_000L
+
+    /**
      * A Drive document that counts as already holding the recording: its reported length equals the source's.
      * A length of 0 or -1 is what a cloud provider reports for a file still settling; that is not proof, so
      * the recording goes through the copier again, which re-asks and says "unverified" if it stays unsettled.
