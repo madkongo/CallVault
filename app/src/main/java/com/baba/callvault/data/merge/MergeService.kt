@@ -296,11 +296,9 @@ object MergeService {
             val uri = publishVerified(context, folderUri, part.partName, mime, targets[i])
             if (uri == null) {
                 AppLogger.e(TAG, "Could not restore ${part.partName}; undoing ${published.size} restored part(s), $mergedName kept")
-                published.forEachIndexed { j, done ->
-                    SafHelper.deleteDocument(DocumentFile.fromSingleUri(context, done), parts[j].partName)
-                }
+                val undone = removePublished(context, published, parts)
                 staging.deleteRecursively()
-                return Outcome.Failed("A call could not be restored to your folder, so nothing was changed")
+                return Outcome.Failed(unMergeFailure("A call could not be restored to your folder", undone))
             }
             published += uri
             onPartProgress(i, true)
@@ -311,12 +309,10 @@ object MergeService {
         //    rows and files of this un-merge and keeps the merged call, as a failed publish does.
         val rowFailure = catalogueParts(context, parts, published)
         if (rowFailure != null) {
-            AppLogger.e(TAG, "Could not catalogue ${rowFailure.first}; undoing this un-merge, $mergedName kept: ${rowFailure.second}")
-            published.forEachIndexed { j, done ->
-                SafHelper.deleteDocument(DocumentFile.fromSingleUri(context, done), parts[j].partName)
-            }
+            AppLogger.e(TAG, "Could not catalogue ${rowFailure.part}; undoing this un-merge, $mergedName kept: ${rowFailure.reason}")
+            val undone = removePublished(context, published, parts) && rowFailure.rowsUndone
             staging.deleteRecursively()
-            return Outcome.Failed("A call could not be restored to your library, so nothing was changed")
+            return Outcome.Failed(unMergeFailure("A call could not be restored to your library", undone))
         }
         parts.forEachIndexed { i, part ->
             val uri = published[i]
@@ -336,22 +332,44 @@ object MergeService {
         return Outcome.UnMerged(parts.size)
     }
 
+    /** Why [catalogueParts] stopped, and whether it managed to put every row it had changed back. */
+    private data class RowFailure(val part: String, val reason: String, val rowsUndone: Boolean)
+
+    /**
+     * The message for a failed un-merge. "Nothing was changed" only when the undo really succeeded; otherwise it
+     * says the merged call is kept but a restored copy may be left over, so the user is not told something false.
+     */
+    private fun unMergeFailure(what: String, undone: Boolean): String =
+        if (undone) "$what, so nothing was changed"
+        else "$what. The merged call is kept, but a partly restored call may be left in your folder"
+
+    /** Removes the parts published so far; true when every one is gone (each refusal is logged). */
+    private fun removePublished(context: Context, published: List<Uri>, parts: List<MergePartEntry>): Boolean {
+        var all = true
+        published.forEachIndexed { j, done ->
+            if (!SafHelper.deleteDocument(DocumentFile.fromSingleUri(context, done), parts[j].partName)) {
+                AppLogger.e(TAG, "Undoing the un-merge: ${parts[j].partName} could not be removed again")
+                all = false
+            }
+        }
+        return all
+    }
+
     /**
      * Writes each part's catalog row for its [published] copy. On the first failure, puts back every row it had
      * changed (a part catalogued before keeps its earlier row; a hidden part loses only its new row, never its kept
-     * data) and returns (part name, reason); null when every row was written.
+     * data) and returns why; null when every row was written.
      */
     private suspend fun catalogueParts(
         context: Context,
         parts: List<MergePartEntry>,
         published: List<Uri>,
-    ): Pair<String, String>? {
+    ): RowFailure? {
         val dao = RecordingDatabase.get(context).recordingDao()
         val before = mutableListOf<Pair<String, RecordingEntry?>>()
         for ((i, part) in parts.withIndex()) {
             val previous = runCatching { dao.findByName(part.partName) }.getOrElse { e ->
-                undoRows(context, before)
-                return part.partName to (e.message ?: e.javaClass.simpleName)
+                return RowFailure(part.partName, e.message ?: e.javaClass.simpleName, undoRows(context, before))
             }
             before += part.partName to previous
             val uri = published[i]
@@ -359,20 +377,29 @@ object MergeService {
                 context, part.partName, uri, SafHelper.fileSize(context, uri), part.originalLastModified
             )
             if (failure != null) {
-                undoRows(context, before)
-                return part.partName to (failure.message ?: failure.javaClass.simpleName)
+                return RowFailure(part.partName, failure.message ?: failure.javaClass.simpleName, undoRows(context, before))
             }
         }
         return null
     }
 
-    /** Puts the rows [catalogueParts] changed back as they were, without touching any part's kept data. */
-    private suspend fun undoRows(context: Context, before: List<Pair<String, RecordingEntry?>>) {
+    /**
+     * Puts the rows [catalogueParts] changed back as they were, without touching any part's kept data. True when
+     * every one was put back.
+     */
+    private suspend fun undoRows(context: Context, before: List<Pair<String, RecordingEntry?>>): Boolean {
         val dao = RecordingDatabase.get(context).recordingDao()
+        var all = true
         before.forEach { (name, previous) ->
-            runCatching { if (previous != null) dao.upsert(previous) else RecordingCatalog.forgetName(context, name) }
-                .onFailure { AppLogger.e(TAG, "Could not undo the row for $name after a failed un-merge: ${it.message}") }
+            runCatching {
+                if (previous != null) dao.upsert(previous)
+                else dao.deleteByName(name) // forgetName's own write, but one that reports a failure
+            }.onFailure {
+                all = false
+                AppLogger.e(TAG, "Could not undo the row for $name after a failed un-merge: ${it.message}")
+            }
         }
+        return all
     }
 
     /**

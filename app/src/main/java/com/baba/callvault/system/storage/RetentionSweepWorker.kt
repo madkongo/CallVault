@@ -199,9 +199,8 @@ class RetentionSweepWorker(ctx: Context, params: WorkerParameters) : CoroutineWo
      * recording. The transcript cascade therefore runs only for the ones whose last copy this takes,
      * which `RecordingCatalog.removeCopyByUri` already handles.
      *
-     * @return how many device copies were deleted.
+     * @return how many device copies were deleted, or null when the cap sat this run out (see the log).
      */
-    /** @return how many device copies were deleted, or null when the cap sat this run out (see the log). */
     private suspend fun sweepStorageCap(capBytes: Long, keptForDrive: MutableSet<String>): Int? {
         // A failed read here must mean "protect everything", not "protect nothing". Sweeping with an
         // empty exemption set would delete precisely the recordings the user starred to keep, so the

@@ -74,7 +74,6 @@ interface RecordingDao {
     @Query("UPDATE recordings SET driveUri = NULL, driveSizeBytes = NULL WHERE displayName = :displayName")
     suspend fun clearDrive(displayName: String)
 
-    /** Remembers the length read off the file, so it is never read twice. */
     /**
      * Forgets the stored Drive size of every row that has a device copy; returns how many it changed. Drive-only
      * rows keep theirs (retention never trusts them). See RecordingCatalog.forgetUnconfirmedDriveSizesOnce.
@@ -82,6 +81,7 @@ interface RecordingDao {
     @Query("UPDATE recordings SET driveSizeBytes = NULL WHERE driveSizeBytes IS NOT NULL AND localUri IS NOT NULL")
     suspend fun clearDeviceRowDriveSizes(): Int
 
+    /** Remembers the length read off the file, so it is never read twice. */
     @Query("UPDATE recordings SET durationSeconds = :durationSeconds WHERE displayName = :displayName")
     suspend fun setDuration(displayName: String, durationSeconds: Long)
 

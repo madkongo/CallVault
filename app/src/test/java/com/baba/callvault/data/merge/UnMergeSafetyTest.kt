@@ -30,6 +30,7 @@ import io.mockk.verifyOrder
 import kotlinx.coroutines.runBlocking
 import org.junit.After
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
@@ -165,5 +166,30 @@ class UnMergeSafetyTest {
         verify(exactly = 1) { SafHelper.deleteDocument(any(), partB) }
         verify(exactly = 0) { SafHelper.deleteDocument(any(), merged) }
         TranscriptDatabase.get(context).transcriptDao().deleteFor(partA)
+    }
+
+    @Test
+    fun `when undoing a failed un-merge also fails, the message does not claim nothing changed`() = runBlocking {
+        every { SafHelper.publishStagedRecording(any(), any(), partA, any(), any()) } returns uriA
+        every { SafHelper.publishStagedRecording(any(), any(), partB, any(), any()) } returns null
+        // The provider refuses to take back the part that did publish.
+        every { SafHelper.deleteDocument(any(), partA) } returns false
+
+        val outcome = MergeService.unMerge(context, merged)
+
+        assertTrue(outcome is MergeService.Outcome.Failed)
+        val reason = (outcome as MergeService.Outcome.Failed).reason
+        assertFalse(reason, reason.contains("nothing was changed"))
+        assertNotNull("the merged call is still kept", dao.findByName(merged)?.localUri)
+    }
+
+    @Test
+    fun `when the undo succeeds, the message still says nothing changed`() = runBlocking {
+        every { SafHelper.publishStagedRecording(any(), any(), partA, any(), any()) } returns uriA
+        every { SafHelper.publishStagedRecording(any(), any(), partB, any(), any()) } returns null
+
+        val outcome = MergeService.unMerge(context, merged) as MergeService.Outcome.Failed
+
+        assertTrue(outcome.reason, outcome.reason.contains("nothing was changed"))
     }
 }
