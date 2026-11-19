@@ -76,6 +76,9 @@ open class RecorderServiceImpl(private val apkPath: String) : IRecorderService.S
     private val worker = HandlerThread("recorder-worker").apply { start() }
     private val workerHandler = android.os.Handler(worker.looper)
 
+    /** Shizuku mode's Wi-Fi join watch (review N15); idle, with no thread, until the app arms it. */
+    private val wifiJoin = WifiJoinHost(RecorderBinderProvider.AUTHORITY)
+
     init {
         // Which package this process presents to the audio stack, which is NOT obvious and differs
         // between hosts. AudioFlinger authorises a capture against (uid, package): our own daemon has
@@ -374,6 +377,12 @@ open class RecorderServiceImpl(private val apkPath: String) : IRecorderService.S
 
     override fun approveWifiNetworkKeepingSwitch(knownKeys: Array<String>?, salt: String?): String =
         WirelessDebuggingApproval.approveKeepingSwitch(knownKeys.orEmpty().toSet(), salt.orEmpty())
+
+    // Review N15: the recorder watches Wi-Fi joins itself (Shizuku mode); the app arms it on every connection.
+    override fun armWifiJoinWatch(on: Boolean, knownKeys: Array<String>?, salt: String?): Boolean =
+        wifiJoin.arm(on, knownKeys.orEmpty().toSet(), salt.orEmpty())
+
+    override fun drainWifiJoinEvents(): Array<String> = wifiJoin.drain()
 
     override fun setEncodeStereo(stereo: Boolean) {
         encodeStereoNext.set(stereo)

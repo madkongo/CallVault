@@ -69,6 +69,9 @@ class RecorderTransactionCodesTest {
         assertEquals(first + 31, IRecorderService.Stub.TRANSACTION_notificationListenerAccess)
         // Appended for review N15 (Shizuku mode approves joined access points).
         assertEquals(first + 32, IRecorderService.Stub.TRANSACTION_approveWifiNetworkKeepingSwitch)
+        // Appended for review N15 (the recorder watches Wi-Fi joins itself).
+        assertEquals(first + 33, IRecorderService.Stub.TRANSACTION_armWifiJoinWatch)
+        assertEquals(first + 34, IRecorderService.Stub.TRANSACTION_drainWifiJoinEvents)
     }
 
     @Test

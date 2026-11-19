@@ -16,6 +16,8 @@ import android.os.Binder
 import android.os.Bundle
 import android.os.IBinder
 import android.os.Process
+import com.baba.callvault.services.recording.WifiJoinEvents
+import com.baba.callvault.services.recording.WifiJoinWatch
 import com.baba.callvault.services.recording.handoff.HandoffReceiver
 import com.baba.callvault.services.recording.handoff.TrackAProbe
 import com.baba.callvault.utils.AppLogger
@@ -57,6 +59,8 @@ class RecorderBinderProvider : ContentProvider() {
         when (method) {
             METHOD_SEND_BINDER -> handleSendBinder(extras)
             METHOD_SEND_HANDOFF -> handleSendHandoff(extras)
+            METHOD_WIFI_JOIN_EVENTS -> return handleWifiJoinEvents(extras)
+            METHOD_WIFI_JOIN_APPROVAL_CONFIG -> return handleWifiJoinApprovalConfig()
             // Diagnostic only, and deliberately shell/self-only: it runs IN THE APP PROCESS, which is
             // the whole point — the question is what the APP's uid is allowed to do.
             METHOD_TRACK_A_PROBE, METHOD_TRACK_A_ARM, METHOD_TRACK_A_MEASURE -> {
@@ -97,6 +101,36 @@ class RecorderBinderProvider : ContentProvider() {
         val channels = extras.getInt(EXTRA_CHANNELS, 1)
         if (binder == null) { AppLogger.e(TAG, "sendHandoff: IAudioRecord binder null"); return }
         HandoffReceiver.onReceived(binder, cblk, frameCount, sampleRate, channels)
+    }
+
+    /**
+     * The recorder's Wi-Fi watch lines, for the always-on log (review N15). Only from our recorder hosts: the lines
+     * land in the log a report is made from, and may add an access point key.
+     */
+    private fun handleWifiJoinEvents(extras: Bundle): Bundle {
+        val callingUid = Binder.getCallingUid()
+        if (!RecorderCallerPolicy.isTrusted(callingUid)) {
+            AppLogger.w(TAG, "wifiJoinEvents rejected: untrusted caller uid=$callingUid")
+            return Bundle()
+        }
+        val ctx = context ?: return Bundle()
+        WifiJoinEvents.record(ctx, extras.getStringArray(EXTRA_WIFI_JOIN_EVENTS))
+        return Bundle()
+    }
+
+    /**
+     * The recorder asks, right before each approval, whether it is still wanted (review N15): the answer is read from
+     * the app's settings now, so a setting switched off while the recorder was not connected is honoured. Only our
+     * recorder hosts get an answer; anyone else gets an empty Bundle, which the recorder reads as "not confirmed".
+     */
+    private fun handleWifiJoinApprovalConfig(): Bundle {
+        val callingUid = Binder.getCallingUid()
+        if (!RecorderCallerPolicy.isTrusted(callingUid)) {
+            AppLogger.w(TAG, "wifiJoinApprovalConfig rejected: untrusted caller uid=$callingUid")
+            return Bundle()
+        }
+        val ctx = context ?: return Bundle()
+        return ApprovalConfigBundle.write(WifiJoinWatch.approvalConfig(ctx))
     }
 
     /** Mirrors `ShizukuProvider.handleSendBinder`: read the container, store + link-to-death the binder. */
@@ -194,6 +228,13 @@ class RecorderBinderProvider : ContentProvider() {
         const val METHOD_TRACK_A_PROBE = "trackAProbe"
         const val METHOD_TRACK_A_ARM = "trackAProbeArm"
         const val METHOD_TRACK_A_MEASURE = "trackAProbeMeasure"
+
+        /** The recorder's Wi-Fi watch lines for the always-on log (review N15); see WifiJoinEvent. */
+        const val METHOD_WIFI_JOIN_EVENTS = "wifiJoinEvents"
+        const val EXTRA_WIFI_JOIN_EVENTS = "com.baba.callvault.recorder.extra.WIFI_JOIN_EVENTS"
+
+        /** The recorder asks whether a Wi-Fi approval is still wanted (review N15); see ApprovalConfigBundle. */
+        const val METHOD_WIFI_JOIN_APPROVAL_CONFIG = "wifiJoinApprovalConfig"
 
         /** Bundle key for the [BinderContainer]; analogous to ShizukuProvider.EXTRA_BINDER. */
         const val EXTRA_BINDER = "com.baba.callvault.recorder.extra.BINDER"

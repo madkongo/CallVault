@@ -13,15 +13,16 @@ import com.baba.callvault.data.AppPreferences
 import com.baba.callvault.integrations.adb.NetworkApprovalPolicy
 import com.baba.callvault.integrations.adb.ShizukuNetworkApproval
 import com.baba.callvault.integrations.adb.TransportTimeline
-import com.baba.callvault.server.KeptSwitchOutcome
+import com.baba.callvault.server.KeptSwitchReport
 import com.baba.callvault.server.KeptSwitchResult
 import com.baba.callvault.server.RecorderConnection
 import com.baba.callvault.utils.AppLogger
 import java.util.concurrent.atomic.AtomicBoolean
 
 /**
- * Shizuku mode's "Approve new Wi-Fi networks automatically" (review N15), run on each Wi-Fi join
- * ([WifiJoinApprovalReceiver]).
+ * Shizuku mode's "Approve new Wi-Fi networks automatically" (review N15), run from the app. Normally the recorder
+ * approves on each Wi-Fi join itself ([com.baba.callvault.server.WifiJoinMonitor]); this is the backup, run once when
+ * the recorder cannot watch ([WifiJoinWatch], [WifiJoinApprovalWorker]).
  *
  * Asks the Shizuku-hosted recorder (shell uid) to approve the access point the phone is on, always-allow, so
  * Shizuku can start over Wireless debugging there after a reboot without Android asking first. The recorder skips
@@ -80,26 +81,7 @@ class ShizukuWifiApproval(
     }
 
     private fun report(answer: KeptSwitchResult) {
-        val ap = answer.maskedBssid.ifEmpty { "?" }
-        val (warn, text) = when (answer.outcome) {
-            KeptSwitchOutcome.APPROVED_RESTORED_OFF -> false to
-                "approved access point $ap (always allow); Wireless debugging restored off after ${answer.restoreMs} ms (undoing the approval's own switch-on)"
-            KeptSwitchOutcome.APPROVED_RESTORE_FAILED -> true to
-                "approved access point $ap (always allow); FAILED to switch Wireless debugging back off after ${answer.restoreMs} ms, it is left on"
-            KeptSwitchOutcome.APPROVED_RESTORE_NOT_CONFIRMED -> true to
-                "approval for $ap sent, but Wireless debugging was not seen on within ${answer.restoreMs} ms; nothing written, will try again on the next join"
-            KeptSwitchOutcome.APPROVAL_FAILED -> true to "failed: the recorder could not approve $ap"
-            KeptSwitchOutcome.ALREADY_APPROVED -> false to "skipped: $ap approved within the last 30 days"
-            KeptSwitchOutcome.NOT_TCP_MODE -> false to
-                "skipped: Shizuku not in tcp mode (adbd has no tcp port), so switching Wireless debugging back off could stop it; nothing approved or written"
-            KeptSwitchOutcome.WIRELESS_DEBUGGING_TURNED_ON_MEANWHILE -> false to
-                "skipped: Wireless debugging was switched on just before approving $ap; left on, nothing written"
-            KeptSwitchOutcome.WIRELESS_DEBUGGING_ON -> false to
-                "skipped: Wireless debugging is on at $ap (Android ignores an approval then)"
-            KeptSwitchOutcome.WIRELESS_DEBUGGING_UNREADABLE -> true to
-                "skipped: the recorder cannot read Wireless debugging, so it could not be put back"
-            KeptSwitchOutcome.NO_WIFI_IDENTITY -> false to "skipped: the recorder sees no Wi-Fi network"
-        }
+        val (warn, text) = KeptSwitchReport.describe(answer)
         log(warn, text)
     }
 

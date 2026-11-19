@@ -81,20 +81,39 @@ internal object BinderDelivery {
             putInt(RecorderBinderProvider.EXTRA_CHANNELS, channelCount)
         })
 
-    private fun deliver(authority: String, method: String, bundle: Bundle): Boolean {
+    /**
+     * Hands the Wi-Fi watch's lines ([WifiJoinEvent], encoded) to the app's always-on log (review N15). Starts the
+     * app's process when it is not running, as every delivery here does. True when the app took them.
+     */
+    fun deliverWifiJoinEventsToApp(authority: String, events: Array<String>): Boolean =
+        deliver(authority, RecorderBinderProvider.METHOD_WIFI_JOIN_EVENTS, Bundle().apply {
+            putStringArray(RecorderBinderProvider.EXTRA_WIFI_JOIN_EVENTS, events)
+        })
+
+    /**
+     * Asks the app, right before an approval, whether Shizuku mode's Wi-Fi approval is still wanted (review N15).
+     * The app's reply ([ApprovalConfigBundle]), or null when the app could not be reached.
+     */
+    fun askWifiJoinApprovalConfig(authority: String): Bundle? =
+        call(authority, RecorderBinderProvider.METHOD_WIFI_JOIN_APPROVAL_CONFIG, Bundle())
+
+    private fun deliver(authority: String, method: String, bundle: Bundle): Boolean = call(authority, method, bundle) != null
+
+    /** The provider's reply to [method], or null when neither path reached it. */
+    private fun call(authority: String, method: String, bundle: Bundle): Bundle? {
         AppLogger.i(TAG, "Delivering ($method): trying getContentProviderExternal path (authority=$authority)")
-        if (runCatching { deliverViaActivityManager(authority, bundle, method) }
-                .onFailure { AppLogger.w(TAG, "getContentProviderExternal path failed: ${it.message}", it) }
-                .getOrDefault(false)
-        ) {
+        val viaAm = runCatching { deliverViaActivityManager(authority, bundle, method) }
+            .onFailure { AppLogger.w(TAG, "getContentProviderExternal path failed: ${it.message}", it) }
+            .getOrNull()
+        if (viaAm != null) {
             AppLogger.i(TAG, "Delivered ($method) via getContentProviderExternal")
-            return true
+            return viaAm
         }
 
         AppLogger.i(TAG, "Falling back to system-context ContentResolver path")
         return runCatching { deliverViaSystemContext(authority, bundle, method) }
             .onFailure { AppLogger.e(TAG, "system-context path failed: ${it.message}", it) }
-            .getOrDefault(false)
+            .getOrNull()
     }
 
     /**
@@ -105,7 +124,7 @@ internal object BinderDelivery {
      *  4. provider.call(<attribution per SDK>, authority, "sendBinder", null, bundle)
      *  5. finally am.removeContentProviderExternal(authority, /*token*/ null)
      */
-    private fun deliverViaActivityManager(authority: String, bundle: Bundle, method: String): Boolean {
+    private fun deliverViaActivityManager(authority: String, bundle: Bundle, method: String): Bundle? {
         // 1. IActivityManager via public-but-grey ActivityManager.getService().
         val am = Class.forName("android.app.ActivityManager")
             .getMethod("getService")
@@ -129,7 +148,7 @@ internal object BinderDelivery {
             // 4. provider.call(...) — version matrix from Shizuku's IContentProviderCompat.
             val reply = callProvider(provider, authority, method, bundle)
             AppLogger.i(TAG, "getContentProviderExternal call reply=$reply (null=${reply == null})")
-            return reply != null
+            return reply
         } finally {
             // 5. removeContentProviderExternal(String name, IBinder token) — best-effort, like Shizuku.
             runCatching {
@@ -192,7 +211,7 @@ internal object BinderDelivery {
      *   ctx.getContentResolver().call(Uri "content://<authority>", "sendBinder", null, bundle)
      * Reflection used for the two hidden ActivityThread methods; the rest is public API.
      */
-    private fun deliverViaSystemContext(authority: String, bundle: Bundle, method: String): Boolean {
+    private fun deliverViaSystemContext(authority: String, bundle: Bundle, method: String): Bundle? {
         val activityThreadClass = Class.forName("android.app.ActivityThread")
         val at = activityThreadClass.getMethod("systemMain").invoke(null)
             ?: throw IllegalStateException("ActivityThread.systemMain() returned null")
@@ -202,6 +221,6 @@ internal object BinderDelivery {
         val uri = android.net.Uri.parse("content://$authority")
         val reply = context.contentResolver.call(uri, method, null, bundle)
         AppLogger.i(TAG, "system-context call reply=$reply (null=${reply == null})")
-        return reply != null
+        return reply
     }
 }

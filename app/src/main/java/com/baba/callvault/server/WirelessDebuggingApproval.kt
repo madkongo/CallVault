@@ -10,6 +10,7 @@ package com.baba.callvault.server
 
 import com.baba.callvault.utils.AppLogger
 import java.util.concurrent.TimeUnit
+import java.util.concurrent.atomic.AtomicReference
 
 /** What [WirelessDebuggingApproval.approveCurrentNetwork] did. Sent to the app by name. */
 enum class NetworkApproval {
@@ -42,8 +43,22 @@ object WirelessDebuggingApproval {
     private const val CMD = "/system/bin/cmd"
     private const val SETTINGS = "/system/bin/settings"
     private const val GETPROP = "/system/bin/getprop"
+    private const val DUMPSYS = "/system/bin/dumpsys"
+    private const val ADB_DUMP_HEADER = "ADB MANAGER STATE"
+    /** The keystore field of `AdbDebuggingManager.dump` as DualDumpOutputStream prints it: `keystore=<file>`. */
+    private val KEYSTORE_FIELD = Regex("(?m)^[ \\t]*keystore=")
+    /** The end of that field: the dump object's closing brace, or the next `name=` field. */
+    private val FIELD_END = Regex("(?m)^[ \\t]*(?:}|[A-Za-z_]+=)")
+    private val BSSID = Regex("""(?<![0-9A-Fa-f:])[0-9A-Fa-f]{2}(?::[0-9A-Fa-f]{2}){5}(?![0-9A-Fa-f:])""")
     private const val WD_SETTING = "adb_wifi_enabled"
-    private const val TIMEOUT_SEC = 10L
+    private const val TIMEOUT_MS = 10_000L
+    private const val READER_GRACE_MS = 1_000L
+
+    /**
+     * Access points this process approved and has not yet seen switched back off (review N15). Process-wide, so the
+     * watch's checks and the app's backup check share it.
+     */
+    private val leftovers = ApprovalLeftovers()
 
     /** What Android reports when it will not say which network this is. */
     private const val UNKNOWN_SSID = "<unknown ssid>"
@@ -77,13 +92,43 @@ object WirelessDebuggingApproval {
      * @param knownKeys [BssidPrivacy.key]s of access points the app has already had approved.
      * @param salt the app's per-install salt for those keys.
      */
-    fun approveKeepingSwitch(knownKeys: Set<String>, salt: String): String = KeptSwitchApprover(
+    fun approveKeepingSwitch(knownKeys: Set<String>, salt: String): String =
+        keptSwitchApprover().run(knownKeys, salt).encode()
+
+    /** The Shizuku-mode approver, wired to this process's shell commands. */
+    fun keptSwitchApprover(): KeptSwitchApprover = KeptSwitchApprover(
         identity = ::currentIdentity,
+        trustedBssids = ::readTrustedBssids,
         readWirelessDebugging = ::readWirelessDebugging,
         adbdListensOnTcp = ::adbdListensOnTcp,
         approve = ::approveIdentity,
         writeWirelessDebuggingOff = ::writeWirelessDebuggingOff,
-    ).run(knownKeys, salt).encode()
+        leftovers = leftovers,
+    )
+
+    /**
+     * Android's trusted list for Wireless debugging, read through `dumpsys adb`: the shell holds DUMP, and the dump
+     * is made by system_server, which reads `/data/misc/adb/adb_temp_keys.xml` itself (`AdbDebuggingManager.dump`,
+     * field "keystore", AOSP android14-release). Null when it cannot be read.
+     */
+    fun readTrustedBssids(): Set<String>? {
+        val trusted = parseTrustedBssids(runCommand(DUMPSYS, "adb"))
+        if (trusted == null) AppLogger.w(TAG, "Could not read Android's trusted Wi-Fi list from 'dumpsys adb'")
+        return trusted
+    }
+
+    /**
+     * The access points in a `dumpsys adb` output's keystore (`<wifiAP bssid="…"/>`), lower case. Matches addresses
+     * rather than XML, so a keystore written as binary XML (Android 12+) reads the same. Empty when the dump has no
+     * keystore (no file yet: nothing trusted); null when the output is not an adb dump at all (refused, failed).
+     */
+    fun parseTrustedBssids(dump: String?): Set<String>? {
+        if (dump == null || !dump.contains(ADB_DUMP_HEADER)) return null
+        val start = KEYSTORE_FIELD.find(dump) ?: return emptySet()
+        val rest = dump.substring(start.range.last + 1)
+        val section = FIELD_END.find(rest)?.let { rest.substring(0, it.range.first) } ?: rest
+        return BSSID.findAll(section).map { it.value.lowercase() }.toSet()
+    }
 
     /**
      * Whether adbd listens on a tcp port: `service.adb.tcp.port` (set when adbd binds, e.g. after `adb tcpip`, which
@@ -119,17 +164,11 @@ object WirelessDebuggingApproval {
     }
 
     /** Writes Wireless debugging off, as shell. True when the command ran cleanly. */
-    fun writeWirelessDebuggingOff(): Boolean = runCatching {
-        val process = ProcessBuilder(SETTINGS, "put", "global", WD_SETTING, "0").redirectErrorStream(true).start()
-        val output = process.inputStream.bufferedReader().use { it.readText() }
-        val finished = process.waitFor(TIMEOUT_SEC, TimeUnit.SECONDS)
-        if (!finished) process.destroyForcibly()
-        val ok = finished && process.exitValue() == 0 && output.isBlank()
-        if (!ok) AppLogger.w(TAG, "'settings put global $WD_SETTING 0' did not succeed: ${output.trim()}")
-        ok
-    }.getOrElse {
-        AppLogger.w(TAG, "'settings put' could not run: ${it.message}")
-        false
+    fun writeWirelessDebuggingOff(): Boolean {
+        val run = execute(arrayOf(SETTINGS, "put", "global", WD_SETTING, "0"), TIMEOUT_MS)
+        val ok = run != null && run.first == 0 && run.second.isBlank()
+        if (!ok) AppLogger.w(TAG, "'settings put global $WD_SETTING 0' did not succeed: ${run?.second?.trim() ?: "did not finish"}")
+        return ok
     }
 
     /** The network `cmd wifi status` reports as connected, or null when there is none it will name. */
@@ -178,13 +217,28 @@ object WirelessDebuggingApproval {
     private fun runCmdWifiStatus(): String = runCommand(CMD, "wifi", "status").orEmpty()
 
     /** Output of a shell command, or null when it could not run or did not finish in time. */
-    private fun runCommand(vararg command: String): String? = runCatching {
+    private fun runCommand(vararg command: String): String? = runCommandWithTimeout(arrayOf(*command), TIMEOUT_MS)
+
+    /** Output of [command], or null when it could not run or did not finish within [timeoutMs] (then it is killed). */
+    fun runCommandWithTimeout(command: Array<String>, timeoutMs: Long): String? = execute(command, timeoutMs)?.second
+
+    /**
+     * Runs [command] with a hard [timeoutMs]: the output is read on its own thread, so a command that never closes
+     * its output cannot hold the caller (the Wi-Fi watch's one thread) past the timeout. Exit code and output, or null.
+     */
+    private fun execute(command: Array<String>, timeoutMs: Long): Pair<Int, String>? = runCatching {
         val process = ProcessBuilder(*command).redirectErrorStream(true).start()
-        val output = process.inputStream.bufferedReader().use { it.readText() }
-        if (!process.waitFor(TIMEOUT_SEC, TimeUnit.SECONDS)) {
+        val output = AtomicReference<String?>(null)
+        val reader = Thread {
+            runCatching { output.set(process.inputStream.bufferedReader().use { it.readText() }) }
+        }.apply { isDaemon = true; name = "cv-shell-read"; start() }
+        if (!process.waitFor(timeoutMs, TimeUnit.MILLISECONDS)) {
             process.destroyForcibly()
-            null
-        } else output
+            AppLogger.w(TAG, "'${command.joinToString(" ")}' did not finish in $timeoutMs ms; stopped")
+            return@runCatching null
+        }
+        reader.join(READER_GRACE_MS)
+        process.exitValue() to (output.get() ?: return@runCatching null)
     }.getOrElse {
         AppLogger.w(TAG, "'${command.joinToString(" ")}' could not run: ${it.message}")
         null
