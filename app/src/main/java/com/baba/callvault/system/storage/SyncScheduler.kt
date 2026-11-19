@@ -21,6 +21,7 @@ import com.baba.callvault.data.StorageTarget
 import com.baba.callvault.data.SyncScheduleMode
 import com.baba.callvault.utils.AppLogger
 import java.util.Calendar
+import java.util.Locale
 import java.util.concurrent.TimeUnit
 
 /**
@@ -124,7 +125,7 @@ object SyncScheduler {
      * request alone and enqueues one when there is none.
      */
     internal fun decide(oldSignature: String?, newSignature: String, states: List<WorkInfo.State>?): Decision = when {
-        oldSignature != newSignature -> Decision(ExistingPeriodicWorkPolicy.CANCEL_AND_REENQUEUE, Reason.CHANGED)
+        oldSignature?.let(::latinDigits) != latinDigits(newSignature) -> Decision(ExistingPeriodicWorkPolicy.CANCEL_AND_REENQUEUE, Reason.CHANGED)
         states == null -> Decision(ExistingPeriodicWorkPolicy.KEEP, Reason.WORK_STATE_UNREADABLE)
         states.any { it in ALIVE_STATES } -> Decision(ExistingPeriodicWorkPolicy.KEEP, Reason.UNCHANGED_ALIVE)
         else -> Decision(ExistingPeriodicWorkPolicy.CANCEL_AND_REENQUEUE, Reason.NO_LIVE_WORK)
@@ -144,9 +145,27 @@ object SyncScheduler {
 
     private const val READ_TIMEOUT_SECONDS = 3L
 
-    /** The schedule as one comparable string; only what changes WHEN or WHETHER the sweep runs. */
+    /**
+     * The schedule as one comparable string; only what changes WHEN or WHETHER the sweep runs.
+     *
+     * Formatted with [Locale.ROOT]: the default locale's `format` writes Persian, Bengali or Arabic digits,
+     * so a signature stored under one language never matched one built under another and every app start
+     * cancelled and re-enqueued the sweep (review C22).
+     */
     internal fun signature(target: StorageTarget, mode: SyncScheduleMode, hour: Int, minute: Int, dayOfWeek: Int): String =
-        "$mode/$target/%02d:%02d".format(hour, minute) + (if (mode == SyncScheduleMode.WEEKLY) "/day$dayOfWeek" else "") + "/net-connected"
+        "$mode/$target/" + String.format(Locale.ROOT, "%02d:%02d", hour, minute) +
+            (if (mode == SyncScheduleMode.WEEKLY) "/day$dayOfWeek" else "") + "/net-connected"
+
+    /**
+     * [s] with every decimal digit, of any script, turned into its Latin form. A signature stored before the
+     * C22 fix may hold native digits; read through this it compares equal to the same schedule now.
+     */
+    internal fun latinDigits(s: String): String = buildString(s.length) {
+        for (c in s) {
+            val d = Character.digit(c, 10)
+            append(if (d >= 0) '0' + d else c)
+        }
+    }
 
     /**
      * Writes what WorkManager itself reports about the request once it is stored: state, attempt count and the
