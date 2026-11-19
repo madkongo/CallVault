@@ -284,7 +284,11 @@ class VoipCallDetector(private val context: Context) {
         AppLogger.i(TAG, "Recording this app call on the user's request (normal-mode=${decision.viaNormalMode})")
         VoipRecordPrompt.cancel(context)
         // The call's own kind (review C26): a LINE call recognised in MODE_NORMAL (item 108) starts as one.
-        runCatching { VoipRecordingCoordinator.onCallStarted(context, manual = true, viaNormalMode = decision.viaNormalMode) }
+        runCatching {
+            VoipRecordingCoordinator.onCallStarted(
+                context, manual = true, viaNormalMode = decision.viaNormalMode, callDetectedAt = callDetectedAt,
+            )
+        }
             .onFailure { AppLogger.w(TAG, "Manual VoIP start failed: ${it.message}") }
         isRecording = VoipRecordingCoordinator.isRecording
         onRecordingStateChanged?.invoke()
@@ -475,7 +479,7 @@ class VoipCallDetector(private val context: Context) {
                 onRecordingStateChanged?.invoke()
                 return
             }
-            runCatching { VoipRecordingCoordinator.onCallStarted(context, viaNormalMode = viaNormalMode) }
+            runCatching { VoipRecordingCoordinator.onCallStarted(context, viaNormalMode = viaNormalMode, callDetectedAt = callDetectedAt) }
                 .onFailure { AppLogger.w(TAG, "VoIP start failed: ${it.message}") }
             isRecording = VoipRecordingCoordinator.isRecording
             onRecordingStateChanged?.invoke()

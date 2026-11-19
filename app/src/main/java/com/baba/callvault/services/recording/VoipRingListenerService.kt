@@ -26,12 +26,12 @@ import com.baba.callvault.utils.AppLogger
 class VoipRingListenerService : NotificationListenerService() {
 
     override fun onListenerConnected() {
-        VoipRingMemory.listenerConnected = true
+        VoipRingMemory.onListenerConnected(SystemClock.elapsedRealtime())
         AppLogger.i(TAG, "Ring listener connected")
     }
 
     override fun onListenerDisconnected() {
-        VoipRingMemory.listenerConnected = false
+        VoipRingMemory.onListenerDisconnected()
         AppLogger.i(TAG, "Ring listener disconnected")
     }
 

@@ -101,6 +101,51 @@ class VoipDirectionTest {
         assertNull(VoipDirection.decide(null, none, true, false))
     }
 
+    // --- review C20: "no ring heard" means outgoing only for a fresh, first, watched start -----------------
+
+    private val tgPkg = "org.telegram.messenger"
+    private val minute = 60_000L
+
+    @Test
+    fun `absence means outgoing when the listener watched since before the call could ring`() {
+        assertEquals(true, VoipDirection.absenceMeansOutgoing(true, listenerConnectedSince = 1_000, callDetectedAt = 1_000 + 2 * minute, lastRecordingEndedAt = 0))
+    }
+
+    @Test
+    fun `a listener that connected after the call could have rung proves nothing`() {
+        // A CallVault restarted into a call already up (Q25), or a listener reconnected late.
+        assertEquals(false, VoipDirection.absenceMeansOutgoing(true, listenerConnectedSince = 1_000, callDetectedAt = 1_000 + 30_000, lastRecordingEndedAt = 0))
+        assertEquals(false, VoipDirection.absenceMeansOutgoing(true, listenerConnectedSince = 0, callDetectedAt = 10 * minute, lastRecordingEndedAt = 0))
+    }
+
+    @Test
+    fun `a second recording of the same call after a split is never outgoing from absence`() {
+        // The first recording consumed the answer; the call split (a mode drop, or a phone call taken in it).
+        assertEquals(false, VoipDirection.absenceMeansOutgoing(true, listenerConnectedSince = 1_000, callDetectedAt = 10 * minute, lastRecordingEndedAt = 10 * minute - 5_000))
+    }
+
+    @Test
+    fun `an app not measured to announce every incoming call never gets outgoing from absence`() {
+        assertEquals(false, VoipDirection.absenceMeansOutgoing(false, listenerConnectedSince = 1_000, callDetectedAt = 10 * minute, lastRecordingEndedAt = 0))
+    }
+
+    @Test
+    fun `an Ask me start two minutes into an answered Telegram call reads the ring as it was at the call's start`() {
+        // Review C20 (a): the incoming call rang and was answered; the user tapped Record 120 s later. Read at the
+        // tap the memory had forgotten the answer and the call was labelled outgoing.
+        VoipRingMemory.clearForTest()
+        try {
+            VoipRingMemory.onPosted(tgPkg, "0|tg|203", incomingMarker = true, ongoing = false, groupSummary = false, now = 10_000)
+            VoipRingMemory.onRemoved(tgPkg, "0|tg|203", 20_000)
+            VoipRingMemory.onPosted(tgPkg, "0|tg|201", incomingMarker = false, ongoing = true, groupSummary = false, now = 20_400)
+            val detectedAt = 20_380L
+            assertEquals(VoipRingMemory.Verdict.NONE, VoipRingMemory.verdict(tgPkg, detectedAt + 2 * minute))
+            assertEquals(VoipRingMemory.Verdict.ANSWERED_RING, VoipRingMemory.verdict(tgPkg, VoipDirection.ringEvidenceAt(detectedAt)))
+        } finally {
+            VoipRingMemory.clearForTest()
+        }
+    }
+
     // --- OUTGOING: ringing at the far end -------------------------------------------------------
 
     @Test

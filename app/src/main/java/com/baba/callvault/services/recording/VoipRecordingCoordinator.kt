@@ -103,7 +103,13 @@ object VoipRecordingCoordinator {
     private const val DIRECTION_LOG_MAX_MS = 60_000L
 
     /** How long a ring that is not yet answered is given to turn into the answer that started this call. */
-    private const val RING_ANSWER_WAIT_MS = 3_000L
+    private const val RING_ANSWER_WAIT_MS = VoipDirection.RING_ANSWER_WAIT_MS
+
+    /** When the detector saw this call begin (elapsedRealtime), for reading the ring memory as of then (C20). */
+    @Volatile private var callDetectedAt = 0L
+
+    /** The app on this call, once known, so its end can be noted in the ring memory (C20). */
+    @Volatile private var currentCallPackage: String? = null
 
     /** The running recording was started from the call-voice audio, not the mode (BabApps item 108). */
     @Volatile private var startedViaNormalMode = false
@@ -152,7 +158,7 @@ object VoipRecordingCoordinator {
      * thread (review C2 second pass: never block the main thread on a stop). Every step and its duration goes to
      * the always-on log.
      */
-    private fun settleOrphanThenStart(context: Context, manual: Boolean, viaNormalMode: Boolean) {
+    private fun settleOrphanThenStart(context: Context, manual: Boolean, viaNormalMode: Boolean, detectedAt: Long?) {
         orphanCheckInFlight = true
         val endsAtStart = callEnds
         val app = context.applicationContext
@@ -181,7 +187,7 @@ object VoipRecordingCoordinator {
                             CallEndLog.record(app, "app call start: recorder still busy ($verdict); the start will be refused and reported")
                         }
                         // FAIL_BUSY continues too: the recorder refuses it and the existing missed-app-call notice says so.
-                        runCatching { onCallStarted(app, manual, viaNormalMode, orphanSettled = true) }
+                        runCatching { onCallStarted(app, manual, viaNormalMode, orphanSettled = true, callDetectedAt = detectedAt) }
                             .onFailure { AppLogger.w(TAG, "VoIP start after the orphan check failed: ${it.message}") }
                     }
                 }
@@ -218,6 +224,7 @@ object VoipRecordingCoordinator {
         manual: Boolean = false,
         viaNormalMode: Boolean = false,
         orphanSettled: Boolean = false,
+        callDetectedAt: Long? = null,
     ) {
         if (recording) return
         if (orphanCheckInFlight) return
@@ -299,7 +306,7 @@ object VoipRecordingCoordinator {
         // Settled OFF the main thread (a stop can take seconds), then this start continues from the main thread.
         // The cheap check below is one binder call; the usual call (nothing to settle) never leaves this thread.
         if (!orphanSettled && OrphanRecorderSession.needsSettling()) {
-            settleOrphanThenStart(context, manual, viaNormalMode)
+            settleOrphanThenStart(context, manual, viaNormalMode, callDetectedAt)
             return
         }
         if (!orphanSettled && DaemonSessionOwnership.isOwnedHere &&
@@ -385,6 +392,8 @@ object VoipRecordingCoordinator {
         directionJob?.cancel()
         direction.set(null)
         answeredByRing.set(false)
+        this.callDetectedAt = callDetectedAt ?: android.os.SystemClock.elapsedRealtime()
+        currentCallPackage = callPackage
         directionJob = if (callPackage != null) readDirection(callPackage) else null
         // The capture had to open now; what waits for the pickup is the encode. See VoipAnswerHold.
         // A normal-mode call (BabApps item 108) too (review C31): its live call-voice pair does not prove an answer.
@@ -469,15 +478,27 @@ object VoipRecordingCoordinator {
         val startedAt = System.currentTimeMillis()
         var first: VoipCallFacts? = null
         // What the ring listener heard BEFORE the pickup, asked once and at once: an incoming call's
-        // ringing notification is gone by the time the audio mode flips.
-        var ring = VoipRingMemory.verdict(callPackage, android.os.SystemClock.elapsedRealtime())
+        // ringing notification is gone by the time the audio mode flips. A recording that starts late into its
+        // call (an "Ask me" tap) reads it as of the call's start instead (C20): by now it has forgotten.
+        val detectedAt = callDetectedAt
+        val late = android.os.SystemClock.elapsedRealtime() - detectedAt > RING_ANSWER_WAIT_MS
+        var ring = VoipRingMemory.verdict(
+            callPackage,
+            if (late) VoipDirection.ringEvidenceAt(detectedAt) else android.os.SystemClock.elapsedRealtime(),
+        )
         val ringAtStart = ring
         val listening = VoipRingMemory.listenerConnected
+        val absence = VoipDirection.absenceMeansOutgoing(
+            alwaysNotified = com.baba.callvault.server.VoipCallerName.isTelegramClient(callPackage),
+            listenerConnectedSince = VoipRingMemory.listenerConnectedSince,
+            callDetectedAt = detectedAt,
+            lastRecordingEndedAt = VoipRingMemory.lastRecordingEndedAt(callPackage),
+        )
         // The audio mode can flip a few milliseconds BEFORE the app's notification is rewritten as
         // ongoing (measured: 32 ms, WhatsApp incoming, 2026-11-17), so a ring that is still unanswered
         // gets a moment to turn into an answer. Never longer than 3 s, and never "outgoing" meanwhile.
         var waited = 0L
-        while (ring == VoipRingMemory.Verdict.UNRESOLVED_RING && waited < RING_ANSWER_WAIT_MS && isActive && recording) {
+        while (!late && ring == VoipRingMemory.Verdict.UNRESOLVED_RING && waited < RING_ANSWER_WAIT_MS && isActive && recording) {
             delay(100)
             waited += 100
             ring = VoipRingMemory.verdict(callPackage, android.os.SystemClock.elapsedRealtime())
@@ -487,16 +508,16 @@ object VoipRecordingCoordinator {
             VoipRingMemory.consume(callPackage)
         }
         // An app measured to post its incoming notice for every incoming call (Telegram) needs no
-        // notification facts: "listener connected, no ring heard" is its outgoing signal.
-        val alwaysNotified = com.baba.callvault.server.VoipCallerName.isTelegramClient(callPackage)
-        VoipDirection.decide(null, ring, listening, alwaysNotified)?.let {
+        // notification facts: "listener connected, no ring heard" is its outgoing signal, when that absence means
+        // anything for THIS recording (C20: watched since before the ring, not a split call's second file).
+        VoipDirection.decide(null, ring, listening, absence)?.let {
             if (isActive && recording) direction.compareAndSet(null, it)
         }
         AppLogger.i(
             TAG,
             "App-call direction ring memory ($callPackage): ring=${ringAtStart.name.lowercase()}" +
                 (if (ring != ringAtStart) " then ${ring.name.lowercase()} after ${waited}ms" else "") +
-                " listenerConnected=$listening -> ${direction.get()?.token ?: "not decided yet"}"
+                " listenerConnected=$listening absenceMeansOutgoing=$absence late=$late -> ${direction.get()?.token ?: "not decided yet"}"
         )
         while (isActive && recording) {
             val service = RecorderConnection.service ?: return@launch
@@ -516,7 +537,7 @@ object VoipRecordingCoordinator {
                     }
                 } else {
                     first = facts
-                    val decided = VoipDirection.decide(facts, ring, listening, alwaysNotified)
+                    val decided = VoipDirection.decide(facts, ring, listening, absence)
                     if (isActive && recording) direction.compareAndSet(null, decided)
                     AppLogger.i(
                         TAG,
@@ -659,6 +680,7 @@ object VoipRecordingCoordinator {
         val label = appLabelFor(context, pkg)?.let { sanitiseForFileName(it) }?.takeIf { it.isNotEmpty() }
         lateAppLabel = label
         currentAppLabel = label
+        currentCallPackage = pkg
         if (directionJob == null) directionJob = readDirection(pkg)
         VoipRecordingNotification.show(context, label, PendingFlags.count(), paused || heldForAnswer)
         if (lateCaller != null) return
@@ -922,6 +944,9 @@ object VoipRecordingCoordinator {
     /** The body of [onCallEnded], under its lock: stop, then publish or discard. */
     private fun endRecording(context: Context, neverConnected: Boolean) {
         recording = false
+        // A next recording of the same app moments from now is this call split, not a new outgoing one (C20).
+        currentCallPackage?.let { VoipRingMemory.noteRecordingEnded(it, android.os.SystemClock.elapsedRealtime()) }
+        currentCallPackage = null
         val saf = pending
         pending = null
         lateCallerJob?.cancel()

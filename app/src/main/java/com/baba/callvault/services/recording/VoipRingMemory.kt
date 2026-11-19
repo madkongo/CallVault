@@ -59,8 +59,34 @@ object VoipRingMemory {
 
     private val entries = HashMap<String, Entry>()
 
-    /** True while the listener is connected to the system: only then does "no ring seen" mean anything. */
-    @Volatile var listenerConnected = false
+    /**
+     * Since when (elapsedRealtime) the listener has been connected to the system; 0 while it is not. Only a listener
+     * connected since before a call could have rung makes "no ring seen" mean anything (review C20).
+     */
+    @Volatile var listenerConnectedSince = 0L
+        private set
+
+    /** True while the listener is connected to the system. */
+    val listenerConnected: Boolean get() = listenerConnectedSince > 0L
+
+    fun onListenerConnected(now: Long) {
+        listenerConnectedSince = now.coerceAtLeast(1L)
+    }
+
+    fun onListenerDisconnected() {
+        listenerConnectedSince = 0L
+    }
+
+    /** When a recording of [pkg]'s call last ended (elapsedRealtime), so a split call's next file is known (C20). */
+    private val recordingEndedAt = HashMap<String, Long>()
+
+    @Synchronized
+    fun noteRecordingEnded(pkg: String, now: Long) {
+        recordingEndedAt[pkg] = now
+    }
+
+    @Synchronized
+    fun lastRecordingEndedAt(pkg: String): Long = recordingEndedAt[pkg] ?: 0L
 
     /** Posted or updated: [incomingMarker] says it is a ringing call notification, [ongoing] that it is an ongoing one. */
     @Synchronized
@@ -94,7 +120,8 @@ object VoipRingMemory {
     @Synchronized
     fun verdict(pkg: String, now: Long): Verdict {
         val e = entries[pkg] ?: return Verdict.NONE
-        if (e.answeredAt > 0L && now - e.answeredAt <= ANSWER_FRESH_MS) return Verdict.ANSWERED_RING
+        // Only an answer before [now]: a ring is read as of the call's start too (C20), never with a later call's answer.
+        if (e.answeredAt in 1L..now && now - e.answeredAt <= ANSWER_FRESH_MS) return Verdict.ANSWERED_RING
         val last = maxOf(e.lastRingAt, e.removedAt)
         if (e.ringActive || (last > 0L && now - last <= UNRESOLVED_MS)) return Verdict.UNRESOLVED_RING
         return Verdict.NONE
@@ -109,6 +136,7 @@ object VoipRingMemory {
     @Synchronized
     internal fun clearForTest() {
         entries.clear()
-        listenerConnected = false
+        recordingEndedAt.clear()
+        listenerConnectedSince = 0L
     }
 }
