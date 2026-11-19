@@ -121,10 +121,11 @@ after N ms`, then reboot onto that access point: Shizuku starts with no "Allow w
   to off within 6 s of a Wi-Fi loss. On the OP9, Shizuku runs in its tcp mode (port 5555) and leaves Wireless
   debugging OFF once started, so that never fired; a time-proximity guess could also re-enable it against the
   user's off; and it ran the keep-alive (a new persistent notification) in Shizuku mode.
-- **What it does now.**
+- **What it did first (rf4 build) — ❌ NOT WORKING 2026-11-19, replaced; see "Join detection, round 2" below.**
   - Trigger: a `ConnectivityManager` Wi-Fi request held by a PendingIntent (`WifiJoinWatch`,
     `WifiJoinApprovalReceiver`), delivered on each Wi-Fi "available" even with the app not running. No service,
     no notification. Registered at app start, on the switch, and on a mode switch; Shizuku mode + switch on only.
+    **Wrong: Android delivers such a request once and then releases it** (below).
   - The receiver only queues a WorkManager job (`WifiJoinApprovalWorker`, not expedited: on Android 11 that would
     need a notification) and returns. The job starts 4 s after the join, waits up to 15 s for a cold-started app
     to reconnect to the recorder (logged when it does not), then asks the Shizuku-hosted recorder (new AIDL
@@ -161,3 +162,71 @@ after N ms`, then reboot onto that access point: Shizuku starts with no "Allow w
 - Not in Shizuku's tcp mode (Shizuku started over Wireless debugging only, or by root): nothing is approved,
   logged as "Shizuku not in tcp mode".
 - If the shell cannot read the switch (an Android 17 that hides it from shell too), the join is skipped and logged.
+
+## Join detection, round 2 (review N15, 2026-11-19) — 🧪 VERIFYING
+
+**❌ What the OP9 showed (rf4 build, Shizuku mode, 2026-11-19).** 17:10:25-36 switch turned on → 17:10:43 timeline
+`approved access point ..:40:18 (always allow); Wireless debugging restored off after 270 ms`. 17:12:55 joined the
+OP12 hotspot (new BSSID ..:88:01): nothing (no timeline line, no job, no broadcast, not in `adb_temp_keys.xml`).
+17:15:33 rejoin of Baba-5G after `svc wifi disable/enable`: nothing. `dumpsys connectivity` for the app's uid: no
+PendingIntent request left. Also: 40:18 was already trusted by the user's own tap, and the approval added it a
+second time (the app's keys cannot see the user's taps).
+
+**Root cause (read from AOSP `packages/modules/Connectivity`, android14-release, `ConnectivityService.java`).** A
+PendingIntent network request is one-shot: `sendPendingIntentForRequest` sends it only for `CALLBACK_AVAILABLE` and
+only while `!nri.mPendingIntentSent`, and `onSendFinished` then calls `releasePendingNetworkRequestWithDelay`, which
+releases the request after `CONNECTIVITY_RELEASE_PENDING_INTENT_DELAY_MS` (default 5 000 ms; "so the receiving
+client has an opportunity to put in its own request"). The `registerNetworkCallback(…, PendingIntent)` javadoc does
+not say so. Registered while the phone was already on Wi-Fi, it fired at once (that was the 17:10:43 approval of the
+current access point), and 5 s later it was gone. Re-registering from the receiver does not fix it: the delayed
+release matches by PendingIntent and would drop the new request too, and a request registered on Wi-Fi fires at once
+again, a loop every ~5 s. Not an Oplus block and not WorkManager.
+
+**What it does now.**
+- The recorder watches joins itself (`server/WifiJoinMonitor`, `ShellWifiNetworkWatch`): an ordinary
+  `NetworkCallback` for Wi-Fi, which stays registered until unregistered or the process dies. The recorder is the
+  shell-uid process Shizuku keeps up, not frozen by OEM app freezers (Oplus Hans), and the one that approves anyway.
+  Its ConnectivityManager is built on the `connectivity` binder with a Context presenting `com.android.shell`.
+- Armed by the app on every recorder connection (`RecorderConnection.onDaemonReady`), at app start, on the switch
+  and on a mode switch (`WifiJoinWatch.sync`, new AIDL `armWifiJoinWatch` / `drainWifiJoinEvents`). One
+  registration per recorder process however often it is armed; a recorder started again (crash, update, reboot) is
+  armed again when it connects. Arming on Wi-Fi also checks the current access point (Android reports the current
+  network to a new callback at once).
+- A join is checked 4 s later; joins closer than that are checked once, after the last.
+- "Already approved" is now Android's own list: `dumpsys adb` (shell holds DUMP; system_server reads
+  `adb_temp_keys.xml` in `AdbDebuggingManager.dump`, field `keystore`), parsed for addresses so binary XML reads
+  too. Listed → `skipped: … is already on Android's trusted list`; not listed → approved even if the app has a key
+  for it. The app's 30-day keys are only the fallback when the dump cannot be read.
+- Every outcome goes to the always-on timeline with the prefix `Wi-Fi approval (Shizuku): `: `watching Wi-Fi joins
+  in the recorder (pid N)`, `still watching … (armed again; one registration)`, `stopped watching …`, `could not
+  watch …: <reason>`, `Wi-Fi network available (net N); checking its access point in 4 s`, then the check's answer
+  (approved / skipped + why / failed + why). The recorder pushes its lines through the app's provider (starting the
+  app if needed); lines the app could not take wait in the recorder (newest 64) for the app's next arm, and a late
+  line ends with `(in the recorder at HH:mm:ss)`.
+- Backup: when the recorder answers that it is not watching, the app logs `the recorder is not watching Wi-Fi joins
+  (<why>); checking the current access point from the app once instead` and runs the old app-side check once.
+- The PendingIntent receiver is removed. A request the old build left registered fires at most once more, to no
+  receiver, and Android releases it.
+
+**Unit-tested only (Robolectric + JVM): a second and third join are delivered, re-arm on a fresh recorder binder,
+no duplicate registration, skip when Android already trusts the access point.** 📐 Not measured: whether OxygenOS
+lets the shell-uid process register a NetworkCallback (a `could not watch` line would say), and the `dumpsys adb`
+keystore format on this phone (the `already on Android's trusted list` line for 40:18 would confirm it).
+
+**To settle it on the OP9 (Shizuku mode, setting on, debug logging not needed):**
+1. Install the build; open CallVault once. Timeline: `watching Wi-Fi joins in the recorder (pid N)`, then
+   `Wi-Fi network available …` and, 4 s later, `skipped: **:**:**:**:40:18 is already on Android's trusted list`.
+   (`could not watch …` instead means the shell cannot register; send that line.)
+2. Join the OP12 hotspot "Feroza". Within ~5 s: `Wi-Fi network available …` then `approved access point
+   **:**:**:**:88:01 (always allow); Wireless debugging restored off after N ms`. Check
+   `/data/misc/adb/adb_temp_keys.xml` (root) lists 88:01 once, and `settings get global adb_wifi_enabled` is 0.
+3. Back to Baba-5G, then Wi-Fi off and on (`svc wifi disable` / `enable`): a line pair for each join (`… already on
+   Android's trusted list`), proving the second and later joins arrive.
+4. Force-stop CallVault, join the hotspot again: lines still appear (the recorder pushes them and starts the app),
+   or appear with `(in the recorder at …)` after opening the app.
+5. Kill the Shizuku recorder by its pid (as root: find it with `ps -A | grep callvault:recorder`, then `kill <pid>`),
+   open CallVault: a new `watching … (pid M)` line. Then reboot onto the hotspot: Shizuku starts with no "Allow
+   wireless debugging on this network?".
+
+**Still not covered:** a roam between access points of one SSID gives no new "available", so it is not checked
+until the next join or recorder start.
