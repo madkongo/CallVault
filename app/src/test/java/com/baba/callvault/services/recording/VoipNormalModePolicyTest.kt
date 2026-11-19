@@ -152,4 +152,53 @@ class VoipNormalModePolicyTest {
         assertTrue(VoipNormalModePolicy.voicePlayerPackages(owners) { listOf(line) }.isEmpty())
         assertTrue(VoipNormalModePolicy.voiceRecorderPackages(owners) { listOf(line) }.isEmpty())
     }
+
+    // ---- review C9: the one-shot judge must never drop a live LINE call silently ----
+
+    private fun next(failure: VoipNormalModePolicy.JudgeFailure?, verdict: Verdict?, pair: Boolean = true, tries: Int = 1) =
+        VoipNormalModePolicy.afterJudge(failure, verdict, appSeesPair = pair, triesUsed = tries)
+
+    @Test
+    fun `a judge that meets a lookup already running tries again when it finishes`() {
+        assertEquals(VoipNormalModePolicy.JudgeNext.RETRY_AFTER_LOOKUP, next(VoipNormalModePolicy.JudgeFailure.LOOKUP_BUSY, null))
+    }
+
+    @Test
+    fun `no recorder host or no answer from it is tried again a little later`() {
+        assertEquals(VoipNormalModePolicy.JudgeNext.RETRY_LATER, next(VoipNormalModePolicy.JudgeFailure.HOST_NOT_CONNECTED, null))
+        assertEquals(VoipNormalModePolicy.JudgeNext.RETRY_LATER, next(VoipNormalModePolicy.JudgeFailure.NO_ANSWER, null))
+    }
+
+    @Test
+    fun `a dump that misses audio the app still sees is racy and tried again`() {
+        assertEquals(VoipNormalModePolicy.JudgeNext.RETRY_LATER, next(null, Verdict.NO_VOICE_PLAYER, pair = true))
+        assertEquals(VoipNormalModePolicy.JudgeNext.RETRY_LATER, next(null, Verdict.NO_VOICE_RECORDING, pair = true))
+        assertEquals(VoipNormalModePolicy.JudgeNext.RETRY_LATER, next(null, Verdict.NOT_YET, pair = true))
+        // The pair is gone: nothing to retry for.
+        assertEquals(VoipNormalModePolicy.JudgeNext.FINAL, next(null, Verdict.NO_VOICE_PLAYER, pair = false))
+    }
+
+    @Test
+    fun `a successful dump that rules the pair out is final, so a game's voice chat costs one dump`() {
+        assertEquals(VoipNormalModePolicy.JudgeNext.FINAL, next(null, Verdict.NOT_ON_ALLOW_LIST))
+        assertEquals(VoipNormalModePolicy.JudgeNext.FINAL, next(null, Verdict.CARRIER_CALL))
+        assertEquals(VoipNormalModePolicy.JudgeNext.FINAL, next(null, Verdict.CALL_ALREADY_ACTIVE))
+        assertEquals(VoipNormalModePolicy.JudgeNext.FINAL, next(null, Verdict.MODE_IS_NOT_NORMAL))
+    }
+
+    @Test
+    fun `a start is a start`() {
+        assertEquals(VoipNormalModePolicy.JudgeNext.STARTED, next(null, Verdict.START))
+    }
+
+    @Test
+    fun `retries are capped per candidate and then said out loud`() {
+        val max = VoipNormalModePolicy.MAX_JUDGE_TRIES
+        assertEquals(VoipNormalModePolicy.JudgeNext.RETRY_LATER, next(VoipNormalModePolicy.JudgeFailure.NO_ANSWER, null, tries = max - 1))
+        assertEquals(VoipNormalModePolicy.JudgeNext.GIVE_UP, next(VoipNormalModePolicy.JudgeFailure.NO_ANSWER, null, tries = max))
+        assertEquals(VoipNormalModePolicy.JudgeNext.GIVE_UP, next(VoipNormalModePolicy.JudgeFailure.LOOKUP_BUSY, null, tries = max))
+        assertEquals(VoipNormalModePolicy.JudgeNext.GIVE_UP, next(null, Verdict.NO_VOICE_PLAYER, pair = true, tries = max))
+        // A start on the last try still starts.
+        assertEquals(VoipNormalModePolicy.JudgeNext.STARTED, next(null, Verdict.START, tries = max))
+    }
 }

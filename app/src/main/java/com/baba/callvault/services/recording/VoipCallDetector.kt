@@ -87,6 +87,12 @@ class VoipCallDetector(private val context: Context) {
     /** The pair was looked at for this candidate already, so it is not looked at again until it ends. */
     private var normalCandidateJudged = false
 
+    /** Judges of the current candidate so far (review C9), capped by [VoipNormalModePolicy.MAX_JUDGE_TRIES]. */
+    private var normalJudgeTries = 0
+
+    /** A judge found another lookup running: it is run again the moment that lookup finishes (C9). */
+    private var normalJudgePending = false
+
     /** The last "voice audio in normal mode" signature that was logged, so a line is written once per change. */
     private var lastNormalVoiceKey: String? = null
     private val ownersLookupBusy = java.util.concurrent.atomic.AtomicBoolean(false)
@@ -474,13 +480,15 @@ class VoipCallDetector(private val context: Context) {
             clearNormalCandidate()
             return
         }
-        // Log once per change (callActive or not): who owns it, what it is, whether the allow-list matched.
+        val both = snap.voiceCallPlayers > 0 && snap.voiceCommRecorders > 0
+        // Log once per change (callActive or not): who owns it, what it is, whether the allow-list matched. Not while
+        // a candidate waits for its judge (C9): that descriptive lookup is what made the judge find one running, and
+        // the judge logs the owners itself.
         val key = "${snap.voiceCallPlayers}/${snap.voiceCommRecorders}/${snap.playerKinds}"
         if (key != lastNormalVoiceKey) {
             lastNormalVoiceKey = key
-            lookUpOwners(snap, judge = false)
+            if (callActive || !both) lookUpOwners(snap, judge = false)
         }
-        val both = snap.voiceCallPlayers > 0 && snap.voiceCommRecorders > 0
         if (callActive || !both) {
             clearNormalCandidate()
             return
@@ -488,6 +496,8 @@ class VoipCallDetector(private val context: Context) {
         if (normalCandidateSince == 0L) {
             normalCandidateSince = android.os.SystemClock.elapsedRealtime()
             normalCandidateJudged = false
+            normalJudgeTries = 0
+            normalJudgePending = false
             handler.removeCallbacks(normalConfirmRunnable)
             handler.postDelayed(normalConfirmRunnable, VoipNormalModePolicy.HOLD_MS)
         }
@@ -496,6 +506,8 @@ class VoipCallDetector(private val context: Context) {
     private fun clearNormalCandidate() {
         normalCandidateSince = 0L
         normalCandidateJudged = false
+        normalJudgeTries = 0
+        normalJudgePending = false
         handler.removeCallbacks(normalConfirmRunnable)
     }
 
@@ -509,6 +521,7 @@ class VoipCallDetector(private val context: Context) {
             return@Runnable
         }
         normalCandidateJudged = true
+        normalJudgeTries++
         lookUpOwners(snap, judge = true)
     }
 
@@ -523,11 +536,12 @@ class VoipCallDetector(private val context: Context) {
         val service = com.baba.callvault.server.RecorderConnection.service
         if (service == null) {
             CallEndLog.record(context, "normal-mode voice audio: ${VoipEndProbe.describe(snap)} callActive=$callActive — recorder host not connected, owners unknown")
+            if (judge) afterJudge(VoipNormalModePolicy.JudgeFailure.HOST_NOT_CONNECTED, null, pairLiveNow())
             return
         }
         if (!ownersLookupBusy.compareAndSet(false, true)) {
-            // One lookup at a time. A judge that finds one running is retried by the next change or tick.
-            if (judge) normalCandidateJudged = false
+            // One lookup at a time. A judge that finds one running runs again when that lookup finishes (C9).
+            if (judge) afterJudge(VoipNormalModePolicy.JudgeFailure.LOOKUP_BUSY, null, pairLiveNow())
             return
         }
         Thread {
@@ -547,7 +561,19 @@ class VoipCallDetector(private val context: Context) {
                     context,
                     "normal-mode voice audio: ${VoipEndProbe.describe(snap)} callActive=$callActive $line",
                 )
-                if (judge) judgeNormalCandidate(players, recorders)
+                when {
+                    judge && owners == null -> afterJudge(VoipNormalModePolicy.JudgeFailure.NO_ANSWER, null, pairLiveNow())
+                    judge -> judgeNormalCandidate(players, recorders)
+                    normalJudgePending -> {
+                        // A judge waited for this lookup (C9): run it now, if its candidate is still there.
+                        normalJudgePending = false
+                        if (normalCandidateSince != 0L && !callActive) {
+                            normalCandidateJudged = false
+                            handler.removeCallbacks(normalConfirmRunnable)
+                            handler.post(normalConfirmRunnable)
+                        }
+                    }
+                }
             }
         }.apply { isDaemon = true; name = "cv-voip-owners" }.start()
     }
@@ -555,7 +581,11 @@ class VoipCallDetector(private val context: Context) {
     /** Main thread: the policy's verdict, on the audio as it is now. */
     private fun judgeNormalCandidate(players: Set<String>, recorders: Set<String>) {
         val am = audioManager ?: return
-        val snap = runCatching { VoipEndProbe.capture(am) }.getOrNull() ?: return
+        val snap = runCatching { VoipEndProbe.capture(am) }.getOrNull()
+        if (snap == null) {
+            afterJudge(VoipNormalModePolicy.JudgeFailure.NO_ANSWER, null, appSeesPair = true)
+            return
+        }
         val now = android.os.SystemClock.elapsedRealtime()
         val stillBoth = snap.voiceCallPlayers > 0 && snap.voiceCommRecorders > 0
         val heldMs = if (normalCandidateSince == 0L || !stillBoth) 0L else now - normalCandidateSince
@@ -567,14 +597,43 @@ class VoipCallDetector(private val context: Context) {
             vcRecorderPackages = recorders,
             heldMs = heldMs,
         )
-        AppLogger.i(TAG, "normal-mode voice audio verdict: $verdict (held ${heldMs}ms)")
-        if (verdict == VoipNormalModePolicy.Verdict.START) {
-            clearNormalCandidate()
-            startAppCall(viaNormalMode = true)
-            return
+        AppLogger.i(TAG, "normal-mode voice audio verdict: $verdict (held ${heldMs}ms, try $normalJudgeTries)")
+        afterJudge(null, verdict, appSeesPair = stillBoth && snap.mode == AudioManager.MODE_NORMAL)
+    }
+
+    /** Whether the app itself still sees a call-voice player and recording in MODE_NORMAL. Unreadable reads as yes. */
+    private fun pairLiveNow(): Boolean {
+        val snap = audioManager?.let { am -> runCatching { VoipEndProbe.capture(am) }.getOrNull() } ?: return true
+        return snap.mode == AudioManager.MODE_NORMAL && snap.voiceCallPlayers > 0 && snap.voiceCommRecorders > 0
+    }
+
+    /**
+     * Carries out [VoipNormalModePolicy.afterJudge] for the current candidate (review C9): start, stop judging,
+     * judge again, or give up and say so in the always-on log. Never drops a live candidate without a line.
+     */
+    private fun afterJudge(failure: VoipNormalModePolicy.JudgeFailure?, verdict: VoipNormalModePolicy.Verdict?, appSeesPair: Boolean) {
+        if (normalCandidateSince == 0L || callActive) return
+        val why = failure?.name?.lowercase() ?: verdict?.name?.lowercase() ?: "?"
+        when (VoipNormalModePolicy.afterJudge(failure, verdict, appSeesPair, normalJudgeTries)) {
+            VoipNormalModePolicy.JudgeNext.STARTED -> {
+                clearNormalCandidate()
+                startAppCall(viaNormalMode = true)
+            }
+            VoipNormalModePolicy.JudgeNext.FINAL -> Unit   // judged: not looked at again until the pair ends
+            VoipNormalModePolicy.JudgeNext.RETRY_AFTER_LOOKUP -> {
+                normalCandidateJudged = false
+                normalJudgePending = true
+                CallEndLog.record(context, "normal-mode app call check $normalJudgeTries met another lookup running; checking again when it ends")
+            }
+            VoipNormalModePolicy.JudgeNext.RETRY_LATER -> {
+                normalCandidateJudged = false
+                handler.removeCallbacks(normalConfirmRunnable)
+                handler.postDelayed(normalConfirmRunnable, VoipNormalModePolicy.JUDGE_RETRY_MS)
+                CallEndLog.record(context, "normal-mode app call check $normalJudgeTries gave no answer ($why); checking again in ${VoipNormalModePolicy.JUDGE_RETRY_MS} ms")
+            }
+            VoipNormalModePolicy.JudgeNext.GIVE_UP ->
+                CallEndLog.record(context, "normal-mode app call NOT started: no usable answer after $normalJudgeTries checks (last: $why); this call is not recorded")
         }
-        // NOT_YET (the pair flickered while the lookup ran): look again when the next change comes.
-        if (verdict == VoipNormalModePolicy.Verdict.NOT_YET) normalCandidateJudged = false
     }
 
     /** A normal-mode call is up: end it once the call-voice audio has been gone for the debounce. */
@@ -622,6 +681,9 @@ class VoipCallDetector(private val context: Context) {
             registered = true
             AppLogger.i(TAG, "VoIP call detection active")
             evaluate(audioManager.mode)   // a call may already be in progress
+            // A normal-mode call already in progress too (C9): registering delivers no current state, so a steady
+            // LINE call would otherwise wait for its next player or recorder change.
+            watchNormalMode()
         }.onFailure { AppLogger.w(TAG, "Could not start VoIP detection: ${it.message}") }
     }
 

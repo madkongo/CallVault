@@ -69,6 +69,64 @@ object VoipNormalModePolicy {
         else -> Verdict.START
     }
 
+    // ---- review C9: the judge is retried, never dropped ----
+
+    /** Why a judge produced no verdict. */
+    enum class JudgeFailure {
+        /** Another owner lookup was still running (one at a time). */
+        LOOKUP_BUSY,
+
+        /** The recorder host was not connected. */
+        HOST_NOT_CONNECTED,
+
+        /** The host gave no answer (it died, or the dump failed or timed out). */
+        NO_ANSWER,
+    }
+
+    enum class JudgeNext {
+        /** The call starts. */
+        STARTED,
+
+        /** A successful look said no: not judged again for this candidate. */
+        FINAL,
+
+        /** Judge again as soon as the running lookup finishes. */
+        RETRY_AFTER_LOOKUP,
+
+        /** Judge again after [JUDGE_RETRY_MS]. */
+        RETRY_LATER,
+
+        /** The tries for this candidate are spent: say so in the always-on log. */
+        GIVE_UP,
+    }
+
+    /** The wait before a judge is retried after no answer or a racy answer. */
+    const val JUDGE_RETRY_MS = 1_500L
+
+    /** Judges per candidate, the first included. Bounded: each is a `dumpsys audio` run in the recorder host. */
+    const val MAX_JUDGE_TRIES = 5
+
+    /**
+     * What follows a judge of a normal-mode candidate (review C9). The judge used to be one-shot: a lookup already
+     * running, a missing recorder host or a failed dump left the candidate judged for the rest of the call, so a
+     * LINE call that stayed live was neither recorded nor reported. Only a verdict from a successful dump that
+     * rules the call out is final; a dump that misses audio the app itself still sees ([appSeesPair]) is racy and
+     * retried. [triesUsed] counts the judges of this candidate so far, this one included.
+     */
+    fun afterJudge(failure: JudgeFailure?, verdict: Verdict?, appSeesPair: Boolean, triesUsed: Int): JudgeNext {
+        if (failure == null) {
+            when (verdict) {
+                Verdict.START -> return JudgeNext.STARTED
+                Verdict.NOT_ON_ALLOW_LIST, Verdict.CARRIER_CALL, Verdict.CALL_ALREADY_ACTIVE, Verdict.MODE_IS_NOT_NORMAL ->
+                    return JudgeNext.FINAL
+                Verdict.NO_VOICE_PLAYER, Verdict.NO_VOICE_RECORDING, Verdict.NOT_YET, null ->
+                    if (!appSeesPair) return JudgeNext.FINAL
+            }
+        }
+        if (triesUsed >= MAX_JUDGE_TRIES) return JudgeNext.GIVE_UP
+        return if (failure == JudgeFailure.LOOKUP_BUSY) JudgeNext.RETRY_AFTER_LOOKUP else JudgeNext.RETRY_LATER
+    }
+
     /**
      * Whether a call started by this path is over: the mode is still NORMAL and neither a call-voice
      * player nor a call-voice recording is live. (A mode other than NORMAL hands the call to the
