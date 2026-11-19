@@ -75,14 +75,6 @@ object CloudCopyPolicy {
     const val LIST_TIMEOUT_MS = 30_000L
 
     /**
-     * True when the copier process failed to list the Drive folder earlier on [today] ([rememberedDay] is the
-     * day it was written down, null when never): the sweep then goes straight to listing in the app's own
-     * process instead of waiting out the copier again. Expires by itself at midnight.
-     */
-    fun copierListFailedToday(rememberedDay: String?, today: String): Boolean =
-        rememberedDay != null && rememberedDay == today
-
-    /**
      * A Drive document that counts as already holding the recording: its reported length equals the source's.
      * A length of 0 or -1 is what a cloud provider reports for a file still settling; that is not proof, so
      * the recording goes through the copier again, which re-asks and says "unverified" if it stays unsettled.

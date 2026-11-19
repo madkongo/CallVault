@@ -23,7 +23,7 @@ import com.baba.callvault.utils.AppLogger
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.withTimeoutOrNull
 
-/** Something the Drive copy can be asked to do: [DriveCopyClient] (the `:drive` process) or [LocalDriveCopier]. */
+/** Something the Drive copy can be asked to do: [DriveCopyClient], the `:drive` process (tests use a fake). */
 interface DriveCopier {
     /** Short name for the journal: where the work runs. */
     val where: String
@@ -218,50 +218,5 @@ class DriveCopyClient(context: Context, private val honorStop: Boolean = true) :
          */
         fun obeysStop(honorStop: Boolean, what: Int): Boolean = honorStop && what != DriveCopyProtocol.MSG_LIST
         private const val CONNECT_TIMEOUT_MS = 15_000L
-    }
-}
-
-/**
- * The same work as [DriveCopyService], done in the app's own process: the fallback when the copier process
- * cannot answer a listing. It runs each message on a worker thread so the caller keeps its time limit and
- * the Stop button; a message stuck in the provider is abandoned (its thread is left to finish on its own).
- */
-class LocalDriveCopier(context: Context, private val honorStop: Boolean = true) : DriveCopier {
-
-    private val appContext = context.applicationContext
-
-    override val where: String get() = "the app's own process"
-
-    override suspend fun call(what: Int, data: Bundle, timeoutMs: Long): DriveCopyClient.Outcome {
-        val done = CompletableDeferred<Result<Bundle>>()
-        Thread({
-            done.complete(runCatching { DriveCopyHandler.handle(appContext, what, data, inCopier = false) })
-        }, "cv-drive-copy-local").start()
-        val start = SystemClock.elapsedRealtime()
-        while (true) {
-            withTimeoutOrNull(POLL_MS) { done.await() }
-            if (done.isCompleted) {
-                val r = done.await()
-                return r.getOrNull()?.let { DriveCopyClient.Outcome.Reply(it) } ?: run {
-                    DriveCopyJournal.record(appContext, "main-process copier: message $what threw ${r.exceptionOrNull()?.javaClass?.simpleName}: ${r.exceptionOrNull()?.message}")
-                    DriveCopyClient.Outcome.Died
-                }
-            }
-            if (DriveCopyClient.obeysStop(honorStop, what) && DriveCopyStop.isRequested()) {
-                DriveCopyJournal.record(appContext, "main-process copier: message $what abandoned, Stop for now pressed after ${SystemClock.elapsedRealtime() - start}ms (its thread is left to finish)")
-                return DriveCopyClient.Outcome.Stopped
-            }
-            val waited = SystemClock.elapsedRealtime() - start
-            if (waited > timeoutMs) {
-                DriveCopyJournal.record(appContext, "main-process copier: no result for message $what within ${waited}ms (limit ${timeoutMs}ms); its thread is left to finish, ${DriveDiagnostics.memory(appContext)}")
-                return DriveCopyClient.Outcome.TimedOut
-            }
-        }
-    }
-
-    override fun close() = Unit
-
-    private companion object {
-        const val POLL_MS = 500L
     }
 }

@@ -107,13 +107,12 @@ class SyncSweepWorker(ctx: Context, params: WorkerParameters) : CoroutineWorker(
 
         // Everything that talks to Google Drive's provider happens in the copier process (see
         // [DriveCopyService]): when Drive's process dies Android kills the process that holds a connection
-        // to it, and that must not be this one. If that process cannot list the folder, the sweep falls
-        // back once to doing the same work here (see [sweep]) rather than giving up for the day.
-        var copier: DriveCopier = DriveCopyClient(applicationContext)
+        // to it, and that must never be this one, which also records calls (review C11).
+        var copier: DriveCopier? = null
         try {
-            return sweep({ copier }, { copier = it }, target, sourceDir, driveFolderUri, sweepStart)
+            return sweep({ DriveCopyClient(applicationContext).also { copier = it } }, target, sourceDir, driveFolderUri, sweepStart)
         } finally {
-            copier.close()
+            copier?.close()
         }
     }
 
@@ -138,8 +137,7 @@ class SyncSweepWorker(ctx: Context, params: WorkerParameters) : CoroutineWorker(
     }
 
     private suspend fun sweep(
-        copierNow: () -> DriveCopier,
-        useCopier: (DriveCopier) -> Unit,
+        openCopier: () -> DriveCopier,
         target: StorageTarget,
         sourceDir: DocumentFile,
         driveFolderUri: android.net.Uri,
@@ -151,52 +149,27 @@ class SyncSweepWorker(ctx: Context, params: WorkerParameters) : CoroutineWorker(
         // The URI is kept, not just the length: proving a file is already in Drive is exactly the
         // evidence the catalog needs, and throwing it away is what let a correctly backed-up
         // recording go on looking unsynced forever. See where `alreadyThere` is used.
-        // A copier that could not list earlier today is not asked again today: that cost its whole time limit
-        // on every retry (see [DriveListMemory]).
-        val remembered = DriveListMemory.failureToday(applicationContext)
-        var (listed, listFailure) = if (remembered != null) {
-            journal("copier list SKIPPED: it failed earlier today ($remembered); listing and copying in the app's own process for this run")
-            null to "skipped, failed earlier today ($remembered)"
-        } else {
-            tryList(copierNow(), driveFolderUri)
-        }
-        var usingFallback = false
+        val listOutcome = DriveCopierListing.list(openCopier, journal = ::journal) { tryList(it, driveFolderUri) }
+        val copier = listOutcome.copier
+        val listed = listOutcome.listing
         if (listed == null) {
-            if (remembered == null) {
-                if (DriveCopyStop.isRequested()) {
-                    journal("sweep stopped by the user while listing: $listFailure")
-                    return Result.success()
-                }
-                journal(
-                    "list through the copier FAILED: $listFailure; copier process alive=${DriveDiagnostics.copierAlive(applicationContext)}, " +
-                        "${DriveDiagnostics.memory(applicationContext)}; falling back ONCE to listing and copying in the app's own process for this run; " +
-                        "the copier is not asked again today",
-                )
-                DriveListMemory.remember(applicationContext, listFailure)
-            }
-            copierNow().close()
-            useCopier(LocalDriveCopier(applicationContext))
-            usingFallback = true
-            val second = tryList(copierNow(), driveFolderUri)
-            listed = second.first
-            if (listed == null) {
-                val again = CloudCopyPolicy.shouldRetryListFailure(runAttemptCount)
-                val wait = CloudCopyPolicy.SWEEP_BACKOFF_MINUTES * (runAttemptCount + 1)
-                AppLogger.w(TAG, "Drive folder cannot be listed in either process; ${if (again) "retrying later" else "giving up until the next scheduled run"}.")
-                journal(
-                    "sweep not started: the Drive folder could not be listed in either process. Copier: $listFailure | App process: ${second.second}. " +
-                        if (again) "Retry ${runAttemptCount + 2} of ${CloudCopyPolicy.LIST_FAILURE_MAX_ATTEMPTS} in about $wait min."
-                        else "Attempt ${runAttemptCount + 1} was the last: waiting for the next scheduled time.",
-                )
-                return if (again) Result.retry() else Result.success()
-            }
-            journal("fallback list ok: ${listed.names.size} entries; this run copies in the app's own process (the Drive provider is now queried from here)")
+            val again = CloudCopyPolicy.shouldRetryListFailure(runAttemptCount)
+            val wait = CloudCopyPolicy.SWEEP_BACKOFF_MINUTES * (runAttemptCount + 1)
+            AppLogger.w(TAG, "Drive folder cannot be listed by the copier; ${if (again) "retrying later" else "giving up until the next scheduled run"}.")
+            journal(
+                "sweep not started: the copier could not list the Drive folder in ${listOutcome.failures.size} tries " +
+                    "(${listOutcome.failures.joinToString(" | ")}); copier process alive=${DriveDiagnostics.copierAlive(applicationContext)}, " +
+                    "${DriveDiagnostics.memory(applicationContext)}. " +
+                    if (again) "Retry ${runAttemptCount + 2} of ${CloudCopyPolicy.LIST_FAILURE_MAX_ATTEMPTS} in about $wait min."
+                    else "Attempt ${runAttemptCount + 1} was the last: waiting for the next scheduled time.",
+            )
+            return if (again) Result.retry() else Result.success()
         }
         val existingInDrive = HashMap<String, DriveCopy>(listed.names.size * 2)
         for (i in listed.names.indices) {
             existingInDrive[listed.names[i].lowercase()] = DriveCopy(listed.uris[i], listed.sizes[i])
         }
-        journal("drive folder listed: ${listed.names.size} entries in ${SystemClock.elapsedRealtime() - sweepStart}ms (incl. start-up), via ${copierNow().where}")
+        journal("drive folder listed: ${listed.names.size} entries in ${SystemClock.elapsedRealtime() - sweepStart}ms (incl. start-up), via ${copier.where}")
 
         val deleteLocal = target == StorageTarget.DRIVE
         var copied = 0
@@ -266,7 +239,7 @@ class SyncSweepWorker(ctx: Context, params: WorkerParameters) : CoroutineWorker(
         var stoppedByUser = false
         if (total > 0) showProgress(done, total)
         val copyStart = SystemClock.elapsedRealtime()
-        journal("sweep start: $total to copy, ready after ${copyStart - sweepStart}ms (Drive folder holds ${existingInDrive.size}), skipped $skipped empty, copying ${if (usingFallback) "in the app's own process (fallback)" else "in the :drive process"}")
+        journal("sweep start: $total to copy, ready after ${copyStart - sweepStart}ms (Drive folder holds ${existingInDrive.size}), skipped $skipped empty, copying in the :drive process")
         var stalls = 0
         for (entry in DriveSweepOrder.newestFirst(pending)) {
             // Between files, and also inside one: the copier call below is abandoned within about half a
@@ -284,7 +257,7 @@ class SyncSweepWorker(ctx: Context, params: WorkerParameters) : CoroutineWorker(
                 existing = known?.uri, existingSize = known?.sizeBytes ?: -1L, staging = staging?.uri,
             )
             val fileStart = SystemClock.elapsedRealtime()
-            val outcome = copierNow().call(
+            val outcome = copier.call(
                 DriveCopyProtocol.MSG_COPY, DriveCopyProtocol.copyRequest(request), CloudCopyPolicy.fileTimeoutMs(sourceSize),
             )
             val fileMs = SystemClock.elapsedRealtime() - fileStart

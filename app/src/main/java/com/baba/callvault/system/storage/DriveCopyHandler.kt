@@ -14,9 +14,8 @@ import android.os.SystemClock
 import java.io.File
 
 /**
- * What the Drive copier does with one message. Shared by [DriveCopyService] (the `:drive` process) and
- * [LocalDriveCopier] (the same work in the app's own process, used only when the copier process cannot list
- * the folder), so both answer the same way and both write the same journal lines.
+ * What the Drive copier ([DriveCopyService], the `:drive` process) does with one message. [handle]'s `inCopier`
+ * is always true since the in-app copier was removed (review C11); the false branches are unused.
  *
  * Every failure here ends in a reply that carries a reason, and in a journal line: there is no path that
  * returns "failed" without saying why.
@@ -24,8 +23,8 @@ import java.io.File
 object DriveCopyHandler {
 
     /**
-     * Test hook for the drive2 build: when true, the `:drive` process refuses to list (the main-process
-     * fallback never does), to show the fallback and its log lines on a phone. False in every shipped
+     * Test hook for the drive2 build: when true, the `:drive` process refuses to list, to show the sweep's
+     * bounded copier restarts and their log lines on a phone. False in every shipped
      * build; a unit test fails if it is ever committed as true.
      */
     const val TEST_FORCE_LIST_FAILURE = false

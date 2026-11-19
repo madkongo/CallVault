@@ -144,13 +144,6 @@ class DriveCopyLimitsTest {
     }
 
     @Test
-    fun `a copier that failed to list today is not asked again today, but is tomorrow`() {
-        assertTrue(CloudCopyPolicy.copierListFailedToday("2026-11-17", "2026-11-17"))
-        assertFalse(CloudCopyPolicy.copierListFailedToday("2026-11-17", "2026-11-18"))
-        assertFalse(CloudCopyPolicy.copierListFailedToday(null, "2026-11-17"))
-    }
-
-    @Test
     fun `a Drive copy reported as 0 or unknown length is not verified and is checked again, never deleted on`() {
         assertTrue(CloudCopyPolicy.isVerifiedPresent(4096L, 4096L))
         assertFalse(CloudCopyPolicy.isVerifiedPresent(0L, 4096L)) // settled-at-zero: ask the copier again next sweep
