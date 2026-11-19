@@ -17,6 +17,10 @@ import com.baba.callvault.data.recordings.db.MergePartEntry
 import com.baba.callvault.data.recordings.db.RecordingDatabase
 import com.baba.callvault.system.storage.SafHelper
 import com.baba.callvault.system.storage.StorageRouter
+import com.baba.callvault.data.transcripts.db.TranscriptDatabase
+import com.baba.callvault.data.transcripts.db.TranscriptEntry
+import com.baba.callvault.data.transcripts.db.TranscriptState
+import io.mockk.coEvery
 import io.mockk.every
 import io.mockk.justRun
 import io.mockk.mockkObject
@@ -138,5 +142,28 @@ class UnMergeSafetyTest {
         }
         // Android may clear cacheDir under storage pressure, which would take the only copy of a part with it.
         staged.forEach { assertTrue(it.path, it.path.startsWith(context.filesDir.path)) }
+    }
+
+    @Test
+    fun `a part whose catalog row cannot be written keeps the merged call and the part's kept data`() = runBlocking {
+        // partA is a hidden part: no row, its transcript kept for un-merge.
+        TranscriptDatabase.get(context).transcriptDao()
+            .upsertTranscript(TranscriptEntry(partA, TranscriptState.DONE, "model", "en", 1L, null))
+        every { SafHelper.publishStagedRecording(any(), any(), partA, any(), any()) } returns uriA
+        every { SafHelper.publishStagedRecording(any(), any(), partB, any(), any()) } returns uriB
+        mockkObject(RecordingCatalog)
+        coEvery { RecordingCatalog.recordLocalReporting(any(), partB, any(), any(), any()) } returns IllegalStateException("disk full")
+
+        val outcome = MergeService.unMerge(context, merged)
+
+        assertTrue("a part with no row is not restored: $outcome", outcome is MergeService.Outcome.Failed)
+        assertNotNull("the merged call must still be catalogued", dao.findByName(merged)?.localUri)
+        assertEquals(2, parts.partsOf(merged).size)
+        assertNull("rows written before the failure are taken back", dao.findByName(partA))
+        assertNotNull("the hidden part keeps its data", TranscriptDatabase.get(context).transcriptDao().findTranscript(partA))
+        verify(exactly = 1) { SafHelper.deleteDocument(any(), partA) }
+        verify(exactly = 1) { SafHelper.deleteDocument(any(), partB) }
+        verify(exactly = 0) { SafHelper.deleteDocument(any(), merged) }
+        TranscriptDatabase.get(context).transcriptDao().deleteFor(partA)
     }
 }

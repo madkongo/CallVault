@@ -306,13 +306,20 @@ object MergeService {
             onPartProgress(i, true)
         }
 
-        // 4. Every part is back and proven, so the merged recording may go. The parts are catalogued first: until
-        //    then they are hidden parts, and deleting the merged call would take their kept data with it (N2).
+        // 4. Catalogue every part before the merged recording may go: until a part has its row it is a hidden part,
+        //    and deleting the merged call would take its kept data with it (N2). A row write that fails undoes the
+        //    rows and files of this un-merge and keeps the merged call, as a failed publish does.
+        val rowFailure = catalogueParts(context, parts, published)
+        if (rowFailure != null) {
+            AppLogger.e(TAG, "Could not catalogue ${rowFailure.first}; undoing this un-merge, $mergedName kept: ${rowFailure.second}")
+            published.forEachIndexed { j, done ->
+                SafHelper.deleteDocument(DocumentFile.fromSingleUri(context, done), parts[j].partName)
+            }
+            staging.deleteRecursively()
+            return Outcome.Failed("A call could not be restored to your library, so nothing was changed")
+        }
         parts.forEachIndexed { i, part ->
             val uri = published[i]
-            RecordingCatalog.recordLocal(
-                context, part.partName, uri, SafHelper.fileSize(context, uri), part.originalLastModified
-            )
             RecordingCatalog.setDuration(context, part.partName, part.durationUs / 1_000_000L)
             // A restored call is a new file, so it needs sending wherever recordings go — otherwise
             // a part that lived in Drive before the merge comes back device-only, and the copy the
@@ -327,6 +334,45 @@ object MergeService {
 
         AppLogger.i(TAG, "Un-merged $mergedName back into ${parts.size} calls")
         return Outcome.UnMerged(parts.size)
+    }
+
+    /**
+     * Writes each part's catalog row for its [published] copy. On the first failure, puts back every row it had
+     * changed (a part catalogued before keeps its earlier row; a hidden part loses only its new row, never its kept
+     * data) and returns (part name, reason); null when every row was written.
+     */
+    private suspend fun catalogueParts(
+        context: Context,
+        parts: List<MergePartEntry>,
+        published: List<Uri>,
+    ): Pair<String, String>? {
+        val dao = RecordingDatabase.get(context).recordingDao()
+        val before = mutableListOf<Pair<String, RecordingEntry?>>()
+        for ((i, part) in parts.withIndex()) {
+            val previous = runCatching { dao.findByName(part.partName) }.getOrElse { e ->
+                undoRows(context, before)
+                return part.partName to (e.message ?: e.javaClass.simpleName)
+            }
+            before += part.partName to previous
+            val uri = published[i]
+            val failure = RecordingCatalog.recordLocalReporting(
+                context, part.partName, uri, SafHelper.fileSize(context, uri), part.originalLastModified
+            )
+            if (failure != null) {
+                undoRows(context, before)
+                return part.partName to (failure.message ?: failure.javaClass.simpleName)
+            }
+        }
+        return null
+    }
+
+    /** Puts the rows [catalogueParts] changed back as they were, without touching any part's kept data. */
+    private suspend fun undoRows(context: Context, before: List<Pair<String, RecordingEntry?>>) {
+        val dao = RecordingDatabase.get(context).recordingDao()
+        before.forEach { (name, previous) ->
+            runCatching { if (previous != null) dao.upsert(previous) else RecordingCatalog.forgetName(context, name) }
+                .onFailure { AppLogger.e(TAG, "Could not undo the row for $name after a failed un-merge: ${it.message}") }
+        }
     }
 
     /**
