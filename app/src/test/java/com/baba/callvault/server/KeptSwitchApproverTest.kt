@@ -35,9 +35,12 @@ class KeptSwitchApproverTest {
     /** Reads answered before any approval, in order, overriding [wd] (to put a user's tap between two reads). */
     private val readsBeforeApproval = ArrayDeque<Int?>()
     private val salt = "0123456789abcdef"
+    /** Android's own trusted list as `dumpsys adb` shows it; null = could not be read. */
+    private var trustedByAndroid: Set<String>? = null
 
     private fun approver() = KeptSwitchApprover(
         identity = { identity },
+        trustedBssids = { trustedByAndroid },
         readWirelessDebugging = {
             if (approvals.isEmpty() && readsBeforeApproval.isNotEmpty()) {
                 readsBeforeApproval.removeFirst().also { wd = it }
@@ -85,6 +88,61 @@ class KeptSwitchApproverTest {
         assertEquals(KeptSwitchOutcome.ALREADY_APPROVED, result.outcome)
         assertTrue(approvals.isEmpty())
         assertEquals(0, offWrites)
+    }
+
+    @Test
+    fun `an access point Android already trusts is not approved again`() {
+        // OP9 2026-11-19: 40:18 was trusted by the user's own tap, the app had no key for it, and the recorder
+        // approved it again, so Android's list then held it twice.
+        trustedByAndroid = setOf("aa:bb:cc:dd:ee:ff")
+
+        val result = approver().run(emptySet(), salt)
+
+        assertEquals(KeptSwitchOutcome.ALREADY_TRUSTED_BY_ANDROID, result.outcome)
+        assertTrue(result.outcome.trusted)
+        assertTrue(approvals.isEmpty())
+        assertEquals(0, offWrites)
+        assertEquals(0, tcpChecks)
+    }
+
+    @Test
+    fun `Android's list is the truth when it can be read - an app key for an access point it no longer holds is approved again`() {
+        trustedByAndroid = setOf("11:22:33:44:55:66")
+
+        val result = approver().run(setOf(BssidPrivacy.key("aa:bb:cc:dd:ee:ff", salt)), salt)
+
+        assertEquals(KeptSwitchOutcome.APPROVED_RESTORED_OFF, result.outcome)
+        assertEquals(listOf(true), approvals)
+    }
+
+    @Test
+    fun `the trusted list in dumpsys adb is read case-insensitively, keys and other text ignored`() {
+        val dump = """
+            ADB MANAGER STATE (dumpsys adb):
+              debugging_manager={
+                connected_to_adb=true
+                user_keys=QAAAAHk2 user@host
+                keystore=<?xml version='1.0' encoding='utf-8' standalone='yes' ?>
+            <keyStore version="1"><adbKey key="QAAAAHk2 user@host" lastConnection="1700000000000" /><wifiAP bssid="AA:BB:CC:DD:EE:FF" /><wifiAP bssid="aa:bb:cc:dd:ee:ff" /><wifiAP bssid="10:20:30:40:50:60" /></keyStore>
+              }
+        """.trimIndent()
+
+        assertEquals(setOf("aa:bb:cc:dd:ee:ff", "10:20:30:40:50:60"), WirelessDebuggingApproval.parseTrustedBssids(dump))
+    }
+
+    @Test
+    fun `a dump with no keystore means an empty trusted list, and a refused or failed dump means unknown`() {
+        assertEquals(emptySet<String>(), WirelessDebuggingApproval.parseTrustedBssids("ADB MANAGER STATE (dumpsys adb):\n  debugging_manager={\n  connected_to_adb=false\n}"))
+        assertNull(WirelessDebuggingApproval.parseTrustedBssids("Permission Denial: can't dump adb from pid=1, uid=10311"))
+        assertNull(WirelessDebuggingApproval.parseTrustedBssids(null))
+    }
+
+    @Test
+    fun `a trusted list in binary XML still yields its access points`() {
+        // Android 12+ may write the keystore as binary XML; the address strings stay plain ASCII inside it.
+        val abx = "ABX\u0000\u0001\u0010keyStore\u002f\u0011\u0000\u0005wifiAP\u002f\u0000\u0011aa:bb:cc:dd:ee:ff\u0003"
+
+        assertEquals(setOf("aa:bb:cc:dd:ee:ff"), WirelessDebuggingApproval.parseTrustedBssids("ADB MANAGER STATE (dumpsys adb):\n keystore=$abx"))
     }
 
     @Test

@@ -42,6 +42,10 @@ object WirelessDebuggingApproval {
     private const val CMD = "/system/bin/cmd"
     private const val SETTINGS = "/system/bin/settings"
     private const val GETPROP = "/system/bin/getprop"
+    private const val DUMPSYS = "/system/bin/dumpsys"
+    private const val ADB_DUMP_HEADER = "ADB MANAGER STATE"
+    private const val KEYSTORE_FIELD = "keystore"
+    private val BSSID = Regex("""(?<![0-9A-Fa-f:])[0-9A-Fa-f]{2}(?::[0-9A-Fa-f]{2}){5}(?![0-9A-Fa-f:])""")
     private const val WD_SETTING = "adb_wifi_enabled"
     private const val TIMEOUT_SEC = 10L
 
@@ -77,13 +81,40 @@ object WirelessDebuggingApproval {
      * @param knownKeys [BssidPrivacy.key]s of access points the app has already had approved.
      * @param salt the app's per-install salt for those keys.
      */
-    fun approveKeepingSwitch(knownKeys: Set<String>, salt: String): String = KeptSwitchApprover(
+    fun approveKeepingSwitch(knownKeys: Set<String>, salt: String): String =
+        keptSwitchApprover().run(knownKeys, salt).encode()
+
+    /** The Shizuku-mode approver, wired to this process's shell commands. */
+    fun keptSwitchApprover(): KeptSwitchApprover = KeptSwitchApprover(
         identity = ::currentIdentity,
+        trustedBssids = ::readTrustedBssids,
         readWirelessDebugging = ::readWirelessDebugging,
         adbdListensOnTcp = ::adbdListensOnTcp,
         approve = ::approveIdentity,
         writeWirelessDebuggingOff = ::writeWirelessDebuggingOff,
-    ).run(knownKeys, salt).encode()
+    )
+
+    /**
+     * Android's trusted list for Wireless debugging, read through `dumpsys adb`: the shell holds DUMP, and the dump
+     * is made by system_server, which reads `/data/misc/adb/adb_temp_keys.xml` itself (`AdbDebuggingManager.dump`,
+     * field "keystore", AOSP android14-release). Null when it cannot be read.
+     */
+    fun readTrustedBssids(): Set<String>? {
+        val trusted = parseTrustedBssids(runCommand(DUMPSYS, "adb"))
+        if (trusted == null) AppLogger.w(TAG, "Could not read Android's trusted Wi-Fi list from 'dumpsys adb'")
+        return trusted
+    }
+
+    /**
+     * The access points in a `dumpsys adb` output's keystore (`<wifiAP bssid="…"/>`), lower case. Matches addresses
+     * rather than XML, so a keystore written as binary XML (Android 12+) reads the same. Empty when the dump has no
+     * keystore (no file yet: nothing trusted); null when the output is not an adb dump at all (refused, failed).
+     */
+    fun parseTrustedBssids(dump: String?): Set<String>? {
+        if (dump == null || !dump.contains(ADB_DUMP_HEADER)) return null
+        val keystore = dump.indexOf(KEYSTORE_FIELD).takeIf { it >= 0 } ?: return emptySet()
+        return BSSID.findAll(dump.substring(keystore)).map { it.value.lowercase() }.toSet()
+    }
 
     /**
      * Whether adbd listens on a tcp port: `service.adb.tcp.port` (set when adbd binds, e.g. after `adb tcpip`, which

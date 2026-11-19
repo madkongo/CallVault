@@ -89,7 +89,10 @@ class ShizukuWifiApproval(
             KeptSwitchOutcome.APPROVED_RESTORE_NOT_CONFIRMED -> true to
                 "approval for $ap sent, but Wireless debugging was not seen on within ${answer.restoreMs} ms; nothing written, will try again on the next join"
             KeptSwitchOutcome.APPROVAL_FAILED -> true to "failed: the recorder could not approve $ap"
-            KeptSwitchOutcome.ALREADY_APPROVED -> false to "skipped: $ap approved within the last 30 days"
+            KeptSwitchOutcome.ALREADY_APPROVED -> false to
+                "skipped: $ap approved within the last 30 days (Android's own trusted list could not be read)"
+            KeptSwitchOutcome.ALREADY_TRUSTED_BY_ANDROID -> false to
+                "skipped: $ap is already on Android's trusted list for Wireless debugging"
             KeptSwitchOutcome.NOT_TCP_MODE -> false to
                 "skipped: Shizuku not in tcp mode (adbd has no tcp port), so switching Wireless debugging back off could stop it; nothing approved or written"
             KeptSwitchOutcome.WIRELESS_DEBUGGING_TURNED_ON_MEANWHILE -> false to

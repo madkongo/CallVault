@@ -15,7 +15,10 @@ enum class KeptSwitchOutcome {
     /** Not on Wi-Fi, or the shell could not name the network. Nothing done. */
     NO_WIFI_IDENTITY,
 
-    /** The app has had this access point approved before. Nothing done. */
+    /**
+     * The app has had this access point approved before. Nothing done. Only decided this way when Android's own
+     * trusted list could not be read ([ALREADY_TRUSTED_BY_ANDROID] otherwise).
+     */
     ALREADY_APPROVED,
 
     /**
@@ -51,10 +54,17 @@ enum class KeptSwitchOutcome {
 
     /** Approved and seen on, but switching it back off failed: Wireless debugging is left on. */
     APPROVED_RESTORE_FAILED,
+
+    /**
+     * Android's own trusted list (`dumpsys adb`) already holds this access point, whoever put it there (the user's
+     * own "Always allow" tap, or an earlier approval). Nothing done: approving again only adds a duplicate entry.
+     */
+    ALREADY_TRUSTED_BY_ANDROID,
     ;
 
     /** Whether Android now holds the access point in its trusted list, so the app need not ask again. */
-    val trusted: Boolean get() = this == APPROVED_RESTORED_OFF || this == APPROVED_RESTORE_FAILED
+    val trusted: Boolean
+        get() = this == APPROVED_RESTORED_OFF || this == APPROVED_RESTORE_FAILED || this == ALREADY_TRUSTED_BY_ANDROID
 }
 
 /**
@@ -117,6 +127,12 @@ object BssidPrivacy {
  */
 class KeptSwitchApprover(
     private val identity: () -> WifiIdentity?,
+    /**
+     * The BSSIDs (lower case) on Android's own trusted list, or null when it cannot be read. When it can, it alone
+     * decides "already approved": the app's keys are only the fallback, as they cannot see the user's own taps or
+     * an entry the user removed.
+     */
+    private val trustedBssids: () -> Set<String>? = { null },
     private val readWirelessDebugging: () -> Int?,
     /** Whether adbd listens on a tcp port (Shizuku's tcp mode), so Wireless debugging is not its only transport. */
     private val adbdListensOnTcp: () -> Boolean,
@@ -134,7 +150,12 @@ class KeptSwitchApprover(
         val masked = BssidPrivacy.mask(wifi.bssid)
         fun result(outcome: KeptSwitchOutcome, ms: Long = -1L) = KeptSwitchResult(outcome, key, masked, ms)
 
-        if (key in knownKeys) return result(KeptSwitchOutcome.ALREADY_APPROVED)
+        val trusted = trustedBssids()
+        if (trusted != null) {
+            if (wifi.bssid.lowercase() in trusted) return result(KeptSwitchOutcome.ALREADY_TRUSTED_BY_ANDROID)
+        } else if (key in knownKeys) {
+            return result(KeptSwitchOutcome.ALREADY_APPROVED)
+        }
         // Before anything that could write: the switch-back is safe only while adbd has another transport.
         if (!adbdListensOnTcp()) return result(KeptSwitchOutcome.NOT_TCP_MODE)
         when (readWirelessDebugging()) {
