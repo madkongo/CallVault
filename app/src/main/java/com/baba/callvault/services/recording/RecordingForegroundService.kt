@@ -570,8 +570,14 @@ class RecordingForegroundService : Service() {
                 stopRecordingSessionAndService()
             }
         } catch (e: PipelineInitializationException) {
-            AppLogger.e(TAG, e.message ?: "", e.cause ?: e)
-            notificationHelper.showErrorNotification(e.userFriendlyMessage)
+            if (e is OrphanSessionKeptException) {
+                // Not a failure: the recorder is recording this call already, for the CallVault process the phone
+                // killed mid-call (Q25). It is stopped and saved under its own name when the call ends (C2).
+                AppLogger.i(TAG, "Not starting a second recording: ${e.message}")
+            } else {
+                AppLogger.e(TAG, e.message ?: "", e.cause ?: e)
+                notificationHelper.showErrorNotification(e.userFriendlyMessage)
+            }
             // Ensure partial resources are cleaned up
             activeSession.cancel(this)
             currentState = RecordingServiceState.Standby(metadata)

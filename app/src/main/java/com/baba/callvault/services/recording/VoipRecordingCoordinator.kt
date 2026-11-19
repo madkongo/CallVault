@@ -26,6 +26,7 @@ import com.baba.callvault.data.health.SetupHealthStore
 import com.baba.callvault.data.transcripts.SpeakerTurnsRepository
 import com.baba.callvault.data.health.record
 import com.baba.callvault.integrations.scrcpy.ScrcpyAudioCodec
+import com.baba.callvault.server.DaemonSessionOwnership
 import com.baba.callvault.server.DaemonStereo
 import com.baba.callvault.server.IRecorderService
 import com.baba.callvault.server.RecorderConnection
@@ -199,6 +200,19 @@ object VoipRecordingCoordinator {
             return
         }
 
+        // Review C2: a session the recorder still runs for a CallVault the phone killed. One whose call is over is
+        // stopped (and rescued under its own name) so this call can start; one that may be this very call, picked
+        // up again after the restart (Q25), is that call's recording: nothing new starts and nothing is "missed".
+        val orphan = OrphanRecorderSession.resolve(context, "app call start", forCallStart = true)
+        if (orphan.startVerdict == OrphanSessionPolicy.StartVerdict.ADOPT) {
+            CallEndLog.record(context, "app call start: the recorder is already recording this call for the process the phone killed; keeping that recording")
+            AppLogger.i(TAG, "Not starting a second recording: the recorder is already recording this app call for the killed CallVault")
+            return
+        }
+        if (orphan.startVerdict == OrphanSessionPolicy.StartVerdict.FAIL_BUSY) {
+            AppLogger.w(TAG, "The recorder is busy with another session (${orphan.action}); this start will be refused")
+        }
+
         val fileName = buildFileName(codec, appLabel, caller)
 
         val saf = SafHelper.createAudioFile(context, folderUri, fileName, codec.mimeType)
@@ -208,12 +222,15 @@ object VoipRecordingCoordinator {
             return
         }
 
+        // Ours from before the start is sent, so no orphan check can take it for a leftover (C2).
+        DaemonSessionOwnership.claim(this)
         val started = runCatching {
             DaemonStereo.request(service, prefs.getRecordStereo()) { AppLogger.w(TAG, it) }
             service.startVoipRecording(codec.cliKey, bitRate, saf.descriptor)
         }.onFailure { AppLogger.e(TAG, "startVoipRecording threw: ${it.message}", it) }.getOrDefault(false)
 
         if (!started) {
+            DaemonSessionOwnership.release(this)
             // Most likely the policy was not armed before the call — nothing can be captured now, so
             // remove the empty file rather than leaving a 0-byte recording in the user's folder.
             reportMissedIfReal(context, R.string.voip_missed_not_ready, null)
@@ -816,6 +833,7 @@ object VoipRecordingCoordinator {
         isSuspendedForCarrierCall = false
         runCatching { RecorderConnection.service?.stopRecording() }
             .onFailure { AppLogger.w(TAG, "stopRecording failed: ${it.message}") }
+        DaemonSessionOwnership.release(this)
         if (discardAsIgnored) {
             // Before any warning or diagnostic: a call the user asked us to skip is not a one-sided or
             // failed recording, and nothing about it should be reported or kept.

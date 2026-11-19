@@ -17,6 +17,7 @@ import android.os.Looper
 import android.os.ParcelFileDescriptor
 import androidx.documentfile.provider.DocumentFile
 import com.baba.callvault.R
+import com.baba.callvault.server.DaemonSessionOwnership
 import com.baba.callvault.data.AppPreferences
 import com.baba.callvault.data.recordings.RecordingMetadata
 import com.baba.callvault.integrations.adb.AdbShell
@@ -548,18 +549,25 @@ class AudioRecordingEngine {
             AppLogger.w(WifiCallRoute.TAG, "App-call capture: daemon unavailable (connected=$connected)")
             return false
         }
+        admitStart(context, "app-call mix")
+        DaemonSessionOwnership.claim(this)
         val call = runCatching { service.startVoipRecording(codecEnum.cliKey, bitRate, outputPfd) }
             .onFailure { AppLogger.w(WifiCallRoute.TAG, "startVoipRecording threw: ${it.message}") }
         val started = call.getOrDefault(false)
         AppLogger.i(WifiCallRoute.TAG, "startVoipRecording -> $started")
         // A plain refusal opened nothing. A binder error is unknown, so it is stopped like a failed open.
-        if (!started && call.isSuccess) return false
+        if (!started && call.isSuccess) {
+            DaemonSessionOwnership.release(this)
+            return false
+        }
         if (!started || !voipCaptureConfirmed(service)) {
             AppLogger.w(WifiCallRoute.TAG, "App-call capture did not confirm it started; stopping it before the fallback")
             // Idempotent. Closes anything a half-open start left, so it never runs beside the fallback.
             runCatching { service.stopRecording() }
                 .onFailure { AppLogger.w(WifiCallRoute.TAG, "stopRecording before the fallback failed: ${it.message}") }
             rewindOutput()
+            // Only once the recorder says it stopped: a capture still running stays ours until the call-end release.
+            if (runCatching { !service.isRecording() }.getOrDefault(false)) DaemonSessionOwnership.release(this)
             return false
         }
         daemonRecording = true
@@ -603,6 +611,8 @@ class AudioRecordingEngine {
             AppLogger.w(TAG, "Recorder daemon unavailable (connected=$connected, service=${service != null})")
             return false
         }
+        admitStart(context, "daemon")
+        DaemonSessionOwnership.claim(this)
         return try {
             DaemonStereo.request(service, recordStereo) { AppLogger.w(TAG, it) }
             service.startRecording(audioSourceEnum.cliKey, codecEnum.cliKey, bitRate, outputPfd)
@@ -633,6 +643,7 @@ class AudioRecordingEngine {
             true
         } catch (e: Exception) {
             AppLogger.w(TAG, "Daemon startRecording failed; will fall back to local path: ${e.message}", e)
+            DaemonSessionOwnership.release(this)
             false
         }
     }
@@ -675,6 +686,8 @@ class AudioRecordingEngine {
             AppLogger.w(TAG, "Handoff: recorder daemon unavailable (connected=$connected, service=${service != null})")
             return false
         }
+        // A leftover session's VOICE_CALL capture beside a new one drops the user's own side (Q39): settle it first.
+        admitStart(context, "handoff")
         val outFd = outputPfd?.fileDescriptor
             ?: run { AppLogger.w(TAG, "Handoff: no output fd; falling back"); return false }
 
@@ -845,8 +858,39 @@ class AudioRecordingEngine {
     private var released = false
 
     private fun finishRelease(discard: Boolean): Boolean {
+        // The recorder's session is stopped (or never was ours): it no longer belongs to this process.
+        DaemonSessionOwnership.release(this)
         if (discard) discardStaging() else finalizeStagingIfNeeded()
         return true
+    }
+
+    /**
+     * Review C2: before this call's recording starts, settle a session the recorder is still running for a
+     * CallVault process that is gone. Its start used to be ignored ("already recording") while this side
+     * reported success, and the call went into the earlier call's file (N4). An orphan whose call is over is
+     * stopped (and rescued under its own name) and this start goes ahead; one that may be this live call's
+     * own recording (Q25) is kept and nothing new starts; a recorder still busy is a failed start, said so.
+     */
+    private fun admitStart(context: Context, path: String) {
+        val outcome = OrphanRecorderSession.resolve(context, "call start, $path", exclude = stagingFile, forCallStart = true)
+        when (outcome.startVerdict) {
+            OrphanSessionPolicy.StartVerdict.START -> if (outcome.action == OrphanSessionPolicy.Action.STOP_ORPHAN) {
+                CallEndLog.record(context, "orphan session: stopped before this call's start; starting this call's own recording")
+            }
+            OrphanSessionPolicy.StartVerdict.FAIL_BUSY -> {
+                val why = "The recorder is still recording an earlier session (action=${outcome.action}, " +
+                    "still recording=${outcome.stillRecording ?: "?"}); it would ignore this call's start"
+                CallEndLog.record(context, "call start FAILED ($path): recorder busy with an earlier session, action=${outcome.action}")
+                throw PipelineInitializationException(
+                    userFriendlyMessage = context.getString(R.string.recording_error_start_failed),
+                    technicalLogMessage = why,
+                )
+            }
+            OrphanSessionPolicy.StartVerdict.ADOPT -> {
+                CallEndLog.record(context, "call start ($path): the recorder is already recording this call for the process the phone killed; keeping that recording")
+                throw OrphanSessionKeptException("Recorder already recording a live call for a killed CallVault process; not starting a second recording")
+            }
+        }
     }
 
     /**
@@ -945,8 +989,16 @@ class AudioRecordingEngine {
  * Custom exception to carry a user-friendly message for UI display
  * and a technical log message for debugging when the pipeline initialization fails.
  */
-class PipelineInitializationException(
+open class PipelineInitializationException(
     val userFriendlyMessage: String,
     technicalLogMessage: String,
     cause: Throwable? = null
 ) : Exception(technicalLogMessage, cause)
+
+/**
+ * The recorder is already recording this call for a CallVault process the phone killed mid-call (quirk Q25),
+ * so no second recording is started and nothing failed: that session is the call's recording, and it is
+ * stopped and rescued under its own name when the call ends (review C2). The caller shows no error.
+ */
+class OrphanSessionKeptException(technicalLogMessage: String) :
+    PipelineInitializationException(userFriendlyMessage = "", technicalLogMessage = technicalLogMessage)

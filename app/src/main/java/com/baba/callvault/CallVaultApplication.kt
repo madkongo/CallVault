@@ -263,6 +263,12 @@ class CallVaultApplication : Application() {
                 // card already explains it in place. What must not happen is a warning from a
                 // previous boot outliving the problem and teaching the user to ignore the next one.
                 if (started) SilentFailureNotifier.clearRecorderUnavailable(applicationContext)
+                // A recorder still recording for a process that is gone (the phone killed CallVault mid-call):
+                // stopped when no call is up so its file is rescued, kept when it may be the live call's (C2, Q25).
+                if (started) {
+                    runCatching { com.baba.callvault.services.recording.OrphanRecorderSession.resolve(applicationContext, "app start") }
+                        .onFailure { AppLogger.e(TAG, "Orphan recorder check at start failed: ${it.message}", it) }
+                }
                 CoroutineScope(Dispatchers.IO).launch {
                     SilentFailureNotifier.checkSyncHealth(applicationContext)
                 }

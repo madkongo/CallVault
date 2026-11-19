@@ -24,6 +24,7 @@ import com.baba.callvault.data.health.recordMissedForMissingPrerequisite
 import com.baba.callvault.data.recordings.RecordingDirection
 import com.baba.callvault.data.recordings.RecordingMetadata
 import com.baba.callvault.services.recording.DaemonKeepAliveService
+import com.baba.callvault.services.recording.OrphanRecorderSession
 import com.baba.callvault.services.recording.RecordingForegroundService
 import com.baba.callvault.services.recording.RecordingPolicy
 import com.baba.callvault.services.recording.VoipRecordingCoordinator
@@ -53,6 +54,9 @@ class CallSessionManager private constructor(context: Context) {
     // Constants accessible globally
     companion object {
         private const val TAG = "CV:CallSessionManager"
+
+        /** How long after IDLE the recorder is checked for an orphaned session; see [handlePhoneState]. */
+        private const val ORPHAN_CHECK_AFTER_IDLE_MS = 3_000L
 
         // Singleton instance management
         @Volatile
@@ -242,6 +246,16 @@ class CallSessionManager private constructor(context: Context) {
             // Any call's end — even one this process never saw start, because the phone killed and restarted
             // CallVault mid-call — is when a recording that call left behind can be saved (backlog #4).
             CutOffRescueWorker.schedule(appContext)
+            // No phone call is up now. Remembered, and the recorder checked for a session nobody owns: a call
+            // this process never saw start (killed and restarted mid-call) left its recording running (C2).
+            // Checked a moment later, so our own session's stop (sent below) has claimed it and the audio
+            // mode has left the call.
+            OrphanRecorderSession.noteNoCall(appContext)
+            managerScope.launch(Dispatchers.IO) {
+                delay(ORPHAN_CHECK_AFTER_IDLE_MS)
+                runCatching { OrphanRecorderSession.resolve(appContext, "phone call ended") }
+                    .onFailure { AppLogger.e(TAG, "Orphan recorder check after the call failed: ${it.message}", it) }
+            }
             // Only trigger stop logic if we were previously in an active session. Prevents redundant stop commands on possible repeated IDLE broadcasts.
             if (session.isSessionActive) {
                 AppLogger.d(TAG, "Phone state is now idle (call ended). Sending stop INTENT for ${session.currentMetadata?.direction} call to RecordingForegroundService.")

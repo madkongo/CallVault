@@ -182,6 +182,10 @@ class VoipCallDetector(private val context: Context) {
             runCatching { VoipRecordingCoordinator.onCallEnded(context, neverConnected) }
                 .onFailure { AppLogger.w(TAG, "VoIP stop failed: ${it.message}") }
             CutOffRescueWorker.schedule(context)
+            // The app call is over: remembered, and a recording no process owns (left by a CallVault that was
+            // killed during this call) is stopped now rather than at the rescue check (C2).
+            OrphanRecorderSession.noteNoCall(context)
+            OrphanRecorderSession.resolveAsync(context, "app call ended")
             isRecording = false
             onRecordingStateChanged?.invoke()
         }
