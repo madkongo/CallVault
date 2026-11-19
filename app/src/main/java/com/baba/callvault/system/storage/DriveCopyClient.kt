@@ -23,7 +23,7 @@ import com.baba.callvault.utils.AppLogger
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.withTimeoutOrNull
 
-/** Something the Drive copy can be asked to do: [DriveCopyClient] (the `:drive` process) or [LocalDriveCopier]. */
+/** Something the Drive copy can be asked to do: [DriveCopyClient], the `:drive` process (tests use a fake). */
 interface DriveCopier {
     /** Short name for the journal: where the work runs. */
     val where: String
@@ -39,8 +39,11 @@ interface DriveCopier {
  * The app's end of the Drive copier process ([DriveCopyService]): one request at a time, each with a time
  * limit, and each abandoned within about half a second when "Stop for now" is pressed.
  *
- * An abandoned, stuck or dead call all end the same way: [close] lets go of the service, which ends the
- * copier process, and the next call starts a fresh one. That is the whole recovery.
+ * An abandoned, stuck or dead call all end the same way: [close] lets go of the service, and the next call
+ * binds again. That ends the copier process only when no other client (the sweep and the after-call copy each
+ * have one) is still bound, so a reply to an abandoned call can still arrive later. Every call therefore
+ * carries its own sequence number in `arg1` and its own reply Messenger ([ReplyHandler]): a late reply can
+ * only reach the abandoned call it belongs to, and is dropped and journalled (review C15).
  *
  * Every way a call can end without an answer writes an always-on journal line with its reason, how long it
  * took and whether the copier process was still alive ([DriveDiagnostics]).
@@ -81,11 +84,23 @@ class DriveCopyClient(context: Context, private val honorStop: Boolean = true) :
         return outcome
     }
 
-    private val replies = Messenger(object : Handler(Looper.getMainLooper()) {
+    /** The sequence number of the last call sent; each call gets the next one. */
+    private var lastSeq = 0
+
+    /**
+     * Receives the reply to ONE call: completes [target] only when the reply's `arg1` is [expectedSeq], and hands
+     * anything else to [onStray] (journalled, then dropped).
+     */
+    class ReplyHandler(
+        looper: Looper,
+        private val expectedSeq: Int,
+        private val target: CompletableDeferred<Bundle?>,
+        private val onStray: (Int) -> Unit,
+    ) : Handler(looper) {
         override fun handleMessage(msg: Message) {
-            pending?.complete(msg.data)
+            if (msg.arg1 == expectedSeq) target.complete(msg.data) else onStray(msg.arg1)
         }
-    })
+    }
 
     private fun bind(): Boolean {
         close()
@@ -143,8 +158,12 @@ class DriveCopyClient(context: Context, private val honorStop: Boolean = true) :
         }
         val done = CompletableDeferred<Bundle?>()
         pending = done
+        val seq = ++lastSeq
+        val replyTo = Messenger(ReplyHandler(Looper.getMainLooper(), seq, done) { got ->
+            journal("copier reply DROPPED: $label call #$seq got a reply numbered #$got, which belongs to another call")
+        })
         val sent = runCatching {
-            service?.send(Message.obtain(null, what).also { it.data = data; it.replyTo = replies })
+            service?.send(Message.obtain(null, what).also { it.data = data; it.arg1 = seq; it.replyTo = replyTo })
         }.onFailure { journal("copier send: $label threw ${it.javaClass.simpleName}: ${it.message}") }
             .isSuccess && service != null
         if (!sent) {
@@ -163,7 +182,7 @@ class DriveCopyClient(context: Context, private val honorStop: Boolean = true) :
                 }
                 return Outcome.Reply(reply)
             }
-            if (honorStop && DriveCopyStop.isRequested()) {
+            if (obeysStop(honorStop, what) && DriveCopyStop.isRequested()) {
                 pending = null
                 close()
                 lastFailure = "stopped by the user"
@@ -191,51 +210,13 @@ class DriveCopyClient(context: Context, private val honorStop: Boolean = true) :
     companion object {
         private const val TAG = "CV:DriveCopyClient"
         private const val POLL_MS = 500L
+
+        /**
+         * Whether a call of kind [what] is abandoned on "Stop for now". Never the LIST: it runs before the copy
+         * notification (the only place the button is) is posted, so a press it could see belongs to an earlier
+         * run (review C21).
+         */
+        fun obeysStop(honorStop: Boolean, what: Int): Boolean = honorStop && what != DriveCopyProtocol.MSG_LIST
         private const val CONNECT_TIMEOUT_MS = 15_000L
-    }
-}
-
-/**
- * The same work as [DriveCopyService], done in the app's own process: the fallback when the copier process
- * cannot answer a listing. It runs each message on a worker thread so the caller keeps its time limit and
- * the Stop button; a message stuck in the provider is abandoned (its thread is left to finish on its own).
- */
-class LocalDriveCopier(context: Context, private val honorStop: Boolean = true) : DriveCopier {
-
-    private val appContext = context.applicationContext
-
-    override val where: String get() = "the app's own process"
-
-    override suspend fun call(what: Int, data: Bundle, timeoutMs: Long): DriveCopyClient.Outcome {
-        val done = CompletableDeferred<Result<Bundle>>()
-        Thread({
-            done.complete(runCatching { DriveCopyHandler.handle(appContext, what, data, inCopier = false) })
-        }, "cv-drive-copy-local").start()
-        val start = SystemClock.elapsedRealtime()
-        while (true) {
-            withTimeoutOrNull(POLL_MS) { done.await() }
-            if (done.isCompleted) {
-                val r = done.await()
-                return r.getOrNull()?.let { DriveCopyClient.Outcome.Reply(it) } ?: run {
-                    DriveCopyJournal.record(appContext, "main-process copier: message $what threw ${r.exceptionOrNull()?.javaClass?.simpleName}: ${r.exceptionOrNull()?.message}")
-                    DriveCopyClient.Outcome.Died
-                }
-            }
-            if (honorStop && DriveCopyStop.isRequested()) {
-                DriveCopyJournal.record(appContext, "main-process copier: message $what abandoned, Stop for now pressed after ${SystemClock.elapsedRealtime() - start}ms (its thread is left to finish)")
-                return DriveCopyClient.Outcome.Stopped
-            }
-            val waited = SystemClock.elapsedRealtime() - start
-            if (waited > timeoutMs) {
-                DriveCopyJournal.record(appContext, "main-process copier: no result for message $what within ${waited}ms (limit ${timeoutMs}ms); its thread is left to finish, ${DriveDiagnostics.memory(appContext)}")
-                return DriveCopyClient.Outcome.TimedOut
-            }
-        }
-    }
-
-    override fun close() = Unit
-
-    private companion object {
-        const val POLL_MS = 500L
     }
 }

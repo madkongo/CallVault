@@ -235,6 +235,11 @@
     <string name="notif_health_shizuku_stopped_text">CallVault musiał ponownie uruchomić usługę debugowania Androida, a to zatrzymuje Shizuku. Otwórz Shizuku i uruchom je ponownie, jeśli korzystasz z niego w innych aplikacjach.</string>
     <string name="notif_health_shizuku_stopped_title">Shizuku zostało zatrzymane</string>
     <string name="notif_health_sync_text">Kopiowanie na Dysk Google zatrzymało się jakiś czas temu. Nic nie zginęło — nagrania nadal są w tym telefonie — ale nie mają kopii zapasowej. Otwórz CallVault i sprawdź ustawienia pamięci.</string>
+    <string name="notif_drive_backup_title">Kopia zapasowa na Dysku nie działa</string>
+    <string name="notif_drive_backup_text">Kopia zapasowa na Dysku nie działa: %1$s. Twoje nagrania są bezpieczne w tym telefonie. CallVault spróbuje ponownie o następnej zaplanowanej godzinie.</string>
+    <string name="notif_drive_backup_reason_no_answer">Dysk Google nie odpowiada</string>
+    <string name="notif_drive_backup_reason_folder">nie można odczytać folderu na Dysku</string>
+    <string name="notif_drive_backup_reason_error">zatrzymał ją błąd (%1$s)</string>
     <string name="notif_health_sync_title">Nagrania nie trafiają na Dysk</string>
     <string name="notif_info_channel">Powiadomienia CallVault</string>
     <string name="notif_readiness_pairing_lost_text">Android zapomniał parowanie CallVault, więc nie można nagrywać połączeń. Otwórz CallVault i dotknij karty stanu, aby sparować ponownie.</string>

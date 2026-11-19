@@ -326,6 +326,11 @@
     <string name="notif_health_shizuku_stopped_text">CallVault مجبور شد سرویس اشکال‌زدایی Android را دوباره راه‌اندازی کند، و آن Shizuku را متوقف می‌کند. اگر با برنامه‌های دیگر از آن استفاده می‌کنید، Shizuku را باز کنید و دوباره اجرایش کنید.</string>
     <string name="notif_health_shizuku_stopped_title">Shizuku متوقف شد</string>
     <string name="notif_health_sync_text">کپی به Google Drive مدتی پیش متوقف شد. چیزی از دست نرفته — فایل‌های ضبط‌شده هنوز روی این گوشی هستند — اما پشتیبان‌گیری نمی‌شوند. برای بررسی تنظیمات فضای ذخیره‌سازی خود CallVault را باز کنید.</string>
+    <string name="notif_drive_backup_title">پشتیبان‌گیری در Drive کار نمی‌کند</string>
+    <string name="notif_drive_backup_text">پشتیبان‌گیری در Drive کار نمی‌کند: %1$s. فایل‌های ضبط‌شده شما روی این گوشی امن هستند. CallVault در زمان برنامه‌ریزی‌شده بعدی دوباره تلاش می‌کند.</string>
+    <string name="notif_drive_backup_reason_no_answer">Google Drive پاسخ نمی‌دهد</string>
+    <string name="notif_drive_backup_reason_folder">پوشه Drive خوانده نمی‌شود</string>
+    <string name="notif_drive_backup_reason_error">خطایی آن را متوقف کرد (%1$s)</string>
     <string name="notif_health_sync_title">فایل‌های ضبط‌شده به Drive نمی‌رسند</string>
     <string name="notif_info_channel">اطلاعیه‌های CallVault</string>
     <string name="notif_readiness_pairing_lost_text">Android مرتبط‌سازی CallVault را فراموش کرد، بنابراین تماس‌ها ضبط نمی‌شوند. CallVault را باز کنید و روی کارت وضعیت بزنید تا دوباره مرتبط‌سازی کنید.</string>

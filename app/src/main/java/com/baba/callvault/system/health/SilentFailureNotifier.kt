@@ -60,6 +60,7 @@ object SilentFailureNotifier {
     private const val ID_CUT_OFF_SAVED = 4723
     private const val ID_TURNED_OFF_FOR_ANDROID = 4724
     private const val ID_STOPPED_BY_USER = 4725
+    private const val ID_DRIVE_BACKUP_BROKEN = 4727
 
     /**
      * The recorder could not be started. Posted from the boot path, where a failure is invisible.
@@ -144,6 +145,21 @@ object SilentFailureNotifier {
         title = LocalizedContext.of(context).getString(R.string.notif_stopped_by_user_title),
         text = LocalizedContext.of(context).getString(R.string.notif_stopped_by_user_text),
     )
+
+    /**
+     * The Drive sweep gave up listing the Drive folder (review C11): nothing reaches Drive until it can.
+     * [reason] is a few localized words. Posted and cleared through [com.baba.callvault.system.storage.DriveBackupNotice].
+     * Returns whether it was actually shown.
+     */
+    fun warnDriveBackupBroken(context: Context, reason: String): Boolean = post(
+        context,
+        id = ID_DRIVE_BACKUP_BROKEN,
+        title = LocalizedContext.of(context).getString(R.string.notif_drive_backup_title),
+        text = LocalizedContext.of(context).getString(R.string.notif_drive_backup_text, reason),
+    )
+
+    /** Drive was reached again. */
+    fun clearDriveBackupBroken(context: Context) = clear(context, ID_DRIVE_BACKUP_BROKEN)
 
     /** The pairing works again. */
     fun clearPairingLost(context: Context) = clear(context, ID_PAIRING_LOST)
@@ -258,8 +274,10 @@ object SilentFailureNotifier {
 
     // POST_NOTIFICATIONS is checked explicitly rather than relying on notify()'s silent no-op, which
     // is also what satisfies the MissingPermission lint check.
+    // Returns whether the notification was actually handed to the system: false without POST_NOTIFICATIONS or
+    // when notify() threw (logged). Callers that remember "the user was told" must check it.
     @SuppressLint("MissingPermission")
-    private fun post(context: Context, id: Int, title: String, text: String) {
+    private fun post(context: Context, id: Int, title: String, text: String): Boolean {
         createChannel(context)
         val open = PendingIntent.getActivity(
             context,
@@ -292,9 +310,13 @@ object SilentFailureNotifier {
             .setOnlyAlertOnce(true)
             .setPriority(NotificationCompat.PRIORITY_DEFAULT)
             .build()
-        if (!PermissionChecks.hasNotificationPermission(context)) return
-        runCatching { NotificationManagerCompat.from(context).notify(id, notification) }
+        if (!PermissionChecks.hasNotificationPermission(context)) {
+            AppLogger.w(TAG, "Health notification $id not shown: notification permission is not granted")
+            return false
+        }
+        return runCatching { NotificationManagerCompat.from(context).notify(id, notification) }
             .onFailure { AppLogger.w(TAG, "Failed to post health notification: ${it.message}") }
+            .isSuccess
     }
 
     private fun clear(context: Context, id: Int) {

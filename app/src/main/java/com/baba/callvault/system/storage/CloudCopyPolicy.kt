@@ -75,12 +75,13 @@ object CloudCopyPolicy {
     const val LIST_TIMEOUT_MS = 30_000L
 
     /**
-     * True when the copier process failed to list the Drive folder earlier on [today] ([rememberedDay] is the
-     * day it was written down, null when never): the sweep then goes straight to listing in the app's own
-     * process instead of waiting out the copier again. Expires by itself at midnight.
+     * How long the copier waits for a cloud provider that answers "still loading" ([android.provider.DocumentsContract.EXTRA_LOADING])
+     * to finish the folder: inside [LIST_TIMEOUT_MS], leaving time for the folder check and the reads themselves.
      */
-    fun copierListFailedToday(rememberedDay: String?, today: String): Boolean =
-        rememberedDay != null && rememberedDay == today
+    const val LIST_LOADING_WAIT_MS = 20_000L
+
+    /** Within [LIST_LOADING_WAIT_MS], a loading folder is read again at least this often, notification or not. */
+    const val LIST_LOADING_POLL_MS = 2_500L
 
     /**
      * A Drive document that counts as already holding the recording: its reported length equals the source's.

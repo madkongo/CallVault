@@ -16,6 +16,7 @@ import android.net.ConnectivityManager
 import android.net.NetworkCapabilities
 import android.net.Uri
 import android.os.Process
+import com.baba.callvault.utils.AppLogger
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
@@ -88,6 +89,24 @@ object DriveDiagnostics {
         val procs = am.runningAppProcesses ?: return@runCatching "unknown (no process list)"
         procs.any { it.processName?.endsWith(COPIER) == true }.toString()
     }.getOrElse { "unknown (${it.javaClass.simpleName}: ${it.message})" }
+
+    /** What the process list says about the copier process: running (with its id), not running, or unknown. */
+    sealed interface CopierProcess {
+        data class Running(val pid: Int) : CopierProcess
+        data object None : CopierProcess
+        /** The process list could not be read; [why] says how. Never to be taken for [None]. */
+        data class Unknown(val why: String) : CopierProcess
+    }
+
+    /** The copier process as the system's process list shows it; [CopierProcess.Unknown] when that list cannot be read. */
+    fun copierProcess(context: Context): CopierProcess = runCatching {
+        val am = context.getSystemService(Context.ACTIVITY_SERVICE) as ActivityManager
+        val procs = am.runningAppProcesses ?: return@runCatching CopierProcess.Unknown("the system gave no process list")
+        procs.firstOrNull { it.processName?.endsWith(COPIER) == true }?.let { CopierProcess.Running(it.pid) } ?: CopierProcess.None
+    }.getOrElse {
+        AppLogger.w("CV:DriveDiagnostics", "Could not read the process list: ${it.javaClass.simpleName}: ${it.message}")
+        CopierProcess.Unknown("${it.javaClass.simpleName}: ${it.message}")
+    }
 
     /**
      * The system's own record of how the copier process last ended, newest first (at most [limit]).

@@ -14,9 +14,8 @@ import android.os.SystemClock
 import java.io.File
 
 /**
- * What the Drive copier does with one message. Shared by [DriveCopyService] (the `:drive` process) and
- * [LocalDriveCopier] (the same work in the app's own process, used only when the copier process cannot list
- * the folder), so both answer the same way and both write the same journal lines.
+ * What the Drive copier ([DriveCopyService], the `:drive` process) does with one message. Only that process
+ * runs it since the in-app copier was removed (review C11).
  *
  * Every failure here ends in a reply that carries a reason, and in a journal line: there is no path that
  * returns "failed" without saying why.
@@ -24,8 +23,8 @@ import java.io.File
 object DriveCopyHandler {
 
     /**
-     * Test hook for the drive2 build: when true, the `:drive` process refuses to list (the main-process
-     * fallback never does), to show the fallback and its log lines on a phone. False in every shipped
+     * Test hook for the drive2 build: when true, the `:drive` process refuses to list, to show the sweep's
+     * bounded copier restarts and their log lines on a phone. False in every shipped
      * build; a unit test fails if it is ever committed as true.
      */
     const val TEST_FORCE_LIST_FAILURE = false
@@ -41,13 +40,13 @@ object DriveCopyHandler {
     private const val VERIFY_RETRIES = 4
     private const val VERIFY_WAIT_MS = 500L
 
-    fun handle(context: Context, what: Int, data: Bundle, inCopier: Boolean): Bundle {
-        val where = if (inCopier) "copier" else "main-process copier"
-        fun log(line: String) = DriveCopyJournal.record(context, line, fromCopier = inCopier)
+    fun handle(context: Context, what: Int, data: Bundle): Bundle {
+        val where = "copier"
+        fun log(line: String) = DriveCopyJournal.record(context, line, fromCopier = true)
         val start = SystemClock.elapsedRealtime()
         return try {
             when (what) {
-                DriveCopyProtocol.MSG_LIST -> list(context, data, inCopier, where, start, ::log)
+                DriveCopyProtocol.MSG_LIST -> list(context, data, where, start, ::log)
                 DriveCopyProtocol.MSG_COPY -> copy(context, data, where, start, ::log)
                 else -> {
                     log("$where: unknown message $what -> refused")
@@ -61,7 +60,7 @@ object DriveCopyHandler {
     }
 
     private fun list(
-        context: Context, data: Bundle, inCopier: Boolean, where: String, start: Long, log: (String) -> Unit,
+        context: Context, data: Bundle, where: String, start: Long, log: (String) -> Unit,
     ): Bundle {
         @Suppress("DEPRECATION")
         val folder = data.getParcelable<android.net.Uri>(DriveCopyProtocol.K_FOLDER)
@@ -71,12 +70,12 @@ object DriveCopyHandler {
             return DriveCopyProtocol.failureReply(reason)
         }
         if (folder == null) return fail("the request carried no folder")
-        if (TEST_FORCE_LIST_FAILURE && inCopier) return fail("TEST HOOK: forced list failure in the copier process")
+        if (TEST_FORCE_LIST_FAILURE) return fail("TEST HOOK: forced list failure in the copier process")
         SafHelper.folderProblem(context, folder)?.let { return fail("folder not usable: $it") }
         val (listing, why) = SafHelper.listChildrenWithReason(context, folder)
         if (listing == null) return fail("listing failed: ${why ?: "no reason given"}")
         var answer: DriveCopyProtocol.Listing = listing
-        if (TEST_PAD_LIST_TO > listing.names.size && inCopier) {
+        if (TEST_PAD_LIST_TO > listing.names.size) {
             // Test hook: make the folder look big enough to overflow a binder reply.
             val extra = TEST_PAD_LIST_TO - listing.names.size
             val padUri = folder
@@ -88,9 +87,9 @@ object DriveCopyHandler {
             log("$where: TEST HOOK padded the listing from ${listing.names.size} to ${answer.names.size} entries")
         }
         log("$where: LIST ok, ${answer.names.size} entries in ${SystemClock.elapsedRealtime() - start}ms")
-        // In the copier process the reply crosses the binder, which cannot carry a big listing: it goes
-        // through a file (see [DriveCopyProtocol.listReplyViaFile]). In the app's own process nothing crosses.
-        if (!inCopier || TEST_SEND_LIST_INLINE) return DriveCopyProtocol.listReply(answer)
+        // The reply crosses the binder, which cannot carry a big listing: it goes through a file (see
+        // [DriveCopyProtocol.listReplyViaFile]). Inline only under the drive3 test hook.
+        if (TEST_SEND_LIST_INLINE) return DriveCopyProtocol.listReply(answer)
         return try {
             val dir = File(context.cacheDir, "drive-list")
             DriveCopyProtocol.sweepStaleListFiles(dir)
@@ -110,10 +109,8 @@ object DriveCopyHandler {
         }
         log("$where: COPY received '${r.name}' ${r.sourceSize}B lookup=${r.lookup}")
         val timings = CopyTimings()
-        val result = SafHelper.copyFileToFolder(
-            context, r.src, r.folder, r.name, r.mime, r.sourceSize, timings,
-            if (r.lookup) null else SafHelper.KnownDest(r.existing, r.existingSize, r.staging),
-        )
+        val known = if (r.lookup) lookUp(context, r, timings, where, log) else SafHelper.KnownDest(r.existing, r.existingSize, r.staging)
+        val result = SafHelper.copyFileToFolder(context, r.src, r.folder, r.name, r.mime, r.sourceSize, timings, known)
         // The length the provider reports for the document the copy ended in: what a delete of the device
         // copy is later checked against. One query by URI, timed with the rest.
         // A cloud provider can report 0 or nothing for a moment after the write (seen on the first file of a
@@ -139,6 +136,59 @@ object DriveCopyHandler {
             is SafHelper.CopyResult.Failed -> "FAILED (${result.reason})"
         }
         log("$where: COPY done '${r.name}' $kind in ${SystemClock.elapsedRealtime() - start}ms, Drive reports $driveSize bytes" + if (verifyTries > 0) " (asked $verifyTries extra times)" else "")
-        return DriveCopyProtocol.copyReply(result, timings, driveSize)
+        return DriveCopyProtocol.copyReply(result, timings, driveSize, r.name)
+    }
+
+    /**
+     * The destination of an after-call copy (the caller has not listed the folder), from ONE listing of it:
+     * `findFile` asks the provider for every child's name one query at a time, twice per copy, which on a big
+     * Drive folder could outlast the copy's time limit on every attempt (review C28). Null (so
+     * [SafHelper.copyFileToFolder] searches with `findFile` as before) only when that listing fails, with its
+     * reason in the journal.
+     */
+    private fun lookUp(
+        context: Context, r: DriveCopyProtocol.Request, timings: CopyTimings, where: String, log: (String) -> Unit,
+    ): SafHelper.KnownDest? {
+        val (listing, why) = timings.time("list") { SafHelper.listChildrenWithReason(context, r.folder) }
+        if (listing == null) {
+            log("$where: COPY '${r.name}': the folder could not be listed (${why ?: "no reason given"}); looking the name up with findFile instead")
+            return null
+        }
+        return knownDestFrom(listing, r.name) { log("$where: $it") }
+    }
+
+    /**
+     * What [listing] says about [name]: the document carrying exactly that name and its listed length, and an
+     * exactly-named staging leftover. Exact case only: Drive can hold "Call.m4a" and "call.m4a" side by side,
+     * and a case-insensitive match could pick the other recording's document, judge it a truncated copy of
+     * this one and delete it. A document that matches only when case is ignored is therefore treated as
+     * unknown (no existing document: the copy uploads under the exact name) and reported to [log].
+     * A listed length of 0 or -1 is passed on as it is; the copy treats it as complete, never as truncated
+     * (device quirk Q47).
+     */
+    /**
+     * A Drive name equal to [name] only when case is ignored, or null. Drive documents are matched by EXACT name
+     * everywhere (the after-call copy and the sweep); this exists only to say so in the journal.
+     */
+    fun caseOnlyMatch(names: Iterable<String>, name: String): String? =
+        names.firstOrNull { it != name && it.equals(name, ignoreCase = true) }
+
+    /** The journal line for a [caseOnlyMatch]. */
+    fun caseOnlyNote(name: String, other: String): String =
+        "'$name': Drive holds '$other', which differs only in case; not treated as this recording's copy"
+
+    fun knownDestFrom(
+        listing: DriveCopyProtocol.Listing,
+        name: String,
+        log: (String) -> Unit = {},
+    ): SafHelper.KnownDest {
+        val existing = listing.names.indexOf(name)
+        val leftover = listing.names.indexOf(CloudCopyPolicy.stagingNameFor(name))
+        if (existing < 0) caseOnlyMatch(listing.names, name)?.let { log(caseOnlyNote(name, it)) }
+        return SafHelper.KnownDest(
+            existingUri = listing.uris.getOrNull(existing),
+            existingSize = if (existing >= 0) listing.sizes[existing] else -1L,
+            stagingUri = listing.uris.getOrNull(leftover),
+        )
     }
 }

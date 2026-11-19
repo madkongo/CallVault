@@ -10,12 +10,17 @@
 package com.baba.callvault.system.storage
 
 import android.content.Context
+import android.database.ContentObserver
+import android.database.Cursor
 import android.net.Uri
 import android.os.ParcelFileDescriptor
+import android.os.SystemClock
 import android.provider.DocumentsContract
 import androidx.documentfile.provider.DocumentFile
 import com.baba.callvault.utils.AppLogger
 import java.io.File
+import java.util.concurrent.CountDownLatch
+import java.util.concurrent.TimeUnit
 import kotlin.contracts.ExperimentalContracts
 import kotlin.contracts.contract
 
@@ -441,45 +446,118 @@ object SafHelper {
         listChildrenWithReason(context, folderUri).first
 
     /**
-     * [listChildren] that also says WHY it returned nothing: the exception's type and message, or "the
-     * provider returned no cursor". A listing that fails without a reason is what hid the drive1 failure.
+     * [listChildren] that also says WHY it returned nothing: the exception's type and message, "the provider
+     * returned no cursor", or that the provider was still loading the folder.
+     *
+     * A cloud provider answers a folder it is still fetching with a partial cursor flagged
+     * [DocumentsContract.EXTRA_LOADING]. Taken as the folder's contents, every name missing from it looked absent
+     * and was uploaded again as a second document (review C29). While the flag is set this reads again on the
+     * provider's change notification on that cursor or every [CloudCopyPolicy.LIST_LOADING_POLL_MS], whichever
+     * comes first (a notification sent before the observer was registered, or a provider with no notification
+     * URI, then costs seconds, not the whole wait), within [loadingWaitMs]; a folder still loading after that is
+     * a failed listing with its reason, never a partial one.
      */
-    fun listChildrenWithReason(context: Context, folderUri: Uri): Pair<DriveCopyProtocol.Listing?, String?> {
-        var reason: String? = null
-        val listing = runCatching {
-            val treeId = DocumentsContract.getTreeDocumentId(folderUri)
-            val docId = runCatching { DocumentsContract.getDocumentId(folderUri) }.getOrDefault(treeId)
-            val children = DocumentsContract.buildChildDocumentsUriUsingTree(folderUri, docId)
+    fun listChildrenWithReason(
+        context: Context,
+        folderUri: Uri,
+        loadingWaitMs: Long = CloudCopyPolicy.LIST_LOADING_WAIT_MS,
+    ): Pair<DriveCopyProtocol.Listing?, String?> = runCatching {
+        val treeId = DocumentsContract.getTreeDocumentId(folderUri)
+        val docId = runCatching { DocumentsContract.getDocumentId(folderUri) }.getOrDefault(treeId)
+        val children = DocumentsContract.buildChildDocumentsUriUsingTree(folderUri, docId)
+        listUntilLoaded(loadingWaitMs, SystemClock::elapsedRealtime) { readChildren(context, folderUri, children) }
+    }.getOrElse { e ->
+        AppLogger.w(TAG, "Could not list $folderUri: ${e.message}")
+        null to "${e.javaClass.simpleName}: ${e.message}"
+    }
+
+    /**
+     * One read of a folder's children: the rows, whether the provider says it is still loading them, a way to
+     * wait (up to a limit) for the provider's next change notification, and the cursor's close.
+     */
+    internal class ChildrenRead(
+        val listing: DriveCopyProtocol.Listing,
+        val loading: Boolean,
+        val awaitChange: (Long) -> Unit,
+        val close: () -> Unit,
+    )
+
+    /**
+     * Reads with [read] until the provider stops saying it is loading, waiting in between for its change
+     * notification or [pollMs], whichever comes first, for at most [waitMs] in all. Null with the reason when [read] gets no cursor or the folder is
+     * still loading at the end.
+     */
+    internal fun listUntilLoaded(
+        waitMs: Long,
+        now: () -> Long,
+        pollMs: Long = CloudCopyPolicy.LIST_LOADING_POLL_MS,
+        read: () -> ChildrenRead?,
+    ): Pair<DriveCopyProtocol.Listing?, String?> {
+        val deadline = now() + waitMs
+        var reads = 0
+        while (true) {
+            val r = read() ?: return null to "the provider returned no cursor for the folder's children"
+            reads++
+            try {
+                if (!r.loading) {
+                    if (reads > 1) AppLogger.i(TAG, "Folder listing complete after $reads reads (the provider was loading it)")
+                    return r.listing to null
+                }
+                val left = deadline - now()
+                if (left <= 0) {
+                    val why = "the provider was still loading the folder after ${waitMs}ms ($reads reads, " +
+                        "${r.listing.names.size} entries so far); a partial listing is not used"
+                    AppLogger.w(TAG, why)
+                    return null to why
+                }
+                r.awaitChange(minOf(left, pollMs))
+            } finally {
+                r.close()
+            }
+        }
+    }
+
+    private fun readChildren(context: Context, folderUri: Uri, children: Uri): ChildrenRead? {
+        val c = context.contentResolver.query(
+            children,
+            arrayOf(
+                DocumentsContract.Document.COLUMN_DOCUMENT_ID,
+                DocumentsContract.Document.COLUMN_DISPLAY_NAME,
+                DocumentsContract.Document.COLUMN_SIZE,
+            ),
+            null, null, null,
+        ) ?: return null
+        try {
             val names = ArrayList<String>()
             val uris = ArrayList<Uri>()
             val sizes = ArrayList<Long>()
-            context.contentResolver.query(
-                children,
-                arrayOf(
-                    DocumentsContract.Document.COLUMN_DOCUMENT_ID,
-                    DocumentsContract.Document.COLUMN_DISPLAY_NAME,
-                    DocumentsContract.Document.COLUMN_SIZE,
-                ),
-                null, null, null,
-            )?.use { c ->
-                while (c.moveToNext()) {
-                    val name = c.getString(1) ?: continue
-                    names += name
-                    uris += DocumentsContract.buildDocumentUriUsingTree(folderUri, c.getString(0))
-                    sizes += if (c.isNull(2)) -1L else c.getLong(2)
-                }
-            } ?: run {
-                reason = "the provider returned no cursor for the folder's children"
-                return@runCatching null
+            while (c.moveToNext()) {
+                val name = c.getString(1) ?: continue
+                names += name
+                uris += DocumentsContract.buildDocumentUriUsingTree(folderUri, c.getString(0))
+                sizes += if (c.isNull(2)) -1L else c.getLong(2)
             }
-            DriveCopyProtocol.Listing(names, uris, sizes)
-        }.getOrElse { e ->
-            reason = "${e.javaClass.simpleName}: ${e.message}"
-            AppLogger.w(TAG, "Could not list $folderUri: ${e.message}")
-            null
+            val loading = isLoading(c)
+            // Registered before the wait, on the cursor itself: the provider notifies whatever URI it set on it.
+            val changed = CountDownLatch(1)
+            if (loading) {
+                c.registerContentObserver(object : ContentObserver(null) {
+                    override fun onChange(selfChange: Boolean) = changed.countDown()
+                })
+            }
+            return ChildrenRead(
+                DriveCopyProtocol.Listing(names, uris, sizes), loading,
+                awaitChange = { left -> changed.await(left, TimeUnit.MILLISECONDS) },
+                close = { c.close() },
+            )
+        } catch (t: Throwable) {
+            c.close()
+            throw t
         }
-        return listing to reason
     }
+
+    /** True when the provider flagged [c] as a partial answer it is still filling ([DocumentsContract.EXTRA_LOADING]). */
+    internal fun isLoading(c: Cursor): Boolean = c.extras?.getBoolean(DocumentsContract.EXTRA_LOADING, false) == true
 
     /**
      * Why [folderUri] is not a usable destination, or null when it is. The same test as [isFolderValid],

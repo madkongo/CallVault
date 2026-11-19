@@ -233,6 +233,11 @@
     <string name="notif_health_shizuku_stopped_text">A CallVaultnak újra kellett indítania az Android hibakeresési szolgáltatását, ami leállítja a Shizukut. Nyisd meg a Shizukut és indítsd el újra, ha más alkalmazásokhoz is használod.</string>
     <string name="notif_health_shizuku_stopped_title">A Shizuku leállt</string>
     <string name="notif_health_sync_text">A Google Drive-ba másolás egy ideje leállt. Semmi nem veszett el — a felvételek még a telefonon vannak —, de nincs róluk biztonsági másolat. Nyissa meg a CallVaultot, és ellenőrizze a tárolási beállításokat.</string>
+    <string name="notif_drive_backup_title">A Drive-mentés nem működik</string>
+    <string name="notif_drive_backup_text">A Drive-mentés nem működik: %1$s. A felvételei biztonságban vannak ezen a telefonon. A CallVault a következő ütemezett időpontban újra megpróbálja.</string>
+    <string name="notif_drive_backup_reason_no_answer">a Google Drive nem válaszol</string>
+    <string name="notif_drive_backup_reason_folder">a Drive-mappa nem olvasható</string>
+    <string name="notif_drive_backup_reason_error">egy hiba leállította (%1$s)</string>
     <string name="notif_health_sync_title">A felvételek nem jutnak el a Drive-ba</string>
     <string name="notif_info_channel">CallVault értesítések</string>
     <string name="notif_readiness_pairing_lost_text">Az Android elfelejtette a CallVault párosítását, ezért a hívások nem rögzíthetők. Nyisd meg a CallVaultot, és koppints az állapotkártyára az újrapárosításhoz.</string>

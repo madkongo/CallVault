@@ -26,7 +26,7 @@ object DriveCopyStop {
 
     private val requested = AtomicBoolean(false)
 
-    /** Called at the start of every run, so an old press never stops a later one. */
+    /** Called at the very start of every sweep run, before any copier call, so an old press never stops a later one. */
     fun reset() = requested.set(false)
 
     fun request() = requested.set(true)

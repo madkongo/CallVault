@@ -73,7 +73,7 @@ class RecordingCopyWorker(ctx: Context, params: WorkerParameters) : CoroutineWor
         }
         var driveSize = -1L
         val copyResult = when (outcome) {
-            is DriveCopyClient.Outcome.Reply -> DriveCopyProtocol.readCopyReply(outcome.data).let { (r, steps, size) ->
+            is DriveCopyClient.Outcome.Reply -> DriveCopyProtocol.readCopyReply(outcome.data, name).let { (r, steps, size) ->
                 driveSize = size
                 DriveCopyJournal.record(
                     applicationContext,
@@ -87,6 +87,9 @@ class RecordingCopyWorker(ctx: Context, params: WorkerParameters) : CoroutineWor
             ).also {
                 DriveCopyJournal.record(applicationContext, "copy '$name' ${srcSize}B FAILED after ${SystemClock.elapsedRealtime() - started}ms: ${it.reason} (after the call, attempt ${runAttemptCount + 1})")
             }
+        }
+        if (copyResult !is SafHelper.CopyResult.Failed) {
+            DriveBackupNotice.onDriveReached(applicationContext, "'$name' reached Drive after the call")
         }
         return when (val result = copyResult) {
             is SafHelper.CopyResult.AlreadyPresent -> {

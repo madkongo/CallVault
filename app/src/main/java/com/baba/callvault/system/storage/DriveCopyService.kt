@@ -47,12 +47,12 @@ class DriveCopyService : Service() {
         thread = HandlerThread("cv-drive-copy").also { it.start() }
         messenger = Messenger(object : Handler(thread.looper) {
             override fun handleMessage(msg: Message) {
-                val reply = Message.obtain(null, msg.what)
+                val reply = DriveCopyProtocol.replyTo(msg)
                 // [DriveCopyHandler.handle] never throws and journals every failure with its reason; this
                 // catch is only for something outside it, and says so.
                 reply.data = runCatching {
                     // Inside the copier process, where the persisted grant for the folder is read from.
-                    DriveCopyHandler.handle(applicationContext, msg.what, msg.data, inCopier = true)
+                    DriveCopyHandler.handle(applicationContext, msg.what, msg.data)
                 }.getOrElse {
                     journal("message ${msg.what} failed outside the handler: ${it.javaClass.simpleName}: ${it.message}")
                     DriveCopyProtocol.failureReply("${it.javaClass.simpleName}: ${it.message}")
@@ -83,7 +83,7 @@ class DriveCopyService : Service() {
         val cause = "${failure.javaClass.simpleName}: ${failure.message}"
         journal("reply to message ${msg.what} could not be sent ($bytes bytes, $entries entries): $cause; sending a failure reply instead")
         reply.data.getString(DriveCopyProtocol.K_LIST_FILE)?.let { runCatching { java.io.File(it).delete() } }
-        val small = Message.obtain(null, msg.what)
+        val small = DriveCopyProtocol.replyTo(msg)
         small.data = DriveCopyProtocol.failureReply(DriveCopyProtocol.tooLargeReason(entries, bytes, cause))
         runCatching { msg.replyTo?.send(small) }
             .onFailure { journal("the failure reply for message ${msg.what} could not be sent either: ${it.javaClass.simpleName}: ${it.message}") }

@@ -232,6 +232,11 @@
     <string name="notif_health_shizuku_stopped_text">CallVault 需要重啓 Android 的偵錯服務，這會停止 Shizuku。如果你還用它來支持其他應用，請打開 Shizuku 重新啓動。</string>
     <string name="notif_health_shizuku_stopped_title">Shizuku 已停止</string>
     <string name="notif_health_sync_text">複製到 Google 雲端硬盤在一段時間前就停止了。沒有丟失任何內容——錄音仍在本機——但沒有備份。請打開 CallVault 檢查存儲設定。</string>
+    <string name="notif_drive_backup_title">雲端硬盤備份無法使用</string>
+    <string name="notif_drive_backup_text">雲端硬盤備份無法使用：%1$s。您的錄音安全地保存在本機上。CallVault 會在下一個預定時間重試。</string>
+    <string name="notif_drive_backup_reason_no_answer">Google 雲端硬盤沒有回應</string>
+    <string name="notif_drive_backup_reason_folder">無法讀取雲端硬盤資料夾</string>
+    <string name="notif_drive_backup_reason_error">出錯而停止（%1$s）</string>
     <string name="notif_health_sync_title">錄音沒有傳到雲端硬盤</string>
     <string name="notif_info_channel">CallVault 通知</string>
     <string name="notif_readiness_pairing_lost_text">Android 忘記了 CallVault 的配對，因此無法錄製通話。打開 CallVault 並點按狀態卡片以重新配對。</string>

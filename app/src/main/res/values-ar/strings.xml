@@ -271,6 +271,11 @@
     <string name="notif_health_shizuku_stopped_text">اضطر CallVault إلى إعادة تشغيل خدمة تصحيح أخطاء Android، وهذا يوقف Shizuku. افتح Shizuku وشغّله مرة أخرى إذا كنت تستخدمه مع تطبيقات أخرى.</string>
     <string name="notif_health_shizuku_stopped_title">تم إيقاف Shizuku</string>
     <string name="notif_health_sync_text">توقف النسخ إلى Google Drive منذ بعض الوقت. لم يُفقد أي شيء؛ التسجيلات لا تزال على هذا الهاتف؛ ولكنها ليست مدعومة. افتح CallVault للتحقق من إعدادات التخزين الخاصة بك.</string>
+    <string name="notif_drive_backup_title">النسخ الاحتياطي إلى Drive لا يعمل</string>
+    <string name="notif_drive_backup_text">النسخ الاحتياطي إلى Drive لا يعمل: %1$s. تسجيلاتك آمنة على هذا الهاتف. سيحاول CallVault مرة أخرى في الموعد المجدول التالي.</string>
+    <string name="notif_drive_backup_reason_no_answer">Google Drive لا يستجيب</string>
+    <string name="notif_drive_backup_reason_folder">لا يمكن قراءة مجلد Drive</string>
+    <string name="notif_drive_backup_reason_error">أوقفه خطأ (%1$s)</string>
     <string name="notif_health_sync_title">التسجيلات لا تصل إلى Drive</string>
     <string name="notif_info_channel">إشعارات CallVault</string>
     <string name="notif_readiness_pairing_lost_text">نسي Android اقتران CallVault، لذا لا يمكن تسجيل المكالمات. افتح CallVault وانقر على بطاقة الحالة لإعادة الاقتران.</string>

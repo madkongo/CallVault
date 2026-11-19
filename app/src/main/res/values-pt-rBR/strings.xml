@@ -236,6 +236,11 @@
     <string name="notif_health_shizuku_stopped_text">O CallVault precisou reiniciar o serviço de depuração do Android, e isso interrompe o Shizuku. Abra o Shizuku e inicie-o novamente se você o usa com outros aplicativos.</string>
     <string name="notif_health_shizuku_stopped_title">O Shizuku foi interrompido</string>
     <string name="notif_health_sync_text">A cópia para o Google Drive parou há algum tempo. Nada foi perdido — as gravações ainda estão neste telefone — mas não têm backup. Abra o CallVault e confira as configurações de armazenamento.</string>
+    <string name="notif_drive_backup_title">O backup no Drive não está funcionando</string>
+    <string name="notif_drive_backup_text">O backup no Drive não está funcionando: %1$s. Suas gravações estão seguras neste telefone. O CallVault tentará de novo no próximo horário programado.</string>
+    <string name="notif_drive_backup_reason_no_answer">o Google Drive não está respondendo</string>
+    <string name="notif_drive_backup_reason_folder">a pasta do Drive não pode ser lida</string>
+    <string name="notif_drive_backup_reason_error">um erro o interrompeu (%1$s)</string>
     <string name="notif_health_sync_title">As gravações não estão chegando ao Drive</string>
     <string name="notif_info_channel">Avisos do CallVault</string>
     <string name="notif_readiness_pairing_lost_text">O Android esqueceu o pareamento do CallVault, então as chamadas não podem ser gravadas. Abra o CallVault e toque no cartão de status para parear de novo.</string>
