@@ -135,6 +135,16 @@ object VoipNormalModePolicy {
     fun shouldEnd(mode: Int, vcPlayers: Int, vcRecorders: Int): Boolean =
         mode == AudioManager.MODE_NORMAL && vcPlayers == 0 && vcRecorders == 0
 
+    /**
+     * A call this path started that moved into call mode and is now back in NORMAL with its call-voice player and
+     * recording still live goes back to the pair watch ([shouldEnd]) instead of being ended by the mode (review
+     * C14). Ending it by the mode published the recording 1.5 s later while LINE's call went on, and the pair watch
+     * then opened a second file a few seconds after. A call the mode started is never handed back: its own rules
+     * (the dip debounce, Q32) stay as they are.
+     */
+    fun handBackToPairWatch(startedNormal: Boolean, mode: Int, vcPlayers: Int, vcRecorders: Int): Boolean =
+        startedNormal && mode == AudioManager.MODE_NORMAL && vcPlayers > 0 && vcRecorders > 0
+
     // ---- reading `dumpsys audio` (run by the recorder host: the app is shown anonymised configurations) ----
 
     data class Player(val uid: Int, val usage: String, val contentType: String)

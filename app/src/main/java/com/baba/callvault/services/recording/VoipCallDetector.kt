@@ -78,6 +78,12 @@ class VoipCallDetector(private val context: Context) {
     /** True while the current call was started from its audio, not from the mode. */
     private var normalModeCall = false
 
+    /**
+     * The current call was started from its call-voice pair (item 108), kept when the mode takes it over, so a
+     * return to NORMAL with the pair still live hands it back to the pair watch (review C14).
+     */
+    private var startedNormal = false
+
     /** When the current normal-mode call was started (elapsedRealtime), for the stop line. */
     private var normalModeStartedAt = 0L
 
@@ -188,6 +194,7 @@ class VoipCallDetector(private val context: Context) {
             AppLogger.i(TAG, "VoIP call ended")
             if (normalModeCall) logNormalModeStopped()
             normalModeCall = false
+            startedNormal = false
             handler.removeCallbacks(normalEndRunnable)
             probeTailUntil = android.os.SystemClock.elapsedRealtime() + PROBE_TAIL_MS
             probe("ended", always = true)
@@ -220,7 +227,23 @@ class VoipCallDetector(private val context: Context) {
             AppLogger.i(TAG, "The audio mode came back (mode=$mode) — the app call is still up, recording continues")
             return@Runnable
         }
+        if (handBackToPairWatchIfLive()) return@Runnable
         endCallRunnable.run()
+    }
+
+    /**
+     * A call started from its call-voice pair, back in NORMAL with the pair still live, goes back to the pair watch
+     * instead of ending (review C14). Returns true when it did.
+     */
+    private fun handBackToPairWatchIfLive(): Boolean {
+        if (!startedNormal || !callActive) return false
+        val snap = audioManager?.let { am -> runCatching { VoipEndProbe.capture(am) }.getOrNull() } ?: return false
+        if (!VoipNormalModePolicy.handBackToPairWatch(startedNormal, snap.mode, snap.voiceCallPlayers, snap.voiceCommRecorders)) return false
+        handler.removeCallbacks(debouncedEndRunnable)
+        endDeferredAsRingDip = false
+        normalModeCall = true
+        CallEndLog.record(context, "normal-mode app call left call mode with its call-voice audio still live; the call goes on (ended when that audio stops)")
+        return true
     }
 
     /**
@@ -287,6 +310,7 @@ class VoipCallDetector(private val context: Context) {
         AppLogger.i(TAG, "A carrier call was answered — ending the app-call recording so the phone call can be recorded")
         if (normalModeCall) logNormalModeStopped()
         normalModeCall = false
+        startedNormal = false
         handler.removeCallbacks(normalEndRunnable)
         callActive = false
         suspendedForCarrier = false
@@ -341,6 +365,7 @@ class VoipCallDetector(private val context: Context) {
 
             VoipSwitchPolicy.Action.END -> {
                 handler.removeCallbacks(debouncedEndRunnable)
+                if (handBackToPairWatchIfLive()) return
                 // Read the players now: the probe that follows this event runs after it.
                 runCatching { audioManager?.let { VoipEndProbe.capture(it) } }.getOrNull()
                     ?.takeIf { it.voiceCallPlayers > 0 }?.let { voicePlayerSeen = true }
@@ -414,6 +439,7 @@ class VoipCallDetector(private val context: Context) {
             voicePlayerSeen = viaNormalMode
             endDeferredAsRingDip = false
             normalModeCall = viaNormalMode
+            startedNormal = viaNormalMode
             normalModeStartedAt = callDetectedAt
             if (viaNormalMode) {
                 CallEndLog.record(context, "normal-mode app call detected (mode=NORMAL, call-voice player + recording from an allow-listed app): starting")

@@ -201,4 +201,22 @@ class VoipNormalModePolicyTest {
         // A start on the last try still starts.
         assertEquals(VoipNormalModePolicy.JudgeNext.STARTED, next(null, Verdict.START, tries = max))
     }
+
+    // ---- review C14: a LINE call that visits call mode and comes back is not ended by the mode ----
+
+    @Test
+    fun `a normal-started call back in NORMAL with its pair still live goes back to the pair watch`() {
+        // NORMAL -> IN_COMMUNICATION -> NORMAL with LINE's call-voice player and recording live: one file goes on.
+        assertTrue(VoipNormalModePolicy.handBackToPairWatch(startedNormal = true, mode = AudioManager.MODE_NORMAL, vcPlayers = 1, vcRecorders = 1))
+    }
+
+    @Test
+    fun `the mode ends it when the pair is gone, or when it never started from the pair`() {
+        assertFalse(VoipNormalModePolicy.handBackToPairWatch(startedNormal = true, mode = AudioManager.MODE_NORMAL, vcPlayers = 0, vcRecorders = 0))
+        assertFalse(VoipNormalModePolicy.handBackToPairWatch(startedNormal = true, mode = AudioManager.MODE_NORMAL, vcPlayers = 1, vcRecorders = 0))
+        // A mode-started call (WhatsApp, Telegram): unchanged, the mode rules end it (Q32's debounce included).
+        assertFalse(VoipNormalModePolicy.handBackToPairWatch(startedNormal = false, mode = AudioManager.MODE_NORMAL, vcPlayers = 1, vcRecorders = 1))
+        // Not NORMAL (a carrier call took the mode): not handed back.
+        assertFalse(VoipNormalModePolicy.handBackToPairWatch(startedNormal = true, mode = AudioManager.MODE_IN_CALL, vcPlayers = 1, vcRecorders = 1))
+    }
 }
