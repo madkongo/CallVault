@@ -518,6 +518,33 @@ class HomeViewModel(application: Application) : AndroidViewModel(application) {
             }
         }
 
+    // Declared above init on purpose: Kotlin runs property initializers and init blocks in text order, so a
+    // property declared below init is re-initialised after init has already used it (refresh() sets
+    // watchingCatalog and listJob from init). The C24 Wi-Fi flow crashed Home this way (2026-11-19).
+    /** The last uri whose playback ERROR we handled, so we prune it at most once per failure. */
+    private var lastHandledErrorUri: Uri? = null
+    /**
+     * The list reload. Guarded because [refresh] runs on every
+     * ON_RESUME, so opening the app, leaving it and coming back used to stack several full passes over
+     * the whole library, each competing with the others for the same disk and the same media codecs.
+     * A pass already running is left to finish — it is reading the same rows this call would.
+     */
+    private var listJob: Job? = null
+    private var listReloadPending = false
+    private var watchingCatalog = false
+    private val _isPullRefreshing = MutableStateFlow(false)
+    private var driveCheckJob: kotlinx.coroutines.Deferred<*>? = null
+
+    /** True while a pull-to-refresh is running, for the indicator at the top of the page. */
+    val isPullRefreshing: StateFlow<Boolean> = _isPullRefreshing.asStateFlow()
+    private var contentSearchJob: Job? = null
+
+    /**
+     * [SystemClock.elapsedRealtime] when recording was last turned on, or 0 if it was turned off. Drives
+     * the grace-gated [HomeStatus.STARTING]: the card only admits a warm-up once it has run past the grace.
+     */
+    @Volatile private var recordingTurnedOnAt: Long = 0L
+
     init {
         detectJustUpdated()
         refresh()
@@ -531,27 +558,13 @@ class HomeViewModel(application: Application) : AndroidViewModel(application) {
         healthListener = SetupHealthStore(appContext).registerCardListener { reloadHealthQuietly() }
     }
 
-    /** Wi-Fi coming and going, for [observeReadiness]. Unregistered in [onCleared]. */
-    private val wifiChanges = kotlinx.coroutines.flow.MutableSharedFlow<Unit>(extraBufferCapacity = 1)
-    private var wifiCallback: android.net.ConnectivityManager.NetworkCallback? = null
-
     /**
      * Review C24: "Needs Wi-Fi to record" is decided from whether the recorder is connected and whether there is
      * Wi-Fi, and both change while Home is open. Recomputed on either, not only on the next resume.
+     * [WifiChanges] registers only while collected here and unregisters with [viewModelScope].
      */
     private fun observeReadiness() {
-        runCatching {
-            val cm = appContext.getSystemService(android.net.ConnectivityManager::class.java) ?: return@runCatching
-            val callback = object : android.net.ConnectivityManager.NetworkCallback() {
-                override fun onAvailable(network: android.net.Network) { wifiChanges.tryEmit(Unit) }
-                override fun onLost(network: android.net.Network) { wifiChanges.tryEmit(Unit) }
-            }
-            val request = android.net.NetworkRequest.Builder()
-                .addTransportType(android.net.NetworkCapabilities.TRANSPORT_WIFI)
-                .build()
-            cm.registerNetworkCallback(request, callback)
-            wifiCallback = callback
-        }.onFailure { AppLogger.w(TAG, "Could not watch Wi-Fi for the status card: ${it.message}") }
+        val wifiChanges = WifiChanges.of(appContext.getSystemService(android.net.ConnectivityManager::class.java))
         viewModelScope.launch {
             ReadinessRecompute.triggers(RecorderConnection.connected, wifiChanges).collect {
                 _uiState.update { state -> state.copy(status = computeStatus()) }
@@ -586,9 +599,6 @@ class HomeViewModel(application: Application) : AndroidViewModel(application) {
             }
         }
     }
-
-    /** The last uri whose playback ERROR we handled, so we prune it at most once per failure. */
-    private var lastHandledErrorUri: Uri? = null
 
     /**
      * When a recording fails to play, verify the file still exists; if it was deleted OUTSIDE the app
@@ -745,21 +755,6 @@ class HomeViewModel(application: Application) : AndroidViewModel(application) {
      * Recomputes the [HomeStatus] (synchronous, cheap) and reloads the recordings list off the main
      * thread. Safe to call on first composition and on every ON_RESUME.
      */
-    /**
-     * The list reload. Guarded because [refresh] runs on every
-     * ON_RESUME, so opening the app, leaving it and coming back used to stack several full passes over
-     * the whole library, each competing with the others for the same disk and the same media codecs.
-     * A pass already running is left to finish — it is reading the same rows this call would.
-     */
-    private var listJob: Job? = null
-    private var listReloadPending = false
-    private var watchingCatalog = false
-
-    /**
-     * [SystemClock.elapsedRealtime] when recording was last turned on, or 0 if it was turned off. Drives
-     * the grace-gated [HomeStatus.STARTING]: the card only admits a warm-up once it has run past the grace.
-     */
-    @Volatile private var recordingTurnedOnAt: Long = 0L
 
     /**
      * Re-reads the list when something else changes the catalog.
@@ -903,12 +898,6 @@ class HomeViewModel(application: Application) : AndroidViewModel(application) {
         }
         startListPass(status)
     }
-
-    private val _isPullRefreshing = MutableStateFlow(false)
-    private var driveCheckJob: kotlinx.coroutines.Deferred<*>? = null
-
-    /** True while a pull-to-refresh is running, for the indicator at the top of the page. */
-    val isPullRefreshing: StateFlow<Boolean> = _isPullRefreshing.asStateFlow()
 
     /**
      * Pull-to-refresh: everything [refresh] does, plus looking at the folders themselves.
@@ -1111,8 +1100,6 @@ class HomeViewModel(application: Application) : AndroidViewModel(application) {
             _uiState.update { if (it.contactQuery == query) it.copy(contentHits = hits) else it }
         }
     }
-
-    private var contentSearchJob: Job? = null
 
     /** Turns every chip filter off (source, direction, date, tag, starred); the search line is left alone. */
     fun clearFilters() {
@@ -1507,11 +1494,6 @@ class HomeViewModel(application: Application) : AndroidViewModel(application) {
 
     override fun onCleared() {
         preferences.unregisterChangeListener(prefsListener)
-        wifiCallback?.let { cb ->
-            runCatching { appContext.getSystemService(android.net.ConnectivityManager::class.java)?.unregisterNetworkCallback(cb) }
-                .onFailure { AppLogger.w(TAG, "Could not stop watching Wi-Fi: ${it.message}") }
-        }
-        wifiCallback = null
         healthListener?.let { SetupHealthStore(appContext).unregisterCardListener(it) }
         playbackController.release()
         super.onCleared()
