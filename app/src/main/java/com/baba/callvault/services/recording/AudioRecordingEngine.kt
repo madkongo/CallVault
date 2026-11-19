@@ -981,7 +981,7 @@ class AudioRecordingEngine {
     private fun releaseSession(ended: Boolean = true) {
         val wasOwned = DaemonSessionOwnership.isOwnedBy(this)
         DaemonSessionOwnership.release(this)
-        if (wasOwned && ended) appContext?.let { OrphanRecorderSession.noteSessionEnded(it) }
+        if (wasOwned && ended) appContext?.let { OrphanRecorderSession.noteSessionEnded(it, stagingFile) }
     }
 
     /**

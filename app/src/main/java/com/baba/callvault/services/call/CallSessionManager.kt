@@ -25,6 +25,7 @@ import com.baba.callvault.data.recordings.RecordingDirection
 import com.baba.callvault.data.recordings.RecordingMetadata
 import com.baba.callvault.services.recording.DaemonKeepAliveService
 import com.baba.callvault.services.recording.OrphanRecorderSession
+import com.baba.callvault.services.recording.OrphanSessionPolicy
 import com.baba.callvault.services.recording.RecordingForegroundService
 import com.baba.callvault.services.recording.RecordingPolicy
 import com.baba.callvault.services.recording.VoipRecordingCoordinator
@@ -281,6 +282,9 @@ class CallSessionManager private constructor(context: Context) {
             !RecordingForegroundService.isAppMixSession
         ) {
             AppLogger.i(TAG, "Carrier call answered while an app call was recording — stopping it.")
+            // From here the phone call is the live call (C1): its beginning is noted now, so the app call's recording,
+            // older than it, is never taken for the phone call's own if it is still running when the phone call starts.
+            OrphanRecorderSession.noteCallBegan(appContext)
             runCatching {
                 appContext.startService(
                     Intent(appContext, DaemonKeepAliveService::class.java).apply {
@@ -293,7 +297,17 @@ class CallSessionManager private constructor(context: Context) {
         // When this call began, for telling its own recording from an earlier call's after a process kill (C2). Only
         // a beginning this process saw: a ring, or an off-hook right after a dial. An off-hook with neither is the
         // call already up when the phone restarted CallVault (Q25), and the value the killed process wrote stays.
-        if (!session.isSessionActive && (receivedCallState == TelephonyManager.CALL_STATE_RINGING || freshDialledNumber() != null)) {
+        // Never while an app call is recorded or its call mode is up (a ring rejected during WhatsApp, Q28).
+        if (OrphanSessionPolicy.mayNoteCarrierCallBegan(
+                carrierSessionActive = session.isSessionActive,
+                ringingOrFreshDial = receivedCallState == TelephonyManager.CALL_STATE_RINGING || freshDialledNumber() != null,
+                appCallRecording = VoipRecordingCoordinator.isRecording,
+                appCallModeUp = runCatching {
+                    appContext.getSystemService(android.media.AudioManager::class.java)?.mode ==
+                        android.media.AudioManager.MODE_IN_COMMUNICATION
+                }.getOrDefault(false),
+            )
+        ) {
             OrphanRecorderSession.noteCallBegan(appContext)
         }
 

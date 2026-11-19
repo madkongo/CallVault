@@ -174,13 +174,34 @@ object OrphanRecorderSession {
 
     /** The app handed [staging] to the recorder for a session it now owns. */
     fun noteSessionStarted(context: Context, staging: File?) {
-        edit(context) { if (staging != null) putString(KEY_SESSION_STAGING, staging.absolutePath) else remove(KEY_SESSION_STAGING) }
+        synchronized(sessionRecordLock) {
+            runCatching {
+                context.applicationContext.getSharedPreferences(PREFS, Context.MODE_PRIVATE).edit().apply {
+                    if (staging != null) putString(KEY_SESSION_STAGING, staging.absolutePath) else remove(KEY_SESSION_STAGING)
+                }.commit()
+            }.onFailure { AppLogger.w(TAG, "Could not update the orphan-session facts: ${it.message}") }
+        }
     }
 
-    /** The app's own session is over (stopped or never started). */
-    fun noteSessionEnded(context: Context) {
-        edit(context) { remove(KEY_SESSION_STAGING); putLong(KEY_LAST_NO_SESSION_AT, System.currentTimeMillis()) }
+    /**
+     * The app's own session on [staging] is over (stopped or never started). The record is removed only while it
+     * still names [staging]: an app call ending late on another thread must not wipe the record of the phone call's
+     * session that started meanwhile (gate review item 3).
+     */
+    fun noteSessionEnded(context: Context, staging: File?) {
+        synchronized(sessionRecordLock) {
+            runCatching {
+                val prefs = context.applicationContext.getSharedPreferences(PREFS, Context.MODE_PRIVATE)
+                val recorded = prefs.getString(KEY_SESSION_STAGING, null)
+                prefs.edit().apply {
+                    if (OrphanSessionPolicy.endsRecordedSession(recorded, staging?.absolutePath)) remove(KEY_SESSION_STAGING)
+                    putLong(KEY_LAST_NO_SESSION_AT, System.currentTimeMillis())
+                }.commit()
+            }.onFailure { AppLogger.w(TAG, "Could not update the orphan-session facts: ${it.message}") }
+        }
     }
+
+    private val sessionRecordLock = Any()
 
     private fun edit(context: Context, block: android.content.SharedPreferences.Editor.() -> Unit) {
         runCatching {
@@ -204,12 +225,19 @@ object OrphanRecorderSession {
         @SuppressLint("MissingPermission")
         override fun callInProgress(): Boolean? = runCatching {
             @Suppress("DEPRECATION")
-            val carrier = context.getSystemService(TelephonyManager::class.java)?.callState
-            val mode = context.getSystemService(AudioManager::class.java)?.mode
+            val carrier = runCatching { context.getSystemService(TelephonyManager::class.java)?.callState }.getOrNull()
+            val am = context.getSystemService(AudioManager::class.java)
+            val mode = runCatching { am?.mode }.getOrNull()
             val telecom = runCatching { context.getSystemService(TelecomManager::class.java)?.isInCall }.getOrNull()
-            (carrier != null && carrier != TelephonyManager.CALL_STATE_IDLE) ||
-                (mode != null && AfterCallPolicy.isCallAudioMode(mode)) ||
-                telecom == true
+            val voice = runCatching { am?.let { VoipEndProbe.capture(it) } }.getOrNull()
+            OrphanSessionPolicy.isCallInProgress(
+                carrierState = carrier,
+                audioModeIsCall = mode?.let(AfterCallPolicy::isCallAudioMode),
+                telecomInCall = telecom,
+                appCallRecording = VoipRecordingCoordinator.isRecording,
+                voiceCommPlayers = voice?.voiceCallPlayers,
+                voiceCommRecorders = voice?.voiceCommRecorders,
+            )
         }.onFailure { AppLogger.w(TAG, "Could not read the call state: ${it.message}") }.getOrNull()
 
         override fun orphanStartedAt(exclude: File?): Long? {

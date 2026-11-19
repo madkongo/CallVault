@@ -325,4 +325,64 @@ class OrphanRecorderSessionTest {
         assertEquals(Action.STOP_ORPHAN, OrphanSessionPolicy.decide(true, false, true, true))
         assertEquals(Action.KEEP_LIVE_CALL, OrphanSessionPolicy.decide(true, false, true, false))
     }
+
+    // ---- gate review ----
+
+    @Test
+    fun `gate 1 - a ring during a recorded app call does not move the live call's beginning`() {
+        // Q28: WhatsApp recorded, a phone call rings and is rejected. Noting it would make a later Q25 kill stop the
+        // live app recording.
+        assertFalse(OrphanSessionPolicy.mayNoteCarrierCallBegan(false, ringingOrFreshDial = true, appCallRecording = true, appCallModeUp = true))
+        assertFalse(OrphanSessionPolicy.mayNoteCarrierCallBegan(false, ringingOrFreshDial = true, appCallRecording = false, appCallModeUp = true))
+        assertFalse(OrphanSessionPolicy.mayNoteCarrierCallBegan(false, ringingOrFreshDial = true, appCallRecording = true, appCallModeUp = false))
+        assertTrue(OrphanSessionPolicy.mayNoteCarrierCallBegan(false, ringingOrFreshDial = true, appCallRecording = false, appCallModeUp = false))
+        assertFalse(OrphanSessionPolicy.mayNoteCarrierCallBegan(true, ringingOrFreshDial = true, appCallRecording = false, appCallModeUp = false))
+        assertFalse(OrphanSessionPolicy.mayNoteCarrierCallBegan(false, ringingOrFreshDial = false, appCallRecording = false, appCallModeUp = false))
+    }
+
+    @Test
+    fun `gate 1 - so a kill after a rejected ring keeps the live app recording`() {
+        // The WhatsApp call began at call1Start - 5 s; its recording started at call1Start; the rejected ring 60 s in
+        // is no longer noted, so the beginning stays before the recording and the restart adopts it.
+        val recorder = FakeRecorder().apply { start("whatsapp") }
+        val env = FakeEnv(inCall = true, orphanStart = call1Start, liveCallBegan = call1Start - 5_000L)
+        assertEquals(Action.KEEP_LIVE_CALL, OrphanRecorderSession.resolve(recorder, env, "app start").action)
+        assertEquals(0, recorder.stops)
+    }
+
+    @Test
+    fun `gate 2 - a LINE call in MODE_NORMAL is a call in progress, by its players or recorders`() {
+        val idleTelephony = 0
+        assertTrue(OrphanSessionPolicy.isCallInProgress(idleTelephony, false, false, false, voiceCommPlayers = 1, voiceCommRecorders = 0))
+        assertTrue(OrphanSessionPolicy.isCallInProgress(idleTelephony, false, false, false, voiceCommPlayers = 0, voiceCommRecorders = 1))
+        assertTrue(OrphanSessionPolicy.isCallInProgress(idleTelephony, false, false, appCallRecording = true, 0, 0))
+        assertFalse(OrphanSessionPolicy.isCallInProgress(idleTelephony, false, false, false, 0, 0))
+    }
+
+    @Test
+    fun `gate 2 - what cannot be read never reads as no call`() {
+        assertTrue(OrphanSessionPolicy.isCallInProgress(null, false, false, false, 0, 0))
+        assertTrue(OrphanSessionPolicy.isCallInProgress(0, false, false, false, null, 0))
+        assertTrue(OrphanSessionPolicy.isCallInProgress(2 /* OFFHOOK */, null, null, false, null, null))
+    }
+
+    @Test
+    fun `gate 3 - an app call ending late does not wipe the phone call's session record`() {
+        assertFalse(OrphanSessionPolicy.endsRecordedSession(recordedPath = "/s/carrier.tmp", endingPath = "/s/voip.tmp"))
+        assertTrue(OrphanSessionPolicy.endsRecordedSession(recordedPath = "/s/voip.tmp", endingPath = "/s/voip.tmp"))
+        assertFalse(OrphanSessionPolicy.endsRecordedSession(recordedPath = null, endingPath = "/s/voip.tmp"))
+    }
+
+    @Test
+    fun `gate 3 - an app call whose stop did not take is stopped for the phone call, not adopted`() {
+        // The app call's recording is still running and its record kept; the phone call answered during it was noted
+        // as the live call's beginning (C1), after the app call's recording started.
+        val recorder = FakeRecorder().apply { start("whatsapp") }
+        val env = FakeEnv(inCall = true, orphanStart = call1Start, liveCallBegan = call1Start + 40_000L)
+
+        val outcome = OrphanRecorderSession.resolve(recorder, env, "call start")
+
+        assertEquals(StartVerdict.START, OrphanSessionPolicy.forStart(outcome.action, outcome.stillRecording))
+        assertEquals(listOf("whatsapp"), recorder.finalised)
+    }
 }

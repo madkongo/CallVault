@@ -48,6 +48,7 @@ import com.baba.callvault.utils.AppLogger
 import com.baba.callvault.utils.DeviceInfo
 import com.baba.callvault.transcription.AudioDecoder
 import com.baba.callvault.system.diagnostics.CallEndLog
+import com.baba.callvault.system.storage.CutOffRescueWorker
 import com.baba.callvault.system.storage.MinDurationPolicy
 import com.baba.callvault.system.interop.MetadataSidecar
 import com.baba.callvault.data.recordings.RecordingsRepository
@@ -311,7 +312,7 @@ object VoipRecordingCoordinator {
 
         if (!started) {
             DaemonSessionOwnership.release(this)
-            OrphanRecorderSession.noteSessionEnded(context)
+            OrphanRecorderSession.noteSessionEnded(context, saf.stagingFile)
             // Most likely the policy was not armed before the call — nothing can be captured now, so
             // remove the empty file rather than leaving a 0-byte recording in the user's folder.
             reportMissedIfReal(context, R.string.voip_missed_not_ready, null)
@@ -913,10 +914,24 @@ object VoipRecordingCoordinator {
         currentAppLabel = null
         paused = false
         isSuspendedForCarrierCall = false
-        runCatching { RecorderConnection.service?.stopRecording() }
+        val recorder = RecorderConnection.service
+        runCatching { recorder?.stopRecording() }
             .onFailure { AppLogger.w(TAG, "stopRecording failed: ${it.message}") }
+        // Gate review item 3: the session is only "ended" once the recorder says it is not recording. A dead or
+        // unreachable recorder is not recording anything.
+        val stillRecording = recorder?.let { r -> runCatching { r.isRecording() }.getOrNull() } ?: false
         DaemonSessionOwnership.release(this)
-        OrphanRecorderSession.noteSessionEnded(context)
+        if (stillRecording) {
+            // Not stopped. Its file stays a KNOWN session (the key is kept): a phone call starting now finds an orphan
+            // older than its own beginning, stops it and records, instead of adopting it. Nothing is published from a
+            // file still being written; the cut-off rescue saves it under its own name once it is stopped.
+            CallEndLog.record(context, "app call end: the recorder did not confirm it stopped; leaving its file to the orphan check and the rescue")
+            AppLogger.w(TAG, "App-call recording did not confirm it stopped; not publishing a file still being written")
+            runCatching { saf?.descriptor?.close() }
+            CutOffRescueWorker.schedule(context)
+            return
+        }
+        OrphanRecorderSession.noteSessionEnded(context, saf?.stagingFile)
         if (discardAsIgnored) {
             // Before any warning or diagnostic: a call the user asked us to skip is not a one-sided or
             // failed recording, and nothing about it should be reported or kept.

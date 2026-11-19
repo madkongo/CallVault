@@ -99,6 +99,49 @@ object OrphanSessionPolicy {
     fun orphanStartFrom(sessionFileStart: Long?, candidateStarts: List<Long>, lastNoSessionAt: Long): Long? =
         sessionFileStart ?: candidateStarts.filter { it > lastNoSessionAt }.maxOrNull()
 
+    /** Whether ending the session on [endingPath] removes the record [recordedPath]: only when it is that same file. */
+    fun endsRecordedSession(recordedPath: String?, endingPath: String?): Boolean =
+        recordedPath != null && recordedPath == endingPath
+
+    /**
+     * Whether a phone call's ring or dial may be noted as "the call in progress began" (gate review item 1).
+     *
+     * Not while an app call is being recorded or its audio mode is up: a ring that is then rejected during a live
+     * WhatsApp call (Q28) would move the beginning past the app call's own recording, and a later kill mid-call
+     * (Q25) would then stop that live recording. A phone call ANSWERED during an app call is noted separately, when
+     * the app-call recording is ended for it (C1): from then on the phone call is the live call.
+     */
+    fun mayNoteCarrierCallBegan(
+        carrierSessionActive: Boolean,
+        ringingOrFreshDial: Boolean,
+        appCallRecording: Boolean,
+        appCallModeUp: Boolean,
+    ): Boolean = !carrierSessionActive && ringingOrFreshDial && !appCallRecording && !appCallModeUp
+
+    /**
+     * Whether any call is ringing or up (gate review item 2). Besides telephony, Telecom and the call audio modes:
+     * an app call this process is recording, and a live voice-communication player or recorder. A LINE call (Q33)
+     * never leaves MODE_NORMAL, and after a restart only its players and recorders show it. The recorder's own
+     * capture is never one of them: it records from MIC and VOICE_CALL, and plays nothing.
+     * Every input that could not be read is null; any null with nothing else true reads as "in progress".
+     */
+    fun isCallInProgress(
+        carrierState: Int?,
+        audioModeIsCall: Boolean?,
+        telecomInCall: Boolean?,
+        appCallRecording: Boolean,
+        voiceCommPlayers: Int?,
+        voiceCommRecorders: Int?,
+    ): Boolean {
+        val known = listOf(
+            carrierState?.let { it != 0 /* TelephonyManager.CALL_STATE_IDLE */ },
+            audioModeIsCall, telecomInCall, appCallRecording,
+            voiceCommPlayers?.let { it > 0 }, voiceCommRecorders?.let { it > 0 },
+        )
+        if (known.any { it == true }) return true
+        return known.any { it == null }
+    }
+
     /** What a call start should do once the orphan question is settled. */
     enum class StartVerdict {
         /** Nothing in the way, or the orphan was stopped: start this call's recording. */
