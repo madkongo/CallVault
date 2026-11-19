@@ -167,6 +167,9 @@ object OrphanRecorderSession {
         return runCatching { RecorderConnection.service?.isRecording() == true }.getOrDefault(false)
     }
 
+    /** When the call in progress began, as noted by whichever process saw it begin (kept across a kill); null = unknown. */
+    fun liveCallBeganAt(context: Context): Long? = AndroidEnvironment(context.applicationContext).liveCallBeganAt()
+
     /** The call in progress began now (it rang, or was dialled), seen by this process. */
     fun noteCallBegan(context: Context, atMillis: Long = System.currentTimeMillis()) {
         edit(context) { putLong(KEY_LIVE_CALL_BEGAN_AT, atMillis) }

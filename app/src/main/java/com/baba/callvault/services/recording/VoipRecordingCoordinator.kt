@@ -149,11 +149,8 @@ object VoipRecordingCoordinator {
     /** Counts call ends, so a start continued after an orphan check knows whether its call already ended. */
     @Volatile private var callEnds = 0
 
-    /** A start that found the recorder not connected: when, and whether the phone looked like it was on a call (N18). */
-    private data class NotReadyStart(val atMillis: Long, val lookedLikeCall: Boolean)
-
-    /** Set by a start that found no recorder; settled when that call ends ([settleNotReadyMiss]). */
-    @Volatile private var notReadyAtStart: NotReadyStart? = null
+    /** Starts that found the recorder not connected, settled when their call ends (review N18). Keyed by [callEnds]. */
+    private val notReadyMiss = VoipNotReadyMiss()
 
     /** Told when a start that went through an orphan check has finished, so the detector can update its state. */
     @Volatile var onDeferredStartFinished: (() -> Unit)? = null
@@ -210,10 +207,10 @@ object VoipRecordingCoordinator {
      */
     fun endInBackground(context: Context) {
         if (!recording) {
-            // Not recording here, but a start that found no recorder still needs its end (N18). Cheap and inline:
-            // before the phone call's own recording can be taken for this app call's.
-            if (notReadyAtStart != null) runCatching { onCallEnded(context) }
-                .onFailure { AppLogger.w(TAG, "The not-ready check at a phone call's answer failed: ${it.message}") }
+            // Not recording here, but a start that found no recorder still needs its end (N18). Only the record is
+            // taken here; the check itself (a binder call, a folder listing, the library) runs off this thread, so it
+            // can never delay the phone call's own start.
+            takeNotReadyAtEnd(context)
             return
         }
         DaemonSessionOwnership.beginRelease(this)
@@ -241,29 +238,37 @@ object VoipRecordingCoordinator {
     ) {
         if (recording) return
         if (orphanCheckInFlight) return
+        // A not-ready record of an earlier call whose end never came must never decide this one (N18).
+        val notReadyEnv = NotReadyEnv(context.applicationContext)
+        notReadyMiss.forgetOtherCalls(callEnds, notReadyEnv)
         val prefs = AppPreferences(context)
         // The master switch sits above the per-type VoIP setting: paused/stopped records nothing.
         val recordingState = prefs.getRecordingState()
         if (!recordingState.isRecordingAllowed) {
             AppLogger.i(TAG, "Master recording switch is $recordingState — not recording this VoIP call.")
             logOutcome(context, VoipOutcome.Reason.MASTER_SWITCH_OFF)
+            notReadyMiss.clear("the master recording switch is off", notReadyEnv)
             return
         }
-        if (!prefs.isVoipRecordingEnabled()) return
+        if (!prefs.isVoipRecordingEnabled()) {
+            notReadyMiss.clear("app-call recording is switched off", notReadyEnv)
+            return
+        }
 
         val service = RecorderConnection.service
         if (service == null) {
             // Nothing can be started for THIS call (a late start cannot capture it), but whether it went
             // unrecorded is only known at its end (review N18): a CallVault restarted into a call gets here before its
             // recorder connection is back, while the recorder is still recording the call for the killed process.
-            if (notReadyAtStart == null) {
-                notReadyAtStart = NotReadyStart(System.currentTimeMillis(), CallEvidence.looksLikeACall(context))
-            }
+            notReadyMiss.onNotReadyStart(callEnds, notReadyEnv)
             AppLogger.w(TAG, "VoIP call detected but the daemon is not connected — not recording; a miss is decided at the call's end")
             logOutcome(context, VoipOutcome.Reason.RECORDER_NOT_CONNECTED)
             CallEndLog.record(context, "app call start: the recorder is not connected; whether the call went unrecorded is decided when it ends")
             return
         }
+        // From here this start has a recorder: it records, or says itself why not (a refusal, no folder, a switched-off
+        // app, an ignored caller). An earlier not-ready start of the same call no longer stands.
+        notReadyMiss.clear("a later start of this call found the recorder connected", notReadyEnv)
 
         // vivo only: turn its audioserver's verbose logging on BEFORE the call opens, so vivo writes its own
         // record-silencing decision for THIS call (voip_audio_log reads it at the end). Re-armed every call,
@@ -365,8 +370,6 @@ object VoipRecordingCoordinator {
         }
 
         recording = true
-        // This call is being recorded here after all (a later manual start): no miss to decide at its end (N18).
-        notReadyAtStart = null
         startedViaNormalMode = viaNormalMode
         pending = saf
         // The rescue must never take this file for an abandoned one while the call goes on (C12): a pause stops
@@ -956,11 +959,12 @@ object VoipRecordingCoordinator {
      */
     @Synchronized
     fun onCallEnded(context: Context, neverConnected: Boolean = false) {
-        callEnds++
         if (!recording) {
-            settleNotReadyMiss(context)
+            takeNotReadyAtEnd(context)
+            callEnds++
             return
         }
+        callEnds++
         val liveStaging = pending?.stagingFile
         try {
             endRecording(context, neverConnected)
@@ -971,32 +975,50 @@ object VoipRecordingCoordinator {
     }
 
     /**
-     * The end of a call whose start found the recorder not connected (review N18): reports the miss only when no
-     * recording of the call exists anywhere. Runs before the detector's after-call orphan check, so a recorder still
-     * recording the call for a killed CallVault is seen recording here. Every verdict goes to the always-on log.
+     * The end of a call whose start found the recorder not connected (review N18). The record is taken under the lock;
+     * the check runs on its own thread (it asks the recorder, lists the staging folder and reads the library), so
+     * neither the detector's main thread nor a phone call's start waits for it. The detector's after-call orphan check
+     * may stop a kept orphan meanwhile: its staged file, or the library entry the rescue makes of it, still counts.
+     * Not under the coordinator's lock: a stop in progress holds it for seconds, and a phone call's start must not
+     * wait for that. [VoipNotReadyMiss] has its own.
      */
-    private fun settleNotReadyMiss(context: Context) {
-        val start = notReadyAtStart ?: return
-        notReadyAtStart = null
-        val service = RecorderConnection.service
-        val recorderRecording = service?.let { s ->
-            runCatching { s.isRecording() }
+    private fun takeNotReadyAtEnd(context: Context) {
+        val app = context.applicationContext
+        val env = NotReadyEnv(app)
+        val ended = notReadyMiss.takeAtEnd(callEnds, env) ?: return
+        Thread {
+            runCatching { notReadyMiss.settle(ended, env) }
+                .onFailure { AppLogger.e(TAG, "The not-ready check at an app call's end failed: ${it.message}", it) }
+        }.apply { isDaemon = true; name = "cv-voip-not-ready-check" }.start()
+    }
+
+    /** [VoipNotReadyMiss.Env] on the phone. */
+    private class NotReadyEnv(private val context: Context) : VoipNotReadyMiss.Env {
+        override fun now(): Long = System.currentTimeMillis()
+        override fun looksLikeACall(): Boolean = runCatching { CallEvidence.looksLikeACall(context) }
+            .onFailure { AppLogger.w(TAG, "Call evidence unreadable at a not-ready start (counted as a call): ${it.message}") }
+            .getOrDefault(true)
+        override fun liveCallBeganAt(): Long? = OrphanRecorderSession.liveCallBeganAt(context)
+        override fun recorderRecordingUnowned(): Boolean? {
+            val service = RecorderConnection.service ?: return null
+            return runCatching { service.isRecording() }
                 .onFailure { AppLogger.w(TAG, "isRecording failed at the not-ready check: ${it.message}") }
-                .getOrNull()
+                .getOrNull()?.let { it && !DaemonSessionOwnership.isOwnedHere }
         }
-        val unowned = recorderRecording?.let { it && !DaemonSessionOwnership.isOwnedHere }
-        val staged = runCatching {
-            val files = com.baba.callvault.system.storage.SafHelper.stagingDirOrNull(context)?.listFiles().orEmpty().toList()
-            VoipMissPolicy.stagedDuringCall(files, start.atMillis) { LiveStagingFiles.isLive(it) }
-        }.onFailure { AppLogger.w(TAG, "Could not read the staging folder at the not-ready check: ${it.message}") }
-            .getOrDefault(false)
-        val verdict = VoipMissPolicy.notReadyAtCallEnd(start.lookedLikeCall, unowned, staged)
-        CallEndLog.record(
-            context,
-            "app call not-ready check at the call's end: recorder=${if (service == null) "not connected" else "recording=${recorderRecording ?: "unknown"} unowned=${unowned ?: "unknown"}"} " +
-                "stagedDuringCall=$staged lookedLikeCall=${start.lookedLikeCall} -> $verdict",
-        )
-        if (verdict == VoipMissPolicy.NotReadyVerdict.REPORT) reportMissed(context, R.string.voip_missed_not_ready, null)
+        override fun stagedFiles(): List<File> = runCatching {
+            com.baba.callvault.system.storage.SafHelper.stagingDirOrNull(context)?.listFiles().orEmpty().toList()
+        }.onFailure { AppLogger.w(TAG, "Could not list the staging folder at the not-ready check: ${it.message}") }
+            .getOrDefault(emptyList())
+        override fun isLiveStaging(file: File): Boolean = LiveStagingFiles.isLive(file)
+        override fun catalogued(): List<Pair<String, Long?>>? = kotlinx.coroutines.runBlocking {
+            RecordingCatalog.allOrNull(context)
+        }?.map { entry ->
+            // The rescue publishes under the name the recording was started with, which carries its start time.
+            entry.displayName to (RecordingsRepository.parseName(entry.displayName).startedAtMillis
+                ?: entry.lastModified.takeIf { it > 0L })
+        }
+        override fun record(line: String) = CallEndLog.record(context, line)
+        override fun reportMiss() = reportMissed(context, R.string.voip_missed_not_ready, null)
     }
 
     /** The body of [onCallEnded], under its lock: stop, then publish or discard. */
