@@ -146,6 +146,27 @@ class VoipDirectionTest {
         }
     }
 
+    // --- review C30: a missed-call notice is not a ring ------------------------------------------------
+
+    @Test
+    fun `to the ring listener a call notice with two actions is a ring only with a full-screen intent`() {
+        // A missed-call notice (Call back, Message) has the shape category=call, two actions, not ongoing, and no
+        // full-screen intent; it left the ring "active" and the next outgoing call read as incoming.
+        val missed = VoipCallFacts("call", 2, null, null, false, null)
+        assertEquals(false, VoipDirection.isRingMarker(missed, hasFullScreenIntent = false))
+        assertEquals(true, VoipDirection.isRingMarker(missed, hasFullScreenIntent = true))
+        // A CallStyle of type incoming (Telegram, WhatsApp) or the incoming flag needs nothing more.
+        assertEquals(true, VoipDirection.isRingMarker(VoipCallFacts("call", 2, 1, null, false, null), hasFullScreenIntent = false))
+        assertEquals(true, VoipDirection.isRingMarker(VoipCallFacts(null, 0, null, null, false, true), hasFullScreenIntent = false))
+    }
+
+    @Test
+    fun `an old missed-call notice beside the ongoing call does not decide the call's direction`() {
+        val missed = record("com.whatsapp", ongoing = false, category = "call", actions = 2)
+        val calling = record("com.whatsapp", category = "call", actions = 1, callType = 2, chronometer = false)
+        assertEquals(RecordingDirection.OUTGOING, direction(missed + "\n" + calling, "com.whatsapp"))
+    }
+
     // --- OUTGOING: ringing at the far end -------------------------------------------------------
 
     @Test

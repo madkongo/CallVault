@@ -79,4 +79,42 @@ class VoipRingMemoryTest {
         assertEquals(Verdict.UNRESOLVED_RING, VoipRingMemory.verdict(wa, 2_000 + 2 * VoipRingMemory.ANSWER_FRESH_MS))
     }
 
+
+    // ---- review C30: a ring that is never closed, or a pickup that is not the call's ----
+
+    @Test
+    fun `a ring left active is over after the longest ring time`() {
+        VoipRingMemory.onPosted(wa, "0|wa|23", incomingMarker = true, ongoing = false, groupSummary = false, now = 1_000)
+        val pastRing = 1_000 + VoipRingMemory.MAX_RING_MS + 1
+        // An ongoing call notice of a call placed long after: not this ring's pickup.
+        VoipRingMemory.onPosted(wa, "0|wa|99", incomingMarker = false, ongoing = true, groupSummary = false, now = pastRing, callLike = true)
+        assertEquals(Verdict.UNRESOLVED_RING, VoipRingMemory.verdict(wa, pastRing + 100))
+        assertEquals(Verdict.NONE, VoipRingMemory.verdict(wa, 1_000 + VoipRingMemory.MAX_RING_MS + VoipRingMemory.UNRESOLVED_MS + 1))
+    }
+
+    @Test
+    fun `a ring rewritten in place into a notice that is neither ringing nor ongoing is over, not answered`() {
+        VoipRingMemory.onPosted(tg, "0|tg|203", incomingMarker = true, ongoing = false, groupSummary = false, now = 1_000)
+        VoipRingMemory.onPosted(tg, "0|tg|203", incomingMarker = false, ongoing = false, groupSummary = false, now = 5_000)
+        VoipRingMemory.onPosted(tg, "0|tg|201", incomingMarker = false, ongoing = true, groupSummary = false, now = 20_000, callLike = true)
+        assertEquals(Verdict.UNRESOLVED_RING, VoipRingMemory.verdict(tg, 20_100))
+    }
+
+    @Test
+    fun `an unrelated ongoing notice of the app while it rings is not the pickup`() {
+        VoipRingMemory.onPosted(wa, "0|wa|23", incomingMarker = true, ongoing = true, groupSummary = false, now = 1_000)
+        // A backup or upload notice: ongoing, no call markers, another key.
+        VoipRingMemory.onPosted(wa, "0|wa|backup", incomingMarker = false, ongoing = true, groupSummary = false, now = 2_000)
+        assertEquals(Verdict.UNRESOLVED_RING, VoipRingMemory.verdict(wa, 2_100))
+        // The ring's own notification rewritten as ongoing is the pickup.
+        VoipRingMemory.onPosted(wa, "0|wa|23", incomingMarker = false, ongoing = true, groupSummary = false, now = 3_000)
+        assertEquals(Verdict.ANSWERED_RING, VoipRingMemory.verdict(wa, 3_100))
+    }
+
+    @Test
+    fun `a call-like ongoing notice of another key is still the pickup while it rings`() {
+        VoipRingMemory.onPosted(wa, "0|wa|23", incomingMarker = true, ongoing = false, groupSummary = false, now = 1_000)
+        VoipRingMemory.onPosted(wa, "0|wa|24", incomingMarker = false, ongoing = true, groupSummary = false, now = 2_000, callLike = true)
+        assertEquals(Verdict.ANSWERED_RING, VoipRingMemory.verdict(wa, 2_100))
+    }
 }

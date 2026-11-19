@@ -101,6 +101,15 @@ object VoipDirection {
         listenerConnectedSince > 0L && callDetectedAt - listenerConnectedSince >= MAX_RING_MS &&
         (lastRecordingEndedAt <= 0L || callDetectedAt - lastRecordingEndedAt > SPLIT_WINDOW_MS)
 
+    /**
+     * What the ring listener takes for a ringing call (review C30): [isIncomingMarker], but the weak shape (call
+     * category with two actions, not ongoing) only with a full-screen intent. A missed-call notice (Call back,
+     * Message) has that shape and no full-screen intent; taken for a ring, it made the next outgoing call from the
+     * app read as an answered incoming one. A CallStyle of type incoming or the incoming flag need nothing more.
+     */
+    fun isRingMarker(f: VoipCallFacts, hasFullScreenIntent: Boolean): Boolean =
+        f.callType == CALL_TYPE_INCOMING || f.incomingFlag == true || (isIncomingMarker(f) && hasFullScreenIntent)
+
     /** The structure of a ringing, incoming call notification: a clear marker, never text. */
     fun isIncomingMarker(f: VoipCallFacts): Boolean =
         f.callType == CALL_TYPE_INCOMING || f.incomingFlag == true ||

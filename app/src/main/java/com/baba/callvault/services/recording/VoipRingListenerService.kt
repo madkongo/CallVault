@@ -53,11 +53,16 @@ class VoipRingListenerService : NotificationListenerService() {
                 ongoing = ongoing,
                 incomingFlag = incomingFlag,
             )
-            val incoming = VoipDirection.isIncomingMarker(facts)
-            // Not a call at all: nothing to remember, nothing to log.
-            if (!incoming && !ongoing) return
+            val incoming = VoipDirection.isRingMarker(facts, hasFullScreenIntent = n.fullScreenIntent != null)
+            // A call's own markers, for telling its ongoing notice from the app's other ongoing ones (C30).
+            val callLike = n.category == Notification.CATEGORY_CALL || callType != null || incomingFlag != null || chrono == true
+            if (!incoming && !ongoing) {
+                // Not ringing and not ongoing: only matters as the ringing notice rewritten in place (C30); nothing logged.
+                VoipRingMemory.onPosted(sbn.packageName, sbn.key, false, false, groupSummary, SystemClock.elapsedRealtime())
+                return
+            }
             val before = VoipRingMemory.verdict(sbn.packageName, SystemClock.elapsedRealtime())
-            VoipRingMemory.onPosted(sbn.packageName, sbn.key, incoming, ongoing, groupSummary, SystemClock.elapsedRealtime())
+            VoipRingMemory.onPosted(sbn.packageName, sbn.key, incoming, ongoing, groupSummary, SystemClock.elapsedRealtime(), callLike)
             val after = VoipRingMemory.verdict(sbn.packageName, SystemClock.elapsedRealtime())
             if (incoming && before != VoipRingMemory.Verdict.UNRESOLVED_RING) {
                 AppLogger.i(TAG, "Incoming call notification seen from ${sbn.packageName}: ${facts.describe()}")

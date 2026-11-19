@@ -128,12 +128,20 @@ internal object VoipCallerName {
     }.onFailure { AppLogger.d(TAG, "Call facts lookup failed: ${it.message}") }.getOrNull()
 
     /**
-     * Facts of [packageName]'s first call-like record: one that carries a CallStyle type, the call
-     * category, an incoming flag, or is ongoing with a call timer flag. A chat notification of the
-     * same app is none of those. Telegram's ongoing call sets none of them and so reads null.
+     * Facts of [packageName]'s call-like record: one that carries a CallStyle type, the call category, an
+     * incoming flag, or is ongoing with a call timer flag. An ongoing one first (review C30): an older missed-call
+     * notice of the app (not ongoing, call category, two actions) read as the incoming marker of the call placed
+     * now. A chat notification of the same app is none of those. Telegram's ongoing call sets none of them and so
+     * reads null.
      */
     internal fun extractFacts(dump: String, packageName: String): VoipCallFacts? {
         if (packageName.isBlank()) return null
+        val all = callLikeFacts(dump, packageName)
+        return all.firstOrNull { it.ongoing } ?: all.firstOrNull()
+    }
+
+    private fun callLikeFacts(dump: String, packageName: String): List<VoipCallFacts> {
+        val found = ArrayList<VoipCallFacts>()
         for (record in dump.split("NotificationRecord(")) {
             if (!record.contains("pkg=$packageName ")) continue
             val category = CATEGORY_REGEX.find(record)?.groupValues?.get(1)
@@ -143,7 +151,7 @@ internal object VoipCallerName {
             val ongoing = isOngoing(record)
             val callLike = category == "call" || callType != null || incomingFlag != null || (ongoing && chrono != null)
             if (!callLike) continue
-            return VoipCallFacts(
+            found += VoipCallFacts(
                 category = category,
                 actionCount = ACTIONS_REGEX.find(record)?.groupValues?.get(1)?.toIntOrNull() ?: 0,
                 callType = callType,
@@ -152,7 +160,7 @@ internal object VoipCallerName {
                 incomingFlag = incomingFlag,
             )
         }
-        return null
+        return found
     }
 
     /**

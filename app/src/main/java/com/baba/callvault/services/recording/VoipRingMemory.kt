@@ -38,6 +38,12 @@ object VoipRingMemory {
      */
     const val HANDOVER_MS = 1_500L
 
+    /**
+     * A ring still "active" this long after it was posted is over (review C30): nothing else may close it when its
+     * notification is rewritten in place or never removed, and an open ring took the next call's notice for its pickup.
+     */
+    const val MAX_RING_MS = VoipDirection.MAX_RING_MS
+
     enum class Verdict {
         /** The app rang, and the call was picked up just now: this call is incoming. */
         ANSWERED_RING,
@@ -88,24 +94,51 @@ object VoipRingMemory {
     @Synchronized
     fun lastRecordingEndedAt(pkg: String): Long = recordingEndedAt[pkg] ?: 0L
 
-    /** Posted or updated: [incomingMarker] says it is a ringing call notification, [ongoing] that it is an ongoing one. */
+    /**
+     * Posted or updated: [incomingMarker] says it is a ringing call notification, [ongoing] that it is an ongoing one,
+     * [callLike] that it carries a call's own markers (the call category, a CallStyle type, the incoming flag or a
+     * running call timer).
+     *
+     * The pickup (review C30) is the ring's own notification rewritten as ongoing (WhatsApp), a call-like ongoing
+     * notice while the app rings, or any ongoing notice just after the ring was removed (Telegram, whose ongoing call
+     * notice carries no call marker at all). Any other ongoing notice of the app (a backup, an upload) is not.
+     */
     @Synchronized
-    fun onPosted(pkg: String, key: String, incomingMarker: Boolean, ongoing: Boolean, groupSummary: Boolean, now: Long) {
-        val e = entries.getOrPut(pkg) { Entry() }
+    fun onPosted(
+        pkg: String,
+        key: String,
+        incomingMarker: Boolean,
+        ongoing: Boolean,
+        groupSummary: Boolean,
+        now: Long,
+        callLike: Boolean = false,
+    ) {
         if (incomingMarker) {
+            val e = entries.getOrPut(pkg) { Entry() }
             e.ringKey = key
             e.ringActive = true
             e.lastRingAt = now
             e.answeredAt = 0L
             return
         }
+        val e = entries[pkg] ?: return
+        if (!ongoing && key == e.ringKey && e.ringActive) {
+            // The ringing notice rewritten in place into one that neither rings nor is ongoing (a missed call):
+            // the ring is over, and it was not answered.
+            e.ringActive = false
+            return
+        }
         if (!ongoing || groupSummary) return
-        val handover = e.ringActive || (e.removedAt > 0L && now - e.removedAt <= HANDOVER_MS)
-        if (handover && e.answeredAt == 0L) {
+        val ringing = isRinging(e, now)
+        val pickup = ringing && (callLike || key == e.ringKey)
+        val handover = e.removedAt > 0L && now - e.removedAt <= HANDOVER_MS
+        if ((pickup || handover) && e.answeredAt == 0L) {
             e.answeredAt = now
             e.ringActive = false
         }
     }
+
+    private fun isRinging(e: Entry, now: Long): Boolean = e.ringActive && now - e.lastRingAt <= MAX_RING_MS
 
     /** A notification of [pkg] was removed. Removing the ringing one ends the ring. */
     @Synchronized
@@ -122,8 +155,11 @@ object VoipRingMemory {
         val e = entries[pkg] ?: return Verdict.NONE
         // Only an answer before [now]: a ring is read as of the call's start too (C20), never with a later call's answer.
         if (e.answeredAt in 1L..now && now - e.answeredAt <= ANSWER_FRESH_MS) return Verdict.ANSWERED_RING
-        val last = maxOf(e.lastRingAt, e.removedAt)
-        if (e.ringActive || (last > 0L && now - last <= UNRESOLVED_MS)) return Verdict.UNRESOLVED_RING
+        if (isRinging(e, now)) return Verdict.UNRESOLVED_RING
+        // When the ring ended: removed, or its time ran out while nothing closed it (C30).
+        val ringEnd = if (e.ringActive) e.lastRingAt + MAX_RING_MS else e.lastRingAt
+        val last = maxOf(ringEnd, e.removedAt)
+        if (e.lastRingAt > 0L && now - last <= UNRESOLVED_MS) return Verdict.UNRESOLVED_RING
         return Verdict.NONE
     }
 
