@@ -80,6 +80,9 @@ object CloudCopyPolicy {
      */
     const val LIST_LOADING_WAIT_MS = 20_000L
 
+    /** Within [LIST_LOADING_WAIT_MS], a loading folder is read again at least this often, notification or not. */
+    const val LIST_LOADING_POLL_MS = 2_500L
+
     /**
      * A Drive document that counts as already holding the recording: its reported length equals the source's.
      * A length of 0 or -1 is what a cloud provider reports for a file still settling; that is not proof, so

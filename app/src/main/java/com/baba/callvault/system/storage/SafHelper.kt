@@ -451,9 +451,11 @@ object SafHelper {
      *
      * A cloud provider answers a folder it is still fetching with a partial cursor flagged
      * [DocumentsContract.EXTRA_LOADING]. Taken as the folder's contents, every name missing from it looked absent
-     * and was uploaded again as a second document (review C29). While the flag is set this waits for the
-     * provider's change notification on that cursor and reads again, within [loadingWaitMs]; a folder still
-     * loading after that is a failed listing with its reason, never a partial one.
+     * and was uploaded again as a second document (review C29). While the flag is set this reads again on the
+     * provider's change notification on that cursor or every [CloudCopyPolicy.LIST_LOADING_POLL_MS], whichever
+     * comes first (a notification sent before the observer was registered, or a provider with no notification
+     * URI, then costs seconds, not the whole wait), within [loadingWaitMs]; a folder still loading after that is
+     * a failed listing with its reason, never a partial one.
      */
     fun listChildrenWithReason(
         context: Context,
@@ -481,13 +483,14 @@ object SafHelper {
     )
 
     /**
-     * Reads with [read] until the provider stops saying it is loading, waiting for its change notification in
-     * between, for at most [waitMs] in all. Null with the reason when [read] gets no cursor or the folder is
+     * Reads with [read] until the provider stops saying it is loading, waiting in between for its change
+     * notification or [pollMs], whichever comes first, for at most [waitMs] in all. Null with the reason when [read] gets no cursor or the folder is
      * still loading at the end.
      */
     internal fun listUntilLoaded(
         waitMs: Long,
         now: () -> Long,
+        pollMs: Long = CloudCopyPolicy.LIST_LOADING_POLL_MS,
         read: () -> ChildrenRead?,
     ): Pair<DriveCopyProtocol.Listing?, String?> {
         val deadline = now() + waitMs
@@ -507,7 +510,7 @@ object SafHelper {
                     AppLogger.w(TAG, why)
                     return null to why
                 }
-                r.awaitChange(left)
+                r.awaitChange(minOf(left, pollMs))
             } finally {
                 r.close()
             }
