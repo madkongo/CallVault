@@ -866,16 +866,29 @@ object VoipRecordingCoordinator {
         paused = pause
         // Resume pressed while the encode is held for the answer: the user has decided to record
         // now, so the hold is over rather than re-applied on the next poll.
-        if (!pause && heldForAnswer) {
-            heldForAnswer = false
-            answerHoldJob?.cancel()
-            answerHoldJob = null
-            AppLogger.i(TAG, "App-call recording released by the user before the answer")
-        }
+        if (!pause && heldForAnswer) releaseHoldForUser(context)
         // The clock follows the encode, or every mark placed after a pause lands late in the file by
         // the length of that pause — the same rule the carrier path follows.
         if (pause) clock.pause() else clock.resume()
         VoipRecordingNotification.show(context, currentAppLabel, PendingFlags.count(), paused)
+    }
+
+    /**
+     * Ends the answer hold because the user pressed Resume. The hold loop is cancelled, so it will never say
+     * "Recording started"; that is said here instead, through the same path, which says nothing once the call is
+     * over (review N17 second pass). Under the lock, so it cannot interleave with the loop's own release.
+     */
+    @Synchronized
+    private fun releaseHoldForUser(context: Context) {
+        if (!heldForAnswer) return
+        val owner = answerHoldJob
+        heldForAnswer = false
+        if (!announceRecordingFromNow(context, owner)) {
+            AppLogger.i(TAG, "Resume released the answer hold, but its call is already over; nothing announced")
+        }
+        owner?.cancel()
+        answerHoldJob = null
+        AppLogger.i(TAG, "App-call recording released by the user before the answer")
     }
 
     /**
