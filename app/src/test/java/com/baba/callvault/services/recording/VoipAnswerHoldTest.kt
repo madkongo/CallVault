@@ -71,4 +71,18 @@ class VoipAnswerHoldTest {
         assertEquals(Decision.RELEASE, VoipAnswerHold.decide(VOIP_RINGING, elapsedMs = VoipAnswerHold.MAX_HOLD_MS, seenRinging = true))
         assertEquals(Decision.RELEASE, VoipAnswerHold.decide(VOIP_NO_NOTIFICATION, elapsedMs = VoipAnswerHold.MAX_HOLD_MS, seenRinging = true))
     }
+
+    @Test
+    fun `start when they answer applies to a LINE call recognised in normal mode too`() {
+        // Review C31: a normal-mode call (item 108) skipped the hold, so an unanswered outgoing LINE call whose
+        // ringback plays through a call-voice player was published as a recording of the ring.
+        assertEquals(true, VoipAnswerHold.applies(recordFromAnswer = true, callPackage = "jp.naver.line.android"))
+        assertEquals(true, VoipAnswerHold.applies(recordFromAnswer = true, callPackage = "com.whatsapp"))
+    }
+
+    @Test
+    fun `no hold when the setting is off or the app is unknown`() {
+        assertEquals(false, VoipAnswerHold.applies(recordFromAnswer = false, callPackage = "com.whatsapp"))
+        assertEquals(false, VoipAnswerHold.applies(recordFromAnswer = true, callPackage = null))
+    }
 }

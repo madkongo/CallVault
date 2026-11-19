@@ -38,6 +38,17 @@ object VoipAnswerHold {
     enum class Decision { HOLD, RELEASE }
 
     /**
+     * Whether "Start when they answer" holds this call's encode: the setting is on and the calling app is known
+     * (its notification is what is read).
+     *
+     * Every app call, a normal-mode one (LINE, BabApps item 108) included (review C31). A live call-voice player
+     * plus recording does not prove the call is connected: an outgoing call can play its ringback through one.
+     * [decide] releases at once for an app whose notification has no call timer, and after
+     * [NOTIFICATION_GRACE_MS] when there is no notification, so an app that never says is not swallowed.
+     */
+    fun applies(recordFromAnswer: Boolean, callPackage: String?): Boolean = recordFromAnswer && callPackage != null
+
+    /**
      * What to do on a poll that got [answered] from the host (null = the host has no such method),
      * [elapsedMs] into the hold, given whether an earlier poll already [seenRinging].
      *

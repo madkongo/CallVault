@@ -367,9 +367,10 @@ object VoipRecordingCoordinator {
         direction.set(null)
         directionJob = if (callPackage != null) readDirection(callPackage) else null
         // The capture had to open now; what waits for the pickup is the encode. See VoipAnswerHold.
-        // Not for a normal-mode call (BabApps item 108): it is recognised by a live call-voice recording, so the
-        // call is already connected, and the app's notification is not known to carry an answer signal.
-        if (!viaNormalMode && callPackage != null && prefs.isRecordFromAnswerEnabled()) answerHoldJob = holdUntilAnswered(context, callPackage)
+        // A normal-mode call (BabApps item 108) too (review C31): its live call-voice pair does not prove an answer.
+        if (VoipAnswerHold.applies(prefs.isRecordFromAnswerEnabled(), callPackage)) {
+            answerHoldJob = holdUntilAnswered(context, callPackage!!)
+        }
     }
 
     /** The route/latency report of the call in flight — see [reportAudioRoute]. */
@@ -536,20 +537,30 @@ object VoipRecordingCoordinator {
                     answered == RecorderServiceImpl.VOIP_NO_TIMER -> "this app's notification shows no call timer"
                     else -> "no call notification appeared within ${elapsed / 1000}s"
                 }
+                // Always on (C31): the first LINE calls with the hold are read from these lines.
                 if (heldForAnswer) {
                     holdEncode(context, false)
-                    AppLogger.i(TAG, "App-call recording released after $polls polls: $why (${elapsed}ms)")
+                    CallEndLog.record(context, "app call answer hold: released after $polls polls: $why (${elapsed}ms, normal-mode=$startedViaNormalMode)")
                 } else {
-                    AppLogger.i(TAG, "App-call recording not held: $why")
+                    CallEndLog.record(context, "app call answer hold: not held: $why (normal-mode=$startedViaNormalMode)")
                 }
                 return@launch
             }
             if (!heldForAnswer) {
                 holdEncode(context, true)
-                AppLogger.i(TAG, "App-call recording held until the call is answered")
+                CallEndLog.record(context, "app call answer hold: held until the call is answered (host said ${answerName(answered)}, normal-mode=$startedViaNormalMode)")
             }
             delay(VoipAnswerHold.POLL_MS)
         }
+    }
+
+    private fun answerName(answered: Int?): String = when (answered) {
+        RecorderServiceImpl.VOIP_ANSWERED -> "answered"
+        RecorderServiceImpl.VOIP_RINGING -> "ringing"
+        RecorderServiceImpl.VOIP_NO_TIMER -> "no timer"
+        RecorderServiceImpl.VOIP_NO_NOTIFICATION -> "no notification"
+        null -> "nothing (older host)"
+        else -> "code $answered"
     }
 
     /**
