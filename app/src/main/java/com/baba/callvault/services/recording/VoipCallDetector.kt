@@ -93,7 +93,7 @@ class VoipCallDetector(private val context: Context) {
     /** The pair was looked at for this candidate already, so it is not looked at again until it ends. */
     private var normalCandidateJudged = false
 
-    /** Judges of the current candidate so far (review C9), capped by [VoipNormalModePolicy.MAX_JUDGE_TRIES]. */
+    /** Judges of the current candidate so far (review C9): fast up to [VoipNormalModePolicy.MAX_FAST_JUDGE_TRIES], then slow. */
     private var normalJudgeTries = 0
 
     /** A judge found another lookup running: it is run again the moment that lookup finishes (C9). */
@@ -661,8 +661,15 @@ class VoipCallDetector(private val context: Context) {
                 handler.postDelayed(normalConfirmRunnable, VoipNormalModePolicy.JUDGE_RETRY_MS)
                 CallEndLog.record(context, "normal-mode app call check $normalJudgeTries gave no answer ($why); checking again in ${VoipNormalModePolicy.JUDGE_RETRY_MS} ms")
             }
-            VoipNormalModePolicy.JudgeNext.GIVE_UP ->
-                CallEndLog.record(context, "normal-mode app call NOT started: no usable answer after $normalJudgeTries checks (last: $why); this call is not recorded")
+            VoipNormalModePolicy.JudgeNext.RETRY_SLOW -> {
+                // Never given up while the pair is live (C9 rework): the host may come back (Q25).
+                normalCandidateJudged = false
+                handler.removeCallbacks(normalConfirmRunnable)
+                handler.postDelayed(normalConfirmRunnable, VoipNormalModePolicy.JUDGE_SLOW_RETRY_MS)
+                if (VoipNormalModePolicy.logSlowCheck(normalJudgeTries)) {
+                    CallEndLog.record(context, "normal-mode app call not started yet: no usable answer after $normalJudgeTries checks (last: $why); still checking every ${VoipNormalModePolicy.JUDGE_SLOW_RETRY_MS} ms while its audio is live")
+                }
+            }
         }
     }
 

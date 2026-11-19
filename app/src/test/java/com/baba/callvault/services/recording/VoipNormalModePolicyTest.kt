@@ -192,14 +192,30 @@ class VoipNormalModePolicyTest {
     }
 
     @Test
-    fun `retries are capped per candidate and then said out loud`() {
-        val max = VoipNormalModePolicy.MAX_JUDGE_TRIES
-        assertEquals(VoipNormalModePolicy.JudgeNext.RETRY_LATER, next(VoipNormalModePolicy.JudgeFailure.NO_ANSWER, null, tries = max - 1))
-        assertEquals(VoipNormalModePolicy.JudgeNext.GIVE_UP, next(VoipNormalModePolicy.JudgeFailure.NO_ANSWER, null, tries = max))
-        assertEquals(VoipNormalModePolicy.JudgeNext.GIVE_UP, next(VoipNormalModePolicy.JudgeFailure.LOOKUP_BUSY, null, tries = max))
-        assertEquals(VoipNormalModePolicy.JudgeNext.GIVE_UP, next(null, Verdict.NO_VOICE_PLAYER, pair = true, tries = max))
-        // A start on the last try still starts.
-        assertEquals(VoipNormalModePolicy.JudgeNext.STARTED, next(null, Verdict.START, tries = max))
+    fun `after the fast tries a live candidate keeps being checked slowly, never given up`() {
+        // Review C9 rework: a recorder host that reconnects after ~10 s (the app restarted mid-call, Q25) must still
+        // get the call recorded; a permanent give-up after 7.5 s lost it.
+        val max = VoipNormalModePolicy.MAX_FAST_JUDGE_TRIES
+        assertEquals(VoipNormalModePolicy.JudgeNext.RETRY_LATER, next(VoipNormalModePolicy.JudgeFailure.HOST_NOT_CONNECTED, null, tries = max - 1))
+        for (tries in listOf(max, max + 1, 50, 10_000)) {
+            assertEquals(VoipNormalModePolicy.JudgeNext.RETRY_SLOW, next(VoipNormalModePolicy.JudgeFailure.HOST_NOT_CONNECTED, null, tries = tries))
+            assertEquals(VoipNormalModePolicy.JudgeNext.RETRY_SLOW, next(VoipNormalModePolicy.JudgeFailure.NO_ANSWER, null, tries = tries))
+            assertEquals(VoipNormalModePolicy.JudgeNext.RETRY_SLOW, next(VoipNormalModePolicy.JudgeFailure.LOOKUP_BUSY, null, tries = tries))
+            assertEquals(VoipNormalModePolicy.JudgeNext.RETRY_SLOW, next(null, Verdict.NO_VOICE_PLAYER, pair = true, tries = tries))
+        }
+        assertTrue(VoipNormalModePolicy.JudgeNext.entries.none { it.name == "GIVE_UP" })
+        assertTrue(VoipNormalModePolicy.JUDGE_SLOW_RETRY_MS > VoipNormalModePolicy.JUDGE_RETRY_MS)
+        // A start on any try still starts; a successful "no" is still final.
+        assertEquals(VoipNormalModePolicy.JudgeNext.STARTED, next(null, Verdict.START, tries = 10_000))
+        assertEquals(VoipNormalModePolicy.JudgeNext.FINAL, next(null, Verdict.NOT_ON_ALLOW_LIST, tries = 10_000))
+    }
+
+    @Test
+    fun `slow checks are logged now and then, not every time`() {
+        val max = VoipNormalModePolicy.MAX_FAST_JUDGE_TRIES
+        assertTrue(VoipNormalModePolicy.logSlowCheck(max))
+        assertTrue(!VoipNormalModePolicy.logSlowCheck(max + 1))
+        assertTrue(VoipNormalModePolicy.logSlowCheck(max + VoipNormalModePolicy.SLOW_CHECKS_PER_LOG_LINE))
     }
 
     // ---- review C14: a LINE call that visits call mode and comes back is not ended by the mode ----

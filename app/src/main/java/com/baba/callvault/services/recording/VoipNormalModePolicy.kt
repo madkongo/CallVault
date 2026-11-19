@@ -96,15 +96,29 @@ object VoipNormalModePolicy {
         /** Judge again after [JUDGE_RETRY_MS]. */
         RETRY_LATER,
 
-        /** The tries for this candidate are spent: say so in the always-on log. */
-        GIVE_UP,
+        /**
+         * The fast tries are spent: judge again after [JUDGE_SLOW_RETRY_MS], for as long as the candidate lives
+         * (review C9 rework). Never a permanent give-up: a recorder host can reconnect many seconds into the call
+         * (the app restarted mid-call, Q25), and the call is still worth recording from then on.
+         */
+        RETRY_SLOW,
     }
 
-    /** The wait before a judge is retried after no answer or a racy answer. */
+    /** The wait before a judge is retried after no answer or a racy answer, for the first tries. */
     const val JUDGE_RETRY_MS = 1_500L
 
-    /** Judges per candidate, the first included. Bounded: each is a `dumpsys audio` run in the recorder host. */
-    const val MAX_JUDGE_TRIES = 5
+    /** Fast judges per candidate, the first included; slower after that, each being a `dumpsys audio` run. */
+    const val MAX_FAST_JUDGE_TRIES = 5
+
+    /** The wait between judges once the fast tries are spent. */
+    const val JUDGE_SLOW_RETRY_MS = 10_000L
+
+    /** Slow checks between two always-on lines (about one a minute), so a long wait does not flood the file. */
+    const val SLOW_CHECKS_PER_LOG_LINE = 6
+
+    /** Whether the slow check after [triesUsed] judges gets an always-on line: the first one, then every few. */
+    fun logSlowCheck(triesUsed: Int): Boolean =
+        triesUsed >= MAX_FAST_JUDGE_TRIES && (triesUsed - MAX_FAST_JUDGE_TRIES) % SLOW_CHECKS_PER_LOG_LINE == 0
 
     /**
      * What follows a judge of a normal-mode candidate (review C9). The judge used to be one-shot: a lookup already
@@ -123,7 +137,7 @@ object VoipNormalModePolicy {
                     if (!appSeesPair) return JudgeNext.FINAL
             }
         }
-        if (triesUsed >= MAX_JUDGE_TRIES) return JudgeNext.GIVE_UP
+        if (triesUsed >= MAX_FAST_JUDGE_TRIES) return JudgeNext.RETRY_SLOW
         return if (failure == JudgeFailure.LOOKUP_BUSY) JudgeNext.RETRY_AFTER_LOOKUP else JudgeNext.RETRY_LATER
     }
 
