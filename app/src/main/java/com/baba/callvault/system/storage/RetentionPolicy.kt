@@ -102,4 +102,15 @@ object RetentionPolicy {
         val local = entry.localSizeBytes ?: return false
         return entry.driveUri != null && local > 0L && entry.driveSizeBytes == local
     }
+
+    /**
+     * Whether a CATALOGUED row may be deleted by age or the size cap at all (review C10, second pass).
+     *
+     * The rescan and the first-run seed catalogue every audio file in the folder, other apps' included, so that
+     * they show in the list. Being catalogued is therefore no proof CallVault wrote a file. Only a name that
+     * passes [AuthoredName] against [activeTemplate], or a merge output (in [mergedNames]; the merge wrote it
+     * whatever its name), may be deleted automatically. Imports are excluded separately ([agesOut]).
+     */
+    fun isOursToSweep(displayName: String, activeTemplate: String, mergedNames: Set<String>): Boolean =
+        displayName in mergedNames || AuthoredName.isCallVaultName(displayName, activeTemplate)
 }

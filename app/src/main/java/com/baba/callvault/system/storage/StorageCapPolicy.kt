@@ -38,6 +38,7 @@ object StorageCapPolicy {
      *                     policy. See [selectForEviction] rule 3 for why.
      * @param isOnlyCopy   A call whose Drive copy is not proven yet (review C7), so the device copy is the only
      *                     one; never deleted by this policy, for the same reason as an import.
+     * @param isForeign    Catalogued, but not a file CallVault wrote (review C10); never deleted by this policy.
      */
     data class Candidate(
         val displayName: String,
@@ -46,6 +47,7 @@ object StorageCapPolicy {
         val isFavourite: Boolean,
         val isImported: Boolean = false,
         val isOnlyCopy: Boolean = false,
+        val isForeign: Boolean = false,
     )
 
     /**
@@ -85,7 +87,7 @@ object StorageCapPolicy {
         // Oldest first; ties broken by name so the same library always yields the same decision —
         // a sweep that deleted a different recording on each run would be untestable and unexplainable.
         val order = candidates
-            .filterNot { it.isFavourite || it.isImported || it.isOnlyCopy }
+            .filterNot { it.isFavourite || it.isImported || it.isOnlyCopy || it.isForeign }
             .filter { it.sizeBytes > 0L }
             .sortedWith(compareBy({ it.lastModified }, { it.displayName }))
 
