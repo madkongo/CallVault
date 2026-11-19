@@ -35,8 +35,11 @@ class DriveCopierListingTest {
     private val journal = ArrayList<String>()
     private fun open(): DriveCopier = FakeCopier(opened.size + 1).also { opened += it }
 
+    /** The `:drive` pid as the system reports it: a new process per copier unless a test says otherwise. */
+    private var pidOf: () -> Int? = { opened.lastOrNull()?.takeIf { !it.closed }?.let { 1000 + it.n } }
+
     private fun run(succeedOn: Int?) = runBlocking {
-        DriveCopierListing.list(::open, pauseMs = 0L, journal = { journal += it }) { copier ->
+        DriveCopierListing.list(::open, copierPid = { pidOf() }, exitWaitMs = 50L, pollMs = 5L, journal = { journal += it }) { copier ->
             if ((copier as FakeCopier).n == succeedOn) listing to "" else null to "${copier.where} died"
         }
     }
@@ -69,6 +72,27 @@ class DriveCopierListingTest {
         assertNotNull(out.listing)
         assertEquals(1, opened.size)
         assertTrue(out.failures.isEmpty())
+    }
+
+    @Test
+    fun `a copier process another client still holds is not restarted, and the run stops asking`() {
+        pidOf = { 4242 } // the same :drive process before and after letting go: the after-call copy holds it
+
+        val out = run(succeedOn = 2)
+
+        assertNull(out.listing)
+        assertEquals("no pointless second attempt on the same wedged process", 1, opened.size)
+        assertTrue(journal.joinToString("\n"), journal.any { it.contains("still running") && it.contains("4242") })
+    }
+
+    @Test
+    fun `a copier process that has already gone counts as restarted`() {
+        pidOf = { null } // no :drive process left after the close
+
+        val out = run(succeedOn = 2)
+
+        assertNotNull(out.listing)
+        assertEquals(2, opened.size)
     }
 
     @Test

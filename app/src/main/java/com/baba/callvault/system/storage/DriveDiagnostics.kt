@@ -16,6 +16,7 @@ import android.net.ConnectivityManager
 import android.net.NetworkCapabilities
 import android.net.Uri
 import android.os.Process
+import com.baba.callvault.utils.AppLogger
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
@@ -88,6 +89,15 @@ object DriveDiagnostics {
         val procs = am.runningAppProcesses ?: return@runCatching "unknown (no process list)"
         procs.any { it.processName?.endsWith(COPIER) == true }.toString()
     }.getOrElse { "unknown (${it.javaClass.simpleName}: ${it.message})" }
+
+    /** The running copier process's id, or null when there is none (or the system will not say). */
+    fun copierPid(context: Context): Int? = runCatching {
+        val am = context.getSystemService(Context.ACTIVITY_SERVICE) as ActivityManager
+        am.runningAppProcesses?.firstOrNull { it.processName?.endsWith(COPIER) == true }?.pid
+    }.getOrElse {
+        AppLogger.w("CV:DriveDiagnostics", "Could not read the process list: ${it.javaClass.simpleName}: ${it.message}")
+        null
+    }
 
     /**
      * The system's own record of how the copier process last ended, newest first (at most [limit]).

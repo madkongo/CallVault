@@ -153,7 +153,9 @@ class SyncSweepWorker(ctx: Context, params: WorkerParameters) : CoroutineWorker(
         // The URI is kept, not just the length: proving a file is already in Drive is exactly the
         // evidence the catalog needs, and throwing it away is what let a correctly backed-up
         // recording go on looking unsynced forever. See where `alreadyThere` is used.
-        val listOutcome = DriveCopierListing.list(openCopier, journal = ::journal) { tryList(it, driveFolderUri) }
+        val listOutcome = DriveCopierListing.list(
+            openCopier, copierPid = { DriveDiagnostics.copierPid(applicationContext) }, journal = ::journal,
+        ) { tryList(it, driveFolderUri) }
         val copier = listOutcome.copier
         val listed = listOutcome.listing
         if (listed == null) {
