@@ -52,7 +52,7 @@ class DriveCopyService : Service() {
                 // catch is only for something outside it, and says so.
                 reply.data = runCatching {
                     // Inside the copier process, where the persisted grant for the folder is read from.
-                    DriveCopyHandler.handle(applicationContext, msg.what, msg.data, inCopier = true)
+                    DriveCopyHandler.handle(applicationContext, msg.what, msg.data)
                 }.getOrElse {
                     journal("message ${msg.what} failed outside the handler: ${it.javaClass.simpleName}: ${it.message}")
                     DriveCopyProtocol.failureReply("${it.javaClass.simpleName}: ${it.message}")

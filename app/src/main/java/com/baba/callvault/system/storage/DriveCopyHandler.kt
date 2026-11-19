@@ -14,8 +14,8 @@ import android.os.SystemClock
 import java.io.File
 
 /**
- * What the Drive copier ([DriveCopyService], the `:drive` process) does with one message. [handle]'s `inCopier`
- * is always true since the in-app copier was removed (review C11); the false branches are unused.
+ * What the Drive copier ([DriveCopyService], the `:drive` process) does with one message. Only that process
+ * runs it since the in-app copier was removed (review C11).
  *
  * Every failure here ends in a reply that carries a reason, and in a journal line: there is no path that
  * returns "failed" without saying why.
@@ -40,13 +40,13 @@ object DriveCopyHandler {
     private const val VERIFY_RETRIES = 4
     private const val VERIFY_WAIT_MS = 500L
 
-    fun handle(context: Context, what: Int, data: Bundle, inCopier: Boolean): Bundle {
-        val where = if (inCopier) "copier" else "main-process copier"
-        fun log(line: String) = DriveCopyJournal.record(context, line, fromCopier = inCopier)
+    fun handle(context: Context, what: Int, data: Bundle): Bundle {
+        val where = "copier"
+        fun log(line: String) = DriveCopyJournal.record(context, line, fromCopier = true)
         val start = SystemClock.elapsedRealtime()
         return try {
             when (what) {
-                DriveCopyProtocol.MSG_LIST -> list(context, data, inCopier, where, start, ::log)
+                DriveCopyProtocol.MSG_LIST -> list(context, data, where, start, ::log)
                 DriveCopyProtocol.MSG_COPY -> copy(context, data, where, start, ::log)
                 else -> {
                     log("$where: unknown message $what -> refused")
@@ -60,7 +60,7 @@ object DriveCopyHandler {
     }
 
     private fun list(
-        context: Context, data: Bundle, inCopier: Boolean, where: String, start: Long, log: (String) -> Unit,
+        context: Context, data: Bundle, where: String, start: Long, log: (String) -> Unit,
     ): Bundle {
         @Suppress("DEPRECATION")
         val folder = data.getParcelable<android.net.Uri>(DriveCopyProtocol.K_FOLDER)
@@ -70,12 +70,12 @@ object DriveCopyHandler {
             return DriveCopyProtocol.failureReply(reason)
         }
         if (folder == null) return fail("the request carried no folder")
-        if (TEST_FORCE_LIST_FAILURE && inCopier) return fail("TEST HOOK: forced list failure in the copier process")
+        if (TEST_FORCE_LIST_FAILURE) return fail("TEST HOOK: forced list failure in the copier process")
         SafHelper.folderProblem(context, folder)?.let { return fail("folder not usable: $it") }
         val (listing, why) = SafHelper.listChildrenWithReason(context, folder)
         if (listing == null) return fail("listing failed: ${why ?: "no reason given"}")
         var answer: DriveCopyProtocol.Listing = listing
-        if (TEST_PAD_LIST_TO > listing.names.size && inCopier) {
+        if (TEST_PAD_LIST_TO > listing.names.size) {
             // Test hook: make the folder look big enough to overflow a binder reply.
             val extra = TEST_PAD_LIST_TO - listing.names.size
             val padUri = folder
@@ -87,9 +87,9 @@ object DriveCopyHandler {
             log("$where: TEST HOOK padded the listing from ${listing.names.size} to ${answer.names.size} entries")
         }
         log("$where: LIST ok, ${answer.names.size} entries in ${SystemClock.elapsedRealtime() - start}ms")
-        // In the copier process the reply crosses the binder, which cannot carry a big listing: it goes
-        // through a file (see [DriveCopyProtocol.listReplyViaFile]). In the app's own process nothing crosses.
-        if (!inCopier || TEST_SEND_LIST_INLINE) return DriveCopyProtocol.listReply(answer)
+        // The reply crosses the binder, which cannot carry a big listing: it goes through a file (see
+        // [DriveCopyProtocol.listReplyViaFile]). Inline only under the drive3 test hook.
+        if (TEST_SEND_LIST_INLINE) return DriveCopyProtocol.listReply(answer)
         return try {
             val dir = File(context.cacheDir, "drive-list")
             DriveCopyProtocol.sweepStaleListFiles(dir)

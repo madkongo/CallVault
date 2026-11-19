@@ -71,7 +71,7 @@ object DriveCopyProtocol {
 
     fun listRequest(folder: Uri) = Bundle().apply { putParcelable(K_FOLDER, folder) }
 
-    /** The listing inside the reply itself: only for the in-process copier, where no binder carries it. */
+    /** The listing inside the reply itself: only under [DriveCopyHandler.TEST_SEND_LIST_INLINE] (drive3 test build). */
     fun listReply(listing: Listing) = Bundle().apply {
         putBoolean(K_OK, true)
         putStringArray(K_NAMES, listing.names.toTypedArray())

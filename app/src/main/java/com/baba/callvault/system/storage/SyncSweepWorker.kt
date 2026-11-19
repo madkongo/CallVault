@@ -160,9 +160,8 @@ class SyncSweepWorker(ctx: Context, params: WorkerParameters) : CoroutineWorker(
                     listing to ""
                 } else null to "${copier.where} answered but gave no listing: ${why ?: "no reason in the reply"} (after ${ms}ms)"
             }
-            DriveCopyClient.Outcome.Died -> null to "${copier.where} did not answer: ${(copier as? DriveCopyClient)?.lastFailure ?: "it died or failed"} (after ${ms}ms)"
-            DriveCopyClient.Outcome.TimedOut -> null to "${copier.where} gave no answer within ${ms}ms"
-            DriveCopyClient.Outcome.Stopped -> null to "Stop for now was pressed while listing"
+            // Died, timed out (and Stopped, which a LIST never obeys): the client's own words for why.
+            else -> null to "${copier.where} did not answer: ${(copier as? DriveCopyClient)?.lastFailure ?: "it died or failed"} (after ${ms}ms)"
         }
     }
 
