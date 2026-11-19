@@ -18,7 +18,6 @@ import android.net.NetworkRequest
 import android.os.Build
 import com.baba.callvault.data.AppPreferences
 import com.baba.callvault.data.PrivilegedMode
-import com.baba.callvault.server.RecorderConnection
 import com.baba.callvault.utils.AppLogger
 
 /**
@@ -29,40 +28,15 @@ import com.baba.callvault.utils.AppLogger
  * Shizuku mode only for app calls, and stays that way). Delivered on each Wi-Fi "available", which a roam between
  * access points of one network does not produce. Registered by [WifiJoinWatch.sync]; it does not survive a reboot,
  * and the app start re-registers it.
+ *
+ * The receiver only hands the join to [WifiJoinApprovalWorker] and returns: the settle delay, the wait for the
+ * recorder and the approval together can outlast a broadcast's time.
  */
 class WifiJoinApprovalReceiver : BroadcastReceiver() {
 
     override fun onReceive(context: Context, intent: Intent) {
         if (intent.action != WifiJoinWatch.ACTION) return
-        val app = context.applicationContext
-        val pending = goAsync()
-        Thread {
-            try {
-                // Let Android finish its own "Wi-Fi changed" handling first, and a cold-started app connect to
-                // the recorder Shizuku is still running (the app start binds it).
-                Thread.sleep(WifiJoinWatch.JOIN_SETTLE_MS)
-                awaitRecorder(WifiJoinWatch.RECORDER_WAIT_MS)
-                ShizukuWifiApproval.forApp(app).approveIfWanted()
-            } catch (e: Exception) {
-                AppLogger.w(TAG, "Wi-Fi join approval failed: ${e.javaClass.simpleName}: ${e.message}")
-            } finally {
-                pending.finish()
-            }
-        }.apply { isDaemon = true; name = "cv-wifi-approve-shizuku" }.start()
-    }
-
-    private fun awaitRecorder(timeoutMs: Long) {
-        var waited = 0L
-        while (!recorderAlive() && waited < timeoutMs) {
-            Thread.sleep(WifiJoinWatch.RECORDER_POLL_MS)
-            waited += WifiJoinWatch.RECORDER_POLL_MS
-        }
-    }
-
-    private fun recorderAlive() = RecorderConnection.service?.asBinder()?.isBinderAlive == true
-
-    private companion object {
-        const val TAG = "CV:WifiApproveShizuku"
+        WifiJoinApprovalWorker.enqueue(context.applicationContext)
     }
 }
 
@@ -70,13 +44,6 @@ class WifiJoinApprovalReceiver : BroadcastReceiver() {
 object WifiJoinWatch {
 
     const val ACTION = "com.baba.callvault.WIFI_JOINED_APPROVE"
-
-    /** After a join, before approving: Android writes its own "Wi-Fi changed" switch-off first (built-in mode's 4 s). */
-    const val JOIN_SETTLE_MS = 4_000L
-
-    /** How long a join waits for the recorder connection; well inside a background broadcast's time. */
-    const val RECORDER_WAIT_MS = 15_000L
-    const val RECORDER_POLL_MS = 500L
 
     private const val TAG = "CV:WifiApproveShizuku"
     private const val REQUEST_CODE = 4_731

@@ -125,16 +125,24 @@ after N ms`, then reboot onto that access point: Shizuku starts with no "Allow w
   - Trigger: a `ConnectivityManager` Wi-Fi request held by a PendingIntent (`WifiJoinWatch`,
     `WifiJoinApprovalReceiver`), delivered on each Wi-Fi "available" even with the app not running. No service,
     no notification. Registered at app start, on the switch, and on a mode switch; Shizuku mode + switch on only.
-  - 4 s after the join (and up to 15 s for a cold-started app to reconnect to the recorder), the app asks the
-    Shizuku-hosted recorder (new AIDL `approveWifiNetworkKeepingSwitch`, appended) with the keys of access points
-    approved before.
-  - The recorder (`KeptSwitchApprover`) reads the BSSID (`cmd wifi status`) and Wireless debugging as shell
-    (`settings get`), and: skips a known access point; skips if the switch cannot be read; skips if it is on
-    (Android ignores an approval then: `MSG_ADBWIFI_ALLOW`, AOSP 14); otherwise approves always-allow, waits
-    (≤ 3 s, 100 ms polls) to see Android switch it on, then writes it back off. That write is the only one and
-    undoes the approval's own switch-on. Not seen on → nothing is written (a hidden "on" is never switched off).
-  - The app stores one-way keys (SHA-256, 64 bits), never addresses; logs show only the last two octets. It sets
-    no "ours" / "turned off by user" flag.
+  - The receiver only queues a WorkManager job (`WifiJoinApprovalWorker`, not expedited: on Android 11 that would
+    need a notification) and returns. The job starts 4 s after the join, waits up to 15 s for a cold-started app
+    to reconnect to the recorder (logged when it does not), then asks the Shizuku-hosted recorder (new AIDL
+    `approveWifiNetworkKeepingSwitch`, appended) with the keys of access points approved in the last 30 days.
+    One run at a time per process; a second join queues behind the first.
+  - The recorder (`KeptSwitchApprover`) reads the BSSID (`cmd wifi status`), and: skips a known access point;
+    **skips unless adbd listens on a tcp port** (`service.adb.tcp.port` or `persist.adb.tcp.port` > 0, i.e.
+    Shizuku's tcp mode), before any approval or write: elsewhere Wireless debugging may be adbd's only transport
+    and switching it off could stop Shizuku and the recorder (Q01); reads Wireless debugging as shell
+    (`settings get`) and skips if unreadable or on (Android ignores an approval then: `MSG_ADBWIFI_ALLOW`, AOSP
+    14); reads it once more right before approving and leaves it alone if someone switched it on in between;
+    otherwise approves always-allow, waits (≤ 3 s, 100 ms polls) to see Android switch it on, then writes it back
+    off. That write is the only one and undoes the approval's own switch-on. Not seen on → nothing is written (a
+    hidden "on" is never switched off). A user switching it on in the moments between that last read and the
+    approval cannot be told apart from the approval, and would be switched off: the window is one binder call.
+  - The app stores salted one-way keys (per-install salt, SHA-256, 64 bits), never addresses; logs show only the
+    last two octets. An approval is trusted for 30 days, then the access point is approved again. It sets no
+    "ours" / "turned off by user" flag.
   - Every decision and failure goes to the always-on transport timeline.
 - **Measured by the coordinator on the OP9 (2026-11-19):** switching `adb_wifi_enabled` 1→0 and 0→1 while the
   Shizuku server and the Shizuku-hosted recorder ran left both alive (same PIDs). Not measured on other phones:
@@ -148,6 +156,8 @@ after N ms`, then reboot onto that access point: Shizuku starts with no "Allow w
 - An access point first seen at boot, never joined while the recorder ran: Android still asks once.
 - A roam between access points of one network produces no Wi-Fi "available": not approved until the next join.
 - Shizuku not running at the join: nothing can approve (`RECORDER_DOWN`, logged).
-- If the user later removes a network from Android's trusted list, CallVault still has it as approved and does not
-  ask again.
+- If Android's trusted list loses an access point CallVault approved (the user removed it), CallVault cannot see
+  that: the reboot prompt can come back for it until its 30-day record expires and it is approved again.
+- Not in Shizuku's tcp mode (Shizuku started over Wireless debugging only, or by root): nothing is approved,
+  logged as "Shizuku not in tcp mode".
 - If the shell cannot read the switch (an Android 17 that hides it from shell too), the join is skipped and logged.

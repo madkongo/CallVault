@@ -40,6 +40,14 @@ class AppPreferences(context: Context) {
         private const val MAX_APPROVED_ACCESS_POINTS = 64
 
         /**
+         * How long an approval is trusted before the access point is approved again. CallVault cannot see Android's
+         * trusted list, so a network removed from it would otherwise never be approved again.
+         */
+        const val APPROVED_ACCESS_POINT_TTL_MS = 30L * 24 * 60 * 60 * 1000
+
+        private const val APPROVED_AT_SEPARATOR = '@'
+
+        /**
          * The settings that may be exported and imported — an explicit ALLOW-list, device-independent
          * user preferences only. It is a positive list on purpose: anything not named here (ADB pairing
          * and transport state, SAF folder grants, per-device calibration, the log salt, install/update/
@@ -449,6 +457,7 @@ class AppPreferences(context: Context) {
         WD_ENFORCED("wd_enforced"),
         WD_AUTO_APPROVE_NETWORK("wd_auto_approve_network"),
         WD_APPROVED_AP_KEYS("wd_approved_ap_keys"),
+        WD_AP_KEY_SALT("wd_ap_key_salt"),
         WD_NEVER_TURN_OFF("wd_never_turn_off"),
         LOG_PSEUDONYM_SALT("log_pseudonym_salt"),
         LOGCAT_RING_PREVIOUS_KIB("logcat_ring_previous_kib"),
@@ -1578,18 +1587,34 @@ class AppPreferences(context: Context) {
     fun setWifiNetworkAutoApproveEnabled(enabled: Boolean) = setBoolean(Key.WD_AUTO_APPROVE_NETWORK, enabled)
 
     /**
-     * Access points the Shizuku-mode approval has added to Android's trusted list (review N15), as one-way keys
-     * (`server.BssidPrivacy.key`), never addresses. Internal state, not a setting; never exported.
+     * Access points the Shizuku-mode approval has added to Android's trusted list (review N15) within the last
+     * [APPROVED_ACCESS_POINT_TTL_MS], as salted one-way keys (`server.BssidPrivacy.key`), never addresses. Internal
+     * state, not a setting; never exported. [nowMs] is wall-clock time.
      */
-    fun getApprovedAccessPointKeys(): Set<String> = getStringSet(Key.WD_APPROVED_AP_KEYS)
+    fun getApprovedAccessPointKeys(nowMs: Long): Set<String> =
+        approvedAccessPoints().filterValues { nowMs - it in 0 until APPROVED_ACCESS_POINT_TTL_MS }.keys
 
-    /** Adds [key]; past [MAX_APPROVED_ACCESS_POINTS] an arbitrary old one is dropped (it is only re-approved once). */
-    fun addApprovedAccessPointKey(key: String) {
+    /** Records [key] as approved at [nowMs]; drops expired ones, and the oldest past [MAX_APPROVED_ACCESS_POINTS]. */
+    fun addApprovedAccessPointKey(key: String, nowMs: Long) {
         if (key.isBlank()) return
-        val keys = getApprovedAccessPointKeys()
-        if (key in keys) return
-        val kept = if (keys.size < MAX_APPROVED_ACCESS_POINTS) keys else keys.drop(1).toSet()
-        setStringSet(Key.WD_APPROVED_AP_KEYS, kept + key)
+        val live = approvedAccessPoints().filterValues { nowMs - it in 0 until APPROVED_ACCESS_POINT_TTL_MS } + (key to nowMs)
+        val kept = live.entries.sortedByDescending { it.value }.take(MAX_APPROVED_ACCESS_POINTS)
+        setStringSet(Key.WD_APPROVED_AP_KEYS, kept.map { "${it.key}$APPROVED_AT_SEPARATOR${it.value}" }.toSet())
+    }
+
+    private fun approvedAccessPoints(): Map<String, Long> = getStringSet(Key.WD_APPROVED_AP_KEYS).mapNotNull { entry ->
+        val key = entry.substringBefore(APPROVED_AT_SEPARATOR)
+        val at = entry.substringAfter(APPROVED_AT_SEPARATOR, "").toLongOrNull() ?: return@mapNotNull null
+        key to at
+    }.toMap()
+
+    /** Per-install salt for the access-point keys above. Created on first use; never leaves the phone but to the recorder. */
+    fun getAccessPointKeySalt(): String {
+        getString(Key.WD_AP_KEY_SALT)?.takeIf { it.isNotBlank() }?.let { return it }
+        val bytes = ByteArray(16).also { java.security.SecureRandom().nextBytes(it) }
+        val salt = bytes.joinToString("") { "%02x".format(it) }
+        setString(Key.WD_AP_KEY_SALT, salt)
+        return salt
     }
 
     /**

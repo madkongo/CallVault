@@ -18,11 +18,24 @@ enum class KeptSwitchOutcome {
     /** The app has had this access point approved before. Nothing done. */
     ALREADY_APPROVED,
 
+    /**
+     * adbd is not listening on a tcp port (Shizuku's tcp mode). Then Wireless debugging may be adbd's only
+     * transport, and switching it back off could stop adbd with Shizuku and the recorder (device-quirks Q01).
+     * Only tcp mode was measured safe (OP9, 2026-11-19), so nothing is approved and nothing written.
+     */
+    NOT_TCP_MODE,
+
     /** `adb_wifi_enabled` could not be read, so its state could not be put back. Nothing done. */
     WIRELESS_DEBUGGING_UNREADABLE,
 
     /** Wireless debugging is on: Android ignores an approval then (`MSG_ADBWIFI_ALLOW`). Nothing done. */
     WIRELESS_DEBUGGING_ON,
+
+    /**
+     * Off at the first read, on at the read just before approving: someone (the user) switched it on in between.
+     * Left on; nothing approved, nothing written, so CallVault never writes off over that.
+     */
+    WIRELESS_DEBUGGING_TURNED_ON_MEANWHILE,
 
     /** `allowWirelessDebugging` is missing or threw. Nothing written. */
     APPROVAL_FAILED,
@@ -76,9 +89,12 @@ object BssidPrivacy {
     private const val KEY_HEX_CHARS = 16
     private const val SHOWN_OCTETS = 2
 
-    /** A stable, one-way key for [bssid] (SHA-256, first 64 bits), case-insensitive. */
-    fun key(bssid: String): String = MessageDigest.getInstance("SHA-256")
-        .digest(bssid.lowercase().toByteArray())
+    /**
+     * A stable, one-way key for [bssid] (salted SHA-256, first 64 bits), case-insensitive. [salt] is per install:
+     * an unsalted hash of a 48-bit address with a known vendor prefix could be reversed by trying every suffix.
+     */
+    fun key(bssid: String, salt: String): String = MessageDigest.getInstance("SHA-256")
+        .digest("$salt:${bssid.lowercase()}".toByteArray())
         .joinToString("") { "%02x".format(it) }
         .take(KEY_HEX_CHARS)
 
@@ -102,6 +118,8 @@ object BssidPrivacy {
 class KeptSwitchApprover(
     private val identity: () -> WifiIdentity?,
     private val readWirelessDebugging: () -> Int?,
+    /** Whether adbd listens on a tcp port (Shizuku's tcp mode), so Wireless debugging is not its only transport. */
+    private val adbdListensOnTcp: () -> Boolean,
     private val approve: (WifiIdentity, alwaysAllow: Boolean) -> NetworkApproval,
     private val writeWirelessDebuggingOff: () -> Boolean,
     private val clock: () -> Long = System::currentTimeMillis,
@@ -109,17 +127,23 @@ class KeptSwitchApprover(
     private val confirmTimeoutMs: Long = CONFIRM_TIMEOUT_MS,
 ) {
 
-    fun run(knownKeys: Set<String>): KeptSwitchResult {
+    /** @param salt the app's per-install salt for [BssidPrivacy.key]. */
+    fun run(knownKeys: Set<String>, salt: String): KeptSwitchResult {
         val wifi = identity() ?: return KeptSwitchResult(KeptSwitchOutcome.NO_WIFI_IDENTITY)
-        val key = BssidPrivacy.key(wifi.bssid)
+        val key = BssidPrivacy.key(wifi.bssid, salt)
         val masked = BssidPrivacy.mask(wifi.bssid)
         fun result(outcome: KeptSwitchOutcome, ms: Long = -1L) = KeptSwitchResult(outcome, key, masked, ms)
 
         if (key in knownKeys) return result(KeptSwitchOutcome.ALREADY_APPROVED)
+        // Before anything that could write: the switch-back is safe only while adbd has another transport.
+        if (!adbdListensOnTcp()) return result(KeptSwitchOutcome.NOT_TCP_MODE)
         when (readWirelessDebugging()) {
             null -> return result(KeptSwitchOutcome.WIRELESS_DEBUGGING_UNREADABLE)
             1 -> return result(KeptSwitchOutcome.WIRELESS_DEBUGGING_ON)
         }
+        // Read again right before approving: a switch-on after this point is the approval's (or so close to it
+        // that it cannot be told apart). One before it is someone else's, and is left alone.
+        if (readWirelessDebugging() != 0) return result(KeptSwitchOutcome.WIRELESS_DEBUGGING_TURNED_ON_MEANWHILE)
         if (approve(wifi, ALWAYS_ALLOW) != NetworkApproval.APPROVED) return result(KeptSwitchOutcome.APPROVAL_FAILED)
 
         val approvedAt = clock()

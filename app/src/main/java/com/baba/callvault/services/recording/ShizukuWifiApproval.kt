@@ -35,13 +35,13 @@ class ShizukuWifiApproval(
     private val context: Context,
     private val recorderAlive: () -> Boolean,
     /** The recorder's `approveWifiNetworkKeepingSwitch`: an encoded [KeptSwitchResult], null from an older one. */
-    private val askRecorder: (knownKeys: Array<String>) -> String?,
+    private val askRecorder: (knownKeys: Array<String>, salt: String) -> String?,
+    /** Wall clock, for the 30-day trust of an approval. */
+    private val clock: () -> Long = System::currentTimeMillis,
 ) {
 
     /** What one look did: the app-side decision, and the recorder's answer when it was asked. */
     data class Result(val decision: ShizukuNetworkApproval, val recorder: KeptSwitchResult?)
-
-    private val running = AtomicBoolean(false)
 
     /** Blocking (a binder call that may wait up to ~3 s in the recorder); call off the main thread. */
     fun approveIfWanted(): Result {
@@ -57,10 +57,11 @@ class ShizukuWifiApproval(
         }
         if (!running.compareAndSet(false, true)) {
             log(warn = false, "skipped: an approval is already running")
-            return Result(decision, recorder = null)
+            return Result(ShizukuNetworkApproval.ALREADY_RUNNING, recorder = null)
         }
         try {
-            val raw = runCatching { askRecorder(prefs.getApprovedAccessPointKeys().toTypedArray()) }
+            val known = prefs.getApprovedAccessPointKeys(clock()).toTypedArray()
+            val raw = runCatching { askRecorder(known, prefs.getAccessPointKeySalt()) }
                 .getOrElse {
                     log(warn = true, "failed: the recorder call threw ${it.javaClass.simpleName}: ${it.message}")
                     return Result(decision, recorder = null)
@@ -70,7 +71,7 @@ class ShizukuWifiApproval(
                 log(warn = true, "failed: no answer the app understands from the recorder ('${raw.orEmpty().take(MAX_RAW)}'; a recorder from an older version?)")
                 return Result(decision, recorder = null)
             }
-            if (answer.outcome.trusted) prefs.addApprovedAccessPointKey(answer.bssidKey)
+            if (answer.outcome.trusted) prefs.addApprovedAccessPointKey(answer.bssidKey, clock())
             report(answer)
             return Result(decision, answer)
         } finally {
@@ -88,7 +89,11 @@ class ShizukuWifiApproval(
             KeptSwitchOutcome.APPROVED_RESTORE_NOT_CONFIRMED -> true to
                 "approval for $ap sent, but Wireless debugging was not seen on within ${answer.restoreMs} ms; nothing written, will try again on the next join"
             KeptSwitchOutcome.APPROVAL_FAILED -> true to "failed: the recorder could not approve $ap"
-            KeptSwitchOutcome.ALREADY_APPROVED -> false to "skipped: $ap approved before"
+            KeptSwitchOutcome.ALREADY_APPROVED -> false to "skipped: $ap approved within the last 30 days"
+            KeptSwitchOutcome.NOT_TCP_MODE -> false to
+                "skipped: Shizuku not in tcp mode (adbd has no tcp port), so switching Wireless debugging back off could stop it; nothing approved or written"
+            KeptSwitchOutcome.WIRELESS_DEBUGGING_TURNED_ON_MEANWHILE -> false to
+                "skipped: Wireless debugging was switched on just before approving $ap; left on, nothing written"
             KeptSwitchOutcome.WIRELESS_DEBUGGING_ON -> false to
                 "skipped: Wireless debugging is on at $ap (Android ignores an approval then)"
             KeptSwitchOutcome.WIRELESS_DEBUGGING_UNREADABLE -> true to
@@ -103,6 +108,7 @@ class ShizukuWifiApproval(
         ShizukuNetworkApproval.NOT_SHIZUKU_MODE -> "not in Shizuku mode"
         ShizukuNetworkApproval.RECORDER_DOWN -> "the recorder is not running; Android may ask about this network after a restart"
         ShizukuNetworkApproval.ASK_RECORDER -> "asked the recorder"
+        ShizukuNetworkApproval.ALREADY_RUNNING -> "an approval is already running"
     }
 
     private fun log(warn: Boolean, text: String) {
@@ -116,11 +122,14 @@ class ShizukuWifiApproval(
         private const val TAG = "CV:WifiApproveShizuku"
         private const val MAX_RAW = 60
 
+        /** Process-wide: each join builds its own instance, and two must not ask the recorder at once. */
+        private val running = AtomicBoolean(false)
+
         /** Wired to the real recorder connection. */
         fun forApp(context: Context): ShizukuWifiApproval = ShizukuWifiApproval(
             context = context.applicationContext,
             recorderAlive = { RecorderConnection.service?.asBinder()?.isBinderAlive == true },
-            askRecorder = { keys -> RecorderConnection.service?.approveWifiNetworkKeepingSwitch(keys) },
+            askRecorder = { keys, salt -> RecorderConnection.service?.approveWifiNetworkKeepingSwitch(keys, salt) },
         )
     }
 }

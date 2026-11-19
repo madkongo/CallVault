@@ -38,6 +38,8 @@ class ShizukuWifiApprovalTest {
     private val prefs = AppPreferences(context)
     private var recorderAlive = true
     private val asked = mutableListOf<Set<String>>()
+    private val salts = mutableListOf<String>()
+    private var now = 1_000_000_000L
     private var answer: () -> String? = { restoredOff.encode() }
 
     private val restoredOff = KeptSwitchResult(KeptSwitchOutcome.APPROVED_RESTORED_OFF, "k1", "**:**:**:**:ee:ff", 180L)
@@ -45,7 +47,8 @@ class ShizukuWifiApprovalTest {
     private val approval = ShizukuWifiApproval(
         context = context,
         recorderAlive = { recorderAlive },
-        askRecorder = { keys -> asked += keys.toSet(); answer() },
+        askRecorder = { keys, salt -> asked += keys.toSet(); salts += salt; answer() },
+        clock = { now },
     )
 
     @Before
@@ -61,12 +64,12 @@ class ShizukuWifiApprovalTest {
 
         assertEquals(ShizukuNetworkApproval.ASK_RECORDER, result.decision)
         assertEquals(KeptSwitchOutcome.APPROVED_RESTORED_OFF, result.recorder?.outcome)
-        assertEquals(setOf("k1"), prefs.getApprovedAccessPointKeys())
+        assertEquals(setOf("k1"), prefs.getApprovedAccessPointKeys(now))
     }
 
     @Test
     fun `passes the access points approved before, so the recorder can skip them`() {
-        prefs.addApprovedAccessPointKey("k0")
+        prefs.addApprovedAccessPointKey("k0", now)
 
         approval.approveIfWanted()
 
@@ -75,13 +78,13 @@ class ShizukuWifiApprovalTest {
 
     @Test
     fun `an access point already approved changes nothing`() {
-        prefs.addApprovedAccessPointKey("k1")
+        prefs.addApprovedAccessPointKey("k1", now)
         answer = { KeptSwitchResult(KeptSwitchOutcome.ALREADY_APPROVED, "k1", "**:**:**:**:ee:ff").encode() }
 
         val result = approval.approveIfWanted()
 
         assertEquals(KeptSwitchOutcome.ALREADY_APPROVED, result.recorder?.outcome)
-        assertEquals(setOf("k1"), prefs.getApprovedAccessPointKeys())
+        assertEquals(setOf("k1"), prefs.getApprovedAccessPointKeys(now))
     }
 
     @Test
@@ -129,7 +132,7 @@ class ShizukuWifiApprovalTest {
         val result = approval.approveIfWanted()
 
         assertEquals(KeptSwitchOutcome.APPROVED_RESTORE_FAILED, result.recorder?.outcome)
-        assertEquals(setOf("k2"), prefs.getApprovedAccessPointKeys())
+        assertEquals(setOf("k2"), prefs.getApprovedAccessPointKeys(now))
     }
 
     @Test
@@ -138,7 +141,7 @@ class ShizukuWifiApprovalTest {
 
         approval.approveIfWanted()
 
-        assertTrue(prefs.getApprovedAccessPointKeys().isEmpty())
+        assertTrue(prefs.getApprovedAccessPointKeys(now).isEmpty())
     }
 
     @Test
@@ -149,7 +152,65 @@ class ShizukuWifiApprovalTest {
         answer = { throw android.os.DeadObjectException() }
         assertNull(approval.approveIfWanted().recorder)
 
-        assertTrue(prefs.getApprovedAccessPointKeys().isEmpty())
+        assertTrue(prefs.getApprovedAccessPointKeys(now).isEmpty())
+    }
+
+    @Test
+    fun `sends the same per-install salt every time`() {
+        approval.approveIfWanted()
+        approval.approveIfWanted()
+
+        assertEquals(2, salts.size)
+        assertTrue(salts[0].length >= 16)
+        assertEquals(salts[0], salts[1])
+    }
+
+    @Test
+    fun `an approval is trusted for 30 days, then the access point is approved again`() {
+        prefs.addApprovedAccessPointKey("k1", now)
+
+        assertEquals(setOf("k1"), prefs.getApprovedAccessPointKeys(now + 29L * DAY_MS))
+        assertTrue(prefs.getApprovedAccessPointKeys(now + 31L * DAY_MS).isEmpty())
+    }
+
+    @Test
+    fun `two overlapping joins make one run, even through two instances`() {
+        val inside = java.util.concurrent.CountDownLatch(1)
+        val release = java.util.concurrent.CountDownLatch(1)
+        val first = ShizukuWifiApproval(
+            context = context,
+            recorderAlive = { true },
+            askRecorder = { _, _ -> inside.countDown(); release.await(); restoredOff.encode() },
+            clock = { now },
+        )
+        val firstRun = Thread { first.approveIfWanted() }.apply { start() }
+        assertTrue(inside.await(5, java.util.concurrent.TimeUnit.SECONDS))
+
+        val second = approval.approveIfWanted()
+
+        release.countDown()
+        firstRun.join(5_000)
+        assertEquals(ShizukuNetworkApproval.ALREADY_RUNNING, second.decision)
+        assertTrue(asked.isEmpty())
+    }
+
+    @Test
+    fun `waiting for the recorder ends when it is back, or at the limit`() {
+        var clock = 0L
+        var aliveAt = 1_500L
+        val back = WifiJoinApprovalWorker.awaitRecorder(
+            alive = { clock >= aliveAt }, timeoutMs = 15_000L, pollMs = 500L, sleep = { clock += it },
+        )
+        assertTrue(back)
+        assertEquals(1_500L, clock)
+
+        clock = 0L
+        aliveAt = Long.MAX_VALUE
+        val notBack = WifiJoinApprovalWorker.awaitRecorder(
+            alive = { clock >= aliveAt }, timeoutMs = 15_000L, pollMs = 500L, sleep = { clock += it },
+        )
+        assertFalse(notBack)
+        assertEquals(15_000L, clock)
     }
 
     @Test
@@ -161,5 +222,6 @@ class ShizukuWifiApprovalTest {
 
     private companion object {
         const val WD = "adb_wifi_enabled"
+        const val DAY_MS = 24L * 60 * 60 * 1000
     }
 }

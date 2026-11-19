@@ -360,9 +360,9 @@ interface IRecorderService {
 
     /**
      * Shizuku mode (review N15): approves the current Wi-Fi access point for Wireless debugging, always-allow,
-     * unless its key is in [knownKeys], and puts Wireless debugging back off when it was off before. Returns an
-     * encoded KeptSwitchResult. Appended last: transaction codes are positional. A daemon from an older APK lacks
-     * it; the app reads no answer and approves nothing.
+     * unless its key (salted with [salt]) is in [knownKeys], and puts Wireless debugging back off when it was off
+     * before. Only in Shizuku's tcp mode. Returns an encoded KeptSwitchResult. Appended last: transaction codes are
+     * positional. A daemon from an older APK lacks it; the app reads no answer and approves nothing.
      */
-    String approveWifiNetworkKeepingSwitch(in String[] knownKeys);
+    String approveWifiNetworkKeepingSwitch(in String[] knownKeys, String salt);
 }

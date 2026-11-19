@@ -364,8 +364,8 @@ open class RecorderServiceImpl(private val apkPath: String) : IRecorderService.S
     override fun approveWirelessDebuggingNetwork(alwaysAllow: Boolean): String =
         WirelessDebuggingApproval.approveCurrentNetwork(alwaysAllow).name
 
-    override fun approveWifiNetworkKeepingSwitch(knownKeys: Array<String>?): String =
-        WirelessDebuggingApproval.approveKeepingSwitch(knownKeys.orEmpty().toSet())
+    override fun approveWifiNetworkKeepingSwitch(knownKeys: Array<String>?, salt: String?): String =
+        WirelessDebuggingApproval.approveKeepingSwitch(knownKeys.orEmpty().toSet(), salt.orEmpty())
 
     override fun setEncodeStereo(stereo: Boolean) {
         encodeStereoNext.set(stereo)

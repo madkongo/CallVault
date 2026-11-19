@@ -14,6 +14,9 @@ enum class ShizukuNetworkApproval {
     SETTING_OFF,
     NOT_SHIZUKU_MODE,
     RECORDER_DOWN,
+
+    /** Another join's approval is still running in this process; not decided by the policy. */
+    ALREADY_RUNNING,
 }
 
 /**

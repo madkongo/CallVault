@@ -41,6 +41,7 @@ object WirelessDebuggingApproval {
     private const val TAG = "CV:WdApproval"
     private const val CMD = "/system/bin/cmd"
     private const val SETTINGS = "/system/bin/settings"
+    private const val GETPROP = "/system/bin/getprop"
     private const val WD_SETTING = "adb_wifi_enabled"
     private const val TIMEOUT_SEC = 10L
 
@@ -74,13 +75,26 @@ object WirelessDebuggingApproval {
      * way it was. See [KeptSwitchApprover]. Returns a [KeptSwitchResult], encoded.
      *
      * @param knownKeys [BssidPrivacy.key]s of access points the app has already had approved.
+     * @param salt the app's per-install salt for those keys.
      */
-    fun approveKeepingSwitch(knownKeys: Set<String>): String = KeptSwitchApprover(
+    fun approveKeepingSwitch(knownKeys: Set<String>, salt: String): String = KeptSwitchApprover(
         identity = ::currentIdentity,
         readWirelessDebugging = ::readWirelessDebugging,
+        adbdListensOnTcp = ::adbdListensOnTcp,
         approve = ::approveIdentity,
         writeWirelessDebuggingOff = ::writeWirelessDebuggingOff,
-    ).run(knownKeys).encode()
+    ).run(knownKeys, salt).encode()
+
+    /**
+     * Whether adbd listens on a tcp port: `service.adb.tcp.port` (set when adbd binds, e.g. after `adb tcpip`, which
+     * is Shizuku's tcp mode) or `persist.adb.tcp.port` (adbd binds it at start). Either positive is enough.
+     */
+    fun adbdListensOnTcp(): Boolean =
+        isTcpPort(runCommand(GETPROP, "service.adb.tcp.port"), runCommand(GETPROP, "persist.adb.tcp.port"))
+
+    /** `getprop` outputs of the two port properties to "a tcp port is set". */
+    fun isTcpPort(servicePort: String?, persistPort: String?): Boolean =
+        listOf(servicePort, persistPort).any { (it?.trim()?.toIntOrNull() ?: 0) > 0 }
 
     /** The network the phone is connected to, as the shell sees it, or null. */
     fun currentIdentity(): WifiIdentity? = parseWifiStatus(runCmdWifiStatus())
