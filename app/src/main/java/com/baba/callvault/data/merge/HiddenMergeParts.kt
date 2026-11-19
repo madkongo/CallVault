@@ -9,6 +9,7 @@
 package com.baba.callvault.data.merge
 
 import android.content.Context
+import com.baba.callvault.data.recordings.RecordingSidecars
 import com.baba.callvault.data.recordings.db.RecordingDatabase
 import com.baba.callvault.utils.AppLogger
 import kotlinx.coroutines.flow.Flow
@@ -60,6 +61,8 @@ object HiddenMergeParts {
                 if (hidden.isNotEmpty()) AppLogger.i(TAG, "Deleting ${hidden.size} hidden part(s) with a merged recording")
                 expanded += hidden
                 dao.deleteParts(name)
+                // Their audio went with the merge; their sidecars may still be there (merges before N2 kept them).
+                RecordingSidecars.deleteFor(context, hidden)
             }
         }
         expanded.distinct()

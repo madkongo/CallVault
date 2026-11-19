@@ -13,6 +13,7 @@ import android.net.Uri
 import androidx.documentfile.provider.DocumentFile
 import com.baba.callvault.data.AppPreferences
 import com.baba.callvault.data.recordings.RecordingCatalog
+import com.baba.callvault.data.recordings.RecordingSidecars
 import com.baba.callvault.data.recordings.db.MergePartEntry
 import com.baba.callvault.data.recordings.db.RecordingDatabase
 import com.baba.callvault.data.recordings.db.RecordingEntry
@@ -386,6 +387,9 @@ object MergeService {
      */
     private suspend fun retireMergedInput(context: Context, entry: RecordingEntry) {
         deleteFiles(context, entry)
+        // Its .md and .json beside it go too, in both folders, as with any delete; the text they carry is kept
+        // in the database for un-merge.
+        RecordingSidecars.deleteFor(context, listOf(entry.displayName))
         val dao = RecordingDatabase.get(context).mergePartDao()
         if (dao.partsOf(entry.displayName).isNotEmpty()) {
             dao.deleteParts(entry.displayName)

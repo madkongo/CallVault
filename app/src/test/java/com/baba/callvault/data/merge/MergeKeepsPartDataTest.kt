@@ -30,7 +30,14 @@ import com.baba.callvault.data.transcripts.db.TranscriptSegmentEntry
 import com.baba.callvault.data.transcripts.db.TranscriptState
 import com.baba.callvault.system.storage.SafHelper
 import com.baba.callvault.system.storage.StorageRouter
+import androidx.documentfile.provider.DocumentFile
+import com.baba.callvault.system.interop.MetadataSidecar
+import com.baba.callvault.system.interop.TranscriptSidecar
+import io.mockk.clearMocks
 import io.mockk.every
+import io.mockk.mockk
+import io.mockk.mockkStatic
+import io.mockk.verify
 import io.mockk.justRun
 import io.mockk.mockkObject
 import io.mockk.unmockkAll
@@ -112,6 +119,7 @@ class MergeKeepsPartDataTest {
     @After
     fun tearDown(): Unit = runBlocking {
         unmockkAll()
+        AppPreferences(context).setDriveFolderUri(null)
         val parts = RecordingDatabase.get(context).mergePartDao()
         dao.getAll().forEach {
             parts.deleteParts(it.displayName)
@@ -195,5 +203,57 @@ class MergeKeepsPartDataTest {
             assertNull(tdb.summaryDao().summary(name))
         }
         assertTrue(RecordingDatabase.get(context).mergePartDao().partsOf(merged).isEmpty())
+    }
+
+    // ---- sidecars (.md transcript, .json details), in the device folder and in Drive
+
+    private val driveFolder = "content://com.google.android.apps.docs.storage/tree/acc%3D1%3Bdoc%3Dd"
+
+    private fun doc(name: String) = mockk<DocumentFile>(relaxed = true).also {
+        every { it.name } returns name
+        every { it.isFile } returns true
+        every { it.delete() } returns true
+    }
+
+    /** Both folders hold both parts' sidecars plus an unrelated file; returns (part sidecars, unrelated). */
+    private fun sidecarsInBothFolders(): Pair<List<DocumentFile>, List<DocumentFile>> {
+        AppPreferences(context).setDriveFolderUri(Uri.parse(driveFolder))
+        val sidecars = mutableListOf<DocumentFile>()
+        val unrelated = mutableListOf<DocumentFile>()
+        mockkStatic(DocumentFile::class)
+        listOf(folder, driveFolder).forEach { tree ->
+            val mine = listOf(partA, partB).flatMap {
+                listOf(doc(TranscriptSidecar.sidecarNameFor(it)), doc(MetadataSidecar.sidecarNameFor(it)))
+            }
+            val other = doc("20200101_000000.000+0000_in_1.md")
+            sidecars += mine
+            unrelated += other
+            val dir = mockk<DocumentFile>(relaxed = true)
+            every { dir.listFiles() } returns (mine + other).toTypedArray()
+            every { DocumentFile.fromTreeUri(any(), Uri.parse(tree)) } returns dir
+        }
+        return sidecars to unrelated
+    }
+
+    @Test
+    fun `merging deletes the parts' sidecars in both folders`() = runBlocking {
+        val (sidecars, unrelated) = sidecarsInBothFolders()
+
+        merge()
+
+        sidecars.forEach { verify(exactly = 1) { it.delete() } }
+        unrelated.forEach { verify(exactly = 0) { it.delete() } }
+    }
+
+    @Test
+    fun `deleting the merged call deletes its hidden parts' sidecars in both folders`() = runBlocking {
+        val (sidecars, unrelated) = sidecarsInBothFolders()
+        val merged = merge()
+        clearMocks(sidecars.first(), *sidecars.drop(1).toTypedArray(), answers = false)
+
+        RecordingCatalog.removeName(context, merged)
+
+        sidecars.forEach { verify(exactly = 1) { it.delete() } }
+        unrelated.forEach { verify(exactly = 0) { it.delete() } }
     }
 }
