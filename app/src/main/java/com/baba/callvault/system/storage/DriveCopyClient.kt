@@ -163,7 +163,7 @@ class DriveCopyClient(context: Context, private val honorStop: Boolean = true) :
                 }
                 return Outcome.Reply(reply)
             }
-            if (honorStop && DriveCopyStop.isRequested()) {
+            if (obeysStop(honorStop, what) && DriveCopyStop.isRequested()) {
                 pending = null
                 close()
                 lastFailure = "stopped by the user"
@@ -191,6 +191,13 @@ class DriveCopyClient(context: Context, private val honorStop: Boolean = true) :
     companion object {
         private const val TAG = "CV:DriveCopyClient"
         private const val POLL_MS = 500L
+
+        /**
+         * Whether a call of kind [what] is abandoned on "Stop for now". Never the LIST: it runs before the copy
+         * notification (the only place the button is) is posted, so a press it could see belongs to an earlier
+         * run (review C21).
+         */
+        fun obeysStop(honorStop: Boolean, what: Int): Boolean = honorStop && what != DriveCopyProtocol.MSG_LIST
         private const val CONNECT_TIMEOUT_MS = 15_000L
     }
 }
@@ -221,7 +228,7 @@ class LocalDriveCopier(context: Context, private val honorStop: Boolean = true) 
                     DriveCopyClient.Outcome.Died
                 }
             }
-            if (honorStop && DriveCopyStop.isRequested()) {
+            if (DriveCopyClient.obeysStop(honorStop, what) && DriveCopyStop.isRequested()) {
                 DriveCopyJournal.record(appContext, "main-process copier: message $what abandoned, Stop for now pressed after ${SystemClock.elapsedRealtime() - start}ms (its thread is left to finish)")
                 return DriveCopyClient.Outcome.Stopped
             }

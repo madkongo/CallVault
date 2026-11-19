@@ -40,6 +40,10 @@ class SyncSweepWorker(ctx: Context, params: WorkerParameters) : CoroutineWorker(
 
     override suspend fun doWork(): Result {
         val sweepStart = SystemClock.elapsedRealtime()
+        // Before any copier call: a press can only come from this run's own copy notification, which is posted
+        // after the listing, so anything set now is an earlier run's press (review C21).
+        if (DriveCopyStop.isRequested()) journal("an earlier run's Stop for now was still set; cleared for this run")
+        DriveCopyStop.reset()
         val prefs = AppPreferences(applicationContext)
         val target = prefs.getStorageTarget()
         val sourceFolderUri = prefs.getRecordingFolderUri()
@@ -260,10 +264,7 @@ class SyncSweepWorker(ctx: Context, params: WorkerParameters) : CoroutineWorker(
         val total = pending.size
         var done = 0
         var stoppedByUser = false
-        if (total > 0) {
-            DriveCopyStop.reset()
-            showProgress(done, total)
-        }
+        if (total > 0) showProgress(done, total)
         val copyStart = SystemClock.elapsedRealtime()
         journal("sweep start: $total to copy, ready after ${copyStart - sweepStart}ms (Drive folder holds ${existingInDrive.size}), skipped $skipped empty, copying ${if (usingFallback) "in the app's own process (fallback)" else "in the :drive process"}")
         var stalls = 0
