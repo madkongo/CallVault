@@ -179,6 +179,24 @@ object VoipRecordingCoordinator {
     }
 
     /**
+     * Ends the app-call recording on a background thread (C1: a phone call was answered). The claim is marked as
+     * being released at once, on the caller's thread, so the phone call's start waits for this stop instead of
+     * failing on a busy recorder.
+     */
+    fun endInBackground(context: Context) {
+        if (!recording) return
+        DaemonSessionOwnership.beginRelease(this)
+        val app = context.applicationContext
+        Thread {
+            val t0 = android.os.SystemClock.elapsedRealtime()
+            runCatching { onCallEnded(app) }.onFailure { AppLogger.w(TAG, "VoIP stop failed: ${it.message}") }
+            AppLogger.i(TAG, "App-call recording ended for the phone call in ${android.os.SystemClock.elapsedRealtime() - t0}ms")
+            // Whatever happened, the phone call's start must not wait on a claim nobody will give back.
+            DaemonSessionOwnership.release(this)
+        }.apply { isDaemon = true; name = "cv-voip-end-for-call" }.start()
+    }
+
+    /**
      * @param manual the user pressed Record (the "Ask me" prompt). An explicit ask outranks the ignore
      *   list, as it does for phone calls.
      */

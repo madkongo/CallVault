@@ -276,8 +276,8 @@ class VoipCallDetector(private val context: Context) {
         callActive = false
         suspendedForCarrier = false
         VoipRecordPrompt.cancel(context)
-        runCatching { VoipRecordingCoordinator.onCallEnded(context) }
-            .onFailure { AppLogger.w(TAG, "VoIP stop failed: ${it.message}") }
+        // Off the main thread (the stop can take seconds); the phone call's start waits for it, bounded (C1).
+        VoipRecordingCoordinator.endInBackground(context)
         isRecording = false
         onRecordingStateChanged?.invoke()
     }
