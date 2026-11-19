@@ -13,6 +13,7 @@ import androidx.test.core.app.ApplicationProvider
 import androidx.work.testing.TestListenableWorkerBuilder
 import com.baba.callvault.data.AppPreferences
 import com.baba.callvault.data.StorageTarget
+import com.baba.callvault.data.recordings.RecordingCatalog
 import com.baba.callvault.data.recordings.RecordingsRepository
 import com.baba.callvault.data.recordings.db.RecordingDatabase
 import com.baba.callvault.data.recordings.db.RecordingEntry
@@ -93,7 +94,19 @@ class RetentionDriveNoticeTest {
     private fun sweep() = runBlocking { TestListenableWorkerBuilder<RetentionSweepWorker>(context).build().doWork() }
 
     @Test
+    fun `before a Drive sweep has re-confirmed sizes since the clear, the notice is left alone`() = runBlocking {
+        prefs.setStorageTarget(StorageTarget.BOTH)
+        dao.upsert(RecordingEntry(unsynced, localUri = "content://dev/$unsynced", localSizeBytes = 500L, lastModified = 1_000L))
+
+        sweep()
+
+        verify(exactly = 0) { SilentFailureNotifier.updateRetentionWaitingForDrive(any(), any()) }
+    }
+
+    @Test
     fun `a sweep that keeps an unsynced recording reports it`() = runBlocking {
+        RecordingCatalog.forgetUnconfirmedDriveSizesOnce(context)
+        RecordingCatalog.markDriveSizesReconfirmed(context)
         prefs.setStorageTarget(StorageTarget.BOTH)
         dao.upsert(RecordingEntry(unsynced, localUri = "content://dev/$unsynced", localSizeBytes = 500L, lastModified = 1_000L))
 
@@ -114,6 +127,8 @@ class RetentionDriveNoticeTest {
 
     @Test
     fun `a pass that could not finish leaves the notice as it was`() = runBlocking {
+        RecordingCatalog.forgetUnconfirmedDriveSizesOnce(context)
+        RecordingCatalog.markDriveSizesReconfirmed(context)
         prefs.setStorageTarget(StorageTarget.BOTH)
         prefs.setStorageCapBytes(100L)
         dao.upsert(RecordingEntry(unsynced, localUri = "content://dev/$unsynced", localSizeBytes = 500L, lastModified = 1_000L))

@@ -164,6 +164,24 @@ object RecordingCatalog {
         return true
     }
 
+    private const val KEY_DRIVE_SIZES_RECONFIRMED = "drive_sizes_reconfirmed_since_forgotten"
+
+    /**
+     * Records that a Drive sweep finished after the one-time clear, so the Drive sizes it lists have been stamped
+     * again. Until then, retention's "kept for Drive" count would include every expired call whose size was just
+     * cleared, and the notice would cry wolf (review C7/N3). A no-op before the clear has happened.
+     */
+    fun markDriveSizesReconfirmed(context: Context) {
+        val state = context.getSharedPreferences(MIGRATIONS_FILE, Context.MODE_PRIVATE)
+        if (!state.getBoolean(KEY_DRIVE_SIZES_FORGOTTEN, false) || state.getBoolean(KEY_DRIVE_SIZES_RECONFIRMED, false)) return
+        state.edit().putBoolean(KEY_DRIVE_SIZES_RECONFIRMED, true).apply()
+        AppLogger.i(TAG, "A Drive sweep finished after the old Drive sizes were cleared; they are re-confirmed")
+    }
+
+    /** Whether a Drive sweep has finished since the one-time clear; see [markDriveSizesReconfirmed]. */
+    fun areDriveSizesReconfirmed(context: Context): Boolean =
+        context.getSharedPreferences(MIGRATIONS_FILE, Context.MODE_PRIVATE).getBoolean(KEY_DRIVE_SIZES_RECONFIRMED, false)
+
     /** Whether [displayName] has a catalog row; null when the catalog cannot be read. Never throws. */
     suspend fun contains(context: Context, displayName: String): Boolean? =
         runCatching { dao(context).findByName(displayName) != null }.getOrElse {

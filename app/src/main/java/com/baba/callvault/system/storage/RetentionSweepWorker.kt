@@ -159,7 +159,13 @@ class RetentionSweepWorker(ctx: Context, params: WorkerParameters) : CoroutineWo
         // spare. Running second also means the cap only ever sees what age retention chose to keep.
         val deletedByCap = if (capBytes > 0L && sizesTrusted) sweepStorageCap(capBytes, keptForDrive)
         else if (capBytes > 0L) null else 0
-        if (!sizesTrusted || deletedByCap == null || !untracked.complete) {
+        val awaitingReconfirm = target != StorageTarget.LOCAL &&
+            !RecordingCatalog.areDriveSizesReconfirmed(applicationContext)
+        if (awaitingReconfirm) {
+            // Sizes were cleared and no Drive sweep has stamped them again yet: everything expired would count as
+            // "kept for Drive". Left alone until one has (review C7/N3).
+            AppLogger.i(TAG, "No Drive sweep has re-confirmed sizes since they were cleared; the 'kept for Drive' notice waits")
+        } else if (!sizesTrusted || deletedByCap == null || !untracked.complete) {
             // A pass did not look, so the count is partial: clearing or lowering the notice now would be a false
             // all-clear. It is left as it was until a run that finishes (N3).
             val which = when {

@@ -375,6 +375,9 @@ class SyncSweepWorker(ctx: Context, params: WorkerParameters) : CoroutineWorker(
         if (isStopped) {
             journal("sweep interrupted: WorkManager asked it to stop after $done of $total (stopReason=$stopReason)")
         }
+        // Every file went through: the Drive sizes this run listed or got back are stamped, so retention may count
+        // what is still unproven as really waiting for Drive (review C7/N3).
+        if (!isStopped && done == total) RecordingCatalog.markDriveSizesReconfirmed(applicationContext)
         AppLogger.i(TAG, "Sweep complete (target=$target copied=$copied failures=$failures skipped=$skipped deleteLocal=$deleteLocal).")
         journal("sweep complete: copied=$copied failures=$failures skipped=$skipped deleteLocal=$deleteLocal deleted=$deleted kept=$kept unverified=$unverified")
         // A sweep that keeps failing backs off rather than hammering the provider: the next scheduled run

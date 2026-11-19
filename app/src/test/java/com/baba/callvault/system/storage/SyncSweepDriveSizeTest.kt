@@ -129,4 +129,15 @@ class SyncSweepDriveSizeTest {
         assertEquals(driveCopy.toString(), dao.findByName(name)?.driveUri)
         assertEquals(size, dao.findByName(name)?.driveSizeBytes)
     }
+
+    @Test
+    fun `a finished sweep after the one-time clear marks Drive sizes re-confirmed`() = runBlocking {
+        RecordingCatalog.forgetUnconfirmedDriveSizesOnce(context)
+        org.junit.Assert.assertFalse(RecordingCatalog.areDriveSizesReconfirmed(context))
+        driveLists(sizeListed = size)
+
+        sweep()
+
+        org.junit.Assert.assertTrue(RecordingCatalog.areDriveSizesReconfirmed(context))
+    }
 }
