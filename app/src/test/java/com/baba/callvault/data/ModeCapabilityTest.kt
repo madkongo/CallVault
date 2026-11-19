@@ -53,6 +53,12 @@ class ModeCapabilityTest {
     }
 
     @Test
+    fun approving_a_joined_wifi_network_works_in_both_through_the_shell_recorder() {
+        // Review N15: the Shizuku host is shell too, and shell holds MANAGE_DEBUGGING.
+        assertTrue(ModeCapability.WIFI_NETWORK_APPROVAL.isAvailableIn(PrivilegedMode.SHIZUKU))
+    }
+
+    @Test
     fun carrier_recording_itself_works_in_both() {
         // The whole point: a call still records under Shizuku, through scrcpy.
         assertTrue(ModeCapability.CARRIER_RECORDING.isAvailableIn(PrivilegedMode.SHIZUKU))

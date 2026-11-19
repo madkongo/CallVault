@@ -131,7 +131,7 @@ class SettingDecisionsTest {
         "transcription_custom_model" to Decision(SettingsOnly("#48: Custom (advanced) only")),
         "wd_auto_approve_network" to Decision(
             SettingsOnly("off by default; only matters to people who move between Wi-Fi networks, found next to Keep Wireless debugging on"),
-            ModeCapability.WIRELESS_DEBUGGING_CONTROL,
+            ModeCapability.WIFI_NETWORK_APPROVAL,
         ),
         "wd_never_turn_off" to Decision(
             SettingsOnly("power-user setting, built-in mode only"),

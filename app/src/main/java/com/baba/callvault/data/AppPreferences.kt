@@ -36,6 +36,9 @@ class AppPreferences(context: Context) {
     companion object {
         private const val PREFS_NAME = "callvault_prefs"
 
+        /** How many approved access points are remembered; a home mesh has a handful. */
+        private const val MAX_APPROVED_ACCESS_POINTS = 64
+
         /**
          * The settings that may be exported and imported — an explicit ALLOW-list, device-independent
          * user preferences only. It is a positive list on purpose: anything not named here (ADB pairing
@@ -445,6 +448,7 @@ class AppPreferences(context: Context) {
         WD_TURNED_OFF_BY_USER("wd_turned_off_by_user"),
         WD_ENFORCED("wd_enforced"),
         WD_AUTO_APPROVE_NETWORK("wd_auto_approve_network"),
+        WD_APPROVED_AP_KEYS("wd_approved_ap_keys"),
         WD_NEVER_TURN_OFF("wd_never_turn_off"),
         LOG_PSEUDONYM_SALT("log_pseudonym_salt"),
         LOGCAT_RING_PREVIOUS_KIB("logcat_ring_previous_kib"),
@@ -1202,7 +1206,7 @@ class AppPreferences(context: Context) {
             ::isWdDisableWhenIdle, ::setWdDisableWhenIdle,
         ),
         GatedSwitch(
-            "wd_auto_approve_network", ModeCapability.WIRELESS_DEBUGGING_CONTROL,
+            "wd_auto_approve_network", ModeCapability.WIFI_NETWORK_APPROVAL,
             ::isWifiNetworkAutoApproveEnabled, ::setWifiNetworkAutoApproveEnabled,
         ),
         GatedSwitch(
@@ -1572,6 +1576,21 @@ class AppPreferences(context: Context) {
     fun isWifiNetworkAutoApproveEnabled() = getBoolean(Key.WD_AUTO_APPROVE_NETWORK, false)
 
     fun setWifiNetworkAutoApproveEnabled(enabled: Boolean) = setBoolean(Key.WD_AUTO_APPROVE_NETWORK, enabled)
+
+    /**
+     * Access points the Shizuku-mode approval has added to Android's trusted list (review N15), as one-way keys
+     * (`server.BssidPrivacy.key`), never addresses. Internal state, not a setting; never exported.
+     */
+    fun getApprovedAccessPointKeys(): Set<String> = getStringSet(Key.WD_APPROVED_AP_KEYS)
+
+    /** Adds [key]; past [MAX_APPROVED_ACCESS_POINTS] an arbitrary old one is dropped (it is only re-approved once). */
+    fun addApprovedAccessPointKey(key: String) {
+        if (key.isBlank()) return
+        val keys = getApprovedAccessPointKeys()
+        if (key in keys) return
+        val kept = if (keys.size < MAX_APPROVED_ACCESS_POINTS) keys else keys.drop(1).toSet()
+        setStringSet(Key.WD_APPROVED_AP_KEYS, kept + key)
+    }
 
     /**
      * The opt-in "Never turn Wireless debugging off" setting (#30 follow-up). Off by default: CallVault then

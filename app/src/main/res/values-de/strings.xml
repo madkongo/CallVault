@@ -586,6 +586,7 @@
     <string name="settings_voip_recording_description">Nimmt auch Anrufe in Apps wie WhatsApp, Signal und Telegram auf. Manche Apps blockieren die Aufnahme, und das lässt sich erst während eines Anrufs feststellen.</string>
     <string name="settings_voip_recording_label">App-Anrufe aufnehmen</string>
     <string name="settings_wd_auto_approve_description">Verbindet sich das Telefon mit einem WLAN, beantwortet CallVault die Android-Frage „WLAN-Debugging in diesem Netzwerk zulassen?“ selbst, damit die Aufnahme nicht auf dein Tippen wartet. Funktioniert, solange der Rekorder läuft. Verbinden können sich nur Geräte, die bereits mit diesem Telefon gekoppelt sind.</string>
+    <string name="settings_wd_auto_approve_description_shizuku">Verbindet sich das Telefon mit einem WLAN, während der Rekorder läuft, fügt CallVault es den vertrauenswürdigen Netzwerken für WLAN-Debugging hinzu, damit Shizuku nach einem Neustart dort starten kann, ohne dass Android „WLAN-Debugging in diesem Netzwerk zulassen?“ fragt. War WLAN-Debugging aus, wird es danach wieder ausgeschaltet. Verbinden können sich nur Geräte, die bereits mit diesem Telefon gekoppelt sind.</string>
     <string name="settings_wd_mode_label">WLAN-Debugging</string>
     <string name="settings_wd_mode_when_needed">Nur bei Bedarf</string>
     <string name="settings_wd_mode_keep_on">Eingeschaltet lassen</string>

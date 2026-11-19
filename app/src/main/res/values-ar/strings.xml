@@ -628,6 +628,7 @@
     <string name="settings_voip_recording_description">أيضًا تسجيل المكالمات التي تتم في تطبيقات مثل WhatsApp وSignal وTelegram؛ كلا الجانبين من المحادثة، وليس صوتك فقط. تظهر التسجيلات التطبيق الذي تم إجراء المكالمة فيه، واسم جهة الاتصال عندما يوفره التطبيق. بعض التطبيقات تمنع التسجيل، ولا يمكن معرفة ذلك إلا بعد بدء المكالمة.</string>
     <string name="settings_voip_recording_label">تسجيل مكالمات التطبيقات</string>
     <string name="settings_wd_auto_approve_description">عندما يتصل الهاتف بشبكة Wi-Fi، يجيب CallVault بنفسه على سؤال Android \"السماح بتصحيح الأخطاء اللاسلكي على هذه الشبكة؟\"، فلا ينتظر التسجيل نقرتك. يعمل ما دام المسجّل قيد التشغيل. لا يمكن أن تتصل إلا الأجهزة المقترنة مسبقًا بهذا الهاتف.</string>
+    <string name="settings_wd_auto_approve_description_shizuku">عندما يتصل الهاتف بشبكة Wi-Fi أثناء تشغيل المسجّل، يضيفها CallVault إلى الشبكات الموثوقة في Android لتصحيح الأخطاء اللاسلكي، فيستطيع Shizuku أن يبدأ عليها بعد إعادة التشغيل دون أن يسأل Android \"السماح بتصحيح الأخطاء اللاسلكي على هذه الشبكة؟\". ثم يُعاد إيقاف تصحيح الأخطاء اللاسلكي إن كان متوقفًا. لا يمكن أن تتصل إلا الأجهزة المقترنة مسبقًا بهذا الهاتف.</string>
     <string name="settings_wd_mode_label">تصحيح الأخطاء اللاسلكي</string>
     <string name="settings_wd_mode_when_needed">عند الحاجة فقط</string>
     <string name="settings_wd_mode_keep_on">إبقاؤه قيد التشغيل</string>

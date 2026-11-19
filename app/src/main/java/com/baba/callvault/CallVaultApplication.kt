@@ -246,6 +246,10 @@ class CallVaultApplication : Application() {
             }
         }.onFailure { AppLogger.d(TAG, "Nothing left over to clear: ${it.message}") }
 
+        // Shizuku mode's Wi-Fi join watch does not survive a reboot or a mode switch; set it to match (review N15).
+        runCatching { com.baba.callvault.services.recording.WifiJoinWatch.sync(applicationContext) }
+            .onFailure { AppLogger.w(TAG, "Could not sync the Wi-Fi join watch: ${it.message}") }
+
         // isPrivilegedTransportSetUp, not isAdbPaired: a Shizuku user never pairs, and gating on
         // pairing meant the app never bound Shizuku at startup — so the first call after a cold
         // start raced an unbound recorder.

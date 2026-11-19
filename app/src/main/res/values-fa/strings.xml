@@ -679,6 +679,7 @@
     <string name="settings_voip_recording_description">تماس‌های انجام‌شده در برنامه‌هایی مانند WhatsApp، Signal و Telegram را نیز ضبط می‌کند. برخی برنامه‌ها ضبط را مسدود می‌کنند و این تا زمانی که تماس در جریان باشد قابل تشخیص نیست.</string>
     <string name="settings_voip_recording_label">ضبط تماس‌های برنامه‌ها</string>
     <string name="settings_wd_auto_approve_description">وقتی گوشی به یک شبکهٔ Wi-Fi وصل می‌شود، CallVault خودش به پرسش Android «اجازهٔ اشکال‌زدایی بی‌سیم در این شبکه داده شود؟» پاسخ می‌دهد تا ضبط منتظر لمس شما نماند. تا وقتی ضبط‌کننده در حال اجراست کار می‌کند. فقط دستگاه‌هایی که از قبل با این گوشی جفت شده‌اند می‌توانند وصل شوند.</string>
+    <string name="settings_wd_auto_approve_description_shizuku">وقتی گوشی در حالی که ضبط‌کننده در حال اجراست به یک شبکهٔ Wi-Fi وصل می‌شود، CallVault آن را به شبکه‌های مورد اعتماد Android برای اشکال‌زدایی بی‌سیم اضافه می‌کند تا Shizuku پس از راه‌اندازی مجدد بتواند بدون پرسش Android «اجازهٔ اشکال‌زدایی بی‌سیم در این شبکه داده شود؟» روی آن شروع شود. اگر اشکال‌زدایی بی‌سیم خاموش بود، دوباره خاموش می‌شود. فقط دستگاه‌هایی که از قبل با این گوشی جفت شده‌اند می‌توانند وصل شوند.</string>
     <string name="settings_wd_mode_label">اشکال‌زدایی بی‌سیم</string>
     <string name="settings_wd_mode_when_needed">فقط در صورت نیاز</string>
     <string name="settings_wd_mode_keep_on">روشن بماند</string>

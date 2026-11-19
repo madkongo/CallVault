@@ -102,5 +102,52 @@ shell call above needs none of that, so it is the better route.
   it on again (`RESPECT_USER`). Pre-existing: it also blocked the recorder restart after any direct network
   switch. Now a switch-off within 6 s of a Wi-Fi loss is `ANDROID_NETWORK_CHANGED`. 🧪 beyond this one run.
 - Shizuku mode: switch shown off and greyed, "Not available in Shizuku mode" (checked by Claude on the OP9).
+  **Superseded 2026-11-19 by review N15, below: the switch now works in Shizuku mode.**
 - **Not tested:** a real recorder restart on the new network (it should find Wireless debugging on), "WD off
   when idle" + always-allow, Android 17.
+
+## Shizuku mode (review N15, 2026-11-19) — 🧪 VERIFYING
+
+Built and unit-tested only; not tried on a phone. To settle it, on the OP9 in Shizuku mode with the switch on:
+join the second access point (Wi-Fi off and on near it) while recording works, see the timeline line
+`Wi-Fi approval (Shizuku): approved access point **:**:**:**:xx:xx (always allow); Wireless debugging restored off
+after N ms`, then reboot onto that access point: Shizuku starts with no "Allow wireless debugging on this network?".
+
+- **Why.** OP9 2026-11-19: after a reboot the phone joined a second access point (same SSID, other BSSID). Shizuku
+  starts only over Wireless debugging, Android asked about the untrusted BSSID, and recording stayed down until
+  the owner tapped Allow. At boot no shell process is alive, so the prompt cannot be answered then; it can only be
+  prevented, by having the access point on Android's trusted list beforehand.
+- **A first design was rejected (2026-11-19, not shipped).** It approved only when Wireless debugging went from on
+  to off within 6 s of a Wi-Fi loss. On the OP9, Shizuku runs in its tcp mode (port 5555) and leaves Wireless
+  debugging OFF once started, so that never fired; a time-proximity guess could also re-enable it against the
+  user's off; and it ran the keep-alive (a new persistent notification) in Shizuku mode.
+- **What it does now.**
+  - Trigger: a `ConnectivityManager` Wi-Fi request held by a PendingIntent (`WifiJoinWatch`,
+    `WifiJoinApprovalReceiver`), delivered on each Wi-Fi "available" even with the app not running. No service,
+    no notification. Registered at app start, on the switch, and on a mode switch; Shizuku mode + switch on only.
+  - 4 s after the join (and up to 15 s for a cold-started app to reconnect to the recorder), the app asks the
+    Shizuku-hosted recorder (new AIDL `approveWifiNetworkKeepingSwitch`, appended) with the keys of access points
+    approved before.
+  - The recorder (`KeptSwitchApprover`) reads the BSSID (`cmd wifi status`) and Wireless debugging as shell
+    (`settings get`), and: skips a known access point; skips if the switch cannot be read; skips if it is on
+    (Android ignores an approval then: `MSG_ADBWIFI_ALLOW`, AOSP 14); otherwise approves always-allow, waits
+    (≤ 3 s, 100 ms polls) to see Android switch it on, then writes it back off. That write is the only one and
+    undoes the approval's own switch-on. Not seen on → nothing is written (a hidden "on" is never switched off).
+  - The app stores one-way keys (SHA-256, 64 bits), never addresses; logs show only the last two octets. It sets
+    no "ours" / "turned off by user" flag.
+  - Every decision and failure goes to the always-on transport timeline.
+- **Measured by the coordinator on the OP9 (2026-11-19):** switching `adb_wifi_enabled` 1→0 and 0→1 while the
+  Shizuku server and the Shizuku-hosted recorder ran left both alive (same PIDs). Not measured on other phones:
+  where Wireless debugging is adbd's only transport, switching it off could stop adbd (device-quirks Q01).
+- Setting gated by the new `ModeCapability.WIFI_NETWORK_APPROVAL` (both modes). A switch turned off by an earlier
+  move to Shizuku mode comes back on at the next reconcile (the existing restore rule); it shows no notification.
+- New text `settings_wd_auto_approve_description_shizuku` in English and 18 translations, written by Claude:
+  **needs a native-speaker check.**
+
+**Known limits (📐 from reading AOSP, not measured):**
+- An access point first seen at boot, never joined while the recorder ran: Android still asks once.
+- A roam between access points of one network produces no Wi-Fi "available": not approved until the next join.
+- Shizuku not running at the join: nothing can approve (`RECORDER_DOWN`, logged).
+- If the user later removes a network from Android's trusted list, CallVault still has it as approved and does not
+  ask again.
+- If the shell cannot read the switch (an Android 17 that hides it from shell too), the join is skipped and logged.

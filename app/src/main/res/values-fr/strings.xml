@@ -586,6 +586,7 @@
     <string name="settings_voip_recording_description">Enregistre aussi les appels passés dans des applis comme WhatsApp, Signal et Telegram. Certaines applis bloquent l\'enregistrement, et cela ne se sait qu\'une fois l\'appel en cours.</string>
     <string name="settings_voip_recording_label">Enregistrer les appels d\'applis</string>
     <string name="settings_wd_auto_approve_description">Quand le téléphone rejoint un réseau Wi-Fi, CallVault répond lui-même à la question d\'Android « Autoriser le débogage sans fil sur ce réseau ? », pour que l\'enregistrement n\'attende pas votre appui. Fonctionne tant que l\'enregistreur tourne. Seuls les appareils déjà associés à ce téléphone peuvent se connecter.</string>
+    <string name="settings_wd_auto_approve_description_shizuku">Quand le téléphone rejoint un réseau Wi-Fi pendant que l\'enregistreur tourne, CallVault l\'ajoute aux réseaux de confiance d\'Android pour le débogage sans fil, pour qu\'après un redémarrage Shizuku puisse y démarrer sans qu\'Android demande « Autoriser le débogage sans fil sur ce réseau ? ». Si le débogage sans fil était désactivé, il est ensuite désactivé à nouveau. Seuls les appareils déjà associés à ce téléphone peuvent se connecter.</string>
     <string name="settings_wd_mode_label">Débogage sans fil</string>
     <string name="settings_wd_mode_when_needed">Uniquement si nécessaire</string>
     <string name="settings_wd_mode_keep_on">Garder activé</string>

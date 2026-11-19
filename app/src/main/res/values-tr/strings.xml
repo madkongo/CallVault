@@ -905,6 +905,7 @@
     <string name="settings_wd_enforce_description">CallVault’un içeri girmesine başka bir yol yokken Kablosuz hata ayıklamayı kapatırsanız, aramaların kaydedilmesi için onu yeniden açar. Bu kapalıyken anahtarınız kapalı kalır ve bildirim kaydın duraklatıldığını söyler.</string>
     <string name="settings_wd_auto_approve_label">Yeni Wi-Fi ağlarını otomatik onayla</string>
     <string name="settings_wd_auto_approve_description">Telefon bir Wi-Fi ağına katıldığında CallVault, Android’in “Bu ağda kablosuz hata ayıklamaya izin verilsin mi?” sorusunu kendisi yanıtlar, böylece kayıt dokunmanızı beklemez. Kaydedici çalışırken işler. Yalnızca bu telefonla zaten eşleştirilmiş cihazlar bağlanabilir.</string>
+    <string name="settings_wd_auto_approve_description_shizuku">Kaydedici çalışırken telefon bir Wi-Fi ağına katıldığında CallVault bu ağı Android’in kablosuz hata ayıklama için güvenilir ağlarına ekler; böylece yeniden başlatmadan sonra Shizuku, Android “Bu ağda kablosuz hata ayıklamaya izin verilsin mi?” diye sormadan orada başlayabilir. Kablosuz hata ayıklama kapalıysa ardından yeniden kapatılır. Yalnızca bu telefonla zaten eşleştirilmiş cihazlar bağlanabilir.</string>
     <string name="settings_wd_mode_label">Kablosuz hata ayıklama</string>
     <string name="settings_wd_mode_when_needed">Yalnızca gerektiğinde</string>
     <string name="settings_wd_mode_keep_on">Açık tut</string>

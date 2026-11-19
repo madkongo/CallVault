@@ -71,4 +71,29 @@ class NetworkApprovalPolicyTest {
         assertFalse(NetworkApprovalPolicy.approved(null))
         assertEquals(false, NetworkApprovalPolicy.approved("approved"))
     }
+
+    // ---- Shizuku mode (review N15) ----
+
+    private fun inShizukuMode(settingOn: Boolean = true, shizukuMode: Boolean = true, recorderAlive: Boolean = true) =
+        NetworkApprovalPolicy.decideInShizukuMode(settingOn, shizukuMode, recorderAlive)
+
+    @Test
+    fun `Shizuku mode asks the recorder when the setting is on and the recorder is alive`() {
+        assertEquals(ShizukuNetworkApproval.ASK_RECORDER, inShizukuMode())
+    }
+
+    @Test
+    fun `Shizuku mode never asks without the opt-in`() {
+        assertEquals(ShizukuNetworkApproval.SETTING_OFF, inShizukuMode(settingOn = false))
+    }
+
+    @Test
+    fun `the Shizuku path is for Shizuku mode only - built-in mode keeps its own`() {
+        assertEquals(ShizukuNetworkApproval.NOT_SHIZUKU_MODE, inShizukuMode(shizukuMode = false))
+    }
+
+    @Test
+    fun `Shizuku mode does nothing without a live recorder, and says so`() {
+        assertEquals(ShizukuNetworkApproval.RECORDER_DOWN, inShizukuMode(recorderAlive = false))
+    }
 }

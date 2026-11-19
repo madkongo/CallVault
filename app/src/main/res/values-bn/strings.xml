@@ -836,6 +836,7 @@
     <string name="settings_wd_enforce_description">CallVault-কে ঢুকতে দেওয়ার আর কিছু না থাকা অবস্থায় আপনি ওয়্যারলেস ডিবাগিং (Wireless debugging) বন্ধ করলে, এটি আবার চালু করে দেয় যাতে কল রেকর্ড হতে থাকে। এটি বন্ধ থাকলে আপনার সুইচ বন্ধই থাকে এবং নোটিফিকেশনে দেখায় রেকর্ডিং থেমে আছে।</string>
     <string name="settings_wd_auto_approve_label">নতুন Wi-Fi নেটওয়ার্ক স্বয়ংক্রিয়ভাবে অনুমোদন করুন</string>
     <string name="settings_wd_auto_approve_description">ফোন কোনো Wi-Fi নেটওয়ার্কে যুক্ত হলে Android-এর \"এই নেটওয়ার্কে ওয়্যারলেস ডিবাগিংয়ের অনুমতি দেবেন?\" প্রশ্নের উত্তর CallVault নিজেই দেয়, তাই রেকর্ডিং আপনার ট্যাপের অপেক্ষায় থাকে না। রেকর্ডার চলার সময় কাজ করে। শুধু এই ফোনের সাথে আগে থেকে পেয়ার করা ডিভাইসই সংযোগ করতে পারে।</string>
+    <string name="settings_wd_auto_approve_description_shizuku">রেকর্ডার চলার সময় ফোন কোনো Wi-Fi নেটওয়ার্কে যুক্ত হলে CallVault সেটিকে ওয়্যারলেস ডিবাগিংয়ের জন্য Android-এর বিশ্বস্ত নেটওয়ার্কে যোগ করে, তাই রিস্টার্টের পর Android \"এই নেটওয়ার্কে ওয়্যারলেস ডিবাগিংয়ের অনুমতি দেবেন?\" জিজ্ঞেস না করেই Shizuku সেখানে চালু হতে পারে। ওয়্যারলেস ডিবাগিং আগে বন্ধ থাকলে তারপর আবার বন্ধ করে দেওয়া হয়। শুধু এই ফোনের সাথে আগে থেকে পেয়ার করা ডিভাইসই সংযোগ করতে পারে।</string>
     <string name="settings_wd_mode_label">ওয়্যারলেস ডিবাগিং (Wireless debugging)</string>
     <string name="settings_wd_mode_when_needed">শুধু দরকার হলে</string>
     <string name="settings_wd_mode_keep_on">চালু রাখুন</string>

@@ -586,6 +586,7 @@
     <string name="settings_voip_recording_description">A WhatsApp, Signal, Telegram és hasonló alkalmazásokban indított hívásokat is rögzíti. Egyes alkalmazások letiltják a rögzítést, és ez csak hívás közben derül ki.</string>
     <string name="settings_voip_recording_label">Alkalmazáshívások rögzítése</string>
     <string name="settings_wd_auto_approve_description">Amikor a telefon Wi-Fi-hálózathoz csatlakozik, a CallVault maga válaszol az Android „Engedélyezed a vezeték nélküli hibakeresést ezen a hálózaton?” kérdésére, így a rögzítés nem vár a koppintásodra. Addig működik, amíg a rögzítő fut. Csak a telefonnal már párosított eszközök csatlakozhatnak.</string>
+    <string name="settings_wd_auto_approve_description_shizuku">Ha a telefon a rögzítő futása közben Wi-Fi-hálózathoz csatlakozik, a CallVault felveszi azt az Android vezeték nélküli hibakereséshez megbízható hálózatai közé, így újraindítás után a Shizuku ott is elindulhat anélkül, hogy az Android megkérdezné: „Engedélyezed a vezeték nélküli hibakeresést ezen a hálózaton?” Ha a vezeték nélküli hibakeresés ki volt kapcsolva, utána újra kikapcsol. Csak a telefonnal már párosított eszközök csatlakozhatnak.</string>
     <string name="settings_wd_mode_label">Vezeték nélküli hibakeresés</string>
     <string name="settings_wd_mode_when_needed">Csak ha szükséges</string>
     <string name="settings_wd_mode_keep_on">Maradjon bekapcsolva</string>
