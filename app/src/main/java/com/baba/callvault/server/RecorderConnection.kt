@@ -11,6 +11,9 @@ package com.baba.callvault.server
 import android.os.IBinder
 import com.baba.callvault.utils.AppLogger
 import com.baba.callvault.utils.SetupJournal
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
 
 /**
  * CallVault Plan 5, Task 3 — PRODUCTION app-side connection holder.
@@ -38,6 +41,15 @@ object RecorderConnection {
     val isConnected: Boolean
         get() = service != null
 
+    private val _connected = MutableStateFlow(false)
+
+    /**
+     * [isConnected] as something a screen can follow (review C24): Home's "Needs Wi-Fi to record" card was read once
+     * and stayed over a recorder that had connected since. Set wherever [service] changes; the single-slot hooks
+     * below stay for the keep-alive.
+     */
+    val connected: StateFlow<Boolean> = _connected.asStateFlow()
+
     /**
      * [IBinder.DeathRecipient] the provider links against the received binder so this holder clears
      * itself when the daemon process dies — callers then see a disconnected channel instead of a
@@ -51,6 +63,7 @@ object RecorderConnection {
     /** Set by the provider after wrapping the received binder. */
     fun onBinderReceived(service: IRecorderService) {
         this.service = service
+        _connected.value = true
         AppLogger.i(TAG, "RecorderConnection received daemon binder")
         // Setup has demonstrably worked, so the always-on setup journal has nothing left to learn and
         // stops here for good. A healthy phone therefore pays for it exactly once.
@@ -103,6 +116,7 @@ object RecorderConnection {
             return
         }
         this.service = null
+        _connected.value = false
         sawRecorderDie = true
         runCatching { onDeath?.invoke() }.onFailure { AppLogger.w(TAG, "onDeath hook failed: ${it.message}") }
     }
@@ -130,6 +144,7 @@ object RecorderConnection {
         if (service == null) return
         AppLogger.w(TAG, "Dropping a live recorder binder on purpose: $reason")
         this.service = null
+        _connected.value = false
         runCatching { onDeath?.invoke() }.onFailure { AppLogger.w(TAG, "onDeath hook failed: ${it.message}") }
     }
 }
