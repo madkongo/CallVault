@@ -41,10 +41,13 @@ internal object DriveCopierListing {
      * [copierPid] is the running `:drive` process's id, or null when there is none. A restart counts only when
      * the failed copier's process has ended: `:drive` lives while ANY client is bound, so with the after-call
      * copy still bound, letting go and binding again would reach the same wedged process (review C11).
+     * [inCall] says a phone or app call is in progress: no copier is restarted then, so binding and killing
+     * processes never churns while the user is on a call; the run leaves it to the next retry.
      */
     suspend fun list(
         open: () -> DriveCopier,
         copierPid: () -> Int?,
+        inCall: () -> Boolean,
         attempts: Int = ATTEMPTS_PER_RUN,
         exitWaitMs: Long = PROCESS_EXIT_WAIT_MS,
         pollMs: Long = PROCESS_POLL_MS,
@@ -65,6 +68,10 @@ internal object DriveCopierListing {
                     if (last) "giving up for this run" else "copier closed, waiting for its process (pid ${pidBefore ?: "none"}) to end",
             )
             if (last) break
+            if (inCall()) {
+                journal("copier restart DEFERRED: a call is in progress; no more list attempts this run, the next retry tries again")
+                break
+            }
             val held = pidBefore != null && !awaitExit(pidBefore, copierPid, exitWaitMs, pollMs)
             if (held) {
                 journal(

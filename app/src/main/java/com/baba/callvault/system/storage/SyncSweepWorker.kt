@@ -11,6 +11,10 @@ package com.baba.callvault.system.storage
 import com.baba.callvault.services.recording.aftercall.AfterCallDecisions
 import com.baba.callvault.services.recording.aftercall.AfterCallPolicy
 import android.content.Context
+import android.media.AudioManager
+import android.telephony.TelephonyManager
+import com.baba.callvault.services.recording.VoipRecordingCoordinator
+import com.baba.callvault.system.updates.CallInProgressGate
 import android.os.SystemClock
 import androidx.documentfile.provider.DocumentFile
 import androidx.work.CoroutineWorker
@@ -116,6 +120,28 @@ class SyncSweepWorker(ctx: Context, params: WorkerParameters) : CoroutineWorker(
         }
     }
 
+    /**
+     * A phone or app call is in progress: the update installer's rule ([CallInProgressGate]: telephony
+     * off-hook or ringing, or a VoIP recording running) plus the call audio modes the after-call pop-up uses
+     * ([AfterCallPolicy.isCallAudioMode]), because telephony reads idle during an app call that is not recorded.
+     */
+    private fun isCallInProgress(): Boolean {
+        val telephony = runCatching {
+            applicationContext.getSystemService(TelephonyManager::class.java)?.callState ?: TelephonyManager.CALL_STATE_IDLE
+        }.getOrElse {
+            AppLogger.w(TAG, "Could not read the call state: ${it.message}")
+            TelephonyManager.CALL_STATE_IDLE
+        }
+        val voip = runCatching { VoipRecordingCoordinator.isRecording }.getOrDefault(false)
+        val mode = runCatching {
+            applicationContext.getSystemService(AudioManager::class.java)?.mode ?: AudioManager.MODE_NORMAL
+        }.getOrElse {
+            AppLogger.w(TAG, "Could not read the audio mode: ${it.message}")
+            AudioManager.MODE_NORMAL
+        }
+        return !CallInProgressGate.mayInstall(telephony, voip) || AfterCallPolicy.isCallAudioMode(mode)
+    }
+
     /** Whether the last LIST got an answer from the copier (a reply without a listing) rather than none. */
     private var lastListAnswered = false
 
@@ -154,7 +180,7 @@ class SyncSweepWorker(ctx: Context, params: WorkerParameters) : CoroutineWorker(
         // evidence the catalog needs, and throwing it away is what let a correctly backed-up
         // recording go on looking unsynced forever. See where `alreadyThere` is used.
         val listOutcome = DriveCopierListing.list(
-            openCopier, copierPid = { DriveDiagnostics.copierPid(applicationContext) }, journal = ::journal,
+            openCopier, copierPid = { DriveDiagnostics.copierPid(applicationContext) }, inCall = ::isCallInProgress, journal = ::journal,
         ) { tryList(it, driveFolderUri) }
         val copier = listOutcome.copier
         val listed = listOutcome.listing

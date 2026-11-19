@@ -38,8 +38,12 @@ class DriveCopierListingTest {
     /** The `:drive` pid as the system reports it: a new process per copier unless a test says otherwise. */
     private var pidOf: () -> Int? = { opened.lastOrNull()?.takeIf { !it.closed }?.let { 1000 + it.n } }
 
+    private var inCall = false
+
     private fun run(succeedOn: Int?) = runBlocking {
-        DriveCopierListing.list(::open, copierPid = { pidOf() }, exitWaitMs = 50L, pollMs = 5L, journal = { journal += it }) { copier ->
+        DriveCopierListing.list(
+            ::open, copierPid = { pidOf() }, inCall = { inCall }, exitWaitMs = 50L, pollMs = 5L, journal = { journal += it },
+        ) { copier ->
             if ((copier as FakeCopier).n == succeedOn) listing to "" else null to "${copier.where} died"
         }
     }
@@ -93,6 +97,17 @@ class DriveCopierListingTest {
 
         assertNotNull(out.listing)
         assertEquals(2, opened.size)
+    }
+
+    @Test
+    fun `no copier is restarted while a call is in progress`() {
+        inCall = true
+
+        val out = run(succeedOn = 2)
+
+        assertNull(out.listing)
+        assertEquals("the first listing runs, the restarts wait for the call to end", 1, opened.size)
+        assertTrue(journal.joinToString("\n"), journal.any { it.contains("DEFERRED") && it.contains("call") })
     }
 
     @Test
