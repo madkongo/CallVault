@@ -44,7 +44,7 @@ object KeptSwitchReport {
             KeptSwitchOutcome.APPROVED_RESTORE_FAILED -> true to
                 "approved access point $ap (always allow); FAILED to switch Wireless debugging back off after $ms ms, it is left on"
             KeptSwitchOutcome.APPROVED_RESTORE_NOT_CONFIRMED -> true to
-                "approval for $ap sent, but Wireless debugging was not seen on within $ms ms; nothing written, will try again on the next join"
+                "approval for $ap sent, but Wireless debugging was not seen on within $ms ms; nothing written. If Android switches it on later, the next check of $ap (next join or recorder start) switches it back off, while this recorder keeps running"
             KeptSwitchOutcome.APPROVAL_FAILED -> true to "failed: the recorder could not approve $ap"
             KeptSwitchOutcome.ALREADY_APPROVED -> false to
                 "skipped: $ap approved within the last 30 days (Android's own trusted list could not be read)"
@@ -59,6 +59,20 @@ object KeptSwitchReport {
             KeptSwitchOutcome.WIRELESS_DEBUGGING_UNREADABLE -> true to
                 "skipped: the recorder cannot read Wireless debugging, so it could not be put back"
             KeptSwitchOutcome.NO_WIFI_IDENTITY -> false to "skipped: the recorder sees no Wi-Fi network"
+            KeptSwitchOutcome.LEFTOVER_RESTORED_OFF -> false to
+                "$ap is trusted; Wireless debugging was on there, left on by an earlier approval of ours, and is switched back off"
+            KeptSwitchOutcome.LEFTOVER_RESTORE_FAILED -> true to
+                "$ap is trusted; Wireless debugging was on there, left on by an earlier approval of ours, and switching it back off FAILED; it is left on"
+            KeptSwitchOutcome.TRUSTED_WIRELESS_DEBUGGING_ON -> true to
+                "skipped: $ap is already trusted, and Wireless debugging is on there, not switched on by CallVault as far as this recorder knows; left on"
+            KeptSwitchOutcome.INTERRUPTED_RESTORED_OFF -> true to
+                "approved access point $ap, then an error stopped the switch-back; Wireless debugging read on and was switched back off after $ms ms"
+            KeptSwitchOutcome.INTERRUPTED_LEFT_ON -> true to
+                "approved access point $ap, then an error stopped the switch-back; Wireless debugging reads on and switching it off FAILED; it is left on"
+            KeptSwitchOutcome.INTERRUPTED_STILL_OFF -> true to
+                "approved access point $ap, then an error stopped the switch-back; Wireless debugging reads off; if Android switches it on later, the next check of $ap switches it back off"
+            KeptSwitchOutcome.INTERRUPTED_STATE_UNKNOWN -> true to
+                "approved access point $ap, then an error stopped the switch-back, and Wireless debugging cannot be read; its state is unknown"
         }
     }
 }

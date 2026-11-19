@@ -37,6 +37,10 @@ class KeptSwitchApproverTest {
     private val salt = "0123456789abcdef"
     /** Android's own trusted list as `dumpsys adb` shows it; null = could not be read. */
     private var trustedByAndroid: Set<String>? = null
+    /** Survives approver instances, as the recorder process's own record does. */
+    private val leftovers = ApprovalLeftovers()
+    /** Reads after the approval that throw before answering (an error in the middle of the switch-back). */
+    private var throwingReadsAfterApproval = 0
 
     private fun approver() = KeptSwitchApprover(
         identity = { identity },
@@ -45,6 +49,10 @@ class KeptSwitchApproverTest {
             if (approvals.isEmpty() && readsBeforeApproval.isNotEmpty()) {
                 readsBeforeApproval.removeFirst().also { wd = it }
             } else {
+                if (approvals.isNotEmpty() && throwingReadsAfterApproval > 0) {
+                    throwingReadsAfterApproval--
+                    throw IllegalStateException("settings died")
+                }
                 if (approvals.isNotEmpty() && wd == 0 && --androidTurnsOnAfterReads <= 0) wd = 1
                 wd
             }
@@ -55,6 +63,8 @@ class KeptSwitchApproverTest {
         clock = { now },
         sleep = { now += it },
         confirmTimeoutMs = 3_000L,
+        lateWindowMs = 5_000L,
+        leftovers = leftovers,
     )
 
     @Test
@@ -131,6 +141,38 @@ class KeptSwitchApproverTest {
     }
 
     @Test
+    fun `only the keystore field counts, not a key comment that happens to say keystore`() {
+        val dump = """
+            ADB MANAGER STATE (dumpsys adb):
+              debugging_manager={
+                connected_to_adb=true
+                user_keys=QAAAAHk2 keystore@11:22:33:44:55:66
+                keystore=<keyStore version="1"><wifiAP bssid="aa:bb:cc:dd:ee:ff" /></keyStore>
+              }
+        """.trimIndent()
+
+        assertEquals(setOf("aa:bb:cc:dd:ee:ff"), WirelessDebuggingApproval.parseTrustedBssids(dump))
+    }
+
+    @Test
+    fun `a dump whose only 'keystore' is inside a key comment has an empty trusted list`() {
+        val dump = "ADB MANAGER STATE (dumpsys adb):\n  debugging_manager={\n    user_keys=QAAA keystore@11:22:33:44:55:66\n  }"
+
+        assertEquals(emptySet<String>(), WirelessDebuggingApproval.parseTrustedBssids(dump))
+    }
+
+    @Test
+    fun `a shell command that hangs is stopped at its timeout`() {
+        val started = System.nanoTime()
+
+        val output = WirelessDebuggingApproval.runCommandWithTimeout(arrayOf("/bin/sleep", "20"), timeoutMs = 500L)
+
+        assertNull(output)
+        assertTrue((System.nanoTime() - started) / 1_000_000L < 5_000L)
+        assertEquals("hi\n", WirelessDebuggingApproval.runCommandWithTimeout(arrayOf("/bin/echo", "hi"), timeoutMs = 5_000L))
+    }
+
+    @Test
     fun `a dump with no keystore means an empty trusted list, and a refused or failed dump means unknown`() {
         assertEquals(emptySet<String>(), WirelessDebuggingApproval.parseTrustedBssids("ADB MANAGER STATE (dumpsys adb):\n  debugging_manager={\n  connected_to_adb=false\n}"))
         assertNull(WirelessDebuggingApproval.parseTrustedBssids("Permission Denial: can't dump adb from pid=1, uid=10311"))
@@ -180,8 +222,101 @@ class KeptSwitchApproverTest {
 
         assertEquals(KeptSwitchOutcome.APPROVED_RESTORE_NOT_CONFIRMED, result.outcome)
         assertEquals(0, offWrites)
-        assertTrue(result.restoreMs >= 3_000L)
+        assertTrue(result.restoreMs >= 8_000L)
         assertFalse(result.outcome.trusted)
+    }
+
+    @Test
+    fun `switched on by Android after the first wait - seen by the late re-read and switched back off`() {
+        androidTurnsOnAfterReads = 40 // past the 3 s of 100 ms reads
+
+        val result = approver().run(emptySet(), salt)
+
+        assertEquals(KeptSwitchOutcome.APPROVED_RESTORED_OFF, result.outcome)
+        assertEquals(1, offWrites)
+        assertEquals(0, wd)
+        assertTrue(result.restoreMs in 3_000L..8_000L)
+    }
+
+    @Test
+    fun `not confirmed, then on later - the next check of that access point switches its own leftover off`() {
+        androidTurnsOnAfterReads = Int.MAX_VALUE
+        assertEquals(KeptSwitchOutcome.APPROVED_RESTORE_NOT_CONFIRMED, approver().run(emptySet(), salt).outcome)
+
+        // Later Android does switch it on, and has the access point on its list.
+        wd = 1
+        trustedByAndroid = setOf("aa:bb:cc:dd:ee:ff")
+        val next = approver().run(emptySet(), salt)
+
+        assertEquals(KeptSwitchOutcome.LEFTOVER_RESTORED_OFF, next.outcome)
+        assertEquals(1, offWrites)
+        assertEquals(0, wd)
+        assertEquals(1, approvals.size)
+
+        // Once put back, it is no longer ours: a later 'on' there is someone else's and is left alone.
+        wd = 1
+        assertEquals(KeptSwitchOutcome.TRUSTED_WIRELESS_DEBUGGING_ON, approver().run(emptySet(), salt).outcome)
+        assertEquals(1, offWrites)
+    }
+
+    @Test
+    fun `trusted, and Wireless debugging on that CallVault did not leave on - left on, nothing written`() {
+        trustedByAndroid = setOf("aa:bb:cc:dd:ee:ff")
+        wd = 1
+
+        val result = approver().run(emptySet(), salt)
+
+        assertEquals(KeptSwitchOutcome.TRUSTED_WIRELESS_DEBUGGING_ON, result.outcome)
+        assertTrue(result.outcome.trusted)
+        assertEquals(0, offWrites)
+        assertEquals(1, wd)
+    }
+
+    @Test
+    fun `a leftover is not switched off outside tcp mode`() {
+        androidTurnsOnAfterReads = Int.MAX_VALUE
+        approver().run(emptySet(), salt)
+        wd = 1
+        trustedByAndroid = setOf("aa:bb:cc:dd:ee:ff")
+        tcpMode = false
+
+        assertEquals(KeptSwitchOutcome.NOT_TCP_MODE, approver().run(emptySet(), salt).outcome)
+        assertEquals(0, offWrites)
+        assertEquals(1, wd)
+    }
+
+    @Test
+    fun `an error after approving still switches back off what the approval switched on`() {
+        throwingReadsAfterApproval = 1
+        androidTurnsOnAfterReads = 1
+
+        val result = approver().run(emptySet(), salt)
+
+        assertEquals(KeptSwitchOutcome.INTERRUPTED_RESTORED_OFF, result.outcome)
+        assertEquals(1, offWrites)
+        assertEquals(0, wd)
+    }
+
+    @Test
+    fun `an error after approving with the switch still off writes nothing, and keeps the leftover for later`() {
+        throwingReadsAfterApproval = 1
+        androidTurnsOnAfterReads = Int.MAX_VALUE
+
+        val result = approver().run(emptySet(), salt)
+
+        assertEquals(KeptSwitchOutcome.INTERRUPTED_STILL_OFF, result.outcome)
+        assertEquals(0, offWrites)
+        wd = 1
+        trustedByAndroid = setOf("aa:bb:cc:dd:ee:ff")
+        assertEquals(KeptSwitchOutcome.LEFTOVER_RESTORED_OFF, approver().run(emptySet(), salt).outcome)
+    }
+
+    @Test
+    fun `an error after approving with the switch unreadable is reported as unknown`() {
+        throwingReadsAfterApproval = 2
+
+        assertEquals(KeptSwitchOutcome.INTERRUPTED_STATE_UNKNOWN, approver().run(emptySet(), salt).outcome)
+        assertEquals(0, offWrites)
     }
 
     @Test

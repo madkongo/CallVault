@@ -8,6 +8,7 @@
 
 package com.baba.callvault.server
 
+import com.baba.callvault.utils.AppLogger
 import java.security.MessageDigest
 
 /** What [KeptSwitchApprover.run] did. Crosses the binder by name inside [KeptSwitchResult]. */
@@ -47,8 +48,10 @@ enum class KeptSwitchOutcome {
     APPROVED_RESTORED_OFF,
 
     /**
-     * Approved, but Wireless debugging was never seen on within the wait, so nothing was written: writing off on an
-     * unconfirmed read could switch off a Wireless debugging the user had on (a phone that hides the setting).
+     * Approved, but Wireless debugging was never seen on within the wait (the first wait and the late re-reads), so
+     * nothing was written: writing off on an unconfirmed read could switch off a Wireless debugging the user had on
+     * (a phone that hides the setting). Recorded as a leftover ([ApprovalLeftovers]): if Android switches it on later,
+     * the next check of this access point switches it back off ([LEFTOVER_RESTORED_OFF]).
      */
     APPROVED_RESTORE_NOT_CONFIRMED,
 
@@ -60,11 +63,56 @@ enum class KeptSwitchOutcome {
      * own "Always allow" tap, or an earlier approval). Nothing done: approving again only adds a duplicate entry.
      */
     ALREADY_TRUSTED_BY_ANDROID,
+
+    /** Trusted, and Wireless debugging was on there because of an earlier approval of ours: switched back off. */
+    LEFTOVER_RESTORED_OFF,
+
+    /** Trusted, Wireless debugging on because of an earlier approval of ours, and switching it off failed. */
+    LEFTOVER_RESTORE_FAILED,
+
+    /** Trusted, and Wireless debugging is on, not left on by CallVault (as far as this recorder knows): left alone. */
+    TRUSTED_WIRELESS_DEBUGGING_ON,
+
+    /** Approved, then an error stopped the switch-back; Wireless debugging read on and was switched off. */
+    INTERRUPTED_RESTORED_OFF,
+
+    /** Approved, then an error stopped the switch-back; Wireless debugging read on and could not be switched off. */
+    INTERRUPTED_LEFT_ON,
+
+    /** Approved, then an error stopped the switch-back; Wireless debugging read off. Kept as a leftover. */
+    INTERRUPTED_STILL_OFF,
+
+    /** Approved, then an error stopped the switch-back; Wireless debugging could not be read. Kept as a leftover. */
+    INTERRUPTED_STATE_UNKNOWN,
     ;
 
     /** Whether Android now holds the access point in its trusted list, so the app need not ask again. */
     val trusted: Boolean
-        get() = this == APPROVED_RESTORED_OFF || this == APPROVED_RESTORE_FAILED || this == ALREADY_TRUSTED_BY_ANDROID
+        get() = this in TRUSTED
+}
+
+private val TRUSTED = setOf(
+    KeptSwitchOutcome.APPROVED_RESTORED_OFF,
+    KeptSwitchOutcome.APPROVED_RESTORE_FAILED,
+    KeptSwitchOutcome.ALREADY_TRUSTED_BY_ANDROID,
+    KeptSwitchOutcome.LEFTOVER_RESTORED_OFF,
+    KeptSwitchOutcome.LEFTOVER_RESTORE_FAILED,
+    KeptSwitchOutcome.TRUSTED_WIRELESS_DEBUGGING_ON,
+    KeptSwitchOutcome.INTERRUPTED_RESTORED_OFF,
+    KeptSwitchOutcome.INTERRUPTED_LEFT_ON,
+)
+
+/**
+ * Access points this recorder approved from "off" without having switched Wireless debugging back off yet (review
+ * N15): Android may still switch it on for them later. Their keys only; in memory, so a recorder started again forgets
+ * them, and an "on" it then finds is treated as not its own. Thread-safe.
+ */
+class ApprovalLeftovers {
+    private val keys = mutableSetOf<String>()
+
+    @Synchronized fun add(key: String) { keys += key }
+    @Synchronized fun remove(key: String) { keys -= key }
+    @Synchronized operator fun contains(key: String): Boolean = key in keys
 }
 
 /**
@@ -141,6 +189,9 @@ class KeptSwitchApprover(
     private val clock: () -> Long = System::currentTimeMillis,
     private val sleep: (Long) -> Unit = Thread::sleep,
     private val confirmTimeoutMs: Long = CONFIRM_TIMEOUT_MS,
+    /** After [confirmTimeoutMs], how long to keep re-reading (every [LATE_POLL_MS]) for a late switch-on. */
+    private val lateWindowMs: Long = LATE_WINDOW_MS,
+    private val leftovers: ApprovalLeftovers = ApprovalLeftovers(),
 ) {
 
     /** @param salt the app's per-install salt for [BssidPrivacy.key]. */
@@ -149,10 +200,11 @@ class KeptSwitchApprover(
         val key = BssidPrivacy.key(wifi.bssid, salt)
         val masked = BssidPrivacy.mask(wifi.bssid)
         fun result(outcome: KeptSwitchOutcome, ms: Long = -1L) = KeptSwitchResult(outcome, key, masked, ms)
+        val toResult: (KeptSwitchOutcome, Long) -> KeptSwitchResult = { outcome, ms -> result(outcome, ms) }
 
         val trusted = trustedBssids()
         if (trusted != null) {
-            if (wifi.bssid.lowercase() in trusted) return result(KeptSwitchOutcome.ALREADY_TRUSTED_BY_ANDROID)
+            if (wifi.bssid.lowercase() in trusted) return alreadyTrusted(key, toResult)
         } else if (key in knownKeys) {
             return result(KeptSwitchOutcome.ALREADY_APPROVED)
         }
@@ -167,19 +219,71 @@ class KeptSwitchApprover(
         if (readWirelessDebugging() != 0) return result(KeptSwitchOutcome.WIRELESS_DEBUGGING_TURNED_ON_MEANWHILE)
         if (approve(wifi, ALWAYS_ALLOW) != NetworkApproval.APPROVED) return result(KeptSwitchOutcome.APPROVAL_FAILED)
 
+        // Approved from off: until it is seen back off, any "on" here is this approval's.
+        leftovers.add(key)
         val approvedAt = clock()
-        if (!awaitOn(approvedAt)) return result(KeptSwitchOutcome.APPROVED_RESTORE_NOT_CONFIRMED, clock() - approvedAt)
-        val restored = writeWirelessDebuggingOff()
-        val ms = clock() - approvedAt
-        return result(if (restored) KeptSwitchOutcome.APPROVED_RESTORED_OFF else KeptSwitchOutcome.APPROVED_RESTORE_FAILED, ms)
+        return try {
+            switchBackOff(key, approvedAt, toResult)
+        } catch (e: Exception) {
+            AppLogger.w(TAG, "Error after approving, putting Wireless debugging back: ${e.javaClass.simpleName}: ${e.message}")
+            guardedSwitchBackOff(key, approvedAt, toResult)
+        }
     }
 
-    /** Polls until Android has switched Wireless debugging on after the approval, or the wait runs out. */
-    private fun awaitOn(since: Long): Boolean {
+    /** Android already trusts the access point. Puts back only an "on" that an approval of ours left behind. */
+    private fun alreadyTrusted(key: String, result: (KeptSwitchOutcome, Long) -> KeptSwitchResult): KeptSwitchResult {
+        val wd = readWirelessDebugging()
+        if (key !in leftovers) {
+            val outcome = if (wd == 1) KeptSwitchOutcome.TRUSTED_WIRELESS_DEBUGGING_ON else KeptSwitchOutcome.ALREADY_TRUSTED_BY_ANDROID
+            return result(outcome, -1L)
+        }
+        return when (wd) {
+            0 -> {
+                leftovers.remove(key)
+                result(KeptSwitchOutcome.ALREADY_TRUSTED_BY_ANDROID, -1L)
+            }
+            null -> result(KeptSwitchOutcome.WIRELESS_DEBUGGING_UNREADABLE, -1L)
+            else -> {
+                if (!adbdListensOnTcp()) return result(KeptSwitchOutcome.NOT_TCP_MODE, -1L)
+                val restored = writeWirelessDebuggingOff()
+                if (restored) leftovers.remove(key)
+                result(if (restored) KeptSwitchOutcome.LEFTOVER_RESTORED_OFF else KeptSwitchOutcome.LEFTOVER_RESTORE_FAILED, -1L)
+            }
+        }
+    }
+
+    /** Waits to see Android switch it on (first wait, then late re-reads), then switches it back off. */
+    private fun switchBackOff(key: String, approvedAt: Long, result: (KeptSwitchOutcome, Long) -> KeptSwitchResult): KeptSwitchResult {
+        val seenOn = awaitOn(approvedAt, confirmTimeoutMs, POLL_MS) || awaitOn(approvedAt, confirmTimeoutMs + lateWindowMs, LATE_POLL_MS)
+        if (!seenOn) return result(KeptSwitchOutcome.APPROVED_RESTORE_NOT_CONFIRMED, clock() - approvedAt)
+        val restored = writeWirelessDebuggingOff()
+        if (restored) leftovers.remove(key)
+        val outcome = if (restored) KeptSwitchOutcome.APPROVED_RESTORED_OFF else KeptSwitchOutcome.APPROVED_RESTORE_FAILED
+        return result(outcome, clock() - approvedAt)
+    }
+
+    /** After an error past the approval: one plain read, and the same switch-off when it reads on. Never throws. */
+    private fun guardedSwitchBackOff(key: String, approvedAt: Long, result: (KeptSwitchOutcome, Long) -> KeptSwitchResult): KeptSwitchResult {
+        val ms = runCatching { clock() - approvedAt }.getOrDefault(-1L)
+        val outcome = when (runCatching { readWirelessDebugging() }.getOrNull()) {
+            1 -> if (runCatching { writeWirelessDebuggingOff() }.getOrDefault(false)) {
+                leftovers.remove(key)
+                KeptSwitchOutcome.INTERRUPTED_RESTORED_OFF
+            } else {
+                KeptSwitchOutcome.INTERRUPTED_LEFT_ON
+            }
+            0 -> KeptSwitchOutcome.INTERRUPTED_STILL_OFF
+            else -> KeptSwitchOutcome.INTERRUPTED_STATE_UNKNOWN
+        }
+        return result(outcome, ms)
+    }
+
+    /** Polls every [pollMs] until Android has switched Wireless debugging on, or [untilMs] after [since] has passed. */
+    private fun awaitOn(since: Long, untilMs: Long, pollMs: Long): Boolean {
         while (true) {
             if (readWirelessDebugging() == 1) return true
-            if (clock() - since >= confirmTimeoutMs) return false
-            sleep(POLL_MS)
+            if (clock() - since >= untilMs) return false
+            sleep(pollMs)
         }
     }
 
@@ -190,5 +294,11 @@ class KeptSwitchApprover(
         /** Android's handler runs right after the binder call; seconds are generous. */
         const val CONFIRM_TIMEOUT_MS = 3_000L
         const val POLL_MS = 100L
+
+        /** Late re-reads after the first wait: a slow Android switch-on is still put back, within a bound. */
+        const val LATE_WINDOW_MS = 5_000L
+        const val LATE_POLL_MS = 500L
+
+        private const val TAG = "CV:WdApproval"
     }
 }
