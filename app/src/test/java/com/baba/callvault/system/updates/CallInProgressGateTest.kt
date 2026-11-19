@@ -9,7 +9,9 @@
 package com.baba.callvault.system.updates
 
 import android.telephony.TelephonyManager
+import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
+import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Test
 
@@ -71,6 +73,42 @@ class CallInProgressGateTest {
                 voipRecording = true,
             )
         )
+    }
+
+    @Test
+    fun `blocks an install during an app call that is not being recorded`() {
+        // Review C3: telephony idle and no VoIP recording, but the phone is in a call audio mode (an app call
+        // recorded by nothing yet, or a OnePlus WhatsApp call that never reaches the telephony state, Q28).
+        for (mode in listOf(2 /* IN_CALL */, 3 /* IN_COMMUNICATION */, 1 /* RINGTONE */)) {
+            assertFalse(
+                "mode $mode",
+                CallInProgressGate.mayInstall(
+                    telephonyState = TelephonyManager.CALL_STATE_IDLE,
+                    voipRecording = false,
+                    audioMode = mode,
+                )
+            )
+        }
+        assertTrue(CallInProgressGate.mayInstall(TelephonyManager.CALL_STATE_IDLE, voipRecording = false, audioMode = 0))
+    }
+
+    @Test
+    fun `Shizuku mode is deferred during a call, not sent to the silent system installer`() {
+        // Review C3: Shizuku mode used to answer UNAVAILABLE before the call check, and the caller then committed a
+        // PackageInstaller session that installs with no prompt on Android 12+, mid-call.
+        assertEquals(
+            UpdateInstaller.ShellResult.DEFERRED_CALL_IN_PROGRESS,
+            UpdateInstaller.preInstallVerdict(callFree = false, shizukuMode = true),
+        )
+        assertEquals(
+            UpdateInstaller.ShellResult.UNAVAILABLE,
+            UpdateInstaller.preInstallVerdict(callFree = true, shizukuMode = true),
+        )
+        assertEquals(
+            UpdateInstaller.ShellResult.DEFERRED_CALL_IN_PROGRESS,
+            UpdateInstaller.preInstallVerdict(callFree = false, shizukuMode = false),
+        )
+        assertNull(UpdateInstaller.preInstallVerdict(callFree = true, shizukuMode = false))
     }
 
     @Test

@@ -34,26 +34,53 @@ object SharedStatusNotice {
     /** The keep-alive's existing id, so a notification already on a user's phone stays the same one. */
     const val ID = 4720
 
-    @Volatile
-    private var recordingNotification: Notification? = null
+    /**
+     * Who holds the id (review C23). A phone call and an app call can both be recorded around the same time, and
+     * one slot without an owner let the carrier service's release (a stand-down for the app call, or its own end)
+     * throw away the app call's notice: the keep-alive then replaced Pause, Mark and Stop with a notice without
+     * them. Each owner now releases only its own claim.
+     */
+    enum class Owner { CARRIER, VOIP }
 
-    /** Called when a recorded call releases the notification. The keep-alive re-posts its own content. */
+    /** Claims in the order they were last made; the newest is what the id shows. Guarded by itself. */
+    private val claims = LinkedHashMap<Owner, Notification>()
+
+    /** Called when a recorded call releases the notification. The keep-alive re-posts what is left: [heldNotification] or its own. */
     @Volatile
     var onReleased: (() -> Unit)? = null
 
-    /** True while a recorded call owns the notification. */
-    val isHeldByRecording: Boolean get() = recordingNotification != null
+    /**
+     * Posts a notification as the keep-alive's foreground notice under [ID], returning whether it did; set while the
+     * keep-alive runs. On Android 17 a notify() on a foreground service's id does not replace what is shown (Q49,
+     * #73), so a recorded call's notice goes through this; notify() is only a logged fallback.
+     */
+    @Volatile
+    var foregroundPoster: ((Notification) -> Boolean)? = null
 
-    /** Records the notification the recording service has just posted under [ID]; each update replaces the last. */
-    fun claim(notification: Notification) {
-        recordingNotification = notification
+    /** True while any recorded call owns the notification. */
+    val isHeldByRecording: Boolean get() = synchronized(claims) { claims.isNotEmpty() }
+
+    /** True while [owner] has a claim. */
+    fun isHeldBy(owner: Owner): Boolean = synchronized(claims) { claims.containsKey(owner) }
+
+    /** The notification the id should show for the recorded calls, the newest claim's; null when none is held. */
+    val heldNotification: Notification? get() = synchronized(claims) { claims.values.lastOrNull() }
+
+    /** Records the notification [owner] has just posted under [ID]; each update replaces its last one. */
+    fun claim(owner: Owner, notification: Notification) {
+        synchronized(claims) {
+            claims.remove(owner)
+            claims[owner] = notification
+        }
     }
 
-    /** Gives the notification back. Only a real release notifies — the stop path can run more than once. */
-    fun release() {
-        if (recordingNotification == null) return
-        recordingNotification = null
-        onReleased?.invoke()
+    /**
+     * Gives [owner]'s claim back. Only a real release notifies (the stop path can run more than once), and another
+     * owner's claim is left alone: the keep-alive then re-posts that one, not "Ready".
+     */
+    fun release(owner: Owner) {
+        val released = synchronized(claims) { claims.remove(owner) != null }
+        if (released) onReleased?.invoke()
     }
 
     /**
@@ -62,7 +89,7 @@ object SharedStatusNotice {
      * recording notification may still sit on [ID]. Ignored while a call holds the id.
      */
     fun requestRefresh() {
-        if (recordingNotification != null) return
+        if (isHeldByRecording) return
         onReleased?.invoke()
     }
 
@@ -75,14 +102,15 @@ object SharedStatusNotice {
      * LXX508, 2026-09-26). The keep-alive reads what is posted and heals it.
      */
     fun isStale(postedChannelId: String?, ownChannelId: String): Boolean =
-        recordingNotification == null && postedChannelId != null && postedChannelId != ownChannelId
+        !isHeldByRecording && postedChannelId != null && postedChannelId != ownChannelId
 
     /** What the keep-alive should post under [ID]: the recorded call's notification if there is one, else [own]. */
-    fun contentForKeepAlive(own: Notification): Notification = recordingNotification ?: own
+    fun contentForKeepAlive(own: Notification): Notification = heldNotification ?: own
 
     @VisibleForTesting
     fun resetForTest() {
-        recordingNotification = null
+        synchronized(claims) { claims.clear() }
         onReleased = null
+        foregroundPoster = null
     }
 }

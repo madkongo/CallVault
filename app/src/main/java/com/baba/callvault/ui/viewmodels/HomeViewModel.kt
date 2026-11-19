@@ -527,7 +527,36 @@ class HomeViewModel(application: Application) : AndroidViewModel(application) {
         observeFavourites()
         preferences.registerChangeListener(prefsListener)
         observeRecoveryState()
+        observeReadiness()
         healthListener = SetupHealthStore(appContext).registerCardListener { reloadHealthQuietly() }
+    }
+
+    /** Wi-Fi coming and going, for [observeReadiness]. Unregistered in [onCleared]. */
+    private val wifiChanges = kotlinx.coroutines.flow.MutableSharedFlow<Unit>(extraBufferCapacity = 1)
+    private var wifiCallback: android.net.ConnectivityManager.NetworkCallback? = null
+
+    /**
+     * Review C24: "Needs Wi-Fi to record" is decided from whether the recorder is connected and whether there is
+     * Wi-Fi, and both change while Home is open. Recomputed on either, not only on the next resume.
+     */
+    private fun observeReadiness() {
+        runCatching {
+            val cm = appContext.getSystemService(android.net.ConnectivityManager::class.java) ?: return@runCatching
+            val callback = object : android.net.ConnectivityManager.NetworkCallback() {
+                override fun onAvailable(network: android.net.Network) { wifiChanges.tryEmit(Unit) }
+                override fun onLost(network: android.net.Network) { wifiChanges.tryEmit(Unit) }
+            }
+            val request = android.net.NetworkRequest.Builder()
+                .addTransportType(android.net.NetworkCapabilities.TRANSPORT_WIFI)
+                .build()
+            cm.registerNetworkCallback(request, callback)
+            wifiCallback = callback
+        }.onFailure { AppLogger.w(TAG, "Could not watch Wi-Fi for the status card: ${it.message}") }
+        viewModelScope.launch {
+            ReadinessRecompute.triggers(RecorderConnection.connected, wifiChanges).collect {
+                _uiState.update { state -> state.copy(status = computeStatus()) }
+            }
+        }
     }
 
     /**
@@ -1478,6 +1507,11 @@ class HomeViewModel(application: Application) : AndroidViewModel(application) {
 
     override fun onCleared() {
         preferences.unregisterChangeListener(prefsListener)
+        wifiCallback?.let { cb ->
+            runCatching { appContext.getSystemService(android.net.ConnectivityManager::class.java)?.unregisterNetworkCallback(cb) }
+                .onFailure { AppLogger.w(TAG, "Could not stop watching Wi-Fi: ${it.message}") }
+        }
+        wifiCallback = null
         healthListener?.let { SetupHealthStore(appContext).unregisterCardListener(it) }
         playbackController.release()
         super.onCleared()

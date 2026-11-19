@@ -29,11 +29,8 @@ import androidx.compose.ui.res.stringResource
 import com.baba.callvault.R
 import com.baba.callvault.data.AppPreferences
 import com.baba.callvault.data.ModeCapability
-import com.baba.callvault.services.recording.DaemonKeepAliveService
-import com.baba.callvault.services.recording.VoipCaptureController
-import kotlinx.coroutines.Dispatchers
+import com.baba.callvault.services.recording.VoipToggleEffects
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
 
 // App (VoIP) call rows. The classic screen and the wizard draw them together through [VoipRecordingToggle];
 // the new Settings screen spreads them over "Calls to record" and "Calls to skip".
@@ -82,7 +79,6 @@ internal fun VoipRecordingToggle(onEnabledChange: (Boolean) -> Unit = {}) {
 internal fun VoipRecordingSwitch(enabled: Boolean, onEnabledChange: (Boolean) -> Unit) {
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
-    val prefs = remember { AppPreferences(context) }
     var showWarning by remember { mutableStateOf(false) }
     var arming by remember { mutableStateOf(false) }
     var unavailable by remember { mutableStateOf(false) }
@@ -93,19 +89,17 @@ internal fun VoipRecordingSwitch(enabled: Boolean, onEnabledChange: (Boolean) ->
     val supported = capabilityAvailable(ModeCapability.VOIP_RECORDING)
     val unsupportedNote = unavailableReason(ModeCapability.VOIP_RECORDING)
 
-    // Arming touches the daemon (and may launch it), so never on the main thread. The policy has to be
-    // registered before any VoIP call starts, which is why this happens on the toggle rather than when
-    // a call begins.
+    // The choice is saved and detection started on the tap; the arm (which touches the daemon, and may launch
+    // it) runs off the main thread in a scope that outlives this page (review C13, see VoipToggleEffects). The
+    // policy has to be registered before any VoIP call starts, which is why this happens on the toggle rather
+    // than when a call begins. This page's scope only follows the result for the status line.
     fun applyPreference(turnOn: Boolean) {
-        prefs.setVoipRecordingEnabled(turnOn)
-        onEnabledChange(turnOn)
         unavailable = false
+        arming = turnOn
+        val armed = VoipToggleEffects.apply(context, turnOn)
+        onEnabledChange(turnOn)
         scope.launch {
-            arming = turnOn
-            val ok = withContext(Dispatchers.IO) { VoipCaptureController.sync(context) }
-            // Restart the keep-alive service so its detector picks up the new preference (it hosts
-            // VoIP detection, so the feature is only live once it has re-synced).
-            runCatching { DaemonKeepAliveService.start(context) }
+            val ok = armed.await()
             arming = false
             if (turnOn && !ok) unavailable = true
         }

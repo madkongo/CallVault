@@ -54,7 +54,7 @@ class SharedStatusNoticeTest {
     @Test
     fun while_a_call_is_recorded_the_keep_alive_shows_the_recording_notification() {
         val recording = notification("Recording call")
-        SharedStatusNotice.claim(recording)
+        SharedStatusNotice.claim(SharedStatusNotice.Owner.CARRIER, recording)
 
         assertTrue(SharedStatusNotice.isHeldByRecording)
         assertSame(recording, SharedStatusNotice.contentForKeepAlive(notification("Ready to record calls")))
@@ -62,9 +62,9 @@ class SharedStatusNoticeTest {
 
     @Test
     fun each_update_of_the_recording_notification_replaces_the_last() {
-        SharedStatusNotice.claim(notification("Preparing to record"))
+        SharedStatusNotice.claim(SharedStatusNotice.Owner.CARRIER, notification("Preparing to record"))
         val active = notification("Recording call")
-        SharedStatusNotice.claim(active)
+        SharedStatusNotice.claim(SharedStatusNotice.Owner.CARRIER, active)
 
         assertSame(active, SharedStatusNotice.contentForKeepAlive(notification("Ready to record calls")))
     }
@@ -77,9 +77,9 @@ class SharedStatusNoticeTest {
     fun releasing_tells_the_keep_alive_to_put_its_own_content_back() {
         var told = 0
         SharedStatusNotice.onReleased = { told++ }
-        SharedStatusNotice.claim(notification("Recording call"))
+        SharedStatusNotice.claim(SharedStatusNotice.Owner.CARRIER, notification("Recording call"))
 
-        SharedStatusNotice.release()
+        SharedStatusNotice.release(SharedStatusNotice.Owner.CARRIER)
 
         assertEquals(1, told)
         assertFalse(SharedStatusNotice.isHeldByRecording)
@@ -91,7 +91,7 @@ class SharedStatusNoticeTest {
         var told = 0
         SharedStatusNotice.onReleased = { told++ }
 
-        SharedStatusNotice.release()
+        SharedStatusNotice.release(SharedStatusNotice.Owner.CARRIER)
 
         assertEquals(0, told)
     }
@@ -125,7 +125,7 @@ class SharedStatusNoticeTest {
     /** During a recorded call the recording's notification is exactly what should be showing. */
     @Test
     fun the_recording_notification_is_not_stale_while_a_call_holds_the_id() {
-        SharedStatusNotice.claim(notification("Recording call"))
+        SharedStatusNotice.claim(SharedStatusNotice.Owner.CARRIER, notification("Recording call"))
         assertFalse(SharedStatusNotice.isStale(postedChannelId = "recording_channel_service", ownChannelId = "recorder_keepalive"))
     }
 
@@ -144,10 +144,62 @@ class SharedStatusNoticeTest {
     fun a_refresh_request_during_a_recorded_call_tells_nobody() {
         var told = 0
         SharedStatusNotice.onReleased = { told++ }
-        SharedStatusNotice.claim(notification("Recording call"))
+        SharedStatusNotice.claim(SharedStatusNotice.Owner.CARRIER, notification("Recording call"))
 
         SharedStatusNotice.requestRefresh()
 
         assertEquals(0, told)
+    }
+
+    // ---- Review C23: two owners ----
+
+    @Test
+    fun the_carrier_standing_down_does_not_take_the_app_call_notice_away() {
+        // The carrier service stands down for an app call and gives the id back on its way out. It never held it.
+        var released = 0
+        SharedStatusNotice.onReleased = { released++ }
+        val voip = notification("Recording WhatsApp call")
+        SharedStatusNotice.claim(SharedStatusNotice.Owner.VOIP, voip)
+
+        SharedStatusNotice.release(SharedStatusNotice.Owner.CARRIER)
+
+        assertTrue(SharedStatusNotice.isHeldByRecording)
+        assertSame(voip, SharedStatusNotice.contentForKeepAlive(notification("Ready to record calls")))
+        assertEquals(0, released)
+    }
+
+    @Test
+    fun with_two_owners_the_notice_stays_held_until_both_release() {
+        var released = 0
+        SharedStatusNotice.onReleased = { released++ }
+        val voip = notification("Recording WhatsApp call")
+        val carrier = notification("Recording call")
+        SharedStatusNotice.claim(SharedStatusNotice.Owner.VOIP, voip)
+        SharedStatusNotice.claim(SharedStatusNotice.Owner.CARRIER, carrier)
+        assertSame(carrier, SharedStatusNotice.heldNotification)
+
+        SharedStatusNotice.release(SharedStatusNotice.Owner.CARRIER)
+
+        // Still held, and what the keep-alive re-posts is the app call's notice with its controls, not "Ready".
+        assertTrue(SharedStatusNotice.isHeldByRecording)
+        assertSame(voip, SharedStatusNotice.heldNotification)
+        assertFalse(SharedStatusNotice.isStale(postedChannelId = "recording_channel_service", ownChannelId = "recorder_keepalive"))
+        assertEquals(1, released)
+
+        SharedStatusNotice.release(SharedStatusNotice.Owner.VOIP)
+        assertFalse(SharedStatusNotice.isHeldByRecording)
+        assertNull(SharedStatusNotice.heldNotification)
+        assertEquals(2, released)
+    }
+
+    @Test
+    fun an_owner_updating_its_notice_shows_the_newest() {
+        val carrier = notification("Recording call")
+        SharedStatusNotice.claim(SharedStatusNotice.Owner.CARRIER, carrier)
+        val voipPaused = notification("Paused")
+        SharedStatusNotice.claim(SharedStatusNotice.Owner.VOIP, voipPaused)
+        assertSame(voipPaused, SharedStatusNotice.heldNotification)
+        assertTrue(SharedStatusNotice.isHeldBy(SharedStatusNotice.Owner.CARRIER))
+        assertTrue(SharedStatusNotice.isHeldBy(SharedStatusNotice.Owner.VOIP))
     }
 }

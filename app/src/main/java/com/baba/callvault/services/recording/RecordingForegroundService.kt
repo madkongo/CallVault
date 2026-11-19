@@ -319,7 +319,7 @@ class RecordingForegroundService : Service() {
         when (RecordingCommandPolicy.handling(action, hasCall)) {
             RecordingCommandPolicy.Handling.END_ORPHAN -> {
                 AppLogger.i(TAG, "'$action' arrived with no call in progress; ending this service instead of re-posting")
-                val claimed = SharedStatusNotice.isHeldByRecording
+                val claimed = SharedStatusNotice.isHeldBy(SharedStatusNotice.Owner.CARRIER)
                 stopRecordingSessionAndService()
                 // Nothing was claimed by this instance, so the release above told nobody — but a leftover
                 // recording notification may be what the user just touched. Put "Ready" back regardless.
@@ -570,12 +570,23 @@ class RecordingForegroundService : Service() {
                 stopRecordingSessionAndService()
             }
         } catch (e: PipelineInitializationException) {
-            AppLogger.e(TAG, e.message ?: "", e.cause ?: e)
-            notificationHelper.showErrorNotification(e.userFriendlyMessage)
+            if (e is OrphanSessionKeptException) {
+                // Not a failure: the recorder is recording this call already, for the CallVault process the phone
+                // killed mid-call (Q25). It is stopped and saved under its own name when the call ends (C2).
+                AppLogger.i(TAG, "Not starting a second recording: ${e.message}")
+            } else {
+                AppLogger.e(TAG, e.message ?: "", e.cause ?: e)
+                notificationHelper.showErrorNotification(e.userFriendlyMessage)
+            }
             // Ensure partial resources are cleaned up
             activeSession.cancel(this)
             currentState = RecordingServiceState.Standby(metadata)
             stopRecordingSessionAndService()
+        } catch (e: Throwable) {
+            // Anything else (a cancelled start, a bug) drops this engine without its release: its recorder claim must
+            // not outlive it, or the recorder reads as ours for good and a real orphan is never stopped (C2 item 8).
+            activeSession.abandonClaim()
+            throw e
         }
     }
 
@@ -802,7 +813,7 @@ class RecordingForegroundService : Service() {
             AppLogger.d(TAG, "No active session, exiting standby state, removing foreground notification and stopping service.")
             stopForeground(STOP_FOREGROUND_REMOVE)
             // Hands the shared notification back, so "Ready to record calls" replaces the finished call.
-            SharedStatusNotice.release()
+            SharedStatusNotice.release(SharedStatusNotice.Owner.CARRIER)
             stopSelf() // Stop the service since the session is over
             return
         }
@@ -940,7 +951,7 @@ class RecordingForegroundService : Service() {
         AppLogger.i(TAG, "The recording session has been stopped and resources have been released. Stopping foreground service. Goodbye >3")
         stopForeground(STOP_FOREGROUND_REMOVE)
             // Hands the shared notification back, so "Ready to record calls" replaces the finished call.
-            SharedStatusNotice.release()
+            SharedStatusNotice.release(SharedStatusNotice.Owner.CARRIER)
         stopSelf() // Stop the service since the session is over
     }
 
@@ -1274,10 +1285,10 @@ class RecordingForegroundService : Service() {
         // Claimed before posting, so the keep-alive — on the same thread — never sees the id as free and
         // re-posts "Ready" over it. A notice that does not share gives the id back instead.
         val notificationId = if (sharesStatusNotice) {
-            SharedStatusNotice.claim(notification)
+            SharedStatusNotice.claim(SharedStatusNotice.Owner.CARRIER, notification)
             SharedStatusNotice.ID
         } else {
-            SharedStatusNotice.release()
+            SharedStatusNotice.release(SharedStatusNotice.Owner.CARRIER)
             RecordingNotificationHelper.SERVICE_NOTIFICATION_ID
         }
         if (Build.VERSION.SDK_INT >= 34) {

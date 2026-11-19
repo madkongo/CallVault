@@ -131,4 +131,25 @@ class VoipRecordingNotificationTest {
         assertEquals(expectedTitle, n.extras.getCharSequence(Notification.EXTRA_TITLE).toString())
         assertEquals(chinese.getString(R.string.general_stop), n.actions.last().title.toString())
     }
+
+    @Test
+    fun theNoticeGoesThroughTheKeepAlivesForegroundPost_notNotify() {
+        // Review C23 / Q49: on Android 17 Pixels notify() on the keep-alive's foreground id does not replace what is
+        // shown, so Pause, Mark and Stop never appeared (#73). With the keep-alive running it posts the notice itself.
+        val posted = mutableListOf<Notification>()
+        SharedStatusNotice.foregroundPoster = { posted.add(it); true }
+
+        postCall()
+
+        assertEquals(1, posted.size)
+        assertTrue(SharedStatusNotice.isHeldBy(SharedStatusNotice.Owner.VOIP))
+        assertNull(manager().activeNotifications.firstOrNull { it.id == SharedStatusNotice.ID })
+    }
+
+    @Test
+    fun withoutTheKeepAliveItFallsBackToNotify() {
+        SharedStatusNotice.foregroundPoster = { false }
+        postCall()
+        assertNotNull(manager().activeNotifications.firstOrNull { it.id == SharedStatusNotice.ID })
+    }
 }

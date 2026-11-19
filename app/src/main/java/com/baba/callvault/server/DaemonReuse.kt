@@ -31,9 +31,13 @@ object DaemonReuse {
 
     /**
      * How long to wait for a live daemon before launching one over ADB. Zero when no daemon can be there to answer
-     * (just after boot) or when the process is old enough that the hand-over would already have come.
+     * (just after boot), when the process is old enough that the hand-over would already have come, or when this
+     * process saw its recorder die (review C17): the hand-over is sent once, when our process starts, by the daemon
+     * that was running then, and that daemon is the one that died. Waiting for it put a flat 1.5 s in front of the
+     * relaunch a ringing call is blocked on.
      */
-    fun waitForRedeliveryMs(processAgeMs: Long, uptimeMs: Long): Long = when {
+    fun waitForRedeliveryMs(processAgeMs: Long, uptimeMs: Long, sawRecorderDie: Boolean = false): Long = when {
+        sawRecorderDie -> 0L
         uptimeMs < RECENT_BOOT_MS -> 0L
         processAgeMs >= FRESH_PROCESS_MS -> 0L
         else -> REDELIVERY_GRACE_MS

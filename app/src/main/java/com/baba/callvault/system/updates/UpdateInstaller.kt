@@ -60,6 +60,13 @@ object UpdateInstaller {
      * by the (shell-uid, separate) shell process, which survives this app being replaced.
      */
     fun installSilentlyViaShell(context: Context, apkFile: File): ShellResult {
+        // Review C3: asked FIRST, before the Shizuku answer below. That answer (UNAVAILABLE) sends the caller to
+        // the PackageInstaller, which installs with no prompt on Android 12+, so a Shizuku user's update could
+        // replace the app in the middle of a call.
+        preInstallVerdict(
+            callFree = CallInProgressGate.mayInstall(context),
+            shizukuMode = AppPreferences(context).getPrivilegedMode().needsShizuku,
+        )?.let { return it }
         // In Shizuku mode there is no embedded ADB shell to stream through, so do not spend a
         // connection attempt (and a confusing failure in the log) discovering that.
         //
@@ -67,21 +74,30 @@ object UpdateInstaller {
         // update-failed notification, which would be a lie — nothing was rejected and nothing is
         // wrong. UNAVAILABLE is the existing "the shell could not be brought up" answer, and the
         // caller already answers it with the ordinary system installer: one tap instead of zero.
-        if (AppPreferences(context).getPrivilegedMode().needsShizuku) {
-            AppLogger.i(TAG, "Shizuku mode: no ADB shell for a silent install; using the system installer")
-            return ShellResult.UNAVAILABLE
-        }
         val size = apkFile.length()
         if (size <= 0L) return ShellResult.FAILED
-        // Checked BEFORE taking heavyOperationLock: installing replaces the app, which kills the
-        // process and takes any in-flight recording with it. See [CallInProgressGate].
-        if (!CallInProgressGate.mayInstall(context)) return ShellResult.DEFERRED_CALL_IN_PROGRESS
         // Hold the shared ADB lock for the whole connect+stream so a concurrent daemon launch can't
         // reconnect the transport out from under the in-flight install stream (the "Stream closed
         // mid-send" collision). A daemon launch requested meanwhile simply waits for this to finish.
         return synchronized(AdbShell.heavyOperationLock) {
+            // Asked again once the lock is ours: a call's daemon bring-up holds this lock, so the check above can be
+            // seconds old by now, with the call that took the lock already being recorded (review C3).
+            if (!CallInProgressGate.mayInstall(context)) return@synchronized ShellResult.DEFERRED_CALL_IN_PROGRESS
             installLocked(context, apkFile, size)
         }
+    }
+
+    /**
+     * What happens before any install work, in order: a call in progress defers (whatever the mode), then Shizuku
+     * mode has no shell to stream through. Null means go on with the shell install.
+     */
+    internal fun preInstallVerdict(callFree: Boolean, shizukuMode: Boolean): ShellResult? = when {
+        !callFree -> ShellResult.DEFERRED_CALL_IN_PROGRESS
+        shizukuMode -> {
+            AppLogger.i(TAG, "Shizuku mode: no ADB shell for a silent install; using the system installer")
+            ShellResult.UNAVAILABLE
+        }
+        else -> null
     }
 
     private fun installLocked(context: Context, apkFile: File, size: Long): ShellResult {
@@ -89,6 +105,8 @@ object UpdateInstaller {
             AppLogger.w(TAG, "Silent install unavailable: embedded ADB shell did not connect")
             return ShellResult.UNAVAILABLE
         }
+        // Connecting can take many seconds; a call may have started meanwhile. Last look before the bytes go.
+        if (!CallInProgressGate.mayInstall(context)) return ShellResult.DEFERRED_CALL_IN_PROGRESS
         // `-r` reinstall, `-S <size>` stream-from-stdin. On install success the SHELL process (which
         // survives this app being replaced, since it runs under the adb/shell uid) re-grants
         // WRITE_SECURE_SETTINGS and `am start`s the launcher activity so CallVault reopens on the new
@@ -167,6 +185,14 @@ object UpdateInstaller {
             session.openWrite("callvault-update", 0, apkFile.length()).use { out ->
                 apkFile.inputStream().use { it.copyTo(out) }
                 session.fsync(out)
+            }
+            // Review C3: the last moment the install can still be called off. This path installs with no prompt on
+            // Android 12+, so it is gated exactly like the shell install; the abandoned session leaves the
+            // "update available" notification for after the call.
+            if (!CallInProgressGate.mayInstall(context)) {
+                AppLogger.i(TAG, "PackageInstaller install called off before commit: a call is in progress")
+                session.abandon()
+                return@runCatching false
             }
             val statusIntent = Intent(ACTION_INSTALL_STATUS).setPackage(context.packageName)
             val statusReceiver = PendingIntent.getBroadcast(

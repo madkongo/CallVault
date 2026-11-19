@@ -9,7 +9,9 @@
 package com.baba.callvault.system.updates
 
 import android.content.Context
+import android.media.AudioManager
 import android.telephony.TelephonyManager
+import com.baba.callvault.services.recording.aftercall.AfterCallPolicy
 import com.baba.callvault.services.recording.VoipRecordingCoordinator
 import com.baba.callvault.utils.AppLogger
 
@@ -33,6 +35,9 @@ object CallInProgressGate {
 
     private const val TAG = "CV:UpdateGate"
 
+    /** AudioManager.MODE_NORMAL, as a number to keep the pure decision free of Android. */
+    private const val MODE_NORMAL = 0
+
     /**
      * Pure decision, so it can be tested without a device.
      *
@@ -43,8 +48,11 @@ object CallInProgressGate {
      * Fails **open** on an unrecognised telephony value: refusing every update because a device
      * reports something unexpected would be worse than the rare split recording.
      */
-    fun mayInstall(telephonyState: Int, voipRecording: Boolean): Boolean {
+    fun mayInstall(telephonyState: Int, voipRecording: Boolean, audioMode: Int = MODE_NORMAL): Boolean {
         if (voipRecording) return false
+        // Review C3: an app call that is not being recorded (or one the OnePlus keeps out of the telephony state,
+        // Q28) still holds a call audio mode, and installing then kills a recording that may start any second.
+        if (AfterCallPolicy.isCallAudioMode(audioMode)) return false
         return when (telephonyState) {
             TelephonyManager.CALL_STATE_OFFHOOK,
             TelephonyManager.CALL_STATE_RINGING -> false
@@ -59,9 +67,11 @@ object CallInProgressGate {
                 ?: TelephonyManager.CALL_STATE_IDLE
         }.getOrDefault(TelephonyManager.CALL_STATE_IDLE)
         val voip = runCatching { VoipRecordingCoordinator.isRecording }.getOrDefault(false)
-        val allowed = mayInstall(telephony, voip)
+        val mode = runCatching { context.getSystemService(AudioManager::class.java)?.mode ?: MODE_NORMAL }
+            .getOrDefault(MODE_NORMAL)
+        val allowed = mayInstall(telephony, voip, mode)
         if (!allowed) {
-            AppLogger.i(TAG, "Deferring the update install: a call is in progress (telephony=$telephony voip=$voip)")
+            AppLogger.i(TAG, "Deferring the update install: a call is in progress (telephony=$telephony voip=$voip mode=$mode)")
         }
         return allowed
     }

@@ -65,6 +65,9 @@ class VoipCallDetector(private val context: Context) {
     /** When the current app call was detected (elapsedRealtime), for [VoipRingDipPolicy]. */
     private var callDetectedAt = 0L
 
+    /** True once this detector has seen a non-call audio mode, so a call it then detects began while it watched. */
+    private var sawNoCallSinceRegister = false
+
     /** True once a call-voice player (vcPlay>0) was seen in the current call. */
     private var voicePlayerSeen = false
 
@@ -105,6 +108,14 @@ class VoipCallDetector(private val context: Context) {
 
     /** Notified when [isRecording] changes, so the keep-alive notification can show the state. */
     var onRecordingStateChanged: (() -> Unit)? = null
+
+    init {
+        // A start that first settled a leftover recorder session off the main thread finishes later (C2).
+        VoipRecordingCoordinator.onDeferredStartFinished = {
+            isRecording = VoipRecordingCoordinator.isRecording
+            onRecordingStateChanged?.invoke()
+        }
+    }
 
     private val modeListener = AudioManager.OnModeChangedListener { mode ->
         evaluate(mode)
@@ -182,6 +193,10 @@ class VoipCallDetector(private val context: Context) {
             runCatching { VoipRecordingCoordinator.onCallEnded(context, neverConnected) }
                 .onFailure { AppLogger.w(TAG, "VoIP stop failed: ${it.message}") }
             CutOffRescueWorker.schedule(context)
+            // The app call is over: a recording no process owns (left by a CallVault that was killed during this
+            // call) is stopped now rather than at the rescue check, and a call-free moment is noted only if no
+            // phone call is up either (C2).
+            OrphanRecorderSession.settleAsync(context, "app call ended")
             isRecording = false
             onRecordingStateChanged?.invoke()
         }
@@ -238,7 +253,7 @@ class VoipCallDetector(private val context: Context) {
     }
 
     /**
-     * Drops an app-call recording because a carrier call has been answered.
+     * Ends an app-call recording because a carrier call has been answered, so the carrier call is recorded.
      *
      * The mode listener cannot be relied on for this: on a ROM where an IMS carrier call reads as
      * MODE_IN_COMMUNICATION, the mode never changes when the phone call starts, so nothing would fire
@@ -249,34 +264,20 @@ class VoipCallDetector(private val context: Context) {
         handler.removeCallbacks(debouncedEndRunnable)
         endDeferredAsRingDip = false
 
-        // Hold it open rather than ending it, so returning to the app call continues the SAME file.
-        // Splitting one conversation across two recordings is what this replaces.
-        // A normal-mode call (item 108) has no mode that brings it back, so it is never held: it ends.
-        val held = !normalModeCall && runCatching { VoipRecordingCoordinator.setSuspendedForCarrierCall(context, true) }
-            .getOrDefault(false)
-        if (held) {
-            suspendedForCarrier = true
-            handler.removeCallbacks(suspendTimeout)
-            handler.postDelayed(suspendTimeout, SUSPEND_MAX_MS)
-            AppLogger.i(TAG, "A carrier call was answered — holding the app-call recording open")
-            // callActive stays true and the prompt stays cancelled: the app call is still up, it is
-            // simply not the one the phone is playing.
-            VoipRecordPrompt.cancel(context)
-            return
-        }
-
-        // The daemon could not hold it — an older one has no setVoipSuspended — so fall back to what
-        // this always did. Two files is worse than one, and far better than a file nothing is
-        // writing to and nobody will ever finalise.
-        AppLogger.i(TAG, "A carrier call was answered — dropping the app-call recording (no suspend available)")
+        // End it, never hold it (review C1, interim). Holding kept the app-call recording "active" through the
+        // phone call, so the carrier recorder stood down and the recorder refused a second session: the phone
+        // call was never recorded. Until the recorder can run a carrier session beside a parked app call, the
+        // app call ends here and is published; returning to it after the phone call starts a new file. Two
+        // files for one app conversation is the known cost; a phone call nobody records is the loss this stops.
+        AppLogger.i(TAG, "A carrier call was answered — ending the app-call recording so the phone call can be recorded")
         if (normalModeCall) logNormalModeStopped()
         normalModeCall = false
         handler.removeCallbacks(normalEndRunnable)
         callActive = false
         suspendedForCarrier = false
         VoipRecordPrompt.cancel(context)
-        runCatching { VoipRecordingCoordinator.onCallEnded(context) }
-            .onFailure { AppLogger.w(TAG, "VoIP stop failed: ${it.message}") }
+        // Off the main thread (the stop can take seconds); the phone call's start waits for it, bounded (C1).
+        VoipRecordingCoordinator.endInBackground(context)
         isRecording = false
         onRecordingStateChanged?.invoke()
     }
@@ -289,6 +290,7 @@ class VoipCallDetector(private val context: Context) {
      * carries the decision out.
      */
     private fun evaluate(mode: Int) {
+        if (!com.baba.callvault.services.recording.aftercall.AfterCallPolicy.isCallAudioMode(mode)) sawNoCallSinceRegister = true
         val latched = VoipStrayStartPolicy.afterMode(carrierEpisode, mode)
         if (carrierEpisode.active && !latched.active) {
             AppLogger.i(TAG, "Carrier episode over (mode=${VoipEndProbe.modeName(mode)}); app-call starts allowed again")
@@ -389,6 +391,10 @@ class VoipCallDetector(private val context: Context) {
             handler.removeCallbacks(debouncedEndRunnable)
             callActive = true
             callDetectedAt = android.os.SystemClock.elapsedRealtime()
+            // Its beginning, if this detector saw it begin (a non-call mode before it). A call already up when the
+            // detector registered is one CallVault was restarted into (Q25): the killed process's value stays (C2).
+            // A normal-mode call (item 108) has no mode edge to prove a beginning, so it notes none.
+            if (sawNoCallSinceRegister && !viaNormalMode) OrphanRecorderSession.noteCallBegan(context)
             // A normal-mode call is recognised BY its call-voice player, so one has been seen.
             voicePlayerSeen = viaNormalMode
             endDeferredAsRingDip = false

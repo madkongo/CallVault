@@ -171,6 +171,28 @@ class RecordingPolicyTest {
     }
 
     @Test
+    fun `records a carrier call answered while an app call is still being recorded`() {
+        // Review C1: a phone call answered during a recorded WhatsApp call. The app-call recording is ended
+        // for it; standing down as well left the phone call recorded by nobody.
+        assertFalse(
+            RecordingPolicy.standsDownForAppCall(
+                voipEnabled = true,
+                voipRecording = true,
+                carrierCallUp = true,
+                modeIsInCommunication = true
+            )
+        )
+        assertFalse(
+            RecordingPolicy.standsDownForAppCall(
+                voipEnabled = true,
+                voipRecording = true,
+                carrierCallUp = true,
+                modeIsInCommunication = false
+            )
+        )
+    }
+
+    @Test
     fun `never stands down while app-call recording is switched off`() {
         // Inert unless the feature is on: the behaviour of every build before app calls existed.
         assertFalse(

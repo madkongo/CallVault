@@ -24,6 +24,8 @@ import com.baba.callvault.data.health.recordMissedForMissingPrerequisite
 import com.baba.callvault.data.recordings.RecordingDirection
 import com.baba.callvault.data.recordings.RecordingMetadata
 import com.baba.callvault.services.recording.DaemonKeepAliveService
+import com.baba.callvault.services.recording.OrphanRecorderSession
+import com.baba.callvault.services.recording.OrphanSessionPolicy
 import com.baba.callvault.services.recording.RecordingForegroundService
 import com.baba.callvault.services.recording.RecordingPolicy
 import com.baba.callvault.services.recording.VoipRecordingCoordinator
@@ -53,6 +55,9 @@ class CallSessionManager private constructor(context: Context) {
     // Constants accessible globally
     companion object {
         private const val TAG = "CV:CallSessionManager"
+
+        /** How long after IDLE the recorder is checked for an orphaned session; see [handlePhoneState]. */
+        private const val ORPHAN_CHECK_AFTER_IDLE_MS = 3_000L
 
         // Singleton instance management
         @Volatile
@@ -242,6 +247,15 @@ class CallSessionManager private constructor(context: Context) {
             // Any call's end — even one this process never saw start, because the phone killed and restarted
             // CallVault mid-call — is when a recording that call left behind can be saved (backlog #4).
             CutOffRescueWorker.schedule(appContext)
+            // The recorder is checked for a session nobody owns: a call this process never saw start (killed and
+            // restarted mid-call) left its recording running (C2). A moment later, so our own session's stop (sent
+            // below) has claimed it and the audio mode has left the call; and only then is a call-free moment
+            // noted, if no call of either kind is still up (a WhatsApp call under this IDLE is not one, Q28).
+            managerScope.launch(Dispatchers.IO) {
+                delay(ORPHAN_CHECK_AFTER_IDLE_MS)
+                runCatching { OrphanRecorderSession.settle(appContext, "phone call ended") }
+                    .onFailure { AppLogger.e(TAG, "Orphan recorder check after the call failed: ${it.message}", it) }
+            }
             // Only trigger stop logic if we were previously in an active session. Prevents redundant stop commands on possible repeated IDLE broadcasts.
             if (session.isSessionActive) {
                 AppLogger.d(TAG, "Phone state is now idle (call ended). Sending stop INTENT for ${session.currentMetadata?.direction} call to RecordingForegroundService.")
@@ -268,6 +282,9 @@ class CallSessionManager private constructor(context: Context) {
             !RecordingForegroundService.isAppMixSession
         ) {
             AppLogger.i(TAG, "Carrier call answered while an app call was recording — stopping it.")
+            // From here the phone call is the live call (C1): its beginning is noted now, so the app call's recording,
+            // older than it, is never taken for the phone call's own if it is still running when the phone call starts.
+            OrphanRecorderSession.noteCallBegan(appContext)
             runCatching {
                 appContext.startService(
                     Intent(appContext, DaemonKeepAliveService::class.java).apply {
@@ -275,6 +292,23 @@ class CallSessionManager private constructor(context: Context) {
                     }
                 )
             }.onFailure { AppLogger.w(TAG, "Could not signal the app-call stop: ${it.message}") }
+        }
+
+        // When this call began, for telling its own recording from an earlier call's after a process kill (C2). Only
+        // a beginning this process saw: a ring, or an off-hook right after a dial. An off-hook with neither is the
+        // call already up when the phone restarted CallVault (Q25), and the value the killed process wrote stays.
+        // Never while an app call is recorded or its call mode is up (a ring rejected during WhatsApp, Q28).
+        if (OrphanSessionPolicy.mayNoteCarrierCallBegan(
+                carrierSessionActive = session.isSessionActive,
+                ringingOrFreshDial = receivedCallState == TelephonyManager.CALL_STATE_RINGING || freshDialledNumber() != null,
+                appCallRecording = VoipRecordingCoordinator.isRecording,
+                appCallModeUp = runCatching {
+                    appContext.getSystemService(android.media.AudioManager::class.java)?.mode ==
+                        android.media.AudioManager.MODE_IN_COMMUNICATION
+                }.getOrDefault(false),
+            )
+        ) {
+            OrphanRecorderSession.noteCallBegan(appContext)
         }
 
         // 3. Launch the Coroutine for RINGING or OFFHOOK
