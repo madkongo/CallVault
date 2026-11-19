@@ -49,6 +49,14 @@ object SharedStatusNotice {
     @Volatile
     var onReleased: (() -> Unit)? = null
 
+    /**
+     * Posts a notification as the keep-alive's foreground notice under [ID], returning whether it did; set while the
+     * keep-alive runs. On Android 17 a notify() on a foreground service's id does not replace what is shown (Q49,
+     * #73), so a recorded call's notice goes through this; notify() is only a logged fallback.
+     */
+    @Volatile
+    var foregroundPoster: ((Notification) -> Boolean)? = null
+
     /** True while any recorded call owns the notification. */
     val isHeldByRecording: Boolean get() = synchronized(claims) { claims.isNotEmpty() }
 
@@ -103,5 +111,6 @@ object SharedStatusNotice {
     fun resetForTest() {
         synchronized(claims) { claims.clear() }
         onReleased = null
+        foregroundPoster = null
     }
 }

@@ -566,6 +566,12 @@ class DaemonKeepAliveService : Service() {
         // Set before the VoIP actions below return early: an instance started by one of them used to never
         // put "Ready" back. The second, delayed look catches a recording post that system_server delivers
         // after this one (LAVA LXX508) — see [healSharedNotice].
+        // The app-call recording notice is posted through this service's startForeground, not notify() (C23, Q49).
+        SharedStatusNotice.foregroundPoster = { notification ->
+            runCatching { startForeground(NOTIF_ID, notification, ServiceInfo.FOREGROUND_SERVICE_TYPE_SPECIAL_USE) }
+                .onFailure { AppLogger.w(TAG, "Could not post the recording notice as the foreground notice: ${it.message}") }
+                .isSuccess
+        }
         SharedStatusNotice.onReleased = {
             watchdogHandler.post {
                 // Another recorded call still holds the id (review C23): put ITS notice back, through startForeground
@@ -945,6 +951,7 @@ class DaemonKeepAliveService : Service() {
         RecorderConnection.onDeath = null
         RecorderConnection.onConnected = null
         SharedStatusNotice.onReleased = null
+        SharedStatusNotice.foregroundPoster = null
         super.onDestroy()
     }
 

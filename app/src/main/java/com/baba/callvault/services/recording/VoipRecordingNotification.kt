@@ -55,8 +55,15 @@ object VoipRecordingNotification {
         // reworded as "Recording VoIP call" (BabApps item 123). The keep-alive stays a foreground service
         // holding that id; it is never stopped or hidden. dismiss() gives the id back and "Ready" returns.
         runCatching {
-            NotificationManagerCompat.from(context).notify(SharedStatusNotice.ID, notification)
+            // Claimed first, so the keep-alive never reads the id as free and puts "Ready" over it.
             SharedStatusNotice.claim(SharedStatusNotice.Owner.VOIP, notification)
+            // Through the keep-alive's startForeground (review C23, Q49): on Android 17 Pixels notify() on this
+            // foreground id does not replace what is shown, so Pause, Mark and Stop never appeared (#73).
+            val posted = SharedStatusNotice.foregroundPoster?.invoke(notification) == true
+            if (!posted) {
+                AppLogger.w(TAG, "App-call notice: the keep-alive could not post it as its foreground notice; posting with notify()")
+                NotificationManagerCompat.from(context).notify(SharedStatusNotice.ID, notification)
+            }
             // Left over from a build that still posted under id 5.
             NotificationManagerCompat.from(context).cancel(LEGACY_NOTIFICATION_ID)
         }.onFailure { AppLogger.w(TAG, "Could not post the VoIP recording notification: ${it.message}") }
