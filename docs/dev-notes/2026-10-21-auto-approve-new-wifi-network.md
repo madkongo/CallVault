@@ -220,13 +220,32 @@ keystore format on this phone (the `already on Android's trusted list` line for 
 2. Join the OP12 hotspot "Feroza". Within ~5 s: `Wi-Fi network available …` then `approved access point
    **:**:**:**:88:01 (always allow); Wireless debugging restored off after N ms`. Check
    `/data/misc/adb/adb_temp_keys.xml` (root) lists 88:01 once, and `settings get global adb_wifi_enabled` is 0.
-3. Back to Baba-5G, then Wi-Fi off and on (`svc wifi disable` / `enable`): a line pair for each join (`… already on
-   Android's trusted list`), proving the second and later joins arrive.
+3. Back to Baba-5G, then Wi-Fi off and on (`svc wifi disable` / `enable`), waiting over 30 s between joins (checks
+   are spaced 30 s apart): a line pair for each join (`… already on Android's trusted list`), proving the second
+   and later joins arrive. Joins closer together fold into one check, and the next line says `(N more Wi-Fi joins
+   since the last line)`.
+3b. Turn the setting off, join a network: no approval line (the watch was disarmed). If a line `skipped: the app says
+   approving is no longer wanted …` ever appears, the recorder caught a setting change the app could not tell it.
 4. Force-stop CallVault, join the hotspot again: lines still appear (the recorder pushes them and starts the app),
    or appear with `(in the recorder at …)` after opening the app.
 5. Kill the Shizuku recorder by its pid (as root: find it with `ps -A | grep callvault:recorder`, then `kill <pid>`),
    open CallVault: a new `watching … (pid M)` line. Then reboot onto the hotspot: Shizuku starts with no "Allow
    wireless debugging on this network?".
+
+**Review fixes (2026-11-19, same branch).**
+- Wireless debugging is never left on by an approval: after the 3 s wait the recorder re-reads every 500 ms for 5 s
+  more and switches a late "on" back off; if it is still not seen on, the access point is kept as this recorder's
+  leftover, and a later check that finds it trusted with Wireless debugging on switches that leftover off
+  (`… left on by an earlier approval of ours, and is switched back off`). An "on" that is not a leftover is left alone
+  with a warning (`… not switched on by CallVault as far as this recorder knows; left on`). Any error after approving
+  runs one guarded switch-back and logs the state found (`then an error stopped the switch-back; …`). A recorder
+  started again forgets its leftovers. The late re-reads widen the window in which a user's own switch-on right after
+  an approval would be switched off, from 3 s to 8 s.
+- The recorder asks the app (its provider) before every approval whether approving is still wanted. No answer:
+  nothing approved, `skipped: could not confirm with the app …`. Not wanted: nothing approved and the recorder stops
+  its own watch.
+- Checks and "available" lines at most every 30 s; pushes to the app coalesced (3 s) on their own thread; shell
+  commands killed at their 10 s timeout; lines from the recorder capped (64 per hand-over, 512 characters).
 
 **Still not covered:** a roam between access points of one SSID gives no new "available", so it is not checked
 until the next join or recorder start.
