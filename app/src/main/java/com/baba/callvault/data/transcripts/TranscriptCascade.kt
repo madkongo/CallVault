@@ -9,6 +9,7 @@
 package com.baba.callvault.data.transcripts
 
 import android.content.Context
+import com.baba.callvault.data.merge.HiddenMergeParts
 import com.baba.callvault.data.transcripts.db.TranscriptDatabase
 import com.baba.callvault.data.waveform.RecordingExtrasRepository
 import com.baba.callvault.transcription.TranscriptionEngine
@@ -45,8 +46,10 @@ object TranscriptCascade {
      * no-op before the first transcription, so deleting a recording on a device that has never used
      * the feature does not create a database.
      */
-    suspend fun deleteFor(context: Context, displayNames: Collection<String>) {
-        if (displayNames.isEmpty()) return
+    suspend fun deleteFor(context: Context, requested: Collection<String>) {
+        if (requested.isEmpty()) return
+        // A merged recording holds its parts' data, hidden, for un-merge (N2). Deleting it for good takes that too.
+        val displayNames = HiddenMergeParts.withHiddenPartsOf(context, requested)
 
         // Before anything is removed, and before the early return below: a recording can be deleted
         // while it is being transcribed, and whisper would otherwise grind on for minutes producing

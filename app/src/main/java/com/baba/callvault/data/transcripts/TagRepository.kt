@@ -9,6 +9,8 @@
 package com.baba.callvault.data.transcripts
 
 import android.content.Context
+import kotlinx.coroutines.flow.combine
+import com.baba.callvault.data.merge.HiddenMergeParts
 import com.baba.callvault.data.transcripts.db.RecordingTagEntry
 import com.baba.callvault.data.transcripts.db.TagCount
 import com.baba.callvault.data.transcripts.db.TranscriptDatabase
@@ -43,7 +45,13 @@ object TagRepository {
     /** Every tag in use, most-used first — the filter row. */
     fun allTags(context: Context): Flow<List<TagCount>> {
         if (!TranscriptDatabase.exists(context)) return flowOf(emptyList())
-        return dao(context).observeAll()
+        // Counted here rather than in SQL so a merged-away part's kept tags (hidden for un-merge, N2) do not count.
+        return dao(context).observeAllAssignments().combine(HiddenMergeParts.observe(context)) { rows, hidden ->
+            rows.filterNot { it.displayName in hidden }
+                .groupingBy { it.tag }.eachCount()
+                .map { (tag, count) -> TagCount(tag, count) }
+                .sortedWith(compareByDescending<TagCount> { it.count }.thenBy(String.CASE_INSENSITIVE_ORDER) { it.tag })
+        }
     }
 
     /**
@@ -54,8 +62,8 @@ object TagRepository {
      */
     fun assignments(context: Context): Flow<Map<String, Set<String>>> {
         if (!TranscriptDatabase.exists(context)) return flowOf(emptyMap())
-        return dao(context).observeAllAssignments().map { rows ->
-            rows.groupBy { it.displayName }
+        return dao(context).observeAllAssignments().combine(HiddenMergeParts.observe(context)) { rows, hidden ->
+            rows.filterNot { it.displayName in hidden }.groupBy { it.displayName }
                 .mapValues { (_, entries) -> entries.map { it.tag }.toSet() }
         }
     }
@@ -64,6 +72,7 @@ object TagRepository {
     fun taggedWith(context: Context, tag: String): Flow<List<String>> {
         if (!TranscriptDatabase.exists(context)) return flowOf(emptyList())
         return dao(context).observeTagged(tag)
+            .combine(HiddenMergeParts.observe(context)) { names, hidden -> names.filterNot { it in hidden } }
     }
 
     /**

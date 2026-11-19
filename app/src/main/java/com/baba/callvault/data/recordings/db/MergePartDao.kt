@@ -45,6 +45,24 @@ interface MergePartDao {
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insertAll(parts: List<MergePartEntry>)
 
+    /**
+     * Parts kept inside a merged recording with no catalog row of their own: their transcript, notes, tags and
+     * star are kept for un-merge but must show nowhere while merged (owner decision N2).
+     */
+    @Query("SELECT DISTINCT partName FROM merge_parts WHERE partName NOT IN (SELECT displayName FROM recordings)")
+    suspend fun hiddenPartNames(): List<String>
+
+    /** [hiddenPartNames], live: Room re-runs it when either table changes. */
+    @Query("SELECT DISTINCT partName FROM merge_parts WHERE partName NOT IN (SELECT displayName FROM recordings)")
+    fun observeHiddenPartNames(): kotlinx.coroutines.flow.Flow<List<String>>
+
+    /** The parts of [mergedName] that have no catalog row of their own: what deleting it must take with it. */
+    @Query(
+        "SELECT DISTINCT partName FROM merge_parts WHERE mergedName = :mergedName " +
+            "AND partName NOT IN (SELECT displayName FROM recordings)"
+    )
+    suspend fun hiddenPartsOf(mergedName: String): List<String>
+
     /** Drops the manifest — the second half of an un-merge, once the parts are back on disk. */
     @Query("DELETE FROM merge_parts WHERE mergedName = :mergedName")
     suspend fun deleteParts(mergedName: String)

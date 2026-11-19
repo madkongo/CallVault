@@ -188,7 +188,7 @@ object MergeService {
             //    and the Drive copy of each consumed part — a Drive-only part's Drive original is
             //    replaced by the merged file, same as a local merge replaces the local originals.
             val keepOriginals = AppPreferences(context).isKeepOriginalsAfterMerge()
-            if (!keepOriginals) entries.forEach { removeEverywhere(context, it) }
+            if (!keepOriginals) entries.forEach { retireMergedInput(context, it) }
 
             // Same reason as on the way back: the merged recording is a new file, and the parts' Drive
             // copies were just deleted, so without this a library kept in Drive loses the conversation.
@@ -305,8 +305,8 @@ object MergeService {
             onPartProgress(i, true)
         }
 
-        // 4. Every part is back and proven, so the merged recording may go.
-        removeEverywhere(context, entry)
+        // 4. Every part is back and proven, so the merged recording may go. The parts are catalogued first: until
+        //    then they are hidden parts, and deleting the merged call would take their kept data with it (N2).
         parts.forEachIndexed { i, part ->
             val uri = published[i]
             RecordingCatalog.recordLocal(
@@ -319,6 +319,7 @@ object MergeService {
             // follows the current target and schedule instead of replaying an old state.
             StorageRouter.route(context, uri, part.partName, mime)
         }
+        removeEverywhere(context, entry)
         db.mergePartDao().deleteParts(mergedName)
         MergeMetadata.onUnMerge(context, mergedName)
         staging.deleteRecursively()
@@ -375,12 +376,35 @@ object MergeService {
         return MergeManifest.flatten(inputs, boundaries)
     }
 
-    /** Deletes every copy of a recording and drops its catalog row. */
-    private suspend fun removeEverywhere(context: Context, entry: RecordingEntry) {
+    /**
+     * Takes a merged input out of the library once the merged recording holds it (owner decision N2, option A).
+     *
+     * Its files go, and its catalog row, but NOT its transcript, notes, tags, star, marks, speaker turns or
+     * summary: those stay, hidden by [HiddenMergeParts], so un-merge gives them back. An input that was itself a
+     * merge is different: un-merge returns its originals (whose data the new manifest now holds), never it, so its
+     * old manifest is dropped first and then its own copied data goes with it.
+     */
+    private suspend fun retireMergedInput(context: Context, entry: RecordingEntry) {
+        deleteFiles(context, entry)
+        val dao = RecordingDatabase.get(context).mergePartDao()
+        if (dao.partsOf(entry.displayName).isNotEmpty()) {
+            dao.deleteParts(entry.displayName)
+            RecordingCatalog.removeName(context, entry.displayName)
+        } else {
+            RecordingCatalog.forgetName(context, entry.displayName)
+        }
+    }
+
+    private fun deleteFiles(context: Context, entry: RecordingEntry) {
         listOfNotNull(entry.localUri, entry.driveUri).forEach { raw ->
             val uri = Uri.parse(raw)
             SafHelper.deleteDocument(DocumentFile.fromSingleUri(context, uri), entry.displayName)
         }
+    }
+
+    /** Deletes every copy of a recording and drops its catalog row. */
+    private suspend fun removeEverywhere(context: Context, entry: RecordingEntry) {
+        deleteFiles(context, entry)
         RecordingCatalog.removeName(context, entry.displayName)
     }
 

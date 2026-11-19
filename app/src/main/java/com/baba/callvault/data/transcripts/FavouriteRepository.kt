@@ -9,6 +9,8 @@
 package com.baba.callvault.data.transcripts
 
 import android.content.Context
+import kotlinx.coroutines.flow.combine
+import com.baba.callvault.data.merge.HiddenMergeParts
 import com.baba.callvault.data.transcripts.db.TranscriptDatabase
 import com.baba.callvault.utils.AppLogger
 import kotlinx.coroutines.flow.Flow
@@ -37,7 +39,9 @@ object FavouriteRepository {
     /** Every starred name, for Home's filter facet. */
     fun all(context: Context): Flow<List<String>> {
         if (!TranscriptDatabase.exists(context)) return flowOf(emptyList())
+        // A merged-away part keeps its star, hidden, for un-merge (N2); it is not a starred recording now.
         return dao(context).observeAll()
+            .combine(HiddenMergeParts.observe(context)) { names, hidden -> names.filterNot { it in hidden } }
     }
 
     /**
