@@ -65,7 +65,8 @@ class DriveCopierListingTest {
 
         assertNull(out.listing)
         assertEquals(DriveCopierListing.ATTEMPTS_PER_RUN, opened.size)
-        assertTrue(opened.all { it.closed })
+        assertTrue("every copier but the returned one is let go here", opened.dropLast(1).all { it.closed })
+        assertSame("the caller lets go of the last one", opened.last(), out.copier)
         assertEquals(DriveCopierListing.ATTEMPTS_PER_RUN, journal.count { it.contains("FAILED") })
     }
 
@@ -107,6 +108,7 @@ class DriveCopierListingTest {
 
         assertNull(out.listing)
         assertEquals("the first listing runs, the restarts wait for the call to end", 1, opened.size)
+        assertEquals("the copier is left as it is during the call, not closed (which ends :drive)", false, opened[0].closed)
         assertTrue(journal.joinToString("\n"), journal.any { it.contains("DEFERRED") && it.contains("call") })
     }
 

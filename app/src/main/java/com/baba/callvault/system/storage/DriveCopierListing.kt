@@ -34,7 +34,10 @@ internal object DriveCopierListing {
     /** How often the process list is read during that wait. */
     const val PROCESS_POLL_MS = 250L
 
-    /** [copier] is the one that listed (or the last one tried); [failures] are the reasons, one per failed attempt. */
+    /**
+     * [copier] is the one that listed, or the last one tried (still bound: the caller lets go of it); [failures]
+     * are the reasons, one per failed attempt.
+     */
     class Outcome(val copier: DriveCopier, val listing: DriveCopyProtocol.Listing?, val failures: List<String>)
 
     /**
@@ -60,18 +63,24 @@ internal object DriveCopierListing {
             val (listing, why) = tryList(copier)
             if (listing != null) return Outcome(copier, listing, failures)
             failures += why
-            val pidBefore = copierPid()
-            copier.close()
             val last = attempt == attempts
-            journal(
-                "list through the copier FAILED (attempt $attempt of $attempts in this run): $why; " +
-                    if (last) "giving up for this run" else "copier closed, waiting for its process (pid ${pidBefore ?: "none"}) to end",
-            )
-            if (last) break
-            if (inCall()) {
-                journal("copier restart DEFERRED: a call is in progress; no more list attempts this run, the next retry tries again")
+            journal("list through the copier FAILED (attempt $attempt of $attempts in this run): $why")
+            if (last) {
+                journal("giving up listing for this run")
                 break
             }
+            // Before close(): letting go of the copier ends :drive when no other client holds it, which is the
+            // churn a call must not see.
+            if (inCall()) {
+                journal(
+                    "copier restart DEFERRED: a call is in progress; the copier is kept as it is and this run makes no " +
+                        "more list attempts (the sweep lets go of it when the run ends, as every run does)",
+                )
+                break
+            }
+            val pidBefore = copierPid()
+            copier.close()
+            journal("copier closed, waiting for its process (pid ${pidBefore ?: "none"}) to end")
             val held = pidBefore != null && !awaitExit(pidBefore, copierPid, exitWaitMs, pollMs)
             if (held) {
                 journal(
