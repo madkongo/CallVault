@@ -72,6 +72,18 @@ class DriveBackupNoticeTest {
     }
 
     @Test
+    fun `a notice that could not be shown is not counted as posted`() {
+        shadowOf(context as Application).denyPermissions(Manifest.permission.POST_NOTIFICATIONS)
+
+        DriveBackupNotice.onGaveUp(context, DriveBackupNotice.Reason.NO_ANSWER, "no permission yet")
+        assertEquals(0, shown())
+
+        shadowOf(context as Application).grantPermissions(Manifest.permission.POST_NOTIFICATIONS)
+        DriveBackupNotice.onGaveUp(context, DriveBackupNotice.Reason.NO_ANSWER, "permission granted since")
+        assertEquals("the next give-up shows it, because nothing was shown before", 1, shown())
+    }
+
+    @Test
     fun `only the attempt that gives up tells the user`() {
         assertTrue(DriveBackupNotice.isGivingUp(CloudCopyPolicy.LIST_FAILURE_MAX_ATTEMPTS - 1))
         assertEquals(false, DriveBackupNotice.isGivingUp(0))

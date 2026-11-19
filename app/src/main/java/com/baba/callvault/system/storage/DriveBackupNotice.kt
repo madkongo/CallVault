@@ -57,7 +57,15 @@ object DriveBackupNotice {
         when (decide(prefs.getBoolean(KEY_POSTED, false), Event.GAVE_UP)) {
             Action.POST -> {
                 val text = LocalizedContext.of(context).getString(reason.text)
-                SilentFailureNotifier.warnDriveBackupBroken(context, text)
+                if (!SilentFailureNotifier.warnDriveBackupBroken(context, text)) {
+                    // Not remembered as posted: the next give-up tries again.
+                    AppLogger.w(TAG, "Drive backup notice could NOT be shown ($reason): $why")
+                    DriveCopyJournal.record(
+                        context,
+                        "user notice NOT shown (no notification permission, or the system refused it); tried again at the next give-up. Cause: $why",
+                    )
+                    return
+                }
                 prefs.edit().putBoolean(KEY_POSTED, true).apply()
                 AppLogger.w(TAG, "Drive backup notice POSTED ($reason): $why")
                 DriveCopyJournal.record(context, "user notice POSTED: Drive backup isn't working ($reason); cause: $why")
