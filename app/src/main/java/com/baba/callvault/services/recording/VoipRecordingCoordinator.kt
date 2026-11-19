@@ -147,6 +147,12 @@ object VoipRecordingCoordinator {
     /** Counts call ends, so a start continued after an orphan check knows whether its call already ended. */
     @Volatile private var callEnds = 0
 
+    /** A start that found the recorder not connected: when, and whether the phone looked like it was on a call (N18). */
+    private data class NotReadyStart(val atMillis: Long, val lookedLikeCall: Boolean)
+
+    /** Set by a start that found no recorder; settled when that call ends ([settleNotReadyMiss]). */
+    @Volatile private var notReadyAtStart: NotReadyStart? = null
+
     /** Told when a start that went through an orphan check has finished, so the detector can update its state. */
     @Volatile var onDeferredStartFinished: (() -> Unit)? = null
 
@@ -201,7 +207,13 @@ object VoipRecordingCoordinator {
      * failing on a busy recorder.
      */
     fun endInBackground(context: Context) {
-        if (!recording) return
+        if (!recording) {
+            // Not recording here, but a start that found no recorder still needs its end (N18). Cheap and inline:
+            // before the phone call's own recording can be taken for this app call's.
+            if (notReadyAtStart != null) runCatching { onCallEnded(context) }
+                .onFailure { AppLogger.w(TAG, "The not-ready check at a phone call's answer failed: ${it.message}") }
+            return
+        }
         DaemonSessionOwnership.beginRelease(this)
         val app = context.applicationContext
         Thread {
@@ -239,11 +251,15 @@ object VoipRecordingCoordinator {
 
         val service = RecorderConnection.service
         if (service == null) {
-            // Nothing can be done for THIS call, and that is not a shortcoming of the retry that is
-            // missing here — see [reportMissed]. All that is left is to say so.
-            reportMissedIfReal(context, R.string.voip_missed_not_ready, null)
-            AppLogger.w(TAG, "VoIP call detected but the daemon is not connected — not recording")
+            // Nothing can be started for THIS call (a late start cannot capture it), but whether it went
+            // unrecorded is only known at its end (review N18): a CallVault restarted into a call gets here before its
+            // recorder connection is back, while the recorder is still recording the call for the killed process.
+            if (notReadyAtStart == null) {
+                notReadyAtStart = NotReadyStart(System.currentTimeMillis(), CallEvidence.looksLikeACall(context))
+            }
+            AppLogger.w(TAG, "VoIP call detected but the daemon is not connected — not recording; a miss is decided at the call's end")
             logOutcome(context, VoipOutcome.Reason.RECORDER_NOT_CONNECTED)
+            CallEndLog.record(context, "app call start: the recorder is not connected; whether the call went unrecorded is decided when it ends")
             return
         }
 
@@ -347,6 +363,8 @@ object VoipRecordingCoordinator {
         }
 
         recording = true
+        // This call is being recorded here after all (a later manual start): no miss to decide at its end (N18).
+        notReadyAtStart = null
         startedViaNormalMode = viaNormalMode
         pending = saf
         // The rescue must never take this file for an abandoned one while the call goes on (C12): a pause stops
@@ -924,7 +942,10 @@ object VoipRecordingCoordinator {
     @Synchronized
     fun onCallEnded(context: Context, neverConnected: Boolean = false) {
         callEnds++
-        if (!recording) return
+        if (!recording) {
+            settleNotReadyMiss(context)
+            return
+        }
         val liveStaging = pending?.stagingFile
         try {
             endRecording(context, neverConnected)
@@ -932,6 +953,35 @@ object VoipRecordingCoordinator {
             // Only once the file is published, discarded, or knowingly left to the rescue (C12).
             LiveStagingFiles.release(liveStaging)
         }
+    }
+
+    /**
+     * The end of a call whose start found the recorder not connected (review N18): reports the miss only when no
+     * recording of the call exists anywhere. Runs before the detector's after-call orphan check, so a recorder still
+     * recording the call for a killed CallVault is seen recording here. Every verdict goes to the always-on log.
+     */
+    private fun settleNotReadyMiss(context: Context) {
+        val start = notReadyAtStart ?: return
+        notReadyAtStart = null
+        val service = RecorderConnection.service
+        val recorderRecording = service?.let { s ->
+            runCatching { s.isRecording() }
+                .onFailure { AppLogger.w(TAG, "isRecording failed at the not-ready check: ${it.message}") }
+                .getOrNull()
+        }
+        val unowned = recorderRecording?.let { it && !DaemonSessionOwnership.isOwnedHere }
+        val staged = runCatching {
+            val files = com.baba.callvault.system.storage.SafHelper.stagingDirOrNull(context)?.listFiles().orEmpty().toList()
+            VoipMissPolicy.stagedDuringCall(files, start.atMillis) { LiveStagingFiles.isLive(it) }
+        }.onFailure { AppLogger.w(TAG, "Could not read the staging folder at the not-ready check: ${it.message}") }
+            .getOrDefault(false)
+        val verdict = VoipMissPolicy.notReadyAtCallEnd(start.lookedLikeCall, unowned, staged)
+        CallEndLog.record(
+            context,
+            "app call not-ready check at the call's end: recorder=${if (service == null) "not connected" else "recording=${recorderRecording ?: "unknown"} unowned=${unowned ?: "unknown"}"} " +
+                "stagedDuringCall=$staged lookedLikeCall=${start.lookedLikeCall} -> $verdict",
+        )
+        if (verdict == VoipMissPolicy.NotReadyVerdict.REPORT) reportMissed(context, R.string.voip_missed_not_ready, null)
     }
 
     /** The body of [onCallEnded], under its lock: stop, then publish or discard. */

@@ -50,4 +50,45 @@ object VoipMissPolicy {
 
         else -> MissReport.UNEXPLAINED
     }
+
+    /** What a start that found no recorder comes to, once its call has ended (review N18). */
+    enum class NotReadyVerdict {
+        /** Nothing recorded the call: say so. */
+        REPORT,
+
+        /** The recorder recorded it for a CallVault the phone killed; the orphan check and the rescue keep it. */
+        RECORDED_ELSEWHERE,
+
+        /** Nothing on the phone looked like a call when it started (issue #29): not a miss. */
+        NOT_A_CALL,
+    }
+
+    /**
+     * Whether an app call whose start found the recorder not connected went unrecorded (review N18).
+     *
+     * Not decided at the start: a CallVault restarted into a call (the phone killed it mid-call, Q25) starts that call
+     * before its recorder connection is back, while the recorder is still recording the call for the killed process.
+     * Saying "not recorded" then was false, and the rescue published the whole call. At the end it is known.
+     *
+     * @param lookedLikeCallAtStart [CallEvidence] at the start; at the end the call is over and it says nothing.
+     * @param recorderRecordingUnowned the recorder is recording a session this process does not own; null when the
+     *   recorder could not be asked (still not connected).
+     * @param stagedDuringCall a staged recording no live recording here owns was written during the call: the orphan,
+     *   already stopped and handed to the rescue.
+     */
+    fun notReadyAtCallEnd(lookedLikeCallAtStart: Boolean, recorderRecordingUnowned: Boolean?, stagedDuringCall: Boolean): NotReadyVerdict = when {
+        recorderRecordingUnowned == true || stagedDuringCall -> NotReadyVerdict.RECORDED_ELSEWHERE
+        !lookedLikeCallAtStart -> NotReadyVerdict.NOT_A_CALL
+        else -> NotReadyVerdict.REPORT
+    }
+
+    /**
+     * Whether any of [files] (the staging folder) is a non-empty staged recording written at or after [sinceMillis]
+     * that [ownedLive] does not claim for a recording still running in this process.
+     */
+    fun stagedDuringCall(files: List<java.io.File>, sinceMillis: Long, ownedLive: (java.io.File) -> Boolean): Boolean =
+        files.any { f ->
+            com.baba.callvault.system.storage.SafHelper.isStagedRecording(f) && f.length() > 0L &&
+                f.lastModified() >= sinceMillis && !ownedLive(f)
+        }
 }
