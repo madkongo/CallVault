@@ -15,6 +15,7 @@ import com.baba.callvault.system.storage.SafHelper
 import java.io.FileNotFoundException
 import androidx.core.net.toUri
 import com.baba.callvault.data.AppPreferences
+import com.baba.callvault.data.recordings.db.RecordingEntry
 import com.baba.callvault.utils.AppLogger
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
@@ -43,7 +44,7 @@ object DriveCatalogRepair {
 
     /**
      * Matches stale rows against the live folder listing by display name, re-pointing each to its real
-     * URI and dropping the reference when the file is not there at all.
+     * URI. A row it cannot find keeps its Drive reference unless it still has a device copy; see [repairFor].
      *
      * Enumerates the Drive folder itself rather than sharing the sweep's later listing: this runs once a
      * day, off the recording path, and the sweep's own scan has to see the repaired state rather than the
@@ -61,26 +62,36 @@ object DriveCatalogRepair {
             val live = RecordingsRepository.enumerateFolder(context, folder).associateBy { it.displayName }
             var repointed = 0
             var forgotten = 0
+            var kept = 0
             for ((row, driveUri) in stale) {
-                val match = live[row.displayName]
-                if (match != null) {
-                    RecordingCatalog.markDrive(
-                        context = context,
-                        displayName = row.displayName,
-                        driveUri = match.uri,
-                        driveSizeBytes = match.sizeBytes.takeIf { it > 0L },
-                        deleteLocalAfter = false,
-                        lastModified = row.lastModified,
-                    )
-                    repointed++
-                } else {
-                    // Not in the folder under the live grant, so the reference points at nothing we can
-                    // reach or reason about. Dropping it is safe now in a way it was not before: if the
-                    // file does turn up in a later listing, the sweep's untracked pass finds it by
-                    // enumeration rather than by a URI we remembered.
-                    RecordingCatalog.removeCopyByUri(context, driveUri.toUri())
-                    forgotten++
+                when (repairFor(row, live.keys)) {
+                    Repair.REPOINT -> {
+                        val match = live.getValue(row.displayName)
+                        RecordingCatalog.markDrive(
+                            context = context,
+                            displayName = row.displayName,
+                            driveUri = match.uri,
+                            driveSizeBytes = match.sizeBytes.takeIf { it > 0L },
+                            deleteLocalAfter = false,
+                            lastModified = row.lastModified,
+                        )
+                        repointed++
+                    }
+                    // The device copy keeps the row (and its transcript); only the dead reference goes, and
+                    // the sync sweep sends the device copy to the current folder.
+                    Repair.DROP_REFERENCE -> {
+                        RecordingCatalog.removeCopyByUri(context, driveUri.toUri())
+                        forgotten++
+                    }
+                    Repair.KEEP -> kept++
                 }
+            }
+            if (kept > 0) {
+                AppLogger.i(
+                    TAG,
+                    "Kept $kept stale Drive reference(s): Drive-only recordings, or no listing to judge them by " +
+                        "(listed ${live.size}); absence from this folder does not prove them deleted",
+                )
             }
             AppLogger.i(TAG, "Drive references repaired: $repointed re-pointed, $forgotten forgotten")
             repointed + forgotten
@@ -88,6 +99,25 @@ object DriveCatalogRepair {
             AppLogger.w(TAG, "Could not repair Drive references: ${it.message}")
             0
         }
+    }
+
+    /** What [reconcile] does with one stale Drive reference. */
+    internal enum class Repair { REPOINT, DROP_REFERENCE, KEEP }
+
+    /**
+     * The repair for one stale [row], given the names in the current Drive folder (review C8).
+     *
+     * Found by name: re-point it. Not found: the row is forgotten only as far as is safe. Absence from the CURRENT
+     * folder is no proof the file is gone (picking a different Drive folder makes every old reference absent), so a
+     * Drive-only row is kept as it is, transcript and all; [forgetDeleted] decides those with its own two proofs. A
+     * row that still has its device copy loses just the dead reference. An empty listing (failed or genuinely
+     * empty) is no evidence at all, so nothing is dropped.
+     */
+    internal fun repairFor(row: RecordingEntry, liveNames: Set<String>): Repair = when {
+        row.displayName in liveNames -> Repair.REPOINT
+        liveNames.isEmpty() -> Repair.KEEP
+        row.localUri != null -> Repair.DROP_REFERENCE
+        else -> Repair.KEEP
     }
 
     /**
