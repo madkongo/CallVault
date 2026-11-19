@@ -182,7 +182,7 @@ class SyncSweepWorker(ctx: Context, params: WorkerParameters) : CoroutineWorker(
         // evidence the catalog needs, and throwing it away is what let a correctly backed-up
         // recording go on looking unsynced forever. See where `alreadyThere` is used.
         val listOutcome = DriveCopierListing.list(
-            openCopier, copierPid = { DriveDiagnostics.copierPid(applicationContext) }, inCall = ::isCallInProgress, journal = ::journal,
+            openCopier, copierProcess = { DriveDiagnostics.copierProcess(applicationContext) }, inCall = ::isCallInProgress, journal = ::journal,
         ) { tryList(it, driveFolderUri) }
         val copier = listOutcome.copier
         val listed = listOutcome.listing

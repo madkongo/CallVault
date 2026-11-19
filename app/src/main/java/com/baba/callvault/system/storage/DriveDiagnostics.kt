@@ -90,13 +90,22 @@ object DriveDiagnostics {
         procs.any { it.processName?.endsWith(COPIER) == true }.toString()
     }.getOrElse { "unknown (${it.javaClass.simpleName}: ${it.message})" }
 
-    /** The running copier process's id, or null when there is none (or the system will not say). */
-    fun copierPid(context: Context): Int? = runCatching {
+    /** What the process list says about the copier process: running (with its id), not running, or unknown. */
+    sealed interface CopierProcess {
+        data class Running(val pid: Int) : CopierProcess
+        data object None : CopierProcess
+        /** The process list could not be read; [why] says how. Never to be taken for [None]. */
+        data class Unknown(val why: String) : CopierProcess
+    }
+
+    /** The copier process as the system's process list shows it; [CopierProcess.Unknown] when that list cannot be read. */
+    fun copierProcess(context: Context): CopierProcess = runCatching {
         val am = context.getSystemService(Context.ACTIVITY_SERVICE) as ActivityManager
-        am.runningAppProcesses?.firstOrNull { it.processName?.endsWith(COPIER) == true }?.pid
+        val procs = am.runningAppProcesses ?: return@runCatching CopierProcess.Unknown("the system gave no process list")
+        procs.firstOrNull { it.processName?.endsWith(COPIER) == true }?.let { CopierProcess.Running(it.pid) } ?: CopierProcess.None
     }.getOrElse {
         AppLogger.w("CV:DriveDiagnostics", "Could not read the process list: ${it.javaClass.simpleName}: ${it.message}")
-        null
+        CopierProcess.Unknown("${it.javaClass.simpleName}: ${it.message}")
     }
 
     /**

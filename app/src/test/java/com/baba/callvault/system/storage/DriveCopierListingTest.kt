@@ -36,13 +36,16 @@ class DriveCopierListingTest {
     private fun open(): DriveCopier = FakeCopier(opened.size + 1).also { opened += it }
 
     /** The `:drive` pid as the system reports it: a new process per copier unless a test says otherwise. */
-    private var pidOf: () -> Int? = { opened.lastOrNull()?.takeIf { !it.closed }?.let { 1000 + it.n } }
+    private var pidOf: () -> DriveDiagnostics.CopierProcess = {
+        opened.lastOrNull()?.takeIf { !it.closed }?.let { DriveDiagnostics.CopierProcess.Running(1000 + it.n) }
+            ?: DriveDiagnostics.CopierProcess.None
+    }
 
     private var inCall = false
 
     private fun run(succeedOn: Int?) = runBlocking {
         DriveCopierListing.list(
-            ::open, copierPid = { pidOf() }, inCall = { inCall }, exitWaitMs = 50L, pollMs = 5L, journal = { journal += it },
+            ::open, copierProcess = { pidOf() }, inCall = { inCall }, exitWaitMs = 50L, pollMs = 5L, journal = { journal += it },
         ) { copier ->
             if ((copier as FakeCopier).n == succeedOn) listing to "" else null to "${copier.where} died"
         }
@@ -81,7 +84,7 @@ class DriveCopierListingTest {
 
     @Test
     fun `a copier process another client still holds is not restarted, and the run stops asking`() {
-        pidOf = { 4242 } // the same :drive process before and after letting go: the after-call copy holds it
+        pidOf = { DriveDiagnostics.CopierProcess.Running(4242) } // the same :drive process before and after letting go: the after-call copy holds it
 
         val out = run(succeedOn = 2)
 
@@ -92,12 +95,38 @@ class DriveCopierListingTest {
 
     @Test
     fun `a copier process that has already gone counts as restarted`() {
-        pidOf = { null } // no :drive process left after the close
+        pidOf = { DriveDiagnostics.CopierProcess.None } // no :drive process left after the close
 
         val out = run(succeedOn = 2)
 
         assertNotNull(out.listing)
         assertEquals(2, opened.size)
+    }
+
+    @Test
+    fun `an unreadable process list is not taken for a process that has gone`() {
+        pidOf = { DriveDiagnostics.CopierProcess.Unknown("SecurityException: test") }
+
+        val out = run(succeedOn = 2)
+
+        assertNull(out.listing)
+        assertEquals(1, opened.size)
+        assertEquals("kept as it is: nothing proves a restart would be real", false, opened[0].closed)
+        assertTrue(journal.joinToString("\n"), journal.any { it.contains("process list unreadable") && it.contains("SecurityException") })
+    }
+
+    @Test
+    fun `a process list that becomes unreadable during the wait stops the restart too`() {
+        var reads = 0
+        pidOf = {
+            if (reads++ == 0) DriveDiagnostics.CopierProcess.Running(1001) else DriveDiagnostics.CopierProcess.Unknown("no process list")
+        }
+
+        val out = run(succeedOn = 2)
+
+        assertNull(out.listing)
+        assertEquals(1, opened.size)
+        assertTrue(journal.joinToString("\n"), journal.any { it.contains("process list unreadable") && it.contains("no process list") })
     }
 
     @Test
