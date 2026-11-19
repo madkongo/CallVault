@@ -239,14 +239,16 @@ class VoipCallDetector(private val context: Context) {
      * late, and starting a capture with no call would produce a file of silence.
      */
     fun startNow() {
-        if (!callActive || isRecording) {
+        val decision = VoipManualStartPolicy.decide(callActive, isRecording, normalModeCall)
+        if (decision !is VoipManualStartPolicy.Decision.Start) {
             AppLogger.i(TAG, "Manual app-call start ignored (callActive=$callActive recording=$isRecording)")
             VoipRecordPrompt.cancel(context)
             return
         }
-        AppLogger.i(TAG, "Recording this app call on the user's request")
+        AppLogger.i(TAG, "Recording this app call on the user's request (normal-mode=${decision.viaNormalMode})")
         VoipRecordPrompt.cancel(context)
-        runCatching { VoipRecordingCoordinator.onCallStarted(context, manual = true) }
+        // The call's own kind (review C26): a LINE call recognised in MODE_NORMAL (item 108) starts as one.
+        runCatching { VoipRecordingCoordinator.onCallStarted(context, manual = true, viaNormalMode = decision.viaNormalMode) }
             .onFailure { AppLogger.w(TAG, "Manual VoIP start failed: ${it.message}") }
         isRecording = VoipRecordingCoordinator.isRecording
         onRecordingStateChanged?.invoke()
