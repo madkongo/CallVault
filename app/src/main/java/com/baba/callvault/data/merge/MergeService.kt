@@ -153,33 +153,48 @@ object MergeService {
             //    itself, so un-merge is always one level and partName always names an original call.
             val manifest = flatten(context, entries, boundaries)
 
-            // 4. Only now is it safe to remove what the user had. removeEverywhere drops both the local
-            //    and the Drive copy of each consumed part — a Drive-only part's Drive original is
-            //    replaced by the merged file, same as a local merge replaces the local originals.
-            val keepOriginals = AppPreferences(context).isKeepOriginalsAfterMerge()
-            if (!keepOriginals) entries.forEach { removeEverywhere(context, it) }
-
-            // 5. Publish. With the originals gone the primary's name is free again, which is what makes
-            //    the merged recording read as that conversation continued rather than as a new one.
+            // 4. Publish into the user's folder and PROVE it is there before anything of theirs goes: the
+            //    published document must read back at exactly the staged size. Until then the originals
+            //    are untouched, so a failed or short publish costs nothing but this merge (review C4).
             val mergedName = freeName(context, primaryName)
+            val stagedSize = stagingFile.length()
             val published = SafHelper.publishStagedRecording(context, folderUri, mergedName, mime, stagingFile)
-                ?: return Outcome.Failed("The merged recording could not be saved to your folder")
+            if (published == null) {
+                AppLogger.e(TAG, "Publishing $mergedName failed; the originals are kept and the staged merge discarded")
+                stagingFile.delete()
+                return Outcome.Failed("The merged recording could not be saved to your folder")
+            }
+            val size = SafHelper.fileSize(context, published)
+            if (stagedSize <= 0L || size != stagedSize) {
+                AppLogger.e(TAG, "Published $mergedName reads back as $size bytes, staged $stagedSize; originals kept, published copy removed")
+                SafHelper.deleteDocument(DocumentFile.fromSingleUri(context, published), mergedName)
+                stagingFile.delete()
+                return Outcome.Failed("The merged recording could not be saved to your folder")
+            }
             stagingFile.delete()
 
-            val size = SafHelper.fileSize(context, published)
+            // 5. Catalog the merged recording with its manifest and metadata, still before any delete:
+            //    the metadata is copied from the parts, so it has to be read while they exist.
             RecordingCatalog.recordLocal(
                 context, mergedName, published, size,
                 entries.first().lastModified.takeIf { it > 0 } ?: System.currentTimeMillis()
             )
             RecordingCatalog.setDuration(context, mergedName, boundaries.sumOf { it.durationUs } / 1_000_000L)
-            // Same reason as on the way back: the merged recording is a new file, and the parts' Drive
-            // copies were just deleted, so without this a library kept in Drive loses the conversation.
-            StorageRouter.route(context, published, mergedName, mime)
             val stamped = manifest.map { it.copy(mergedName = mergedName) }
             db.mergePartDao().insertAll(stamped)
             MergeMetadata.onMerge(context, mergedName, stamped)
 
-            // 6. The merge is done; clean up the downloads as a visible step before reporting success.
+            // 6. Only now is it safe to remove what the user had. removeEverywhere drops both the local
+            //    and the Drive copy of each consumed part — a Drive-only part's Drive original is
+            //    replaced by the merged file, same as a local merge replaces the local originals.
+            val keepOriginals = AppPreferences(context).isKeepOriginalsAfterMerge()
+            if (!keepOriginals) entries.forEach { removeEverywhere(context, it) }
+
+            // Same reason as on the way back: the merged recording is a new file, and the parts' Drive
+            // copies were just deleted, so without this a library kept in Drive loses the conversation.
+            StorageRouter.route(context, published, mergedName, mime)
+
+            // 7. The merge is done; clean up the downloads as a visible step before reporting success.
             if (tempFiles.isNotEmpty()) {
                 onPhase(MergePhase.DELETING_TEMP)
                 tempFiles.forEach { runCatching { it.delete() } }
