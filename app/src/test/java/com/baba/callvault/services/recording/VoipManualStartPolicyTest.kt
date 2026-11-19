@@ -21,7 +21,7 @@ class VoipManualStartPolicyTest {
         // normal-mode handling and its capture-health line.
         assertEquals(
             Decision.Start(viaNormalMode = true),
-            VoipManualStartPolicy.decide(callActive = true, isRecording = false, normalModeCall = true),
+            VoipManualStartPolicy.decide(callActive = true, isRecording = false, normalModeCall = true, carrierCallUp = false),
         )
     }
 
@@ -29,13 +29,27 @@ class VoipManualStartPolicyTest {
     fun `a mode-path call recorded from the prompt starts as a mode call`() {
         assertEquals(
             Decision.Start(viaNormalMode = false),
-            VoipManualStartPolicy.decide(callActive = true, isRecording = false, normalModeCall = false),
+            VoipManualStartPolicy.decide(callActive = true, isRecording = false, normalModeCall = false, carrierCallUp = false),
         )
     }
 
     @Test
     fun `no call up or already recording is ignored`() {
-        assertEquals(Decision.Ignore, VoipManualStartPolicy.decide(callActive = false, isRecording = false, normalModeCall = false))
-        assertEquals(Decision.Ignore, VoipManualStartPolicy.decide(callActive = true, isRecording = true, normalModeCall = true))
+        assertEquals(Decision.Ignore, VoipManualStartPolicy.decide(callActive = false, isRecording = false, normalModeCall = false, carrierCallUp = false))
+        assertEquals(Decision.Ignore, VoipManualStartPolicy.decide(callActive = true, isRecording = true, normalModeCall = true, carrierCallUp = false))
+    }
+
+    @Test
+    fun `a Record tap during a phone call starts nothing`() {
+        // Review C16: the prompt of a LINE call stays up through a phone call; a tap then opened the app-call
+        // capture against the carrier recording (Q39: a second voice capture drops the user's own side).
+        assertEquals(
+            Decision.RefuseCarrierCall,
+            VoipManualStartPolicy.decide(callActive = true, isRecording = false, normalModeCall = true, carrierCallUp = true),
+        )
+        assertEquals(
+            Decision.RefuseCarrierCall,
+            VoipManualStartPolicy.decide(callActive = true, isRecording = false, normalModeCall = false, carrierCallUp = true),
+        )
     }
 }

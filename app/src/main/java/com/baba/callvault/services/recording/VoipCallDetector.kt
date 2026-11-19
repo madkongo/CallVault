@@ -239,7 +239,14 @@ class VoipCallDetector(private val context: Context) {
      * late, and starting a capture with no call would produce a file of silence.
      */
     fun startNow() {
-        val decision = VoipManualStartPolicy.decide(callActive, isRecording, normalModeCall)
+        val decision = VoipManualStartPolicy.decide(
+            callActive, isRecording, normalModeCall, carrierCallUp = !VoipTelephonyGate.mayStartNow(context),
+        )
+        if (decision == VoipManualStartPolicy.Decision.RefuseCarrierCall) {
+            CallEndLog.record(context, "app call: Record tapped during a phone call; not starting the app-call capture (it would cut your side of the phone call)")
+            VoipRecordPrompt.cancel(context)
+            return
+        }
         if (decision !is VoipManualStartPolicy.Decision.Start) {
             AppLogger.i(TAG, "Manual app-call start ignored (callActive=$callActive recording=$isRecording)")
             VoipRecordPrompt.cancel(context)

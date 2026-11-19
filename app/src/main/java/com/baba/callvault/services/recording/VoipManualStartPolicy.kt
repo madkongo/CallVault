@@ -25,10 +25,20 @@ object VoipManualStartPolicy {
          * start gets the same handling as an automatic one of the same call (review C26).
          */
         data class Start(val viaNormalMode: Boolean) : Decision
+
+        /**
+         * A carrier (managed) call is up: nothing may open the app-call capture now (review C16). The capture
+         * would run beside the phone call's recording, and a second voice capture during a phone call drops
+         * the user's own side of it (Q39); on the default path the recorder refuses it and a false "app call
+         * not recorded" warning follows. The prompt of a LINE call (item 108) can still be up then, because
+         * its end needs MODE_NORMAL.
+         */
+        data object RefuseCarrierCall : Decision
     }
 
-    fun decide(callActive: Boolean, isRecording: Boolean, normalModeCall: Boolean): Decision = when {
+    fun decide(callActive: Boolean, isRecording: Boolean, normalModeCall: Boolean, carrierCallUp: Boolean): Decision = when {
         !callActive || isRecording -> Decision.Ignore
+        carrierCallUp -> Decision.RefuseCarrierCall
         else -> Decision.Start(viaNormalMode = normalModeCall)
     }
 }
