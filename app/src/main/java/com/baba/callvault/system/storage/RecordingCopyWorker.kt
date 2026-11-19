@@ -88,6 +88,9 @@ class RecordingCopyWorker(ctx: Context, params: WorkerParameters) : CoroutineWor
                 DriveCopyJournal.record(applicationContext, "copy '$name' ${srcSize}B FAILED after ${SystemClock.elapsedRealtime() - started}ms: ${it.reason} (after the call, attempt ${runAttemptCount + 1})")
             }
         }
+        if (copyResult !is SafHelper.CopyResult.Failed) {
+            DriveBackupNotice.onDriveReached(applicationContext, "'$name' reached Drive after the call")
+        }
         return when (val result = copyResult) {
             is SafHelper.CopyResult.AlreadyPresent -> {
                 if (FolderOverlap.isSameDocument(src, result.uri)) {

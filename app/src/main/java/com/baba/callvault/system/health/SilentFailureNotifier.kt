@@ -60,6 +60,7 @@ object SilentFailureNotifier {
     private const val ID_CUT_OFF_SAVED = 4723
     private const val ID_TURNED_OFF_FOR_ANDROID = 4724
     private const val ID_STOPPED_BY_USER = 4725
+    private const val ID_DRIVE_BACKUP_BROKEN = 4727
 
     /**
      * The recorder could not be started. Posted from the boot path, where a failure is invisible.
@@ -144,6 +145,20 @@ object SilentFailureNotifier {
         title = LocalizedContext.of(context).getString(R.string.notif_stopped_by_user_title),
         text = LocalizedContext.of(context).getString(R.string.notif_stopped_by_user_text),
     )
+
+    /**
+     * The Drive sweep gave up listing the Drive folder (review C11): nothing reaches Drive until it can.
+     * [reason] is a few localized words. Posted and cleared through [com.baba.callvault.system.storage.DriveBackupNotice].
+     */
+    fun warnDriveBackupBroken(context: Context, reason: String) = post(
+        context,
+        id = ID_DRIVE_BACKUP_BROKEN,
+        title = LocalizedContext.of(context).getString(R.string.notif_drive_backup_title),
+        text = LocalizedContext.of(context).getString(R.string.notif_drive_backup_text, reason),
+    )
+
+    /** Drive was reached again. */
+    fun clearDriveBackupBroken(context: Context) = clear(context, ID_DRIVE_BACKUP_BROKEN)
 
     /** The pairing works again. */
     fun clearPairingLost(context: Context) = clear(context, ID_PAIRING_LOST)

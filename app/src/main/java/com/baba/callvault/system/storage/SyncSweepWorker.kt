@@ -116,11 +116,15 @@ class SyncSweepWorker(ctx: Context, params: WorkerParameters) : CoroutineWorker(
         }
     }
 
+    /** Whether the last LIST got an answer from the copier (a reply without a listing) rather than none. */
+    private var lastListAnswered = false
+
     /** Asks [copier] to list the Drive folder; returns the listing or the reason it could not. */
     private suspend fun tryList(copier: DriveCopier, driveFolderUri: android.net.Uri): Pair<DriveCopyProtocol.Listing?, String> {
         val started = SystemClock.elapsedRealtime()
         val outcome = copier.call(DriveCopyProtocol.MSG_LIST, DriveCopyProtocol.listRequest(driveFolderUri), CloudCopyPolicy.LIST_TIMEOUT_MS)
         val ms = SystemClock.elapsedRealtime() - started
+        lastListAnswered = outcome is DriveCopyClient.Outcome.Reply
         return when (outcome) {
             is DriveCopyClient.Outcome.Reply -> {
                 val (listing, why) = DriveCopyProtocol.readListingWithReason(outcome.data)
@@ -163,8 +167,16 @@ class SyncSweepWorker(ctx: Context, params: WorkerParameters) : CoroutineWorker(
                     if (again) "Retry ${runAttemptCount + 2} of ${CloudCopyPolicy.LIST_FAILURE_MAX_ATTEMPTS} in about $wait min."
                     else "Attempt ${runAttemptCount + 1} was the last: waiting for the next scheduled time.",
             )
+            if (DriveBackupNotice.isGivingUp(runAttemptCount)) {
+                DriveBackupNotice.onGaveUp(
+                    applicationContext,
+                    if (lastListAnswered) DriveBackupNotice.Reason.FOLDER_UNREADABLE else DriveBackupNotice.Reason.NO_ANSWER,
+                    listOutcome.failures.lastOrNull() ?: "no reason recorded",
+                )
+            }
             return if (again) Result.retry() else Result.success()
         }
+        DriveBackupNotice.onDriveReached(applicationContext, "the sweep listed the Drive folder")
         val existingInDrive = HashMap<String, DriveCopy>(listed.names.size * 2)
         for (i in listed.names.indices) {
             existingInDrive[listed.names[i].lowercase()] = DriveCopy(listed.uris[i], listed.sizes[i])

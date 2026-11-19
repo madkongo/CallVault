@@ -946,6 +946,10 @@
     <string name="notif_health_recorder_text">Calls will not be recorded until this phone joins a Wi-Fi network once. Any network will do and it does not need internet — a few seconds is enough, then it keeps working even off Wi-Fi.</string>
     <string name="notif_health_sync_title">Recordings are not reaching Drive</string>
     <string name="notif_health_sync_text">Copying to Google Drive stopped some time ago. Nothing is lost — the recordings are still on this phone — but they are not backed up. Open CallVault to check your storage settings.</string>
+    <string name="notif_drive_backup_title">Drive backup isn\'t working</string>
+    <string name="notif_drive_backup_text">Drive backup isn\'t working: %1$s. Your recordings are safe on this phone. CallVault tries again at the next scheduled time.</string>
+    <string name="notif_drive_backup_reason_no_answer">Google Drive is not answering</string>
+    <string name="notif_drive_backup_reason_folder">the Drive folder cannot be read</string>
     <string name="notif_health_recorder_text_shizuku">Calls will not be recorded until Shizuku is running again. A reboot stops it, so it has to be started once after the phone restarts.</string>
     <string name="settings_offline_recording_reboot_note">After a restart this stops working until the phone joins a Wi-Fi network once. Any network will do and it does not need internet — a few seconds is enough. CallVault will tell you when that is needed.</string>
     <string name="general_stop">Stop</string>

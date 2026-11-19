@@ -233,6 +233,10 @@
     <string name="notif_health_shizuku_stopped_text">CallVault musste den Debugging-Dienst von Android neu starten, und dadurch wird Shizuku beendet. Öffne Shizuku und starte es erneut, falls du es für andere Apps nutzt.</string>
     <string name="notif_health_shizuku_stopped_title">Shizuku wurde beendet</string>
     <string name="notif_health_sync_text">Das Kopieren zu Google Drive ist vor einiger Zeit stehengeblieben. Es ist nichts verloren — die Aufnahmen sind noch auf diesem Telefon — aber sie sind nicht gesichert. Öffnen Sie CallVault und prüfen Sie die Speichereinstellungen.</string>
+    <string name="notif_drive_backup_title">Drive-Sicherung funktioniert nicht</string>
+    <string name="notif_drive_backup_text">Drive-Sicherung funktioniert nicht: %1$s. Ihre Aufnahmen sind auf diesem Telefon sicher. CallVault versucht es zur nächsten geplanten Zeit erneut.</string>
+    <string name="notif_drive_backup_reason_no_answer">Google Drive antwortet nicht</string>
+    <string name="notif_drive_backup_reason_folder">der Drive-Ordner kann nicht gelesen werden</string>
     <string name="notif_health_sync_title">Aufnahmen erreichen Drive nicht</string>
     <string name="notif_info_channel">CallVault-Hinweise</string>
     <string name="notif_readiness_pairing_lost_text">Android hat die Kopplung von CallVault vergessen, daher können keine Anrufe aufgenommen werden. Öffne CallVault und tippe auf die Statuskarte, um erneut zu koppeln.</string>

@@ -758,6 +758,10 @@
     <string name="notif_health_recorder_text">এই ফোন অন্তত একবার কোনো Wi-Fi নেটওয়ার্কে যুক্ত না হওয়া পর্যন্ত কল রেকর্ড হবে না। যেকোনো নেটওয়ার্ক চলবে, ইন্টারনেট লাগবে না — কয়েক সেকেন্ডই যথেষ্ট, তারপর Wi-Fi ছাড়াও কাজ করতে থাকে।</string>
     <string name="notif_health_sync_title">রেকর্ডিং Drive-এ পৌঁছাচ্ছে না</string>
     <string name="notif_health_sync_text">Google Drive-এ কপি করা কিছুক্ষণ আগে থেমে গেছে। কিছু হারায়নি — রেকর্ডিংগুলো এখনও এই ফোনে আছে — কিন্তু ব্যাকআপ হচ্ছে না। স্টোরেজ সেটিংস দেখতে CallVault খুলুন।</string>
+    <string name="notif_drive_backup_title">Drive ব্যাকআপ কাজ করছে না</string>
+    <string name="notif_drive_backup_text">Drive ব্যাকআপ কাজ করছে না: %1$s। আপনার রেকর্ডিংগুলো এই ফোনে নিরাপদে আছে। পরের নির্ধারিত সময়ে CallVault আবার চেষ্টা করবে।</string>
+    <string name="notif_drive_backup_reason_no_answer">Google Drive সাড়া দিচ্ছে না</string>
+    <string name="notif_drive_backup_reason_folder">Drive ফোল্ডারটি পড়া যাচ্ছে না</string>
     <string name="notif_health_recorder_text_shizuku">Shizuku আবার চালু না হওয়া পর্যন্ত কল রেকর্ড হবে না। রিবুট করলে এটি বন্ধ হয়ে যায়, তাই ফোন রিস্টার্টের পর একবার চালু করতে হয়।</string>
     <string name="settings_offline_recording_reboot_note">রিস্টার্টের পর ফোনটি অন্তত একবার কোনো Wi-Fi নেটওয়ার্কে যুক্ত না হওয়া পর্যন্ত এটি কাজ করে না। যেকোনো নেটওয়ার্ক চলবে, ইন্টারনেট লাগবে না — কয়েক সেকেন্ডই যথেষ্ট। কখন দরকার, CallVault আপনাকে জানাবে।</string>
     <string name="general_stop">থামান</string>

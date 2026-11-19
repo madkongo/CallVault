@@ -827,6 +827,10 @@
     <string name="notif_health_recorder_text">Bu telefon bir Wi-Fi ağına bir kez katılana kadar aramalar kaydedilmeyecek. Herhangi bir ağ olur ve internet gerekmez — birkaç saniye yeterli, sonrasında Wi-Fi dışında bile çalışmaya devam eder.</string>
     <string name="notif_health_sync_title">Kayıtlar Drive’a ulaşmıyor</string>
     <string name="notif_health_sync_text">Google Drive’a kopyalama bir süre önce durdu. Hiçbir şey kaybolmadı — kayıtlar hâlâ bu telefonda — ama yedeklenmiyorlar. Depolama ayarlarınızı denetlemek için CallVault’u açın.</string>
+    <string name="notif_drive_backup_title">Drive yedeklemesi çalışmıyor</string>
+    <string name="notif_drive_backup_text">Drive yedeklemesi çalışmıyor: %1$s. Kayıtlarınız bu telefonda güvende. CallVault bir sonraki planlanan saatte yeniden deneyecek.</string>
+    <string name="notif_drive_backup_reason_no_answer">Google Drive yanıt vermiyor</string>
+    <string name="notif_drive_backup_reason_folder">Drive klasörü okunamıyor</string>
     <string name="notif_health_recorder_text_shizuku">Shizuku yeniden çalışana kadar aramalar kaydedilmeyecek. Yeniden başlatma onu durdurur, bu yüzden telefon yeniden başladıktan sonra bir kez başlatılması gerekir.</string>
     <string name="settings_offline_recording_reboot_note">Yeniden başlatmadan sonra, telefon bir Wi-Fi ağına bir kez katılana kadar bu çalışmaz. Herhangi bir ağ olur ve internet gerekmez — birkaç saniye yeterli. Bunun ne zaman gerektiğini CallVault size söyler.</string>
     <string name="general_stop">Durdur</string>

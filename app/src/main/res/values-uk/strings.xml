@@ -243,6 +243,10 @@
     <string name="notif_health_shizuku_stopped_text">CallVault перезапустив налагодження Android і цим зупинив Shizuku. Якщо використовуєте Shizuku з іншими програмами, запустіть його знову.</string>
     <string name="notif_health_shizuku_stopped_title">Shizuku зупинено</string>
     <string name="notif_health_sync_text">Синхронізація з Google Drive зупинилася. Записи залишаються на телефоні, але резервної копії поки немає. Перевірте налаштування.</string>
+    <string name="notif_drive_backup_title">Резервне копіювання в Drive не працює</string>
+    <string name="notif_drive_backup_text">Резервне копіювання в Drive не працює: %1$s. Ваші записи в безпеці на цьому телефоні. CallVault спробує знову в наступний запланований час.</string>
+    <string name="notif_drive_backup_reason_no_answer">Google Drive не відповідає</string>
+    <string name="notif_drive_backup_reason_folder">не вдається прочитати папку Drive</string>
     <string name="notif_health_sync_title">Записи не копіюються на Drive</string>
     <string name="notif_info_channel">Повідомлення CallVault</string>
     <string name="notif_readiness_pairing_lost_text">Android забув сполучення CallVault. Відкрийте застосунок і налаштуйте його знову.</string>

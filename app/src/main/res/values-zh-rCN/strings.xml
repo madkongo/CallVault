@@ -232,6 +232,10 @@
     <string name="notif_health_shizuku_stopped_text">CallVault 需要重启 Android 的调试服务，这会停止 Shizuku。如果你还用它来支持其他应用，请打开 Shizuku 重新启动。</string>
     <string name="notif_health_shizuku_stopped_title">Shizuku 已停止</string>
     <string name="notif_health_sync_text">复制到 Google 云端硬盘在一段时间前就停止了。没有丢失任何内容——录音仍在本机——但没有备份。请打开 CallVault 检查存储设置。</string>
+    <string name="notif_drive_backup_title">云端硬盘备份无法使用</string>
+    <string name="notif_drive_backup_text">云端硬盘备份无法使用：%1$s。您的录音安全地保存在本机上。CallVault 会在下一个预定时间重试。</string>
+    <string name="notif_drive_backup_reason_no_answer">Google 云端硬盘没有响应</string>
+    <string name="notif_drive_backup_reason_folder">无法读取云端硬盘文件夹</string>
     <string name="notif_health_sync_title">录音没有传到云端硬盘</string>
     <string name="notif_info_channel">CallVault 通知</string>
     <string name="notif_readiness_pairing_lost_text">Android 忘记了 CallVault 的配对，因此无法录制通话。打开 CallVault 并点按状态卡片以重新配对。</string>
