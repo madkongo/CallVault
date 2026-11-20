@@ -104,6 +104,9 @@ class DaemonKeepAliveService : Service() {
     /** Which named causes hold a relaunch back, and when one still gets a safety-net attempt (reviews C130, R8). */
     private val rewarmStandDown = RewarmStandDown(RewarmStandDown.SAFETY_NET_MS)
 
+    /** How long each recorder lived, so a recorder that keeps dying seconds after it starts is not relaunched back to back (R7). */
+    private val deathBudget = RecorderDeathBudget()
+
     /**
      * Decides how to recover, and notices when recovery itself has stopped working.
      *
@@ -748,6 +751,7 @@ class DaemonKeepAliveService : Service() {
                     .onFailure { AppLogger.w(TAG, "Could not capture the USB-debugging log window: ${it.message}") }
             }.apply { isDaemon = true; name = "cv-usb-off-log" }.start()
             watchdogHandler.post {
+            deathBudget.onConnected(SystemClock.elapsedRealtime())
                 val alive = isDaemonAlive()
                 if (alive != (lastReady == true)) {
                     lastReady = alive
@@ -790,6 +794,21 @@ class DaemonKeepAliveService : Service() {
             // relaunch was being throttled — the cause of a long "starting up" window a call would race.
             maybeRewarm(force = true)
         }
+            // A recorder that keeps dying seconds after it starts: after a few, the next relaunch goes through the normal
+            // once-a-minute tick, and the death counts as a failed attempt so the "stuck" notice can show (review R7).
+            // Never during a call or a ring: then the relaunch is as immediate as ever.
+            val verdict = deathBudget.onDeath(SystemClock.elapsedRealtime())
+            if (verdict.tripped && !CallActivity.isActive(applicationContext)) {
+                if (verdict.firstOfRun) {
+                    val line = "keep-alive: the recorder died ${verdict.shortDeathsInWindow} times within " +
+                        "${RecorderDeathBudget.WINDOW_MS / 60_000} min of starting; relaunching at the once-a-minute pace until it stays up"
+                    AppLogger.w(TAG, line)
+                    runCatching { UsbDebuggingEvents.record(applicationContext, line) }
+                }
+                recoveryPolicy.onAttemptFailed()
+                updateNotification(false)
+                return@post
+            }
     }
 
     /**
