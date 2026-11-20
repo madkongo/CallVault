@@ -628,10 +628,10 @@ class DaemonKeepAliveService : Service() {
     }
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
-        // Stand down if the mode changed underneath us. start() guards the entry, but this service
-        // outlives a mode switch, and a keep-alive left over from standalone goes on relaunching the ADB
-        // daemon — which is how an ADB daemon turned up in Shizuku mode after a switch, on the OP9.
-        if (standDownIfShizuku()) return START_NOT_STICKY
+        // It runs in every mode now (P1a), so there is nothing to stand down for. The ADB daemon guarantee is kept
+        // elsewhere: every ADB path here is gated on usesAdb(), which reads the mode each time, so a keep-alive
+        // left over from standalone cannot relaunch our daemon in Shizuku mode (the OP9 bug).
+        logDecisionIfChanged(applicationContext)
 
         val startedForeground = runCatching {
             // While a call is recorded the shared notification shows the recording, with its controls;
@@ -1045,16 +1045,6 @@ class DaemonKeepAliveService : Service() {
 
     override fun onBind(intent: Intent?): IBinder? = null
 
-    /** True when this service has no business running, having stopped itself. */
-    private fun standDownIfShizuku(): Boolean {
-        val prefs = AppPreferences(applicationContext)
-        if (KeepAlivePolicy.shouldRun(prefs.getPrivilegedMode(), prefs.isVoipRecordingEnabled())) return false
-        AppLogger.i(TAG, "Shizuku mode without app calls: the keep-alive has nothing to do; stopping")
-        runCatching { downAlert.onServiceStopping("stood down for Shizuku mode") }
-        stopSelf()
-        return true
-    }
-
     companion object {
         /** How long adbd may take to stop after USB debugging goes off before the off is believed. */
         private const val USB_OFF_SETTLE_MS = 5_000L
@@ -1160,6 +1150,20 @@ class DaemonKeepAliveService : Service() {
         /** Consecutive down reads before relaunching — debounces a transient binder blip into no action. */
         private const val DOWN_STREAK_THRESHOLD = 2
 
+        private val decisionLog = KeepAliveDecisionLog()
+
+        /** Writes why the keep-alive runs (mode, app-calls flag, role) to the always-on log, once per change. */
+        private fun logDecisionIfChanged(context: Context) {
+            runCatching {
+                val prefs = AppPreferences(context)
+                val line = decisionLog.lineIfChanged(
+                    KeepAlivePolicy.decision(prefs.getPrivilegedMode(), prefs.isVoipRecordingEnabled()),
+                ) ?: return
+                AppLogger.i(TAG, line)
+                UsbDebuggingEvents.record(context, line)
+            }.onFailure { AppLogger.w(TAG, "Could not log the keep-alive decision: ${it.message}") }
+        }
+
         /** Start (or no-op if already running) the persistent keep-alive anchor. Safe to call repeatedly. */
         fun start(context: Context) {
             // The user turned recording off — honour it here so EVERY caller (boot, app launch,
@@ -1170,19 +1174,9 @@ class DaemonKeepAliveService : Service() {
                 stop(context)
                 return
             }
-            // Nothing to keep alive in Shizuku mode, and worse than nothing: this service relaunches
-            // OUR daemon and turns Wireless debugging on to do it — on a phone whose owner chose
-            // Shizuku precisely so none of that would happen. Shizuku restarts its own user service
-            // (bound with daemon(true)), so the job this exists for is already someone else's.
-            // In Shizuku mode Shizuku keeps its own user service alive, so this runs only as the app-call
-            // detector — and must not run at all without app calls: it would be a foreground service
-            // watching nothing, on a phone whose owner chose Shizuku so none of ours would run.
-            val prefs = AppPreferences(context)
-            if (!KeepAlivePolicy.shouldRun(prefs.getPrivilegedMode(), prefs.isVoipRecordingEnabled())) {
-                AppLogger.i(TAG, "Shizuku mode without app calls: not starting the keep-alive")
-                stop(context)
-                return
-            }
+            // Runs in every mode (P1a): in Shizuku mode it is the process anchor + status notice (and the app-call
+            // detector when those are on), never our ADB daemon — see [KeepAlivePolicy].
+            logDecisionIfChanged(context)
             val outcome = ForegroundStartGuard.attempt {
                 ContextCompat.startForegroundService(context, Intent(context, DaemonKeepAliveService::class.java))
             }

@@ -64,8 +64,8 @@ object VoipToggleEffects {
         return apply(
             turnOn = turnOn,
             persist = { AppPreferences(app).setVoipRecordingEnabled(it) },
-            // Its onStartCommand re-syncs the detector with the new choice; in Shizuku mode KeepAlivePolicy
-            // starts it only while app calls are on, and stops it when they are turned off.
+            // Its onStartCommand re-syncs the detector with the new choice; the keep-alive runs in every mode
+            // (KeepAlivePolicy); turning app calls off only stops the detector inside it.
             startDetection = { DaemonKeepAliveService.start(app) },
             arm = { VoipCaptureController.sync(app) },
             syncRingListener = { VoipRingListenerAccess.requestSync(app) },

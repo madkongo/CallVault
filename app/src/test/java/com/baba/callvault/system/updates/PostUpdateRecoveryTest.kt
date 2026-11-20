@@ -64,8 +64,8 @@ class PostUpdateRecoveryTest {
         // no foreground service at all — so no VoIP detection and nothing keeping the daemon warm.
         assertTrue(PostUpdateRecovery.plan(PrivilegedMode.STANDALONE, grantSurvived = true).restartKeepAlive)
         assertTrue(PostUpdateRecovery.plan(PrivilegedMode.STANDALONE, grantSurvived = false).restartKeepAlive)
-        assertFalse(
-            "Without app calls there is nothing for it to do in Shizuku mode",
+        assertTrue(
+            "Without app calls it is still the process anchor in Shizuku mode (R4/Q54, N26/Q53)",
             PostUpdateRecovery.plan(PrivilegedMode.SHIZUKU, grantSurvived = true, voipEnabled = false).restartKeepAlive,
         )
         assertTrue(

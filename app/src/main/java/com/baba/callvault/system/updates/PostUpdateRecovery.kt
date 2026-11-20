@@ -53,7 +53,7 @@ internal object PostUpdateRecovery {
         // The one thing that is never conditional.
         ensureRecorder = true,
         restartShizukuService = mode.needsShizuku,
-        // In Shizuku mode it is only the app-call detector, so it comes back only when that is on.
+        // Runs in every mode (P1a): in Shizuku mode it is the process anchor, so it comes back with app calls on or off.
         restartKeepAlive = com.baba.callvault.services.recording.KeepAlivePolicy.shouldRun(mode, voipEnabled),
     )
 }

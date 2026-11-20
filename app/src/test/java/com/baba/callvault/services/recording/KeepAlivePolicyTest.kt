@@ -9,7 +9,9 @@
 package com.baba.callvault.services.recording
 
 import com.baba.callvault.data.PrivilegedMode
+import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
+import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Test
 
@@ -22,9 +24,42 @@ class KeepAlivePolicyTest {
     }
 
     @Test
-    fun `shizuku runs it only to detect app calls`() {
-        assertFalse(KeepAlivePolicy.shouldRun(PrivilegedMode.SHIZUKU, voipEnabled = false))
+    fun `shizuku runs it with app calls on and with app calls off`() {
+        // Owner decision 2026-11-20: without a running keep-alive Android's unused-app hibernation stops the
+        // app and revokes phone permissions (R4/Q54) and an answered call can hit the background foreground
+        // start refusal (N26/Q53). The anchor is needed whether or not app calls are recorded.
+        assertTrue(KeepAlivePolicy.shouldRun(PrivilegedMode.SHIZUKU, voipEnabled = false))
         assertTrue(KeepAlivePolicy.shouldRun(PrivilegedMode.SHIZUKU, voipEnabled = true))
+    }
+
+    @Test
+    fun `every mode and app-calls combination runs, and only standalone may use adb`() {
+        for (mode in PrivilegedMode.entries) for (voip in listOf(false, true)) {
+            val d = KeepAlivePolicy.decision(mode, voip)
+            assertTrue("mode=$mode voip=$voip", d.run)
+            assertTrue("mode=$mode voip=$voip", d.reason.contains("mode=$mode") && d.reason.contains("appCalls=$voip"))
+            assertEquals("mode=$mode voip=$voip", mode == PrivilegedMode.STANDALONE, d.mayUseAdb)
+        }
+    }
+
+    @Test
+    fun `the role of the keep-alive names what it does in each set-up`() {
+        assertEquals(KeepAlivePolicy.Role.DAEMON_WATCHDOG, KeepAlivePolicy.decision(PrivilegedMode.STANDALONE, false).role)
+        assertEquals(KeepAlivePolicy.Role.DAEMON_WATCHDOG, KeepAlivePolicy.decision(PrivilegedMode.STANDALONE, true).role)
+        assertEquals(KeepAlivePolicy.Role.SHIZUKU_ANCHOR, KeepAlivePolicy.decision(PrivilegedMode.SHIZUKU, false).role)
+        assertEquals(KeepAlivePolicy.Role.SHIZUKU_ANCHOR, KeepAlivePolicy.decision(PrivilegedMode.SHIZUKU, true).role)
+    }
+
+    @Test
+    fun `the decision is logged once per change, not on every start`() {
+        val log = KeepAliveDecisionLog()
+        val a = KeepAlivePolicy.decision(PrivilegedMode.SHIZUKU, false)
+        assertTrue(log.lineIfChanged(a)!!.contains("keep-alive runs"))
+        assertNull("same decision again", log.lineIfChanged(a))
+        assertNull(log.lineIfChanged(KeepAlivePolicy.decision(PrivilegedMode.SHIZUKU, false)))
+        val b = KeepAlivePolicy.decision(PrivilegedMode.SHIZUKU, true)
+        assertTrue("flag change is logged", log.lineIfChanged(b)!!.contains("appCalls=true"))
+        assertTrue("mode change is logged", log.lineIfChanged(KeepAlivePolicy.decision(PrivilegedMode.STANDALONE, true))!!.contains("mode=STANDALONE"))
     }
 
     @Test
