@@ -9,7 +9,6 @@
 package com.baba.callvault.services.recording
 
 import android.content.Context
-import android.media.AudioManager
 import android.os.SystemClock
 import com.baba.callvault.data.AppPreferences
 import com.baba.callvault.integrations.adb.AdbShell
@@ -222,15 +221,8 @@ object MicOpAutoHeal {
         return MicOpReport.heldMicOps(dump).filter { it.uid == uid }
     }
 
-    private fun callOrRecordingActive(context: Context): Boolean {
-        // The carrier recording service holds the shared notification for as long as it is in the foreground,
-        // including a ringing call it is only offering to record.
-        if (SharedStatusNotice.isHeldByRecording) return true
-        if (VoipRecordingCoordinator.isRecording) return true
-        val mode = runCatching { context.getSystemService(AudioManager::class.java)?.mode }.getOrNull()
-        if (mode != null && mode != AudioManager.MODE_NORMAL) return true
-        return VoipTelephonyGate.managedCallInProgress(context)
-    }
+    /** Any call in progress or ringing, app calls included (review C54); see [CallActivity]. */
+    private fun callOrRecordingActive(context: Context): Boolean = CallActivity.isActive(context)
 
     /** The six inputs of [MicOpHealPolicy.canRelaunch], kept together so they can be logged. */
     private data class RelaunchInputs(
