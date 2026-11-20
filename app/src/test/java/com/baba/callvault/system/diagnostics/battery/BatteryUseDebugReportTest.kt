@@ -43,7 +43,7 @@ class BatteryUseDebugReportTest {
         val report = runBlocking {
             AppLogger.buildShareableReport(app) { entries ->
                 BatteryUseCollector.section(
-                    BatteryUseCollector.Fetched(dump, null), "com.baba.callvault", appUid = 10234, recorderUid = 2000, logEntries = entries,
+                    BatteryUseCollector.Fetched(dump, null), "com.baba.callvault", appUid = 10234, logEntries = entries,
                 )
             }
         }!!.readText()
@@ -63,7 +63,7 @@ class BatteryUseDebugReportTest {
             AppLogger.buildShareableReport(app) {
                 BatteryUseCollector.section(
                     BatteryUseCollector.Fetched(null, "recorder not connected, and Shizuku mode has no ADB fallback"),
-                    "com.baba.callvault", appUid = 10234, recorderUid = 2000, logEntries = null,
+                    "com.baba.callvault", appUid = 10234, logEntries = null,
                 )
             }
         }!!.readText()
@@ -75,9 +75,19 @@ class BatteryUseDebugReportTest {
     @Test
     fun `an answer without since-charge numbers is a gap, not an empty section`() {
         val section = BatteryUseCollector.section(
-            BatteryUseCollector.Fetched("Permission Denial: can't dump BatteryStats", null), "com.baba.callvault", 10234, 2000, null,
+            BatteryUseCollector.Fetched("Permission Denial: can't dump BatteryStats", null), "com.baba.callvault", 10234, null,
         )
         assertTrue(section.gap!!, section.gap!!.startsWith("battery use (batterystats answered without"))
+    }
+
+    @Test
+    fun `the recorder's uid is taken from its cut, a raw ADB answer is the shell's`() {
+        val raw = fixture("batterystats_checkin_a11_root.txt")
+        val rootCut = BatteryCheckin.cut(raw.lineSequence(), "com.baba.callvault", 0, null)
+        val fromRoot = BatteryUseCollector.section(BatteryUseCollector.Fetched(rootCut, null), "com.baba.callvault", 10301, null)
+        assertTrue(fromRoot.lines.toString(), fromRoot.lines.any { it.startsWith("Root uid 0") })
+        val fromAdb = BatteryUseCollector.section(BatteryUseCollector.Fetched(raw, null), "com.baba.callvault", 10301, null)
+        assertFalse(fromAdb.lines.any { it.startsWith("Root uid 0") })
     }
 
     @Test

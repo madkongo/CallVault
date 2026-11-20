@@ -73,6 +73,17 @@ object BatteryCheckin {
     /** True when [text] is already a cut (from the recorder) rather than a raw dump. */
     fun isCut(text: String): Boolean = text.startsWith(HEADER)
 
+    /** The uid the recorder that made the cut [text] runs as, from its header; null for a raw dump. */
+    fun recorderUidOf(text: String): Int? = headerValue(text, "recorder_uid")
+
+    /** The app uid the cut [text] was made for, from its header; null for a raw dump or an unknown uid. */
+    fun appUidOf(text: String): Int? = headerValue(text, "app_uid")
+
+    private fun headerValue(text: String, key: String): Int? {
+        if (!isCut(text)) return null
+        return text.lineSequence().first().substringAfter(" $key=", "").takeWhile { it.isDigit() }.toIntOrNull()
+    }
+
     /**
      * The rows of [lines] that are about us, bounded to [maxChars], as text starting with [HEADER].
      *

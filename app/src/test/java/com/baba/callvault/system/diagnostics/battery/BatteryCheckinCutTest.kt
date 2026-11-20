@@ -81,6 +81,13 @@ class BatteryCheckinCutTest {
     }
 
     @Test
+    fun `the recorder's uid is read back from the header`() {
+        assertEquals(0, BatteryCheckin.recorderUidOf(cut("batterystats_checkin_a11_root.txt", recorderUid = 0)))
+        assertEquals(2000, BatteryCheckin.recorderUidOf(cut("batterystats_checkin_a14.txt")))
+        assertEquals(null, BatteryCheckin.recorderUidOf(fixture("batterystats_checkin_a14.txt")))
+    }
+
+    @Test
     fun `history rows are dropped`() {
         val out = cut("batterystats_checkin_a16_extra_fields.txt")
         assertFalse(out, out.lines().any { it.startsWith("9,h,") || it.startsWith("9,hsp,") })

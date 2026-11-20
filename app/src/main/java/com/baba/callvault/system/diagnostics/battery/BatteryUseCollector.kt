@@ -53,13 +53,16 @@ object BatteryUseCollector {
         val pending = scope.async { runCatching { fetch() }.getOrElse { Fetched(null, "reading it failed: ${it.javaClass.simpleName}") } }
         val fetched = withTimeoutOrNull(budgetMs) { pending.await() }
             ?: Fetched(null, "not collected within ${budgetMs / 1000} s").also { scope.cancel() }
-        val recorderUid = runCatching { RecorderConnection.service?.hostUid() }.getOrNull() ?: BatteryCheckin.SHELL_UID
-        return section(fetched, context.packageName, context.applicationInfo.uid, recorderUid, logEntries)
+        return section(fetched, context.packageName, context.applicationInfo.uid, logEntries)
     }
 
-    /** Pure: the section for [fetched]. */
-    fun section(fetched: Fetched, packageName: String, appUid: Int, recorderUid: Int, logEntries: List<String>?): Section {
+    /**
+     * Pure: the section for [fetched]. The recorder's uid comes from its cut's header (one binder call, not two);
+     * a raw answer came from the app's ADB shell, which is the shell user.
+     */
+    fun section(fetched: Fetched, packageName: String, appUid: Int, logEntries: List<String>?): Section {
         val text = fetched.text ?: return missing(fetched.whyMissing ?: "batterystats gave nothing")
+        val recorderUid = BatteryCheckin.recorderUidOf(text) ?: BatteryCheckin.SHELL_UID
         val use = BatteryUseParser.parse(text, packageName, recorderUid, appUid)
             ?: return missing("batterystats answered without the since-charge numbers: refused or not a checkin dump")
         val counts = logEntries?.let { RecorderActivityCounts.count(it, use.sinceMillis) }

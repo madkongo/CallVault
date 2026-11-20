@@ -28,7 +28,7 @@ object BatteryUseParser {
     fun parse(text: String, ownPackage: String, recorderUid: Int, knownAppUid: Int?): BatteryUse? {
         val cut = if (BatteryCheckin.isCut(text)) text else BatteryCheckin.cut(text.lineSequence(), ownPackage, recorderUid, knownAppUid)
         val lines = cut.lines()
-        val appUid = knownAppUid ?: headerAppUid(lines.firstOrNull())
+        val appUid = knownAppUid ?: BatteryCheckin.appUidOf(cut)
         val allRows = lines.mapNotNull { BatteryCheckin.row(it) }
         val rows = allRows.filter { it.category == "l" }
         val bt = rows.global("bt") ?: return null
@@ -73,9 +73,6 @@ object BatteryUseParser {
         }
         return null
     }
-
-    private fun headerAppUid(header: String?): Int? =
-        header?.takeIf { it.startsWith(BatteryCheckin.HEADER) }?.substringAfter("app_uid=", "")?.takeWhile { it.isDigit() }?.toIntOrNull()
 
     /** Device-wide rows are uid 0 with a type root's per-uid rows never use. */
     private fun List<Row>.global(type: String): Row? = firstOrNull { it.uid == BatteryCheckin.ROOT_UID && it.type == type }
