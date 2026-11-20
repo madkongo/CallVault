@@ -68,12 +68,53 @@ class NewerApiListenersStayInGatedClassesTest {
         assertEquals(listOf(2), ungatedCreations(subclass))
     }
 
+    @Test
+    fun `the scan finds a newer-API type anywhere in a supertype list`() {
+        val anonymous = """
+            class Watcher {
+                private val callback = object : AudioManager.AudioPlaybackCallback(), AudioManager.OnModeChangedListener {
+                }
+            }
+        """.trimIndent().lines()
+        val secondInterface = """
+            class Service {
+                private inner class Callback : Base(), TelephonyCallback.CallStateListener {
+                }
+            }
+        """.trimIndent().lines()
+        val interfaceOnly = """
+            class Holder {
+                private inner class Listener(private val am: AudioManager) : OnModeChangedListener {
+                }
+            }
+        """.trimIndent().lines()
+        val notACreation = """
+            class Holder {
+                fun register(executor: Executor, listener: AudioManager.OnModeChangedListener) = Unit
+                fun current(): TelephonyCallback? = null
+            }
+        """.trimIndent().lines()
+
+        assertEquals(listOf(2), ungatedCreations(anonymous))
+        assertEquals(listOf(2), ungatedCreations(secondInterface))
+        assertEquals(listOf(2), ungatedCreations(interfaceOnly))
+        assertEquals(emptyList<Int>(), ungatedCreations(notACreation))
+    }
+
     /** 1-based line numbers where a newer-API type is created outside a `@RequiresApi` class. */
     private fun ungatedCreations(lines: List<String>): List<Int> = lines.indices.filter { i ->
         val code = lines[i].trimStart()
         val isComment = code.startsWith("//") || code.startsWith("*") || code.startsWith("/*")
-        !isComment && creation.containsMatchIn(lines[i]) && !isGated(lines, enclosingDeclaration(lines, i))
+        !isComment && createsNewerApiType(lines[i]) && !isGated(lines, enclosingDeclaration(lines, i))
     }.map { it + 1 }
+
+    /** A SAM lambda (`Type {`), or the type anywhere in the supertype list of an `object :` or a class declaration. */
+    private fun createsNewerApiType(line: String): Boolean {
+        if (samLambda.containsMatchIn(line)) return true
+        if (line.contains(Regex("""\bfun\s"""))) return false
+        val supertypes = supertypeList.find(line)?.groupValues?.get(1) ?: return false
+        return newerType.containsMatchIn(supertypes)
+    }
 
     /** The innermost class or object declared at, or around, [index]; -1 for top-level code. */
     private fun enclosingDeclaration(lines: List<String>, index: Int): Int {
@@ -111,8 +152,13 @@ class NewerApiListenersStayInGatedClassesTest {
         )
         private val names = NEWER_API_TYPES.joinToString("|")
 
-        /** A SAM lambda (`Type {`), an anonymous object (`object : Type`) or a subclass (`: Type(`). */
-        val creation = Regex("""\b(?:$names)\s*\{|object\s*:\s*(?:[\w.]*\.)?(?:$names)\b|:\s*(?:[\w.]*\.)?(?:$names)\s*\(""")
+        val samLambda = Regex("""\b(?:$names)\s*\{""")
+
+        /** One of the types, bare or qualified (`AudioManager.OnModeChangedListener`, `TelephonyCallback.CallStateListener`). */
+        val newerType = Regex("""\b(?:$names)\b""")
+
+        /** What follows the colon of `object :`, of `class Name :` or of a primary constructor's `) :`. */
+        val supertypeList = Regex("""(?:\bobject\s*(?:\w+\s*)?|\b(?:class|interface)\s+\w+(?:<[^>]*>)?\s*|\)\s*):\s*(.*)""")
 
         val declaration = Regex("""^\s*(?:[a-z]+\s+)*(?:class|object|interface)\s+\w+""")
     }
