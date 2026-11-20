@@ -61,8 +61,20 @@ object PhoneProfileReader {
             }.getOrNull()),
             blockedChannels = blockedChannels(context),
             usbDefault = runCatching { UsbDefaultConfig.cached(context).name.lowercase() }.getOrDefault("?"),
+            conflictingApps = conflictingApps(context),
         )
     }
+
+    /**
+     * Which of the fixed [KnownConflictingApps] packages are installed. A read-only lookup by exact name, answered for
+     * launcher apps through the manifest's LAUNCHER <queries>; the installed-app list is never enumerated.
+     */
+    private fun conflictingApps(context: Context): List<String> = runCatching {
+        val pm = context.packageManager
+        KnownConflictingApps.packageNames(KnownConflictingApps.detect { name ->
+            try { pm.getPackageInfo(name, 0); true } catch (_: android.content.pm.PackageManager.NameNotFoundException) { false }
+        })
+    }.getOrDefault(emptyList())
 
     /**
      * "Pause app activity if unused": androidx answers per ROM (Android 11+, and the Play-services backport), so a

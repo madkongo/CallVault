@@ -36,6 +36,11 @@ class PhoneRulesCoverageTest {
         return (q + u).toSet()
     }
 
+    private fun appIdsInCatalogue(): Set<String> =
+        Regex("^\\| (A\\d+) \\|", RegexOption.MULTILINE).findAll(catalogue()).map { it.groupValues[1] }.toSet()
+
+    private val appRegistryIds get() = PhoneRules.appEntries.map { it.id }.toSet()
+
     @Test
     fun everyCatalogueIdHasARegistryEntry() {
         val missing = idsInCatalogue() - PhoneRules.ids
@@ -56,8 +61,55 @@ class PhoneRulesCoverageTest {
     }
 
     @Test
+    fun everyAppConflictInTheCatalogueHasARegistryEntry() {
+        val missing = appIdsInCatalogue() - appRegistryIds
+        assertTrue("A-ids with no PhoneRules entry: $missing", missing.isEmpty())
+    }
+
+    @Test
+    fun everyAppRegistryIdIsInTheCatalogue() {
+        val stray = appRegistryIds - appIdsInCatalogue()
+        assertTrue("A-ids in PhoneRules missing from device-quirks.md: $stray", stray.isEmpty())
+    }
+
+    @Test
+    fun appCatalogueHasAllNineteen() {
+        assertEquals((1..19).map { "A$it" }.toSet(), appIdsInCatalogue())
+    }
+
+    @Test
+    fun appIdsAreKeptOutOfTheQuirkIdSet() {
+        assertTrue(PhoneRules.ids.none { it.startsWith("A") })
+        assertTrue(PhoneRules.entries.none { it.id.startsWith("A") })
+    }
+
+    @Test
+    fun packageListKindMatchesTheFixedPackageTable() {
+        val listed = PhoneRules.appEntries.filter { it.kind == DetectionKind.PACKAGE_LIST }.map { it.id }.toSet()
+        assertEquals("PACKAGE_LIST ids must be exactly the ids the package table covers", KnownConflictingApps.coveredIds, listed)
+    }
+
+    @Test
+    fun everyAppCrossReferenceNamesARealQuirk() {
+        val refs = Regex("\\| Other apps \\| ([^|]*?) \\(see section F\\)").findAll(catalogue())
+            .flatMap { it.groupValues[1].split(",") }.map { it.trim() }.toSet()
+        assertTrue("cross-references name unknown A-ids: ${refs - appIdsInCatalogue()}", appIdsInCatalogue().containsAll(refs))
+        assertTrue(refs.isNotEmpty())
+    }
+
+    @Test
+    fun appQuirkCrossReferencesRunBothWays() {
+        val text = catalogue()
+        // Q07 <-> A5 and U7 <-> A2, the pairs the owner named.
+        assertTrue(Regex("^### Q07 .*\\n\\| \\| \\|\\n\\|---\\|---\\|\\n\\| Other apps \\| A5", RegexOption.MULTILINE).containsMatchIn(text))
+        assertTrue(Regex("^\\| U7 \\|.*Other apps: A2", RegexOption.MULTILINE).containsMatchIn(text))
+        assertTrue(Regex("^\\| A5 \\|.*Q07").containsMatchIn(text.lines().first { it.startsWith("| A5 |") }))
+        assertTrue(text.lines().first { it.startsWith("| A2 |") }.contains("U7"))
+    }
+
+    @Test
     fun notDetectableEntriesCarryAReason() {
-        val bad = PhoneRules.entries.filter {
+        val bad = (PhoneRules.entries + PhoneRules.appEntries).filter {
             it.kind == DetectionKind.NOT_DETECTABLE && it.reason.isNullOrBlank()
         }.map { it.id }
         assertTrue("Not-detectable without a reason: $bad", bad.isEmpty())
