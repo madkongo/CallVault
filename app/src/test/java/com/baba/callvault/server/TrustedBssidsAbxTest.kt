@@ -61,4 +61,27 @@ class TrustedBssidsAbxTest {
 
         assertEquals(emptySet<String>(), WirelessDebuggingApproval.parseTrustedBssids(dump(text)))
     }
+
+    @Test
+    fun `a newline in the binary data followed by a brace or a name= does not end the keystore early`() {
+        // 0x0A is an ordinary byte in ABX (a length or an index of 10); only the dump's own lines end the field.
+        val abx = "ABX\u0000\u001111:11:11:11:11:113\n}\u0000\u001122:22:22:22:22:223" +
+            "\nabc=\u0000\u001133:33:33:33:33:333\n  }x\u0000\u001144:44:44:44:44:443"
+
+        assertEquals(
+            setOf("11:11:11:11:11:11", "22:22:22:22:22:22", "33:33:33:33:33:33", "44:44:44:44:44:44"),
+            WirelessDebuggingApproval.parseTrustedBssids(dump(abx)),
+        )
+    }
+
+    @Test
+    fun `the keystore ends at the next field at its own indentation or at its parent's closing brace`() {
+        val nextField = "ADB MANAGER STATE (dumpsys adb):\n  debugging_manager={\n    keystore=<wifiAP bssid=\"aa:bb:cc:dd:ee:ff\"/>\n" +
+            "    other_field=11:22:33:44:55:66\n  }\n}"
+        val closingBrace = "ADB MANAGER STATE (dumpsys adb):\n  debugging_manager={\n    keystore=<wifiAP bssid=\"aa:bb:cc:dd:ee:ff\"/>\n" +
+            "  }\n  other_manager={\n    note=11:22:33:44:55:66\n  }\n}"
+
+        assertEquals(setOf("aa:bb:cc:dd:ee:ff"), WirelessDebuggingApproval.parseTrustedBssids(nextField))
+        assertEquals(setOf("aa:bb:cc:dd:ee:ff"), WirelessDebuggingApproval.parseTrustedBssids(closingBrace))
+    }
 }
