@@ -121,6 +121,8 @@ class WifiJoinMonitor(
             lastCheckAt = elapsed()
         }
         val config = runCatching { confirm() }.getOrElse {
+            // Caught, not thrown on: keep the flag so whoever interrupted this thread still sees it.
+            if (it is InterruptedException) Thread.currentThread().interrupt()
             note(warn = true, "skipped: could not confirm with the app that approving is still wanted (asking threw ${FailureChain.describe(it)}); nothing approved")
             return
         }

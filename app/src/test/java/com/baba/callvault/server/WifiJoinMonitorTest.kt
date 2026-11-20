@@ -270,6 +270,23 @@ class WifiJoinMonitorTest {
     }
 
     @Test
+    fun `an interrupted ask of the app keeps the thread's interrupt flag`() {
+        val m = monitor()
+        m.arm(true, emptySet(), "salt")
+        confirmThrows = InterruptedException("stopping")
+
+        watch.deliver("100")
+        try {
+            runner.runPending()
+            assertTrue("interrupt flag restored", Thread.currentThread().isInterrupted)
+        } finally {
+            Thread.interrupted()
+        }
+        assertTrue(asked.isEmpty())
+        assertTrue(events.last().text, events.last().text.contains("InterruptedException: stopping"))
+    }
+
+    @Test
     fun `nothing is approved when the app cannot confirm the setting is still on`() {
         val m = monitor()
         m.arm(true, emptySet(), "salt")
