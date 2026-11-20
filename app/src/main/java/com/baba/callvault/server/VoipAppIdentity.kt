@@ -59,7 +59,8 @@ internal object VoipAppIdentity {
      */
     internal fun isAppUid(uid: Int): Boolean = uid >= APP_UID_START
 
-    private const val DUMP_TIMEOUT_MS = 1_500L
+    /** A wedge ceiling, not a speed target: the old read never bounded anything, so a slow healthy phone always got its answer. */
+    private const val DUMP_TIMEOUT_MS = 10_000L
 
     /** Total time to keep looking before giving up, and the gap between attempts. */
     private const val RESOLVE_BUDGET_MS = 1_200L
@@ -217,20 +218,10 @@ internal object VoipAppIdentity {
 
     private val MODE_OWNER_UID_REGEX = Regex("""mUid=(\d+)""")
 
-    private fun readAudioDump(): String? {
+    internal fun readAudioDump(shellPath: String = SHELL, timeoutMs: Long = DUMP_TIMEOUT_MS): String? =
         // Absolute path, not "sh": a bare name resolves through PATH, and the daemon should not
         // depend on an environment it does not own. Safe to hard-code — the caller already treats a
         // failure to start as "owner unknown", so a device without it behaves as one without a
-        // usable `sh` does today.
-        val process = ProcessBuilder(SHELL, "-c", "dumpsys audio").redirectErrorStream(true).start()
-        return try {
-            val text = process.inputStream.bufferedReader().readText()
-            if (!process.waitFor(DUMP_TIMEOUT_MS, java.util.concurrent.TimeUnit.MILLISECONDS)) {
-                process.destroy()
-            }
-            text.takeIf { it.isNotBlank() }
-        } finally {
-            runCatching { process.destroy() }
-        }
-    }
+        // usable `sh` does today. Bounded for real, and a cut-short dump is dropped rather than parsed (C67).
+        BoundedProcess.runText(arrayOf(shellPath, "-c", "dumpsys audio"), timeoutMs, TAG)
 }

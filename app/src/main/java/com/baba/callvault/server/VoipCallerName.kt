@@ -32,7 +32,12 @@ internal object VoipCallerName {
 
     private const val TAG = "CV:VoipName"
 
-    private const val DUMP_TIMEOUT_MS = 1_500L
+    /**
+     * How long one dump may take. 1.5 s was the intent, but the old read never honoured it, so a slow healthy phone
+     * (the whole-dump fallback is megabytes) always got its answer eventually; a bound that bites at 1.5 s would turn
+     * those into "no notification". This is a wedge ceiling, not a speed target.
+     */
+    private const val DUMP_TIMEOUT_MS = 10_000L
     private const val MAX_NAME_LENGTH = 40
 
     /** Characters unsafe or annoying in a filename, plus anything non-printable. */
@@ -267,17 +272,8 @@ internal object VoipCallerName {
 
     private fun readNotificationDump(): String? = shell("dumpsys notification --noredact")
 
-    private fun shell(command: String): String? {
+    internal fun shell(command: String, shellPath: String = SHELL, timeoutMs: Long = DUMP_TIMEOUT_MS): String? =
         // Absolute path — see VoipAppIdentity. resolve() already returns null on any failure, so a
-        // missing shell costs the caller name and nothing else.
-        val proc = ProcessBuilder(SHELL, "-c", command)
-            .redirectErrorStream(true).start()
-        return try {
-            val text = proc.inputStream.bufferedReader().readText()
-            if (!proc.waitFor(DUMP_TIMEOUT_MS, java.util.concurrent.TimeUnit.MILLISECONDS)) proc.destroy()
-            text.takeIf { it.isNotBlank() }
-        } finally {
-            runCatching { proc.destroy() }
-        }
-    }
+        // missing shell costs the caller name and nothing else. Bounded for real (C67).
+        BoundedProcess.runText(arrayOf(shellPath, "-c", command), timeoutMs, TAG)
 }
