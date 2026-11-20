@@ -128,4 +128,26 @@ class HostAudioRecordBuildTest {
         assertNull(r)
         assertEquals(listOf(1, 1, 0), listOf(c.builds, c.bypasses, c.repairs))
     }
+
+    @Test
+    fun any_other_failure_goes_to_the_callers_own_log_line() {
+        val boom = SecurityException("EX_SECURITY")
+        var logged: Throwable? = null
+        HostAudioRecord.buildWithRecovery<String>(
+            "test",
+            build = { throw boom },
+            bypass = { "bypass" },
+            repair = { true },
+            onOtherFailure = { logged = it },
+        )
+        assertEquals(boom, logged)
+    }
+
+    /** Review N21 (1c): a non-vendor sink failure is logged exactly as before — error level, with the throwable. */
+    @Test
+    fun the_sink_keeps_its_old_error_line_for_other_failures() {
+        val root = listOf(java.io.File("src/main/java"), java.io.File("app/src/main/java")).first { it.isDirectory }
+        val source = java.io.File(root, "com/baba/callvault/server/VoipAudioPolicy.kt").readText()
+        org.junit.Assert.assertTrue(source.contains("AppLogger.e(TAG, \"createSink failed: \${error.message}\", error)"))
+    }
 }

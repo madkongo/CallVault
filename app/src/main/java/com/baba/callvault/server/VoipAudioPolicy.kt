@@ -163,6 +163,7 @@ internal object VoipAudioPolicy {
             },
             bypass = { createSinkBypassingConstructor(m) },
             repair = ShellApplication::install,
+            onOtherFailure = { error -> AppLogger.e(TAG, "createSink failed: ${error.message}", error) },
         )
         if (ar == null || ar.state != AudioRecord.STATE_INITIALIZED) {
             AppLogger.w(TAG, "VoIP sink did not initialise (state=${ar?.state})")

@@ -50,6 +50,9 @@ internal object HostAudioRecord {
                 )
             },
             repair = ShellApplication::install,
+            onOtherFailure = { error ->
+                AppLogger.w(TAG, "$what: AudioRecord(source=$source) threw: ${error.javaClass.simpleName}: ${error.message}")
+            },
         )
 
     /**
@@ -65,13 +68,20 @@ internal object HostAudioRecord {
      *
      * Every failure is logged with its reason. Any other failure of [build] is logged and returns null, untouched.
      */
-    internal fun <T : Any> buildWithRecovery(what: String, build: () -> T?, bypass: () -> T, repair: () -> Boolean): T? {
+    internal fun <T : Any> buildWithRecovery(
+        what: String,
+        build: () -> T?,
+        bypass: () -> T,
+        repair: () -> Boolean,
+        onOtherFailure: (Throwable) -> Unit = { error ->
+            AppLogger.w(TAG, "$what: AudioRecord constructor threw: ${error.javaClass.simpleName}: ${error.message}")
+        },
+    ): T? {
         val normal = runCatching(build)
         if (normal.isSuccess) return normal.getOrNull()
         val error = normal.exceptionOrNull()!!
         if (!VendorConstructorCrash.matches(error)) {
-            val root = VendorConstructorCrash.rootCause(error)
-            AppLogger.w(TAG, "$what: AudioRecord constructor threw: ${root.javaClass.simpleName}: ${root.message}")
+            onOtherFailure(error)
             return null
         }
         AppLogger.w(TAG, "$what: the ROM's AudioRecord constructor crashed without a Context " +
