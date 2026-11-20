@@ -285,8 +285,12 @@ internal class VoipCaptureSession(
         }
     }
 
+    /** Whether the capture was ever paused (by the user or an answer hold); says how to read "nothing recorded". */
+    @Volatile private var pauseSeen = false
+
     /** Pauses or resumes the encode. Safe to call when nothing is recording; it simply arms the flag. */
     fun setPaused(paused: Boolean) {
+        if (paused) pauseSeen = true
         pauseRequested.set(paused)
         AppLogger.i(TAG, "VoIP capture ${if (paused) "paused" else "resumed"} by the user")
     }
@@ -428,7 +432,7 @@ internal class VoipCaptureSession(
             syncSummary = ledger.summary(totalFrames, System.nanoTime() - startedNanos) +
                 " firstSecondPeak near=$firstSecNear far=$firstSecFar"
             AppLogger.i(TAG, syncSummary)
-            FarAudibilityLine.atEnd(farPartyHeard, totalFrames)?.let {
+            FarAudibilityLine.atEnd(farPartyHeard, totalFrames, pauseSeen)?.let {
                 if (it.warn) AppLogger.w(TAG, it.text) else AppLogger.i(TAG, it.text)
             }
         } finally {
