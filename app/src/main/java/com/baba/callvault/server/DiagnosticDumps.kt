@@ -9,6 +9,7 @@
 package com.baba.callvault.server
 
 import com.baba.callvault.system.diagnostics.SystemLogFilter
+import com.baba.callvault.system.diagnostics.battery.BatteryCheckin
 import com.baba.callvault.utils.AppLogger
 
 /**
@@ -195,6 +196,11 @@ object DiagnosticDumps {
         )
         // vivo's audio switches, read-only — e.g. persist.sys.audio.vapc.record.share_record.enable, which its
         // policy XML ships "off" (iQOO firmware dump, 2026-09-28). Harmless elsewhere: matches nothing.
+        // Battery use since the last full charge, for a drain report: Settings books the recorder (shell uid) and
+        // adbd under "Android System", so only batterystats has our real cost. `-c` is the CSV form; our own package
+        // as the last argument drops the history. Never `--checkin`: that one deletes the system's saved checkin.
+        // Fixed argv, no shell; any argument is ignored. Cut to our uids in this process (see runBatteryStats).
+        BATTERY_STATS -> arrayOf(DUMPSYS, "batterystats", "-c", com.baba.callvault.BuildConfig.APPLICATION_ID)
         "vivo_audio_props" -> arrayOf(
             SH, "-c",
             "/system/bin/getprop | grep -iE 'vapc|vivo.*audio|audio.*vivo|liveapp|remote_?submix' | head -n 40",
@@ -227,6 +233,7 @@ object DiagnosticDumps {
     fun run(key: String, arg: String?): String? {
         if (key == LOGCAT_OURS) return runLogcatOurs(arg)
         if (key == LOGCAT_LIFECYCLE) return runLifecycle()
+        if (key == BATTERY_STATS) return runBatteryStats()
         val command = commandFor(key, arg) ?: run {
             AppLogger.w(TAG, "refused unknown diagnostic dump '$key'")
             return null
@@ -242,6 +249,13 @@ object DiagnosticDumps {
     }
 
     private const val LOGCAT_OURS = "logcat_ours"
+    private const val BATTERY_STATS = "battery_stats"
+
+    /**
+     * Shorter than the other dumps: the debug report waits on this one, and batterystats first syncs its external
+     * sources (modem, Wi-Fi, energy rails), which can stall on a busy phone.
+     */
+    private const val BATTERY_TIMEOUT_MS = 15_000L
     private const val LOGCAT_LIFECYCLE = "logcat_lifecycle"
 
     /** Characters the crash and event slice may send: ~500 KB as UTF-16, under the binder's 1 MB with room to spare. */
@@ -265,6 +279,32 @@ object DiagnosticDumps {
             }
             SystemLogFilter.render(cut.copy(partial = outcome.partial?.let { "the slice $it" }))
         }.onFailure { AppLogger.w(TAG, "diagnostic dump '$LOGCAT_LIFECYCLE' failed: ${it.message}") }.getOrNull()
+    }
+
+    /**
+     * `dumpsys batterystats -c` cut down IN THIS PROCESS to the app's uid, the shell uid, root when this recorder is
+     * root, and the device-wide rows ([BatteryCheckin.cut]). The raw answer holds every app's wake-lock names and
+     * the installed-package list; none of it crosses the binder. The app's uid comes from the dump's own uid map, so
+     * the caller's argument is never read.
+     */
+    private fun runBatteryStats(): String? {
+        val command = commandFor(BATTERY_STATS, null) ?: return null
+        val recorderUid = android.os.Process.myUid()
+        return runCatching {
+            val outcome = BoundedProcess.run(command, BATTERY_TIMEOUT_MS) {
+                BatteryCheckin.cut(
+                    it.bufferedReader().lineSequence(),
+                    com.baba.callvault.BuildConfig.APPLICATION_ID,
+                    recorderUid,
+                    knownAppUid = null,
+                )
+            }
+            val cut = outcome.value ?: run {
+                AppLogger.w(TAG, "diagnostic dump '$BATTERY_STATS' gave nothing (${outcome.partial})")
+                return null
+            }
+            outcome.partial?.let { "$cut# partial: batterystats $it\n" } ?: cut
+        }.onFailure { AppLogger.w(TAG, "diagnostic dump '$BATTERY_STATS' failed: ${it.message}") }.getOrNull()
     }
 
     /**
