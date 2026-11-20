@@ -17,6 +17,7 @@ import com.baba.callvault.server.KeptSwitchReport
 import com.baba.callvault.server.KeptSwitchResult
 import com.baba.callvault.server.RecorderConnection
 import com.baba.callvault.utils.AppLogger
+import com.baba.callvault.utils.FailureChain
 import java.util.concurrent.atomic.AtomicBoolean
 
 /**
@@ -64,7 +65,7 @@ class ShizukuWifiApproval(
             val known = prefs.getApprovedAccessPointKeys(clock()).toTypedArray()
             val raw = runCatching { askRecorder(known, prefs.getAccessPointKeySalt()) }
                 .getOrElse {
-                    log(warn = true, "failed: the recorder call threw ${it.javaClass.simpleName}: ${it.message}")
+                    log(warn = true, "failed: the recorder call threw ${FailureChain.describe(it)}")
                     return Result(decision, recorder = null)
                 }
             val answer = KeptSwitchResult.decode(raw)
@@ -97,7 +98,7 @@ class ShizukuWifiApproval(
         val line = "Wi-Fi approval (Shizuku): $text"
         if (warn) AppLogger.w(TAG, line) else AppLogger.i(TAG, line)
         runCatching { TransportTimeline.event(context, line) }
-            .onFailure { AppLogger.w(TAG, "Could not write the transport timeline: ${it.message}") }
+            .onFailure { AppLogger.w(TAG, "Could not write the transport timeline: ${FailureChain.describe(it)}") }
     }
 
     companion object {

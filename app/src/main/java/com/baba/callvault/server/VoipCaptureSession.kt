@@ -285,8 +285,12 @@ internal class VoipCaptureSession(
         }
     }
 
+    /** Whether the capture was ever paused (by the user or an answer hold); says how to read "nothing recorded". */
+    @Volatile private var pauseSeen = false
+
     /** Pauses or resumes the encode. Safe to call when nothing is recording; it simply arms the flag. */
     fun setPaused(paused: Boolean) {
+        if (paused) pauseSeen = true
         pauseRequested.set(paused)
         AppLogger.i(TAG, "VoIP capture ${if (paused) "paused" else "resumed"} by the user")
     }
@@ -428,8 +432,8 @@ internal class VoipCaptureSession(
             syncSummary = ledger.summary(totalFrames, System.nanoTime() - startedNanos) +
                 " firstSecondPeak near=$firstSecNear far=$firstSecFar"
             AppLogger.i(TAG, syncSummary)
-            if (!farPartyHeard) {
-                AppLogger.w(TAG, "Far party was never audible — this app blocks capture, or the OEM did not attach the call to our mix")
+            FarAudibilityLine.atEnd(farPartyHeard, totalFrames, pauseSeen)?.let {
+                if (it.warn) AppLogger.w(TAG, it.text) else AppLogger.i(TAG, it.text)
             }
         } finally {
             readers.forEach { it.interrupt() }
@@ -464,7 +468,7 @@ internal class VoipCaptureSession(
     private fun feeder(q: BlockingQueue<Chunk>, side: VoipSyncLedger.Side) = Thread {
         val tag = side.name
         val buf = ByteArray(CHUNK_BYTES)
-        var silentChunks = 0
+        val quiet = QuietMicStreak(SILENT_CHUNKS_BEFORE_RETAKE)
         var current: AudioRecord? = null
         var frameIndex = 0L
         var firstReadLogged = false
@@ -526,10 +530,12 @@ internal class VoipCaptureSession(
             // heard everything while our capture held the mic, so the VoIP app keeps transmitting
             // regardless of what the arbitration reports. Only the NEAR source needs this — the far
             // party arrives through the policy submix, outside the mic arbitration entirely.
+            //
+            // Not while paused (review N20): nothing is encoded then, and re-taking only fights the calling app.
             if (tag == "near") {
-                if (isAllZero(buf)) { silentChunks++; side.zeroChunk() } else silentChunks = 0
-                if (silentChunks >= SILENT_CHUNKS_BEFORE_RETAKE) {
-                    silentChunks = 0
+                val allZero = isAllZero(buf)
+                if (allZero) side.zeroChunk()
+                if (quiet.onChunk(allZero, paused = pauseRequested.get())) {
                     // Asked BEFORE the re-take, of the record that went quiet: did Android silence it, or is
                     // this a pause? Recorded only (backlog #9, step 1) — the re-take happens either way, as
                     // before. Null when the platform will not say.
@@ -541,7 +547,7 @@ internal class VoipCaptureSession(
                         // to the fresh one being started. Its first read adds one buffer on top.
                         val gap = System.nanoTime() - retakeStart
                         side.retake(gap, platformSilenced)
-                        AppLogger.i(TAG, "VoIP sync: re-take #${side.retakes} at ${(retakeStart - startedNanos) / 1_000_000L}ms took ${gap / 1_000_000L}ms; ${side.zeroChunks} zero chunks so far; Android says silenced=$platformSilenced")
+                        AppLogger.i(TAG, "VoIP sync: re-take #${side.retakes} at ${(retakeStart - startedNanos) / 1_000_000L}ms took ${gap / 1_000_000L}ms; ${side.zeroChunks} zero chunks so far (paused ones included); Android says silenced=$platformSilenced")
                         // The platform took the mic away and we opened another. Without closing the
                         // old id and opening a new one, every re-take would read as a leaked capture
                         // — and this happens several times in a normal call.

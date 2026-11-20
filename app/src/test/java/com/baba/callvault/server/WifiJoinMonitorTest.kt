@@ -64,6 +64,7 @@ class WifiJoinMonitorTest {
     /** What the app answers before each approval; null = it could not be reached. */
     private var appSays: ApprovalConfig? = ApprovalConfig(wanted = true, knownKeys = emptySet(), salt = "salt")
     private var confirms = 0
+    private var confirmThrows: Throwable? = null
     private var elapsedNow = 0L
 
     private fun monitor(w: FakeWatch = watch, r: FakeRunner = runner) = WifiJoinMonitor(
@@ -71,7 +72,7 @@ class WifiJoinMonitorTest {
         runner = r,
         approve = { keys, _ -> asked += keys; answer() },
         emit = { events += it },
-        confirm = { confirms++; appSays },
+        confirm = { confirms++; confirmThrows?.let { throw it }; appSays },
         clock = { 1_000L },
         elapsed = { elapsedNow },
     )
@@ -236,6 +237,53 @@ class WifiJoinMonitorTest {
         assertEquals(WifiJoinEvent(5L, false, "x", ""), WifiJoinEvent.decode(WifiJoinEvent(5L, false, "x").encode()))
         assertNull(WifiJoinEvent.decode("garbage"))
         assertNull(WifiJoinEvent.decode(null))
+    }
+
+    @Test
+    fun `a check that fails in a class initializer names the real exception`() {
+        answer = { throw ExceptionInInitializerError(java.util.regex.PatternSyntaxException("Syntax error", "(?:}|x)", 3)) }
+        val m = monitor()
+        m.arm(true, emptySet(), "salt")
+
+        watch.deliver("100")
+        runner.runPending()
+
+        val last = events.last()
+        assertTrue(last.warn)
+        assertTrue(last.text, last.text.startsWith("failed: the check threw ExceptionInInitializerError, caused by PatternSyntaxException: Syntax error"))
+    }
+
+    @Test
+    fun `asking the app that throws is logged with the reason, and nothing is approved`() {
+        val m = monitor()
+        m.arm(true, emptySet(), "salt")
+        confirmThrows = IllegalStateException("binder died")
+
+        watch.deliver("100")
+        runner.runPending()
+
+        assertTrue(asked.isEmpty())
+        val last = events.last()
+        assertTrue(last.warn)
+        assertTrue(last.text, last.text.startsWith("skipped: could not confirm with the app"))
+        assertTrue(last.text, last.text.contains("IllegalStateException: binder died"))
+    }
+
+    @Test
+    fun `an interrupted ask of the app keeps the thread's interrupt flag`() {
+        val m = monitor()
+        m.arm(true, emptySet(), "salt")
+        confirmThrows = InterruptedException("stopping")
+
+        watch.deliver("100")
+        try {
+            runner.runPending()
+            assertTrue("interrupt flag restored", Thread.currentThread().isInterrupted)
+        } finally {
+            Thread.interrupted()
+        }
+        assertTrue(asked.isEmpty())
+        assertTrue(events.last().text, events.last().text.contains("InterruptedException: stopping"))
     }
 
     @Test
