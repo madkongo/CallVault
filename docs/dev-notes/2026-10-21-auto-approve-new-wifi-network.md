@@ -106,7 +106,7 @@ shell call above needs none of that, so it is the better route.
 - **Not tested:** a real recorder restart on the new network (it should find Wireless debugging on), "WD off
   when idle" + always-allow, Android 17.
 
-## Shizuku mode (review N15, 2026-11-19) — 🧪 VERIFYING
+## Shizuku mode (review N15, 2026-11-19) — ✅ VERIFIED 2026-11-20 (maintainer, rf7)
 
 Built and unit-tested only; not tried on a phone. To settle it, on the OP9 in Shizuku mode with the switch on:
 join the second access point (Wi-Fi off and on near it) while recording works, see the timeline line
@@ -163,7 +163,7 @@ after N ms`, then reboot onto that access point: Shizuku starts with no "Allow w
   logged as "Shizuku not in tcp mode".
 - If the shell cannot read the switch (an Android 17 that hides it from shell too), the join is skipped and logged.
 
-## Join detection, round 2 (review N15, 2026-11-19) — 🧪 VERIFYING
+## Join detection, round 2 (review N15, 2026-11-19) — ✅ VERIFIED 2026-11-20 (maintainer, rf7; see "rf5–rf7 on the OP9" below)
 
 **❌ What the OP9 showed (rf4 build, Shizuku mode, 2026-11-19).** 17:10:25-36 switch turned on → 17:10:43 timeline
 `approved access point ..:40:18 (always allow); Wireless debugging restored off after 270 ms`. 17:12:55 joined the
@@ -254,3 +254,19 @@ keystore format on this phone (the `already on Android's trusted list` line for 
 
 **Still not covered:** a roam between access points of one SSID gives no new "available", so it is not checked
 until the next join or recorder start.
+
+## rf5–rf7 on the OP9 (review N15, 2026-11-20) — ✅ VERIFIED 2026-11-20 (maintainer: "no" Android prompt seen)
+
+- **rf5 (20666) — ❌ NOT WORKING 2026-11-20.** The recorder saw the hotspot join (rf4 never did), but every check threw
+  `ExceptionInInitializerError` / `NoClassDefFoundError`: `FIELD_END` had a bare `}`, which the desktop JVM accepts and
+  Android's ICU regex rejects, so `WirelessDebuggingApproval` could not load in the recorder (the shipped
+  `approveCurrentNetwork` path too). Fixed: escaped, regexes lazy, `RegexIcuBraceGuardTest` over every pattern
+  (constants and templates included), failure cause chains logged.
+- **rf6 (20667) — ❌ NOT WORKING 2026-11-20 (partly).** Approval worked, but the "already trusted" skip never matched:
+  `dumpsys adb`'s keystore is Android Binary XML on one line, and the bytes next to each address (0x11 / `d` before,
+  `3` after) failed the old lookaround pattern, so every join re-approved (Wireless debugging flipped each time, the
+  trusted list grew duplicates). Fixed with whole-run matching and a real OP9 dump as the test fixture; the keystore
+  section now ends only at the dump's own lines.
+- **rf7 (20668) — ✅ VERIFIED 2026-11-20.** On start: home AP skipped as already trusted. OP12 hotspot off/on (new
+  address) and join: approved silently, Wireless debugging back off after 209 ms, address added once. Back to home
+  Wi-Fi within 30 s: folded into one check, skipped. No CallVault pop-up; the maintainer saw no Android prompt.
