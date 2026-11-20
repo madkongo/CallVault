@@ -845,6 +845,11 @@ class DaemonKeepAliveService : Service() {
             //
             // What counts as "usable" is [DaemonRecoveryPolicy]'s job, and getting it wrong cost a
             // silent multi-hour outage on 2026-08-18 — see that class. In short: USB debugging being
+        // A recording on the local ADB fallback rides the very connection a relaunch drops or reconfigures (review C89).
+        if (LocalFallbackLease.shared.active) {
+            timelineSkip("a recording on the local fallback is using the ADB connection")
+            return
+        }
             // enabled is NOT a transport this app can dial, and an attempt that keeps timing out must
             // be escalated rather than repeated.
             // A switch that reads on is not proof adbd is up: turning USB debugging off stops it while Wireless
