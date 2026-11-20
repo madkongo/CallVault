@@ -16,6 +16,7 @@ import android.media.AudioManager
 import android.os.Handler
 import android.os.Looper
 import android.os.SystemClock
+import android.telephony.TelephonyManager
 import android.view.KeyEvent
 import android.view.WindowManager
 import android.widget.FrameLayout
@@ -42,7 +43,9 @@ import com.baba.callvault.services.recording.aftercall.AfterCallDecision
 import com.baba.callvault.services.recording.aftercall.AfterCallDecisions
 import com.baba.callvault.services.recording.aftercall.AfterCallPolicy
 import com.baba.callvault.services.recording.aftercall.AfterCallText
+import com.baba.callvault.services.recording.VoipRecordingCoordinator
 import com.baba.callvault.system.AppLock
+import com.baba.callvault.system.updates.CallInProgressGate
 import com.baba.callvault.ui.theme.CallVaultTheme
 import com.baba.callvault.utils.AppLogger
 import kotlinx.coroutines.CoroutineScope
@@ -92,6 +95,24 @@ internal object AfterCallOverlay {
                 }
         }
     }
+
+    /**
+     * Whether a call is ringing or under way, by ANY evidence: the telephony state (carrier calls, even when the
+     * ringer is on and the audio mode is still normal), the audio mode (app calls) or a VoIP recording (an app call
+     * that stays in MODE_NORMAL, like LINE on HyperOS). The same definition the update installer uses, so there is
+     * one meaning of "in a call" (C79). Every read fails towards "no call" and the pop-up simply shows.
+     */
+    internal fun isCallInProgress(context: Context): Boolean {
+        val telephony = runCatching { context.getSystemService(TelephonyManager::class.java)?.callState }
+            .getOrNull() ?: TelephonyManager.CALL_STATE_IDLE
+        val mode = runCatching { context.getSystemService(AudioManager::class.java)?.mode }
+            .getOrNull() ?: AudioManager.MODE_NORMAL
+        val isVoipRecording = runCatching { VoipRecordingCoordinator.isRecording }.getOrDefault(false)
+        return isCallInProgress(telephony, mode, isVoipRecording)
+    }
+
+    internal fun isCallInProgress(telephonyState: Int, audioMode: Int, isVoipRecording: Boolean): Boolean =
+        !CallInProgressGate.mayInstall(telephonyState, isVoipRecording, audioMode)
 
     /** Whether the window is up. Main thread. */
     internal val isShowing: Boolean get() = window != null
@@ -163,7 +184,7 @@ internal object AfterCallOverlay {
          * Keeps the card off the screen while a call rings or is under way, phone or app call alike: over the
          * call screen it covered the hang-up button and the keypad (OP9, 2026-11-07), and it would cover an
          * incoming call's answer screen the same way. Back when the call ends, with the tap guard restarted.
-         * Read from the audio mode, which every kind of call sets; polled, as it has no listener before API 31.
+         * Read from the telephony state, the audio mode and the VoIP recorder (see [isCallInProgress]); polled.
          */
         private suspend fun stepAsideDuringCalls() {
             while (true) {
@@ -183,9 +204,7 @@ internal object AfterCallOverlay {
             }
         }
 
-        private fun isInCall(): Boolean = AfterCallPolicy.isCallAudioMode(
-            context.getSystemService(AudioManager::class.java)?.mode ?: AudioManager.MODE_NORMAL,
-        )
+        private fun isInCall(): Boolean = isCallInProgress(context)
 
         private fun putOnScreen() {
             windowManager.addView(root, layoutParams())

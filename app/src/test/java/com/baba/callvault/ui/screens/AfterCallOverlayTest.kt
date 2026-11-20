@@ -9,7 +9,9 @@
 package com.baba.callvault.ui.screens
 
 import android.content.Context
+import android.media.AudioManager
 import android.os.Looper
+import android.telephony.TelephonyManager
 import androidx.core.net.toUri
 import androidx.test.core.app.ApplicationProvider
 import com.baba.callvault.services.recording.aftercall.AfterCallDecisions
@@ -62,6 +64,23 @@ class AfterCallOverlayTest {
         AfterCallOverlay.show(context)
         waitUntil { !AfterCallOverlay.isShowing }
         assertFalse(AfterCallOverlay.isShowing)
+    }
+
+    @Test
+    fun `a ringing or active carrier call is a call even when the audio mode is normal`() {
+        assertTrue(AfterCallOverlay.isCallInProgress(TelephonyManager.CALL_STATE_RINGING, AudioManager.MODE_NORMAL, false))
+        assertTrue(AfterCallOverlay.isCallInProgress(TelephonyManager.CALL_STATE_OFFHOOK, AudioManager.MODE_NORMAL, false))
+    }
+
+    @Test
+    fun `a recorded app call in normal mode is a call`() {
+        assertTrue(AfterCallOverlay.isCallInProgress(TelephonyManager.CALL_STATE_IDLE, AudioManager.MODE_NORMAL, true))
+    }
+
+    @Test
+    fun `an app call mode is a call and a quiet phone is not`() {
+        assertTrue(AfterCallOverlay.isCallInProgress(TelephonyManager.CALL_STATE_IDLE, AudioManager.MODE_IN_COMMUNICATION, false))
+        assertFalse(AfterCallOverlay.isCallInProgress(TelephonyManager.CALL_STATE_IDLE, AudioManager.MODE_NORMAL, false))
     }
 
     private fun idle() = shadowOf(Looper.getMainLooper()).idle()
