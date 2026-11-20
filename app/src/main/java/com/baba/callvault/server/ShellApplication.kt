@@ -13,6 +13,7 @@ import android.content.AttributionSource
 import android.content.Context
 import android.content.ContextWrapper
 import android.os.Build
+import android.os.Process
 import androidx.annotation.RequiresApi
 import com.baba.callvault.utils.AppLogger
 
@@ -76,8 +77,19 @@ internal object ShellApplication {
         override fun getOpPackageName(): String = SHELL_PACKAGE
         override fun getApplicationContext(): Context = this
 
+        /**
+         * The process's real uid (review N21). scrcpy's FakeContext always claims uid 2000, but a Shizuku server
+         * started with root runs this host as uid 0, and it reaches [install] through the same AudioRecord paths.
+         * Only the shell uid presents the shell package; any other uid presents none, which the AudioRecord
+         * constructor names "uid:<uid>" — what that host presents today with no Context at all.
+         */
         @RequiresApi(Build.VERSION_CODES.S)
-        override fun getAttributionSource(): AttributionSource =
-            AttributionSource.Builder(SHELL_UID).setPackageName(SHELL_PACKAGE).build()
+        override fun getAttributionSource(): AttributionSource {
+            val uid = Process.myUid()
+            return AttributionSource.Builder(uid).setPackageName(attributionPackageFor(uid)).build()
+        }
     }
+
+    /** The package the attribution names for [uid]: the shell's for the shell uid, none for any other. */
+    internal fun attributionPackageFor(uid: Int): String? = if (uid == SHELL_UID) SHELL_PACKAGE else null
 }
