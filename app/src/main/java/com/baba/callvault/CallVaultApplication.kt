@@ -59,6 +59,7 @@ class CallVaultApplication : Application() {
             // a process that dies at start-up (before any message) is otherwise invisible to the app.
             val previous = Thread.getDefaultUncaughtExceptionHandler()
             Thread.setDefaultUncaughtExceptionHandler { thread, error ->
+                com.baba.callvault.system.diagnostics.CrashJournal.record(applicationContext, thread, error)
                 com.baba.callvault.system.storage.DriveCopyJournal.record(
                     applicationContext,
                     "copier process crashed on thread ${thread.name}: ${error.javaClass.simpleName}: ${error.message}",

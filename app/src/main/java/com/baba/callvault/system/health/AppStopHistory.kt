@@ -52,7 +52,7 @@ object AppStopHistory {
     }.getOrDefault(false)
 
     /** One recorded end of the app's process. */
-    data class ExitRecord(val atMillis: Long, val reason: Int, val description: String?)
+    data class ExitRecord(val atMillis: Long, val reason: Int, val description: String?, val pid: Int = 0)
 
     /**
      * Whether an exit is the user stopping the app: Active apps -> Stop, or Settings -> Force stop. Both are
@@ -91,7 +91,7 @@ object AppStopHistory {
     fun exits(context: Context): List<ExitRecord> {
         val am = context.getSystemService(ActivityManager::class.java) ?: return emptyList()
         return am.getHistoricalProcessExitReasons(context.packageName, 0, HISTORY)
-            .map { ExitRecord(it.timestamp, it.reason, it.description) }
+            .map { ExitRecord(it.timestamp, it.reason, it.description, it.pid) }
     }
 
     /** A start as Android stamps it: time since the boot it happened in — which boot, it does not say. */
@@ -135,10 +135,16 @@ object AppStopHistory {
     fun reportLines(context: Context): List<String> = runCatching {
         val am = context.getSystemService(ActivityManager::class.java) ?: return listOf("unavailable")
         val time = SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.US)
-        val exits = am.getHistoricalProcessExitReasons(context.packageName, 0, HISTORY).map {
-            val description = it.description?.take(DESCRIPTION_MAX)?.let { d -> " \"$d\"" } ?: ""
-            "exit  ${time.format(Date(it.timestamp))} ${it.processName} ${exitReasonName(it.reason)}" +
-                " importance=${it.importance}$description"
+        val crashes = com.baba.callvault.system.diagnostics.CrashJournal.readForReport(context).orEmpty()
+        var traced = 0
+        val exits = am.getHistoricalProcessExitReasons(context.packageName, 0, HISTORY).flatMap {
+            val line = exitLine(
+                time.format(Date(it.timestamp)), it.processName, it.reason, it.importance, it.pid, it.status, it.description,
+            )
+            // What the crash or ANR said, for the newest few: "crash" alone sent the vivo report (2026-11-20) to the code.
+            val detail = if (traced < MAX_TRACED_EXITS) exitDetail(it, crashes).also { d -> if (d.isNotEmpty()) traced++ } else emptyList()
+            // Redacted: a trace is text the app did not write. The exit line itself is not, so its time stays readable.
+            listOf(line) + detail.map { d -> "      " + com.baba.callvault.utils.AppLogger.redactForReport(d) }
         }
         val starts = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.VANILLA_ICE_CREAM) {
             val infos = am.getHistoricalProcessStartReasons(HISTORY)
@@ -154,6 +160,58 @@ object AppStopHistory {
         }
         (exits.ifEmpty { listOf("no exits recorded") }) + starts
     }.getOrElse { listOf("unavailable: ${it.javaClass.simpleName}") }
+
+    /** One exit as the report prints it. [status] is shown only where it means something: the signal or exit code. */
+    fun exitLine(
+        time: String, process: String, reason: Int, importance: Int, pid: Int, status: Int, description: String?,
+    ): String {
+        val quoted = description?.take(DESCRIPTION_MAX)?.let { " \"$it\"" } ?: ""
+        val withStatus = reason in STATUS_REASONS && status != 0
+        return "exit  $time $process ${exitReasonName(reason)} pid=$pid" +
+            (if (withStatus) " status=$status" else "") + " importance=$importance$quoted"
+    }
+
+    /**
+     * The part of a trace worth printing: from the main thread's header in an ANR dump (the thread that did not
+     * answer), else the first lines. Blank lines end the main thread's block, so the next thread is not printed.
+     */
+    fun traceExcerpt(trace: String, maxLines: Int): List<String> {
+        val lines = trace.lines()
+        val main = lines.indexOfFirst { it.startsWith("\"main\"") }
+        if (main < 0) return lines.filter { it.isNotBlank() }.take(maxLines)
+        return lines.drop(main).takeWhile { it.isNotBlank() }.take(maxLines)
+    }
+
+    /**
+     * For a Java crash, the exception from the crash journal (Android keeps no trace of one); for an ANR, the trace
+     * Android kept; for a native crash, whether it left a tombstone (a protobuf, not text).
+     */
+    private fun exitDetail(exit: ApplicationExitInfo, crashJournal: String): List<String> = runCatching {
+        when (exit.reason) {
+            ApplicationExitInfo.REASON_CRASH -> listOf(
+                com.baba.callvault.system.diagnostics.CrashJournal.summaryFor(crashJournal, exit.pid, exit.timestamp)
+                    ?.let { "crash: $it (whole note under Crashes)" }
+                    ?: "crash: no note in the crash journal (a version without it, or it could not write)",
+            )
+            ApplicationExitInfo.REASON_ANR -> exit.traceInputStream?.use { stream ->
+                val head = ByteArray(TRACE_READ_BYTES)
+                val read = stream.read(head).coerceAtLeast(0)
+                traceExcerpt(String(head, 0, read), TRACE_LINES).map { "anr: $it" }
+            } ?: listOf("anr: no trace kept")
+            ApplicationExitInfo.REASON_CRASH_NATIVE -> listOf(
+                if (exit.traceInputStream?.use { true } == true) "native crash: tombstone kept by Android (binary)"
+                else "native crash: no tombstone kept",
+            )
+            else -> emptyList()
+        }
+    }.getOrElse { listOf("trace unreadable: ${it.javaClass.simpleName}") }
+
+    private const val MAX_TRACED_EXITS = 3
+    private const val TRACE_LINES = 15
+    private const val TRACE_READ_BYTES = 64 * 1024
+    private val STATUS_REASONS = setOf(
+        ApplicationExitInfo.REASON_SIGNALED, ApplicationExitInfo.REASON_CRASH_NATIVE, ApplicationExitInfo.REASON_EXIT_SELF,
+    )
 
     fun exitReasonName(reason: Int): String = when (reason) {
         ApplicationExitInfo.REASON_UNKNOWN -> "UNKNOWN"

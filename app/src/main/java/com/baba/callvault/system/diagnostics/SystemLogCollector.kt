@@ -11,11 +11,16 @@ package com.baba.callvault.system.diagnostics
 import android.content.Context
 import com.baba.callvault.data.AppPreferences
 import com.baba.callvault.integrations.adb.AdbShell
+import com.baba.callvault.server.DiagnosticDumps
 import com.baba.callvault.server.RecorderConnection
+import com.baba.callvault.system.health.AppStopHistory
 import com.baba.callvault.utils.AppLogger
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import java.io.File
+import java.text.SimpleDateFormat
+import java.util.Date
+import java.util.Locale
 
 /**
  * Collects the daemon's and the system's log lines for a bug report, over the privileged shell.
@@ -86,38 +91,66 @@ object SystemLogCollector {
     }
 
     /**
-     * Builds the filtered, redacted slice, or null when there is nothing to attach.
+     * Builds the filtered, redacted slice, or null only when it could not be written. A part that could not
+     * be collected is named in the header rather than leaving the file out.
      *
      * Written into the same `cacheDir/logs/` the FileProvider already exposes — the only folder the
      * share sheet can read from.
      */
     suspend fun buildReport(context: Context): File? = withContext(Dispatchers.IO) {
-        val raw = dump(context, "logcat_dump", "logcat -b main -b system -d -v threadtime")
-        if (raw.isNullOrBlank()) {
-            AppLogger.w(TAG, "No logcat output; the system report will not be attached")
-            return@withContext null
-        }
+        // What could not be collected, named in the header: a report must never lack a part silently.
+        val gaps = mutableListOf<String>()
+        if (RecorderConnection.service == null) gaps += "recorder not connected (system dumps came over the app's ADB link, if at all)"
 
-        val kept = raw.lineSequence().filter(SystemLogFilter::keep).toList()
-        if (kept.isEmpty()) {
-            AppLogger.w(TAG, "Logcat held nothing on the whitelist; the system report will not be attached")
-            return@withContext null
+        // Cut down to what is about us IN THE RECORDER, bounded under the binder's limit: the whole log no longer
+        // fits through it, and the ADB fallback is refused in Shizuku mode (vivo, 2026-11-20: no main or system
+        // log at all). A plain dump over the app's ADB shell — an older recorder, or none — is cut the same way here.
+        val ours = ours(context)
+        val log = dump(context, "logcat_ours", "logcat -b main -b system -d -v threadtime", arg = SystemLogFilter.encodeOurs(ours))
+            ?.takeIf { it.isNotBlank() }
+            ?.let { SystemLogFilter.parsePrefiltered(it) ?: SystemLogFilter.parsePrefiltered(SystemLogFilter.prefilter(it.lineSequence(), ours, Int.MAX_VALUE)) }
+        if (log == null || log.read == 0) {
+            AppLogger.w(TAG, "No logcat output; the system report will carry no main/system log")
+            gaps += "main and system log (logcat gave nothing)"
+        } else if (log.truncated > 0) {
+            gaps += "${log.truncated} older log lines about CallVault (cut on the phone to fit the recorder link; newest kept)"
         }
+        log?.partial?.let { gaps += "part of the main and system log ($it)" }
+        // Read separately and bounded on the device: the crash buffer, the event log and every system line naming
+        // us. It is what says WHY Android stopped us, and it still arrives when the whole-log dump above is too big
+        // for the binder or empty (vivo Android 17, 2026-11-20). See DiagnosticDumps.lifecycleScript.
+        // Cut to its newest characters in the recorder; a raw answer over the app's ADB shell is cut the same way here.
+        val lifecycle = dump(context, "logcat_lifecycle", DiagnosticDumps.lifecycleScript("logcat"))
+            ?.let { SystemLogFilter.parsePrefiltered(it) ?: SystemLogFilter.capNewest(it.lineSequence(), Int.MAX_VALUE) }
+        if (lifecycle == null) gaps += "crash and event log (logcat gave nothing)"
+        if (lifecycle != null && lifecycle.truncated > 0) {
+            gaps += "${lifecycle.truncated} older crash and event lines (cut on the phone to fit the recorder link; newest kept)"
+        }
+        lifecycle?.partial?.let { gaps += "part of the crash and event log ($it)" }
+
+        val merged = SystemLogFilter.mergeByTime(
+            log?.lines.orEmpty(),
+            lifecycle?.lines.orEmpty(),
+        )
+        val kept = SystemLogFilter.select(merged, ours)
+        if (kept.isEmpty()) AppLogger.w(TAG, "Logcat held nothing about CallVault")
         val capped = SystemLogFilter.capToNewest(kept, MAX_LINES, MAX_BYTES)
 
         // Whether this phone's log is current at all. On the Honor BVL-N59 (2026-11-04) the dump held 121k lines and
         // every kept line was from the last boot, three days earlier — a log that stopped, or one that only keeps
         // what is not ours? This says which, without anyone reading 121k lines.
-        val health = LogcatHealth.render(raw, dump(context, "logcat_size", "logcat -g"))
+        val health = LogcatHealth.render(log?.read ?: 0, log?.oldest, log?.newest, dump(context, "logcat_size", "logcat -g"))
         // Every debugging/USB line in the whole log, not only the window around an event: what switched USB
-        // debugging off is the open question on Honor. Keyword lines only, as in UsbOffLogWindow.
-        val usbLines = LogcatHealth.debuggingLines(raw)
+        // debugging off is the open question on Honor. Ours, the debugging services', and lines naming a switch.
+        val usbLines = LogcatHealth.debuggingLines(log?.lines.orEmpty(), ours)
 
         // Android's own record of who is holding a microphone. Collected separately from logcat
         // because it answers a question logcat cannot: a capture leaked by a process that has since
         // died, or by a leftover scrcpy server, leaves no log line anywhere — but it is still listed
         // here, and it is still lighting the green dot on the user's screen.
-        val micActivity = RecordActivityReport.render(dump(context, "dumpsys_audio", "dumpsys audio"))
+        val audioDump = dump(context, "dumpsys_audio", "dumpsys audio")
+        if (audioDump == null) gaps += "microphone activity (dumpsys audio gave nothing)"
+        val micActivity = RecordActivityReport.render(audioDump)
 
         // The app-op that actually drives the green dot. Collected because the section above CANNOT
         // answer the question it looks like it answers: its ring log cannot pair system-only sources
@@ -133,14 +166,15 @@ object SystemLogCollector {
         // `Running start at:` belonging to some later non-mic op (CAMERA, say) follow a mic op header
         // directly, and the parser would credit the microphone to it. Falls back to the raw dump if
         // the device's grep does not take the expression, so a picky ROM loses speed, not the section.
-        val micOps = MicOpReport.render(
-            dump(context, "appops_mic", MIC_OPS_COMMAND) ?: dump(context, "appops_all", "dumpsys appops")
-        )
+        val opsDump = dump(context, "appops_mic", MIC_OPS_COMMAND) ?: dump(context, "appops_all", "dumpsys appops")
+        if (opsDump == null) gaps += "microphone app-op (dumpsys appops gave nothing)"
+        val micOps = MicOpReport.render(opsDump)
 
         // How many privileged recorders are alive. Paired with the section above on purpose: an open
         // capture plus more than one recorder process names an orphan that outlived its replacement,
         // which is the one arrangement neither the app's log nor the live daemon's ledger can show.
         val psOutput = dump(context, "processes", "ps -A -o USER,PID,ARGS")
+        if (psOutput == null) gaps += "process list (ps gave nothing)"
         val recorders = RecorderProcessReport.render(psOutput)
         // Next to the mic op: a running op carries no pid, so this list is how a reader sees what else runs as shell.
         val shellProcs = MicOpReport.shellProcesses(psOutput)
@@ -149,7 +183,7 @@ object SystemLogCollector {
         val out = File(dir, REPORT_NAME)
         runCatching {
             out.writeText(buildString {
-                appendLine(header(rawLines = raw.count { it == '\n' }, kept = kept.size, attached = capped.size))
+                appendLine(header(rawLines = log?.read ?: 0, kept = kept.size, attached = capped.size, gaps = gaps))
                 appendLine(micActivity)
                 appendLine(micOps)
                 appendLine(recorders)
@@ -164,7 +198,7 @@ object SystemLogCollector {
             AppLogger.w(TAG, "Could not write the system report: ${it.message}")
             return@withContext null
         }
-        AppLogger.i(TAG, "System report: ${capped.size} lines kept of ${kept.size} whitelisted")
+        AppLogger.i(TAG, "System report: ${capped.size} lines kept of ${kept.size} whitelisted; missing: ${gaps.size}")
         out
     }
 
@@ -174,16 +208,37 @@ object SystemLogCollector {
      * The user is about to attach this to a public issue, so the file should say plainly what is in
      * it rather than requiring them to read every line to find out.
      */
-    private fun header(rawLines: Int, kept: Int, attached: Int): String = """
+    private fun header(rawLines: Int, kept: Int, attached: Int, gaps: List<String>): String = """
         |CallVault system log report
         |
-        |This file contains logcat lines from CallVault (app and background helper) and from the
-        |Android audio, security and process-lifecycle services. Everything else — including other
-        |applications' logs — was filtered out, and phone numbers were redacted.
+        |This file contains logcat lines from CallVault (app and background helper), from the
+        |Android audio, security and process-lifecycle services, and Android's own lines that name
+        |CallVault. Everything else — including other applications' logs — was filtered out, and
+        |phone numbers were redacted.
         |
         |Scanned: $rawLines lines. Matched the filter: $kept. Attached (most recent): $attached.
+        |${ReportGaps.line(gaps)}
         |-----------------------------------------------------------------------------------------
     """.trimMargin()
+
+    /**
+     * Who "us" is in the system log: the package, the app's uid, and the pids Android's exit record says were
+     * ours, each for the two minutes before it ended — a process that crashed while starting wrote no CV line.
+     */
+    private fun ours(context: Context): SystemLogFilter.Ours {
+        val stamp = SimpleDateFormat("MM-dd HH:mm:ss.SSS", Locale.US)
+        val windows = runCatching {
+            AppStopHistory.exits(context).filter { it.pid > 0 }.mapNotNull { exit ->
+                SystemLogFilter.logClockMillis(stamp.format(Date(exit.atMillis)))?.let {
+                    SystemLogFilter.PidWindow(exit.pid, it - EXIT_LEAD_MS, it + EXIT_TRAIL_MS)
+                }
+            }
+        }.getOrDefault(emptyList())
+        return SystemLogFilter.Ours(context.packageName, context.applicationInfo.uid, windows)
+    }
+
+    private const val EXIT_LEAD_MS = 120_000L
+    private const val EXIT_TRAIL_MS = 5_000L
 
     /**
      * One shell command, output as text, or null on any failure. Never throws.

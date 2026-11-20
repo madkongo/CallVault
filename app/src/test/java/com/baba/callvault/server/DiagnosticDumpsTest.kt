@@ -33,7 +33,7 @@ class DiagnosticDumpsTest {
             "processes_times", "logcat_grow_host",
             "setting_adb_enabled", "setting_dev_options", "call_state", "audio_latency",
             "voip_policy", "voip_players", "voip_tracks", "voip_audio_log", "vivo_audio_props",
-            "audio_record_state", "voip_owners",
+            "audio_record_state", "voip_owners", "logcat_lifecycle", "logcat_ours",
         )
             .forEach { key ->
                 assertTrue("$key must be runnable", DiagnosticDumps.commandFor(key, null) != null)
@@ -155,5 +155,35 @@ class DiagnosticDumpsTest {
             assertTrue("$key must not carry the argument: $cmd", !cmd.contains("rm -rf"))
         }
     }
-}
 
+    @Test
+    fun `the lifecycle slice reads the crash and events buffers, bounded, with no caller input`() {
+        // The crash buffer and Android's event log (am_crash, am_kill, am_proc_died) say why we died even on a phone
+        // whose system log is quiet. Bounded on the device so it stays far below the binder's 1 MB limit.
+        val command = DiagnosticDumps.commandFor("logcat_lifecycle", "ignored; rm -rf /")!!
+        val script = command.joinToString(" ")
+        assertEquals("/system/bin/sh", command.first())
+        assertTrue(script.contains("-b crash"))
+        assertTrue(script.contains("-b events"))
+        assertTrue(script.contains("tail -n"))
+        assertTrue("the argument must never reach the shell", !script.contains("rm -rf"))
+    }
+
+    @Test
+    fun `the cut log runs only with a valid identity, and the identity never reaches a shell`() {
+        // The command is fixed: logcat itself, no shell. The argument is parsed in-process as digits.
+        val command = DiagnosticDumps.commandFor("logcat_ours", "10024")!!
+        assertEquals("/system/bin/logcat", command.first())
+        assertTrue(command.none { it.contains("10024") })
+        assertNull(DiagnosticDumps.run("logcat_ours", "10024; rm -rf /"))
+        assertNull(DiagnosticDumps.run("logcat_ours", null))
+    }
+
+    @Test
+    fun `the lifecycle slice is cut in-process, so its argument is ignored and it is refused nothing`() {
+        // Bounded by characters in the recorder (S1); still a fixed script with no caller input.
+        val script = DiagnosticDumps.commandFor("logcat_lifecycle", null)!!.joinToString(" ")
+        assertTrue(script.contains("-b crash"))
+        assertTrue(DiagnosticDumps.LIFECYCLE_MAX_CHARS <= 250_000)
+    }
+}

@@ -8,9 +8,8 @@
 
 package com.baba.callvault.server
 
+import com.baba.callvault.system.diagnostics.SystemLogFilter
 import com.baba.callvault.utils.AppLogger
-import java.io.BufferedReader
-import java.util.concurrent.TimeUnit
 
 /**
  * The diagnostic dumps the privileged daemon is willing to run on the app's behalf.
@@ -62,6 +61,7 @@ object DiagnosticDumps {
 
     /** How long any one dump may take. Generous for `logcat -d` on a full ring, finite for everything. */
     private const val TIMEOUT_SECONDS = 20L
+    private const val TIMEOUT_MS = TIMEOUT_SECONDS * 1_000
 
     /**
      * The command for [key], or null if it is not one we run.
@@ -73,6 +73,9 @@ object DiagnosticDumps {
         "logcat_grow" -> arrayOf(LOGCAT, "-b", "main", "-G", "8M")
         "logcat_restore" -> arg?.takeIf { SIZE.matches(it) }?.let { arrayOf(LOGCAT, "-b", "main", "-G", it) }
         "logcat_dump" -> arrayOf(LOGCAT, "-b", "main", "-b", "system", "-d", "-v", "threadtime")
+        // The same log, cut down in this process to what is about the app (see runLogcatOurs). Plain logcat, no
+        // shell: the caller's argument says who the app is and is parsed here as digits, never put on a command line.
+        LOGCAT_OURS -> arrayOf(LOGCAT, "-b", "main", "-b", "system", "-d", "-v", "threadtime")
         // The debugging/USB lines of the log from a given moment on, for USB debugging going off
         // (UsbDebuggingRestorer). Filtered and capped here: everything since the moment ran past the binder's
         // 1 MB limit on the OP9 ("Transaction failed on small parcel"). The argument only reaches the shell after
@@ -84,6 +87,9 @@ object DiagnosticDumps {
                     "| grep -E 'Adb|ADB|Usb|USB|(^|[^A-Za-z])(adb|usb)|[Dd]ebugg|[Dd]evelop' | head -n 800",
             )
         }
+        // Why Android stopped us, from the buffers the plain dump above does not read. See [lifecycleScript].
+        // Fixed command; any argument is ignored.
+        LOGCAT_LIFECYCLE -> arrayOf(SH, "-c", lifecycleScript(LOGCAT))
         "dumpsys_audio" -> arrayOf(DUMPSYS, "audio")
         "appops_all" -> arrayOf(DUMPSYS, "appops")
         // Filtered on the device: the raw dump is megabytes and most of it is irrelevant. A pipeline
@@ -196,21 +202,97 @@ object DiagnosticDumps {
         else -> null
     }
 
+    /**
+     * The crash buffer, plus every system and event-log line naming our package, plus the stack trace under
+     * any refused foreground notice — each cut to its newest lines ON THE DEVICE.
+     *
+     * Why (vivo Android 17, 2026-11-20): three "Bad notification for startForeground" crashes and the report
+     * held no system line about any of them. The plain dump reads main+system whole, which on a 16 MB ring
+     * runs past the binder's 1 MB limit and is easily empty on a ROM that keeps its system log quiet, and it
+     * never read `-b crash` or `-b events` at all — where `am_crash`, `am_kill` and `am_proc_died` live.
+     * Bounded to ~1,800 lines so the answer always fits through the binder. The app filters it again by
+     * exact package, uid and pid ([com.baba.callvault.system.diagnostics.SystemLogFilter.select]); the
+     * package in the grep is a coarse first cut so that little else is ever read off the device.
+     *
+     * [logcat] is the binary to run: an absolute path in the daemon, plain `logcat` over the app's ADB shell.
+     */
+    fun lifecycleScript(logcat: String): String =
+        "{ $logcat -b crash -d -v threadtime | tail -n 400; " +
+            "$logcat -b system -b events -d -v threadtime | grep -F 'com.baba.callvault' | tail -n 1200; " +
+            "$logcat -b system -d -v threadtime " +
+            "| grep -E -A 20 'Error showing notification for service|invalid (channel for )?service notification|Bad notification' " +
+            "| grep -v '^--\$' | tail -n 200; }"
+
     /** Runs [key] and returns its output, or null if it is not allowed, fails, or times out. */
     fun run(key: String, arg: String?): String? {
+        if (key == LOGCAT_OURS) return runLogcatOurs(arg)
+        if (key == LOGCAT_LIFECYCLE) return runLifecycle()
         val command = commandFor(key, arg) ?: run {
             AppLogger.w(TAG, "refused unknown diagnostic dump '$key'")
             return null
         }
         return runCatching {
-            val process = ProcessBuilder(*command).redirectErrorStream(true).start()
-            val output = process.inputStream.bufferedReader().use(BufferedReader::readText)
-            if (!process.waitFor(TIMEOUT_SECONDS, TimeUnit.SECONDS)) {
-                process.destroyForcibly()
-                AppLogger.w(TAG, "diagnostic dump '$key' timed out after ${TIMEOUT_SECONDS}s")
+            val outcome = BoundedProcess.run(command, TIMEOUT_MS) { it.bufferedReader().readText() }
+            if (outcome.timedOut) {
+                AppLogger.w(TAG, "diagnostic dump '$key' timed out after ${TIMEOUT_SECONDS}s; stopped it")
                 return null
             }
-            output
+            outcome.value
         }.onFailure { AppLogger.w(TAG, "diagnostic dump '$key' failed: ${it.message}") }.getOrNull()
+    }
+
+    private const val LOGCAT_OURS = "logcat_ours"
+    private const val LOGCAT_LIFECYCLE = "logcat_lifecycle"
+
+    /** Characters the crash and event slice may send: ~500 KB as UTF-16, under the binder's 1 MB with room to spare. */
+    const val LIFECYCLE_MAX_CHARS = 250_000
+
+    /**
+     * [lifecycleScript]'s output, cut to its newest [LIFECYCLE_MAX_CHARS] in this process and sent with a summary
+     * line saying how many lines were left out and whether the run was partial. Its line limits alone did not bound
+     * it: long ActivityManager or NotificationService lines could still overrun the binder, and in Shizuku mode —
+     * no ADB fallback — the report then had no crash or event log at all.
+     */
+    private fun runLifecycle(): String? {
+        val command = commandFor(LOGCAT_LIFECYCLE, null) ?: return null
+        return runCatching {
+            val outcome = BoundedProcess.run(command, TIMEOUT_MS) {
+                SystemLogFilter.capNewest(it.bufferedReader().lineSequence(), LIFECYCLE_MAX_CHARS)
+            }
+            val cut = outcome.value ?: run {
+                AppLogger.w(TAG, "diagnostic dump '$LOGCAT_LIFECYCLE' gave nothing (${outcome.partial})")
+                return null
+            }
+            SystemLogFilter.render(cut.copy(partial = outcome.partial?.let { "the slice $it" }))
+        }.onFailure { AppLogger.w(TAG, "diagnostic dump '$LOGCAT_LIFECYCLE' failed: ${it.message}") }.getOrNull()
+    }
+
+    /**
+     * The main+system log cut down to what is about the app, bounded under the binder's limit, with a summary
+     * line saying how much was read and how much had to be left out ([SystemLogFilter.prefilter]).
+     *
+     * Why (vivo, Shizuku mode, 2026-11-20): `logcat_dump` sent the whole log, which with the 16 MB ring is far
+     * past the binder's 1 MB; the call failed, the app fell back to its ADB shell, Shizuku mode refuses that, and
+     * the report had no main or system log at all. Streamed, so this process holds only what it keeps.
+     */
+    private fun runLogcatOurs(arg: String?): String? {
+        val ours = SystemLogFilter.decodeOurs(arg, com.baba.callvault.BuildConfig.APPLICATION_ID) ?: run {
+            AppLogger.w(TAG, "refused '$LOGCAT_OURS': the identity argument is not digits in the expected shape")
+            return null
+        }
+        val command = commandFor(LOGCAT_OURS, null) ?: return null
+        return runCatching {
+            // Bounded for real: a wedged logd used to hold this binder thread for good. A cut that ended early
+            // carries why, and the report says the log is partial.
+            val outcome = BoundedProcess.run(command, TIMEOUT_MS) {
+                SystemLogFilter.prefilterCut(it.bufferedReader().lineSequence(), ours, SystemLogFilter.PREFILTER_MAX_CHARS)
+            }
+            val cut = outcome.value ?: run {
+                AppLogger.w(TAG, "diagnostic dump '$LOGCAT_OURS' gave nothing (${outcome.partial})")
+                return null
+            }
+            outcome.partial?.let { AppLogger.w(TAG, "diagnostic dump '$LOGCAT_OURS' is partial: logcat $it") }
+            SystemLogFilter.render(cut.copy(partial = outcome.partial?.let { "logcat $it" }))
+        }.onFailure { AppLogger.w(TAG, "diagnostic dump '$LOGCAT_OURS' failed: ${it.message}") }.getOrNull()
     }
 }

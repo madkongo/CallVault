@@ -569,4 +569,36 @@ class LogRedactionTest {
     }
 
     private val phone = "+972541234567"
+
+    // ---- E-mail addresses (review of rf/logs-capture-gaps): the crash journal, ANR traces and the Drive copier's
+    // exceptions can quote the Google account, and they now reach every report whether logging is on or not.
+
+    @Test
+    fun `an e-mail address is redacted wherever it sits in a line`() {
+        val lines = listOf(
+            "GoogleAuthException: account someone.name+tag@gmail.com needs consent",
+            "Drive: upload failed for user=first_last@example.co.il (403)",
+            "mailto:Someone@Example.org",
+        )
+        for (line in lines) {
+            val out = redact(line)
+            assertFalse("leaked: $out", out.contains("@"))
+            assertTrue(out, out.contains("[EMAIL_REDACTED]"))
+        }
+    }
+
+    @Test
+    fun `redacting an e-mail address twice changes nothing`() {
+        val once = redact("account a.b@gmail.com")
+        assertEquals(once, redact(once))
+    }
+
+    @Test
+    fun `things with an at-sign that are not addresses are left alone`() {
+        val lines = listOf(
+            "java.lang.Object@1a2b3c4d",
+            "android.os.BinderProxy@9f00",
+        )
+        for (line in lines) assertEquals(line, redact(line))
+    }
 }

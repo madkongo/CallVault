@@ -93,6 +93,9 @@ object AppLogger {
     /** Reference to the app preferences to check logging enablement dynamically. */
     private var prefs: AppPreferences? = null
 
+    /** The application context from [init], for the always-on files kept outside the log. */
+    private var appContext: Context? = null
+
     /** Pointer to the internal application diagnostic log file. */
     private var logFile: File? = null
 
@@ -170,6 +173,7 @@ object AppLogger {
      * @param context The application context.
      */
     fun init(context: Context) {
+        appContext = context.applicationContext
         prefs = AppPreferences(context)
         logFile = File(context.cacheDir, "app_debug.log")
         // Always on, unlike the file above: the setup that fails on a stranger's phone happens before
@@ -183,6 +187,10 @@ object AppLogger {
         // logs
         val defaultHandler = Thread.getDefaultUncaughtExceptionHandler()
         Thread.setDefaultUncaughtExceptionHandler { thread, throwable ->
+            // First, and whatever the logging switch says: with logging off this note is the only place the
+            // exception survives — Android's exit record says just "crash". Covers the RemoteServiceException
+            // family too, which Android throws on our main thread and arrives here like any other.
+            com.baba.callvault.system.diagnostics.CrashJournal.record(context, thread, throwable)
             e(TAG, "Caught an uncaught exception, flushing logs to disk before process death...", throwable)
             flushSync()
             // Forward runtime exception to original uncaught handler
@@ -231,6 +239,7 @@ object AppLogger {
         // "Gone" has to mean gone for the always-on journal as well, not only for the file the user
         // switched on themselves.
         SetupJournal.clear()
+        appContext?.let { com.baba.callvault.system.diagnostics.CrashJournal.clear(it) }
         scope.launch {
             fileMutex.withLock {
                 logWriter?.close()
@@ -358,6 +367,7 @@ object AppLogger {
                 } else {
                     writer.println("Recorder host lines: ${daemonEntries.size}, merged in below by timestamp")
                 }
+                writer.println(com.baba.callvault.system.diagnostics.ReportGaps.line(reportGaps(daemonEntries)))
                 writer.println("===========================================")
                 writer.println()
 
@@ -367,6 +377,14 @@ object AppLogger {
                 SetupJournal.readForReport()?.let { journal ->
                     writer.println("--- Setup journal (always on; the first run, kept as it happened) ---")
                     writer.println(journal.trimEnd())
+                    writer.println("===========================================")
+                    writer.println()
+                }
+
+                // Always on: every uncaught exception of the app's own processes, logging on or off.
+                com.baba.callvault.system.diagnostics.CrashJournal.readForReport(context)?.let { crashes ->
+                    writer.println("--- Crashes (always on; newest last) ---")
+                    writer.println(crashes.trimEnd())
                     writer.println("===========================================")
                     writer.println()
                 }
@@ -421,6 +439,18 @@ object AppLogger {
         }
     }
 
+
+    /**
+     * What this report lacks, for its "missing" line: the opt-in log when logging is off, and the recorder's lines
+     * when there was no recorder to ask or it had none. The system report adds itself later if it never arrives.
+     */
+    private fun reportGaps(daemonEntries: List<String>): List<String> = buildList {
+        if (prefs?.isLoggingEnabled() != true) add("the app's debug log (debug logging is off; only the always-on sections)")
+        when {
+            runCatching { RecorderConnection.service }.getOrNull() == null -> add("recorder host lines (recorder not connected)")
+            daemonEntries.isEmpty() -> add("recorder host lines (the recorder had none)")
+        }
+    }
 
     /** Length of the "yyyy-MM-dd HH:mm:ss.SSS" prefix every entry starts with, used to sort by time. */
     private const val TIMESTAMP_LENGTH = 23

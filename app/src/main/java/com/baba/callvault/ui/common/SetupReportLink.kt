@@ -37,6 +37,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.unit.dp
 import com.baba.callvault.R
+import com.baba.callvault.system.diagnostics.ReportGaps
 import com.baba.callvault.system.diagnostics.SystemLogCollector
 import com.baba.callvault.system.shareLogFiles
 import com.baba.callvault.utils.AppLogger
@@ -78,6 +79,15 @@ object DebugReportBuilder {
                 "System report not attached (empty or over ${SYSTEM_REPORT_BUDGET_MS}ms); " +
                     "going on with the app report alone"
             )
+            // Said in the report itself, so a reader never mistakes a missing system half for a quiet one.
+            report?.let { file ->
+                withContext(Dispatchers.IO) {
+                    runCatching {
+                        val gap = "the system report (not collected within ${SYSTEM_REPORT_BUDGET_MS / 1000} s, or not writable)"
+                        file.writeText(ReportGaps.withGap(file.readText(), gap))
+                    }
+                }
+            }
         }
         return report to systemReport
     }
