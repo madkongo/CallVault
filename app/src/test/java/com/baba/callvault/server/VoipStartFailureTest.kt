@@ -55,7 +55,7 @@ class VoipStartFailureTest {
     fun the_recorder_publishes_the_failure_and_the_app_reports_it() {
         val root = listOf(File("src/main/java"), File("app/src/main/java")).first { it.isDirectory }
         val server = File(root, "com/baba/callvault/server/RecorderServiceImpl.kt").readText()
-        assertTrue(server.contains("lastCaptureDiagnostics = VoipStartFailure.line("))
+        assertTrue(server.contains("captureHealth.startFailed("))
 
         val app = File(root, "com/baba/callvault/services/recording/VoipRecordingCoordinator.kt").readText()
         val branch = app.substring(app.indexOf("if (!wroteAnything) {"), app.indexOf("} else if (!farHeard) {"))
