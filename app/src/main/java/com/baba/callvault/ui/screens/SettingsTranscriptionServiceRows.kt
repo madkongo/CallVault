@@ -202,8 +202,8 @@ private fun CloudServiceDetails(service: TranscriptionService, preferences: AppP
     val keyStore = remember(service) { CloudKeyStore(context) }
     var key by remember(service) { mutableStateOf<String?>(null) }
     // Saves outside this page's lifetime, and flushes what is unsaved when the row leaves (review C27).
-    val keySaver = remember(service) { CloudKeySaver(context) }
-    DisposableEffect(keySaver) { onDispose { keySaver.flush() } }
+    val keySaver = remember { CloudKeySaver.shared(context) }
+    DisposableEffect(service) { onDispose { keySaver.flush() } }
     var keyVisible by remember(service) { mutableStateOf(false) }
     var baseUrl by remember(service) { mutableStateOf(preferences.getTranscriptionCustomBaseUrl()) }
     var model by remember(service) { mutableStateOf(preferences.getTranscriptionCustomModel()) }
@@ -212,8 +212,10 @@ private fun CloudServiceDetails(service: TranscriptionService, preferences: AppP
 
     // Read once, off the main thread: decrypting goes through the Keystore.
     LaunchedEffect(service) {
-        val stored = withContext(Dispatchers.IO) { keyStore.get(service).orEmpty() }
-        key = stored
+        // Through the saver: a key the previous page (before a rotation) is still saving wins over the
+        // store, and a load that lands after typing began leaves the typing alone.
+        val stored = keySaver.load(service)
+        key = CloudKeySaver.fieldAfterLoad(current = key, loaded = stored)
     }
 
     Column(
