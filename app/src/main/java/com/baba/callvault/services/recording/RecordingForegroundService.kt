@@ -53,6 +53,8 @@ import com.baba.callvault.system.permissions.PermissionChecks
 import com.baba.callvault.utils.RecordingFileNameFormatter
 import com.baba.callvault.transcription.AudioDecoder
 import com.baba.callvault.system.diagnostics.CallEndLog
+import com.baba.callvault.system.storage.FreeSpaceMonitor
+import com.baba.callvault.system.storage.FreeSpacePolicy
 import com.baba.callvault.system.storage.MinDurationPolicy
 import com.baba.callvault.system.storage.WaitingNote
 import com.baba.callvault.system.storage.WaitingRecordings
@@ -554,6 +556,7 @@ class RecordingForegroundService : Service() {
             captureStartedAt = android.os.SystemClock.elapsedRealtime()
             currentState = RecordingServiceState.Active(activeSession, false, metadata)
             AppLogger.i(TAG, "Recording pipeline started successfully")
+            FreeSpaceMonitor.checkAsync(applicationContext, logLine = true)
             CallEndLog.record(
                 applicationContext,
                 CallEndLog.capturePath(
@@ -1144,6 +1147,7 @@ class RecordingForegroundService : Service() {
             recordHealth(sizeBytes, name, mix.healthFarHeard)
             return
         }
+        warnIfCutShortByFullStorage(name)
         // Too short to be worth keeping, if the user asked for that. Before the catalog, the
         // transcription queue and StorageRouter — a recording discarded after any of those has
         // already cost a whisper run or a cloud upload, and would flicker through the Home list on
@@ -1245,6 +1249,25 @@ class RecordingForegroundService : Service() {
      * and shares the same notification id (don't overwrite it and double-vibrate).
      */
     private fun notifyEmptyCapture() {
+        // A full phone is named only when the facts say so (review R2): low at call start, almost nothing now, no daemon
+        // death known, folder on the measured volume. Otherwise the advice below stays, so no real fault is hidden.
+        val free = FreeSpaceMonitor.freeBytes(applicationContext)
+        val cause = FreeSpacePolicy.emptyCaptureCause(
+            lowAtCallStart = FreeSpaceMonitor.lowAtCallStart,
+            freeNowBytes = free,
+            daemonLossKnown = daemonLossNotified,
+            folderOnPhoneStorage = FreeSpaceMonitor.folderOnPhoneStorage(applicationContext),
+        )
+        CallEndLog.record(
+            applicationContext,
+            "recording empty: ${if (free < 0) "free space unknown" else "${free / (1024 * 1024)} MB free"}, " +
+                "lowAtCallStart=${FreeSpaceMonitor.lowAtCallStart}, daemonLossNotified=$daemonLossNotified, " +
+                "${FreeSpaceMonitor.volumeNote(applicationContext)} -> $cause",
+        )
+        if (cause == FreeSpacePolicy.EmptyCause.STORAGE_FULL) {
+            if (!daemonLossNotified) notificationHelper.showErrorNotification(getString(R.string.storage_full_empty_text))
+            return
+        }
         if (!daemonLossNotified) {
             // The advice has to match the mode. Telling a Shizuku user to check Developer options
             // and Wireless debugging sends them to settings they have never touched and do not need,
@@ -1257,6 +1280,17 @@ class RecordingForegroundService : Service() {
                 }
             notificationHelper.showErrorNotification(getString(emptyFileMessage))
         }
+    }
+
+    /**
+     * A free-space warning when a call ends with almost no room left. It does NOT claim the call was cut short: a
+     * complete long call also ends on a nearly full phone. The file is kept as it is (review R2).
+     */
+    private fun warnIfCutShortByFullStorage(name: String) {
+        val free = FreeSpaceMonitor.freeBytes(applicationContext)
+        if (!FreeSpacePolicy.mayHaveBeenCutShort(free)) return
+        CallEndLog.record(applicationContext, "call ended with only ${free / (1024 * 1024)} MB free: ${CallEndLog.safeName(name)} free space is very low (warned the user; the file is kept, its length was not checked)")
+        if (!daemonLossNotified) notificationHelper.showErrorNotification(getString(R.string.storage_full_cut_short_text))
     }
 
     /** Both sides or a failure, never a quiet near-only success (#45), for a Wi-Fi call recorded as an app call. */

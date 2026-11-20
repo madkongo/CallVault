@@ -39,8 +39,14 @@ import com.baba.callvault.ui.theme.LocalCvBrand
 internal fun WaitingCallsCard(count: Int, bytes: Long, onOpenSettings: () -> Unit) {
     val accent = LocalCvBrand.current.warning
     val tinted = accent.copy(alpha = 0.10f).compositeOver(MaterialTheme.colorScheme.surface)
+    // One stat call, only when the list of waiting calls changes. A full phone, not a missing folder, is the likelier reason then.
+    val context = androidx.compose.ui.platform.LocalContext.current
+    val phoneFull = androidx.compose.runtime.remember(count, bytes) {
+        com.baba.callvault.system.storage.FreeSpaceMonitor.isStorageFull(context)
+    }
     val text = when (WaitingPolicy.level(bytes)) {
-        WaitingPolicy.Level.NORMAL -> R.string.waiting_calls_text
+        WaitingPolicy.Level.NORMAL ->
+            if (phoneFull) R.string.waiting_calls_storage_full_text else R.string.waiting_calls_text
         WaitingPolicy.Level.NEARLY_FULL -> R.string.waiting_calls_nearly_full_text
         WaitingPolicy.Level.FULL -> R.string.waiting_calls_full_text
     }

@@ -123,7 +123,7 @@ object FolderProtection {
     private fun notify(context: Context, why: String, folderGone: Boolean, refused: WaitingPolicy.Admission? = null) {
         val count = WaitingRecordings.count(context)
         val bytes = WaitingRecordings.totalBytes(context)
-        val notice = FolderNotice.decide(folderGone, count, bytes, refused)
+        val notice = FolderNotice.decide(folderGone, count, bytes, refused, FreeSpaceMonitor.isStorageFull(context))
         val shown = FolderNotice.show(context, notice)
         RecordingFolderCheck.recordAlwaysOn(
             context,

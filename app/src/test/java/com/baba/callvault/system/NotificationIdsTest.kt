@@ -10,6 +10,7 @@ import com.baba.callvault.services.recording.VoipRecordPrompt
 import com.baba.callvault.services.recording.VoipRecordingNotification
 import com.baba.callvault.system.health.SilentFailureNotifier
 import com.baba.callvault.system.storage.FolderNotice
+import com.baba.callvault.system.storage.FreeSpaceMonitor
 import com.baba.callvault.system.updates.UpdateNotifications
 import com.baba.callvault.transcription.HeavyWorkNotification
 import com.baba.callvault.transcription.TranscriptNotifier
@@ -37,6 +38,7 @@ class NotificationIdsTest {
             "TranscriptNotifier.FAILED" to TranscriptNotifier.ID_FAILED,
             "RecordingNotificationHelper.BATTERY_EXEMPTION" to RecordingNotificationHelper.BATTERY_EXEMPTION_NOTIFICATION_ID,
             "FolderNotice" to FolderNotice.NOTIFICATION_ID,
+            "FreeSpaceMonitor" to FreeSpaceMonitor.NOTIFICATION_ID,
         )
         val all = named.entries.map { it.key to it.value } +
             SilentFailureNotifier.ALL_IDS.map { "SilentFailureNotifier" to it } +
