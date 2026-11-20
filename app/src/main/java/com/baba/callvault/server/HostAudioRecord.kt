@@ -76,43 +76,65 @@ internal object HostAudioRecord {
         onOtherFailure: (Throwable) -> Unit = { error ->
             AppLogger.w(TAG, "$what: AudioRecord constructor threw: ${error.javaClass.simpleName}: ${error.message}")
         },
+        recovery: CaptureRecoveryLog = CaptureRecoveryLog.current,
+        layout: () -> String = ::rebuildLayout,
     ): T? {
         val normal = runCatching(build)
-        if (normal.isSuccess) return normal.getOrNull()
+        if (normal.isSuccess) {
+            recovery.noteNormalIfActive(what)
+            return normal.getOrNull()
+        }
         val error = normal.exceptionOrNull()!!
         if (!VendorConstructorCrash.matches(error)) {
             onOtherFailure(error)
+            recovery.note(what, "ctor failed(${CaptureRecoveryLog.reason(VendorConstructorCrash.rootCause(error))})")
             return null
         }
+        // The always-on summary of this record's steps (review N21b), handed to the app with captureDiagnostics().
+        val steps = StringBuilder("ctor crashed(${CaptureRecoveryLog.reason(VendorConstructorCrash.rootCause(error))})")
         AppLogger.w(TAG, "$what: the ROM's AudioRecord constructor crashed without a Context " +
             "(${VendorConstructorCrash.rootCause(error).message}); building it without that constructor")
         val bypassed = runCatching(bypass)
         bypassed.getOrNull()?.let {
             AppLogger.i(TAG, "$what: built without the vendor constructor")
+            recovery.note(what, "$steps > rebuilt(${runCatching(layout).getOrDefault("layout unknown")})")
             return it
         }
         val bypassError = bypassed.exceptionOrNull()!!
+        steps.append(" > rebuild failed(${CaptureRecoveryLog.reason(VendorConstructorCrash.rootCause(bypassError))})")
         AppLogger.e(TAG, "$what: building without the vendor constructor failed too: " +
             "${bypassError.javaClass.simpleName}: ${bypassError.message}", bypassError)
         ShellApplicationRepairGate.refusal(error, bypassError)?.let { why ->
             AppLogger.e(TAG, "$what: not giving the recorder a shell Application: $why; the record cannot be built")
+            recovery.note(what, "$steps > shellApp refused($why)")
             return null
         }
         AppLogger.w(TAG, "$what: the crash was a Context lookup and the rebuild does not fit this framework; " +
             "giving the recorder a shell Application and trying the constructor once more")
         if (!repair()) {
             AppLogger.e(TAG, "$what: no shell Application could be installed (reason logged above); the record cannot be built")
+            recovery.note(what, "$steps > shellApp install failed")
             return null
         }
+        steps.append(" > shellApp installed")
         val retried = runCatching(build)
         retried.exceptionOrNull()?.let {
             AppLogger.e(TAG, "$what: the constructor failed again with a shell Application: " +
                 "${VendorConstructorCrash.rootCause(it).javaClass.simpleName}: ${VendorConstructorCrash.rootCause(it).message}", it)
+            recovery.note(what, "$steps > retry failed(${CaptureRecoveryLog.reason(VendorConstructorCrash.rootCause(it))})")
             return null
         }
         AppLogger.i(TAG, "$what: built by the public constructor with a shell Application")
+        recovery.note(what, "$steps > retry ok")
         return retried.getOrNull()
     }
+
+    /** Which field layout the constructor-free rebuild used on this phone, for the recovery summary. */
+    private fun rebuildLayout(): String =
+        when (BypassedAudioRecord.channelLayoutOf(AudioRecord::class.java)) {
+            BypassedAudioRecord.ChannelLayout.CHANNEL_MASKS -> "A17 layout"
+            BypassedAudioRecord.ChannelLayout.COUNT_AND_MASK -> "old layout"
+        }
 
     /**
      * Starts [record]. Only on the crash Honor put into `startRecording()` ([VendorStartCrash], issue #53) does it
@@ -122,13 +144,27 @@ internal object HostAudioRecord {
     fun start(what: String, record: AudioRecord) =
         startWithRepair(what, start = { record.startRecording() }, repair = ShellApplication::install)
 
-    internal fun startWithRepair(what: String, start: () -> Unit, repair: () -> Boolean) {
+    internal fun startWithRepair(
+        what: String,
+        start: () -> Unit,
+        repair: () -> Boolean,
+        recovery: CaptureRecoveryLog = CaptureRecoveryLog.current,
+    ) {
         val error = runCatching(start).exceptionOrNull() ?: return
         if (!VendorStartCrash.matches(error)) throw error
+        val label = "$what start"
+        val crashed = "crashed(${CaptureRecoveryLog.reason(VendorConstructorCrash.rootCause(error))})"
         AppLogger.w(TAG, "$what: the ROM's startRecording() needs an Application " +
             "(${VendorConstructorCrash.rootCause(error).message}); giving the recorder a shell one")
-        if (!repair()) throw error
-        start()
+        if (!repair()) {
+            recovery.note(label, "$crashed > shellApp install failed")
+            throw error
+        }
+        runCatching(start).exceptionOrNull()?.let {
+            recovery.note(label, "$crashed > shellApp installed > start failed again(${CaptureRecoveryLog.reason(VendorConstructorCrash.rootCause(it))})")
+            throw it
+        }
+        recovery.note(label, "$crashed > shellApp installed > started")
         AppLogger.i(TAG, "$what: started after the shell Application was installed")
     }
 }

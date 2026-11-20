@@ -26,6 +26,7 @@ import com.baba.callvault.data.health.SetupHealthStore
 import com.baba.callvault.data.transcripts.SpeakerTurnsRepository
 import com.baba.callvault.data.health.record
 import com.baba.callvault.integrations.scrcpy.ScrcpyAudioCodec
+import com.baba.callvault.server.CaptureRecoveryLog
 import com.baba.callvault.server.DaemonSessionOwnership
 import com.baba.callvault.server.DaemonStereo
 import com.baba.callvault.server.IRecorderService
@@ -1104,9 +1105,14 @@ object VoipRecordingCoordinator {
         // The capture's own account of how its two sides lined up, written to the APP's log — the
         // same route the carrier path uses — so a report carries it even when the host's ring was
         // not on for the whole call. Issue #41 is diagnosed from this line. Empty from an older host.
-        val captureHealth = runCatching { RecorderConnection.service?.captureDiagnostics() }
+        val diagnostics = runCatching { RecorderConnection.service?.captureDiagnostics() }
             .onFailure { AppLogger.w(TAG, "Could not read the app-call capture health: ${it.message}") }
             .getOrNull()
+        // Review N21b: how the recorder had to build or start this call's sink and mic when the normal way failed
+        // (vivo's constructor crash, the rebuild, a shell Application), to the always-on log for a recorded call and
+        // a failed one alike. Nothing when every record was built normally, or from an older recorder.
+        CaptureRecoveryLog.callEndLine(diagnostics)?.let { CallEndLog.record(context, it) }
+        val captureHealth = CaptureRecoveryLog.split(diagnostics).first
         captureHealth
             ?.takeIf { it.isNotBlank() }
             ?.let {
