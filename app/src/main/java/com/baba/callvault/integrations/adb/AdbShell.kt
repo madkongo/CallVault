@@ -301,13 +301,23 @@ object AdbShell {
      * explain a failure: `isOn` is "proven on", and only `isOff` may be called off.
      */
     fun usbDebuggingState(context: Context): UsbDebuggingState = UsbDebuggingPolicy.of(
-        settingSaysOn = runCatching {
-            android.provider.Settings.Global.getInt(context.contentResolver, "adb_enabled", 0) == 1
-        }.getOrDefault(false),
+        settingSaysOn = usbDebuggingSettingSaysOn(context),
         adbd = adbdState(),
         wirelessDebuggingOn = isWirelessDebuggingEnabled(context),
         shellSaysOn = UsbDebuggingShellRead.current(),
     )
+
+    /** Whether asking the recorder for USB debugging can change [usbDebuggingState] now. See [UsbDebuggingPolicy.needsShellRead]. */
+    fun usbDebuggingShellReadNeeded(context: Context): Boolean = UsbDebuggingPolicy.needsShellRead(
+        settingSaysOn = usbDebuggingSettingSaysOn(context),
+        adbd = adbdState(),
+        wirelessDebuggingOn = isWirelessDebuggingEnabled(context),
+    )
+
+    /** The app's own `adb_enabled` read. A 1 is the truth; a 0 may be Android 17's redaction. */
+    private fun usbDebuggingSettingSaysOn(context: Context): Boolean = runCatching {
+        android.provider.Settings.Global.getInt(context.contentResolver, "adb_enabled", 0) == 1
+    }.getOrDefault(false)
 
     /**
      * True if adbd has a classic-tcpip listener we can use on loopback: ours, or, in offline mode, one another

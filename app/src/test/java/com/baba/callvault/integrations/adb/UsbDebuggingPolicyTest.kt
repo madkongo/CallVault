@@ -52,6 +52,51 @@ class UsbDebuggingPolicyTest {
     fun `the app's own on still wins over a stale shell off`() =
         assertEquals(UsbDebuggingState.ON, of(settingSaysOn = true, shellSaysOn = false))
 
+    // ---- When the shell read is worth its fork: only where it can change the answer (battery) ----
+
+    @Test
+    fun `the shell read is needed only when the setting reads 0 and Wireless debugging or adbd leaves it open`() {
+        val table = listOf(
+            // setting, adbd, wd -> needed
+            Triple(true, AdbdState.RUNNING, true) to false,
+            Triple(true, AdbdState.RUNNING, false) to false,
+            Triple(true, AdbdState.STOPPED, true) to false,
+            Triple(true, AdbdState.STOPPED, false) to false,
+            Triple(true, AdbdState.UNKNOWN, true) to false,
+            Triple(true, AdbdState.UNKNOWN, false) to false,
+            // Honor 2026-11-04: Wireless debugging holds adbd up, so only the shell can tell.
+            Triple(false, AdbdState.RUNNING, true) to true,
+            Triple(false, AdbdState.STOPPED, true) to true,
+            Triple(false, AdbdState.UNKNOWN, true) to true,
+            // R1 decides: adbd up with Wireless debugging off is USB debugging on. The everyday Android 17 state.
+            Triple(false, AdbdState.RUNNING, false) to false,
+            // R1/R2 decide: nothing holds adbd up.
+            Triple(false, AdbdState.STOPPED, false) to false,
+            // adbd unreadable or restarting: no evidence without the shell.
+            Triple(false, AdbdState.UNKNOWN, false) to true,
+        )
+        for ((state, needed) in table) {
+            val (setting, adbd, wd) = state
+            assertEquals("setting=$setting adbd=$adbd wd=$wd", needed, UsbDebuggingPolicy.needsShellRead(setting, adbd, wd))
+        }
+    }
+
+    @Test
+    fun `skipping the shell read never changes the answer, and a needed read always can`() {
+        for (setting in listOf(true, false)) for (adbd in AdbdState.values()) for (wd in listOf(true, false)) {
+            val label = "setting=$setting adbd=$adbd wd=$wd"
+            val without = of(setting, adbd, wd, shellSaysOn = null)
+            if (UsbDebuggingPolicy.needsShellRead(setting, adbd, wd)) {
+                // The read is what decides here: on and off give different answers.
+                assertEquals(label, false, of(setting, adbd, wd, true) == of(setting, adbd, wd, false))
+            } else {
+                // Already proven without it, and a shell read agreeing with that proof leaves it unchanged.
+                assertEquals(label, false, without == UsbDebuggingState.UNKNOWN)
+                assertEquals(label, without, of(setting, adbd, wd, shellSaysOn = without.isOn))
+            }
+        }
+    }
+
     @Test
     fun `shell read parsing`() {
         assertEquals(true, UsbDebuggingShellRead.parse("1"))

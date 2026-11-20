@@ -93,4 +93,18 @@ object UsbDebuggingPolicy {
         // either. adbd UNKNOWN ("restarting", or unreadable): no evidence at all.
         else -> UsbDebuggingState.UNKNOWN
     }
+
+    /**
+     * Whether a shell read ([UsbDebuggingShellRead]) can change what [of] answers — the only states worth its
+     * fork+exec in the recorder. Everywhere else [of] is already decided without it:
+     *
+     * - the setting reads 1: always ON;
+     * - adbd RUNNING with Wireless debugging off: R1 proves ON (the everyday Android 17 state with USB debugging on);
+     * - adbd STOPPED with Wireless debugging off: R1/R2 prove OFF.
+     *
+     * It is needed with Wireless debugging on (it alone can keep adbd up, so the Honor 2026-11-04 "off for two hours"
+     * case is invisible without the shell), and with adbd unreadable or restarting (no evidence at all).
+     */
+    fun needsShellRead(settingSaysOn: Boolean, adbd: AdbdState, wirelessDebuggingOn: Boolean): Boolean =
+        !settingSaysOn && (wirelessDebuggingOn || adbd == AdbdState.UNKNOWN)
 }
