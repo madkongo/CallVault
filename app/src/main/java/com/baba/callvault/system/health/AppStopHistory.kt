@@ -52,7 +52,7 @@ object AppStopHistory {
     }.getOrDefault(false)
 
     /** One recorded end of the app's process. */
-    data class ExitRecord(val atMillis: Long, val reason: Int, val description: String?)
+    data class ExitRecord(val atMillis: Long, val reason: Int, val description: String?, val pid: Int = 0)
 
     /**
      * Whether an exit is the user stopping the app: Active apps -> Stop, or Settings -> Force stop. Both are
@@ -91,7 +91,7 @@ object AppStopHistory {
     fun exits(context: Context): List<ExitRecord> {
         val am = context.getSystemService(ActivityManager::class.java) ?: return emptyList()
         return am.getHistoricalProcessExitReasons(context.packageName, 0, HISTORY)
-            .map { ExitRecord(it.timestamp, it.reason, it.description) }
+            .map { ExitRecord(it.timestamp, it.reason, it.description, it.pid) }
     }
 
     /** A start as Android stamps it: time since the boot it happened in — which boot, it does not say. */

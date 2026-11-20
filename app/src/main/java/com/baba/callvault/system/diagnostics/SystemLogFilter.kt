@@ -65,8 +65,14 @@ object SystemLogFilter {
         "avc", "SELinux", "auditd",
     )
 
-    /** How a line says it concerns CallVault: the app package, or the daemon's process and shell uid. */
-    private val OURS = listOf("com.baba.callvault", "app_process", "com.android.shell", "uid:2000")
+    /**
+     * How a line says it concerns CallVault: the app package as a whole word (so `com.baba.callvaultpro` is
+     * somebody else), or the daemon's process and shell uid.
+     */
+    private val OURS = listOf(
+        Regex("""(?<![A-Za-z0-9_.])com\.baba\.callvault(?![A-Za-z0-9_])"""),
+        Regex.fromLiteral("app_process"), Regex.fromLiteral("com.android.shell"), Regex.fromLiteral("uid:2000"),
+    )
 
     /** Our own lines, app and daemon alike. */
     private const val OWN_TAG_PREFIX = "CV:"
@@ -81,7 +87,7 @@ object SystemLogFilter {
         val tag = tagOf(line) ?: return false
         if (tag.startsWith(OWN_TAG_PREFIX)) return true
         if (tag !in ALLOWED_TAGS) return false
-        if (tag in ABOUT_US_ONLY) return OURS.any { line.contains(it) }
+        if (tag in ABOUT_US_ONLY) return OURS.any { it.containsMatchIn(line) }
         return true
     }
 
@@ -119,6 +125,195 @@ object SystemLogFilter {
         kept = kept.drop(from)
         return kept
     }
+
+    // ---------------------------------------------------------------------------------------------
+    // Lines about CallVault from the rest of the system
+    //
+    // The vivo Android 17 report of 2026-11-20 crashed three times with "Bad notification for
+    // startForeground" and carried not one system_server line about it, so why Android refused the
+    // notice had to be read out of code. [select] widens the report by IDENTITY, never by keyword:
+    // a line is let in because it names our package or our uid exactly, or because one of our own
+    // processes wrote it. Another app's line about another app stays out, whatever its tag.
+    // ---------------------------------------------------------------------------------------------
+
+    /**
+     * Who "us" is, for [select]: the package (which also covers `:recorder` / `:drive` process names
+     * and our component names), the app's uid, and pids Android's exit record says were ours.
+     */
+    data class Ours(
+        val packageName: String,
+        val uid: Int,
+        val pidWindows: List<PidWindow> = emptyList(),
+    )
+
+    /**
+     * [pid] counts as ours between [fromMs] and [toMs], on the clock of [logClockMillis].
+     *
+     * Windowed because pids are reused: a number that was our process an hour ago may be someone
+     * else's chat app now, and its lines must not ride in on our old pid.
+     */
+    data class PidWindow(val pid: Int, val fromMs: Long, val toMs: Long)
+
+    /**
+     * System tags whose lines are let in when they name us. Lifecycle, foreground services and their
+     * notifications, jobs, app-ops, packages, power allow-lists and the runtime's own crash lines.
+     */
+    private val SYSTEM_TAGS = setOf(
+        "ActivityManager", "ActivityTaskManager", "ActiveServices", "ServiceRecord", "AppErrors",
+        "ProcessList", "Process", "Zygote", "AndroidRuntime", "libprocessgroup", "lmkd", "lowmemorykiller",
+        "NotificationService", "NotificationRecord", "ForegroundServiceTypePolicy", "ForegroundServiceTypeLoggerModule",
+        "JobScheduler", "JobScheduler.Quota", "JobServiceContext", "JobStore", "AlarmManager",
+        "AppOps", "AppOpsService", "PackageManager", "PackageInstaller", "PermissionManager",
+        "DeviceIdleController", "DeviceIdle", "PowerManagerService", "AppStandbyController",
+        "UsageStatsService", "BatteryOptimization", "PowerExemptionManager", "CachedAppOptimizer",
+    )
+
+    /** Android's event log tags (`-b events`): am_crash, am_anr, am_kill, am_proc_died, notification_*. */
+    private val EVENT_TAG_PREFIXES = listOf("am_", "notification_")
+
+    /**
+     * Phone makers' own process killers and freezers, by tag: vivo, OPPO/OnePlus/realme (Hans, athena,
+     * oplus), Xiaomi (PowerKeeper, MIUI), Honor/Huawei (iAware, PowerGenie), Samsung (Freecess).
+     * Only ever let in together with a line that names us.
+     */
+    private val OEM_KILLER_TAG = Regex(
+        "(?i)vivo|bbk|hans|athena|oplus|oppo|coloros|oneplus|powerkeeper|miui|xiaomi|joyose|greeze|" +
+            "honor|huawei|iaware|powergenie|freecess|smartpower|kill|freez",
+    )
+
+    /**
+     * Phrases that say Android refused a foreground notice. The system_server lines carrying them name
+     * no package, so they are let in only next to a death of ours (see [CORRELATION_MS]).
+     */
+    private val NOTICE_FAILURE = Regex(
+        "Error showing notification for service|invalid (channel for )?service notification|Bad notification",
+    )
+
+    /** How close in time a [NOTICE_FAILURE] line must be to a line about us to be counted as ours. */
+    private const val CORRELATION_MS = 5_000L
+
+    /** How long before our first own line, and after our last, a pid still counts as ours. */
+    private const val PID_LEAD_MS = 10_000L
+    private const val PID_TRAIL_MS = 30_000L
+
+    /** At most this many lines of one refused-notice stack trace. */
+    private const val MAX_GROUP_LINES = 25
+
+    private class Parsed(val tag: String, val pid: Int, val tid: Int, val atMs: Long)
+
+    /**
+     * The lines of [lines] that belong in the report, in their original order: everything [keep]
+     * allows, plus what the rest of the system said about us — see [Ours].
+     */
+    fun select(lines: List<String>, ours: Ours): List<String> {
+        val parsed = lines.map(::parse)
+        val windows = ours.pidWindows + ownPidWindows(parsed)
+        val namesUs = namesUsMatcher(ours)
+        val kept = BooleanArray(lines.size)
+        val aboutUsTimes = mutableListOf<Long>()
+
+        lines.forEachIndexed { i, line ->
+            val p = parsed[i] ?: return@forEachIndexed
+            val ownPid = windows.any { it.pid == p.pid && p.atMs in it.fromMs..it.toMs }
+            val systemAboutUs = isSystemTag(p.tag) && namesUs(line)
+            if (ownPid || systemAboutUs) aboutUsTimes += p.atMs
+            kept[i] = keep(line) || ownPid || systemAboutUs
+        }
+
+        noticeFailureGroups(lines, parsed)
+            .filter { group -> aboutUsTimes.any { kotlin.math.abs(it - parsed[group.first()]!!.atMs) <= CORRELATION_MS } }
+            .forEach { group -> group.forEach { kept[it] = true } }
+
+        return lines.filterIndexed { i, _ -> kept[i] }
+    }
+
+    /**
+     * Two dumps of the same log as one list, oldest first, without repeating a line both carried.
+     * Stable for lines with the same timestamp, so a stack trace keeps its order.
+     */
+    fun mergeByTime(a: List<String>, b: List<String>): List<String> =
+        LinkedHashSet(a + b).sortedBy { it.take(STAMP_LENGTH) }
+
+    /**
+     * A `threadtime` timestamp (`MM-DD HH:MM:SS.mmm`) as milliseconds on a clock that only has to
+     * order and subtract within one log: months count as 31 days, and there is no year.
+     */
+    fun logClockMillis(stamp: String): Long? {
+        val m = STAMP.find(stamp) ?: return null
+        val (mo, d, h, mi, s, ms) = m.destructured
+        val days = mo.toLong() * 31 + d.toLong()
+        return ((days * 24 + h.toLong()) * 60 + mi.toLong()) * 60_000 + s.toLong() * 1_000 + ms.toLong()
+    }
+
+    private fun parse(line: String): Parsed? {
+        val m = HEADER.find(line) ?: return null
+        val at = logClockMillis(line) ?: return null
+        return Parsed(m.groupValues[3].trim(), m.groupValues[1].toInt(), m.groupValues[2].toInt(), at)
+    }
+
+    /** Every pid that wrote one of our own `CV:` lines, for the stretch it was writing them. */
+    private fun ownPidWindows(parsed: List<Parsed?>): List<PidWindow> =
+        parsed.filterNotNull()
+            .filter { it.tag.startsWith(OWN_TAG_PREFIX) }
+            .groupBy { it.pid }
+            .map { (pid, own) ->
+                PidWindow(pid, own.minOf { it.atMs } - PID_LEAD_MS, own.maxOf { it.atMs } + PID_TRAIL_MS)
+            }
+
+    private fun isSystemTag(tag: String): Boolean =
+        tag in SYSTEM_TAGS || EVENT_TAG_PREFIXES.any { tag.startsWith(it) } || OEM_KILLER_TAG.containsMatchIn(tag)
+
+    /**
+     * Whether a line names us: the package as a whole word (so `com.baba.callvaultpro` is not us, but
+     * `com.baba.callvault:recorder` and `com.baba.callvault/u0a24` are), or the uid in either of the
+     * forms Android prints it (`10024` after "uid", or `u0a24`), never as part of a longer number.
+     */
+    private fun namesUsMatcher(ours: Ours): (String) -> Boolean {
+        val pkg = Regex("(?<![A-Za-z0-9_.])" + Regex.escape(ours.packageName) + "(?![A-Za-z0-9_])")
+        val user = ours.uid / PER_USER_RANGE
+        val appId = ours.uid % PER_USER_RANGE
+        val uidPatterns = if (appId < FIRST_APPLICATION_UID) emptyList() else listOf(
+            Regex("(?i)\\buid[ =:#]*" + ours.uid + "(?![0-9])"),
+            Regex("(?<![A-Za-z0-9])u" + user + "a" + (appId - FIRST_APPLICATION_UID) + "(?![0-9])"),
+        )
+        return { line -> pkg.containsMatchIn(line) || uidPatterns.any { it.containsMatchIn(line) } }
+    }
+
+    /**
+     * Each refused-notice line with the stack trace system_server printed under it: the following
+     * lines from the same pid, thread and tag, up to [MAX_GROUP_LINES].
+     */
+    private fun noticeFailureGroups(lines: List<String>, parsed: List<Parsed?>): List<List<Int>> {
+        val groups = mutableListOf<List<Int>>()
+        var i = 0
+        while (i < lines.size) {
+            val head = parsed[i]
+            if (head == null || head.tag !in SYSTEM_TAGS || !NOTICE_FAILURE.containsMatchIn(lines[i])) {
+                i++
+                continue
+            }
+            val group = mutableListOf(i)
+            var j = i + 1
+            while (j < lines.size && group.size < MAX_GROUP_LINES) {
+                val next = parsed[j] ?: break
+                if (next.pid != head.pid || next.tid != head.tid || next.tag != head.tag) break
+                group += j
+                j++
+            }
+            groups += group
+            i = j
+        }
+        return groups
+    }
+
+    private const val PER_USER_RANGE = 100_000
+    private const val FIRST_APPLICATION_UID = 10_000
+    private const val STAMP_LENGTH = 18
+
+    private val STAMP = Regex("""^(\d{2})-(\d{2})\s+(\d{2}):(\d{2}):(\d{2})\.(\d{3})""")
+
+    private val HEADER =
+        Regex("""^\d{2}-\d{2}\s+\d{2}:\d{2}:\d{2}\.\d{3}\s+(\d+)\s+(\d+)\s+[VDIWEFS]\s+(\S.{0,63}?):\s""")
 
     private val THREADTIME =
         Regex("""^\d{2}-\d{2}\s+\d{2}:\d{2}:\d{2}\.\d{3}\s+\d+\s+\d+\s+[VDIWEFS]\s+(\S.{0,63}?):\s""")

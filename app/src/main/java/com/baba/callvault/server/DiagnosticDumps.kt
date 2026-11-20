@@ -84,6 +84,9 @@ object DiagnosticDumps {
                     "| grep -E 'Adb|ADB|Usb|USB|(^|[^A-Za-z])(adb|usb)|[Dd]ebugg|[Dd]evelop' | head -n 800",
             )
         }
+        // Why Android stopped us, from the buffers the plain dump above does not read. See [lifecycleScript].
+        // Fixed command; any argument is ignored.
+        "logcat_lifecycle" -> arrayOf(SH, "-c", lifecycleScript(LOGCAT))
         "dumpsys_audio" -> arrayOf(DUMPSYS, "audio")
         "appops_all" -> arrayOf(DUMPSYS, "appops")
         // Filtered on the device: the raw dump is megabytes and most of it is irrelevant. A pipeline
@@ -195,6 +198,27 @@ object DiagnosticDumps {
         )
         else -> null
     }
+
+    /**
+     * The crash buffer, plus every system and event-log line naming our package, plus the stack trace under
+     * any refused foreground notice — each cut to its newest lines ON THE DEVICE.
+     *
+     * Why (vivo Android 17, 2026-11-20): three "Bad notification for startForeground" crashes and the report
+     * held no system line about any of them. The plain dump reads main+system whole, which on a 16 MB ring
+     * runs past the binder's 1 MB limit and is easily empty on a ROM that keeps its system log quiet, and it
+     * never read `-b crash` or `-b events` at all — where `am_crash`, `am_kill` and `am_proc_died` live.
+     * Bounded to ~1,800 lines so the answer always fits through the binder. The app filters it again by
+     * exact package, uid and pid ([com.baba.callvault.system.diagnostics.SystemLogFilter.select]); the
+     * package in the grep is a coarse first cut so that little else is ever read off the device.
+     *
+     * [logcat] is the binary to run: an absolute path in the daemon, plain `logcat` over the app's ADB shell.
+     */
+    fun lifecycleScript(logcat: String): String =
+        "{ $logcat -b crash -d -v threadtime | tail -n 400; " +
+            "$logcat -b system -b events -d -v threadtime | grep -F 'com.baba.callvault' | tail -n 1200; " +
+            "$logcat -b system -d -v threadtime " +
+            "| grep -E -A 20 'Error showing notification for service|invalid (channel for )?service notification|Bad notification' " +
+            "| grep -v '^--\$' | tail -n 200; }"
 
     /** Runs [key] and returns its output, or null if it is not allowed, fails, or times out. */
     fun run(key: String, arg: String?): String? {

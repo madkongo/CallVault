@@ -33,7 +33,7 @@ class DiagnosticDumpsTest {
             "processes_times", "logcat_grow_host",
             "setting_adb_enabled", "setting_dev_options", "call_state", "audio_latency",
             "voip_policy", "voip_players", "voip_tracks", "voip_audio_log", "vivo_audio_props",
-            "audio_record_state", "voip_owners",
+            "audio_record_state", "voip_owners", "logcat_lifecycle",
         )
             .forEach { key ->
                 assertTrue("$key must be runnable", DiagnosticDumps.commandFor(key, null) != null)
@@ -155,5 +155,17 @@ class DiagnosticDumpsTest {
             assertTrue("$key must not carry the argument: $cmd", !cmd.contains("rm -rf"))
         }
     }
-}
 
+    @Test
+    fun `the lifecycle slice reads the crash and events buffers, bounded, with no caller input`() {
+        // The crash buffer and Android's event log (am_crash, am_kill, am_proc_died) say why we died even on a phone
+        // whose system log is quiet. Bounded on the device so it stays far below the binder's 1 MB limit.
+        val command = DiagnosticDumps.commandFor("logcat_lifecycle", "ignored; rm -rf /")!!
+        val script = command.joinToString(" ")
+        assertEquals("/system/bin/sh", command.first())
+        assertTrue(script.contains("-b crash"))
+        assertTrue(script.contains("-b events"))
+        assertTrue(script.contains("tail -n"))
+        assertTrue("the argument must never reach the shell", !script.contains("rm -rf"))
+    }
+}
