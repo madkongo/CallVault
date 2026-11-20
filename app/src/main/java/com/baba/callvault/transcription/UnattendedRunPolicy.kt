@@ -20,4 +20,12 @@ internal object UnattendedRunPolicy {
     /** True when an automatic run should wait because the phone is already [PowerManager.THERMAL_STATUS_SEVERE] or worse. */
     fun shouldDefer(userRequested: Boolean, thermalStatus: Int): Boolean =
         !userRequested && thermalStatus >= PowerManager.THERMAL_STATUS_SEVERE
+
+    /**
+     * True when a cloud run must not upload now: the user does not allow mobile data and the network is metered
+     * (review R23). The work request's own network rule is fixed when it is queued, so a run queued while the
+     * switch was on would otherwise still upload after it was turned off.
+     */
+    fun mustWaitForUnmetered(isCloud: Boolean, allowMobileData: Boolean, isMetered: Boolean): Boolean =
+        isCloud && !allowMobileData && isMetered
 }

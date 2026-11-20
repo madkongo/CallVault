@@ -31,4 +31,16 @@ class UnattendedRunPolicyTest {
     fun `a tapped run is never held for heat`() {
         assertFalse(UnattendedRunPolicy.shouldDefer(true, PowerManager.THERMAL_STATUS_CRITICAL))
     }
+
+    @Test
+    fun `a cloud run waits on a metered network unless mobile data is allowed`() {
+        assertTrue(UnattendedRunPolicy.mustWaitForUnmetered(isCloud = true, allowMobileData = false, isMetered = true))
+        assertFalse(UnattendedRunPolicy.mustWaitForUnmetered(isCloud = true, allowMobileData = true, isMetered = true))
+        assertFalse(UnattendedRunPolicy.mustWaitForUnmetered(isCloud = true, allowMobileData = false, isMetered = false))
+    }
+
+    @Test
+    fun `an on-device run never waits for an unmetered network`() {
+        assertFalse(UnattendedRunPolicy.mustWaitForUnmetered(isCloud = false, allowMobileData = false, isMetered = true))
+    }
 }

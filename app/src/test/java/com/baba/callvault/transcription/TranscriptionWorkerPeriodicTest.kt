@@ -44,6 +44,7 @@ class TranscriptionWorkerPeriodicTest {
     fun restoreSeam() {
         TranscriptionWorker.isSummaryRunning = { com.baba.callvault.summary.SummaryEngine.isRunning }
         TranscriptionWorker.thermalStatusOverride = null
+        TranscriptionWorker.isNetworkMeteredOverride = null
     }
 
     @Before
@@ -176,5 +177,21 @@ class TranscriptionWorkerPeriodicTest {
         // what matters is that it got as far as the engine choice (the gate was entered and released).
         assertEquals(ListenableWorker.Result.retry(), result)
         assertTrue(TranscriptionRunGate.tryEnter(TranscriptionRunGate.Kind.AFTER_CALL))
+    }
+
+    @Test
+    fun a_queued_cloud_run_does_not_upload_on_a_metered_network_once_mobile_data_is_turned_off() {
+        val prefs = com.baba.callvault.data.AppPreferences(context)
+        prefs.setTranscriptionService(com.baba.callvault.transcription.cloud.TranscriptionService.GROQ)
+        prefs.setTranscriptionCloudMobileData(false)
+        TranscriptionWorker.isNetworkMeteredOverride = { true }
+
+        val result = runBlocking {
+            TestListenableWorkerBuilder<TranscriptionWorker>(context)
+                .setInputData(androidx.work.workDataOf(TranscriptionWorker.KEY_DISPLAY_NAME to "call.ogg"))
+                .build().doWork()
+        }
+
+        assertEquals(ListenableWorker.Result.retry(), result)
     }
 }

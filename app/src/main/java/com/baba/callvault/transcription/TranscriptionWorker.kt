@@ -132,6 +132,12 @@ class TranscriptionWorker(
                 return@withContext Result.success()
             }
         }
+        // The switch can be turned off after this run was queued with "any network" (review R23): look again now.
+        if (UnattendedRunPolicy.mustWaitForUnmetered(engine.isCloud, prefs.getTranscriptionCloudMobileData(), isNetworkMetered())) {
+            AppLogger.i(TAG, "Cloud run not started: mobile data is not allowed and the network is metered")
+            com.baba.callvault.system.storage.DriveCopyJournal.record(applicationContext, "transcription run DEFERRED: cloud upload on a metered network is not allowed")
+            return@withContext retryLater("mobile data is not allowed for cloud transcription")
+        }
         val names = if (single != null) {
             listOf(single)
         } else {
@@ -303,6 +309,12 @@ class TranscriptionWorker(
         )
     }
 
+    private fun isNetworkMetered(): Boolean =
+        isNetworkMeteredOverride?.invoke() ?: runCatching {
+            (applicationContext.getSystemService(Context.CONNECTIVITY_SERVICE) as android.net.ConnectivityManager)
+                .isActiveNetworkMetered
+        }.getOrDefault(false) // unreadable: do not hold the run back on a guess
+
     private fun readThermalStatus(): Int =
         runCatching {
             (applicationContext.getSystemService(Context.POWER_SERVICE) as android.os.PowerManager).currentThermalStatus
@@ -310,6 +322,9 @@ class TranscriptionWorker(
 
     companion object {
         private const val TAG = "CV:TranscriptionWorker"
+
+        /** A test's stand-in for "is the active network metered"; null reads the real one. */
+        internal var isNetworkMeteredOverride: (() -> Boolean)? = null
 
         /** A test's stand-in for the phone's thermal status; null reads the real one. */
         internal var thermalStatusOverride: (() -> Int)? = null
