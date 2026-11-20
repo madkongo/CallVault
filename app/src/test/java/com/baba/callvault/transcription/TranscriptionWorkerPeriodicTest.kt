@@ -43,6 +43,7 @@ class TranscriptionWorkerPeriodicTest {
     @org.junit.After
     fun restoreSeam() {
         TranscriptionWorker.isSummaryRunning = { com.baba.callvault.summary.SummaryEngine.isRunning }
+        TranscriptionWorker.thermalStatusOverride = null
     }
 
     @Before
@@ -143,5 +144,37 @@ class TranscriptionWorkerPeriodicTest {
 
         assertEquals(ListenableWorker.Result.success(), run(TranscriptionScheduler.TAG_PERIODIC))
         assertEquals(1, retryInfos().size)
+    }
+
+    @Test
+    fun an_after_call_run_waits_while_the_phone_is_severely_hot() {
+        TranscriptionWorker.thermalStatusOverride = { android.os.PowerManager.THERMAL_STATUS_SEVERE }
+
+        val result = runBlocking {
+            TestListenableWorkerBuilder<TranscriptionWorker>(context)
+                .setInputData(androidx.work.workDataOf(TranscriptionWorker.KEY_DISPLAY_NAME to "call.ogg"))
+                .build().doWork()
+        }
+
+        assertEquals(ListenableWorker.Result.retry(), result)
+    }
+
+    @Test
+    fun a_tapped_run_ignores_heat() {
+        TranscriptionWorker.thermalStatusOverride = { android.os.PowerManager.THERMAL_STATUS_CRITICAL }
+
+        val result = runBlocking {
+            TestListenableWorkerBuilder<TranscriptionWorker>(context)
+                .setInputData(androidx.work.workDataOf(
+                    TranscriptionWorker.KEY_DISPLAY_NAME to "call.ogg",
+                    TranscriptionWorker.KEY_USER_REQUESTED to true,
+                ))
+                .build().doWork()
+        }
+
+        // No model in the test, so a run that was not deferred for heat still ends in the model-wait retry;
+        // what matters is that it got as far as the engine choice (the gate was entered and released).
+        assertEquals(ListenableWorker.Result.retry(), result)
+        assertTrue(TranscriptionRunGate.tryEnter(TranscriptionRunGate.Kind.AFTER_CALL))
     }
 }

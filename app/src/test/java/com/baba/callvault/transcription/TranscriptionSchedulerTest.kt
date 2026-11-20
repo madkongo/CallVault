@@ -209,4 +209,18 @@ class TranscriptionSchedulerTest {
             .getWorkInfosForUniqueWork(TranscriptionScheduler.AFTER_CALL_WORK_PREFIX + "call1.ogg").get()
         assertTrue(infos.all { it.state.isFinished })
     }
+
+    // -- R10: an automatic after-call run does not start on a nearly flat battery -----------------
+
+    @Test
+    fun an_after_call_run_needs_the_battery_not_low_and_a_tap_does_not() {
+        AppPreferences(context).setTranscriptionMode(TranscriptionMode.AFTER_EACH_CALL)
+        TranscriptionScheduler.transcribeAfterCallIfEnabled(context, "call1.ogg")
+        TranscriptionScheduler.runNow(context, "tapped.ogg", userRequested = true)
+
+        val afterCall = WorkManager.getInstance(context)
+            .getWorkInfosForUniqueWork(TranscriptionScheduler.AFTER_CALL_WORK_PREFIX + "call1.ogg").get().single()
+        assertTrue(afterCall.constraints.requiresBatteryNotLow())
+        assertTrue(!manualInfos().single().constraints.requiresBatteryNotLow())
+    }
 }

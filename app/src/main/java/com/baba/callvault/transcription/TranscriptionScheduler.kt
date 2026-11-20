@@ -201,6 +201,9 @@ object TranscriptionScheduler {
                     Constraints.Builder()
                         .setRequiresCharging(run.requiresCharging)
                         .setRequiredNetworkType(run.networkType)
+                        // An unattended after-call run does not start on a nearly flat battery (review R10); the
+                        // nightly sweep already had this. A tap is the user's own decision and is never held.
+                        .setRequiresBatteryNotLow(afterCall)
                         .build()
                 )
                 addTag(TAG_RUN)

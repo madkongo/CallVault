@@ -61,6 +61,13 @@ class TranscriptionWorker(
             journal("transcription run DEFERRED: a summary is running")
             return retryLater("a summary is running")
         }
+        // Only automatic runs: a tap is the user's own choice. Checked at the start of a run, not mid-recording
+        // (the runner's stop hook would cut a decode short); a hot phone is asked again after the back-off.
+        val thermal = thermalStatusOverride?.invoke() ?: readThermalStatus()
+        if (UnattendedRunPolicy.shouldDefer(userRequested = kind == TranscriptionRunGate.Kind.TAP, thermalStatus = thermal)) {
+            journal("transcription run DEFERRED: the phone is hot (thermal status $thermal)")
+            return retryLater("the phone is hot (thermal status $thermal)")
+        }
         if (!TranscriptionRunGate.tryEnter(kind)) {
             journal("transcription run DEFERRED: another transcription is running (kind=$kind)")
             return retryLater("another transcription is running")
@@ -296,8 +303,16 @@ class TranscriptionWorker(
         )
     }
 
+    private fun readThermalStatus(): Int =
+        runCatching {
+            (applicationContext.getSystemService(Context.POWER_SERVICE) as android.os.PowerManager).currentThermalStatus
+        }.getOrDefault(android.os.PowerManager.THERMAL_STATUS_NONE)
+
     companion object {
         private const val TAG = "CV:TranscriptionWorker"
+
+        /** A test's stand-in for the phone's thermal status; null reads the real one. */
+        internal var thermalStatusOverride: (() -> Int)? = null
 
         /** Whether a summary is running; a seam so a test can say yes (the engine's flag is private-set). */
         internal var isSummaryRunning: () -> Boolean = { com.baba.callvault.summary.SummaryEngine.isRunning }
