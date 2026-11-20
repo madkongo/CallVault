@@ -1079,6 +1079,16 @@ object VoipRecordingCoordinator {
         // unreachable recorder is not recording anything.
         val stillRecording = recorder?.let { r -> runCatching { r.isRecording() }.getOrNull() } ?: false
         DaemonSessionOwnership.release(this)
+        // The recorder's one answer about this call, read once and before any early return: the slot holding it is
+        // overwritten at the next start. Review N21b: how the recorder had to build or start this call's sink and mic
+        // when the normal way failed (vivo's constructor crash, the rebuild, a shell Application) goes to the
+        // always-on log for every app call, recorded, failed or discarded. Nothing when every record was built
+        // normally, or from an older recorder.
+        val diagnostics = runCatching { recorder?.captureDiagnostics() }
+            .onFailure { AppLogger.w(TAG, "Could not read the app-call capture health: ${it.message}") }
+            .getOrNull()
+        CaptureRecoveryLog.callEndLine(diagnostics)?.let { CallEndLog.record(context, it) }
+        val captureHealth = CaptureRecoveryLog.split(diagnostics).first
         if (stillRecording) {
             // Not stopped. Its file stays a KNOWN session (the key is kept): a phone call starting now finds an orphan
             // older than its own beginning, stops it and records, instead of adopting it. Nothing is published from a
@@ -1102,17 +1112,9 @@ object VoipRecordingCoordinator {
             discardStarted(context, saf, VoipOutcome.Reason.NEVER_CONNECTED, recordedMs, "the app call that never connected")
             return
         }
-        // The capture's own account of how its two sides lined up, written to the APP's log — the
+        // The capture's own account of how its two sides lined up (read above), written to the APP's log — the
         // same route the carrier path uses — so a report carries it even when the host's ring was
         // not on for the whole call. Issue #41 is diagnosed from this line. Empty from an older host.
-        val diagnostics = runCatching { RecorderConnection.service?.captureDiagnostics() }
-            .onFailure { AppLogger.w(TAG, "Could not read the app-call capture health: ${it.message}") }
-            .getOrNull()
-        // Review N21b: how the recorder had to build or start this call's sink and mic when the normal way failed
-        // (vivo's constructor crash, the rebuild, a shell Application), to the always-on log for a recorded call and
-        // a failed one alike. Nothing when every record was built normally, or from an older recorder.
-        CaptureRecoveryLog.callEndLine(diagnostics)?.let { CallEndLog.record(context, it) }
-        val captureHealth = CaptureRecoveryLog.split(diagnostics).first
         captureHealth
             ?.takeIf { it.isNotBlank() }
             ?.let {

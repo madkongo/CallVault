@@ -234,4 +234,19 @@ class CaptureRecoveryLogTest {
         assertTrue(source.contains("VoipStartFailure.reasonOf(captureHealth)"))
         assertTrue(source.contains("CaptureRecoveryLog.split("))
     }
+
+    /**
+     * Review N21b round 2: a call that is discarded early (not stopped, an ignored caller, never connected) still gets
+     * its recovery line, because the recorder overwrites the slot at the next start. One read, before those returns.
+     */
+    @Test
+    fun the_line_is_written_before_every_early_return_with_one_read() {
+        val root = listOf(java.io.File("src/main/java"), java.io.File("app/src/main/java")).first { it.isDirectory }
+        val source = java.io.File(root, "com/baba/callvault/services/recording/VoipRecordingCoordinator.kt").readText()
+        val written = source.indexOf("CaptureRecoveryLog.callEndLine(")
+        assertTrue(written < source.indexOf("if (stillRecording) {"))
+        assertTrue(written < source.indexOf("discardLate?.let { reason ->"))
+        assertTrue(written < source.indexOf("if (neverConnected) {"))
+        assertEquals(1, Regex("""\.captureDiagnostics\(\)""").findAll(source).count())
+    }
 }
