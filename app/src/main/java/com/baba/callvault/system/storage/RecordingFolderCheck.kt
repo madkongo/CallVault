@@ -316,6 +316,7 @@ object RecordingFolderCheck {
      * tests, so that check cannot overwrite what a test arranges.
      */
     internal fun awaitIdleForTest(timeoutMs: Long = 10_000L) {
+        FolderProtection.awaitInstalledForTest(timeoutMs)
         worker.submit {}.get(timeoutMs, TimeUnit.MILLISECONDS)
     }
 
