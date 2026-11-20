@@ -90,7 +90,19 @@ internal class VoipCaptureSession(
     /** The sync summary of the finished capture, for the app's log; empty until the loop ends. */
     @Volatile private var syncSummary: String = ""
 
-    override fun captureDiagnostics(): String = syncSummary
+    override fun captureDiagnostics(): String =
+        listOf(syncSummary, contentionEvidence).filter { it.isNotBlank() }.joinToString("\n")
+
+    /**
+     * Review N30: the first time the call app's own capture was found silenced right after our mic re-take, as the
+     * line [MicYield.evidenceLine] builds. Rides on the capture health to the app's always-on log. Empty when it never happened.
+     */
+    @Volatile private var contentionEvidence: String = ""
+
+    /** Set when the (default-off) yield took effect: the near mic is released and the capture loop ends. */
+    private val yielded = AtomicBoolean(false)
+    private val contentionCheckRunning = AtomicBoolean(false)
+    @Volatile private var callAppUid = VoipAppIdentity.UID_UNKNOWN
 
     private val ledger = VoipSyncLedger(SAMPLE_RATE, CHUNK_FRAMES)
 
@@ -333,7 +345,7 @@ internal class VoipCaptureSession(
         var slotNanos = -1L
 
         try {
-            while (!stopRequested.get()) {
+            while (!stopRequested.get() && !yielded.get()) {
                 if (slotNanos < 0) {
                     // Anchor on the earlier first capture, waiting briefly for the other side so a
                     // slow start is padded at the head rather than the file starting without it.
@@ -494,7 +506,7 @@ internal class VoipCaptureSession(
                 frameIndex = 0L
                 side.newRecord()
             }
-            if (record == null || suspended.get()) {
+            if (record == null || suspended.get() || yielded.get()) {
                 // Waiting, not dying. The old feeder ended itself the moment a read failed, which is
                 // right for a broken capture and fatal for a suspended one — the thread would be gone
                 // by the time the phone call ended and there would be nothing left to resume into.
@@ -508,7 +520,7 @@ internal class VoipCaptureSession(
                 if (r <= 0) {
                     // A failed read while suspending is the record being released underneath us, not
                     // a fault. Go back to waiting instead of ending the thread for good.
-                    if (suspended.get() || stopRequested.get()) { interrupted = true; break }
+                    if (suspended.get() || stopRequested.get() || yielded.get()) { interrupted = true; break }
                     AppLogger.d(TAG, "$tag read=$r, feeder ending")
                     return@Thread
                 }
@@ -566,12 +578,63 @@ internal class VoipCaptureSession(
                         // in step was the old shape and would now be a second source of truth.
                         nearRecord = fresh
                         nearAuditId = CaptureAudit.opened("VoIP near capture (MIC, re-taken)")
+                        checkCallAppAfterRetake(side.retakes)
                     }
                 }
             }
             if (!q.offer(Chunk(buf.copyOf(), contentNanos))) side.dropped()
         }
     }.apply { isDaemon = true; name = "voip-${side.name}" }
+
+    /**
+     * Review N30: after a re-take, asks Android (on its own thread, never the capture's) whether the CALLING app's
+     * capture is now silenced, i.e. whether we just muted the user to the other side. The answer is always logged as
+     * evidence; it changes behaviour only when [MicYield.YIELD_ENABLED] is on. One check at a time; any failure
+     * is logged and leaves the re-take behaviour as it was.
+     */
+    private fun checkCallAppAfterRetake(retakeNumber: Int) {
+        if (!contentionCheckRunning.compareAndSet(false, true)) return
+        Thread {
+            try {
+                val begun = System.nanoTime()
+                Thread.sleep(CONTENTION_SETTLE_MS)
+                if (callAppUid == VoipAppIdentity.UID_UNKNOWN) callAppUid = VoipAppIdentity.currentVoiceCommUid()
+                val uid = callAppUid
+                val dump = if (uid == VoipAppIdentity.UID_UNKNOWN) null else VoipAppIdentity.readAudioDump()
+                val state = dump?.let { MicYield.callAppState(it, uid) }
+                val checkMs = (System.nanoTime() - begun) / 1_000_000L
+                if (state == null) {
+                    AppLogger.i(TAG, "VoIP mic contention check after re-take #$retakeNumber: call app state unknown (uid known=${uid != VoipAppIdentity.UID_UNKNOWN}, dump=${dump != null}), ${checkMs}ms")
+                    return@Thread
+                }
+                AppLogger.i(TAG, "VoIP mic contention check after re-take #$retakeNumber: ${state.pack} src=${state.source} silenced=${state.silenced}, ${checkMs}ms")
+                val action = MicYield.decide(state.silenced)
+                if (state.silenced && (contentionEvidence.isEmpty() || action == MicYield.Action.YIELD)) {
+                    val at = (System.nanoTime() - startedNanos) / 1_000_000L
+                    contentionEvidence = MicYield.evidenceLine(state, at, retakeNumber, checkMs, action)
+                    AppLogger.w(TAG, contentionEvidence)
+                }
+                if (action == MicYield.Action.YIELD) yieldMic()
+            } catch (e: InterruptedException) {
+                // The capture ended first.
+            } catch (t: Throwable) {
+                AppLogger.w(TAG, "VoIP mic contention check failed: ${t.message}")
+            } finally {
+                contentionCheckRunning.set(false)
+            }
+        }.apply { isDaemon = true; name = "voip-contention" }.start()
+    }
+
+    /** The default-off yield: give our mic back for the rest of the call and end the capture loop (stop() still finalises). */
+    private fun yieldMic() {
+        if (!yielded.compareAndSet(false, true)) return
+        val near = nearRecord
+        nearRecord = null
+        runCatching { near?.stop() }
+        runCatching { near?.release() }
+        if (near != null) { CaptureAudit.released(nearAuditId); nearAuditId = 0 }
+        AppLogger.w(TAG, "VoIP capture yielded the mic to the call app; recording ends here (both sides or nothing)")
+    }
 
     /**
      * The allow-lists vivo's audioserver consults before zero-filling a remote-submix record during a call (keys found
@@ -708,6 +771,9 @@ internal class VoipCaptureSession(
          * floor — so this only needs to outlast a codec-aligned run of them, not real quiet.
          */
         private const val SILENT_CHUNKS_BEFORE_RETAKE = 15
+
+        /** Time for Android to update the call app's silenced flag after our re-take, before it is read (N30). */
+        private const val CONTENTION_SETTLE_MS = 400L
 
         private const val TAG = "CV:VoipCapture"
         private const val SAMPLE_RATE = VoipAudioPolicy.SAMPLE_RATE

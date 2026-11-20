@@ -217,7 +217,7 @@ internal object VoipAppIdentity {
 
     private val MODE_OWNER_UID_REGEX = Regex("""mUid=(\d+)""")
 
-    private fun readAudioDump(): String? {
+    internal fun readAudioDump(): String? {
         // Absolute path, not "sh": a bare name resolves through PATH, and the daemon should not
         // depend on an environment it does not own. Safe to hard-code — the caller already treats a
         // failure to start as "owner unknown", so a device without it behaves as one without a

@@ -135,6 +135,7 @@
     <string name="voip_missed_no_folder">একটি অ্যাপ কল রেকর্ড হয়নি — রেকর্ডিং ফোল্ডারটি নেই বা তাতে লেখা যাচ্ছে না। সেটিংসে আবার ফোল্ডারটি বেছে নিন।</string>
     <string name="voip_missed_label">অ্যাপ কল</string>
     <string name="voip_one_sided_warning">ওই অ্যাপ কলে শুধু আপনার দিকটি রেকর্ড হয়েছে — অন্য অ্যাপটি তার কলের অডিও ধারণ করতে দেয় না।</string>
+    <string name="voip_mic_yielded_warning">This app call couldn\'t be recorded without muting you, so recording stopped. The audio saved so far is kept.</string>
     <string name="voip_one_sided_warning_vivo">ওই অ্যাপ কলে শুধু আপনার দিকটি রেকর্ড হয়েছে। vivo-তে Recorder অ্যাপ → In-app call recording খুলে চালু করুন (Auto-start recording সহ), তাহলে অন্য ব্যক্তিও রেকর্ড হবেন।</string>
     <string name="voip_one_sided_warning_vivo_overseas">ওই অ্যাপ কলে শুধু আপনার দিকটি রেকর্ড হয়েছে। এই vivo ফোন অ্যাপ কলে অন্য ব্যক্তিকে রেকর্ড করতে দেয় না, এবং এর Recorder অ্যাপে তা চালু করার কোনো বিকল্প নেই। সাধারণ ফোন কলে এখনও দুই দিকই রেকর্ড হয়।</string>
     <string name="voip_recording_unavailable">এই ডিভাইসে চালু করা যায়নি — এখানে VoIP রেকর্ডিং উপলব্ধ নয়।</string>

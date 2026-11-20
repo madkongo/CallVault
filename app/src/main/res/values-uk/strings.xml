@@ -863,6 +863,7 @@
     <string name="voip_missed_not_ready">VoIP-дзвінок не записано — CallVault не встиг підготуватися. Наступний дзвінок має працювати.</string>
     <string name="voip_missed_capture_failed">Дзвінок у застосунку не записано — рекордер не зміг відкрити звук дзвінка на цьому телефоні. Якщо це повториться, надішліть звіт налагодження з налаштувань.</string>
     <string name="voip_one_sided_warning">Записано лише ваш голос: застосунок не дозволив захопити звук співрозмовника.</string>
+    <string name="voip_mic_yielded_warning">This app call couldn\'t be recorded without muting you, so recording stopped. The audio saved so far is kept.</string>
     <string name="voip_one_sided_warning_vivo">Записано лише ваш голос. На vivo відкрийте «Диктофон» → запис дзвінків із застосунків та увімкніть відповідну опцію.</string>
     <string name="voip_one_sided_warning_vivo_overseas">Записано лише ваш голос. Цей телефон vivo не дозволяє застосункам записувати співрозмовника в дзвінках через застосунки, а в його «Диктофоні» немає налаштування, щоб це дозволити. Звичайні телефонні дзвінки й надалі записуються з обох сторін.</string>
     <string name="voip_prompt_text">Натисніть «Запис», щоб записати розмову.</string>

@@ -851,6 +851,7 @@
     <string name="voip_missed_not_ready">Ein App-Anruf wurde nicht aufgezeichnet — CallVault war nicht rechtzeitig bereit. Das kann kurz nach dem Ende eines Telefonats passieren. Der nächste Anruf sollte normal aufgezeichnet werden.</string>
     <string name="voip_missed_capture_failed">Ein App-Anruf wurde nicht aufgezeichnet — der Rekorder konnte den Anruf-Ton auf diesem Telefon nicht öffnen. Wenn das wieder passiert, teile bitte einen Debug-Bericht aus den Einstellungen.</string>
     <string name="voip_one_sided_warning">Von diesem App-Anruf wurde nur deine Seite aufgenommen — die andere App erlaubt es nicht, ihr Gesprächsaudio aufzuzeichnen.</string>
+    <string name="voip_mic_yielded_warning">This app call couldn\'t be recorded without muting you, so recording stopped. The audio saved so far is kept.</string>
     <string name="voip_one_sided_warning_vivo">Von diesem App-Anruf wurde nur Ihre Seite aufgenommen. Öffnen Sie auf vivo die App „Recorder“ → In-App-Anrufaufnahme und schalten Sie sie ein (samt automatischem Aufnahmestart), um auch die andere Person aufzunehmen.</string>
     <string name="voip_one_sided_warning_vivo_overseas">Von diesem App-Anruf wurde nur Ihre Seite aufgenommen. Dieses vivo-Telefon hindert Apps daran, die andere Person bei App-Anrufen aufzunehmen, und seine Recorder-App bietet keine Option, das zu erlauben. Normale Telefonanrufe werden weiterhin beidseitig aufgenommen.</string>
     <string name="voip_prompt_text">Auf „Aufnehmen“ tippen, um diesen Anruf aufzunehmen.</string>

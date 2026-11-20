@@ -155,6 +155,7 @@
     <string name="voip_missed_no_folder">Bir uygulama araması kaydedilmedi — kayıt klasörü eksik veya yazılamıyor. Ayarlar’da yeniden seçin.</string>
     <string name="voip_missed_label">Uygulama araması</string>
     <string name="voip_one_sided_warning">O uygulama aramasının yalnızca sizin tarafınız kaydedildi — diğer uygulama arama sesinin yakalanmasına izin vermiyor.</string>
+    <string name="voip_mic_yielded_warning">This app call couldn\'t be recorded without muting you, so recording stopped. The audio saved so far is kept.</string>
     <string name="voip_one_sided_warning_vivo">O uygulama aramasının yalnızca sizin tarafınız kaydedildi. vivo’da, karşı kişiyi de kaydetmek için Recorder uygulamasını açın → Uygulama içi arama kaydı’nı açın (Kaydı otomatik başlat ile birlikte).</string>
     <string name="voip_one_sided_warning_vivo_overseas">O uygulama aramasının yalnızca sizin tarafınız kaydedildi. Bu vivo telefon, uygulamaların uygulama aramalarında karşı kişiyi kaydetmesini engelliyor ve Recorder uygulamasında buna izin verme seçeneği yok. Normal telefon aramaları yine her iki tarafı da kaydeder.</string>
     <string name="voip_recording_unavailable">Bu cihazda açılamadı — VoIP kaydı burada kullanılamıyor.</string>
