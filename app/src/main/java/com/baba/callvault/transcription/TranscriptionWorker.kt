@@ -169,7 +169,12 @@ class TranscriptionWorker(
         // starting over (issue #34). See [TranscriptionProgressTracker].
         val progress = TranscriptionProgressTracker()
 
+        // Every setProgress is a database write that wakes every observer, and the figure is a whole percent
+        // sampled every 400 ms, so most samples repeat the last (review R41). Only a different one is written.
+        val publishGate = ProgressPublishGate()
+
         suspend fun publishProgress(percent: Int) {
+            if (!publishGate.shouldPublish(latestCompleted, latestTotal, latestCurrent, percent)) return
             setProgress(
                 workDataOf(
                     KEY_COMPLETED to latestCompleted,
