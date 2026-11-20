@@ -215,4 +215,17 @@ class WaitingRecordingsTest {
         val plain = WaitingNote(StagingNote("none", "a.ogg", "audio/ogg", 5L), null)
         assertEquals(plain, WaitingNote.decode(plain.encode()))
     }
+
+    @Test
+    fun `two waiting calls never share a name, so neither can be taken for the other when saved`() {
+        val a = WaitingRecordings.create(context, null, "call.ogg", "audio/ogg", "test", "phone call")!!.also { it.descriptor.close() }.stagingFile!!
+        val b = WaitingRecordings.create(context, null, "call.ogg", "audio/ogg", "test", "phone call")!!.also { it.descriptor.close() }.stagingFile!!
+        a.writeBytes(ByteArray(10)); b.writeBytes(ByteArray(10))
+        assertTrue(WaitingRecordings.end(context, a, "call.ogg", "audio/ogg", "phone call"))
+        assertTrue(WaitingRecordings.end(context, b, "call.ogg", "audio/ogg", "phone call"))
+        val names = setOf(WaitingNote.read(a)!!.note.fileName, WaitingNote.read(b)!!.note.fileName)
+        assertEquals(setOf("call.ogg", "call (1).ogg"), names)
+        assertTrue(WaitingRecordings.rename(a, WaitingNote.read(b)!!.note.fileName))
+        assertFalse(WaitingNote.read(a)!!.note.fileName == WaitingNote.read(b)!!.note.fileName)
+    }
 }

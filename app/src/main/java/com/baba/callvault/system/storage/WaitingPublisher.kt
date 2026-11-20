@@ -49,14 +49,56 @@ object WaitingPublisher {
         fun record(line: String)
     }
 
+    /** What a document already in the folder under a candidate name is, to a waiting call about to be saved. */
+    enum class Existing {
+        /** Nothing there: save under this name. */
+        NONE,
+
+        /** Our own earlier save (killed before the private copy was removed): same name, same non-zero size. */
+        ALREADY_SAVED,
+
+        /** Something else, or something we cannot measure: never replaced, never trusted; try the next name. */
+        OTHER_NAME,
+    }
+
     /**
-     * The saved document and its name from a [SafHelper.copyFileToFolder] result, or null when nothing usable landed.
-     * An existing same-name same-size file counts as saved: that is a save killed before the private copy was removed.
+     * Second review 2026-11-20 (B1, B2): an existing document is ours only when its size is known, non-zero and equal to
+     * ours. A 0-byte or unmeasurable one (a failed earlier write that could not be removed, a provider that will not
+     * say) taken as "saved" would delete the only real audio; one of another size may be another call or the user's
+     * own file, and is never deleted.
      */
-    fun publishedFrom(result: SafHelper.CopyResult, name: String): Pair<Uri, String>? = when (result) {
-        is SafHelper.CopyResult.Copied -> result.uri to name
-        is SafHelper.CopyResult.AlreadyPresent -> result.uri to name
-        is SafHelper.CopyResult.Failed -> null
+    fun existing(existingSize: Long?, ourSize: Long): Existing = when {
+        existingSize == null -> Existing.NONE
+        existingSize > 0L && existingSize == ourSize -> Existing.ALREADY_SAVED
+        else -> Existing.OTHER_NAME
+    }
+
+    /** [name], then "name (1).ext", "name (2).ext", …, as a provider numbers a clash. */
+    fun candidates(name: String): Sequence<String> {
+        val dot = name.lastIndexOf('.').takeIf { it > 0 }
+        val base = dot?.let { name.substring(0, it) } ?: name
+        val ext = dot?.let { name.substring(it) } ?: ""
+        return sequenceOf(name) + (1..MAX_NUMBERED).asSequence().map { "$base ($it)$ext" }
+    }
+
+    private const val MAX_NUMBERED = 999
+
+    /** The first of [candidates] not [taken]. */
+    fun freeName(name: String, taken: (String) -> Boolean): String = candidates(name).firstOrNull { !taken(it) } ?: name
+
+    /**
+     * The name to save under: the first candidate that is free, or the one that already holds our earlier save
+     * ([alreadySaved]). Null when every candidate is taken by something else.
+     */
+    fun choose(name: String, ourSize: Long, sizeOf: (String) -> Long?): Pair<String, Boolean>? {
+        candidates(name).forEach { candidate ->
+            when (existing(sizeOf(candidate), ourSize)) {
+                Existing.NONE -> return candidate to false
+                Existing.ALREADY_SAVED -> return candidate to true
+                Existing.OTHER_NAME -> Unit
+            }
+        }
+        return null
     }
 
     /** @param retryLater something is still in use or failed: look again later. */

@@ -164,14 +164,25 @@ class WaitingPublisherTest {
         assertTrue(result.retryLater)
     }
 
+    // ---- second review 2026-11-20: never delete or trust an existing document -----------------------------------
+
     @Test
-    fun `a save killed before its private copy was removed is found already there on the retry, not saved twice`() {
-        // Review 2026-11-20 (idempotent publish): the folder copy goes through SafHelper.copyFileToFolder, which writes
-        // under a staging name, renames, and reports an existing same-name same-size file as AlreadyPresent.
-        val uri = "content://x/document/a.ogg".toUri()
-        assertEquals(uri to "a.ogg", WaitingPublisher.publishedFrom(SafHelper.CopyResult.AlreadyPresent(uri), "a.ogg"))
-        assertEquals(uri to "a.ogg", WaitingPublisher.publishedFrom(SafHelper.CopyResult.Copied(uri, 10L), "a.ogg"))
-        assertNull(WaitingPublisher.publishedFrom(SafHelper.CopyResult.Failed("no"), "a.ogg"))
+    fun `an existing file counts as our earlier save only when it has the same non-zero size`() {
+        assertEquals(WaitingPublisher.Existing.NONE, WaitingPublisher.existing(existingSize = null, ourSize = 500L))
+        assertEquals(WaitingPublisher.Existing.ALREADY_SAVED, WaitingPublisher.existing(existingSize = 500L, ourSize = 500L))
+        // A 0-byte or unmeasurable document (a failed earlier write, a provider that will not say) is not our audio.
+        assertEquals(WaitingPublisher.Existing.OTHER_NAME, WaitingPublisher.existing(existingSize = 0L, ourSize = 500L))
+        assertEquals(WaitingPublisher.Existing.OTHER_NAME, WaitingPublisher.existing(existingSize = -1L, ourSize = 500L))
+        // Someone else's file of that name is never replaced.
+        assertEquals(WaitingPublisher.Existing.OTHER_NAME, WaitingPublisher.existing(existingSize = 900L, ourSize = 500L))
+    }
+
+    @Test
+    fun `a name already taken gets the next free numbered name, like the provider would`() {
+        val taken = setOf("a.ogg", "a (1).ogg")
+        assertEquals("a (2).ogg", WaitingPublisher.freeName("a.ogg") { it in taken })
+        assertEquals("b.ogg", WaitingPublisher.freeName("b.ogg") { it in taken })
+        assertEquals("noext (1)", WaitingPublisher.freeName("noext") { it == "noext" })
     }
 
     @Test
@@ -180,5 +191,13 @@ class WaitingPublisherTest {
         val env = FakeEnv(listOf(f), now = now).apply { hold = true }
         WaitingPublisher.run(env)
         assertEquals(listOf(true), env.held)
+    }
+
+    @Test
+    fun `a retry finds its own earlier numbered save instead of making another copy`() {
+        // "a.ogg" is someone else's (900 bytes); our earlier save went to "a (1).ogg" and was killed before cleanup.
+        val sizes = mapOf("a.ogg" to 900L, "a (1).ogg" to 500L)
+        assertEquals("a (1).ogg" to true, WaitingPublisher.choose("a.ogg", 500L) { sizes[it] })
+        assertEquals("a (2).ogg" to false, WaitingPublisher.choose("a.ogg", 700L) { sizes[it] })
     }
 }

@@ -10,6 +10,8 @@ package com.baba.callvault.system.storage
 
 import android.content.Context
 import android.net.Uri
+import android.provider.DocumentsContract
+import androidx.documentfile.provider.DocumentFile
 import androidx.work.CoroutineWorker
 import androidx.work.ExistingPeriodicWorkPolicy
 import androidx.work.ExistingWorkPolicy
@@ -56,16 +58,40 @@ class WaitingRecordingsWorker(ctx: Context, params: WorkerParameters) : Coroutin
         override fun callActive(): Boolean = PhoneCallState.isCallUp(context)
 
         /**
-         * Idempotent and atomic (review 2026-11-20): written under a staging name and renamed, a leftover from a killed
-         * attempt is cleaned up, and a same-name same-size file already there (a save killed before the private copy
-         * was removed) is taken as saved instead of producing "x (1).ogg".
+         * Saves without ever deleting or trusting a document that is not provably ours (second review 2026-11-20, B1/B2):
+         * - a document already under the name is our earlier save only with the same known, non-zero size (a save killed
+         *   before the private copy was removed); anything else keeps its name and this call takes the next free one;
+         * - the bytes go into a document under our own staging name, renamed once complete; only a leftover under that
+         *   staging name (ours, from a killed attempt) is ever deleted.
+         * The private copy is removed by the caller only after this returns a document.
          */
         override fun publish(file: File, name: String, mimeType: String): Pair<Uri, String>? {
             val target = folder ?: return null
-            val result = SafHelper.copyFileToFolder(context, Uri.fromFile(file), target, name, mimeType, file.length())
-            if (result is SafHelper.CopyResult.Failed) AppLogger.w(TAG, "Saving '$name' failed: ${result.reason}")
-            if (result is SafHelper.CopyResult.AlreadyPresent) AppLogger.i(TAG, "'$name' is already in the folder (an earlier save); not saving it twice")
-            return WaitingPublisher.publishedFrom(result, name)
+            val dir = DocumentFile.fromTreeUri(context, target) ?: return null
+            fun sizeOf(n: String): Long? = runCatching { dir.findFile(n) }.getOrNull()?.let { SafHelper.documentSize(context, it.uri) }
+            val (finalName, alreadySaved) = WaitingPublisher.choose(name, file.length(), ::sizeOf) ?: run {
+                AppLogger.e(TAG, "Every name for '$name' is taken by other files; keeping the call for later")
+                return null
+            }
+            if (finalName != name) AppLogger.w(TAG, "'$name' is taken by another file in the folder; saving this call as '$finalName'")
+            if (alreadySaved) {
+                AppLogger.i(TAG, "'$finalName' is already in the folder with the same size (an earlier save); not saving it twice")
+                return dir.findFile(finalName)?.uri?.let { it to finalName }
+            }
+            val partialName = CloudCopyPolicy.stagingNameFor(finalName)
+            runCatching { dir.findFile(partialName)?.let { SafHelper.deleteDocument(it, "a partial earlier save '$partialName'") } }
+            val partial = dir.createFile(mimeType, partialName) ?: return null
+            if (!SafHelper.writeStagedFileToUri(context, file, partial.uri)) {
+                SafHelper.deleteDocument(partial, "the partial save '$partialName'")
+                return null
+            }
+            val renamed = runCatching { DocumentsContract.renameDocument(context.contentResolver, partial.uri, finalName) }
+                .onFailure { AppLogger.w(TAG, "Could not rename '$partialName' to '$finalName': ${it.message}") }
+                .getOrNull()
+            if (renamed != null) return renamed to finalName
+            // A provider that cannot rename: write under the final name directly; the partial copy is ours to remove.
+            SafHelper.deleteDocument(partial, "the partial save '$partialName'")
+            return SafHelper.publishStagedRecording(context, target, finalName, mimeType, file)?.let { it to finalName }
         }
 
         override suspend fun beforeCatalog(name: String, uri: Uri, mimeType: String, note: WaitingNote): Boolean {

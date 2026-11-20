@@ -144,11 +144,21 @@ object WaitingRecordings {
     /** Gives a waiting recording the name it will be saved under (the call-log rename). Never throws. */
     fun rename(file: File, name: String, mimeType: String? = null): Boolean = runCatching {
         val old = WaitingNote.read(file)
-        val note = old?.note?.copy(fileName = name, mimeType = mimeType ?: old.note.mimeType)
-            ?: StagingNote("none", name, mimeType ?: "audio/ogg", file.lastModified())
+        // Never the name of another waiting call (second review 2026-11-20): two calls named alike (a template with
+        // minute precision, or no time) must stay two files.
+        val unique = WaitingPublisher.freeName(name) { it in otherWaitingNames(file) }
+        val note = old?.note?.copy(fileName = unique, mimeType = mimeType ?: old.note.mimeType)
+            ?: StagingNote("none", unique, mimeType ?: "audio/ogg", file.lastModified())
         WaitingNote.write(file, WaitingNote(note, old?.finishedAt, old?.extras))
         true
     }.onFailure { AppLogger.w(TAG, "Could not rename the waiting recording ${file.name}: ${it.message}") }.getOrDefault(false)
+
+    /** The names the other waiting recordings beside [file] will be saved under. */
+    private fun otherWaitingNames(file: File): Set<String> =
+        file.parentFile?.listFiles().orEmpty()
+            .filter { isWaitingRecording(it) && it.absolutePath != file.absolutePath }
+            .mapNotNull { WaitingNote.read(it)?.note?.fileName }
+            .toSet()
 
     /**
      * The after-call steps of a waiting recording are done: mark it finished with what saving needs ([extras]), so the
