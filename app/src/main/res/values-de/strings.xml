@@ -226,6 +226,8 @@
     <string name="notif_health_recorder_text">Anrufe werden erst aufgezeichnet, wenn sich dieses Telefon einmal mit einem WLAN verbindet. Jedes Netz genügt, Internet ist nicht nötig — ein paar Sekunden reichen, danach funktioniert es auch ohne WLAN weiter.</string>
     <string name="notif_health_recorder_text_shizuku">Anrufe werden erst wieder aufgezeichnet, wenn Shizuku läuft. Ein Neustart beendet es, es muss also nach jedem Neustart einmal gestartet werden.</string>
     <string name="notif_health_recorder_title">CallVault kann derzeit nicht aufnehmen</string>
+    <string name="notif_health_down_title">Calls are not being recorded</string>
+    <string name="notif_health_down_generic_text">CallVault could not bring the recorder back up. Open the app to see why and what to do.</string>
     <string name="notif_health_shizuku_restart_failed_text">CallVault musste den Debugging-Dienst von Android neu starten, und dadurch wird Shizuku beendet. Der Versuch, Shizuku wieder zu starten, ist fehlgeschlagen – öffne Shizuku und starte es selbst.</string>
     <string name="notif_health_shizuku_restart_failed_title">Shizuku wurde beendet</string>
     <string name="notif_health_shizuku_restarted_text">CallVault musste den Debugging-Dienst von Android neu starten, was Shizuku beendet – und hat Shizuku danach wieder gestartet. Du musst nichts tun.</string>

@@ -105,6 +105,9 @@ class DaemonKeepAliveService : Service() {
     /** Consecutive "daemon down" readings — we only relaunch after a couple, to not churn on a blip. */
     private var downStreak = 0
 
+    /** Where the "Calls are not being recorded" alert stands (review R1). Main thread only, like the watchdog. */
+    private var downAlertState = RecorderDownAlertPolicy.State()
+
     private val watchdog = object : Runnable {
         override fun run() {
             val alive = isDaemonAlive()
@@ -136,6 +139,8 @@ class DaemonKeepAliveService : Service() {
                 // binder blip doesn't trigger a relaunch (which would kill+respawn a daemon that was fine).
                 if (downStreak >= DOWN_STREAK_THRESHOLD) maybeRewarm()
             }
+            runCatching { runDownAlert(alive) }
+                .onFailure { AppLogger.w(TAG, "Recorder-down alert check failed: ${it.message}") }
             if (alive && usesAdb()) syncShellUsbRead()
             if (usesAdb()) timelineSnapshot(alive, "tick")
             healSharedNotice()
@@ -146,6 +151,42 @@ class DaemonKeepAliveService : Service() {
                 this@DaemonKeepAliveService, "keep-alive tick", com.baba.callvault.system.storage.FolderWatchPlan.KEEP_ALIVE_GOOD_MAX_AGE_MS,
             )
             watchdogHandler.postDelayed(this, WATCHDOG_INTERVAL_MS)
+        }
+    }
+
+    /**
+     * Raises, and takes down, the loud "Calls are not being recorded" alert (review R1). The rule is
+     * [RecorderDownAlertPolicy]; this reads the clock and the master switch, names the cause, and logs every
+     * alert shown or cleared to the always-on log so "why did it (not) tell me" has an answer.
+     */
+    private fun runDownAlert(alive: Boolean) {
+        val switchedOff = AppPreferences(applicationContext).getRecordingState() == RecordingState.STOPPED
+        val now = SystemClock.elapsedRealtime()
+        val before = downAlertState
+        val step = RecorderDownAlertPolicy.step(before, alive, switchedOff, now)
+        downAlertState = step.state
+        val log = { line: String -> com.baba.callvault.integrations.adb.UsbDebuggingEvents.record(applicationContext, line) }
+        when (step.action) {
+            RecorderDownAlertPolicy.Action.NONE -> Unit
+            RecorderDownAlertPolicy.Action.POST -> {
+                val notice = ReadinessNoticeText.current(this, ready = false)
+                val shizuku = runCatching { AppPreferences(applicationContext).getPrivilegedMode().needsShizuku }.getOrDefault(false)
+                val reasonRes = when {
+                    notice == ReadinessNotice.STARTING || notice == ReadinessNotice.STUCK ->
+                        if (shizuku) R.string.notif_health_recorder_text_shizuku else R.string.notif_health_down_generic_text
+                    else -> ReadinessNoticeText.text(notice)
+                }
+                val shown = SilentFailureNotifier.warnRecorderDown(applicationContext, LocalizedContext.of(this).getString(reasonRes))
+                val downForS = (now - (step.state.downSinceMs ?: now)) / 1000
+                log("recorder-down alert SHOWN cause=$notice shizukuMode=$shizuku downFor=${downForS}s ticks=${step.state.downTicks} posted=$shown")
+                AppLogger.w(TAG, "Recorder down for ${downForS}s ($notice): alerted the user (posted=$shown)")
+            }
+            RecorderDownAlertPolicy.Action.CLEAR -> {
+                SilentFailureNotifier.clearRecorderUnavailable(applicationContext)
+                val why = if (switchedOff && !alive) "recording switched off" else "recorder ready again"
+                log("recorder-down alert CLEARED reason=$why")
+                AppLogger.i(TAG, "Recorder-down alert cleared ($why)")
+            }
         }
     }
 

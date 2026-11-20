@@ -228,6 +228,8 @@
     <string name="notif_health_recorder_text">Звонки не будут записываться, пока телефон один раз не подключится к сети Wi-Fi. Подойдёт любая сеть, интернет не нужен — хватит нескольких секунд, дальше всё работает и без Wi-Fi.</string>
     <string name="notif_health_recorder_text_shizuku">Звонки не будут записываться, пока снова не заработает Shizuku. Перезагрузка останавливает его, поэтому после перезапуска телефона его нужно один раз запустить.</string>
     <string name="notif_health_recorder_title">CallVault сейчас не может записывать</string>
+    <string name="notif_health_down_title">Calls are not being recorded</string>
+    <string name="notif_health_down_generic_text">CallVault could not bring the recorder back up. Open the app to see why and what to do.</string>
     <string name="notif_health_shizuku_restart_failed_text">CallVault пришлось перезапустить службу отладки Android, а это останавливает Shizuku. Запустить Shizuku снова не удалось — откройте Shizuku и запустите его сами.</string>
     <string name="notif_health_shizuku_restart_failed_title">Shizuku остановлен</string>
     <string name="notif_health_shizuku_restarted_text">CallVault пришлось перезапустить службу отладки Android, а это останавливает Shizuku, поэтому он запустил Shizuku снова. Ничего делать не нужно.</string>

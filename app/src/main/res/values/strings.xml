@@ -938,6 +938,8 @@
     <string name="storage_cap_confirm_message">Recordings will be deleted from this phone whenever they exceed the limit, oldest first. Starred recordings are never taken. This cannot be undone.</string>
     <string name="notif_health_channel">Problems that need you</string>
     <string name="notif_health_recorder_title">CallVault cannot record right now</string>
+    <string name="notif_health_down_title">Calls are not being recorded</string>
+    <string name="notif_health_down_generic_text">CallVault could not bring the recorder back up. Open the app to see why and what to do.</string>
     <string name="notif_health_shizuku_stopped_title">Shizuku was stopped</string>
     <string name="notif_health_shizuku_stopped_text">CallVault had to restart Android\'s debugging service, and that stops Shizuku. Open Shizuku and start it again if you use it with other apps.</string>
     <string name="notif_health_shizuku_restarted_title">Shizuku was started again</string>

@@ -98,6 +98,19 @@ object SilentFailureNotifier {
     }
 
     /**
+     * The recorder has stayed down past the grace period (review R1; see
+     * [com.baba.callvault.services.recording.RecorderDownAlertPolicy]). Same id as [warnRecorderUnavailable], so it
+     * replaces the boot/Shizuku warning instead of stacking, and the ready-clear that already exists takes it down.
+     * [reason] is the localized sentence for the cause. Returns whether it was actually shown.
+     */
+    fun warnRecorderDown(context: Context, reason: String): Boolean = post(
+        context,
+        id = ID_RECORDER_UNAVAILABLE,
+        title = LocalizedContext.of(context).getString(R.string.notif_health_down_title),
+        text = reason,
+    )
+
+    /**
      * Android forgot CallVault's Wireless-debugging pairing (issue #43).
      *
      * Posted once, when [com.baba.callvault.integrations.adb.PairingLoss] first decides the pairing is gone,
