@@ -9,6 +9,7 @@
 package com.baba.callvault.services.recording
 
 import android.app.Notification
+import com.baba.callvault.system.diagnostics.RecorderLogMarkers
 import android.app.NotificationChannel
 import android.app.NotificationManager
 import android.app.Service
@@ -691,7 +692,7 @@ class DaemonKeepAliveService : Service() {
      */
     private fun onDaemonDiedImmediate() {
         watchdogHandler.post {
-            AppLogger.i(TAG, "keep-alive: binder-death signal — relaunching immediately")
+            AppLogger.i(TAG, "keep-alive: binder-death signal — ${RecorderLogMarkers.RELAUNCH} immediately")
             if (usesAdb()) {
                 TransportTimeline.event(applicationContext, "recorder died")
                 timelineSnapshot(false, "death")
@@ -753,7 +754,7 @@ class DaemonKeepAliveService : Service() {
         // Checked AFTER the Wi-Fi guard so a relaunch we never attempt does not consume the throttle.
         if (!rewarmGate.tryEnter(SystemClock.elapsedRealtime(), force)) return
         Thread {
-            AppLogger.i(TAG, "keep-alive: daemon down — relaunching (force=$force offline=$offline)")
+            AppLogger.i(TAG, "keep-alive: daemon down — ${RecorderLogMarkers.RELAUNCH} (force=$force offline=$offline)")
             // Restore a usable endpoint FIRST, explicitly. The connect path only rediscovers a missing
             // one after ~12 s of failing loopback probes, so doing it here is the difference between
             // recovering in seconds and sitting on "starting up" indefinitely — which is what happened
@@ -791,7 +792,7 @@ class DaemonKeepAliveService : Service() {
                     // connection outright, and make sure Wireless debugging is on so there is a second
                     // endpoint to reach even if the loopback one is the wedged half. Manually enabling
                     // Wireless debugging is exactly what un-wedged the 2026-08-18 device.
-                    AppLogger.w(TAG, "keep-alive: relaunch keeps timing out — rebuilding the ADB connection")
+                    AppLogger.w(TAG, "keep-alive: relaunch keeps timing out — ${RecorderLogMarkers.ADB_REBUILD}")
                     runCatching { AdbShell.dropConnection(applicationContext) }
                         .onFailure { AppLogger.w(TAG, "keep-alive: could not drop the ADB connection: ${it.message}") }
                     runCatching { AdbShell.enableWirelessDebugging(applicationContext) }
@@ -1018,7 +1019,7 @@ class DaemonKeepAliveService : Service() {
         /** How long adbd may take to stop after USB debugging goes off before the off is believed. */
         private const val USB_OFF_SETTLE_MS = 5_000L
         private const val USB_OFF_POLL_MS = 200L
-        private const val TAG = "CV:DaemonKeepAlive"
+        private const val TAG = RecorderLogMarkers.KEEP_ALIVE_TAG
         internal const val CHANNEL_ID = "recorder_keepalive"
 
         /**

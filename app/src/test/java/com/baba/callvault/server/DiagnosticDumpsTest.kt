@@ -33,11 +33,24 @@ class DiagnosticDumpsTest {
             "processes_times", "logcat_grow_host",
             "setting_adb_enabled", "setting_dev_options", "call_state", "audio_latency",
             "voip_policy", "voip_players", "voip_tracks", "voip_audio_log", "vivo_audio_props",
-            "audio_record_state", "voip_owners", "logcat_lifecycle", "logcat_ours",
+            "audio_record_state", "voip_owners", "logcat_lifecycle", "logcat_ours", "battery_stats",
         )
             .forEach { key ->
                 assertTrue("$key must be runnable", DiagnosticDumps.commandFor(key, null) != null)
             }
+    }
+
+    @Test
+    fun `battery stats is a fixed dumpsys with no shell, no argument and never the destructive --checkin`() {
+        // `--checkin` is the "real checkin": it hands out the system's SAVED previous-cycle stats and then deletes
+        // that file (BatteryStatsService.dumpUnmonitored). `-c` plus our own package is the same CSV with no side
+        // effect, and the package argument is what drops the multi-megabyte history from the answer.
+        val command = DiagnosticDumps.commandFor("battery_stats", "10234; id")!!.toList()
+        assertEquals(
+            listOf("/system/bin/dumpsys", "batterystats", "-c", com.baba.callvault.BuildConfig.APPLICATION_ID),
+            command,
+        )
+        assertTrue(command.none { it == "--checkin" || it == "--reset" || it == "/system/bin/sh" })
     }
 
     @Test

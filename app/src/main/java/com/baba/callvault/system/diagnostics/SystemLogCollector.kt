@@ -264,7 +264,7 @@ object SystemLogCollector {
      * @param key names a dump; the whitelist that turns it into a command lives in the daemon.
      * @param fallbackCommand the same dump as a shell command, for when no daemon is connected.
      */
-    private fun dump(
+    internal fun dump(
         context: Context,
         key: String,
         fallbackCommand: String,

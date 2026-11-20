@@ -39,6 +39,7 @@ import androidx.compose.ui.unit.dp
 import com.baba.callvault.R
 import com.baba.callvault.system.diagnostics.ReportGaps
 import com.baba.callvault.system.diagnostics.SystemLogCollector
+import com.baba.callvault.server.RecorderConnection
 import com.baba.callvault.system.shareLogFiles
 import com.baba.callvault.utils.AppLogger
 import kotlinx.coroutines.CoroutineScope
@@ -67,12 +68,29 @@ object DebugReportBuilder {
      * and only the await is timed out, because the work is one long blocking block that cancellation cannot
      * interrupt. A hang there must never throw away the app report that is already built.
      */
-    suspend fun build(context: Context): Pair<File?, File?> {
-        val report = withContext(Dispatchers.IO) { AppLogger.buildShareableReport(context) }
+    suspend fun build(context: Context): Pair<File?, File?> = build(
+        recorderConnected = RecorderConnection.service != null,
+        appReport = { AppLogger.buildShareableReport(context) },
+        systemReport = { SystemLogCollector.buildReport(context) },
+    )
+
+    /**
+     * With the recorder connected, the system report starts first and runs alongside the app report, whose battery
+     * read can take up to BatteryUseCollector.BUDGET_MS: the user waits for the slower of the two, not their sum.
+     * Without it both halves fall back to the app's single ADB link, where one side's forceReconnect kills the other's
+     * shell stream — so then they run one after the other, as before.
+     */
+    internal suspend fun build(
+        recorderConnected: Boolean,
+        appReport: suspend () -> File?,
+        systemReport: suspend () -> File?,
+    ): Pair<File?, File?> {
         val collector = CoroutineScope(Dispatchers.IO)
-        val pending = collector.async { SystemLogCollector.buildReport(context) }
-        val systemReport = withTimeoutOrNull(SYSTEM_REPORT_BUDGET_MS) { pending.await() }
-        if (systemReport == null) {
+        val early = if (recorderConnected) collector.async { systemReport() } else null
+        val report = withContext(Dispatchers.IO) { appReport() }
+        val pending = early ?: collector.async { systemReport() }
+        val systemFile = withTimeoutOrNull(SYSTEM_REPORT_BUDGET_MS) { pending.await() }
+        if (systemFile == null) {
             collector.cancel()
             AppLogger.w(
                 "CV:Settings",
@@ -89,7 +107,7 @@ object DebugReportBuilder {
                 }
             }
         }
-        return report to systemReport
+        return report to systemFile
     }
 }
 

@@ -9,6 +9,7 @@
 package com.baba.callvault.server
 
 import android.content.Context
+import com.baba.callvault.system.diagnostics.RecorderLogMarkers
 import android.os.SystemClock
 import com.baba.callvault.data.AppPreferences
 import com.baba.callvault.integrations.adb.AdbShell
@@ -33,7 +34,7 @@ import com.baba.callvault.utils.AppLogger
  */
 object RecorderServerLauncher {
 
-    private const val TAG = "CV:RecorderLauncher"
+    private const val TAG = RecorderLogMarkers.LAUNCHER_TAG
 
     /** Who asked for the launch in progress ([RecorderCaller]); set by [RecorderBackend], read for the always-on log (BabApps #95). */
     @Volatile
@@ -333,7 +334,7 @@ object RecorderServerLauncher {
             AppLogger.d(TAG, "Recent boot (uptime < ${RECENT_BOOT_GRACE_MS}ms); skipping killStaleDaemons — reboot already cleared any stale daemon")
         }
         val command = String.format(PRIMARY_CMD_FORMAT, apk)
-        AppLogger.i(TAG, "Attempt $attempt: launching recorder daemon. apk=$apk")
+        AppLogger.i(TAG, "Attempt $attempt: ${RecorderLogMarkers.LAUNCH}. apk=$apk")
 
         // Background thread: send the command and hold the shell's stream open for the keep-alive
         // window so the daemon detaches. Owns the shell's whole lifetime; outlives this method if the
