@@ -52,6 +52,7 @@ Every other C-id that touches a quirk path is marked OK in its entry.
 ### Q01 — adbd stops when USB debugging goes off, or when its last transport is removed
 | | |
 |---|---|
+| Other apps | A4 (see section F) |
 | Behaviour | `adbd` (and every shell-uid process it started, including our recorder) stops when USB debugging is switched off, even while Wireless debugging reads on (stock `init.usb.configfs.rc`). Switching Wireless debugging off when it is adbd's only transport also stops adbd, and the recorder dies 50–90 ms later. Writing WD on within ms of a USB change loses a race (24 ms window). The recovery that works: wait ~2 s, then cycle WD off→on. |
 | Phones | Galaxy S24 FE SM-S721B (One UI 8.5, A16); OnePlus 12 (A16); OnePlus 9 Pro (A14); AOSP emulator. |
 | Evidence | memory `adbd-transport-and-oem-quirks.md` (proven by experiment), `debugging-switches-model.md` (measured 2026-09-14; fixes 🧪); `docs/dev-notes/2026-09-14-debugging-switches-model.md`. A real call was lost on a OnePlus (18.3 s cold start for a 15 s call). Fixes: 🧪. |
@@ -63,6 +64,7 @@ Every other C-id that touches a quirk path is marked OK in its entry.
 ### Q02 — Some phones switch USB debugging off by themselves
 | | |
 |---|---|
+| Other apps | A4 (see section F) |
 | Behaviour | Honor/Huawei write `adb_enabled=0` when USB is in charge-only mode, unless "Allow ADB debugging in Charge only mode" (`allow_charging_adb`) is on. A Samsung reverted the switch repeatedly (Auto Blocker suspected). Off Wi-Fi, recording then stays down. |
 | Phones | Honor BVL-N59 (MagicOS 10/A16, later MagicOS 11/A17); Galaxy S24 FE SM-S721B (One UI, A16). |
 | Evidence | memory `usb-debugging-turned-off-by-phone.md` 🧪 (cause 📐 from Honor support thread; no off event in 27 h after the user turned `allow_charging_adb` on, so the restore never fired); S24 FE part 🧪 in `debugging-switches-model.md`. Rollback note `docs/dev-notes/rollback/usb-debugging-restore.md`. |
@@ -96,6 +98,7 @@ Every other C-id that touches a quirk path is marked OK in its entry.
 ### Q05 — Android, not the user, switches Wireless debugging off
 | | |
 |---|---|
+| Other apps | A4 (see section F) |
 | Behaviour | WD needs Wi-Fi on a trusted network. Android writes `adb_wifi_enabled` back to 0 when it refuses (new network prompt) or when Wi-Fi drops. A direct Wi-Fi→Wi-Fi switch looks like a user tap because Wi-Fi still reads connected. Our own `tcpip:`/`usb:` adbd restart is followed by WD going off. |
 | Phones | OnePlus 9 Pro, OnePlus 12 (hotspot test); POCO X7 Pro HyperOS 3 (after our adbd restart). |
 | Evidence | memory `auto-approve-wifi-network-prompt.md` (✅ 2026-10-21 untrusted hotspot; network-change fix 🧪 one run); `reboot-deadlock-wd-off-by-user.md` ✅ 2026-09-19; `shizuku-fails-on-hyperos3-poco-x7-pro.md` 🧪. |
@@ -107,6 +110,7 @@ Every other C-id that touches a quirk path is marked OK in its entry.
 ### Q06 — The off-Wi-Fi (`tcpip`) listener: cleared on reboot, `service.adb.tcp.port` lags, `tcpip:` restarts adbd
 | | |
 |---|---|
+| Other apps | A5 (see section F) |
 | Behaviour | `adb tcpip` clears on reboot; re-arming needs Wi-Fi + WD once, and `setprop persist.adb.tcp.port` is SELinux-denied for shell. adbd writes `service.adb.tcp.port` when it restarts and binds, not when it accepts `tcpip:`. Arming restarts adbd, which kills every shell child (our recorder, a Shizuku server). The first arms can fail before one sticks. |
 | Phones | AOSP emulator, OnePlus 12, OnePlus 9 Pro; POCO X7 Pro HyperOS 3 (two failed arms, third worked); Galaxy Note20 Ultra A13 (reboot off Wi-Fi, 📐). |
 | Evidence | memory `loopback-tcpip-offwifi.md` (reboot gap spiked 2026-08-29); `reboot-deadlock-wd-off-by-user.md` ✅ (boot time measured 73 s→11.4 s); `debugging-switches-model.md`. |
@@ -118,6 +122,7 @@ Every other C-id that touches a quirk path is marked OK in its entry.
 ### Q07 — Another app moves adbd to its own tcp port and toggles WD
 | | |
 |---|---|
+| Other apps | A5 (see section F) |
 | Behaviour | A Shizuku fork with Watchdog + TCP mode restarts Shizuku after our arm kills it, runs its own `tcpip` (5555), toggles WD (~20× in 300 ms seen), and moves adbd off our port. The result is a tug-of-war. |
 | Phones | POCO X7 Pro (HyperOS 3, A16); OnePlus 8T KB2001 (A14); repro on OnePlus 9 Pro (A14). |
 | Evidence | memory `shizuku-fails-on-hyperos3-poco-x7-pro.md` (📐 log read; fix 🧪 held on OP9 across a reboot 2026-10-23); OnePlus 8T report note 2026-11-08 📐. |
@@ -140,6 +145,7 @@ Every other C-id that touches a quirk path is marked OK in its entry.
 ### Q09 — The ROM never advertises the WD connect service over mDNS
 | | |
 |---|---|
+| Other apps | A11 (see section F) |
 | Behaviour | Pairing is advertised, but `_adb-tls-connect._tcp` never appears (adbd's advert goes through `mdnsd`, which is missing or stopped). The recorder never starts. |
 | Phones | Realme GT 7 RMX5061 (A16); Galaxy Note10+ (A12) suspected. |
 | Evidence | memory `issue-65-no-tls-connect-service.md`: ✅ 2026-10-29 (the reporter's carrier call recorded on the fix build); Note10+ 🧪. `docs/dev-notes/2026-10-29-issue-65-connect-port-fallback.md`. |
@@ -151,6 +157,7 @@ Every other C-id that touches a quirk path is marked OK in its entry.
 ### Q10 — adbd may bind only the Wi-Fi address (Xiaomi, suspected)
 | | |
 |---|---|
+| Other apps | A11 (see section F) |
 | Behaviour | Our probe "bind loopback, expect it to fail" succeeds on a ROM whose adbd binds only the Wi-Fi address, so a real service reads as fake. |
 | Phones | Xiaomi (issue #23; model not recorded in notes). |
 | Evidence | memory `issue-23-xiaomi-discovery.md` 🧪, cause unproven. |
@@ -184,6 +191,7 @@ Every other C-id that touches a quirk path is marked OK in its entry.
 ### Q13 — An adbd restart (including Charging only) stops the Shizuku server
 | | |
 |---|---|
+| Other apps | A5 (see section F) |
 | Behaviour | A Shizuku server started over ADB is a shell child of adbd: switching USB to Charging only, or any `tcpip:` restart, kills it. |
 | Phones | OnePlus 9 Pro (A14). |
 | Evidence | memory `github-issues-25-28.md` (28g "mechanism MEASURED"), `debugging-switches-model.md` (arming off-Wi-Fi kills Shizuku's server). |
@@ -206,6 +214,7 @@ Every other C-id that touches a quirk path is marked OK in its entry.
 ### Q15 — An install-over stops the recorder and can drop `WRITE_SECURE_SETTINGS`
 | | |
 |---|---|
+| Other apps | A15 (see section F) |
 | Behaviour | An install-over stops the app's foreground services and the shell-uid recorder. On some phones it also drops the `WRITE_SECURE_SETTINGS` grant (seen after `adb install -r`). From Android 12 a foreground service may start only inside `MY_PACKAGE_REPLACED`'s short window. |
 | Phones | OnePlus 12 (a 13-minute call was lost on 2026-09-06). |
 | Evidence | memory `post-update-recorder-stays-down.md` ✅ 2026-09-06; `reinstall-drops-write-secure-settings.md` (observed 2026-06-15). |
@@ -228,6 +237,7 @@ Every other C-id that touches a quirk path is marked OK in its entry.
 ### Q17 — Shizuku binds by name, a `daemon(true)` service outlives updates, and Shizuku 13.1.5 crashes on background binds
 | | |
 |---|---|
+| Other apps | A5 (see section F) |
 | Behaviour | Shizuku delivers a binder by service NAME, so an old process's late answer lands on the new binding. A `daemon(true)` service survives an update with a path to an APK that no longer exists. Two concurrent binds replace each other. Shizuku 13.1.5's `died()` walks a HashSet on main while our background bind/unbind mutates it (ConcurrentModificationException). |
 | Phones | OnePlus 9 Pro (A14, Shizuku mode). |
 | Evidence | memory `shizuku-stale-service-after-update.md` (✅ 2026-09-22 for fix 3; the 2026-11-03 serial-rebind fix 🧪); `shell-mic-open-first-evidence.md` (CME found 2026-11-07, 🧪). Rollback note `shizuku-serial-rebind.md`. |
@@ -250,6 +260,7 @@ Every other C-id that touches a quirk path is marked OK in its entry.
 ### Q19 — Renamed Shizuku forks and Sui (no manager app)
 | | |
 |---|---|
+| Other apps | A5 (see section F) |
 | Behaviour | A stealth-mode fork re-signs Shizuku under a random package name; Sui installs no manager app. A package-name check says "not installed". |
 | Phones | OnePlus 12 (A16, fork in stealth mode, issue #24); emulator. |
 | Evidence | memory `shizuku-detection-not-by-package-name.md` 🧪 (instrumented test passed on OP9 and emulator). |
@@ -287,6 +298,7 @@ Every other C-id that touches a quirk path is marked OK in its entry.
 ### Q22 — Android 15+: BOOT_COMPLETED after a force-stop, and no call broadcasts while stopped
 | | |
 |---|---|
+| Other apps | A3 (see section F) |
 | Behaviour | Android 15+ sends `BOOT_COMPLETED` when an app leaves the force-stopped state, without a reboot. A force-stopped app receives no `PHONE_STATE`, so calls are missed until it is opened. Task-killer apps (`am force-stop` on every non-whitelisted app) cause this. |
 | Phones | Galaxy Z Fold 7 (A16, Shizuku mode); repro on the A16 emulator. |
 | Evidence | memory issue-#71 note: cause near-certain 📐, fixes 🧪 (emulator reproduced the "boot without reboot" tell). |
@@ -320,6 +332,7 @@ Every other C-id that touches a quirk path is marked OK in its entry.
 ### Q25 — OEM battery management kills the app mid-call, or reaps the idle recorder
 | | |
 |---|---|
+| Other apps | A3 (see section F) |
 | Behaviour | OnePlus battery management restarted the app ~12× in a day, once mid-call, so the staged file was left behind. OxygenOS reaped the idle recorder within ~3 min, and the Doze allow-list alone was not enough. |
 | Phones | OnePlus CPH2653 (OxygenOS 16); OnePlus 12 (2026-06-15). |
 | Evidence | memory `field-reports-2026-09-29.md` (📐 inference; cut-off rescue ✅ 2026-09-29 on OP9 by force-stop); `daemon-survival-and-coldstart.md`. |
@@ -379,6 +392,7 @@ Every other C-id that touches a quirk path is marked OK in its entry.
 ### Q30 — Samsung Wi-Fi Calling: the call tap is silent, the call runs in COMMUNICATION mode
 | | |
 |---|---|
+| Other apps | A8 (see section F) |
 | Behaviour | On some Samsungs a VoWiFi call's `VOICE_CALL` tap delivers silence or one side. The mode flips IN_CALL → IN_COMMUNICATION ~0.4–0.7 s after OFFHOOK. On the Fold2 the far side plays from a system_server native track that is never listed as a player (vcPlay=0). The app-call capture records both sides. On OnePlus/Qualcomm, VoWiFi records fine on the call tap, and forcing the app-call route there **loses** the far side. |
 | Phones | Galaxy Z Fold2 SM-F976B (One UI 9, A17); Galaxy S24 SM-S921U (A17, own side only); S25 Ultra (upstream report). Counter-example: OnePlus 9 Pro (A14). |
 | Evidence | memory `samsung-vowifi-not-recordable.md`: Fold2 auto-switch both sides 2026-11-08 and VoLTE stayed on call source 2026-11-09 (tester's ear, 🧪); OP9 VoWiFi recorded ✅ 2026-09-30 (maintainer); forced route on OP9 = far side silent (measured). |
@@ -390,6 +404,7 @@ Every other C-id that touches a quirk path is marked OK in its entry.
 ### Q31 — Stale or out-of-order mode at the call's edges
 | | |
 |---|---|
+| Other apps | A9 (see section F) |
 | Behaviour | (a) `OnModeChangedListener` delivered a mode that was already over: START ran 290 ms after WhatsApp was back to NORMAL. (b) At a Wi-Fi-call hang-up Samsung drops the Telecom call before the mode leaves IN_COMMUNICATION, which left a phantom 1 s "app call" file. |
 | Phones | (a) POCO X5 Pro 5G (HyperOS OS2.0.17, A14). (b) Galaxy S24 SM-S921U, Galaxy Z Fold2. |
 | Evidence | memory `issue-68-voip-stale-start.md` 🧪 (unit tests); `samsung-vowifi-not-recordable.md` / `field-reports-2026-09-29.md` (side bug). Rollback note `voip-stale-start-68.md`. |
@@ -434,6 +449,7 @@ Every other C-id that touches a quirk path is marked OK in its entry.
 ### Q35 — The caller's name only exists in the call notification, in version-dependent shapes
 | | |
 |---|---|
+| Other apps | A10, A16 (see section F) |
 | Behaviour | App calls are not in Telecom or the call log. WhatsApp puts the person in `android.title`; Telegram puts "Ongoing Telegram call" there and the person in `android.text`, with no `category`. Android 14 dumps flags as hex (`flags=0x62`), with no `ONGOING_EVENT` word; Spanned titles dump as `SpannableString`. |
 | Phones | OnePlus 9 Pro (A14: 1/6 named before the fix); OnePlus 12 (A16). |
 | Evidence | memory `voip-recording-feasibility.md`: ✅ 2026-09-22 (maintainer saw the name). |
@@ -445,6 +461,7 @@ Every other C-id that touches a quirk path is marked OK in its entry.
 ### Q36 — WhatsApp's notification: a timer at pickup, removed before the mode drops
 | | |
 |---|---|
+| Other apps | A9, A16 (see section F) |
 | Behaviour | WhatsApp's call notification has `showChronometer=false` while ringing and `true` at pickup. At hang-up it removes the notification **before** the audio mode drops. Ringback reaches the far submix on outgoing calls, so far audio is no proof of answer. |
 | Phones | OnePlus 9 Pro (A14). |
 | Evidence | memory `record-from-answer.md`: ✅ OP9 (8.4 s file for a 22 s call). |
@@ -456,6 +473,7 @@ Every other C-id that touches a quirk path is marked OK in its entry.
 ### Q37 — Mic contention: our near-side record gets silenced; WhatsApp restarts its capture
 | | |
 |---|---|
+| Other apps | A6, A2 (see section F) |
 | Behaviour | On One UI, WhatsApp captures with `src:MIC`; the most recent starter wins, so our record is SILENCED and delivers zeros. On the OnePlus 9 Pro WhatsApp restarts capture ~every 400 ms while ringing. 📐 Our MIC may in turn mute the user's uplink on phones where the app uses plain MIC. |
 | Phones | Galaxy S24 FE (A16); OnePlus 9 Pro (A14); Galaxy S21 Ultra (155 re-takes in one log). |
 | Evidence | `docs/dev-notes/2026-07-30-voip-near-party-silenced-on-one-ui.md` (dumpsys shows `SILENCED` for shell; measured 8 s → 1.5 s); `docs/dev-notes/2026-09-23-voip-near-side-zeros.md` (OP9: 31 re-takes, all `silenced=false`); memory `voip-mic-capture-mutes-user.md` 📐. |
@@ -478,6 +496,7 @@ Every other C-id that touches a quirk path is marked OK in its entry.
 ### Q39 — The HAL cannot serve a second voice capture during VOICE_CALL
 | | |
 |---|---|
+| Other apps | A1 (see section F) |
 | Behaviour | Opening a second voice-source capture (e.g. `VOICE_DOWNLINK`) while `VOICE_CALL` records silently drops the user's own side. No error anywhere. |
 | Phones | OnePlus 12 (A/B by ear); another device in ShizuCallRecorder #130. |
 | Evidence | memory `no-second-voice-capture-during-call.md` (proven by A/B on real calls 2026-08-23). |
@@ -500,6 +519,7 @@ Every other C-id that touches a quirk path is marked OK in its entry.
 ### Q41 — Early-invalidated capture tracks and the leaked shell mic op
 | | |
 |---|---|
+| Other apps | A2 (see section F) |
 | Behaviour | AudioFlinger invalidates a capture track early in a call (`CBLK_INVALID`, 0.4–0.8 s in). The invalidated track's RECORD_AUDIO op is never finished, even after an accepted `stop()`, so the mic dot stays on until the shell process dies. |
 | Phones | OnePlus 13 (tester); OnePlus CPH2747 (A17, Shizuku, new report); Pixel 8 (A17, "in use by Shell"). |
 | Evidence | memory `shell-mic-open-first-evidence.md`: ❌ 2026-09-11 (stop does not clear it); ✅ closed 2026-10-12 on field silence; reopened ⏸️ 2026-11-07 (Shizuku gap fix 🧪). CHANGELOG Pixel 8 entry 🧪. |
@@ -511,6 +531,7 @@ Every other C-id that touches a quirk path is marked OK in its entry.
 ### Q42 — Handoff picks up the previous call's buffer
 | | |
 |---|---|
+| Other apps | A2 (see section F) |
 | Behaviour | The native scan returned the first matching ashmem block; the host's dup of the previous call's block was never closed, so every second call failed with `CBLK_INVALID` and 0 bytes. |
 | Phones | Xiaomi M2101K9AG / Redmi Note 10 Pro (MIUI 14, A13). |
 | Evidence | memory `private-reports-2026-09-28.md` 🧪 (not reproduced; the emulator cannot run handoff). |
@@ -555,6 +576,7 @@ Every other C-id that touches a quirk path is marked OK in its entry.
 ### Q46 — After a recorded call, other apps record silence
 | | |
 |---|---|
+| Other apps | A7 (see section F) |
 | Behaviour | After any phone call, voice messages in other apps came out silent until CallVault was stopped. Stopping CallVault restored the mic at once on a second phone. |
 | Phones | Galaxy A56 (A17); Galaxy S23+ (#77). |
 | Evidence | CHANGELOG 2.5.1 "Other apps no longer record silence" 🧪 (test build 2.5.1-mic1); memory `issue-77-s23-mic-silenced.md` ⏸️ 📐. |
@@ -570,6 +592,7 @@ Every other C-id that touches a quirk path is marked OK in its entry.
 ### Q47 — Cloud SAF providers reject `"rw"` and report 0 bytes while uploading
 | | |
 |---|---|
+| Other apps | A17 (see section F) |
 | Behaviour | Google Drive's provider (also Downloads, SD card and other cloud providers) rejects `openFileDescriptor(uri, "rw")` ("Unsupported mode: rw"). Right after a write it reports `length()=0` while the upload settles. |
 | Phones | OnePlus CPH2653 (A16) with a Drive recording folder (any phone with that provider). |
 | Evidence | memory `user-bug-reports-voicemail-devoptions.md`: validated on the reporter's device (v1.3.1). Code comment `CloudCopyPolicy.kt:108-112`. |
@@ -614,6 +637,7 @@ Every other C-id that touches a quirk path is marked OK in its entry.
 ### Q51 — Voicemail apps take IN_COMMUNICATION; app calls are invisible to `isInCall`
 | | |
 |---|---|
+| Other apps | A9 (see section F) |
 | Behaviour | A voicemail app takes `MODE_IN_COMMUNICATION` to play through the earpiece, so it looks like an app call. `TelecomManager.isInCall()` is false for a whole WhatsApp call. `getActiveRecordingConfigurations()` is readable by apps (a source, not a count). 📐 This evidence looks unreliable on OnePlus A17. |
 | Phones | Galaxy S20 FE (One UI 5.1, A13) (#29); OnePlus 12 (measured); OnePlus CPH2749 and CPH2747 (A17, gate gaps). |
 | Evidence | memory `issue-29-voicemail-false-call.md` 🧪 (awaiting a real voicemail); CPH2749 dev-note (📐). |
@@ -653,8 +677,8 @@ their own merits.
 | U3 | `services/recording/VoipRecordingCoordinator.kt:157-161` + `server/DiagnosticDumps.kt` (`vivo_verbose_arm`) | ⚠️ BRAND diagnostic that setprops vivo's audio log tag on every app call. Research found the decision lines never appear on retail builds (compiled out). Likely dead weight on the call-start path, but the vivo far-side matter is not closed. |
 | U4 | `CallEvidence` gate on OnePlus A17 (Q51) | Two OnePlus A17 phones had real app calls the gate refused to report. It is unclear whether the gate is a quirk handler with a gap, or a bug cover. |
 | U5 | `server/AppStartBinderSender.kt:39,83` (`UID_OBSERVER_ACTIVE_FALLBACK`) | Hidden-API constant fallback. No device evidence either way. |
-| U6 | Stereo → mono "where the phone can only record one channel (e.g. Bluetooth)" (`DirectAudioRecorderSession.kt:122-128`) | Owner, 2026-11-19: stereo recordings over AirPods 4 were fine on his own phone back when stereo was the default. That is ONE phone + ONE headset (🧪 one data point), and the owner stresses different hardware behaves differently, so it does not prove other phones or headsets. Decision: KEEP the mono fallback, but treat it as a named quirk: it must log when it is taken (phone model, route, requested vs granted channels), so field reports show where it really fires. LE Audio untested. |
-| U7 | A second shell-uid call recorder on the same phone (JemRec seen on an Infinix X6871 GT20 Pro, A16) | Seen in a log with no call (📐). `killStaleRecorders` (`RecorderServiceImpl.kt:434`) only kills ours. Whether two shell recorders interfere is unknown. |
+| U6 | Stereo → mono "where the phone can only record one channel (e.g. Bluetooth)" (`DirectAudioRecorderSession.kt:122-128`) | Owner, 2026-11-19: stereo recordings over AirPods 4 were fine on his own phone back when stereo was the default. That is ONE phone + ONE headset (🧪 one data point), and the owner stresses different hardware behaves differently, so it does not prove other phones or headsets. Decision: KEEP the mono fallback, but treat it as a named quirk: it must log when it is taken (phone model, route, requested vs granted channels), so field reports show where it really fires. LE Audio untested. Other apps: A12. |
+| U7 | A second shell-uid call recorder on the same phone (JemRec seen on an Infinix X6871 GT20 Pro, A16) | Seen in a log with no call (📐). `killStaleRecorders` (`RecorderServiceImpl.kt:434`) only kills ours. Whether two shell recorders interfere is unknown. Other apps: A2 (the same item, now catalogued there). |
 | U8 | (superseded by Q68, 2026-11-20) `server/BypassedAudioRecord.kt:114-145` on Android 17 | 📐 desk research says A17 removed fields this vivo path relies on; the code branches only <S, <U and else. Unknown until a vivo on A17 reports. |
 
 ## 📐 Background notes (not quirks, no field evidence)
@@ -699,6 +723,7 @@ If CallVault is killed during call A, stays dead until call B goes off-hook, and
 ### Q54 — After ~90 days unopened: phone/call-log/contacts permissions revoked, package st
 | | |
 |---|---|
+| Other apps | A15 (see section F) |
 | Tracker ref | R4 |
 | Who | Android 11+ all makers; worst when no keep-alive runs at the scan (Shizuku + app calls off) |
 | Symptom | After ~90 days unopened: phone/call-log/contacts permissions revoked, package stopped, calls not even delivered (PROOF.md, A14/A17 emulator) |
@@ -755,6 +780,7 @@ If CallVault is killed during call A, stays dead until call B goes off-hook, and
 ### Q58 — App not restarted after kills; no boot start; PowerKeeper resets lists (📐)
 | | |
 |---|---|
+| Other apps | A3 (see section F) |
 | Who | Xiaomi/Redmi/POCO (MIUI, HyperOS) |
 | Symptom | App not restarted after kills; no boot start; PowerKeeper resets lists (📐) |
 | Detect | **I** (`Build.MANUFACTURER`) for wording. State: hidden MIUI app-op 10008 (📐, from a public MIUI-autostart library; not probed by us). **B** after the fact: Q22 exit reasons, Q63 |
@@ -768,6 +794,7 @@ If CallVault is killed during call A, stays dead until call B goes off-hook, and
 ### Q59 — "Sleeping"/"Deep sleeping apps" and "Put unused apps to sleep" undo the exemptio
 | | |
 |---|---|
+| Other apps | A3 (see section F) |
 | Who | Samsung One UI |
 | Symptom | "Sleeping"/"Deep sleeping apps" and "Put unused apps to sleep" undo the exemption |
 | Detect | **I** for wording; **D** effect via Q55/Q56/Q57 |
@@ -781,6 +808,7 @@ If CallVault is killed during call A, stays dead until call B goes off-hook, and
 ### Q60 — "App launch" manager blocks restarts (separate from Q23 pause, which no setting
 | | |
 |---|---|
+| Other apps | A3 (see section F) |
 | Who | Honor / Huawei |
 | Symptom | "App launch" manager blocks restarts (separate from Q23 pause, which no setting fixes) |
 | Detect | **I** |
@@ -794,6 +822,7 @@ If CallVault is killed during call A, stays dead until call B goes off-hook, and
 ### Q61 — Background kills
 | | |
 |---|---|
+| Other apps | A3 (see section F) |
 | Who | vivo / iQOO (OriginOS, Funtouch) |
 | Symptom | Background kills |
 | Detect | **I** |
@@ -807,6 +836,7 @@ If CallVault is killed during call A, stays dead until call B goes off-hook, and
 ### Q62 — App killed or frozen mid-call (Q25), frozen during jobs (Q52)
 | | |
 |---|---|
+| Other apps | A3 (see section F) |
 | Who | OnePlus / OPPO / realme (ColorOS, OxygenOS) |
 | Symptom | App killed or frozen mid-call (Q25), frozen during jobs (Q52) |
 | Detect | **I** (current wording fits) + **B** Q52 AppPause |
@@ -848,6 +878,7 @@ If CallVault is killed during call A, stays dead until call B goes off-hook, and
 ### Q65 — Notice says "You stopped CallVault" when the phone did
 | | |
 |---|---|
+| Other apps | A3 (see section F) |
 | Tracker ref | R53 |
 | Who | Xiaomi/Honor/Huawei style power keepers (📐, no sample) |
 | Symptom | Notice says "You stopped CallVault" when the phone did |
@@ -862,6 +893,7 @@ If CallVault is killed during call A, stays dead until call B goes off-hook, and
 ### Q66 — "Allow wireless debugging on this network?" repeats; recorder stays down
 | | |
 |---|---|
+| Other apps | A11 (see section F) |
 | Tracker ref | N15 |
 | Who | Shizuku mode, any phone, new Wi-Fi access point after reboot |
 | Symptom | "Allow wireless debugging on this network?" repeats; recorder stays down |
@@ -904,6 +936,7 @@ If CallVault is killed during call A, stays dead until call B goes off-hook, and
 ### Q69 — Reportedly not captured
 | | |
 |---|---|
+| Other apps | A1 (see section F) |
 | Tracker ref | N24 |
 | Who | vivo A17, wired headphones on app calls |
 | Symptom | Reportedly not captured |
@@ -918,6 +951,7 @@ If CallVault is killed during call A, stays dead until call B goes off-hook, and
 ### Q70 — Notifications or the recording notification channel blocked: every warning is silent
 | | |
 |---|---|
+| Other apps | A16 (see section F) |
 | Who | Android 13+ all; any phone with notifications off for CallVault, or with the foreground-service (recording), error or keep-alive notification channel blocked (importance NONE) |
 | Symptom | Every warning in this design is silent |
 | Detect | **D**: `NotificationManagerCompat.areNotificationsEnabled()`; channel `importance == NONE` (`system/health/NotificationChannelsReport.kt`) |
@@ -970,6 +1004,7 @@ If CallVault is killed during call A, stays dead until call B goes off-hook, and
 ### Q74 — Shizuku does not survive a reboot; nothing records until started
 | | |
 |---|---|
+| Other apps | A5 (see section F) |
 | Who | Shizuku mode, all phones |
 | Symptom | Shizuku does not survive a reboot; nothing records until started |
 | Detect | **D**: `RecorderBackend.shizukuStatus()` |
@@ -983,6 +1018,7 @@ If CallVault is killed during call A, stays dead until call B goes off-hook, and
 ### Q75 — Near-mic start times out (-110) on ring-time WhatsApp calls
 | | |
 |---|---|
+| Other apps | A6 (see section F) |
 | Who | Redmi Note 8 (KB "Solved #4") |
 | Symptom | Near-mic start times out (-110) on ring-time WhatsApp calls |
 | Detect | **B** (error code) |
@@ -996,6 +1032,7 @@ If CallVault is killed during call A, stays dead until call B goes off-hook, and
 ### Q76 — Bank apps refuse to run while debugging is on
 | | |
 |---|---|
+| Other apps | A4 (see section F) |
 | Tracker ref | #118 |
 | Who | Any phone, bank apps |
 | Symptom | Bank apps refuse to run while debugging is on |
@@ -1007,3 +1044,42 @@ If CallVault is killed during call A, stays dead until call B goes off-hook, and
 | Test | n/a |
 | Priority | P3 |
 
+
+## F. Other apps that conflict with CallVault (A1-A19)
+
+📐 Written 2026-11-20 from notes, code, store reviews and public issue trackers; nothing here was run on a phone.
+Every entry is 🧪 PROPOSAL: no message below is built yet. Owner rule: other apps get the same treatment as phone
+quirks (detected on the phone, a specific path or message naming the app, nothing leaves the phone, the debug report
+lists only the conflicting packages found, never the installed-app list). Detect codes as in section E. The package
+lists live in `KnownConflictingApps.kt`; a package is matched by presence only (read-only `PackageManager` lookup).
+Visibility: the manifest `<queries>` LAUNCHER intent already makes every app with a launcher icon visible on Android 11+,
+so no `QUERY_ALL_PACKAGES` and no extra `<package>` entry is needed. A launcher-less helper would read as absent.
+Package ids are public application ids; AVault ships the same id as ShizuCallRecorder, so one id names both.
+
+| Id | Who | Symptom | Detect | Cross-ref | Priority |
+|---|---|---|---|---|---|
+| A1 | Another call recorder on the same phone call (Cube ACR, ACR Phone, SKVALEX, Talker ACR, callX, ACR q4u, BCR, ShizuCallRecorder/AVault, JemRec, OEM dialer auto-record) | one side silent, or both empty | **I** package list; **B** (shell) another uid capturing VOICE_CALL/UPLINK/DOWNLINK during our call | Q39, U7, Q69 | P0 |
+| A2 | A second shell/Shizuku-hosted recorder (JemRec, ShizuCallRecorder/AVault, SKVALEX/ACR Phone/Cube in Shizuku mode) | app-call far or near side lost; recorders take each other's audio | **B** classify foreign `app_process` hosts; **I** package list | U7, Q37, Q41, Q42 | P0 |
+| A3 | Task killers and freezers (AppZuku, Greenify, Hail, Ice Box, Thanox, Brevent, App Manager freeze, Phone Master) | force-stopped state: no call broadcast until CallVault is opened | **B** force-stop history (built, 🧪); **D** `isPackageSuspended`; **I** package list to name the tool | Q22, Q25, Q58-Q62, Q65 | P0 |
+| A4 | Apps that switch debugging or Developer options off (JemRec "When JemRec is off", DevSwitch, Tasker/MacroDroid/Automate flows) and Samsung Auto Blocker | recorder down, calls lost silently | **B** who wrote the setting (settings history, to verify on a phone); **D** Auto Blocker; **I** package list | Q01, Q02, Q05, Q76 | P0 |
+| A5 | Other ADB/Shizuku clients that restart adbd or move its port (Shizuku forks with TCP mode/watchdog, JemRec, App Manager auto-connect, LADB, aShellYou, Termux) | recorder dies with adbd; arm fails; tug-of-war | **B** foreign port, WD off after our restart (exists); adbd pid per tick (new); **I** package list | Q07, Q06, Q13, Q17, Q19, Q74 | P1 |
+| A6 | Apps holding the microphone during a call (accessibility recorders, mic blockers, Live Caption, voice typing, AI call assistants) | our near side silenced, or contention | **B** other active capture configs at a silenced re-take; **D** enabled accessibility services | Q37, Q39, Q75 | P1 |
+| A7 | CallVault silencing other apps (reverse of A6) | voice notes and camera video record silence | **B** idle mic-op check, other client seen silenced | Q46, Q41 | P1 |
+| A8 | Apps that turn Wi-Fi Calling / IMS on behind the user's back (Pixel IMS and "enable VoLTE/VoWiFi" apps) on Samsung | calls move to Wi-Fi Calling and record silent | **I** package list; **D** Wi-Fi Calling state | Q30 | P1 |
+| A9 | Apps keeping the phone in call mode without a call (WhatsApp after hang-up, voicemail apps, JemRec answering machine, voice-chat apps) | false app-call starts, overruns, stubs | **B** mode owner is a known non-call app, or WhatsApp with no voice capture | Q31, Q36, Q51 | P2 |
+| A10 | Caller-ID, dialer and call-screening apps (Truecaller, Hiya, Google Phone/Voice, Should I Answer) | screening audio recorded or not, wrong names, phantom actions blamed on CallVault | **D** default dialer and role holders; **I** package list | Q35, Q69 | P2 |
+| A11 | VPN, firewall and DNS apps (NetGuard, RethinkDNS, AdGuard, WireGuard, Tailscale, ShizuWall) | Wireless debugging not found, pairing fails | **D** `TRANSPORT_VPN`, always-on VPN setting; **I** package list | Q09, Q10, Q66 | P2 |
+| A12 | Bluetooth, car and hearing apps (Android Auto, car apps, LE Audio companions) | one-sided or mono recordings | **B** audio route at start and on change | U6 | P2 |
+| A13 | Cloned or second-profile copies (Dual Apps, Secure Folder, Work profile, Island, Parallel Space) of CallVault or WhatsApp | two hosts kill each other; clone calls not named | **D** `pm list users`, `pm list packages --user all` (shell) | Q35 | P2 |
+| A14 | Accessibility services and overlay apps (Truecaller overlay, auto-clickers, Tasker/MacroDroid) | win the mic, tap our UI, launch things blamed on us | **D** enabled accessibility services, overlay app-op | A6 | P2 |
+| A15 | Permission and app-op managers (App Ops, Permission Pilot, App Manager, Thanox) | `WRITE_SECURE_SETTINGS`, mic or notification access revoked | **D** a grant disappeared without an install-over; **I** package list | Q15, Q54 | P2 |
+| A16 | Notification managers and listeners (BuzzKill, FilterBox) | call notification dismissed: caller name missing | **D** enabled notification listeners (short list) | Q35, Q36, Q70 | P3 |
+| A17 | Cleaners, file managers, cloud sync (SD Maid, CCleaner, Files junk clean, Drive/OneDrive/Syncthing) | staging files or recordings deleted, moved or locked | **I** package list only | Q47 | P3 |
+| A18 | scrcpy, screen recorders, audio-effect apps | a leftover scrcpy server reads as a second CallVault recorder | **B** classify `app_process` by class name | A2 | P3 |
+| A19 | Call-redirection role holders (SKVALEX, Google Voice) | only if CallVault ever takes the role: it displaces them | **D** `cmd role get-role-holders` (shell) | none | P3 |
+
+Evidence per entry (own reports, public issue trackers, store reviews) is in the research file the review kept; the
+decisions that matter here: A1 and A2 cannot be settled by the user alone, so the path is a Home warning that names
+the app, never killing another app's process. Messages are proposals and are written when the Home-card phase starts.
+Runtime probes (A6, A7, A9, A12, A13, A18) and role/setting reads (A4 Auto Blocker, A8 state, A10, A11, A14, A16, A19)
+are not part of the package-presence groundwork.
