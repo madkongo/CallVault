@@ -22,8 +22,6 @@ import com.baba.callvault.data.recordings.RecordingCatalog
 import com.baba.callvault.transcription.model.TranscriptionModel
 import com.baba.callvault.utils.AppLogger
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.delay
-import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
@@ -185,25 +183,29 @@ class TranscriptionWorker(
             )
         }
 
+        // Set just before the normal end of the batch, so the watcher's own cancellation then is not read as a stop.
+        var finishedNormally = false
         val abortWatcher = launch {
-            while (isActive) {
-                if (isStopped) {
-                    AppLogger.i(TAG, "Stopped; asking whisper to abort")
-                    TranscriptionEngine.requestAbort()
-                    break
-                }
+            runAbortWatch(
+                isStopped = { isStopped },
                 // Republish on the same tick. The percentage lives in native memory and changes
                 // continuously, so it can only reach the UI by being sampled — and this loop was
                 // already running, so it costs nothing to add. Whisper reports only at chunk
                 // boundaries, so the tracker fills the long gaps between its anchors.
-                publishProgress(
-                    progress.percent(
-                        reportedPercent = engine.progressPercent(),
-                        nowMs = SystemClock.elapsedRealtime(),
+                sample = {
+                    publishProgress(
+                        progress.percent(
+                            reportedPercent = engine.progressPercent(),
+                            nowMs = SystemClock.elapsedRealtime(),
+                        )
                     )
-                )
-                delay(ABORT_POLL_MS)
-            }
+                },
+                requestAbort = { TranscriptionEngine.requestAbort() },
+                ownsEngine = { TranscriptionRunGate.isOnlyRun() },
+                finishedNormally = { finishedNormally },
+                onAbort = { AppLogger.i(TAG, it) },
+                pollMs = ABORT_POLL_MS,
+            )
         }
 
         val runner = engine.transcriber
@@ -238,6 +240,7 @@ class TranscriptionWorker(
             }
         )
 
+        finishedNormally = true
         abortWatcher.cancel()
 
         // Anything left unfinished stays queued, so a later run resumes rather than restarts.
