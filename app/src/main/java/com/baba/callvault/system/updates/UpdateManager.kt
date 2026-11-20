@@ -157,9 +157,10 @@ object UpdateManager {
 
     /** Posts the "update available" notification at most once per tag. */
     fun notifyAvailableOnce(context: Context, preferences: AppPreferences, tag: String) {
-        if (preferences.getLastNotifiedUpdateTag() == tag) return
+        if (!UpdateNoticePolicy.shouldPost(preferences.getLastNotifiedUpdateTag(), tag, preferences.isUpdateNoticeOwnIdAdopted())) return
         UpdateNotifications.showUpdateAvailable(context, tag)
         preferences.setLastNotifiedUpdateTag(tag)
+        preferences.setUpdateNoticeOwnIdAdopted(true)
     }
 
     /**

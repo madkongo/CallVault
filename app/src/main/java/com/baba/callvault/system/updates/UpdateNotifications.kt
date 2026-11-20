@@ -29,10 +29,14 @@ object UpdateNotifications {
 
     private const val CHANNEL_ID = "app_updates"
 
-    // 47xx block, following CallMonitorService (4714) and RecorderReadinessNotifier (4715).
-    private const val AVAILABLE_NOTIFICATION_ID = 4716
-    private const val RESULT_NOTIFICATION_ID = 4717
-    private const val PROGRESS_NOTIFICATION_ID = 4718
+    // Own ids since review C36. They used to be 4716-4718, which SilentFailureNotifier also posts and clears
+    // ("cannot record" is cleared on every ready tick, taking "update available" with it).
+    private const val AVAILABLE_NOTIFICATION_ID = 4729
+    private const val RESULT_NOTIFICATION_ID = 4730
+    private const val PROGRESS_NOTIFICATION_ID = 4731
+
+    /** Every id this object posts, for the uniqueness guard test. */
+    internal val ALL_IDS = listOf(AVAILABLE_NOTIFICATION_ID, RESULT_NOTIFICATION_ID, PROGRESS_NOTIFICATION_ID)
 
     /** "vX.Y.Z is available" — tapping opens the app, where the Home banner offers Update. */
     fun showUpdateAvailable(context: Context, tag: String) {

@@ -63,6 +63,12 @@ object SilentFailureNotifier {
     private const val ID_RETENTION_WAITING_FOR_DRIVE = 4726
     private const val ID_DRIVE_BACKUP_BROKEN = 4727
 
+    /** Every id this object posts, for the uniqueness guard test (review C36). */
+    internal val ALL_IDS = listOf(
+        ID_RECORDER_UNAVAILABLE, ID_SYNC_STALLED, ID_SHIZUKU_STOPPED, ID_PAIRING_LOST, ID_CUT_OFF_SAVED,
+        ID_TURNED_OFF_FOR_ANDROID, ID_STOPPED_BY_USER, ID_RETENTION_WAITING_FOR_DRIVE, ID_DRIVE_BACKUP_BROKEN,
+    )
+
     /**
      * The recorder could not be started. Posted from the boot path, where a failure is invisible.
      *

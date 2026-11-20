@@ -413,6 +413,7 @@ class AppPreferences(context: Context) {
         AVAILABLE_UPDATE_TAG("available_update_tag"),
         PENDING_UPDATE_TAG("pending_update_tag"),
         LAST_NOTIFIED_UPDATE_TAG("last_notified_update_tag"),
+        UPDATE_NOTICE_OWN_ID_ADOPTED("update_notice_own_id_adopted"),
         UPDATE_POPUP_SHOWN_TAG("update_popup_shown_tag"),
         OUTGOING_CALLS_PERMISSION_ASKED("outgoing_calls_permission_asked"),
         LAST_UPDATE_CHECK_MILLIS("last_update_check_millis"),
@@ -743,6 +744,10 @@ class AppPreferences(context: Context) {
     /** Last tag the "update available" notification was posted for, so one tag notifies only once. */
     fun getLastNotifiedUpdateTag() = getString(Key.LAST_NOTIFIED_UPDATE_TAG)
     fun setLastNotifiedUpdateTag(tag: String?) = setString(Key.LAST_NOTIFIED_UPDATE_TAG, tag)
+
+    /** Set once the "update available" notice has been re-announced under its own id (review C36). */
+    fun isUpdateNoticeOwnIdAdopted() = getBoolean(Key.UPDATE_NOTICE_OWN_ID_ADOPTED, false)
+    fun setUpdateNoticeOwnIdAdopted(done: Boolean) = setBoolean(Key.UPDATE_NOTICE_OWN_ID_ADOPTED, done)
 
     /** The version the update popup was last shown for — so it appears once per version, never nags. */
     fun getUpdatePopupShownTag() = getString(Key.UPDATE_POPUP_SHOWN_TAG)
