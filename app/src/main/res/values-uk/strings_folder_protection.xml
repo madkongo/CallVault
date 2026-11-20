@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Recording folder protection: review C98 / N5. -->
+<resources>
+    <string name="recording_folder_gone_title">Папка записів зникла</string>
+    <string name="home_status_folder_gone_suggestion">Нові дзвінки зберігаються в CallVault, доки ви не виберете папку. Торкніться, щоб відкрити налаштування.</string>
+    <string name="home_hero_pill_folder_gone">Немає папки</string>
+</resources>

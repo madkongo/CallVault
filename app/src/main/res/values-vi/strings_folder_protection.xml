@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Recording folder protection: review C98 / N5. -->
+<resources>
+    <string name="recording_folder_gone_title">Thư mục ghi âm không còn</string>
+    <string name="home_status_folder_gone_suggestion">Cuộc gọi mới được giữ trong CallVault cho đến khi bạn chọn thư mục. Chạm để mở Cài đặt.</string>
+    <string name="home_hero_pill_folder_gone">Mất thư mục</string>
+</resources>

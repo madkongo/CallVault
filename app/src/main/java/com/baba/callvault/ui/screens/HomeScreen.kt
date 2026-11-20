@@ -1160,6 +1160,8 @@ fun HomeScreen(
                             }
                             // "Keep recording off Wi-Fi" lives in Settings; open the panel (BabApps item 115).
                             HomeViewModel.HomeStatus.NEEDS_WIFI -> onOpenSettings
+                            // The recording folder is chosen in Settings (review C98).
+                            HomeViewModel.HomeStatus.FOLDER_UNAVAILABLE -> onOpenSettings
                             else -> null
                         },
                         onSetRecordingState = { viewModel.setRecordingState(it) },
@@ -2754,6 +2756,8 @@ private fun HeroStatusCard(
         HomeViewModel.HomeStatus.READY -> CvTone.Success
         HomeViewModel.HomeStatus.NOT_PAIRED -> CvTone.Warning
         HomeViewModel.HomeStatus.NO_FOLDER -> CvTone.Error
+        // Error: calls are kept inside CallVault, and lost if the app is uninstalled before a folder is chosen.
+        HomeViewModel.HomeStatus.FOLDER_UNAVAILABLE -> CvTone.Error
         HomeViewModel.HomeStatus.DEV_OPTIONS_OFF -> CvTone.Error
         HomeViewModel.HomeStatus.UPDATE_REGRANT_NEEDED -> CvTone.Warning
         // Error: with the pairing gone the recorder cannot be restarted, so the next call can be missed.
@@ -2774,6 +2778,7 @@ private fun HeroStatusCard(
         HomeViewModel.HomeStatus.READY -> stringResource(R.string.home_hero_pill_ready)
         HomeViewModel.HomeStatus.NOT_PAIRED -> stringResource(R.string.home_hero_pill_not_paired)
         HomeViewModel.HomeStatus.NO_FOLDER -> stringResource(R.string.home_hero_pill_no_folder)
+        HomeViewModel.HomeStatus.FOLDER_UNAVAILABLE -> stringResource(R.string.home_hero_pill_folder_gone)
         HomeViewModel.HomeStatus.DEV_OPTIONS_OFF -> stringResource(R.string.home_hero_pill_dev_options_off)
         HomeViewModel.HomeStatus.UPDATE_REGRANT_NEEDED -> stringResource(R.string.home_hero_pill_update_regrant)
         HomeViewModel.HomeStatus.PAIRING_LOST -> stringResource(R.string.home_hero_pill_recovery_stuck)
@@ -2886,7 +2891,8 @@ private fun healthMessage(health: SetupHealth): String {
             // Named per prerequisite so the card states the actual, user-owned cause instead of
             // reading as the unexplained CallNotRecorded case above.
             val (named, unnamed) = when (health.prerequisite) {
-                Prerequisite.RECORDING_FOLDER ->
+                // FOLDER_UNAVAILABLE is never recorded as a miss (the call is kept); named like a missing folder if it were.
+                Prerequisite.RECORDING_FOLDER, Prerequisite.FOLDER_UNAVAILABLE ->
                     R.string.home_health_missed_recording_folder to R.string.home_health_missed_recording_folder_unnamed
                 Prerequisite.ADB_PAIRING ->
                     R.string.home_health_missed_adb_pairing to R.string.home_health_missed_adb_pairing_unnamed

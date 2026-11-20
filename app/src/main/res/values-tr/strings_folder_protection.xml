@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Recording folder protection: review C98 / N5. -->
+<resources>
+    <string name="recording_folder_gone_title">Kayıt klasörü yok</string>
+    <string name="home_status_folder_gone_suggestion">Bir klasör seçene kadar yeni aramalar CallVault içinde tutulur. Ayarları açmak için dokunun.</string>
+    <string name="home_hero_pill_folder_gone">Klasör yok</string>
+</resources>

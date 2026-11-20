@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Recording folder protection: review C98 / N5. -->
+<resources>
+    <string name="recording_folder_gone_title">A pasta de gravações sumiu</string>
+    <string name="home_status_folder_gone_suggestion">As novas chamadas ficam guardadas no CallVault até você escolher uma pasta. Toque para abrir as Configurações.</string>
+    <string name="home_hero_pill_folder_gone">Sem pasta</string>
+</resources>

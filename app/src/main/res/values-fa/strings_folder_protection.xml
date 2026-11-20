@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Recording folder protection: review C98 / N5. -->
+<resources>
+    <string name="recording_folder_gone_title">پوشهٔ ضبط‌ها وجود ندارد</string>
+    <string name="home_status_folder_gone_suggestion">تماس‌های جدید تا وقتی پوشه‌ای انتخاب کنید داخل CallVault نگه داشته می‌شوند. برای باز کردن تنظیمات ضربه بزنید.</string>
+    <string name="home_hero_pill_folder_gone">پوشه نیست</string>
+</resources>

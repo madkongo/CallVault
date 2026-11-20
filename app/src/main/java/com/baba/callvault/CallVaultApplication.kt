@@ -195,6 +195,9 @@ class CallVaultApplication : Application() {
                 .onFailure { AppLogger.w(TAG, "Releasing stale transcription rows failed: ${it.message}") }
         }.start()
 
+        // Is the recording folder still there (review C98)? Off the main thread; Home and readiness read the result.
+        com.baba.callvault.system.storage.RecordingFolderCheck.checkAsync(applicationContext, "app start")
+
         // Tell the user once if the previous process ended because they stopped the app (BabApps item 115).
         Thread { UserStopNotice.onAppStart(applicationContext) }.apply { isDaemon = true }.start()
 

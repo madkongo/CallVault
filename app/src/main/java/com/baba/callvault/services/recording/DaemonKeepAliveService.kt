@@ -124,6 +124,9 @@ class DaemonKeepAliveService : Service() {
             if (alive && usesAdb()) refreshShellUsbRead()
             if (usesAdb()) timelineSnapshot(alive, "tick")
             healSharedNotice()
+            // The recording folder, at most every few minutes and on its own thread (review C98): a folder deleted
+            // between calls turns Home red and raises the alert before the next call, not after it.
+            com.baba.callvault.system.storage.RecordingFolderCheck.checkIfDue(this@DaemonKeepAliveService, "keep-alive tick")
             watchdogHandler.postDelayed(this, WATCHDOG_INTERVAL_MS)
         }
     }

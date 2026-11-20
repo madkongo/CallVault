@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Recording folder protection: review C98 / N5. -->
+<resources>
+    <string name="recording_folder_gone_title">مجلد التسجيلات غير موجود</string>
+    <string name="home_status_folder_gone_suggestion">تُحفظ المكالمات الجديدة داخل CallVault حتى تختار مجلدًا. اضغط لفتح الإعدادات.</string>
+    <string name="home_hero_pill_folder_gone">المجلد مفقود</string>
+</resources>

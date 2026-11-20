@@ -44,6 +44,7 @@ import com.baba.callvault.services.recording.RecordingSwitch
 import com.baba.callvault.services.recording.RecordingPolicy
 import com.baba.callvault.data.health.Prerequisite
 import com.baba.callvault.data.health.SetupPrerequisites
+import com.baba.callvault.system.storage.RecordingFolderCheck
 import com.baba.callvault.data.recordings.AudioImport
 import com.baba.callvault.data.recordings.ImportedRecording
 import com.baba.callvault.data.recordings.RecordingDirection
@@ -119,6 +120,11 @@ class HomeViewModel(application: Application) : AndroidViewModel(application) {
         val isReady: Boolean = false
     ) {
         NO_FOLDER(R.string.home_status_no_folder_title, R.string.home_status_no_folder_suggestion),
+        /**
+         * A folder is set but measured as gone (review C98): deleted, its access revoked, its SD card removed. Calls
+         * are kept inside CallVault meanwhile (review N5). Tapping opens Settings, where the folder is chosen.
+         */
+        FOLDER_UNAVAILABLE(R.string.recording_folder_gone_title, R.string.home_status_folder_gone_suggestion),
         NOT_PAIRED(R.string.home_status_not_paired_title, R.string.home_status_not_paired_suggestion),
         DEV_OPTIONS_OFF(R.string.home_status_dev_options_off_title, R.string.home_status_dev_options_off_suggestion),
         /** Android forgot CallVault's Wireless-debugging pairing (issue #43); tapping the card pairs again. */
@@ -929,7 +935,13 @@ class HomeViewModel(application: Application) : AndroidViewModel(application) {
 
     private fun startListPass(status: HomeStatus) {
         listJob = viewModelScope.launch {
-            val health = withContext(Dispatchers.IO) { sweepSetupHealth(status.isReady) }
+            // Look at the recording folder itself (review C98): a stored address says nothing about whether the
+            // folder is still there. Off the main thread; the status is re-read from the new measurement.
+            val measured = withContext(Dispatchers.IO) { RecordingFolderCheck.checkNow(appContext, "Home") }
+            val current = if (measured == null) status else computeStatus().also { now ->
+                if (now != status) _uiState.update { it.copy(status = now) }
+            }
+            val health = withContext(Dispatchers.IO) { sweepSetupHealth(current.isReady) }
             _uiState.update { it.copy(setupHealth = health) }
             // A recording deleted in Drive itself stays listed until something notices; this does, every few hours.
             withContext(Dispatchers.IO) { DriveCatalogRepair.forgetDeletedIfDue(appContext) }
@@ -1183,6 +1195,7 @@ class HomeViewModel(application: Application) : AndroidViewModel(application) {
 
     private fun baseStatus(): HomeStatus = when (SetupPrerequisites.missing(appContext)) {
         Prerequisite.RECORDING_FOLDER -> HomeStatus.NO_FOLDER
+        Prerequisite.FOLDER_UNAVAILABLE -> HomeStatus.FOLDER_UNAVAILABLE
         Prerequisite.ADB_PAIRING -> HomeStatus.NOT_PAIRED
         Prerequisite.DEVELOPER_OPTIONS -> HomeStatus.DEV_OPTIONS_OFF
         Prerequisite.SECURE_SETTINGS_GRANT -> HomeStatus.UPDATE_REGRANT_NEEDED

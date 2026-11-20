@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Recording folder protection: review C98 / N5. -->
+<resources>
+    <string name="recording_folder_gone_title">录音文件夹不见了</string>
+    <string name="home_status_folder_gone_suggestion">在你选择文件夹之前，新通话会保存在 CallVault 内。点按打开设置。</string>
+    <string name="home_hero_pill_folder_gone">文件夹丢失</string>
+</resources>

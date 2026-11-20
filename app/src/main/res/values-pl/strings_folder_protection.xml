@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Recording folder protection: review C98 / N5. -->
+<resources>
+    <string name="recording_folder_gone_title">Folder nagrań zniknął</string>
+    <string name="home_status_folder_gone_suggestion">Nowe rozmowy są przechowywane w CallVault, dopóki nie wybierzesz folderu. Dotknij, aby otworzyć Ustawienia.</string>
+    <string name="home_hero_pill_folder_gone">Brak folderu</string>
+</resources>

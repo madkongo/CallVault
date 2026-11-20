@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Recording folder protection: review C98 / N5. -->
+<resources>
+    <string name="recording_folder_gone_title">Recording folder is gone</string>
+    <string name="home_status_folder_gone_suggestion">New calls are kept inside CallVault until you choose a folder. Tap to open Settings.</string>
+    <string name="home_hero_pill_folder_gone">Folder gone</string>
+</resources>

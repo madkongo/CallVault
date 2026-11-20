@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Recording folder protection: review C98 / N5. -->
+<resources>
+    <string name="recording_folder_gone_title">La cartella delle registrazioni non c\'è più</string>
+    <string name="home_status_folder_gone_suggestion">Le nuove chiamate restano dentro CallVault finché non scegli una cartella. Tocca per aprire le Impostazioni.</string>
+    <string name="home_hero_pill_folder_gone">Cartella assente</string>
+</resources>

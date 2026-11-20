@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Recording folder protection: review C98 / N5. -->
+<resources>
+    <string name="recording_folder_gone_title">রেকর্ডিং ফোল্ডারটি নেই</string>
+    <string name="home_status_folder_gone_suggestion">ফোল্ডার বেছে না নেওয়া পর্যন্ত নতুন কলগুলো CallVault-এর ভেতরে রাখা হবে। সেটিংস খুলতে ট্যাপ করুন।</string>
+    <string name="home_hero_pill_folder_gone">ফোল্ডার নেই</string>
+</resources>
