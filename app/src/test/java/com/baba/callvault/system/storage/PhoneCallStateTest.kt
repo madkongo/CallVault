@@ -51,10 +51,16 @@ class PhoneCallStateTest {
     }
 
     @Test
-    fun `a fresh save replaces a backed-off retry, a retry queues behind the run that made it`() {
-        // Third review F4: "save now" (folder picked, call end) waited behind a retry backed off up to 60 minutes.
+    fun `a fresh save and the one pending retry each replace their own kind, so there is never a second chain`() {
+        // Merge gate: an old run's late retry appended behind a fresh run made a second chain.
+        assertTrue(WaitingPolicy.workName(fresh = true) != WaitingPolicy.workName(fresh = false))
         assertEquals(androidx.work.ExistingWorkPolicy.REPLACE, WaitingPolicy.workPolicy(fresh = true))
-        assertEquals(androidx.work.ExistingWorkPolicy.APPEND_OR_REPLACE, WaitingPolicy.workPolicy(fresh = false))
+        assertEquals(androidx.work.ExistingWorkPolicy.REPLACE, WaitingPolicy.workPolicy(fresh = false))
+    }
+
+    @Test
+    fun `when the retries stop, the count starts again for the next trigger`() {
+        assertEquals(0, WaitingPolicy.attemptAfterRun(attempt = WaitingPolicy.MAX_RETRIES, retryLater = true))
     }
 
     @Test

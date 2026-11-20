@@ -37,23 +37,26 @@ class WaitingRecordingsWorker(ctx: Context, params: WorkerParameters) : Coroutin
     override suspend fun doWork(): Result {
         val app = applicationContext
         val attempts = app.getSharedPreferences(PUBLISH_PREFS, Context.MODE_PRIVATE)
-        val attempt = attempts.getInt(KEY_ATTEMPT, 0)
-        val result = runCatching {
-            WaitingPublisher.run(
-                PhoneEnv(app),
-                notes = WaitingRecordings.dirOrNull(app)?.listFiles().orEmpty().toList(),
-                ignoreCallState = WaitingPolicy.ignoreCallState(attempt),
+        runCatching {
+            WaitingPublisher.runExclusive(
+                env = { PhoneEnv(app) },
+                notes = { WaitingRecordings.dirOrNull(app)?.listFiles().orEmpty().toList() },
+                ignoreCallState = WaitingPolicy::ignoreCallState,
+                attempt = { attempts.getInt(KEY_ATTEMPT, 0) },
+                after = { result ->
+                    // Under the run lock: read, decide and schedule as one step, so no older run's retry overtakes it.
+                    val attempt = attempts.getInt(KEY_ATTEMPT, 0)
+                    attempts.edit().putInt(KEY_ATTEMPT, WaitingPolicy.attemptAfterRun(attempt, result.retryLater)).apply()
+                    if (result.saved > 0) FolderProtection.onWaitingSaved(app, result.saved)
+                    // Backing off, and stopping after a while (S6): the next app start, Home visit, folder check or call
+                    // starts again, with the count starting again.
+                    if (result.retryLater) {
+                        if (WaitingPolicy.shouldRetry(attempt)) scheduleRetry(app, WaitingPolicy.retryDelayMs(attempt))
+                        else AppLogger.w(TAG, "Still cannot save the waiting calls after $attempt retries; stopping until the next trigger, count reset")
+                    }
+                },
             )
-        }.onFailure { AppLogger.e(TAG, "Saving waiting calls failed: ${it.message}", it) }.getOrNull()
-        if (result != null) {
-            attempts.edit().putInt(KEY_ATTEMPT, WaitingPolicy.attemptAfterRun(attempt, result.retryLater)).apply()
-            if (result.saved > 0) FolderProtection.onWaitingSaved(app, result.saved)
-            // Backing off, and stopping after a while (S6): the next app start, Home visit, folder check or call starts again.
-            if (result.retryLater) {
-                if (WaitingPolicy.shouldRetry(attempt)) scheduleRetry(app, WaitingPolicy.retryDelayMs(attempt))
-                else AppLogger.w(TAG, "Still cannot save the waiting calls after $attempt retries; waiting for the next trigger")
-            }
-        }
+        }.onFailure { AppLogger.e(TAG, "Saving waiting calls failed: ${it.message}", it) }
         return Result.success()
     }
 
@@ -146,7 +149,6 @@ class WaitingRecordingsWorker(ctx: Context, params: WorkerParameters) : Coroutin
 
     companion object {
         private const val TAG = "CV:WaitingPublish"
-        private const val WORK_NAME = "waiting_recordings_publish"
         private const val PERIODIC_NAME = "recording_folder_watch"
 
         private const val PUBLISH_PREFS = "waiting_publish"
@@ -166,7 +168,7 @@ class WaitingRecordingsWorker(ctx: Context, params: WorkerParameters) : Coroutin
                 val request = OneTimeWorkRequestBuilder<WaitingRecordingsWorker>()
                     .setInitialDelay(delayMs, TimeUnit.MILLISECONDS)
                     .build()
-                WorkManager.getInstance(context).enqueueUniqueWork(WORK_NAME, WaitingPolicy.workPolicy(fresh), request)
+                WorkManager.getInstance(context).enqueueUniqueWork(WaitingPolicy.workName(fresh), WaitingPolicy.workPolicy(fresh), request)
             }.onFailure { AppLogger.w(TAG, "Could not schedule saving the waiting calls: ${it.message}") }
         }
 

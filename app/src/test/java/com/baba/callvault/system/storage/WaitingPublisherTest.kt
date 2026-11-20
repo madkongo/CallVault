@@ -10,6 +10,7 @@ package com.baba.callvault.system.storage
 
 import android.net.Uri
 import androidx.core.net.toUri
+import kotlinx.coroutines.async
 import kotlinx.coroutines.runBlocking
 import org.junit.After
 import org.junit.Assert.assertEquals
@@ -249,5 +250,25 @@ class WaitingPublisherTest {
         assertEquals("a (1).ogg", WaitingPublisher.nameFromProvider(reported = "a (1).ogg", asked = "a.ogg"))
         assertEquals("a.ogg", WaitingPublisher.nameFromProvider(reported = null, asked = "a.ogg"))
         assertEquals("a.ogg", WaitingPublisher.nameFromProvider(reported = " ", asked = "a.ogg"))
+    }
+
+    @OptIn(kotlinx.coroutines.DelicateCoroutinesApi::class)
+    @Test
+    fun `two runs at once never save the same call twice - the second waits and re-reads the list`() = runBlocking {
+        // Merge gate: REPLACE does not stop a running save (it is NonCancellable), so a fresh trigger could start a
+        // second run on the same files: a duplicate "name (1)" or a second library entry.
+        waiting("same.ogg", 500, finished = true)
+        val published = java.util.Collections.synchronizedList(mutableListOf<String>())
+        fun env() = object : WaitingPublisher.Env by FakeEnv(dir.listFiles().orEmpty().filter { it.name.endsWith(".tmp") }, now = now) {
+            override fun publish(file: File, name: String, mimeType: String): Pair<Uri, String>? {
+                Thread.sleep(200)
+                published += name
+                return "content://x/document/$name".toUri() to name
+            }
+        }
+        val a = kotlinx.coroutines.GlobalScope.async(kotlinx.coroutines.Dispatchers.IO) { WaitingPublisher.runExclusive({ env() }) }
+        val b = kotlinx.coroutines.GlobalScope.async(kotlinx.coroutines.Dispatchers.IO) { WaitingPublisher.runExclusive({ env() }) }
+        a.await(); b.await()
+        assertEquals(listOf("same.ogg"), published.toList())
     }
 }

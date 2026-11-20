@@ -45,14 +45,22 @@ object WaitingPolicy {
     fun ignoreCallState(attempt: Int): Boolean = attempt >= IGNORE_CALL_AFTER_ATTEMPTS
 
     /**
-     * Third review 2026-11-20 (F4): a fresh "save now" (a folder picked, a call kept, the folder found usable) replaces
-     * a pending backed-off retry and runs at once; a retry queues behind the run that made it, so there is one chain.
+     * A fresh "save now" (a folder picked, a call kept, the folder found usable) and the one pending retry are separate
+     * unique works, each replacing its own kind (F4, merge gate 2026-11-20): a fresh run starts at once instead of
+     * waiting behind a backed-off retry, and a late retry from an older run replaces the pending one instead of adding a
+     * second chain. Runs never overlap: [WaitingPublisher.runExclusive].
      */
-    fun workPolicy(fresh: Boolean): androidx.work.ExistingWorkPolicy =
-        if (fresh) androidx.work.ExistingWorkPolicy.REPLACE else androidx.work.ExistingWorkPolicy.APPEND_OR_REPLACE
+    fun workName(fresh: Boolean): String = if (fresh) "waiting_recordings_publish" else "waiting_recordings_retry"
 
-    /** The retry count is kept across fresh runs until one needs no retry, so [ignoreCallState] can be reached. */
-    fun attemptAfterRun(attempt: Int, retryLater: Boolean): Int = if (retryLater) attempt + 1 else 0
+    @Suppress("UNUSED_PARAMETER")
+    fun workPolicy(fresh: Boolean): androidx.work.ExistingWorkPolicy = androidx.work.ExistingWorkPolicy.REPLACE
+
+    /**
+     * The retry count is kept across fresh runs until one needs no retry, so [ignoreCallState] can be reached; and starts
+     * again when the retries stop ([MAX_RETRIES]), for the next trigger.
+     */
+    fun attemptAfterRun(attempt: Int, retryLater: Boolean): Int =
+        if (retryLater && shouldRetry(attempt)) attempt + 1 else 0
 
     enum class Admission { OK, FULL, NO_SPACE }
 

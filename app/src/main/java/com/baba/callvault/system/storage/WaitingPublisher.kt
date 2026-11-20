@@ -11,6 +11,7 @@ package com.baba.callvault.system.storage
 import android.net.Uri
 import com.baba.callvault.system.diagnostics.CallEndLog
 import kotlinx.coroutines.NonCancellable
+import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.withContext
 import java.io.File
 
@@ -118,6 +119,26 @@ object WaitingPublisher {
 
     /** @param retryLater something is still in use or failed: look again later. */
     data class Result(val saved: Int, val retryLater: Boolean)
+
+    private val runLock = kotlinx.coroutines.sync.Mutex()
+
+    /**
+     * [run], one at a time in this process (merge gate 2026-11-20): a save cannot be cancelled, so a fresh trigger could
+     * start a second run on the same files (a duplicate "name (1)" or a second library entry). The second run waits,
+     * and [env] is built only once it has the lock, so it lists the waiting files again and skips those already saved.
+     * [after] runs under the same lock, so the retry decision of one run is never overtaken by another.
+     */
+    suspend fun runExclusive(
+        env: () -> Env,
+        notes: () -> List<File> = { emptyList() },
+        ignoreCallState: (Int) -> Boolean = { false },
+        attempt: () -> Int = { 0 },
+        after: (Result) -> Unit = {},
+    ): Result = runLock.withLock {
+        val result = run(env(), notes(), ignoreCallState(attempt()))
+        after(result)
+        result
+    }
 
     /** @param ignoreCallState a call state that seemed never to end has blocked enough retries (S6): save finished calls anyway. */
     suspend fun run(env: Env, notes: List<File> = emptyList(), ignoreCallState: Boolean = false): Result {
