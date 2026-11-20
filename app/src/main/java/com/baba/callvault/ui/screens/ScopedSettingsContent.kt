@@ -207,9 +207,13 @@ fun ScopedSettingsContent(
             }
             item(key = "footer") {
                 Column {
+                    // Does what it says: builds the report and opens the share sheet, behind the "Preparing debug
+                    // report…" dialog. It used to only jump to Help and about — on that page, where the user already
+                    // was, and with logging on that section had no Share button, so three taps did nothing visible
+                    // (owner report 2026-11-20, OP9).
                     SettingsFooterLink(
                         text = stringResource(R.string.settings_link_share_debug_report),
-                        onClick = { jumpTo(SettingsScope.ALL, SettingsGroup.HELP_AND_ABOUT) },
+                        onClick = onShareLogs,
                     )
                     if (scope != SettingsScope.ALL) {
                         SettingsFooterLink(
