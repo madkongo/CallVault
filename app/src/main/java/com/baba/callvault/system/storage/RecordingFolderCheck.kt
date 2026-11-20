@@ -190,18 +190,39 @@ object RecordingFolderCheck {
         val grantHeld = runCatching {
             context.contentResolver.persistedUriPermissions.any { it.uri == uri && it.isWritePermission }
         }.getOrNull()
-        if (grantHeld == false) {
-            return reading(FolderReading.Kind.GRANT_MISSING, "CallVault no longer holds write access to the folder; provider: $detail")
-        }
         val volume = volumeState(context, uri)
-        if (volume != null && volume != Environment.MEDIA_MOUNTED) {
-            return reading(FolderReading.Kind.TRANSIENT, "the folder's storage is $volume; provider: $detail")
+        val relativePath = primaryRelativePath(uri)
+        val base = FolderCheckPolicy.NotUsableEvidence(
+            unlocked = unlocked,
+            grantHeld = grantHeld,
+            volume = volume,
+            providerFailed = detail.startsWith(PROVIDER_FAILED),
+            localPrimary = !cloud && relativePath != null,
+        )
+        // A provider that gave no answer about a folder on the phone's own storage gets a second opinion from the
+        // path itself (OnePlus 9 Pro, 2026-11-20: a deleted folder there answers with a null cursor).
+        val pathResult = if (FolderCheckPolicy.shouldLookAtPath(base) && relativePath != null) {
+            FolderPathLook.look(Environment.getExternalStorageDirectory(), relativePath)
+        } else {
+            null
         }
-        if (detail.startsWith(PROVIDER_FAILED)) {
-            return reading(FolderReading.Kind.TRANSIENT, "grant held=${grantHeld ?: "?"}, storage=${volume ?: "n/a"}; provider: $detail")
+        val evidence = base.copy(path = pathResult?.look ?: PathLook.NOT_LOOKED)
+        val pathNote = pathResult?.let { "; path: ${it.look} (${it.evidence})" }.orEmpty()
+        val kind = FolderCheckPolicy.classify(evidence)
+        return when {
+            kind == FolderReading.Kind.GRANT_MISSING ->
+                reading(kind, "CallVault no longer holds write access to the folder; provider: $detail")
+            volume != null && volume != Environment.MEDIA_MOUNTED ->
+                reading(kind, "the folder's storage is $volume; provider: $detail")
+            else -> reading(kind, "grant held=${grantHeld ?: "?"}, storage=${volume ?: "n/a"}; provider: $detail$pathNote")
         }
-        return reading(FolderReading.Kind.MISSING, "grant held=${grantHeld ?: "?"}, storage=${volume ?: "n/a"}; provider: $detail")
     }
+
+    /** The folder's path below the primary storage root, when it is on the phone's own storage provider; else null. */
+    private fun primaryRelativePath(treeUri: Uri): String? = runCatching {
+        if (treeUri.authority != EXTERNAL_STORAGE_AUTHORITY) return@runCatching null
+        FolderPathLook.relativePathOnPrimary(DocumentsContract.getTreeDocumentId(treeUri))
+    }.getOrNull()
 
     private const val PROVIDER_FAILED = "failed:"
 
