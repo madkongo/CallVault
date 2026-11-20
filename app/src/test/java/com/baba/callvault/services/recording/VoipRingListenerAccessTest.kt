@@ -9,6 +9,10 @@
 package com.baba.callvault.services.recording
 
 import com.baba.callvault.services.recording.VoipRingListenerAccess.Outcome
+import com.baba.callvault.utils.AppLogger
+import io.mockk.mockkObject
+import io.mockk.unmockkObject
+import io.mockk.verify
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
@@ -197,5 +201,18 @@ class VoipRingListenerAccessTest {
         assertEquals(1, tasks.size)
         tasks.removeFirst().run()  // the host went away again before the retry reached it
         assertEquals(0, tasks.size)
+    }
+
+    /** Review of C19: a grant of ours that is gone while app calls are on is re-approved, and the log says so. */
+    @Test
+    fun `re-approving a listener that went missing is logged`() {
+        mockkObject(AppLogger)
+        try {
+            val port = FakePort(wantedNow = true, approvedByUs = true, granted = false)
+            assertEquals(Outcome.APPROVED, VoipRingListenerAccess.syncWith(port))
+            verify { AppLogger.i(any(), match { it.contains("re-approving", ignoreCase = true) }, any()) }
+        } finally {
+            unmockkObject(AppLogger)
+        }
     }
 }

@@ -177,6 +177,11 @@ object VoipRingListenerAccess {
         }
         // Read again: the switch may have changed while we waited, and that change queued its own sync.
         val allow = target(port) ?: return idle(port)
+        if (allow && port.approvedByUs && !port.isGranted()) {
+            // Ours, and gone while app calls stayed on: most likely the user turned it off in system
+            // settings. Re-approved as before (self-healing), but said out loud so field logs show it.
+            AppLogger.i(TAG, "Ring listener we approved is no longer approved while app calls are on; re-approving")
+        }
         val answer = port.setAccess(allow)
         val nowGranted = port.isGranted()
         if (nowGranted != allow) {
