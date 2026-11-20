@@ -91,6 +91,14 @@ class BatteryUseReportTest {
     }
 
     @Test
+    fun `an unrecognised format is not judged and its numbers are marked unverified`() {
+        val use = quiet().copy(formatProblem = "report version 37")
+        assertEquals("cannot judge: batterystats format not recognised (report version 37)", BatteryUseReport.verdict(use, null))
+        val lines = BatteryUseReport.lines(use, null, utc)
+        assertTrue(lines.toString(), lines.first().startsWith("Format not recognised (report version 37): the numbers below are read by position and unverified."))
+    }
+
+    @Test
     fun `too short a period is not judged`() {
         assertTrue(BatteryUseReport.verdict(quiet(onBatteryMs = hour - 1), null).startsWith("too little time on battery"))
     }

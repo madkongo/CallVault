@@ -55,6 +55,7 @@ object BatteryUseReport {
 
     /** The section's lines, without its heading. [counts] is null when debug logging is off. */
     fun lines(use: BatteryUse, counts: LogCounts?, zone: TimeZone = TimeZone.getDefault()): List<String> = buildList {
+        use.formatProblem?.let { add("Format not recognised ($it): the numbers below are read by position and unverified.") }
         add(period(use, zone))
         add(uidLine(APP_LABEL, use.app))
         add(uidLine("Android System / shell uid ${BatteryCheckin.SHELL_UID} (the recorder, adbd, and any other adb or Shizuku tool)", use.shell))
@@ -89,6 +90,7 @@ object BatteryUseReport {
      * that was sent because something is wrong.
      */
     private fun cannotJudge(use: BatteryUse): String? = when {
+        use.formatProblem != null -> "batterystats format not recognised (${use.formatProblem})"
         use.notes.isNotEmpty() -> use.notes.joinToString("; ")
         use.app == null && use.shell == null -> "no batterystats row for the CallVault app or the shell uid"
         use.app == null -> "no batterystats row for the CallVault app"

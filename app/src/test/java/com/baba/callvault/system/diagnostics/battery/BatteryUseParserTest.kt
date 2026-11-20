@@ -142,6 +142,30 @@ class BatteryUseParserTest {
         assertEquals(0L, use!!.onBatteryMs)
     }
 
+    @Test
+    fun `the known layouts are recognised`() {
+        assertNull(parse("batterystats_checkin_a14.txt")!!.formatProblem)
+        assertNull(parse("batterystats_checkin_a11_root.txt", recorderUid = 0)!!.formatProblem)
+        assertNull(parse("batterystats_checkin_op9_a14_real.txt")!!.formatProblem)
+    }
+
+    @Test
+    fun `an unknown report version is flagged`() {
+        assertEquals("report version 37", parse("batterystats_checkin_a16_extra_fields.txt")!!.formatProblem)
+    }
+
+    @Test
+    fun `a missing version row or a short row is flagged`() {
+        val noVers = "9,0,l,bt,0,3600000,1,1,1,0,1,1,0,0,0,0\n9,10234,l,cpu,10,20,0"
+        assertEquals("no version row", BatteryUseParser.parse(noVers, PACKAGE, 2000, 10234)!!.formatProblem)
+        val shortCpu = "9,0,i,vers,36,214,x,x\n9,0,l,bt,0,3600000,1,1,1,0,1,1,0,0,0,0\n9,10234,l,cpu,10"
+        assertEquals("a 'cpu' row has 1 fields, expected at least 2", BatteryUseParser.parse(shortCpu, PACKAGE, 2000, 10234)!!.formatProblem)
+        val otherRowVersion = "9,0,i,vers,36,214,x,x\n9,0,l,bt,0,3600000,1,1,1,0,1,1,0,0,0,0\n10,10234,l,cpu,10,20,0"
+        assertEquals("row format version 10", BatteryUseParser.parse(otherRowVersion, PACKAGE, 2000, 10234)!!.formatProblem)
+        val wlWithoutP = "9,0,i,vers,36,214,x,x\n9,0,l,bt,0,3600000,1,1,1,0,1,1,0,0,0,0\n9,10234,l,wl,name,0,f,0,5,q,1"
+        assertEquals("a 'wl' row has no partial ('p') part", BatteryUseParser.parse(wlWithoutP, PACKAGE, 2000, 10234)!!.formatProblem)
+    }
+
     private companion object {
         const val PACKAGE = "com.baba.callvault"
     }

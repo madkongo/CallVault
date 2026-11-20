@@ -13,9 +13,11 @@ import com.baba.callvault.system.diagnostics.battery.BatteryCheckin.Row
 /**
  * Reads a batterystats checkin answer — the recorder's cut, or a raw dump from the app's ADB shell — into [BatteryUse].
  *
- * Field positions follow AOSP `BatteryStats.dumpCheckinLocked` (checkin version 9, unchanged in shape from Android 11
- * to 16). Newer releases only ever append fields, so extra trailing fields are ignored; a missing or non-numeric
- * field reads as zero or null rather than failing the whole section.
+ * Field positions follow AOSP `BatteryStats.dumpCheckinLocked` (row format 9, report versions 35-36; the rows read
+ * here have the same layout on Android 11 to 16, checked against the android11/12/13-release and main sources). A
+ * layout we have not seen — another row or report version, or a row shorter than the fields read from it — is named
+ * in [BatteryUse.formatProblem], and the report then shows the numbers as unverified and gives no verdict. A
+ * non-numeric field reads as zero or null rather than failing the whole section.
  */
 object BatteryUseParser {
 
@@ -27,7 +29,8 @@ object BatteryUseParser {
         val cut = if (BatteryCheckin.isCut(text)) text else BatteryCheckin.cut(text.lineSequence(), ownPackage, recorderUid, knownAppUid)
         val lines = cut.lines()
         val appUid = knownAppUid ?: headerAppUid(lines.firstOrNull())
-        val rows = lines.mapNotNull { BatteryCheckin.row(it) }.filter { it.category == "l" }
+        val allRows = lines.mapNotNull { BatteryCheckin.row(it) }
+        val rows = allRows.filter { it.category == "l" }
         val bt = rows.global("bt") ?: return null
         val dc = rows.global("dc")
         val shellUid = if (recorderUid == BatteryCheckin.ROOT_UID) BatteryCheckin.SHELL_UID else recorderUid
@@ -44,7 +47,31 @@ object BatteryUseParser {
             shell = uidUse(rows, shellUid),
             root = if (recorderUid == BatteryCheckin.ROOT_UID) uidUse(rows, BatteryCheckin.ROOT_UID) else null,
             notes = lines.filter { it.startsWith("# ") && !it.startsWith(BatteryCheckin.HEADER) }.map { it.removePrefix("# ") },
+            formatProblem = formatProblem(allRows),
         )
+    }
+
+    private const val ROW_VERSION = 9
+    private val KNOWN_REPORT_VERSIONS = 35..36
+
+    /** The fewest fields each row type must have for the positions read here to exist. */
+    private val MIN_FIELDS = mapOf(
+        "bt" to 7, "dc" to 2, "m" to 1, "pws" to 2, "cpu" to 2, "nt" to 9,
+        "awl" to 1, "fgs" to 1, "wua" to 2, "jb" to 3, "pr" to 7, "pwi" to 2,
+    )
+
+    /** Why the layout is not one we know, or null. */
+    private fun formatProblem(rows: List<Row>): String? {
+        rows.firstOrNull { it.version != ROW_VERSION }?.let { return "row format version ${it.version}" }
+        val vers = rows.firstOrNull { it.category == "i" && it.type == "vers" } ?: return "no version row"
+        val report = vers.fields.firstOrNull()
+        if (report?.toIntOrNull() !in KNOWN_REPORT_VERSIONS) return "report version $report"
+        for (row in rows.filter { it.category == "l" }) {
+            val min = MIN_FIELDS[row.type]
+            if (min != null && row.fields.size < min) return "a '${row.type}' row has ${row.fields.size} fields, expected at least $min"
+            if (row.type == "wl" && row.fields.indexOf("p") < 2) return "a 'wl' row has no partial ('p') part"
+        }
+        return null
     }
 
     private fun headerAppUid(header: String?): Int? =

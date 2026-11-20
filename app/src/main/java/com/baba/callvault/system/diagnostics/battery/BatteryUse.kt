@@ -23,6 +23,8 @@ package com.baba.callvault.system.diagnostics.battery
  * @property shell uid 2000: the recorder AND adbd, and any other adb or Shizuku tool. Settings shows it as "Android System".
  * @property root uid 0, only when the recorder runs as root; it also holds every other root daemon.
  * @property notes what limits this reading (cut short, timed out), in plain words.
+ * @property formatProblem why the dump's layout was not recognised, or null when it was. When set, every figure was
+ *   read by field position from a layout we have not seen and is unverified.
  */
 data class BatteryUse(
     val sinceMillis: Long?,
@@ -37,6 +39,7 @@ data class BatteryUse(
     val shell: UidUse?,
     val root: UidUse?,
     val notes: List<String>,
+    val formatProblem: String? = null,
 )
 
 /**

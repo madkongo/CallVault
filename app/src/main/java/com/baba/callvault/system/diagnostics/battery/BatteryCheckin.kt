@@ -16,9 +16,11 @@ package com.baba.callvault.system.diagnostics.battery
  * the shell uid 2000 (or root 0 under a root Shizuku), adbd runs as shell too, and Settings books every uid below
  * 10000 as "Android System". The shell user holds BATTERY_STATS, so the recorder can read the real per-uid numbers.
  *
- * **The format.** One CSV row per stat: `9,<uid>,<category>,<type>,<fields…>` (AOSP `BatteryStats.dumpCheckinLocked`,
- * checkin version 9 since Android 6). Category `l` is "since last full charge"; `i` is info. Device-wide rows use
- * uid 0, which root's own per-uid rows share — the row TYPE tells them apart.
+ * **The format.** One CSV row per stat: `9,<uid>,<category>,<type>,<fields…>` (AOSP `BatteryStats.dumpCheckinLocked`).
+ * The leading `9` is the ROW format version (`BATTERY_STATS_CHECKIN_VERSION`, 9 on Android 11 to 16); the separate
+ * `9,0,i,vers,<report version>,<parcel version>,…` row carries the REPORT version (`CHECKIN_VERSION`: 35 on Android
+ * 11-13, 36 on 14+, e.g. `vers,36,212` on the OP9). [BatteryUseParser] checks both. Category `l` is "since last full
+ * charge"; `i` is info. Device-wide rows use uid 0, which root's own per-uid rows share — the row TYPE tells them apart.
  *
  * **Why `-c <package>` and never `--checkin`.** `--checkin` is the "real" checkin: it prints the SAVED previous
  * cycle when there is one and then deletes that file (BatteryStatsService.dumpUnmonitored), taking it from the
@@ -65,8 +67,8 @@ object BatteryCheckin {
     /** A name visibly ours, so it may be shown under the shell or root uid. */
     private val OURS = Regex("callvault", RegexOption.IGNORE_CASE)
 
-    /** One checkin row. [fields] are the values after the type, unquoted. */
-    data class Row(val uid: Int, val category: String, val type: String, val fields: List<String>)
+    /** One checkin row. [fields] are the values after the type, unquoted; [version] is the row format version. */
+    data class Row(val uid: Int, val category: String, val type: String, val fields: List<String>, val version: Int)
 
     /** True when [text] is already a cut (from the recorder) rather than a raw dump. */
     fun isCut(text: String): Boolean = text.startsWith(HEADER)
@@ -126,9 +128,10 @@ object BatteryCheckin {
     fun row(line: String): Row? {
         if (line.isBlank() || line.startsWith("#")) return null
         val parts = split(line.trim())
-        if (parts.size < 4 || parts[0].toIntOrNull() == null) return null
+        val version = parts[0].toIntOrNull()
+        if (parts.size < 4 || version == null) return null
         val uid = parts[1].toIntOrNull() ?: return null
-        return Row(uid, parts[2], parts[3], parts.drop(4))
+        return Row(uid, parts[2], parts[3], parts.drop(4), version)
     }
 
     /** The app's full uid from a uid-map row naming [ownPackage], in the recorder's Android user. */
