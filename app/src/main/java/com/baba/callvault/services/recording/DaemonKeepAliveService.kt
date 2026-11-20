@@ -75,6 +75,7 @@ class DaemonKeepAliveService : Service() {
         }
     }
     private var lastReady: Boolean? = null
+    private val shellUsbReadGate = ShellUsbReadGate()
 
     /** Serialises and throttles relaunch attempts, and expires one that never came back. */
     private val rewarmGate = RewarmGate(stuckAfterMs = REWARM_STUCK_MS, throttleMs = REWARM_THROTTLE_MS)
@@ -121,7 +122,7 @@ class DaemonKeepAliveService : Service() {
                 // binder blip doesn't trigger a relaunch (which would kill+respawn a daemon that was fine).
                 if (downStreak >= DOWN_STREAK_THRESHOLD) maybeRewarm()
             }
-            if (alive && usesAdb()) refreshShellUsbRead()
+            if (alive && usesAdb()) syncShellUsbRead()
             if (usesAdb()) timelineSnapshot(alive, "tick")
             healSharedNotice()
             watchdogHandler.postDelayed(this, WATCHDOG_INTERVAL_MS)
@@ -311,14 +312,31 @@ class DaemonKeepAliveService : Service() {
      * the only way to know it is off while Wireless debugging is also on (see [UsbDebuggingShellRead]).
      */
     private fun refreshShellUsbRead() {
+        Thread { readShellUsb() }.apply { isDaemon = true; name = "cv-usb-shell-read" }.start()
+    }
+
+    /**
+     * The keep-alive tick's (and a Wireless debugging change's) version of [refreshShellUsbRead]: asks the recorder
+     * only while that can change the answer ([ShellUsbReadGate]), and forgets the last read otherwise. Each read is a
+     * fork+exec in the recorder, which used to run every awake minute.
+     */
+    private fun syncShellUsbRead() {
         Thread {
-            val before = UsbDebuggingShellRead.current()
-            val now = UsbDebuggingShellRead.refresh()
-            if (now != null && now != before) {
-                AppLogger.i(TAG, "USB debugging as the recorder reads it: ${if (now) "on" else "off"}")
-                watchdogHandler.post { updateNotification(isDaemonAlive()) }
-            }
+            val step = shellUsbReadGate.decide(AdbShell.usbDebuggingShellReadNeeded(applicationContext))
+            step.log?.let { AppLogger.i(TAG, it) }
+            if (step.forget) UsbDebuggingShellRead.forget()
+            if (step.read) readShellUsb()
         }.apply { isDaemon = true; name = "cv-usb-shell-read" }.start()
+    }
+
+    /** Blocking: one read through the recorder; redraws the notice when the answer changed. */
+    private fun readShellUsb() {
+        val before = UsbDebuggingShellRead.current()
+        val now = UsbDebuggingShellRead.refresh()
+        if (now != null && now != before) {
+            AppLogger.i(TAG, "USB debugging as the recorder reads it: ${if (now) "on" else "off"}")
+            watchdogHandler.post { updateNotification(isDaemonAlive()) }
+        }
     }
 
     /** One line of the always-on timeline, off the main thread (it reads several settings). */
@@ -373,6 +391,9 @@ class DaemonKeepAliveService : Service() {
             com.baba.callvault.integrations.adb.ConnectPortFinder.onWirelessDebuggingChanged()
             val on = AdbShell.isWirelessDebuggingEnabled(applicationContext)
             TransportTimeline.event(applicationContext, "Wireless debugging switch changed → ${if (on) "on" else "off"}")
+            // On: the app's own read can no longer tell USB debugging, so the recorder's must be fresh now, not at the
+            // next tick. Off: R1/R2 decide again, and the last read is dropped.
+            if (usesAdb()) syncShellUsbRead()
             val prefs = AppPreferences(applicationContext)
             if (on) {
                 // On again, by anyone: nothing left to respect.

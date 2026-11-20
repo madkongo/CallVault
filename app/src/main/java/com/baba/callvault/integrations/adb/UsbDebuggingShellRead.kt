@@ -18,8 +18,10 @@ import com.baba.callvault.server.RecorderConnection
  * the "paused off Wi-Fi" notice and its "Turn USB debugging on" button never showed — while the report's own shell
  * read said `adb_enabled as shell: 0`. [UsbDebuggingPolicy] now takes this as the answer when it is fresh.
  *
- * Refreshed off the main thread (it starts `settings get` in the recorder), every keep-alive tick and on every change
- * of the switch; forgotten on a change until re-read, so a stale value never outlives the switch it describes.
+ * Refreshed off the main thread (it starts `settings get` in the recorder — a fork+exec charged to "Android System"),
+ * on every change of the switch, on Wireless debugging turning on, and on keep-alive ticks only while
+ * [UsbDebuggingPolicy.needsShellRead] says it can change the answer. Forgotten on a change until re-read, and forgotten
+ * when it stops being needed, so a stale value never outlives the switches it was read under.
  */
 object UsbDebuggingShellRead {
 
