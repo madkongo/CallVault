@@ -9,6 +9,7 @@
 package com.baba.callvault.server
 
 import com.baba.callvault.utils.AppLogger
+import com.baba.callvault.utils.FailureChain
 
 /**
  * Carries the recorder's Wi-Fi watch lines ([WifiJoinEvent]) to the app's always-on log, each once (review N15).
@@ -50,7 +51,7 @@ class WifiJoinEventQueue(
         val batch = take()
         if (batch.events.isEmpty()) return
         val delivered = runCatching { push(batch.encode()) }
-            .onFailure { AppLogger.w(TAG, "Could not hand the Wi-Fi watch lines to the app: ${it.message}") }
+            .onFailure { AppLogger.w(TAG, "Could not hand the Wi-Fi watch lines to the app: ${FailureChain.describe(it)}") }
             .getOrDefault(false)
         if (!delivered) putBack(batch)
     }

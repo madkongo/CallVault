@@ -13,6 +13,7 @@ import android.os.SystemClock
 import com.baba.callvault.data.AppPreferences
 import com.baba.callvault.server.ShizukuBackend
 import com.baba.callvault.utils.AppLogger
+import com.baba.callvault.utils.FailureChain
 import io.github.muntashirakon.adb.AdbPairingRequiredException
 import io.github.muntashirakon.adb.AdbStream
 
@@ -1023,7 +1024,7 @@ object AdbShell {
         ) return false
         val alwaysAllow = NetworkApprovalPolicy.alwaysAllow(prefs.isWdDisableWhenIdle())
         val answer = runCatching { recorder?.approveWirelessDebuggingNetwork(alwaysAllow) }
-            .onFailure { AppLogger.w(TAG, "Recorder could not approve the Wi-Fi: ${it.javaClass.simpleName}: ${it.message}") }
+            .onFailure { AppLogger.w(TAG, "Recorder could not approve the Wi-Fi: ${FailureChain.describe(it)}") }
             .getOrNull()
         val approved = NetworkApprovalPolicy.approved(answer)
         AppLogger.i(TAG, "Approving this Wi-Fi for Wireless debugging (alwaysAllow=$alwaysAllow): $answer")

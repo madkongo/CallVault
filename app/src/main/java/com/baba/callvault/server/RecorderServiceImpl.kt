@@ -78,6 +78,7 @@ open class RecorderServiceImpl(private val apkPath: String) : IRecorderService.S
 
     /** Shizuku mode's Wi-Fi join watch (review N15); idle, with no thread, until the app arms it. */
     private val wifiJoin = WifiJoinHost(RecorderBinderProvider.AUTHORITY)
+    private val approvalCalls = RecorderApprovalCalls()
 
     init {
         // Which package this process presents to the audio stack, which is NOT obvious and differs
@@ -373,10 +374,12 @@ open class RecorderServiceImpl(private val apkPath: String) : IRecorderService.S
     }
 
     override fun approveWirelessDebuggingNetwork(alwaysAllow: Boolean): String =
-        WirelessDebuggingApproval.approveCurrentNetwork(alwaysAllow).name
+        approvalCalls.approveNetwork { WirelessDebuggingApproval.approveCurrentNetwork(alwaysAllow) }
 
     override fun approveWifiNetworkKeepingSwitch(knownKeys: Array<String>?, salt: String?): String =
-        WirelessDebuggingApproval.approveKeepingSwitch(knownKeys.orEmpty().toSet(), salt.orEmpty())
+        approvalCalls.approveKeepingSwitch {
+            WirelessDebuggingApproval.approveKeepingSwitch(knownKeys.orEmpty().toSet(), salt.orEmpty())
+        }
 
     // Review N15: the recorder watches Wi-Fi joins itself (Shizuku mode); the app arms it on every connection.
     override fun armWifiJoinWatch(on: Boolean, knownKeys: Array<String>?, salt: String?): Boolean =

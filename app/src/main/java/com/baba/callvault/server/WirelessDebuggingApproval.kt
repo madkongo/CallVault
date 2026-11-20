@@ -9,6 +9,7 @@
 package com.baba.callvault.server
 
 import com.baba.callvault.utils.AppLogger
+import com.baba.callvault.utils.FailureChain
 import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicReference
 
@@ -150,7 +151,7 @@ object WirelessDebuggingApproval {
     /** Calls `allowWirelessDebugging` for [identity]; any exception is [NetworkApproval.FAILED], logged. */
     fun approveIdentity(identity: WifiIdentity, alwaysAllow: Boolean): NetworkApproval =
         runCatching { callAllow(identity, alwaysAllow) }
-            .onFailure { AppLogger.w(TAG, "allowWirelessDebugging failed: ${it.javaClass.simpleName}: ${it.message}") }
+            .onFailure { AppLogger.w(TAG, "allowWirelessDebugging failed: ${FailureChain.describe(it)}") }
             .getOrDefault(NetworkApproval.FAILED)
 
     /**
@@ -243,7 +244,7 @@ object WirelessDebuggingApproval {
         reader.join(READER_GRACE_MS)
         process.exitValue() to (output.get() ?: return@runCatching null)
     }.getOrElse {
-        AppLogger.w(TAG, "'${command.joinToString(" ")}' could not run: ${it.message}")
+        AppLogger.w(TAG, "'${command.joinToString(" ")}' could not run: ${FailureChain.describe(it)}")
         null
     }
 }

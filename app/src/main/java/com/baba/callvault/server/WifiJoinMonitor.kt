@@ -8,6 +8,8 @@
 
 package com.baba.callvault.server
 
+import com.baba.callvault.utils.FailureChain
+
 /** Tells the recorder each time a Wi-Fi network comes up, until stopped. */
 interface WifiNetworkWatch {
     /** Registers, unless already registered. Throws when Android refuses. [onAvailable] gets a network id. */
@@ -86,7 +88,7 @@ class WifiJoinMonitor(
                 watching = true
                 note(warn = false, "watching Wi-Fi joins in the recorder (pid ${android.os.Process.myPid()})")
             }
-            .onFailure { note(warn = true, "could not watch Wi-Fi joins in the recorder: ${it.javaClass.simpleName}: ${it.message}") }
+            .onFailure { note(warn = true, "could not watch Wi-Fi joins in the recorder: ${FailureChain.describe(it)}") }
             .isSuccess
     }
 
@@ -118,7 +120,10 @@ class WifiJoinMonitor(
             if (!watching) return
             lastCheckAt = elapsed()
         }
-        val config = runCatching { confirm() }.getOrNull()
+        val config = runCatching { confirm() }.getOrElse {
+            note(warn = true, "skipped: could not confirm with the app that approving is still wanted (asking threw ${FailureChain.describe(it)}); nothing approved")
+            return
+        }
         if (config == null) {
             note(warn = true, "skipped: could not confirm with the app that approving is still wanted (app not reachable, or no answer); nothing approved")
             return
@@ -135,7 +140,7 @@ class WifiJoinMonitor(
             knownKeys to salt
         }
         val answer = runCatching { approve(keys, salt) }.getOrElse {
-            note(warn = true, "failed: the check threw ${it.javaClass.simpleName}: ${it.message}")
+            note(warn = true, "failed: the check threw ${FailureChain.describe(it)}")
             return
         }
         val trustedKey = answer.bssidKey.takeIf { answer.outcome.trusted && it.isNotBlank() }.orEmpty()
@@ -149,7 +154,7 @@ class WifiJoinMonitor(
         watching = false
         runner.cancelPending()
         runCatching { watch.stop() }
-            .onFailure { note(warn = true, "could not unregister the Wi-Fi watch: ${it.javaClass.simpleName}: ${it.message}") }
+            .onFailure { note(warn = true, "could not unregister the Wi-Fi watch: ${FailureChain.describe(it)}") }
         note(warn = false, line)
     }
 

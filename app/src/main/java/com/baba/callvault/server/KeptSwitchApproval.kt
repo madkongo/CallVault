@@ -9,6 +9,7 @@
 package com.baba.callvault.server
 
 import com.baba.callvault.utils.AppLogger
+import com.baba.callvault.utils.FailureChain
 import java.security.MessageDigest
 
 /** What [KeptSwitchApprover.run] did. Crosses the binder by name inside [KeptSwitchResult]. */
@@ -247,7 +248,7 @@ class KeptSwitchApprover(
         return try {
             switchBackOff(key, approvedAt, toResult)
         } catch (e: Exception) {
-            AppLogger.w(TAG, "Error after approving, putting Wireless debugging back: ${e.javaClass.simpleName}: ${e.message}")
+            AppLogger.w(TAG, "Error after approving, putting Wireless debugging back: ${FailureChain.describe(e)}")
             guardedSwitchBackOff(key, approvedAt, toResult)
         }
     }
