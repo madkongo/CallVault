@@ -48,3 +48,41 @@ internal object VendorStartCrash {
         return start > 0 && frames[0].className != "android.media.AudioRecord"
     }
 }
+
+/**
+ * Whether the shell Application may be installed after vivo's constructor crash (review N21). It is process-global
+ * and one-way, so it runs only where it can be the fix:
+ *
+ * - the constructor crashed looking up a Context — the NPE names a `Context` (or `Application`) method called on
+ *   null, as the V2546A log does (`…android.content.Context.getOpPackageName()' on a null object reference`); and
+ * - the constructor-free rebuild failed because this framework is shaped differently — a field, method or class
+ *   missing somewhere in its cause chain. A rebuild that failed at run time (`native_setup` returned an error, the
+ *   mic is busy) says nothing about Context, and vivo on Android 16 and earlier must keep the identity it has.
+ */
+internal object ShellApplicationRepairGate {
+
+    /** A Context or Application method invoked on null, as ART words it. */
+    private val CONTEXT_ON_NULL =
+        Regex("""method '[^']*\bandroid\.(content\.Context|content\.ContextWrapper|app\.Application)\.\w+\([^']*\)' on a null object reference""")
+
+    /** @return null when the repair may run, otherwise the reason it may not (for the log). */
+    fun refusal(constructorError: Throwable, bypassError: Throwable): String? = when {
+        !pointsAtContextLookup(constructorError) ->
+            "the constructor crash is not a Context lookup on null (${VendorConstructorCrash.rootCause(constructorError).message})"
+        !failedStructurally(bypassError) ->
+            "the rebuild failed at run time, not for a missing field, method or class " +
+                "(${VendorConstructorCrash.rootCause(bypassError).javaClass.simpleName}: ${VendorConstructorCrash.rootCause(bypassError).message})"
+        else -> null
+    }
+
+    fun pointsAtContextLookup(error: Throwable): Boolean {
+        val root = VendorConstructorCrash.rootCause(error)
+        return root is NullPointerException && root.message?.let { CONTEXT_ON_NULL.containsMatchIn(it) } == true
+    }
+
+    fun failedStructurally(error: Throwable): Boolean =
+        generateSequence(error) { e -> e.cause?.takeIf { it !== e } }.any {
+            it is NoSuchFieldException || it is NoSuchMethodException || it is ClassNotFoundException ||
+                it is NoSuchFieldError || it is NoSuchMethodError || it is NoClassDefFoundError
+        }
+}

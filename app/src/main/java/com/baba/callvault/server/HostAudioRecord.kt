@@ -83,8 +83,13 @@ internal object HostAudioRecord {
         }
         val bypassError = bypassed.exceptionOrNull()!!
         AppLogger.e(TAG, "$what: building without the vendor constructor failed too: " +
-            "${bypassError.javaClass.simpleName}: ${bypassError.message}; giving the recorder a shell Application " +
-            "and trying the constructor once more", bypassError)
+            "${bypassError.javaClass.simpleName}: ${bypassError.message}", bypassError)
+        ShellApplicationRepairGate.refusal(error, bypassError)?.let { why ->
+            AppLogger.e(TAG, "$what: not giving the recorder a shell Application: $why; the record cannot be built")
+            return null
+        }
+        AppLogger.w(TAG, "$what: the crash was a Context lookup and the rebuild does not fit this framework; " +
+            "giving the recorder a shell Application and trying the constructor once more")
         if (!repair()) {
             AppLogger.e(TAG, "$what: no shell Application could be installed (reason logged above); the record cannot be built")
             return null

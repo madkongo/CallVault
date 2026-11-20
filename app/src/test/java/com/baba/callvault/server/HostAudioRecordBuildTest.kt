@@ -115,4 +115,17 @@ class HostAudioRecordBuildTest {
         assertNull(r)
         assertEquals(listOf(2, 1, 1), listOf(c.builds, c.bypasses, c.repairs))
     }
+
+    @Test
+    fun a_bypass_that_fails_at_run_time_never_installs_the_shell_application() {
+        val c = Calls()
+        val r = HostAudioRecord.buildWithRecovery<String>(
+            "test",
+            build = { c.builds++; throw vivoCrash() },
+            bypass = { c.bypasses++; throw IllegalStateException("native_setup returned -38") },
+            repair = { c.repairs++; true },
+        )
+        assertNull(r)
+        assertEquals(listOf(1, 1, 0), listOf(c.builds, c.bypasses, c.repairs))
+    }
 }
