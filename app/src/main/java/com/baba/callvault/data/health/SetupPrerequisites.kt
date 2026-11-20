@@ -127,10 +127,26 @@ object SetupPrerequisites {
     ): Prerequisite? {
         // Asked first in both modes: it is about where recordings go, not about privileges.
         if (!hasFolder) return Prerequisite.RECORDING_FOLDER
+        privilegeMissing(mode, isPaired, devOptionsDisabled, hasSecureSettings, daemonConnected, shizuku, canRelaunchWithoutGrant)
+            ?.let { return it }
         // "Configured" is not "usable" (review C98). Only a confirmed, recent measurement of this same folder counts,
-        // so a phone whose folder works, or was never measured, reads exactly as before.
+        // so a phone whose folder works, or was never measured, reads exactly as before. Asked AFTER the privileges
+        // (review 2026-11-20): a gone folder means calls wait to be saved, a broken recorder means they are not recorded
+        // at all, so the broken recorder is what Home shows and what a missed call is put down to.
         if (FolderCheckPolicy.isUnusable(folderMeasurement, folderUri, now)) return Prerequisite.FOLDER_UNAVAILABLE
+        return null
+    }
 
+    /** The privilege half of [firstMissing], unchanged from before the folder measurement existed. */
+    private fun privilegeMissing(
+        mode: PrivilegedMode,
+        isPaired: Boolean,
+        devOptionsDisabled: Boolean,
+        hasSecureSettings: Boolean,
+        daemonConnected: Boolean,
+        shizuku: ShizukuStatus,
+        canRelaunchWithoutGrant: Boolean,
+    ): Prerequisite? {
         if (mode.needsShizuku) {
             // A recorder that is already connected outranks anything Shizuku says now: the user
             // service outlives the app, so Shizuku stopping does not stop a live recording — and

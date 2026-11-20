@@ -50,8 +50,23 @@ class SetupPrerequisitesFolderUsableTest {
     )
 
     @Test
-    fun `a folder measured as gone is not ready, ahead of everything after the folder`() {
-        assertEquals(Prerequisite.FOLDER_UNAVAILABLE, firstMissing(measurement = gone(), isPaired = false))
+    fun `a folder measured as gone is not ready`() {
+        assertEquals(Prerequisite.FOLDER_UNAVAILABLE, firstMissing(measurement = gone()))
+    }
+
+    @Test
+    fun `a broken recorder outranks a gone folder, so it is still shown and its calls still count as missed`() {
+        // Review 2026-11-20: a gone folder only means calls wait; a broken recorder means they are not recorded at all.
+        assertEquals(Prerequisite.ADB_PAIRING, firstMissing(measurement = gone(), isPaired = false))
+        assertEquals(
+            Prerequisite.SHIZUKU,
+            SetupPrerequisites.firstMissing(
+                mode = PrivilegedMode.SHIZUKU, hasFolder = true, isPaired = false, devOptionsDisabled = false,
+                hasSecureSettings = false, daemonConnected = false, shizuku = ShizukuStatus.NOT_RUNNING,
+                folderUri = uri, folderMeasurement = gone(), now = now,
+            ),
+        )
+        assertEquals(true, SetupPrerequisites.leavesCallUnrecorded(Prerequisite.ADB_PAIRING))
     }
 
     @Test
