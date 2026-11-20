@@ -60,4 +60,20 @@ class LogcatHealthTest {
         )
         assertEquals(listOf(lines[0]), LogcatHealth.debuggingLines(lines, ours))
     }
+
+    @Test fun `a switch name in another app's own words is still that app's content`() {
+        val others = listOf(
+            "11-20 17:36:05.000 31515 31515 I RootChecker: adb_enabled=1 development_settings_enabled=1, flagging device",
+            "11-20 17:36:05.100 31515 31515 W BankApp : USB debugging on (adb_enabled), refusing to start",
+        )
+        assertEquals(emptyList<String>(), LogcatHealth.debuggingLines(others, ours))
+    }
+
+    @Test fun `a switch line from the platform is kept from any pid`() {
+        val platform = listOf(
+            "11-20 17:36:05.000  1500  1600 I init    : processing action (sys.usb.config=adb) from (/system/etc/init/hw/init.usb.rc)",
+            "11-20 17:36:05.100  1500  1600 I SettingsProvider: adb_enabled changed by uid 1000",
+        )
+        assertEquals(platform, LogcatHealth.debuggingLines(platform, ours))
+    }
 }

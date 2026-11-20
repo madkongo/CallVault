@@ -59,14 +59,26 @@ object LogcatHealth {
 
     /**
      * A debugging line that says nothing about any other app: written by a debugging/USB service, or naming one of
-     * the debugging switches. The second is kept from any pid on purpose — the pid of a `Setting adb_enabled has
-     * moved …` line is how a report names who wrote the switch, and the text is the platform's own.
+     * the debugging switches in the PLATFORM's words — from a platform tag, or the framework's own `Setting … has
+     * moved …` warning. That warning is kept from any pid on purpose: its pid is how a report names who wrote the
+     * switch, and its text is the platform's. An app that names a switch in its own words (a root or banking check)
+     * is that app's content and stays out.
      */
     fun isDebuggingSystemLine(line: String): Boolean {
         if (!isKeywordLine(line)) return false
         val tag = SystemLogFilter.tagOf(line) ?: return false
-        return tag in DEBUGGING_TAGS || SWITCHES.containsMatchIn(line)
+        if (tag in DEBUGGING_TAGS) return true
+        if (!SWITCHES.containsMatchIn(line)) return false
+        return tag in PLATFORM_TAGS || SETTING_MOVED.containsMatchIn(line)
     }
+
+    /** Platform tags whose lines may name a debugging switch: settings, init, the activity manager. */
+    private val PLATFORM_TAGS = setOf(
+        "Settings", "SettingsProvider", "SettingsState", "init", "ActivityManager", "SystemServer", "SystemServerTiming",
+    )
+
+    /** The framework's own warning when a setting is read through its old table (`Settings.java`). */
+    private val SETTING_MOVED = Regex("""Setting \S+ has moved from android\.provider\.Settings\.""")
 
     private fun isKeywordLine(line: String): Boolean = STAMP.containsMatchIn(line) && DEBUGGING.containsMatchIn(line)
 
