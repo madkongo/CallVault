@@ -197,6 +197,11 @@ class CallVaultApplication : Application() {
                 .onFailure { AppLogger.w(TAG, "Releasing stale transcription rows failed: ${it.message}") }
         }.start()
 
+        // The phone profile (maker, ROM, settings that decide whether calls are recorded) goes to the always-on log
+        // only when it or the active phone rules changed. Once per process start; no periodic work. Reads only.
+        Thread { com.baba.callvault.system.phone.PhoneProfileReport.evaluateAtStart(applicationContext) }
+            .apply { isDaemon = true; name = "cv-phone-profile" }.start()
+
         // Is the recording folder still there (review C98)? Off the main thread; Home and readiness read the result.
         // Also keeps the periodic check and saves calls kept while the folder was not usable (review N5).
         com.baba.callvault.system.storage.FolderProtection.installInBackground(applicationContext)
