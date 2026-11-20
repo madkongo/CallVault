@@ -151,22 +151,19 @@ internal object VoipAudioPolicy {
     fun createSink(): AudioRecord? {
         val p = policy ?: run { AppLogger.w(TAG, "createSink with no armed policy"); return null }
         val m = mix ?: return null
-        val normal = runCatching {
-            val policyCls = Class.forName("android.media.audiopolicy.AudioPolicy")
-            val mixCls = Class.forName("android.media.audiopolicy.AudioMix")
-            policyCls.getMethod("createAudioRecordSink", mixCls).invoke(p, m) as AudioRecord?
-        }
-        val ar = normal.getOrElse { error ->
-            if (!VendorConstructorCrash.matches(error)) {
-                AppLogger.e(TAG, "createSink failed: ${error.message}", error)
-                return null
-            }
-            // vivo's AudioRecord constructor dereferences a Context the recorder host does not have. Build
-            // the very same sink without running that constructor (scrcpy's fix for the identical crash).
-            AppLogger.w(TAG, "createSink: the ROM's AudioRecord constructor crashed without a Context " +
-                "(${VendorConstructorCrash.rootCause(error).message}); building the sink without it")
-            createSinkBypassingConstructor(m) ?: return null
-        }
+        // vivo's AudioRecord constructor dereferences a Context the recorder host does not have. Only on that crash is
+        // the same sink built another way (HostAudioRecord.buildWithRecovery: the constructor-free rebuild, then a
+        // shell Application — review N21); every other phone runs createAudioRecordSink exactly as before.
+        val ar = HostAudioRecord.buildWithRecovery(
+            "VoIP far-party sink",
+            build = {
+                val policyCls = Class.forName("android.media.audiopolicy.AudioPolicy")
+                val mixCls = Class.forName("android.media.audiopolicy.AudioMix")
+                policyCls.getMethod("createAudioRecordSink", mixCls).invoke(p, m) as AudioRecord?
+            },
+            bypass = { createSinkBypassingConstructor(m) },
+            repair = ShellApplication::install,
+        )
         if (ar == null || ar.state != AudioRecord.STATE_INITIALIZED) {
             AppLogger.w(TAG, "VoIP sink did not initialise (state=${ar?.state})")
             runCatching { ar?.release() }
@@ -178,14 +175,14 @@ internal object VoipAudioPolicy {
     /**
      * What `AudioPolicy.createAudioRecordSink` builds — REMOTE_SUBMIX preset, the mix's address tag, fixed
      * volume, the mix's format as an IN mask, a stereo-sized minimum buffer — created through
-     * [BypassedAudioRecord] instead of the public constructor. Null (logged) if that fails too.
+     * [BypassedAudioRecord] instead of the public constructor. Throws if that fails too (logged by the caller).
      */
-    private fun createSinkBypassingConstructor(m: Any): AudioRecord? = runCatching {
+    private fun createSinkBypassingConstructor(m: Any): AudioRecord {
         val registration = m.javaClass.getMethod("getRegistration").invoke(m) as String
         val format = m.javaClass.getMethod("getFormat").invoke(m) as AudioFormat
         val inMask = AudioFormat::class.java.getMethod("inChannelMaskFromOutChannelMask", Int::class.javaPrimitiveType)
             .invoke(null, format.channelMask) as Int
-        BypassedAudioRecord.create(
+        return BypassedAudioRecord.create(
             capturePreset = MediaRecorder.AudioSource.REMOTE_SUBMIX,
             tags = listOf("addr=$registration", "fixedVolume"),
             sampleRate = format.sampleRate,
@@ -193,6 +190,6 @@ internal object VoipAudioPolicy {
             channelCount = format.channelCount,
             encoding = format.encoding,
             bufferSizeInBytes = AudioRecord.getMinBufferSize(format.sampleRate, AudioFormat.CHANNEL_IN_STEREO, format.encoding),
-        ).also { AppLogger.i(TAG, "VoIP sink built without the vendor constructor (state=${it.state})") }
-    }.onFailure { AppLogger.e(TAG, "createSink without the vendor constructor failed too: ${it.message}", it) }.getOrNull()
+        )
+    }
 }
