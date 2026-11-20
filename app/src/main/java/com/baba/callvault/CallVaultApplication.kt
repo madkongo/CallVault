@@ -133,22 +133,7 @@ class CallVaultApplication : Application() {
         // The VoIP capture policy lives in the daemon and dies with it, and it must be armed BEFORE a
         // call starts — there is no arming it once a call is under way. Re-arm on every fresh daemon
         // binder. Off the binder thread: arming is a blocking IPC.
-        RecorderConnection.onDaemonReady = {
-            // A fresh host collects nothing until it is told to. Do this first and cheaply, so a daemon
-            // that relaunched mid-session is logging again before anything else happens to it.
-            RecorderBackend.syncDiagnostics(applicationContext)
-            // Shizuku mode's Wi-Fi join watch lives in the recorder and dies with it: arm it on every fresh binder
-            // (review N15). Async, and a no-op unless Shizuku mode and the setting are on.
-            com.baba.callvault.services.recording.WifiJoinWatch.sync(applicationContext)
-            // A ring listener sync that could not reach the host is retried now (review C19). Non-blocking.
-            com.baba.callvault.services.recording.VoipRingListenerAccess.onHostConnected()
-            if (AppPreferences(applicationContext).isVoipRecordingEnabled()) {
-                Thread {
-                    runCatching { VoipCaptureController.sync(applicationContext) }
-                        .onFailure { AppLogger.w(TAG, "VoIP re-arm failed: ${it.message}") }
-                }.apply { isDaemon = true; name = "cv-voip-rearm" }.start()
-            }
-        }
+        RecorderConnection.onDaemonReady = { onDaemonReady(applicationContext) }
 
         // Push the diagnostics switch once at start as well as on every fresh binder.
         //
@@ -306,5 +291,26 @@ class CallVaultApplication : Application() {
         com.baba.callvault.data.ModeCapability.VOIP_RECORDING -> R.string.settings_voip_recording_label
         com.baba.callvault.data.ModeCapability.RESILIENT_RECORDING -> R.string.settings_handoff_persist_label
         else -> null
+    }
+}
+
+/**
+ * What the app does on every fresh recorder binder (see [RecorderConnection.onDaemonReady]). Top level so the unit-test
+ * application can wire the same hook without running the rest of [CallVaultApplication.onCreate] (N27).
+ */
+internal fun onDaemonReady(applicationContext: android.content.Context) {
+    // A fresh host collects nothing until it is told to. Do this first and cheaply, so a daemon
+    // that relaunched mid-session is logging again before anything else happens to it.
+    RecorderBackend.syncDiagnostics(applicationContext)
+    // Shizuku mode's Wi-Fi join watch lives in the recorder and dies with it: arm it on every fresh binder
+    // (review N15). Async, and a no-op unless Shizuku mode and the setting are on.
+    com.baba.callvault.services.recording.WifiJoinWatch.sync(applicationContext)
+    // A ring listener sync that could not reach the host is retried now (review C19). Non-blocking.
+    com.baba.callvault.services.recording.VoipRingListenerAccess.onHostConnected()
+    if (AppPreferences(applicationContext).isVoipRecordingEnabled()) {
+        Thread {
+            runCatching { VoipCaptureController.sync(applicationContext) }
+                .onFailure { AppLogger.w("CV:CallVaultApplication", "VoIP re-arm failed: ${it.message}") }
+        }.apply { isDaemon = true; name = "cv-voip-rearm" }.start()
     }
 }
