@@ -47,8 +47,11 @@ object WirelessDebuggingApproval {
     private const val ADB_DUMP_HEADER = "ADB MANAGER STATE"
     /** The keystore field of `AdbDebuggingManager.dump` as DualDumpOutputStream prints it: `keystore=<file>`. */
     private val KEYSTORE_FIELD = Regex("(?m)^[ \\t]*keystore=")
-    /** The end of that field: the dump object's closing brace, or the next `name=` field. */
-    private val FIELD_END = Regex("(?m)^[ \\t]*(?:}|[A-Za-z_]+=)")
+    /**
+     * The end of that field: the dump object's closing brace, or the next `name=` field. The brace is escaped: Android's
+     * ICU regex rejects a bare `}` that the desktop JVM accepts (rf5, 2026-11-20; RegexIcuBraceGuardTest).
+     */
+    private val FIELD_END = Regex("(?m)^[ \\t]*(?:\\}|[A-Za-z_]+=)")
     private val BSSID = Regex("""(?<![0-9A-Fa-f:])[0-9A-Fa-f]{2}(?::[0-9A-Fa-f]{2}){5}(?![0-9A-Fa-f:])""")
     private const val WD_SETTING = "adb_wifi_enabled"
     private const val TIMEOUT_MS = 10_000L
