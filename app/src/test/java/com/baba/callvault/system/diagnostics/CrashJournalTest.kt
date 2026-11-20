@@ -95,4 +95,20 @@ class CrashJournalTest {
         assertEquals("java.lang.RuntimeException: boom", CrashJournal.summaryForPid(text, 777))
         assertEquals(null, CrashJournal.summaryForPid(text, 999))
     }
+
+    @Test
+    fun `a note that cannot be formatted still records the exception class`() {
+        val entry = CrashJournal.safeEntry(0L, 13572, "p", "main", IllegalStateException("x")) { throw OutOfMemoryError("redactor") }
+        assertTrue(entry, entry.contains("pid=13572"))
+        assertTrue(entry.contains("java.lang.IllegalStateException"))
+        assertTrue(entry.contains("OutOfMemoryError"))
+    }
+
+    @Test
+    fun `trimming replaces the file whole and leaves no temporary file behind`() {
+        val file = folder.newFile("crash_journal.txt")
+        repeat(100) { i -> CrashJournal.append(file, "entry $i\n" + "y".repeat(1_000)) }
+        assertEquals(listOf("crash_journal.txt"), folder.root.list()!!.sorted())
+        assertTrue(file.readText().endsWith("\n\n"))
+    }
 }

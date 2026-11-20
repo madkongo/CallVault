@@ -54,10 +54,10 @@ object CrashJournal {
      */
     fun record(context: Context, thread: Thread, error: Throwable) {
         runCatching {
-            val entry = format(
+            val entry = safeEntry(
                 atMillis = System.currentTimeMillis(),
                 pid = android.os.Process.myPid(),
-                process = Application.getProcessName() ?: "?",
+                process = runCatching { Application.getProcessName() }.getOrNull() ?: "?",
                 thread = thread.name,
                 error = error,
                 redact = AppLogger::redactForReport,
@@ -65,6 +65,22 @@ object CrashJournal {
             append(File(context.filesDir, FILE_NAME), entry)
         }
     }
+
+    /**
+     * [format], or — when formatting or redaction itself throws (a dying process can be out of memory, or a
+     * redactor can fail) — a minimal entry with the header and only the exception's class, which carries no
+     * personal data and is still what a report most needs. Catches [Throwable] on purpose: nothing may stop the note.
+     */
+    fun safeEntry(
+        atMillis: Long, pid: Int, process: String, thread: String, error: Throwable, redact: (String) -> String,
+    ): String = try {
+        format(atMillis, pid, process, thread, error, redact)
+    } catch (failure: Throwable) {
+        "${stamp(atMillis)}$HEADER_MARK$pid process=$process thread=$thread\n" +
+            "${error.javaClass.name} (note cut short: ${failure.javaClass.simpleName})"
+    }
+
+    private fun stamp(atMillis: Long): String = SimpleDateFormat("yyyy-MM-dd HH:mm:ss.SSS", Locale.US).format(Date(atMillis))
 
     /** The whole journal for a report, or null when nothing has crashed. */
     fun readForReport(context: Context): String? = runCatching {
@@ -81,8 +97,7 @@ object CrashJournal {
      * Only the body is passed through [redact]; the header is ours and its timestamp must stay readable.
      */
     fun format(atMillis: Long, pid: Int, process: String, thread: String, error: Throwable, redact: (String) -> String): String {
-        val time = SimpleDateFormat("yyyy-MM-dd HH:mm:ss.SSS", Locale.US).format(Date(atMillis))
-        val header = "$time$HEADER_MARK$pid process=$process thread=$thread"
+        val header = "${stamp(atMillis)}$HEADER_MARK$pid process=$process thread=$thread"
         val body = StringBuilder()
         appendThrowable(body, error, MAX_FRAMES, prefix = "")
         val seen = IdentityHashMap<Throwable, Unit>().apply { put(error, Unit) }
@@ -117,8 +132,17 @@ object CrashJournal {
             size -= entries[from].toByteArray().size + ENTRY_SEPARATOR.length
             from++
         }
-        file.writeText(entries.drop(from).joinToString(ENTRY_SEPARATOR) + ENTRY_SEPARATOR)
+        // Written beside the journal and renamed over it, so a process killed mid-trim leaves the old journal whole
+        // rather than a half-written one.
+        val temp = File(file.parentFile, file.name + TEMP_SUFFIX)
+        temp.writeText(entries.drop(from).joinToString(ENTRY_SEPARATOR) + ENTRY_SEPARATOR)
+        if (!temp.renameTo(file)) {
+            temp.delete()
+            error("could not replace ${file.name}")
+        }
     }
+
+    private const val TEMP_SUFFIX = ".tmp"
 
     /** The exception line of the newest entry written by [pid], or null when there is none. */
     fun summaryForPid(journal: String, pid: Int): String? =
