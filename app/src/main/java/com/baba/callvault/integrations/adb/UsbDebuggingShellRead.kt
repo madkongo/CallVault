@@ -87,6 +87,10 @@ object UsbDebuggingShellRead {
     @Synchronized
     fun noteProvenOnByR1(startedIn: Long, now: Long = System.currentTimeMillis()) {
         if (startedIn != generation) return
+        // A fresh read from the recorder is real evidence; a proof from a tick that raced it must not replace it (USB
+        // turned off while adbd is still up for a few seconds: the shell read says OFF, R1 would still say ON).
+        val current = reading
+        if (current != null && current.source == Source.SHELL && now - current.atMs <= FRESH_MS) return
         reading = Reading(true, now, Source.R1)
         miss = null
     }

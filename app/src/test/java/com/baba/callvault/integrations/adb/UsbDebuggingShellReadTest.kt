@@ -42,6 +42,17 @@ class UsbDebuggingShellReadTest {
     }
 
     @Test
+    fun `an R1 proof never overwrites a fresh shell read of OFF - USB turned off while adbd is still up`() {
+        // USB debugging switched off with Wireless debugging off: adbd keeps running for a few seconds (OP9, 2026-11-04).
+        // The observer's own shell read says OFF; a tick that began after the switch change must not replace it with ON.
+        val started = UsbDebuggingShellRead.generation()
+        UsbDebuggingShellRead.refreshWith(t0) { "0" }
+        UsbDebuggingShellRead.noteProvenOnByR1(started, t0 + 50)
+        assertEquals(false, UsbDebuggingShellRead.current(t0 + 100))
+        assertEquals(UsbDebuggingState.OFF, answer(AdbdState.STOPPED, t0 + 5_000))
+    }
+
+    @Test
     fun `an R1 proof expires like a shell read, so a long adbd stop still reads OFF`() {
         UsbDebuggingShellRead.noteProvenOnByR1(UsbDebuggingShellRead.generation(), t0)
         assertEquals(UsbDebuggingState.OFF, answer(AdbdState.STOPPED, t0 + 3 * 60_000))
@@ -90,6 +101,10 @@ class UsbDebuggingShellReadTest {
         assertEquals("off", describe())
         UsbDebuggingShellRead.refreshWith(t0) { "1" }
         assertEquals("on", describe())
+        // A fresh shell read wins over a proof; after a switch change the proof is what shows.
+        UsbDebuggingShellRead.noteProvenOnByR1(UsbDebuggingShellRead.generation(), t0)
+        assertEquals("on", describe())
+        UsbDebuggingShellRead.forget()
         UsbDebuggingShellRead.noteProvenOnByR1(UsbDebuggingShellRead.generation(), t0)
         assertEquals("on(r1)", describe())
     }
