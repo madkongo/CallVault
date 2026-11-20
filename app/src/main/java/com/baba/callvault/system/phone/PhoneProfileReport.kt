@@ -32,7 +32,17 @@ object PhoneProfileReport {
             add("profile id: ${profile.hash()}")
             add("--- Active phone rules ---")
             add(if (active.isEmpty()) "none" else active.joinToString("\n") { "${it.id} ${it.severity?.name ?: ""}".trim() })
+            add(appsLine(profile))
             add("checked, not active: $inactive; rules without a profile check yet are catalogued only")
+        }
+    }
+
+    /** Conflicting packages found on this phone, with their A-ids; package names only, never the installed-app list. */
+    fun appsLine(profile: PhoneProfile): String {
+        if (profile.conflictingApps.isEmpty()) return "other apps that can affect recording: none of the known packages"
+        val byPackage = KnownConflictingApps.entries.associateBy { it.packageName }
+        return "other apps that can affect recording: " + profile.conflictingApps.joinToString("; ") { name ->
+            "$name ${byPackage[name]?.ids?.joinToString("/").orEmpty()}".trim()
         }
     }
 

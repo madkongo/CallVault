@@ -1,3 +1,4 @@
+import java.time.Duration
 /*
  * CallVault: FOSS call recording, self-contained over embedded ADB
  *  Copyright (C) 2026-present kitsumed (Med)
@@ -372,6 +373,8 @@ android {
                 // Conscrypt install failed 472 tests on GitHub's ubuntu runners (found by the frce552-collab fork,
                 // 2026-11-08). macOS passes either way. No test needs Conscrypt.
                 it.systemProperty("robolectric.conscryptMode", "OFF")
+                // A hang must fail the run, not sit for 15 minutes (N27). The whole suite takes a few minutes.
+                it.timeout.set(Duration.ofMinutes(30))
             }
         }
     }
