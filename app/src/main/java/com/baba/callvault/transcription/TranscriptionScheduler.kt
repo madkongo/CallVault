@@ -13,6 +13,7 @@ import android.os.BatteryManager
 import androidx.work.Constraints
 import androidx.work.ExistingPeriodicWorkPolicy
 import androidx.work.ExistingWorkPolicy
+import androidx.work.NetworkType
 import androidx.work.OneTimeWorkRequestBuilder
 import androidx.work.PeriodicWorkRequestBuilder
 import androidx.work.WorkManager
@@ -28,7 +29,7 @@ import java.util.concurrent.TimeUnit
  * Schedules (or cancels) the periodic [TranscriptionWorker] that transcribes everything not yet done.
  *
  * Idempotent: [apply] reconciles the current prefs with WorkManager using
- * [ExistingPeriodicWorkPolicy.UPDATE], so it is safe to call from Settings, after boot, or whenever
+ * KEEP or CANCEL_AND_REENQUEUE by a stored signature (never UPDATE, review C127), so it is safe to call from Settings, after boot, or whenever
  * a preference changes. Modelled directly on
  * [com.baba.callvault.system.storage.SyncScheduler] so there is one scheduling idiom in this app
  * rather than two.
@@ -46,6 +47,8 @@ object TranscriptionScheduler {
 
     private const val TAG = "CV:TranscriptionScheduler"
     private const val DAILY_PERIOD_HOURS = 24L
+    private const val STATE_FILE = "cv_transcription_scheduler"
+    private const val KEY_SIGNATURE = "signature"
 
     /**
      * Reconciles the periodic sweep with the current prefs: cancels it for MANUAL, otherwise
@@ -60,6 +63,9 @@ object TranscriptionScheduler {
         // never touches the back catalogue.
         if (!mode.needsPeriodicSweep) {
             workManager.cancelUniqueWork(WORK_NAME)
+            // Forgotten, so switching back on re-enqueues instead of KEEP-ing a request that no longer exists.
+            context.applicationContext.getSharedPreferences(STATE_FILE, Context.MODE_PRIVATE)
+                .edit().remove(KEY_SIGNATURE).apply()
             AppLogger.i(TAG, "Periodic transcription cancelled (mode=$mode).")
             return
         }
@@ -85,9 +91,28 @@ object TranscriptionScheduler {
             .setInitialDelay(nextDailyDelayMillis(hour, minute), TimeUnit.MILLISECONDS)
             .build()
 
-        workManager.enqueueUniquePeriodicWork(WORK_NAME, ExistingPeriodicWorkPolicy.UPDATE, request)
-        AppLogger.i(TAG, "Periodic transcription scheduled at $hour:$minute.")
+        // UPDATE is not used: it keeps the queued request's own timing, so a new hour was ignored once the
+        // sweep had run (review C127). An unchanged schedule is KEEP (a live request is left alone, and one is
+        // enqueued when none is live); a changed one is a fresh request with a delay counted from now.
+        // Everything that changes WHEN or WHETHER the sweep runs is in the signature, because KEEP no longer
+        // carries a changed constraint across the way UPDATE did.
+        val state = context.applicationContext.getSharedPreferences(STATE_FILE, Context.MODE_PRIVATE)
+        val signature = signature(hour, minute, run.requiresCharging, run.networkType)
+        val policy = decide(state.getString(KEY_SIGNATURE, null), signature)
+        workManager.enqueueUniquePeriodicWork(WORK_NAME, policy, request)
+        state.edit().putString(KEY_SIGNATURE, signature).apply()
+        AppLogger.i(TAG, "Periodic transcription ${policy.name} at $hour:$minute ($signature).")
     }
+
+    /** Unchanged -> KEEP; changed, or never recorded -> CANCEL_AND_REENQUEUE. Never UPDATE (see [apply]). */
+    internal fun decide(oldSignature: String?, newSignature: String): ExistingPeriodicWorkPolicy =
+        if (oldSignature == newSignature) ExistingPeriodicWorkPolicy.KEEP
+        else ExistingPeriodicWorkPolicy.CANCEL_AND_REENQUEUE
+
+    /** The schedule as one comparable string; digits are formatted with the root locale (see SyncScheduler C22). */
+    internal fun signature(hour: Int, minute: Int, requiresCharging: Boolean, networkType: NetworkType): String =
+        String.format(java.util.Locale.ROOT, "%02d:%02d", hour, minute) +
+            "/charging=$requiresCharging/net=${networkType.name}"
 
     /**
      * Transcribes now, on request.

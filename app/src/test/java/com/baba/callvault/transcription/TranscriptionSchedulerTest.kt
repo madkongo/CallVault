@@ -110,4 +110,57 @@ class TranscriptionSchedulerTest {
             .get()
         assertTrue(manual.all { it.state.isFinished })
     }
+
+    // -- C127: a new hour moves the nightly run ------------------------------------------------
+
+    private fun sweepInfo(): WorkInfo =
+        WorkManager.getInstance(context).getWorkInfosForUniqueWork(TranscriptionScheduler.WORK_NAME).get().single()
+
+    @Test
+    fun changing_the_nightly_hour_moves_the_next_run() {
+        val prefs = AppPreferences(context)
+        prefs.setTranscriptionMode(TranscriptionMode.AUTOMATIC)
+        prefs.setTranscriptionHour(2)
+        prefs.setTranscriptionMinute(0)
+        TranscriptionScheduler.apply(context)
+        val before = sweepInfo().nextScheduleTimeMillis
+
+        prefs.setTranscriptionHour(14)
+        TranscriptionScheduler.apply(context)
+        val after = sweepInfo().nextScheduleTimeMillis
+
+        // 12 hours apart, give or take the minutes the test itself takes to run.
+        val hours = Math.abs(after - before) / 3_600_000.0
+        assertTrue("the next run did not move (moved $hours h)", hours in 11.5..12.5)
+    }
+
+    @Test
+    fun applying_an_unchanged_schedule_leaves_the_queued_run_alone() {
+        val prefs = AppPreferences(context)
+        prefs.setTranscriptionMode(TranscriptionMode.AUTOMATIC)
+        TranscriptionScheduler.apply(context)
+        val first = sweepInfo().id
+
+        TranscriptionScheduler.apply(context)
+
+        assertEquals(first, sweepInfo().id)
+    }
+
+    @Test
+    fun decide_keeps_an_unchanged_signature_and_replaces_a_changed_or_missing_one() {
+        val keep = TranscriptionScheduler.decide("2:0/charging/NOT_REQUIRED", "2:0/charging/NOT_REQUIRED")
+        assertEquals(androidx.work.ExistingPeriodicWorkPolicy.KEEP, keep)
+        val changed = TranscriptionScheduler.decide("2:0/charging/NOT_REQUIRED", "3:0/charging/NOT_REQUIRED")
+        assertEquals(androidx.work.ExistingPeriodicWorkPolicy.CANCEL_AND_REENQUEUE, changed)
+        val first = TranscriptionScheduler.decide(null, "2:0/charging/NOT_REQUIRED")
+        assertEquals(androidx.work.ExistingPeriodicWorkPolicy.CANCEL_AND_REENQUEUE, first)
+    }
+
+    @Test
+    fun the_signature_covers_everything_that_changes_when_or_whether_the_sweep_runs() {
+        val base = TranscriptionScheduler.signature(2, 0, requiresCharging = true, androidx.work.NetworkType.NOT_REQUIRED)
+        assertTrue(base != TranscriptionScheduler.signature(2, 30, true, androidx.work.NetworkType.NOT_REQUIRED))
+        assertTrue(base != TranscriptionScheduler.signature(2, 0, false, androidx.work.NetworkType.NOT_REQUIRED))
+        assertTrue(base != TranscriptionScheduler.signature(2, 0, true, androidx.work.NetworkType.UNMETERED))
+    }
 }
