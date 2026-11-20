@@ -61,4 +61,19 @@ class ForegroundNoticeChannelTest {
         val repost = text.substring(text.indexOf("private fun repostHeldAsForeground"))
         assertTrue(repost.substring(0, 600).contains("ForegroundNoticeChannel.usable("))
     }
+
+    /**
+     * Light guard: the keep-alive cannot be started under Robolectric (ADB, daemon, observers), so its use of the
+     * tested [ForegroundNoticeChannel.noticeForStart] is checked in the source. CallMonitorForegroundNoticeTest covers
+     * the same choice behaviourally in the call monitor.
+     */
+    @Test
+    fun `the keep-alive starts with a notice whose channel exists, and makes sure of its own before re-posting Ready`() {
+        val text = source("com/baba/callvault/services/recording/DaemonKeepAliveService.kt")
+        assertTrue("never the held notice unchecked", !text.contains("contentForKeepAlive("))
+        assertTrue(text.contains("ForegroundNoticeChannel.noticeForStart("))
+        val ready = text.substring(text.indexOf("private fun repostAsForeground"))
+        val ensure = ready.indexOf("ensureOwnChannel()")
+        assertTrue("ensureOwnChannel must come before the startForeground of Ready", ensure in 0 until ready.indexOf("startForeground("))
+    }
 }

@@ -162,6 +162,7 @@ class DaemonKeepAliveService : Service() {
     private fun repostAsForeground(ready: Boolean) {
         if (ready) runCatching { SilentFailureNotifier.clearRecorderUnavailable(applicationContext) }
         if (SharedStatusNotice.isHeldByRecording) return
+        ensureOwnChannel()
         runCatching {
             startForeground(NOTIF_ID, buildNotification(ready), ServiceInfo.FOREGROUND_SERVICE_TYPE_SPECIAL_USE)
         }.onFailure {
@@ -185,6 +186,23 @@ class DaemonKeepAliveService : Service() {
             runCatching { getSystemService(NotificationManager::class.java).notify(NOTIF_ID, held) }
                 .onFailure { e -> AppLogger.w(TAG, "Could not re-post the remaining recording notice: ${e.message}") }
         }
+    }
+
+    /**
+     * Creates the keep-alive's channel, or re-states it: idempotent, and it keeps whatever the user set on it. Run
+     * again before each foreground post of "Ready", since this service lives for days and a channel can be deleted
+     * meanwhile; a foreground notice on a missing channel crashes the app (review N22).
+     */
+    private fun ensureOwnChannel() {
+        runCatching {
+            getSystemService(NotificationManager::class.java).createNotificationChannel(
+                NotificationChannel(CHANNEL_ID, getString(R.string.notif_readiness_channel), NotificationManager.IMPORTANCE_MIN).apply {
+                    setShowBadge(false)
+                    enableVibration(false)
+                    setSound(null, null)
+                },
+            )
+        }.onFailure { AppLogger.e(TAG, "Could not create the keep-alive notification channel: ${it.javaClass.simpleName}: ${it.message}") }
     }
 
     /**
@@ -532,13 +550,7 @@ class DaemonKeepAliveService : Service() {
     override fun onCreate() {
         super.onCreate()
         AppPauseWatch.start(applicationContext)
-        getSystemService(NotificationManager::class.java).createNotificationChannel(
-            NotificationChannel(CHANNEL_ID, getString(R.string.notif_readiness_channel), NotificationManager.IMPORTANCE_MIN).apply {
-                setShowBadge(false)
-                enableVibration(false)
-                setSound(null, null)
-            },
-        )
+        ensureOwnChannel()
 
         // The debugging switches are our embedded ADB's business only. A mode switch always stops this
         // service first, so the mode read here holds for the instance's whole life.
@@ -579,10 +591,11 @@ class DaemonKeepAliveService : Service() {
 
         val startedForeground = runCatching {
             // While a call is recorded the shared notification shows the recording, with its controls;
-            // starting here must not swap that for "Ready". See [SharedStatusNotice].
+            // starting here must not swap that for "Ready". See [SharedStatusNotice]. Unless that notice's channel
+            // is missing: it would crash the app (review N22), so "Ready" it is, on a channel just made sure of.
             startForeground(
                 NOTIF_ID,
-                SharedStatusNotice.contentForKeepAlive(buildNotification(RecorderConnection.isConnected)),
+                ForegroundNoticeChannel.noticeForStart(applicationContext, buildNotification(RecorderConnection.isConnected), ::ensureOwnChannel),
                 ServiceInfo.FOREGROUND_SERVICE_TYPE_SPECIAL_USE,
             )
         }.onFailure { AppLogger.e(TAG, "keep-alive startForeground failed", it) }.isSuccess

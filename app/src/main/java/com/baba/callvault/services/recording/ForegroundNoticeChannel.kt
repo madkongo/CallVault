@@ -54,4 +54,30 @@ object ForegroundNoticeChannel {
         AppLogger.e(TAG, "Notification channel '$id' does not exist; not posting it as a foreground notice (it would crash the app)")
         return false
     }
+
+    /**
+     * Pure decision for a foreground service that starts while a recorded call may hold the shared id: the call's
+     * notice ([held]) only when [heldUsable] says its channel exists, otherwise the service's [own]. A failing lookup
+     * counts as unusable. Never "nothing": startForeground must still be called in time.
+     */
+    fun <N : Any> chooseForStart(held: N?, own: N, heldUsable: (N) -> Boolean): N {
+        if (held == null) return own
+        return if (runCatching { heldUsable(held) }.getOrDefault(false)) held else own
+    }
+
+    /**
+     * The notice the keep-alive or the call monitor hands startForeground (review N22 follow-up). Until now it was
+     * [SharedStatusNotice.contentForKeepAlive], which can return a recorded call's notice built for another channel.
+     * When [own] is chosen, [ensureOwnChannel] runs first, so the fallback is never on a missing channel either.
+     */
+    fun noticeForStart(context: Context, own: Notification, ensureOwnChannel: () -> Unit): Notification {
+        val held = SharedStatusNotice.heldNotification
+        val chosen = chooseForStart(held, own) { usable(context, it) }
+        if (chosen !== own) return chosen
+        if (held != null) {
+            AppLogger.w(TAG, "Starting the foreground service with its own notice: the recorded call's notice is on missing channel '${held.channelId}'")
+        }
+        ensureOwnChannel()
+        return own
+    }
 }
