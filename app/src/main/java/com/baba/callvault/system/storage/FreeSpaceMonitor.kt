@@ -34,15 +34,37 @@ object FreeSpaceMonitor {
     private const val PREFS = "free_space_notice"
     private const val KEY_WARNED = "warned_low"
 
-    /** Not used elsewhere (4712-4728 are). */
-    const val NOTIFICATION_ID = 4729
+    /** Not used elsewhere (4712-4728 are; 4729-4731 belong to the updater). */
+    const val NOTIFICATION_ID = 4732
+
+    /** Whether free space was under the warning threshold when the current call started (this process; unknown = false). */
+    @Volatile
+    var lowAtCallStart: Boolean = false
+        private set
 
     /** Free bytes on the volume recordings are staged on; -1 when it cannot be read. */
     fun freeBytes(context: Context): Long =
         runCatching { context.applicationContext.filesDir.usableSpace }.getOrDefault(-1L)
 
-    /** Whether the phone is full now (see [FreeSpacePolicy.isStorageFull]). */
-    fun isStorageFull(context: Context): Boolean = FreeSpacePolicy.isStorageFull(freeBytes(context))
+    /** Whether the recording folder is on the measured volume (see [FreeSpacePolicy.folderOnPhoneStorage]). */
+    fun folderOnPhoneStorage(context: Context): Boolean = runCatching {
+        FreeSpacePolicy.folderOnPhoneStorage(AppPreferences(context.applicationContext).getRecordingFolderUri()?.toString())
+    }.getOrDefault(true)
+
+    /** Which volume the free-space figure is about, for the always-on log. */
+    fun volumeNote(context: Context): String =
+        if (folderOnPhoneStorage(context)) "volume=phone storage (app files; folder on phone)"
+        else "volume=phone storage (app files only; folder is on another volume, full-phone wording off)"
+
+    /** Whether the phone is full now (see [FreeSpacePolicy.isStorageFull]); false when the folder is on another volume. */
+    fun isStorageFull(context: Context): Boolean =
+        FreeSpacePolicy.isStorageFull(freeBytes(context)) && folderOnPhoneStorage(context)
+
+    /** [check] on its own thread: a stat call and preference reads must not run on the main thread. */
+    fun checkAsync(context: Context, logLine: Boolean) {
+        val app = context.applicationContext
+        Thread { check(app, logLine) }.apply { isDaemon = true; name = "cv-free-space" }.start()
+    }
 
     private fun threshold(context: Context): Long = runCatching {
         val prefs = AppPreferences(context.applicationContext)
@@ -58,7 +80,10 @@ object FreeSpaceMonitor {
         runCatching {
             val free = freeBytes(context)
             val limit = threshold(context)
-            if (logLine) CallEndLog.record(context, FreeSpacePolicy.callStartLine(free, limit))
+            if (logLine) {
+                lowAtCallStart = free in 0 until limit
+                CallEndLog.record(context, FreeSpacePolicy.callStartLine(free, limit) + " " + volumeNote(context))
+            }
             val prefs = context.applicationContext.getSharedPreferences(PREFS, Context.MODE_PRIVATE)
             when (FreeSpacePolicy.decide(free, limit, prefs.getBoolean(KEY_WARNED, false))) {
                 FreeSpacePolicy.Action.WARN -> {

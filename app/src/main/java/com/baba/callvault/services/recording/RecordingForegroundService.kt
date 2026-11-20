@@ -556,7 +556,7 @@ class RecordingForegroundService : Service() {
             captureStartedAt = android.os.SystemClock.elapsedRealtime()
             currentState = RecordingServiceState.Active(activeSession, false, metadata)
             AppLogger.i(TAG, "Recording pipeline started successfully")
-            FreeSpaceMonitor.check(applicationContext, logLine = true)
+            FreeSpaceMonitor.checkAsync(applicationContext, logLine = true)
             CallEndLog.record(
                 applicationContext,
                 CallEndLog.capturePath(
@@ -1249,9 +1249,22 @@ class RecordingForegroundService : Service() {
      * and shares the same notification id (don't overwrite it and double-vibrate).
      */
     private fun notifyEmptyCapture() {
-        // A full phone is the cause when there is no room left: say that, not "check Wireless debugging" (review R2).
-        if (FreeSpaceMonitor.isStorageFull(applicationContext)) {
-            CallEndLog.record(applicationContext, "recording empty and the phone is full (${FreeSpaceMonitor.freeBytes(applicationContext) / (1024 * 1024)} MB free): told the user storage is full")
+        // A full phone is named only when the facts say so (review R2): low at call start, almost nothing now, no daemon
+        // death known, folder on the measured volume. Otherwise the advice below stays, so no real fault is hidden.
+        val free = FreeSpaceMonitor.freeBytes(applicationContext)
+        val cause = FreeSpacePolicy.emptyCaptureCause(
+            lowAtCallStart = FreeSpaceMonitor.lowAtCallStart,
+            freeNowBytes = free,
+            daemonLossKnown = daemonLossNotified,
+            folderOnPhoneStorage = FreeSpaceMonitor.folderOnPhoneStorage(applicationContext),
+        )
+        CallEndLog.record(
+            applicationContext,
+            "recording empty: ${if (free < 0) "free space unknown" else "${free / (1024 * 1024)} MB free"}, " +
+                "lowAtCallStart=${FreeSpaceMonitor.lowAtCallStart}, daemonLossNotified=$daemonLossNotified, " +
+                "${FreeSpaceMonitor.volumeNote(applicationContext)} -> $cause",
+        )
+        if (cause == FreeSpacePolicy.EmptyCause.STORAGE_FULL) {
             if (!daemonLossNotified) notificationHelper.showErrorNotification(getString(R.string.storage_full_empty_text))
             return
         }
@@ -1270,13 +1283,13 @@ class RecordingForegroundService : Service() {
     }
 
     /**
-     * A recording that just ended with almost no room left may have stopped early (the encoder cannot write on a full
-     * phone, and an AAC file cut short will not play). Said once, in plain words; the file is kept as it is (review R2).
+     * A free-space warning when a call ends with almost no room left. It does NOT claim the call was cut short: a
+     * complete long call also ends on a nearly full phone. The file is kept as it is (review R2).
      */
     private fun warnIfCutShortByFullStorage(name: String) {
         val free = FreeSpaceMonitor.freeBytes(applicationContext)
         if (!FreeSpacePolicy.mayHaveBeenCutShort(free)) return
-        CallEndLog.record(applicationContext, "call ended with only ${free / (1024 * 1024)} MB free: ${CallEndLog.safeName(name)} may have been cut short; told the user")
+        CallEndLog.record(applicationContext, "call ended with only ${free / (1024 * 1024)} MB free: ${CallEndLog.safeName(name)} free space is very low (warned the user; the file is kept, its length was not checked)")
         if (!daemonLossNotified) notificationHelper.showErrorNotification(getString(R.string.storage_full_cut_short_text))
     }
 

@@ -73,4 +73,46 @@ class FreeSpacePolicyTest {
         assertEquals("free space at call start: 250 MB (warn below 300 MB) LOW", line)
         assertEquals("free space at call start: unknown", FreeSpacePolicy.callStartLine(-1L, 300 * mb))
     }
+
+    // Review R2 rework: the storage wording must not hide the real cause of an empty file.
+
+    @Test
+    fun `empty file after a daemon death keeps the old advice even on a full phone`() {
+        val cause = FreeSpacePolicy.emptyCaptureCause(
+            lowAtCallStart = true, freeNowBytes = 5 * mb, daemonLossKnown = true, folderOnPhoneStorage = true,
+        )
+        assertEquals(FreeSpacePolicy.EmptyCause.OTHER, cause)
+    }
+
+    @Test
+    fun `empty file on a phone that was fine at call start keeps the old advice`() {
+        val cause = FreeSpacePolicy.emptyCaptureCause(false, 5 * mb, daemonLossKnown = false, folderOnPhoneStorage = true)
+        assertEquals(FreeSpacePolicy.EmptyCause.OTHER, cause)
+    }
+
+    @Test
+    fun `empty file with plenty of room now keeps the old advice - low at the start is not enough`() {
+        val cause = FreeSpacePolicy.emptyCaptureCause(true, 150 * mb, daemonLossKnown = false, folderOnPhoneStorage = true)
+        assertEquals(FreeSpacePolicy.EmptyCause.OTHER, cause)
+    }
+
+    @Test
+    fun `empty file when low at start, almost nothing now, no daemon loss - storage full`() {
+        val cause = FreeSpacePolicy.emptyCaptureCause(true, 5 * mb, daemonLossKnown = false, folderOnPhoneStorage = true)
+        assertEquals(FreeSpacePolicy.EmptyCause.STORAGE_FULL, cause)
+    }
+
+    @Test
+    fun `an unreadable free space or a folder on another volume never gives the storage wording`() {
+        assertEquals(FreeSpacePolicy.EmptyCause.OTHER, FreeSpacePolicy.emptyCaptureCause(true, -1L, false, true))
+        assertEquals(FreeSpacePolicy.EmptyCause.OTHER, FreeSpacePolicy.emptyCaptureCause(true, 5 * mb, false, false))
+    }
+
+    @Test
+    fun `only the phone's own storage counts as the measured volume`() {
+        assertTrue(FreeSpacePolicy.folderOnPhoneStorage(null))
+        assertTrue(FreeSpacePolicy.folderOnPhoneStorage("content://com.android.externalstorage.documents/tree/primary%3ARecordings"))
+        assertFalse(FreeSpacePolicy.folderOnPhoneStorage("content://com.android.externalstorage.documents/tree/1A2B-3C4D%3ARecordings"))
+        assertFalse(FreeSpacePolicy.folderOnPhoneStorage("content://com.google.android.apps.docs.storage/document/acc%3D1"))
+    }
 }

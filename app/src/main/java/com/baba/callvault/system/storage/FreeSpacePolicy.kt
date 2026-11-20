@@ -19,6 +19,9 @@ import com.baba.callvault.server.StereoBitRate
  */
 object FreeSpacePolicy {
 
+    // Every threshold below is 📐 CALCULATED (arithmetic on bit rates), never measured on a phone.
+    // For the default Opus 24 kb/s mono, 5 h is only ~54 MB, so the 300 MB floor is what triggers the warning.
+
     /** The early warning covers at least this many hours of calls at the user's chosen format. */
     const val WARN_HOURS = 5
 
@@ -68,4 +71,33 @@ object FreeSpacePolicy {
         if (free < 0L) "free space at call start: unknown"
         else "free space at call start: ${free / MB} MB (warn below ${threshold / MB} MB)" +
             (if (free < threshold) " LOW" else "")
+
+    enum class EmptyCause { STORAGE_FULL, OTHER }
+
+    /**
+     * Why a 0-byte recording ended up empty. The storage wording is used only when the phone was already low at call
+     * start AND has almost nothing now AND no daemon death or capture failure is known AND the folder is on the
+     * measured volume: otherwise the existing advice stays, so a full phone never hides a real transport fault.
+     */
+    fun emptyCaptureCause(
+        lowAtCallStart: Boolean,
+        freeNowBytes: Long,
+        daemonLossKnown: Boolean,
+        folderOnPhoneStorage: Boolean,
+    ): EmptyCause =
+        if (lowAtCallStart && mayHaveBeenCutShort(freeNowBytes) && !daemonLossKnown && folderOnPhoneStorage) {
+            EmptyCause.STORAGE_FULL
+        } else {
+            EmptyCause.OTHER
+        }
+
+    /**
+     * Whether the recording folder is on the volume CallVault measures (the phone's own storage, where staging lives).
+     * Unset (null) means the app's default place on the phone. A tree on an SD card, USB drive or a cloud provider is
+     * another volume: the wording about a full phone is then not used.
+     */
+    fun folderOnPhoneStorage(folderUri: String?): Boolean =
+        folderUri.isNullOrBlank() ||
+            folderUri.contains("com.android.externalstorage.documents/tree/primary%3A", ignoreCase = true) ||
+            folderUri.contains("com.android.externalstorage.documents/tree/primary:", ignoreCase = true)
 }
