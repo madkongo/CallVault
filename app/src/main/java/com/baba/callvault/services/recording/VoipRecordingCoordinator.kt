@@ -1216,7 +1216,7 @@ object VoipRecordingCoordinator {
                 deleteStaged(staging, "the empty app-call capture")
                 return@let null
             }
-            if (result.waiting || folder == null) {
+            if (result.waiting) {
                 // The folder was not usable when the call started (review N5): kept under its final name, with the
                 // after-call steps of a saved call, and saved into a folder once one is usable.
                 if (WaitingRecordings.end(context, staging, outName, mime, kind = "app call")) {
@@ -1224,6 +1224,12 @@ object VoipRecordingCoordinator {
                 } else {
                     logOutcome(context, VoipOutcome.Reason.NO_AUDIO, recordedMs, 0L)
                 }
+                return@let null
+            }
+            if (folder == null) {
+                // Cannot happen: a call not kept for want of a folder always has one (checked above). Logged if it does.
+                AppLogger.e(TAG, "VoIP recording has no folder but was not kept to save later; keeping it in staging")
+                logOutcome(context, VoipOutcome.Reason.STAGING_MISSING, recordedMs, staging.length())
                 return@let null
             }
             val bytes = staging.length()
