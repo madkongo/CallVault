@@ -188,6 +188,11 @@ class RetentionSweepWorker(ctx: Context, params: WorkerParameters) : CoroutineWo
             TAG,
             "Retention sweep complete (deletedLocal=$deletedLocal deletedDrive=$deletedDrive deletedByCap=$deletedByCap)."
         )
+        // Always-on: a user who set an age period or a size cap needs to be able to show it ran (review C126).
+        com.baba.callvault.integrations.adb.UsbDebuggingEvents.record(
+            applicationContext,
+            "retention: sweep ran (deletedLocal=$deletedLocal deletedDrive=$deletedDrive deletedByCap=$deletedByCap, kept for Drive=$keptUnproven)",
+        )
         return Result.success()
     }
 
