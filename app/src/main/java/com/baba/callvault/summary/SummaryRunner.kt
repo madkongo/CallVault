@@ -134,6 +134,7 @@ class SummaryRunner(
                 // object at all.
                 AppLogger.w(TAG, "${parts.size - parsedParts.size} of ${parts.size} part(s) did not parse")
             }
+            logDroppedFragments("part(s)", parts)
 
             // One chunk is already the answer. Merging it with itself would compress a summary that
             // has already been compressed once, and measurably loses detail.
@@ -148,6 +149,7 @@ class SummaryRunner(
                 // The merge is a second generation and so a second chance to fail. Losing every
                 // part to it would mean minutes of work the user watched, ending in nothing —
                 // so a merge that will not parse falls back to the parts that did.
+                logDroppedFragments("merge", listOf(document))
                 CallSummary.parse(document) ?: run {
                     AppLogger.w(TAG, "The merge did not parse; falling back to the parts")
                     CallSummary.concatenate(parsedParts)
@@ -211,6 +213,15 @@ class SummaryRunner(
         )
         AppLogger.i(TAG, "Stored a summary of ${chunks.size} chunk(s)")
         return summary
+    }
+
+    /**
+     * How many list items the JSON-fragment filter removed from [documents] (review C18). A count,
+     * never the text, so field logs show how often the filter fires without carrying call content.
+     */
+    private fun logDroppedFragments(what: String, documents: List<String>) {
+        val dropped = documents.sumOf(CallSummary::droppedFragmentCount)
+        if (dropped > 0) AppLogger.i(TAG, "Dropped $dropped JSON-fragment list item(s) from the $what")
     }
 
     /**

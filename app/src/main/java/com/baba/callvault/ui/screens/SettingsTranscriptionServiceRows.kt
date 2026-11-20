@@ -42,6 +42,7 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.minimumInteractiveComponentSize
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -62,6 +63,7 @@ import androidx.compose.ui.unit.dp
 import com.baba.callvault.R
 import com.baba.callvault.data.AppPreferences
 import com.baba.callvault.transcription.cloud.CloudEndpoint
+import com.baba.callvault.transcription.cloud.CloudKeySaver
 import com.baba.callvault.transcription.cloud.CloudKeyStore
 import com.baba.callvault.transcription.cloud.CloudTranscriptionClient
 import com.baba.callvault.transcription.cloud.TranscriptionService
@@ -69,7 +71,6 @@ import com.baba.callvault.ui.theme.LocalCvBrand
 import com.baba.callvault.ui.viewmodels.SettingsActions
 import com.baba.callvault.utils.AppLogger
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
@@ -191,7 +192,8 @@ private enum class TestState { RUNNING, WORKS, BAD_KEY, NO_TIMINGS, UNREACHABLE,
  * The open cloud row: (Custom: address and model,) the key, Test, and where to get a key.
  *
  * The key is saved as it is typed — a moment after the last keystroke, off the main thread, sealed by
- * the Keystore — so there is no Save button to forget. It is never logged.
+ * the Keystore — so there is no Save button to forget. Closing the page sooner saves it at once
+ * ([CloudKeySaver.flush]). It is never logged.
  */
 @Composable
 private fun CloudServiceDetails(service: TranscriptionService, preferences: AppPreferences) {
@@ -199,7 +201,9 @@ private fun CloudServiceDetails(service: TranscriptionService, preferences: AppP
     val scope = rememberCoroutineScope()
     val keyStore = remember(service) { CloudKeyStore(context) }
     var key by remember(service) { mutableStateOf<String?>(null) }
-    var savedKey by remember(service) { mutableStateOf<String?>(null) }
+    // Saves outside this page's lifetime, and flushes what is unsaved when the row leaves (review C27).
+    val keySaver = remember { CloudKeySaver.shared(context) }
+    DisposableEffect(service) { onDispose { keySaver.flush() } }
     var keyVisible by remember(service) { mutableStateOf(false) }
     var baseUrl by remember(service) { mutableStateOf(preferences.getTranscriptionCustomBaseUrl()) }
     var model by remember(service) { mutableStateOf(preferences.getTranscriptionCustomModel()) }
@@ -208,19 +212,10 @@ private fun CloudServiceDetails(service: TranscriptionService, preferences: AppP
 
     // Read once, off the main thread: decrypting goes through the Keystore.
     LaunchedEffect(service) {
-        val stored = withContext(Dispatchers.IO) { keyStore.get(service).orEmpty() }
-        savedKey = stored
-        key = stored
-    }
-    LaunchedEffect(service, key) {
-        val typed = key ?: return@LaunchedEffect
-        if (typed == savedKey) return@LaunchedEffect
-        delay(KEY_SAVE_DELAY_MS)
-        withContext(Dispatchers.IO) {
-            runCatching { keyStore.set(service, typed) }
-                .onSuccess { savedKey = typed }
-                .onFailure { AppLogger.w(TAG, "Could not save the key (${it.javaClass.simpleName})") }
-        }
+        // Through the saver: a key the previous page (before a rotation) is still saving wins over the
+        // store, and a load that lands after typing began leaves the typing alone.
+        val stored = keySaver.load(service)
+        key = CloudKeySaver.fieldAfterLoad(current = key, loaded = stored)
     }
 
     Column(
@@ -265,6 +260,7 @@ private fun CloudServiceDetails(service: TranscriptionService, preferences: AppP
         OutlinedTextField(
             value = key.orEmpty(),
             onValueChange = {
+                if (it != key) keySaver.typed(service, it)
                 key = it
                 test = null
             },
@@ -426,4 +422,3 @@ private fun CloudConsentDialog(serviceName: String, onConfirm: () -> Unit, onDis
 private const val TAG = "CV:CloudSettings"
 
 /** How long after the last keystroke the key is sealed and saved. */
-private const val KEY_SAVE_DELAY_MS = 400L

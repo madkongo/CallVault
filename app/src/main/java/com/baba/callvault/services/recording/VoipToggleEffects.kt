@@ -45,9 +45,12 @@ object VoipToggleEffects {
         persist: (Boolean) -> Unit,
         startDetection: () -> Unit,
         arm: () -> Boolean,
+        syncRingListener: () -> Unit = {},
         scope: CoroutineScope = armScope,
     ): Deferred<Boolean> {
         persist(turnOn)
+        // The ring listener's approval follows the switch now, not at the next process start (review C19).
+        runCatching(syncRingListener).onFailure { AppLogger.e(TAG, "Could not queue the ring listener sync: ${it.message}", it) }
         runCatching(startDetection).onFailure { AppLogger.e(TAG, "Could not start app-call detection: ${it.message}", it) }
         return scope.async {
             runCatching(arm).onFailure { AppLogger.e(TAG, "Arming app-call capture failed: ${it.message}", it) }
@@ -65,6 +68,7 @@ object VoipToggleEffects {
             // starts it only while app calls are on, and stops it when they are turned off.
             startDetection = { DaemonKeepAliveService.start(app) },
             arm = { VoipCaptureController.sync(app) },
+            syncRingListener = { VoipRingListenerAccess.requestSync(app) },
         )
     }
 }

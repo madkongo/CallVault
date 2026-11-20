@@ -255,24 +255,72 @@ data class CallSummary(
                 .filterNot(::isJsonFragment)
         }
 
-        private val KEY_NAMES = "summary|keyPoints|decisions|actionItems|keyFacts|tags|intent"
+        /** The list keys [stringsIn] filters, in the order [from] reads them. */
+        private val LIST_KEYS = listOf(KEY_POINTS, KEY_DECISIONS, KEY_ACTIONS, KEY_FACTS, KEY_TAGS, KEY_DISMISSED_TAGS)
 
-        /** A key name touching a quote, bracket or brace: `decisions]: [`, `"tags"`, `[keyFacts`. */
-        private val KEY_AT_STRUCTURE = Regex(
-            "(?i)([\"'\\[\\]{}]\\s*($KEY_NAMES)\\b)|(\\b($KEY_NAMES)\\s*[\"'\\[\\]{}])"
-        )
+        /**
+         * How many list items in [raw] [isJsonFragment] removes, for the run's log; a count, never
+         * the text. Reads [raw] the way [parse] does, and is 0 when there is no object in it.
+         */
+        internal fun droppedFragmentCount(raw: String): Int {
+            val text = SummaryText.stripReasoning(raw)
+            val json = objectIn(text) ?: SummaryText.closeTruncated(text)?.let(::objectIn) ?: return 0
+            return LIST_KEYS.sumOf { key ->
+                val array = json.optJSONArray(key) ?: return@sumOf 0
+                (0 until array.length()).count { i ->
+                    val item = array.optString(i).trim()
+                    item.isNotEmpty() && isJsonFragment(item)
+                }
+            }
+        }
 
-        /** A key name followed by a colon and nothing else of substance: `decisions:`. */
+        private const val KEY_NAMES = "summary|keyPoints|decisions|actionItems|keyFacts|tags|intent"
+
+        /** A `[m:ss]` citation, the shape [SummaryCitations] keeps in the text. Removed before testing. */
+        private val CITATION = Regex("""\[\d{1,2}:\d{1,2}(?::\d{1,2})?]""")
+
+        /** (R1) A quoted key followed by a colon: `"actionItems": [`. */
+        private val QUOTED_KEY_THEN_COLON = Regex("(?i)\"\\s*($KEY_NAMES)\\s*\"\\s*:")
+
+        /** (R2) A key, then a closing quote, bracket or brace, then a colon: `decisions]: [`, `keyFacts":`. */
+        private val KEY_CLOSED_THEN_COLON = Regex("(?i)\\b($KEY_NAMES)\\s*[\"\\]}]+\\s*:")
+
+        /** (R3) A key name followed by a colon and nothing else of substance: `decisions:`. */
         private val KEY_THEN_NOTHING = Regex("(?i)\\b($KEY_NAMES)\\s*:[\\p{P}\\p{S}\\s]*$")
 
         /**
+         * (R4) Nothing but key names and JSON punctuation, with at least one quote, bracket, brace or
+         * colon: `[tags`, `"tags"`, `}, "actionItems`. A lone word ("Summary") is a real item.
+         */
+        private val ONLY_KEYS_AND_STRUCTURE = Regex(
+            "(?i)^[\\s\"\\[\\]{}:,]*($KEY_NAMES)([\\s\"\\[\\]{}:,]+($KEY_NAMES))*[\\s\"\\[\\]{}:,]*$"
+        )
+        private val JSON_STRUCTURE = Regex("[\"\\[\\]{}:]")
+
+        /**
+         * (R5) The seam between two JSON members written into one string: a closing bracket or brace,
+         * a comma, and an opening quote before a key, as in `Real point"], "decisions`.
+         */
+        private val MEMBER_SEAM_BEFORE_KEY = Regex("(?i)[\\]}]\\s*,\\s*\"\\s*($KEY_NAMES)\\b")
+
+        /**
          * An item that is a piece of the JSON's own structure rather than content: only punctuation
-         * and brackets (`],`), or a key name written into the string (`decisions]: [`). A sentence
-         * that merely mentions "decisions" ("We made two decisions: A and B") is real and stays.
+         * and brackets (`],`), or a key name written into the string in key position
+         * (`decisions]: [`, `"actionItems": [`). A sentence that merely mentions a key word stays,
+         * also beside a quote, an apostrophe or a `[m:ss]` citation: "We made two decisions: A and B",
+         * `[1:30] Summary of the quote`, `Both parties' decisions are final` (review C18).
+         *
+         * Only decides; the stored item is never rewritten. Citations are removed from a copy so a
+         * marker's brackets never count as structure, and an apostrophe never counts at all.
          */
         internal fun isJsonFragment(item: String): Boolean {
             if (item.none { it.isLetterOrDigit() }) return true
-            return KEY_AT_STRUCTURE.containsMatchIn(item) || KEY_THEN_NOTHING.containsMatchIn(item)
+            val bare = CITATION.replace(item, " ").trim()
+            return QUOTED_KEY_THEN_COLON.containsMatchIn(bare) ||
+                KEY_CLOSED_THEN_COLON.containsMatchIn(bare) ||
+                KEY_THEN_NOTHING.containsMatchIn(bare) ||
+                (ONLY_KEYS_AND_STRUCTURE.matches(bare) && JSON_STRUCTURE.containsMatchIn(bare)) ||
+                MEMBER_SEAM_BEFORE_KEY.containsMatchIn(bare)
         }
     }
 }
