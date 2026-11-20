@@ -11,54 +11,62 @@ package com.baba.callvault.system.storage
 import android.content.Context
 import android.media.AudioManager
 import android.telephony.TelephonyManager
-import com.baba.callvault.data.AppPreferences
 
 /**
  * When the folder check may run, so it adds no wake-ups of its own on a phone in a good state (review 2026-11-20: users
  * report battery drain).
  *
- * The checks ride work that already runs: app start, Home, the keep-alive's existing one-minute tick (at most every
- * [KEEP_ALIVE_MAX_AGE_MS]) and the end of a call kept for want of a folder. A periodic WorkManager job exists only
- * when nothing else would notice: [TROUBLE_MINUTES] while the folder is bad or calls are waiting, and
- * [GOOD_NO_KEEP_ALIVE_MINUTES] on a phone recording with no keep-alive (Shizuku mode). Never otherwise.
+ * The checks ride work that already runs: process start, Home, the keep-alive's existing one-minute tick and the end of a
+ * call kept for want of a folder. A good folder is looked at by the keep-alive at most every
+ * [KEEP_ALIVE_GOOD_MAX_AGE_MS]; a bad one backs off ([badRetryMs]) rather than being probed on every tick. A periodic
+ * WorkManager job exists only while the folder is bad or calls are waiting ([TROUBLE_MINUTES]); never on a phone in a
+ * good state, in either mode (Shizuku mode has process start and Home).
  */
 object FolderWatchPlan {
 
     /** While the folder is bad or calls wait: often enough to save them soon after the folder is back. */
     const val TROUBLE_MINUTES = 60L
 
-    /** Good folder, recording on, no keep-alive (Shizuku mode): app start and Home are the other triggers. */
-    const val GOOD_NO_KEEP_ALIVE_MINUTES = 6 * 60L
-
-    /** Home looks again only when the stored answer is older than this. */
+    /** Home looks again at a good answer only when it is older than this (the app is open; no wake-up). */
     const val HOME_MAX_AGE_MS = 5 * 60_000L
 
-    /** The keep-alive tick looks again only when the stored answer is older than this. */
-    const val KEEP_ALIVE_MAX_AGE_MS = 5 * 60_000L
+    /** The keep-alive tick looks again at a good answer only when it is older than this. */
+    const val KEEP_ALIVE_GOOD_MAX_AGE_MS = 60 * 60_000L
 
-    /** A process start looks again only when the stored answer is older than this. */
+    /** A process start looks again at a good answer only when it is older than this. */
     const val APP_START_MAX_AGE_MS = 30 * 60_000L
 
     /** The period of the periodic check, or null for none. */
-    fun periodMinutes(keepAliveRuns: Boolean, recordingOn: Boolean, waitingCount: Int, folderBad: Boolean): Long? = when {
-        folderBad || waitingCount > 0 -> TROUBLE_MINUTES
-        recordingOn && !keepAliveRuns -> GOOD_NO_KEEP_ALIVE_MINUTES
-        else -> null
+    fun periodMinutes(waitingCount: Int, folderBad: Boolean): Long? =
+        if (folderBad || waitingCount > 0) TROUBLE_MINUTES else null
+
+    /**
+     * How long to wait before looking at a bad folder again, by how long it has been bad: 5, then 10, then 30, then
+     * at most 60 minutes. An unconfirmed reading is settled by its own scheduled re-check, not by this.
+     */
+    fun badRetryMs(badForMs: Long): Long = when {
+        badForMs < 30 * MINUTE -> 5 * MINUTE
+        badForMs < 2 * 60 * MINUTE -> 10 * MINUTE
+        badForMs < 6 * 60 * MINUTE -> 30 * MINUTE
+        else -> 60 * MINUTE
     }
 
-    /** Whether to measure again: never measured, older than [maxAgeMs], or not good (an unsettled answer). */
-    fun isStale(state: FolderCheckState?, now: Long, maxAgeMs: Long): Boolean =
-        state == null || state.kind != FolderReading.Kind.OK && state.kind != FolderReading.Kind.NOT_SET ||
-            now - state.measuredAt !in 0 until maxAgeMs
+    private const val MINUTE = 60_000L
 
-    /** The inputs of [periodMinutes] on the phone. Cheap: preferences and one directory listing. */
+    /** Whether to measure again: never measured, or older than [goodMaxAgeMs] (good) or [badRetryMs] (not good). */
+    fun isStale(state: FolderCheckState?, now: Long, goodMaxAgeMs: Long): Boolean {
+        if (state == null) return true
+        val age = now - state.measuredAt
+        if (age < 0L) return true
+        val good = state.kind == FolderReading.Kind.OK || state.kind == FolderReading.Kind.NOT_SET
+        val badFor = if (state.firstBadAt > 0L) state.measuredAt - state.firstBadAt else 0L
+        return age >= if (good) goodMaxAgeMs else badRetryMs(badFor)
+    }
+
+    /** The inputs of [periodMinutes] on the phone. Cheap: one preference read and one directory listing. */
     fun periodFor(context: Context): Long? {
-        val prefs = AppPreferences(context)
         val state = RecordingFolderCheck.cached(context)
         return periodMinutes(
-            // The keep-alive stands down in Shizuku mode.
-            keepAliveRuns = !prefs.getPrivilegedMode().needsShizuku,
-            recordingOn = prefs.getRecordingState().isRecordingAllowed,
             waitingCount = WaitingRecordings.count(context),
             folderBad = state != null && state.kind != FolderReading.Kind.OK && state.kind != FolderReading.Kind.NOT_SET,
         )

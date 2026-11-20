@@ -128,7 +128,7 @@ class DaemonKeepAliveService : Service() {
             // between calls turns Home red and raises the alert before the next call, not after it.
             // Rides this existing tick (no timer of its own) and skips while a call is up (review 2026-11-20).
             com.baba.callvault.system.storage.RecordingFolderCheck.checkIfStale(
-                this@DaemonKeepAliveService, "keep-alive tick", com.baba.callvault.system.storage.FolderWatchPlan.KEEP_ALIVE_MAX_AGE_MS,
+                this@DaemonKeepAliveService, "keep-alive tick", com.baba.callvault.system.storage.FolderWatchPlan.KEEP_ALIVE_GOOD_MAX_AGE_MS,
             )
             watchdogHandler.postDelayed(this, WATCHDOG_INTERVAL_MS)
         }

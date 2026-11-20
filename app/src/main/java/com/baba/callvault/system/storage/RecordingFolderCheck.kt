@@ -88,13 +88,13 @@ object RecordingFolderCheck {
     }
 
     /**
-     * Looks, on a background thread, only when the stored answer is older than [maxAgeMs] (or not good) and no call is
-     * up. No timer of its own: it rides whatever called it. [then] runs on that thread with the result (null: skipped
+     * Looks, on a background thread, only when the stored answer is stale ([FolderWatchPlan.isStale]: older than
+     * [maxAgeMs] when good, backing off when bad) and no call is up. No timer of its own: it rides whatever called it. [then] runs on that thread with the result (null: skipped
      * or failed). Cheap to call often: a preference read when nothing is due.
      */
     fun checkIfStale(context: Context, trigger: String, maxAgeMs: Long, then: ((FolderCheckPolicy.Step?) -> Unit)? = null) {
         val app = context.applicationContext
-        if (!FolderWatchPlan.isStale(cached(app), System.currentTimeMillis(), maxAgeMs)) return
+        if (!FolderWatchPlan.isStale(cached(app), System.currentTimeMillis(), goodMaxAgeMs = maxAgeMs)) return
         runCatching {
             worker.execute {
                 // Never a provider query while a call is up (review 2026-11-20).
