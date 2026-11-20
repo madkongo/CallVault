@@ -45,6 +45,18 @@ object TranscriptionScheduler {
     /** Unique name for a user-requested run, so repeated taps do not stack up duplicate work. */
     const val MANUAL_WORK_NAME = "cv_transcription_now"
 
+    /** Unique name for the one-time retry a periodic sweep asks for instead of returning retry (review N36). */
+    const val SWEEP_RETRY_WORK_NAME = "cv_transcription_sweep_retry"
+
+    /** On every transcription request, so a stop (and the pill) can reach all of them whatever their unique name. */
+    const val TAG_RUN = "cv_transcription_run"
+
+    /** On the periodic sweep only: [TranscriptionWorker] reads it to know it must never return retry (review N36). */
+    const val TAG_PERIODIC = "cv_transcription_periodic"
+
+    /** Wait before the sweep's one-time retry; WorkManager's own backoff takes over if that run retries too. */
+    private const val SWEEP_RETRY_DELAY_MINUTES = 15L
+
     private const val TAG = "CV:TranscriptionScheduler"
     private const val DAILY_PERIOD_HOURS = 24L
     private const val STATE_FILE = "cv_transcription_scheduler"
@@ -89,6 +101,8 @@ object TranscriptionScheduler {
         )
             .setConstraints(constraints)
             .setInitialDelay(nextDailyDelayMillis(hour, minute), TimeUnit.MILLISECONDS)
+            .addTag(TAG_RUN)
+            .addTag(TAG_PERIODIC)
             .build()
 
         // UPDATE is not used: it keeps the queued request's own timing, so a new hour was ignored once the
@@ -161,6 +175,7 @@ object TranscriptionScheduler {
                         .setRequiredNetworkType(run.networkType)
                         .build()
                 )
+                addTag(TAG_RUN)
             }
             .build()
 
@@ -172,6 +187,32 @@ object TranscriptionScheduler {
             request
         )
         AppLogger.i(TAG, "Transcription requested (${displayName ?: "whole queue"}).")
+    }
+
+    /**
+     * The sweep's retry, as one-time work. A periodic worker that returns retry runs on WorkManager's
+     * backoff (up to 5 h), not on its period, so a bad night could push the next run far off the chosen time
+     * (review N36). The periodic work succeeds instead and asks for this: the same drain, a little later,
+     * under the sweep's own constraints. KEEP, so two bad nights in a row do not stack up retries.
+     */
+    fun enqueueSweepRetry(context: Context) {
+        val prefs = AppPreferences(context)
+        val run = runConstraints(prefs, requiresCharging = prefs.getTranscriptionRequiresCharging())
+        val request = OneTimeWorkRequestBuilder<TranscriptionWorker>()
+            .setConstraints(
+                Constraints.Builder()
+                    .setRequiresCharging(run.requiresCharging)
+                    .setRequiredNetworkType(run.networkType)
+                    .setRequiresBatteryNotLow(true)
+                    .setRequiresStorageNotLow(true)
+                    .build()
+            )
+            .setInitialDelay(SWEEP_RETRY_DELAY_MINUTES, TimeUnit.MINUTES)
+            .addTag(TAG_RUN)
+            .build()
+        WorkManager.getInstance(context)
+            .enqueueUniqueWork(SWEEP_RETRY_WORK_NAME, ExistingWorkPolicy.KEEP, request)
+        AppLogger.i(TAG, "Sweep retry queued in $SWEEP_RETRY_DELAY_MINUTES min.")
     }
 
     /**
@@ -190,6 +231,9 @@ object TranscriptionScheduler {
         val workManager = WorkManager.getInstance(context)
         workManager.cancelUniqueWork(MANUAL_WORK_NAME)
         workManager.cancelUniqueWork(WORK_NAME)
+        workManager.cancelUniqueWork(SWEEP_RETRY_WORK_NAME)
+        // Every other transcription request too (each after-call run is its own unique work, C124).
+        workManager.cancelAllWorkByTag(TAG_RUN)
         apply(context)
 
         // The cancelled worker cannot be trusted to reset the row it was working on — whisper sits in

@@ -97,7 +97,7 @@ class TranscriptionWorker(
             // once it lands instead of the user having to ask again.
             TranscriptionEngineChoice.WaitForModel -> {
                 AppLogger.i(TAG, "Model ${model.id} is not installed yet; will retry")
-                return@withContext Result.retry()
+                return@withContext retryLater("model ${model.id} not installed")
             }
             // A sweep with no key set up would mark every waiting call failed; it waits instead.
             TranscriptionEngineChoice.CloudNotSetUp -> {
@@ -215,10 +215,28 @@ class TranscriptionWorker(
 
         // Anything left unfinished stays queued, so a later run resumes rather than restarts.
         when {
-            runner.retryRequested -> Result.retry()
-            isStopped && transcribed < names.size -> Result.retry()
+            runner.retryRequested -> retryLater("a passing cloud failure")
+            // A stopped run's result is ignored by WorkManager, which reschedules a stopped periodic run itself.
+            isStopped && transcribed < names.size -> if (isPeriodic) Result.success() else Result.retry()
             else -> Result.success()
         }
+    }
+
+    /** True for the nightly sweep (tagged by [TranscriptionScheduler.apply]), false for every one-time run. */
+    private val isPeriodic: Boolean get() = tags.contains(TranscriptionScheduler.TAG_PERIODIC)
+
+    /**
+     * Retry, the way this run may. One-time work returns retry (WorkManager's backoff is what we want there).
+     * Periodic work never does: it would run on the backoff rather than its schedule, up to 5 h late (review
+     * N36), so it succeeds and queues a separate one-time retry instead. The only `Result.retry()` in this
+     * class outside the stopped case; a source-scan test holds it to that.
+     */
+    private fun retryLater(reason: String): Result {
+        if (!isPeriodic) return Result.retry()
+        AppLogger.i(TAG, "Nightly run cannot finish now ($reason); queueing a one-time retry")
+        com.baba.callvault.system.storage.DriveCopyJournal.record(applicationContext, "transcription sweep: retry queued as one-time work ($reason)")
+        TranscriptionScheduler.enqueueSweepRetry(applicationContext)
+        return Result.success()
     }
 
     /**
