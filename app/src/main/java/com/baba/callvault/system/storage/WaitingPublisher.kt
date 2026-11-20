@@ -49,9 +49,11 @@ object WaitingPublisher {
         notes.filter { it.name.endsWith(StagingNote.SUFFIX) && !File(it.parentFile, it.name.removeSuffix(StagingNote.SUFFIX)).exists() }
             .forEach { runCatching { it.delete() } }
         if (env.files.isEmpty()) return Result(0, retryLater = false)
+        // No provider query while a call is up (review 2026-11-20): look again once it is over.
+        if (env.callActive()) return Result(0, retryLater = true)
         val problem = env.folderProblem()
         if (problem != null) return Result(0, retryLater = false)
-        val callActive = env.callActive()
+        val callActive = false
         var saved = 0
         var retry = false
         env.files.forEach { file ->

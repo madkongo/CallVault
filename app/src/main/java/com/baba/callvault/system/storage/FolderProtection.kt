@@ -19,13 +19,17 @@ object FolderProtection {
 
     private const val TAG = "CV:FolderProtection"
 
-    /** At app start, off the main thread: hooks the check up, keeps the periodic check, saves what is waiting. */
+    /**
+     * At process start, off the main thread: hooks the check up and sets the periodic check to what is needed. Looks at
+     * the folder only when the stored answer is older than [FolderWatchPlan.APP_START_MAX_AGE_MS] and no call is up, so
+     * a process started for a call makes no provider query (review 2026-11-20).
+     */
     fun install(context: Context) = guard("install") {
         val app = context.applicationContext
         RecordingFolderCheck.onChecked = ::onChecked
-        WaitingRecordingsWorker.ensureWatch(app)
+        WaitingRecordingsWorker.applyWatch(app)
         if (WaitingRecordings.count(app) > 0) WaitingRecordingsWorker.schedule(app)
-        RecordingFolderCheck.checkNow(app, "app start")
+        RecordingFolderCheck.checkIfStale(app, "app start", FolderWatchPlan.APP_START_MAX_AGE_MS)
     }
 
     /** The user picked a recording folder (Settings, setup wizard, permissions screen). */
@@ -37,6 +41,7 @@ object FolderProtection {
 
     /** After every folder check. */
     internal fun onChecked(context: Context, step: FolderCheckPolicy.Step) = guard("after check") {
+        WaitingRecordingsWorker.applyWatch(context)
         // Once per loss, the moment it is confirmed, before any call: not through the missed-call gate (review N5).
         if (step.alert) notify(context, "folder confirmed gone", folderGone = true)
         if (step.state.kind == FolderReading.Kind.OK) {
@@ -52,6 +57,7 @@ object FolderProtection {
     /** A call was kept in CallVault's own storage. */
     fun onWaitingKept(context: Context) = guard("call kept") {
         notify(context, "a call was kept", folderGone = true)
+        WaitingRecordingsWorker.applyWatch(context)
         // Saved at once if the folder came back during the call; otherwise the worker finds it still unusable.
         WaitingRecordingsWorker.schedule(context)
     }
@@ -65,6 +71,7 @@ object FolderProtection {
     /** [count] waiting calls were saved into the folder. */
     fun onWaitingSaved(context: Context, count: Int) = guard("calls saved") {
         AppLogger.i(TAG, "$count waiting call(s) saved into the recording folder")
+        WaitingRecordingsWorker.applyWatch(context)
         if (WaitingRecordings.count(context) == 0) {
             val shown = FolderNotice.showSaved(context, count)
             RecordingFolderCheck.recordAlwaysOn(context, "notice: $count waiting call(s) saved${if (shown) "" else " (notice NOT shown)"}")

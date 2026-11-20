@@ -9,9 +9,7 @@
 package com.baba.callvault.system.storage
 
 import android.content.Context
-import android.media.AudioManager
 import android.net.Uri
-import android.telephony.TelephonyManager
 import androidx.documentfile.provider.DocumentFile
 import androidx.work.CoroutineWorker
 import androidx.work.ExistingPeriodicWorkPolicy
@@ -53,13 +51,7 @@ class WaitingRecordingsWorker(ctx: Context, params: WorkerParameters) : Coroutin
             if (problem != null) AppLogger.i(TAG, "${files.size} call(s) waiting; the recording folder is still not usable: $problem")
         }
 
-        override fun callActive(): Boolean = runCatching {
-            val mode = context.getSystemService(AudioManager::class.java)?.mode
-            val inCall = mode == AudioManager.MODE_IN_CALL || mode == AudioManager.MODE_IN_COMMUNICATION
-            @Suppress("DEPRECATION")
-            val carrier = context.getSystemService(TelephonyManager::class.java)?.callState
-            inCall || carrier == TelephonyManager.CALL_STATE_OFFHOOK
-        }.getOrDefault(true) // unknown reads as "in a call", as in the cut-off rescue: waiting costs nothing
+        override fun callActive(): Boolean = PhoneCallState.isCallUp(context)
 
         override fun publish(file: File, name: String, mimeType: String): Pair<Uri, String>? {
             val target = folder ?: return null
@@ -89,8 +81,8 @@ class WaitingRecordingsWorker(ctx: Context, params: WorkerParameters) : Coroutin
         /** Long enough for a cut-off waiting call to go quiet ([CutOffRescuePolicy.QUIET_MS]). */
         private const val RETRY_DELAY_MS = CutOffRescuePolicy.QUIET_MS + 30_000L
 
-        /** WorkManager's shortest period. */
-        private const val WATCH_PERIOD_MINUTES = 15L
+        private const val WATCH_PREFS = "recording_folder_watch"
+        private const val KEY_WATCH_PERIOD = "period_minutes"
 
         /** Saves the waiting calls soon. Queued after a run in progress, never instead of it. */
         fun schedule(context: Context, delayMs: Long = 0L) {
@@ -102,20 +94,34 @@ class WaitingRecordingsWorker(ctx: Context, params: WorkerParameters) : Coroutin
             }.onFailure { AppLogger.w(TAG, "Could not schedule saving the waiting calls: ${it.message}") }
         }
 
-        /** The periodic folder check, for when nothing else runs (no keep-alive in Shizuku mode, app not opened). */
-        fun ensureWatch(context: Context) {
+        /**
+         * Keeps the periodic folder check only while [FolderWatchPlan] says it is needed, at its period; cancels it
+         * otherwise. Re-applied only when the period changes, so calling it often costs one preference read.
+         */
+        fun applyWatch(context: Context) {
             runCatching {
-                val request = PeriodicWorkRequestBuilder<FolderWatchWorker>(WATCH_PERIOD_MINUTES, TimeUnit.MINUTES).build()
-                WorkManager.getInstance(context).enqueueUniquePeriodicWork(PERIODIC_NAME, ExistingPeriodicWorkPolicy.KEEP, request)
-            }.onFailure { AppLogger.w(TAG, "Could not schedule the periodic folder check: ${it.message}") }
+                val period = FolderWatchPlan.periodFor(context)
+                val prefs = context.getSharedPreferences(WATCH_PREFS, Context.MODE_PRIVATE)
+                val applied = prefs.getLong(KEY_WATCH_PERIOD, -1L)
+                if (applied == (period ?: 0L)) return@runCatching
+                val work = WorkManager.getInstance(context)
+                if (period == null) {
+                    work.cancelUniqueWork(PERIODIC_NAME)
+                } else {
+                    val request = PeriodicWorkRequestBuilder<FolderWatchWorker>(period, TimeUnit.MINUTES).build()
+                    work.enqueueUniquePeriodicWork(PERIODIC_NAME, ExistingPeriodicWorkPolicy.UPDATE, request)
+                }
+                prefs.edit().putLong(KEY_WATCH_PERIOD, period ?: 0L).apply()
+                AppLogger.i(TAG, "Periodic folder check: ${period?.let { "every $it min" } ?: "off"}")
+            }.onFailure { AppLogger.w(TAG, "Could not set the periodic folder check: ${it.message}") }
         }
     }
 }
 
-/** Looks at the recording folder every [15 minutes][WaitingRecordingsWorker.ensureWatch] (review C98). */
+/** The periodic folder check, only while [FolderWatchPlan] needs one (review C98, 2026-11-20). Skipped during a call. */
 class FolderWatchWorker(ctx: Context, params: WorkerParameters) : CoroutineWorker(ctx, params) {
     override suspend fun doWork(): Result {
-        RecordingFolderCheck.checkNow(applicationContext, "periodic")
+        if (!PhoneCallState.isCallUp(applicationContext)) RecordingFolderCheck.checkNow(applicationContext, "periodic")
         return Result.success()
     }
 }

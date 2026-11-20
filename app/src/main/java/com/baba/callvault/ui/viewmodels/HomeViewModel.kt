@@ -44,6 +44,7 @@ import com.baba.callvault.services.recording.RecordingSwitch
 import com.baba.callvault.services.recording.RecordingPolicy
 import com.baba.callvault.data.health.Prerequisite
 import com.baba.callvault.data.health.SetupPrerequisites
+import com.baba.callvault.system.storage.FolderWatchPlan
 import com.baba.callvault.system.storage.RecordingFolderCheck
 import com.baba.callvault.system.storage.WaitingRecordings
 import com.baba.callvault.data.recordings.AudioImport
@@ -939,12 +940,13 @@ class HomeViewModel(application: Application) : AndroidViewModel(application) {
 
     private fun startListPass(status: HomeStatus) {
         listJob = viewModelScope.launch {
-            // Look at the recording folder itself (review C98): a stored address says nothing about whether the
-            // folder is still there. Off the main thread; the status is re-read from the new measurement.
-            val measured = withContext(Dispatchers.IO) { RecordingFolderCheck.checkNow(appContext, "Home") }
-            val current = if (measured == null) status else computeStatus().also { now ->
-                if (now != status) _uiState.update { it.copy(status = now) }
+            // Look at the recording folder itself (review C98), without holding the list up (review 2026-11-20): the
+            // status above came from the stored answer; a stale one is measured on the check's own thread and the
+            // status is re-read when it is done.
+            RecordingFolderCheck.checkIfStale(appContext, "Home", FolderWatchPlan.HOME_MAX_AGE_MS) { step ->
+                if (step != null) viewModelScope.launch { _uiState.update { it.copy(status = computeStatus()) } }
             }
+            val current = status
             val (waiting, waitingBytes) = withContext(Dispatchers.IO) {
                 WaitingRecordings.count(appContext) to WaitingRecordings.totalBytes(appContext)
             }

@@ -107,8 +107,6 @@ object WaitingRecordings {
             context,
             "$kind: recording folder not usable ($why); recording into CallVault's own storage, to save into a folder later: ${CallEndLog.safeName(fileName)}",
         )
-        // The call is real evidence that the folder is gone: measure now so Home and the alert follow.
-        RecordingFolderCheck.checkAsync(context, "a call found the folder not usable")
         return SafHelper.SafResult(
             uri = null,
             descriptor = fd,
@@ -141,6 +139,9 @@ object WaitingRecordings {
             "$kind kept in CallVault until a recording folder is usable: ${CallEndLog.safeName(finalName)} " +
                 "size=$bytes bytes; waiting now: ${count(context)} calls, ${totalBytes(context)} bytes",
         )
+        // The call is real evidence that the folder is gone: measure now (at the call's end, never its start) so Home
+        // and the alert follow.
+        RecordingFolderCheck.checkAsync(context, "a call found the folder not usable")
         onKept(context)
         true
     }.getOrElse { e ->

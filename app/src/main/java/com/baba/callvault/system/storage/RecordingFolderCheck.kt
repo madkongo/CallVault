@@ -49,9 +49,6 @@ object RecordingFolderCheck {
     /** A provider that has not answered within this is counted as slow (transient), not as "folder gone". */
     const val PROVIDER_TIMEOUT_MS = 5_000L
 
-    /** [checkIfDue] looks again at most this often. */
-    const val DUE_INTERVAL_MS = 5 * 60_000L
-
     private const val EXTERNAL_STORAGE_AUTHORITY = "com.android.externalstorage.documents"
     private const val PRIMARY_VOLUME = "primary"
 
@@ -69,7 +66,6 @@ object RecordingFolderCheck {
     /** Always-on `folder:` lines: at most 12 an hour, so a flapping provider cannot flood the file. */
     private val alwaysOnLimit = AlwaysOnRateLimit(maxPerWindow = 12, windowMs = 60 * 60_000L)
 
-    @Volatile private var lastCheckAtElapsed = 0L
     private var pendingRecheck: ScheduledFuture<*>? = null
 
     /** Called after every check with its result; set once by the app (the alert lives outside this file). */
@@ -91,10 +87,21 @@ object RecordingFolderCheck {
             .onFailure { AppLogger.w(TAG, "Could not start the folder check ($trigger): ${it.message}") }
     }
 
-    /** Looks on a background thread if the last look is older than [DUE_INTERVAL_MS]. Cheap to call often. */
-    fun checkIfDue(context: Context, trigger: String) {
-        if (SystemClock.elapsedRealtime() - lastCheckAtElapsed < DUE_INTERVAL_MS && lastCheckAtElapsed > 0L) return
-        checkAsync(context, trigger)
+    /**
+     * Looks, on a background thread, only when the stored answer is older than [maxAgeMs] (or not good) and no call is
+     * up. No timer of its own: it rides whatever called it. [then] runs on that thread with the result (null: skipped
+     * or failed). Cheap to call often: a preference read when nothing is due.
+     */
+    fun checkIfStale(context: Context, trigger: String, maxAgeMs: Long, then: ((FolderCheckPolicy.Step?) -> Unit)? = null) {
+        val app = context.applicationContext
+        if (!FolderWatchPlan.isStale(cached(app), System.currentTimeMillis(), maxAgeMs)) return
+        runCatching {
+            worker.execute {
+                // Never a provider query while a call is up (review 2026-11-20).
+                val step = if (PhoneCallState.isCallUp(app)) null else checkNow(app, trigger)
+                runCatching { then?.invoke(step) }
+            }
+        }.onFailure { AppLogger.w(TAG, "Could not start the folder check ($trigger): ${it.message}") }
     }
 
     /**
@@ -106,7 +113,6 @@ object RecordingFolderCheck {
         val startedAt = System.currentTimeMillis()
         val reading = measure(app)
         val step = synchronized(lock) {
-            lastCheckAtElapsed = SystemClock.elapsedRealtime()
             val previous = cached(app)
             val step = FolderCheckPolicy.next(previous, reading, startedAt)
             if (step.stale) {
@@ -264,6 +270,5 @@ object RecordingFolderCheck {
     /** Forgets the stored result: for tests. */
     internal fun clearForTest(context: Context) {
         prefs(context).edit().clear().commit()
-        lastCheckAtElapsed = 0L
     }
 }

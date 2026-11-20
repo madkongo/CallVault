@@ -62,7 +62,8 @@ class WaitingPublisherTest {
         val catalogued = mutableListOf<Triple<String, Long, Long>>()
         val after = mutableListOf<String>()
         val lines = mutableListOf<String>()
-        override fun folderProblem(): String? = problem
+        var folderAsked = 0
+        override fun folderProblem(): String? { folderAsked++; return problem }
         override fun callActive(): Boolean = call
         override fun publish(file: File, name: String, mimeType: String): Pair<Uri, String>? {
             if (failPublish) return null
@@ -146,5 +147,16 @@ class WaitingPublisherTest {
         WaitingPublisher.run(env)
         assertTrue(f.exists())
         assertTrue(env.published.isEmpty())
+    }
+
+    @Test
+    fun `nothing asks the folder's provider while a call is up`() = runBlocking {
+        // Review 2026-11-20: no provider query at call time; a process started for a call must not run one.
+        val f = waiting("a.ogg", 500, finished = true)
+        val env = FakeEnv(listOf(f), call = true, now = now)
+        val result = WaitingPublisher.run(env)
+        assertEquals(0, env.folderAsked)
+        assertEquals(0, result.saved)
+        assertTrue(result.retryLater)
     }
 }
