@@ -4,4 +4,17 @@
     <string name="recording_folder_gone_title">Aufnahmeordner ist weg</string>
     <string name="home_status_folder_gone_suggestion">Neue Anrufe werden in CallVault aufbewahrt, bis du einen Ordner wählst. Tippen, um die Einstellungen zu öffnen.</string>
     <string name="home_hero_pill_folder_gone">Ordner fehlt</string>
+    <string name="notif_folder_gone_text">Neue Anrufe werden in CallVault aufbewahrt, bis du wieder einen Ordner wählst. Wenn du CallVault deinstallierst, gehen sie verloren.</string>
+    <string name="waiting_calls_text">Wähle einen Aufnahmeordner, dann werden sie dort gespeichert. Wenn du CallVault deinstallierst, gehen sie verloren.</string>
+    <string name="waiting_calls_nearly_full_text">Der Platz für wartende Anrufe ist fast voll. Wähle jetzt einen Aufnahmeordner. Wartende Anrufe gehen verloren, wenn du CallVault deinstallierst.</string>
+    <string name="waiting_calls_full_text">Kein Platz mehr für wartende Anrufe, neue Anrufe werden nicht aufgenommen. Wähle jetzt einen Aufnahmeordner.</string>
+    <string name="waiting_calls_saved_text">Sie sind jetzt in deinem Aufnahmeordner.</string>
+    <plurals name="waiting_calls_title">
+        <item quantity="one">%1$d Anruf wartet aufs Speichern</item>
+        <item quantity="other">%1$d Anrufe warten aufs Speichern</item>
+    </plurals>
+    <plurals name="waiting_calls_saved_title">
+        <item quantity="one">%1$d wartender Anruf gespeichert</item>
+        <item quantity="other">%1$d wartende Anrufe gespeichert</item>
+    </plurals>
 </resources>

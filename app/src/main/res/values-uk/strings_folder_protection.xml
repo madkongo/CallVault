@@ -4,4 +4,21 @@
     <string name="recording_folder_gone_title">Папка записів зникла</string>
     <string name="home_status_folder_gone_suggestion">Нові дзвінки зберігаються в CallVault, доки ви не виберете папку. Торкніться, щоб відкрити налаштування.</string>
     <string name="home_hero_pill_folder_gone">Немає папки</string>
+    <string name="notif_folder_gone_text">Нові дзвінки зберігаються в CallVault, доки ви знову не виберете папку. Вони зникнуть, якщо видалити CallVault.</string>
+    <string name="waiting_calls_text">Виберіть папку для записів, і їх буде збережено в ній. Вони зникнуть, якщо видалити CallVault.</string>
+    <string name="waiting_calls_nearly_full_text">Місце для дзвінків, що чекають, майже закінчилося. Виберіть папку для записів зараз. Дзвінки, що чекають, зникнуть, якщо видалити CallVault.</string>
+    <string name="waiting_calls_full_text">Місця для дзвінків, що чекають, більше немає, тож нові дзвінки не записуються. Виберіть папку для записів зараз.</string>
+    <string name="waiting_calls_saved_text">Тепер вони у вашій папці записів.</string>
+    <plurals name="waiting_calls_title">
+        <item quantity="one">%1$d дзвінок чекає збереження</item>
+        <item quantity="few">%1$d дзвінки чекають збереження</item>
+        <item quantity="many">%1$d дзвінків чекають збереження</item>
+        <item quantity="other">%1$d дзвінка чекають збереження</item>
+    </plurals>
+    <plurals name="waiting_calls_saved_title">
+        <item quantity="one">Збережено %1$d дзвінок, що чекав</item>
+        <item quantity="few">Збережено %1$d дзвінки, що чекали</item>
+        <item quantity="many">Збережено %1$d дзвінків, що чекали</item>
+        <item quantity="other">Збережено %1$d дзвінка, що чекали</item>
+    </plurals>
 </resources>

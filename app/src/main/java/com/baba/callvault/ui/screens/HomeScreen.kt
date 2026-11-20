@@ -1166,6 +1166,9 @@ fun HomeScreen(
                         },
                         onSetRecordingState = { viewModel.setRecordingState(it) },
                     )
+                    if (uiState.waitingCalls > 0) {
+                        WaitingCallsCard(uiState.waitingCalls, uiState.waitingBytes, onOpenSettings)
+                    }
                     if (uiState.usbScreenLockRisk) {
                         UsbReliabilityAdvisoryCard(
                             fixing = uiState.usbFixInProgress,

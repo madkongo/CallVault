@@ -45,6 +45,7 @@ import com.baba.callvault.services.recording.RecordingPolicy
 import com.baba.callvault.data.health.Prerequisite
 import com.baba.callvault.data.health.SetupPrerequisites
 import com.baba.callvault.system.storage.RecordingFolderCheck
+import com.baba.callvault.system.storage.WaitingRecordings
 import com.baba.callvault.data.recordings.AudioImport
 import com.baba.callvault.data.recordings.ImportedRecording
 import com.baba.callvault.data.recordings.RecordingDirection
@@ -205,6 +206,9 @@ class HomeViewModel(application: Application) : AndroidViewModel(application) {
      */
     data class HomeUiState(
         val status: HomeStatus = HomeStatus.READY,
+        /** Calls kept inside CallVault while the recording folder was not usable, and their size (review N5). */
+        val waitingCalls: Int = 0,
+        val waitingBytes: Long = 0L,
         val recordings: List<RecordingItem> = emptyList(),
         /**
          * The transcribe-only imports on the device, newest-first, kept OUT of [recordings].
@@ -941,6 +945,10 @@ class HomeViewModel(application: Application) : AndroidViewModel(application) {
             val current = if (measured == null) status else computeStatus().also { now ->
                 if (now != status) _uiState.update { it.copy(status = now) }
             }
+            val (waiting, waitingBytes) = withContext(Dispatchers.IO) {
+                WaitingRecordings.count(appContext) to WaitingRecordings.totalBytes(appContext)
+            }
+            _uiState.update { it.copy(waitingCalls = waiting, waitingBytes = waitingBytes) }
             val health = withContext(Dispatchers.IO) { sweepSetupHealth(current.isReady) }
             _uiState.update { it.copy(setupHealth = health) }
             // A recording deleted in Drive itself stays listed until something notices; this does, every few hours.

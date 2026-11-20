@@ -4,4 +4,17 @@
     <string name="recording_folder_gone_title">錄音資料夾不見了</string>
     <string name="home_status_folder_gone_suggestion">在你選擇資料夾之前，新通話會保存在 CallVault 內。輕觸開啟設定。</string>
     <string name="home_hero_pill_folder_gone">資料夾遺失</string>
+    <string name="notif_folder_gone_text">在你重新選擇資料夾之前，新通話會保存在 CallVault 內。如果解除安裝 CallVault，這些通話會遺失。</string>
+    <string name="waiting_calls_text">選擇一個錄音資料夾，通話就會儲存到那裡。如果解除安裝 CallVault，這些通話會遺失。</string>
+    <string name="waiting_calls_nearly_full_text">等待儲存的通話空間快滿了。請立即選擇錄音資料夾。如果解除安裝 CallVault，等待中的通話會遺失。</string>
+    <string name="waiting_calls_full_text">等待儲存的通話已沒有空間，新通話不會錄音。請立即選擇錄音資料夾。</string>
+    <string name="waiting_calls_saved_text">它們現在已在你的錄音資料夾中。</string>
+    <plurals name="waiting_calls_title">
+        <item quantity="one">%1$d 個通話等待儲存</item>
+        <item quantity="other">%1$d 個通話等待儲存</item>
+    </plurals>
+    <plurals name="waiting_calls_saved_title">
+        <item quantity="one">已儲存 %1$d 個等待中的通話</item>
+        <item quantity="other">已儲存 %1$d 個等待中的通話</item>
+    </plurals>
 </resources>

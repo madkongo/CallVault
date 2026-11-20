@@ -4,4 +4,21 @@
     <string name="recording_folder_gone_title">Folder nagrań zniknął</string>
     <string name="home_status_folder_gone_suggestion">Nowe rozmowy są przechowywane w CallVault, dopóki nie wybierzesz folderu. Dotknij, aby otworzyć Ustawienia.</string>
     <string name="home_hero_pill_folder_gone">Brak folderu</string>
+    <string name="notif_folder_gone_text">Nowe rozmowy są przechowywane w CallVault, dopóki znów nie wybierzesz folderu. Przepadną, jeśli odinstalujesz CallVault.</string>
+    <string name="waiting_calls_text">Wybierz folder nagrań, a zostaną w nim zapisane. Przepadną, jeśli odinstalujesz CallVault.</string>
+    <string name="waiting_calls_nearly_full_text">Miejsce na oczekujące rozmowy prawie się skończyło. Wybierz teraz folder nagrań. Oczekujące rozmowy przepadną, jeśli odinstalujesz CallVault.</string>
+    <string name="waiting_calls_full_text">Brak miejsca na oczekujące rozmowy, więc nowe rozmowy nie są nagrywane. Wybierz teraz folder nagrań.</string>
+    <string name="waiting_calls_saved_text">Są już w Twoim folderze nagrań.</string>
+    <plurals name="waiting_calls_title">
+        <item quantity="one">%1$d rozmowa czeka na zapisanie</item>
+        <item quantity="few">%1$d rozmowy czekają na zapisanie</item>
+        <item quantity="many">%1$d rozmów czeka na zapisanie</item>
+        <item quantity="other">%1$d rozmowy czekają na zapisanie</item>
+    </plurals>
+    <plurals name="waiting_calls_saved_title">
+        <item quantity="one">Zapisano %1$d oczekującą rozmowę</item>
+        <item quantity="few">Zapisano %1$d oczekujące rozmowy</item>
+        <item quantity="many">Zapisano %1$d oczekujących rozmów</item>
+        <item quantity="other">Zapisano %1$d oczekującej rozmowy</item>
+    </plurals>
 </resources>

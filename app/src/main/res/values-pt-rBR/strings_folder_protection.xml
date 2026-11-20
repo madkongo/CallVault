@@ -4,4 +4,17 @@
     <string name="recording_folder_gone_title">A pasta de gravações sumiu</string>
     <string name="home_status_folder_gone_suggestion">As novas chamadas ficam guardadas no CallVault até você escolher uma pasta. Toque para abrir as Configurações.</string>
     <string name="home_hero_pill_folder_gone">Sem pasta</string>
+    <string name="notif_folder_gone_text">As novas chamadas ficam guardadas no CallVault até você escolher uma pasta de novo. Elas se perdem se você desinstalar o CallVault.</string>
+    <string name="waiting_calls_text">Escolha uma pasta de gravações e elas serão salvas lá. Elas se perdem se você desinstalar o CallVault.</string>
+    <string name="waiting_calls_nearly_full_text">O espaço para chamadas em espera está quase cheio. Escolha uma pasta de gravações agora. As chamadas em espera se perdem se você desinstalar o CallVault.</string>
+    <string name="waiting_calls_full_text">Não há mais espaço para chamadas em espera, então novas chamadas não são gravadas. Escolha uma pasta de gravações agora.</string>
+    <string name="waiting_calls_saved_text">Elas já estão na sua pasta de gravações.</string>
+    <plurals name="waiting_calls_title">
+        <item quantity="one">%1$d chamada esperando para ser salva</item>
+        <item quantity="other">%1$d chamadas esperando para serem salvas</item>
+    </plurals>
+    <plurals name="waiting_calls_saved_title">
+        <item quantity="one">%1$d chamada em espera salva</item>
+        <item quantity="other">%1$d chamadas em espera salvas</item>
+    </plurals>
 </resources>

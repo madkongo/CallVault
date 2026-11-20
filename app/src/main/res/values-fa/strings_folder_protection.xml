@@ -4,4 +4,17 @@
     <string name="recording_folder_gone_title">پوشهٔ ضبط‌ها وجود ندارد</string>
     <string name="home_status_folder_gone_suggestion">تماس‌های جدید تا وقتی پوشه‌ای انتخاب کنید داخل CallVault نگه داشته می‌شوند. برای باز کردن تنظیمات ضربه بزنید.</string>
     <string name="home_hero_pill_folder_gone">پوشه نیست</string>
+    <string name="notif_folder_gone_text">تماس‌های جدید تا وقتی دوباره پوشه‌ای انتخاب کنید داخل CallVault نگه داشته می‌شوند. اگر CallVault را حذف کنید از دست می‌روند.</string>
+    <string name="waiting_calls_text">یک پوشهٔ ضبط انتخاب کنید تا در آن ذخیره شوند. اگر CallVault را حذف کنید از دست می‌روند.</string>
+    <string name="waiting_calls_nearly_full_text">فضای تماس‌های در انتظار تقریباً پر شده است. همین حالا یک پوشهٔ ضبط انتخاب کنید. اگر CallVault را حذف کنید تماس‌های در انتظار از دست می‌روند.</string>
+    <string name="waiting_calls_full_text">دیگر جایی برای تماس‌های در انتظار نیست، پس تماس‌های جدید ضبط نمی‌شوند. همین حالا یک پوشهٔ ضبط انتخاب کنید.</string>
+    <string name="waiting_calls_saved_text">اکنون در پوشهٔ ضبط شما هستند.</string>
+    <plurals name="waiting_calls_title">
+        <item quantity="one">%1$d تماس در انتظار ذخیره</item>
+        <item quantity="other">%1$d تماس در انتظار ذخیره</item>
+    </plurals>
+    <plurals name="waiting_calls_saved_title">
+        <item quantity="one">%1$d تماس در انتظار ذخیره شد</item>
+        <item quantity="other">%1$d تماس در انتظار ذخیره شد</item>
+    </plurals>
 </resources>

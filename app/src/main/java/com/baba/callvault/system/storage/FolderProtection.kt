@@ -37,14 +37,21 @@ object FolderProtection {
 
     /** After every folder check. */
     internal fun onChecked(context: Context, step: FolderCheckPolicy.Step) = guard("after check") {
-        if (step.state.kind == FolderReading.Kind.OK && WaitingRecordings.count(context) > 0) {
-            AppLogger.i(TAG, "The recording folder is usable and calls are waiting; saving them")
-            WaitingRecordingsWorker.schedule(context)
+        // Once per loss, the moment it is confirmed, before any call: not through the missed-call gate (review N5).
+        if (step.alert) notify(context, "folder confirmed gone", folderGone = true)
+        if (step.state.kind == FolderReading.Kind.OK) {
+            if (WaitingRecordings.count(context) > 0) {
+                AppLogger.i(TAG, "The recording folder is usable and calls are waiting; saving them")
+                WaitingRecordingsWorker.schedule(context)
+            } else if (step.cleared) {
+                FolderNotice.show(context, FolderNotice.Clear)
+            }
         }
     }
 
     /** A call was kept in CallVault's own storage. */
     fun onWaitingKept(context: Context) = guard("call kept") {
+        notify(context, "a call was kept", folderGone = true)
         // Saved at once if the folder came back during the call; otherwise the worker finds it still unusable.
         WaitingRecordingsWorker.schedule(context)
     }
@@ -52,11 +59,31 @@ object FolderProtection {
     /** A call could not be kept: the waiting area is full or the phone is out of space. */
     fun onWaitingRefused(context: Context, admission: WaitingPolicy.Admission) = guard("call refused") {
         AppLogger.w(TAG, "A call could not be kept while the folder is not usable: $admission")
+        notify(context, "a call could not be kept ($admission)", folderGone = true, refused = admission)
     }
 
     /** [count] waiting calls were saved into the folder. */
     fun onWaitingSaved(context: Context, count: Int) = guard("calls saved") {
         AppLogger.i(TAG, "$count waiting call(s) saved into the recording folder")
+        if (WaitingRecordings.count(context) == 0) {
+            val shown = FolderNotice.showSaved(context, count)
+            RecordingFolderCheck.recordAlwaysOn(context, "notice: $count waiting call(s) saved${if (shown) "" else " (notice NOT shown)"}")
+        } else {
+            notify(context, "some calls still waiting", folderGone = RecordingFolderCheck.cached(context)?.confirmedUnusable == true)
+        }
+    }
+
+    /** Shows the alert for the state now, and says in the always-on log whether it reached the user. */
+    private fun notify(context: Context, why: String, folderGone: Boolean, refused: WaitingPolicy.Admission? = null) {
+        val count = WaitingRecordings.count(context)
+        val bytes = WaitingRecordings.totalBytes(context)
+        val notice = FolderNotice.decide(folderGone, count, bytes, refused)
+        val shown = FolderNotice.show(context, notice)
+        RecordingFolderCheck.recordAlwaysOn(
+            context,
+            "alert ($why): waiting $count calls, $bytes bytes -> " +
+                if (notice is FolderNotice.Post) (if (shown) "shown" else "NOT shown (no notification permission, or posting failed)") else "cleared",
+        )
     }
 
     private inline fun guard(what: String, block: () -> Unit) {

@@ -4,4 +4,25 @@
     <string name="recording_folder_gone_title">مجلد التسجيلات غير موجود</string>
     <string name="home_status_folder_gone_suggestion">تُحفظ المكالمات الجديدة داخل CallVault حتى تختار مجلدًا. اضغط لفتح الإعدادات.</string>
     <string name="home_hero_pill_folder_gone">المجلد مفقود</string>
+    <string name="notif_folder_gone_text">تُحفظ المكالمات الجديدة داخل CallVault حتى تختار مجلدًا من جديد. ستضيع إذا ألغيت تثبيت CallVault.</string>
+    <string name="waiting_calls_text">اختر مجلدًا للتسجيلات وستُحفظ فيه. ستضيع إذا ألغيت تثبيت CallVault.</string>
+    <string name="waiting_calls_nearly_full_text">المساحة المخصصة للمكالمات المنتظرة توشك أن تمتلئ. اختر مجلدًا للتسجيلات الآن. ستضيع المكالمات المنتظرة إذا ألغيت تثبيت CallVault.</string>
+    <string name="waiting_calls_full_text">لم تعد هناك مساحة للمكالمات المنتظرة، لذا لن تُسجَّل المكالمات الجديدة. اختر مجلدًا للتسجيلات الآن.</string>
+    <string name="waiting_calls_saved_text">أصبحت الآن في مجلد التسجيلات.</string>
+    <plurals name="waiting_calls_title">
+        <item quantity="zero">مكالمات تنتظر الحفظ (%1$d)</item>
+        <item quantity="one">مكالمات تنتظر الحفظ (%1$d)</item>
+        <item quantity="two">مكالمات تنتظر الحفظ (%1$d)</item>
+        <item quantity="few">مكالمات تنتظر الحفظ (%1$d)</item>
+        <item quantity="many">مكالمات تنتظر الحفظ (%1$d)</item>
+        <item quantity="other">مكالمات تنتظر الحفظ (%1$d)</item>
+    </plurals>
+    <plurals name="waiting_calls_saved_title">
+        <item quantity="zero">تم حفظ مكالمات منتظرة (%1$d)</item>
+        <item quantity="one">تم حفظ مكالمات منتظرة (%1$d)</item>
+        <item quantity="two">تم حفظ مكالمات منتظرة (%1$d)</item>
+        <item quantity="few">تم حفظ مكالمات منتظرة (%1$d)</item>
+        <item quantity="many">تم حفظ مكالمات منتظرة (%1$d)</item>
+        <item quantity="other">تم حفظ مكالمات منتظرة (%1$d)</item>
+    </plurals>
 </resources>
