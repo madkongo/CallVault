@@ -44,6 +44,12 @@ object BatteryUseReport {
 
     const val NORMAL = "looks normal by these numbers"
 
+    /** Said with every reason that adds the shell uid in: it is not only the recorder. */
+    const val SHELL_CAVEAT = "shell also counts adbd, Shizuku and other adb tools"
+
+    private const val HIGH = "high: "
+    private const val ESTIMATES = " (limits are estimates)"
+
     private const val APP_LABEL = "CallVault app"
     private const val HOUR_MS = 3_600_000L
     private const val MINUTE_MS = 60_000L
@@ -66,7 +72,9 @@ object BatteryUseReport {
         add(countsLine(counts, use.sinceMillis, zone))
         add("Transcription on battery vs charger: not recorded by this version.")
         use.notes.forEach { add("Note: $it") }
-        add("Verdict: " + verdict(use, counts))
+        val verdict = verdict(use, counts)
+        val isJudged = verdict == NORMAL || verdict.startsWith(HIGH)
+        add("Verdict: " + verdict + if (isJudged) ESTIMATES else "")
     }
 
     /** One plain verdict: "looks normal…", "too little time…", or "high: <each reason>". */
@@ -81,7 +89,7 @@ object BatteryUseReport {
             alarms(use, hours),
             power(use),
         )
-        return if (reasons.isEmpty()) NORMAL else "high: " + reasons.joinToString("; ")
+        return if (reasons.isEmpty()) NORMAL else HIGH + reasons.joinToString("; ")
     }
 
     /**
@@ -107,13 +115,13 @@ object BatteryUseReport {
         val shell = use.shell?.cpuMs ?: 0
         if (app + shell <= CPU_HIGH_MS_PER_HOUR * hours) return null
         return "CPU ${duration(app + shell)} in ${duration(use.onBatteryMs)} on battery " +
-            "(app ${duration(app)}, shell ${duration(shell)}; shell also counts adbd and any other adb tool)"
+            "(app ${duration(app)}, shell ${duration(shell)}; $SHELL_CAVEAT)"
     }
 
     private fun wake(use: BatteryUse): String? {
         val held = (use.app?.partialWakeLockMs ?: 0) + (use.shell?.partialWakeLockMs ?: 0)
         if (held <= WAKE_HIGH_FRACTION * use.onBatteryMs) return null
-        return "wake locks held ${duration(held)} (${held * PERCENT / use.onBatteryMs}% of the time on battery)"
+        return "wake locks held ${duration(held)} (${held * PERCENT / use.onBatteryMs}% of the time on battery; $SHELL_CAVEAT)"
     }
 
     private fun alarms(use: BatteryUse, hours: Double): String? {
@@ -126,7 +134,7 @@ object BatteryUseReport {
         val ours = (use.app?.powerMah ?: 0.0) + (use.shell?.powerMah ?: 0.0)
         if (ours < POWER_SHARE_HIGH * total) return null
         return "estimated ${"%.0f".format(Locale.US, ours)} mAh of Android's ${"%.0f".format(Locale.US, total)} mAh estimate " +
-            "(${(ours * PERCENT / total).toInt()}%)"
+            "(${(ours * PERCENT / total).toInt()}%; $SHELL_CAVEAT)"
     }
 
     private fun period(use: BatteryUse, zone: TimeZone): String = buildString {

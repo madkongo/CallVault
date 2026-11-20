@@ -74,6 +74,21 @@ class BatteryUseReportTest {
     }
 
     @Test
+    fun `every reason that counts the shell says what else the shell holds`() {
+        val held = (10 * hour * BatteryUseReport.WAKE_HIGH_FRACTION).toLong() + 1
+        val wake = BatteryUseReport.verdict(quiet().copy(app = UidUse(10234, wakeLocks = listOf(NamedUse("w", 1, held)))), null)
+        val power = BatteryUseReport.verdict(quiet().copy(app = UidUse(10234, powerMah = 200.0)), null)
+        val cpu = BatteryUseReport.verdict(quiet().copy(shell = UidUse(2000, cpuUserMs = 10 * BatteryUseReport.CPU_HIGH_MS_PER_HOUR)), null)
+        listOf(wake, power, cpu).forEach { assertTrue(it, it.contains(BatteryUseReport.SHELL_CAVEAT)) }
+    }
+
+    @Test
+    fun `a judged verdict line says its limits are estimates, a refusal to judge does not`() {
+        assertEquals("Verdict: looks normal by these numbers (limits are estimates)", BatteryUseReport.lines(quiet(), null, utc).last())
+        assertEquals("Verdict: cannot judge: no batterystats row for the CallVault app", BatteryUseReport.lines(quiet().copy(app = null), null, utc).last())
+    }
+
+    @Test
     fun `quiet numbers look normal`() {
         assertEquals("looks normal by these numbers", BatteryUseReport.verdict(quiet(), null))
     }
