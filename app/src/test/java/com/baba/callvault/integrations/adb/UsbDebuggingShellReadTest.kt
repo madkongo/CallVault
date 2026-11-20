@@ -59,4 +59,24 @@ class UsbDebuggingShellReadTest {
         UsbDebuggingShellRead.refreshWith(t0) { "1" }
         assertEquals(true, UsbDebuggingShellRead.current(t0 + 90_000))
     }
+
+    @Test
+    fun `S3 - a read still running when a switch changes is dropped, not stored as fresh`() {
+        // The adb_enabled observer starts a read; USB debugging is switched off while it is in flight.
+        val got = UsbDebuggingShellRead.refreshWith(t0) {
+            UsbDebuggingShellRead.forget() // the switch change lands mid-read
+            "1" // what the shell saw before the change
+        }
+        assertEquals(null, got)
+        assertEquals(null, UsbDebuggingShellRead.current(t0 + 1_000))
+        // So R2 decides again instead of the stale on.
+        assertEquals(UsbDebuggingState.OFF, answer(AdbdState.STOPPED, t0 + 1_000))
+    }
+
+    @Test
+    fun `a read begun after the switch change is kept`() {
+        UsbDebuggingShellRead.forget()
+        assertEquals(false, UsbDebuggingShellRead.refreshWith(t0) { "0" })
+        assertEquals(false, UsbDebuggingShellRead.current(t0 + 1_000))
+    }
 }

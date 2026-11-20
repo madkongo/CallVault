@@ -66,10 +66,19 @@ object UsbDebuggingShellRead {
         return refreshWith(now) { service.diagnosticDump("setting_adb_enabled", null) }
     }
 
-    /** [refresh] with the read itself passed in, so the bookkeeping is testable without a recorder. */
+    /**
+     * [refresh] with the read itself passed in, so the bookkeeping is testable without a recorder.
+     *
+     * A read still in flight when a switch changes ([forget]) saw the old switch: it is dropped rather than stored as
+     * fresh, or it would override R1/R2 for up to [FRESH_MS] with a value that no longer holds (review S3).
+     */
     internal fun refreshWith(now: Long, read: () -> String?): Boolean? {
+        val startedIn = generation
         val on = parse(runCatching(read).getOrNull()?.trim()) ?: return null
-        synchronized(this) { reading = Reading(on, now, Source.SHELL) }
+        synchronized(this) {
+            if (startedIn != generation) return null
+            reading = Reading(on, now, Source.SHELL)
+        }
         return on
     }
 
