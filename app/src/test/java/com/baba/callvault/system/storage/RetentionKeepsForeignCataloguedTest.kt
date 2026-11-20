@@ -67,7 +67,7 @@ class RetentionKeepsForeignCataloguedTest {
         // A merge output is CallVault's whatever its name: the merge wrote it.
         parts.insertAll(listOf(MergePartEntry(mergedForeignShape, 1, "x.m4a", 0, 1, 0L, 1L, 1L, 0L, 0L)))
         mockkObject(RecordingsRepository)
-        coEvery { RecordingsRepository.deleteFile(any(), any()) } returns true
+        coEvery { RecordingsRepository.deleteCopy(any(), any(), any()) } returns true
     }
 
     @After
@@ -84,7 +84,7 @@ class RetentionKeepsForeignCataloguedTest {
     }
 
     private fun deleted(name: String) = runCatching {
-        coVerify(atLeast = 1) { RecordingsRepository.deleteFile(any(), Uri.parse(local(name))) }
+        coVerify(atLeast = 1) { RecordingsRepository.deleteCopy(any(), Uri.parse(local(name)), any()) }
     }.isSuccess
 
     @Test

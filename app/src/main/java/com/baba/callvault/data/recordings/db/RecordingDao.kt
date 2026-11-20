@@ -55,6 +55,13 @@ interface RecordingDao {
     @Query("SELECT * FROM recordings WHERE displayName = :displayName LIMIT 1")
     suspend fun findByName(displayName: String): RecordingEntry?
 
+    /**
+     * The row that holds [uri] as its device or Drive copy, if any. One query that reads at most one row, so deleting a
+     * copy no longer reads the whole catalog (R47). No new index: that would be a schema change.
+     */
+    @Query("SELECT * FROM recordings WHERE localUri = :uri OR driveUri = :uri LIMIT 1")
+    suspend fun findByUri(uri: String): RecordingEntry?
+
     /** Insert or replace a full row (used by record-finish and the one-time import). */
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun upsert(entry: RecordingEntry)

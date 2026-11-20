@@ -18,6 +18,7 @@ import com.baba.callvault.data.StorageTarget
 import com.baba.callvault.data.recordings.DriveCatalogRepair
 import com.baba.callvault.data.recordings.ImportedRecording
 import com.baba.callvault.data.recordings.RecordingCatalog
+import com.baba.callvault.data.recordings.RecordingSidecars
 import com.baba.callvault.data.recordings.RecordingsRepository
 import com.baba.callvault.data.recordings.RecordingsRepository.RecordingItem
 import com.baba.callvault.data.recordings.UntrackedRecordings
@@ -97,13 +98,20 @@ class RetentionSweepWorker(ctx: Context, params: WorkerParameters) : CoroutineWo
         val keptForDrive = HashSet<String>()
         var keptUnproven = 0
         var keptForeign = 0
+        // Recordings whose last copy this run deletes: their sidecars (.md, .json) are removed once at the end, with
+        // one folder listing, not one per copy (C41).
+        val orphanedNames = ArrayList<String>()
         val catalogue = RecordingCatalog.allOrNull(applicationContext) ?: run {
             // Not "no recordings": an unreadable catalog proves nothing, so this run deletes nothing and leaves the
             // "kept for Drive" notice as it was (review N3).
             AppLogger.w(TAG, "The catalog could not be read; skipping retention this run")
             return Result.success()
         }
+        var stoppedEarly = false
         for (entry in catalogue) {
+            // A stop request ends the loop (R47): the first run on a big library is long, and WorkManager gives a
+            // job only so long. What is left is found again by the next daily run.
+            if (isStopped) { stoppedEarly = true; break }
             // And the right stamp is only half of it. Once the retention period elapses this pass
             // would delete an import like anything else — except that for a call the Drive copy
             // survives and the row keeps its transcript, while an import has no Drive copy by design.
@@ -122,14 +130,19 @@ class RetentionSweepWorker(ctx: Context, params: WorkerParameters) : CoroutineWo
                     keptUnproven++
                     keptForDrive += entry.displayName
                 }
-                else if (RecordingsRepository.deleteFile(applicationContext, localUri.toUri())) deletedLocal++
+                else if (RecordingsRepository.deleteCopy(applicationContext, localUri.toUri(), orphanedNames)) deletedLocal++
             }
             val driveUri = entry.driveUri
             if (driveUri != null && RetentionPolicy.isExpired(ts, driveCutoff)) {
-                if (RecordingsRepository.deleteFile(applicationContext, driveUri.toUri())) deletedDrive++
+                if (RecordingsRepository.deleteCopy(applicationContext, driveUri.toUri(), orphanedNames)) deletedDrive++
             }
         }
 
+        if (stoppedEarly) {
+            AppLogger.w(TAG, "Retention sweep was asked to stop; the rest is left for the next run (deletedLocal=$deletedLocal deletedDrive=$deletedDrive)")
+            RecordingSidecars.deleteOrphanedFor(applicationContext, orphanedNames)
+            return Result.success()
+        }
         if (keptForeign > 0) {
             AppLogger.i(TAG, "Kept $keptForeign catalogued file(s) whose name is not one CallVault writes")
         }
@@ -158,13 +171,14 @@ class RetentionSweepWorker(ctx: Context, params: WorkerParameters) : CoroutineWo
         val deletedDriveNames = deleteExpired(untracked.drive.filter { it.displayName !in starred }, driveCutoff, "Drive")
         deletedLocal += deletedDeviceNames.size
         deletedDrive += deletedDriveNames.size
-        cascadeForUntracked(untracked, deletedDeviceNames + deletedDriveNames)
+        orphanedNames += cascadeForUntracked(untracked, deletedDeviceNames + deletedDriveNames)
 
         // After the age pass, never before: an expired recording should go because it expired, and
         // counting it against the cap first could evict a newer one that the age rule was going to
         // spare. Running second also means the cap only ever sees what age retention chose to keep.
-        val deletedByCap = if (capBytes > 0L && sizesTrusted) sweepStorageCap(capBytes, keptForDrive)
+        val deletedByCap = if (capBytes > 0L && sizesTrusted) sweepStorageCap(capBytes, keptForDrive, orphanedNames)
         else if (capBytes > 0L) null else 0
+        RecordingSidecars.deleteOrphanedFor(applicationContext, orphanedNames)
         val awaitingReconfirm = target != StorageTarget.LOCAL &&
             !RecordingCatalog.areDriveSizesReconfirmed(applicationContext)
         if (awaitingReconfirm) {
@@ -201,7 +215,7 @@ class RetentionSweepWorker(ctx: Context, params: WorkerParameters) : CoroutineWo
      *
      * @return how many device copies were deleted, or null when the cap sat this run out (see the log).
      */
-    private suspend fun sweepStorageCap(capBytes: Long, keptForDrive: MutableSet<String>): Int? {
+    private suspend fun sweepStorageCap(capBytes: Long, keptForDrive: MutableSet<String>, orphanedNames: MutableCollection<String>): Int? {
         // A failed read here must mean "protect everything", not "protect nothing". Sweeping with an
         // empty exemption set would delete precisely the recordings the user starred to keep, so the
         // cap sits this run out instead and tries again tomorrow.
@@ -254,8 +268,12 @@ class RetentionSweepWorker(ctx: Context, params: WorkerParameters) : CoroutineWo
 
         var deleted = 0
         for (name in doomed) {
+            if (isStopped) {
+                AppLogger.w(TAG, "Storage cap was asked to stop after $deleted of ${doomed.size}; the rest waits for the next run")
+                break
+            }
             val uri = uriByName[name] ?: continue
-            if (RecordingsRepository.deleteFile(applicationContext, uri.toUri())) deleted++
+            if (RecordingsRepository.deleteCopy(applicationContext, uri.toUri(), orphanedNames)) deleted++
         }
 
         // Said plainly, because it is the one case where the setting visibly does not do what it
@@ -284,6 +302,10 @@ class RetentionSweepWorker(ctx: Context, params: WorkerParameters) : CoroutineWo
     private fun deleteExpired(items: List<RecordingItem>, cutoff: Long?, where: String): List<RecordingItem> {
         val deleted = mutableListOf<RecordingItem>()
         for (item in items) {
+            if (isStopped) {
+                AppLogger.w(TAG, "Untracked $where pass was asked to stop; the rest is found again next run")
+                break
+            }
             if (!RetentionPolicy.isExpired(item.lastModified, cutoff)) continue
             val gone = runCatching {
                 DocumentFile.fromSingleUri(applicationContext, item.uri)?.delete() == true
@@ -305,8 +327,8 @@ class RetentionSweepWorker(ctx: Context, params: WorkerParameters) : CoroutineWo
      * that still holds a copy, means the recording still exists and its transcript must stay. See
      * [UntrackedCascade] for why that distinction is the whole point.
      */
-    private suspend fun cascadeForUntracked(untracked: UntrackedRecordings.Found, deleted: List<RecordingItem>) {
-        if (deleted.isEmpty()) return
+    private suspend fun cascadeForUntracked(untracked: UntrackedRecordings.Found, deleted: List<RecordingItem>): List<String> {
+        if (deleted.isEmpty()) return emptyList()
         // By URI, not by name: a name with a copy in each folder appears twice, and only the copy that was
         // actually deleted may be crossed off. Comparing names here would call a surviving copy deleted.
         val deletedUris = deleted.map { it.uri }.toSet()
@@ -322,9 +344,10 @@ class RetentionSweepWorker(ctx: Context, params: WorkerParameters) : CoroutineWo
             survivingUntracked = survivingUntracked,
             cataloguedWithCopies = cataloguedWithCopies,
         )
-        if (orphaned.isEmpty()) return
+        if (orphaned.isEmpty()) return emptyList()
         AppLogger.i(TAG, "Removing what ${orphaned.size} deleted untracked recording(s) left behind")
         TranscriptCascade.deleteFor(applicationContext, orphaned)
+        return orphaned.toList()
     }
 
     /** Names of merge outputs, or null when they cannot be read (the caller then deletes nothing). */

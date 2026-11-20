@@ -79,7 +79,7 @@ class RetentionDriveNoticeTest {
         prefs.setStorageCapBytes(0L)
         prefs.setRetentionLocalDays(7)
         mockkObject(RecordingsRepository, SilentFailureNotifier)
-        coEvery { RecordingsRepository.deleteFile(any(), any()) } returns true
+        coEvery { RecordingsRepository.deleteCopy(any(), any(), any()) } returns true
         justRun { SilentFailureNotifier.updateRetentionWaitingForDrive(any(), any()) }
     }
 
