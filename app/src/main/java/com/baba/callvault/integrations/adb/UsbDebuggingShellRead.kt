@@ -33,7 +33,17 @@ object UsbDebuggingShellRead {
 
     private class Reading(val on: Boolean, val atMs: Long, val source: Source)
 
+    /** Why there is no value, for the transport timeline (review S4). Cleared by any stored value. */
+    private enum class Miss(val label: String) {
+        NOT_NEEDED("skip"),
+        NO_RECORDER("?(no recorder)"),
+        FAILED("?(failed)"),
+        SWITCH_CHANGED("?(switch changed)"),
+        DROPPED("?(dropped: switch changed mid-read)"),
+    }
+
     @Volatile private var reading: Reading? = null
+    @Volatile private var miss: Miss? = null
 
     /** Bumped by every [forget], i.e. every switch change. A proof or read begun before one is dropped. */
     @Volatile private var generation = 0L
@@ -48,6 +58,26 @@ object UsbDebuggingShellRead {
     fun forget() {
         reading = null
         generation++
+        miss = Miss.SWITCH_CHANGED
+    }
+
+    /** The setting reads 1, so nothing was asked. Recorded only so the timeline can say so. */
+    fun markNotNeeded() {
+        miss = Miss.NOT_NEEDED
+    }
+
+    /**
+     * The value as the transport timeline prints it: `on` / `off` (the recorder's read), `on(r1)` (R1's proof), or why
+     * it is unknown — `skip`, `?(no recorder)`, `?(failed)`, `?(switch changed)`, `?(dropped: …)`, `?(stale)`.
+     */
+    fun describe(now: Long = System.currentTimeMillis(), recorderAlive: Boolean): String {
+        val r = reading
+        if (r != null && now - r.atMs <= FRESH_MS) {
+            return if (r.source == Source.R1) "on(r1)" else if (r.on) "on" else "off"
+        }
+        if (!recorderAlive) return Miss.NO_RECORDER.label
+        miss?.let { return it.label }
+        return if (r != null) "?(stale)" else "?"
     }
 
     /**
@@ -58,11 +88,12 @@ object UsbDebuggingShellRead {
     fun noteProvenOnByR1(startedIn: Long, now: Long = System.currentTimeMillis()) {
         if (startedIn != generation) return
         reading = Reading(true, now, Source.R1)
+        miss = null
     }
 
     /** Reads it again through the recorder. Blocking; never on the main thread. Null when it cannot be read. */
     fun refresh(now: Long = System.currentTimeMillis()): Boolean? {
-        val service = RecorderConnection.service ?: return null
+        val service = RecorderConnection.service ?: run { miss = Miss.NO_RECORDER; return null }
         return refreshWith(now) { service.diagnosticDump("setting_adb_enabled", null) }
     }
 
@@ -74,10 +105,18 @@ object UsbDebuggingShellRead {
      */
     internal fun refreshWith(now: Long, read: () -> String?): Boolean? {
         val startedIn = generation
-        val on = parse(runCatching(read).getOrNull()?.trim()) ?: return null
+        val on = parse(runCatching(read).getOrNull()?.trim())
         synchronized(this) {
-            if (startedIn != generation) return null
+            if (startedIn != generation) {
+                miss = Miss.DROPPED
+                return null
+            }
+            if (on == null) {
+                miss = Miss.FAILED
+                return null
+            }
             reading = Reading(on, now, Source.SHELL)
+            miss = null
         }
         return on
     }

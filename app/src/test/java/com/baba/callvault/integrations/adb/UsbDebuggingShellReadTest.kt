@@ -79,4 +79,44 @@ class UsbDebuggingShellReadTest {
         assertEquals(false, UsbDebuggingShellRead.refreshWith(t0) { "0" })
         assertEquals(false, UsbDebuggingShellRead.current(t0 + 1_000))
     }
+
+    // ---- S4: the timeline says why the value is unknown, not just "?" ----
+
+    private fun describe(now: Long = t0 + 1_000, alive: Boolean = true) = UsbDebuggingShellRead.describe(now, alive)
+
+    @Test
+    fun `the timeline shows a fresh value and where it came from`() {
+        UsbDebuggingShellRead.refreshWith(t0) { "0" }
+        assertEquals("off", describe())
+        UsbDebuggingShellRead.refreshWith(t0) { "1" }
+        assertEquals("on", describe())
+        UsbDebuggingShellRead.noteProvenOnByR1(UsbDebuggingShellRead.generation(), t0)
+        assertEquals("on(r1)", describe())
+    }
+
+    @Test
+    fun `the timeline tells skipped, no recorder, failed and stale apart`() {
+        UsbDebuggingShellRead.markNotNeeded()
+        assertEquals("skip", describe())
+
+        assertEquals("?(no recorder)", describe(alive = false))
+
+        UsbDebuggingShellRead.refreshWith(t0) { throw IllegalStateException("binder died") }
+        assertEquals("?(failed)", describe())
+
+        UsbDebuggingShellRead.refreshWith(t0) { "garbage" }
+        assertEquals("?(failed)", describe())
+
+        UsbDebuggingShellRead.refreshWith(t0) { "1" }
+        assertEquals("?(stale)", describe(now = t0 + 3 * 60_000))
+    }
+
+    @Test
+    fun `the timeline says when a switch change emptied it`() {
+        UsbDebuggingShellRead.refreshWith(t0) { "1" }
+        UsbDebuggingShellRead.forget()
+        assertEquals("?(switch changed)", describe())
+        UsbDebuggingShellRead.refreshWith(t0) { UsbDebuggingShellRead.forget(); "1" }
+        assertEquals("?(dropped: switch changed mid-read)", describe())
+    }
 }

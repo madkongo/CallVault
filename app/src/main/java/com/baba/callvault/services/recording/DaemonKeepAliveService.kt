@@ -329,7 +329,7 @@ class DaemonKeepAliveService : Service() {
             when (step.need) {
                 ShellReadNeed.READ -> readShellUsb()
                 ShellReadNeed.R1_DECIDES -> UsbDebuggingShellRead.noteProvenOnByR1(startedIn)
-                ShellReadNeed.SETTING_DECIDES -> Unit
+                ShellReadNeed.SETTING_DECIDES -> UsbDebuggingShellRead.markNotNeeded()
             }
         }.apply { isDaemon = true; name = "cv-usb-shell-read" }.start()
     }
