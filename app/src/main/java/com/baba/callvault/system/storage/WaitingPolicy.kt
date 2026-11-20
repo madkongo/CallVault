@@ -73,18 +73,27 @@ object WaitingPolicy {
 
 /**
  * The note beside a waiting recording: the [StagingNote] (same format, so the orphan check reads its start time)
- * plus when the call finished. The folder field is informational only: a waiting call is saved to whichever folder
- * is set when it is published.
+ * plus when the call finished (its after-call steps done) and what the steps at saving time need ([Extras]). The
+ * folder field is informational only: a waiting call is saved to whichever folder is set when it is published.
  */
-data class WaitingNote(val note: StagingNote, val finishedAt: Long?) {
+data class WaitingNote(val note: StagingNote, val finishedAt: Long?, val extras: Extras? = null) {
 
-    fun encode(): String = note.encode() + (finishedAt?.let { "\nfinished=$it" } ?: "")
+    /**
+     * What saving needs that the name does not say: the keep-or-delete question differs for app calls ([isVoip]), the
+     * details file names the near channel of an app-call mix ([appCallMix]) and an app call's [direction] token.
+     */
+    data class Extras(val isVoip: Boolean, val appCallMix: Boolean, val direction: String?)
+
+    fun encode(): String = note.encode() + (finishedAt?.let { "\nfinished=$it" } ?: "") +
+        (extras?.let { "\nvoip=${it.isVoip}\nmix=${it.appCallMix}" + (it.direction?.let { d -> "\ndir=$d" } ?: "") } ?: "")
 
     companion object {
         fun decode(text: String): WaitingNote? {
             val note = StagingNote.decode(text) ?: return null
-            val finished = text.lineSequence().firstOrNull { it.startsWith("finished=") }?.substringAfter('=')?.toLongOrNull()
-            return WaitingNote(note, finished)
+            fun field(key: String) = text.lineSequence().firstOrNull { it.startsWith("$key=") }?.substringAfter('=')
+            val voip = field("voip")?.toBooleanStrictOrNull()
+            val extras = voip?.let { Extras(it, field("mix")?.toBooleanStrictOrNull() ?: false, field("dir")?.takeIf { d -> d.isNotBlank() }) }
+            return WaitingNote(note, field("finished")?.toLongOrNull(), extras)
         }
 
         fun read(recording: File): WaitingNote? =

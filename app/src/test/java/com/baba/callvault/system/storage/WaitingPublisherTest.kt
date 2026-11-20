@@ -71,10 +71,13 @@ class WaitingPublisherTest {
             published += name
             return "content://x/document/$name".toUri() to name
         }
+        var hold = false
+        val held = mutableListOf<Boolean>()
+        override suspend fun beforeCatalog(name: String, uri: Uri, mimeType: String, note: WaitingNote): Boolean = hold
         override suspend fun catalog(name: String, uri: Uri, bytes: Long, startedAt: Long): Throwable? {
             catalogued += Triple(name, bytes, startedAt); return null
         }
-        override fun afterPublish(name: String, uri: Uri, mimeType: String) { after += name }
+        override fun afterPublish(name: String, uri: Uri, mimeType: String, held: Boolean) { after += name; this.held += held }
         override fun record(line: String) { lines += line }
     }
 
@@ -169,5 +172,13 @@ class WaitingPublisherTest {
         assertEquals(uri to "a.ogg", WaitingPublisher.publishedFrom(SafHelper.CopyResult.AlreadyPresent(uri), "a.ogg"))
         assertEquals(uri to "a.ogg", WaitingPublisher.publishedFrom(SafHelper.CopyResult.Copied(uri, 10L), "a.ogg"))
         assertNull(WaitingPublisher.publishedFrom(SafHelper.CopyResult.Failed("no"), "a.ogg"))
+    }
+
+    @Test
+    fun `a call held for the keep-or-delete answer is handed on as held, so nothing uploads or transcribes it yet`() = runBlocking {
+        val f = waiting("h.ogg", 500, finished = true)
+        val env = FakeEnv(listOf(f), now = now).apply { hold = true }
+        WaitingPublisher.run(env)
+        assertEquals(listOf(true), env.held)
     }
 }

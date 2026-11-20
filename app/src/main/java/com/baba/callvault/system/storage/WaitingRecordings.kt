@@ -120,33 +120,64 @@ object WaitingRecordings {
     }
 
     /**
-     * The call of a waiting recording ended: keep it under [finalName], marked finished, or remove it when it holds no
-     * audio. Returns whether a recording is kept. Never throws.
+     * The call of a waiting recording ended (its capture is closed): keep it under [name] for the after-call steps, or
+     * remove it when it holds no audio. Returns whether a recording is kept. The file stays owned
+     * ([LiveStagingFiles]) and unfinished until [ready], so it is never saved under a name the call log is about to
+     * change. Never throws.
      */
-    fun finish(context: Context, file: File, finalName: String, mimeType: String, kind: String): Boolean = runCatching {
-        LiveStagingFiles.release(file)
+    fun end(context: Context, file: File, name: String, mimeType: String, kind: String): Boolean = runCatching {
         val bytes = if (file.exists()) file.length() else 0L
         if (bytes <= 0L) {
+            LiveStagingFiles.release(file)
             StagingNote.deleteWithNote(file)
             CallEndLog.record(context, "$kind: the waiting recording holds no audio; nothing kept")
             return@runCatching false
         }
-        val note = WaitingNote.read(file)?.note?.copy(fileName = finalName, mimeType = mimeType)
-            ?: StagingNote("none", finalName, mimeType, file.lastModified())
-        runCatching { WaitingNote.write(file, WaitingNote(note, System.currentTimeMillis())) }.onFailure { AppLogger.w(TAG, "Could not update the note of ${file.name} (it keeps its start name): ${it.message}") }
-        CallEndLog.record(
-            context,
-            "$kind kept in CallVault until a recording folder is usable: ${CallEndLog.safeName(finalName)} " +
-                "size=$bytes bytes; waiting now: ${count(context)} calls, ${totalBytes(context)} bytes",
-        )
-        // The call is real evidence that the folder is gone: measure now (at the call's end, never its start) so Home
-        // and the alert follow.
-        RecordingFolderCheck.checkAsync(context, "a call found the folder not usable")
-        onKept(context)
+        LiveStagingFiles.register(file)
+        rename(file, name, mimeType)
         true
     }.getOrElse { e ->
-        AppLogger.e(TAG, "Finishing the waiting recording ${file.name} failed; it stays where it is", e)
+        AppLogger.e(TAG, "Ending the waiting recording ${file.name} failed; it stays where it is", e)
         true
+    }
+
+    /** Gives a waiting recording the name it will be saved under (the call-log rename). Never throws. */
+    fun rename(file: File, name: String, mimeType: String? = null): Boolean = runCatching {
+        val old = WaitingNote.read(file)
+        val note = old?.note?.copy(fileName = name, mimeType = mimeType ?: old.note.mimeType)
+            ?: StagingNote("none", name, mimeType ?: "audio/ogg", file.lastModified())
+        WaitingNote.write(file, WaitingNote(note, old?.finishedAt, old?.extras))
+        true
+    }.onFailure { AppLogger.w(TAG, "Could not rename the waiting recording ${file.name}: ${it.message}") }.getOrDefault(false)
+
+    /**
+     * The after-call steps of a waiting recording are done: mark it finished with what saving needs ([extras]), so the
+     * publisher may take it, and tell the user. Never throws.
+     */
+    fun ready(context: Context, file: File, mimeType: String, kind: String, extras: WaitingNote.Extras) {
+        runCatching {
+            LiveStagingFiles.release(file)
+            val old = WaitingNote.read(file)
+            val note = old?.note?.copy(mimeType = mimeType) ?: StagingNote("none", file.name, mimeType, file.lastModified())
+            runCatching { WaitingNote.write(file, WaitingNote(note, System.currentTimeMillis(), extras)) }
+                .onFailure { AppLogger.w(TAG, "Could not mark ${file.name} finished; it will be saved as a cut-off: ${it.message}") }
+            CallEndLog.record(
+                context,
+                "$kind kept in CallVault until a recording folder is usable: ${CallEndLog.safeName(note.fileName)} " +
+                    "size=${file.length()} bytes; waiting now: ${count(context)} calls, ${totalBytes(context)} bytes",
+            )
+            // The call is real evidence that the folder is gone: measure now (at the call's end, never its start) so Home
+            // and the alert follow.
+            RecordingFolderCheck.checkAsync(context, "a call found the folder not usable")
+            onKept(context)
+        }.onFailure { AppLogger.e(TAG, "Finishing the waiting recording ${file.name} failed; it stays where it is", it) }
+    }
+
+    /** [end] and [ready] together, for a call with no after-call steps to run. Returns whether a recording is kept. */
+    fun finish(context: Context, file: File, finalName: String, mimeType: String, kind: String): Boolean {
+        if (!end(context, file, finalName, mimeType, kind)) return false
+        ready(context, file, mimeType, kind, WaitingNote.Extras(isVoip = kind == "app call", appCallMix = false, direction = null))
+        return true
     }
 
     private fun onKept(context: Context) = FolderProtection.onWaitingKept(context)

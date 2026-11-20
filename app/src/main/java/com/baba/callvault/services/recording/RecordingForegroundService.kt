@@ -54,6 +54,8 @@ import com.baba.callvault.utils.RecordingFileNameFormatter
 import com.baba.callvault.transcription.AudioDecoder
 import com.baba.callvault.system.diagnostics.CallEndLog
 import com.baba.callvault.system.storage.MinDurationPolicy
+import com.baba.callvault.system.storage.WaitingNote
+import com.baba.callvault.system.storage.WaitingRecordings
 import com.baba.callvault.system.interop.MetadataSidecar
 import com.baba.callvault.data.recordings.RecordingsRepository
 import com.baba.callvault.data.transcripts.FlagRepository
@@ -840,11 +842,20 @@ class RecordingForegroundService : Service() {
         // release() — so reading it earlier yields null and silently skips everything downstream,
         // including the call-log rename fallback below.
         val uriToRename = activeSession.currentRecordingUri
+        // Review N5 / 2026-11-20: a call kept in CallVault's own storage (the folder was not usable) takes the same
+        // after-call steps, on its file. For a call saved into the folder this is just its document, as before.
+        val finished: FinishedFile? = uriToRename?.let { FinishedFile.Document(it) }
+            ?: activeSession.waitingRecording?.let { FinishedFile.Waiting(it) }
+        if (activeSession.waitingEmpty) {
+            AppLogger.e(TAG, "The waiting recording is empty (0 bytes) — capture never ran. Notifying instead of keeping it.")
+            notifyEmptyCapture()
+            recordHealth(0L, "the waiting recording", mix.healthFarHeard)
+        }
 
         // If the initialization metadata do not contain a phone number, we attempt to query the call log as a fallback.
         // TODO: Remove this fallback logic once we have a more reliable way to get phone number (using a privileged shell and hidden api)
         val isHonorPreset = AppPreferences(applicationContext).getFileNameTemplate() == HONOR_DIALER_TEMPLATE
-        if (originalMetadata != null && originalMetadata.rawPhoneNumber.isNullOrBlank() && uriToRename != null) {
+        if (originalMetadata != null && originalMetadata.rawPhoneNumber.isNullOrBlank() && finished != null) {
             AppLogger.d(TAG, "Recording ended without a phone number. Querying CallLog as a fallback to get more information...")
             // We use GlobalScope/IO because the Service's scope might be cancelled immediately in onDestroy.
             // Android gives the process some time to live, so this is safe for a few seconds.
@@ -864,7 +875,7 @@ class RecordingForegroundService : Service() {
                 }
 
                 // finalUri tracks the URI after any rename attempt, for routing exactly once.
-                val finalUri: Uri
+                val finalUri: FinishedFile
                 if (finalNumber.isNotBlank()) {
                     val updatedMeta = originalMetadata.copy(rawPhoneNumber = finalNumber)
                     val stamp = startedAt ?: Date()
@@ -878,9 +889,9 @@ class RecordingForegroundService : Service() {
                     // Use DocumentsContract.renameDocument (NOT DocumentFile.renameTo): the latter is a
                     // SingleDocumentFile here and throws UnsupportedOperationException, while
                     // renameDocument is supported by ExternalStorageProvider and returns the new URI.
-                    var renamedUri: Uri? = null
+                    var renamedUri: FinishedFile? = null
                     try {
-                        renamedUri = DocumentsContract.renameDocument(applicationContext.contentResolver, uriToRename, newName)
+                        renamedUri = finished.renamedTo(newName)
                         if (renamedUri != null) {
                             AppLogger.d(TAG, "Successfully renamed wrongly detected anonymous recording to: $newName")
                         }
@@ -888,18 +899,18 @@ class RecordingForegroundService : Service() {
                         AppLogger.e(TAG, "Failed to rename file using CallLog fallback", e)
                     }
                     // renameDocument may return a new document URI; fall back to the original on failure.
-                    finalUri = renamedUri ?: uriToRename
+                    finalUri = renamedUri ?: finished
                 } else {
                     AppLogger.d(TAG, "Call log confirmed the call is anonymous, or no actual number was found. Keeping file name as is.")
-                    finalUri = uriToRename
+                    finalUri = finished
                 }
 
                 // Route exactly once, after any rename has been applied.
-                routeFinalRecording(
+                routeFinished(
                     finalUri, mimeType, activeSession.lastCapturedByteCount, originalMetadata.direction, mix
                 )
             }
-        } else if (uriToRename != null && originalMetadata != null && startedAt != null &&
+        } else if (finished != null && originalMetadata != null && startedAt != null &&
             (isHonorPreset || originalMetadata.direction == RecordingDirection.OUTGOING)
         ) {
             CoroutineScope(Dispatchers.IO).launch {
@@ -927,21 +938,21 @@ class RecordingForegroundService : Service() {
                     val newName = RecordingFileNameFormatter.formatFileName(
                         applicationContext, metadata, activeSession.currentCodecEnum, startedAt = callStart ?: startedAt
                     )
-                    val renamed = runCatching { DocumentsContract.renameDocument(applicationContext.contentResolver, uriToRename, newName) }
+                    val renamed = runCatching { finished.renamedTo(newName) }
                         .onFailure { AppLogger.e(TAG, "Could not rename the recording to its dialled number or call-log time", it) }
                         .getOrNull()
                     if (renamed != null) AppLogger.d(TAG, "Renamed to the dialled number or call-log time: '$newName'")
-                    renamed ?: uriToRename
+                    renamed ?: finished
                 } else {
-                    uriToRename
+                    finished
                 }
-                routeFinalRecording(finalUri, mimeType, activeSession.lastCapturedByteCount, originalMetadata.direction, mix)
+                routeFinished(finalUri, mimeType, activeSession.lastCapturedByteCount, originalMetadata.direction, mix)
             }
-        } else if (uriToRename != null) {
+        } else if (finished != null) {
             // Phone number was already known at recording start — no rename needed.
             // Route the file with its current name immediately (once).
-            routeFinalRecording(
-                uriToRename, mimeType, activeSession.lastCapturedByteCount, originalMetadata?.direction, mix
+            routeFinished(
+                finished, mimeType, activeSession.lastCapturedByteCount, originalMetadata?.direction, mix
             )
         }
         // A capture AudioFlinger invalidated mid-call can leave the microphone indicator on with nothing recording;
@@ -1128,18 +1139,7 @@ class RecordingForegroundService : Service() {
             AppLogger.e(TAG, "Recording '$name' is empty (0 bytes) — capture never ran. Deleting it and notifying instead of cataloging.")
             // The mid-call daemon-death warning is the more actionable message and shares the same
             // notification ID — don't overwrite it (and double-vibrate) with the empty-file variant.
-            if (!daemonLossNotified) {
-                // The advice has to match the mode. Telling a Shizuku user to check Developer options
-                // and Wireless debugging sends them to settings they have never touched and do not need,
-                // and away from the one thing that is actually actionable: whether Shizuku is running.
-                val emptyFileMessage =
-                    if (AppPreferences(this).getPrivilegedMode().needsShizuku) {
-                        R.string.recording_error_empty_file_shizuku
-                    } else {
-                        R.string.recording_error_empty_file
-                    }
-                notificationHelper.showErrorNotification(getString(emptyFileMessage))
-            }
+            notifyEmptyCapture()
             SafHelper.deleteDocument(doc, "the empty recording '$name'")
             recordHealth(sizeBytes, name, mix.healthFarHeard)
             return
@@ -1173,16 +1173,7 @@ class RecordingForegroundService : Service() {
         // before either starts, so no sweep can copy it in between. Not held — kept as in Keep mode — when
         // the question could not be shown or the hold could not be stored; see AfterCallDecision.tryHold.
         val isHeld = AfterCallDecision.tryHold(applicationContext, name, uri, mimeType, isVoip = false)
-        // Both sides or a failure, never a quiet near-only success (#45). The file is kept, as an
-        // app call that came out one-sided is, and the health card records it as one-sided.
-        if (mix.appCallMix && mix.farHeard == false) {
-            AppLogger.e(WifiCallRoute.TAG, "Wi-Fi call '$name': the other side was not heard — only the user's side is on it")
-            notificationHelper.showErrorNotification(getString(R.string.wifi_call_one_sided))
-        } else if (mix.appCallMix && mix.farHeard == null) {
-            // Unknown is not a success. A lost recorder has already said so, more usefully.
-            AppLogger.e(WifiCallRoute.TAG, "Wi-Fi call '$name': could not check that the other side was heard")
-            if (!daemonLossNotified) notificationHelper.showErrorNotification(getString(R.string.wifi_call_far_unknown))
-        }
+        reportMixOutcome(name, mix)
 
         // Record this finished recording in CallVault's own catalog (the Home list's source of truth).
         // The file is on the device now, so this is the local copy; the copy/sweep workers later stamp
@@ -1247,6 +1238,86 @@ class RecordingForegroundService : Service() {
         }
         recordHealth(sizeBytes, name, mix.healthFarHeard)
         if (!isHeld) StorageRouter.route(applicationContext, uri, name, mimeType)
+    }
+
+    /**
+     * The "capture never ran" notice. Not over the mid-call daemon-death warning, which is the more actionable message
+     * and shares the same notification id (don't overwrite it and double-vibrate).
+     */
+    private fun notifyEmptyCapture() {
+        if (!daemonLossNotified) {
+            // The advice has to match the mode. Telling a Shizuku user to check Developer options
+            // and Wireless debugging sends them to settings they have never touched and do not need,
+            // and away from the one thing that is actually actionable: whether Shizuku is running.
+            val emptyFileMessage =
+                if (AppPreferences(this).getPrivilegedMode().needsShizuku) {
+                    R.string.recording_error_empty_file_shizuku
+                } else {
+                    R.string.recording_error_empty_file
+                }
+            notificationHelper.showErrorNotification(getString(emptyFileMessage))
+        }
+    }
+
+    /** Both sides or a failure, never a quiet near-only success (#45), for a Wi-Fi call recorded as an app call. */
+    private fun reportMixOutcome(name: String, mix: MixResult) {
+        // The file is kept, as an app call that came out one-sided is, and the health card records it as one-sided.
+        if (mix.appCallMix && mix.farHeard == false) {
+            AppLogger.e(WifiCallRoute.TAG, "Wi-Fi call '$name': the other side was not heard — only the user's side is on it")
+            notificationHelper.showErrorNotification(getString(R.string.wifi_call_one_sided))
+        } else if (mix.appCallMix && mix.farHeard == null) {
+            // Unknown is not a success. A lost recorder has already said so, more usefully.
+            AppLogger.e(WifiCallRoute.TAG, "Wi-Fi call '$name': could not check that the other side was heard")
+            if (!daemonLossNotified) notificationHelper.showErrorNotification(getString(R.string.wifi_call_far_unknown))
+        }
+    }
+
+    /** A finished carrier recording: its document in the folder, or its file in waiting storage (review N5). */
+    private sealed interface FinishedFile {
+        data class Document(val uri: Uri) : FinishedFile
+        data class Waiting(val file: java.io.File) : FinishedFile
+    }
+
+    /** The call-log rename: of the document exactly as before, or of the name a waiting recording will be saved under. */
+    private fun FinishedFile.renamedTo(newName: String): FinishedFile? = when (this) {
+        is FinishedFile.Document ->
+            DocumentsContract.renameDocument(applicationContext.contentResolver, uri, newName)?.let { FinishedFile.Document(it) }
+        is FinishedFile.Waiting -> if (WaitingRecordings.rename(file, newName)) this else null
+    }
+
+    private fun routeFinished(
+        target: FinishedFile,
+        mimeType: String,
+        knownByteCount: Long? = null,
+        direction: RecordingDirection? = null,
+        mix: MixResult = MixResult(appCallMix = false, farHeard = null),
+    ) = when (target) {
+        is FinishedFile.Document -> routeFinalRecording(target.uri, mimeType, knownByteCount, direction, mix)
+        is FinishedFile.Waiting -> routeWaitingRecording(target.file, mimeType, knownByteCount, direction, mix)
+    }
+
+    /**
+     * [routeFinalRecording] for a call kept in waiting storage (review 2026-11-20): what only exists now (marks, speaker
+     * turns), the minimum-duration setting, the Wi-Fi-call checks and the health card, here; the details file, the
+     * keep-or-delete question, the library entry, transcription and the Drive copy when it is saved into a folder
+     * ([com.baba.callvault.system.storage.WaitingRecordingsWorker]).
+     */
+    private fun routeWaitingRecording(file: java.io.File, mimeType: String, knownByteCount: Long?, direction: RecordingDirection?, mix: MixResult) {
+        val name = WaitingNote.read(file)?.note?.fileName ?: file.name
+        val sizeBytes = knownByteCount ?: file.length()
+        CoroutineScope(Dispatchers.IO).launch {
+            val kept = WaitingCallSteps.atCallEnd(
+                applicationContext, file, name, "carrier",
+                outgoingForTurns = direction == RecordingDirection.OUTGOING && !mix.appCallMix,
+            )
+            if (!kept) return@launch
+            reportMixOutcome(name, mix)
+            recordHealth(sizeBytes, name, mix.healthFarHeard)
+            WaitingRecordings.ready(
+                applicationContext, file, mimeType, "phone call",
+                WaitingNote.Extras(isVoip = false, appCallMix = mix.appCallMix, direction = null),
+            )
+        }
     }
 
     /**

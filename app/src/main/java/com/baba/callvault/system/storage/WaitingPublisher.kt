@@ -33,10 +33,18 @@ object WaitingPublisher {
         fun callActive(): Boolean
         /** Creates the file in the folder and fills it; the new document and the name the provider gave it. */
         fun publish(file: File, name: String, mimeType: String): Pair<Uri, String>?
+        /**
+         * What a finished call gets before its library entry: the details file, and the keep-or-delete hold. Returns
+         * whether the call is held for the user's answer.
+         */
+        suspend fun beforeCatalog(name: String, uri: Uri, mimeType: String, note: WaitingNote): Boolean
         /** The library entry; the failure, or null when it was written. */
         suspend fun catalog(name: String, uri: Uri, bytes: Long, startedAt: Long): Throwable?
-        /** What every finished call gets after its library entry: transcription, waveform, the Drive copy. */
-        fun afterPublish(name: String, uri: Uri, mimeType: String)
+        /**
+         * What every finished call gets after its library entry: transcription, waveform, the Drive copy; while [held],
+         * only the waveform and the question (Keep runs the rest, Delete removes it).
+         */
+        fun afterPublish(name: String, uri: Uri, mimeType: String, held: Boolean)
         /** One always-on line. */
         fun record(line: String)
     }
@@ -112,6 +120,10 @@ object WaitingPublisher {
             return@withContext Outcome.RETRY
         }
         val (uri, name) = published
+        // A hold that cannot be set keeps the call, as on the normal path (AfterCallDecision.tryHold).
+        val held = runCatching { env.beforeCatalog(name, uri, note.mimeType, waiting) }
+            .onFailure { env.record("details file or keep-or-delete hold for ${CallEndLog.safeName(name)} failed: ${CallEndLog.describe(it)}") }
+            .getOrDefault(false)
         val failure = runCatching { env.catalog(name, uri, bytes, note.startedAtMillis) }.getOrElse { it }
         val removed = StagingNote.deleteWithNote(file)
         env.record(
@@ -119,7 +131,7 @@ object WaitingPublisher {
                 (failure?.let { "; library entry FAILED: ${CallEndLog.describe(it)}" } ?: "") +
                 (if (removed) "" else "; its private copy could not be removed"),
         )
-        runCatching { env.afterPublish(name, uri, note.mimeType) }
+        runCatching { env.afterPublish(name, uri, note.mimeType, held) }
             .onFailure { env.record("after-save steps for ${CallEndLog.safeName(name)} failed: ${CallEndLog.describe(it)}") }
         Outcome.SAVED
     }

@@ -20,6 +20,9 @@ import androidx.work.WorkerParameters
 import com.baba.callvault.data.AppPreferences
 import com.baba.callvault.data.recordings.RecordingCatalog
 import com.baba.callvault.data.waveform.WaveformDrawWorker
+import com.baba.callvault.services.recording.WaitingCallSteps
+import com.baba.callvault.services.recording.aftercall.AfterCallDecision
+import com.baba.callvault.system.interop.MetadataSidecar
 import com.baba.callvault.system.diagnostics.CallEndLog
 import com.baba.callvault.transcription.TranscriptionScheduler
 import com.baba.callvault.utils.AppLogger
@@ -65,13 +68,27 @@ class WaitingRecordingsWorker(ctx: Context, params: WorkerParameters) : Coroutin
             return WaitingPublisher.publishedFrom(result, name)
         }
 
+        override suspend fun beforeCatalog(name: String, uri: Uri, mimeType: String, note: WaitingNote): Boolean {
+            WaitingCallSteps.writeDetails(context, name, note)
+            return AfterCallDecision.tryHold(context, name, uri, mimeType, isVoip = note.extras?.isVoip ?: false)
+        }
+
         override suspend fun catalog(name: String, uri: Uri, bytes: Long, startedAt: Long): Throwable? =
             RecordingCatalog.recordLocalReporting(context, name, uri, bytes, startedAt)
 
-        override fun afterPublish(name: String, uri: Uri, mimeType: String) {
-            TranscriptionScheduler.transcribeAfterCallIfEnabled(context, name)
-            WaveformDrawWorker.enqueue(context, name, uri)
-            StorageRouter.route(context, uri, name, mimeType)
+        /** The same steps, in the same order, as after a call saved straight into the folder. */
+        override fun afterPublish(name: String, uri: Uri, mimeType: String, held: Boolean) {
+            try {
+                if (!held) {
+                    StorageRouter.routeSidecar(context, name, MetadataSidecar.sidecarNameFor(name), "application/json")
+                    TranscriptionScheduler.transcribeAfterCallIfEnabled(context, name)
+                }
+                WaveformDrawWorker.enqueue(context, name, uri)
+                if (!held) StorageRouter.route(context, uri, name, mimeType)
+            } finally {
+                // Asked last, once the library entry exists, and in a finally, as on the normal path.
+                if (held) AfterCallDecision.ask(context, name)
+            }
         }
 
         override fun record(line: String) = CallEndLog.record(context, line)

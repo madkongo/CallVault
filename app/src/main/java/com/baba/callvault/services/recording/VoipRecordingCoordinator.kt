@@ -37,6 +37,7 @@ import com.baba.callvault.data.recordings.RecordingDirection
 import kotlinx.coroutines.isActive
 import com.baba.callvault.system.storage.SafHelper
 import com.baba.callvault.system.storage.LiveStagingFiles
+import com.baba.callvault.system.storage.WaitingNote
 import com.baba.callvault.system.storage.WaitingRecordings
 import com.baba.callvault.system.storage.StagingNote
 import java.io.File
@@ -1216,11 +1217,13 @@ object VoipRecordingCoordinator {
                 return@let null
             }
             if (result.waiting || folder == null) {
-                // The folder was not usable when the call started (review N5): kept under its final name, and saved
-                // into a folder once one is usable. One outcome line, as for every app call.
-                val kept = staging.length()
-                WaitingRecordings.finish(context, staging, outName, mime, kind = "app call")
-                logOutcome(context, VoipOutcome.Reason.WAITING_FOR_FOLDER, recordedMs, kept)
+                // The folder was not usable when the call started (review N5): kept under its final name, with the
+                // after-call steps of a saved call, and saved into a folder once one is usable.
+                if (WaitingRecordings.end(context, staging, outName, mime, kind = "app call")) {
+                    keepWaiting(context, staging, outName, mime, recordedMs, farHeard, callDirection)
+                } else {
+                    logOutcome(context, VoipOutcome.Reason.NO_AUDIO, recordedMs, 0L)
+                }
                 return@let null
             }
             val bytes = staging.length()
@@ -1383,6 +1386,34 @@ object VoipRecordingCoordinator {
         AppLogger.i(TAG, "VoIP recording stopped (${saf?.uri})")
         // Same check as after a carrier recording: a stuck indicator with nothing recording. See [MicOpAutoHeal].
         MicOpAutoHeal.scheduleAfterCall(context, "the VoIP recording")
+    }
+
+    /**
+     * An app call kept in waiting storage (review N5 / 2026-11-20) gets the after-call steps a saved one gets, from the
+     * same parts: the minimum-duration setting, the marks and speaker turns (only available now), the health card, and
+     * its one outcome line. The details file, the keep-or-delete question, the library entry, transcription and the
+     * Drive copy follow when it is saved into a folder (WaitingRecordingsWorker).
+     */
+    private fun keepWaiting(context: Context, file: File, name: String, mime: String, recordedMs: Long?, farHeard: Boolean, direction: RecordingDirection?) {
+        val size = file.length()
+        CoroutineScope(Dispatchers.IO).launch {
+            val kept = runCatching { WaitingCallSteps.atCallEnd(context, file, name, "VoIP", outgoingForTurns = false) }
+                .onFailure { AppLogger.e(TAG, "After-call steps of the waiting app call failed; keeping it: ${it.message}", it) }
+                .getOrDefault(true)
+            if (!kept) {
+                logOutcome(context, VoipOutcome.Reason.TOO_SHORT, recordedMs, size)
+                return@launch
+            }
+            logOutcome(context, VoipOutcome.Reason.WAITING_FOR_FOLDER, recordedMs, size)
+            runCatching {
+                val outcome = CallOutcomes.of(size, daemonDied = false, farPartyHeard = farHeard)
+                SetupHealthStore(context).record(outcome, System.currentTimeMillis(), name, SetupFingerprint.of(AppPreferences(context)))
+            }.onFailure { AppLogger.w(TAG, "Could not record setup health for the waiting '$name': ${it.message}") }
+            WaitingRecordings.ready(
+                context, file, mime, "app call",
+                WaitingNote.Extras(isVoip = true, appCallMix = false, direction = VoipDirection.nameToken(direction)),
+            )
+        }
     }
 
     /** The always-on outcome line of this app call (review N8). Never throws. */

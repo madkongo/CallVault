@@ -157,6 +157,17 @@ class AudioRecordingEngine {
     private var isWaitingOutput = false
 
     /**
+     * After [release]: the recording kept in waiting storage (the folder was not usable at the start, or saving into it
+     * failed at the end), still owned and waiting for its after-call steps; null otherwise. Review N5 / 2026-11-20.
+     */
+    var waitingRecording: File? = null
+        private set
+
+    /** After [release]: the waiting recording held no audio and was removed. */
+    var waitingEmpty = false
+        private set
+
+    /**
      * The exact number of audio bytes captured this session, when known reliably — set only after a
      * STAGED recording is successfully copied to its destination (we measured the internal temp before
      * copying). Null on the direct-to-SAF path (there the destination file's own length is authoritative).
@@ -1065,7 +1076,13 @@ class AudioRecordingEngine {
                 AppLogger.e(TAG, "Cannot keep the waiting recording (details missing); it stays at ${temp.path}")
                 return
             }
-            WaitingRecordings.finish(ctx, temp, name, mime, kind = "phone call")
+            val bytes = temp.length()
+            if (WaitingRecordings.end(ctx, temp, name, mime, kind = "phone call")) {
+                waitingRecording = temp
+                lastCapturedByteCount = bytes
+            } else {
+                waitingEmpty = true
+            }
             return
         }
         if (ctx == null || folder == null || name == null || mime == null) {

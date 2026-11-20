@@ -162,4 +162,32 @@ class WaitingRecordingsTest {
         assertEquals(WaitingPolicy.Publish.DISCARD_EMPTY, d(finished = true, age = 0L, call = false, size = 0L))
         assertEquals(WaitingPolicy.Publish.LEAVE, d(finished = true, age = 0L, call = false, note = false))
     }
+
+    // ---- review 2026-11-20: handled like normal calls; folder lost mid-call -------------------------------------
+
+    @Test
+    fun `the end of a call keeps the audio owned and unfinished until the after-call steps are done`() {
+        val result = WaitingRecordings.create(context, null, "start.ogg", "audio/ogg", "test", "phone call")!!
+        result.descriptor.close()
+        val file = result.stagingFile!!
+        file.writeBytes(ByteArray(100))
+        assertTrue(WaitingRecordings.end(context, file, "start.ogg", "audio/ogg", "phone call"))
+        assertTrue("still owned: the publisher must not take it before its final name", LiveStagingFiles.isLive(file))
+        assertNull(WaitingNote.read(file)!!.finishedAt)
+        assertTrue(WaitingRecordings.rename(file, "renamed_from_call_log.ogg"))
+        WaitingRecordings.ready(context, file, "audio/ogg", "phone call", WaitingNote.Extras(isVoip = false, appCallMix = true, direction = null))
+        val note = WaitingNote.read(file)!!
+        assertEquals("renamed_from_call_log.ogg", note.note.fileName)
+        assertNotNull(note.finishedAt)
+        assertEquals(WaitingNote.Extras(isVoip = false, appCallMix = true, direction = null), note.extras)
+        assertFalse(LiveStagingFiles.isLive(file))
+    }
+
+    @Test
+    fun `the note's extras survive being written and read`() {
+        val n = WaitingNote(StagingNote("none", "a.ogg", "audio/ogg", 5L), 9L, WaitingNote.Extras(isVoip = true, appCallMix = false, direction = "in"))
+        assertEquals(n, WaitingNote.decode(n.encode()))
+        val plain = WaitingNote(StagingNote("none", "a.ogg", "audio/ogg", 5L), null)
+        assertEquals(plain, WaitingNote.decode(plain.encode()))
+    }
 }
