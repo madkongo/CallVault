@@ -111,6 +111,9 @@ object AfterCallPolicy {
     /** Whether a tap at [nowMs] may answer a card shown at [shownAtMs] (both on the same monotonic clock). */
     fun acceptsTap(shownAtMs: Long, nowMs: Long): Boolean = nowMs - shownAtMs >= TAP_GUARD_MS
 
+    /** A Delete tap that reaches the receiver while the phone is locked is not honoured (it needs the unlock first). */
+    fun shouldRefuseDelete(isDeviceLocked: Boolean): Boolean = isDeviceLocked
+
     /** Hold only when the user asked to be asked AND the question can be shown. */
     fun shouldHold(mode: AfterCallMode, canShowQuestion: Boolean): Boolean = shouldAsk(mode) && canShowQuestion
 
