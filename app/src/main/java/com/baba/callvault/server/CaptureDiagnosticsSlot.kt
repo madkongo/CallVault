@@ -17,8 +17,13 @@ import com.baba.callvault.utils.AppLogger
  * Review N21: the reason must reach the app for its own call and only that call. A stop that finds no session — the
  * app's stop arriving while the slow VoIP start is still being built, then failing — leaves the reason in place, and
  * an accepted app-call start clears what the previous call left.
+ *
+ * Review N21b: either answer carries, after [CaptureRecoveryLog.MARKER], the summary of how the capture's records had
+ * to be built or started when the normal way failed — nothing at all when every one was built normally.
  */
-internal class CaptureDiagnosticsSlot {
+internal class CaptureDiagnosticsSlot(
+    private val recovery: CaptureRecoveryLog = CaptureRecoveryLog.current,
+) {
 
     @Volatile
     var value: String = ""
@@ -27,19 +32,21 @@ internal class CaptureDiagnosticsSlot {
     /** A new app-call start was accepted: nothing from an earlier call may be read as this one's. */
     fun startAccepted() {
         value = ""
+        recovery.reset()
     }
 
     fun startFailed(error: Throwable) {
-        value = VoipStartFailure.line(error)
+        value = CaptureRecoveryLog.append(VoipStartFailure.line(error), recovery.drain())
     }
 
     /** A stop tore [session] down. With no session there is nothing new to say, so a start failure stays readable. */
     fun sessionEnded(session: RecordingSession?) {
         if (session == null) return
-        value = runCatching { session.captureDiagnostics() }.getOrElse {
+        val health = runCatching { session.captureDiagnostics() }.getOrElse {
             AppLogger.w(TAG, "Could not read the capture's health: ${it.message}")
             ""
         }
+        value = CaptureRecoveryLog.append(health, recovery.drain())
     }
 
     private companion object {

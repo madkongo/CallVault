@@ -45,6 +45,13 @@ internal object ShellApplication {
     @Volatile
     private var toProcessUid = false
 
+    /** For the capture-recovery summary ([CaptureRecoveryLog]): whether one is installed, and with which attribution. */
+    fun state(): String = when {
+        !installed -> "no"
+        toProcessUid -> "installed(process uid)"
+        else -> "installed(shell uid)"
+    }
+
     /** Honor MagicOS (#53): the attribution exactly as it shipped. */
     fun install(): Boolean = install(attributeToProcessUid = false)
 

@@ -26,7 +26,7 @@ class CaptureDiagnosticsSlotTest {
 
     @Test
     fun a_stop_with_no_session_keeps_the_start_failure() {
-        val slot = CaptureDiagnosticsSlot()
+        val slot = CaptureDiagnosticsSlot(CaptureRecoveryLog())
         slot.startFailed(IllegalStateException("VoIP far-party sink unavailable (policy not armed?)"))
         slot.sessionEnded(null)
         assertEquals("IllegalStateException: VoIP far-party sink unavailable (policy not armed?)", VoipStartFailure.reasonOf(slot.value))
@@ -34,14 +34,14 @@ class CaptureDiagnosticsSlotTest {
 
     @Test
     fun a_stop_with_a_session_takes_its_health() {
-        val slot = CaptureDiagnosticsSlot()
+        val slot = CaptureDiagnosticsSlot(CaptureRecoveryLog())
         slot.sessionEnded(Session("near late by 40 ms"))
         assertEquals("near late by 40 ms", slot.value)
     }
 
     @Test
     fun a_session_whose_health_cannot_be_read_leaves_nothing() {
-        val slot = CaptureDiagnosticsSlot()
+        val slot = CaptureDiagnosticsSlot(CaptureRecoveryLog())
         slot.startFailed(IllegalStateException("old"))
         slot.sessionEnded(object : RecordingSession {
             override fun start() = Unit
@@ -53,7 +53,7 @@ class CaptureDiagnosticsSlotTest {
 
     @Test
     fun an_accepted_start_clears_the_previous_calls_reason() {
-        val slot = CaptureDiagnosticsSlot()
+        val slot = CaptureDiagnosticsSlot(CaptureRecoveryLog())
         slot.startFailed(IllegalStateException("from the call before"))
         slot.startAccepted()
         assertEquals("", slot.value)

@@ -90,10 +90,15 @@ object CallEndLog {
         else -> "local scrcpy over ADB (muxer)"
     }
 
-    /** Writes [line] to the always-on file and to the ordinary log. Never throws. */
+    /** [line] with its line breaks turned into spaces: the always-on file holds one entry per line. */
+    fun singleLine(line: String): String = line.replace(LINE_BREAKS, " ")
+
+    private val LINE_BREAKS = Regex("[\\r\\n]+")
+
+    /** Writes [line] to the always-on file and to the ordinary log, as one line. Never throws. */
     fun record(context: Context, line: String) {
         runCatching {
-            val safe = AppLogger.redactForReport(line)
+            val safe = AppLogger.redactForReport(singleLine(line))
             UsbDebuggingEvents.record(context, "call: $safe")
             AppLogger.i(TAG, safe)
         }
