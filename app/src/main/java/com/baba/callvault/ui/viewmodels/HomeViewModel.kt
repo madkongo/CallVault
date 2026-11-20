@@ -1268,7 +1268,10 @@ class HomeViewModel(application: Application) : AndroidViewModel(application) {
             batteryExempt = exempt,
             sdkInt = Build.VERSION.SDK_INT,
         )
-        if (!advised) return@runCatching null
+        val processAge = SystemClock.elapsedRealtime() - android.os.Process.getStartElapsedRealtime()
+        if (!advised || !ForegroundStartGuard.hasSettled(processAge, ForegroundStartGuard.keepAliveStartRefused)) {
+            return@runCatching null
+        }
         if (!batteryAskLogged) {
             batteryAskLogged = true
             UsbDebuggingEvents.record(appContext, ForegroundStartGuard.describeSetup(Build.VERSION.SDK_INT))

@@ -75,6 +75,11 @@ class BatteryExemptionNeedTest {
     @Test fun `a running keep-alive means the app is allowed to start the recorder`() = assertFalse(need(running = true))
     @Test fun `recording off does not ask`() = assertFalse(need(recording = false))
     @Test fun `before Android 12 there is no limit`() = assertFalse(need(sdk = 30))
+    @Test fun `the ask waits for the keep-alive to come up after process start`() {
+        assertFalse(ForegroundStartGuard.hasSettled(ForegroundStartGuard.SETTLE_MS - 1, false))
+        assertTrue(ForegroundStartGuard.hasSettled(ForegroundStartGuard.SETTLE_MS, false))
+    }
+    @Test fun `a refused keep-alive start needs no waiting`() = assertTrue(ForegroundStartGuard.hasSettled(0L, true))
     @Test fun `the log line carries the quirk id`() {
         assertEquals("Q53", ForegroundStartGuard.QUIRK_ID)
         assertTrue(ForegroundStartGuard.describeSetup(34).contains("Q53"))

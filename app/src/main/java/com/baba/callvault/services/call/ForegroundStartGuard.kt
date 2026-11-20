@@ -67,6 +67,17 @@ object ForegroundStartGuard {
         sdkInt: Int,
     ): Boolean = sdkInt >= SDK_FGS_BACKGROUND_LIMIT && recordingAllowed && !batteryExempt && !keepAliveRunning
 
+    /** How long the keep-alive may be absent after the process starts before its absence is believed. */
+    const val SETTLE_MS = 15_000L
+
+    /** Set when the keep-alive's own start was refused: its absence is then certain, no need to wait. */
+    @Volatile
+    var keepAliveStartRefused: Boolean = false
+
+    /** The proactive ask waits for the keep-alive to come up at app start, unless its start was refused. */
+    fun hasSettled(processAgeMs: Long, keepAliveStartRefused: Boolean): Boolean =
+        keepAliveStartRefused || processAgeMs >= SETTLE_MS
+
     /** The always-on line for a positive [setupNeedsBatteryExemption], so a report shows why Home asked. */
     fun describeSetup(sdkInt: Int): String =
         "$QUIRK_ID: keepAlive=not-running batteryExempt=false sdk=$sdkInt: Home asks for the battery exemption"

@@ -1187,6 +1187,7 @@ class DaemonKeepAliveService : Service() {
                 ContextCompat.startForegroundService(context, Intent(context, DaemonKeepAliveService::class.java))
             }
             if (outcome is ForegroundStartGuard.Outcome.Refused) {
+                ForegroundStartGuard.keepAliveStartRefused = true
                 AppLogger.w(TAG, "Failed to start keep-alive service: ${outcome.cause.message}")
                 UsbDebuggingEvents.record(context, ForegroundStartGuard.describe("keep-alive start", outcome.cause, batteryExempt = false))
             }
