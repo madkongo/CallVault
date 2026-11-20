@@ -552,6 +552,8 @@ class HomeViewModel(application: Application) : AndroidViewModel(application) {
     private var listReloadPending = false
     private var watchingCatalog = false
     private val _isPullRefreshing = MutableStateFlow(false)
+    /** N26: the proactive battery-exemption ask is written to the always-on log once per process. */
+    @Volatile private var batteryAskLogged = false
     private var driveCheckJob: kotlinx.coroutines.Deferred<*>? = null
 
     /** True while a pull-to-refresh is running, for the indicator at the top of the page. */
@@ -1273,8 +1275,6 @@ class HomeViewModel(application: Application) : AndroidViewModel(application) {
         }
         refused || proactive
     }.getOrDefault(false)
-
-    @Volatile private var batteryAskLogged = false
 
     /**
      * Recorder down AND no Wi-Fi AND "Keep recording off Wi-Fi" off, using the notification's own rule
