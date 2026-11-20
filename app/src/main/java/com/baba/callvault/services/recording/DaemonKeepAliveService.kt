@@ -136,6 +136,8 @@ class DaemonKeepAliveService : Service() {
                 // binder blip doesn't trigger a relaunch (which would kill+respawn a daemon that was fine).
                 if (downStreak >= DOWN_STREAK_THRESHOLD) maybeRewarm()
             }
+            runCatching { downAlert.onTick(alive) }
+                .onFailure { AppLogger.w(TAG, "Recorder-down alert check failed: ${it.message}") }
             if (alive && usesAdb()) syncShellUsbRead()
             if (usesAdb()) timelineSnapshot(alive, "tick")
             healSharedNotice()
@@ -148,6 +150,25 @@ class DaemonKeepAliveService : Service() {
             watchdogHandler.postDelayed(this, WATCHDOG_INTERVAL_MS)
         }
     }
+
+    /** Raises and takes down the loud "Calls are not being recorded" alert (review R1); see [RecorderDownAlertRunner]. */
+    private val downAlert = RecorderDownAlertRunner(
+        isSwitchedOff = { AppPreferences(applicationContext).getRecordingState() == RecordingState.STOPPED },
+        nowMs = { SystemClock.elapsedRealtime() },
+        describeCause = {
+            val notice = ReadinessNoticeText.current(this, ready = false)
+            val shizuku = runCatching { AppPreferences(applicationContext).getPrivilegedMode().needsShizuku }.getOrDefault(false)
+            val reasonRes = when {
+                notice == ReadinessNotice.STARTING || notice == ReadinessNotice.STUCK ->
+                    if (shizuku) R.string.notif_health_recorder_text_shizuku else R.string.notif_health_down_generic_text
+                else -> ReadinessNoticeText.text(notice)
+            }
+            RecorderDownAlertRunner.Cause(notice.name, LocalizedContext.of(this).getString(reasonRes), shizuku)
+        },
+        post = { reason -> SilentFailureNotifier.warnRecorderDown(applicationContext, reason) },
+        clear = { SilentFailureNotifier.clearRecorderUnavailable(applicationContext) },
+        alwaysOnLog = { line -> com.baba.callvault.integrations.adb.UsbDebuggingEvents.record(applicationContext, line) },
+    )
 
     private val healSharedNoticeRunnable = Runnable { healSharedNotice() }
 
@@ -999,6 +1020,8 @@ class DaemonKeepAliveService : Service() {
     }
 
     override fun onDestroy() {
+        // Nobody else clears the alert once this service is gone (review R1 follow-up).
+        runCatching { downAlert.onServiceStopping("service destroyed") }
         AppPauseWatch.stop()
         runCatching { unregisterReceiver(screenReceiver) }
         runCatching { contentResolver.unregisterContentObserver(usbDebuggingObserver) }
@@ -1023,6 +1046,7 @@ class DaemonKeepAliveService : Service() {
         val prefs = AppPreferences(applicationContext)
         if (KeepAlivePolicy.shouldRun(prefs.getPrivilegedMode(), prefs.isVoipRecordingEnabled())) return false
         AppLogger.i(TAG, "Shizuku mode without app calls: the keep-alive has nothing to do; stopping")
+        runCatching { downAlert.onServiceStopping("stood down for Shizuku mode") }
         stopSelf()
         return true
     }

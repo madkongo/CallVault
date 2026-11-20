@@ -236,6 +236,8 @@
     <string name="notif_health_recorder_text">Для відновлення запису підключіть телефон до будь-якої мережі Wi-Fi один раз. Доступ до інтернету не потрібен: достатньо кількох секунд.</string>
     <string name="notif_health_recorder_text_shizuku">Запис не працюватиме, доки Shizuku не буде запущено знову. Після перезавантаження телефону запустіть його вручну.</string>
     <string name="notif_health_recorder_title">CallVault зараз не може записувати</string>
+    <string name="notif_health_down_title">Calls are not being recorded</string>
+    <string name="notif_health_down_generic_text">CallVault could not bring the recorder back up. Open the app to see why and what to do.</string>
     <string name="notif_health_shizuku_restart_failed_text">Після перезапуску налагодження Android службу Shizuku не вдалося запустити. Відкрийте Shizuku та запустіть її вручну.</string>
     <string name="notif_health_shizuku_restart_failed_title">Не вдалося перезапустити Shizuku</string>
     <string name="notif_health_shizuku_restarted_text">CallVault перезапустив службу налагодження Android і після цього успішно запустив Shizuku. Додаткових дій не потрібно.</string>

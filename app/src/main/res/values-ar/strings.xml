@@ -264,6 +264,8 @@
     <string name="notif_health_recorder_text">لن يتم تسجيل المكالمات حتى يتصل هذا الهاتف بشبكة Wi-Fi مرة واحدة. ستفي أي شبكة بالغرض ولا تحتاج إلى إنترنت؛ بضع ثوانٍ تكفي، ثم يستمر في العمل حتى بدون Wi-Fi.</string>
     <string name="notif_health_recorder_text_shizuku">لن يتم تسجيل المكالمات حتى يعمل Shizuku مرة أخرى. تؤدي إعادة التشغيل إلى إيقافه، لذا يجب تشغيله مرة واحدة بعد إعادة تشغيل الهاتف.</string>
     <string name="notif_health_recorder_title">لا يمكن لـ CallVault التسجيل حاليًا</string>
+    <string name="notif_health_down_title">Calls are not being recorded</string>
+    <string name="notif_health_down_generic_text">CallVault could not bring the recorder back up. Open the app to see why and what to do.</string>
     <string name="notif_health_shizuku_restart_failed_text">اضطر CallVault إلى إعادة تشغيل خدمة تصحيح أخطاء Android، وهذا يوقف Shizuku. حاول بدء Shizuku مرة أخرى ولم يتمكن؛ افتح Shizuku وشغّله بنفسك.</string>
     <string name="notif_health_shizuku_restart_failed_title">تم إيقاف Shizuku</string>
     <string name="notif_health_shizuku_restarted_text">اضطر CallVault إلى إعادة تشغيل خدمة تصحيح أخطاء Android، مما يوقف Shizuku، لذا فقد بدأ Shizuku مرة أخرى لك. لا يوجد شيء تفعله.</string>

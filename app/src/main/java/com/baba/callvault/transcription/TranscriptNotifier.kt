@@ -70,8 +70,8 @@ object TranscriptNotifier {
      * id would mean the last thing to happen erased the other — most likely a success quietly erasing
      * the failure, which is the half that needs acting on.
      */
-    private const val ID_READY = 4721
-    private const val ID_FAILED = 4722
+    internal const val ID_READY = 4721
+    internal const val ID_FAILED = 4722
 
     /**
      * Where the merge state is kept: on the notification itself.
