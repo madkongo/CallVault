@@ -135,13 +135,14 @@ object AppStopHistory {
     fun reportLines(context: Context): List<String> = runCatching {
         val am = context.getSystemService(ActivityManager::class.java) ?: return listOf("unavailable")
         val time = SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.US)
+        val crashes = com.baba.callvault.system.diagnostics.CrashJournal.readForReport(context).orEmpty()
         var traced = 0
         val exits = am.getHistoricalProcessExitReasons(context.packageName, 0, HISTORY).flatMap {
             val line = exitLine(
                 time.format(Date(it.timestamp)), it.processName, it.reason, it.importance, it.pid, it.status, it.description,
             )
             // What the crash or ANR said, for the newest few: "crash" alone sent the vivo report (2026-11-20) to the code.
-            val detail = if (traced < MAX_TRACED_EXITS) exitDetail(it).also { d -> if (d.isNotEmpty()) traced++ } else emptyList()
+            val detail = if (traced < MAX_TRACED_EXITS) exitDetail(it, crashes).also { d -> if (d.isNotEmpty()) traced++ } else emptyList()
             // Redacted: a trace is text the app did not write. The exit line itself is not, so its time stays readable.
             listOf(line) + detail.map { d -> "      " + com.baba.callvault.utils.AppLogger.redactForReport(d) }
         }
@@ -182,11 +183,16 @@ object AppStopHistory {
     }
 
     /**
-     * The trace Android kept for an ANR, or whether a native crash left a tombstone (a protobuf, not text).
-     * Android keeps no trace of a Java crash.
+     * For a Java crash, the exception from the crash journal (Android keeps no trace of one); for an ANR, the trace
+     * Android kept; for a native crash, whether it left a tombstone (a protobuf, not text).
      */
-    private fun exitDetail(exit: ApplicationExitInfo): List<String> = runCatching {
+    private fun exitDetail(exit: ApplicationExitInfo, crashJournal: String): List<String> = runCatching {
         when (exit.reason) {
+            ApplicationExitInfo.REASON_CRASH -> listOf(
+                com.baba.callvault.system.diagnostics.CrashJournal.summaryForPid(crashJournal, exit.pid)
+                    ?.let { "crash: $it (whole note under Crashes)" }
+                    ?: "crash: no note in the crash journal (a version without it, or it could not write)",
+            )
             ApplicationExitInfo.REASON_ANR -> exit.traceInputStream?.use { stream ->
                 val head = ByteArray(TRACE_READ_BYTES)
                 val read = stream.read(head).coerceAtLeast(0)
