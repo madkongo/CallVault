@@ -184,6 +184,31 @@ class WaitingRecordingsTest {
     }
 
     @Test
+    fun `a staged recording whose save failed mid-call moves into waiting storage, out of the rescue's reach`() {
+        val staging = File(context.filesDir, "staging").apply { mkdirs() }
+        val staged = File(staging, "rec_stage_1.tmp").apply { writeBytes(ByteArray(300)) }
+        StagingNote.fileFor(staged).writeText(StagingNote("content://gone", "call.ogg", "audio/ogg", 1_000L).encode())
+        val moved = WaitingRecordings.adopt(context, staged, "call.ogg", "audio/ogg", "phone call", finished = false)!!
+        assertFalse(staged.exists())
+        assertFalse(StagingNote.fileFor(staged).exists())
+        assertTrue(WaitingRecordings.isWaitingRecording(moved))
+        assertEquals(300L, moved.length())
+        val note = WaitingNote.read(moved)!!
+        assertEquals("call.ogg", note.note.fileName)
+        assertEquals(1_000L, note.note.startedAtMillis)
+        assertNull(note.finishedAt)
+        assertEquals(1, WaitingRecordings.count(context))
+    }
+
+    @Test
+    fun `a cut-off recording the rescue could not save is adopted ready to go`() {
+        val staging = File(context.filesDir, "staging").apply { mkdirs() }
+        val staged = File(staging, "rec_stage_2.tmp").apply { writeBytes(ByteArray(300)) }
+        val moved = WaitingRecordings.adopt(context, staged, "cut.ogg", "audio/ogg", "cut-off recording", finished = true)!!
+        assertNotNull(WaitingNote.read(moved)!!.finishedAt)
+    }
+
+    @Test
     fun `the note's extras survive being written and read`() {
         val n = WaitingNote(StagingNote("none", "a.ogg", "audio/ogg", 5L), 9L, WaitingNote.Extras(isVoip = true, appCallMix = false, direction = "in"))
         assertEquals(n, WaitingNote.decode(n.encode()))

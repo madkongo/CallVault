@@ -93,6 +93,13 @@ class CutOffRescueWorker(ctx: Context, params: WorkerParameters) : CoroutineWork
         val bytes = file.length()
         val uri = SafHelper.publishStagedRecording(applicationContext, folderUri.toUri(), fileName, mimeType, file)
         if (uri == null) {
+            // Review 2026-11-20: retrying the folder its note names for ever is what kept a call from a lost folder out
+            // of reach. Moved into waiting storage instead, it is saved into whichever folder is usable later, counted on
+            // Home and in the alert. If the move fails it stays here for the next try, as before.
+            if (WaitingRecordings.adopt(applicationContext, file, fileName, mimeType, "cut-off recording", finished = true) != null) {
+                AppLogger.w(TAG, "Could not save the cut-off recording ${file.name} as '$fileName'; moved into waiting storage")
+                return
+            }
             AppLogger.e(TAG, "Could not save the cut-off recording ${file.name} as '$fileName'; keeping it for the next try")
             return
         }

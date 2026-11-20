@@ -1235,8 +1235,16 @@ object VoipRecordingCoordinator {
             } else {
                 // Kept, not deleted: an unpublished recording on internal storage is recoverable and a
                 // deleted one is not.
-                AppLogger.e(TAG, "Could not publish the VoIP recording; it stays at ${staging.path}")
-                logOutcome(context, VoipOutcome.Reason.NOT_PUBLISHED, recordedMs, bytes)
+                // The folder was lost during the call (review 2026-11-20): moved into waiting storage, to be saved into
+                // whichever folder is usable later. If the move fails it stays in staging for the rescue, as before.
+                val adopted = WaitingRecordings.adopt(context, staging, outName, mime, kind = "app call", finished = false)
+                if (adopted != null) {
+                    AppLogger.e(TAG, "Could not publish the VoIP recording; moved into waiting storage to save later")
+                    keepWaiting(context, adopted, outName, mime, recordedMs, farHeard, callDirection)
+                } else {
+                    AppLogger.e(TAG, "Could not publish the VoIP recording; it stays at ${staging.path}")
+                    logOutcome(context, VoipOutcome.Reason.NOT_PUBLISHED, recordedMs, bytes)
+                }
             }
             uri
         }

@@ -180,6 +180,29 @@ object WaitingRecordings {
         return true
     }
 
+    /**
+     * Moves a staged recording whose save into the folder failed (the folder was lost mid-call, review 2026-11-20) into
+     * waiting storage, so it is saved into whichever folder is usable later, counted on Home and in the alert, instead of
+     * being retried for ever against the folder its staging note names. Not refused for the cap: the audio exists
+     * already, and refusing would only leave it in staging. [finished]: no after-call steps follow (the cut-off rescue).
+     * Returns the new file, or null when it could not be moved (the caller then keeps today's behaviour).
+     */
+    fun adopt(context: Context, staged: File, name: String, mimeType: String, kind: String, finished: Boolean): File? = runCatching {
+        val target = File(dir(context), "$PREFIX${System.nanoTime()}$SUFFIX")
+        val stagingNote = StagingNote.fileFor(staged).takeIf { it.exists() }?.let { runCatching { StagingNote.decode(it.readText()) }.getOrNull() }
+        if (!staged.renameTo(target)) {
+            CallEndLog.record(context, "$kind: could not move the unsaved recording into waiting storage; it stays in staging")
+            return@runCatching null
+        }
+        StagingNote.fileFor(staged).delete()
+        val note = (stagingNote ?: StagingNote("none", name, mimeType, target.lastModified())).copy(fileName = name, mimeType = mimeType)
+        WaitingNote.write(target, WaitingNote(note, null))
+        CallEndLog.record(context, "$kind: saving into the folder failed; moved into waiting storage to save later: ${CallEndLog.safeName(name)} size=${target.length()} bytes")
+        if (finished) ready(context, target, mimeType, kind, WaitingNote.Extras(isVoip = false, appCallMix = false, direction = null))
+        else LiveStagingFiles.register(target)
+        target
+    }.onFailure { AppLogger.e(TAG, "Moving ${staged.name} into waiting storage failed; it stays in staging", it) }.getOrNull()
+
     private fun onKept(context: Context) = FolderProtection.onWaitingKept(context)
 
     private fun onRefused(context: Context, admission: WaitingPolicy.Admission) = FolderProtection.onWaitingRefused(context, admission)

@@ -1110,6 +1110,13 @@ class AudioRecordingEngine {
             // Kept, not deleted: an unpublished recording on internal storage can still be recovered,
             // and a deleted one cannot.
             AppLogger.e(TAG, "Failed to publish staged recording into $folder; keeping temp at ${temp.path}")
+            // The folder was lost during the call (review 2026-11-20): move it into waiting storage, to be saved into
+            // whichever folder is usable later, instead of the rescue retrying the lost folder for ever. If the move
+            // fails it stays in staging, as before.
+            WaitingRecordings.adopt(ctx, temp, name, mime, kind = "phone call", finished = false)?.let { adopted ->
+                waitingRecording = adopted
+                lastCapturedByteCount = bytes
+            }
         }
     }
 
