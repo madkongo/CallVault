@@ -601,4 +601,50 @@ class LogRedactionTest {
         )
         for (line in lines) assertEquals(line, redact(line))
     }
+
+    // C165: the pre-filter let through every line holding an underscore or a dot, so most lines ran both name regexes.
+
+    @Test
+    fun `a line that cannot hold a recording name skips the name regexes`() {
+        listOf(
+            "CV:Foo_bar state changed -> IDLE",
+            "Version 2.5.2 started",
+            "retry_count=3 at host.example.net",
+            "no punctuation at all",
+        ).forEach { assertFalse(it, LogRedaction.mayContainRecordingName(it)) }
+    }
+
+    @Test
+    fun `a line with a recording extension in any case still reaches the name regexes`() {
+        listOf(
+            "Mom 2026-11-12 14-35-20.ogg",
+            "Mom 20261112T143520.OGG",
+            "content://x/document/primary%3ARec%2F20260816_120000.000%2B0300_in_John%20Doe.m4a",
+            "20260816_120000.000+0300_in_Mom.Opus",
+            "@0501234567_20261112143520.mp3",
+        ).forEach { assertTrue(it, LogRedaction.mayContainRecordingName(it)) }
+    }
+
+    @Test
+    fun `names are still redacted after the tighter pre-filter`() {
+        val salt = "s"
+        listOf(
+            "playing Mom 2026-11-12 14-35-20.ogg now",
+            "playing Mom 20261112T143520.OGG now",
+            "file 20260816_120000.000+0300_in_John Doe.ogg gone",
+        ).forEach { line ->
+            val out = LogRedaction.redact(line, salt)
+            assertFalse(out, out.contains("Mom") || out.contains("John"))
+        }
+    }
+
+    @Test
+    fun `namesAroundDate answers the same for every template shape`() {
+        assertTrue(LogRedaction.namesAroundDate("{contact_name} {date} {direction}"))
+        assertTrue(LogRedaction.namesAroundDate("{contact} {day}_{time} x"))
+        assertFalse(LogRedaction.namesAroundDate("{date}_{contact}"))
+        assertFalse(LogRedaction.namesAroundDate("{contact}_{date}"))
+        assertFalse(LogRedaction.namesAroundDate("no date here"))
+        assertFalse(LogRedaction.namesAroundDate(""))
+    }
 }
