@@ -54,6 +54,20 @@ object VoipMissPolicy {
         else -> MissReport.UNEXPLAINED
     }
 
+    /**
+     * Whether to tell the user about an app call whose capture never started in the recorder (review N21).
+     *
+     * Only when the recorder said why ([startFailureReason], from `VoipStartFailure`): an empty capture with no
+     * reason is as likely a call that ended before the session was built, or a recorder that died, and gets the
+     * always-on log line alone. And not for a call under [VoipStubPolicy.TOO_SHORT_TO_JUDGE_MS], the length below
+     * which an app call is a misdial or a ring as far as every other rule here is concerned. The phone's own call
+     * evidence ([CallEvidence]) cannot be asked: at the end the call is already over.
+     *
+     * @param recordedMs how long the recording was meant to have been running; null when unknown, which is told.
+     */
+    fun tellStartFailure(startFailureReason: String?, recordedMs: Long?): Boolean =
+        startFailureReason != null && (recordedMs == null || recordedMs >= VoipStubPolicy.TOO_SHORT_TO_JUDGE_MS)
+
     /** What a start that found no recorder comes to, once its call has ended (review N18). */
     enum class NotReadyVerdict {
         /** Nothing recorded the call: say so. */

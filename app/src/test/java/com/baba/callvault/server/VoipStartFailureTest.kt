@@ -61,6 +61,7 @@ class VoipStartFailureTest {
         val branch = app.substring(app.indexOf("if (!wroteAnything) {"), app.indexOf("} else if (!farHeard) {"))
         assertTrue(branch, branch.contains("VoipStartFailure.reasonOf("))
         assertTrue(branch, branch.contains("CallEndLog.record("))
+        assertTrue(branch, branch.contains("VoipMissPolicy.tellStartFailure("))
         assertTrue(branch, branch.contains("reportMissed(context, R.string.voip_missed_capture_failed, null)"))
     }
 }

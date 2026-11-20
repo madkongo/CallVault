@@ -1146,11 +1146,19 @@ object VoipRecordingCoordinator {
         if (!wroteAnything) {
             AppLogger.w(TAG, "VoIP capture never started — nothing was recorded (the recorder's reason is logged above)")
             // Review N21: a vivo phone lost 23 app calls this way with no word to the user and no reason in the
-            // always-on log. The recorder's reason, when it sent one, goes there; the user is told as for any miss.
+            // always-on log. The recorder's reason, when it sent one, goes there; and only a reason on a call long
+            // enough to be one is told to the user, as for any miss.
             val reason = VoipStartFailure.reasonOf(captureHealth)
-                ?: "no reason from the recorder (an older recorder, or the capture started and wrote nothing)"
-            CallEndLog.record(context, "app call capture did not start in the recorder: $reason")
-            reportMissed(context, R.string.voip_missed_capture_failed, null)
+            CallEndLog.record(
+                context,
+                "app call capture did not start in the recorder: " +
+                    (reason ?: "no reason from the recorder (an older recorder, a call that ended first, or a recorder that died)"),
+            )
+            if (VoipMissPolicy.tellStartFailure(reason, recordedMs)) {
+                reportMissed(context, R.string.voip_missed_capture_failed, null)
+            } else {
+                AppLogger.i(TAG, "Not telling the user: ${if (reason == null) "the recorder gave no reason" else "the call was under ${VoipStubPolicy.TOO_SHORT_TO_JUDGE_MS} ms"}")
+            }
         } else if (!farHeard) {
             logOneSidedDiagnostics()
             AppLogger.w(TAG, "VoIP recording captured only your side — the other app blocks capture")
