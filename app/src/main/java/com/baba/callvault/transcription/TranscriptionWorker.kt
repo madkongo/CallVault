@@ -57,6 +57,12 @@ class TranscriptionWorker(
         // An after-call run is its own unique work (review C124), so two runs can now be scheduled at once;
         // the gate keeps an unattended one from decoding on top of another. Refused means try again soon.
         val kind = runKind()
+        // Summaries already wait for a transcription; this is the other half. Both models in the main process
+        // are ~2.5 GB and 12 threads, slower and hotter, and the same pairing can crash (review R38, C83).
+        if (isSummaryRunning()) {
+            journal("transcription run DEFERRED: a summary is running")
+            return retryLater("a summary is running")
+        }
         if (!TranscriptionRunGate.tryEnter(kind)) {
             journal("transcription run DEFERRED: another transcription is running (kind=$kind)")
             return retryLater("another transcription is running")
@@ -284,6 +290,9 @@ class TranscriptionWorker(
 
     companion object {
         private const val TAG = "CV:TranscriptionWorker"
+
+        /** Whether a summary is running; a seam so a test can say yes (the engine's flag is private-set). */
+        internal var isSummaryRunning: () -> Boolean = { com.baba.callvault.summary.SummaryEngine.isRunning }
 
         /** How often the abort watcher checks for a stop. Cheap, and a stop should feel instant. */
         private const val ABORT_POLL_MS = 400L

@@ -40,6 +40,11 @@ class TranscriptionWorkerPeriodicTest {
 
     private val context: Context = ApplicationProvider.getApplicationContext()
 
+    @org.junit.After
+    fun restoreSeam() {
+        TranscriptionWorker.isSummaryRunning = { com.baba.callvault.summary.SummaryEngine.isRunning }
+    }
+
     @Before
     fun setUp() {
         TranscriptionRunGate.reset()
@@ -122,5 +127,21 @@ class TranscriptionWorkerPeriodicTest {
     fun a_finished_run_frees_the_gate() {
         run()
         assertTrue(TranscriptionRunGate.tryEnter(TranscriptionRunGate.Kind.AFTER_CALL))
+    }
+
+    @Test
+    fun a_transcription_waits_while_a_summary_is_running() {
+        TranscriptionWorker.isSummaryRunning = { true }
+
+        assertEquals(ListenableWorker.Result.retry(), run())
+        assertTrue(TranscriptionRunGate.tryEnter(TranscriptionRunGate.Kind.AFTER_CALL)) // no gate slot was taken
+    }
+
+    @Test
+    fun the_nightly_run_waits_for_a_summary_without_returning_retry() {
+        TranscriptionWorker.isSummaryRunning = { true }
+
+        assertEquals(ListenableWorker.Result.success(), run(TranscriptionScheduler.TAG_PERIODIC))
+        assertEquals(1, retryInfos().size)
     }
 }
