@@ -227,4 +227,13 @@ class WaitingPublisherTest {
         assertEquals(0, env.beforeCatalogCalls)
         assertEquals(listOf(false), env.held)
     }
+
+    @Test
+    fun `a folder lookup that throws is unknown, never a free name`() {
+        // Third review F1: a provider exception read as "name free" could rename the partial onto an existing file.
+        val logged = mutableListOf<String>()
+        val chosen = WaitingPublisher.chooseOrNull("a.ogg", 500L, sizeOf = { throw IllegalStateException("provider died") }) { logged += it }
+        assertNull(chosen)
+        assertTrue(logged.single().contains("provider died"))
+    }
 }

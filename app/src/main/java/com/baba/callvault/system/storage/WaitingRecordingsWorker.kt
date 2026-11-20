@@ -77,11 +77,13 @@ class WaitingRecordingsWorker(ctx: Context, params: WorkerParameters) : Coroutin
         override fun publish(file: File, name: String, mimeType: String): Pair<Uri, String>? {
             val target = folder ?: return null
             val dir = DocumentFile.fromTreeUri(context, target) ?: return null
-            fun sizeOf(n: String): Long? = runCatching { dir.findFile(n) }.getOrNull()?.let { SafHelper.documentSize(context, it.uri) }
-            val (finalName, alreadySaved) = WaitingPublisher.choose(name, file.length(), ::sizeOf) ?: run {
-                AppLogger.e(TAG, "Every name for '$name' is taken by other files; keeping the call for later")
-                return null
-            }
+            // A lookup that throws is unknown, not free (F1): chooseOrNull logs it and the call stays private for later.
+            fun sizeOf(n: String): Long? = dir.findFile(n)?.let { SafHelper.documentSize(context, it.uri) }
+            val (finalName, alreadySaved) = WaitingPublisher.chooseOrNull(name, file.length(), ::sizeOf) { AppLogger.w(TAG, it) }
+                ?: run {
+                    AppLogger.e(TAG, "No safe name for '$name' in the folder now; keeping the call for later")
+                    return null
+                }
             if (finalName != name) AppLogger.w(TAG, "'$name' is taken by another file in the folder; saving this call as '$finalName'")
             if (alreadySaved) {
                 AppLogger.i(TAG, "'$finalName' is already in the folder with the same size (an earlier save); not saving it twice")

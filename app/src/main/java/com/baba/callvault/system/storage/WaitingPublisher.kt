@@ -101,6 +101,16 @@ object WaitingPublisher {
         return null
     }
 
+    /**
+     * [choose], with a folder lookup that throws read as "unknown" (third review 2026-11-20, F1): logged, and null, so
+     * the call is kept privately and tried again later. Never read as a free name, which could rename the partial onto
+     * a file that exists.
+     */
+    fun chooseOrNull(name: String, ourSize: Long, sizeOf: (String) -> Long?, log: (String) -> Unit): Pair<String, Boolean>? =
+        runCatching { choose(name, ourSize, sizeOf) }
+            .onFailure { log("looking up '$name' in the folder failed (${CallEndLog.describe(it)}); keeping the call for later") }
+            .getOrNull()
+
     /** @param retryLater something is still in use or failed: look again later. */
     data class Result(val saved: Int, val retryLater: Boolean)
 
