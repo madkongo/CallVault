@@ -49,6 +49,33 @@ object UpdateManager {
         }
     }
 
+    /** A downloaded update nobody installed is dropped after this long (review R35). */
+    private const val STALE_DOWNLOAD_MS = 7 * 24 * 60 * 60_000L
+
+    /**
+     * Removes downloads in [dir] that can no longer be wanted: not newer than the [installed] version, or untouched
+     * for [STALE_DOWNLOAD_MS]. A file whose name is not ours is left alone. A download in progress is touched all
+     * the time, so it is never old. Returns how many files were removed (review R35).
+     */
+    internal fun pruneStaleDownloads(dir: File, installed: String, now: Long): Int {
+        var removed = 0
+        dir.listFiles().orEmpty().forEach { file ->
+            val tag = Regex("^CallVault-(.+)\\.apk(\\.part)?$").find(file.name)?.groupValues?.get(1) ?: return@forEach
+            val notNewer = !UpdateVersion.isNewer(tag, installed)
+            val old = now - file.lastModified() > STALE_DOWNLOAD_MS
+            if ((notNewer || old) && file.delete()) removed++
+        }
+        return removed
+    }
+
+    /** At app start: frees the cache of an update that was declined or failed (review R35). Never throws. */
+    fun pruneStaleDownloads(context: Context) {
+        runCatching {
+            val removed = pruneStaleDownloads(File(context.cacheDir, DOWNLOAD_DIR), BuildConfig.VERSION_NAME, System.currentTimeMillis())
+            if (removed > 0) AppLogger.i(TAG, "Removed $removed stale downloaded update file(s)")
+        }.onFailure { AppLogger.w(TAG, "Could not prune downloaded updates: ${it.message}") }
+    }
+
     fun cleanupDownloadCache(context: Context) {
         runCatching { File(context.cacheDir, DOWNLOAD_DIR).deleteRecursively() }
     }
@@ -64,7 +91,7 @@ object UpdateManager {
         val preferences = AppPreferences(context)
         if (reconcile) reconcilePendingState(context, preferences)
 
-        val release = GitHubReleases.fetchLatestRelease(preferences.getUpdateSourceOverrideUrl()) ?: return null
+        val release = GitHubReleases.fetchLatestRelease(preferences.getUpdateSourceOverrideUrl(), ReleaseEtagCache(context)) ?: return null
         if (!UpdateVersion.isNewer(release.tag, BuildConfig.VERSION_NAME)) {
             // Up to date (or ahead, e.g. a local test build): clear any stale banner state.
             preferences.setAvailableUpdateTag(null)

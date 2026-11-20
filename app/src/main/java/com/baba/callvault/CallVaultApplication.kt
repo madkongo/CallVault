@@ -106,6 +106,11 @@ class CallVaultApplication : Application() {
             }.onFailure { AppLogger.w(TAG, "Could not prune orphaned model files: ${it.message}") }
         }.apply { isDaemon = true; start() }
 
+        // A downloaded update that was declined or never installed (about 70 MB) is dropped once it is no longer newer
+        // than this build or a week old (review R35). Own thread, touches only cacheDir/updates, never throws.
+        Thread { com.baba.callvault.system.updates.UpdateManager.pruneStaleDownloads(applicationContext) }
+            .apply { isDaemon = true; name = "cv-update-cache-prune" }.start()
+
         // Keep or delete after the call: a reboot clears every notification and a killed process can lose
         // the steps after a hold, so each held recording gets its 24-hour check and its question back here.
         // This runs on every process start, boot included. Off the main thread: it reads a file per entry.
