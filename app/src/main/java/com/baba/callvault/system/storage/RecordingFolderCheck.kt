@@ -139,8 +139,15 @@ object RecordingFolderCheck {
         }
     }
 
-    /** One look at the folder, with what was seen. Blocking. */
-    internal fun measure(context: Context): FolderReading {
+    /**
+     * One look at the folder, with what was seen. Blocking. One measurement at a time (second review 2026-11-20, N2):
+     * a second caller waits for the first instead of reading its probe, still running, as "hung".
+     */
+    internal fun measure(context: Context): FolderReading = synchronized(measureLock) { measureLocked(context) }
+
+    private val measureLock = Any()
+
+    private fun measureLocked(context: Context): FolderReading {
         val uri = AppPreferences(context).getRecordingFolderUri()
             ?: return FolderReading(null, FolderReading.Kind.NOT_SET, "no folder set")
         val u = uri.toString()
