@@ -43,13 +43,24 @@ sealed interface FolderNotice {
         const val NOTIFICATION_ID = 4728
 
         /** What the alert should say now. [refused] is set when a call could not be kept at all. */
-        fun decide(folderGone: Boolean, waitingCount: Int, waitingBytes: Long, refused: WaitingPolicy.Admission?): FolderNotice {
+        fun decide(
+            folderGone: Boolean,
+            waitingCount: Int,
+            waitingBytes: Long,
+            refused: WaitingPolicy.Admission?,
+            phoneStorageFull: Boolean = false,
+        ): FolderNotice {
+            // The phone itself is out of room: say so. "Choose a recording folder" would be wrong advice (review R2).
+            if (refused == WaitingPolicy.Admission.NO_SPACE) {
+                return Post(R.string.storage_full_title, null, 0, R.string.storage_full_not_recorded_text)
+            }
             if (refused != null && refused != WaitingPolicy.Admission.OK) {
                 return Post(R.string.recording_folder_gone_title, null, 0, R.string.waiting_calls_full_text)
             }
             if (waitingCount > 0) {
                 val text = when (WaitingPolicy.level(waitingBytes)) {
-                    WaitingPolicy.Level.NORMAL -> R.string.waiting_calls_text
+                    WaitingPolicy.Level.NORMAL ->
+                        if (phoneStorageFull && !folderGone) R.string.waiting_calls_storage_full_text else R.string.waiting_calls_text
                     WaitingPolicy.Level.NEARLY_FULL -> R.string.waiting_calls_nearly_full_text
                     WaitingPolicy.Level.FULL -> R.string.waiting_calls_full_text
                 }

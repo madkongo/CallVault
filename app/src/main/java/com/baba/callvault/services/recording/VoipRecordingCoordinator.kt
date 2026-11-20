@@ -407,6 +407,7 @@ object VoipRecordingCoordinator {
         // held for the answer (N17): the hold says it when it releases, and an unanswered call never says it.
         if (!holdApplies) RecordingNotificationHelper(context).showRecordingStarted()
         AppLogger.i(TAG, "VoIP recording started -> $fileName")
+        com.baba.callvault.system.storage.FreeSpaceMonitor.check(context, logLine = true)
         CallEndLog.record(
             context,
             CallEndLog.capturePath(

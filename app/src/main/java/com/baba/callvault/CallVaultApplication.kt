@@ -167,6 +167,12 @@ class CallVaultApplication : Application() {
         runCatching { DebugNotificationHelper.sync(applicationContext) }
             .onFailure { AppLogger.w(TAG, "Debug notification sync failed: ${it.message}") }
 
+        // The phone's free space (review R2): one stat call, off the main thread; warns once when it runs low.
+        // Not periodic: app start and each call start are the only moments it reads.
+        Thread {
+            com.baba.callvault.system.storage.FreeSpaceMonitor.check(applicationContext, logLine = false)
+        }.apply { isDaemon = true; name = "cv-free-space" }.start()
+
         // Reconcile the daily retention sweep with the saved prefs (schedules it when retention is on,
         // cancels it when off). Idempotent; ensures the sweep persists across reinstalls/reboots.
         runCatching { RetentionScheduler.apply(applicationContext) }

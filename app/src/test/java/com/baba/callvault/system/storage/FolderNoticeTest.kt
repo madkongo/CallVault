@@ -45,7 +45,16 @@ class FolderNoticeTest {
         val n = FolderNotice.decide(true, 40, WaitingPolicy.CAP_BYTES, WaitingPolicy.Admission.FULL) as FolderNotice.Post
         assertEquals(R.string.waiting_calls_full_text, n.textRes)
         val noSpace = FolderNotice.decide(true, 0, 0L, WaitingPolicy.Admission.NO_SPACE) as FolderNotice.Post
-        assertEquals(R.string.waiting_calls_full_text, noSpace.textRes)
+        // The phone itself is full: say that, not "choose a recording folder" (review R2).
+        assertEquals(R.string.storage_full_not_recorded_text, noSpace.textRes)
+    }
+
+    @Test
+    fun `calls waiting only because the phone is full - say storage is full, not choose a folder`() {
+        val n = FolderNotice.decide(false, 2, 1_000L, null, phoneStorageFull = true) as FolderNotice.Post
+        assertEquals(R.string.waiting_calls_storage_full_text, n.textRes)
+        val gone = FolderNotice.decide(true, 2, 1_000L, null, phoneStorageFull = true) as FolderNotice.Post
+        assertEquals(R.string.waiting_calls_text, gone.textRes)
     }
 
     @Test
