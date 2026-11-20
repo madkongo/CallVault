@@ -30,7 +30,10 @@ internal object VoipStartFailure {
         return (PREFIX + reason).replace(Regex("[\\r\\n]+"), " ").take(MAX_LINE)
     }
 
-    /** The reason in [diagnostics] when it is a start failure from [line]; null for ordinary capture health. */
+    /**
+     * The reason in [diagnostics] when it is a start failure from [line]; null for ordinary capture health. [line] is
+     * one line, so the reason ends at any line break (a newer recorder adds its recovery summary after one).
+     */
     fun reasonOf(diagnostics: String?): String? =
-        diagnostics?.takeIf { it.startsWith(PREFIX) }?.removePrefix(PREFIX)
+        diagnostics?.takeIf { it.startsWith(PREFIX) }?.removePrefix(PREFIX)?.substringBefore('\n')
 }

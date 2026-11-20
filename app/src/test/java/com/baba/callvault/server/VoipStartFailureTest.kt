@@ -64,4 +64,11 @@ class VoipStartFailureTest {
         assertTrue(branch, branch.contains("VoipMissPolicy.tellStartFailure("))
         assertTrue(branch, branch.contains("reportMissed(context, R.string.voip_missed_capture_failed, null)"))
     }
+
+    /** Review N21b: a newer recorder may add a recovery summary after a line break; the reason ends at the break. */
+    @Test
+    fun the_reason_stops_at_a_line_break() {
+        val line = VoipStartFailure.line(IllegalStateException("sink unavailable")) + "\ncapture recovery: sink=ctor crashed(x)"
+        assertEquals("IllegalStateException: sink unavailable", VoipStartFailure.reasonOf(line))
+    }
 }

@@ -17,6 +17,16 @@ import org.junit.Test
 
 class CallEndLogTest {
 
+    /** Review N21b: the always-on file is one entry per line, so a line handed in with breaks stays one entry. */
+    @Test
+    fun `a line with breaks is written as one line`() {
+        assertEquals("health ok capture recovery: sink=normal", CallEndLog.singleLine("health ok\ncapture recovery: sink=normal"))
+        assertEquals("a b", CallEndLog.singleLine("a\r\nb"))
+        val root = listOf(java.io.File("src/main/java"), java.io.File("app/src/main/java")).first { it.isDirectory }
+        val source = java.io.File(root, "com/baba/callvault/system/diagnostics/CallEndLog.kt").readText()
+        assertTrue(source.contains("AppLogger.redactForReport(singleLine(line))"))
+    }
+
     @Test
     fun `a name keeps its timestamp marker and extension but not the contact`() {
         assertEquals(
