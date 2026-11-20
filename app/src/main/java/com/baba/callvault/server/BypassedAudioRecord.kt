@@ -16,6 +16,7 @@ import android.os.Binder
 import android.os.Build
 import android.os.Looper
 import android.os.Parcel
+import androidx.annotation.RequiresApi
 import java.lang.ref.WeakReference
 
 /**
@@ -38,6 +39,13 @@ import java.lang.ref.WeakReference
  * rejected by AudioFlinger. Also like the public constructor for a REMOTE_SUBMIX capture: the
  * [AudioRecord.SUBMIX_FIXED_VOLUME] tag is not passed down but turned into the full-volume flag.
  *
+ * **Android 17** (review N21) replaced the private `mChannelCount` + `mChannelMask` ints with one `mChannelMasks`
+ * (`AudioFormat.ChannelMasks`) and passes that object to `native_setup` in place of the two masks. Read from the
+ * Android 17 emulator image's framework.jar (build CP41.260831.007): the public constructor builds
+ * `new ChannelMasks(positionMask, indexMask, acnMask)` and calls `native_setup(Object, Object, int[], Object, int,
+ * int, int[], Parcel, long, int, int)`. Which layout a phone has is read from its fields ([channelLayoutOf]), not
+ * assumed from the SDK level. Upstream scrcpy still sets `mChannelCount`, so it has no Android 17 fix to copy.
+ *
  * Used only after the normal path has failed — never the first choice.
  *
  * **Hidden APIs, and why lint is told so.** This runs only inside the recorder host — an `app_process` started
@@ -47,7 +55,7 @@ import java.lang.ref.WeakReference
 @SuppressLint("DiscouragedPrivateApi", "SoonBlockedPrivateApi", "PrivateApi", "BlockedPrivateApi")
 internal object BypassedAudioRecord {
 
-    /** The tag the public constructor strips and turns into `mIsSubmixFullVolume`. Hidden constant, same value on 11–16. */
+    /** The tag the public constructor strips and turns into `mIsSubmixFullVolume`. Hidden constant, same value on 11–17. */
     private const val SUBMIX_FIXED_VOLUME = "fixedVolume"
 
     /**
@@ -84,15 +92,22 @@ internal object BypassedAudioRecord {
 
         cls.getDeclaredMethod("audioParamCheck", Int::class.javaPrimitiveType, Int::class.javaPrimitiveType, Int::class.javaPrimitiveType)
             .apply { isAccessible = true }.invoke(record, capturePreset, sampleRate, encoding)
-        field("mChannelCount").setInt(record, channelCount)
-        field("mChannelMask").setInt(record, channelMask)
+        // Before audioBuffSizeCheck, which derives the frame size from the channels.
+        val channels: Any = when (channelLayoutOf(cls)) {
+            ChannelLayout.CHANNEL_MASKS -> channelMasks(channelMask).also { field("mChannelMasks").set(record, it) }
+            ChannelLayout.COUNT_AND_MASK -> {
+                field("mChannelCount").setInt(record, channelCount)
+                field("mChannelMask").setInt(record, channelMask)
+                channelMask
+            }
+        }
         cls.getDeclaredMethod("audioBuffSizeCheck", Int::class.javaPrimitiveType)
             .apply { isAccessible = true }.invoke(record, bufferSizeInBytes)
 
         val rates = intArrayOf(sampleRate)
         val session = intArrayOf(android.media.AudioManager.AUDIO_SESSION_ID_GENERATE)
         val nativeBuffer = field("mNativeBufferSizeInBytes").getInt(record)
-        val result = nativeSetup(record, attributes, rates, channelMask, record.audioFormat, nativeBuffer, session)
+        val result = nativeSetup(record, attributes, rates, channels, record.audioFormat, nativeBuffer, session)
         check(result == AudioRecord.SUCCESS) { "native_setup returned $result" }
 
         field("mSampleRate").setInt(record, rates[0])
@@ -101,11 +116,49 @@ internal object BypassedAudioRecord {
         return record
     }
 
+    /** How a given `AudioRecord` class stores its channel configuration. */
+    internal enum class ChannelLayout {
+        /** Android 17: one `mChannelMasks` (`AudioFormat.ChannelMasks`: position, index and ACN masks plus the count). */
+        CHANNEL_MASKS,
+
+        /** Android 11–16: `mChannelCount` and `mChannelMask` ints. */
+        COUNT_AND_MASK,
+    }
+
+    private const val CHANNEL_MASKS_FIELD = "mChannelMasks"
+    private val COUNT_AND_MASK_FIELDS = listOf("mChannelCount", "mChannelMask")
+
+    /**
+     * Which [ChannelLayout] [cls] has, read from its declared fields rather than assumed from the SDK level: an OEM
+     * ROM can differ from AOSP, and the 2.5.1 code assumed `mChannelCount`, which Android 17 no longer has (review
+     * N21, vivo V2546A). The newer field wins if a ROM kept both.
+     *
+     * @throws NoSuchFieldException naming every field looked for and which were missing.
+     */
+    internal fun channelLayoutOf(cls: Class<*>): ChannelLayout {
+        val declared = cls.declaredFields.mapTo(HashSet()) { it.name }
+        if (CHANNEL_MASKS_FIELD in declared) return ChannelLayout.CHANNEL_MASKS
+        if (declared.containsAll(COUNT_AND_MASK_FIELDS)) return ChannelLayout.COUNT_AND_MASK
+        val missing = (listOf(CHANNEL_MASKS_FIELD) + COUNT_AND_MASK_FIELDS).filterNot { it in declared }
+        throw NoSuchFieldException(
+            "${cls.name} has no known channel fields: looked for $CHANNEL_MASKS_FIELD (Android 17) or " +
+                "${COUNT_AND_MASK_FIELDS.joinToString(" + ")} (Android 11-16); missing: ${missing.joinToString(", ")}"
+        )
+    }
+
+    /** Android 17's `new AudioFormat.ChannelMasks(positionMask, indexMask = 0, acnMask = 0)`, as its constructor builds it. */
+    private fun channelMasks(positionMask: Int): Any {
+        val i = Int::class.javaPrimitiveType
+        return Class.forName("android.media.AudioFormat\$ChannelMasks").getDeclaredConstructor(i, i, i)
+            .apply { isAccessible = true }.newInstance(positionMask, 0, 0)
+    }
+
     private fun field(name: String) =
         AudioRecord::class.java.getDeclaredField(name).apply { isAccessible = true }
 
+    /** @param channels the `ChannelMasks` object on Android 17, the IN position mask (an Int) before it. */
     private fun nativeSetup(
-        record: AudioRecord, attributes: AudioAttributes, rates: IntArray, channelMask: Int,
+        record: AudioRecord, attributes: AudioAttributes, rates: IntArray, channels: Any,
         format: Int, bufferBytes: Int, session: IntArray,
     ): Int {
         val cls = AudioRecord::class.java
@@ -118,11 +171,37 @@ internal object BypassedAudioRecord {
             }.getOrNull()
             return cls.getDeclaredMethod("native_setup", Any::class.java, Any::class.java, IntArray::class.java, i, i, i, i,
                 IntArray::class.java, String::class.java, l).apply { isAccessible = true }
-                .invoke(record, WeakReference(record), attributes, rates, channelMask, 0, format, bufferBytes, session, opPackage, 0L) as Int
+                .invoke(record, WeakReference(record), attributes, rates, channels as Int, 0, format, bufferBytes, session, opPackage, 0L) as Int
         }
+        return withAttributionParcel { parcel ->
+            if (channels !is Int) {
+                // Android 17: (weakThis, attributes, rate[], Object channelMasks, format, bytes, session[],
+                //              Parcel attributionSource, nativePtr, maxSharedAudioHistoryMs, halInputFlags)
+                cls.getDeclaredMethod("native_setup", Any::class.java, Any::class.java, IntArray::class.java, Any::class.java, i, i,
+                    IntArray::class.java, Parcel::class.java, l, i, i).apply { isAccessible = true }
+                    .invoke(record, WeakReference(record), attributes, rates, channels, format, bufferBytes, session, parcel, 0L, 0, 0) as Int
+            } else if (Build.VERSION.SDK_INT < Build.VERSION_CODES.UPSIDE_DOWN_CAKE) {
+                // Android 12–13: (…, session[], Parcel attributionSource, nativePtr, maxSharedAudioHistoryMs)
+                cls.getDeclaredMethod("native_setup", Any::class.java, Any::class.java, IntArray::class.java, i, i, i, i,
+                    IntArray::class.java, Parcel::class.java, l, i).apply { isAccessible = true }
+                    .invoke(record, WeakReference(record), attributes, rates, channels, 0, format, bufferBytes, session, parcel, 0L, 0) as Int
+            } else {
+                // Android 14-16 added halInputFlags.
+                cls.getDeclaredMethod("native_setup", Any::class.java, Any::class.java, IntArray::class.java, i, i, i, i,
+                    IntArray::class.java, Parcel::class.java, l, i, i).apply { isAccessible = true }
+                    .invoke(record, WeakReference(record), attributes, rates, channels, 0, format, bufferBytes, session, parcel, 0L, 0, 0) as Int
+            }
+        }
+    }
+
+    /**
+     * Runs [setup] with the attribution the public constructor itself passes when it has no Context (Android 12+):
+     * `AttributionSource.myAttributionSource()`, renamed `uid:<uid>` when it has no package (Android 13 and later).
+     */
+    @RequiresApi(Build.VERSION_CODES.S)
+    private fun withAttributionParcel(setup: (Parcel) -> Int): Int {
         var source = AttributionSource.myAttributionSource()
         if (source.packageName == null) {
-            // What the public constructor does for a command-line caller (Android 13 and later).
             source = runCatching {
                 AttributionSource::class.java.getMethod("withPackageName", String::class.java)
                     .invoke(source, "uid:" + Binder.getCallingUid()) as AttributionSource
@@ -132,17 +211,7 @@ internal object BypassedAudioRecord {
             .invoke(source) as AutoCloseable
         return state.use {
             val parcel = it.javaClass.getDeclaredMethod("getParcel").apply { isAccessible = true }.invoke(it) as Parcel
-            if (Build.VERSION.SDK_INT < Build.VERSION_CODES.UPSIDE_DOWN_CAKE) {
-                // Android 12–13: (…, session[], Parcel attributionSource, nativePtr, maxSharedAudioHistoryMs)
-                cls.getDeclaredMethod("native_setup", Any::class.java, Any::class.java, IntArray::class.java, i, i, i, i,
-                    IntArray::class.java, Parcel::class.java, l, i).apply { isAccessible = true }
-                    .invoke(record, WeakReference(record), attributes, rates, channelMask, 0, format, bufferBytes, session, parcel, 0L, 0) as Int
-            } else {
-                // Android 14+ added halInputFlags.
-                cls.getDeclaredMethod("native_setup", Any::class.java, Any::class.java, IntArray::class.java, i, i, i, i,
-                    IntArray::class.java, Parcel::class.java, l, i, i).apply { isAccessible = true }
-                    .invoke(record, WeakReference(record), attributes, rates, channelMask, 0, format, bufferBytes, session, parcel, 0L, 0, 0) as Int
-            }
+            setup(parcel)
         }
     }
 }
