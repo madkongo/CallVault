@@ -41,6 +41,9 @@ object WaitingRecordings {
     private const val PREFIX = "rec_wait_"
     private const val SUFFIX = ".tmp"
 
+    /** The call-end check skipped because the audio mode still said "call": tried once more after this. */
+    private const val CALL_END_RECHECK_MS = 45_000L
+
     /**
      * The folder's own output when it is usable ([inFolder], today's path, untouched); waiting storage otherwise, and
      * also when the folder looked usable but its file could not be created.
@@ -178,7 +181,9 @@ object WaitingRecordings {
             )
             // The call is real evidence that the folder is gone: measure now (at the call's end, never its start) so Home
             // and the alert follow.
-            RecordingFolderCheck.checkAsync(context, "a call found the folder not usable", skipDuringCall = true)
+            RecordingFolderCheck.checkAsync(
+                context, "a call found the folder not usable", skipDuringCall = true, retryIfSkippedMs = CALL_END_RECHECK_MS,
+            )
             onKept(context)
         }.onFailure { AppLogger.e(TAG, "Finishing the waiting recording ${file.name} failed; it stays where it is", it) }
     }

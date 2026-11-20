@@ -80,10 +80,21 @@ object RecordingFolderCheck {
     fun isKnownUnusable(context: Context, currentUri: Uri?): Boolean =
         FolderCheckPolicy.isUnusable(cached(context), currentUri?.toString(), System.currentTimeMillis())
 
-    /** Looks now, on a background thread; with [skipDuringCall], not while a call is up (no provider query mid-call). */
-    fun checkAsync(context: Context, trigger: String, skipDuringCall: Boolean = false) {
+    /**
+     * Looks now, on a background thread; with [skipDuringCall], not while a call is up ([CallGuard]). A skipped check
+     * with [retryIfSkippedMs] is tried once more after that delay (the audio mode can lag a hang-up: F2).
+     */
+    fun checkAsync(context: Context, trigger: String, skipDuringCall: Boolean = false, retryIfSkippedMs: Long? = null) {
         val app = context.applicationContext
-        runCatching { worker.execute { if (!(skipDuringCall && PhoneCallState.isCallUp(app))) checkNow(app, trigger) } }
+        runCatching {
+            worker.execute {
+                if (!(skipDuringCall && CallGuard.shouldSkip(app, trigger))) {
+                    checkNow(app, trigger)
+                } else if (retryIfSkippedMs != null) {
+                    runCatching { worker.schedule({ checkAsync(app, "$trigger (again)", skipDuringCall = true) }, retryIfSkippedMs, TimeUnit.MILLISECONDS) }
+                }
+            }
+        }
             .onFailure { AppLogger.w(TAG, "Could not start the folder check ($trigger): ${it.message}") }
     }
 
@@ -98,7 +109,7 @@ object RecordingFolderCheck {
         runCatching {
             worker.execute {
                 // Never a provider query while a call is up (review 2026-11-20).
-                val step = if (PhoneCallState.isCallUp(app)) null else checkNow(app, trigger)
+                val step = if (CallGuard.shouldSkip(app, trigger)) null else checkNow(app, trigger)
                 runCatching { then?.invoke(step) }
             }
         }.onFailure { AppLogger.w(TAG, "Could not start the folder check ($trigger): ${it.message}") }

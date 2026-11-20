@@ -179,7 +179,7 @@ class WaitingRecordingsWorker(ctx: Context, params: WorkerParameters) : Coroutin
 /** The periodic folder check, only while [FolderWatchPlan] needs one (review C98, 2026-11-20). Skipped during a call. */
 class FolderWatchWorker(ctx: Context, params: WorkerParameters) : CoroutineWorker(ctx, params) {
     override suspend fun doWork(): Result {
-        if (!PhoneCallState.isCallUp(applicationContext)) RecordingFolderCheck.checkNow(applicationContext, "periodic")
+        if (!CallGuard.shouldSkip(applicationContext, "periodic")) RecordingFolderCheck.checkNow(applicationContext, "periodic")
         return Result.success()
     }
 }
