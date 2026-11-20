@@ -144,4 +144,52 @@ class FolderCheckPolicyTest {
         assertEquals(state, FolderCheckState.decode(state.encode()))
         assertNull(FolderCheckState.decode("garbage"))
     }
+
+    // ---- independent review, 2026-11-20 -------------------------------------------------------------------------
+
+    @Test
+    fun `a cloud folder offline never counts as gone, however long it lasts`() {
+        var state: FolderCheckState? = null
+        listOf(Kind.TRANSIENT, Kind.MISSING, Kind.TRANSIENT).forEachIndexed { i, kind ->
+            val step = FolderCheckPolicy.next(state, FolderReading(uri, kind, "offline", cloud = true), now = 1_000L + i * FolderCheckPolicy.TRANSIENT_GRACE_MS * 3)
+            assertFalse(step.state.confirmedUnusable)
+            assertFalse(step.alert)
+            state = step.state
+        }
+    }
+
+    @Test
+    fun `a cloud folder whose grant is gone is still gone`() {
+        val step = FolderCheckPolicy.next(null, FolderReading(uri, Kind.GRANT_MISSING, "x", cloud = true), now = 1_000L)
+        assertTrue(step.state.confirmedUnusable)
+    }
+
+    @Test
+    fun `two transient readings hours apart are not hours of trouble`() {
+        val first = FolderCheckPolicy.next(null, reading(Kind.TRANSIENT), now = 1_000L)
+        val muchLater = 1_000L + FolderCheckPolicy.MAX_CHECK_GAP_MS + 1
+        val second = FolderCheckPolicy.next(first.state, reading(Kind.TRANSIENT), now = muchLater)
+        assertFalse(second.state.confirmedUnusable)
+        assertEquals(muchLater, second.state.firstBadAt)
+    }
+
+    @Test
+    fun `an older reading that finishes late never overwrites a newer one`() {
+        val newer = FolderCheckPolicy.next(null, reading(Kind.GRANT_MISSING), now = 50_000L)
+        val older = FolderCheckPolicy.next(newer.state, reading(Kind.OK), now = 40_000L)
+        assertTrue(older.stale)
+        assertEquals(newer.state, older.state)
+        assertFalse(older.cleared)
+    }
+
+    @Test
+    fun `always-on folder lines are rate-limited, and say how many were dropped`() {
+        val limit = AlwaysOnRateLimit(maxPerWindow = 3, windowMs = 60_000L)
+        assertEquals(0, limit.take(0L))
+        assertEquals(0, limit.take(1L))
+        assertEquals(0, limit.take(2L))
+        assertNull(limit.take(3L))
+        assertNull(limit.take(4L))
+        assertEquals(2, limit.take(60_001L))
+    }
 }

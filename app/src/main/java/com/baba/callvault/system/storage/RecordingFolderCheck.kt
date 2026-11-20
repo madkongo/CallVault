@@ -19,6 +19,7 @@ import com.baba.callvault.data.AppPreferences
 import com.baba.callvault.integrations.adb.UsbDebuggingEvents
 import com.baba.callvault.utils.AppLogger
 import java.util.concurrent.Executors
+import java.util.concurrent.Future
 import java.util.concurrent.ScheduledFuture
 import java.util.concurrent.TimeUnit
 import java.util.concurrent.TimeoutException
@@ -55,8 +56,18 @@ object RecordingFolderCheck {
     private const val PRIMARY_VOLUME = "primary"
 
     private val worker = Executors.newSingleThreadScheduledExecutor { r -> Thread(r, "cv-folder-check").apply { isDaemon = true } }
-    private val providerCalls = Executors.newCachedThreadPool { r -> Thread(r, "cv-folder-probe").apply { isDaemon = true } }
+
+    /**
+     * One thread for provider queries, and one query at a time: a provider that hangs keeps this thread, and every
+     * check meanwhile reads "a previous probe is still waiting" instead of starting another thread (review 2026-11-20:
+     * the cached pool leaked a thread per check on a hung provider).
+     */
+    private val providerCalls = Executors.newSingleThreadExecutor { r -> Thread(r, "cv-folder-probe").apply { isDaemon = true } }
+    @Volatile private var outstandingProbe: Future<*>? = null
     private val lock = Any()
+
+    /** Always-on `folder:` lines: at most 12 an hour, so a flapping provider cannot flood the file. */
+    private val alwaysOnLimit = AlwaysOnRateLimit(maxPerWindow = 12, windowMs = 60 * 60_000L)
 
     @Volatile private var lastCheckAtElapsed = 0L
     private var pendingRecheck: ScheduledFuture<*>? = null
@@ -92,11 +103,17 @@ object RecordingFolderCheck {
      */
     fun checkNow(context: Context, trigger: String): FolderCheckPolicy.Step? = runCatching {
         val app = context.applicationContext
+        val startedAt = System.currentTimeMillis()
         val reading = measure(app)
         val step = synchronized(lock) {
             lastCheckAtElapsed = SystemClock.elapsedRealtime()
             val previous = cached(app)
-            val step = FolderCheckPolicy.next(previous, reading, System.currentTimeMillis())
+            val step = FolderCheckPolicy.next(previous, reading, startedAt)
+            if (step.stale) {
+                // Two checks overlapped and the newer one already stored its answer.
+                AppLogger.d(TAG, "check ($trigger): a newer reading is already stored; dropping this one (${reading.kind})")
+                return@runCatching step
+            }
             prefs(app).edit().putString(KEY_STATE, step.state.encode()).apply()
             log(app, trigger, previous, reading, step)
             scheduleRecheck(app, step.recheckInMs)
@@ -121,33 +138,45 @@ object RecordingFolderCheck {
         val uri = AppPreferences(context).getRecordingFolderUri()
             ?: return FolderReading(null, FolderReading.Kind.NOT_SET, "no folder set")
         val u = uri.toString()
-        // The same test a call makes, so "usable" here means exactly what it means when a call starts.
-        val usable = try {
-            providerCalls.submit<Boolean> { SafHelper.isFolderValid(context, uri) }.get(PROVIDER_TIMEOUT_MS, TimeUnit.MILLISECONDS)
-        } catch (_: TimeoutException) {
-            return FolderReading(u, FolderReading.Kind.TRANSIENT, "the folder's provider did not answer within $PROVIDER_TIMEOUT_MS ms")
-        } catch (e: Exception) {
-            return FolderReading(u, FolderReading.Kind.TRANSIENT, "the usability test threw ${describe(e)}")
+        val cloud = SafHelper.isCloudFolder(uri)
+        fun reading(kind: FolderReading.Kind, evidence: String) =
+            FolderReading(u, kind, if (cloud) "cloud folder; $evidence" else evidence, cloud)
+        outstandingProbe?.takeIf { !it.isDone }?.let {
+            return reading(FolderReading.Kind.TRANSIENT, "a previous probe is still waiting on the folder's provider")
         }
-        if (usable) return FolderReading(u, FolderReading.Kind.OK, "exists and writable")
+        // The same test a call makes, so "usable" here means exactly what it means when a call starts; and, only when
+        // it fails, what the provider says about the folder document. One task, on the one probe thread.
+        val probe = providerCalls.submit<Pair<Boolean, String?>> {
+            val ok = SafHelper.isFolderValid(context, uri)
+            ok to (if (ok) null else providerAnswer(context, uri))
+        }
+        outstandingProbe = probe
+        val (usable, answer) = try {
+            probe.get(PROVIDER_TIMEOUT_MS, TimeUnit.MILLISECONDS)
+        } catch (_: TimeoutException) {
+            return reading(FolderReading.Kind.TRANSIENT, "the folder's provider did not answer within $PROVIDER_TIMEOUT_MS ms")
+        } catch (e: Exception) {
+            return reading(FolderReading.Kind.TRANSIENT, "the usability test threw ${describe(e.cause ?: e)}")
+        }
+        if (usable) return reading(FolderReading.Kind.OK, "exists and writable")
 
         val unlocked = runCatching { context.getSystemService(UserManager::class.java)?.isUserUnlocked }.getOrNull()
-        if (unlocked == false) return FolderReading(u, FolderReading.Kind.TRANSIENT, "storage is still locked after a reboot")
-        val detail = providerAnswer(context, uri)
+        if (unlocked == false) return reading(FolderReading.Kind.TRANSIENT, "storage is still locked after a reboot")
+        val detail = answer ?: "$PROVIDER_FAILED no answer"
         val grantHeld = runCatching {
             context.contentResolver.persistedUriPermissions.any { it.uri == uri && it.isWritePermission }
         }.getOrNull()
         if (grantHeld == false) {
-            return FolderReading(u, FolderReading.Kind.GRANT_MISSING, "CallVault no longer holds write access to the folder; provider: $detail")
+            return reading(FolderReading.Kind.GRANT_MISSING, "CallVault no longer holds write access to the folder; provider: $detail")
         }
         val volume = volumeState(context, uri)
         if (volume != null && volume != Environment.MEDIA_MOUNTED) {
-            return FolderReading(u, FolderReading.Kind.TRANSIENT, "the folder's storage is $volume; provider: $detail")
+            return reading(FolderReading.Kind.TRANSIENT, "the folder's storage is $volume; provider: $detail")
         }
         if (detail.startsWith(PROVIDER_FAILED)) {
-            return FolderReading(u, FolderReading.Kind.TRANSIENT, "grant held=${grantHeld ?: "?"}, storage=${volume ?: "n/a"}; provider: $detail")
+            return reading(FolderReading.Kind.TRANSIENT, "grant held=${grantHeld ?: "?"}, storage=${volume ?: "n/a"}; provider: $detail")
         }
-        return FolderReading(u, FolderReading.Kind.MISSING, "grant held=${grantHeld ?: "?"}, storage=${volume ?: "n/a"}; provider: $detail")
+        return reading(FolderReading.Kind.MISSING, "grant held=${grantHeld ?: "?"}, storage=${volume ?: "n/a"}; provider: $detail")
     }
 
     private const val PROVIDER_FAILED = "failed:"
@@ -157,7 +186,7 @@ object RecordingFolderCheck {
      * definite answer) from a provider that failed (which may pass). Starts with [PROVIDER_FAILED] for the latter.
      */
     private fun providerAnswer(context: Context, treeUri: Uri): String = try {
-        providerCalls.submit<String> {
+        run {
             val doc = DocumentsContract.buildDocumentUriUsingTree(treeUri, DocumentsContract.getTreeDocumentId(treeUri))
             context.contentResolver.query(
                 doc, arrayOf(DocumentsContract.Document.COLUMN_FLAGS, DocumentsContract.Document.COLUMN_MIME_TYPE), null, null, null,
@@ -173,9 +202,7 @@ object RecordingFolderCheck {
                     }
                 }
             }
-        }.get(PROVIDER_TIMEOUT_MS, TimeUnit.MILLISECONDS)
-    } catch (_: TimeoutException) {
-        "$PROVIDER_FAILED no answer within $PROVIDER_TIMEOUT_MS ms"
+        }
     } catch (e: Exception) {
         val cause = e.cause ?: e
         val text = describe(cause)
@@ -226,7 +253,9 @@ object RecordingFolderCheck {
     /** A line in the always-on events file (kept with debug logging off), redacted like every other one there. */
     fun recordAlwaysOn(context: Context, line: String) {
         runCatching {
-            UsbDebuggingEvents.record(context, "folder: " + AppLogger.redactForReport(line.replace(Regex("[\\r\\n]+"), " ")))
+            val dropped = synchronized(alwaysOnLimit) { alwaysOnLimit.take(SystemClock.elapsedRealtime()) } ?: return
+            val note = if (dropped > 0) " ($dropped earlier folder lines dropped by the rate limit)" else ""
+            UsbDebuggingEvents.record(context, "folder: " + AppLogger.redactForReport(line.replace(Regex("[\\r\\n]+"), " ")) + note)
         }
     }
 

@@ -13,8 +13,10 @@ package com.baba.callvault.system.storage
  *
  * @param uri      the folder that was set when it was measured, or null when none is set.
  * @param evidence what was seen, for the log: which test failed and what the system said.
+ * @param cloud    the folder is served by a cloud provider (Drive, OneDrive, Dropbox): offline it cannot answer, so
+ *                 only a missing grant ever counts as gone (see [FolderCheckPolicy]).
  */
-data class FolderReading(val uri: String?, val kind: Kind, val evidence: String) {
+data class FolderReading(val uri: String?, val kind: Kind, val evidence: String, val cloud: Boolean = false) {
     enum class Kind {
         /** The provider says the folder exists and can be written. */
         OK,
@@ -86,6 +88,12 @@ data class FolderCheckState(
  *  - anything that may pass on its own (storage locked after a reboot, SD card not mounted yet, a provider that
  *    threw or timed out): only after it has lasted [TRANSIENT_GRACE_MS].
  *
+ * A cloud folder (Drive and the like, see [SafHelper.isCloudFolder]) is offline on every flight and in every dead
+ * zone, and its provider then fails or says "no such file": for it only a missing grant counts; "missing" and
+ * transient readings never confirm. A run of bad readings with a gap of more than [MAX_CHECK_GAP_MS] between two
+ * checks starts again: two readings hours apart do not prove hours of trouble. A reading older than the stored one
+ * (two checks that overlapped) is dropped ([Step.stale]).
+ *
  * Once confirmed, the user is alerted once for that loss ([Step.alert]); a later usable reading ends the loss.
  */
 object FolderCheckPolicy {
@@ -99,14 +107,28 @@ object FolderCheckPolicy {
     /** A confirmed loss older than this is not trusted by [isUnusable]: something should have measured it since. */
     const val MAX_AGE_MS = 24 * 60 * 60_000L
 
+    /** Longer than this between two checks, and a run of bad readings starts again. */
+    const val MAX_CHECK_GAP_MS = 30 * 60_000L
+
     /**
      * @param recheckInMs when to look again to settle an unconfirmed bad reading, or null.
      * @param alert       raise the "folder gone" alert now (first confirmation of this loss).
      * @param cleared     a loss just ended: the folder is usable again.
+     * @param stale       the reading was older than the stored one and was dropped; [state] is the stored one.
      */
-    data class Step(val state: FolderCheckState, val recheckInMs: Long?, val alert: Boolean, val cleared: Boolean)
+    data class Step(
+        val state: FolderCheckState,
+        val recheckInMs: Long?,
+        val alert: Boolean,
+        val cleared: Boolean,
+        val stale: Boolean = false,
+    )
 
+    /** @param now when the reading was STARTED, so an older reading that finishes late is recognised. */
     fun next(previous: FolderCheckState?, reading: FolderReading, now: Long): Step {
+        if (previous != null && previous.measuredAt > now) {
+            return Step(previous, recheckInMs = null, alert = false, cleared = false, stale = true)
+        }
         // A reading of another folder (the user picked a new one) owes nothing to the old one's history.
         val prev = previous?.takeIf { it.uri == reading.uri }
         val wasLost = prev?.confirmedUnusable == true || prev?.alerted == true
@@ -116,13 +138,15 @@ object FolderCheckPolicy {
                 recheckInMs = null, alert = false, cleared = wasLost && reading.kind == FolderReading.Kind.OK,
             )
             FolderReading.Kind.GRANT_MISSING -> bad(prev, reading, now, confirmedNow = true, recheckInMs = null)
-            FolderReading.Kind.MISSING -> {
+            FolderReading.Kind.MISSING, FolderReading.Kind.TRANSIENT -> if (reading.cloud) {
+                // Offline Drive says "missing" as readily as "failed": neither confirms. Rechecked when due anyway.
+                bad(prev, reading, now, confirmedNow = false, recheckInMs = null)
+            } else if (reading.kind == FolderReading.Kind.MISSING) {
                 val previousMissing = prev?.kind == FolderReading.Kind.MISSING || prev?.kind == FolderReading.Kind.GRANT_MISSING
                 val secondReading = previousMissing && now - prev!!.measuredAt >= CONFIRM_DELAY_MS
                 bad(prev, reading, now, confirmedNow = secondReading, recheckInMs = CONFIRM_DELAY_MS)
-            }
-            FolderReading.Kind.TRANSIENT -> {
-                val since = prev?.firstBadAt?.takeIf { it > 0L } ?: now
+            } else {
+                val since = runStart(prev, now)
                 val waited = now - since
                 bad(
                     prev, reading, now,
@@ -140,12 +164,16 @@ object FolderCheckPolicy {
             uri = reading.uri,
             kind = reading.kind,
             measuredAt = now,
-            firstBadAt = prev?.firstBadAt?.takeIf { it > 0L } ?: now,
+            firstBadAt = runStart(prev, now),
             confirmedUnusable = confirmed,
             alerted = alerted || confirmed,
         )
         return Step(state, recheckInMs = if (confirmed) null else recheckInMs, alert = confirmed && !alerted, cleared = false)
     }
+
+    /** When the current run of bad readings began: carried over only from a recent bad reading. */
+    private fun runStart(prev: FolderCheckState?, now: Long): Long =
+        prev?.takeIf { now - it.measuredAt <= MAX_CHECK_GAP_MS }?.firstBadAt?.takeIf { it > 0L } ?: now
 
     /**
      * Whether readiness should say the folder that is set now ([currentUri]) is not usable: only a confirmed loss,
@@ -155,4 +183,28 @@ object FolderCheckPolicy {
     fun isUnusable(state: FolderCheckState?, currentUri: String?, now: Long): Boolean =
         state != null && currentUri != null && state.uri == currentUri && state.confirmedUnusable &&
             now - state.measuredAt in 0..MAX_AGE_MS
+}
+
+/**
+ * At most [maxPerWindow] always-on lines per [windowMs], so a provider that flaps between answers cannot fill the
+ * always-on file (it keeps a bounded size, and a flood would push out what matters). Not thread-safe on its own.
+ */
+class AlwaysOnRateLimit(private val maxPerWindow: Int, private val windowMs: Long) {
+    private var windowStart = Long.MIN_VALUE
+    private var used = 0
+    private var dropped = 0
+
+    /** Null: drop this line. Otherwise how many lines were dropped before it (to say so in it). */
+    fun take(now: Long): Int? {
+        if (windowStart == Long.MIN_VALUE || now - windowStart >= windowMs) {
+            windowStart = now
+            used = 0
+        }
+        if (used >= maxPerWindow) {
+            dropped++
+            return null
+        }
+        used++
+        return dropped.also { dropped = 0 }
+    }
 }
