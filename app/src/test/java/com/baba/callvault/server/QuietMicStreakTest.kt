@@ -25,18 +25,39 @@ class QuietMicStreakTest {
     }
 
     @Test
-    fun `zeros read while paused do not count toward the streak after resume`() {
+    fun `a pause that ended with real audio gives the mic the full streak after resume`() {
         val streak = QuietMicStreak(limit = 15)
         streak.feed(10, allZero = true, paused = false)
         streak.feed(100, allZero = true, paused = true)
+        streak.feed(1, allZero = false, paused = true)
+        assertEquals(0, streak.feed(14, allZero = true, paused = false))
+        assertTrue(streak.onChunk(allZero = true, paused = false))
+    }
+
+    @Test
+    fun `a mic that went silent during the pause is re-taken on the first quiet chunk after resume`() {
+        // The platform gave the mic to the calling app while held; waiting 15 more chunks would lose ~300 ms of
+        // the user's voice right after the answer.
+        val streak = QuietMicStreak(limit = 15)
+        streak.feed(15, allZero = true, paused = true)
+        assertTrue(streak.onChunk(allZero = true, paused = false))
         assertEquals(0, streak.feed(14, allZero = true, paused = false))
     }
 
     @Test
-    fun `after resume a mic that stays dead is still re-taken`() {
+    fun `a mic silent through a short pause is not re-taken early`() {
+        val streak = QuietMicStreak(limit = 15)
+        streak.feed(14, allZero = true, paused = true)
+        assertEquals(0, streak.feed(14, allZero = true, paused = false))
+        assertTrue(streak.onChunk(allZero = true, paused = false))
+    }
+
+    @Test
+    fun `a mic silent through the pause that has audio on resume is left alone`() {
         val streak = QuietMicStreak(limit = 15)
         streak.feed(500, allZero = true, paused = true)
-        assertEquals(1, streak.feed(15, allZero = true, paused = false))
+        assertFalse(streak.onChunk(allZero = false, paused = false))
+        assertEquals(0, streak.feed(14, allZero = true, paused = false))
     }
 
     @Test
