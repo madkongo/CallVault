@@ -440,6 +440,8 @@ object RecorderBackend {
         if (turnedOff.isNotEmpty()) {
             AppLogger.i(TAG, "Turned off (unsupported in $to): ${turnedOff.joinToString()}")
         }
+        // App calls switched by the reconcile take the ring listener's approval with them (review C19).
+        com.baba.callvault.services.recording.VoipRingListenerAccess.syncIfAffected(context, restored + turnedOff)
         AppLogger.i(TAG, "Privileged mode is now $to")
     }
 

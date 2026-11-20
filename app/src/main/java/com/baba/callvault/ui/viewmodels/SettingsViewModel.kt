@@ -9,6 +9,7 @@
 
 package com.baba.callvault.ui.viewmodels
 
+import com.baba.callvault.services.recording.VoipRingListenerAccess
 import android.app.Application
 import android.content.Intent
 import android.net.Uri
@@ -420,8 +421,11 @@ class SettingsViewModel(application: Application) : AndroidViewModel(application
     override fun exportSettingsJson(): String = preferences.exportToJson()
 
     override fun importSettings(json: String): Int {
+        val voipBefore = preferences.isVoipRecordingEnabled()
         val applied = preferences.importFromJson(json)
         if (applied >= 0) refresh()
+        // A file that turns app calls on or off brings the ring listener's approval with it (review C19).
+        if (preferences.isVoipRecordingEnabled() != voipBefore) VoipRingListenerAccess.requestSync(getApplication())
         return applied
     }
 
