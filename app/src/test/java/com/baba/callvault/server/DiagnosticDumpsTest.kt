@@ -178,4 +178,12 @@ class DiagnosticDumpsTest {
         assertNull(DiagnosticDumps.run("logcat_ours", "10024; rm -rf /"))
         assertNull(DiagnosticDumps.run("logcat_ours", null))
     }
+
+    @Test
+    fun `the lifecycle slice is cut in-process, so its argument is ignored and it is refused nothing`() {
+        // Bounded by characters in the recorder (S1); still a fixed script with no caller input.
+        val script = DiagnosticDumps.commandFor("logcat_lifecycle", null)!!.joinToString(" ")
+        assertTrue(script.contains("-b crash"))
+        assertTrue(DiagnosticDumps.LIFECYCLE_MAX_CHARS <= 250_000)
+    }
 }

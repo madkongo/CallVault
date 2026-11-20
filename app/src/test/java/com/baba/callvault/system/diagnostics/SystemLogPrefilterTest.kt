@@ -91,4 +91,17 @@ class SystemLogPrefilterTest {
         assertEquals("logcat timed out after 20 s", parsed.partial)
         assertEquals(listOf(own), parsed.lines)
     }
+
+    @Test
+    fun `the crash and event slice is bounded by characters, newest kept`() {
+        // Lines, not characters, bounded it before: long ActivityManager lines could still overrun the binder.
+        val long = (0 until 2_000).map { "11-20 17:00:00.000  1500  1600 I am_kill: [$it,com.baba.callvault," + "x".repeat(500) + "]" }
+        val cut = SystemLogFilter.capNewest(long.asSequence(), maxChars = 50_000)
+        val text = SystemLogFilter.render(cut)
+        assertTrue(text.length <= 50_000 + 200)
+        val parsed = SystemLogFilter.parsePrefiltered(text)!!
+        assertEquals(long.last(), parsed.lines.last())
+        assertEquals(2_000 - parsed.lines.size, parsed.truncated)
+        assertEquals(2_000, parsed.read)
+    }
 }

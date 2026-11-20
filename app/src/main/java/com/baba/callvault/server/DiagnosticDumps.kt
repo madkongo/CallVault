@@ -89,7 +89,7 @@ object DiagnosticDumps {
         }
         // Why Android stopped us, from the buffers the plain dump above does not read. See [lifecycleScript].
         // Fixed command; any argument is ignored.
-        "logcat_lifecycle" -> arrayOf(SH, "-c", lifecycleScript(LOGCAT))
+        LOGCAT_LIFECYCLE -> arrayOf(SH, "-c", lifecycleScript(LOGCAT))
         "dumpsys_audio" -> arrayOf(DUMPSYS, "audio")
         "appops_all" -> arrayOf(DUMPSYS, "appops")
         // Filtered on the device: the raw dump is megabytes and most of it is irrelevant. A pipeline
@@ -226,6 +226,7 @@ object DiagnosticDumps {
     /** Runs [key] and returns its output, or null if it is not allowed, fails, or times out. */
     fun run(key: String, arg: String?): String? {
         if (key == LOGCAT_OURS) return runLogcatOurs(arg)
+        if (key == LOGCAT_LIFECYCLE) return runLifecycle()
         val command = commandFor(key, arg) ?: run {
             AppLogger.w(TAG, "refused unknown diagnostic dump '$key'")
             return null
@@ -241,6 +242,30 @@ object DiagnosticDumps {
     }
 
     private const val LOGCAT_OURS = "logcat_ours"
+    private const val LOGCAT_LIFECYCLE = "logcat_lifecycle"
+
+    /** Characters the crash and event slice may send: ~500 KB as UTF-16, under the binder's 1 MB with room to spare. */
+    const val LIFECYCLE_MAX_CHARS = 250_000
+
+    /**
+     * [lifecycleScript]'s output, cut to its newest [LIFECYCLE_MAX_CHARS] in this process and sent with a summary
+     * line saying how many lines were left out and whether the run was partial. Its line limits alone did not bound
+     * it: long ActivityManager or NotificationService lines could still overrun the binder, and in Shizuku mode —
+     * no ADB fallback — the report then had no crash or event log at all.
+     */
+    private fun runLifecycle(): String? {
+        val command = commandFor(LOGCAT_LIFECYCLE, null) ?: return null
+        return runCatching {
+            val outcome = BoundedProcess.run(command, TIMEOUT_MS) {
+                SystemLogFilter.capNewest(it.bufferedReader().lineSequence(), LIFECYCLE_MAX_CHARS)
+            }
+            val cut = outcome.value ?: run {
+                AppLogger.w(TAG, "diagnostic dump '$LOGCAT_LIFECYCLE' gave nothing (${outcome.partial})")
+                return null
+            }
+            SystemLogFilter.render(cut.copy(partial = outcome.partial?.let { "the slice $it" }))
+        }.onFailure { AppLogger.w(TAG, "diagnostic dump '$LOGCAT_LIFECYCLE' failed: ${it.message}") }.getOrNull()
+    }
 
     /**
      * The main+system log cut down to what is about the app, bounded under the binder's limit, with a summary

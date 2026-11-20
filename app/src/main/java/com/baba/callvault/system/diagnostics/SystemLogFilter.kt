@@ -391,6 +391,25 @@ object SystemLogFilter {
         return Prefiltered(read, oldest, newest, candidates - kept.size, kept.toList())
     }
 
+    /**
+     * [lines] as they are, newest kept within [maxChars], in the same shape as [prefilterCut] — for the crash and
+     * event slice, which is already chosen on the device but was bounded by lines only, so long lines could still
+     * overrun the binder.
+     */
+    fun capNewest(lines: Sequence<String>, maxChars: Int): Prefiltered {
+        val kept = ArrayDeque<String>()
+        var chars = 0
+        var read = 0
+        for (line in lines) {
+            if (line.isBlank()) continue
+            read++
+            kept.addLast(line)
+            chars += line.length + 1
+            while (chars > maxChars && kept.size > 1) chars -= kept.removeFirst().length + 1
+        }
+        return Prefiltered(read, null, null, read - kept.size, kept.toList())
+    }
+
     /** [cut] as the text the recorder sends: a one-line summary, then the lines. */
     fun render(cut: Prefiltered): String {
         val summary = "$PREFILTER_MARK|read=${cut.read}|oldest=${cut.oldest.orEmpty()}|newest=${cut.newest.orEmpty()}" +

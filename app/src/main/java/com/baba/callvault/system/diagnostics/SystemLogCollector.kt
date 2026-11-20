@@ -119,12 +119,18 @@ object SystemLogCollector {
         // Read separately and bounded on the device: the crash buffer, the event log and every system line naming
         // us. It is what says WHY Android stopped us, and it still arrives when the whole-log dump above is too big
         // for the binder or empty (vivo Android 17, 2026-11-20). See DiagnosticDumps.lifecycleScript.
+        // Cut to its newest characters in the recorder; a raw answer over the app's ADB shell is cut the same way here.
         val lifecycle = dump(context, "logcat_lifecycle", DiagnosticDumps.lifecycleScript("logcat"))
+            ?.let { SystemLogFilter.parsePrefiltered(it) ?: SystemLogFilter.capNewest(it.lineSequence(), Int.MAX_VALUE) }
         if (lifecycle == null) gaps += "crash and event log (logcat gave nothing)"
+        if (lifecycle != null && lifecycle.truncated > 0) {
+            gaps += "${lifecycle.truncated} older crash and event lines (cut on the phone to fit the recorder link; newest kept)"
+        }
+        lifecycle?.partial?.let { gaps += "part of the crash and event log ($it)" }
 
         val merged = SystemLogFilter.mergeByTime(
             log?.lines.orEmpty(),
-            lifecycle.orEmpty().lines().filter { it.isNotBlank() },
+            lifecycle?.lines.orEmpty(),
         )
         val kept = SystemLogFilter.select(merged, ours)
         if (kept.isEmpty()) AppLogger.w(TAG, "Logcat held nothing about CallVault")
