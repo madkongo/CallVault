@@ -135,7 +135,13 @@ class VoipCallDetector(private val context: Context) {
         }
     }
 
-    private val modeListener = AudioManager.OnModeChangedListener { mode ->
+    /**
+     * The mode listener, Android 12+ only. Never a field initializer: Android 11 has no listener type, and building one
+     * there threw from this constructor and crash-looped the keep-alive (see [ModeChangeSubscription]).
+     */
+    private var modeSubscription: ModeChangeSubscription? = null
+
+    private fun onModeChanged(mode: Int) {
         evaluate(mode)
         probe("mode")
     }
@@ -736,8 +742,8 @@ class VoipCallDetector(private val context: Context) {
         if (registered || audioManager == null) return
         if (!AppPreferences(context).isVoipRecordingEnabled()) return
         runCatching {
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
-                audioManager.addOnModeChangedListener(executor, modeListener)
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S && modeSubscription == null) {
+                modeSubscription = ModeChangeSubscription(audioManager, executor, ::onModeChanged)
             }
             // Registered on every version: on API 30 it is the only trigger, and above it is a cheap
             // backstop in case a mode change is ever missed.
@@ -765,11 +771,12 @@ class VoipCallDetector(private val context: Context) {
         if (!registered || audioManager == null) return
         runCatching {
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
-                audioManager.removeOnModeChangedListener(modeListener)
+                modeSubscription?.cancel()
             }
             audioManager.unregisterAudioPlaybackCallback(playbackTrigger)
             audioManager.unregisterAudioRecordingCallback(recordingTrigger)
         }
+        modeSubscription = null
         registered = false
         AppLogger.i(TAG, "VoIP call detection stopped")
     }

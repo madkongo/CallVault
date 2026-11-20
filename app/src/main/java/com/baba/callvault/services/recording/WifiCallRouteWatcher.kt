@@ -28,11 +28,10 @@ class WifiCallRouteWatcher(context: Context, private val onEvent: () -> Unit) {
     private val handler = Handler(Looper.getMainLooper())
     private val executor = Executor { handler.post(it) }
     // Tracked apart, so a failure registering one never leaves the other behind.
-    private var modeRegistered = false
+    /** Android 12+ only, and never a field initializer: Android 11 cannot build the listener ([ModeChangeSubscription]). */
+    private var modeSubscription: ModeChangeSubscription? = null
     private var playbackRegistered = false
     @Volatile private var started = false
-
-    private val modeListener = AudioManager.OnModeChangedListener { onEvent() }
 
     private val playbackCallback = object : AudioManager.AudioPlaybackCallback() {
         override fun onPlaybackConfigChanged(configs: MutableList<AudioPlaybackConfiguration>) = onEvent()
@@ -43,8 +42,8 @@ class WifiCallRouteWatcher(context: Context, private val onEvent: () -> Unit) {
         if (started) return
         started = true
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
-            runCatching { am.addOnModeChangedListener(executor, modeListener) }
-                .onSuccess { modeRegistered = true }
+            runCatching { ModeChangeSubscription(am, executor) { onEvent() } }
+                .onSuccess { modeSubscription = it }
                 .onFailure { AppLogger.w(WifiCallRoute.TAG, "Could not watch the audio mode: ${it.message}") }
         }
         runCatching { am.registerAudioPlaybackCallback(playbackCallback, handler) }
@@ -57,9 +56,10 @@ class WifiCallRouteWatcher(context: Context, private val onEvent: () -> Unit) {
     fun stop() {
         val am = audioManager ?: return
         started = false
-        if (modeRegistered && Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
-            runCatching { am.removeOnModeChangedListener(modeListener) }
-            modeRegistered = false
+        val subscription = modeSubscription
+        if (subscription != null && Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+            runCatching { subscription.cancel() }
+            modeSubscription = null
         }
         if (playbackRegistered) {
             runCatching { am.unregisterAudioPlaybackCallback(playbackCallback) }
