@@ -74,6 +74,44 @@ class BatteryCheckinCutTest {
     }
 
     @Test
+    fun `foreign rows under the shell uid are summed into one numbers-only row per type`() {
+        val lines = sequenceOf(
+            "9,0,i,uid,10234,$PACKAGE",
+            "9,2000,l,wl,toolA,0,f,0,0,0,0,1000,p,2,0,0,0,0,bp,0,0,0,0,0,w,0,0,0,0",
+            "9,2000,l,wl,toolB,0,f,0,0,0,0,500,p,1,0,0,0,0,bp,0,0,0,0,0,w,0,0,0,0",
+            "9,2000,l,wua,*walarm*:tool,4",
+            "9,2000,l,wua,*walarm*:tool2,1",
+        )
+        val rows = BatteryCheckin.cut(lines, PACKAGE, 2000, null).lines()
+        assertEquals(listOf("9,2000,l,wl,other,0,f,0,0,0,0,1500,p,3,0,0,1500,0,bp,0,0,0,0,0,w,0,0,0,0"), rows.filter { it.startsWith("9,2000,l,wl,") })
+        assertEquals(listOf("9,2000,l,wua,other,5"), rows.filter { it.startsWith("9,2000,l,wua,") })
+    }
+
+    @Test
+    fun `nothing but numbers survives from a foreign row, whatever its tail holds`() {
+        val lines = sequenceOf(
+            "9,0,i,uid,10234,$PACKAGE",
+            "9,2000,l,jb,\"evil\",+15551234567,\"x\",5,1",
+            "9,2000,l,pr,\"tool\",1,2,3,4,0,0,user@example.com",
+        )
+        val out = BatteryCheckin.cut(lines, PACKAGE, 2000, null)
+        assertFalse(out, out.contains("15551234567") || out.contains("example.com") || out.contains("evil") || out.contains("\"x\""))
+        assertTrue(out, out.lines().contains("9,2000,l,pr,\"other\",1,2,3,4,0,0"))
+    }
+
+    @Test
+    fun `ours under the shell uid means our package exactly, not any name containing it`() {
+        val lines = sequenceOf(
+            "9,0,i,uid,10234,$PACKAGE",
+            "9,2000,l,pr,\"$PACKAGE:recorder\",10,30,0,0,0,0",
+            "9,2000,l,wl,not-callvault-at-all,0,f,0,0,0,0,7,p,1,0,0,0,0,bp,0,0,0,0,0,w,0,0,0,0",
+        )
+        val out = BatteryCheckin.cut(lines, PACKAGE, 2000, null)
+        assertTrue(out, out.lines().contains("9,2000,l,pr,\"$PACKAGE:recorder\",10,30,0,0,0,0"))
+        assertFalse(out, out.contains("not-callvault"))
+    }
+
+    @Test
     fun `a root recorder's root wake lock names are replaced too`() {
         val rows = cut("batterystats_checkin_a11_root.txt", recorderUid = 0).lines()
         assertTrue(rows.any { it.startsWith("9,0,l,wl,other,") })

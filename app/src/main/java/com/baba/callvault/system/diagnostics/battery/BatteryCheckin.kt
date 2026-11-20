@@ -32,8 +32,11 @@ package com.baba.callvault.system.diagnostics.battery
  * caller sends reaches the command line or the filter. A caller-known uid ([cut]'s `knownAppUid`) is accepted only
  * as a typed Int, for the app's own re-cut of a raw answer from its ADB shell.
  *
- * **Privacy.** Only numbers leave, plus names of the app's own wake locks, jobs, alarms and processes. A name under
- * the shell or root uid is kept only if it is visibly ours; any other becomes `other`. No other uid's row is kept.
+ * **Privacy.** Only numbers leave, plus names of the app's own wake locks, jobs, alarms and processes. Under the shell
+ * or root uid a named row is kept only when the name is our package (`<package>`, `<package>:<process>`,
+ * `<package>/<component>`); every other one is dropped and only its numbers are summed into a single `other` row per
+ * type, rebuilt from parsed numbers — so nothing in a foreign row's text, wherever it sits, can leave. No other
+ * uid's row is kept.
  */
 object BatteryCheckin {
 
@@ -60,12 +63,8 @@ object BatteryCheckin {
     /** Per-uid rows worth keeping. */
     private val UID_TYPES = setOf("cpu", "wl", "awl", "wua", "jb", "fgs", "nt", "pr", "pwi")
 
-    /** Row types whose first field is a name; jobs and processes quote theirs. */
+    /** Row types whose first field is a name. */
     private val NAMED_TYPES = setOf("wl", "wua", "jb", "pr")
-    private val QUOTED_TYPES = setOf("jb", "pr")
-
-    /** A name visibly ours, so it may be shown under the shell or root uid. */
-    private val OURS = Regex("callvault", RegexOption.IGNORE_CASE)
 
     /** One checkin row. [fields] are the values after the type, unquoted; [version] is the row format version. */
     data class Row(val uid: Int, val category: String, val type: String, val fields: List<String>, val version: Int)
@@ -101,17 +100,27 @@ object BatteryCheckin {
         val kept = ArrayList<String>()
         var size = 0
         var left = 0
-        for (line in lines) {
-            val row = row(line) ?: continue
-            if (appUid == null) appUid = appUidFromMap(row, ownPackage, recorderUid)
-            val out = keep(line, row, ownPackage, recorderUid, appUid) ?: continue
+        val foreign = LinkedHashMap<Pair<Int, String>, LongArray>()
+        fun add(out: String) {
             if (size + out.length + 1 > maxChars) {
                 left++
-                continue
+                return
             }
             kept += out
             size += out.length + 1
         }
+        for (line in lines) {
+            val row = row(line) ?: continue
+            if (appUid == null) appUid = appUidFromMap(row, ownPackage, recorderUid)
+            if (!isOurs(row, ownPackage, recorderUid, appUid)) continue
+            if (row.uid != appUid && row.type in NAMED_TYPES && !isOurName(row.fields.firstOrNull(), ownPackage)) {
+                val sums = foreign.getOrPut(row.uid to row.type) { LongArray(SUM_SLOTS) }
+                numbersOf(row).forEachIndexed { i, n -> sums[i] += n }
+                continue
+            }
+            add(line.trim())
+        }
+        foreign.forEach { (key, sums) -> add(otherRow(key.first, key.second, sums)) }
         return buildString {
             append(HEADER).append(" recorder_uid=").append(recorderUid).append(" app_uid=").append(appUid ?: "?").append('\n')
             kept.forEach { append(it).append('\n') }
@@ -152,29 +161,50 @@ object BatteryCheckin {
         return recorderUid / PER_USER_RANGE * PER_USER_RANGE + appId
     }
 
-    /** The line to keep for [row], possibly with a foreign name replaced, or null to drop it. */
-    private fun keep(line: String, row: Row, ownPackage: String, recorderUid: Int, appUid: Int?): String? {
-        if (row.category == INFO) {
-            val isOurMap = row.type == "uid" && row.fields.getOrNull(1) == ownPackage
-            return if (row.type == "vers" || isOurMap) line.trim() else null
-        }
-        if (row.category != SINCE_CHARGED) return null
+    /** Whether [row] is one we keep at all: our info rows, the device-wide rows, and our uids' per-uid rows. */
+    private fun isOurs(row: Row, ownPackage: String, recorderUid: Int, appUid: Int?): Boolean {
+        if (row.category == INFO) return row.type == "vers" || (row.type == "uid" && row.fields.getOrNull(1) == ownPackage)
+        if (row.category != SINCE_CHARGED) return false
         val isRootRow = row.uid == ROOT_UID
-        if (isRootRow && row.type in GLOBAL_TYPES) return line.trim()
-        if (row.type !in UID_TYPES) return null
-        if (row.type == "pwi" && row.fields.firstOrNull() != "uid") return null
+        if (isRootRow && row.type in GLOBAL_TYPES) return true
+        if (row.type !in UID_TYPES) return false
+        if (row.type == "pwi" && row.fields.firstOrNull() != "uid") return false
         val ours = row.uid == appUid || row.uid == SHELL_UID || row.uid == recorderUid
-        if (!ours || (isRootRow && recorderUid != ROOT_UID)) return null
-        return if (row.uid == appUid) line.trim() else withForeignNameReplaced(line.trim(), row)
+        return ours && !(isRootRow && recorderUid != ROOT_UID)
     }
 
-    private fun withForeignNameReplaced(line: String, row: Row): String {
-        if (row.type !in NAMED_TYPES) return line
-        val name = row.fields.firstOrNull() ?: return line
-        if (OURS.containsMatchIn(name)) return line
-        val replacement = if (row.type in QUOTED_TYPES) "\"$OTHER_NAME\"" else OTHER_NAME
-        val values = row.fields.drop(1)
-        val version = line.substringBefore(',')
-        return (listOf(version, row.uid.toString(), row.category, row.type, replacement) + values).joinToString(",")
+    /** Our package exactly, one of its processes (`pkg:proc`) or components (`pkg/…`). Never a mere substring. */
+    private fun isOurName(name: String?, ownPackage: String): Boolean =
+        name != null && (name == ownPackage || name.startsWith("$ownPackage:") || name.startsWith("$ownPackage/"))
+
+    /** Slots summed per foreign row type (the most any type uses: a process row's six numbers). */
+    private const val SUM_SLOTS = 6
+
+    /** Digits only: `toLongOrNull` alone also takes a sign, which let "+15551234567" through as a number. */
+    private val PLAIN_DIGITS = Regex("^[0-9]{1,18}$")
+
+    /** The numbers of a foreign named row, by type; anything that is not plain digits counts as zero. */
+    private fun numbersOf(row: Row): List<Long> {
+        fun n(i: Int) = row.fields.getOrNull(i)?.trim()?.takeIf { PLAIN_DIGITS.matches(it) }?.toLong() ?: 0L
+        return when (row.type) {
+            "wl" -> row.fields.indexOf("p").takeIf { it >= 2 }?.let { listOf(n(it - 1), n(it + 1)) } ?: listOf(0L, 0L)
+            "wua" -> listOf(n(1))
+            "jb" -> listOf(n(1), n(2))
+            "pr" -> (1..6).map { n(it) }
+            else -> emptyList()
+        }
     }
+
+    /** One `other` row of [type] for [uid], built from [sums] alone, in the layout the parser reads. */
+    private fun otherRow(uid: Int, type: String, sums: LongArray): String {
+        val values = when (type) {
+            "wl" -> "$OTHER_NAME,0,f,0,0,0,0,${sums[0]},p,${sums[1]},0,0,${sums[0]},0,bp,0,0,0,0,0,w,0,0,0,0"
+            "wua" -> "$OTHER_NAME,${sums[0]}"
+            "jb" -> "\"$OTHER_NAME\",${sums[0]},${sums[1]},0,0"
+            else -> "\"$OTHER_NAME\"," + sums.joinToString(",")
+        }
+        return "$ROW_VERSION,$uid,$SINCE_CHARGED,$type,$values"
+    }
+
+    private const val ROW_VERSION = 9
 }
