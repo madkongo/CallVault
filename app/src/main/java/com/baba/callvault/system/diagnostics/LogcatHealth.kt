@@ -38,11 +38,49 @@ object LogcatHealth {
         }
     }
 
-    fun debuggingLines(raw: String): List<String> =
-        raw.lineSequence().filter(::isDebuggingLine).toList().takeLast(MAX_DEBUG_LINES)
+    /**
+     * The debugging/USB lines of [lines] that are ours to share, newest [MAX_DEBUG_LINES].
+     *
+     * A keyword alone is not enough: the vivo report of 2026-11-20 listed a codec's "app developers", a libc probe
+     * of `ro.debuggable` and a binder line from other apps' pids. A line is kept only when one of our processes
+     * wrote it (windowed, as in [SystemLogFilter.select]), when a debugging service wrote it ([isDebuggingSystemLine]),
+     * or when a system line names our package or uid.
+     */
+    fun debuggingLines(lines: List<String>, ours: SystemLogFilter.Ours): List<String> {
+        val windows = SystemLogFilter.ownWindows(lines, ours)
+        val namesUs = SystemLogFilter.namesUsMatcher(ours)
+        return lines.filter { line ->
+            if (!isKeywordLine(line)) return@filter false
+            val (pid, at) = SystemLogFilter.pidAndTime(line) ?: return@filter false
+            windows.any { it.pid == pid && at in it.fromMs..it.toMs } || isDebuggingSystemLine(line) ||
+                (SystemLogFilter.isSystemTagLine(line) && namesUs(line))
+        }.takeLast(MAX_DEBUG_LINES)
+    }
 
-    /** Whether [line] is one [debuggingLines] lists. */
-    fun isDebuggingLine(line: String): Boolean = STAMP.containsMatchIn(line) && DEBUGGING.containsMatchIn(line)
+    /**
+     * A debugging line that says nothing about any other app: written by a debugging/USB service, or naming one of
+     * the debugging switches. The second is kept from any pid on purpose — the pid of a `Setting adb_enabled has
+     * moved …` line is how a report names who wrote the switch, and the text is the platform's own.
+     */
+    fun isDebuggingSystemLine(line: String): Boolean {
+        if (!isKeywordLine(line)) return false
+        val tag = SystemLogFilter.tagOf(line) ?: return false
+        return tag in DEBUGGING_TAGS || SWITCHES.containsMatchIn(line)
+    }
+
+    private fun isKeywordLine(line: String): Boolean = STAMP.containsMatchIn(line) && DEBUGGING.containsMatchIn(line)
+
+    /** Android's adb and USB services, whose lines are about the switches and the transport, not about apps. */
+    private val DEBUGGING_TAGS = setOf(
+        "adbd", "AdbDebuggingManager", "AdbService", "AdbDebuggingManager.AdbConnectionPortPoller",
+        "UsbDeviceManager", "UsbService", "UsbPortManager", "UsbHostManager", "UsbHandler",
+    )
+
+    /** The settings and properties that are the debugging switches themselves. */
+    private val SWITCHES = Regex(
+        "(?<![A-Za-z0-9_])(adb_enabled|adb_wifi_enabled|development_settings_enabled|allow_charging_adb|" +
+            "sys\\.usb\\.config|sys\\.usb\\.state|persist\\.sys\\.usb\\.config)(?![A-Za-z0-9_])",
+    )
 
     private const val MAX_SIZE_LINES = 8
 }

@@ -245,6 +245,15 @@ object SystemLogFilter {
         return ((days * 24 + h.toLong()) * 60 + mi.toLong()) * 60_000 + s.toLong() * 1_000 + ms.toLong()
     }
 
+    /** The windows in which each pid of [lines] counts as ours: [Ours.pidWindows] and every pid that wrote a CV line. */
+    fun ownWindows(lines: List<String>, ours: Ours): List<PidWindow> = ours.pidWindows + ownPidWindows(lines.map(::parse))
+
+    /** A line's pid and its time on the [logClockMillis] clock, or null when it is not a `threadtime` line. */
+    fun pidAndTime(line: String): Pair<Int, Long>? = parse(line)?.let { it.pid to it.atMs }
+
+    /** Whether [line] comes from one of the system tags [select] accepts a line about us from. */
+    fun isSystemTagLine(line: String): Boolean = tagOf(line)?.let(::isSystemTag) == true
+
     private fun parse(line: String): Parsed? {
         val m = HEADER.find(line) ?: return null
         val at = logClockMillis(line) ?: return null
@@ -268,7 +277,7 @@ object SystemLogFilter {
      * `com.baba.callvault:recorder` and `com.baba.callvault/u0a24` are), or the uid in either of the
      * forms Android prints it (`10024` after "uid", or `u0a24`), never as part of a longer number.
      */
-    private fun namesUsMatcher(ours: Ours): (String) -> Boolean {
+    fun namesUsMatcher(ours: Ours): (String) -> Boolean {
         val pkg = Regex("(?<![A-Za-z0-9_.])" + Regex.escape(ours.packageName) + "(?![A-Za-z0-9_])")
         val user = ours.uid / PER_USER_RANGE
         val appId = ours.uid % PER_USER_RANGE
@@ -367,7 +376,7 @@ object SystemLogFilter {
                 else -> group = null
             }
             val candidate = startsGroup || inGroup || keep(line) || p.pid in ownPids ||
-                (isSystemTag(p.tag) && namesUs(line)) || LogcatHealth.isDebuggingLine(line)
+                (isSystemTag(p.tag) && namesUs(line)) || LogcatHealth.isDebuggingSystemLine(line)
             if (!candidate) continue
             candidates++
             kept.addLast(line)

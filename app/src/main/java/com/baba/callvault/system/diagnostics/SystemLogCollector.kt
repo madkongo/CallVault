@@ -134,8 +134,8 @@ object SystemLogCollector {
         // what is not ours? This says which, without anyone reading 121k lines.
         val health = LogcatHealth.render(log?.read ?: 0, log?.oldest, log?.newest, dump(context, "logcat_size", "logcat -g"))
         // Every debugging/USB line in the whole log, not only the window around an event: what switched USB
-        // debugging off is the open question on Honor. Keyword lines only, as in UsbOffLogWindow.
-        val usbLines = LogcatHealth.debuggingLines(log?.lines.orEmpty().joinToString("\n"))
+        // debugging off is the open question on Honor. Ours, the debugging services', and lines naming a switch.
+        val usbLines = LogcatHealth.debuggingLines(log?.lines.orEmpty(), ours)
 
         // Android's own record of who is holding a microphone. Collected separately from logcat
         // because it answers a question logcat cannot: a capture leaked by a process that has since
