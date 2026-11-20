@@ -146,4 +146,56 @@ class VoipRingListenerAccessTest {
         assertEquals(true, sawSuperseded)
         assertEquals(1, tasks.size)
     }
+
+    /** Review of C19: a sync that could not reach the host is retried once the host connects, and only then. */
+    private fun syncerReturning(vararg outcomes: Outcome?): Pair<VoipRingListenerAccess.CoalescingSyncer, ArrayDeque<Runnable>> {
+        val tasks = ArrayDeque<Runnable>()
+        val queue = ArrayDeque(outcomes.toList())
+        val syncer = VoipRingListenerAccess.CoalescingSyncer({ tasks.addLast(it) }) { queue.removeFirst() }
+        return syncer to tasks
+    }
+
+    @Test
+    fun `a sync that found no host is retried once when the host connects`() {
+        val (syncer, tasks) = syncerReturning(Outcome.NO_HOST, Outcome.APPROVED)
+        syncer.request()
+        tasks.removeFirst().run()
+        syncer.onHostConnected()
+        assertEquals(1, tasks.size)
+        tasks.removeFirst().run()
+        // Done now: a later reconnect queues nothing.
+        syncer.onHostConnected()
+        assertEquals(0, tasks.size)
+    }
+
+    @Test
+    fun `a sync that threw (host died mid-call) is retried when the host connects`() {
+        val (syncer, tasks) = syncerReturning(null, Outcome.REMOVED)
+        syncer.request()
+        tasks.removeFirst().run()
+        syncer.onHostConnected()
+        assertEquals(1, tasks.size)
+    }
+
+    @Test
+    fun `a completed sync is not retried on reconnect`() {
+        for (done in listOf(Outcome.APPROVED, Outcome.REMOVED, Outcome.NOTHING_TO_DO, Outcome.GRANTED_BY_USER, Outcome.FAILED)) {
+            val (syncer, tasks) = syncerReturning(done)
+            syncer.request()
+            tasks.removeFirst().run()
+            syncer.onHostConnected()
+            assertEquals(done.name, 0, tasks.size)
+        }
+    }
+
+    @Test
+    fun `repeated reconnects after one failure queue one retry, not a loop`() {
+        val (syncer, tasks) = syncerReturning(Outcome.NO_HOST, Outcome.NO_HOST)
+        syncer.request()
+        tasks.removeFirst().run()
+        repeat(3) { syncer.onHostConnected() }
+        assertEquals(1, tasks.size)
+        tasks.removeFirst().run()  // the host went away again before the retry reached it
+        assertEquals(0, tasks.size)
+    }
 }

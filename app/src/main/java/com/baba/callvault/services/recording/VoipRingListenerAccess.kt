@@ -76,6 +76,9 @@ object VoipRingListenerAccess {
         private val generation = AtomicLong()
         private val queued = AtomicBoolean(false)
 
+        /** The last sync could not reach the host (none connected, or it died mid-call): retry on the next one. */
+        private val incomplete = AtomicBoolean(false)
+
         fun request() {
             generation.incrementAndGet()
             if (!queued.compareAndSet(false, true)) return  // the queued one will read the latest state
@@ -83,12 +86,29 @@ object VoipRingListenerAccess {
                 executor.execute {
                     queued.set(false)
                     val mine = generation.get()
-                    run { generation.get() != mine }
+                    val outcome = runCatching { run { generation.get() != mine } }
+                        .onFailure { AppLogger.w(TAG, "Ring listener sync failed: ${it.javaClass.simpleName}: ${it.message}") }
+                        .getOrNull()
+                    when (outcome) {
+                        null, Outcome.NO_HOST -> incomplete.set(true)
+                        Outcome.SUPERSEDED -> Unit  // the newer request decides
+                        else -> incomplete.set(false)
+                    }
                 }
             }.onFailure {
                 queued.set(false)
                 AppLogger.w(TAG, "Ring listener sync not queued: ${it.javaClass.simpleName}: ${it.message}")
             }
+        }
+
+        /**
+         * A recorder binder arrived. Queues one retry when the last sync did not reach the host, and
+         * nothing otherwise; the flag is cleared here, so a host that keeps reconnecting cannot loop it.
+         */
+        fun onHostConnected() {
+            if (!incomplete.getAndSet(false)) return
+            AppLogger.i(TAG, "Recorder host connected: retrying the ring listener sync that could not reach it")
+            request()
         }
     }
 
@@ -111,6 +131,13 @@ object VoipRingListenerAccess {
         appContext = context.applicationContext
         syncer.request()
     }
+
+    /**
+     * A fresh recorder binder arrived ([RecorderConnection.onDaemonReady]): retry a sync that found no
+     * host or lost it mid-call, so the listener does not stay wrong until the next process start.
+     * Does not block.
+     */
+    fun onHostConnected() = syncer.onHostConnected()
 
     /** [requestSync] when a mode reconcile turned app-call recording on or off. */
     fun syncIfAffected(context: Context, changed: Collection<ModeCapability>) {

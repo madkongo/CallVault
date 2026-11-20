@@ -135,6 +135,8 @@ class CallVaultApplication : Application() {
             // Shizuku mode's Wi-Fi join watch lives in the recorder and dies with it: arm it on every fresh binder
             // (review N15). Async, and a no-op unless Shizuku mode and the setting are on.
             com.baba.callvault.services.recording.WifiJoinWatch.sync(applicationContext)
+            // A ring listener sync that could not reach the host is retried now (review C19). Non-blocking.
+            com.baba.callvault.services.recording.VoipRingListenerAccess.onHostConnected()
             if (AppPreferences(applicationContext).isVoipRecordingEnabled()) {
                 Thread {
                     runCatching { VoipCaptureController.sync(applicationContext) }
