@@ -239,13 +239,43 @@ object DiagnosticDumps {
             return null
         }
         return runCatching {
-            val outcome = BoundedProcess.run(command, TIMEOUT_MS) { it.bufferedReader().readText() }
+            val outcome = BoundedProcess.run(command, TIMEOUT_MS) { readCapped(it, DUMP_MAX_CHARS) }
             if (outcome.timedOut) {
                 AppLogger.w(TAG, "diagnostic dump '$key' timed out after ${TIMEOUT_SECONDS}s; stopped it")
                 return null
             }
             outcome.value
         }.onFailure { AppLogger.w(TAG, "diagnostic dump '$key' failed: ${it.message}") }.getOrNull()
+    }
+
+    /**
+     * Characters one generic dump may send: 250,000, ~500 KB as UTF-16, under the binder's 1 MB with room to spare.
+     * `dumpsys audio`, `dumpsys appops` and a whole-log `logcat -d` each ran past it on a busy phone, the call
+     * failed, and the report went out without them (C138).
+     */
+    const val DUMP_MAX_CHARS = 250_000
+
+    /**
+     * Reads [input] as text, keeping the first [max] characters and reading (and discarding) the rest so the
+     * process is never left blocked on a full pipe. A cut dump ends with a line saying how much was left out.
+     */
+    internal fun readCapped(input: java.io.InputStream, max: Int): String {
+        val reader = input.bufferedReader()
+        val kept = StringBuilder()
+        val buffer = CharArray(8_192)
+        var skipped = 0L
+        while (true) {
+            val n = reader.read(buffer)
+            if (n < 0) break
+            val room = max - kept.length
+            if (room >= n) kept.append(buffer, 0, n)
+            else {
+                if (room > 0) kept.append(buffer, 0, room)
+                skipped += n - maxOf(room, 0)
+            }
+        }
+        if (skipped > 0) kept.append("\n# cut: $skipped more characters left out to fit the recorder link\n")
+        return kept.toString()
     }
 
     private const val LOGCAT_OURS = "logcat_ours"
