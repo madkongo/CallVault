@@ -70,6 +70,7 @@ object BatteryUseReport {
 
     /** One plain verdict: "looks normal…", "too little time…", or "high: <each reason>". */
     fun verdict(use: BatteryUse, counts: LogCounts?): String {
+        cannotJudge(use)?.let { return "cannot judge: $it" }
         if (use.onBatteryMs < MIN_PERIOD_MS) return "too little time on battery since the last full charge to judge (${duration(use.onBatteryMs)})"
         val hours = use.onBatteryMs.toDouble() / HOUR_MS
         val reasons = listOfNotNull(
@@ -80,6 +81,18 @@ object BatteryUseReport {
             power(use),
         )
         return if (reasons.isEmpty()) NORMAL else "high: " + reasons.joinToString("; ")
+    }
+
+    /**
+     * Why the numbers cannot carry a verdict, or null when they can. A cut that was cut short or timed out, or one
+     * without the app's own row, would otherwise read as "looks normal" — a false all-clear on exactly the report
+     * that was sent because something is wrong.
+     */
+    private fun cannotJudge(use: BatteryUse): String? = when {
+        use.notes.isNotEmpty() -> use.notes.joinToString("; ")
+        use.app == null && use.shell == null -> "no batterystats row for the CallVault app or the shell uid"
+        use.app == null -> "no batterystats row for the CallVault app"
+        else -> null
     }
 
     private fun starts(counts: LogCounts?, hours: Double): String? {

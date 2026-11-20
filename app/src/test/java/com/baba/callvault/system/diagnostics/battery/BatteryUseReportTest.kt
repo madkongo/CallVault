@@ -79,6 +79,18 @@ class BatteryUseReportTest {
     }
 
     @Test
+    fun `a cut that was cut short or timed out cannot be judged`() {
+        val v = BatteryUseReport.verdict(quiet().copy(notes = listOf("partial: batterystats timed out after 15 s")), null)
+        assertEquals("cannot judge: partial: batterystats timed out after 15 s", v)
+    }
+
+    @Test
+    fun `without the app's own row nothing is judged`() {
+        assertTrue(BatteryUseReport.verdict(quiet().copy(app = null), null).startsWith("cannot judge: no batterystats row for the CallVault app"))
+        assertTrue(BatteryUseReport.verdict(quiet().copy(app = null, shell = null), null).startsWith("cannot judge: no batterystats row for the CallVault app or the shell uid"))
+    }
+
+    @Test
     fun `too short a period is not judged`() {
         assertTrue(BatteryUseReport.verdict(quiet(onBatteryMs = hour - 1), null).startsWith("too little time on battery"))
     }
