@@ -145,7 +145,12 @@ object WaitingRecordings {
     }
 
     /** Gives a waiting recording the name it will be saved under (the call-log rename). Never throws. */
-    fun rename(file: File, name: String, mimeType: String? = null): Boolean = runCatching {
+    fun rename(file: File, name: String, mimeType: String? = null): Boolean = synchronized(namesLock) { renameLocked(file, name, mimeType) }
+
+    /** Choosing a free name and writing it is one step, so two calls ending together cannot pick the same name. */
+    private val namesLock = Any()
+
+    private fun renameLocked(file: File, name: String, mimeType: String?): Boolean = runCatching {
         val old = WaitingNote.read(file)
         // Never the name of another waiting call (second review 2026-11-20): two calls named alike (a template with
         // minute precision, or no time) must stay two files.
@@ -220,11 +225,12 @@ object WaitingRecordings {
             WaitingNote.write(target, WaitingNote(base, null))
             rename(target, name, mimeType) // never the name of a call already waiting
         }.onFailure { AppLogger.w(TAG, "Could not write the note of the moved recording ${target.name}: ${it.message}") }.isSuccess
-        runCatching { stagingNoteFile.delete() }
+        // Removed only once the new note exists: otherwise the staging note is the one left that names the recording.
+        if (noteWritten) runCatching { stagingNoteFile.delete() }
         CallEndLog.record(
             context,
             "$kind: saving into the folder failed; moved into waiting storage to save later: ${CallEndLog.safeName(name)} " +
-                "size=${target.length()} bytes" + (if (noteWritten) "" else " (its note could not be written: it will be left, not saved)"),
+                "size=${target.length()} bytes" + (if (noteWritten) "" else " (its note could not be written: the staging note is kept, and the publisher leaves an unnamed recording in place, never deleting it)"),
         )
         // A cut-off carries no call identity (S5): saved like the rescue saves one, without details file or question.
         if (finished) ready(context, target, mimeType, kind, extras = null) else LiveStagingFiles.register(target)
