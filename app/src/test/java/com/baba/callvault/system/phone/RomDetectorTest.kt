@@ -13,7 +13,7 @@ import org.junit.Test
 
 class RomDetectorTest {
     private fun detect(maker: String, vararg props: Pair<String, String>) =
-        RomDetector.detect(maker, props.toMap().let { m -> { k: String -> m[k] ?: "" } })
+        RomDetector.detect(props.toMap().let { m -> { k: String -> m[k] ?: "" } })
 
     @Test fun unknownMakerWithNoPropertiesIsUnknown() {
         assertEquals(Rom(RomFamily.UNKNOWN, null), detect("acme"))
@@ -54,6 +54,6 @@ class RomDetectorTest {
     }
 
     @Test fun aReaderThatThrowsGivesUnknown() {
-        assertEquals(RomFamily.UNKNOWN, RomDetector.detect("x") { error("boom") }.family)
+        assertEquals(RomFamily.UNKNOWN, RomDetector.detect { error("boom") }.family)
     }
 }

@@ -12,7 +12,8 @@ import android.content.Context
 import com.baba.callvault.integrations.adb.UsbDebuggingEvents
 
 /**
- * Where the profile reaches a human: the debug report header, and the always-on log when something changed.
+ * Where the profile reaches a human: the debug report header, and the always-on log (usb_debugging_events.txt, written by
+ * UsbDebuggingEvents and exported in every debug report under "USB debugging switched off (always on)") when something changed.
  * No periodic work: [evaluateAtStart] runs once per process start.
  */
 object PhoneProfileReport {
@@ -64,6 +65,9 @@ object PhoneProfileReport {
                     .putStringSet(KEY_ACTIVE, PhoneRules.evaluate(profile).map { it.id }.toSet())
                     .apply()
             }
-        }.onFailure { com.baba.callvault.utils.AppLogger.w("CV:PhoneProfile", "Phone profile check failed: \${it.javaClass.simpleName}: \${it.message}") }
+        }.onFailure {
+            com.baba.callvault.utils.AppLogger.w("CV:PhoneProfile", "Phone profile check failed: ${it.javaClass.simpleName}: ${it.message}")
+            runCatching { UsbDebuggingEvents.record(context, "phone profile check failed: ${it.javaClass.simpleName}") }
+        }
     }
 }

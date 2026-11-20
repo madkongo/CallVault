@@ -13,9 +13,13 @@ import android.app.NotificationManager
 import android.app.usage.UsageStatsManager
 import android.content.Context
 import android.os.Build
-import android.os.PowerManager
+import androidx.core.content.PackageManagerCompat
+import androidx.core.content.UnusedAppRestrictionsConstants
+import java.util.concurrent.TimeUnit
 import com.baba.callvault.data.AppPreferences
 import com.baba.callvault.integrations.adb.UsbDefaultConfig
+import com.baba.callvault.services.recording.DaemonKeepAliveService
+import com.baba.callvault.services.recording.RecordingNotificationHelper
 import com.baba.callvault.system.permissions.PermissionChecks
 
 /**
@@ -25,14 +29,20 @@ import com.baba.callvault.system.permissions.PermissionChecks
  */
 object PhoneProfileReader {
 
-    private const val ANDROID_11 = 30
+    /** The channels a recorded call and its warnings depend on (same list as the report's channel block). */
+    private val RELEVANT_CHANNELS = setOf(
+        DaemonKeepAliveService.CHANNEL_ID,
+        RecordingNotificationHelper.CHANNEL_ID_SERVICE,
+        RecordingNotificationHelper.CHANNEL_ID_ERROR,
+    )
+    private const val HIBERNATION_WAIT_SECONDS = 2L
 
     fun read(context: Context): PhoneProfile {
         val prefs = runCatching { AppPreferences(context) }.getOrNull()
         return PhoneProfile(
             maker = Build.MANUFACTURER.orEmpty().ifBlank { "?" },
             model = Build.MODEL.orEmpty().ifBlank { "?" },
-            rom = runCatching { RomDetector.detect(Build.MANUFACTURER.orEmpty(), ::systemProperty) }
+            rom = runCatching { RomDetector.detect(::systemProperty) }
                 .getOrDefault(Rom(RomFamily.UNKNOWN, null)),
             sdk = Build.VERSION.SDK_INT,
             mode = runCatching { prefs?.getPrivilegedMode() }.getOrNull(),
@@ -55,17 +65,27 @@ object PhoneProfileReader {
     }
 
     /**
-     * "Pause app activity if unused" is ON when the app is NOT on the auto-revoke allow-list. Before Android 11 the
-     * feature does not exist, so it is off. Synchronous, unlike the androidx future-based call.
+     * "Pause app activity if unused": androidx answers per ROM (Android 11+, and the Play-services backport), so a
+     * phone that removed the feature or exempts the app reads NO. Called from a background thread (it waits on a
+     * binder-backed future for at most [HIBERNATION_WAIT_SECONDS]); a timeout or error reads UNKNOWN.
      */
-    private fun hibernation(context: Context): Tri {
-        if (Build.VERSION.SDK_INT < ANDROID_11) return Tri.NO
-        return Tri.of(runCatching { !context.packageManager.isAutoRevokeWhitelisted }.getOrNull())
+    private fun hibernation(context: Context): Tri = hibernationOf(runCatching {
+        PackageManagerCompat.getUnusedAppRestrictionsStatus(context).get(HIBERNATION_WAIT_SECONDS, TimeUnit.SECONDS)
+    }.getOrNull())
+
+    /** The androidx status code to a [Tri]: only a confirmed restriction is YES; unavailable or disabled is NO. */
+    internal fun hibernationOf(status: Int?): Tri = when (status) {
+        UnusedAppRestrictionsConstants.API_30_BACKPORT,
+        UnusedAppRestrictionsConstants.API_30,
+        UnusedAppRestrictionsConstants.API_31 -> Tri.YES
+        UnusedAppRestrictionsConstants.FEATURE_NOT_AVAILABLE,
+        UnusedAppRestrictionsConstants.DISABLED -> Tri.NO
+        else -> Tri.UNKNOWN // ERROR, a timeout, or a code this version does not know
     }
 
     private fun blockedChannels(context: Context): List<String> = runCatching {
         context.getSystemService(NotificationManager::class.java)?.notificationChannels.orEmpty()
-            .filter { it.importance == NotificationManager.IMPORTANCE_NONE }
+            .filter { it.id in RELEVANT_CHANNELS && it.importance == NotificationManager.IMPORTANCE_NONE }
             .map { it.id }.sorted()
     }.getOrDefault(emptyList())
 

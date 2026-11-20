@@ -66,14 +66,18 @@ object PhoneRules {
             p.mode == PrivilegedMode.SHIZUKU && p.appCallsOn == Tri.NO && p.batteryExempt == Tri.NO &&
                 p.sdk >= ANDROID_12
         }),
-        PhoneRule("Q54", DetectionKind.SETTING, Severity.RISK, applies = { it.hibernation == Tri.YES }),
+        // CALL_LOSS: proven on the A14/A17 emulators to stop recording in Shizuku + app calls off. It bites only after
+        // the unused period (about 90 days unopened), so a phone showing it today is still recording.
+        PhoneRule("Q54", DetectionKind.SETTING, Severity.CALL_LOSS, applies = { it.hibernation == Tri.YES }),
         PhoneRule("Q55", DetectionKind.SETTING, Severity.CALL_LOSS, applies = { it.batteryExempt == Tri.NO }),
         PhoneRule("Q56", DetectionKind.SETTING, Severity.CALL_LOSS, applies = { it.backgroundRestricted == Tri.YES }),
         PhoneRule("Q57", DetectionKind.SETTING, Severity.RISK, applies = { it.standbyBucket == StandbyBucketClass.RESTRICTED }),
         identity("Q58"), identity("Q59"), identity("Q60"), identity("Q61"), identity("Q62"),
         probe("Q63"), setting("Q64"), probe("Q65"), probe("Q66"), identity("Q67"), probe("Q68"),
         none("Q69", "Cause unknown (wired headphones on app calls, vivo A17); the report logs the route, nothing to probe yet."),
-        PhoneRule("Q70", DetectionKind.SETTING, Severity.CALL_LOSS, applies = { it.notificationsEnabled == Tri.NO }),
+        PhoneRule("Q70", DetectionKind.SETTING, Severity.CALL_LOSS, applies = {
+            it.notificationsEnabled == Tri.NO || it.blockedChannels.isNotEmpty()
+        }),
         none("Q71", "A RAM ceiling or phantom-process kill is visible only as the recorder dying, which is a symptom not a cause."),
         probe("Q72"), probe("Q73"), setting("Q74"), probe("Q75"),
         none("Q76", "Other apps' debugging checks cannot be seen from CallVault; answered in the FAQ only."),

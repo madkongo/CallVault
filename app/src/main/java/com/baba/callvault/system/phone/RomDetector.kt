@@ -15,7 +15,7 @@ package com.baba.callvault.system.phone
  */
 object RomDetector {
 
-    fun detect(maker: String, get: (String) -> String): Rom = runCatching { detectUnsafe(get) }
+    fun detect(get: (String) -> String): Rom = runCatching { detectUnsafe(get) }
         .getOrDefault(Rom(RomFamily.UNKNOWN, null))
 
     private fun detectUnsafe(get: (String) -> String): Rom {

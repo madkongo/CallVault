@@ -26,7 +26,10 @@ enum class Tri {
  * Collapsing keeps the always-on log from changing every time Android moves the app between ACTIVE and FREQUENT.
  */
 enum class StandbyBucketClass {
-    NORMAL, RARE, RESTRICTED, UNKNOWN;
+    NORMAL, RARE, RESTRICTED,
+    /** STANDBY_BUCKET_NEVER (50): the app was never started by the user; not the same as Restricted. */
+    NEVER,
+    UNKNOWN;
 
     val label: String get() = if (this == UNKNOWN) "?" else name.lowercase()
 
@@ -34,10 +37,12 @@ enum class StandbyBucketClass {
         // UsageStatsManager.STANDBY_BUCKET_* values, spelled out so this stays a pure function.
         private const val BUCKET_RARE = 40
         private const val BUCKET_RESTRICTED = 45
+        private const val BUCKET_NEVER = 50
 
         fun of(bucket: Int?): StandbyBucketClass = when {
             bucket == null -> UNKNOWN
-            bucket >= BUCKET_RESTRICTED -> RESTRICTED
+            bucket == BUCKET_RESTRICTED -> RESTRICTED
+            bucket == BUCKET_NEVER -> NEVER
             bucket >= BUCKET_RARE -> RARE
             else -> NORMAL
         }
@@ -68,7 +73,7 @@ data class PhoneProfile(
     val standbyBucket: StandbyBucketClass,
     val hibernation: Tri,
     val notificationsEnabled: Tri,
-    /** Notification channels the user blocked, by id. Empty when none or unreadable. */
+    /** The recording, error and keep-alive notification channels the user blocked, by id. Empty when none or unreadable. */
     val blockedChannels: List<String>,
     /** The Default USB Configuration as last cached by the app (UNKNOWN name when never read). */
     val usbDefault: String,

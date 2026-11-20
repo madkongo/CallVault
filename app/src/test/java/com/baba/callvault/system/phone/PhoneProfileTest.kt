@@ -45,6 +45,8 @@ class PhoneProfileTest {
         assertEquals(StandbyBucketClass.NORMAL, StandbyBucketClass.of(10))
         assertEquals(StandbyBucketClass.NORMAL, StandbyBucketClass.of(30))
         assertEquals(StandbyBucketClass.UNKNOWN, StandbyBucketClass.of(null))
+        assertEquals(StandbyBucketClass.NEVER, StandbyBucketClass.of(50))
+        assertEquals(StandbyBucketClass.RESTRICTED, StandbyBucketClass.of(45))
     }
 
     @Test fun reportLinesHaveBothSections() {

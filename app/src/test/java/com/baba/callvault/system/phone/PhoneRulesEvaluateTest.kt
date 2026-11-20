@@ -62,6 +62,19 @@ class PhoneRulesEvaluateTest {
         assertTrue("Q53" !in active(p.copy(sdk = 30)))
     }
 
+    @Test fun neverBucketDoesNotActivateQ57() {
+        assertTrue("Q57" !in active(base.copy(standbyBucket = StandbyBucketClass.NEVER)))
+    }
+
+    @Test fun blockedRecordingChannelActivatesQ70EvenWithNotificationsOn() {
+        assertTrue("Q70" in active(base.copy(notificationsEnabled = Tri.YES, blockedChannels = listOf("recording_channel_error"))))
+        assertTrue("Q70" !in active(base.copy(notificationsEnabled = Tri.YES)))
+    }
+
+    @Test fun hibernationAndBatteryRulesAreCallLoss() {
+        assertEquals(Severity.CALL_LOSS, PhoneRules.evaluate(base.copy(hibernation = Tri.YES)).single().severity)
+    }
+
     @Test fun activeRulesAreSortedAndUnique() {
         val ids = active(base.copy(batteryExempt = Tri.NO, backgroundRestricted = Tri.YES, notificationsEnabled = Tri.NO))
         assertEquals(ids.sorted().distinct(), ids)

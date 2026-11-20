@@ -915,10 +915,10 @@ If CallVault is killed during call A, stays dead until call B goes off-hook, and
 | Test | R |
 | Priority | P2 |
 
-### Q70 — Every warning in this design is silent
+### Q70 — Notifications or the recording notification channel blocked: every warning is silent
 | | |
 |---|---|
-| Who | Android 13+ all; any phone with the channel blocked |
+| Who | Android 13+ all; any phone with notifications off for CallVault, or with the foreground-service (recording), error or keep-alive notification channel blocked (importance NONE) |
 | Symptom | Every warning in this design is silent |
 | Detect | **D**: `NotificationManagerCompat.areNotificationsEnabled()`; channel `importance == NONE` (`system/health/NotificationChannelsReport.kt`) |
 | Current handling | onboarding requires the permission (`OnboardingStatus.kt:82`, re-checked only when the app is opened); report lists channels |
