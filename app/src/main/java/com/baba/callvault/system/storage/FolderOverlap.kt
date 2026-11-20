@@ -8,7 +8,9 @@
 
 package com.baba.callvault.system.storage
 
+import android.content.Context
 import android.net.Uri
+import android.system.Os
 import android.provider.DocumentsContract
 
 /**
@@ -43,6 +45,42 @@ object FolderOverlap {
         val idB = documentId(b) ?: return true
         return idA == idB
     }
+
+    /** Identifies a file on disk: the device and inode of an open descriptor. */
+    data class FileId(val device: Long, val inode: Long)
+
+    /**
+     * [isSameDocument] plus the case it cannot see (review C55): one directory reached through two different providers
+     * has two authorities and two document ids, so the "Drive copy" can be the device file itself and deleting the
+     * device copy would delete the only one. Where both providers are the phone's own storage, both documents are opened
+     * read-only and compared by device and inode. Any failure to tell answers true (keep). Cloud providers are never
+     * opened for this: opening a Drive document can download it, and they are not the phone's files.
+     */
+    fun isSameFile(context: Context, a: Uri, b: Uri): Boolean =
+        isSameFile(a, b) { fileIdOf(context, it) }
+
+    internal fun isSameFile(a: Uri, b: Uri, fileId: (Uri) -> FileId?): Boolean {
+        if (isSameDocument(a, b)) return true
+        if (a.authority == b.authority) return false
+        if (a.authority !in LOCAL_AUTHORITIES || b.authority !in LOCAL_AUTHORITIES) return false
+        val idA = fileId(a) ?: return true
+        val idB = fileId(b) ?: return true
+        return idA == idB
+    }
+
+    /** Providers that serve the phone's own file system; the only ones the inode check opens. */
+    internal val LOCAL_AUTHORITIES = setOf(
+        "com.android.externalstorage.documents",
+        "com.android.providers.downloads.documents",
+        "com.android.providers.media.documents",
+    )
+
+    private fun fileIdOf(context: Context, uri: Uri): FileId? = runCatching {
+        context.contentResolver.openFileDescriptor(uri, "r")?.use {
+            val st = Os.fstat(it.fileDescriptor)
+            FileId(st.st_dev, st.st_ino)
+        }
+    }.getOrNull()
 
     /** "primary:Alarms" holds "primary:Alarms/x"; "primary:" (the storage root) holds everything on it. */
     private fun contains(parent: String, child: String): Boolean {
