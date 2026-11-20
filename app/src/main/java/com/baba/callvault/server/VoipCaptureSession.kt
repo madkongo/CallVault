@@ -464,7 +464,7 @@ internal class VoipCaptureSession(
     private fun feeder(q: BlockingQueue<Chunk>, side: VoipSyncLedger.Side) = Thread {
         val tag = side.name
         val buf = ByteArray(CHUNK_BYTES)
-        var silentChunks = 0
+        val quiet = QuietMicStreak(SILENT_CHUNKS_BEFORE_RETAKE)
         var current: AudioRecord? = null
         var frameIndex = 0L
         var firstReadLogged = false
@@ -526,10 +526,12 @@ internal class VoipCaptureSession(
             // heard everything while our capture held the mic, so the VoIP app keeps transmitting
             // regardless of what the arbitration reports. Only the NEAR source needs this — the far
             // party arrives through the policy submix, outside the mic arbitration entirely.
+            //
+            // Not while paused (review N20): nothing is encoded then, and re-taking only fights the calling app.
             if (tag == "near") {
-                if (isAllZero(buf)) { silentChunks++; side.zeroChunk() } else silentChunks = 0
-                if (silentChunks >= SILENT_CHUNKS_BEFORE_RETAKE) {
-                    silentChunks = 0
+                val allZero = isAllZero(buf)
+                if (allZero) side.zeroChunk()
+                if (quiet.onChunk(allZero, paused = pauseRequested.get())) {
                     // Asked BEFORE the re-take, of the record that went quiet: did Android silence it, or is
                     // this a pause? Recorded only (backlog #9, step 1) — the re-take happens either way, as
                     // before. Null when the platform will not say.
