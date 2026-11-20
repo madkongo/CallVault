@@ -52,11 +52,21 @@ object WirelessDebuggingApproval {
     /** The keystore field of `AdbDebuggingManager.dump` as DualDumpOutputStream prints it: `keystore=<file>`. */
     private val KEYSTORE_FIELD by lazy { Regex("(?m)^[ \\t]*keystore=") }
     /**
-     * The end of that field: the dump object's closing brace, or the next `name=` field. The brace is escaped: Android's
-     * ICU regex rejects a bare `}` that the desktop JVM accepts (rf5, 2026-11-20; RegexIcuBraceGuardTest).
+     * A dump field's name at the start of a line, after its indentation: `name=`. Only lines at the keystore's own
+     * indentation are tried, so a 0x0A byte inside binary XML followed by letters and `=` cannot end it (review N15).
      */
-    private val FIELD_END by lazy { Regex("(?m)^[ \\t]*(?:\\}|[A-Za-z_]+=)") }
-    private val BSSID by lazy { Regex("""(?<![0-9A-Fa-f:])[0-9A-Fa-f]{2}(?::[0-9A-Fa-f]{2}){5}(?![0-9A-Fa-f:])""") }
+    private val FIELD_NAME by lazy { Regex("^[a-z_]+=") }
+    /** IndentingPrintWriter's step: a field's parent object closes this much further left. */
+    private const val DUMP_INDENT_STEP = 2
+    /**
+     * A run of colon-joined hex pairs, taken whole so a longer run is never read from inside. The keystore is binary
+     * XML on real phones: an address sits between a length byte (or a printable character) and the next token's type
+     * byte ('3'), so hex may touch it on either side and only a colon marks it as part of something longer (review
+     * N15, OnePlus 9 Pro, Android 14, 2026-11-20). [isBssidRun] keeps the runs that are exactly one address.
+     */
+    private val COLON_HEX_RUN by lazy { Regex("""[0-9A-Fa-f]{2}(?::[0-9A-Fa-f]{2})+""") }
+    /** `aa:bb:cc:dd:ee:ff`: six pairs and five colons. */
+    private const val BSSID_LENGTH = 17
     private const val WD_SETTING = "adb_wifi_enabled"
     private const val TIMEOUT_MS = 10_000L
     private const val READER_GRACE_MS = 1_000L
@@ -135,10 +145,37 @@ object WirelessDebuggingApproval {
     fun parseTrustedBssids(dump: String?): Set<String>? {
         if (dump == null || !dump.contains(ADB_DUMP_HEADER)) return null
         val start = KEYSTORE_FIELD.find(dump) ?: return emptySet()
-        val rest = dump.substring(start.range.last + 1)
-        val section = FIELD_END.find(rest)?.let { rest.substring(0, it.range.first) } ?: rest
-        return BSSID.findAll(section).map { it.value.lowercase() }.toSet()
+        val indent = start.value.removeSuffix("keystore=")
+        val section = keystoreSection(dump.substring(start.range.last + 1), indent)
+        return COLON_HEX_RUN.findAll(section).filter { isBssidRun(section, it.range) }.map { it.value.lowercase() }.toSet()
     }
+
+    /**
+     * The keystore field's text: up to the dump's own next line, which is either the next field at the keystore's
+     * indentation (`    name=`) or its parent's closing brace alone on a line (`  }`). Anything else that follows a
+     * newline is the field's own data: binary XML holds 0x0A bytes. With no such line the rest of the dump is kept.
+     */
+    private fun keystoreSection(rest: String, indent: String): String {
+        val closing = indent.dropLast(DUMP_INDENT_STEP) + "}"
+        var lineStart = rest.indexOf('\n')
+        while (lineStart >= 0) {
+            val next = rest.indexOf('\n', lineStart + 1)
+            val line = rest.substring(lineStart + 1, if (next < 0) rest.length else next).removeSuffix("\r")
+            val isNextField = line.startsWith(indent) && FIELD_NAME.containsMatchIn(line.substring(indent.length))
+            if (line == closing || isNextField) return rest.substring(0, lineStart)
+            lineStart = next
+        }
+        return rest
+    }
+
+    /**
+     * Exactly six groups, and no colon on either side: `11:22:33:44:55:66:77` or `1:22:33:44:55:66:77` is not an
+     * access point. Reading one that is not trusted as trusted would skip its approval and leave Android's prompt.
+     */
+    private fun isBssidRun(text: String, range: IntRange): Boolean =
+        range.last - range.first + 1 == BSSID_LENGTH &&
+            text.getOrNull(range.first - 1) != ':' &&
+            text.getOrNull(range.last + 1) != ':'
 
     /**
      * Whether adbd listens on a tcp port: `service.adb.tcp.port` (set when adbd binds, e.g. after `adb tcpip`, which
