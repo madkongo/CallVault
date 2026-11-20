@@ -206,6 +206,9 @@ class WaitingRecordingsTest {
         val staged = File(staging, "rec_stage_2.tmp").apply { writeBytes(ByteArray(300)) }
         val moved = WaitingRecordings.adopt(context, staged, "cut.ogg", "audio/ogg", "cut-off recording", finished = true)!!
         assertNotNull(WaitingNote.read(moved)!!.finishedAt)
+        // Second review S5: a cut-off may be an app call; it carries no call identity, so saving it skips the details
+        // file and the keep-or-delete question, exactly like the rescue's own successful save.
+        assertNull(WaitingNote.read(moved)!!.extras)
     }
 
     @Test
@@ -227,5 +230,15 @@ class WaitingRecordingsTest {
         assertEquals(setOf("call.ogg", "call (1).ogg"), names)
         assertTrue(WaitingRecordings.rename(a, WaitingNote.read(b)!!.note.fileName))
         assertFalse(WaitingNote.read(a)!!.note.fileName == WaitingNote.read(b)!!.note.fileName)
+    }
+
+    @Test
+    fun `an adopted recording never takes the name of a call already waiting`() {
+        val first = WaitingRecordings.create(context, null, "call.ogg", "audio/ogg", "test", "phone call")!!.also { it.descriptor.close() }.stagingFile!!
+        first.writeBytes(ByteArray(10))
+        val staging = File(context.filesDir, "staging").apply { mkdirs() }
+        val staged = File(staging, "rec_stage_3.tmp").apply { writeBytes(ByteArray(20)) }
+        val moved = WaitingRecordings.adopt(context, staged, "call.ogg", "audio/ogg", "phone call", finished = false)!!
+        assertEquals("call (1).ogg", WaitingNote.read(moved)!!.note.fileName)
     }
 }

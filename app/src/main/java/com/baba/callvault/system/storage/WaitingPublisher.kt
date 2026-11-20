@@ -165,7 +165,9 @@ object WaitingPublisher {
         }
         val (uri, name) = published
         // A hold that cannot be set keeps the call, as on the normal path (AfterCallDecision.tryHold).
-        val held = runCatching { env.beforeCatalog(name, uri, note.mimeType, waiting) }
+        // No call identity (a cut-off: the app was killed mid-call, or the rescue handed it over): saved like the rescue
+        // saves one, with no details file and no keep-or-delete question (second review 2026-11-20, S5).
+        val held = if (waiting.extras == null) false else runCatching { env.beforeCatalog(name, uri, note.mimeType, waiting) }
             .onFailure { env.record("details file or keep-or-delete hold for ${CallEndLog.safeName(name)} failed: ${CallEndLog.describe(it)}") }
             .getOrDefault(false)
         val failure = runCatching { env.catalog(name, uri, bytes, note.startedAtMillis) }.getOrElse { it }

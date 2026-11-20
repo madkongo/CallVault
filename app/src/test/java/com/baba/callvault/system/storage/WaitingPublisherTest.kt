@@ -48,7 +48,14 @@ class WaitingPublisherTest {
         val f = File(dir, "rec_wait_${name.hashCode()}.tmp")
         f.writeBytes(ByteArray(bytes))
         f.setLastModified(now - ageMs)
-        if (withNote) WaitingNote.write(f, WaitingNote(StagingNote("none", name, "audio/ogg", now - 60_000L), if (finished) now - ageMs else null))
+        if (withNote) WaitingNote.write(
+            f,
+            WaitingNote(
+                StagingNote("none", name, "audio/ogg", now - 60_000L),
+                if (finished) now - ageMs else null,
+                if (finished) WaitingNote.Extras(isVoip = false, appCallMix = false, direction = null) else null,
+            ),
+        )
         return f
     }
 
@@ -73,7 +80,10 @@ class WaitingPublisherTest {
         }
         var hold = false
         val held = mutableListOf<Boolean>()
-        override suspend fun beforeCatalog(name: String, uri: Uri, mimeType: String, note: WaitingNote): Boolean = hold
+        var beforeCatalogCalls = 0
+        override suspend fun beforeCatalog(name: String, uri: Uri, mimeType: String, note: WaitingNote): Boolean {
+            beforeCatalogCalls++; return hold
+        }
         override suspend fun catalog(name: String, uri: Uri, bytes: Long, startedAt: Long): Throwable? {
             catalogued += Triple(name, bytes, startedAt); return null
         }
@@ -206,5 +216,15 @@ class WaitingPublisherTest {
         val f = waiting("a.ogg", 500, finished = true)
         val env = FakeEnv(listOf(f), call = true, now = now)
         assertEquals(1, WaitingPublisher.run(env, ignoreCallState = true).saved)
+    }
+
+    @Test
+    fun `a cut-off with no call identity is saved like the rescue saves one - no details file, no question`() = runBlocking {
+        val f = waiting("c.ogg", 500, finished = true)
+        WaitingNote.write(f, WaitingNote(StagingNote("none", "c.ogg", "audio/ogg", now), now, extras = null))
+        val env = FakeEnv(listOf(f), now = now).apply { hold = true }
+        assertEquals(1, WaitingPublisher.run(env).saved)
+        assertEquals(0, env.beforeCatalogCalls)
+        assertEquals(listOf(false), env.held)
     }
 }

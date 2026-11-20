@@ -164,7 +164,7 @@ object WaitingRecordings {
      * The after-call steps of a waiting recording are done: mark it finished with what saving needs ([extras]), so the
      * publisher may take it, and tell the user. Never throws.
      */
-    fun ready(context: Context, file: File, mimeType: String, kind: String, extras: WaitingNote.Extras) {
+    fun ready(context: Context, file: File, mimeType: String, kind: String, extras: WaitingNote.Extras?) {
         runCatching {
             LiveStagingFiles.release(file)
             val old = WaitingNote.read(file)
@@ -197,21 +197,34 @@ object WaitingRecordings {
      * already, and refusing would only leave it in staging. [finished]: no after-call steps follow (the cut-off rescue).
      * Returns the new file, or null when it could not be moved (the caller then keeps today's behaviour).
      */
-    fun adopt(context: Context, staged: File, name: String, mimeType: String, kind: String, finished: Boolean): File? = runCatching {
-        val target = File(dir(context), "$PREFIX${System.nanoTime()}$SUFFIX")
-        val stagingNote = StagingNote.fileFor(staged).takeIf { it.exists() }?.let { runCatching { StagingNote.decode(it.readText()) }.getOrNull() }
-        if (!staged.renameTo(target)) {
+    fun adopt(context: Context, staged: File, name: String, mimeType: String, kind: String, finished: Boolean): File? {
+        val stagingNoteFile = StagingNote.fileFor(staged)
+        val stagingNote = stagingNoteFile.takeIf { it.exists() }?.let { runCatching { StagingNote.decode(it.readText()) }.getOrNull() }
+        val target = runCatching {
+            val t = File(dir(context), "$PREFIX${System.nanoTime()}$SUFFIX")
+            if (staged.renameTo(t)) t else null
+        }.onFailure { AppLogger.e(TAG, "Moving ${staged.name} into waiting storage threw; it stays in staging", it) }.getOrNull()
+        if (target == null) {
             CallEndLog.record(context, "$kind: could not move the unsaved recording into waiting storage; it stays in staging")
-            return@runCatching null
+            return null
         }
-        StagingNote.fileFor(staged).delete()
-        val note = (stagingNote ?: StagingNote("none", name, mimeType, target.lastModified())).copy(fileName = name, mimeType = mimeType)
-        WaitingNote.write(target, WaitingNote(note, null))
-        CallEndLog.record(context, "$kind: saving into the folder failed; moved into waiting storage to save later: ${CallEndLog.safeName(name)} size=${target.length()} bytes")
-        if (finished) ready(context, target, mimeType, kind, WaitingNote.Extras(isVoip = false, appCallMix = false, direction = null))
-        else LiveStagingFiles.register(target)
-        target
-    }.onFailure { AppLogger.e(TAG, "Moving ${staged.name} into waiting storage failed; it stays in staging", it) }.getOrNull()
+        // The audio has moved: from here the new file is returned whatever else fails (second review 2026-11-20, S4).
+        // The waiting note is written BEFORE the staging note is removed, so a kill in between leaves a named recording.
+        val noteWritten = runCatching {
+            val base = (stagingNote ?: StagingNote("none", name, mimeType, target.lastModified())).copy(fileName = name, mimeType = mimeType)
+            WaitingNote.write(target, WaitingNote(base, null))
+            rename(target, name, mimeType) // never the name of a call already waiting
+        }.onFailure { AppLogger.w(TAG, "Could not write the note of the moved recording ${target.name}: ${it.message}") }.isSuccess
+        runCatching { stagingNoteFile.delete() }
+        CallEndLog.record(
+            context,
+            "$kind: saving into the folder failed; moved into waiting storage to save later: ${CallEndLog.safeName(name)} " +
+                "size=${target.length()} bytes" + (if (noteWritten) "" else " (its note could not be written: it will be left, not saved)"),
+        )
+        // A cut-off carries no call identity (S5): saved like the rescue saves one, without details file or question.
+        if (finished) ready(context, target, mimeType, kind, extras = null) else LiveStagingFiles.register(target)
+        return target
+    }
 
     private fun onKept(context: Context) = FolderProtection.onWaitingKept(context)
 
