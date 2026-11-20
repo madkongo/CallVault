@@ -64,8 +64,10 @@ fun rememberTranscribingPillState(): State<TranscribingPillState> {
     ) {
         combine(
             workManager.getWorkInfosForUniqueWorkFlow(TranscriptionScheduler.WORK_NAME),
-            workManager.getWorkInfosForUniqueWorkFlow(TranscriptionScheduler.MANUAL_WORK_NAME)
-        ) { sweep, manual -> (sweep + manual).firstOrNull { it.state == WorkInfo.State.RUNNING } }
+            workManager.getWorkInfosForUniqueWorkFlow(TranscriptionScheduler.MANUAL_WORK_NAME),
+            // Every run since C124 carries this tag, including each after-call run (its own unique work).
+            workManager.getWorkInfosByTagFlow(TranscriptionScheduler.TAG_RUN)
+        ) { sweep, manual, tagged -> (sweep + manual + tagged).firstOrNull { it.state == WorkInfo.State.RUNNING } }
             .collect { running -> value = running.toPillState() }
     }
 }
