@@ -65,4 +65,9 @@
     <string name="notif_stopped_by_user_title">你已停止 CallVault</string>
     <string name="notif_stopped_by_user_text">应用停止期间的通话没有被录音。CallVault 现已重新打开，会录制新的通话。</string>
     <string name="home_stopped_by_user_text">你已停止 CallVault——应用停止期间的通话没有被录音。</string>
+    <string name="home_status_battery_title">Allow unrestricted battery use</string>
+    <string name="home_status_battery_suggestion">In this set-up Android only lets CallVault start recording a call in the background when it has unrestricted battery use. Tap, then choose “Allow”. On some phones the setting is called “Unrestricted” or “Don’t optimise”.</string>
+    <string name="recording_error_start_refused">This call wasn’t recorded because Android blocked CallVault from starting the recorder in the background. Tap to open the setting, then choose “Allow CallVault unrestricted battery use”.</string>
+    <string name="recording_error_start_refused_title">Call not recorded</string>
+    <string name="recording_error_start_refused_action">Allow unrestricted battery use</string>
 </resources>

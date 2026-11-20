@@ -342,6 +342,27 @@ class RecordingNotificationHelper(base: Context) {
      *
      * @param message Human-readable error description to show in the notification body.
      */
+    fun showBatteryExemptionNotification() {
+        val message = context.getString(R.string.recording_error_start_refused)
+        val open = PendingIntent.getActivity(
+            context, ERROR_NOTIFICATION_ID,
+            com.baba.callvault.services.call.ForegroundStartGuard.batteryExemptionIntent(context),
+            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+        )
+        val notification = NotificationCompat.Builder(context, CHANNEL_ID_ERROR)
+            .setSmallIcon(R.drawable.ic_mic)
+            .setContentTitle(context.getString(R.string.recording_error_start_refused_title))
+            .setContentText(message)
+            .setStyle(NotificationCompat.BigTextStyle().bigText(message))
+            .setContentIntent(open)
+            .addAction(0, context.getString(R.string.recording_error_start_refused_action), open)
+            .setAutoCancel(true)
+            .setCategory(NotificationCompat.CATEGORY_ERROR)
+            .build()
+        context.getSystemService(NotificationManager::class.java).notify(ERROR_NOTIFICATION_ID, notification)
+        vibrate(VibrationEffect.createWaveform(longArrayOf(0, 100, 800), intArrayOf(0, 46, 184), -1))
+    }
+
     fun showErrorNotification(message: String) {
         val notification = NotificationCompat.Builder(context, CHANNEL_ID_ERROR)
             .setSmallIcon(R.drawable.ic_mic)
