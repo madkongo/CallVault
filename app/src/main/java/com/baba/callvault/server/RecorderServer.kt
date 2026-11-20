@@ -88,7 +88,14 @@ object RecorderServer {
             // is OFF. Ends on SIGTERM or destroy().
             // Enlarge the main log buffer once (BabApps #95), off the delivery path and only if the shell may.
             Thread {
+                // Once per boot (review R7): a recorder that restarts often used to fork `logcat -G` on every start.
+                val marker = LogcatGrowMarker.forShell()
+                if (!marker.shouldGrow()) {
+                    AppLogger.i(TAG, "logcat main buffer already enlarged in this boot; not asking again")
+                    return@Thread
+                }
                 val out = runCatching { DiagnosticDumps.run("logcat_grow_host", null) }.getOrNull()
+                if (out != null) marker.markGrown()
                 AppLogger.i(TAG, "logcat main buffer enlarged to 16M: " + (if (out == null) "refused or failed" else out.trim().ifEmpty { "ok" }))
             }.apply { isDaemon = true; name = "cv-logcat-grow" }.start()
             Looper.loop()

@@ -689,6 +689,12 @@ class DaemonKeepAliveService : Service() {
             )
         }.onFailure { AppLogger.e(TAG, "keep-alive startForeground failed", it) }.isSuccess
         if (!startedForeground) {
+            // Nothing else would start it again (review R3): queue a bounded retry before giving up.
+            KeepAliveRetry.schedule(
+                applicationContext,
+                (intent?.getIntExtra(EXTRA_RETRY_ATTEMPT, 0) ?: 0) + 1,
+                "startForeground failed",
+            )
             stopSelf()
             return START_NOT_STICKY
         }
@@ -817,8 +823,19 @@ class DaemonKeepAliveService : Service() {
             rebindShizuku(force)
             return
         }
+        // A recording on the local ADB fallback rides the very connection a relaunch drops or reconfigures (review C89).
+        if (LocalFallbackLease.shared.expireIfStale()) {
+            val line = "keep-alive: the local-fallback lease was held over ${LocalFallbackLease.MAX_HOLD_MS / 60_000} min; treating it as a missed release"
+            AppLogger.w(TAG, line)
+            runCatching { UsbDebuggingEvents.record(applicationContext, line) }
+        }
+        if (LocalFallbackLease.shared.active) {
+            timelineSkip("a recording on the local fallback is using the ADB connection")
+            return
+        }
         val offline = runCatching { AppPreferences(this).isOfflineRecordingEnabled() }.getOrDefault(false)
-        if (!offline && !isWifiConnected()) {
+        // Every network, not the default one: a Wi-Fi without internet while mobile data is up is still Wi-Fi (review C34).
+        if (!RewarmDecisions.wifiAllowsRelaunch(offline, WifiState.of(this))) {
             timelineSkip("no Wi-Fi and off-Wi-Fi recording is off")
             return // the WD relaunch path needs Wi-Fi; loopback doesn't
         }
@@ -992,12 +1009,6 @@ class DaemonKeepAliveService : Service() {
     /** How a bounded relaunch ended. A timeout also needs its ADB connection dropped. */
     private enum class LaunchOutcome { CONNECTED, FAILED, TIMED_OUT }
 
-    private fun isWifiConnected(): Boolean = runCatching {
-        val cm = getSystemService(ConnectivityManager::class.java) ?: return false
-        val caps = cm.getNetworkCapabilities(cm.activeNetwork) ?: return false
-        caps.hasTransport(NetworkCapabilities.TRANSPORT_WIFI)
-    }.getOrDefault(false)
-
     /** Tells the user CallVault undid their Wireless-debugging change, and why. Dismissible, silent. */
 
     private fun updateNotification(ready: Boolean) {
@@ -1011,7 +1022,14 @@ class DaemonKeepAliveService : Service() {
         // controls during a call, with "Ready to record calls". The release puts this back afterwards.
         if (SharedStatusNotice.isHeldByRecording) return
         runCatching {
-            getSystemService(NotificationManager::class.java).notify(NOTIF_ID, buildNotification(ready))
+            val manager = getSystemService(NotificationManager::class.java)
+            val next = buildNotification(ready)
+            // The same notice, still posted exactly as it would be: posting again only wakes system UI and every
+            // notification listener (review R11). Anything else under the id (a recording's, a stale one, none because
+            // the user swiped it) is posted over. A read that fails posts, as before.
+            val posted = runCatching { manager.activeNotifications.firstOrNull { it.id == NOTIF_ID }?.notification }.getOrNull()
+            if (!NoticeKey.shouldPost(posted, next)) return@runCatching
+            manager.notify(NOTIF_ID, next)
         }
     }
 
@@ -1230,27 +1248,43 @@ class DaemonKeepAliveService : Service() {
             }.onFailure { AppLogger.w(TAG, "Could not log the keep-alive decision: ${it.message}") }
         }
 
+        /** Which retry started this run (review R3); absent on a normal start. */
+        internal const val EXTRA_RETRY_ATTEMPT = "keep_alive_retry_attempt"
+
         /** Start (or no-op if already running) the persistent keep-alive anchor. Safe to call repeatedly. */
         fun start(context: Context) {
+            // A refused start used to leave the keep-alive down with nothing to try again (review R3).
+            if (!startOnce(context, retryAttempt = 0)) KeepAliveRetry.schedule(context, 1, "start refused")
+        }
+
+        /** One start attempt. False only when Android refused the foreground start; a switched-off recorder counts as done. */
+        internal fun startOnce(context: Context, retryAttempt: Int): Boolean {
             // The user turned recording off — honour it here so EVERY caller (boot, app launch,
             // post-update, Settings) respects it without each having to check. STOPPED survives a reboot:
             // the recorder stays down until the user turns it back on.
             if (AppPreferences(context).getRecordingState() == RecordingState.STOPPED) {
                 AppLogger.i(TAG, "Recording is STOPPED by the user: not starting the keep-alive")
                 stop(context)
-                return
+                return true
             }
             // Runs in every mode (P1a): in Shizuku mode it is the process anchor + status notice (and the app-call
             // detector when those are on), never our ADB daemon — see [KeepAlivePolicy].
             logDecisionIfChanged(context)
             val outcome = ForegroundStartGuard.attempt {
-                ContextCompat.startForegroundService(context, Intent(context, DaemonKeepAliveService::class.java))
+                ContextCompat.startForegroundService(
+                    context,
+                    Intent(context, DaemonKeepAliveService::class.java).apply {
+                        if (retryAttempt > 0) putExtra(EXTRA_RETRY_ATTEMPT, retryAttempt)
+                    },
+                )
             }
             if (outcome is ForegroundStartGuard.Outcome.Refused) {
                 ForegroundStartGuard.keepAliveStartRefused = true
                 AppLogger.w(TAG, "Failed to start keep-alive service: ${outcome.cause.message}")
                 UsbDebuggingEvents.record(context, ForegroundStartGuard.describe("keep-alive start", outcome.cause, batteryExempt = false))
+                return false
             }
+            return true
         }
 
         /** Stop the keep-alive anchor (e.g. if the user disables persistence). */
@@ -1268,6 +1302,8 @@ class DaemonKeepAliveService : Service() {
             // started. The phone settled in Shizuku mode being served by our own ADB daemon — a wrong
             // host, silently, with every layer reporting success.
             RecorderConnection.onDeath = null
+            // A retry queued earlier must not bring back a keep-alive that was stopped on purpose (review R3).
+            runCatching { KeepAliveRetry.cancel(context) }
             runCatching { context.stopService(Intent(context, DaemonKeepAliveService::class.java)) }
         }
     }
