@@ -929,6 +929,9 @@ class HomeViewModel(application: Application) : AndroidViewModel(application) {
                 val driveCheck = driveCheckJob?.takeIf { it.isActive }
                     ?: async(Dispatchers.IO) { runCatching { DriveCatalogRepair.forgetDeleted(appContext) } }
                         .also { driveCheckJob = it }
+                // The recording folder too, now even when its answer is bad (review C98): the list pass below may be
+                // coalesced into one already running, which would skip this look.
+                lookAtFolderIfStale("pull-to-refresh")
                 withContext(Dispatchers.IO) { DeviceFolderRescan.run(appContext) }
                 withTimeoutOrNull(PULL_DRIVE_CHECK_MAX_MS) { driveCheck.await() }
                 refresh()
@@ -947,8 +950,8 @@ class HomeViewModel(application: Application) : AndroidViewModel(application) {
      */
     fun onHomeVisible() = lookAtFolderIfStale()
 
-    private fun lookAtFolderIfStale() {
-        HomeFolderLook.onVisible(appContext) {
+    private fun lookAtFolderIfStale(trigger: String = "Home") {
+        HomeFolderLook.onVisible(appContext, trigger) {
             viewModelScope.launch { _uiState.update { it.copy(status = computeStatus()) } }
         }
     }

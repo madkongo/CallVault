@@ -15,7 +15,9 @@ import com.baba.callvault.system.storage.RecordingFolderCheck
 
 /**
  * Home's look at the recording folder (review C98): only when the stored answer is stale
- * ([FolderWatchPlan.HOME_MAX_AGE_MS] when good, backing off when bad), on the check's own thread, never holding the UI.
+ * ([FolderWatchPlan.HOME_MAX_AGE_MS] when good; a bad one again after seconds, not the background backoff, since the
+ * user is looking: [FolderWatchPlan.isStale] with foreground), on the check's own thread, never holding the UI.
+ * Used for Home coming into view, opening the app and pull-to-refresh.
  */
 internal object HomeFolderLook {
     /**
@@ -23,6 +25,6 @@ internal object HomeFolderLook {
      * the stored answer may have been refreshed by another check that ran first, and Home re-reads its status from
      * that stored answer either way (a cheap read).
      */
-    fun onVisible(context: Context, onDone: () -> Unit): Boolean =
-        RecordingFolderCheck.checkIfStale(context, "Home", FolderWatchPlan.HOME_MAX_AGE_MS) { onDone() }
+    fun onVisible(context: Context, trigger: String = "Home", onDone: () -> Unit): Boolean =
+        RecordingFolderCheck.checkIfStale(context, trigger, FolderWatchPlan.HOME_MAX_AGE_MS, foreground = true) { onDone() }
 }
