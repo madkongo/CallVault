@@ -415,7 +415,13 @@ class AdbPairingService : Service() {
         fun start(context: Context) {
             val intent = Intent(context, AdbPairingService::class.java).setAction(ACTION_START)
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-                context.startForegroundService(intent)
+                val outcome = com.baba.callvault.services.call.ForegroundStartGuard.attempt { context.startForegroundService(intent) }
+                if (outcome is com.baba.callvault.services.call.ForegroundStartGuard.Outcome.Refused) {
+                    com.baba.callvault.integrations.adb.UsbDebuggingEvents.record(
+                        context,
+                        com.baba.callvault.services.call.ForegroundStartGuard.describe("pairing start", outcome.cause, batteryExempt = false),
+                    )
+                }
             } else {
                 context.startService(intent)
             }

@@ -43,6 +43,7 @@ class RecordingNotificationHelper(base: Context) {
 
         const val SERVICE_NOTIFICATION_ID = 1
         const val ERROR_NOTIFICATION_ID = 2
+        const val BATTERY_EXEMPTION_NOTIFICATION_ID = 4733
 
         private val channelsEnsured = EnsureOnce()
 
@@ -335,6 +336,28 @@ class RecordingNotificationHelper(base: Context) {
         Handler(Looper.getMainLooper()).post {
             Toast.makeText(context, message, Toast.LENGTH_SHORT).show()
         }
+    }
+
+    /** N26: a call was not recorded because Android refused the start; one tap opens the battery setting. */
+    fun showBatteryExemptionNotification() {
+        val message = context.getString(R.string.recording_error_start_refused)
+        val open = PendingIntent.getActivity(
+            context, ERROR_NOTIFICATION_ID,
+            com.baba.callvault.services.call.ForegroundStartGuard.bestBatteryIntent(context),
+            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+        )
+        val notification = NotificationCompat.Builder(context, CHANNEL_ID_ERROR)
+            .setSmallIcon(R.drawable.ic_mic)
+            .setContentTitle(context.getString(R.string.recording_error_start_refused_title))
+            .setContentText(message)
+            .setStyle(NotificationCompat.BigTextStyle().bigText(message))
+            .setContentIntent(open)
+            .addAction(0, context.getString(R.string.recording_error_start_refused_action), open)
+            .setAutoCancel(true)
+            .setCategory(NotificationCompat.CATEGORY_ERROR)
+            .build()
+        context.getSystemService(NotificationManager::class.java).notify(BATTERY_EXEMPTION_NOTIFICATION_ID, notification)
+        vibrate(VibrationEffect.createWaveform(longArrayOf(0, 100, 800), intArrayOf(0, 46, 184), -1))
     }
 
     /**

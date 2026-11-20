@@ -17,6 +17,11 @@ import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import com.baba.callvault.R
 import com.baba.callvault.data.AppPreferences
+import com.baba.callvault.integrations.adb.UsbDebuggingEvents
+import android.os.Build
+import com.baba.callvault.system.permissions.PermissionChecks
+import com.baba.callvault.services.call.CallMonitorService
+import com.baba.callvault.services.call.ForegroundStartGuard
 import com.baba.callvault.data.recordings.DeviceFolderRescan
 import com.baba.callvault.data.recordings.DriveCatalogRepair
 import com.baba.callvault.data.calls.CallHistory
@@ -137,6 +142,13 @@ class HomeViewModel(application: Application) : AndroidViewModel(application) {
          * it (BabApps item 115). Named causes outrank the generic [RECOVERY_STUCK]. Tapping opens Settings.
          */
         NEEDS_WIFI(R.string.home_status_needs_wifi_title, R.string.home_status_needs_wifi_suggestion),
+        /**
+         * Android refused to start the recording service for a call (review N26): the phone is not exempt from battery
+         * optimisation and nothing else lets the app start it from the background. Tapping asks for the exemption.
+         */
+        BATTERY_EXEMPTION_NEEDED(R.string.home_status_battery_title, R.string.home_status_battery_suggestion),
+        /** Before any call has failed: nothing keeps the app allowed to start the recorder from the background (Q53). A warning, not an error. */
+        BATTERY_EXEMPTION_ADVISED(R.string.home_status_battery_title, R.string.home_status_battery_advised_suggestion),
         RECOVERY_STUCK(R.string.home_status_recovery_stuck_title, R.string.home_status_recovery_stuck_suggestion),
         /** The user turned recording off (master switch). Daemon is torn down until they turn it back on. */
         STOPPED(R.string.home_status_stopped_title, R.string.home_status_stopped_suggestion),
@@ -543,6 +555,8 @@ class HomeViewModel(application: Application) : AndroidViewModel(application) {
     private var listReloadPending = false
     private var watchingCatalog = false
     private val _isPullRefreshing = MutableStateFlow(false)
+    /** N26: the proactive battery-exemption ask is written to the always-on log once per process. */
+    @Volatile private var batteryAskLogged = false
     private var driveCheckJob: kotlinx.coroutines.Deferred<*>? = null
 
     /** True while a pull-to-refresh is running, for the indicator at the top of the page. */
@@ -1233,10 +1247,37 @@ class HomeViewModel(application: Application) : AndroidViewModel(application) {
         // an idle daemon is the normal, healthy state and must never turn the card red.
         null -> when {
             needsWifiToRecord() -> HomeStatus.NEEDS_WIFI
+            batteryExemptionStatus() != null -> batteryExemptionStatus()!!
             DaemonKeepAliveService.isRecoveryStuck -> HomeStatus.RECOVERY_STUCK
             else -> HomeStatus.READY
         }
     }
+
+    /**
+     * N26 / Q53: Error only after Android really refused a call start and the exemption is still off (behaviour
+     * measured); a Warning when nothing keeping the app allowed to start the recorder is running right now.
+     */
+    private fun batteryExemptionStatus(): HomeStatus? = runCatching {
+        val exempt = PermissionChecks.hasBatteryExemption(appContext)
+        if (ForegroundStartGuard.shouldWarnAboutBattery(ForegroundStartGuard.refusedAt(appContext), exempt)) {
+            return@runCatching HomeStatus.BATTERY_EXEMPTION_NEEDED
+        }
+        val advised = ForegroundStartGuard.setupNeedsBatteryExemption(
+            keepAliveRunning = DaemonKeepAliveService.isRunning || CallMonitorService.isListening,
+            recordingAllowed = AppPreferences(appContext).getRecordingState().isRecordingAllowed,
+            batteryExempt = exempt,
+            sdkInt = Build.VERSION.SDK_INT,
+        )
+        val processAge = SystemClock.elapsedRealtime() - android.os.Process.getStartElapsedRealtime()
+        if (!advised || !ForegroundStartGuard.hasSettled(processAge, ForegroundStartGuard.keepAliveStartRefused)) {
+            return@runCatching null
+        }
+        if (!batteryAskLogged) {
+            batteryAskLogged = true
+            UsbDebuggingEvents.record(appContext, ForegroundStartGuard.describeSetup(Build.VERSION.SDK_INT))
+        }
+        HomeStatus.BATTERY_EXEMPTION_ADVISED
+    }.getOrNull()
 
     /**
      * Recorder down AND no Wi-Fi AND "Keep recording off Wi-Fi" off, using the notification's own rule

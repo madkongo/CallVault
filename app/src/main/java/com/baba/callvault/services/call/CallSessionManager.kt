@@ -510,21 +510,8 @@ class CallSessionManager private constructor(context: Context) {
         }
     }
 
-    private fun sendServiceCommand(action: String, metadata: RecordingMetadata? = null) {
-        val intent = Intent(appContext, RecordingForegroundService::class.java).apply {
-            this.action = action
-            if (metadata != null) {
-                putExtra(RecordingMetadata.EXTRA_METADATA, metadata)
-            }
-        }
-        if (action == RecordingForegroundService.ACTION_STOP_RECORDING) {
-            // When Stopping, we use StartService as we assume the service is already running from startForegroundService. We only send it a new Intent that trigger cleanup.
-            // we don't use stopService as it would give us a very short time to do any cleanup before the OS kill the service and prevent cleanup finalization.
-            appContext.startService(intent)
-        } else {
-            appContext.startForegroundService(intent)
-        }
-    }
+    private fun sendServiceCommand(action: String, metadata: RecordingMetadata? = null) =
+        RecordingServiceCommander(appContext).send(action, metadata)
 
     /**
      * Determines whether the current call session should be automatically recorded based on user preferences.
