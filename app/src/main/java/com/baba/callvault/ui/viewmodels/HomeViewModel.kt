@@ -44,6 +44,7 @@ import com.baba.callvault.services.recording.RecordingSwitch
 import com.baba.callvault.services.recording.RecordingPolicy
 import com.baba.callvault.data.health.Prerequisite
 import com.baba.callvault.data.health.SetupPrerequisites
+import com.baba.callvault.system.storage.RecordingFolderCheck
 import com.baba.callvault.system.storage.WaitingRecordings
 import com.baba.callvault.data.recordings.AudioImport
 import com.baba.callvault.data.recordings.ImportedRecording
@@ -571,11 +572,13 @@ class HomeViewModel(application: Application) : AndroidViewModel(application) {
      * Review C24: "Needs Wi-Fi to record" is decided from whether the recorder is connected and whether there is
      * Wi-Fi, and both change while Home is open. Recomputed on either, not only on the next resume.
      * [WifiChanges] registers only while collected here and unregisters with [viewModelScope].
+     * The stored recording-folder answer too, whatever stored it (review C98, OnePlus 9 Pro 2026-11-20): a re-check
+     * that confirms the folder gone turns Home red, and one that finds it usable again turns it green, at once.
      */
     private fun observeReadiness() {
         val wifiChanges = WifiChanges.of(appContext.getSystemService(android.net.ConnectivityManager::class.java))
         viewModelScope.launch {
-            ReadinessRecompute.triggers(RecorderConnection.connected, wifiChanges).collect {
+            ReadinessRecompute.triggers(RecorderConnection.connected, wifiChanges, RecordingFolderCheck.changes).collect {
                 _uiState.update { state -> state.copy(status = computeStatus()) }
             }
         }
@@ -926,6 +929,9 @@ class HomeViewModel(application: Application) : AndroidViewModel(application) {
                 val driveCheck = driveCheckJob?.takeIf { it.isActive }
                     ?: async(Dispatchers.IO) { runCatching { DriveCatalogRepair.forgetDeleted(appContext) } }
                         .also { driveCheckJob = it }
+                // The recording folder too, now even when its answer is bad (review C98): the list pass below may be
+                // coalesced into one already running, which would skip this look.
+                lookAtFolderIfStale("pull-to-refresh")
                 withContext(Dispatchers.IO) { DeviceFolderRescan.run(appContext) }
                 withTimeoutOrNull(PULL_DRIVE_CHECK_MAX_MS) { driveCheck.await() }
                 refresh()
@@ -944,8 +950,8 @@ class HomeViewModel(application: Application) : AndroidViewModel(application) {
      */
     fun onHomeVisible() = lookAtFolderIfStale()
 
-    private fun lookAtFolderIfStale() {
-        HomeFolderLook.onVisible(appContext) {
+    private fun lookAtFolderIfStale(trigger: String = "Home") {
+        HomeFolderLook.onVisible(appContext, trigger) {
             viewModelScope.launch { _uiState.update { it.copy(status = computeStatus()) } }
         }
     }

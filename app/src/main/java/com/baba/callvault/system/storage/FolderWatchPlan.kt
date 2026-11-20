@@ -36,6 +36,13 @@ object FolderWatchPlan {
     /** A process start looks again at a good answer only when it is older than this. */
     const val APP_START_MAX_AGE_MS = 30 * 60_000L
 
+    /**
+     * The user in front of the app (Home coming into view, pull-to-refresh) looks at a confirmed-bad folder again
+     * once its answer is this old, instead of waiting out [badRetryMs] (OnePlus 9 Pro, 2026-11-20: the folder was put
+     * back and a pull-to-refresh still said "gone"). Enough to stop repeated refreshes hammering the provider.
+     */
+    const val FOREGROUND_BAD_MIN_SPACING_MS = 10_000L
+
     /** The period of the periodic check, or null for none. */
     fun periodMinutes(waitingCount: Int, folderBad: Boolean): Long? =
         if (folderBad || waitingCount > 0) TROUBLE_MINUTES else null
@@ -53,14 +60,27 @@ object FolderWatchPlan {
 
     private const val MINUTE = 60_000L
 
-    /** Whether to measure again: never measured, or older than [goodMaxAgeMs] (good) or [badRetryMs] (not good). */
-    fun isStale(state: FolderCheckState?, now: Long, goodMaxAgeMs: Long): Boolean {
+    /**
+     * Whether to measure again: never measured, or older than [goodMaxAgeMs] (good) or [badRetryMs] (not good).
+     *
+     * [foreground]: the user is in front of the app, so a bad answer is looked at again much sooner (no wake-up: the
+     * app is open): a confirmed loss after [FOREGROUND_BAD_MIN_SPACING_MS], an unconfirmed one after
+     * [FolderCheckPolicy.CONFIRM_DELAY_MS], so a foreground reading never restarts the wait for the reading that would
+     * confirm it (and is itself such a reading). Background triggers keep the backoff. A good answer is unchanged.
+     */
+    fun isStale(state: FolderCheckState?, now: Long, goodMaxAgeMs: Long, foreground: Boolean = false): Boolean {
         if (state == null) return true
         val age = now - state.measuredAt
         if (age < 0L) return true
         val good = state.kind == FolderReading.Kind.OK || state.kind == FolderReading.Kind.NOT_SET
+        if (good) return age >= goodMaxAgeMs
         val badFor = if (state.firstBadAt > 0L) state.measuredAt - state.firstBadAt else 0L
-        return age >= if (good) goodMaxAgeMs else badRetryMs(badFor)
+        val due = when {
+            !foreground -> badRetryMs(badFor)
+            state.confirmedUnusable -> FOREGROUND_BAD_MIN_SPACING_MS
+            else -> FolderCheckPolicy.CONFIRM_DELAY_MS
+        }
+        return age >= due
     }
 
     /** The inputs of [periodMinutes] on the phone. Cheap: one preference read and one directory listing. */

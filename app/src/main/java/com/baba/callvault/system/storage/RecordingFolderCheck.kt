@@ -18,6 +18,10 @@ import android.provider.DocumentsContract
 import com.baba.callvault.data.AppPreferences
 import com.baba.callvault.integrations.adb.UsbDebuggingEvents
 import com.baba.callvault.utils.AppLogger
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.update
 import java.util.concurrent.Executors
 import java.util.concurrent.Future
 import java.util.concurrent.ScheduledFuture
@@ -71,6 +75,18 @@ object RecordingFolderCheck {
     /** Called after every check with its result; set once by the app (the alert lives outside this file). */
     @Volatile var onChecked: ((Context, FolderCheckPolicy.Step) -> Unit)? = null
 
+    private val _changes = MutableStateFlow(0L)
+
+    /**
+     * Counts every stored result, whatever stored it (a re-check, the keep-alive tick, the periodic job, a call's end,
+     * a folder picked). Home collects it while shown and reads [cached] again on each change, so its status follows
+     * the stored answer without a pull-to-refresh (OnePlus 9 Pro, 2026-11-20: the 20 s re-check confirmed the folder
+     * gone and alerted, and Home still said "Ready to record"). Its current value is not a change.
+     */
+    val changes: StateFlow<Long> = _changes.asStateFlow()
+
+    private fun stored() = _changes.update { it + 1 }
+
     /** The last stored result, or null. A SharedPreferences read: no provider I/O. */
     fun cached(context: Context): FolderCheckState? = runCatching {
         prefs(context).getString(KEY_STATE, null)?.let(FolderCheckState::decode)
@@ -100,13 +116,20 @@ object RecordingFolderCheck {
 
     /**
      * Looks, on a background thread, only when the stored answer is stale ([FolderWatchPlan.isStale]: older than
-     * [maxAgeMs] when good, backing off when bad) and no call is up. No timer of its own: it rides whatever called it. [then] runs on that thread with the result (null: skipped
+     * [maxAgeMs] when good, backing off when bad; [foreground] for the user's own actions, which look at a bad answer
+     * again within seconds) and no call is up. No timer of its own: it rides whatever called it. [then] runs on that thread with the result (null: skipped
      * during a call, failed, or another check measured first so the stored answer is fresh already). Cheap to call
      * often: a preference read when nothing is due. Returns whether a look was queued.
      */
-    fun checkIfStale(context: Context, trigger: String, maxAgeMs: Long, then: ((FolderCheckPolicy.Step?) -> Unit)? = null): Boolean {
+    fun checkIfStale(
+        context: Context,
+        trigger: String,
+        maxAgeMs: Long,
+        foreground: Boolean = false,
+        then: ((FolderCheckPolicy.Step?) -> Unit)? = null,
+    ): Boolean {
         val app = context.applicationContext
-        fun stale() = FolderWatchPlan.isStale(cached(app), System.currentTimeMillis(), goodMaxAgeMs = maxAgeMs)
+        fun stale() = FolderWatchPlan.isStale(cached(app), System.currentTimeMillis(), goodMaxAgeMs = maxAgeMs, foreground = foreground)
         if (!stale()) return false
         return runCatching {
             worker.execute {
@@ -135,6 +158,7 @@ object RecordingFolderCheck {
                 return@runCatching step
             }
             prefs(app).edit().putString(KEY_STATE, step.state.encode()).apply()
+            stored()
             log(app, trigger, previous, reading, step)
             scheduleRecheck(app, step.recheckInMs)
             step
@@ -316,16 +340,19 @@ object RecordingFolderCheck {
      * tests, so that check cannot overwrite what a test arranges.
      */
     internal fun awaitIdleForTest(timeoutMs: Long = 10_000L) {
+        FolderProtection.awaitInstalledForTest(timeoutMs)
         worker.submit {}.get(timeoutMs, TimeUnit.MILLISECONDS)
     }
 
     /** Stores a result as if measured: for tests. */
     internal fun storeForTest(context: Context, state: FolderCheckState) {
         prefs(context).edit().putString(KEY_STATE, state.encode()).commit()
+        stored()
     }
 
     /** Forgets the stored result: for tests. */
     internal fun clearForTest(context: Context) {
         prefs(context).edit().clear().commit()
+        stored()
     }
 }

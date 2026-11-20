@@ -32,6 +32,33 @@ object FolderProtection {
         RecordingFolderCheck.checkIfStale(app, "app start", FolderWatchPlan.APP_START_MAX_AGE_MS)
     }
 
+    /** Installs that were started and have not finished yet: see [awaitInstalledForTest]. */
+    private val installsRunning = java.util.concurrent.atomic.AtomicInteger(0)
+
+    /** [install] on its own thread, so the app's start never waits on it. */
+    fun installInBackground(context: Context) {
+        val app = context.applicationContext
+        installsRunning.incrementAndGet()
+        runCatching {
+            Thread {
+                try { install(app) } finally { installsRunning.decrementAndGet() }
+            }.apply { isDaemon = true; name = "cv-folder-protection" }.start()
+        }.onFailure {
+            installsRunning.decrementAndGet()
+            AppLogger.e(TAG, "Could not start the folder protection: ${it.message}", it)
+        }
+    }
+
+    /**
+     * Waits until every [installInBackground] started so far has queued its "app start" check: for tests, which
+     * otherwise race that check (it can store its answer over what a test arranged). Gives up after [timeoutMs].
+     */
+    internal fun awaitInstalledForTest(timeoutMs: Long = 10_000L) {
+        // Counted in sleeps, not read off a clock: Robolectric stops the clock.
+        var left = timeoutMs / 5L
+        while (installsRunning.get() > 0 && left-- > 0) Thread.sleep(5L)
+    }
+
     /** The user picked a recording folder (Settings, setup wizard, permissions screen). */
     fun onFolderChosen(context: Context) = guard("folder chosen") {
         val app = context.applicationContext
