@@ -200,4 +200,11 @@ class WaitingPublisherTest {
         assertEquals("a (1).ogg" to true, WaitingPublisher.choose("a.ogg", 500L) { sizes[it] })
         assertEquals("a (2).ogg" to false, WaitingPublisher.choose("a.ogg", 700L) { sizes[it] })
     }
+
+    @Test
+    fun `after enough retries a call state that never ends no longer blocks a finished save`() = runBlocking {
+        val f = waiting("a.ogg", 500, finished = true)
+        val env = FakeEnv(listOf(f), call = true, now = now)
+        assertEquals(1, WaitingPublisher.run(env, ignoreCallState = true).saved)
+    }
 }

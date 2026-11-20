@@ -73,14 +73,23 @@ object FolderWatchPlan {
     }
 }
 
-/** Whether a phone or app call is up. Unknown reads as "up": waiting costs nothing, a provider query mid-call might. */
+/**
+ * Whether a phone or app call is up, so no provider query runs during one. The audio mode decides (it needs no
+ * permission); the carrier call state is only the fallback, and something unreadable is not a call (second review
+ * 2026-11-20, S6: "unknown is a call" skipped every check for ever on a phone without the phone-state permission).
+ */
 object PhoneCallState {
-    fun isCallUp(context: Context): Boolean = runCatching {
-        val mode = context.getSystemService(AudioManager::class.java)?.mode
-        val inCall = mode == AudioManager.MODE_IN_CALL || mode == AudioManager.MODE_IN_COMMUNICATION ||
-            mode == AudioManager.MODE_RINGTONE
+    fun isCallUp(context: Context): Boolean {
+        val mode = runCatching { context.getSystemService(AudioManager::class.java)?.mode }.getOrNull()
         @Suppress("DEPRECATION")
-        val carrier = context.getSystemService(TelephonyManager::class.java)?.callState
-        inCall || (carrier != null && carrier != TelephonyManager.CALL_STATE_IDLE)
-    }.getOrDefault(true)
+        val carrier = runCatching { context.getSystemService(TelephonyManager::class.java)?.callState }.getOrNull()
+        return decide(mode, carrier)
+    }
+
+    fun decide(audioMode: Int?, carrierState: Int?): Boolean {
+        if (audioMode == AudioManager.MODE_IN_CALL || audioMode == AudioManager.MODE_IN_COMMUNICATION ||
+            audioMode == AudioManager.MODE_RINGTONE
+        ) return true
+        return carrierState != null && carrierState != TelephonyManager.CALL_STATE_IDLE
+    }
 }

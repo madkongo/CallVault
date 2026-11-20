@@ -25,6 +25,25 @@ object WaitingPolicy {
     /** A new waiting call is refused when the phone's own storage has less free than this: the system needs it. */
     const val MIN_FREE_BYTES = 200L * 1024 * 1024
 
+    /** The publisher's first retry: long enough for a cut-off waiting call to go quiet. */
+    const val FIRST_RETRY_MS = CutOffRescuePolicy.QUIET_MS + 30_000L
+
+    /** Its retries double up to this. */
+    const val MAX_RETRY_MS = 60 * 60_000L
+
+    /** After this many retries in a row it stops; the next trigger (app start, Home, a check, a call) starts again. */
+    const val MAX_RETRIES = 12
+
+    /** After this many retries, a call state that seems never to end (a stuck audio mode) no longer blocks a finished save. */
+    const val IGNORE_CALL_AFTER_ATTEMPTS = 6
+
+    fun retryDelayMs(attempt: Int): Long =
+        (FIRST_RETRY_MS shl attempt.coerceIn(0, 20)).coerceAtMost(MAX_RETRY_MS).coerceAtLeast(FIRST_RETRY_MS)
+
+    fun shouldRetry(attempt: Int): Boolean = attempt < MAX_RETRIES
+
+    fun ignoreCallState(attempt: Int): Boolean = attempt >= IGNORE_CALL_AFTER_ATTEMPTS
+
     enum class Admission { OK, FULL, NO_SPACE }
 
     enum class Level { NORMAL, NEARLY_FULL, FULL }

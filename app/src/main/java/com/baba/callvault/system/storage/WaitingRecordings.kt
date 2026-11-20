@@ -178,7 +178,7 @@ object WaitingRecordings {
             )
             // The call is real evidence that the folder is gone: measure now (at the call's end, never its start) so Home
             // and the alert follow.
-            RecordingFolderCheck.checkAsync(context, "a call found the folder not usable")
+            RecordingFolderCheck.checkAsync(context, "a call found the folder not usable", skipDuringCall = true)
             onKept(context)
         }.onFailure { AppLogger.e(TAG, "Finishing the waiting recording ${file.name} failed; it stays where it is", it) }
     }

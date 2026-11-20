@@ -104,16 +104,18 @@ object WaitingPublisher {
     /** @param retryLater something is still in use or failed: look again later. */
     data class Result(val saved: Int, val retryLater: Boolean)
 
-    suspend fun run(env: Env, notes: List<File> = emptyList()): Result {
+    /** @param ignoreCallState a call state that seemed never to end has blocked enough retries (S6): save finished calls anyway. */
+    suspend fun run(env: Env, notes: List<File> = emptyList(), ignoreCallState: Boolean = false): Result {
         // A note whose recording is gone (a call whose start was abandoned) holds nothing.
         notes.filter { it.name.endsWith(StagingNote.SUFFIX) && !File(it.parentFile, it.name.removeSuffix(StagingNote.SUFFIX)).exists() }
             .forEach { runCatching { it.delete() } }
         if (env.files.isEmpty()) return Result(0, retryLater = false)
         // No provider query while a call is up (review 2026-11-20): look again once it is over.
-        if (env.callActive()) return Result(0, retryLater = true)
+        val callActive = env.callActive()
+        if (callActive && !ignoreCallState) return Result(0, retryLater = true)
+        if (callActive) env.record("the call state has looked busy through several retries; saving finished waiting calls anyway")
         val problem = env.folderProblem()
         if (problem != null) return Result(0, retryLater = false)
-        val callActive = false
         var saved = 0
         var retry = false
         env.files.forEach { file ->

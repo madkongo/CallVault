@@ -80,10 +80,10 @@ object RecordingFolderCheck {
     fun isKnownUnusable(context: Context, currentUri: Uri?): Boolean =
         FolderCheckPolicy.isUnusable(cached(context), currentUri?.toString(), System.currentTimeMillis())
 
-    /** Looks now, on a background thread. */
-    fun checkAsync(context: Context, trigger: String) {
+    /** Looks now, on a background thread; with [skipDuringCall], not while a call is up (no provider query mid-call). */
+    fun checkAsync(context: Context, trigger: String, skipDuringCall: Boolean = false) {
         val app = context.applicationContext
-        runCatching { worker.execute { checkNow(app, trigger) } }
+        runCatching { worker.execute { if (!(skipDuringCall && PhoneCallState.isCallUp(app))) checkNow(app, trigger) } }
             .onFailure { AppLogger.w(TAG, "Could not start the folder check ($trigger): ${it.message}") }
     }
 

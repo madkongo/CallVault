@@ -36,12 +36,21 @@ class WaitingRecordingsWorker(ctx: Context, params: WorkerParameters) : Coroutin
 
     override suspend fun doWork(): Result {
         val app = applicationContext
+        val attempt = inputData.getInt(KEY_ATTEMPT, 0)
         val result = runCatching {
-            WaitingPublisher.run(PhoneEnv(app), notes = WaitingRecordings.dirOrNull(app)?.listFiles().orEmpty().toList())
+            WaitingPublisher.run(
+                PhoneEnv(app),
+                notes = WaitingRecordings.dirOrNull(app)?.listFiles().orEmpty().toList(),
+                ignoreCallState = WaitingPolicy.ignoreCallState(attempt),
+            )
         }.onFailure { AppLogger.e(TAG, "Saving waiting calls failed: ${it.message}", it) }.getOrNull()
         if (result != null) {
             if (result.saved > 0) FolderProtection.onWaitingSaved(app, result.saved)
-            if (result.retryLater) schedule(app, RETRY_DELAY_MS)
+            // Backing off, and stopping after a while (S6): the next app start, Home visit, folder check or call starts again.
+            if (result.retryLater) {
+                if (WaitingPolicy.shouldRetry(attempt)) schedule(app, WaitingPolicy.retryDelayMs(attempt), attempt + 1)
+                else AppLogger.w(TAG, "Still cannot save the waiting calls after $attempt retries; waiting for the next trigger")
+            }
         }
         return Result.success()
     }
@@ -125,17 +134,17 @@ class WaitingRecordingsWorker(ctx: Context, params: WorkerParameters) : Coroutin
         private const val WORK_NAME = "waiting_recordings_publish"
         private const val PERIODIC_NAME = "recording_folder_watch"
 
-        /** Long enough for a cut-off waiting call to go quiet ([CutOffRescuePolicy.QUIET_MS]). */
-        private const val RETRY_DELAY_MS = CutOffRescuePolicy.QUIET_MS + 30_000L
+        private const val KEY_ATTEMPT = "attempt"
 
         private const val WATCH_PREFS = "recording_folder_watch"
         private const val KEY_WATCH_PERIOD = "period_minutes"
 
         /** Saves the waiting calls soon. Queued after a run in progress, never instead of it. */
-        fun schedule(context: Context, delayMs: Long = 0L) {
+        fun schedule(context: Context, delayMs: Long = 0L, attempt: Int = 0) {
             runCatching {
                 val request = OneTimeWorkRequestBuilder<WaitingRecordingsWorker>()
                     .setInitialDelay(delayMs, TimeUnit.MILLISECONDS)
+                    .setInputData(androidx.work.workDataOf(KEY_ATTEMPT to attempt))
                     .build()
                 WorkManager.getInstance(context).enqueueUniqueWork(WORK_NAME, ExistingWorkPolicy.APPEND_OR_REPLACE, request)
             }.onFailure { AppLogger.w(TAG, "Could not schedule saving the waiting calls: ${it.message}") }

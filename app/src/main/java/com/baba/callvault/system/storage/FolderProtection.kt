@@ -58,7 +58,12 @@ object FolderProtection {
     fun onWaitingKept(context: Context) = guard("call kept") {
         // At a call's end (never its start), so a provider query is fine. A folder that works (its file could not be
         // made, or one save failed) needs no "choose a folder" notice: the publisher saves the call now.
-        val folderUsable = SafHelper.isFolderValid(context, com.baba.callvault.data.AppPreferences(context).getRecordingFolderUri())
+        // During another call no provider query: the stored answer decides (S6).
+        val folderUsable = if (PhoneCallState.isCallUp(context)) {
+            RecordingFolderCheck.cached(context)?.kind == FolderReading.Kind.OK
+        } else {
+            SafHelper.isFolderValid(context, com.baba.callvault.data.AppPreferences(context).getRecordingFolderUri())
+        }
         if (folderUsable) {
             RecordingFolderCheck.recordAlwaysOn(context, "a call was kept while the folder looks usable; saving it now, no notice")
         } else {
