@@ -1015,7 +1015,7 @@ class DaemonKeepAliveService : Service() {
         private const val USB_OFF_SETTLE_MS = 5_000L
         private const val USB_OFF_POLL_MS = 200L
         private const val TAG = "CV:DaemonKeepAlive"
-        private const val CHANNEL_ID = "recorder_keepalive"
+        internal const val CHANNEL_ID = "recorder_keepalive"
 
         /**
          * Sent by the "Ask me" prompt's Record button. Handled here because this service owns the
