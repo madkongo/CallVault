@@ -37,15 +37,16 @@ object ForegroundNoticeChannel {
     }
 
     /**
-     * True when [notification] may be posted through `startForeground`. If its channel is missing it tries once to
-     * create the recording channels, then decides; a false answer is logged with the channel id.
+     * True when [notification] may be posted through `startForeground`. If its channel is missing it creates the
+     * recording channels again (bypassing the once-per-process cache: the channel may have been deleted since), then
+     * decides; a false answer is logged with the channel id.
      */
     fun usable(context: Context, notification: Notification): Boolean {
         val manager = context.getSystemService(NotificationManager::class.java) ?: return false
         val id = notification.channelId
         val exists: (String) -> Boolean = { manager.getNotificationChannel(it) != null }
         if (verdict(id, exists) == Verdict.OK) return true
-        RecordingNotificationHelper.ensureChannels(context)
+        RecordingNotificationHelper.ensureChannels(context, force = true)
         if (verdict(id, exists) == Verdict.OK) {
             AppLogger.w(TAG, "Notification channel '$id' was missing; created it before the foreground post")
             return true
