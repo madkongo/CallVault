@@ -182,6 +182,59 @@ class AfterCallDecisionTest {
     }
 
     @Test
+    fun `a refused delete leaves the recording held for a retry`() = runBlocking {
+        RecordingCatalog.recordLocal(context, name, uri, 1_000L, 1L)
+        AfterCallDecisions.hold(context, name, uri, "audio/ogg", isVoip = false)
+        val realDeleter = AfterCallDecision.recordingDeleter
+        val realExists = AfterCallDecision.fileStillExists
+        AfterCallDecision.recordingDeleter = { _, _ -> false }
+        AfterCallDecision.fileStillExists = { _, _ -> true }
+        try {
+            val deleted = AfterCallDecision.deleteNow(context, name, fromUnansweredCheck = false)
+
+            assertFalse(deleted)
+            assertNotNull("still held, so nothing re-adopts or uploads the file", AfterCallDecisions.peek(context, name))
+        } finally {
+            AfterCallDecision.recordingDeleter = realDeleter
+            AfterCallDecision.fileStillExists = realExists
+        }
+    }
+
+    @Test
+    fun `a delete that dies before finishing does not end the wait`() = runBlocking {
+        AfterCallDecisions.hold(context, name, uri, "audio/ogg", isVoip = false)
+        val realDeleter = AfterCallDecision.recordingDeleter
+        val realExists = AfterCallDecision.fileStillExists
+        AfterCallDecision.recordingDeleter = { _, _ -> error("process died") }
+        AfterCallDecision.fileStillExists = { _, _ -> true }
+        try {
+            AfterCallDecision.deleteNow(context, name, fromUnansweredCheck = false)
+
+            assertNotNull(AfterCallDecisions.peek(context, name))
+        } finally {
+            AfterCallDecision.recordingDeleter = realDeleter
+            AfterCallDecision.fileStillExists = realExists
+        }
+    }
+
+    @Test
+    fun `a file already gone by hand still ends the wait`() = runBlocking {
+        AfterCallDecisions.hold(context, name, uri, "audio/ogg", isVoip = false)
+        val realDeleter = AfterCallDecision.recordingDeleter
+        val realExists = AfterCallDecision.fileStillExists
+        AfterCallDecision.recordingDeleter = { _, _ -> false }
+        AfterCallDecision.fileStillExists = { _, _ -> false }
+        try {
+            AfterCallDecision.deleteNow(context, name, fromUnansweredCheck = false)
+
+            assertNull(AfterCallDecisions.peek(context, name))
+        } finally {
+            AfterCallDecision.recordingDeleter = realDeleter
+            AfterCallDecision.fileStillExists = realExists
+        }
+    }
+
+    @Test
     fun `startup restores the 24 hour check and a tapped delete`() {
         AfterCallDecisions.hold(context, "asked.ogg", uri, "audio/ogg", isVoip = false, askedAt = System.currentTimeMillis())
         AfterCallDecisions.hold(context, name, uri, "audio/ogg", isVoip = false, askedAt = System.currentTimeMillis())

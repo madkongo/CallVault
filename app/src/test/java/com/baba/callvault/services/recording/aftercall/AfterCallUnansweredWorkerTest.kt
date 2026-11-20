@@ -13,6 +13,7 @@ import android.util.Log
 import androidx.core.net.toUri
 import androidx.test.core.app.ApplicationProvider
 import androidx.work.Configuration
+import androidx.work.ListenableWorker
 import androidx.work.testing.SynchronousExecutor
 import androidx.work.testing.TestListenableWorkerBuilder
 import androidx.work.testing.WorkManagerTestInitHelper
@@ -23,6 +24,7 @@ import com.baba.callvault.data.recordings.RecordingCatalog
 import com.baba.callvault.data.transcripts.db.TranscriptDatabase
 import kotlinx.coroutines.runBlocking
 import org.junit.After
+import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
@@ -93,6 +95,37 @@ class AfterCallUnansweredWorkerTest {
     fun `an untouched recording is not engaged`() = runBlocking {
         TranscriptDatabase.get(context) // exists, but holds nothing for this name
         assertFalse(AfterCallEngagement.isEngaged(context, "nobody-touched-this.ogg"))
+    }
+
+    @Test
+    fun `a refused delete makes the delete worker retry, and the unanswered check too`() = runBlocking {
+        RecordingCatalog.recordLocal(context, name, uri, 1_000L, 1L)
+        AfterCallDecisions.hold(context, name, uri, "audio/ogg", isVoip = false)
+        AfterCallDecisions.setDeleteRequested(context, name, true)
+        val realDeleter = AfterCallDecision.recordingDeleter
+        val realExists = AfterCallDecision.fileStillExists
+        AfterCallDecision.recordingDeleter = { _, _ -> false }
+        AfterCallDecision.fileStillExists = { _, _ -> true }
+        try {
+            val deleteResult = TestListenableWorkerBuilder<AfterCallDeleteWorker>(context)
+                .setInputData(workDataOf(AfterCallWork.KEY_NAME to name)).build().doWork()
+            val checkResult = TestListenableWorkerBuilder<AfterCallUnansweredWorker>(context)
+                .setInputData(workDataOf(AfterCallWork.KEY_NAME to name)).build().doWork()
+
+            assertEquals(ListenableWorker.Result.retry(), deleteResult)
+            assertEquals(ListenableWorker.Result.retry(), checkResult)
+            assertTrue(AfterCallDecisions.peek(context, name) != null)
+        } finally {
+            AfterCallDecision.recordingDeleter = realDeleter
+            AfterCallDecision.fileStillExists = realExists
+        }
+    }
+
+    @Test
+    fun `retries stop after the cap so the work cannot loop forever`() {
+        assertEquals(ListenableWorker.Result.retry(), AfterCallWork.retryOrGiveUp(true, 0, name))
+        assertEquals(ListenableWorker.Result.success(), AfterCallWork.retryOrGiveUp(true, AfterCallWork.MAX_DELETE_ATTEMPTS - 1, name))
+        assertEquals(ListenableWorker.Result.success(), AfterCallWork.retryOrGiveUp(false, 0, name))
     }
 
     private suspend fun runCheck() {
