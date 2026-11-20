@@ -80,12 +80,12 @@ object FreeSpacePolicy {
      * measured volume: otherwise the existing advice stays, so a full phone never hides a real transport fault.
      */
     fun emptyCaptureCause(
-        lowAtCallStart: Boolean,
+        lowAtCallStart: Boolean?,
         freeNowBytes: Long,
         daemonLossKnown: Boolean,
         folderOnPhoneStorage: Boolean,
     ): EmptyCause =
-        if (lowAtCallStart && mayHaveBeenCutShort(freeNowBytes) && !daemonLossKnown && folderOnPhoneStorage) {
+        if (lowAtCallStart == true && mayHaveBeenCutShort(freeNowBytes) && !daemonLossKnown && folderOnPhoneStorage) {
             EmptyCause.STORAGE_FULL
         } else {
             EmptyCause.OTHER

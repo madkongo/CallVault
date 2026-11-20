@@ -115,4 +115,18 @@ class FreeSpacePolicyTest {
         assertFalse(FreeSpacePolicy.folderOnPhoneStorage("content://com.android.externalstorage.documents/tree/1A2B-3C4D%3ARecordings"))
         assertFalse(FreeSpacePolicy.folderOnPhoneStorage("content://com.google.android.apps.docs.storage/document/acc%3D1"))
     }
+
+    @Test
+    fun `unknown low-at-start never gives the storage wording`() {
+        val cause = FreeSpacePolicy.emptyCaptureCause(null, 5 * mb, daemonLossKnown = false, folderOnPhoneStorage = true)
+        assertEquals(FreeSpacePolicy.EmptyCause.OTHER, cause)
+    }
+
+    @Test
+    fun `a new call forgets the previous call's low reading`() {
+        FreeSpaceMonitor.recordLowAtCallStart(true)
+        assertEquals(true, FreeSpaceMonitor.lowAtCallStart)
+        FreeSpaceMonitor.beginCall()
+        assertEquals(null, FreeSpaceMonitor.lowAtCallStart)
+    }
 }

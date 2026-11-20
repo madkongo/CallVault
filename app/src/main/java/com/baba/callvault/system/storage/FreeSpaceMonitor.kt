@@ -37,10 +37,23 @@ object FreeSpaceMonitor {
     /** Not used elsewhere (4712-4728 are; 4729-4731 belong to the updater). */
     const val NOTIFICATION_ID = 4732
 
-    /** Whether free space was under the warning threshold when the current call started (this process; unknown = false). */
+    /**
+     * Whether free space was under the warning threshold when the current call started. Null = unknown: reset by
+     * [beginCall] at every call start and set only when that call's own check has read the space, so a short call or a
+     * check that throws can never inherit the previous call's value. Unknown counts as not low.
+     */
     @Volatile
-    var lowAtCallStart: Boolean = false
+    var lowAtCallStart: Boolean? = null
         private set
+
+    /** A call is starting: forget the last call's reading until this call's check has made its own. */
+    fun beginCall() {
+        lowAtCallStart = null
+    }
+
+    internal fun recordLowAtCallStart(low: Boolean) {
+        lowAtCallStart = low
+    }
 
     /** Free bytes on the volume recordings are staged on; -1 when it cannot be read. */
     fun freeBytes(context: Context): Long =
@@ -63,6 +76,7 @@ object FreeSpaceMonitor {
     /** [check] on its own thread: a stat call and preference reads must not run on the main thread. */
     fun checkAsync(context: Context, logLine: Boolean) {
         val app = context.applicationContext
+        if (logLine) beginCall()
         Thread { check(app, logLine) }.apply { isDaemon = true; name = "cv-free-space" }.start()
     }
 
@@ -81,7 +95,7 @@ object FreeSpaceMonitor {
             val free = freeBytes(context)
             val limit = threshold(context)
             if (logLine) {
-                lowAtCallStart = free in 0 until limit
+                recordLowAtCallStart(free in 0 until limit)
                 CallEndLog.record(context, FreeSpacePolicy.callStartLine(free, limit) + " " + volumeNote(context))
             }
             val prefs = context.applicationContext.getSharedPreferences(PREFS, Context.MODE_PRIVATE)
