@@ -35,6 +35,8 @@ import com.baba.callvault.services.recording.handoff.HandoffSource
 import com.baba.callvault.system.diagnostics.CallEndLog
 import com.baba.callvault.system.storage.SafHelper
 import com.baba.callvault.system.storage.StagingNote
+import com.baba.callvault.system.storage.LiveStagingFiles
+import com.baba.callvault.system.storage.WaitingRecordings
 import com.baba.callvault.integrations.scrcpy.ServerExtractor
 import com.baba.callvault.utils.AppLogger
 import com.baba.callvault.utils.RecordingFileNameFormatter
@@ -150,6 +152,9 @@ class AudioRecordingEngine {
     private var pendingFolderUri: Uri? = null
     private var pendingFileName: String? = null
     private var pendingMimeType: String? = null
+
+    /** The recording is kept in CallVault's own storage because the folder was not usable (review N5). */
+    private var isWaitingOutput = false
 
     /**
      * The exact number of audio bytes captured this session, when known reliably — set only after a
@@ -385,13 +390,9 @@ class AudioRecordingEngine {
         if (isCancelled()) throw CancellationException("Recording aborted before start (call already ended)")
         val preferences = AppPreferences(context)
         val folderUri = preferences.getRecordingFolderUri()
-
-        if (!SafHelper.isFolderValid(context, folderUri)) {
-            throw PipelineInitializationException(
-                userFriendlyMessage = context.getString(R.string.recording_error_folder_missing),
-                technicalLogMessage = "Cannot start recording: Selected Output folder is missing, invalid, or we do not have permission to write to it"
-            )
-        }
+        // Not a refusal any more (review N5): a call whose folder is not usable is kept in CallVault's own storage
+        // and saved into a folder later. The same test as before, at the same point; see the output choice below.
+        val folderUsable = SafHelper.isFolderValid(context, folderUri)
 
         val codecEnum = ScrcpyAudioCodec.fromKey(preferences.getAudioCodec())
         val bitRate = preferences.getAudioBitRate().takeIf { it > 0 } ?: codecEnum.defaultBitRate
@@ -406,11 +407,26 @@ class AudioRecordingEngine {
         currentStartedAt = nameStamp
         val fileName = RecordingFileNameFormatter.formatFileName(context, metadata, codecEnum, startedAt = nameStamp)
 
-        val safResult = SafHelper.createAudioFile(context, folderUri, fileName, codecEnum.mimeType)
-            ?: throw PipelineInitializationException(
+        // A usable folder takes exactly today's path. Only when it is not usable, or its file could not be made, is
+        // the call kept in CallVault's own storage (review N5); if that fails too, the old refusal stands.
+        val safResult = WaitingRecordings.chooseOutput(
+            folderUsable,
+            inFolder = { folderUri?.let { SafHelper.createAudioFile(context, it, fileName, codecEnum.mimeType) } },
+            waiting = {
+                val why = if (folderUsable) "its file could not be created" else SafHelper.folderProblem(context, folderUri) ?: "not usable"
+                WaitingRecordings.create(context, folderUri, fileName, codecEnum.mimeType, why, kind = "phone call")
+            },
+        ) ?: if (folderUsable) {
+            throw PipelineInitializationException(
                 userFriendlyMessage = context.getString(R.string.recording_error_file_creation),
                 technicalLogMessage = "Failed to create audio file in SAF storage"
             )
+        } else {
+            throw PipelineInitializationException(
+                userFriendlyMessage = context.getString(R.string.recording_error_folder_missing),
+                technicalLogMessage = "Cannot start recording: Selected Output folder is missing, invalid, or we do not have permission to write to it"
+            )
+        }
 
         AppLogger.d(TAG, "Created SAF recording file: ${safResult.uri}")
 
@@ -421,6 +437,7 @@ class AudioRecordingEngine {
         pendingFolderUri = safResult.folderUri
         pendingFileName = safResult.fileName
         pendingMimeType = safResult.mimeType
+        isWaitingOutput = safResult.waiting
 
         // Wi-Fi call (#45): the far side is a voice-comm player, so record it the way an app call is
         // recorded. If the daemon refuses, fall through to the normal carrier capture below.
@@ -1012,6 +1029,10 @@ class AudioRecordingEngine {
         pendingFolderUri = null
         pendingFileName = null
         pendingMimeType = null
+        if (isWaitingOutput) {
+            isWaitingOutput = false
+            LiveStagingFiles.release(temp)
+        }
         val bytes = temp.length()
         runCatching { StagingNote.fileFor(temp).delete() }
         val deleted = runCatching { temp.delete() }.getOrDefault(false)
@@ -1037,6 +1058,16 @@ class AudioRecordingEngine {
         pendingFileName = null
         pendingMimeType = null
 
+        if (isWaitingOutput) {
+            // The folder was not usable at the start (review N5): keep it under its name, to be saved later.
+            isWaitingOutput = false
+            if (ctx == null || name == null || mime == null) {
+                AppLogger.e(TAG, "Cannot keep the waiting recording (details missing); it stays at ${temp.path}")
+                return
+            }
+            WaitingRecordings.finish(ctx, temp, name, mime, kind = "phone call")
+            return
+        }
         if (ctx == null || folder == null || name == null || mime == null) {
             AppLogger.e(TAG, "Cannot publish staged recording (destination details missing); temp left at ${temp.path}")
             return

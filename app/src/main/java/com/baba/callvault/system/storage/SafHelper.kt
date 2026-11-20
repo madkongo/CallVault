@@ -58,6 +58,8 @@ object SafHelper {
      * @param folderUri   The chosen folder, carried so the destination can be created at the end.
      * @param fileName    The name the published file will take.
      * @param mimeType    The MIME type the published file will take.
+     * @param waiting     The folder was not usable, so the recording is kept in CallVault's own storage
+     *                    ([WaitingRecordings]) and [folderUri] is null: it is saved into a folder later (review N5).
      */
     data class SafResult(
         val uri: Uri?,
@@ -67,6 +69,7 @@ object SafHelper {
         val folderUri: Uri? = null,
         val fileName: String? = null,
         val mimeType: String? = null,
+        val waiting: Boolean = false,
     )
 
     /**

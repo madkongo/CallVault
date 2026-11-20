@@ -19,7 +19,12 @@ package com.baba.callvault.services.recording
  */
 object VoipOutcome {
 
-    enum class Kind(val word: String) { SAVED("SAVED"), DISCARDED("DISCARDED"), FAILED("FAILED"), NOT_STARTED("NOT STARTED") }
+    enum class Kind(val word: String) {
+        SAVED("SAVED"), DISCARDED("DISCARDED"), FAILED("FAILED"), NOT_STARTED("NOT STARTED"),
+
+        /** Recorded and kept in CallVault's own storage, to be saved into a folder later (review N5). */
+        WAITING("WAITING"),
+    }
 
     enum class Reason(val kind: Kind, val why: String) {
         SAVED(Kind.SAVED, "published to the recordings folder"),
@@ -48,6 +53,9 @@ object VoipOutcome {
         STAGING_MISSING(Kind.FAILED, "the staged recording's details are missing; nothing to publish"),
         NOT_PUBLISHED(Kind.FAILED, "could not publish to the recordings folder; kept in staging for the rescue"),
         NOT_STOPPED(Kind.FAILED, "the recorder did not confirm it stopped; left to the orphan check and the rescue"),
+
+        // Recorded while the recordings folder was not usable (review N5).
+        WAITING_FOR_FOLDER(Kind.WAITING, "the recordings folder was not usable; kept in CallVault's own storage until a folder is usable"),
     }
 
     /**
