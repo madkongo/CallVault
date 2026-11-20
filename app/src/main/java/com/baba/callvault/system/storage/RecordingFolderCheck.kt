@@ -101,18 +101,21 @@ object RecordingFolderCheck {
     /**
      * Looks, on a background thread, only when the stored answer is stale ([FolderWatchPlan.isStale]: older than
      * [maxAgeMs] when good, backing off when bad) and no call is up. No timer of its own: it rides whatever called it. [then] runs on that thread with the result (null: skipped
-     * or failed). Cheap to call often: a preference read when nothing is due.
+     * during a call, failed, or another check measured first so the stored answer is fresh already). Cheap to call
+     * often: a preference read when nothing is due. Returns whether a look was queued.
      */
-    fun checkIfStale(context: Context, trigger: String, maxAgeMs: Long, then: ((FolderCheckPolicy.Step?) -> Unit)? = null) {
+    fun checkIfStale(context: Context, trigger: String, maxAgeMs: Long, then: ((FolderCheckPolicy.Step?) -> Unit)? = null): Boolean {
         val app = context.applicationContext
-        if (!FolderWatchPlan.isStale(cached(app), System.currentTimeMillis(), goodMaxAgeMs = maxAgeMs)) return
-        runCatching {
+        fun stale() = FolderWatchPlan.isStale(cached(app), System.currentTimeMillis(), goodMaxAgeMs = maxAgeMs)
+        if (!stale()) return false
+        return runCatching {
             worker.execute {
-                // Never a provider query while a call is up (review 2026-11-20).
-                val step = if (CallGuard.shouldSkip(app, trigger)) null else checkNow(app, trigger)
+                // Two callers close together (Home coming into view and its list pass) measure once: the second
+                // finds the first one's fresh answer here. Never a provider query while a call is up (review 2026-11-20).
+                val step = if (!stale() || CallGuard.shouldSkip(app, trigger)) null else checkNow(app, trigger)
                 runCatching { then?.invoke(step) }
             }
-        }.onFailure { AppLogger.w(TAG, "Could not start the folder check ($trigger): ${it.message}") }
+        }.onFailure { AppLogger.w(TAG, "Could not start the folder check ($trigger): ${it.message}") }.isSuccess
     }
 
     /**
@@ -307,6 +310,19 @@ object RecordingFolderCheck {
     }
 
     private fun prefs(context: Context) = context.applicationContext.getSharedPreferences(PREFS, Context.MODE_PRIVATE)
+
+    /**
+     * Waits until the check's thread has run everything queued so far (the app's own "app start" check among it): for
+     * tests, so that check cannot overwrite what a test arranges.
+     */
+    internal fun awaitIdleForTest(timeoutMs: Long = 10_000L) {
+        worker.submit {}.get(timeoutMs, TimeUnit.MILLISECONDS)
+    }
+
+    /** Stores a result as if measured: for tests. */
+    internal fun storeForTest(context: Context, state: FolderCheckState) {
+        prefs(context).edit().putString(KEY_STATE, state.encode()).commit()
+    }
 
     /** Forgets the stored result: for tests. */
     internal fun clearForTest(context: Context) {

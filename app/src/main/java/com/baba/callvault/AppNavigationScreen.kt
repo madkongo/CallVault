@@ -272,11 +272,18 @@ fun AppNavigationScreen(
                 // building HomeViewModel there would start a full recordings pass behind the wizard.
                 DisposableEffect(lifecycleOwner) {
                     val observer = LifecycleEventObserver { _, event ->
-                        if (event == Lifecycle.Event.ON_RESUME) homeViewModel.refresh()
+                        if (event == Lifecycle.Event.ON_RESUME) {
+                            homeViewModel.onHomeVisible()
+                            homeViewModel.refresh()
+                        }
                     }
                     lifecycleOwner.lifecycle.addObserver(observer)
                     onDispose { lifecycleOwner.lifecycle.removeObserver(observer) }
                 }
+
+                // Back from Settings or another section: Home is in view again, so a stale folder answer is
+                // looked at (a preference read when it is fresh). OnePlus 9 Pro, 2026-11-20.
+                LaunchedEffect(settingsOpen, section) { if (!settingsOpen) homeViewModel.onHomeVisible() }
 
                 // Back from a section returns to the hub. From the hub, nothing is registered at all
                 // and the gesture leaves the app — swallowing it there would make CallVault the one
