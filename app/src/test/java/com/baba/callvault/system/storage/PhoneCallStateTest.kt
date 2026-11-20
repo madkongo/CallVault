@@ -49,4 +49,18 @@ class PhoneCallStateTest {
         assertFalse(WaitingPolicy.ignoreCallState(attempt = 0))
         assertTrue(WaitingPolicy.ignoreCallState(attempt = WaitingPolicy.IGNORE_CALL_AFTER_ATTEMPTS))
     }
+
+    @Test
+    fun `a fresh save replaces a backed-off retry, a retry queues behind the run that made it`() {
+        // Third review F4: "save now" (folder picked, call end) waited behind a retry backed off up to 60 minutes.
+        assertEquals(androidx.work.ExistingWorkPolicy.REPLACE, WaitingPolicy.workPolicy(fresh = true))
+        assertEquals(androidx.work.ExistingWorkPolicy.APPEND_OR_REPLACE, WaitingPolicy.workPolicy(fresh = false))
+    }
+
+    @Test
+    fun `the attempt count survives fresh triggers until a run needs no retry`() {
+        // So the stuck-call override after a few retries can be reached even while checks keep triggering fresh runs.
+        assertEquals(4, WaitingPolicy.attemptAfterRun(attempt = 3, retryLater = true))
+        assertEquals(0, WaitingPolicy.attemptAfterRun(attempt = 3, retryLater = false))
+    }
 }

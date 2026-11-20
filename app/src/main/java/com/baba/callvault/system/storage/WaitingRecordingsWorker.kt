@@ -36,7 +36,8 @@ class WaitingRecordingsWorker(ctx: Context, params: WorkerParameters) : Coroutin
 
     override suspend fun doWork(): Result {
         val app = applicationContext
-        val attempt = inputData.getInt(KEY_ATTEMPT, 0)
+        val attempts = app.getSharedPreferences(PUBLISH_PREFS, Context.MODE_PRIVATE)
+        val attempt = attempts.getInt(KEY_ATTEMPT, 0)
         val result = runCatching {
             WaitingPublisher.run(
                 PhoneEnv(app),
@@ -45,10 +46,11 @@ class WaitingRecordingsWorker(ctx: Context, params: WorkerParameters) : Coroutin
             )
         }.onFailure { AppLogger.e(TAG, "Saving waiting calls failed: ${it.message}", it) }.getOrNull()
         if (result != null) {
+            attempts.edit().putInt(KEY_ATTEMPT, WaitingPolicy.attemptAfterRun(attempt, result.retryLater)).apply()
             if (result.saved > 0) FolderProtection.onWaitingSaved(app, result.saved)
             // Backing off, and stopping after a while (S6): the next app start, Home visit, folder check or call starts again.
             if (result.retryLater) {
-                if (WaitingPolicy.shouldRetry(attempt)) schedule(app, WaitingPolicy.retryDelayMs(attempt), attempt + 1)
+                if (WaitingPolicy.shouldRetry(attempt)) scheduleRetry(app, WaitingPolicy.retryDelayMs(attempt))
                 else AppLogger.w(TAG, "Still cannot save the waiting calls after $attempt retries; waiting for the next trigger")
             }
         }
@@ -139,19 +141,24 @@ class WaitingRecordingsWorker(ctx: Context, params: WorkerParameters) : Coroutin
         private const val WORK_NAME = "waiting_recordings_publish"
         private const val PERIODIC_NAME = "recording_folder_watch"
 
+        private const val PUBLISH_PREFS = "waiting_publish"
         private const val KEY_ATTEMPT = "attempt"
 
         private const val WATCH_PREFS = "recording_folder_watch"
         private const val KEY_WATCH_PERIOD = "period_minutes"
 
         /** Saves the waiting calls soon. Queued after a run in progress, never instead of it. */
-        fun schedule(context: Context, delayMs: Long = 0L, attempt: Int = 0) {
+        /** Saves the waiting calls now, replacing a pending backed-off retry (F4). */
+        fun schedule(context: Context) = enqueue(context, delayMs = 0L, fresh = true)
+
+        private fun scheduleRetry(context: Context, delayMs: Long) = enqueue(context, delayMs, fresh = false)
+
+        private fun enqueue(context: Context, delayMs: Long, fresh: Boolean) {
             runCatching {
                 val request = OneTimeWorkRequestBuilder<WaitingRecordingsWorker>()
                     .setInitialDelay(delayMs, TimeUnit.MILLISECONDS)
-                    .setInputData(androidx.work.workDataOf(KEY_ATTEMPT to attempt))
                     .build()
-                WorkManager.getInstance(context).enqueueUniqueWork(WORK_NAME, ExistingWorkPolicy.APPEND_OR_REPLACE, request)
+                WorkManager.getInstance(context).enqueueUniqueWork(WORK_NAME, WaitingPolicy.workPolicy(fresh), request)
             }.onFailure { AppLogger.w(TAG, "Could not schedule saving the waiting calls: ${it.message}") }
         }
 

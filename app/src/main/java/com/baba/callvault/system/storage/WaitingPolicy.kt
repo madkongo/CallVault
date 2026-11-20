@@ -44,6 +44,16 @@ object WaitingPolicy {
 
     fun ignoreCallState(attempt: Int): Boolean = attempt >= IGNORE_CALL_AFTER_ATTEMPTS
 
+    /**
+     * Third review 2026-11-20 (F4): a fresh "save now" (a folder picked, a call kept, the folder found usable) replaces
+     * a pending backed-off retry and runs at once; a retry queues behind the run that made it, so there is one chain.
+     */
+    fun workPolicy(fresh: Boolean): androidx.work.ExistingWorkPolicy =
+        if (fresh) androidx.work.ExistingWorkPolicy.REPLACE else androidx.work.ExistingWorkPolicy.APPEND_OR_REPLACE
+
+    /** The retry count is kept across fresh runs until one needs no retry, so [ignoreCallState] can be reached. */
+    fun attemptAfterRun(attempt: Int, retryLater: Boolean): Int = if (retryLater) attempt + 1 else 0
+
     enum class Admission { OK, FULL, NO_SPACE }
 
     enum class Level { NORMAL, NEARLY_FULL, FULL }
