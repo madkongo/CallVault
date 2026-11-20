@@ -225,6 +225,8 @@
     <string name="notif_health_recorder_text">在本機連線一次 Wi-Fi 網路之前，通話不會被錄製。任何網路都可以，也不需要聯網——幾秒鐘即可，之後即使離開 Wi-Fi 也能繼續工作。</string>
     <string name="notif_health_recorder_text_shizuku">在 Shizuku 重新執行之前，通話不會被錄製。重啟會停止它，因此手機重啟後需要再啟動一次。</string>
     <string name="notif_health_recorder_title">CallVault 目前無法錄音</string>
+    <string name="notif_health_down_title">Calls are not being recorded</string>
+    <string name="notif_health_down_generic_text">CallVault could not bring the recorder back up. Open the app to see why and what to do.</string>
     <string name="notif_health_shizuku_restart_failed_text">CallVault 需要重啟 Android 的除錯服務，這會停止 Shizuku。嘗試重新啟動 Shizuku 未成功——請開啟 Shizuku 自行啟動。</string>
     <string name="notif_health_shizuku_restart_failed_title">Shizuku 已停止</string>
     <string name="notif_health_shizuku_restarted_text">CallVault 需要重啟 Android 的除錯服務，這會停止 Shizuku，因此已替你重新啟動了 Shizuku。無需操作。</string>

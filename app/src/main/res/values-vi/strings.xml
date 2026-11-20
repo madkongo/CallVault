@@ -225,6 +225,8 @@
     <string name="notif_health_recorder_text">Cuộc gọi sẽ không được ghi cho đến khi điện thoại này kết nối một lần vào mạng Wi-Fi. Mạng nào cũng được và không cần internet — vài giây là đủ, sau đó vẫn hoạt động kể cả khi không có Wi-Fi.</string>
     <string name="notif_health_recorder_text_shizuku">Cuộc gọi sẽ không được ghi cho đến khi Shizuku chạy lại. Khởi động lại máy sẽ tắt nó, nên cần bật lại một lần sau mỗi lần khởi động.</string>
     <string name="notif_health_recorder_title">CallVault hiện không thể ghi âm</string>
+    <string name="notif_health_down_title">Calls are not being recorded</string>
+    <string name="notif_health_down_generic_text">CallVault could not bring the recorder back up. Open the app to see why and what to do.</string>
     <string name="notif_health_shizuku_restart_failed_text">CallVault phải khởi động lại dịch vụ gỡ lỗi của Android, và điều đó làm dừng Shizuku. Nó đã thử khởi động Shizuku lại nhưng không được — hãy mở Shizuku và tự khởi động.</string>
     <string name="notif_health_shizuku_restart_failed_title">Shizuku đã bị dừng</string>
     <string name="notif_health_shizuku_restarted_text">CallVault phải khởi động lại dịch vụ gỡ lỗi của Android, điều đó làm dừng Shizuku, nên nó đã khởi động Shizuku lại giúp bạn. Bạn không cần làm gì.</string>

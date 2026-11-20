@@ -750,6 +750,8 @@
     <string name="storage_cap_confirm_message">সীমা ছাড়ালেই এই ফোন থেকে রেকর্ডিং মুছে ফেলা হবে, সবচেয়ে পুরোনোগুলো আগে। তারা দেওয়া রেকর্ডিং কখনো নেওয়া হয় না। এটি ফেরানো যাবে না।</string>
     <string name="notif_health_channel">যেসব সমস্যায় আপনাকে দরকার</string>
     <string name="notif_health_recorder_title">CallVault এখন রেকর্ড করতে পারছে না</string>
+    <string name="notif_health_down_title">Calls are not being recorded</string>
+    <string name="notif_health_down_generic_text">CallVault could not bring the recorder back up. Open the app to see why and what to do.</string>
     <string name="notif_health_shizuku_stopped_title">Shizuku বন্ধ হয়ে গেছে</string>
     <string name="notif_health_shizuku_stopped_text">CallVault-কে Android-এর ডিবাগিং সার্ভিস আবার চালু করতে হয়েছে, আর তাতে Shizuku বন্ধ হয়ে যায়। অন্য অ্যাপের সাথে Shizuku ব্যবহার করলে Shizuku খুলে আবার চালু করুন।</string>
     <string name="notif_health_shizuku_restarted_title">Shizuku আবার চালু হয়েছে</string>

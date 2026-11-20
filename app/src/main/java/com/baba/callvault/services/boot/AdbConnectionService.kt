@@ -106,7 +106,7 @@ class AdbConnectionService : Service() {
     companion object {
         private const val TAG = "CV:AdbConnectionService"
         private const val CHANNEL_ID = "adb_boot"
-        private const val NOTIF_ID = 4713
+        internal const val NOTIF_ID = 4713
 
         fun start(context: Context) {
             val intent = Intent(context, AdbConnectionService::class.java)

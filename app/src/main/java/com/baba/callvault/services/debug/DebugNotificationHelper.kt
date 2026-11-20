@@ -34,7 +34,7 @@ import com.baba.callvault.system.permissions.PermissionChecks
 object DebugNotificationHelper {
 
     private const val CHANNEL_ID = "debug_logging_channel"
-    private const val NOTIFICATION_ID = 4242
+    internal const val NOTIFICATION_ID = 4242
 
     /** Posts the reminder when logging is enabled, or clears it when disabled. Safe to call anytime. */
     fun sync(context: Context) {

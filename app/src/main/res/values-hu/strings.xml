@@ -226,6 +226,8 @@
     <string name="notif_health_recorder_text">Addig nem lesz hívásrögzítés, amíg a telefon egyszer nem csatlakozik egy Wi-Fi hálózathoz. Bármelyik hálózat megfelel, és internet sem kell — néhány másodperc elég, utána Wi-Fi nélkül is működik tovább.</string>
     <string name="notif_health_recorder_text_shizuku">Addig nem lesz hívásrögzítés, amíg a Shizuku újra nem fut. Az újraindítás leállítja, ezért a telefon újraindulása után egyszer el kell indítani.</string>
     <string name="notif_health_recorder_title">A CallVault most nem tud felvenni</string>
+    <string name="notif_health_down_title">Calls are not being recorded</string>
+    <string name="notif_health_down_generic_text">CallVault could not bring the recorder back up. Open the app to see why and what to do.</string>
     <string name="notif_health_shizuku_restart_failed_text">A CallVaultnak újra kellett indítania az Android hibakeresési szolgáltatását, ami leállítja a Shizukut. Megpróbálta újraindítani, de nem sikerült – nyisd meg a Shizukut és indítsd el magad.</string>
     <string name="notif_health_shizuku_restart_failed_title">A Shizuku leállt</string>
     <string name="notif_health_shizuku_restarted_text">A CallVaultnak újra kellett indítania az Android hibakeresési szolgáltatását, ami leállítja a Shizukut, ezért utána újra el is indította helyetted. Nincs teendőd.</string>

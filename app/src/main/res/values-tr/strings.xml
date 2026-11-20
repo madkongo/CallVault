@@ -819,6 +819,8 @@
     <string name="storage_cap_confirm_message">Kayıtlar sınırı aştıkça bu telefondan, en eskiden başlayarak silinecek. Yıldızlı kayıtlar asla alınmaz. Bu geri alınamaz.</string>
     <string name="notif_health_channel">Sizi gerektiren sorunlar</string>
     <string name="notif_health_recorder_title">CallVault şu anda kaydedemiyor</string>
+    <string name="notif_health_down_title">Calls are not being recorded</string>
+    <string name="notif_health_down_generic_text">CallVault could not bring the recorder back up. Open the app to see why and what to do.</string>
     <string name="notif_health_shizuku_stopped_title">Shizuku durduruldu</string>
     <string name="notif_health_shizuku_stopped_text">CallVault’un Android’in hata ayıklama hizmetini yeniden başlatması gerekti ve bu Shizuku’yu durdurur. Onu başka uygulamalarla kullanıyorsanız Shizuku’yu açıp yeniden başlatın.</string>
     <string name="notif_health_shizuku_restarted_title">Shizuku yeniden başlatıldı</string>

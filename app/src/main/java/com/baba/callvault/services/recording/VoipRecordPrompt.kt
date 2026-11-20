@@ -36,7 +36,7 @@ object VoipRecordPrompt {
     private const val TAG = "CV:VoipPrompt"
 
     /** Distinct from the recording service (1) and error (2) notifications. */
-    private const val NOTIFICATION_ID = 3
+    internal const val NOTIFICATION_ID = 3
 
     private const val REQUEST_CODE = 3001
 

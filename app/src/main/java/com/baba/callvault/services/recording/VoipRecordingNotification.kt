@@ -38,7 +38,7 @@ object VoipRecordingNotification {
     private const val TAG = "CV:VoipRecNotification"
 
     /** Distinct from the recording service (1), error (2) and record-prompt (3) notifications. */
-    private const val LEGACY_NOTIFICATION_ID = 5
+    internal const val LEGACY_NOTIFICATION_ID = 5
 
     @SuppressLint("MissingPermission")
     fun show(

@@ -319,6 +319,8 @@
     <string name="notif_health_recorder_text">تا زمانی که این گوشی یک‌بار به یک شبکه Wi-Fi بپیوندد، تماس‌ها ضبط نخواهند شد. هر شبکه‌ای مناسب است و نیازی به اینترنت ندارد — چند ثانیه کافی است، سپس حتی بدون Wi-Fi هم به کار ادامه می‌دهد.</string>
     <string name="notif_health_recorder_text_shizuku">تا زمانی که Shizuku دوباره در حال اجرا باشد، تماس‌ها ضبط نخواهند شد. یک راه‌اندازی مجدد آن را متوقف می‌کند، پس باید یک‌بار پس از راه‌اندازی مجدد گوشی اجرا شود.</string>
     <string name="notif_health_recorder_title">CallVault همین حالا نمی‌تواند ضبط کند</string>
+    <string name="notif_health_down_title">Calls are not being recorded</string>
+    <string name="notif_health_down_generic_text">CallVault could not bring the recorder back up. Open the app to see why and what to do.</string>
     <string name="notif_health_shizuku_restart_failed_text">CallVault مجبور شد سرویس اشکال‌زدایی Android را دوباره راه‌اندازی کند، و آن Shizuku را متوقف می‌کند. تلاش کرد Shizuku را دوباره اجرا کند و نتوانست — Shizuku را باز کنید و خودتان اجرایش کنید.</string>
     <string name="notif_health_shizuku_restart_failed_title">Shizuku متوقف شد</string>
     <string name="notif_health_shizuku_restarted_text">CallVault مجبور شد سرویس اشکال‌زدایی Android را دوباره راه‌اندازی کند، که Shizuku را متوقف می‌کند، بنابراین Shizuku را برای شما دوباره اجرا کرد. کاری برای انجام دادن نیست.</string>
