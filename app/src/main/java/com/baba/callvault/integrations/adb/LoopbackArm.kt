@@ -37,4 +37,7 @@ enum class LoopbackArm {
 
     /** The listener was armed but the port did not come back up in time. Usually worth retrying. */
     PORT_DID_NOT_COME_UP,
+
+    /** A call is being recorded; arming restarts adbd, which would end it. Nothing was changed (C35). */
+    BUSY_RECORDING,
 }
