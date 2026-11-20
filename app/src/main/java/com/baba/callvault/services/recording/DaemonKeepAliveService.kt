@@ -9,6 +9,7 @@
 package com.baba.callvault.services.recording
 
 import android.app.Notification
+import com.baba.callvault.system.diagnostics.CallEndLog
 import com.baba.callvault.system.diagnostics.RecorderLogMarkers
 import android.app.NotificationChannel
 import android.app.NotificationManager
@@ -75,7 +76,11 @@ class DaemonKeepAliveService : Service() {
      * again after the notification's guarded read, crash-looping the app on every start.
      */
     private val voipDetector: VoipCallDetector? by lazy {
-        buildOptionalPart(TAG, "App-call detection") {
+        val what = "App-call detection"
+        val alwaysOn: (Throwable) -> Unit = { failure ->
+            UnavailablePartLog.recordOnce(what, failure) { line -> CallEndLog.record(applicationContext, line) }
+        }
+        buildOptionalPart(TAG, what, onFailure = alwaysOn) {
             VoipCallDetector(applicationContext).apply {
                 // Reuse the permanent keep-alive notification to show that a VoIP call is being recorded,
                 // rather than adding a second one. Without this the user has no sign it is working.
