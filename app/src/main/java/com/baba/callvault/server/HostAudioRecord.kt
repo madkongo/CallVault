@@ -106,7 +106,7 @@ internal object HostAudioRecord {
             "${bypassError.javaClass.simpleName}: ${bypassError.message}", bypassError)
         ShellApplicationRepairGate.refusal(error, bypassError)?.let { why ->
             AppLogger.e(TAG, "$what: not giving the recorder a shell Application: $why; the record cannot be built")
-            recovery.note(what, "$steps > shellApp refused($why)")
+            recovery.note(what, "$steps > shellApp refused(${CaptureRecoveryLog.reason(why)})")
             return null
         }
         AppLogger.w(TAG, "$what: the crash was a Context lookup and the rebuild does not fit this framework; " +

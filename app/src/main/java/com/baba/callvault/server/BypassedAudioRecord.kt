@@ -140,9 +140,10 @@ internal object BypassedAudioRecord {
         if (CHANNEL_MASKS_FIELD in declared) return ChannelLayout.CHANNEL_MASKS
         if (declared.containsAll(COUNT_AND_MASK_FIELDS)) return ChannelLayout.COUNT_AND_MASK
         val missing = (listOf(CHANNEL_MASKS_FIELD) + COUNT_AND_MASK_FIELDS).filterNot { it in declared }
+        // The missing fields first: the always-on recovery summary keeps only a reason's first 100 characters.
         throw NoSuchFieldException(
-            "${cls.name} has no known channel fields: looked for $CHANNEL_MASKS_FIELD (Android 17) or " +
-                "${COUNT_AND_MASK_FIELDS.joinToString(" + ")} (Android 11-16); missing: ${missing.joinToString(", ")}"
+            "missing: ${missing.joinToString(", ")}; ${cls.name} has no known channel fields: looked for " +
+                "$CHANNEL_MASKS_FIELD (Android 17) or ${COUNT_AND_MASK_FIELDS.joinToString(" + ")} (Android 11-16)"
         )
     }
 

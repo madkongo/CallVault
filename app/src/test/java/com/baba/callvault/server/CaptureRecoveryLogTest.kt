@@ -132,6 +132,19 @@ class CaptureRecoveryLogTest {
     }
 
     @Test
+    fun a_refusal_reason_is_bounded_like_any_other() {
+        val log = log()
+        build<String>(
+            log, "VoIP mic",
+            build = { throw InvocationTargetException(NullPointerException("w".repeat(5_000)).apply { stackTrace = vivoCrash().cause!!.stackTrace }) },
+            bypass = { throw NoSuchFieldException("mChannelCount") },
+        )
+        val summary = log.drain()
+        val refused = summary.substringAfter("> shellApp refused(").substringBefore("; shellApp=")
+        assertTrue(refused, refused.length <= CaptureRecoveryLog.MAX_REASON + 1)
+    }
+
+    @Test
     fun the_honor_start_repair_is_summarised() {
         val log = log(shellApp = "installed(shell uid)")
         var starts = 0
@@ -172,6 +185,59 @@ class CaptureRecoveryLogTest {
         assertTrue("length ${summary.length}", summary.length <= CaptureRecoveryLog.MAX_SUMMARY)
         assertTrue(summary, summary.contains("more)"))
         assertTrue(summary, !summary.contains('\n'))
+    }
+
+    /** A class with neither channel layout: [BypassedAudioRecord.channelLayoutOf] fails on it as on the V2546A. */
+    private class NoChannelFields
+
+    private fun layoutFailure(): Throwable =
+        runCatching { BypassedAudioRecord.channelLayoutOf(NoChannelFields::class.java) }.exceptionOrNull()!!
+
+    /** The vivo constructor crash with a message of exactly [length] characters ending in [tail]. */
+    private fun vivoCrashOf(length: Int, tail: String) = InvocationTargetException(
+        NullPointerException(vivoCrash().cause!!.message + " " + "x".repeat(length) + tail).apply {
+            stackTrace = vivoCrash().cause!!.stackTrace
+        },
+    )
+
+    /** Review N21b round 2: the worst-case sink and mic chains both survive whole, with the reasons at their ends. */
+    @Test
+    fun the_worst_case_keeps_the_retry_reason_the_missing_fields_and_the_mic() {
+        val log = log(shellApp = "installed(process uid)")
+        val long = "y".repeat(CaptureRecoveryLog.MAX_REASON)
+        var builds = 0
+        build<String>(
+            log, "VoIP far-party sink",
+            build = { builds++; if (builds == 1) throw vivoCrashOf(200, "END1") else throw IllegalStateException(long + "RETRY") },
+            bypass = { throw layoutFailure() },
+        )
+        var micBuilds = 0
+        build<String>(
+            log, "VoIP mic",
+            build = { micBuilds++; if (micBuilds == 1) throw vivoCrashOf(200, "END2") else throw IllegalStateException("mic retry $long") },
+            bypass = { throw layoutFailure() },
+        )
+        val summary = log.drain()
+        assertTrue(summary, summary.contains("missing: mChannelMasks, mChannelCount, mChannelMask"))
+        assertTrue(summary, summary.contains("> retry failed(IllegalStateException: yyyy"))
+        assertTrue(summary, summary.contains("; mic=ctor crashed("))
+        assertTrue(summary, summary.contains("> retry failed(IllegalStateException: mic retry"))
+        assertTrue(summary, summary.endsWith("; shellApp=installed(process uid)"))
+    }
+
+    /** Past the summary's length every event keeps its head: a long sink event never pushes the mic out. */
+    @Test
+    fun an_overlong_summary_keeps_every_events_head() {
+        val log = log()
+        val long = "z".repeat(5_000)
+        repeat(6) {
+            build<String>(log, "VoIP far-party sink", build = { throw vivoCrash() }, bypass = { throw NoSuchFieldException(long) })
+        }
+        build<String>(log, "VoIP mic", build = { throw SecurityException("EX_SECURITY") }, bypass = { "x" })
+        val summary = log.drain()
+        assertTrue("length ${summary.length}", summary.length <= CaptureRecoveryLog.MAX_SUMMARY)
+        assertEquals(6, Regex("sink=ctor crashed\\(").findAll(summary).count())
+        assertTrue(summary, summary.contains("; mic=ctor failed(SecurityException: EX_SECURITY)"))
     }
 
     @Test

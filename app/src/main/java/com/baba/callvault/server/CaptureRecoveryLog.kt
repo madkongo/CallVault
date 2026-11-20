@@ -69,9 +69,8 @@ internal class CaptureRecoveryLog(
             if (more > 0) add("(+$more more)")
             add("shellApp=${runCatching(shellAppState).getOrDefault("?")}")
         }
-        val head = taken.joinToString("; ")
-        val room = MAX_SUMMARY - tail.sumOf { it.length + 2 }
-        return (listOf(clip(head, room)) + tail).joinToString("; ")
+        val room = MAX_SUMMARY - tail.sumOf { it.length + SEPARATOR.length }
+        return (fitEach(taken, room) + tail).joinToString(SEPARATOR)
     }
 
     companion object {
@@ -81,14 +80,19 @@ internal class CaptureRecoveryLog(
         /** Separates the summary from the capture's own health in the `captureDiagnostics()` answer. */
         const val MARKER = "\ncapture recovery: "
 
-        const val MAX_SUMMARY = 700
+        /** A worst-case sink and mic chain (about 400 characters each, three reasons apiece) fit whole. */
+        const val MAX_SUMMARY = 1_200
         private const val MAX_EVENTS = 8
-        private const val MAX_EVENT = 300
+        private const val MAX_EVENT = 600
+        private const val SEPARATOR = "; "
         const val MAX_REASON = 100
 
         /** A failure as a short reason: its class and the start of its message. */
         fun reason(error: Throwable): String =
-            clip(listOfNotNull(error.javaClass.simpleName, error.message?.takeIf { it.isNotBlank() }).joinToString(": "), MAX_REASON)
+            reason(listOfNotNull(error.javaClass.simpleName, error.message?.takeIf { it.isNotBlank() }).joinToString(": "))
+
+        /** Any other reason text, bounded the same way. */
+        fun reason(text: String): String = clip(oneLine(text), MAX_REASON)
 
         /** [diagnostics] with [summary] after it; [diagnostics] unchanged when there is no summary. */
         fun append(diagnostics: String, summary: String): String =
@@ -111,6 +115,22 @@ internal class CaptureRecoveryLog(
             .replace("far-party sink", "sink")
             .replace(Regex("^far\\b"), "sink")
             .replace(Regex("^near\\b"), "mic")
+
+        /**
+         * [events] joined into at most [room] characters, every event keeping its head: short events stay whole and
+         * the long ones share what is left equally, so a long sink chain never pushes the mic out of the summary.
+         */
+        private fun fitEach(events: List<String>, room: Int): List<String> {
+            var budget = room - SEPARATOR.length * (events.size - 1).coerceAtLeast(0)
+            val caps = IntArray(events.size)
+            var left = events.size
+            for (i in events.indices.sortedBy { events[it].length }) {
+                caps[i] = minOf(events[i].length, (budget / left).coerceAtLeast(0))
+                budget -= caps[i]
+                left--
+            }
+            return events.mapIndexed { i, event -> clip(event, caps[i]) }
+        }
 
         private fun oneLine(text: String) = text.replace(Regex("[\\r\\n]+"), " ")
 
