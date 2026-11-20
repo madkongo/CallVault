@@ -135,10 +135,15 @@ object AppStopHistory {
     fun reportLines(context: Context): List<String> = runCatching {
         val am = context.getSystemService(ActivityManager::class.java) ?: return listOf("unavailable")
         val time = SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.US)
-        val exits = am.getHistoricalProcessExitReasons(context.packageName, 0, HISTORY).map {
-            val description = it.description?.take(DESCRIPTION_MAX)?.let { d -> " \"$d\"" } ?: ""
-            "exit  ${time.format(Date(it.timestamp))} ${it.processName} ${exitReasonName(it.reason)}" +
-                " importance=${it.importance}$description"
+        var traced = 0
+        val exits = am.getHistoricalProcessExitReasons(context.packageName, 0, HISTORY).flatMap {
+            val line = exitLine(
+                time.format(Date(it.timestamp)), it.processName, it.reason, it.importance, it.pid, it.status, it.description,
+            )
+            // What the crash or ANR said, for the newest few: "crash" alone sent the vivo report (2026-11-20) to the code.
+            val detail = if (traced < MAX_TRACED_EXITS) exitDetail(it).also { d -> if (d.isNotEmpty()) traced++ } else emptyList()
+            // Redacted: a trace is text the app did not write. The exit line itself is not, so its time stays readable.
+            listOf(line) + detail.map { d -> "      " + com.baba.callvault.utils.AppLogger.redactForReport(d) }
         }
         val starts = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.VANILLA_ICE_CREAM) {
             val infos = am.getHistoricalProcessStartReasons(HISTORY)
@@ -154,6 +159,53 @@ object AppStopHistory {
         }
         (exits.ifEmpty { listOf("no exits recorded") }) + starts
     }.getOrElse { listOf("unavailable: ${it.javaClass.simpleName}") }
+
+    /** One exit as the report prints it. [status] is shown only where it means something: the signal or exit code. */
+    fun exitLine(
+        time: String, process: String, reason: Int, importance: Int, pid: Int, status: Int, description: String?,
+    ): String {
+        val quoted = description?.take(DESCRIPTION_MAX)?.let { " \"$it\"" } ?: ""
+        val withStatus = reason in STATUS_REASONS && status != 0
+        return "exit  $time $process ${exitReasonName(reason)} pid=$pid" +
+            (if (withStatus) " status=$status" else "") + " importance=$importance$quoted"
+    }
+
+    /**
+     * The part of a trace worth printing: from the main thread's header in an ANR dump (the thread that did not
+     * answer), else the first lines. Blank lines end the main thread's block, so the next thread is not printed.
+     */
+    fun traceExcerpt(trace: String, maxLines: Int): List<String> {
+        val lines = trace.lines()
+        val main = lines.indexOfFirst { it.startsWith("\"main\"") }
+        if (main < 0) return lines.filter { it.isNotBlank() }.take(maxLines)
+        return lines.drop(main).takeWhile { it.isNotBlank() }.take(maxLines)
+    }
+
+    /**
+     * The trace Android kept for an ANR, or whether a native crash left a tombstone (a protobuf, not text).
+     * Android keeps no trace of a Java crash.
+     */
+    private fun exitDetail(exit: ApplicationExitInfo): List<String> = runCatching {
+        when (exit.reason) {
+            ApplicationExitInfo.REASON_ANR -> exit.traceInputStream?.use { stream ->
+                val head = ByteArray(TRACE_READ_BYTES)
+                val read = stream.read(head).coerceAtLeast(0)
+                traceExcerpt(String(head, 0, read), TRACE_LINES).map { "anr: $it" }
+            } ?: listOf("anr: no trace kept")
+            ApplicationExitInfo.REASON_CRASH_NATIVE -> listOf(
+                if (exit.traceInputStream?.use { true } == true) "native crash: tombstone kept by Android (binary)"
+                else "native crash: no tombstone kept",
+            )
+            else -> emptyList()
+        }
+    }.getOrElse { listOf("trace unreadable: ${it.javaClass.simpleName}") }
+
+    private const val MAX_TRACED_EXITS = 3
+    private const val TRACE_LINES = 15
+    private const val TRACE_READ_BYTES = 64 * 1024
+    private val STATUS_REASONS = setOf(
+        ApplicationExitInfo.REASON_SIGNALED, ApplicationExitInfo.REASON_CRASH_NATIVE, ApplicationExitInfo.REASON_EXIT_SELF,
+    )
 
     fun exitReasonName(reason: Int): String = when (reason) {
         ApplicationExitInfo.REASON_UNKNOWN -> "UNKNOWN"
