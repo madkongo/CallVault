@@ -183,8 +183,19 @@ object DriveCatalogRepair {
             val rows = RecordingCatalog.all(context).mapNotNull { row -> row.driveUri?.let { row.displayName to it } }
             if (rows.isEmpty()) return@withContext 0
             val listed = if (SafHelper.isFolderValid(context, folder)) listedNames(context, folder) else null
-            val gone = goneCopies(rows, listed) { presenceOf(context, it.toUri()) }
+            val blind = listed.isNullOrEmpty()
+            val unmetered = !blind || isUnmetered(context)
+            val gone = goneCopies(rows, listed, unmetered) { presenceOf(context, it.toUri()) }
             gone.forEach { RecordingCatalog.removeCopyByUri(context, it.toUri()) }
+            if (blind) {
+                // Always on: this is the one time the check works without a folder listing, and a user may ask why.
+                com.baba.callvault.integrations.adb.UsbDebuggingEvents.record(
+                    context,
+                    "drive: presence check without a folder listing (${listed?.size ?: "unavailable"}): " +
+                        (if (unmetered) "checked up to $MAX_BLIND_OPENS of ${rows.size} copies, ${gone.size} gone"
+                        else "skipped, the connection is metered or absent"),
+                )
+            }
             AppLogger.i(
                 TAG,
                 "Drive presence check: ${rows.size} Drive copies, folder listing " +
@@ -209,11 +220,35 @@ object DriveCatalogRepair {
     internal fun goneCopies(
         rows: List<Pair<String, String>>,
         listed: Set<String>?,
+        blindAllowed: Boolean = true,
         presence: (String) -> Presence,
     ): List<String> {
-        val candidates = if (listed.isNullOrEmpty()) rows else rows.filter { it.first !in listed }
-        return candidates.map { it.second }.filter { presence(it) == Presence.GONE }
+        if (!listed.isNullOrEmpty()) {
+            return rows.filter { it.first !in listed }.map { it.second }.filter { presence(it) == Presence.GONE }
+        }
+        // No usable listing (review R22): nothing says which copies are missing, so each would be opened, and opening a
+        // Drive document can download it. So: only where that is free (unmetered), at most MAX_BLIND_OPENS per run, and
+        // the first copy that is still there proves the listing wrong and ends the check. The rest wait for the next run.
+        if (!blindAllowed) return emptyList()
+        val gone = ArrayList<String>()
+        for ((_, uri) in rows.take(MAX_BLIND_OPENS)) {
+            when (presence(uri)) {
+                Presence.GONE -> gone += uri
+                Presence.PRESENT -> break
+                Presence.UNKNOWN -> Unit
+            }
+        }
+        return gone
     }
+
+    /** The most copies one run opens when the folder listing gave no answer (review R22). */
+    internal const val MAX_BLIND_OPENS = 25
+
+    /** True on an unmetered connection; a metered or absent one is false, so a blind check waits. */
+    private fun isUnmetered(context: Context): Boolean = runCatching {
+        val cm = context.getSystemService(android.net.ConnectivityManager::class.java)
+        cm != null && cm.activeNetwork != null && !cm.isActiveNetworkMetered
+    }.getOrDefault(false)
 
     /**
      * Names in the Drive folder, or null when it could not be listed.
