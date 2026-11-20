@@ -547,7 +547,7 @@ internal class VoipCaptureSession(
                         // to the fresh one being started. Its first read adds one buffer on top.
                         val gap = System.nanoTime() - retakeStart
                         side.retake(gap, platformSilenced)
-                        AppLogger.i(TAG, "VoIP sync: re-take #${side.retakes} at ${(retakeStart - startedNanos) / 1_000_000L}ms took ${gap / 1_000_000L}ms; ${side.zeroChunks} zero chunks so far; Android says silenced=$platformSilenced")
+                        AppLogger.i(TAG, "VoIP sync: re-take #${side.retakes} at ${(retakeStart - startedNanos) / 1_000_000L}ms took ${gap / 1_000_000L}ms; ${side.zeroChunks} zero chunks so far (paused ones included); Android says silenced=$platformSilenced")
                         // The platform took the mic away and we opened another. Without closing the
                         // old id and opening a new one, every re-take would read as a leaked capture
                         // — and this happens several times in a normal call.

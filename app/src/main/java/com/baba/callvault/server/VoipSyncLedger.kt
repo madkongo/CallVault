@@ -43,6 +43,7 @@ internal class VoipSyncLedger(private val sampleRate: Int, private val chunkFram
         @Volatile var chunksDropped = 0L; private set
         @Volatile var chunksSubstituted = 0L; private set
         @Volatile var chunksDiscarded = 0L; private set
+        /** All-zero chunks read, including those read while the capture was paused (they are read, just not encoded). */
         @Volatile var zeroChunks = 0L; private set
         @Volatile var retakes = 0; private set
         @Volatile var retakeGapTotalMs = 0L; private set
