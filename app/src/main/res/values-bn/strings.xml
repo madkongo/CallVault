@@ -131,6 +131,7 @@
     <string name="notif_voip_recording_title">VoIP কল রেকর্ড হচ্ছে</string>
     <string name="notif_voip_recording_text">CallVault একটি অ্যাপ কল রেকর্ড করছে।</string>
     <string name="voip_missed_not_ready">একটি অ্যাপ কল রেকর্ড হয়নি — CallVault সময়মতো প্রস্তুত ছিল না। ফোন কল শেষ হওয়ার কিছুক্ষণ পর পর্যন্ত এমন হতে পারে। পরের কলটি স্বাভাবিকভাবে রেকর্ড হওয়া উচিত।</string>
+    <string name="voip_missed_capture_failed">একটি অ্যাপ কল রেকর্ড হয়নি — রেকর্ডার এই ফোনে কলের অডিও খুলতে পারেনি। আবার এমন হলে সেটিংস থেকে একটি ডিবাগ রিপোর্ট শেয়ার করুন।</string>
     <string name="voip_missed_no_folder">একটি অ্যাপ কল রেকর্ড হয়নি — রেকর্ডিং ফোল্ডারটি নেই বা তাতে লেখা যাচ্ছে না। সেটিংসে আবার ফোল্ডারটি বেছে নিন।</string>
     <string name="voip_missed_label">অ্যাপ কল</string>
     <string name="voip_one_sided_warning">ওই অ্যাপ কলে শুধু আপনার দিকটি রেকর্ড হয়েছে — অন্য অ্যাপটি তার কলের অডিও ধারণ করতে দেয় না।</string>

@@ -316,13 +316,19 @@ open class RecorderServiceImpl(private val apkPath: String) : IRecorderService.S
         voipSlot.beginStart()
         // Heavy setup off the binder thread, matching startRecording.
         workerHandler.post {
-            val active = runCatching {
+            val started = runCatching {
                 // Published with any queued pause applied before it starts (review C49).
                 voipSlot.publishThenStart(VoipCaptureSession(codecEnum, bitRate, outFd, keepStereo = stereo)) { it.start() }
-            }.onFailure { AppLogger.e(TAG, "startVoipRecording failed: ${it.message}", it) }.getOrNull()
+            }.onFailure { AppLogger.e(TAG, "startVoipRecording failed: ${it.message}", it) }
+            val active = started.getOrNull()
             if (active != null) {
                 session = active
             } else {
+                // The app was already told "started"; this is how it learns otherwise when the call ends (review N21).
+                // No stop follows a failed start, so nothing overwrites it before the app reads it.
+                lastCaptureDiagnostics = VoipStartFailure.line(
+                    started.exceptionOrNull() ?: IllegalStateException("the capture session returned nothing")
+                )
                 // Also when the session could not even be built: no pause stays queued for it.
                 voipSlot.withdraw()
                 runCatching { outFd.close() }

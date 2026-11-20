@@ -151,6 +151,7 @@
     <string name="notif_voip_recording_title">VoIP araması kaydediliyor</string>
     <string name="notif_voip_recording_text">CallVault bir uygulama aramasını kaydediyor.</string>
     <string name="voip_missed_not_ready">Bir uygulama araması kaydedilmedi — CallVault zamanında hazır değildi. Bu, bir telefon araması bittikten sonra kısa bir süre olabilir. Bir sonraki arama normal kaydedilmelidir.</string>
+    <string name="voip_missed_capture_failed">Bir uygulama araması kaydedilmedi — kaydedici bu telefonda arama sesini açamadı. Tekrar olursa lütfen Ayarlar\'dan bir hata ayıklama raporu paylaşın.</string>
     <string name="voip_missed_no_folder">Bir uygulama araması kaydedilmedi — kayıt klasörü eksik veya yazılamıyor. Ayarlar’da yeniden seçin.</string>
     <string name="voip_missed_label">Uygulama araması</string>
     <string name="voip_one_sided_warning">O uygulama aramasının yalnızca sizin tarafınız kaydedildi — diğer uygulama arama sesinin yakalanmasına izin vermiyor.</string>
