@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Recording folder protection: review C98 / N5. -->
+<resources>
+    <string name="recording_folder_gone_title">La carpeta de grabaciones ya no está</string>
+    <string name="home_status_folder_gone_suggestion">Las llamadas nuevas se guardan dentro de CallVault hasta que elijas una carpeta. Toca para abrir Ajustes.</string>
+    <string name="home_hero_pill_folder_gone">Sin carpeta</string>
+    <string name="notif_folder_gone_text">Las llamadas nuevas se guardan dentro de CallVault hasta que vuelvas a elegir una carpeta. Se pierden si desinstalas CallVault.</string>
+    <string name="waiting_calls_text">Elige una carpeta de grabaciones y se guardarán allí. Se pierden si desinstalas CallVault.</string>
+    <string name="waiting_calls_nearly_full_text">El espacio para llamadas en espera está casi lleno. Elige ya una carpeta de grabaciones. Las llamadas en espera se pierden si desinstalas CallVault.</string>
+    <string name="waiting_calls_full_text">No queda espacio para llamadas en espera, así que las llamadas nuevas no se graban. Elige ya una carpeta de grabaciones.</string>
+    <string name="waiting_calls_saved_text">Ya están en tu carpeta de grabaciones.</string>
+    <plurals name="waiting_calls_title">
+        <item quantity="one">%1$d llamada esperando a guardarse</item>
+        <item quantity="other">%1$d llamadas esperando a guardarse</item>
+    </plurals>
+    <plurals name="waiting_calls_saved_title">
+        <item quantity="one">%1$d llamada en espera guardada</item>
+        <item quantity="other">%1$d llamadas en espera guardadas</item>
+    </plurals>
+</resources>

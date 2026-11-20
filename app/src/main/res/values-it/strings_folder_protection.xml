@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Recording folder protection: review C98 / N5. -->
+<resources>
+    <string name="recording_folder_gone_title">La cartella delle registrazioni non c\'è più</string>
+    <string name="home_status_folder_gone_suggestion">Le nuove chiamate restano dentro CallVault finché non scegli una cartella. Tocca per aprire le Impostazioni.</string>
+    <string name="home_hero_pill_folder_gone">Cartella assente</string>
+    <string name="notif_folder_gone_text">Le nuove chiamate restano dentro CallVault finché non scegli di nuovo una cartella. Si perdono se disinstalli CallVault.</string>
+    <string name="waiting_calls_text">Scegli una cartella delle registrazioni e verranno salvate lì. Si perdono se disinstalli CallVault.</string>
+    <string name="waiting_calls_nearly_full_text">Lo spazio per le chiamate in attesa è quasi pieno. Scegli ora una cartella delle registrazioni. Le chiamate in attesa si perdono se disinstalli CallVault.</string>
+    <string name="waiting_calls_full_text">Non c\'è più spazio per le chiamate in attesa, quindi le nuove chiamate non vengono registrate. Scegli ora una cartella delle registrazioni.</string>
+    <string name="waiting_calls_saved_text">Ora sono nella tua cartella delle registrazioni.</string>
+    <plurals name="waiting_calls_title">
+        <item quantity="one">%1$d chiamata in attesa di salvataggio</item>
+        <item quantity="other">%1$d chiamate in attesa di salvataggio</item>
+    </plurals>
+    <plurals name="waiting_calls_saved_title">
+        <item quantity="one">%1$d chiamata in attesa salvata</item>
+        <item quantity="other">%1$d chiamate in attesa salvate</item>
+    </plurals>
+</resources>

@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Recording folder protection: review C98 / N5. -->
+<resources>
+    <string name="recording_folder_gone_title">A felvételi mappa eltűnt</string>
+    <string name="home_status_folder_gone_suggestion">Az új hívásokat a CallVault megőrzi, amíg nem választasz mappát. Koppints a Beállítások megnyitásához.</string>
+    <string name="home_hero_pill_folder_gone">Nincs mappa</string>
+    <string name="notif_folder_gone_text">Az új hívásokat a CallVault megőrzi, amíg újra nem választasz mappát. Ha eltávolítod a CallVaultot, elvesznek.</string>
+    <string name="waiting_calls_text">Válassz felvételi mappát, és oda kerülnek. Ha eltávolítod a CallVaultot, elvesznek.</string>
+    <string name="waiting_calls_nearly_full_text">A várakozó hívások helye majdnem megtelt. Válassz most felvételi mappát. A várakozó hívások elvesznek, ha eltávolítod a CallVaultot.</string>
+    <string name="waiting_calls_full_text">Nincs több hely várakozó hívásoknak, ezért az új hívásokat nem rögzíti. Válassz most felvételi mappát.</string>
+    <string name="waiting_calls_saved_text">Most már a felvételi mappádban vannak.</string>
+    <plurals name="waiting_calls_title">
+        <item quantity="one">%1$d hívás vár mentésre</item>
+        <item quantity="other">%1$d hívás vár mentésre</item>
+    </plurals>
+    <plurals name="waiting_calls_saved_title">
+        <item quantity="one">%1$d várakozó hívás elmentve</item>
+        <item quantity="other">%1$d várakozó hívás elmentve</item>
+    </plurals>
+</resources>

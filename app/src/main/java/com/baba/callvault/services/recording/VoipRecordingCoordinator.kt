@@ -37,6 +37,8 @@ import com.baba.callvault.data.recordings.RecordingDirection
 import kotlinx.coroutines.isActive
 import com.baba.callvault.system.storage.SafHelper
 import com.baba.callvault.system.storage.LiveStagingFiles
+import com.baba.callvault.system.storage.WaitingNote
+import com.baba.callvault.system.storage.WaitingRecordings
 import com.baba.callvault.system.storage.StagingNote
 import java.io.File
 import com.baba.callvault.data.recordings.RecordingCatalog
@@ -316,7 +318,10 @@ object VoipRecordingCoordinator {
         }
 
         val folderUri = prefs.getRecordingFolderUri()
-        if (!SafHelper.isFolderValid(context, folderUri)) {
+        val folderUsable = SafHelper.isFolderValid(context, folderUri)
+        // Review N5: a call whose folder is not usable is kept in CallVault's own storage and saved later. Only when
+        // that cannot take it either (its cap or the phone's space is reached) is the call refused, as before.
+        if (!folderUsable && !WaitingRecordings.canAccept(context)) {
             // User-owned and permanent until they fix it: every call goes the same way until then.
             reportMissedIfReal(context, R.string.voip_missed_no_folder, Prerequisite.RECORDING_FOLDER)
             AppLogger.e(TAG, "VoIP call detected but the recording folder is missing/unwritable")
@@ -341,7 +346,15 @@ object VoipRecordingCoordinator {
 
         val fileName = buildFileName(codec, appLabel, caller)
 
-        val saf = SafHelper.createAudioFile(context, folderUri, fileName, codec.mimeType)
+        // A usable folder takes exactly today's path; otherwise the call is kept to be saved later (review N5).
+        val saf = WaitingRecordings.chooseOutput(
+            folderUsable,
+            inFolder = { folderUri?.let { SafHelper.createAudioFile(context, it, fileName, codec.mimeType) } },
+            waiting = {
+                val why = if (folderUsable) "its file could not be created" else SafHelper.folderProblem(context, folderUri) ?: "not usable"
+                WaitingRecordings.create(context, folderUri, fileName, codec.mimeType, why, kind = "app call")
+            },
+        )
         if (saf == null) {
             reportMissedIfReal(context, R.string.voip_missed_no_folder, Prerequisite.RECORDING_FOLDER)
             AppLogger.e(TAG, "Could not create the VoIP output file")
@@ -1192,7 +1205,7 @@ object VoipRecordingCoordinator {
             val folder = result.folderUri
             val outName = result.fileName?.let(finalName)
             val mime = result.mimeType
-            if (staging == null || folder == null || outName == null || mime == null) {
+            if (staging == null || (folder == null && !result.waiting) || outName == null || mime == null) {
                 AppLogger.e(TAG, "VoIP recording cannot be published: staging details are missing")
                 logOutcome(context, VoipOutcome.Reason.STAGING_MISSING, recordedMs, staging?.takeIf { it.exists() }?.length())
                 return@let null
@@ -1201,6 +1214,22 @@ object VoipRecordingCoordinator {
                 AppLogger.w(TAG, "VoIP capture produced no audio; nothing to publish")
                 logOutcome(context, VoipOutcome.Reason.NO_AUDIO, recordedMs, staging.takeIf { it.exists() }?.length())
                 deleteStaged(staging, "the empty app-call capture")
+                return@let null
+            }
+            if (result.waiting) {
+                // The folder was not usable when the call started (review N5): kept under its final name, with the
+                // after-call steps of a saved call, and saved into a folder once one is usable.
+                if (WaitingRecordings.end(context, staging, outName, mime, kind = "app call")) {
+                    keepWaiting(context, staging, outName, mime, recordedMs, farHeard, callDirection)
+                } else {
+                    logOutcome(context, VoipOutcome.Reason.NO_AUDIO, recordedMs, 0L)
+                }
+                return@let null
+            }
+            if (folder == null) {
+                // Cannot happen: a call not kept for want of a folder always has one (checked above). Logged if it does.
+                AppLogger.e(TAG, "VoIP recording has no folder but was not kept to save later; keeping it in staging")
+                logOutcome(context, VoipOutcome.Reason.STAGING_MISSING, recordedMs, staging.length())
                 return@let null
             }
             val bytes = staging.length()
@@ -1212,8 +1241,16 @@ object VoipRecordingCoordinator {
             } else {
                 // Kept, not deleted: an unpublished recording on internal storage is recoverable and a
                 // deleted one is not.
-                AppLogger.e(TAG, "Could not publish the VoIP recording; it stays at ${staging.path}")
-                logOutcome(context, VoipOutcome.Reason.NOT_PUBLISHED, recordedMs, bytes)
+                // The folder was lost during the call (review 2026-11-20): moved into waiting storage, to be saved into
+                // whichever folder is usable later. If the move fails it stays in staging for the rescue, as before.
+                val adopted = WaitingRecordings.adopt(context, staging, outName, mime, kind = "app call", finished = false)
+                if (adopted != null) {
+                    AppLogger.e(TAG, "Could not publish the VoIP recording; moved into waiting storage to save later")
+                    keepWaiting(context, adopted, outName, mime, recordedMs, farHeard, callDirection)
+                } else {
+                    AppLogger.e(TAG, "Could not publish the VoIP recording; it stays at ${staging.path}")
+                    logOutcome(context, VoipOutcome.Reason.NOT_PUBLISHED, recordedMs, bytes)
+                }
             }
             uri
         }
@@ -1363,6 +1400,34 @@ object VoipRecordingCoordinator {
         AppLogger.i(TAG, "VoIP recording stopped (${saf?.uri})")
         // Same check as after a carrier recording: a stuck indicator with nothing recording. See [MicOpAutoHeal].
         MicOpAutoHeal.scheduleAfterCall(context, "the VoIP recording")
+    }
+
+    /**
+     * An app call kept in waiting storage (review N5 / 2026-11-20) gets the after-call steps a saved one gets, from the
+     * same parts: the minimum-duration setting, the marks and speaker turns (only available now), the health card, and
+     * its one outcome line. The details file, the keep-or-delete question, the library entry, transcription and the
+     * Drive copy follow when it is saved into a folder (WaitingRecordingsWorker).
+     */
+    private fun keepWaiting(context: Context, file: File, name: String, mime: String, recordedMs: Long?, farHeard: Boolean, direction: RecordingDirection?) {
+        val size = file.length()
+        CoroutineScope(Dispatchers.IO).launch {
+            val kept = runCatching { WaitingCallSteps.atCallEnd(context, file, name, "VoIP", outgoingForTurns = false) }
+                .onFailure { AppLogger.e(TAG, "After-call steps of the waiting app call failed; keeping it: ${it.message}", it) }
+                .getOrDefault(true)
+            if (!kept) {
+                logOutcome(context, VoipOutcome.Reason.TOO_SHORT, recordedMs, size)
+                return@launch
+            }
+            logOutcome(context, VoipOutcome.Reason.WAITING_FOR_FOLDER, recordedMs, size)
+            runCatching {
+                val outcome = CallOutcomes.of(size, daemonDied = false, farPartyHeard = farHeard)
+                SetupHealthStore(context).record(outcome, System.currentTimeMillis(), name, SetupFingerprint.of(AppPreferences(context)))
+            }.onFailure { AppLogger.w(TAG, "Could not record setup health for the waiting '$name': ${it.message}") }
+            WaitingRecordings.ready(
+                context, file, mime, "app call",
+                WaitingNote.Extras(isVoip = true, appCallMix = false, direction = VoipDirection.nameToken(direction)),
+            )
+        }
     }
 
     /** The always-on outcome line of this app call (review N8). Never throws. */

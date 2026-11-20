@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Recording folder protection: review C98 / N5. -->
+<resources>
+    <string name="recording_folder_gone_title">Папка записей пропала</string>
+    <string name="home_status_folder_gone_suggestion">Новые звонки хранятся внутри CallVault, пока вы не выберете папку. Нажмите, чтобы открыть настройки.</string>
+    <string name="home_hero_pill_folder_gone">Нет папки</string>
+    <string name="notif_folder_gone_text">Новые звонки хранятся внутри CallVault, пока вы снова не выберете папку. Они пропадут, если удалить CallVault.</string>
+    <string name="waiting_calls_text">Выберите папку для записей, и они сохранятся в ней. Они пропадут, если удалить CallVault.</string>
+    <string name="waiting_calls_nearly_full_text">Место для ожидающих звонков почти закончилось. Выберите папку для записей сейчас. Ожидающие звонки пропадут, если удалить CallVault.</string>
+    <string name="waiting_calls_full_text">Места для ожидающих звонков больше нет, поэтому новые звонки не записываются. Выберите папку для записей сейчас.</string>
+    <string name="waiting_calls_saved_text">Теперь они в вашей папке записей.</string>
+    <plurals name="waiting_calls_title">
+        <item quantity="one">%1$d звонок ждёт сохранения</item>
+        <item quantity="few">%1$d звонка ждут сохранения</item>
+        <item quantity="many">%1$d звонков ждут сохранения</item>
+        <item quantity="other">%1$d звонка ждут сохранения</item>
+    </plurals>
+    <plurals name="waiting_calls_saved_title">
+        <item quantity="one">Сохранён %1$d ожидавший звонок</item>
+        <item quantity="few">Сохранено %1$d ожидавших звонка</item>
+        <item quantity="many">Сохранено %1$d ожидавших звонков</item>
+        <item quantity="other">Сохранено %1$d ожидавшего звонка</item>
+    </plurals>
+</resources>

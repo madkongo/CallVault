@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Recording folder protection: review C98 / N5. -->
+<resources>
+    <string name="recording_folder_gone_title">录音文件夹不见了</string>
+    <string name="home_status_folder_gone_suggestion">在你选择文件夹之前，新通话会保存在 CallVault 内。点按打开设置。</string>
+    <string name="home_hero_pill_folder_gone">文件夹丢失</string>
+    <string name="notif_folder_gone_text">在你重新选择文件夹之前，新通话会保存在 CallVault 内。如果卸载 CallVault，这些通话会丢失。</string>
+    <string name="waiting_calls_text">选择一个录音文件夹，通话就会保存到那里。如果卸载 CallVault，这些通话会丢失。</string>
+    <string name="waiting_calls_nearly_full_text">等待保存的通话空间快满了。请立即选择录音文件夹。如果卸载 CallVault，等待中的通话会丢失。</string>
+    <string name="waiting_calls_full_text">等待保存的通话已没有空间，新通话不会被录音。请立即选择录音文件夹。</string>
+    <string name="waiting_calls_saved_text">它们现在已在你的录音文件夹中。</string>
+    <plurals name="waiting_calls_title">
+        <item quantity="one">%1$d 个通话等待保存</item>
+        <item quantity="other">%1$d 个通话等待保存</item>
+    </plurals>
+    <plurals name="waiting_calls_saved_title">
+        <item quantity="one">已保存 %1$d 个等待中的通话</item>
+        <item quantity="other">已保存 %1$d 个等待中的通话</item>
+    </plurals>
+</resources>

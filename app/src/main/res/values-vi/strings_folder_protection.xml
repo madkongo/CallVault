@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Recording folder protection: review C98 / N5. -->
+<resources>
+    <string name="recording_folder_gone_title">Thư mục ghi âm không còn</string>
+    <string name="home_status_folder_gone_suggestion">Cuộc gọi mới được giữ trong CallVault cho đến khi bạn chọn thư mục. Chạm để mở Cài đặt.</string>
+    <string name="home_hero_pill_folder_gone">Mất thư mục</string>
+    <string name="notif_folder_gone_text">Cuộc gọi mới được giữ trong CallVault cho đến khi bạn chọn lại thư mục. Chúng sẽ mất nếu bạn gỡ cài đặt CallVault.</string>
+    <string name="waiting_calls_text">Chọn một thư mục ghi âm và chúng sẽ được lưu vào đó. Chúng sẽ mất nếu bạn gỡ cài đặt CallVault.</string>
+    <string name="waiting_calls_nearly_full_text">Dung lượng cho cuộc gọi đang chờ sắp đầy. Hãy chọn thư mục ghi âm ngay. Cuộc gọi đang chờ sẽ mất nếu bạn gỡ cài đặt CallVault.</string>
+    <string name="waiting_calls_full_text">Hết chỗ cho cuộc gọi đang chờ, nên cuộc gọi mới không được ghi âm. Hãy chọn thư mục ghi âm ngay.</string>
+    <string name="waiting_calls_saved_text">Chúng đã ở trong thư mục ghi âm của bạn.</string>
+    <plurals name="waiting_calls_title">
+        <item quantity="one">%1$d cuộc gọi đang chờ lưu</item>
+        <item quantity="other">%1$d cuộc gọi đang chờ lưu</item>
+    </plurals>
+    <plurals name="waiting_calls_saved_title">
+        <item quantity="one">Đã lưu %1$d cuộc gọi đang chờ</item>
+        <item quantity="other">Đã lưu %1$d cuộc gọi đang chờ</item>
+    </plurals>
+</resources>

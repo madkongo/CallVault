@@ -93,6 +93,13 @@ class CutOffRescueWorker(ctx: Context, params: WorkerParameters) : CoroutineWork
         val bytes = file.length()
         val uri = SafHelper.publishStagedRecording(applicationContext, folderUri.toUri(), fileName, mimeType, file)
         if (uri == null) {
+            // Review 2026-11-20: retrying the folder its note names for ever is what kept a call from a lost folder out
+            // of reach. Moved into waiting storage instead, it is saved into whichever folder is usable later, counted on
+            // Home and in the alert. If the move fails it stays here for the next try, as before.
+            if (WaitingRecordings.adopt(applicationContext, file, fileName, mimeType, "cut-off recording", finished = true) != null) {
+                AppLogger.w(TAG, "Could not save the cut-off recording ${file.name} as '$fileName'; moved into waiting storage")
+                return
+            }
             AppLogger.e(TAG, "Could not save the cut-off recording ${file.name} as '$fileName'; keeping it for the next try")
             return
         }
@@ -102,19 +109,7 @@ class CutOffRescueWorker(ctx: Context, params: WorkerParameters) : CoroutineWork
         // Into the library (Home's list follows the catalog live), and into the health card: the call
         // this belongs to is no longer "not recorded", it was cut off.
         RecordingCatalog.recordLocal(applicationContext, fileName, uri, bytes, startedAt ?: cutAt)
-        val call = CutOffRescuePolicy.matchCall(
-            CallLogReader.entriesSince(applicationContext, cutAt - CALL_LOOKBACK_MS), startedAt, cutAt,
-        )
-        AppLogger.i(TAG, "The cut-off recording belongs to ${call?.let { "the call at ${it.startedAt}" } ?: "no call in the call log"}")
-        runCatching {
-            SetupHealthStore(applicationContext).recordCutOff(
-                atMillis = System.currentTimeMillis(),
-                callStartedAt = call?.startedAt,
-                callEndedAt = call?.let { it.startedAt + it.durationSeconds * 1_000L },
-                label = call?.label,
-            )
-        }.onFailure { AppLogger.w(TAG, "Could not update the status card: ${it.message}") }
-        SilentFailureNotifier.noteCutOffRecordingSaved(applicationContext, fileName)
+        recordSaved(applicationContext, fileName, startedAt, cutAt)
     }
 
     private fun isCallActive(): Boolean = runCatching {
@@ -127,6 +122,26 @@ class CutOffRescueWorker(ctx: Context, params: WorkerParameters) : CoroutineWork
 
     companion object {
         private const val TAG = "CV:CutOffRescue"
+
+        /**
+         * After a cut-off recording is in the library: the health card (the call it belongs to was cut off, not "not
+         * recorded") and the notice. Shared with the waiting publisher, which saves a cut-off the same way (F3).
+         */
+        fun recordSaved(context: Context, fileName: String, startedAt: Long?, cutAt: Long) {
+            val call = CutOffRescuePolicy.matchCall(
+                CallLogReader.entriesSince(context, cutAt - CALL_LOOKBACK_MS), startedAt, cutAt,
+            )
+            AppLogger.i(TAG, "The cut-off recording belongs to ${call?.let { "the call at ${it.startedAt}" } ?: "no call in the call log"}")
+            runCatching {
+                SetupHealthStore(context).recordCutOff(
+                    atMillis = System.currentTimeMillis(),
+                    callStartedAt = call?.startedAt,
+                    callEndedAt = call?.let { it.startedAt + it.durationSeconds * 1_000L },
+                    label = call?.label,
+                )
+            }.onFailure { AppLogger.w(TAG, "Could not update the status card: ${it.message}") }
+            SilentFailureNotifier.noteCutOffRecordingSaved(context, fileName)
+        }
         private const val WORK_NAME = "cut_off_rescue"
 
         /** How far back the call log is read to find the cut-off call: longer than any plausible call. */

@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Recording folder protection: review C98 / N5. -->
+<resources>
+    <string name="recording_folder_gone_title">Ο φάκελος ηχογραφήσεων δεν υπάρχει</string>
+    <string name="home_status_folder_gone_suggestion">Οι νέες κλήσεις φυλάσσονται μέσα στο CallVault μέχρι να επιλέξετε φάκελο. Πατήστε για να ανοίξουν οι Ρυθμίσεις.</string>
+    <string name="home_hero_pill_folder_gone">Χωρίς φάκελο</string>
+    <string name="notif_folder_gone_text">Οι νέες κλήσεις φυλάσσονται μέσα στο CallVault μέχρι να επιλέξετε ξανά φάκελο. Θα χαθούν αν απεγκαταστήσετε το CallVault.</string>
+    <string name="waiting_calls_text">Επιλέξτε φάκελο ηχογραφήσεων και θα αποθηκευτούν εκεί. Θα χαθούν αν απεγκαταστήσετε το CallVault.</string>
+    <string name="waiting_calls_nearly_full_text">Ο χώρος για τις κλήσεις σε αναμονή σχεδόν γέμισε. Επιλέξτε τώρα φάκελο ηχογραφήσεων. Οι κλήσεις σε αναμονή χάνονται αν απεγκαταστήσετε το CallVault.</string>
+    <string name="waiting_calls_full_text">Δεν υπάρχει χώρος για άλλες κλήσεις σε αναμονή, οπότε οι νέες κλήσεις δεν ηχογραφούνται. Επιλέξτε τώρα φάκελο ηχογραφήσεων.</string>
+    <string name="waiting_calls_saved_text">Βρίσκονται τώρα στον φάκελο ηχογραφήσεων.</string>
+    <plurals name="waiting_calls_title">
+        <item quantity="one">%1$d κλήση περιμένει αποθήκευση</item>
+        <item quantity="other">%1$d κλήσεις περιμένουν αποθήκευση</item>
+    </plurals>
+    <plurals name="waiting_calls_saved_title">
+        <item quantity="one">Αποθηκεύτηκε %1$d κλήση σε αναμονή</item>
+        <item quantity="other">Αποθηκεύτηκαν %1$d κλήσεις σε αναμονή</item>
+    </plurals>
+</resources>

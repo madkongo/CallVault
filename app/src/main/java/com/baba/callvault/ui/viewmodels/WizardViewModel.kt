@@ -61,6 +61,8 @@ class WizardViewModel(application: Application) : AndroidViewModel(application) 
     /** Persists the user-selected device/recording folder URI. */
     fun setRecordingFolderUri(uri: Uri?) {
         preferences.setRecordingFolderUri(uri)
+        // Calls kept while the folder was not usable are saved into it (review N5).
+        if (uri != null) com.baba.callvault.system.storage.FolderProtection.onFolderChosen(getApplication<Application>())
         bump()
     }
 

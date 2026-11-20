@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Recording folder protection: review C98 / N5. -->
+<resources>
+    <string name="recording_folder_gone_title">Recording folder is gone</string>
+    <string name="home_status_folder_gone_suggestion">New calls are kept inside CallVault until you choose a folder. Tap to open Settings.</string>
+    <string name="home_hero_pill_folder_gone">Folder gone</string>
+    <string name="notif_folder_gone_text">New calls are kept inside CallVault until you choose a folder again. They are lost if you uninstall CallVault.</string>
+    <string name="waiting_calls_text">Choose a recording folder and they are saved there. They are lost if you uninstall CallVault.</string>
+    <string name="waiting_calls_nearly_full_text">Space for waiting calls is almost full. Choose a recording folder now. Waiting calls are lost if you uninstall CallVault.</string>
+    <string name="waiting_calls_full_text">No space left for waiting calls, so new calls are not recorded. Choose a recording folder now.</string>
+    <string name="waiting_calls_saved_text">They are in your recording folder now.</string>
+    <plurals name="waiting_calls_title">
+        <item quantity="one">%1$d call waiting to be saved</item>
+        <item quantity="other">%1$d calls waiting to be saved</item>
+    </plurals>
+    <plurals name="waiting_calls_saved_title">
+        <item quantity="one">%1$d waiting call saved</item>
+        <item quantity="other">%1$d waiting calls saved</item>
+    </plurals>
+</resources>

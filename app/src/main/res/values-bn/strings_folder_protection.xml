@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Recording folder protection: review C98 / N5. -->
+<resources>
+    <string name="recording_folder_gone_title">রেকর্ডিং ফোল্ডারটি নেই</string>
+    <string name="home_status_folder_gone_suggestion">ফোল্ডার বেছে না নেওয়া পর্যন্ত নতুন কলগুলো CallVault-এর ভেতরে রাখা হবে। সেটিংস খুলতে ট্যাপ করুন।</string>
+    <string name="home_hero_pill_folder_gone">ফোল্ডার নেই</string>
+    <string name="notif_folder_gone_text">আবার ফোল্ডার বেছে না নেওয়া পর্যন্ত নতুন কলগুলো CallVault-এর ভেতরে রাখা হবে। CallVault আনইনস্টল করলে সেগুলো হারিয়ে যাবে।</string>
+    <string name="waiting_calls_text">একটি রেকর্ডিং ফোল্ডার বেছে নিন, কলগুলো সেখানে সেভ হবে। CallVault আনইনস্টল করলে সেগুলো হারিয়ে যাবে।</string>
+    <string name="waiting_calls_nearly_full_text">অপেক্ষমাণ কলের জায়গা প্রায় ভরে গেছে। এখনই একটি রেকর্ডিং ফোল্ডার বেছে নিন। CallVault আনইনস্টল করলে অপেক্ষমাণ কলগুলো হারিয়ে যাবে।</string>
+    <string name="waiting_calls_full_text">অপেক্ষমাণ কলের জন্য আর জায়গা নেই, তাই নতুন কল রেকর্ড হবে না। এখনই একটি রেকর্ডিং ফোল্ডার বেছে নিন।</string>
+    <string name="waiting_calls_saved_text">সেগুলো এখন আপনার রেকর্ডিং ফোল্ডারে আছে।</string>
+    <plurals name="waiting_calls_title">
+        <item quantity="one">%1$dটি কল সেভের অপেক্ষায়</item>
+        <item quantity="other">%1$dটি কল সেভের অপেক্ষায়</item>
+    </plurals>
+    <plurals name="waiting_calls_saved_title">
+        <item quantity="one">%1$dটি অপেক্ষমাণ কল সেভ হয়েছে</item>
+        <item quantity="other">%1$dটি অপেক্ষমাণ কল সেভ হয়েছে</item>
+    </plurals>
+</resources>

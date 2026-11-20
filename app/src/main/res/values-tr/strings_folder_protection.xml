@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Recording folder protection: review C98 / N5. -->
+<resources>
+    <string name="recording_folder_gone_title">Kayıt klasörü yok</string>
+    <string name="home_status_folder_gone_suggestion">Bir klasör seçene kadar yeni aramalar CallVault içinde tutulur. Ayarları açmak için dokunun.</string>
+    <string name="home_hero_pill_folder_gone">Klasör yok</string>
+    <string name="notif_folder_gone_text">Yeniden bir klasör seçene kadar yeni aramalar CallVault içinde tutulur. CallVault\'u kaldırırsanız kaybolurlar.</string>
+    <string name="waiting_calls_text">Bir kayıt klasörü seçin, aramalar oraya kaydedilsin. CallVault\'u kaldırırsanız kaybolurlar.</string>
+    <string name="waiting_calls_nearly_full_text">Bekleyen aramalar için yer neredeyse doldu. Şimdi bir kayıt klasörü seçin. CallVault\'u kaldırırsanız bekleyen aramalar kaybolur.</string>
+    <string name="waiting_calls_full_text">Bekleyen aramalar için yer kalmadı, bu yüzden yeni aramalar kaydedilmiyor. Şimdi bir kayıt klasörü seçin.</string>
+    <string name="waiting_calls_saved_text">Artık kayıt klasörünüzdeler.</string>
+    <plurals name="waiting_calls_title">
+        <item quantity="one">%1$d arama kaydedilmeyi bekliyor</item>
+        <item quantity="other">%1$d arama kaydedilmeyi bekliyor</item>
+    </plurals>
+    <plurals name="waiting_calls_saved_title">
+        <item quantity="one">Bekleyen %1$d arama kaydedildi</item>
+        <item quantity="other">Bekleyen %1$d arama kaydedildi</item>
+    </plurals>
+</resources>

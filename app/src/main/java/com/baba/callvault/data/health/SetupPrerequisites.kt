@@ -17,10 +17,20 @@ import com.baba.callvault.integrations.adb.AdbShell
 import com.baba.callvault.integrations.adb.AdbdState
 import com.baba.callvault.integrations.adb.DeveloperOptions
 import com.baba.callvault.server.RecorderConnection
+import com.baba.callvault.system.storage.FolderCheckPolicy
+import com.baba.callvault.system.storage.FolderCheckState
+import com.baba.callvault.system.storage.RecordingFolderCheck
 
 /** A user-owned condition that must hold for a call to be recordable at all. */
 enum class Prerequisite {
     RECORDING_FOLDER,
+
+    /**
+     * A recording folder is set but measured as gone: deleted, its grant revoked, its SD card removed (review C98).
+     * Unlike the others, a call in this state is NOT lost: it is kept inside CallVault and saved to the folder once
+     * one is usable again (review N5), so it is never reported as a missed call ([leavesCallUnrecorded]).
+     */
+    FOLDER_UNAVAILABLE,
     ADB_PAIRING,
     DEVELOPER_OPTIONS,
     SECURE_SETTINGS_GRANT,
@@ -68,9 +78,15 @@ object SetupPrerequisites {
     fun missing(context: Context): Prerequisite? {
         val preferences = AppPreferences(context)
         val mode = preferences.getPrivilegedMode()
+        val folderUri = preferences.getRecordingFolderUri()
         return firstMissing(
             mode = mode,
-            hasFolder = preferences.getRecordingFolderUri() != null,
+            hasFolder = folderUri != null,
+            // The stored measurement, not a new one: a SharedPreferences read (review C98). Measured off the main
+            // thread by RecordingFolderCheck at app start, on Home, on the keep-alive tick and when a call finds
+            // the folder unusable.
+            folderUri = folderUri?.toString(),
+            folderMeasurement = RecordingFolderCheck.cached(context),
             isPaired = preferences.isAdbPaired(),
             // isExplicitlyDisabled (not !isEnabled): an absent/unreadable global must not read as
             // missing on a ROM that doesn't expose the setting — see DeveloperOptions' own doc comment.
@@ -105,10 +121,32 @@ object SetupPrerequisites {
         daemonConnected: Boolean,
         shizuku: ShizukuStatus,
         canRelaunchWithoutGrant: Boolean = false,
+        folderUri: String? = null,
+        folderMeasurement: FolderCheckState? = null,
+        now: Long = System.currentTimeMillis(),
     ): Prerequisite? {
         // Asked first in both modes: it is about where recordings go, not about privileges.
         if (!hasFolder) return Prerequisite.RECORDING_FOLDER
+        privilegeMissing(mode, isPaired, devOptionsDisabled, hasSecureSettings, daemonConnected, shizuku, canRelaunchWithoutGrant)
+            ?.let { return it }
+        // "Configured" is not "usable" (review C98). Only a confirmed, recent measurement of this same folder counts,
+        // so a phone whose folder works, or was never measured, reads exactly as before. Asked AFTER the privileges
+        // (review 2026-11-20): a gone folder means calls wait to be saved, a broken recorder means they are not recorded
+        // at all, so the broken recorder is what Home shows and what a missed call is put down to.
+        if (FolderCheckPolicy.isUnusable(folderMeasurement, folderUri, now)) return Prerequisite.FOLDER_UNAVAILABLE
+        return null
+    }
 
+    /** The privilege half of [firstMissing], unchanged from before the folder measurement existed. */
+    private fun privilegeMissing(
+        mode: PrivilegedMode,
+        isPaired: Boolean,
+        devOptionsDisabled: Boolean,
+        hasSecureSettings: Boolean,
+        daemonConnected: Boolean,
+        shizuku: ShizukuStatus,
+        canRelaunchWithoutGrant: Boolean,
+    ): Prerequisite? {
         if (mode.needsShizuku) {
             // A recorder that is already connected outranks anything Shizuku says now: the user
             // service outlives the app, so Shizuku stopping does not stop a live recording — and
@@ -133,6 +171,13 @@ object SetupPrerequisites {
         return null
     }
 
+    /**
+     * Whether a call that starts while [missing] is absent goes unrecorded. False for [Prerequisite.FOLDER_UNAVAILABLE]:
+     * that call is kept inside CallVault and saved once a folder is usable (review N5), so it is not a missed call.
+     */
+    fun leavesCallUnrecorded(missing: Prerequisite?): Boolean =
+        missing != null && missing != Prerequisite.FOLDER_UNAVAILABLE
+
     /** Whether the recorder can be restarted without the grant: see [firstMissing]. */
     fun canRelaunchWithoutGrant(wirelessDebuggingOn: Boolean, loopbackArmed: Boolean, adbd: AdbdState): Boolean =
         wirelessDebuggingOn || (loopbackArmed && adbd != AdbdState.STOPPED)
@@ -155,7 +200,8 @@ object SetupPrerequisites {
  *    setting the app up.
  */
 fun SetupHealthStore.recordMissedForMissingPrerequisite(missing: Prerequisite?, atMillis: Long, label: String?) {
-    if (missing == null) return
+    if (!SetupPrerequisites.leavesCallUnrecorded(missing)) return
+    missing ?: return
     if (read().lastVerifiedAt <= 0L) return
     recordMissedWhileNotReady(atMillis, label, missing)
 }

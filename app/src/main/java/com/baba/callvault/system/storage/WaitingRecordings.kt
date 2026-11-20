@@ -1,0 +1,243 @@
+/*
+ * CallVault: FOSS call recording, self-contained over embedded ADB
+ *  Copyright (C) 2026-present The CallVault Authors
+ *  This software is licensed under the GNU General Public License v3 or later, with additional terms as permitted under Section 7.
+ *  The full license text is available in the LICENSE file at the root of this project.
+ *  This software is distributed WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+ */
+
+package com.baba.callvault.system.storage
+
+import android.content.Context
+import android.net.Uri
+import android.os.ParcelFileDescriptor
+import com.baba.callvault.system.diagnostics.CallEndLog
+import com.baba.callvault.utils.AppLogger
+import java.io.File
+
+/**
+ * Calls recorded while the recording folder was not usable, kept in CallVault's own storage until a folder is usable
+ * again (review N5).
+ *
+ * Field report (Motorola edge 70 fusion, Android 16, 2.5.1): the user deleted the recording folder by accident and
+ * three Telegram calls were refused, with nothing saved and nothing said. A call is now never refused for its folder:
+ * it is recorded here instead, and [WaitingRecordingsWorker] saves it into the folder under its own name, with its
+ * library entry, once a folder is usable.
+ *
+ * **Only when the folder is not usable.** [chooseOutput] asks the folder first and comes here only when the folder
+ * failed, so a phone whose folder works records exactly as before: same staging area, same names, same timing.
+ *
+ * A directory of its own (`filesDir/waiting`), not the staging area: the cut-off rescue publishes staged files into
+ * the folder their note names, which is exactly the folder that is gone, and would report them as calls "cut off".
+ * Notes use the [StagingNote] format, so the orphan-session check still reads a waiting call's start time.
+ *
+ * `filesDir`, never `cacheDir`: Android may clear a cache when space runs low. The files are lost if CallVault is
+ * uninstalled, which the alert says.
+ */
+object WaitingRecordings {
+
+    private const val TAG = "CV:Waiting"
+    const val DIR_NAME = "waiting"
+    private const val PREFIX = "rec_wait_"
+    private const val SUFFIX = ".tmp"
+
+    /** The call-end check skipped because the audio mode still said "call": tried once more after this. */
+    private const val CALL_END_RECHECK_MS = 45_000L
+
+    /**
+     * The folder's own output when it is usable ([inFolder], today's path, untouched); waiting storage otherwise, and
+     * also when the folder looked usable but its file could not be created.
+     */
+    inline fun <T : Any> chooseOutput(folderUsable: Boolean, inFolder: () -> T?, waiting: () -> T?): T? =
+        (if (folderUsable) inFolder() else null) ?: waiting()
+
+    fun dirOrNull(context: Context): File? = File(context.filesDir, DIR_NAME).takeIf { it.isDirectory }
+
+    private fun dir(context: Context): File = File(context.filesDir, DIR_NAME).apply { mkdirs() }
+
+    fun isWaitingRecording(file: File): Boolean =
+        file.isFile && file.name.startsWith(PREFIX) && file.name.endsWith(SUFFIX)
+
+    /** The waiting recordings (not their notes). */
+    fun files(context: Context): List<File> =
+        dirOrNull(context)?.listFiles().orEmpty().filter { isWaitingRecording(it) }
+
+    fun count(context: Context): Int = runCatching { files(context).size }.getOrDefault(0)
+
+    fun totalBytes(context: Context): Long = runCatching { files(context).sumOf { it.length() } }.getOrDefault(0L)
+
+    private fun freeBytes(context: Context): Long = runCatching { context.filesDir.usableSpace }.getOrDefault(-1L)
+
+    fun admission(context: Context): WaitingPolicy.Admission = WaitingPolicy.admit(totalBytes(context), freeBytes(context))
+
+    /** Whether a new call can be kept here now. */
+    fun canAccept(context: Context): Boolean = admission(context) == WaitingPolicy.Admission.OK
+
+    /**
+     * Opens a waiting recording for a call whose folder is not usable ([why], for the log). Null when it cannot be
+     * kept (the cap or the phone's space is reached, or the file could not be made); the caller then does what it did
+     * before this existed, and the reason is logged.
+     *
+     * @param kind "phone call" or "app call", for the always-on log.
+     */
+    fun create(context: Context, folderUri: Uri?, fileName: String, mimeType: String, why: String, kind: String): SafHelper.SafResult? {
+        val admission = admission(context)
+        if (admission != WaitingPolicy.Admission.OK) {
+            CallEndLog.record(
+                context,
+                "$kind: recording folder not usable ($why); cannot keep it in CallVault either: " +
+                    (if (admission == WaitingPolicy.Admission.FULL) "waiting calls reached their ${WaitingPolicy.CAP_BYTES} byte cap"
+                    else "the phone has under ${WaitingPolicy.MIN_FREE_BYTES} bytes free") + "; not recorded",
+            )
+            onRefused(context, admission)
+            return null
+        }
+        val file = runCatching { File.createTempFile(PREFIX, SUFFIX, dir(context)) }
+            .getOrElse { e -> CallEndLog.record(context, "$kind: could not create a waiting recording: ${CallEndLog.describe(e)}"); return null }
+        runCatching {
+            WaitingNote.write(file, WaitingNote(StagingNote(folderUri?.toString() ?: "none", fileName, mimeType, System.currentTimeMillis()), null))
+        }.onFailure { AppLogger.w(TAG, "Could not write the note of ${file.name}: ${it.message}") }
+        val fd = runCatching {
+            ParcelFileDescriptor.open(file, ParcelFileDescriptor.MODE_READ_WRITE or ParcelFileDescriptor.MODE_TRUNCATE)
+        }.getOrElse { e ->
+            CallEndLog.record(context, "$kind: could not open a waiting recording: ${CallEndLog.describe(e)}")
+            StagingNote.deleteWithNote(file)
+            return null
+        }
+        // Never taken for an abandoned file while its call goes on: a paused recording is quiet (review C12).
+        LiveStagingFiles.register(file)
+        CallEndLog.record(
+            context,
+            "$kind: recording folder not usable ($why); recording into CallVault's own storage, to save into a folder later: ${CallEndLog.safeName(fileName)}",
+        )
+        return SafHelper.SafResult(
+            uri = null,
+            descriptor = fd,
+            displayName = "CallVault/$fileName",
+            stagingFile = file,
+            folderUri = null,
+            fileName = fileName,
+            mimeType = mimeType,
+            waiting = true,
+        )
+    }
+
+    /**
+     * The call of a waiting recording ended (its capture is closed): keep it under [name] for the after-call steps, or
+     * remove it when it holds no audio. Returns whether a recording is kept. The file stays owned
+     * ([LiveStagingFiles]) and unfinished until [ready], so it is never saved under a name the call log is about to
+     * change. Never throws.
+     */
+    fun end(context: Context, file: File, name: String, mimeType: String, kind: String): Boolean = runCatching {
+        val bytes = if (file.exists()) file.length() else 0L
+        if (bytes <= 0L) {
+            LiveStagingFiles.release(file)
+            StagingNote.deleteWithNote(file)
+            CallEndLog.record(context, "$kind: the waiting recording holds no audio; nothing kept")
+            return@runCatching false
+        }
+        LiveStagingFiles.register(file)
+        rename(file, name, mimeType)
+        true
+    }.getOrElse { e ->
+        AppLogger.e(TAG, "Ending the waiting recording ${file.name} failed; it stays where it is", e)
+        true
+    }
+
+    /** Gives a waiting recording the name it will be saved under (the call-log rename). Never throws. */
+    fun rename(file: File, name: String, mimeType: String? = null): Boolean = synchronized(namesLock) { renameLocked(file, name, mimeType) }
+
+    /** Choosing a free name and writing it is one step, so two calls ending together cannot pick the same name. */
+    private val namesLock = Any()
+
+    private fun renameLocked(file: File, name: String, mimeType: String?): Boolean = runCatching {
+        val old = WaitingNote.read(file)
+        // Never the name of another waiting call (second review 2026-11-20): two calls named alike (a template with
+        // minute precision, or no time) must stay two files.
+        val unique = WaitingPublisher.freeName(name) { it in otherWaitingNames(file) }
+        val note = old?.note?.copy(fileName = unique, mimeType = mimeType ?: old.note.mimeType)
+            ?: StagingNote("none", unique, mimeType ?: "audio/ogg", file.lastModified())
+        WaitingNote.write(file, WaitingNote(note, old?.finishedAt, old?.extras))
+        true
+    }.onFailure { AppLogger.w(TAG, "Could not rename the waiting recording ${file.name}: ${it.message}") }.getOrDefault(false)
+
+    /** The names the other waiting recordings beside [file] will be saved under. */
+    private fun otherWaitingNames(file: File): Set<String> =
+        file.parentFile?.listFiles().orEmpty()
+            .filter { isWaitingRecording(it) && it.absolutePath != file.absolutePath }
+            .mapNotNull { WaitingNote.read(it)?.note?.fileName }
+            .toSet()
+
+    /**
+     * The after-call steps of a waiting recording are done: mark it finished with what saving needs ([extras]), so the
+     * publisher may take it, and tell the user. Never throws.
+     */
+    fun ready(context: Context, file: File, mimeType: String, kind: String, extras: WaitingNote.Extras?) {
+        runCatching {
+            LiveStagingFiles.release(file)
+            val old = WaitingNote.read(file)
+            val note = old?.note?.copy(mimeType = mimeType) ?: StagingNote("none", file.name, mimeType, file.lastModified())
+            runCatching { WaitingNote.write(file, WaitingNote(note, System.currentTimeMillis(), extras)) }
+                .onFailure { AppLogger.w(TAG, "Could not mark ${file.name} finished; it will be saved as a cut-off: ${it.message}") }
+            CallEndLog.record(
+                context,
+                "$kind kept in CallVault until a recording folder is usable: ${CallEndLog.safeName(note.fileName)} " +
+                    "size=${file.length()} bytes; waiting now: ${count(context)} calls, ${totalBytes(context)} bytes",
+            )
+            // The call is real evidence that the folder is gone: measure now (at the call's end, never its start) so Home
+            // and the alert follow.
+            RecordingFolderCheck.checkAsync(
+                context, "a call found the folder not usable", skipDuringCall = true, retryIfSkippedMs = CALL_END_RECHECK_MS,
+            )
+            onKept(context)
+        }.onFailure { AppLogger.e(TAG, "Finishing the waiting recording ${file.name} failed; it stays where it is", it) }
+    }
+
+    /** [end] and [ready] together, for a call with no after-call steps to run. Returns whether a recording is kept. */
+    fun finish(context: Context, file: File, finalName: String, mimeType: String, kind: String): Boolean {
+        if (!end(context, file, finalName, mimeType, kind)) return false
+        ready(context, file, mimeType, kind, WaitingNote.Extras(isVoip = kind == "app call", appCallMix = false, direction = null))
+        return true
+    }
+
+    /**
+     * Moves a staged recording whose save into the folder failed (the folder was lost mid-call, review 2026-11-20) into
+     * waiting storage, so it is saved into whichever folder is usable later, counted on Home and in the alert, instead of
+     * being retried for ever against the folder its staging note names. Not refused for the cap: the audio exists
+     * already, and refusing would only leave it in staging. [finished]: no after-call steps follow (the cut-off rescue).
+     * Returns the new file, or null when it could not be moved (the caller then keeps today's behaviour).
+     */
+    fun adopt(context: Context, staged: File, name: String, mimeType: String, kind: String, finished: Boolean): File? {
+        val stagingNoteFile = StagingNote.fileFor(staged)
+        val stagingNote = stagingNoteFile.takeIf { it.exists() }?.let { runCatching { StagingNote.decode(it.readText()) }.getOrNull() }
+        val target = runCatching {
+            val t = File(dir(context), "$PREFIX${System.nanoTime()}$SUFFIX")
+            if (staged.renameTo(t)) t else null
+        }.onFailure { AppLogger.e(TAG, "Moving ${staged.name} into waiting storage threw; it stays in staging", it) }.getOrNull()
+        if (target == null) {
+            CallEndLog.record(context, "$kind: could not move the unsaved recording into waiting storage; it stays in staging")
+            return null
+        }
+        // The audio has moved: from here the new file is returned whatever else fails (second review 2026-11-20, S4).
+        // The waiting note is written BEFORE the staging note is removed, so a kill in between leaves a named recording.
+        val noteWritten = runCatching {
+            val base = (stagingNote ?: StagingNote("none", name, mimeType, target.lastModified())).copy(fileName = name, mimeType = mimeType)
+            WaitingNote.write(target, WaitingNote(base, null))
+            rename(target, name, mimeType) // never the name of a call already waiting
+        }.onFailure { AppLogger.w(TAG, "Could not write the note of the moved recording ${target.name}: ${it.message}") }.isSuccess
+        // Removed only once the new note exists: otherwise the staging note is the one left that names the recording.
+        if (noteWritten) runCatching { stagingNoteFile.delete() }
+        CallEndLog.record(
+            context,
+            "$kind: saving into the folder failed; moved into waiting storage to save later: ${CallEndLog.safeName(name)} " +
+                "size=${target.length()} bytes" + (if (noteWritten) "" else " (its note could not be written: the staging note is kept, and the publisher leaves an unnamed recording in place, never deleting it)"),
+        )
+        // A cut-off carries no call identity (S5): saved like the rescue saves one, without details file or question.
+        if (finished) ready(context, target, mimeType, kind, extras = null) else LiveStagingFiles.register(target)
+        return target
+    }
+
+    private fun onKept(context: Context) = FolderProtection.onWaitingKept(context)
+
+    private fun onRefused(context: Context, admission: WaitingPolicy.Admission) = FolderProtection.onWaitingRefused(context, admission)
+}
