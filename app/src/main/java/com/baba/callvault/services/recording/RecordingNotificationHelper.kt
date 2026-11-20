@@ -45,6 +45,16 @@ class RecordingNotificationHelper(base: Context) {
         const val ERROR_NOTIFICATION_ID = 2
 
         /**
+         * Creates the recording and error channels if they are missing. Idempotent and cheap. Called at app start and
+         * before any notice that uses them is posted (review N22): until then they were created only by the
+         * phone-call service, so a phone that only records app calls never had them.
+         */
+        fun ensureChannels(context: Context) {
+            runCatching { RecordingNotificationHelper(context).createNotificationChannels() }
+                .onFailure { com.baba.callvault.utils.AppLogger.e("CV:RecNotif", "Could not create the recording notification channels: ${it.javaClass.simpleName}: ${it.message}") }
+        }
+
+        /**
          * The two-pulse buzz every recording state change uses: started, paused, resumed, ended.
          *
          * One definition rather than the same four literals repeated, so "the recording changed

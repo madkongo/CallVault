@@ -177,6 +177,8 @@ class DaemonKeepAliveService : Service() {
      */
     private fun repostHeldAsForeground(held: Notification) {
         runCatching {
+            // Never hand startForeground a notice on a missing channel (review N22): it crashes the app later.
+            check(ForegroundNoticeChannel.usable(applicationContext, held)) { "its notification channel does not exist" }
             startForeground(NOTIF_ID, held, ServiceInfo.FOREGROUND_SERVICE_TYPE_SPECIAL_USE)
         }.onFailure {
             AppLogger.w(TAG, "Could not re-post the remaining recording notice as the foreground notice (${it.message}); trying notify")
@@ -595,6 +597,8 @@ class DaemonKeepAliveService : Service() {
         // after this one (LAVA LXX508) — see [healSharedNotice].
         // The app-call recording notice is posted through this service's startForeground, not notify() (C23, Q49).
         SharedStatusNotice.foregroundPoster = { notification ->
+            // A notice on a missing channel would crash the app later, uncatchably (review N22); false → notify().
+            ForegroundNoticeChannel.usable(applicationContext, notification) &&
             runCatching { startForeground(NOTIF_ID, notification, ServiceInfo.FOREGROUND_SERVICE_TYPE_SPECIAL_USE) }
                 .onFailure { AppLogger.w(TAG, "Could not post the recording notice as the foreground notice: ${it.message}") }
                 .isSuccess

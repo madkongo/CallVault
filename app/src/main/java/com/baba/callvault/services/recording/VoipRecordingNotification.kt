@@ -48,6 +48,8 @@ object VoipRecordingNotification {
         paused: Boolean = false,
         heldForCall: Boolean = false,
     ) {
+        // Its channel is created by the phone-call service; a phone that only records app calls may not have it yet.
+        RecordingNotificationHelper.ensureChannels(context)
         val notification = build(context, appLabel, marks, paused, heldForCall)
         if (!PermissionChecks.hasNotificationPermission(context)) return
         // Posted under the keep-alive's id and claimed, exactly like a carrier call (issue #31): one
