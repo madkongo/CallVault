@@ -47,6 +47,8 @@ object WaitingPublisher {
         fun afterPublish(name: String, uri: Uri, mimeType: String, held: Boolean)
         /** One always-on line. */
         fun record(line: String)
+        /** A cut-off was saved: what today's cut-off rescue does after its library entry (health record and notice). */
+        fun cutOffSaved(name: String, startedAt: Long, cutAt: Long)
     }
 
     /** What a document already in the folder under a candidate name is, to a waiting call about to be saved. */
@@ -181,12 +183,21 @@ object WaitingPublisher {
             .onFailure { env.record("details file or keep-or-delete hold for ${CallEndLog.safeName(name)} failed: ${CallEndLog.describe(it)}") }
             .getOrDefault(false)
         val failure = runCatching { env.catalog(name, uri, bytes, note.startedAtMillis) }.getOrElse { it }
+        val cutAt = file.lastModified()
         val removed = StagingNote.deleteWithNote(file)
         env.record(
             "waiting call saved into the folder: ${CallEndLog.safeName(name)} size=$bytes bytes" +
                 (failure?.let { "; library entry FAILED: ${CallEndLog.describe(it)}" } ?: "") +
                 (if (removed) "" else "; its private copy could not be removed"),
         )
+        if (waiting.extras == null) {
+            // A cut-off is saved exactly as today's cut-off rescue saves one (third review 2026-11-20, F3): library entry,
+            // health record and notice; no automatic Drive copy or transcription, since it never got the keep-or-delete
+            // question.
+            runCatching { env.cutOffSaved(name, note.startedAtMillis, cutAt) }
+                .onFailure { env.record("cut-off steps for ${CallEndLog.safeName(name)} failed: ${CallEndLog.describe(it)}") }
+            return@withContext Outcome.SAVED
+        }
         runCatching { env.afterPublish(name, uri, note.mimeType, held) }
             .onFailure { env.record("after-save steps for ${CallEndLog.safeName(name)} failed: ${CallEndLog.describe(it)}") }
         Outcome.SAVED

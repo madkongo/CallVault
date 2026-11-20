@@ -89,6 +89,8 @@ class WaitingPublisherTest {
         }
         override fun afterPublish(name: String, uri: Uri, mimeType: String, held: Boolean) { after += name; this.held += held }
         override fun record(line: String) { lines += line }
+        val cutOffs = mutableListOf<String>()
+        override fun cutOffSaved(name: String, startedAt: Long, cutAt: Long) { cutOffs += name }
     }
 
     @Test
@@ -219,13 +221,17 @@ class WaitingPublisherTest {
     }
 
     @Test
-    fun `a cut-off with no call identity is saved like the rescue saves one - no details file, no question`() = runBlocking {
+    fun `a cut-off with no call identity is saved exactly like the rescue saves one`() = runBlocking {
+        // Third review F3: library entry, the cut-off health record and notice; no details file, no question, and no
+        // automatic Drive copy or transcription (it never got the keep-or-delete question).
         val f = waiting("c.ogg", 500, finished = true)
         WaitingNote.write(f, WaitingNote(StagingNote("none", "c.ogg", "audio/ogg", now), now, extras = null))
         val env = FakeEnv(listOf(f), now = now).apply { hold = true }
         assertEquals(1, WaitingPublisher.run(env).saved)
         assertEquals(0, env.beforeCatalogCalls)
-        assertEquals(listOf(false), env.held)
+        assertEquals(1, env.catalogued.size)
+        assertTrue("no transcription, Drive or waveform", env.after.isEmpty())
+        assertEquals(listOf("c.ogg"), env.cutOffs)
     }
 
     @Test
