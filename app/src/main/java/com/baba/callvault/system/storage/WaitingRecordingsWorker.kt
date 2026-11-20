@@ -10,7 +10,6 @@ package com.baba.callvault.system.storage
 
 import android.content.Context
 import android.net.Uri
-import androidx.documentfile.provider.DocumentFile
 import androidx.work.CoroutineWorker
 import androidx.work.ExistingPeriodicWorkPolicy
 import androidx.work.ExistingWorkPolicy
@@ -53,12 +52,17 @@ class WaitingRecordingsWorker(ctx: Context, params: WorkerParameters) : Coroutin
 
         override fun callActive(): Boolean = PhoneCallState.isCallUp(context)
 
+        /**
+         * Idempotent and atomic (review 2026-11-20): written under a staging name and renamed, a leftover from a killed
+         * attempt is cleaned up, and a same-name same-size file already there (a save killed before the private copy
+         * was removed) is taken as saved instead of producing "x (1).ogg".
+         */
         override fun publish(file: File, name: String, mimeType: String): Pair<Uri, String>? {
             val target = folder ?: return null
-            val uri = SafHelper.publishStagedRecording(context, target, name, mimeType, file) ?: return null
-            // The provider renames on a clash ("x (1).ogg"); the library must hold the name it really has.
-            val actual = runCatching { DocumentFile.fromSingleUri(context, uri)?.name }.getOrNull() ?: name
-            return uri to actual
+            val result = SafHelper.copyFileToFolder(context, Uri.fromFile(file), target, name, mimeType, file.length())
+            if (result is SafHelper.CopyResult.Failed) AppLogger.w(TAG, "Saving '$name' failed: ${result.reason}")
+            if (result is SafHelper.CopyResult.AlreadyPresent) AppLogger.i(TAG, "'$name' is already in the folder (an earlier save); not saving it twice")
+            return WaitingPublisher.publishedFrom(result, name)
         }
 
         override suspend fun catalog(name: String, uri: Uri, bytes: Long, startedAt: Long): Throwable? =

@@ -41,6 +41,16 @@ object WaitingPublisher {
         fun record(line: String)
     }
 
+    /**
+     * The saved document and its name from a [SafHelper.copyFileToFolder] result, or null when nothing usable landed.
+     * An existing same-name same-size file counts as saved: that is a save killed before the private copy was removed.
+     */
+    fun publishedFrom(result: SafHelper.CopyResult, name: String): Pair<Uri, String>? = when (result) {
+        is SafHelper.CopyResult.Copied -> result.uri to name
+        is SafHelper.CopyResult.AlreadyPresent -> result.uri to name
+        is SafHelper.CopyResult.Failed -> null
+    }
+
     /** @param retryLater something is still in use or failed: look again later. */
     data class Result(val saved: Int, val retryLater: Boolean)
 

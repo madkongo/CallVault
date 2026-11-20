@@ -14,6 +14,7 @@ import kotlinx.coroutines.runBlocking
 import org.junit.After
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
+import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Rule
@@ -158,5 +159,15 @@ class WaitingPublisherTest {
         assertEquals(0, env.folderAsked)
         assertEquals(0, result.saved)
         assertTrue(result.retryLater)
+    }
+
+    @Test
+    fun `a save killed before its private copy was removed is found already there on the retry, not saved twice`() {
+        // Review 2026-11-20 (idempotent publish): the folder copy goes through SafHelper.copyFileToFolder, which writes
+        // under a staging name, renames, and reports an existing same-name same-size file as AlreadyPresent.
+        val uri = "content://x/document/a.ogg".toUri()
+        assertEquals(uri to "a.ogg", WaitingPublisher.publishedFrom(SafHelper.CopyResult.AlreadyPresent(uri), "a.ogg"))
+        assertEquals(uri to "a.ogg", WaitingPublisher.publishedFrom(SafHelper.CopyResult.Copied(uri, 10L), "a.ogg"))
+        assertNull(WaitingPublisher.publishedFrom(SafHelper.CopyResult.Failed("no"), "a.ogg"))
     }
 }
