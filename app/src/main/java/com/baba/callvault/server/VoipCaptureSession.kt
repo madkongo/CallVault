@@ -428,8 +428,8 @@ internal class VoipCaptureSession(
             syncSummary = ledger.summary(totalFrames, System.nanoTime() - startedNanos) +
                 " firstSecondPeak near=$firstSecNear far=$firstSecFar"
             AppLogger.i(TAG, syncSummary)
-            if (!farPartyHeard) {
-                AppLogger.w(TAG, "Far party was never audible — this app blocks capture, or the OEM did not attach the call to our mix")
+            FarAudibilityLine.atEnd(farPartyHeard, totalFrames)?.let {
+                if (it.warn) AppLogger.w(TAG, it.text) else AppLogger.i(TAG, it.text)
             }
         } finally {
             readers.forEach { it.interrupt() }
