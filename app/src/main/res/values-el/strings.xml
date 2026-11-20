@@ -380,6 +380,8 @@
     <string name="notif_health_recorder_text">Οι κλήσεις δεν θα καταγράφονται μέχρι αυτό το τηλέφωνο να συνδεθεί σε δίκτυο Wi-Fi μία φορά. Οποιοδήποτε δίκτυο αρκεί και δεν χρειάζεται internet — λίγα δευτερόλεπτα είναι αρκετά, και μετά συνεχίζει να λειτουργεί ακόμα και εκτός Wi-Fi.</string>
     <string name="notif_health_recorder_text_shizuku">Οι κλήσεις δεν θα καταγράφονται μέχρι το Shizuku να εκτελείται ξανά. Μια επανεκκίνηση το σταματά, οπότε πρέπει να ξεκινά μία φορά αφού επανεκκινήσει το τηλέφωνο.</string>
     <string name="notif_health_recorder_title">Το CallVault δεν μπορεί να κάνει εγγραφή αυτή τη στιγμή</string>
+    <string name="notif_health_down_title">Calls are not being recorded</string>
+    <string name="notif_health_down_generic_text">CallVault could not bring the recorder back up. Open the app to see why and what to do.</string>
     <string name="notif_health_shizuku_restart_failed_text">Το CallVault χρειάστηκε να επανεκκινήσει την υπηρεσία εντοπισμού σφαλμάτων του Android, και αυτό σταματά το Shizuku. Προσπάθησε να ξεκινήσει το Shizuku ξανά και δεν μπόρεσε — ανοίξτε το Shizuku και ξεκινήστε το μόνοι σας.</string>
     <string name="notif_health_shizuku_restart_failed_title">Το Shizuku σταμάτησε</string>
     <string name="notif_health_shizuku_restarted_text">Το CallVault χρειάστηκε να επανεκκινήσει την υπηρεσία εντοπισμού σφαλμάτων του Android, που σταματά το Shizuku, οπότε ξεκίνησε το Shizuku ξανά για εσάς. Δεν υπάρχει τίποτα να κάνετε.</string>

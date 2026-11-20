@@ -400,7 +400,7 @@ class AdbPairingService : Service() {
         /** Re-reads of the Wireless debugging setting while waiting, so a stuck wait shows what the phone said. */
         private val WAIT_HEARTBEATS_MS = longArrayOf(10_000L, 30_000L, 60_000L, 120_000L, 240_000L)
         private const val CHANNEL_ID = "adb_pairing"
-        private const val NOTIFICATION_ID = 4712
+        internal const val NOTIFICATION_ID = 4712
         private const val REQ_STOP = 2
         private const val REQ_REPLY = 1
         private const val REMOTE_INPUT_KEY = "pairing_code"

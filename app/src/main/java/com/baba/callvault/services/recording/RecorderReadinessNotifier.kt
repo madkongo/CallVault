@@ -41,7 +41,7 @@ object RecorderReadinessNotifier {
 
     private const val TAG = "CV:RecorderReadiness"
     private const val CHANNEL_ID = "recorder_readiness"
-    private const val NOTIFICATION_ID = 4715
+    internal const val NOTIFICATION_ID = 4715
 
     /** How long the "ready" notification lingers before auto-dismissing. */
     private const val READY_LINGER_MS = 6_000L

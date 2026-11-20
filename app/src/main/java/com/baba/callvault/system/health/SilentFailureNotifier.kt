@@ -63,6 +63,12 @@ object SilentFailureNotifier {
     private const val ID_RETENTION_WAITING_FOR_DRIVE = 4726
     private const val ID_DRIVE_BACKUP_BROKEN = 4727
 
+    /** Every id this object posts, for the uniqueness guard test (review C36). */
+    internal val ALL_IDS = listOf(
+        ID_RECORDER_UNAVAILABLE, ID_SYNC_STALLED, ID_SHIZUKU_STOPPED, ID_PAIRING_LOST, ID_CUT_OFF_SAVED,
+        ID_TURNED_OFF_FOR_ANDROID, ID_STOPPED_BY_USER, ID_RETENTION_WAITING_FOR_DRIVE, ID_DRIVE_BACKUP_BROKEN,
+    )
+
     /**
      * The recorder could not be started. Posted from the boot path, where a failure is invisible.
      *
@@ -90,6 +96,19 @@ object SilentFailureNotifier {
             text = LocalizedContext.of(context).getString(text)
         )
     }
+
+    /**
+     * The recorder has stayed down past the grace period (review R1; see
+     * [com.baba.callvault.services.recording.RecorderDownAlertPolicy]). Same id as [warnRecorderUnavailable], so it
+     * replaces the boot/Shizuku warning instead of stacking, and the ready-clear that already exists takes it down.
+     * [reason] is the localized sentence for the cause. Returns whether it was actually shown.
+     */
+    fun warnRecorderDown(context: Context, reason: String): Boolean = post(
+        context,
+        id = ID_RECORDER_UNAVAILABLE,
+        title = LocalizedContext.of(context).getString(R.string.notif_health_down_title),
+        text = reason,
+    )
 
     /**
      * Android forgot CallVault's Wireless-debugging pairing (issue #43).

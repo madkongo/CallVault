@@ -229,6 +229,8 @@
     <string name="notif_health_recorder_text">As chamadas não serão gravadas até este telefone entrar uma vez em uma rede Wi-Fi. Qualquer rede serve e não precisa de internet — alguns segundos bastam, e depois continua funcionando mesmo fora do Wi-Fi.</string>
     <string name="notif_health_recorder_text_shizuku">As chamadas não serão gravadas até o Shizuku voltar a rodar. Reiniciar o desliga, então ele precisa ser iniciado uma vez depois que o telefone reinicia.</string>
     <string name="notif_health_recorder_title">O CallVault não consegue gravar agora</string>
+    <string name="notif_health_down_title">Calls are not being recorded</string>
+    <string name="notif_health_down_generic_text">CallVault could not bring the recorder back up. Open the app to see why and what to do.</string>
     <string name="notif_health_shizuku_restart_failed_text">O CallVault precisou reiniciar o serviço de depuração do Android, e isso interrompe o Shizuku. Ele tentou iniciar o Shizuku de novo e não conseguiu — abra o Shizuku e inicie-o você mesmo.</string>
     <string name="notif_health_shizuku_restart_failed_title">O Shizuku foi interrompido</string>
     <string name="notif_health_shizuku_restarted_text">O CallVault precisou reiniciar o serviço de depuração do Android, o que interrompe o Shizuku, então ele iniciou o Shizuku de novo para você. Não é preciso fazer nada.</string>

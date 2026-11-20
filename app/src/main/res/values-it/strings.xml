@@ -226,6 +226,8 @@
     <string name="notif_health_recorder_text">Le chiamate non verranno registrate finché questo telefono non si collega una volta a una rete Wi-Fi. Va bene qualsiasi rete e non serve internet: bastano pochi secondi, poi continua a funzionare anche senza Wi-Fi.</string>
     <string name="notif_health_recorder_text_shizuku">Le chiamate non verranno registrate finché Shizuku non è di nuovo in esecuzione. Un riavvio lo arresta, quindi va avviato una volta dopo ogni riavvio del telefono.</string>
     <string name="notif_health_recorder_title">CallVault non può registrare ora</string>
+    <string name="notif_health_down_title">Calls are not being recorded</string>
+    <string name="notif_health_down_generic_text">CallVault could not bring the recorder back up. Open the app to see why and what to do.</string>
     <string name="notif_health_shizuku_restart_failed_text">CallVault ha dovuto riavviare il servizio di debug di Android, e questo arresta Shizuku. Ha provato a riavviarlo senza riuscirci: apri Shizuku e avvialo tu.</string>
     <string name="notif_health_shizuku_restart_failed_title">Shizuku è stato arrestato</string>
     <string name="notif_health_shizuku_restarted_text">CallVault ha dovuto riavviare il servizio di debug di Android, il che arresta Shizuku, quindi ha riavviato Shizuku al posto tuo. Non devi fare nulla.</string>
