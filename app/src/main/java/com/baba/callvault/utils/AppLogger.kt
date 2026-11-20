@@ -527,6 +527,7 @@ object AppLogger {
         writer.println("Device Country Iso Estimation: ${PhoneNumberManager.getInstance(context).getDeviceCountryIso()}")
         // Loads the Traditional Chinese conversion table (BabApps item 125), so the report shows it is readable here.
         writer.println("Chinese conversion table: ${com.baba.callvault.transcription.ChineseScript.tableSummary()}")
+        com.baba.callvault.system.phone.PhoneProfileReport.linesNow(context).forEach { writer.println(it) }
         writeConfiguration(writer, context)
     }
 
