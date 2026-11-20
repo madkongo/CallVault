@@ -70,4 +70,28 @@ class SingleFlightTest {
             pool.shutdownNow()
         }
     }
+
+    @Test
+    fun `a joiner with a deadline gives up on a wedged leader and the leader is not disturbed`() {
+        val flight = SingleFlight<Int>()
+        val started = CountDownLatch(1)
+        val release = CountDownLatch(1)
+        val pool = Executors.newFixedThreadPool(2)
+        try {
+            val leader = pool.submit<Int> { flight.run { started.countDown(); release.await(10, TimeUnit.SECONDS); 5 } }
+            assertTrue(started.await(5, TimeUnit.SECONDS))
+            val begun = System.nanoTime()
+            val joiner = pool.submit<Result<Int>> { runCatching { flight.run(joinTimeoutMs = 300) { 9 } } }
+            val outcome = joiner.get(5, TimeUnit.SECONDS)
+            val tookMs = (System.nanoTime() - begun) / 1_000_000
+            assertTrue("gave up at the deadline, took $tookMs ms", tookMs < 3_000)
+            assertTrue(outcome.exceptionOrNull() is java.util.concurrent.TimeoutException)
+            release.countDown()
+            assertEquals(5, leader.get(5, TimeUnit.SECONDS))
+            assertEquals("the next caller starts a new run", 7, flight.run { 7 })
+        } finally {
+            release.countDown()
+            pool.shutdownNow()
+        }
+    }
 }
