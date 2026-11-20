@@ -31,6 +31,7 @@ import com.baba.callvault.server.DaemonStereo
 import com.baba.callvault.server.IRecorderService
 import com.baba.callvault.server.RecorderConnection
 import com.baba.callvault.server.VoipCallFacts
+import com.baba.callvault.server.VoipStartFailure
 import com.baba.callvault.data.recordings.RecordingDirection
 import kotlinx.coroutines.isActive
 import com.baba.callvault.system.storage.SafHelper
@@ -1103,8 +1104,10 @@ object VoipRecordingCoordinator {
         // The capture's own account of how its two sides lined up, written to the APP's log — the
         // same route the carrier path uses — so a report carries it even when the host's ring was
         // not on for the whole call. Issue #41 is diagnosed from this line. Empty from an older host.
-        runCatching { RecorderConnection.service?.captureDiagnostics() }
+        val captureHealth = runCatching { RecorderConnection.service?.captureDiagnostics() }
+            .onFailure { AppLogger.w(TAG, "Could not read the app-call capture health: ${it.message}") }
             .getOrNull()
+        captureHealth
             ?.takeIf { it.isNotBlank() }
             ?.let {
                 AppLogger.i(TAG, "App-call capture health: $it")
@@ -1142,6 +1145,20 @@ object VoipRecordingCoordinator {
         }
         if (!wroteAnything) {
             AppLogger.w(TAG, "VoIP capture never started — nothing was recorded (the recorder's reason is logged above)")
+            // Review N21: a vivo phone lost 23 app calls this way with no word to the user and no reason in the
+            // always-on log. The recorder's reason, when it sent one, goes there; and only a reason on a call long
+            // enough to be one is told to the user, as for any miss.
+            val reason = VoipStartFailure.reasonOf(captureHealth)
+            CallEndLog.record(
+                context,
+                "app call capture did not start in the recorder: " +
+                    (reason ?: "no reason from the recorder (an older recorder, a call that ended first, or a recorder that died)"),
+            )
+            if (VoipMissPolicy.tellStartFailure(reason, recordedMs)) {
+                reportMissed(context, R.string.voip_missed_capture_failed, null)
+            } else {
+                AppLogger.i(TAG, "Not telling the user: ${if (reason == null) "the recorder gave no reason" else "the call was under ${VoipStubPolicy.TOO_SHORT_TO_JUDGE_MS} ms"}")
+            }
         } else if (!farHeard) {
             logOneSidedDiagnostics()
             AppLogger.w(TAG, "VoIP recording captured only your side — the other app blocks capture")

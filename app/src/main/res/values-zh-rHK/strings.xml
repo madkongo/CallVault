@@ -845,6 +845,7 @@
     <string name="voip_missed_label">應用通話</string>
     <string name="voip_missed_no_folder">一通應用通話未被錄製 — 錄音資料夾缺失或無法寫入。請在設定中重新選擇。</string>
     <string name="voip_missed_not_ready">一通應用通話未被錄製 — CallVault 未能及時就緒。這可能出現在通話結束後的短時間內。下一通通話應可正常錄製。</string>
+    <string name="voip_missed_capture_failed">一通應用通話未被錄製 — 錄音器無法在此手機上開啟通話音訊。如果再次發生，請在設定中分享偵錯報告。</string>
     <string name="voip_one_sided_warning">那通應用內通話只錄到了你這一方——對方應用不允許捕獲其通話音頻。</string>
     <string name="voip_one_sided_warning_vivo">該應用通話僅錄下了你這一方。在 vivo 手機上，打開“錄音機”應用 → 應用內通話錄音並開啓（同時開啓自動開始錄音），即可同時錄下對方。</string>
     <string name="voip_one_sided_warning_vivo_overseas">該應用通話僅錄下了你這一方。這台 vivo 手機不允許應用在應用通話中錄製對方的聲音，且其“錄音機”應用沒有可開啓此功能的選項。普通電話通話仍會錄下雙方。</string>

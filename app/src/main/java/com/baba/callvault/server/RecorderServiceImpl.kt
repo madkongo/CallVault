@@ -60,7 +60,8 @@ open class RecorderServiceImpl(private val apkPath: String) : IRecorderService.S
      * [stopRecording] has already discarded the session.
      */
     @Volatile private var lastSpeakerTurns: String = ""
-    @Volatile private var lastCaptureDiagnostics: String = ""
+    /** What [captureDiagnostics] answers: the last capture's health, or why the last app-call start failed. */
+    private val captureHealth = CaptureDiagnosticsSlot()
 
     /**
      * The VoIP session: paused through it, and kept afterwards so the app can ask whether the far party was audible.
@@ -175,7 +176,8 @@ open class RecorderServiceImpl(private val apkPath: String) : IRecorderService.S
                 AppLogger.w(TAG, "Could not read speaker turns: ${it.message}")
                 ""
             }
-            lastCaptureDiagnostics = runCatching { session?.captureDiagnostics().orEmpty() }.getOrElse { "" }
+            // A stop that finds no session (the app stopped while a VoIP start was still failing) keeps that reason.
+            captureHealth.sessionEnded(session)
             session = null
             done.countDown()
         }
@@ -279,7 +281,7 @@ open class RecorderServiceImpl(private val apkPath: String) : IRecorderService.S
      */
     override fun speakerTurns(): String = lastSpeakerTurns
 
-    override fun captureDiagnostics(): String = lastCaptureDiagnostics
+    override fun captureDiagnostics(): String = captureHealth.value
 
     override fun disarmVoipCapture() {
         AppLogger.i(TAG, "disarmVoipCapture requested")
@@ -315,15 +317,23 @@ open class RecorderServiceImpl(private val apkPath: String) : IRecorderService.S
         // So voipFarPartyHeard can never answer for a previous call if this one fails to open, and so a pause the
         // app sends before the worker has built the session is queued for it (C49).
         voipSlot.beginStart()
+        // Nothing an earlier call left may be read as this call's (review N21).
+        captureHealth.startAccepted()
         // Heavy setup off the binder thread, matching startRecording.
         workerHandler.post {
-            val active = runCatching {
+            val started = runCatching {
                 // Published with any queued pause applied before it starts (review C49).
                 voipSlot.publishThenStart(VoipCaptureSession(codecEnum, bitRate, outFd, keepStereo = stereo)) { it.start() }
-            }.onFailure { AppLogger.e(TAG, "startVoipRecording failed: ${it.message}", it) }.getOrNull()
+            }.onFailure { AppLogger.e(TAG, "startVoipRecording failed: ${it.message}", it) }
+            val active = started.getOrNull()
             if (active != null) {
                 session = active
             } else {
+                // The app was already told "started"; this is how it learns otherwise when the call ends (review N21).
+                // A stop arriving meanwhile finds no session and leaves it (CaptureDiagnosticsSlot.sessionEnded).
+                captureHealth.startFailed(
+                    started.exceptionOrNull() ?: IllegalStateException("the capture session returned nothing")
+                )
                 // Also when the session could not even be built: no pause stays queued for it.
                 voipSlot.withdraw()
                 runCatching { outFd.close() }

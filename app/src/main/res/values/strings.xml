@@ -186,6 +186,7 @@
     <string name="notif_voip_recording_title">Recording VoIP call</string>
     <string name="notif_voip_recording_text">CallVault is recording an app call.</string>
     <string name="voip_missed_not_ready">An app call was not recorded — CallVault was not ready in time. This can happen for a short while after a phone call ends. The next call should record normally.</string>
+    <string name="voip_missed_capture_failed">An app call was not recorded — the recorder could not open the call audio on this phone. If it happens again, please share a debug report from Settings.</string>
     <string name="voip_missed_no_folder">An app call was not recorded — the recordings folder is missing or cannot be written to. Choose it again in Settings.</string>
     <string name="voip_missed_label">App call</string>
     <string name="voip_one_sided_warning">Only your side of that app call was recorded — the other app does not allow its call audio to be captured.</string>

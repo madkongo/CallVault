@@ -13,6 +13,7 @@ import android.content.AttributionSource
 import android.content.Context
 import android.content.ContextWrapper
 import android.os.Build
+import android.os.Process
 import androidx.annotation.RequiresApi
 import com.baba.callvault.utils.AppLogger
 
@@ -40,10 +41,25 @@ internal object ShellApplication {
     @Volatile
     private var installed = false
 
-    /** @return true when `ActivityThread.currentApplication()` now returns a shell Application. */
+    /** Set by the first successful [install]; false keeps the attribution Honor's path shipped with (uid 2000). */
+    @Volatile
+    private var toProcessUid = false
+
+    /** Honor MagicOS (#53): the attribution exactly as it shipped. */
+    fun install(): Boolean = install(attributeToProcessUid = false)
+
+    /** vivo Android 17 (review N21): the attribution names the process's real uid. */
+    fun installForProcessUid(): Boolean = install(attributeToProcessUid = true)
+
+    /**
+     * @param attributeToProcessUid false (Honor's path) presents uid 2000 + the shell package, as before review N21;
+     *   true (the vivo path) presents the process's real uid. The first successful install decides, for the process.
+     * @return true when `ActivityThread.currentApplication()` now returns a shell Application.
+     */
     @Synchronized
-    fun install(): Boolean {
+    private fun install(attributeToProcessUid: Boolean): Boolean {
         if (installed) return true
+        toProcessUid = attributeToProcessUid
         return runCatching {
             val atCls = Class.forName("android.app.ActivityThread")
             val thread = atCls.getMethod("currentActivityThread").invoke(null) ?: newActivityThread(atCls)
@@ -76,8 +92,23 @@ internal object ShellApplication {
         override fun getOpPackageName(): String = SHELL_PACKAGE
         override fun getApplicationContext(): Context = this
 
+        /**
+         * Honor's path keeps scrcpy's FakeContext attribution (uid 2000 + shell package), as shipped. The vivo path
+         * (review N21) uses the process's real uid: a Shizuku server started with root runs this host as uid 0, and
+         * only the shell uid presents the shell package; any other uid presents none, which the AudioRecord
+         * constructor names "uid:<uid>", what that host presents today with no Context at all.
+         */
         @RequiresApi(Build.VERSION_CODES.S)
-        override fun getAttributionSource(): AttributionSource =
-            AttributionSource.Builder(SHELL_UID).setPackageName(SHELL_PACKAGE).build()
+        override fun getAttributionSource(): AttributionSource {
+            val (uid, pkg) = attributionFor(Process.myUid(), toProcessUid)
+            return AttributionSource.Builder(uid).setPackageName(pkg).build()
+        }
     }
+
+    /** The uid and package the attribution names. */
+    internal fun attributionFor(processUid: Int, toProcessUid: Boolean): Pair<Int, String?> =
+        if (toProcessUid) processUid to attributionPackageFor(processUid) else SHELL_UID to SHELL_PACKAGE
+
+    /** The package the attribution names for [uid]: the shell's for the shell uid, none for any other. */
+    internal fun attributionPackageFor(uid: Int): String? = if (uid == SHELL_UID) SHELL_PACKAGE else null
 }

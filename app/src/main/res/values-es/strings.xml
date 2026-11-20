@@ -847,6 +847,7 @@
     <string name="voip_missed_label">Llamada de app</string>
     <string name="voip_missed_no_folder">Una llamada de aplicación no se grabó — falta la carpeta de grabaciones o no se puede escribir en ella. Vuelve a elegirla en Ajustes.</string>
     <string name="voip_missed_not_ready">Una llamada de aplicación no se grabó — CallVault no estaba listo a tiempo. Puede ocurrir durante un rato después de terminar una llamada telefónica. La siguiente debería grabarse con normalidad.</string>
+    <string name="voip_missed_capture_failed">Una llamada de aplicación no se grabó — la grabadora no pudo abrir el audio de la llamada en este teléfono. Si vuelve a ocurrir, comparte un informe de depuración desde Ajustes.</string>
     <string name="voip_one_sided_warning">De esa llamada solo se grabó tu lado: la otra app no permite capturar el audio de sus llamadas.</string>
     <string name="voip_one_sided_warning_vivo">De esa llamada de app solo se grabó tu lado. En teléfonos vivo, abre la app Grabadora → Grabación de llamadas en apps y actívala (con Inicio automático) para grabar también a la otra persona.</string>
     <string name="voip_one_sided_warning_vivo_overseas">De esa llamada de app solo se grabó tu lado. Este teléfono vivo impide que las apps graben a la otra persona en llamadas de apps, y su app Grabadora no tiene ninguna opción para permitirlo. Las llamadas telefónicas normales se siguen grabando por ambos lados.</string>
