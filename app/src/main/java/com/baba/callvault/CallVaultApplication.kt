@@ -109,11 +109,6 @@ class CallVaultApplication : Application() {
                 .onFailure { AppLogger.w(TAG, "Could not restore held after-call questions: ${it.message}") }
         }.apply { isDaemon = true; name = "cv-after-call-restore" }.start()
 
-        // The ring listener that lets an incoming app call be told from an outgoing one (BabApps item 113).
-        Thread {
-            com.baba.callvault.services.recording.VoipRingListenerAccess.sync(applicationContext)
-        }.apply { isDaemon = true; name = "cv-ring-listener-access" }.start()
-
         // Two maintainer test switches were removed (BabApps item 126): clear what a phone stored for them.
         Thread {
             runCatching { AppPreferences(applicationContext).clearRetiredTestSwitches() }
@@ -230,6 +225,11 @@ class CallVaultApplication : Application() {
                 )
             }
         }.onFailure { AppLogger.w(TAG, "Capability reconcile failed: ${it.message}") }
+
+        // The ring listener that lets an incoming app call be told from an outgoing one (BabApps item 113).
+        // After the reconcile, so it never approves the listener for app calls the reconcile just turned off
+        // (review C19); queued off the main thread, since it may wait minutes for the recorder host.
+        com.baba.callvault.services.recording.VoipRingListenerAccess.requestSync(applicationContext)
 
         // In standalone mode, make sure no Shizuku user service is left running. One bound with
         // daemon(true) outlives the app and even survives an app update, so a phone that used Shizuku
