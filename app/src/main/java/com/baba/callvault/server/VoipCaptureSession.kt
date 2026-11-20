@@ -285,13 +285,17 @@ internal class VoipCaptureSession(
         }
     }
 
-    /** Whether the capture was ever paused (by the user or an answer hold); says how to read "nothing recorded". */
+    /**
+     * Whether the capture was ever paused (by the user or an answer hold); says how to read a silent far party. Set
+     * only after [pauseRequested] (review N20), so an encode that read it true before its pause check knows the
+     * pause had already begun: a chunk it then encodes comes after a resume, never from before the hold.
+     */
     @Volatile private var pauseSeen = false
 
     /** Pauses or resumes the encode. Safe to call when nothing is recording; it simply arms the flag. */
     fun setPaused(paused: Boolean) {
-        if (paused) pauseSeen = true
         pauseRequested.set(paused)
+        if (paused) pauseSeen = true
         AppLogger.i(TAG, "VoIP capture ${if (paused) "paused" else "resumed"} by the user")
     }
 
@@ -321,6 +325,8 @@ internal class VoipCaptureSession(
         val info = MediaCodec.BufferInfo()
         var muxerStarted = false
         var totalFrames = 0L
+        // Frames encoded after the first pause (review N20): zero with a pause means held to the end. Encode thread only.
+        var framesAfterResume = 0L
         var substituted = 0L
         // The file is a run of slots of real time — see SlotPairer for why arrival order is not.
         val pairer = SlotPairer(CHUNK_NANOS)
@@ -353,6 +359,8 @@ internal class VoipCaptureSession(
                 // pauses — but nothing reaches the encoder, the speaker detector or the frame count,
                 // so the paused stretch is simply absent from the file. Same result as the carrier
                 // path, reached without going anywhere near the microphone.
+                // Read before the pause check (review N20): see pauseSeen for why the order matters.
+                val afterAPause = pauseSeen
                 if (pauseRequested.get() || suspended.get()) continue
                 val fMix = farAligner.align(n, f)
                 var o = 0
@@ -401,7 +409,9 @@ internal class VoipCaptureSession(
                 enc.getInputBuffer(inIdx)!!.apply { clear(); put(buf, 0, len) }
                 enc.queueInputBuffer(inIdx, 0, len, totalFrames * 1_000_000L / SAMPLE_RATE, 0)
                 // 2 bytes per sample per channel; stereo output must count frames, not samples.
-                totalFrames += len / (2 * encodeChannels)
+                val chunkFrames = len / (2 * encodeChannels)
+                totalFrames += chunkFrames
+                if (afterAPause) framesAfterResume += chunkFrames
                 muxerStarted = drainEncoder(enc, mux, info, muxerStarted)
                 if (totalFrames >= nextSnapshotFrames) {
                     nextSnapshotFrames += SNAPSHOT_FRAMES
@@ -432,7 +442,7 @@ internal class VoipCaptureSession(
             syncSummary = ledger.summary(totalFrames, System.nanoTime() - startedNanos) +
                 " firstSecondPeak near=$firstSecNear far=$firstSecFar"
             AppLogger.i(TAG, syncSummary)
-            FarAudibilityLine.atEnd(farPartyHeard, totalFrames, pauseSeen)?.let {
+            FarAudibilityLine.atEnd(farPartyHeard, totalFrames, pauseSeen, framesAfterResume)?.let {
                 if (it.warn) AppLogger.w(TAG, it.text) else AppLogger.i(TAG, it.text)
             }
         } finally {

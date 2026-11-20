@@ -16,9 +16,12 @@ internal object FarAudibilityLine {
     const val NEVER_AUDIBLE =
         "Far party was never audible — this app blocks capture, or the OEM did not attach the call to our mix"
 
-    /** Review N20: a call held until answered and never answered encodes nothing, which says nothing about the mix. */
-    const val NOTHING_RECORDED_WHILE_HELD =
-        "Far party not judged: nothing was recorded while the capture was paused or held (an app call never answered)"
+    /**
+     * Review N20: a call held until answered and never answered says nothing about the mix. A slice from before the
+     * hold took effect may still be in the file (434 ms on the OP9, 2026-11-20); the far party is silent in it anyway.
+     */
+    const val HELD_TO_THE_END =
+        "Far party not judged: the capture was paused or held until the end, nothing recorded after it (an app call never answered)"
 
     /** Nothing encoded and no pause: the capture itself never got going, which says nothing about the app or the mix. */
     const val NOTHING_RECORDED =
@@ -26,12 +29,13 @@ internal object FarAudibilityLine {
 
     /**
      * Null when the far party was heard. [encodedFrames] is what reached the file; [pauseSeen] is whether the capture
-     * was paused (by the user or an answer hold) at any point.
+     * was paused (by the user or an answer hold) at any point; [framesAfterResume] is what reached the file after the
+     * first pause, so zero with a pause means it stayed paused to the end.
      */
-    fun atEnd(farPartyHeard: Boolean, encodedFrames: Long, pauseSeen: Boolean): Line? = when {
+    fun atEnd(farPartyHeard: Boolean, encodedFrames: Long, pauseSeen: Boolean, framesAfterResume: Long): Line? = when {
         farPartyHeard -> null
+        pauseSeen && framesAfterResume == 0L -> Line(warn = false, HELD_TO_THE_END)
         encodedFrames > 0L -> Line(warn = true, NEVER_AUDIBLE)
-        pauseSeen -> Line(warn = false, NOTHING_RECORDED_WHILE_HELD)
         else -> Line(warn = true, NOTHING_RECORDED)
     }
 }
