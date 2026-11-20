@@ -14,7 +14,8 @@ import com.baba.callvault.system.diagnostics.battery.BatteryCheckin.Row
  * Reads a batterystats checkin answer — the recorder's cut, or a raw dump from the app's ADB shell — into [BatteryUse].
  *
  * Field positions follow AOSP `BatteryStats.dumpCheckinLocked` (row format 9, report versions 35-36; the rows read
- * here have the same layout on Android 11 to 16, checked against the android11/12/13-release and main sources). A
+ * here have the same layout on Android 11 to 17: checked against the android11/12/13-release and main sources, and in
+ * real dumps from emulators of API 30-37 and an OP9 on Android 14). A
  * layout we have not seen — another row or report version, or a row shorter than the fields read from it — is named
  * in [BatteryUse.formatProblem], and the report then shows the numbers as unverified and gives no verdict. A
  * non-numeric field reads as zero or null rather than failing the whole section.
@@ -52,7 +53,12 @@ object BatteryUseParser {
     }
 
     private const val ROW_VERSION = 9
-    private val KNOWN_REPORT_VERSIONS = 35..36
+    /**
+     * Report versions SEEN in real dumps, nothing guessed: 35 on API 30, 31 and 33 and 36 on API 34-37 (Google
+     * emulator images, 2026-11-20, Android 17 included), 36 on the OP9 (OxygenOS, Android 14). Add one only from a
+     * real dump.
+     */
+    private val KNOWN_REPORT_VERSIONS = setOf(35, 36)
 
     /** The fewest fields each row type must have for the positions read here to exist. */
     private val MIN_FIELDS = mapOf(
