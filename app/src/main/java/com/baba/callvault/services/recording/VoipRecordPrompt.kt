@@ -62,6 +62,8 @@ object VoipRecordPrompt {
             if (appLabel.isNullOrBlank()) context.getString(R.string.voip_prompt_text)
             else context.getString(R.string.voip_prompt_text_named, appLabel)
 
+        // Without its channel (phone-call recording never ran) this prompt was silently dropped (review N22).
+        RecordingNotificationHelper.ensureChannels(context)
         val notification = NotificationCompat.Builder(context, RecordingNotificationHelper.CHANNEL_ID_SERVICE)
             .setSmallIcon(R.drawable.ic_mic)
             .setContentTitle(context.getString(R.string.voip_prompt_title))

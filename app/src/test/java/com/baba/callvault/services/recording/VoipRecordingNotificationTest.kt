@@ -60,6 +60,22 @@ class VoipRecordingNotificationTest {
         VoipRecordingNotification.show(context, appLabel)
     }
 
+    /** Review N22: on a phone that never recorded a phone call the recording channel did not exist yet. */
+    @Test
+    fun the_app_call_notice_has_its_channel_before_it_is_posted() {
+        RecordingNotificationHelper.resetEnsuredForTest()
+        manager().deleteNotificationChannel(RecordingNotificationHelper.CHANNEL_ID_SERVICE)
+        var channelAtPost: Any? = null
+        SharedStatusNotice.foregroundPoster = { n ->
+            channelAtPost = manager().getNotificationChannel(n.channelId)
+            true
+        }
+
+        postCall()
+
+        assertNotNull("the recording channel existed when the notice was posted", channelAtPost)
+    }
+
     @Test
     fun an_app_call_posts_one_notification_under_the_shared_id_and_claims_it() {
         postCall()

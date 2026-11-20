@@ -543,6 +543,9 @@ object AppLogger {
         // A force-stopped app hears no calls until it is opened again, and our own log just restarts (#71).
         writer.println("--- App stops and starts (Android's record, newest first) ---")
         com.baba.callvault.system.health.AppStopHistory.reportLines(context).forEach { writer.println(it) }
+        // A missing recording channel crashed every app call on a vivo (review N22); a blocked one hides the controls.
+        writer.println("--- Notification channels ---")
+        com.baba.callvault.system.health.NotificationChannelsReport.reportLines(context).forEach { writer.println(it) }
         writer.println("--- Recorder ---")
         writer.println("Binder connected: ${runCatching { RecorderConnection.isConnected }.getOrDefault(false)}")
         writer.println("Host uid: ${runCatching { RecorderConnection.service?.hostUid()?.toString() }.getOrNull() ?: "?"}")

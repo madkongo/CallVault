@@ -75,6 +75,10 @@ class CallVaultApplication : Application() {
         }
         AppLogger.init(applicationContext)
 
+        // The recording and error channels must exist before any app-call notice or alert uses them, including on a
+        // phone that never records a phone call (review N22: a missing channel crashed every app call on a vivo).
+        com.baba.callvault.services.recording.RecordingNotificationHelper.ensureChannels(applicationContext)
+
         // Hide Recordings is a property of the folder, and the folder can change under us: a settings
         // import, a wizard re-pick, a user deleting the marker by hand. Re-checking is one folder lookup.
         com.baba.callvault.system.storage.HideRecordings.applyAsync(applicationContext)

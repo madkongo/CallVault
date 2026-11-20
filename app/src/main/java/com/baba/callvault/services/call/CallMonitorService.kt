@@ -8,6 +8,7 @@
 
 package com.baba.callvault.services.call
 
+import com.baba.callvault.services.recording.ForegroundNoticeChannel
 import com.baba.callvault.services.recording.SharedStatusNotice
 import android.app.Notification
 import android.app.NotificationChannel
@@ -95,20 +96,32 @@ class CallMonitorService : Service() {
 
     override fun onCreate() {
         super.onCreate()
-        getSystemService(NotificationManager::class.java).createNotificationChannel(
-            NotificationChannel(CHANNEL_ID, getString(R.string.notif_readiness_channel), NotificationManager.IMPORTANCE_MIN).apply {
-                setSound(null, null)
-                setShowBadge(false)
-            },
-        )
+        ensureOwnChannel()
+    }
+
+    /**
+     * Creates this service's channel, or re-states it: idempotent, and it keeps whatever the user set on it. Run again
+     * before each foreground post of its own notice, since a channel can be deleted while the service lives, and a
+     * foreground notice on a missing channel crashes the app (review N22).
+     */
+    private fun ensureOwnChannel() {
+        runCatching {
+            getSystemService(NotificationManager::class.java).createNotificationChannel(
+                NotificationChannel(CHANNEL_ID, getString(R.string.notif_readiness_channel), NotificationManager.IMPORTANCE_MIN).apply {
+                    setSound(null, null)
+                    setShowBadge(false)
+                },
+            )
+        }.onFailure { AppLogger.e(TAG, "Could not create the readiness notification channel: ${it.javaClass.simpleName}: ${it.message}") }
     }
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
         val startedForeground = runCatching {
-            // Same shared notification as the keep-alive: if a call is being recorded, keep showing it.
+            // Same shared notification as the keep-alive: if a call is being recorded, keep showing it, unless its
+            // channel is missing (it would crash the app; review N22): then this service's own notice.
             startForeground(
                 NOTIF_ID,
-                SharedStatusNotice.contentForKeepAlive(buildNotification(RecorderConnection.isConnected)),
+                ForegroundNoticeChannel.noticeForStart(applicationContext, buildNotification(RecorderConnection.isConnected), ::ensureOwnChannel),
                 ServiceInfo.FOREGROUND_SERVICE_TYPE_SPECIAL_USE,
             )
         }.onFailure { AppLogger.e(TAG, "startForeground failed", it) }.isSuccess

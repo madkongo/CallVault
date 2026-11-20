@@ -44,6 +44,28 @@ class RecordingNotificationHelper(base: Context) {
         const val SERVICE_NOTIFICATION_ID = 1
         const val ERROR_NOTIFICATION_ID = 2
 
+        private val channelsEnsured = EnsureOnce()
+
+        /**
+         * Creates the recording and error channels if they are missing. Called at app start and before any notice
+         * that uses them is posted (review N22): until then they were created only by the phone-call service, so a
+         * phone that only records app calls never had them.
+         *
+         * Done once per process, since every Mark or Pause re-posts the app-call notice; [force] creates them again,
+         * for a foreground post that found one missing (a user or the phone can delete a channel while the app runs).
+         * A failed attempt is retried on the next call.
+         */
+        fun ensureChannels(context: Context, force: Boolean = false) {
+            channelsEnsured.run(force) {
+                runCatching { RecordingNotificationHelper(context).createNotificationChannels() }
+                    .onFailure { com.baba.callvault.utils.AppLogger.e("CV:RecNotif", "Could not create the recording notification channels: ${it.javaClass.simpleName}: ${it.message}") }
+                    .isSuccess
+            }
+        }
+
+        @androidx.annotation.VisibleForTesting
+        fun resetEnsuredForTest() = channelsEnsured.reset()
+
         /**
          * The two-pulse buzz every recording state change uses: started, paused, resumed, ended.
          *
