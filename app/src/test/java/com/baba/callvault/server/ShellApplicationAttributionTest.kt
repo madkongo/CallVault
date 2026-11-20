@@ -35,3 +35,26 @@ class ShellApplicationAttributionTest {
         assertNull(ShellApplication.attributionPackageFor(1000))
     }
 }
+
+/**
+ * The Honor path (#53, `startWithRepair`) keeps the attribution it shipped with: uid 2000 + the shell package, whatever
+ * the process uid. Only the vivo repair path (review N21) asks for the process's real uid. Owner rule: a phone that
+ * works today behaves exactly as today.
+ */
+class ShellApplicationAttributionModeTest {
+
+    @Test
+    fun honor_path_keeps_shell_uid_and_package_even_as_root() {
+        assertEquals(2000 to "com.android.shell", ShellApplication.attributionFor(processUid = 0, toProcessUid = false))
+    }
+
+    @Test
+    fun vivo_path_as_root_presents_uid_0_without_package() {
+        assertEquals(0 to null, ShellApplication.attributionFor(processUid = 0, toProcessUid = true))
+    }
+
+    @Test
+    fun vivo_path_as_shell_presents_the_shell() {
+        assertEquals(2000 to "com.android.shell", ShellApplication.attributionFor(processUid = 2000, toProcessUid = true))
+    }
+}

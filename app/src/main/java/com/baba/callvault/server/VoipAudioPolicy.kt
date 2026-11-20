@@ -162,7 +162,7 @@ internal object VoipAudioPolicy {
                 policyCls.getMethod("createAudioRecordSink", mixCls).invoke(p, m) as AudioRecord?
             },
             bypass = { createSinkBypassingConstructor(m) },
-            repair = ShellApplication::install,
+            repair = ShellApplication::installForProcessUid,
             onOtherFailure = { error -> AppLogger.e(TAG, "createSink failed: ${error.message}", error) },
         )
         if (ar == null || ar.state != AudioRecord.STATE_INITIALIZED) {

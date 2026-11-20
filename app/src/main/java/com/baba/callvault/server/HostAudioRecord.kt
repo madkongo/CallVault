@@ -49,7 +49,7 @@ internal object HostAudioRecord {
                     bufferSizeInBytes = bufferBytes,
                 )
             },
-            repair = ShellApplication::install,
+            repair = ShellApplication::installForProcessUid,
             onOtherFailure = { error ->
                 AppLogger.w(TAG, "$what: AudioRecord(source=$source) threw: ${error.javaClass.simpleName}: ${error.message}")
             },
