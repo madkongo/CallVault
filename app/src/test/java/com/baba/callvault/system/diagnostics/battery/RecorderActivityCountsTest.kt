@@ -10,6 +10,7 @@ package com.baba.callvault.system.diagnostics.battery
 
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNull
+import org.junit.Assert.assertTrue
 import org.junit.Test
 import java.util.TimeZone
 
@@ -43,6 +44,22 @@ class RecorderActivityCountsTest {
     fun `the log's first entry is reported so a short log is not mistaken for a quiet one`() {
         assertEquals(since - 1_000, RecorderActivityCounts.count(log, since, utc).logStartMillis)
         assertNull(RecorderActivityCounts.count(emptyList(), since, utc).logStartMillis)
+    }
+
+    @Test
+    fun `a plain hyphen instead of the em dash is still counted`() {
+        val lines = listOf("2026-11-20 08:00:02.000 [I] CV:DaemonKeepAlive: keep-alive: daemon down - relaunching (force=false offline=false)")
+        assertEquals(1, RecorderActivityCounts.count(lines, since, utc).relaunches)
+    }
+
+    @Test
+    fun `the log call sites write the very markers that are counted`() {
+        // Shared constants, so rewording a log line cannot silently zero these counts.
+        val launcher = java.io.File("src/main/java/com/baba/callvault/server/RecorderServerLauncher.kt").readText()
+        val keepAlive = java.io.File("src/main/java/com/baba/callvault/services/recording/DaemonKeepAliveService.kt").readText()
+        assertTrue(launcher.contains("RecorderLogMarkers.LAUNCH"))
+        assertEquals(2, Regex("RecorderLogMarkers\\.RELAUNCH\\b").findAll(keepAlive).count())
+        assertTrue(keepAlive.contains("RecorderLogMarkers.ADB_REBUILD"))
     }
 
     @Test

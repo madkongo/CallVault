@@ -8,6 +8,7 @@
 
 package com.baba.callvault.system.diagnostics.battery
 
+import com.baba.callvault.system.diagnostics.RecorderLogMarkers
 import java.text.ParseException
 import java.text.SimpleDateFormat
 import java.util.Locale
@@ -29,8 +30,11 @@ object RecorderActivityCounts {
     data class LogCounts(val launchAttempts: Int, val relaunches: Int, val adbRebuilds: Int, val logStartMillis: Long?)
 
     private const val STAMP_LENGTH = 23
-    private const val LAUNCHER = "CV:RecorderLauncher: "
-    private const val KEEP_ALIVE = "CV:DaemonKeepAlive: "
+
+    /** The word alone, whatever punctuation precedes it (the call sites use an em dash; a hyphen must count too). */
+    private val RELAUNCH_WORD = Regex("\\b" + RecorderLogMarkers.RELAUNCH + "\\b")
+    private const val LAUNCHER = RecorderLogMarkers.LAUNCHER_TAG + ": "
+    private const val KEEP_ALIVE = RecorderLogMarkers.KEEP_ALIVE_TAG + ": "
 
     /** Counts over [entries] (debug-log entries, `yyyy-MM-dd HH:mm:ss.SSS [L] TAG: message`) at or after [sinceMillis]. */
     fun count(entries: List<String>, sinceMillis: Long?, zone: TimeZone = TimeZone.getDefault()): LogCounts {
@@ -38,9 +42,9 @@ object RecorderActivityCounts {
         val timed = entries.mapNotNull { entry -> timeOf(entry, format)?.let { it to entry } }
         val inPeriod = timed.filter { (time, _) -> sinceMillis == null || time >= sinceMillis }.map { it.second }
         return LogCounts(
-            launchAttempts = inPeriod.count { it.contains(LAUNCHER) && it.contains("launching recorder daemon") },
-            relaunches = inPeriod.count { it.contains(KEEP_ALIVE) && it.contains("— relaunching") },
-            adbRebuilds = inPeriod.count { it.contains(KEEP_ALIVE) && it.contains("rebuilding the ADB connection") },
+            launchAttempts = inPeriod.count { it.contains(LAUNCHER) && it.contains(RecorderLogMarkers.LAUNCH) },
+            relaunches = inPeriod.count { it.contains(KEEP_ALIVE) && RELAUNCH_WORD.containsMatchIn(it) },
+            adbRebuilds = inPeriod.count { it.contains(KEEP_ALIVE) && it.contains(RecorderLogMarkers.ADB_REBUILD) },
             logStartMillis = timed.minOfOrNull { it.first },
         )
     }
