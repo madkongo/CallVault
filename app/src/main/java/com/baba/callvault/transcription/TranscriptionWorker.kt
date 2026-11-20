@@ -54,6 +54,13 @@ class TranscriptionWorker(
         val started = SystemClock.elapsedRealtime()
         val journal = { line: String -> com.baba.callvault.system.storage.DriveCopyJournal.record(applicationContext, line) }
         journal("transcription run START (attempt ${runAttemptCount + 1}, userRequested=${inputData.getBoolean(KEY_USER_REQUESTED, false)}, named=${inputData.getString(KEY_DISPLAY_NAME) != null})")
+        // An after-call run is its own unique work (review C124), so two runs can now be scheduled at once;
+        // the gate keeps an unattended one from decoding on top of another. Refused means try again soon.
+        val kind = runKind()
+        if (!TranscriptionRunGate.tryEnter(kind)) {
+            journal("transcription run DEFERRED: another transcription is running (kind=$kind)")
+            return retryLater("another transcription is running")
+        }
         return try {
             val result = runBatch()
             journal("transcription run END ${result.javaClass.simpleName} after ${(SystemClock.elapsedRealtime() - started) / 1000}s")
@@ -64,7 +71,16 @@ class TranscriptionWorker(
         } catch (t: Throwable) {
             journal("transcription run CRASHED after ${(SystemClock.elapsedRealtime() - started) / 1000}s: ${t.javaClass.simpleName}: ${t.message}")
             throw t
+        } finally {
+            TranscriptionRunGate.leave(kind)
         }
+    }
+
+    /** What this run is, for [TranscriptionRunGate]: a tap, an unattended after-call run, or a queue drain. */
+    private fun runKind(): TranscriptionRunGate.Kind = when {
+        inputData.getBoolean(KEY_USER_REQUESTED, false) -> TranscriptionRunGate.Kind.TAP
+        inputData.getString(KEY_DISPLAY_NAME) != null -> TranscriptionRunGate.Kind.AFTER_CALL
+        else -> TranscriptionRunGate.Kind.SWEEP
     }
 
     private suspend fun runBatch(): Result = withContext(Dispatchers.IO) {

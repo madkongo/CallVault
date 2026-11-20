@@ -10,6 +10,7 @@ package com.baba.callvault.transcription
 
 import android.content.Context
 import android.os.BatteryManager
+import androidx.work.BackoffPolicy
 import androidx.work.Constraints
 import androidx.work.ExistingPeriodicWorkPolicy
 import androidx.work.ExistingWorkPolicy
@@ -45,6 +46,9 @@ object TranscriptionScheduler {
     /** Unique name for a user-requested run, so repeated taps do not stack up duplicate work. */
     const val MANUAL_WORK_NAME = "cv_transcription_now"
 
+    /** Unique-name prefix of an after-call run; the recording's display name follows (review C124). */
+    const val AFTER_CALL_WORK_PREFIX = "cv_transcription_after_call:"
+
     /** Unique name for the one-time retry a periodic sweep asks for instead of returning retry (review N36). */
     const val SWEEP_RETRY_WORK_NAME = "cv_transcription_sweep_retry"
 
@@ -56,6 +60,9 @@ object TranscriptionScheduler {
 
     /** Wait before the sweep's one-time retry; WorkManager's own backoff takes over if that run retries too. */
     private const val SWEEP_RETRY_DELAY_MINUTES = 15L
+
+    /** Linear back-off of an after-call run that had to defer to another run: asked again every minute. */
+    private const val AFTER_CALL_BACKOFF_MINUTES = 1L
 
     private const val TAG = "CV:TranscriptionScheduler"
     private const val DAILY_PERIOD_HOURS = 24L
@@ -153,7 +160,28 @@ object TranscriptionScheduler {
         /** A per-run engine (#72 "transcribe again"); null uses the setting. Only reaches a named recording. */
         service: TranscriptionService? = null,
     ) {
-        val request = OneTimeWorkRequestBuilder<TranscriptionWorker>()
+        val request = oneTimeRequest(context, displayName, requiresCharging, language, userRequested, service)
+
+        // APPEND rather than KEEP: two different recordings tapped in a row must both be transcribed,
+        // while the queue-draining variant still cannot run twice at once.
+        WorkManager.getInstance(context).enqueueUniqueWork(
+            MANUAL_WORK_NAME,
+            ExistingWorkPolicy.APPEND_OR_REPLACE,
+            request
+        )
+        AppLogger.i(TAG, "Transcription requested (${displayName ?: "whole queue"}).")
+    }
+
+    private fun oneTimeRequest(
+        context: Context,
+        displayName: String?,
+        requiresCharging: Boolean,
+        language: String?,
+        userRequested: Boolean,
+        service: TranscriptionService?,
+        afterCall: Boolean = false,
+    ): androidx.work.OneTimeWorkRequest =
+        OneTimeWorkRequestBuilder<TranscriptionWorker>()
             .apply {
                 if (displayName != null) {
                     setInputData(
@@ -176,18 +204,9 @@ object TranscriptionScheduler {
                         .build()
                 )
                 addTag(TAG_RUN)
+                if (afterCall) setBackoffCriteria(BackoffPolicy.LINEAR, AFTER_CALL_BACKOFF_MINUTES, TimeUnit.MINUTES)
             }
             .build()
-
-        // APPEND rather than KEEP: two different recordings tapped in a row must both be transcribed,
-        // while the queue-draining variant still cannot run twice at once.
-        WorkManager.getInstance(context).enqueueUniqueWork(
-            MANUAL_WORK_NAME,
-            ExistingWorkPolicy.APPEND_OR_REPLACE,
-            request
-        )
-        AppLogger.i(TAG, "Transcription requested (${displayName ?: "whole queue"}).")
-    }
 
     /**
      * The sweep's retry, as one-time work. A periodic worker that returns retry runs on WorkManager's
@@ -271,7 +290,16 @@ object TranscriptionScheduler {
             "Queueing $displayName: the call just ended" +
                 if (requiresCharging) " (waits for a charger)" else ""
         )
-        runNow(context, displayName, requiresCharging)
+        // Its own unique work, not the chain a tap uses: an after-call run waiting for a charger must never
+        // be the prerequisite of a tapped Transcribe, and Stop must not silently drop it (review C124).
+        // KEEP: the same call queued twice is one run. The worker defers to any run already going
+        // ([TranscriptionRunGate]); a short linear back-off keeps that wait short.
+        val request = oneTimeRequest(context, displayName, requiresCharging, null, false, null, afterCall = true)
+        WorkManager.getInstance(context).enqueueUniqueWork(
+            AFTER_CALL_WORK_PREFIX + displayName,
+            ExistingWorkPolicy.KEEP,
+            request,
+        )
     }
 
     /** The constraints for one run under the current where-to-transcribe settings. */

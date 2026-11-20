@@ -163,4 +163,50 @@ class TranscriptionSchedulerTest {
         assertTrue(base != TranscriptionScheduler.signature(2, 0, false, androidx.work.NetworkType.NOT_REQUIRED))
         assertTrue(base != TranscriptionScheduler.signature(2, 0, true, androidx.work.NetworkType.UNMETERED))
     }
+
+    // -- C124: an after-call run is its own work, not a link in the tap chain ---------------------
+
+    private fun manualInfos() =
+        WorkManager.getInstance(context).getWorkInfosForUniqueWork(TranscriptionScheduler.MANUAL_WORK_NAME).get()
+
+    @Test
+    fun an_after_call_run_waiting_for_a_charger_does_not_block_a_tapped_run() {
+        val prefs = AppPreferences(context)
+        prefs.setTranscriptionMode(TranscriptionMode.AFTER_EACH_CALL)
+        prefs.setTranscriptionRequiresCharging(true)
+
+        TranscriptionScheduler.transcribeAfterCallIfEnabled(context, "call1.ogg")
+        TranscriptionScheduler.runNow(context, "tapped.ogg", userRequested = true)
+
+        val tapped = manualInfos().single()
+        // Not BLOCKED behind the charger-bound after-call run.
+        assertEquals(WorkInfo.State.ENQUEUED, tapped.state)
+        val afterCall = WorkManager.getInstance(context)
+            .getWorkInfosForUniqueWork(TranscriptionScheduler.AFTER_CALL_WORK_PREFIX + "call1.ogg").get().single()
+        assertTrue(afterCall.tags.contains(TranscriptionScheduler.TAG_RUN))
+    }
+
+    @Test
+    fun the_same_call_queued_twice_is_one_after_call_run() {
+        AppPreferences(context).setTranscriptionMode(TranscriptionMode.AFTER_EACH_CALL)
+
+        TranscriptionScheduler.transcribeAfterCallIfEnabled(context, "call1.ogg")
+        TranscriptionScheduler.transcribeAfterCallIfEnabled(context, "call1.ogg")
+
+        val infos = WorkManager.getInstance(context)
+            .getWorkInfosForUniqueWork(TranscriptionScheduler.AFTER_CALL_WORK_PREFIX + "call1.ogg").get()
+        assertEquals(1, infos.size)
+    }
+
+    @Test
+    fun stopping_also_cancels_a_queued_after_call_run() {
+        AppPreferences(context).setTranscriptionMode(TranscriptionMode.AFTER_EACH_CALL)
+        TranscriptionScheduler.transcribeAfterCallIfEnabled(context, "call1.ogg")
+
+        runBlocking { TranscriptionScheduler.stopNow(context) }
+
+        val infos = WorkManager.getInstance(context)
+            .getWorkInfosForUniqueWork(TranscriptionScheduler.AFTER_CALL_WORK_PREFIX + "call1.ogg").get()
+        assertTrue(infos.all { it.state.isFinished })
+    }
 }

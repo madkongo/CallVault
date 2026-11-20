@@ -42,6 +42,7 @@ class TranscriptionWorkerPeriodicTest {
 
     @Before
     fun setUp() {
+        TranscriptionRunGate.reset()
         WorkManagerTestInitHelper.initializeTestWorkManager(
             context,
             Configuration.Builder().setMinimumLoggingLevel(Log.DEBUG).setExecutor(SynchronousExecutor()).build()
@@ -102,5 +103,24 @@ class TranscriptionWorkerPeriodicTest {
                 !(code.contains("isPeriodic") || source[i - 1].contains("!isPeriodic"))
         }
         assertTrue("unguarded Result.retry() at lines ${offenders.map { it.index + 1 }}", offenders.isEmpty())
+    }
+
+    @Test
+    fun an_after_call_run_defers_while_another_run_holds_the_gate() {
+        assertTrue(TranscriptionRunGate.tryEnter(TranscriptionRunGate.Kind.TAP))
+
+        val result = runBlocking {
+            TestListenableWorkerBuilder<TranscriptionWorker>(context)
+                .setInputData(androidx.work.workDataOf(TranscriptionWorker.KEY_DISPLAY_NAME to "call.ogg"))
+                .build().doWork()
+        }
+
+        assertEquals(ListenableWorker.Result.retry(), result)
+    }
+
+    @Test
+    fun a_finished_run_frees_the_gate() {
+        run()
+        assertTrue(TranscriptionRunGate.tryEnter(TranscriptionRunGate.Kind.AFTER_CALL))
     }
 }
