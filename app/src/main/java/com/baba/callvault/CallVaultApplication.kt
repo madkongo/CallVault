@@ -287,7 +287,8 @@ class CallVaultApplication : Application() {
                     SilentFailureNotifier.checkSyncHealth(applicationContext)
                 }
                 // A recording left behind by a call the phone cut off, e.g. by killing this process mid-call.
-                CutOffRescueWorker.schedule(applicationContext)
+                // Only when something is staged (review R17); call end queues it again.
+                CutOffRescueWorker.scheduleAtStartIfNeeded(applicationContext)
             }.apply { isDaemon = true }.start()
         }
     }
