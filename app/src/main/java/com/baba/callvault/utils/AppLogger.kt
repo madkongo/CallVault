@@ -484,8 +484,27 @@ object AppLogger {
         }
     }
 
+    /**
+     * Asks [drainOnce] until it returns nothing, at most [maxRounds] times, and returns every line it handed over.
+     * A call that throws ends the loop but never costs the batches already taken: they are returned and the failure
+     * is logged (C138). Also what "delete the log" uses to empty the recorder's copy.
+     */
+    internal fun drainAll(drainOnce: () -> Array<String>, maxRounds: Int = MAX_DRAIN_ROUNDS): List<String> {
+        val all = ArrayList<String>()
+        try {
+            repeat(maxRounds) {
+                val batch = drainOnce()
+                if (batch.isEmpty()) return all
+                all += batch
+            }
+        } catch (e: Exception) {
+            w(TAG, "Recorder host diagnostics cut short after ${all.size} lines: ${e.message}")
+        }
+        return all
+    }
+
     /** Upper bound on batches asked of the recorder in one export: 4,000 lines never need more. */
-    private const val MAX_DRAIN_ROUNDS = 40
+    internal const val MAX_DRAIN_ROUNDS = 40
 
     /** Length of the "yyyy-MM-dd HH:mm:ss.SSS" prefix every entry starts with, used to sort by time. */
     private const val TIMESTAMP_LENGTH = 23
@@ -520,14 +539,7 @@ object AppLogger {
         // a public issue. One rule for all three sources, applied where they enter the report.
         // In batches: the recorder hands over a bounded slice per call (C138), so ask until it has nothing more. An
         // older recorder returns everything at once and then nothing, which ends the loop the same way.
-        val service = RecorderConnection.service
-        val all = ArrayList<String>()
-        if (service != null) repeat(MAX_DRAIN_ROUNDS) {
-            val batch = service.drainDiagnostics()
-            if (batch.isEmpty()) return@runCatching all.map { redactForReport(it) }
-            all += batch
-        }
-        all.map { redactForReport(it) }
+        drainAll({ RecorderConnection.service?.drainDiagnostics() ?: emptyArray() }).map { redactForReport(it) }
     }.onFailure {
         w(TAG, "Could not read the recorder host's diagnostics: ${it.message}")
     }.getOrDefault(emptyList())

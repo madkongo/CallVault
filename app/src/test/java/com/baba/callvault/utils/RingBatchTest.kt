@@ -47,4 +47,30 @@ class RingBatchTest {
         assertEquals(1_000, first[0].length)
         assertEquals(listOf("next"), AppLogger.takeBatch(ring, 1_000))
     }
+
+    @Test
+    fun `drainAll asks until the recorder has nothing and returns every batch`() {
+        val batches = ArrayDeque(listOf(arrayOf("a", "b"), arrayOf("c"), emptyArray()))
+        val got = AppLogger.drainAll({ batches.removeFirst() }, maxRounds = 10)
+        assertEquals(listOf("a", "b", "c"), got)
+        assertTrue(batches.isEmpty())
+    }
+
+    @Test
+    fun `drainAll keeps the batches already taken when a later call throws`() {
+        var calls = 0
+        val got = AppLogger.drainAll({
+            calls++
+            if (calls == 3) throw IllegalStateException("binder died")
+            arrayOf("batch$calls")
+        }, maxRounds = 10)
+        assertEquals(listOf("batch1", "batch2"), got)
+    }
+
+    @Test
+    fun `drainAll stops at the round limit`() {
+        var calls = 0
+        AppLogger.drainAll({ calls++; arrayOf("x") }, maxRounds = 5)
+        assertEquals(5, calls)
+    }
 }
