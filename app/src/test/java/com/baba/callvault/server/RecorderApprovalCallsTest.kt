@@ -1,6 +1,7 @@
 package com.baba.callvault.server
 
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertSame
 import org.junit.Assert.assertTrue
 import org.junit.Test
 
@@ -34,5 +35,16 @@ class RecorderApprovalCallsTest {
 
         assertEquals(KeptSwitchOutcome.APPROVAL_FAILED, KeptSwitchResult.decode(answer)?.outcome)
         assertTrue(logged.single(), logged.single().contains("ExceptionInInitializerError, caused by PatternSyntaxException: Syntax error"))
+    }
+
+    @Test
+    fun `an out-of-memory or stack overflow is logged, then thrown on, never turned into FAILED`() {
+        val oom = OutOfMemoryError("heap")
+        val thrown = runCatching { calls.approveNetwork { throw oom } }.exceptionOrNull()
+        assertSame(oom, thrown)
+        val overflow = StackOverflowError()
+        assertSame(overflow, runCatching { calls.approveKeepingSwitch { throw overflow } }.exceptionOrNull())
+        assertEquals(2, logged.size)
+        assertTrue(logged[0], logged[0].contains("OutOfMemoryError: heap"))
     }
 }
