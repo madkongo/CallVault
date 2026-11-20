@@ -949,4 +949,5 @@
         <item quantity="other">Đã giữ bản ghi cũ trên điện thoại: Drive chưa sao lưu chúng (%1$d)</item>
     </plurals>
     <string name="notif_retention_waiting_for_drive_text">Cài đặt dọn dẹp sẽ xóa chúng khỏi điện thoại này, nhưng Google Drive chưa có bản sao được xác nhận nên chúng vẫn ở đây. Mở CallVault để kiểm tra cài đặt Drive.</string>
+    <string name="carrier_call_silent">This call was recorded as pure silence: neither side was heard. The file is kept in case you want to check it. If it keeps happening, tell us your phone model.</string>
 </resources>

@@ -957,4 +957,5 @@
         <item quantity="other">Stare nagrania zostają na telefonie: Drive jeszcze ich nie zapisał (%1$d)</item>
     </plurals>
     <string name="notif_retention_waiting_for_drive_text">Ustawienia czyszczenia usunęłyby je z tego telefonu, ale Google Drive nie ma jeszcze ich potwierdzonej kopii, więc zostają tutaj. Otwórz CallVault, aby sprawdzić ustawienia Drive.</string>
+    <string name="carrier_call_silent">This call was recorded as pure silence: neither side was heard. The file is kept in case you want to check it. If it keeps happening, tell us your phone model.</string>
 </resources>

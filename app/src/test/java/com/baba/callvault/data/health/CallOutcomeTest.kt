@@ -108,4 +108,28 @@ class CallOutcomeTest {
             CallOutcomes.of(98L, daemonDied = false, farPartyHeard = false)
         )
     }
+
+    @Test
+    fun `a full-length recording that was all silence is not verified (N28)`() {
+        assertEquals(
+            CallOutcome.Failed(FailureReason.NO_SOUND),
+            CallOutcomes.of(500_000L, daemonDied = false, farPartyHeard = null, heardAnything = false)
+        )
+    }
+
+    @Test
+    fun `an unmeasured carrier recording stays verified, silence is never assumed`() {
+        assertEquals(CallOutcome.Verified, CallOutcomes.of(500_000L, daemonDied = false, farPartyHeard = null, heardAnything = null))
+    }
+
+    @Test
+    fun `a measured recording that heard something is verified`() {
+        assertEquals(CallOutcome.Verified, CallOutcomes.of(500_000L, daemonDied = false, farPartyHeard = null, heardAnything = true))
+    }
+
+    @Test
+    fun `a dead daemon and a header-only file both outrank silence`() {
+        assertEquals(CallOutcome.Failed(FailureReason.DAEMON_DIED), CallOutcomes.of(500_000L, daemonDied = true, farPartyHeard = null, heardAnything = false))
+        assertEquals(CallOutcome.Failed(FailureReason.NO_AUDIO), CallOutcomes.of(98L, daemonDied = false, farPartyHeard = null, heardAnything = false))
+    }
 }

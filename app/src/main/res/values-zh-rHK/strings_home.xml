@@ -370,4 +370,5 @@
     <string name="share_import_kept_body">它已在你的錄音裏。你隨時可以從那裏開始轉寫。</string>
     <string name="share_import_kept_only_body">它正在“轉寫”中等待。你可以隨時從那裏開始轉寫，也可以在同一處刪除它。</string>
     <string name="share_import_no_model">還沒有安裝轉寫模型，CallVault 讀不了這個檔案。音頻已保存——請先在設定中安裝模型，再從“轉寫”中開始。</string>
+    <string name="home_health_failed_no_sound">Your last call was recorded as pure silence: neither side was heard. The file is kept.</string>
 </resources>

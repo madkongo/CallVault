@@ -1105,4 +1105,5 @@
         <item quantity="other">Παλιές ηχογραφήσεις κρατήθηκαν στο τηλέφωνο: το Drive δεν τις έχει αντιγράψει ακόμη (%1$d)</item>
     </plurals>
     <string name="notif_retention_waiting_for_drive_text">Οι ρυθμίσεις καθαρισμού θα τις διέγραφαν από αυτό το τηλέφωνο, αλλά το Google Drive δεν έχει ακόμη επιβεβαιωμένο αντίγραφο, γι\' αυτό μένουν εδώ. Ανοίξτε το CallVault για να ελέγξετε τις ρυθμίσεις του Drive.</string>
+    <string name="carrier_call_silent">This call was recorded as pure silence: neither side was heard. The file is kept in case you want to check it. If it keeps happening, tell us your phone model.</string>
 </resources>

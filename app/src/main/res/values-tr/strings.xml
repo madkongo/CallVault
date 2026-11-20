@@ -1047,4 +1047,5 @@
         <item quantity="other">Eski kayıtlar telefonda tutuldu: Drive henüz yedeklemedi (%1$d)</item>
     </plurals>
     <string name="notif_retention_waiting_for_drive_text">Temizlik ayarlarınız bunları bu telefondan silerdi, ancak Google Drive\'da henüz onaylanmış bir kopyaları yok, bu yüzden burada kalıyorlar. Drive ayarlarınızı kontrol etmek için CallVault\'u açın.</string>
+    <string name="carrier_call_silent">This call was recorded as pure silence: neither side was heard. The file is kept in case you want to check it. If it keeps happening, tell us your phone model.</string>
 </resources>

@@ -952,4 +952,5 @@
         <item quantity="other">Grabaciones antiguas guardadas en el teléfono: Drive aún no tiene copia (%1$d)</item>
     </plurals>
     <string name="notif_retention_waiting_for_drive_text">Tu limpieza automática las borraría de este teléfono, pero Google Drive aún no tiene una copia confirmada, así que se quedan aquí. Abre CallVault para revisar los ajustes de Drive.</string>
+    <string name="carrier_call_silent">This call was recorded as pure silence: neither side was heard. The file is kept in case you want to check it. If it keeps happening, tell us your phone model.</string>
 </resources>

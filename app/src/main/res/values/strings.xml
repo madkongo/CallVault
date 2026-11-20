@@ -1166,4 +1166,5 @@
         <item quantity="other">Old recordings kept on the phone: Drive hasn\'t backed them up yet (%1$d)</item>
     </plurals>
     <string name="notif_retention_waiting_for_drive_text">Your clean-up settings would remove these from this phone, but Google Drive has no confirmed copy of them yet, so they stay here. Open CallVault to check your Drive settings.</string>
+    <string name="carrier_call_silent">This call was recorded as pure silence: neither side was heard. The file is kept in case you want to check it. If it keeps happening, tell us your phone model.</string>
 </resources>

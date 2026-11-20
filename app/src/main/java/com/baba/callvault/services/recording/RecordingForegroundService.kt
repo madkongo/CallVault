@@ -29,10 +29,13 @@ import com.baba.callvault.data.calls.PhoneCallMatch
 import com.baba.callvault.data.calls.PhoneCallReader
 import com.baba.callvault.data.calls.SimLabels
 import com.baba.callvault.data.health.CallOutcomes
+import com.baba.callvault.data.health.CapturedCaptureLevels
 import com.baba.callvault.data.health.SetupFingerprint
 import com.baba.callvault.data.health.SetupHealthStore
 import com.baba.callvault.data.health.record
 import com.baba.callvault.integrations.adb.AdbShell
+import com.baba.callvault.server.CaptureLevels
+import com.baba.callvault.server.CaptureSilence
 import com.baba.callvault.server.RecorderBackend
 import com.baba.callvault.R
 import com.baba.callvault.system.LocalizedContext
@@ -525,6 +528,8 @@ class RecordingForegroundService : Service() {
             return
         }
 
+        // A capture starts: nothing an earlier one measured may judge this call (review N28).
+        CapturedCaptureLevels.clear()
         // 1. Create a new session (declared here to allow cleanup if startPipeline fails)
         val activeSession = newEngine()
         daemonLossNotified = false
@@ -738,6 +743,7 @@ class RecordingForegroundService : Service() {
         // Turns measured by the discarded capture must not label the new file. The clock and the
         // user's marks are left alone: marks keep their place on the call's timeline.
         CapturedSpeakerTurns.clear()
+        CapturedCaptureLevels.clear()
         val startedAt = old.currentStartedAt
         var fresh = startReplacement(active.metadata, startedAt, WifiCallRoute.Route.APP_CALL_MIX)
         val mix = fresh?.isAppCallMix == true
@@ -835,10 +841,14 @@ class RecordingForegroundService : Service() {
         // Release all resources held by the recording session, stopping the ADB transport and finalizing the recording file.
         activeSession.release()
         val farHeard = activeSession.farPartyHeard
+        // What the carrier capture measured (review N28): published by the handoff encoder, or read from the
+        // direct capture's diagnostics by release(). Null on the app-call capture, which has its own check, and
+        // on a path that measures nothing; both read as "not measured".
+        val levels = CapturedCaptureLevels.take().takeUnless { appCallMix }
         if (appCallMix || switchedToMix) {
             AppLogger.i(WifiCallRoute.TAG, "end appCallMix=$appCallMix farHeard=$farHeard bytes=${activeSession.lastCapturedByteCount}")
         }
-        val mix = MixResult(appCallMix, farHeard)
+        val mix = MixResult(appCallMix, farHeard, levels)
 
         // Read the URI AFTER release, never before. The destination document does not exist while the
         // call is in progress — the recording is staged to app-private storage and published by
@@ -852,7 +862,7 @@ class RecordingForegroundService : Service() {
         if (activeSession.waitingEmpty) {
             AppLogger.e(TAG, "The waiting recording is empty (0 bytes) — capture never ran. Notifying instead of keeping it.")
             notifyEmptyCapture()
-            recordHealth(0L, "the waiting recording", mix.healthFarHeard)
+            recordHealth(0L, "the waiting recording", mix.healthFarHeard, null)
         }
 
         // If the initialization metadata do not contain a phone number, we attempt to query the call log as a fallback.
@@ -1144,7 +1154,7 @@ class RecordingForegroundService : Service() {
             // notification ID — don't overwrite it (and double-vibrate) with the empty-file variant.
             notifyEmptyCapture()
             SafHelper.deleteDocument(doc, "the empty recording '$name'")
-            recordHealth(sizeBytes, name, mix.healthFarHeard)
+            recordHealth(sizeBytes, name, mix.healthFarHeard, mix.healthHeardAnything)
             return
         }
         warnIfCutShortByFullStorage(name)
@@ -1240,7 +1250,7 @@ class RecordingForegroundService : Service() {
                 if (isHeld) AfterCallDecision.ask(applicationContext, name)
             }
         }
-        recordHealth(sizeBytes, name, mix.healthFarHeard)
+        recordHealth(sizeBytes, name, mix.healthFarHeard, mix.healthHeardAnything)
         if (!isHeld) StorageRouter.route(applicationContext, uri, name, mimeType)
     }
 
@@ -1295,6 +1305,7 @@ class RecordingForegroundService : Service() {
 
     /** Both sides or a failure, never a quiet near-only success (#45), for a Wi-Fi call recorded as an app call. */
     private fun reportMixOutcome(name: String, mix: MixResult) {
+        reportCarrierLevels(name, mix)
         // The file is kept, as an app call that came out one-sided is, and the health card records it as one-sided.
         if (mix.appCallMix && mix.farHeard == false) {
             AppLogger.e(WifiCallRoute.TAG, "Wi-Fi call '$name': the other side was not heard — only the user's side is on it")
@@ -1303,6 +1314,29 @@ class RecordingForegroundService : Service() {
             // Unknown is not a success. A lost recorder has already said so, more usefully.
             AppLogger.e(WifiCallRoute.TAG, "Wi-Fi call '$name': could not check that the other side was heard")
             if (!daemonLossNotified) notificationHelper.showErrorNotification(getString(R.string.wifi_call_far_unknown))
+        }
+    }
+
+    /**
+     * Review N28: a carrier recording is judged on what the capture measured. One always-on line per call with the
+     * levels (so "why was my call flagged / not flagged" can be answered from a report), and a silent call is said so,
+     * never stored as a success. The file is kept: the user may still want to look at it.
+     */
+    private fun reportCarrierLevels(name: String, mix: MixResult) {
+        if (mix.appCallMix) return
+        val levels = mix.levels
+        if (levels == null) {
+            CallEndLog.record(applicationContext, "carrier capture levels: not measured for ${CallEndLog.safeName(name)} (a capture path that does not measure, or an older recorder)")
+            return
+        }
+        val verdict = mix.silence
+        CallEndLog.record(
+            applicationContext,
+            "carrier capture levels for ${CallEndLog.safeName(name)}: ${levels.line().removePrefix(CaptureLevels.PREFIX).trim()} " +
+                "silence_peak=${CaptureSilence.SILENCE_PEAK} judged_from_ms=${CaptureSilence.MIN_JUDGED_MILLIS} verdict=$verdict",
+        )
+        if (verdict == CaptureSilence.Verdict.NOTHING_HEARD && !daemonLossNotified) {
+            notificationHelper.showErrorNotification(getString(R.string.carrier_call_silent))
         }
     }
 
@@ -1346,7 +1380,7 @@ class RecordingForegroundService : Service() {
             )
             if (!kept) return@launch
             reportMixOutcome(name, mix)
-            recordHealth(sizeBytes, name, mix.healthFarHeard)
+            recordHealth(sizeBytes, name, mix.healthFarHeard, mix.healthHeardAnything)
             WaitingRecordings.ready(
                 applicationContext, file, mimeType, "phone call",
                 WaitingNote.Extras(isVoip = false, appCallMix = mix.appCallMix, direction = null),
@@ -1359,9 +1393,9 @@ class RecordingForegroundService : Service() {
      * written leaves the previous state rather than corrupting it. `farPartyHeard` is null for the
      * carrier capture, which cannot observe silence; the app-call capture of a Wi-Fi call can.
      */
-    private fun recordHealth(sizeBytes: Long, name: String, farPartyHeard: Boolean?) {
+    private fun recordHealth(sizeBytes: Long, name: String, farPartyHeard: Boolean?, heardAnything: Boolean?) {
         runCatching {
-            val outcome = CallOutcomes.of(sizeBytes, daemonLossNotified, farPartyHeard = farPartyHeard)
+            val outcome = CallOutcomes.of(sizeBytes, daemonLossNotified, farPartyHeard = farPartyHeard, heardAnything = heardAnything)
             SetupHealthStore(applicationContext)
                 .record(outcome, System.currentTimeMillis(), name, SetupFingerprint.of(appPreferences))
         }.onFailure { AppLogger.w(TAG, "Could not record setup health for '$name': ${it.message}") }
@@ -1417,7 +1451,18 @@ class RecordingForegroundService : Service() {
 }
 
 /** How a finished carrier recording was captured, for the end-of-call checks (#45). */
-private data class MixResult(val appCallMix: Boolean, val farHeard: Boolean?) {
+private data class MixResult(val appCallMix: Boolean, val farHeard: Boolean?, val levels: CaptureLevels? = null) {
     /** Only the app-call capture can tell whether the far side was heard; unknown counts as not. */
     val healthFarHeard: Boolean? get() = if (appCallMix) farHeard ?: false else null
+
+    /** Review N28: what the carrier capture's own loudness check made of the call. */
+    val silence: CaptureSilence.Verdict get() = if (appCallMix) CaptureSilence.Verdict.UNKNOWN else CaptureSilence.judge(levels)
+
+    /** False only when the check ran and every channel stayed silent; null when nothing was measured or judged. */
+    val healthHeardAnything: Boolean?
+        get() = when (silence) {
+            CaptureSilence.Verdict.SOUND -> true
+            CaptureSilence.Verdict.NOTHING_HEARD -> false
+            CaptureSilence.Verdict.UNKNOWN -> null
+        }
 }
