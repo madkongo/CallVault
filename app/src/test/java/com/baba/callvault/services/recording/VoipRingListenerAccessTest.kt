@@ -32,7 +32,11 @@ class VoipRingListenerAccessTest {
         private var waited = false
         override fun wanted() = if (waited && wantedAfterWait != null) wantedAfterWait else wantedNow
         override fun isGranted() = granted
-        override fun awaitHost(): Boolean { waited = true; return hostConnects }
+        override fun awaitHost(keepWaiting: () -> Boolean): Boolean {
+            waited = true
+            if (!keepWaiting()) return false
+            return hostConnects
+        }
         override fun setAccess(allow: Boolean): String {
             asked += allow
             if (commandWorks) granted = allow
@@ -102,5 +106,44 @@ class VoipRingListenerAccessTest {
         assertEquals(Outcome.NOTHING_TO_DO, VoipRingListenerAccess.syncWith(port))
         assertTrue(port.asked.isEmpty())
         assertFalse(port.approvedByUs)
+    }
+
+    @Test
+    fun `a sync superseded by a newer request stops waiting and changes nothing`() {
+        val port = FakePort(wantedNow = true, hostConnects = false)
+        assertEquals(Outcome.SUPERSEDED, VoipRingListenerAccess.syncWith(port, superseded = { true }))
+        assertTrue(port.asked.isEmpty())
+        assertFalse(port.approvedByUs)
+    }
+
+    /** Review of C19: a toggle storm while the host is down must not pile up minutes-long waits. */
+    @Test
+    fun `requests while one is queued collapse into that one`() {
+        val tasks = ArrayDeque<Runnable>()
+        var runs = 0
+        val syncer = VoipRingListenerAccess.CoalescingSyncer({ tasks.addLast(it) }) { runs++; Outcome.APPROVED }
+        repeat(10) { syncer.request() }
+        assertEquals(1, tasks.size)
+        tasks.removeFirst().run()
+        assertEquals(1, runs)
+    }
+
+    @Test
+    fun `a request made while a sync is waiting supersedes it and queues exactly one more`() {
+        val tasks = ArrayDeque<Runnable>()
+        var sawSuperseded: Boolean? = null
+        lateinit var syncer: VoipRingListenerAccess.CoalescingSyncer
+        syncer = VoipRingListenerAccess.CoalescingSyncer({ tasks.addLast(it) }) { superseded ->
+            // While this sync waits for the host, the user toggles three more times.
+            if (sawSuperseded == null) {
+                repeat(3) { syncer.request() }
+                sawSuperseded = superseded()
+                Outcome.SUPERSEDED
+            } else Outcome.APPROVED
+        }
+        syncer.request()
+        tasks.removeFirst().run()
+        assertEquals(true, sawSuperseded)
+        assertEquals(1, tasks.size)
     }
 }
