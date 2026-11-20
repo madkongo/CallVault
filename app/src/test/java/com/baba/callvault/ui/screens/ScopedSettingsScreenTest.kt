@@ -293,4 +293,22 @@ class ScopedSettingsScreenTest {
         assertTrue(bodyOf("VoipRecordingToggle", source("SettingsVoipRows.kt")).contains("VoipAutoStartRow()"))
         assertTrue(source("SettingsVoipRows.kt").contains("label: String = stringResource(R.string.settings_voip_auto_start_label)"))
     }
+
+    // ── Owner report 2026-11-20 (OP9): "Share a debug report" at the foot of a page did nothing visible ──────────
+
+    @Test
+    fun `the share-a-debug-report link shares the report, behind the preparing dialog`() {
+        // It used to only jump to Help and about, which on that page is where the user already was, and with
+        // logging on that section had no Share button: three taps, nothing happened.
+        val content = source("ScopedSettingsContent.kt")
+        val link = content.substring(content.indexOf("R.string.settings_link_share_debug_report"))
+            .substringBefore("SettingsFooterLink(")
+        assertTrue(link, link.contains("onClick = onShareLogs"))
+        assertFalse(link, link.contains("jumpTo("))
+        // A tap is never silent: Share raises the modal "Preparing debug report…" while the report is built.
+        val screen = source("SettingsScreen.kt")
+        val share = screen.substring(screen.indexOf("val onShareLogs: () -> Unit = {")).substringBefore("val onSaveLogs")
+        assertTrue(share.contains("preparingReport = true"))
+        assertTrue(screen.substring(screen.indexOf("if (preparingReport) {")).contains("R.string.settings_bugreport_preparing"))
+    }
 }

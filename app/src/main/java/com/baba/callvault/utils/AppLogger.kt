@@ -400,13 +400,17 @@ object AppLogger {
                     writer.println()
                 }
 
-                // Always on: every uncaught exception of the app's own processes, logging on or off.
-                com.baba.callvault.system.diagnostics.CrashJournal.readForReport(context)?.let { crashes ->
+                // Always on: every uncaught exception of the app's own processes, logging on or off. Said even
+                // when there are none, so a reader can tell "no crashes" from "this report has no crash section".
+                val crashes = com.baba.callvault.system.diagnostics.CrashJournal.readForReport(context)
+                if (crashes != null) {
                     writer.println("--- Crashes (always on; newest last) ---")
                     writer.println(crashes.trimEnd())
-                    writer.println("===========================================")
-                    writer.println()
+                } else {
+                    writer.println("--- Crashes (always on): none recorded ---")
                 }
+                writer.println("===========================================")
+                writer.println()
 
                 // Always on as well: every time USB debugging went off, and the phone's own log around it.
                 com.baba.callvault.integrations.adb.UsbDebuggingEvents.readForReport(context)?.let { events ->

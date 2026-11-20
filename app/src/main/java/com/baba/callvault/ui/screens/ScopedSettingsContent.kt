@@ -129,10 +129,7 @@ fun ScopedSettingsContent(
     // could open scrolled to wherever the previous page's were left.
     LaunchedEffect(scope, scrollRequest) {
         val groupIndex = openGroup?.let { groups.indexOf(it) }?.takeIf { it >= 0 }
-        // Items above the groups: the mode row, where shown.
-        val itemsAbove = if (showsModeRow) 1 else 0
-        val index = if (groupIndex == null) 0 else groupIndex + itemsAbove
-        listState.animateScrollToItem(index)
+        listState.animateScrollToItem(settingsScrollIndex(groupIndex, showsModeRow))
     }
 
     val callbacks = GroupBodyCallbacks(
@@ -207,9 +204,13 @@ fun ScopedSettingsContent(
             }
             item(key = "footer") {
                 Column {
+                    // Does what it says: builds the report and opens the share sheet, behind the "Preparing debug
+                    // report…" dialog. It used to only jump to Help and about — on that page, where the user already
+                    // was, and with logging on that section had no Share button, so three taps did nothing visible
+                    // (owner report 2026-11-20, OP9).
                     SettingsFooterLink(
                         text = stringResource(R.string.settings_link_share_debug_report),
-                        onClick = { jumpTo(SettingsScope.ALL, SettingsGroup.HELP_AND_ABOUT) },
+                        onClick = onShareLogs,
                     )
                     if (scope != SettingsScope.ALL) {
                         SettingsFooterLink(
@@ -310,4 +311,14 @@ private fun androidx.compose.foundation.lazy.LazyListScope.settingsSearchResults
             ) {}
         }
     }
+}
+
+/**
+ * Lazy-list index of the settings group at [groupIndex]: the search line is item 0, the mode row (where shown)
+ * follows, then the groups. Null means the top. The search line was once left out, so a jump landed one item high.
+ */
+internal fun settingsScrollIndex(groupIndex: Int?, showsModeRow: Boolean): Int {
+    if (groupIndex == null) return 0
+    val itemsAbove = 1 + (if (showsModeRow) 1 else 0)
+    return groupIndex + itemsAbove
 }
