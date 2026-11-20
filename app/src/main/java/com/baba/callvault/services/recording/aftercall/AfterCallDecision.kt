@@ -84,9 +84,20 @@ object AfterCallDecision {
         AfterCallDecisions.all(context)
             .filter { AfterCallPolicy.shouldRepostQuestion(it.deleteRequested, it.dismissed) }
             .forEach { held ->
-                runCatching { AfterCallNotifier.postQuestion(context, held) }
+                runCatching { repostIfStillWaiting(context, held) }
                     .onFailure { AppLogger.w(TAG, "Could not ask keep-or-delete by notification: ${it.message}") }
             }
+    }
+
+    /**
+     * Posts [snapshot]'s question from a snapshot that may be old (startup, the pop-up closing): the text is
+     * built first, outside the store lock, and the post happens only if the entry still waits at that moment,
+     * so an answer given meanwhile is not followed by the same question coming back (C176).
+     */
+    private fun repostIfStillWaiting(context: Context, snapshot: AfterCallDecisions.Held) {
+        val notify = AfterCallNotifier.prepareQuestion(context, snapshot)
+        val posted = AfterCallDecisions.postIfStillWaiting(context, snapshot.displayName) { notify() }
+        if (!posted) AppLogger.i(TAG, "A held recording's question was answered meanwhile; not asking again")
     }
 
     /** Opens the pop-up window. A seam so tests can see the call without drawing an overlay. */
@@ -147,6 +158,8 @@ object AfterCallDecision {
         AfterCallWork.cancelDelete(context, displayName)
         // Null: the delete already ran, and it cleared the notification on its way.
         val held = AfterCallDecisions.setDeleteRequested(context, displayName, requested = false) ?: return
+        // Not repostIfStillWaiting: Undo is the user's own act just now, and must ask again even for a question
+        // that was swiped away before Delete.
         AfterCallNotifier.postQuestion(context, held)
         AppLogger.i(TAG, "Delete undone; asking again")
     }
@@ -215,7 +228,7 @@ object AfterCallDecision {
                     AfterCallWork.scheduleDelete(context, name, AfterCallPolicy.DELETE_UNDO_WINDOW_MS, replace = false)
                 }
                 if (AfterCallPolicy.shouldRepostQuestion(entry.deleteRequested, entry.dismissed)) {
-                    AfterCallNotifier.postQuestion(context, entry)
+                    repostIfStillWaiting(context, entry)
                 }
             }.onFailure { AppLogger.w(TAG, "Could not restore a held recording's question: ${it.message}") }
         }

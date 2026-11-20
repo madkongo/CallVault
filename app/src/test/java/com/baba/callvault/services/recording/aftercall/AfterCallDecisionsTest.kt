@@ -130,4 +130,39 @@ class AfterCallDecisionsTest {
 
         assertNull(AfterCallDecisions.peek(context, name))
     }
+
+    @Test
+    fun `a question is posted only while its entry still waits`() {
+        AfterCallDecisions.hold(context, name, uri, "audio/ogg", isVoip = false)
+        var posted = 0
+
+        val first = AfterCallDecisions.postIfStillWaiting(context, name) { posted++ }
+        AfterCallDecisions.release(context, name) // answered between the snapshot and the post
+        val second = AfterCallDecisions.postIfStillWaiting(context, name) { posted++ }
+
+        assertTrue(first)
+        assertFalse("an answered question must not come back", second)
+        assertEquals(1, posted)
+    }
+
+    @Test
+    fun `a swiped or deleted question is not posted again`() {
+        AfterCallDecisions.hold(context, name, uri, "audio/ogg", isVoip = false)
+        AfterCallDecisions.setDismissed(context, name)
+        var posted = 0
+
+        assertFalse(AfterCallDecisions.postIfStillWaiting(context, name) { posted++ })
+
+        AfterCallDecisions.hold(context, "b.ogg", uri, "audio/ogg", isVoip = false)
+        AfterCallDecisions.setDeleteRequested(context, "b.ogg", true)
+        assertFalse(AfterCallDecisions.postIfStillWaiting(context, "b.ogg") { posted++ })
+        assertEquals(0, posted)
+    }
+
+    @Test
+    fun `a post that throws is reported as not posted and does not escape`() {
+        AfterCallDecisions.hold(context, name, uri, "audio/ogg", isVoip = false)
+
+        assertFalse(AfterCallDecisions.postIfStillWaiting(context, name) { error("notify failed") })
+    }
 }
