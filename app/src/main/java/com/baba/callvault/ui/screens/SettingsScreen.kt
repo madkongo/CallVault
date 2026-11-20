@@ -248,7 +248,7 @@ fun SettingsScreen(
     }
     val onDismissContacts = { contactPickerViewModel.dismissContactPicker() }
     // Build the report off the main thread, then hand it to the system share-sheet. The Share
-    // entry point is only shown when a valid log file exists, so the null branch is a safety net.
+    // entry point is offered in every state; the null branch is a safety net.
     val onShareLogs: () -> Unit = {
         if (!preparingReport) scope.launch {
             preparingReport = true

@@ -62,14 +62,12 @@ import androidx.compose.material.icons.filled.Gavel
 import androidx.compose.material.icons.filled.Save
 
 /**
- * Debug section (always visible). The flow is: turn logging on, reproduce the issue, turn logging
- * off, then share the captured log.
+ * Debug section (always visible). The usual flow is: turn logging on, reproduce the issue, turn
+ * logging off, then share the captured log.
  *
- * - While logging is **on**, we show a red reminder to turn it back off; sharing is intentionally
- *   hidden here so the user isn't sharing a log that is still being written to. The log viewer offers
- *   Share and Save in every state (#71): someone reading the log there wants to send it now.
- * - While logging is **off**, the Share button appears only if a valid (non-empty) log file from a
- *   previous session still exists — there is nothing to share otherwise.
+ * - Share and Save are shown in every state ([BugReportRows]); the report built while logging runs
+ *   holds the log up to that moment.
+ * - While logging is **on**, a red reminder above them says to turn it back off.
  *
  * Logs stay redacted (phone numbers masked). Turning logging on keeps the previous capture (see
  * [SettingsViewModel.setLoggingEnabled]); only Delete starts a fresh log.
@@ -113,33 +111,31 @@ internal fun BugReportSection(
             description     = stringResource(R.string.settings_debug_logging_enabled_description)
         )
 
-        if (isLoggingEnabled) {
-            Column(modifier = Modifier.padding(horizontal = 16.dp)) {
+        val rows = BugReportRows.of(isLoggingEnabled)
+        Column(modifier = Modifier.padding(horizontal = 16.dp)) {
+            if (rows.showLoggingOnWarning) {
                 Text(
                     text = stringResource(R.string.settings_bugreport_active_warning),
                     style = MaterialTheme.typography.labelLarge,
                     color = MaterialTheme.colorScheme.error
                 )
-                Spacer(modifier = Modifier.height(4.dp))
+                Spacer(modifier = Modifier.height(12.dp))
             }
-        } else {
-            // Offered whenever logging is off, with no precondition on there being a log: the report
-            // always carries the configuration header, and the setup journal when there is one. The
-            // old gate asked for a log file first, so the maintainer had to switch logging on and off
-            // again just to reach Share — for a report whose useful half needed neither.
-            Column(modifier = Modifier.padding(horizontal = 16.dp)) {
-                // In ⓘ mode this is behind the "Help and about" card's ⓘ (see groupExplanationText).
-                if (!LocalSettingsDescriptionsAsInfo.current) {
-                    Text(
-                        text = stringResource(R.string.settings_bugreport_share_hint),
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onSurface
-                    )
+            // In ⓘ mode this is behind the "Help and about" card's ⓘ (see groupExplanationText).
+            if (rows.showLastSessionHint && !LocalSettingsDescriptionsAsInfo.current) {
+                Text(
+                    text = stringResource(R.string.settings_bugreport_share_hint),
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurface
+                )
+                Spacer(modifier = Modifier.height(12.dp))
+            }
 
-                    Spacer(modifier = Modifier.height(12.dp))
-                }
-
-                // Side by side: Share hands the report to another app, Save writes it to a file on the phone.
+            // Offered in every state, with no precondition on there being a log: the report always carries the
+            // configuration header and the always-on sections. See [BugReportRows] for why they are no longer
+            // hidden while logging runs. Side by side: Share hands the report to another app, Save writes it to a
+            // file on the phone.
+            if (rows.showShareAndSave) {
                 Row(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.spacedBy(8.dp),
@@ -158,9 +154,9 @@ internal fun BugReportSection(
                         modifier = Modifier.weight(1f),
                     )
                 }
-
-                Spacer(modifier = Modifier.height(4.dp))
             }
+
+            Spacer(modifier = Modifier.height(4.dp))
         }
 
         // The log file itself — visible whether or not logging is currently running. Until now the
@@ -328,7 +324,7 @@ private fun DebugLogViewer(onDismiss: () -> Unit, onShare: () -> Unit, onSave: (
                 }
                 // The viewer is where people go looking for "the log", so the way to send it lives here too —
                 // #71's reporter read it here, found no way out and sent screenshots. Same report as the
-                // buttons under Debug logging, and offered while logging is on (they're hidden then).
+                // buttons under Debug logging.
                 HorizontalDivider()
                 Row(
                     modifier = Modifier
