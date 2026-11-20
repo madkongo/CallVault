@@ -578,6 +578,7 @@ class DaemonKeepAliveService : Service() {
     private val approveJoinedWifi = Runnable {
         if (!usesAdb() || !AppPreferences(applicationContext).isWifiNetworkAutoApproveEnabled()) return@Runnable
         Thread {
+            if (!usesAdb()) return@Thread
             runCatching {
                 if (AdbShell.approveCurrentNetworkIfWanted(applicationContext)) {
                     AppLogger.i(TAG, "Joined a Wi-Fi: approved it for Wireless debugging")
@@ -621,19 +622,25 @@ class DaemonKeepAliveService : Service() {
             KeepAlivePolicy.WatcherAction.REGISTER -> registerAdbWatchers()
             KeepAlivePolicy.WatcherAction.UNREGISTER -> unregisterAdbWatchers()
         }
-        val line = "keep-alive: ADB watchers ${if (watchersForAdb) "registered" else "dropped"} ($why); mode=${AppPreferences(applicationContext).getPrivilegedMode()}"
+        val line = "keep-alive: ADB watchers ${if (watchersForAdb) "registered" else if (usesAdb()) "registration FAILED, retrying at the next tick" else "dropped"} ($why); mode=${AppPreferences(applicationContext).getPrivilegedMode()}"
         AppLogger.i(TAG, line)
-        runCatching { UsbDebuggingEvents.record(applicationContext, line) }
+        // A registration that keeps failing is retried every tick; say so once, not once a minute, in the always-on file.
+        val repeatedFailure = usesAdb() && !watchersForAdb && watcherFailureLogged
+        if (usesAdb() && !watchersForAdb) watcherFailureLogged = true else if (watchersForAdb) watcherFailureLogged = false
+        if (!repeatedFailure) runCatching { UsbDebuggingEvents.record(applicationContext, line) }
     }
 
+    private var watcherFailureLogged = false
+
     private fun registerAdbWatchers() {
-        watchersForAdb = true
-        runCatching {
+        // Per successful registration, so a failed one is retried at the next reconcile (the flag stays false until
+        // all three have worked; registering an observer twice is harmless, and unregister tolerates a missing one).
+        val observers = runCatching {
             contentResolver.registerContentObserver(Settings.Global.getUriFor("adb_enabled"), false, usbDebuggingObserver)
             contentResolver.registerContentObserver(Settings.Global.getUriFor("adb_wifi_enabled"), false, wirelessDebuggingObserver)
             contentResolver.registerContentObserver(Settings.Global.getUriFor("development_settings_enabled"), false, developerOptionsObserver)
-        }.onFailure { AppLogger.w(TAG, "Could not watch the debugging switches: ${it.message}") }
-        runCatching {
+        }.onFailure { AppLogger.w(TAG, "Could not watch the debugging switches: ${it.message}") }.isSuccess
+        val screen = runCatching {
             registerReceiver(
                 screenReceiver,
                 android.content.IntentFilter().apply {
@@ -642,13 +649,16 @@ class DaemonKeepAliveService : Service() {
                     addAction(android.content.Intent.ACTION_USER_PRESENT)
                 },
             )
-        }.onFailure { AppLogger.w(TAG, "Could not watch the screen: ${it.message}") }
-        runCatching {
+        }.onFailure { AppLogger.w(TAG, "Could not watch the screen: ${it.message}") }.isSuccess
+        val wifi = runCatching {
             getSystemService(ConnectivityManager::class.java)?.registerNetworkCallback(
                 NetworkRequest.Builder().addTransportType(NetworkCapabilities.TRANSPORT_WIFI).build(),
                 wifiJoinCallback,
             )
-        }.onFailure { AppLogger.w(TAG, "Could not watch for Wi-Fi joins: ${it.message}") }
+        }.onFailure { AppLogger.w(TAG, "Could not watch for Wi-Fi joins: ${it.message}") }.isSuccess
+        watchersForAdb = observers && screen && wifi
+        // Partly registered is worse than not at all (a retry would double-register): undo, and retry next reconcile.
+        if (!watchersForAdb) unregisterAdbWatchers()
     }
 
     private fun unregisterAdbWatchers() {
@@ -839,7 +849,8 @@ class DaemonKeepAliveService : Service() {
             // A switch that reads on is not proof adbd is up: turning USB debugging off stops it while Wireless
             // debugging still reads on, and every attempt below would then dial nothing. Catches the case
             // the switch observer missed — the service was not running when it happened, or it rebooted.
-            runCatching { AdbShell.reviveAdbdIfStopped(applicationContext, "keep-alive relaunch") }
+            if (!adbStillAllowed("revive adbd")) { rewarmGate.leave(); return@Thread }
+            runCatching { AdbShell.reviveAdbdIfStopped(applicationContext, "keep-alive relaunch", mayEnable = usesAdb()) }
                 .onFailure { AppLogger.w(TAG, "keep-alive: could not check adbd: ${it.message}") }
             when (
                 recoveryPolicy.nextStep(
@@ -854,6 +865,7 @@ class DaemonKeepAliveService : Service() {
                     // the user tapped Wireless debugging off and this switched it back on 50 ms later, before
                     // anything had recorded that it was the user's tap. The gate reads that record.
                     Thread.sleep(RESTORE_SETTLE_MS)
+                    if (!adbStillAllowed("re-enable Wireless debugging")) { rewarmGate.leave(); return@Thread }
                     runCatching { AdbShell.enableWirelessDebugging(applicationContext) }
                         .onFailure { AppLogger.w(TAG, "keep-alive: could not re-enable Wireless debugging: ${it.message}") }
                 }
@@ -864,8 +876,10 @@ class DaemonKeepAliveService : Service() {
                     // endpoint to reach even if the loopback one is the wedged half. Manually enabling
                     // Wireless debugging is exactly what un-wedged the 2026-08-18 device.
                     AppLogger.w(TAG, "keep-alive: relaunch keeps timing out — ${RecorderLogMarkers.ADB_REBUILD}")
+                    if (!adbStillAllowed("rebuild the ADB connection")) { rewarmGate.leave(); return@Thread }
                     runCatching { AdbShell.dropConnection(applicationContext) }
                         .onFailure { AppLogger.w(TAG, "keep-alive: could not drop the ADB connection: ${it.message}") }
+                    if (!adbStillAllowed("re-enable Wireless debugging")) { rewarmGate.leave(); return@Thread }
                     runCatching { AdbShell.enableWirelessDebugging(applicationContext) }
                         .onFailure { AppLogger.w(TAG, "keep-alive: could not re-enable Wireless debugging: ${it.message}") }
                 }
@@ -890,7 +904,7 @@ class DaemonKeepAliveService : Service() {
             // BEFORE the rescue below on purpose: on 2026-09-14 the rescue itself blocked, this line was never
             // reached, and six hours of relaunches never once escalated or told the user.
             if (ok) recoveryPolicy.onAttemptSucceeded() else recoveryPolicy.onAttemptFailed()
-            if (outcome == LaunchOutcome.TIMED_OUT) AdbShell.dropConnection(applicationContext)
+            if (outcome == LaunchOutcome.TIMED_OUT && adbStillAllowed("drop the timed-out ADB connection")) AdbShell.dropConnection(applicationContext)
             // Flip the notification to "ready" the INSTANT the relaunch succeeds — don't wait for the next
             // 60s watchdog tick. Without this the daemon reconnects in seconds but the user would still see
             // "starting up" for up to a minute (a perceived-but-false slow recovery).
@@ -959,6 +973,15 @@ class DaemonKeepAliveService : Service() {
             val outcome = try { launchDaemonBounded() } finally { rewarmGate.leave() }
             if (outcome == LaunchOutcome.CONNECTED) watchdogHandler.post { lastReady = true; updateNotification(true) }
         }.apply { isDaemon = true; name = "cv-keepalive-rebind" }.start()
+    }
+
+    /** Re-checks the mode right before an ADB action of a relaunch that began in standalone; logs an abort once, always-on. */
+    private fun adbStillAllowed(step: String): Boolean {
+        if (usesAdb()) return true
+        val line = "keep-alive: relaunch aborted before '$step': the mode changed to ${AppPreferences(applicationContext).getPrivilegedMode()}"
+        AppLogger.i(TAG, line)
+        runCatching { UsbDebuggingEvents.record(applicationContext, line) }
+        return false
     }
 
     private var lastShizukuSkipStatus: ShizukuStatus? = null
