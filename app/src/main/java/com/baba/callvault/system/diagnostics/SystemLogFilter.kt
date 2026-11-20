@@ -333,6 +333,8 @@ object SystemLogFilter {
         val newest: String?,
         val truncated: Int,
         val lines: List<String>,
+        /** Why the log behind this may be incomplete (logcat timed out or died early), or null. */
+        val partial: String? = null,
     )
 
     /** Characters the recorder may send: ~600 KB as the binder's UTF-16, well under its 1 MB limit. */
@@ -348,7 +350,10 @@ object SystemLogFilter {
      * kept when they exceed [maxChars]. Streams: holds only what it keeps, so a 60 MB log costs no more
      * than the budget. Pids are not windowed here (a superset); [select] windows them in the app.
      */
-    fun prefilter(lines: Sequence<String>, ours: Ours, maxChars: Int): String {
+    fun prefilter(lines: Sequence<String>, ours: Ours, maxChars: Int): String = render(prefilterCut(lines, ours, maxChars))
+
+    /** [prefilter] before it is turned into text, so the caller can add why it may be [Prefiltered.partial]. */
+    fun prefilterCut(lines: Sequence<String>, ours: Ours, maxChars: Int): Prefiltered {
         val namesUs = namesUsMatcher(ours)
         val ownPids = ours.pidWindows.mapTo(HashSet()) { it.pid }
         val kept = ArrayDeque<String>()
@@ -383,9 +388,14 @@ object SystemLogFilter {
             chars += line.length + 1
             while (chars > maxChars && kept.size > 1) chars -= kept.removeFirst().length + 1
         }
-        val summary = "$PREFILTER_MARK|read=$read|oldest=${oldest.orEmpty()}|newest=${newest.orEmpty()}" +
-            "|truncated=${candidates - kept.size}"
-        return summary + "\n" + kept.joinToString("\n")
+        return Prefiltered(read, oldest, newest, candidates - kept.size, kept.toList())
+    }
+
+    /** [cut] as the text the recorder sends: a one-line summary, then the lines. */
+    fun render(cut: Prefiltered): String {
+        val summary = "$PREFILTER_MARK|read=${cut.read}|oldest=${cut.oldest.orEmpty()}|newest=${cut.newest.orEmpty()}" +
+            "|truncated=${cut.truncated}" + (cut.partial?.let { "|partial=" + it.replace('|', '/').replace('\n', ' ') } ?: "")
+        return summary + "\n" + cut.lines.joinToString("\n")
     }
 
     /** The parts of a [prefilter] answer, or null when [text] is something else — a plain logcat dump. */
@@ -399,6 +409,7 @@ object SystemLogFilter {
             newest = fields["newest"]?.ifEmpty { null },
             truncated = fields["truncated"]?.toIntOrNull() ?: 0,
             lines = text.substringAfter('\n', "").split('\n').filter { it.isNotBlank() },
+            partial = fields["partial"]?.ifEmpty { null },
         )
     }
 

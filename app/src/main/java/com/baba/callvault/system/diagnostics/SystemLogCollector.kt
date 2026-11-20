@@ -115,6 +115,7 @@ object SystemLogCollector {
         } else if (log.truncated > 0) {
             gaps += "${log.truncated} older log lines about CallVault (cut on the phone to fit the recorder link; newest kept)"
         }
+        log?.partial?.let { gaps += "part of the main and system log ($it)" }
         // Read separately and bounded on the device: the crash buffer, the event log and every system line naming
         // us. It is what says WHY Android stopped us, and it still arrives when the whole-log dump above is too big
         // for the binder or empty (vivo Android 17, 2026-11-20). See DiagnosticDumps.lifecycleScript.

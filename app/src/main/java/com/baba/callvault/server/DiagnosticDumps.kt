@@ -10,8 +10,6 @@ package com.baba.callvault.server
 
 import com.baba.callvault.system.diagnostics.SystemLogFilter
 import com.baba.callvault.utils.AppLogger
-import java.io.BufferedReader
-import java.util.concurrent.TimeUnit
 
 /**
  * The diagnostic dumps the privileged daemon is willing to run on the app's behalf.
@@ -63,6 +61,7 @@ object DiagnosticDumps {
 
     /** How long any one dump may take. Generous for `logcat -d` on a full ring, finite for everything. */
     private const val TIMEOUT_SECONDS = 20L
+    private const val TIMEOUT_MS = TIMEOUT_SECONDS * 1_000
 
     /**
      * The command for [key], or null if it is not one we run.
@@ -232,14 +231,12 @@ object DiagnosticDumps {
             return null
         }
         return runCatching {
-            val process = ProcessBuilder(*command).redirectErrorStream(true).start()
-            val output = process.inputStream.bufferedReader().use(BufferedReader::readText)
-            if (!process.waitFor(TIMEOUT_SECONDS, TimeUnit.SECONDS)) {
-                process.destroyForcibly()
-                AppLogger.w(TAG, "diagnostic dump '$key' timed out after ${TIMEOUT_SECONDS}s")
+            val outcome = BoundedProcess.run(command, TIMEOUT_MS) { it.bufferedReader().readText() }
+            if (outcome.timedOut) {
+                AppLogger.w(TAG, "diagnostic dump '$key' timed out after ${TIMEOUT_SECONDS}s; stopped it")
                 return null
             }
-            output
+            outcome.value
         }.onFailure { AppLogger.w(TAG, "diagnostic dump '$key' failed: ${it.message}") }.getOrNull()
     }
 
@@ -260,16 +257,17 @@ object DiagnosticDumps {
         }
         val command = commandFor(LOGCAT_OURS, null) ?: return null
         return runCatching {
-            val process = ProcessBuilder(*command).redirectErrorStream(true).start()
-            val out = process.inputStream.bufferedReader().useLines {
-                SystemLogFilter.prefilter(it, ours, SystemLogFilter.PREFILTER_MAX_CHARS)
+            // Bounded for real: a wedged logd used to hold this binder thread for good. A cut that ended early
+            // carries why, and the report says the log is partial.
+            val outcome = BoundedProcess.run(command, TIMEOUT_MS) {
+                SystemLogFilter.prefilterCut(it.bufferedReader().lineSequence(), ours, SystemLogFilter.PREFILTER_MAX_CHARS)
             }
-            if (!process.waitFor(TIMEOUT_SECONDS, TimeUnit.SECONDS)) {
-                process.destroyForcibly()
-                AppLogger.w(TAG, "diagnostic dump '$LOGCAT_OURS' timed out after ${TIMEOUT_SECONDS}s")
+            val cut = outcome.value ?: run {
+                AppLogger.w(TAG, "diagnostic dump '$LOGCAT_OURS' gave nothing (${outcome.partial})")
                 return null
             }
-            out
+            outcome.partial?.let { AppLogger.w(TAG, "diagnostic dump '$LOGCAT_OURS' is partial: logcat $it") }
+            SystemLogFilter.render(cut.copy(partial = outcome.partial?.let { "logcat $it" }))
         }.onFailure { AppLogger.w(TAG, "diagnostic dump '$LOGCAT_OURS' failed: ${it.message}") }.getOrNull()
     }
 }

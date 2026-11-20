@@ -83,4 +83,12 @@ class SystemLogPrefilterTest {
             assertNull("accepted: $it", SystemLogFilter.decodeOurs(it, "com.baba.callvault"))
         }
     }
+
+    @Test
+    fun `a cut that ended early says so`() {
+        val cut = SystemLogFilter.prefilterCut(sequenceOf(own), ours, 100_000).copy(partial = "logcat timed out after 20 s")
+        val parsed = SystemLogFilter.parsePrefiltered(SystemLogFilter.render(cut))!!
+        assertEquals("logcat timed out after 20 s", parsed.partial)
+        assertEquals(listOf(own), parsed.lines)
+    }
 }
