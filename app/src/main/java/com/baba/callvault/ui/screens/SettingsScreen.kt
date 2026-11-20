@@ -169,6 +169,8 @@ fun SettingsScreen(
             } else {
                 context.takePersistableFolderPermission(uri)
                 viewModel.preferences.setRecordingFolderUri(uri)
+                // Calls kept while the folder was not usable are saved into it (review N5).
+                com.baba.callvault.system.storage.FolderProtection.onFolderChosen(context)
                 // A new folder starts unhidden; carry the setting over to it.
                 viewModel.preferences.setNomediaCreatedByUs(false)
                 com.baba.callvault.system.storage.HideRecordings.applyAsync(context)

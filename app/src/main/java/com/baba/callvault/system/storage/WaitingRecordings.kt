@@ -148,9 +148,7 @@ object WaitingRecordings {
         true
     }
 
-    /** A call was kept: tell the user and try to save it. Filled in by the alert and the publisher. */
-    private fun onKept(context: Context) = Unit
+    private fun onKept(context: Context) = FolderProtection.onWaitingKept(context)
 
-    /** A call could not be kept. Filled in by the alert. */
-    private fun onRefused(context: Context, admission: WaitingPolicy.Admission) = Unit
+    private fun onRefused(context: Context, admission: WaitingPolicy.Admission) = FolderProtection.onWaitingRefused(context, admission)
 }

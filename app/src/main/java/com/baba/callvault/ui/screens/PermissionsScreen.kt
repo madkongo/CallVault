@@ -149,6 +149,8 @@ fun PermissionsScreen(
                 Intent.FLAG_GRANT_READ_URI_PERMISSION or Intent.FLAG_GRANT_WRITE_URI_PERMISSION
             )
             AppPreferences(activityContext).setRecordingFolderUri(uri)
+            // Calls kept while the folder was not usable are saved into it (review N5).
+            com.baba.callvault.system.storage.FolderProtection.onFolderChosen(activityContext)
         }
         onPermissionGranted()
     }
