@@ -83,4 +83,24 @@ class VoipToggleEffectsTest {
         assertTrue(detectionStarted)
         armScope.cancel()
     }
+
+    /** Review C19: the ring listener's approval follows the switch at once, both ways, not at the next start. */
+    @Test
+    fun `the ring listener is re-synced on every toggle, after the choice is saved`() {
+        for (turnOn in listOf(true, false)) {
+            val events = mutableListOf<String>()
+            val armScope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
+            val armed = VoipToggleEffects.apply(
+                turnOn = turnOn,
+                persist = { events.add("persist=$it") },
+                startDetection = {},
+                arm = { true },
+                syncRingListener = { events.add("listener") },
+                scope = armScope,
+            )
+            runBlocking { armed.await() }
+            assertEquals(listOf("persist=$turnOn", "listener"), events.toList())
+            armScope.cancel()
+        }
+    }
 }
