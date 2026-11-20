@@ -46,14 +46,17 @@ object WirelessDebuggingApproval {
     private const val GETPROP = "/system/bin/getprop"
     private const val DUMPSYS = "/system/bin/dumpsys"
     private const val ADB_DUMP_HEADER = "ADB MANAGER STATE"
+
+    // The regexes are lazy (rf5, 2026-11-20): one Android's ICU rejects then fails only the function that uses it, with
+    // its PatternSyntaxException logged, instead of failing this object's initializer and every approval with it.
     /** The keystore field of `AdbDebuggingManager.dump` as DualDumpOutputStream prints it: `keystore=<file>`. */
-    private val KEYSTORE_FIELD = Regex("(?m)^[ \\t]*keystore=")
+    private val KEYSTORE_FIELD by lazy { Regex("(?m)^[ \\t]*keystore=") }
     /**
      * The end of that field: the dump object's closing brace, or the next `name=` field. The brace is escaped: Android's
      * ICU regex rejects a bare `}` that the desktop JVM accepts (rf5, 2026-11-20; RegexIcuBraceGuardTest).
      */
-    private val FIELD_END = Regex("(?m)^[ \\t]*(?:\\}|[A-Za-z_]+=)")
-    private val BSSID = Regex("""(?<![0-9A-Fa-f:])[0-9A-Fa-f]{2}(?::[0-9A-Fa-f]{2}){5}(?![0-9A-Fa-f:])""")
+    private val FIELD_END by lazy { Regex("(?m)^[ \\t]*(?:\\}|[A-Za-z_]+=)") }
+    private val BSSID by lazy { Regex("""(?<![0-9A-Fa-f:])[0-9A-Fa-f]{2}(?::[0-9A-Fa-f]{2}){5}(?![0-9A-Fa-f:])""") }
     private const val WD_SETTING = "adb_wifi_enabled"
     private const val TIMEOUT_MS = 10_000L
     private const val READER_GRACE_MS = 1_000L
@@ -69,7 +72,7 @@ object WirelessDebuggingApproval {
     private const val PLACEHOLDER_BSSID = "02:00:00:00:00:00"
 
     /** `WifiInfo.toString()`: `SSID: "name", BSSID: aa:bb:cc:dd:ee:ff, MAC: …`. The SSID keeps its quotes. */
-    private val WIFI_INFO = Regex("""WifiInfo: SSID: (.*?), BSSID: ([0-9A-Fa-f]{2}(?::[0-9A-Fa-f]{2}){5})""")
+    private val WIFI_INFO by lazy { Regex("""WifiInfo: SSID: (.*?), BSSID: ([0-9A-Fa-f]{2}(?::[0-9A-Fa-f]{2}){5})""") }
 
     /**
      * @param alwaysAllow also add the network to Android's trusted list, as ticking "Always allow" does.
@@ -116,7 +119,10 @@ object WirelessDebuggingApproval {
      * field "keystore", AOSP android14-release). Null when it cannot be read.
      */
     fun readTrustedBssids(): Set<String>? {
-        val trusted = parseTrustedBssids(runCommand(DUMPSYS, "adb"))
+        val trusted = runCatching { parseTrustedBssids(runCommand(DUMPSYS, "adb")) }.getOrElse {
+            AppLogger.w(TAG, "Could not parse Android's trusted Wi-Fi list: ${FailureChain.describe(it)}")
+            return null
+        }
         if (trusted == null) AppLogger.w(TAG, "Could not read Android's trusted Wi-Fi list from 'dumpsys adb'")
         return trusted
     }
