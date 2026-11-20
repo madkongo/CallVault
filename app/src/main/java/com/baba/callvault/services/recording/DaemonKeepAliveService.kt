@@ -101,6 +101,9 @@ class DaemonKeepAliveService : Service() {
     /** Serialises and throttles relaunch attempts, and expires one that never came back. */
     private val rewarmGate = RewarmGate(stuckAfterMs = REWARM_STUCK_MS, throttleMs = REWARM_THROTTLE_MS)
 
+    /** Which named causes hold a relaunch back, and when one still gets a safety-net attempt (reviews C130, R8). */
+    private val rewarmStandDown = RewarmStandDown(RewarmStandDown.SAFETY_NET_MS)
+
     /**
      * Decides how to recover, and notices when recovery itself has stopped working.
      *
@@ -828,7 +831,7 @@ class DaemonKeepAliveService : Service() {
         // refusal each time, for as long as the switch stayed off. The switch observer comes back here the
         // moment either switch changes, and the watchdog still ticks for Wi-Fi returning.
         val known = ReadinessNoticeText.current(this, ready = false)
-        if (known == ReadinessNotice.WD_OFF_BY_USER || known == ReadinessNotice.NEEDS_WIFI) {
+        if (rewarmStandDown.check(known, force, SystemClock.elapsedRealtime()) == RewarmStandDown.Verdict.STAND_DOWN) {
             timelineSkip("recovery impossible: $known")
             updateNotification(false)
             return
@@ -845,11 +848,6 @@ class DaemonKeepAliveService : Service() {
             //
             // What counts as "usable" is [DaemonRecoveryPolicy]'s job, and getting it wrong cost a
             // silent multi-hour outage on 2026-08-18 — see that class. In short: USB debugging being
-        // A recording on the local ADB fallback rides the very connection a relaunch drops or reconfigures (review C89).
-        if (LocalFallbackLease.shared.active) {
-            timelineSkip("a recording on the local fallback is using the ADB connection")
-            return
-        }
             // enabled is NOT a transport this app can dial, and an attempt that keeps timing out must
             // be escalated rather than repeated.
             // A switch that reads on is not proof adbd is up: turning USB debugging off stops it while Wireless
