@@ -69,11 +69,18 @@ import com.baba.callvault.utils.AppLogger
 class DaemonKeepAliveService : Service() {
 
     private val watchdogHandler = Handler(Looper.getMainLooper())
-    private val voipDetector by lazy {
-        VoipCallDetector(applicationContext).apply {
-            // Reuse the permanent keep-alive notification to show that a VoIP call is being recorded,
-            // rather than adding a second one. Without this the user has no sign it is working.
-            onRecordingStateChanged = { updateNotification(RecorderConnection.isConnected) }
+    /**
+     * Null when it cannot be built. This service anchors carrier recording, so it must outlive its app-call detector:
+     * on Android 11 the detector's constructor threw (2026-11-20), and the plain [VoipCallDetector.sync] below threw
+     * again after the notification's guarded read, crash-looping the app on every start.
+     */
+    private val voipDetector: VoipCallDetector? by lazy {
+        buildOptionalPart(TAG, "App-call detection") {
+            VoipCallDetector(applicationContext).apply {
+                // Reuse the permanent keep-alive notification to show that a VoIP call is being recorded,
+                // rather than adding a second one. Without this the user has no sign it is working.
+                onRecordingStateChanged = { updateNotification(RecorderConnection.isConnected) }
+            }
         }
     }
     private var lastReady: Boolean? = null
@@ -647,10 +654,10 @@ class DaemonKeepAliveService : Service() {
             return START_STICKY
         }
         if (intent?.action == ACTION_VOIP_RECORD_NOW) {
-            voipDetector.startNow()
+            voipDetector?.startNow()
         }
         if (intent?.action == ACTION_CARRIER_CALL_STARTED) {
-            voipDetector.abortForCarrierCall()
+            voipDetector?.abortForCarrierCall()
         }
 
         // Recover the INSTANT the daemon dies (binder linkToDeath) — don't wait for the next poll.
@@ -675,7 +682,7 @@ class DaemonKeepAliveService : Service() {
         // VoIP detection lives here rather than in its own component: this service is already a
         // permanent foreground presence, so watching for VoIP calls costs no extra process and no
         // second notification, and VoIP gets exactly the same lifetime as carrier recording.
-        voipDetector.sync()
+        voipDetector?.sync()
 
         // Kick the watchdog now (first tick warms the daemon immediately if it's cold).
         lastReady = null
@@ -909,7 +916,7 @@ class DaemonKeepAliveService : Service() {
     }
 
     private fun buildNotification(ready: Boolean): Notification {
-        val voipRecording = runCatching { voipDetector.isRecording }.getOrDefault(false)
+        val voipRecording = voipDetector?.isRecording == true
         // Text from the app's language, not only the phone's (BabApps item 123); this service lives for days.
         val loc = LocalizedContext.of(this)
         val notice = ReadinessNoticeText.current(this, ready)
@@ -994,7 +1001,7 @@ class DaemonKeepAliveService : Service() {
         runCatching { contentResolver.unregisterContentObserver(developerOptionsObserver) }
         runCatching { getSystemService(ConnectivityManager::class.java)?.unregisterNetworkCallback(wifiJoinCallback) }
         watchdogHandler.removeCallbacks(approveJoinedWifi)
-        runCatching { voipDetector.stop() }
+        runCatching { voipDetector?.stop() }
         watchdogHandler.removeCallbacks(watchdog)
         watchdogHandler.removeCallbacks(healSharedNoticeRunnable)
         RecorderConnection.onDeath = null
