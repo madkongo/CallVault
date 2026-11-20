@@ -13,6 +13,7 @@ import com.baba.callvault.data.AppPreferences
 import com.baba.callvault.server.RecorderConnection
 import com.baba.callvault.system.diagnostics.SystemLogCollector
 import com.baba.callvault.utils.AppLogger
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
@@ -50,10 +51,24 @@ object BatteryUseCollector {
         fetch: suspend () -> Fetched = { fetchDump(context) },
     ): Section {
         val scope = CoroutineScope(Dispatchers.IO)
-        val pending = scope.async { runCatching { fetch() }.getOrElse { Fetched(null, "reading it failed: ${it.javaClass.simpleName}") } }
-        val fetched = withTimeoutOrNull(budgetMs) { pending.await() }
-            ?: Fetched(null, "not collected within ${budgetMs / 1000} s").also { scope.cancel() }
+        val fetched = try {
+            val pending = scope.async { fetchOrWhy(fetch) }
+            withTimeoutOrNull(budgetMs) { pending.await() } ?: Fetched(null, "not collected within ${budgetMs / 1000} s")
+        } finally {
+            // On the budget running out AND on the report itself being cancelled: the read must not outlive it.
+            scope.cancel()
+        }
         return section(fetched, context.packageName, context.applicationInfo.uid, logEntries)
+    }
+
+    /** [fetch]'s answer, or a failure named for the report; a cancellation is passed on, never reported as a failure. */
+    private suspend fun fetchOrWhy(fetch: suspend () -> Fetched): Fetched = try {
+        fetch()
+    } catch (e: CancellationException) {
+        throw e
+    } catch (e: Exception) {
+        AppLogger.w(TAG, "Battery read failed: ${e.javaClass.simpleName}: ${e.message}")
+        Fetched(null, "reading it failed: ${e.javaClass.simpleName}")
     }
 
     /**

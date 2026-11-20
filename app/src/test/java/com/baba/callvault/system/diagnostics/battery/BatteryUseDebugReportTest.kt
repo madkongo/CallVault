@@ -11,9 +11,15 @@ package com.baba.callvault.system.diagnostics.battery
 import android.app.Application
 import androidx.test.core.app.ApplicationProvider
 import com.baba.callvault.utils.AppLogger
+import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.withTimeout
+import kotlinx.coroutines.withTimeoutOrNull
 import kotlinx.coroutines.runBlocking
+import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
+import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -88,6 +94,36 @@ class BatteryUseDebugReportTest {
         assertTrue(fromRoot.lines.toString(), fromRoot.lines.any { it.startsWith("Root uid 0") })
         val fromAdb = BatteryUseCollector.section(BatteryUseCollector.Fetched(raw, null), "com.baba.callvault", 10301, null)
         assertFalse(fromAdb.lines.any { it.startsWith("Root uid 0") })
+    }
+
+    @Test
+    fun `cancelling the report cancels the battery read too`() {
+        val fetchStarted = CompletableDeferred<Unit>()
+        val fetchCancelled = CompletableDeferred<Unit>()
+        val result = runBlocking {
+            withTimeoutOrNull(300) {
+                BatteryUseCollector.collect(app, logEntries = null, budgetMs = 10_000) {
+                    fetchStarted.complete(Unit)
+                    try {
+                        delay(10_000)
+                    } catch (e: CancellationException) {
+                        fetchCancelled.complete(Unit)
+                        throw e
+                    }
+                    BatteryUseCollector.Fetched("unused", null)
+                }
+            }
+        }
+        assertNull(result)
+        runBlocking { withTimeout(2_000) { fetchCancelled.await() } }
+    }
+
+    @Test
+    fun `a failing fetch is named, a cancelled one is not swallowed`() {
+        val section = runBlocking {
+            BatteryUseCollector.collect(app, logEntries = null) { throw IllegalStateException("boom") }
+        }
+        assertEquals("battery use (reading it failed: IllegalStateException)", section.gap)
     }
 
     @Test
