@@ -38,6 +38,15 @@ object UpdateNotifications {
     /** Every id this object posts, for the uniqueness guard test. */
     internal val ALL_IDS = listOf(AVAILABLE_NOTIFICATION_ID, RESULT_NOTIFICATION_ID, PROGRESS_NOTIFICATION_ID)
 
+    /**
+     * Opens the running window (onNewIntent) or creates one, never a second one on top (review C150). Same flags as
+     * the other notices that carry a destination.
+     */
+    internal fun openAppIntent(context: Context): Intent =
+        Intent(context, MainActivity::class.java)
+            .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_SINGLE_TOP)
+            .putExtra(NotificationDestination.EXTRA, NotificationDestination.Update.key)
+
     /** "vX.Y.Z is available" — tapping opens the app, where the Home banner offers Update. */
     fun showUpdateAvailable(context: Context, tag: String) {
         val openApp = PendingIntent.getActivity(
@@ -46,9 +55,7 @@ object UpdateNotifications {
             // whichever posted last would have decided where both of them led once they started
             // carrying a destination. See NotificationDestination.requestCode.
             context, NotificationDestination.Update.requestCode,
-            Intent(context, MainActivity::class.java)
-                .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
-                .putExtra(NotificationDestination.EXTRA, NotificationDestination.Update.key),
+            openAppIntent(context),
             PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT
         )
         post(
