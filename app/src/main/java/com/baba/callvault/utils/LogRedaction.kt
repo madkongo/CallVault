@@ -168,7 +168,21 @@ object LogRedaction {
      *   from "Transcribed {date}_in_….ogg", so any text in front of a date is hidden, prose included.
      */
     fun redact(message: String, salt: String, namesAroundDate: Boolean = false): String =
-        redactPeople(redactApiKeys(message), salt, namesAroundDate)
+        redactPeople(redactEmails(redactApiKeys(message)), salt, namesAroundDate)
+
+    /**
+     * E-mail addresses — the Google account above all, which a Drive or sign-in exception can quote, and which the
+     * always-on crash journal and ANR traces carry into every report. Before the phone rule, so the digits of an
+     * address are not read as a number. Needs a dot and a letter-only top-level part after the `@`, so
+     * `java.lang.Object@1a2b3c4d` and the Honor `@{number}_{stamp}` names are not addresses. Idempotent.
+     */
+    fun redactEmails(message: String): String =
+        if (!message.contains('@')) message else EMAIL_REGEX.replace(message, EMAIL_PLACEHOLDER)
+
+    private const val EMAIL_PLACEHOLDER = "[EMAIL_REDACTED]"
+
+    private val EMAIL_REGEX =
+        Regex("""(?<![A-Za-z0-9._%+-])[A-Za-z0-9._%+-]+@(?:[A-Za-z0-9-]+\.)+[A-Za-z]{2,}(?![A-Za-z0-9-])""")
 
     /**
      * True when [template] has text both before and after `{date}` ("{contact_name} {date} {direction}").
