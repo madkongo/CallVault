@@ -89,11 +89,16 @@ class CrashJournalTest {
     }
 
     @Test
-    fun `entries for a pid are found for the exit that ended it`() {
-        val text = CrashJournal.format(0L, 777, "p", "main", RuntimeException("boom"), redact = { it }) + "\n" +
-            CrashJournal.format(0L, 888, "p", "main", RuntimeException("other"), redact = { it })
-        assertEquals("java.lang.RuntimeException: boom", CrashJournal.summaryForPid(text, 777))
-        assertEquals(null, CrashJournal.summaryForPid(text, 999))
+    fun `a note is matched to an exit by pid and by time`() {
+        val t = 1_700_000_000_000L
+        val hourAgo = CrashJournal.format(t - 3_600_000, 777, "p", "main", RuntimeException("old life"), redact = { it })
+        val now = CrashJournal.format(t - 200, 777, "p", "main", RuntimeException("boom"), redact = { it })
+        val other = CrashJournal.format(t - 100, 888, "p", "main", RuntimeException("other"), redact = { it })
+        val journal = listOf(hourAgo, now, other).joinToString("\n\n")
+        assertEquals("java.lang.RuntimeException: boom", CrashJournal.summaryFor(journal, pid = 777, exitAtMillis = t))
+        assertEquals(null, CrashJournal.summaryFor(journal, pid = 999, exitAtMillis = t))
+        // The pid was reused: a note from an hour before is not about this exit.
+        assertEquals(null, CrashJournal.summaryFor(hourAgo, pid = 777, exitAtMillis = t))
     }
 
     @Test

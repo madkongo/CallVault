@@ -80,7 +80,9 @@ object CrashJournal {
             "${error.javaClass.name} (note cut short: ${failure.javaClass.simpleName})"
     }
 
-    private fun stamp(atMillis: Long): String = SimpleDateFormat("yyyy-MM-dd HH:mm:ss.SSS", Locale.US).format(Date(atMillis))
+    private fun stamp(atMillis: Long): String = stampFormat().format(Date(atMillis))
+
+    private fun stampFormat() = SimpleDateFormat("yyyy-MM-dd HH:mm:ss.SSS", Locale.US)
 
     /** The whole journal for a report, or null when nothing has crashed. */
     fun readForReport(context: Context): String? = runCatching {
@@ -144,9 +146,21 @@ object CrashJournal {
 
     private const val TEMP_SUFFIX = ".tmp"
 
-    /** The exception line of the newest entry written by [pid], or null when there is none. */
-    fun summaryForPid(journal: String, pid: Int): String? =
-        journal.split(ENTRY_SEPARATOR)
-            .lastOrNull { entry -> entry.lineSequence().firstOrNull()?.contains("$HEADER_MARK$pid ") == true }
-            ?.lines()?.getOrNull(1)
+    /**
+     * The exception line of the newest note written by [pid] shortly before Android recorded its exit at
+     * [exitAtMillis], or null. By time as well as pid: pids are reused, and a note from an earlier process that
+     * had the same number is not about this exit.
+     */
+    fun summaryFor(journal: String, pid: Int, exitAtMillis: Long): String? =
+        journal.split(ENTRY_SEPARATOR).lastOrNull { entry ->
+            val header = entry.lineSequence().firstOrNull() ?: return@lastOrNull false
+            if (!header.contains("$HEADER_MARK$pid ")) return@lastOrNull false
+            val at = runCatching { stampFormat().parse(header.substringBefore(HEADER_MARK))?.time }.getOrNull()
+                ?: return@lastOrNull false
+            exitAtMillis - at in -MATCH_AFTER_MS..MATCH_BEFORE_MS
+        }?.lines()?.getOrNull(1)
+
+    /** A note is written moments before the exit; this much either side still counts as the same death. */
+    private const val MATCH_BEFORE_MS = 60_000L
+    private const val MATCH_AFTER_MS = 5_000L
 }

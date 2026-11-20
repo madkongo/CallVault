@@ -189,7 +189,7 @@ object AppStopHistory {
     private fun exitDetail(exit: ApplicationExitInfo, crashJournal: String): List<String> = runCatching {
         when (exit.reason) {
             ApplicationExitInfo.REASON_CRASH -> listOf(
-                com.baba.callvault.system.diagnostics.CrashJournal.summaryForPid(crashJournal, exit.pid)
+                com.baba.callvault.system.diagnostics.CrashJournal.summaryFor(crashJournal, exit.pid, exit.timestamp)
                     ?.let { "crash: $it (whole note under Crashes)" }
                     ?: "crash: no note in the crash journal (a version without it, or it could not write)",
             )
