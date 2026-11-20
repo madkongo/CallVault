@@ -367,6 +367,7 @@ object AppLogger {
                 } else {
                     writer.println("Recorder host lines: ${daemonEntries.size}, merged in below by timestamp")
                 }
+                writer.println(com.baba.callvault.system.diagnostics.ReportGaps.line(reportGaps(daemonEntries)))
                 writer.println("===========================================")
                 writer.println()
 
@@ -438,6 +439,18 @@ object AppLogger {
         }
     }
 
+
+    /**
+     * What this report lacks, for its "missing" line: the opt-in log when logging is off, and the recorder's lines
+     * when there was no recorder to ask or it had none. The system report adds itself later if it never arrives.
+     */
+    private fun reportGaps(daemonEntries: List<String>): List<String> = buildList {
+        if (prefs?.isLoggingEnabled() != true) add("the app's debug log (debug logging is off; only the always-on sections)")
+        when {
+            runCatching { RecorderConnection.service }.getOrNull() == null -> add("recorder host lines (recorder not connected)")
+            daemonEntries.isEmpty() -> add("recorder host lines (the recorder had none)")
+        }
+    }
 
     /** Length of the "yyyy-MM-dd HH:mm:ss.SSS" prefix every entry starts with, used to sort by time. */
     private const val TIMESTAMP_LENGTH = 23
