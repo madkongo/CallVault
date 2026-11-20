@@ -242,4 +242,12 @@ class WaitingPublisherTest {
         assertNull(chosen)
         assertTrue(logged.single().contains("provider died"))
     }
+
+    @Test
+    fun `the library and details file take the name the provider really gave`() {
+        // Third review (low): a provider may number a clash on create or rename.
+        assertEquals("a (1).ogg", WaitingPublisher.nameFromProvider(reported = "a (1).ogg", asked = "a.ogg"))
+        assertEquals("a.ogg", WaitingPublisher.nameFromProvider(reported = null, asked = "a.ogg"))
+        assertEquals("a.ogg", WaitingPublisher.nameFromProvider(reported = " ", asked = "a.ogg"))
+    }
 }

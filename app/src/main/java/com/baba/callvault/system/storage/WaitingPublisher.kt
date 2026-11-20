@@ -113,6 +113,9 @@ object WaitingPublisher {
             .onFailure { log("looking up '$name' in the folder failed (${CallEndLog.describe(it)}); keeping the call for later") }
             .getOrNull()
 
+    /** The name the provider reports for a saved document, or the one asked for when it reports none. */
+    fun nameFromProvider(reported: String?, asked: String): String = reported?.takeIf { it.isNotBlank() } ?: asked
+
     /** @param retryLater something is still in use or failed: look again later. */
     data class Result(val saved: Int, val retryLater: Boolean)
 

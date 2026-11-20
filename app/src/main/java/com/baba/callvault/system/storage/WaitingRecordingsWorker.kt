@@ -101,10 +101,18 @@ class WaitingRecordingsWorker(ctx: Context, params: WorkerParameters) : Coroutin
             val renamed = runCatching { DocumentsContract.renameDocument(context.contentResolver, partial.uri, finalName) }
                 .onFailure { AppLogger.w(TAG, "Could not rename '$partialName' to '$finalName': ${it.message}") }
                 .getOrNull()
-            if (renamed != null) return renamed to finalName
+            if (renamed != null) return renamed to actualName(renamed, finalName)
             // A provider that cannot rename: write under the final name directly; the partial copy is ours to remove.
             SafHelper.deleteDocument(partial, "the partial save '$partialName'")
-            return SafHelper.publishStagedRecording(context, target, finalName, mimeType, file)?.let { it to finalName }
+            return SafHelper.publishStagedRecording(context, target, finalName, mimeType, file)?.let { it to actualName(it, finalName) }
+        }
+
+        /** The name the provider gave (it may number a clash), for the library, the details file and the log. */
+        private fun actualName(uri: Uri, asked: String): String {
+            val reported = runCatching { DocumentFile.fromSingleUri(context, uri)?.name }.getOrNull()
+            return WaitingPublisher.nameFromProvider(reported, asked).also {
+                if (it != asked) AppLogger.w(TAG, "The folder named '$asked' '$it'; using that")
+            }
         }
 
         override suspend fun beforeCatalog(name: String, uri: Uri, mimeType: String, note: WaitingNote): Boolean {
