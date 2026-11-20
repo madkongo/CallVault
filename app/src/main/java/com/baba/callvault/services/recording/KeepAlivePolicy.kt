@@ -24,9 +24,37 @@ import com.baba.callvault.data.PrivilegedMode
  */
 object KeepAlivePolicy {
 
+    /** Everything the keep-alive may do to our own embedded ADB. Standalone: all of it. Shizuku: none of it. */
+    enum class AdbAction {
+        WATCH_SWITCHES, REVIVE_ADBD, ENABLE_WIRELESS_DEBUGGING, RESTORE_USB_DEBUGGING, DROP_ADB_CONNECTION, APPROVE_WIFI,
+    }
+
+    fun allowedAdbActions(mode: PrivilegedMode): Set<AdbAction> =
+        if (mayUseAdb(mode)) AdbAction.entries.toSet() else emptySet()
+
+    /** What to do with the ADB watchers (debugging-switch observers, screen receiver, Wi-Fi callback) after a mode change. */
+    enum class WatcherAction { NONE, REGISTER, UNREGISTER }
+
+    /**
+     * The watchers are registered once, in onCreate, for the mode of that moment, and this service outlives a mode
+     * switch (a start() between the switch's stop and the preference write builds an instance for the OLD mode).
+     * So the registered state is compared with what the mode allows now, at every start and every tick.
+     */
+    fun reconcileWatchers(registered: Boolean, mayUseAdb: Boolean): WatcherAction = when {
+        registered && !mayUseAdb -> WatcherAction.UNREGISTER
+        !registered && mayUseAdb -> WatcherAction.REGISTER
+        else -> WatcherAction.NONE
+    }
+
     enum class Role { DAEMON_WATCHDOG, SHIZUKU_ANCHOR }
 
-    data class Decision(val run: Boolean, val role: Role, val mayUseAdb: Boolean, val reason: String)
+    data class Decision(
+        val run: Boolean,
+        val role: Role,
+        val mayUseAdb: Boolean,
+        val adbActions: Set<AdbAction>,
+        val reason: String,
+    )
 
     fun decision(mode: PrivilegedMode, voipEnabled: Boolean): Decision {
         val role = if (mode.needsShizuku) Role.SHIZUKU_ANCHOR else Role.DAEMON_WATCHDOG
@@ -38,6 +66,7 @@ object KeepAlivePolicy {
             run = true,
             role = role,
             mayUseAdb = mayUseAdb(mode),
+            adbActions = allowedAdbActions(mode),
             reason = "mode=$mode appCalls=$voipEnabled role=$role: $what",
         )
     }

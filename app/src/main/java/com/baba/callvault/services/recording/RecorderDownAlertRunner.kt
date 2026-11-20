@@ -57,7 +57,7 @@ class RecorderDownAlertRunner(
     }
 
     /**
-     * The keep-alive is ending (destroyed, or standing down for Shizuku mode): its alert has no one left to clear it,
+     * The keep-alive is ending (destroyed): its alert has no one left to clear it,
      * so take it down now. A no-op when none is up.
      */
     fun onServiceStopping(why: String) {

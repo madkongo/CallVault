@@ -49,6 +49,7 @@ import com.baba.callvault.integrations.adb.UsbNotice
 import com.baba.callvault.integrations.adb.WirelessDebuggingPolicy
 import com.baba.callvault.server.RecorderConnection
 import com.baba.callvault.server.RecorderBackend
+import com.baba.callvault.server.ShizukuStatus
 import com.baba.callvault.server.RecorderServerLauncher
 import com.baba.callvault.system.health.SilentFailureNotifier
 import com.baba.callvault.utils.AppLogger
@@ -68,6 +69,10 @@ import com.baba.callvault.utils.AppLogger
  * **Fast recovery.** A confirmed binder-death ([onDaemonDiedImmediate]) relaunches immediately, and the
  * notification flips to "ready" the instant the relaunch succeeds. A cheap 60s binder-liveness watchdog
  * is the backup for a death we somehow missed.
+ *
+ * **Modes.** Runs in every mode ([KeepAlivePolicy]). Standalone: the above, over our own ADB. Shizuku (app calls
+ * on or off): the process anchor and status notice only; Shizuku keeps its own user service alive, and nothing
+ * here touches our ADB (every ADB path is behind usesAdb(), re-read each time).
  */
 class DaemonKeepAliveService : Service() {
 
@@ -109,6 +114,7 @@ class DaemonKeepAliveService : Service() {
 
     private val watchdog = object : Runnable {
         override fun run() {
+            reconcileAdbWatchers("tick")
             val alive = isDaemonAlive()
             if (alive != (lastReady == true)) {
                 lastReady = alive
@@ -271,6 +277,7 @@ class DaemonKeepAliveService : Service() {
      */
     private val usbDebuggingObserver = object : ContentObserver(watchdogHandler) {
         override fun onChange(selfChange: Boolean) {
+            if (!usesAdb()) return // Shizuku mode: the switches are not ours to act on
             // Tri-state on purpose: a build that redacts the setting reports every change as "off", and
             // treating that as the user's doing wipes the observation window and manufactures an
             // unrecordable window that never existed. Only a proven off counts as off.
@@ -333,10 +340,10 @@ class DaemonKeepAliveService : Service() {
                 // it when the user cannot have done it by hand. See [UsbDebuggingRestorer].
                 val restored = usbOff &&
                     UsbDebuggingRestorer.onUsbDebuggingOff(applicationContext, needsAdb = usesAdb())
-                if (usbOff && !restored) {
+                if (usbOff && !restored && usesAdb()) {
                     // The revival waits for the USB change to settle itself before touching Wireless
                     // debugging — a second wait here made recovery take 10.5 s on the OP9 instead of ~7.
-                    AdbShell.reviveAdbdIfStopped(applicationContext, "USB debugging switched off")
+                    AdbShell.reviveAdbdIfStopped(applicationContext, "USB debugging switched off", mayEnable = usesAdb())
                 }
                 // Re-runs the transport policy: with the daemon already connected this is just the
                 // decision, no relaunch — and it is what switches Wireless debugging off.
@@ -455,6 +462,7 @@ class DaemonKeepAliveService : Service() {
      */
     private val wirelessDebuggingObserver = object : ContentObserver(watchdogHandler) {
         override fun onChange(selfChange: Boolean) {
+            if (!usesAdb()) return // Shizuku mode: the switches are not ours to act on
             // Any switch of Wireless debugging gives adbd a new port, so a port search that failed may run again (#65).
             com.baba.callvault.integrations.adb.ConnectPortFinder.onWirelessDebuggingChanged()
             val on = AdbShell.isWirelessDebuggingEnabled(applicationContext)
@@ -552,6 +560,7 @@ class DaemonKeepAliveService : Service() {
         }
 
         override fun onAvailable(network: Network) {
+            if (!usesAdb()) return
             // Let Android finish its own "Wi-Fi changed" handling of the switch first.
             watchdogHandler.removeCallbacks(approveJoinedWifi)
             watchdogHandler.postDelayed(approveJoinedWifi, WIFI_JOIN_SETTLE_MS)
@@ -567,7 +576,7 @@ class DaemonKeepAliveService : Service() {
         lastWifiLostAtMs != 0L && SystemClock.elapsedRealtime() - lastWifiLostAtMs < WIFI_LOST_WINDOW_MS
 
     private val approveJoinedWifi = Runnable {
-        if (!AppPreferences(applicationContext).isWifiNetworkAutoApproveEnabled()) return@Runnable
+        if (!usesAdb() || !AppPreferences(applicationContext).isWifiNetworkAutoApproveEnabled()) return@Runnable
         Thread {
             runCatching {
                 if (AdbShell.approveCurrentNetworkIfWanted(applicationContext)) {
@@ -585,6 +594,7 @@ class DaemonKeepAliveService : Service() {
      */
     private val developerOptionsObserver = object : ContentObserver(watchdogHandler) {
         override fun onChange(selfChange: Boolean) {
+            if (!usesAdb()) return
             if (!DeveloperOptions.isExplicitlyDisabled(applicationContext)) return
             restartObservationWindow("Developer options switched off")
         }
@@ -596,20 +606,34 @@ class DaemonKeepAliveService : Service() {
         AppPauseWatch.start(applicationContext)
         ensureOwnChannel()
 
-        // The debugging switches are our embedded ADB's business only. A mode switch always stops this
-        // service first, so the mode read here holds for the instance's whole life.
-        if (usesAdb()) runCatching {
-            contentResolver.registerContentObserver(
-                Settings.Global.getUriFor("adb_enabled"), false, usbDebuggingObserver,
-            )
-            contentResolver.registerContentObserver(
-                Settings.Global.getUriFor("adb_wifi_enabled"), false, wirelessDebuggingObserver,
-            )
-            contentResolver.registerContentObserver(
-                Settings.Global.getUriFor("development_settings_enabled"), false, developerOptionsObserver,
-            )
+        // The debugging switches are our embedded ADB's business only. This service outlives a mode switch, so the
+        // watchers are reconciled with the mode now and again at every start and tick (P1a review).
+        reconcileAdbWatchers("create")
+    }
+
+    /** True while the debugging-switch observers, screen receiver and Wi-Fi callback are registered. */
+    private var watchersForAdb = false
+
+    /** Registers or drops the ADB watchers so they match the mode as it is NOW; one always-on line per change. */
+    private fun reconcileAdbWatchers(why: String) {
+        when (KeepAlivePolicy.reconcileWatchers(watchersForAdb, usesAdb())) {
+            KeepAlivePolicy.WatcherAction.NONE -> return
+            KeepAlivePolicy.WatcherAction.REGISTER -> registerAdbWatchers()
+            KeepAlivePolicy.WatcherAction.UNREGISTER -> unregisterAdbWatchers()
+        }
+        val line = "keep-alive: ADB watchers ${if (watchersForAdb) "registered" else "dropped"} ($why); mode=${AppPreferences(applicationContext).getPrivilegedMode()}"
+        AppLogger.i(TAG, line)
+        runCatching { UsbDebuggingEvents.record(applicationContext, line) }
+    }
+
+    private fun registerAdbWatchers() {
+        watchersForAdb = true
+        runCatching {
+            contentResolver.registerContentObserver(Settings.Global.getUriFor("adb_enabled"), false, usbDebuggingObserver)
+            contentResolver.registerContentObserver(Settings.Global.getUriFor("adb_wifi_enabled"), false, wirelessDebuggingObserver)
+            contentResolver.registerContentObserver(Settings.Global.getUriFor("development_settings_enabled"), false, developerOptionsObserver)
         }.onFailure { AppLogger.w(TAG, "Could not watch the debugging switches: ${it.message}") }
-        if (usesAdb()) runCatching {
+        runCatching {
             registerReceiver(
                 screenReceiver,
                 android.content.IntentFilter().apply {
@@ -619,7 +643,7 @@ class DaemonKeepAliveService : Service() {
                 },
             )
         }.onFailure { AppLogger.w(TAG, "Could not watch the screen: ${it.message}") }
-        if (usesAdb()) runCatching {
+        runCatching {
             getSystemService(ConnectivityManager::class.java)?.registerNetworkCallback(
                 NetworkRequest.Builder().addTransportType(NetworkCapabilities.TRANSPORT_WIFI).build(),
                 wifiJoinCallback,
@@ -627,11 +651,22 @@ class DaemonKeepAliveService : Service() {
         }.onFailure { AppLogger.w(TAG, "Could not watch for Wi-Fi joins: ${it.message}") }
     }
 
+    private fun unregisterAdbWatchers() {
+        watchersForAdb = false
+        runCatching { unregisterReceiver(screenReceiver) }
+        runCatching { contentResolver.unregisterContentObserver(usbDebuggingObserver) }
+        runCatching { contentResolver.unregisterContentObserver(wirelessDebuggingObserver) }
+        runCatching { contentResolver.unregisterContentObserver(developerOptionsObserver) }
+        runCatching { getSystemService(ConnectivityManager::class.java)?.unregisterNetworkCallback(wifiJoinCallback) }
+        watchdogHandler.removeCallbacks(approveJoinedWifi)
+    }
+
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
         // It runs in every mode now (P1a), so there is nothing to stand down for. The ADB daemon guarantee is kept
         // elsewhere: every ADB path here is gated on usesAdb(), which reads the mode each time, so a keep-alive
         // left over from standalone cannot relaunch our daemon in Shizuku mode (the OP9 bug).
         logDecisionIfChanged(applicationContext)
+        reconcileAdbWatchers("start command")
 
         val startedForeground = runCatching {
             // While a call is recorded the shared notification shows the recording, with its controls;
@@ -907,6 +942,17 @@ class DaemonKeepAliveService : Service() {
      * "start Shizuku" notice already covers that.
      */
     private fun rebindShizuku(force: Boolean) {
+        // Shizuku not running (after a reboot, before the user starts it): asking again every 20 s only fills the log
+        // and spends battery. The status notice and R1 alert already say so; resume the moment it is READY.
+        val status = runCatching { RecorderBackend.shizukuStatus(applicationContext) }.getOrNull()
+        if (status != null && status != ShizukuStatus.READY) {
+            if (status != lastShizukuSkipStatus) {
+                lastShizukuSkipStatus = status
+                AppLogger.i(TAG, "keep-alive (Shizuku): not asking for the recorder while Shizuku is $status")
+            }
+            return
+        }
+        lastShizukuSkipStatus = null
         if (!rewarmGate.tryEnter(SystemClock.elapsedRealtime(), force)) return
         Thread {
             AppLogger.i(TAG, "keep-alive (Shizuku): recorder down — asking Shizuku for it again (force=$force)")
@@ -914,6 +960,8 @@ class DaemonKeepAliveService : Service() {
             if (outcome == LaunchOutcome.CONNECTED) watchdogHandler.post { lastReady = true; updateNotification(true) }
         }.apply { isDaemon = true; name = "cv-keepalive-rebind" }.start()
     }
+
+    private var lastShizukuSkipStatus: ShizukuStatus? = null
 
     private fun usesAdb(): Boolean =
         KeepAlivePolicy.mayUseAdb(AppPreferences(applicationContext).getPrivilegedMode())
@@ -1027,12 +1075,7 @@ class DaemonKeepAliveService : Service() {
         // Nobody else clears the alert once this service is gone (review R1 follow-up).
         runCatching { downAlert.onServiceStopping("service destroyed") }
         AppPauseWatch.stop()
-        runCatching { unregisterReceiver(screenReceiver) }
-        runCatching { contentResolver.unregisterContentObserver(usbDebuggingObserver) }
-        runCatching { contentResolver.unregisterContentObserver(wirelessDebuggingObserver) }
-        runCatching { contentResolver.unregisterContentObserver(developerOptionsObserver) }
-        runCatching { getSystemService(ConnectivityManager::class.java)?.unregisterNetworkCallback(wifiJoinCallback) }
-        watchdogHandler.removeCallbacks(approveJoinedWifi)
+        unregisterAdbWatchers()
         runCatching { voipDetector?.stop() }
         watchdogHandler.removeCallbacks(watchdog)
         watchdogHandler.removeCallbacks(healSharedNoticeRunnable)
